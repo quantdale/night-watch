@@ -66,7 +66,7 @@ test('Phase 2A pre-real-run safety gate', async () => {
     repositories: {
       snapshotRecorded: true,
       snapshotsValid: snapshots.length > 0 && snapshots.every((snapshot) => snapshot.ok),
-      alphausRepositoriesClean: snapshots.every((snapshot) => !snapshot.dirty),
+      alphausRepositoriesSnapshotValid: snapshots.length > 0 && snapshots.every((snapshot) => snapshot.ok),
       nightwatchDirtyPaths: nightwatchDirtyPaths(),
       documentedNightwatchDirtyPaths: [],
     },

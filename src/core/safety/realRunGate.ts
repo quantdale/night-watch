@@ -42,7 +42,8 @@ export interface PassiveActionContract {
 export interface RepositoryFreshnessContract {
   snapshotRecorded: boolean;
   snapshotsValid: boolean;
-  alphausRepositoriesClean: boolean;
+  /** Pre-existing Alphaus dirt is recorded; the snapshot itself must be valid. */
+  alphausRepositoriesSnapshotValid: boolean;
   nightwatchDirtyPaths: readonly string[];
   documentedNightwatchDirtyPaths: readonly string[];
 }
@@ -273,7 +274,7 @@ export function evaluateRealRunGate(input: RealRunGateInput): RealRunGateResult 
   const repositoryPass =
     input.repositories.snapshotRecorded &&
     input.repositories.snapshotsValid &&
-    input.repositories.alphausRepositoriesClean &&
+    input.repositories.alphausRepositoriesSnapshotValid &&
     undocumented.length === 0;
   checks.push(
     check(

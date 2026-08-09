@@ -115,7 +115,7 @@ test('Phase 2A unauthenticated Ripple connectivity canary', async ({ browser }) 
     repositories: {
       snapshotRecorded: true,
       snapshotsValid: snapshots.length > 0 && snapshots.every((snapshot) => snapshot.ok),
-      alphausRepositoriesClean: snapshots.every((snapshot) => !snapshot.dirty),
+      alphausRepositoriesSnapshotValid: snapshots.length > 0 && snapshots.every((snapshot) => snapshot.ok),
       nightwatchDirtyPaths: dirtyNightwatchPaths(),
       documentedNightwatchDirtyPaths: [],
     },

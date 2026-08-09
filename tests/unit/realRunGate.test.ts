@@ -44,7 +44,7 @@ const ACTIONS: PassiveActionContract = { passiveOnly: true, mutationRegistryEnab
 const REPOSITORIES: RepositoryFreshnessContract = {
   snapshotRecorded: true,
   snapshotsValid: true,
-  alphausRepositoriesClean: true,
+  alphausRepositoriesSnapshotValid: true,
   nightwatchDirtyPaths: [],
   documentedNightwatchDirtyPaths: [],
 };
@@ -130,7 +130,7 @@ test('missing/invalid proxy, state, browser, evidence, action, and repository fa
     repositories: {
       ...REPOSITORIES,
       snapshotRecorded: false,
-      alphausRepositoriesClean: false,
+      alphausRepositoriesSnapshotValid: false,
       nightwatchDirtyPaths: ['src/unsafe-change.ts'],
       documentedNightwatchDirtyPaths: [],
     },
