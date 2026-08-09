@@ -1,8 +1,9 @@
 # Phase 1.3 — Durable Agent Continuity / Execution-State Protocol
 
 - Starting SHA: `ea2d327f54269c101123c2660a456e69dd319735`
-- Resulting SHA: implementation commit SHA recorded at the next checkpoint;
-  final handoff checkpoint SHA is reported by `git rev-parse HEAD`.
+- Resulting SHA (implementation commit): `1994eaca9f8b67cf7d31cdffd66ebdc600379c90`.
+  The final handoff checkpoint commit is the repository HEAD after this
+  recorded-SHA update.
 - Objective: Provide durable project/task memory and fresh-session/context-
   compaction recovery without conversational/model memory.
 - Changes: Added concise root `AGENTS.md`; `.agent/README.md`, `PLANS.md`,
