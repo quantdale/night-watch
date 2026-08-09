@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: a9f56a2019929511918fff731c2b5ee1bf08b611
-Last validated implementation SHA: a9f56a2019929511918fff731c2b5ee1bf08b611
+Current SHA: 780b86b514050f166f9c4e80d8436e178aea9bef
+Last validated implementation SHA: 780b86b514050f166f9c4e80d8436e178aea9bef
 Branch: main
-Last checkpoint: 2026-08-09 — M6 unauthenticated canary and manifest implementation validated locally; implementation checkpoint a9f56a2
+Last checkpoint: 2026-08-09 — M6 canary wiring repaired and dedicated test discovery validated; implementation checkpoint 780b86b
 
 ## Objective
 
@@ -121,6 +121,8 @@ UNCLASSIFIED_REQUIRED_HOST traffic.
 | `src/browser/contract.ts`, `playwright.config.ts`, `playwright.gate.config.ts` | Shared authenticated browser containment contract and isolated gate harness | Added/modified |
 | `src/core/safety/realRunGate.ts`, `bin/observe-gate.mjs`, `tests/manual/observe-gate.ts`, `tests/unit/realRunGate.test.ts`, `package.json` | Fail-closed local pre-real-run gate and CLI | Added/modified |
 | `tsconfig.json` | Typecheck dedicated gate config | Modified |
+| `src/core/evidence/destinationManifest.ts`, `tests/unit/destinationManifest.test.ts` | Sanitized host-level runtime destination manifest | Added |
+| `bin/observe-canary.mjs`, `playwright.canary.config.ts`, `tests/manual/phase2a-canary.ts`, `package.json` | Opt-in no-auth direct-navigation canary | Added/modified |
 
 ## Validation Ledger
 
@@ -227,6 +229,27 @@ When: 2026-08-09
 Relevant failure/output summary: missing external state was not opened or
 printed; no target was contacted. The initial manual-test discovery issue was
 repaired with a dedicated `playwright.gate.config.ts` before this validation.
+
+Command: `npx playwright test tests/unit/destinationManifest.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
+Result: PASS; 9 passed, 0 failed.
+When: 2026-08-09
+Relevant failure/output summary: manifest category separation, no-query
+serialization, explicit verified-host handling, authenticated-gate state
+requirements, and unauthenticated-canary state absence all passed locally.
+
+Command: `npx playwright test --config=playwright.canary.config.ts --list --project=nightwatch`
+Result: PASS; exactly one dedicated canary test was discovered.
+When: 2026-08-09
+Relevant failure/output summary: no browser or target activity was performed.
+
+Command: first `npm run observe:canary -- --env=dev` attempt
+Result: PASS-as-safe-rejection; no-network preflight passed, then the wrapper
+stopped with `No tests found` before browser launch because the canary test file
+was missing from the implementation checkpoint.
+When: 2026-08-09
+Relevant failure/output summary: no real target was contacted. The missing
+test was added, dedicated discovery passed, and a new implementation
+checkpoint was created before retrying.
 
 ## Decisions Made During This Task
 
