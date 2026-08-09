@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
-Last validated implementation SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
+Current SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
+Last validated implementation SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
 Branch: main
-Last checkpoint: 2026-08-09 — narrow Ripple source verification proved the exact Pylon widget host is optional support/chat; exact-host local blocking and focused policy/evidence tests passed. No auth state loaded.
+Last checkpoint: 2026-08-09 — exact-host Pylon policy/evidence implementation committed at `46f5817b5c2a8180affb1c0a5edc7454480a34ad`; focused tests passed. No auth state loaded.
 
 ## Objective
 
@@ -426,6 +426,13 @@ tests/unit/safety.test.ts tests/unit/proxy.test.ts
 tests/unit/destinationManifest.test.ts tests/unit/containmentEffect.test.ts
 --project=nightwatch` => **30 passed, 0 failed**; `npx tsc --noEmit` => PASS;
 `git diff --check` => PASS. No Alphaus source was modified.
+
+Command: `git commit -m "fix: classify optional Pylon support containment"`
+Result: PASS; implementation, focused tests, and task checkpoint committed at
+`46f5817b5c2a8180affb1c0a5edc7454480a34ad`; Nightwatch tree clean afterward.
+When: 2026-08-09
+Relevant failure/output summary: no Alphaus repository or workspace-root file
+was included in the Nightwatch commit.
 
 ## Decisions Made During This Task
 
