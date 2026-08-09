@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
-Last validated implementation SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
+Current SHA: cd7e3687578707237707671c7ad7123533c0706a
+Last validated implementation SHA: cd7e3687578707237707671c7ad7123533c0706a
 Branch: main
-Last checkpoint: 2026-08-09 — M6 user-approved explicit non-network block disposition checkpoint; implementation checkpoint f5c4abb
+Last checkpoint: 2026-08-09 — approved Chromium telemetry classification implemented and validated; implementation checkpoint cd7e368
 
 ## Objective
 
@@ -23,12 +23,13 @@ Milestone ID: M6 — Run the unauthenticated real connectivity canary
 Status: IN_PROGRESS
 What is being attempted: M6 real canary reached the explicit dev UI under the
 proxy, but stopped before any authenticated work because Chromium attempted
-unresolved background destinations. The user has now approved a narrow,
-explicit non-network block disposition for `clients2.google.com` and
-`safebrowsingohttpgateway.googleapis.com`. They remain denied locally, are not
-allowlisted, and their appearance may be recorded as sanitized blocked
-telemetry without failing the run. Any other unknown hostname remains
-fail-closed and requires separate review.
+unresolved background destinations. The user-approved narrow, explicit
+non-network block disposition for `clients2.google.com` and
+`safebrowsingohttpgateway.googleapis.com` is now represented in the dev/next
+telemetry classification only. They remain locally denied and not allowlisted;
+their appearance may be recorded as sanitized blocked telemetry without
+failing the run. Any other unknown hostname remains fail-closed and requires
+separate review.
 
 ## Completed Milestones
 
@@ -91,15 +92,17 @@ fail-closed and requires separate review.
 ## Work In Progress
 
 Continuity, target preflight, evidence minimization, manual capture, and the
-pre-real-run safety gate are complete. No real environment contact has
-occurred. M6 is now the next bounded change.
+pre-real-run safety gate are complete. The prior unauthenticated canary made
+only the recorded selected-dev UI observation; no authenticated observation has
+occurred. The approved background-host classification is validated and M6 is
+ready to resume.
 
 ## Exact Next Action
 
-Implement the bounded unauthenticated real connectivity canary and sanitized
-destination manifest. Keep the run to the explicit selected UI URL, do not
-load storage state, do not follow links, and stop on production/unknown/
-UNCLASSIFIED_REQUIRED_HOST traffic.
+Run `npm run observe:canary -- --env=dev`. Keep the run to the explicit
+selected UI URL, do not load storage state, do not follow links, and stop on
+production or any hostname other than the two explicitly approved blocked
+telemetry hosts and the already classified destinations.
 
 ## Files Changed
 
@@ -128,6 +131,7 @@ UNCLASSIFIED_REQUIRED_HOST traffic.
 | `tsconfig.json` | Typecheck dedicated gate config | Modified |
 | `src/core/evidence/destinationManifest.ts`, `tests/unit/destinationManifest.test.ts` | Sanitized host-level runtime destination manifest | Added |
 | `bin/observe-canary.mjs`, `playwright.canary.config.ts`, `tests/manual/phase2a-canary.ts`, `package.json` | Opt-in no-auth direct-navigation canary | Added/modified |
+| `config/environments/dev.json`, `config/environments/next.json`, `tests/unit/safety.test.ts` | Explicit non-network block classification for approved Chromium background hosts | Modified |
 
 ## Validation Ledger
 
@@ -292,6 +296,17 @@ When: 2026-08-09
 Relevant failure/output summary: dedicated configs each discover exactly one
 manual test; no additional real target activity occurred during the fix.
 
+Command: `npx playwright test tests/unit/safety.test.ts --project=nightwatch`,
+`npx tsc --noEmit`, and `git diff --check` after the approved block
+classification
+Result: PASS; **21 safety tests passed**, typecheck passed, and no whitespace
+errors were reported. The two approved hosts are explicitly present only in
+`dev`/`next` `telemetryHosts`, absent from `allowedHosts`, and policy decisions
+are `block-telemetry`.
+When: 2026-08-09
+Relevant failure/output summary: no browser, DNS, TCP, or target activity was
+performed by this validation.
+
 Command: fourth `npm run observe:canary -- --env=dev` attempt; run ID
 `nightwatch-20260809T075359Z-0a6d`
 Result: USER_ACTION_REQUIRED; the fresh run passed preflight and the full
@@ -380,6 +395,17 @@ tree to be clean or documented.
 Evidence/constraint: the first real-canary attempt proved several Alphaus
 clones already had local changes; Nightwatch performed no writes to them.
 
+Decision: Classify `clients2.google.com` and
+`safebrowsingohttpgateway.googleapis.com` as explicit blocked telemetry/control
+plane destinations for dev/next, without adding either to an outbound
+allowlist.
+Reason: the user approved non-network blocking after repeated Chromium
+background attempts; local browser/proxy containment must continue to prevent
+DNS/TCP/HTTP/HTTPS access while allowing sanitized non-fatal telemetry
+evidence.
+Evidence/constraint: any other unknown hostname remains fail-closed and must
+receive separate review.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -438,8 +464,8 @@ request occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Apply the approved explicit non-network block classification to the two
-   named Chromium hosts; never allow them or permit network access.
+3. Verify the approved explicit non-network block classification is present for
+   the two named Chromium hosts; never allow them or permit network access.
 4. Resume with `npm run observe:canary -- --env=dev`; it reruns preflight and
    the pre-auth gate before any navigation and uses a fresh run ID.
 5. Update STATE with exact sanitized runtime results and checkpoint before M7.
