@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: cd7e3687578707237707671c7ad7123533c0706a
-Last validated implementation SHA: cd7e3687578707237707671c7ad7123533c0706a
+Current SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
+Last validated implementation SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
 Branch: main
-Last checkpoint: 2026-08-09 — M6 canary PASS after approved telemetry block; no auth state loaded; implementation checkpoint cd7e368
+Last checkpoint: 2026-08-09 — M6 canary checkpoint aed7787; narrow Ripple routing review proved the configured root path is not the deployed `/ripple/` route; no auth state loaded.
 
 ## Objective
 
@@ -19,16 +19,15 @@ evidence, and a single fresh-context replay.
 
 ## Current Milestone
 
-Milestone ID: M7 — Observe the first authenticated Ripple landing page
-Status: IN_PROGRESS — USER_ACTION_REQUIRED
-What is being attempted: M6 completed successfully after the explicit
-non-network block classification. The fresh canary passed preflight and all
-pre-auth gates, reached only the selected dev UI, and recorded the two named
-Chromium hosts as non-fatal blocked telemetry. No storage state was loaded.
-M7 is paused until a human supplies a valid external Playwright storage-state
-path; credentials, cookies, tokens, and customer data must not enter Nightwatch
-or this session. Any other unknown hostname remains fail-closed and requires
-separate review.
+Milestone ID: M2 — Establish explicit real-target configuration and preflight
+Status: IN_PROGRESS — TARGET_URL_CORRECTION_REQUIRED
+What is being attempted: Before authentication, the M6 404 was checked against
+the narrow, already-known Ripple routing/build configuration. The configured
+`https://appdev.alphaus.cloud/` root is not the deployed Ripple document path:
+the Ripple router base and the dev/next build public path are `/ripple/`.
+Therefore the 404 is evidence of a wrong configured path, not an acceptable
+unauthenticated observation of the intended Ripple route. No storage state was
+loaded and no auth capture was started.
 
 ## Completed Milestones
 
@@ -90,20 +89,20 @@ separate review.
 
 ## Work In Progress
 
-Continuity, target preflight, evidence minimization, manual capture, and the
-pre-real-run safety gate and M6 unauthenticated canary are complete. The
-selected dev UI returned HTTP 404 with one generic console-error oracle, but
-the canary summary passed; no authenticated observation has occurred. M7 is
-waiting for a valid external storage-state path and must remain passive-only.
+Continuity, evidence minimization, manual capture, the pre-real-run safety gate,
+and the M6 unauthenticated canary are complete. The canary reached the
+configured dev host but used the wrong root document path and returned HTTP 404
+with one generic console-error oracle. Narrow current Ripple source/config
+evidence proves the intended base path is `/ripple/`; no authenticated
+observation or auth capture has occurred.
 
 ## Exact Next Action
 
-USER_ACTION_REQUIRED — provide an absolute path to a valid externally captured
-Playwright storage-state file outside the Nightwatch repository and artifacts,
-without exposing its contents. After the pre-real-run gate accepts that path,
-run only the direct authenticated landing observation and one fresh-context
-replay; do not start until the gate passes and stop on any newly unclassified
-hostname.
+TARGET_URL_CORRECTION_REQUIRED — use the code-verified dev target
+`https://appdev.alphaus.cloud/ripple/`. Update or explicitly supply that path in
+a fresh session, rerun the no-auth preflight/canary, and only after that passes
+resume M7’s manual external storage-state workflow. Do not start auth capture
+against the current root URL; do not change host allowlists dynamically.
 
 ## Files Changed
 
@@ -359,6 +358,21 @@ When: 2026-08-09
 Relevant failure/output summary: artifacts remain ignored/local-only and no
 storage-state file was used.
 
+Command: narrow Ripple routing/build configuration review for the M6 404
+Result: TARGET_URL_CORRECTION_REQUIRED. Nightwatch `config/environments/dev.json`
+currently selects `https://appdev.alphaus.cloud` without a path. The already-
+known Ripple source defines the Vue Router base as
+`process.env.VUE_APP_PUBLIC_PATH || '/ripple/'` (`src/router.js`), and
+`vue.config.js` selects `/ripple/` for development, next, and production builds.
+The router's unauthenticated login route and authenticated dashboard alias are
+therefore under that base. The exact corrected dev target is
+`https://appdev.alphaus.cloud/ripple/`. No browser, DNS, TCP, auth, or allowlist
+change was performed during this review.
+When: 2026-08-09
+Relevant failure/output summary: the configured host root is not the intended
+Ripple document route; do not begin manual auth capture until the explicit path
+is corrected and the no-auth preflight/canary is rerun.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -445,6 +459,10 @@ receive separate review.
 - The gate CLI initially found no manual test because manual helpers are
   excluded from the ordinary Playwright match; a dedicated gate config now
   keeps that helper explicit and out of the full suite.
+- Narrow Ripple routing/build evidence resolves the M6 404 as a target-path
+  correction: the deployed app base is `/ripple/`, while Nightwatch configured
+  the host root. The corrected dev URL is
+  `https://appdev.alphaus.cloud/ripple/`.
 
 ## Blockers
 
@@ -460,14 +478,13 @@ destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`
 - every other previously unknown hostname remains unresolved, denied, and
   requires separate review.
 
-Current blocker: `USER_ACTION_REQUIRED` for M7. A human must make a valid
-external Playwright storage-state path available without exposing its contents.
-No credential automation or authenticated navigation may begin without that
-state and a passing pre-real-run gate.
-
-Resume M7 only after the external storage-state prerequisite is available; the
-canary itself must not be rerun unless a new unclassified destination requires
-review.
+Current blocker: `TARGET_URL_CORRECTION_REQUIRED` for M2. The configured dev
+root path must be replaced or explicitly overridden with the code-verified
+`https://appdev.alphaus.cloud/ripple/`, followed by a no-auth preflight/canary
+validation. No credential automation, auth capture, or authenticated
+navigation may begin against the current root URL. After target correction,
+M7 still requires a valid external Playwright storage-state path without
+exposing its contents and a passing pre-real-run gate.
 
 ## Safety Events
 

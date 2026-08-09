@@ -125,7 +125,10 @@ Phase 2B+, and container/L6 implementation.
   browser storage-state requirement.
 - Validation commands: focused Phase 2A preflight tests; `npm run observe:preflight
   -- --env=... --ui-url=...` with a synthetic/approved target only.
-- Status: COMPLETE
+- Status: IN_PROGRESS — TARGET_URL_CORRECTION_REQUIRED after the M6 runtime
+  observation proved that the configured host root is not the deployed Ripple
+  document path. Correct the explicit path and rerun the no-auth preflight/
+  canary before resuming M7; do not dynamically change host allowlists.
 
 ### M3 — Enforce authenticated evidence minimization
 
@@ -229,9 +232,10 @@ fail-closed and requires separate review.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — USER_ACTION_REQUIRED for a valid externally supplied
-  Playwright storage-state path; no authentication state is present in this
-  session and no credentials may be provided to Nightwatch.
+- Status: BLOCKED pending M2 target correction, then USER_ACTION_REQUIRED for a
+  valid externally supplied Playwright storage-state path; no authentication
+  state is present in this session and no credentials may be provided to
+  Nightwatch.
 
 ### M8 — Produce the destination manifest
 
