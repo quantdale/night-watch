@@ -36,6 +36,11 @@ Each PLAN contains these sections:
 Before implementation, write SPEC/PLAN/STATE and the first checkpoint. For
 each milestone, implement → validate → repair → record exact results in STATE
 → advance. Update STATE before a milestone commit and record the resulting SHA
-at the next checkpoint. Keep STATE concise; move durable history to REPORT or
-project docs. Never let a plan preserve a known-wrong assumption for the sake
-of consistency.
+at the next checkpoint. `Current SHA` is retained as a compatibility field and
+must equal `Last validated implementation SHA`. The validator classifies that
+baseline as `SYNCED` when it equals HEAD with no changes,
+`CHECKPOINT_ADVANCE` when all descendant/worktree changes are on the explicit
+continuity/documentation allowlist, and `STALE` when any implementation,
+source, test, config, or unapproved path changed. It never rewrites STATE.
+Keep STATE concise; move durable history to REPORT or project docs. Never let a
+plan preserve a known-wrong assumption for the sake of consistency.

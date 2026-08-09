@@ -13,6 +13,9 @@
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
     "agent:check": "node bin/agent-state.mjs",
+    "observe:preflight": "node bin/observe-preflight.mjs",
+    "observe:gate": "node bin/observe-gate.mjs",
+    "auth:capture": "node bin/auth-capture.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "nightwatch": "node bin/nightwatch.mjs"
   },

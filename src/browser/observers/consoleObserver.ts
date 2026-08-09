@@ -24,19 +24,21 @@ export function createConsoleObserver(opts: {
     install(page: Page): void {
       page.on('console', (msg) => {
         try {
-          const text = recorder.redaction.redactText(msg.text());
+          const text = recorder.isAuthenticated
+            ? '[SUPPRESSED_AUTHENTICATED_CONSOLE_TEXT]'
+            : recorder.redaction.redactText(msg.text());
           if (CHROME_RESOURCE_FAILURE_RE.test(text)) return; // network observer's job
           recorder.event({
             type: 'console',
             severity: msg.type() === 'error' ? 'error' : 'info',
-            message: `[${msg.type()}] ${text}`,
-            data: { type: msg.type(), text },
+            message: recorder.isAuthenticated ? `console-${msg.type()}` : `[${msg.type()}] ${text}`,
+            data: recorder.isAuthenticated ? { type: msg.type(), category: `console-${msg.type()}` } : { type: msg.type(), text },
           });
           if (msg.type() === 'error') {
             const issueEvent = recorder.event({
               type: 'issue',
               severity: 'error',
-              message: `console-error: ${text}`,
+              message: 'console-error',
               data: { reason: 'console-error' },
             });
             monitor.recordIssue(issueEvent);

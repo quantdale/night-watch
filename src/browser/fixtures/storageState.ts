@@ -102,6 +102,43 @@ export function validateStorageStateFile(p: string, opts?: StorageStateOptions):
   return abs;
 }
 
+/**
+ * Validate a destination before a human-led capture writes secret state.
+ * The destination must not already exist; capture never overwrites a file.
+ */
+export function validateStorageStateOutputPath(p: string, opts?: StorageStateOptions): string {
+  const { nightwatchRoot, workspaceRoot } = defaultRoots(opts);
+  if (!path.isAbsolute(p)) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must be an absolute path (got: ${p})`);
+  }
+  const abs = path.resolve(p);
+  if (isInside(nightwatchRoot, abs) || isInside(workspaceRoot, abs)) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must be outside the Nightwatch repo and Alphaus workspace`);
+  }
+  if (!abs.toLowerCase().endsWith('.json')) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must use a .json filename`);
+  }
+  if (fs.existsSync(abs)) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output already exists; refusing to overwrite secret state`);
+  }
+  const parent = path.dirname(abs);
+  if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent directory does not exist`);
+  }
+  try {
+    fs.accessSync(parent, fs.constants.W_OK);
+  } catch (err) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is not writable: ${(err as Error).message}`);
+  }
+  const mode = fs.statSync(parent).mode;
+  // Sticky world-writable directories such as /tmp are acceptable; an
+  // ordinary world-writable parent is an obvious unsafe destination.
+  if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is world-writable without sticky protection`);
+  }
+  return abs;
+}
+
 /** Resolve the storage-state path from the environment; null when unset. */
 export function resolveStorageStatePath(opts?: StorageStateOptions): string | null {
   const raw = process.env[NIGHTWATCH_STORAGE_STATE_VAR];

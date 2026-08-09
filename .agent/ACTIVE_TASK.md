@@ -1,12 +1,13 @@
 # Active Task
 
-Task ID: phase-1.3-continuity
-Phase: 1.3
-Title: Durable Agent Continuity / Execution-State Protocol
-Status: COMPLETE
-Task directory: .agent/tasks/phase-1.3-continuity
-Starting SHA: ea2d327f54269c101123c2660a456e69dd319735
-Current SHA: 1994eaca9f8b67cf7d31cdffd66ebdc600379c90
-Current milestone: M4 — update project memory and finish handoff
-Last checkpoint: 2026-08-09 — typecheck, full suite, and agent check passed
-Next action: No implementation action remains; review REPORT.md and begin PHASE 2A only as a new explicitly scoped task.
+Task ID: phase-2a-controlled-observation
+Phase: 2A
+Title: First Controlled Authenticated Ripple Dev/Next Observation
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-2a-controlled-observation
+Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
+Current SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
+Last validated implementation SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
+Current milestone: M6 — Run the unauthenticated real connectivity canary
+Last checkpoint: 2026-08-09 — M5 pre-real-run safety gate validated locally; no target contact
+Next action: Implement the bounded unauthenticated canary and sanitized destination manifest; run it only after the explicit dev/next preflight and safety gate pass.

@@ -140,6 +140,45 @@ export class RedactionLayer {
     return out;
   }
 
+  /**
+   * Metadata-first URL form for authenticated evidence. Query strings and
+   * fragments are removed entirely, and path segments that look like account,
+   * customer, billing-group, invoice, UUID, or opaque resource identifiers are
+   * replaced with a stable placeholder. Low-entropy secrets are never hashed.
+   */
+  redactAuthenticatedUrl(url: string): string {
+    const redacted = this.redactText(url);
+    try {
+      const u = new URL(redacted);
+      u.username = '';
+      u.password = '';
+      u.search = '';
+      u.hash = '';
+      u.pathname = u.pathname
+        .split('/')
+        .map((segment) => {
+          if (segment === '') return '';
+          let decoded = segment;
+          try {
+            decoded = decodeURIComponent(segment);
+          } catch {
+            // Keep the encoded segment; it will be treated conservatively.
+          }
+          const safeRouteWord = /^[a-z][a-z0-9._-]*$/;
+          const looksLikeIdentifier =
+            decoded.includes('@') ||
+            /^\d{4,}$/.test(decoded) ||
+            /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(decoded) ||
+            (decoded.length >= 8 && /[A-Z]/.test(decoded) && /[a-z]/.test(decoded) && /\d/.test(decoded));
+          return looksLikeIdentifier || !safeRouteWord.test(decoded) ? '<ID>' : decoded;
+        })
+        .join('/');
+      return u.toString().replace(/%3CID%3E/gi, '<ID>');
+    } catch {
+      return redacted.replace(/[?#].*$/, '');
+    }
+  }
+
   /** Redact a headers map in place-safe way (returns a new object). */
   redactHeaders(headers: Record<string, string>): Record<string, string> {
     const out: Record<string, string> = {};

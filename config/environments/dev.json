@@ -2,6 +2,8 @@
   "name": "dev",
   "label": "Dev environment. Hosts code-verified from mobingilabs/ripple-ui src/config/common.js @ d80b161b (2026-08-06) and NIGHTWATCH_RECON_B. Caveat (RECON_B E8): dev backend services may share production data-plane resources — Nightwatch runs are strictly READ-ONLY in every environment.",
   "uiBaseUrl": "https://appdev.alphaus.cloud",
+  "apiHosts": ["apidev.alphaus.cloud", "servicedev.mobingi.com"],
+  "authHosts": ["logindev.alphaus.cloud"],
   "allowedHosts": [
     "apidev.alphaus.cloud",
     "logindev.alphaus.cloud",

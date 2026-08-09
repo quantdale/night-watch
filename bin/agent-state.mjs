@@ -17,6 +17,7 @@ const REQUIRED_ACTIVE_FIELDS = [
   'Task directory',
   'Starting SHA',
   'Current SHA',
+  'Last validated implementation SHA',
   'Current milestone',
   'Last checkpoint',
   'Next action',
@@ -147,6 +148,100 @@ function gitHead(root, errors) {
   return result.stdout.trim();
 }
 
+// A task-state commit necessarily changes the repository after the last
+// validated implementation baseline. Keep this allowlist deliberately narrow:
+// arbitrary documentation or source descendants must not look synchronized.
+const APPROVED_CHECKPOINT_PATHS = [
+  /^AGENTS\.md$/,
+  /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
+  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT)\.md$/,
+  /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP)\.md$/,
+];
+
+function isApprovedCheckpointPath(file) {
+  return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));
+}
+
+function commandOutput(root, args) {
+  const result = spawnSync('git', args, {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) return null;
+  return result.stdout ?? '';
+}
+
+function changedPaths(root, recordedSha, head) {
+  const paths = new Set();
+  const committed = commandOutput(root, ['diff', '--name-only', '--no-renames', `${recordedSha}..${head}`]);
+  const worktree = commandOutput(root, ['diff', '--name-only', '--no-renames', recordedSha]);
+  for (const output of [committed, worktree]) {
+    if (output === null) continue;
+    for (const file of output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)) paths.add(file);
+  }
+
+  // `git diff` does not include untracked files. Include them because a new
+  // source/config/test file must be visible as stale before it is committed.
+  const status = commandOutput(root, ['status', '--porcelain=v1', '--untracked-files=all', '-z']);
+  if (status !== null) {
+    const records = status.split('\0').filter(Boolean);
+    for (let index = 0; index < records.length; index += 1) {
+      const record = records[index];
+      const code = record.slice(0, 2);
+      const file = record.slice(3);
+      if (file) paths.add(file);
+      if (code.includes('R') || code.includes('C')) {
+        const original = records[index + 1];
+        if (original) {
+          paths.add(original);
+          index += 1;
+        }
+      }
+    }
+  }
+  return [...paths].sort();
+}
+
+/**
+ * Classify the recorded implementation baseline against committed and
+ * uncommitted repository changes. This function never rewrites task state.
+ */
+export function classifySha(root, recordedSha) {
+  const head = commandOutput(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+  if (!head || !/^[0-9a-f]{40}$/i.test(recordedSha ?? '')) {
+    return { status: 'STALE', head, paths: [], reason: 'recorded SHA or HEAD is unavailable/invalid' };
+  }
+
+  const ancestorCheck = spawnSync('git', ['merge-base', '--is-ancestor', recordedSha, head], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  if (ancestorCheck.status !== 0) {
+    return { status: 'STALE', head, paths: [], reason: 'recorded SHA is not an ancestor of HEAD' };
+  }
+
+  const paths = changedPaths(root, recordedSha, head);
+  const disallowed = paths.filter((file) => !isApprovedCheckpointPath(file));
+  if (disallowed.length > 0) {
+    return {
+      status: 'STALE',
+      head,
+      paths,
+      disallowed,
+      reason: 'implementation/source/test/config or unapproved file changed after the recorded baseline',
+    };
+  }
+  if (head === recordedSha && paths.length === 0) {
+    return { status: 'SYNCED', head, paths, reason: 'recorded baseline equals HEAD with no working-tree changes' };
+  }
+  return {
+    status: 'CHECKPOINT_ADVANCE',
+    head,
+    paths,
+    reason: 'only approved continuity/documentation state changed after the recorded baseline',
+  };
+}
+
 export function validate(root) {
   const errors = [];
   const warnings = [];
@@ -199,14 +294,34 @@ export function validate(root) {
     }
     checkSha(active.get('Starting SHA'), 'ACTIVE_TASK Starting SHA', errors);
     checkSha(active.get('Current SHA'), 'ACTIVE_TASK Current SHA', errors);
+    checkSha(active.get('Last validated implementation SHA'), 'ACTIVE_TASK Last validated implementation SHA', errors);
     if (state) {
       checkSha(stateFields.get('Starting SHA'), 'STATE Starting SHA', errors);
       checkSha(stateFields.get('Current SHA'), 'STATE Current SHA', errors);
+      checkSha(stateFields.get('Last validated implementation SHA'), 'STATE Last validated implementation SHA', errors);
+      if (
+        stateFields.get('Last validated implementation SHA') &&
+        stateFields.get('Current SHA') &&
+        stateFields.get('Last validated implementation SHA') !== stateFields.get('Current SHA')
+      ) {
+        errors.push('STATE Current SHA must equal Last validated implementation SHA');
+      }
     }
     const head = gitHead(root, errors);
-    const currentSha = active.get('Current SHA');
-    if (head && currentSha && head !== currentSha) {
-      warnings.push(`STALE STATE: ACTIVE_TASK Current SHA ${currentSha} != git HEAD ${head}`);
+    const currentSha = active.get('Last validated implementation SHA');
+    if (head && currentSha) {
+      const shaResult = classifySha(root, currentSha);
+      if (shaResult.status === 'SYNCED') {
+        console.log(`[agent-check] SHA SYNCED: ${currentSha}`);
+      } else if (shaResult.status === 'CHECKPOINT_ADVANCE') {
+        warnings.push(
+          `CHECKPOINT_ADVANCE: validated implementation SHA ${currentSha} precedes HEAD ${shaResult.head}; approved paths only: ${shaResult.paths.join(', ') || '(none)'}`
+        );
+      } else {
+        warnings.push(
+          `STALE STATE: validated implementation SHA ${currentSha} vs git HEAD ${shaResult.head ?? '<unknown>'}; ${shaResult.reason}`
+        );
+      }
     }
     scanForSecrets(root, [
       'AGENTS.md',

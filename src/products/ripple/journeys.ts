@@ -50,7 +50,7 @@ export async function runPassiveJourney(
     try {
       assertPassiveAction(action);
     } catch {
-      const redactedUrl = ctx.recorder.redaction.redactUrl(url);
+      const redactedUrl = ctx.recorder.redactUrl(url);
       const ev = ctx.recorder.event({
         type: 'hard-failure',
         severity: 'fatal',
@@ -69,13 +69,13 @@ export async function runPassiveJourney(
     ctx.recorder.event({
       type: 'navigation',
       severity: 'info',
-      message: `navigate: ${ctx.recorder.redaction.redactUrl(url)}`,
+      message: `navigate: ${ctx.recorder.redactUrl(url)}`,
     });
 
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
     } catch (err) {
-      const redactedUrl = ctx.recorder.redaction.redactUrl(url);
+      const redactedUrl = ctx.recorder.redactUrl(url);
       ctx.recorder.event({
         type: 'navigation',
         severity: 'fatal',

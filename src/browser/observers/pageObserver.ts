@@ -18,19 +18,19 @@ export function createPageObserver(opts: {
     install(page: Page): void {
       page.on('pageerror', (err) => {
         try {
-          const message = recorder.redaction.redactText(
-            String(err instanceof Error && err.message ? err.message : err)
-          );
+          const message = recorder.isAuthenticated
+            ? '[SUPPRESSED_AUTHENTICATED_PAGE_ERROR]'
+            : recorder.redaction.redactText(String(err instanceof Error && err.message ? err.message : err));
           recorder.event({
             type: 'pageerror',
             severity: 'error',
-            message: `page error: ${message}`,
-            data: { message },
+            message: recorder.isAuthenticated ? 'pageerror' : `page error: ${message}`,
+            data: recorder.isAuthenticated ? { category: 'uncaught-page-exception' } : { message },
           });
           const issueEvent = recorder.event({
             type: 'issue',
             severity: 'error',
-            message: `pageerror: ${message}`,
+            message: 'pageerror',
             data: { reason: 'pageerror' },
           });
           monitor.recordIssue(issueEvent);

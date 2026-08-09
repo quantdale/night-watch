@@ -91,7 +91,7 @@ export function createNetworkObserver(opts: {
       }
       recorder.redaction.addSecret(headers['cookie']); // explicit; addSecret dedups
 
-      const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+      const redactedUrl = recorder.redactUrl(rawUrl);
       const redactedHeaders = recorder.redaction.redactHeaders(headers);
 
       if (decision.verdict === 'allow') {
@@ -199,7 +199,7 @@ export function createNetworkObserver(opts: {
   async function handleWebSocket(ws: import('@playwright/test').WebSocketRoute): Promise<void> {
     const rawUrl = ws.url();
     const decision = decideBrowserWebSocket(policy, rawUrl);
-    const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+    const redactedUrl = recorder.redactUrl(rawUrl);
     const base = {
       url: redactedUrl,
       protocol: 'websocket',
@@ -256,7 +256,7 @@ export function createNetworkObserver(opts: {
     try {
       const rawUrl = response.request().url();
       if (blockedUrls.has(rawUrl)) return; // policy-aborted — no response exists
-      const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+      const redactedUrl = recorder.redactUrl(rawUrl);
       const status = response.status();
       const contentType = response.headers()['content-type'];
       active = Math.max(0, active - 1);
@@ -301,7 +301,7 @@ export function createNetworkObserver(opts: {
           const ev = recorder.event({
             type: 'oracle',
             severity: issue.severity,
-            message: issue.message,
+            message: recorder.isAuthenticated ? `${issue.type}: ${redactedUrl}` : issue.message,
             data: { url: redactedUrl, reason: issue.type },
           });
           monitor.recordIssue(ev);
@@ -315,7 +315,7 @@ export function createNetworkObserver(opts: {
   function onRequestFailed(request: Request): void {
     try {
       const rawUrl = request.url();
-      const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+      const redactedUrl = recorder.redactUrl(rawUrl);
       if (blockedUrls.has(rawUrl)) {
         recorder.event({
           type: 'requestfailed',
@@ -337,16 +337,16 @@ export function createNetworkObserver(opts: {
         recorder.event({
           type: 'requestfailed',
           severity: 'info',
-          message: `client-aborted request: ${redactedUrl} (${errorText})`,
-          data: { url: redactedUrl, errorText },
+          message: recorder.isAuthenticated ? `client-aborted request: ${redactedUrl}` : `client-aborted request: ${redactedUrl} (${errorText})`,
+          data: { url: redactedUrl, errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText },
         });
         return;
       }
       recorder.event({
         type: 'requestfailed',
         severity: 'warn',
-        message: `request failed: ${redactedUrl} (${errorText})`,
-        data: { url: redactedUrl, errorText },
+        message: recorder.isAuthenticated ? `request failed: ${redactedUrl}` : `request failed: ${redactedUrl} (${errorText})`,
+        data: { url: redactedUrl, errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText },
       });
       const issueEvent = recorder.event({
         type: 'issue',
@@ -379,7 +379,7 @@ export function createNetworkObserver(opts: {
         try {
           if (blockedUrls.has(rawUrl)) return; // route handler processed it synchronously
           blockedUrls.add(rawUrl);
-          const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+          const redactedUrl = recorder.redactUrl(rawUrl);
           const ev = recorder.event({
             type: 'hard-failure',
             severity: 'fatal',

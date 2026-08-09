@@ -2,6 +2,8 @@
   "name": "next",
   "label": "Next environment. Hosts code-verified from mobingilabs/ripple-ui src/config/common.js @ d80b161b (2026-08-06) and NIGHTWATCH_RECON_B. Caveat (RECON_B E8/E9): next services may read/write production tables; env detection in some CLIs is string-magic on 'next' (bluectl pkg/grpcconn/conn.go:24-30). Nightwatch runs are strictly READ-ONLY in every environment.",
   "uiBaseUrl": "https://next.alphaus.cloud",
+  "apiHosts": ["apinext.alphaus.cloud"],
+  "authHosts": ["loginnext.alphaus.cloud"],
   "allowedHosts": [
     "apinext.alphaus.cloud",
     "loginnext.alphaus.cloud",

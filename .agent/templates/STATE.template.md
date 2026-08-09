@@ -7,6 +7,7 @@ Phase: <phase>
 Status: IN_PROGRESS
 Starting SHA: <sha>
 Current SHA: <sha>
+Last validated implementation SHA: <sha>
 Branch: <branch>
 Last checkpoint: <timestamp and fact>
 

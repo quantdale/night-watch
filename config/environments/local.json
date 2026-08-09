@@ -2,6 +2,8 @@
   "name": "local",
   "label": "Local development. Fail-closed: only localhost-family origins are allowed; everything else (including apidev/apinext) is DENIED. Default uiBaseUrl serves the built-in fixture app when NIGHTWATCH_UI_URL is unset.",
   "uiBaseUrl": "http://127.0.0.1:7311",
+  "apiHosts": [],
+  "authHosts": [],
   "allowedHosts": ["127.0.0.1", "localhost", "[::1]"],
   "staticAssetHosts": [],
   "telemetryHosts": [

@@ -35,6 +35,7 @@ Status: ${options.status ?? 'IN_PROGRESS'}
 Task directory: ${taskDirectory}
 Starting SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
 Current SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
+Last validated implementation SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
 Current milestone: M1
 Last checkpoint: synthetic
 Next action: run the synthetic validator test
@@ -64,6 +65,7 @@ Phase: test
 Status: ${options.status ?? 'IN_PROGRESS'}
 Starting SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
 Current SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
+Last validated implementation SHA: ${options.currentSha ?? '0000000000000000000000000000000000000000'}
 Branch: main
 Last checkpoint: synthetic
 
@@ -117,8 +119,10 @@ function run(root: string) {
 
 test('valid active task passes', () => {
   const { root } = fixture();
+  fs.appendFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
   const result = run(root);
   expect(result.status).toBe(0);
+  expect(result.stdout).toContain('[agent-check] SHA SYNCED');
   expect(result.stdout).toContain('[agent-check] PASS');
 });
 
@@ -148,7 +152,7 @@ test('mismatched task id and directory fails', () => {
   expect(result.stderr).toContain('task ID/directory mismatch');
 });
 
-test('stale current SHA is reported without rewriting state', () => {
+test('non-ancestor SHA is reported stale without rewriting state', () => {
   const { root } = fixture();
   const file = path.join(root, '.agent', 'ACTIVE_TASK.md');
   const stale = '1111111111111111111111111111111111111111';
@@ -156,6 +160,47 @@ test('stale current SHA is reported without rewriting state', () => {
   const result = run(root);
   expect(result.status).toBe(0);
   expect(result.stderr).toContain('STALE STATE');
+  expect(result.stderr).toContain('not an ancestor');
+});
+
+test('approved continuity-only descendant is checkpoint advance', () => {
+  const { root, sha } = fixture();
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Updated agent contract\n');
+  git(root, ['add', 'AGENTS.md']);
+  git(root, ['commit', '-m', 'checkpoint continuity docs']);
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).toContain(sha);
+  expect(result.stderr).toContain('AGENTS.md');
+});
+
+test('implementation descendant remains stale', () => {
+  const { root } = fixture();
+  fs.writeFileSync(path.join(root, 'source.ts'), 'synthetic implementation change\n');
+  git(root, ['add', 'source.ts']);
+  git(root, ['commit', '-m', 'synthetic implementation change']);
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('STALE STATE');
+  expect(result.stderr).toContain('implementation/source/test/config');
+});
+
+test('uncommitted implementation change remains stale', () => {
+  const { root } = fixture();
+  fs.writeFileSync(path.join(root, 'seed.txt'), 'uncommitted implementation change\n');
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('STALE STATE');
+});
+
+test('uncommitted approved task state is checkpoint advance', () => {
+  const { root } = fixture();
+  fs.appendFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), '\ncheckpoint note\n');
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('STALE STATE');
 });
 
 test('missing required state section fails', () => {

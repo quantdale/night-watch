@@ -214,6 +214,56 @@ test.describe('RunRecorder', () => {
     expect(events[0]?.data).toEqual({ file: 'screenshots/home.png' });
   });
 
+  test('authenticated mode persists metadata only and disables screenshots', async () => {
+    const rec = new RunRecorder({ ...baseOpts('auth-minimal-run'), authenticated: true });
+    rec.event({
+      type: 'request',
+      severity: 'info',
+      message: 'GET https://api.example.com/companies/0JXQq8Oe?customer=FAKE_CUSTOMER',
+      data: {
+        method: 'GET',
+        url: 'https://api.example.com/companies/0JXQq8Oe?customer=FAKE_CUSTOMER',
+        headers: { authorization: 'Bearer SYNTHETIC_FAKE_TOKEN', cookie: 'session=SYNTHETIC_COOKIE' },
+        body: JSON.stringify({ customerName: 'SYNTHETIC_CUSTOMER_NAME', amount: 12345 }),
+        status: 200,
+        contentType: 'application/json',
+      },
+    });
+    rec.event({
+      type: 'console',
+      severity: 'error',
+      message: 'console-error',
+      data: { type: 'error', text: 'SYNTHETIC_CUSTOMER_NAME Bearer SYNTHETIC_FAKE_TOKEN' },
+    });
+    const shot = await rec.captureScreenshot(stubPage, 'customer-page');
+    expect(shot).toBeNull();
+
+    const allText = fs.readdirSync(rec.dir)
+      .filter((file) => file.endsWith('.json') || file.endsWith('.jsonl'))
+      .map((file) => fs.readFileSync(path.join(rec.dir, file), 'utf8'))
+      .join('\n');
+    expect(allText).not.toContain('SYNTHETIC_FAKE_TOKEN');
+    expect(allText).not.toContain('SYNTHETIC_COOKIE');
+    expect(allText).not.toContain('SYNTHETIC_CUSTOMER_NAME');
+    expect(allText).not.toContain('0JXQq8Oe');
+    expect(allText).not.toContain('FAKE_CUSTOMER');
+    expect(fs.existsSync(path.join(rec.dir, 'screenshots'))).toBe(false);
+
+    const manifest = JSON.parse(fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8')) as Record<string, any>;
+    expect(manifest.evidencePolicy).toMatchObject({
+      mode: 'authenticated-metadata-first',
+      requestHeaders: false,
+      requestBodies: false,
+      screenshots: false,
+      traces: false,
+    });
+    const events = readJsonl(path.join(rec.dir, 'events.jsonl'));
+    const requestData = events.find((event) => event.type === 'request')?.data as Record<string, unknown>;
+    expect(requestData.headers).toBeUndefined();
+    expect(requestData.body).toBeUndefined();
+    expect(requestData.url).toBe('https://api.example.com/companies/<ID>');
+  });
+
   test('captureScreenshot failure returns null and records a warn event', async () => {
     const rec = new RunRecorder(baseOpts('shot-fail-run'));
     const page = {

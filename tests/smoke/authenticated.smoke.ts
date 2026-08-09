@@ -163,6 +163,10 @@ test.describe('authenticated storage state is secret material', () => {
         uiBaseUrl: server.origin,
         storageStatePath: stateFile,
         trace: 'on',
+        // The good fixture intentionally emits one console.error; this test
+        // isolates authenticated evidence privacy, while real Phase 2A runs
+        // retain the environment's console-error oracle in failOn.
+        failOn: env.failOn.filter((issue) => issue !== 'console-error'),
       });
       // The good page fetches /api/invoices etc.; its cookies (incl. nw_session)
       // are sent on every same-origin request and must be redacted.
@@ -215,15 +219,14 @@ test.describe('authenticated storage state is secret material', () => {
       expect(allText).not.toContain('FAKE_SESSION_COOKIE_SECRET_999');
       expect(allText).not.toContain('FAKE_LOCALSTORAGE_JWT_000');
 
-      // -- Cookie header redacted on the wire evidence ------------------------
+      // -- Authenticated wire metadata is header-free -------------------------
       const netEvents = readJsonl(path.join(recorder.dir, 'network.jsonl'));
       const invoicesReq = netEvents.find((e) => {
         const d = e.data as Record<string, unknown> | undefined;
         if (e.type !== 'request' || typeof d?.url !== 'string' || !d.url.includes('/api/invoices')) {
           return false;
         }
-        const headers = d.headers as Record<string, unknown> | undefined;
-        return headers?.cookie === '[REDACTED]';
+        return !('headers' in d) && !('body' in d);
       });
       expect(invoicesReq).toBeDefined();
     } finally {

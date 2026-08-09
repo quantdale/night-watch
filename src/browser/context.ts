@@ -169,6 +169,8 @@ export async function createNightwatchContext(
       ? validateStorageStateFile(opts.storageStatePath)
       : resolveStorageStatePath();
 
+  if (auth !== null) recorder.enableAuthenticatedEvidence();
+
   // Trace policy — authenticated traces are NEVER enabled (fail-safe even
   // against an explicit NIGHTWATCH_TRACE=on): Playwright traces can embed
   // request headers/cookies/bodies and cannot be sanitized before persistence.
@@ -237,7 +239,7 @@ export async function createNightwatchContext(
       type: 'service-worker',
       severity: 'fatal',
       message: 'HARD FAILURE: service worker registered despite blocking (containment violation)',
-      data: { reason: 'service-worker-registered', url: recorder.redaction.redactUrl(worker.url()) },
+      data: { reason: 'service-worker-registered', url: recorder.redactUrl(worker.url()) },
     });
     monitor.recordHardFailure(ev, {
       url: worker.url(),
@@ -326,7 +328,7 @@ export async function createNightwatchContext(
   async function onDownload(download: Download): Promise<void> {
     try {
       const rawUrl = download.url();
-      const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+      const redactedUrl = recorder.redactUrl(rawUrl);
       const decision = policy.decide(rawUrl);
       recorder.event({
         type: 'download',

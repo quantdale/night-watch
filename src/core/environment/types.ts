@@ -13,6 +13,10 @@ export interface EnvironmentConfig {
   label: string;
   /** Target UI origin for this environment (e.g. http://127.0.0.1:7311). */
   uiBaseUrl: string;
+  /** Explicit API hosts expected by the selected environment. */
+  apiHosts?: string[];
+  /** Explicit authentication hosts expected by the selected environment. */
+  authHosts?: string[];
   /**
    * Explicit host[:port] allowlist. An entry without a port matches any port.
    * A request whose host is NOT here (and not a classified static asset) is

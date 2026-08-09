@@ -52,3 +52,7 @@ handoff within Nightwatch.
 
 The optional machine check is `npm run agent:check`; documentation remains the
 primary protocol and the validator is only a deterministic consistency guard.
+The active task's `Last validated implementation SHA` is the baseline: exact
+HEAD with no changes is `SYNCED`; descendants containing only approved
+continuity/documentation state are `CHECKPOINT_ADVANCE`; any source/test/config
+or unapproved change is `STALE`. The checker never rewrites task state.

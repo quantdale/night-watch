@@ -93,7 +93,7 @@ export async function installFetchGuard(
         // network; record evidence once (deduped via the shared set).
         if (recordEvidence && !sharedBlocked.has(rawUrl)) {
           sharedBlocked.add(rawUrl);
-          const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+          const redactedUrl = recorder.redactUrl(rawUrl);
           if (decision.verdict === 'deny') {
             recorder.event({
               type: 'request',

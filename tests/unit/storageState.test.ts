@@ -14,6 +14,7 @@ import path from 'node:path';
 import {
   NIGHTWATCH_STORAGE_STATE_VAR,
   validateStorageStateFile,
+  validateStorageStateOutputPath,
   resolveStorageStatePath,
   isAuthenticatedRun,
 } from '../../src/browser/fixtures/storageState';
@@ -148,6 +149,20 @@ test.describe('storage-state secret handling', () => {
       if (prev !== undefined) process.env[NIGHTWATCH_STORAGE_STATE_VAR] = prev;
       else delete process.env[NIGHTWATCH_STORAGE_STATE_VAR];
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('capture output requires an external absolute non-existing JSON path', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-output-'));
+    try {
+      const output = path.join(dir, 'ripple-dev-state.json');
+      expect(validateStorageStateOutputPath(output, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toBe(output);
+      fs.writeFileSync(output, '{}');
+      expect(() => validateStorageStateOutputPath(output, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/already exists/);
+      expect(() => validateStorageStateOutputPath('relative.json', { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/absolute path/);
+      expect(() => validateStorageStateOutputPath(path.join(NIGHTWATCH_ROOT, 'captured.json'), { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/outside/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 });

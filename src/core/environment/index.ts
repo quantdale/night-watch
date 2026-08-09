@@ -96,12 +96,14 @@ export function validateEnvironmentConfig(
     }
   }
   const listFields: Array<[string, Array<string>]> = [
+    ['apiHosts', []],
+    ['authHosts', []],
     ['allowedHosts', []],
     ['staticAssetHosts', []],
     ['telemetryHosts', []],
     ['failOn', []],
   ];
-  const out = { name, label: '', uiBaseUrl: '', allowedHosts: [], staticAssetHosts: [], telemetryHosts: [], failOn: [] } as EnvironmentConfig;
+  const out = { name, label: '', uiBaseUrl: '', apiHosts: [], authHosts: [], allowedHosts: [], staticAssetHosts: [], telemetryHosts: [], failOn: [] } as EnvironmentConfig;
   for (const [field, fallback] of listFields) {
     const v = cfg[field];
     if (v === undefined) {

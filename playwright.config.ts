@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 import { proxyServerUrl } from './src/proxy/server';
+import { REQUIRED_BROWSER_LAUNCH_ARGS } from './src/browser/contract';
 
 // ---------------------------------------------------------------------------
 // Nightwatch Playwright configuration (Phase 0/1/1.1/1.2).
@@ -34,18 +35,13 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         channel: 'chrome',
+        headless: process.env.NIGHTWATCH_HEADED !== '1',
         // Explicit browser launch proxy. HTTP_PROXY/HTTPS_PROXY are not part
         // of the containment contract and are intentionally ignored.
         launchOptions: {
           proxy: { server: proxyServerUrl() },
           args: [
-            // Chromium otherwise treats loopback as a proxy bypass. This
-            // special token removes that implicit bypass; the sink test proves
-            // the installed browser obeys it.
-            '--proxy-bypass-list=<-loopback>',
-            // The L5 proxy is TCP/HTTP only; disable non-proxied transports.
-            '--disable-quic',
-            '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
+            ...REQUIRED_BROWSER_LAUNCH_ARGS,
             '--disable-background-networking',
             '--disable-sync',
             '--disable-default-apps',

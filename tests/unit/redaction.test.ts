@@ -133,4 +133,17 @@ test.describe('RedactionLayer', () => {
     expect(layer2.secretCount).toBe(0);
     expect(layer2.redactText('abc')).toBe('abc');
   });
+
+  test('authenticated URLs remove queries and fingerprint resource identifiers', () => {
+    const layer = createRedactionLayer();
+    const out = layer.redactAuthenticatedUrl(
+      'https://api.example.com/companies/0JXQq8Oe/billing-groups/3901/invoices/202506?customer=FAKE_CUSTOMER&token=FAKE_TOKEN'
+    );
+    expect(out).toBe('https://api.example.com/companies/<ID>/billing-groups/<ID>/invoices/<ID>');
+    expect(out).not.toContain('0JXQq8Oe');
+    expect(out).not.toContain('3901');
+    expect(out).not.toContain('202506');
+    expect(out).not.toContain('FAKE_CUSTOMER');
+    expect(out).not.toContain('FAKE_TOKEN');
+  });
 });

@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------------
 // Nightwatch — run evidence recorder.
 //
-// All evidence passes through the shared RedactionLayer BEFORE persistence;
-// the recorder never receives unredacted secrets. Callers MUST redact every
-// message/data payload (redaction.redactText / redactUrl / redactHeaders)
-// before handing it to event() — the recorder applies NO redaction itself.
+// Standard evidence passes through the shared RedactionLayer BEFORE
+// persistence. Authenticated evidence has a second recorder-level guard:
+// metadata-only mode strips bodies, headers, storage, arbitrary query values,
+// and sensitive path identifiers even if a caller supplies them by mistake.
 //
 // Per-run layout:  artifacts/<run-id>/
 //   manifest.json       — run identity, written at construction
@@ -39,6 +39,8 @@ export interface RunRecorderOptions {
   now?: () => Date;
   /** Override the artifacts root; defaults to <nightwatch>/artifacts. */
   artifactsRoot?: string;
+  /** Enable metadata-first persistence for a real authenticated run. */
+  authenticated?: boolean;
 }
 
 export interface RecorderProxyOptions {
@@ -61,6 +63,7 @@ export class RunRecorder {
   private readonly nightwatchSha: string | null;
   private readonly now: () => Date;
   private readonly startedAt: string;
+  private authenticated: boolean;
   private seq = 0;
   private readonly events: RunEvent[] = [];
   private proxy: {
@@ -83,6 +86,7 @@ export class RunRecorder {
     this.browser = opts.browser;
     this.scenario = opts.scenario;
     this.nightwatchSha = opts.nightwatchSha ?? null;
+    this.authenticated = opts.authenticated ?? false;
     this.now = opts.now ?? (() => new Date());
     this.redaction = createRedactionLayer();
 
@@ -104,6 +108,70 @@ export class RunRecorder {
     if (opts.seed !== undefined) manifest.seed = opts.seed;
     if (opts.nightwatchSha != null) manifest.nightwatchSha = opts.nightwatchSha;
     fs.writeFileSync(path.join(this.dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    if (this.authenticated) this.enableAuthenticatedEvidence();
+  }
+
+  get isAuthenticated(): boolean {
+    return this.authenticated;
+  }
+
+  /** Switch the recorder to the irreversible authenticated metadata policy. */
+  enableAuthenticatedEvidence(): void {
+    this.authenticated = true;
+    this.addManifestEntry('evidencePolicy', {
+      mode: 'authenticated-metadata-first',
+      requestHeaders: false,
+      requestBodies: false,
+      responseBodies: false,
+      queryValues: false,
+      pathIdentifiers: 'placeholder',
+      storageState: false,
+      customerDom: false,
+      screenshots: false,
+      traces: false,
+    });
+  }
+
+  /** URL helper used by observers so authenticated paths are minimized too. */
+  redactUrl(url: string): string {
+    return this.authenticated ? this.redaction.redactAuthenticatedUrl(url) : this.redaction.redactUrl(url);
+  }
+
+  /** Stable category for transport errors; raw error text is not evidence. */
+  classifyNetworkFailure(errorText: string): string {
+    if (/^(?:client-or-policy-abort|dns-failure|timeout|tls-failure|transport-failure)$/.test(errorText)) return errorText;
+    if (/ERR_ABORTED|ERR_BLOCKED_BY_CLIENT|inspector/i.test(errorText)) return 'client-or-policy-abort';
+    if (/NAME_NOT_RESOLVED|DNS/i.test(errorText)) return 'dns-failure';
+    if (/TIMED_OUT|TIMEOUT/i.test(errorText)) return 'timeout';
+    if (/SSL|CERT|TLS/i.test(errorText)) return 'tls-failure';
+    return 'transport-failure';
+  }
+
+  private sanitizeAuthenticatedMessage(message: string): string {
+    const redacted = this.redaction.redactText(message);
+    return redacted.replace(/\b(?:https?|wss?):\/\/[^\s)]+/gi, (url) => this.redaction.redactAuthenticatedUrl(url));
+  }
+
+  private sanitizeAuthenticatedData(data: Record<string, unknown>): Record<string, unknown> {
+    const forbidden = /^(?:authorization|headers?|cookie|set-cookie|body|requestbody|responsebody|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|cookies|storage|localstorage|sessionstorage|storage_state|dom|html|textcontent|query|querystring|search|searchparams|email|customer(?:name|id)?|account(?:id)?|msp(?:id)?|billing(?:group)?(?:id|name)?|invoice(?:id|amount)?|cost|amount)$/i;
+    const visit = (value: unknown, key: string): unknown => {
+      if (forbidden.test(key)) return undefined;
+      if (Array.isArray(value)) return value.map((item) => visit(item, key)).filter((item) => item !== undefined);
+      if (value !== null && typeof value === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+          const safe = visit(childValue, childKey);
+          if (safe !== undefined) out[childKey] = safe;
+        }
+        return out;
+      }
+      if (typeof value !== 'string') return value;
+      if (key === 'url') return this.redaction.redactAuthenticatedUrl(value);
+      if (key === 'errorText') return this.classifyNetworkFailure(value);
+      if (key === 'message' || key === 'text') return '[SUPPRESSED_AUTHENTICATED_TEXT]';
+      return this.redaction.redactText(value);
+    };
+    return (visit(data, 'data') as Record<string, unknown>) ?? {};
   }
 
   /**
@@ -118,7 +186,7 @@ export class RunRecorder {
     } catch {
       manifest = {};
     }
-    manifest[key] = value;
+    manifest[key] = this.authenticated ? this.sanitizeAuthenticatedData({ value }).value : value;
     fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
   }
 
@@ -177,7 +245,8 @@ export class RunRecorder {
   }
 
   /**
-   * Record one event. Message and data MUST already be redacted by the caller.
+   * Record one event. Standard callers provide redacted values; authenticated
+   * mode applies a second metadata-only persistence guard here.
    * Events are appended to events.jsonl; 'request'/'response' events are also
    * mirrored to network.jsonl and 'console' events to console.jsonl.
    */
@@ -187,14 +256,20 @@ export class RunRecorder {
     message: string;
     data?: Record<string, unknown>;
   }): RunEvent {
+    const message = this.authenticated ? this.sanitizeAuthenticatedMessage(input.message) : input.message;
+    const data = input.data === undefined
+      ? undefined
+      : this.authenticated
+        ? this.sanitizeAuthenticatedData(input.data)
+        : input.data;
     const ev: RunEvent = {
       seq: this.seq++,
       ts: this.now().toISOString(),
       type: input.type,
       severity: input.severity,
-      message: input.message,
+      message,
     };
-    if (input.data !== undefined) ev.data = input.data;
+    if (data !== undefined) ev.data = data;
     const line = `${JSON.stringify(ev)}\n`;
     fs.appendFileSync(path.join(this.dir, 'events.jsonl'), line);
     if (input.type === 'request' || input.type === 'response') {
@@ -208,6 +283,15 @@ export class RunRecorder {
 
   /** Capture a screenshot; returns its path relative to the run dir (or null). */
   async captureScreenshot(page: Page, name: string): Promise<string | null> {
+    if (this.authenticated) {
+      this.event({
+        type: 'policy',
+        severity: 'info',
+        message: 'authenticated screenshot capture disabled',
+        data: { reason: 'authenticated-evidence-minimization' },
+      });
+      return null;
+    }
     const safeName = name.replace(/[\\/]/g, '-');
     const rel = path.join('screenshots', `${safeName}.png`);
     fs.mkdirSync(path.join(this.dir, 'screenshots'), { recursive: true });
