@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 780b86b514050f166f9c4e80d8436e178aea9bef
-Last validated implementation SHA: 780b86b514050f166f9c4e80d8436e178aea9bef
+Current SHA: 39f4510d90dfe6e875803e7379de12f06bd18013
+Last validated implementation SHA: 39f4510d90dfe6e875803e7379de12f06bd18013
 Branch: main
-Last checkpoint: 2026-08-09 — M6 canary wiring repaired and dedicated test discovery validated; implementation checkpoint 780b86b
+Last checkpoint: 2026-08-09 — M6 pre-existing Alphaus repository dirt semantics repaired; implementation checkpoint 39f4510
 
 ## Objective
 
@@ -251,6 +251,18 @@ Relevant failure/output summary: no real target was contacted. The missing
 test was added, dedicated discovery passed, and a new implementation
 checkpoint was created before retrying.
 
+Command: second `npm run observe:canary -- --env=dev` attempt
+Result: PASS-as-safe-rejection; no-network preflight passed, the loopback proxy
+and all browser/evidence/action checks passed, then the pre-auth gate stopped
+before navigation because the Alphaus repository snapshot contained
+pre-existing dirty worktrees.
+When: 2026-08-09
+Relevant failure/output summary: the Nightwatch tree was clean and the
+sanitized `repositories.json` recorded the baseline dirty entries; no real
+Ripple page or target request was made. The gate was repaired to require a
+valid read-only Alphaus snapshot rather than an incorrectly strict clean-tree
+condition.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -300,6 +312,15 @@ while the global setup can still provide the mandatory loopback proxy health
 check without contacting the selected target.
 Evidence/constraint: M5 requires precise fail-closed checks and prohibits real
 authenticated navigation until every check passes.
+
+Decision: Treat pre-existing Alphaus repository dirt as snapshot data, not a
+gate failure, while retaining the Nightwatch-tree clean/documented-change
+requirement.
+Reason: the task requires a read-only freshness snapshot of Alphaus repos and
+unchanged repositories, but only explicitly constrains the Nightwatch working
+tree to be clean or documented.
+Evidence/constraint: the first real-canary attempt proved several Alphaus
+clones already had local changes; Nightwatch performed no writes to them.
 
 ## Discoveries
 
