@@ -246,11 +246,14 @@ The corrected target was reached safely, but M6 is **USER_ACTION_REQUIRED**:
 - UI document HTTP status: `200`; no redirect chain was observed.
 - Destination counts: 3 expected, 0 new-but-verified, 7 blocked telemetry,
   1 unresolved.
-- Blocked telemetry: `www.google.com` (5 proxy events),
-  `accounts.google.com` (1), `clients2.google.com` (1),
+- Blocked telemetry in the sanitized destination manifest: `www.google.com`
+  (6 browser requests), `accounts.google.com` (4), `clients2.google.com` (1),
   `safebrowsingohttpgateway.googleapis.com` (1), `api-js.mixpanel.com` (1),
-  `o446571.ingest.sentry.io` (1), and `widget.intercom.io` (1). All were
-  blocked locally as non-fatal telemetry; no dynamic allowlist entry was made.
+  `o446571.ingest.sentry.io` (1), and `widget.intercom.io` (1). The outer
+  proxy recorded 6 telemetry-block events (5 for `www.google.com`, 1 for
+  `accounts.google.com`); the remaining telemetry was blocked by the browser
+  guard before reaching the proxy. All were blocked locally as non-fatal
+  telemetry; no dynamic allowlist entry was made.
 - Unresolved/new host: `widget.usepylon.com`, external/unknown, denied by the
   browser Fetch guard before upstream contact; it appeared twice in the
   sanitized destination manifest and is the blocking fact.
