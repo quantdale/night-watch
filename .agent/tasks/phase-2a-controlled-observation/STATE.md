@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
 Last validated implementation SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
 Branch: main
-Last checkpoint: 2026-08-09 — M6 real canary stopped on denied Chromium background destinations; implementation checkpoint f5c4abb
+Last checkpoint: 2026-08-09 — M6 USER_ACTION_REQUIRED checkpoint and sanitized artifact review complete; implementation checkpoint f5c4abb
 
 ## Objective
 
@@ -21,9 +21,10 @@ evidence, and a single fresh-context replay.
 
 Milestone ID: M6 — Run the unauthenticated real connectivity canary
 Status: IN_PROGRESS
-What is being attempted: Implement the bounded no-auth canary and sanitized
-destination manifest. It must run only after the M5 gate and must stop on any
-production, unknown, or unclassified required host.
+What is being attempted: M6 real canary reached the explicit dev UI under the
+proxy, but stopped before any authenticated work because Chromium attempted
+unresolved background destinations. Status is `USER_ACTION_REQUIRED`; no
+destination may be allowlisted without a narrow human-approved disposition.
 
 ## Completed Milestones
 
@@ -287,6 +288,35 @@ When: 2026-08-09
 Relevant failure/output summary: dedicated configs each discover exactly one
 manual test; no additional real target activity occurred during the fix.
 
+Command: fourth `npm run observe:canary -- --env=dev` attempt; run ID
+`nightwatch-20260809T075359Z-0a6d`
+Result: USER_ACTION_REQUIRED; the fresh run passed preflight and the full
+pre-auth gate, reached only the selected dev UI host through the proxy, and
+again stopped on the same two unresolved Chromium background destinations.
+When: 2026-08-09
+Relevant failure/output summary: Safe Browsing launch restrictions did not
+eliminate the attempts. The sanitized manifest again recorded 1 expected UI
+host, 2 telemetry-blocked hosts, and unresolved denied
+`clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`; no
+authenticated state or production upstream connection occurred.
+
+Command: `npx playwright test`
+Result: PASS; 121 passed, 0 failed.
+When: 2026-08-09
+Relevant failure/output summary: the ordinary suite exercised only local
+fixtures and unit tests; the opt-in manual canary was not included.
+
+Command: authenticated-artifact privacy review for real canary runs
+`nightwatch-20260809T075124Z-cf0a` and `nightwatch-20260809T075359Z-0a6d`
+Result: PASS for persisted-secret checks. Both artifacts had 0 bearer-token,
+JWT-like, cookie, authorization-header, request/response-body, trace, or
+screenshot hits. A broad customer-domain keyword check matched only generic
+policy/schema words in `manifest.json`/`repositories.json`, not customer
+values; no real sensitive value was printed or added to this state.
+When: 2026-08-09
+Relevant failure/output summary: artifacts remain ignored/local-only and no
+storage-state file was used.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -365,8 +395,13 @@ clones already had local changes; Nightwatch performed no writes to them.
 
 ## Blockers
 
-None at M5. Human authentication or a narrow unresolved-host approval may
-become a later conditional blocker.
+USER_ACTION_REQUIRED at M6. Human disposition is required for the two
+Chromium background destinations `clients2.google.com` and
+`safebrowsingohttpgateway.googleapis.com`. They must remain denied; do not add
+them to an allowlist. After a narrow explicit block disposition is approved,
+resume with:
+
+`npm run observe:canary -- --env=dev`
 
 ## Safety Events
 
@@ -391,9 +426,10 @@ request occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Implement the bounded M6 unauthenticated canary and destination manifest.
-4. Run M6 only after `observe:preflight` and `observe:gate` pass for exactly one
-   selected `dev` or `next` target; do not load storage state.
+3. Obtain the exact human disposition for the two unresolved Chromium hosts;
+   never allow them.
+4. Resume with `npm run observe:canary -- --env=dev`; it reruns preflight and
+   the pre-auth gate before any navigation and uses a fresh run ID.
 5. Update STATE with exact sanitized runtime results and checkpoint before M7.
 
 ## Completion Snapshot
