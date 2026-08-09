@@ -73,6 +73,7 @@ function purposeForHost(host: string, env: EnvironmentConfig): string {
   if (inEntries(host, env.authHosts ?? [])) return 'authentication';
   if (inEntries(host, env.apiHosts ?? [])) return 'api';
   if (inEntries(host, env.staticAssetHosts)) return 'static-asset';
+  if (inEntries(host, env.optionalThirdPartySupportHosts ?? [])) return 'optional-support-chat';
   if (inEntries(host, env.telemetryHosts)) return 'telemetry';
   return 'unclassified';
 }
@@ -81,13 +82,14 @@ function environmentClassification(classification: string): string {
   if (classification === 'dev' || classification === 'next') return classification;
   if (classification === 'production') return 'production';
   if (classification === 'telemetry') return 'telemetry';
+  if (classification === 'optional-third-party-support') return 'optional-third-party-support';
   if (classification === 'static') return 'static';
   if (classification === 'local') return 'local';
   return 'unknown';
 }
 
 function categoryFor(observation: Observation, env: EnvironmentConfig, verified: ReadonlySet<string>): DestinationCategory {
-  if (observation.decision === 'block-telemetry') return 'BLOCKED';
+  if (observation.decision === 'block-telemetry' || observation.decision === 'block-optional-support') return 'BLOCKED';
   if (observation.decision === 'deny') {
     return observation.classification === 'production' ? 'BLOCKED' : 'UNRESOLVED';
   }
@@ -114,7 +116,7 @@ function fromProxy(event: ProxyEvent, env: EnvironmentConfig): Observation {
 }
 
 function fromBrowserEvent(event: RunEvent, env: EnvironmentConfig): Observation | null {
-  if (event.type !== 'request' && event.type !== 'telemetry' && event.type !== 'hard-failure') return null;
+  if (event.type !== 'request' && event.type !== 'telemetry' && event.type !== 'optional-support' && event.type !== 'hard-failure') return null;
   const rawUrl = event.data?.url;
   if (typeof rawUrl !== 'string') return null;
   const hostname = hostOnly(rawUrl);
@@ -123,6 +125,8 @@ function fromBrowserEvent(event: RunEvent, env: EnvironmentConfig): Observation 
     ? event.data.verdict
     : event.type === 'telemetry'
       ? 'block-telemetry'
+      : event.type === 'optional-support'
+        ? 'block-optional-support'
       : 'deny';
   const classification = typeof event.data?.hostClass === 'string' ? event.data.hostClass : 'unknown-alphaus';
   return {

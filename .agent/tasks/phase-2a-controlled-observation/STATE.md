@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
 Last validated implementation SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
 Branch: main
-Last checkpoint: 2026-08-09 — corrected canary `nightwatch-20260809T103326Z-5feb` reached `/ripple/` with HTTP 200 but stopped on new unclassified host `widget.usepylon.com`; no auth state loaded.
+Last checkpoint: 2026-08-09 — narrow Ripple source verification proved the exact Pylon widget host is optional support/chat; exact-host local blocking and focused policy/evidence tests passed. No auth state loaded.
 
 ## Objective
 
@@ -20,16 +20,16 @@ evidence, and a single fresh-context replay.
 ## Current Milestone
 
 Milestone ID: M6 — Run the unauthenticated real connectivity canary
-Status: USER_ACTION_REQUIRED
+Status: IN_PROGRESS
 What is being attempted: The corrected target is checkpointed in the `dev`
 configuration and path-agreement guards. The approved UI origin is
 `https://appdev.alphaus.cloud`; the approved Ripple application path is
 `/ripple/`; the exact Phase 2A UI URL is
 `https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 and
-final URL `/ripple/`, but the browser encountered new unclassified external
-host `widget.usepylon.com` and denied it before upstream contact. The host
-allowlist and production policy are unchanged. No storage state was loaded and
-no auth capture was started.
+  final URL `/ripple/`, and the exact source-supported Pylon host is now
+  classified as optional support and denied before upstream contact. The host
+  allowlist and production policy are unchanged. No storage state was loaded
+  and no auth capture was started.
 
 ## Completed Milestones
 
@@ -92,19 +92,22 @@ no auth capture was started.
 ## Work In Progress
 
 Continuity, evidence minimization, manual capture, and the pre-real-run safety
-gate are complete. The prior canary reached the configured dev host at the
-wrong root path and returned HTTP 404; the corrected canary reached `/ripple/`
-with HTTP 200 but stopped on new unclassified host `widget.usepylon.com`.
-Narrow current Ripple source/config evidence proves the intended base path is
-`/ripple/`; the approved correction is configured and guarded. No
-authenticated observation or auth capture has occurred.
+gate are complete. The corrected canary reached `/ripple/` with HTTP 200 but
+stopped on `widget.usepylon.com`. Narrow current Ripple source verification at
+`mobingilabs/ripple-ui` `dev` `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`
+proved the exact host is an asynchronous optional support/chat widget; no
+direct Pylon references were found in the named Ripple MFE/shared UI repos.
+Nightwatch now blocks only that exact host as
+`OPTIONAL_THIRD_PARTY_SUPPORT`; related Pylon names remain fail-closed
+unknowns. No authenticated observation or auth capture has occurred.
 
 ## Exact Next Action
 
-USER_ACTION_REQUIRED — review the exact unresolved host `widget.usepylon.com`
-from corrected canary run `nightwatch-20260809T103326Z-5feb`. Do not dynamically
-approve it, retry the canary, load storage state, or start auth capture until a
-human disposition is recorded.
+Run exactly one corrected unauthenticated canary:
+`npm run observe:canary -- --env=dev`.
+Use the approved target `https://appdev.alphaus.cloud/ripple/`; do not load
+storage state or start auth capture. If any hostname other than exact
+`widget.usepylon.com` appears unresolved, stop and checkpoint.
 
 ## Files Changed
 
@@ -134,6 +137,9 @@ human disposition is recorded.
 | `src/core/evidence/destinationManifest.ts`, `tests/unit/destinationManifest.test.ts` | Sanitized host-level runtime destination manifest | Added |
 | `bin/observe-canary.mjs`, `playwright.canary.config.ts`, `tests/manual/phase2a-canary.ts`, `package.json` | Opt-in no-auth direct-navigation canary | Added/modified |
 | `config/environments/dev.json`, `config/environments/next.json`, `tests/unit/safety.test.ts` | Explicit non-network block classification for approved Chromium background hosts | Modified |
+| `config/environments/local.json`, `config/environments/dev.json`, `config/environments/next.json`, `src/core/environment/*`, `src/core/safety/*`, `src/proxy/*` | Exact optional support policy classification and fail-closed related-host behavior | Modified |
+| `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, `src/browser/observers/consoleObserver.ts`, `src/browser/observers/containmentEffect.ts`, `src/browser/context.ts` | Local blocking evidence and causal expected-containment console attribution | Modified/added |
+| `src/core/evidence/destinationManifest.ts`, `src/core/evidence/types.ts`, `tests/unit/destinationManifest.test.ts`, `tests/unit/containmentEffect.test.ts`, `tests/unit/proxy.test.ts` | Distinct sanitized reporting and regression coverage | Modified/added |
 
 ## Validation Ledger
 
@@ -410,6 +416,17 @@ checkpoint; the workspace root and Alphaus repositories retain only their
 pre-existing user changes, and no Alphaus repository was modified by this
 task.
 
+Command: narrow Ripple Pylon source verification plus focused implementation
+tests
+Result: PASS; current `mobingilabs/ripple-ui` branch `dev` at source SHA
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9` proves an asynchronous optional
+chat-widget integration in `src/main.js`/`src/pylon.js`; directly named Ripple
+MFE/shared UI repositories have no Pylon matches. `npx playwright test
+tests/unit/safety.test.ts tests/unit/proxy.test.ts
+tests/unit/destinationManifest.test.ts tests/unit/containmentEffect.test.ts
+--project=nightwatch` => **30 passed, 0 failed**; `npx tsc --noEmit` => PASS;
+`git diff --check` => PASS. No Alphaus source was modified.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -480,6 +497,16 @@ evidence.
 Evidence/constraint: any other unknown hostname remains fail-closed and must
 receive separate review.
 
+Decision: Classify only `widget.usepylon.com` as optional third-party support.
+Reason: the current Ripple shell source proves an asynchronous chat-widget
+integration that receives authenticated user context but is not awaited or
+needed for core Vue boot.
+Evidence/constraint: `mobingilabs/ripple-ui` `dev` at
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, `src/main.js:69-98,207-226`,
+`src/pylon.js:3-22`; no Pylon matches in directly named Ripple MFE/shared UI
+repositories. Consequence: exact-host non-fatal blocking with distinct
+sanitized evidence; no wildcard or related-host approval.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -500,6 +527,12 @@ receive separate review.
   correction: the deployed app base is `/ripple/`, while Nightwatch configured
   the host root. The corrected dev URL is
   `https://appdev.alphaus.cloud/ripple/`.
+- The current Ripple shell source proves `widget.usepylon.com` is optional
+  support/chat, and its settings are populated only after authenticated user
+  data is loaded; no identity value was copied into Nightwatch state.
+- The exact Pylon host is now separate from telemetry in policy, browser
+  evidence, proxy summaries, and destination manifests. Related Pylon hosts
+  remain unknown and fail closed.
 
 ## Blockers
 
@@ -515,14 +548,12 @@ destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`
 - every other previously unknown hostname remains unresolved, denied, and
   requires separate review.
 
-Current blocker: `USER_ACTION_REQUIRED` for the new unclassified external host
-`widget.usepylon.com` encountered by corrected canary run
-`nightwatch-20260809T103326Z-5feb`. It was denied locally by the browser Fetch
-guard before upstream contact. Do not dynamically approve the host, retry the
-canary, perform auth capture, or begin authenticated navigation until a human
-disposition is recorded. After the blocker is resolved, M7 still requires a
-valid external Playwright storage-state path without exposing its contents and
-a passing pre-real-run gate.
+The Pylon classification blocker is cleared by the human disposition and the
+narrow source check. M6 now requires one corrected canary rerun. If any
+hostname other than exact `widget.usepylon.com` appears unresolved, stop and
+checkpoint. After a passing canary, M7 still requires a valid external
+Playwright storage-state path without exposing its contents and a passing
+pre-real-run gate.
 
 ## Safety Events
 
@@ -537,12 +568,13 @@ denied them before upstream contact, the sanitized manifest recorded them as
 unresolved, and the run stopped. No production destination or authenticated
 request occurred.
 
-M6 corrected-canary safety event: `widget.usepylon.com` was a new unclassified
-external destination attempted twice by the page. The browser Fetch guard
-denied it before upstream contact; the outer proxy recorded 0 denied and 0
-violations. The sanitized manifest recorded one unresolved destination and the
-run stopped. No production destination, auth state, credential, DB access, or
-mutation occurred.
+M6 corrected-canary safety event: before classification, `widget.usepylon.com`
+was an unclassified external destination attempted twice by the page. The
+browser Fetch guard denied it before upstream contact; the outer proxy recorded
+0 denied and 0 violations. The sanitized manifest recorded one unresolved
+destination and the run stopped. The source-backed policy now blocks the exact
+host as optional support; no production destination, auth state, credential, DB
+access, or mutation occurred.
 
 ## Deferred / Follow-Up
 
@@ -554,9 +586,9 @@ mutation occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Resolve the `widget.usepylon.com` USER_ACTION_REQUIRED blocker without
-   dynamic approval; do not retry or load auth state before that disposition.
-4. After the canary is allowed to proceed, provide only a safe external
+3. Run exactly one `npm run observe:canary -- --env=dev` against
+   `https://appdev.alphaus.cloud/ripple/`; stop on any other unresolved host.
+4. After the canary passes, provide only a safe external
    storage-state path for M7; never provide its contents or credentials.
 5. Run the authenticated command only after the pre-real-run gate passes; use
    a direct landing navigation, then exactly one fresh-context replay.

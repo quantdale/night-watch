@@ -186,9 +186,12 @@ Phase 2B+, and container/L6 implementation.
   allowed or added to config.
 - Validation commands: real-run gate/canary command if preflight PASS; inspect
   sanitized local manifest and STATE checkpoint.
-- Status: USER_ACTION_REQUIRED — the corrected canary reached the approved
+- Status: IN_PROGRESS — the corrected canary reached the approved
   `/ripple/` target with HTTP 200 but stopped on the new unclassified host
-  `widget.usepylon.com`; no auth capture may begin.
+  `widget.usepylon.com`. Human disposition required a narrow source check; that
+  check proved the host is an optional support widget and the exact-host policy
+  classification/tests are now complete. No auth capture may begin until the
+  one corrected canary rerun passes.
 
 #### M6 approval checkpoint — 2026-08-09
 
@@ -266,8 +269,35 @@ The corrected target was reached safely, but M6 is **USER_ACTION_REQUIRED**:
 - No storage state, credentials, DB access, mutation, screenshot, trace, or
   production connection was used.
 
-Do not dynamically approve `widget.usepylon.com` or continue to M7. Await a
-human disposition for this exact host under the existing fail-closed policy.
+#### Pylon source verification and policy checkpoint — 2026-08-09
+
+The narrow check was limited to the current Ripple shell and directly named
+Ripple MFE/shared UI repositories. At `mobingilabs/ripple-ui`, branch `dev`,
+source SHA `d80b161b684d9153c7e5acaa65ae1752d93d8ba9` (the Pylon integration was
+introduced by `a31d1349258c58886bfb1813fb1b9dd3f66c3395`), matches are limited to
+the shell bootstrap/config files `src/main.js` and `src/pylon.js` plus the
+environment app-id settings. The directly named MFE/shared UI repositories had
+no Pylon matches.
+
+`src/main.js:69-98` creates an asynchronous third-party script tag and does not
+await its load or use its result to boot Vue. Core initialization proceeds via
+the token/user/RBAC/preferences/status path at `src/main.js:207-223`; the only
+later Pylon operation is the widget-settings assignment at `src/main.js:225-226`.
+`src/pylon.js:3-22` describes chat settings and derives email/display-name
+context from the authenticated user object. No token or identity value was
+copied into Nightwatch state or artifacts. This proves support/chat-only,
+non-critical behavior; blocking can remove/degrade support chat but cannot
+prevent core Ripple boot based on the current source.
+
+Nightwatch now classifies only the exact hostname `widget.usepylon.com` as
+`OPTIONAL_THIRD_PARTY_SUPPORT`, with `block-optional-support`, no allowlist
+entry, local browser/proxy blocking, non-fatal expected severity, and a
+distinct sanitized manifest/event category. Related or future Pylon hostnames
+remain unknown and fail closed.
+
+Do not dynamically approve any hostname or begin M7 until the one corrected
+canary rerun passes. If any hostname other than exact `widget.usepylon.com`
+appears unresolved, stop and checkpoint again.
 
 ### M7 — Observe the first authenticated Ripple landing page
 
@@ -282,9 +312,8 @@ human disposition for this exact host under the existing fail-closed policy.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: BLOCKED — USER_ACTION_REQUIRED because the corrected no-auth canary
-  encountered the new unclassified host `widget.usepylon.com`; no
-  authentication state is present in this session and no credentials may be
+- Status: NOT_STARTED — gated on a passing corrected unauthenticated canary;
+  no authentication state is present in this session and no credentials may be
   provided to Nightwatch.
 
 ### M8 — Produce the destination manifest

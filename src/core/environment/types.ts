@@ -31,6 +31,8 @@ export interface EnvironmentConfig {
    * Entries may use a leading `*.` wildcard (suffix match).
    */
   telemetryHosts: string[];
+  /** Exact optional support-widget hosts. Blocked locally, never allowlisted. */
+  optionalThirdPartySupportHosts?: string[];
   /**
    * Oracle issue event types that fail the run when raised
    * (e.g. 'console-error', 'pageerror', 'malformed-json'). 'hard-failure'

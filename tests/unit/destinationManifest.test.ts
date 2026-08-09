@@ -78,3 +78,32 @@ test('verified runtime host is explicit and never learned from an observation', 
   );
   expect(unresolved.unresolved).toMatchObject([{ hostname: 'newdev.alphaus.cloud' }]);
 });
+
+test('exact optional support blocking is represented as blocked, not unresolved, with a distinct category', () => {
+  const result = buildDestinationManifest(
+    env,
+    [],
+    [{
+      ...browserEvent({
+        type: 'optional-support',
+        data: {
+          url: 'https://widget.usepylon.com/widget/<ID>',
+          verdict: 'block-optional-support',
+          hostClass: 'optional-third-party-support',
+          classification: 'OPTIONAL_THIRD_PARTY_SUPPORT',
+        },
+      }),
+    }]
+  );
+
+  expect(result.blocked).toMatchObject([{
+    hostname: 'widget.usepylon.com',
+    environmentClassification: 'optional-third-party-support',
+    policyRule: 'browser-policy',
+    observedPurpose: 'optional-support-chat',
+    decision: 'block-optional-support',
+    requestCount: 1,
+  }]);
+  expect(result.unresolved).toEqual([]);
+  expect(JSON.stringify(result)).not.toContain('<ID>');
+});

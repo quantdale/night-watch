@@ -42,6 +42,8 @@ export interface FetchGuardOptions {
    * the evidence itself (request event + hard failure). Default true.
    */
   recordEvidence?: boolean;
+  /** Shared exact-host set used to attribute support-widget console effects. */
+  optionalSupportBlockedHosts?: Set<string>;
 }
 
 /**
@@ -56,6 +58,7 @@ export async function installFetchGuard(
   const { policy, recorder, monitor } = opts;
   const sharedBlocked = opts.sharedBlocked;
   const recordEvidence = opts.recordEvidence ?? true;
+  const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts;
 
   let session: Awaited<ReturnType<BrowserContext['newCDPSession']>> | null = null;
   try {
@@ -125,12 +128,27 @@ export async function installFetchGuard(
               hostClass: decision.hostClass,
               reason: decision.reason,
             });
+          } else if (decision.verdict === 'block-optional-support') {
+            optionalSupportBlockedHosts?.add(decision.host);
+            recorder.event({
+              type: 'optional-support',
+              severity: 'info',
+              message: 'OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED',
+              data: {
+                url: redactedUrl,
+                verdict: decision.verdict,
+                hostClass: decision.hostClass,
+                classification: 'OPTIONAL_THIRD_PARTY_SUPPORT',
+                reason: decision.reason,
+                path: 'fetch-guard',
+              },
+            });
           } else {
             recorder.event({
               type: 'telemetry',
               severity: 'info',
               message: `telemetry blocked: ${redactedUrl}`,
-              data: { url: redactedUrl, verdict: 'block-telemetry', reason: decision.reason, path: 'fetch-guard' },
+              data: { url: redactedUrl, verdict: decision.verdict, hostClass: decision.hostClass, classification: 'TELEMETRY', reason: decision.reason, path: 'fetch-guard' },
             });
           }
         } else if (!sharedBlocked.has(rawUrl)) {

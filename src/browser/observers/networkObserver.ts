@@ -27,6 +27,7 @@ import type { BrowserContext, Page, Request, Response, Route } from '@playwright
 import { RedactionLayer } from '../../core/safety/redaction';
 import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
 import { decideBrowserHttp, decideBrowserWebSocket } from '../../core/safety/policyConsumers';
+import { isNonFatalBlock } from '../../core/safety/types';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 import {
@@ -53,18 +54,22 @@ export interface NetworkObserver {
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
+  /** Exact optional-support hosts intentionally blocked in this context. */
+  optionalSupportBlockedHosts(): Set<string>;
 }
 
 export function createNetworkObserver(opts: {
   policy: OutboundPolicy;
   recorder: RunRecorder;
   monitor: RunMonitor;
+  optionalSupportBlockedHosts?: Set<string>;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
   let active = 0;
   let lastActivity = Date.now();
   const blockedUrls = new Set<string>();
+  const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
 
   async function handleRoute(route: Route): Promise<void> {
     try {
@@ -114,16 +119,25 @@ export function createNetworkObserver(opts: {
         return;
       }
 
-      if (decision.verdict === 'block-telemetry') {
+      if (isNonFatalBlock(decision.verdict)) {
         // Dedupe with the Fetch guard: whichever layer resolves the pause
         // first records the evidence; the other skips.
         if (!blockedUrls.has(rawUrl)) {
           blockedUrls.add(rawUrl);
+          if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
           recorder.event({
-            type: 'telemetry',
+            type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
             severity: 'info',
-            message: `telemetry blocked: ${redactedUrl}`,
-            data: { url: redactedUrl, verdict: 'block-telemetry', reason: decision.reason },
+            message: decision.verdict === 'block-optional-support'
+              ? 'OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED'
+              : `telemetry blocked: ${redactedUrl}`,
+            data: {
+              url: redactedUrl,
+              verdict: decision.verdict,
+              hostClass: decision.hostClass,
+              classification: decision.verdict === 'block-optional-support' ? 'OPTIONAL_THIRD_PARTY_SUPPORT' : 'TELEMETRY',
+              reason: decision.reason,
+            },
           });
         }
         try {
@@ -217,13 +231,21 @@ export function createNetworkObserver(opts: {
       return;
     }
 
-    if (decision.verdict === 'block-telemetry') {
+    if (isNonFatalBlock(decision.verdict)) {
       blockedUrls.add(rawUrl);
+      if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
       recorder.event({
-        type: 'telemetry',
+        type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
         severity: 'info',
-        message: `telemetry blocked: ${redactedUrl}`,
-        data: { ...base, verdict: 'block-telemetry' },
+        message: decision.verdict === 'block-optional-support'
+          ? 'OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED'
+          : `telemetry blocked: ${redactedUrl}`,
+        data: {
+          ...base,
+          verdict: decision.verdict,
+          hostClass: decision.hostClass,
+          classification: decision.verdict === 'block-optional-support' ? 'OPTIONAL_THIRD_PARTY_SUPPORT' : 'TELEMETRY',
+        },
       });
       await ws.close(); // never connects to the server
       return;
@@ -429,5 +451,6 @@ export function createNetworkObserver(opts: {
     activeRequests: () => active,
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
+    optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
   };
 }

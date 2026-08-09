@@ -71,6 +71,14 @@ export function defaultCanaryChecks(policy: OutboundPolicy): CanaryCheck[] {
     });
   }
 
+  for (const host of env.optionalThirdPartySupportHosts ?? []) {
+    checks.push({
+      label: `optional support: ${host}`,
+      url: `https://${host}/widget/synthetic-app-id`,
+      expected: 'block-optional-support',
+    });
+  }
+
   checks.push({ label: 'local: 127.0.0.1', url: 'http://127.0.0.1:1/', expected: env.name === 'local' ? 'allow' : 'deny' });
   checks.push({ label: 'local: localhost', url: 'http://localhost:1/', expected: env.name === 'local' ? 'allow' : 'deny' });
 

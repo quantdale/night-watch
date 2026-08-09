@@ -38,6 +38,7 @@
     "clients2.google.com",
     "safebrowsingohttpgateway.googleapis.com"
   ],
+  "optionalThirdPartySupportHosts": ["widget.usepylon.com"],
   "failOn": [
     "hard-failure",
     "pageerror",

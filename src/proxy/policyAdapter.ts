@@ -30,6 +30,7 @@ function ruleId(decision: OutboundDecision): string {
   if (decision.reason.includes('embedded credentials')) return 'embedded-credentials';
   if (decision.reason.includes('allowlisted')) return 'environment-allowlist';
   if (decision.reason.includes('static asset')) return 'static-assets';
+  if (decision.reason.includes('optional third-party support')) return 'optional-third-party-support';
   if (decision.reason.includes('telemetry')) return 'telemetry';
   if (decision.reason.includes('known Alphaus production')) return 'known-production';
   if (decision.reason.includes('Cloud Run')) return 'cloud-run-production';

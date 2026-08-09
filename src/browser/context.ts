@@ -42,6 +42,7 @@ import {
   type NetworkObserver,
 } from './observers/networkObserver';
 import { createConsoleObserver } from './observers/consoleObserver';
+import { classifyOptionalSupportConsoleEffect } from './observers/containmentEffect';
 import { createPageObserver } from './observers/pageObserver';
 import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/storageState';
 import { installFetchGuard } from './network/fetchGuard';
@@ -267,7 +268,8 @@ export async function createNightwatchContext(
 
   const policy = new OutboundPolicy(opts.env);
 
-  const network = createNetworkObserver({ policy, recorder, monitor });
+  const optionalSupportBlockedHosts = new Set<string>();
+  const network = createNetworkObserver({ policy, recorder, monitor, optionalSupportBlockedHosts });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;
   let proxyDownRecorded = false;
@@ -300,7 +302,12 @@ export async function createNightwatchContext(
         proxyHealthCheckInFlight = false;
       });
   }, 100);
-  const consoleObserver = createConsoleObserver({ recorder, monitor });
+  const consoleObserver = createConsoleObserver({
+    recorder,
+    monitor,
+    classifyExpectedContainmentEffect: (text, locationUrl) =>
+      classifyOptionalSupportConsoleEffect(text, locationUrl, network.optionalSupportBlockedHosts()),
+  });
   const pageObserver = createPageObserver({ recorder, monitor });
 
   // L1/L2 — route + WebSocket policy gates. Both registrations are
@@ -319,6 +326,7 @@ export async function createNightwatchContext(
     recorder,
     monitor,
     sharedBlocked: network.blockedUrls(),
+    optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
   });
   page.on('download', onDownload);
 
@@ -333,6 +341,7 @@ export async function createNightwatchContext(
       recorder,
       monitor,
       sharedBlocked: network.blockedUrls(),
+      optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
     });
     p.on('download', onDownload);
   });

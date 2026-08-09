@@ -23,6 +23,8 @@ export type { EnvironmentConfig } from '../environment/types';
  * - 'static'          : explicitly classified harmless static asset.
  * - 'telemetry'       : explicitly classified telemetry/analytics host —
  *                       blocked (aborted), not failed.
+ * - 'optional-third-party-support' : explicitly classified optional support
+ *                       widget host — blocked (aborted), not failed.
  * - 'internal'        : non-http(s) scheme (data:, blob:, javascript:...).
  */
 export type HostClass =
@@ -34,10 +36,16 @@ export type HostClass =
   | 'external'
   | 'static'
   | 'telemetry'
+  | 'optional-third-party-support'
   | 'internal';
 
 /** Verdict for an inspected outbound request. */
-export type Verdict = 'allow' | 'deny' | 'block-telemetry';
+export type Verdict = 'allow' | 'deny' | 'block-telemetry' | 'block-optional-support';
+
+/** Non-fatal containment decisions. The request is still stopped locally. */
+export function isNonFatalBlock(verdict: Verdict): boolean {
+  return verdict === 'block-telemetry' || verdict === 'block-optional-support';
+}
 
 export interface OutboundDecision {
   verdict: Verdict;

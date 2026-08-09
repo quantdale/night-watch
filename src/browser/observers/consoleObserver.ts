@@ -11,6 +11,7 @@
 import type { Page } from '@playwright/test';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
+import type { ExpectedContainmentEffect } from './containmentEffect';
 
 /** Chromium logs this automatically when any resource load fails. */
 const CHROME_RESOURCE_FAILURE_RE = /^Failed to load resource:/i;
@@ -18,12 +19,42 @@ const CHROME_RESOURCE_FAILURE_RE = /^Failed to load resource:/i;
 export function createConsoleObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
+  classifyExpectedContainmentEffect?: (text: string, locationUrl: string | undefined) => ExpectedContainmentEffect | null;
 }): { install(page: Page): void } {
   const { recorder, monitor } = opts;
   return {
     install(page: Page): void {
       page.on('console', (msg) => {
         try {
+          const expectedContainment = msg.type() === 'error'
+            ? opts.classifyExpectedContainmentEffect?.(msg.text(), msg.location().url)
+            : null;
+          if (expectedContainment !== null && expectedContainment !== undefined) {
+            recorder.event({
+              type: 'console',
+              severity: 'warn',
+              message: expectedContainment.reason,
+              data: {
+                type: msg.type(),
+                category: expectedContainment.reason,
+                classification: expectedContainment.classification,
+                hostClass: expectedContainment.hostClass,
+                host: expectedContainment.host,
+              },
+            });
+            recorder.event({
+              type: 'oracle',
+              severity: 'info',
+              message: expectedContainment.reason,
+              data: {
+                reason: 'expected-containment-effect',
+                classification: expectedContainment.classification,
+                hostClass: expectedContainment.hostClass,
+                host: expectedContainment.host,
+              },
+            });
+            return;
+          }
           const text = recorder.isAuthenticated
             ? '[SUPPRESSED_AUTHENTICATED_CONSOLE_TEXT]'
             : recorder.redaction.redactText(msg.text());

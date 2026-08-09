@@ -24,6 +24,7 @@ export interface ProxyEvent {
 export interface ProxySummary {
   allowed: number;
   telemetryBlocked: number;
+  optionalSupportBlocked: number;
   denied: number;
   unknown: number;
   violations: number;

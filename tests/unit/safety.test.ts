@@ -142,6 +142,30 @@ test('telemetry hosts are blocked without failing', () => {
   }
 });
 
+test('the exact Pylon widget host is optional support, never telemetry or allowlisted', () => {
+  const relatedHosts = [
+    'api.usepylon.com',
+    'cdn.usepylon.com',
+    'widget.eu.usepylon.com',
+    'widget.usepylon.com.evil.invalid',
+  ];
+  for (const envName of ENVS) {
+    const env = loadEnvironmentConfig(envName);
+    const policy = new OutboundPolicy(env);
+    const exact = policy.decide('https://widget.usepylon.com/widget/synthetic-app-id');
+    expect(env.allowedHosts, `${envName} allowlist`).not.toContain('widget.usepylon.com');
+    expect(env.telemetryHosts, `${envName} telemetry`).not.toContain('widget.usepylon.com');
+    expect(env.optionalThirdPartySupportHosts, `${envName} optional support`).toEqual(['widget.usepylon.com']);
+    expect(exact.verdict, envName).toBe('block-optional-support');
+    expect(exact.hostClass, envName).toBe('optional-third-party-support');
+    for (const relatedHost of relatedHosts) {
+      const related = policy.decide(`https://${relatedHost}/widget/synthetic-app-id`);
+      expect(related.verdict, `${envName} :: ${relatedHost}`).toBe('deny');
+      expect(related.hostClass, `${envName} :: ${relatedHost}`).toBe('external');
+    }
+  }
+});
+
 test('approved Chromium background hosts are blocked telemetry, never allowed', () => {
   const hosts = ['clients2.google.com', 'safebrowsingohttpgateway.googleapis.com'];
   for (const envName of ['dev', 'next'] as const) {

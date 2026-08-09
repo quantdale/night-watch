@@ -120,39 +120,51 @@ export class OutboundPolicy {
       return { verdict: 'allow', hostClass: 'static', host: hostname, reason: 'classified static asset host' };
     }
 
-    // R5 — telemetry/analytics: blocked (aborted) but does NOT fail the run.
+    // R5 — exact optional support-widget hosts: blocked (aborted) but do NOT
+    // fail the run. This is intentionally separate from telemetry and is not
+    // a wildcard for other usepylon.com hosts.
+    if (this.env.optionalThirdPartySupportHosts?.some((entry) => entryMatches(hostname, hostPortKey, entry))) {
+      return {
+        verdict: 'block-optional-support',
+        hostClass: 'optional-third-party-support',
+        host: hostname,
+        reason: 'optional third-party support widget — blocked, not failed',
+      };
+    }
+
+    // R6 — telemetry/analytics: blocked (aborted) but does NOT fail the run.
     if (this.env.telemetryHosts.some((entry) => entryMatches(hostname, hostPortKey, entry))) {
       return { verdict: 'block-telemetry', hostClass: 'telemetry', host: hostname, reason: 'telemetry host — blocked, not failed' };
     }
 
-    // R6 — known Alphaus production hosts (see KNOWN_PRODUCTION_HOSTS in hosts.ts).
+    // R7 — known Alphaus production hosts (see KNOWN_PRODUCTION_HOSTS in hosts.ts).
     if (isKnownProductionHost(hostname)) {
       return deny(hostname, 'production', 'known Alphaus production host');
     }
 
-    // R7 — GCP Cloud Run hosts are production-class compute.
+    // R8 — GCP Cloud Run hosts are production-class compute.
     if (hostname === CLOUD_RUN_SUFFIX.slice(1) || hostname.endsWith(CLOUD_RUN_SUFFIX)) {
       return deny(hostname, 'production', 'GCP Cloud Run host (production-class)');
     }
 
-    // R8 — unknown Alphaus hosts (alphaus.cloud domain not in any table):
+    // R9 — unknown Alphaus hosts (alphaus.cloud domain not in any table):
     // fail closed, treat as hostile. This also catches dev/next hosts that are
     // not allowlisted in the selected environment.
     if (hostname === 'alphaus.cloud' || hostname.endsWith('.alphaus.cloud')) {
       return deny(hostname, 'unknown-alphaus', 'unknown Alphaus host — fail closed');
     }
 
-    // R9 — legacy Alphaus domain (mobingi.com), not otherwise classified.
+    // R10 — legacy Alphaus domain (mobingi.com), not otherwise classified.
     if (hostname === 'mobingi.com' || hostname.endsWith('.mobingi.com')) {
       return deny(hostname, 'production', 'legacy Alphaus domain');
     }
 
-    // R10 — localhost family is only reachable via the explicit allowlist (R3).
+    // R11 — localhost family is only reachable via the explicit allowlist (R3).
     if (LOCAL_HOSTS.includes(hostname)) {
       return deny(hostname, 'local', 'localhost not allowed in this environment allowlist');
     }
 
-    // R11 — everything else: deny.
+    // R12 — everything else: deny.
     return deny(hostname, 'external', 'unexpected external host');
   }
 }

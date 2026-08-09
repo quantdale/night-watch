@@ -17,6 +17,7 @@ export type RunEventType =
   | 'requestfailed'
   | 'policy'
   | 'telemetry'
+  | 'optional-support'
   | 'oracle'
   | 'issue'
   | 'hard-failure'
@@ -82,6 +83,7 @@ export interface RunSummary {
   proxy?: {
     allowed: number;
     telemetryBlocked: number;
+    optionalSupportBlocked: number;
     denied: number;
     unknown: number;
     violations: number;

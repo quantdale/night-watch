@@ -105,6 +105,8 @@ test.describe('outer proxy policy and parsing', () => {
       ['https://example.invalid/', 'deny'],
       ['https://sentry.io/ingest', 'block-telemetry'],
       ['https://www.google.com/chrome/background', 'block-telemetry'],
+      ['https://widget.usepylon.com/widget/synthetic-app-id', 'block-optional-support'],
+      ['https://api.usepylon.com/widget/synthetic-app-id', 'deny'],
       ['ws://127.0.0.1:7311/socket', 'allow'],
       ['wss://api.alphaus.cloud:8443/socket', 'deny'],
       ['http://LOCALHOST:3000/', 'allow'],
@@ -150,6 +152,7 @@ test.describe('outer proxy policy and parsing', () => {
       expect(await proxyGet(proxy.port, `http://${allowed.host}:${allowed.port}/ok`)).toBe(200);
       expect(allowed.requestCount).toBe(1);
       expect(await proxyGet(proxy.port, `http://${denied.host}:${denied.port}/denied`)).toBe(403);
+      expect(await proxyGet(proxy.port, 'http://widget.usepylon.com/widget/synthetic-app-id')).toBe(403);
       expect(await proxyConnect(proxy.port, `${denied.host}:${denied.port}`)).toBe(403);
       expect(await proxyConnect(proxy.port, 'api.alphaus.cloud:443')).toBe(403);
       expect(denied.connectionCount).toBe(0);
@@ -158,6 +161,7 @@ test.describe('outer proxy policy and parsing', () => {
       const events = readProxyEvents(eventLog);
       expect(events.some((e) => e.host === denied.host && e.decision === 'deny')).toBe(true);
       expect(events.some((e) => e.host === 'api.alphaus.cloud' && e.decision === 'deny')).toBe(true);
+      expect(events.some((e) => e.host === 'widget.usepylon.com' && e.decision === 'block-optional-support')).toBe(true);
       expect(events.some((e) => e.decision === 'allow' && e.host === allowed.host)).toBe(true);
     } finally {
       await allowed.close();

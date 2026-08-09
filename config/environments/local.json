@@ -26,6 +26,7 @@
     "accounts.google.com",
     "www.google.com"
   ],
+  "optionalThirdPartySupportHosts": ["widget.usepylon.com"],
   "failOn": [
     "hard-failure",
     "pageerror",
