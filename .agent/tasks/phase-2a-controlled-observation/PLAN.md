@@ -341,7 +341,7 @@ handoff; do not execute the authenticated observation in this session.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
 - Status: USER_ACTION_REQUIRED — the corrected unauthenticated canary passed,
-  and the guarded manual capture launcher is repaired and locally validated,
+  and the direct parent-CLI capture runner is repaired and locally validated,
   but no authentication state is present in this session. Prepare the guarded
   manual capture handoff only; no credentials may be provided to Nightwatch.
 
@@ -362,21 +362,32 @@ storage-state file remains outside the workspace at the exact path above.
 Do not execute authenticated observation until a fresh session has rerun the
 local gate with that path and it passes.
 
-#### M7 launcher repair checkpoint — 2026-08-09 — `0499543`
+#### M7 direct-runner repair checkpoint — 2026-08-10 — `963128f`
 
-The human command previously failed before browser launch because
-`bin/auth-capture.mjs` passed `tests/manual/auth-capture.ts` to the base
-Playwright config, whose `testMatch` excluded manual `.ts` files. Playwright
-therefore resolved zero tests and returned `No tests found`.
+The previous repair fixed Playwright discovery, but the real human capture then
+failed inside `tests/manual/auth-capture.ts` because
+`process.stdin.isTTY === false` in the Playwright Test worker. The parent
+`npm run auth:capture` process had an interactive terminal, but Playwright did
+not preserve that TTY on the worker stdin; the headed browser therefore never
+opened and no state file could be created.
 
-The launcher now selects `playwright.capture.config.ts`, which matches exactly
-the intended manual helper while keeping it excluded from ordinary test runs.
-`tests/unit/authCaptureLauncher.test.ts` proves the repaired command contract
-resolves exactly one test. A separate local-only synthetic config/fixture ran
-the same guarded context in headed mode three times, completed fake login to a
-synthetic authenticated destination, wrote and structurally validated a
-temporary external state, and confirmed metadata-only provenance and
-production/unknown-host denial. No human input or Alphaus network was used.
+The real manual test path and dedicated real-capture config were removed. The
+parent `bin/auth-capture.mjs` now performs safe path checks and no-network
+preflight, loads the canonical TypeScript safety modules, starts and health
+checks the mandatory loopback proxy, launches headed Chrome through the
+Playwright Library API, creates `createNightwatchContext`, and owns the
+readline ENTER wait. The runner writes storage state directly through
+`context.storageState()` to the validated external path, validates the shape,
+records sanitized capture provenance in the run manifest, and closes browser
+and proxy cleanly. The normal CLI has no synthetic completion switch.
+
+`tests/manual/auth-capture.synthetic.ts` is now local-only direct-runner
+coverage. Its test-only completion callback uses a loopback auth fixture and
+ephemeral proxy, verifies browser/proxy/guard provenance, production and
+unknown-host denial, external state validation, and absence of fake secrets in
+artifacts. `tests/unit/authCaptureLauncher.test.ts` proves the CLI no longer
+invokes Playwright Test, no longer has a competing worker test, and retains
+the parent TTY check.
 
 M7 remains `USER_ACTION_REQUIRED`; the real external state is still missing.
 

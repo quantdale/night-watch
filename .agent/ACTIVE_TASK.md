@@ -6,8 +6,8 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 04995437406f8b253bdac7a977a9a47145a64808
-Last validated implementation SHA: 04995437406f8b253bdac7a977a9a47145a64808
+Current SHA: 963128f4772db6e6c790cdc8cbb464c382cad8df
+Last validated implementation SHA: 963128f4772db6e6c790cdc8cbb464c382cad8df
 Current milestone: M7 — Manual login required before authenticated observation (IN_PROGRESS)
-Last checkpoint: 2026-08-09 — repaired the auth:capture Playwright discovery contract at implementation SHA `04995437406f8b253bdac7a977a9a47145a64808`. The real external storage state remains missing; no storage-state contents were inspected or printed.
-Next action: human runs the guarded external `auth:capture` command, then a fresh session reruns the exact preflight gate. Do not execute authenticated observation until the gate passes. Related or new Pylon hostnames remain fail-closed.
+Last checkpoint: 2026-08-10 — replaced the Playwright Test worker auth flow with a parent-CLI Playwright Library API runner at implementation SHA `963128f4772db6e6c790cdc8cbb464c382cad8df`. The exact blocker was worker-local non-TTY stdin; the real external storage state remains missing.
+Next action: human runs the repaired guarded external `auth:capture` command, then a fresh session reruns the exact preflight gate. Do not execute authenticated observation until the gate passes. Related or new Pylon hostnames remain fail-closed.
