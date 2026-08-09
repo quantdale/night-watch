@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
-Last validated implementation SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
+Current SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
+Last validated implementation SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
 Branch: main
-Last checkpoint: 2026-08-09 — corrected target prepared for checkpoint: dev origin `https://appdev.alphaus.cloud`, Ripple path `/ripple/`, exact URL `https://appdev.alphaus.cloud/ripple/`; no auth state loaded.
+Last checkpoint: 2026-08-09 — corrected target configuration/path guards checkpointed at 76bd7df; dev origin `https://appdev.alphaus.cloud`, Ripple path `/ripple/`, exact URL `https://appdev.alphaus.cloud/ripple/`; no auth state loaded.
 
 ## Objective
 
@@ -19,15 +19,15 @@ evidence, and a single fresh-context replay.
 
 ## Current Milestone
 
-Milestone ID: M2 — Establish explicit real-target configuration and preflight
-Status: IN_PROGRESS — CORRECTED_TARGET_CHECKPOINT_PENDING
-What is being attempted: The approved target correction is prepared in the
-`dev` configuration and path-agreement guards. The approved UI origin is
+Milestone ID: M6 — Run the unauthenticated real connectivity canary
+Status: IN_PROGRESS — CORRECTED_TARGET_CANARY
+What is being attempted: The approved target correction is checkpointed in
+the `dev` configuration and path-agreement guards. The approved UI origin is
 `https://appdev.alphaus.cloud`; the approved Ripple application path is
 `/ripple/`; the exact Phase 2A UI URL is
 `https://appdev.alphaus.cloud/ripple/`. The host allowlist and production
-policy are unchanged. Focused local validation passed; no storage state was
-loaded and no auth capture was started.
+policy are unchanged. Focused local validation passed; no storage state is
+loaded and no auth capture is started before the corrected canary passes.
 
 ## Completed Milestones
 
@@ -99,11 +99,10 @@ occurred.
 
 ## Exact Next Action
 
-CHECKPOINT_CORRECTED_TARGET — commit the corrected dev configuration and task
-state, then run `npm run observe:canary -- --env=dev`. The canary must resolve
-exactly to `https://appdev.alphaus.cloud/ripple/` with no storage state. Only
-after that canary passes may M7’s manual external storage-state workflow be
-prepared; do not change host allowlists dynamically.
+RUN_CORRECTED_CANARY — run `npm run observe:canary -- --env=dev`. The canary
+must resolve exactly to `https://appdev.alphaus.cloud/ripple/` with no storage
+state. Only after that canary passes may M7’s manual external storage-state
+workflow be prepared; do not change host allowlists dynamically.
 
 ## Files Changed
 
@@ -373,6 +372,11 @@ When: 2026-08-09
 Relevant failure/output summary: the configured host root is not the intended
 Ripple document route; do not begin manual auth capture until the explicit path
 is corrected and the no-auth preflight/canary is rerun.
+
+Command: corrected target guard validation
+Result: PASS; `npx playwright test tests/unit/target-preflight.test.ts tests/unit/realRunGate.test.ts tests/unit/safety.test.ts --project=nightwatch` => **32 passed, 0 failed**; `npx tsc --noEmit` => PASS; `git diff --check` => PASS. The configured target is exactly `https://appdev.alphaus.cloud/ripple/`; same-host root-path overrides fail closed; no browser, DNS, TCP, auth, or allowlist activity occurred.
+When: 2026-08-09
+Relevant failure/output summary: production deny policy and the two explicitly blocked Chromium telemetry destinations remain unchanged.
 
 ## Decisions Made During This Task
 

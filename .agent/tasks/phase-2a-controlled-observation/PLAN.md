@@ -125,12 +125,12 @@ Phase 2B+, and container/L6 implementation.
   browser storage-state requirement.
 - Validation commands: focused Phase 2A preflight tests; `npm run observe:preflight
   -- --env=... --ui-url=...` with a synthetic/approved target only.
-- Status: IN_PROGRESS — CORRECTED_TARGET_CHECKPOINT_PENDING. The approved dev
-  UI origin is `https://appdev.alphaus.cloud`, the Ripple application path is
-  `/ripple/`, and the exact configured target is
-  `https://appdev.alphaus.cloud/ripple/`. Same-host explicit overrides must
-  use that exact path. Checkpoint this correction, then rerun the no-auth
-  preflight/canary before resuming M7; do not change host allowlists.
+- Status: COMPLETE. The approved dev UI origin is
+  `https://appdev.alphaus.cloud`, the Ripple application path is `/ripple/`,
+  and the exact configured target is `https://appdev.alphaus.cloud/ripple/`.
+  Same-host explicit overrides must use that exact path. The correction and
+  path guards are checkpointed at `76bd7df`; host allowlists and production
+  policy are unchanged.
 
 ### M3 — Enforce authenticated evidence minimization
 
@@ -221,7 +221,7 @@ observation was started.
 M6 acceptance is COMPLETE. Any other hostname appearing in a later run remains
 fail-closed and requires separate review.
 
-#### Corrected target checkpoint — 2026-08-09
+#### Corrected target checkpoint — 2026-08-09 — `76bd7df`
 
 The approved Phase 2A target correction is recorded as configuration, not as a
 host-policy change:
@@ -248,7 +248,8 @@ the corrected real no-auth canary is the exact next action.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: BLOCKED pending M2 target correction, then USER_ACTION_REQUIRED for a
+- Status: IN_PROGRESS — CORRECTED_TARGET_CANARY. The M2 target correction is
+  checkpointed; the no-auth canary must pass before USER_ACTION_REQUIRED for a
   valid externally supplied Playwright storage-state path; no authentication
   state is present in this session and no credentials may be provided to
   Nightwatch.
