@@ -183,6 +183,22 @@ Phase 2B+, and container/L6 implementation.
   sanitized local manifest and STATE checkpoint.
 - Status: IN_PROGRESS
 
+#### M6 approval checkpoint — 2026-08-09
+
+The user explicitly approved **NON-NETWORK BLOCKING** for the Chromium
+background/control-plane hosts `clients2.google.com` and
+`safebrowsingohttpgateway.googleapis.com`. This is a classification as
+explicitly blocked telemetry/control-plane traffic, not an outbound allowlist
+grant: DNS/TCP/HTTP/HTTPS access remains prohibited, and both the browser and
+outer proxy must continue aborting locally. Once represented by the existing
+sanitized telemetry-blocked evidence path, attempts to these two named hosts
+are non-fatal. No other unknown hostname is covered; any such appearance must
+stop the canary for separate review.
+
+Exact continuation: run `npm run observe:canary -- --env=dev` after this
+checkpoint. Do not load storage state or begin authenticated observation until
+all preflight and canary gates pass.
+
 ### M7 — Observe the first authenticated Ripple landing page
 
 - Objective: perform one tiny passive authenticated observation.
@@ -295,6 +311,11 @@ outputs and sanitized run IDs in STATE/REPORT, never secrets or customer data.
 - 2026-08-09 — Require one exact `dev` or `next` target and metadata-first
   authenticated evidence; reason: application environment defaults and shared
   data planes cannot be trusted as containment or evidence minimization.
+- 2026-08-09 — User-approved explicit non-network block for
+  `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`; reason:
+  Chromium background/control-plane attempts must remain locally denied and
+  may be recorded as non-fatal sanitized telemetry, while all other unknown
+  destinations remain fail-closed.
 
 ## Discoveries
 

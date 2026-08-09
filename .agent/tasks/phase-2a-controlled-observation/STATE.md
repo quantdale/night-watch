@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
 Last validated implementation SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
 Branch: main
-Last checkpoint: 2026-08-09 — M6 USER_ACTION_REQUIRED checkpoint and sanitized artifact review complete; implementation checkpoint f5c4abb
+Last checkpoint: 2026-08-09 — M6 user-approved explicit non-network block disposition checkpoint; implementation checkpoint f5c4abb
 
 ## Objective
 
@@ -23,8 +23,12 @@ Milestone ID: M6 — Run the unauthenticated real connectivity canary
 Status: IN_PROGRESS
 What is being attempted: M6 real canary reached the explicit dev UI under the
 proxy, but stopped before any authenticated work because Chromium attempted
-unresolved background destinations. Status is `USER_ACTION_REQUIRED`; no
-destination may be allowlisted without a narrow human-approved disposition.
+unresolved background destinations. The user has now approved a narrow,
+explicit non-network block disposition for `clients2.google.com` and
+`safebrowsingohttpgateway.googleapis.com`. They remain denied locally, are not
+allowlisted, and their appearance may be recorded as sanitized blocked
+telemetry without failing the run. Any other unknown hostname remains
+fail-closed and requires separate review.
 
 ## Completed Milestones
 
@@ -395,11 +399,19 @@ clones already had local changes; Nightwatch performed no writes to them.
 
 ## Blockers
 
-USER_ACTION_REQUIRED at M6. Human disposition is required for the two
-Chromium background destinations `clients2.google.com` and
-`safebrowsingohttpgateway.googleapis.com`. They must remain denied; do not add
-them to an allowlist. After a narrow explicit block disposition is approved,
-resume with:
+The prior `USER_ACTION_REQUIRED` blocker is cleared by the user's explicit
+approval on 2026-08-09. The approved disposition is **NON-NETWORK BLOCK** for
+the two Chromium background/control-plane destinations
+`clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`:
+
+- no DNS, TCP, HTTP, or HTTPS access;
+- no outbound allowlist entry;
+- browser and outer-proxy containment continue blocking locally;
+- sanitized blocked-telemetry evidence is allowed and non-fatal;
+- every other previously unknown hostname remains unresolved, denied, and
+  requires separate review.
+
+Resume with:
 
 `npm run observe:canary -- --env=dev`
 
@@ -426,8 +438,8 @@ request occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Obtain the exact human disposition for the two unresolved Chromium hosts;
-   never allow them.
+3. Apply the approved explicit non-network block classification to the two
+   named Chromium hosts; never allow them or permit network access.
 4. Resume with `npm run observe:canary -- --env=dev`; it reruns preflight and
    the pre-auth gate before any navigation and uses a fresh run ID.
 5. Update STATE with exact sanitized runtime results and checkpoint before M7.
