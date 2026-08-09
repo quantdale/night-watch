@@ -24,7 +24,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 
-export type FixtureVariant = 'good' | 'negative' | 'safety';
+export type FixtureVariant = 'good' | 'negative' | 'safety' | 'auth';
 
 export interface FixtureRequest {
   method: string;
@@ -166,6 +166,36 @@ const BILLING_GROUPS_JSON = '[{"id":"bg-1","name":"Fixture BG","currency":"USD"}
 const STREAM_NDJSON = '{"result":{"i":1}}\n{"result":{"i":2}}\n{"result":{"i":3}}\n';
 const POPUP_HTML = '<!doctype html><html><body><h1 id="popup-landed">popup landed</h1></body></html>';
 
+const AUTH_LOGIN_HTML = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Synthetic Login</title></head>
+<body>
+  <h1>Synthetic Login</h1>
+  <form id="synthetic-login">
+    <label>Username <input id="username" name="username" autocomplete="username"></label>
+    <label>Password <input id="password" name="password" type="password" autocomplete="current-password"></label>
+    <button type="submit">Sign in</button>
+  </form>
+  <script>
+    document.querySelector('#synthetic-login').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await fetch('/api/synthetic-login', { method: 'POST' });
+      window.location.assign('/synthetic-authenticated');
+    });
+  </script>
+</body>
+</html>`;
+
+const AUTH_DESTINATION_HTML = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Synthetic Authenticated Destination</title></head>
+<body>
+  <h1>Synthetic Authenticated Destination</h1>
+  <p id="authenticated-marker">Synthetic session is active.</p>
+  <script>localStorage.setItem('synthetic-auth-marker', 'authenticated');</script>
+</body>
+</html>`;
+
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 function send(res: http.ServerResponse, status: number, contentType: string, body: string): void {
@@ -176,7 +206,7 @@ function send(res: http.ServerResponse, status: number, contentType: string, bod
 export function startFixtureServer(variant: FixtureVariant = 'good'): Promise<FixtureServerHandle> {
   const requests: FixtureRequest[] = [];
   const html =
-    variant === 'good' ? GOOD_HTML : variant === 'negative' ? NEGATIVE_HTML : SAFETY_HTML;
+    variant === 'good' ? GOOD_HTML : variant === 'negative' ? NEGATIVE_HTML : variant === 'safety' ? SAFETY_HTML : AUTH_LOGIN_HTML;
   let wsConnections = 0;
 
   const server = http.createServer((req, res) => {
@@ -186,6 +216,16 @@ export function startFixtureServer(variant: FixtureVariant = 'good'): Promise<Fi
 
     if (pathname.startsWith('/api/')) {
       switch (pathname) {
+        case '/api/synthetic-login':
+          if (variant !== 'auth' || req.method !== 'POST') {
+            send(res, 404, 'application/json', '{"error":"not found"}');
+            return;
+          }
+          res.writeHead(204, {
+            'Set-Cookie': 'nw_synthetic_session=authenticated; Path=/; HttpOnly',
+          });
+          res.end();
+          return;
         case '/api/invoices':
           send(res, 200, 'application/json', INVOICES_JSON);
           return;
@@ -278,6 +318,16 @@ export function startFixtureServer(variant: FixtureVariant = 'good'): Promise<Fi
         send(res, 200, 'application/javascript', '/* containment probe */');
         return;
       }
+    }
+
+    if (variant === 'auth' && pathname === '/synthetic-authenticated') {
+      const cookie = req.headers.cookie ?? '';
+      if (!cookie.split(';').some((item) => item.trim() === 'nw_synthetic_session=authenticated')) {
+        send(res, 401, 'text/html', AUTH_LOGIN_HTML);
+        return;
+      }
+      send(res, 200, 'text/html', AUTH_DESTINATION_HTML);
+      return;
     }
 
     // Everything else renders the app page (journey routes '/' and '/invoices').

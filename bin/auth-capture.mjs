@@ -79,7 +79,13 @@ if (preflight.status !== 0) {
 }
 
 const playwright = path.join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'playwright.cmd' : 'playwright');
-const result = spawnSync(playwright, ['test', 'tests/manual/auth-capture.ts', '--project=nightwatch', '--headed'], {
+const result = spawnSync(playwright, [
+  'test',
+  '--config=playwright.capture.config.ts',
+  'tests/manual/auth-capture.ts',
+  '--project=nightwatch',
+  '--headed',
+], {
   cwd: root,
   env: {
     ...process.env,
