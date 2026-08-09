@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
 Last validated implementation SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
 Branch: main
-Last checkpoint: 2026-08-09 — exact-host Pylon policy/evidence implementation committed at `46f5817b5c2a8180affb1c0a5edc7454480a34ad`; focused tests passed. No auth state loaded.
+Last checkpoint: 2026-08-09 — corrected DEV canary `nightwatch-20260809T110122Z-4d4d` passed after the exact-host Pylon policy/evidence implementation at `46f5817b5c2a8180affb1c0a5edc7454480a34ad`. No auth state loaded.
 
 ## Objective
 
@@ -19,17 +19,16 @@ evidence, and a single fresh-context replay.
 
 ## Current Milestone
 
-Milestone ID: M6 — Run the unauthenticated real connectivity canary
-Status: IN_PROGRESS
-What is being attempted: The corrected target is checkpointed in the `dev`
-configuration and path-agreement guards. The approved UI origin is
-`https://appdev.alphaus.cloud`; the approved Ripple application path is
-`/ripple/`; the exact Phase 2A UI URL is
-`https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 and
-  final URL `/ripple/`, and the exact source-supported Pylon host is now
-  classified as optional support and denied before upstream contact. The host
-  allowlist and production policy are unchanged. No storage state was loaded
-  and no auth capture was started.
+Milestone ID: M7 — Manual login required before authenticated observation
+Status: USER_ACTION_REQUIRED
+What is being attempted: M6 passed against the exact DEV Ripple target
+`https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 with
+final path `/ripple/`; three expected destination groups and eight blocked
+groups were recorded, with zero unresolved destinations. The exact
+source-supported Pylon host remains locally blocked as distinct,
+non-fatal `OPTIONAL_THIRD_PARTY_SUPPORT`; it is not allowlisted and did not
+reach the proxy or upstream. No storage state was loaded and no auth capture
+was started. The next step is human-led external auth capture only.
 
 ## Completed Milestones
 
@@ -92,22 +91,47 @@ configuration and path-agreement guards. The approved UI origin is
 ## Work In Progress
 
 Continuity, evidence minimization, manual capture, and the pre-real-run safety
-gate are complete. The corrected canary reached `/ripple/` with HTTP 200 but
-stopped on `widget.usepylon.com`. Narrow current Ripple source verification at
+gate are complete. The corrected canary reached `/ripple/` with HTTP 200 and
+passed after the source-backed Pylon classification. Narrow current Ripple
+source verification at
 `mobingilabs/ripple-ui` `dev` `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`
 proved the exact host is an asynchronous optional support/chat widget; no
 direct Pylon references were found in the named Ripple MFE/shared UI repos.
 Nightwatch now blocks only that exact host as
 `OPTIONAL_THIRD_PARTY_SUPPORT`; related Pylon names remain fail-closed
-unknowns. No authenticated observation or auth capture has occurred.
+unknowns. The passing run was `nightwatch-20260809T110122Z-4d4d`: 3 expected,
+0 new-but-verified, 8 blocked, 0 unresolved; 0 production attempts and 0
+proxy violations. No authenticated observation or auth capture has occurred.
 
 ## Exact Next Action
 
-Run exactly one corrected unauthenticated canary:
-`npm run observe:canary -- --env=dev`.
-Use the approved target `https://appdev.alphaus.cloud/ripple/`; do not load
-storage state or start auth capture. If any hostname other than exact
-`widget.usepylon.com` appears unresolved, stop and checkpoint.
+The corrected unauthenticated canary already passed:
+`npm run observe:canary -- --env=dev`, run
+`nightwatch-20260809T110122Z-4d4d`, against
+`https://appdev.alphaus.cloud/ripple/`. Do not rerun it in this handoff.
+
+Exact next action for the human:
+
+```bash
+mkdir -p "$HOME/.nightwatch/auth"
+npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+
+Complete login/MFA manually in the headed browser, press ENTER in the
+interactive terminal, and keep the storage state outside the workspace. Never
+paste the file contents, credentials, tokens, or user identity into Nightwatch.
+
+Exact fresh-session resume instruction after capture:
+
+```bash
+cd /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
+npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+
+The gate is local-only and must pass before any authenticated target navigation.
+Then resume this same task at M7 using the guarded direct-landing observer and
+exactly one fresh-context replay; do not begin Phase 2B or approve any new
+hostname. If another hostname is unresolved, stop and checkpoint.
 
 ## Files Changed
 
@@ -434,6 +458,39 @@ When: 2026-08-09
 Relevant failure/output summary: no Alphaus repository or workspace-root file
 was included in the Nightwatch commit.
 
+Command: corrected `npm run observe:canary -- --env=dev`
+Result: PASS; run ID `nightwatch-20260809T110122Z-4d4d` passed preflight, all
+13 pre-real-run checks, and direct unauthenticated navigation to
+`https://appdev.alphaus.cloud/ripple/`. HTTP status was `200`, final path was
+`/ripple/`, and no redirect occurred. The sanitized destination manifest
+recorded 3 expected, 0 new-but-verified, 8 blocked, and 0 unresolved groups.
+The exact Pylon group was one `OPTIONAL_THIRD_PARTY_SUPPORT` block with
+`block-optional-support`; related hosts were not approved. Proxy summary was
+3 allowed, 7 telemetry-blocked, 0 optional-support-blocked, 0 denied, 0
+unknown, and 0 violations. Production attempts: 0. The browser Fetch guard
+blocked Pylon before proxy/upstream contact. No storage state, auth,
+credentials, DB access, mutation, screenshot, or trace was used.
+When: 2026-08-09
+Relevant failure/output summary: Pylon console effects were recorded as
+`EXPECTED_CONTAINMENT_EFFECT`; unrelated console errors remained normal
+oracle events. The artifact's sanitized evidence contains no identity values
+or credentials.
+
+Command: final Phase 2A handoff validation and read-only scope checks
+Result: PASS; `npx tsc --noEmit` passed; `npx playwright test` => **126
+passed, 0 failed**; `npm run agent:check` passed with the expected approved
+state-only `CHECKPOINT_ADVANCE` warning; and `git diff --check` passed. The
+canary repository snapshot comparison covered all 144 Alphaus repositories
+with 0 HEAD or dirty-file-count mismatches. The canary artifact secret scan
+found 0 credential-like patterns and Pylon URLs were sanitized to the
+`<ID>` placeholder. The external auth-state path is absent,
+`NIGHTWATCH_STORAGE_STATE` is unset, and `proxy.jsonl` contains no Pylon
+event. No Alphaus repository was modified.
+When: 2026-08-09
+Relevant failure/output summary: the Nightwatch tree contains only the three
+documented handoff-state changes before the checkpoint commit; no authenticated
+observation was executed.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -556,11 +613,12 @@ destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`
   requires separate review.
 
 The Pylon classification blocker is cleared by the human disposition and the
-narrow source check. M6 now requires one corrected canary rerun. If any
-hostname other than exact `widget.usepylon.com` appears unresolved, stop and
-checkpoint. After a passing canary, M7 still requires a valid external
-Playwright storage-state path without exposing its contents and a passing
-pre-real-run gate.
+narrow source check. The corrected canary passed as run
+`nightwatch-20260809T110122Z-4d4d`, with zero unresolved destinations,
+production attempts, and proxy violations. The current blocker is human
+action: M7 requires a valid external Playwright storage-state path without
+exposing its contents and a passing pre-real-run gate. If any hostname other
+than exact `widget.usepylon.com` appears unresolved, stop and checkpoint.
 
 ## Safety Events
 
@@ -582,6 +640,14 @@ browser Fetch guard denied it before upstream contact; the outer proxy recorded
 destination and the run stopped. The source-backed policy now blocks the exact
 host as optional support; no production destination, auth state, credential, DB
 access, or mutation occurred.
+
+M6 corrected-canary pass: run `nightwatch-20260809T110122Z-4d4d` reached the
+approved DEV Ripple path with HTTP 200 and final `/ripple/`. The manifest
+recorded 3 expected, 0 new-but-verified, 8 blocked, and 0 unresolved groups.
+The exact Pylon attempt was represented as sanitized optional-support evidence;
+the proxy recorded no Pylon event and no Pylon upstream connection. Production
+attempts, proxy violations, database access, mutation, auth state, and
+credentials were absent.
 
 ## Deferred / Follow-Up
 

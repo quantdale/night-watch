@@ -186,12 +186,10 @@ Phase 2B+, and container/L6 implementation.
   allowed or added to config.
 - Validation commands: real-run gate/canary command if preflight PASS; inspect
   sanitized local manifest and STATE checkpoint.
-- Status: IN_PROGRESS — the corrected canary reached the approved
-  `/ripple/` target with HTTP 200 but stopped on the new unclassified host
-  `widget.usepylon.com`. Human disposition required a narrow source check; that
-  check proved the host is an optional support widget and the exact-host policy
-  classification/tests are now complete. No auth capture may begin until the
-  one corrected canary rerun passes.
+- Status: COMPLETE — the corrected canary reached the approved `/ripple/`
+  target with HTTP 200, and the exact source-supported optional support host
+  was blocked locally with zero unresolved destinations. No auth capture or
+  authenticated observation has begun.
 
 #### M6 approval checkpoint — 2026-08-09
 
@@ -295,9 +293,39 @@ entry, local browser/proxy blocking, non-fatal expected severity, and a
 distinct sanitized manifest/event category. Related or future Pylon hostnames
 remain unknown and fail closed.
 
-Do not dynamically approve any hostname or begin M7 until the one corrected
-canary rerun passes. If any hostname other than exact `widget.usepylon.com`
-appears unresolved, stop and checkpoint again.
+The corrected canary rerun passed. Do not dynamically approve any hostname.
+If any hostname other than exact `widget.usepylon.com` appears in a later run,
+stop and checkpoint again.
+
+#### M6 canary pass — 2026-08-09 — `nightwatch-20260809T110122Z-4d4d`
+
+The corrected command `npm run observe:canary -- --env=dev` passed against
+`https://appdev.alphaus.cloud/ripple/`:
+
+- HTTP status `200`; final path `/ripple/`; no redirect.
+- Destination groups: 3 expected, 0 new-but-verified, 8 blocked, 0 unresolved.
+- Expected: `appdev.alphaus.cloud`, `fonts.googleapis.com`, and
+  `fonts.gstatic.com` (one request each).
+- Blocked telemetry groups: 7 — `accounts.google.com` (4),
+  `api-js.mixpanel.com` (1), `clients2.google.com` (1),
+  `o446571.ingest.sentry.io` (1),
+  `safebrowsingohttpgateway.googleapis.com` (1), `widget.intercom.io` (1),
+  and `www.google.com` (6). The manifest's telemetry attempt count is 15;
+  the proxy recorded 7 telemetry-block events because the browser guard
+  blocked some attempts before proxy contact.
+- Optional support group: `widget.usepylon.com` (1 manifest request),
+  `OPTIONAL_THIRD_PARTY_SUPPORT`, `block-optional-support`,
+  `optional-support-chat`; blocked by the browser Fetch guard before proxy
+  contact. It is not allowlisted and is not unresolved.
+- Proxy: 3 allowed, 7 telemetry-blocked, 0 optional-support-blocked,
+  0 denied, 0 unknown, 0 violations. Production attempts: 0.
+- No storage state, authentication, credentials, database access, mutation,
+  screenshot, trace, or Pylon upstream connection occurred. Pylon console
+  effects were recorded as `EXPECTED_CONTAINMENT_EFFECT`; unrelated console
+  errors remained normal oracle events.
+
+M6 acceptance is COMPLETE. Proceed only to the manual external auth-state
+handoff; do not execute the authenticated observation in this session.
 
 ### M7 — Observe the first authenticated Ripple landing page
 
@@ -312,9 +340,26 @@ appears unresolved, stop and checkpoint again.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: NOT_STARTED — gated on a passing corrected unauthenticated canary;
-  no authentication state is present in this session and no credentials may be
-  provided to Nightwatch.
+- Status: USER_ACTION_REQUIRED — the corrected unauthenticated canary passed,
+  but no authentication state is present in this session. Prepare the guarded
+  manual capture handoff only; no credentials may be provided to Nightwatch.
+
+#### M7 handoff preparation
+
+The human must create the external parent directory, then run from an
+interactive terminal:
+
+```bash
+mkdir -p "$HOME/.nightwatch/auth"
+npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+
+The headed browser opens only the approved DEV Ripple path. The human
+completes login/MFA in that browser and presses ENTER in the same terminal;
+Nightwatch does not read, print, copy, or receive credential values. The
+storage-state file remains outside the workspace at the exact path above.
+Do not execute authenticated observation until a fresh session has rerun the
+local gate with that path and it passes.
 
 ### M8 — Produce the destination manifest
 
@@ -326,7 +371,8 @@ appears unresolved, stop and checkpoint again.
 - Acceptance criteria: no dynamic allowlist mutation; every destination has a
   deterministic category and unresolved items stop or remain explicit.
 - Validation commands: focused manifest tests; real-run artifact inspection.
-- Status: NOT_STARTED
+- Status: NOT_STARTED — remains gated on the manual external state and M7
+  observation; no destination approval may be inferred from the canary.
 
 ### M9 — Run passive first-observation oracles
 
@@ -392,7 +438,9 @@ appears unresolved, stop and checkpoint again.
   instructions and remains `IN_PROGRESS`.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`; `npm run
   agent:check`; `git diff --check`; focused Phase 2A tests; clean `git status`.
-- Status: NOT_STARTED
+- Status: USER_ACTION_REQUIRED — handoff checkpoint is prepared and local
+  validation is complete; authenticated observation and later milestones
+  remain unstarted until the human supplies external state.
 
 ## Validation Strategy
 
