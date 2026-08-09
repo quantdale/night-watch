@@ -142,6 +142,21 @@ test('telemetry hosts are blocked without failing', () => {
   }
 });
 
+test('approved Chromium background hosts are blocked telemetry, never allowed', () => {
+  const hosts = ['clients2.google.com', 'safebrowsingohttpgateway.googleapis.com'];
+  for (const envName of ['dev', 'next'] as const) {
+    const env = loadEnvironmentConfig(envName);
+    const policy = new OutboundPolicy(env);
+    for (const host of hosts) {
+      expect(env.allowedHosts, `${envName} allowlist :: ${host}`).not.toContain(host);
+      expect(env.telemetryHosts, `${envName} telemetry classification :: ${host}`).toContain(host);
+      const decision = policy.decide(`https://${host}/background-check`);
+      expect(decision.verdict, `${envName} :: ${host}`).toBe('block-telemetry');
+      expect(decision.hostClass, `${envName} :: ${host}`).toBe('telemetry');
+    }
+  }
+});
+
 test('port-exact allowlist entries', () => {
   const policy = new OutboundPolicy(inlineEnv('local', ['127.0.0.1:8080']));
 
