@@ -1,7 +1,8 @@
 import { defineConfig } from '@playwright/test';
+import { proxyServerUrl } from './src/proxy/server';
 
 // ---------------------------------------------------------------------------
-// Nightwatch Playwright configuration (Phase 0/1).
+// Nightwatch Playwright configuration (Phase 0/1/1.1/1.2).
 //
 // - Nightwatch manages its own evidence in artifacts/<run-id>; Playwright's
 //   own trace/screenshot/video capture is disabled to avoid double capture.
@@ -26,12 +27,41 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: [['list']],
   outputDir: 'test-results',
+  globalSetup: './tests/globalSetup.ts',
   projects: [
     {
       name: 'nightwatch',
       use: {
         browserName: 'chromium',
         channel: 'chrome',
+        // Explicit browser launch proxy. HTTP_PROXY/HTTPS_PROXY are not part
+        // of the containment contract and are intentionally ignored.
+        launchOptions: {
+          proxy: { server: proxyServerUrl() },
+          args: [
+            // Chromium otherwise treats loopback as a proxy bypass. This
+            // special token removes that implicit bypass; the sink test proves
+            // the installed browser obeys it.
+            '--proxy-bypass-list=<-loopback>',
+            // The L5 proxy is TCP/HTTP only; disable non-proxied transports.
+            '--disable-quic',
+            '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
+            '--disable-background-networking',
+            '--disable-sync',
+            '--disable-default-apps',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--disable-component-update',
+            '--disable-domain-reliability',
+            '--disable-client-side-phishing-detection',
+            '--disable-variations-safe-mode',
+            '--disable-variations-seed-fetch',
+            '--disable-top-sites',
+            '--disable-network-hint',
+            '--disable-fetching-hints-at-navigation-start',
+            '--disable-features=AutofillServerCommunication,CertificateTransparencyComponentUpdater,InterestFeedContentSuggestions,MediaRouter,OptimizationHints,Translate',
+          ],
+        },
         trace: 'off',
         screenshot: 'off',
         video: 'off',

@@ -185,6 +185,9 @@ test.describe('authenticated storage state is secret material', () => {
       expect(ctx.monitor.hardFailures.length).toBe(0);
       expect(ctx.monitor.failed).toBe(false);
       expect(summary.passed).toBe(true);
+      expect(summary.proxy).toBeDefined();
+      expect(summary.proxy?.allowed).toBeGreaterThan(0);
+      expect(summary.proxy?.violations).toBe(0);
       const allEvents = readJsonl(path.join(recorder.dir, 'events.jsonl'));
       expect(allEvents.some((e) => e.type === 'hard-failure')).toBe(false);
 
@@ -196,6 +199,10 @@ test.describe('authenticated storage state is secret material', () => {
       const traceEntry = manifest.trace as Record<string, unknown>;
       expect(traceEntry.enabled).toBe(false);
       expect(String(traceEntry.reason)).toContain('cannot be sanitized');
+      expect(manifest.networkContainment).toEqual(expect.objectContaining({
+        proxyEnabled: true,
+        browserGuardsEnabled: true,
+      }));
 
       expect(
         allEvents.some((e) => e.type === 'env' && String(e.message).includes('authenticated run: Playwright tracing forced OFF'))

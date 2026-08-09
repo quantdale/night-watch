@@ -20,7 +20,9 @@
     "segment.io",
     "*.segment.io",
     "intercom.io",
-    "*.intercom.io"
+    "*.intercom.io",
+    "accounts.google.com",
+    "www.google.com"
   ],
   "failOn": [
     "hard-failure",

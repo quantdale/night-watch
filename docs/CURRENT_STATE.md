@@ -1,14 +1,16 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-09** by the
-> Phase 1.1 (SAFETY HARDENING) implementation agent, after the final acceptance
-> run. Nightwatch HEAD at last update: `HEAD~0` of this commit (see git log).
+> Phase 1.2 (OUT-OF-PROCESS EGRESS CONTAINMENT) implementation agent. Prior
+> Nightwatch HEAD: `22ff87f`; the resulting Phase 1.2 SHA is recorded after the
+> implementation commit.
 
 ---
 
 ## What exists now
 
-Phase 0/1 **and** Phase 1.1 (safety hardening) are complete. Nightwatch lives in
+Phase 0/1, Phase 1.1 (browser safety hardening), and Phase 1.2 (outer egress
+containment) are complete. Nightwatch lives in
 `REPOSITORIES/nightwatch/` as its own git repository (no remote). It reads the
 Alphaus repos under `REPOSITORIES/alphauslabs` and `REPOSITORIES/mobingilabs`
 strictly read-only.
@@ -21,6 +23,9 @@ strictly read-only.
 | Policy | `ws:`/`wss:` are network schemes (`NETWORK_PROTOCOLS`) — WebSocket policy identical to HTTP; `isNetworkUrl()` helper |
 | Storage state | Hardened secret handling: absolute path, external to repo+workspace, shape `{cookies, origins}`, ≤5MB, fail closed; explicit `storageStatePath` now validated too (was bypassed); `.gitignore` auth patterns |
 | Traces | Authenticated runs ALWAYS disable Playwright traces (even `NIGHTWATCH_TRACE=on`); manifest records `trace.enabled=false` + reason via `addManifestEntry` |
+| Outer containment | Mandatory loopback L5 forward proxy (`src/proxy/server.ts`) is started by Playwright global setup, health-checked, and passed explicitly to Chromium; HTTP and CONNECT/upgrade destinations are classified before DNS/TCP; no TLS MITM; sanitized `proxy.jsonl` plus `summary.json.proxy` aggregates |
+| Policy consumers | `OutboundPolicy.decide()` is the only semantic policy source; named browser HTTP/WS consumers and `src/proxy/policyAdapter.ts` delegate to it; policy version is recorded in the manifest |
+| Chromium egress configuration | Loopback proxy bypass removed with `--proxy-bypass-list=<-loopback>`; QUIC disabled; non-proxied WebRTC UDP disabled; background/speculative Chrome channels disabled where supported; observed Chrome Google control-plane preconnects are explicit telemetry and blocked locally |
 | Fixtures | `safety` variant with `window.__nw` driver (SW/WS/SSE/popup/redirect/download/worker probes), RFC 6455 WS echo endpoint, SSE, redirect endpoints (prod target = `random.mobingi.com` — production-class AND DNS-unresolvable, zero real contact) |
 | Tests | `tests/smoke/safety.smoke.ts` (23 network-surface cases), `tests/smoke/authenticated.smoke.ts` (2), `tests/unit/storageState.test.ts` (10), WS policy unit tests (8), manifest entry test |
 | Docs | `docs/SAFETY_MODEL.md` (layers L0–L5, surface audit §10, residual gaps §11, auth sessions §12, second-layer design §13), `docs/DECISIONS.md` D-15–D-22, `docs/ROADMAP.md` Phase 1.1 + Phase 2 L5 gate, `docs/recon/README.md` (handoff summaries) |
@@ -29,7 +34,7 @@ strictly read-only.
 
 | Capability | Evidence |
 |---|---|
-| Full self-test suite | `npx playwright test` → **84 passed** (56 unit + 25 safety/auth smoke + 2 pre-existing smoke + 1 scenario); green on 4 consecutive runs |
+| Previous self-test suite | Phase 1.1 ended at `22ff87f` with `npx tsc --noEmit` PASS and `npx playwright test` **84 passed** |
 | Typecheck | `npx tsc --noEmit` → 0 errors |
 | Service workers | `serviceWorkers:'block'` + stub: `register()` rejects, console marker recorded, SW script never fetched (`server.requests()` clean), no `serviceworker` event |
 | WebSockets | allowed localhost WS connects + echoes (server counts upgrade); `wss://api.alphaus.cloud:8443` closed pre-connect + hard failure; unknown WS hard-fails; telemetry WS closed, run stays green |
@@ -41,7 +46,7 @@ strictly read-only.
 | Telemetry | HTTP + WS telemetry blocked-not-failed; run stays green (was flaky under the removed CDP blocklist) |
 | Redaction | Authorization/Cookie/JWT fake secrets appear nowhere in artifacts; headers/URLs show `[REDACTED]` |
 | Authenticated runs | fake storage-state secrets never enter artifacts; `trace.zip` absent; manifest documents trace reason; missing/misplaced/malformed storage state fails closed at context creation |
-| No prod/DB/mutation | policy unit tests + canary; all browser tests use localhost fixtures + unresolvable hosts (`random-host-xyz.alphaus.cloud`, `*.mobingi.com` random subdomains, `*.invalid`) |
+| No prod/DB/mutation | policy unit tests + canary; all Phase 1.2 browser tests use loopback fixtures and denied local alias `127.0.0.2`; production/unknown CONNECT tests stop at the proxy and never resolve or dial the destination |
 
 ## Phase 1.1 harness bugs found & fixed (by the test suite)
 
@@ -51,17 +56,47 @@ strictly read-only.
 4. **Spurious `malformed-json` on unreadable bodies** — body oracles run only when capture succeeded.
 5. **SSE/abort misclassification** — `text/event-stream` excluded from NDJSON oracle; `net::ERR_ABORTED`/`ERR_BLOCKED_BY_CLIENT`/`inspector` classified as benign client/policy aborts (were spurious `request-failed` issues).
 
-## Known residual gaps (Phase 1.1)
+## Historical Phase 1.1 safety event
+
+During intermediate Phase 1.1 safety testing, before the final raw-CDP Fetch
+guard was installed, one unintended production contact occurred at the
+`api.alphaus.cloud` host. No intended production interaction, production
+mutation, or database query occurred. The final Phase 1.1 implementation
+blocked the demonstrated browser path; Phase 1.2 adds the independent outer
+gate specifically so a browser/harness escape must defeat both layers.
+
+Retained local Nightwatch artifacts were inspected before Phase 1.2. They do
+not contain a matching production event, so the evidence-supported fields are:
+
+| Field | Value |
+|---|---|
+| Attempted URL | **UNKNOWN** (host recorded as `api.alphaus.cloud`; exact path unavailable) |
+| Method | **UNKNOWN** |
+| Credentials attached | **UNKNOWN** |
+| Response received | **UNKNOWN** |
+
+No new request was made to production to investigate this historical event.
+
+## Known residual gaps (Phase 1.2)
 
 - A redirect follow-up racing an in-flight Fetch-guard install on a brand-new popup could complete before detection — detected (L4) but not prevented; closed by the second containment layer (see `docs/SAFETY_MODEL.md` §11/§13).
-- Browser-internal background telemetry (Chrome metrics/safe-browsing) not visible to Playwright; largely disabled by launch defaults; second layer addresses.
+- HTTP/HTTPS/WS/WSS browser traffic is under L5. QUIC is disabled and WebRTC
+  non-proxied UDP is disabled by the verified Chromium launch flag. Chromium
+  control-plane preconnects to `accounts.google.com`/`www.google.com` were
+  observed locally and are classified as explicit telemetry, then blocked by
+  the proxy before upstream connection.
+- DNS prefetch/resolver activity is not itself visible as a proxy event:
+  **UNRESOLVED**. The proxy performs no DNS for denied/unknown targets and
+  only resolves after an allow decision; a future restricted container is
+  still required for complete process/network-namespace isolation.
 - `serviceWorker.register()` may resolve under `serviceWorkers:'block'` (no worker is created — verified; the stub makes it reject for app-level evidence).
 - Real dev/next sessions still NOT run; authenticated runs exercised only with synthetic storage state.
 
 ## Last successful checks (2026-08-09)
 
 - `npx tsc --noEmit` — PASS
-- `npx playwright test` — 84 passed (4 consecutive runs)
+- `npx playwright test --project=nightwatch` — **93 passed, 0 failed**
+- Focused Phase 1.2 proxy tests — 9 passed (3 unit/parser + 6 browser/sink tests)
 - `NIGHTWATCH_RUN_ID=acceptance-11 npm run scenario -- --env=local` — 1 passed; artifacts in `artifacts/acceptance-11/` (passed=true, 0 hard failures, manifest carries `trace` decision)
 - Sample Alphaus repos (ouchan, ripple-ui, ripple-api, invoice-ui, blueapi, blue-sdk-ts, blue-sdk-go) byte-identical before/after — PASS
 - No production contact: all denied targets DNS-unresolvable or aborted pre-network; no DB tool used in session

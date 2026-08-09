@@ -500,7 +500,7 @@ via the manifest entry.
 
 ---
 
-## D-22 — Second containment layer deferred by design (Phase 2 prerequisite)
+## D-22 — Second containment layer deferred by design (Phase 2 prerequisite; superseded by D-23)
 
 **Decision.** A second containment layer (L5) is designed but **not
 implemented** in Phase 1.1: a local allowlist filtering proxy applying
@@ -523,3 +523,97 @@ lands; SAFETY_MODEL §13 documents the design; ROADMAP Phase 2 carries the
 gate.
 
 **Phase applicability.** 2+ (implementation); design documented in 1.1.
+
+---
+
+## D-23 — L5 is a mandatory loopback proxy, explicitly configured at launch
+
+**Decision.** Phase 1.2 implements L5 as a small Nightwatch-owned forward
+proxy in `src/proxy/`. Playwright global setup starts it on loopback, performs
+a health check, and writes runtime state. Chromium receives an explicit
+`launchOptions.proxy` value; `HTTP_PROXY`/`HTTPS_PROXY` environment variables
+are not a containment mechanism. Startup or health failure aborts controlled
+browser execution; there is no continue-without-proxy path.
+
+**Rationale.** The Phase 1.1 browser layers depend on code executing inside
+Playwright. A separate local process boundary must remain active even if a
+popup, redirect, worker, browser background channel, or future subprocess
+escapes those handlers. Loopback-only binding needs no root, firewall rule, or
+system-wide proxy change.
+
+**Consequences.** The installed Chrome receives
+`--proxy-bypass-list=<-loopback>` because loopback is otherwise special-cased;
+the A/B sink test is the empirical proof. The proxy is required for all
+Nightwatch browser runs and future browser integrations.
+
+**Phase applicability.** 1.2 and all later browser phases.
+
+---
+
+## D-24 — One semantic policy source; proxy parsing is fail-closed
+
+**Decision.** `OutboundPolicy.decide()` remains the only host/verdict
+authority. Browser HTTP, browser WebSocket, and proxy policy consumers all
+delegate to it. `src/proxy/policyAdapter.ts` only parses absolute URLs and
+CONNECT authorities; malformed input, embedded credentials, trailing-dot
+hostnames, invalid IPv4/IPv6 forms, missing ports, and unexpected ports reject
+before DNS or TCP.
+
+**Rationale.** Separate proxy host lists would drift from L0–L2 and make a
+browser/proxy disagreement possible. Raw-authority rejection prevents WHATWG
+URL canonicalization from turning a hostile spelling into an allow decision.
+
+**Consequences.** `OUTBOUND_POLICY_VERSION` is recorded in the manifest;
+`tests/unit/proxy.test.ts` compares direct policy, browser HTTP/WS consumers,
+and proxy decisions across the full destination matrix.
+
+**Phase applicability.** 1.2 and all later phases.
+
+---
+
+## D-25 — Proxy controls egress, not encrypted content
+
+**Decision.** HTTP is forwarded only after policy classification. HTTPS/WSS
+uses CONNECT tunnelling and WebSocket uses HTTP Upgrade where Chromium uses
+that path. Nightwatch does not implement TLS MITM. Proxy evidence records only
+sanitized destination metadata; browser L0–L4 evidence remains responsible for
+request/response details.
+
+**Rationale.** The required independent boundary is destination egress
+control. TLS interception would increase secret exposure and create a second
+certificate/security system without improving the allowlist decision.
+
+**Phase applicability.** 1.2 and all later phases.
+
+---
+
+## D-26 — Non-HTTP browser channels are disabled or explicitly bounded
+
+**Decision.** Nightwatch launches installed Chrome with `--disable-quic` and
+`--force-webrtc-ip-handling-policy=disable_non_proxied_udp`. Background and
+speculative networking switches are enabled where supported by this Chrome
+build. The observed Chrome control-plane hosts `accounts.google.com` and
+`www.google.com` are explicit telemetry entries and are blocked locally by
+L5. DNS prefetch visibility remains documented as **UNRESOLVED**.
+
+**Rationale.** An HTTP CONNECT proxy cannot govern UDP QUIC or non-proxied
+WebRTC. The conservative execution configuration removes those unnecessary
+channels without claiming complete process isolation.
+
+**Phase applicability.** 1.2; future L6 container supersedes residual DNS
+and process-level concerns.
+
+---
+
+## D-27 — Historical Phase 1.1 production contact is recorded without inference
+
+**Decision.** Documentation records one unintended intermediate-test contact
+with `api.alphaus.cloud`, no intended production interaction, no mutation, and
+no database query. Retained local artifacts did not identify the exact URL,
+method, credential attachment, or response status, so those fields remain
+`UNKNOWN`. Nightwatch makes no new production request to reconstruct them.
+
+**Rationale.** Safety history must be accurate and auditable; replacing an
+uncertain fact with a reassuring claim would be misleading.
+
+**Phase applicability.** 1.2 and all later phases.

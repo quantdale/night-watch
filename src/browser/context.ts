@@ -45,6 +45,7 @@ import { createConsoleObserver } from './observers/consoleObserver';
 import { createPageObserver } from './observers/pageObserver';
 import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/storageState';
 import { installFetchGuard } from './network/fetchGuard';
+import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
 
 export interface NightwatchContextOptions {
   env: EnvironmentConfig;
@@ -153,6 +154,10 @@ export async function createNightwatchContext(
   browser: Browser,
   opts: NightwatchContextOptions
 ): Promise<NightwatchContext> {
+  // L5 is a mandatory startup precondition. A browser context is never
+  // created on the assumption that an environment proxy variable happens to
+  // be configured by the shell.
+  const proxyRuntime = await requireProxyRuntime(opts.env.name);
   const validated = validateUiUrl(opts.env, opts.uiBaseUrl);
   const recorder = opts.recorder;
 
@@ -205,6 +210,19 @@ export async function createNightwatchContext(
   }
 
   const monitor = new RunMonitor(opts.failOn ?? opts.env.failOn);
+  recorder.configureProxy({
+    state: proxyRuntime,
+    browserGuardsEnabled: true,
+    onViolation: (proxyEvent, failureEvent) => {
+      const safeUrl = `${proxyEvent.protocol}://${proxyEvent.host}${proxyEvent.port === null ? '' : `:${proxyEvent.port}`}/`;
+      monitor.recordHardFailure(failureEvent, {
+        url: safeUrl,
+        verdict: proxyEvent.decision,
+        hostClass: proxyEvent.classification,
+        reason: proxyEvent.reason,
+      });
+    },
+  });
   recorder.event({
     type: 'env',
     severity: 'info',
@@ -234,6 +252,38 @@ export async function createNightwatchContext(
   const policy = new OutboundPolicy(opts.env);
 
   const network = createNetworkObserver({ policy, recorder, monitor });
+  let proxyPollStopped = false;
+  let proxyHealthCheckInFlight = false;
+  let proxyDownRecorded = false;
+  const proxyPoll = setInterval(() => {
+    recorder.syncProxyViolations();
+    if (proxyPollStopped || proxyHealthCheckInFlight || proxyDownRecorded) return;
+    proxyHealthCheckInFlight = true;
+    void checkProxyHealth(proxyRuntime)
+      .then((healthy) => {
+        if (healthy || proxyPollStopped || proxyDownRecorded) return;
+        proxyDownRecorded = true;
+        const failureEvent = recorder.event({
+          type: 'hard-failure',
+          severity: 'fatal',
+          message: 'HARD FAILURE: outer proxy became unavailable during run',
+          data: {
+            path: 'outer-proxy-runtime',
+            proxyAddress: `loopback:${proxyRuntime.port}`,
+            reason: 'proxy health check failed during run',
+          },
+        });
+        monitor.recordHardFailure(failureEvent, {
+          url: `${proxyRuntime.address}/__nightwatch_health`,
+          verdict: 'deny',
+          hostClass: 'external',
+          reason: 'proxy health check failed during run',
+        });
+      })
+      .finally(() => {
+        proxyHealthCheckInFlight = false;
+      });
+  }, 100);
   const consoleObserver = createConsoleObserver({ recorder, monitor });
   const pageObserver = createPageObserver({ recorder, monitor });
 
@@ -316,6 +366,9 @@ export async function createNightwatchContext(
   }
 
   const close = async (): Promise<void> => {
+    proxyPollStopped = true;
+    clearInterval(proxyPoll);
+    recorder.syncProxyViolations();
     if (traceOn) {
       try {
         await context.tracing.stop({ path: path.join(recorder.dir, 'trace.zip') });

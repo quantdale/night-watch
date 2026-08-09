@@ -78,6 +78,14 @@ export interface RunSummary {
   hardFailures: Array<{ ts: string; message: string; reason: string }>;
   screenshots: string[];
   nightwatchSha: string | null;
+  /** Sanitized aggregate from the independent outer proxy, when configured. */
+  proxy?: {
+    allowed: number;
+    telemetryBlocked: number;
+    denied: number;
+    unknown: number;
+    violations: number;
+  };
   notes?: string[];
 }
 

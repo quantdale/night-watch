@@ -1,8 +1,9 @@
 # Nightwatch
 
 Private, local, autonomous bug-hunting framework for Alphaus products.
-**Phase 0/1** — scaffold, safety kernel, repository snapshot, Playwright
-harness, passive Ripple observer, evidence recorder, self-tests.
+**Phase 1.2** — scaffold, layered browser safety, mandatory loopback egress
+proxy, passive Ripple observer, evidence recorder, and synthetic containment
+self-tests. Phase 2 product testing has not started.
 
 > The default `local` scenario targets a built-in fixture app and performs
 > **zero** network I/O beyond `127.0.0.1`. No production request can pass the
@@ -10,8 +11,8 @@ harness, passive Ripple observer, evidence recorder, self-tests.
 
 ## Safety in one paragraph
 
-Nightwatch **fails closed** on every outbound request: the browser harness
-inspects EVERY request and the policy allows only hosts explicitly listed in
+Nightwatch **fails closed** on every outbound request: the browser harness and
+mandatory outer loopback proxy inspect every request, and the policy allows only hosts explicitly listed in
 the selected environment's allowlist. Known production hosts
 (`api.alphaus.cloud`, `bluerpc.alphaus.cloud`, `login.alphaus.cloud`,
 `blue.alphaus.cloud`, `app.alphaus.cloud`, `*.mobingi.com`, `*.run.app`),
@@ -35,7 +36,8 @@ Run the Phase 1 passive Ripple scenario (local fixture, fully offline):
 ```bash
 npm run scenario -- --env=local
 # artifacts/<run-id>/  contains manifest.json, repositories.json,
-#                      events.jsonl, network.jsonl, console.jsonl, summary.json,
+#                      events.jsonl, network.jsonl, console.jsonl, proxy.jsonl,
+#                      summary.json,
 #                      trace.zip, screenshots (on failure)
 ```
 
@@ -53,6 +55,7 @@ src/core/safety/        outbound-request policy, canary, action policy, redactio
 src/core/evidence/      run recorder (artifacts/<run-id>), event contracts
 src/core/repositories/  read-only repo snapshot collector
 src/browser/            Playwright harness: observers, network, fixtures
+src/proxy/              mandatory loopback HTTP/CONNECT/Upgrade egress gate
 src/oracles/protocol/   generic passive protocol oracles
 src/products/ripple/    Ripple product config + passive action table
 scenarios/ripple/       runnable Phase 1 scenarios

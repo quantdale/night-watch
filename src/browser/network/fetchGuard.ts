@@ -27,6 +27,7 @@
 
 import type { BrowserContext, Page } from '@playwright/test';
 import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
+import { decideBrowserHttp } from '../../core/safety/policyConsumers';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 
@@ -83,7 +84,7 @@ export async function installFetchGuard(
           await cdp.send('Fetch.continueRequest', { requestId: p.requestId });
           return;
         }
-        const decision = policy.decide(rawUrl);
+        const decision = decideBrowserHttp(policy, rawUrl);
         if (decision.verdict === 'allow') {
           await cdp.send('Fetch.continueRequest', { requestId: p.requestId });
           return;

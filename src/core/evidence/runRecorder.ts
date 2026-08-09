@@ -22,6 +22,8 @@ import type { Page } from '@playwright/test';
 import { createRedactionLayer } from '../safety/redaction';
 import type { RedactionLayer } from '../safety/redaction';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from './types';
+import { readProxyEvents, summarizeProxyEvents } from '../../proxy/events';
+import type { ProxyEvent, ProxyRuntimeState, ProxySummary } from '../../proxy/types';
 
 export interface RunRecorderOptions {
   runId: string;
@@ -37,6 +39,12 @@ export interface RunRecorderOptions {
   now?: () => Date;
   /** Override the artifacts root; defaults to <nightwatch>/artifacts. */
   artifactsRoot?: string;
+}
+
+export interface RecorderProxyOptions {
+  state: ProxyRuntimeState;
+  browserGuardsEnabled: boolean;
+  onViolation?: (event: ProxyEvent, failureEvent: RunEvent) => void;
 }
 
 export class RunRecorder {
@@ -55,6 +63,13 @@ export class RunRecorder {
   private readonly startedAt: string;
   private seq = 0;
   private readonly events: RunEvent[] = [];
+  private proxy: {
+    state: ProxyRuntimeState;
+    startIndex: number;
+    browserGuardsEnabled: boolean;
+    onViolation?: (event: ProxyEvent, failureEvent: RunEvent) => void;
+    consumedViolationSeqs: Set<number>;
+  } | null = null;
 
   constructor(opts: RunRecorderOptions) {
     if (!/^[A-Za-z0-9._-]+$/.test(opts.runId)) {
@@ -105,6 +120,60 @@ export class RunRecorder {
     }
     manifest[key] = value;
     fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+  }
+
+  /** Bind this recorder to the already-running Nightwatch outer proxy. */
+  configureProxy(opts: RecorderProxyOptions): void {
+    const existing = readProxyEvents(opts.state.eventLogPath);
+    this.proxy = {
+      state: opts.state,
+      startIndex: existing.length,
+      browserGuardsEnabled: opts.browserGuardsEnabled,
+      onViolation: opts.onViolation,
+      consumedViolationSeqs: new Set<number>(),
+    };
+    this.addManifestEntry('networkContainment', {
+      proxyEnabled: true,
+      proxyAddress: `loopback:${opts.state.port}`,
+      proxyPolicyVersion: opts.state.policyVersion,
+      browserGuardsEnabled: opts.browserGuardsEnabled,
+    });
+  }
+
+  /**
+   * Pull new proxy events into sanitized run evidence and notify the monitor
+   * callback for denied production/unknown traffic. The proxy never stores
+   * request headers, cookies, bodies, query strings, or tokens.
+   */
+  syncProxyViolations(): ProxySummary | null {
+    if (this.proxy === null) return null;
+    const all = readProxyEvents(this.proxy.state.eventLogPath);
+    const relevant = all.slice(this.proxy.startIndex);
+    for (const event of relevant) {
+      if (event.decision !== 'deny' || this.proxy.consumedViolationSeqs.has(event.seq)) continue;
+      this.proxy.consumedViolationSeqs.add(event.seq);
+      const failureEvent = this.onProxyViolation(event);
+      this.proxy.onViolation?.(event, failureEvent);
+    }
+    fs.writeFileSync(path.join(this.dir, 'proxy.jsonl'), relevant.map((e) => `${JSON.stringify(e)}\n`).join(''));
+    return summarizeProxyEvents(relevant);
+  }
+
+  private onProxyViolation(event: ProxyEvent): RunEvent {
+    const safeTarget = `${event.protocol}://${event.host}${event.port === null ? '' : `:${event.port}`}/`;
+    return this.event({
+      type: 'hard-failure',
+      severity: 'fatal',
+      message: `HARD FAILURE: outer proxy denied ${safeTarget}`,
+      data: {
+        url: safeTarget,
+        verdict: event.decision,
+        hostClass: event.classification,
+        reason: event.reason,
+        path: 'outer-proxy',
+        proxyRuleId: event.ruleId,
+      },
+    });
   }
 
   /**
@@ -171,6 +240,7 @@ export class RunRecorder {
 
   /** Write summary.json and return the run summary. */
   async finalize(input: { passed: boolean; notes?: string[] }): Promise<RunSummary> {
+    const proxySummary = this.syncProxyViolations();
     const endedAt = this.now().toISOString();
     const counts: Record<string, number> = {};
     const severityCounts: Record<string, number> = {};
@@ -201,7 +271,7 @@ export class RunRecorder {
       startedAt,
       endedAt,
       durationMs: Math.max(0, Date.parse(endedAt) - Date.parse(startedAt)),
-      passed: input.passed,
+      passed: input.passed && (proxySummary === null || proxySummary.violations === 0),
       eventCount: this.events.length,
       counts,
       severityCounts,
@@ -209,6 +279,7 @@ export class RunRecorder {
       screenshots,
       nightwatchSha: this.nightwatchSha,
     };
+    if (proxySummary !== null) summary.proxy = proxySummary;
     if (input.notes !== undefined) summary.notes = input.notes;
     fs.writeFileSync(path.join(this.dir, 'summary.json'), JSON.stringify(summary, null, 2));
     return summary;

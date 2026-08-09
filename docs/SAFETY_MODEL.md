@@ -1,6 +1,6 @@
 # Nightwatch Safety Model
 
-Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1.
+Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -30,6 +30,19 @@ through the CLI, which requires `--env` (D-10).
 Every environment shares one rule that overrides all others:
 **runs are strictly read-only in every environment**, because dev/next
 services share the production data plane (RECON_B E8).
+
+### Historical Phase 1.1 production contact
+
+Before the final Phase 1.1 raw-CDP Fetch guard was installed, intermediate
+safety testing caused one unintended contact with the production host
+`api.alphaus.cloud`. There was no intended production interaction, mutation,
+or database query. The final Phase 1.1 implementation blocked the demonstrated
+browser path; Phase 1.2 adds an independent L5 gate.
+
+Retained local Nightwatch artifacts were inspected before implementation and
+contain no matching event. Therefore the exact attempted URL/path, method,
+whether credentials were attached, and whether a response was received are
+all **UNKNOWN**. No new production request was made to investigate this note.
 
 ---
 
@@ -208,7 +221,9 @@ Hard rules:
 
 Telemetry/analytics hosts are classified explicitly per environment
 (sentry, mixpanel, intercom, Google Analytics/GTM, Amplitude, Segment —
-plus their CDN subdomains). Requests to them are:
+plus their CDN subdomains). Chromium's observed control-plane hosts
+`accounts.google.com` and `www.google.com` are also explicit telemetry-class
+entries in all supported environment configs. Requests to them are:
 
 1. **blocked** — aborted at the route handler before leaving the browser
    (sentry.io spans, analytics beacons, etc. never fire);
@@ -251,7 +266,7 @@ before a single request could be made.
 
 ---
 
-## 9. Browser containment layers (Phase 1.1)
+## 9. Browser containment layers (Phase 1.1) plus outer L5 (Phase 1.2)
 
 The Phase 0/1 outbound policy is enforced inside the browser by a layered
 containment stack, all derived from the single `OutboundPolicy.decide()`
@@ -268,7 +283,7 @@ does not see. Build order: `createNightwatchContext()`
 | **L2** | `context.routeWebSocket('**/*')` (`networkObserver.ts` `handleWebSocket`) | WebSocket creation governed with **identical** policy semantics: `allow` → `connectToServer()`; telemetry → `close()` (blocked, not fatal); production/unknown → `close()` + hard failure before any communication | authoritative |
 | **L3** | `serviceWorkers: 'block'` + init script stubbing the Service Worker API and the `SharedWorker` constructor + `serviceworker` hard-failure alarm (`src/browser/context.ts` `containmentInitScript`, alarm handler) | service-worker fetches (never visible to Playwright routing) and shared-worker fetches (empirically verified to bypass routing) cannot exist; any SW that still registers fires a hard failure | native block + evidence |
 | **L4** | unrouted-request detection (150 ms grace, dedupe via `blockedUrls`) + download record/cancel (`networkObserver.ts` `onRequestObserved`; `src/browser/context.ts` `onDownload`) | redirect follow-ups and download-manager traffic that escape routing are detected and recorded as hard failures; downloads are cancelled — the violation cannot escape evidence or the run verdict | detection + evidence |
-| **L5** | second containment layer — local allowlist filtering proxy and/or Docker network isolation (§13) | governs everything browser-internal layers cannot see (browser background telemetry) and future non-browser tools | design only; Phase 2 prerequisite |
+| **L5** | mandatory local proxy (`src/proxy/server.ts`) started by `tests/globalSetup.ts`; explicit Chromium `launchOptions.proxy`; parser/policy adapter in `src/proxy/policyAdapter.ts` | governs HTTP forward traffic, HTTPS/WSS CONNECT, and HTTP Upgrade before DNS/TCP; denied/unknown destinations are rejected locally; sanitized events feed `proxy.jsonl` and `summary.json.proxy` | implemented; Docker namespace remains future L6 |
 
 L0 pattern generation is per environment (`buildCdpBlockPatterns`): every
 known production host and all `*.run.app` are always listed (exact
@@ -306,11 +321,13 @@ Empirical claims were verified on Playwright 1.62.1 with system Chrome
 | WebSockets | L2 (`context.routeWebSocket('**/*')`) | unit: WebSocket policy tests in `tests/unit/safety.test.ts` (`ws:`/`wss:` in `NETWORK_PROTOCOLS`, `isNetworkUrl`); smoke: a closed-without-connect WS surfaces as `onclose(code 0)` in the page | none |
 | EventSource / SSE | L1 | empirical: EventSource requests enter the route handler; smoke: `tests/smoke/safety.smoke.ts` | none |
 | Downloads | L1 (cross-origin) + L4 (record + cancel) | empirical: cross-origin downloads are routed and denied; smoke: `tests/smoke/safety.smoke.ts` | same-origin downloads bypass routing — benign by construction (§11) |
-| Browser background telemetry (Chrome metrics / safe-browsing) | none in 1.1 | not visible to Playwright routing; largely disabled by Playwright's launch defaults | residual risk — primary motivation for L5 (§11, §13) |
+| Browser background/speculative traffic | L5 proxy; explicit Chrome launch flags; `accounts.google.com` and `www.google.com` are telemetry-class and blocked locally | local Chromium run with system Chrome; proxy event log recorded the control-plane CONNECT attempts without upstream contact | DNS prefetch itself is not visible to the proxy (**UNRESOLVED**); future container closes the process-level gap |
+| QUIC / HTTP3 | `--disable-quic` | installed Chrome launch command and local proxy tests | none observed in this configuration |
+| WebRTC/STUN/TURN non-proxied UDP | `--force-webrtc-ip-handling-policy=disable_non_proxied_udp` | installed Chrome launch command; no UDP fixture path is permitted | browser feature is disabled for non-proxied UDP; proxied TURN is not exercised |
 
 ---
 
-## 11. Known residual gaps (Phase 1.1)
+## 11. Known residual gaps (Phase 1.2)
 
 Accepted, documented residuals. None weakens the fail-closed verdict —
 each is either detected and failed, or benign by construction:
@@ -328,10 +345,12 @@ each is either detected and failed, or benign by construction:
    still recorded and the download cancelled; the request is benign by
    construction because same-origin means the host is in the environment
    allowlist.
-3. **Browser-internal background telemetry** (Chrome metrics,
-   safe-browsing) is not visible to Playwright routing. It is largely
-   disabled by Playwright's launch defaults; the residual risk is the
-   primary motivation for the second containment layer (L5, §13).
+3. **DNS prefetch/resolver activity is unresolved at the browser process
+   boundary.** The proxy does not resolve denied/unknown destinations and
+   only calls `net.connect` after an allow decision, but DNS activity that
+   Chromium performs speculatively is not a proxy event. This is why Phase
+   1.2 does not claim complete network isolation and why the future L6
+   container/network namespace remains planned.
 4. **`serviceWorker.register()` may resolve under `serviceWorkers:
    'block'`.** No worker is created (verified), but the promise
    resolution itself is outside Playwright's control; the init-script
@@ -393,26 +412,36 @@ committed by accident: `*.storage-state.json`, `*.storage-state`,
 
 ---
 
-## 13. Second containment layer (design, Phase 2 prerequisite)
+## 13. L5 outer proxy and future L6 container
 
-The browser-internal stack (L0–L4) cannot see everything (browser
-background telemetry, §11). The planned L5 closes that by moving the
-egress gate outside the browser:
+The browser-internal stack (L0–L4) cannot see everything. Phase 1.2 moves
+the egress gate outside the browser:
 
-- **Local allowlist filtering proxy** — a small CONNECT/HTTP proxy that
-  applies the **same allowlist semantics as `OutboundPolicy`**; Chrome
-  is launched with `--proxy-server=http://127.0.0.1:<port>` so *all*
-  egress — including browser-internal traffic routing cannot see — must
-  pass the gate. DNS pinning is the documented alternative (Phase 2
-  chooses).
-- **Docker network isolation** — for the future nightly runner: a
-  container network with default-deny egress except the proxy and the
-  fixture hosts.
+- **Local allowlist proxy (implemented).** `server.ts` handles normal
+  forward-proxy HTTP, CONNECT tunnelling for HTTPS/WSS, and WebSocket HTTP
+  Upgrade. `policyAdapter.ts` rejects malformed authorities and delegates
+  all semantic decisions to `OutboundPolicy`. A denied/unknown destination
+  is answered locally before DNS or TCP. TLS is never intercepted.
+- **Mandatory browser integration (implemented).** Playwright global setup
+  starts the proxy on loopback, performs a health check, writes runtime state,
+  and fails the run if bind/health fails. The context repeats the health gate
+  and polls liveness during execution; a mid-run proxy loss is a fatal
+  hard-failure even if no later browser request occurs. Chromium receives an
+  explicit proxy launch option; `--proxy-bypass-list=<-loopback>` is required
+  because the installed Chrome otherwise treats loopback specially.
+- **Sanitized evidence (implemented).** Proxy events contain only timestamp,
+  run label, protocol, host, port, classification, decision, rule, and safe
+  reason. Authorization, Cookie, Proxy-Authorization, bodies, query strings,
+  and tokens are never persisted. Denied proxy events are fatal; telemetry is
+  blocked without failing; aggregate counts are in `summary.json.proxy`.
+- **Future L6 container (planned).** Browser and Nightwatch subprocesses will
+  run inside a restricted container/network namespace whose default-deny
+  egress permits only the Nightwatch proxy. This later covers Playwright,
+  `oops`, CLIs, and model/API integrations.
 
-Explicitly out of scope for Phase 1.1: no iptables, no root
-requirements, no proxy implementation — L5 is design only (D-22). The
-proxy would also govern future non-browser tools (oops/CLI subprocesses,
-Phase 5) by forcing them through the same egress gate.
+Explicitly out of scope for Phase 1.2: no TLS MITM, no privileged firewall
+rules, no root requirements, no production/dev/next session, and no Docker
+implementation.
 
 ---
 
@@ -437,8 +466,12 @@ test (all under `tests/unit` unless noted):
 | Authenticated runs | Smoke: `tests/smoke/authenticated.smoke.ts` — storage state passes validation; traces forced off; manifest records `trace.enabled=false` + reason |
 | Storage-state secret rules | Unit: `tests/unit/storageState.test.ts` — every fail-closed rule (absolute path, external location, regular readable file, ≤ 5 MB, `{cookies, origins}` shape) throws on violation |
 | WebSocket policy | Unit: WebSocket describe block in `tests/unit/safety.test.ts` — `ws:`/`wss:` classified as network schemes; allow only via env allowlist; production/unknown deny; telemetry block-not-deny; `isNetworkUrl` classification |
+| L5 parser and policy consistency | `tests/unit/proxy.test.ts` — browser HTTP/WS helpers, direct policy, proxy URL/CONNECT adapter decisions, casing, trailing dot, userinfo, invalid ports, production and unknown destinations |
+| L5 upstream zero-connection evidence | `tests/smoke/proxy.smoke.ts` — allowed A (`127.0.0.1`) succeeds; denied B (`127.0.0.2`) receives zero TCP connections for direct HTTP, redirect, immediate popup, SharedWorker, Service Worker, and WebSocket attempts |
+| L5 defense in depth | `tests/smoke/proxy.smoke.ts` — outer-only redirect records proxy DENY and sink count 0; normal Nightwatch context independently records browser hard failure for the same destination |
+| Proxy failure modes | `tests/unit/proxy.test.ts` — unavailable startup health, close-during-run health state, malformed CONNECT, invalid hostname/port, IPv4/IPv6 forms, casing, trailing dot, embedded credentials, and unexpected port; context liveness polling converts a mid-run loss to a hard failure |
 
 ---
 
-*End of SAFETY_MODEL. Normative for Phase 0/1/1.1; changes require a DECISIONS
+*End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2; changes require a DECISIONS
 entry and a test update.*

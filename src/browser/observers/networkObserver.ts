@@ -26,6 +26,7 @@
 import type { BrowserContext, Page, Request, Response, Route } from '@playwright/test';
 import { RedactionLayer } from '../../core/safety/redaction';
 import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
+import { decideBrowserHttp, decideBrowserWebSocket } from '../../core/safety/policyConsumers';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 import {
@@ -78,7 +79,7 @@ export function createNetworkObserver(opts: {
         return;
       }
 
-      const decision = policy.decide(rawUrl);
+      const decision = decideBrowserHttp(policy, rawUrl);
 
       // Register secrets BEFORE recording anything: every sensitive header
       // value plus the full Cookie header becomes a redaction secret.
@@ -197,7 +198,7 @@ export function createNetworkObserver(opts: {
   /** L2 — WebSocket policy: same semantics as HTTP, never weaker. */
   async function handleWebSocket(ws: import('@playwright/test').WebSocketRoute): Promise<void> {
     const rawUrl = ws.url();
-    const decision = policy.decide(rawUrl);
+    const decision = decideBrowserWebSocket(policy, rawUrl);
     const redactedUrl = recorder.redaction.redactUrl(rawUrl);
     const base = {
       url: redactedUrl,
@@ -370,7 +371,7 @@ export function createNetworkObserver(opts: {
     try {
       const rawUrl = request.url();
       if (!isNetworkUrl(rawUrl)) return;
-      const decision = policy.decide(rawUrl);
+      const decision = decideBrowserHttp(policy, rawUrl);
       if (decision.verdict !== 'deny') return;
       if (blockedUrls.has(rawUrl)) return; // governed by a route/WS handler already
 

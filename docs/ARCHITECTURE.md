@@ -1,11 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 0/1. This document describes the architecture as built so far
-(the scaffold, safety contracts, and configuration surface) and the planned
-contracts of modules currently being implemented in parallel. Planned modules
-are marked *in flight*; nothing below claims they are finished. The safety
-model is normative and load-bearing — read `docs/SAFETY_MODEL.md` alongside
-this document.
+Status: Phase 1.2. This document describes the implemented scaffold, browser
+containment, and mandatory out-of-process L5 proxy. The future restricted
+container is explicitly marked planned; nothing here starts Phase 2 product
+testing. The safety model is normative and load-bearing — read
+`docs/SAFETY_MODEL.md` alongside this document.
 
 Design input: `NIGHTWATCH_RECON_B.md` (the full-stack oracle map,
 `investigations/nightwatch_recon_b/`). Facts cited from it use its IDs
@@ -57,6 +56,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/browser/context/` | Playwright browser-context factory: system Chrome via `channel`, storage-state by path, tracing decision (disabled when authenticated state is in use), installs the request-inspection route. | *in flight* |
 | `src/browser/observers/` | Console, page-error, and request-failed observers emitting redacted `RunEvent`s. | *in flight* |
 | `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / deny+abort+hard-failure / block-telemetry+abort), redacted request/response recording. | *in flight* |
+| `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, sanitized event log and runtime health state. | implemented |
 | `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | *in flight* |
 | `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | *in flight* |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
@@ -65,6 +65,11 @@ browser. Hence the architecture is built around request-level policy.
 | `bin/nightwatch.mjs` | Fail-closed CLI: `--env` required (missing/unsupported → exit 2), forwards to the Playwright runner. | implemented |
 | `tests/` | Nightwatch's own unit tests (`tests/unit`) and smoke tests (`tests/smoke`). | *in flight* |
 | `artifacts/` | Run evidence output. Gitignored; evidence is never committed. | scaffold |
+
+The Playwright project launches Chromium with an explicit proxy from
+`playwright.config.ts`; `tests/globalSetup.ts` binds and health-checks the
+proxy before controlled browser execution. Loopback bypass is removed with
+`--proxy-bypass-list=<-loopback>` and the A/B sink test is the empirical proof.
 
 ---
 
@@ -90,9 +95,12 @@ A Nightwatch run proceeds through the following stages:
    *state*, not proof of *freshness* (RECON_B §3: local checkouts drift —
    e.g. `ouchan` was 19 commits behind origin/master; re-verify before
    trusting code-derived assumptions, per D-8/D-12).
-4. **Browser context with request inspection** (`src/browser/context`,
-   `src/browser/network`). A Chromium context (system Chrome via `channel:
-   'chrome'`) is created; `context.route('**/*')` is installed *before* any
+4. **Mandatory L5 startup, then browser context with request inspection.**
+   Playwright global setup starts the loopback proxy and health-checks it;
+   `createNightwatchContext` repeats the health check, polls liveness during
+   the run, and refuses or fatally records a missing/crashed proxy. A Chromium
+   context (system Chrome via `channel: 'chrome'`) is then created;
+   `context.route('**/*')` is installed *before* any
    page loads so that **every** request passes through the policy. Optional
    `NIGHTWATCH_STORAGE_STATE` (path only) loads authenticated state; when it
    is present, tracing is disabled and the run is marked authenticated.
@@ -107,13 +115,47 @@ A Nightwatch run proceeds through the following stages:
 6. **Evidence finalize** (`src/core/evidence/runRecorder.ts`). The recorder
    closes the run: final `events.jsonl`/`network.jsonl`/`console.jsonl`
    flush, `summary.json` (counts, severity counts, hard failures,
-   screenshots, `nightwatchSha`), `manifest.json` (artifact index and run
+   screenshots, `nightwatchSha`, proxy aggregates), `manifest.json` (artifact index and run
    identity), optional `trace.zip` and failure screenshots. A hard failure
    (denied outbound request) always fails the run and is recorded.
 
+The resulting egress topology is:
+
+```
+Browser / browser-internal channels
+          │
+          ▼
+Nightwatch L0–L4 browser controls
+          │
+          ▼
+mandatory loopback L5 proxy  ──► approved target only
+          │
+          └── denied / unknown / malformed: local response, no DNS/TCP
+```
+
 ---
 
-## 4. Request inspection pipeline
+## 4. Outer proxy pipeline
+
+`src/proxy/server.ts` accepts normal forward-proxy HTTP requests, CONNECT
+authorities for HTTPS/WSS, and HTTP Upgrade requests for WebSockets. Each
+target is parsed by `src/proxy/policyAdapter.ts` and delegated to the same
+`OutboundPolicy.decide()` used by the browser consumers.
+
+- `allow`: only then does the proxy forward HTTP or create the upstream TCP
+  connection. HTTPS/WSS is tunneled; TLS is not intercepted.
+- `block-telemetry`: return a local block response and record a sanitized
+  telemetry event; no upstream connection is attempted.
+- `deny` or malformed/unknown: return a local block response and record a
+  fatal proxy event; DNS resolution and TCP are never attempted.
+
+Proxy events contain timestamp, safe run label, protocol, normalized host and
+port, classification, decision, rule ID, and safe reason. They never contain
+headers, cookies, bodies, query strings, or tokens. `RunRecorder` copies only
+the current run's event slice to `proxy.jsonl` and places aggregate counts in
+`summary.json.proxy`.
+
+## 5. Request inspection pipeline
 
 The pipeline is the safety architecture's core. It has exactly one input —
 a request about to leave the browser — and one source of authority — the
@@ -160,7 +202,7 @@ constructed to be safe to persist (no secrets).
 
 ---
 
-## 5. Determinism and injected clock
+## 6. Determinism and injected clock
 
 Evidence must be reproducible, because diffing evidence across runs is how
 regressions are detected:
@@ -181,7 +223,7 @@ events (D-7).
 
 ---
 
-## 6. External toolchain
+## 7. External toolchain
 
 | Component | Choice | Notes |
 |---|---|---|
@@ -197,7 +239,7 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
 
 ---
 
-## 7. Boundaries
+## 8. Boundaries
 
 - Nightwatch may **read** repos under `REPOSITORIES/alphauslabs` and
   `REPOSITORIES/mobingilabs` (for snapshots, provenance, and later change
@@ -214,7 +256,7 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
 
 ---
 
-## 8. Deliberately NOT in Phase 1
+## 9. Deliberately NOT in Phase 1
 
 The mission's DO-NOT-IMPLEMENT list for Phase 1 — kept explicit so later
 phases claim each item deliberately (see `docs/ROADMAP.md`):

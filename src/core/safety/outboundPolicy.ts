@@ -17,8 +17,20 @@ import type { EnvironmentConfig } from '../environment/types';
 import type { HostClass, OutboundDecision } from './types';
 import { isKnownProductionHost, LOCAL_HOSTS, CLOUD_RUN_SUFFIX } from './hosts';
 
+/** Semantic policy version recorded by every containment consumer. */
+export const OUTBOUND_POLICY_VERSION = 'phase-1.2-outbound-policy-v1';
+
 function deny(host: string, hostClass: HostClass, reason: string): OutboundDecision {
   return { verdict: 'deny', hostClass, host, reason };
+}
+
+function hasUnsupportedTrailingDot(rawUrl: string): boolean {
+  const match = /^[a-z][a-z0-9+.-]*:\/\/([^\/?#]*)/i.exec(rawUrl);
+  if (match === null) return false;
+  const authority = match[1] ?? '';
+  if (authority.startsWith('[')) return false;
+  const rawHost = authority.replace(/:\d+$/, '');
+  return rawHost.endsWith('.');
 }
 
 /**
@@ -67,6 +79,18 @@ export class OutboundPolicy {
       u = new URL(rawUrl);
     } catch {
       return deny('', 'external', 'unparsable URL');
+    }
+    // Userinfo is never a valid Nightwatch destination. Apart from being a
+    // credential-smuggling hazard, accepting it would make proxy and browser
+    // URL representations disagree about the authority being classified.
+    if (u.username !== '' || u.password !== '') {
+      return deny('', 'external', 'embedded credentials in URL');
+    }
+    // WHATWG URL canonicalizes an IPv4 trailing dot away. Reject the raw
+    // spelling first so an authority normalization cannot change a deny into
+    // an allow decision at one consumer but not another.
+    if (hasUnsupportedTrailingDot(rawUrl)) {
+      return deny('', 'external', 'trailing-dot hostname unsupported');
     }
     const hostname = u.hostname.toLowerCase();
     // WHATWG URL omits default ports (http:80/https:443), so an entry with a

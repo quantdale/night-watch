@@ -55,7 +55,7 @@ self-development.
 
 ---
 
-## Phase 1.1 — Safety hardening: browser containment layers (current)
+## Phase 1.1 — Safety hardening: browser containment layers (complete)
 
 **Goal.** Close every gap between "the policy decides" and "nothing leaves
 the browser" across the full surface a real browser exposes — WebSockets,
@@ -95,13 +95,51 @@ sessions** in this phase.
   network isolation — design only in 1.1 (D-22, SAFETY_MODEL §13).
 
 **Non-goals / exclusions.** Real dev/next sessions (Phase 2, gated on
-L5); L5 implementation (no proxy, no iptables, no root requirements in
-1.1); any change to the mutation boundary (Phase 1 blocked classes stay
+the complete Phase 1.2 acceptance report); any change to the mutation boundary (Phase 1 blocked classes stay
 blocked); `production`; authenticated traces.
 
 **Dependencies.** Phase 0/1 harness and safety kernel. Verified grounding:
 empirical containment verification on Playwright 1.62.1 + system Chrome
 (documented in `docs/SAFETY_MODEL.md` §9–§11) and DECISIONS D-15–D-22.
+
+---
+
+## Phase 1.2 — Out-of-process egress containment (complete)
+
+**Goal.** Add an independent local L5 egress boundary so a browser escape
+must defeat both the Playwright safety kernel and the outer proxy before any
+external destination can receive a connection. Phase 2 product testing is not
+part of this phase.
+
+**Key deliverables.**
+
+- Fail-closed loopback proxy in `src/proxy/server.ts`: normal HTTP forward
+  traffic, HTTPS/WSS CONNECT, and WebSocket HTTP Upgrade; denied/unknown and
+  malformed destinations are rejected before DNS/TCP; no TLS MITM.
+- `src/proxy/policyAdapter.ts` delegates to the canonical
+  `OutboundPolicy.decide()`; browser HTTP/WS consumers use named adapters and
+  the policy-consistency matrix fails on drift.
+- Playwright global setup starts and health-checks the proxy; browser launch
+  receives an explicit proxy and `--proxy-bypass-list=<-loopback>`; no
+  environment-variable-only or continue-without-proxy path exists.
+- Sanitized proxy events, per-run `proxy.jsonl`, manifest
+  `networkContainment`, and `summary.json.proxy` aggregates; denied proxy
+  traffic is a fatal run violation while telemetry is blocked-not-failed.
+- Synthetic A/B loopback fixtures prove allowed A works and denied B receives
+  zero connections through HTTP, redirect, popup, SharedWorker, Service
+  Worker, WebSocket, and CONNECT paths.
+- Chromium non-HTTP review: QUIC disabled, non-proxied WebRTC UDP disabled,
+  background/speculative options applied where supported; DNS prefetch remains
+  explicitly **UNRESOLVED**.
+
+**Non-goals / exclusions.** No real Alphaus session, dev/next product
+testing, production contact, database query, mutation, privileged firewall,
+root requirement, system-wide proxy change, TLS MITM, or full container.
+
+**Acceptance evidence.** `tests/unit/proxy.test.ts` and
+`tests/smoke/proxy.smoke.ts`, plus all pre-existing Phase 1/1.1 suites. The
+future L6 container/network namespace remains a prerequisite for broader
+non-browser subprocess coverage.
 
 ---
 
@@ -130,13 +168,11 @@ Ripple deployments with deterministic, read-only, configurable journeys.
 **Non-goals / exclusions.** Mutations (all Phase 1 blocked classes remain
 blocked); login/auth-flow automation; tracing with auth state; production.
 
-**Prerequisite gate.** The second containment layer (L5 — a local
-allowlist filtering proxy with `OutboundPolicy` semantics, or Docker
-network isolation for the nightly runner; D-22, SAFETY_MODEL §13) must
-land **before the first real dev/next session**. No dev/next journey runs
-without it: the browser-internal stack alone (L0–L4) is not the bar for
-real sessions, because browser-internal background telemetry is not
-visible to Playwright routing.
+**Prerequisite gate.** The Phase 1.2 L5 proxy must remain mandatory and green
+before the first real dev/next session. The browser-internal stack alone
+(L0–L4) is not sufficient. A future L6 restricted container/network
+namespace is additionally required before Nightwatch controls non-browser
+subprocesses such as `oops` or CLIs.
 
 **Dependencies.** Phase 0/1 + 1.1 harness, safety kernel, snapshotter
 (journey runs record repo state for later correlation); the `docs/recon/`
