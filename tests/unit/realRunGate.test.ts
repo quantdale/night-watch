@@ -95,6 +95,22 @@ test('browser launch contract retains all transport containment arguments', () =
   expect(hasRequiredBrowserLaunchArgs(REQUIRED_BROWSER_LAUNCH_ARGS.filter((arg) => arg !== '--disable-quic'))).toBe(false);
 });
 
+test('pre-auth canary mode requires that storage state is explicitly absent', () => {
+  const canary = evaluateRealRunGate(baseInput({
+    storageStatePath: null,
+    storageStateValid: false,
+    requireAuthenticationState: false,
+  }));
+  expect(canary.pass).toBe(true);
+
+  const accidentalState = evaluateRealRunGate(baseInput({
+    storageStatePath: '/tmp/unexpected-state.json',
+    storageStateValid: true,
+    requireAuthenticationState: false,
+  }));
+  expect(accidentalState.checks.filter((item) => item.status === 'FAIL').map((item) => item.name)).toContain('authentication-state');
+});
+
 test('environment, target, and production policy ambiguity fail closed', () => {
   expect(failedNames(baseInput({ environment: { ...ENV, name: 'local' }, uiUrl: 'http://127.0.0.1:7311/' }))).toEqual(
     expect.arrayContaining(['environment-selection', 'target-agreement', 'production-deny-canary'])

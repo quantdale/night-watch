@@ -57,6 +57,8 @@ export interface RealRunGateInput {
   uiUrl: string;
   storageStatePath: string | null;
   storageStateValid: boolean;
+  /** False only for the pre-authentication connectivity canary. */
+  requireAuthenticationState?: boolean;
   /** Optional provenance supplied by a user-owned workflow; never persisted. */
   storageStateEnvironment?: string | null;
   proxy: ProxyGateFacts;
@@ -208,15 +210,20 @@ export function evaluateRealRunGate(input: RealRunGateInput): RealRunGateResult 
 
   checks.push(...evaluateProxy(input));
 
-  const storagePass = input.storageStatePath !== null && input.storageStateValid;
-  const provenancePass = input.storageStateEnvironment === undefined || input.storageStateEnvironment === null || input.storageStateEnvironment === env.name;
+  const requiresAuth = input.requireAuthenticationState !== false;
+  const storagePass = requiresAuth
+    ? input.storageStatePath !== null && input.storageStateValid
+    : input.storageStatePath === null && !input.storageStateValid;
+  const provenancePass = !requiresAuth || input.storageStateEnvironment === undefined || input.storageStateEnvironment === null || input.storageStateEnvironment === env.name;
   checks.push(
     check(
       'authentication-state',
       storagePass && provenancePass,
-      storagePass && provenancePass
-        ? 'external storage state is structurally valid and environment-compatible'
-        : 'external storage state is missing, invalid, or has mismatched provenance'
+      !requiresAuth && storagePass
+        ? 'unauthenticated canary explicitly has no storage state'
+        : storagePass && provenancePass
+          ? 'external storage state is structurally valid and environment-compatible'
+          : 'external storage state is missing, invalid, or has mismatched provenance'
     )
   );
 
@@ -309,7 +316,7 @@ export async function runRealRunGate(opts: RealRunGateRuntimeOptions): Promise<R
   }
 
   let storageStateValid = false;
-  if (opts.storageStatePath !== null) {
+  if (opts.requireAuthenticationState !== false && opts.storageStatePath !== null) {
     try {
       validateStorageStateFile(opts.storageStatePath);
       storageStateValid = true;
