@@ -617,3 +617,29 @@ method, credential attachment, or response status, so those fields remain
 uncertain fact with a reassuring claim would be misleading.
 
 **Phase applicability.** 1.2 and all later phases.
+
+---
+
+## D-28 — Stable project guidance and changing execution state are separate
+
+**Decision.** `AGENTS.md` contains stable repository operating instructions
+only. Task-specific and changing execution state lives under
+`.agent/tasks/<task-id>/`; `.agent/ACTIVE_TASK.md` is the small routing file,
+and `STATE.md` is the current operational waypoint. Project docs under
+`docs/` remain durable project memory rather than minute-by-minute logs.
+
+**Rationale.** Fresh sessions, interruptions, and context compaction cannot
+depend on conversational/model memory. Separating the layers keeps durable
+architecture and decisions readable while preserving the exact work-in-
+progress, validation ledger, and next action needed to resume safely.
+Current tests/runtime evidence and the working tree outrank task state, durable
+docs, recon handoffs, and assumptions; contradictions are recorded and stale
+documents are updated rather than silently reconciled.
+
+**Consequences.** Every substantial task uses SPEC/PLAN/STATE/REPORT, updates
+STATE at checkpoints, and completes with a report and handoff. The optional
+`npm run agent:check` validator checks structure and reports current-SHA drift;
+it never rewrites state. A fresh agent routes through ACTIVE_TASK and resumes
+STATE instead of rediscovering the repository.
+
+**Phase applicability.** 1.3 and all later phases.

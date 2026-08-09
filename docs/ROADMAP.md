@@ -143,6 +143,38 @@ non-browser subprocess coverage.
 
 ---
 
+## Phase 1.3 — Durable agent continuity / execution-state protocol (complete)
+
+**Goal.** Make long-running Nightwatch development recoverable across fresh
+sessions, context compaction, interruption, and agent restart without relying
+on conversational/model memory.
+
+**Key deliverables.**
+
+- Permanent `AGENTS.md` contract for bootstrap, source precedence,
+  no-rediscovery, repository boundaries, checkpoints, validation, recovery,
+  scope, secrets, and completion handoff.
+- Two-level memory protocol: project memory under `docs/`; active task memory
+  under `.agent/`, routed by `ACTIVE_TASK.md` and checkpointed in `STATE.md`.
+- Living ExecPlan contract, current Phase 1.3 SPEC/PLAN/STATE/REPORT, and
+  reusable templates for future tasks.
+- Small local `npm run agent:check` validator with synthetic tests for valid,
+  missing, malformed, mismatched, stale, incomplete, and secret-like state.
+
+**Non-goals / exclusions.** No real Alphaus environment or product testing,
+database access, production mutation, autonomous exploration, Phase 2 work,
+DeepSeek, oops integration, change-directed selection, or Docker L6
+containment. No Alphaus repository is modified.
+
+**Dependencies.** Phase 1.2 handoff and the existing local TypeScript/
+Playwright test toolchain. The protocol is documentation-first; the validator
+is only a deterministic consistency guard.
+
+**Acceptance evidence.** The Phase 1.3 task report, `npm run agent:check`, the
+validator unit tests, and the unchanged full Nightwatch regression suite.
+
+---
+
 ## Phase 2 — Deterministic browser journeys against real Ripple
 
 **Goal.** Extend the Phase 1 harness from the fixture to real local/dev/next

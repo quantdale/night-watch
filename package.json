@@ -12,6 +12,7 @@
     "test:unit": "playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
+    "agent:check": "node bin/agent-state.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "nightwatch": "node bin/nightwatch.mjs"
   },

@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-09** by the
-> Phase 1.2 (OUT-OF-PROCESS EGRESS CONTAINMENT) implementation agent. Prior
-> Nightwatch HEAD: `22ff87f`; the resulting Phase 1.2 SHA is recorded after the
-> implementation commit.
+> Phase 1.3 (DURABLE AGENT CONTINUITY) implementation agent. Phase 1.2 remains
+> the last completed safety milestone; the Phase 1.3 resulting SHA is recorded
+> in the task report.
 
 ---
 
@@ -14,6 +14,24 @@ containment) are complete. Nightwatch lives in
 `REPOSITORIES/nightwatch/` as its own git repository (no remote). It reads the
 Alphaus repos under `REPOSITORIES/alphauslabs` and `REPOSITORIES/mobingilabs`
 strictly read-only.
+
+### Phase 1.3 additions — durable agent continuity
+
+Nightwatch now has a two-level durable memory protocol. Project memory remains
+under `docs/` and answers “what is Nightwatch today?”; active execution memory
+is routed through `.agent/ACTIVE_TASK.md` and stored under
+`.agent/tasks/<task-id>/`. `AGENTS.md` is the concise permanent operating
+contract. `SPEC.md` is frozen intent, `PLAN.md` is a living execution plan,
+`STATE.md` is the current waypoint, and `REPORT.md` is the completed-task
+handoff. The protocol explicitly supports fresh-session and context-compaction
+recovery without conversational/model memory.
+
+`bin/agent-state.mjs`, exposed as `npm run agent:check`, performs a local
+consistency check for required files/headings, active status, task identity,
+synthetic secret-like values, and current-SHA drift. It reports stale SHA
+state without rewriting it. Phase 1.3 validation is local and synthetic only;
+no real Alphaus environment, product session, database query, or mutation is
+part of this phase.
 
 ### Phase 1.1 additions (this update)
 
@@ -28,13 +46,13 @@ strictly read-only.
 | Chromium egress configuration | Loopback proxy bypass removed with `--proxy-bypass-list=<-loopback>`; QUIC disabled; non-proxied WebRTC UDP disabled; background/speculative Chrome channels disabled where supported; observed Chrome Google control-plane preconnects are explicit telemetry and blocked locally |
 | Fixtures | `safety` variant with `window.__nw` driver (SW/WS/SSE/popup/redirect/download/worker probes), RFC 6455 WS echo endpoint, SSE, redirect endpoints (prod target = `random.mobingi.com` — production-class AND DNS-unresolvable, zero real contact) |
 | Tests | `tests/smoke/safety.smoke.ts` (23 network-surface cases), `tests/smoke/authenticated.smoke.ts` (2), `tests/unit/storageState.test.ts` (10), WS policy unit tests (8), manifest entry test |
-| Docs | `docs/SAFETY_MODEL.md` (layers L0–L5, surface audit §10, residual gaps §11, auth sessions §12, second-layer design §13), `docs/DECISIONS.md` D-15–D-22, `docs/ROADMAP.md` Phase 1.1 + Phase 2 L5 gate, `docs/recon/README.md` (handoff summaries) |
+| Docs | `docs/SAFETY_MODEL.md` (layers L0–L5, surface audit §10, residual gaps §11, auth sessions §12, second-layer design §13), `docs/DECISIONS.md` D-15–D-28, `docs/ROADMAP.md` Phase 1.2 + Phase 1.3 + Phase 2 L5 gate, `docs/recon/README.md` (handoff summaries), and `.agent/` continuity protocol |
 
 ## What works (verified)
 
 | Capability | Evidence |
 |---|---|
-| Previous self-test suite | Phase 1.1 ended at `22ff87f` with `npx tsc --noEmit` PASS and `npx playwright test` **84 passed** |
+| Previous self-test suite | Phase 1.2 handoff at `ea2d327f54269c101123c2660a456e69dd319735` with `npx tsc --noEmit` PASS and `npx playwright test` **93 passed**; Phase 1.3 full validation is recorded below |
 | Typecheck | `npx tsc --noEmit` → 0 errors |
 | Service workers | `serviceWorkers:'block'` + stub: `register()` rejects, console marker recorded, SW script never fetched (`server.requests()` clean), no `serviceworker` event |
 | WebSockets | allowed localhost WS connects + echoes (server counts upgrade); `wss://api.alphaus.cloud:8443` closed pre-connect + hard failure; unknown WS hard-fails; telemetry WS closed, run stays green |
@@ -100,6 +118,9 @@ No new request was made to production to investigate this historical event.
 - `NIGHTWATCH_RUN_ID=acceptance-11 npm run scenario -- --env=local` — 1 passed; artifacts in `artifacts/acceptance-11/` (passed=true, 0 hard failures, manifest carries `trace` decision)
 - Sample Alphaus repos (ouchan, ripple-ui, ripple-api, invoice-ui, blueapi, blue-sdk-ts, blue-sdk-go) byte-identical before/after — PASS
 - No production contact: all denied targets DNS-unresolvable or aborted pre-network; no DB tool used in session
+- Phase 1.3 validator unit suite — `npx playwright test tests/unit/agent-state.test.ts` → **8 passed, 0 failed**
+- Phase 1.3 full suite — `npx playwright test` → **101 passed, 0 failed**
+- Phase 1.3 continuity check — `npm run agent:check` → PASS; no stale-SHA warning before the implementation commit
 
 ## Environment (machine facts)
 

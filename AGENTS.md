@@ -1,0 +1,83 @@
+# Nightwatch Agent Contract
+
+This repository is a private, read-only-by-default bug-hunting framework. All
+implementation changes belong here. Do not contact a real Alphaus environment,
+query a database, mutate production data, or modify Alphaus repositories as
+part of normal development.
+
+## Session bootstrap
+
+Before substantial work:
+
+1. Confirm the current directory is inside this Nightwatch Git repository.
+2. Read this file.
+3. Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
+   `docs/DECISIONS.md`, and `docs/ROADMAP.md`. Read `docs/ARCHITECTURE.md`
+   when architecture is relevant.
+4. Read `.agent/ACTIVE_TASK.md`.
+5. For an `IN_PROGRESS` task, read its `SPEC.md`, `PLAN.md`, and `STATE.md`
+   in that order, then resume from `STATE.md`.
+
+Do not restart investigation or planning merely because the conversation is
+fresh. The active task files are the execution memory.
+
+## Authority and scope
+
+When sources disagree, use this precedence:
+
+`current tests/runtime evidence` > `current implementation` >
+`active task STATE/PLAN` > `durable docs/decisions` > `recon handoffs` >
+`assumptions`.
+
+Record disagreements, prefer the stronger/current evidence, and update the
+stale durable document. Never silently reconcile contradictions.
+
+Do not broadly rediscover established facts: do not rescan Alphaus repos,
+repeat Recon A/B/C/D, re-audit Nightwatch architecture, reread unrelated
+files, or rerun completed experiments by default. Re-verify only when the
+active task requires it, implementation depends on it, repository freshness
+may invalidate it, or current evidence contradicts it; use the narrowest
+decisive check.
+
+Nightwatch may read Alphaus repositories only when explicitly required and
+must never modify them. Preserve the existing fail-closed, read-only safety
+model. No credentials, auth state, bearer tokens, cookies, customer data, or
+other secrets may enter source, artifacts, or `.agent` files. Safe path
+references are allowed; tests use synthetic fake values only.
+
+## Task and checkpoint discipline
+
+Any multi-milestone, long-running, architecture-changing, safety-sensitive,
+or compaction-prone task uses `.agent/tasks/<task-id>/` with `SPEC.md`,
+`PLAN.md`, `STATE.md`, and `REPORT.md`. `PLAN.md` is living; `SPEC.md` is
+frozen intent; `STATE.md` is the concise operational waypoint; `REPORT.md` is
+the final handoff. Project docs under `docs/` describe what Nightwatch is and
+must not become minute-by-minute logs.
+
+Update `STATE.md` after each milestone, design decision, unexpected constraint,
+significant validation, safety event, before a substantially different
+subproblem, before ending a session, and whenever context may be compacted or
+lost. Checkpoint often enough that losing the conversation costs at most one
+small unit of work.
+
+For every milestone: implement, run its defined validation, repair failures,
+record the exact result in `STATE.md`, then advance. If required validation
+fails, stop accumulating unrelated changes and repair it first. Keep discoveries
+outside scope under `Deferred / Follow-Up`.
+
+## Recovery
+
+If context may have been compacted or certainty is lost: stop editing; read
+`.agent/ACTIVE_TASK.md`, then the task `SPEC.md`, `PLAN.md`, and `STATE.md`;
+inspect `git status`/diff; reconcile state with the working tree; run the
+smallest decisive validation; update `STATE.md`; and continue its `Exact Next
+Action`. The working tree and tests outrank remembered conversation.
+
+A fresh session loads project state and the active task, verifies Git state,
+and resumes the exact next action. It does not begin with broad repository
+exploration.
+
+When complete, run all acceptance checks, update plan statuses, fill the state
+completion snapshot and `REPORT.md`, update project docs when appropriate, set
+`ACTIVE_TASK.md` to `COMPLETE` or `NONE`, commit within Nightwatch, and leave a
+clean tree unless an exception is explicitly recorded.
