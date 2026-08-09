@@ -341,6 +341,7 @@ handoff; do not execute the authenticated observation in this session.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
 - Status: USER_ACTION_REQUIRED — the corrected unauthenticated canary passed,
+  and the guarded manual capture launcher is repaired and locally validated,
   but no authentication state is present in this session. Prepare the guarded
   manual capture handoff only; no credentials may be provided to Nightwatch.
 
@@ -360,6 +361,24 @@ Nightwatch does not read, print, copy, or receive credential values. The
 storage-state file remains outside the workspace at the exact path above.
 Do not execute authenticated observation until a fresh session has rerun the
 local gate with that path and it passes.
+
+#### M7 launcher repair checkpoint — 2026-08-09 — `0499543`
+
+The human command previously failed before browser launch because
+`bin/auth-capture.mjs` passed `tests/manual/auth-capture.ts` to the base
+Playwright config, whose `testMatch` excluded manual `.ts` files. Playwright
+therefore resolved zero tests and returned `No tests found`.
+
+The launcher now selects `playwright.capture.config.ts`, which matches exactly
+the intended manual helper while keeping it excluded from ordinary test runs.
+`tests/unit/authCaptureLauncher.test.ts` proves the repaired command contract
+resolves exactly one test. A separate local-only synthetic config/fixture ran
+the same guarded context in headed mode three times, completed fake login to a
+synthetic authenticated destination, wrote and structurally validated a
+temporary external state, and confirmed metadata-only provenance and
+production/unknown-host denial. No human input or Alphaus network was used.
+
+M7 remains `USER_ACTION_REQUIRED`; the real external state is still missing.
 
 ### M8 — Produce the destination manifest
 

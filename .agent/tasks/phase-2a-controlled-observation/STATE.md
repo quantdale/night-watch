@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
-Last validated implementation SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
+Current SHA: 04995437406f8b253bdac7a977a9a47145a64808
+Last validated implementation SHA: 04995437406f8b253bdac7a977a9a47145a64808
 Branch: main
-Last checkpoint: 2026-08-09 — reconciled the sanitized preflight-gate stop from clean HEAD `70f0565a7b169ea6f2494fe527b36a5dd692b9cb`. The repository-freshness failure was caused by the two uncommitted task-state checkpoint paths; no Alphaus snapshot or undocumented Alphaus repository condition was found. Authentication remains blocked because the external storage state is missing. No storage-state contents were inspected or printed.
+Last checkpoint: 2026-08-09 — repaired the auth:capture Playwright discovery contract at implementation SHA `04995437406f8b253bdac7a977a9a47145a64808`. The real external storage state remains missing; no storage-state contents were inspected or printed.
 
 ## Objective
 
@@ -101,7 +101,15 @@ Nightwatch now blocks only that exact host as
 `OPTIONAL_THIRD_PARTY_SUPPORT`; related Pylon names remain fail-closed
 unknowns. The passing run was `nightwatch-20260809T110122Z-4d4d`: 3 expected,
 0 new-but-verified, 8 blocked, 0 unresolved; 0 production attempts and 0
-proxy violations. No authenticated observation or auth capture has occurred.
+proxy violations. The auth-capture launcher repair is checkpointed at
+`04995437406f8b253bdac7a977a9a47145a64808`: the default Playwright config
+excluded `tests/manual/auth-capture.ts` because its `testMatch` only included
+`.test.ts`, `.smoke.ts`, and scenario smoke files. The launcher now selects an
+exact dedicated capture config, and a discovery regression proves exactly one
+capture test is resolved. A local synthetic headed capture reached a synthetic
+authenticated destination and wrote/validated a temporary external state;
+production and a separate unknown host remained denied. No authenticated
+observation or real auth capture has occurred.
 
 ## Exact Next Action
 
@@ -120,6 +128,10 @@ npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-st
 Complete login/MFA manually in the headed browser, press ENTER in the
 interactive terminal, and keep the storage state outside the workspace. Never
 paste the file contents, credentials, tokens, or user identity into Nightwatch.
+
+The real external auth state is still **MISSING** at
+`$HOME/.nightwatch/auth/ripple-dev-state.json`; this session performed only an
+existence check and did not inspect, print, copy, or persist its contents.
 
 Exact fresh-session resume instruction after capture:
 
@@ -163,6 +175,12 @@ stop and checkpoint.
 | `tests/smoke/authenticated.smoke.ts` | Assert header/body-free authenticated evidence | Modified |
 | `src/browser/fixtures/storageState.ts`, `tests/unit/storageState.test.ts` | External capture output validation | Modified |
 | `bin/auth-capture.mjs`, `tests/manual/auth-capture.ts`, `package.json`, `playwright.config.ts` | Human-only guarded capture workflow | Added/modified |
+| `playwright.capture.config.ts` | Exact Playwright discovery contract for the human capture helper | Added |
+| `bin/auth-capture.mjs` | Pass the dedicated capture config to the child Playwright command | Modified |
+| `tests/unit/authCaptureLauncher.test.ts` | Regression: the launcher resolves exactly one capture test instead of zero | Added |
+| `playwright.capture.synthetic.config.ts`, `tests/manual/auth-capture.synthetic.ts` | Local-only synthetic capture validation with no human input or Alphaus I/O | Added |
+| `src/browser/fixtures/fixtureServer.ts` | Synthetic login and authenticated destination fixture pages | Modified |
+| `tsconfig.json` | Include the two dedicated capture configs in typechecking | Modified |
 | `src/browser/contract.ts`, `playwright.config.ts`, `playwright.gate.config.ts` | Shared authenticated browser containment contract and isolated gate harness | Added/modified |
 | `src/core/safety/realRunGate.ts`, `bin/observe-gate.mjs`, `tests/manual/observe-gate.ts`, `tests/unit/realRunGate.test.ts`, `package.json` | Fail-closed local pre-real-run gate and CLI | Added/modified |
 | `tsconfig.json` | Typecheck dedicated gate config | Modified |
@@ -513,6 +531,54 @@ Relevant failure/output summary: the Nightwatch tree contains only the three
 documented handoff-state changes before the checkpoint commit; no authenticated
 observation was executed.
 
+Command: `npx playwright test --config=playwright.capture.config.ts tests/manual/auth-capture.ts --project=nightwatch --list`
+Result: PASS; exactly one intended manual capture test was discovered.
+When: 2026-08-09
+Relevant failure/output summary: no browser or target activity occurred.
+
+Command: `npx playwright test tests/manual/auth-capture.ts --project=nightwatch --list`
+Result: EXPECTED FAILURE REPRODUCED; the default config listed zero tests and
+returned Playwright's `No tests found` error.
+When: 2026-08-09
+Relevant failure/output summary: this proves the exact root cause was default
+`testMatch` filtering, not a missing file, cwd, or path-construction problem.
+
+Command: `npx playwright test tests/unit/authCaptureLauncher.test.ts tests/unit/storageState.test.ts tests/unit/target-preflight.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
+Result: PASS; **23 passed, 0 failed**.
+When: 2026-08-09
+Relevant failure/output summary: discovery, external output-path validation,
+no-network preflight contracts, and local gate contracts passed.
+
+Command: `NIGHTWATCH_ENV=local NIGHTWATCH_STORAGE_STATE='' npx playwright test --config=playwright.capture.synthetic.config.ts tests/manual/auth-capture.synthetic.ts --project=nightwatch --headed --repeat-each=3`
+Result: PASS; **3 passed, 0 failed**.
+When: 2026-08-09
+Relevant failure/output summary: the synthetic login and authenticated
+destination executed through the guarded loopback proxy/context; a temporary
+external storage state was structurally validated, provenance/evidence policy
+was created, fake login values were absent from Nightwatch artifacts, and
+production plus a separate unknown host remained denied. The exact observed
+system-Chrome control-plane host `redirector.gvt1.com` was blocked locally as
+non-fatal telemetry only in the in-memory synthetic policy; no real environment
+config or allowlist was changed.
+
+Command: `npx playwright test`
+Result: PASS; **127 passed, 0 failed**.
+When: 2026-08-09
+Relevant failure/output summary: the ordinary suite remained local/synthetic;
+the human capture helper was not executed.
+
+Command: `npx tsc --noEmit`, `npm run observe:preflight -- --env=dev`,
+`npm run auth:capture -- --help`, and `git diff --check`
+Result: PASS. The DEV preflight reported the approved
+`https://appdev.alphaus.cloud/ripple/` target and explicitly performed no
+DNS/TCP/browser activity; auth help performed no browser activity; typecheck
+and whitespace checks were clean.
+When: 2026-08-09
+Relevant failure/output summary: existence-only verification reported the real
+external state path as MISSING. No real Alphaus request, production request,
+DB query, mutation, credential handling, or real storage-state creation
+occurred.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -593,6 +659,15 @@ Evidence/constraint: `mobingilabs/ripple-ui` `dev` at
 repositories. Consequence: exact-host non-fatal blocking with distinct
 sanitized evidence; no wildcard or related-host approval.
 
+Decision: Give the human-led capture helper an exact dedicated Playwright
+config instead of broadening the ordinary test match.
+Reason: the original invocation passed a real manual spec path, but the base
+config filtered it because only `.test.ts`, `.smoke.ts`, and scenario smoke
+files were matched. A dedicated config preserves the ordinary suite's
+non-interactive safety boundary and makes the child target explicit.
+Evidence/constraint: the repaired command lists exactly one capture test, while
+the original default-config command reproduces zero tests and `No tests found`.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -619,6 +694,15 @@ sanitized evidence; no wildcard or related-host approval.
 - The exact Pylon host is now separate from telemetry in policy, browser
   evidence, proxy summaries, and destination manifests. Related Pylon hosts
   remain unknown and fail closed.
+- `auth:capture` had a real discovery defect: `bin/auth-capture.mjs` invoked
+  `tests/manual/auth-capture.ts` under the base config, whose `testMatch`
+  excluded manual `.ts` files. Playwright therefore produced `No tests found`
+  before browser/global capture logic ran. `playwright.capture.config.ts` now
+  matches exactly that helper, and the launcher regression guards the one-test
+  discovery contract.
+- The synthetic capture regression uses only a loopback auth fixture and a
+  temporary `/tmp` state path. It does not exercise the human CLI or require
+  ENTER, credentials, MFA, or any Alphaus host.
 
 ## Blockers
 
