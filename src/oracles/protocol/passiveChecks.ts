@@ -100,6 +100,9 @@ export function checkJsonBody(
 }
 
 function wantsNdjson(body: string, contentType: string | undefined): boolean {
+  // text/event-stream is NOT NDJSON (SSE frames are 'data: ...' lines) —
+  // never flag it with the NDJSON oracle.
+  if (contentType !== undefined && /event-stream/i.test(contentType)) return false;
   if (contentType !== undefined && (contentType.includes('ndjson') || contentType.includes('stream'))) {
     return true;
   }

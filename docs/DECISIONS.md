@@ -317,3 +317,209 @@ evidence via the browser field; the fallback path keeps the tool
 installable anywhere.
 
 **Phase applicability.** 0/1 and all later phases.
+
+---
+
+## D-15 — Service workers blocked natively; init-script stub adds evidence; alarm hard-fails any registration
+
+**Decision.** Browser contexts are created with `serviceWorkers: 'block'`
+(Playwright-native). An init script additionally stubs the Service Worker
+API — `register()` rejects, `getRegistrations()`/`getRegistration()`
+return empty, `ready` never settles — and emits a
+`console.warn('[nightwatch] service-worker-blocked')` marker; any
+`serviceworker` event that fires despite blocking is recorded as a hard
+failure (`src/browser/context.ts` `containmentInitScript`, alarm handler).
+
+**Rationale.** Service-worker-controlled fetches are not visible to
+`context.route` interception — Playwright's documented recommendation is
+`serviceWorkers: 'block'`. The native block is the guarantee; the stub
+makes the block observable (app registration paths reject; evidence via
+the console marker) and covers the empirically verified case where
+`register()` resolves without creating a worker; the alarm turns any
+actual registration into a hard failure so a containment violation can
+never pass silently.
+
+**Consequences.** `containmentInitScript` runs on every page via
+`addInitScript`; SW-dependent features never work in Nightwatch runs
+(acceptable — no Phase 1/2 journey needs them); evidence carries the
+`service-worker-blocked` console marker.
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-16 — WebSocket policy via `context.routeWebSocket` with semantics identical to HTTP
+
+**Decision.** `context.routeWebSocket('**/*')` governs WebSocket creation
+with the **same** `OutboundPolicy.decide()` semantics as HTTP:
+`allow` → `connectToServer()`; `block-telemetry` → `close()` (blocked,
+recorded, not fatal); `deny` → `close()` + hard failure before any
+communication. `ws:`/`wss:` are added to `NETWORK_PROTOCOLS`
+(`src/core/safety/outboundPolicy.ts`) so the rule chain and
+`isNetworkUrl` classify them exactly like http(s).
+
+**Rationale.** A WebSocket is an outbound network connection carrying the
+same data plane as HTTP; a policy weaker than the HTTP policy would be a
+hole in the containment model. Telemetry WS are closed rather than
+connected (blocked-not-failed, consistent with D-5); production/unknown
+WS are closed and fail the run before meaningful communication.
+
+**Consequences.** `handleWebSocket` in `src/browser/observers/networkObserver.ts`
+mirrors `handleRoute` verdicts; a closed-without-connect WS surfaces to
+the page as `onclose(code 0)`; unit tests cover ws/wss classification for
+allow/deny/telemetry per environment (`tests/unit/safety.test.ts`).
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-17 — Redirect containment: Fetch-guard prevention + detect-and-fail
+
+**Decision.** Redirect follow-up requests — which Playwright routing does
+not re-enter (empirically verified: a 302's follow-up does not pass
+through the route handler) — are governed by the L0 raw-CDP Fetch guard
+(`src/browser/network/fetchGuard.ts`): a per-page `Fetch.enable` session
+pauses every request (including follow-ups) and fails denied/telemetry
+URLs with `Fetch.failRequest` BEFORE network I/O, recording evidence
+once via the shared `blockedUrls` set (deduped against the L1 route
+handler, which makes identical decisions). The L4 unrouted-request
+detector remains as the detection backstop (any observed deny-class
+request not governed within a 150 ms grace becomes a hard failure).
+Evidence distinguishes the initial request (allowed) from the target
+(denied). Chrome waits for every Fetch-enabled session to respond
+(verified), so the guard always resolves its pauses.
+
+**Rationale.** Playwright's route API cannot intercept follow-ups; a raw
+CDP Fetch session can. An earlier attempt with `Network.setBlockedURLs`
+was removed after empirical testing showed it preempted route-level
+evidence for subresources while NOT blocking navigations — the Fetch
+guard blocks both and never races L1 to a different decision.
+
+**Consequences.** `onRequestObserved` in
+`src/browser/observers/networkObserver.ts`; route handlers record into
+`blockedUrls` synchronously so the grace timer never double-reports;
+`onDownload` extends the same logic to downloads; residual gap documented
+in SAFETY_MODEL §11.
+
+**Phase applicability.** 1.1 (detect-and-fail), 2+ (prevention via L5).
+
+---
+
+## D-18 — Shared workers blocked at construction; dedicated workers remain allowed
+
+**Decision.** The `SharedWorker` constructor is stubbed in the init
+script: construction throws and emits a
+`console.warn('[nightwatch] shared-worker-blocked')` marker. Dedicated
+workers are left untouched.
+
+**Rationale.** Empirically verified: a shared worker's fetch to a real
+host bypasses Playwright routing entirely — there is no client-side
+interception point after construction, so blocking creation is the only
+containment. Dedicated-worker fetches were verified to enter the route
+handler, so no blocking is needed. Fail-closed asymmetry: unverified
+surfaces are blocked; verified surfaces are allowed.
+
+**Consequences.** Shared-worker-dependent features never work in
+Nightwatch runs; evidence carries the `shared-worker-blocked` console
+marker; SAFETY_MODEL §10 lists both surfaces with their verification.
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-19 — Downloads: recorded and cancelled; cross-origin routed, same-origin benign
+
+**Decision.** Every `download` event is recorded (redacted URL + policy
+verdict) and the download is cancelled. Cross-origin download requests
+are governed by L1 routing (denied per policy). Same-origin downloads can
+bypass routing but are benign by construction — same origin means the
+host is in the environment allowlist. A denied download URL that bypassed
+routing is added to `blockedUrls` and hard-fails the run.
+
+**Rationale.** Download-manager traffic is one of the browser paths
+Playwright routing does not reliably see; the `download` event is the
+authoritative observation point. Recorded-and-cancelled keeps evidence
+complete without depending on the request path.
+
+**Consequences.** `onDownload` in `src/browser/context.ts`; denied
+downloads contribute `hard-failure` events (`path: 'download-cancel'`);
+same-origin downloads appear as `warn`-level `download` events only.
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-20 — Storage-state secret rules: fail-closed validation, never read into evidence
+
+**Decision.** `NIGHTWATCH_STORAGE_STATE`, when set, must satisfy all of:
+absolute path; existing regular file; readable; located outside the
+Nightwatch repo **and** outside the Alphaus workspace (`REPOSITORIES/`);
+≤ 5 MB; JSON with the Playwright storage-state shape
+`{ cookies: [], origins: [] }`. Any violation throws at startup
+(`src/browser/fixtures/storageState.ts` `validateStorageStateFile`).
+Nightwatch validates the shape but never reads cookie values into
+evidence; `.gitignore` is hardened with auth/session filename patterns.
+
+**Rationale.** Storage state is secret material (cookies from a real
+login). Fail-closed location rules keep the secret's lifecycle outside
+Nightwatch entirely (hardens D-13) and make "no credentials in
+git/artifacts" a structural property; the size cap and shape check reject
+garbage and misconfiguration at the earliest possible point — startup.
+
+**Consequences.** `tests/unit/storageState.test.ts` covers every rule;
+authenticated runs are impossible without a compliant external file; the
+recorder never receives storage-state content.
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-21 — Authenticated traces always disabled; manifest records why
+
+**Decision.** When authenticated storage state is in use, Playwright
+tracing is **ALWAYS** disabled — even an explicit `NIGHTWATCH_TRACE=on`
+cannot enable it (fail-safe). The manifest records
+`trace.enabled = false` plus the reason via `addManifestEntry`
+(`src/core/evidence/runRecorder.ts`); Nightwatch's own redacted
+network/event evidence is preserved instead. This is an explicit
+**security decision**, not a temporary accident.
+
+**Rationale.** Playwright traces can embed request headers, cookies,
+request/response bodies, and console content and cannot be sanitized
+before persistence — no redaction layer can guarantee a trace artifact is
+clean. The only correct policy is mutual exclusion of traces and auth
+state. This hardens D-6 (which made the disable conditional on the trace
+flag) into an absolute rule.
+
+**Consequences.** `src/browser/context.ts` computes
+`traceOn = traceRequested && auth === null`; authenticated runs emit an
+`env` event explaining the forced-off decision; artifacts self-describe
+via the manifest entry.
+
+**Phase applicability.** 1.1 and all later phases.
+
+---
+
+## D-22 — Second containment layer deferred by design (Phase 2 prerequisite)
+
+**Decision.** A second containment layer (L5) is designed but **not
+implemented** in Phase 1.1: a local allowlist filtering proxy applying
+the same allowlist semantics as `OutboundPolicy` (Chrome launched with
+`--proxy-server=http://127.0.0.1:<port>`), or Docker network isolation
+with default-deny egress for the future nightly runner. No iptables, no
+root requirements in 1.1. The proxy would also govern future non-browser
+tools (oops/CLI subprocesses) by forcing them through the same egress
+gate.
+
+**Rationale.** Browser-internal telemetry (Chrome metrics/safe-browsing)
+is not visible to Playwright routing and is only mitigated by launch
+defaults. Real dev/next sessions (Phase 2) raise the stakes, so the
+second layer becomes a Phase 2 prerequisite gate rather than a 1.1 scope
+item — keeping 1.1 free of root/network-admin complexity while the
+browser-internal stack is proven.
+
+**Consequences.** Phase 2 cannot start real dev/next sessions until L5
+lands; SAFETY_MODEL §13 documents the design; ROADMAP Phase 2 carries the
+gate.
+
+**Phase applicability.** 2+ (implementation); design documented in 1.1.

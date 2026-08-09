@@ -1,6 +1,6 @@
 # Nightwatch Safety Model
 
-Normative reference for every safety guarantee Nightwatch makes. Phase 0/1.
+Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -251,7 +251,172 @@ before a single request could be made.
 
 ---
 
-## 9. Verification / test mapping
+## 9. Browser containment layers (Phase 1.1)
+
+The Phase 0/1 outbound policy is enforced inside the browser by a layered
+containment stack, all derived from the single `OutboundPolicy.decide()`
+(`src/core/safety/outboundPolicy.ts`). No layer may weaken policy; lower
+layers only add early abort and detection for paths Playwright routing
+does not see. Build order: `createNightwatchContext()`
+(`src/browser/context.ts`); route/WS handlers in
+`src/browser/observers/networkObserver.ts`.
+
+| Layer | Mechanism | Role | Status |
+|---|---|---|---|
+| **L0** | raw-CDP Fetch guard per page (`src/browser/network/fetchGuard.ts` `installFetchGuard`): a CDP `Fetch.enable` session pauses EVERY request on the page target — including redirect follow-ups that Playwright routing never re-enters — and resolves each pause with the same `OutboundPolicy` decision (`deny`/`block-telemetry` → `Fetch.failRequest`; `allow` → `continueRequest`) | browser-internal abort of denied/telemetry requests **before** network I/O — the only abort layer for redirect follow-ups; evidence recorded exactly once via the shared `blockedUrls` set | backstop, never authoritative |
+| **L1** | `context.route('**/*')` (`networkObserver.ts` `handleRoute`) | every ordinary HTTP(S) request — pages, frames, iframes, dedicated workers, EventSource, cross-origin downloads, popups (context-wide) — inspected before it leaves the browser: `allow` → continue; `block-telemetry` → abort (recorded, not fatal); `deny` → abort + hard failure | authoritative |
+| **L2** | `context.routeWebSocket('**/*')` (`networkObserver.ts` `handleWebSocket`) | WebSocket creation governed with **identical** policy semantics: `allow` → `connectToServer()`; telemetry → `close()` (blocked, not fatal); production/unknown → `close()` + hard failure before any communication | authoritative |
+| **L3** | `serviceWorkers: 'block'` + init script stubbing the Service Worker API and the `SharedWorker` constructor + `serviceworker` hard-failure alarm (`src/browser/context.ts` `containmentInitScript`, alarm handler) | service-worker fetches (never visible to Playwright routing) and shared-worker fetches (empirically verified to bypass routing) cannot exist; any SW that still registers fires a hard failure | native block + evidence |
+| **L4** | unrouted-request detection (150 ms grace, dedupe via `blockedUrls`) + download record/cancel (`networkObserver.ts` `onRequestObserved`; `src/browser/context.ts` `onDownload`) | redirect follow-ups and download-manager traffic that escape routing are detected and recorded as hard failures; downloads are cancelled — the violation cannot escape evidence or the run verdict | detection + evidence |
+| **L5** | second containment layer — local allowlist filtering proxy and/or Docker network isolation (§13) | governs everything browser-internal layers cannot see (browser background telemetry) and future non-browser tools | design only; Phase 2 prerequisite |
+
+L0 pattern generation is per environment (`buildCdpBlockPatterns`): every
+known production host and all `*.run.app` are always listed (exact
+patterns); full-domain wildcards `*://*.alphaus.cloud/*` and
+Chrome pauses a request for EVERY session that enabled the Fetch domain,
+so the guard responds to every pause it receives (verified: a session
+that never responds stalls the request). Because the guard and L1 make
+identical policy decisions, their races are benign — whichever resolves
+a pause first, the outcome is the same, and evidence is recorded once
+via the shared `blockedUrls` set.
+
+Trace policy is part of the stack contract: Playwright traces can embed
+request headers, cookies, bodies, and console content and **cannot be
+sanitized before persistence**, so authenticated runs always have traces
+disabled — even against an explicit `NIGHTWATCH_TRACE=on` (§12).
+
+---
+
+## 10. Network surface audit
+
+Every outbound surface a Chromium-based browser exposes, the layer(s)
+that govern it, how the claim was verified, and any residual gap.
+Empirical claims were verified on Playwright 1.62.1 with system Chrome
+(`channel: 'chrome'`).
+
+| Surface | Governed by | How verified | Residual gap |
+|---|---|---|---|
+| Ordinary HTTP(S) — pages, main frames | L1 | unit: `decide()` policy tests in `tests/unit/safety.test.ts`; smoke: `tests/smoke/safety.smoke.ts` | none |
+| Iframes | L1 | smoke: `tests/smoke/safety.smoke.ts` (route coverage) | none |
+| Redirects (302 etc. follow-up requests) | L0 (abort) + L4 (detection + hard failure) | empirical: a follow-up does **not** re-enter the route handler; L0 abort verified (`ERR_ABORTED`); smoke: `tests/smoke/safety.smoke.ts` | follow-up may complete in rare Chrome classifications before the abort — mitigated by L0 + L4 hard failure (§11) |
+| Popups / new pages | L1 + L2 + L0 + all observers, auto-wired on `context.on('page')` | empirical: `page.route` would miss popup first requests — `context.route` is context-wide; smoke: `tests/smoke/safety.smoke.ts` | none |
+| Dedicated workers | L1 (worker fetches are routed) | empirical: dedicated-worker fetches enter the route handler | none (no blocking needed) |
+| Shared workers | L3 (constructor blocked via init script) | empirical: a shared-worker fetch to a real host bypasses routing entirely — blocking creation is the only client-side containment; smoke: `tests/smoke/safety.smoke.ts` | none in 1.1 (worker cannot be constructed) |
+| Service Workers | L3 (`serviceWorkers: 'block'` + API stub + alarm) | empirical: blocking prevents SW script fetch and worker creation; smoke: `tests/smoke/safety.smoke.ts` | `register()` may resolve without creating a worker — stub rejects + emits console marker (§11) |
+| WebSockets | L2 (`context.routeWebSocket('**/*')`) | unit: WebSocket policy tests in `tests/unit/safety.test.ts` (`ws:`/`wss:` in `NETWORK_PROTOCOLS`, `isNetworkUrl`); smoke: a closed-without-connect WS surfaces as `onclose(code 0)` in the page | none |
+| EventSource / SSE | L1 | empirical: EventSource requests enter the route handler; smoke: `tests/smoke/safety.smoke.ts` | none |
+| Downloads | L1 (cross-origin) + L4 (record + cancel) | empirical: cross-origin downloads are routed and denied; smoke: `tests/smoke/safety.smoke.ts` | same-origin downloads bypass routing — benign by construction (§11) |
+| Browser background telemetry (Chrome metrics / safe-browsing) | none in 1.1 | not visible to Playwright routing; largely disabled by Playwright's launch defaults | residual risk — primary motivation for L5 (§11, §13) |
+
+---
+
+## 11. Known residual gaps (Phase 1.1)
+
+Accepted, documented residuals. None weakens the fail-closed verdict —
+each is either detected and failed, or benign by construction:
+
+1. **Redirect follow-ups: prevented by the Fetch guard (L0) in the
+   common case.** Playwright does not re-enter the route handler for a
+   302 follow-up; the raw-CDP Fetch guard fails the follow-up request
+   (`Fetch.failRequest`) before network I/O, and the L4 detector records
+   a hard failure if any follow-up is merely observed. The guard is
+   installed per page at creation; a follow-up racing an in-flight guard
+   install is detected (L4) rather than prevented — full guarantee
+   across every page lifecycle is deferred to the second containment
+   layer (L5).
+2. **Same-origin downloads bypass routing.** The `download` event is
+   still recorded and the download cancelled; the request is benign by
+   construction because same-origin means the host is in the environment
+   allowlist.
+3. **Browser-internal background telemetry** (Chrome metrics,
+   safe-browsing) is not visible to Playwright routing. It is largely
+   disabled by Playwright's launch defaults; the residual risk is the
+   primary motivation for the second containment layer (L5, §13).
+4. **`serviceWorker.register()` may resolve under `serviceWorkers:
+   'block'`.** No worker is created (verified), but the promise
+   resolution itself is outside Playwright's control; the init-script
+   stub makes the app's registration path reject and emits a console
+   marker so evidence exists, and any actual `serviceworker` event fires
+   a hard-failure alarm.
+
+---
+
+## 12. Authenticated sessions
+
+Authenticated runs (a `NIGHTWATCH_STORAGE_STATE` file present) carry
+secret material; two rules make them safe by construction.
+
+### Trace policy — always off for authenticated runs
+
+Playwright traces can embed request headers, cookies, request/response
+bodies, and console content, and **cannot be sanitized before
+persistence**. Therefore:
+
+- traces are **always disabled** when authenticated storage state is in
+  use — even an explicit `NIGHTWATCH_TRACE=on` cannot enable them
+  (fail-safe; `src/browser/context.ts`);
+- the manifest records the decision: `addManifestEntry('trace',
+  { enabled: false, reason: … })` (`src/core/evidence/runRecorder.ts`),
+  so every artifact self-describes why no trace exists;
+- Nightwatch's own redacted network/event evidence (D-7) is the
+  substitute for the trace.
+
+This is an explicit security decision (D-21), hardening D-6, not a
+temporary accident.
+
+### Storage-state secret rules
+
+`NIGHTWATCH_STORAGE_STATE` points at a Playwright storage-state JSON
+file. The file is secret material: never committed, never copied into
+`artifacts/`, never printed or logged, never included in summaries —
+Nightwatch only ever passes the path to Playwright
+(`src/browser/fixtures/storageState.ts`). Validation is fail-closed at
+startup — any violation throws and the run aborts:
+
+1. the path must be **absolute**;
+2. the file must **exist**, be a **regular file**, and be **readable**;
+3. the file must live **outside the Nightwatch repo and outside the
+   Alphaus workspace** (`REPOSITORIES/`) — user-owned, outside source
+   control;
+4. the file must be **≤ 5 MB**;
+5. the content must parse as JSON with the Playwright storage-state
+   shape `{ cookies: [], origins: [] }`.
+
+Nightwatch validates the **shape** but never reads cookie values into
+evidence (unit: `tests/unit/storageState.test.ts`). `.gitignore` is
+hardened with auth/session filename patterns so state files cannot be
+committed by accident: `*.storage-state.json`, `*.storage-state`,
+`storage-state*.json`, `storageState*.json`, `auth-state*.json`,
+`auth*.json`, `session*.json`, `*.cookies.json`, `cookies*.json`,
+`*credentials*.json`, `credentials/`, `.secrets/`, `*.token`,
+`*.tokens.json` (`.gitignore`).
+
+---
+
+## 13. Second containment layer (design, Phase 2 prerequisite)
+
+The browser-internal stack (L0–L4) cannot see everything (browser
+background telemetry, §11). The planned L5 closes that by moving the
+egress gate outside the browser:
+
+- **Local allowlist filtering proxy** — a small CONNECT/HTTP proxy that
+  applies the **same allowlist semantics as `OutboundPolicy`**; Chrome
+  is launched with `--proxy-server=http://127.0.0.1:<port>` so *all*
+  egress — including browser-internal traffic routing cannot see — must
+  pass the gate. DNS pinning is the documented alternative (Phase 2
+  chooses).
+- **Docker network isolation** — for the future nightly runner: a
+  container network with default-deny egress except the proxy and the
+  fixture hosts.
+
+Explicitly out of scope for Phase 1.1: no iptables, no root
+requirements, no proxy implementation — L5 is design only (D-22). The
+proxy would also govern future non-browser tools (oops/CLI subprocesses,
+Phase 5) by forcing them through the same egress gate.
+
+---
+
+## 14. Verification / test mapping
 
 Nightwatch's own self-tests prove each guarantee. Mapping of guarantee →
 test (all under `tests/unit` unless noted):
@@ -268,8 +433,12 @@ test (all under `tests/unit` unless noted):
 | Reproducible run | Smoke: two runs with fixed `NIGHTWATCH_RUN_ID` and injected clock produce identical `events.jsonl` |
 | Missing env denied | Unit: `selectEnvironment(undefined)` throws; CLI without `--env` exits 2 |
 | Canary is offline | Smoke: canary completes without any network call (harness fails on any fetch attempt) |
+| Containment layers L0–L4 | Smoke: `tests/smoke/safety.smoke.ts` — route coverage across the surface audit (§10: popups, dedicated/shared/service workers, EventSource, downloads), redirect follow-up prevention via the Fetch guard, WebSocket close semantics |
+| Authenticated runs | Smoke: `tests/smoke/authenticated.smoke.ts` — storage state passes validation; traces forced off; manifest records `trace.enabled=false` + reason |
+| Storage-state secret rules | Unit: `tests/unit/storageState.test.ts` — every fail-closed rule (absolute path, external location, regular readable file, ≤ 5 MB, `{cookies, origins}` shape) throws on violation |
+| WebSocket policy | Unit: WebSocket describe block in `tests/unit/safety.test.ts` — `ws:`/`wss:` classified as network schemes; allow only via env allowlist; production/unknown deny; telemetry block-not-deny; `isNetworkUrl` classification |
 
 ---
 
-*End of SAFETY_MODEL. Normative for Phase 0/1; changes require a DECISIONS
+*End of SAFETY_MODEL. Normative for Phase 0/1/1.1; changes require a DECISIONS
 entry and a test update.*

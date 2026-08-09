@@ -20,6 +20,22 @@ artifacts/*
 .env
 *.local.json
 
+# auth/session files — secret material, never committed (defensive; Phase 1.1)
+*.storage-state.json
+*.storage-state
+storage-state*.json
+storageState*.json
+auth-state*.json
+auth*.json
+session*.json
+*.cookies.json
+cookies*.json
+*credentials*.json
+credentials/
+.secrets/
+*.token
+*.tokens.json
+
 # misc
 *.log
 .DS_Store

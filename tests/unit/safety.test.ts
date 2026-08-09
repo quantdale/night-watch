@@ -214,3 +214,82 @@ test('passive-action policy rejects mutation-tagged actions', () => {
   const badUrl = classifyRippleAction({ id: 'a5', label: 'Go', kind: 'navigate', url: 'not a url' });
   expect(badUrl.passive).toBe(false);
 });
+
+// ---------------------------------------------------------------------------
+// Phase 1.1 — WebSocket URL classification (ws/wss are network schemes and
+// must be governed with EXACTLY the same host rules as http/https; the
+// harness's routeWebSocket policy uses this same decide()).
+// ---------------------------------------------------------------------------
+
+test.describe('WebSocket policy (ws/wss network schemes)', () => {
+  const local = loadEnvironmentConfig('local');
+  const dev = loadEnvironmentConfig('dev');
+  const next = loadEnvironmentConfig('next');
+
+  const localWithTelemetry = inlineEnv('local', ['127.0.0.1', 'localhost'], {
+    telemetryHosts: ['sentry.example.invalid'],
+  });
+
+  test('allowed localhost WebSocket is permitted in the local environment', () => {
+    const d = new OutboundPolicy(local).decide('ws://127.0.0.1:8080/ws');
+    expect(d.verdict).toBe('allow');
+    expect(d.hostClass).toBe('local');
+  });
+
+  test('production WebSocket destinations are hard-denied in every environment', () => {
+    for (const env of [local, dev, next]) {
+      const d = new OutboundPolicy(env).decide('wss://api.alphaus.cloud:8443/socket');
+      expect(d.verdict).toBe('deny');
+      expect(d.hostClass).toBe('production');
+      const d2 = new OutboundPolicy(env).decide('ws://bluerpc.alphaus.cloud/ws');
+      expect(d2.verdict).toBe('deny');
+    }
+  });
+
+  test('unknown Alphaus WebSocket destinations fail closed', () => {
+    for (const env of [local, dev, next]) {
+      const d = new OutboundPolicy(env).decide('ws://random-host-xyz.alphaus.cloud/socket');
+      expect(d.verdict).toBe('deny');
+      expect(d.hostClass).toBe('unknown-alphaus');
+    }
+  });
+
+  test('unexpected external WebSocket destinations are denied', () => {
+    const d = new OutboundPolicy(local).decide('wss://example.invalid/socket');
+    expect(d.verdict).toBe('deny');
+    expect(d.hostClass).toBe('external');
+  });
+
+  test('telemetry WebSocket destinations are blocked, not denied', () => {
+    const d = new OutboundPolicy(localWithTelemetry).decide('wss://sentry.example.invalid/ingest');
+    expect(d.verdict).toBe('block-telemetry');
+    expect(d.hostClass).toBe('telemetry');
+  });
+
+  test('dev/next hosts are only allowed in their own environment over ws too', () => {
+    const devWs = new OutboundPolicy(dev).decide('wss://apidev.alphaus.cloud/ws');
+    expect(devWs.verdict).toBe('allow');
+    const localToDev = new OutboundPolicy(local).decide('wss://apidev.alphaus.cloud/ws');
+    expect(localToDev.verdict).toBe('deny');
+    expect(localToDev.hostClass).toBe('unknown-alphaus');
+  });
+
+  test('non-network schemes remain internal (data:/blob:/about:)', () => {
+    for (const url of ['data:text/plain,hi', 'blob:https://x/y', 'about:blank', 'javascript:void(0)']) {
+      const d = new OutboundPolicy(local).decide(url);
+      expect(d.verdict).toBe('allow');
+      expect(d.hostClass).toBe('internal');
+    }
+  });
+
+  test('isNetworkUrl classifies ws/wss/http/https as network, others not', () => {
+    const { isNetworkUrl } = require('../../src/core/safety/outboundPolicy') as typeof import('../../src/core/safety/outboundPolicy');
+    expect(isNetworkUrl('http://a/')).toBe(true);
+    expect(isNetworkUrl('https://a/')).toBe(true);
+    expect(isNetworkUrl('ws://a/')).toBe(true);
+    expect(isNetworkUrl('wss://a/')).toBe(true);
+    expect(isNetworkUrl('data:text/plain,hi')).toBe(false);
+    expect(isNetworkUrl('blob:https://x/y')).toBe(false);
+    expect(isNetworkUrl('not a url')).toBe(false);
+  });
+});

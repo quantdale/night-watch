@@ -83,6 +83,25 @@ test.describe('RunRecorder', () => {
     expect(() => new RunRecorder({ ...baseOpts('slash/name') })).toThrow(/runId/);
   });
 
+  test('addManifestEntry adds and replaces entries deterministically', () => {
+    const rec = new RunRecorder(baseOpts('manifest-extra'));
+    rec.addManifestEntry('trace', { enabled: false, reason: 'authenticated storage state' });
+    rec.addManifestEntry('product', 'ripple-overridden');
+    const manifest = JSON.parse(fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8'));
+    expect(manifest).toMatchObject({
+      runId: 'manifest-extra',
+      environment: 'local',
+      product: 'ripple-overridden',
+      trace: { enabled: false, reason: 'authenticated storage state' },
+    });
+    // Deterministic: same inputs, same bytes.
+    const a = fs.readFileSync(path.join(rec.dir, 'manifest.json'), 'utf8');
+    const rec2 = new RunRecorder(baseOpts('manifest-extra'));
+    rec2.addManifestEntry('trace', { enabled: false, reason: 'authenticated storage state' });
+    rec2.addManifestEntry('product', 'ripple-overridden');
+    expect(fs.readFileSync(path.join(rec2.dir, 'manifest.json'), 'utf8')).toBe(a);
+  });
+
   test('events.jsonl / network.jsonl / console.jsonl capture the right events', () => {
     const rec = new RunRecorder(baseOpts('events-run'));
     rec.event({ type: 'start', severity: 'info', message: 'started' });

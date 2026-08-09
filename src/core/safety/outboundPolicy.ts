@@ -22,6 +22,22 @@ function deny(host: string, hostClass: HostClass, reason: string): OutboundDecis
 }
 
 /**
+ * Network protocols governed by the outbound policy. ws/wss are classified
+ * with the same host rules as http(s) — the WebSocket policy must be exactly
+ * as strict as the HTTP policy, never weaker (Phase 1.1 hardening).
+ */
+export const NETWORK_PROTOCOLS: ReadonlySet<string> = new Set(['http:', 'https:', 'ws:', 'wss:']);
+
+/** True when the URL is subject to the outbound policy (network scheme). */
+export function isNetworkUrl(rawUrl: string): boolean {
+  try {
+    return NETWORK_PROTOCOLS.has(new URL(rawUrl).protocol);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Match a hostname (and host:port key) against a single allowlist-style entry.
  * - A `*.`-prefixed entry is a wildcard: matches any subdomain of the bare
  *   domain (suffix match after the dot; the bare domain itself does NOT match).
@@ -57,10 +73,12 @@ export class OutboundPolicy {
     // non-default port only matches URLs that actually carry that port.
     const hostPortKey = u.port !== '' ? `${hostname}:${u.port}` : hostname;
 
-    // R2 — non-http(s) schemes (data:, blob:, javascript:, mailto:, file:...)
+    // R2 — non-network schemes (data:, blob:, javascript:, mailto:, file:...)
     // are inert browser capabilities, not outbound requests: allow, internal.
-    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-      return { verdict: 'allow', hostClass: 'internal', host: hostname, reason: 'non-http(s) scheme' };
+    // ws:/wss: ARE network schemes — they must pass the same host classification
+    // as http(s) (WebSocket policy in the harness uses this same decide()).
+    if (!NETWORK_PROTOCOLS.has(u.protocol)) {
+      return { verdict: 'allow', hostClass: 'internal', host: hostname, reason: 'non-network scheme' };
     }
 
     // R3 — explicit environment allowlist: the ONLY route to 'allow'.

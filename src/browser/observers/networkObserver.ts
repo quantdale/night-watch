@@ -1,20 +1,31 @@
 // ---------------------------------------------------------------------------
-// Nightwatch — network observer.
+// Nightwatch — network observer (Phase 1.1 hardened).
 //
-// Installs a context-wide route handler (`context.route('**/*')`) so EVERY
-// outbound request is inspected by the OutboundPolicy BEFORE it leaves the
-// browser: allowed requests continue, telemetry is aborted (never reaches the
-// network, never fails the run), and denied requests abort AND raise a
-// hard failure. Response bodies are captured for JSON-ish content types and
-// run through the passive protocol oracles.
+// Installs the layered browser containment inside the page/context network
+// stack, ALL derived from the single OutboundPolicy (decide()):
 //
-// All evidence (URLs, headers, bodies) is redacted through the recorder's
-// shared RedactionLayer BEFORE recording — the recorder itself never redacts.
+//   L1 — context.route('**/*'): EVERY ordinary HTTP(S) request (pages, frames,
+//        iframes, dedicated workers, EventSource, cross-origin downloads,
+//        popups — context-wide, never page-local) is inspected BEFORE it
+//        leaves the browser: allowed -> continue; telemetry -> abort (recorded,
+//        not failing); denied -> abort + hard failure.
+//   L2 — context.routeWebSocket('**/*'): WebSocket creation is governed with
+//        IDENTICAL policy semantics (allowed host -> connect; telemetry ->
+//        closed; production/unknown -> closed + hard failure BEFORE any
+//        meaningful communication).
+//   L4 — page.on('request') observation: Playwright does NOT re-route redirect
+//        follow-ups and some download-manager traffic, so any request observed
+//        that policy classifies as DENY and that no route handler governed is
+//        still recorded as a hard failure (detection closes the gap; CDP
+//        the raw-CDP Fetch guard in the harness is the abort layer for those paths).
+//
+// All evidence is redacted through the recorder's shared RedactionLayer
+// BEFORE recording — the recorder itself never redacts.
 // ---------------------------------------------------------------------------
 
 import type { BrowserContext, Page, Request, Response, Route } from '@playwright/test';
 import { RedactionLayer } from '../../core/safety/redaction';
-import type { OutboundPolicy } from '../../core/safety/outboundPolicy';
+import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 import {
@@ -26,8 +37,17 @@ import {
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
 
+/**
+ * Grace period for the unrouted-request detector: route handlers run
+ * synchronously at interception and record into blockedUrls before this
+ * timer fires, so routed requests never double-report.
+ */
+const OBSERVATION_GRACE_MS = 150;
+
 export interface NetworkObserver {
-  install(context: BrowserContext): void;
+  /** Registers the route + WebSocket policy gates. MUST be awaited before any
+   *  page navigation (route/routeWebSocket registration is asynchronous). */
+  install(context: BrowserContext): Promise<void>;
   activeRequests(): number;
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
@@ -49,6 +69,15 @@ export function createNetworkObserver(opts: {
     try {
       const request = route.request();
       const rawUrl = request.url();
+
+      // WebSockets are governed by the routeWebSocket policy (L2), not here.
+      // Playwright does not route ws handshakes through route(), but if a
+      // future version does, do not double-classify them.
+      if (/^wss?:/i.test(rawUrl)) {
+        await route.continue();
+        return;
+      }
+
       const decision = policy.decide(rawUrl);
 
       // Register secrets BEFORE recording anything: every sensitive header
@@ -85,50 +114,64 @@ export function createNetworkObserver(opts: {
       }
 
       if (decision.verdict === 'block-telemetry') {
-        blockedUrls.add(rawUrl);
-        recorder.event({
-          type: 'telemetry',
-          severity: 'info',
-          message: `telemetry blocked: ${redactedUrl}`,
-          data: { url: redactedUrl, verdict: 'block-telemetry', reason: decision.reason },
-        });
-        await route.abort('blockedbyclient'); // never reaches the network
+        // Dedupe with the Fetch guard: whichever layer resolves the pause
+        // first records the evidence; the other skips.
+        if (!blockedUrls.has(rawUrl)) {
+          blockedUrls.add(rawUrl);
+          recorder.event({
+            type: 'telemetry',
+            severity: 'info',
+            message: `telemetry blocked: ${redactedUrl}`,
+            data: { url: redactedUrl, verdict: 'block-telemetry', reason: decision.reason },
+          });
+        }
+        try {
+          await route.abort('blockedbyclient'); // never reaches the network
+        } catch {
+          // benign race: the Fetch guard already failed this request
+        }
         return;
       }
 
       // verdict === 'deny' — HARD FAILURE. Abort before any network I/O.
-      blockedUrls.add(rawUrl);
-      recorder.event({
-        type: 'request',
-        severity: 'info',
-        message: `${request.method()} ${redactedUrl}`,
-        data: {
-          method: request.method(),
-          url: redactedUrl,
-          headers: redactedHeaders,
-          resourceType: request.resourceType(),
-          verdict: 'deny',
-          reason: decision.reason,
-        },
-      });
-      const failureEvent = recorder.event({
-        type: 'hard-failure',
-        severity: 'fatal',
-        message: `HARD FAILURE: ${redactedUrl}`,
-        data: {
-          url: redactedUrl,
+      if (!blockedUrls.has(rawUrl)) {
+        blockedUrls.add(rawUrl);
+        recorder.event({
+          type: 'request',
+          severity: 'info',
+          message: `${request.method()} ${redactedUrl}`,
+          data: {
+            method: request.method(),
+            url: redactedUrl,
+            headers: redactedHeaders,
+            resourceType: request.resourceType(),
+            verdict: 'deny',
+            reason: decision.reason,
+          },
+        });
+        const failureEvent = recorder.event({
+          type: 'hard-failure',
+          severity: 'fatal',
+          message: `HARD FAILURE: ${redactedUrl}`,
+          data: {
+            url: redactedUrl,
+            verdict: 'deny',
+            hostClass: decision.hostClass,
+            reason: decision.reason,
+          },
+        });
+        monitor.recordHardFailure(failureEvent, {
+          url: rawUrl,
           verdict: 'deny',
           hostClass: decision.hostClass,
           reason: decision.reason,
-        },
-      });
-      await route.abort('blockedbyclient');
-      monitor.recordHardFailure(failureEvent, {
-        url: rawUrl,
-        verdict: 'deny',
-        hostClass: decision.hostClass,
-        reason: decision.reason,
-      });
+        });
+      }
+      try {
+        await route.abort('blockedbyclient');
+      } catch {
+        // benign race: the Fetch guard already failed this request
+      }
     } catch (err) {
       // The route handler must never hang the browser.
       try {
@@ -151,6 +194,63 @@ export function createNetworkObserver(opts: {
     }
   }
 
+  /** L2 — WebSocket policy: same semantics as HTTP, never weaker. */
+  async function handleWebSocket(ws: import('@playwright/test').WebSocketRoute): Promise<void> {
+    const rawUrl = ws.url();
+    const decision = policy.decide(rawUrl);
+    const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+    const base = {
+      url: redactedUrl,
+      protocol: 'websocket',
+      reason: decision.reason,
+    } as Record<string, unknown>;
+
+    if (decision.verdict === 'allow') {
+      recorder.event({
+        type: 'request',
+        severity: 'info',
+        message: `WS ${redactedUrl}`,
+        data: { ...base, method: 'WS', verdict: 'allow' },
+      });
+      await ws.connectToServer();
+      return;
+    }
+
+    if (decision.verdict === 'block-telemetry') {
+      blockedUrls.add(rawUrl);
+      recorder.event({
+        type: 'telemetry',
+        severity: 'info',
+        message: `telemetry blocked: ${redactedUrl}`,
+        data: { ...base, verdict: 'block-telemetry' },
+      });
+      await ws.close(); // never connects to the server
+      return;
+    }
+
+    // deny — HARD FAILURE, closed before any meaningful communication.
+    blockedUrls.add(rawUrl);
+    recorder.event({
+      type: 'request',
+      severity: 'info',
+      message: `WS ${redactedUrl}`,
+      data: { ...base, method: 'WS', verdict: 'deny' },
+    });
+    const failureEvent = recorder.event({
+      type: 'hard-failure',
+      severity: 'fatal',
+      message: `HARD FAILURE: ${redactedUrl}`,
+      data: { ...base, verdict: 'deny', hostClass: decision.hostClass },
+    });
+    await ws.close();
+    monitor.recordHardFailure(failureEvent, {
+      url: rawUrl,
+      verdict: 'deny',
+      hostClass: decision.hostClass,
+      reason: decision.reason,
+    });
+  }
+
   async function onResponse(response: Response): Promise<void> {
     try {
       const rawUrl = response.request().url();
@@ -164,6 +264,8 @@ export function createNetworkObserver(opts: {
       const data: Record<string, unknown> = { url: redactedUrl, status, contentType };
 
       // Body capture: only for JSON-ish content types; capped and redacted.
+      // body stays undefined when capture fails — oracles must NOT run on a
+      // failed capture (an unreadable body is not a malformed body).
       let body: string | undefined;
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
         try {
@@ -185,13 +287,13 @@ export function createNetworkObserver(opts: {
         data,
       });
 
-      // Passive protocol oracles (RECON_B §6.1 H1/H8 baseline). The recorder's
-      // RunEventType union has no per-check names, so oracle issues are typed
-      // 'oracle' with the semantic check name in data.reason.
+      // Passive protocol oracles (RECON_B §6.1 H1/H8 baseline). Oracle issues
+      // are typed 'oracle' with the semantic check name in data.reason.
+      // Body-dependent oracles run only when capture succeeded.
       const issues = [
         checkUnexpectedStatus(status, redactedUrl),
-        checkJsonBody(body ?? '', redactedUrl, contentType),
-        checkNdjsonBody(body ?? '', redactedUrl, contentType),
+        body !== undefined ? checkJsonBody(body, redactedUrl, contentType) : null,
+        body !== undefined ? checkNdjsonBody(body, redactedUrl, contentType) : null,
       ];
       for (const issue of issues) {
         if (issue !== null) {
@@ -222,6 +324,23 @@ export function createNetworkObserver(opts: {
         return;
       }
       const errorText = request.failure()?.errorText ?? 'unknown';
+      // Client-side aborts (net::ERR_ABORTED) are ordinary application
+      // behavior (e.g. EventSource.close(), fetch AbortController) and
+      // net::ERR_BLOCKED_BY_CLIENT is Nightwatch's OWN Fetch-guard action —
+      // both are recorded, never issues.
+      if (
+        errorText.includes('ERR_ABORTED') ||
+        errorText.includes('inspector') ||
+        errorText.includes('ERR_BLOCKED_BY_CLIENT')
+      ) {
+        recorder.event({
+          type: 'requestfailed',
+          severity: 'info',
+          message: `client-aborted request: ${redactedUrl} (${errorText})`,
+          data: { url: redactedUrl, errorText },
+        });
+        return;
+      }
       recorder.event({
         type: 'requestfailed',
         severity: 'warn',
@@ -240,15 +359,68 @@ export function createNetworkObserver(opts: {
     }
   }
 
-  /** Attach response/requestfailed capture to one page (shared helper). */
+  /**
+   * L4 — unrouted-request detection. Playwright does not re-route redirect
+   * follow-ups (and some download-manager traffic). Any request observed here
+   * that policy DENIES and that no route handler governed within the grace
+   * window is still recorded as a hard failure: the violation cannot escape
+   * the evidence or the run verdict even if it escapes interception.
+   */
+  function onRequestObserved(request: Request): void {
+    try {
+      const rawUrl = request.url();
+      if (!isNetworkUrl(rawUrl)) return;
+      const decision = policy.decide(rawUrl);
+      if (decision.verdict !== 'deny') return;
+      if (blockedUrls.has(rawUrl)) return; // governed by a route/WS handler already
+
+      setTimeout(() => {
+        try {
+          if (blockedUrls.has(rawUrl)) return; // route handler processed it synchronously
+          blockedUrls.add(rawUrl);
+          const redactedUrl = recorder.redaction.redactUrl(rawUrl);
+          const ev = recorder.event({
+            type: 'hard-failure',
+            severity: 'fatal',
+            message: `HARD FAILURE (unrouted request detected): ${redactedUrl}`,
+            data: {
+              url: redactedUrl,
+              verdict: 'deny',
+              hostClass: decision.hostClass,
+              reason: decision.reason,
+              path: 'unrouted-observation',
+            },
+          });
+          monitor.recordHardFailure(ev, {
+            url: rawUrl,
+            verdict: 'deny',
+            hostClass: decision.hostClass,
+            reason: decision.reason,
+          });
+        } catch {
+          // never crash the run from an observation timer
+        }
+      }, OBSERVATION_GRACE_MS);
+    } catch {
+      // observer must never crash the run
+    }
+  }
+
+  /** Attach response/requestfailed/observation capture to one page. */
   function installPage(page: Page): void {
     page.on('response', onResponse);
     page.on('requestfailed', onRequestFailed);
+    page.on('request', onRequestObserved);
   }
 
   return {
-    install(context: BrowserContext): void {
-      context.route('**/*', handleRoute);
+    async install(context: BrowserContext): Promise<void> {
+      // Both registrations are ASYNC (routeWebSocket installs an in-page init
+      // script + binding). They MUST complete before any navigation: an
+      // unawaited registration leaves a window without WebSocket interception
+      // and can reject with 'Target closed' when the context shuts down.
+      await context.route('**/*', handleRoute);
+      await context.routeWebSocket('**/*', handleWebSocket);
       // Wire existing pages, and auto-wire popups/new pages.
       for (const page of context.pages()) installPage(page);
       context.on('page', (page) => installPage(page));

@@ -14,7 +14,7 @@ provenance (repo @ SHA, D-12).
 
 ---
 
-## Phase 0/1 — Scaffold, safety kernel, passive Ripple observer (current)
+## Phase 0/1 — Scaffold, safety kernel, passive Ripple observer
 
 **Goal.** Stand up the safety kernel and a minimal runnable pipeline that
 proves the fail-closed model end to end: a passive Ripple journey against a
@@ -55,6 +55,56 @@ self-development.
 
 ---
 
+## Phase 1.1 — Safety hardening: browser containment layers (current)
+
+**Goal.** Close every gap between "the policy decides" and "nothing leaves
+the browser" across the full surface a real browser exposes — WebSockets,
+workers, redirects, downloads, popups, EventSource — and make
+authenticated runs safe by construction. Empirically verified on
+Playwright 1.62.1 + system Chrome. Explicit exclusion: **no real dev/next
+sessions** in this phase.
+
+**Key deliverables.**
+
+- Containment layers L0–L4 in the browser harness
+  (`src/browser/context.ts`,
+  `src/browser/observers/networkObserver.ts`,
+  `src/browser/network/fetchGuard.ts`): raw-CDP `Fetch.enable` guard
+  per page (L0 — pauses every request incl. redirect follow-ups,
+  fails denied/telemetry URLs before network I/O), `context.route('**/*')`
+  (L1),
+  `context.routeWebSocket('**/*')` (L2), `serviceWorkers: 'block'` +
+  Service Worker / SharedWorker API stubs + `serviceworker` alarm (L3),
+  unrouted-request detection (150 ms grace, `blockedUrls` dedupe) +
+  download record/cancel (L4).
+- WebSocket policy with semantics identical to HTTP (`ws:`/`wss:` in
+  `NETWORK_PROTOCOLS`); telemetry WS closed, not failed; denied WS closed
+  + hard failure before communication.
+- Storage-state secret rules — fail-closed validation
+  (`src/browser/fixtures/storageState.ts`: absolute path, external
+  location, readable regular file, ≤ 5 MB, `{cookies, origins}` shape) —
+  and `.gitignore` hardening with auth/session filename patterns.
+- Authenticated trace policy: traces always off with auth state; the
+  manifest records `trace.enabled=false` + reason.
+- Network-surface regression suite: `tests/smoke/safety.smoke.ts`,
+  `tests/smoke/authenticated.smoke.ts`, `tests/unit/storageState.test.ts`,
+  WebSocket policy tests in `tests/unit/safety.test.ts`.
+- Recon archive: `docs/recon/README.md` — RECON_B present; RECON_A/C/D
+  handoff summaries (originals still to be located).
+- Second containment layer (L5) design: allowlist filtering proxy / Docker
+  network isolation — design only in 1.1 (D-22, SAFETY_MODEL §13).
+
+**Non-goals / exclusions.** Real dev/next sessions (Phase 2, gated on
+L5); L5 implementation (no proxy, no iptables, no root requirements in
+1.1); any change to the mutation boundary (Phase 1 blocked classes stay
+blocked); `production`; authenticated traces.
+
+**Dependencies.** Phase 0/1 harness and safety kernel. Verified grounding:
+empirical containment verification on Playwright 1.62.1 + system Chrome
+(documented in `docs/SAFETY_MODEL.md` §9–§11) and DECISIONS D-15–D-22.
+
+---
+
 ## Phase 2 — Deterministic browser journeys against real Ripple
 
 **Goal.** Extend the Phase 1 harness from the fixture to real local/dev/next
@@ -80,8 +130,19 @@ Ripple deployments with deterministic, read-only, configurable journeys.
 **Non-goals / exclusions.** Mutations (all Phase 1 blocked classes remain
 blocked); login/auth-flow automation; tracing with auth state; production.
 
-**Dependencies.** Phase 0/1 harness, safety kernel, snapshotter (journey
-runs record repo state for later correlation).
+**Prerequisite gate.** The second containment layer (L5 — a local
+allowlist filtering proxy with `OutboundPolicy` semantics, or Docker
+network isolation for the nightly runner; D-22, SAFETY_MODEL §13) must
+land **before the first real dev/next session**. No dev/next journey runs
+without it: the browser-internal stack alone (L0–L4) is not the bar for
+real sessions, because browser-internal background telemetry is not
+visible to Playwright routing.
+
+**Dependencies.** Phase 0/1 + 1.1 harness, safety kernel, snapshotter
+(journey runs record repo state for later correlation); the `docs/recon/`
+archive as input (RECON_A/C/D originals still to be located — only
+handoff summaries are archived; locate and archive the originals before
+finalizing Phase 2 journey scope).
 
 ---
 
@@ -230,7 +291,7 @@ over Alphaus repos is absolute.
 - Self-development loop confined to `REPOSITORIES/nightwatch/`: candidate
   scenarios/tests/oracles proposed by the system, run through the full
   self-test + canary gate, adopted only when green.
-- Evaluation harness: safety guarantees (SAFETY_MODEL §9) re-run on every
+- Evaluation harness: safety guarantees (SAFETY_MODEL §14) re-run on every
   candidate; any candidate that weakens a guarantee is rejected.
 - Budget and blast-radius limits: bounded generation budget per session;
   changes are additive; rollback via git.

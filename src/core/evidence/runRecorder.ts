@@ -92,6 +92,22 @@ export class RunRecorder {
   }
 
   /**
+   * Add (or replace) a manifest.json entry after construction, e.g. the trace
+   * decision made by the harness. Deterministic: same inputs, same bytes.
+   */
+  addManifestEntry(key: string, value: unknown): void {
+    const file = path.join(this.dir, 'manifest.json');
+    let manifest: Record<string, unknown>;
+    try {
+      manifest = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>;
+    } catch {
+      manifest = {};
+    }
+    manifest[key] = value;
+    fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+  }
+
+  /**
    * Record one event. Message and data MUST already be redacted by the caller.
    * Events are appended to events.jsonl; 'request'/'response' events are also
    * mirrored to network.jsonl and 'console' events to console.jsonl.

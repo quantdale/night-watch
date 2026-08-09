@@ -21,7 +21,9 @@ export type RunEventType =
   | 'issue'
   | 'hard-failure'
   | 'screenshot'
-  | 'stability';
+  | 'stability'
+  | 'download'
+  | 'service-worker';
 
 export type RunSeverity = 'info' | 'warn' | 'error' | 'fatal';
 

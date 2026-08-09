@@ -30,7 +30,7 @@ Phase 0/1 goals:
 3. **Evidence-backed.** Every run produces a self-contained, redacted,
    deterministic artifact bundle under `artifacts/<run-id>/`.
 4. **Self-tested.** Nightwatch's own unit and smoke tests prove the safety
-   guarantees (see `docs/SAFETY_MODEL.md` §9).
+   guarantees (see `docs/SAFETY_MODEL.md` §14).
 
 The platform reality that motivates the architecture (RECON_B §4, E1–E10):
 application-level environment selection (SDK defaults, CLI flags, UI cookies,
