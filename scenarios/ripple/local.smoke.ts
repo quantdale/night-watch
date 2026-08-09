@@ -38,7 +38,11 @@ function getNightwatchSha(): string | null {
 /** Repos (relative to the repos root) across the alphauslabs/mobingilabs org dirs. */
 function discoverWorkspaceRepos(reposRoot: string): string[] {
   const found: string[] = [];
-  for (const entry of discoverRepositories(reposRoot)) found.push(entry);
+  const selfAbs = path.resolve(__dirname, '..', '..');
+  for (const entry of discoverRepositories(reposRoot)) {
+    if (path.resolve(reposRoot, entry) === selfAbs) continue; // nightwatch itself
+    found.push(entry);
+  }
   for (const org of ['alphauslabs', 'mobingilabs']) {
     const orgDir = path.join(reposRoot, org);
     for (const repo of discoverRepositories(orgDir)) found.push(path.join(org, repo));
