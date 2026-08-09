@@ -396,6 +396,20 @@ Relevant failure/output summary: two category-only console-error oracles were
 observed near the blocked third-party widget and are classified as
 safety-blocked third-party behavior, not as an auth-state or product bug.
 
+Command: final local validation and scope checks
+Result: PASS; `npx tsc --noEmit` => PASS; `npx playwright test` => **122 passed,
+0 failed**; `npm run agent:check` => PASS with the expected approved
+state-only `CHECKPOINT_ADVANCE` warning; `git diff --check` => PASS.
+The canary-start Alphaus snapshot comparison checked all 144 repositories with
+0 HEAD or dirty-file-count mismatches. The expected external auth-state path
+`$HOME/.nightwatch/auth/ripple-dev-state.json` is absent and
+`NIGHTWATCH_STORAGE_STATE` is unset; no auth state is loaded.
+When: 2026-08-09
+Relevant failure/output summary: the Nightwatch tree is clean after the stop
+checkpoint; the workspace root and Alphaus repositories retain only their
+pre-existing user changes, and no Alphaus repository was modified by this
+task.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
