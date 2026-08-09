@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
 Last validated implementation SHA: 46f5817b5c2a8180affb1c0a5edc7454480a34ad
 Branch: main
-Last checkpoint: 2026-08-09 — corrected DEV canary `nightwatch-20260809T110122Z-4d4d` passed after the exact-host Pylon policy/evidence implementation at `46f5817b5c2a8180affb1c0a5edc7454480a34ad`. No auth state loaded.
+Last checkpoint: 2026-08-09 — reconciled the sanitized preflight-gate stop from clean HEAD `70f0565a7b169ea6f2494fe527b36a5dd692b9cb`. The repository-freshness failure was caused by the two uncommitted task-state checkpoint paths; no Alphaus snapshot or undocumented Alphaus repository condition was found. Authentication remains blocked because the external storage state is missing. No storage-state contents were inspected or printed.
 
 ## Objective
 
@@ -129,9 +129,17 @@ npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple
 ```
 
 The gate is local-only and must pass before any authenticated target navigation.
-Then resume this same task at M7 using the guarded direct-landing observer and
-exactly one fresh-context replay; do not begin Phase 2B or approve any new
-hostname. If another hostname is unresolved, stop and checkpoint.
+The requested gate was run and stopped before authenticated context creation
+or target navigation. Its authentication blocker was the missing external
+storage state. Its repository-freshness result was caused by the two
+uncommitted task-state checkpoint paths being treated as undocumented by the
+gate; existing sanitized all-144-repository snapshot comparisons found no
+Alphaus snapshot or undocumented-repository condition. This checkpoint
+commits those paths, so no snapshot regeneration is needed before manual auth
+capture. After capture, rerun this exact gate in a fresh session without
+exposing storage-state contents. Do not begin authenticated observation,
+Phase 2B, or approve any new hostname. If another hostname is unresolved,
+stop and checkpoint.
 
 ## Files Changed
 
@@ -166,6 +174,20 @@ hostname. If another hostname is unresolved, stop and checkpoint.
 | `src/core/evidence/destinationManifest.ts`, `src/core/evidence/types.ts`, `tests/unit/destinationManifest.test.ts`, `tests/unit/containmentEffect.test.ts`, `tests/unit/proxy.test.ts` | Distinct sanitized reporting and regression coverage | Modified/added |
 
 ## Validation Ledger
+
+Command: `npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+Result: **USER_ACTION_REQUIRED / STOP**; the local pre-real-run gate exited
+non-zero before authenticated context creation or target navigation.
+When: 2026-08-09
+Relevant failure/output summary: all environment, target, API/auth contract,
+production-deny, proxy, browser-containment, authenticated-evidence, and
+passive-action checks passed. Exact sanitized blockers were
+`authentication-state: external storage state is missing, invalid, or has
+mismatched provenance` and `repository-freshness: repository freshness
+snapshot is missing/invalid or contains undocumented changes`. The supplied
+storage-state path was used only as a path; its contents were not inspected,
+printed, copied, summarized, or persisted. No authenticated observation was
+attempted.
 
 Command: `git status --short --branch` and `git rev-parse HEAD`
 Result: PASS; clean `main` at the reconciled starting SHA before task-state
@@ -599,6 +621,19 @@ sanitized evidence; no wildcard or related-host approval.
   remain unknown and fail closed.
 
 ## Blockers
+
+The authenticated preflight gate was run exactly as planned after the Git
+reconciliation and stopped before authenticated context creation or target
+navigation. The exact sanitized authentication blocker was:
+
+- `authentication-state: external storage state is missing, invalid, or has mismatched provenance`
+
+The repository-freshness result was caused by the two uncommitted task-state
+paths in the Nightwatch working tree; the read-only Alphaus snapshot was not
+found invalid, and no undocumented Alphaus repository condition was found.
+The storage-state file was not opened for inspection, printed, copied, or
+persisted by Nightwatch/Codex. Phase 2A remains `IN_PROGRESS`; M7 cannot
+advance until the external capture is completed and the same gate passes.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
