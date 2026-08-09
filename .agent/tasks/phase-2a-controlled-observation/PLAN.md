@@ -186,7 +186,9 @@ Phase 2B+, and container/L6 implementation.
   allowed or added to config.
 - Validation commands: real-run gate/canary command if preflight PASS; inspect
   sanitized local manifest and STATE checkpoint.
-- Status: COMPLETE
+- Status: USER_ACTION_REQUIRED — the corrected canary reached the approved
+  `/ripple/` target with HTTP 200 but stopped on the new unclassified host
+  `widget.usepylon.com`; no auth capture may begin.
 
 #### M6 approval checkpoint — 2026-08-09
 
@@ -233,7 +235,36 @@ host-policy change:
 
 The `dev` allowlist is unchanged. The corrected configuration and path-agreement
 guards passed focused target, gate, safety, type, and whitespace validation;
-the corrected real no-auth canary is the exact next action.
+the corrected real no-auth canary then stopped on a new unclassified host as
+recorded below.
+
+#### Corrected canary result — 2026-08-09 — `nightwatch-20260809T103326Z-5feb`
+
+The corrected target was reached safely, but M6 is **USER_ACTION_REQUIRED**:
+
+- Final sanitized URL/path: `https://appdev.alphaus.cloud/ripple/`.
+- UI document HTTP status: `200`; no redirect chain was observed.
+- Destination counts: 3 expected, 0 new-but-verified, 7 blocked telemetry,
+  1 unresolved.
+- Blocked telemetry: `www.google.com` (5 proxy events),
+  `accounts.google.com` (1), `clients2.google.com` (1),
+  `safebrowsingohttpgateway.googleapis.com` (1), `api-js.mixpanel.com` (1),
+  `o446571.ingest.sentry.io` (1), and `widget.intercom.io` (1). All were
+  blocked locally as non-fatal telemetry; no dynamic allowlist entry was made.
+- Unresolved/new host: `widget.usepylon.com`, external/unknown, denied by the
+  browser Fetch guard before upstream contact; it appeared twice in the
+  sanitized destination manifest and is the blocking fact.
+- Proxy counts: 3 allowed, 6 telemetry-blocked, 0 denied, 0 unknown,
+  0 proxy violations. Production attempts: 0.
+- Passive oracles: two category-only `console-error` entries occurred near the
+  denied third-party widget activity; they are classified as safety-blocked
+  third-party behavior, not as an authenticated/unauthenticated product bug.
+  The run remains stopped because the new host is unresolved.
+- No storage state, credentials, DB access, mutation, screenshot, trace, or
+  production connection was used.
+
+Do not dynamically approve `widget.usepylon.com` or continue to M7. Await a
+human disposition for this exact host under the existing fail-closed policy.
 
 ### M7 — Observe the first authenticated Ripple landing page
 
@@ -248,11 +279,10 @@ the corrected real no-auth canary is the exact next action.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — CORRECTED_TARGET_CANARY. The M2 target correction is
-  checkpointed; the no-auth canary must pass before USER_ACTION_REQUIRED for a
-  valid externally supplied Playwright storage-state path; no authentication
-  state is present in this session and no credentials may be provided to
-  Nightwatch.
+- Status: BLOCKED — USER_ACTION_REQUIRED because the corrected no-auth canary
+  encountered the new unclassified host `widget.usepylon.com`; no
+  authentication state is present in this session and no credentials may be
+  provided to Nightwatch.
 
 ### M8 — Produce the destination manifest
 

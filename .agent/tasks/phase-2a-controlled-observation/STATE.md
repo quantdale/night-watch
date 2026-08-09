@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
 Last validated implementation SHA: 76bd7dfae59cb01c922a71e45a22d6534011bf1b
 Branch: main
-Last checkpoint: 2026-08-09 — corrected target configuration/path guards checkpointed at 76bd7df; dev origin `https://appdev.alphaus.cloud`, Ripple path `/ripple/`, exact URL `https://appdev.alphaus.cloud/ripple/`; no auth state loaded.
+Last checkpoint: 2026-08-09 — corrected canary `nightwatch-20260809T103326Z-5feb` reached `/ripple/` with HTTP 200 but stopped on new unclassified host `widget.usepylon.com`; no auth state loaded.
 
 ## Objective
 
@@ -20,14 +20,16 @@ evidence, and a single fresh-context replay.
 ## Current Milestone
 
 Milestone ID: M6 — Run the unauthenticated real connectivity canary
-Status: IN_PROGRESS — CORRECTED_TARGET_CANARY
-What is being attempted: The approved target correction is checkpointed in
-the `dev` configuration and path-agreement guards. The approved UI origin is
+Status: USER_ACTION_REQUIRED
+What is being attempted: The corrected target is checkpointed in the `dev`
+configuration and path-agreement guards. The approved UI origin is
 `https://appdev.alphaus.cloud`; the approved Ripple application path is
 `/ripple/`; the exact Phase 2A UI URL is
-`https://appdev.alphaus.cloud/ripple/`. The host allowlist and production
-policy are unchanged. Focused local validation passed; no storage state is
-loaded and no auth capture is started before the corrected canary passes.
+`https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 and
+final URL `/ripple/`, but the browser encountered new unclassified external
+host `widget.usepylon.com` and denied it before upstream contact. The host
+allowlist and production policy are unchanged. No storage state was loaded and
+no auth capture was started.
 
 ## Completed Milestones
 
@@ -89,20 +91,20 @@ loaded and no auth capture is started before the corrected canary passes.
 
 ## Work In Progress
 
-Continuity, evidence minimization, manual capture, the pre-real-run safety gate,
-and the M6 unauthenticated canary are complete. The prior canary reached the
-configured dev host at the wrong root path and returned HTTP 404 with one
-generic console-error oracle. Narrow current Ripple source/config evidence
-proves the intended base path is `/ripple/`; the approved correction is now
-configured and guarded. No authenticated observation or auth capture has
-occurred.
+Continuity, evidence minimization, manual capture, and the pre-real-run safety
+gate are complete. The prior canary reached the configured dev host at the
+wrong root path and returned HTTP 404; the corrected canary reached `/ripple/`
+with HTTP 200 but stopped on new unclassified host `widget.usepylon.com`.
+Narrow current Ripple source/config evidence proves the intended base path is
+`/ripple/`; the approved correction is configured and guarded. No
+authenticated observation or auth capture has occurred.
 
 ## Exact Next Action
 
-RUN_CORRECTED_CANARY — run `npm run observe:canary -- --env=dev`. The canary
-must resolve exactly to `https://appdev.alphaus.cloud/ripple/` with no storage
-state. Only after that canary passes may M7’s manual external storage-state
-workflow be prepared; do not change host allowlists dynamically.
+USER_ACTION_REQUIRED — review the exact unresolved host `widget.usepylon.com`
+from corrected canary run `nightwatch-20260809T103326Z-5feb`. Do not dynamically
+approve it, retry the canary, load storage state, or start auth capture until a
+human disposition is recorded.
 
 ## Files Changed
 
@@ -378,6 +380,22 @@ Result: PASS; `npx playwright test tests/unit/target-preflight.test.ts tests/uni
 When: 2026-08-09
 Relevant failure/output summary: production deny policy and the two explicitly blocked Chromium telemetry destinations remain unchanged.
 
+Command: `npm run observe:canary -- --env=dev`
+Result: USER_ACTION_REQUIRED; run ID `nightwatch-20260809T103326Z-5feb` passed
+the no-network preflight and all 13 pre-real-run checks, reached
+`https://appdev.alphaus.cloud/ripple/`, and received HTTP 200. The final
+sanitized URL remained `/ripple/` with no redirect chain. The destination
+manifest recorded 3 expected, 0 new-but-verified, 7 blocked telemetry, and 1
+unresolved destination. New unclassified blocker: `widget.usepylon.com`
+appeared twice, was denied by the browser Fetch guard, and produced no proxy
+upstream violation. Proxy summary: 3 allowed, 6 telemetry-blocked, 0 denied,
+0 unknown, 0 violations; production attempts: 0. No storage state, auth,
+credentials, DB access, mutation, screenshot, or trace was used.
+When: 2026-08-09
+Relevant failure/output summary: two category-only console-error oracles were
+observed near the blocked third-party widget and are classified as
+safety-blocked third-party behavior, not as an auth-state or product bug.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -483,13 +501,14 @@ destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`
 - every other previously unknown hostname remains unresolved, denied, and
   requires separate review.
 
-Current blocker: `TARGET_URL_CORRECTION_REQUIRED` for M2. The configured dev
-root path must be replaced or explicitly overridden with the code-verified
-`https://appdev.alphaus.cloud/ripple/`, followed by a no-auth preflight/canary
-validation. No credential automation, auth capture, or authenticated
-navigation may begin against the current root URL. After target correction,
-M7 still requires a valid external Playwright storage-state path without
-exposing its contents and a passing pre-real-run gate.
+Current blocker: `USER_ACTION_REQUIRED` for the new unclassified external host
+`widget.usepylon.com` encountered by corrected canary run
+`nightwatch-20260809T103326Z-5feb`. It was denied locally by the browser Fetch
+guard before upstream contact. Do not dynamically approve the host, retry the
+canary, perform auth capture, or begin authenticated navigation until a human
+disposition is recorded. After the blocker is resolved, M7 still requires a
+valid external Playwright storage-state path without exposing its contents and
+a passing pre-real-run gate.
 
 ## Safety Events
 
@@ -504,6 +523,13 @@ denied them before upstream contact, the sanitized manifest recorded them as
 unresolved, and the run stopped. No production destination or authenticated
 request occurred.
 
+M6 corrected-canary safety event: `widget.usepylon.com` was a new unclassified
+external destination attempted twice by the page. The browser Fetch guard
+denied it before upstream contact; the outer proxy recorded 0 denied and 0
+violations. The sanitized manifest recorded one unresolved destination and the
+run stopped. No production destination, auth state, credential, DB access, or
+mutation occurred.
+
 ## Deferred / Follow-Up
 
 - Phase 2B deterministic read-only Ripple journeys and all later phases.
@@ -514,11 +540,13 @@ request occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Provide only a safe external storage-state path for M7; never provide its
-   contents or credentials.
-4. Run the authenticated command only after the pre-real-run gate passes; use
+3. Resolve the `widget.usepylon.com` USER_ACTION_REQUIRED blocker without
+   dynamic approval; do not retry or load auth state before that disposition.
+4. After the canary is allowed to proceed, provide only a safe external
+   storage-state path for M7; never provide its contents or credentials.
+5. Run the authenticated command only after the pre-real-run gate passes; use
    a direct landing navigation, then exactly one fresh-context replay.
-5. Update STATE with exact sanitized runtime results and checkpoint before M8.
+6. Update STATE with exact sanitized runtime results and checkpoint before M8.
 
 ## Completion Snapshot
 
