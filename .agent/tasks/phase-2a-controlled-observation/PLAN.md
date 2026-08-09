@@ -181,7 +181,7 @@ Phase 2B+, and container/L6 implementation.
   allowed or added to config.
 - Validation commands: real-run gate/canary command if preflight PASS; inspect
   sanitized local manifest and STATE checkpoint.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 #### M6 approval checkpoint — 2026-08-09
 
@@ -199,6 +199,23 @@ Exact continuation: run `npm run observe:canary -- --env=dev` after this
 checkpoint. Do not load storage state or begin authenticated observation until
 all preflight and canary gates pass.
 
+#### M6 result — 2026-08-09
+
+`npm run observe:canary -- --env=dev` completed with `PASS` for run
+`nightwatch-20260809T080408Z-7b9e`. Preflight and all 13 pre-real-run gate
+checks passed before direct navigation. The sanitized destination manifest
+recorded 1 expected `appdev.alphaus.cloud` UI destination, 4 blocked telemetry
+destinations (`accounts.google.com`, `www.google.com`, and the two approved
+Chromium background hosts), and 0 unresolved destinations. The proxy recorded
+1 allowed, 4 telemetry-blocked, 0 denied, and 0 violations. No storage state,
+credentials, screenshots, traces, request/response bodies, or production
+connection were used. The UI response was HTTP 404 and emitted one generic
+console-error oracle; the canary summary still passed and no authenticated
+observation was started.
+
+M6 acceptance is COMPLETE. Any other hostname appearing in a later run remains
+fail-closed and requires separate review.
+
 ### M7 — Observe the first authenticated Ripple landing page
 
 - Objective: perform one tiny passive authenticated observation.
@@ -212,7 +229,9 @@ all preflight and canary gates pass.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS — USER_ACTION_REQUIRED for a valid externally supplied
+  Playwright storage-state path; no authentication state is present in this
+  session and no credentials may be provided to Nightwatch.
 
 ### M8 — Produce the destination manifest
 

@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: cd7e3687578707237707671c7ad7123533c0706a
 Last validated implementation SHA: cd7e3687578707237707671c7ad7123533c0706a
 Branch: main
-Last checkpoint: 2026-08-09 — approved Chromium telemetry classification implemented and validated; implementation checkpoint cd7e368
+Last checkpoint: 2026-08-09 — M6 canary PASS after approved telemetry block; no auth state loaded; implementation checkpoint cd7e368
 
 ## Objective
 
@@ -19,16 +19,15 @@ evidence, and a single fresh-context replay.
 
 ## Current Milestone
 
-Milestone ID: M6 — Run the unauthenticated real connectivity canary
-Status: IN_PROGRESS
-What is being attempted: M6 real canary reached the explicit dev UI under the
-proxy, but stopped before any authenticated work because Chromium attempted
-unresolved background destinations. The user-approved narrow, explicit
-non-network block disposition for `clients2.google.com` and
-`safebrowsingohttpgateway.googleapis.com` is now represented in the dev/next
-telemetry classification only. They remain locally denied and not allowlisted;
-their appearance may be recorded as sanitized blocked telemetry without
-failing the run. Any other unknown hostname remains fail-closed and requires
+Milestone ID: M7 — Observe the first authenticated Ripple landing page
+Status: IN_PROGRESS — USER_ACTION_REQUIRED
+What is being attempted: M6 completed successfully after the explicit
+non-network block classification. The fresh canary passed preflight and all
+pre-auth gates, reached only the selected dev UI, and recorded the two named
+Chromium hosts as non-fatal blocked telemetry. No storage state was loaded.
+M7 is paused until a human supplies a valid external Playwright storage-state
+path; credentials, cookies, tokens, and customer data must not enter Nightwatch
+or this session. Any other unknown hostname remains fail-closed and requires
 separate review.
 
 ## Completed Milestones
@@ -92,17 +91,19 @@ separate review.
 ## Work In Progress
 
 Continuity, target preflight, evidence minimization, manual capture, and the
-pre-real-run safety gate are complete. The prior unauthenticated canary made
-only the recorded selected-dev UI observation; no authenticated observation has
-occurred. The approved background-host classification is validated and M6 is
-ready to resume.
+pre-real-run safety gate and M6 unauthenticated canary are complete. The
+selected dev UI returned HTTP 404 with one generic console-error oracle, but
+the canary summary passed; no authenticated observation has occurred. M7 is
+waiting for a valid external storage-state path and must remain passive-only.
 
 ## Exact Next Action
 
-Run `npm run observe:canary -- --env=dev`. Keep the run to the explicit
-selected UI URL, do not load storage state, do not follow links, and stop on
-production or any hostname other than the two explicitly approved blocked
-telemetry hosts and the already classified destinations.
+USER_ACTION_REQUIRED — provide an absolute path to a valid externally captured
+Playwright storage-state file outside the Nightwatch repository and artifacts,
+without exposing its contents. After the pre-real-run gate accepts that path,
+run only the direct authenticated landing observation and one fresh-context
+replay; do not start until the gate passes and stop on any newly unclassified
+hostname.
 
 ## Files Changed
 
@@ -307,6 +308,28 @@ When: 2026-08-09
 Relevant failure/output summary: no browser, DNS, TCP, or target activity was
 performed by this validation.
 
+Command: `npm run observe:canary -- --env=dev`
+Result: PASS; run ID `nightwatch-20260809T080408Z-7b9e` passed no-network
+preflight, the full pre-auth gate, and the direct unauthenticated canary. The
+sanitized manifest recorded 1 expected UI host, 4 blocked telemetry hosts, 0
+new-but-verified hosts, and 0 unresolved hosts. The proxy summary was 1
+allowed, 4 telemetry-blocked, 0 denied, and 0 violations. No storage state was
+loaded and no authenticated observation was started.
+When: 2026-08-09
+Relevant failure/output summary: selected UI returned HTTP 404 and produced
+one generic `console-error` oracle; `summary.json.passed` remained true. No
+production destination, unknown destination, DNS/TCP violation, request body,
+credential, screenshot, or trace was recorded.
+
+Command: sanitized privacy review of
+`artifacts/nightwatch-20260809T080408Z-7b9e`
+Result: PASS; artifact directory contained only the expected sanitized JSONL
+and JSON files, with zero bearer-token, JWT-like, cookie/authorization, or
+request/response-body pattern hits; trace and screenshot outputs were absent.
+When: 2026-08-09
+Relevant failure/output summary: artifacts remain local/ignored and contain no
+auth state or customer data.
+
 Command: fourth `npm run observe:canary -- --env=dev` attempt; run ID
 `nightwatch-20260809T075359Z-0a6d`
 Result: USER_ACTION_REQUIRED; the fresh run passed preflight and the full
@@ -425,10 +448,10 @@ receive separate review.
 
 ## Blockers
 
-The prior `USER_ACTION_REQUIRED` blocker is cleared by the user's explicit
-approval on 2026-08-09. The approved disposition is **NON-NETWORK BLOCK** for
-the two Chromium background/control-plane destinations
-`clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`:
+The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
+user's explicit approval on 2026-08-09. The approved disposition remains
+**NON-NETWORK BLOCK** for the two Chromium background/control-plane
+destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`:
 
 - no DNS, TCP, HTTP, or HTTPS access;
 - no outbound allowlist entry;
@@ -437,9 +460,14 @@ the two Chromium background/control-plane destinations
 - every other previously unknown hostname remains unresolved, denied, and
   requires separate review.
 
-Resume with:
+Current blocker: `USER_ACTION_REQUIRED` for M7. A human must make a valid
+external Playwright storage-state path available without exposing its contents.
+No credential automation or authenticated navigation may begin without that
+state and a passing pre-real-run gate.
 
-`npm run observe:canary -- --env=dev`
+Resume M7 only after the external storage-state prerequisite is available; the
+canary itself must not be rerun unless a new unclassified destination requires
+review.
 
 ## Safety Events
 
@@ -464,11 +492,11 @@ request occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Verify the approved explicit non-network block classification is present for
-   the two named Chromium hosts; never allow them or permit network access.
-4. Resume with `npm run observe:canary -- --env=dev`; it reruns preflight and
-   the pre-auth gate before any navigation and uses a fresh run ID.
-5. Update STATE with exact sanitized runtime results and checkpoint before M7.
+3. Provide only a safe external storage-state path for M7; never provide its
+   contents or credentials.
+4. Run the authenticated command only after the pre-real-run gate passes; use
+   a direct landing navigation, then exactly one fresh-context replay.
+5. Update STATE with exact sanitized runtime results and checkpoint before M8.
 
 ## Completion Snapshot
 
