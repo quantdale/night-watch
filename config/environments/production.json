@@ -1,0 +1,19 @@
+{
+  "name": "production",
+  "supported": false,
+  "label": "NOT SUPPORTED in Phase 1. This file documents the production surface for the safety kernel and for humans; the environment loader rejects it (name must be one of local | dev | next).",
+  "knownProductionHosts": [
+    "api.alphaus.cloud",
+    "bluerpc.alphaus.cloud",
+    "login.alphaus.cloud",
+    "blue.alphaus.cloud",
+    "app.alphaus.cloud",
+    "service.mobingi.com",
+    "login.mobingi.com",
+    "app.mobingi.com"
+  ],
+  "notes": [
+    "Hosts code-verified from mobingilabs/ripple-ui src/config/common.js @ d80b161b, alphauslabs/blue-sdk-ts conn/conn.ts:6-7, alphauslabs/blue-sdk-go conn/conn.go:14-17, NIGHTWATCH_RECON_B E1-E10.",
+    "Additional production-class hosts denied by rule: any *.run.app (GCP Cloud Run, RECON_B E6/E7) and any *.mobingi.com / *.alphaus.cloud subdomain not explicitly allowed by the selected environment."
+  ]
+}

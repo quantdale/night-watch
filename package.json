@@ -1,0 +1,23 @@
+{
+  "name": "nightwatch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private local autonomous bug-hunting framework for Alphaus products (Phase 0/1)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:unit": "playwright test tests/unit",
+    "test:smoke": "playwright test tests/smoke",
+    "typecheck": "tsc --noEmit",
+    "scenario": "node bin/nightwatch.mjs",
+    "nightwatch": "node bin/nightwatch.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

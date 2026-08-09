@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# test runner output
+test-results/
+test-results-*/
+
+# run artifacts (evidence is never committed)
+artifacts/*
+!artifacts/.gitkeep
+
+# test fixtures / scratch
+.tmp-*/
+.tmp-test/
+
+# secrets
+.env
+*.local.json
+
+# misc
+*.log
+.DS_Store

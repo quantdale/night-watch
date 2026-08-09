@@ -1,0 +1,35 @@
+{
+  "name": "local",
+  "label": "Local development. Fail-closed: only localhost-family origins are allowed; everything else (including apidev/apinext) is DENIED. Default uiBaseUrl serves the built-in fixture app when NIGHTWATCH_UI_URL is unset.",
+  "uiBaseUrl": "http://127.0.0.1:7311",
+  "allowedHosts": ["127.0.0.1", "localhost", "[::1]"],
+  "staticAssetHosts": [],
+  "telemetryHosts": [
+    "sentry.io",
+    "*.sentry.io",
+    "browser.sentry-cdn.com",
+    "google-analytics.com",
+    "*.google-analytics.com",
+    "googletagmanager.com",
+    "*.googletagmanager.com",
+    "mixpanel.com",
+    "*.mixpanel.com",
+    "cdn.mxpnl.com",
+    "amplitude.com",
+    "*.amplitude.com",
+    "segment.io",
+    "*.segment.io",
+    "intercom.io",
+    "*.intercom.io"
+  ],
+  "failOn": [
+    "hard-failure",
+    "pageerror",
+    "console-error",
+    "request-failed",
+    "malformed-json",
+    "malformed-ndjson",
+    "navigation-failed",
+    "stability-timeout"
+  ]
+}

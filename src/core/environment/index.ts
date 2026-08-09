@@ -1,0 +1,131 @@
+// ---------------------------------------------------------------------------
+// Nightwatch — fail-closed environment selection and config loading.
+//
+// Rules:
+//   - NIGHTWATCH_ENV must be one of local | dev | next  (else DENY)
+//   - production is NOT supported in Phase 1 (else DENY)
+//   - the config file must exist and pass shape validation (else DENY)
+// ---------------------------------------------------------------------------
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type { EnvironmentConfig, EnvironmentName } from './types';
+
+export type { EnvironmentConfig, EnvironmentName } from './types';
+
+export const SUPPORTED_ENVIRONMENTS: readonly EnvironmentName[] = ['local', 'dev', 'next'];
+export const SUPPORTED_ENV_SET: ReadonlySet<string> = new Set(SUPPORTED_ENVIRONMENTS);
+
+export const NIGHTWATCH_ENV_VAR = 'NIGHTWATCH_ENV';
+
+export class EnvironmentSelectionError extends Error {}
+
+/** Fail-closed gate: returns the canonical name or throws. Never returns 'prod'. */
+export function assertSupportedEnvironment(name: string | undefined): EnvironmentName {
+  if (!name || name.trim() === '') {
+    throw new EnvironmentSelectionError(
+      `fail-closed: no environment selected (${NIGHTWATCH_ENV_VAR} is not set). ` +
+        `Allowed: ${SUPPORTED_ENVIRONMENTS.join(', ')}. production is NOT supported.`
+    );
+  }
+  const trimmed = name.trim().toLowerCase();
+  if (!SUPPORTED_ENV_SET.has(trimmed)) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: environment "${name}" is not supported. ` +
+        `Allowed: ${SUPPORTED_ENVIRONMENTS.join(', ')}. production is NOT supported.`
+    );
+  }
+  return trimmed as EnvironmentName;
+}
+
+function configPath(name: EnvironmentName): string {
+  // <root>/config/environments/<name>.json — resolved relative to this file
+  // (src/core/environment/index.ts -> <root>), with a cwd-based fallback so
+  // the same code works when run from the nightwatch root via the CLI.
+  const fromFile = path.join(__dirname, '..', '..', '..', 'config', 'environments', `${name}.json`);
+  if (fs.existsSync(fromFile)) return fromFile;
+  return path.join(process.cwd(), 'config', 'environments', `${name}.json`);
+}
+
+/** Load and validate the JSON config for a supported environment. */
+export function loadEnvironmentConfig(name: EnvironmentName): EnvironmentConfig {
+  const file = configPath(name);
+  let raw: string;
+  try {
+    raw = fs.readFileSync(file, 'utf8');
+  } catch (err) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: cannot read environment config for "${name}" at ${file}: ${(err as Error).message}`
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: environment config ${file} is not valid JSON: ${(err as Error).message}`
+    );
+  }
+  return validateEnvironmentConfig(name, parsed, file);
+}
+
+/** Shape-validate a parsed environment config object. */
+export function validateEnvironmentConfig(
+  name: EnvironmentName,
+  value: unknown,
+  source = 'in-memory'
+): EnvironmentConfig {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new EnvironmentSelectionError(`fail-closed: environment config (${source}) is not an object`);
+  }
+  const cfg = value as Record<string, unknown>;
+  if (cfg['name'] !== name) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: config (${source}) name=${String(cfg['name'])} does not match requested env "${name}"`
+    );
+  }
+  const strFields: Array<[string, string]> = [
+    ['label', 'string'],
+    ['uiBaseUrl', 'string'],
+  ];
+  for (const [field, type] of strFields) {
+    if (typeof cfg[field] !== type || String(cfg[field] ?? '').trim() === '') {
+      throw new EnvironmentSelectionError(
+        `fail-closed: config (${source}) field "${field}" must be a non-empty ${type}`
+      );
+    }
+  }
+  const listFields: Array<[string, Array<string>]> = [
+    ['allowedHosts', []],
+    ['staticAssetHosts', []],
+    ['telemetryHosts', []],
+    ['failOn', []],
+  ];
+  const out = { name, label: '', uiBaseUrl: '', allowedHosts: [], staticAssetHosts: [], telemetryHosts: [], failOn: [] } as EnvironmentConfig;
+  for (const [field, fallback] of listFields) {
+    const v = cfg[field];
+    if (v === undefined) {
+      out[field as keyof EnvironmentConfig] = fallback as never;
+      continue;
+    }
+    if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) {
+      throw new EnvironmentSelectionError(
+        `fail-closed: config (${source}) field "${field}" must be an array of strings`
+      );
+    }
+    out[field as keyof EnvironmentConfig] = v as never;
+  }
+  out.label = cfg['label'] as string;
+  out.uiBaseUrl = cfg['uiBaseUrl'] as string;
+  return out;
+}
+
+/** Select environment by name (fail-closed). */
+export function selectEnvironment(name: string | undefined): EnvironmentConfig {
+  return loadEnvironmentConfig(assertSupportedEnvironment(name));
+}
+
+/** Convenience: read NIGHTWATCH_ENV from the process environment. */
+export function selectEnvironmentFromProcessEnv(): EnvironmentConfig {
+  return selectEnvironment(process.env[NIGHTWATCH_ENV_VAR]);
+}

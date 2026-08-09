@@ -1,0 +1,45 @@
+{
+  "name": "next",
+  "label": "Next environment. Hosts code-verified from mobingilabs/ripple-ui src/config/common.js @ d80b161b (2026-08-06) and NIGHTWATCH_RECON_B. Caveat (RECON_B E8/E9): next services may read/write production tables; env detection in some CLIs is string-magic on 'next' (bluectl pkg/grpcconn/conn.go:24-30). Nightwatch runs are strictly READ-ONLY in every environment.",
+  "uiBaseUrl": "https://next.alphaus.cloud",
+  "allowedHosts": [
+    "apinext.alphaus.cloud",
+    "loginnext.alphaus.cloud",
+    "next.alphaus.cloud"
+  ],
+  "staticAssetHosts": [
+    "fonts.googleapis.com",
+    "fonts.gstatic.com",
+    "cdnjs.cloudflare.com",
+    "cdn.jsdelivr.net",
+    "unpkg.com"
+  ],
+  "telemetryHosts": [
+    "sentry.io",
+    "*.sentry.io",
+    "browser.sentry-cdn.com",
+    "google-analytics.com",
+    "*.google-analytics.com",
+    "googletagmanager.com",
+    "*.googletagmanager.com",
+    "mixpanel.com",
+    "*.mixpanel.com",
+    "cdn.mxpnl.com",
+    "amplitude.com",
+    "*.amplitude.com",
+    "segment.io",
+    "*.segment.io",
+    "intercom.io",
+    "*.intercom.io"
+  ],
+  "failOn": [
+    "hard-failure",
+    "pageerror",
+    "console-error",
+    "request-failed",
+    "malformed-json",
+    "malformed-ndjson",
+    "navigation-failed",
+    "stability-timeout"
+  ]
+}

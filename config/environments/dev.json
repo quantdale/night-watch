@@ -1,0 +1,47 @@
+{
+  "name": "dev",
+  "label": "Dev environment. Hosts code-verified from mobingilabs/ripple-ui src/config/common.js @ d80b161b (2026-08-06) and NIGHTWATCH_RECON_B. Caveat (RECON_B E8): dev backend services may share production data-plane resources — Nightwatch runs are strictly READ-ONLY in every environment.",
+  "uiBaseUrl": "https://appdev.alphaus.cloud",
+  "allowedHosts": [
+    "apidev.alphaus.cloud",
+    "logindev.alphaus.cloud",
+    "appdev.alphaus.cloud",
+    "servicedev.mobingi.com",
+    "appdev.mobingi.com"
+  ],
+  "staticAssetHosts": [
+    "fonts.googleapis.com",
+    "fonts.gstatic.com",
+    "cdnjs.cloudflare.com",
+    "cdn.jsdelivr.net",
+    "unpkg.com"
+  ],
+  "telemetryHosts": [
+    "sentry.io",
+    "*.sentry.io",
+    "browser.sentry-cdn.com",
+    "google-analytics.com",
+    "*.google-analytics.com",
+    "googletagmanager.com",
+    "*.googletagmanager.com",
+    "mixpanel.com",
+    "*.mixpanel.com",
+    "cdn.mxpnl.com",
+    "amplitude.com",
+    "*.amplitude.com",
+    "segment.io",
+    "*.segment.io",
+    "intercom.io",
+    "*.intercom.io"
+  ],
+  "failOn": [
+    "hard-failure",
+    "pageerror",
+    "console-error",
+    "request-failed",
+    "malformed-json",
+    "malformed-ndjson",
+    "navigation-failed",
+    "stability-timeout"
+  ]
+}

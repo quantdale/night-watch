@@ -1,0 +1,41 @@
+import { defineConfig } from '@playwright/test';
+
+// ---------------------------------------------------------------------------
+// Nightwatch Playwright configuration (Phase 0/1).
+//
+// - Nightwatch manages its own evidence in artifacts/<run-id>; Playwright's
+//   own trace/screenshot/video capture is disabled to avoid double capture.
+// - The 'nightwatch' project drives the system Google Chrome via channel:
+//   'chrome'. If Chrome is unavailable on a machine, install the bundled
+//   browser instead:  npx playwright install chromium   and remove the
+//   `channel` line below.
+// - Test-suite convenience default: the self-tests may run without an
+//   explicit NIGHTWATCH_ENV and fall back to 'local'. Real scenario runs via
+//   `bin/nightwatch.mjs` REQUIRE --env (fail-closed).
+// ---------------------------------------------------------------------------
+
+process.env.NIGHTWATCH_ENV ??= 'local';
+
+export default defineConfig({
+  testDir: '.',
+  testMatch: ['**/tests/**/*.{test,smoke}.ts', '**/scenarios/**/*.smoke.ts'],
+  testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/.tmp-*/**'],
+  fullyParallel: false,
+  workers: 1,
+  timeout: 120_000,
+  expect: { timeout: 10_000 },
+  reporter: [['list']],
+  outputDir: 'test-results',
+  projects: [
+    {
+      name: 'nightwatch',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        trace: 'off',
+        screenshot: 'off',
+        video: 'off',
+      },
+    },
+  ],
+});

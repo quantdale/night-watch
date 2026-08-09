@@ -1,0 +1,253 @@
+# Nightwatch Roadmap
+
+Phase plan for Nightwatch, a private, local, autonomous bug-hunting
+framework for Alphaus products. Every phase lists its goal, key
+deliverables, explicit non-goals/exclusions, and dependencies. Phases 4–8
+reference capabilities defined in `NIGHTWATCH_RECON_B.md` (cited by ID);
+their scope is bounded by the mission's DO-NOT-IMPLEMENT list — production
+writes are never in scope in any phase.
+
+Cross-cutting rule for every phase: **read-only over Alphaus repos and the
+data plane** unless a phase explicitly whitelists a mutation class against a
+sandbox MSP (RECON_B §8), and every code-derived assumption carries
+provenance (repo @ SHA, D-12).
+
+---
+
+## Phase 0/1 — Scaffold, safety kernel, passive Ripple observer (current)
+
+**Goal.** Stand up the safety kernel and a minimal runnable pipeline that
+proves the fail-closed model end to end: a passive Ripple journey against a
+fully offline fixture, with policy-enforced request inspection, redacted
+deterministic evidence, and self-tests proving every safety guarantee.
+
+**Key deliverables.**
+
+- Fail-closed environment selection (`src/core/environment`); config files
+  for `local`/`dev`/`next` with provenance-labeled allowlists;
+  `production.json` as the documented rejected surface.
+- Safety kernel: explicit host tables, `OutboundPolicy.decide` rule chain,
+  startup canary (zero network), passive action policy
+  (`RIPPLE_MUTATION_PATTERNS`), `RedactionLayer`.
+- Read-only repo snapshotter (`src/core/repositories/snapshotter.ts`).
+- Playwright harness: browser context (system Chrome via channel),
+  `context.route('**/*')` request inspection, console/pageerror/requestfailed
+  observers, stability wait.
+- Generic passive protocol oracles (uncaught page errors, console errors,
+  unexpected failed requests, unexpected production/unknown-host requests,
+  malformed JSON/NDJSON, navigation failure, stability timeout).
+- Evidence recorder: `artifacts/<run-id>/{manifest.json, events.jsonl,
+  network.jsonl, console.jsonl, repositories.json, summary.json,
+  screenshots/}`, injected clock, run-id override.
+- Ripple product config (candidate passive routes) and
+  `scenarios/ripple/local.smoke.ts` against the built-in fixture app.
+- Self-tests: `tests/unit` (policy, redaction, action policy, environment,
+  snapshot read-only, determinism) and `tests/smoke` (offline scenario,
+  planted-secret absence, reproducible run, offline canary).
+
+**Non-goals / exclusions.** `production` environment; any mutation; real
+dev/next journeys; authenticated runs with tracing; API/oops subprocesses;
+data oracles; generative exploration; AI assistance; autonomous
+self-development.
+
+**Dependencies.** None (foundation). Verified grounding: RECON_B §4 E1–E10
+(hazard table) and the host provenance cited in `docs/SAFETY_MODEL.md` §3.
+
+---
+
+## Phase 2 — Deterministic browser journeys against real Ripple
+
+**Goal.** Extend the Phase 1 harness from the fixture to real local/dev/next
+Ripple deployments with deterministic, read-only, configurable journeys.
+
+**Key deliverables.**
+
+- Real-app journey configs per environment (`--ui-url` against local dev
+  servers; dev/next against the allowlisted hosts).
+- Route re-verification: the candidate route list in
+  `src/products/ripple/config.ts` is currently fixture-relative; Phase 2
+  re-verifies exact ripple-ui route paths against the real app
+  (`ripple-ui @ d80b161b` and later).
+- Journey surface from the Phase 0/1 candidates: dashboard, invoice list,
+  invoice detail, billing-group list (detail views only — settings forms
+  remain out of scope).
+- Session/cookie hygiene hardening: no cookie injection; storage-state
+  path-only loading; authenticated runs keep traces off.
+- Env-variable injection for MFEs under test (`VITE_BLUEAPI_BASE_URL` /
+  `BLUE_API_BASE_URL`, fail-closed, fail-no-prod) — the request policy
+  backstops it (RECON_B E2 mitigation).
+
+**Non-goals / exclusions.** Mutations (all Phase 1 blocked classes remain
+blocked); login/auth-flow automation; tracing with auth state; production.
+
+**Dependencies.** Phase 0/1 harness, safety kernel, snapshotter (journey
+runs record repo state for later correlation).
+
+---
+
+## Phase 3 — Change intelligence
+
+**Goal.** Make Nightwatch aware of the code it is testing: repo freshness,
+provenance of every code-derived assumption, and change-directed scenario
+generation.
+
+**Key deliverables.**
+
+- Freshness canary on the snapshotter: ahead/behind vs upstream feeds
+  warnings ("`ouchan` local HEAD is 19 commits behind origin/master") and
+  triggers re-verification of assumptions before use (RECON_B §3 — the
+  canary everything depends on).
+- Code-derived assumption registry: every host fact, route path, and
+  behavior table cites repo @ SHA (D-12), with a checker that re-verifies
+  citations against current HEADs and flags drift.
+- Change-directed scenario generation: diff a tracked repo (e.g. ripple-ui
+  commit) → select/extend affected candidate routes and oracle checks.
+- Static env-lint sweep: scan Alphaus repos for newly added
+  `https://api.alphaus.cloud` / `*.run.app` references without an adjacent
+  env-switch (RECON_B §4 mitigation; 4 sites known today).
+
+**Non-goals / exclusions.** Auto-updating repos or fetching on Nightwatch's
+behalf (snapshotter stays read-only; fetch is a manual, explicit step);
+producing findings (still a Phase 5+ ladder matter).
+
+**Dependencies.** Phase 2 journeys (change direction needs a journey
+surface); snapshotter.
+
+---
+
+## Phase 4 — Generative / model exploration (bounded)
+
+**Goal.** Generate requests from contracts, not from the UI: schema-validated
+messages constructed from blueapi/blueinternal protos, run only against a
+dedicated sandbox MSP in dev/next, behind the isolation gate.
+
+**Key deliverables.**
+
+- Contract-driven request builder from proto JSON (RECON_B §5: Blue API
+  protos, `apidocs.swagger.json` 462 paths).
+- NDJSON stream client for Connect/REST surfaces (envelope assertions per
+  RECON_B §5/H8).
+- Bounded mutation whitelist per scenario with mandatory read-back (S1);
+  create/list/get/update/delete chains only against the sandbox MSP — never
+  prod or seed data (RECON_B §8).
+- Schema validation before anything hits the wire (malformed requests
+  eliminated locally).
+
+**Non-goals / exclusions.** Unbounded fuzzing; any request toward
+production or prod-side tables; internal gRPC surfaces (`tucpd`, `iamd`,
+`import-curs` — RECON_B §8, HIGH risk, NEVER auto).
+
+**Dependencies.** Phase 2/3; `alphauslabs/blueapi` protos (local `protos/`
+submodule must be initialized — RECON_B §2.2).
+
+---
+
+## Phase 5 — API/oops integration and the confirmation ladder
+
+**Goal.** Turn observations into confirmed findings using out-of-band
+replay and the L0–L5 confirmation ladder from RECON_B §11.
+
+**Key deliverables.**
+
+- Go subprocess runner: `bluectl`, `tucp`, `iam` with hard requirements —
+  explicit `--env dev|next`, `RunEnv != "prod"` verified before dial
+  (E5/E9), no default flags trusted.
+- `bluectl --raw-input` replay of captured request sequences (RECON_B §5).
+- Ladder enforcement: L1 deterministic replay, L2 repeated (≥3) replay
+  with varied sessions, L3 API/state contradiction, L4 read-only datastore
+  probe (narrow PK/SK only), L5 source/change correlation (needs Phase 3
+  freshness). Bar for tracking: ≥L2; bar for filing: ≥L3 (RECON_B §11).
+- Evidence bundle generator matching RECON_B §12 (trigger log, network
+  capture, replay verification, probe outputs, contract evidence, ladder
+  level).
+
+**Non-goals / exclusions.** Any prod dial; internal-service mutations
+(tucp invoice start `--force`, iamd authorize, import-curs — NEVER auto);
+writing to the tracker (still human-gated).
+
+**Dependencies.** Phase 3 freshness (L5 correlation); Phase 4 contract
+surface (replay sources).
+
+---
+
+## Phase 6 — Read-only data oracles
+
+**Goal.** Add the strongest oracle class: store-vs-store equality checks
+that can prove "actual wrong" at L3–L4 (RECON_B §1.2, §6.2–6.3).
+
+**Key deliverables.**
+
+- Oracle catalog implementation for code-supported invariants (RECON_B §7):
+  REPORTS ≡ BQ `tu_` mirror equality (I-TU3), `awsdaily2` vs
+  `awsdaily2_snapshots` settled-month equality (I-TU4), `ripple_insight` vs
+  `RIPPLE_INVOICES` totals (S3/T1), invoice header vs detail chunks (I-INV2),
+  RIPPLE_INVOICES_PREVIEW dead-threshold (I-TU5), FX dirty-data probes
+  (I-FX2).
+- Execution only through the read-only wrappers (`alphaus-tools/bin/`
+  `bq-ro`, `dynamo-ro`, `spanner-ro` or their MCP equivalents), narrow
+  PK/SK queries only; the do-not-scan tables (REPORTS, RIPPLE_FEES,
+  RIPPLE_INVOICES, TAGS, UNBLENDED_EXPORT) are never scanned.
+
+**Non-goals / exclusions.** Any write path; scans of large tables; schema
+migrations; oracles for UNRESOLVED invariants (RECON_B §14) until code
+evidence exists.
+
+**Dependencies.** Phase 5 ladder (data probes are L4 evidence); Phase 3
+freshness; wrapper availability.
+
+---
+
+## Phase 7 — Bounded AI assistance
+
+**Goal.** Use a model as a *review assistant*, not a decision-maker:
+triaging candidate bugs (L2+) into drafts and generating oracle-check
+candidates from contract diffs — all human-reviewed.
+
+**Key deliverables.**
+
+- Candidate triage: cluster L2+ observations, draft bug descriptions with
+  the RECON_B §12 bundle attached.
+- Contract-diff → oracle-suggestion pipeline over Phase 3 change data.
+- Review workflow: every AI-produced artifact is labeled AI-generated and
+  requires human sign-off before any filing.
+
+**Non-goals / exclusions.** Autonomous filing (L3+ gate stays); model-driven
+mutation choices; unbounded exploration budgets.
+
+**Dependencies.** Phase 5/6 pipelines (the evidence they produce is the
+assistant's input).
+
+---
+
+## Phase 8 — Evaluated autonomous self-development (with guardrails)
+
+**Goal.** Nightwatch extends itself: generating scenarios and tests for
+its own suite, evaluated before adoption — while the read-only boundary
+over Alphaus repos is absolute.
+
+**Key deliverables.**
+
+- Self-development loop confined to `REPOSITORIES/nightwatch/`: candidate
+  scenarios/tests/oracles proposed by the system, run through the full
+  self-test + canary gate, adopted only when green.
+- Evaluation harness: safety guarantees (SAFETY_MODEL §9) re-run on every
+  candidate; any candidate that weakens a guarantee is rejected.
+- Budget and blast-radius limits: bounded generation budget per session;
+  changes are additive; rollback via git.
+
+**Non-goals / exclusions.** Editing any Alphaus repository; weakening or
+bypassing the safety kernel; production; unmeasured autonomy.
+
+**Dependencies.** Phase 7 assistance; a stable Phase 0/1 self-test suite as
+the evaluation gate.
+
+---
+
+## Never in scope (any phase)
+
+- `production` as a runnable environment (D-4).
+- Writes to production data (E8 data-plane sharing makes env isolation
+  impossible; only sandbox-MSP mutations, Phase 4+ whitelisted, are ever
+  considered).
+- Any mechanism that bypasses request-level inspection (D-2).
+- Credentials in the repository or artifacts (D-13).
