@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Last validated implementation SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
+Current SHA: 15e21428ac146a0cc034d74e76c4503cb659d0ee
+Last validated implementation SHA: 15e21428ac146a0cc034d74e76c4503cb659d0ee
 Branch: main
-Last checkpoint: 2026-08-09 — M4 manual capture/path workflow validated without browser launch
+Last checkpoint: 2026-08-09 — M5 pre-real-run safety gate validated locally; implementation checkpoint 15e2142
 
 ## Objective
 
