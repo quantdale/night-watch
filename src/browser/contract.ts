@@ -20,6 +20,8 @@ export const REQUIRED_BROWSER_LAUNCH_ARGS: readonly string[] = [
   '--proxy-bypass-list=<-loopback>',
   '--disable-quic',
   '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
+  '--disable-features=SafeBrowsing,SafeBrowsingOnExtendedReporting',
+  '--safebrowsing-disable-download-protection',
 ];
 
 /** Contract asserted by the real-run gate before storage state is loaded. */

@@ -8,5 +8,5 @@ import baseConfig from './playwright.config';
 export default defineConfig({
   ...baseConfig,
   testMatch: ['**/tests/manual/phase2a-canary.ts'],
-  testIgnore: [],
+  testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/test-results/**', '**/.tmp-*/**'],
 });

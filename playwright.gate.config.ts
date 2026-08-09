@@ -8,5 +8,5 @@ import baseConfig from './playwright.config';
 export default defineConfig({
   ...baseConfig,
   testMatch: ['**/tests/manual/observe-gate.ts'],
-  testIgnore: [],
+  testIgnore: ['**/fixtures/**', '**/node_modules/**', '**/dist/**', '**/artifacts/**', '**/test-results/**', '**/.tmp-*/**'],
 });
