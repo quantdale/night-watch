@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 39f4510d90dfe6e875803e7379de12f06bd18013
-Last validated implementation SHA: 39f4510d90dfe6e875803e7379de12f06bd18013
+Current SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
+Last validated implementation SHA: f5c4abb6dac6044961763e76ad4fd3f4310b2f33
 Branch: main
-Last checkpoint: 2026-08-09 — M6 pre-existing Alphaus repository dirt semantics repaired; implementation checkpoint 39f4510
+Last checkpoint: 2026-08-09 — M6 real canary stopped on denied Chromium background destinations; implementation checkpoint f5c4abb
 
 ## Objective
 
@@ -263,6 +263,30 @@ Ripple page or target request was made. The gate was repaired to require a
 valid read-only Alphaus snapshot rather than an incorrectly strict clean-tree
 condition.
 
+Command: third `npm run observe:canary -- --env=dev` attempt; run ID
+`nightwatch-20260809T075124Z-cf0a`
+Result: REAL RUNTIME OBSERVATION completed the explicit dev preflight and
+pre-auth gate, reached `appdev.alphaus.cloud` once through the loopback proxy,
+and stopped with a failed canary verdict because two Chromium background
+destinations were unresolved.
+When: 2026-08-09
+Relevant failure/output summary: sanitized manifest recorded 1 expected UI
+host, 2 telemetry-blocked Google hosts, and unresolved denied
+`clients2.google.com` plus `safebrowsingohttpgateway.googleapis.com`. Proxy
+summary was 1 allowed, 5 telemetry-blocked, 0 denied, 0 violations. The UI
+response was HTTP 404 with a generic console-error oracle. No storage state,
+credentials, screenshots, traces, request bodies, or production upstream
+connections were used. The run stopped as required; no allowlist was changed.
+
+Command: local post-failure hardening checks
+Result: PASS; Safe Browsing/background launch restrictions and dedicated
+canary/gate test discovery were updated; `npx tsc --noEmit`, `git diff --check`,
+and focused destination/gate tests remained green. No retry was made before
+the implementation checkpoint `f5c4abb6dac6044961763e76ad4fd3f4310b2f33`.
+When: 2026-08-09
+Relevant failure/output summary: dedicated configs each discover exactly one
+manual test; no additional real target activity occurred during the fix.
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -349,6 +373,13 @@ become a later conditional blocker.
 NONE during Phase 2A setup. The historical Phase 1.1 `api.alphaus.cloud` event
 remains documented with unknown path, method, credential attachment, and
 response; no production investigation is being attempted.
+
+M6 safety event: the first permitted real dev canary reached only the selected
+UI host and the outer proxy recorded no denied upstream connection. Chromium
+attempted two unclassified external background destinations; browser policy
+denied them before upstream contact, the sanitized manifest recorded them as
+unresolved, and the run stopped. No production destination or authenticated
+request occurred.
 
 ## Deferred / Follow-Up
 
