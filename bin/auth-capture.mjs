@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * Human-led authenticated storage-state capture.
+ * Parent-process human-led authenticated storage-state capture.
  *
- * This wrapper performs only local argument/path checks and a no-network target
- * preflight before delegating to the guarded Playwright helper. It never asks
- * for, prints, or stores credentials itself.
+ * This command intentionally does not invoke `playwright test`. It loads the
+ * guarded TypeScript library modules into this Node process, launches Chrome
+ * through the Playwright Library API, and owns the interactive terminal wait.
+ * Credentials and MFA values are entered only by the human in the headed
+ * browser; Nightwatch never receives or prints them.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
+import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -24,79 +28,126 @@ function fail(message) {
   process.exit(2);
 }
 
-let env;
-let uiUrl;
-let output;
-for (const arg of process.argv.slice(2)) {
-  if (arg === '--help' || arg === '-h') {
-    usage();
-    process.exit(0);
+/** Load the canonical TypeScript safety modules without a test runner. */
+function loadTypeScriptModule(file) {
+  const require = createRequire(import.meta.url);
+  const typescript = require('typescript');
+  const previous = require.extensions['.ts'];
+  require.extensions['.ts'] = (module, filename) => {
+    const source = fs.readFileSync(filename, 'utf8');
+    const output = typescript.transpileModule(source, {
+      fileName: filename,
+      compilerOptions: {
+        target: typescript.ScriptTarget.ES2022,
+        module: typescript.ModuleKind.CommonJS,
+        moduleResolution: typescript.ModuleResolutionKind.Node10,
+        esModuleInterop: true,
+        skipLibCheck: true,
+      },
+    }).outputText;
+    module._compile(output, filename);
+  };
+  try {
+    return require(file);
+  } finally {
+    if (previous === undefined) delete require.extensions['.ts'];
+    else require.extensions['.ts'] = previous;
   }
-  if (arg.startsWith('--env=')) {
-    if (env !== undefined) fail('exactly one --env is required');
-    env = arg.slice('--env='.length).trim().toLowerCase();
-  } else if (arg.startsWith('--ui-url=')) {
-    if (uiUrl !== undefined) fail('--ui-url may be supplied only once');
-    uiUrl = arg.slice('--ui-url='.length);
-  } else if (arg.startsWith('--output=')) {
-    if (output !== undefined) fail('--output may be supplied only once');
-    output = arg.slice('--output='.length);
-  } else {
-    fail(`unknown option ${arg}`);
+}
+
+function waitForHumanEnter() {
+  console.log('[auth:capture] Guarded headed Chrome is ready on the approved DEV Ripple target. Complete login/MFA manually, wait until authenticated Ripple is loaded, then press ENTER here.');
+  const prompt = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      prompt.close();
+      resolve();
+    };
+    prompt.once('line', finish);
+    prompt.once('SIGINT', () => {
+      prompt.close();
+      reject(new Error('human cancelled capture'));
+    });
+  });
+}
+
+async function main() {
+  let env;
+  let uiUrl;
+  let output;
+  for (const arg of process.argv.slice(2)) {
+    if (arg === '--help' || arg === '-h') {
+      usage();
+      return;
+    }
+    if (arg.startsWith('--env=')) {
+      if (env !== undefined) fail('exactly one --env is required');
+      env = arg.slice('--env='.length).trim().toLowerCase();
+    } else if (arg.startsWith('--ui-url=')) {
+      if (uiUrl !== undefined) fail('--ui-url may be supplied only once');
+      uiUrl = arg.slice('--ui-url='.length);
+    } else if (arg.startsWith('--output=')) {
+      if (output !== undefined) fail('--output may be supplied only once');
+      output = arg.slice('--output='.length);
+    } else {
+      fail(`unknown option ${arg}`);
+    }
   }
+
+  if (!env || !SUPPORTED.has(env)) fail('exactly one supported environment is required: dev or next; production is forbidden');
+  if (!output || !path.isAbsolute(output)) fail('--output must be an absolute path outside the Nightwatch repository and workspace');
+  const outputPath = path.resolve(output);
+  const workspaceRoot = path.resolve(root, '..');
+  const inside = (dir, file) => {
+    const rel = path.relative(dir, file);
+    return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+  };
+  if (inside(root, outputPath) || inside(workspaceRoot, outputPath)) fail('--output must be outside the Nightwatch repository and Alphaus workspace');
+  if (!outputPath.toLowerCase().endsWith('.json')) fail('--output must use a .json filename');
+  if (fs.existsSync(outputPath)) fail('--output already exists; refusing to overwrite secret state');
+  const parent = path.dirname(outputPath);
+  if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) fail('--output parent directory must already exist');
+  try {
+    fs.accessSync(parent, fs.constants.W_OK);
+  } catch {
+    fail('--output parent directory is not writable');
+  }
+  const mode = fs.statSync(parent).mode;
+  if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) fail('--output parent is world-writable without sticky protection');
+  if ((process.env.NIGHTWATCH_STORAGE_STATE ?? '').trim() !== '') fail('direct capture refuses an existing NIGHTWATCH_STORAGE_STATE');
+
+  const preflight = spawnSync(process.execPath, [path.join(root, 'bin', 'observe-preflight.mjs'), `--env=${env}`, ...(uiUrl === undefined ? [] : [`--ui-url=${uiUrl}`])], {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (preflight.stdout) process.stdout.write(preflight.stdout);
+  if (preflight.status !== 0) {
+    if (preflight.stderr) process.stderr.write(preflight.stderr);
+    process.exit(preflight.status ?? 2);
+  }
+
+  const environmentModule = loadTypeScriptModule(path.join(root, 'src', 'core', 'environment', 'index.ts'));
+  const runnerModule = loadTypeScriptModule(path.join(root, 'src', 'auth', 'directRunner.ts'));
+  const environment = environmentModule.selectEnvironment(env);
+
+  // This is the parent CLI's terminal, not a Playwright worker's stdin.
+  if (!process.stdin.isTTY) fail('USER_ACTION_REQUIRED: run auth:capture from an interactive terminal so the human can complete login/MFA');
+
+  const result = await runnerModule.runDirectAuthCapture({
+    environment,
+    uiUrl: uiUrl ?? environment.uiBaseUrl,
+    outputPath,
+    nightwatchRoot: root,
+    completion: { kind: 'human-parent-cli', wait: waitForHumanEnter },
+  });
+  console.log(`[auth:capture] PASS: guarded browser and proxy closed; external storage state was structurally validated and safe capture provenance was recorded for ${result.provenance.environment}. Secret values were not printed.`);
 }
 
-if (!env || !SUPPORTED.has(env)) fail('exactly one supported environment is required: dev or next; production is forbidden');
-if (!output || !path.isAbsolute(output)) fail('--output must be an absolute path outside the Nightwatch repository and workspace');
-const outputPath = path.resolve(output);
-const workspaceRoot = path.resolve(root, '..');
-const inside = (dir, file) => {
-  const rel = path.relative(dir, file);
-  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
-};
-if (inside(root, outputPath) || inside(workspaceRoot, outputPath)) fail('--output must be outside the Nightwatch repository and Alphaus workspace');
-if (!outputPath.toLowerCase().endsWith('.json')) fail('--output must use a .json filename');
-if (fs.existsSync(outputPath)) fail('--output already exists; refusing to overwrite secret state');
-const parent = path.dirname(outputPath);
-if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) fail('--output parent directory must already exist');
-try {
-  fs.accessSync(parent, fs.constants.W_OK);
-} catch {
-  fail('--output parent directory is not writable');
-}
-const mode = fs.statSync(parent).mode;
-if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) fail('--output parent is world-writable without sticky protection');
-
-const preflight = spawnSync(process.execPath, [path.join(root, 'bin', 'observe-preflight.mjs'), `--env=${env}`, ...(uiUrl === undefined ? [] : [`--ui-url=${uiUrl}`])], {
-  cwd: root,
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'pipe'],
+main().catch(() => {
+  // Do not echo Playwright/browser errors: they may contain page text or URL
+  // details from an authenticated session. The recorder retains only sanitized
+  // metadata and the human receives a category-only CLI failure.
+  console.error('[auth:capture] FAIL: capture stopped before a sanitized successful result; no secret values were printed.');
+  process.exitCode = 1;
 });
-if (preflight.stdout) process.stdout.write(preflight.stdout);
-if (preflight.status !== 0) {
-  if (preflight.stderr) process.stderr.write(preflight.stderr);
-  process.exit(preflight.status ?? 2);
-}
-
-const playwright = path.join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'playwright.cmd' : 'playwright');
-const result = spawnSync(playwright, [
-  'test',
-  '--config=playwright.capture.config.ts',
-  'tests/manual/auth-capture.ts',
-  '--project=nightwatch',
-  '--headed',
-], {
-  cwd: root,
-  env: {
-    ...process.env,
-    NIGHTWATCH_ENV: env,
-    NIGHTWATCH_UI_URL: uiUrl ?? '',
-    NIGHTWATCH_CAPTURE_OUTPUT: outputPath,
-    NIGHTWATCH_MANUAL_CAPTURE: '1',
-    NIGHTWATCH_HEADED: '1',
-    NIGHTWATCH_TRACE: 'off',
-    NIGHTWATCH_STORAGE_STATE: '',
-  },
-  stdio: 'inherit',
-});
-process.exit(result.status ?? 1);

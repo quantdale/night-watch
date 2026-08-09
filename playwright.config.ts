@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 import { proxyServerUrl } from './src/proxy/server';
-import { REQUIRED_BROWSER_LAUNCH_ARGS } from './src/browser/contract';
+import { nightwatchChromiumLaunchOptions } from './src/browser/contract';
 
 // ---------------------------------------------------------------------------
 // Nightwatch Playwright configuration (Phase 0/1/1.1/1.2).
@@ -39,24 +39,7 @@ export default defineConfig({
         // Explicit browser launch proxy. HTTP_PROXY/HTTPS_PROXY are not part
         // of the containment contract and are intentionally ignored.
         launchOptions: {
-          proxy: { server: proxyServerUrl() },
-          args: [
-            ...REQUIRED_BROWSER_LAUNCH_ARGS,
-            '--disable-background-networking',
-            '--disable-sync',
-            '--disable-default-apps',
-            '--no-first-run',
-            '--no-default-browser-check',
-            '--disable-component-update',
-            '--disable-domain-reliability',
-            '--disable-client-side-phishing-detection',
-            '--disable-variations-safe-mode',
-            '--disable-variations-seed-fetch',
-            '--disable-top-sites',
-            '--disable-network-hint',
-            '--disable-fetching-hints-at-navigation-start',
-            '--disable-features=AutofillServerCommunication,CertificateTransparencyComponentUpdater,InterestFeedContentSuggestions,MediaRouter,OptimizationHints,Translate',
-          ],
+          ...nightwatchChromiumLaunchOptions(proxyServerUrl()),
         },
         trace: 'off',
         screenshot: 'off',

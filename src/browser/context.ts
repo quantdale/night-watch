@@ -56,6 +56,8 @@ export interface NightwatchContextOptions {
   failOn?: string[];
   storageStatePath?: string | null;
   trace?: 'on' | 'off';
+  /** Direct runners may use an isolated runtime state file for local tests. */
+  proxyStateFile?: string;
 }
 
 export interface NightwatchContext {
@@ -172,7 +174,7 @@ export async function createNightwatchContext(
   // L5 is a mandatory startup precondition. A browser context is never
   // created on the assumption that an environment proxy variable happens to
   // be configured by the shell.
-  const proxyRuntime = await requireProxyRuntime(opts.env.name);
+  const proxyRuntime = await requireProxyRuntime(opts.env.name, opts.proxyStateFile);
   const validated = validateUiUrl(opts.env, opts.uiBaseUrl);
   const recorder = opts.recorder;
 
