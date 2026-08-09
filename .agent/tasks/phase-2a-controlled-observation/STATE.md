@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 15e21428ac146a0cc034d74e76c4503cb659d0ee
-Last validated implementation SHA: 15e21428ac146a0cc034d74e76c4503cb659d0ee
+Current SHA: a9f56a2019929511918fff731c2b5ee1bf08b611
+Last validated implementation SHA: a9f56a2019929511918fff731c2b5ee1bf08b611
 Branch: main
-Last checkpoint: 2026-08-09 — M5 pre-real-run safety gate validated locally; implementation checkpoint 15e2142
+Last checkpoint: 2026-08-09 — M6 unauthenticated canary and manifest implementation validated locally; implementation checkpoint a9f56a2
 
 ## Objective
 
