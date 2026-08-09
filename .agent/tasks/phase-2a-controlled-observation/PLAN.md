@@ -125,10 +125,12 @@ Phase 2B+, and container/L6 implementation.
   browser storage-state requirement.
 - Validation commands: focused Phase 2A preflight tests; `npm run observe:preflight
   -- --env=... --ui-url=...` with a synthetic/approved target only.
-- Status: IN_PROGRESS — TARGET_URL_CORRECTION_REQUIRED after the M6 runtime
-  observation proved that the configured host root is not the deployed Ripple
-  document path. Correct the explicit path and rerun the no-auth preflight/
-  canary before resuming M7; do not dynamically change host allowlists.
+- Status: IN_PROGRESS — CORRECTED_TARGET_CHECKPOINT_PENDING. The approved dev
+  UI origin is `https://appdev.alphaus.cloud`, the Ripple application path is
+  `/ripple/`, and the exact configured target is
+  `https://appdev.alphaus.cloud/ripple/`. Same-host explicit overrides must
+  use that exact path. Checkpoint this correction, then rerun the no-auth
+  preflight/canary before resuming M7; do not change host allowlists.
 
 ### M3 — Enforce authenticated evidence minimization
 
@@ -218,6 +220,20 @@ observation was started.
 
 M6 acceptance is COMPLETE. Any other hostname appearing in a later run remains
 fail-closed and requires separate review.
+
+#### Corrected target checkpoint — 2026-08-09
+
+The approved Phase 2A target correction is recorded as configuration, not as a
+host-policy change:
+
+- Environment: `dev`
+- Approved UI origin: `https://appdev.alphaus.cloud`
+- Approved Ripple application path: `/ripple/`
+- Correct Phase 2A UI URL: `https://appdev.alphaus.cloud/ripple/`
+
+The `dev` allowlist is unchanged. The corrected configuration and path-agreement
+guards passed focused target, gate, safety, type, and whitespace validation;
+the corrected real no-auth canary is the exact next action.
 
 ### M7 — Observe the first authenticated Ripple landing page
 

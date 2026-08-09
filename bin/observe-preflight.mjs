@@ -111,6 +111,9 @@ function validateTarget(env, config, candidate) {
   if (target.hostname.toLowerCase() !== base.hostname.toLowerCase() || target.port !== base.port) {
     throw new Error(`selected UI host must match the verified ${env} uiBaseUrl host`);
   }
+  if (target.pathname !== base.pathname) {
+    throw new Error(`selected UI path must match the verified ${env} uiBaseUrl path ${base.pathname}`);
+  }
   assertNotProduction(target.hostname, 'selected UI host');
   if (!hostIsAllowed(target.hostname.toLowerCase(), target.port, config.allowedHosts)) {
     throw new Error(`selected UI host ${target.hostname.toLowerCase()} is not explicitly allowlisted for ${env}`);

@@ -12,6 +12,7 @@ test('dev preflight uses the verified configured UI URL without auth state', () 
   const result = run('--env=dev');
   expect(result.status).toBe(0);
   expect(result.stdout).toContain('"environment": "dev"');
+  expect(result.stdout).toContain('"target": "https://appdev.alphaus.cloud/ripple/"');
   expect(result.stdout).toContain('"uiHost": "appdev.alphaus.cloud"');
   expect(result.stdout).toContain('"authentication": "not required for preflight"');
   expect(result.stdout).not.toContain('storage');
@@ -46,4 +47,8 @@ test('production UI host, unknown host, and sensitive URL forms fail closed', ()
   const query = run('--env=dev', '--ui-url=https://appdev.alphaus.cloud/?customer=FAKE_CUSTOMER');
   expect(query.status).toBe(2);
   expect(query.stderr).toContain('query parameters');
+
+  const wrongPath = run('--env=dev', '--ui-url=https://appdev.alphaus.cloud/');
+  expect(wrongPath.status).toBe(2);
+  expect(wrongPath.stderr).toContain('selected UI path must match');
 });

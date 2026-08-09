@@ -23,10 +23,11 @@ test('manual authenticated state capture', async ({ browser }) => {
     selected.protocol !== 'https:' ||
     selected.hostname.toLowerCase() !== configured.hostname.toLowerCase() ||
     selected.port !== configured.port ||
+    selected.pathname !== configured.pathname ||
     selected.search !== '' ||
     selected.hash !== ''
   ) {
-    throw new Error('fail-closed: manual capture UI URL must be the verified HTTPS Ripple UI host without query or fragment');
+    throw new Error('fail-closed: manual capture UI URL must be the verified HTTPS Ripple UI path without query or fragment');
   }
   const recorder = new RunRecorder({
     runId: createRunId(),

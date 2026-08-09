@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
 Last validated implementation SHA: aed7787b08ef60da7274ca50a5b782025d2ab3ea
 Branch: main
-Last checkpoint: 2026-08-09 — M6 canary checkpoint aed7787; narrow Ripple routing review proved the configured root path is not the deployed `/ripple/` route; no auth state loaded.
+Last checkpoint: 2026-08-09 — corrected target prepared for checkpoint: dev origin `https://appdev.alphaus.cloud`, Ripple path `/ripple/`, exact URL `https://appdev.alphaus.cloud/ripple/`; no auth state loaded.
 
 ## Objective
 
@@ -20,13 +20,13 @@ evidence, and a single fresh-context replay.
 ## Current Milestone
 
 Milestone ID: M2 — Establish explicit real-target configuration and preflight
-Status: IN_PROGRESS — TARGET_URL_CORRECTION_REQUIRED
-What is being attempted: Before authentication, the M6 404 was checked against
-the narrow, already-known Ripple routing/build configuration. The configured
-`https://appdev.alphaus.cloud/` root is not the deployed Ripple document path:
-the Ripple router base and the dev/next build public path are `/ripple/`.
-Therefore the 404 is evidence of a wrong configured path, not an acceptable
-unauthenticated observation of the intended Ripple route. No storage state was
+Status: IN_PROGRESS — CORRECTED_TARGET_CHECKPOINT_PENDING
+What is being attempted: The approved target correction is prepared in the
+`dev` configuration and path-agreement guards. The approved UI origin is
+`https://appdev.alphaus.cloud`; the approved Ripple application path is
+`/ripple/`; the exact Phase 2A UI URL is
+`https://appdev.alphaus.cloud/ripple/`. The host allowlist and production
+policy are unchanged. Focused local validation passed; no storage state was
 loaded and no auth capture was started.
 
 ## Completed Milestones
@@ -90,19 +90,20 @@ loaded and no auth capture was started.
 ## Work In Progress
 
 Continuity, evidence minimization, manual capture, the pre-real-run safety gate,
-and the M6 unauthenticated canary are complete. The canary reached the
-configured dev host but used the wrong root document path and returned HTTP 404
-with one generic console-error oracle. Narrow current Ripple source/config
-evidence proves the intended base path is `/ripple/`; no authenticated
-observation or auth capture has occurred.
+and the M6 unauthenticated canary are complete. The prior canary reached the
+configured dev host at the wrong root path and returned HTTP 404 with one
+generic console-error oracle. Narrow current Ripple source/config evidence
+proves the intended base path is `/ripple/`; the approved correction is now
+configured and guarded. No authenticated observation or auth capture has
+occurred.
 
 ## Exact Next Action
 
-TARGET_URL_CORRECTION_REQUIRED — use the code-verified dev target
-`https://appdev.alphaus.cloud/ripple/`. Update or explicitly supply that path in
-a fresh session, rerun the no-auth preflight/canary, and only after that passes
-resume M7’s manual external storage-state workflow. Do not start auth capture
-against the current root URL; do not change host allowlists dynamically.
+CHECKPOINT_CORRECTED_TARGET — commit the corrected dev configuration and task
+state, then run `npm run observe:canary -- --env=dev`. The canary must resolve
+exactly to `https://appdev.alphaus.cloud/ripple/` with no storage state. Only
+after that canary passes may M7’s manual external storage-state workflow be
+prepared; do not change host allowlists dynamically.
 
 ## Files Changed
 

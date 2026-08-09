@@ -61,6 +61,7 @@ function validateCanaryTarget(env: EnvironmentConfig, raw: string): string {
   if (target.protocol !== 'https:' || configured.protocol !== 'https:') throw new Error('fail-closed: real canary target must use HTTPS');
   if (target.username || target.password || target.search || target.hash) throw new Error('fail-closed: canary target contains credentials, query, or fragment');
   if (target.hostname.toLowerCase() !== configured.hostname.toLowerCase() || target.port !== configured.port) throw new Error('fail-closed: canary target does not match verified UI host');
+  if (target.pathname !== configured.pathname) throw new Error(`fail-closed: canary target path must match verified UI path ${configured.pathname}`);
   return validateUiUrl(env, target.toString());
 }
 

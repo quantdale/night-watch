@@ -66,10 +66,11 @@ export interface NightwatchContext {
 }
 
 /**
- * Fail-closed startup gate for the target UI URL: must be http(s) and its
- * host must be allowlisted in the environment. An allowlist entry without a
- * port matches any port; an entry with a port requires an exact host:port
- * match. Returns the normalized URL.
+ * Fail-closed startup gate for the target UI URL: must be http(s), its host
+ * must be allowlisted, and its path must match the selected environment's
+ * verified UI base path. An allowlist entry without a port matches any port;
+ * an entry with a port requires an exact host:port match. Returns the
+ * normalized URL.
  */
 export function validateUiUrl(env: EnvironmentConfig, uiUrl: string): string {
   let u: URL;
@@ -94,6 +95,19 @@ export function validateUiUrl(env: EnvironmentConfig, uiUrl: string): string {
   if (!allowed) {
     throw new EnvironmentSelectionError(
       `fail-closed: UI URL host "${hostname}" is not in the allowlist of environment "${env.name}"`
+    );
+  }
+  let configured: URL;
+  try {
+    configured = new URL(env.uiBaseUrl);
+  } catch (err) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: configured UI URL for environment "${env.name}" is invalid: ${(err as Error).message}`
+    );
+  }
+  if (u.pathname !== configured.pathname) {
+    throw new EnvironmentSelectionError(
+      `fail-closed: UI URL path "${u.pathname}" does not match the verified environment path "${configured.pathname}"`
     );
   }
   return u.toString();

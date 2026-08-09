@@ -186,6 +186,7 @@ export function evaluateRealRunGate(input: RealRunGateInput): RealRunGateResult 
     selected.search === '' &&
     selected.hash === '' &&
     sameHostAndPort(selected, configured) &&
+    selected.pathname === configured.pathname &&
     policy.decide(input.uiUrl).verdict === 'allow';
   checks.push(
     check(
