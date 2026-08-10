@@ -445,6 +445,39 @@ Playwright suite passed **144/144**. No real auth or authenticated observation
 was run by Codex. M7 remains `IN_PROGRESS` pending the human-provided
 external state.
 
+#### M7 malformed-json oracle checkpoint — 2026-08-10 — `6443baf`
+
+The new human capture run `nightwatch-20260810T052211Z-cdd4` passed PREFLIGHT,
+proxy start/health, headed browser launch, guard install, target navigation, and
+target verification, then failed at HUMAN_WAIT with
+`SAFETY_MONITOR_FAILED`, `monitor-reason: OTHER`, `guard-type: oracle`, and
+`event-category: malformed-json`. Sanitized evidence recovers two records for
+`POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>` at
+`2026-08-10T05:23:12.976Z` and `2026-08-10T05:23:16.201Z`; both responses were
+HTTP `200` with `Content-Type: application/json`. Content-Length was not
+persisted by the historical observer and is therefore unavailable. The
+endpoint classification is `UNKNOWN`: Nightwatch had no path-level semantic
+registry entry, and HTTP POST alone is insufficient to label it mutation.
+
+The parser was applicable because the response declared JSON and body capture
+succeeded; this is a genuine protocol anomaly at the observed contract layer,
+not an HTML/redirect/NDJSON/empty-response false positive. The underlying
+server-versus-transport cause cannot be distinguished from sanitized history,
+because response content and historical Content-Length are unavailable. The
+fatal behavior was a monitor-severity defect: `recordIssue()` folded the
+configured oracle into the shared `failed` bit, and the direct runner mapped
+that bit to `SAFETY_MONITOR_FAILED / OTHER`.
+
+The repair keeps ordinary passive-run oracle failure semantics, adds a
+safety-only monitor state for auth capture, narrows parser applicability for
+HTML/text, NDJSON/JSON-seq/streaming, redirects, 204/205/empty, and incomplete
+bodies, and records metadata-only `ORACLE_ANOMALY` fields. Synthetic coverage
+proves anomaly continuation and state write, while production/unknown
+destinations and proxy liveness remain fatal. Implementation is committed at
+`6443baf`; the final task-state checkpoint remains separate. M7 remains
+IN_PROGRESS; no real auth state exists and no authenticated observation may
+begin.
+
 #### M7 safety-monitor repair checkpoint — 2026-08-10 — `342584c`
 
 The real run's sanitized evidence was recovered at
@@ -587,6 +620,11 @@ outputs and sanitized run IDs in STATE/REPORT, never secrets or customer data.
   non-fatal only after successful containment during HUMAN_WAIT. Do not add
   wildcards or infer approval for sibling hosts; all other new destinations
   remain UNKNOWN and fatal.
+- 2026-08-10 — Separate protocol/product oracle anomalies from safety-monitor
+  failures during human auth capture. Preserve ordinary passive-run oracle
+  verdicts, but require a direct safety/containment violation to stop HUMAN_WAIT;
+  continue to post-login verification so auth failure is reported at the
+  correct stage.
 
 ## Discoveries
 

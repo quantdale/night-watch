@@ -6,14 +6,13 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: efe96bd37d33d6042038bb996a9f8cdbe6963992
-Last validated implementation SHA: efe96bd37d33d6042038bb996a9f8cdbe6963992
+Current SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
+Last validated implementation SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
 Branch: main
-Last checkpoint: 2026-08-10 — applied the human safety disposition for three
-exact Chromium browser-background destinations and implemented separate exact
-local-block classifications at implementation SHA
-`efe96bd37d33d6042038bb996a9f8cdbe6963992`. The real external storage state
-remains missing.
+Last checkpoint: 2026-08-10 — repaired HUMAN_WAIT oracle severity handling and
+narrow protocol-parser applicability at implementation SHA
+`6443baf4ef219903ea84159df96d5c8ee7eb2e5b`. The real
+external storage state remains missing; no retry is authorized from Codex.
 
 ## Objective
 
@@ -55,7 +54,59 @@ None is network-allowlisted or permitted to reach upstream. Zero wildcards
 were added. HUMAN_WAIT may continue when one of these exact requests is
 successfully blocked and sanitized expected-containment evidence is recorded.
 Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
-M7 remains IN_PROGRESS because the external auth state is still missing.
+The latest human run then failed at HUMAN_WAIT with
+`SAFETY_MONITOR_FAILED / OTHER / oracle / malformed-json`; its exact sanitized
+source and repair are checkpointed below. M7 remains IN_PROGRESS because the
+external auth state is still missing.
+
+## Current Oracle Failure Checkpoint
+
+Real failure: run `nightwatch-20260810T052211Z-cdd4` reached the verified
+`https://appdev.alphaus.cloud/ripple/` target and failed during HUMAN_WAIT with
+`SAFETY_MONITOR_FAILED`, `monitor-reason: OTHER`, `guard-type: oracle`, and
+`event-category: malformed-json`. Cleanup passed and the external auth-state
+file remains MISSING.
+
+Exact recoverable sanitized source metadata:
+
+- timestamp: `2026-08-10T05:23:12.976Z` and `2026-08-10T05:23:16.201Z`;
+- method: `POST`;
+- origin/path: `https://apidev.alphaus.cloud` and
+  `/m/blue/cost/v1/<ID>`;
+- status: `200`;
+- Content-Type: `application/json`;
+- Content-Length: unavailable in historical sanitized evidence;
+- oracle/parser: plain JSON protocol oracle / `checkJsonBody`;
+- expected protocol: `json`;
+- observed protocol: `invalid-json`;
+- endpoint classification: `UNKNOWN` (no path-level semantic registry entry;
+  method alone is insufficient to infer `KNOWN_MUTATION`);
+- response classification: JSON-declared response, observed invalid JSON.
+
+Classification: `GENUINE_PROTOCOL_ANOMALY` at the observed protocol-contract
+layer, not `FALSE_POSITIVE_ORACLE`. HTML, non-JSON text, NDJSON/streaming,
+redirect, 204/empty, and failed/incomplete body captures were not the
+historical parser input. The server-versus-truncated-transport subcause is
+not recoverable without forbidden response content or unavailable historical
+Content-Length, so it is not guessed.
+
+Parser/oracle root cause: the historical observer correctly ran the plain JSON
+parser for a complete-capture candidate whose response declared
+`application/json`; it emitted `malformed-json` as an `error` oracle. The
+monitor then treated any configured oracle in `failOn` as the shared fatal
+`failed` state, and the direct runner converted that state to
+`SAFETY_MONITOR_FAILED / OTHER`. The termination was therefore a
+monitor-severity defect, not a containment violation.
+
+Repair: safety hard failures and oracle failures are now separate monitor
+states. Auth capture checks `safetyFailed`, while ordinary passive runs retain
+their configured oracle-failure verdict. Plain JSON parsing is narrow to
+explicit JSON (or absent Content-Type with unambiguous JSON shape), complete
+body captures, non-redirect, non-204/205 responses; NDJSON/JSON-seq/streaming
+uses the streaming oracle, HTML/text is not parsed, and sanitized anomaly
+metadata preserves category and protocol details without response content.
+No containment rule, host classification, endpoint allowlist, or mutation
+policy was weakened.
 
 ## Completed Milestones
 
@@ -888,6 +939,30 @@ session. The implementation commit is
 `efe96bd37d33d6042038bb996a9f8cdbe6963992`.
 When: 2026-08-10
 
+Command: implementation commit `6443baf` validation
+Result: PASS; `npx playwright test tests/unit/passiveChecks.test.ts
+tests/unit/monitor.test.ts tests/unit/authCaptureStages.test.ts --project=nightwatch`
+=> **20 passed, 0 failed**; `npx playwright test
+--config=playwright.capture.synthetic.config.ts` => **1 passed, 0 failed**;
+`npx playwright test --reporter=line` => **153 passed, 0 failed**;
+`npx tsc --noEmit` => PASS; `git diff --check` => PASS. All traffic was local
+fixture traffic only; no authenticated real observation ran.
+When: 2026-08-10
+
+Command: `npx playwright test tests/unit/passiveChecks.test.ts
+tests/unit/monitor.test.ts tests/unit/authCaptureStages.test.ts --project=nightwatch`
+Result: PASS; **20 passed, 0 failed**. Coverage proves valid/invalid JSON,
+HTML/text non-applicability, NDJSON streaming separation, 204/empty handling,
+redirect handling, incomplete-capture handling, oracle/safety separation,
+non-fatal HUMAN_WAIT continuation with sanitized anomaly evidence and state
+write, plus fatal production/unknown destination and proxy-liveness behavior.
+All traffic was local fixture traffic only.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: PASS; the oracle applicability and safety-severity repair typechecks.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -1093,6 +1168,19 @@ Any new, sibling, or production hostname remains fail-closed and fatal.
 - The three exact human-reviewed browser-background hosts are now separate
   semantic classes and remain network-denied. Related hosts remain UNKNOWN;
   no wildcard was introduced.
+- The latest real human failure is recoverable as run
+  `nightwatch-20260810T052211Z-cdd4`: two `application/json`/HTTP 200
+  `malformed-json` oracle events for sanitized path
+  `/m/blue/cost/v1/<ID>` caused HUMAN_WAIT termination through the shared
+  monitor failed bit. The endpoint remains `UNKNOWN` because no path-level
+  semantic registry entry exists and method alone is insufficient.
+- The parser was applicable, so the event is a genuine protocol anomaly rather
+  than a false-positive applicability error; the server-versus-transport
+  subcause is unresolved because body and historical Content-Length are not
+  available. Termination was a monitor-severity defect.
+- The repair records metadata-only `ORACLE_ANOMALY`, separates `safetyFailed`
+  from `oracleFailed`, and leaves production/unknown/containment/liveness
+  failures fatal. The real external auth state remains MISSING.
 
 ## Blockers
 
@@ -1188,6 +1276,14 @@ local blocks only: `android.clients.google.com` as
 only when successfully contained with sanitized expected-containment
 evidence. Related or new hosts remain UNKNOWN, blocked, and fatal; no wildcard
 or allowlist entry was added.
+
+M7 real capture oracle event: run `nightwatch-20260810T052211Z-cdd4` recorded
+two sanitized `malformed-json` anomalies during HUMAN_WAIT for the DEV API
+origin/path listed above. The historical observer did not persist
+Content-Length, response content, headers, cookies, tokens, or storage state.
+The event was a protocol anomaly, not a containment violation. The repaired
+auth workflow records it and continues to post-login verification; the
+external auth state remains MISSING.
 
 M7 implementation safety event: none. The policy, proxy, browser guard, and
 monitor regression coverage used local/synthetic requests only. No Google
