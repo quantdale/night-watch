@@ -52,6 +52,7 @@ import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/st
 import { installFetchGuard } from './network/fetchGuard';
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
 import type { ProxyRuntimeState } from '../proxy/types';
+import { classifyRippleEndpoint } from '../core/safety/endpointSemantics';
 
 export interface NightwatchContextOptions {
   env: EnvironmentConfig;
@@ -289,7 +290,14 @@ export async function createNightwatchContext(
 
   const optionalSupportBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = new Map<string, import('../core/safety/types').BrowserBackgroundClassification>();
-  const network = createNetworkObserver({ policy, recorder, monitor, optionalSupportBlockedHosts, browserBackgroundBlockedHosts });
+  const network = createNetworkObserver({
+    policy,
+    recorder,
+    monitor,
+    endpointClassifier: (url, method) => classifyRippleEndpoint(url, method, opts.env),
+    optionalSupportBlockedHosts,
+    browserBackgroundBlockedHosts,
+  });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;
   let proxyDownRecorded = false;

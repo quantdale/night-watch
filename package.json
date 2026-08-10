@@ -16,6 +16,7 @@
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
     "observe:canary": "node bin/observe-canary.mjs",
+    "observe:authenticated": "node bin/observe-authenticated.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "nightwatch": "node bin/nightwatch.mjs"

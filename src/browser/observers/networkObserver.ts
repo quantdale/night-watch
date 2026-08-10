@@ -30,6 +30,7 @@ import { decideBrowserHttp, decideBrowserWebSocket } from '../../core/safety/pol
 import { isBrowserBackgroundClassification, isNonFatalBlock, type BrowserBackgroundClassification } from '../../core/safety/types';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
+import type { EndpointSemanticClassification } from '../../core/safety/endpointSemantics';
 import {
   checkUnexpectedStatus,
   checkJsonBody,
@@ -93,6 +94,7 @@ export function createNetworkObserver(opts: {
   policy: OutboundPolicy;
   recorder: RunRecorder;
   monitor: RunMonitor;
+  endpointClassifier?: (url: string, method: string) => EndpointSemanticClassification | null;
   optionalSupportBlockedHosts?: Set<string>;
   browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
 }): NetworkObserver {
@@ -119,6 +121,7 @@ export function createNetworkObserver(opts: {
       }
 
       const decision = decideBrowserHttp(policy, rawUrl);
+      const endpointClassification = opts.endpointClassifier?.(rawUrl, request.method()) ?? null;
 
       // Register secrets BEFORE recording anything: every sensitive header
       // value plus the full Cookie header becomes a redaction secret.
@@ -132,6 +135,42 @@ export function createNetworkObserver(opts: {
 
       const redactedUrl = recorder.redactUrl(rawUrl);
       const redactedHeaders = recorder.redaction.redactHeaders(headers);
+
+      // Semantic endpoint safety is independent of HTTP method. A
+      // source-backed KNOWN_MUTATION rule is never allowed to leave the
+      // browser, even when the outbound host itself is allowlisted. Natural
+      // initialization calls classified UNKNOWN are recorded and may be
+      // observed; this branch exists for the prohibited known-mutation case.
+      if (decision.verdict === 'allow' && endpointClassification === 'KNOWN_MUTATION') {
+        const failureEvent = recorder.event({
+          type: 'hard-failure',
+          severity: 'fatal',
+          message: 'HARD FAILURE: known mutation endpoint blocked',
+          data: {
+            url: redactedUrl,
+            method: request.method(),
+            endpointClassification,
+            verdict: 'deny',
+            reason: 'known-mutation-endpoint',
+            path: 'semantic-endpoint',
+          },
+        });
+        monitor.recordHardFailure(failureEvent, {
+          url: rawUrl,
+          verdict: 'deny',
+          hostClass: decision.hostClass,
+          reason: 'known-mutation-endpoint',
+          monitorReason: 'POLICY_VIOLATION',
+          guardType: 'semantic-endpoint',
+          path: 'semantic-endpoint',
+        });
+        try {
+          await route.abort('blockedbyclient');
+        } catch {
+          // The Fetch guard may have handled the same request first.
+        }
+        return;
+      }
 
       if (decision.verdict === 'allow') {
         active += 1;
@@ -147,6 +186,7 @@ export function createNetworkObserver(opts: {
             resourceType: request.resourceType(),
             verdict: 'allow',
             reason: decision.reason,
+            ...(endpointClassification === null ? {} : { endpointClassification }),
           },
         });
         await route.continue();
@@ -209,6 +249,7 @@ export function createNetworkObserver(opts: {
             resourceType: request.resourceType(),
             verdict: 'deny',
             reason: decision.reason,
+            ...(endpointClassification === null ? {} : { endpointClassification }),
           },
         });
         const failureEvent = recorder.event({
@@ -344,6 +385,7 @@ export function createNetworkObserver(opts: {
       const contentType = responseHeaders['content-type'];
       const contentLength = responseHeaders['content-length'];
       const method = response.request().method();
+      const endpointClassification = opts.endpointClassifier?.(rawUrl, method) ?? null;
       active = Math.max(0, active - 1);
       lastActivity = Date.now();
 
@@ -353,6 +395,7 @@ export function createNetworkObserver(opts: {
         status,
         contentType,
         ...(contentLength !== undefined ? { contentLength } : {}),
+        ...(endpointClassification === null ? {} : { endpointClassification }),
       };
 
       // Body capture: only for JSON-ish content types; capped and redacted.
@@ -411,7 +454,7 @@ export function createNetworkObserver(opts: {
               ...(contentLength !== undefined ? { contentLength } : {}),
               protocolExpected: issue.protocolExpected,
               protocolObserved: issue.protocolObserved,
-              endpointClassification: OBSERVED_ENDPOINT_CLASSIFICATION,
+              endpointClassification: endpointClassification ?? OBSERVED_ENDPOINT_CLASSIFICATION,
             },
           });
           monitor.recordIssue(ev);
