@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: ed337d75966f8af20130df32e084459da74dff50
-Last validated implementation SHA: ed337d75966f8af20130df32e084459da74dff50
+Current SHA: 4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1
+Last validated implementation SHA: 4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1
 Branch: main
-Last checkpoint: 2026-08-10 — implementation `ed337d75966f8af20130df32e084459da74dff50` repairs the authenticated Ripple target and SPA stability contracts after source comparison. The source-backed `#app` selector remains unchanged because current Ripple source supports it; the real runtime absence remains unresolved without DOM inspection. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
+Last checkpoint: 2026-08-10 — implementation `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1` repairs the authenticated Ripple target and SPA stability contracts after source comparison, including resetting the structural-stability timer after any shell/readiness interruption. The source-backed `#app` selector remains unchanged because current Ripple source supports it; the real runtime absence remains unresolved without DOM inspection. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
 
 ## Objective
 
@@ -114,14 +114,18 @@ inspected or persisted.
 
 ### Repair checkpoint
 
-Implementation SHA: `ed337d75966f8af20130df32e084459da74dff50`.
+Initial implementation SHA: `ed337d75966f8af20130df32e084459da74dff50`.
+
+Follow-up implementation SHA: `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`.
 
 Files changed:
 
 - `src/products/ripple/readiness.ts` — source-backed target namespace,
   origin, `#app`, and structural readiness helpers.
 - `src/browser/observers/stability.ts` — structural Ripple stability wait;
-  generic network-idle wait remains available to other existing workflows.
+  generic network-idle wait remains available to other existing workflows;
+  structural stability restarts after a route/root/document readiness
+  interruption.
 - `tests/manual/phase2a-authenticated.ts` — bounded final target semantics,
   source-backed shell sampling, structural stability, and readiness verdict.
 - `tests/unit/rippleReadiness.test.ts` — synthetic contract/readiness matrix
@@ -131,6 +135,11 @@ The repair preserves HTTPS, exact DEV host policy, production denial,
 unknown-host denial, auth-host handling, local blocking, metadata-first
 privacy, and the no-body/no-DOM persistence boundary. It does not approve
 arbitrary paths on `appdev.alphaus.cloud`.
+
+The follow-up does not alter target, app-root, network, proxy, or privacy
+policy. It only prevents a previously accumulated route-stability interval
+from being reused after the source-backed shell disappears or the document is
+not complete.
 
 ## Current Oracle Failure Checkpoint
 
@@ -379,12 +388,27 @@ third pass is authorized.
 
 ## Exact Next Action
 
-Current next action: repair and locally validate the narrow authenticated
-post-navigation readiness contract for the approved `/ripple/` landing and
-`/ripple/dashboard` destination. The exact authenticated command has already
-been run once; do not rerun, replay, or begin a third observation until that
-repair is checkpointed. The external auth-state path remains outside
-Nightwatch and its contents remain uninspected.
+Current next action: M7 remains IN_PROGRESS. The readiness contract repair is
+implemented and locally validated. A fresh interactive session may perform the
+bounded first-observation retry below after reviewing this checkpoint. Do not
+run that real retry in this repair session, do not replay, and do not begin
+Phase 2B. The exact external auth-state path remains outside Nightwatch and
+its contents remain uninspected.
+
+The previous real gate result was **13/13 PASS**. The first real observation
+ended at final path `/ripple/dashboard` with
+`targetConfirmed=false`, `stabilityReached=false`, and
+`appRootPresent=false`; replay was correctly prohibited. The known malformed
+JSON response remained metadata-only oracle evidence and did not cause the
+readiness failure. Safety totals remained zero for unresolved destinations,
+proxy violations, production attempts, mutations, and DB queries.
+
+Current source evidence remains `mobingilabs/ripple-ui`, branch `dev`, exact
+HEAD `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, with the same SHA as the
+existing Nightwatch source snapshot. The worktree is `dev...origin/dev
+[behind 17]` with unrelated local deletions and an untracked `AGENTS.md`; no
+relevant routing/bootstrap/root file is dirty, and Nightwatch did not modify
+that repository.
 
 The corrected unauthenticated canary already passed:
 `npm run observe:canary -- --env=dev`, run
@@ -450,13 +474,11 @@ npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple
 ```
 
 The gate is local-only and must pass before any authenticated target
-navigation. The current exact run passed all 13 checks before the first
-authenticated context was created. Existing sanitized all-144-repository
-snapshot comparisons found no Alphaus snapshot or undocumented-repository
-condition. Do not rerun the gate or authenticated observation until the
-readiness-contract result above is resolved and checkpointed. Do not begin
-Phase 2B or approve any new hostname. If another hostname is unresolved, stop
-and checkpoint.
+navigation. Existing sanitized all-144-repository snapshot comparisons found
+no Alphaus snapshot or undocumented-repository condition. Do not run the
+retry in this repair session. In the fresh session, do not begin Phase 2B or
+approve any new hostname. If another hostname is unresolved, stop and
+checkpoint.
 
 Existence/non-empty verification, without reading the file:
 
@@ -523,6 +545,30 @@ HUMAN_WAIT continuation, sanitized evidence, and fatal unknown/related-host
 canaries. No wildcard or allowlist entry was added.
 
 ## Validation Ledger
+
+Command: `npx playwright test tests/unit/rippleReadiness.test.ts tests/unit/observeAuthenticatedRunner.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
+Result: **PASS; 24 passed, 0 failed**. Added coverage confirms source-backed
+route semantics, exact host/path safety, `#app`-only structural readiness,
+benign recurring traffic, route changes, fatal state, malformed-JSON
+separation, target/app-root causal independence, and a fresh continuous
+stability window after shell loss.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: **PASS** at implementation SHA
+`4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`.
+When: 2026-08-10
+
+Command: `npx playwright test`
+Result: **PASS; 172 passed, 0 failed**. The full suite used only local
+synthetic/loopback traffic and did not discover the opt-in authenticated
+observer. No real Alphaus request occurred during this repair.
+When: 2026-08-10
+
+Command: `npm run agent:check` and `git diff --check`
+Result: **PASS**. `agent:check` passed with the expected stale-baseline
+warning before this checkpoint was recorded; whitespace validation passed.
+When: 2026-08-10
 
 Command: `npx playwright test tests/unit/rippleReadiness.test.ts tests/unit/observeAuthenticatedRunner.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
 Result: **PASS; 21 passed, 0 failed**. The synthetic matrix covers the
@@ -1474,11 +1520,12 @@ unsuccessful authenticated readiness result recorded above; no replay or
 Phase 2B journey may start.
 
 The readiness contract repair is now implemented and locally validated at
-`ed337d75966f8af20130df32e084459da74dff50`. The remaining M7 boundary is
-intentional: this repair session must not perform the fresh real retry or
-replay. A fresh interactive session must use the exact retry command in the
-Resume Recipe, inspect only sanitized results, and stop again if any new
-destination or source-contract mismatch appears.
+`4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`; the initial source-comparison
+repair is retained at `ed337d75966f8af20130df32e084459da74dff50`. The
+remaining M7 boundary is intentional: this repair session must not perform the
+fresh real retry or replay. A fresh interactive session must use the exact
+retry command in the Resume Recipe, inspect only sanitized results, and stop
+again if any new destination or source-contract mismatch appears.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
@@ -1593,11 +1640,11 @@ malformed-JSON protocol anomaly recurred twice as metadata-only evidence.
    network allowlist or wildcard exists.
 4. The external auth state is already user-confirmed present at the recorded
    path; its contents remain out of scope.
-5. The exact authenticated command has been run once. Do not rerun, replay, or
-   begin a third observation until the readiness-contract result is resolved
-   and checkpointed.
+5. The exact authenticated command has been run once. The readiness repair is
+   checkpointed, but do not run the fresh retry in this repair session. Replay
+   remains prohibited until a fresh first observation is successful.
 6. This repair is checkpointed at implementation SHA
-   `ed337d75966f8af20130df32e084459da74dff50`; do not expose storage-state
+   `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`; do not expose storage-state
    contents or rerun the canary.
 7. The exact fresh-session retry command, and only that command, is:
 

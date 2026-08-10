@@ -623,6 +623,21 @@ and is not used as a readiness or safety failure.
 M7 remains IN_PROGRESS. Do not run the real retry or replay from this repair
 session.
 
+#### M7 stability continuity follow-up — 2026-08-10 — `4e74d56`
+
+The structural Ripple stability timer now starts only after a continuously
+ready shell sample. If the route changes, the document is not complete, or
+the source-backed `#app` root disappears, the timer is reset; a later ready
+sample must establish a new 750 ms window. This is a narrow correction to the
+stability contract and does not change target confirmation, host policy,
+proxy containment, app-root selection, privacy, or oracle severity.
+
+Focused readiness/gate/runner tests passed **24/24**; `npx tsc --noEmit`
+passed; the full local Playwright suite passed **172/172**; `npm run
+agent:check` and `git diff --check` passed. No real authenticated observation,
+replay, Alphaus traffic, production traffic, mutation, or DB query occurred.
+M7 remains IN_PROGRESS and the retry remains deferred to a fresh session.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
