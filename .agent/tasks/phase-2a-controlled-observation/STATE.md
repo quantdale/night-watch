@@ -275,7 +275,42 @@ unrelated transient proxy/flaky-test failures; a fresh rerun passed **159/159**.
 No real authenticated state was opened, printed, copied, or modified; no
 browser/context or authenticated target navigation occurred.
 
+### M7 first authenticated observation checkpoint — 2026-08-10 — `de97`
+
+The exact authenticated command was run without `--ui-url`. Its pre-real-run
+gate passed all 13 required checks before browser/context creation. The first
+guarded authenticated context then navigated directly to the canonical DEV
+target and closed normally. Because the first observation was unsuccessful,
+the runner prohibited the fresh-context replay as required.
+
+Sanitized run: `nightwatch-20260810T092636Z-de97-first`. Destination manifest:
+4 expected, 0 new-but-verified, 7 blocked expected-containment groups, and 0
+unresolved. Proxy summary: 3 allowed, 9 telemetry-blocked, 1
+browser-background-blocked, 0 denied, 0 unknown, and 0 violations. Production
+attempts were 0. The final origin was `https://appdev.alphaus.cloud`; the
+final path was `/ripple/dashboard`. Readiness was
+`targetConfirmed=false`, `titlePresent=true`, `documentReadyState=complete`,
+`appRootPresent=false`, `stabilityReached=false`, and `navigationFailed=false`.
+The sanitized comparison records `replay-not-run`.
+
+The known protocol anomaly recurred twice and was recorded without response
+content: `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>`, HTTP 200,
+`application/json`, expected `json`, observed `invalid-json`, endpoint
+classification `UNKNOWN`. This remained an oracle anomaly, not a safety
+failure. Encountered API initialization calls remained metadata-only
+`UNKNOWN`; no endpoint was deliberately triggered or replayed. The first
+observation is unsuccessful at the authenticated shell/readiness stage; this
+does not classify the product behavior as a bug. No fresh-context replay or
+third pass is authorized.
+
 ## Exact Next Action
+
+Current next action: repair and locally validate the narrow authenticated
+post-navigation readiness contract for the approved `/ripple/` landing and
+`/ripple/dashboard` destination. The exact authenticated command has already
+been run once; do not rerun, replay, or begin a third observation until that
+repair is checkpointed. The external auth-state path remains outside
+Nightwatch and its contents remain uninspected.
 
 The corrected unauthenticated canary already passed:
 `npm run observe:canary -- --env=dev`, run
@@ -340,18 +375,14 @@ cd /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 
-The gate is local-only and must pass before any authenticated target navigation.
-The requested gate was run and stopped before authenticated context creation
-or target navigation. Its authentication blocker was the missing external
-storage state. Its repository-freshness result was caused by the two
-uncommitted task-state checkpoint paths being treated as undocumented by the
-gate; existing sanitized all-144-repository snapshot comparisons found no
-Alphaus snapshot or undocumented-repository condition. This checkpoint
-commits those paths, so no snapshot regeneration is needed before manual auth
-capture. After capture, rerun this exact gate in a fresh session without
-exposing storage-state contents. Do not begin authenticated observation,
-Phase 2B, or approve any new hostname. If another hostname is unresolved,
-stop and checkpoint.
+The gate is local-only and must pass before any authenticated target
+navigation. The current exact run passed all 13 checks before the first
+authenticated context was created. Existing sanitized all-144-repository
+snapshot comparisons found no Alphaus snapshot or undocumented-repository
+condition. Do not rerun the gate or authenticated observation until the
+readiness-contract result above is resolved and checkpointed. Do not begin
+Phase 2B or approve any new hostname. If another hostname is unresolved, stop
+and checkpoint.
 
 Existence/non-empty verification, without reading the file:
 
@@ -414,6 +445,32 @@ HUMAN_WAIT continuation, sanitized evidence, and fatal unknown/related-host
 canaries. No wildcard or allowlist entry was added.
 
 ## Validation Ledger
+
+Command: `npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+Result: **USER_ACTION_REQUIRED / STOP AFTER FIRST PASS**. The local
+pre-real-run gate passed all 13 checks. The first guarded authenticated
+observation reached the approved DEV origin and closed its context, but the
+sanitized readiness result was unsuccessful: final path `/ripple/dashboard`,
+`targetConfirmed=false` against the configured `/ripple/` path,
+`stabilityReached=false`, and `appRootPresent=false`. Replay was prohibited by
+the runner. Run ID: `nightwatch-20260810T092636Z-de97-first`; comparison
+records `replay-not-run`. Destination summary was 4 expected, 7 blocked, 0
+new-but-verified, 0 unresolved; proxy violations and production attempts were
+0. The known malformed-JSON anomaly recurred twice as metadata-only evidence
+for `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>` with HTTP 200 and
+`application/json`; it remained an oracle anomaly, not a safety failure. No
+body content was inspected or persisted.
+When: 2026-08-10
+
+Command: category-level privacy review of the generated first-pass and
+comparison artifacts
+Result: **PASS**. The reviewed artifact files contained no credential-like
+values, authorization/token/JWT material, cookie or Set-Cookie material,
+storage-state material, user email/display-name values, raw account/resource
+IDs, raw request/response bodies, or financial values. Screenshots, traces, and
+DOM dumps were absent. Review used counts/category results only; no secret
+value was printed. The external storage-state file was not opened.
+When: 2026-08-10
 
 Command: `npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
 Result: **USER_ACTION_REQUIRED / STOP**; the local pre-real-run gate exited
@@ -1240,7 +1297,8 @@ Any new, sibling, or production hostname remains fail-closed and fatal.
   attribution now records expected containment without setting `monitor.failed`.
 - The browser-background disposition implementation is checkpointed at
   `efe96bd37d33d6042038bb996a9f8cdbe6963992`; M7 remains IN_PROGRESS and the
-  real external storage state remains missing.
+  real external storage state is user-confirmed present at the external path,
+  with contents intentionally uninspected.
 - The three exact human-reviewed browser-background hosts are now separate
   semantic classes and remain network-denied. Related hosts remain UNKNOWN;
   no wildcard was introduced.
@@ -1256,14 +1314,15 @@ Any new, sibling, or production hostname remains fail-closed and fatal.
   available. Termination was a monitor-severity defect.
 - The repair records metadata-only `ORACLE_ANOMALY`, separates `safetyFailed`
   from `oracleFailed`, and leaves production/unknown/containment/liveness
-  failures fatal. The real external auth state remains MISSING.
+  failures fatal. The first authenticated observation later recorded the same
+  anomaly without making it a safety failure; the external auth state remains
+  outside Nightwatch.
 
 ## Blockers
 
-The authenticated preflight gate was run exactly as planned after the Git
-reconciliation and stopped before authenticated context creation or target
-navigation. The external state remains missing; the exact sanitized gate
-blocker was:
+The authenticated preflight gate was historically run before the external
+state was available and stopped before authenticated context creation or
+target navigation. That historical gate blocker was:
 
 - `authentication-state: external storage state is missing, invalid, or has mismatched provenance`
 
@@ -1271,19 +1330,19 @@ The prior repository-freshness result was caused by the two uncommitted
 task-state paths in the Nightwatch working tree; the read-only Alphaus
 snapshot was not found invalid, and no undocumented Alphaus repository
 condition was found. The storage-state file was not opened for inspection,
-printed, copied, or persisted by Nightwatch/Codex. That gate result is not the
-current capture architecture blocker. Phase 2A remains `IN_PROGRESS`; M7
-cannot advance until the human completes the external capture and the same
-gate passes.
+printed, copied, or persisted by Nightwatch/Codex. That gate result is
+historical and is not the current blocker. Phase 2A remains `IN_PROGRESS`; M7
+cannot advance until the unsuccessful authenticated readiness result is
+resolved and checkpointed.
 
-The repaired implementation has no remaining code blocker. The human safety
-review of the newly observed external Chrome destinations is cleared by the
+The implementation has no known containment blocker. The human safety review
+of the newly observed external Chrome destinations is cleared by the
 exact disposition checkpoint at implementation SHA
 `efe96bd37d33d6042038bb996a9f8cdbe6963992`. The three reviewed hosts remain
 network-denied local blocks with separate browser-background classifications;
-no wildcard or related-host approval was added. The remaining blocker is the
-missing external auth state and a passing pre-real-run gate; no authenticated
-observation may start.
+no wildcard or related-host approval was added. The current blocker is the
+unsuccessful authenticated readiness result recorded above; no replay or
+Phase 2B journey may start.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
@@ -1359,18 +1418,28 @@ origin/path listed above. The historical observer did not persist
 Content-Length, response content, headers, cookies, tokens, or storage state.
 The event was a protocol anomaly, not a containment violation. The repaired
 auth workflow records it and continues to post-login verification; the
-external auth state remains MISSING.
+external auth state remains outside Nightwatch.
 
 M7 implementation safety event: none. The policy, proxy, browser guard, and
 monitor regression coverage used local/synthetic requests only. No Google
 upstream, Alphaus, production, database, credential, mutation, or auth-state
 activity occurred in this Codex session.
 
+M7 first authenticated observation result: no safety event occurred. The gate
+passed all 13 checks; observed destinations were expected or explicitly
+blocked; the proxy recorded zero denied/unknown destinations and zero
+violations; and production attempts, mutations, DB queries, and deliberate
+endpoint replays were zero. The run was unsuccessful at authenticated
+readiness: the approved DEV origin reached `/ripple/dashboard`, while the
+observer required the configured `/ripple/` path, stability timed out, and
+the sanitized shell check reported `appRootPresent=false`. The known
+malformed-JSON protocol anomaly recurred twice as metadata-only evidence.
+
 ## Deferred / Follow-Up
 
 - Phase 2B deterministic read-only Ripple journeys and all later phases.
-- Real dev/next observation cannot begin until explicit target, auth state, and
-  every required safety gate pass.
+- M7 cannot advance to replay until the authenticated target/readiness result
+  is resolved and checkpointed. Phase 2B remains deferred.
 
 ## Resume Recipe
 
@@ -1380,17 +1449,18 @@ activity occurred in this Codex session.
    reviewed hosts is checkpointed: local block, separate browser-background
    classification, and non-fatal only after successful containment. No
    network allowlist or wildcard exists.
-4. A human may run the exact guarded parent-CLI capture command in `## Exact
-   Next Action` from an interactive terminal. Codex must not execute it.
-5. This repair is checkpointed at implementation SHA
+4. The external auth state is already user-confirmed present at the recorded
+   path; its contents remain out of scope.
+5. The exact authenticated command has been run once. Do not rerun, replay, or
+   begin a third observation until the readiness-contract result is resolved
+   and checkpointed.
+6. This repair is checkpointed at implementation SHA
    `868b639fb6a5374bea6af99e70e570f398e3e448`; do not expose storage-state
    contents or rerun the canary.
-6. A later human/fresh session may run the exact `observe:authenticated`
-   command in the return handoff. Its local gate must pass all 13 checks before
-   any authenticated browser/context creation or target navigation.
-7. Update STATE with exact sanitized runtime results and checkpoint before M8.
-   Do not begin Phase 2B; M7 remains IN_PROGRESS until external state and the
-   authenticated observation requirements are actually completed.
+7. Update STATE with the bounded readiness resolution and exact sanitized
+   retry result before M8. Do not begin Phase 2B; M7 remains IN_PROGRESS until
+   the authenticated observation and replay requirements are actually
+   completed.
 
 ## Completion Snapshot
 

@@ -340,10 +340,13 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the direct runner's pre-real-run gate stopped safely at
-  `75d877c` because the wrapper supplied an empty UI override. The target
-  plumbing repair is implemented and locally validated at `868b639`; no
-  authenticated browser/context creation or target navigation occurred.
+- Status: IN_PROGRESS — the exact authenticated command passed all 13
+  pre-real-run checks and completed its first guarded landing observation, but
+  stopped before replay because sanitized readiness reported the approved DEV
+  origin with `/ripple/dashboard`, while the observer only confirmed the
+  configured `/ripple/` path. The same pass also recorded a stability timeout
+  and `appRootPresent=false`; no safety failure, unresolved destination,
+  production attempt, proxy violation, mutation, or DB query occurred.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -542,6 +545,32 @@ Focused runner/gate coverage passed **11/11**; the actual wrapper reported
 `npx tsc --noEmit` passed; and a fresh ordinary suite passed **159/159**.
 M7 remains `IN_PROGRESS`; do not run the real authenticated observation in
 this repair session and do not begin Phase 2B.
+
+#### M7 first authenticated observation checkpoint — 2026-08-10 — `de97`
+
+The exact authenticated command passed the strict pre-real-run gate with all
+13 checks PASS. The first fresh authenticated context navigated directly to
+the canonical DEV target and closed normally. The runner correctly prohibited
+the fresh-context replay because the first result was unsuccessful.
+
+Sanitized first-pass result: run
+`nightwatch-20260810T092636Z-de97-first`; 4 expected destination groups, 7
+blocked expected-containment groups, 0 new-but-verified, 0 unresolved, 0
+proxy violations, and 0 production attempts. The approved final origin was
+`https://appdev.alphaus.cloud`; the final path was `/ripple/dashboard`.
+Readiness was `targetConfirmed=false`, `titlePresent=true`,
+`documentReadyState=complete`, `appRootPresent=false`,
+`stabilityReached=false`, and `navigationFailed=false`. The sanitized
+comparison records `replay-not-run`.
+
+The known oracle recurred twice as metadata-only `malformed-json`: `POST
+https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>`, HTTP 200,
+`application/json`, expected `json`, observed `invalid-json`, semantic
+classification `UNKNOWN`. It did not set the safety-failure state. Other
+encountered API initialization calls were observed only as `UNKNOWN`; no
+endpoint was deliberately invoked or replayed. This pass is unsuccessful at
+the authenticated shell/readiness stage and is not a product-bug verdict.
+No replay or third observation is authorized from this checkpoint.
 
 ### M8 — Produce the destination manifest
 
