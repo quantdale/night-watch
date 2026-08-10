@@ -93,6 +93,16 @@ export async function waitForRippleStability(opts: {
     const currentTime = now();
     if (previousRoute !== sample.route) {
       previousRoute = sample.route;
+      routeStableSince = null;
+    }
+
+    // A route that remains unchanged is not enough: if the document or shell
+    // root is temporarily unavailable, the next ready sample starts a fresh
+    // continuous-readiness window instead of inheriting time from before the
+    // interruption.
+    if (!isRippleStructurallyReady(sample)) {
+      routeStableSince = null;
+    } else if (routeStableSince === null) {
       routeStableSince = currentTime;
     }
 

@@ -63,7 +63,8 @@ test('the app-root marker is the source-backed shell mount and customer text is 
   expect(isRippleStructurallyReady(structural('complete', true))).toBe(true);
   // A page can contain arbitrary/customer text while the source-backed shell
   // mount is absent; text is not an input to the readiness contract.
-  expect(isRippleStructurallyReady(structural('complete', false))).toBe(false);
+  const pageSignals = { ...structural('complete', false), textPresent: true };
+  expect(isRippleStructurallyReady(pageSignals)).toBe(false);
   expect(isRippleStructurallyReady(structural('loading', true))).toBe(false);
 });
 
@@ -132,6 +133,28 @@ test('a disappearing shell root prevents structural stability', async () => {
     { route: '/ripple/dashboard', documentReadyState: 'complete', appRootPresent: true },
     { route: '/ripple/dashboard', documentReadyState: 'complete', appRootPresent: false },
   ])).resolves.toBe(false);
+});
+
+test('a shell root that disappears and reappears must regain continuous stability', async () => {
+  let now = 0;
+  let index = 0;
+  await expect(waitForRippleStability({
+    quietMs: 200,
+    timeoutMs: 700,
+    now: () => now,
+    sleep: async (ms) => { now += ms; },
+    sample: async () => {
+      const samples = [
+        { route: '/ripple/dashboard', documentReadyState: 'complete', appRootPresent: true, fatal: false },
+        { route: '/ripple/dashboard', documentReadyState: 'complete', appRootPresent: false, fatal: false },
+        { route: '/ripple/dashboard', documentReadyState: 'complete', appRootPresent: true, fatal: false },
+      ];
+      return samples[Math.min(index++, samples.length - 1)]!;
+    },
+  })).resolves.toBe(true);
+  // The result requires the post-reappearance 200 ms window; it cannot pass
+  // immediately by reusing the pre-disappearance route timer.
+  expect(now).toBeGreaterThanOrEqual(400);
 });
 
 test('fatal page/browser state prevents structural stability', async () => {
