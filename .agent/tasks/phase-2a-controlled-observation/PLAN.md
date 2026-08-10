@@ -340,10 +340,10 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the external auth state and the post-implementation
-  pre-real-run gate passed all 13 checks at task checkpoint
-  `56e46396c5ce760ec6ee673f553e7d2f474a9f76`. The direct landing/replay
-  runner is now authorized for its single first observation and replay.
+- Status: IN_PROGRESS — the direct runner's pre-real-run gate stopped safely at
+  `75d877c` because the wrapper supplied an empty UI override. The target
+  plumbing repair is implemented and locally validated at `868b639`; no
+  authenticated browser/context creation or target navigation occurred.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -521,6 +521,27 @@ M7 remains `IN_PROGRESS`. Human review is required before retrying because the
 new external destinations are not among the already approved non-fatal
 telemetry hosts. Do not broadly suppress them or begin authenticated
 observation.
+
+#### M7 authenticated target-plumbing repair checkpoint — 2026-08-10 — `868b639`
+
+The failing checkpoint was `75d877c`: `observe:authenticated` passed the empty
+string `NIGHTWATCH_UI_URL` override to the existing strict gate when the CLI
+did not receive `--ui-url`. The gate correctly rejected that value at
+`target-agreement` before browser/context creation or target navigation.
+
+The runner now omits the UI override field when absent, removes any inherited
+ambient UI override, and lets the gate resolve the canonical selected
+environment target. For `dev`, that target remains the single existing source
+of truth: `https://appdev.alphaus.cloud/ripple/`. Explicit non-empty overrides
+are still passed to strict validation; explicit blank values are rejected at
+the CLI boundary. No gate, allowlist, production-deny, proxy, browser, or
+authenticated-evidence behavior changed.
+
+Focused runner/gate coverage passed **11/11**; the actual wrapper reported
+`target-agreement: PASS` with a synthetic state path and no target contact;
+`npx tsc --noEmit` passed; and a fresh ordinary suite passed **159/159**.
+M7 remains `IN_PROGRESS`; do not run the real authenticated observation in
+this repair session and do not begin Phase 2B.
 
 ### M8 — Produce the destination manifest
 

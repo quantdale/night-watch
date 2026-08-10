@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
-Last validated implementation SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
+Current SHA: 868b639fb6a5374bea6af99e70e570f398e3e448
+Last validated implementation SHA: 868b639fb6a5374bea6af99e70e570f398e3e448
 Branch: main
-Last checkpoint: 2026-08-10 — `observe:authenticated` stopped at its pre-real-run gate before browser/context creation or target navigation. The sanitized failing check was `target-agreement: UI target must be an explicit HTTPS host matching the selected verified environment`; the other 12 checks passed. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
+Last checkpoint: 2026-08-10 — implementation `868b639fb6a5374bea6af99e70e570f398e3e448` repairs the `75d877c` `observe:authenticated` pre-real-run target-plumbing failure. The absent UI override now resolves through the canonical selected DEV environment target; explicit non-empty overrides remain strict and explicit blank values are rejected. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
 
 ## Objective
 
@@ -239,6 +239,42 @@ telemetry console effects are classified as expected containment only when the
 same host was already blocked by policy; exact Pylon behavior is unchanged.
 No containment rule was weakened.
 
+### M7 authenticated target-plumbing repair checkpoint — 2026-08-10 — `868b639`
+
+Failing checkpoint: `75d877c`.
+
+Failure: the first `observe:authenticated` attempt stopped safely at the
+pre-real-run gate's `target-agreement` check before browser creation, context
+creation, or authenticated target navigation. The other 12 gate checks passed.
+
+Exact root cause: `bin/observe-authenticated.mjs` converted an absent
+`--ui-url` option into `NIGHTWATCH_UI_URL: ''` in both child-process
+environments. The existing gate uses a nullish fallback to the selected
+environment's canonical `uiBaseUrl`, so the empty string bypassed that fallback
+and was rejected by strict target agreement.
+
+Old behavior: no CLI override produced `NIGHTWATCH_UI_URL=''`, which reached
+the gate as a misleading explicit target and failed with `UI target must be an
+explicit HTTPS host matching the selected verified environment`.
+
+Repair: the authenticated runner now parses the option boundary separately,
+removes any inherited ambient `NIGHTWATCH_UI_URL` when no CLI override was
+supplied, and omits the variable entirely. The gate therefore resolves the
+selected environment's existing canonical target. An explicit non-empty
+override is forwarded unchanged for strict gate validation; an explicit blank
+override is rejected at the CLI boundary and never reaches the gate. The gate
+itself and target-agreement semantics were not changed.
+
+Canonical resolved DEV target: `https://appdev.alphaus.cloud/ripple/`.
+
+Focused synthetic validation: runner-boundary and strict gate tests passed
+**11/11**; the actual wrapper with a conflicting ambient UI variable reported
+`target-agreement: PASS` and stopped only on synthetic missing-state/current
+worktree facts. `npx tsc --noEmit` passed. The first full-suite attempt had
+unrelated transient proxy/flaky-test failures; a fresh rerun passed **159/159**.
+No real authenticated state was opened, printed, copied, or modified; no
+browser/context or authenticated target navigation occurred.
+
 ## Exact Next Action
 
 The corrected unauthenticated canary already passed:
@@ -363,6 +399,8 @@ test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth st
 | `src/state/run.ts`, `src/auth/stages.ts`, `src/auth/directRunner.ts`, `bin/auth-capture.mjs` | First-cause sanitized HUMAN_WAIT monitor taxonomy and CLI diagnostics | Modified |
 | `src/browser/context.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, `src/browser/observers/containmentEffect.ts` | Proxy/lifecycle monitor evidence and exact expected telemetry console attribution | Modified |
 | `tests/unit/monitor.test.ts`, `tests/unit/authCaptureStages.test.ts`, `tests/manual/auth-capture.synthetic.ts` | Local taxonomy, liveness, lifecycle, blocked-traffic, and multi-poll HUMAN_WAIT coverage | Added/modified |
+| `bin/observe-authenticated.mjs`, `bin/observe-authenticated-config.mjs` | Preserve absent UI-override semantics between the authenticated CLI and gate; reject explicit blank overrides | Added/modified |
+| `tests/unit/observeAuthenticatedRunner.test.ts`, `tests/unit/realRunGate.test.ts` | Synthetic runner-boundary and strict target-agreement regression coverage | Added/modified |
 
 ### Browser-background disposition implementation — `efe96bd37d33d6042038bb996a9f8cdbe6963992`
 
@@ -963,6 +1001,44 @@ Command: `npx tsc --noEmit`
 Result: PASS; the oracle applicability and safety-severity repair typechecks.
 When: 2026-08-10
 
+Command: `npx playwright test tests/unit/observeAuthenticatedRunner.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
+Result: PASS; **11 passed, 0 failed**. Synthetic runner-boundary coverage proves
+that the normal `--env=dev --storage-state=...` argument shape omits
+`NIGHTWATCH_UI_URL`, resolves the canonical DEV target, preserves an explicit
+canonical override, and rejects an explicit blank override. Strict gate cases
+reject NEXT, production, HTTP, unknown-host, and blank targets.
+When: 2026-08-10
+
+Command: `env NIGHTWATCH_UI_URL=https://next.alphaus.cloud/ NIGHTWATCH_TRACKED_REPOS=nightwatch npm run observe:authenticated -- --env=dev --storage-state=/tmp/nightwatch-synthetic-missing-state.json`
+Result: PASS-as-safe-rejection; the actual authenticated wrapper's local gate
+reported `target-agreement: PASS` and stopped before browser/context creation
+because the synthetic state path was missing and the current implementation
+worktree was not yet documented. The conflicting ambient UI variable did not
+override the canonical DEV target. No target was contacted.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: PASS at implementation SHA `868b639fb6a5374bea6af99e70e570f398e3e448`.
+When: 2026-08-10
+
+Command: first `npx playwright test`
+Result: PASS-as-retry-required; one local proxy-start failure and one existing
+redaction test failure occurred in the first run; the redaction test passed on
+retry. No target or authenticated activity occurred.
+When: 2026-08-10
+
+Command: fresh `npx playwright test`
+Result: PASS; **159 passed, 0 failed**. The suite used local/synthetic traffic
+only; no authenticated observation was run.
+When: 2026-08-10
+
+Command: implementation commit and `git diff --check`
+Result: PASS; implementation SHA is
+`868b639fb6a5374bea6af99e70e570f398e3e448`. Only Nightwatch files changed;
+no Alphaus repository, real Alphaus endpoint, database, mutation, storage
+state, or authenticated browser navigation was used.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -1306,11 +1382,12 @@ activity occurred in this Codex session.
    network allowlist or wildcard exists.
 4. A human may run the exact guarded parent-CLI capture command in `## Exact
    Next Action` from an interactive terminal. Codex must not execute it.
-5. STOP. The immediate gate inside `observe:authenticated` failed at
-   `target-agreement` before browser/context creation or target navigation.
-   Do not expose storage-state contents or rerun the canary.
-6. A later session must resolve the sanitized runner invocation issue, rerun
-   the exact authenticated gate, and only continue if all 13 checks pass.
+5. This repair is checkpointed at implementation SHA
+   `868b639fb6a5374bea6af99e70e570f398e3e448`; do not expose storage-state
+   contents or rerun the canary.
+6. A later human/fresh session may run the exact `observe:authenticated`
+   command in the return handoff. Its local gate must pass all 13 checks before
+   any authenticated browser/context creation or target navigation.
 7. Update STATE with exact sanitized runtime results and checkpoint before M8.
    Do not begin Phase 2B; M7 remains IN_PROGRESS until external state and the
    authenticated observation requirements are actually completed.
