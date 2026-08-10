@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
 Last validated implementation SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
 Branch: main
-Last checkpoint: 2026-08-10 — M7 direct landing/replay runner and fail-closed endpoint semantic registry were implemented and locally validated at `cdeff506c3e4524edc1c1412bc19ed711ce322b5`, after the prior 13-check gate PASS. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
+Last checkpoint: 2026-08-10 — post-implementation authenticated `observe:gate` PASS at actual HEAD `56e46396c5ce760ec6ee673f553e7d2f474a9f76`, an approved documentation/state-only descendant of validated implementation `cdeff506c3e4524edc1c1412bc19ed711ce322b5`. All 13 checks passed; the external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
 
 ## Objective
 
@@ -54,10 +54,9 @@ Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
 The latest human run then failed at HUMAN_WAIT with
 `SAFETY_MONITOR_FAILED / OTHER / oracle / malformed-json`; its exact sanitized
 source and repair are checkpointed below. The user has now confirmed a later
-successful guarded DEV auth capture and the authenticated pre-real-run gate
-passed all 13 checks before the M7 runner was implemented. M7 remains
-IN_PROGRESS; rerun the gate against the committed runner before the first
-controlled landing observation.
+successful guarded DEV auth capture and the post-implementation authenticated
+pre-real-run gate passed all 13 checks. M7 remains IN_PROGRESS; the first
+controlled landing observation and one replay are now authorized.
 
 ## Current Oracle Failure Checkpoint
 
@@ -1307,10 +1306,9 @@ activity occurred in this Codex session.
    network allowlist or wildcard exists.
 4. A human may run the exact guarded parent-CLI capture command in `## Exact
    Next Action` from an interactive terminal. Codex must not execute it.
-5. Rerun `npm run observe:gate -- --env=dev
-   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"` against the
-   committed M7 runner. Do not expose storage-state contents.
-6. If it passes, run `npm run observe:authenticated -- --env=dev
+5. The post-implementation gate passed all 13 checks at `56e4639`; do not
+   expose storage-state contents or rerun the canary.
+6. Run `npm run observe:authenticated -- --env=dev
    --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`. The
    command performs the first landing observation and exactly one replay.
 7. Update STATE with exact sanitized runtime results and checkpoint before M8.
