@@ -9,10 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
 Last validated implementation SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
 Branch: main
-Last checkpoint: 2026-08-10 — repaired HUMAN_WAIT oracle severity handling and
-narrow protocol-parser applicability at implementation SHA
-`6443baf4ef219903ea84159df96d5c8ee7eb2e5b`. The real
-external storage state remains missing; no retry is authorized from Codex.
+Last checkpoint: 2026-08-10 — actual HEAD is `8a44151ab2faf30965e64a5a2262bca9e912b31c`, an approved documentation/state-only descendant of the validated implementation baseline `6443baf4ef219903ea84159df96d5c8ee7eb2e5b`. The user confirmed that the guarded DEV auth capture completed successfully and that the external storage state exists at `$HOME/.nightwatch/auth/ripple-dev-state.json`; its contents remain outside Nightwatch and were not inspected.
 
 ## Objective
 
@@ -56,8 +53,9 @@ successfully blocked and sanitized expected-containment evidence is recorded.
 Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
 The latest human run then failed at HUMAN_WAIT with
 `SAFETY_MONITOR_FAILED / OTHER / oracle / malformed-json`; its exact sanitized
-source and repair are checkpointed below. M7 remains IN_PROGRESS because the
-external auth state is still missing.
+source and repair are checkpointed below. The user has now confirmed a later
+successful guarded DEV auth capture. M7 remains IN_PROGRESS pending the
+authenticated pre-real-run gate.
 
 ## Current Oracle Failure Checkpoint
 
@@ -259,9 +257,10 @@ Complete login/MFA manually in the headed browser, press ENTER in the
 interactive terminal, and keep the storage state outside the workspace. Never
 paste the file contents, credentials, tokens, or user identity into Nightwatch.
 
-The real external auth state is still **MISSING** at
-`$HOME/.nightwatch/auth/ripple-dev-state.json`; this session performed only an
-existence check and did not inspect, print, copy, or persist its contents.
+The external auth state is now **USER-CONFIRMED PRESENT** at
+`$HOME/.nightwatch/auth/ripple-dev-state.json`. This checkpoint records only
+the path and capture result; the file was not opened, printed, copied, or
+persisted in Nightwatch.
 
 Human interaction remains confined to the repaired parent CLI:
 
@@ -1306,9 +1305,8 @@ activity occurred in this Codex session.
    network allowlist or wildcard exists.
 4. A human may run the exact guarded parent-CLI capture command in `## Exact
    Next Action` from an interactive terminal. Codex must not execute it.
-5. In a fresh session after a successful capture, run the exact
-   `observe:gate` command shown there without exposing state contents; it must
-   PASS before navigation.
+5. Run the exact `observe:gate` command shown there without exposing state
+   contents; it must PASS before navigation.
 6. Run the authenticated observation only after that gate passes; use a direct
    landing navigation, then exactly one fresh-context replay.
 7. Update STATE with exact sanitized runtime results and checkpoint before M8.
