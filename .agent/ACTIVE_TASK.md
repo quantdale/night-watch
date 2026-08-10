@@ -6,8 +6,8 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
-Last validated implementation SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
-Current milestone: M7 — Manual login required before authenticated observation (IN_PROGRESS)
-Last checkpoint: 2026-08-10 — authenticated `observe:gate` PASS at implementation baseline `6443baf4ef219903ea84159df96d5c8ee7eb2e5b` with the external DEV storage-state path; all 13 checks passed without exposing state contents. Checkpoint commit: `a8112ddc0d04d1cff7e66c859c99b6de6faaffe7`.
-Next action: run the first controlled authenticated DEV landing observation, then exactly one fresh-context replay. Keep metadata-first evidence and stop on any production, mutation, DB, containment, or unknown-destination event.
+Current SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
+Last validated implementation SHA: cdeff506c3e4524edc1c1412bc19ed711ce322b5
+Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS)
+Last checkpoint: 2026-08-10 — M7 direct landing/replay runner and fail-closed endpoint semantic registry implemented and locally validated at `cdeff506c3e4524edc1c1412bc19ed711ce322b5`; the external auth state remains outside Nightwatch.
+Next action: rerun the authenticated pre-real-run gate against this implementation, then run the first controlled DEV landing observation and exactly one fresh-context replay. Stop on any gate failure or fatal safety event.

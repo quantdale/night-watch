@@ -340,11 +340,28 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the corrected unauthenticated canary passed, and the
-  human safety disposition for the three exact browser-background destinations
-  is applied and checkpointed. The browser/proxy/monitor repair is locally
-  validated; M7 remains gated on the missing external auth state and a passing
-  pre-real-run gate. No authenticated observation may begin in this session.
+- Status: IN_PROGRESS — the external auth state and prior pre-real-run gate
+  passed. The direct landing/replay runner and fail-closed endpoint semantic
+  registry are implemented at `cdeff506c3e4524edc1c1412bc19ed711ce322b5` and
+  locally validated; rerun the gate against this implementation before real
+  navigation.
+
+#### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
+
+Added the opt-in `observe:authenticated` command and dedicated Playwright
+configuration. It runs the local safety gate immediately before a test that
+creates one guarded context, directly navigates only to the exact verified
+Ripple landing URL, waits for deterministic stability, records sanitized shell
+readiness/network/console/page-error/oracle metadata, closes the context, and
+repeats exactly once with a fresh context and the same external state path.
+Screenshots and traces are disabled. The semantic registry contains no
+unreviewed API rules, so encountered API initialization calls are recorded as
+`UNKNOWN`; exact reviewed `KNOWN_MUTATION` rules, if added later with
+provenance, are blocked before network I/O.
+
+Local validation: `npx tsc --noEmit` PASS; focused endpoint semantic and gate
+tests **9 passed, 0 failed**; `npm run observe:authenticated -- --help` PASS.
+No real target navigation occurred during implementation validation.
 
 #### M7 handoff preparation
 
