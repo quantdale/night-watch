@@ -472,6 +472,17 @@ DOM dumps were absent. Review used counts/category results only; no secret
 value was printed. The external storage-state file was not opened.
 When: 2026-08-10
 
+Command: `npx tsc --noEmit`, `npx playwright test`, `npm run agent:check`,
+and `git diff --check`
+Result: **PASS**. TypeScript passed; the ordinary local/synthetic Playwright
+suite passed **159/159**; the continuity validator passed with the expected
+approved state-only `CHECKPOINT_ADVANCE` warning from implementation SHA
+`868b639fb6a5374bea6af99e70e570f398e3e448` to the documentation checkpoint;
+and whitespace validation passed. The ordinary suite does not discover the
+real authenticated observation test, so no additional authenticated target
+navigation occurred.
+When: 2026-08-10
+
 Command: `npm run observe:gate -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
 Result: **USER_ACTION_REQUIRED / STOP**; the local pre-real-run gate exited
 non-zero before authenticated context creation or target navigation.
