@@ -41,6 +41,7 @@ test('synthetic direct runner launches guarded browser and writes external state
     ],
   };
   const fakePassword = 'SYNTHETIC_CAPTURE_PASSWORD_ONLY';
+  const stages: string[] = [];
   let result: Awaited<ReturnType<typeof runDirectAuthCapture>> | undefined;
 
   try {
@@ -68,6 +69,7 @@ test('synthetic direct runner launches guarded browser and writes external state
       outputPath: output,
       testOnly: true,
       headless: true,
+      stageReporter: (event) => stages.push(`${event.stage}:${event.status}`),
       completion: {
         kind: 'synthetic-test-only',
         wait: async (page) => {
@@ -84,6 +86,20 @@ test('synthetic direct runner launches guarded browser and writes external state
     if (!result) throw new Error('synthetic direct capture did not return a result');
 
     expect(result.browserLaunched).toBe(true);
+    expect(stages).toEqual([
+      'PROXY_START:START', 'PROXY_START:PASS',
+      'PROXY_HEALTH:START', 'PROXY_HEALTH:PASS',
+      'BROWSER_LAUNCH:START', 'BROWSER_LAUNCH:PASS',
+      'GUARD_INSTALL:START', 'GUARD_INSTALL:PASS',
+      'TARGET_NAVIGATION:START', 'TARGET_NAVIGATION:PASS',
+      'TARGET_VERIFICATION:START', 'TARGET_VERIFICATION:PASS',
+      'HUMAN_WAIT:START', 'HUMAN_WAIT:PASS',
+      'POST_LOGIN_VERIFICATION:START', 'POST_LOGIN_VERIFICATION:PASS',
+      'STORAGE_STATE_WRITE:START', 'STORAGE_STATE_WRITE:PASS',
+      'PROVENANCE_WRITE:START', 'PROVENANCE_WRITE:PASS',
+      'STATE_VALIDATION:START', 'STATE_VALIDATION:PASS',
+      'CLEANUP:START', 'CLEANUP:PASS',
+    ]);
     expect(result.provenance).toMatchObject({
       schemaVersion: 'phase-2a-auth-capture-v1',
       mode: 'synthetic-test-only',

@@ -28,6 +28,28 @@ function fail(message) {
   process.exit(2);
 }
 
+function printStage(event) {
+  if (event.status === 'START') {
+    console.log(`[auth:capture] STAGE ${event.stage} START`);
+    return;
+  }
+  if (event.status === 'PASS') {
+    console.log(`[auth:capture] STAGE ${event.stage} PASS`);
+    return;
+  }
+  console.error('[auth:capture] FAIL');
+  console.error(`stage: ${event.stage}`);
+  console.error(`reason: ${event.reason ?? `${event.stage}_FAILED`}`);
+  if (event.expected) {
+    console.error(`expected: ${event.expected.origin}${event.expected.path}`);
+  }
+  if (event.actual) {
+    console.error(`actual-origin: ${event.actual.origin}`);
+    console.error(`actual-path: ${event.actual.path}`);
+  }
+  if (event.detail) console.error(`detail: ${event.detail}`);
+}
+
 /** Load the canonical TypeScript safety modules without a test runner. */
 function loadTypeScriptModule(file) {
   const require = createRequire(import.meta.url);
@@ -56,7 +78,6 @@ function loadTypeScriptModule(file) {
 }
 
 function waitForHumanEnter() {
-  console.log('[auth:capture] Guarded headed Chrome is ready on the approved DEV Ripple target. Complete login/MFA manually, wait until authenticated Ripple is loaded, then press ENTER here.');
   const prompt = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve, reject) => {
     const finish = () => {
@@ -116,6 +137,7 @@ async function main() {
   if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) fail('--output parent is world-writable without sticky protection');
   if ((process.env.NIGHTWATCH_STORAGE_STATE ?? '').trim() !== '') fail('direct capture refuses an existing NIGHTWATCH_STORAGE_STATE');
 
+  printStage({ stage: 'PREFLIGHT', status: 'START' });
   const preflight = spawnSync(process.execPath, [path.join(root, 'bin', 'observe-preflight.mjs'), `--env=${env}`, ...(uiUrl === undefined ? [] : [`--ui-url=${uiUrl}`])], {
     cwd: root,
     encoding: 'utf8',
@@ -123,9 +145,10 @@ async function main() {
   });
   if (preflight.stdout) process.stdout.write(preflight.stdout);
   if (preflight.status !== 0) {
-    if (preflight.stderr) process.stderr.write(preflight.stderr);
+    printStage({ stage: 'PREFLIGHT', status: 'FAIL', reason: 'PREFLIGHT_REJECTED' });
     process.exit(preflight.status ?? 2);
   }
+  printStage({ stage: 'PREFLIGHT', status: 'PASS' });
 
   const environmentModule = loadTypeScriptModule(path.join(root, 'src', 'core', 'environment', 'index.ts'));
   const runnerModule = loadTypeScriptModule(path.join(root, 'src', 'auth', 'directRunner.ts'));
@@ -139,15 +162,28 @@ async function main() {
     uiUrl: uiUrl ?? environment.uiBaseUrl,
     outputPath,
     nightwatchRoot: root,
+    stageReporter: printStage,
+    onReady: (location) => {
+      const configuredOrigin = new URL(environment.uiBaseUrl).origin;
+      const isRippleTarget = location.origin === configuredOrigin;
+      console.log(`[auth:capture] Guarded headed Chrome is ready on the approved ${env.toUpperCase()} ${isRippleTarget ? 'Ripple target' : `${env.toUpperCase()} authentication host`}.`);
+      console.log(`current-origin: ${location.origin}`);
+      console.log(`current-path: ${location.path}`);
+      console.log('[auth:capture] Complete login/MFA manually, wait until authenticated Ripple is loaded, then press ENTER here.');
+    },
     completion: { kind: 'human-parent-cli', wait: waitForHumanEnter },
   });
   console.log(`[auth:capture] PASS: guarded browser and proxy closed; external storage state was structurally validated and safe capture provenance was recorded for ${result.provenance.environment}. Secret values were not printed.`);
 }
 
-main().catch(() => {
+main().catch((error) => {
   // Do not echo Playwright/browser errors: they may contain page text or URL
   // details from an authenticated session. The recorder retains only sanitized
   // metadata and the human receives a category-only CLI failure.
-  console.error('[auth:capture] FAIL: capture stopped before a sanitized successful result; no secret values were printed.');
+  if (error && typeof error === 'object' && typeof error.stage === 'string') {
+    printStage(error);
+  } else {
+    console.error('[auth:capture] FAIL: capture stopped before a sanitized successful result; no secret values were printed.');
+  }
   process.exitCode = 1;
 });
