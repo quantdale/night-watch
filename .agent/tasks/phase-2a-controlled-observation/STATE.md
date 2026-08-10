@@ -6,10 +6,14 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 963128f4772db6e6c790cdc8cbb464c382cad8df
-Last validated implementation SHA: 963128f4772db6e6c790cdc8cbb464c382cad8df
+Current SHA: af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef
+Last validated implementation SHA: af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef
 Branch: main
-Last checkpoint: 2026-08-10 — replaced the Playwright Test worker capture path with the direct parent-CLI runner at implementation SHA `963128f4772db6e6c790cdc8cbb464c382cad8df`. The exact TTY blocker is recorded below; the real external storage state remains missing.
+Last checkpoint: 2026-08-10 — repaired post-launch target verification and
+stage diagnostics at implementation SHA `af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef`.
+The human reached headed Chrome, but the old run's generic failure did not
+identify its post-launch stage; the real external storage state remains
+missing.
 
 ## Objective
 
@@ -27,9 +31,12 @@ final path `/ripple/`; three expected destination groups and eight blocked
 groups were recorded, with zero unresolved destinations. The exact
 source-supported Pylon host remains locally blocked as distinct,
 non-fatal `OPTIONAL_THIRD_PARTY_SUPPORT`; it is not allowlisted and did not
-reach the proxy or upstream. No storage state was loaded and no auth capture
-was started. The capture architecture is now repaired locally; the next step
-is human-led external auth capture only.
+reach the proxy or upstream. No storage state was loaded by this session. The
+human then executed the repaired parent CLI: preflight passed for the exact
+canonical target, headed Chrome opened, the visible page resembled
+`testing...`, and the command ended with the old generic sanitized failure.
+No successful state was established. The next step is a human-led rerun with
+stage diagnostics only.
 
 ## Completed Milestones
 
@@ -111,13 +118,32 @@ real TTY, but the worker's stdin was non-TTY, so it stopped with
 occur and the external state was never created.
 
 At implementation SHA `963128f4772db6e6c790cdc8cbb464c382cad8df`, the real test
-path is gone. `bin/auth-capture.mjs` owns the interactive terminal and invokes
-the direct Playwright Library API runner. The runner reuses the existing
-loopback proxy, `OutboundPolicy`, raw CDP Fetch guard, BrowserContext HTTP and
-WebSocket guards, worker blocks, transport restrictions, trace policy, and
-metadata-first recorder. The local synthetic direct-runner test passed with a
-temporary external state and no fake-secret artifact leakage. No authenticated
-observation or real auth capture has occurred.
+path was gone. The human result proves that the parent CLI and headed browser
+did launch, but does not identify the later exception because that version
+collapsed every post-launch error into one generic line.
+
+The exact source-proven failure is therefore the missing post-launch
+observability and verification contract, not a proven synthetic-target leak:
+the old runner navigated without checking the resulting sanitized URL,
+printed a hard-coded ready message, accepted ENTER without a post-login
+readiness check, and only then attempted state write/validation/cleanup. Its
+catch block discarded the stage and error category. The new runner reports
+PREFLIGHT, PROXY_START, PROXY_HEALTH, BROWSER_LAUNCH, GUARD_INSTALL,
+TARGET_NAVIGATION, TARGET_VERIFICATION, HUMAN_WAIT,
+POST_LOGIN_VERIFICATION, STORAGE_STATE_WRITE, PROVENANCE_WRITE,
+STATE_VALIDATION, and CLEANUP, with origin/path only on URL diagnostics.
+
+Local source and synthetic execution prove the `testing...` page was not the
+Nightwatch synthetic fixture: real CLI mode accepts only `dev|next`, resolves
+the selected environment directly to
+`https://appdev.alphaus.cloud/ripple/`, does not use the synthetic Playwright
+config, and rejects synthetic completion unless `testOnly && local`. No
+Nightwatch fixture contains or serves that page text. The exact remote page
+content cannot be identified without a forbidden real request; the repaired
+rerun's TARGET_VERIFICATION output will identify only the safe origin/path.
+The local synthetic direct-runner test passed with a temporary external state
+and no fake-secret artifact leakage. No authenticated observation or real auth
+state has been created by Codex.
 
 ## Exact Next Action
 
@@ -151,10 +177,29 @@ npm run auth:capture -- \
 ```
 
 The terminal must be interactive. After the preflight PASS, headed Chrome will
-open through the mandatory proxy. The human completes DEV login/MFA, waits for
-authenticated Ripple, presses ENTER in that same terminal, and lets the CLI
-write and validate the external state. Do not execute this login from an agent
-session and do not expose the file contents.
+open through the mandatory proxy. The expected initial URL is exactly
+`https://appdev.alphaus.cloud/ripple/`; a legitimate login redirect may show
+the exact configured DEV auth host `logindev.alphaus.cloud` with a sanitized
+path. A localhost, synthetic fixture, production, or unknown origin must
+produce `TARGET_VERIFICATION` failure and must not print the ready message.
+The human completes DEV login/MFA, waits for authenticated Ripple to be back on
+the approved `appdev.alphaus.cloud/ripple/` path, presses ENTER in that same
+terminal, and lets the CLI write and validate the external state. Do not
+execute this login from an agent session and do not expose the file contents.
+
+Expected sanitized stage sequence:
+
+```text
+PREFLIGHT, PROXY_START, PROXY_HEALTH, BROWSER_LAUNCH, GUARD_INSTALL,
+TARGET_NAVIGATION, TARGET_VERIFICATION, HUMAN_WAIT,
+POST_LOGIN_VERIFICATION, STORAGE_STATE_WRITE, PROVENANCE_WRITE,
+STATE_VALIDATION, CLEANUP
+```
+
+The ready message appears only after TARGET_VERIFICATION PASS. If ENTER is
+pressed before the approved authenticated Ripple landing is structurally
+confirmed, the command must fail at `POST_LOGIN_VERIFICATION` with reason
+`POST_LOGIN_NOT_CONFIRMED` and must not write state.
 
 Exact fresh-session resume instruction after capture:
 
@@ -175,6 +220,12 @@ capture. After capture, rerun this exact gate in a fresh session without
 exposing storage-state contents. Do not begin authenticated observation,
 Phase 2B, or approve any new hostname. If another hostname is unresolved,
 stop and checkpoint.
+
+Existence/non-empty verification, without reading the file:
+
+```bash
+test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth state exists and is non-empty'
+```
 
 ## Files Changed
 
@@ -201,6 +252,7 @@ stop and checkpoint.
 | `tests/manual/auth-capture.ts`, `playwright.capture.config.ts` | Removed competing Playwright Test worker capture path/config | Removed |
 | `tests/unit/authCaptureLauncher.test.ts` | Regression: parent CLI has no Playwright Test discovery/worker stdin dependency | Modified |
 | `playwright.capture.synthetic.config.ts`, `tests/manual/auth-capture.synthetic.ts` | Local-only synthetic direct-runner validation with test-only completion | Modified |
+| `src/auth/stages.ts`, `tests/unit/authCaptureStages.test.ts` | Sanitized lifecycle stages, target verification, post-login readiness, and injected local failure coverage | Added |
 | `src/browser/fixtures/fixtureServer.ts` | Synthetic login and authenticated destination fixture pages | Modified |
 | `tsconfig.json` | Include the synthetic capture config in typechecking | Modified |
 | `src/browser/contract.ts`, `playwright.config.ts`, `playwright.gate.config.ts` | Shared authenticated browser containment contract and isolated gate harness | Added/modified |
@@ -648,6 +700,62 @@ Relevant failure/output summary: the ordinary suite contains no real capture
 test; all traffic was local synthetic/test traffic. The focused direct-runner
 test is recorded separately above.
 
+Command: human execution of the repaired direct auth-capture command
+Result: **POST-LAUNCH FAILURE OBSERVED**; the no-network preflight passed with
+target `https://appdev.alphaus.cloud/ripple/`, the approved UI host and API/
+auth host lists, and explicit production denial. A headed Chrome window opened.
+The human saw a page resembling `testing...`; the command then ended with the
+old generic failure and no successful sanitized state. This run occurred
+outside Codex; no credentials, MFA values, state contents, or artifacts were
+provided to Nightwatch/Codex.
+When: 2026-08-10
+Relevant failure/output summary: the old implementation had no stage reporter,
+did not verify `page.url()` before its ready message, and caught all
+post-launch errors as one generic line. The exact old failing stage is not
+recoverable from that output.
+
+Command: source and synthetic isolation review plus new stage regression
+Result: PASS. Real CLI mode accepts only `dev|next`, resolves the canonical
+DEV target from the selected config, does not load the synthetic Playwright
+config, ignores ambient `NIGHTWATCH_UI_URL` for runner target selection, and
+rejects synthetic completion unless `testOnly && local`. No Nightwatch source
+contains or serves `testing...`. Synthetic tests prove real-mode loopback
+rejection and stage-specific sanitized origin/path mismatch output.
+When: 2026-08-10
+
+Command: `NIGHTWATCH_ENV=local NIGHTWATCH_STORAGE_STATE='' npx playwright test --config=playwright.capture.synthetic.config.ts tests/manual/auth-capture.synthetic.ts --project=nightwatch --reporter=list`
+Result: PASS; **1 passed, 0 failed**. The successful synthetic direct lifecycle
+covered proxy start/health, browser launch, guard install, navigation and URL
+verification, explicit test completion, post-login structural readiness,
+state write, provenance write, validation, and cleanup. The run used loopback
+fixture traffic and temporary state only; no Alphaus traffic occurred.
+When: 2026-08-10
+
+Command: `npx playwright test tests/unit/authCaptureStages.test.ts tests/unit/authCaptureLauncher.test.ts --project=nightwatch --reporter=list`
+Result: PASS; **6 passed, 0 failed**. Coverage includes canonical DEV versus
+synthetic target resolution, target mismatch, navigation failure, human-wait
+failure, storage-write failure, state-validation failure, post-login
+not-confirmed, parent-TTY isolation, cleanup, and absence of injected
+synthetic secret-like text from stage diagnostics.
+When: 2026-08-10
+
+Command: no-TTY direct CLI probe and `node --check bin/auth-capture.mjs`
+Result: PASS-as-safe-rejection; the CLI printed PREFLIGHT START/PASS, then
+rejected before browser launch with `USER_ACTION_REQUIRED`; no output state
+was created. JavaScript syntax validation passed.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit && npx playwright test`
+Result: PASS; typecheck passed and the full suite passed **132/132**. The
+ordinary suite used only local/synthetic fixtures; no authenticated real
+observation was run.
+When: 2026-08-10
+
+Command: `git diff --check`
+Result: PASS; implementation checkpoint committed at
+`af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef`.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -746,6 +854,24 @@ Evidence/constraint: `synthetic-test-only` is rejected unless the runner is
 explicitly marked test-only and the environment is local; the real CLI passes
 only `human-parent-cli`.
 
+Decision: Treat the human's `testing...` observation as unclassified page
+content until sanitized target verification identifies its origin/path.
+Reason: the old runner printed readiness without checking `page.url()` and
+then discarded every post-launch exception; local source contains no such
+fixture page and the session must not make a second real request to infer its
+content.
+Evidence/constraint: the real CLI resolves only the selected `dev|next`
+config, while synthetic target selection is explicit local test injection.
+
+Decision: Require structural post-login readiness before storage-state write.
+Reason: ENTER alone is not evidence that the browser returned from the
+approved auth host to Ripple; saving state in that condition would create an
+untrusted artifact.
+Evidence/constraint: existing Phase 2A canary semantics already record the
+sanitized final URL and non-empty-title structural signal. Real mode now
+requires the configured Ripple host/path family and title presence, while
+synthetic mode uses only the loopback fixture path.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -758,8 +884,10 @@ only `human-parent-cli`.
   allowlist behavior.
 - Standard local evidence retains its Phase 1 redaction behavior; only an
   authenticated recorder switches to the stricter metadata-first policy.
-- Manual capture has not been invoked; no real target, credential, MFA code, or
-  storage state exists in this repository/session.
+- Codex did not invoke manual capture and received no real target contents,
+  credentials, MFA codes, or storage state. The human invoked the command
+  externally, reached headed Chrome, and reported the post-launch failure;
+  no successful state was supplied to this repository/session.
 - The original `No tests found` discovery defect was real but insufficient: a
   dedicated config would still leave human interaction inside a worker. The
   worker-based real capture path and config are now removed entirely.
@@ -779,6 +907,17 @@ only `human-parent-cli`.
 - The synthetic direct-runner regression uses only a loopback auth fixture,
   ephemeral proxy, and temporary `/tmp` state path. It does not exercise human
   login, credentials, MFA, or any Alphaus host.
+- The human's first repaired invocation proves preflight and browser launch,
+  but its old generic catch makes the exact later stage unrecoverable. The
+  repaired invocation will distinguish navigation, target verification, wait,
+  post-login, write, provenance, validation, and cleanup without raw errors.
+- The visible `testing...` page is not served by the Nightwatch fixture and
+  cannot be explained as synthetic leakage from the real CLI. Its remote
+  origin/path is intentionally unresolved until a sanitized target report is
+  produced; no real request was made by Codex to investigate it.
+- Synthetic failure injection proved partial state written by a failed
+  write/validation path is removed because the file was created by that
+  failed attempt and is never treated as trusted state.
 
 ## Blockers
 

@@ -391,6 +391,36 @@ the parent TTY check.
 
 M7 remains `USER_ACTION_REQUIRED`; the real external state is still missing.
 
+#### M7 post-launch repair checkpoint — 2026-08-10 — `af3c3a7`
+
+The human executed the repaired parent CLI. The no-network preflight passed for
+the canonical target `https://appdev.alphaus.cloud/ripple/`, and a headed
+Chrome window opened. The terminal then emitted only the old generic failure
+after the human saw a page resembling `testing...`; because the old runner
+collapsed every post-launch exception into one message, the exact failing
+stage cannot be recovered from that run.
+
+Local source and synthetic execution prove this was not synthetic fixture
+selection: normal capture accepts only `dev|next`, resolves the selected
+environment directly, ignores ambient `NIGHTWATCH_UI_URL` for runner target
+selection, and rejects synthetic completion unless `testOnly && local`. The
+synthetic fixture is reachable only from the dedicated test config. No
+Nightwatch source contains or serves a `testing...` page. The human-visible
+page therefore cannot be attributed to the local fixture from this session;
+its exact remote content remains intentionally unobserved.
+
+The repair adds sanitized diagnostics and target verification before the ready
+message, allows only the selected UI host or exact configured DEV/NEXT auth
+host during the initial navigation, keeps the parent readline lifecycle, and
+requires an approved Ripple landing plus non-empty title after ENTER before
+state write. Synthetic execution covers successful completion and injected
+navigation, target-mismatch, wait, write, validation, and post-login failures;
+all safety layers remain unchanged.
+
+Status remains `USER_ACTION_REQUIRED`: no real auth state was produced. The
+next human action is to rerun the exact parent CLI below from an interactive
+terminal and use the new stage output; do not begin authenticated observation.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
