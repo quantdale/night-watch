@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1
-Last validated implementation SHA: 4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1
+Current SHA: 3b52b5893fab5ead396974645c29d60618cccc9b
+Last validated implementation SHA: 3b52b5893fab5ead396974645c29d60618cccc9b
 Branch: main
-Last checkpoint: 2026-08-10 — implementation `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1` repairs the authenticated Ripple target and SPA stability contracts after source comparison, including resetting the structural-stability timer after any shell/readiness interruption. The source-backed `#app` selector remains unchanged because current Ripple source supports it; the real runtime absence remains unresolved without DOM inspection. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
+Last checkpoint: 2026-08-10 — implementation `3b52b5893fab5ead396974645c29d60618cccc9b` verifies the current local `origin/dev` Ripple source contract and adds sanitized main-frame/child-frame, document/body, timing, route-stability, navigation/lifecycle, and page-error diagnostics. The source-backed `#app` selector remains unchanged because current `origin/dev` supports it; the real runtime absence remains unresolved without DOM/content inspection. The external DEV storage-state path and contents remain outside Nightwatch.
 
 ## Objective
 
@@ -62,14 +62,18 @@ authorized in this repair session.
 
 Repository: `REPOSITORIES/mobingilabs/ripple-ui`.
 
-- Branch: `dev`.
-- Exact HEAD: `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`.
-- Status: `dev...origin/dev [behind 17]`, with unrelated local deletions under
+- Checked-out branch: `dev`.
+- Checked-out SHA: `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`.
+- Locally available current reference: `origin/dev` at
+  `0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2`.
+- Relationship: checked-out `dev` is behind `origin/dev` by 17 commits; the
+  worktree has unrelated local deletions under
   `openspec/changes/add-reserveshield-export-report/` and an untracked
-  `AGENTS.md`; no relevant routing/bootstrap/root file is dirty.
-- Freshness: exact same HEAD as the existing Nightwatch source evidence, so
-  source behavior is tied to this SHA and is not described as newer than the
-  prior snapshot. No pull/reset/checkout/stash/clean/modification occurred.
+  `AGENTS.md`.
+- The 17-commit delta is limited to translation/invoice/settings files and
+  has no changes to bootstrap, `public/index.html`, `src/main.js`,
+  `src/router.js`, `src/App.vue`, or build/runtime mounting files. No
+  pull/fetch/checkout/reset/rebase/stash/clean/modification occurred.
 
 Source contract:
 
@@ -78,11 +82,16 @@ Source contract:
 3. The `beforeEach` guard redirects authenticated `/` or `/login` to
    `/dashboard`; the authenticated browser URL is therefore
    `/ripple/dashboard`.
-4. `public/index.html` declares `<div id="app"></div>` and `src/main.js`
-   mounts Vue with `vm.$mount('#app')`.
+4. At current `origin/dev`, `public/index.html:35` declares
+   `<div id="app"></div>` and `src/main.js:48,324` mounts Vue with
+   `}).$mount('#app')`.
 5. The shell owns the mount and layout; dashboard content is rendered below
    the shell and may select a dashboard MFE via feature flags. No customer
    text or financial value is needed for readiness.
+
+Classification: `CURRENT_SOURCE_STILL_USES_APP`. The exact source-backed root
+contract remains `#app` in the top-level document; no newer source proved a
+different selector.
 
 ### Exact causal analysis
 
@@ -92,12 +101,16 @@ Source contract:
   authenticated landing route is a source-proven sub-route. The repair keeps
   exact origin/host policy and accepts only `/ripple/` or a path beneath the
   configured Ripple namespace.
-- `appRootPresent=false`: pre-repair and repaired code query only the
-  source-backed `#app` mount in the main page. The sanitized runtime result
-  was false because that query found no matching element at the sampled final
-  document. Current source proves the selector, but not the runtime reason
-  for its absence; deployment variation versus timing is unresolved without
-  prohibited DOM/body inspection. No selector weakening was made.
+- `appRootPresent=false`: the previous observer used the retained
+  `context.page` Page object, queried the top-level main-frame document with
+  `page.evaluate`, and checked `document.querySelector('#app')` after the
+  direct `goto(..., { waitUntil: 'domcontentloaded' })` returned. No iframe
+  or alternate Page was queried, and no DOM/body content was recorded. The
+  sanitized runtime result was false because that query found no matching
+  element at the sampled final document. Current `origin/dev` proves the
+  selector, but not the runtime reason for its absence; deployment/source
+  divergence versus timing or shell mount failure remains unresolved without
+  prohibited content inspection. No selector weakening was made.
 - `stabilityReached=false`: pre-repair `waitForStability` required zero active
   network requests plus 750 ms of silence for 15 seconds. It did not depend on
   `targetConfirmed` or `appRootPresent`, so the three old booleans were not
@@ -111,6 +124,18 @@ Source contract:
 The malformed-JSON response anomaly remains `GENUINE_PROTOCOL_ANOMALY` with
 subcause unresolved. It is not a readiness blocker, and no response body was
 inspected or persisted.
+
+The diagnostic repair remains metadata-only. Future failed retries record the
+approved origin/path, top-level-page flag, Playwright frame count, main-frame
+evaluation frame, exact `#app` selector, main/child-frame root counts,
+document-ready-state, body presence/child count, first/last bounded sample
+timing, direct-navigation state, page-closed state, main-frame navigation
+count, fatal page-error count, route-stable boolean and milliseconds, and a
+sanitized diagnosis. A complete main document with a body but no main-frame
+root is reported as
+`SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED`; it is never promoted to a
+product bug or used to weaken readiness. The source contract, target
+confirmation, app-root presence, and stability result remain independent.
 
 ### Repair checkpoint
 
@@ -140,6 +165,48 @@ The follow-up does not alter target, app-root, network, proxy, or privacy
 policy. It only prevents a previously accumulated route-stability interval
 from being reused after the source-backed shell disappears or the document is
 not complete.
+
+### M7 current-source and readiness-diagnostics checkpoint — 2026-08-10 — `3b52b58`
+
+The required read-only source comparison used the locally available
+`origin/dev` ref; no Git network operation was performed. The checked-out
+Ripple SHA is `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, branch `dev`, and the
+current local `origin/dev` SHA is `0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2`,
+with the checkout 17 commits behind. The delta changes only translation,
+invoice, and settings files. It does not change application bootstrap,
+`public/index.html`, Vue mounting, router/base path, dashboard route,
+authentication redirect, shell/root component, or build/runtime mounting.
+
+Classification: `CURRENT_SOURCE_STILL_USES_APP`. The exact current contract is
+`public/index.html:35` `<div id="app"></div>` and
+`src/main.js:48,324` `}).$mount('#app')`, at `origin/dev`
+`0bba40b7...`. Route provenance remains `src/router.js:273,325-328,1385-1409`:
+base `/ripple/`, authenticated `/dashboard` route with `/` alias, and the
+authenticated redirect to `/dashboard`. The root marker was not changed.
+
+Nightwatch implementation `3b52b58` now records sanitized diagnostics from
+the same `context.page` Page object and top-level main-frame evaluation used
+by the observer, while also checking child frames only for structural root
+presence. It records origin/path, `documentReadyState`, `topLevelPage`,
+`frameCount`, `appRootSelector`, main/child root counts, `bodyPresent`, safe
+`bodyChildCount`, evaluation frame/timing, whether the root was queried before
+document completion, direct-navigation progress, page closure, main-frame
+navigation count after Page capture, fatal page-error count, first/last sample
+elapsed milliseconds, `routeStable`, `routeStableMs`, and an explicit
+diagnosis. Persistent complete-document root absence remains
+`SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED`; no selector or readiness
+rule was weakened. Structural stability still requires complete document,
+exact source-backed `#app`, and an unchanged route for 750 ms, independent of
+target confirmation and generic network idle.
+
+Focused validation: `npx playwright test
+tests/unit/rippleReadiness.test.ts --project=nightwatch` => **16 passed, 0
+failed**; `npx tsc --noEmit` => PASS; full `npx playwright test --reporter=line`
+=> **175 passed, 0 failed**; `npm run agent:check` => PASS with only the
+expected stale-baseline warning before this state checkpoint; `git diff
+--check` => PASS. No real authenticated request, replay, production traffic,
+mutation, DB query, storage-state read, or Alphaus repository modification
+occurred. Replay remains NOT RUN and M7 remains IN_PROGRESS.
 
 ## Current Oracle Failure Checkpoint
 
@@ -251,7 +318,7 @@ policy was weakened.
 
 Continuity, evidence minimization, manual capture, and the pre-real-run safety
 gate are complete. The corrected canary reached `/ripple/` with HTTP 200 and
-passed after the source-backed Pylon classification. Narrow current Ripple
+passed after the source-backed Pylon classification. Earlier Ripple checkout
 source verification at
 `mobingilabs/ripple-ui` `dev` `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`
 proved the exact host is an asynchronous optional support/chat widget; no
@@ -403,12 +470,35 @@ JSON response remained metadata-only oracle evidence and did not cause the
 readiness failure. Safety totals remained zero for unresolved destinations,
 proxy violations, production attempts, mutations, and DB queries.
 
-Current source evidence remains `mobingilabs/ripple-ui`, branch `dev`, exact
-HEAD `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, with the same SHA as the
-existing Nightwatch source snapshot. The worktree is `dev...origin/dev
-[behind 17]` with unrelated local deletions and an untracked `AGENTS.md`; no
-relevant routing/bootstrap/root file is dirty, and Nightwatch did not modify
-that repository.
+Current source evidence is the locally available `origin/dev` ref at
+`0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2`. The checked-out Ripple worktree
+remains `dev` at `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, exactly 17 commits
+behind `origin/dev`, with unrelated local deletions and an untracked
+`AGENTS.md`; no checkout, reset, pull, rebase, stash, clean, or modification
+occurred. The 17-commit delta touches only translation/invoice/settings files;
+it does not touch `public/index.html`, `src/main.js`, `src/router.js`,
+`src/App.vue`, or build/runtime mounting files.
+
+Classification: `CURRENT_SOURCE_STILL_USES_APP`. At `origin/dev`,
+`public/index.html:35` declares `<div id="app"></div>`, and
+`src/main.js:48,324` constructs the Vue root and calls `}).$mount('#app')`.
+The current source-backed route contract remains `src/router.js:273`
+(`base: '/ripple/'`), `:325-328` (`/dashboard`, alias `/`, `requiresAuth`),
+and `:1385-1409` (authenticated `/` or `/login` redirects to `/dashboard`).
+The exact reviewed app-root contract is therefore `#app` in the top-level
+document; it was not replaced with a runtime-invented selector.
+
+Checkpointed implementation: `3b52b58`. Target-path repair is COMPLETE;
+generic network-idle repair is COMPLETE; app-root contract status is exact
+current source `#app` (`CURRENT_SOURCE_STILL_USES_APP`). The next retry will
+record sanitized `origin`, `path`, `documentReadyState`, `topLevelPage`,
+`frameCount`, `appRootSelector`, `appRootPresent`, `bodyPresent`, optional safe
+`bodyChildCount`, `routeStable`, `routeStableMs`, `navigationInProgress`,
+`pageClosed`, and `fatalPageErrorCount`, plus source reference, evaluation
+timing/frame, Page-reference navigation count, child-frame root count, and an
+unresolved diagnosis when the complete main document has no root. It does not
+record innerHTML, outerHTML, DOM dumps, text, IDs, costs, bodies, storage, or
+identity. Replay is NOT RUN.
 
 The corrected unauthenticated canary already passed:
 `npm run observe:canary -- --env=dev`, run
@@ -528,10 +618,10 @@ test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth st
 | `tests/unit/monitor.test.ts`, `tests/unit/authCaptureStages.test.ts`, `tests/manual/auth-capture.synthetic.ts` | Local taxonomy, liveness, lifecycle, blocked-traffic, and multi-poll HUMAN_WAIT coverage | Added/modified |
 | `bin/observe-authenticated.mjs`, `bin/observe-authenticated-config.mjs` | Preserve absent UI-override semantics between the authenticated CLI and gate; reject explicit blank overrides | Added/modified |
 | `tests/unit/observeAuthenticatedRunner.test.ts`, `tests/unit/realRunGate.test.ts` | Synthetic runner-boundary and strict target-agreement regression coverage | Added/modified |
-| `src/products/ripple/readiness.ts` | Source-backed Ripple route namespace, origin, `#app`, and structural readiness contract | Added |
-| `src/browser/observers/stability.ts` | Structural Ripple stability wait; generic network-idle wait retained for other workflows | Modified |
-| `tests/manual/phase2a-authenticated.ts` | Apply bounded route confirmation, shell sampling, and structural stability to M7 observer | Modified |
-| `tests/unit/rippleReadiness.test.ts` | Synthetic readiness matrix and causal-independence regression coverage | Added |
+| `src/products/ripple/readiness.ts` | Current `origin/dev` source reference, exact `#app` contract, structural diagnosis, and fail-closed readiness semantics | Modified |
+| `src/browser/observers/stability.ts` | Structural Ripple stability wait plus sanitized route-stability progress callbacks; generic network-idle wait retained for other workflows | Modified |
+| `tests/manual/phase2a-authenticated.ts` | Main/child-frame structural diagnostics, bounded timing/lifecycle metadata, and current-source provenance for M7 observer | Modified |
+| `tests/unit/rippleReadiness.test.ts` | 16-case synthetic readiness/diagnostic matrix and causal-independence regression coverage | Modified |
 
 ### Browser-background disposition implementation — `efe96bd37d33d6042038bb996a9f8cdbe6963992`
 
@@ -578,6 +668,31 @@ unknown policy denial, source-backed `#app` structure, route changes,
 disappearing root, fatal page/browser state, blocked telemetry/Pylon/background
 traffic, malformed-JSON separation, and target/app-root causal independence.
 No browser target or external state was used.
+When: 2026-08-10
+
+Command: `npx playwright test tests/unit/rippleReadiness.test.ts
+--project=nightwatch`
+Result: **PASS; 16 passed, 0 failed**. Added coverage proves the exact
+current-source reference, wrong-selector rejection, early document timing,
+wrong-frame/unavailable-document/unresolved-divergence diagnoses, route-change
+progress, shell interruption reset, recurring-network independence, and
+malformed-oracle separation.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: **PASS** at implementation SHA `3b52b58`.
+When: 2026-08-10
+
+Command: `npx playwright test --reporter=line`
+Result: **PASS; 175 passed, 0 failed**. The suite used only local fixture,
+loopback, and synthetic traffic; the opt-in authenticated observer was not
+discovered.
+When: 2026-08-10
+
+Command: `npm run agent:check` and `git diff --check`
+Result: **PASS**. The agent check showed the expected stale-baseline warning
+while the implementation commit preceded this documentation checkpoint;
+whitespace validation passed.
 When: 2026-08-10
 
 Command: `npx tsc --noEmit`
@@ -1480,14 +1595,21 @@ Any new, sibling, or production hostname remains fail-closed and fatal.
   failures fatal. The first authenticated observation later recorded the same
   anomaly without making it a safety failure; the external auth state remains
   outside Nightwatch.
-- Current Ripple source evidence at branch `dev`, SHA
-  `d80b161b684d9153c7e5acaa65ae1752d93d8ba9` is unchanged from the prior
-  Nightwatch source snapshot. Its relevant route/bootstrap/root files are
-  clean; unrelated worktree changes remain untouched.
+- The checked-out Ripple source remains branch `dev`, SHA
+  `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`, but current local `origin/dev`
+  is `0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2` and is 17 commits ahead.
+  The narrow delta contains no readiness-relevant bootstrap/router/root/build
+  changes. Current-source classification is therefore
+  `CURRENT_SOURCE_STILL_USES_APP`.
 - Source comparison proves `/ripple/dashboard` is the authenticated landing
-  route, while `#app` remains the source-backed shell mount. The readiness
-  repair therefore changed target semantics and SPA stability, not the app-root
-  selector.
+  route, while `#app` remains the exact current source-backed shell mount.
+  The readiness repair changed target semantics and SPA stability, not the
+  app-root selector; implementation `3b52b58` adds only sanitized structural
+  diagnostics around that unchanged contract.
+- The new synthetic matrix covers all ten requested readiness cases, including
+  wrong selector, early loading, child-frame root, route changes, recurring
+  network activity, and malformed-oracle independence. Persistent root absence
+  remains unresolved rather than being labeled a shell bug.
 - Structural stability no longer waits for zero network activity in the M7
   authenticated observer. It requires complete document readiness, `#app`,
   and a route that remains unchanged for 750 ms; target confirmation is
@@ -1519,9 +1641,11 @@ no wildcard or related-host approval was added. The current blocker is the
 unsuccessful authenticated readiness result recorded above; no replay or
 Phase 2B journey may start.
 
-The readiness contract repair is now implemented and locally validated at
-`4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`; the initial source-comparison
-repair is retained at `ed337d75966f8af20130df32e084459da74dff50`. The
+The readiness contract repair and sanitized diagnostic improvements are now
+implemented and locally validated at `3b52b58`; the initial source-comparison
+repair is retained at `ed337d75966f8af20130df32e084459da74dff50` and the
+stability-continuity follow-up at `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`.
+The
 remaining M7 boundary is intentional: this repair session must not perform the
 fresh real retry or replay. A fresh interactive session must use the exact
 retry command in the Resume Recipe, inspect only sanitized results, and stop
@@ -1643,9 +1767,9 @@ malformed-JSON protocol anomaly recurred twice as metadata-only evidence.
 5. The exact authenticated command has been run once. The readiness repair is
    checkpointed, but do not run the fresh retry in this repair session. Replay
    remains prohibited until a fresh first observation is successful.
-6. This repair is checkpointed at implementation SHA
-   `4e74d56394b3971a5a1cc4ef14a8db3b2ea9b8e1`; do not expose storage-state
-   contents or rerun the canary.
+6. This repair is implemented at SHA `3b52b58`; do not expose storage-state
+   contents or rerun the canary. The final documentation checkpoint SHA will
+   be the clean Nightwatch descendant that records this state update.
 7. The exact fresh-session retry command, and only that command, is:
 
    ```bash

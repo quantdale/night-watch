@@ -343,10 +343,12 @@ handoff; do not execute the authenticated observation in this session.
 - Status: IN_PROGRESS — the exact authenticated command passed all 13
   pre-real-run checks and completed its first guarded landing observation, but
   stopped before replay because sanitized readiness reported the approved DEV
-  origin with `/ripple/dashboard`, while the observer only confirmed the
-  configured `/ripple/` path. The readiness contract repair is now locally
-  implemented and checkpointed; no real retry, replay, production attempt,
-  mutation, or DB query is authorized in this repair session.
+  origin with `/ripple/dashboard`, `appRootPresent=false`, and
+  `stabilityReached=false`. The current local `origin/dev` source comparison
+  proves `#app` remains the exact root marker; Nightwatch now records bounded
+  structural diagnostics without weakening readiness. No real retry, replay,
+  production attempt, mutation, or DB query is authorized in this repair
+  session.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -638,6 +640,34 @@ agent:check` and `git diff --check` passed. No real authenticated observation,
 replay, Alphaus traffic, production traffic, mutation, or DB query occurred.
 M7 remains IN_PROGRESS and the retry remains deferred to a fresh session.
 
+#### M7 current-source and readiness-diagnostics checkpoint — 2026-08-10 — `3b52b58`
+
+The checked-out Ripple worktree is `dev` at
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9`; the locally available
+`origin/dev` is `0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2`, and the checkout is
+17 commits behind. Read-only comparison of only readiness-relevant paths
+classified the result as `CURRENT_SOURCE_STILL_USES_APP`: the delta changes
+translation/invoice/settings files only, while `origin/dev`
+`public/index.html:35` and `src/main.js:48,324` retain `<div id="app">` and
+`}).$mount('#app')`; `src/router.js` retains `/ripple/`, `/dashboard`, and
+the authenticated redirect contract. No Ripple file was modified.
+
+Nightwatch now records sanitized origin/path, document-ready-state,
+top-level-page/frame/root/body structural counts, exact selector and source
+reference, main-frame evaluation/timing, whether evaluation preceded complete
+document readiness, direct-navigation/Page-reference facts, page closure,
+fatal page-error count, bounded route stability, and a diagnosis that leaves
+complete-document root absence unresolved between shell mount failure and
+deployment/source divergence. The target, app-root, and stability signals
+remain independent; generic network idle remains outside M7 readiness.
+
+Focused readiness tests are **16/16**; full local Playwright validation is
+**175/175**; `npx tsc --noEmit`, `npm run agent:check`, and `git diff --check`
+pass (agent-check has only the expected pre-checkpoint stale-baseline warning).
+No real authenticated request, replay, production traffic, mutation, database
+query, storage-state read, or Alphaus repository modification occurred. M7
+remains IN_PROGRESS and the retry is deferred to a fresh session.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
@@ -767,6 +797,23 @@ outputs and sanitized run IDs in STATE/REPORT, never secrets or customer data.
   750 ms. Do not require generic network-idle because benign recurring reads
   can continue after a SPA shell is ready; keep the generic wait for existing
   non-M7 workflows.
+- 2026-08-10 — Classify the current root contract from the locally available
+  `origin/dev` ref, not the 17-commit-behind checkout. Reason: the checkout is
+  not current enough to establish current dev source truth by itself, while
+  the local upstream ref is available for read-only object inspection.
+  Evidence: `origin/dev` `0bba40b7...` still has `public/index.html:35` and
+  `src/main.js:48,324` for `#app`, and the 17-commit delta contains no
+  relevant bootstrap/router/root/build paths. Consequence: classification is
+  `CURRENT_SOURCE_STILL_USES_APP`; no marker replacement is authorized.
+- 2026-08-10 — Add structural diagnostics without changing the readiness
+  contract. Reason: the previous `appRootPresent=false` result came from a
+  main-frame `page.evaluate` query after direct navigation, but sanitized
+  evidence could not distinguish stale source, wrong document/frame, early
+  timing, or runtime shell/source divergence. Consequence: future failures
+  preserve independent target/root/stability booleans and add only safe
+  origin/path, frame/body counts, document state, bounded timing, lifecycle,
+  route-stability, exact selector, source provenance, and an honest unresolved
+  diagnosis; no DOM content or generic network-idle dependency is introduced.
 
 ## Discoveries
 
