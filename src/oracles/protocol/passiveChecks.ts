@@ -6,25 +6,35 @@
 // the JSON / NDJSON the server claimed it is. They carry NO business
 // invariants — product/data invariants are Phase 6+.
 //
-// All `body`/`url` inputs arrive ALREADY REDACTED from the caller; the preview
-// strings embedded in messages are therefore safe to persist.
+// All `body`/`url` inputs arrive ALREADY REDACTED from the caller. Oracle
+// diagnostics intentionally contain metadata only; response content is never
+// included in an oracle message.
 // ---------------------------------------------------------------------------
 
 export interface UnexpectedStatusIssue {
   type: 'unexpected-status';
   severity: 'error' | 'warn';
+  oracleSeverity: 'anomaly';
+  protocolExpected: 'http-status';
+  protocolObserved: 'unexpected-status';
   message: string;
 }
 
 export interface MalformedJsonIssue {
   type: 'malformed-json';
   severity: 'error';
+  oracleSeverity: 'anomaly';
+  protocolExpected: 'json';
+  protocolObserved: 'invalid-json';
   message: string;
 }
 
 export interface MalformedNdjsonIssue {
   type: 'malformed-ndjson';
   severity: 'error';
+  oracleSeverity: 'anomaly';
+  protocolExpected: 'ndjson';
+  protocolObserved: 'invalid-ndjson';
   message: string;
 }
 
@@ -43,6 +53,9 @@ export function checkUnexpectedStatus(
     return {
       type: 'unexpected-status',
       severity: 'error',
+      oracleSeverity: 'anomaly',
+      protocolExpected: 'http-status',
+      protocolObserved: 'unexpected-status',
       message: `unexpected-status: HTTP ${status} for ${url}`,
     };
   }
@@ -63,11 +76,22 @@ function looksLikeNdjson(body: string): boolean {
 
 function wantsJson(body: string, contentType: string | undefined): boolean {
   // Content-type claim: JSON (but NOT NDJSON — the NDJSON oracle owns that).
-  if (contentType !== undefined && contentType.includes('json') && !contentType.includes('ndjson')) {
+  const normalizedContentType = contentType?.toLowerCase();
+  if (
+    normalizedContentType !== undefined &&
+    normalizedContentType.includes('json') &&
+    !normalizedContentType.includes('ndjson') &&
+    !normalizedContentType.includes('json-seq') &&
+    !normalizedContentType.includes('stream')
+  ) {
     return true;
   }
-  // Content-type missing/misleading: only sniff when the body looks like
-  // JSON (single JSON value, not multi-line NDJSON) and is small enough.
+  // A declared non-JSON type is not a JSON-parser invitation. This prevents
+  // HTML/login/text responses from being parsed merely because a URL looks
+  // API-like. Sniff only when Content-Type is genuinely absent.
+  if (normalizedContentType !== undefined) return false;
+  // Missing Content-Type: only sniff when the body looks like JSON (single
+  // JSON value, not multi-line NDJSON) and is small enough.
   const trimmed = body.trim();
   if ((trimmed.startsWith('{') || trimmed.startsWith('[')) && body.length < 200_000) {
     return !looksLikeNdjson(body);
@@ -76,25 +100,35 @@ function wantsJson(body: string, contentType: string | undefined): boolean {
 }
 
 /**
- * JSON body check. Only when the response claims JSON (or the body clearly
- * looks like a single JSON value). Successfully parsed → null; otherwise an
- * issue carrying a 200-char preview of the (already redacted) body.
+ * JSON body check. Only when the response claims JSON (or Content-Type is
+ * absent and the body clearly looks like one JSON value). Successfully parsed
+ * → null; otherwise a metadata-only anomaly.
  */
 export function checkJsonBody(
   body: string,
   url: string,
-  contentType: string | undefined
+  contentType: string | undefined,
+  status?: number,
+  bodyComplete = true,
 ): MalformedJsonIssue | null {
+  // A response with no body is not malformed JSON unless a separately known
+  // endpoint contract requires a body. Nightwatch has no such contract here.
+  // Redirect bodies are browser control-flow responses, not application JSON.
+  if (!bodyComplete || body.trim() === '' || status === 204 || status === 205 || (status !== undefined && status >= 300 && status < 400)) {
+    return null;
+  }
   if (!wantsJson(body, contentType)) return null;
   try {
     JSON.parse(body);
     return null;
   } catch {
-    const preview = body.slice(0, 200);
     return {
       type: 'malformed-json',
       severity: 'error',
-      message: `malformed-json: ${url}: body is not valid JSON (preview: ${JSON.stringify(preview)})`,
+      oracleSeverity: 'anomaly',
+      protocolExpected: 'json',
+      protocolObserved: 'invalid-json',
+      message: `malformed-json: ${url}`,
     };
   }
 }
@@ -103,7 +137,11 @@ function wantsNdjson(body: string, contentType: string | undefined): boolean {
   // text/event-stream is NOT NDJSON (SSE frames are 'data: ...' lines) —
   // never flag it with the NDJSON oracle.
   if (contentType !== undefined && /event-stream/i.test(contentType)) return false;
-  if (contentType !== undefined && (contentType.includes('ndjson') || contentType.includes('stream'))) {
+  const normalizedContentType = contentType?.toLowerCase();
+  if (
+    normalizedContentType !== undefined &&
+    (normalizedContentType.includes('ndjson') || normalizedContentType.includes('json-seq') || normalizedContentType.includes('stream'))
+  ) {
     return true;
   }
   return looksLikeNdjson(body);
@@ -118,9 +156,11 @@ function wantsNdjson(body: string, contentType: string | undefined): boolean {
 export function checkNdjsonBody(
   body: string,
   url: string,
-  contentType: string | undefined
+  contentType: string | undefined,
+  status?: number,
+  bodyComplete = true,
 ): MalformedNdjsonIssue | null {
-  if (body.trim() === '') return null;
+  if (!bodyComplete || body.trim() === '' || status === 204 || status === 205 || (status !== undefined && status >= 300 && status < 400)) return null;
   if (!wantsNdjson(body, contentType)) return null;
   const lines = body.split('\n');
   for (let i = 0; i < lines.length; i++) {
@@ -129,11 +169,13 @@ export function checkNdjsonBody(
     try {
       JSON.parse(line);
     } catch {
-      const preview = line.slice(0, 200);
       return {
         type: 'malformed-ndjson',
         severity: 'error',
-        message: `malformed-ndjson: ${url}: line ${i + 1} is not valid JSON (preview: ${JSON.stringify(preview)})`,
+        oracleSeverity: 'anomaly',
+        protocolExpected: 'ndjson',
+        protocolObserved: 'invalid-ndjson',
+        message: `malformed-ndjson: ${url}: invalid line ${i + 1}`,
       };
     }
   }

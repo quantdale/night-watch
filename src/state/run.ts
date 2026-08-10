@@ -1,9 +1,10 @@
 // ---------------------------------------------------------------------------
 // Nightwatch — run monitor (in-memory failure state for the harness).
 //
-// The monitor aggregates hard failures (denied outbound requests) and oracle
-// issues so journeys/scenarios can make a fail/pass decision at the end of a
-// run, and can produce short human-readable notes for summary.json.
+// The monitor aggregates hard safety failures (denied outbound requests) and
+// oracle issues so ordinary journeys can make a fail/pass decision at the end
+// of a run. Direct auth capture reads the safety-only state: authentication
+// acquisition is not a bug-free page certification workflow.
 // ---------------------------------------------------------------------------
 
 import type { RunEvent } from '../core/evidence/types';
@@ -118,10 +119,16 @@ export class RunMonitor {
   readonly hardFailures: HardFailureRecord[] = [];
   /** Every issue event recorded (any type), in sequence. */
   readonly issues: RunEvent[] = [];
+  /** Oracle issues that matched the configured failOn set. */
+  readonly oracleFailures: RunEvent[] = [];
   /** Sanitized causes, in first-observed order. */
   readonly monitorFailures: SafetyMonitorDiagnostic[] = [];
   /** True after any hard failure or any issue whose type is in failOn. */
   failed = false;
+  /** True only after a safety-policy, containment, or lifecycle failure. */
+  safetyFailed = false;
+  /** True after a configured oracle issue; this is not a safety failure. */
+  oracleFailed = false;
 
   constructor(failOn: readonly string[]) {
     this.failOnSet = new Set([...failOn, 'hard-failure']);
@@ -148,6 +155,7 @@ export class RunMonitor {
       guardType: data.guardType ?? (typeof event.data?.path === 'string' ? event.data.path : data.path),
       lifecycleEvent: data.lifecycleEvent,
     });
+    this.safetyFailed = true;
     this.failed = true;
   }
 
@@ -161,11 +169,8 @@ export class RunMonitor {
   recordIssue(event: RunEvent): void {
     this.issues.push(event);
     if (this.failOnSet.has(event.type) || this.failOnSet.has(semanticTypeOf(event))) {
-      this.monitorFailures.push({
-        reason: 'OTHER',
-        issueCategory: semanticTypeOf(event),
-        guardType: 'oracle',
-      });
+      this.oracleFailures.push(event);
+      this.oracleFailed = true;
       this.failed = true;
     }
   }
@@ -177,6 +182,7 @@ export class RunMonitor {
       guardType: 'monitor',
       issueCategory: category,
     });
+    this.safetyFailed = true;
     this.failed = true;
   }
 

@@ -449,13 +449,13 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
 
     await runStage(opts, 'HUMAN_WAIT', async () => {
       await opts.completion.wait(guarded!.page);
-      if (guarded!.monitor.failed) {
+      if (guarded!.monitor.safetyFailed) {
         throw safetyMonitorStageError('HUMAN_WAIT', guarded!.monitor.primaryFailure());
       }
     });
 
     await runStage(opts, 'POST_LOGIN_VERIFICATION', async () => {
-      if (guarded!.monitor.failed) {
+      if (guarded!.monitor.safetyFailed) {
         throw safetyMonitorStageError('POST_LOGIN_VERIFICATION', guarded!.monitor.primaryFailure());
       }
       let titlePresent = false;
@@ -522,7 +522,7 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
     if (stateWriteAttempted && captureError !== undefined) removeRuntimeFile(outputPath);
     try {
       summary = await recorder.finalize({
-        passed: captureError === undefined && cleanupError === undefined && !guarded?.monitor.failed,
+        passed: captureError === undefined && cleanupError === undefined && !guarded?.monitor.safetyFailed,
         notes: captureError === undefined && cleanupError === undefined ? undefined : ['direct auth capture stopped before successful completion'],
       });
     } catch {

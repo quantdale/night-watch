@@ -218,7 +218,10 @@ test('proxy liveness failure is reported as a precise HUMAN_WAIT monitor reason'
         },
         completion: {
           kind: 'synthetic-test-only',
-          wait: async () => { await new Promise((resolve) => setTimeout(resolve, 100)); },
+          wait: async (page) => {
+            await page.evaluate(async () => { await fetch('/api/synthetic-malformed-json'); });
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          },
         },
       }),
       'HUMAN_WAIT',
@@ -252,7 +255,10 @@ test('unknown and production destinations retain distinct fatal HUMAN_WAIT reaso
           completion: {
             kind: 'synthetic-test-only',
             wait: async (page) => {
-              await page.evaluate((url) => { void fetch(url).catch(() => undefined); }, item.url);
+              await page.evaluate(async (url) => {
+                await fetch('/api/synthetic-malformed-json');
+                await fetch(url).catch(() => undefined);
+              }, item.url);
               await new Promise((resolve) => setTimeout(resolve, 100));
             },
           },
@@ -269,6 +275,41 @@ test('unknown and production destinations retain distinct fatal HUMAN_WAIT reaso
       await server.close();
       fs.rmSync(temp, { recursive: true, force: true });
     }
+  }
+});
+
+test('malformed JSON during HUMAN_WAIT is recorded but auth capture continues', async () => {
+  const server = await startFixtureServer('auth');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-oracle-'));
+  const events: AuthCaptureStageEvent[] = [];
+  try {
+    const result = await runDirectAuthCapture(await baseOptions(server.origin, temp, events, {
+      completion: {
+        kind: 'synthetic-test-only',
+        wait: async (page) => {
+          await page.evaluate(async () => { await fetch('/api/synthetic-malformed-json'); });
+          // Let the observer finish its asynchronous response-body capture
+          // before the next navigation closes/replaces the response.
+          await page.waitForTimeout(350);
+          await page.evaluate(async () => { await fetch('/api/synthetic-login', { method: 'POST' }); });
+          await page.goto(`${server.origin}/synthetic-authenticated`);
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        },
+      },
+    }));
+
+    expect(stageNames(events)).toContain('HUMAN_WAIT:PASS');
+    expect(stageNames(events)).toContain('POST_LOGIN_VERIFICATION:PASS');
+    expect(stageNames(events)).toContain('STORAGE_STATE_WRITE:PASS');
+    expect(result.summary.passed).toBe(true);
+    expect(fs.existsSync(path.join(temp, 'state.json'))).toBe(true);
+    const evidence = fs.readFileSync(path.join(result.artifactDir, 'events.jsonl'), 'utf8');
+    expect(evidence).toContain('"oracleCategory":"malformed-json"');
+    expect(evidence).toContain('"oracleSeverity":"anomaly"');
+    expect(evidence).toContain('"protocolObserved":"invalid-json"');
+  } finally {
+    await server.close();
+    fs.rmSync(temp, { recursive: true, force: true });
   }
 });
 

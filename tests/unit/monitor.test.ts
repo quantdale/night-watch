@@ -68,3 +68,26 @@ test('lifecycle and monitor-internal failures retain exact safe categories', () 
     issueCategory: 'synthetic-monitor-error',
   });
 });
+
+test('oracle failure does not become a safety-monitor failure', () => {
+  const monitor = new RunMonitor(['malformed-json']);
+  monitor.recordIssue({
+    seq: 0,
+    ts: '2026-01-01T00:00:00.000Z',
+    type: 'oracle',
+    severity: 'warn',
+    message: 'malformed-json: https://api.synthetic.invalid/path',
+    data: {
+      reason: 'malformed-json',
+      oracleCategory: 'malformed-json',
+      oracleSeverity: 'anomaly',
+      protocolExpected: 'json',
+      protocolObserved: 'invalid-json',
+    },
+  });
+
+  expect(monitor.failed).toBe(true);
+  expect(monitor.oracleFailed).toBe(true);
+  expect(monitor.safetyFailed).toBe(false);
+  expect(monitor.primaryFailure()).toBeUndefined();
+});

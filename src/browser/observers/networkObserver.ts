@@ -46,6 +46,33 @@ const MAX_BODY_CHARS = 1_000_000;
  */
 const OBSERVATION_GRACE_MS = 150;
 
+/** No path-level endpoint registry exists in the capture observer. HTTP
+ * method alone is deliberately insufficient to label a request read/mutate. */
+const OBSERVED_ENDPOINT_CLASSIFICATION = 'UNKNOWN' as const;
+
+function safeProtocolLocation(url: string): { origin?: string; path?: string } {
+  try {
+    const parsed = new URL(url);
+    return { origin: parsed.origin, path: parsed.pathname || '/' };
+  } catch {
+    return {};
+  }
+}
+
+function bodyCaptureStatus(
+  bytes: Buffer,
+  headers: Record<string, string>,
+): 'complete' | 'incomplete' {
+  const declaredLength = Number.parseInt(headers['content-length'] ?? '', 10);
+  const encoding = headers['content-encoding'];
+  // Content-Length describes encoded bytes when content encoding is present;
+  // do not compare it with Playwright's decoded body in that case.
+  if (!Number.isFinite(declaredLength) || declaredLength < 0 || (encoding !== undefined && encoding !== 'identity')) {
+    return 'complete';
+  }
+  return bytes.byteLength === declaredLength ? 'complete' : 'incomplete';
+}
+
 export interface NetworkObserver {
   /** Registers the route + WebSocket policy gates. MUST be awaited before any
    *  page navigation (route/routeWebSocket registration is asynchronous). */
@@ -313,20 +340,32 @@ export function createNetworkObserver(opts: {
       if (blockedUrls.has(rawUrl)) return; // policy-aborted — no response exists
       const redactedUrl = recorder.redactUrl(rawUrl);
       const status = response.status();
-      const contentType = response.headers()['content-type'];
+      const responseHeaders = response.headers();
+      const contentType = responseHeaders['content-type'];
+      const contentLength = responseHeaders['content-length'];
+      const method = response.request().method();
       active = Math.max(0, active - 1);
       lastActivity = Date.now();
 
-      const data: Record<string, unknown> = { url: redactedUrl, status, contentType };
+      const data: Record<string, unknown> = {
+        url: redactedUrl,
+        method,
+        status,
+        contentType,
+        ...(contentLength !== undefined ? { contentLength } : {}),
+      };
 
       // Body capture: only for JSON-ish content types; capped and redacted.
       // body stays undefined when capture fails — oracles must NOT run on a
       // failed capture (an unreadable body is not a malformed body).
       let body: string | undefined;
+      let bodyCapture: 'complete' | 'incomplete' | 'unavailable' = 'unavailable';
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
         try {
           const buf = await response.body();
+          bodyCapture = bodyCaptureStatus(buf, responseHeaders);
           const text = buf.toString('utf8');
+          if (text.length > MAX_BODY_CHARS) bodyCapture = 'incomplete';
           body = recorder.redaction.redactText(
             text.length > MAX_BODY_CHARS ? text.slice(0, MAX_BODY_CHARS) : text
           );
@@ -335,6 +374,7 @@ export function createNetworkObserver(opts: {
           // unreadable body (no-body response, closed early...) — skip capture
         }
       }
+      data.bodyCapture = bodyCapture;
 
       recorder.event({
         type: 'response',
@@ -348,16 +388,31 @@ export function createNetworkObserver(opts: {
       // Body-dependent oracles run only when capture succeeded.
       const issues = [
         checkUnexpectedStatus(status, redactedUrl),
-        body !== undefined ? checkJsonBody(body, redactedUrl, contentType) : null,
-        body !== undefined ? checkNdjsonBody(body, redactedUrl, contentType) : null,
+        body !== undefined ? checkJsonBody(body, redactedUrl, contentType, status, bodyCapture === 'complete') : null,
+        body !== undefined ? checkNdjsonBody(body, redactedUrl, contentType, status, bodyCapture === 'complete') : null,
       ];
       for (const issue of issues) {
         if (issue !== null) {
+          const location = safeProtocolLocation(redactedUrl);
           const ev = recorder.event({
             type: 'oracle',
-            severity: issue.severity,
-            message: recorder.isAuthenticated ? `${issue.type}: ${redactedUrl}` : issue.message,
-            data: { url: redactedUrl, reason: issue.type },
+            severity: 'warn',
+            message: `${issue.type}: ${redactedUrl}`,
+            data: {
+              url: redactedUrl,
+              reason: issue.type,
+              oracleCategory: issue.type,
+              oracleSeverity: issue.oracleSeverity,
+              origin: location.origin,
+              path: location.path,
+              method,
+              status,
+              ...(contentType !== undefined ? { contentType } : {}),
+              ...(contentLength !== undefined ? { contentLength } : {}),
+              protocolExpected: issue.protocolExpected,
+              protocolObserved: issue.protocolObserved,
+              endpointClassification: OBSERVED_ENDPOINT_CLASSIFICATION,
+            },
           });
           monitor.recordIssue(ev);
         }

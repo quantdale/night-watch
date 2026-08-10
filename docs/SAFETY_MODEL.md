@@ -71,6 +71,23 @@ browser, a `hard-failure` event is recorded, and the run fails.
 `hard-failure` is always in `failOn` and cannot be turned off
 (`src/core/environment/types.ts`).
 
+### Protocol-oracle severity is separate from safety severity
+
+Protocol/product findings such as `malformed-json` and `malformed-ndjson` are
+recorded as sanitized oracle anomalies with response metadata only: origin,
+path, method, status, content type, expected/observed protocol, and the
+endpoint classification available to the observer. They are not containment
+violations. Ordinary passive runs may still fail their configured oracle
+verdict, but the direct authentication-state workflow does not use an oracle
+finding as a safety-monitor failure. It continues to post-login verification,
+where an unusable authenticated landing fails as `POST_LOGIN_NOT_CONFIRMED`.
+
+The following remain hard safety failures in every workflow: production or
+unknown destination attempts, containment bypasses, proxy liveness/process
+loss, browser/guard/lifecycle failures, prohibited mutations, sensitive
+artifact leakage, and equivalent policy violations. A malformed protocol
+response does not weaken any of those controls.
+
 ---
 
 ## 3. Explicit host classifications

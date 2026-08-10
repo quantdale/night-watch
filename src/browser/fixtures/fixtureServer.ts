@@ -242,6 +242,13 @@ export function startFixtureServer(variant: FixtureVariant = 'good'): Promise<Fi
             send(res, 404, 'application/json', '{"error":"not found"}');
           }
           return;
+        case '/api/synthetic-malformed-json':
+          if (variant !== 'auth') {
+            send(res, 404, 'application/json', '{"error":"not found"}');
+            return;
+          }
+          send(res, 200, 'application/json', '{"synthetic":');
+          return;
         case '/api/safety/echo':
           send(res, 200, 'application/json', '{"echo":"ok"}');
           return;

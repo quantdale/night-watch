@@ -667,3 +667,25 @@ remain UNKNOWN and fail closed until separately reviewed. The policy version
 advances so stale proxy runtime state cannot be reused.
 
 **Phase applicability.** Phase 2A and later browser phases.
+
+## D-30 — Authentication capture separates oracle anomalies from safety failures
+
+**Decision.** `RunMonitor` retains configured oracle failures for ordinary
+passive-run verdicts but exposes `safetyFailed` separately. The direct
+authentication capture runner stops HUMAN_WAIT only for safety/containment,
+browser, lifecycle, or equivalent hard failures. A protocol anomaly such as
+`malformed-json` remains evidence and proceeds to post-login verification.
+
+**Rationale.** Auth-state acquisition is not bug-free page certification. A
+product response can be malformed without representing a containment breach;
+terminating the human login flow as `SAFETY_MONITOR_FAILED` loses that
+distinction and prevents the correct post-login outcome from being reported.
+
+**Applicability guard.** JSON parsing runs only for complete bodies with an
+explicit JSON content type (or an absent content type with an unambiguous
+single-JSON shape). HTML/text, NDJSON/JSON-seq/streaming, redirects, empty
+204/205 responses, and incomplete captures are not sent through the plain JSON
+parser. No endpoint or host is broadly suppressed.
+
+**Phase applicability.** Phase 2A authentication capture and later workflows
+that reuse the monitor contract.
