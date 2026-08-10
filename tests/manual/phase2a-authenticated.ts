@@ -21,8 +21,9 @@ import {
   classifyRippleReadiness,
   confirmsRippleTarget,
   isRippleStructurallyReady,
-  RIPPLE_APP_ROOT_SELECTOR,
-  RIPPLE_SOURCE_ROOT_CONTRACT,
+  RIPPLE_BOOTSTRAP_MOUNT_SELECTOR,
+  RIPPLE_RENDERED_SHELL_SELECTOR,
+  RIPPLE_SOURCE_SHELL_CONTRACT,
   type RippleReadinessDiagnosis,
 } from '../../src/products/ripple/readiness';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
@@ -36,7 +37,7 @@ import { readProxyRuntimeState } from '../../src/proxy/runtime';
 import type { EndpointSemanticClassification } from '../../src/core/safety/endpointSemantics';
 
 interface ReadinessEvidence {
-  sourceRootContract: typeof RIPPLE_SOURCE_ROOT_CONTRACT;
+  sourceShellContract: typeof RIPPLE_SOURCE_SHELL_CONTRACT;
   finalOrigin: string | null;
   finalPath: string | null;
   targetConfirmed: boolean;
@@ -44,16 +45,18 @@ interface ReadinessEvidence {
   documentReadyState: string;
   topLevelPage: boolean;
   frameCount: number;
-  appRootPresent: boolean;
-  appRootSelector: string;
-  appRootFrameCount: number;
+  bootstrapMountSelector: string;
+  bootstrapMountTargetPresent: boolean;
+  renderedShellSelector: string;
+  renderedShellPresent: boolean;
+  renderedShellFrameCount: number;
   bodyPresent: boolean;
   bodyChildCount: number | null;
   evaluationFrame: 'top-level-main-frame' | 'unavailable';
   evaluationSucceeded: boolean;
   evaluationPhase: 'stability-poll' | 'post-stability-final';
-  appRootQueryTiming: 'same-document-evaluation';
-  appRootQueriedBeforeDocumentComplete: boolean;
+  renderedShellQueryTiming: 'same-document-evaluation';
+  renderedShellQueriedBeforeDocumentComplete: boolean;
   routeStable: boolean;
   routeStableMs: number;
   navigationInProgress: boolean;
@@ -65,7 +68,7 @@ interface ReadinessEvidence {
   mainFrameNavigationCount: number;
   firstReadinessSampleElapsedMs: number | null;
   firstReadinessDocumentReadyState: string;
-  firstReadinessAppRootPresent: boolean;
+  firstReadinessRenderedShellPresent: boolean;
   firstReadinessEvaluationSucceeded: boolean;
   lastReadinessSampleElapsedMs: number;
   iframeCount: number;
@@ -75,7 +78,8 @@ interface ReadinessEvidence {
 
 interface FrameStructure {
   documentReadyState: string;
-  appRootPresent: boolean;
+  bootstrapMountTargetPresent: boolean;
+  renderedShellPresent: boolean;
   bodyPresent: boolean;
   bodyChildCount: number;
   iframeCount: number;
@@ -88,17 +92,19 @@ interface RipplePageDiagnostics {
   documentReadyState: string;
   topLevelPage: boolean;
   frameCount: number;
-  appRootPresent: boolean;
-  appRootSelector: string;
-  appRootFrameCount: number;
+  bootstrapMountTargetPresent: boolean;
+  renderedShellPresent: boolean;
+  bootstrapMountSelector: string;
+  renderedShellSelector: string;
+  renderedShellFrameCount: number;
   bodyPresent: boolean;
   bodyChildCount: number | null;
   iframeCount: number;
   evaluationFrame: 'top-level-main-frame' | 'unavailable';
   evaluationSucceeded: boolean;
   evaluationPhase: 'stability-poll' | 'post-stability-final';
-  appRootQueryTiming: 'same-document-evaluation';
-  appRootQueriedBeforeDocumentComplete: boolean;
+  renderedShellQueryTiming: 'same-document-evaluation';
+  renderedShellQueriedBeforeDocumentComplete: boolean;
   navigationInProgress: boolean;
   pageClosed: boolean;
   fatalPageErrorCount: number;
@@ -192,12 +198,18 @@ async function evaluateFrameStructure(frame: Frame): Promise<FrameStructure | nu
     const body = doc?.body;
     return {
       documentReadyState: doc?.readyState ?? 'unavailable',
-      appRootPresent: doc?.querySelector(selector) !== null && doc?.querySelector(selector) !== undefined,
+      bootstrapMountTargetPresent: doc?.querySelector(selector.bootstrapMountSelector) !== null &&
+        doc?.querySelector(selector.bootstrapMountSelector) !== undefined,
+      renderedShellPresent: doc?.querySelector(selector.renderedShellSelector) !== null &&
+        doc?.querySelector(selector.renderedShellSelector) !== undefined,
       bodyPresent: body !== null && body !== undefined,
       bodyChildCount: body?.children?.length ?? 0,
       iframeCount: doc?.querySelectorAll('iframe').length ?? 0,
     };
-  }, RIPPLE_APP_ROOT_SELECTOR).catch(() => null);
+  }, {
+    bootstrapMountSelector: RIPPLE_BOOTSTRAP_MOUNT_SELECTOR,
+    renderedShellSelector: RIPPLE_RENDERED_SHELL_SELECTOR,
+  }).catch(() => null);
 }
 
 async function sampleRipplePage(opts: {
@@ -239,23 +251,25 @@ async function sampleRipplePage(opts: {
   const frameStructures = await Promise.all(frames.map((frame) => evaluateFrameStructure(frame)));
   const mainIndex = mainFrame === null ? -1 : frames.indexOf(mainFrame);
   const mainStructure = mainIndex >= 0 ? frameStructures[mainIndex] ?? null : null;
-  const appRootFrameCount = frameStructures.filter((structure) => structure?.appRootPresent === true).length;
+  const renderedShellFrameCount = frameStructures.filter((structure) => structure?.renderedShellPresent === true).length;
   const documentReadyState = mainStructure?.documentReadyState ?? 'unavailable';
-  const appRootPresent = mainStructure?.appRootPresent ?? false;
+  const bootstrapMountTargetPresent = mainStructure?.bootstrapMountTargetPresent ?? false;
+  const renderedShellPresent = mainStructure?.renderedShellPresent ?? false;
   const bodyPresent = mainStructure?.bodyPresent ?? false;
   const bodyChildCount = mainStructure?.bodyChildCount ?? null;
   const iframeCount = mainStructure?.iframeCount ?? 0;
   const evaluationSucceeded = mainStructure !== null;
   const structural = {
     documentReadyState,
-    appRootSelector: RIPPLE_APP_ROOT_SELECTOR,
-    appRootPresent,
+    bootstrapMountSelector: RIPPLE_BOOTSTRAP_MOUNT_SELECTOR,
+    renderedShellSelector: RIPPLE_RENDERED_SHELL_SELECTOR,
+    renderedShellPresent,
   };
   const readinessDiagnosis = classifyRippleReadiness({
     ...structural,
     targetConfirmed,
     bodyPresent,
-    appRootFrameCount,
+    renderedShellFrameCount,
     evaluationSucceeded,
     navigationInProgress: opts.navigationInProgress,
     pageClosed,
@@ -265,17 +279,18 @@ async function sampleRipplePage(opts: {
     finalPath: location?.path ?? null,
     targetConfirmed,
     ...structural,
+    bootstrapMountTargetPresent,
     topLevelPage: true,
     frameCount: frames.length,
-    appRootFrameCount,
+    renderedShellFrameCount,
     bodyPresent,
     bodyChildCount,
     iframeCount,
     evaluationFrame: evaluationSucceeded ? 'top-level-main-frame' : 'unavailable',
     evaluationSucceeded,
     evaluationPhase: opts.evaluationPhase,
-    appRootQueryTiming: 'same-document-evaluation',
-    appRootQueriedBeforeDocumentComplete: evaluationSucceeded && documentReadyState !== 'complete',
+    renderedShellQueryTiming: 'same-document-evaluation',
+    renderedShellQueriedBeforeDocumentComplete: evaluationSucceeded && documentReadyState !== 'complete',
     navigationInProgress: opts.navigationInProgress,
     pageClosed,
     fatalPageErrorCount: opts.monitorIssueCount,
@@ -401,7 +416,7 @@ async function observeOnce(
   let latestDiagnostics: RipplePageDiagnostics | null = null;
   let firstReadinessSampleElapsedMs: number | null = null;
   let firstReadinessDocumentReadyState = 'unavailable';
-  let firstReadinessAppRootPresent = false;
+  let firstReadinessRenderedShellPresent = false;
   let firstReadinessEvaluationSucceeded = false;
   let lastStabilityRoute: string | null = null;
   let lastRouteStable = false;
@@ -462,13 +477,14 @@ async function observeOnce(
         if (firstReadinessSampleElapsedMs === null) {
           firstReadinessSampleElapsedMs = sample.readinessSampleElapsedMs;
           firstReadinessDocumentReadyState = sample.documentReadyState;
-          firstReadinessAppRootPresent = sample.appRootPresent;
+          firstReadinessRenderedShellPresent = sample.renderedShellPresent;
           firstReadinessEvaluationSucceeded = sample.evaluationSucceeded;
         }
         return {
           documentReadyState: sample.documentReadyState,
-          appRootSelector: sample.appRootSelector,
-          appRootPresent: sample.appRootPresent,
+          bootstrapMountSelector: sample.bootstrapMountSelector,
+          renderedShellSelector: sample.renderedShellSelector,
+          renderedShellPresent: sample.renderedShellPresent,
           route: sample.route,
           fatal: sample.pageClosed || context.monitor.safetyFailed || sample.fatalPageErrorCount > 0,
           diagnostics: sample,
@@ -500,7 +516,7 @@ async function observeOnce(
     stabilityReached = stabilityReached && routeStable && isRippleStructurallyReady(finalDiagnostics);
     const titlePresent = await context.page.title().then((title) => title.trim().length > 0).catch(() => false);
     readiness = {
-      sourceRootContract: RIPPLE_SOURCE_ROOT_CONTRACT,
+      sourceShellContract: RIPPLE_SOURCE_SHELL_CONTRACT,
       finalOrigin: finalDiagnostics.finalOrigin,
       finalPath: finalDiagnostics.finalPath,
       targetConfirmed: finalDiagnostics.targetConfirmed,
@@ -508,16 +524,18 @@ async function observeOnce(
       documentReadyState: finalDiagnostics.documentReadyState,
       topLevelPage: finalDiagnostics.topLevelPage,
       frameCount: finalDiagnostics.frameCount,
-      appRootPresent: finalDiagnostics.appRootPresent,
-      appRootSelector: finalDiagnostics.appRootSelector,
-      appRootFrameCount: finalDiagnostics.appRootFrameCount,
+      bootstrapMountSelector: finalDiagnostics.bootstrapMountSelector,
+      bootstrapMountTargetPresent: finalDiagnostics.bootstrapMountTargetPresent,
+      renderedShellSelector: finalDiagnostics.renderedShellSelector,
+      renderedShellPresent: finalDiagnostics.renderedShellPresent,
+      renderedShellFrameCount: finalDiagnostics.renderedShellFrameCount,
       bodyPresent: finalDiagnostics.bodyPresent,
       bodyChildCount: finalDiagnostics.bodyChildCount,
       evaluationFrame: finalDiagnostics.evaluationFrame,
       evaluationSucceeded: finalDiagnostics.evaluationSucceeded,
       evaluationPhase: finalDiagnostics.evaluationPhase,
-      appRootQueryTiming: finalDiagnostics.appRootQueryTiming,
-      appRootQueriedBeforeDocumentComplete: finalDiagnostics.appRootQueriedBeforeDocumentComplete,
+      renderedShellQueryTiming: finalDiagnostics.renderedShellQueryTiming,
+      renderedShellQueriedBeforeDocumentComplete: finalDiagnostics.renderedShellQueriedBeforeDocumentComplete,
       routeStable,
       routeStableMs,
       navigationInProgress: finalDiagnostics.navigationInProgress,
@@ -529,7 +547,7 @@ async function observeOnce(
       mainFrameNavigationCount,
       firstReadinessSampleElapsedMs,
       firstReadinessDocumentReadyState,
-      firstReadinessAppRootPresent,
+      firstReadinessRenderedShellPresent,
       firstReadinessEvaluationSucceeded,
       lastReadinessSampleElapsedMs: finalDiagnostics.readinessSampleElapsedMs,
       iframeCount: finalDiagnostics.iframeCount,
@@ -538,11 +556,11 @@ async function observeOnce(
     };
     recorder.event({
       type: 'env',
-      severity: readiness.targetConfirmed && readiness.appRootPresent && readiness.stabilityReached && !navigationFailed ? 'info' : 'warn',
+      severity: readiness.targetConfirmed && readiness.renderedShellPresent && readiness.stabilityReached && !navigationFailed ? 'info' : 'warn',
       message: 'authenticated landing readiness observed',
-      data: { ...readiness, sourceRootContract: RIPPLE_SOURCE_ROOT_CONTRACT, pass },
+      data: { ...readiness, sourceShellContract: RIPPLE_SOURCE_SHELL_CONTRACT, pass },
     });
-    if (!readiness.targetConfirmed || !readiness.appRootPresent || !readiness.stabilityReached || navigationFailed) {
+    if (!readiness.targetConfirmed || !readiness.renderedShellPresent || !readiness.stabilityReached || navigationFailed) {
       const issue = recorder.event({
         type: 'issue',
         severity: 'error',
@@ -550,7 +568,9 @@ async function observeOnce(
         data: {
           reason: 'ripple-readiness-not-confirmed',
           targetConfirmed: readiness.targetConfirmed,
-          appRootPresent: readiness.appRootPresent,
+          bootstrapMountSelector: readiness.bootstrapMountSelector,
+          postMountShellSelector: readiness.renderedShellSelector,
+          postMountShellPresent: readiness.renderedShellPresent,
           stabilityReached: readiness.stabilityReached,
           navigationFailed,
           pass,
@@ -580,7 +600,7 @@ async function observeOnce(
     unresolved: manifest.unresolved.length,
   });
   const unsafeDestination = manifest.unresolved.length > 0 || manifest.blocked.some((entry) => entry.decision === 'deny');
-  const passed = !context.monitor.safetyFailed && !unsafeDestination && readiness.targetConfirmed && readiness.appRootPresent && readiness.stabilityReached && !navigationFailed;
+  const passed = !context.monitor.safetyFailed && !unsafeDestination && readiness.targetConfirmed && readiness.renderedShellPresent && readiness.stabilityReached && !navigationFailed;
   const summary = await recorder.finalize({
     passed,
     notes: [

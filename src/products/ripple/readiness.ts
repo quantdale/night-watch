@@ -5,27 +5,54 @@
 //   - vue-router base is /ripple/;
 //   - authenticated / is redirected to /dashboard;
 //   - public/index.html provides #app;
-//   - src/main.js mounts Vue with vm.$mount('#app').
+//   - src/main.js renders App and mounts Vue with vm.$mount('#app');
+//   - App delegates authenticated routes to DefaultLayout;
+//   - DefaultLayout's QLayout renders a container DIV carrying the static
+//     `layout` class.
 //
 // Keep this contract structural and bounded to the configured Ripple path
 // namespace. It must never depend on customer text, account values, or data.
 // ---------------------------------------------------------------------------
 
-export const RIPPLE_APP_ROOT_SELECTOR = '#app';
+/** The pre-bootstrap element declared by public/index.html. */
+export const RIPPLE_BOOTSTRAP_MOUNT_SELECTOR = '#app';
 
 /**
- * The source reference used for the current authenticated readiness contract.
- * This is deliberately explicit so a runtime result can be compared with the
- * source contract that was actually reviewed, instead of silently relying on
- * an older checkout.
+ * The authenticated Ripple shell rendered after Vue replaces the bootstrap
+ * mount target. DefaultLayout passes the static `layout` class to Quasar's
+ * containerized QLayout, whose root DOM element is a DIV with the stable
+ * `q-layout-container` class.
  */
-export const RIPPLE_SOURCE_ROOT_CONTRACT = {
-  status: 'CURRENT_SOURCE_STILL_USES_APP',
+export const RIPPLE_RENDERED_SHELL_SELECTOR = '.q-layout-container.layout';
+export const RIPPLE_RENDERED_SHELL_TAG_NAME = 'DIV';
+
+/**
+ * Source references used for the current authenticated readiness contract.
+ * This is deliberately explicit so a runtime result can be compared with the
+ * source/framework contract that was actually reviewed, instead of silently
+ * relying on an older checkout or treating the bootstrap placeholder as the
+ * post-mount shell.
+ */
+export const RIPPLE_SOURCE_SHELL_CONTRACT = {
+  status: 'APP_IS_PREMOUNT_TARGET_ONLY',
   repository: 'mobingilabs/ripple-ui',
   ref: 'origin/dev',
   sha: '0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2',
-  selector: RIPPLE_APP_ROOT_SELECTOR,
-  evidence: ['public/index.html:35', 'src/main.js:48,324'],
+  bootstrapMountSelector: RIPPLE_BOOTSTRAP_MOUNT_SELECTOR,
+  renderedShellSelector: RIPPLE_RENDERED_SHELL_SELECTOR,
+  renderedShellTagName: RIPPLE_RENDERED_SHELL_TAG_NAME,
+  framework: {
+    vue: '2.6.12',
+    quasar: '1.15.4',
+  },
+  evidence: [
+    'public/index.html:35',
+    'src/main.js:2,48-52,324',
+    'src/App.vue:1-5',
+    'src/layouts/DefaultLayout.vue:1-2',
+    'package-lock.json:vue@2.6.12',
+    'package-lock.json:quasar@1.15.4',
+  ],
 } as const;
 
 function normalizedNamespace(pathname: string): string {
@@ -60,33 +87,35 @@ export function confirmsRippleTarget(
 
 export interface RippleStructuralState {
   documentReadyState: string;
-  appRootSelector: string;
-  appRootPresent: boolean;
+  bootstrapMountSelector: string;
+  renderedShellSelector: string;
+  renderedShellPresent: boolean;
 }
 
 /**
  * Structural readiness intentionally excludes network silence and page text.
- * The app root is required here, so a missing root is the upstream cause of a
- * structural-stability failure rather than a second independent failure.
+ * The rendered shell is required here. The bootstrap mount target is not part
+ * of readiness because Vue 2 replaces it during a normal client-side mount.
  */
 export function isRippleStructurallyReady(state: RippleStructuralState): boolean {
   return state.documentReadyState === 'complete' &&
-    state.appRootSelector === RIPPLE_APP_ROOT_SELECTOR &&
-    state.appRootPresent;
+    state.bootstrapMountSelector === RIPPLE_BOOTSTRAP_MOUNT_SELECTOR &&
+    state.renderedShellSelector === RIPPLE_RENDERED_SHELL_SELECTOR &&
+    state.renderedShellPresent;
 }
 
 export type RippleReadinessDiagnosis =
   | 'READY'
   | 'EARLY_DOCUMENT_OR_NAVIGATION'
   | 'WRONG_DOCUMENT_OR_PAGE'
-  | 'ROOT_PRESENT_ONLY_IN_CHILD_FRAME'
+  | 'SHELL_PRESENT_ONLY_IN_CHILD_FRAME'
   | 'DOCUMENT_OR_PAGE_UNAVAILABLE'
   | 'SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED';
 
 export interface RippleReadinessDiagnosisInput extends RippleStructuralState {
   targetConfirmed: boolean;
   bodyPresent: boolean;
-  appRootFrameCount: number;
+  renderedShellFrameCount: number;
   evaluationSucceeded: boolean;
   navigationInProgress: boolean;
   pageClosed: boolean;
@@ -95,8 +124,8 @@ export interface RippleReadinessDiagnosisInput extends RippleStructuralState {
 /**
  * Classify only the sanitized structural signals. This is diagnostic metadata,
  * not a readiness override: the caller still requires all three independent
- * target/root/stability signals to pass. Persistent main-frame root absence is
- * intentionally left unresolved between a shell mount failure and
+ * target/shell/stability signals to pass. Persistent main-frame shell absence
+ * is intentionally left unresolved between a shell mount failure and
  * deployment/source divergence.
  */
 export function classifyRippleReadiness(input: RippleReadinessDiagnosisInput): RippleReadinessDiagnosis {
@@ -107,7 +136,7 @@ export function classifyRippleReadiness(input: RippleReadinessDiagnosisInput): R
     return 'EARLY_DOCUMENT_OR_NAVIGATION';
   }
   if (!input.targetConfirmed) return 'WRONG_DOCUMENT_OR_PAGE';
-  if (input.appRootPresent && isRippleStructurallyReady(input)) return 'READY';
-  if (input.appRootFrameCount > 0) return 'ROOT_PRESENT_ONLY_IN_CHILD_FRAME';
+  if (input.renderedShellPresent && isRippleStructurallyReady(input)) return 'READY';
+  if (input.renderedShellFrameCount > 0) return 'SHELL_PRESENT_ONLY_IN_CHILD_FRAME';
   return 'SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED';
 }

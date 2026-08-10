@@ -72,11 +72,11 @@ export interface RippleStabilityProgress {
  * SPA-appropriate authenticated Ripple stability.
  *
  * This deliberately does not inspect NetworkObserver.activeRequests(). Ripple
- * may continue benign background reads after its shell is ready, so generic
- * network-idle is not a reliable application readiness signal. Stability is
- * the source-backed structural state remaining ready while the route stays
- * unchanged for quietMs. Target confirmation is intentionally not an input;
- * the caller reports that signal independently.
+ * may continue benign background reads after its rendered shell is ready, so
+ * generic network-idle is not a reliable application readiness signal.
+ * Stability is the source-backed structural state remaining ready while the
+ * route stays unchanged for quietMs. Target confirmation is intentionally not
+ * an input; the caller reports that signal independently.
  */
 export async function waitForRippleStability(opts: {
   sample: () => Promise<RippleStabilitySample>;
@@ -136,7 +136,7 @@ export async function waitForRippleStability(opts: {
           data: {
             reason: 'stability-timeout',
             contract: 'ripple-structural',
-            signals: ['document-ready', 'app-root', 'route-stable'],
+            signals: ['document-ready', 'rendered-shell', 'route-stable'],
           },
         });
         const issueEvent: RunEvent = opts.recorder.event({
