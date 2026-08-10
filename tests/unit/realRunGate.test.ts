@@ -119,6 +119,19 @@ test('environment, target, and production policy ambiguity fail closed', () => {
   expect(failedNames(baseInput({ uiUrl: 'https://appdev.alphaus.cloud/?customer=FAKE_CUSTOMER' }))).toContain('target-agreement');
 });
 
+test('explicit UI overrides remain strict against the selected DEV environment', () => {
+  expect(evaluateRealRunGate(baseInput({ uiUrl: ENV.uiBaseUrl })).pass).toBe(true);
+  for (const uiUrl of [
+    'https://next.alphaus.cloud/',
+    'https://app.alphaus.cloud/ripple/',
+    'http://appdev.alphaus.cloud/ripple/',
+    'https://unknown.alphaus.cloud/ripple/',
+    '',
+  ]) {
+    expect(failedNames(baseInput({ uiUrl }))).toContain('target-agreement');
+  }
+});
+
 test('missing/invalid proxy, state, browser, evidence, action, and repository facts fail closed', () => {
   const broken = baseInput({
     storageStatePath: null,
