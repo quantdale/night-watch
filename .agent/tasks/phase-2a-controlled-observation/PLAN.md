@@ -340,11 +340,11 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the corrected unauthenticated canary passed, but the
-  human capture reached HUMAN_WAIT and exposed a real fatal safety event. The
-  monitor diagnostic repair is locally validated; M7 remains gated on human
-  review of the newly observed denied external Chrome destinations. No
-  authenticated observation may begin.
+- Status: IN_PROGRESS — the corrected unauthenticated canary passed, and the
+  human safety disposition for the three exact browser-background destinations
+  is applied and checkpointed. The browser/proxy/monitor repair is locally
+  validated; M7 remains gated on the missing external auth state and a passing
+  pre-real-run gate. No authenticated observation may begin in this session.
 
 #### M7 handoff preparation
 
@@ -418,9 +418,32 @@ state write. Synthetic execution covers successful completion and injected
 navigation, target-mismatch, wait, write, validation, and post-login failures;
 all safety layers remain unchanged.
 
-Status remains `IN_PROGRESS`: no real auth state was produced. The newly
-observed external destinations require human safety review before any retry;
-do not begin authenticated observation.
+Status remains `IN_PROGRESS`: no real auth state was produced. The exact
+browser-background disposition is now applied; do not begin authenticated
+observation or Phase 2B until the human separately completes the guarded auth
+capture and the fresh pre-real-run gate passes.
+
+#### M7 browser-background disposition checkpoint — 2026-08-10 — `efe96bd`
+
+Human safety review is complete. Nightwatch now applies exact local blocks,
+with zero proxy upstream connections and browser-guard blocking, to:
+
+- `android.clients.google.com` → `BROWSER_BACKGROUND_GOOGLE`;
+- `update.googleapis.com` → `BROWSER_BACKGROUND_UPDATE`;
+- `redirector.gvt1.com` → `BROWSER_BACKGROUND_DOWNLOAD`.
+
+The three classes are distinct from `TELEMETRY` and
+`OPTIONAL_THIRD_PARTY_SUPPORT`. Successful containment is recorded as
+sanitized expected containment and is non-fatal during HUMAN_WAIT. A new,
+sibling, related, or production hostname remains fail-closed; related hosts
+remain `UNKNOWN_DESTINATION` and fatal. No network allowlist entry and zero
+wildcards were introduced.
+
+Focused policy/monitor/direct-runner coverage passed **47/47**; synthetic
+direct-runner coverage passed **1/1**; `npx tsc --noEmit` passed; and the full
+Playwright suite passed **144/144**. No real auth or authenticated observation
+was run by Codex. M7 remains `IN_PROGRESS` pending the human-provided
+external state.
 
 #### M7 safety-monitor repair checkpoint — 2026-08-10 — `342584c`
 
@@ -555,6 +578,15 @@ outputs and sanitized run IDs in STATE/REPORT, never secrets or customer data.
   Chromium background/control-plane attempts must remain locally denied and
   may be recorded as non-fatal sanitized telemetry, while all other unknown
   destinations remain fail-closed.
+- 2026-08-10 — Apply the human-reviewed disposition as three exact local-block
+  browser-background classes: `android.clients.google.com` as
+  `BROWSER_BACKGROUND_GOOGLE`, `update.googleapis.com` as
+  `BROWSER_BACKGROUND_UPDATE`, and `redirector.gvt1.com` as
+  `BROWSER_BACKGROUND_DOWNLOAD`. Keep all three network-denied with zero
+  upstream connections, separate from telemetry and optional support, and
+  non-fatal only after successful containment during HUMAN_WAIT. Do not add
+  wildcards or infer approval for sibling hosts; all other new destinations
+  remain UNKNOWN and fatal.
 
 ## Discoveries
 

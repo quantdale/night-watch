@@ -6,13 +6,14 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 342584c2be349924399af281bf18cfb9029dc3ba
-Last validated implementation SHA: 342584c2be349924399af281bf18cfb9029dc3ba
+Current SHA: efe96bd37d33d6042038bb996a9f8cdbe6963992
+Last validated implementation SHA: efe96bd37d33d6042038bb996a9f8cdbe6963992
 Branch: main
-Last checkpoint: 2026-08-10 — recovered the real HUMAN_WAIT safety event and
-added first-cause sanitized monitor diagnostics plus exact telemetry console
-containment at implementation SHA `342584c2be349924399af281bf18cfb9029dc3ba`.
-The real external storage state remains missing.
+Last checkpoint: 2026-08-10 — applied the human safety disposition for three
+exact Chromium browser-background destinations and implemented separate exact
+local-block classifications at implementation SHA
+`efe96bd37d33d6042038bb996a9f8cdbe6963992`. The real external storage state
+remains missing.
 
 ## Objective
 
@@ -35,12 +36,26 @@ human then executed the repaired parent CLI: preflight passed for the exact
 canonical target, headed Chrome opened, TARGET_NAVIGATION and
 TARGET_VERIFICATION passed for `https://appdev.alphaus.cloud/ripple/`, and the
 command ended at HUMAN_WAIT with the old generic `SAFETY_MONITOR_FAILED`.
-No successful state was established. Human review is required before retry.
+No successful state was established. Human review is complete; the exact
+browser-background disposition is applied below before any retry.
 Sanitized local evidence recovered five outer-proxy `deny` events classified
 as `external` for the newly observed hosts `android.clients.google.com`,
 `update.googleapis.com`, and `redirector.gvt1.com`. The exact monitor
-subreason is `UNKNOWN_DESTINATION`; these hosts remain fail-closed and are
-not allowlisted.
+subreason was `UNKNOWN_DESTINATION`. Human review is now complete and the
+following disposition is checkpointed:
+
+- `android.clients.google.com` → exact local block,
+  `BROWSER_BACKGROUND_GOOGLE`, non-fatal when successfully contained;
+- `update.googleapis.com` → exact local block,
+  `BROWSER_BACKGROUND_UPDATE`, non-fatal when successfully contained;
+- `redirector.gvt1.com` → exact local block,
+  `BROWSER_BACKGROUND_DOWNLOAD`, non-fatal when successfully contained.
+
+None is network-allowlisted or permitted to reach upstream. Zero wildcards
+were added. HUMAN_WAIT may continue when one of these exact requests is
+successfully blocked and sanitized expected-containment evidence is recorded.
+Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
+M7 remains IN_PROGRESS because the external auth state is still missing.
 
 ## Completed Milestones
 
@@ -181,12 +196,8 @@ The corrected unauthenticated canary already passed:
 `nightwatch-20260809T110122Z-4d4d`, against
 `https://appdev.alphaus.cloud/ripple/`. Do not rerun it in this handoff.
 
-Exact next action for the human: review the exact denied external destinations
-`android.clients.google.com`, `update.googleapis.com`, and
-`redirector.gvt1.com`. They are not currently approved non-fatal telemetry
-hosts, so do not retry capture or make an allowlist change from this session.
-If a separate human safety decision approves a narrow non-network disposition
-and that disposition is checkpointed, the guarded retry command is:
+The human safety review is complete and checkpointed. The exact guarded retry
+command for a human, from an interactive terminal, is:
 
 ```bash
 mkdir -p "$HOME/.nightwatch/auth"
@@ -201,8 +212,7 @@ The real external auth state is still **MISSING** at
 `$HOME/.nightwatch/auth/ripple-dev-state.json`; this session performed only an
 existence check and did not inspect, print, copy, or persist its contents.
 
-After the safety review and any separately approved checkpoint, human
-interaction remains confined to the repaired parent CLI:
+Human interaction remains confined to the repaired parent CLI:
 
 ```bash
 mkdir -p "$HOME/.nightwatch/auth"
@@ -302,6 +312,17 @@ test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth st
 | `src/state/run.ts`, `src/auth/stages.ts`, `src/auth/directRunner.ts`, `bin/auth-capture.mjs` | First-cause sanitized HUMAN_WAIT monitor taxonomy and CLI diagnostics | Modified |
 | `src/browser/context.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, `src/browser/observers/containmentEffect.ts` | Proxy/lifecycle monitor evidence and exact expected telemetry console attribution | Modified |
 | `tests/unit/monitor.test.ts`, `tests/unit/authCaptureStages.test.ts`, `tests/manual/auth-capture.synthetic.ts` | Local taxonomy, liveness, lifecycle, blocked-traffic, and multi-poll HUMAN_WAIT coverage | Added/modified |
+
+### Browser-background disposition implementation — `efe96bd37d33d6042038bb996a9f8cdbe6963992`
+
+The canonical environment policy now classifies only the three reviewed exact
+hosts as `BROWSER_BACKGROUND_GOOGLE`, `BROWSER_BACKGROUND_UPDATE`, and
+`BROWSER_BACKGROUND_DOWNLOAD`. Policy, browser Fetch/console/network
+containment, proxy summaries/events, sanitized destination manifests, and
+monitor liveness all preserve the separate semantic classes. Focused tests
+cover exact blocking, zero upstream connections, browser blocking, non-fatal
+HUMAN_WAIT continuation, sanitized evidence, and fatal unknown/related-host
+canaries. No wildcard or allowlist entry was added.
 
 ## Validation Ledger
 
@@ -829,6 +850,44 @@ Result: PASS; implementation checkpoint
 `342584c2be349924399af281bf18cfb9029dc3ba`.
 When: 2026-08-10
 
+Command: focused Phase 2A policy/monitor/direct-runner tests
+`npx playwright test tests/unit/safety.test.ts tests/unit/proxy.test.ts
+tests/unit/containmentEffect.test.ts tests/unit/destinationManifest.test.ts
+tests/unit/monitor.test.ts tests/unit/authCaptureStages.test.ts --project=nightwatch`
+Result: PASS; **47 passed, 0 failed**. Coverage proves each exact reviewed
+host has its separate semantic classification, `BLOCK` policy, no upstream
+proxy connection, browser containment, non-fatal expected containment during
+HUMAN_WAIT, sanitized evidence, and no UNKNOWN classification. Related and
+structurally similar unapproved hosts remain UNKNOWN and fatal; existing
+telemetry, Pylon, unknown, and production behavior remains covered.
+When: 2026-08-10
+
+Command: `npx playwright test --config=playwright.capture.synthetic.config.ts`
+Result: PASS; **1 passed, 0 failed**. The direct runner exercised local
+HUMAN_WAIT continuation with the exact browser-background blocks and no
+external upstream traffic.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: PASS; implementation SHA
+`efe96bd37d33d6042038bb996a9f8cdbe6963992`.
+When: 2026-08-10
+
+Command: `npx playwright test`
+Result: PASS; **144 passed, 0 failed**. The full suite used local/synthetic
+traffic only; no authenticated observation was run. Exact Google background
+requests in synthetic coverage were contained locally and did not establish
+upstream connections.
+When: 2026-08-10
+
+Command: implementation review and `git diff --check`
+Result: PASS; no Alphaus repository was modified, no real Alphaus traffic,
+Google upstream contact, production traffic, database query, mutation,
+credential use, or auth state generation occurred in this implementation
+session. The implementation commit is
+`efe96bd37d33d6042038bb996a9f8cdbe6963992`.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -960,6 +1019,20 @@ human needs a safe subreason and host/classification to distinguish a proxy,
 policy, lifecycle, or monitor failure. Query strings, fragments, bodies,
 headers, credentials, and storage values remain excluded.
 
+Decision: Apply the human-reviewed disposition as three exact local-block
+browser-background classes, separate from `TELEMETRY` and
+`OPTIONAL_THIRD_PARTY_SUPPORT`.
+Reason: the approved hosts are known expected browser-background traffic that
+Nightwatch intentionally blocks, not hosts safe to contact and not generic
+telemetry. Each class therefore returns `BLOCK`, establishes zero upstream
+connections, is blocked by the browser guard, records sanitized
+`EXPECTED_CONTAINMENT_EFFECT`, and is non-fatal only after successful
+containment during HUMAN_WAIT.
+Evidence/constraint: the exact approved set is
+`android.clients.google.com`, `update.googleapis.com`, and
+`redirector.gvt1.com`; no wildcard or related-host approval is permitted.
+Any new, sibling, or production hostname remains fail-closed and fatal.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -1014,9 +1087,12 @@ headers, credentials, and storage values remain excluded.
   confirmed a Nightwatch defect in console attribution: an exact configured
   telemetry block could raise `console-error`. Exact-host telemetry
   attribution now records expected containment without setting `monitor.failed`.
-- The active implementation checkpoint for this repair is
-  `342584c2be349924399af281bf18cfb9029dc3ba`; M7 remains IN_PROGRESS and the
+- The browser-background disposition implementation is checkpointed at
+  `efe96bd37d33d6042038bb996a9f8cdbe6963992`; M7 remains IN_PROGRESS and the
   real external storage state remains missing.
+- The three exact human-reviewed browser-background hosts are now separate
+  semantic classes and remain network-denied. Related hosts remain UNKNOWN;
+  no wildcard was introduced.
 
 ## Blockers
 
@@ -1036,11 +1112,14 @@ current capture architecture blocker. Phase 2A remains `IN_PROGRESS`; M7
 cannot advance until the human completes the external capture and the same
 gate passes.
 
-The repaired implementation has no remaining code blocker. The current
-blocker is human safety review of the newly observed external Chrome
-destinations. Capture must not be retried until their disposition is explicit;
-the external auth state remains missing and no authenticated observation may
-start.
+The repaired implementation has no remaining code blocker. The human safety
+review of the newly observed external Chrome destinations is cleared by the
+exact disposition checkpoint at implementation SHA
+`efe96bd37d33d6042038bb996a9f8cdbe6963992`. The three reviewed hosts remain
+network-denied local blocks with separate browser-background classifications;
+no wildcard or related-host approval was added. The remaining blocker is the
+missing external auth state and a passing pre-real-run gate; no authenticated
+observation may start.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
@@ -1055,12 +1134,15 @@ destinations `clients2.google.com` and `safebrowsingohttpgateway.googleapis.com`
   requires separate review.
 
 The Pylon classification blocker is cleared by the human disposition and the
-narrow source check. The corrected canary passed as run
+narrow source check. The browser-background classification blocker is also
+cleared by the exact-host disposition above. The corrected canary passed as run
 `nightwatch-20260809T110122Z-4d4d`, with zero unresolved destinations,
 production attempts, and proxy violations. The current blocker is human
 action: M7 requires a valid external Playwright storage-state path without
 exposing its contents and a passing pre-real-run gate. If any hostname other
-than exact `widget.usepylon.com` appears unresolved, stop and checkpoint.
+than the exact reviewed browser-background hosts or exact `widget.usepylon.com`
+appears unresolved, stop and checkpoint; related browser-background hosts are
+not covered by this disposition.
 
 ## Safety Events
 
@@ -1098,11 +1180,19 @@ credential, MFA, mutation, or external auth-state activity occurred.
 
 M7 real capture safety event: the outer proxy correctly denied five attempts to
 new external destinations while HUMAN_WAIT was active. The browser/proxy
-containment prevented upstream connection; the exact hosts remain unresolved
-and fatal under the current policy. Expected configured telemetry and exact
-`widget.usepylon.com` support blocks remained non-fatal. This is a legitimate
-unknown/fatal safety event requiring human review, not permission to broaden
-third-party suppression.
+containment prevented upstream connection. Human review then approved exact
+local blocks only: `android.clients.google.com` as
+`BROWSER_BACKGROUND_GOOGLE`, `update.googleapis.com` as
+`BROWSER_BACKGROUND_UPDATE`, and `redirector.gvt1.com` as
+`BROWSER_BACKGROUND_DOWNLOAD`. These remain network-denied and are non-fatal
+only when successfully contained with sanitized expected-containment
+evidence. Related or new hosts remain UNKNOWN, blocked, and fatal; no wildcard
+or allowlist entry was added.
+
+M7 implementation safety event: none. The policy, proxy, browser guard, and
+monitor regression coverage used local/synthetic requests only. No Google
+upstream, Alphaus, production, database, credential, mutation, or auth-state
+activity occurred in this Codex session.
 
 ## Deferred / Follow-Up
 
@@ -1114,17 +1204,20 @@ third-party suppression.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Do not rerun the already-passed canary. Review the three newly denied
-   external Chrome destinations first; do not retry until their disposition is
-   explicit and checkpointed.
-4. If the review permits a retry, run the exact guarded parent-CLI capture
-   command in `## Exact Next Action` from an interactive terminal.
+3. Do not rerun the already-passed canary. The exact disposition for the three
+   reviewed hosts is checkpointed: local block, separate browser-background
+   classification, and non-fatal only after successful containment. No
+   network allowlist or wildcard exists.
+4. A human may run the exact guarded parent-CLI capture command in `## Exact
+   Next Action` from an interactive terminal. Codex must not execute it.
 5. In a fresh session after a successful capture, run the exact
    `observe:gate` command shown there without exposing state contents; it must
    PASS before navigation.
 6. Run the authenticated observation only after that gate passes; use a direct
    landing navigation, then exactly one fresh-context replay.
 7. Update STATE with exact sanitized runtime results and checkpoint before M8.
+   Do not begin Phase 2B; M7 remains IN_PROGRESS until external state and the
+   authenticated observation requirements are actually completed.
 
 ## Completion Snapshot
 
