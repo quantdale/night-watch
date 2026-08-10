@@ -344,9 +344,9 @@ handoff; do not execute the authenticated observation in this session.
   pre-real-run checks and completed its first guarded landing observation, but
   stopped before replay because sanitized readiness reported the approved DEV
   origin with `/ripple/dashboard`, while the observer only confirmed the
-  configured `/ripple/` path. The same pass also recorded a stability timeout
-  and `appRootPresent=false`; no safety failure, unresolved destination,
-  production attempt, proxy violation, mutation, or DB query occurred.
+  configured `/ripple/` path. The readiness contract repair is now locally
+  implemented and checkpointed; no real retry, replay, production attempt,
+  mutation, or DB query is authorized in this repair session.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -572,6 +572,57 @@ endpoint was deliberately invoked or replayed. This pass is unsuccessful at
 the authenticated shell/readiness stage and is not a product-bug verdict.
 No replay or third observation is authorized from this checkpoint.
 
+#### M7 authenticated readiness contract repair checkpoint — 2026-08-10 — `ed337d7`
+
+Current Ripple source evidence was re-established narrowly at
+`REPOSITORIES/mobingilabs/ripple-ui`, branch `dev`, exact HEAD
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9`. This is the same source SHA used
+by the existing Nightwatch source snapshot, so there is no source-HEAD drift
+relative to the prior evidence. The Ripple worktree has unrelated local
+deletions and an untracked `AGENTS.md`, and the branch is 17 commits behind
+its upstream; no pull, checkout, reset, stash, clean, or modification was
+performed. The relevant routing/bootstrap/root files are clean.
+
+The source proves `vue-router` uses `/ripple/` as its base, the dashboard route
+is `/dashboard` with alias `/`, and the authenticated router guard redirects
+`/` or `/login` with a token to `/dashboard`. Therefore the browser's final
+`/ripple/dashboard` is the canonical authenticated landing route, and the
+previous exact-path check was incorrect. Target confirmation now requires the
+configured origin exactly and the source-proven `/ripple/` path namespace; it
+does not accept the host root, production/unknown origins, or unrelated paths.
+
+The source proves the shell mount is `#app`: `public/index.html` declares the
+element and `src/main.js` calls `vm.$mount('#app')`. Nightwatch's selector was
+therefore source-correct and was not replaced with customer text or a page
+label. The real observation's `appRootPresent=false` means the sanitized
+runtime query found no `#app` in the sampled final document. The source does
+not prove whether that was deployment variation or timing, and no DOM/body
+inspection was performed; it remains a readiness review fact, not a Ripple
+bug classification.
+
+The old `stabilityReached=false` was produced independently by generic
+`waitForStability`: it required zero active requests and 750 ms of network
+silence for up to 15 seconds. It did not read target or app-root signals, so
+target mismatch did not mechanically cause the old stability result. The
+authenticated observer now uses source-backed structural stability: document
+ready state `complete`, `#app` present, and the browser route unchanged for
+750 ms, with fatal safety/page failures stopping it. It deliberately ignores
+benign recurring reads and locally blocked telemetry/Pylon/browser-background
+traffic. In the repaired contract, missing `#app` is an upstream prerequisite
+failure for structural stability; target confirmation remains independent.
+
+Implementation `ed337d75966f8af20130df32e084459da74dff50` changed only the
+authenticated readiness path and local synthetic coverage. Focused readiness,
+runner-boundary, and gate tests passed **21/21** when run together; the new
+readiness matrix is **12/12**. TypeScript passed, the ordinary local suite
+passed **171/171**, and no opt-in authenticated test was discovered. The
+known `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>` HTTP 200
+`application/json` invalid-JSON anomaly remains metadata-only oracle evidence
+and is not used as a readiness or safety failure.
+
+M7 remains IN_PROGRESS. Do not run the real retry or replay from this repair
+session.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
@@ -691,6 +742,16 @@ outputs and sanitized run IDs in STATE/REPORT, never secrets or customer data.
   verdicts, but require a direct safety/containment violation to stop HUMAN_WAIT;
   continue to post-login verification so auth failure is reported at the
   correct stage.
+- 2026-08-10 — Treat `/ripple/` as the source-proven authenticated Ripple
+  route namespace for final target confirmation, with exact configured-origin
+  matching. The current source proves `/ripple/dashboard` is the canonical
+  authenticated landing; accepting only the exact configured entry path was a
+  Nightwatch mismatch.
+- 2026-08-10 — Use structural Ripple stability for the authenticated observer:
+  document complete, source-backed `#app` present, and unchanged route for
+  750 ms. Do not require generic network-idle because benign recurring reads
+  can continue after a SPA shell is ready; keep the generic wait for existing
+  non-M7 workflows.
 
 ## Discoveries
 

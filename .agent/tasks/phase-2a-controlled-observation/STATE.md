@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 868b639fb6a5374bea6af99e70e570f398e3e448
-Last validated implementation SHA: 868b639fb6a5374bea6af99e70e570f398e3e448
+Current SHA: ed337d75966f8af20130df32e084459da74dff50
+Last validated implementation SHA: ed337d75966f8af20130df32e084459da74dff50
 Branch: main
-Last checkpoint: 2026-08-10 — implementation `868b639fb6a5374bea6af99e70e570f398e3e448` repairs the `75d877c` `observe:authenticated` pre-real-run target-plumbing failure. The absent UI override now resolves through the canonical selected DEV environment target; explicit non-empty overrides remain strict and explicit blank values are rejected. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
+Last checkpoint: 2026-08-10 — implementation `ed337d75966f8af20130df32e084459da74dff50` repairs the authenticated Ripple target and SPA stability contracts after source comparison. The source-backed `#app` selector remains unchanged because current Ripple source supports it; the real runtime absence remains unresolved without DOM inspection. The external DEV storage-state path remains outside Nightwatch and its contents were not inspected.
 
 ## Objective
 
@@ -21,19 +21,17 @@ evidence, and a single fresh-context replay.
 
 Milestone ID: M7 — First controlled authenticated landing observation
 Status: IN_PROGRESS
-What is being attempted: M6 passed against the exact DEV Ripple target
-`https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 with
-final path `/ripple/`; three expected destination groups and eight blocked
-groups were recorded, with zero unresolved destinations. The exact
-source-supported Pylon host remains locally blocked as distinct,
-non-fatal `OPTIONAL_THIRD_PARTY_SUPPORT`; it is not allowlisted and did not
-reach the proxy or upstream. No storage state was loaded by this session. The
-human then executed the repaired parent CLI: preflight passed for the exact
-canonical target, headed Chrome opened, TARGET_NAVIGATION and
-TARGET_VERIFICATION passed for `https://appdev.alphaus.cloud/ripple/`, and the
-command ended at HUMAN_WAIT with the old generic `SAFETY_MONITOR_FAILED`.
-No successful state was established. Human review is complete; the exact
-browser-background disposition is applied below before any retry.
+What is now established: M6 passed against the exact DEV Ripple target
+`https://appdev.alphaus.cloud/ripple/`. The first real authenticated command
+passed all 13 pre-real-run checks and reached the approved DEV origin with
+final path `/ripple/dashboard`; it stopped before replay because readiness was
+unsuccessful. This repair session established the current source-backed
+target and shell contracts and locally repaired Nightwatch accordingly. The
+fresh real retry is intentionally deferred to a new session.
+
+Historical M7 safety review remains recorded below: the exact source-supported
+Pylon host and reviewed browser-background hosts remain locally blocked,
+non-fatal only under their exact classifications, and no new host is approved.
 Sanitized local evidence recovered five outer-proxy `deny` events classified
 as `external` for the newly observed hosts `android.clients.google.com`,
 `update.googleapis.com`, and `redirector.gvt1.com`. The exact monitor
@@ -53,10 +51,86 @@ successfully blocked and sanitized expected-containment evidence is recorded.
 Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
 The latest human run then failed at HUMAN_WAIT with
 `SAFETY_MONITOR_FAILED / OTHER / oracle / malformed-json`; its exact sanitized
-source and repair are checkpointed below. The user has now confirmed a later
-successful guarded DEV auth capture. The direct runner's immediate pre-real-run
-gate failed closed on target agreement, so no authenticated landing observation
-or replay was authorized. M7 remains IN_PROGRESS with USER_ACTION_REQUIRED.
+source and repair are checkpointed below. The user has confirmed a later
+successful guarded DEV auth capture. The external state remains outside
+Nightwatch and uninspected. M7 remains IN_PROGRESS; no real retry or replay is
+authorized in this repair session.
+
+## M7 Readiness Contract Review and Repair
+
+### Current Ripple source evidence
+
+Repository: `REPOSITORIES/mobingilabs/ripple-ui`.
+
+- Branch: `dev`.
+- Exact HEAD: `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`.
+- Status: `dev...origin/dev [behind 17]`, with unrelated local deletions under
+  `openspec/changes/add-reserveshield-export-report/` and an untracked
+  `AGENTS.md`; no relevant routing/bootstrap/root file is dirty.
+- Freshness: exact same HEAD as the existing Nightwatch source evidence, so
+  source behavior is tied to this SHA and is not described as newer than the
+  prior snapshot. No pull/reset/checkout/stash/clean/modification occurred.
+
+Source contract:
+
+1. `src/router.js` sets the router base to `/ripple/`.
+2. The dashboard route is `/dashboard` with alias `/` and `requiresAuth`.
+3. The `beforeEach` guard redirects authenticated `/` or `/login` to
+   `/dashboard`; the authenticated browser URL is therefore
+   `/ripple/dashboard`.
+4. `public/index.html` declares `<div id="app"></div>` and `src/main.js`
+   mounts Vue with `vm.$mount('#app')`.
+5. The shell owns the mount and layout; dashboard content is rendered below
+   the shell and may select a dashboard MFE via feature flags. No customer
+   text or financial value is needed for readiness.
+
+### Exact causal analysis
+
+- `targetConfirmed=false`: pre-repair code compared the final pathname for
+  exact equality with configured `/ripple/`. The actual sanitized final path
+  was `/ripple/dashboard`, so this predicate failed solely because the
+  authenticated landing route is a source-proven sub-route. The repair keeps
+  exact origin/host policy and accepts only `/ripple/` or a path beneath the
+  configured Ripple namespace.
+- `appRootPresent=false`: pre-repair and repaired code query only the
+  source-backed `#app` mount in the main page. The sanitized runtime result
+  was false because that query found no matching element at the sampled final
+  document. Current source proves the selector, but not the runtime reason
+  for its absence; deployment variation versus timing is unresolved without
+  prohibited DOM/body inspection. No selector weakening was made.
+- `stabilityReached=false`: pre-repair `waitForStability` required zero active
+  network requests plus 750 ms of silence for 15 seconds. It did not depend on
+  `targetConfirmed` or `appRootPresent`, so the three old booleans were not
+  three independent product failures: target mismatch was independent, while
+  the old stability timeout was a generic network-idle result. The repaired
+  authenticated contract uses `document.readyState === complete`, source
+  `#app` presence, and unchanged route for 750 ms; target confirmation is
+  still independent, and missing `#app` is an explicit upstream prerequisite
+  for structural stability.
+
+The malformed-JSON response anomaly remains `GENUINE_PROTOCOL_ANOMALY` with
+subcause unresolved. It is not a readiness blocker, and no response body was
+inspected or persisted.
+
+### Repair checkpoint
+
+Implementation SHA: `ed337d75966f8af20130df32e084459da74dff50`.
+
+Files changed:
+
+- `src/products/ripple/readiness.ts` — source-backed target namespace,
+  origin, `#app`, and structural readiness helpers.
+- `src/browser/observers/stability.ts` — structural Ripple stability wait;
+  generic network-idle wait remains available to other existing workflows.
+- `tests/manual/phase2a-authenticated.ts` — bounded final target semantics,
+  source-backed shell sampling, structural stability, and readiness verdict.
+- `tests/unit/rippleReadiness.test.ts` — synthetic contract/readiness matrix
+  and causal tests.
+
+The repair preserves HTTPS, exact DEV host policy, production denial,
+unknown-host denial, auth-host handling, local blocking, metadata-first
+privacy, and the no-body/no-DOM persistence boundary. It does not approve
+arbitrary paths on `appdev.alphaus.cloud`.
 
 ## Current Oracle Failure Checkpoint
 
@@ -432,6 +506,10 @@ test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth st
 | `tests/unit/monitor.test.ts`, `tests/unit/authCaptureStages.test.ts`, `tests/manual/auth-capture.synthetic.ts` | Local taxonomy, liveness, lifecycle, blocked-traffic, and multi-poll HUMAN_WAIT coverage | Added/modified |
 | `bin/observe-authenticated.mjs`, `bin/observe-authenticated-config.mjs` | Preserve absent UI-override semantics between the authenticated CLI and gate; reject explicit blank overrides | Added/modified |
 | `tests/unit/observeAuthenticatedRunner.test.ts`, `tests/unit/realRunGate.test.ts` | Synthetic runner-boundary and strict target-agreement regression coverage | Added/modified |
+| `src/products/ripple/readiness.ts` | Source-backed Ripple route namespace, origin, `#app`, and structural readiness contract | Added |
+| `src/browser/observers/stability.ts` | Structural Ripple stability wait; generic network-idle wait retained for other workflows | Modified |
+| `tests/manual/phase2a-authenticated.ts` | Apply bounded route confirmation, shell sampling, and structural stability to M7 observer | Modified |
+| `tests/unit/rippleReadiness.test.ts` | Synthetic readiness matrix and causal-independence regression coverage | Added |
 
 ### Browser-background disposition implementation — `efe96bd37d33d6042038bb996a9f8cdbe6963992`
 
@@ -445,6 +523,34 @@ HUMAN_WAIT continuation, sanitized evidence, and fatal unknown/related-host
 canaries. No wildcard or allowlist entry was added.
 
 ## Validation Ledger
+
+Command: `npx playwright test tests/unit/rippleReadiness.test.ts tests/unit/observeAuthenticatedRunner.test.ts tests/unit/realRunGate.test.ts --project=nightwatch`
+Result: **PASS; 21 passed, 0 failed**. The synthetic matrix covers the
+source-proven `/ripple/` entry, `/ripple/dashboard` landing, another Ripple
+sub-route, unrelated same-host paths, auth-host redirects, production and
+unknown policy denial, source-backed `#app` structure, route changes,
+disappearing root, fatal page/browser state, blocked telemetry/Pylon/background
+traffic, malformed-JSON separation, and target/app-root causal independence.
+No browser target or external state was used.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit`
+Result: **PASS** at implementation SHA
+`ed337d75966f8af20130df32e084459da74dff50`.
+When: 2026-08-10
+
+Command: `npx playwright test`
+Result: **PASS; 171 passed, 0 failed**. The ordinary suite used only local
+synthetic/loopback traffic and did not discover the opt-in authenticated
+observer. No real Alphaus request occurred during the repair.
+When: 2026-08-10
+
+Command: `npm run agent:check` and `git diff --check`
+Result: **PASS**. Before the implementation checkpoint, agent-check reported
+the expected stale-baseline warning; after implementation and state updates it
+must report only the approved documentation checkpoint advance. Whitespace
+validation passed.
+When: 2026-08-10
 
 Command: `npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
 Result: **USER_ACTION_REQUIRED / STOP AFTER FIRST PASS**. The local
@@ -1328,6 +1434,18 @@ Any new, sibling, or production hostname remains fail-closed and fatal.
   failures fatal. The first authenticated observation later recorded the same
   anomaly without making it a safety failure; the external auth state remains
   outside Nightwatch.
+- Current Ripple source evidence at branch `dev`, SHA
+  `d80b161b684d9153c7e5acaa65ae1752d93d8ba9` is unchanged from the prior
+  Nightwatch source snapshot. Its relevant route/bootstrap/root files are
+  clean; unrelated worktree changes remain untouched.
+- Source comparison proves `/ripple/dashboard` is the authenticated landing
+  route, while `#app` remains the source-backed shell mount. The readiness
+  repair therefore changed target semantics and SPA stability, not the app-root
+  selector.
+- Structural stability no longer waits for zero network activity in the M7
+  authenticated observer. It requires complete document readiness, `#app`,
+  and a route that remains unchanged for 750 ms; target confirmation is
+  independent, while missing `#app` is an upstream stability prerequisite.
 
 ## Blockers
 
@@ -1354,6 +1472,13 @@ network-denied local blocks with separate browser-background classifications;
 no wildcard or related-host approval was added. The current blocker is the
 unsuccessful authenticated readiness result recorded above; no replay or
 Phase 2B journey may start.
+
+The readiness contract repair is now implemented and locally validated at
+`ed337d75966f8af20130df32e084459da74dff50`. The remaining M7 boundary is
+intentional: this repair session must not perform the fresh real retry or
+replay. A fresh interactive session must use the exact retry command in the
+Resume Recipe, inspect only sanitized results, and stop again if any new
+destination or source-contract mismatch appears.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
@@ -1436,6 +1561,12 @@ monitor regression coverage used local/synthetic requests only. No Google
 upstream, Alphaus, production, database, credential, mutation, or auth-state
 activity occurred in this Codex session.
 
+M7 readiness-repair safety event: NONE. The repair used only current local
+source inspection, Nightwatch source edits, synthetic values, and loopback
+test traffic. No real Alphaus request, authenticated observation, replay,
+production traffic, database query, mutation, or external state read/write
+occurred in this repair session.
+
 M7 first authenticated observation result: no safety event occurred. The gate
 passed all 13 checks; observed destinations were expected or explicitly
 blocked; the proxy recorded zero denied/unknown destinations and zero
@@ -1466,12 +1597,20 @@ malformed-JSON protocol anomaly recurred twice as metadata-only evidence.
    begin a third observation until the readiness-contract result is resolved
    and checkpointed.
 6. This repair is checkpointed at implementation SHA
-   `868b639fb6a5374bea6af99e70e570f398e3e448`; do not expose storage-state
+   `ed337d75966f8af20130df32e084459da74dff50`; do not expose storage-state
    contents or rerun the canary.
-7. Update STATE with the bounded readiness resolution and exact sanitized
-   retry result before M8. Do not begin Phase 2B; M7 remains IN_PROGRESS until
-   the authenticated observation and replay requirements are actually
-   completed.
+7. The exact fresh-session retry command, and only that command, is:
+
+   ```bash
+   npm run observe:authenticated -- \
+     --env=dev \
+     --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+   ```
+
+   Do not run it in this repair session. Replay remains prohibited until a
+   fresh first observation is successful. Do not begin Phase 2B; M7 remains
+   IN_PROGRESS until the authenticated observation and replay requirements
+   are actually completed.
 
 ## Completion Snapshot
 
