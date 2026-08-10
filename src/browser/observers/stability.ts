@@ -59,6 +59,15 @@ export interface RippleStabilitySample extends RippleStructuralState {
   fatal: boolean;
 }
 
+export interface RippleStabilityProgress {
+  /** The route was unchanged from the previous sample. */
+  routeStable: boolean;
+  /** Continuous structurally-ready time for the current route. */
+  routeStableMs: number;
+  /** Whether the current sample satisfies the structural shell contract. */
+  structurallyReady: boolean;
+}
+
 /**
  * SPA-appropriate authenticated Ripple stability.
  *
@@ -77,6 +86,7 @@ export async function waitForRippleStability(opts: {
   monitor?: RunMonitor;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  onSample?: (progress: RippleStabilityProgress) => void;
 }): Promise<boolean> {
   const quietMs = opts.quietMs ?? 750;
   const timeoutMs = opts.timeoutMs ?? 15_000;
@@ -91,6 +101,7 @@ export async function waitForRippleStability(opts: {
     if (sample.fatal) return false;
 
     const currentTime = now();
+    const routeChanged = previousRoute !== null && previousRoute !== sample.route;
     if (previousRoute !== sample.route) {
       previousRoute = sample.route;
       routeStableSince = null;
@@ -105,6 +116,12 @@ export async function waitForRippleStability(opts: {
     } else if (routeStableSince === null) {
       routeStableSince = currentTime;
     }
+
+    opts.onSample?.({
+      routeStable: !routeChanged,
+      routeStableMs: routeStableSince === null ? 0 : Math.max(0, currentTime - routeStableSince),
+      structurallyReady: isRippleStructurallyReady(sample),
+    });
 
     if (isRippleStructurallyReady(sample) && routeStableSince !== null && currentTime - routeStableSince >= quietMs) {
       return true;

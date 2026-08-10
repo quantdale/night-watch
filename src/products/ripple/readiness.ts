@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Ripple authenticated readiness contract.
 //
-// Source provenance (mobingilabs/ripple-ui, branch dev, d80b161b...):
+// Source provenance (mobingilabs/ripple-ui, origin/dev, 0bba40b7...):
 //   - vue-router base is /ripple/;
 //   - authenticated / is redirected to /dashboard;
 //   - public/index.html provides #app;
@@ -12,6 +12,21 @@
 // ---------------------------------------------------------------------------
 
 export const RIPPLE_APP_ROOT_SELECTOR = '#app';
+
+/**
+ * The source reference used for the current authenticated readiness contract.
+ * This is deliberately explicit so a runtime result can be compared with the
+ * source contract that was actually reviewed, instead of silently relying on
+ * an older checkout.
+ */
+export const RIPPLE_SOURCE_ROOT_CONTRACT = {
+  status: 'CURRENT_SOURCE_STILL_USES_APP',
+  repository: 'mobingilabs/ripple-ui',
+  ref: 'origin/dev',
+  sha: '0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2',
+  selector: RIPPLE_APP_ROOT_SELECTOR,
+  evidence: ['public/index.html:35', 'src/main.js:48,324'],
+} as const;
 
 function normalizedNamespace(pathname: string): string {
   const path = pathname === '' ? '/' : pathname;
@@ -45,6 +60,7 @@ export function confirmsRippleTarget(
 
 export interface RippleStructuralState {
   documentReadyState: string;
+  appRootSelector: string;
   appRootPresent: boolean;
 }
 
@@ -54,5 +70,44 @@ export interface RippleStructuralState {
  * structural-stability failure rather than a second independent failure.
  */
 export function isRippleStructurallyReady(state: RippleStructuralState): boolean {
-  return state.documentReadyState === 'complete' && state.appRootPresent;
+  return state.documentReadyState === 'complete' &&
+    state.appRootSelector === RIPPLE_APP_ROOT_SELECTOR &&
+    state.appRootPresent;
+}
+
+export type RippleReadinessDiagnosis =
+  | 'READY'
+  | 'EARLY_DOCUMENT_OR_NAVIGATION'
+  | 'WRONG_DOCUMENT_OR_PAGE'
+  | 'ROOT_PRESENT_ONLY_IN_CHILD_FRAME'
+  | 'DOCUMENT_OR_PAGE_UNAVAILABLE'
+  | 'SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED';
+
+export interface RippleReadinessDiagnosisInput extends RippleStructuralState {
+  targetConfirmed: boolean;
+  bodyPresent: boolean;
+  appRootFrameCount: number;
+  evaluationSucceeded: boolean;
+  navigationInProgress: boolean;
+  pageClosed: boolean;
+}
+
+/**
+ * Classify only the sanitized structural signals. This is diagnostic metadata,
+ * not a readiness override: the caller still requires all three independent
+ * target/root/stability signals to pass. Persistent main-frame root absence is
+ * intentionally left unresolved between a shell mount failure and
+ * deployment/source divergence.
+ */
+export function classifyRippleReadiness(input: RippleReadinessDiagnosisInput): RippleReadinessDiagnosis {
+  if (input.pageClosed || !input.evaluationSucceeded || !input.bodyPresent) {
+    return 'DOCUMENT_OR_PAGE_UNAVAILABLE';
+  }
+  if (input.navigationInProgress || input.documentReadyState !== 'complete') {
+    return 'EARLY_DOCUMENT_OR_NAVIGATION';
+  }
+  if (!input.targetConfirmed) return 'WRONG_DOCUMENT_OR_PAGE';
+  if (input.appRootPresent && isRippleStructurallyReady(input)) return 'READY';
+  if (input.appRootFrameCount > 0) return 'ROOT_PRESENT_ONLY_IN_CHILD_FRAME';
+  return 'SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED';
 }

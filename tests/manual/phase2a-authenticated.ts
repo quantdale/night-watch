@@ -8,7 +8,7 @@
 // dump, or deliberate API replay is permitted here.
 // ---------------------------------------------------------------------------
 
-import { test, expect, type Browser } from '@playwright/test';
+import { test, expect, type Browser, type Frame, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -17,7 +17,14 @@ import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { validateStorageStateFile } from '../../src/browser/fixtures/storageState';
 import { waitForRippleStability } from '../../src/browser/observers/stability';
-import { confirmsRippleTarget, RIPPLE_APP_ROOT_SELECTOR } from '../../src/products/ripple/readiness';
+import {
+  classifyRippleReadiness,
+  confirmsRippleTarget,
+  isRippleStructurallyReady,
+  RIPPLE_APP_ROOT_SELECTOR,
+  RIPPLE_SOURCE_ROOT_CONTRACT,
+  type RippleReadinessDiagnosis,
+} from '../../src/products/ripple/readiness';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { buildDestinationManifest, writeDestinationManifest, type DestinationManifest } from '../../src/core/evidence/destinationManifest';
@@ -29,15 +36,75 @@ import { readProxyRuntimeState } from '../../src/proxy/runtime';
 import type { EndpointSemanticClassification } from '../../src/core/safety/endpointSemantics';
 
 interface ReadinessEvidence {
+  sourceRootContract: typeof RIPPLE_SOURCE_ROOT_CONTRACT;
   finalOrigin: string | null;
   finalPath: string | null;
   targetConfirmed: boolean;
   titlePresent: boolean;
   documentReadyState: string;
+  topLevelPage: boolean;
+  frameCount: number;
   appRootPresent: boolean;
+  appRootSelector: string;
+  appRootFrameCount: number;
+  bodyPresent: boolean;
+  bodyChildCount: number | null;
+  evaluationFrame: 'top-level-main-frame' | 'unavailable';
+  evaluationSucceeded: boolean;
+  evaluationPhase: 'stability-poll' | 'post-stability-final';
+  appRootQueryTiming: 'same-document-evaluation';
+  appRootQueriedBeforeDocumentComplete: boolean;
+  routeStable: boolean;
+  routeStableMs: number;
+  navigationInProgress: boolean;
+  pageClosed: boolean;
+  fatalPageErrorCount: number;
+  readinessDiagnosis: RippleReadinessDiagnosis;
+  pageReferenceCapturedBeforeNavigation: boolean;
+  navigationAfterPageReference: boolean;
+  mainFrameNavigationCount: number;
+  firstReadinessSampleElapsedMs: number | null;
+  firstReadinessDocumentReadyState: string;
+  firstReadinessAppRootPresent: boolean;
+  firstReadinessEvaluationSucceeded: boolean;
+  lastReadinessSampleElapsedMs: number;
   iframeCount: number;
   stabilityReached: boolean;
   navigationFailed: boolean;
+}
+
+interface FrameStructure {
+  documentReadyState: string;
+  appRootPresent: boolean;
+  bodyPresent: boolean;
+  bodyChildCount: number;
+  iframeCount: number;
+}
+
+interface RipplePageDiagnostics {
+  finalOrigin: string | null;
+  finalPath: string | null;
+  targetConfirmed: boolean;
+  documentReadyState: string;
+  topLevelPage: boolean;
+  frameCount: number;
+  appRootPresent: boolean;
+  appRootSelector: string;
+  appRootFrameCount: number;
+  bodyPresent: boolean;
+  bodyChildCount: number | null;
+  iframeCount: number;
+  evaluationFrame: 'top-level-main-frame' | 'unavailable';
+  evaluationSucceeded: boolean;
+  evaluationPhase: 'stability-poll' | 'post-stability-final';
+  appRootQueryTiming: 'same-document-evaluation';
+  appRootQueriedBeforeDocumentComplete: boolean;
+  navigationInProgress: boolean;
+  pageClosed: boolean;
+  fatalPageErrorCount: number;
+  readinessDiagnosis: RippleReadinessDiagnosis;
+  readinessSampleElapsedMs: number;
+  route: string;
 }
 
 interface EndpointEvidence {
@@ -79,6 +146,10 @@ function readEvents(file: string): RunEvent[] {
   }
 }
 
+function pageErrorCount(events: readonly RunEvent[]): number {
+  return events.filter((event) => event.type === 'issue' && event.data?.reason === 'pageerror').length;
+}
+
 function targetFor(env: EnvironmentConfig): string {
   const configured = new URL(env.uiBaseUrl);
   const override = process.env.NIGHTWATCH_UI_URL;
@@ -105,6 +176,113 @@ function safeLocation(rawUrl: string): { origin: string; path: string } | null {
   } catch {
     return null;
   }
+}
+
+async function evaluateFrameStructure(frame: Frame): Promise<FrameStructure | null> {
+  return frame.evaluate((selector) => {
+    const pageGlobal = globalThis as unknown as {
+      document?: {
+        readyState?: string;
+        body?: { children?: { length: number } } | null;
+        querySelector: (value: string) => unknown;
+        querySelectorAll: (value: string) => { length: number };
+      };
+    };
+    const doc = pageGlobal.document;
+    const body = doc?.body;
+    return {
+      documentReadyState: doc?.readyState ?? 'unavailable',
+      appRootPresent: doc?.querySelector(selector) !== null && doc?.querySelector(selector) !== undefined,
+      bodyPresent: body !== null && body !== undefined,
+      bodyChildCount: body?.children?.length ?? 0,
+      iframeCount: doc?.querySelectorAll('iframe').length ?? 0,
+    };
+  }, RIPPLE_APP_ROOT_SELECTOR).catch(() => null);
+}
+
+async function sampleRipplePage(opts: {
+  page: Page;
+  target: string;
+  evaluationPhase: 'stability-poll' | 'post-stability-final';
+  navigationInProgress: boolean;
+  navigationStartedAt: number;
+  monitorIssueCount: number;
+}): Promise<RipplePageDiagnostics> {
+  const pageClosed = opts.page.isClosed();
+  const route = (() => {
+    try {
+      return opts.page.url();
+    } catch {
+      return '';
+    }
+  })();
+  const location = safeLocation(route);
+  const configured = new URL(opts.target);
+  const targetConfirmed = location !== null && confirmsRippleTarget(
+    configured.origin,
+    configured.pathname,
+    location.origin,
+    location.path,
+  );
+
+  let frames: Frame[] = [];
+  let mainFrame: Frame | null = null;
+  if (!pageClosed) {
+    try {
+      frames = opts.page.frames();
+      mainFrame = opts.page.mainFrame();
+    } catch {
+      frames = [];
+      mainFrame = null;
+    }
+  }
+  const frameStructures = await Promise.all(frames.map((frame) => evaluateFrameStructure(frame)));
+  const mainIndex = mainFrame === null ? -1 : frames.indexOf(mainFrame);
+  const mainStructure = mainIndex >= 0 ? frameStructures[mainIndex] ?? null : null;
+  const appRootFrameCount = frameStructures.filter((structure) => structure?.appRootPresent === true).length;
+  const documentReadyState = mainStructure?.documentReadyState ?? 'unavailable';
+  const appRootPresent = mainStructure?.appRootPresent ?? false;
+  const bodyPresent = mainStructure?.bodyPresent ?? false;
+  const bodyChildCount = mainStructure?.bodyChildCount ?? null;
+  const iframeCount = mainStructure?.iframeCount ?? 0;
+  const evaluationSucceeded = mainStructure !== null;
+  const structural = {
+    documentReadyState,
+    appRootSelector: RIPPLE_APP_ROOT_SELECTOR,
+    appRootPresent,
+  };
+  const readinessDiagnosis = classifyRippleReadiness({
+    ...structural,
+    targetConfirmed,
+    bodyPresent,
+    appRootFrameCount,
+    evaluationSucceeded,
+    navigationInProgress: opts.navigationInProgress,
+    pageClosed,
+  });
+  return {
+    finalOrigin: location?.origin ?? null,
+    finalPath: location?.path ?? null,
+    targetConfirmed,
+    ...structural,
+    topLevelPage: true,
+    frameCount: frames.length,
+    appRootFrameCount,
+    bodyPresent,
+    bodyChildCount,
+    iframeCount,
+    evaluationFrame: evaluationSucceeded ? 'top-level-main-frame' : 'unavailable',
+    evaluationSucceeded,
+    evaluationPhase: opts.evaluationPhase,
+    appRootQueryTiming: 'same-document-evaluation',
+    appRootQueriedBeforeDocumentComplete: evaluationSucceeded && documentReadyState !== 'complete',
+    navigationInProgress: opts.navigationInProgress,
+    pageClosed,
+    fatalPageErrorCount: opts.monitorIssueCount,
+    readinessDiagnosis,
+    readinessSampleElapsedMs: Math.max(0, Date.now() - opts.navigationStartedAt),
+    route,
+  };
 }
 
 function endpointEvidence(events: readonly RunEvent[]): EndpointEvidence[] {
@@ -216,6 +394,29 @@ async function observeOnce(
   let navigationFailed = false;
   let stabilityReached = false;
   let readiness: ReadinessEvidence;
+  let navigationInProgress = false;
+  let navigationStartedAt = Date.now();
+  let mainFrameNavigationCount = 0;
+  const pageReferenceCapturedBeforeNavigation = true;
+  let latestDiagnostics: RipplePageDiagnostics | null = null;
+  let firstReadinessSampleElapsedMs: number | null = null;
+  let firstReadinessDocumentReadyState = 'unavailable';
+  let firstReadinessAppRootPresent = false;
+  let firstReadinessEvaluationSucceeded = false;
+  let lastStabilityRoute: string | null = null;
+  let lastRouteStable = false;
+  let lastRouteStableMs = 0;
+
+  // The Page object is captured by createNightwatchContext before this direct
+  // navigation. Track only main-frame navigation count; URLs remain
+  // sanitized at the final evidence boundary.
+  context.page.on('framenavigated', (frame) => {
+    try {
+      if (frame === context.page.mainFrame()) mainFrameNavigationCount += 1;
+    } catch {
+      // A closed page is represented by the structural diagnostics below.
+    }
+  });
   try {
     recorder.event({
       type: 'navigation',
@@ -223,6 +424,8 @@ async function observeOnce(
       message: 'direct authenticated landing navigation',
       data: { url: recorder.redactUrl(target), action: 'navigate-only', pass },
     });
+    navigationStartedAt = Date.now();
+    navigationInProgress = true;
     try {
       await context.page.goto(target, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     } catch (error) {
@@ -237,6 +440,8 @@ async function observeOnce(
           pass,
         },
       });
+    } finally {
+      navigationInProgress = false;
     }
 
     stabilityReached = await waitForRippleStability({
@@ -245,48 +450,89 @@ async function observeOnce(
       recorder,
       monitor: context.monitor,
       sample: async () => {
-        const shell = await context.page.evaluate(() => {
-          const pageGlobal = globalThis as unknown as {
-            document?: {
-              readyState?: string;
-              querySelector: (selector: string) => unknown;
-            };
-          };
-          const doc = pageGlobal.document;
-          return {
-            documentReadyState: doc?.readyState ?? 'unavailable',
-            appRootPresent: doc?.querySelector('#app') !== null && doc?.querySelector('#app') !== undefined,
-          };
-        }).catch(() => ({ documentReadyState: 'unavailable', appRootPresent: false }));
+        const sample = await sampleRipplePage({
+          page: context.page,
+          target,
+          evaluationPhase: 'stability-poll',
+          navigationInProgress,
+          navigationStartedAt,
+          monitorIssueCount: pageErrorCount(context.monitor.issues),
+        });
+        latestDiagnostics = sample;
+        if (firstReadinessSampleElapsedMs === null) {
+          firstReadinessSampleElapsedMs = sample.readinessSampleElapsedMs;
+          firstReadinessDocumentReadyState = sample.documentReadyState;
+          firstReadinessAppRootPresent = sample.appRootPresent;
+          firstReadinessEvaluationSucceeded = sample.evaluationSucceeded;
+        }
         return {
-          ...shell,
-          route: context.page.url(),
-          fatal: context.monitor.safetyFailed || context.monitor.issues.some((event) => event.data?.reason === 'pageerror'),
+          documentReadyState: sample.documentReadyState,
+          appRootSelector: sample.appRootSelector,
+          appRootPresent: sample.appRootPresent,
+          route: sample.route,
+          fatal: sample.pageClosed || context.monitor.safetyFailed || sample.fatalPageErrorCount > 0,
+          diagnostics: sample,
         };
+      },
+      onSample: (progress) => {
+        if (latestDiagnostics !== null) {
+          lastStabilityRoute = latestDiagnostics.route;
+          lastRouteStable = progress.routeStable;
+          lastRouteStableMs = progress.routeStableMs;
+        }
       },
     });
 
-    const finalUrl = context.page.url();
-    const final = safeLocation(finalUrl);
-    const configured = new URL(target);
+    const finalDiagnostics = await sampleRipplePage({
+      page: context.page,
+      target,
+      evaluationPhase: 'post-stability-final',
+      navigationInProgress,
+      navigationStartedAt,
+      monitorIssueCount: pageErrorCount(context.monitor.issues),
+    });
+    latestDiagnostics = finalDiagnostics;
+    const finalProgressMatches = lastStabilityRoute !== null && lastStabilityRoute === finalDiagnostics.route;
+    const routeStable = finalProgressMatches ? lastRouteStable : false;
+    const routeStableMs = finalProgressMatches && isRippleStructurallyReady(finalDiagnostics)
+      ? lastRouteStableMs
+      : 0;
+    stabilityReached = stabilityReached && routeStable && isRippleStructurallyReady(finalDiagnostics);
     const titlePresent = await context.page.title().then((title) => title.trim().length > 0).catch(() => false);
-    const shell = await context.page.evaluate(() => {
-      const pageGlobal = globalThis as unknown as { document?: { readyState?: string; querySelector: (selector: string) => unknown; querySelectorAll: (selector: string) => { length: number } } };
-      const doc = pageGlobal.document;
-      return {
-        documentReadyState: doc?.readyState ?? 'unavailable',
-        appRootPresent: doc?.querySelector('#app') !== null && doc?.querySelector('#app') !== undefined,
-        iframeCount: doc?.querySelectorAll('iframe').length ?? 0,
-      };
-    }).catch(() => ({ documentReadyState: 'unavailable', appRootPresent: false, iframeCount: 0 }));
     readiness = {
-      finalOrigin: final?.origin ?? null,
-      finalPath: final?.path ?? null,
-      targetConfirmed: final !== null && confirmsRippleTarget(configured.origin, configured.pathname, final.origin, final.path),
+      sourceRootContract: RIPPLE_SOURCE_ROOT_CONTRACT,
+      finalOrigin: finalDiagnostics.finalOrigin,
+      finalPath: finalDiagnostics.finalPath,
+      targetConfirmed: finalDiagnostics.targetConfirmed,
       titlePresent,
-      documentReadyState: shell.documentReadyState,
-      appRootPresent: shell.appRootPresent,
-      iframeCount: shell.iframeCount,
+      documentReadyState: finalDiagnostics.documentReadyState,
+      topLevelPage: finalDiagnostics.topLevelPage,
+      frameCount: finalDiagnostics.frameCount,
+      appRootPresent: finalDiagnostics.appRootPresent,
+      appRootSelector: finalDiagnostics.appRootSelector,
+      appRootFrameCount: finalDiagnostics.appRootFrameCount,
+      bodyPresent: finalDiagnostics.bodyPresent,
+      bodyChildCount: finalDiagnostics.bodyChildCount,
+      evaluationFrame: finalDiagnostics.evaluationFrame,
+      evaluationSucceeded: finalDiagnostics.evaluationSucceeded,
+      evaluationPhase: finalDiagnostics.evaluationPhase,
+      appRootQueryTiming: finalDiagnostics.appRootQueryTiming,
+      appRootQueriedBeforeDocumentComplete: finalDiagnostics.appRootQueriedBeforeDocumentComplete,
+      routeStable,
+      routeStableMs,
+      navigationInProgress: finalDiagnostics.navigationInProgress,
+      pageClosed: finalDiagnostics.pageClosed,
+      fatalPageErrorCount: finalDiagnostics.fatalPageErrorCount,
+      readinessDiagnosis: finalDiagnostics.readinessDiagnosis,
+      pageReferenceCapturedBeforeNavigation,
+      navigationAfterPageReference: mainFrameNavigationCount > 0,
+      mainFrameNavigationCount,
+      firstReadinessSampleElapsedMs,
+      firstReadinessDocumentReadyState,
+      firstReadinessAppRootPresent,
+      firstReadinessEvaluationSucceeded,
+      lastReadinessSampleElapsedMs: finalDiagnostics.readinessSampleElapsedMs,
+      iframeCount: finalDiagnostics.iframeCount,
       stabilityReached,
       navigationFailed,
     };
@@ -294,7 +540,7 @@ async function observeOnce(
       type: 'env',
       severity: readiness.targetConfirmed && readiness.appRootPresent && readiness.stabilityReached && !navigationFailed ? 'info' : 'warn',
       message: 'authenticated landing readiness observed',
-      data: { ...readiness, appRootSelector: RIPPLE_APP_ROOT_SELECTOR, pass },
+      data: { ...readiness, sourceRootContract: RIPPLE_SOURCE_ROOT_CONTRACT, pass },
     });
     if (!readiness.targetConfirmed || !readiness.appRootPresent || !readiness.stabilityReached || navigationFailed) {
       const issue = recorder.event({
