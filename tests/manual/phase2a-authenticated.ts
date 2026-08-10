@@ -16,7 +16,8 @@ import { assertSupportedEnvironment, loadEnvironmentConfig } from '../../src/cor
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { validateStorageStateFile } from '../../src/browser/fixtures/storageState';
-import { waitForStability } from '../../src/browser/observers/stability';
+import { waitForRippleStability } from '../../src/browser/observers/stability';
+import { confirmsRippleTarget, RIPPLE_APP_ROOT_SELECTOR } from '../../src/products/ripple/readiness';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { buildDestinationManifest, writeDestinationManifest, type DestinationManifest } from '../../src/core/evidence/destinationManifest';
@@ -238,12 +239,31 @@ async function observeOnce(
       });
     }
 
-    stabilityReached = await waitForStability({
-      network: context.network,
+    stabilityReached = await waitForRippleStability({
       quietMs: 750,
       timeoutMs: 15_000,
       recorder,
       monitor: context.monitor,
+      sample: async () => {
+        const shell = await context.page.evaluate(() => {
+          const pageGlobal = globalThis as unknown as {
+            document?: {
+              readyState?: string;
+              querySelector: (selector: string) => unknown;
+            };
+          };
+          const doc = pageGlobal.document;
+          return {
+            documentReadyState: doc?.readyState ?? 'unavailable',
+            appRootPresent: doc?.querySelector('#app') !== null && doc?.querySelector('#app') !== undefined,
+          };
+        }).catch(() => ({ documentReadyState: 'unavailable', appRootPresent: false }));
+        return {
+          ...shell,
+          route: context.page.url(),
+          fatal: context.monitor.safetyFailed || context.monitor.issues.some((event) => event.data?.reason === 'pageerror'),
+        };
+      },
     });
 
     const finalUrl = context.page.url();
@@ -262,7 +282,7 @@ async function observeOnce(
     readiness = {
       finalOrigin: final?.origin ?? null,
       finalPath: final?.path ?? null,
-      targetConfirmed: final?.origin === configured.origin && final?.path === configured.pathname,
+      targetConfirmed: final !== null && confirmsRippleTarget(configured.origin, configured.pathname, final.origin, final.path),
       titlePresent,
       documentReadyState: shell.documentReadyState,
       appRootPresent: shell.appRootPresent,
@@ -272,16 +292,23 @@ async function observeOnce(
     };
     recorder.event({
       type: 'env',
-      severity: readiness.targetConfirmed && !navigationFailed ? 'info' : 'warn',
+      severity: readiness.targetConfirmed && readiness.appRootPresent && readiness.stabilityReached && !navigationFailed ? 'info' : 'warn',
       message: 'authenticated landing readiness observed',
-      data: { ...readiness, pass },
+      data: { ...readiness, appRootSelector: RIPPLE_APP_ROOT_SELECTOR, pass },
     });
-    if (!readiness.targetConfirmed || navigationFailed) {
+    if (!readiness.targetConfirmed || !readiness.appRootPresent || !readiness.stabilityReached || navigationFailed) {
       const issue = recorder.event({
         type: 'issue',
         severity: 'error',
-        message: 'authenticated landing target was not confirmed',
-        data: { reason: 'landing-target-not-confirmed', pass },
+        message: 'authenticated Ripple readiness was not confirmed',
+        data: {
+          reason: 'ripple-readiness-not-confirmed',
+          targetConfirmed: readiness.targetConfirmed,
+          appRootPresent: readiness.appRootPresent,
+          stabilityReached: readiness.stabilityReached,
+          navigationFailed,
+          pass,
+        },
       });
       context.monitor.recordIssue(issue);
     }
@@ -307,7 +334,7 @@ async function observeOnce(
     unresolved: manifest.unresolved.length,
   });
   const unsafeDestination = manifest.unresolved.length > 0 || manifest.blocked.some((entry) => entry.decision === 'deny');
-  const passed = !context.monitor.safetyFailed && !unsafeDestination && readiness.targetConfirmed && !navigationFailed;
+  const passed = !context.monitor.safetyFailed && !unsafeDestination && readiness.targetConfirmed && readiness.appRootPresent && readiness.stabilityReached && !navigationFailed;
   const summary = await recorder.finalize({
     passed,
     notes: [
