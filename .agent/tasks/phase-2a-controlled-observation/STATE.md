@@ -756,6 +756,15 @@ Result: PASS; implementation checkpoint committed at
 `af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef`.
 When: 2026-08-10
 
+Command: final checkpoint validation — `npm run agent:check`,
+`npx tsc --noEmit`, `git diff --check`, and clean-tree check
+Result: PASS. `agent:check` reported the expected approved state-only
+`CHECKPOINT_ADVANCE` warning from implementation SHA `af3c3a7` to task-state
+HEAD `9ee48446178ec507ba39a6cf39d8c04a4148e8df`; no source/test/config drift
+was reported. The Nightwatch tree is clean. The existence-only auth-state
+check reports missing or empty; no state contents were inspected.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
