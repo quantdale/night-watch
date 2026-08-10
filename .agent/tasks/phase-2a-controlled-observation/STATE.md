@@ -9,7 +9,7 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
 Last validated implementation SHA: 6443baf4ef219903ea84159df96d5c8ee7eb2e5b
 Branch: main
-Last checkpoint: 2026-08-10 — actual HEAD is `8a44151ab2faf30965e64a5a2262bca9e912b31c`, an approved documentation/state-only descendant of the validated implementation baseline `6443baf4ef219903ea84159df96d5c8ee7eb2e5b`. The user confirmed that the guarded DEV auth capture completed successfully and that the external storage state exists at `$HOME/.nightwatch/auth/ripple-dev-state.json`; its contents remain outside Nightwatch and were not inspected.
+Last checkpoint: 2026-08-10 — authenticated `observe:gate` PASS at actual HEAD `a8112ddc0d04d1cff7e66c859c99b6de6faaffe7`, an approved documentation/state-only descendant of the validated implementation baseline `6443baf4ef219903ea84159df96d5c8ee7eb2e5b`. All 13 checks passed with the external DEV storage-state path; its contents remain outside Nightwatch and were not inspected.
 
 ## Objective
 
@@ -54,16 +54,17 @@ Any new or related hostname remains `UNKNOWN_DESTINATION`, blocked, and fatal.
 The latest human run then failed at HUMAN_WAIT with
 `SAFETY_MONITOR_FAILED / OTHER / oracle / malformed-json`; its exact sanitized
 source and repair are checkpointed below. The user has now confirmed a later
-successful guarded DEV auth capture. M7 remains IN_PROGRESS pending the
-authenticated pre-real-run gate.
+successful guarded DEV auth capture and the authenticated pre-real-run gate
+passed all 13 checks. M7 remains IN_PROGRESS; the first controlled landing
+observation is now authorized.
 
 ## Current Oracle Failure Checkpoint
 
 Real failure: run `nightwatch-20260810T052211Z-cdd4` reached the verified
 `https://appdev.alphaus.cloud/ripple/` target and failed during HUMAN_WAIT with
 `SAFETY_MONITOR_FAILED`, `monitor-reason: OTHER`, `guard-type: oracle`, and
-`event-category: malformed-json`. Cleanup passed and the external auth-state
-file remains MISSING.
+`event-category: malformed-json`. Cleanup passed; this historical run did not
+produce an external auth state.
 
 Exact recoverable sanitized source metadata:
 
@@ -1305,10 +1306,11 @@ activity occurred in this Codex session.
    network allowlist or wildcard exists.
 4. A human may run the exact guarded parent-CLI capture command in `## Exact
    Next Action` from an interactive terminal. Codex must not execute it.
-5. Run the exact `observe:gate` command shown there without exposing state
-   contents; it must PASS before navigation.
-6. Run the authenticated observation only after that gate passes; use a direct
-   landing navigation, then exactly one fresh-context replay.
+5. The authenticated gate passed all 13 checks at `a8112dd`; do not rerun the
+   canary or expose storage-state contents. Any implementation changes require
+   the gate to be rerun before navigation.
+6. Run the authenticated observation using a direct landing navigation, then
+   exactly one fresh-context replay.
 7. Update STATE with exact sanitized runtime results and checkpoint before M8.
    Do not begin Phase 2B; M7 remains IN_PROGRESS until external state and the
    authenticated observation requirements are actually completed.
