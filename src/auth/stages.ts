@@ -6,6 +6,8 @@
 // fragment, header, cookie, body, storage value, or page text.
 // ---------------------------------------------------------------------------
 
+import type { SafetyMonitorDiagnostic, SafetyMonitorReason } from '../state/run';
+
 export const AUTH_CAPTURE_STAGES = [
   'PREFLIGHT',
   'PROXY_START',
@@ -37,6 +39,8 @@ export interface AuthCaptureStageEvent {
   expected?: SanitizedLocation;
   actual?: SanitizedLocation;
   detail?: string;
+  monitorReason?: SafetyMonitorReason;
+  monitor?: SafetyMonitorDiagnostic;
 }
 
 export type AuthCaptureStageReporter = (event: AuthCaptureStageEvent) => void;
@@ -60,6 +64,8 @@ export class AuthCaptureStageError extends Error {
   readonly expected?: SanitizedLocation;
   readonly actual?: SanitizedLocation;
   readonly detail?: string;
+  readonly monitorReason?: SafetyMonitorReason;
+  readonly monitor?: SafetyMonitorDiagnostic;
 
   constructor(input: {
     stage: AuthCaptureStage;
@@ -67,6 +73,8 @@ export class AuthCaptureStageError extends Error {
     expected?: SanitizedLocation;
     actual?: SanitizedLocation;
     detail?: string;
+    monitorReason?: SafetyMonitorReason;
+    monitor?: SafetyMonitorDiagnostic;
   }) {
     super(`${input.stage}: ${input.reason}`);
     this.name = 'AuthCaptureStageError';
@@ -75,6 +83,8 @@ export class AuthCaptureStageError extends Error {
     this.expected = input.expected;
     this.actual = input.actual;
     this.detail = input.detail;
+    this.monitorReason = input.monitorReason;
+    this.monitor = input.monitor;
   }
 }
 

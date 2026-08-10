@@ -38,10 +38,12 @@ test('synthetic direct runner launches guarded browser and writes external state
       'clients2.google.com',
       'safebrowsingohttpgateway.googleapis.com',
       'update.googleapis.com',
+      'android.clients.google.com',
     ],
   };
   const fakePassword = 'SYNTHETIC_CAPTURE_PASSWORD_ONLY';
   const stages: string[] = [];
+  let healthChecks = 0;
   let result: Awaited<ReturnType<typeof runDirectAuthCapture>> | undefined;
 
   try {
@@ -69,6 +71,11 @@ test('synthetic direct runner launches guarded browser and writes external state
       outputPath: output,
       testOnly: true,
       headless: true,
+      proxyPollIntervalMs: 50,
+      proxyHealthCheck: async () => {
+        healthChecks += 1;
+        return true;
+      },
       stageReporter: (event) => stages.push(`${event.stage}:${event.status}`),
       completion: {
         kind: 'synthetic-test-only',
@@ -79,6 +86,13 @@ test('synthetic direct runner launches guarded browser and writes external state
           await page.getByRole('button', { name: 'Sign in' }).click();
           await expect(page).toHaveURL(`${server.origin}/synthetic-authenticated`);
           await expect(page.getByRole('heading', { name: 'Synthetic Authenticated Destination' })).toBeVisible();
+          await page.evaluate(() => {
+            void fetch('https://www.google.com/chrome/background?synthetic=1').catch(() => undefined);
+            void fetch('https://widget.usepylon.com/widget/synthetic-app-id').catch(() => undefined);
+          });
+          // Exercise several real monitor polls without making this suite
+          // depend on a human-scale wall-clock wait.
+          await new Promise((resolve) => setTimeout(resolve, 250));
         },
       },
     });
@@ -112,6 +126,11 @@ test('synthetic direct runner launches guarded browser and writes external state
     expect(result.summary.passed, JSON.stringify({ notes: result.summary.notes, proxy: result.summary.proxy })).toBe(true);
     expect(result.summary.proxy?.allowed).toBeGreaterThan(0);
     expect(result.summary.proxy?.violations).toBe(0);
+    expect(result.summary.proxy?.telemetryBlocked).toBeGreaterThan(0);
+    expect(healthChecks).toBeGreaterThanOrEqual(3);
+    const runtimeEvents = fs.readFileSync(path.join(result.artifactDir, 'events.jsonl'), 'utf8');
+    expect(runtimeEvents).toContain('OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED');
+    expect(runtimeEvents).toContain('telemetry blocked');
     expect(server.requests.some((request) => request.url === '/api/synthetic-login')).toBe(true);
     expect(server.requests.some((request) => request.url === '/synthetic-authenticated')).toBe(true);
 

@@ -11,6 +11,8 @@
 export const OPTIONAL_SUPPORT_HOST_CLASS = 'optional-third-party-support' as const;
 export const OPTIONAL_SUPPORT_HOST = 'widget.usepylon.com' as const;
 export const OPTIONAL_SUPPORT_CLASSIFICATION = 'OPTIONAL_THIRD_PARTY_SUPPORT' as const;
+export const TELEMETRY_HOST_CLASS = 'telemetry' as const;
+export const TELEMETRY_CLASSIFICATION = 'TELEMETRY' as const;
 export const EXPECTED_CONTAINMENT_EFFECT = 'EXPECTED_CONTAINMENT_EFFECT' as const;
 
 function mentionsExactHost(value: string, host: string): boolean {
@@ -24,8 +26,8 @@ function mentionsExactHost(value: string, host: string): boolean {
 
 export interface ExpectedContainmentEffect {
   host: string;
-  hostClass: typeof OPTIONAL_SUPPORT_HOST_CLASS;
-  classification: typeof OPTIONAL_SUPPORT_CLASSIFICATION;
+  hostClass: typeof OPTIONAL_SUPPORT_HOST_CLASS | typeof TELEMETRY_HOST_CLASS;
+  classification: typeof OPTIONAL_SUPPORT_CLASSIFICATION | typeof TELEMETRY_CLASSIFICATION;
   reason: typeof EXPECTED_CONTAINMENT_EFFECT;
 }
 
@@ -50,6 +52,27 @@ export function classifyOptionalSupportConsoleEffect(
         reason: EXPECTED_CONTAINMENT_EFFECT,
       };
     }
+  }
+  return null;
+}
+
+/** Attribute a console error only to an exact policy-blocked telemetry host. */
+export function classifyTelemetryConsoleEffect(
+  text: string,
+  locationUrl: string | undefined,
+  blockedHosts: ReadonlySet<string>
+): ExpectedContainmentEffect | null {
+  for (const rawHost of blockedHosts) {
+    const host = rawHost.toLowerCase();
+    if (!(mentionsExactHost(text, host) || (locationUrl !== undefined && mentionsExactHost(locationUrl, host)))) {
+      continue;
+    }
+    return {
+      host,
+      hostClass: TELEMETRY_HOST_CLASS,
+      classification: TELEMETRY_CLASSIFICATION,
+      reason: EXPECTED_CONTAINMENT_EFFECT,
+    };
   }
   return null;
 }

@@ -23,6 +23,7 @@ function localSyntheticEnvironment() {
       'clients2.google.com',
       'safebrowsingohttpgateway.googleapis.com',
       'update.googleapis.com',
+      'android.clients.google.com',
     ],
   };
 }
@@ -42,6 +43,7 @@ async function expectStageFailure(options: DirectAuthCaptureOptions, stage: stri
   expect(stageNames(events)).toContain(`${stage}:FAIL`);
   expect(stageNames(events)).toContain('CLEANUP:PASS');
   expect(JSON.stringify(events)).not.toContain('SYNTHETIC_CAPTURE_SECRET');
+  return caught;
 }
 
 async function baseOptions(
@@ -188,6 +190,114 @@ test('ENTER without an approved authenticated Ripple landing rejects before stat
     );
     expect(fs.existsSync(path.join(temp, 'state.json'))).toBe(false);
     expect(stageNames(events)).not.toContain('STORAGE_STATE_WRITE:START');
+  } finally {
+    await server.close();
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('approved DEV authentication-host navigation remains allowed by target verification', async () => {
+  const { verifyTargetLocation } = await import('../../src/auth/directRunner');
+  const environment = selectEnvironment('dev');
+  expect(verifyTargetLocation(
+    environment,
+    environment.uiBaseUrl,
+    'https://logindev.alphaus.cloud/sso/callback?code=SYNTHETIC_CODE',
+  )).toMatchObject({ origin: 'https://logindev.alphaus.cloud', path: '/sso/callback' });
+});
+
+test('proxy liveness failure is reported as a precise HUMAN_WAIT monitor reason', async () => {
+  const server = await startFixtureServer('auth');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-monitor-'));
+  const events: AuthCaptureStageEvent[] = [];
+  let healthChecks = 0;
+  try {
+    const caught = await expectStageFailure(
+      await baseOptions(server.origin, temp, events, {
+        proxyPollIntervalMs: 25,
+        proxyHealthCheck: async () => {
+          healthChecks += 1;
+          return healthChecks < 2;
+        },
+        completion: {
+          kind: 'synthetic-test-only',
+          wait: async () => { await new Promise((resolve) => setTimeout(resolve, 100)); },
+        },
+      }),
+      'HUMAN_WAIT',
+      'SAFETY_MONITOR_FAILED',
+      events,
+    );
+    expect(caught).toMatchObject({
+      monitorReason: 'PROXY_LIVENESS_FAILED',
+      monitor: { reason: 'PROXY_LIVENESS_FAILED', guardType: 'outer-proxy' },
+    });
+    expect(healthChecks).toBeGreaterThanOrEqual(2);
+  } finally {
+    await server.close();
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('unknown and production destinations retain distinct fatal HUMAN_WAIT reasons', async () => {
+  const cases = [
+    { url: 'https://unknown.synthetic.invalid/blocked', reason: 'UNKNOWN_DESTINATION', host: 'unknown.synthetic.invalid' },
+    { url: 'https://app.alphaus.cloud/blocked', reason: 'PRODUCTION_DESTINATION_ATTEMPT', host: 'app.alphaus.cloud' },
+  ] as const;
+  for (const item of cases) {
+    const server = await startFixtureServer('auth');
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-monitor-'));
+    const events: AuthCaptureStageEvent[] = [];
+    try {
+      const caught = await expectStageFailure(
+        await baseOptions(server.origin, temp, events, {
+          proxyPollIntervalMs: 25,
+          completion: {
+            kind: 'synthetic-test-only',
+            wait: async (page) => {
+              await page.evaluate((url) => { void fetch(url).catch(() => undefined); }, item.url);
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            },
+          },
+        }),
+        'HUMAN_WAIT',
+        'SAFETY_MONITOR_FAILED',
+        events,
+      );
+      expect(caught).toMatchObject({
+        monitorReason: item.reason,
+        monitor: { reason: item.reason, host: item.host },
+      });
+    } finally {
+      await server.close();
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
+  }
+});
+
+test('primary page closure is reported as PAGE_CLOSED rather than a generic monitor failure', async () => {
+  const server = await startFixtureServer('auth');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-monitor-'));
+  const events: AuthCaptureStageEvent[] = [];
+  try {
+    const caught = await expectStageFailure(
+      await baseOptions(server.origin, temp, events, {
+        completion: {
+          kind: 'synthetic-test-only',
+          wait: async (page) => {
+            await page.close();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          },
+        },
+      }),
+      'HUMAN_WAIT',
+      'SAFETY_MONITOR_FAILED',
+      events,
+    );
+    expect(caught).toMatchObject({
+      monitorReason: 'PAGE_CLOSED',
+      monitor: { reason: 'PAGE_CLOSED', lifecycleEvent: 'page-closed' },
+    });
   } finally {
     await server.close();
     fs.rmSync(temp, { recursive: true, force: true });

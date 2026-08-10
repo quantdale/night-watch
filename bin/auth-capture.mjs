@@ -47,6 +47,17 @@ function printStage(event) {
     console.error(`actual-origin: ${event.actual.origin}`);
     console.error(`actual-path: ${event.actual.path}`);
   }
+  if (event.monitorReason) console.error(`monitor-reason: ${event.monitorReason}`);
+  if (event.monitor) {
+    if (event.monitor.host) console.error(`host: ${event.monitor.host}`);
+    if (event.monitor.origin) console.error(`monitor-origin: ${event.monitor.origin}`);
+    if (event.monitor.path) console.error(`monitor-path: ${event.monitor.path}`);
+    if (event.monitor.policyClassification) console.error(`policy-classification: ${event.monitor.policyClassification}`);
+    if (event.monitor.policyDecision) console.error(`policy-decision: ${event.monitor.policyDecision}`);
+    if (event.monitor.guardType) console.error(`guard-type: ${event.monitor.guardType}`);
+    if (event.monitor.lifecycleEvent) console.error(`lifecycle-event: ${event.monitor.lifecycleEvent}`);
+    if (event.monitor.issueCategory) console.error(`event-category: ${event.monitor.issueCategory}`);
+  }
   if (event.detail) console.error(`detail: ${event.detail}`);
 }
 

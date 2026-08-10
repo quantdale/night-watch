@@ -42,11 +42,12 @@ import {
   type NetworkObserver,
 } from './observers/networkObserver';
 import { createConsoleObserver } from './observers/consoleObserver';
-import { classifyOptionalSupportConsoleEffect } from './observers/containmentEffect';
+import { classifyOptionalSupportConsoleEffect, classifyTelemetryConsoleEffect } from './observers/containmentEffect';
 import { createPageObserver } from './observers/pageObserver';
 import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/storageState';
 import { installFetchGuard } from './network/fetchGuard';
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
+import type { ProxyRuntimeState } from '../proxy/types';
 
 export interface NightwatchContextOptions {
   env: EnvironmentConfig;
@@ -58,6 +59,12 @@ export interface NightwatchContextOptions {
   trace?: 'on' | 'off';
   /** Direct runners may use an isolated runtime state file for local tests. */
   proxyStateFile?: string;
+  /** Local failure injection; real callers use the canonical health check. */
+  proxyHealthCheck?: (state: ProxyRuntimeState) => Promise<boolean>;
+  /** Local failure injection / direct-runner process lifecycle check. */
+  proxyProcessAlive?: () => boolean;
+  /** Local timing control; real capture uses the conservative default. */
+  proxyPollIntervalMs?: number;
 }
 
 export interface NightwatchContext {
@@ -256,7 +263,13 @@ export async function createNightwatchContext(
       type: 'service-worker',
       severity: 'fatal',
       message: 'HARD FAILURE: service worker registered despite blocking (containment violation)',
-      data: { reason: 'service-worker-registered', url: recorder.redactUrl(worker.url()) },
+      data: {
+        reason: 'service-worker-registered',
+        path: 'service-worker',
+        monitorReason: 'GUARD_ALARM',
+        guardType: 'service-worker-alarm',
+        url: recorder.redactUrl(worker.url()),
+      },
     });
     monitor.recordHardFailure(ev, {
       url: worker.url(),
@@ -275,40 +288,104 @@ export async function createNightwatchContext(
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;
   let proxyDownRecorded = false;
+  let lifecycleStopping = false;
+  let lifecycleFailureRecorded = false;
+
+  const recordLifecycleFailure = (reason: 'BROWSER_DISCONNECTED' | 'CONTEXT_CLOSED' | 'PAGE_CLOSED', lifecycleEvent: string): void => {
+    if (lifecycleStopping || lifecycleFailureRecorded) return;
+    lifecycleFailureRecorded = true;
+    const failureEvent = recorder.event({
+      type: 'hard-failure',
+      severity: 'fatal',
+      message: `HARD FAILURE: browser lifecycle ${lifecycleEvent}`,
+      data: {
+        reason: 'browser-lifecycle',
+        path: 'browser-lifecycle',
+        monitorReason: reason,
+        lifecycleEvent,
+        guardType: 'browser-lifecycle',
+      },
+    });
+    monitor.recordHardFailure(failureEvent, {
+      url: 'about:blank',
+      verdict: 'deny',
+      hostClass: 'external',
+      reason: 'browser lifecycle failure',
+      monitorReason: reason,
+      guardType: 'browser-lifecycle',
+      lifecycleEvent,
+    });
+  };
+
+  browser.on('disconnected', () => recordLifecycleFailure('BROWSER_DISCONNECTED', 'browser-disconnected'));
+  context.on('close', () => recordLifecycleFailure('CONTEXT_CLOSED', 'context-closed'));
+  page.on('close', () => recordLifecycleFailure('PAGE_CLOSED', 'page-closed'));
+
+  const healthCheck = opts.proxyHealthCheck ?? checkProxyHealth;
   const proxyPoll = setInterval(() => {
-    recorder.syncProxyViolations();
+    try {
+      recorder.syncProxyViolations();
+    } catch {
+      monitor.recordInternalFailure('proxy-violation-sync');
+    }
     if (proxyPollStopped || proxyHealthCheckInFlight || proxyDownRecorded) return;
     proxyHealthCheckInFlight = true;
-    void checkProxyHealth(proxyRuntime)
-      .then((healthy) => {
+    void Promise.resolve()
+      .then(() => {
+        try {
+          return { processAlive: opts.proxyProcessAlive?.() ?? true };
+        } catch {
+          monitor.recordInternalFailure('proxy-process-lifecycle-check');
+          return { processAlive: true };
+        }
+      })
+      .then(async ({ processAlive }) => {
+        if (proxyPollStopped || proxyDownRecorded) return { healthy: true, processAlive };
+        if (!processAlive) return { healthy: false, processAlive };
+        try {
+          return { healthy: await healthCheck(proxyRuntime), processAlive };
+        } catch {
+          monitor.recordInternalFailure('proxy-health-check');
+          return { healthy: false, processAlive };
+        }
+      })
+      .then(({ healthy, processAlive }) => {
         if (healthy || proxyPollStopped || proxyDownRecorded) return;
         proxyDownRecorded = true;
+        const monitorReason = processAlive ? 'PROXY_LIVENESS_FAILED' : 'PROXY_PROCESS_EXITED';
         const failureEvent = recorder.event({
           type: 'hard-failure',
           severity: 'fatal',
-          message: 'HARD FAILURE: outer proxy became unavailable during run',
+          message: processAlive
+            ? 'HARD FAILURE: outer proxy became unavailable during run'
+            : 'HARD FAILURE: outer proxy process exited during run',
           data: {
             path: 'outer-proxy-runtime',
             proxyAddress: `loopback:${proxyRuntime.port}`,
-            reason: 'proxy health check failed during run',
+            reason: processAlive ? 'proxy health check failed during run' : 'proxy process exited during run',
+            monitorReason,
+            guardType: 'outer-proxy',
           },
         });
         monitor.recordHardFailure(failureEvent, {
           url: `${proxyRuntime.address}/__nightwatch_health`,
           verdict: 'deny',
           hostClass: 'external',
-          reason: 'proxy health check failed during run',
+          reason: processAlive ? 'proxy health check failed during run' : 'proxy process exited during run',
+          monitorReason,
+          guardType: 'outer-proxy',
         });
       })
       .finally(() => {
         proxyHealthCheckInFlight = false;
       });
-  }, 100);
+  }, opts.proxyPollIntervalMs ?? 100);
   const consoleObserver = createConsoleObserver({
     recorder,
     monitor,
     classifyExpectedContainmentEffect: (text, locationUrl) =>
-      classifyOptionalSupportConsoleEffect(text, locationUrl, network.optionalSupportBlockedHosts()),
+      classifyOptionalSupportConsoleEffect(text, locationUrl, network.optionalSupportBlockedHosts()) ??
+      classifyTelemetryConsoleEffect(text, locationUrl, network.telemetryBlockedHosts()),
   });
   const pageObserver = createPageObserver({ recorder, monitor });
 
@@ -329,6 +406,7 @@ export async function createNightwatchContext(
     monitor,
     sharedBlocked: network.blockedUrls(),
     optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
+    telemetryBlockedHosts: network.telemetryBlockedHosts(),
   });
   page.on('download', onDownload);
 
@@ -344,6 +422,7 @@ export async function createNightwatchContext(
       monitor,
       sharedBlocked: network.blockedUrls(),
       optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
+      telemetryBlockedHosts: network.telemetryBlockedHosts(),
     });
     p.on('download', onDownload);
   });
@@ -393,6 +472,7 @@ export async function createNightwatchContext(
   }
 
   const close = async (): Promise<void> => {
+    lifecycleStopping = true;
     proxyPollStopped = true;
     clearInterval(proxyPoll);
     recorder.syncProxyViolations();

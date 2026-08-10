@@ -24,6 +24,8 @@ import { createRunId, RunRecorder } from '../core/evidence/runRecorder';
 import type { RunSummary } from '../core/evidence/types';
 import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from '../core/safety/outboundPolicy';
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
+import type { ProxyRuntimeState } from '../proxy/types';
+import type { SafetyMonitorDiagnostic } from '../state/run';
 import {
   DEFAULT_PROXY_PORT,
   proxyEventLogPath,
@@ -33,7 +35,6 @@ import {
   writeProxyRuntimeState,
 } from '../proxy/server';
 import type { OutboundProxyServer } from '../proxy/server';
-import type { ProxyRuntimeState } from '../proxy/types';
 import {
   AuthCaptureStageError,
   type AuthCaptureStage,
@@ -79,6 +80,12 @@ export interface DirectAuthCaptureOptions {
   targetVerificationUrl?: string;
   /** Dependency injection used only by local navigation failure tests. */
   targetNavigator?: (page: Page, target: string) => Promise<void>;
+  /** Dependency injection used only by local proxy-liveness tests. */
+  proxyHealthCheck?: (state: ProxyRuntimeState) => Promise<boolean>;
+  /** Dependency injection used only by local proxy-process lifecycle tests. */
+  proxyProcessAlive?: () => boolean;
+  /** Dependency injection used only by local timing tests. */
+  proxyPollIntervalMs?: number;
 }
 
 export interface DirectAuthCaptureResult {
@@ -213,6 +220,8 @@ async function runStage<T>(
       expected: failure.expected,
       actual: failure.actual,
       detail: failure.detail,
+      monitorReason: failure.monitorReason,
+      monitor: failure.monitor,
     });
     throw failure;
   }
@@ -235,7 +244,7 @@ function captureTargetLocation(target: string): SanitizedLocation {
   return sanitizedLocation(target);
 }
 
-function verifyTargetLocation(
+export function verifyTargetLocation(
   environment: EnvironmentConfig,
   target: string,
   actualRaw: string
@@ -329,7 +338,10 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
     opts.storageStateWriter !== undefined ||
     opts.stateValidator !== undefined ||
     opts.targetVerificationUrl !== undefined ||
-    opts.targetNavigator !== undefined;
+    opts.targetNavigator !== undefined ||
+    opts.proxyHealthCheck !== undefined ||
+    opts.proxyProcessAlive !== undefined ||
+    opts.proxyPollIntervalMs !== undefined;
   if (hasTestOnlyOverrides && !testOnly) {
     throw new Error('fail-closed: direct capture test overrides are unavailable in real mode');
   }
@@ -395,6 +407,9 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       storageStatePath: null,
       trace: 'off',
       proxyStateFile: managed!.stateFile,
+      proxyHealthCheck: opts.proxyHealthCheck,
+      proxyProcessAlive: opts.proxyProcessAlive ?? (() => managed?.proxy.health() ?? false),
+      proxyPollIntervalMs: opts.proxyPollIntervalMs,
     }));
     await runStage(opts, 'TARGET_NAVIGATION', async () => {
       try {
@@ -435,13 +450,13 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
     await runStage(opts, 'HUMAN_WAIT', async () => {
       await opts.completion.wait(guarded!.page);
       if (guarded!.monitor.failed) {
-        throw new AuthCaptureStageError({ stage: 'HUMAN_WAIT', reason: 'SAFETY_MONITOR_FAILED' });
+        throw safetyMonitorStageError('HUMAN_WAIT', guarded!.monitor.primaryFailure());
       }
     });
 
     await runStage(opts, 'POST_LOGIN_VERIFICATION', async () => {
       if (guarded!.monitor.failed) {
-        throw new AuthCaptureStageError({ stage: 'POST_LOGIN_VERIFICATION', reason: 'SAFETY_MONITOR_FAILED' });
+        throw safetyMonitorStageError('POST_LOGIN_VERIFICATION', guarded!.monitor.primaryFailure());
       }
       let titlePresent = false;
       try {
@@ -530,4 +545,13 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
     provenance,
     summary,
   };
+}
+
+function safetyMonitorStageError(stage: 'HUMAN_WAIT' | 'POST_LOGIN_VERIFICATION', monitor?: SafetyMonitorDiagnostic): AuthCaptureStageError {
+  return new AuthCaptureStageError({
+    stage,
+    reason: 'SAFETY_MONITOR_FAILED',
+    monitorReason: monitor?.reason ?? 'MONITOR_INTERNAL_ERROR',
+    monitor,
+  });
 }

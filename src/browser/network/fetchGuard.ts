@@ -44,6 +44,8 @@ export interface FetchGuardOptions {
   recordEvidence?: boolean;
   /** Shared exact-host set used to attribute support-widget console effects. */
   optionalSupportBlockedHosts?: Set<string>;
+  /** Shared exact-host set used to attribute telemetry console effects. */
+  telemetryBlockedHosts?: Set<string>;
 }
 
 /**
@@ -59,6 +61,7 @@ export async function installFetchGuard(
   const sharedBlocked = opts.sharedBlocked;
   const recordEvidence = opts.recordEvidence ?? true;
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts;
+  const telemetryBlockedHosts = opts.telemetryBlockedHosts;
 
   let session: Awaited<ReturnType<BrowserContext['newCDPSession']>> | null = null;
   try {
@@ -144,6 +147,7 @@ export async function installFetchGuard(
               },
             });
           } else {
+            telemetryBlockedHosts?.add(decision.host);
             recorder.event({
               type: 'telemetry',
               severity: 'info',

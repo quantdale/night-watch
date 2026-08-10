@@ -56,6 +56,8 @@ export interface NetworkObserver {
   blockedUrls(): Set<string>;
   /** Exact optional-support hosts intentionally blocked in this context. */
   optionalSupportBlockedHosts(): Set<string>;
+  /** Exact telemetry hosts intentionally blocked in this context. */
+  telemetryBlockedHosts(): Set<string>;
 }
 
 export function createNetworkObserver(opts: {
@@ -70,6 +72,7 @@ export function createNetworkObserver(opts: {
   let lastActivity = Date.now();
   const blockedUrls = new Set<string>();
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
+  const telemetryBlockedHosts = new Set<string>();
 
   async function handleRoute(route: Route): Promise<void> {
     try {
@@ -125,6 +128,7 @@ export function createNetworkObserver(opts: {
         if (!blockedUrls.has(rawUrl)) {
           blockedUrls.add(rawUrl);
           if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
+          if (decision.verdict === 'block-telemetry') telemetryBlockedHosts.add(decision.host);
           recorder.event({
             type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
             severity: 'info',
@@ -234,6 +238,7 @@ export function createNetworkObserver(opts: {
     if (isNonFatalBlock(decision.verdict)) {
       blockedUrls.add(rawUrl);
       if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
+      if (decision.verdict === 'block-telemetry') telemetryBlockedHosts.add(decision.host);
       recorder.event({
         type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
         severity: 'info',
@@ -452,5 +457,6 @@ export function createNetworkObserver(opts: {
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
+    telemetryBlockedHosts: () => telemetryBlockedHosts,
   };
 }
