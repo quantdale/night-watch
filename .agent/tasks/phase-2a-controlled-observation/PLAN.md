@@ -340,10 +340,11 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: USER_ACTION_REQUIRED — the corrected unauthenticated canary passed,
-  and the direct parent-CLI capture runner is repaired and locally validated,
-  but no authentication state is present in this session. Prepare the guarded
-  manual capture handoff only; no credentials may be provided to Nightwatch.
+- Status: IN_PROGRESS — the corrected unauthenticated canary passed, but the
+  human capture reached HUMAN_WAIT and exposed a real fatal safety event. The
+  monitor diagnostic repair is locally validated; M7 remains gated on human
+  review of the newly observed denied external Chrome destinations. No
+  authenticated observation may begin.
 
 #### M7 handoff preparation
 
@@ -417,9 +418,37 @@ state write. Synthetic execution covers successful completion and injected
 navigation, target-mismatch, wait, write, validation, and post-login failures;
 all safety layers remain unchanged.
 
-Status remains `USER_ACTION_REQUIRED`: no real auth state was produced. The
-next human action is to rerun the exact parent CLI below from an interactive
-terminal and use the new stage output; do not begin authenticated observation.
+Status remains `IN_PROGRESS`: no real auth state was produced. The newly
+observed external destinations require human safety review before any retry;
+do not begin authenticated observation.
+
+#### M7 safety-monitor repair checkpoint — 2026-08-10 — `342584c`
+
+The real run's sanitized evidence was recovered at
+`artifacts/nightwatch-20260810T034113Z-02f7`. HUMAN_WAIT ended with the old
+generic `SAFETY_MONITOR_FAILED`, but the evidence shows five outer-proxy
+denials classified as `external` / `deny` for the newly observed hosts
+`android.clients.google.com`, `update.googleapis.com`, and
+`redirector.gvt1.com`. The exact monitor subreason is
+`UNKNOWN_DESTINATION`; proxy liveness stayed healthy, and neither the exact
+optional-support Pylon block nor configured telemetry blocks caused the fatal
+state. These new hosts remain fail-closed and are not allowlisted.
+
+Nightwatch now carries a sanitized first-cause monitor taxonomy through the
+direct runner and parent CLI, including proxy liveness/process state,
+browser/context/page lifecycle, guard alarms, unknown/production destinations,
+WebSocket/worker policy, unrouted requests, and monitor-internal errors. An
+exact-host attribution path also keeps console effects from configured
+telemetry blocks non-fatal, matching the existing Pylon containment behavior.
+Synthetic coverage exercises a multi-poll HUMAN_WAIT, expected telemetry and
+Pylon blocks, injected liveness failure, unknown and production destinations,
+approved DEV auth-host navigation, page closure, successful state writing,
+and the full reason taxonomy.
+
+M7 remains `IN_PROGRESS`. Human review is required before retrying because the
+new external destinations are not among the already approved non-fatal
+telemetry hosts. Do not broadly suppress them or begin authenticated
+observation.
 
 ### M8 — Produce the destination manifest
 

@@ -6,14 +6,13 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef
-Last validated implementation SHA: af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef
+Current SHA: 342584c2be349924399af281bf18cfb9029dc3ba
+Last validated implementation SHA: 342584c2be349924399af281bf18cfb9029dc3ba
 Branch: main
-Last checkpoint: 2026-08-10 — repaired post-launch target verification and
-stage diagnostics at implementation SHA `af3c3a7885b6f0ffad4f7faef00c22e0686ad3ef`.
-The human reached headed Chrome, but the old run's generic failure did not
-identify its post-launch stage; the real external storage state remains
-missing.
+Last checkpoint: 2026-08-10 — recovered the real HUMAN_WAIT safety event and
+added first-cause sanitized monitor diagnostics plus exact telemetry console
+containment at implementation SHA `342584c2be349924399af281bf18cfb9029dc3ba`.
+The real external storage state remains missing.
 
 ## Objective
 
@@ -24,7 +23,7 @@ evidence, and a single fresh-context replay.
 ## Current Milestone
 
 Milestone ID: M7 — Manual login required before authenticated observation
-Status: USER_ACTION_REQUIRED
+Status: IN_PROGRESS
 What is being attempted: M6 passed against the exact DEV Ripple target
 `https://appdev.alphaus.cloud/ripple/`. The document returned HTTP 200 with
 final path `/ripple/`; three expected destination groups and eight blocked
@@ -33,10 +32,15 @@ source-supported Pylon host remains locally blocked as distinct,
 non-fatal `OPTIONAL_THIRD_PARTY_SUPPORT`; it is not allowlisted and did not
 reach the proxy or upstream. No storage state was loaded by this session. The
 human then executed the repaired parent CLI: preflight passed for the exact
-canonical target, headed Chrome opened, the visible page resembled
-`testing...`, and the command ended with the old generic sanitized failure.
-No successful state was established. The next step is a human-led rerun with
-stage diagnostics only.
+canonical target, headed Chrome opened, TARGET_NAVIGATION and
+TARGET_VERIFICATION passed for `https://appdev.alphaus.cloud/ripple/`, and the
+command ended at HUMAN_WAIT with the old generic `SAFETY_MONITOR_FAILED`.
+No successful state was established. Human review is required before retry.
+Sanitized local evidence recovered five outer-proxy `deny` events classified
+as `external` for the newly observed hosts `android.clients.google.com`,
+`update.googleapis.com`, and `redirector.gvt1.com`. The exact monitor
+subreason is `UNKNOWN_DESTINATION`; these hosts remain fail-closed and are
+not allowlisted.
 
 ## Completed Milestones
 
@@ -145,6 +149,31 @@ The local synthetic direct-runner test passed with a temporary external state
 and no fake-secret artifact leakage. No authenticated observation or real auth
 state has been created by Codex.
 
+### Current real failure and repair
+
+Real failure: `HUMAN_WAIT / SAFETY_MONITOR_FAILED` in sanitized run
+`nightwatch-20260810T034113Z-02f7`. The historical subreason is recoverable as
+`UNKNOWN_DESTINATION`: `RunRecorder.syncProxyViolations()` observed five
+outer-proxy `deny` events while HUMAN_WAIT was active for the newly observed
+external Chrome destinations `android.clients.google.com`,
+`update.googleapis.com`, and `redirector.gvt1.com`. The proxy remained alive;
+there was no proxy health failure, browser disconnect, context closure, page
+closure, guard alarm, or Pylon/expected-telemetry fatality in the evidence.
+
+Root cause: the direct runner converted any `monitor.failed` state to the
+single `SAFETY_MONITOR_FAILED` reason. A second Nightwatch defect allowed a
+console error caused by an exact policy-blocked telemetry request to enter the
+generic `console-error` fail-on path. The new-host proxy denials themselves
+remain legitimate fail-closed safety events and were not suppressed.
+
+Repair: first-cause sanitized safety-monitor taxonomy and metadata now flow
+from the monitor through HUMAN_WAIT/POST_LOGIN_VERIFICATION stage diagnostics
+to the parent CLI. The CLI prints only reason code, host, origin/path,
+classification, decision, guard, lifecycle, and event category. Exact blocked
+telemetry console effects are classified as expected containment only when the
+same host was already blocked by policy; exact Pylon behavior is unchanged.
+No containment rule was weakened.
+
 ## Exact Next Action
 
 The corrected unauthenticated canary already passed:
@@ -152,7 +181,12 @@ The corrected unauthenticated canary already passed:
 `nightwatch-20260809T110122Z-4d4d`, against
 `https://appdev.alphaus.cloud/ripple/`. Do not rerun it in this handoff.
 
-Exact next action for the human:
+Exact next action for the human: review the exact denied external destinations
+`android.clients.google.com`, `update.googleapis.com`, and
+`redirector.gvt1.com`. They are not currently approved non-fatal telemetry
+hosts, so do not retry capture or make an allowlist change from this session.
+If a separate human safety decision approves a narrow non-network disposition
+and that disposition is checkpointed, the guarded retry command is:
 
 ```bash
 mkdir -p "$HOME/.nightwatch/auth"
@@ -167,7 +201,8 @@ The real external auth state is still **MISSING** at
 `$HOME/.nightwatch/auth/ripple-dev-state.json`; this session performed only an
 existence check and did not inspect, print, copy, or persist its contents.
 
-Exact next action is human interaction in the repaired parent CLI:
+After the safety review and any separately approved checkpoint, human
+interaction remains confined to the repaired parent CLI:
 
 ```bash
 mkdir -p "$HOME/.nightwatch/auth"
@@ -264,6 +299,9 @@ test -s "$HOME/.nightwatch/auth/ripple-dev-state.json" && echo 'external auth st
 | `config/environments/local.json`, `config/environments/dev.json`, `config/environments/next.json`, `src/core/environment/*`, `src/core/safety/*`, `src/proxy/*` | Exact optional support policy classification and fail-closed related-host behavior | Modified |
 | `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, `src/browser/observers/consoleObserver.ts`, `src/browser/observers/containmentEffect.ts`, `src/browser/context.ts` | Local blocking evidence and causal expected-containment console attribution | Modified/added |
 | `src/core/evidence/destinationManifest.ts`, `src/core/evidence/types.ts`, `tests/unit/destinationManifest.test.ts`, `tests/unit/containmentEffect.test.ts`, `tests/unit/proxy.test.ts` | Distinct sanitized reporting and regression coverage | Modified/added |
+| `src/state/run.ts`, `src/auth/stages.ts`, `src/auth/directRunner.ts`, `bin/auth-capture.mjs` | First-cause sanitized HUMAN_WAIT monitor taxonomy and CLI diagnostics | Modified |
+| `src/browser/context.ts`, `src/browser/network/fetchGuard.ts`, `src/browser/observers/networkObserver.ts`, `src/browser/observers/containmentEffect.ts` | Proxy/lifecycle monitor evidence and exact expected telemetry console attribution | Modified |
+| `tests/unit/monitor.test.ts`, `tests/unit/authCaptureStages.test.ts`, `tests/manual/auth-capture.synthetic.ts` | Local taxonomy, liveness, lifecycle, blocked-traffic, and multi-poll HUMAN_WAIT coverage | Added/modified |
 
 ## Validation Ledger
 
@@ -765,6 +803,32 @@ was reported. The Nightwatch tree is clean. The existence-only auth-state
 check reports missing or empty; no state contents were inspected.
 When: 2026-08-10
 
+Command: sanitized failed-capture evidence inspection
+Result: PASS; run `nightwatch-20260810T034113Z-02f7` reached the approved DEV
+target and failed during HUMAN_WAIT after five outer-proxy `deny` events for
+new external Chrome destinations. The exact recovered monitor subreason is
+`UNKNOWN_DESTINATION`; proxy liveness remained healthy. No bodies, headers,
+cookies, tokens, credentials, or storage state were inspected.
+When: 2026-08-10
+
+Command: `npx playwright test tests/unit/authCaptureStages.test.ts tests/unit/monitor.test.ts --project=nightwatch`
+Result: PASS; **11 passed, 0 failed**. Coverage includes liveness,
+unknown/production destination, approved auth-host, page lifecycle, and the
+sanitized monitor taxonomy.
+When: 2026-08-10
+
+Command: `npx playwright test --config=playwright.capture.synthetic.config.ts --project=nightwatch tests/manual/auth-capture.synthetic.ts`
+Result: PASS; **1 passed, 0 failed**. HUMAN_WAIT exercised at least three
+controlled proxy-health polls; expected telemetry and exact Pylon support
+blocks remained non-fatal, and synthetic external state writing/validation
+passed.
+When: 2026-08-10
+
+Command: `npx tsc --noEmit` and `git diff --check`
+Result: PASS; implementation checkpoint
+`342584c2be349924399af281bf18cfb9029dc3ba`.
+When: 2026-08-10
+
 ## Decisions Made During This Task
 
 Decision: Use exactly one task directory, `phase-2a-controlled-observation`,
@@ -881,6 +945,21 @@ sanitized final URL and non-empty-title structural signal. Real mode now
 requires the configured Ripple host/path family and title presence, while
 synthetic mode uses only the loopback fixture path.
 
+Decision: Keep the newly observed Chrome destinations fatal and unresolved.
+Reason: the current approved non-fatal policy covers only the existing exact
+Chrome telemetry hosts and `widget.usepylon.com`; broadening third-party
+suppression would weaken containment. The real evidence shows these hosts were
+denied before upstream contact, so review can occur without another request.
+Evidence/constraint: M7 requires a separate human disposition for any new
+hostname; no allowlist or production policy was changed.
+
+Decision: Report the first sanitized monitor cause at HUMAN_WAIT and
+POST_LOGIN_VERIFICATION while preserving the generic stage failure.
+Reason: the generic `SAFETY_MONITOR_FAILED` contract remains safe, but the
+human needs a safe subreason and host/classification to distinguish a proxy,
+policy, lifecycle, or monitor failure. Query strings, fragments, bodies,
+headers, credentials, and storage values remain excluded.
+
 ## Discoveries
 
 - The Phase 1.3 final handoff commit is a continuity-only checkpoint advance,
@@ -927,6 +1006,17 @@ synthetic mode uses only the loopback fixture path.
 - Synthetic failure injection proved partial state written by a failed
   write/validation path is removed because the file was created by that
   failed attempt and is never treated as trusted state.
+- Sanitized evidence recovered the actual HUMAN_WAIT cause: five outer-proxy
+  denials for new external Chrome destinations. This is not proxy liveness,
+  browser lifecycle, Pylon, expected telemetry, or an authentication-state
+  validation failure.
+- The first synthetic realistic-duration HUMAN_WAIT exposed and then
+  confirmed a Nightwatch defect in console attribution: an exact configured
+  telemetry block could raise `console-error`. Exact-host telemetry
+  attribution now records expected containment without setting `monitor.failed`.
+- The active implementation checkpoint for this repair is
+  `342584c2be349924399af281bf18cfb9029dc3ba`; M7 remains IN_PROGRESS and the
+  real external storage state remains missing.
 
 ## Blockers
 
@@ -947,9 +1037,10 @@ cannot advance until the human completes the external capture and the same
 gate passes.
 
 The repaired implementation has no remaining code blocker. The current
-blocker is exactly the required human action: run the parent CLI from an
-interactive terminal, complete DEV login/MFA in the headed browser, press
-ENTER, and leave the state outside the workspace.
+blocker is human safety review of the newly observed external Chrome
+destinations. Capture must not be retried until their disposition is explicit;
+the external auth state remains missing and no authenticated observation may
+start.
 
 The prior host-classification `USER_ACTION_REQUIRED` blocker is cleared by the
 user's explicit approval on 2026-08-09. The approved disposition remains
@@ -1005,6 +1096,14 @@ loopback fixture traffic and blocked synthetic production/unknown policy
 probes before any network path. No real Alphaus, production, database,
 credential, MFA, mutation, or external auth-state activity occurred.
 
+M7 real capture safety event: the outer proxy correctly denied five attempts to
+new external destinations while HUMAN_WAIT was active. The browser/proxy
+containment prevented upstream connection; the exact hosts remain unresolved
+and fatal under the current policy. Expected configured telemetry and exact
+`widget.usepylon.com` support blocks remained non-fatal. This is a legitimate
+unknown/fatal safety event requiring human review, not permission to broaden
+third-party suppression.
+
 ## Deferred / Follow-Up
 
 - Phase 2B deterministic read-only Ripple journeys and all later phases.
@@ -1015,13 +1114,17 @@ credential, MFA, mutation, or external auth-state activity occurred.
 
 1. Read this STATE, then SPEC and PLAN if context is uncertain.
 2. Verify `git status --short --branch` and `git rev-parse HEAD`.
-3. Do not rerun the already-passed canary. The exact next human action is the
-   parent-CLI capture command in `## Exact Next Action`.
-4. In a fresh session after capture, run the exact `observe:gate` command shown
-   there without exposing state contents; it must PASS before navigation.
-5. Run the authenticated observation only after that gate passes; use a direct
+3. Do not rerun the already-passed canary. Review the three newly denied
+   external Chrome destinations first; do not retry until their disposition is
+   explicit and checkpointed.
+4. If the review permits a retry, run the exact guarded parent-CLI capture
+   command in `## Exact Next Action` from an interactive terminal.
+5. In a fresh session after a successful capture, run the exact
+   `observe:gate` command shown there without exposing state contents; it must
+   PASS before navigation.
+6. Run the authenticated observation only after that gate passes; use a direct
    landing navigation, then exactly one fresh-context replay.
-6. Update STATE with exact sanitized runtime results and checkpoint before M8.
+7. Update STATE with exact sanitized runtime results and checkpoint before M8.
 
 ## Completion Snapshot
 
