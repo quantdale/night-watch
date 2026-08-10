@@ -18,6 +18,7 @@ export type RunEventType =
   | 'policy'
   | 'telemetry'
   | 'optional-support'
+  | 'browser-background'
   | 'oracle'
   | 'issue'
   | 'hard-failure'
@@ -45,7 +46,7 @@ export interface RequestEventData {
   url: string;
   headers?: Record<string, string>;
   resourceType?: string;
-  /** True when the policy blocked this request (deny or telemetry). */
+  /** True when the policy blocked or denied this request. */
   blockedByPolicy?: boolean;
   verdict?: string;
   reason?: string;
@@ -84,6 +85,7 @@ export interface RunSummary {
     allowed: number;
     telemetryBlocked: number;
     optionalSupportBlocked: number;
+    browserBackgroundBlocked: number;
     denied: number;
     unknown: number;
     violations: number;

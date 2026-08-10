@@ -115,6 +115,10 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
       host: target?.url.hostname.toLowerCase().replace(/^\[|\]$/g, '') ?? classified.decision.host,
       port: target?.port ?? null,
       classification: classified.decision.hostClass,
+      semanticClassification: classified.decision.classification,
+      ...(classified.decision.verdict === 'block-browser-background'
+        ? { containment: 'EXPECTED_CONTAINMENT_EFFECT' as const }
+        : {}),
       decision: classified.decision.verdict,
       ruleId: classified.ruleId,
       reason: classified.decision.reason,

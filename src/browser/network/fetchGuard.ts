@@ -8,7 +8,7 @@
 // follow-ups — and this guard resolves each pause with the SAME decision the
 // OutboundPolicy would make:
 //
-//   deny / telemetry  -> Fetch.failRequest (aborted BEFORE any network I/O)
+//   deny / local block -> Fetch.failRequest (aborted BEFORE any network I/O)
 //   allow             -> Fetch.continueRequest
 //
 // Both the guard and the Playwright route handler (L1) make identical policy
@@ -28,6 +28,7 @@
 import type { BrowserContext, Page } from '@playwright/test';
 import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
 import { decideBrowserHttp } from '../../core/safety/policyConsumers';
+import { isBrowserBackgroundClassification, type BrowserBackgroundClassification } from '../../core/safety/types';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 
@@ -46,6 +47,8 @@ export interface FetchGuardOptions {
   optionalSupportBlockedHosts?: Set<string>;
   /** Shared exact-host set used to attribute telemetry console effects. */
   telemetryBlockedHosts?: Set<string>;
+  /** Shared exact-host map used to attribute browser-background console effects. */
+  browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
 }
 
 /**
@@ -62,6 +65,7 @@ export async function installFetchGuard(
   const recordEvidence = opts.recordEvidence ?? true;
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts;
   const telemetryBlockedHosts = opts.telemetryBlockedHosts;
+  const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts;
 
   let session: Awaited<ReturnType<BrowserContext['newCDPSession']>> | null = null;
   try {
@@ -95,7 +99,7 @@ export async function installFetchGuard(
           await cdp.send('Fetch.continueRequest', { requestId: p.requestId });
           return;
         }
-        // deny or block-telemetry: fail before the request can reach the
+        // deny or non-fatal block: fail before the request can reach the
         // network; record evidence once (deduped via the shared set).
         if (recordEvidence && !sharedBlocked.has(rawUrl)) {
           sharedBlocked.add(rawUrl);
@@ -142,6 +146,24 @@ export async function installFetchGuard(
                 verdict: decision.verdict,
                 hostClass: decision.hostClass,
                 classification: 'OPTIONAL_THIRD_PARTY_SUPPORT',
+                reason: decision.reason,
+                path: 'fetch-guard',
+              },
+            });
+          } else if (decision.verdict === 'block-browser-background') {
+            if (isBrowserBackgroundClassification(decision.classification)) {
+              browserBackgroundBlockedHosts?.set(decision.host, decision.classification);
+            }
+            recorder.event({
+              type: 'browser-background',
+              severity: 'info',
+              message: 'BROWSER_BACKGROUND_BLOCKED',
+              data: {
+                url: redactedUrl,
+                verdict: decision.verdict,
+                hostClass: decision.hostClass,
+                classification: decision.classification,
+                containment: 'EXPECTED_CONTAINMENT_EFFECT',
                 reason: decision.reason,
                 path: 'fetch-guard',
               },

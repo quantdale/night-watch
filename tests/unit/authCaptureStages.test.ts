@@ -19,11 +19,8 @@ function localSyntheticEnvironment() {
     ...base,
     telemetryHosts: [
       ...base.telemetryHosts,
-      'redirector.gvt1.com',
       'clients2.google.com',
       'safebrowsingohttpgateway.googleapis.com',
-      'update.googleapis.com',
-      'android.clients.google.com',
     ],
   };
 }

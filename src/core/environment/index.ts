@@ -10,6 +10,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { EnvironmentConfig, EnvironmentName } from './types';
+import { isBrowserBackgroundClassification, type BrowserBackgroundHostConfig } from '../safety/types';
 
 export type { EnvironmentConfig, EnvironmentName } from './types';
 
@@ -104,7 +105,19 @@ export function validateEnvironmentConfig(
     ['optionalThirdPartySupportHosts', []],
     ['failOn', []],
   ];
-  const out = { name, label: '', uiBaseUrl: '', apiHosts: [], authHosts: [], allowedHosts: [], staticAssetHosts: [], telemetryHosts: [], optionalThirdPartySupportHosts: [], failOn: [] } as EnvironmentConfig;
+  const out = {
+    name,
+    label: '',
+    uiBaseUrl: '',
+    apiHosts: [],
+    authHosts: [],
+    allowedHosts: [],
+    staticAssetHosts: [],
+    telemetryHosts: [],
+    optionalThirdPartySupportHosts: [],
+    browserBackgroundHosts: [],
+    failOn: [],
+  } as EnvironmentConfig;
   for (const [field, fallback] of listFields) {
     const v = cfg[field];
     if (v === undefined) {
@@ -117,6 +130,49 @@ export function validateEnvironmentConfig(
       );
     }
     out[field as keyof EnvironmentConfig] = v as never;
+  }
+  const background = cfg['browserBackgroundHosts'];
+  if (background === undefined) {
+    out.browserBackgroundHosts = [];
+  } else {
+    if (!Array.isArray(background)) {
+      throw new EnvironmentSelectionError(
+        `fail-closed: config (${source}) field "browserBackgroundHosts" must be an array of exact host classifications`
+      );
+    }
+    const seenHosts = new Set<string>();
+    out.browserBackgroundHosts = background.map((item, index) => {
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+        throw new EnvironmentSelectionError(
+          `fail-closed: config (${source}) browserBackgroundHosts[${index}] must be an object`
+        );
+      }
+      const record = item as Record<string, unknown>;
+      const host = record['host'];
+      const classification = record['classification'];
+      if (
+        typeof host !== 'string' ||
+        host.trim() !== host ||
+        host.length === 0 ||
+        host.includes('*') ||
+        host.includes('/') ||
+        host.includes(':') ||
+        typeof classification !== 'string' ||
+        !isBrowserBackgroundClassification(classification)
+      ) {
+        throw new EnvironmentSelectionError(
+          `fail-closed: config (${source}) browserBackgroundHosts[${index}] must contain one exact hostname and a supported browser-background classification`
+        );
+      }
+      const normalizedHost = host.toLowerCase();
+      if (seenHosts.has(normalizedHost)) {
+        throw new EnvironmentSelectionError(
+          `fail-closed: config (${source}) browserBackgroundHosts contains duplicate host "${normalizedHost}"`
+        );
+      }
+      seenHosts.add(normalizedHost);
+      return { host: normalizedHost, classification } as BrowserBackgroundHostConfig;
+    });
   }
   out.label = cfg['label'] as string;
   out.uiBaseUrl = cfg['uiBaseUrl'] as string;

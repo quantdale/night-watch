@@ -26,6 +26,11 @@
     "accounts.google.com",
     "www.google.com"
   ],
+  "browserBackgroundHosts": [
+    { "host": "android.clients.google.com", "classification": "BROWSER_BACKGROUND_GOOGLE" },
+    { "host": "update.googleapis.com", "classification": "BROWSER_BACKGROUND_UPDATE" },
+    { "host": "redirector.gvt1.com", "classification": "BROWSER_BACKGROUND_DOWNLOAD" }
+  ],
   "optionalThirdPartySupportHosts": ["widget.usepylon.com"],
   "failOn": [
     "hard-failure",

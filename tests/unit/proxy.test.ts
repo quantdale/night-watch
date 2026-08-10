@@ -106,6 +106,9 @@ test.describe('outer proxy policy and parsing', () => {
       ['https://sentry.io/ingest', 'block-telemetry'],
       ['https://www.google.com/chrome/background', 'block-telemetry'],
       ['https://widget.usepylon.com/widget/synthetic-app-id', 'block-optional-support'],
+      ['https://android.clients.google.com/generate_204', 'block-browser-background'],
+      ['https://update.googleapis.com/service/update2/json', 'block-browser-background'],
+      ['https://redirector.gvt1.com/edgedl/chrome/dict/1.bdic', 'block-browser-background'],
       ['https://api.usepylon.com/widget/synthetic-app-id', 'deny'],
       ['ws://127.0.0.1:7311/socket', 'allow'],
       ['wss://api.alphaus.cloud:8443/socket', 'deny'],
@@ -153,6 +156,9 @@ test.describe('outer proxy policy and parsing', () => {
       expect(allowed.requestCount).toBe(1);
       expect(await proxyGet(proxy.port, `http://${denied.host}:${denied.port}/denied`)).toBe(403);
       expect(await proxyGet(proxy.port, 'http://widget.usepylon.com/widget/synthetic-app-id')).toBe(403);
+      for (const host of ['android.clients.google.com', 'update.googleapis.com', 'redirector.gvt1.com']) {
+        expect(await proxyGet(proxy.port, `http://${host}/synthetic-background`)).toBe(403);
+      }
       expect(await proxyConnect(proxy.port, `${denied.host}:${denied.port}`)).toBe(403);
       expect(await proxyConnect(proxy.port, 'api.alphaus.cloud:443')).toBe(403);
       expect(denied.connectionCount).toBe(0);
@@ -162,6 +168,9 @@ test.describe('outer proxy policy and parsing', () => {
       expect(events.some((e) => e.host === denied.host && e.decision === 'deny')).toBe(true);
       expect(events.some((e) => e.host === 'api.alphaus.cloud' && e.decision === 'deny')).toBe(true);
       expect(events.some((e) => e.host === 'widget.usepylon.com' && e.decision === 'block-optional-support')).toBe(true);
+      expect(events.some((e) => e.host === 'android.clients.google.com' && e.decision === 'block-browser-background' && e.semanticClassification === 'BROWSER_BACKGROUND_GOOGLE' && e.containment === 'EXPECTED_CONTAINMENT_EFFECT')).toBe(true);
+      expect(events.some((e) => e.host === 'update.googleapis.com' && e.decision === 'block-browser-background' && e.semanticClassification === 'BROWSER_BACKGROUND_UPDATE' && e.containment === 'EXPECTED_CONTAINMENT_EFFECT')).toBe(true);
+      expect(events.some((e) => e.host === 'redirector.gvt1.com' && e.decision === 'block-browser-background' && e.semanticClassification === 'BROWSER_BACKGROUND_DOWNLOAD' && e.containment === 'EXPECTED_CONTAINMENT_EFFECT')).toBe(true);
       expect(events.some((e) => e.decision === 'allow' && e.host === allowed.host)).toBe(true);
     } finally {
       await allowed.close();
@@ -205,7 +214,7 @@ test.describe('outer proxy policy and parsing', () => {
         host: '127.0.0.1',
         port: proxy.port,
         environment: 'local',
-        policyVersion: 'phase-1.2-outbound-policy-v1',
+        policyVersion: 'phase-2a-browser-background-policy-v1',
         eventLogPath: eventLog,
       })).toBe(false);
 
@@ -215,7 +224,7 @@ test.describe('outer proxy policy and parsing', () => {
         host: '127.0.0.1',
         port: proxy.port,
         environment: 'local',
-        policyVersion: 'phase-1.2-outbound-policy-v1',
+        policyVersion: 'phase-2a-browser-background-policy-v1',
         eventLogPath: eventLog,
       }, stateFile);
       await expect(requireProxyRuntime('local', stateFile)).rejects.toThrow(/startup is aborted/);

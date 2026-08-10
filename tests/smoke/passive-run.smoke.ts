@@ -47,6 +47,11 @@ test('passive fixture run produces complete redacted evidence', async ({ browser
       allowedHosts: ['127.0.0.1', 'localhost'],
       staticAssetHosts: [],
       telemetryHosts: ['sentry.example.invalid'],
+      browserBackgroundHosts: [
+        { host: 'android.clients.google.com', classification: 'BROWSER_BACKGROUND_GOOGLE' },
+        { host: 'update.googleapis.com', classification: 'BROWSER_BACKGROUND_UPDATE' },
+        { host: 'redirector.gvt1.com', classification: 'BROWSER_BACKGROUND_DOWNLOAD' },
+      ],
       failOn: [
         'hard-failure',
         'pageerror',

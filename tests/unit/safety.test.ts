@@ -10,7 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
-import { loadEnvironmentConfig, selectEnvironment } from '../../src/core/environment/index';
+import { loadEnvironmentConfig, selectEnvironment, validateEnvironmentConfig } from '../../src/core/environment/index';
 import { KNOWN_PRODUCTION_HOSTS } from '../../src/core/safety/hosts';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary, CanaryFailureError } from '../../src/core/safety/canary';
@@ -140,6 +140,68 @@ test('telemetry hosts are blocked without failing', () => {
       expect(d.hostClass, `${envName} :: ${url}`).toBe('telemetry');
     }
   }
+});
+
+test('the three approved browser-background hosts are exact, distinct, and non-fatal blocks', () => {
+  const expected = [
+    ['android.clients.google.com', 'BROWSER_BACKGROUND_GOOGLE', 'browser-background-google'],
+    ['update.googleapis.com', 'BROWSER_BACKGROUND_UPDATE', 'browser-background-update'],
+    ['redirector.gvt1.com', 'BROWSER_BACKGROUND_DOWNLOAD', 'browser-background-download'],
+  ] as const;
+  const related = ['clients.google.com', 'edgedl.me.gvt1.com', 'redirector.gvt2.com', 'update.googleapis.com.evil.invalid'];
+
+  for (const envName of ENVS) {
+    const env = loadEnvironmentConfig(envName);
+    const policy = new OutboundPolicy(env);
+    for (const [host, classification, hostClass] of expected) {
+      const decision = policy.decide(`https://${host}/synthetic-background-path`);
+      expect(decision.verdict, `${envName} :: ${host}`).toBe('block-browser-background');
+      expect(decision.classification, `${envName} :: ${host}`).toBe(classification);
+      expect(decision.hostClass, `${envName} :: ${host}`).toBe(hostClass);
+      expect(env.allowedHosts, `${envName} allowlist :: ${host}`).not.toContain(host);
+      expect(env.telemetryHosts, `${envName} telemetry :: ${host}`).not.toContain(host);
+      expect(env.browserBackgroundHosts?.find((entry) => entry.host === host)?.classification).toBe(classification);
+    }
+    expect(env.browserBackgroundHosts?.every((entry) => !entry.host.includes('*'))).toBe(true);
+
+    for (const host of related) {
+      const decision = policy.decide(`https://${host}/`);
+      expect(decision.verdict, `${envName} :: ${host}`).toBe('deny');
+      expect(decision.classification, `${envName} :: ${host}`).toBe('UNKNOWN');
+    }
+  }
+});
+
+test('semantic categories for expected, telemetry, optional support, unknown, and production remain distinct', () => {
+  const policy = new OutboundPolicy(loadEnvironmentConfig('dev'));
+  expect(policy.decide('https://appdev.alphaus.cloud/ripple/').classification).toBe('EXPECTED');
+  expect(policy.decide('https://www.google.com/').classification).toBe('TELEMETRY');
+  expect(policy.decide('https://widget.usepylon.com/').classification).toBe('OPTIONAL_THIRD_PARTY_SUPPORT');
+  expect(policy.decide('https://clients.google.com/').classification).toBe('UNKNOWN');
+  expect(policy.decide('https://app.alphaus.cloud/').classification).toBe('PRODUCTION_DENIED');
+});
+
+test('browser-background config rejects wildcard or malformed entries', () => {
+  const base = inlineEnv('local', []);
+  expect(() => validateEnvironmentConfig('local', {
+    ...base,
+    browserBackgroundHosts: [{ host: '*.google.com', classification: 'BROWSER_BACKGROUND_GOOGLE' }],
+  })).toThrow(/exact hostname/);
+  expect(() => validateEnvironmentConfig('local', {
+    ...base,
+    browserBackgroundHosts: [{ host: 'android.clients.google.com', classification: 'TELEMETRY' }],
+  })).toThrow(/supported browser-background classification/);
+});
+
+test('browser-background classification stays blocked even if an invalid allowlist includes the exact host', () => {
+  const base = loadEnvironmentConfig('local');
+  const policy = new OutboundPolicy({
+    ...base,
+    allowedHosts: [...base.allowedHosts, 'android.clients.google.com'],
+  });
+  const decision = policy.decide('https://android.clients.google.com/generate_204');
+  expect(decision.verdict).toBe('block-browser-background');
+  expect(decision.classification).toBe('BROWSER_BACKGROUND_GOOGLE');
 });
 
 test('the exact Pylon widget host is optional support, never telemetry or allowlisted', () => {

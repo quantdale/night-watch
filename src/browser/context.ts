@@ -42,7 +42,11 @@ import {
   type NetworkObserver,
 } from './observers/networkObserver';
 import { createConsoleObserver } from './observers/consoleObserver';
-import { classifyOptionalSupportConsoleEffect, classifyTelemetryConsoleEffect } from './observers/containmentEffect';
+import {
+  classifyBrowserBackgroundConsoleEffect,
+  classifyOptionalSupportConsoleEffect,
+  classifyTelemetryConsoleEffect,
+} from './observers/containmentEffect';
 import { createPageObserver } from './observers/pageObserver';
 import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/storageState';
 import { installFetchGuard } from './network/fetchGuard';
@@ -284,7 +288,8 @@ export async function createNightwatchContext(
   const policy = new OutboundPolicy(opts.env);
 
   const optionalSupportBlockedHosts = new Set<string>();
-  const network = createNetworkObserver({ policy, recorder, monitor, optionalSupportBlockedHosts });
+  const browserBackgroundBlockedHosts = new Map<string, import('../core/safety/types').BrowserBackgroundClassification>();
+  const network = createNetworkObserver({ policy, recorder, monitor, optionalSupportBlockedHosts, browserBackgroundBlockedHosts });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;
   let proxyDownRecorded = false;
@@ -385,7 +390,8 @@ export async function createNightwatchContext(
     monitor,
     classifyExpectedContainmentEffect: (text, locationUrl) =>
       classifyOptionalSupportConsoleEffect(text, locationUrl, network.optionalSupportBlockedHosts()) ??
-      classifyTelemetryConsoleEffect(text, locationUrl, network.telemetryBlockedHosts()),
+      classifyTelemetryConsoleEffect(text, locationUrl, network.telemetryBlockedHosts()) ??
+      classifyBrowserBackgroundConsoleEffect(text, locationUrl, network.browserBackgroundBlockedHosts()),
   });
   const pageObserver = createPageObserver({ recorder, monitor });
 
@@ -407,6 +413,7 @@ export async function createNightwatchContext(
     sharedBlocked: network.blockedUrls(),
     optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
     telemetryBlockedHosts: network.telemetryBlockedHosts(),
+    browserBackgroundBlockedHosts: network.browserBackgroundBlockedHosts(),
   });
   page.on('download', onDownload);
 
@@ -423,6 +430,7 @@ export async function createNightwatchContext(
       sharedBlocked: network.blockedUrls(),
       optionalSupportBlockedHosts: network.optionalSupportBlockedHosts(),
       telemetryBlockedHosts: network.telemetryBlockedHosts(),
+      browserBackgroundBlockedHosts: network.browserBackgroundBlockedHosts(),
     });
     p.on('download', onDownload);
   });

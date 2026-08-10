@@ -107,3 +107,38 @@ test('exact optional support blocking is represented as blocked, not unresolved,
   expect(result.unresolved).toEqual([]);
   expect(JSON.stringify(result)).not.toContain('<ID>');
 });
+
+test('exact browser-background blocks are sanitized, categorized, and not unresolved', () => {
+  const hosts = [
+    ['android.clients.google.com', 'BROWSER_BACKGROUND_GOOGLE', 'browser-background-google'],
+    ['update.googleapis.com', 'BROWSER_BACKGROUND_UPDATE', 'browser-background-update'],
+    ['redirector.gvt1.com', 'BROWSER_BACKGROUND_DOWNLOAD', 'browser-background-download'],
+  ] as const;
+  const result = buildDestinationManifest(
+    env,
+    [],
+    hosts.map(([host, classification, hostClass], index) => browserEvent({
+      seq: index + 10,
+      type: 'browser-background',
+      data: {
+        url: `https://${host}/background/<SYNTHETIC_ID>?token=REDACTED`,
+        verdict: 'block-browser-background',
+        hostClass,
+        classification,
+      },
+    }))
+  );
+
+  expect(result.blocked).toHaveLength(3);
+  for (const [hostname, semanticClassification, hostClass] of hosts) {
+    expect(result.blocked.find((entry) => entry.hostname === hostname)).toMatchObject({
+      hostname,
+      semanticClassification,
+      environmentClassification: hostClass,
+      decision: 'block-browser-background',
+    });
+  }
+  expect(result.unresolved).toEqual([]);
+  expect(JSON.stringify(result)).not.toContain('<SYNTHETIC_ID>');
+  expect(JSON.stringify(result)).not.toContain('token=');
+});

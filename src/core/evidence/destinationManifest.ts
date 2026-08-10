@@ -12,6 +12,11 @@ import path from 'node:path';
 import type { EnvironmentConfig } from '../environment/types';
 import type { RunEvent } from './types';
 import type { ProxyEvent, ProxyProtocol } from '../../proxy/types';
+import {
+  isBrowserBackgroundClassification,
+  semanticClassificationForHostClass,
+  type SemanticClassification,
+} from '../safety/types';
 
 export type DestinationCategory = 'EXPECTED' | 'NEW_BUT_VERIFIED' | 'BLOCKED' | 'UNRESOLVED';
 
@@ -19,6 +24,7 @@ export interface DestinationManifestEntry {
   hostname: string;
   protocol: string;
   environmentClassification: string;
+  semanticClassification: SemanticClassification;
   policyRule: string;
   observedPurpose: string;
   decision: string;
@@ -37,6 +43,7 @@ interface Observation {
   hostname: string;
   protocol: string;
   classification: string;
+  semanticClassification: SemanticClassification;
   decision: string;
   ruleId: string;
   purpose: string;
@@ -74,6 +81,8 @@ function purposeForHost(host: string, env: EnvironmentConfig): string {
   if (inEntries(host, env.apiHosts ?? [])) return 'api';
   if (inEntries(host, env.staticAssetHosts)) return 'static-asset';
   if (inEntries(host, env.optionalThirdPartySupportHosts ?? [])) return 'optional-support-chat';
+  const browserBackground = env.browserBackgroundHosts?.find((entry) => entry.host.toLowerCase() === host);
+  if (browserBackground !== undefined) return browserBackground.classification.toLowerCase().replaceAll('_', '-');
   if (inEntries(host, env.telemetryHosts)) return 'telemetry';
   return 'unclassified';
 }
@@ -83,13 +92,20 @@ function environmentClassification(classification: string): string {
   if (classification === 'production') return 'production';
   if (classification === 'telemetry') return 'telemetry';
   if (classification === 'optional-third-party-support') return 'optional-third-party-support';
+  if (classification === 'browser-background-google') return 'browser-background-google';
+  if (classification === 'browser-background-update') return 'browser-background-update';
+  if (classification === 'browser-background-download') return 'browser-background-download';
   if (classification === 'static') return 'static';
   if (classification === 'local') return 'local';
   return 'unknown';
 }
 
 function categoryFor(observation: Observation, env: EnvironmentConfig, verified: ReadonlySet<string>): DestinationCategory {
-  if (observation.decision === 'block-telemetry' || observation.decision === 'block-optional-support') return 'BLOCKED';
+  if (
+    observation.decision === 'block-telemetry' ||
+    observation.decision === 'block-optional-support' ||
+    observation.decision === 'block-browser-background'
+  ) return 'BLOCKED';
   if (observation.decision === 'deny') {
     return observation.classification === 'production' ? 'BLOCKED' : 'UNRESOLVED';
   }
@@ -108,6 +124,8 @@ function fromProxy(event: ProxyEvent, env: EnvironmentConfig): Observation {
     hostname: event.host.toLowerCase(),
     protocol: event.protocol,
     classification: event.classification,
+    semanticClassification:
+      event.semanticClassification ?? semanticClassificationForHostClass(event.classification),
     decision: event.decision,
     ruleId: event.ruleId,
     purpose: purposeForHost(event.host.toLowerCase(), env),
@@ -116,7 +134,7 @@ function fromProxy(event: ProxyEvent, env: EnvironmentConfig): Observation {
 }
 
 function fromBrowserEvent(event: RunEvent, env: EnvironmentConfig): Observation | null {
-  if (event.type !== 'request' && event.type !== 'telemetry' && event.type !== 'optional-support' && event.type !== 'hard-failure') return null;
+  if (event.type !== 'request' && event.type !== 'telemetry' && event.type !== 'optional-support' && event.type !== 'browser-background' && event.type !== 'hard-failure') return null;
   const rawUrl = event.data?.url;
   if (typeof rawUrl !== 'string') return null;
   const hostname = hostOnly(rawUrl);
@@ -127,12 +145,26 @@ function fromBrowserEvent(event: RunEvent, env: EnvironmentConfig): Observation 
       ? 'block-telemetry'
       : event.type === 'optional-support'
         ? 'block-optional-support'
+        : event.type === 'browser-background'
+          ? 'block-browser-background'
       : 'deny';
   const classification = typeof event.data?.hostClass === 'string' ? event.data.hostClass : 'unknown-alphaus';
+  const semanticClassification = typeof event.data?.classification === 'string' && isBrowserBackgroundClassification(event.data.classification)
+    ? event.data.classification
+    : classification === 'telemetry'
+      ? 'TELEMETRY'
+      : classification === 'optional-third-party-support'
+        ? 'OPTIONAL_THIRD_PARTY_SUPPORT'
+        : classification === 'production'
+          ? 'PRODUCTION_DENIED'
+          : classification === 'dev' || classification === 'next' || classification === 'local' || classification === 'static' || classification === 'internal'
+            ? 'EXPECTED'
+            : 'UNKNOWN';
   return {
     hostname,
     protocol: protocolFromUrl(rawUrl),
     classification,
+    semanticClassification,
     decision,
     ruleId: 'browser-policy',
     purpose: purposeForHost(hostname, env),
@@ -185,6 +217,7 @@ export function buildDestinationManifest(
       hostname: group.observation.hostname,
       protocol: group.observation.protocol,
       environmentClassification: environmentClassification(group.observation.classification),
+      semanticClassification: group.observation.semanticClassification,
       policyRule: group.observation.ruleId,
       observedPurpose: group.observation.purpose,
       decision: group.observation.decision,

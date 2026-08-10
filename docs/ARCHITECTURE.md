@@ -47,7 +47,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/safety/types.ts` | Shared safety contracts: `HostClass`, `Verdict`, `OutboundDecision`. | implemented |
 | `src/core/safety/redaction.ts` | `RedactionLayer`: sensitive-header list, sensitive query params, secret-shape patterns (Bearer/JWT/AWS key/PEM/JSON secret fields), runtime secret registry. No I/O. | implemented |
 | `src/core/safety/hosts.ts` | Explicit host classification tables: `KNOWN_PRODUCTION_HOSTS`, `DEV_HOSTS`, `NEXT_HOSTS`, `CLOUD_RUN_SUFFIX` (`.run.app`), `ALPHAUS_DOMAINS` (`alphaus.cloud`, `mobingi.com`). | *in flight* |
-| `src/core/safety/outboundPolicy.ts` | `OutboundPolicy.decide(rawUrl): OutboundDecision`. Rule order: non-http → internal allow; env allowlist → allow; static asset list → allow; telemetry list → block-telemetry; known production → deny; `*.run.app` → deny; unknown `*.alphaus.cloud` → deny; `*.mobingi.com` → deny; localhost when not allowlisted → deny; else external deny. Pure logic, no I/O. | *in flight* |
+| `src/core/safety/outboundPolicy.ts` | `OutboundPolicy.decide(rawUrl): OutboundDecision`. Rule order: non-http → internal allow; env allowlist → allow; static asset list → allow; exact browser-background list → local block; optional support → local block; telemetry list → block-telemetry; known production → deny; `*.run.app` → deny; unknown `*.alphaus.cloud` → deny; `*.mobingi.com` → deny; localhost when not allowlisted → deny; else external deny. Pure logic, no I/O. | *in flight* |
 | `src/core/safety/canary.ts` | Startup policy canary (`runCanary`, `defaultCanaryChecks`, `assertCanary`): asserts the policy/redaction/action tables behave as specified. Pure policy logic, zero network I/O. | *in flight* |
 | `src/core/safety/actions.ts` | Passive action policy: `assertPassiveAction`, `classifyRippleAction`, `RIPPLE_MUTATION_PATTERNS`. Gates every journey step. | *in flight* |
 | `src/core/evidence/types.ts` | Event contracts: `RunEvent`, `RunEventType`, `RunSummary`, `RepoSnapshotRecord`. | implemented |
@@ -55,7 +55,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/repositories/snapshotter.ts` | Read-only git snapshot collector: branch, HEAD SHA, upstream, ahead/behind, dirty state, last commit, timestamp. Never mutates a repo. | *in flight* |
 | `src/browser/context/` | Playwright browser-context factory: system Chrome via `channel`, storage-state by path, tracing decision (disabled when authenticated state is in use), installs the request-inspection route. | *in flight* |
 | `src/browser/observers/` | Console, page-error, and request-failed observers emitting redacted `RunEvent`s. | *in flight* |
-| `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / deny+abort+hard-failure / block-telemetry+abort), redacted request/response recording. | *in flight* |
+| `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / local block+abort / deny+abort+hard-failure), redacted request/response recording. | *in flight* |
 | `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, sanitized event log and runtime health state. | implemented |
 | `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | *in flight* |
 | `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | *in flight* |
@@ -173,6 +173,7 @@ OutboundPolicy.decide(rawUrl)          [rule order, see §2 / SAFETY_MODEL §3]
         ├── internal (non-http scheme: data:, blob:, javascript:) ──► ALLOW
         ├── env allowlist match            ──► ALLOW
         ├── static asset list match        ──► ALLOW
+        ├── exact browser-background match ─► BLOCK-BROWSER-BACKGROUND (abort; recorded; not fatal)
         ├── telemetry list match           ──► BLOCK-TELEMETRY  (abort; recorded; not fatal)
         ├── known production               ──► DENY  (abort + hard-failure; always fatal)
         ├── *.run.app                      ──► DENY  (abort + hard-failure)
@@ -191,6 +192,9 @@ Verdict handling in `src/browser/network`:
 - **deny** — the request is aborted (`route.abort()`) before it leaves the
   browser. A `hard-failure` event is raised; `hard-failure` is always in
   `failOn` and cannot be disabled. The run fails.
+- **block-browser-background** — the exact reviewed Chromium background host
+  is aborted locally; a category-specific sanitized event is recorded and the
+  run remains non-fatal. Related hosts do not match this rule.
 - **block-telemetry** — the request is aborted; a `telemetry` event is
   recorded. It is deliberately **not** fatal (real UIs emit telemetry; a
   dev/next journey must still be usable — D-5).

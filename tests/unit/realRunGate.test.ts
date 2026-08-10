@@ -55,7 +55,7 @@ function proxyFacts(overrides: Partial<ProxyRuntimeState> = {}) {
     host: '127.0.0.1',
     port: 43123,
     environment: 'dev',
-    policyVersion: 'phase-1.2-outbound-policy-v1',
+    policyVersion: 'phase-2a-browser-background-policy-v1',
     eventLogPath: '/tmp/nightwatch-test-events.jsonl',
     ...overrides,
   };
@@ -195,7 +195,7 @@ test('runtime gate validates synthetic external state and loopback proxy health 
       host: '127.0.0.1',
       port: proxy.port,
       environment: 'dev',
-      policyVersion: 'phase-1.2-outbound-policy-v1',
+      policyVersion: 'phase-2a-browser-background-policy-v1',
       eventLogPath: eventLog,
     },
     proxyStateFile

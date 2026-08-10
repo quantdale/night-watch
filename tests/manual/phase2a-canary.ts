@@ -140,7 +140,7 @@ test('Phase 2A unauthenticated Ripple connectivity canary', async ({ browser }) 
       recorder.event({ type: 'navigation', severity: 'error', message: 'unauthenticated landing navigation failed', data: { reason: 'navigation-failed', errorText: recorder.classifyNetworkFailure(String(error instanceof Error ? error.message : error)) } });
     }
     await waitForStability({ network: context.network, quietMs: 500, timeoutMs: 5_000, recorder, monitor: context.monitor });
-    recorder.event({ type: 'env', severity: 'info', message: 'unauthenticated landing structure observed', data: { finalUrl: recorder.redactUrl(context.page.url()), titlePresent: (await context.page.title()).trim().length > 0, navigationError, policyVersion: 'phase-1.2-outbound-policy-v1' } });
+    recorder.event({ type: 'env', severity: 'info', message: 'unauthenticated landing structure observed', data: { finalUrl: recorder.redactUrl(context.page.url()), titlePresent: (await context.page.title()).trim().length > 0, navigationError, policyVersion: 'phase-2a-browser-background-policy-v1' } });
   } finally {
     await context.close();
   }

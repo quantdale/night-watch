@@ -4,6 +4,8 @@
 // startup. production is NOT a supported environment in Phase 1.
 // ---------------------------------------------------------------------------
 
+import type { BrowserBackgroundHostConfig } from '../safety/types';
+
 export type EnvironmentName = 'local' | 'dev' | 'next';
 
 export interface EnvironmentConfig {
@@ -33,6 +35,8 @@ export interface EnvironmentConfig {
   telemetryHosts: string[];
   /** Exact optional support-widget hosts. Blocked locally, never allowlisted. */
   optionalThirdPartySupportHosts?: string[];
+  /** Exact Chromium browser-background hosts. Blocked locally, never allowlisted. */
+  browserBackgroundHosts?: BrowserBackgroundHostConfig[];
   /**
    * Oracle issue event types that fail the run when raised
    * (e.g. 'console-error', 'pageerror', 'malformed-json'). 'hard-failure'

@@ -643,3 +643,27 @@ it never rewrites state. A fresh agent routes through ACTIVE_TASK and resumes
 STATE instead of rediscovering the repository.
 
 **Phase applicability.** 1.3 and all later phases.
+
+---
+
+## D-29 — Reviewed Chromium background hosts are exact local blocks
+
+**Decision.** `android.clients.google.com`, `update.googleapis.com`, and
+`redirector.gvt1.com` are represented by separate exact
+`BROWSER_BACKGROUND_GOOGLE`, `BROWSER_BACKGROUND_UPDATE`, and
+`BROWSER_BACKGROUND_DOWNLOAD` classifications. The browser guard and outer
+proxy abort them before upstream contact; successful containment is recorded
+as sanitized, non-fatal expected containment. They are not telemetry and are
+not allowlisted.
+
+**Rationale.** Human safety review identified these exact Chromium/Google
+browser-background destinations as expected attempts during the guarded DEV
+capture. The approved disposition is “known expected browser-background
+traffic that Nightwatch intentionally blocks,” not permission to contact them.
+
+**Consequences.** No wildcard or related-host approval exists. `clients.google.com`,
+`edgedl.me.gvt1.com`, `redirector.gvt2.com`, and any other new destination
+remain UNKNOWN and fail closed until separately reviewed. The policy version
+advances so stale proxy runtime state cannot be reused.
+
+**Phase applicability.** Phase 2A and later browser phases.

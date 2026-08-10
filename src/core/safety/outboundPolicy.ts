@@ -14,14 +14,25 @@
 // ---------------------------------------------------------------------------
 
 import type { EnvironmentConfig } from '../environment/types';
-import type { HostClass, OutboundDecision } from './types';
+import {
+  browserBackgroundHostClass,
+  semanticClassificationForHostClass,
+  type HostClass,
+  type OutboundDecision,
+} from './types';
 import { isKnownProductionHost, LOCAL_HOSTS, CLOUD_RUN_SUFFIX } from './hosts';
 
 /** Semantic policy version recorded by every containment consumer. */
-export const OUTBOUND_POLICY_VERSION = 'phase-1.2-outbound-policy-v1';
+export const OUTBOUND_POLICY_VERSION = 'phase-2a-browser-background-policy-v1';
 
 function deny(host: string, hostClass: HostClass, reason: string): OutboundDecision {
-  return { verdict: 'deny', hostClass, host, reason };
+  return {
+    verdict: 'deny',
+    hostClass,
+    classification: semanticClassificationForHostClass(hostClass),
+    host,
+    reason,
+  };
 }
 
 function hasUnsupportedTrailingDot(rawUrl: string): boolean {
@@ -102,7 +113,29 @@ export class OutboundPolicy {
     // ws:/wss: ARE network schemes — they must pass the same host classification
     // as http(s) (WebSocket policy in the harness uses this same decide()).
     if (!NETWORK_PROTOCOLS.has(u.protocol)) {
-      return { verdict: 'allow', hostClass: 'internal', host: hostname, reason: 'non-network scheme' };
+      return {
+        verdict: 'allow',
+        hostClass: 'internal',
+        classification: 'EXPECTED',
+        host: hostname,
+        reason: 'non-network scheme',
+      };
+    }
+
+    // Exact browser-background hosts are a safety override: even an invalid
+    // future allowlist edit must not turn a reviewed network-denied host into
+    // an upstream connection.
+    const browserBackground = this.env.browserBackgroundHosts?.find(
+      (entry) => entry.host.toLowerCase() === hostname && !entry.host.includes('*')
+    );
+    if (browserBackground !== undefined) {
+      return {
+        verdict: 'block-browser-background',
+        hostClass: browserBackgroundHostClass(browserBackground.classification),
+        classification: browserBackground.classification,
+        host: hostname,
+        reason: `${browserBackground.classification} host — blocked, not failed`,
+      };
     }
 
     // R3 — explicit environment allowlist: the ONLY route to 'allow'.
@@ -110,6 +143,7 @@ export class OutboundPolicy {
       return {
         verdict: 'allow',
         hostClass: this.env.name,
+        classification: 'EXPECTED',
         host: hostname,
         reason: `allowlisted host for ${this.env.name} environment`,
       };
@@ -117,7 +151,13 @@ export class OutboundPolicy {
 
     // R4 — explicitly classified harmless static assets (CDNs, fonts...).
     if (this.env.staticAssetHosts.some((entry) => entryMatches(hostname, hostPortKey, entry))) {
-      return { verdict: 'allow', hostClass: 'static', host: hostname, reason: 'classified static asset host' };
+      return {
+        verdict: 'allow',
+        hostClass: 'static',
+        classification: 'EXPECTED',
+        host: hostname,
+        reason: 'classified static asset host',
+      };
     }
 
     // R5 — exact optional support-widget hosts: blocked (aborted) but do NOT
@@ -127,6 +167,7 @@ export class OutboundPolicy {
       return {
         verdict: 'block-optional-support',
         hostClass: 'optional-third-party-support',
+        classification: 'OPTIONAL_THIRD_PARTY_SUPPORT',
         host: hostname,
         reason: 'optional third-party support widget — blocked, not failed',
       };
@@ -134,7 +175,13 @@ export class OutboundPolicy {
 
     // R6 — telemetry/analytics: blocked (aborted) but does NOT fail the run.
     if (this.env.telemetryHosts.some((entry) => entryMatches(hostname, hostPortKey, entry))) {
-      return { verdict: 'block-telemetry', hostClass: 'telemetry', host: hostname, reason: 'telemetry host — blocked, not failed' };
+      return {
+        verdict: 'block-telemetry',
+        hostClass: 'telemetry',
+        classification: 'TELEMETRY',
+        host: hostname,
+        reason: 'telemetry host — blocked, not failed',
+      };
     }
 
     // R7 — known Alphaus production hosts (see KNOWN_PRODUCTION_HOSTS in hosts.ts).

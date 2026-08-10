@@ -1,4 +1,9 @@
 // ---------------------------------------------------------------------------
+
+import {
+  browserBackgroundHostClass,
+  type BrowserBackgroundClassification,
+} from '../../core/safety/types';
 // Expected containment-effect attribution.
 //
 // Console errors are never ignored by substring. An error is attributable to
@@ -26,8 +31,14 @@ function mentionsExactHost(value: string, host: string): boolean {
 
 export interface ExpectedContainmentEffect {
   host: string;
-  hostClass: typeof OPTIONAL_SUPPORT_HOST_CLASS | typeof TELEMETRY_HOST_CLASS;
-  classification: typeof OPTIONAL_SUPPORT_CLASSIFICATION | typeof TELEMETRY_CLASSIFICATION;
+  hostClass:
+    | typeof OPTIONAL_SUPPORT_HOST_CLASS
+    | typeof TELEMETRY_HOST_CLASS
+    | Extract<ReturnType<typeof browserBackgroundHostClass>, string>;
+  classification:
+    | typeof OPTIONAL_SUPPORT_CLASSIFICATION
+    | typeof TELEMETRY_CLASSIFICATION
+    | BrowserBackgroundClassification;
   reason: typeof EXPECTED_CONTAINMENT_EFFECT;
 }
 
@@ -71,6 +82,27 @@ export function classifyTelemetryConsoleEffect(
       host,
       hostClass: TELEMETRY_HOST_CLASS,
       classification: TELEMETRY_CLASSIFICATION,
+      reason: EXPECTED_CONTAINMENT_EFFECT,
+    };
+  }
+  return null;
+}
+
+/** Attribute a console error only to an exact blocked browser-background host. */
+export function classifyBrowserBackgroundConsoleEffect(
+  text: string,
+  locationUrl: string | undefined,
+  blockedHosts: ReadonlyMap<string, BrowserBackgroundClassification>
+): ExpectedContainmentEffect | null {
+  for (const [rawHost, classification] of blockedHosts.entries()) {
+    const host = rawHost.toLowerCase();
+    if (!(mentionsExactHost(text, host) || (locationUrl !== undefined && mentionsExactHost(locationUrl, host)))) {
+      continue;
+    }
+    return {
+      host,
+      hostClass: browserBackgroundHostClass(classification),
+      classification,
       reason: EXPECTED_CONTAINMENT_EFFECT,
     };
   }

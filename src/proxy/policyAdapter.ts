@@ -30,6 +30,9 @@ function ruleId(decision: OutboundDecision): string {
   if (decision.reason.includes('embedded credentials')) return 'embedded-credentials';
   if (decision.reason.includes('allowlisted')) return 'environment-allowlist';
   if (decision.reason.includes('static asset')) return 'static-assets';
+  if (decision.classification === 'BROWSER_BACKGROUND_GOOGLE') return 'browser-background-google';
+  if (decision.classification === 'BROWSER_BACKGROUND_UPDATE') return 'browser-background-update';
+  if (decision.classification === 'BROWSER_BACKGROUND_DOWNLOAD') return 'browser-background-download';
   if (decision.reason.includes('optional third-party support')) return 'optional-third-party-support';
   if (decision.reason.includes('telemetry')) return 'telemetry';
   if (decision.reason.includes('known Alphaus production')) return 'known-production';

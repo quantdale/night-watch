@@ -27,7 +27,7 @@ import type { BrowserContext, Page, Request, Response, Route } from '@playwright
 import { RedactionLayer } from '../../core/safety/redaction';
 import { OutboundPolicy, isNetworkUrl } from '../../core/safety/outboundPolicy';
 import { decideBrowserHttp, decideBrowserWebSocket } from '../../core/safety/policyConsumers';
-import { isNonFatalBlock } from '../../core/safety/types';
+import { isBrowserBackgroundClassification, isNonFatalBlock, type BrowserBackgroundClassification } from '../../core/safety/types';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 import {
@@ -58,6 +58,8 @@ export interface NetworkObserver {
   optionalSupportBlockedHosts(): Set<string>;
   /** Exact telemetry hosts intentionally blocked in this context. */
   telemetryBlockedHosts(): Set<string>;
+  /** Exact browser-background hosts and their semantic categories. */
+  browserBackgroundBlockedHosts(): Map<string, BrowserBackgroundClassification>;
 }
 
 export function createNetworkObserver(opts: {
@@ -65,6 +67,7 @@ export function createNetworkObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
   optionalSupportBlockedHosts?: Set<string>;
+  browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -73,6 +76,7 @@ export function createNetworkObserver(opts: {
   const blockedUrls = new Set<string>();
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
   const telemetryBlockedHosts = new Set<string>();
+  const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
 
   async function handleRoute(route: Route): Promise<void> {
     try {
@@ -129,17 +133,29 @@ export function createNetworkObserver(opts: {
           blockedUrls.add(rawUrl);
           if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
           if (decision.verdict === 'block-telemetry') telemetryBlockedHosts.add(decision.host);
+          if (decision.verdict === 'block-browser-background' && isBrowserBackgroundClassification(decision.classification)) {
+            browserBackgroundBlockedHosts.set(decision.host, decision.classification);
+          }
           recorder.event({
-            type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
+            type: decision.verdict === 'block-optional-support'
+              ? 'optional-support'
+              : decision.verdict === 'block-browser-background'
+                ? 'browser-background'
+                : 'telemetry',
             severity: 'info',
             message: decision.verdict === 'block-optional-support'
               ? 'OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED'
-              : `telemetry blocked: ${redactedUrl}`,
+              : decision.verdict === 'block-browser-background'
+                ? 'BROWSER_BACKGROUND_BLOCKED'
+                : `telemetry blocked: ${redactedUrl}`,
             data: {
               url: redactedUrl,
               verdict: decision.verdict,
               hostClass: decision.hostClass,
-              classification: decision.verdict === 'block-optional-support' ? 'OPTIONAL_THIRD_PARTY_SUPPORT' : 'TELEMETRY',
+              classification: decision.classification,
+              ...(decision.verdict === 'block-browser-background'
+                ? { containment: 'EXPECTED_CONTAINMENT_EFFECT' }
+                : {}),
               reason: decision.reason,
             },
           });
@@ -239,17 +255,29 @@ export function createNetworkObserver(opts: {
       blockedUrls.add(rawUrl);
       if (decision.verdict === 'block-optional-support') optionalSupportBlockedHosts.add(decision.host);
       if (decision.verdict === 'block-telemetry') telemetryBlockedHosts.add(decision.host);
+      if (decision.verdict === 'block-browser-background' && isBrowserBackgroundClassification(decision.classification)) {
+        browserBackgroundBlockedHosts.set(decision.host, decision.classification);
+      }
       recorder.event({
-        type: decision.verdict === 'block-optional-support' ? 'optional-support' : 'telemetry',
+        type: decision.verdict === 'block-optional-support'
+          ? 'optional-support'
+          : decision.verdict === 'block-browser-background'
+            ? 'browser-background'
+            : 'telemetry',
         severity: 'info',
         message: decision.verdict === 'block-optional-support'
           ? 'OPTIONAL_THIRD_PARTY_SUPPORT_BLOCKED'
-          : `telemetry blocked: ${redactedUrl}`,
+          : decision.verdict === 'block-browser-background'
+            ? 'BROWSER_BACKGROUND_BLOCKED'
+            : `telemetry blocked: ${redactedUrl}`,
         data: {
           ...base,
           verdict: decision.verdict,
           hostClass: decision.hostClass,
-          classification: decision.verdict === 'block-optional-support' ? 'OPTIONAL_THIRD_PARTY_SUPPORT' : 'TELEMETRY',
+          classification: decision.classification,
+          ...(decision.verdict === 'block-browser-background'
+            ? { containment: 'EXPECTED_CONTAINMENT_EFFECT' }
+            : {}),
         },
       });
       await ws.close(); // never connects to the server
@@ -458,5 +486,6 @@ export function createNetworkObserver(opts: {
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
     telemetryBlockedHosts: () => telemetryBlockedHosts,
+    browserBackgroundBlockedHosts: () => browserBackgroundBlockedHosts,
   };
 }

@@ -55,6 +55,7 @@ export function summarizeProxyEvents(events: readonly ProxyEvent[]): ProxySummar
     allowed: 0,
     telemetryBlocked: 0,
     optionalSupportBlocked: 0,
+    browserBackgroundBlocked: 0,
     denied: 0,
     unknown: 0,
     violations: 0,
@@ -63,6 +64,7 @@ export function summarizeProxyEvents(events: readonly ProxyEvent[]): ProxySummar
     if (event.decision === 'allow') summary.allowed += 1;
     else if (event.decision === 'block-telemetry') summary.telemetryBlocked += 1;
     else if (event.decision === 'block-optional-support') summary.optionalSupportBlocked += 1;
+    else if (event.decision === 'block-browser-background') summary.browserBackgroundBlocked += 1;
     else {
       summary.denied += 1;
       summary.violations += 1;

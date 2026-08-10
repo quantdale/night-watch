@@ -62,6 +62,7 @@ path.
 | Ambiguous target (host classification inconsistent, unparseable URL, unexpected scheme) | **DENY** |
 | Unexpected external host | **DENY** |
 | Environment config missing, invalid JSON, shape-invalid, or `name` mismatch | **DENY** (startup) |
+| Exact reviewed browser-background host | **BLOCK** (abort; recorded; not fatal) |
 | Telemetry host | **BLOCK** (abort; recorded; not fatal) |
 | Non-http(s) scheme (`data:`, `blob:`, `javascript:`, …) | **ALLOW** (internal; never leaves the browser) |
 
@@ -99,6 +100,7 @@ to `allow` for http(s) requests (an entry without a port matches any port).
 | **external** | everything else | deny |
 | **static** | `fonts.googleapis.com`, `fonts.gstatic.com`, `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` | `dev.json` / `next.json` `staticAssetHosts`; `local.json` has none |
 | **telemetry** | `sentry.io` + `*.sentry.io`, `browser.sentry-cdn.com`, `google-analytics.com` + `*.google-analytics.com`, `googletagmanager.com` + `*.googletagmanager.com`, `mixpanel.com` + `*.mixpanel.com`, `cdn.mxpnl.com`, `amplitude.com` + `*.amplitude.com`, `segment.io` + `*.segment.io`, `intercom.io` + `*.intercom.io` | `telemetryHosts` in all three configs; wildcard = suffix match |
+| **browser background** | `android.clients.google.com`, `update.googleapis.com`, `redirector.gvt1.com` | exact `browserBackgroundHosts` entries in all supported configs; no wildcard; local block only |
 | **internal** | non-http(s) schemes | allowed; cannot leave the browser |
 
 Classification nuance: a host's **class** (dev/next/local) does not grant
@@ -254,6 +256,7 @@ The canary checks, at minimum:
   external hosts → `deny`;
 - each environment's allowlist hosts → `allow` **only** in that environment;
 - localhost family → `allow` in `local`, `deny` elsewhere;
+- exact browser-background hosts → `block-browser-background` and never `allow`/`deny`;
 - telemetry hosts → `block-telemetry` (and never `allow`/`deny`);
 - non-http schemes → `allow` as `internal`;
 - redaction: a registered fake secret is absent from every redacted output
@@ -278,8 +281,8 @@ does not see. Build order: `createNightwatchContext()`
 
 | Layer | Mechanism | Role | Status |
 |---|---|---|---|
-| **L0** | raw-CDP Fetch guard per page (`src/browser/network/fetchGuard.ts` `installFetchGuard`): a CDP `Fetch.enable` session pauses EVERY request on the page target — including redirect follow-ups that Playwright routing never re-enters — and resolves each pause with the same `OutboundPolicy` decision (`deny`/`block-telemetry` → `Fetch.failRequest`; `allow` → `continueRequest`) | browser-internal abort of denied/telemetry requests **before** network I/O — the only abort layer for redirect follow-ups; evidence recorded exactly once via the shared `blockedUrls` set | backstop, never authoritative |
-| **L1** | `context.route('**/*')` (`networkObserver.ts` `handleRoute`) | every ordinary HTTP(S) request — pages, frames, iframes, dedicated workers, EventSource, cross-origin downloads, popups (context-wide) — inspected before it leaves the browser: `allow` → continue; `block-telemetry` → abort (recorded, not fatal); `deny` → abort + hard failure | authoritative |
+| **L0** | raw-CDP Fetch guard per page (`src/browser/network/fetchGuard.ts` `installFetchGuard`): a CDP `Fetch.enable` session pauses EVERY request on the page target — including redirect follow-ups that Playwright routing never re-enters — and resolves each pause with the same `OutboundPolicy` decision (`deny`/any local block → `Fetch.failRequest`; `allow` → `continueRequest`) | browser-internal abort of denied/blocked requests **before** network I/O — the only abort layer for redirect follow-ups; evidence recorded exactly once via the shared `blockedUrls` set | backstop, never authoritative |
+| **L1** | `context.route('**/*')` (`networkObserver.ts` `handleRoute`) | every ordinary HTTP(S) request — pages, frames, iframes, dedicated workers, EventSource, cross-origin downloads, popups (context-wide) — inspected before it leaves the browser: `allow` → continue; any explicit local block → abort (recorded, not fatal); `deny` → abort + hard failure | authoritative |
 | **L2** | `context.routeWebSocket('**/*')` (`networkObserver.ts` `handleWebSocket`) | WebSocket creation governed with **identical** policy semantics: `allow` → `connectToServer()`; telemetry → `close()` (blocked, not fatal); production/unknown → `close()` + hard failure before any communication | authoritative |
 | **L3** | `serviceWorkers: 'block'` + init script stubbing the Service Worker API and the `SharedWorker` constructor + `serviceworker` hard-failure alarm (`src/browser/context.ts` `containmentInitScript`, alarm handler) | service-worker fetches (never visible to Playwright routing) and shared-worker fetches (empirically verified to bypass routing) cannot exist; any SW that still registers fires a hard failure | native block + evidence |
 | **L4** | unrouted-request detection (150 ms grace, dedupe via `blockedUrls`) + download record/cancel (`networkObserver.ts` `onRequestObserved`; `src/browser/context.ts` `onDownload`) | redirect follow-ups and download-manager traffic that escape routing are detected and recorded as hard failures; downloads are cancelled — the violation cannot escape evidence or the run verdict | detection + evidence |
@@ -321,7 +324,7 @@ Empirical claims were verified on Playwright 1.62.1 with system Chrome
 | WebSockets | L2 (`context.routeWebSocket('**/*')`) | unit: WebSocket policy tests in `tests/unit/safety.test.ts` (`ws:`/`wss:` in `NETWORK_PROTOCOLS`, `isNetworkUrl`); smoke: a closed-without-connect WS surfaces as `onclose(code 0)` in the page | none |
 | EventSource / SSE | L1 | empirical: EventSource requests enter the route handler; smoke: `tests/smoke/safety.smoke.ts` | none |
 | Downloads | L1 (cross-origin) + L4 (record + cancel) | empirical: cross-origin downloads are routed and denied; smoke: `tests/smoke/safety.smoke.ts` | same-origin downloads bypass routing — benign by construction (§11) |
-| Browser background/speculative traffic | L5 proxy; explicit Chrome launch flags; `accounts.google.com` and `www.google.com` are telemetry-class and blocked locally | local Chromium run with system Chrome; proxy event log recorded the control-plane CONNECT attempts without upstream contact | DNS prefetch itself is not visible to the proxy (**UNRESOLVED**); future container closes the process-level gap |
+| Browser background/speculative traffic | L5 proxy; explicit Chrome launch flags; the three exact reviewed hosts are browser-background classes and blocked locally | local Chromium run with system Chrome; proxy/browser evidence records local containment without upstream contact | DNS prefetch itself is not visible to the proxy (**UNRESOLVED**); future container closes the process-level gap |
 | QUIC / HTTP3 | `--disable-quic` | installed Chrome launch command and local proxy tests | none observed in this configuration |
 | WebRTC/STUN/TURN non-proxied UDP | `--force-webrtc-ip-handling-policy=disable_non_proxied_udp` | installed Chrome launch command; no UDP fixture path is permitted | browser feature is disabled for non-proxied UDP; proxied TURN is not exercised |
 

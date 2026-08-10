@@ -2,7 +2,7 @@
 // Nightwatch — outer egress proxy contracts.
 // ---------------------------------------------------------------------------
 
-import type { HostClass, Verdict } from '../core/safety/types';
+import type { HostClass, SemanticClassification, Verdict } from '../core/safety/types';
 import { OUTBOUND_POLICY_VERSION } from '../core/safety/outboundPolicy';
 
 export type ProxyProtocol = 'http' | 'https-connect' | 'ws' | 'wss';
@@ -16,6 +16,8 @@ export interface ProxyEvent {
   host: string;
   port: number | null;
   classification: HostClass;
+  semanticClassification?: SemanticClassification;
+  containment?: 'EXPECTED_CONTAINMENT_EFFECT';
   decision: Verdict;
   ruleId: string;
   reason: string;
@@ -25,6 +27,7 @@ export interface ProxySummary {
   allowed: number;
   telemetryBlocked: number;
   optionalSupportBlocked: number;
+  browserBackgroundBlocked: number;
   denied: number;
   unknown: number;
   violations: number;

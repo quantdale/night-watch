@@ -79,6 +79,14 @@ export function defaultCanaryChecks(policy: OutboundPolicy): CanaryCheck[] {
     });
   }
 
+  for (const entry of env.browserBackgroundHosts ?? []) {
+    checks.push({
+      label: `browser background: ${entry.host}`,
+      url: `https://${entry.host}/background`,
+      expected: 'block-browser-background',
+    });
+  }
+
   checks.push({ label: 'local: 127.0.0.1', url: 'http://127.0.0.1:1/', expected: env.name === 'local' ? 'allow' : 'deny' });
   checks.push({ label: 'local: localhost', url: 'http://localhost:1/', expected: env.name === 'local' ? 'allow' : 'deny' });
 
