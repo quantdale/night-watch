@@ -16,26 +16,40 @@ Current source inspected narrowly:
 
 At this SHA, Ripple's Vue Router base is `/ripple/`; authenticated `/` and
 `/login` are redirected to `/dashboard`, producing the final browser route
-`/ripple/dashboard`. The shell mount is `#app`, declared in
-`public/index.html` and used by `vm.$mount('#app')` in `src/main.js`.
+`/ripple/dashboard`. The `#app` element declared in `public/index.html` is
+the Vue bootstrap mount target, not the post-mount shell.
+
+The lockfile resolves Vue `2.6.12` and Quasar `1.15.4`. `src/main.js` renders
+`App` with `render: h => h(App)` and calls `vm.$mount('#app')`. `App.vue`
+selects `default-layout` for authenticated route records; `DefaultLayout.vue`
+passes static class `layout` to containerized `q-layout`. Quasar's QLayout
+returns a root `DIV.q-layout-container`, so Vue's class inheritance produces
+the source-backed post-mount shell marker:
+
+```text
+bootstrap mount selector: #app
+post-mount shell selector: .q-layout-container.layout
+post-mount shell element: DIV
+```
 
 ## Root-cause analysis
 
 - `targetConfirmed=false` was a Nightwatch contract mismatch: it required
   exact `/ripple/`, while source-proven authenticated navigation ends at
   `/ripple/dashboard`.
-- `appRootPresent=false` came from the runtime query finding no source-backed
-  `#app` in the sampled final document. The selector itself is source-correct;
-  deployment-versus-timing cause is unresolved without prohibited DOM/body
-  inspection. No selector weakening was made.
+- The historical `appRootPresent=false` result came from querying the Vue
+  bootstrap placeholder after mount. Vue 2.6.12 normally replaces that
+  non-hydrating target, so the absence is expected and is not evidence of
+  deployment/source divergence. Nightwatch now records it only as
+  `bootstrapMountTargetPresent` and queries the rendered shell separately.
 - `stabilityReached=false` was produced by the old generic network-idle wait:
-  zero active requests and 750 ms quiet for up to 15 seconds. It was
-  independent of target and app-root predicates. The repaired authenticated
-  contract uses complete document readiness, `#app`, and unchanged route for
-  750 ms; benign recurring reads and exact locally blocked telemetry/Pylon/
-  browser-background traffic do not create instability. Missing `#app` is an
-  upstream prerequisite for structural stability; target confirmation remains
-  independent.
+  zero active requests and 750 ms quiet for up to 15 seconds. In the current
+  structural timer, `routeStable=true` with `routeStableMs=0` was causal: the
+  route stayed unchanged, but the old `#app` predicate never started the
+  continuous interval. The repaired contract uses complete document readiness,
+  the rendered shell, and unchanged route for 750 ms; benign recurring reads
+  and exact locally blocked telemetry/Pylon/browser-background traffic do not
+  create instability.
 
 The three old booleans therefore were not three independent product failures.
 The target mismatch was independent; the old stability timeout was a generic
@@ -49,7 +63,7 @@ made a readiness blocker.
 
 ## Repair
 
-Implementation SHA: `ed337d75966f8af20130df32e084459da74dff50`.
+Repair implementation SHA: `701748ed516d83aa09b88e6e2a9875cec726142c`.
 
 Changed files:
 
@@ -64,20 +78,28 @@ paths remain non-final or fatal under the existing policy. Privacy remains
 structural and metadata-only; no customer text, identity, financial value,
 DOM dump, body, screenshot, trace, or storage-state content is used.
 
+A local browser regression runs the actual Vue `2.6.12` UMD runtime against
+`<body><div id="app"></div></body>` and verifies that `#app` disappears while
+`DIV.q-layout-container.layout` is present. The readiness matrix rejects the
+placeholder alone, requires the rendered shell, starts stability after delayed
+shell appearance, resets on route/shell changes, and keeps safety/oracle
+signals independent.
+
 ## Validation
 
-- Focused readiness/runner/gate tests: **21 passed, 0 failed**.
-- Readiness matrix: **12 passed, 0 failed**.
+- Focused readiness/mount/stability tests: **20 passed, 0 failed**.
 - `npx tsc --noEmit`: PASS.
-- `npx playwright test`: **171 passed, 0 failed**.
+- Full local suite after the repair: **179 passed, 0 failed**.
 - `npm run agent:check`: PASS with only the expected checkpoint-state
   classification during implementation/state transition.
 - `git diff --check`: PASS.
 
 No Alphaus repository was modified. No real Alphaus request, authenticated
-observation, replay, production traffic, database query, mutation, external
-state read/write, or real authenticated traffic occurred in this repair
-session. The external auth state remains outside Nightwatch and uninspected.
+retry, replay, production traffic, database query, mutation, external state
+read/write, or real authenticated traffic occurred in this repair session.
+The latest real run remains `nightwatch-20260810T140122Z-02d9` with gate
+13/13 PASS and final `/ripple/dashboard`; replay remains NOT RUN. The external
+auth state remains outside Nightwatch and uninspected.
 
 ## Exact fresh-session retry
 

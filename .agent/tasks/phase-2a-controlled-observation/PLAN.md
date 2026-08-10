@@ -340,15 +340,16 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the exact authenticated command passed all 13
-  pre-real-run checks and completed its first guarded landing observation, but
-  stopped before replay because sanitized readiness reported the approved DEV
-  origin with `/ripple/dashboard`, `appRootPresent=false`, and
-  `stabilityReached=false`. The current local `origin/dev` source comparison
-  proves `#app` remains the exact root marker; Nightwatch now records bounded
-  structural diagnostics without weakening readiness. No real retry, replay,
-  production attempt, mutation, or DB query is authorized in this repair
-  session.
+- Status: IN_PROGRESS — the exact authenticated retry passed all 13 pre-real-run
+  checks and completed one guarded first observation, but replay was prohibited
+  because the final sanitized readiness result used the historical
+  `#app`-absence predicate and had `stabilityReached=false`. The approved DEV
+  route was `/ripple/dashboard` and `targetConfirmed=true`. Current source and
+  Vue 2.6.12 framework behavior prove that `#app` is only the bootstrap mount
+  target; authenticated `DefaultLayout` renders the post-mount
+  `DIV.q-layout-container.layout` shell. Nightwatch is repaired to require that
+  rendered shell instead. No real retry, replay, production attempt, mutation,
+  or DB query is authorized in this repair session.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -667,6 +668,104 @@ pass (agent-check has only the expected pre-checkpoint stale-baseline warning).
 No real authenticated request, replay, production traffic, mutation, database
 query, storage-state read, or Alphaus repository modification occurred. M7
 remains IN_PROGRESS and the retry is deferred to a fresh session.
+
+#### M7 authenticated DEV root-absent retry checkpoint — 2026-08-10 — `nightwatch-20260810T140122Z-02d9`
+
+The exact retry command passed the strict pre-real-run gate with **13/13
+checks PASS** before authenticated context creation. The first controlled
+observation then performed direct landing navigation only and stopped before
+fresh-context replay because the first result was unsuccessful. No third-party
+host was dynamically approved and no replay or deliberate endpoint action was
+performed.
+
+Sanitized first-pass result:
+
+- final origin: `https://appdev.alphaus.cloud`;
+- final path: `/ripple/dashboard`;
+- `targetConfirmed=true`;
+- `documentReadyState=complete`;
+- `topLevelPage=true`, `frameCount=1`, `iframeCount=0`;
+- `evaluationFrame=top-level-main-frame`, evaluation succeeded;
+- `bootstrapMountSelector=#app`, `bootstrapMountTargetPresent=false`;
+- the historical run did not sample the repaired post-mount shell selector;
+- `bodyPresent=true`, `bodyChildCount=11`;
+- `navigationInProgress=false`, `pageClosed=false`, `fatalPageErrorCount=0`;
+- first readiness sample: `interactive`, historical bootstrap target absent,
+  elapsed
+  `11254ms`;
+- final readiness sample: `complete`, historical bootstrap target absent,
+  elapsed
+  `26310ms`;
+- bounded wait: full configured `15000ms` readiness window elapsed;
+- `routeStable=true` in the final sample, but `routeStableMs=0` because the
+  source-backed structural shell prerequisite was never continuously ready;
+- `stabilityReached=false` and `navigationFailed=false`;
+- the old diagnosis `SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED` was caused
+  by treating the pre-mount placeholder as a post-mount invariant.
+
+The historical `#app` absence is expected after a successful non-hydrating
+Vue mount and is not evidence of shell mount/deployment divergence. The prior
+`routeStable=true` with `routeStableMs=0` was causal: the route remained
+unchanged, but the old structural predicate never became ready, so the 750ms
+continuous interval never started. The repaired observer now samples the
+source-backed rendered shell and starts that interval only when the shell and
+complete document are present. No authenticated retry was run to determine
+whether the repaired shell is present in the same deployment.
+
+The destination manifest recorded 4 expected, 0 new-but-verified, 7 blocked
+expected-containment groups, and 0 unresolved. Proxy counts were 3 allowed, 9
+telemetry-blocked, 1 browser-background-blocked, 0 denied, 0 unknown, and 0
+violations. Production attempts, mutations, DB queries, and deliberately
+replayed endpoints were 0. Encountered API initialization calls remained
+metadata-only `UNKNOWN` semantic observations.
+
+The known oracle anomaly recurred twice as sanitized `malformed-json` evidence
+for `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>` with HTTP 200 and
+declared `application/json`; response bodies were not inspected or persisted.
+It remained an oracle anomaly, not a safety failure. Category-level artifact
+privacy review passed for credentials/tokens/JWTs, cookies/storage-state
+material, user/customer/account identity, raw request/response bodies,
+financial values, and screenshots/traces/DOM dumps. The external auth state
+remained outside Nightwatch and uninspected.
+
+Final validation after the retry: `npx tsc --noEmit` PASS; `npx playwright
+test` **175 passed, 0 failed**; `npm run agent:check` PASS with the expected
+approved checkpoint-advance warning; `git diff --check` PASS. M7 remains
+IN_PROGRESS and no replay is authorized from this checkpoint.
+
+#### M7 post-mount shell contract repair checkpoint — 2026-08-11
+
+The required read-only Ripple source/framework review classifies the old
+`#app` predicate as `APP_IS_PREMOUNT_TARGET_ONLY`:
+
+- `package-lock.json` resolves Vue `2.6.12` and Quasar `1.15.4`.
+- `src/main.js:2,48-52,324` imports `App`, renders it with `render: h => h(App)`,
+  and calls `vm.$mount('#app')`.
+- Vue `2.6.12`'s local runtime/source path resolves `$mount()` to a real-element
+  patch; the patch creates the rendered vnode and removes the old mount element
+  when the render tree does not hydrate it.
+- `src/App.vue:1-5` selects the authenticated `default-layout`; all
+  `requiresAuth` route records use the default layout.
+- `src/layouts/DefaultLayout.vue:1-2` supplies `q-layout` with `container` and
+  static class `layout`. Quasar `1.15.4`'s `QLayout` returns a root `DIV` with
+  static class `q-layout-container`; Vue class inheritance preserves
+  `layout`, producing `DIV.q-layout-container.layout`.
+
+A local browser regression runs the exact Vue `2.6.12` UMD runtime against a
+synthetic `<body><div id="app"></div></body>` document and observes Vue
+`2.6.12`, bootstrap target absent after mount, and the rendered
+`DIV.q-layout-container.layout` shell present. The pre-mount target alone is
+explicitly rejected by readiness.
+
+Nightwatch now distinguishes `bootstrapMountSelector=#app` from
+`renderedShellSelector=.q-layout-container.layout` and uses only
+`renderedShellPresent` for the shell readiness predicate. Structural stability
+requires complete document readiness, rendered shell present, and the route
+unchanged continuously for `750ms`; benign recurring network activity and the
+malformed-json oracle remain independent. The latest real run is not replayed
+or retried here, so its repaired shell presence remains unknown.
+
+M7 remains IN_PROGRESS; replay remains NOT RUN and Phase 2B remains deferred.
 
 ### M8 — Produce the destination manifest
 
