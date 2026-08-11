@@ -15,7 +15,7 @@ function readEvents(file: string): Array<Record<string, unknown>> {
     .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
-test('bootstrap hooks capture unhandled rejection, CSP, and route categories without page values', async ({ context, page }) => {
+test('bootstrap hooks capture lifecycle, route, rejection, and CSP categories without page values', async ({ context, page }) => {
   const runId = `bootstrap-hooks-${Date.now()}`;
   const recorder = new RunRecorder({
     runId,
@@ -35,8 +35,18 @@ test('bootstrap hooks capture unhandled rejection, CSP, and route categories wit
         dispatchEvent: (event: unknown) => boolean;
         Event: new (type: string) => unknown;
         Promise: PromiseConstructor;
+        document: {
+          querySelector: (selector: string) => { remove: () => void } | null;
+          createElement: (tagName: string) => { className: string };
+          body: { appendChild: (element: unknown) => void };
+        };
       };
       pageGlobal.history.pushState({}, '', '#synthetic-route');
+      const mount = pageGlobal.document.querySelector('#app');
+      mount?.remove();
+      const shell = pageGlobal.document.createElement('div');
+      shell.className = 'q-layout-container layout';
+      pageGlobal.document.body.appendChild(shell);
       pageGlobal.dispatchEvent(new pageGlobal.Event('securitypolicyviolation'));
       pageGlobal.Promise.reject(new Error('synthetic secret must not be recorded'));
     });
@@ -51,7 +61,13 @@ test('bootstrap hooks capture unhandled rejection, CSP, and route categories wit
       'route-transition',
       'csp-violation',
       'unhandled-rejection',
+      'bootstrap-target',
+      'rendered-shell',
     ]));
+    const lifecycle = events.filter((entry) => entry.type === 'bootstrap' &&
+      ['bootstrap-target', 'rendered-shell', 'route-transition'].includes(String((entry.data as Record<string, unknown> | undefined)?.category)));
+    expect(lifecycle.some((entry) => (entry.data as Record<string, unknown>)?.phase === 'seen')).toBe(true);
+    expect(lifecycle.some((entry) => (entry.data as Record<string, unknown>)?.phase === 'removed')).toBe(true);
     const artifactText = fs.readFileSync(path.join(recorder.dir, 'events.jsonl'), 'utf8');
     expect(artifactText).not.toContain('synthetic secret');
     expect(artifactText).not.toContain('synthetic-route');

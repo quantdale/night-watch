@@ -17,6 +17,7 @@ import {
   validateStorageStateOutputPath,
   resolveStorageStatePath,
   isAuthenticatedRun,
+  inspectStorageStateKeyPresence,
 } from '../../src/browser/fixtures/storageState';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
@@ -148,6 +149,31 @@ test.describe('storage-state secret handling', () => {
     } finally {
       if (prev !== undefined) process.env[NIGHTWATCH_STORAGE_STATE_VAR] = prev;
       else delete process.env[NIGHTWATCH_STORAGE_STATE_VAR];
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('source-defined presence inspection returns booleans and never values', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_REALISTIC_TOKEN_SHOULD_NOT_ESCAPE', domain: '127.0.0.1', path: '/' },
+        { name: 'api_type', value: 'dev', domain: '127.0.0.1', path: '/' },
+      ],
+      origins: [{ origin: 'http://127.0.0.1', localStorage: [{ name: 'secret-key', value: 'FAKE_LOCAL_SECRET' }] }],
+    });
+    try {
+      const presence = inspectStorageStateKeyPresence(file, {
+        cookie: ['mo_access_token', 'api_type', 'app_type'],
+        localStorage: ['secret-key'],
+      });
+      expect(presence).toEqual({
+        cookieNames: { mo_access_token: true, api_type: true, app_type: false },
+        localStorageNames: { 'secret-key': true },
+        originCount: 1,
+      });
+      expect(JSON.stringify(presence)).not.toContain('FAKE_REALISTIC_TOKEN_SHOULD_NOT_ESCAPE');
+      expect(JSON.stringify(presence)).not.toContain('FAKE_LOCAL_SECRET');
+    } finally {
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
   });

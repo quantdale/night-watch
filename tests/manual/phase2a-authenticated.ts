@@ -15,7 +15,11 @@ import { spawnSync } from 'node:child_process';
 import { assertSupportedEnvironment, loadEnvironmentConfig } from '../../src/core/environment';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
-import { validateStorageStateFile } from '../../src/browser/fixtures/storageState';
+import {
+  inspectStorageStateKeyPresence,
+  validateStorageStateFile,
+} from '../../src/browser/fixtures/storageState';
+import { installDocumentLifecycleObserver, type DocumentLifecycleObserver } from '../../src/browser/observers/documentLifecycle';
 import { waitForRippleStability } from '../../src/browser/observers/stability';
 import {
   classifyRippleReadiness,
@@ -404,6 +408,40 @@ async function observeOnce(
     data: { environment: env.name, url: recorder.redactUrl(target), storageStateLoaded: true, pass },
   });
 
+  // Only fixed, source-proven key names are inspected. The helper returns
+  // booleans and counts; no cookie or storage value can enter this event.
+  const storagePresence = inspectStorageStateKeyPresence(storageStatePath, {
+    cookie: ['mo_access_token', 'api_type', 'app_type'],
+  });
+  const authRequiredStatePresent = storagePresence.cookieNames.mo_access_token === true;
+  const provenanceMatch = true;
+  const storageStateLoadedBeforeNavigation = true;
+  const authBootstrapStatePresence = {
+    storageStateLoadedBeforeNavigation,
+    provenanceMatch,
+    authRequired: {
+      key: 'mo_access_token',
+      present: authRequiredStatePresent,
+      presentCount: authRequiredStatePresent ? 1 : 0,
+      total: 1,
+    },
+    environmentSelection: {
+      apiTypePresent: storagePresence.cookieNames.api_type === true,
+      appTypePresent: storagePresence.cookieNames.app_type === true,
+      presentCount: [storagePresence.cookieNames.api_type, storagePresence.cookieNames.app_type]
+        .filter((present) => present === true).length,
+      total: 2,
+      fallbackAllowedForDevBootstrap: true,
+    },
+  };
+  recorder.addManifestEntry('authBootstrapStatePresence', authBootstrapStatePresence);
+  recorder.event({
+    type: 'env',
+    severity: 'info',
+    message: 'source-defined authenticated bootstrap state presence observed',
+    data: { ...authBootstrapStatePresence, pass },
+  });
+
   const proxyEventLogStart = (() => {
     try {
       return readProxyEvents(readProxyRuntimeState(proxyStatePath()).eventLogPath).length;
@@ -421,6 +459,7 @@ async function observeOnce(
     failOn: ['hard-failure'],
     bootstrapDiagnostics: true,
   });
+  let documentLifecycle: DocumentLifecycleObserver | null = null;
   let navigationFailed = false;
   let stabilityReached = false;
   let readiness: ReadinessEvidence;
@@ -448,6 +487,7 @@ async function observeOnce(
     }
   });
   try {
+    documentLifecycle = await installDocumentLifecycleObserver(context.page, recorder);
     recorder.event({
       type: 'navigation',
       severity: 'info',
@@ -559,7 +599,7 @@ async function observeOnce(
       readinessDiagnosis: finalDiagnostics.readinessDiagnosis,
       pageReferenceCapturedBeforeNavigation,
       navigationAfterPageReference: mainFrameNavigationCount > 0,
-      mainFrameNavigationCount,
+      mainFrameNavigationCount: Math.max(mainFrameNavigationCount, documentLifecycle?.mainDocumentNavigationCount() ?? 0),
       firstReadinessSampleElapsedMs,
       firstReadinessDocumentReadyState,
       firstReadinessRenderedShellPresent,
@@ -594,6 +634,7 @@ async function observeOnce(
       context.monitor.recordIssue(issue);
     }
   } finally {
+    await documentLifecycle?.close();
     await context.close();
   }
 
@@ -607,6 +648,12 @@ async function observeOnce(
       mainFrameNavigationCount: readiness.mainFrameNavigationCount,
     },
     BOOTSTRAP_OBSERVER_COVERAGE,
+    {
+      authHosts: env.authHosts,
+      storageStateLoadedBeforeNavigation,
+      provenanceMatch,
+      authRequiredStatePresent,
+    },
   );
   recorder.addManifestEntry('bootstrapDiagnostics', bootstrapDiagnostics);
   recorder.event({

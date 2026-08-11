@@ -9,6 +9,11 @@
 // ---------------------------------------------------------------------------
 
 import type { RunEvent } from '../../core/evidence/types';
+import {
+  buildRippleLifecycleDiagnostics,
+  type RippleLifecycleDiagnostics,
+} from './lifecycleDiagnostics';
+import type { AuthReplayEffectiveness } from './bootstrapContract';
 
 export type BootstrapClassification =
   | 'AUTH_STATE_REPLAY_INEFFECTIVE'
@@ -99,6 +104,8 @@ export interface RippleBootstrapDiagnostics {
   observerCoverage: BootstrapObserverCoverage;
   failedCriticalResources: BootstrapFailureResource[];
   classification: BootstrapClassification;
+  authReplayEffectiveness: AuthReplayEffectiveness;
+  lifecycle: RippleLifecycleDiagnostics;
 }
 
 export interface BootstrapClassificationInput {
@@ -152,6 +159,13 @@ interface FinalBootstrapState {
   stabilityReached: boolean;
   finalPath: string | null;
   mainFrameNavigationCount: number;
+}
+
+export interface BootstrapLifecycleInput {
+  authHosts?: readonly string[];
+  storageStateLoadedBeforeNavigation: boolean;
+  provenanceMatch: boolean;
+  authRequiredStatePresent: boolean;
 }
 
 const JS_CONTENT_TYPE = /(java|ecma)script/i;
@@ -409,6 +423,11 @@ export function buildRippleBootstrapDiagnostics(
   events: readonly RunEvent[],
   finalState: FinalBootstrapState,
   observerCoverage: BootstrapObserverCoverage,
+  lifecycleInput: BootstrapLifecycleInput = {
+    storageStateLoadedBeforeNavigation: false,
+    provenanceMatch: false,
+    authRequiredStatePresent: false,
+  },
 ): RippleBootstrapDiagnostics {
   const records: ResourceRecord[] = [];
   const pending = new Map<string, ResourceRecord[]>();
@@ -453,9 +472,25 @@ export function buildRippleBootstrapDiagnostics(
   const observerBlindSpot = Object.values(observerCoverage).some((covered) => !covered);
   const readinessConfirmed = authenticatedRouteReached &&
     finalState.renderedShellPresent && finalState.stabilityReached;
+  const lifecycle = buildRippleLifecycleDiagnostics(events, {
+    finalPath: finalState.finalPath,
+    applicationEntryCompleted: classified.applicationEntryCompleted,
+    authHosts: lifecycleInput.authHosts,
+    storageStateLoadedBeforeNavigation: lifecycleInput.storageStateLoadedBeforeNavigation,
+    provenanceMatch: lifecycleInput.provenanceMatch,
+    authRequiredStatePresent: lifecycleInput.authRequiredStatePresent,
+    renderedShellPresent: finalState.renderedShellPresent,
+    runtimeExceptionCount: events.filter((event) => event.type === 'pageerror').length,
+    unhandledRejectionCount,
+  });
+  const authState = lifecycle.authReplayEffectiveness === 'CONFIRMED'
+    ? 'effective'
+    : lifecycle.authReplayEffectiveness === 'INEFFECTIVE'
+      ? 'ineffective'
+      : 'unknown';
   const classification = classifyBootstrapEvidence({
     documentLoaded: classified.documentLoaded,
-    authState: 'unknown',
+    authState,
     applicationEntryCompleted: classified.applicationEntryCompleted,
     criticalAssetFailure: classified.criticalAssetFailure,
     requiredResourceBlocked: classified.requiredResourceBlocked,
@@ -505,5 +540,7 @@ export function buildRippleBootstrapDiagnostics(
     observerCoverage,
     failedCriticalResources: classified.failedCriticalResources,
     classification,
+    authReplayEffectiveness: lifecycle.authReplayEffectiveness,
+    lifecycle,
   };
 }

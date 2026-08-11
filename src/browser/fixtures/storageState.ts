@@ -102,6 +102,49 @@ export function validateStorageStateFile(p: string, opts?: StorageStateOptions):
   return abs;
 }
 
+export interface StorageStateKeyPresence {
+  cookieNames: Readonly<Record<string, boolean>>;
+  localStorageNames: Readonly<Record<string, boolean>>;
+  originCount: number;
+}
+
+/**
+ * Return presence booleans for a caller-supplied, source-defined key catalog.
+ * This function intentionally does not return, log, hash, or register any
+ * cookie/localStorage values. Callers must pass fixed key names rather than
+ * names discovered from the state file.
+ */
+export function inspectStorageStateKeyPresence(
+  p: string,
+  keys: { cookie: readonly string[]; localStorage?: readonly string[] },
+): StorageStateKeyPresence {
+  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
+  const origins = Array.isArray(parsed.origins) ? parsed.origins : [];
+  const cookieNames = new Set(
+    cookies
+      .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+      .map((item) => item.name)
+      .filter((name): name is string => typeof name === 'string'),
+  );
+  const localStorageNames = new Set<string>();
+  for (const origin of origins) {
+    if (origin === null || typeof origin !== 'object') continue;
+    const entries = (origin as Record<string, unknown>).localStorage;
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      if (entry === null || typeof entry !== 'object') continue;
+      const name = (entry as Record<string, unknown>).name;
+      if (typeof name === 'string') localStorageNames.add(name);
+    }
+  }
+  return {
+    cookieNames: Object.fromEntries(keys.cookie.map((key) => [key, cookieNames.has(key)])),
+    localStorageNames: Object.fromEntries((keys.localStorage ?? []).map((key) => [key, localStorageNames.has(key)])),
+    originCount: origins.length,
+  };
+}
+
 /**
  * Validate a destination before a human-led capture writes secret state.
  * The destination must not already exist; capture never overwrites a file.
