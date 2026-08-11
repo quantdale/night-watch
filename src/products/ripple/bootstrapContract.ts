@@ -60,6 +60,48 @@ export interface RippleStoragePresence {
   };
 }
 
+export interface RippleSemanticStateInput {
+  /** Presence and non-empty structure are booleans so values never escape. */
+  authTokenPresent: boolean;
+  authTokenStructurallyNonEmpty: boolean;
+  /** Optional DEV cookies may be absent because the source has host fallbacks. */
+  apiTypePresent: boolean;
+  apiTypeMatchesSelectedEnvironment: boolean;
+  appTypePresent: boolean;
+  appTypeMatchesRippleApplication: boolean;
+}
+
+export interface RippleSemanticStateValidation {
+  authTokenStructurallyNonEmpty: boolean;
+  environmentStateMatchesSelectedDev: boolean;
+  applicationStateMatchesRipple: boolean;
+  requiredBootstrapStateSemanticallyValid: boolean;
+}
+
+/**
+ * Reduce source-defined semantic checks to booleans only. The real observer
+ * deliberately does not call this against an authenticated storage file in
+ * the current session; synthetic callers may supply already-reduced facts.
+ */
+export function validateRippleSemanticState(
+  input: RippleSemanticStateInput,
+): RippleSemanticStateValidation {
+  const authTokenStructurallyNonEmpty = input.authTokenPresent && input.authTokenStructurallyNonEmpty;
+  const environmentStateMatchesSelectedDev =
+    !input.apiTypePresent || input.apiTypeMatchesSelectedEnvironment;
+  const applicationStateMatchesRipple =
+    !input.appTypePresent || input.appTypeMatchesRippleApplication;
+  return {
+    authTokenStructurallyNonEmpty,
+    environmentStateMatchesSelectedDev,
+    applicationStateMatchesRipple,
+    requiredBootstrapStateSemanticallyValid:
+      authTokenStructurallyNonEmpty &&
+      environmentStateMatchesSelectedDev &&
+      applicationStateMatchesRipple,
+  };
+}
+
 export type AuthReplayEffectiveness = 'CONFIRMED' | 'INEFFECTIVE' | 'UNRESOLVED';
 
 export interface AuthReplayClassificationInput {

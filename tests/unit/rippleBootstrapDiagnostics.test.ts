@@ -74,6 +74,8 @@ function documentAndEntry(entryResponse: RunEvent = response(
 function final(overrides: Partial<Parameters<typeof buildRippleBootstrapDiagnostics>[1]> = {}) {
   return {
     renderedShellPresent: false,
+    routeStable: false,
+    routeStableMs: 0,
     stabilityReached: false,
     finalPath: '/ripple/',
     mainFrameNavigationCount: 1,

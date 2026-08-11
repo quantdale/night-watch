@@ -102,18 +102,28 @@ test('target never appears -> source/document mismatch candidate without readine
   expect(diagnostics.bootstrapProgress.classification).toBe('NO_MOUNT_PROGRESS');
 });
 
-test('target removal without shell -> post-mount render failure candidate', () => {
+test('target removal without shell -> Vue initial patch observed, later branch unresolved', () => {
   const diagnostics = buildRippleLifecycleDiagnostics([
     ...baseDocumentEvents(),
     event('bootstrap', { category: 'bootstrap-target', phase: 'removed', elapsedMs: 15, path: '/ripple/' }),
   ], lifecycleInput());
-  expect(diagnostics.bootstrapProgress.classification).toBe('POST_MOUNT_RENDER_FAILURE_CANDIDATE');
+  expect(diagnostics.bootstrapProgress.classification).toBe('VUE_INITIAL_PATCH_OBSERVED');
+  expect(diagnostics.postMountCheckpoints.vueInitialPatch).toBe(true);
+  expect(diagnostics.postMountCheckpoints.initialRouteResolved).toBe(false);
+  expect(diagnostics.postMountCheckpoints.qLayoutRendered).toBe(false);
 });
 
-test('expected bootstrap reload, application reload, and server redirect are distinct', () => {
+test('source reload proof is distinct from resource-error correlation and server redirect', () => {
   const expectedEvents = [
     ...baseDocumentEvents(),
     event('bootstrap', { category: 'resource-error-event', phase: 'resource-error', resourceKind: 'script', path: '/ripple/' }),
+    event('bootstrap', {
+      category: 'source-reload-signal',
+      phase: 'reload-trigger',
+      sourceReloadOwner: 'Ripple',
+      sourceReloadPath: 'public/index.html',
+      sourceReloadTrigger: 'script-or-link-error',
+    }),
     documentEvent('request', 2, {
       origin: 'http://127.0.0.1:43111',
       path: '/ripple/',
@@ -125,9 +135,23 @@ test('expected bootstrap reload, application reload, and server redirect are dis
     documentEvent('response', 2, { origin: 'http://127.0.0.1:43111', path: '/ripple/', status: 200, contentType: 'text/html' }),
   ];
   const expected = buildRippleLifecycleDiagnostics(expectedEvents, lifecycleInput());
-  expect(expected.documentNavigationClassifications).toEqual(['EXPECTED_BOOTSTRAP_RELOAD']);
+  expect(expected.documentNavigationClassifications).toEqual(['SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD']);
 
-  const appReload = buildRippleLifecycleDiagnostics([
+  const correlatedOnly = buildRippleLifecycleDiagnostics([
+    ...baseDocumentEvents(),
+    event('bootstrap', { category: 'resource-error-event', phase: 'resource-error', resourceKind: 'script', path: '/ripple/' }),
+    documentEvent('request', 2, {
+      origin: 'http://127.0.0.1:43111',
+      path: '/ripple/',
+      method: 'GET',
+      navigationInitiatorCategory: 'script',
+      redirectChainPresent: false,
+      replacesMainDocument: true,
+    }),
+  ], lifecycleInput());
+  expect(correlatedOnly.documentNavigationClassifications).toEqual(['RELOAD_CAUSE_UNRESOLVED']);
+
+  const noSignal = buildRippleLifecycleDiagnostics([
     ...baseDocumentEvents(),
     documentEvent('request', 2, {
       origin: 'http://127.0.0.1:43111',
@@ -138,7 +162,7 @@ test('expected bootstrap reload, application reload, and server redirect are dis
       replacesMainDocument: true,
     }),
   ], lifecycleInput());
-  expect(appReload.documentNavigationClassifications).toEqual(['APP_INITIATED_RELOAD']);
+  expect(noSignal.documentNavigationClassifications).toEqual(['RELOAD_CAUSE_UNRESOLVED']);
 
   const serverRedirect = buildRippleLifecycleDiagnostics([
     ...baseDocumentEvents(),
@@ -153,6 +177,34 @@ test('expected bootstrap reload, application reload, and server redirect are dis
     }),
   ], lifecycleInput({ finalPath: '/ripple/dashboard' }));
   expect(serverRedirect.documentNavigationClassifications).toEqual(['SERVER_REDIRECT']);
+});
+
+test('history-mode router observation is fixed-primitive only and does not claim initialization', () => {
+  const diagnostics = buildRippleLifecycleDiagnostics([
+    ...baseDocumentEvents(),
+    event('bootstrap', { category: 'route-transition', phase: 'replaceState', path: '/ripple/dashboard' }),
+    event('bootstrap', { category: 'post-mount-structure', phase: 'replacement', elapsedMs: 12,
+      vueInitialPatchObserved: true, replacementNodeType: 'element', replacementTag: 'DIV',
+      matchesDefaultLayout: true, matchesQLayout: true, rootBranch: 'default-layout' }),
+    event('bootstrap', { category: 'rendered-shell', phase: 'seen', elapsedMs: 14, path: '/ripple/dashboard' }),
+  ], lifecycleInput({
+    finalPath: '/ripple/dashboard',
+    renderedShellPresent: true,
+    routeStable: true,
+    routeStableMs: 900,
+    stabilityReached: true,
+  }));
+  expect(diagnostics.postMountCheckpoints).toMatchObject({
+    routerMode: 'history',
+    routerInitialized: 'NOT_DIRECTLY_OBSERVABLE',
+    initialRouteResolved: true,
+    dashboardRouteActive: true,
+    defaultLayoutRendered: true,
+    qLayoutRendered: true,
+    routeStable: true,
+    routeStableMs: 900,
+    stabilityReached: true,
+  });
 });
 
 test('required auth state absent plus source login branch is ineffective, not merely unresolved', () => {

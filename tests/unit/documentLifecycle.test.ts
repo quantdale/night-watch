@@ -170,7 +170,7 @@ test('server redirect and application reload remain distinct document classifica
         unhandledRejectionCount: 0,
       });
       expect(diagnostics.documentLoads.length).toBeGreaterThanOrEqual(2);
-      expect(diagnostics.documentNavigationClassifications).toContain('EXPECTED_BOOTSTRAP_RELOAD');
+      expect(diagnostics.documentNavigationClassifications).toContain('SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD');
       expect(JSON.stringify(diagnostics)).not.toContain('nw-reloaded');
       await lifecycle.close();
     });

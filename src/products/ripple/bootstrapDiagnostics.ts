@@ -156,6 +156,8 @@ interface ResourceRecord {
 
 interface FinalBootstrapState {
   renderedShellPresent: boolean;
+  routeStable: boolean;
+  routeStableMs: number;
   stabilityReached: boolean;
   finalPath: string | null;
   mainFrameNavigationCount: number;
@@ -482,6 +484,9 @@ export function buildRippleBootstrapDiagnostics(
     renderedShellPresent: finalState.renderedShellPresent,
     runtimeExceptionCount: events.filter((event) => event.type === 'pageerror').length,
     unhandledRejectionCount,
+    routeStable: finalState.routeStable,
+    routeStableMs: finalState.routeStableMs,
+    stabilityReached: finalState.stabilityReached,
   });
   const authState = lifecycle.authReplayEffectiveness === 'CONFIRMED'
     ? 'effective'

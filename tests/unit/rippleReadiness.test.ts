@@ -85,7 +85,7 @@ test('the bootstrap mount target is distinct from the source-backed rendered she
   expect(RIPPLE_BOOTSTRAP_MOUNT_SELECTOR).toBe('#app');
   expect(RIPPLE_RENDERED_SHELL_SELECTOR).toBe('.q-layout-container.layout');
   expect(RIPPLE_SOURCE_SHELL_CONTRACT.status).toBe('APP_IS_PREMOUNT_TARGET_ONLY');
-  expect(RIPPLE_SOURCE_SHELL_CONTRACT.ref).toBe('origin/dev');
+  expect(RIPPLE_SOURCE_SHELL_CONTRACT.ref).toBe('dev');
   expect(RIPPLE_SOURCE_SHELL_CONTRACT.bootstrapMountSelector).toBe('#app');
   expect(RIPPLE_SOURCE_SHELL_CONTRACT.renderedShellSelector).toBe('.q-layout-container.layout');
   expect(isRippleStructurallyReady(structural('complete', true))).toBe(true);

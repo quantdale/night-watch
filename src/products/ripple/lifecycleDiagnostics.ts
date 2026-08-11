@@ -13,14 +13,20 @@ import {
   classifyAuthReplayEffectiveness,
   type AuthReplayEffectiveness,
 } from './bootstrapContract';
+import {
+  RIPPLE_SOURCE_ROUTER_CONTRACT,
+  type RippleRootRenderBranch,
+} from './readiness';
 
 export type DocumentNavigationClassification =
-  | 'EXPECTED_BOOTSTRAP_RELOAD'
-  | 'AUTH_STATE_BRANCH_RELOAD'
-  | 'APP_INITIATED_RELOAD'
+  | 'SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD'
+  | 'NIGHTWATCH_INITIATED_RELOAD'
+  | 'SOURCE_PROVEN_AUTH_RELOAD'
+  | 'SOURCE_PROVEN_ENVIRONMENT_RELOAD'
   | 'SERVER_REDIRECT'
   | 'BROWSER_RETRY'
-  | 'UNKNOWN';
+  | 'RELOAD_CAUSE_UNRESOLVED'
+  | 'NOT_APPLICABLE';
 
 export type DocumentInitiatorCategory =
   | 'parser'
@@ -69,10 +75,44 @@ export interface BootstrapTargetLifecycleDiagnostic {
   bootstrapMountTargetRemovedMs: number | null;
 }
 
+export type SourceReloadSignalKind =
+  | 'public-index-script-or-link-error'
+  | 'auth-logout'
+  | 'environment-selection'
+  | 'nightwatch'
+  | 'unknown';
+
+export interface PostMountReplacementDiagnostic {
+  vueInitialPatchObserved: boolean;
+  replacementNodeType: 'element' | 'comment' | 'text' | 'none' | 'unknown';
+  replacementTag: string | null;
+  matchesLoadingWrapper: boolean;
+  matchesAuthLayout: boolean;
+  matchesDefaultLayout: boolean;
+  matchesQLayout: boolean;
+  rootBranch: RippleRootRenderBranch;
+  firstSeenMs: number | null;
+}
+
+export interface RipplePostMountCheckpoints {
+  vueInitialPatch: boolean;
+  rootRenderBranch: RippleRootRenderBranch;
+  routerMode: typeof RIPPLE_SOURCE_ROUTER_CONTRACT.mode;
+  routerInitialized: 'NOT_DIRECTLY_OBSERVABLE';
+  routeActivityObserved: boolean;
+  initialRouteResolved: boolean;
+  defaultLayoutRendered: boolean;
+  qLayoutRendered: boolean;
+  dashboardRouteActive: boolean;
+  routeStable: boolean;
+  routeStableMs: number;
+  stabilityReached: boolean;
+}
+
 export interface BootstrapProgressDiagnostic {
   classification:
     | 'BOOTSTRAP_STALL_CANDIDATE'
-    | 'POST_MOUNT_RENDER_FAILURE_CANDIDATE'
+    | 'VUE_INITIAL_PATCH_OBSERVED'
     | 'NO_MOUNT_PROGRESS'
     | 'PROGRESS_UNKNOWN';
   evidence: string;
@@ -93,6 +133,8 @@ export interface RippleLifecycleDiagnostics {
   subsequentFullDocumentNavigationCount: number;
   mainDocumentReplacedCount: number;
   bootstrapTarget: BootstrapTargetLifecycleDiagnostic;
+  postMountReplacement: PostMountReplacementDiagnostic;
+  postMountCheckpoints: RipplePostMountCheckpoints;
   renderedShellSeen: boolean;
   renderedShellFirstSeenMs: number | null;
   routeTransitions: RouteHistoryDiagnostic[];
@@ -102,6 +144,8 @@ export interface RippleLifecycleDiagnostics {
   sourceDefinedAuthenticatedBootstrapBranchObserved: boolean;
   authReplayEffectiveness: AuthReplayEffectiveness;
   documentNavigationClassifications: DocumentNavigationClassification[];
+  sourceReloadSignalObserved: boolean;
+  sourceReloadMarkerPresent: boolean;
   bootstrapProgress: BootstrapProgressDiagnostic;
   deploymentFingerprint: DeploymentFingerprintDiagnostic;
 }
@@ -266,7 +310,7 @@ function newDocumentLoad(ordinal: number): MutableDocumentLoad {
     responseSeq: null,
     requestAt: null,
     responseAt: null,
-    navigationClassification: 'UNKNOWN',
+    navigationClassification: 'NOT_APPLICABLE',
   };
 }
 
@@ -359,53 +403,110 @@ function authHostMatches(origin: string | null, authHosts: readonly string[]): b
   }
 }
 
+export interface DocumentNavigationClassificationInput {
+  initiator: DocumentInitiatorCategory;
+  serverRedirect: boolean;
+  resourceErrorBefore: boolean;
+  sourceBootstrapReloadSignalBefore: boolean;
+  sourceAuthReloadSignal: boolean;
+  sourceEnvironmentReloadSignal: boolean;
+  nightwatchInitiated: boolean;
+  priorRequestFailure: boolean;
+}
+
+/**
+ * Correlation is intentionally weaker than causation. A resource error before
+ * a same-path reload is unresolved unless the fixed source reload signal was
+ * also observed. This prevents the previous EXPECTED_BOOTSTRAP_RELOAD label
+ * from being assigned from timing alone.
+ */
+export function classifyDocumentNavigation(
+  input: DocumentNavigationClassificationInput,
+): DocumentNavigationClassification {
+  if (input.serverRedirect) return 'SERVER_REDIRECT';
+  if (input.nightwatchInitiated) return 'NIGHTWATCH_INITIATED_RELOAD';
+  if (input.sourceAuthReloadSignal) return 'SOURCE_PROVEN_AUTH_RELOAD';
+  if (input.sourceEnvironmentReloadSignal) return 'SOURCE_PROVEN_ENVIRONMENT_RELOAD';
+  if (
+    (input.initiator === 'script' || input.initiator === 'reload') &&
+    input.sourceBootstrapReloadSignalBefore
+  ) {
+    return 'SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD';
+  }
+  if (input.priorRequestFailure && (input.initiator === 'other' || input.initiator === 'unknown')) {
+    return 'BROWSER_RETRY';
+  }
+  if (
+    input.resourceErrorBefore &&
+    (input.initiator === 'script' || input.initiator === 'reload')
+  ) {
+    return 'RELOAD_CAUSE_UNRESOLVED';
+  }
+  if (input.initiator === 'script' || input.initiator === 'reload' || input.initiator === 'meta-refresh') {
+    return 'RELOAD_CAUSE_UNRESOLVED';
+  }
+  return 'RELOAD_CAUSE_UNRESOLVED';
+}
+
 function classifyDocumentLoads(
   loads: MutableDocumentLoad[],
   events: readonly RunEvent[],
-  authRequiredStatePresent: boolean,
 ): void {
   const resourceErrorSeqs = events
     .filter((event) => event.type === 'bootstrap' && dataOf(event).category === 'resource-error-event')
+    .map((event) => event.seq);
+  const sourceBootstrapReloadSignalSeqs = events
+    .filter((event) => event.type === 'bootstrap' &&
+      dataOf(event).category === 'source-reload-signal' &&
+      dataOf(event).phase === 'reload-trigger' &&
+      dataOf(event).sourceReloadPath === 'public/index.html')
+    .map((event) => event.seq);
+  const sourceAuthReloadSignalSeqs = events
+    .filter((event) => event.type === 'bootstrap' &&
+      dataOf(event).category === 'source-reload-signal' &&
+      dataOf(event).sourceReloadOwner === 'Ripple' &&
+      dataOf(event).sourceReloadTrigger === 'auth-logout')
+    .map((event) => event.seq);
+  const sourceEnvironmentReloadSignalSeqs = events
+    .filter((event) => event.type === 'bootstrap' &&
+      dataOf(event).category === 'source-reload-signal' &&
+      dataOf(event).sourceReloadOwner === 'Ripple' &&
+      dataOf(event).sourceReloadTrigger === 'environment-selection')
+    .map((event) => event.seq);
+  const nightwatchReloadSignalSeqs = events
+    .filter((event) => event.type === 'bootstrap' &&
+      dataOf(event).category === 'source-reload-signal' &&
+      dataOf(event).sourceReloadOwner === 'Nightwatch')
     .map((event) => event.seq);
   const requestFailureSeqs = events
     .filter((event) => event.type === 'requestfailed')
     .map((event) => event.seq);
   for (const load of loads) {
     if (load.ordinal === 1) {
-      load.navigationClassification = 'UNKNOWN';
-      continue;
-    }
-    if (load.redirectChainPresent || (load.redirectStatus !== null && load.redirectStatus >= 300 && load.redirectStatus < 400)) {
-      load.navigationClassification = 'SERVER_REDIRECT';
+      load.navigationClassification = 'NOT_APPLICABLE';
       continue;
     }
     const previous = loads.find((candidate) => candidate.ordinal === load.ordinal - 1);
     const previousSeq = previous?.requestSeq ?? -1;
-    const resourceErrorBefore = resourceErrorSeqs.some((seq) =>
-      seq > previousSeq &&
-      (load.requestSeq === null || seq < load.requestSeq || load.responseSeq === null || seq < load.responseSeq),
-    );
-    if (load.path === '/ripple/login' && !authRequiredStatePresent) {
-      load.navigationClassification = 'AUTH_STATE_BRANCH_RELOAD';
-      continue;
-    }
-    if (
-      load.navigationInitiatorCategory === 'meta-refresh' ||
-      ((load.navigationInitiatorCategory === 'script' || load.navigationInitiatorCategory === 'reload') && resourceErrorBefore)
-    ) {
-      load.navigationClassification = 'EXPECTED_BOOTSTRAP_RELOAD';
-      continue;
-    }
-    if (load.navigationInitiatorCategory === 'script' || load.navigationInitiatorCategory === 'reload') {
-      load.navigationClassification = 'APP_INITIATED_RELOAD';
-      continue;
-    }
-    const priorFailure = requestFailureSeqs.some((seq) => seq > previousSeq && load.requestSeq !== null && seq < load.requestSeq);
-    if (priorFailure && (load.navigationInitiatorCategory === 'other' || load.navigationInitiatorCategory === 'unknown')) {
-      load.navigationClassification = 'BROWSER_RETRY';
-      continue;
-    }
-    load.navigationClassification = 'UNKNOWN';
+    const beforeCurrentLoad = (seq: number): boolean =>
+      seq > previousSeq && (load.requestSeq === null || seq < load.requestSeq);
+    const resourceErrorBefore = resourceErrorSeqs.some(beforeCurrentLoad);
+    const sourceBootstrapReloadSignalBefore = sourceBootstrapReloadSignalSeqs.some(beforeCurrentLoad);
+    const sourceAuthReloadSignal = sourceAuthReloadSignalSeqs.some(beforeCurrentLoad);
+    const sourceEnvironmentReloadSignal = sourceEnvironmentReloadSignalSeqs.some(beforeCurrentLoad);
+    const nightwatchInitiated = nightwatchReloadSignalSeqs.some(beforeCurrentLoad);
+    const priorRequestFailure = requestFailureSeqs.some(beforeCurrentLoad);
+    load.navigationClassification = classifyDocumentNavigation({
+      initiator: load.navigationInitiatorCategory,
+      serverRedirect: load.redirectChainPresent ||
+        (load.redirectStatus !== null && load.redirectStatus >= 300 && load.redirectStatus < 400),
+      resourceErrorBefore,
+      sourceBootstrapReloadSignalBefore,
+      sourceAuthReloadSignal,
+      sourceEnvironmentReloadSignal,
+      nightwatchInitiated,
+      priorRequestFailure,
+    });
   }
 }
 
@@ -420,6 +521,133 @@ function bootstrapTarget(events: readonly RunEvent[]): BootstrapTargetLifecycleD
     bootstrapMountTargetFirstSeenMs: firstSeen.length > 0 ? Math.min(...firstSeen) : null,
     bootstrapMountTargetRemoved: removed.length > 0,
     bootstrapMountTargetRemovedMs: firstRemoved.length > 0 ? Math.min(...firstRemoved) : null,
+  };
+}
+
+function safeReplacementNodeType(value: unknown): PostMountReplacementDiagnostic['replacementNodeType'] {
+  const allowed: readonly PostMountReplacementDiagnostic['replacementNodeType'][] = [
+    'element',
+    'comment',
+    'text',
+    'none',
+    'unknown',
+  ];
+  return typeof value === 'string' && allowed.includes(value as PostMountReplacementDiagnostic['replacementNodeType'])
+    ? value as PostMountReplacementDiagnostic['replacementNodeType']
+    : 'unknown';
+}
+
+function safeRootBranch(value: unknown): RippleRootRenderBranch {
+  const allowed: readonly RippleRootRenderBranch[] = [
+    'loading-wrapper',
+    'auth-layout',
+    'default-layout',
+    'q-layout',
+    'comment-vnode',
+    'text-node',
+    'none',
+    'unknown-element',
+    'unknown',
+  ];
+  return typeof value === 'string' && allowed.includes(value as RippleRootRenderBranch)
+    ? value as RippleRootRenderBranch
+    : 'unknown';
+}
+
+function safeReplacementTag(value: unknown): string | null {
+  const allowed = new Set([
+    'DIV',
+    'SPAN',
+    'P',
+    'SECTION',
+    'MAIN',
+    'ASIDE',
+    'HEADER',
+    'FOOTER',
+    'NAV',
+    'UL',
+    'LI',
+  ]);
+  return typeof value === 'string' && allowed.has(value) ? value : null;
+}
+
+function postMountReplacement(events: readonly RunEvent[]): PostMountReplacementDiagnostic {
+  const replacement = events.find((event) =>
+    event.type === 'bootstrap' &&
+    dataOf(event).category === 'post-mount-structure' &&
+    dataOf(event).phase === 'replacement',
+  );
+  if (replacement === undefined) {
+    return {
+      vueInitialPatchObserved: false,
+      replacementNodeType: 'unknown',
+      replacementTag: null,
+      matchesLoadingWrapper: false,
+      matchesAuthLayout: false,
+      matchesDefaultLayout: false,
+      matchesQLayout: false,
+      rootBranch: 'unknown',
+      firstSeenMs: null,
+    };
+  }
+  const data = dataOf(replacement);
+  const replacementTag = safeReplacementTag(data.replacementTag);
+  return {
+    vueInitialPatchObserved: data.vueInitialPatchObserved === true,
+    replacementNodeType: safeReplacementNodeType(data.replacementNodeType),
+    replacementTag,
+    matchesLoadingWrapper: data.matchesLoadingWrapper === true,
+    matchesAuthLayout: data.matchesAuthLayout === true,
+    matchesDefaultLayout: data.matchesDefaultLayout === true,
+    matchesQLayout: data.matchesQLayout === true,
+    rootBranch: safeRootBranch(data.rootBranch),
+    firstSeenMs: numberValue(data.elapsedMs),
+  };
+}
+
+function isSourceApprovedRoute(path: string | null): boolean {
+  return path === '/ripple/' ||
+    path === '/ripple/dashboard' ||
+    path === '/ripple/login' ||
+    path === '/ripple/saml' ||
+    path === '/ripple/change-password' ||
+    path === '/ripple/error' ||
+    path === '/ripple/error500' ||
+    path === '/ripple/error-access-deny';
+}
+
+function isSourceResolvedRoute(path: string | null): boolean {
+  return isSourceApprovedRoute(path) && path !== '/ripple/';
+}
+
+function postMountCheckpointsForLifecycle(input: {
+  target: BootstrapTargetLifecycleDiagnostic;
+  replacement: PostMountReplacementDiagnostic;
+  renderedShellSeen: boolean;
+  routeTransitions: RouteHistoryDiagnostic[];
+  finalPath: string | null;
+  routeStable: boolean;
+  routeStableMs: number;
+  stabilityReached: boolean;
+}): RipplePostMountCheckpoints {
+  const dashboardRouteActive = input.finalPath === '/ripple/dashboard' ||
+    input.routeTransitions.some((route) => route.path === '/ripple/dashboard');
+  const defaultLayoutRendered = input.replacement.matchesDefaultLayout || input.renderedShellSeen;
+  const qLayoutRendered = input.replacement.matchesQLayout || input.renderedShellSeen;
+  const vueInitialPatch = input.target.bootstrapMountTargetRemoved || input.replacement.vueInitialPatchObserved;
+  return {
+    vueInitialPatch,
+    rootRenderBranch: input.replacement.rootBranch,
+    routerMode: RIPPLE_SOURCE_ROUTER_CONTRACT.mode,
+    routerInitialized: 'NOT_DIRECTLY_OBSERVABLE',
+    routeActivityObserved: input.routeTransitions.length > 0 || dashboardRouteActive,
+    initialRouteResolved: isSourceResolvedRoute(input.finalPath) || input.routeTransitions.some((route) => isSourceResolvedRoute(route.path)),
+    defaultLayoutRendered,
+    qLayoutRendered,
+    dashboardRouteActive,
+    routeStable: input.routeStable,
+    routeStableMs: input.routeStableMs,
+    stabilityReached: input.stabilityReached,
   };
 }
 
@@ -458,10 +686,12 @@ function bootstrapProgress(
       evidence: 'document complete and application entry completed, but the pre-mount target remained without a runtime error signal',
     };
   }
-  if (input.target.bootstrapMountTargetRemoved && !input.renderedShellSeen) {
+  if (input.target.bootstrapMountTargetRemoved) {
     return {
-      classification: 'POST_MOUNT_RENDER_FAILURE_CANDIDATE',
-      evidence: 'the pre-mount target was removed, but the source-backed rendered shell was not observed',
+      classification: 'VUE_INITIAL_PATCH_OBSERVED',
+      evidence: input.renderedShellSeen
+        ? 'the pre-mount target was removed and a source-backed rendered shell was observed'
+        : 'the pre-mount target was removed; complete root-branch and route progression remain unresolved',
     };
   }
   if (!input.target.bootstrapMountTargetSeen && !input.renderedShellSeen) {
@@ -483,6 +713,10 @@ export interface BuildRippleLifecycleDiagnosticsInput {
   renderedShellPresent: boolean;
   runtimeExceptionCount: number;
   unhandledRejectionCount: number;
+  /** Readiness samples are passed through as bounded scalar evidence only. */
+  routeStable?: boolean;
+  routeStableMs?: number;
+  stabilityReached?: boolean;
 }
 
 export function buildRippleLifecycleDiagnostics(
@@ -490,8 +724,9 @@ export function buildRippleLifecycleDiagnostics(
   input: BuildRippleLifecycleDiagnosticsInput,
 ): RippleLifecycleDiagnostics {
   const loads = buildDocumentLoads(events);
-  classifyDocumentLoads(loads, events, input.authRequiredStatePresent);
+  classifyDocumentLoads(loads, events);
   const target = bootstrapTarget(events);
+  const replacement = postMountReplacement(events);
   const routeTransitions = routes(events);
   const finalPath = safePath(input.finalPath);
   const routePaths = routeTransitions.map((route) => route.path);
@@ -500,6 +735,33 @@ export function buildRippleLifecycleDiagnostics(
   const authHostNavigationSeen = loads.some((load) => authHostMatches(load.origin, input.authHosts ?? []));
   const renderedShellEvents = events.filter((event) => event.type === 'bootstrap' && dataOf(event).category === 'rendered-shell' && dataOf(event).phase === 'seen');
   const shellTimings = renderedShellEvents.map((event) => numberValue(dataOf(event).elapsedMs)).filter((value): value is number => value !== null);
+  const renderedShellSeen = renderedShellEvents.length > 0 || input.renderedShellPresent;
+  const routeStableMs = numberValue(input.routeStableMs) === null
+    ? 0
+    : Math.max(0, Math.min(120_000, Math.round(numberValue(input.routeStableMs) ?? 0)));
+  const routeStable = input.routeStable === true;
+  const stabilityReached = input.stabilityReached === true;
+  const postMountCheckpoints = postMountCheckpointsForLifecycle({
+    target,
+    replacement,
+    renderedShellSeen,
+    routeTransitions,
+    finalPath,
+    routeStable,
+    routeStableMs,
+    stabilityReached,
+  });
+  const sourceReloadSignalObserved = events.some((event) =>
+    event.type === 'bootstrap' &&
+    dataOf(event).category === 'source-reload-signal' &&
+    dataOf(event).phase === 'reload-trigger',
+  );
+  const sourceReloadMarkerPresent = events.some((event) =>
+    event.type === 'bootstrap' &&
+    dataOf(event).category === 'source-reload-signal' &&
+    dataOf(event).phase === 'marker-present' &&
+    dataOf(event).sourceReloadMarkerPresent === true,
+  );
   const documentCompleteKeys = new Set(
     lifecycleEvents(events)
       .filter((event) => dataOf(event).phase === 'complete' && (numberValue(dataOf(event).documentOrdinal) ?? 0) > 0)
@@ -528,7 +790,9 @@ export function buildRippleLifecycleDiagnostics(
     subsequentFullDocumentNavigationCount: loads.filter((load) => load.ordinal > 1).length,
     mainDocumentReplacedCount: lifecycleReplaced > 0 ? lifecycleReplaced : Math.max(0, loads.filter((load) => load.ordinal > 1).length),
     bootstrapTarget: target,
-    renderedShellSeen: renderedShellEvents.length > 0,
+    postMountReplacement: replacement,
+    postMountCheckpoints,
+    renderedShellSeen,
     renderedShellFirstSeenMs: shellTimings.length > 0 ? Math.min(...shellTimings) : null,
     routeTransitions,
     routeTransitionObserved: routeTransitions.length > 0,
@@ -544,11 +808,13 @@ export function buildRippleLifecycleDiagnostics(
       sourceDefinedAuthenticatedBootstrapBranchObserved,
     }),
     documentNavigationClassifications,
+    sourceReloadSignalObserved,
+    sourceReloadMarkerPresent,
     bootstrapProgress: bootstrapProgress({
       documentComplete: documentCompleteKeys.size > 0,
       applicationEntryCompleted: input.applicationEntryCompleted,
       target,
-      renderedShellSeen: renderedShellEvents.length > 0 || input.renderedShellPresent,
+      renderedShellSeen,
       runtimeExceptionCount: input.runtimeExceptionCount,
       unhandledRejectionCount: input.unhandledRejectionCount,
     }),

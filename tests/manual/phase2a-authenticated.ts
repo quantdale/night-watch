@@ -643,6 +643,8 @@ async function observeOnce(
     events,
     {
       renderedShellPresent: readiness.renderedShellPresent,
+      routeStable: readiness.routeStable,
+      routeStableMs: readiness.routeStableMs,
       stabilityReached: readiness.stabilityReached,
       finalPath: readiness.finalPath,
       mainFrameNavigationCount: readiness.mainFrameNavigationCount,
