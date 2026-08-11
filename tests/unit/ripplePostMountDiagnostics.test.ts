@@ -185,7 +185,6 @@ test('8 and 10. same-path reload is proven only with a source signal; timing cor
     sourceAuthReloadSignal: false,
     sourceEnvironmentReloadSignal: false,
     nightwatchInitiated: false,
-    priorRequestFailure: false,
   })).toBe('SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD');
   expect(classifyDocumentNavigation({
     initiator: 'reload',
@@ -195,7 +194,6 @@ test('8 and 10. same-path reload is proven only with a source signal; timing cor
     sourceAuthReloadSignal: false,
     sourceEnvironmentReloadSignal: false,
     nightwatchInitiated: false,
-    priorRequestFailure: false,
   })).toBe('RELOAD_CAUSE_UNRESOLVED');
 });
 
@@ -208,7 +206,6 @@ test('9. Nightwatch reload evidence has priority over application-resource corre
     sourceAuthReloadSignal: false,
     sourceEnvironmentReloadSignal: false,
     nightwatchInitiated: true,
-    priorRequestFailure: false,
   })).toBe('NIGHTWATCH_INITIATED_RELOAD');
 });
 

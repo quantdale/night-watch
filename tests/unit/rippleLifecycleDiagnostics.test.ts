@@ -179,6 +179,33 @@ test('source reload proof is distinct from resource-error correlation and server
   expect(serverRedirect.documentNavigationClassifications).toEqual(['SERVER_REDIRECT']);
 });
 
+test('a bare prior request failure cannot earn BROWSER_RETRY from timing alone', () => {
+  // Regression for the D5 over-claim: a same-path reload preceded only by a
+  // requestfailed (no source-proven reload signal) was previously mislabeled
+  // BROWSER_RETRY from correlation. It must remain RELOAD_CAUSE_UNRESOLVED.
+  const eventsWithPriorFailure = [
+    ...baseDocumentEvents(),
+    event('requestfailed', {
+      method: 'GET',
+      url: 'http://127.0.0.1:43111/ripple/static/js/chunk-abc.js',
+      resourceType: 'script',
+      completed: false,
+      failureCategory: 'transport-failure',
+    }),
+    documentEvent('request', 2, {
+      origin: 'http://127.0.0.1:43111',
+      path: '/ripple/',
+      method: 'GET',
+      navigationInitiatorCategory: 'other',
+      redirectChainPresent: false,
+      replacesMainDocument: true,
+    }),
+    documentEvent('response', 2, { origin: 'http://127.0.0.1:43111', path: '/ripple/', status: 200, contentType: 'text/html' }),
+  ];
+  const diagnostics = buildRippleLifecycleDiagnostics(eventsWithPriorFailure, lifecycleInput());
+  expect(diagnostics.documentNavigationClassifications).toEqual(['RELOAD_CAUSE_UNRESOLVED']);
+});
+
 test('history-mode router observation is fixed-primitive only and does not claim initialization', () => {
   const diagnostics = buildRippleLifecycleDiagnostics([
     ...baseDocumentEvents(),

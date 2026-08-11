@@ -411,14 +411,15 @@ export interface DocumentNavigationClassificationInput {
   sourceAuthReloadSignal: boolean;
   sourceEnvironmentReloadSignal: boolean;
   nightwatchInitiated: boolean;
-  priorRequestFailure: boolean;
 }
 
 /**
  * Correlation is intentionally weaker than causation. A resource error before
  * a same-path reload is unresolved unless the fixed source reload signal was
  * also observed. This prevents the previous EXPECTED_BOOTSTRAP_RELOAD label
- * from being assigned from timing alone.
+ * from being assigned from timing alone, and it means a bare prior request
+ * failure can never earn BROWSER_RETRY (which has no source-proven observation
+ * mechanism in the current Nightwatch model).
  */
 export function classifyDocumentNavigation(
   input: DocumentNavigationClassificationInput,
@@ -433,9 +434,10 @@ export function classifyDocumentNavigation(
   ) {
     return 'SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD';
   }
-  if (input.priorRequestFailure && (input.initiator === 'other' || input.initiator === 'unknown')) {
-    return 'BROWSER_RETRY';
-  }
+  // A prior request failure correlated with a same-path reload is NOT proof of
+  // a browser retry: browser-retry behavior has no source-proven signal in the
+  // current model, and the relying code previously could over-claim causation
+  // from timing alone. Such cases are honestly left UNRESOLVED.
   if (
     input.resourceErrorBefore &&
     (input.initiator === 'script' || input.initiator === 'reload')
@@ -478,9 +480,6 @@ function classifyDocumentLoads(
       dataOf(event).category === 'source-reload-signal' &&
       dataOf(event).sourceReloadOwner === 'Nightwatch')
     .map((event) => event.seq);
-  const requestFailureSeqs = events
-    .filter((event) => event.type === 'requestfailed')
-    .map((event) => event.seq);
   for (const load of loads) {
     if (load.ordinal === 1) {
       load.navigationClassification = 'NOT_APPLICABLE';
@@ -495,7 +494,6 @@ function classifyDocumentLoads(
     const sourceAuthReloadSignal = sourceAuthReloadSignalSeqs.some(beforeCurrentLoad);
     const sourceEnvironmentReloadSignal = sourceEnvironmentReloadSignalSeqs.some(beforeCurrentLoad);
     const nightwatchInitiated = nightwatchReloadSignalSeqs.some(beforeCurrentLoad);
-    const priorRequestFailure = requestFailureSeqs.some(beforeCurrentLoad);
     load.navigationClassification = classifyDocumentNavigation({
       initiator: load.navigationInitiatorCategory,
       serverRedirect: load.redirectChainPresent ||
@@ -505,7 +503,6 @@ function classifyDocumentLoads(
       sourceAuthReloadSignal,
       sourceEnvironmentReloadSignal,
       nightwatchInitiated,
-      priorRequestFailure,
     });
   }
 }
