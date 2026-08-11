@@ -16,6 +16,19 @@ import type { ExpectedContainmentEffect } from './containmentEffect';
 /** Chromium logs this automatically when any resource load fails. */
 const CHROME_RESOURCE_FAILURE_RE = /^Failed to load resource:/i;
 
+function safeConsoleLocation(recorder: RunRecorder, rawUrl: string | undefined): Record<string, unknown> {
+  if (typeof rawUrl !== 'string' || rawUrl === '') return {};
+  try {
+    const location = new URL(recorder.redactUrl(rawUrl));
+    return {
+      sourceOrigin: location.origin,
+      sourcePath: location.pathname || '/',
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function createConsoleObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
@@ -63,7 +76,9 @@ export function createConsoleObserver(opts: {
             type: 'console',
             severity: msg.type() === 'error' ? 'error' : 'info',
             message: recorder.isAuthenticated ? `console-${msg.type()}` : `[${msg.type()}] ${text}`,
-            data: recorder.isAuthenticated ? { type: msg.type(), category: `console-${msg.type()}` } : { type: msg.type(), text },
+            data: recorder.isAuthenticated
+              ? { type: msg.type(), category: `console-${msg.type()}`, ...safeConsoleLocation(recorder, msg.location().url) }
+              : { type: msg.type(), text, ...safeConsoleLocation(recorder, msg.location().url) },
           });
           if (msg.type() === 'error') {
             const issueEvent = recorder.event({

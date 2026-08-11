@@ -35,6 +35,11 @@ import { readProxyEvents } from '../../src/proxy/events';
 import { proxyStatePath } from '../../src/proxy/server';
 import { readProxyRuntimeState } from '../../src/proxy/runtime';
 import type { EndpointSemanticClassification } from '../../src/core/safety/endpointSemantics';
+import {
+  buildRippleBootstrapDiagnostics,
+  type BootstrapObserverCoverage,
+  type RippleBootstrapDiagnostics,
+} from '../../src/products/ripple/bootstrapDiagnostics';
 
 interface ReadinessEvidence {
   sourceShellContract: typeof RIPPLE_SOURCE_SHELL_CONTRACT;
@@ -131,7 +136,16 @@ interface ObservationResult {
   oracleCategories: string[];
   consolePageErrorCategories: string[];
   responseStructure: Array<{ method: string; status: number; contentType: string | null; count: number }>;
+  bootstrapDiagnostics: RippleBootstrapDiagnostics;
 }
+
+const BOOTSTRAP_OBSERVER_COVERAGE: BootstrapObserverCoverage = {
+  unhandledRejection: true,
+  cspViolation: true,
+  resourceLoadFailure: true,
+  historyRouteTransition: true,
+  requestFailureMetadata: true,
+};
 
 function nightwatchSha(): string | null {
   const root = path.resolve(__dirname, '..', '..');
@@ -405,6 +419,7 @@ async function observeOnce(
     storageStatePath,
     trace: 'off',
     failOn: ['hard-failure'],
+    bootstrapDiagnostics: true,
   });
   let navigationFailed = false;
   let stabilityReached = false;
@@ -583,6 +598,23 @@ async function observeOnce(
   }
 
   const events = readEvents(path.join(recorder.dir, 'events.jsonl'));
+  const bootstrapDiagnostics = buildRippleBootstrapDiagnostics(
+    events,
+    {
+      renderedShellPresent: readiness.renderedShellPresent,
+      stabilityReached: readiness.stabilityReached,
+      finalPath: readiness.finalPath,
+      mainFrameNavigationCount: readiness.mainFrameNavigationCount,
+    },
+    BOOTSTRAP_OBSERVER_COVERAGE,
+  );
+  recorder.addManifestEntry('bootstrapDiagnostics', bootstrapDiagnostics);
+  recorder.event({
+    type: 'bootstrap',
+    severity: 'info',
+    message: 'sanitized Ripple bootstrap diagnostics observed',
+    data: { ...bootstrapDiagnostics },
+  });
   const proxyEvents = (() => {
     try {
       return readProxyEvents(readProxyRuntimeState(proxyStatePath()).eventLogPath).slice(proxyEventLogStart);
@@ -619,6 +651,7 @@ async function observeOnce(
     oracleCategories: oracleCategories(events),
     consolePageErrorCategories: consolePageErrorCategories(events),
     responseStructure: responseStructure(events),
+    bootstrapDiagnostics,
   };
 }
 
@@ -634,6 +667,7 @@ function writeComparison(root: string, runId: string, first: ObservationResult, 
     oracleCategories: result.oracleCategories,
     consolePageErrorCategories: result.consolePageErrorCategories,
     responseStructure: result.responseStructure,
+    bootstrapDiagnostics: result.bootstrapDiagnostics,
     timing: { durationMs: result.summary.durationMs, eventCount: result.summary.eventCount },
   });
   const firstComparable = comparable(first);
@@ -650,6 +684,7 @@ function writeComparison(root: string, runId: string, first: ObservationResult, 
       ...(JSON.stringify(firstComparable?.oracleCategories) !== JSON.stringify(replayComparable.oracleCategories) ? ['oracle-categories'] : []),
       ...(JSON.stringify(firstComparable?.consolePageErrorCategories) !== JSON.stringify(replayComparable.consolePageErrorCategories) ? ['console-page-error-categories'] : []),
       ...(JSON.stringify(firstComparable?.responseStructure) !== JSON.stringify(replayComparable.responseStructure) ? ['response-status-content-type-structure'] : []),
+      ...(JSON.stringify(firstComparable?.bootstrapDiagnostics) !== JSON.stringify(replayComparable.bootstrapDiagnostics) ? ['bootstrap-diagnostics'] : []),
     ],
   }, null, 2));
 }

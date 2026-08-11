@@ -48,6 +48,7 @@ import {
   classifyTelemetryConsoleEffect,
 } from './observers/containmentEffect';
 import { createPageObserver } from './observers/pageObserver';
+import { installBootstrapDiagnosticHooks } from './observers/bootstrapHooks';
 import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/storageState';
 import { installFetchGuard } from './network/fetchGuard';
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
@@ -70,6 +71,8 @@ export interface NightwatchContextOptions {
   proxyProcessAlive?: () => boolean;
   /** Local timing control; real capture uses the conservative default. */
   proxyPollIntervalMs?: number;
+  /** Opt-in fixed-category bootstrap/runtime diagnostics for Phase 2A. */
+  bootstrapDiagnostics?: boolean;
 }
 
 export interface NightwatchContext {
@@ -263,6 +266,9 @@ export async function createNightwatchContext(
 
   // L3 — init scripts + serviceworker alarm (defense in depth).
   await context.addInitScript(containmentInitScript);
+  if (opts.bootstrapDiagnostics === true) {
+    await installBootstrapDiagnosticHooks(context, recorder);
+  }
   context.on('serviceworker', (worker) => {
     const ev = recorder.event({
       type: 'service-worker',

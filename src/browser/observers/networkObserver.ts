@@ -185,6 +185,9 @@ export function createNetworkObserver(opts: {
             headers: redactedHeaders,
             resourceType: request.resourceType(),
             verdict: 'allow',
+            policyDecision: decision.verdict,
+            policyClassification: decision.classification,
+            policyHostClass: decision.hostClass,
             reason: decision.reason,
             ...(endpointClassification === null ? {} : { endpointClassification }),
           },
@@ -220,6 +223,11 @@ export function createNetworkObserver(opts: {
               verdict: decision.verdict,
               hostClass: decision.hostClass,
               classification: decision.classification,
+              policyDecision: decision.verdict,
+              policyClassification: decision.classification,
+              policyHostClass: decision.hostClass,
+              method: request.method(),
+              resourceType: request.resourceType(),
               ...(decision.verdict === 'block-browser-background'
                 ? { containment: 'EXPECTED_CONTAINMENT_EFFECT' }
                 : {}),
@@ -248,6 +256,9 @@ export function createNetworkObserver(opts: {
             headers: redactedHeaders,
             resourceType: request.resourceType(),
             verdict: 'deny',
+            policyDecision: decision.verdict,
+            policyClassification: decision.classification,
+            policyHostClass: decision.hostClass,
             reason: decision.reason,
             ...(endpointClassification === null ? {} : { endpointClassification }),
           },
@@ -392,8 +403,10 @@ export function createNetworkObserver(opts: {
       const data: Record<string, unknown> = {
         url: redactedUrl,
         method,
+        resourceType: response.request().resourceType(),
         status,
         contentType,
+        completed: true,
         ...(contentLength !== undefined ? { contentLength } : {}),
         ...(endpointClassification === null ? {} : { endpointClassification }),
       };
@@ -470,10 +483,21 @@ export function createNetworkObserver(opts: {
       const rawUrl = request.url();
       const redactedUrl = recorder.redactUrl(rawUrl);
       if (blockedUrls.has(rawUrl)) {
+        const decision = policy.decide(rawUrl);
         recorder.event({
           type: 'requestfailed',
           severity: 'info',
           message: `blocked by policy (expected): ${redactedUrl}`,
+          data: {
+            url: redactedUrl,
+            method: request.method(),
+            resourceType: request.resourceType(),
+            blockedByPolicy: true,
+            verdict: decision.verdict,
+            policyClassification: decision.classification,
+            policyHostClass: decision.hostClass,
+            failureCategory: 'policy-block',
+          },
         });
         return;
       }
@@ -491,7 +515,14 @@ export function createNetworkObserver(opts: {
           type: 'requestfailed',
           severity: 'info',
           message: recorder.isAuthenticated ? `client-aborted request: ${redactedUrl}` : `client-aborted request: ${redactedUrl} (${errorText})`,
-          data: { url: redactedUrl, errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText },
+          data: {
+            url: redactedUrl,
+            method: request.method(),
+            resourceType: request.resourceType(),
+            completed: false,
+            errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText,
+            failureCategory: recorder.classifyNetworkFailure(errorText),
+          },
         });
         return;
       }
@@ -499,7 +530,14 @@ export function createNetworkObserver(opts: {
         type: 'requestfailed',
         severity: 'warn',
         message: recorder.isAuthenticated ? `request failed: ${redactedUrl}` : `request failed: ${redactedUrl} (${errorText})`,
-        data: { url: redactedUrl, errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText },
+        data: {
+          url: redactedUrl,
+          method: request.method(),
+          resourceType: request.resourceType(),
+          completed: false,
+          errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText,
+          failureCategory: recorder.classifyNetworkFailure(errorText),
+        },
       });
       const issueEvent = recorder.event({
         type: 'issue',

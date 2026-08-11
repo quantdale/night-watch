@@ -9,6 +9,25 @@ import type { Page } from '@playwright/test';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 
+function safeErrorLocation(error: unknown, recorder: RunRecorder): Record<string, unknown> {
+  const stack = error instanceof Error ? error.stack : undefined;
+  if (typeof stack !== 'string') return {};
+  const match = /(https?:\/\/[^\s)]+):(\d+):(\d+)/i.exec(stack);
+  if (match === null || match[1] === undefined || match[2] === undefined || match[3] === undefined) return {};
+  const safeUrl = recorder.redactUrl(match[1]);
+  try {
+    const location = new URL(safeUrl);
+    return {
+      sourceOrigin: location.origin,
+      sourcePath: location.pathname || '/',
+      sourceLine: Number(match[2]),
+      sourceColumn: Number(match[3]),
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function createPageObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
@@ -25,7 +44,9 @@ export function createPageObserver(opts: {
             type: 'pageerror',
             severity: 'error',
             message: recorder.isAuthenticated ? 'pageerror' : `page error: ${message}`,
-            data: recorder.isAuthenticated ? { category: 'uncaught-page-exception' } : { message },
+            data: recorder.isAuthenticated
+              ? { category: 'uncaught-page-exception', ...safeErrorLocation(err, recorder) }
+              : { message, ...safeErrorLocation(err, recorder) },
           });
           const issueEvent = recorder.event({
             type: 'issue',

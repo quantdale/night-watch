@@ -25,7 +25,8 @@ export type RunEventType =
   | 'screenshot'
   | 'stability'
   | 'download'
-  | 'service-worker';
+  | 'service-worker'
+  | 'bootstrap';
 
 export type RunSeverity = 'info' | 'warn' | 'error' | 'fatal';
 
