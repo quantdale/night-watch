@@ -1,98 +1,138 @@
-# NIGHTWATCH PHASE 2A — AUTHENTICATED BOOTSTRAP DIAGNOSTICS READY
+# NIGHTWATCH PHASE 2A — AUTHENTICATED BOOTSTRAP DIAGNOSTIC RESULT
 
-Status: `IN_PROGRESS` / M7. This checkpoint does not run the real retry,
-replay, or Phase 2B.
+Status: `IN_PROGRESS` / M7. The first instrumented authenticated observation
+failed the unchanged readiness contract. Replay was not run, no speculative
+repair was made, and Phase 2B remains deferred.
 
-## Latest real observation
+## Run and gate
 
-Run: `nightwatch-20260811T012811Z-9045`
+- Starting checkpoint SHA: `d08b153b52c64d5bd0925d905df08414c4f9a396`.
+- Implementation baseline: `952be215a0d65843e2fb7f8d15e0c28a7d7b142a`.
+- Run: `nightwatch-20260811T032906Z-3fd5-first`.
+- Pre-real-run gate: **13/13 PASS**, before browser/context creation.
+- Observation mode: one passive direct landing navigation in a guarded DEV
+  context; no clicks, forms, exploration, endpoint replay, or database access.
 
-- Pre-real-run gate: **13/13 PASS**.
-- Environment/origin: authenticated DEV / `https://appdev.alphaus.cloud`.
-- Final path: `/ripple/`.
-- `document.readyState`: `complete`.
-- Top-level frame: present; frames `1`, iframes `0`.
-- Body: present; safe child count `8`.
-- Source-backed rendered shell: `DIV.q-layout-container.layout`, absent.
-- `routeStable=true` at the final sample, `routeStableMs=0`.
-- `stabilityReached=false`; navigation was not in progress; page remained open.
-- Fatal page errors: `0`.
-- Destination manifest: `3` expected, `7` blocked, `0` unresolved.
-- Production attempts, proxy violations, mutations, and DB queries: `0`.
-- Replay: **NOT RUN**.
-- M7: **IN_PROGRESS**.
+## Auth context
+
+- External storage state loaded before navigation: `true`.
+- Provenance matched selected `dev`: `true`; the gate reported structural
+  validity and environment compatibility.
+- Login/auth-host redirect observed: `false`.
+- Authentication-related HTTP status category: no auth-host response or
+  auth-related status was safely observable; both document responses were
+  `200 text/html`.
+- Auth replay effectiveness: **UNRESOLVED**. Loading/provenance succeeded,
+  but effective authenticated session behavior was not proven and was not
+  called ineffective merely because the route stayed at `/ripple/`.
+- No cookie names/values, tokens, localStorage values, identity, or account
+  data were read or persisted.
+
+## Document and navigation
+
+- Initial sanitized origin/path: `https://appdev.alphaus.cloud` / `/ripple/`.
+- Final sanitized origin/path: `https://appdev.alphaus.cloud` / `/ripple/`.
+- Document load count: `2`; both completed with `200 text/html`.
+- Route transition count/sequence: `0` / `[]`.
+- `/ripple/dashboard` reached: `false`.
+- Navigation in progress: `false`; `navigationFailed=false`.
+- Page remained open during final sampling and the context closed normally
+  after the observation.
+
+## Application assets and bootstrap diagnostics
+
+- `applicationEntryObserved/completed`: `true` / `true`.
+- Scripts: `112` requested, `112` successful, `0` failed.
+- Chunks: `108` requested, `108` successful, `0` failed; modules: `0`.
+- Styles: `6` requested, `6` successful, `0` failed.
+- Critical resource failures: `0`; wrong-content-type script failures: `0`;
+  failed critical-resource list: empty. All observed JavaScript responses
+  were `200 text/javascript`; no HTML fallback was observed for a script.
+- CSP resource blocks: `0`.
+- Four resource-load error events were recorded, all as expected local policy
+  containment effects; none was a critical application asset.
+- Observer-hook health: PASS for unhandled rejection, CSP, resource failure,
+  history route transition, and request-failure metadata hooks.
+
+## Runtime execution
+
+- Runtime exceptions: `0`; categories/fingerprints: none.
+- Unhandled rejections: `0`; categories/fingerprints: none.
+- Console errors: `0`; console output was limited to safe category metadata.
+- CSP violation count: `0`.
+- Router/bootstrap signal: `routerBootstrap=unknown`; no concrete
+  router/bootstrap error or route transition was observed.
+
+## Structural readiness
+
+- `document.readyState=complete`.
+- Body present: `true`; safe body-child count: `8`.
+- Source-backed shell: `DIV.q-layout-container.layout`; present: `false`.
+- `targetConfirmed=true`.
+- `routeStable=true` at the final sample; `routeStableMs=0`.
+- `stabilityReached=false` after the full bounded wait.
+- Fatal lifecycle/page-error count: `0`; `pageClosed=false` during sampling.
 
 ## Classification
 
-No product bootstrap root cause is proven from the existing evidence.
+Exact classification: **OTHER / UNRESOLVED**.
 
-| Candidate | Result | Evidence basis |
-|---|---|---|
-| `AUTH_STATE_REPLAY_INEFFECTIVE` | Not established | Structural storage-state loading/provenance passed and was recorded before navigation; no auth redirect or auth-status evidence exists. Staying at `/ripple/` alone is insufficient. |
-| `ENTRY_DOCUMENT_WRONG_OR_UNEXPECTED` | Not established | Both document loads were `200 text/html` from the approved DEV `/ripple/` path. |
-| `CRITICAL_ASSET_LOAD_FAILURE` | Ruled out by current metadata | App/vendor entry assets completed twice with `200 text/javascript`; all `112` JavaScript responses and observed CSS/HTML/font/image/SVG responses were HTTP 200. Six failures were expected containment. |
-| `JAVASCRIPT_BOOTSTRAP_EXCEPTION` | Not established | Historical pageerror count was `0`, but the old observer did not capture all runtime categories. |
-| `ROUTER_BOOTSTRAP_FAILURE` | Unresolved | The final path stayed at `/ripple/`, but route-transition/router-start evidence was not captured. |
-| `EXPECTED_RESOURCE_BLOCK_CAUSED_BOOTSTRAP_FAILURE` | No evidence | Blocked resources were telemetry, optional Pylon support, or reviewed browser-background traffic; no blocked dependency was proven required. Containment is unchanged. |
-| `DEPLOYMENT_SOURCE_DIVERGENCE` | Unresolved | Observed `/ripple/static/` paths agree with the reviewed source/build configuration, but no safe deployment identity or execution proof exists. |
-| `OBSERVER_BLIND_SPOT` | Confirmed as a Nightwatch gap | The old observer lacked separate unhandled-rejection, CSP, resource-error, module/chunk, and route-transition diagnostics. |
-| `OTHER / UNRESOLVED` | Current product result | Execution, router start, auth effectiveness, and the second document load remain unresolved without prohibited content inspection or a fresh instrumented run. |
+The evidence rules out a concrete critical-asset load failure, JavaScript
+bootstrap exception, unhandled bootstrap rejection, CSP bootstrap failure,
+and observed router transition failure. It does not establish ineffective
+auth replay, deployment/source divergence, or causation by expected blocked
+telemetry/support/browser-background traffic. The new observer hooks were
+installed and healthy, so `OBSERVER_BLIND_SPOT` is not earned. No speculative
+fix is supported by this run.
 
-The known malformed JSON anomaly remains separate:
-`POST https://apidev.alphaus.cloud/m/blue/cost/v1/`, HTTP 200,
-`application/json`, invalid JSON. Its subcause remains unresolved; no body was
-inspected and it is not treated as the shell-bootstrap cause.
+## Destinations and endpoint semantics
 
-## Diagnostic repair
+- Destination manifest: `3` expected, `0` new-but-verified, `7` blocked,
+  `0` unresolved.
+- Proxy: `2` allowed, `9` telemetry-blocked, `0` optional-support-blocked,
+  `1` browser-background-blocked, `0` denied, `0` unknown, `0` violations.
+- Endpoint semantic classifications: none recorded in this passive landing;
+  no endpoint was deliberately invoked or replayed.
+- Oracle categories: `EXPECTED_CONTAINMENT_EFFECT`,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`.
+- The known `POST https://apidev.alphaus.cloud/m/blue/cost/v1/` malformed-JSON
+  anomaly did **not** recur in this run. Its prior
+  `GENUINE_PROTOCOL_ANOMALY` classification and unresolved subcause remain
+  unchanged; no response body was inspected.
 
-Implementation SHA: `952be215a0d65843e2fb7f8d15e0c28a7d7b142a`.
+## Safety and privacy
 
-Files changed:
+- Production attempts: `0`.
+- Proxy violations: `0`.
+- Unknown destinations silently approved: `0`.
+- Mutations: `0`.
+- DB queries: `0`.
+- Privacy review: **PASS** at category level for credentials/tokens/JWTs,
+  authorization/cookie material, user/customer/account identifiers, raw
+  request/response bodies, financial values, DOM/text dumps,
+  screenshots/traces, and auth-state material. No screenshot or trace was
+  created, no authenticated artifact was tracked, and the external storage
+  state remained outside Nightwatch.
 
-- `src/browser/observers/bootstrapHooks.ts` — opt-in fixed-category hooks for
-  unhandled rejection, CSP, resource/runtime errors, and route transitions.
-- `src/products/ripple/bootstrapDiagnostics.ts` — sanitized resource merger,
-  bootstrap counters, failure metadata, observer coverage, and conservative
-  A–I classification. Diagnostic confirmation requires `/ripple/dashboard`;
-  it cannot treat `/ripple/` as authenticated success.
-- `src/browser/context.ts` and `tests/manual/phase2a-authenticated.ts` — enable
-  the layer only for the Phase 2A authenticated observer and persist the
-  summary in sanitized manifest/comparison metadata.
-- `src/browser/observers/networkObserver.ts` — resource type, status,
-  content-type, completion, policy, failure, and ordering metadata.
-- `src/browser/observers/pageObserver.ts` and `consoleObserver.ts` — safe
-  source origin/path metadata only.
-- `src/core/evidence/types.ts` — bootstrap event category.
-- `tests/unit/bootstrapHooks.test.ts` and
-  `tests/unit/rippleBootstrapDiagnostics.test.ts` — local synthetic coverage.
+## Validation
 
-No selector, stability interval, containment rule, or replay behavior changed.
-No response bodies, request bodies, cookies, tokens, storage-state contents,
-DOM, text, identity, screenshots, or traces are recorded by the new layer.
+- `npx tsc --noEmit`: **PASS**.
+- `npx playwright test`: **194 passed, 0 failed**; this was the ordinary
+  local/synthetic suite and did not run another real authenticated observation.
+- `npm run agent:check`: **PASS** with the expected one approved
+  `CHECKPOINT_ADVANCE` warning from implementation baseline `952be215` to
+  documentation checkpoint `d08b153`.
+- `git diff --check`: **PASS**.
+- Alphaus source status remained the previously documented pre-existing Ripple
+  worktree state; no Alphaus repository was modified by this task.
+- The real-run artifact pair contained only sanitized JSON/JSONL metadata;
+  binary screenshot/trace files were absent, and no artifact was tracked.
 
-## Validation and safety
-
-- Focused bootstrap/hooks/readiness tests: **35 passed, 0 failed**.
-- Full `npx playwright test`: **194 passed, 0 failed**.
-- `npx tsc --noEmit`: PASS.
-- `git diff --check`: PASS for staged implementation and task-state changes.
-- `npm run agent:check`: PASS with one expected approved `CHECKPOINT_ADVANCE`
-  warning for the task-state files.
-- No Alphaus repository was modified.
-- No new real Alphaus traffic, production traffic, replay, mutation, DB query,
-  auth-state read, or body inspection occurred in this diagnostic session.
+This diagnostic result is a truthful M7 checkpoint, not a product bug verdict.
 
 ## Exact next action
 
-Do not execute in this diagnostic implementation session. In a later fresh
-authorized session, run exactly:
-
-```bash
-npm run observe:authenticated -- \
-  --env=dev \
-  --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
-```
-
-Inspect only its sanitized bootstrap summary. Do not run replay unless the
-instrumented first observation satisfies the unchanged readiness contract, and
-do not begin Phase 2B.
+Keep the task `IN_PROGRESS`. Do not run replay, a third pass, a canary, a
+speculative repair, or Phase 2B. A later session must receive an explicit
+decision before any new real observation; if authorized, it must use the
+existing exact authenticated command and inspect only sanitized diagnostics.

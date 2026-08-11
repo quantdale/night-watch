@@ -9,17 +9,18 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 952be215a0d65843e2fb7f8d15e0c28a7d7b142a
 Last validated implementation SHA: 952be215a0d65843e2fb7f8d15e0c28a7d7b142a
 Branch: main
-Last checkpoint: 2026-08-11 — the exact guarded authenticated retry run
-`nightwatch-20260811T012811Z-9045` passed the pre-real-run gate 13/13. Its
-sanitized evidence shows successful document and critical asset responses, but
-does not prove application execution, auth-state effectiveness, router start,
-or deployment identity. The final path was `/ripple/`, the document was
-complete, and the source-backed post-mount
+Last checkpoint: 2026-08-11 — the instrumented authenticated observation run
+`nightwatch-20260811T032906Z-3fd5-first` passed the pre-real-run gate 13/13.
+Its sanitized evidence shows successful document and critical asset responses,
+but the unchanged readiness contract still failed: the final path was
+`/ripple/`, the document was complete, and the source-backed post-mount
 `DIV.q-layout-container.layout` shell was absent. `routeStableMs` remained
-`0` and `stabilityReached` was `false`; replay was correctly NOT RUN. The run
-recorded zero denied or unknown destinations, zero proxy violations, zero hard
-failures, and zero fatal page errors. The external DEV storage-state path and
-contents remain outside Nightwatch.
+`0` and `stabilityReached` was `false`; replay was correctly NOT RUN. The new
+hooks observed zero runtime exceptions, unhandled rejections, CSP violations,
+route transitions, and critical-resource failures. The run recorded zero
+denied or unknown destinations, zero proxy violations, zero hard failures,
+and zero fatal page errors. The external DEV storage-state path and contents
+remain outside Nightwatch.
 
 ## Objective
 
@@ -32,17 +33,19 @@ evidence, and a single fresh-context replay.
 Milestone ID: M7 — First controlled authenticated landing observation
 Status: IN_PROGRESS
 What is now established: M6 passed against the exact DEV Ripple target
-`https://appdev.alphaus.cloud/ripple/`. The exact guarded authenticated retry
-`nightwatch-20260811T012811Z-9045` passed all 13 pre-real-run checks and
+`https://appdev.alphaus.cloud/ripple/`. The instrumented authenticated run
+`nightwatch-20260811T032906Z-3fd5-first` passed all 13 pre-real-run checks and
 reached the approved DEV origin. Its final path was `/ripple/`; the document
 was complete, but the post-mount `DIV.q-layout-container.layout` shell was
 absent after the full bounded readiness window. `targetConfirmed` was `true`,
 `routeStable` was `true` at the final sample, `routeStableMs` was `0`, and
-`stabilityReached` was `false`. The run stopped before replay as required. The
+`stabilityReached` was `false`. The new bootstrap hooks observed zero runtime
+exceptions, unhandled rejections, CSP violations, route transitions, and
+critical-resource failures. The run stopped before replay as required. The
 source/framework repair remains authoritative: `#app` is only the Vue
 pre-mount target, and the rendered shell remains the readiness marker. This
-shell-absent result is now the remaining runtime/deployment/bootstrap branch;
-the selector and readiness contract must not be weakened.
+shell-absent result remains `OTHER / UNRESOLVED`; the selector and readiness
+contract must not be weakened.
 
 Historical M7 safety review remains recorded below: the exact source-supported
 Pylon host and reviewed browser-background hosts remain locally blocked,
@@ -2060,6 +2063,116 @@ replay, production traffic, mutation, database query, auth-state read, body
 inspection, or Alphaus repository modification occurred. M7 remains
 `IN_PROGRESS`; replay remains **NOT RUN**.
 
+## M7 instrumented authenticated observation result — 2026-08-11 — `nightwatch-20260811T032906Z-3fd5-first`
+
+The exact requested command was run without `--ui-url`. The strict pre-real-run
+gate passed **13/13** before browser/context creation. The first observation
+then ran once in a guarded context and failed the unchanged readiness
+contract; the runner wrote a sanitized comparison with `replay-not-run` and
+did not create a fresh replay context.
+
+### Sanitized authenticated and navigation evidence
+
+- storage state loaded before navigation: `true`;
+  provenance/environment compatibility: `true` (`dev` gate and selected
+  target agreed). The state path and contents were not opened or persisted by
+  Nightwatch.
+- login/auth-host redirect observed: `false`.
+- authentication-related HTTP status category: no auth-host response or
+  auth-related status was safely observable in the run; the two document
+  responses were `200 text/html`. Authentication replay effectiveness is
+  **UNRESOLVED**: structural loading/provenance passed, but effective
+  authenticated session behavior was not proven and was not classified
+  ineffective solely from the route result.
+- initial sanitized origin/path: `https://appdev.alphaus.cloud` / `/ripple/`.
+- final sanitized origin/path: `https://appdev.alphaus.cloud` / `/ripple/`.
+- document loads: `2`; both completed with `200 text/html`.
+- route transition count/sequence: `0` / `[]`; `/ripple/dashboard` was not
+  reached. The only navigation event was the direct passive landing
+  navigation to `/ripple/`.
+- navigation in progress: `false`; `navigationFailed: false`; page remained
+  open during final sampling and the context closed normally after observation.
+
+### Sanitized bootstrap and runtime evidence
+
+- `applicationEntryObserved/completed`: `true` / `true`.
+- scripts: `112` requested, `112` completed, `0` failed.
+- chunks: `108` requested, `108` completed, `0` failed; modules: `0`.
+- styles: `6` requested, `6` completed, `0` failed.
+- critical resource failures: `0`; wrong-content-type script failures: `0`;
+  failed critical resource list: empty. All observed JavaScript responses
+  were `200 text/javascript`; no HTML fallback was observed for a script.
+- runtime exceptions: `0`; unhandled rejections: `0`; console errors: `0`.
+  No exception or rejection category/fingerprint was recorded.
+- CSP violations: `0`; resource-load error events: `4`, all corresponding to
+  expected local containment effects rather than critical application assets.
+- router/bootstrap signal: `routerBootstrap=unknown`; no route transition or
+  concrete router/bootstrap error was observed. Observer hooks were healthy
+  for unhandled rejection, CSP, resource failure, history transition, and
+  request-failure metadata.
+
+### Structural result and classification
+
+- `document.readyState`: `complete`; body present: `true`; safe body-child
+  count: `8`.
+- source-backed rendered shell selector: `DIV.q-layout-container.layout`;
+  `renderedShellPresent=false`.
+- `targetConfirmed=true`; `routeStable=true` at the final sample but
+  `routeStableMs=0`; `stabilityReached=false` after the full bounded wait.
+- fatal lifecycle/page-error count: `0`; `pageClosed=false` during sampling.
+- exact classification: **OTHER / UNRESOLVED**.
+
+The evidence rules out a concrete critical-asset failure, runtime exception,
+unhandled bootstrap rejection, CSP bootstrap failure, and observed router
+transition failure. It does not prove authentication ineffectiveness or
+deployment/source divergence, and no causal path from expected blocked
+telemetry/support/browser-background traffic to shell absence was established.
+The observer hooks were installed and healthy, so `OBSERVER_BLIND_SPOT` is not
+earned. No speculative repair is authorized from this result.
+
+### Destinations, endpoint semantics, and oracles
+
+- destination manifest: `3` expected, `0` new-but-verified, `7` blocked,
+  `0` unresolved.
+- endpoint semantic classifications: none recorded in this passive landing
+  (`endpointSemantics=[]`); no endpoint was deliberately invoked or replayed.
+- oracle categories: `EXPECTED_CONTAINMENT_EFFECT`,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`.
+- the known `POST https://apidev.alphaus.cloud/m/blue/cost/v1/` malformed-JSON
+  anomaly did **not** recur in this run. Its prior
+  `GENUINE_PROTOCOL_ANOMALY` classification and unresolved subcause remain
+  unchanged; no response body was inspected.
+
+### Safety and privacy checkpoint
+
+- proxy: `2` allowed, `9` telemetry-blocked, `0` optional-support-blocked,
+  `1` browser-background-blocked, `0` denied, `0` unknown, `0` violations.
+- production attempts: `0`; mutations: `0`; DB queries: `0`; unknown
+  destinations silently approved: `0`.
+- category-level privacy review: **PASS** for credentials/tokens/JWTs,
+  authorization/cookie material, user/customer/account identifiers, raw
+  request/response bodies, financial values, DOM/text dumps,
+  screenshots/traces, and auth-state material. No screenshot or trace file
+  was created, and no authenticated artifact was tracked. The external state
+  remains outside Nightwatch.
+
+### Final validation for this checkpoint
+
+- `npx tsc --noEmit`: **PASS**.
+- `npx playwright test`: **194 passed, 0 failed**; only the ordinary
+  local/synthetic suite ran.
+- `npm run agent:check`: **PASS** with one expected approved
+  `CHECKPOINT_ADVANCE` warning from implementation SHA `952be215` to the
+  documentation checkpoint `d08b153`.
+- `git diff --check`: **PASS**.
+- The inspected Ripple worktree retained only its previously documented
+  pre-existing changes; no Alphaus repository was modified.
+- The first-run artifact pair contained only sanitized JSON/JSONL metadata;
+  no screenshot, trace, or tracked authenticated artifact was present.
+
+M7 remains `IN_PROGRESS`; M10 replay remains **NOT RUN**; Phase 2B remains
+deferred. This is a checkpointed diagnostic result, not a product bug verdict.
+
 ## Deferred / Follow-Up
 
 - Phase 2B deterministic read-only Ripple journeys and all later phases.
@@ -2076,17 +2189,17 @@ inspection, or Alphaus repository modification occurred. M7 remains
    network allowlist or wildcard exists.
 4. The external auth state is already user-confirmed present at the recorded
    path; its contents remain out of scope.
-5. The exact authenticated retry `nightwatch-20260811T012811Z-9045` is the
-   latest real run. It passed the 13/13 gate, ended at `/ripple/` with a
-   complete document but no `DIV.q-layout-container.layout`, and recorded
-   `routeStableMs=0`. Replay remains prohibited.
-6. Treat the result as the unresolved runtime/deployment/bootstrap branch. Do
-   not inspect DOM/content, change the selector, weaken readiness, rerun the
-   canary, replay, or begin Phase 2B.
-7. If a fresh authorized real retry is approved in a later session, use exactly:
-   `npm run observe:authenticated -- --env=dev
-   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
-   and inspect only the resulting sanitized bootstrap diagnostics.
+5. The instrumented authenticated observation
+   `nightwatch-20260811T032906Z-3fd5-first` is the latest real run. It passed
+   the 13/13 gate, ended at `/ripple/` with a complete document but no
+   `DIV.q-layout-container.layout`, and recorded `routeStableMs=0`. Replay
+   remains prohibited.
+6. Treat the result as `OTHER / UNRESOLVED`. Do not inspect DOM/content, change
+   the selector, weaken readiness, rerun the canary, replay, make a speculative
+   repair, or begin Phase 2B.
+7. Await a later explicit task decision; do not run another real observation
+   implicitly. If a new authorized retry is later requested, use exactly the
+   prescribed authenticated command and inspect only its sanitized diagnostics.
 8. This task remains `IN_PROGRESS`; the external storage-state path and its
    contents remain outside Nightwatch and uninspected.
 

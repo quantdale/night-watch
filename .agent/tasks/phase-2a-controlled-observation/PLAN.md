@@ -340,16 +340,15 @@ handoff; do not execute the authenticated observation in this session.
   sanitized; no deliberate click/form/action or database access occurs.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
-- Status: IN_PROGRESS — the exact authenticated retry passed all 13 pre-real-run
-  checks and completed one guarded first observation, but replay was prohibited
-  because the final sanitized readiness result used the historical
-  `#app`-absence predicate and had `stabilityReached=false`. The approved DEV
-  route was `/ripple/dashboard` and `targetConfirmed=true`. Current source and
-  Vue 2.6.12 framework behavior prove that `#app` is only the bootstrap mount
-  target; authenticated `DefaultLayout` renders the post-mount
-  `DIV.q-layout-container.layout` shell. Nightwatch is repaired to require that
-  rendered shell instead. No real retry, replay, production attempt, mutation,
-  or DB query is authorized in this repair session.
+- Status: IN_PROGRESS — the instrumented authenticated observation
+  `nightwatch-20260811T032906Z-3fd5-first` passed all 13 pre-real-run checks,
+  but the unchanged readiness contract failed at `/ripple/`: the document was
+  complete, the approved target was confirmed, and the post-mount
+  `DIV.q-layout-container.layout` shell was absent. The new hooks observed zero
+  runtime exceptions, unhandled rejections, CSP violations, route transitions,
+  and critical-resource failures. Replay was prohibited because the first pass
+  failed. The result is `OTHER / UNRESOLVED`; no selector, stability threshold,
+  containment rule, or replay behavior is changed.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -849,8 +848,10 @@ npm run observe:authenticated -- \
 - Acceptance criteria: no dynamic allowlist mutation; every destination has a
   deterministic category and unresolved items stop or remain explicit.
 - Validation commands: focused manifest tests; real-run artifact inspection.
-- Status: NOT_STARTED — remains gated on the manual external state and M7
-  observation; no destination approval may be inferred from the canary.
+- Status: COMPLETE — the first authenticated observation produced the
+  sanitized manifest for run `nightwatch-20260811T032906Z-3fd5`: 3 expected,
+  0 new-but-verified, 7 blocked, and 0 unresolved destinations. No dynamic
+  approval was added.
 
 ### M9 — Run passive first-observation oracles
 
@@ -863,7 +864,11 @@ npm run observe:authenticated -- \
 - Acceptance criteria: oracle verdicts are deterministic, generic, and clearly
   separated from visual oddities or business findings.
 - Validation commands: focused oracle tests and real-run oracle report.
-- Status: NOT_STARTED
+- Status: COMPLETE — the first authenticated observation produced the
+  sanitized passive oracle result: expected-containment effects,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`. The known
+  malformed-JSON anomaly did not recur in this run and remains a separate
+  previously recorded protocol anomaly.
 
 ### M10 — Repeat once in a fresh context
 
@@ -875,7 +880,8 @@ npm run observe:authenticated -- \
 - Acceptance criteria: replay completes or records a precise failure/difference;
   no third/random exploration pass and no automatic bug label.
 - Validation commands: real-run replay command and sanitized comparison review.
-- Status: NOT_STARTED
+- Status: NOT_STARTED — intentionally not run because the first observation
+  failed readiness; no fresh context was created and no third pass is allowed.
 
 ### M11 — Review authenticated artifact privacy
 
@@ -888,7 +894,10 @@ npm run observe:authenticated -- \
 - Acceptance criteria: no sensitive persistence; any safety event is factual,
   sanitized, and Phase 2A fails until fixed and rerun.
 - Validation commands: targeted artifact scan/review; `git status --short`.
-- Status: NOT_STARTED
+- Status: COMPLETE — category-level review of the first-pass artifacts passed;
+  no credentials, auth headers/cookies/tokens, raw bodies, DOM/text dumps,
+  screenshots, traces, auth-state material, or tracked authenticated artifact
+  was found. The external storage state remained outside Nightwatch.
 
 ### M12 — Document the actual sanitized runtime contract
 
@@ -902,7 +911,8 @@ npm run observe:authenticated -- \
 - Acceptance criteria: durable docs contain sanitized facts only and preserve
   the historical safety event and current scope boundaries.
 - Validation commands: manual sanitized-doc review; `git diff --check`.
-- Status: NOT_STARTED
+- Status: NOT_STARTED — no durable runtime contract is promoted from this
+  unresolved observation; the sanitized result remains in task state/report.
 
 ### M13 — Final validation and handoff
 
@@ -916,9 +926,10 @@ npm run observe:authenticated -- \
   instructions and remains `IN_PROGRESS`.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`; `npm run
   agent:check`; `git diff --check`; focused Phase 2A tests; clean `git status`.
-- Status: USER_ACTION_REQUIRED — handoff checkpoint is prepared and local
-  validation is complete; authenticated observation and later milestones
-  remain unstarted until the human supplies external state.
+- Status: USER_ACTION_REQUIRED — the external state was available for this
+  one authorized observation, but the first pass failed unchanged readiness.
+  Replay and speculative repair are prohibited; the task remains IN_PROGRESS
+  pending a later explicit decision.
 
 ## Validation Strategy
 
