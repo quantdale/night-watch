@@ -838,6 +838,36 @@ npm run observe:authenticated -- \
   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 
+#### M7 source-traced lifecycle diagnostics checkpoint — 2026-08-11 — `9b8f740`
+
+The implementation checkpoint `9b8f7403726afb3749609400d0cbbcec9ce80b5e`
+adds a pre-navigation main-frame CDP document observer and a pre-script fixed-
+category lifecycle hook. It records sanitized document request/response/
+failure/replacement and DOM lifecycle metadata; redirect chain/status;
+initiator category and sanitized source path; script/style resource errors;
+runtime/CSP/rejection categories; `#app` target seen/removed; the exact
+rendered shell marker; history route transitions; and presence-only evidence
+for source-defined auth/environment keys. It separates expected stale-cache
+reloads, auth-branch reloads, application reloads, server redirects, browser
+retries, and unknown navigation. It also reports bounded bootstrap progress,
+silent-async vocabulary, and an explicit unavailable deployment-fingerprint
+comparison.
+
+The source trace is ordered through `public/index.html`, `src/main.js`,
+`src/router.js`, `src/vuex/api/auth.js`, `src/axios.config.js`, `src/App.vue`,
+and `src/layouts/DefaultLayout.vue`. It confirms `#app` is the Vue pre-mount
+target and `DIV.q-layout-container.layout` is the post-mount shell. The two-
+document historical artifact is source-consistent with the generic script/link
+error reload after blocked support-script errors, but the old observer lacks
+causal ordering, so the historical product result remains `OTHER / UNRESOLVED`.
+
+The readiness contract, selector, stability threshold, target policy,
+containment, and replay prohibition are unchanged. Final local validation after
+the observer hardening was `npx tsc --noEmit` PASS, focused diagnostic subset
+**23/23**, and full `npx playwright test --project=nightwatch` **205/205**.
+No new real observation was run; replay remains NOT RUN and M7 remains
+IN_PROGRESS.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.

@@ -4,10 +4,27 @@ Status: `IN_PROGRESS` / M7. The first instrumented authenticated observation
 failed the unchanged readiness contract. Replay was not run, no speculative
 repair was made, and Phase 2B remains deferred.
 
+## Diagnostic implementation checkpoint
+
+Implementation checkpoint: `9b8f7403726afb3749609400d0cbbcec9ce80b5e`.
+This is a code-and-documentation handoff, not a new real observation. The
+source-traced observer records sanitized main-frame document lifecycle,
+redirect/initiator metadata, fixed page bootstrap categories, pre-mount target
+and post-mount shell transitions, route history, presence-only auth-state
+contract facts, bounded progress classifications, and explicit deployment
+fingerprint unavailability. It preserves the existing readiness contract and
+does not infer a product cause from duplicate document loads. The latest real
+run remains `nightwatch-20260811T032906Z-3fd5-first`; replay remains NOT RUN.
+
+Local validation for the implementation was TypeScript PASS, focused diagnostic
+tests **37/37** (with a final hardening subset **23/23**), and full Playwright
+suite **205/205**. No new real request, replay, Alphaus mutation, DB query, or
+storage-state value inspection occurred.
+
 ## Run and gate
 
 - Starting checkpoint SHA: `d08b153b52c64d5bd0925d905df08414c4f9a396`.
-- Implementation baseline: `952be215a0d65843e2fb7f8d15e0c28a7d7b142a`.
+- Implementation baseline: `9b8f7403726afb3749609400d0cbbcec9ce80b5e`.
 - Run: `nightwatch-20260811T032906Z-3fd5-first`.
 - Pre-real-run gate: **13/13 PASS**, before browser/context creation.
 - Observation mode: one passive direct landing navigation in a guarded DEV

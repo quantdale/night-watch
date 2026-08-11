@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 952be215a0d65843e2fb7f8d15e0c28a7d7b142a
-Last validated implementation SHA: 952be215a0d65843e2fb7f8d15e0c28a7d7b142a
+Current SHA: 9b8f7403726afb3749609400d0cbbcec9ce80b5e
+Last validated implementation SHA: 9b8f7403726afb3749609400d0cbbcec9ce80b5e
 Branch: main
-Last checkpoint: 2026-08-11 — the instrumented authenticated observation run
+Last checkpoint: 2026-08-11 — source-traced lifecycle diagnostics implementation
 `nightwatch-20260811T032906Z-3fd5-first` passed the pre-real-run gate 13/13.
 Its sanitized evidence shows successful document and critical asset responses,
 but the unchanged readiness contract still failed: the final path was
@@ -83,12 +83,13 @@ Repository: `REPOSITORIES/mobingilabs/ripple-ui`.
 - Checked-out branch: `dev`.
 - Checked-out SHA: `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`.
 - Locally available current reference: `origin/dev` at
-  `0bba40b749a1d79cd2b3b3f9eb1aba44e4b313a2`.
-- Relationship: checked-out `dev` is behind `origin/dev` by 17 commits; the
+  `e46b8ed6540b647574bdb96ec59eca42fc8acdef`.
+- Relationship: checked-out `dev` is behind `origin/dev` by 21 commits; the
   worktree has unrelated local deletions under
   `openspec/changes/add-reserveshield-export-report/` and an untracked
   `AGENTS.md`.
-- The 17-commit delta is limited to translation/invoice/settings files and
+- The 21-commit delta is limited to mock, feature, invoice/settings, and
+  related files and
   has no changes to bootstrap, `public/index.html`, `src/main.js`,
   `src/router.js`, `src/App.vue`, or build/runtime mounting files. No
   pull/fetch/checkout/reset/rebase/stash/clean/modification occurred.
@@ -100,16 +101,27 @@ Source contract:
 3. The `beforeEach` guard redirects authenticated `/` or `/login` to
    `/dashboard`; the authenticated browser URL is therefore
    `/ripple/dashboard`.
-4. At current `origin/dev`, `public/index.html:35` declares
-   `<div id="app"></div>` and `src/main.js:48,324` mounts Vue with
-   `}).$mount('#app')`.
-5. The shell owns the mount and layout; dashboard content is rendered below
-   the shell and may select a dashboard MFE via feature flags. No customer
-   text or financial value is needed for readiness.
+4. `public/index.html:35` declares `<div id="app"></div>` and
+   `src/main.js:48,324` renders `App` and calls `}).$mount('#app')`; this is
+   the Vue pre-mount target, not the post-mount readiness shell.
+5. `src/App.vue:1-5` selects `default-layout` for authenticated routes;
+   `src/layouts/DefaultLayout.vue:1-2` supplies `<q-layout container
+   class="layout">`; the source-backed rendered shell is therefore
+   `DIV.q-layout-container.layout`.
+6. `src/main.js:69-145,207-277` creates optional Pylon/Intercom scripts and
+   runs `loadInitialData()` on authenticated routes without awaiting that
+   call before `$mount`; `loadInitialData()` has no explicit timeout. The
+   source supports a silent post-mount async stall hypothesis, but the real
+   run recorded no rejection or runtime error and did not prove that branch.
+7. `public/index.html:36-50` reloads once after a script/link error;
+   `src/router.js:1449-1460` independently reloads once after a chunk-load
+   error. `src/router.js:1385-1412` remains the auth branch contract, and
+   `src/axios.config.js:20-30` plus `src/vuex/api/auth.js:52-61,84-96`
+   define the source-traced cookie/fallback behavior.
 
-Classification: `CURRENT_SOURCE_STILL_USES_APP`. The exact source-backed root
-contract remains `#app` in the top-level document; no newer source proved a
-different selector.
+Classification: `APP_IS_PREMOUNT_TARGET_ONLY`; the rendered shell selector is
+source-backed and remains the unchanged readiness marker. No Alphaus source
+file was modified.
 
 ### Exact causal analysis
 
@@ -2172,6 +2184,122 @@ earned. No speculative repair is authorized from this result.
 
 M7 remains `IN_PROGRESS`; M10 replay remains **NOT RUN**; Phase 2B remains
 deferred. This is a checkpointed diagnostic result, not a product bug verdict.
+
+## M7 Source-Trace and Lifecycle Diagnostics Checkpoint — 2026-08-11 — `9b8f740`
+
+The implementation checkpoint is `9b8f7403726afb3749609400d0cbbcec9ce80b5e`.
+It adds diagnostics only; it does not modify `src/products/ripple/readiness.ts`,
+the source-backed shell selector, the 750 ms structural stability threshold,
+the target contract, containment, passive-action policy, or replay rules.
+
+### Ordered source graph and current source facts
+
+The narrow read-only source trace is now explicit and ordered:
+
+1. `public/index.html:35-50` provides the pre-mount `<div id="app"></div>`
+   target and a generic stale-cache handler that reloads once after any
+   script/link error (`__ripple_reload__`, 60-second guard).
+2. `src/main.js:48-52,324` renders `App` and mounts Vue at `#app`.
+   `src/main.js:69-145` injects optional Pylon/Intercom scripts, and
+   `src/main.js:140-145,207-277` invokes `loadInitialData()` on authenticated
+   routes without awaiting it before the mount call. That async path has no
+   explicit timeout and can therefore support a silent loading/post-mount
+   stall hypothesis if a dependency never settles; source alone does not
+   prove that branch occurred in the real run.
+3. `src/router.js:270-273,300-328,1385-1412` defines the `/ripple/` base,
+   `/dashboard` route with `/` alias and `requiresAuth`, and the missing-token
+   redirect to `/login` plus token-present redirect to `/dashboard`.
+4. `src/vuex/api/auth.js:52-61,84-96` defines `mo_access_token` as the
+   protected-route cookie and `api_type`/`app_type` as environment-selection
+   cookies with hostname-derived DEV/Next fallbacks; `src/axios.config.js:20-30`
+   consumes the same fallback contract.
+5. `src/App.vue:1-5` selects `default-layout` for authenticated routes, and
+   `src/layouts/DefaultLayout.vue:1-2` supplies `<q-layout container
+   class="layout">`; Quasar's root makes the rendered shell
+   `DIV.q-layout-container.layout`. `#app` is therefore only the pre-mount
+   target; the rendered shell remains the readiness marker.
+6. `src/router.js:1449-1460` independently reloads once after a chunk-load
+   error. The stale-cache and chunk handlers are the source-backed full-
+   document reload paths; no source branch was found that proves an auth
+   redirect or application reload occurred in the old artifact.
+
+The checked-out Ripple source remains branch `dev` at
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9`; the locally available `origin/dev`
+is `e46b8ed6540b647574bdb96ec59eca42fc8acdef`, 21 commits ahead. The delta is
+limited to mock, feature, invoice, settings, and related files; the
+readiness-relevant paths above are unchanged. The Ripple worktree's unrelated
+pre-existing deletions and untracked file were preserved. No Alphaus file was
+modified.
+
+### Explanation boundary for the earlier two-document artifact
+
+The prior sanitized artifact still shows two `200 text/html` `/ripple/`
+documents, complete app/vendor assets, and no critical failed asset or runtime
+error. Its second document request followed two expected blocked dynamic
+support-script errors by only a small interval. The generic
+`public/index.html` script/link error handler is therefore a strong
+source-consistent explanation for the second load, but the old observer did
+not record the resource target, initiator, or document replacement ordering
+needed to claim causality. The classification remains `OTHER / UNRESOLVED`
+for that historical run. The new observer can classify a later run as
+`EXPECTED_BOOTSTRAP_RELOAD` only when sanitized ordering/initiator evidence
+supports it; it does not infer that classification from a duplicate document
+count alone.
+
+### Diagnostics now available for one later authorized observation
+
+- A pre-navigation CDP observer records only main-frame document request,
+  response, failure, replacement, DOMContentLoaded, and complete metadata:
+  bounded ordinal, sanitized origin/path, safe method, status, content type,
+  redirect presence/status, fixed navigation initiator category, sanitized
+  initiator source path, frame classification, and replacement relation.
+- A pre-script page hook records fixed categories for unhandled rejection,
+  CSP violation, script/stylesheet resource errors, runtime errors, document
+  lifecycle, `#app` target seen/removed, rendered-shell seen, and history
+  route transitions (`pushState`, `replaceState`, `popstate`, `hashchange`,
+  `go`). Pathnames are allowlisted or reduced to `<ID>`; query/fragment,
+  text, bodies, stack text, DOM, storage values, and identity are excluded.
+- Source-defined auth evidence is presence-only for fixed names. The catalog
+  records `mo_access_token` as required for protected routing and
+  `api_type`/`app_type` as optional DEV bootstrap selection with fallback.
+  The run output contains booleans/counts only; it never emits cookie names
+  discovered from the file or any values. Auth replay is `CONFIRMED` only when
+  provenance, required-key presence, the source authenticated branch, and no
+  auth-host/unauthenticated branch all agree; absent proof remains
+  `UNRESOLVED`, while a source login branch with missing auth state is
+  `INEFFECTIVE`.
+- Full-document navigation is classified only from fixed evidence as
+  `EXPECTED_BOOTSTRAP_RELOAD`, `AUTH_STATE_BRANCH_RELOAD`,
+  `APP_INITIATED_RELOAD`, `SERVER_REDIRECT`, `BROWSER_RETRY`, or `UNKNOWN`.
+  Target lifecycle is separate from rendered-shell lifecycle, and progress
+  can identify `BOOTSTRAP_STALL_CANDIDATE`,
+  `POST_MOUNT_RENDER_FAILURE_CANDIDATE`, `NO_MOUNT_PROGRESS`, or
+  `PROGRESS_UNKNOWN` without promoting readiness.
+- Deployment fingerprint comparison is explicitly `UNAVAILABLE`: public asset
+  basenames are observable, but this checkout has no defensible committed
+  deployment manifest/build comparison for the run. The result is not
+  guessed from a hash or URL basename.
+- The source-defined silent async branches have a synthetic fixed classifier
+  for `BOOTSTRAP_STALL`, `BOOTSTRAP_FAILURE_SWALLOWED`,
+  `BOOTSTRAP_FAILURE_UNHANDLED`, and `BOOTSTRAP_DEPENDENCY_RESOLVED`; this is
+  diagnostic vocabulary, not a claim about the old real artifact.
+
+The observer installation and context cleanup are fail-safe. Document failure
+events are restricted to the main frame, and the observer is installed before
+the direct landing navigation. Readiness remains authoritative and unchanged.
+
+### Validation and safety boundary
+
+- Focused lifecycle/bootstrap/storage validation: **37 passed, 0 failed**;
+  final observer-cleanup hardening subset: **23 passed, 0 failed**.
+- `npx tsc --noEmit`: **PASS**.
+- Full local/synthetic suite: **205 passed, 0 failed**.
+- `git diff --check`: **PASS** before the implementation checkpoint.
+- No real authenticated retry was run after instrumentation. No replay, third
+  observation, Alphaus request, production traffic, mutation, DB query, or
+  storage-state value inspection occurred in this implementation session.
+  The earlier real run remains the latest real observation; replay remains
+  **NOT RUN** and M7 remains **IN_PROGRESS**.
 
 ## Deferred / Follow-Up
 
