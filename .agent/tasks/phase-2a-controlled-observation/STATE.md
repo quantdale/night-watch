@@ -6,8 +6,8 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
-Last validated implementation SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
+Current SHA: 47937ab
+Last validated implementation SHA: 47937ab
 Branch: main
 Last checkpoint: 2026-08-11 (resume session) — auth replay classified INEFFECTIVE;
 root-route cause is expired external auth state, NOT a product routing bug.
