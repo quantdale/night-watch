@@ -1252,3 +1252,28 @@ canary, first authenticated observation, one replay, manifest/oracles,
 artifact privacy review, sanitized docs, full validations, acceptance matrix,
 and clean committed handoff are complete. If a genuine human input is missing,
 checkpoint all state and stop as `USER_ACTION_REQUIRED` without broad recon.
+
+## M7 D8 page-readability repair checkpoint — 2026-08-12 — `a6d7c8b`
+
+The old `authTokenPageReadability` evidence was correctly retained as a
+storage-state applicability approximation, but it did not prove that Ripple's
+page JavaScript could read the cookie. A fixed-key page evaluator now reduces
+live `document.cookie` visibility and the DEV bootstrap cookie semantics to
+booleans only. It is used after post-login verification during capture and
+after the real landing navigation during observation. Non-local capture and
+authenticated readiness both fail closed when the required token is absent,
+empty, semantically invalid, or not page-readable. The lifecycle classifier
+also recognizes source-observed auth-layout versus default/QLayout branches at
+the canonical root path.
+
+The local synthetic Playwright regression proves a live cookie is visible and
+an expired storage-state cookie is absent from page JavaScript. Capture output
+replacement is now atomic and validation-first, so a failed fresh capture
+preserves the prior external state. No host policy, readiness selector, 750 ms
+threshold, trace/screenshot setting, or Ripple source was changed.
+
+Validation at this checkpoint: `npx tsc --noEmit` PASS; full Playwright suite
+241/241 PASS; focused capture/lifecycle/storage suite 46/46 PASS; synthetic
+capture 1/1 PASS; `git diff --check` PASS. Implementation commit is
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`. Human capture remains pending;
+the stale external state must not be used.

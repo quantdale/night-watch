@@ -6,10 +6,12 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
-Last validated implementation SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
-Current milestone: M7 — First controlled authenticated landing observation (BLOCKED)
-Last checkpoint: 2026-08-11 (resume) — auth replay classified INEFFECTIVE; prior
+Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
+Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
+Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS — awaiting fresh human auth capture)
+Last checkpoint: 2026-08-12 (D8 repair) — auth replay classified INEFFECTIVE for
+the expired state; live page-readability proof and atomic recapture are now
+implemented; prior
 "product routing" conclusion refuted.
 
 The resume session drove the routing/auth ambiguity to an evidence-backed

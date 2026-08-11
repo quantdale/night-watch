@@ -531,3 +531,37 @@ is not begun.
 `npx playwright test` and `npm run agent:check`/`git diff --check` run next after
 STATE/REPORT checkpoint. No Alphaus repo modified; no production/DB/mutation/
 auth-value access. Production attempts for this resume: 0.
+
+## D8 live page-readability repair — 2026-08-12
+
+The expired-auth blocker was revalidated without reading or printing the old
+token. The previous static `pageReadable` result remains a context-side
+cookie-applicability fact, not a live page proof. Nightwatch now evaluates only
+fixed source-defined cookie predicates inside the browser and returns boolean
+fields: token visibility/non-emptiness, optional DEV/app cookie visibility and
+matches, aggregate bootstrap semantics, and evaluation basis. Raw
+`document.cookie`, cookie values, page text, and storage-state contents remain
+outside evidence.
+
+The new browser-backed synthetic test passes for a live cookie and rejects an
+expired cookie. Capture records the live proof after human post-login
+verification and refuses non-local state writing when the required token is
+not page-readable. Authenticated observation records the same proof after the
+landing navigation and uses it for replay classification/readiness; it refuses
+to create a real authenticated context when the static state applicability
+check is already false. Auth-layout is now an explicit unauthenticated branch
+in lifecycle diagnostics, while the source-approved default/QLayout shell can
+establish the authenticated branch at the canonical root.
+
+Because the canonical external path already contains the expired state, the
+approved capture workflow now writes a temporary sibling, validates it, and
+atomically replaces the old path only on success. Failed capture preserves the
+old state. This is limited to the direct human-capture path; ordinary output
+validation still rejects an existing path.
+
+Implementation checkpoint: `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
+Validation: TypeScript PASS; full Playwright 241/241 PASS; focused suite 46/46
+PASS; synthetic capture 1/1 PASS; diff check PASS. No fresh real observation
+has run and no human capture has started. Next action is the exact interactive
+DEV auth-capture command at the canonical external path, followed by safe
+fresh-state booleans and the 13/13 gate. Phase 2B remains unstarted.

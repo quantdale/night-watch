@@ -3285,3 +3285,303 @@ Read this waypoint + tail of STATE.md. Root cause is a product routing
 condition at `/ripple/` (auth-layout vs dashboard shell). Nightwatch is healthy
 and validated (230/230). Real-run command unchanged. Await product/user
 decision before any further real observation.
+
+---
+
+## PHASE_A_HEALTH_AUDIT_AND_B_BLOCKER_RECONFIRMED — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+Drive the existing Phase 2A task from the expired-auth blocker through fresh
+DEV authentication, page-visible auth validation, one controlled authenticated
+observation, one fresh-context replay, and final safety/privacy/documentation
+closure without modifying Ripple or starting Phase 2B.
+
+### CURRENT_PHASE
+Phase A/B complete; Phase C preparation is next. M7 remains IN_PROGRESS.
+
+### CURRENT_EVIDENCE
+- Actual Nightwatch HEAD is `8fd108dd29e2708bf092eefe617835a2ed67a511` and the
+  worktree is clean.
+- `47937abb9134e0fbfb5a3e0e224d3e10cc8337eb` is the last validated
+  implementation SHA; the only commits after it are approved task-state/doc
+  paths, so the continuity state is `CHECKPOINT_ADVANCE`.
+- `npx tsc --noEmit` PASS; `npx playwright test` PASS, **237/237**;
+  `npm run agent:check` PASS with only the expected approved checkpoint
+  warning; `git diff --check` PASS; `git status --short` clean.
+- D1 canceled/unterminated resource handling: HEALTHY; D2 client/policy
+  abort handling: HEALTHY; D3 mount-parent-scoped Vue-root selection: HEALTHY;
+  D5 timing-only `BROWSER_RETRY` suppression: HEALTHY.
+- D8 file/context/page-readability separation: QUESTIONABLE until the
+  browser-backed synthetic regression and page-runtime evidence are added.
+  The current helper remains boolean-only and standards-derived, but its
+  `pageReadable` result is explicitly context-derived rather than a live page
+  JavaScript observation.
+- Safe recheck of the existing external state reported only booleans:
+  `storageStateExists=true`, `present=true`, `domainApplicable=true`,
+  `pathApplicable=true`, `httpOnly=false`, `secure=false`, `expired=true`,
+  `pageReadable=false`. No token value was printed or inspected manually.
+- Conflict reconciled: the older tail of this STATE still says
+  `PRODUCT ROUTING CONDITION`/230 tests, while the newer ACTIVE_TASK, REPORT,
+  implementation commit, and safe expired-cookie evidence supersede it with
+  `AUTH_REPLAY_INEFFECTIVE`/237 tests. The stale wording is preserved above as
+  history; this waypoint is the current execution authority.
+
+### CURRENT_CLASSIFICATION
+`AUTH_REPLAY_INEFFECTIVE` remains confirmed for the existing capture. The
+external file contains an applicable source-required cookie row, but the
+cookie is expired and therefore not page-readable under the current browser
+visibility contract. Fresh human auth is required before any authenticated
+observation or replay.
+
+### COMPLETED_THIS_SESSION
+- Recovered AGENTS, current project state, active task, SPEC, PLAN, STATE, and
+  REPORT in the mandated order.
+- Read the required safety, decision, roadmap, and architecture contracts.
+- Reconciled actual Git continuity against active task SHA fields.
+- Audited the previous Phase 2A repairs, containment stack, affected tests,
+  and authenticated evidence emitters.
+- Ran the pre-auth TypeScript, full Playwright, agent continuity, whitespace,
+  and clean-tree checks.
+- Reconfirmed the expired-auth blocker with sanitized boolean output.
+
+### FILES_CHANGED
+None this waypoint. Nightwatch and all Alphaus repositories remain unchanged.
+
+### VALIDATION_LEDGER
+- `npx tsc --noEmit` — PASS.
+- `npx playwright test` — **237 passed, 0 failed**.
+- `npm run agent:check` — PASS; expected `CHECKPOINT_ADVANCE` warning only.
+- `git diff --check` — PASS.
+- `git status --short` — clean.
+- Existing-state boolean diagnostic — expired applicable cookie,
+  `pageReadable=false`; no secret values emitted.
+
+### REAL_RUN_LEDGER
+No real run was performed in this waypoint. The last controlled real runs are
+historical and remain bounded in the earlier ledger; no fresh observation or
+replay is authorized until the new auth capture passes validation.
+
+### AUTH_CAPTURE_LEDGER
+The prior external capture remains present but expired. No capture was launched
+in this waypoint. The approved next command is the existing interactive
+`auth:capture` workflow at the external user-owned path.
+
+### DECISIONS
+- Treat the existing `pageReadable=false` result as a genuine auth blocker;
+  do not run stale authenticated traffic.
+- Keep the exact DEV target, mandatory proxy, browser guards, trace-off policy,
+  750ms rendered-shell readiness contract, and replay budget unchanged.
+- Repair only the D8 evidence/test boundary before human recapture; do not
+  broaden host policy or alter Ripple.
+
+### REJECTED_HYPOTHESES
+- The prior root-route auth-layout symptom is not currently evidence of a
+  routing bug; the expired capture is a sufficient explanation and the source
+  guard contract was already verified.
+- A passing file-level semantic aggregate is not proof of page-readable auth.
+- A clean local suite does not authorize use of the stale external state.
+
+### UNRESOLVED
+- Live page-readable auth behavior for the future fresh capture.
+- Whether the fresh authenticated DEV landing reaches the rendered QLayout
+  shell and remains structurally stable for at least 750ms.
+- First-run and replay lifecycle/destination/oracle results.
+
+### SAFETY_EVENTS
+None in this waypoint. No browser target, production host, database, mutation,
+or Alphaus repository write was performed.
+
+### PRIVACY_STATUS
+PASS for the local synthetic suite and current artifact policy. The external
+state was queried only through a boolean-only helper; no token, cookie value,
+body, DOM, identity, screenshot, or trace was persisted or printed.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+`47937abb9134e0fbfb5a3e0e224d3e10cc8337eb`
+
+### LAST_CHECKPOINT_SHA
+`8fd108dd29e2708bf092eefe617835a2ed67a511`
+
+### NEXT_EXACT_ACTION
+Add the local browser-backed expired/live-cookie regression and wire actual
+page-JavaScript auth readability booleans into capture/observation diagnostics;
+run focused and full local validation, then checkpoint before human auth.
+
+### RESUME_RECIPE
+Read this waypoint, then inspect the current diff and continue with D8 only:
+add synthetic Playwright evidence that an expired storage-state cookie is absent
+from `document.cookie` while a live cookie is visible, keep returned evidence
+boolean-only, add post-login/real-observation page readability booleans, run
+the full validation gate, update this waypoint, commit Nightwatch only, and
+then launch the exact interactive capture command. Never open the stale state
+in an authenticated real context, never print `document.cookie`, never modify
+Ripple, and never start Phase 2B.
+
+## D8_PAGE_READABILITY_REPAIR_COMPLETE — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+
+Close Phase 2A safely: obtain a fresh DEV human-authenticated external state,
+prove that Ripple page JavaScript can consume it, complete one controlled
+canonical landing observation and one fresh-context replay, then finalize the
+task without starting Phase 2B.
+
+### CURRENT_PHASE
+
+M7 — IN_PROGRESS. Health audit and expired-auth blocker reconfirmed; D8 repair
+implemented and locally validated. Human capture has not yet been launched.
+
+### CURRENT_EVIDENCE
+
+- The existing external state remains present but its source-required token is
+  expired and not context-page-readable: present=true, domainApplicable=true,
+  pathApplicable=true, httpOnly=false, secure=false, expired=true,
+  pageReadable=false. No token value was read or printed.
+- The bounded independent D8 review confirmed that the old pageReadable flag
+  was only storage-state geometry, and that the existing synthetic auth cookie
+  is HttpOnly and unsuitable for document.cookie visibility testing.
+- Added one fixed-key page evaluator that reduces live document.cookie access
+  to booleans only, plus a browser-backed local expired-versus-live regression.
+- Auth capture now records live page auth booleans after post-login verification
+  and rejects non-local capture before writing state when the required token is
+  not page-readable, non-empty, or semantically invalid.
+- Auth observation now refuses a context when the external state’s static
+  applicability check is false, then records live page auth booleans after
+  navigation and uses those booleans for replay classification/readiness.
+- Auth-layout post-mount evidence is now an explicit unauthenticated branch;
+  default/QLayout/rendered-shell evidence can establish the authenticated
+  branch even when the browser remains at the canonical root alias.
+- Approved capture replacement is atomic: a fresh temporary external state is
+  validated first, then renames over the prior external path; failed capture
+  preserves the old state and removes only the temporary file.
+
+### CURRENT_CLASSIFICATION
+
+AUTH_REPLAY_INEFFECTIVE for the old capture; ROOT_ALIAS_COLLISION_BUG remains
+REFUTED. Fresh-auth outcome is not yet known.
+
+### COMPLETED_THIS_SESSION
+
+- Recovered all required Nightwatch task files in the mandated order and
+  reconciled clean HEAD 8fd108d with implementation baseline 47937ab.
+- Completed A1–A6 health audit: D1, D2, D3, D5 healthy; D8 was questionable
+  until this repair; safety architecture and privacy boundaries remained
+  intact.
+- Reconfirmed the expired-auth diagnosis with boolean-only diagnostics.
+- Used the healthy Kimi DeepSeek worker in read-only mode for the bounded D8
+  review; no worker edits or external auth/browser flows occurred.
+- Added live page-readability implementation, lifecycle branch correction,
+  atomic capture replacement, synthetic browser regression, lifecycle
+  regressions, and capture replacement regression.
+
+### FILES_CHANGED
+
+- `src/browser/fixtures/pageAuthReadability.ts`
+- `src/browser/fixtures/storageState.ts`
+- `src/auth/directRunner.ts`
+- `bin/auth-capture.mjs`
+- `src/products/ripple/lifecycleDiagnostics.ts`
+- `tests/manual/phase2a-authenticated.ts`
+- `tests/unit/storageState.test.ts`
+- `tests/unit/rippleLifecycleDiagnostics.test.ts`
+- `tests/unit/authCaptureStages.test.ts`
+- this task `STATE.md`
+
+### VALIDATION_LEDGER
+
+- `npx tsc --noEmit`: PASS after repair.
+- Focused lifecycle/storage/capture suite: 46 passed, 0 failed.
+- Browser-backed live expired/live cookie regression: PASS.
+- Synthetic direct auth-capture config: 1 passed, 0 failed.
+- Full Playwright suite, agent check, final diff check: pending after diff/docs
+  review and checkpoint.
+
+### REAL_RUN_LEDGER
+
+- No fresh real authenticated observation in this waypoint.
+- Prior controlled run remains historical only: auth replay was ineffective
+  because the external state was expired; no replay was allowed after failure.
+- Current-run productionAttempts=0, proxyViolations=0, unknownDestinations=0,
+  unknownApprovals=0, mutations=0, DBQueries=0.
+
+### AUTH_CAPTURE_LEDGER
+
+- Old external path: `$HOME/.nightwatch/auth/ripple-dev-state.json`.
+- Old state remains unusable and has not been used in a real context.
+- Fresh capture: NOT_STARTED.
+- Next capture must use the approved exact parent-CLI workflow, interactive
+  human login/MFA, and the same external path; no manual state editing.
+
+### DECISIONS
+
+- Keep static storage-state applicability and live page JavaScript readability
+  as separate evidence layers.
+- Use only fixed source-defined cookie keys and return booleans; never return
+  document.cookie or cookie values.
+- Require live page auth proof before authenticated replay classification or
+  readiness can pass.
+- Preserve the canonical `/ripple/` target contract; do not add a route fallback.
+- Permit existing external capture output only inside direct auth capture, via
+  validated temporary write plus atomic replacement.
+
+### REJECTED_HYPOTHESES
+
+- ROOT_ALIAS_COLLISION_BUG remains refuted by source-equivalent router evidence.
+- A file-present cookie is not accepted as page-visible authentication.
+- Canceled/unterminated resources are not promoted to critical asset failures.
+- Timing alone is not used to infer BROWSER_RETRY.
+
+### UNRESOLVED
+
+- Whether fresh human auth will produce a valid, non-expired, page-readable
+  `mo_access_token` remains unresolved until interactive capture.
+- First-run/replay lifecycle, route, readiness, oracle, and safety manifests
+  are not yet available for the fresh state.
+
+### SAFETY_EVENTS
+
+- No new production attempt, proxy violation, unknown approval, mutation, or DB
+  query. No new host was approved. No Ripple or other Alphaus repository was
+  modified.
+- Historical Phase 1.1 accidental production-host event remains preserved and
+  is not rewritten as “never contacted production.”
+
+### PRIVACY_STATUS
+
+PASS for the repaired local paths: page evaluator returns booleans only;
+synthetic secrets were not present in serialized diagnostics; authenticated
+traces/screenshots remain disabled; storage state remains external.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+
+a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c (D8 page-readability repair
+implementation; committed locally)
+
+### LAST_CHECKPOINT_SHA
+
+8fd108dd29e2708bf092eefe617835a2ed67a511
+
+### NEXT_EXACT_ACTION
+
+Update PLAN/REPORT/STATE continuity docs to the committed D8 implementation,
+run the post-commit validation/checkpoint, then launch human auth. Do not run
+authenticated observation with the old state.
+
+### RESUME_RECIPE
+
+Read this waypoint and the current diff. Run `npx tsc --noEmit`, the full
+`npx playwright test`, `npm run agent:check`, `git diff --check`, and review
+privacy/safety changes. If all pass, update PLAN/REPORT/STATE and the D20
+capture-replacement decision as needed, commit only Nightwatch, then verify the
+external path without printing contents and run:
+
+`npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+
+At HUMAN_WAIT, the human must complete DEV login/MFA and press ENTER. After
+success, validate only safe booleans, require page-readable auth and the exact
+13/13 gate, then run the canonical `observe:authenticated` command once; allow
+only one bounded Nightwatch repair/retry if a specific observer defect is
+proven. If the first observation passes, allow exactly one fresh-context replay
+and then complete the final safety/privacy/self-review and task closure. Never
+print auth values, never inspect document.cookie text, never modify Ripple, and
+never start Phase 2B.
