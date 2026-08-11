@@ -6,10 +6,10 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: b733e515471145335531a4833717c434de9c76cb
-Last validated implementation SHA: b733e515471145335531a4833717c434de9c76cb
+Current SHA: 6c0d973
+Last validated implementation SHA: 6c0d973
 Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS)
-Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
+Last checkpoint: 2026-08-11 — root cause found: DEV /ripple/ renders auth-layout, not dashboard shell
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13,
 then completed one guarded passive observation. The final origin/path was
 `https://appdev.alphaus.cloud` / `/ripple/`; both main documents were

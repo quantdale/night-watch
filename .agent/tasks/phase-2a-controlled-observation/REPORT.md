@@ -358,3 +358,76 @@ Nightwatch and was not printed, dumped, or copied.
 
 M7 remains `IN_PROGRESS`; M10 replay is **NOT RUN**; no readiness-contract,
 selector, alias, destination-policy, or implementation change was made.
+
+---
+
+# NIGHTWATCH PHASE 2A — POST-MOUNT ROOT CAUSE FOUND (PRODUCT ROUTING CONDITION)
+
+Status: IN_PROGRESS / M7. Two controlled real authenticated DEV observations
+ran this session (goal-mode). Both passed the pre-real-run gate 13/13 and
+executed safely; both failed the unchanged readiness contract; replay was
+correctly NOT run. The readiness failure is now fully attributed to a real
+product routing condition, not a Nightwatch defect.
+
+## What the repairs established (Phase F/G/I)
+
+This session completed a comprehensive Phase 2A health audit and repair round:
+
+- **D1/D2** — canceled/unterminated/chunk resources no longer drive
+  CRITICAL_ASSET_LOAD_FAILURE. The d840 five-chunk false positive is resolved:
+  replayed through the fixed classifier it now reports `OTHER_UNRESOLVED` with
+  0 failures and 5 unterminated (not failed) chunks.
+- **D3** — post-mount replacement correctly selects the Vue root (DIV) even
+  when #app is the last child and Vue inserts-then-removes in separate
+  mutations.
+- **D5** — `BROWSER_RETRY` no longer over-claims causation from timing.
+- **D8** — boolean-only auth bootstrap semantic checks added; real run reports
+  aggregate auth state `VALID` (token non-empty, api_type=dev, app_type=alphaus).
+- Regression suite grew to 230 passing tests; `npx tsc --noEmit`, full suite,
+  agent:check, diff --check all PASS; self-review clean.
+
+## Real-run evidence (run B `nightwatch-20260811T151945Z-8f18-first`)
+
+- Gate 13/13 PASS; auth aggregate `VALID`.
+- All 112 scripts + 108 chunks completed; 0 failures, 0 unterminated.
+- `#app` seen@136ms, removed@1765ms → VUE_INITIAL_PATCH.
+- Post-mount replacement: `DIV`, `rootBranch=auth-layout` (`matchesAuthLayout=true`,
+  `.__AuthLayout`).
+- No route transitions; pathname stays `/ripple/`; `renderedShellPresent=false`.
+- Safety: 0 hard failures, 0 proxy violations, 0 deny, 0 unknown, 0 mutations,
+  0 DB queries. Replay NOT run (first observation failed — correct).
+
+## Root cause
+
+The Ripple DEV deployment at `/ripple/` renders the **`auth-layout`** root
+(`.__AuthLayout`), not the authenticated **`default-layout`** dashboard shell
+(`DIV.q-layout-container.layout`). In the checked-out Ripple router
+(`src/router.js`), base is `/ripple/`; `/login` has `alias: ''` (→ `/ripple/`,
+`requiresAuth:false`) and `/dashboard` has `alias: '/'` (→ `/ripple/`,
+`requiresAuth:true`). `/login` is registered before `/dashboard`, so a literal
+`/ripple/` URL resolves to the login/auth route and renders `auth-layout`. The
+dashboard shell never appears, so the readiness contract (which requires that
+shell) is correctly not met.
+
+## Why this is a product condition, not Nightwatch
+
+Nightwatch's post-mount observer now correctly identified the rendered root as
+a DIV `auth-layout`. The readiness contract requires the dashboard shell; the
+DEV app genuinely does not render it at `/ripple/`. Weakening the contract to
+accept `auth-layout` would falsely claim dashboard readiness and is prohibited.
+
+## Blocker
+
+Phase 2A cannot reach readiness/completion against the current DEV `/ripple/`
+deployment because the app renders the auth layout, not the dashboard shell. A
+product-side decision is required (whether authenticated `/ripple/` should
+resolve to the dashboard), or an explicit instruction to target
+`/ripple/dashboard` instead. Nightwatch is healthy and validated; Phase 2B is
+not begun.
+
+## Validation
+
+`npx tsc --noEmit` PASS; `npx playwright test` 230/230 PASS; `npm run
+agent:check` PASS (approved CHECKPOINT_ADVANCE); `git diff --check` PASS;
+self-review clean. No Alphaus repo modified; no production/DB/mutation/auth-state
+access. Production attempts for the controlled run(s): 0.

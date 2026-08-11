@@ -6,8 +6,8 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: b733e515471145335531a4833717c434de9c76cb
-Last validated implementation SHA: b733e515471145335531a4833717c434de9c76cb
+Current SHA: 6c0d973
+Last validated implementation SHA: 6c0d973
 Branch: main
 Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13.
@@ -3124,3 +3124,110 @@ it must use the exact command:
 npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 requiring 13/13 gate before context creation, with no `--ui-url`.
+
+---
+
+## PHASE_J_L_REAL_RUNS — Root Cause Found (2026-08-11)
+
+### CURRENT GOAL
+Complete Phase 2A by proving the controlled authenticated observation and
+replay. Goal mode drove two controlled real runs; both safely executed and the
+readiness failure is now fully attributed to a real product routing condition,
+not a Nightwatch defect.
+
+### REAL RUNS THIS SESSION (sanitized)
+- Run A `nightwatch-20260811T151436Z-4fad-first`: gate 13/13 PASS; readiedness
+  failed; replay not run. Auth aggregate `VALID`; replacement `unknown-element`
+  (D3 fix v1 not yet fully effective).
+- Run B `nightwatch-20260811T151945Z-8f18-first`: gate 13/13 PASS; readiedness
+  failed; replay not run. Auth aggregate `VALID`; replacement `DIV`, rootBranch
+  `auth-layout` (D3 fix v2 effective).
+
+### CURRENT EVIDENCE (established facts)
+- Gate: 13/13 PASS both runs, before context creation.
+- Auth semantics (D8): token present + non-empty, api_type=dev, app_type=alphaus
+  → aggregate `VALID`. This resolves the previously UNRESOLVED auth semantic
+  values.
+- Resources (D1/D2): all 112 scripts + 108 chunks completed; script/chunk
+  `failureCount=0`, `unterminatedCount=0`, `failedCriticalResources=[]`. The
+  d840 five-chunk false positive is fully resolved.
+- `#app` seen/removed → VUE_INITIAL_PATCH; replacement is a DIV.
+- **Root branch = `auth-layout` (`matchesAuthLayout=true`, `.__AuthLayout`)**,
+  NOT the dashboard shell `.q-layout-container.layout`.
+- No route transitions, no auth-host navigation, pathname stays `/ripple/`.
+- `renderedShellPresent=false`, `readinessConfirmed=false`.
+- Safety all clean: 0 hard failures, 0 proxy violations, 0 deny, 0 unknown,
+  0 mutations, 0 DB queries. Replay correctly NOT run (first observation failed).
+
+### CURRENT CLASSIFICATION
+**NIGHTWATCH PHASE 2A — POST-MOUNT ROOT CAUSE FOUND (product routing condition).**
+The Ripple DEV deployment at `/ripple/` resolves to the `auth-layout` root
+(`.__AuthLayout`), not the authenticated `default-layout` dashboard shell. The
+Vue Router base is `/ripple/`; `/login` has `alias: ''` (→ `/ripple/`) and
+`requiresAuth: false`, and `/dashboard` has `alias: '/'` (→ `/ripple/`) with
+`requiresAuth: true`. `/login` is registered before `/dashboard`, so a literal
+`/ripple/` URL resolves to the `/login` auth route, rendering `auth-layout`.
+The dashboard shell (`DIV.q-layout-container.layout`) never appears, so the
+Phase 2A readiness contract (which requires that shell) is correctly not met.
+
+### WHY THIS IS A PRODUCT CONDITION, NOT NIGHTWATCH
+- Nightwatch's post-mount observer now correctly identifies the rendered root
+  (DIV, auth-layout). The diagnostic is granular and accurate.
+- The readiness contract requires the dashboard shell; the app genuinely does
+  not render it at `/ripple/` (it renders auth-layout). This is a real
+  routing/deployment behavior of the DEV app, not observer blindness.
+- Weakening the readiness contract to accept auth-layout would be wrong (it
+  would falsely claim dashboard readiness). Per goal rules, do NOT weaken
+  Nightwatch to make a run pass.
+
+### COMPLETED THIS SESSION
+- Full Phase A health audit; Phases F (repairs D1,D2,D3,D5,D8 + test health),
+  G (24-case regression), H (validation 230/230), I (self-review).
+- Two controlled real authenticated DEV observations, both safely executed.
+- Root cause of the readiness failure identified and evidence-backed.
+
+### FILES CHANGED (Nightwatch only, this session)
+- HEAD advanced `a04cbd6` → `6c0d973` (repairs) + doc checkpoints.
+- Source: bootstrapDiagnostics, lifecycleDiagnostics, bootstrapHooks,
+  storageState, networkObserver (comment), phase2a-authenticated (D8).
+- Tests: +bootstrapHooks mount-sequence, +rippleResourceReloadCausality,
+  +storageState semantics, +bootstrap diagnostics reload/cancel regressions;
+  removed redundant tests.
+- No Alphaus repo modified. No production/DB/mutation/auth-state access.
+
+### VALIDATION LEDGER
+- `npx tsc --noEmit`: PASS.
+- `npx playwright test`: 230 passed, 0 failed.
+- Two real runs: gate 13/13 PASS both; readiedness failed (product condition);
+  replay NOT run (correct).
+- `npm run agent:check`: PASS (approved CHECKPOINT_ADVANCE).
+
+### DECISIONS
+- Do NOT weaken the readiness contract to accept the auth-layout root — that
+  would falsely claim dashboard readiness. The app genuinely renders auth-layout.
+- Do NOT run a third real observation (Phase L budget: at most one retry used;
+  the retry proved the D3 fix but the product condition persists). The root
+  cause is a product routing condition, so further Nightwatch repair is not
+  indicated.
+
+### UNRESOLVED
+- Whether the DEV deployment intends `/ripple/` to show the login/auth page
+  (auth not effective for dashboard) or whether the empty-alias collision is a
+  deployment bug. This is a product question for the Alphaus team, outside
+  Nightwatch's read-only scope.
+- Auth replay effectiveness remains UNRESOLVED (no dashboard/auth branch
+  observed because the app renders auth-layout at `/ripple/`).
+
+### NEXT EXACT ACTION
+Report the blocker to the user with the evidence. Phase 2A cannot reach
+readiness/completion against the current DEV `/ripple/` deployment because the
+app renders the auth layout, not the dashboard shell. A product-side decision
+is required (e.g., whether authenticated `/ripple/` should resolve to the
+dashboard), or an explicit instruction to target `/ripple/dashboard` instead.
+Do NOT begin Phase 2B.
+
+### RESUME RECIPE
+Read this waypoint + tail of STATE.md. Root cause is a product routing
+condition at `/ripple/` (auth-layout vs dashboard shell). Nightwatch is healthy
+and validated (230/230). Real-run command unchanged. Await product/user
+decision before any further real observation.
