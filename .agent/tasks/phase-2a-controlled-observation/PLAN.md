@@ -971,11 +971,13 @@ diagnostic boundary:
 - resource-error timing without a source reload signal is explicitly
   `RELOAD_CAUSE_UNRESOLVED`.
 
-The latest real run remains `nightwatch-20260811T061449Z-1fff-first`, gate
+At that implementation checkpoint the latest real run was
+`nightwatch-20260811T061449Z-1fff-first`, gate
 13/13 PASS, two `200 text/html` main documents, `#app` seen at 174 ms and
 removed at 4580 ms, no rendered shell, zero history transitions, and no
 runtime/critical-resource failures. Its previous `EXPECTED_BOOTSTRAP_RELOAD`
-label is corrected to `RELOAD_CAUSE_UNRESOLVED`; no new real run was made.
+label was corrected to `RELOAD_CAUSE_UNRESOLVED`; the superseding result is
+recorded below.
 
 Focused boundary/reload/privacy tests are **22/22**; full Playwright is
 **218/218** and TypeScript is PASS. Replay remains NOT RUN, M7 remains
@@ -988,6 +990,82 @@ npm run observe:authenticated -- \
   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 
+#### M7 first post-mount/router observation — 2026-08-11 — `nightwatch-20260811T072928Z-d840-first`
+
+The exact required command was run without `--ui-url`. The strict pre-real-run
+gate passed **13/13** before browser/context creation. One guarded passive
+first observation then completed; readiness failed, so the runner wrote
+`replay-not-run` and did not create a fresh context.
+
+Sanitized result:
+
+- final origin/path: `https://appdev.alphaus.cloud` / `/ripple/`;
+- main-document loads: two `GET 200 text/html` main-frame loads, no redirect
+  chains; document 1 initiator `other`, request/response about `+252/+471 ms`;
+  document 2 initiator `reload`, source path `/ripple/`, replacement `true`,
+  request/response about `+3712/+4641 ms`;
+- reload classification: `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`, earned
+  from the fixed Ripple `public/index.html` source-reload signal emitted
+  before the second navigation request. The prior run's
+  `RELOAD_CAUSE_UNRESOLVED` classification remains unchanged because that
+  earlier artifact had no such signal;
+- `#app`: seen at `239 ms` and removed at `3174 ms` in the first observed
+  document; the later document was also seen/removed at `972/5326 ms`;
+- immediate replacement: `element`; bounded replacement tag unavailable;
+  `matchesLoadingWrapper=false`, `matchesDefaultLayout=false`, and
+  `matchesQLayout=false`; `rootBranch=unknown-element`;
+- primary root classification: **POST_MOUNT_ROOT_UNKNOWN**. The run did not
+  earn `LOADING_BRANCH_ACTIVE` or `DYNAMIC_LAYOUT_BRANCH_ACTIVE`; the
+  source-backed `.loading-div` and dynamic-layout/QLayout markers were not
+  observed. `routeMetaLayoutPresent` is not directly observable in this
+  metadata-first run and remains `UNKNOWN`;
+- layout checkpoints: `defaultLayoutRendered=false`, `qLayoutRendered=false`,
+  `renderedShellSeen=false`, and `renderedShellFirstSeenMs=null`;
+- route semantics: browser pathname `/ripple/`, history transitions
+  `pushState=0`, `replaceState=0`, `popstate=0`, hash/go `0`, and pathname
+  transitions `[]`. Router initialization is
+  `NOT_DIRECTLY_OBSERVABLE`. Because `/ripple/` is the source-proven dashboard
+  alias and no route/component evidence was observed, initial route resolution,
+  dashboard semantic activity, and dashboard-component activity are reported
+  as `UNRESOLVED`, not as router failure;
+- auth semantics: storage state loaded before navigation `true`, DEV
+  provenance `true`, required token key present `true`, `api_type` and
+  `app_type` keys present `true`. The real runner inspected presence only;
+  non-empty token, DEV-value match, Ripple-value match, and the resulting
+  semantic-validity boolean were not emitted and remain `UNRESOLVED`.
+  Auth-host navigation and source-defined unauthenticated/authenticated route
+  branches were not observed; auth replay effectiveness is `UNRESOLVED`;
+- resources: application entry and runtime/vendor observed/completed;
+  scripts `112 requested / 107 completed`, chunks `108 / 103`, styles `6 / 6`.
+  Five allowlisted chunk requests were `not-completed` at cleanup, with no
+  response status or content type; `criticalResourceFailureCount=5`,
+  `wrongContentFailureCount=0`. This is a resource observation, not proof that
+  those requests caused the unknown root branch;
+- runtime: exceptions `0`, unhandled rejections `0`, product console errors
+  `0`, CSP violations `0`, observer coverage PASS. The four resource-error
+  events were expected containment effects;
+- readiness: target confirmed `true`, document complete `true`, rendered shell
+  `false`, final route-stable sample `true` but continuous stable interval
+  `0 ms`, stability reached `false`; no fatal lifecycle/page error;
+- destinations: `3` expected, `7` blocked, `0` new-but-verified, `0`
+  unresolved; proxy `2 allowed`, `8 telemetry-blocked`, `0 optional-support-`
+  `blocked`, `1 browser-background-blocked`, `0 denied`, `0 unknown`,
+  `0 violations`. Production attempts, mutations, DB queries, and silently
+  approved unknown destinations were all `0`;
+- oracle categories: `EXPECTED_CONTAINMENT_EFFECT`,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`. The known
+  malformed-JSON anomaly did not recur;
+- privacy: PASS. The authenticated regression was **2/2**; the real artifact
+  directory contains only sanitized JSON/JSONL metadata, with no screenshot,
+  trace, auth-state file, credential-like match, persisted header/body,
+  query/fragment URL, or storage material.
+
+The narrowest earned result is **POST_MOUNT_ROOT_UNKNOWN**, with an
+independent `CRITICAL_ASSET_LOAD_FAILURE` diagnostic for five incomplete
+allowlisted chunk requests. No root cause is claimed. Replay is prohibited,
+no repair is authorized in this session, M7 remains `IN_PROGRESS`, and Phase
+2B remains deferred.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
@@ -998,8 +1076,8 @@ npm run observe:authenticated -- \
 - Acceptance criteria: no dynamic allowlist mutation; every destination has a
   deterministic category and unresolved items stop or remain explicit.
 - Validation commands: focused manifest tests; real-run artifact inspection.
-- Status: COMPLETE — the first authenticated observation produced the
-  sanitized manifest for run `nightwatch-20260811T032906Z-3fd5`: 3 expected,
+- Status: COMPLETE — the latest authenticated observation produced the
+  sanitized manifest for run `nightwatch-20260811T072928Z-d840-first`: 3 expected,
   0 new-but-verified, 7 blocked, and 0 unresolved destinations. No dynamic
   approval was added.
 
@@ -1014,7 +1092,7 @@ npm run observe:authenticated -- \
 - Acceptance criteria: oracle verdicts are deterministic, generic, and clearly
   separated from visual oddities or business findings.
 - Validation commands: focused oracle tests and real-run oracle report.
-- Status: COMPLETE — the first authenticated observation produced the
+- Status: COMPLETE — the latest authenticated observation produced the
   sanitized passive oracle result: expected-containment effects,
   `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`. The known
   malformed-JSON anomaly did not recur in this run and remains a separate
@@ -1045,7 +1123,7 @@ npm run observe:authenticated -- \
   sanitized, and Phase 2A fails until fixed and rerun.
 - Validation commands: targeted artifact scan/review; `git status --short`.
 - Status: COMPLETE — category-level review of
-  `nightwatch-20260811T061449Z-1fff-first` passed. The existing authenticated
+  `nightwatch-20260811T072928Z-d840-first` passed. The existing authenticated
   privacy regression passed **2/2**; the run artifact scan found no
   credential/JWT-like values, persisted headers or bodies, cookie/origin
   arrays, query/fragment-bearing URLs, screenshots/traces, or auth-state files.
@@ -1080,11 +1158,13 @@ npm run observe:authenticated -- \
   agent:check`; `git diff --check`; focused Phase 2A tests; clean `git status`.
 - Status: USER_ACTION_REQUIRED — the external state was available for this
   one authorized observation, but run
-  `nightwatch-20260811T061449Z-1fff-first` failed unchanged readiness in the
-  `#app`-removed/shell-absent branch. Replay and speculative repair are
+  `nightwatch-20260811T072928Z-d840-first` failed unchanged readiness in the
+  post-mount `unknown-element` branch. Replay and speculative repair are
   prohibited; the task remains IN_PROGRESS pending a later explicit decision.
-  Typecheck, full local Playwright validation, privacy review, continuity
-  check, and whitespace validation passed.
+  The latest local privacy review passed **2/2**; `npx tsc --noEmit` passed;
+  `npx playwright test` passed **218/218**; `npm run agent:check` passed with
+  the expected approved `CHECKPOINT_ADVANCE` warning; and `git diff --check`
+  passed. The Nightwatch changes are task-state documentation only.
 
 ## Validation Strategy
 

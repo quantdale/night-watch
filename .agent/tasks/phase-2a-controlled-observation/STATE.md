@@ -9,21 +9,22 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: c771048fc1cdad04807a72c2b77e687a3139077b
 Last validated implementation SHA: c771048fc1cdad04807a72c2b77e687a3139077b
 Branch: main
-Last checkpoint: 2026-08-11 — post-mount/router diagnostics ready
-`nightwatch-20260811T061449Z-1fff-first` passed the pre-real-run gate 13/13.
+Last checkpoint: 2026-08-11 — first post-mount/router observation result
+`nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13.
 Its sanitized evidence shows two completed `200 text/html` main-document
-loads, complete critical assets, `#app` seen and removed, and no observation
-of the source-backed post-mount `DIV.q-layout-container.layout` shell. The
-the prior `EXPECTED_BOOTSTRAP_RELOAD` label for the second same-path reload
-after script resource-error events is corrected to
-`RELOAD_CAUSE_UNRESOLVED` because no source-specific signal was recorded.
-`routeStableMs` remained
-`0` and `stabilityReached` was `false`; replay was correctly NOT RUN. The
-hooks observed zero runtime exceptions, unhandled rejections, CSP violations,
-route transitions, and critical-resource failures. The run recorded zero
-denied or unknown destinations, zero proxy violations, zero hard failures,
-and zero fatal page errors. Auth replay effectiveness remains `UNRESOLVED`.
-The external DEV storage-state path and contents remain outside Nightwatch.
+loads, `#app` seen and removed, and an immediate replacement classified as a
+bounded `element` with `rootBranch=unknown-element`. Neither the
+source-backed loading branch nor dynamic-layout/QLayout markers was observed.
+The fixed Ripple source-reload signal was captured before the second same-path
+reload, so this run earns `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`; the
+earlier run's `RELOAD_CAUSE_UNRESOLVED` correction remains valid for that
+earlier artifact. Five allowlisted chunk requests were not completed by
+observation cleanup; wrong-content failures, runtime exceptions, unhandled
+rejections, CSP violations, and product console errors were zero. `routeStable`
+was true only at the final sample with `routeStableMs=0`, and
+`stabilityReached` was false; replay was correctly NOT RUN. Auth replay
+effectiveness remains `UNRESOLVED`. The external DEV storage-state path and
+contents remain outside Nightwatch.
 
 ## Objective
 
@@ -37,24 +38,24 @@ Milestone ID: M7 — First controlled authenticated landing observation
 Status: IN_PROGRESS
 What is now established: M6 passed against the exact DEV Ripple target
 `https://appdev.alphaus.cloud/ripple/`. The latest instrumented authenticated
-run `nightwatch-20260811T061449Z-1fff-first` passed all 13 pre-real-run checks
+run `nightwatch-20260811T072928Z-d840-first` passed all 13 pre-real-run checks
 and reached the approved DEV origin. Its final path was `/ripple/`; the
-document was complete, `#app` was seen and removed, but the post-mount
-`DIV.q-layout-container.layout` shell was never observed after the full
-bounded readiness window. `targetConfirmed` was `true`, `routeStable` was
-`true` at the final sample, `routeStableMs` was `0`, and `stabilityReached`
-was `false`. The second main-document load was the evidence-backed
-`EXPECTED_BOOTSTRAP_RELOAD` branch. The hooks observed zero runtime
-exceptions, unhandled rejections, CSP violations, route transitions, and
-critical-resource failures. Auth replay effectiveness remains `UNRESOLVED`.
-The run stopped before replay as required. The prior source shorthand for a
-base-path URL redirect is corrected by the source trace: `/` is the dashboard
-route alias, not an unconditional URL redirect. The source/framework repair remains
-authoritative: `#app` is only the Vue pre-mount target, and the rendered shell
-remains the readiness marker. The narrow result is
-`POST_MOUNT_RENDER_NOT_CONFIRMED`; no root cause is claimed and the selector
-and readiness contract must not be weakened. The post-mount/router diagnostic
-implementation is ready for a future separately authorized fresh session.
+document was complete, `#app` was seen and removed, but the immediate
+post-mount replacement was an unapproved/unknown element and the
+`DIV.q-layout-container.layout` shell was never observed. The primary branch
+classification is `POST_MOUNT_ROOT_UNKNOWN`, with an independent diagnostic
+`CRITICAL_ASSET_LOAD_FAILURE` for five incomplete allowlisted chunk requests.
+The run earned `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD` from an explicit
+source-reload signal before the second navigation; this is stronger evidence
+than the prior run's unresolved reload classification. `targetConfirmed` was
+`true`, the final route-stable sample was true but `routeStableMs` was `0`, and
+`stabilityReached` was `false`. The source alias means `/ripple/` alone does
+not prove router failure; route/component semantic activity remains
+`UNRESOLVED`. Auth replay effectiveness remains `UNRESOLVED`. The run stopped
+before replay as required. The source/framework repair remains authoritative:
+`#app` is only the Vue pre-mount target, the rendered shell remains the
+readiness marker, and the readiness contract is unchanged. No root cause is
+claimed and the selector/readiness contract must not be weakened.
 
 Historical M7 safety review remains recorded below: the exact source-supported
 Pylon host and reviewed browser-background hosts remain locally blocked,
@@ -604,10 +605,9 @@ third pass is authorized.
 
 ## Exact Next Action
 
-Current next action: complete the existing authenticated privacy review and
-the required local validation after run
-`nightwatch-20260811T061449Z-1fff-first`, then leave M7 `IN_PROGRESS`.
-Readiness failed in the `#app`-removed/shell-absent branch, so do not run
+Current next action: complete the required local validation after run
+`nightwatch-20260811T072928Z-d840-first`, then leave M7 `IN_PROGRESS`.
+Readiness failed in the `#app`-removed/unknown-element branch, so do not run
 replay, make a speculative repair, alter the selector or 750ms contract, or
 begin Phase 2B. The exact external auth-state path remains outside Nightwatch
 and its contents remain uninspected.
@@ -2417,15 +2417,15 @@ The external auth state remains outside Nightwatch and uninspected. M7 remains
    network allowlist or wildcard exists.
 4. The external auth state is already user-confirmed present at the recorded
    path; its contents remain out of scope.
-5. The instrumented authenticated observation
-   `nightwatch-20260811T061449Z-1fff-first` is the latest real run. It passed
-   the 13/13 gate, ended at `/ripple/` with a complete document, saw and
-   removed `#app`, never saw `DIV.q-layout-container.layout`, and recorded
-   `routeStableMs=0`. Replay remains prohibited.
-6. Treat the narrow result as `POST_MOUNT_RENDER_NOT_CONFIRMED`; do not infer
-   a root cause. Do not inspect DOM/content, change the selector, weaken
-   readiness, rerun the canary, replay, make a speculative repair, or begin
-   Phase 2B.
+5. The latest instrumented authenticated observation is
+   `nightwatch-20260811T072928Z-d840-first`. It passed the 13/13 gate, ended at
+   `/ripple/` with a complete document, saw and removed `#app`, observed an
+   `unknown-element` replacement, never saw `DIV.q-layout-container.layout`,
+   and recorded `routeStableMs=0`. Replay remains prohibited.
+6. Treat the narrow result as `POST_MOUNT_ROOT_UNKNOWN` with an independent
+   five-incomplete-chunk diagnostic; do not infer a root cause. Do not inspect
+   DOM/content, change the selector, weaken readiness, rerun the canary, replay,
+   make a speculative repair, or begin Phase 2B.
 7. Complete only the existing privacy review and local validation for this
    checkpoint. The external storage-state path and contents remain out of
    scope.
@@ -2636,3 +2636,210 @@ npm run observe:authenticated -- \
   --env=dev \
   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
+
+## M7 Latest Real Observation Checkpoint — 2026-08-11 — `nightwatch-20260811T072928Z-d840-first`
+
+This is the authoritative post-mount/router result for the latest single real
+observation. It supersedes the prior run as the latest runtime evidence, but it
+does not supersede the unchanged readiness contract and does not authorize a
+replay or repair.
+
+### Gate and observation scope
+
+- Exact command used:
+
+  ```bash
+  npm run observe:authenticated -- \
+    --env=dev \
+    --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+  ```
+
+- Pre-real-run gate: **13/13 PASS**, before browser/context creation.
+- Observation: one guarded passive direct landing navigation only; no clicks,
+  forms, route exploration, endpoint replay, database query, mutation, or
+  third observation.
+- First observation result: readiness failed; fresh-context replay was **NOT
+  RUN** and the comparison recorded `replay-not-run`.
+
+### Auth semantic results
+
+Only fixed source-defined presence metadata was recorded by the real runner.
+The external state remains outside Nightwatch and its contents were not
+printed, dumped, copied, or persisted.
+
+| Checkpoint | Sanitized result |
+|---|---|
+| `storageStateLoadedBeforeNavigation` | `true` |
+| `provenanceMatchesDev` | `true` |
+| `requiredTokenPresent` | `true` |
+| `requiredTokenNonEmpty` | `UNRESOLVED` — real observer is presence-only |
+| `apiTypePresent` | `true` |
+| `apiTypeMatchesDev` | `UNRESOLVED` — value was not read |
+| `appTypePresent` | `true` |
+| `appTypeMatchesRipple` | `UNRESOLVED` — value was not read |
+| `requiredBootstrapStateSemanticallyValid` | `UNRESOLVED` — only structural state validation ran in the real path |
+| `authHostNavigationObserved` | `false` |
+| `sourceDefinedUnauthenticatedBranchObserved` | `false` |
+| `sourceDefinedAuthenticatedBranchObserved` | `false` |
+| `authReplayEffectiveness` | `UNRESOLVED` |
+
+The gate's external storage-state check passed structural validation and DEV
+compatibility. That is not treated as proof of the uninspected cookie values.
+
+### Document and reload lifecycle
+
+Both loads were sanitized main-frame documents with no query strings or
+fragments:
+
+| Ordinal | Origin/path | Method/status/content type | Initiator | Replacement | Redirect chain | Relative timing |
+|---|---|---|---|---|---|---|
+| 1 | `https://appdev.alphaus.cloud` / `/ripple/` | `GET` / `200` / `text/html` | `other` | `false` | `false` | request `+252 ms`, response `+471 ms` |
+| 2 | `https://appdev.alphaus.cloud` / `/ripple/` | `GET` / `200` / `text/html` | `reload`, source path `/ripple/` | `true` | `false` | request `+3712 ms`, response `+4641 ms` |
+
+The second load is classified `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`: the
+fixed Ripple source-reload signal (`public/index.html`, script/link error)
+was emitted before the second navigation request. This is not the old timing-
+only inference. The previous run's `RELOAD_CAUSE_UNRESOLVED` classification
+remains correct for that earlier artifact because its source signal was absent.
+Nightwatch itself emitted no reload signal.
+
+### `#app` pre-mount lifecycle
+
+- `bootstrapMountTargetSeen`: `true`.
+- `bootstrapMountTargetFirstSeenMs`: `239`.
+- `bootstrapMountTargetRemoved`: `true`.
+- `bootstrapMountTargetRemovedMs`: `3174`.
+- The later document independently saw/removed the target at approximately
+  `972/5326 ms`.
+- Interpretation: `VUE_INITIAL_PATCH_OBSERVED`; `#app` remains diagnostic only
+  and is not used as final readiness.
+
+### Immediate replacement and root branch
+
+- `replacementNodeType`: `element`.
+- `replacementTag`: `unknown` / unavailable within the bounded safe tag
+  vocabulary.
+- `matchesLoadingBranch`: `false`.
+- `matchesDynamicLayoutRoot`: `false`.
+- `matchesDefaultLayout`: `false`.
+- `matchesQLayout`: `false`.
+- `loadingBranchSeen`: `false`.
+- `loadingBranchStillPresentAtTimeout`: `UNRESOLVED` — no approved loading
+  marker was observed, but no arbitrary DOM inspection is permitted.
+- `dynamicLayoutBranchSeen`: `false`.
+- `routeMetaLayoutPresent`: `UNKNOWN` / not directly observable; no route-meta
+  object was read or persisted.
+- Primary classification: **`POST_MOUNT_ROOT_UNKNOWN`**. The observed
+  `unknown-element` branch earns neither `LOADING_BRANCH_ACTIVE` nor
+  `DYNAMIC_LAYOUT_BRANCH_ACTIVE`.
+
+### Layout and route checkpoints
+
+- `dynamicLayoutSelected`: `false` / not observed.
+- `defaultLayoutRendered`: `false`.
+- `qLayoutRendered`: `false`.
+- `renderedShellSeen`: `false`.
+- `renderedShellFirstSeenMs`: `null`.
+- Source-backed shell `DIV.q-layout-container.layout`: absent.
+- Browser pathname: `/ripple/`.
+- `initialRouteResolved`: `UNRESOLVED` in the semantic report. The raw
+  observer flag was false because no route transition or `/ripple/dashboard`
+  path was observed; `/ripple/` is nevertheless the source-proven dashboard
+  alias, so zero history transitions are not labeled router failure.
+- `dashboardRouteSemanticallyActive`: `UNRESOLVED`.
+- `dashboardComponentCheckpoint`: `UNRESOLVED` / not observed.
+- History transitions: `pushState=0`, `replaceState=0`, `popstate=0`,
+  `hashchange=0`, `go=0`; pathname transitions `[]`.
+- `routerInitialization`: `NOT_DIRECTLY_OBSERVABLE`.
+- `guardTokenRequirementSatisfied`: `UNRESOLVED` beyond the presence-only
+  required-key result.
+- `environmentSemanticsSatisfied`: `UNRESOLVED` beyond DEV provenance and
+  presence-only key metadata.
+- `applicationSemanticsSatisfied`: `UNRESOLVED` beyond presence-only key
+  metadata.
+- `unauthenticatedBranchObserved=false`, `loginNavigationObserved=false`.
+- `navigationCancelled`: `UNRESOLVED` / not directly observable.
+
+### Runtime, resources, and containment
+
+- Application entry and runtime/vendor entry: observed and completed.
+- Scripts: `112 requested`, `107 completed`, `5 not completed`.
+- Chunks: `108 requested`, `103 completed`, `5 not completed`.
+- Styles: `6 requested`, `6 completed`, `0 failed`.
+- `criticalResourceFailureCount`: `5` (`failureCategory=not-completed`, all
+  allowlisted DEV host requests; no status/content type was available).
+- `wrongContentFailureCount`: `0`.
+- Bootstrap diagnostic classification: `CRITICAL_ASSET_LOAD_FAILURE` for the
+  five incomplete chunk requests. This is independent evidence and is not
+  asserted as the cause of the unknown root branch.
+- Runtime exceptions: `0`.
+- Unhandled rejections: `0`.
+- Product console errors: `0`.
+- CSP violations: `0`.
+- Observer-hook health: **PASS** for unhandled rejection, CSP, resource
+  failure, history transition, and request-failure metadata hooks.
+- Four resource-error events were expected local containment effects only.
+- Destination manifest: `3` expected, `0` new-but-verified, `7` blocked,
+  `0` unresolved.
+- Proxy: `2` allowed, `8` telemetry-blocked, `0` optional-support-blocked,
+  `1` browser-background-blocked, `0` denied, `0` unknown, `0` violations.
+- Production attempts: `0`; mutations: `0`; DB queries: `0`; silently
+  approved unknown destinations: `0`.
+- Oracle categories: `EXPECTED_CONTAINMENT_EFFECT`,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`. The known
+  malformed-JSON anomaly did not recur.
+
+### Readiness, causal boundary, and unresolved facts
+
+- `targetConfirmed=true`.
+- `documentComplete=true`.
+- `renderedShellPresent=false`.
+- The final route-stable sample was `true`, but `routeStableMs=0` and
+  `stabilityReached=false`; the 750 ms readiness predicate was not reached.
+- No fatal lifecycle/page error occurred.
+- Narrowest earned result: **`POST_MOUNT_ROOT_UNKNOWN`**, with the independent
+  five-incomplete-chunk `CRITICAL_ASSET_LOAD_FAILURE` diagnostic.
+- Causal evidence: Vue removed `#app`; the immediate replacement was an
+  element outside the approved branch/tag vocabulary; a Ripple source reload
+  signal preceded the second document request; five allowed chunk requests
+  remained incomplete at cleanup. No runtime exception, rejection, CSP error,
+  wrong-content response, or blocked required destination established why the
+  approved root did not render.
+- Unresolved: actual route-meta layout selection, direct router state, semantic
+  storage values, auth effectiveness, whether incomplete chunks caused the
+  root result, and deployment fingerprint comparison.
+
+### Privacy and checkpoint status
+
+Category-level privacy review: **PASS**. The existing authenticated privacy
+regression passed **2/2**. The new run directory contains only sanitized
+`JSON/JSONL` metadata; screenshots/traces/auth-state files are absent, and
+credential-like, authorization/cookie, request/response-body,
+query/fragment-bearing URL, DOM/text, identity, and financial material was not
+persisted. The external storage-state file remains outside Nightwatch and was
+not printed, dumped, or copied.
+
+### Final local validation checkpoint
+
+- `npx tsc --noEmit`: **PASS**.
+- `npx playwright test`: **218 passed, 0 failed**.
+- `npx playwright test tests/smoke/authenticated.smoke.ts --project=nightwatch`:
+  **2 passed, 0 failed**.
+- `npm run agent:check`: **PASS** with the expected approved
+  `CHECKPOINT_ADVANCE` warning from implementation SHA `c771048` to the
+  documentation checkpoint `83e21c2`.
+- `git diff --check`: **PASS**.
+- Nightwatch worktree changes are limited to the four existing task-state
+  documents; no implementation/source/test/config file changed in this
+  real-run checkpoint.
+- Ripple worktree status remains the previously documented pre-existing
+  branch state (`dev`, behind local `origin/dev`, with its unrelated deleted
+  OpenSpec files and untracked `AGENTS.md`); no Alphaus repository was modified.
+- Production attempts, proxy violations, mutations, DB queries, and unknown
+  destination approvals remain `0`.
+
+M7 remains `IN_PROGRESS`; M10 replay remains `NOT_STARTED`; M12 durable runtime
+promotion remains deferred; Phase 2B remains deferred. Do not rerun the real
+observation, create a replay context, change selectors or alias semantics,
+weaken the 750 ms contract, approve destinations, inspect response bodies, or
+make a speculative repair in this session.

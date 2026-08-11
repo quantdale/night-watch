@@ -9,20 +9,24 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: c771048fc1cdad04807a72c2b77e687a3139077b
 Last validated implementation SHA: c771048fc1cdad04807a72c2b77e687a3139077b
 Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS)
-Last checkpoint: 2026-08-11 — post-mount/router diagnostics ready
-`nightwatch-20260811T061449Z-1fff-first` passed the pre-real-run gate 13/13,
+Last checkpoint: 2026-08-11 — first post-mount/router observation result
+`nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13,
 then completed one guarded passive observation. The final origin/path was
-`https://appdev.alphaus.cloud` / `/ripple/`; the document was complete, all
-112 scripts and 6 styles completed, `#app` was seen and removed, and the
-source-backed `DIV.q-layout-container.layout` shell was never seen. The two
-main-document loads were both `200 text/html`; the prior
-`EXPECTED_BOOTSTRAP_RELOAD` label for the second same-path reload after script
-resource-error events is now corrected to
-`RELOAD_CAUSE_UNRESOLVED` because no source-specific reload signal was
-captured. Runtime exceptions, unhandled rejections, CSP
-violations, route transitions, and critical-resource failures were all zero.
-Auth replay effectiveness remains `UNRESOLVED`. Replay was correctly NOT RUN.
+`https://appdev.alphaus.cloud` / `/ripple/`; both main documents were
+`200 text/html`, `#app` was seen and removed, and the immediate replacement
+was a bounded `element` with `rootBranch=unknown-element`. Neither the
+source-backed loading branch nor dynamic-layout/QLayout markers was observed.
+The source reload signal was captured before the second same-path reload, so
+this run earns `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`; the earlier run's
+`RELOAD_CAUSE_UNRESOLVED` correction remains valid for that earlier artifact.
+Five allowlisted chunk requests were not completed by observation cleanup;
+wrong-content failures, runtime exceptions, unhandled rejections, CSP
+violations, and product console errors were zero. Auth replay effectiveness
+remains `UNRESOLVED`. Readiness failed, so replay was correctly NOT RUN.
 The external DEV storage-state path and contents remain outside Nightwatch.
-Next action: M7 remains IN_PROGRESS with post-mount/router diagnostics ready;
-do not infer a root cause, run replay, make a speculative repair, or begin
-Phase 2B.
+Validation checkpoint: `npx tsc --noEmit` PASS; `npx playwright test` **218
+passed, 0 failed**; authenticated privacy review **2/2**; `npm run agent:check`
+PASS with the expected approved `CHECKPOINT_ADVANCE` warning; and
+`git diff --check` PASS. Nightwatch changes are task-state documentation only.
+Next action: keep M7 IN_PROGRESS and await an explicit later decision; do not
+rerun, repair, replay, or begin Phase 2B.
