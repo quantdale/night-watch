@@ -767,6 +767,78 @@ or retried here, so its repaired shell presence remains unknown.
 
 M7 remains IN_PROGRESS; replay remains NOT RUN and Phase 2B remains deferred.
 
+#### M7 rendered-shell-absent retry checkpoint — 2026-08-11 — `nightwatch-20260811T012811Z-9045`
+
+The exact authenticated command from the resume handoff was run for `dev`
+without a UI override. The pre-real-run safety gate passed **13/13** before
+browser/context creation. The first passive landing observation then reached
+the approved DEV origin and stopped after the full bounded readiness window;
+the runner correctly did not create the fresh replay context.
+
+Sanitized readiness facts:
+
+- final origin/path: `https://appdev.alphaus.cloud` / `/ripple/`;
+- `targetConfirmed=true`, `document.readyState=complete`;
+- top-level frame present, frame count `1`, iframe count `0`;
+- body present with child count `8`;
+- rendered shell `DIV.q-layout-container.layout` absent;
+- `routeStable=true` at the final sample, `routeStableMs=0`,
+  `stabilityReached=false`;
+- navigation not in progress, page open, fatal page-error count `0`;
+- diagnosis: `SHELL_MOUNT_OR_DEPLOYMENT_DIVERGENCE_UNRESOLVED`.
+
+The destination manifest recorded `3` expected, `0` new-but-verified, `7`
+blocked, and `0` unresolved destinations. Proxy accounting recorded `0`
+denied, `0` unknown, and `0` violations. Production attempts, mutations, and
+DB queries were `0`. Oracle categories were
+`EXPECTED_CONTAINMENT_EFFECT`, `RIPPLE_READINESS_NOT_CONFIRMED`, and
+`STABILITY_TIMEOUT`; no malformed-json anomaly occurred in this run. The
+known malformed-json finding remains the independent
+`ORACLE_ANOMALY`/`GENUINE_PROTOCOL_ANOMALY` classification with unresolved
+subcause.
+
+M7 remains `IN_PROGRESS`. This is the required rendered-shell-absent branch;
+do not change the selector, weaken readiness, run replay, or start Phase 2B.
+
+#### M7 sanitized bootstrap-diagnostics checkpoint — 2026-08-11 — `952be215`
+
+The existing sanitized evidence was inspected before instrumentation. It
+records two completed DEV document loads (`200 text/html`), two completed app
+entry loads and two completed vendor loads (`200 text/javascript`), `112`
+successful JavaScript responses overall, successful CSS responses, and no
+critical non-2xx, failed, or wrong-content-type asset. The six request failures
+were expected containment. The authenticated event sequence recorded
+`storageStateLoaded=true` before navigation, but no safe evidence proves auth
+effectiveness. There was no auth redirect, auth status, or non-containment
+page/runtime error. The old observer did not cover unhandled rejections, CSP,
+resource-error events, route transitions, or module/chunk failures. The second
+document load/navigation remains unexplained. Source/build paths agree with
+Ripple config; deployment/source divergence remains unresolved. No blocked
+host is shown to be a required bootstrap dependency.
+
+The product/bootstrap result is therefore `OTHER / UNRESOLVED`; the old
+observer coverage is an `OBSERVER_BLIND_SPOT`, not a guessed product cause.
+Implementation `952be215a0d65843e2fb7f8d15e0c28a7d7b142a` adds an opt-in,
+fixed-category pre-script hook and sanitized resource/runtime diagnostics. It
+records only safe metadata and failed critical host/path details; it does not
+capture bodies, DOM, text, storage, identity, or query values. The diagnostic
+confirmation path also requires `/ripple/dashboard`, so `/ripple/` cannot be
+reported as authenticated success.
+
+Synthetic coverage includes the requested 12 bootstrap cases plus observer
+coverage, source/document ambiguity, and base-namespace non-readiness checks.
+Focused bootstrap/hooks/readiness tests passed **35/35**; the full suite passed
+**194/194**; `npx tsc --noEmit` and staged `git diff --check` passed. M7 remains
+`IN_PROGRESS`; replay remains NOT RUN; Phase 2B remains deferred.
+
+Exact later-session retry, not executed in this diagnostic session:
+
+```bash
+npm run observe:authenticated -- \
+  --env=dev \
+  --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.

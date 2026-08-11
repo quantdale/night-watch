@@ -1,110 +1,92 @@
-# Nightwatch Phase 2A — Authenticated Readiness Contract Repair
+# NIGHTWATCH PHASE 2A — AUTHENTICATED BOOTSTRAP DIAGNOSTICS READY
 
-Status: `IN_PROGRESS` / M7. This repair does not run the real retry, replay, or
-Phase 2B.
+Status: `IN_PROGRESS` / M7. This checkpoint does not run the real retry,
+replay, or Phase 2B.
 
-## Source contract
+## Latest real observation
 
-Current source inspected narrowly:
+Run: `nightwatch-20260811T012811Z-9045`
 
-- Repository: `REPOSITORIES/mobingilabs/ripple-ui`
-- Branch: `dev`
-- Exact HEAD: `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`
-- Freshness: same SHA as the existing Nightwatch source snapshot. The source
-  worktree is behind upstream by 17 commits and has unrelated local changes;
-  relevant routing/bootstrap/root files are clean. It was not modified.
+- Pre-real-run gate: **13/13 PASS**.
+- Environment/origin: authenticated DEV / `https://appdev.alphaus.cloud`.
+- Final path: `/ripple/`.
+- `document.readyState`: `complete`.
+- Top-level frame: present; frames `1`, iframes `0`.
+- Body: present; safe child count `8`.
+- Source-backed rendered shell: `DIV.q-layout-container.layout`, absent.
+- `routeStable=true` at the final sample, `routeStableMs=0`.
+- `stabilityReached=false`; navigation was not in progress; page remained open.
+- Fatal page errors: `0`.
+- Destination manifest: `3` expected, `7` blocked, `0` unresolved.
+- Production attempts, proxy violations, mutations, and DB queries: `0`.
+- Replay: **NOT RUN**.
+- M7: **IN_PROGRESS**.
 
-At this SHA, Ripple's Vue Router base is `/ripple/`; authenticated `/` and
-`/login` are redirected to `/dashboard`, producing the final browser route
-`/ripple/dashboard`. The `#app` element declared in `public/index.html` is
-the Vue bootstrap mount target, not the post-mount shell.
+## Classification
 
-The lockfile resolves Vue `2.6.12` and Quasar `1.15.4`. `src/main.js` renders
-`App` with `render: h => h(App)` and calls `vm.$mount('#app')`. `App.vue`
-selects `default-layout` for authenticated route records; `DefaultLayout.vue`
-passes static class `layout` to containerized `q-layout`. Quasar's QLayout
-returns a root `DIV.q-layout-container`, so Vue's class inheritance produces
-the source-backed post-mount shell marker:
+No product bootstrap root cause is proven from the existing evidence.
 
-```text
-bootstrap mount selector: #app
-post-mount shell selector: .q-layout-container.layout
-post-mount shell element: DIV
-```
+| Candidate | Result | Evidence basis |
+|---|---|---|
+| `AUTH_STATE_REPLAY_INEFFECTIVE` | Not established | Structural storage-state loading/provenance passed and was recorded before navigation; no auth redirect or auth-status evidence exists. Staying at `/ripple/` alone is insufficient. |
+| `ENTRY_DOCUMENT_WRONG_OR_UNEXPECTED` | Not established | Both document loads were `200 text/html` from the approved DEV `/ripple/` path. |
+| `CRITICAL_ASSET_LOAD_FAILURE` | Ruled out by current metadata | App/vendor entry assets completed twice with `200 text/javascript`; all `112` JavaScript responses and observed CSS/HTML/font/image/SVG responses were HTTP 200. Six failures were expected containment. |
+| `JAVASCRIPT_BOOTSTRAP_EXCEPTION` | Not established | Historical pageerror count was `0`, but the old observer did not capture all runtime categories. |
+| `ROUTER_BOOTSTRAP_FAILURE` | Unresolved | The final path stayed at `/ripple/`, but route-transition/router-start evidence was not captured. |
+| `EXPECTED_RESOURCE_BLOCK_CAUSED_BOOTSTRAP_FAILURE` | No evidence | Blocked resources were telemetry, optional Pylon support, or reviewed browser-background traffic; no blocked dependency was proven required. Containment is unchanged. |
+| `DEPLOYMENT_SOURCE_DIVERGENCE` | Unresolved | Observed `/ripple/static/` paths agree with the reviewed source/build configuration, but no safe deployment identity or execution proof exists. |
+| `OBSERVER_BLIND_SPOT` | Confirmed as a Nightwatch gap | The old observer lacked separate unhandled-rejection, CSP, resource-error, module/chunk, and route-transition diagnostics. |
+| `OTHER / UNRESOLVED` | Current product result | Execution, router start, auth effectiveness, and the second document load remain unresolved without prohibited content inspection or a fresh instrumented run. |
 
-## Root-cause analysis
+The known malformed JSON anomaly remains separate:
+`POST https://apidev.alphaus.cloud/m/blue/cost/v1/`, HTTP 200,
+`application/json`, invalid JSON. Its subcause remains unresolved; no body was
+inspected and it is not treated as the shell-bootstrap cause.
 
-- `targetConfirmed=false` was a Nightwatch contract mismatch: it required
-  exact `/ripple/`, while source-proven authenticated navigation ends at
-  `/ripple/dashboard`.
-- The historical `appRootPresent=false` result came from querying the Vue
-  bootstrap placeholder after mount. Vue 2.6.12 normally replaces that
-  non-hydrating target, so the absence is expected and is not evidence of
-  deployment/source divergence. Nightwatch now records it only as
-  `bootstrapMountTargetPresent` and queries the rendered shell separately.
-- `stabilityReached=false` was produced by the old generic network-idle wait:
-  zero active requests and 750 ms quiet for up to 15 seconds. In the current
-  structural timer, `routeStable=true` with `routeStableMs=0` was causal: the
-  route stayed unchanged, but the old `#app` predicate never started the
-  continuous interval. The repaired contract uses complete document readiness,
-  the rendered shell, and unchanged route for 750 ms; benign recurring reads
-  and exact locally blocked telemetry/Pylon/browser-background traffic do not
-  create instability.
+## Diagnostic repair
 
-The three old booleans therefore were not three independent product failures.
-The target mismatch was independent; the old stability timeout was a generic
-network-idle result, and in the repaired contract a missing root is upstream
-of structural stability.
+Implementation SHA: `952be215a0d65843e2fb7f8d15e0c28a7d7b142a`.
 
-The recurring `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>` HTTP 200
-`application/json` invalid-JSON event remains `GENUINE_PROTOCOL_ANOMALY`,
-subcause unresolved. It remains metadata-only oracle evidence and was not
-made a readiness blocker.
+Files changed:
 
-## Repair
+- `src/browser/observers/bootstrapHooks.ts` — opt-in fixed-category hooks for
+  unhandled rejection, CSP, resource/runtime errors, and route transitions.
+- `src/products/ripple/bootstrapDiagnostics.ts` — sanitized resource merger,
+  bootstrap counters, failure metadata, observer coverage, and conservative
+  A–I classification. Diagnostic confirmation requires `/ripple/dashboard`;
+  it cannot treat `/ripple/` as authenticated success.
+- `src/browser/context.ts` and `tests/manual/phase2a-authenticated.ts` — enable
+  the layer only for the Phase 2A authenticated observer and persist the
+  summary in sanitized manifest/comparison metadata.
+- `src/browser/observers/networkObserver.ts` — resource type, status,
+  content-type, completion, policy, failure, and ordering metadata.
+- `src/browser/observers/pageObserver.ts` and `consoleObserver.ts` — safe
+  source origin/path metadata only.
+- `src/core/evidence/types.ts` — bootstrap event category.
+- `tests/unit/bootstrapHooks.test.ts` and
+  `tests/unit/rippleBootstrapDiagnostics.test.ts` — local synthetic coverage.
 
-Repair implementation SHA: `701748ed516d83aa09b88e6e2a9875cec726142c`.
+No selector, stability interval, containment rule, or replay behavior changed.
+No response bodies, request bodies, cookies, tokens, storage-state contents,
+DOM, text, identity, screenshots, or traces are recorded by the new layer.
 
-Changed files:
+## Validation and safety
 
-- `src/products/ripple/readiness.ts`
-- `src/browser/observers/stability.ts`
-- `tests/manual/phase2a-authenticated.ts`
-- `tests/unit/rippleReadiness.test.ts`
-
-Target safety remains bounded to the exact configured origin and `/ripple/`
-namespace. Production, unknown, auth-host-final, host-root, and unrelated
-paths remain non-final or fatal under the existing policy. Privacy remains
-structural and metadata-only; no customer text, identity, financial value,
-DOM dump, body, screenshot, trace, or storage-state content is used.
-
-A local browser regression runs the actual Vue `2.6.12` UMD runtime against
-`<body><div id="app"></div></body>` and verifies that `#app` disappears while
-`DIV.q-layout-container.layout` is present. The readiness matrix rejects the
-placeholder alone, requires the rendered shell, starts stability after delayed
-shell appearance, resets on route/shell changes, and keeps safety/oracle
-signals independent.
-
-## Validation
-
-- Focused readiness/mount/stability tests: **20 passed, 0 failed**.
+- Focused bootstrap/hooks/readiness tests: **35 passed, 0 failed**.
+- Full `npx playwright test`: **194 passed, 0 failed**.
 - `npx tsc --noEmit`: PASS.
-- Full local suite after the repair: **179 passed, 0 failed**.
-- `npm run agent:check`: PASS with only the expected checkpoint-state
-  classification during implementation/state transition.
-- `git diff --check`: PASS.
+- `git diff --check`: PASS for staged implementation and task-state changes.
+- `npm run agent:check`: PASS; after the implementation commit it reports
+  only the approved checkpoint-advance warning until the task-state commit is
+  the current HEAD.
+- No Alphaus repository was modified.
+- No new real Alphaus traffic, production traffic, replay, mutation, DB query,
+  auth-state read, or body inspection occurred in this diagnostic session.
 
-No Alphaus repository was modified. No real Alphaus request, authenticated
-retry, replay, production traffic, database query, mutation, external state
-read/write, or real authenticated traffic occurred in this repair session.
-The latest real run remains `nightwatch-20260810T140122Z-02d9` with gate
-13/13 PASS and final `/ripple/dashboard`; replay remains NOT RUN. The external
-auth state remains outside Nightwatch and uninspected.
+## Exact next action
 
-## Exact fresh-session retry
-
-Do not run in this repair session. In a fresh interactive session, after
-reviewing the checkpoint:
+Do not execute in this diagnostic implementation session. In a later fresh
+authorized session, run exactly:
 
 ```bash
 npm run observe:authenticated -- \
@@ -112,4 +94,6 @@ npm run observe:authenticated -- \
   --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 
-Replay remains prohibited until that fresh first observation succeeds.
+Inspect only its sanitized bootstrap summary. Do not run replay unless the
+instrumented first observation satisfies the unchanged readiness contract, and
+do not begin Phase 2B.
