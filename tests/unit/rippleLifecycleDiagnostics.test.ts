@@ -243,6 +243,42 @@ test('required auth state absent plus source login branch is ineffective, not me
   expect(diagnostics.authReplayEffectiveness).toBe('INEFFECTIVE');
 });
 
+test('post-mount auth-layout is an unauthenticated branch even when the browser remains at root', () => {
+  const diagnostics = buildRippleLifecycleDiagnostics([
+    ...baseDocumentEvents(),
+    event('bootstrap', {
+      category: 'post-mount-structure',
+      phase: 'replacement',
+      replacementNodeType: 'element',
+      replacementTag: 'DIV',
+      matchesAuthLayout: true,
+      rootBranch: 'auth-layout',
+    }),
+  ], lifecycleInput({ finalPath: '/ripple/', authRequiredStatePresent: false }));
+  expect(diagnostics.sourceDefinedUnauthenticatedBranchObserved).toBe(true);
+  expect(diagnostics.sourceDefinedAuthenticatedBootstrapBranchObserved).toBe(false);
+  expect(diagnostics.authReplayEffectiveness).toBe('INEFFECTIVE');
+});
+
+test('post-mount default shell proves the authenticated branch even when root alias resolution is retained', () => {
+  const diagnostics = buildRippleLifecycleDiagnostics([
+    ...baseDocumentEvents(),
+    event('bootstrap', {
+      category: 'post-mount-structure',
+      phase: 'replacement',
+      replacementNodeType: 'element',
+      replacementTag: 'DIV',
+      matchesDefaultLayout: true,
+      matchesQLayout: true,
+      rootBranch: 'default-layout',
+    }),
+    event('bootstrap', { category: 'rendered-shell', phase: 'seen', elapsedMs: 25, path: '/ripple/' }),
+  ], lifecycleInput({ finalPath: '/ripple/', authRequiredStatePresent: true, renderedShellPresent: true }));
+  expect(diagnostics.sourceDefinedUnauthenticatedBranchObserved).toBe(false);
+  expect(diagnostics.sourceDefinedAuthenticatedBootstrapBranchObserved).toBe(true);
+  expect(diagnostics.authReplayEffectiveness).toBe('CONFIRMED');
+});
+
 test('silent async branches retain only fixed classification metadata', () => {
   expect(classifyAsyncBootstrapDependency({ state: 'pending', timeoutConfigured: false, rejectionHandled: false })).toMatchObject({
     classification: 'BOOTSTRAP_STALL',

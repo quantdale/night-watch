@@ -36,6 +36,11 @@ export interface StorageStateOptions {
   workspaceRoot?: string;
 }
 
+export interface StorageStateOutputOptions extends StorageStateOptions {
+  /** Only the approved direct auth-capture workflow may replace an existing external file. */
+  allowExisting?: boolean;
+}
+
 function defaultRoots(opts?: StorageStateOptions): { nightwatchRoot: string; workspaceRoot: string } {
   const nightwatchRoot = opts?.nightwatchRoot ?? path.resolve(__dirname, '..', '..', '..');
   const workspaceRoot = opts?.workspaceRoot ?? path.resolve(nightwatchRoot, '..');
@@ -290,9 +295,11 @@ export function inspectStorageStateCookiePageReadability(
 
 /**
  * Validate a destination before a human-led capture writes secret state.
- * The destination must not already exist; capture never overwrites a file.
+ * Normal callers fail closed on an existing path. The direct auth-capture
+ * workflow may opt into an atomic replacement after the newly captured state
+ * has passed validation; it never writes over the old file in place.
  */
-export function validateStorageStateOutputPath(p: string, opts?: StorageStateOptions): string {
+export function validateStorageStateOutputPath(p: string, opts?: StorageStateOutputOptions): string {
   const { nightwatchRoot, workspaceRoot } = defaultRoots(opts);
   if (!path.isAbsolute(p)) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must be an absolute path (got: ${p})`);
@@ -305,7 +312,12 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOpt
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must use a .json filename`);
   }
   if (fs.existsSync(abs)) {
-    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output already exists; refusing to overwrite secret state`);
+    if (!opts?.allowExisting) {
+      throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output already exists; refusing to overwrite secret state`);
+    }
+    if (!fs.statSync(abs).isFile()) {
+      throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output is not a regular file: ${abs}`);
+    }
   }
   const parent = path.dirname(abs);
   if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) {

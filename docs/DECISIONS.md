@@ -468,7 +468,10 @@ garbage and misconfiguration at the earliest possible point — startup.
 
 **Consequences.** `tests/unit/storageState.test.ts` covers every rule;
 authenticated runs are impossible without a compliant external file; the
-recorder never receives storage-state content.
+recorder never receives storage-state content. The approved direct human
+capture workflow may replace an existing external output path only by writing
+to a temporary sibling, validating that new file, and atomically renaming it;
+ordinary output-path validation still rejects pre-existing paths.
 
 **Phase applicability.** 1.1 and all later phases.
 

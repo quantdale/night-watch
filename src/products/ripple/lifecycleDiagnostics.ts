@@ -727,12 +727,19 @@ export function buildRippleLifecycleDiagnostics(
   const routeTransitions = routes(events);
   const finalPath = safePath(input.finalPath);
   const routePaths = routeTransitions.map((route) => route.path);
-  const sourceDefinedUnauthenticatedBranchObserved = routePaths.includes('/ripple/login') || finalPath === '/ripple/login';
-  const sourceDefinedAuthenticatedBootstrapBranchObserved = routePaths.includes('/ripple/dashboard') || finalPath === '/ripple/dashboard';
   const authHostNavigationSeen = loads.some((load) => authHostMatches(load.origin, input.authHosts ?? []));
   const renderedShellEvents = events.filter((event) => event.type === 'bootstrap' && dataOf(event).category === 'rendered-shell' && dataOf(event).phase === 'seen');
   const shellTimings = renderedShellEvents.map((event) => numberValue(dataOf(event).elapsedMs)).filter((value): value is number => value !== null);
   const renderedShellSeen = renderedShellEvents.length > 0 || input.renderedShellPresent;
+  // The post-mount hook has source-approved branch predicates that remain
+  // meaningful even when the router stays at the canonical root path. Keep
+  // the login/auth-layout branch distinct from the authenticated default/QLayout
+  // shell so a stale file cannot be mistaken for page-visible auth.
+  const sourceDefinedUnauthenticatedBranchObserved =
+    replacement.matchesAuthLayout || routePaths.includes('/ripple/login') || finalPath === '/ripple/login';
+  const sourceDefinedAuthenticatedBootstrapBranchObserved =
+    replacement.matchesDefaultLayout || replacement.matchesQLayout || renderedShellSeen ||
+    routePaths.includes('/ripple/dashboard') || finalPath === '/ripple/dashboard';
   const routeStableMs = numberValue(input.routeStableMs) === null
     ? 0
     : Math.max(0, Math.min(120_000, Math.round(numberValue(input.routeStableMs) ?? 0)));

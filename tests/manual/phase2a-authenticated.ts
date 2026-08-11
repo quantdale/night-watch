@@ -21,6 +21,11 @@ import {
   inspectStorageStateCookiePageReadability,
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
+import {
+  inspectRipplePageAuthReadability,
+  unavailableRipplePageAuthReadability,
+  type RipplePageAuthReadability,
+} from '../../src/browser/fixtures/pageAuthReadability';
 import { installDocumentLifecycleObserver, type DocumentLifecycleObserver } from '../../src/browser/observers/documentLifecycle';
 import { waitForRippleStability } from '../../src/browser/observers/stability';
 import {
@@ -143,6 +148,7 @@ interface ObservationResult {
   consolePageErrorCategories: string[];
   responseStructure: Array<{ method: string; status: number; contentType: string | null; count: number }>;
   bootstrapDiagnostics: RippleBootstrapDiagnostics;
+  authPageReadability: RipplePageAuthReadability;
 }
 
 const BOOTSTRAP_OBSERVER_COVERAGE: BootstrapObserverCoverage = {
@@ -415,7 +421,7 @@ async function observeOnce(
   const storagePresence = inspectStorageStateKeyPresence(storageStatePath, {
     cookie: ['mo_access_token', 'api_type', 'app_type'],
   });
-  const authRequiredStatePresent = storagePresence.cookieNames.mo_access_token === true;
+  const authRequiredStateFilePresent = storagePresence.cookieNames.mo_access_token === true;
   const provenanceMatch = true;
   const storageStateLoadedBeforeNavigation = true;
   const authBootstrapStatePresence = {
@@ -423,8 +429,8 @@ async function observeOnce(
     provenanceMatch,
     authRequired: {
       key: 'mo_access_token',
-      present: authRequiredStatePresent,
-      presentCount: authRequiredStatePresent ? 1 : 0,
+      present: authRequiredStateFilePresent,
+      presentCount: authRequiredStateFilePresent ? 1 : 0,
       total: 1,
     },
     environmentSelection: {
@@ -491,8 +497,9 @@ async function observeOnce(
   // Context-side browser-visibility approximation (Phase D). Never exposes the
   // token value: only booleans for domain/path applicability, httpOnly, secure,
   // expiry, and the aggregate pageReadable flag. This distinguishes "the capture
-  // file records a cookie" from "a browser at the app origin would expose it to
-  // the page for js-cookie". Expiry is checked with the current wall clock.
+  // file records a cookie" from "a browser at the app origin is expected to
+  // expose it to the page for js-cookie". Expiry is checked with the current
+  // wall clock; the live page proof is collected after navigation below.
   const targetUrl = new URL(target);
   const targetOrigin = targetUrl.origin;
   const targetPath = targetUrl.pathname;
@@ -508,6 +515,13 @@ async function observeOnce(
     message: 'auth-token page-readability booleans observed (context-derived, no value exposed)',
     data: { ...tokenPageReadability, pass },
   });
+  if (!tokenPageReadability.pageReadable) {
+    await recorder.finalize({
+      passed: false,
+      notes: ['authenticated observation stopped before context creation because the external auth state is not page-readable'],
+    });
+    throw new Error('FRESH_AUTH_CAPTURE_INVALID: source-required auth cookie is expired, inapplicable, or not page-readable');
+  }
 
   const proxyEventLogStart = (() => {
     try {
@@ -527,6 +541,7 @@ async function observeOnce(
     bootstrapDiagnostics: true,
   });
   let documentLifecycle: DocumentLifecycleObserver | null = null;
+  let authPageReadability = unavailableRipplePageAuthReadability();
   let navigationFailed = false;
   let stabilityReached = false;
   let readiness: ReadinessEvidence;
@@ -580,6 +595,15 @@ async function observeOnce(
     } finally {
       navigationInProgress = false;
     }
+
+    authPageReadability = await inspectRipplePageAuthReadability(context.page);
+    recorder.addManifestEntry('authPageReadability', authPageReadability);
+    recorder.event({
+      type: 'env',
+      severity: authPageReadability.evaluationSucceeded && authPageReadability.tokenNonEmpty ? 'info' : 'warn',
+      message: 'live Ripple page auth-readability booleans observed',
+      data: { ...authPageReadability, pass },
+    });
 
     stabilityReached = await waitForRippleStability({
       quietMs: 750,
@@ -682,7 +706,16 @@ async function observeOnce(
       message: 'authenticated landing readiness observed',
       data: { ...readiness, sourceShellContract: RIPPLE_SOURCE_SHELL_CONTRACT, pass },
     });
-    if (!readiness.targetConfirmed || !readiness.renderedShellPresent || !readiness.stabilityReached || navigationFailed) {
+    if (
+      !authPageReadability.evaluationSucceeded ||
+      !authPageReadability.tokenPageReadable ||
+      !authPageReadability.tokenNonEmpty ||
+      authPageReadability.aggregatePageBootstrapSemantics !== 'VALID' ||
+      !readiness.targetConfirmed ||
+      !readiness.renderedShellPresent ||
+      !readiness.stabilityReached ||
+      navigationFailed
+    ) {
       const issue = recorder.event({
         type: 'issue',
         severity: 'error',
@@ -721,7 +754,7 @@ async function observeOnce(
       authHosts: env.authHosts,
       storageStateLoadedBeforeNavigation,
       provenanceMatch,
-      authRequiredStatePresent,
+      authRequiredStatePresent: authPageReadability.tokenNonEmpty,
     },
   );
   recorder.addManifestEntry('bootstrapDiagnostics', bootstrapDiagnostics);
@@ -748,7 +781,16 @@ async function observeOnce(
     unresolved: manifest.unresolved.length,
   });
   const unsafeDestination = manifest.unresolved.length > 0 || manifest.blocked.some((entry) => entry.decision === 'deny');
-  const passed = !context.monitor.safetyFailed && !unsafeDestination && readiness.targetConfirmed && readiness.renderedShellPresent && readiness.stabilityReached && !navigationFailed;
+  const passed = !context.monitor.safetyFailed &&
+    !unsafeDestination &&
+    authPageReadability.evaluationSucceeded &&
+    authPageReadability.tokenPageReadable &&
+    authPageReadability.tokenNonEmpty &&
+    authPageReadability.aggregatePageBootstrapSemantics === 'VALID' &&
+    readiness.targetConfirmed &&
+    readiness.renderedShellPresent &&
+    readiness.stabilityReached &&
+    !navigationFailed;
   const summary = await recorder.finalize({
     passed,
     notes: [
@@ -768,6 +810,7 @@ async function observeOnce(
     consolePageErrorCategories: consolePageErrorCategories(events),
     responseStructure: responseStructure(events),
     bootstrapDiagnostics,
+    authPageReadability,
   };
 }
 
@@ -784,6 +827,7 @@ function writeComparison(root: string, runId: string, first: ObservationResult, 
     consolePageErrorCategories: result.consolePageErrorCategories,
     responseStructure: result.responseStructure,
     bootstrapDiagnostics: result.bootstrapDiagnostics,
+    authPageReadability: result.authPageReadability,
     timing: { durationMs: result.summary.durationMs, eventCount: result.summary.eventCount },
   });
   const firstComparable = comparable(first);
@@ -801,6 +845,7 @@ function writeComparison(root: string, runId: string, first: ObservationResult, 
       ...(JSON.stringify(firstComparable?.consolePageErrorCategories) !== JSON.stringify(replayComparable.consolePageErrorCategories) ? ['console-page-error-categories'] : []),
       ...(JSON.stringify(firstComparable?.responseStructure) !== JSON.stringify(replayComparable.responseStructure) ? ['response-status-content-type-structure'] : []),
       ...(JSON.stringify(firstComparable?.bootstrapDiagnostics) !== JSON.stringify(replayComparable.bootstrapDiagnostics) ? ['bootstrap-diagnostics'] : []),
+      ...(JSON.stringify(firstComparable?.authPageReadability) !== JSON.stringify(replayComparable.authPageReadability) ? ['auth-page-readability'] : []),
     ],
   }, null, 2));
 }

@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
+import { validateStorageStateFile } from '../../src/browser/fixtures/storageState';
 import { selectEnvironment } from '../../src/core/environment';
 import { runDirectAuthCapture, type DirectAuthCaptureOptions } from '../../src/auth/directRunner';
 import type { AuthCaptureStageEvent } from '../../src/auth/stages';
@@ -307,6 +308,31 @@ test('malformed JSON during HUMAN_WAIT is recorded but auth capture continues', 
     expect(evidence).toContain('"oracleCategory":"malformed-json"');
     expect(evidence).toContain('"oracleSeverity":"anomaly"');
     expect(evidence).toContain('"protocolObserved":"invalid-json"');
+  } finally {
+    await server.close();
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('successful capture atomically replaces an existing external state after validation', async () => {
+  const server = await startFixtureServer('auth');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-replace-'));
+  const output = path.join(temp, 'state.json');
+  try {
+    fs.writeFileSync(output, JSON.stringify({ cookies: [], origins: [], marker: 'OLD_STATE_MARKER' }));
+    const result = await runDirectAuthCapture(await baseOptions(server.origin, temp, [], {
+      completion: {
+        kind: 'synthetic-test-only',
+        wait: async (page) => {
+          await page.evaluate(async () => { await fetch('/api/synthetic-login', { method: 'POST' }); });
+          await page.goto(`${server.origin}/synthetic-authenticated`);
+        },
+      },
+    }));
+    expect(result.summary.passed).toBe(true);
+    const replaced = fs.readFileSync(output, 'utf8');
+    expect(replaced).not.toContain('OLD_STATE_MARKER');
+    expect(validateStorageStateFile(output)).toBe(output);
   } finally {
     await server.close();
     fs.rmSync(temp, { recursive: true, force: true });

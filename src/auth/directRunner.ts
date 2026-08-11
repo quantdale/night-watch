@@ -20,6 +20,7 @@ import {
   validateStorageStateFile,
   validateStorageStateOutputPath,
 } from '../browser/fixtures/storageState';
+import { inspectRipplePageAuthReadability } from '../browser/fixtures/pageAuthReadability';
 import { createRunId, RunRecorder } from '../core/evidence/runRecorder';
 import type { RunSummary } from '../core/evidence/types';
 import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from '../core/safety/outboundPolicy';
@@ -182,6 +183,10 @@ function removeRuntimeFile(file: string): void {
     // Runtime scratch and a state file created by this failed attempt are
     // best-effort cleanup targets; neither is a pre-existing user file.
   }
+}
+
+function pendingStorageStatePath(outputPath: string, runId: string): string {
+  return path.join(path.dirname(outputPath), `.${path.basename(outputPath)}.${runId}.pending.json`);
 }
 
 function reportStage(opts: DirectAuthCaptureOptions, event: AuthCaptureStageEvent): void {
@@ -354,8 +359,10 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
 
   const root = repositoryRoot(opts.nightwatchRoot);
   const target = resolveCaptureTarget(opts.environment, opts.uiUrl);
-  const outputPath = validateStorageStateOutputPath(opts.outputPath);
   const runId = createRunId();
+  const outputPath = validateStorageStateOutputPath(opts.outputPath, { allowExisting: true });
+  const pendingOutputPath = pendingStorageStatePath(outputPath, runId);
+  validateStorageStateOutputPath(pendingOutputPath);
   const provenance: DirectAuthCaptureResult['provenance'] = {
     schemaVersion: 'phase-2a-auth-capture-v1',
     mode: testOnly ? 'synthetic-test-only' : 'human-parent-cli',
@@ -384,6 +391,7 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
   let captureError: unknown;
   let cleanupError: unknown;
   let stateWriteAttempted = false;
+  let stateCommitted = false;
   let summary: RunSummary | undefined;
 
   try {
@@ -465,14 +473,35 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
         titlePresent = false;
       }
       verifyPostLoginLocation(opts.environment, target, guarded!.page.url(), titlePresent);
+      const pageAuthReadability = await inspectRipplePageAuthReadability(guarded!.page);
+      recorder.addManifestEntry('authPageReadability', { ...pageAuthReadability });
+      recorder.event({
+        type: 'env',
+        severity: 'info',
+        message: 'post-login Ripple auth page-readability booleans observed',
+        data: { ...pageAuthReadability },
+      });
+      if (
+        opts.environment.name !== 'local' &&
+        (!pageAuthReadability.evaluationSucceeded ||
+          !pageAuthReadability.tokenPageReadable ||
+          !pageAuthReadability.tokenNonEmpty ||
+          pageAuthReadability.aggregatePageBootstrapSemantics !== 'VALID')
+      ) {
+        throw new AuthCaptureStageError({
+          stage: 'POST_LOGIN_VERIFICATION',
+          reason: 'POST_LOGIN_AUTH_NOT_PAGE_READABLE',
+          detail: 'source-required auth cookie was not proven readable by page JavaScript',
+        });
+      }
     });
 
     stateWriteAttempted = true;
     await runStage(opts, 'STORAGE_STATE_WRITE', async () => {
       if (opts.storageStateWriter !== undefined) {
-        await opts.storageStateWriter(guarded!.context, outputPath);
+        await opts.storageStateWriter(guarded!.context, pendingOutputPath);
       } else {
-        await guarded!.context.storageState({ path: outputPath });
+        await guarded!.context.storageState({ path: pendingOutputPath });
       }
     });
     await runStage(opts, 'PROVENANCE_WRITE', () => {
@@ -483,8 +512,14 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       });
     });
     await runStage(opts, 'STATE_VALIDATION', () => {
-      if (opts.stateValidator !== undefined) return opts.stateValidator(outputPath);
-      return validateStorageStateFile(outputPath);
+      if (opts.stateValidator !== undefined) opts.stateValidator(pendingOutputPath);
+      else validateStorageStateFile(pendingOutputPath);
+      // Keep the old external state untouched until the fresh capture has
+      // passed shape validation, then replace it atomically within the same
+      // user-owned directory. No state contents enter evidence.
+      fs.renameSync(pendingOutputPath, outputPath);
+      stateCommitted = true;
+      return outputPath;
     });
   } catch (error) {
     captureError = error;
@@ -519,7 +554,7 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       reportStage(opts, { stage: 'CLEANUP', status: 'PASS' });
     }
 
-    if (stateWriteAttempted && captureError !== undefined) removeRuntimeFile(outputPath);
+    if (stateWriteAttempted && captureError !== undefined && !stateCommitted) removeRuntimeFile(pendingOutputPath);
     try {
       summary = await recorder.finalize({
         passed: captureError === undefined && cleanupError === undefined && !guarded?.monitor.safetyFailed,

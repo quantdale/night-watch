@@ -21,6 +21,8 @@ import {
   inspectStorageStateKeySemantics,
   inspectStorageStateCookiePageReadability,
 } from '../../src/browser/fixtures/storageState';
+import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
+import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
 const WORKSPACE_ROOT = path.resolve(NIGHTWATCH_ROOT, '..');
@@ -240,7 +242,7 @@ test.describe('storage-state secret handling', () => {
     }
   });
 
-  test('semantic inspection: absent env cookies permit bootstrap validity but the aggregate stays UNRESOLVED-capable', () => {
+  test('semantic inspection: absent env cookies permit bootstrap validity with source fallback', () => {
     const file = tmpStateFile({
       cookies: [
         { name: 'mo_access_token', value: 'FAKE_TOKEN_ABC', domain: '127.0.0.1', path: '/' },
@@ -394,6 +396,69 @@ test.describe('storage-state secret handling', () => {
       expect(r.pageReadable).toBe(false);
     } finally {
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: live browser document.cookie distinguishes fresh and expired cookies', async ({ browser }) => {
+    const server = await startFixtureServer('good');
+    const now = Math.floor(Date.now() / 1000);
+    const liveContext = await browser.newContext({
+      storageState: {
+        cookies: [
+          { name: 'mo_access_token', value: 'FAKE_LIVE_TOKEN', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now + 86_400 },
+          { name: 'api_type', value: 'dev', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now + 86_400 },
+          { name: 'app_type', value: 'alphaus', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now + 86_400 },
+        ],
+        origins: [],
+      },
+    });
+    const expiredContext = await browser.newContext({
+      storageState: {
+        cookies: [
+          { name: 'mo_access_token', value: 'FAKE_EXPIRED_TOKEN', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now - 86_400 },
+          { name: 'api_type', value: 'dev', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now + 86_400 },
+          { name: 'app_type', value: 'alphaus', domain: '127.0.0.1', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: now + 86_400 },
+        ],
+        origins: [],
+      },
+    });
+    try {
+      const livePage = await liveContext.newPage();
+      await livePage.goto(`${server.origin}/`, { waitUntil: 'domcontentloaded' });
+      const live = await inspectRipplePageAuthReadability(livePage);
+      expect(live).toMatchObject({
+        evaluationSucceeded: true,
+        tokenPageReadable: true,
+        tokenNonEmpty: true,
+        apiTypePageVisible: true,
+        apiTypeMatchesDev: true,
+        appTypePageVisible: true,
+        appTypeMatchesRipple: true,
+        aggregatePageBootstrapSemantics: 'VALID',
+        basis: 'page-javascript-document-cookie',
+      });
+
+      const expiredPage = await expiredContext.newPage();
+      await expiredPage.goto(`${server.origin}/`, { waitUntil: 'domcontentloaded' });
+      const expired = await inspectRipplePageAuthReadability(expiredPage);
+      expect(expired).toMatchObject({
+        evaluationSucceeded: true,
+        tokenPageReadable: false,
+        tokenNonEmpty: false,
+        apiTypePageVisible: true,
+        apiTypeMatchesDev: true,
+        appTypePageVisible: true,
+        appTypeMatchesRipple: true,
+        aggregatePageBootstrapSemantics: 'INVALID',
+        basis: 'page-javascript-document-cookie',
+      });
+      const serialized = JSON.stringify({ live, expired });
+      expect(serialized).not.toContain('FAKE_LIVE_TOKEN');
+      expect(serialized).not.toContain('FAKE_EXPIRED_TOKEN');
+    } finally {
+      await liveContext.close();
+      await expiredContext.close();
+      await server.close();
     }
   });
 });

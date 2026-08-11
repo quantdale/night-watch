@@ -21,6 +21,7 @@ const SUPPORTED = new Set(['dev', 'next']);
 function usage() {
   console.log('Usage: npm run auth:capture -- --env=dev|next --output=/absolute/user-owned/ripple-state.json [--ui-url=https://verified-host/]');
   console.log('Human login/MFA is performed in the headed browser; Nightwatch never receives credentials.');
+  console.log('An existing external state at the requested path is replaced atomically only after fresh capture validation.');
 }
 
 function fail(message) {
@@ -136,7 +137,7 @@ async function main() {
   };
   if (inside(root, outputPath) || inside(workspaceRoot, outputPath)) fail('--output must be outside the Nightwatch repository and Alphaus workspace');
   if (!outputPath.toLowerCase().endsWith('.json')) fail('--output must use a .json filename');
-  if (fs.existsSync(outputPath)) fail('--output already exists; refusing to overwrite secret state');
+  if (fs.existsSync(outputPath) && !fs.statSync(outputPath).isFile()) fail('--output must be a regular file when an existing path is replaced');
   const parent = path.dirname(outputPath);
   if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) fail('--output parent directory must already exist');
   try {
