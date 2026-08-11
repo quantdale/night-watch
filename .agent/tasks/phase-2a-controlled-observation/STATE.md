@@ -6,7 +6,7 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 4763108645871e6aabe908dba3ec142443ffa95e
+Current SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
 Last validated implementation SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
 Branch: main
 Last checkpoint: 2026-08-11 (resume session) — auth replay classified INEFFECTIVE;

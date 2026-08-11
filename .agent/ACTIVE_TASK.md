@@ -6,7 +6,7 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 4763108645871e6aabe908dba3ec142443ffa95e
+Current SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
 Last validated implementation SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
 Current milestone: M7 — First controlled authenticated landing observation (BLOCKED)
 Last checkpoint: 2026-08-11 (resume) — auth replay classified INEFFECTIVE; prior
