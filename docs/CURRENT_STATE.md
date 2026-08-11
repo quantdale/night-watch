@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-09** by the
-> Phase 1.3 (DURABLE AGENT CONTINUITY) implementation agent. Phase 1.2 remains
-> the last completed safety milestone; the Phase 1.3 resulting SHA is recorded
-> in the task report.
+> Durable memory for the next agent/session. Last updated: **2026-08-12** by the
+> Phase 2A controlled authenticated observation closure. Phase 1.2 remains the
+> last completed safety milestone; Phase 2A has now completed its bounded
+> authenticated landing/replay observation with the existing safety kernel.
 
 ---
 
@@ -110,7 +110,9 @@ No new request was made to production to investigate this historical event.
   only resolves after an allow decision; a future restricted container is
   still required for complete process/network-namespace isolation.
 - `serviceWorker.register()` may resolve under `serviceWorkers:'block'` (no worker is created — verified; the stub makes it reject for app-level evidence).
-- Real dev/next sessions still NOT run; authenticated runs exercised only with synthetic storage state.
+- Before Phase 2A, real dev/next sessions had not run; that historical
+  statement is superseded by the completed Phase 2A record below. Authenticated
+  traces remain disabled and real state remains external-only.
 
 ## Last successful checks (2026-08-09)
 
@@ -123,6 +125,36 @@ No new request was made to production to investigate this historical event.
 - Phase 1.3 validator unit suite — `npx playwright test tests/unit/agent-state.test.ts` → **8 passed, 0 failed**
 - Phase 1.3 full suite — `npx playwright test` → **101 passed, 0 failed**
 - Phase 1.3 continuity check — `npm run agent:check` → PASS; no stale-SHA warning before the implementation commit
+
+## Phase 2A — controlled authenticated DEV observation (complete)
+
+The bounded Phase 2A task completed on 2026-08-12 using the canonical
+`https://appdev.alphaus.cloud/ripple/` entry and a fresh human-authenticated
+external Playwright state. The capture proved page-JavaScript auth visibility
+with boolean-only diagnostics; no credential, cookie, token, DOM, body,
+identity, screenshot, or trace material entered Nightwatch.
+
+- Fresh capture: `nightwatch-20260811T183030Z-c652`; provenance matched `dev`.
+- First run: `nightwatch-20260811T190009Z-efce-first`; final route
+  `/ripple/dashboard`, QLayout shell present, `READY`, route stability `834 ms`.
+- Fresh-context replay: `nightwatch-20260811T190009Z-efce-replay`; same final
+  route and shell, `READY`, route stability `766 ms`.
+- Auth replay: `CONFIRMED` in both runs; the prior expired capture remains a
+  historical `AUTH_REPLAY_INEFFECTIVE` diagnosis, not a current-state claim.
+- Both runs used the mandatory proxy/browser containment and passive-only
+  observation. Production attempts, proxy violations, unresolved/unknown
+  destinations, unknown approvals, mutations, and DB queries were all zero.
+- The comparator recorded bounded non-fatal timing/request-count variance and
+  one already-reviewed locally blocked browser-background attempt in the first
+  run. Both runs had zero failed critical resources, zero runtime exceptions,
+  and passed the same authenticated shell/readiness contract; no third replay
+  was run.
+- Privacy review passed for both sanitized artifact sets; authenticated traces
+  and screenshots were absent. Full TypeScript, Playwright, agent continuity,
+  and whitespace validation passed at task closure.
+
+Phase 2B — `THREE DETERMINISTIC READ-ONLY RIPPLE JOURNEYS` remains the
+recommended next task and was not started.
 
 ## Environment (machine facts)
 

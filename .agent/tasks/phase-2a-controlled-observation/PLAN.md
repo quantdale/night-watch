@@ -1275,5 +1275,86 @@ threshold, trace/screenshot setting, or Ripple source was changed.
 Validation at this checkpoint: `npx tsc --noEmit` PASS; full Playwright suite
 241/241 PASS; focused capture/lifecycle/storage suite 46/46 PASS; synthetic
 capture 1/1 PASS; `git diff --check` PASS. Implementation commit is
-`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`. Human capture remains pending;
-the stale external state must not be used.
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`. Human capture remained pending
+at this historical checkpoint; the stale external state was not used.
+
+## CURRENT STATUS OVERRIDE — Phase 2A closure (2026-08-12)
+
+This final status block supersedes earlier `IN_PROGRESS`/`USER_ACTION_REQUIRED`
+sentences retained above as historical checkpoints. The existing task was
+completed; no new task was created and Phase 2B was not started.
+
+### M7 — First controlled authenticated landing observation — COMPLETE
+
+Fresh capture `nightwatch-20260811T183030Z-c652` passed post-login live
+page-readability validation and the strict 13/13 gate. The exact canonical
+command ran once and produced `nightwatch-20260811T190009Z-efce-first` with
+`passed=true`, `AUTH_REPLAY_CONFIRMED`, final `/ripple/dashboard`, complete
+document, source-backed `DIV.q-layout-container.layout`, and `READY`. Vue
+pre-mount `#app` was seen and removed; the source-proven expected bootstrap
+reload and one guarded `/ripple/dashboard` history transition were recorded.
+Route stability was 834 ms. No clicks, forms, endpoint replay, mutation, DB
+query, or arbitrary route exploration occurred.
+
+### M9 — Passive first-observation oracles — COMPLETE
+
+The first run recorded only expected containment effects as oracle findings;
+no malformed-JSON anomaly recurred. All encountered API calls remained
+metadata-only `UNKNOWN` observations and were not deliberately replayed.
+
+### M10 — Fresh-context replay — COMPLETE
+
+The implementation closed the first context and created a completely new
+context with the same external state. Replay
+`nightwatch-20260811T190009Z-efce-replay` passed with
+`AUTH_REPLAY_CONFIRMED`, final `/ripple/dashboard`, rendered QLayout shell,
+`READY`, and route stability 766 ms. No third replay was run.
+
+The sanitized comparator recorded non-fatal differences in request counts,
+response counts, cleanup timing, and destination attempts. The first-only
+extra destination was the already-reviewed exact local block for
+`android.clients.google.com`; there were no new or unresolved destinations,
+no deny/proxy violation, and no readiness/auth/runtime divergence. Replay
+resource variance included three allowed unterminated chunks at cleanup but
+zero failed critical resources; D1/D2 classification remained correct.
+
+### M11 — Authenticated artifact privacy — COMPLETE
+
+The existing authenticated privacy smoke suite passed 2/2 after both runs.
+Category-level scans of capture/first/replay artifacts found no secret-like
+values, raw body fields, unredacted identity values, auth-state files,
+screenshots, or traces. Auth state remains external.
+
+### M12 — Sanitized runtime contract — COMPLETE
+
+`docs/CURRENT_STATE.md` and this plan now record the reusable DEV target,
+page-readable auth contract, rendered-shell/readiness contract, route
+resolution, safety accounting, bounded replay variance, historical expired
+auth diagnosis, and the explicit deferral of Phase 2B. No customer-specific
+runtime fact was promoted.
+
+### M13 — Final validation and handoff — COMPLETE pending final commit
+
+Final task documentation, adversarial self-review, full validation, clean-tree
+verification, and the final Nightwatch-only checkpoint are the last closure
+actions. The implementation baseline remains
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`; docs-only descendants are approved
+continuity checkpoints.
+
+### Final acceptance matrix
+
+| Criterion | Result |
+|---|---|
+| Fresh external DEV auth capture | PASS — `c652` |
+| Page-JavaScript auth visibility | PASS — both runs, boolean-only |
+| Strict pre-real-run gate | PASS — 13/13 |
+| First authenticated observation | PASS — `efce-first` |
+| Fresh-context replay | PASS — `efce-replay`; no third replay |
+| QLayout shell / route stability | PASS — both; 834 ms / 766 ms |
+| Privacy / traces / screenshots | PASS / absent |
+| Production attempts / proxy violations | 0 / 0 |
+| Unknown destinations / approvals | 0 / 0 |
+| Mutations / DB queries | 0 / 0 |
+| Full validation | PASS; recorded in STATE/REPORT |
+| Alphaus repository modifications | 0 |
+| Phase 2B | NOT STARTED |

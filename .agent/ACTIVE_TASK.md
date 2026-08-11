@@ -3,52 +3,47 @@
 Task ID: phase-2a-controlled-observation
 Phase: 2A
 Title: First Controlled Authenticated Ripple Dev/Next Observation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
 Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
-Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS — awaiting fresh human auth capture)
-Last checkpoint: 2026-08-12 (D8 repair) — auth replay classified INEFFECTIVE for
-the expired state; live page-readability proof and atomic recapture are now
-implemented; prior
-"product routing" conclusion refuted.
+Current milestone: M13 — Final validation and handoff (COMPLETE)
+Last checkpoint: 2026-08-12 — fresh human-authenticated DEV capture,
+canonical authenticated observation, fresh-context replay, final safety /
+privacy review, and Phase 2A documentation closure. Phase 2B was not started.
+Next action: Phase 2B — THREE DETERMINISTIC READ-ONLY RIPPLE JOURNEYS is
+recommended but intentionally not started.
 
-The resume session drove the routing/auth ambiguity to an evidence-backed
-conclusion:
+## Completion summary
 
-- **Phase A** — Nightwatch's prior `requiredTokenPresent` / `requiredTokenNonEmpty`
-  / `aggregateSemanticValidity=VALID` are context-only: they read the external
-  storage-state FILE (`inspectStorageStateKeySemantics`/`Presence`), not the
-  browser page. Verdict `AUTH_DIAGNOSTIC_CONTEXT_ONLY`.
-- **Phase D** — real capture `mo_access_token` cookie is domain/path-applicable,
-  non-httpOnly, non-secure, sameSite Lax (would be page-visible IF unexpired),
-  but its `expires=2026-08-10T18:53:39Z` is in the past. Local Playwright/Chrome
-  reproduction proves an expired storageState cookie is ABSENT from
-  `document.cookie` (live/session cookies are present). Ripple's guard reads via
-  js-cookie `document.cookie`, so the expired token is invisible to it.
-- **Phase B/C** — actual vue-router 3.5.1 synthetic repro: base `/ripple/` root
-  path `/` matches `["/login"]` (alias `''`); guard (router.js:1385-1413): root
-  `/` WITH token → `next('/dashboard')`; root `/` WITHOUT token → fall-through →
-  `auth-layout`. So authenticated `/ripple/` DOES reach the dashboard; the
-  observed auth-layout reflects an unauthenticated (expired-token) session.
-- **Phase F/G/H** — intent is correct for authenticated sessions; no product bug
-  (`ROOT_ALIAS_COLLISION_BUG` refuted). `/ripple/dashboard` is a safe passive
-  observation target, but a truthful authenticated observation needs a fresh
-  non-expired capture.
+- Fresh capture: `nightwatch-20260811T183030Z-c652`; external state remained at
+  `$HOME/.nightwatch/auth/ripple-dev-state.json`, outside the repository.
+- Page-JavaScript auth proof: PASS; required token readable/non-empty and
+  DEV/Ripple bootstrap semantics valid, with boolean-only evidence.
+- First run: `nightwatch-20260811T190009Z-efce-first`; canonical `/ripple/`
+  naturally resolved to `/ripple/dashboard`; QLayout readiness PASS; route
+  stability 834 ms.
+- Fresh-context replay:
+  `nightwatch-20260811T190009Z-efce-replay`; same auth/readiness contract;
+  route stability 766 ms; no third replay.
+- Safety for both runs: production attempts 0, proxy violations 0, unknown
+  destinations 0, unknown approvals 0, mutations 0, DB queries 0.
+- Privacy: PASS; authenticated traces/screenshots absent and no sensitive
+  values or bodies persisted.
+- Final implementation is `a6d7c8b`; the final Git handoff commit contains
+  the completed task documents and is the current HEAD after closure.
 
-Nightwatch repair (Phase J): added `inspectStorageStateCookiePageReadability`
-(booleans only) + 7 focused unit tests; wired into the authenticated runner as
-`authTokenPageReadability` (real capture reports `expired=true`,
-`pageReadable=false`). Validation: `npx tsc --noEmit` PASS; full suite **237
-passed, 0 failed**; `git diff --check` PASS.
+## Historical conclusions preserved
 
-BLOCKER (external/human): no truthful authenticated observation or replay is
-possible until a human re-captures fresh auth state via
-`npm run auth:capture -- --env=dev --output=<fresh-path>` (MFA login). Readiness
-was NOT weakened; no product bug was filed; Phase 2B was NOT begun; no real-run
-budget was spent this resume.
+The earlier context-only auth diagnosis and expired external capture remain
+documented as `AUTH_REPLAY_INEFFECTIVE`. The earlier `ROOT_ALIAS_COLLISION_BUG`
+and product-routing conclusion were refuted by source-equivalent router
+evidence and fresh page-readable auth. Historical Phase 1.1 production-host
+contact remains recorded with unknown details; it is not rewritten as “never
+contacted production.”
 
-Next action: await a fresh human-provided external auth capture, then re-run the
-authenticated observation (and, if earned, the explicit `/ripple/dashboard`
-observation + fresh-context replay). Do not begin Phase 2B.
+## Deferred work
+
+`PHASE 2B — THREE DETERMINISTIC READ-ONLY RIPPLE JOURNEYS` is the recommended
+next task and was not started.

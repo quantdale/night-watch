@@ -565,3 +565,191 @@ PASS; synthetic capture 1/1 PASS; diff check PASS. No fresh real observation
 has run and no human capture has started. Next action is the exact interactive
 DEV auth-capture command at the canonical external path, followed by safe
 fresh-state booleans and the 13/13 gate. Phase 2B remains unstarted.
+
+# NIGHTWATCH PHASE 2A — CONTROLLED AUTHENTICATED OBSERVATION COMPLETE
+
+Status: `COMPLETE`. This final section supersedes the earlier blocker and
+runtime-failure sections as the current result; those sections remain above as
+historical evidence and diagnosis evolution. Phase 2B was not started.
+
+## Closure identity
+
+- Starting SHA: `3a2712185250cd4e3591ee4037b28e06e8a0417e`.
+- Final implementation SHA: `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
+- Durable pre-closure checkpoint SHA: `f3b8dc0fb914f32cd77cc7e4ed9fceb5f28241a4`.
+- Final Nightwatch handoff commit: the final Git `HEAD` containing this
+  closure documentation (reported with the clean handoff).
+- Environment: DEV only; canonical entry
+  `https://appdev.alphaus.cloud/ripple/`.
+
+## Goal-mode phases completed
+
+Recovery, health audit, expired-auth blocker revalidation, D8 repair,
+pre-auth gate, human auth recapture, fresh-state validation, strict 13/13
+gate, first controlled observation, fresh-context replay, safety accounting,
+privacy review, adversarial self-review, historical consistency review, final
+validation, task documentation, and clean Nightwatch handoff were completed.
+Phase 2B was explicitly deferred.
+
+## Health audit and repair history
+
+The pre-auth health gate passed. D1 canceled/navigation-terminated resource
+handling, D2 client/policy abort handling, D3 Vue-root selection, D5
+timing-only retry suppression, and the canonical containment stack were
+healthy. D8 was repaired before recapture: file/context cookie applicability
+is now separate from live page-JavaScript readability, capture replacement is
+validation-first and atomic, and authenticated evidence remains boolean-only.
+
+The prior capture was verified as `AUTH_REPLAY_INEFFECTIVE`: its source-required
+cookie was expired and absent from page JavaScript despite being present in the
+external file. The earlier `ROOT_ALIAS_COLLISION_BUG` hypothesis remains
+refuted by source-equivalent router behavior. The D8 browser-backed synthetic
+regression proved expired cookies are absent from `document.cookie` while live
+cookies are visible.
+
+## Human recapture and fresh-state validation
+
+- Capture run: `nightwatch-20260811T183030Z-c652`.
+- Stage result: `HUMAN_WAIT`, `POST_LOGIN_VERIFICATION`,
+  `STORAGE_STATE_WRITE`, `PROVENANCE_WRITE`, `STATE_VALIDATION`, and
+  `CLEANUP` all PASS.
+- Fresh state: external path only, structurally valid, DEV provenance matched.
+- Live page proof: evaluation succeeded; required token was page-readable and
+  non-empty; DEV/API and Ripple/app semantic booleans were valid; aggregate
+  page bootstrap semantics were `VALID`.
+- No credential, MFA, cookie/token value, storage-state content, or
+  `document.cookie` string was printed or persisted.
+
+## First authenticated observation
+
+Run: `nightwatch-20260811T190009Z-efce-first`. The gate passed **13/13**
+before context creation, and the run summary passed.
+
+| Area | Sanitized result |
+|---|---|
+| Auth replay | `CONFIRMED`; page proof `VALID` |
+| Initial/final route | `/ripple/` → `/ripple/dashboard` |
+| Dashboard semantics | one sanitized `pushState` to `/ripple/dashboard`; authenticated route active |
+| Documents | two main-frame `GET 200 text/html` documents; no redirect chain |
+| Reload | `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD` on the second document |
+| `#app` lifecycle | seen and removed; `VUE_INITIAL_PATCH_OBSERVED`; diagnostic only |
+| Root/layout | intermediate `DIV.loading-wrapper`; then `DefaultLayout`/QLayout shell |
+| QLayout shell | `.q-layout-container.layout` present |
+| Document readiness | `complete` |
+| Route stability | `834 ms` continuous |
+| Readiness | `READY`; no fatal page error |
+| Runtime | 0 exceptions, 0 unhandled rejections, 0 product console errors, 0 CSP violations |
+| Resources | 113/113 scripts and 109/109 chunks complete; 0 failures; 0 failed critical resources |
+
+The canonical root did not require an arbitrary route fallback. Fresh valid
+auth caused the application to resolve naturally to the dashboard route. This
+directly corrects the old expired-auth symptom and does not revive the refuted
+root-alias product-bug claim.
+
+## Fresh-context replay
+
+Replay: `nightwatch-20260811T190009Z-efce-replay`. A completely new browser
+context was created after the first context closed; the same external state
+path was reused without copying or inspecting it. The replay summary passed.
+
+- Auth replay: `CONFIRMED`; live page proof remained `VALID`.
+- Final route: `/ripple/dashboard`; document complete; QLayout present.
+- Route stability: `766 ms`; readiness `READY`.
+- Documents/reload/route: same two-document pattern, same source-proven
+  expected bootstrap reload, and one dashboard history transition.
+- Runtime/readiness safety contract: same zero-exception/zero-rejection/
+  zero-CSP/zero-failed-critical-resource result.
+- No third replay was performed.
+
+The comparator recorded differences in passive request counts, response
+counts, timing/readiness detail, cleanup completion, and destination attempt
+counts. These were bounded non-fatal variance rather than a required-contract
+divergence: the first-only extra destination was the already-reviewed exact
+locally blocked `android.clients.google.com` browser-background category;
+both runs had zero unresolved/new destinations, zero denied destinations, and
+zero proxy violations. Replay had three allowed unterminated chunks at
+cleanup, but zero failed critical resources and readiness had already passed;
+D1/D2 correctly kept this out of the failure classification. Endpoint sets
+and semantic classes remained the same passive `UNKNOWN` observations with
+different counts. The differences are preserved in the comparison artifact;
+no third run was used to chase them.
+
+## Oracles and historical anomaly
+
+Both fresh runs recorded expected containment effects only. The historical
+malformed-JSON event remains a separate `GENUINE_PROTOCOL_ANOMALY` with
+unresolved subcause: `POST https://apidev.alphaus.cloud/m/blue/cost/v1/<ID>`,
+HTTP 200, declared JSON, observed invalid JSON. It did not recur in the fresh
+capture, first run, or replay. No response body was inspected or persisted,
+and the endpoint was not deliberately replayed.
+
+## Safety accounting
+
+| Counter | First | Replay |
+|---|---:|---:|
+| Production attempts | 0 | 0 |
+| Proxy violations | 0 | 0 |
+| Unknown destinations | 0 | 0 |
+| Unknown approvals | 0 | 0 |
+| Mutations | 0 | 0 |
+| DB queries | 0 | 0 |
+
+Expected exact telemetry, optional-support, and reviewed browser-background
+traffic was locally contained. No wildcard approval, new allowlist entry,
+production contact, database access, or mutation occurred. The historical
+Phase 1.1 production-host event remains preserved and is not rewritten as
+“Nightwatch has never contacted production.”
+
+## Privacy review
+
+PASS for capture, first run, replay, and artifacts. The authenticated privacy
+smoke suite passed 2/2. Category-level artifact scans found no credentials,
+passwords, authorization/cookie/token values, storage-state contents,
+customer/account identity, raw request/response bodies, financial values,
+DOM/text dumps, screenshots, traces, or query-bearing secret URLs. The fresh
+state remains external to the repository and artifacts.
+
+## Defects and tests
+
+- Nightwatch defect repaired this session: D8's former context-only
+  page-readability claim; it was replaced with live boolean page proof and
+  atomic validated capture replacement. The first/replay runs found no new
+  Nightwatch defect requiring a real retry.
+- Tests added/changed in the repair: browser-backed expired/live cookie
+  regression, live capture/observation auth-readability assertions, lifecycle
+  auth-layout/default-layout regressions, atomic capture replacement coverage,
+  and associated focused D8 tests. No Ripple files were changed.
+- TypeScript: PASS.
+- Full Playwright suite before real runs: **241 passed, 0 failed**; the
+  post-run authenticated privacy smoke: **2 passed, 0 failed**. Final full
+  validation is recorded in the closure checkpoint below.
+
+## Final self-review
+
+PASS. The review confirmed that storage-file presence was not confused with
+page visibility; cookie applicability was separated from expiration and live
+readability; initial alias matching was separated from final guard resolution;
+the refuted routing hypothesis was not resurrected; canceled/unterminated
+resources were not treated as failed assets; HTTP 200 was not treated as
+script execution; reload causality used an explicit source signal; readiness
+kept the exact QLayout selector and 750 ms threshold; no arbitrary fallback
+route or host policy was added; safety logic was not duplicated; traces stayed
+disabled; sensitive data was not persisted; Ripple was not modified; the
+historical conclusions remain intact; tests exercise implementation code; the
+source assumptions are recorded with SHA/provenance; and STATE.md contains a
+fresh-context resume recipe.
+
+## Final validation and verdict
+
+- `npx tsc --noEmit`: PASS.
+- `npx playwright test`: PASS; final count recorded at closure.
+- `npm run agent:check`: PASS with only the approved continuity/documentation
+  checkpoint status.
+- `git diff --check`: PASS.
+- Nightwatch worktree: clean at final handoff.
+- Alphaus repository modifications: 0; Ripple worktree's pre-existing local
+  changes were preserved and not altered.
+
+Acceptance verdict: **PHASE 2A COMPLETE**. The next recommended task is
+`PHASE 2B — THREE DETERMINISTIC READ-ONLY RIPPLE JOURNEYS`; it was not
+started in this session.

@@ -4,7 +4,7 @@
 
 Task ID: phase-2a-controlled-observation
 Phase: 2A
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
 Last validated implementation SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
@@ -3985,3 +3985,228 @@ sanitized results. If readiness fails, classify the narrowest evidence-backed
 result; repair only a proven Nightwatch defect with full local validation and
 one bounded retry. Never print auth values, inspect `document.cookie`, modify
 Ripple, approve a new host, or begin Phase 2B.
+
+## FRESH_CONTEXT_REPLAY_COMPLETE — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+
+Close Phase 2A after the fresh page-readable DEV capture, successful canonical
+authenticated observation, successful fresh-context replay, final safety and
+privacy review, adversarial self-review, and clean documentation checkpoint.
+Do not start Phase 2B.
+
+### CURRENT_PHASE
+
+M7/M10 — IN_PROGRESS pending final documentation and validation. First-run and
+fresh-context replay readiness both passed; no further real observation is
+authorized.
+
+### CURRENT_EVIDENCE
+
+- First-run ID: `nightwatch-20260811T190009Z-efce-first`.
+- Fresh-context replay ID: `nightwatch-20260811T190009Z-efce-replay`.
+- Comparison artifact: `nightwatch-20260811T190009Z-efce-comparison`.
+- The same fresh external state was used; the replay was created after the
+  first context closed and no state was copied or inspected.
+- Both runs passed the strict 13/13 gate before context creation and had live
+  page auth booleans valid: evaluation succeeded, required token page-readable
+  and non-empty, DEV/Ripple semantic booleans valid, aggregate `VALID`.
+- Both runs naturally resolved the canonical `/ripple/` entry to the
+  authenticated `/ripple/dashboard` route through the application guard. The
+  final origin/path was approved, the document was complete, the rendered
+  shell `.q-layout-container.layout` was present, and readiness was `READY`.
+- First run route stability was `834 ms`; replay route stability was `766 ms`.
+  Both exceeded the unchanged 750 ms threshold. `#app` was seen and removed
+  in both runs as expected Vue pre-mount lifecycle evidence; it was not used
+  as final readiness.
+- Both runs recorded `VUE_INITIAL_PATCH_OBSERVED`, a source-proven expected
+  bootstrap reload, one sanitized `pushState` transition to `/ripple/dashboard`,
+  authenticated branch evidence, zero runtime exceptions, zero unhandled
+  rejections, zero product console errors, zero CSP violations, and zero
+  failed critical resources.
+- First resource lifecycle completed all `113` scripts and `109` chunks. The
+  replay had three `not-completed` allowed chunk/script entries at cleanup but
+  zero resource failures and zero failed critical resources; D1/D2 correctly
+  classify these as non-fatal unterminated/canceled lifecycle variance, not an
+  asset failure. Both runs reached shell readiness before cleanup.
+- The comparator recorded sanitized differences in destination counts/sets,
+  endpoint observation counts, timing/readiness detail, response counts, and
+  bootstrap completion counts. The required contract did not diverge: auth,
+  route, shell, readiness, runtime-failure, critical-resource, oracle, and
+  safety outcomes matched. The first-only extra destination was the exact
+  already-reviewed locally blocked `android.clients.google.com` browser-
+  background class; replay had no new or unresolved destination. All other
+  destination classes remained governed and fail-closed. This is recorded as
+  bounded non-fatal runtime variance; no third replay is permitted.
+
+### CURRENT_CLASSIFICATION
+
+`FIRST_AND_REPLAY_READINESS_PASS_WITH_NONFATAL_SANITIZED_VARIANCE`. This is
+not classified as `AUTHENTICATED_REPLAY_DIVERGENCE` because both contexts
+produced the same required authenticated route/shell/readiness and all safety
+and privacy invariants passed. The automatic comparison differences remain
+durably recorded and are not silently discarded.
+
+### COMPLETED_THIS_SESSION
+
+- Ran the exact canonical authenticated observation command once.
+- Completed the implementation's one completely fresh-context replay; no
+  third replay or random exploration was run.
+- Reviewed sanitized first/replay manifests, summaries, destination manifests,
+  and comparison output without reading bodies, cookies, storage state, DOM,
+  or identity values.
+- Ran the authenticated privacy smoke suite: 2/2 PASS.
+- Ran category-level artifact scans: no trace, screenshot, auth-state file,
+  secret-like material, raw body keys, or unredacted identity values found.
+
+### FILES_CHANGED
+
+- Fresh external state remains at `$HOME/.nightwatch/auth/ripple-dev-state.json`
+  outside the repository.
+- Ignored local run artifacts for capture/first/replay remain outside Git;
+  no artifact or external state was added to the repository.
+- This `STATE.md` waypoint only; no implementation or Alphaus repository file
+  changed after the observation.
+
+### VALIDATION_LEDGER
+
+- First observation command: PASS; first run summary `passed=true`.
+- Fresh-context replay: PASS; replay summary `passed=true`.
+- First/replay readiness: `READY` / `READY`; shell present; route stability
+  `834 ms` / `766 ms`; auth replay `CONFIRMED` / `CONFIRMED`.
+- First/replay destination manifests: zero unresolved, zero denied, zero new-
+  but-verified destinations; expected/blocked counts were `4/8` and `4/6`.
+- First/replay proxy summaries: zero denied, zero unknown, zero violations;
+  expected telemetry/background/support blocks only.
+- Authenticated privacy smoke: **2 passed, 0 failed**.
+- Category-level artifact privacy scans: PASS for secret-like values, raw
+  body keys, identity values, traces, screenshots, and auth-state files.
+
+### REAL_RUN_LEDGER
+
+- First run: productionAttempts=0, proxyViolations=0,
+  unknownDestinations=0, unknownApprovals=0, mutations=0, DBQueries=0.
+- Replay: productionAttempts=0, proxyViolations=0,
+  unknownDestinations=0, unknownApprovals=0, mutations=0, DBQueries=0.
+- No endpoint was deliberately replayed; observed API calls remained passive
+  metadata-only `UNKNOWN` semantic observations.
+
+### AUTH_CAPTURE_LEDGER
+
+- Fresh capture `nightwatch-20260811T183030Z-c652` remains the sole accepted
+  source for both runs. Live page proof and static safe booleans were valid.
+- The old expired capture was not used after replacement and no auth value was
+  printed, copied, persisted, or inspected.
+
+### DECISIONS
+
+- Treat the replay as a successful contract replay with bounded benign
+  nondeterminism, not as a product or Nightwatch failure: all required
+  readiness/safety/privacy booleans and classifications agree.
+- Do not run a third replay. Do not repair or weaken readiness based on
+  non-fatal cleanup timing, request counts, or an already-reviewed blocked
+  browser-background attempt.
+- Preserve the canonical root target and natural dashboard guard resolution;
+  do not add an explicit dashboard fallback to hide root behavior.
+
+### REJECTED_HYPOTHESES
+
+- Replay variance is not evidence of a new host-policy failure: no unresolved
+  destination, deny decision, or proxy violation occurred.
+- Unterminated replay chunks are not critical asset failures under D1/D2;
+  there were zero failed critical resources and readiness passed.
+- Different passive request counts are not deliberate mutation or endpoint
+  replay; semantic classifications stayed `UNKNOWN` and actions were passive.
+
+### UNRESOLVED
+
+- Benign nondeterministic request-count/timing differences between contexts.
+- Replay cleanup left three allowed chunk requests unterminated; this did not
+  affect readiness or safety, but remains an observation variance.
+- Historical malformed-JSON protocol anomaly remains independently
+  `GENUINE_PROTOCOL_ANOMALY` with unresolved subcause; it did not recur in
+  either fresh run.
+
+### SAFETY_EVENTS
+
+- No fatal safety event in either run. Production attempts, proxy violations,
+  unknown destinations, unknown approvals, mutations, and DB queries were all
+  zero in both runs.
+- Known exact telemetry, optional-support, and browser-background destinations
+  were contained by the existing policy. No wildcard, new allowlist entry, or
+  related-host approval was introduced.
+
+### PRIVACY_STATUS
+
+PASS for capture, first run, replay, and artifacts. Metadata-first evidence,
+trace-off, screenshot-off, query/path redaction, page-auth boolean reduction,
+and external-only state boundaries held. No credentials, tokens, cookie
+values, storage-state contents, bodies, DOM/text, identity, or financial
+values were persisted or exposed.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`
+
+### LAST_CHECKPOINT_SHA
+
+`f3b8dc0fb914f32cd77cc7e4ed9fceb5f28241a4`
+
+### NEXT_EXACT_ACTION
+
+Run the final Phase 2A validation and safety/privacy/self-review, update
+PLAN/REPORT/ACTIVE_TASK with both run IDs and the bounded replay variance,
+mark the task complete only if every SPEC acceptance criterion remains true,
+commit only Nightwatch documentation, verify a clean worktree, and do not
+start Phase 2B.
+
+### RESUME_RECIPE
+
+Read this waypoint and the latest first/replay sanitized artifacts. Do not
+create another browser context. Perform the final category-level privacy and
+safety accounting, adversarial checklist, full TypeScript/Playwright/
+agent-check/diff validation, task-document finalization, and clean checkpoint.
+If any final audit finds a real safety/privacy/readiness contradiction, leave
+the task `IN_PROGRESS` with the narrowest evidence-backed classification.
+Otherwise mark ACTIVE_TASK complete, preserve the historical expired-auth and
+refuted-routing conclusions, and report Phase 2A complete with Phase 2B only
+as the recommended next task.
+
+## COMPLETION SNAPSHOT — Phase 2A (2026-08-12)
+
+- Completion date: 2026-08-12 (Asia/Manila session date).
+- Environment: DEV only; canonical entry
+  `https://appdev.alphaus.cloud/ripple/`.
+- Fresh auth capture: `nightwatch-20260811T183030Z-c652`, PASS; external state
+  valid, page-readable, provenance-matched, and outside Nightwatch.
+- First run ID: `nightwatch-20260811T190009Z-efce-first`, PASS.
+- Replay run ID: `nightwatch-20260811T190009Z-efce-replay`, PASS.
+- Auth replay: `CONFIRMED` in both runs.
+- Route: canonical root naturally resolved to `/ripple/dashboard`.
+- Shell/readiness: source-backed `.q-layout-container.layout` present and
+  `READY` in both runs; route stability `834 ms` / `766 ms`.
+- Safety accounting for both runs: productionAttempts `0`, proxyViolations
+  `0`, unknownDestinations `0`, unknownApprovals `0`, mutations `0`, DBQueries
+  `0`.
+- Privacy: PASS; authenticated traces/screenshots absent; state external.
+- Oracle findings: expected containment only in fresh runs; historical
+  malformed-JSON anomaly remains separate `GENUINE_PROTOCOL_ANOMALY` with
+  unresolved subcause and did not recur.
+- Historical expired-auth diagnosis: preserved as `AUTH_REPLAY_INEFFECTIVE`;
+  root-alias collision/product-routing conclusion remains refuted.
+- Final implementation SHA: `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
+- Final closure checkpoint SHA: the Nightwatch-only documentation commit that
+  records this completion snapshot; it is the Git checkpoint immediately
+  preceding the final checkpoint-identity commit.
+- Next recommended task: `PHASE 2B — THREE DETERMINISTIC READ-ONLY RIPPLE
+  JOURNEYS`; not started.
+
+### FINAL_SELF_REVIEW_PASS
+
+The adversarial checklist passed: no file/page auth confusion, cookie
+applicability confusion, alias/guard confusion, resurrected routing claim,
+canceled-resource false failure, HTTP-200-as-execution claim, timing-only
+reload causality, readiness weakening, arbitrary route fallback, hostname
+policy broadening, duplicated safety logic, authenticated trace enablement,
+sensitive persistence, Ripple modification, historical rewrite, meaningless
+tests, stale source assumption, or incomplete resume recipe was found.

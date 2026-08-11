@@ -212,6 +212,28 @@ archive as input (RECON_A/C/D originals still to be located — only
 handoff summaries are archived; locate and archive the originals before
 finalizing Phase 2 journey scope).
 
+### Phase 2A — Controlled authenticated landing observation (complete)
+
+Phase 2A closed on 2026-08-12. It used the canonical DEV Ripple entry,
+fresh human authentication, boolean-only page-readable auth proof, the strict
+13/13 gate, one passive first observation, and one completely fresh-context
+replay. Both runs naturally resolved to `/ripple/dashboard`, rendered the
+source-backed QLayout shell, and maintained the required 750 ms structural
+stability interval. The first run stabilized at 834 ms and the replay at
+766 ms.
+
+The existing proxy, browser guards, passive-action registry, metadata-first
+evidence policy, trace-off policy, and production/unknown fail-closed rules
+remained unchanged. Both runs had zero production attempts, proxy violations,
+unresolved destinations, unknown approvals, mutations, and DB queries. The
+sanitized comparison records non-fatal request/timing variation and a
+reviewed blocked browser-background event; it does not change the shared
+authenticated route/readiness/safety result. No third replay was performed.
+
+### Phase 2B — Three deterministic read-only Ripple journeys (deferred)
+
+This is the recommended next task. It was not started as part of Phase 2A.
+
 ---
 
 ## Phase 3 — Change intelligence
