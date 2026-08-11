@@ -81,12 +81,15 @@ export interface RippleBootstrapDiagnostics {
   scriptRequestCount: number;
   scriptCompletedCount: number;
   scriptFailureCount: number;
+  scriptUnterminatedCount: number;
   styleRequestCount: number;
   styleCompletedCount: number;
   styleFailureCount: number;
+  styleUnterminatedCount: number;
   chunkRequestCount: number;
   chunkCompletedCount: number;
   chunkFailureCount: number;
+  chunkUnterminatedCount: number;
   moduleRequestCount: number;
   runtimeExceptionCount: number;
   unhandledRejectionCount: number;
@@ -103,6 +106,7 @@ export interface RippleBootstrapDiagnostics {
   readinessConfirmed: boolean;
   observerCoverage: BootstrapObserverCoverage;
   failedCriticalResources: BootstrapFailureResource[];
+  unterminatedCriticalResources: BootstrapFailureResource[];
   classification: BootstrapClassification;
   authReplayEffectiveness: AuthReplayEffectiveness;
   lifecycle: RippleLifecycleDiagnostics;
@@ -238,11 +242,27 @@ function failureCategoryOf(record: ResourceRecord): BootstrapFailureResource['fa
       return 'policy-block';
     }
   }
+  // A client/policy abort (net::ERR_ABORTED, ERR_BLOCKED_BY_CLIENT, inspector)
+  // is ordinary browser/application behavior (navigation cancellation,
+  // EventSource.close(), fetch AbortController, or Nightwatch's own Fetch-guard
+  // action). It is NOT a product asset-load failure and must never drive the
+  // diagnostic into CRITICAL_ASSET_LOAD_FAILURE.
+  if (record.failureCategory === 'client-or-policy-abort') return null;
   if (record.failureCategory !== null && record.failureCategory !== 'policy-block') return 'request-failed';
+  // A request with no response and no requestfailed is "unterminated": it was
+  // still in flight at observation cleanup or canceled by a document
+  // replacement/navigation. A missing completion event is never by itself a
+  // failure; it is reported separately from genuine failures.
   if (record.responseSeq === null) return 'not-completed';
   if (record.status === null || record.status < 200 || record.status >= 300) return 'http-status';
   if (!responseCompatible(record)) return 'wrong-content-type';
   return null;
+}
+
+/** Only categories that prove a genuine required-asset load failure. */
+function isGenuineCriticalFailure(category: BootstrapFailureResource['failureCategory'] | null): boolean {
+  return category === 'request-failed' || category === 'http-status' ||
+    category === 'wrong-content-type' || category === 'policy-block';
 }
 
 function recordFromEvent(event: RunEvent, resourceKind: BootstrapResourceKind | null, url: string, location: SanitizedLocation): ResourceRecord {
@@ -349,15 +369,19 @@ function classifyRecords(records: readonly ResourceRecord[]): {
   scriptRequestCount: number;
   scriptCompletedCount: number;
   scriptFailureCount: number;
+  scriptUnterminatedCount: number;
   styleRequestCount: number;
   styleCompletedCount: number;
   styleFailureCount: number;
+  styleUnterminatedCount: number;
   chunkRequestCount: number;
   chunkCompletedCount: number;
   chunkFailureCount: number;
+  chunkUnterminatedCount: number;
   moduleRequestCount: number;
   documentLoaded: boolean;
   failedCriticalResources: BootstrapFailureResource[];
+  unterminatedCriticalResources: BootstrapFailureResource[];
   requiredResourceBlocked: boolean;
   criticalAssetFailure: boolean;
 } {
@@ -369,9 +393,17 @@ function classifyRecords(records: readonly ResourceRecord[]): {
   const chunks = records.filter((record) => record.resourceKind === 'chunk');
   const modules = records.filter((record) => record.resourceKind === 'module');
   const failures = records.map(failedResource).filter((value): value is BootstrapFailureResource => value !== null);
-  const scriptFailures = scripts.filter((record) => failureCategoryOf(record) !== null).length;
-  const styleFailures = styles.filter((record) => failureCategoryOf(record) !== null).length;
-  const chunkFailures = chunks.filter((record) => failureCategoryOf(record) !== null).length;
+  const genuineFailures = failures.filter((failure) => isGenuineCriticalFailure(failure.failureCategory));
+  const unterminated = failures.filter((failure) => failure.failureCategory === 'not-completed');
+  const scriptRecords = scripts.filter((record) => failureCategoryOf(record) !== null);
+  const scriptFailures = scriptRecords.filter((record) => isGenuineCriticalFailure(failureCategoryOf(record))).length;
+  const scriptUnterminated = scriptRecords.filter((record) => failureCategoryOf(record) === 'not-completed').length;
+  const styleRecords = styles.filter((record) => failureCategoryOf(record) !== null);
+  const styleFailures = styleRecords.filter((record) => isGenuineCriticalFailure(failureCategoryOf(record))).length;
+  const styleUnterminated = styleRecords.filter((record) => failureCategoryOf(record) === 'not-completed').length;
+  const chunkRecords = chunks.filter((record) => failureCategoryOf(record) !== null);
+  const chunkFailures = chunkRecords.filter((record) => isGenuineCriticalFailure(failureCategoryOf(record))).length;
+  const chunkUnterminated = chunkRecords.filter((record) => failureCategoryOf(record) === 'not-completed').length;
   return {
     documentRequestCount: docs.length,
     documentCompletedCount: docs.filter((record) => record.requestCompleted).length,
@@ -382,17 +414,21 @@ function classifyRecords(records: readonly ResourceRecord[]): {
     scriptRequestCount: scripts.length,
     scriptCompletedCount: scripts.filter(responseCompatible).length,
     scriptFailureCount: scriptFailures,
+    scriptUnterminatedCount: scriptUnterminated,
     styleRequestCount: styles.length,
     styleCompletedCount: styles.filter(responseCompatible).length,
     styleFailureCount: styleFailures,
+    styleUnterminatedCount: styleUnterminated,
     chunkRequestCount: chunks.length,
     chunkCompletedCount: chunks.filter(responseCompatible).length,
     chunkFailureCount: chunkFailures,
+    chunkUnterminatedCount: chunkUnterminated,
     moduleRequestCount: modules.length,
     documentLoaded: docs.some((record) => responseCompatible(record)),
-    failedCriticalResources: failures,
-    requiredResourceBlocked: failures.some((failure) => failure.failureCategory === 'policy-block' && isScriptKind(failure.resourceKind)),
-    criticalAssetFailure: failures.length > 0,
+    failedCriticalResources: genuineFailures,
+    unterminatedCriticalResources: unterminated,
+    requiredResourceBlocked: genuineFailures.some((failure) => failure.failureCategory === 'policy-block' && isScriptKind(failure.resourceKind)),
+    criticalAssetFailure: genuineFailures.length > 0,
   };
 }
 
@@ -522,12 +558,15 @@ export function buildRippleBootstrapDiagnostics(
     scriptRequestCount: classified.scriptRequestCount,
     scriptCompletedCount: classified.scriptCompletedCount,
     scriptFailureCount: classified.scriptFailureCount,
+    scriptUnterminatedCount: classified.scriptUnterminatedCount,
     styleRequestCount: classified.styleRequestCount,
     styleCompletedCount: classified.styleCompletedCount,
     styleFailureCount: classified.styleFailureCount,
+    styleUnterminatedCount: classified.styleUnterminatedCount,
     chunkRequestCount: classified.chunkRequestCount,
     chunkCompletedCount: classified.chunkCompletedCount,
     chunkFailureCount: classified.chunkFailureCount,
+    chunkUnterminatedCount: classified.chunkUnterminatedCount,
     moduleRequestCount: classified.moduleRequestCount,
     runtimeExceptionCount: events.filter((event) => event.type === 'pageerror').length,
     unhandledRejectionCount,
@@ -544,6 +583,7 @@ export function buildRippleBootstrapDiagnostics(
     readinessConfirmed,
     observerCoverage,
     failedCriticalResources: classified.failedCriticalResources,
+    unterminatedCriticalResources: classified.unterminatedCriticalResources,
     classification,
     authReplayEffectiveness: lifecycle.authReplayEffectiveness,
     lifecycle,

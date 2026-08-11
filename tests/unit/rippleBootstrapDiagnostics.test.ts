@@ -170,7 +170,12 @@ test('6. CSP blocks the application entry and remains visible without content ca
   expect(diagnostics.cspViolationCount).toBe(1);
   expect(diagnostics.applicationEntryObserved).toBe(true);
   expect(diagnostics.applicationEntryCompleted).toBe(false);
-  expect(diagnostics.failedCriticalResources[0]?.path).toBe(new URL(entryUrl).pathname);
+  // The CSP-blocked entry request never received a response and was never
+  // reported as a network failure, so it is an unterminated critical resource
+  // (not a genuine load failure). The CRITICAL_ASSET_LOAD_FAILURE verdict below
+  // is driven by the independent CSP-violation branch, not by this resource.
+  expect(diagnostics.unterminatedCriticalResources[0]?.path).toBe(new URL(entryUrl).pathname);
+  expect(diagnostics.failedCriticalResources).toHaveLength(0);
   expect(diagnostics.classification).toBe('CRITICAL_ASSET_LOAD_FAILURE');
 });
 
@@ -302,4 +307,109 @@ test('observer coverage gaps are explicitly classified without changing readines
   expect(classifyBootstrapEvidence(completeInput({ observerBlindSpot: true }))).toBe('OBSERVER_BLIND_SPOT');
   expect(classifyBootstrapEvidence(completeInput({ deploymentSourceDivergence: true }))).toBe('DEPLOYMENT_SOURCE_DIVERGENCE');
   expect(classifyBootstrapEvidence(completeInput({ entryDocumentUnexpected: true }))).toBe('ENTRY_DOCUMENT_WRONG_OR_UNEXPECTED');
+});
+
+test('13. a client-or-policy-abort on a critical chunk is NOT a critical asset failure', () => {
+  const entryUrl = 'http://127.0.0.1:43111/ripple/static/js/app.synthetic.js';
+  const chunkUrl = 'http://127.0.0.1:43111/ripple/static/js/chunk-abc.synthetic.js';
+  const diagnostics = buildRippleBootstrapDiagnostics(
+    [
+      ...documentAndEntry(),
+      request(chunkUrl, 'script'),
+      event('requestfailed', {
+        method: 'GET',
+        url: chunkUrl,
+        resourceType: 'script',
+        completed: false,
+        failureCategory: 'client-or-policy-abort',
+      }),
+    ],
+    final(),
+    coverage,
+  );
+  // A navigation/browser abort (net::ERR_ABORTED / ERR_BLOCKED_BY_CLIENT) is
+  // ordinary behavior, not a product asset-load failure.
+  expect(diagnostics.scriptFailureCount).toBe(0);
+  expect(diagnostics.scriptUnterminatedCount).toBe(0);
+  expect(diagnostics.failedCriticalResources).toHaveLength(0);
+  expect(diagnostics.unterminatedCriticalResources).toHaveLength(0);
+  expect(diagnostics.classification).toBe('OTHER_UNRESOLVED');
+});
+
+test('14. an unterminated critical chunk (no response, no requestfailed) is NOT a critical failure', () => {
+  const entryUrl = 'http://127.0.0.1:43111/ripple/static/js/app.synthetic.js';
+  const chunkUrl = 'http://127.0.0.1:43111/ripple/static/js/chunk-xyz.synthetic.js';
+  const diagnostics = buildRippleBootstrapDiagnostics(
+    [
+      ...documentAndEntry(),
+      request(chunkUrl, 'script'),
+      // no response, no requestfailed: in-flight at cleanup or canceled by navigation
+    ],
+    final(),
+    coverage,
+  );
+  expect(diagnostics.scriptRequestCount).toBe(2);
+  expect(diagnostics.scriptCompletedCount).toBe(1);
+  expect(diagnostics.scriptFailureCount).toBe(0);
+  expect(diagnostics.scriptUnterminatedCount).toBe(1);
+  expect(diagnostics.failedCriticalResources).toHaveLength(0);
+  expect(diagnostics.unterminatedCriticalResources).toHaveLength(1);
+  expect(diagnostics.unterminatedCriticalResources[0]).toMatchObject({
+    resourceKind: 'chunk',
+    failureCategory: 'not-completed',
+  });
+  expect(diagnostics.classification).not.toBe('CRITICAL_ASSET_LOAD_FAILURE');
+});
+
+test('15. a genuine network failure on a critical chunk remains a critical asset failure', () => {
+  const entryUrl = 'http://127.0.0.1:43111/ripple/static/js/app.synthetic.js';
+  const chunkUrl = 'http://127.0.0.1:43111/ripple/static/js/chunk-abc.synthetic.js';
+  const diagnostics = buildRippleBootstrapDiagnostics(
+    [
+      ...documentAndEntry(),
+      request(chunkUrl, 'script'),
+      event('requestfailed', {
+        method: 'GET',
+        url: chunkUrl,
+        resourceType: 'script',
+        completed: false,
+        failureCategory: 'transport-failure',
+      }),
+    ],
+    final(),
+    coverage,
+  );
+  expect(diagnostics.scriptFailureCount).toBe(1);
+  expect(diagnostics.failedCriticalResources).toHaveLength(1);
+  expect(diagnostics.failedCriticalResources[0]).toMatchObject({
+    resourceKind: 'chunk',
+    failureCategory: 'request-failed',
+  });
+  expect(diagnostics.classification).toBe('CRITICAL_ASSET_LOAD_FAILURE');
+});
+
+test('16. same-URL chunk across two documents with one canceled must not raise a false critical failure', () => {
+  // Mirrors the real d840 run: doc-1 requests a chunk (canceled by reload),
+  // doc-2 re-requests the same URL and completes 200. The diagnostic must not
+  // report a critical asset load failure for the canceled doc-1 request.
+  const entryUrl = 'http://127.0.0.1:43111/ripple/static/js/app.synthetic.js';
+  const chunkUrl = 'http://127.0.0.1:43111/ripple/static/js/chunk-dup.synthetic.js';
+  const base = documentAndEntry();
+  const diagnostics = buildRippleBootstrapDiagnostics(
+    [
+      ...base,
+      // doc-1 request (in flight, then canceled by navigation): no response, no requestfailed
+      request(chunkUrl, 'script'),
+      // doc-2 re-request of the same URL, which completes 200
+      request(chunkUrl, 'script'),
+      response(chunkUrl, 200, 'text/javascript'),
+    ],
+    final(),
+    coverage,
+  );
+  // Physically one completed + one canceled. The matcher may attribute the 200
+  // to the first pending record; regardless, no genuine load failure is proven.
+  expect(diagnostics.scriptFailureCount).toBe(0);
+  expect(diagnostics.failedCriticalResources).toHaveLength(0);
+  expect(diagnostics.classification).not.toBe('CRITICAL_ASSET_LOAD_FAILURE');
 });

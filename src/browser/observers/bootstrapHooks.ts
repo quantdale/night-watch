@@ -315,7 +315,34 @@ export function bootstrapDiagnosticInitScript(): void {
     };
   };
 
-  const replacementCandidate = (records: any[], parent: any, nextSibling: any): any => {
+  const replacementCandidate = (records: any[], parent: any, nextSibling: any, mountNode: any): any => {
+    // Preferred path: find the mutation record that REMOVED the mount target;
+    // the node Vue inserted in its place is that record's added node. This
+    // avoids mis-picking an unrelated widget/injection from the same observed
+    // batch (the root cause of POST_MOUNT_ROOT_UNKNOWN in the d840 run).
+    if (mountNode !== null && mountNode !== undefined) {
+      for (const record of records) {
+        const removed = record?.removedNodes;
+        if (removed === undefined) continue;
+        let removedMount = false;
+        for (let index = 0; index < removed.length; index += 1) {
+          if (removed[index] === mountNode || removed[index]?.isSameNode?.(mountNode) === true) {
+            removedMount = true;
+            break;
+          }
+        }
+        if (!removedMount) continue;
+        const added = record?.addedNodes;
+        if (added === undefined) continue;
+        for (let index = 0; index < added.length; index += 1) {
+          const node = added[index];
+          if (node !== null && node !== undefined) return node;
+        }
+      }
+    }
+    // Fallback for records that add a node without removing the mount target
+    // in the same observation batch (e.g. an in-place replacement recorded as a
+    // single added-only mutation, or the observer missing the removal record).
     for (const record of records) {
       const addedNodes = record?.addedNodes;
       if (addedNodes === undefined) continue;
@@ -324,6 +351,8 @@ export function bootstrapDiagnosticInitScript(): void {
         if (node !== null && node !== undefined) return node;
       }
     }
+    // Deterministic positional fallback: the node that precedes the mount
+    // target's former next sibling is the replacement.
     if (parent !== null && parent !== undefined && nextSibling !== null && nextSibling !== undefined) {
       try {
         const children = parent.childNodes;
@@ -356,6 +385,7 @@ export function bootstrapDiagnosticInitScript(): void {
     const document = pageWindow.document;
     let mountSeen = false;
     let mountRemoved = false;
+    let mountNode: any = null;
     let shellSeen = false;
     let mountParent: any = null;
     let mountNextSibling: any = null;
@@ -394,6 +424,7 @@ export function bootstrapDiagnosticInitScript(): void {
         const mountPresent = mount !== null && mount !== undefined;
         if (mountPresent && !mountSeen) {
           mountSeen = true;
+          mountNode = mount;
           try {
             mountParent = mount.parentNode ?? null;
             mountNextSibling = mount.nextSibling ?? null;
@@ -406,7 +437,7 @@ export function bootstrapDiagnosticInitScript(): void {
         if (!mountPresent && mountSeen && !mountRemoved) {
           mountRemoved = true;
           emit({ category: 'bootstrap-target', phase: 'removed', elapsedMs: elapsedMs(), path: safePath() });
-          emitReplacement(replacementCandidate(records, mountParent, mountNextSibling), canDetermineReplacement);
+          emitReplacement(replacementCandidate(records, mountParent, mountNextSibling, mountNode), canDetermineReplacement);
         }
         const shellPresent = document?.querySelector?.('.q-layout-container.layout') !== null &&
           document?.querySelector?.('.q-layout-container.layout') !== undefined;

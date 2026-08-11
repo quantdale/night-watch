@@ -88,3 +88,56 @@ test('bootstrap hooks capture lifecycle, route, rejection, and CSP categories wi
     fs.rmSync(recorder.dir, { recursive: true, force: true });
   }
 });
+
+test('bootstrap hooks select the Vue root replacement, not an earlier injected widget', async ({ context, page }) => {
+  // Regression for POST_MOUNT_ROOT_UNKNOWN (d840): the observer must pick the
+  // node that replaced #app, not an unrelated widget injected earlier into the
+  // same observed mutation batch.
+  const runId = `bootstrap-hooks-widget-${Date.now()}`;
+  const recorder = new RunRecorder({
+    runId,
+    environment: 'local',
+    product: 'ripple',
+    browser: 'chromium',
+    scenario: 'synthetic-bootstrap-hooks-widget',
+    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'bootstrap-hooks-widget'),
+    authenticated: true,
+  });
+  try {
+    await installBootstrapDiagnosticHooks(context, recorder);
+    await page.goto('data:text/html,<html><head></head><body><div id="app"></div></body></html>');
+    await page.evaluate(() => {
+      const pageGlobal = globalThis as unknown as {
+        document: {
+          head: { appendChild: (element: unknown) => void };
+          querySelector: (selector: string) => { replaceWith: (element: unknown) => void } | null;
+          createElement: (tagName: string) => { className: string };
+        };
+      };
+      // A third-party widget/injection appears in the mutation stream.
+      const widget = pageGlobal.document.createElement('script');
+      widget.className = 'widget';
+      pageGlobal.document.head.appendChild(widget);
+      // Vue replaces #app in place with the loading-div root.
+      const mount = pageGlobal.document.querySelector('#app');
+      const root = pageGlobal.document.createElement('div');
+      root.className = 'loading-div';
+      mount?.replaceWith(root);
+    });
+    await page.waitForTimeout(50);
+    const events = readEvents(path.join(recorder.dir, 'events.jsonl'));
+    const replacement = events.find((entry) => entry.type === 'bootstrap' &&
+      (entry.data as Record<string, unknown> | undefined)?.category === 'post-mount-structure');
+    expect(replacement?.data).toMatchObject({
+      phase: 'replacement',
+      vueInitialPatchObserved: true,
+      replacementNodeType: 'element',
+      replacementTag: 'DIV',
+      matchesLoadingWrapper: true,
+      rootBranch: 'loading-wrapper',
+    });
+  } finally {
+    await page.goto('about:blank').catch(() => undefined);
+    fs.rmSync(recorder.dir, { recursive: true, force: true });
+  }
+});
