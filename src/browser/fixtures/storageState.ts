@@ -109,6 +109,62 @@ export interface StorageStateKeyPresence {
 }
 
 /**
+ * Boolean-only semantic facts for the fixed, source-proven Ripple bootstrap
+ * cookie keys. Unlike `inspectStorageStateKeyPresence`, this reads the cookie
+ * VALUES into a function-local variable long enough to test non-empty/equality,
+ * then returns ONLY booleans. The values themselves are never returned, logged,
+ * registered as secrets, hashed, or written to evidence. Callers must pass the
+ * fixed source-defined key names and expected constants.
+ */
+export interface StorageStateKeySemantics {
+  authTokenPresent: boolean;
+  authTokenStructurallyNonEmpty: boolean;
+  apiTypePresent: boolean;
+  apiTypeExpectedValue: string;
+  apiTypeMatchesExpected: boolean;
+  appTypePresent: boolean;
+  appTypeExpectedValue: string;
+  appTypeMatchesExpected: boolean;
+}
+
+export function inspectStorageStateKeySemantics(
+  p: string,
+  opts: {
+    authTokenKey: string;
+    apiTypeKey: string;
+    apiTypeExpected: string;
+    appTypeKey: string;
+    appTypeExpected: string;
+  },
+): StorageStateKeySemantics {
+  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
+  const cookieMap = new Map<string, string>();
+  for (const item of cookies) {
+    if (item === null || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    if (typeof record.name !== 'string' || typeof record.value !== 'string') continue;
+    cookieMap.set(record.name, record.value);
+  }
+  const authTokenValue = cookieMap.get(opts.authTokenKey);
+  const apiTypeValue = cookieMap.get(opts.apiTypeKey);
+  const appTypeValue = cookieMap.get(opts.appTypeKey);
+  const authTokenPresent = authTokenValue !== undefined;
+  const apiTypePresent = apiTypeValue !== undefined;
+  const appTypePresent = appTypeValue !== undefined;
+  return {
+    authTokenPresent,
+    authTokenStructurallyNonEmpty: authTokenPresent && authTokenValue.length > 0,
+    apiTypePresent,
+    apiTypeExpectedValue: opts.apiTypeExpected,
+    apiTypeMatchesExpected: apiTypePresent && apiTypeValue === opts.apiTypeExpected,
+    appTypePresent,
+    appTypeExpectedValue: opts.appTypeExpected,
+    appTypeMatchesExpected: appTypePresent && appTypeValue === opts.appTypeExpected,
+  };
+}
+
+/**
  * Return presence booleans for a caller-supplied, source-defined key catalog.
  * This function intentionally does not return, log, hash, or register any
  * cookie/localStorage values. Callers must pass fixed key names rather than

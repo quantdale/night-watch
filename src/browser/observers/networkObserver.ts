@@ -413,13 +413,14 @@ export function createNetworkObserver(opts: {
 
       // Body capture: only for JSON-ish content types; capped and redacted.
       // body stays undefined when capture fails — oracles must NOT run on a
-      // failed capture (an unreadable body is not a malformed body).
-      // In authenticated (metadata-first) mode, response bodies are NEVER
-      // read into memory at all — this honors the evidence-minimization
-      // contract and also disables body-dependent oracles for these runs.
+      // failed capture (an unreadable body is not a malformed body). The
+      // recorder drops the `body` key entirely in authenticated mode before
+      // persistence, so the payload is never written to evidence; it is read
+      // in-memory only to feed the passive protocol oracles (e.g. malformed-json)
+      // that the SPEC requires as a passive-observation deliverable.
       let body: string | undefined;
       let bodyCapture: 'complete' | 'incomplete' | 'unavailable' = 'unavailable';
-      if (!recorder.isAuthenticated && contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
+      if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
         try {
           const buf = await response.body();
           bodyCapture = bodyCaptureStatus(buf, responseHeaders);

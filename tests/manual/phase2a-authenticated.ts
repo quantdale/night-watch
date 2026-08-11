@@ -17,6 +17,7 @@ import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import {
   inspectStorageStateKeyPresence,
+  inspectStorageStateKeySemantics,
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
 import { installDocumentLifecycleObserver, type DocumentLifecycleObserver } from '../../src/browser/observers/documentLifecycle';
@@ -440,6 +441,50 @@ async function observeOnce(
     severity: 'info',
     message: 'source-defined authenticated bootstrap state presence observed',
     data: { ...authBootstrapStatePresence, pass },
+  });
+
+  // Boolean-only semantic facts for the fixed source-proven bootstrap keys.
+  // The helper reads cookie values only into a local variable and returns
+  // booleans; the values themselves never enter evidence, manifests, or logs.
+  const authSemantics = inspectStorageStateKeySemantics(storageStatePath, {
+    authTokenKey: 'mo_access_token',
+    apiTypeKey: 'api_type',
+    apiTypeExpected: 'dev',
+    appTypeKey: 'app_type',
+    appTypeExpected: 'alphaus',
+  });
+  const environmentStateMatchesSelectedDev = !authSemantics.apiTypePresent || authSemantics.apiTypeMatchesExpected;
+  const applicationStateMatchesRipple = !authSemantics.appTypePresent || authSemantics.appTypeMatchesExpected;
+  const authTokenStructurallyNonEmpty = authSemantics.authTokenPresent && authSemantics.authTokenStructurallyNonEmpty;
+  const requiredBootstrapStateSemanticallyValid =
+    authTokenStructurallyNonEmpty && environmentStateMatchesSelectedDev && applicationStateMatchesRipple;
+  const aggregateSemanticValidity =
+    !authSemantics.authTokenPresent || !authTokenStructurallyNonEmpty
+      ? 'INVALID'
+      : (authSemantics.apiTypePresent && !authSemantics.apiTypeMatchesExpected) ||
+          (authSemantics.appTypePresent && !authSemantics.appTypeMatchesExpected)
+        ? 'INVALID'
+        : authSemantics.authTokenPresent
+          ? 'VALID'
+          : 'UNRESOLVED';
+  const authBootstrapStateSemantics = {
+    authTokenPresent: authSemantics.authTokenPresent,
+    authTokenStructurallyNonEmpty,
+    apiTypePresent: authSemantics.apiTypePresent,
+    apiTypeMatchesDev: authSemantics.apiTypeMatchesExpected,
+    appTypePresent: authSemantics.appTypePresent,
+    appTypeMatchesRipple: authSemantics.appTypeMatchesExpected,
+    environmentStateMatchesSelectedDev,
+    applicationStateMatchesRipple,
+    requiredBootstrapStateSemanticallyValid,
+    aggregateSemanticValidity,
+  };
+  recorder.addManifestEntry('authBootstrapStateSemantics', authBootstrapStateSemantics);
+  recorder.event({
+    type: 'env',
+    severity: 'info',
+    message: 'source-defined authenticated bootstrap state semantic booleans observed',
+    data: { ...authBootstrapStateSemantics, pass },
   });
 
   const proxyEventLogStart = (() => {

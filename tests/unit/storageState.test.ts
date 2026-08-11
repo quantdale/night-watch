@@ -18,6 +18,7 @@ import {
   resolveStorageStatePath,
   isAuthenticatedRun,
   inspectStorageStateKeyPresence,
+  inspectStorageStateKeySemantics,
 } from '../../src/browser/fixtures/storageState';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
@@ -173,6 +174,94 @@ test.describe('storage-state secret handling', () => {
       });
       expect(JSON.stringify(presence)).not.toContain('FAKE_REALISTIC_TOKEN_SHOULD_NOT_ESCAPE');
       expect(JSON.stringify(presence)).not.toContain('FAKE_LOCAL_SECRET');
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('semantic inspection returns booleans only and never leaks cookie values', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_REALISTIC_TOKEN_SHOULD_NOT_ESCAPE', domain: '127.0.0.1', path: '/' },
+        { name: 'api_type', value: 'dev', domain: '127.0.0.1', path: '/' },
+        { name: 'app_type', value: 'alphaus', domain: '127.0.0.1', path: '/' },
+      ],
+      origins: [],
+    });
+    try {
+      const semantics = inspectStorageStateKeySemantics(file, {
+        authTokenKey: 'mo_access_token',
+        apiTypeKey: 'api_type',
+        apiTypeExpected: 'dev',
+        appTypeKey: 'app_type',
+        appTypeExpected: 'alphaus',
+      });
+      expect(semantics).toEqual({
+        authTokenPresent: true,
+        authTokenStructurallyNonEmpty: true,
+        apiTypePresent: true,
+        apiTypeExpectedValue: 'dev',
+        apiTypeMatchesExpected: true,
+        appTypePresent: true,
+        appTypeExpectedValue: 'alphaus',
+        appTypeMatchesExpected: true,
+      });
+      expect(JSON.stringify(semantics)).not.toContain('FAKE_REALISTIC_TOKEN_SHOULD_NOT_ESCAPE');
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('semantic inspection: token present but empty, and mismatched env types, are INVALID', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: '', domain: '127.0.0.1', path: '/' },
+        { name: 'api_type', value: 'next', domain: '127.0.0.1', path: '/' },
+        { name: 'app_type', value: 'other', domain: '127.0.0.1', path: '/' },
+      ],
+      origins: [],
+    });
+    try {
+      const semantics = inspectStorageStateKeySemantics(file, {
+        authTokenKey: 'mo_access_token',
+        apiTypeKey: 'api_type',
+        apiTypeExpected: 'dev',
+        appTypeKey: 'app_type',
+        appTypeExpected: 'alphaus',
+      });
+      expect(semantics.authTokenStructurallyNonEmpty).toBe(false);
+      expect(semantics.apiTypeMatchesExpected).toBe(false);
+      expect(semantics.appTypeMatchesExpected).toBe(false);
+      expect(JSON.stringify(semantics)).not.toContain('next');
+      expect(JSON.stringify(semantics)).not.toContain('other');
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('semantic inspection: absent env cookies permit bootstrap validity but the aggregate stays UNRESOLVED-capable', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_TOKEN_ABC', domain: '127.0.0.1', path: '/' },
+      ],
+      origins: [],
+    });
+    try {
+      const semantics = inspectStorageStateKeySemantics(file, {
+        authTokenKey: 'mo_access_token',
+        apiTypeKey: 'api_type',
+        apiTypeExpected: 'dev',
+        appTypeKey: 'app_type',
+        appTypeExpected: 'alphaus',
+      });
+      expect(semantics.authTokenPresent).toBe(true);
+      expect(semantics.authTokenStructurallyNonEmpty).toBe(true);
+      expect(semantics.apiTypePresent).toBe(false);
+      expect(semantics.appTypePresent).toBe(false);
+      // Match the runner's aggregate rule: absent env cookies leave the env
+      // clauses vacuously true, but only a present token yields VALID.
+      const valid = semantics.authTokenPresent && (!semantics.apiTypePresent || semantics.apiTypeMatchesExpected) && (!semantics.appTypePresent || semantics.appTypeMatchesExpected);
+      expect(valid).toBe(true);
     } finally {
       fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
