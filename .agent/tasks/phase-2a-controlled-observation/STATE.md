@@ -2843,3 +2843,136 @@ promotion remains deferred; Phase 2B remains deferred. Do not rerun the real
 observation, create a replay context, change selectors or alias semantics,
 weaken the 750 ms contract, approve destinations, inspect response bodies, or
 make a speculative repair in this session.
+
+---
+
+## PHASE_2A_HEALTH_AUDIT — Goal-Mode Waypoint (2026-08-11)
+
+This waypoint records the comprehensive Phase 2A health audit (Phases A1–A7)
+performed in a goal-mode session. It is an AUDIT, not a rewrite. It does not
+change the readiness contract, selectors, destination policy, or safety model.
+
+### CURRENT GOAL
+Drive the Phase 2A task toward safe completion: audit the Phase 2A system,
+review current and historical changes, repair evidence-backed Nightwatch
+defects, self-review, validate locally, then (if safe) perform the next
+controlled authenticated observation and one replay.
+
+### CURRENT EVIDENCE (established facts)
+- HEAD `a04cbd6`; working tree clean at session start; CC `CHECKPOINT_ADVANCE`
+  (STATE `Current SHA` frozen at implementation `c771048`, two docs-only commits
+  beyond — the approved convention, not an error).
+- Last validated implementation SHA `c771048` is SYNCED with git's last
+  implementation commit.
+- Latest real run `nightwatch-20260811T072928Z-d840-first`: gate 13/13 PASS;
+  final `/ripple/`; two 200 text/html docs; second reload
+  `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`; `VUE_INITIAL_PATCH_OBSERVED`;
+  `POST_MOUNT_ROOT_UNKNOWN`; five allowlisted chunks reported
+  `CRITICAL_ASSET_LOAD_FAILURE`; readiness failed; replay not run.
+
+### CURRENT CLASSIFICATION
+The audit establishes that the five incomplete chunks are a Nightwatch FALSE
+POSITIVE (resource/reload causality: `SOURCE_RELOAD_CANCELED_INFLIGHT_CHUNKS`);
+the `POST_MOUNT_ROOT_UNKNOWN` is caused by a post-mount replacement-node
+selection bug; and readiness failure is likely a genuine product condition
+(loading branch / pending bootstrap dependency), not proven by the audit alone.
+
+### COMPLETED THIS SESSION
+- Comprehensive Phase A health audit (A1 git/continuity, A2 20-repair review,
+  A3 safety kernel, A4 tests, A5 observability, A6 privacy, A7 report).
+- Corroborated the audit's decisive findings directly against the real artifact
+  `events.jsonl`/`network.jsonl` (0 `requestfailed`; each flagged chunk has a
+  200 response; pylon block 2 ms before the reload signal).
+
+### AUDIT FINDINGS SUMMARY
+- A1: HEALTHY. `CHECKPOINT_ADVANCE`; no git/doc contradiction.
+- A2: 17/20 repairs HEALTHY. Two QUESTIONABLE: `#18` `BROWSER_RETRY`
+  over-claims on timing-only; `#20` `not-completed`/`client-or-policy-abort`
+  treated as critical failure (REGRESSION_RISK).
+- A3: CONFIRMED single canonical safety kernel (one OutboundPolicy, one proxy,
+  one createNightwatchContext; gate before context). No divergence.
+- A4: 184/184 unit PASS. Missing regressions: (a) navigation-canceled resource
+  not a critical failure; (d) five-canceled-chunk false positive; (b) #app
+  seen->removed vs mount-complete integration. Weak: ripplePostMount test 6,
+  observeAuthenticatedRunner test 1. Redundant: ripplePostMount 5 & 6.
+- A5: `not-completed` counted as failure (strongest conflation); no CANCELED
+  /request-termination taxonomy; root branch frozen at first replacement;
+  LAYOUT_RENDERED conflated with SHELL; no SCRIPT_PARSED. VUE_INITIAL_PATCH
+  vs SHELL_READY distinct (good).
+- A6: CONDITIONAL PASS. Core: nothing persists. Two items: (1) response bodies
+  still read into memory in authenticated mode (networkObserver.ts:414-432);
+  (2) authenticated.smoke.ts header-free assertion wired against a
+  non-authenticated recorder.
+- B: `RESOURCE_RELOAD_CAUSALITY` = `SOURCE_RELOAD_CANCELED_INFLIGHT_CHUNKS`;
+  `CRITICAL_ASSET_LOAD_FAILURE` = FALSE_POSITIVE (URL-key matcher collision
+  across documents). Ripple reload signal = `public/index.html` global
+  script/link error handler.
+- C: true root tag in every App.vue branch is DIV (in vocabulary); the
+  observed unbounded tag was an observer artifact (`replacementCandidate`
+  returns `records[0].addedNodes[0]` = earliest widget, not Vue root).
+- D: boolean-only auth semantics feasible/safe; replay effectiveness stays
+  isolated.
+- E: only historical over-strengthening (061449 `EXPECTED_BOOTSTRAP_RELOAD`)
+  already corrected to `RELOAD_CAUSE_UNRESOLVED`; d840 label valid.
+
+### EVIDENCE-BACKED NIGHTWATCH DEFECTS TO REPAIR (Phase F scope)
+- D1: `not-completed` (responseSeq===null) counted as critical failure →
+  CRITICAL_ASSET_LOAD_FAILURE false positive. Fix: separate unterminated
+  bucket, exclude from criticalAssetFailure.
+- D2: `client-or-policy-abort` (ERR_ABORTED/ERR_BLOCKED_BY_CLIENT) mapped to
+  `request-failed` for critical kinds. Fix: benign cancel, not a failure.
+- D3: post-mount replacement node mis-selection (`replacementCandidate` picks
+  `records[0].addedNodes[0]`). Fix: prefer the record whose removedNodes
+  contains the mount element; make parent/nextSibling fallback primary.
+- D4: response body read into memory in authenticated mode. Fix: short-circuit
+  when `recorder.isAuthenticated`.
+- D5: `BROWSER_RETRY` over-claims on timing alone. Fix: require stronger
+  evidence or downgrade.
+- D8: add boolean-only auth semantic checks + VALID/INVALID/UNRESOLVED
+  aggregate (Phase D), without persisting values.
+- Add missing regressions for D1/D2/D3/D4 and the canceled-chunk false positive.
+
+### SAFETY EVENTS
+None this session. No production attempt, DB query, mutation, auth-state read,
+or policy weakening. All investigation read-only.
+
+### DECISIONS
+- Treat the five incomplete chunks as a Nightwatch false positive (do not
+  assert them as product failure). Do not change the readiness contract.
+- Keep all safety controls unchanged; repair only diagnostic/classification
+  logic and the authenticated body-capture privacy gap.
+- Do NOT weaken fail-closed behavior or add wildcard approvals.
+
+### REJECTED HYPOTHESES
+- `CHUNK_FAILURE_TRIGGERED_SOURCE_RELOAD` — rejected: no chunk failure preceded
+  the reload; the reload followed the pylon policy block by 2 ms.
+- `POST_MOUNT_ROOT_UNKNOWN` caused by a non-DIV App.vue root — rejected: every
+  branch roots in DIV; the unbounded tag is an observer artifact.
+
+### UNRESOLVED
+- Whether readiness failure is a genuine product condition (loading branch
+  persisted / pending bootstrap dependency) vs a Nightwatch blind spot. The
+  audit cannot prove this without a real run; the D3 observer fix may clarify.
+- Auth replay effectiveness, semantic values, route-meta layout selection.
+- Per-document request/response attribution without a document ordinal on
+  resource events (deferred; the unterminated-bucket fix removes the false
+  positive without it).
+
+### VALIDATION LEDGER
+- `npx tsc --noEmit`: PASS.
+- `npx playwright test tests/unit`: 184 passed, 0 failed (baseline before
+  repairs).
+
+### NEXT EXACT ACTION
+Proceed to Phase F: implement repairs D1, D2, D3, D4, D5, D8 in dependency
+order, each with a focused regression; then run focused tests, full suite,
+self-review, and the health gate before any real run.
+
+### RESUME RECIPE
+Read this waypoint, `.agent/ACTIVE_TASK.md`, and the tail of STATE.md. The
+audit is complete; the next action is Phase F repair D1. Repairs touch:
+`src/products/ripple/bootstrapDiagnostics.ts`, `src/products/ripple/
+lifecycleDiagnostics.ts`, `src/browser/observers/bootstrapHooks.ts`,
+`src/browser/observers/networkObserver.ts`, `src/core/evidence/runRecorder.ts`,
+`src/browser/fixtures/storageState.ts`, plus focused tests. Re-run the baseline
+before and after. Do not modify Alphaus repos or weaken safety.
