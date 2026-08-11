@@ -2976,3 +2976,108 @@ lifecycleDiagnostics.ts`, `src/browser/observers/bootstrapHooks.ts`,
 `src/browser/observers/networkObserver.ts`, `src/core/evidence/runRecorder.ts`,
 `src/browser/fixtures/storageState.ts`, plus focused tests. Re-run the baseline
 before and after. Do not modify Alphaus repos or weaken safety.
+
+---
+
+## PHASE_F_AND_G_WAYPOINT — Repairs and Regression Complete (2026-08-11)
+
+### CURRENT GOAL
+Drive Phase 2A to safe completion. After the health audit, all evidence-backed
+Nightwatch defects within Phase 2A scope have been repaired (Phase F) and the
+local/synthetic regression suite now covers all 24 Phase G cases. Next: full
+validation gate (Phase H), self-review (Phase I), then one controlled real
+authenticated observation + replay (Phase J onward).
+
+### COMPLETED THIS SESSION (machine-readable SHA ledger)
+- `9bc93fd` — docs: checkpoint Phase 2A comprehensive health audit.
+- `c33e849` — fix: D1+D2 (canceled/unterminated no longer CRITICAL; true Vue
+  root selected after mount = D3).
+- `e8a50f3` — feat: D8 boolean-only auth semantic checks + aggregate
+  VALID/INVALID/UNRESOLVED (D4 body-capture short-circuit reverted inside this
+  commit because it broke the SPEC-required malformed-json passive oracle; the
+  body is never persisted regardless).
+- `1d5a3cf` — test: remove redundant post-mount tests; de-circularize runner
+  target assertion (A4 weak/redundant findings).
+- `1f26dac` — test: Phase G resource/reload causality regressions.
+
+### CURRENT EVIDENCE
+- Full suite: `npx playwright test` → **229 passed, 0 failed** (baseline was
+  218; net +11 new tests).
+- `npx tsc --noEmit` → PASS.
+- Real d840 artifact replayed through the fixed `buildRippleBootstrapDiagnostics`:
+  classification `OTHER_UNRESOLVED` (was `CRITICAL_ASSET_LOAD_FAILURE`),
+  `failedCriticalResources=0`, `unterminatedCriticalResources=5` (the five
+  chunks, correctly attributed as unterminated/canceled, not failed).
+
+### CURRENT CLASSIFICATION
+- The five "incomplete" chunks in the real d840 run are a Nightwatch FALSE
+  POSITIVE, resolved: they were navigation-canceled doc-1 requests / completed
+  doc-2 requests, never genuine load failures. Resource/reload causality =
+  `SOURCE_RELOAD_CANCELED_INFLIGHT_CHUNKS`.
+- `POST_MOUNT_ROOT_UNKNOWN` root cause (observer picked a widget instead of the
+  Vue root) repaired via the removedNodes-based replacement selection.
+- Readiness failure in the real run remains UNRESOLVED as a product condition —
+  the D3 observer fix may clarify on the next observation, but no product cause
+  is asserted.
+
+### FILES CHANGED (Nightwatch only)
+- src/products/ripple/bootstrapDiagnostics.ts (D1+D2)
+- src/products/ripple/lifecycleDiagnostics.ts (D5)
+- src/browser/observers/bootstrapHooks.ts (D3)
+- src/browser/fixtures/storageState.ts (D8)
+- src/browser/observers/networkObserver.ts (comment: body read for oracle, never persisted)
+- tests/manual/phase2a-authenticated.ts (D8 wiring)
+- test files (rippleBootstrapDiagnostics, bootstrapHooks, storageState,
+  rippleLifecycleDiagnostics, ripplePostMountDiagnostics, observeAuthenticatedRunner,
+  authenticated.smoke, NEW rippleResourceReloadCausality)
+
+### FILES CHANGED vs AUDIT START
+Audio start HEAD was `a04cbd6`; current HEAD `1f26dac`. Implementation SHA
+advance: `c771048` (last validated) → `1f26dac`. The prior `Current SHA` and
+`Last validated implementation SHA` fields in ACTIVE_TASK.md are now STALE and
+must be updated at the next checkpoint.
+
+### VALIDATION LEDGER
+- `npx tsc --noEmit`: PASS.
+- `npx playwright test`: 229 passed, 0 failed.
+- `npx playwright test tests/unit`: 197 passed (includes 4 new causality tests).
+- `npx playwright test tests/smoke/authenticated.smoke.ts --project=nightwatch`: 2 passed.
+- `git diff --check`: pending (run in Phase H).
+
+### DECISIONS
+- Reverted the D4 response-body short-circuit: in authenticated mode the body
+  is needed to feed the SPEC-required malformed-json passive oracle, and it is
+  never persisted (recorder drops the body key). Documented this in
+  networkObserver.ts. This is a deliberate trade-off: passive oracle capability
+  is preferred over disabling body inspection in-memory, with persistence still
+  guaranteed off.
+- Removed redundant tests 5/6 (ripplePostMount) only after confirming tests 2/3
+  cover the same behavior (task guidance: only remove when confidence improves
+  and behavior stays covered).
+
+### REJECTED HYPOTHESES
+- That the five chunks were genuine product failures — rejected (each has a 200
+  response; zero requestfailed).
+- That D4 body short-circuit was safe to keep — rejected (broke the required
+  malformed-json oracle and its regression).
+
+### UNRESOLVED
+- Whether the real run's readiness failure is a genuine product condition
+  (loading branch persisted / pending bootstrap dependency) vs a Nightwatch
+  blind spot. The D3 observer fix may clarify; not asserted without a real run.
+- Auth replay effectiveness, per-document resource attribution (URL-key matcher
+  collision remains a known limitation, but it no longer causes false failures).
+
+### NEXT EXACT ACTION
+Run Phase H full validation gate: `npx tsc --noEmit`, `npx playwright test`,
+`npm run agent:check`, `git diff --check`, `git status --short`, then Phase I
+self-review of the Nightwatch diff, then decide on the real observation.
+
+### RESUME RECIPE
+Read this waypoint + tail of STATE.md. Phase F/G are complete at `1f26dac`.
+Next is Phase H (validation gate) then Phase I (self-review). The real-run
+command, if authorized, is exactly:
+```bash
+npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+No Alphaus repo was modified; no production/DB/mutation/auth-state access occurred.
