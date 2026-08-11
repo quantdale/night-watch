@@ -3585,3 +3585,129 @@ proven. If the first observation passes, allow exactly one fresh-context replay
 and then complete the final safety/privacy/self-review and task closure. Never
 print auth values, never inspect document.cookie text, never modify Ripple, and
 never start Phase 2B.
+
+## PRE_AUTH_RECAPTURE_HEALTH_GATE — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+
+Complete Phase 2A through fresh human-authenticated DEV capture, page-readable
+auth proof, one canonical passive observation, one fresh-context replay, and
+final safety/privacy closure without starting Phase 2B.
+
+### CURRENT_PHASE
+
+M7 — IN_PROGRESS; pre-auth recapture health gate PASS; waiting to launch the
+interactive human capture.
+
+### CURRENT_EVIDENCE
+
+- Implementation `a6d7c8b` and docs checkpoint `6bf9773` are present locally.
+- `npm run observe:preflight -- --env=dev` PASS: target is exactly
+  `https://appdev.alphaus.cloud/ripple/`; DEV API/auth hosts are explicit; no
+  DNS/TCP/browser activity occurred during preflight.
+- External auth parent exists with mode 755; canonical state path is a regular
+  external file (3201 bytes, mode 644). Contents were not read or printed.
+- `npm run auth:capture -- --help` confirms the approved interactive parent CLI
+  and validation-first atomic replacement behavior.
+- Full local validation remains green: TypeScript PASS, Playwright 241/241,
+  focused repair suite 46/46, synthetic capture 1/1, diff check PASS.
+
+### CURRENT_CLASSIFICATION
+
+AUTH_REPLAY_INEFFECTIVE for the old expired state; fresh auth capture is now
+prepared but not started. ROOT_ALIAS_COLLISION_BUG remains REFUTED.
+
+### COMPLETED_THIS_SESSION
+
+- Completed A1–A6 health audit and B expired-auth reconfirmation.
+- Implemented and committed D8 live page-readability proof, lifecycle branch
+  correction, and atomic external state replacement.
+- Completed full post-repair validation and committed task continuity docs.
+- Completed DEV preflight and external-path metadata checks without reading
+  storage-state contents.
+
+### FILES_CHANGED
+
+- Implementation commit `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
+- Continuity checkpoint commit `6bf9773`.
+- This waypoint in task `STATE.md` (pending checkpoint commit).
+
+### VALIDATION_LEDGER
+
+- `npx tsc --noEmit`: PASS.
+- `npx playwright test`: 241 passed, 0 failed.
+- Focused capture/lifecycle/storage suite: 46 passed, 0 failed.
+- Synthetic capture config: 1 passed, 0 failed.
+- `npm run agent:check`: PASS with approved continuity warning.
+- `git diff --check`: PASS.
+- DEV preflight: PASS.
+
+### REAL_RUN_LEDGER
+
+- Fresh real authenticated observation: none.
+- Current controlled-run safety counts remain productionAttempts=0,
+  proxyViolations=0, unknownDestinations=0, unknownApprovals=0, mutations=0,
+  DBQueries=0.
+
+### AUTH_CAPTURE_LEDGER
+
+- Old state at canonical path is structurally present but expired/page-unreadable;
+  it remains prohibited for authenticated observation.
+- Fresh capture: PREPARED, NOT_STARTED.
+- Required command is the exact interactive parent workflow at the canonical
+  path. Human login/MFA and ENTER are the only expected user action.
+
+### DECISIONS
+
+- Do not delete or manually edit the old state. Let the approved capture
+  workflow replace it only after a fresh page-readable state is validated.
+- Do not run `observe:gate` or authenticated observation against the old state.
+- Preserve canonical `/ripple/`; no arbitrary dashboard fallback is added.
+
+### REJECTED_HYPOTHESES
+
+- Product root alias collision remains refuted.
+- File-level token presence is not live authentication.
+- A preflight PASS is not an authenticated-state PASS.
+
+### UNRESOLVED
+
+- Human login/MFA completion and fresh capture validity.
+- All first-run/replay runtime, readiness, oracle, privacy, and safety evidence.
+
+### SAFETY_EVENTS
+
+- No new safety event, host approval, production attempt, proxy violation,
+  mutation, or DB query. Ripple remains unmodified.
+
+### PRIVACY_STATUS
+
+PASS: only state-file metadata (existence, regular-file status, size, mode) was
+checked; state contents, cookie names/values beyond fixed synthetic/source
+diagnostic boundaries, credentials, DOM, bodies, traces, and screenshots were
+not exposed.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`
+
+### LAST_CHECKPOINT_SHA
+
+`6bf9773`
+
+### NEXT_EXACT_ACTION
+
+Launch the exact `npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"` command from an interactive terminal. At HUMAN_WAIT, wait for the human to complete normal DEV login/MFA and press ENTER; then continue autonomously with safe fresh-state validation.
+
+### RESUME_RECIPE
+
+Read this waypoint, verify the working tree and implementation SHA, then run
+the exact capture command. Do not print state contents or automate credentials
+or MFA. If capture fails before human action, repair a specific Nightwatch
+defect and rerun local validation; if the human cannot complete login, record
+`HUMAN_AUTH_ACTION_REQUIRED`. After success, use boolean-only structural and
+live page checks, require the exact 13/13 gate, run the canonical authenticated
+observation once, and permit only one specific observer repair/retry. If it
+passes, allow one completely fresh-context replay, then perform final privacy,
+safety, self-review, docs, clean-tree, and closure steps. Never modify Ripple or
+start Phase 2B.
