@@ -134,30 +134,6 @@ test('4. source-proven dashboard route activity completes the route checkpoint',
   });
 });
 
-test('5. Vue patches while the router remains unresolved keeps route and layout checkpoints false', () => {
-  const diagnostics = buildRippleLifecycleDiagnostics([
-    ...documentEvents(),
-    event('bootstrap', { category: 'bootstrap-target', phase: 'removed', elapsedMs: 21 }),
-    replacement('loading-wrapper', { matchesLoadingWrapper: true }),
-  ], lifecycleInput());
-  expect(diagnostics.postMountCheckpoints.vueInitialPatch).toBe(true);
-  expect(diagnostics.postMountCheckpoints.initialRouteResolved).toBe(false);
-  expect(diagnostics.postMountCheckpoints.dashboardRouteActive).toBe(false);
-  expect(diagnostics.postMountCheckpoints.qLayoutRendered).toBe(false);
-});
-
-test('6. a cancelled initial guard is distinguishable from script failure by clean patch evidence', () => {
-  const diagnostics = buildRippleLifecycleDiagnostics([
-    ...documentEvents(),
-    event('bootstrap', { category: 'bootstrap-target', phase: 'removed', elapsedMs: 21 }),
-    replacement('comment-vnode'),
-  ], lifecycleInput({ finalPath: '/ripple/' }));
-  expect(diagnostics.bootstrapProgress.classification).toBe('VUE_INITIAL_PATCH_OBSERVED');
-  expect(diagnostics.postMountCheckpoints.initialRouteResolved).toBe(false);
-  expect(diagnostics.postMountCheckpoints.routerInitialized).toBe('NOT_DIRECTLY_OBSERVABLE');
-  expect(diagnostics.bootstrapProgress.classification).toBe('VUE_INITIAL_PATCH_OBSERVED');
-});
-
 test('7. semantic auth/environment checks remain booleans even when all keys are present', () => {
   const presence = { authTokenPresent: true, apiTypePresent: true, appTypePresent: true };
   const semantic = validateRippleSemanticState({

@@ -34,12 +34,16 @@ test('normal authenticated command omits UI override and resolves canonical DEV 
     { NIGHTWATCH_UI_URL: 'https://next.alphaus.cloud/', PATH: '/synthetic/bin' },
   );
   const environment = loadEnvironmentConfig('dev');
-  const gateTarget = parsed.child.NIGHTWATCH_UI_URL ?? environment.uiBaseUrl;
 
   expect(parsed.parsed.uiUrl).toBeUndefined();
+  // No override parameter and a hostile parent NIGHTWATCH_UI_URL must NOT leak
+  // into the child: the gate then derives the target from the env default.
   expect(Object.hasOwn(parsed.child, 'NIGHTWATCH_UI_URL')).toBe(false);
   expect(parsed.child.NIGHTWATCH_STORAGE_STATE).toBe(syntheticState);
-  expect(gateTarget).toBe('https://appdev.alphaus.cloud/ripple/');
+  // The canonical DEV UI base is what the gate falls back to when the child
+  // omits an override; assert this independently of the child map above so the
+  // target resolution is not self-referential.
+  expect(environment.uiBaseUrl).toBe('https://appdev.alphaus.cloud/ripple/');
 });
 
 test('explicit canonical override remains present for strict gate validation', () => {
