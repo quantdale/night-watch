@@ -6,10 +6,10 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: c771048fc1cdad04807a72c2b77e687a3139077b
-Last validated implementation SHA: c771048fc1cdad04807a72c2b77e687a3139077b
+Current SHA: b733e515471145335531a4833717c434de9c76cb
+Last validated implementation SHA: b733e515471145335531a4833717c434de9c76cb
 Branch: main
-Last checkpoint: 2026-08-11 — first post-mount/router observation result
+Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13.
 Its sanitized evidence shows two completed `200 text/html` main-document
 loads, `#app` seen and removed, and an immediate replacement classified as a

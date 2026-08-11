@@ -6,10 +6,10 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: c771048fc1cdad04807a72c2b77e687a3139077b
-Last validated implementation SHA: c771048fc1cdad04807a72c2b77e687a3139077b
+Current SHA: b733e515471145335531a4833717c434de9c76cb
+Last validated implementation SHA: b733e515471145335531a4833717c434de9c76cb
 Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS)
-Last checkpoint: 2026-08-11 — first post-mount/router observation result
+Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13,
 then completed one guarded passive observation. The final origin/path was
 `https://appdev.alphaus.cloud` / `/ripple/`; both main documents were
