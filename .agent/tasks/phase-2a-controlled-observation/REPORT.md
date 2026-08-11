@@ -577,8 +577,11 @@ historical evidence and diagnosis evolution. Phase 2B was not started.
 - Starting SHA: `3a2712185250cd4e3591ee4037b28e06e8a0417e`.
 - Final implementation SHA: `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
 - Durable pre-closure checkpoint SHA: `f3b8dc0fb914f32cd77cc7e4ed9fceb5f28241a4`.
+- Final closure documentation checkpoint SHA:
+  `9bf2c4593c9eb46db8bb8a5975bfa336461641cd`.
 - Final Nightwatch handoff commit: the final Git `HEAD` containing this
-  closure documentation (reported with the clean handoff).
+  closure documentation and the final identity-only continuity update
+  (reported with the clean handoff).
 - Environment: DEV only; canonical entry
   `https://appdev.alphaus.cloud/ripple/`.
 

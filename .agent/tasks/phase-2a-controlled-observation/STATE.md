@@ -4150,7 +4150,7 @@ values were persisted or exposed.
 
 ### LAST_CHECKPOINT_SHA
 
-`f3b8dc0fb914f32cd77cc7e4ed9fceb5f28241a4`
+`9bf2c4593c9eb46db8bb8a5975bfa336461641cd`
 
 ### NEXT_EXACT_ACTION
 
@@ -4195,9 +4195,9 @@ as the recommended next task.
 - Historical expired-auth diagnosis: preserved as `AUTH_REPLAY_INEFFECTIVE`;
   root-alias collision/product-routing conclusion remains refuted.
 - Final implementation SHA: `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
-- Final closure checkpoint SHA: the Nightwatch-only documentation commit that
-  records this completion snapshot; it is the Git checkpoint immediately
-  preceding the final checkpoint-identity commit.
+- Final closure checkpoint SHA: `9bf2c4593c9eb46db8bb8a5975bfa336461641cd`.
+  A final identity-only continuity commit may follow without changing the
+  implementation or closure result.
 - Next recommended task: `PHASE 2B — THREE DETERMINISTIC READ-ONLY RIPPLE
   JOURNEYS`; not started.
 
