@@ -341,14 +341,18 @@ handoff; do not execute the authenticated observation in this session.
 - Validation commands: real-run command under gate; inspect run manifest,
   oracle output, and STATE checkpoint.
 - Status: IN_PROGRESS — the instrumented authenticated observation
-  `nightwatch-20260811T032906Z-3fd5-first` passed all 13 pre-real-run checks,
+  `nightwatch-20260811T061449Z-1fff-first` passed all 13 pre-real-run checks,
   but the unchanged readiness contract failed at `/ripple/`: the document was
-  complete, the approved target was confirmed, and the post-mount
-  `DIV.q-layout-container.layout` shell was absent. The new hooks observed zero
-  runtime exceptions, unhandled rejections, CSP violations, route transitions,
-  and critical-resource failures. Replay was prohibited because the first pass
-  failed. The result is `OTHER / UNRESOLVED`; no selector, stability threshold,
-  containment rule, or replay behavior is changed.
+  complete, the approved target was confirmed, `#app` was seen and removed,
+  and the post-mount `DIV.q-layout-container.layout` shell was never observed.
+  The two document loads were both `200 text/html`; the second was classified
+  `EXPECTED_BOOTSTRAP_RELOAD` from a same-path reload initiated after script
+  resource-error events. The hooks observed zero runtime exceptions,
+  unhandled rejections, CSP violations, route transitions, and critical-
+  resource failures. Auth replay effectiveness is `UNRESOLVED`. Replay was
+  prohibited because the first pass failed. The narrow result is
+  `POST_MOUNT_RENDER_NOT_CONFIRMED`; no root cause, selector, stability
+  threshold, containment rule, or replay behavior is changed.
 
 #### M7 observation-runner implementation checkpoint — 2026-08-10 — `cdeff50`
 
@@ -868,6 +872,73 @@ the observer hardening was `npx tsc --noEmit` PASS, focused diagnostic subset
 No new real observation was run; replay remains NOT RUN and M7 remains
 IN_PROGRESS.
 
+#### M7 first controlled authenticated observation — 2026-08-11 — `nightwatch-20260811T061449Z-1fff-first`
+
+The exact required authenticated command was run without `--ui-url`. The
+strict pre-real-run gate passed **13/13** before browser/context creation. One
+guarded passive first observation then completed; because readiness failed,
+the runner wrote `replay-not-run` and did not create a fresh context.
+
+Sanitized lifecycle result:
+
+- final origin/path: `https://appdev.alphaus.cloud` / `/ripple/`;
+- both main documents: `GET`, `200`, `text/html`, main frame, no redirect
+  chain;
+- first document: initiator `other`, no replacement; request/response were
+  approximately `556ms`/`758ms` from run start;
+- second document: initiator `reload`, source path `/ripple/`, replacement
+  `true`; request/response were approximately `10279ms`/`10404ms` from run
+  start; the relationship was classified `EXPECTED_BOOTSTRAP_RELOAD` after
+  sanitized script resource-error events and a same-path reload request;
+- `#app`: seen `true` at `174ms` in the final document and removed `true` at
+  `4580ms`; the earlier document also recorded removal before its reload;
+- rendered shell `.q-layout-container.layout`: never seen;
+- route/history: `pushState=0`, `replaceState=0`, `popstate=0`, hash/go
+  transitions `0`, full-document navigation after the initial load `1`, and
+  sanitized pathname transitions `[]`; `/ripple/dashboard` was never reached.
+
+Sanitized bootstrap/auth/runtime result:
+
+- storage state loaded before navigation: `true`; provenance match: `true`;
+  source-required `mo_access_token` structural presence: `true`; DEV
+  bootstrap selection keys `api_type`/`app_type`: both structurally present;
+- auth-host navigation: not observed; source-defined unauthenticated branch:
+  not observed; source-defined authenticated bootstrap branch: not observed;
+  auth replay effectiveness: `UNRESOLVED`;
+- document loads `2/2` complete; application entry and runtime/vendor entry
+  observed/completed; scripts `112/112`, chunks `108/108`, styles `6/6`,
+  modules `0`; critical failures `0`, wrong-content failures `0`;
+- runtime exceptions `0`, unhandled rejections `0`, product console errors
+  `0`, CSP violations `0`; four resource-load error events were all tied to
+  expected local containment; observer hooks were healthy;
+- no source-defined awaited bootstrap prerequisite was shown rejected or
+  unresolved, so `BOOTSTRAP_STALL` is not earned. The sanitized progress
+  vocabulary is `POST_MOUNT_RENDER_FAILURE_CANDIDATE`, not a root-cause claim.
+
+Primary classification: **POST_MOUNT_RENDER_NOT_CONFIRMED**. This is the
+narrow branch supported by `#app` removal plus absence of the rendered shell;
+the evidence does not distinguish a deployment/source contradiction from a
+post-mount render/bootstrap cause. Deployment fingerprint status remains
+**UNAVAILABLE** and is not manufactured.
+
+Safety/oracle/privacy result:
+
+- destination manifest: `3` expected, `0` new-but-verified, `7` blocked,
+  `0` unresolved; proxy: `2` allowed, `8` telemetry-blocked,
+  `1` browser-background-blocked, `0` denied, `0` unknown, `0` violations;
+- production attempts `0`, mutations `0`, DB queries `0`, and unknown
+  destinations silently approved `0`;
+- oracle categories: `EXPECTED_CONTAINMENT_EFFECT`,
+  `RIPPLE_READINESS_NOT_CONFIRMED`, and `STABILITY_TIMEOUT`; the known
+  malformed-JSON anomaly did not recur and remains
+  `GENUINE_PROTOCOL_ANOMALY` with unresolved subcause;
+- category-level authenticated privacy review: pending the existing review
+  command and final validation; no auth-state content, credentials, bodies,
+  DOM, screenshot, trace, or identity data was inspected or persisted.
+
+The external auth state remains outside Nightwatch and uninspected. M7 remains
+`IN_PROGRESS`; M10 replay is `NOT_STARTED` and Phase 2B remains deferred.
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
@@ -924,10 +995,12 @@ IN_PROGRESS.
 - Acceptance criteria: no sensitive persistence; any safety event is factual,
   sanitized, and Phase 2A fails until fixed and rerun.
 - Validation commands: targeted artifact scan/review; `git status --short`.
-- Status: COMPLETE — category-level review of the first-pass artifacts passed;
-  no credentials, auth headers/cookies/tokens, raw bodies, DOM/text dumps,
-  screenshots, traces, auth-state material, or tracked authenticated artifact
-  was found. The external storage state remained outside Nightwatch.
+- Status: COMPLETE — category-level review of
+  `nightwatch-20260811T061449Z-1fff-first` passed. The existing authenticated
+  privacy regression passed **2/2**; the run artifact scan found no
+  credential/JWT-like values, persisted headers or bodies, cookie/origin
+  arrays, query/fragment-bearing URLs, screenshots/traces, or auth-state files.
+  The external storage state remained outside Nightwatch.
 
 ### M12 — Document the actual sanitized runtime contract
 
@@ -957,9 +1030,12 @@ IN_PROGRESS.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`; `npm run
   agent:check`; `git diff --check`; focused Phase 2A tests; clean `git status`.
 - Status: USER_ACTION_REQUIRED — the external state was available for this
-  one authorized observation, but the first pass failed unchanged readiness.
-  Replay and speculative repair are prohibited; the task remains IN_PROGRESS
-  pending a later explicit decision.
+  one authorized observation, but run
+  `nightwatch-20260811T061449Z-1fff-first` failed unchanged readiness in the
+  `#app`-removed/shell-absent branch. Replay and speculative repair are
+  prohibited; the task remains IN_PROGRESS pending a later explicit decision.
+  Typecheck, full local Playwright validation, privacy review, continuity
+  check, and whitespace validation passed.
 
 ## Validation Strategy
 
