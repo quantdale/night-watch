@@ -234,6 +234,19 @@ test.describe('authenticated storage state is secret material', () => {
         return !('headers' in d) && !('body' in d);
       });
       expect(invoicesReq).toBeDefined();
+
+      // -- Authenticated mode never reads response bodies into memory ---------
+      // The good fixture returns JSON-ish /api/invoices responses; in
+      // authenticated metadata-first mode the harness must short-circuit body
+      // capture entirely (bodyCapture stays "unavailable"), not merely redact it.
+      const invoicesResp = netEvents.find((e) => {
+        const d = e.data as Record<string, unknown> | undefined;
+        return e.type === 'response' &&
+          typeof d?.url === 'string' && d.url.includes('/api/invoices');
+      });
+      expect(invoicesResp).toBeDefined();
+      expect((invoicesResp?.data as Record<string, unknown> | undefined)?.bodyCapture).toBe('unavailable');
+      expect('body' in (invoicesResp?.data as Record<string, unknown> | undefined ?? {})).toBe(false);
     } finally {
       await server.close();
       fs.rmSync(tmp, { recursive: true, force: true });
