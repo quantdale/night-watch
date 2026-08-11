@@ -3081,3 +3081,46 @@ command, if authorized, is exactly:
 npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
 ```
 No Alphaus repo was modified; no production/DB/mutation/auth-state access occurred.
+
+---
+
+## SELF_REVIEW_COMPLETE — Pre-Real-Run Adversarial Review (2026-08-11)
+
+Adversarial review of the Phase F/G repair round (HEAD `dbf9e18`) against the
+Phase I checklist, performed like reviewing another engineer's PR:
+
+- No diagnosis stronger than evidence: canceled/unterminated resources are
+  explicitly NOT classified as failures; `CRITICAL_ASSET_LOAD_FAILURE` now
+  requires a genuine failure. D3 node selection is evidence-backed.
+- No correlation→causation conversion: D5 removed the `BROWSER_RETRY` timing
+  over-claim (now RELOAD_CAUSE_UNRESOLVED).
+- No selector broadened: `safeReplacementTags` and `safeRootBranch` allowlists
+  unchanged; D3 only changes WHICH node is inspected.
+- No fail-closed weakening: safety policy/gate/proxy/guards untouched.
+- Canceled resources no longer treated as failures (D1/D2).
+- HTTP 200 never treated as execution (responseCompatible still requires 2xx +
+  correct content-type).
+- Auth key presence never treated as authenticated success: D8 semantic
+  booleans are kept separate from `classifyAuthReplayEffectiveness` (still
+  requires a source-defined authenticated branch for CONFIRMED).
+- No duplicated safety implementation; only diagnostics + an auth-semantic
+  helper were added.
+- Removed tests that could not fail meaningfully (self-referential runner
+  assertion; redundant post-mount tests 5/6); new tests assert real behavior.
+- No real-run contract changed to pass a previous run: readiness contract
+  (750ms, shell selector, target) unchanged.
+- Historical reports preserved, not rewritten: the d840 `CRITICAL_ASSET_LOAD_FAILURE`
+  remains in REPORT.md as the at-that-time record; the reclassification is
+  documented separately as a Nightwatch false positive in STATE.md.
+
+VERDICT: clean. NetworkObserver change is comment-only; authenticated.smoke.ts
+is net-neutral (D4 add+revert canceled). Typecheck PASS, 229/229 PASS,
+agent:check PASS (approved CHECKPOINT_ADVANCE), diff --check PASS.
+
+### NEXT EXACT ACTION
+Phase J pending a decision on the real authenticated observation. If executed,
+it must use the exact command:
+```bash
+npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+requiring 13/13 gate before context creation, with no `--ui-url`.
