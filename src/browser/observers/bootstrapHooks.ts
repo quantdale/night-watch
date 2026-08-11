@@ -340,27 +340,49 @@ export function bootstrapDiagnosticInitScript(): void {
         }
       }
     }
-    // Fallback for records that add a node without removing the mount target
-    // in the same observation batch (e.g. an in-place replacement recorded as a
-    // single added-only mutation, or the observer missing the removal record).
+    // Deterministic positional fallback. Vue's $mount may insert the new root
+    // BEFORE #app and then remove #app in separate mutations, so the removal
+    // record has no added node. In that case the replacement is the node that
+    // now occupies the mount target's former slot — the child immediately
+    // before the target's former next sibling (or, when the target was the last
+    // child, the last child if it was freshly added).
+    if (parent !== null && parent !== undefined) {
+      try {
+        const children = parent.childNodes;
+        if (nextSibling !== null && nextSibling !== undefined) {
+          for (let index = 0; index < children.length; index += 1) {
+            if (children[index] === nextSibling && index > 0) return children[index - 1];
+          }
+        } else if (children.length > 0) {
+          // mount was the last child: the replacement is the (new) last child.
+          const last = children[children.length - 1];
+          if (last !== null && last !== undefined && last !== mountNode) return last;
+        }
+      } catch {
+        // Fall through to the parent-scoped added fallback below.
+      }
+    }
+    // Parent-scoped fallback: prefer an added node that lives in the mount
+    // target's former parent (body), which excludes head/other-parent widget
+    // injections. This covers an in-place replacement recorded as a single
+    // added-only mutation.
+    if (parent !== null && parent !== undefined) {
+      for (const record of records) {
+        const addedNodes = record?.addedNodes;
+        if (addedNodes === undefined) continue;
+        for (let index = 0; index < addedNodes.length; index += 1) {
+          const node = addedNodes[index];
+          if (node !== null && node !== undefined && node.parentNode === parent) return node;
+        }
+      }
+    }
+    // Generic added-only fallback (last resort).
     for (const record of records) {
       const addedNodes = record?.addedNodes;
       if (addedNodes === undefined) continue;
       for (let index = 0; index < addedNodes.length; index += 1) {
         const node = addedNodes[index];
         if (node !== null && node !== undefined) return node;
-      }
-    }
-    // Deterministic positional fallback: the node that precedes the mount
-    // target's former next sibling is the replacement.
-    if (parent !== null && parent !== undefined && nextSibling !== null && nextSibling !== undefined) {
-      try {
-        const children = parent.childNodes;
-        for (let index = 0; index < children.length; index += 1) {
-          if (children[index] === nextSibling && index > 0) return children[index - 1];
-        }
-      } catch {
-        // Fall through to an explicit unknown classification.
       }
     }
     return undefined;

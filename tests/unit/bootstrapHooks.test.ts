@@ -141,3 +141,56 @@ test('bootstrap hooks select the Vue root replacement, not an earlier injected w
     fs.rmSync(recorder.dir, { recursive: true, force: true });
   }
 });
+
+test('bootstrap hooks detect the Vue root when mount inserts-before then removes #app in separate mutations', async ({ context, page }) => {
+  // Vue 2 `$mount` can insert the new root BEFORE #app and then remove #app in
+  // two separate mutation records. A widget earlier in the batch must not
+  // displace the real root — the node occupying #app's former slot wins.
+  const runId = `bootstrap-hooks-mountseq-${Date.now()}`;
+  const recorder = new RunRecorder({
+    runId,
+    environment: 'local',
+    product: 'ripple',
+    browser: 'chromium',
+    scenario: 'synthetic-bootstrap-hooks-mountseq',
+    artifactsRoot: path.join(process.cwd(), '.tmp-test', 'bootstrap-hooks-mountseq'),
+    authenticated: true,
+  });
+  try {
+    await installBootstrapDiagnosticHooks(context, recorder);
+    await page.goto('data:text/html,<html><head></head><body><div id="app"></div></body></html>');
+    await page.evaluate(() => {
+      const pageGlobal = globalThis as unknown as {
+        document: {
+          head: { appendChild: (element: unknown) => void };
+          querySelector: (selector: string) => { parentNode: unknown; nextSibling: unknown } & { remove: () => void } | null;
+          createElement: (tagName: string) => { className: string };
+          body: { insertBefore: (node: unknown, ref: unknown) => void; childNodes: unknown };
+        };
+      };
+      // A third-party widget injection arrives first in the mutation stream.
+      const widget = pageGlobal.document.createElement('script');
+      widget.className = 'widget';
+      pageGlobal.document.head.appendChild(widget);
+      const mount = pageGlobal.document.querySelector('#app');
+      // Vue inserts the root before #app, then removes #app (two mutations).
+      const root = pageGlobal.document.createElement('div');
+      root.className = 'q-layout';
+      pageGlobal.document.body.insertBefore(root, mount);
+      mount?.remove();
+    });
+    await page.waitForTimeout(50);
+    const events = readEvents(path.join(recorder.dir, 'events.jsonl'));
+    const replacement = events.find((entry) => entry.type === 'bootstrap' &&
+      (entry.data as Record<string, unknown> | undefined)?.category === 'post-mount-structure');
+    expect(replacement?.data).toMatchObject({
+      phase: 'replacement',
+      vueInitialPatchObserved: true,
+      replacementNodeType: 'element',
+      replacementTag: 'DIV',
+    });
+  } finally {
+    await page.goto('about:blank').catch(() => undefined);
+    fs.rmSync(recorder.dir, { recursive: true, force: true });
+  }
+});
