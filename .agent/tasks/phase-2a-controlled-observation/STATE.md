@@ -2051,9 +2051,9 @@ at `/ripple/` is not authenticated readiness.
 
 Validation after implementation: focused bootstrap/hooks/readiness tests
 **35 passed, 0 failed**; full `npx playwright test` **194 passed, 0 failed**;
-`npx tsc --noEmit` PASS; staged `git diff --check` PASS. The pre-check before
-the task-state checkpoint reported only the expected stale-baseline warning;
-the final checker must be rerun after this state is committed.
+`npx tsc --noEmit` PASS; `git diff --check` PASS. The final
+`npm run agent:check` passed with one expected approved `CHECKPOINT_ADVANCE`
+warning for the task-state files.
 
 No real Alphaus request was initiated in this diagnostic repair session. No
 replay, production traffic, mutation, database query, auth-state read, body

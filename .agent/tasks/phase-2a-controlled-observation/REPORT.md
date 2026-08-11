@@ -76,9 +76,8 @@ DOM, text, identity, screenshots, or traces are recorded by the new layer.
 - Full `npx playwright test`: **194 passed, 0 failed**.
 - `npx tsc --noEmit`: PASS.
 - `git diff --check`: PASS for staged implementation and task-state changes.
-- `npm run agent:check`: PASS; after the implementation commit it reports
-  only the approved checkpoint-advance warning until the task-state commit is
-  the current HEAD.
+- `npm run agent:check`: PASS with one expected approved `CHECKPOINT_ADVANCE`
+  warning for the task-state files.
 - No Alphaus repository was modified.
 - No new real Alphaus traffic, production traffic, replay, mutation, DB query,
   auth-state read, or body inspection occurred in this diagnostic session.
