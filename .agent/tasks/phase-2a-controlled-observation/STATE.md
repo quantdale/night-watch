@@ -6,16 +6,18 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 9b8f7403726afb3749609400d0cbbcec9ce80b5e
-Last validated implementation SHA: 9b8f7403726afb3749609400d0cbbcec9ce80b5e
+Current SHA: c771048fc1cdad04807a72c2b77e687a3139077b
+Last validated implementation SHA: c771048fc1cdad04807a72c2b77e687a3139077b
 Branch: main
-Last checkpoint: 2026-08-11 — first controlled authenticated observation
+Last checkpoint: 2026-08-11 — post-mount/router diagnostics ready
 `nightwatch-20260811T061449Z-1fff-first` passed the pre-real-run gate 13/13.
 Its sanitized evidence shows two completed `200 text/html` main-document
 loads, complete critical assets, `#app` seen and removed, and no observation
 of the source-backed post-mount `DIV.q-layout-container.layout` shell. The
-second document was classified `EXPECTED_BOOTSTRAP_RELOAD` from a same-path
-reload initiated after script resource-error events. `routeStableMs` remained
+the prior `EXPECTED_BOOTSTRAP_RELOAD` label for the second same-path reload
+after script resource-error events is corrected to
+`RELOAD_CAUSE_UNRESOLVED` because no source-specific signal was recorded.
+`routeStableMs` remained
 `0` and `stabilityReached` was `false`; replay was correctly NOT RUN. The
 hooks observed zero runtime exceptions, unhandled rejections, CSP violations,
 route transitions, and critical-resource failures. The run recorded zero
@@ -45,11 +47,14 @@ was `false`. The second main-document load was the evidence-backed
 `EXPECTED_BOOTSTRAP_RELOAD` branch. The hooks observed zero runtime
 exceptions, unhandled rejections, CSP violations, route transitions, and
 critical-resource failures. Auth replay effectiveness remains `UNRESOLVED`.
-The run stopped before replay as required. The source/framework repair remains
+The run stopped before replay as required. The prior source shorthand for a
+base-path URL redirect is corrected by the source trace: `/` is the dashboard
+route alias, not an unconditional URL redirect. The source/framework repair remains
 authoritative: `#app` is only the Vue pre-mount target, and the rendered shell
 remains the readiness marker. The narrow result is
 `POST_MOUNT_RENDER_NOT_CONFIRMED`; no root cause is claimed and the selector
-and readiness contract must not be weakened.
+and readiness contract must not be weakened. The post-mount/router diagnostic
+implementation is ready for a future separately authorized fresh session.
 
 Historical M7 safety review remains recorded below: the exact source-supported
 Pylon host and reviewed browser-background hosts remain locally blocked,
@@ -102,9 +107,10 @@ Source contract:
 
 1. `src/router.js` sets the router base to `/ripple/`.
 2. The dashboard route is `/dashboard` with alias `/` and `requiresAuth`.
-3. The `beforeEach` guard redirects authenticated `/` or `/login` to
-   `/dashboard`; the authenticated browser URL is therefore
-   `/ripple/dashboard`.
+3. The dashboard route aliases `/`; the authenticated matched-route branch
+   calls `next()` when the token is present. Only the unprotected token-present
+   `/login` branch explicitly redirects to `/dashboard`; `/ripple/` is not
+   source-proven to become a `/ripple/dashboard` browser URL unconditionally.
 4. `public/index.html:35` declares `<div id="app"></div>` and
    `src/main.js:48,324` renders `App` and calls `}).$mount('#app')`; this is
    the Vue pre-mount target, not the post-mount readiness shell.
@@ -2274,12 +2280,12 @@ count alone.
   `UNRESOLVED`, while a source login branch with missing auth state is
   `INEFFECTIVE`.
 - Full-document navigation is classified only from fixed evidence as
-  `EXPECTED_BOOTSTRAP_RELOAD`, `AUTH_STATE_BRANCH_RELOAD`,
-  `APP_INITIATED_RELOAD`, `SERVER_REDIRECT`, `BROWSER_RETRY`, or `UNKNOWN`.
+  `SOURCE_PROVEN_EXPECTED_BOOTSTRAP_RELOAD`, `NIGHTWATCH_INITIATED_RELOAD`,
+  `SOURCE_PROVEN_AUTH_RELOAD`, `SOURCE_PROVEN_ENVIRONMENT_RELOAD`,
+  `SERVER_REDIRECT`, `BROWSER_RETRY`, or `RELOAD_CAUSE_UNRESOLVED`.
   Target lifecycle is separate from rendered-shell lifecycle, and progress
-  can identify `BOOTSTRAP_STALL_CANDIDATE`,
-  `POST_MOUNT_RENDER_FAILURE_CANDIDATE`, `NO_MOUNT_PROGRESS`, or
-  `PROGRESS_UNKNOWN` without promoting readiness.
+  can identify `BOOTSTRAP_STALL_CANDIDATE`, `VUE_INITIAL_PATCH_OBSERVED`,
+  `NO_MOUNT_PROGRESS`, or `PROGRESS_UNKNOWN` without promoting readiness.
 - Deployment fingerprint comparison is explicitly `UNAVAILABLE`: public asset
   basenames are observable, but this checkout has no defensible committed
   deployment manifest/build comparison for the run. The result is not
@@ -2431,3 +2437,202 @@ The external auth state remains outside Nightwatch and uninspected. M7 remains
 Populate only when complete. If human input is required, record the exact
 command and set `Status: IN_PROGRESS` with `USER_ACTION_REQUIRED` in the
 current milestone/next action instead.
+
+## M7 Post-Mount Router Diagnostics Ready — 2026-08-11 — implementation `c771048`
+
+This superseding checkpoint resumes the existing M7 task. It does not create a
+new task, change the readiness contract, run replay, or perform another real
+authenticated observation.
+
+### Latest real run reconciliation
+
+- run: `nightwatch-20260811T061449Z-1fff-first`;
+- pre-real-run gate: **13/13 PASS**;
+- main documents: `2`, both `GET 200 text/html`, main frame;
+- final origin/path: `https://appdev.alphaus.cloud` / `/ripple/`;
+- `#app`: seen at `174 ms`, removed at `4580 ms` in the final document;
+- lifecycle evidence: `VUE_INITIAL_PATCH_OBSERVED` is supported by target
+  removal, but the older real artifact did not capture the replacement node;
+- rendered shell `DIV.q-layout-container.layout`: absent;
+- history primitives: `pushState=0`, `replaceState=0`, `popstate=0`,
+  `hashchange=0`, `go=0`; pathname transitions: `[]`;
+- full-document navigation after the initial load: `1`; `/ripple/dashboard`
+  was never observed; route stability remained `0 ms` and readiness failed;
+- runtime exceptions, unhandled rejections, product console errors, CSP
+  violations, critical resource failures, and wrong-content failures: `0`;
+- scripts/chunks/styles: `112/112`, `108/108`, `6/6` completed;
+- source-defined awaited bootstrap rejection/unresolved evidence: none;
+  `BOOTSTRAP_STALL` is not earned;
+- auth state loaded before navigation: `true`; DEV provenance: `true`;
+  required structural auth/bootstrap keys: present; auth-host redirect: not
+  observed; auth effectiveness: `UNRESOLVED`;
+- safety: `3` expected destinations, `7` blocked, `0` unresolved,
+  production attempts `0`, proxy violations `0`, mutations `0`, DB queries `0`;
+- replay: **NOT RUN**.
+
+The previous second-document label `EXPECTED_BOOTSTRAP_RELOAD` is corrected.
+Because the real artifact recorded only resource errors immediately before a
+same-path `reload`-initiated document request, and did not record the new
+source-specific reload signal, its narrow classification is now
+`RELOAD_CAUSE_UNRESOLVED`. Resource-error/reload timing is correlation, not
+causation.
+
+### Exact current Ripple post-`$mount` graph
+
+Read-only source trace: `mobingilabs/ripple-ui`, checked-out branch `dev`, SHA
+`d80b161b684d9153c7e5acaa65ae1752d93d8ba9`; local `origin/dev` comparison
+`e46b8ed6540b647574bdb96ec59eca42fc8acdef`. The readiness-relevant files are
+unchanged in that comparison, and the Ripple worktree was not modified.
+
+1. `src/main.js:48-52,324`: `new Vue({ store, router, i18n,
+   render: h => h(App), ... }).$mount('#app')`. Root construction and VNode
+   creation are synchronous; the injected store, router, and i18n are required.
+2. `src/main.js:38-40`: `default-layout`, `auth-layout`, and `error-layout`
+   are globally registered before the root is created.
+3. `src/main.js:69-145`: the root `created` hook injects optional Pylon and
+   Intercom scripts. For routes outside `/login`, `/saml`, `/`, and
+   `/change-password`, it starts `loadInitialData()` without awaiting it before
+   `$mount`; the source path has no explicit timeout.
+4. `src/vuex/rootState.js:1-3`: `loading` initially is `false`; `rootUser`
+   initially is `false`. `src/main.js:207-277` can set `loading=true`, await
+   source dependencies, route to login/access-denied on selected errors, and
+   always sets `loading=false` in `finally` when the promise settles.
+5. `src/App.vue:1-5,18-26`: the root render is a single conditional chain:
+   `loading=true` renders `Loading`; `loading=false` renders the dynamic
+   component `(this.$route.meta.layout || 'default') + '-layout'` with a
+   `router-view` child.
+6. Source-backed immediate branches are therefore:
+   - `Loading.vue:1-12` → element `.loading-div` while `loading=true`;
+   - authenticated route metadata without `layout` → `default-layout`;
+   - login/SAML/change-password metadata `layout='auth'` → `AuthLayout`, whose
+     stable root is `.__AuthLayout` and whose child view is gated for 500 ms;
+   - error/wildcard metadata `layout='error'` → `ErrorLayout`, which has no
+     stable own element and delegates to `router-view`.
+7. `src/layouts/DefaultLayout.vue:1-2`: `DefaultLayout` renders Quasar
+   `QLayout` with `container class="layout"`; Quasar 1.15.4 produces the
+   source-backed `DIV.q-layout-container.layout` marker.
+
+The current route table registers only the default/auth/error layout names.
+A comment replacement is therefore not source-proven for a normal current
+route. It remains a covered defensive branch if a dynamic layout is unresolved
+or a `router-view` has no resolved component. The synthetic fixture confirms
+that `#app -> comment VNode` is classified as initial patch observed, with no
+shell or route-readiness promotion. No text, HTML, arbitrary class, attribute,
+or customer value is collected.
+
+### Exact initial router flow and guard prerequisites
+
+- `src/router.js:270-274`: Vue Router is `history` mode with base
+  `/ripple/`; Nightwatch observes `pushState`, `replaceState`, `popstate`, and
+  harmlessly also records `hashchange`/`go` without persisting fragments.
+- `src/router.js:323-332`: `/dashboard` is the authenticated route and `/` is
+  its alias. This is a route-record alias, not an unconditional browser URL
+  redirect from `/ripple/` to `/ripple/dashboard`.
+- `beforeEach` at `src/router.js:1385-1413` first handles `/?redirect=...`,
+  then matched `requiresAuth`: missing `mo_access_token` routes to `/login`
+  with a redirect query; `rootUserOnly` routes can go to
+  `/error-access-deny`; otherwise `next()` is called. Only the later
+  unprotected branch explicitly redirects token-present `/login` or `/` to
+  `/dashboard`; the dashboard alias normally takes the matched-auth branch.
+- There is no `beforeResolve`, no `next(false)`, and no dynamic route
+  registration in the reviewed initial-routing path. Every explicit guard
+  branch calls `next` or supplies a replacement, although the unguarded
+  synchronous `analyzer.track` call before the branches could theoretically
+  throw; source alone does not show that occurring.
+- `afterEach` at `src/router.js:1415-1447` may push `/dashboard` when
+  `handleByPermission(to.path)` is false. `src/permissions.js:80-116` returns
+  true when there is no permission configuration for the path; it is
+  synchronous. No permission value was retrieved or persisted by Nightwatch.
+- `src/vuex/api/auth.js:84-96` requires a truthy/non-empty
+  `mo_access_token` cookie for `checkToken` and installs the bearer only in
+  Axios memory. `src/main.js:207-277` awaits token, user, permission, global
+  flag, preferences, status, analytics, and a possible permission check; many
+  API failures are caught, selected auth/permission errors route away, and the
+  `finally` clears loading. Pending dependencies remain a source-supported
+  stall hypothesis but were not proven by the real run.
+
+The previous source shorthand `/ripple/ -> /ripple/dashboard` is corrected to
+the alias/guard behavior above. Readiness still requires the approved route,
+complete document, exact rendered shell, continuous stability of at least
+750 ms, and no fatal lifecycle failure; none of those conditions was weakened.
+
+### Source-defined semantic state contract
+
+The current source supports only sanitized semantic checks:
+
+- `mo_access_token`: presence plus structurally non-empty/truthy boolean;
+- `api_type`: if present in DEV, must semantically match `dev`;
+- `app_type`: if present, must semantically match Ripple/`alphaus`;
+- absent `api_type`/`app_type` remains allowed because
+  `src/axios.config.js:20-30` falls back to hostname-derived `navigator.appEnv`
+  and `navigator.appDomain` for DEV/Next selection.
+
+The selected DEV host maps to environment `dev` and application domain
+`alphaus` through `src/axios.config.lib.js:8-19` and
+`src/config/common.js:170-178`. `validateRippleSemanticState()` now reduces
+these facts to booleans only. It was exercised only with synthetic facts in
+this session; no authenticated storage-state value was read.
+
+### Source reload paths and corrected classification
+
+Read-only search found these Ripple full-document paths:
+
+- `public/index.html:36-50`: script/link error listener; once the fixed
+  `__ripple_reload__` marker is absent or older than 60 seconds, it calls
+  `window.location.reload(true)`. This is the source-proven bootstrap/stale-
+  cache path, but an error alone is not enough for the old artifact.
+- `src/router.js:1449-1462`: `router.onError` reloads once for a matching
+  chunk/CSS `Loading chunk ... failed`/`ChunkLoadError` message.
+- `src/vuex/api/auth.js:111-117`: `logout()` calls `location.reload()` after
+  removing the auth cookie; this is user/session action, not a passive initial
+  route prerequisite.
+- `src/microfrontends/components/MicroAppError.vue:93-100`: user-visible
+  reload action; not initial bootstrap.
+- `src/App.vue:121-191`: token-expiry handling uses a full `location.href`
+  redirect to login, not a same-path reload.
+
+Nightwatch `observe:authenticated`, readiness, and bootstrap observer code has
+no `page.reload()` or equivalent reload trigger. Its authenticated path uses a
+single `page.goto(target)`; `page.goto` in direct auth capture is separate and
+does not run in this observation. Synthetic classifier coverage proves a
+Nightwatch signal cannot be mislabeled as an application reload.
+
+The four blocked resource-error events in the real run were already within the
+approved browser-background/telemetry/Pylon containment categories and were
+not source-proven required Ripple bootstrap dependencies. No blocked required
+destination was approved, and no safety review was triggered.
+
+### Post-mount diagnostic contract and validation
+
+Implementation `c771048fc1cdad04807a72c2b77e687a3139077b` adds:
+
+- a pre-navigation `MutationObserver` replacement event after `#app` removal;
+- fixed replacement metadata: `element|comment|text|none|unknown`, bounded
+  allowlisted tag, and only `.loading-div`, `.__AuthLayout`,
+  `.q-layout-container.layout`, and `.q-layout-container` matches;
+- `VUE_INITIAL_PATCH`, `ROOT_RENDER_BRANCH`, `ROUTER_INITIALIZED` (explicitly
+  `NOT_DIRECTLY_OBSERVABLE`), `INITIAL_ROUTE_RESOLVED`,
+  `DEFAULT_LAYOUT_RENDERED`, `Q_LAYOUT_RENDERED`,
+  `DASHBOARD_ROUTE_ACTIVE`, and `ROUTE_STABLE_750MS` checkpoint metadata;
+- source-specific stale-cache reload signals that are emitted only when the
+  fixed source marker is not present, so a resource error alone remains
+  unresolved;
+- the exact history-mode observer primitives and no query/fragment capture;
+- source semantic-state validation and fixed reload classifier coverage.
+
+Focused boundary/reload/privacy suite: **22 passed**. Full local
+`npx playwright test`: **218 passed, 0 failed**. `npx tsc --noEmit`: PASS.
+No real Alphaus traffic, production traffic, DB query, mutation, replay,
+storage-state content access, or Ripple repository modification occurred in
+this session. `git diff --check` is PASS. M7 remains **IN_PROGRESS**.
+
+### Exact next action
+
+Do not execute the following command in this session. A fresh authorized
+session may use it only after reviewing this checkpoint and without replay:
+
+```bash
+npm run observe:authenticated -- \
+  --env=dev \
+  --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```

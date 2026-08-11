@@ -939,6 +939,55 @@ Safety/oracle/privacy result:
 The external auth state remains outside Nightwatch and uninspected. M7 remains
 `IN_PROGRESS`; M10 replay is `NOT_STARTED` and Phase 2B remains deferred.
 
+### M7 post-mount/router diagnostics ready — 2026-08-11 — `c771048`
+
+This supersedes the prior M7 reload wording without changing readiness or
+authorizing another real observation. The implementation checkpoint
+`c771048fc1cdad04807a72c2b77e687a3139077b` adds the source-backed post-`$mount`
+diagnostic boundary:
+
+- `App.vue` is now documented as `loading ? Loading : dynamic layout`, with
+  source-approved `.loading-div`, `.__AuthLayout`, `.q-layout-container`, and
+  `.q-layout-container.layout` structural vocabulary;
+- a pre-navigation MutationObserver records the immediate `#app` replacement
+  as a fixed element/comment/text/none/unknown node type, with no text, HTML,
+  arbitrary classes, attributes, or values;
+- the checkpoint sequence is `VUE_INITIAL_PATCH`, `ROOT_RENDER_BRANCH`,
+  `ROUTER_INITIALIZED=NOT_DIRECTLY_OBSERVABLE`, `INITIAL_ROUTE_RESOLVED`,
+  `DEFAULT_LAYOUT_RENDERED`, `Q_LAYOUT_RENDERED`, `DASHBOARD_ROUTE_ACTIVE`,
+  and unchanged-route stability;
+- source tracing corrected the route shorthand: Router is history mode with
+  `/ripple/` base, `/dashboard` has `/` alias, authenticated `beforeEach`
+  calls `next()` for a token-present dashboard alias, and `/login` with a token
+  explicitly redirects to `/dashboard`; there is no unconditional `/` URL
+  redirect, `beforeResolve`, or dynamic route registration;
+- source semantic checks are boolean-only: non-empty `mo_access_token`, DEV
+  `api_type`, and Ripple/`alphaus` `app_type` when present; synthetic invalid
+  state coverage is included;
+- Ripple reload paths are recorded separately for the public stale-cache
+  script/link handler, chunk-load `router.onError`, logout, MFE retry, and
+  token-expiry login navigation. Nightwatch observe/readiness code contains no
+  reload trigger;
+- resource-error timing without a source reload signal is explicitly
+  `RELOAD_CAUSE_UNRESOLVED`.
+
+The latest real run remains `nightwatch-20260811T061449Z-1fff-first`, gate
+13/13 PASS, two `200 text/html` main documents, `#app` seen at 174 ms and
+removed at 4580 ms, no rendered shell, zero history transitions, and no
+runtime/critical-resource failures. Its previous `EXPECTED_BOOTSTRAP_RELOAD`
+label is corrected to `RELOAD_CAUSE_UNRESOLVED`; no new real run was made.
+
+Focused boundary/reload/privacy tests are **22/22**; full Playwright is
+**218/218** and TypeScript is PASS. Replay remains NOT RUN, M7 remains
+IN_PROGRESS, and Phase 2B remains deferred. The exact fresh-session retry,
+not executed here, is:
+
+```bash
+npm run observe:authenticated -- \
+  --env=dev \
+  --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"
+```
+
 ### M8 — Produce the destination manifest
 
 - Objective: establish the actual browser-runtime host contract.
