@@ -3711,3 +3711,122 @@ observation once, and permit only one specific observer repair/retry. If it
 passes, allow one completely fresh-context replay, then perform final privacy,
 safety, self-review, docs, clean-tree, and closure steps. Never modify Ripple or
 start Phase 2B.
+
+## HUMAN_AUTH_ACTION_REQUIRED — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+
+Complete Phase 2A with a fresh page-readable DEV auth capture, one controlled
+canonical authenticated observation, one fresh-context replay, and final
+safety/privacy closure; do not start Phase 2B.
+
+### CURRENT_PHASE
+
+M7 — IN_PROGRESS; capture is paused at HUMAN_WAIT for the human operator.
+
+### CURRENT_EVIDENCE
+
+- The exact approved command was launched for the canonical external path.
+- PREFLIGHT, PROXY_START, PROXY_HEALTH, BROWSER_LAUNCH, GUARD_INSTALL,
+  TARGET_NAVIGATION, and TARGET_VERIFICATION all passed.
+- The headed browser is on sanitized DEV target origin/path
+  `https://appdev.alphaus.cloud` + `/ripple/`.
+- The capture process is alive at `HUMAN_WAIT:START`; no state write or
+  provenance commit has occurred yet.
+
+### CURRENT_CLASSIFICATION
+
+HUMAN_AUTH_ACTION_REQUIRED. The old external state remains
+AUTH_REPLAY_INEFFECTIVE and must not be used.
+
+### COMPLETED_THIS_SESSION
+
+- Completed and committed the D8 implementation, full local validation,
+  pre-auth gate, DEV preflight, and capture preparation.
+- Started the approved guarded headed capture and reached the human boundary.
+
+### FILES_CHANGED
+
+- This `STATE.md` waypoint; implementation remains `a6d7c8b`.
+- Prior continuity checkpoints: `6bf9773`, `58c6648`.
+
+### VALIDATION_LEDGER
+
+- TypeScript: PASS.
+- Full Playwright: 241/241 PASS.
+- Focused repair suite: 46/46 PASS.
+- Synthetic capture: 1/1 PASS.
+- DEV preflight: PASS.
+- Agent check: PASS with approved continuity warning.
+- Diff check: PASS before this waypoint.
+
+### REAL_RUN_LEDGER
+
+- No authenticated real observation has started.
+- No first-run or replay IDs exist.
+- Current controlled safety counts remain productionAttempts=0,
+  proxyViolations=0, unknownDestinations=0, unknownApprovals=0, mutations=0,
+  DBQueries=0.
+
+### AUTH_CAPTURE_LEDGER
+
+- Capture command: `npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"`.
+- Stage reached: HUMAN_WAIT:START after target verification.
+- Human action required: complete normal DEV login/MFA in the headed browser,
+  wait for authenticated Ripple to load, then press ENTER in the capture
+  terminal. Nightwatch must not receive credentials or MFA values.
+
+### DECISIONS
+
+- Keep the capture process paused; do not send ENTER on behalf of the human.
+- Do not inspect or print storage-state contents.
+- Do not launch `observe:gate` or authenticated observation until capture
+  passes post-login live page-readability validation and replaces the stale
+  external state.
+
+### REJECTED_HYPOTHESES
+
+- No new product-routing evidence exists; ROOT_ALIAS_COLLISION_BUG remains
+  refuted.
+- A headed browser reaching the target is not proof of authenticated state.
+
+### UNRESOLVED
+
+- Human login/MFA completion, fresh cookie validity, and post-login page proof.
+
+### SAFETY_EVENTS
+
+- No new safety failure, production attempt, proxy violation, unknown approval,
+  mutation, or DB query. No Ripple modification.
+
+### PRIVACY_STATUS
+
+PASS: only sanitized origin/path and stage categories were emitted. No
+credentials, MFA values, cookie values, storage-state contents, DOM, bodies,
+screenshots, or authenticated traces were persisted.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`
+
+### LAST_CHECKPOINT_SHA
+
+`58c6648`
+
+### NEXT_EXACT_ACTION
+
+Human operator completes DEV login/MFA in the already-open headed Chrome,
+waits for authenticated Ripple, and presses ENTER in the existing capture
+terminal. Then poll the existing capture process and continue with safe fresh
+state validation; never start observation with the old state.
+
+### RESUME_RECIPE
+
+Read this waypoint first. If the existing capture session is still alive,
+continue polling it rather than starting a second capture. After human ENTER,
+record post-login stage results, verify only boolean fresh-state/page-readability
+facts, require the 13/13 gate, and run the canonical authenticated observation.
+Use at most one specific Nightwatch repair/retry, then one fresh-context replay
+after a first pass. If human action cannot be completed, leave the capture
+without stale observation, report HUMAN AUTH ACTION REQUIRED, and preserve this
+checkpoint. Never modify Ripple or start Phase 2B.
