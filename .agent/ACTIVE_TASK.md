@@ -6,8 +6,8 @@ Title: First Controlled Authenticated Ripple Dev/Next Observation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2a-controlled-observation
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 6c0d973
-Last validated implementation SHA: 6c0d973
+Current SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
+Last validated implementation SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
 Current milestone: M7 — First controlled authenticated landing observation (IN_PROGRESS)
 Last checkpoint: 2026-08-11 — root cause found: DEV /ripple/ renders auth-layout, not dashboard shell
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13,

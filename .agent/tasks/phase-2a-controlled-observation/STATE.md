@@ -6,8 +6,8 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: IN_PROGRESS
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 6c0d973
-Last validated implementation SHA: 6c0d973
+Current SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
+Last validated implementation SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
 Branch: main
 Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13.
