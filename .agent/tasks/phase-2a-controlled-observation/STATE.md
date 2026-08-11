@@ -6,11 +6,11 @@ Task ID: phase-2a-controlled-observation
 Phase: 2A
 Status: COMPLETE
 Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
-Current SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
-Last validated implementation SHA: 47937abb9134e0fbfb5a3e0e224d3e10cc8337eb
+Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
+Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
 Branch: main
-Last checkpoint: 2026-08-11 (resume session) — auth replay classified INEFFECTIVE;
-root-route cause is expired external auth state, NOT a product routing bug.
+Last checkpoint: 2026-08-12 — Phase 2A fresh-auth observation and replay
+completed; final closure checkpoint is `9bf2c4593c9eb46db8bb8a5975bfa336461641cd`.
 
 ## Resume discrimination result (supersedes prior root-cause "product routing")
 
@@ -89,8 +89,8 @@ evidence, and a single fresh-context replay.
 ## Current Milestone
 
 Milestone ID: M7 — First controlled authenticated landing observation
-Status: IN_PROGRESS
-What is now established: M6 passed against the exact DEV Ripple target
+Status: COMPLETE
+Historical checkpoint (superseded): M6 passed against the exact DEV Ripple target
 `https://appdev.alphaus.cloud/ripple/`. The latest instrumented authenticated
 run `nightwatch-20260811T072928Z-d840-first` passed all 13 pre-real-run checks
 and reached the approved DEV origin. Its final path was `/ripple/`; the
