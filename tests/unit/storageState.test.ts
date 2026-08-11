@@ -19,6 +19,7 @@ import {
   isAuthenticatedRun,
   inspectStorageStateKeyPresence,
   inspectStorageStateKeySemantics,
+  inspectStorageStateCookiePageReadability,
 } from '../../src/browser/fixtures/storageState';
 
 const NIGHTWATCH_ROOT = path.resolve(__dirname, '..', '..');
@@ -278,6 +279,121 @@ test.describe('storage-state secret handling', () => {
       expect(() => validateStorageStateOutputPath(path.join(NIGHTWATCH_ROOT, 'captured.json'), { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/outside/);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: live applicable non-httpOnly cookie is readable', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'appdev.alphaus.cloud', path: '/ripple/', httpOnly: false, secure: false, sameSite: 'Lax', expires: Math.floor(Date.now() / 1000) + 86400 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.present).toBe(true);
+      expect(r.domainApplicable).toBe(true);
+      expect(r.pathApplicable).toBe(true);
+      expect(r.httpOnly).toBe(false);
+      expect(r.expired).toBe(false);
+      expect(r.pageReadable).toBe(true);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: expired applicable non-httpOnly cookie is NOT readable (the stale-capture case)', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'appdev.alphaus.cloud', path: '/ripple/', httpOnly: false, secure: false, sameSite: 'Lax', expires: Math.floor(Date.now() / 1000) - 86400 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.present).toBe(true);
+      expect(r.domainApplicable).toBe(true);
+      expect(r.pathApplicable).toBe(true);
+      expect(r.expired).toBe(true);
+      expect(r.pageReadable).toBe(false);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: httpOnly cookie is NOT readable by page JS', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'appdev.alphaus.cloud', path: '/ripple/', httpOnly: true, secure: false, sameSite: 'Lax', expires: Math.floor(Date.now() / 1000) + 86400 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.httpOnly).toBe(true);
+      expect(r.pageReadable).toBe(false);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: path mismatch makes the cookie not readable', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'appdev.alphaus.cloud', path: '/other/', httpOnly: false, secure: false, sameSite: 'Lax', expires: Math.floor(Date.now() / 1000) + 86400 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.pathApplicable).toBe(false);
+      expect(r.pageReadable).toBe(false);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: session cookie (expires -1) counts as unexpired and readable', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'appdev.alphaus.cloud', path: '/ripple/', httpOnly: false, secure: false, sameSite: 'Lax', expires: -1 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.expired).toBe(false);
+      expect(r.pageReadable).toBe(true);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: parent-domain cookie covers the app host', () => {
+    const file = tmpStateFile({
+      cookies: [
+        { name: 'mo_access_token', value: 'FAKE_VAL_SHOULD_NOT_LEAK', domain: 'alphaus.cloud', path: '/', httpOnly: false, secure: false, sameSite: 'Lax', expires: Math.floor(Date.now() / 1000) + 86400 },
+      ],
+      origins: [],
+    });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.domainApplicable).toBe(true);
+      expect(r.pathApplicable).toBe(true);
+      expect(r.pageReadable).toBe(true);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
+    }
+  });
+
+  test('page-readability: absent cookie reports not present and not readable', () => {
+    const file = tmpStateFile({ cookies: [], origins: [] });
+    try {
+      const r = inspectStorageStateCookiePageReadability(file, { cookieKey: 'mo_access_token', appOrigin: 'https://appdev.alphaus.cloud', appPath: '/ripple/' });
+      expect(r.present).toBe(false);
+      expect(r.pageReadable).toBe(false);
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true });
     }
   });
 });

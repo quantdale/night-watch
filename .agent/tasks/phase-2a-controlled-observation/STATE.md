@@ -9,7 +9,61 @@ Starting SHA: 3a2712185250cd4e3591ee4037b28e06e8a0417e
 Current SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
 Last validated implementation SHA: 6c0d9737fa147eaaaee8796979f419a8ab007567
 Branch: main
-Last checkpoint: 2026-08-11 — Phase 2A health audit + repair round complete (229/229)
+Last checkpoint: 2026-08-11 (resume session) — auth replay classified INEFFECTIVE;
+root-route cause is expired external auth state, NOT a product routing bug.
+
+## Resume discrimination result (supersedes prior root-cause "product routing")
+
+Evidence-backed resolution of the Phase A–G discrimination, during this goal-mode
+resume:
+
+1. **Phase A verdict: `AUTH_DIAGNOSTIC_CONTEXT_ONLY`.** Nightwatch's prior
+   `requiredTokenPresent`/`requiredTokenNonEmpty`/
+   `aggregateSemanticValidity=VALID` came from `inspectStorageStateKeySemantics`
+   and `inspectStorageStateKeyPresence`, which read the external
+   `NIGHTWATCH_STORAGE_STATE` **file on disk** (cookie name + value in a local
+   variable, booleans returned). They prove only "the capture file records these
+   cookie rows" — NOT that Ripple page JavaScript can read `mo_access_token`.
+2. **Phase D cookie applicability (metadata only, no values):** in the external
+   capture file the `mo_access_token` cookie is `domain=appdev.alphaus.cloud`,
+   `path=/ripple/`, `httpOnly=false`, `secure=false`, `sameSite=Lax` — i.e. it
+   WOULD be exposed to `document.cookie` at the app origin IF unexpired. But its
+   **`expires=2026-08-10T18:53:39Z` is in the past** (now 2026-08-11), as are
+   `api_type`/`app_type` (2026-08-10T18:07:26Z). So the capture is stale/expired.
+3. **Phase B/C exact semantics (actual vue-router 3.5.1, synthetic local
+   reproduction + source `router.js:1385-1413`):** for base `/ripple/` the
+   base-relative root path is `/`, which matches `["/login"]` (via its
+   `alias: ''`, layout `auth`, requiresAuth false). Guard behavior:
+   - root `/` **with token** → `(to.path==='/'||to.path==='/login') && token` →
+     `next('/dashboard')`. Authenticated `/ripple/` DOES reach the dashboard.
+   - root `/` **without token** → the requiresAuth branch is false (login has
+     no requiresAuth) and the `/`+token branch is false → fall-through `next()`
+     → renders `auth-layout` (login content).
+   So an authenticated root visit does NOT render an auth layout — it is
+   redirected to `/dashboard`. The "root resolves to AuthLayout" symptom is
+   produced ONLY by an unauthenticated (no page-visible token) session.
+4. **Phase E classification: `AUTH_REPLAY_INEFFECTIVE`.** Context (file)
+   contains the expired token; the page cannot read it (expired cookies are not
+   in `document.cookie` — proved by a local Playwright/Chrome reproduction:
+   expired cookie → absent from `document.cookie`; live/session cookie →
+   present). The source-defined unauthenticated branch (auth-layout) is
+   positively observed. Prior aggregate "VALID" was a context-only artifact.
+5. **Phase F/G intent:** the routing contract is NOT a product bug. `/login`
+   `alias:''` matches the base root and its guard redirects authenticated users
+   to `/dashboard`. The observed auth-layout at `/ripple/` reflects that the
+   session was effectively unauthenticated because the external auth capture
+   expired. `ROOT_ALIAS_COLLISION_BUG` is refuted; intent is correct and
+   unambiguous for authenticated sessions. Prior "PRODUCT ROUTING CONDITION"
+   report is superseded: it confused context cookie presence with page
+   visibility and did not model the authenticated guard redirect.
+
+Implication for Phase 2A: the dashboard `/ripple/dashboard` IS a safe, valid
+passive observation target (get/navigation only, requiresAuth), but a truthful
+AUTHENTICATED observation and fresh-context replay require a **fresh**, non-expired
+external auth capture. The prior capture is expired; no authenticated
+observation or replay is runnable from it. Per spec, readiness must NOT be
+weakened to fake an authenticated pass, and no product bug is to be filed.
+
 `nightwatch-20260811T072928Z-d840-first` passed the pre-real-run gate 13/13.
 Its sanitized evidence shows two completed `200 text/html` main-document
 loads, `#app` seen and removed, and an immediate replacement classified as a

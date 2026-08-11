@@ -18,6 +18,7 @@ import { createNightwatchContext, validateUiUrl } from '../../src/browser/contex
 import {
   inspectStorageStateKeyPresence,
   inspectStorageStateKeySemantics,
+  inspectStorageStateCookiePageReadability,
   validateStorageStateFile,
 } from '../../src/browser/fixtures/storageState';
 import { installDocumentLifecycleObserver, type DocumentLifecycleObserver } from '../../src/browser/observers/documentLifecycle';
@@ -485,6 +486,27 @@ async function observeOnce(
     severity: 'info',
     message: 'source-defined authenticated bootstrap state semantic booleans observed',
     data: { ...authBootstrapStateSemantics, pass },
+  });
+
+  // Context-side browser-visibility approximation (Phase D). Never exposes the
+  // token value: only booleans for domain/path applicability, httpOnly, secure,
+  // expiry, and the aggregate pageReadable flag. This distinguishes "the capture
+  // file records a cookie" from "a browser at the app origin would expose it to
+  // the page for js-cookie". Expiry is checked with the current wall clock.
+  const targetUrl = new URL(target);
+  const targetOrigin = targetUrl.origin;
+  const targetPath = targetUrl.pathname;
+  const tokenPageReadability = inspectStorageStateCookiePageReadability(storageStatePath, {
+    cookieKey: 'mo_access_token',
+    appOrigin: targetOrigin,
+    appPath: targetPath,
+  });
+  recorder.addManifestEntry('authTokenPageReadability', tokenPageReadability);
+  recorder.event({
+    type: 'env',
+    severity: 'info',
+    message: 'auth-token page-readability booleans observed (context-derived, no value exposed)',
+    data: { ...tokenPageReadability, pass },
   });
 
   const proxyEventLogStart = (() => {

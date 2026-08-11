@@ -431,3 +431,103 @@ not begun.
 agent:check` PASS (approved CHECKPOINT_ADVANCE); `git diff --check` PASS;
 self-review clean. No Alphaus repo modified; no production/DB/mutation/auth-state
 access. Production attempts for the controlled run(s): 0.
+
+---
+
+# NIGHTWATCH PHASE 2A — AUTH REPLAY INEFFECTIVE (supersedes PRODUCT ROUTING CONDITION)
+
+Status: this resume session re-discriminated the prior "PRODUCT ROUTING
+CONDITION" conclusion and refutes it. The root-route auth-layout symptom is
+caused by **ineffective auth replay** (the external auth capture is expired),
+not by a Ripple product routing bug. Phase 2A cannot complete until a fresh,
+non-expired external auth capture is provided by a human.
+
+## Previous Goal-Mode audit (Phase A)
+
+- Prior `requiredTokenPresent=true`, `requiredTokenNonEmpty=true`, and
+  `aggregateSemanticValidity=VALID` were computed by
+  `inspectStorageStateKeySemantics`/`inspectStorageStateKeyPresence`, which read
+  the external `NIGHTWATCH_STORAGE_STATE` **file on disk** (cookie name + value
+  in a local variable; booleans returned). They prove only "the capture file
+  records these cookie rows" — NOT that Ripple page JS can read `mo_access_token`.
+- Verdict: **`AUTH_DIAGNOSTIC_CONTEXT_ONLY`**. The prior aggregate "VALID" was a
+  context-only artifact and did not discriminate auth replay effectiveness.
+
+## Browser-visibility (Phase D/E) — context metadata + live-browser proof
+
+- Real capture (`$HOME/.nightwatch/auth/ripple-dev-state.json`) `mo_access_token`
+  cookie: `domain=appdev.alphaus.cloud`, `path=/ripple/`, `httpOnly=false`,
+  `secure=false`, `sameSite=Lax` — i.e. it WOULD be exposed to `document.cookie`
+  at the app origin IF unexpired. But its **`expires=2026-08-10T18:53:39Z` is in
+  the past** (now 2026-08-11); `api_type`/`app_type` expired 2026-08-10T18:07:26Z.
+- Local Playwright/Chrome reproduction (no real network): an **expired** cookie
+  injected via storageState is ABSENT from `document.cookie`; a live/session
+  cookie is PRESENT. Ripple's guard uses `js-cookie` `Cookies.get`, which reads
+  `document.cookie`; an expired token is therefore invisible to the guard.
+- Classification: **`AUTH_REPLAY_INEFFECTIVE`**. Context contains the expired
+  token; the page cannot read it; the source-defined unauthenticated branch
+  (auth-layout) is positively observed.
+
+## Exact router semantics (Phase B/C) — actual vue-router 3.5.1 synthetic repro
+
+- Base `/ripple/`; base-relative root path is `/`; matches `["/login"]` via its
+  `alias: ''` (layout `auth`, requiresAuth false). `/login` is registered before
+  `/dashboard` (`alias: '/'`).
+- Guard (src/router.js:1385-1413):
+  - root `/` **with token** → `(to.path==='/'||'/login') && token` →
+    `next('/dashboard')`. Authenticated `/ripple/` DOES reach the dashboard.
+  - root `/` **without token** → requiresAuth branch false + `/`-token branch
+    false → fall-through `next()` → renders `auth-layout`.
+- Conclusion: an authenticated root visit does NOT render an auth layout; it is
+  redirected to `/dashboard`. The observed auth-layout reflects an
+  unauthenticated (expired-token) session. `ROOT_ALIAS_COLLISION_BUG` refuted.
+
+## Product intent (Phase F/G)
+
+- Source intent is unambiguous: guard branch5 redirects authenticated root to
+  `/dashboard`; `Header.vue:74` and `afterEach` (router.js:1438-1446) route the
+  authenticated landing to `/dashboard`. No Ripple Router unit tests exist. The
+  routing contract is correct for authenticated sessions; no product bug is
+  indicated.
+
+## Explicit /ripple/dashboard target (Phase H)
+
+- From source, `/ripple/dashboard` exists, `requiresAuth=true`, is a
+  GET/navigation-only passive observation (no mutation). Classification:
+  **`EXPLICIT_DASHBOARD_TARGET_APPROVED_FOR_PASSIVE_OBSERVATION`** — but a truthful
+  authenticated observation requires a valid (non-expired) capture, which is not
+  present.
+
+## Nightwatch repair (Phase J)
+
+- Added `inspectStorageStateCookiePageReadability` (booleans only: present,
+  domainApplicable, pathApplicable, httpOnly, secure, expired, pageReadable) and
+  wired it into the authenticated runner's reporting as `authTokenPageReadability`.
+  Against the real capture it correctly reports `expired=true, pageReadable=false`.
+- Added 7 focused unit tests (22 storage-state tests total). `npx tsc --noEmit`
+  PASS.
+
+## Real observations (Phase L/M/N)
+
+- NOT run this resume. Phase L: when browser-visible auth is FALSE, STOP
+  root-route product diagnosis and classify `AUTH_REPLAY_INEFFECTIVE`. Phase M
+  (dashboard observation) is gated on "browser-visible auth is valid", which is
+  false with the expired capture. Running anything with the stale capture would
+  only re-render auth-layout and would not be a truthful authenticated
+  observation. No real-run budget was spent this resume.
+
+## Blocker
+
+A genuine external/human blocker: the external auth capture is **expired** and
+must be re-created by a human login/MFA via
+`npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+(a fresh output path). Until then, no truthful authenticated observation or
+replay is possible. Readiness is NOT weakened; no product bug is filed; Phase 2B
+is not begun.
+
+## Validation
+
+`npx tsc --noEmit` PASS; storage-state focused tests **22/22 PASS**; full
+`npx playwright test` and `npm run agent:check`/`git diff --check` run next after
+STATE/REPORT checkpoint. No Alphaus repo modified; no production/DB/mutation/
+auth-value access. Production attempts for this resume: 0.

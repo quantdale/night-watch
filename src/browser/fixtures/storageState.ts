@@ -202,6 +202,93 @@ export function inspectStorageStateKeyPresence(
 }
 
 /**
+ * Context-side approximation of whether a browser WILL expose a named cookie
+ * to the app page — WITHOUT reading any cookie value. Returns booleans only.
+ *
+ * Ripple reads `mo_access_token` via js-cookie (`Cookies.get`), which parses
+ * `document.cookie`. A cookie is present in `document.cookie` only when ALL of:
+ *   - the cookie's domain applies to the current origin's host;
+ *   - the cookie's path is a prefix of the current path;
+ *   - the cookie is NOT httpOnly (httpOnly cookies are hidden from JS);
+ *   - the cookie is NOT expired (and not secure-required-on-a-non-https page,
+ *     which never occurs for the appdev https target);
+ *   - sameSite does not suppress the top-level navigation (Lax does not).
+ *
+ * This is deliberately context-derived; it does NOT prove the live page truly
+ * received the cookie (only a real browser evaluation can). It upgrades the
+ * Phase A claim from "capture file records a row" to "a browser at the app
+ * origin would expose this non-httpOnly, unexpired, applicable cookie". The
+ * page-readability result must still be classified conservatively.
+ */
+export interface CookiePageReadability {
+  /** The named cookie exists in the capture file. */
+  present: boolean;
+  /** Cookie domain equals the app host or covers it as a parent domain. */
+  domainApplicable: boolean;
+  /** Cookie path is a prefix of the app path. */
+  pathApplicable: boolean;
+  /** Cookie is httpOnly (hidden from document.cookie / page JS). */
+  httpOnly: boolean;
+  /** Cookie requires a secure context. */
+  secure: boolean;
+  /** Cookie is expired as of inspection time (or true when unknown). */
+  expired: boolean;
+  /**
+   * True only when present && domainApplicable && pathApplicable && !httpOnly
+   * && !expired && (page would be https). This mirrors the conditions under
+   * which js-cookie can see the token from the app page.
+   */
+  pageReadable: boolean;
+}
+
+export function inspectStorageStateCookiePageReadability(
+  p: string,
+  opts: { cookieKey: string; appOrigin: string; appPath: string },
+  atEpochSeconds: number = Math.floor(Date.now() / 1000),
+): CookiePageReadability {
+  const parsed = JSON.parse(fs.readFileSync(p, 'utf8')) as Record<string, unknown>;
+  const cookies = Array.isArray(parsed.cookies) ? parsed.cookies : [];
+  const record = cookies.find(
+    (item): item is Record<string, unknown> =>
+      item !== null && typeof item === 'object' && (item as Record<string, unknown>).name === opts.cookieKey,
+  );
+  if (record === undefined) {
+    return { present: false, domainApplicable: false, pathApplicable: false, httpOnly: false, secure: false, expired: false, pageReadable: false };
+  }
+  // appOrigin like "https://appdev.alphaus.cloud"
+  const appHost: string = (opts.appOrigin.replace(/^https?:\/\//i, '').split('/')[0]) || '';
+  const secureTarget = /^https:/i.test(opts.appOrigin);
+  // Strip a leading "." from the cookie domain, then compare: cookie covers
+  // the host if the host is the cookie domain or ends with "." + cookie domain.
+  const cookieDomain = typeof record.domain === 'string' ? record.domain.replace(/^\./, '') : '';
+  const hostMatches = (cookieDomain === appHost) || (cookieDomain !== '' && appHost.endsWith('.' + cookieDomain));
+  const cookiePath = typeof record.path === 'string' ? record.path : '';
+  const pathMatches =
+    cookiePath === '' ||
+    cookiePath === '/' ||
+    opts.appPath.replace(/\/+$/, '') + '/' === cookiePath.replace(/\/+$/, '') + '/' ||
+    opts.appPath === cookiePath ||
+    (cookiePath !== '/' && opts.appPath.startsWith(cookiePath.replace(/\/+$/, '') + '/'));
+  const httpOnly = record.httpOnly === true;
+  const secure = record.secure === true;
+  const expiresRaw = record.expires;
+  // expires === -1 (session cookie) counts as unexpired for this session.
+  const isSession = typeof expiresRaw === 'number' && expiresRaw === -1;
+  const hasFutureExpiry = typeof expiresRaw === 'number' && expiresRaw > atEpochSeconds;
+  const expired = !isSession && (!hasFutureExpiry);
+  const pageReadable = hostMatches && pathMatches && !httpOnly && !expired && (secure ? secureTarget : true);
+  return {
+    present: true,
+    domainApplicable: hostMatches,
+    pathApplicable: pathMatches,
+    httpOnly,
+    secure,
+    expired,
+    pageReadable,
+  };
+}
+
+/**
  * Validate a destination before a human-led capture writes secret state.
  * The destination must not already exist; capture never overwrites a file.
  */
