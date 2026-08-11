@@ -19,20 +19,20 @@ semantically read-only Ripple journeys with one fresh-context replay each.
 
 ## Current Milestone
 
-CURRENT_PHASE: M0 — Phase 2A reconciliation and native Phase 2B task creation.
-The frozen SPEC exists; implementation and candidate archaeology have not
-begun.
+CURRENT_PHASE: M1 — Ripple archaeology and candidate inventory. The Phase 2B
+SPEC and native task routing are checkpointed; candidate source inspection is
+next.
 
 ## Completed Milestones
 
 - Phase 2A closure reconciliation: complete against Git history and durable
   task files; no implementation drift after `a6d7c8b`.
-- Phase 2B task creation: files added and awaiting the first continuity commit.
+- Phase 2B task creation: files added and checkpointed at `5797ac8`.
 
 ## Work In Progress
 
-M0 task checkpoint validation and commit. No Ripple source archaeology or
-Phase 2B implementation has started.
+M1 candidate source archaeology and inventory. No Phase 2B implementation or
+real target activity has started.
 
 ## CURRENT_GOAL
 
@@ -47,7 +47,7 @@ task routing are checkpointed; candidate source inspection is next.
 
 ## CURRENT_EVIDENCE
 
-- Nightwatch HEAD is clean at `ec4c14376923ffbe12356dd180218eb09cf4f75f`.
+- Nightwatch M0 task checkpoint is `5797ac8`; the post-commit tree is clean.
 - Phase 2A implementation baseline is `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
 - Phase 2A validated closure checkpoint is
   `9bf2c4593c9eb46db8bb8a5975bfa336461641cd`.
@@ -105,9 +105,8 @@ continuity documentation only.
 
 ## VALIDATION_LEDGER
 
-- `git status --short --branch`: clean at the Phase 2A terminal HEAD before
-  task creation; M0 task files are the only current Nightwatch changes.
-- `git rev-parse HEAD`: `ec4c14376923ffbe12356dd180218eb09cf4f75f`.
+- `git status --short --branch`: clean at M0 checkpoint `5797ac8`.
+- `git rev-parse HEAD`: `5797ac8`.
 - Phase 2A history review: implementation, closure checkpoint, and terminal
   documentation descendants have the expected semantics.
 - `npm run agent:check`: PASS with the expected approved `CHECKPOINT_ADVANCE`
@@ -117,7 +116,7 @@ continuity documentation only.
 ## Validation Ledger
 
 The machine-readable ledger is `VALIDATION_LEDGER` above. The M0 validation
-gate is complete; the following commit contains only the native Phase 2B
+gate is complete; commit `5797ac8` contains only the native Phase 2B
 task-routing documents.
 
 ## REAL_RUN_LEDGER
@@ -206,8 +205,8 @@ privacy validation has not started; no sensitive artifact was created.
 
 ## LAST_CHECKPOINT_SHA
 
-`ec4c14376923ffbe12356dd180218eb09cf4f75f` (pre-task-file clean HEAD; the
-first Phase 2B continuity commit will become the active checkpoint).
+`5797ac8` (native Phase 2B task-routing checkpoint; implementation baseline
+remains `a6d7c8b`).
 
 ## NEXT_EXACT_ACTION
 
@@ -219,8 +218,8 @@ selecting any journey.
 
 ## Exact Next Action
 
-Run the M0 task checkpoint validation, then begin the minimal read-only source
-archaeology described by `NEXT_EXACT_ACTION` above.
+Begin the minimal read-only source archaeology described by
+`NEXT_EXACT_ACTION` above.
 
 ## RESUME_RECIPE
 
