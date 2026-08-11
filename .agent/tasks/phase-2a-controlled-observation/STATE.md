@@ -3830,3 +3830,158 @@ Use at most one specific Nightwatch repair/retry, then one fresh-context replay
 after a first pass. If human action cannot be completed, leave the capture
 without stale observation, report HUMAN AUTH ACTION REQUIRED, and preserve this
 checkpoint. Never modify Ripple or start Phase 2B.
+
+## FRESH_AUTH_VALIDATED — Goal-Mode Waypoint (2026-08-12)
+
+### CURRENT_GOAL
+
+Complete Phase 2A with the fresh page-readable DEV auth state, one controlled
+canonical passive observation, one completely fresh-context replay, and final
+safety/privacy/documentation closure. Do not start Phase 2B.
+
+### CURRENT_PHASE
+
+M7 — IN_PROGRESS; fresh human auth capture and the strict pre-real-run gate
+passed. The first authenticated observation has not yet started.
+
+### CURRENT_EVIDENCE
+
+- The existing interactive capture process completed successfully through
+  `HUMAN_WAIT`, `POST_LOGIN_VERIFICATION`, `STORAGE_STATE_WRITE`,
+  `PROVENANCE_WRITE`, `STATE_VALIDATION`, and `CLEANUP`.
+- Fresh capture artifact run ID: `nightwatch-20260811T183030Z-c652`.
+- Sanitized capture provenance: `mode=human-parent-cli`, `environment=dev`,
+  origin `https://appdev.alphaus.cloud`, path `/ripple/`, state shape
+  `playwright-storage-state`, state location `external-requested-path`.
+- Live page-JavaScript auth proof from the capture is boolean-only:
+  `evaluationSucceeded=true`, `tokenPageReadable=true`,
+  `tokenNonEmpty=true`, `apiTypePageVisible=true`,
+  `apiTypeMatchesDev=true`, `appTypePageVisible=true`,
+  `appTypeMatchesRipple=true`, aggregate page bootstrap semantics `VALID`.
+  The evaluator basis is `page-javascript-document-cookie`; no cookie value or
+  `document.cookie` string was emitted.
+- Fresh external-state safe structural diagnostics are all valid:
+  `storageStateExists=true`, `provenanceMatchesDev=true`, required token
+  entry present, not expired, domain/path applicable, HttpOnly-compatible,
+  secure-compatible, and page-readable; API/app selection keys are present
+  and match DEV/Ripple; aggregate bootstrap semantics are `VALID`.
+- `npm run observe:gate -- --env=dev --storage-state=...` passed all **13/13**
+  checks before any authenticated context or target navigation.
+
+### CURRENT_CLASSIFICATION
+
+`FRESH_AUTH_VALIDATED`. The previous state remains historically classified as
+`AUTH_REPLAY_INEFFECTIVE`; the fresh state is positively page-readable and is
+the only state authorized for the next observation.
+
+### COMPLETED_THIS_SESSION
+
+- Completed the human DEV login/MFA interaction in the already-open guarded
+  browser and released the existing capture process exactly once.
+- Confirmed validation-first atomic replacement of the external state path;
+  the state remains outside Nightwatch and was not copied or persisted here.
+- Reviewed the sanitized capture manifest and extracted only boolean/provenance
+  fields.
+- Ran safe static fresh-state booleans and the strict 13/13 local gate.
+
+### FILES_CHANGED
+
+- External state path only: `$HOME/.nightwatch/auth/ripple-dev-state.json`
+  (outside the repository and not inspected for values).
+- This `STATE.md` waypoint; no implementation or Alphaus repository changes.
+
+### VALIDATION_LEDGER
+
+- Interactive capture stages: PASS through cleanup.
+- Capture live page-readability proof: PASS; all fixed semantic booleans valid.
+- Fresh state structural boolean diagnostic: PASS; aggregate `VALID`.
+- `npm run observe:gate -- --env=dev --storage-state=...`: **13/13 PASS**.
+- Prior pre-auth local validation remains valid: TypeScript PASS, Playwright
+  241/241 PASS, focused repair suite 46/46 PASS, synthetic capture 1/1 PASS,
+  `agent:check` PASS with approved continuity warning, diff check PASS.
+
+### REAL_RUN_LEDGER
+
+- Fresh authenticated observation: NOT STARTED after this gate.
+- Fresh-context replay: NOT STARTED.
+- Current controlled-run safety counts remain:
+  `productionAttempts=0`, `proxyViolations=0`, `unknownDestinations=0`,
+  `unknownApprovals=0`, `mutations=0`, `DBQueries=0`.
+
+### AUTH_CAPTURE_LEDGER
+
+- Fresh capture run: `nightwatch-20260811T183030Z-c652`, PASS.
+- Fresh state: valid, externally stored, page-readable, and provenance-matched
+  to DEV. The prior expired state was replaced only after post-login live proof
+  and state validation.
+- No credentials, MFA values, cookie values, storage-state contents, or
+  `document.cookie` text were printed, persisted, or copied.
+
+### DECISIONS
+
+- Proceed only with the existing canonical `/ripple/` observation contract;
+  do not add an arbitrary dashboard fallback.
+- Require the strict 13/13 gate result already earned before creating the real
+  authenticated context.
+- Use the exact observation command once. Permit at most one bounded retry only
+  if a specific Nightwatch defect is proven and repaired locally; replay is a
+  separate single fresh-context action after a complete first-run pass.
+- Preserve the 750 ms rendered-QLayout readiness contract and all containment,
+  privacy, passive-action, trace-off, and no-mutation controls.
+
+### REJECTED_HYPOTHESES
+
+- File-level token presence alone is not being used as auth replay proof; live
+  page-JavaScript booleans are now positive evidence.
+- The old expired-auth root symptom is not being revived as a routing bug.
+- A successful capture or gate alone is not Phase 2A completion.
+
+### UNRESOLVED
+
+- First-run authenticated route resolution, QLayout rendering, 750 ms route
+  stability, lifecycle/resource/oracle results, and safety manifest.
+- Fresh-context replay equivalence and final privacy review of both runs.
+
+### SAFETY_EVENTS
+
+- No new safety event during capture or the local gate. No production attempt,
+  proxy violation, unknown approval, mutation, DB query, or new host approval.
+- Expected contained browser/background and telemetry categories remain
+  governed by the existing exact policy; no policy was broadened.
+
+### PRIVACY_STATUS
+
+PASS. Capture and gate emitted only sanitized stage/provenance/boolean
+metadata; authenticated traces and screenshots remained disabled; the external
+state remains outside Nightwatch; no credentials, token/cookie values, bodies,
+DOM, identity, or financial data were persisted.
+
+### LAST_VERIFIED_IMPLEMENTATION_SHA
+
+`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`
+
+### LAST_CHECKPOINT_SHA
+
+`4df6105fcf8910840930dd9844d30bfc99b10f2e`
+
+### NEXT_EXACT_ACTION
+
+Checkpoint this waypoint, confirm the current SPEC/PLAN target contract still
+requires canonical `/ripple/`, then run exactly:
+
+`npm run observe:authenticated -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+
+Do not supply `--ui-url`, do not reuse the old state, do not run a third real
+observation, and do not start Phase 2B.
+
+### RESUME_RECIPE
+
+Read this waypoint, verify the Nightwatch tree and implementation SHA, and
+confirm the capture artifact's boolean page proof plus the 13/13 gate. Commit
+the checkpoint, then run the exact canonical authenticated command. Inspect
+only sanitized first-run output. If readiness passes completely, allow one
+completely new browser context with the same fresh external state and compare
+sanitized results. If readiness fails, classify the narrowest evidence-backed
+result; repair only a proven Nightwatch defect with full local validation and
+one bounded retry. Never print auth values, inspect `document.cookie`, modify
+Ripple, approve a new host, or begin Phase 2B.
