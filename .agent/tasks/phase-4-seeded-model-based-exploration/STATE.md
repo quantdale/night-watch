@@ -19,8 +19,9 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## CURRENT_PHASE
 
-M0 through M6 complete; M7 is blocked at the required human-auth step before
-the first DEV exploration context.
+M0 through M6 complete; M7 is in progress at the one-time local hidden
+credential configuration step before the first authenticated exploration
+context.
 
 ## CURRENT_EVIDENCE
 
@@ -55,6 +56,11 @@ the first DEV exploration context.
 - Final guarded blocked-audit invocation produced the same result before
   BrowserContext creation. The external auth state remains unsuitable for
   Phase 4; no further automatic retries are authorized.
+- Resume launcher attempt after implementation checkpoint: DEV safety gate
+  passed; existing state was not reusable; the bounded refresh stopped with
+  `LOCAL_DEV_SECRET_CONFIGURATION_REQUIRED` before provider retrieval. One
+  unauthenticated guarded auth-refresh context was created and closed; its
+  sanitized auth artifact was `nightwatch-20260812T114909Z-b8c4`.
 
 ## SOURCE_BASELINES
 
@@ -125,6 +131,10 @@ new auto-refresh path has not yet retrieved a credential or created a real
 login context. No Phase 4 action, product mutation, production attempt, DB
 query, or exploration request was made. The fixed corpus remains unused; no
 diagnostic retries were consumed.
+
+Auth-refresh setup attempts: 1 after the secure implementation checkpoint;
+credential retrievals: 0; credential submissions: 0; MFA waits: 0. This setup
+attempt is not counted as a Phase 4 exploration context or product mutation.
 
 ## REPRODUCTION_LEDGER
 
