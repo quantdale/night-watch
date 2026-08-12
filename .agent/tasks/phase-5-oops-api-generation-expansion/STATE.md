@@ -10,7 +10,8 @@ Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Branch: main
 Last checkpoint: 2026-08-12 — Phase 4 closure independently reconciled and
-Phase 5 frozen task artifacts created; implementation has not started.
+Phase 5 frozen task artifacts committed at `7019de0005a3d288de079236f30049b605f13bd7`;
+implementation has not started.
 
 ## CURRENT_GOAL
 
@@ -244,8 +245,8 @@ implementation yet).
 
 ## LAST_CHECKPOINT_SHA
 
-`1d05c460ec0762c4587bb76f5d050a322f8f47a6` before the M0 task-document
-checkpoint commit.
+`7019de0005a3d288de079236f30049b605f13bd7` — M0 task-document checkpoint;
+the validated implementation baseline remains `1d05c460ec0762c4587bb76f5d050a322f8f47a6`.
 
 ## NEXT_EXACT_ACTION
 
