@@ -6,13 +6,12 @@ Title: Seeded / Model-Based Exploration
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 728422a7f8fe367438cf903ddae462d48843a715
-Last validated implementation SHA: 728422a7f8fe367438cf903ddae462d48843a715
-Current milestone: M0 — recovery, Phase 3 closure audit, and task creation
-Last checkpoint: 2026-08-12 — native task and durable-ledger continuity support
-checkpoint `728422a7f8fe367438cf903ddae462d48843a715`.
-Next action: read the shared safety/semantic/journey/oracle/replay modules and
-perform narrow source archaeology; do not admit actions or start DEV.
+Current SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
+Last validated implementation SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
+Current milestone: M6 — pre-real validation and adversarial review
+Last checkpoint: 2026-08-12 — Phase 4 hardening checkpoint `72dd9c276945bb0081b613b00bdeff6b11d66808`.
+Next action: record the passing pre-real checkpoint, then run only the fixed
+serial DEV seed corpus within the declared context budget.
 
 ## Prior phase closure handoff
 

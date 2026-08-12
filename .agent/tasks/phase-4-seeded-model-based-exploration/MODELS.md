@@ -1,6 +1,7 @@
 # Phase 4 Exploration Models
 
-Status: `IMPLEMENTATION_PENDING`
+Status: `IMPLEMENTED_SYNTHETIC_VALIDATED` at checkpoint
+`72dd9c276945bb0081b613b00bdeff6b11d66808`.
 
 Planned schemas:
 

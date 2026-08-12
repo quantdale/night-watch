@@ -6,11 +6,10 @@ Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Status: IN_PROGRESS
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 728422a7f8fe367438cf903ddae462d48843a715
-Last validated implementation SHA: 728422a7f8fe367438cf903ddae462d48843a715
+Current SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
+Last validated implementation SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
 Branch: main
-Last checkpoint: 2026-08-12 — native task and durable-ledger continuity
-support checkpoint `728422a7f8fe367438cf903ddae462d48843a715`.
+Last checkpoint: 2026-08-12 — Phase 4 hardening checkpoint `72dd9c276945bb0081b613b00bdeff6b11d66808`.
 
 ## CURRENT_GOAL
 
@@ -19,7 +18,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## CURRENT_PHASE
 
-M0 and M1 complete; M2 current — source archaeology and action admission.
+M0 through M5 complete; M6 current — pre-real validation and adversarial
+review passed locally, checkpoint pending before DEV.
 
 ## CURRENT_EVIDENCE
 
@@ -31,6 +31,13 @@ M0 and M1 complete; M2 current — source archaeology and action admission.
 - Source review found J1/J2 bounded selector actions and J3 local table-sort
   actions. J3 vendor switching is stale against the local tracking delta and
   is rejected pending semantic review.
+- Phase 4 engine, typed schemas, catalog, browser adapter, seed corpus, and
+  synthetic fixture are implemented at `72dd9c276945bb0081b613b00bdeff6b11d66808`.
+- Focused Phase 4 matrix: 16 passed; full Nightwatch suite: 308 passed;
+  typecheck: PASS; no real context yet.
+- Pre-real adversarial review: PASS; no unproven action, host-policy
+  relaxation, privacy leak, planner nondeterminism, budget bypass, or Phase 5
+  scope was found.
 
 ## SOURCE_BASELINES
 
@@ -57,41 +64,49 @@ M0 and M1 complete; M2 current — source archaeology and action admission.
 ## ACTION_CATALOG_VERSION
 
 `nightwatch.safe-actions.phase4.v1`; source-reviewed catalog is recorded in
-`ACTIONS.md`, implementation still pending.
+`ACTIONS.md`; implementation is at `72dd9c276945bb0081b613b00bdeff6b11d66808`.
 
 ## STATE_MODEL_VERSION
 
-Planned: `nightwatch.exploration-state.phase4.v1`.
+`nightwatch.exploration-state.phase4.v1`.
 
 ## EXPLORATION_MODEL_VERSION
 
-`nightwatch.exploration-model.phase4.v1` with SplitMix64 v1 planner; model
-implementation pending.
+`nightwatch.exploration-model.phase4.v1` with SplitMix64 v1 planner; generic
+engine and browser adapter implemented.
 
 ## CURRENT_EXPLORATION_ENVELOPES
 
-E1/J1, E2/J2, and E3/J3 are source-reviewed in `EXPLORATION.md`; no real
-context is authorized until implementation, synthetic tripwires, full local
-validation, and adversarial pre-real review pass.
+E1/J1, E2/J2, and E3/J3 are source-reviewed in `EXPLORATION.md`; implementation,
+synthetic tripwires, full local validation, and adversarial pre-real review
+pass. DEV remains blocked until this documentation checkpoint is committed.
 
 ## SEED_LEDGER
 
-None selected or executed. Fixed seeds will be recorded before any DEV run;
-synthetic seeds will be deterministic fixture-only evidence.
+Fixed before DEV and not tuned to product findings: E1/J1
+`0x0000000000000101`, `0x0000000000000102`; E2/J2
+`0x0000000000000201`, `0x0000000000000202`; E3/J3
+`0x0000000000000301`, `0x0000000000000302`. Canonical seed format is lowercase
+`0x` plus 16 hex digits; SplitMix64 v1 and model/catalog fingerprints are
+recorded per run. Six exploration contexts plus at most three exact replays.
 
 ## COVERAGE_LEDGER
 
-Not started. Required dimensions are scoped per envelope; no product-wide
-coverage claim is permitted.
+Synthetic coverage ledger is implemented in exploration evidence; real ledger
+is empty. Required dimensions remain per-envelope; no product-wide coverage
+claim is permitted.
 
 ## REAL_RUN_LEDGER
 
-No Phase 4 real contexts. Auth state was not read, printed, or used.
+No Phase 4 real contexts yet. Auth state was not read, printed, or used. The
+fixed serial corpus is authorized only after the checkpoint commit; no
+diagnostic retries are included in the budget.
 
 ## REPRODUCTION_LEDGER
 
-None. Exact-sequence replay is not implemented and no reproduction is allowed
-before M6 pre-real readiness.
+Synthetic seed replay and exact-sequence replay pass. Real reproduction ledger
+is empty; up to one exact fresh-context replay per envelope is allowed only
+when that envelope produces a nontrivial, safety-zero sequence.
 
 ## BUG_CANDIDATES
 
@@ -111,8 +126,8 @@ control discovery is permitted.
 
 ## FILES_CHANGED
 
-Phase 4 task docs plus `FRESHNESS.md`; implementation and focused tests are
-pending.
+Phase 4 task docs plus typed engine/catalog/runner/fixture/tests; all changes
+are Nightwatch-only.
 
 ## VALIDATION_LEDGER
 
@@ -127,11 +142,19 @@ pending.
   result is to be confirmed after this documentation checkpoint.
 - Relevant Ripple UI tracking delta reviewed; J3 supplementary AOR POST
   identified and excluded from the v1 action catalog.
+- Phase 4 focused suite: 16 passed; `npx tsc --noEmit`: PASS; full
+  Playwright suite: 308 passed; `git diff --check`: PASS.
+- Hardening regression: failed actions retain invalidated transition evidence;
+  structural/read contracts are independently enforced; privacy state scalars
+  are canonicalized.
+- Pre-real adversarial review: PASS; durable review is in
+  `ADVERSARIAL_REVIEW.md`.
 
 ## SAFETY_EVENTS
 
 NONE. No browser context, DEV target, production target, database, or Alphaus
-write was used for Phase 4.
+write was used. Synthetic mutation, UNKNOWN, new-host, route-escape, runtime,
+stale, and unavailable tripwires all pass.
 
 ## PRIVACY_STATUS
 
@@ -140,28 +163,31 @@ traces entered Phase 4 task state.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`728422a7f8fe367438cf903ddae462d48843a715` (Phase 4 continuity support;
-inherited Phase 3 implementation remains `8d72ec9`).
+`72dd9c276945bb0081b613b00bdeff6b11d66808` (Phase 4 hardening checkpoint; inherited Phase 3
+implementation remains `8d72ec9`).
 
 ## LAST_CHECKPOINT_SHA
 
-`728422a7f8fe367438cf903ddae462d48843a715` — task docs plus the narrowly
-scoped validator extension for ACTIONS/MODELS/EXPLORATION/FRESHNESS ledgers.
+`72dd9c276945bb0081b613b00bdeff6b11d66808` — deterministic engine, catalog,
+synthetic fixture/tests, browser adapter, bounded real runner, and transition
+evidence hardening.
 
 ## NEXT_EXACT_ACTION
 
-Implement the generic Phase 4 state/transition/evidence model, SplitMix64 v1,
-planner, and safety-aware exploration runner against the frozen catalog. Add
-synthetic fixtures/tests before any real context.
+Commit this passing pre-real checkpoint, rerun `agent:check` against the clean
+checkpoint, then run `npm run explore:phase4 -- --env=dev` exactly once within
+the fixed six-context plus three-replay budget. Do not inspect or print auth
+state contents.
 
 ## RESUME_RECIPE
 
 1. Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `.agent/ACTIVE_TASK.md`, then
    this task's SPEC, PLAN, and STATE.
 2. Inspect `git status --short`, current SHA, and this task's diff.
-3. Complete M2 source archaeology from `ACTIONS.md`/`FRESHNESS.md`.
-4. Implement and test the generic engine; do not start a browser context until
-   `PHASE_4_PRE_REAL_EXPLORATION_READY` is recorded.
+3. Confirm the pre-real checkpoint and fixed seed ledger; use a fresh context
+   for every seed and replay.
+4. Run the fixed serial DEV corpus and exact replays only within the declared
+   budget.
 5. Update this STATE after each milestone before implementation changes.
 
 ## Decision Log
@@ -190,9 +216,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## Current Milestone
 
-Milestone ID: M2. Status: COMPLETED. Source-backed action inventory,
-rejections, and tracking-ref freshness review are checkpointed; implementation
-is the next milestone.
+Milestone ID: M4. Status: IN_PROGRESS. The implementation and synthetic
+matrix are checkpointed; pre-real validation is next.
 
 ## Completed Milestones
 
@@ -201,16 +226,19 @@ is the next milestone.
 - M1: native task and frozen Phase 4 acceptance docs created.
 - M2: J1/J2/J3 source archaeology, rejected-action ledger, and freshness delta
   review completed.
+- M3: deterministic Phase 4 engine, catalog, browser adapter, seed corpus,
+  synthetic hostile fixture, and focused tests implemented.
 
 ## Work In Progress
 
-Source archaeology is checkpointed in the worktree; generic implementation and
-synthetic validation are next. No real context has started.
+Implementation and synthetic validation are checkpointed; full local
+validation and adversarial review are in progress. No real context has started.
 
 ## Exact Next Action
 
-Implement the generic exploration engine and local synthetic fixture/tests.
-Do not create a browser context.
+Run `npx tsc --noEmit`, the full Playwright suite, `npm run agent:check`,
+focused Phase 4/privacy/artifact tests, and the pre-real adversarial review.
+Do not create a browser context until the checkpoint is written.
 
 ## Files Changed
 

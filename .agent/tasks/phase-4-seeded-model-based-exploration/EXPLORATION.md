@@ -1,6 +1,6 @@
 # Phase 4 Exploration Envelopes and Seed Ledger
 
-Status: `SOURCE_REVIEWED_PENDING_IMPLEMENTATION`
+Status: `PRE_REAL_REVIEWED_PENDING_CHECKPOINT`
 
 Required envelopes are E1/J1 payer exchange, E2/J2 common exchange, and E3/J3
 account inventory. The source-reviewed boundaries are:

@@ -1,7 +1,8 @@
 # Phase 4 Safe-Action Catalog and Candidate Inventory
 
 Catalog version: `nightwatch.safe-actions.phase4.v1`
-Status: `SOURCE_REVIEWED_PENDING_IMPLEMENTATION`
+Status: `IMPLEMENTED_SOURCE_REVIEWED`; hardening checkpoint
+`72dd9c276945bb0081b613b00bdeff6b11d66808`.
 
 The catalog contains only source-reviewed, declarative actions. It contains
 both admitted actions and rejected candidates; absence from the catalog never

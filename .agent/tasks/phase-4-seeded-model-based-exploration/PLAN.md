@@ -98,7 +98,9 @@ Alphaus edits, or broad overnight autonomy.
   and repaired before real execution; no stale action model is used.
 - Validation commands: focused inherited tests, `npm run agent:check`, read-only
   source/Git checks.
-- Status: NOT_STARTED
+- Status: COMPLETE — inherited safety/semantic/oracle/replay primitives and
+  source freshness were audited; no shared defect required reopening prior
+  phases.
 
 ### M2 — Exploration domain archaeology and candidate inventory
 
@@ -110,7 +112,8 @@ Alphaus edits, or broad overnight autonomy.
 - Acceptance criteria: candidate inventory and rejected-action ledger are
   complete; no candidate is approved from label/DOM presence alone.
 - Validation commands: read-only `rg`/`git show`/status checks; no live DOM crawl.
-- Status: NOT_STARTED
+- Status: COMPLETE — source-backed inventory and explicit rejected-action
+  ledger are recorded in `ACTIONS.md`.
 
 ### M3 — Safe catalog, state/transition schemas, and envelope model
 
@@ -124,7 +127,8 @@ Alphaus edits, or broad overnight autonomy.
   state/transition hashes are stable and privacy-safe; envelope contracts are
   explicit and versioned.
 - Validation commands: focused catalog/state/transition/staleness/privacy tests.
-- Status: NOT_STARTED
+- Status: COMPLETE — catalog, state/transition schemas, three envelopes, and
+  provenance/staleness links are implemented and focused-tested.
 
 ### M4 — Deterministic RNG, planner, budget, coverage, and replay
 
@@ -137,7 +141,8 @@ Alphaus edits, or broad overnight autonomy.
   seeds can branch; safety exclusions cannot be overridden; budgets terminate.
 - Validation commands: deterministic RNG/planner/budget/cycle/coverage/replay
   and property-like focused tests.
-- Status: NOT_STARTED
+- Status: COMPLETE — SplitMix64 planner, canonical ordering, budgets, cycle
+  controls, coverage, and strict replay are implemented and focused-tested.
 
 ### M5 — Action-causal network attribution and local synthetic fixture
 
@@ -151,7 +156,8 @@ Alphaus edits, or broad overnight autonomy.
   and atomic partial-run tests pass.
 - Validation commands: synthetic matrix, fixture browser tests, focused safety
   tripwires, privacy and artifact compatibility tests.
-- Status: NOT_STARTED
+- Status: COMPLETE — local graph fixture, semantic attribution, hostile-edge
+  tripwires, and metadata-only evidence are implemented and focused-tested.
 
 ### M6 — Pre-real validation and adversarial review
 
@@ -164,7 +170,8 @@ Alphaus edits, or broad overnight autonomy.
   privacy leak, host-policy weakening, nondeterminism, or budget bypass.
 - Validation commands: `npx tsc --noEmit`, `npx playwright test`,
   `npm run agent:check`, `git diff --check`, focused Phase 4 tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS — full local validation and adversarial review are the
+  gate before any DEV browser context.
 
 ### M7 — Bounded real DEV exploration and exact reproduction
 

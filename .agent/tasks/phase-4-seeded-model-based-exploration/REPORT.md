@@ -1,11 +1,12 @@
 # Nightwatch Phase 4 — Seeded / Model-Based Exploration Report
 
-Status: `IN_PROGRESS` — native task created after Phase 3 closure audit.
+Status: `IN_PROGRESS` — implementation and synthetic safety matrix complete;
+pre-real validation pending.
 
 - Starting SHA: `acdb4a27a953dbff2c3408815efe634468d4ad20`
 - Validated inherited implementation: `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`
 - Phase 3 checkpoint: `058a1ab4168324f346bd80f8fd3c2c3edec45c77`
-- Current phase: Phase 4 task creation / source archaeology pending
+- Current phase: M4/M6 pre-real validation and adversarial review
 - Safety events: NONE
 - Real DEV execution: NOT STARTED
 - Phase 5: NOT STARTED
@@ -27,8 +28,17 @@ exploration, and a fixed small DEV budget. It explicitly excludes arbitrary
 DOM discovery, mutation/unknown actions, datastore/production access, AI, and
 Phase 5.
 
+## Implementation checkpoint
+
+The `1ec9bfd` checkpoint contains the typed Phase 4 state, transition,
+catalog, deterministic RNG/planner, bounded engine, source-backed Ripple
+adapter, hostile local fixture, fixed seed corpus, and guarded serial DEV
+runner. The focused Phase 4 matrix is 14/14, TypeScript is passing, and no
+real browser context has been created.
+
 ## Exact next action
 
-Complete the current safety/semantic/model freshness audit and narrow source
-archaeology. Do not run DEV or admit a catalog action until `ACTIONS.md`,
-`FRESHNESS.md`, and the rejected-action ledger contain source evidence.
+Run the full local suite, focused inherited safety/oracle/replay/privacy tests,
+`agent:check`, and the documented adversarial review. Only after those pass,
+write `PHASE_4_PRE_REAL_EXPLORATION_READY` and begin the fixed six-context DEV
+corpus.
