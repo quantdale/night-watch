@@ -413,6 +413,7 @@ export async function createNightwatchContext(
   const consoleObserver = createConsoleObserver({
     recorder,
     monitor,
+    isExpectedOptionalResourceFailure: (locationUrl) => locationUrl !== undefined && network.optionalResourceFailureUrls().has(locationUrl),
     classifyExpectedContainmentEffect: (text, locationUrl) =>
       classifyOptionalSupportConsoleEffect(text, locationUrl, network.optionalSupportBlockedHosts()) ??
       classifyTelemetryConsoleEffect(text, locationUrl, network.telemetryBlockedHosts()) ??

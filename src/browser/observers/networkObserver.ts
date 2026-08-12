@@ -100,6 +100,8 @@ export interface NetworkObserver {
   telemetryBlockedHosts(): Set<string>;
   /** Exact browser-background hosts and their semantic categories. */
   browserBackgroundBlockedHosts(): Map<string, BrowserBackgroundClassification>;
+  /** Raw locations already classified as non-causal optional-resource failures. */
+  optionalResourceFailureUrls(): ReadonlySet<string>;
   /** Mark the one declarative journey action currently being executed. */
   beginJourneyIntent(stepId: string, actionType: string): void;
   /** End the current declarative journey action. */
@@ -158,6 +160,7 @@ export function createNetworkObserver(opts: {
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
   const telemetryBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
+  const optionalResourceFailureUrls = new Set<string>();
   const semanticLedger: SemanticRequestObservation[] = [];
   const resourceLedger: ResourceObservation[] = [];
   const completedRequests = new WeakSet<Request>();
@@ -282,6 +285,7 @@ export function createNetworkObserver(opts: {
     data?: Record<string, unknown>;
   }): void {
     const impact = resourceImpact(input.role);
+    if (impact === 'OPTIONAL' || impact === 'ASSET') optionalResourceFailureUrls.add(input.rawUrl);
     const fingerprint = fingerprintAnomaly({
       journeyId: opts.journeyId ?? 'unbound',
       stepId: journeyIntent?.stepId ?? null,
@@ -927,6 +931,7 @@ export function createNetworkObserver(opts: {
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
     telemetryBlockedHosts: () => telemetryBlockedHosts,
     browserBackgroundBlockedHosts: () => browserBackgroundBlockedHosts,
+    optionalResourceFailureUrls: () => optionalResourceFailureUrls,
     beginJourneyIntent: (stepId: string, actionType: string): void => {
       if (journeyIntent !== null) {
         throw new Error('fail-closed: a journey action is already active');

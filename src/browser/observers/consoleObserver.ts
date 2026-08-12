@@ -33,6 +33,7 @@ export function createConsoleObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
   classifyExpectedContainmentEffect?: (text: string, locationUrl: string | undefined) => ExpectedContainmentEffect | null;
+  isExpectedOptionalResourceFailure?: (locationUrl: string | undefined) => boolean;
 }): { install(page: Page): void } {
   const { recorder, monitor } = opts;
   return {
@@ -65,6 +66,30 @@ export function createConsoleObserver(opts: {
                 classification: expectedContainment.classification,
                 hostClass: expectedContainment.hostClass,
                 host: expectedContainment.host,
+              },
+            });
+            return;
+          }
+          if (msg.type() === 'error' && opts.isExpectedOptionalResourceFailure?.(msg.location().url) === true) {
+            recorder.event({
+              type: 'console',
+              severity: 'warn',
+              message: 'EXPECTED_OPTIONAL_RESOURCE_FAILURE',
+              data: {
+                type: msg.type(),
+                category: 'EXPECTED_OPTIONAL_RESOURCE_FAILURE',
+                ...safeConsoleLocation(recorder, msg.location().url),
+              },
+            });
+            recorder.event({
+              type: 'oracle',
+              severity: 'info',
+              message: 'EXPECTED_OPTIONAL_RESOURCE_FAILURE',
+              data: {
+                reason: 'optional-resource-console-duplicate',
+                anomalyClass: 'DEV_INFRA_TRANSIENT',
+                causalToPrimaryFailure: 'NOT_CAUSAL',
+                ...safeConsoleLocation(recorder, msg.location().url),
               },
             });
             return;
