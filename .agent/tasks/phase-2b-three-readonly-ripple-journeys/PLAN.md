@@ -178,7 +178,7 @@ unbounded Ripple archaeology.
   classified; safety/privacy counters are zero.
 - Validation commands: exact approved journey runner commands and artifact
   review; no third run.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M8 — Journey 2 first observation and fresh-context replay
 
@@ -188,7 +188,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: pair passes with strict invariants and zero safety/
   privacy violations.
 - Validation commands: exact contract-driven runner command; no concurrency.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M9 — Journey 3 first observation and fresh-context replay
 

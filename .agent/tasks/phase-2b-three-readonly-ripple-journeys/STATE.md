@@ -18,20 +18,23 @@ journeys.
 
 ## Current Milestone
 
-M7 — Journey 1 first observation and fresh-context replay.
+M8 — Journey 2 first observation diagnostic review after a bounded L0
+product-anomaly candidate.
 
 ## Completed Milestones
 
 M0 continuity/task creation, M1 archaeology/inventory/freshness, M2 semantic
 proof/selection/contracts, M3 generic engine design, M4 implementation, and
-M5 synthetic/local validation and M6 pre-real validation/self-review are
-complete. M7 is in progress; M8–M11 remain pending.
+M5 synthetic/local validation, M6 pre-real validation/self-review, and the
+Journey 1 pair are complete. M8 is in progress; M9–M11 remain pending.
 
 ## Work In Progress
 
-Full local validation and the adversarial pre-real review are PASS. The
-pre-real readiness checkpoint is recorded in Nightwatch. No DEV context has
-run yet; the next action is the gated serial Journey 1 pair.
+Full local validation and the adversarial pre-real review are PASS. Journey 1
+passed in a first observation and fresh-context replay. Journey 2 first
+observation reached its structural/read checkpoint but failed a generic
+oracle on one allowed DEV font response; no replay or Journey 3 context has
+run.
 
 ## CURRENT_GOAL
 
@@ -41,9 +44,8 @@ Ripple customer journeys with one fresh-context replay each.
 
 ## CURRENT_PHASE
 
-M7 — first controlled DEV observation/replay after contract, semantic
-registry, reusable engine, tripwire, evidence, and replay-comparison
-implementation plus pre-real self-review.
+M8 — controlled DEV Journey 2 first observation diagnostic review after the
+successful Journey 1 pair.
 
 ## CURRENT_EVIDENCE
 
@@ -76,6 +78,17 @@ implementation plus pre-real self-review.
 - `PRE_REAL_SELF_REVIEW_PASS`: PASS; the 15-question review is recorded below
   and found no unresolved Nightwatch defect, containment weakening, semantic
   ambiguity, privacy leak, or cross-repository modification.
+- Journey 1 first observation `nightwatch-20260812T011302Z-3ff2-j1-first`:
+  PASS; route `/payer-exchange-rate-v2`, shell and both journey markers true,
+  required read observed, auth readable, oracle/safety/privacy PASS.
+- Journey 1 replay `nightwatch-20260812T011302Z-3ff2-j1-replay`: PASS in a
+  fresh context; strict replay comparison MATCH with expected timing and
+  passive-unknown-count variance only.
+- Journey 2 first observation `nightwatch-20260812T011302Z-3ff2-j2-first`:
+  structural and semantic read checkpoints PASS, auth/safety/privacy PASS,
+  but generic oracle status FAIL from one allowed DEV font response with HTTP
+  502 and the resulting console-error; no production/unknown/mutation/DB
+  event occurred. The runner correctly prohibited replay.
 - Focused endpoint plus journey suite: `12 passed`; real local fixture HTTP,
   engine, recorder, observer, tripwire, privacy, and replay comparator paths
   were exercised. No Alphaus target or database was contacted.
@@ -145,7 +158,10 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`; s
   contracts, engine, safety integration, fixture, tests, gated serial runner,
   and task documentation; the worktree was clean after the implementation
   checkpoint.
-- Real DEV contexts: NONE. Real journey/replay IDs: NONE. DB queries: NONE.
+- Pre-real gate: PASS; all 13 checks passed before the real runner.
+- Real DEV contexts: 3 (`nightwatch-20260812T011302Z-3ff2-j1-first`,
+  `nightwatch-20260812T011302Z-3ff2-j1-replay`,
+  `nightwatch-20260812T011302Z-3ff2-j2-first`). DB queries: NONE.
 - Alphaus repositories: read-only source inspection only; pre-existing Ripple
   UI/API worktree entries remain untouched.
 - `npm run journey:real -- --help`: PASS; launcher is opt-in and did not
@@ -153,21 +169,37 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`; s
 
 ## REAL_RUN_LEDGER
 
-Phase 2B real runs: NONE. No browser context with external auth state has
-been created for Phase 2B. No host approval, production attempt, proxy
-violation, mutation, or database query occurred.
+| Run ID | Journey | Result | Sanitized finding |
+|---|---|---|---|
+| `nightwatch-20260812T011302Z-3ff2-j1-first` | payer exchange read | PASS | source-backed GET read, route/shell/table ready, oracle/safety/privacy PASS |
+| `nightwatch-20260812T011302Z-3ff2-j1-replay` | payer exchange read | PASS | fresh context; strict invariants matched; timing/passive-unknown variance bounded |
+| `nightwatch-20260812T011302Z-3ff2-j2-first` | common exchange read | FAIL | route/shell/table/read/auth/safety passed; generic unexpected-status + console-error on one allowed DEV font response (HTTP 502) |
+
+Per-run safety totals for all three contexts: production attempts 0, proxy
+violations 0, unknown destinations 0, unknown approvals 0, known mutations 0,
+DB queries 0.
+
+No host approval, production attempt, proxy violation, mutation, or database
+query occurred. The J2 failure is an L0 product/infra anomaly candidate,
+not a safety failure.
 
 ## REPLAY_LEDGER
 
-Phase 2B replays: NONE. Synthetic comparator tests are not real replay IDs.
+| Replay ID | Journey | Comparison |
+|---|---|---|
+| `nightwatch-20260812T011302Z-3ff2-j1-replay` | payer exchange read | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
+
+Journey 2 replay is prohibited because its first observation did not pass.
+Journey 3 has not started. Synthetic comparator tests are not real replay IDs.
 
 ## AUTH_STATUS
 
 External `$HOME/.nightwatch/auth/ripple-dev-state.json` remains outside Git
-and has not been printed, copied, dumped, or persisted. Phase 2B has not yet
-validated it for a real context. Before each of the six real contexts, use
-only the existing boolean/provenance/page-readability helpers and the
-Phase 2A gate. If invalid, stop with the human-auth blocker and do not run.
+and has not been printed, copied, dumped, or persisted. The three completed
+contexts each passed boolean structural, DEV-semantic, domain/path, and live
+page-readability checks. Before any bounded J2 diagnostic retry or later
+context, use only the existing boolean/provenance/page-readability helpers and
+the Phase 2A gate. If invalid, stop with the human-auth blocker and do not run.
 
 ## DECISIONS
 
@@ -248,60 +280,79 @@ JSON status, and historical production contact remain preserved facts.
 
 ## BUG_CANDIDATES
 
-NONE. Synthetic negative cases are harness regression coverage, not Ripple
-bug candidates. The local telemetry omission was a Nightwatch policy defect,
-repaired in `a2bde6a`; no real target anomaly exists.
+- `PB2-J2-L0-DEV-FONT-502`: `ripple-common-exchange-read`, first run
+  `nightwatch-20260812T011302Z-3ff2-j2-first`; last successful checkpoint was
+  the common route/shell/table/read/auth checkpoint, then a generic
+  `unexpected-status` oracle and `console-error` occurred for one allowed DEV
+  font response with status 502. Reproduction level L0 (single observation).
+  Nightwatch self-check: target/policy/proxy/auth/route/structural/semantic
+  ledgers passed; no mutation or destination safety event. Source correlation
+  and repeatability are unresolved. Do not weaken the oracle or contract.
+
+Synthetic negative cases are harness regression coverage, not Ripple bug
+candidates. The local telemetry omission was a Nightwatch policy defect,
+repaired in `a2bde6a`.
 
 ## UNRESOLVED
 
 - Real DEV request set may contain passive unknown bootstrap traffic; this is
   expected and must remain separate from action-caused unknown.
-- Real auth state must pass the fresh six-context boolean gate.
+- Journey 2's single allowed DEV font HTTP 502/console-error needs one bounded
+  diagnostic re-observation to distinguish transient L0 behavior from a
+  repeatable product/infra anomaly; do not inspect its body or relax the
+  generic oracle.
+- Journey 3 remains unrun because execution is serial and J2 has not yet
+  completed its first-success/replay pair.
 - Real source/deployment freshness remains the recorded local-source caveat;
   no fetch/pull is authorized.
 
 ## SAFETY_EVENTS
 
-NONE. Synthetic tests intentionally exercised blocked production/unknown,
-known mutation, and action-caused unknown paths against loopback only; those
-are expected local assertions, not real safety events.
+NONE. All three real contexts had exact totals of 0 production attempts, 0
+proxy violations, 0 unknown destinations, 0 unknown approvals, 0 known
+mutations, and 0 DB queries. Synthetic tests intentionally exercised blocked
+production/unknown, known mutation, and action-caused unknown paths against
+loopback only; those are expected local assertions, not real safety events.
 
 ## PRIVACY_STATUS
 
-PASS for contract/source docs and focused synthetic artifacts. Authenticated
-synthetic evidence scan found no fake Authorization secret; engine evidence
-contains fixed IDs/classes/booleans/counts/timings only. Real artifact audit is
-pending.
+PASS for the three real run directories and the Journey 1 comparison: 22
+sanitized text/JSON files scanned, 0 non-safe forbidden-field values, 0 trace
+files, and 0 screenshots. Authenticated evidence contains fixed
+IDs/classes/booleans/counts/timings only; no bodies, headers, cookies, tokens,
+DOM/text, customer/account values, or cost values were persisted.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
 `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba` (Phase 2B contract/engine/gated
-runner plus exact local telemetry containment checkpoint; Phase 2A baseline
-remains `a6d7c8b`).
+runner plus exact local telemetry containment implementation; the real
+contexts used approved documentation checkpoint `15c3c9f`, and Phase 2A
+baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba` (`CHECKPOINT_ADVANCE`: exact local
-telemetry containment is repaired, TypeScript and full local Playwright
-validation pass, and the gated serial real runner is ready for explicit
-adversarial review; no DEV context has run).
+`15c3c9fef9fe2da57090ddd103a88604829c9607` (`CHECKPOINT_ADVANCE`: pre-real
+readiness/self-review is committed; Journey 1 first/replay passed with strict
+invariants, and Journey 2 first reached a sanitized L0 generic-oracle
+anomaly. No code or contract change has been made after the failure.)
 
 ## NEXT_EXACT_ACTION
 
-Run the exact gated command:
-`npm run journey:real -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json"`
-This must execute Journey 1 first observation then its fresh-context replay,
-serially. Before each context the runner must revalidate boolean auth facts,
-the Phase 2A gate, repository snapshots, the explicit contract, and the
-mutation tripwire. Do not start Journey 2 until the Journey 1 pair is
-checkpointed. If auth is invalid, stop with the prescribed human-auth
-blocker; do not inspect or print the state.
+Checkpoint this L0 finding before code changes. Then add only a bounded,
+explicit resume selector to the generic runner if needed to avoid repeating
+the successful Journey 1 pair, run one diagnostic J2 first observation in a
+fresh context, and—only if it passes—run its one fresh-context replay. Do not
+inspect the 502 body, change the contract/oracle, or run Journey 3 until the
+J2 diagnostic decision is checkpointed. If the re-observation repeats the
+anomaly, classify it L1 and continue only with an explicitly resumed,
+independent Journey 3 context; Phase 2B completion remains blocked until all
+three pairs pass.
 
 ## Exact Next Action
 
-Run the exact gated serial real-run command for Journey 1 first observation and
-fresh replay shown in `NEXT_EXACT_ACTION`; stop before Journey 2 unless the
-Journey 1 pair is successful and checkpointed.
+Record the J2 failure checkpoint, implement only the bounded generic resume
+selector if required, revalidate locally, then run one fresh J2 diagnostic
+observation; no third Journey 1 replay and no oracle weakening.
 
 ## Files Changed
 
