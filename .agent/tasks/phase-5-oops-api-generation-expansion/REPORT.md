@@ -165,6 +165,10 @@ exact real replay was `NOT_APPLICABLE`, proven from the frozen
 failures remain `NIGHTWATCH_RUNTIME_ARTIFACT` with no request delta,
 fingerprint, or product-anomaly admission. Phase 6 was not started.
 
+Implementation SHA: `83f9d610f9ecc5c35422e91a83b9a3bc760ccadd`.
+Final corpus/checkpoint SHA: `6971ead8eac50df62b55aacce79d0c6f4ae4b170`.
+The terminal clean Nightwatch HEAD is recorded by the final Git handoff.
+
 ### OOPS identity and containment
 
 - Source: `alphauslabs/oops@c4a129feb0b97dc0ae39f32c39a92abe834567f2`, clean
