@@ -309,6 +309,55 @@ async function waitForLoginControls(page: Page, environment: EnvironmentConfig, 
   throw new DevAuthFailure('AUTH_FORM_NOT_READY');
 }
 
+export function isApprovedDevAuthTokenExchange(environment: EnvironmentConfig, target: URL, rawLocation: string): boolean {
+  let location: URL;
+  try {
+    location = new URL(rawLocation);
+  } catch {
+    return false;
+  }
+  const configuredPath = new URL(environment.uiBaseUrl).pathname;
+  const expectedPath = `${configuredPath.replace(/\/+$/, '')}/access_token`;
+  const authOrigin = environment.authHosts?.some((entry) => hostMatchesEntry(location.hostname, location.port, entry)) ?? false;
+  return location.protocol === 'https:' && location.username === '' && location.password === '' &&
+    authOrigin && location.pathname === expectedPath && location.search === '' && location.hash === '' &&
+    target.protocol === 'https:';
+}
+
+async function waitForAuthTokenExchange(
+  page: Page,
+  environment: EnvironmentConfig,
+  target: URL,
+): Promise<number> {
+  try {
+    const response = await page.waitForResponse(
+      candidate => isApprovedDevAuthTokenExchange(environment, target, candidate.url()),
+      { timeout: 30_000 },
+    );
+    return response.status();
+  } catch {
+    throw new DevAuthFailure('AUTH_NETWORK_FAILURE');
+  }
+}
+
+async function authenticatedShellCheckpoint(page: Page, environment: EnvironmentConfig, target: URL): Promise<boolean> {
+  if (!approvedAuthenticatedLocation(environment, target, page.url())) return false;
+  const readability = await inspectRipplePageAuthReadability(page);
+  if (!readability.evaluationSucceeded || !readability.tokenPageReadable || !readability.tokenNonEmpty || readability.aggregatePageBootstrapSemantics !== 'VALID') {
+    return false;
+  }
+  const structural = {
+    documentReadyState: await page.evaluate(() => {
+      const pageGlobal = globalThis as unknown as { document?: { readyState?: string } };
+      return pageGlobal.document?.readyState ?? 'unavailable';
+    }).catch(() => 'unavailable'),
+    bootstrapMountSelector: '#app',
+    renderedShellSelector: '.q-layout-container.layout',
+    renderedShellPresent: await page.locator('.q-layout-container.layout').count() === 1,
+  };
+  return isRippleStructurallyReady(structural);
+}
+
 async function verifyAuthenticatedPage(
   page: Page,
   context: NightwatchContext,
@@ -371,13 +420,23 @@ async function waitForPostSubmit(
   context: NightwatchContext,
   environment: EnvironmentConfig,
   target: URL,
+  authResponseStatus: number,
 ): Promise<'AUTHENTICATED' | 'MFA_REQUIRED'> {
   const deadline = Date.now() + 30_000;
   const mfa = page.locator('input[name="mfaToken"], input[name="emailOtp"]');
+  if (authResponseStatus === 401 || authResponseStatus === 403) {
+    const mfaDeadline = Date.now() + 5_000;
+    while (Date.now() < mfaDeadline) {
+      if (await uniqueVisible(mfa, 200)) return 'MFA_REQUIRED';
+      await page.waitForTimeout(100);
+    }
+    throw new DevAuthFailure('LOGIN_FORM_REJECTED');
+  }
+  if (authResponseStatus < 200 || authResponseStatus >= 300) throw new DevAuthFailure('AUTH_NETWORK_FAILURE');
   while (Date.now() < deadline) {
     if (context.monitor.safetyFailed) throw new DevAuthFailure('AUTH_ROUTE_FAILURE');
     if (await uniqueVisible(mfa, 200)) return 'MFA_REQUIRED';
-    if (approvedAuthenticatedLocation(environment, target, page.url())) {
+    if (await authenticatedShellCheckpoint(page, environment, target)) {
       await verifyAuthenticatedPage(page, context, environment, target);
       return 'AUTHENTICATED';
     }
@@ -484,8 +543,11 @@ export async function runDevAuthRefresh(opts: DevAuthRefreshOptions): Promise<De
       // established before the provider is asked for plaintext credentials.
       credential = provider.getDevLoginCredential();
       if (credential.username.trim() === '' || credential.password === '') throw new DevAuthFailure('LOCAL_DEV_SECRET_CONFIGURATION_REQUIRED');
-      await fillAndSubmitSourceApprovedDevLogin(controls, credential);
-      const postSubmit = await waitForPostSubmit(guarded.page, guarded, opts.environment, target);
+      const [authResponseStatus] = await Promise.all([
+        waitForAuthTokenExchange(guarded.page, opts.environment, target),
+        fillAndSubmitSourceApprovedDevLogin(controls, credential),
+      ]);
+      const postSubmit = await waitForPostSubmit(guarded.page, guarded, opts.environment, target, authResponseStatus);
       if (postSubmit === 'MFA_REQUIRED') {
         mfaOccurred = true;
         if (opts.mfaCompletion === undefined) throw new DevAuthFailure('MFA_REQUIRED');

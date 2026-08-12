@@ -35,6 +35,11 @@ if (env === 'dev' && storage === path.join(os.homedir(), '.nightwatch', 'auth', 
   const authDirectory = path.dirname(storage);
   fs.mkdirSync(authDirectory, { recursive: true, mode: 0o700 });
   fs.chmodSync(authDirectory, 0o700);
+  if (fs.existsSync(storage)) {
+    const stateLink = fs.lstatSync(storage);
+    if (stateLink.isSymbolicLink() || !stateLink.isFile()) throw new Error('phase4-real refuses an unsafe default DEV storage-state path');
+    fs.chmodSync(storage, 0o600);
+  }
 }
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
 const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;

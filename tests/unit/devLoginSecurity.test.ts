@@ -8,7 +8,7 @@ import path from 'node:path';
 import { startFixtureServer } from '../../src/browser/fixtures/fixtureServer';
 import { selectEnvironment } from '../../src/core/environment';
 import { fillAndSubmitSourceApprovedDevLogin, sourceApprovedDevLoginControls } from '../../src/auth/loginForm';
-import { runDevAuthRefresh } from '../../src/auth/devAutoLogin';
+import { isApprovedDevAuthTokenExchange, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
 import {
   CHROME_DEVTOOLS_MCP_TOOL_COUNT,
   CHROME_DEVTOOLS_MCP_TOOLS,
@@ -70,6 +70,15 @@ test('non-DEV target is rejected before the credential provider is consulted', a
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('DEV auth response gate accepts only the source-backed allowlisted token exchange', () => {
+  const environment = selectEnvironment('dev');
+  const target = new URL(environment.uiBaseUrl);
+  expect(isApprovedDevAuthTokenExchange(environment, target, 'https://logindev.alphaus.cloud/ripple/access_token')).toBe(true);
+  expect(isApprovedDevAuthTokenExchange(environment, target, 'https://appdev.alphaus.cloud/ripple/access_token')).toBe(false);
+  expect(isApprovedDevAuthTokenExchange(environment, target, 'https://logindev.alphaus.cloud/ripple/access_token?redirect=unexpected')).toBe(false);
+  expect(isApprovedDevAuthTokenExchange(environment, target, 'https://login.alphaus.cloud/ripple/access_token')).toBe(false);
 });
 
 test('MCP discovery is fixed and real authenticated attachment stays disabled by default policy', () => {
