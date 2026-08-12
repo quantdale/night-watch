@@ -9,8 +9,8 @@ Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
 Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Branch: main
-Last checkpoint: Phase 6 local architecture and validation complete; no
-datastore query has run.
+Last checkpoint: deployment/source re-audit recorded; Phase 6 local
+architecture and validation complete; no datastore query has run.
 
 ## Objective
 
@@ -296,7 +296,7 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_CHECKPOINT_SHA
 
-8f2c2a5ed6e7d794f9d2b159c1f6f39923c7fee3.
+51be1311117dd2a0290ad0380e21f52124f3792b.
 
 ## NEXT_EXACT_ACTION
 
