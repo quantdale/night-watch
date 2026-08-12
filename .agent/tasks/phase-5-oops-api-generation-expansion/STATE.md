@@ -6,12 +6,11 @@ Task ID: phase-5-oops-api-generation-expansion
 Phase: 5
 Status: COMPLETE
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
-Last validated implementation SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
+Current SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
+Last validated implementation SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
 Branch: main
-Last checkpoint: 8f6b7923044d7ce5ba6401da84941e40e70feaf0 — repaired preflight
-snapshot-root defect checkpoint; no real API request reached the relay before
-the subsequent successful run.
+Last checkpoint: 6971ead8eac50df62b55aacce79d0c6f4ae4b170 — final Phase 5
+corpus, safety/privacy accounting, validation, and closure checkpoint.
 
 ## Objective
 
@@ -363,11 +362,11 @@ screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-83f9d610f9ecc5c35422e91a83b9a3bc760ccadd.
+6971ead8eac50df62b55aacce79d0c6f4ae4b170.
 
 ## LAST_CHECKPOINT_SHA
 
-83f9d610f9ecc5c35422e91a83b9a3bc760ccadd.
+6971ead8eac50df62b55aacce79d0c6f4ae4b170.
 
 ## NEXT_EXACT_ACTION
 

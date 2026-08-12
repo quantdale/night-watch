@@ -6,14 +6,14 @@ Title: Restricted OOPS Integration + Source-Generated Read-Only API Corpus
 Status: COMPLETE
 Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
-Last validated implementation SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
+Current SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
+Last validated implementation SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
 Current milestone: M10 — final review, validation, and clean closure; M0–M9
 implementation, source audit, corpus, lineage, security review, validation,
 and the bounded DEV ledger are complete. Phase 5 acceptance is closed.
-Last checkpoint: 2026-08-12 — successful native-relay DEV run
-`nightwatch-20260812T141849Z-ca02`; six first executions and six fresh replays
-passed with zero safety events.
+Last checkpoint: 2026-08-12 — final Phase 5 corpus and closure checkpoint
+`6971ead8eac50df62b55aacce79d0c6f4ae4b170`; six first executions and six
+fresh replays passed with zero safety events.
 Next action: no further Phase 5 action. Authenticated OOPS remains
 local-fixture-only
 because its isolated
