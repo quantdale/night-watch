@@ -168,7 +168,7 @@ of historical anomalies, and broad source archaeology.
 - Acceptance criteria: exact frequencies and fingerprints are preserved;
   causal confidence is explicit; no body/DOM/data-store work is performed.
 - Validation commands: local report/check scripts and privacy scan.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M7 — Final privacy, architecture, adversarial review, and validation
 
@@ -180,7 +180,7 @@ of historical anomalies, and broad source archaeology.
   is clean after closure commit; ACTIVE_TASK is complete.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`;
   `npm run agent:check`; `git diff --check`; `git status --short`.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 
@@ -222,4 +222,6 @@ is permitted.
 The task is complete only when every criterion in `SPEC.md` is evidenced in
 STATE/REPORT, the six-context base matrix is complete or a declared safety/
 auth/oracle blocker is reported, all final validations pass, and Nightwatch is
-clean with no Phase 3 task started.
+clean with no Phase 3 task started. These conditions are satisfied; Phase 2C
+is closed and the recommended next task only is `PHASE 3 — CHANGE-DIRECTED
+JOURNEY SELECTION`.

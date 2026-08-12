@@ -3,17 +3,16 @@
 Task ID: phase-2c-replay-oracle-verification
 Phase: 2C
 Title: Replay + Oracle Verification
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-2c-replay-oracle-verification
 Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
 Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Current milestone: M6 — differential analysis and failure attribution
-Last checkpoint: 2026-08-12 — comparator repair and bounded diagnostic harness
-validated at implementation `efc03de`; v2 diagnostic checkpoint is being
-prepared. V1 real evidence remains preserved.
-Next action: run the exact one-context J1 v2 diagnostic command in STATE; do
-not compare it with V1 as if the implementation were unchanged.
+Current milestone: M7 — final privacy, architecture, adversarial review, and validation (COMPLETE)
+Last checkpoint: 2026-08-12 — V1/V2 differential, safety/privacy review, and
+final validation complete; Nightwatch-only closure committed.
+Next action: none. Phase 2C is complete. The recommended next task only is
+`PHASE 3 — CHANGE-DIRECTED JOURNEY SELECTION`; do not start it in this task.
 
 ## Phase 2A/2B closure handoff
 

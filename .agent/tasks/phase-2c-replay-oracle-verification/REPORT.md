@@ -1,8 +1,8 @@
 # NIGHTWATCH PHASE 2C — REPLAY + ORACLE VERIFICATION
 
-Status: `IN_PROGRESS`; shared Phase 2C implementation, synthetic matrix, and
-the six-context DEV matrix are complete. One shared comparator defect was
-repaired and fully revalidated; the single authorized v2 J1 diagnostic remains.
+Status: `COMPLETE`; implementation, synthetic matrix, V1 six-context DEV
+matrix, comparator repair, the single authorized v2 J1 diagnostic, final
+validation, and Nightwatch-only closure are complete.
 
 ## Starting identity
 
@@ -20,7 +20,7 @@ terminal tree was independently verified clean, and its descendants after
 `78e5d1f` are approved `.agent` continuity/documentation changes only. This
 task does not reopen either phase.
 
-## Closure sections to populate
+## Closure sections
 
 - Replay-engine and oracle inventory/audit
 - Invariant, variance, fingerprint, causality, and failure-attribution model
@@ -33,13 +33,13 @@ task does not reopen either phase.
 
 ## Current blocker
 
-The V1 `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` is repaired at implementation
-`efc03de2f7396a96baaca485894df300ddcc4ce0`: the comparator now excludes
-navigation/document-replacement/browser/policy cancellation from strict
-resource failures while retaining sanitized cancellation evidence and
-containment variance. The synthetic regression and full 263-test suite pass.
-V1 evidence is retained; one post-fix J1 diagnostic under matrix
-`phase2c-real-v2-j1-diagnostic` remains and is not a V1 replay comparison.
+None. The V1 `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` was repaired at
+implementation `efc03de2f7396a96baaca485894df300ddcc4ce0`; the comparator now
+excludes navigation/document-replacement/browser/policy cancellation from
+strict resource failures while retaining sanitized cancellation evidence and
+containment variance. The synthetic regression, full 263-test suite, and
+single v2 J1 diagnostic pass. V1 evidence is retained and v2 was not compared
+to V1 as an equivalent replay.
 
 ## Phase 2C v1 real matrix
 
@@ -70,8 +70,8 @@ This is admitted as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`, not a product
 bug. V1 is preserved as pre-fix evidence. The repair is to exclude expected
 policy/navigation/browser cancellation from strict resource-failure keys while
 retaining it in containment/lifecycle evidence; a synthetic regression and
-one narrowly scoped post-fix J1 diagnostic context are required before final
-closure. Pre-fix and post-fix observations will not be treated as one replay
+one narrowly scoped post-fix J1 diagnostic context were completed before final
+closure. Pre-fix and post-fix observations were not treated as one replay
 contract.
 
 ## Comparator defect repair
@@ -90,9 +90,8 @@ journey contract. V1 and v2 are separate implementation/matrix versions.
 
 ## Static replay/oracle audit checkpoint
 
-The audit is complete and the shared implementation plus synthetic matrix are
-now recorded below; only the clean pre-real checkpoint and bounded DEV matrix
-remain.
+The audit, shared implementation, synthetic matrix, V1 matrix, repair, V2
+diagnostic, and final validation are recorded below. Phase 2C is closed.
 
 Replay findings:
 
@@ -142,22 +141,29 @@ False-positive catalog:
 | secondary oracle beside primary failure | preserve primary/secondary attribution | attribution matrix |
 | source-proven optional containment | `EXPECTED_CONTAINMENT`, not hidden failure | blocked-host fixtures |
 
-False-negative catalog:
+False-negative catalog and residual risks:
 
-- unhandled rejection/CSP and JS-HTML content-type can currently fail to reach
-  the journey result;
-- optional-resource role can be lost when all request failures use one issue;
-- semantic counts/order and action-step attribution are reduced to unique sets;
-- navigation-caused UNKNOWN has an exemption that requires explicit audit;
-- live page auth is checked after the journey rather than gating it;
-- criticality, background variance, anomaly fingerprints, and causal confidence
-  are absent or flattened;
-- required reads are currently run-wide rather than strictly step-scoped.
+- Before hardening, unhandled rejection/CSP, JS-HTML content type, optional
+  resource role, fingerprints, background variance, causal confidence, and
+  step-scoped required reads were flattened or absent. Phase 2C now admits and
+  compares these dimensions through the shared observer/classifier/evidence
+  path, with golden regressions.
+- Semantic ordering remains intentionally bounded for passive initialization,
+  while required read families, disposition, action step, mutation, and
+  action-caused UNKNOWN remain strict. A stale source registry or contract
+  remains a false-negative risk and is classified as contract drift, not
+  silently normalized.
+- Navigation-caused UNKNOWN retains an explicit, audited exemption; an
+  instrumentation mistake could still misattribute the cause.
+- Auth is checked before actions and at result admission, but expiry after the
+  final check remains a bounded observation risk.
+- Sanitized fingerprints can collide only at their declared category/path
+  template granularity; exact equality is therefore required and similarity
+  is never promoted.
 
-These are concrete implementation risks, not claims that the product is
-defective. Phase 2C will harden shared infrastructure and exercise the real
-observer/classifier/evidence/comparator paths with local fixtures before any
-DEV matrix execution.
+These are concrete residual observation risks, not claims that the product is
+defective. They remain visible for later hardening and are not used to weaken
+the Phase 2C acceptance result.
 
 ## Shared model after hardening
 
@@ -293,3 +299,136 @@ fail-closed. No journey action or contract was altered, no customer/private
 data enters fingerprints, historical false-positive fixtures are covered,
 false-negative risks remain explicit, and no Phase 3, AI, fuzzing, or datastore
 work was introduced.
+
+## Phase 2C v2 diagnostic result
+
+Artifact: `artifacts/phase2c-nightwatch-20260812T042725Z-11cc-matrix.json`.
+Run: `nightwatch-20260812T042725Z-11cc-j1-diagnostic`.
+This was exactly one additional fresh J1 context authorized for the proven
+Nightwatch comparator defect. It used matrix
+`phase2c-real-v2-j1-diagnostic`, contract digest
+`sha256:cde7146702f88df9a5790965cddc9b27e62ef17c8f055dc044097fd3e86ca3bf`,
+implementation `efc03de`, and clean checkpoint HEAD `0f894d9`. It finished
+PASS with page-visible auth PASS, route `/payer-exchange-rate-v2`, both J1
+markers true, oracle status PASS, privacy PASS, zero mutations and
+action-caused UNKNOWN, and no anomaly fingerprints. It has no replay
+comparison by design because V1 and V2 are different implementation/matrix
+versions.
+
+## Final differential outcomes
+
+The stored V1 evidence was re-evaluated with the repaired comparator without
+rerunning traffic. All three pairs now pass with no strict invariant mismatch:
+
+| Canary | Cumulative evidence | Repaired differential | Variance |
+|---|---|---|---|
+| J1 payer exchange | Phase 2B first/replay PASS; V1 C1/C2 PASS; V2 diagnostic PASS | `BOUNDED_MATCH`; route, structure, semantic ledger, auth, and safety equal | `resource-containment-variance`, 52 ms timing; six versus five expected third-party policy cancellations |
+| J2 common exchange | Phase 2B bounded diagnostic first/replay PASS; V1 C1/C2 PASS | `BOUNDED_MATCH`; strict mismatch set empty | 58 ms timing; no font-502 fingerprint |
+| J3 account inventory | Phase 2B first/replay PASS; V1 C1/C2 PASS | `BOUNDED_MATCH`; strict mismatch set empty | 6 ms timing |
+
+Across successful contexts, global shell readiness, journey markers, approved
+routes, known-read families, auth equivalence, safety, privacy, and oracle-set
+stability were preserved. Optional support and telemetry containment remained
+visible and did not overwrite primary journey results.
+
+## Anomaly and bug-candidate outcomes
+
+- `NW2C-J1-RESOURCE-LIFECYCLE-COMPARATOR` is a confirmed
+  `NIGHTWATCH_DEFECT`, repaired by `e731ba4` and covered by the cancellation
+  regression. Its V1 false divergence is superseded and is not a product bug.
+- `PB2-J2-L0-DEV-FONT-502` remains a visible `L0_NOT_REPRODUCED` transient
+  candidate: one Phase 2B initial occurrence, no recurrence in the Phase 2B
+  bounded diagnostic pair or either Phase 2C J2 context. It is not an expected
+  baseline and is not promoted to L1/L2.
+- No Phase 2C product behavior anomaly candidate was admitted. Expected
+  policy containment remains `EXPECTED_CONTAINMENT`, not ignored.
+- No naturally recurring malformed-JSON fingerprint was observed. The
+  historical POST at the unresolved semantic endpoint remains independently
+  classified `GENUINE_PROTOCOL_ANOMALY`, semantic cause UNKNOWN, and was not
+  intentionally triggered or replayed.
+
+## Oracle precision and architecture review
+
+Final qualitative result: true-positive paths are role-aware critical/known-
+read status, incompatible bootstrap/API content type, malformed declared JSON,
+fatal runtime/CSP, route/structure, semantic mutation/action-UNKNOWN, auth,
+and safety violations. The proven false-positive path discovered by the real
+matrix was expected cancellation being treated as strict failure; it is
+repaired and regression-tested. No numerical precision/recall claim is made.
+
+The same generic engine evaluates J1, J2, and J3. Journey-specific differences
+are frozen declarative route/marker/known-read requirements, not engine forks.
+Failure output separates `PRIMARY_FAILURE`, `SECONDARY_ORACLES`,
+`SAFETY_FAILURE`, `CONTAINMENT_EVENTS`, `LIKELY_CAUSE`,
+`CAUSALITY_CONFIDENCE`, last successful step, and first failing step. Delivery
+is not execution, cancellation is not failure, and timestamp order alone is
+not causal proof.
+
+## Safety and privacy accounting
+
+Phase 2C controlled contexts: 7 (six V1 plus one v2 diagnostic). Every
+context had:
+
+`production attempts = 0; proxy violations = 0; unknown destinations = 0;
+unknown approvals = 0; mutations = 0; DB queries = 0; action-caused UNKNOWN = 0`.
+
+The pre-real gate passed before both runs; no safety stop occurred. Counting
+the two Phase 2A controlled contexts, seven Phase 2B contexts, and seven Phase
+2C contexts, the durable Phase 2A–2C controlled-run total is 16, all with the
+same zero safety vector. The historical Phase 1.1 production contact remains
+preserved separately and is not erased by these current-run counts.
+
+Privacy review passed for all new source, sanitized evidence, differential
+metadata, fingerprints, V1/V2 matrix files, and task documents. No credentials,
+tokens, cookies, auth state, customer names/IDs, account IDs, costs, query
+values, request/response bodies, DOM, screenshots, or authenticated traces
+were persisted.
+
+## Final adversarial self-review
+
+PASS: repeated occurrence was not equated with fingerprint identity; the font
+502 was not made a baseline; passing journeys did not suppress secondary
+signals; no L0/L1/L2 promotion was overstated; fresh-context differences were
+retained; tolerances are semantic/bounded rather than arbitrary; normalization
+preserves meaningful route/request differences; cancellation is not failure;
+HTTP delivery is not execution; page-visible auth is required; journey
+behavior and contract versions were frozen; safety remained fail-closed; no
+private data entered fingerprints; generic oracles are reused across all three
+canaries; historical false-positive fixtures pass; false-negative risks remain
+documented; no Phase 3/change intelligence, datastore query, fuzzing, or AI
+planning was introduced; and STATE contains the exact recovery/evidence/next
+action recipe.
+
+## Evidence compatibility and final validation ledger
+
+Legacy Phase 2A/2B evidence remains parseable through the explicit legacy
+projection. Phase 2C fields are versioned as
+`nightwatch.evidence.phase2c.v1`; old artifacts were not rewritten. The
+validated implementation is `efc03de2f7396a96baaca485894df300ddcc4ce0`; the
+pre-closure clean documentation checkpoint is `0f894d96bc384e402f4199ac6255ecb3948781c6`.
+
+Final validation: TypeScript PASS; full Playwright PASS, 263 tests; synthetic
+Phase 2C matrix PASS; opt-in real test discoverable; V1/V2 metadata privacy
+review PASS; `git diff --check` PASS; continuity check PASS with only the
+expected approved-document `CHECKPOINT_ADVANCE` warning. The closure
+documentation was finalized in a Nightwatch-only commit and the worktree was
+verified clean afterward.
+
+## Remaining unresolved findings
+
+The historical malformed-JSON endpoint remains semantically unresolved, and
+the single historical DEV font 502 remains an L0 transient candidate. The
+qualitative false-negative risks in the catalog remain future hardening input;
+they are not silently promoted to product findings. No Phase 2C blocker
+remains.
+
+## Acceptance verdict
+
+All substantive Phase 2C acceptance criteria pass: closure reconciliation,
+native task, frozen canaries, replay/oracle audits, invariants/variance,
+fingerprints/admission, false-positive/negative catalogs, synthetic matrix,
+schema compatibility, bounded safe real matrix, conservative J2 status,
+historical anomaly preservation, safety/privacy, architecture, and adversarial
+review. Verdict: `ACCEPTED`. ACTIVE_TASK is complete, the Nightwatch-only
+closure is committed, and no Phase 3 task was started. The recommended next
+task only is `PHASE 3 — CHANGE-DIRECTED JOURNEY SELECTION`.

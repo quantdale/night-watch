@@ -4,14 +4,14 @@
 
 Task ID: phase-2c-replay-oracle-verification
 Phase: 2C
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
 Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Branch: `main`
-Last checkpoint: 2026-08-12 — comparator repair and diagnostic harness
+Last checkpoint: 2026-08-12 — v2 diagnostic and Phase 2C closure evidence
 validated at implementation `efc03de2f7396a96baaca485894df300ddcc4ce0`;
-v2 diagnostic checkpoint is being prepared.
+the final Nightwatch-only closure commit is the clean handoff descendant.
 
 ## Objective
 
@@ -21,11 +21,10 @@ tolerant, privacy-safe, and conservative about anomaly admission.
 
 ## Current Milestone
 
-M6 — Differential analysis and failure attribution.
-Status: IN_PROGRESS
-What is being attempted: preserve V1 evidence, repair the proven shared
-comparator defect, and validate the corrected classification with synthetic
-coverage plus one bounded J1 diagnostic context.
+M7 — Final privacy, architecture, adversarial review, and validation.
+Status: COMPLETE
+What was completed: the V1/V2 differential ledger, privacy and safety
+accounting, architecture review, final validation, and clean Phase 2C closure.
 
 ## Completed Milestones
 
@@ -45,12 +44,13 @@ coverage plus one bounded J1 diagnostic context.
 - Comparator defect repair — COMPLETE. Expected cancellation is now bounded
   containment with synthetic regression; full local validation is green at
   `efc03de`.
+- M6 — COMPLETE. V1 was re-evaluated with the repaired comparator, the J1
+  differential is now bounded, and the single v2 J1 diagnostic passed without
+  pre/post-fix replay conflation.
 
 ## Work In Progress
 
-M6 is the active bounded work unit. V1 evidence is frozen; the shared
-comparator repair and synthetic regression pass at `efc03de`. One narrowly
-scoped J1 diagnostic context under matrix v2 remains.
+None. Phase 2C is complete. Do not start Phase 3 in this task.
 
 ## CURRENT_GOAL
 
@@ -61,7 +61,7 @@ and conservative anomaly admission.
 
 ## CURRENT_PHASE
 
-M6 — differential analysis and failure attribution; Phase 2B remains closed.
+M7 — complete; Phase 2B remains closed and Phase 3 has not started.
 
 ## CURRENT_EVIDENCE
 
@@ -120,6 +120,18 @@ M6 — differential analysis and failure attribution; Phase 2B remains closed.
   of treating expected containment as bounded variance. J2 and J3 were
   bounded matches. This is `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`.
 
+- Repair `efc03de2f7396a96baaca485894df300ddcc4ce0` passes the synthetic
+   cancellation regression and full 263-test local suite. Re-evaluating V1
+   through the repaired comparator yields bounded matches for J1/J2/J3 with
+   no strict mismatches. V2 diagnostic
+   `nightwatch-20260812T042725Z-11cc-j1-diagnostic` is PASS, has no oracle IDs
+   or fingerprints, and is intentionally unpaired with V1.
+- Final validation is PASS: `npx tsc --noEmit`, full Playwright (`263 passed`),
+  `npm run agent:check` (PASS with the expected approved-document
+  `CHECKPOINT_ADVANCE` warning), and `git diff --check`. The Phase 2C
+  controlled-run safety vector is zero across all seven contexts, and the
+  final privacy review is PASS.
+
 ## CANARY_SET
 
 1. `ripple-payer-exchange-read` (J1) — `/payer-exchange-rate-v2` —
@@ -174,12 +186,13 @@ context-only auth validity, and transient DEV font 502.
 
 ## FALSE_NEGATIVE_LEDGER
 
-Status: COMPLETE. The false-negative section of `REPORT.md` records concrete
-current risks:
-unhandled rejection/CSP not admitted to journey result, JS-HTML content type,
-optional-resource role loss, semantic count/order erasure, navigation UNKNOWN
-exemption, post-journey auth classification, absent fingerprints/background
-comparison, unstructured causality, and run-wide required-read attribution.
+Status: COMPLETE. `REPORT.md` preserves the pre-hardening false-negative
+catalog and records residual risks after repair: stale source contracts,
+navigation-UNKNOWN misattribution, post-check auth expiry, and sanitized
+fingerprint collision at category/path-template granularity. Runtime/CSP,
+content type, resource role, fingerprint/background, causality, and
+step-scoped required-read dimensions are now covered by the shared engine and
+golden regressions.
 
 ## REAL_RUN_LEDGER
 
@@ -202,21 +215,27 @@ The base budget is not expanded for a product/infra anomaly; only the proven
 Nightwatch comparator defect can create one new matrix version and one
 narrowly justified diagnostic context.
 
+The authorized v2 diagnostic added exactly one fresh J1 context:
+`nightwatch-20260812T042725Z-11cc-j1-diagnostic` — PASS. It used the same
+frozen J1 contract and a new post-fix matrix/implementation version, and was
+not compared with V1 as an equivalent replay.
+
 ## REPLAY_MATRIX_LEDGER
 
-Status: V2_DIAGNOSTIC_READY. V1 completed and is preserved. The corrected
-comparator is validated locally; one additional J1 context is authorized only
-under the new matrix version and will not be compared to V1 as an equivalent
-replay.
+Status: COMPLETE. V1 completed and is preserved; repaired re-evaluation is
+bounded for all three pairs. V2 contains exactly one post-fix J1 diagnostic
+with no cross-version replay comparison.
 
 Pre-real checkpoint: `PHASE_2C_PRE_REAL_MATRIX_READY`.
-Implementation SHA: `043c2cc02b96ce9aec42c6b529978150c09dabfe`.
+Implementation SHA V1: `043c2cc02b96ce9aec42c6b529978150c09dabfe`.
+Implementation SHA V2: `efc03de2f7396a96baaca485894df300ddcc4ce0`.
 Contract version: `nightwatch.journey.phase2c.v1`.
 Oracle version: `nightwatch.oracle.phase2c.v1`.
 Evidence schema: `nightwatch.evidence.phase2c.v1`.
 Matrix version V1: `phase2c-real-v1`.
 Diagnostic matrix version: `phase2c-real-v2-j1-diagnostic`.
 Diagnostic command: `NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY=ripple-payer-exchange-read NIGHTWATCH_PHASE_2C_MATRIX_VERSION=phase2c-real-v2-j1-diagnostic npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
+V2 artifact: `artifacts/phase2c-nightwatch-20260812T042725Z-11cc-matrix.json`.
 
 ## BUG_CANDIDATES
 
@@ -226,9 +245,9 @@ Diagnostic command: `NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY=ripple-payer-exchang
 - `NW2C-J1-RESOURCE-LIFECYCLE-COMPARATOR`: Nightwatch defect candidate. V1
   compared expected third-party policy cancellations as strict failures; the
   exact divergence was J1-C1 count 6 versus J1-C2 count 5. Journey result,
-  safety, and oracle ledgers were otherwise clean. Status: confirmed and
-  repaired as `NIGHTWATCH_DEFECT`; closure admission awaits the one new
-  diagnostic context under matrix v2.
+  safety, and oracle ledgers were otherwise clean. Status: confirmed,
+  repaired, and superseded as `NIGHTWATCH_DEFECT`; no product candidate is
+  admitted.
 
 ## REJECTED_ANOMALIES
 
@@ -239,6 +258,8 @@ Diagnostic command: `NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY=ripple-payer-exchang
   the single observation.
 - No J2 font-502 fingerprint or malformed-JSON event occurred naturally in
   the six Phase 2C contexts.
+- The V1 J1 replay divergence is rejected as a product signal and superseded
+  by the repaired Nightwatch comparator; V2 produced no new anomaly.
 
 ## FILES_CHANGED
 
@@ -300,22 +321,26 @@ Diagnostic command: `NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY=ripple-payer-exchang
   one opt-in Phase2C matrix test is discoverable.
 - Full V1 real matrix: PASS, six serial contexts; artifact metadata review
   found only the documented J1 comparator divergence. No datastore query ran.
+- V2 diagnostic: PASS, exactly one J1 context; no cross-version comparison.
+- Stored V1 artifact re-evaluated through repaired comparator: all three pairs
+  PASS/BOUNDED_MATCH with no strict invariant mismatches.
 
 ## SAFETY_EVENTS
 
-V1 controlled-run counts: production attempts `0`, proxy violations `0`,
-unknown destinations `0`, unknown approvals `0`, mutations `0`, DB queries `0`,
-and action-caused UNKNOWN `0`. The pre-real gate passed before the matrix and
-the runner stopped on no safety condition. Historical Phase 1.1 production
-contact remains preserved separately; Phase 2A/2B safety counts remain
-separate.
+Phase 2C controlled-run counts across V1 plus V2 (7 contexts): production
+attempts `0`, proxy violations `0`, unknown destinations `0`, unknown
+approvals `0`, mutations `0`, DB queries `0`, and action-caused UNKNOWN `0`.
+The pre-real gate passed before both executions and no safety stop occurred.
+Historical Phase 1.1 production contact remains preserved separately;
+Phase 2A/2B safety counts remain separate.
 
 ## PRIVACY_STATUS
 
-PASS for source, task documents, and synthetic evidence: no auth values,
-cookies, tokens, bodies, DOM, customer values, costs, or query secrets are
-persisted. The external auth path is referenced only by the guarded runner and
-is never printed or inspected for values.
+PASS for source, task documents, synthetic evidence, V1 matrix metadata, and
+V2 matrix metadata: no auth values, cookies, tokens, bodies, DOM, customer
+values, costs, screenshots, traces, or query secrets are persisted. The
+external auth path is referenced only by the guarded runner and is never
+printed or inspected for values.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
@@ -325,31 +350,41 @@ validation pass.
 
 ## LAST_CHECKPOINT_SHA
 
-`efc03de2f7396a96baaca485894df300ddcc4ce0` — post-fix implementation
-checkpoint; V1 remains preserved at `043c2cc` and v2 diagnostic is separately
-versioned.
+`0f894d96bc384e402f4199ac6255ecb3948781c6` — clean v2 diagnostic
+documentation checkpoint; validated implementation remains `efc03de` and V1
+remains preserved at `043c2cc`.
 
 ## NEXT_EXACT_ACTION
 
-Run exactly one gated v2 J1 diagnostic using the command in
-`REPLAY_MATRIX_LEDGER`. Record it as a post-fix observation with no V1 replay
-comparison; stop on any safety, privacy, or auth-integrity event.
+None. Phase 2C is complete and the Nightwatch worktree is handed off clean.
+The recommended next task only is `PHASE 3 — CHANGE-DIRECTED JOURNEY
+SELECTION`; do not start it in this task.
 
 ## Exact Next Action
 
-The V1 matrix is complete and its comparator defect is repaired/validated at
-`efc03de`; run only the one declared v2 J1 diagnostic and preserve V1 as
-historical evidence.
+No further Phase 2C action. If resumed, verify the clean handoff and stop
+before Phase 3.
+
+## FINAL_ADVERSARIAL_REVIEW
+
+PASS. The final review confirms exact-fingerprint admission, conservative L0
+handling, no anomaly suppression, no arbitrary tolerances, no meaningful
+normalization loss, cancellation/delivery/execution separation, page-visible
+auth gating, frozen journey behavior, unchanged fail-closed safety, privacy-
+safe fingerprints, reusable generic oracles, regression coverage, documented
+false negatives, no Phase 3/change intelligence, no datastore work, and exact
+STATE recovery instructions.
 
 ## Files Changed
 
-See the `FILES_CHANGED` table below. Changes remain limited to Nightwatch;
-implementation work is now authorized only for the shared Phase 2C model.
+See the `FILES_CHANGED` table below. All changes are limited to Nightwatch;
+Phase 2C implementation and documentation are complete.
 
 ## Validation Ledger
 
-See `VALIDATION_LEDGER` below. The task-document continuity check passed after
-the required-heading repair.
+See `VALIDATION_LEDGER` below. Final validation passed after the closure
+documentation was finalized; the expected continuity warning is limited to
+approved task-document descendants of the validated implementation.
 
 ## Decisions Made During This Task
 
@@ -368,18 +403,21 @@ the required-heading repair.
 - V1 real evidence is complete; J1's strict resource-lifecycle mismatch is a
   proven shared comparator defect because both differing events were expected
   third-party policy containment.
-- Pre-real checkpoint `043c2cc` is clean and frozen; the next exact action is
-  the gated serial launcher above.
+- Pre-real checkpoint `043c2cc` was clean and frozen; the gated serial launcher
+  completed the declared V1 matrix, and the one authorized post-fix diagnostic
+  completed under V2.
 
 ## Blockers
 
-The V1 matrix is complete. A shared comparator repair and one narrowly scoped
-diagnostic context remain; no product or datastore investigation is authorized.
+None. All Phase 2C acceptance criteria are satisfied. No product, datastore,
+or Phase 3 investigation is authorized by this closed task.
 
 ## Safety Events
 
-NONE. No Phase 2C external context, product mutation, datastore query, or
-production contact has occurred.
+NONE. Seven Phase 2C controlled contexts completed with production attempts,
+proxy violations, unknown destinations, unknown approvals, mutations, DB
+queries, and action-caused UNKNOWN all equal to zero. The historical Phase 1.1
+production contact remains preserved separately.
 
 ## Deferred / Follow-Up
 
@@ -389,12 +427,15 @@ production contact has occurred.
 
 ## Resume Recipe
 
-1. Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `ACTIVE_TASK.md`, then this
+1. Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `ACTIVE_TASK.md`, and this
    task's SPEC/PLAN/STATE.
-2. Inspect `git status --short` and current diff.
-3. Continue the exact `NEXT_EXACT_ACTION` above; do not run DEV until the
-   clean `PHASE_2C_PRE_REAL_MATRIX_READY` checkpoint exists.
-4. Preserve the frozen J1/J2/J3 contract and serial six-context budget.
+2. Verify `git status --short` is clean and confirm the final closure commit
+   is a Nightwatch-only descendant of validated implementation
+   `efc03de2f7396a96baaca485894df300ddcc4ce0`.
+3. Treat this task as closed. Preserve the seven recorded Phase 2C contexts,
+   the frozen J1/J2/J3 contracts, and all anomaly classifications.
+4. Do not run additional DEV traffic, reopen Phase 2B, or start Phase 3 from
+   this state.
 
 ## ADVERSARIAL_SELF_REVIEW
 
@@ -440,15 +481,20 @@ Oracle triggering is not treated as causal solely because of timestamp order.
 
 ## RESUME_RECIPE
 
-1. Read Nightwatch `AGENTS.md`, `docs/CURRENT_STATE.md`,
-   `.agent/ACTIVE_TASK.md`, this task's `SPEC.md`, `PLAN.md`, and `STATE.md`.
-2. Confirm only Nightwatch is in scope; inspect `git status --short` and the
-   current diff.
-3. Continue `NEXT_EXACT_ACTION`: commit the validated implementation and
-   pre-real checkpoint, then run only the declared serial matrix.
-4. Never start Phase 3 or add journeys/actions; update this STATE after each
-   major matrix/differential milestone.
+The task is closed. A fresh agent can recover the complete V1/V2 evidence,
+oracle versions, safety vector, anomaly ledger, and final validation from this
+STATE and REPORT. No additional Phase 2C execution is needed; the next task,
+if explicitly authorized later, is only `PHASE 3 — CHANGE-DIRECTED JOURNEY
+SELECTION`.
 
 ## Completion Snapshot
 
-Not complete.
+Complete. Phase 2A/2B closure was reconciled; J1/J2/J3 remained the canary
+set; the shared replay/oracle model was hardened; synthetic coverage passed;
+the six-context V1 matrix and one authorized V2 diagnostic completed safely;
+the J1 comparator false positive was repaired and superseded; J2's historical
+font 502 remained `L0_NOT_REPRODUCED`; malformed JSON remained an independent
+semantic-UNKNOWN protocol anomaly; privacy and safety passed; and the final
+Nightwatch worktree is clean. Final implementation remains
+`efc03de2f7396a96baaca485894df300ddcc4ce0`; the closure commit is the clean
+terminal descendant recorded at handoff.
