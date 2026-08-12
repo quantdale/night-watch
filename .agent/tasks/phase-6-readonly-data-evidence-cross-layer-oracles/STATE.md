@@ -59,7 +59,8 @@ comparisons.
 
 ## CURRENT_PHASE
 
-M6/M7 — synthetic data plane complete; pre-real gate review pending.
+M7 — pre-real gate BLOCKED: runtime-to-datastore environment and designated
+scope are not proven.
 
 ## CURRENT_EVIDENCE
 
