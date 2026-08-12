@@ -174,6 +174,7 @@ function recordStepEvent(ctx: JourneyContext, definition: JourneyDefinition, res
       structuralPresent: result.structuralPresent,
       requiredReadRuleIds: result.requiredReadRuleIds,
       elapsedMs: result.elapsedMs,
+      ...(result.routeStabilityMs === undefined ? {} : { routeStabilityMs: result.routeStabilityMs }),
       ...(result.failureClassification === undefined ? {} : { failureClassification: result.failureClassification }),
     },
   });
@@ -229,6 +230,7 @@ async function executeStep(
   let structuralPresent = false;
   let status: JourneyStepResult['status'] = 'PASS';
   let failureClassification: string | undefined;
+  let observedRouteStabilityMs = 0;
 
   const fail = (classification: string): void => {
     status = 'FAIL';
@@ -268,6 +270,9 @@ async function executeStep(
               fatal: page.isClosed() || ctx.monitor.safetyFailed,
             };
           },
+          onSample: (progress) => {
+            observedRouteStabilityMs = Math.max(observedRouteStabilityMs, progress.routeStableMs);
+          },
         });
         if (!stable) fail('global-shell-stability-failure');
         structuralPresent = await markerPresent(
@@ -276,6 +281,7 @@ async function executeStep(
           definition.globalShellRequirement.minimumCount,
         );
         if (!structuralPresent) fail('global-shell-structural-failure');
+        if (!await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep)) fail('required-read-not-observed');
       } finally {
         ctx.network.endJourneyIntent(step.stepId);
       }
@@ -332,6 +338,7 @@ async function executeStep(
     structuralPresent,
     requiredReadRuleIds: step.expectedNetworkResult.requiredRuleIds,
     elapsedMs: Math.max(0, (opts.now ?? Date.now)() - started),
+    ...(observedRouteStabilityMs > 0 ? { routeStabilityMs: observedRouteStabilityMs } : {}),
     ...(failureClassification === undefined ? {} : { failureClassification }),
   };
   recordStepEvent(ctx, definition, result);
@@ -353,7 +360,7 @@ export async function runDeclarativeJourney(
   for (const step of definition.allowedSteps) {
     const result = await executeStep(page, ctx, definition, step, base, opts);
     steps.push(result);
-    if (result.actionType === 'NAVIGATE_APPROVED_ROUTE') routeStabilityMs = Math.max(routeStabilityMs, definition.stabilityRequirement.routeStableMs);
+    if (result.actionType === 'NAVIGATE_APPROVED_ROUTE') routeStabilityMs = Math.max(routeStabilityMs, result.routeStabilityMs ?? 0);
     if (result.status !== 'PASS') break;
   }
 

@@ -43,6 +43,17 @@ function isApiHost(url: URL, env: EnvironmentConfig): boolean {
   return (env.apiHosts ?? []).some((host) => hostMatches(url, host));
 }
 
+function pathMatches(candidate: EndpointSemanticRule, pathname: string): boolean {
+  if (candidate.path === pathname) return true;
+  if (candidate.pathPattern === undefined) return false;
+  try {
+    return new RegExp(candidate.pathPattern).test(pathname);
+  } catch {
+    // A malformed local registry entry is never allowed to classify traffic.
+    return false;
+  }
+}
+
 /**
  * Classify one encountered API URL. `null` means it is not an API endpoint
  * for the selected environment and is intentionally omitted from semantic
@@ -82,8 +93,7 @@ export function matchRippleEndpoint(
     (candidate) =>
       hostMatches(url, candidate.host) &&
       candidate.method.toUpperCase() === normalizedMethod &&
-      (candidate.path === url.pathname ||
-        (candidate.pathPattern !== undefined && new RegExp(candidate.pathPattern).test(url.pathname))),
+      pathMatches(candidate, url.pathname),
   );
   return rule === undefined
     ? { ruleId: 'unreviewed-api-endpoint', classification: 'UNKNOWN' }

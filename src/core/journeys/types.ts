@@ -98,6 +98,7 @@ export interface JourneyStepResult {
   structuralPresent: boolean;
   requiredReadRuleIds: readonly string[];
   elapsedMs: number;
+  routeStabilityMs?: number;
   failureClassification?: string;
 }
 
