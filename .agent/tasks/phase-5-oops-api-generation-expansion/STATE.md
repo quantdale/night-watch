@@ -6,8 +6,8 @@ Task ID: phase-5-oops-api-generation-expansion
 Phase: 5
 Status: IN_PROGRESS
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
-Last validated implementation SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
+Current SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
+Last validated implementation SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
 Branch: main
 Last checkpoint: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a — M2–M7
 implementation, durable corpus, native relay runner, and local validation
@@ -105,6 +105,12 @@ Phase 5 task.
   suite 15 passed; full Nightwatch Playwright suite 333 passed; agent:check
   PASS with the approved checkpoint-advance warning; git diff --check PASS;
   Nightwatch worktree clean at the checkpoint.
+- The first guarded DEV command stopped before any API request because the
+  runner resolved source repositories two directory levels above
+  `REPOSITORIES`; all six snapshots were therefore invalid. This was a
+  `NIGHTWATCH_GATE_DEFECT`, repaired by resolving repositories beside the
+  Nightwatch checkout. After repair, TypeScript and the 15-test Phase 5 suite
+  passed; no real endpoint was reached.
 
 ## PRE_REAL_SECURITY_REVIEW
 
@@ -240,7 +246,9 @@ bounded and sanitized, and workspaces cleaned.
 
 ## DEV_API_RUN_LEDGER
 
-Frozen set is six KNOWN_READ operations; maximum 12 serial calls;
+Frozen set is six KNOWN_READ operations; maximum 12 serial calls. The first
+guarded attempt was blocked before relay/API execution by a repaired
+Nightwatch repository-snapshot path defect; no real endpoint was reached.
 real runner is native Nightwatch through the catalog-resolving relay because
 authenticated OOPS is disabled by the sandbox decision.
 
@@ -284,11 +292,17 @@ REPORT.md are also being checkpointed. No Alphaus repository is changed.
 - `npm run agent:check`: PASS with the approved checkpoint-advance warning.
 - `git diff --check`: PASS.
 - Pre-real gate: PASS; no real request has executed yet.
+- Post-gate repair validation: TypeScript PASS; focused Phase 5 suite 15
+  passed; diff check PASS.
 
 ## BUG_CANDIDATES
 
-None admitted for Phase 5. Phase 4 runtime artifacts and historical J2 font
-signal remain classified as above; no API anomaly has executed.
+One Nightwatch preflight defect was found and repaired: the Phase 5 runner
+resolved the Alphaus repository root two levels above `REPOSITORIES`, making
+all source snapshots invalid. It stopped before API execution and was fixed in
+`83f9d610f9ecc5c35422e91a83b9a3bc760ccadd`. No product/API anomaly is admitted.
+Phase 4 runtime artifacts and historical J2 font signal remain classified as
+above.
 
 ## REJECTED_OPERATIONS
 
@@ -317,7 +331,9 @@ customer identifiers; unbounded bodies.
 
 ## SAFETY_EVENTS
 
-Phase 5 real safety counters remain zero because no real API call has run.
+Phase 5 real safety counters remain zero because the guarded attempt stopped
+before any real API call. The source-snapshot gate defect was repaired before
+the next checkpoint.
 Local synthetic safety blocks (arbitrary target, UNKNOWN, mutation, redirect)
 were rejected before target execution. No production attempt, proxy violation,
 unknown approval, product mutation, action-caused UNKNOWN, DB query, or
@@ -331,15 +347,16 @@ screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-3f989a25bb9618ef43d384ba66f050a6e831a61a.
+83f9d610f9ecc5c35422e91a83b9a3bc760ccadd.
 
 ## LAST_CHECKPOINT_SHA
 
-cfde3d899791d1b89683f930982a9ccd04122764.
+83f9d610f9ecc5c35422e91a83b9a3bc760ccadd.
 
 ## NEXT_EXACT_ACTION
 
-Run `npm run api:phase5 -- --env=dev` once. On completion, inspect only the
+After the repaired runner is checkpointed, run `npm run api:phase5 -- --env=dev`
+once. On completion, inspect only the
 sanitized ledger, update the corpus/task closure records, and run final
 validation. If a preflight or auth gate fails, record the exact blocker and do
 not retry real traffic.
@@ -382,6 +399,9 @@ post-run closure validation remain pending.
   because its isolated namespace cannot reach the parent relay.
 - Native Nightwatch relay execution is the only real DEV fallback.
 - Six source-proven reads are frozen; no endpoint expansion is permitted.
+- A preflight failure caused by Nightwatch's incorrect repository-root
+  resolution is repaired and must be rechecked before the single real run;
+  it is not an API anomaly.
 
 ## Discoveries
 
@@ -391,10 +411,13 @@ post-run closure validation remain pending.
   for a status assertion failure; Nightwatch must use relay/oracle metadata.
 - The generated scenario is a JSON-subset YAML document so no broad YAML
   parser or permissive external schema is introduced.
+- The Phase 5 source snapshot root is the `REPOSITORIES` directory beside the
+  Nightwatch checkout, not the meta-workspace root.
 
 ## Blockers
 
-No human blocker yet. Authenticated OOPS execution is intentionally disabled
+No human blocker yet. The first preflight was blocked by a repaired Nightwatch
+snapshot-path defect; no real request reached the relay. Authenticated OOPS execution is intentionally disabled
 by the relay/network-namespace incompatibility; native Nightwatch relay
 execution remains in scope.
 

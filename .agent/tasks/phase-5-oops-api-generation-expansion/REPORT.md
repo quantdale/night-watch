@@ -113,3 +113,14 @@ Pre-real validation passed: TypeScript, 15 focused Phase 5 tests, the full
 Nightwatch Playwright suite (333 passed), `agent:check` (PASS with the approved
 checkpoint-advance warning), and `git diff --check`. No real API request,
 production attempt, mutation, database query, or secret leak has occurred.
+
+## M9 preflight repair
+
+The first opt-in DEV command failed at the Nightwatch preflight before any
+relay or Alphaus API request. The runner used the meta-workspace root when
+resolving the six source repositories, so all snapshots were invalid. This was
+classified as a `NIGHTWATCH_GATE_DEFECT`, repaired in
+`83f9d610f9ecc5c35422e91a83b9a3bc760ccadd` by resolving repositories from the
+`REPOSITORIES` directory beside Nightwatch, and revalidated with TypeScript,
+the 15-test focused Phase 5 suite, and diff-check. No API anomaly or safety
+event resulted.
