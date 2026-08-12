@@ -176,8 +176,25 @@ The Phase 4 closure report and full run ledger are in
 `.agent/tasks/phase-4-seeded-model-based-exploration/REPORT.md`.
 
 Phase 2B, Phase 2C, Phase 3, Phase 4, and Phase 5 are completed predecessor
-phases. Phase 6 is active under the native task
+phases. Phase 6 local architecture and validation are complete, but its native
+task is blocked under the explicit runtime/data environment gate:
 `.agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles/`.
+
+## Phase 6 — read-only data evidence (local architecture; blocked before live data)
+
+Phase 6 has versioned typed query plans, DynamoDB/BigQuery/Spanner validators
+and thin adapters, metadata-only normalization, cross-layer comparison,
+source-to-store lineage, Phase 3 staleness integration, Phase 5 API linkage,
+and synthetic adversarial coverage. The focused Phase 5 + Phase 6 suite passed
+23/23 and the full Playwright suite passed 341/341; TypeScript, agent-check,
+and diff-check passed.
+
+The real data gate remains closed as
+`PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`: current configuration and
+source evidence do not prove which datastore environment the selected DEV API
+runtime reads or establish a designated Nightwatch scope. No datastore auth
+probe, query, scan, or write ran, and no live datastore verification is
+claimed. Phase 7 has not started.
 
 ## Environment (machine facts)
 

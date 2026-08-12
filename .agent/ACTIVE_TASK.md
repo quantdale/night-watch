@@ -3,18 +3,18 @@
 Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
 Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
-Last validated implementation SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
-Current milestone: M6 — synthetic data plane and adversarial matrix; typed
-Phase 6 architecture is implemented and live datastore work remains gated.
-Last checkpoint: 2026-08-12 — Phase 6 typed data-evidence implementation; no
-datastore query has run.
-Next action: run the complete local validation matrix and perform the pre-real
-gate review without executing a datastore query while environment/scope/auth
-remain unconfirmed.
+Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
+Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
+Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
+datastore environment mapping.
+Last checkpoint: local Phase 6 architecture, synthetic matrix, privacy review,
+and full validation completed; no datastore query has run.
+Next action: obtain a source/config-backed proof of the selected DEV runtime's
+datastore environment and designated Nightwatch scope before any auth probe or
+read-only query; do not guess or bypass the gate.
 
 ## Prior phase closure handoff
 

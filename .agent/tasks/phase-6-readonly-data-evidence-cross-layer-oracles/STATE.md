@@ -4,13 +4,13 @@
 
 Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
-Last validated implementation SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
+Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
+Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Branch: main
-Last checkpoint: Phase 6 typed data-evidence implementation; no datastore
-query has run.
+Last checkpoint: Phase 6 local architecture and validation complete; no
+datastore query has run.
 
 ## Objective
 
@@ -19,9 +19,9 @@ plane linked to Phase 5 API and Phase 2 browser behavior.
 
 ## Current Milestone
 
-M6 — synthetic data plane and adversarial matrix. Typed schemas, validators,
-adapters, privacy/oracle logic, catalogs, and Phase 3/Phase 5 lineage are
-implemented; full validation and final real-data gate remain.
+M7 — pre-real gate blocked by unresolved runtime-to-datastore environment
+mapping. Typed schemas, validators, adapters, privacy/oracle logic, catalogs,
+synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
 
 ## Completed Milestones
 
@@ -38,15 +38,18 @@ implemented; full validation and final real-data gate remain.
 
 ## Work In Progress
 
-Run the complete local validation matrix and adversarial review. Keep the
-external data gate closed while runtime environment, designated scope, and
-datastore auth remain unconfirmed.
+Local work is complete. Keep the external data gate closed: the selected DEV
+runtime's actual datastore environment and designated Nightwatch scope remain
+unconfirmed. No datastore auth probe is justified until that mapping is
+proved.
 
 ## Exact Next Action
 
-Run `npx tsc --noEmit`, the focused Phase 6/Phase 5 suites, full Playwright,
-`npm run agent:check`, and privacy/diff/integrity checks. Do not run a real
-datastore query.
+The exact next action is external/source configuration verification of the
+selected DEV runtime's datastore environment and designated scope. After that
+proof, re-read this task state, validate one frozen plan, and only then assess
+the auth/tool gate. Never run a real datastore query before the environment
+gate passes.
 
 ## CURRENT_GOAL
 
@@ -96,15 +99,16 @@ M6/M7 — synthetic data plane complete; pre-real gate review pending.
   responses. The strongest additional candidate is the non-user-scoped
   billing-group exchange read; it remains outside the frozen D1-D3 real budget
   unless the SPEC is amended.
-- Phase 6 implementation checkpoint `21323f7e9684cc7859b849591ceb87dc02279ffb`
+- Phase 6 hardened implementation checkpoint `6de063325f2afc1bafc14ce4889c6d53d2e76bed`
   adds `src/data/phase6`, four Nightwatch-owned corpus artifacts, and the
   focused synthetic test. The runtime API accepts only `ValidatedReadPlan`;
   the default `GatedReadToolInvoker` cannot invoke an external datastore.
 - Current catalog counts: 7 structured query plans, 4 data-oracle records, 11
   lineage edges. Phase 5 remains 11 inventoried / 6 KNOWN_READ / 4
   KNOWN_MUTATION / 1 UNKNOWN.
-- Focused Phase 6 suite is 7/7 PASS and TypeScript is PASS. No datastore tool,
-  auth probe, query, scan, or write has executed.
+- Focused Phase 5 + Phase 6 suite is 23/23 PASS; full Playwright is 341/341
+  PASS; TypeScript is PASS. No datastore tool, auth probe, query, scan, or
+  write has executed.
 
 ## PHASE_5_RECONCILIATION
 
@@ -165,7 +169,8 @@ optional D4 without SPEC amendment; currently remaining=6.
 ## REAL_QUERY_LEDGER
 
 0 executed; 0 production writes; 0 protected scans; 0 DB credentials exposed;
-no auth or environment probe performed; remaining=6.
+no auth or environment probe performed; remaining=6. This is intentionally
+not `DATASTORE_VERIFIED`.
 
 ## CROSS_LAYER_LEDGER
 
@@ -199,8 +204,10 @@ Phase 6 task docs, `src/data/phase6/*`, `corpus/phase6/*`, and
 
 Phase 5 terminal validation remains: TypeScript PASS, focused Phase 5 15
 passed, full Playwright 333 passed, agent:check PASS with approved continuity
-warning, diff-check PASS. Phase 6 TypeScript PASS and focused suite 7 passed;
-full suite and final adversarial validation remain.
+warning, diff-check PASS. Phase 6 final validation: focused Phase 5 + Phase 6
+23/23 passed, full Playwright 341/341 passed, TypeScript PASS, agent:check
+PASS with the approved continuity warning, diff-check PASS, privacy scan PASS,
+and Alphaus integrity audit PASS.
 
 ## BUG_CANDIDATES
 
@@ -251,18 +258,17 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-21323f7e9684cc7859b849591ceb87dc02279ffb.
+6de063325f2afc1bafc14ce4889c6d53d2e76bed.
 
 ## LAST_CHECKPOINT_SHA
 
-21323f7e9684cc7859b849591ceb87dc02279ffb.
+TO_BE_RECORDED_AFTER_DOCUMENTATION_CHECKPOINT.
 
 ## NEXT_EXACT_ACTION
 
-Run the complete local validation matrix, add any missing adversarial cases,
-and perform the pre-real gate review. If environment/scope/auth remain
-unconfirmed, preserve the explicit safe blocker and do not run a datastore
-query.
+Obtain source/config-backed proof of the selected DEV runtime's datastore
+environment and designated Nightwatch scope. If that proof remains absent,
+keep this task blocked and do not run a datastore query or auth probe.
 
 ## RESUME_RECIPE
 
@@ -276,9 +282,10 @@ query.
 
 ## Completion Snapshot
 
-Not complete. Phase 6 architecture and synthetic boundary are implemented;
-full validation and optional real-read decision remain. No live datastore
-evidence exists.
+Blocked, not complete. Phase 6 architecture, synthetic boundary, adversarial
+matrix, privacy review, and full local validation are complete. No live
+datastore evidence exists and no real-read decision is possible until the
+runtime-to-datastore environment and designated scope are proven.
 
 ## Files Changed
 
@@ -287,10 +294,11 @@ current-state handoff; no Alphaus repo changed and no datastore query executed.
 
 ## Validation Ledger
 
-Phase 6 focused: TypeScript PASS; 7/7 Phase 6 tests PASS; `git diff --check`
-PASS. Full Playwright, complete Phase 5 regression, and final `agent:check`
-remain. Worker archaeology completed in four read-only tracks; no datastore
-command was invoked.
+Phase 6 focused Phase 5 + Phase 6: 23/23 PASS; full Playwright: 341/341 PASS;
+`npx tsc --noEmit`: PASS; `npm run agent:check`: PASS with the approved
+continuity warning; `git diff --check`: PASS. Privacy scan and Alphaus
+integrity audit: PASS. Four read-only source archaeology tracks completed; no
+datastore command was invoked.
 
 ## Decisions Made During This Task
 
@@ -311,8 +319,11 @@ command was invoked.
 
 ## Blockers
 
-No blocker yet; environment/scope/auth are unprobed and real queries are
-intentionally deferred.
+BLOCKED: `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. Nightwatch config and
+PIPELINE_MAP/source evidence show possible DEV/production data-plane sharing,
+but do not prove the exact datastore selected by `apidev.alphaus.cloud` or a
+designated safe runtime scope. Comparing against production, or probing DB auth
+first, would be unsafe and potentially misleading.
 
 ## Safety Events
 
@@ -320,8 +331,9 @@ None.
 
 ## Deferred / Follow-Up
 
-All implementation and any optional real read stage remain pending. Phase 7 is
-not started.
+Any real read stage remains blocked on environment/scope proof. Broader data
+coverage, multi-hop escalation, scheduling, mutation/remediation, and Phase 7
+remain out of scope; Phase 7 is not started.
 
 ## Resume Recipe
 

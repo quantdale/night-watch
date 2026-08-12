@@ -112,31 +112,35 @@ AI planning, scheduler, and Phase 7.
 
 ### M6 — Synthetic data plane and adversarial matrix
 
-- Status: IN_PROGRESS.
+- Status: COMPLETED.
 - Exercise all three datastore adapters through the actual plan/validator/
   normalizer/comparator boundary. Cover valid reads, malicious plans, query
   injection, protected scans, empty/large results, retention, async lag, and
   privacy sentinels.
 - Acceptance: focused Phase 6 suite passes and no approved tool is called by
-  rejected plans.
+  rejected plans. Result: 8 Phase 6 tests passed; synthetic invokers only;
+  rejected plans were proven to stop before adapter invocation.
 
 ### M7 — Pre-real audit and optional bounded real data
 
-- Status: PENDING.
+- Status: BLOCKED — `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`.
 - Freeze at most D1–D3 and six total read queries. Prove environment, exact
   scope, designated-account policy, auth, budget, privacy, and tool health.
 - Execute serially only if every gate passes; otherwise record exact blocker and
   complete local work without pretending live verification.
-- Acceptance: every real query is catalog-bound, read-only, narrow, and
-  metadata-only; no query repeats beyond the frozen pair.
+- Acceptance remains conditional: every real query must be catalog-bound,
+  read-only, narrow, and metadata-only; no query repeats beyond the frozen
+  pair. The runtime-to-datastore binding and designated scope are not proven,
+  so the gate correctly remains closed and zero live queries are reported.
 
 ### M8 — Final validation, adversarial review, and clean closure
 
-- Status: PENDING.
+- Status: COMPLETED — local validation and blocker handoff.
 - Run all focused suites, Phase 5 lineage tests, full Playwright, typecheck,
   agent check, diff check, Alphaus integrity audit, privacy scan, and closure
-  review. Commit Nightwatch only; mark task COMPLETE only if all criteria or an
-  explicit safe blocker state are durable.
+  review. Commit Nightwatch only; keep the task BLOCKED because the explicit
+  safe environment gate is unresolved rather than marking live evidence
+  complete.
 - Do not create or start Phase 7.
 
 ## Validation Strategy
