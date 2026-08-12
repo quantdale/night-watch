@@ -1,11 +1,27 @@
 # Phase 4 Exploration Envelopes and Seed Ledger
 
-Status: `DESIGN_CHECKPOINT`
+Status: `SOURCE_REVIEWED_PENDING_IMPLEMENTATION`
 
 Required envelopes are E1/J1 payer exchange, E2/J2 common exchange, and E3/J3
-account inventory. Their approved route/surface/action/network boundaries are
-pending source archaeology. No seed has been selected or executed; no real
-context is authorized before the pre-real checkpoint.
+account inventory. The source-reviewed boundaries are:
 
-The fixed real budget is two preselected seeds per applicable envelope plus at
-most one exact-sequence reproduction per envelope with a nontrivial path.
+| envelope | route class | admitted action IDs | network envelope |
+|---|---|---|---|
+| E1/J1 | `/payer-exchange-rate-v2` | J1 vendor local views, J1 status local views, trusted return-to-anchor | no action-caused request for local actions; anchor family `ripple.payer-exchange.read`; mutation family forbidden |
+| E2/J2 | `/global-exchange-rate-v2` | J2 AWS/Azure vendor reads, trusted return-to-anchor | `ripple.common-exchange.read`; mutation family forbidden |
+| E3/J3 | `/accounts` | J3 account/billing-group local sort; trusted return-to-anchor | no action-caused request for local sort; anchor families `ripple.billing-groups.read` and `ripple.account-inventory.read`; J3 vendor switch stale/excluded |
+
+The three envelopes have branching approved paths. E3 is intentionally local
+only because the current tracking-ref delta changed the vendor request graph.
+No live DOM crawling was used.
+
+The fixed real budget is two preselected seeds per envelope plus at most one
+exact-sequence reproduction per envelope with a nontrivial path: six fresh
+contexts and up to three fresh reproduction contexts. No seeds have been
+executed yet; the preselected corpus is recorded in the implementation ledger
+before the real gate.
+
+Runtime-unavailable controls are recorded and excluded deterministically. A
+new host, production destination, known mutation, action-caused UNKNOWN, route
+escape, or fatal oracle stops the current run; a known mutation stops all real
+Phase 4 execution.

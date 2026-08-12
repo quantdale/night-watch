@@ -19,7 +19,7 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## CURRENT_PHASE
 
-M0 complete; M1 current — task creation and frozen acceptance checkpoint.
+M0 and M1 complete; M2 current — source archaeology and action admission.
 
 ## CURRENT_EVIDENCE
 
@@ -28,15 +28,18 @@ M0 complete; M1 current — task creation and frozen acceptance checkpoint.
 - Phase 3 focused suite: 28 passed; typecheck: PASS; agent continuity: PASS
   with the expected prior-document checkpoint warning.
 - Phase 3 current shadow was empty and accepted; no Phase 3 DEV run occurred.
+- Source review found J1/J2 bounded selector actions and J3 local table-sort
+  actions. J3 vendor switching is stale against the local tracking delta and
+  is rejected pending semantic review.
 
 ## SOURCE_BASELINES
 
 - Ripple UI: `mobingilabs/ripple-ui@d80b161b`; tracking `origin/dev` is
-  `e46b8ed6`, 0 ahead/21 behind; freshness `LOCAL_TRACKING_REF_ONLY`.
-- Ripple API: `mobingilabs/ripple-api@27bb007a`; tracking matches; freshness
-  remains local-tracking only.
+  `f6b2d2f6`, 0 ahead/21 behind; freshness `LOCAL_TRACKING_REF_ONLY`.
+- Ripple API: `mobingilabs/ripple-api@27bb007a`; tracking `origin/master` is
+  4 commits ahead; freshness remains local-tracking only.
 - Ouchan: `mobingilabs/ouchan@565f00a8`; tracking `origin/master` is
-  `16910fc9`, 0 ahead/25 behind; local-tracking only.
+  55 commits ahead; local-tracking only.
 - Blue API: `alphauslabs/blueapi@691422e5`; tracking 2 commits ahead of
   checkout; local-tracking only.
 - Blue Go SDK: `alphauslabs/blue-sdk-go@8883ee3d`; tracking 1 commit ahead;
@@ -53,7 +56,8 @@ M0 complete; M1 current — task creation and frozen acceptance checkpoint.
 
 ## ACTION_CATALOG_VERSION
 
-Planned: `nightwatch.safe-actions.phase4.v1`; catalog not yet admitted.
+`nightwatch.safe-actions.phase4.v1`; source-reviewed catalog is recorded in
+`ACTIONS.md`, implementation still pending.
 
 ## STATE_MODEL_VERSION
 
@@ -61,13 +65,14 @@ Planned: `nightwatch.exploration-state.phase4.v1`.
 
 ## EXPLORATION_MODEL_VERSION
 
-Planned: `nightwatch.exploration-model.phase4.v1` with SplitMix64 v1 planner;
-implementation not yet started.
+`nightwatch.exploration-model.phase4.v1` with SplitMix64 v1 planner; model
+implementation pending.
 
 ## CURRENT_EXPLORATION_ENVELOPES
 
-E1/J1, E2/J2, and E3/J3 are required anchor envelopes. Route/action/network
-contents remain `PENDING_SOURCE_ARCHAEOLOGY`; no real context is authorized.
+E1/J1, E2/J2, and E3/J3 are source-reviewed in `EXPLORATION.md`; no real
+context is authorized until implementation, synthetic tripwires, full local
+validation, and adversarial pre-real review pass.
 
 ## SEED_LEDGER
 
@@ -95,8 +100,8 @@ malformed JSON remains `GENUINE_PROTOCOL_ANOMALY` with unresolved semantics.
 
 ## REJECTED_ACTIONS
 
-Inventory not yet completed. Rejected candidates must be recorded durably before
-real exploration; no live control discovery is permitted.
+Inventory is complete in `ACTIONS.md`; rejected candidates are durable. No live
+control discovery is permitted.
 
 ## REJECTED_HYPOTHESES
 
@@ -106,8 +111,8 @@ real exploration; no live control discovery is permitted.
 
 ## FILES_CHANGED
 
-Phase 4 task docs only: `.agent/ACTIVE_TASK.md` and this task's SPEC/PLAN/STATE/
-REPORT plus initial `ACTIONS.md`, `MODELS.md`, and `EXPLORATION.md`.
+Phase 4 task docs plus `FRESHNESS.md`; implementation and focused tests are
+pending.
 
 ## VALIDATION_LEDGER
 
@@ -120,6 +125,8 @@ REPORT plus initial `ACTIONS.md`, `MODELS.md`, and `EXPLORATION.md`.
 - Phase 3 focused suite: 28 passed.
 - Full inherited Playwright suite: launched as a read-only audit; exact final
   result is to be confirmed after this documentation checkpoint.
+- Relevant Ripple UI tracking delta reviewed; J3 supplementary AOR POST
+  identified and excluded from the v1 action catalog.
 
 ## SAFETY_EVENTS
 
@@ -143,19 +150,19 @@ scoped validator extension for ACTIONS/MODELS/EXPLORATION/FRESHNESS ledgers.
 
 ## NEXT_EXACT_ACTION
 
-Read the current safety/semantic/journey/oracle/replay implementation and the
-Phase 3 dependency map, then perform narrow source archaeology around J1/J2/J3
-to populate `ACTIONS.md` and `FRESHNESS.md`. Do not create an approved action
-or start a browser context until source proof is recorded.
+Implement the generic Phase 4 state/transition/evidence model, SplitMix64 v1,
+planner, and safety-aware exploration runner against the frozen catalog. Add
+synthetic fixtures/tests before any real context.
 
 ## RESUME_RECIPE
 
 1. Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `.agent/ACTIVE_TASK.md`, then
    this task's SPEC, PLAN, and STATE.
 2. Inspect `git status --short`, current SHA, and this task's diff.
-3. Complete M1 health audit and M2 source archaeology; keep Alphaus operations
-   read-only and narrow.
-4. Update this STATE after each milestone before implementation changes.
+3. Complete M2 source archaeology from `ACTIONS.md`/`FRESHNESS.md`.
+4. Implement and test the generic engine; do not start a browser context until
+   `PHASE_4_PRE_REAL_EXPLORATION_READY` is recorded.
+5. Update this STATE after each milestone before implementation changes.
 
 ## Decision Log
 
@@ -183,24 +190,27 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## Current Milestone
 
-Milestone ID: M0. Status: IN_PROGRESS. The native task is created; the next
-work is the shared health audit and narrow source archaeology.
+Milestone ID: M2. Status: COMPLETED. Source-backed action inventory,
+rejections, and tracking-ref freshness review are checkpointed; implementation
+is the next milestone.
 
 ## Completed Milestones
 
 - M0: Phase 3 closure SHA, validation, freshness, and Alphaus integrity audit
   passed before Phase 4 task creation.
+- M1: native task and frozen Phase 4 acceptance docs created.
+- M2: J1/J2/J3 source archaeology, rejected-action ledger, and freshness delta
+  review completed.
 
 ## Work In Progress
 
-Task documentation is checkpointed in the worktree; implementation and
-source-approved action admission have not started.
+Source archaeology is checkpointed in the worktree; generic implementation and
+synthetic validation are next. No real context has started.
 
 ## Exact Next Action
 
-Read the current safety/semantic/journey/oracle/replay implementation and the
-Phase 3 dependency map, then populate `ACTIONS.md` and `FRESHNESS.md` from
-narrow source archaeology. Do not admit actions or start a browser context.
+Implement the generic exploration engine and local synthetic fixture/tests.
+Do not create a browser context.
 
 ## Files Changed
 
