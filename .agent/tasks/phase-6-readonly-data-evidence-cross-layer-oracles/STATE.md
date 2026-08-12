@@ -262,7 +262,7 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_CHECKPOINT_SHA
 
-TO_BE_RECORDED_AFTER_DOCUMENTATION_CHECKPOINT.
+8f2c2a5ed6e7d794f9d2b159c1f6f39923c7fee3.
 
 ## NEXT_EXACT_ACTION
 
