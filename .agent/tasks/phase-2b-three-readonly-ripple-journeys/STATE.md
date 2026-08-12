@@ -10,7 +10,7 @@ Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
 Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
 Branch: main
 Last checkpoint: 2026-08-12 — Phase 2A closure independently reconciled;
-Phase 2B frozen SPEC/task waypoint created before Ripple archaeology.
+Phase 2B frozen SPEC/task waypoint and source-archeology inventory recorded.
 
 ## Objective
 
@@ -19,20 +19,22 @@ semantically read-only Ripple journeys with one fresh-context replay each.
 
 ## Current Milestone
 
-CURRENT_PHASE: M1 — Ripple archaeology and candidate inventory. The Phase 2B
-SPEC and native task routing are checkpointed; candidate source inspection is
-next.
+CURRENT_PHASE: M2 — Three journey contracts and semantic registry. M1
+archaeology, inventory, freshness, and preliminary selection are complete;
+durable contracts are next.
 
 ## Completed Milestones
 
 - Phase 2A closure reconciliation: complete against Git history and durable
   task files; no implementation drift after `a6d7c8b`.
 - Phase 2B task creation: files added and checkpointed at `5797ac8`.
+- Ripple archaeology and candidate inventory: complete in `CANDIDATES.md` and
+  `FRESHNESS.md`; no real target activity occurred.
 
 ## Work In Progress
 
-M1 candidate source archaeology and inventory. No Phase 2B implementation or
-real target activity has started.
+M2 contract drafting and executable semantic policy design. No Phase 2B
+implementation or real target activity has started.
 
 ## CURRENT_GOAL
 
@@ -42,12 +44,14 @@ Ripple customer journeys with one fresh-context replay each.
 
 ## CURRENT_PHASE
 
-M1 — Ripple archaeology and candidate inventory. The Phase 2B SPEC and native
-task routing are checkpointed; candidate source inspection is next.
+M2 — Three journey contracts and semantic registry. M1 source archaeology is
+recorded; contract drafting is next.
 
 ## CURRENT_EVIDENCE
 
-- Nightwatch M0 task checkpoint is `5797ac8`; the post-commit tree is clean.
+- Nightwatch current docs checkpoint is `ea70dfa`; M1 inventory docs are
+  currently uncommitted and must be checkpointed before contract
+  implementation.
 - Phase 2A implementation baseline is `a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c`.
 - Phase 2A validated closure checkpoint is
   `9bf2c4593c9eb46db8bb8a5975bfa336461641cd`.
@@ -67,26 +71,29 @@ task routing are checkpointed; candidate source inspection is next.
 
 ## CURRENT_JOURNEY_CANDIDATES
 
-NOT_STARTED. No broad or premature route selection has been performed. M1 will
-inventory a reasonable candidate pool from minimal current Ripple source and
-record every candidate's purpose, route, component, actions, endpoint classes,
-selectors, determinism, privacy, third-party, and replay risks.
+COMPLETE. `CANDIDATES.md` records ten candidates, source-backed verdicts, the
+semantic ledger, rejected candidates, and the exact three selected leads: C02
+Payer exchange-rate read, C03 Common exchange-rate read, and C04 Account
+inventory. Durable journey contracts are not written yet; selection remains
+subject to contract review and synthetic implementation.
 
 ## SELECTED_JOURNEYS
 
-NONE. Exactly three will be selected only after candidate inventory and
-source-backed semantic proof. No real DEV journey is authorized before all
-three contracts exist.
+PRESELECTED_PENDING_CONTRACTS: C02, C03, C04. These are the only three
+journeys authorized for contract drafting; no real DEV journey is authorized
+before all contracts and synthetic validation exist.
 
 ## READ_ONLY_PROOF_STATUS
 
-NOT_STARTED for Phase 2B. Phase 2A's passive landing evidence is not being
-reused as proof for any journey action.
+SOURCE_PROVEN_FOR_SELECTED_ENDPOINTS_PENDING_DURABLE_REGISTRY. The four
+required reads are proven in `CANDIDATES.md`; selected journey contracts and
+the executable registry still need implementation. No POST read-shaped
+endpoint is selected.
 
 ## IMPLEMENTATION_STATUS
 
 NOT_STARTED. No Phase 2B source, fixture, runner, contract, or test code has
-been added; only native task documentation exists.
+been added; task docs, source inventory, and freshness record only.
 
 ## FILES_CHANGED
 
@@ -97,6 +104,8 @@ been added; only native task documentation exists.
 | `.agent/tasks/phase-2b-three-readonly-ripple-journeys/PLAN.md` | Living execution plan | checkpointed |
 | `.agent/tasks/phase-2b-three-readonly-ripple-journeys/STATE.md` | Durable waypoint and resume recipe | checkpointed |
 | `.agent/tasks/phase-2b-three-readonly-ripple-journeys/REPORT.md` | Final handoff placeholder | checkpointed |
+| `.agent/tasks/phase-2b-three-readonly-ripple-journeys/CANDIDATES.md` | Source-backed candidate inventory and semantic ledger | ready to checkpoint |
+| `.agent/tasks/phase-2b-three-readonly-ripple-journeys/FRESHNESS.md` | Ripple/source repository freshness record | ready to checkpoint |
 
 ## Files Changed
 
@@ -105,8 +114,9 @@ continuity documentation only.
 
 ## VALIDATION_LEDGER
 
-- `git status --short --branch`: clean at M0 checkpoint `5797ac8`.
-- `git rev-parse HEAD`: `5797ac8`.
+- `git status --short --branch`: inventory docs and this STATE update are the
+  only intended uncommitted Nightwatch paths.
+- `git rev-parse HEAD`: `ea70dfae9bb3637555d0303571597a5c30649b87`.
 - Phase 2A history review: implementation, closure checkpoint, and terminal
   documentation descendants have the expected semantics.
 - `npm run agent:check`: PASS with the expected approved `CHECKPOINT_ADVANCE`
@@ -116,8 +126,8 @@ continuity documentation only.
 ## Validation Ledger
 
 The machine-readable ledger is `VALIDATION_LEDGER` above. The M0 validation
-gate is complete; commit `5797ac8` contains only the native Phase 2B
-task-routing documents.
+gate is complete; `ea70dfa` is the docs-only continuity checkpoint after the
+native task-routing commit. M1 inventory docs are ready for their checkpoint.
 
 ## REAL_RUN_LEDGER
 
@@ -138,7 +148,13 @@ booleans and provenance; never print, copy, inspect, or persist state values.
 ## DECISIONS
 
 - Freeze the Phase 2B SPEC before source archaeology or implementation.
-- Keep candidate names unset until a source-backed inventory exists.
+- Treat worker output as bounded archaeology leads only; independently verify
+  all persisted source facts.
+- Do not intentionally invoke the POST-shaped Cost Drift `:read` endpoint;
+  its DEV implementation is unavailable and its historical anomaly remains
+  unresolved.
+- Select C02/C03/C04 for contract drafting because they provide payer-scope,
+  common-fee-scope, and account-inventory diversity with proven GET reads.
 - Preserve Phase 2A's implementation/checkpoint/terminal SHA semantics and all
   safety/readiness/privacy primitives.
 - Do not run any real DEV journey until exactly three durable contracts and
@@ -146,13 +162,12 @@ booleans and provenance; never print, copy, inspect, or persist state values.
 
 ## Decisions Made During This Task
 
-See `DECISIONS` above; no implementation decision has been made before
-candidate archaeology.
+See `DECISIONS` above; implementation is still pending contract drafting.
 
 ## REJECTED_JOURNEYS
 
-NONE YET. Candidate inventory has not begun; future rejections will state the
-semantic, mutation, unknown, determinism, privacy, duplicate, or other reason.
+C01, C05, C06, C07, C08, C09, and C10 are rejected or constrained with reasons
+in `CANDIDATES.md`. No selected journey has been executed.
 
 ## REJECTED_HYPOTHESES
 
@@ -163,11 +178,17 @@ historical facts, not candidate hypotheses.
 
 - The Phase 2A implementation/checkpoint/terminal SHA interpretation matches
   actual Git history and the clean terminal tree.
+- Ripple UI `dev` is 0 ahead / 21 behind its local `origin/dev`; relevant
+  selected-source files have no local tracking diff. Ripple API is synced with
+  `origin/master`. This is a source-freshness caveat, not deployment proof.
+- C02/C03/C04 have source-backed read proofs; Cost Drift is explicitly
+  unavailable in DEV and remains untriggered.
 
 ## Blockers
 
-None at task creation. Candidate availability and semantic proof remain
-unresolved work, not blockers.
+No blocker to contract drafting. Executable selector/observer integration and
+synthetic proof remain unresolved implementation work, not permission to run
+DEV.
 
 ## BUG_CANDIDATES
 
@@ -175,15 +196,16 @@ NONE. No Phase 2B real or synthetic product anomaly has been observed.
 
 ## UNRESOLVED
 
-- Current Ripple route/component/API surface and freshness relationship.
-- Which three distinct journeys can meet the semantic read-only bar.
-- Whether any candidate POST/read query semantics can be proven locally.
-- Journey-engine integration points in current Nightwatch code.
+- Exact contract fields/selectors and executable semantic registry entries for
+  C02/C03/C04.
+- Whether current observers can attribute requests to steps without persisting
+  payloads.
+- Journey-engine integration points and synthetic fixture behavior.
 
 ## SAFETY_EVENTS
 
-NONE during Phase 2B setup. No Alphaus repository was modified, no target was
-contacted, no database tool was used, and no auth state was opened.
+NONE during Phase 2B setup/archaeology. No Alphaus repository was modified, no
+target was contacted, no database tool was used, and no auth state was opened.
 
 ## Safety Events
 
@@ -192,11 +214,13 @@ See `SAFETY_EVENTS` above: NONE during Phase 2B setup.
 ## PRIVACY_STATUS
 
 PASS for the Phase 2A handoff and task docs. Phase 2B implementation/evidence
-privacy validation has not started; no sensitive artifact was created.
+privacy validation has not started; inventory docs contain only source paths,
+method names, hashes, and sanitized semantic descriptions.
 
 ## Deferred / Follow-Up
 
-- Candidate archaeology and all subsequent Phase 2B milestones.
+- Contract drafting, engine implementation, and all subsequent Phase 2B
+  milestones.
 - Phase 2C and all later functionality.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
@@ -205,20 +229,20 @@ privacy validation has not started; no sensitive artifact was created.
 
 ## LAST_CHECKPOINT_SHA
 
-`5797ac8` (native Phase 2B task-routing checkpoint; implementation baseline
-remains `a6d7c8b`).
+`ea70dfae9bb3637555d0303571597a5c30649b87` (docs-only continuity checkpoint;
+implementation baseline remains `a6d7c8b`).
 
 ## NEXT_EXACT_ACTION
 
-Inspect only the minimum current Nightwatch journey/action/evidence
-integration files and the Ripple router, authenticated navigation/layout,
-existing E2E specs, and candidate page/API callsites. Record source
-SHAs/freshness and a broad candidate inventory in `CANDIDATES.md` before
-selecting any journey.
+Checkpoint the M1 inventory docs, then inspect the exact Nightwatch
+engine/observer/evidence integration points and draft durable contracts for
+C02/C03/C04. Do not run DEV or add an executable registry entry until each
+contract's selectors, endpoint expectations, and stop conditions are
+represented in code/tests.
 
 ## Exact Next Action
 
-Begin the minimal read-only source archaeology described by
+Checkpoint M1, then begin contract drafting and engine integration review described by
 `NEXT_EXACT_ACTION` above.
 
 ## RESUME_RECIPE
@@ -227,11 +251,12 @@ Begin the minimal read-only source archaeology described by
    `PLAN.md`, and `STATE.md`.
 2. Run `git status --short --branch`, `git rev-parse HEAD`, and
    `npm run agent:check`; reconcile any SHA warning without rewriting it.
-3. M0 validation is complete; commit only the Phase 2B task-routing/docs
-   checkpoint, then verify the new HEAD.
-4. For M1, inspect minimal current Nightwatch journey/action/evidence files
-   and Ripple route/menu/page/API sources read-only; do not run DEV or query a
-   database.
+3. M0 validation is complete; `ea70dfa` is the current docs-only continuity
+   checkpoint. The M1 inventory is in `CANDIDATES.md`/`FRESHNESS.md` and is
+   ready to checkpoint.
+4. Checkpoint M1, then draft contracts for C02/C03/C04 and implement only after the contract
+   fields, semantic registry, and synthetic cases are explicit; do not run
+   DEV or query a database.
 5. Update this STATE before and after each milestone. Do not create a real
    context until `PRE_REAL_PHASE_2B_IMPLEMENTATION_READY` and
    `PRE_REAL_SELF_REVIEW_PASS` are recorded.
