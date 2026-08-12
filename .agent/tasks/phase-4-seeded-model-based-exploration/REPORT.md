@@ -1,13 +1,13 @@
 # Nightwatch Phase 4 — Seeded / Model-Based Exploration Report
 
-Status: `IN_PROGRESS` — pre-real gate passed; bounded DEV exploration pending.
+Status: `BLOCKED` — `HUMAN_AUTH_ACTION_REQUIRED` before bounded DEV exploration.
 
 - Starting SHA: `acdb4a27a953dbff2c3408815efe634468d4ad20`
 - Validated inherited implementation: `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`
 - Phase 3 checkpoint: `058a1ab4168324f346bd80f8fd3c2c3edec45c77`
-- Current phase: M7 bounded DEV exploration and exact reproduction
+- Current phase: M7 blocked before first DEV exploration context
 - Safety events: NONE
-- Real DEV execution: NOT STARTED
+- Real DEV execution: BLOCKED before context creation by boolean auth preflight
 - Phase 5: NOT STARTED
 
 ## Initial closure reconciliation
@@ -38,5 +38,13 @@ been created.
 
 ## Exact next action
 
-Run `npm run explore:phase4 -- --env=dev` once with the frozen serial seed
-corpus; inspect only metadata evidence and stop on any safety condition.
+Human completes the guarded DEV login/MFA capture, then resume the frozen
+serial seed corpus. Do not run stale auth or inspect state contents.
+
+## Real-run blocker
+
+The pre-real safety gate passed. The first per-context boolean auth check
+failed before BrowserContext creation. The established `auth:capture` workflow
+reached its explicit HUMAN_WAIT stage and was canceled without atomically
+replacing the external state. Therefore Phase 4 has zero real contexts, zero
+exploration actions, zero exact replays, and no real anomaly evidence.

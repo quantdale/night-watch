@@ -1,6 +1,6 @@
 # Phase 4 Exploration Envelopes and Seed Ledger
 
-Status: `PRE_REAL_REVIEWED_PENDING_CHECKPOINT`
+Status: `PRE_REAL_READY_REAL_BLOCKED_ON_HUMAN_AUTH`
 
 Required envelopes are E1/J1 payer exchange, E2/J2 common exchange, and E3/J3
 account inventory. The source-reviewed boundaries are:
@@ -13,7 +13,8 @@ account inventory. The source-reviewed boundaries are:
 
 The three envelopes have branching approved paths. E3 is intentionally local
 only because the current tracking-ref delta changed the vendor request graph.
-No live DOM crawling was used.
+No live DOM crawling was used. The fixed real corpus has not executed because
+the external DEV auth state failed boolean preflight before context creation.
 
 The fixed real budget is two preselected seeds per envelope plus at most one
 exact-sequence reproduction per envelope with a nontrivial path: six fresh

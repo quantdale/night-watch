@@ -4,7 +4,8 @@
 
 Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
-Status: IN_PROGRESS
+Status: BLOCKED
+Blocker: HUMAN_AUTH_ACTION_REQUIRED before first DEV context.
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
 Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
@@ -18,8 +19,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## CURRENT_PHASE
 
-M0 through M5 complete; M6 current — pre-real validation and adversarial
-review passed locally, checkpoint pending before DEV.
+M0 through M6 complete; M7 is blocked at the required human-auth step before
+the first DEV exploration context.
 
 ## CURRENT_EVIDENCE
 
@@ -38,6 +39,10 @@ review passed locally, checkpoint pending before DEV.
 - Pre-real adversarial review: PASS; no unproven action, host-policy
   relaxation, privacy leak, planner nondeterminism, budget bypass, or Phase 5
   scope was found.
+- The guarded Phase 4 DEV gate passed its non-auth safety checks, but the first
+  per-context boolean auth preflight failed before BrowserContext creation.
+  The established guarded `auth:capture` reached `HUMAN_WAIT` for manual
+  login/MFA; it was canceled without writing a replacement state.
 
 ## SOURCE_BASELINES
 
@@ -98,9 +103,11 @@ claim is permitted.
 
 ## REAL_RUN_LEDGER
 
-No Phase 4 real contexts yet. Auth state was not read, printed, or used. The
-fixed serial corpus is authorized only after the checkpoint commit; no
-diagnostic retries are included in the budget.
+Phase 4 exploration contexts: 0/6. Exact replay contexts: 0/3. The guarded
+pre-real safety gate passed; per-context auth boolean preflight failed before
+the first BrowserContext. No Phase 4 action, product mutation, production
+attempt, DB query, or exploration request was made. The fixed corpus remains
+unused; no diagnostic retries were consumed.
 
 ## REPRODUCTION_LEDGER
 
@@ -152,9 +159,11 @@ are Nightwatch-only.
 
 ## SAFETY_EVENTS
 
-NONE. No browser context, DEV target, production target, database, or Alphaus
-write was used. Synthetic mutation, UNKNOWN, new-host, route-escape, runtime,
-stale, and unavailable tripwires all pass.
+NONE for Phase 4. No Phase 4 browser context, product mutation, production
+target, database, or Alphaus write was used. Synthetic mutation, UNKNOWN,
+new-host, route-escape, runtime, stale, and unavailable tripwires all pass.
+The separate guarded auth capture was canceled at HUMAN_WAIT and cleaned up
+without replacing external auth state.
 
 ## PRIVACY_STATUS
 
@@ -163,21 +172,21 @@ traces entered Phase 4 task state.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`72dd9c276945bb0081b613b00bdeff6b11d66808` (Phase 4 hardening checkpoint; inherited Phase 3
+`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` (Phase 4 pre-real checkpoint; inherited Phase 3
 implementation remains `8d72ec9`).
 
 ## LAST_CHECKPOINT_SHA
 
-`72dd9c276945bb0081b613b00bdeff6b11d66808` — deterministic engine, catalog,
-synthetic fixture/tests, browser adapter, bounded real runner, and transition
-evidence hardening.
+`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` — pre-real checkpoint containing
+the deterministic engine, catalog, synthetic fixture/tests, browser adapter,
+bounded real runner, and transition evidence hardening.
 
 ## NEXT_EXACT_ACTION
 
-Commit this passing pre-real checkpoint, rerun `agent:check` against the clean
-checkpoint, then run `npm run explore:phase4 -- --env=dev` exactly once within
-the fixed six-context plus three-replay budget. Do not inspect or print auth
-state contents.
+Human completes DEV login/MFA in the established guarded capture workflow and
+presses ENTER after authenticated Ripple is loaded. Then rerun the fixed
+command with the existing external state exactly once; do not inspect or print
+auth-state contents and do not retry before capture.
 
 ## RESUME_RECIPE
 
@@ -186,9 +195,10 @@ state contents.
 2. Inspect `git status --short`, current SHA, and this task's diff.
 3. Confirm the pre-real checkpoint and fixed seed ledger; use a fresh context
    for every seed and replay.
-4. Run the fixed serial DEV corpus and exact replays only within the declared
+4. Human completes guarded auth capture; verify only its boolean preflight.
+5. Run the fixed serial DEV corpus and exact replays only within the declared
    budget.
-5. Update this STATE after each milestone before implementation changes.
+6. Update this STATE after each milestone before implementation changes.
 
 ## Decision Log
 
@@ -207,7 +217,7 @@ Phase 5 and all broader autonomous/fuzzing/datastore work remain deferred.
 
 ## Completion Snapshot
 
-Not complete.
+Blocked before real execution; no completion claim is made.
 
 ## Objective
 
@@ -216,8 +226,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## Current Milestone
 
-Milestone ID: M6. Status: COMPLETE. Local validation and adversarial review
-passed; the pre-real checkpoint is `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
+Milestone ID: M7. Status: BLOCKED — HUMAN_AUTH_ACTION_REQUIRED. Local
+validation and adversarial review passed; real exploration awaits manual auth.
 
 ## Completed Milestones
 
@@ -238,7 +248,8 @@ passed; the pre-real checkpoint is `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
 ## Work In Progress
 
 Implementation, synthetic validation, full local validation, and adversarial
-review are checkpointed. No real context has started.
+review are checkpointed. Real execution is blocked before context creation by
+invalid/unreadable external auth state.
 
 ## Exact Next Action
 

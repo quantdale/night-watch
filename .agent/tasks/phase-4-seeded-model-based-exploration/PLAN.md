@@ -170,8 +170,8 @@ Alphaus edits, or broad overnight autonomy.
   privacy leak, host-policy weakening, nondeterminism, or budget bypass.
 - Validation commands: `npx tsc --noEmit`, `npx playwright test`,
   `npm run agent:check`, `git diff --check`, focused Phase 4 tests.
-- Status: IN_PROGRESS — full local validation and adversarial review are the
-  gate before any DEV browser context.
+- Status: COMPLETE — full local validation and adversarial review passed;
+  first DEV context is blocked by human auth.
 
 ### M7 — Bounded real DEV exploration and exact reproduction
 
@@ -186,7 +186,7 @@ Alphaus edits, or broad overnight autonomy.
   runtime-unavailable actions are explicit; anomalies use Phase 2C admission.
 - Validation commands: guarded DEV runner, sanitized evidence/privacy review,
   exact replay comparator, no extra exploratory retries.
-- Status: NOT_STARTED
+- Status: BLOCKED — HUMAN_AUTH_ACTION_REQUIRED before first DEV context.
 
 ### M8 — Cross-seed analysis, architecture review, and closure
 

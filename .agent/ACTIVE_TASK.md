@@ -3,15 +3,15 @@
 Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Title: Seeded / Model-Based Exploration
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
 Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
-Current milestone: M6 — pre-real validation and adversarial review
+Current milestone: M7 — bounded DEV exploration blocked on human auth
 Last checkpoint: 2026-08-12 — Phase 4 pre-real checkpoint `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
-Next action: record the passing pre-real checkpoint, then run only the fixed
-serial DEV seed corpus within the declared context budget.
+Next action: human must complete the established guarded DEV login/MFA
+capture; then resume the fixed serial seed corpus. Do not run stale auth.
 
 ## Prior phase closure handoff
 
