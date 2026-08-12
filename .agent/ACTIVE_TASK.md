@@ -3,16 +3,17 @@
 Task ID: phase-3-change-directed-journey-selection
 Phase: 3
 Title: Change-Directed Journey Selection
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-3-change-directed-journey-selection
 Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
-Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Current milestone: M7 — adversarial false-negative/false-positive review and independent shadow review
-Last checkpoint: 2026-08-12 — Phase 2A/2B/2C closure independently reconciled;
-native Phase 3 task created before implementation.
-Next action: complete adversarial review of dynamic/config/generated/MFE edges,
-rerun all Phase 3 tests, and finalize the current shadow review.
+Current SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
+Last validated implementation SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
+Current milestone: M10 — final validation and closure
+Last checkpoint: 2026-08-12 — Phase 3 implementation, adversarial fallback
+repair, historical backtests, empty current shadow, adversarial review, and
+full validation completed; closure commit is ready.
+Next action: commit the completed Phase 3 closure documentation in Nightwatch
+only, then verify the final clean HEAD.
 
 ## Prior phase closure handoff
 

@@ -139,8 +139,9 @@ data, or start Phase 4.
 
 ### M7 — Adversarial false-negative/false-positive review
 
-- Status: `IN_PROGRESS` — load-bearing dynamic/MFE/config/style/generated-code
-  review and independent current shadow review remain.
+- Status: `COMPLETE` — independent source review found no material load-bearing
+  false negative; runtime/config/style fallback was hardened and regression
+  tested in commit `8d72ec9`.
 - Inspect dynamic routing/imports, barrels, stores, wrappers, generated clients,
   MFE boundaries, config/build/resource/CSS behavior, tests/docs/dead code.
 - Validation: review ledger, regression tests for each repaired gap, rerun all
@@ -148,6 +149,9 @@ data, or start Phase 4.
 
 ### M8 — Current shadow selection and independent review
 
+- Status: `COMPLETE` — current empty committed window was independently
+  reviewed and accepted as `PHASE_3_SHADOW_SELECTION_ACCEPTED`; no DEV run is
+  required.
 - Use the deterministic current baseline-to-head window; exclude dirty work.
 - Produce selected/non-selected journeys, priorities, exact source reasons,
   ambiguity/fallback, and freshness status. Independently cross-check edges.
@@ -156,6 +160,8 @@ data, or start Phase 4.
 
 ### M9 — Optional controlled DEV validation
 
+- Status: `COMPLETE` — explicitly not required because the current committed
+  shadow window is empty; no live context was invoked.
 - Only if M8 is accepted, current range is meaningful, the SPEC gate passes,
   auth is current, and selected existing journeys can run safely.
 - Validation: selected-run lineage, replay/oracle result, safety vector zero,
@@ -163,6 +169,8 @@ data, or start Phase 4.
 
 ### M10 — Final validation and closure
 
+- Status: `IN_PROGRESS` — final validation, closure report, and clean commit
+  remain.
 - Complete architecture/adversarial/privacy/Alphaus-integrity review, update
   STATE/REPORT/ACTIVE_TASK, commit Nightwatch only, and leave clean.
 - Validation: TypeScript, full Playwright, agent check, diff check, focused

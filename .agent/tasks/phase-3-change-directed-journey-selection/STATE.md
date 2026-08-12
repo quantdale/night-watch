@@ -4,12 +4,13 @@
 
 Task ID: phase-3-change-directed-journey-selection
 Phase: 3
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
-Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
+Current SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
+Last validated implementation SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
 Branch: main
-Last checkpoint: Phase 3 task created after independent Phase 2A/2B/2C closure reconciliation.
+Last checkpoint: final Phase 3 validation and closure documentation are ready
+for the Nightwatch-only closure commit.
 
 ## Objective
 
@@ -20,7 +21,7 @@ or starting Phase 4.
 
 ## Current Milestone
 
-M7 — adversarial false-negative/false-positive review and independent shadow review.
+M10 — final validation and closure.
 
 ## Completed Milestones
 
@@ -37,12 +38,20 @@ M7 — adversarial false-negative/false-positive review and independent shadow r
   baseline transitions are implemented and tested.
 - M6 — COMPLETE. Eight sanitized representative fixtures and seven historical
   local Git backtests pass; the ledger records zero material false negatives.
+- M7 — COMPLETE. Independent source review covered routes/guards, wrappers,
+  generated clients/contracts, MFE boundaries, renames/deletes, runtime/build
+  configuration, and CSS. No material load-bearing false negative remained;
+  the runtime/config/style repair and regression test are in `8d72ec9`.
+- M8 — COMPLETE. The current shadow result was independently reviewed and
+  accepted as `PHASE_3_SHADOW_SELECTION_ACCEPTED`.
+- M9 — COMPLETE. No live DEV execution was required because the current
+  committed shadow range is empty.
 
 ## Work In Progress
 
-Implementation and backtests are complete. The current work is adversarial
-review of dynamic/config/generated/MFE boundaries and independent review of
-the empty current shadow result.
+None. Implementation, backtests, adversarial review, shadow review, final
+validation, and Alphaus integrity comparison are complete; the closure commit
+is the final Nightwatch action.
 
 ## CURRENT_GOAL
 
@@ -52,18 +61,20 @@ mapping, and why were other journeys not selected?”
 
 ## CURRENT_PHASE
 
-Phase 3 — change-directed journey selection; M7 adversarial review and M8
-shadow review.
+Phase 3 — change-directed journey selection; complete.
 
 ## CURRENT_EVIDENCE
 
-- Nightwatch HEAD is clean at `427f10295ae2037d09741de98ebea9210f14f85a`.
+- Nightwatch implementation checkpoint is clean at
+  `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`; closure documentation is the
+  only remaining Nightwatch change before the final clean HEAD.
 - Phase 2C implementation/checkpoint/terminal chain is
   `efc03de2 -> 0f894d9 -> 427f1029`; terminal changes are approved task
   documentation only.
-- `npm run agent:check` passes with the expected `CHECKPOINT_ADVANCE` warning.
-- `npx tsc --noEmit`, full existing Playwright, and `git diff --check` pass;
-  the inherited full suite result is `263 passed`.
+- `npm run agent:check` passes with the expected approved-document
+  `CHECKPOINT_ADVANCE` warning.
+- `npx tsc --noEmit` passes; full `npx playwright test` passes with `291
+  passed`; `git diff --check` passes.
 - Phase 2C safety vector across seven controlled contexts is zero and privacy
   is PASS; no Phase 3 live execution has occurred.
 - M1 evidence is in `REPOSITORY_SCOPE.md` and `DEPENDENCY_MAP.md`; freshness is
@@ -149,13 +160,13 @@ non-selection, and 1 ground-truth-unresolved case; see `BACKTEST_LEDGER.md`.
 
 `COMPLETE_CURRENT_SHADOW`: `npm run change:shadow` collected six explicit
 HEAD->HEAD ranges, excluded 82 dirty files, and did not invoke DEV. Independent
-load-bearing review is the remaining gate.
+load-bearing review accepted the empty result as
+`PHASE_3_SHADOW_SELECTION_ACCEPTED`.
 
 ## REAL_RUN_LEDGER
 
-No Phase 3 real execution. If the current committed window is empty or shadow
-review is not independently accepted, live execution will be explicitly
-recorded as not required.
+No Phase 3 real execution. The current committed window is empty, so the
+frozen SPEC explicitly makes live execution not required.
 
 ## FILES_CHANGED
 
@@ -170,12 +181,16 @@ selector/backtest tests, `BACKTEST_LEDGER.md`, and updated task docs.
 - `npm run agent:check`: PASS with expected Phase 2C approved-document
   `CHECKPOINT_ADVANCE` warning.
 - `npx tsc --noEmit`: PASS.
-- `npx playwright test --project=nightwatch`: PASS, `263 passed`.
+- `npx playwright test`: PASS, `291 passed`.
 - `git diff --check`: PASS before Phase 3 task creation.
 - M1 focused validation: source/route/API/backend/proto inspection complete;
   Alphaus status checks were read-only and no Alphaus diff changed.
-- Phase 3 focused tests: 19 selector/baseline/Git tests and 8 historical
-  backtest tests passed; `npx tsc --noEmit` passed; current shadow passed.
+- Phase 3 focused tests: 20 selector/baseline/Git tests and 8 historical
+  backtest tests passed; latest focused run: `28 passed`; current shadow
+  passed after the adversarial repair.
+- Adversarial review is recorded in `ADVERSARIAL_REVIEW.md`; six explicit
+  HEAD->HEAD ranges contain zero committed files and exclude 82 dirty files.
+- `npm run change:shadow`: PASS; empty current shadow accepted.
 
 ## BUGS_FOUND
 
@@ -194,8 +209,9 @@ defect remains closed as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`.
 
 ## UNRESOLVED
 
-- Current committed change window and bootstrap-baseline disposition pending
-  selector implementation.
+- The current committed change window is empty; its six equal baseline/head
+  records remain explicit bootstrap/shadow records, not verified deployment
+  coverage.
 - Historical direct J2 isolation may not exist; if unavailable it will be
   recorded as unresolved rather than fabricated.
 - Direct isolated J1/J2 ranges were not available in local history; fixtures
@@ -214,24 +230,23 @@ no credentials, auth state, customer data, raw bodies, or whole patches.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`efc03de2f7396a96baaca485894df300ddcc4ce0` — inherited Phase 2C validated
-implementation. Phase 3 implementation SHA is not yet established.
+`8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b` — Phase 3 implementation and
+adversarial runtime/config/style fallback repair.
 
 ## LAST_CHECKPOINT_SHA
 
-`427f10295ae2037d09741de98ebea9210f14f85a` — clean Nightwatch starting
-checkpoint for Phase 3 task creation.
+`8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b` — latest validated Nightwatch
+implementation checkpoint before final documentation closure.
 
 ## NEXT_EXACT_ACTION
 
-Complete independent adversarial review of the map against dynamic imports,
-runtime config/CSS/build/generated-code boundaries, then rerun focused and
-historical tests and write the final shadow review.
+Commit the final closure documentation, then verify the final clean Nightwatch
+HEAD, `npm run agent:check`, `git diff --check`, and Alphaus integrity status.
 
 ## Exact Next Action
 
-Cross-check load-bearing edges and non-selected reasoning independently; no
-DEV execution is required for the empty current committed window.
+Commit the completed Phase 3 closure artifacts in Nightwatch only; no DEV
+execution is required for the empty current committed window.
 
 ## Files Changed
 
@@ -280,5 +295,4 @@ correlation remain out of scope.
 
 ## Completion Snapshot
 
-Not complete. M0–M6 are complete; M7 adversarial review and M8 shadow review
-remain before final validation and closure.
+Complete. M0–M10 are complete; Phase 3 is closed and Phase 4 is not started.
