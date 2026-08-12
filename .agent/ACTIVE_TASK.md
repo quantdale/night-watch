@@ -6,14 +6,13 @@ Title: Restricted OOPS Integration + Source-Generated Read-Only API Corpus
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
+Current SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
+Last validated implementation SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
 Current milestone: M8 — pre-real gate and frozen serial DEV ledger; M2–M7
 local implementation and validation are complete, with the implementation
 checkpoint still pending.
-Last checkpoint: 2026-08-12 — current OOPS source/security audit at
-`ba56ef0`; the uncommitted M2–M7 implementation slice is reconciled in STATE.
-No Phase 5 real DEV API request has executed.
+Last checkpoint: 2026-08-12 — M2–M7 implementation and durable corpus at
+`3f989a2`; no Phase 5 real DEV API request has executed.
 Next action: run the post-change validation, checkpoint Nightwatch, then run
 the frozen six-operation native-relay DEV first/replay ledger if all gates
 pass. Authenticated OOPS remains local-fixture-only because its isolated

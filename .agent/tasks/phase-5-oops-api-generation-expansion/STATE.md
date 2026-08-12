@@ -6,12 +6,12 @@ Task ID: phase-5-oops-api-generation-expansion
 Phase: 5
 Status: IN_PROGRESS
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
+Current SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
+Last validated implementation SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
 Branch: main
-Last checkpoint: ba56ef0a37948f333651d634c778436210e6c4c1 — current OOPS
-source/security audit checkpoint. This STATE update reconciles the uncommitted
-M2–M7 implementation slice; no Phase 5 real DEV request has run.
+Last checkpoint: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a — M2–M7
+implementation, durable corpus, native relay runner, and local validation
+checkpoint. No Phase 5 real DEV request has run.
 
 ## Objective
 
@@ -294,19 +294,17 @@ screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-1d05c460ec0762c4587bb76f5d050a322f8f47a6 until the current implementation
-checkpoint is committed and revalidated.
+3f989a2e31bed3c128be62e8fe0a60ba94723f0a.
 
 ## LAST_CHECKPOINT_SHA
 
-ba56ef0a37948f333651d634c778436210e6c4c1 (last committed OOPS audit;
-current M2–M7 implementation remains uncommitted).
+3f989a2e31bed3c128be62e8fe0a60ba94723f0a.
 
 ## NEXT_EXACT_ACTION
 
-Run npx tsc --noEmit, the focused 15-test Phase 5 suite, npm run agent:check,
-npm run api:phase5 -- --help, and git diff --check; then checkpoint the
-implementation. After the clean checkpoint, run the frozen DEV command once.
+Run the full Playwright suite, final Phase 5 focused/privacy checks, agent:check,
+diff-check, and the clean-worktree/source-integrity review. Then run the frozen
+DEV command once if the real gate passes.
 
 ## RESUME_RECIPE
 
