@@ -176,8 +176,10 @@ is captured in memory and reduced before evidence.
 - The 2026-08-12 deployment/source re-audit proves the DEV image/branch path
   but not its effective datastore binding: `ripple-api-micro` builds the
   Ripple master branch as `apidev`, while `API_ENV`, AWS role, and AWS region
-  remain deployment-provided. Approved local GKE metadata has no DEV context,
-  so the runtime/data gate remains blocked.
+  remain deployment-provided. An explicit approved metadata query confirms
+  `mochi-dev-pong` in `labs-169405` with DEV labels, but the deployment source
+  carrying effective service values is absent, so the runtime/data gate
+  remains blocked.
 
 ## Deferred Work
 

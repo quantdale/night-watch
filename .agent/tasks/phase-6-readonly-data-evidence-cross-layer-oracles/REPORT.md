@@ -179,17 +179,23 @@ The re-audit narrowed the missing proof without weakening the gate:
   BigQuery clients directly. Those services are not proof of the selected
   legacy `apidev` PHP runtime and cannot be used as a substitute for its
   deployment binding.
-- The approved read-only GKE metadata command listed
-  `mochi-next-pong`, `mochi-prod-ping`, `curmx`, and
-  `mcx-us-east1-cfg-ping`. `kubectl config get-contexts -o name` exposed only
-  next/prod mochi contexts and no DEV context. No context was switched; no
-  deployment metadata, datastore tool, auth probe, or application request was
-  run.
+- The approved read-only GKE metadata query, explicitly scoped to
+  `labs-169405`, confirms `mochi-dev-pong` is RUNNING in
+  `asia-northeast1-a` with `env=dev` and `network=dev`. The default
+  `mobingi-main` inventory still contains the next/prod clusters only. No
+  context was switched. The checked-in `kubeconf-dev.yaml` has no usable
+  server endpoint, so no workload deployment metadata was obtained; no
+  datastore tool, auth probe, or application request was run.
+- The documented `mobingilabs/mochi` deployment source is not present in the
+  local repository set, and an unauthenticated read-only remote lookup did not
+  resolve it. Its absence leaves the effective `API_ENV`, AWS role/region, and
+  secret/config references unproven.
 
-Therefore the state remains `RUNTIME_DATA_ENV_SOURCE_DERIVED`, not confirmed.
-The exact deployment-level datastore target and designated Nightwatch scope
-must come from an authoritative external deployment/config source before any
-datastore authentication or read. A production read would otherwise risk a
+Therefore the compute environment is confirmed as DEV, but the state remains
+`RUNTIME_DATA_ENV_SOURCE_DERIVED` for the datastore binding. The exact
+deployment-level datastore target and designated Nightwatch scope must come
+from an authoritative external deployment/config source before any datastore
+authentication or read. A production read would otherwise risk a
 cross-environment comparison.
 
 ## Local synthetic validation

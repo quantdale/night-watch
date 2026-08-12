@@ -41,9 +41,10 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
   configuration is deployment-provided through `API_ENV`, `AWS_REGION`, and
   `AWS_ARN_ROLE_DYNAMODB`, whose values are not checked into the read-only
   source, while its Dynamo client consumes the role/region values. The
-  approved GKE inventory contains `mochi-next-pong` and
-  `mochi-prod-ping` but no DEV cluster, and the local kubeconfig has no DEV
-  context. This strengthens, but does not resolve, the environment gate.
+  approved GKE metadata now also confirms `mochi-dev-pong` is RUNNING in
+  `labs-169405` with `env=dev` and `network=dev` when queried explicitly by
+  project. Master-to-DEV cluster mapping is therefore proven; effective
+  service environment values and designated scope remain unresolved.
 
 ## Work In Progress
 
@@ -58,11 +59,12 @@ mapping is proved.
 The exact next action is deployment-level configuration verification for the
 selected DEV `ripple-api-micro` runtime: prove the effective datastore target
 (`API_ENV`/AWS role and region or equivalent) and obtain the designated
-Nightwatch test scope. The local approved cluster metadata has no DEV context,
-so this proof must come from an authoritative deployment/config source. After
-that proof, re-read this task state, validate one frozen plan, and only then
-assess the auth/tool gate. Never run a real datastore query before the
-environment gate passes.
+Nightwatch test scope. The DEV cluster is confirmed, but the checked-in
+service configuration does not contain those effective values; this proof
+must come from an authoritative deployment/config source. After that proof,
+re-read this task state, validate one frozen plan, and only then assess the
+auth/tool gate. Never run a real datastore query before the environment gate
+passes.
 
 ## CURRENT_GOAL
 
@@ -146,25 +148,29 @@ will not edit the Alphaus documentation. Live schema freshness is not claimed.
 AVAILABLE: `/home/dalepalaca/go/src/alphaus-main/alphaus-tools/bin/dynamo-ro`,
 `bq-ro`, `spanner-ro`, `gcloud-ro`; underlying `/usr/local/bin/aws`,
 `/snap/bin/bq`, `/snap/bin/gcloud` present. AUTH_STATUS: NOT_PROBED; no real
-tool invocation has occurred. Raw aliases `dynamo_query`, `bq_query`, and
-`spanner_query` unavailable.
+datastore tool invocation has occurred. `gcloud-ro` metadata-only cluster
+listing/describe succeeded for `labs-169405`; no workload or datastore query
+was run. Raw aliases `dynamo_query`, `bq_query`, and `spanner_query`
+unavailable.
 
 ## DATA_ENVIRONMENT_MAP
 
-`RUNTIME_DATA_ENV_SOURCE_DERIVED` only. Phase 5 runtime target is DEV API
-`apidev.alphaus.cloud`; Nightwatch's DEV config is explicit at
-`config/environments/dev.json:4-12`. The current read-only source audit proves
-that the Ripple master branch is built as the `apidev` image input by
-`mobingilabs/ouchan/services/ripple-api-micro/Makefile:12-26`, and that the PHP
-API selects its Dynamo client from deployment-provided `API_ENV`,
+`RUNTIME_DATA_ENV_SOURCE_DERIVED` for the datastore binding. Phase 5 runtime
+target is DEV API `apidev.alphaus.cloud`; Nightwatch's DEV config is explicit
+at `config/environments/dev.json:4-12`. The current read-only source audit
+proves that the Ripple master branch is built as the `apidev` image input by
+`mobingilabs/ouchan/services/ripple-api-micro/Makefile:12-26`, and that the
+PHP API selects its Dynamo client from deployment-provided `API_ENV`,
 `AWS_REGION`, and `AWS_ARN_ROLE_DYNAMODB` slots
 (`mobingilabs/ripple-api/docker/ripple-api.env.dist:15-55` and
-`src/App/Core/Factory/AwsSdkClientFactory.php:63-80`). It does not prove the
-effective values for the selected running deployment. The approved GKE
-metadata lists `mochi-next-pong`, `mochi-prod-ping`, `curmx`, and
-`mcx-us-east1-cfg-ping`; the local kubeconfig exposes only next/prod mochi
-contexts and no DEV context. No context was switched and no deployment or
-datastore query was run. The designated Nightwatch scope is also absent.
+`src/App/Core/Factory/AwsSdkClientFactory.php:63-80`). An approved GKE query
+explicitly scoped to `labs-169405` confirms `mochi-dev-pong` is RUNNING with
+`env=dev` and `network=dev`; compute environment and master-to-DEV cluster
+mapping are therefore proven. The effective service values are not in the
+checked-in source. The checked-in `kubeconf-dev.yaml` has no usable server
+endpoint, so no workload deployment metadata was obtained. No context was
+switched and no deployment or datastore query was run. The designated
+Nightwatch scope is also absent.
 No cross-layer comparison or real query is allowed while this remains
 unconfirmed. Application auth is not datastore auth.
 
@@ -261,8 +267,10 @@ and query-widening fallbacks are rejected by frozen intent.
   exercised execution path in this checkpoint.
 - The current deployment/source audit cannot close the runtime gate: the
   checked-in legacy deployment path does not carry effective AWS role/region
-  or `API_ENV` values, and the approved local cluster metadata has no DEV
-  context. `billingd` and `costd` source also contains production Spanner
+  or `API_ENV` values. The checked-in `kubeconf-dev.yaml` has no usable server
+  endpoint, so the approved metadata wrapper could not obtain workload
+  deployment metadata without an external cluster credential/config source.
+  `billingd` and `costd` source also contains production Spanner
   bindings for their current non-local paths, but that is not proof of the
   selected legacy `apidev` runtime and must not be substituted for deployment
   evidence.
@@ -276,6 +284,8 @@ and query-widening fallbacks are rejected by frozen intent.
 - Current live auth state for approved datastore tooling.
 - Exact runtime DEV→datastore binding and designated Nightwatch test scope.
 - Datastore-tool auth status; no auth probe was attempted.
+- Authoritative `mochi` deployment configuration is not present locally and
+  an unauthenticated remote lookup did not resolve the documented repository.
 - J3 permission/restricted-role scope and non-AWS vendor source boundary.
 - Whether any real datastore query is safe/necessary under this SPEC.
 - Stale §3.3 Spanner wrapper statement in the read-only schema document.
@@ -300,9 +310,11 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## NEXT_EXACT_ACTION
 
-Obtain authoritative deployment/config proof of the selected DEV runtime's
-datastore environment and designated Nightwatch scope. If that proof remains
-absent, keep this task blocked and do not run a datastore query or auth probe.
+Obtain authoritative `mochi` deployment/config proof of the selected DEV
+`ripple-api-micro` runtime's effective datastore environment (`API_ENV`, AWS
+role/region or equivalent) and designated Nightwatch scope. If that proof
+remains absent, keep this task blocked and do not run a datastore query or
+auth probe.
 
 ## RESUME_RECIPE
 
@@ -350,6 +362,10 @@ datastore command was invoked.
   protected scans, `bq-ro --dry-run` is not a dry run, and the schema document
   contains a stale contradictory Spanner-wrapper note. Nightwatch must fail
   closed above all three wrappers.
+- An explicit approved GKE metadata query confirmed the separate DEV cluster
+  `mochi-dev-pong` in `labs-169405`; this corrects the earlier default-project
+  inventory gap. It proves compute environment, not the PHP service's AWS
+  datastore target or test-account scope.
 
 ## Blockers
 
