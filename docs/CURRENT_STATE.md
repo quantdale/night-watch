@@ -1,8 +1,7 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-12** by the
-> Phase 4 seeded/model-based exploration closure. Phase 4 completed its frozen
-> DEV corpus with the existing safety kernel; Phase 5 was not started.
+> Durable memory for the next agent/session. Last updated: **2026-08-12** at
+> Phase 6 task creation. Phase 4 and Phase 5 are complete; Phase 6 is active.
 
 ---
 
@@ -176,8 +175,9 @@ path was not proven. Playwright remains the sole executor and MCP is optional.
 The Phase 4 closure report and full run ledger are in
 `.agent/tasks/phase-4-seeded-model-based-exploration/REPORT.md`.
 
-Phase 2B and Phase 2C are completed predecessor phases; Phase 5 is the only
-recommended next task and was not started.
+Phase 2B, Phase 2C, Phase 3, Phase 4, and Phase 5 are completed predecessor
+phases. Phase 6 is active under the native task
+`.agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles/`.
 
 ## Environment (machine facts)
 

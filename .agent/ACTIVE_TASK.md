@@ -1,23 +1,19 @@
 # Active Task
 
-Task ID: phase-5-oops-api-generation-expansion
-Phase: 5
-Title: Restricted OOPS Integration + Source-Generated Read-Only API Corpus
-Status: COMPLETE
-Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
-Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
-Last validated implementation SHA: 6971ead8eac50df62b55aacce79d0c6f4ae4b170
-Current milestone: M10 — final review, validation, and clean closure; M0–M9
-implementation, source audit, corpus, lineage, security review, validation,
-and the bounded DEV ledger are complete. Phase 5 acceptance is closed.
-Last checkpoint: 2026-08-12 — final Phase 5 corpus and closure checkpoint
-`6971ead8eac50df62b55aacce79d0c6f4ae4b170`; six first executions and six
-fresh replays passed with zero safety events.
-Next action: no further Phase 5 action. Authenticated OOPS remains
-local-fixture-only
-because its isolated
-network namespace cannot reach the parent relay.
+Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
+Phase: 6
+Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
+Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
+Current SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
+Last validated implementation SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
+Current milestone: M0 — Phase 5 handoff reconciled; Phase 6 SPEC frozen and
+mandatory datastore-document/tool audit recorded.
+Last checkpoint: 2026-08-12 — Phase 6 native task creation; no implementation
+or datastore query has run.
+Next action: collect bounded read-only archaeology results, freeze the
+environment/source lineage map, and implement typed Phase 6 schemas/validators.
 
 ## Prior phase closure handoff
 
