@@ -188,7 +188,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: pair passes with strict invariants and zero safety/
   privacy violations.
 - Validation commands: exact contract-driven runner command; no concurrency.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M9 — Journey 3 first observation and fresh-context replay
 
@@ -198,7 +198,7 @@ unbounded Ripple archaeology.
   evidence invalidates the candidate, return to already-proven inventory.
 - Acceptance criteria: pair passes or task reports a truthful semantic blocker.
 - Validation commands: exact contract-driven runner command; no third replay.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M10 — Cross-journey, safety, privacy, and architecture review
 

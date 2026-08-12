@@ -33,8 +33,8 @@ Journey 1 pair are complete. M8 is in progress; M9–M11 remain pending.
 Full local validation and the adversarial pre-real review are PASS. Journey 1
 passed in a first observation and fresh-context replay. Journey 2 first
 observation reached its structural/read checkpoint but failed a generic
-oracle on one allowed DEV font response; no replay or Journey 3 context has
-run.
+oracle on one allowed DEV font response; its one bounded fresh diagnostic pair
+then passed with strict invariants. Journey 3 has not run.
 
 ## CURRENT_GOAL
 
@@ -91,6 +91,10 @@ successful Journey 1 pair.
   but generic oracle status FAIL from one allowed DEV font response with HTTP
   502 and the resulting console-error; no production/unknown/mutation/DB
   event occurred. The runner correctly prohibited replay.
+- Journey 2 diagnostic first/replay `nightwatch-20260812T012232Z-2fc7-j2-first`
+  and `nightwatch-20260812T012232Z-2fc7-j2-replay`: both PASS in fresh
+  contexts; the HTTP 502 did not recur, strict invariants matched, and only
+  timing/passive-unknown variance was observed.
 - Focused endpoint plus journey suite: `12 passed`; real local fixture HTTP,
   engine, recorder, observer, tripwire, privacy, and replay comparator paths
   were exercised. No Alphaus target or database was contacted.
@@ -161,9 +165,11 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; s
   and task documentation; the worktree was clean after the implementation
   checkpoint.
 - Pre-real gate: PASS; all 13 checks passed before the real runner.
-- Real DEV contexts: 3 (`nightwatch-20260812T011302Z-3ff2-j1-first`,
+- Real DEV contexts: 5 (`nightwatch-20260812T011302Z-3ff2-j1-first`,
   `nightwatch-20260812T011302Z-3ff2-j1-replay`,
-  `nightwatch-20260812T011302Z-3ff2-j2-first`). DB queries: NONE.
+  `nightwatch-20260812T011302Z-3ff2-j2-first`,
+  `nightwatch-20260812T012232Z-2fc7-j2-first`,
+  `nightwatch-20260812T012232Z-2fc7-j2-replay`). DB queries: NONE.
 - Alphaus repositories: read-only source inspection only; pre-existing Ripple
   UI/API worktree entries remain untouched.
 - `npm run journey:real -- --help`: PASS; launcher is opt-in and did not
@@ -176,6 +182,8 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; s
 | `nightwatch-20260812T011302Z-3ff2-j1-first` | payer exchange read | PASS | source-backed GET read, route/shell/table ready, oracle/safety/privacy PASS |
 | `nightwatch-20260812T011302Z-3ff2-j1-replay` | payer exchange read | PASS | fresh context; strict invariants matched; timing/passive-unknown variance bounded |
 | `nightwatch-20260812T011302Z-3ff2-j2-first` | common exchange read | FAIL | route/shell/table/read/auth/safety passed; generic unexpected-status + console-error on one allowed DEV font response (HTTP 502) |
+| `nightwatch-20260812T012232Z-2fc7-j2-first` | common exchange read diagnostic | PASS | fresh context; original font anomaly did not recur; oracle/safety/privacy PASS |
+| `nightwatch-20260812T012232Z-2fc7-j2-replay` | common exchange read diagnostic replay | PASS | fresh context; strict invariants matched; timing/passive-unknown variance bounded |
 
 Per-run safety totals for all three contexts: production attempts 0, proxy
 violations 0, unknown destinations 0, unknown approvals 0, known mutations 0,
@@ -190,18 +198,20 @@ not a safety failure.
 | Replay ID | Journey | Comparison |
 |---|---|---|
 | `nightwatch-20260812T011302Z-3ff2-j1-replay` | payer exchange read | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
+| `nightwatch-20260812T012232Z-2fc7-j2-replay` | common exchange read | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
 
-Journey 2 replay is prohibited because its first observation did not pass.
-Journey 3 has not started. Synthetic comparator tests are not real replay IDs.
+The initial J2 failed first observation and therefore has no replay; its one
+bounded diagnostic first/replay pair passed. Journey 3 has not started.
+Synthetic comparator tests are not real replay IDs.
 
 ## AUTH_STATUS
 
 External `$HOME/.nightwatch/auth/ripple-dev-state.json` remains outside Git
-and has not been printed, copied, dumped, or persisted. The three completed
-contexts each passed boolean structural, DEV-semantic, domain/path, and live
-page-readability checks. Before any bounded J2 diagnostic retry or later
-context, use only the existing boolean/provenance/page-readability helpers and
-the Phase 2A gate. If invalid, stop with the human-auth blocker and do not run.
+and has not been printed, copied, dumped, or persisted. All five completed
+contexts passed boolean structural, DEV-semantic, domain/path, and live
+page-readability checks. Before the next context, use only the existing
+boolean/provenance/page-readability helpers and the Phase 2A gate. If invalid,
+stop with the human-auth blocker and do not run.
 
 ## DECISIONS
 
@@ -228,6 +238,8 @@ the Phase 2A gate. If invalid, stop with the human-auth blocker and do not run.
   runner still executes all three in order; the selector accepts only one of
   the three frozen contracts and preserves its original journey index in run
   IDs. It does not bless endpoints or alter actions/oracles.
+- The one bounded J2 diagnostic budget is consumed. The original 502 remains
+  a non-reproduced L0 anomaly candidate; do not rerun J2 or change its oracle.
 
 ## PRE_REAL_SELF_REVIEW
 
@@ -291,7 +303,8 @@ JSON status, and historical production contact remain preserved facts.
   `nightwatch-20260812T011302Z-3ff2-j2-first`; last successful checkpoint was
   the common route/shell/table/read/auth checkpoint, then a generic
   `unexpected-status` oracle and `console-error` occurred for one allowed DEV
-  font response with status 502. Reproduction level L0 (single observation).
+  font response with status 502. Reproduction level L0 (single observation;
+  not reproduced by the one permitted diagnostic first observation).
   Nightwatch self-check: target/policy/proxy/auth/route/structural/semantic
   ledgers passed; no mutation or destination safety event. Source correlation
   and repeatability are unresolved. Do not weaken the oracle or contract.
@@ -304,18 +317,16 @@ repaired in `a2bde6a`.
 
 - Real DEV request set may contain passive unknown bootstrap traffic; this is
   expected and must remain separate from action-caused unknown.
-- Journey 2's single allowed DEV font HTTP 502/console-error needs one bounded
-  diagnostic re-observation to distinguish transient L0 behavior from a
-  repeatable product/infra anomaly; do not inspect its body or relax the
-  generic oracle.
-- Journey 3 remains unrun because execution is serial and J2 has not yet
-  completed its first-success/replay pair.
+- Journey 2's single allowed DEV font HTTP 502/console-error did not recur in
+  its one bounded diagnostic pair; retain it as L0 only and do not inspect its
+  body or relax the generic oracle.
+- Journey 3 remains unrun and is the next independent controlled pair.
 - Real source/deployment freshness remains the recorded local-source caveat;
   no fetch/pull is authorized.
 
 ## SAFETY_EVENTS
 
-NONE. All three real contexts had exact totals of 0 production attempts, 0
+NONE. All five real contexts had exact totals of 0 production attempts, 0
 proxy violations, 0 unknown destinations, 0 unknown approvals, 0 known
 mutations, and 0 DB queries. Synthetic tests intentionally exercised blocked
 production/unknown, known mutation, and action-caused unknown paths against
@@ -323,7 +334,7 @@ loopback only; those are expected local assertions, not real safety events.
 
 ## PRIVACY_STATUS
 
-PASS for the three real run directories and the Journey 1 comparison: 22
+PASS for the real run directories and Journey 1/Journey 2 comparisons: 37
 sanitized text/JSON files scanned, 0 non-safe forbidden-field values, 0 trace
 files, and 0 screenshots. Authenticated evidence contains fixed
 IDs/classes/booleans/counts/timings only; no bodies, headers, cookies, tokens,
@@ -337,27 +348,24 @@ documentation checkpoint `15c3c9f`, and Phase 2A baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`78e5d1f049064e594f99ed7e600ecffb081d6b23` (`CHECKPOINT_ADVANCE`: the
-bounded fixed-ID resume selector is validated by typecheck, focused 12-test
-suite, full 251-test suite, launcher help, and diff check; no contract,
-endpoint, oracle, host, or action policy changed.)
+`329c32de5e36ffda9e53ab27b7e1d852c745b0b0` (`CHECKPOINT_ADVANCE`: the
+bounded fixed-ID resume selector is checkpointed; Journey 2 diagnostic
+first/replay passed in fresh contexts with strict invariants, and the original
+L0 anomaly did not recur.)
 
 ## NEXT_EXACT_ACTION
 
-Run exactly one bounded fresh Journey 2 diagnostic observation/replay pair:
-`npm run journey:real -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json" --journey-id=ripple-common-exchange-read`
-The selector preserves the contract's original journey index and uses the
-same gate, auth, target, registry, and action sequence. Do not inspect the
-502 body, change the contract/oracle, or run Journey 3 until this J2 decision
-is checkpointed. If the first observation repeats the anomaly, the runner
-will prohibit replay; classify it L1 and then continue only with an
-explicitly resumed independent Journey 3 context. Phase 2B completion
-remains blocked until all three pairs pass.
+Run the exact gated Journey 3 pair:
+`npm run journey:real -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json" --journey-id=ripple-account-inventory`
+The fixed selector preserves the contract's original journey index and uses
+the same gate, auth, target, registry, and action sequence. Do not rerun
+Journey 1 or 2, inspect any response body, or alter the contract/oracle.
+Phase 2B completion remains blocked until this pair also passes.
 
 ## Exact Next Action
 
-Run the exact `--journey-id=ripple-common-exchange-read` command above; no
-third Journey 1 replay and no oracle weakening.
+Run the exact `--journey-id=ripple-account-inventory` command above; no repeat
+of Journey 1/2 and no oracle weakening.
 
 ## Files Changed
 

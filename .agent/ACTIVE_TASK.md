@@ -8,13 +8,13 @@ Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
 Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
-Current milestone: M8 — Journey 2 first observation diagnostic review (IN_PROGRESS)
-Last checkpoint: 2026-08-12 — `78e5d1f`; the bounded fixed-ID resume selector
-is validated by the focused 12-test and full 251-test suites, and it does not
-alter contracts, endpoints, or oracle policy.
-Next action: run exactly one fresh Journey 2 diagnostic observation/replay
-pair with `--journey-id=ripple-common-exchange-read`; do not repeat Journey 1
-or inspect the 502 body.
+Current milestone: M9 — Journey 3 first observation and fresh-context replay (IN_PROGRESS)
+Last checkpoint: 2026-08-12 — `329c32d`; Journey 2's bounded diagnostic
+first/replay pair passed in fresh contexts with strict invariants; its prior
+L0 font anomaly did not recur.
+Next action: run exactly one fresh Journey 3 observation/replay pair with
+`--journey-id=ripple-account-inventory`; do not repeat Journey 1/2 or inspect
+response bodies.
 
 ## Phase 2A closure handoff
 
