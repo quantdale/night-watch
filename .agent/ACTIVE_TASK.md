@@ -6,8 +6,8 @@ Title: Restricted OOPS Integration + Source-Generated Read-Only API Corpus
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
-Last validated implementation SHA: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a
+Current SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
+Last validated implementation SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
 Current milestone: M8 — pre-real gate and frozen serial DEV ledger; M2–M7
 local implementation and validation are complete, with the implementation
 checkpoint still pending.
