@@ -9,7 +9,7 @@ Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
 Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Current milestone: M7 — bounded DEV exploration blocked on human auth
-Last checkpoint: 2026-08-12 — Phase 4 pre-real checkpoint `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
+Last checkpoint: 2026-08-12 — Phase 4 auth-blocker checkpoint `58d27eb383d7b3af1fdf1df0760bd797f0792da7`.
 Next action: human must complete the established guarded DEV login/MFA
 capture; then resume the fixed serial seed corpus. Do not run stale auth.
 

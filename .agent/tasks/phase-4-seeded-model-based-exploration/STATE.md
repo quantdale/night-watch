@@ -10,7 +10,7 @@ Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
 Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Branch: main
-Last checkpoint: 2026-08-12 — Phase 4 pre-real checkpoint `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
+Last checkpoint: 2026-08-12 — Phase 4 auth-blocker checkpoint `58d27eb383d7b3af1fdf1df0760bd797f0792da7`.
 
 ## CURRENT_GOAL
 
@@ -51,7 +51,9 @@ the first DEV exploration context.
 - Ripple API: `mobingilabs/ripple-api@27bb007a`; tracking `origin/master` is
   4 commits ahead; freshness remains local-tracking only.
 - Ouchan: `mobingilabs/ouchan@565f00a8`; tracking `origin/master` is
-  55 commits ahead; local-tracking only.
+  55 commits ahead; local-tracking only. Dirty count was 71 at the initial
+  audit and 79 at the final read-only snapshot; this discrepancy is preserved
+  and was not modified or cleaned by Nightwatch.
 - Blue API: `alphauslabs/blueapi@691422e5`; tracking 2 commits ahead of
   checkout; local-tracking only.
 - Blue Go SDK: `alphauslabs/blue-sdk-go@8883ee3d`; tracking 1 commit ahead;
@@ -165,6 +167,10 @@ new-host, route-escape, runtime, stale, and unavailable tripwires all pass.
 The separate guarded auth capture was canceled at HUMAN_WAIT and cleaned up
 without replacing external auth state.
 
+Read-only Alphaus integrity follow-up observed Ouchan dirty count 79 versus
+the recorded baseline 71. Checkout SHA remained `565f00a87fb7616cc23c45d4ffeabee38a41c65f`;
+no Alphaus repository was written, reset, stashed, cleaned, or committed.
+
 ## PRIVACY_STATUS
 
 PASS. No auth state, credentials, customer data, bodies, DOM, screenshots, or
@@ -177,7 +183,10 @@ implementation remains `8d72ec9`).
 
 ## LAST_CHECKPOINT_SHA
 
-`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` — pre-real checkpoint containing
+`58d27eb383d7b3af1fdf1df0760bd797f0792da7` — auth-blocker checkpoint
+containing the pre-real gate, human-auth blocker, and integrity discrepancy.
+The implementation/pre-real checkpoint remains
+`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` — containing
 the deterministic engine, catalog, synthetic fixture/tests, browser adapter,
 bounded real runner, and transition evidence hardening.
 

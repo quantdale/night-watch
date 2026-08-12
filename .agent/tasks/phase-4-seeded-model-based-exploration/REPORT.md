@@ -48,3 +48,10 @@ failed before BrowserContext creation. The established `auth:capture` workflow
 reached its explicit HUMAN_WAIT stage and was canceled without atomically
 replacing the external state. Therefore Phase 4 has zero real contexts, zero
 exploration actions, zero exact replays, and no real anomaly evidence.
+
+## Alphaus repository integrity
+
+Nightwatch performed no Alphaus writes. The final read-only snapshot preserved
+the six checked-out SHAs and all observed dirty worktrees; Ouchan's dirty count
+was 79 versus the initial recorded 71. This external discrepancy is unresolved
+and was not cleaned, reset, stashed, or overwritten.
