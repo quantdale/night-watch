@@ -6,8 +6,8 @@ Task ID: phase-2b-three-readonly-ripple-journeys
 Phase: 2B
 Status: IN_PROGRESS
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
-Current SHA: a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba
-Last validated implementation SHA: a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba
+Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
+Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Branch: `main`
 
 ## Objective
@@ -64,12 +64,14 @@ successful Journey 1 pair.
   in the registry or any journey.
 - The semantic observer now records only rule IDs/classes, action IDs/types,
   and dispositions; passive unknowns are distinct from action-caused unknowns.
-- The contract/engine implementation checkpoint is `7b57d559dad039fb491ca9e539d174dc40357d58`; the serial gated real-run harness checkpoint is `f763aca65ba6f5dfbf47956d66c9f90d561a2a18`; reviewed local telemetry containment and the latest implementation checkpoint are `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`.
-- `npx tsc --noEmit`: PASS at `a2bde6a`.
+- The contract/engine implementation checkpoint is `7b57d559dad039fb491ca9e539d174dc40357d58`; the serial gated real-run harness checkpoint is `f763aca65ba6f5dfbf47956d66c9f90d561a2a18`; reviewed local telemetry containment checkpoint is `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`; bounded resume selector checkpoint is `78e5d1f049064e594f99ed7e600ecffb081d6b23`.
+- `npx tsc --noEmit`: PASS at `78e5d1f`.
 - Full local `NIGHTWATCH_ENV=local npx playwright test --project=nightwatch --workers=1`: **251 passed** in 58.7s at `a2bde6a`.
 - `npm run journey:real -- --help`: PASS; the opt-in launcher performs no
   real work without the required environment, target, and storage-state
   arguments.
+- After the bounded resume-selector implementation, focused suite: **12
+  passed**; full local suite: **251 passed**; `git diff --check`: PASS.
 - Full validation exposed and repaired one Nightwatch-only config omission:
   two exact reviewed Chromium control-plane telemetry hosts were absent from
   local containment. No product bug or real safety event resulted.
@@ -121,7 +123,7 @@ an interaction. No selected action intentionally requires UNKNOWN.
 
 ## IMPLEMENTATION_STATUS
 
-CONTRACT_AND_ENGINE_IMPLEMENTED at `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`; synthetic and full local validation PASS. The generic declarative engine is in `src/core/journeys/engine.ts`, generic contract/result types in `src/core/journeys/types.ts`, fresh-context comparison in `src/core/journeys/replay.ts`, and the serial gated real-run harness is in `tests/manual/phase2b-real-journeys.ts` with `bin/phase2b-real.mjs`. Pre-real adversarial review remains.
+CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; synthetic and full local validation PASS. The generic declarative engine is in `src/core/journeys/engine.ts`, generic contract/result types in `src/core/journeys/types.ts`, fresh-context comparison in `src/core/journeys/replay.ts`, and the serial gated real-run harness is in `tests/manual/phase2b-real-journeys.ts` with `bin/phase2b-real.mjs`. The fixed-ID resume selector only avoids repeating a previously checkpointed successful pair; it does not alter contracts, endpoints, or oracle policy.
 
 ## FILES_CHANGED
 
@@ -221,6 +223,11 @@ the Phase 2A gate. If invalid, stop with the human-auth blocker and do not run.
   exact Chromium control-plane telemetry hosts were absent from local policy.
   The two reviewed exact hosts were added in `a2bde6a`; no wildcard, proxy
   bypass, production allowance, or real safety event was introduced.
+- After the L0 Journey 2 anomaly, add only a fixed-ID `--journey-id` resume
+  selector to avoid repeating the successful Journey 1 pair. The default
+  runner still executes all three in order; the selector accepts only one of
+  the three frozen contracts and preserves its original journey index in run
+  IDs. It does not bless endpoints or alter actions/oracles.
 
 ## PRE_REAL_SELF_REVIEW
 
@@ -324,35 +331,33 @@ DOM/text, customer/account values, or cost values were persisted.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba` (Phase 2B contract/engine/gated
-runner plus exact local telemetry containment implementation; the real
-contexts used approved documentation checkpoint `15c3c9f`, and Phase 2A
-baseline remains `a6d7c8b`).
+`78e5d1f049064e594f99ed7e600ecffb081d6b23` (Phase 2B contract/engine/gated
+runner plus bounded fixed-ID resume selector; the real contexts used approved
+documentation checkpoint `15c3c9f`, and Phase 2A baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`15c3c9fef9fe2da57090ddd103a88604829c9607` (`CHECKPOINT_ADVANCE`: pre-real
-readiness/self-review is committed; Journey 1 first/replay passed with strict
-invariants, and Journey 2 first reached a sanitized L0 generic-oracle
-anomaly. No code or contract change has been made after the failure.)
+`78e5d1f049064e594f99ed7e600ecffb081d6b23` (`CHECKPOINT_ADVANCE`: the
+bounded fixed-ID resume selector is validated by typecheck, focused 12-test
+suite, full 251-test suite, launcher help, and diff check; no contract,
+endpoint, oracle, host, or action policy changed.)
 
 ## NEXT_EXACT_ACTION
 
-Checkpoint this L0 finding before code changes. Then add only a bounded,
-explicit resume selector to the generic runner if needed to avoid repeating
-the successful Journey 1 pair, run one diagnostic J2 first observation in a
-fresh context, and—only if it passes—run its one fresh-context replay. Do not
-inspect the 502 body, change the contract/oracle, or run Journey 3 until the
-J2 diagnostic decision is checkpointed. If the re-observation repeats the
-anomaly, classify it L1 and continue only with an explicitly resumed,
-independent Journey 3 context; Phase 2B completion remains blocked until all
-three pairs pass.
+Run exactly one bounded fresh Journey 2 diagnostic observation/replay pair:
+`npm run journey:real -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json" --journey-id=ripple-common-exchange-read`
+The selector preserves the contract's original journey index and uses the
+same gate, auth, target, registry, and action sequence. Do not inspect the
+502 body, change the contract/oracle, or run Journey 3 until this J2 decision
+is checkpointed. If the first observation repeats the anomaly, the runner
+will prohibit replay; classify it L1 and then continue only with an
+explicitly resumed independent Journey 3 context. Phase 2B completion
+remains blocked until all three pairs pass.
 
 ## Exact Next Action
 
-Record the J2 failure checkpoint, implement only the bounded generic resume
-selector if required, revalidate locally, then run one fresh J2 diagnostic
-observation; no third Journey 1 replay and no oracle weakening.
+Run the exact `--journey-id=ripple-common-exchange-read` command above; no
+third Journey 1 replay and no oracle weakening.
 
 ## Files Changed
 
