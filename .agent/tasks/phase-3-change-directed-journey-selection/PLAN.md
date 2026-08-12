@@ -169,8 +169,8 @@ data, or start Phase 4.
 
 ### M10 — Final validation and closure
 
-- Status: `IN_PROGRESS` — final validation, closure report, and clean commit
-  remain.
+- Status: `COMPLETE` — final validation passed and the Nightwatch-only closure
+  checkpoint is `058a1ab`.
 - Complete architecture/adversarial/privacy/Alphaus-integrity review, update
   STATE/REPORT/ACTIVE_TASK, commit Nightwatch only, and leave clean.
 - Validation: TypeScript, full Playwright, agent check, diff check, focused

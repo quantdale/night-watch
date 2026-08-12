@@ -9,8 +9,9 @@ Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
 Current SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
 Last validated implementation SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
 Branch: main
-Last checkpoint: final Phase 3 validation and closure documentation are ready
-for the Nightwatch-only closure commit.
+Last checkpoint: final Phase 3 validation and closure checkpoint
+`058a1ab4168324f346bd80f8fd3c2c3edec45c77`; the terminal documentation-only
+descendant is the final clean handoff.
 
 ## Objective
 
@@ -235,18 +236,19 @@ adversarial runtime/config/style fallback repair.
 
 ## LAST_CHECKPOINT_SHA
 
-`8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b` — latest validated Nightwatch
-implementation checkpoint before final documentation closure.
+`058a1ab4168324f346bd80f8fd3c2c3edec45c77` — validated Phase 3 closure
+checkpoint; any terminal descendant contains documentation-only handoff.
 
 ## NEXT_EXACT_ACTION
 
-Commit the final closure documentation, then verify the final clean Nightwatch
-HEAD, `npm run agent:check`, `git diff --check`, and Alphaus integrity status.
+Verify the terminal clean Nightwatch HEAD, `npm run agent:check`,
+`git diff --check`, and Alphaus integrity status; do not start Phase 4.
 
 ## Exact Next Action
 
-Commit the completed Phase 3 closure artifacts in Nightwatch only; no DEV
-execution is required for the empty current committed window.
+Perform the final read-only status/hash comparison and report the terminal
+clean Nightwatch HEAD; no DEV execution is required for the empty current
+committed window.
 
 ## Files Changed
 

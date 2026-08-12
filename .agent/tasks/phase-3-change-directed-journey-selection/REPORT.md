@@ -1,6 +1,6 @@
 # NIGHTWATCH PHASE 3 — CHANGE-DIRECTED JOURNEY SELECTION COMPLETE
 
-Status: `COMPLETE` pending the final Nightwatch-only documentation commit.
+Status: `COMPLETE`.
 
 Phase 3 adds deterministic source-change intelligence for the existing trusted
 Ripple canaries. It does not add journeys, browser actions, fuzzing, AI
@@ -11,9 +11,9 @@ correlation.
 
 - Starting SHA: `427f10295ae2037d09741de98ebea9210f14f85a`.
 - Final implementation SHA: `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`.
-- Final checkpoint SHA: the final Nightwatch-only closure checkpoint recorded
-  by Git after this report is committed.
-- Final clean HEAD: recorded by the final `git rev-parse HEAD` closure check.
+- Final checkpoint SHA: `058a1ab4168324f346bd80f8fd3c2c3edec45c77`.
+- Final clean HEAD: terminal documentation-only closure descendant recorded by
+  the final `git rev-parse HEAD` check.
 - Phase 4 was not started.
 
 ## 2. Phase 2C reconciliation

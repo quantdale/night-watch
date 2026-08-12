@@ -9,11 +9,11 @@ Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
 Current SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
 Last validated implementation SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
 Current milestone: M10 — final validation and closure
-Last checkpoint: 2026-08-12 — Phase 3 implementation, adversarial fallback
-repair, historical backtests, empty current shadow, adversarial review, and
-full validation completed; closure commit is ready.
-Next action: commit the completed Phase 3 closure documentation in Nightwatch
-only, then verify the final clean HEAD.
+Last checkpoint: 2026-08-12 — Phase 3 closure checkpoint
+`058a1ab4168324f346bd80f8fd3c2c3edec45c77`; terminal documentation-only
+handoff is ready.
+Next action: verify the terminal clean HEAD and final read-only integrity
+comparison; do not start Phase 4.
 
 ## Prior phase closure handoff
 
