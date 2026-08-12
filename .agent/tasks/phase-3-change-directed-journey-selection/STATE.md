@@ -20,7 +20,7 @@ or starting Phase 4.
 
 ## Current Milestone
 
-M2 — dependency-map contract and deterministic model implementation.
+M7 — adversarial false-negative/false-positive review and independent shadow review.
 
 ## Completed Milestones
 
@@ -32,12 +32,17 @@ M2 — dependency-map contract and deterministic model implementation.
   the three canary maps and shared edges are recorded in `DEPENDENCY_MAP.md`.
   Local tracking refs were recorded without fetch, and dirty Alphaus states
   were preserved and excluded from the committed window.
+- M2/M3/M4/M5 — COMPLETE. Versioned types, source-backed map, safe Git
+  collector, impact graph, deterministic selector, fallback, and atomic
+  baseline transitions are implemented and tested.
+- M6 — COMPLETE. Eight sanitized representative fixtures and seven historical
+  local Git backtests pass; the ledger records zero material false negatives.
 
 ## Work In Progress
 
-The source-backed scope and dependency contract are complete. The next work is
-to implement the pure Git/change representation, impact graph, selector, and
-baseline state without touching Alphaus repositories.
+Implementation and backtests are complete. The current work is adversarial
+review of dynamic/config/generated/MFE boundaries and independent review of
+the empty current shadow result.
 
 ## CURRENT_GOAL
 
@@ -47,8 +52,8 @@ mapping, and why were other journeys not selected?”
 
 ## CURRENT_PHASE
 
-Phase 3 — change-directed journey selection; M1 repository/change-surface and
-freshness audit.
+Phase 3 — change-directed journey selection; M7 adversarial review and M8
+shadow review.
 
 ## CURRENT_EVIDENCE
 
@@ -63,6 +68,12 @@ freshness audit.
   is PASS; no Phase 3 live execution has occurred.
 - M1 evidence is in `REPOSITORY_SCOPE.md` and `DEPENDENCY_MAP.md`; freshness is
   `LOCAL_TRACKING_REF_ONLY`, not remote/deployment confirmation.
+- Phase 3 implementation is in `src/core/changeIntelligence`; the offline
+  command is `npm run change:shadow` and writes only sanitized Nightwatch
+  metadata under ignored `artifacts/change-intelligence-shadow/current.json`.
+- Current shadow changeset is `cs-a42938b70eb71fbcc1896fc9`, six HEAD->HEAD
+  committed ranges, zero committed changed files, 82 dirty files excluded,
+  zero selected journeys, zero fallback, and justified zero selection.
 
 ## REPO_BASELINES
 
@@ -96,47 +107,49 @@ are authoritative; no canary or action is added here.
 
 ## DEPENDENCY_MAP_STATUS
 
-`SOURCE_AUDITED`. Durable source contract is
+`IMPLEMENTED`. Durable source contract is
 `nightwatch.ripple-dependency-map.v1` in `DEPENDENCY_MAP.md`; implementation
 must carry source SHA, journey contract version, edge provenance, and stale
 edge detection for J1/J2/J3.
 
 ## IMPACT_GRAPH_STATUS
 
-`CONTRACT_DEFINED`. Required graph levels and stable reason codes are defined
-in `DEPENDENCY_MAP.md`; implementation pending.
+`IMPLEMENTED`. Required graph levels and stable reason codes are defined in
+`DEPENDENCY_MAP.md` and implemented with source SHA/map provenance.
 
 ## SELECTION_MODEL_VERSION
 
-`nightwatch.selector.phase3.v1` (frozen in SPEC; implementation pending).
+`nightwatch.selector.phase3.v1` (frozen in SPEC and implemented).
 
 ## SELECTED_JOURNEYS
 
-`PENDING_IMPLEMENTATION`. No current changeset has been collected and no
-journey has been selected.
+`CURRENT_SHADOW_ZERO_SELECTION`. The current committed HEAD->HEAD window
+selected no journeys; historical/fixture selection results are in the backtest
+ledger.
 
 ## SELECTION_RATIONALE
 
-`PENDING_IMPLEMENTATION`. Must contain source-backed positive reasons, confidence, risk,
-priority, provenance, and deterministic explanations.
+`CURRENT_SHADOW_ZERO_SELECTION`: each J1/J2/J3 non-selection says the explicit
+range contained no committed files; historical positive reasons are persisted
+in `BACKTEST_LEDGER.md` and selection evidence.
 
 ## NEGATIVE_SELECTIONS
 
-`PENDING_IMPLEMENTATION`. Every J1/J2/J3 not selected must have an explicit reason; unknown
-relevant impact must not be represented as a silent empty result.
+`CURRENT_SHADOW`: J1/J2/J3 are explicit `NON_RUNTIME_ONLY` non-selections.
+Unknown relevant runtime impact is tested as visible `UNKNOWN_FALLBACK` and
+selects all three.
 
 ## BACKTEST_LEDGER
 
-`PENDING_IMPLEMENTATION`. Expected categories are true-positive selection, false-positive
-selection, false-negative selection, safe conservative fallback, correct
-non-selection, and ground-truth unresolved. Ground truth must be independently
-source-traced before selector comparison.
+`COMPLETE`: 2 true-positive selections, 0 material false-positive selections,
+0 false-negative selections, 4 conservative fallbacks, 1 correct
+non-selection, and 1 ground-truth-unresolved case; see `BACKTEST_LEDGER.md`.
 
 ## SHADOW_RUN_LEDGER
 
-`PENDING_IMPLEMENTATION`. Shadow mode will collect a reproducible current source window,
-exclude dirty changes, and produce a human-reviewable selection without
-automatically invoking DEV.
+`COMPLETE_CURRENT_SHADOW`: `npm run change:shadow` collected six explicit
+HEAD->HEAD ranges, excluded 82 dirty files, and did not invoke DEV. Independent
+load-bearing review is the remaining gate.
 
 ## REAL_RUN_LEDGER
 
@@ -146,9 +159,9 @@ recorded as not required.
 
 ## FILES_CHANGED
 
-Task and M1 evidence: `.agent/ACTIVE_TASK.md`, `SPEC.md`, `PLAN.md`, `STATE.md`,
-`REPORT.md`, `REPOSITORY_SCOPE.md`, and `DEPENDENCY_MAP.md`. No selector source
-implementation has changed.
+Task/M1 evidence plus implementation: `src/core/changeIntelligence/*`,
+`bin/change-intelligence.mjs`, `package.json`, sanitized fixture JSON, focused
+selector/backtest tests, `BACKTEST_LEDGER.md`, and updated task docs.
 
 ## VALIDATION_LEDGER
 
@@ -161,12 +174,15 @@ implementation has changed.
 - `git diff --check`: PASS before Phase 3 task creation.
 - M1 focused validation: source/route/API/backend/proto inspection complete;
   Alphaus status checks were read-only and no Alphaus diff changed.
-- Phase 3 focused validation: pending implementation.
+- Phase 3 focused tests: 19 selector/baseline/Git tests and 8 historical
+  backtest tests passed; `npx tsc --noEmit` passed; current shadow passed.
 
 ## BUGS_FOUND
 
-None in Phase 3. The historical Phase 2C shared comparator defect remains
-closed as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` and is not reopened.
+One Phase 3 implementation defect was found and repaired: porcelain `??`
+entries were initially classified as dirty `modify` rather than dirty `add`.
+No product defect was inferred. The historical Phase 2C shared comparator
+defect remains closed as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`.
 
 ## REJECTED_HYPOTHESES
 
@@ -182,6 +198,8 @@ closed as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` and is not reopened.
   selector implementation.
 - Historical direct J2 isolation may not exist; if unavailable it will be
   recorded as unresolved rather than fabricated.
+- Direct isolated J1/J2 ranges were not available in local history; fixtures
+  cover isolation and real historical ranges use visible conservative fallback.
 
 ## SAFETY_EVENTS
 
@@ -206,14 +224,14 @@ checkpoint for Phase 3 task creation.
 
 ## NEXT_EXACT_ACTION
 
-Implement the pure Phase 3 model: typed changesets, source-backed Ripple
-dependency edges, deterministic impact classification/selection, and atomic
-baseline state. Add unit tests before collecting historical backtests.
+Complete independent adversarial review of the map against dynamic imports,
+runtime config/CSS/build/generated-code boundaries, then rerun focused and
+historical tests and write the final shadow review.
 
 ## Exact Next Action
 
-Implement and test the offline selection core from the frozen M1 scope and
-dependency contract. Keep Git collection separate from impact/selection.
+Cross-check load-bearing edges and non-selected reasoning independently; no
+DEV execution is required for the empty current committed window.
 
 ## Files Changed
 
@@ -262,5 +280,5 @@ correlation remain out of scope.
 
 ## Completion Snapshot
 
-Not complete. Native Phase 3 task, repository scope, and dependency contract
-are created; M2 model implementation is the next exact action.
+Not complete. M0–M6 are complete; M7 adversarial review and M8 shadow review
+remain before final validation and closure.

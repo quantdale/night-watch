@@ -86,12 +86,18 @@ data, or start Phase 4.
 
 ### M2 — Frozen change model and dependency contracts
 
+- Status: `COMPLETE` — schema, source-backed repository metadata, and the
+  J1/J2/J3/shared dependency contract are implemented in
+  `src/core/changeIntelligence` and documented in `DEPENDENCY_MAP.md`.
 - Define schema/model versions, change-window semantics, J1/J2/J3 dependency
   edges, source provenance, stale-edge rules, and shared-core evidence.
 - Validation: model/type tests and map integrity checks.
 
 ### M3 — Git collection and freshness implementation
 
+- Status: `COMPLETE` — safe argument-array Git collection, dirty separation,
+  range validation, commits, merge-base, and rename/delete tombstones pass
+  focused tests; current shadow records local tracking freshness only.
 - Implement committed upstream/local committed/dirty separation, range/tombstone
   collection, safe process invocation, reproducible changeset identity, and
   freshness diagnostics.
@@ -101,6 +107,9 @@ data, or start Phase 4.
 
 ### M4 — Impact graph and classification implementation
 
+- Status: `COMPLETE` — deterministic path/previous-path graph, direct/shared/
+  backend/contract/transport edges, confidence, risk, runtime filtering,
+  deduplication, and stale-edge fallback are implemented.
 - Implement direct/shared/transitive graph edges, path/component/route/API/
   backend mapping, confidence, risk, conflict/deduplication, runtime-only
   classification, and map version/source SHA checks.
@@ -108,6 +117,9 @@ data, or start Phase 4.
 
 ### M5 — Deterministic selector and baseline implementation
 
+- Status: `COMPLETE` — selection, negative explanations, P0–P3 priority,
+  visible all-canary fallback, zero-selection contract, and atomic pending /
+  accepted baseline transitions pass focused tests.
 - Implement selection, stable priority, positive and negative explanations,
   unknown fallback, zero-selection contract, and atomic baseline transitions.
 - Validation: all selection combinations, determinism, stale-map handling,
@@ -115,6 +127,10 @@ data, or start Phase 4.
 
 ### M6 — Fixtures and historical blind backtests
 
+- Status: `COMPLETE` — eight representative fixtures and seven real local Git
+  ranges pass; the durable ledger records two true-positive selections, four
+  conservative fallbacks, one correct non-selection, zero material false
+  negatives, and one explicitly unresolved ground-truth case.
 - Create minimal sanitized changeset fixtures and select real historical ranges
   from local history. Establish independent ground truth before comparing.
 - Validation: direct J1/J2/J3 where available, shared, non-runtime, unknown,
@@ -123,6 +139,8 @@ data, or start Phase 4.
 
 ### M7 — Adversarial false-negative/false-positive review
 
+- Status: `IN_PROGRESS` — load-bearing dynamic/MFE/config/style/generated-code
+  review and independent current shadow review remain.
 - Inspect dynamic routing/imports, barrels, stores, wrappers, generated clients,
   MFE boundaries, config/build/resource/CSS behavior, tests/docs/dead code.
 - Validation: review ledger, regression tests for each repaired gap, rerun all

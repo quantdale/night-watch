@@ -1,0 +1,58 @@
+[
+  {
+    "id": "j1-component",
+    "groundTruth": "independent source tracing: payer route page and table belong only to J1",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "src/pages/ExchangeRate_v2/PayerExchangeRate/index.vue", "status": "modify"}],
+    "expected": {"selected": ["ripple-payer-exchange-read"], "fallback": false}
+  },
+  {
+    "id": "j2-client",
+    "groundTruth": "independent source tracing: common exchange Vuex GET client belongs only to J2",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "src/vuex/api/exchangeRateGlobal.js", "status": "modify"}],
+    "expected": {"selected": ["ripple-common-exchange-read"], "fallback": false}
+  },
+  {
+    "id": "j3-backend",
+    "groundTruth": "independent source tracing: billingd ListBillingGroups is the proven J3 backend path",
+    "repoId": "mobingilabs/ouchan",
+    "files": [{"path": "services/billingd/service.go", "status": "modify"}],
+    "expected": {"selected": ["ripple-account-inventory"], "fallback": false}
+  },
+  {
+    "id": "shared-router",
+    "groundTruth": "independent source tracing: router table/auth guard gates all three approved routes",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "src/router.js", "status": "modify"}],
+    "expected": {"selected": ["ripple-payer-exchange-read", "ripple-common-exchange-read", "ripple-account-inventory"], "fallback": false}
+  },
+  {
+    "id": "docs-only",
+    "groundTruth": "independent source tracing: documentation cannot enter the runtime bundle",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "docs/change-intelligence.md", "status": "modify"}],
+    "expected": {"selected": [], "fallback": false}
+  },
+  {
+    "id": "unknown-runtime",
+    "groundTruth": "deliberately unresolved runtime path; safe behavior is all-canary fallback",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "src/runtime/new-indirection.js", "status": "modify"}],
+    "expected": {"selected": ["ripple-payer-exchange-read", "ripple-common-exchange-read", "ripple-account-inventory"], "fallback": true}
+  },
+  {
+    "id": "rename-j1",
+    "groundTruth": "base-path tombstone is a known J1 component even though the current path was renamed",
+    "repoId": "mobingilabs/ripple-ui",
+    "files": [{"path": "src/pages/ExchangeRate_v2/PayerExchangeRate/Renamed.vue", "previousPath": "src/pages/ExchangeRate_v2/PayerExchangeRate/index.vue", "status": "rename"}],
+    "expected": {"selected": ["ripple-payer-exchange-read"], "fallback": false}
+  },
+  {
+    "id": "j3-contract",
+    "groundTruth": "independent source tracing: Blue Billing ListBillingGroups contract is consumed by J3",
+    "repoId": "alphauslabs/blueapi",
+    "files": [{"path": "billing/v1/billing.proto", "status": "modify"}],
+    "expected": {"selected": ["ripple-account-inventory"], "fallback": false}
+  }
+]

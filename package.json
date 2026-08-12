@@ -19,6 +19,7 @@
     "observe:authenticated": "node bin/observe-authenticated.mjs",
     "journey:real": "node bin/phase2b-real.mjs",
     "journey:phase2c": "node bin/phase2c-real.mjs",
+    "change:shadow": "node bin/change-intelligence.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "nightwatch": "node bin/nightwatch.mjs"

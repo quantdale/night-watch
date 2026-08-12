@@ -8,11 +8,11 @@ Task directory: .agent/tasks/phase-3-change-directed-journey-selection
 Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
 Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Current milestone: M2 — dependency-map contract and deterministic model implementation
+Current milestone: M7 — adversarial false-negative/false-positive review and independent shadow review
 Last checkpoint: 2026-08-12 — Phase 2A/2B/2C closure independently reconciled;
 native Phase 3 task created before implementation.
-Next action: implement and unit-test the pure Phase 3 changeset, impact graph,
-selector, and baseline model from the frozen M1 evidence.
+Next action: complete adversarial review of dynamic/config/generated/MFE edges,
+rerun all Phase 3 tests, and finalize the current shadow review.
 
 ## Prior phase closure handoff
 
