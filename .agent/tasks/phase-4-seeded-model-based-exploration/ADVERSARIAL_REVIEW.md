@@ -3,7 +3,7 @@
 Review status: `PASS` — 2026-08-12 pre-real review.
 
 This review is completed against the frozen Phase 4 SPEC and the implementation
-checkpoint `72dd9c276945bb0081b613b00bdeff6b11d66808`. It is a gate, not a
+checkpoint `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`. It is a gate, not a
 relaxation of the catalog.
 
 | question | result | evidence / boundary |

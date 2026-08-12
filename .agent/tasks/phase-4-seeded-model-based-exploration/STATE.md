@@ -6,10 +6,10 @@ Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Status: IN_PROGRESS
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
-Last validated implementation SHA: 72dd9c276945bb0081b613b00bdeff6b11d66808
+Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
+Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
 Branch: main
-Last checkpoint: 2026-08-12 — Phase 4 hardening checkpoint `72dd9c276945bb0081b613b00bdeff6b11d66808`.
+Last checkpoint: 2026-08-12 — Phase 4 pre-real checkpoint `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
 
 ## CURRENT_GOAL
 
@@ -216,8 +216,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## Current Milestone
 
-Milestone ID: M4. Status: IN_PROGRESS. The implementation and synthetic
-matrix are checkpointed; pre-real validation is next.
+Milestone ID: M6. Status: COMPLETE. Local validation and adversarial review
+passed; the pre-real checkpoint is `8916e91ca3f983808f1385d27bd79e2aa54c4d5e`.
 
 ## Completed Milestones
 
@@ -228,17 +228,23 @@ matrix are checkpointed; pre-real validation is next.
   review completed.
 - M3: deterministic Phase 4 engine, catalog, browser adapter, seed corpus,
   synthetic hostile fixture, and focused tests implemented.
+- M4: deterministic RNG/planner, budget, coverage, novelty, and strict replay
+  validated by the synthetic matrix.
+- M5: action attribution, mutation/UNKNOWN/new-host tripwires, model staleness,
+  privacy constraints, and local fixture validation completed.
+- M6: full 308-test suite, typecheck, diff check, continuity gate, and
+  adversarial review passed; `PHASE_4_PRE_REAL_EXPLORATION_READY` checkpointed.
 
 ## Work In Progress
 
-Implementation and synthetic validation are checkpointed; full local
-validation and adversarial review are in progress. No real context has started.
+Implementation, synthetic validation, full local validation, and adversarial
+review are checkpointed. No real context has started.
 
 ## Exact Next Action
 
-Run `npx tsc --noEmit`, the full Playwright suite, `npm run agent:check`,
-focused Phase 4/privacy/artifact tests, and the pre-real adversarial review.
-Do not create a browser context until the checkpoint is written.
+Run `npm run explore:phase4 -- --env=dev` once, serially, with the fixed seed
+corpus and declared six-context plus three-replay maximum. Do not inspect auth
+state contents or exceed the frozen budget.
 
 ## Files Changed
 

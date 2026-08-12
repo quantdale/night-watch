@@ -1,12 +1,11 @@
 # Nightwatch Phase 4 — Seeded / Model-Based Exploration Report
 
-Status: `IN_PROGRESS` — implementation and synthetic safety matrix complete;
-pre-real validation pending.
+Status: `IN_PROGRESS` — pre-real gate passed; bounded DEV exploration pending.
 
 - Starting SHA: `acdb4a27a953dbff2c3408815efe634468d4ad20`
 - Validated inherited implementation: `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`
 - Phase 3 checkpoint: `058a1ab4168324f346bd80f8fd3c2c3edec45c77`
-- Current phase: M4/M6 pre-real validation and adversarial review
+- Current phase: M7 bounded DEV exploration and exact reproduction
 - Safety events: NONE
 - Real DEV execution: NOT STARTED
 - Phase 5: NOT STARTED
@@ -30,15 +29,14 @@ Phase 5.
 
 ## Implementation checkpoint
 
-The `1ec9bfd` checkpoint contains the typed Phase 4 state, transition,
+The `8916e91ca3f983808f1385d27bd79e2aa54c4d5e` checkpoint contains the typed Phase 4 state, transition,
 catalog, deterministic RNG/planner, bounded engine, source-backed Ripple
-adapter, hostile local fixture, fixed seed corpus, and guarded serial DEV
-runner. The focused Phase 4 matrix is 14/14, TypeScript is passing, and no
-real browser context has been created.
+adapter, hostile local fixture, fixed seed corpus, guarded serial DEV runner,
+and the pre-real adversarial review. The focused Phase 4 matrix is 16/16, the
+full suite is 308/308, TypeScript is passing, and no real browser context has
+been created.
 
 ## Exact next action
 
-Run the full local suite, focused inherited safety/oracle/replay/privacy tests,
-`agent:check`, and the documented adversarial review. Only after those pass,
-write `PHASE_4_PRE_REAL_EXPLORATION_READY` and begin the fixed six-context DEV
-corpus.
+Run `npm run explore:phase4 -- --env=dev` once with the frozen serial seed
+corpus; inspect only metadata evidence and stop on any safety condition.
