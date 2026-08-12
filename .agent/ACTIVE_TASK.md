@@ -3,15 +3,16 @@
 Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Title: Seeded / Model-Based Exploration
-Status: BLOCKED
+Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
-Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
-Current milestone: M7 — bounded DEV exploration blocked on human auth
-Last checkpoint: 2026-08-12 — Phase 4 auth-blocker checkpoint `58d27eb383d7b3af1fdf1df0760bd797f0792da7`.
-Next action: human must complete the established guarded DEV login/MFA
-capture; then resume the fixed serial seed corpus. Do not run stale auth.
+Current SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
+Last validated implementation SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
+Current milestone: M7 — secure DEV auto-login infrastructure ready; configure once
+Last checkpoint: 2026-08-12 — guarded DEV auto-login/MCP safety implementation `5e6aeff9fed37df0bc11f376d0d346d1107e1e54`.
+Next action: run `npm run auth:configure` in an interactive terminal and enter
+the designated DEV account once at the hidden prompts; never place credential
+values in chat, arguments, files, or evidence.
 
 ## Prior phase closure handoff
 

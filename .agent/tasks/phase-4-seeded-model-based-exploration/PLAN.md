@@ -186,7 +186,9 @@ Alphaus edits, or broad overnight autonomy.
   runtime-unavailable actions are explicit; anomalies use Phase 2C admission.
 - Validation commands: guarded DEV runner, sanitized evidence/privacy review,
   exact replay comparator, no extra exploratory retries.
-- Status: BLOCKED — HUMAN_AUTH_ACTION_REQUIRED before first DEV context.
+- Status: IN_PROGRESS — secure DEV auto-login infrastructure is checkpointed;
+  one-time hidden credential configuration remains before the first real
+  context.
 
 ### M8 — Cross-seed analysis, architecture review, and closure
 
@@ -206,7 +208,7 @@ Alphaus edits, or broad overnight autonomy.
 Use focused unit/property-like tests for each model and planner invariant,
 local browser fixtures for real engine and safety behavior, then the inherited
 full Playwright suite. Before real DEV, run typecheck, full Playwright,
-agent-check, diff-check, focused Phase 4 tests, privacy scans, and the
+agent-check, diff-check, focused Phase 4/auth/MCP tests, privacy scans, and the
 adversarial review. Real execution is serial and evidence is reviewed after
 each context/pair. No production, DB, or Alphaus mutation is part of any
 validation command.
@@ -224,6 +226,14 @@ validation command.
 - 2026-08-12 — Use a seeded frontier walk with deterministic canonical action
   ordering and explicit exclusions. Reason: it gives bounded safe diversity
   without building a universal search framework.
+- 2026-08-12 — Use an external owner-only file fallback for the designated DEV
+  credential because OS keychain facilities were unavailable. Reason: it
+  keeps the secret outside Git/argv/transcripts while preserving a narrow
+  auth-only API and atomic writes.
+- 2026-08-12 — Keep Chrome DevTools MCP optional and real authenticated
+  attachment disabled until a dedicated Nightwatch-owned loopback CDP path
+  proves containment. Reason: MCP tool capability is not safety authority and
+  tool-call argument persistence cannot be assumed safe for credentials.
 
 ## Discoveries
 

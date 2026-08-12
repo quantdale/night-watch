@@ -1,13 +1,14 @@
 # Nightwatch Phase 4 — Seeded / Model-Based Exploration Report
 
-Status: `BLOCKED` — `HUMAN_AUTH_ACTION_REQUIRED` before bounded DEV exploration.
+Status: `IN_PROGRESS` — secure DEV refresh is ready; one-time hidden local
+credential configuration remains before bounded DEV exploration.
 
 - Starting SHA: `acdb4a27a953dbff2c3408815efe634468d4ad20`
 - Validated inherited implementation: `8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b`
 - Phase 3 checkpoint: `058a1ab4168324f346bd80f8fd3c2c3edec45c77`
-- Current phase: M7 blocked before first DEV exploration context
+- Current phase: M7 secure auth refresh checkpointed before first DEV context
 - Safety events: NONE
-- Real DEV execution: BLOCKED before context creation by boolean auth preflight
+- Real DEV execution: not started; prior auth blocker independently confirmed
 - Phase 5: NOT STARTED
 
 ## Initial closure reconciliation
@@ -29,25 +30,47 @@ Phase 5.
 
 ## Implementation checkpoint
 
-The `8916e91ca3f983808f1385d27bd79e2aa54c4d5e` checkpoint contains the typed Phase 4 state, transition,
+The `5e6aeff9fed37df0bc11f376d0d346d1107e1e54` checkpoint contains the typed Phase 4 state, transition,
 catalog, deterministic RNG/planner, bounded engine, source-backed Ripple
 adapter, hostile local fixture, fixed seed corpus, guarded serial DEV runner,
-and the pre-real adversarial review. The focused Phase 4 matrix is 16/16, the
-full suite is 308/308, TypeScript is passing, and no real browser context has
-been created.
+external owner-only DEV credential provider, hidden configuration CLI, bounded
+source-backed login, atomic refresh validation, and MCP safety policy. The
+focused Phase 4 matrix is 16/16, the focused auth/storage/MCP suite is 32/32,
+the full suite is 317/317, TypeScript is passing, and no real browser context
+has been created.
 
 ## Exact next action
 
-Human completes the guarded DEV login/MFA capture, then resume the frozen
-serial seed corpus. Do not run stale auth or inspect state contents.
+Run `npm run auth:configure` in an interactive terminal and enter the
+designated DEV account once through the hidden prompts. Then resume the frozen
+serial seed corpus through the guarded auto-refresh/reuse path. Do not pass or
+inspect credential or state contents.
 
 ## Real-run blocker
 
-The pre-real safety gate passed. The first per-context boolean auth check
+The pre-real safety gate passed. Three prior per-context boolean auth checks
 failed before BrowserContext creation. The established `auth:capture` workflow
-reached its explicit HUMAN_WAIT stage and was canceled without atomically
-replacing the external state. Therefore Phase 4 has zero real contexts, zero
-exploration actions, zero exact replays, and no real anomaly evidence.
+reached HUMAN_WAIT and was canceled without replacing external state. The new
+refresh path has passed local security validation but has not retrieved a real
+credential or created a real login context. Therefore Phase 4 still has zero
+real contexts, zero exploration actions, zero exact replays, and no real
+anomaly evidence.
+
+## Secure auth and MCP resume
+
+The provider uses the external owner-only-file storage class because OS
+keychain facilities were unavailable in this environment. Configuration uses
+hidden TTY input and reports only safe metadata. The DEV gate precedes secret
+retrieval; login is one bounded source-backed submit, MFA remains human-only,
+and fresh state validation precedes atomic replacement. Authentication is
+classified as `AUTH_SESSION_CREATION` with `productStateMutation=false` and
+does not widen the Phase 4 product catalog.
+
+MCP discovery remains `mcp__chrome_devtools` with 29 tools. `list_pages` was
+checked read-only and could not connect to loopback port 9222. Real
+authenticated MCP attachment is disabled by safety because a dedicated
+Nightwatch-owned loopback CDP path is not proven; MCP receives no credential
+input and Playwright remains the sole executor.
 
 ## Chrome DevTools MCP discovery
 

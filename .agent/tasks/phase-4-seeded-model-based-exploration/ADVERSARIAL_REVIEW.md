@@ -50,3 +50,26 @@ relaxation of the catalog.
 `PHASE_4_PRE_REAL_EXPLORATION_READY` — all review questions and local gates
 pass. The fixed serial DEV corpus remains bounded by the frozen SPEC and must
 be recorded in STATE before the first context.
+
+## DEV auto-login / MCP resume checkpoint
+
+Review status: `PASS` — implementation checkpoint `5e6aeff9fed37df0bc11f376d0d346d1107e1e54`.
+
+| threat / question | mitigation / result |
+|---|---|
+| `SECRET_IN_SOURCE`, Git, task docs, fixtures, or artifacts? | PASS — the provider stores only outside the workspace; tests use synthetic values; no real credential value is present in Nightwatch artifacts or task state. |
+| Shell history or process argv exposure? | PASS — `npm run auth:configure` accepts no credential arguments and reads both fields from hidden TTY input; no credential environment fallback exists. |
+| MCP transcript exposure? | PASS — `MCP_SECRET_INPUT_ALLOWED=false`; login uses in-process Playwright and no MCP fill/type/evaluate operation receives a credential. |
+| Console, network, exception, or storage-state report exposure? | PASS — recorder is metadata-first; raw credential values never enter recorder/event data; failure categories are sanitized; state is external by path only. |
+| DEV-only retrieval ordering? | PASS — exact target, allowlist, production-deny canary, proxy health, browser containment, and privacy checks run before provider retrieval; a production target test records zero provider calls. |
+| Existing auth reuse and bounded refresh? | PASS — valid state is reused; refresh performs one source-backed submit, no retry loop, and validates a pending state in a fresh guarded context before atomic replacement. |
+| MFA boundary and lockout protection? | PASS — MFA enters `HUMAN_MFA_WAIT`; no OTP bypass/retrieval; a rejected form stops without retry. |
+| Personal Chrome or containment bypass through MCP? | PASS — no dedicated Nightwatch-owned loopback CDP launcher is proven; real authenticated MCP attachment is disabled and Playwright remains primary. |
+| MCP DOM/screenshot/heap/raw-body leak? | PASS — authenticated screenshots, heap snapshots, broad snapshots/evaluations, and raw request inspection are prohibited; MCP is optional. |
+| AUTH_SESSION_CREATION widening product safety? | PASS — auth session creation is separately recorded with `productStateMutation=false`; the Phase 4 product catalog remains passive/read-only. |
+
+Synthetic validation at this checkpoint: focused auth/storage/MCP suite 32/32,
+full suite 317/317, TypeScript PASS, diff check PASS. `list_pages` was checked
+read-only and remained unavailable at `127.0.0.1:9222`; no MCP browser action
+or authenticated data was accessed. The checkpoint is ready for the one-time
+hidden local DEV credential configuration; Phase 5 remains unstarted.

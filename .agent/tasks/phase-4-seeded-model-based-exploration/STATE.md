@@ -4,13 +4,13 @@
 
 Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
-Status: BLOCKED
-Blocker: HUMAN_AUTH_ACTION_REQUIRED before first DEV context.
+Status: IN_PROGRESS
+Blocker: LOCAL_DEV_SECRET_CONFIGURATION_REQUIRED before first automatic DEV refresh.
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
-Last validated implementation SHA: 8916e91ca3f983808f1385d27bd79e2aa54c4d5e
+Current SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
+Last validated implementation SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
 Branch: main
-Last checkpoint: 2026-08-12 — Phase 4 auth-blocker checkpoint `58d27eb383d7b3af1fdf1df0760bd797f0792da7`.
+Last checkpoint: 2026-08-12 — guarded DEV auto-login/MCP safety implementation `5e6aeff9fed37df0bc11f376d0d346d1107e1e54`.
 
 ## CURRENT_GOAL
 
@@ -34,8 +34,14 @@ the first DEV exploration context.
   is rejected pending semantic review.
 - Phase 4 engine, typed schemas, catalog, browser adapter, seed corpus, and
   synthetic fixture are implemented at `72dd9c276945bb0081b613b00bdeff6b11d66808`.
-- Focused Phase 4 matrix: 16 passed; full Nightwatch suite: 308 passed;
-  typecheck: PASS; no real context yet.
+- Focused Phase 4 matrix: 16 passed; full Nightwatch suite before the resume:
+  308 passed; no real context yet.
+- Secure DEV auth resume implementation committed at `5e6aeff`: external
+  owner-only credential provider, hidden configuration CLI, DEV-gated bounded
+  refresh, source-backed selectors, fresh-context state validation, atomic
+  replacement, and synthetic auth/MCP/security tests.
+- Resume validation: focused auth/storage/MCP suite 32 passed; full Nightwatch
+  suite 317 passed; `npx tsc --noEmit` passed; `git diff --check` passed.
 - Pre-real adversarial review: PASS; no unproven action, host-policy
   relaxation, privacy leak, planner nondeterminism, budget bypass, or Phase 5
   scope was found.
@@ -92,7 +98,8 @@ engine and browser adapter implemented.
 
 E1/J1, E2/J2, and E3/J3 are source-reviewed in `EXPLORATION.md`; implementation,
 synthetic tripwires, full local validation, and adversarial pre-real review
-pass. DEV remains blocked until this documentation checkpoint is committed.
+pass. DEV is paused only until the one-time hidden local credential
+configuration; no credential value is part of this state.
 
 ## SEED_LEDGER
 
@@ -112,11 +119,12 @@ claim is permitted.
 ## REAL_RUN_LEDGER
 
 Phase 4 exploration contexts: 0/6. Exact replay contexts: 0/3. The guarded
-pre-real safety gate passed; all three guarded invocations failed the same
-per-context auth boolean preflight before the first BrowserContext. No Phase 4
-action, product mutation, production attempt, DB query, or exploration request
-was made. The fixed corpus remains unused; no diagnostic retries were
-consumed.
+pre-real safety gate passed; the previous three guarded invocations failed the
+same per-context auth boolean preflight before the first BrowserContext. The
+new auto-refresh path has not yet retrieved a credential or created a real
+login context. No Phase 4 action, product mutation, production attempt, DB
+query, or exploration request was made. The fixed corpus remains unused; no
+diagnostic retries were consumed.
 
 ## REPRODUCTION_LEDGER
 
@@ -154,8 +162,8 @@ are Nightwatch-only.
 - `npm run agent:check`: PASS before task creation.
 - `npx tsc --noEmit`: PASS before task creation.
 - Phase 3 focused suite: 28 passed.
-- Full inherited Playwright suite: launched as a read-only audit; exact final
-  result is to be confirmed after this documentation checkpoint.
+- Full inherited Playwright suite: 317 passed after the auth/MCP resume
+  implementation; no real Alphaus context was created by the suite.
 - Relevant Ripple UI tracking delta reviewed; J3 supplementary AOR POST
   identified and excluded from the v1 action catalog.
 - Phase 4 focused suite: 16 passed; `npx tsc --noEmit`: PASS; full
@@ -165,6 +173,34 @@ are Nightwatch-only.
   are canonicalized.
 - Pre-real adversarial review: PASS; durable review is in
   `ADVERSARIAL_REVIEW.md`.
+- `npx tsc --noEmit`: PASS at implementation checkpoint `5e6aeff`.
+- Focused auth/storage/MCP security suite: 32 passed.
+- `npx playwright test --project=nightwatch`: 317 passed.
+- `git diff --check`: PASS before implementation checkpoint.
+- `mcp__chrome_devtools__list_pages`: unavailable at loopback `127.0.0.1:9222`;
+  no browser action or authenticated data was accessed.
+
+## AUTO_LOGIN_IMPLEMENTATION
+
+- Provider: narrow auth-only external owner-only file fallback; OS keychain
+  facilities were unavailable in this environment.
+- Real storage class: owner-only external secret file under the operator's
+  local Nightwatch namespace; no contents or identity values are recorded.
+- Configuration: `npm run auth:configure`; both username and password prompts
+  disable terminal echo; no credential flags, environment fallback, or output
+  values.
+- Gate ordering: exact DEV UI/auth/API allowlists, production deny canary,
+  healthy mandatory proxy, seven-part browser containment, and authenticated
+  metadata-only evidence policy all pass before provider retrieval.
+- Refresh: valid external state is reused first; otherwise one source-backed
+  login submit, optional human MFA wait, page-visible auth/QLayout validation,
+  fresh guarded pending-state validation, and atomic replacement.
+- Product mutation distinction: `AUTH_SESSION_CREATION` is authorized and
+  recorded with `productStateMutation=false`; the Phase 4 product mutation
+  invariant remains zero.
+- Synthetic coverage includes hidden-input/static CLI checks, unsafe/missing
+  provider state, production-target pre-retrieval rejection, fake login form,
+  artifact-safe metadata, and atomic replacement preservation.
 
 ## CHROME_DEVTOOLS_MCP_DISCOVERY
 
@@ -202,13 +238,14 @@ server is available as `mcp__chrome_devtools` with exactly 29 tools:
 - `upload_file` — upload a file through an element.
 - `wait_for` — wait for specified page text.
 
-Independent connection check: `mcp__chrome_devtools__list_pages` failed closed
-because Chrome was not running at `127.0.0.1:9222`; no page, auth value,
+Independent connection check on resume: `mcp__chrome_devtools__list_pages`
+failed closed because Chrome was not running at `127.0.0.1:9222`; no page, auth value,
 credential, request body, response body, screenshot, trace, or DOM was read or
 persisted. DevTools MCP remains an independent optional observation surface;
 Nightwatch containment, semantic registry, and metadata-first evidence remain
-authoritative. No MCP browser action was attempted because auth was invalid
-and the real Phase 4 run is already blocked before context creation.
+authoritative. Real authenticated attachment is disabled by safety because a
+dedicated Nightwatch-owned loopback CDP architecture is not proven. MCP
+credential input is permanently disallowed for this flow.
 
 ## SAFETY_EVENTS
 
@@ -229,24 +266,21 @@ traces entered Phase 4 task state.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` (Phase 4 pre-real checkpoint; inherited Phase 3
-implementation remains `8d72ec9`).
+`5e6aeff9fed37df0bc11f376d0d346d1107e1e54` (secure DEV auto-login/MCP
+implementation checkpoint; inherited Phase 3 implementation remains `8d72ec9`).
 
 ## LAST_CHECKPOINT_SHA
 
-`58d27eb383d7b3af1fdf1df0760bd797f0792da7` — auth-blocker checkpoint
-containing the pre-real gate, human-auth blocker, and integrity discrepancy.
-The implementation/pre-real checkpoint remains
-`8916e91ca3f983808f1385d27bd79e2aa54c4d5e` — containing
-the deterministic engine, catalog, synthetic fixture/tests, browser adapter,
-bounded real runner, and transition evidence hardening.
+`5e6aeff9fed37df0bc11f376d0d346d1107e1e54` — secure DEV auto-login/MCP
+safety implementation, synthetic validation, and pre-real integration.
 
 ## NEXT_EXACT_ACTION
 
-Human completes DEV login/MFA in the established guarded capture workflow and
-presses ENTER after authenticated Ripple is loaded. Then rerun the fixed
-command with the existing external state exactly once; do not inspect or print
-auth-state contents and do not retry before capture.
+Run `npm run auth:configure` in an interactive terminal. Enter the designated
+DEV account at the hidden prompts exactly once; report only safe metadata. Then
+run the fixed DEV Phase 4 command and allow the guarded refresh/reuse path to
+perform the existing six seeds plus permitted exact replays. Do not inspect or
+print credential or storage-state contents.
 
 ## RESUME_RECIPE
 
@@ -255,21 +289,29 @@ auth-state contents and do not retry before capture.
 2. Inspect `git status --short`, current SHA, and this task's diff.
 3. Confirm the pre-real checkpoint and fixed seed ledger; use a fresh context
    for every seed and replay.
-4. Human completes guarded auth capture; verify only its boolean preflight.
+4. Configure the local DEV credential through the hidden prompt only; never
+   transfer it through chat, argv, environment, MCP, or task state.
 5. Run the fixed serial DEV corpus and exact replays only within the declared
    budget.
-6. Update this STATE after each milestone before implementation changes.
+6. If MFA appears, wait for the human MFA action; never bypass or retry.
+7. Update this STATE after each milestone before implementation changes.
 
 ## Decision Log
 
 - Phase 4 acceptance is frozen before action implementation.
 - Current Phase 3 baseline is consumed only for provenance/staleness; Phase 4
   validation does not advance Phase 3 baselines.
+- Automatic authentication is a DEV-only session-creation exception and does
+  not widen the read-only Phase 4 product-action catalog.
+- MCP remains optional; real authenticated attachment is disabled unless a
+  dedicated Nightwatch-owned loopback CDP path proves containment.
 
 ## Blockers
 
-None yet. A safe-frontier blocker remains an allowed outcome if source proof
-cannot establish meaningful branching.
+The prior external auth blocker is repaired by the committed secure refresh
+infrastructure. The only current prerequisite is one-time local hidden
+configuration (`LOCAL_DEV_SECRET_CONFIGURATION_REQUIRED`). Safe MCP attachment
+is intentionally disabled and is not a Phase 4 blocker.
 
 ## Deferred / Follow-Up
 
@@ -277,7 +319,8 @@ Phase 5 and all broader autonomous/fuzzing/datastore work remain deferred.
 
 ## Completion Snapshot
 
-Blocked before real execution; no completion claim is made.
+Implementation checkpointed; real execution has not started and no completion
+claim is made until the hidden configuration and fixed corpus pass.
 
 ## Objective
 
@@ -286,8 +329,8 @@ Ripple J1/J2/J3 anchor journeys without widening Nightwatch's safety boundary.
 
 ## Current Milestone
 
-Milestone ID: M7. Status: BLOCKED — HUMAN_AUTH_ACTION_REQUIRED. Local
-validation and adversarial review passed; real exploration awaits manual auth.
+Milestone ID: M7. Status: IN_PROGRESS — secure auto-login is checkpointed;
+real exploration awaits one-time hidden DEV credential configuration.
 
 ## Completed Milestones
 
@@ -304,18 +347,23 @@ validation and adversarial review passed; real exploration awaits manual auth.
   privacy constraints, and local fixture validation completed.
 - M6: full 308-test suite, typecheck, diff check, continuity gate, and
   adversarial review passed; `PHASE_4_PRE_REAL_EXPLORATION_READY` checkpointed.
+- M7a: secure external DEV credential provider, hidden configuration CLI,
+  pre-retrieval DEV safety gate, bounded source-backed login, atomic refresh,
+  synthetic security coverage, and optional MCP policy checkpointed at
+  `5e6aeff`.
 
 ## Work In Progress
 
 Implementation, synthetic validation, full local validation, and adversarial
-review are checkpointed. Real execution is blocked before context creation by
-invalid/unreadable external auth state.
+review are checkpointed. Real execution is waiting for the one-time local
+hidden credential configuration; no plaintext credential is in task state.
 
 ## Exact Next Action
 
-Run `npm run explore:phase4 -- --env=dev` once, serially, with the fixed seed
-corpus and declared six-context plus three-replay maximum. Do not inspect auth
-state contents or exceed the frozen budget.
+Run `npm run auth:configure` once in an interactive terminal, then run
+`npm run explore:phase4 -- --env=dev` serially with the fixed seed corpus and
+declared six-context plus three-replay maximum. Do not inspect credential or
+auth-state contents or exceed the frozen budget.
 
 ## Files Changed
 
