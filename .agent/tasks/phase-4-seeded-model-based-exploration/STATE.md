@@ -6,10 +6,11 @@ Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Status: IN_PROGRESS
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Last validated implementation SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
+Current SHA: 728422a7f8fe367438cf903ddae462d48843a715
+Last validated implementation SHA: 728422a7f8fe367438cf903ddae462d48843a715
 Branch: main
-Last checkpoint: 2026-08-12 — native Phase 4 task created after independent Phase 3 closure audit; implementation not started
+Last checkpoint: 2026-08-12 — native task and durable-ledger continuity
+support checkpoint `728422a7f8fe367438cf903ddae462d48843a715`.
 
 ## CURRENT_GOAL
 
@@ -132,12 +133,13 @@ traces entered Phase 4 task state.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`acdb4a27a953dbff2c3408815efe634468d4ad20` (task-creation baseline; inherited
-Phase 3 implementation remains `8d72ec9`).
+`728422a7f8fe367438cf903ddae462d48843a715` (Phase 4 continuity support;
+inherited Phase 3 implementation remains `8d72ec9`).
 
 ## LAST_CHECKPOINT_SHA
 
-Pending initial Phase 4 task checkpoint commit.
+`728422a7f8fe367438cf903ddae462d48843a715` — task docs plus the narrowly
+scoped validator extension for ACTIONS/MODELS/EXPLORATION/FRESHNESS ledgers.
 
 ## NEXT_EXACT_ACTION
 

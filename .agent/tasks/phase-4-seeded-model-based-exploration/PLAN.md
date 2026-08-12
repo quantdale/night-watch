@@ -83,7 +83,8 @@ Alphaus edits, or broad overnight autonomy.
   SPEC is frozen before source/action implementation.
 - Validation commands: `git status --short --branch`; `git log`; `git
   cat-file`; `npm run agent:check`; `npx tsc --noEmit`; Phase 3 focused tests.
-- Status: COMPLETE — closure audit passed; task docs are being checkpointed.
+- Status: COMPLETE — closure audit passed; native task and durable-ledger
+  checkpoint is `728422a7`.
 
 ### M1 — Current safety, semantic, and source-freshness health audit
 
