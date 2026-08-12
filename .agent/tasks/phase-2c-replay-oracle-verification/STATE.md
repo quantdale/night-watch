@@ -6,11 +6,12 @@ Task ID: phase-2c-replay-oracle-verification
 Phase: 2C
 Status: IN_PROGRESS
 Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
-Current SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
-Last validated implementation SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
+Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
+Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Branch: `main`
-Last checkpoint: 2026-08-12 — `PHASE_2C_PRE_REAL_MATRIX_READY` at implementation
-`043c2cc02b96ce9aec42c6b529978150c09dabfe`; no real context has run.
+Last checkpoint: 2026-08-12 — comparator repair and diagnostic harness
+validated at implementation `efc03de2f7396a96baaca485894df300ddcc4ce0`;
+v2 diagnostic checkpoint is being prepared.
 
 ## Objective
 
@@ -41,12 +42,15 @@ coverage plus one bounded J1 diagnostic context.
   `043c2cc` is frozen for real execution.
 - M5 — COMPLETE. The six-context V1 serial matrix completed safely; all six
   journeys passed and the sanitized differential ledger was captured.
+- Comparator defect repair — COMPLETE. Expected cancellation is now bounded
+  containment with synthetic regression; full local validation is green at
+  `efc03de`.
 
 ## Work In Progress
 
 M6 is the active bounded work unit. V1 evidence is frozen; the shared
-comparator repair, synthetic regression, and one narrowly scoped J1 diagnostic
-context remain. No additional context is authorized until the repair passes.
+comparator repair and synthetic regression pass at `efc03de`. One narrowly
+scoped J1 diagnostic context under matrix v2 remains.
 
 ## CURRENT_GOAL
 
@@ -76,7 +80,7 @@ M6 — differential analysis and failure attribution; Phase 2B remains closed.
 - Phase 2B historical malformed JSON remains a genuine protocol anomaly at an
   unresolved semantic endpoint and was not intentionally replayed.
 - Phase 2C pre-real implementation checkpoint `043c2cc02b96ce9aec42c6b529978150c09dabfe`
-  is clean, validated, and frozen with contract `nightwatch.journey.phase2c.v1`,
+  is preserved with contract `nightwatch.journey.phase2c.v1`,
   oracle `nightwatch.oracle.phase2c.v1`, evidence `nightwatch.evidence.phase2c.v1`,
   and matrix `phase2c-real-v1`.
 - The frozen contract and budget are written in `SPEC.md`: J1/J2/J3 only and
@@ -200,18 +204,19 @@ narrowly justified diagnostic context.
 
 ## REPLAY_MATRIX_LEDGER
 
-Status: V1_COMPLETED_REVIEW_REQUIRED. The six-context serial order completed;
-all six sanitized results are recorded in the matrix artifact and the first
-differential review is recorded below. A corrected comparator requires a new
-matrix version for any additional real diagnostic.
+Status: V2_DIAGNOSTIC_READY. V1 completed and is preserved. The corrected
+comparator is validated locally; one additional J1 context is authorized only
+under the new matrix version and will not be compared to V1 as an equivalent
+replay.
 
 Pre-real checkpoint: `PHASE_2C_PRE_REAL_MATRIX_READY`.
 Implementation SHA: `043c2cc02b96ce9aec42c6b529978150c09dabfe`.
 Contract version: `nightwatch.journey.phase2c.v1`.
 Oracle version: `nightwatch.oracle.phase2c.v1`.
 Evidence schema: `nightwatch.evidence.phase2c.v1`.
-Matrix version: `phase2c-real-v1`.
-Serial command: `npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
+Matrix version V1: `phase2c-real-v1`.
+Diagnostic matrix version: `phase2c-real-v2-j1-diagnostic`.
+Diagnostic command: `NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY=ripple-payer-exchange-read NIGHTWATCH_PHASE_2C_MATRIX_VERSION=phase2c-real-v2-j1-diagnostic npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
 
 ## BUG_CANDIDATES
 
@@ -221,9 +226,9 @@ Serial command: `npm run journey:phase2c -- --env=dev --storage-state=/home/dale
 - `NW2C-J1-RESOURCE-LIFECYCLE-COMPARATOR`: Nightwatch defect candidate. V1
   compared expected third-party policy cancellations as strict failures; the
   exact divergence was J1-C1 count 6 versus J1-C2 count 5. Journey result,
-  safety, and oracle ledgers were otherwise clean. Status: confirmed
-  `NIGHTWATCH_DEFECT`; closure admission awaits the synthetic repair and one
-  new diagnostic context under matrix v2.
+  safety, and oracle ledgers were otherwise clean. Status: confirmed and
+  repaired as `NIGHTWATCH_DEFECT`; closure admission awaits the one new
+  diagnostic context under matrix v2.
 
 ## REJECTED_ANOMALIES
 
@@ -284,7 +289,11 @@ Serial command: `npm run journey:phase2c -- --env=dev --storage-state=/home/dale
 - Focused existing + Phase2C tests: PASS, including the final 11-test
   journey-engine/browser-backed matrix and 11 focused protocol/replay/
   evidence/admission tests.
-- `npx playwright test --project=nightwatch`: PASS, 262 tests.
+- `npx playwright test --project=nightwatch`: PASS, 263 tests.
+- Comparator repair synthetic matrix: PASS, 8 tests; expected cancellation is
+  bounded containment and differential evidence remains present.
+- Bounded diagnostic harness TypeScript compile: PASS at implementation
+  `efc03de2f7396a96baaca485894df300ddcc4ce0`.
 - Browser-backed `tests/unit/journeyEngine.test.ts`: PASS, 11 tests,
   including the new resource/runtime matrix.
 - `npx playwright test --config=playwright.phase2c.config.ts --list`: PASS;
@@ -310,28 +319,27 @@ is never printed or inspected for values.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`043c2cc02b96ce9aec42c6b529978150c09dabfe` — validated Phase 2C
-implementation checkpoint; source, synthetic matrix, and pre-real review pass.
+`efc03de2f7396a96baaca485894df300ddcc4ce0` — validated Phase 2C
+comparator repair and bounded diagnostic harness; synthetic and full local
+validation pass.
 
 ## LAST_CHECKPOINT_SHA
 
-`043c2cc02b96ce9aec42c6b529978150c09dabfe` —
-`PHASE_2C_PRE_REAL_MATRIX_READY` implementation checkpoint; task-document
-descendants retain the same validated implementation SHA.
+`efc03de2f7396a96baaca485894df300ddcc4ce0` — post-fix implementation
+checkpoint; V1 remains preserved at `043c2cc` and v2 diagnostic is separately
+versioned.
 
 ## NEXT_EXACT_ACTION
 
-Checkpoint the V1 differential evidence, repair the shared comparator so
-expected policy-canceled/background resource events are bounded containment,
-add a synthetic regression, run full local validation, then use at most one
-narrowly justified J1 diagnostic context under matrix v2. Do not compare the
-post-fix observation as a pre-fix replay.
+Run exactly one gated v2 J1 diagnostic using the command in
+`REPLAY_MATRIX_LEDGER`. Record it as a post-fix observation with no V1 replay
+comparison; stop on any safety, privacy, or auth-integrity event.
 
 ## Exact Next Action
 
-The V1 matrix is complete but its J1 differential exposed a Nightwatch
-comparator defect. Repair and revalidate the comparator before any diagnostic
-context; preserve V1 as historical evidence.
+The V1 matrix is complete and its comparator defect is repaired/validated at
+`efc03de`; run only the one declared v2 J1 diagnostic and preserve V1 as
+historical evidence.
 
 ## Files Changed
 

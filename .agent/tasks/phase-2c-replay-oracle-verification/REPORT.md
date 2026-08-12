@@ -1,8 +1,8 @@
 # NIGHTWATCH PHASE 2C — REPLAY + ORACLE VERIFICATION
 
 Status: `IN_PROGRESS`; shared Phase 2C implementation, synthetic matrix, and
-the six-context DEV matrix are complete. Differential review found one shared
-Nightwatch comparator defect that must be repaired before closure.
+the six-context DEV matrix are complete. One shared comparator defect was
+repaired and fully revalidated; the single authorized v2 J1 diagnostic remains.
 
 ## Starting identity
 
@@ -33,12 +33,13 @@ task does not reopen either phase.
 
 ## Current blocker
 
-`PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`: the V1 replay comparator treated a
-one-count difference in expected third-party `CANCELED_BY_POLICY` containment
-as strict `resource-lifecycle` divergence for J1. The real journey and safety
-result passed; the comparator classification is not defensible until expected
-containment is bounded. J2 and J3 comparisons passed. V1 evidence is retained
-and no product anomaly is admitted from this event.
+The V1 `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` is repaired at implementation
+`efc03de2f7396a96baaca485894df300ddcc4ce0`: the comparator now excludes
+navigation/document-replacement/browser/policy cancellation from strict
+resource failures while retaining sanitized cancellation evidence and
+containment variance. The synthetic regression and full 263-test suite pass.
+V1 evidence is retained; one post-fix J1 diagnostic under matrix
+`phase2c-real-v2-j1-diagnostic` remains and is not a V1 replay comparison.
 
 ## Phase 2C v1 real matrix
 
@@ -72,6 +73,20 @@ retaining it in containment/lifecycle evidence; a synthetic regression and
 one narrowly scoped post-fix J1 diagnostic context are required before final
 closure. Pre-fix and post-fix observations will not be treated as one replay
 contract.
+
+## Comparator defect repair
+
+Repair commit: `e731ba4` (cancellation classification and differential
+evidence), with bounded one-context diagnostic harness commit `efc03de`.
+Synthetic coverage proves that expected cancellation is not a critical asset
+failure, but differences in cancellation counts remain visible as
+`resource-containment-variance` and `EXPECTED_BACKGROUND_VARIANCE`. No
+strict invariant is weakened for `NETWORK_FAILED`, `HTTP_FAILED`,
+`UNRESOLVED`, critical status, known-read status, route, structure, semantic
+read, mutation, or safety divergence.
+
+The repair is a Nightwatch defect correction, not a change to any Phase 2B
+journey contract. V1 and v2 are separate implementation/matrix versions.
 
 ## Static replay/oracle audit checkpoint
 
