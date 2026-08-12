@@ -6,8 +6,8 @@ Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
 Status: IN_PROGRESS
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Last validated implementation SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
+Current SHA: 10cce640e08d068f23641986e6315dd6369188a6
+Last validated implementation SHA: 10cce640e08d068f23641986e6315dd6369188a6
 Branch: main
 Last checkpoint: Phase 6 task creation; no Phase 6 implementation or
 datastore query has run.
@@ -234,11 +234,11 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-abb0d446f52206390272f8d7a17e6bf6d9ecf0bf.
+10cce640e08d068f23641986e6315dd6369188a6.
 
 ## LAST_CHECKPOINT_SHA
 
-abb0d446f52206390272f8d7a17e6bf6d9ecf0bf.
+10cce640e08d068f23641986e6315dd6369188a6.
 
 ## NEXT_EXACT_ACTION
 
