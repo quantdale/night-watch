@@ -1,22 +1,24 @@
 # Active Task
 
-Task ID: phase-2c-replay-oracle-verification
-Phase: 2C
-Title: Replay + Oracle Verification
-Status: COMPLETE
-Task directory: .agent/tasks/phase-2c-replay-oracle-verification
-Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
+Task ID: phase-3-change-directed-journey-selection
+Phase: 3
+Title: Change-Directed Journey Selection
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-3-change-directed-journey-selection
+Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
 Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Current milestone: M7 — final privacy, architecture, adversarial review, and validation (COMPLETE)
-Last checkpoint: 2026-08-12 — V1/V2 differential, safety/privacy review, and
-final validation complete; Nightwatch-only closure committed.
-Next action: none. Phase 2C is complete. The recommended next task only is
-`PHASE 3 — CHANGE-DIRECTED JOURNEY SELECTION`; do not start it in this task.
+Current milestone: M1 — repository routing, change-surface, and freshness audit
+Last checkpoint: 2026-08-12 — Phase 2A/2B/2C closure independently reconciled;
+native Phase 3 task created before implementation.
+Next action: read codebase routing, inspect justified Ripple source surfaces, and
+record the repository/freshness ledger in the Phase 3 STATE.
 
-## Phase 2A/2B closure handoff
+## Prior phase closure handoff
 
 Phase 2A remains closed at implementation `a6d7c8b`, closure checkpoint
 `9bf2c45`, terminal clean HEAD `ec4c143`. Phase 2B remains closed at
 implementation `78e5d1f`, completion checkpoint `1b6e7a5`, terminal clean HEAD
-`1760e594`. The three Phase 2B journeys are the only Phase 2C canaries.
+`1760e594`. Phase 2C remains closed at validated implementation `efc03de`,
+checkpoint `0f894d9`, and terminal clean documentation HEAD `427f1029`. The
+three Phase 2B/2C journeys remain the only canaries.
