@@ -198,7 +198,7 @@ unbounded Ripple archaeology.
   evidence invalidates the candidate, return to already-proven inventory.
 - Acceptance criteria: pair passes or task reports a truthful semantic blocker.
 - Validation commands: exact contract-driven runner command; no third replay.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M10 — Cross-journey, safety, privacy, and architecture review
 
@@ -210,7 +210,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: exact per-run and total counters, privacy PASS, no
   duplicate safety forks, fourth-journey extensibility review PASS.
 - Validation commands: artifact scans, focused regressions, Alphaus status.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M11 — Final validation and Phase 2B closure
 

@@ -18,15 +18,15 @@ journeys.
 
 ## Current Milestone
 
-M8 — Journey 2 first observation diagnostic review after a bounded L0
-product-anomaly candidate.
+M10 — cross-journey, safety, privacy, and architecture review (IN_PROGRESS).
 
 ## Completed Milestones
 
 M0 continuity/task creation, M1 archaeology/inventory/freshness, M2 semantic
-proof/selection/contracts, M3 generic engine design, M4 implementation, and
-M5 synthetic/local validation, M6 pre-real validation/self-review, and the
-Journey 1 pair are complete. M8 is in progress; M9–M11 remain pending.
+proof/selection/contracts, M3 generic engine design, M4 implementation, M5
+synthetic/local validation, M6 pre-real validation/self-review, the Journey 1
+pair, the Journey 2 pair (after one bounded diagnostic pair), and the Journey 3
+pair are complete. M10 is in progress; M11 remains pending.
 
 ## Work In Progress
 
@@ -34,7 +34,9 @@ Full local validation and the adversarial pre-real review are PASS. Journey 1
 passed in a first observation and fresh-context replay. Journey 2 first
 observation reached its structural/read checkpoint but failed a generic
 oracle on one allowed DEV font response; its one bounded fresh diagnostic pair
-then passed with strict invariants. Journey 3 has not run.
+then passed with strict invariants. Journey 3 passed in a first observation and
+fresh-context replay with strict invariants. Cross-journey and final validation
+remain before closure.
 
 ## CURRENT_GOAL
 
@@ -44,8 +46,8 @@ Ripple customer journeys with one fresh-context replay each.
 
 ## CURRENT_PHASE
 
-M8 — controlled DEV Journey 2 first observation diagnostic review after the
-successful Journey 1 pair.
+M10 — cross-journey, safety, privacy, and architecture review after all three
+controlled first/replay pairs.
 
 ## CURRENT_EVIDENCE
 
@@ -95,6 +97,14 @@ successful Journey 1 pair.
   and `nightwatch-20260812T012232Z-2fc7-j2-replay`: both PASS in fresh
   contexts; the HTTP 502 did not recur, strict invariants matched, and only
   timing/passive-unknown variance was observed.
+- Journey 3 first observation `nightwatch-20260812T012634Z-3d33-j3-first`:
+  PASS; `/accounts`, the global shell, and `ACCOUNT_INVENTORY_DATA_TABLE`
+  were ready; the two required source-backed reads were observed; auth,
+  oracle, safety, and privacy all passed. Route stability was 818 ms.
+- Journey 3 replay `nightwatch-20260812T012634Z-3d33-j3-replay`: PASS in a
+  fresh context; `/accounts` and the inventory marker matched; route stability
+  was 823 ms; strict invariants matched with expected timing and passive-unknown
+  count variance only.
 - Focused endpoint plus journey suite: `12 passed`; real local fixture HTTP,
   engine, recorder, observer, tripwire, privacy, and replay comparator paths
   were exercised. No Alphaus target or database was contacted.
@@ -165,11 +175,13 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; s
   and task documentation; the worktree was clean after the implementation
   checkpoint.
 - Pre-real gate: PASS; all 13 checks passed before the real runner.
-- Real DEV contexts: 5 (`nightwatch-20260812T011302Z-3ff2-j1-first`,
+- Real DEV contexts: 7 (`nightwatch-20260812T011302Z-3ff2-j1-first`,
   `nightwatch-20260812T011302Z-3ff2-j1-replay`,
   `nightwatch-20260812T011302Z-3ff2-j2-first`,
   `nightwatch-20260812T012232Z-2fc7-j2-first`,
-  `nightwatch-20260812T012232Z-2fc7-j2-replay`). DB queries: NONE.
+  `nightwatch-20260812T012232Z-2fc7-j2-replay`,
+  `nightwatch-20260812T012634Z-3d33-j3-first`,
+  `nightwatch-20260812T012634Z-3d33-j3-replay`). DB queries: NONE.
 - Alphaus repositories: read-only source inspection only; pre-existing Ripple
   UI/API worktree entries remain untouched.
 - `npm run journey:real -- --help`: PASS; launcher is opt-in and did not
@@ -184,8 +196,10 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; s
 | `nightwatch-20260812T011302Z-3ff2-j2-first` | common exchange read | FAIL | route/shell/table/read/auth/safety passed; generic unexpected-status + console-error on one allowed DEV font response (HTTP 502) |
 | `nightwatch-20260812T012232Z-2fc7-j2-first` | common exchange read diagnostic | PASS | fresh context; original font anomaly did not recur; oracle/safety/privacy PASS |
 | `nightwatch-20260812T012232Z-2fc7-j2-replay` | common exchange read diagnostic replay | PASS | fresh context; strict invariants matched; timing/passive-unknown variance bounded |
+| `nightwatch-20260812T012634Z-3d33-j3-first` | account inventory | PASS | source-backed billing-group/account reads, route/shell/table ready, oracle/safety/privacy PASS |
+| `nightwatch-20260812T012634Z-3d33-j3-replay` | account inventory replay | PASS | fresh context; strict invariants matched; timing/passive-unknown variance bounded |
 
-Per-run safety totals for all three contexts: production attempts 0, proxy
+Per-run safety totals for all seven contexts: production attempts 0, proxy
 violations 0, unknown destinations 0, unknown approvals 0, known mutations 0,
 DB queries 0.
 
@@ -199,15 +213,16 @@ not a safety failure.
 |---|---|---|
 | `nightwatch-20260812T011302Z-3ff2-j1-replay` | payer exchange read | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
 | `nightwatch-20260812T012232Z-2fc7-j2-replay` | common exchange read | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
+| `nightwatch-20260812T012634Z-3d33-j3-replay` | account inventory | PASS; strict mismatch set empty; expected timing and passive-unknown variance |
 
 The initial J2 failed first observation and therefore has no replay; its one
-bounded diagnostic first/replay pair passed. Journey 3 has not started.
+bounded diagnostic first/replay pair passed. The J3 pair also passed.
 Synthetic comparator tests are not real replay IDs.
 
 ## AUTH_STATUS
 
 External `$HOME/.nightwatch/auth/ripple-dev-state.json` remains outside Git
-and has not been printed, copied, dumped, or persisted. All five completed
+and has not been printed, copied, dumped, or persisted. All seven completed
 contexts passed boolean structural, DEV-semantic, domain/path, and live
 page-readability checks. Before the next context, use only the existing
 boolean/provenance/page-readability helpers and the Phase 2A gate. If invalid,
@@ -320,13 +335,14 @@ repaired in `a2bde6a`.
 - Journey 2's single allowed DEV font HTTP 502/console-error did not recur in
   its one bounded diagnostic pair; retain it as L0 only and do not inspect its
   body or relax the generic oracle.
-- Journey 3 remains unrun and is the next independent controlled pair.
+- Cross-journey analysis, final full validation, documentation closure, and
+  the Nightwatch-only clean commit remain.
 - Real source/deployment freshness remains the recorded local-source caveat;
   no fetch/pull is authorized.
 
 ## SAFETY_EVENTS
 
-NONE. All five real contexts had exact totals of 0 production attempts, 0
+NONE. All seven real contexts had exact totals of 0 production attempts, 0
 proxy violations, 0 unknown destinations, 0 unknown approvals, 0 known
 mutations, and 0 DB queries. Synthetic tests intentionally exercised blocked
 production/unknown, known mutation, and action-caused unknown paths against
@@ -334,9 +350,9 @@ loopback only; those are expected local assertions, not real safety events.
 
 ## PRIVACY_STATUS
 
-PASS for the real run directories and Journey 1/Journey 2 comparisons: 37
-sanitized text/JSON files scanned, 0 non-safe forbidden-field values, 0 trace
-files, and 0 screenshots. Authenticated evidence contains fixed
+PASS for the seven real run directories and three comparison directories: 52
+sanitized text/JSON files scanned, 0 non-safe forbidden-field values, 0
+secret-like values, 0 trace files, and 0 screenshots. Authenticated evidence contains fixed
 IDs/classes/booleans/counts/timings only; no bodies, headers, cookies, tokens,
 DOM/text, customer/account values, or cost values were persisted.
 
@@ -348,24 +364,22 @@ documentation checkpoint `15c3c9f`, and Phase 2A baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`329c32de5e36ffda9e53ab27b7e1d852c745b0b0` (`CHECKPOINT_ADVANCE`: the
-bounded fixed-ID resume selector is checkpointed; Journey 2 diagnostic
-first/replay passed in fresh contexts with strict invariants, and the original
-L0 anomaly did not recur.)
+`6cbe409` (`CHECKPOINT_ADVANCE`: Journey 2 diagnostic first/replay passed in
+fresh contexts with strict invariants, and the original L0 anomaly did not
+recur.) The next checkpoint will record the completed Journey 3 pair and the
+cross-journey review.
 
 ## NEXT_EXACT_ACTION
 
-Run the exact gated Journey 3 pair:
-`npm run journey:real -- --env=dev --storage-state="$HOME/.nightwatch/auth/ripple-dev-state.json" --journey-id=ripple-account-inventory`
-The fixed selector preserves the contract's original journey index and uses
-the same gate, auth, target, registry, and action sequence. Do not rerun
-Journey 1 or 2, inspect any response body, or alter the contract/oracle.
-Phase 2B completion remains blocked until this pair also passes.
+Perform the cross-journey consistency review, exact safety/privacy accounting,
+final adversarial review, and then run the required final validation commands.
+Do not run any additional real journey or replay; do not inspect response
+bodies; do not alter the frozen contracts or oracle policy.
 
 ## Exact Next Action
 
-Run the exact `--journey-id=ripple-account-inventory` command above; no repeat
-of Journey 1/2 and no oracle weakening.
+Cross-review the shared engine, semantic registry, replay comparator, and all
+seven real contexts; then run final validation and prepare closure docs.
 
 ## Files Changed
 
@@ -423,6 +437,7 @@ semantic decisions from conversation memory.
 
 ## Completion Snapshot
 
-Not complete. Populate only after all three pairs, strict replay matches,
-zero safety totals, privacy PASS, full validation PASS, Nightwatch-only
-closure commit, and a clean tree. Do not start Phase 2C.
+Three journey pairs are complete, including fresh-context replays. The J2
+original first observation remains an L0 non-reproduced DEV font anomaly; its
+single bounded diagnostic pair passed and no third replay was run. Cross-review
+and final validation are the remaining closure gates. Do not start Phase 2C.

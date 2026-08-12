@@ -8,13 +8,12 @@ Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
 Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
-Current milestone: M9 — Journey 3 first observation and fresh-context replay (IN_PROGRESS)
-Last checkpoint: 2026-08-12 — `329c32d`; Journey 2's bounded diagnostic
-first/replay pair passed in fresh contexts with strict invariants; its prior
-L0 font anomaly did not recur.
-Next action: run exactly one fresh Journey 3 observation/replay pair with
-`--journey-id=ripple-account-inventory`; do not repeat Journey 1/2 or inspect
-response bodies.
+Current milestone: M10 — cross-journey, safety, privacy, and architecture review (IN_PROGRESS)
+Last checkpoint: 2026-08-12 — `6cbe409`; Journey 3's first/replay pair passed
+in fresh contexts with strict invariants and bounded timing/passive-unknown
+variance.
+Next action: complete the cross-journey review and final validation; do not run
+additional real journeys, inspect response bodies, or start Phase 2C.
 
 ## Phase 2A closure handoff
 
