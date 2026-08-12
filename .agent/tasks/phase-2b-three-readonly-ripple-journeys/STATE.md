@@ -139,6 +139,19 @@ an interaction. No selected action intentionally requires UNKNOWN.
 
 CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; synthetic and full local validation PASS. The generic declarative engine is in `src/core/journeys/engine.ts`, generic contract/result types in `src/core/journeys/types.ts`, fresh-context comparison in `src/core/journeys/replay.ts`, and the serial gated real-run harness is in `tests/manual/phase2b-real-journeys.ts` with `bin/phase2b-real.mjs`. The fixed-ID resume selector only avoids repeating a previously checkpointed successful pair; it does not alter contracts, endpoints, or oracle policy.
 
+Cross-journey review: PASS. `observeOnce` is the only real-run boot path and
+owns the auth gate, repository freshness gate, proxy/containment gate, shared
+context, recorder, live page-auth check, and sanitized safety totals. All three
+journeys call the same `runDeclarativeJourney` action executor and the same
+`compareJourneyReplay`; no journey-specific runner files or boot/policy forks
+were added. The endpoint registry is explicit per environment, exact-host,
+source-backed, and contains read rules plus adjacent mutation tripwires; the
+default registry remains empty. Evidence uses one metadata-only schema and the
+same structural/semantic/replay oracles across all journeys. A fourth Ripple
+journey can be added as a source-backed contract/registry definition without
+new runner logic. The existing Phase 1 passive journey remains separate and
+was not used as a Phase 2B implementation path.
+
 ## FILES_CHANGED
 
 - `.agent/tasks/phase-2b-three-readonly-ripple-journeys/CANDIDATES.md`
@@ -186,6 +199,12 @@ CONTRACT_AND_ENGINE_IMPLEMENTED at `78e5d1f049064e594f99ed7e600ecffb081d6b23`; s
   UI/API worktree entries remain untouched.
 - `npm run journey:real -- --help`: PASS; launcher is opt-in and did not
   create a browser context.
+- Sanitized Phase 2B artifact audit: **52 files** across seven run directories
+  and three comparison directories; 0 non-safe forbidden-field values, 0
+  secret-like values, 0 trace files, and 0 screenshots.
+- Cross-journey replay audit: all three comparison files PASS with empty strict
+  mismatch sets; each variance set is limited to route-stability timing and
+  passive-unknown count/request-count variance.
 
 ## REAL_RUN_LEDGER
 
@@ -255,6 +274,9 @@ stop with the human-auth blocker and do not run.
   IDs. It does not bless endpoints or alter actions/oracles.
 - The one bounded J2 diagnostic budget is consumed. The original 502 remains
   a non-reproduced L0 anomaly candidate; do not rerun J2 or change its oracle.
+- M9 is closed after the J3 pair. M10 review found no reason to repair shared
+  Nightwatch code, change a contract, add a destination, or consume another
+  real-run budget.
 
 ## PRE_REAL_SELF_REVIEW
 
@@ -295,6 +317,50 @@ PASS, checkpointed before any DEV context.
 
 PRE_REAL_PHASE_2B_IMPLEMENTATION_READY: PASS
 PRE_REAL_SELF_REVIEW_PASS: PASS
+
+## FINAL_ADVERSARIAL_SELF_REVIEW
+
+Pending only the final command run and closure commit; the substantive review
+is PASS:
+
+1. No selected journey hid a mutation; all seven real contexts recorded zero
+   mutations and mutation rules are blocked before I/O.
+2. No UNKNOWN behavior was intentionally triggered; passive unknowns remained
+   separate and action-caused UNKNOWN was zero.
+3. No POST was used as a read; selected reads are source-proven GETs and all
+   reviewed POSTs are mutation tripwires.
+4. No customer-specific state was used in actions, selectors, or assertions.
+5. Selectors are fixed source-defined component classes and do not overfit the
+   observed DEV account.
+6. Auth was valid by boolean/provenance/page-readability checks in all seven
+   contexts.
+7. Every replay used a newly created browser context through `observeOnce`.
+8. Timing and passive-unknown count differences were classified as bounded
+   variance; no strict difference was ignored.
+9. The J2 strict oracle failure stopped its original run before replay; the
+   one permitted diagnostic pair passed, with no oracle weakening.
+10. No timeout was changed after a real failure; the fixed 30-second navigation
+    and 15-second structural limits remain source/contract justified.
+11. Phase 2A auth, containment, production deny, unknown-host fail-closed,
+    shell, and stability primitives were reused without weakening.
+12. No new hostname was approved; unknown destinations and approvals stayed
+    zero.
+13. The authenticated artifact scan found no sensitive values, bodies, DOM,
+    screenshots, or traces.
+14. Ripple, ripple-api, and ouchan were not modified; their pre-existing dirty
+    entries remain unchanged.
+15. The three journeys cover payer exchange, common exchange, and account
+    inventory behavior with distinct routes/components/read sets.
+16. The engine is reusable: contracts provide data and the shared executor,
+    observer, recorder, and comparator provide behavior.
+17. Synthetic tests exercise real engine, classifier, observer, tripwire,
+    recorder, privacy, and replay paths; unsafe cases are included.
+18. The only real bug candidate is the conservative L0, non-reproduced DEV
+    font 502; no product bug is claimed.
+19. No Phase 2C or later functionality was started.
+20. STATE/PLAN/ACTIVE_TASK plus the final REPORT will contain the exact run,
+    replay, validation, safety, privacy, and resume handoff needed by a fresh
+    context.
 
 ## REJECTED_JOURNEYS
 
