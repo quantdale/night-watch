@@ -181,7 +181,7 @@ export function createNetworkObserver(opts: {
         ? 'KNOWN_READ'
         : match.classification === 'KNOWN_MUTATION'
           ? 'KNOWN_MUTATION'
-          : action?.actionType === 'NAVIGATE_APPROVED_ROUTE' || action === null
+            : action?.actionType === 'NAVIGATE_APPROVED_ROUTE' || action?.actionType === 'RETURN_TO_ANCHOR' || action === null
             ? 'PASSIVE_UNKNOWN_OBSERVED'
             : 'ACTION_CAUSED_UNKNOWN';
     const observation: SemanticRequestObservation = {
