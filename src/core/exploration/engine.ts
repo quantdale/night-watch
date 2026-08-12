@@ -232,7 +232,7 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
       if (oracle.startsWith('FINGERPRINT:')) anomalyFingerprints.add(oracle.slice('FINGERPRINT:'.length));
     }
     const semanticUnknown = result.semanticRequestDelta.some((request) => request.disposition === 'ACTION_CAUSED_UNKNOWN');
-    const routeEscape = !opts.envelope.allowedRoutes.includes(result.nextState.routeClass);
+    const routeEscape = !opts.envelope.allowedRoutes.includes(result.nextState.routeClass) || result.nextState.routeClass !== action.expectedRouteClass;
     const safetyTermination = terminationForSafety(resultSafety, semanticUnknown, routeEscape);
     if (safetyTermination !== null) {
       terminationReason = safetyTermination;
@@ -388,6 +388,9 @@ export async function replayExactSequence(args: {
       return { status: 'INVARIANT_DIVERGENCE', observedActions, stateIds, transitionIds, firstDivergentIndex: index, terminationReason: 'REPLAY_DIVERGENCE' };
     }
     const nextState = createExplorationState(result.nextState);
+    if (nextState.routeClass !== action.expectedRouteClass) {
+      return { status: 'INVARIANT_DIVERGENCE', observedActions, stateIds, transitionIds, firstDivergentIndex: index, terminationReason: 'UNEXPECTED_ROUTE_ESCAPE' };
+    }
     const stableTransitionId = createTransition({
       fromStateId: state.stateId,
       actionId,

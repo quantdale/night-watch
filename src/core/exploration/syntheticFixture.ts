@@ -40,7 +40,7 @@ const base = (actionId: string, kind: SafeAction['actionKind'], route: string, v
 
 export const SYNTHETIC_ACTIONS: readonly SafeAction[] = [
   base('fixture.safe-a', 'TOGGLE_LOCAL_VIEW', '/start', 'a'),
-  base('fixture.safe-b', 'CLICK_APPROVED_READ_CONTROL', '/start', 'detail'),
+  { ...base('fixture.safe-b', 'CLICK_APPROVED_READ_CONTROL', '/start', 'detail'), expectedRouteClass: '/detail' },
   { ...base('fixture.back', 'RETURN_TO_ANCHOR', '/detail', 'start'), expectedRouteClass: '/start', locator: { kind: 'approved-route', routeClass: '/start' }, routeEffect: 'APPROVED_ROUTE' },
   base('fixture.safe-local-branch', 'TOGGLE_LOCAL_VIEW', '/start', 'local'),
   { ...base('fixture.resource-anomaly', 'CLICK_APPROVED_READ_CONTROL', '/start', 'resource'), oracle: 'RESOURCE_ANOMALY' } as SafeAction & { oracle: string },

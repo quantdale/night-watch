@@ -21,6 +21,17 @@ contexts and up to three fresh reproduction contexts. No seeds have been
 executed yet; the preselected corpus is recorded in the implementation ledger
 before the real gate.
 
+## Frozen seed corpus
+
+| envelope | seed A | seed B | purpose |
+|---|---|---|---|
+| E1/J1 | `0x0000000000000101` | `0x0000000000000102` | two deterministic local-filter branches |
+| E2/J2 | `0x0000000000000201` | `0x0000000000000202` | two deterministic known-read vendor branches |
+| E3/J3 | `0x0000000000000301` | `0x0000000000000302` | two deterministic local-sort branches |
+
+The corpus is fixed before DEV execution and is not tuned to historical
+anomalies.
+
 Runtime-unavailable controls are recorded and excluded deterministically. A
 new host, production destination, known mutation, action-caused UNKNOWN, route
 escape, or fatal oracle stops the current run; a known mutation stops all real

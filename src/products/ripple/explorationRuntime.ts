@@ -124,7 +124,16 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
     if (opts.page.isClosed()) return false;
     if (action.locator.kind === 'approved-route') return routeClass(opts.uiBaseUrl, opts.page.url()) === action.locator.routeClass;
     const locator = locatorForSpec(opts.page, action.locator);
-    return (await uniqueCount(locator)) === 1;
+    if (await uniqueCount(locator) !== 1) return false;
+    if (action.locator.kind === 'selector-option') {
+      const select = locator.locator('.q-select');
+      const input = select.locator('input');
+      if (await uniqueCount(input) === 1) {
+        const current = (await input.inputValue()).trim();
+        if (action.locator.optionLabels.includes(current)) return false;
+      }
+    }
+    return true;
   };
 
   const executeSelectorOption = async (action: SafeAction, spec: Extract<LocatorSpec, { kind: 'selector-option' }>): Promise<void> => {

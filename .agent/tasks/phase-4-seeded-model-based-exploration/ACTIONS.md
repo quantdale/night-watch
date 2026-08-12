@@ -33,6 +33,9 @@ DOM enumeration, `nth-child`, or arbitrary callbacks.
 | `p4.j2.vendor-read.azure` | J2 vendor Selector | `APPROVE_READ_ONLY` | `azure` | same as above; GCP is source-disabled | `safeViewState.vendor=azure`; `ripple.common-exchange.read` |
 | `p4.j3.sort-account` | J3 account table Account column header | `APPROVE_LOCAL_ONLY` | source column `account` | `AccountManagement/DataTable.vue` declares sortable `account`; `CustomDataTable.vue` binds Quasar `q-table` data/pagination locally and does not persist sort | `safeViewState.sortKey=account`; no request |
 | `p4.j3.sort-billinggroup` | J3 account table Billing group column header | `APPROVE_LOCAL_ONLY` | source column `billinggroup` | same source chain | `safeViewState.sortKey=billinggroup`; no request |
+| `p4.j1.return-anchor` | J1 approved anchor route | `APPROVE_READ_ONLY` | `/payer-exchange-rate-v2` | existing Phase 2B router/journey contract and payer GET registry | returns only to the same approved route and reuses the trusted read |
+| `p4.j2.return-anchor` | J2 approved anchor route | `APPROVE_READ_ONLY` | `/global-exchange-rate-v2` | existing Phase 2B router/journey contract and common GET registry | returns only to the same approved route and reuses the trusted read |
+| `p4.j3.return-anchor` | J3 approved anchor route | `APPROVE_READ_ONLY` | `/accounts` | existing Phase 2B router/journey contract, account GET, and Blue billing GET proof | returns only to the same approved route and reuses trusted reads |
 
 Common locator forms are declarative: `selector-option` scopes to the
 source-defined surface and `.__C_Selector-Label` label, then selects one fixed
