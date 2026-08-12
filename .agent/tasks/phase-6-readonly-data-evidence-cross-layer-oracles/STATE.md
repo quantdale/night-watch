@@ -306,7 +306,7 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_CHECKPOINT_SHA
 
-51be1311117dd2a0290ad0380e21f52124f3792b.
+ecddce21c5d9a9ee03cfb697ee64a9c4158fcf50.
 
 ## NEXT_EXACT_ACTION
 

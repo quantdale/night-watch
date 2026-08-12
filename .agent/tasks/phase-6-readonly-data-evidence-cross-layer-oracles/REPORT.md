@@ -11,7 +11,7 @@ probe, read, scan, or write was executed.
 
 - Starting SHA: `abb0d446f52206390272f8d7a17e6bf6d9ecf0bf`.
 - Final validated implementation SHA: `6de063325f2afc1bafc14ce4889c6d53d2e76bed`.
-- Final documentation checkpoint SHA: `51be1311117dd2a0290ad0380e21f52124f3792b`.
+- Final documentation checkpoint SHA: `ecddce21c5d9a9ee03cfb697ee64a9c4158fcf50`.
 - Terminal clean HEAD: verified after the final documentation sync; Git HEAD
   is the authoritative exact value and is emitted in the final handoff.
 - Nightwatch only was modified. Phase 7 was not created or started.
