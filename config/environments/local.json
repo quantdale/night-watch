@@ -24,7 +24,9 @@
     "intercom.io",
     "*.intercom.io",
     "accounts.google.com",
-    "www.google.com"
+    "www.google.com",
+    "clients2.google.com",
+    "safebrowsingohttpgateway.googleapis.com"
   ],
   "browserBackgroundHosts": [
     { "host": "android.clients.google.com", "classification": "BROWSER_BACKGROUND_GOOGLE" },
