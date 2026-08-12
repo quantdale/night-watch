@@ -206,6 +206,42 @@ test('replay matrix distinguishes strict, bounded, semantic, and anomaly dimensi
   expect(compareJourneyReplay(sameFingerprint, differentFingerprint).strictInvariantMismatches).toContain('oracle-set');
 });
 
+test('replay comparator treats expected cancellation as bounded containment, not resource failure', () => {
+  const first = baseEvidence();
+  const withPolicyContainment = {
+    ...first,
+    resourceObservations: [{
+      role: 'THIRD_PARTY' as const,
+      state: 'CANCELED_BY_POLICY' as const,
+      method: 'GET',
+      stepId: null,
+      statusClass: null,
+      contentTypeClass: null,
+    }],
+    containmentCounts: {
+      optionalSupportBlocked: 1,
+      telemetryBlocked: 3,
+      browserBackgroundBlocked: 0,
+      containmentEvents: ['TELEMETRY'],
+    },
+  };
+  const withoutPolicyContainment = {
+    ...first,
+    resourceObservations: [],
+    containmentCounts: {
+      optionalSupportBlocked: 1,
+      telemetryBlocked: 3,
+      browserBackgroundBlocked: 0,
+      containmentEvents: [],
+    },
+  };
+  const comparison = compareJourneyReplay(withPolicyContainment, withoutPolicyContainment);
+  expect(comparison.passed).toBe(true);
+  expect(comparison.strictInvariantMismatches).toEqual([]);
+  expect(comparison.categories).toEqual(expect.arrayContaining(['BOUNDED_MATCH', 'EXPECTED_VARIANCE']));
+  expect(comparison.differential?.resourceContainmentSame).toBe(false);
+});
+
 test('legacy Phase 2B evidence remains parseable and attribution separates primary and secondary causes', () => {
   const legacy = baseEvidence();
   (legacy as unknown as Record<string, unknown>).responseBody = 'synthetic-body';

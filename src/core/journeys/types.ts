@@ -260,6 +260,7 @@ export interface ReplayDifferentialEvidence {
   passiveUnknownDelta: number | null;
   oracleIdsOnlyInFirst: readonly string[];
   oracleIdsOnlyInReplay: readonly string[];
+  resourceContainmentSame: boolean;
   authEquivalent: boolean;
   safetyEquivalent: boolean;
 }

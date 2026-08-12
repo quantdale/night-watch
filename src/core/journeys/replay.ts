@@ -45,7 +45,23 @@ function oracleKeys(evidence: JourneyEvidence): string[] | null {
 function resourceFailureKeys(evidence: JourneyEvidence): string[] | null {
   if (evidence.resourceObservations === undefined) return null;
   return evidence.resourceObservations
-    .filter((item) => item.state !== 'COMPLETED' && item.state !== 'REQUESTED')
+    // Cancellation is retained in lifecycle/containment evidence, but is not
+    // a strict resource failure. Expected policy blocks and document-replace
+    // aborts can vary with browser timing without changing the journey.
+    .filter((item) => item.state !== 'COMPLETED' && item.state !== 'REQUESTED' && !isCancellation(item.state))
+    .map((item) => `${item.role}|${item.state}|${item.stepId ?? ''}`)
+    .sort();
+}
+
+function isCancellation(state: string): boolean {
+  return state === 'CANCELED_BY_NAVIGATION' || state === 'CANCELED_BY_DOCUMENT_REPLACEMENT' ||
+    state === 'CANCELED_BY_BROWSER' || state === 'CANCELED_BY_POLICY';
+}
+
+function resourceContainmentKeys(evidence: JourneyEvidence): string[] | null {
+  if (evidence.resourceObservations === undefined) return null;
+  return evidence.resourceObservations
+    .filter((item) => isCancellation(item.state))
     .map((item) => `${item.role}|${item.state}|${item.stepId ?? ''}`)
     .sort();
 }
@@ -147,6 +163,12 @@ export function compareJourneyReplay(first: JourneyEvidence, replay: JourneyEvid
     mismatches.push('resource-lifecycle');
     categories.add('ORACLE_DIVERGENCE');
   }
+  const firstResourceContainment = resourceContainmentKeys(first);
+  const replayResourceContainment = resourceContainmentKeys(replay);
+  if (firstResourceContainment !== null && replayResourceContainment !== null && !sameJson(firstResourceContainment, replayResourceContainment)) {
+    variance.push('resource-containment-variance');
+    categories.add('EXPECTED_BACKGROUND_VARIANCE');
+  }
   if (first.privacyStatus !== replay.privacyStatus) {
     mismatches.push('privacy-status');
     categories.add('SAFETY_DIVERGENCE');
@@ -210,6 +232,7 @@ export function compareJourneyReplay(first: JourneyEvidence, replay: JourneyEvid
     passiveUnknownDelta: Math.abs(first.passiveUnknownCount - replay.passiveUnknownCount),
     oracleIdsOnlyInFirst: firstOracleKeys === null || replayOracleKeys === null ? [] : onlyIn(firstOracleKeys, replayOracleKeys),
     oracleIdsOnlyInReplay: firstOracleKeys === null || replayOracleKeys === null ? [] : onlyIn(replayOracleKeys, firstOracleKeys),
+    resourceContainmentSame: firstResourceContainment === null || replayResourceContainment === null || sameJson(firstResourceContainment, replayResourceContainment),
     authEquivalent: first.authValid === replay.authValid,
     safetyEquivalent: safetyEqual(first, replay),
   };
