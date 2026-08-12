@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.cross-layer-lineage.phase6.v1",
+  "edges": [
+    { "edgeId": "j1-journey-api", "edgeType": "JOURNEY_USES_API", "from": "ripple-payer-exchange-read", "to": "ripple.payer-exchange.read" },
+    { "edgeId": "j1-api-ripple", "edgeType": "API_READS_DATASTORE", "from": "ripple.payer-exchange.read", "to": "DYNAMODB:RIPPLE" },
+    { "edgeId": "d1-api-oracle", "edgeType": "ORACLE_VALIDATES_API", "from": "D1.j1.payer-exchange", "to": "ripple.payer-exchange.read" },
+    { "edgeId": "j2-journey-api", "edgeType": "JOURNEY_USES_API", "from": "ripple-common-exchange-read", "to": "ripple.common-exchange.read" },
+    { "edgeId": "j2-api-ripple", "edgeType": "API_READS_DATASTORE", "from": "ripple.common-exchange.read", "to": "DYNAMODB:RIPPLE" },
+    { "edgeId": "d2-api-oracle", "edgeType": "ORACLE_VALIDATES_API", "from": "D2.j2.common-exchange", "to": "ripple.common-exchange.read" },
+    { "edgeId": "j3-journey-api", "edgeType": "JOURNEY_USES_API", "from": "ripple-account-inventory", "to": "ripple.billing-groups.read" },
+    { "edgeId": "j3-api-companies", "edgeType": "API_READS_DATASTORE", "from": "ripple.billing-groups.read", "to": "DYNAMODB:Companies" },
+    { "edgeId": "j3-api-accounts", "edgeType": "API_READS_DATASTORE", "from": "ripple.billing-groups.read", "to": "DYNAMODB:WAVE_CB_CUSTOMER" },
+    { "edgeId": "j3-data-derivation", "edgeType": "DATASTORE_DERIVES_FROM", "from": "DYNAMODB:WAVE_CB_CUSTOMER", "to": "ripple.billing-groups.read:company_id grouping" },
+    { "edgeId": "d3-api-oracle", "edgeType": "ORACLE_VALIDATES_API", "from": "D3.j3.account-inventory", "to": "ripple.billing-groups.read" }
+  ]
+}

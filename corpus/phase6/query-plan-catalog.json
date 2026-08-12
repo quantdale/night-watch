@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "nightwatch.readonly-query-plan.phase6.v1",
+  "policy": {
+    "allowedKinds": ["DYNAMO_GET", "DYNAMO_QUERY_PREFIX", "DYNAMO_QUERY_GSI", "BQ_SELECT_SCOPED", "SPANNER_SELECT_SCOPED"],
+    "rawSql": false,
+    "dynamoScan": false,
+    "writes": false,
+    "selectAll": false,
+    "rawRowsPersisted": false
+  },
+  "plans": [
+    { "planId": "phase6.d1.j1.payer-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J1_PAYER_JPY", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] },
+    { "planId": "phase6.d1.j1.payer-non-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J1_PAYER_NON_JPY", "scopeRoles": ["mspId", "month", "vendor"], "projection": ["id", "sort_key"] },
+    { "planId": "phase6.d2.j2.common-aws-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J2_COMMON_AWS_JPY", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] },
+    { "planId": "phase6.d2.j2.common-non-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J2_COMMON_NON_AWS_JPY", "scopeRoles": ["mspId", "month", "vendor"], "projection": ["id", "sort_key"] },
+    { "planId": "phase6.d3.j3.companies-msp", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_GSI", "table": "Companies", "grammar": "COMPANIES_MSP_INDEX", "index": "msp_id-index", "scopeRoles": ["mspId"], "projection": ["company_id", "billinggroup_id"] },
+    { "planId": "phase6.d3.j3.accounts-by-company", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_GSI", "table": "WAVE_CB_CUSTOMER", "grammar": "WAVE_CUSTOMER_COMPANY_INDEX", "index": "company_id-index", "scopeRoles": ["companyId"], "projection": ["customer_id", "company_id", "account_id"] },
+    { "planId": "phase6.p5.billing-group-exchange.metadata", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J3_BILLING_GROUP_RATE", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] }
+  ]
+}

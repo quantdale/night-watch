@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "nightwatch.data-oracle-catalog.phase6.v1",
+  "queryPlanVersion": "nightwatch.readonly-query-plan.phase6.v1",
+  "oracles": [
+    { "oracleId": "D1.j1.payer-exchange", "journeyIds": ["ripple-payer-exchange-read"], "apiOperationIds": ["ripple.payer-exchange.read"], "queryPlanIds": ["phase6.d1.j1.payer-jpy", "phase6.d1.j1.payer-non-jpy"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
+    { "oracleId": "D2.j2.common-exchange", "journeyIds": ["ripple-common-exchange-read"], "apiOperationIds": ["ripple.common-exchange.read"], "queryPlanIds": ["phase6.d2.j2.common-aws-jpy", "phase6.d2.j2.common-non-jpy"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
+    { "oracleId": "D3.j3.account-inventory", "journeyIds": ["ripple-account-inventory"], "apiOperationIds": ["ripple.billing-groups.read", "ripple.account-inventory.read"], "queryPlanIds": ["phase6.d3.j3.companies-msp", "phase6.d3.j3.accounts-by-company"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DERIVED_SYNCHRONOUS", "comparisonMode": "MEMBERSHIP", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
+    { "oracleId": "P5.billing-group-exchange.metadata", "journeyIds": [], "apiOperationIds": ["ripple.billing-group-exchange.read"], "queryPlanIds": ["phase6.p5.billing-group-exchange.metadata"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "SPEC_BLOCKED" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "nightwatch.data-evidence.phase6.v1",
+  "required": ["evidenceId", "oracleId", "runtimeRunId", "datastore", "queryPlanId", "comparisonResult", "consistencyClass", "safetyResult", "privacyResult"],
+  "forbidden": ["rawRows", "customerId", "companyIdValue", "billingGroupIdValue", "accountIdValue", "costValue", "queryParameters", "credentials"],
+  "cardinalityClasses": ["ZERO", "ONE", "MANY"],
+  "comparisonClasses": ["DATA_CORROBORATES_RUNTIME", "DATA_CONTRADICTS_RUNTIME", "DATA_NOT_PRESENT", "DATA_PRESENT_RUNTIME_MISSING", "RUNTIME_PRESENT_DATA_MISSING", "DATA_TIMING_AMBIGUOUS", "DATA_SCOPE_AMBIGUOUS", "DATA_CHANGED_DURING_CHECK", "DATA_ORACLE_NOT_APPLICABLE", "DATA_QUERY_BLOCKED", "DATA_QUERY_AUTH_REQUIRED", "DATA_QUERY_COST_BLOCKED"],
+  "rawRowsPersisted": false
+}
