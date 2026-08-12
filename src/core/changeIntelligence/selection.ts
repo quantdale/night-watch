@@ -21,8 +21,7 @@ import { RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from './map';
 
 const DOC_RE = /(^|\/)(docs?|documentation)(\/|$)|\.(md|mdx|txt|adoc)$/i;
 const TEST_RE = /(^|\/)(__tests__|tests?|test-fixtures?|fixtures)(\/|$)|\.(test|spec)\.[^.]+$/i;
-const CI_RE = /(^|\/)(\.github|\.circleci)(\/|$)|(^|\/)(Makefile|Dockerfile|.*\.ya?ml)$/i;
-const CONFIG_RE = /(^|\/)(\.env[^/]*|config|configs?|vue\.config\.[^/]+|webpack[^/]*)($|\/)|(^|\/)(package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/i;
+const CI_RE = /(^|\/)(\.github|\.circleci)(\/|$)/i;
 
 const CONFIDENCE_RANK: Record<Confidence, number> = { HIGH: 4, MEDIUM: 3, LOW: 2, UNKNOWN: 1 };
 const PRIORITY_RANK: Record<PriorityTier, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
@@ -65,7 +64,7 @@ function nonRuntimeReason(repoId: string, file: ChangedFile): { impactClass: 'DO
   const combined = previousPath ? `${path}\n${previousPath}` : path;
   if (DOC_RE.test(combined)) return { impactClass: 'DOC_ONLY_CHANGE', explanation: 'Path is documentation-only by the repository path convention.' };
   if (TEST_RE.test(combined)) return { impactClass: 'TEST_ONLY_CHANGE', explanation: 'Path is test/fixture-only by the repository path convention.' };
-  if (CI_RE.test(path) && !CONFIG_RE.test(path)) return { impactClass: 'TEST_ONLY_CHANGE', explanation: 'Path is CI metadata and is not runtime product source.' };
+  if (CI_RE.test(path)) return { impactClass: 'TEST_ONLY_CHANGE', explanation: 'Path is CI metadata and is not runtime product source.' };
   if (repoId === 'alphauslabs/grpc-chunk-parser' && path === 'README.md') return { impactClass: 'DOC_ONLY_CHANGE', explanation: 'Parser README does not enter the published runtime.' };
   return null;
 }

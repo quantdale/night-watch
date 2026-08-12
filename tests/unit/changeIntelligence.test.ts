@@ -91,6 +91,17 @@ test.describe('Phase 3 deterministic selection', () => {
     expect(result.nonSelectedJourneys.map((item) => item.reasonCode)).toEqual(['NON_RUNTIME_ONLY', 'NON_RUNTIME_ONLY', 'NON_RUNTIME_ONLY']);
   });
 
+  test('runtime/build configuration and CSS fail safe instead of CI suppression', () => {
+    for (const file of ['Dockerfile', 'Makefile', 'build/config.yaml', 'src/assets/css/global.css', 'package.json']) {
+      const result = selectJourneys(syntheticChangeset({ repoId: 'mobingilabs/ripple-ui', headSha: stableHead, files: [{ repoId: 'mobingilabs/ripple-ui', path: file, status: 'modify' }] }));
+      expect(selected(result), file).toEqual([j1, j2, j3]);
+      expect(result.fallbackTriggered, file).toBe(true);
+    }
+    const ci = selectJourneys(syntheticChangeset({ repoId: 'mobingilabs/ripple-ui', headSha: stableHead, files: [{ repoId: 'mobingilabs/ripple-ui', path: '.github/workflows/check.yml', status: 'modify' }] }));
+    expect(selected(ci)).toEqual([]);
+    expect(ci.zeroSelectionJustified).toBe(true);
+  });
+
   test('rename preserves the base-path impact edge', () => {
     const result = selectJourneys(fixture('rename-j1'));
     expect(selected(result)).toEqual([j1]);

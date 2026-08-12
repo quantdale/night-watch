@@ -104,6 +104,12 @@ logical API/component identity.
   source-proven callsite.
 * Test fixtures, docs, comments, and CI files do not select a product journey
   unless the build/source graph proves runtime inclusion.
+* Runtime/build configuration, package manifests, Docker/Make build inputs,
+  asset-serving rules, and CSS are not suppressed by filename convention. If
+  they have no source-backed edge, they are treated as unresolved runtime
+  impact and invoke the visible all-canary fallback. This is conservative for
+  structural UI/resource regressions; an isolated cosmetic stylesheet change
+  is not silently assumed safe.
 * The historical malformed-JSON endpoint remains unresolved and is not
   intentionally replayed or used as a journey dependency.
 
