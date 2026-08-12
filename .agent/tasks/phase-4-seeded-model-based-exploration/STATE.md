@@ -43,6 +43,9 @@ the first DEV exploration context.
   per-context boolean auth preflight failed before BrowserContext creation.
   The established guarded `auth:capture` reached `HUMAN_WAIT` for manual
   login/MFA; it was canceled without writing a replacement state.
+- Resumed guarded invocation on 2026-08-12 produced the same
+  `HUMAN_AUTH_ACTION_REQUIRED` result before BrowserContext creation. No
+  context, action, retry seed, or replay budget was consumed.
 
 ## SOURCE_BASELINES
 
@@ -106,10 +109,11 @@ claim is permitted.
 ## REAL_RUN_LEDGER
 
 Phase 4 exploration contexts: 0/6. Exact replay contexts: 0/3. The guarded
-pre-real safety gate passed; per-context auth boolean preflight failed before
-the first BrowserContext. No Phase 4 action, product mutation, production
-attempt, DB query, or exploration request was made. The fixed corpus remains
-unused; no diagnostic retries were consumed.
+pre-real safety gate passed; both guarded invocations failed the same
+per-context auth boolean preflight before the first BrowserContext. No Phase 4
+action, product mutation, production attempt, DB query, or exploration request
+was made. The fixed corpus remains unused; no diagnostic retries were
+consumed.
 
 ## REPRODUCTION_LEDGER
 
