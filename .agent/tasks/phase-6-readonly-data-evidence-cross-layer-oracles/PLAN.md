@@ -75,7 +75,7 @@ AI planning, scheduler, and Phase 7.
 
 ### M2 — Frozen schemas and catalogs
 
-- Status: IN_PROGRESS.
+- Status: COMPLETED.
 - Add versioned TypeScript contracts and durable JSON catalogs for read plans,
   data oracles, evidence, and cross-layer lineage.
 - Add D1/D2/D3 candidate records without inventing unresolved semantics.
@@ -84,7 +84,7 @@ AI planning, scheduler, and Phase 7.
 
 ### M3 — Query validators and typed adapters
 
-- Status: PENDING.
+- Status: COMPLETED.
 - Implement structured Dynamo/BQ/Spanner plan validators and deterministic
   query compilers. Enforce table/index/project/database allowlists, required
   scope, projections, limits, no mutation, no scan, and no arbitrary SQL.
@@ -94,7 +94,7 @@ AI planning, scheduler, and Phase 7.
 
 ### M4 — Normalization, privacy, consistency, numeric, comparator
 
-- Status: PENDING.
+- Status: COMPLETED.
 - Implement metadata-first normalizers, run-local membership comparison,
   consistency/retention handling, numeric semantic contracts, timing classes,
   and reusable presence/cardinality/enum/schema/numeric comparators.
@@ -103,7 +103,7 @@ AI planning, scheduler, and Phase 7.
 
 ### M5 — Source/store lineage and Phase 3/5 integration
 
-- Status: PENDING.
+- Status: COMPLETED.
 - Trace J1/J2/J3 from UI/API to handlers/accessors/store/transform/response;
   link Phase 5 operation IDs to data oracles and source freshness edges.
 - Acceptance: each oracle is REAL_ELIGIBLE, LOCAL_ONLY, STALE, or
@@ -112,7 +112,7 @@ AI planning, scheduler, and Phase 7.
 
 ### M6 — Synthetic data plane and adversarial matrix
 
-- Status: PENDING.
+- Status: IN_PROGRESS.
 - Exercise all three datastore adapters through the actual plan/validator/
   normalizer/comparator boundary. Cover valid reads, malicious plans, query
   injection, protected scans, empty/large results, retention, async lag, and

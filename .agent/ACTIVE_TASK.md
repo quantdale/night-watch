@@ -6,14 +6,15 @@ Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
-Last validated implementation SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
-Current milestone: M0 — Phase 5 handoff reconciled; Phase 6 SPEC frozen and
-mandatory datastore-document/tool audit recorded.
-Last checkpoint: 2026-08-12 — Phase 6 native task creation and source/tool
-archaeology checkpoint; no implementation or datastore query has run.
-Next action: collect bounded read-only archaeology results, freeze the
-environment/source lineage map, and implement typed Phase 6 schemas/validators.
+Current SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
+Last validated implementation SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
+Current milestone: M6 — synthetic data plane and adversarial matrix; typed
+Phase 6 architecture is implemented and live datastore work remains gated.
+Last checkpoint: 2026-08-12 — Phase 6 typed data-evidence implementation; no
+datastore query has run.
+Next action: run the complete local validation matrix and perform the pre-real
+gate review without executing a datastore query while environment/scope/auth
+remain unconfirmed.
 
 ## Prior phase closure handoff
 

@@ -6,11 +6,11 @@ Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
 Status: IN_PROGRESS
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
-Last validated implementation SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
+Current SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
+Last validated implementation SHA: 21323f7e9684cc7859b849591ceb87dc02279ffb
 Branch: main
-Last checkpoint: Phase 6 task creation; no Phase 6 implementation or
-datastore query has run.
+Last checkpoint: Phase 6 typed data-evidence implementation; no datastore
+query has run.
 
 ## Objective
 
@@ -19,9 +19,9 @@ plane linked to Phase 5 API and Phase 2 browser behavior.
 
 ## Current Milestone
 
-M1/M2 — mandatory datastore audit and source-to-store archaeology complete;
-typed schema/validator implementation is next. Phase 5 is independently
-accepted; Phase 6 SPEC is frozen and no data query has executed.
+M6 — synthetic data plane and adversarial matrix. Typed schemas, validators,
+adapters, privacy/oracle logic, catalogs, and Phase 3/Phase 5 lineage are
+implemented; full validation and final real-data gate remain.
 
 ## Completed Milestones
 
@@ -38,14 +38,14 @@ accepted; Phase 6 SPEC is frozen and no data query has executed.
 
 ## Work In Progress
 
-Create the initial source/data environment map and record worker archaeology.
-Then implement only the frozen Phase 6 schema/validator boundary.
+Run the complete local validation matrix and adversarial review. Keep the
+external data gate closed while runtime environment, designated scope, and
+datastore auth remain unconfirmed.
 
 ## Exact Next Action
 
-Collect the four read-only worker results, inspect current Nightwatch Phase 5
-catalog/lineage and targeted Alphaus source, then update this STATE with the
-environment map and M1/M2 evidence before implementation. Do not run a real
+Run `npx tsc --noEmit`, the focused Phase 6/Phase 5 suites, full Playwright,
+`npm run agent:check`, and privacy/diff/integrity checks. Do not run a real
 datastore query.
 
 ## CURRENT_GOAL
@@ -56,7 +56,7 @@ comparisons.
 
 ## CURRENT_PHASE
 
-M0/M1 — Phase 5 handoff and mandatory data-tool/document audit.
+M6/M7 — synthetic data plane complete; pre-real gate review pending.
 
 ## CURRENT_EVIDENCE
 
@@ -96,6 +96,15 @@ M0/M1 — Phase 5 handoff and mandatory data-tool/document audit.
   responses. The strongest additional candidate is the non-user-scoped
   billing-group exchange read; it remains outside the frozen D1-D3 real budget
   unless the SPEC is amended.
+- Phase 6 implementation checkpoint `21323f7e9684cc7859b849591ceb87dc02279ffb`
+  adds `src/data/phase6`, four Nightwatch-owned corpus artifacts, and the
+  focused synthetic test. The runtime API accepts only `ValidatedReadPlan`;
+  the default `GatedReadToolInvoker` cannot invoke an external datastore.
+- Current catalog counts: 7 structured query plans, 4 data-oracle records, 11
+  lineage edges. Phase 5 remains 11 inventoried / 6 KNOWN_READ / 4
+  KNOWN_MUTATION / 1 UNKNOWN.
+- Focused Phase 6 suite is 7/7 PASS and TypeScript is PASS. No datastore tool,
+  auth probe, query, scan, or write has executed.
 
 ## PHASE_5_RECONCILIATION
 
@@ -133,18 +142,20 @@ unconfirmed. Application auth is not datastore auth.
 
 ## DATA_CATALOG_VERSION
 
-`nightwatch.data-oracle-catalog.phase6.v1` (frozen version; implementation and
-durable catalog artifact pending)
+`nightwatch.data-oracle-catalog.phase6.v1` implemented in
+`src/data/phase6/catalog.ts` and `corpus/phase6/data-oracle-catalog.json`.
 
 ## QUERY_PLAN_VERSION
 
-`nightwatch.readonly-query-plan.phase6.v1` (frozen by SPEC; implementation
-pending)
+`nightwatch.readonly-query-plan.phase6.v1` implemented in
+`src/data/phase6/types.ts`/`validators.ts` and
+`corpus/phase6/query-plan-catalog.json`.
 
 ## ORACLE_VERSION
 
-nightwatch.data-evidence.phase6.v1; nightwatch.cross-layer-lineage.phase6.v1
-(frozen by SPEC; implementation pending)
+`nightwatch.data-evidence.phase6.v1` and
+`nightwatch.cross-layer-lineage.phase6.v1` implemented with metadata-only
+normalization/comparison and Nightwatch-owned lineage artifacts.
 
 ## REAL_QUERY_BUDGET
 
@@ -154,7 +165,7 @@ optional D4 without SPEC amendment; currently remaining=6.
 ## REAL_QUERY_LEDGER
 
 0 executed; 0 production writes; 0 protected scans; 0 DB credentials exposed;
-no auth or environment probe performed.
+no auth or environment probe performed; remaining=6.
 
 ## CROSS_LAYER_LEDGER
 
@@ -175,17 +186,21 @@ data evidence exists. J1/J2/J3 lineage is source-derived, not live-verified.
 - Phase 5 cache-backed billing/account operations are not automatically
   data-oracle eligible because Redis/cache freshness and async fan-out can
   contradict a direct-Dynamo read without implying a product defect.
+- Implemented in `src/data/phase6/lineage.ts`: Phase 5 operation lineage and
+  source-proven J1/J2/J3 store edges are evaluated against the Phase 3
+  snapshot; source changes mark affected data oracles stale/review-required.
 
 ## FILES_CHANGED
 
-Phase 6 task docs only so far. No source implementation, catalog artifact, or
-datastore evidence file exists yet.
+Phase 6 task docs, `src/data/phase6/*`, `corpus/phase6/*`, and
+`tests/unit/phase6Data.test.ts`. No live datastore evidence file exists.
 
 ## VALIDATION_LEDGER
 
 Phase 5 terminal validation remains: TypeScript PASS, focused Phase 5 15
 passed, full Playwright 333 passed, agent:check PASS with approved continuity
-warning, diff-check PASS. Phase 6 validation not yet run.
+warning, diff-check PASS. Phase 6 TypeScript PASS and focused suite 7 passed;
+full suite and final adversarial validation remain.
 
 ## BUG_CANDIDATES
 
@@ -211,6 +226,8 @@ and query-widening fallbacks are rejected by frozen intent.
   freshness/eviction is unknown.
 - The modern billing-group stream is a per-group datastore query; source shows
   it fetches the MSP inventory and derives groups in memory.
+- The real adapter default is fail-closed; a synthetic invoker is the only
+  exercised execution path in this checkpoint.
 
 ## UNRESOLVED
 
@@ -234,17 +251,18 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-7255b04f1b8633ac74f65d30618bffc399f1ae5e.
+21323f7e9684cc7859b849591ceb87dc02279ffb.
 
 ## LAST_CHECKPOINT_SHA
 
-7255b04f1b8633ac74f65d30618bffc399f1ae5e.
+21323f7e9684cc7859b849591ceb87dc02279ffb.
 
 ## NEXT_EXACT_ACTION
 
-Implement the frozen Phase 6 typed contracts, validators, budget gate, and
-durable D1/D2/D3 catalog artifacts. Add synthetic tests before considering any
-real datastore gate. Do not run a datastore query.
+Run the complete local validation matrix, add any missing adversarial cases,
+and perform the pre-real gate review. If environment/scope/auth remain
+unconfirmed, preserve the explicit safe blocker and do not run a datastore
+query.
 
 ## RESUME_RECIPE
 
@@ -258,19 +276,20 @@ real datastore gate. Do not run a datastore query.
 
 ## Completion Snapshot
 
-Not complete. Phase 6 has frozen task/spec, mandatory-doc/tool audit, and
-source-derived J1/J2/J3 archaeology; no implementation or live data evidence
-yet.
+Not complete. Phase 6 architecture and synthetic boundary are implemented;
+full validation and optional real-read decision remain. No live datastore
+evidence exists.
 
 ## Files Changed
 
-Phase 6 task files and ACTIVE_TASK/current-state handoff only; no Alphaus repo
-changed and no datastore query executed.
+Phase 6 task files, implementation, corpus, focused tests, ACTIVE_TASK, and
+current-state handoff; no Alphaus repo changed and no datastore query executed.
 
 ## Validation Ledger
 
-Phase 6 task creation checks pending; Phase 5 inherited validation is recorded
-above. Worker archaeology completed in four read-only tracks; no datastore
+Phase 6 focused: TypeScript PASS; 7/7 Phase 6 tests PASS; `git diff --check`
+PASS. Full Playwright, complete Phase 5 regression, and final `agent:check`
+remain. Worker archaeology completed in four read-only tracks; no datastore
 command was invoked.
 
 ## Decisions Made During This Task
@@ -280,6 +299,8 @@ command was invoked.
 - Real data is optional under the frozen SPEC and never claimed when absent.
 - Worker evidence is recorded as source-derived conclusions only; raw worker
   transcripts and any customer-like values are not durable Nightwatch evidence.
+- A real read is not eligible while the environment map is only
+  `RUNTIME_DATA_ENV_SOURCE_DERIVED`; no live result is labeled verified.
 
 ## Discoveries
 
