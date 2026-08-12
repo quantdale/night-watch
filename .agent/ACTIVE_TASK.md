@@ -6,8 +6,8 @@ Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 10cce640e08d068f23641986e6315dd6369188a6
-Last validated implementation SHA: 10cce640e08d068f23641986e6315dd6369188a6
+Current SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
+Last validated implementation SHA: 7255b04f1b8633ac74f65d30618bffc399f1ae5e
 Current milestone: M0 — Phase 5 handoff reconciled; Phase 6 SPEC frozen and
 mandatory datastore-document/tool audit recorded.
 Last checkpoint: 2026-08-12 — Phase 6 native task creation and source/tool
