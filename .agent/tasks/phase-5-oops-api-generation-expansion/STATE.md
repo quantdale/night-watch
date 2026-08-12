@@ -21,11 +21,11 @@ destinations, semantics, or durable privacy.
 
 ## Current Milestone
 
-M8 — pre-real gate and frozen serial DEV ledger. M2–M7 local implementation,
-source inventory, corpus generation, relay controls, lineage hooks, and actual
-current-source OOPS fixture execution are complete. Remaining work is the
-security gate, validation, and bounded DEV first/replay run if the existing
-external DEV auth state and Nightwatch policy pass.
+M9 — bounded DEV first/replay corpus. M2–M8 local implementation,
+source inventory, corpus generation, relay controls, lineage hooks, actual
+current-source OOPS fixture execution, security review, and pre-real validation
+are complete. Remaining work is the single gated DEV first/replay run and
+post-run closure review.
 
 ## Completed Milestones
 
@@ -46,7 +46,8 @@ external DEV auth state and Nightwatch policy pass.
 
 ## Work In Progress
 
-M8 is frozen around six eligible operations and a twelve-request maximum:
+M8 is complete and M9 is frozen around six eligible operations and a
+twelve-request maximum:
 first execution plus one fresh replay for each operation, serially, with a
 350ms delay. OOPS authenticated DEV execution is disabled because the verified
 unprivileged bubblewrap network namespace cannot reach the parent Nightwatch
@@ -55,10 +56,10 @@ remains exercised against local fixtures only.
 
 ## Exact Next Action
 
-Run the post-change focused suite and agent:check, checkpoint the
-implementation/docs, then run npm run api:phase5 -- --env=dev only after the
-clean-worktree, auth, proxy, source-freshness, relay, privacy, and budget gates
-pass. Record the sanitized first/replay ledger before final closure review.
+Run `npm run api:phase5 -- --env=dev` once after the clean-worktree, auth,
+proxy, source-freshness, relay, privacy, and budget gates pass. Record the
+sanitized first/replay ledger before final closure review; if a gate fails,
+record the blocker and do not retry real traffic.
 
 ## CURRENT_GOAL
 
@@ -67,7 +68,8 @@ OOPS subordinate to Nightwatch policy and preserving all Phase 4 caveats.
 
 ## CURRENT_PHASE
 
-M8 — pre-real API gate; no real API request has executed in this Phase 5 task.
+M9 — bounded DEV first/replay corpus; no real API request has executed in this
+Phase 5 task.
 
 ## CURRENT_EVIDENCE
 
@@ -99,6 +101,38 @@ M8 — pre-real API gate; no real API request has executed in this Phase 5 task.
   not reachable from the parent relay, so it is available but not compatible
   with authenticated OOPS relay execution. Native Nightwatch relay fallback
   is the only real DEV path considered.
+- Full local validation before the real gate: TypeScript PASS; focused Phase 5
+  suite 15 passed; full Nightwatch Playwright suite 333 passed; agent:check
+  PASS with the approved checkpoint-advance warning; git diff --check PASS;
+  Nightwatch worktree clean at the checkpoint.
+
+## PRE_REAL_SECURITY_REVIEW
+
+1. Generated YAML shell/script execution: REJECTED by the restricted parser
+   and fixed generated dialect; no shell/script/command primitive is emitted.
+2. Pre-process hook: rejected before OOPS spawn and unavailable in fixed argv.
+3. Slack/GitHub/PubSub/distributed reporting: rejected; fixed argv uses only
+   local scenario execution and disabled result notification.
+4. Parent environment secrets: not inherited; explicit allowlist and sentinel
+   regression pass.
+5. DEV password: never passed to OOPS.
+6. Browser storage state: never passed to OOPS.
+7. Arbitrary host: impossible in generated schema and relay operation-ID API.
+8. Production target: not representable in the approved DEV host policy.
+9. Redirect escape: revalidated and blocked by relay/outbound policy.
+10. Open proxy: impossible; relay accepts only catalog operation IDs.
+11. Raw response body through OOPS: local sentinel regression found zero leaks;
+    real authenticated OOPS is disabled by sandbox/relay incompatibility.
+12. OOPS stdout/stderr: bounded, captured, and sanitized in memory.
+13. Subprocess lifetime: hard timeout with terminate/kill fallback.
+14. UNKNOWN operation: rejected before execution.
+15. KNOWN_MUTATION operation: rejected before execution and tripwired at runtime.
+16. Runtime mutation: method/path policy and catalog resolution are active.
+17. Source freshness: Phase 3 lineage gate is active for every frozen read.
+18. Customer runtime values: typed placeholders only; no durable resolution.
+19. API budget: six first executions plus six fresh replays, serial, 350ms
+    delay, maximum twelve requests.
+20. Alphaus repository integrity: no Alphaus repository modification.
 
 ## PHASE_4_CLOSURE_AUDIT
 
@@ -206,7 +240,7 @@ bounded and sanitized, and workspaces cleaned.
 
 ## DEV_API_RUN_LEDGER
 
-none yet; frozen set is six KNOWN_READ operations; maximum 12 serial calls;
+Frozen set is six KNOWN_READ operations; maximum 12 serial calls;
 real runner is native Nightwatch through the catalog-resolving relay because
 authenticated OOPS is disabled by the sandbox decision.
 
@@ -226,7 +260,7 @@ receives neither password, storage-state path, browser state, nor token.
 
 ## FILES_CHANGED
 
-Uncommitted Nightwatch-only Phase 5 implementation and tests:
+Nightwatch-only Phase 5 implementation and tests:
 src/api/phase5/{types,catalog,generator,restrictedProfile,oracle,relay,lineage,auth}.ts,
 src/core/oops/{process,sandbox}.ts, tests/unit/phase5Api.test.ts,
 tests/unit/phase5Fixture.test.ts, tests/manual/phase5-real-api.ts,
@@ -245,8 +279,11 @@ REPORT.md are also being checkpointed. No Alphaus repository is changed.
 - Bubblewrap read-only network namespace probe: PASS on this host.
 - Phase 4 inherited focused suite: 16 passed; Phase 4 full suite: 318 passed
   at closure.
-- Full Playwright, agent:check, and final diff-check remain pending after the
-  implementation checkpoint.
+- Full Nightwatch Playwright suite: 333 passed.
+- TypeScript: PASS.
+- `npm run agent:check`: PASS with the approved checkpoint-advance warning.
+- `git diff --check`: PASS.
+- Pre-real gate: PASS; no real request has executed yet.
 
 ## BUG_CANDIDATES
 
@@ -294,17 +331,18 @@ screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-3f989a2e31bed3c128be62e8fe0a60ba94723f0a.
+3f989a25bb9618ef43d384ba66f050a6e831a61a.
 
 ## LAST_CHECKPOINT_SHA
 
-3f989a2e31bed3c128be62e8fe0a60ba94723f0a.
+cfde3d899791d1b89683f930982a9ccd04122764.
 
 ## NEXT_EXACT_ACTION
 
-Run the full Playwright suite, final Phase 5 focused/privacy checks, agent:check,
-diff-check, and the clean-worktree/source-integrity review. Then run the frozen
-DEV command once if the real gate passes.
+Run `npm run api:phase5 -- --env=dev` once. On completion, inspect only the
+sanitized ledger, update the corpus/task closure records, and run final
+validation. If a preflight or auth gate fails, record the exact blocker and do
+not retry real traffic.
 
 ## RESUME_RECIPE
 
@@ -333,7 +371,8 @@ repository is changed.
 ## Validation Ledger
 
 The current validation results are recorded in VALIDATION_LEDGER above. The
-full suite and final clean-checkpoint validation remain pending.
+pre-real validation checkpoint is complete; the frozen DEV ledger and final
+post-run closure validation remain pending.
 
 ## Decisions Made During This Task
 

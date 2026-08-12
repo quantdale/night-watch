@@ -1,7 +1,8 @@
 # Nightwatch Phase 5 — Restricted OOPS + Generated Read-Only API Corpus
 
-Status: `IN_PROGRESS` — M0/M1 task creation, Phase 4 closure audit, and the
-current OOPS source/binary audit are complete; adapter/source/API work remains.
+Status: `IN_PROGRESS` — M0/M8 task creation, Phase 4 closure audit, current
+OOPS audit, restricted adapter, catalog, local corpus, and pre-real gate are
+complete; the frozen DEV ledger and final closure remain.
 
 ## Starting identity
 
@@ -35,11 +36,9 @@ No product anomaly was admitted.
 
 ## Closure handoff
 
-The remaining report sections will be filled at M10 with current OOPS source
-and binary provenance, adapter/relay/sandbox results, catalog counts and
-operation ledger, scenario/replay corpus, DEV results, anomaly levels,
-privacy/safety accounting, validation, and the final adversarial review. A
-successful closure must leave Nightwatch clean and must not start Phase 6.
+The remaining report sections will be filled at M10 with the frozen DEV
+results, anomaly levels, privacy/safety accounting, final adversarial review,
+and clean Nightwatch handoff. A successful closure must not start Phase 6.
 
 ## M1 OOPS audit checkpoint
 
@@ -62,12 +61,12 @@ the next implementation boundary.
 
 ## Current next action
 
-Run the post-change validation, checkpoint the implementation, then execute
-the frozen six-operation DEV first/replay set only if the real gate passes.
+Execute the frozen six-operation DEV first/replay set once through the native
+Nightwatch relay if the already-passed runtime gates remain healthy.
 
-## M2–M7 implementation checkpoint in progress
+## M2–M8 implementation and pre-real checkpoint
 
-The uncommitted Nightwatch implementation now contains a strict restricted
+The Nightwatch implementation contains a strict restricted
 OOPS dialect, deterministic source-backed API catalog/generator, loopback
 operation relay, metadata-only oracle, bounded OOPS subprocess adapter,
 ephemeral auth bridge, Phase 3 staleness hooks, and a durable six-scenario
@@ -92,3 +91,25 @@ weakening the relay boundary. The native Nightwatch relay path is the only
 real DEV fallback authorized by the frozen Phase 5 task. The real budget is
 12 serial requests: one first execution and one fresh replay for each of the
 six frozen reads.
+
+## M8 pre-real gate
+
+The pre-real gate is accepted as `PHASE_5_PRE_REAL_API_READY`. The frozen set
+contains six source-proven `KNOWN_READ` operations: the J1 payer-exchange,
+J2 common-exchange, J3 account-inventory and billing-group stream bridges, and
+two API-only expansion reads. The budget is twelve total serial requests,
+one first execution and one fresh replay per operation, with a 350ms delay.
+
+The security review answers are durable in STATE.md. Generated scenarios cannot
+execute shell/script/command/pre-process features, enable notification or
+distributed modes, select arbitrary destinations, represent mutations or
+UNKNOWN operations, or contain credentials/customer values. OOPS receives an
+explicit non-secret environment allowlist and no application auth. The current
+source-built OOPS path is local-fixture-only because its verified isolated
+network namespace cannot reach the parent loopback relay; the native Nightwatch
+relay is the sole permitted authenticated DEV fallback.
+
+Pre-real validation passed: TypeScript, 15 focused Phase 5 tests, the full
+Nightwatch Playwright suite (333 passed), `agent:check` (PASS with the approved
+checkpoint-advance warning), and `git diff --check`. No real API request,
+production attempt, mutation, database query, or secret leak has occurred.

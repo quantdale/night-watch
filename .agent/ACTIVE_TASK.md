@@ -8,14 +8,14 @@ Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
 Last validated implementation SHA: 3f989a25bb9618ef43d384ba66f050a6e831a61a
-Current milestone: M8 — pre-real gate and frozen serial DEV ledger; M2–M7
-local implementation and validation are complete, with the implementation
-checkpoint still pending.
-Last checkpoint: 2026-08-12 — M2–M7 implementation and durable corpus at
-`3f989a2`; no Phase 5 real DEV API request has executed.
-Next action: run the post-change validation, checkpoint Nightwatch, then run
-the frozen six-operation native-relay DEV first/replay ledger if all gates
-pass. Authenticated OOPS remains local-fixture-only because its isolated
+Current milestone: M9 — bounded DEV first/replay corpus; M0–M8 local
+implementation, source audit, corpus, lineage, security review, and validation
+are complete.
+Last checkpoint: 2026-08-12 — pre-real gate passed at implementation
+`3f989a25bb9618ef43d384ba66f050a6e831a61a`; no Phase 5 real DEV API request has
+executed.
+Next action: run the frozen six-operation native-relay DEV first/replay ledger
+once. Authenticated OOPS remains local-fixture-only because its isolated
 network namespace cannot reach the parent relay.
 
 ## Prior phase closure handoff

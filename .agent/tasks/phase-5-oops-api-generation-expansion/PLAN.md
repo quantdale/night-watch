@@ -207,8 +207,9 @@ other-repository writes, and Phase 6.
   blocker prevents real execution.
 - Validation commands: typecheck, focused suites, full Playwright,
   `npm run agent:check`, diff check, privacy scans.
-- Status: `IN_PROGRESS`; the frozen six-operation, twelve-call serial budget
-  and native-relay fallback are implemented; the real gate and ledger remain.
+- Status: `COMPLETED`; `PHASE_5_PRE_REAL_API_READY` was reached after the
+  frozen six-operation, twelve-call serial budget, native-relay fallback,
+  focused/full validation, privacy checks, and adversarial review.
 
 ### M9 — Bounded DEV first/replay corpus
 
@@ -221,7 +222,7 @@ other-repository writes, and Phase 6.
   remains zero, every promoted operation has first + fresh replay, anomalies
   retain L0/L1/L2 status, budget is not exceeded.
 - Validation commands: guarded DEV runner and post-run privacy/safety audit.
-- Status: `NOT_STARTED`
+- Status: `IN_PROGRESS`
 
 ### M10 — Final review, validation, and clean closure
 
