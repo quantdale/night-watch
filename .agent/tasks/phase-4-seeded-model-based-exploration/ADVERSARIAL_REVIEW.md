@@ -73,3 +73,37 @@ full suite 317/317, TypeScript PASS, diff check PASS. `list_pages` was checked
 read-only and remained unavailable at `127.0.0.1:9222`; no MCP browser action
 or authenticated data was accessed. The checkpoint is ready for the one-time
 hidden local DEV credential configuration; Phase 5 remains unstarted.
+
+## Post-real closure review
+
+Review status: `PASS` — final implementation
+`6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b`, 2026-08-12.
+
+The designated DEV credential was configured only through the hidden local
+workflow. The provider remained external and owner-only; the real value was
+not copied into Nightwatch files, task state, process arguments, MCP calls, or
+evidence. The pre-retrieval DEV gate remained mandatory, valid external auth
+state was reused for the final corpus, and the one successful refresh was
+validated before atomic replacement. Two bounded refresh submissions were
+made across the repaired failed attempt and the successful attempt; no retry
+loop or MFA bypass occurred.
+
+The final frozen matrix completed six fresh contexts. Every intentional action
+was selected from the existing source-backed catalog, and the safety vector
+was zero for production, proxy, unknown destinations/approvals, mutations,
+action-caused UNKNOWN, and DB queries. Two selected actions ended in sanitized
+runtime failure with no safety consequence; no product anomaly was admitted.
+No final sequence was nontrivial, so the SPEC's conditional real exact replay
+was not scheduled. Synthetic exact replay and no-substitution tests passed.
+
+Chrome DevTools MCP discovery remains durable at 29 tools, but the actual
+loopback endpoint was unavailable. Real authenticated attachment was therefore
+disabled, `MCP_SECRET_INPUT_ALLOWED=false` remained enforced, and Playwright
+was the sole executor. No MCP screenshot, heap, snapshot, broad evaluation,
+raw network request, credential input, or unapproved action occurred. The
+absence of MCP cross-checks is recorded as optional observation unavailable,
+not as a Phase 4 failure.
+
+Final validation: TypeScript PASS; focused auth/security suite 48/48; focused
+Phase 4 model suite 16/16; full Playwright suite 318/318; final fixed corpus
+6/6; agent continuity PASS; diff check PASS; privacy/sentinel scan PASS.

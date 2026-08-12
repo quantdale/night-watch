@@ -1,9 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-12** by the
-> Phase 2A controlled authenticated observation closure. Phase 1.2 remains the
-> last completed safety milestone; Phase 2A has now completed its bounded
-> authenticated landing/replay observation with the existing safety kernel.
+> Phase 4 seeded/model-based exploration closure. Phase 4 completed its frozen
+> DEV corpus with the existing safety kernel; Phase 5 was not started.
 
 ---
 
@@ -153,7 +152,31 @@ identity, screenshot, or trace material entered Nightwatch.
   and screenshots were absent. Full TypeScript, Playwright, agent continuity,
   and whitespace validation passed at task closure.
 
-Phase 2B — `THREE DETERMINISTIC READ-ONLY RIPPLE JOURNEYS` remains the
+## Phase 4 — seeded/model-based exploration (complete)
+
+The frozen Phase 4 task `phase-4-seeded-model-based-exploration` completed its
+six-context DEV corpus on 2026-08-12. The fixed E1/J1, E2/J2, and E3/J3 seed
+ledger ran serially in fresh contexts with the source-backed safe-action
+catalog, deterministic model, mandatory proxy, production deny, mutation and
+UNKNOWN tripwires, and metadata-first authenticated evidence. Production
+attempts, proxy violations, unknown destinations/approvals, product mutations,
+action-caused UNKNOWNs, and DB queries were all zero.
+
+The designated DEV account was configured once through `npm run auth:configure`
+using hidden input. The credential provider is an auth-only external
+owner-only-file mechanism under the operator's local Nightwatch namespace;
+credential contents remain outside Git, task state, argv, logs, evidence, and
+MCP. Valid external auth state is reused first; one bounded guarded refresh
+successfully established the current external state and replaced it atomically.
+
+Chrome DevTools MCP discovery is durable as `mcp__chrome_devtools` with 29
+tools, but real authenticated attachment remains disabled because the
+loopback endpoint was unavailable and a dedicated contained browser ownership
+path was not proven. Playwright remains the sole executor and MCP is optional.
+The Phase 4 closure report and full run ledger are in
+`.agent/tasks/phase-4-seeded-model-based-exploration/REPORT.md`.
+
+Phase 2B and Phase 2C are completed predecessor phases; Phase 5 is the only
 recommended next task and was not started.
 
 ## Environment (machine facts)

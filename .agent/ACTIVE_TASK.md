@@ -3,16 +3,16 @@
 Task ID: phase-4-seeded-model-based-exploration
 Phase: 4
 Title: Seeded / Model-Based Exploration
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
 Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
-Last validated implementation SHA: 5e6aeff9fed37df0bc11f376d0d346d1107e1e54
-Current milestone: M7 — secure DEV auto-login infrastructure ready; configure once
-Last checkpoint: 2026-08-12 — guarded DEV auto-login/MCP safety implementation `5e6aeff9fed37df0bc11f376d0d346d1107e1e54`.
-Next action: run `npm run auth:configure` in an interactive terminal and enter
-the designated DEV account once at the hidden prompts; never place credential
-values in chat, arguments, files, or evidence.
+Current SHA: 6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b
+Last validated implementation SHA: 6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b
+Current milestone: M8 — cross-seed analysis, architecture review, and closure
+Last checkpoint: 2026-08-12 — final guarded DEV corpus and closure validation at
+`6bc3cfc`.
+Next action: Phase 4 is complete. The only recommended next task is Phase 5;
+do not start it in this task.
 
 ## Prior phase closure handoff
 

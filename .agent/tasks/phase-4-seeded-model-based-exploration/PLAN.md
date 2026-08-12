@@ -170,8 +170,8 @@ Alphaus edits, or broad overnight autonomy.
   privacy leak, host-policy weakening, nondeterminism, or budget bypass.
 - Validation commands: `npx tsc --noEmit`, `npx playwright test`,
   `npm run agent:check`, `git diff --check`, focused Phase 4 tests.
-- Status: COMPLETE — full local validation and adversarial review passed;
-  first DEV context is blocked by human auth.
+- Status: COMPLETE — pre-real validation and adversarial review passed before
+  the authorized DEV auth-refresh resume.
 
 ### M7 — Bounded real DEV exploration and exact reproduction
 
@@ -186,9 +186,12 @@ Alphaus edits, or broad overnight autonomy.
   runtime-unavailable actions are explicit; anomalies use Phase 2C admission.
 - Validation commands: guarded DEV runner, sanitized evidence/privacy review,
   exact replay comparator, no extra exploratory retries.
-- Status: IN_PROGRESS — secure DEV auto-login infrastructure is checkpointed;
-  one-time hidden credential configuration remains before the first real
-  context.
+- Status: COMPLETE — hidden DEV configuration succeeded; one bounded guarded
+  refresh atomically established valid external state; all six fixed seeds ran
+  in fresh contexts with a zero safety vector. No envelope produced a
+  nontrivial sequence, so the SPEC's conditional exact-replay budget was not
+  invoked. Two source-approved actions ended in sanitized runtime failures
+  without safety impact.
 
 ### M8 — Cross-seed analysis, architecture review, and closure
 
@@ -201,7 +204,10 @@ Alphaus edits, or broad overnight autonomy.
   reproduction blocker is reported; task closes; Phase 5 is only recommended.
 - Validation commands: full required validation, focused Phase 4 suite, status,
   manual diff, Alphaus before/after comparison.
-- Status: NOT_STARTED
+- Status: COMPLETE — cross-seed ledger, secure-auth/MCP adversarial review,
+  full validation, privacy scan, Alphaus integrity comparison, documentation,
+  clean Nightwatch handoff, and ACTIVE_TASK closure completed. Phase 5 was not
+  started.
 
 ## Validation Strategy
 
