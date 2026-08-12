@@ -46,6 +46,9 @@ the first DEV exploration context.
 - Resumed guarded invocation on 2026-08-12 produced the same
   `HUMAN_AUTH_ACTION_REQUIRED` result before BrowserContext creation. No
   context, action, retry seed, or replay budget was consumed.
+- Final guarded blocked-audit invocation produced the same result before
+  BrowserContext creation. The external auth state remains unsuitable for
+  Phase 4; no further automatic retries are authorized.
 
 ## SOURCE_BASELINES
 
@@ -109,7 +112,7 @@ claim is permitted.
 ## REAL_RUN_LEDGER
 
 Phase 4 exploration contexts: 0/6. Exact replay contexts: 0/3. The guarded
-pre-real safety gate passed; both guarded invocations failed the same
+pre-real safety gate passed; all three guarded invocations failed the same
 per-context auth boolean preflight before the first BrowserContext. No Phase 4
 action, product mutation, production attempt, DB query, or exploration request
 was made. The fixed corpus remains unused; no diagnostic retries were
