@@ -1,25 +1,26 @@
 # Active Task
 
-Task ID: phase-3-change-directed-journey-selection
-Phase: 3
-Title: Change-Directed Journey Selection
-Status: COMPLETE
-Task directory: .agent/tasks/phase-3-change-directed-journey-selection
-Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
-Current SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
-Last validated implementation SHA: 8d72ec9159cba450e4e9d763d0f9e9d0ba7a493b
-Current milestone: M10 — final validation and closure
-Last checkpoint: 2026-08-12 — Phase 3 closure checkpoint
-`058a1ab4168324f346bd80f8fd3c2c3edec45c77`; terminal documentation-only
-handoff is ready.
-Next action: verify the terminal clean HEAD and final read-only integrity
-comparison; do not start Phase 4.
+Task ID: phase-4-seeded-model-based-exploration
+Phase: 4
+Title: Seeded / Model-Based Exploration
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
+Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
+Current SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
+Last validated implementation SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
+Current milestone: M0 — recovery, Phase 3 closure audit, and task creation
+Last checkpoint: pending initial Phase 4 task checkpoint commit.
+Next action: read the shared safety/semantic/journey/oracle/replay modules and
+perform narrow source archaeology; do not admit actions or start DEV.
 
 ## Prior phase closure handoff
 
 Phase 2A remains closed at implementation `a6d7c8b`, closure checkpoint
-`9bf2c45`, terminal clean HEAD `ec4c143`. Phase 2B remains closed at
+`9bf2c459`, terminal clean HEAD `ec4c143`. Phase 2B remains closed at
 implementation `78e5d1f`, completion checkpoint `1b6e7a5`, terminal clean HEAD
 `1760e594`. Phase 2C remains closed at validated implementation `efc03de`,
-checkpoint `0f894d9`, and terminal clean documentation HEAD `427f1029`. The
-three Phase 2B/2C journeys remain the only canaries.
+checkpoint `0f894d9`, terminal clean documentation HEAD `427f1029`. Phase 3
+is independently reconciled at implementation `8d72ec9`, checkpoint
+`058a1ab`, terminal clean HEAD `acdb4a2`; its source freshness remains
+`LOCAL_TRACKING_REF_ONLY`. The three Phase 2B/2C journeys remain the only
+anchors.
