@@ -43,7 +43,7 @@ import {
 } from '../../src/products/ripple/journeyContracts';
 
 const AUTH_CAPTURE_COMMAND = 'npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"';
-type MatrixPass = 'phase2c-c1' | 'phase2c-c2';
+type MatrixPass = 'phase2c-c1' | 'phase2c-c2' | 'phase2c-diagnostic';
 
 interface AuthFacts {
   valid: boolean;
@@ -348,8 +348,11 @@ function admissionLedger(observations: readonly RealObservation[]): AdmissionRes
 }
 
 function writeMatrix(root: string, baseRunId: string, contracts: readonly FrozenJourneyContract[], observations: readonly RealObservation[], comparisons: readonly Record<string, unknown>[], admissions: readonly AdmissionResult[] = []): void {
+  const matrixVersion = process.env.NIGHTWATCH_PHASE_2C_MATRIX_VERSION ?? 'phase2c-real-v1';
+  if (!/^phase2c-real-v[12](?:-[a-z0-9-]+)?$/.test(matrixVersion)) throw new Error('fail-closed: invalid Phase 2C matrix version');
   fs.writeFileSync(path.join(root, 'artifacts', `phase2c-${baseRunId}-matrix.json`), JSON.stringify({
-    matrixVersion: 'phase2c-real-v1',
+    matrixVersion,
+    nightwatchSha: nightwatchSha(root),
     contractVersion: contracts[0]?.version ?? null,
     oracleVersion: ORACLE_VERSION,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
@@ -378,6 +381,34 @@ test('Phase 2C six serial fresh-context Ripple canary observations', async ({ br
   const contracts = RIPPLE_JOURNEY_DEFINITIONS.map((definition) => freezeJourneyContract(definition));
   const observations: RealObservation[] = [];
   const comparisons: Record<string, unknown>[] = [];
+
+  const diagnosticJourney = process.env.NIGHTWATCH_PHASE_2C_DIAGNOSTIC_JOURNEY;
+  if (diagnosticJourney !== undefined) {
+    if (diagnosticJourney !== 'ripple-payer-exchange-read' || process.env.NIGHTWATCH_PHASE_2C_MATRIX_VERSION !== 'phase2c-real-v2-j1-diagnostic') {
+      throw new Error('fail-closed: only the declared one-context J1 Phase 2C diagnostic is supported');
+    }
+    const contract = contracts.find((item) => item.definition.journeyId === diagnosticJourney);
+    if (contract === undefined) throw new Error('fail-closed: diagnostic journey contract is unavailable');
+    assertJourneyContractUnchanged(contract);
+    const observation = await observeOnce({
+      browser,
+      env,
+      target,
+      statePath: validatedStatePath,
+      contract,
+      runId: `${baseRunId}-j1-diagnostic`,
+      pass: 'phase2c-diagnostic',
+    });
+    if (observation.safety.productionAttempts !== 0 || observation.safety.proxyViolations !== 0 || observation.safety.unknownDestinations !== 0 || observation.safety.unknownApprovals !== 0 || observation.safety.mutations !== 0 || observation.safety.dbQueries !== 0 || observation.safety.actionCausedUnknown !== 0) {
+      throw new Error('SAFETY_REVIEW_REQUIRED: Phase 2C J1 diagnostic');
+    }
+    if (!observation.evidence.authValid) throw new Error(`HUMAN_AUTH_ACTION_REQUIRED: ${diagnosticJourney}; run ${AUTH_CAPTURE_COMMAND}`);
+    observations.push(observation);
+    // Deliberately no replay comparison: this post-fix observation has a new
+    // Nightwatch implementation/matrix version and cannot be paired with V1.
+    writeMatrix(root, baseRunId, contracts, observations, comparisons, admissionLedger(observations));
+    return;
+  }
 
   for (let index = 0; index < contracts.length; index += 1) {
     const contract = contracts[index];
