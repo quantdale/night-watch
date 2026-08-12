@@ -10,7 +10,7 @@ Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
 datastore environment mapping.
-Last checkpoint: 9a2db449a4d1bdc93f86dcce8f95d4a29cacdb73 — deployment/source re-audit checkpoint; local Phase 6 architecture, synthetic matrix,
+Last checkpoint: 9a2db44a3e48787b285523f8a0a9f2af3c65fefc — deployment/source re-audit checkpoint; local Phase 6 architecture, synthetic matrix,
 privacy review, and full validation completed; no datastore query has run.
 Next action: obtain authoritative `mochi` deployment/config proof of the
 selected DEV `ripple-api-micro` runtime's effective datastore environment and
