@@ -6,11 +6,11 @@ Task ID: phase-2c-replay-oracle-verification
 Phase: 2C
 Status: IN_PROGRESS
 Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
-Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
-Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
+Current SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
+Last validated implementation SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
 Branch: `main`
-Last checkpoint: 2026-08-12 — shared hardening and synthetic matrix validated;
-pre-real implementation checkpoint pending.
+Last checkpoint: 2026-08-12 — `PHASE_2C_PRE_REAL_MATRIX_READY` at implementation
+`043c2cc02b96ce9aec42c6b529978150c09dabfe`; no real context has run.
 
 ## Objective
 
@@ -20,10 +20,10 @@ tolerant, privacy-safe, and conservative about anomaly admission.
 
 ## Current Milestone
 
-M4 — Pre-real validation and adversarial self-review.
+M5 — Bounded serial Phase 2C real matrix.
 Status: IN_PROGRESS
-What is being attempted: freeze the validated implementation, contract,
-oracle, and serial matrix versions before any DEV context.
+What is being attempted: execute the six frozen fresh-context observations
+serially after the completed pre-real checkpoint.
 
 ## Completed Milestones
 
@@ -35,12 +35,15 @@ oracle, and serial matrix versions before any DEV context.
   false-negative catalog, and journey contract audit were recorded.
 - M3 — COMPLETE. Shared hardening, golden fixtures, admission model, and
   focused/full local synthetic coverage passed.
+- M4 — COMPLETE. Full local validation, privacy scan, Alphaus read-only status
+  audit, and adversarial self-review passed; implementation checkpoint
+  `043c2cc` is frozen for real execution.
 
 ## Work In Progress
 
-M4 is the active bounded work unit. The implementation is validated locally;
-the pre-real adversarial review, privacy scan, checkpoint commit, and six
-serial DEV contexts remain. No Phase 2C real context has run.
+M5 is the active bounded work unit. The implementation/oracle/contract/matrix
+versions are frozen at the clean pre-real checkpoint; the six serial DEV
+contexts remain. No Phase 2C real context has run.
 
 ## CURRENT_GOAL
 
@@ -51,7 +54,7 @@ and conservative anomaly admission.
 
 ## CURRENT_PHASE
 
-M4 — pre-real validation and adversarial self-review; Phase 2B remains closed.
+M5 — bounded serial Phase 2C real matrix; Phase 2B remains closed.
 
 ## CURRENT_EVIDENCE
 
@@ -69,6 +72,10 @@ M4 — pre-real validation and adversarial self-review; Phase 2B remains closed.
   its diagnostic pair.
 - Phase 2B historical malformed JSON remains a genuine protocol anomaly at an
   unresolved semantic endpoint and was not intentionally replayed.
+- Phase 2C pre-real implementation checkpoint `043c2cc02b96ce9aec42c6b529978150c09dabfe`
+  is clean, validated, and frozen with contract `nightwatch.journey.phase2c.v1`,
+  oracle `nightwatch.oracle.phase2c.v1`, evidence `nightwatch.evidence.phase2c.v1`,
+  and matrix `phase2c-real-v1`.
 - The frozen contract and budget are written in `SPEC.md`: J1/J2/J3 only and
   exactly six additional serial contexts `J1-C1 → J1-C2 → J2-C1 → J2-C2 →
   J3-C1 → J3-C2` before any real execution.
@@ -170,10 +177,18 @@ matrix version and one narrowly justified diagnostic context.
 
 ## REPLAY_MATRIX_LEDGER
 
-Status: FROZEN_NOT_STARTED. Contract/matrix/oracle versions and each sanitized
-result must be recorded before advancing to the next pair. The six-context
-serial order is fixed in `SPEC.md`; the real-run launcher is present but has
-not contacted DEV.
+Status: FROZEN_NOT_STARTED / PRE_REAL_READY. Contract/matrix/oracle versions
+and each sanitized result must be recorded before advancing to the next pair.
+The six-context serial order is fixed in `SPEC.md`; the launcher has not
+contacted DEV.
+
+Pre-real checkpoint: `PHASE_2C_PRE_REAL_MATRIX_READY`.
+Implementation SHA: `043c2cc02b96ce9aec42c6b529978150c09dabfe`.
+Contract version: `nightwatch.journey.phase2c.v1`.
+Oracle version: `nightwatch.oracle.phase2c.v1`.
+Evidence schema: `nightwatch.evidence.phase2c.v1`.
+Matrix version: `phase2c-real-v1`.
+Serial command: `npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
 
 ## BUG_CANDIDATES
 
@@ -243,7 +258,7 @@ not contacted DEV.
   including the new resource/runtime matrix.
 - `npx playwright test --config=playwright.phase2c.config.ts --list`: PASS;
   one opt-in Phase2C matrix test is discoverable.
-- No Phase2C real context or datastore query has run.
+- No Phase 2C real context or datastore query has run.
 
 ## SAFETY_EVENTS
 
@@ -261,28 +276,26 @@ is never printed or inspected for values.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`78e5d1f049064e594f99ed7e600ecffb081d6b23` — current validated source
-baseline until the Phase 2C implementation checkpoint commit is created.
+`043c2cc02b96ce9aec42c6b529978150c09dabfe` — validated Phase 2C
+implementation checkpoint; source, synthetic matrix, and pre-real review pass.
 
 ## LAST_CHECKPOINT_SHA
 
-`1760e594419cabdcec12f6506cabe3aa242331c4` — clean Phase 2B terminal HEAD
-from which this native task was created. The next checkpoint is the clean
-Phase 2C pre-real implementation/documentation checkpoint.
+`043c2cc02b96ce9aec42c6b529978150c09dabfe` —
+`PHASE_2C_PRE_REAL_MATRIX_READY` implementation checkpoint; task-document
+descendants retain the same validated implementation SHA.
 
 ## NEXT_EXACT_ACTION
 
-Complete the recorded adversarial/privacy review, commit the validated
-Nightwatch implementation and pre-real task state, then set
-`PHASE_2C_PRE_REAL_MATRIX_READY` with exact implementation/oracle/contract/
-matrix versions. Only after that clean checkpoint may the declared six-context
-DEV matrix run.
+Run the exact gated serial command:
+`npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
+Do not add contexts or alter the frozen contract; stop on any safety, privacy,
+or auth-integrity event.
 
 ## Exact Next Action
 
-Shared hardening and synthetic coverage are complete. The adversarial review
-is recorded below; only the clean pre-real checkpoint and serial real matrix
-remain.
+The clean pre-real checkpoint is complete. Run only the frozen serial matrix;
+then update STATE/REPORT with each sanitized result and pair comparison.
 
 ## Files Changed
 
@@ -308,11 +321,12 @@ the required-heading repair.
   limited to Nightwatch Phase 2C implementation and task continuity files.
 - Shared replay/oracle hardening is locally validated; no production or
   datastore execution is part of the evidence model.
+- Pre-real checkpoint `043c2cc` is clean and frozen; the next exact action is
+  the gated serial launcher above.
 
 ## Blockers
 
-None. Real execution is not yet authorized; the pre-real checkpoint is still
-ahead in the plan.
+None. The pre-real gate passed; only the bounded serial matrix is authorized.
 
 ## Safety Events
 

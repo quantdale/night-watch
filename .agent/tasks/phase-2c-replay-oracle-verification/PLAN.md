@@ -141,7 +141,7 @@ of historical anomalies, and broad source archaeology.
   contract/oracle/matrix versions are frozen; no blocker remains.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`;
   `npm run agent:check`; `git diff --check`; `git status --short`.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M5 — Bounded serial Phase 2C real matrix
 
@@ -154,7 +154,7 @@ of historical anomalies, and broad source archaeology.
   each result is metadata-only, and no safety/privacy event occurs.
 - Validation commands: approved real-run launcher only; no parallelism,
   exploratory reruns, or anomaly chasing.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Differential analysis and failure attribution
 
