@@ -366,8 +366,15 @@ test('Phase 2B three controlled read-only Ripple journey pairs', async ({ browse
   const validatedStatePath = validateStorageStateFile(statePath);
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
   const root = rootDirectory();
+  const requestedJourneyId = process.env.NIGHTWATCH_PHASE_2B_JOURNEY_ID;
+  const indexedDefinitions = RIPPLE_JOURNEY_DEFINITIONS
+    .map((definition, index) => ({ definition, index }))
+    .filter(({ definition }) => requestedJourneyId === undefined || definition.journeyId === requestedJourneyId);
+  if (indexedDefinitions.length === 0) {
+    throw new Error('fail-closed: requested Phase 2B journey ID is not one of the three approved contracts');
+  }
 
-  for (const [index, definition] of RIPPLE_JOURNEY_DEFINITIONS.entries()) {
+  for (const { definition, index } of indexedDefinitions) {
     const first = await observeOnce({
       browser,
       env,

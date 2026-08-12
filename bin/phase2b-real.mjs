@@ -15,6 +15,7 @@ const args = process.argv.slice(2);
 let env;
 let storage;
 let uiUrl;
+let journeyId;
 for (const arg of args) {
   if (arg.startsWith('--env=')) {
     if (env !== undefined) throw new Error('phase2b-real accepts --env only once');
@@ -25,8 +26,12 @@ for (const arg of args) {
   } else if (arg.startsWith('--ui-url=')) {
     if (uiUrl !== undefined) throw new Error('phase2b-real accepts --ui-url only once');
     uiUrl = arg.slice('--ui-url='.length);
+  } else if (arg.startsWith('--journey-id=')) {
+    if (journeyId !== undefined) throw new Error('phase2b-real accepts --journey-id only once');
+    journeyId = arg.slice('--journey-id='.length);
+    if (journeyId.trim() === '') throw new Error('phase2b-real --journey-id must not be empty');
   } else if (arg === '--help' || arg === '-h') {
-    console.log('Usage: npm run journey:real -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
+    console.log('Usage: npm run journey:real -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/] [--journey-id=ripple-payer-exchange-read|ripple-common-exchange-read|ripple-account-inventory]');
     process.exit(0);
   } else {
     throw new Error(`phase2b-real does not accept option ${arg}`);
@@ -45,6 +50,7 @@ const commonEnv = {
   NIGHTWATCH_PHASE_2B_REAL: '1',
   NIGHTWATCH_TRACE: 'off',
   NIGHTWATCH_HEADED: '0',
+  ...(journeyId === undefined ? {} : { NIGHTWATCH_PHASE_2B_JOURNEY_ID: journeyId }),
   ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }),
 };
 
