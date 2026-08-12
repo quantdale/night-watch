@@ -180,6 +180,12 @@ is captured in memory and reduced before evidence.
   `mochi-dev-pong` in `labs-169405` with DEV labels, but the deployment source
   carrying effective service values is absent, so the runtime/data gate
   remains blocked.
+- The 2026-08-13 follow-up used a temporary isolated GKE metadata context and
+  exact GCR/Cloud Build/GitHub/source checks. It confirmed the live owner chain,
+  image digest, default ServiceAccount, and Secret reference names, but found
+  no non-secret effective AWS/API_ENV mapping or designated scope. The image
+  tag's temporal proximity to Ripple master is not promoted to provenance;
+  the real-data gate remains blocked.
 
 ## Deferred Work
 

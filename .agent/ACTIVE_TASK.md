@@ -10,15 +10,15 @@ Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
 Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
 datastore environment mapping.
-Last checkpoint: 9a2db44a3e48787b285523f8a0a9f2af3c65fefc — deployment/source re-audit checkpoint; local Phase 6 architecture, synthetic matrix,
-privacy review, and full validation completed; no datastore query has run.
-Next action: correlate the live image tag/digest with current source/deployment
-provenance using exact authenticated GitHub metadata, targeted read-only
-`ouchan` deployment manifests/build rules, and exact GCR/Cloud Build metadata.
-The GKE workload is proven, but `API_ENV`/AWS binding remains Secret-backed;
-do not read Secret payloads. Prove the effective datastore environment and
-designated Nightwatch scope before any auth probe or read-only query. Do not
-exec, switch the normal context, guess, or bypass the gate.
+Last checkpoint: a5aeaf0684d02c62ab71c0aec9273b33f2e22973 — temporary isolated
+GKE workload/image/config-reference checkpoint; local Phase 6 architecture,
+synthetic matrix, privacy review, and full validation completed; no datastore
+query has run.
+Next action: reconcile the completed GKE, GCR, Cloud Build, GitHub, and source
+cross-check in STATE/REPORT, then retain the blocker unless an authoritative
+deployment artifact supplies effective `API_ENV`/AWS binding and approved
+designated scope. Do not read Secret payloads, run an auth probe, query a
+datastore, exec, switch the normal context, guess, or bypass the gate.
 
 ## Prior phase closure handoff
 

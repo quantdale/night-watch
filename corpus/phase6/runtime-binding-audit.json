@@ -1,0 +1,85 @@
+{
+  "schema": "nightwatch.runtime-binding-audit.phase6.v1",
+  "auditedAt": "2026-08-13",
+  "runtime": {
+    "cluster": "mochi-dev-pong",
+    "project": "labs-169405",
+    "location": "asia-northeast1-a",
+    "namespace": "default",
+    "workload": "ripple-api-micro",
+    "ownerChain": ["Pod", "ReplicaSet", "Deployment"],
+    "deployment": "ripple-api-micro",
+    "serviceAccount": "default",
+    "computeEnvironment": "DEV_CONFIRMED",
+    "dataEnvironment": "UNRESOLVED"
+  },
+  "image": {
+    "registry": "asia.gcr.io",
+    "repository": "labs-169405/ripple-api-micro",
+    "tag": "b7d124bb517632050de59ccd5ba9032d2caac0e2",
+    "digest": "sha256:48f3e00b4ee417619d080119a83a2e387e77405af4cdcc26158beb9378dcab23",
+    "gcrTimestamp": "2026-08-12T09:47:40+08:00",
+    "cloudBuildExactMatch": false,
+    "sourceCommit": "UNRESOLVED"
+  },
+  "configuration": {
+    "environmentVariableNames": [
+      "API_ENV",
+      "AWS_REGION",
+      "AWS_ARN_ROLE",
+      "AWS_ARN_ROLE_DYNAMODB",
+      "AWS_ACCESS_KEY_STS",
+      "AWS_SECRET_KEY_STS"
+    ],
+    "apiEnvironment": {"source": "SecretKeyRef:ripple-api-micro-envvars/API_ENV", "effectiveValue": "UNRESOLVED"},
+    "awsRegion": {"source": "SecretKeyRef:ripple-api-micro-envvars/AWS_REGION", "effectiveValue": "UNRESOLVED"},
+    "dynamoRole": {"source": "SecretKeyRef:ripple-api-micro-envvars/AWS_ARN_ROLE_DYNAMODB", "effectiveValue": "UNRESOLVED"},
+    "awsAssumeCredentials": {"source": "SecretKeyRef:common-envvars/AWS_ACCESS_KEY_ID_ASSUME,AWS_SECRET_ACCESS_KEY_ASSUME", "valuesInspected": false},
+    "configMapsReferenced": [],
+    "secretReferences": ["common-envvars", "ripple-api-micro-envvars"]
+  },
+  "sourceResolution": {
+    "deploymentTrigger": {
+      "repository": "mobingilabs/ouchan",
+      "commit": "b7d124bb517632050de59ccd5ba9032d2caac0e2",
+      "meaning": "ripple-api-micro deployment trigger from master"
+    },
+    "serviceBuild": {
+      "repository": "mobingilabs/ouchan",
+      "path": "services/ripple-api-micro/Makefile",
+      "meaning": "master clones ripple-api origin/master as apidev"
+    },
+    "rippleSource": {
+      "repository": "mobingilabs/ripple-api",
+      "masterAtAudit": "07114cb2506c9bc8c47c90e8e01b5d9edd6bb9de",
+      "imageCorrelation": "TEMPORAL_ONLY_NOT_PROVEN"
+    },
+    "mochiDeploymentSource": "NOT_RESOLVED_BY_TARGETED_AUTHENTICATED_LOOKUP"
+  },
+  "datastoreBinding": {
+    "dynamoDb": "POSSIBLY_USED_EFFECTIVE_TARGET_UNRESOLVED",
+    "bigQuery": "NOT_PROVEN_FOR_SELECTED_LEGACY_PHP_WORKLOAD",
+    "spanner": "NOT_PROVEN_FOR_SELECTED_LEGACY_PHP_WORKLOAD",
+    "sourceEvidence": "ripple-api AwsSdkClientFactory consumes deployment-provided AWS region and Dynamo role"
+  },
+  "designatedNightwatchScope": {
+    "status": "UNRESOLVED",
+    "durableRuntimeEvidenceContainsScope": false,
+    "dbDiscoveryAllowed": false,
+    "nextApprovedPath": "derive ephemerally from an already-approved KNOWN_READ after binding proof"
+  },
+  "safety": {
+    "secretPayloadValuesSelected": false,
+    "podExec": false,
+    "portForward": false,
+    "datastoreQueries": 0,
+    "datastoreWrites": 0,
+    "protectedScans": 0,
+    "normalKubeContextChanged": false
+  },
+  "verdict": "PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED",
+  "requiredExternalEvidence": [
+    "sanitized effective deployment/config evidence mapping API_ENV and AWS region/role/account without secret payloads",
+    "approved ephemeral designated Nightwatch scope from runtime/API evidence"
+  ]
+}

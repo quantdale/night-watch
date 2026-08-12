@@ -196,10 +196,12 @@ runtime reads or establish a designated Nightwatch scope. No datastore auth
 probe, query, scan, or write ran, and no live datastore verification is
 claimed. The 2026-08-12 deployment/source re-audit confirms the DEV
 `ripple-api-micro` image/branch path and deployment-provided AWS configuration
-slots. An explicit approved metadata query now confirms `mochi-dev-pong` in
-`labs-169405` with DEV labels, but no effective datastore binding or designated
-scope is available from checked-in service configuration. Phase 7 has not
-started.
+slots. Explicit read-only GKE metadata now confirms the live
+`ripple-api-micro` Pod → ReplicaSet → Deployment chain, image digest, default
+ServiceAccount, and Secret reference names in `mochi-dev-pong`/`labs-169405`.
+GCR/Cloud Build/GitHub/source checks did not expose effective Secret-backed
+`API_ENV`/AWS binding or designated scope, so the data environment remains
+unresolved and no datastore query is authorized. Phase 7 has not started.
 
 ## Environment (machine facts)
 

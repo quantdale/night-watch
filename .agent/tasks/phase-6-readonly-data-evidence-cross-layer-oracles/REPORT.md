@@ -11,7 +11,7 @@ probe, read, scan, or write was executed.
 
 - Starting SHA: `abb0d446f52206390272f8d7a17e6bf6d9ecf0bf`.
 - Final validated implementation SHA: `6de063325f2afc1bafc14ce4889c6d53d2e76bed`.
-- Final documentation checkpoint SHA: `9a2db44a3e48787b285523f8a0a9f2af3c65fefc`.
+- Prior documentation checkpoint SHA: `a5aeaf0684d02c62ab71c0aec9273b33f2e22973`.
 - Terminal clean HEAD: verified after the final documentation sync; Git HEAD
   is the authoritative exact value and is emitted in the final handoff.
 - Nightwatch only was modified. Phase 7 was not created or started.
@@ -143,13 +143,13 @@ above these wrappers.
 
 ## Environment and real-query gate
 
-Current status is `RUNTIME_DATA_ENV_SOURCE_DERIVED`, not confirmed. Nightwatch
-configuration identifies the DEV API host as `apidev.alphaus.cloud`. Current
-pipeline/config/source evidence indicates DEV/next service paths may share
-production data-plane resources, but it does not prove which datastore
-environment this selected runtime reads or establish a designated safe
-Nightwatch test scope. Application DEV authentication is not datastore
-authentication.
+Current compute status is `RUNTIME_COMPUTE_ENV_CONFIRMED`; effective data
+status is `RUNTIME_DATA_ENV_UNRESOLVED`. Nightwatch configuration identifies
+the DEV API host as `apidev.alphaus.cloud`. Current deployment/config/source
+evidence proves the live workload and deployment-provided Secret reference
+names, but it does not prove which datastore environment this selected runtime
+reads or establish a designated safe Nightwatch test scope. Application DEV
+authentication is not datastore authentication.
 
 Because this mapping is unresolved, a production read would be unsafe and
 potentially misleading even if an approved wrapper were available. No DB auth
@@ -181,15 +181,17 @@ The re-audit narrowed the missing proof without weakening the gate:
   deployment binding.
 - The approved read-only GKE metadata query, explicitly scoped to
   `labs-169405`, confirms `mochi-dev-pong` is RUNNING in
-  `asia-northeast1-a` with `env=dev` and `network=dev`. The default
-  `mobingi-main` inventory still contains the next/prod clusters only. No
-  context was switched. The checked-in `kubeconf-dev.yaml` has no usable
-  server endpoint, so no workload deployment metadata was obtained; no
-  datastore tool, auth probe, or application request was run.
+  `asia-northeast1-a` with `env=dev` and `network=dev`. A temporary isolated
+  context then confirmed the live owner chain, image digest, default
+  ServiceAccount, and Secret reference names. No normal context was switched;
+  the temporary context and auth-plugin cache were removed. No Secret payload
+  values were selected, inspected, printed, or persisted; no datastore tool,
+  auth probe, pod exec, port-forward, or application request was run.
 - The documented `mobingilabs/mochi` deployment source is not present in the
-  local repository set, and an unauthenticated read-only remote lookup did not
-  resolve it. Its absence leaves the effective `API_ENV`, AWS role/region, and
-  secret/config references unproven.
+  local repository set, and the targeted authenticated remote lookup returned
+  404/not found. GCR exact metadata, the empty exact Cloud Build search, and
+  the `ouchan` deployment trigger/build rules do not expose the effective
+  `API_ENV`, AWS role/region/account, or physical table environment.
 - On 2026-08-13, an approved `gcloud-ro logging read` query restricted to
   resource labels confirmed a live `ripple-api-micro` container in the DEV
   cluster/default namespace. The command emitted labels only; no log payload
@@ -198,11 +200,44 @@ The re-audit narrowed the missing proof without weakening the gate:
   effective environment/datastore value remains unproven.
 
 Therefore the compute environment is confirmed as DEV, but the state remains
-`RUNTIME_DATA_ENV_SOURCE_DERIVED` for the datastore binding. The exact
+`RUNTIME_DATA_ENV_UNRESOLVED` for the datastore binding. The exact
 deployment-level datastore target and designated Nightwatch scope must come
 from an authoritative external deployment/config source before any datastore
 authentication or read. A production read would otherwise risk a
 cross-environment comparison.
+
+### Follow-up deployment-binding audit — 2026-08-13
+
+The safe independent evidence paths were exhausted without weakening the
+environment gate:
+
+| Question | Evidence | Result |
+| --- | --- | --- |
+| Live workload | Isolated read-only GKE metadata in `labs-169405` | `CONFIRMED`: `mochi-dev-pong/asia-northeast1-a/default`, Pod → ReplicaSet → Deployment, Ready |
+| Image | Live Pod image ID plus GCR exact digest/tag metadata | `CONFIRMED`: `asia.gcr.io/labs-169405/ripple-api-micro`, tag `b7d124...`, digest `sha256:48f3...`, GCR timestamp `2026-08-12T09:47:40+08:00` |
+| Deployment source | Exact Cloud Build search, authenticated GitHub metadata, targeted `ouchan` build rules | Image/branch path proven; exact source commit and effective deployment config unresolved |
+| Effective service configuration | Deployment env names and SecretKeyRefs | `API_ENV`, AWS region, and Dynamo role are Secret-backed; values were not selected, inspected, printed, or persisted |
+| Datastore family | Current `ripple-api` source and AWS client factory | DynamoDB client family source-proven for J1/J2; effective AWS account/role/region/table environment unresolved |
+| GCP stores | Live workload config plus selected legacy PHP source | BigQuery/Spanner target not proven for this workload |
+| Designated scope | Phase 5 sanitized corpus/ledger and existing durable runtime evidence | No MSP/company/payer/account scope value or approved ephemeral bridge is available; DB discovery is prohibited |
+
+The `ouchan` deployment trigger is commit
+`b7d124bb517632050de59ccd5ba9032d2caac0e2`; current `ripple-api` master is
+`07114cb2506c9bc8c47c90e8e01b5d9edd6bb9de`. Their timing is recorded only as
+`TEMPORAL_ONLY_NOT_PROVEN` image correlation. The targeted `mochi` repository
+lookup returned 404/not found. Cloud Asset Inventory was not usable for this
+target because the API is disabled/inaccessible; Artifact Registry had no
+matching repository; exact Cloud Build lookup returned no matching record.
+
+The complete sanitized matrix is
+`corpus/phase6/runtime-binding-audit.json`. It contains no Secret payload,
+runtime scope, customer identifier, query parameter, or datastore result.
+
+Required external evidence is specific: a sanitized authoritative deployment
+artifact mapping the effective `API_ENV` and AWS region/role/account (without
+Secret payloads), plus an approved ephemeral designated Nightwatch scope from
+runtime/API evidence. A generic database credential or application password is
+not sufficient.
 
 ## Local synthetic validation
 

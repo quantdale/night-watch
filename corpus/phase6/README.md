@@ -11,7 +11,12 @@ Versions:
 - `nightwatch.data-oracle-catalog.phase6.v1`
 - `nightwatch.data-evidence.phase6.v1`
 - `nightwatch.cross-layer-lineage.phase6.v1`
+- `nightwatch.runtime-binding-audit.phase6.v1`
 
-The initial real frontier is D1/D2/D3 only. The current environment map is
-source-derived rather than confirmed, so the durable catalog marks those
-oracles `ENVIRONMENT_BLOCKED`; no live datastore query is implied.
+The initial real frontier is D1/D2/D3 only. The effective data environment is
+currently unresolved, so the durable catalog marks those oracles
+`ENVIRONMENT_BLOCKED`; no live datastore query is implied.
+
+`runtime-binding-audit.json` records sanitized live workload/image/config
+provenance. It contains reference names and classifications only; it does not
+contain Secret payloads, runtime scope values, or datastore results.
