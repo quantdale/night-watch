@@ -49,6 +49,20 @@ reached its explicit HUMAN_WAIT stage and was canceled without atomically
 replacing the external state. Therefore Phase 4 has zero real contexts, zero
 exploration actions, zero exact replays, and no real anomaly evidence.
 
+## Chrome DevTools MCP discovery
+
+The actual session registry exposed `mcp__chrome_devtools` with 29 tools:
+`click`, `close_page`, `drag`, `emulate`, `evaluate_script`, `fill`,
+`fill_form`, `get_console_message`, `get_network_request`, `handle_dialog`,
+`hover`, `lighthouse_audit`, `list_console_messages`,
+`list_network_requests`, `list_pages`, `navigate_page`, `new_page`,
+`performance_analyze_insight`, `performance_start_trace`,
+`performance_stop_trace`, `press_key`, `resize_page`, `select_page`,
+`take_heapsnapshot`, `take_screenshot`, `take_snapshot`, `type_text`,
+`upload_file`, and `wait_for`. A read-only `list_pages` check failed because
+Chrome was not running on the local DevTools endpoint. No MCP action or
+authenticated data access occurred; Nightwatch remains authoritative.
+
 ## Alphaus repository integrity
 
 Nightwatch performed no Alphaus writes. The final read-only snapshot preserved

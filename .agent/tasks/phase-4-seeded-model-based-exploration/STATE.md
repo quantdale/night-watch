@@ -166,6 +166,50 @@ are Nightwatch-only.
 - Pre-real adversarial review: PASS; durable review is in
   `ADVERSARIAL_REVIEW.md`.
 
+## CHROME_DEVTOOLS_MCP_DISCOVERY
+
+Enumerated from the actual session tool registry on 2026-08-12. The MCP
+server is available as `mcp__chrome_devtools` with exactly 29 tools:
+
+- `click` — click an element by snapshot UID.
+- `close_page` — close a page by ID.
+- `drag` — drag one snapshot element to another.
+- `emulate` — emulate color scheme, CPU, network, geolocation, user agent,
+  headers, and viewport.
+- `evaluate_script` — evaluate a page JavaScript function and return JSON.
+- `fill` — fill an input/textarea or select an option.
+- `fill_form` — fill multiple form controls.
+- `get_console_message` — retrieve a listed console message.
+- `get_network_request` — retrieve a selected/request-ID network record.
+- `handle_dialog` — accept or dismiss a browser dialog.
+- `hover` — hover an element by snapshot UID.
+- `lighthouse_audit` — run accessibility/SEO/best-practice/agentic audits.
+- `list_console_messages` — list page console messages.
+- `list_network_requests` — list page network requests.
+- `list_pages` — list open browser pages.
+- `navigate_page` — navigate, reload, or move history.
+- `new_page` — open a page, optionally in an isolated context.
+- `performance_analyze_insight` — inspect a highlighted trace insight.
+- `performance_start_trace` — start a performance trace.
+- `performance_stop_trace` — stop a performance trace.
+- `press_key` — press a key or key combination.
+- `resize_page` — resize the selected page.
+- `select_page` — select a page by ID.
+- `take_heapsnapshot` — save a heap snapshot.
+- `take_screenshot` — save or return a screenshot.
+- `take_snapshot` — capture the accessibility-tree snapshot.
+- `type_text` — type into the focused input.
+- `upload_file` — upload a file through an element.
+- `wait_for` — wait for specified page text.
+
+Independent connection check: `mcp__chrome_devtools__list_pages` failed closed
+because Chrome was not running at `127.0.0.1:9222`; no page, auth value,
+credential, request body, response body, screenshot, trace, or DOM was read or
+persisted. DevTools MCP remains an independent optional observation surface;
+Nightwatch containment, semantic registry, and metadata-first evidence remain
+authoritative. No MCP browser action was attempted because auth was invalid
+and the real Phase 4 run is already blocked before context creation.
+
 ## SAFETY_EVENTS
 
 NONE for Phase 4. No Phase 4 browser context, product mutation, production
