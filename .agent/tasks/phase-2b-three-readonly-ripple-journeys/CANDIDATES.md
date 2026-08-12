@@ -54,7 +54,9 @@ backend read methods, and their UI state transitions differ.
   an existing vendor/month/status view control. Status and vendor setters are
   Vuex local-view mutations; month selection triggers the source-defined read.
 - **Expected read API:** UI `src/vuex/api/exchangeRatePayer_v2.js` calls
-  `GET /v2/payer/exchange_rate/{month}`.
+  `GET /v2/payer/exchange_rate/{month}` on the basic API base
+  `/m/ripple/`, giving the network path
+  `/m/ripple/v2/payer/exchange_rate/{month}`.
 - **Backend proof:** Ripple API routing maps this GET to
   `App\\Handler\\ExchangeRate::getAccountExchangeForMonth`. That method reads
   user payer metadata and `secondaryListItems` values, then constructs the
@@ -81,7 +83,8 @@ backend read methods, and their UI state transitions differ.
   selector only updates the exchange-rate Vuex view state and the page watcher
   invokes the same known GET for the selected vendor.
 - **Expected read API:** `src/vuex/api/exchangeRateGlobal.js` calls
-  `GET /exchange_rate/global/{vendor}`.
+  `GET /exchange_rate/global/{vendor}` on the basic API base `/m/ripple/`,
+  giving `/m/ripple/exchange_rate/global/{vendor}`.
 - **Backend proof:** Ripple API routing maps this GET to
   `App\\Handler\\ExchangeRate::getCommonExchangeRate`. The handler validates
   the vendor, reads user currency metadata and master-table lists, and builds
@@ -106,8 +109,10 @@ backend read methods, and their UI state transitions differ.
   `defaultVendor` to `aws`, so the initial source path is deterministic.
 - **Expected read APIs:** page initialization first dispatches billing-group
   list fetch and then account fetch. The selected source paths are
-  `GET billing/v1/billinggroups` via `streamPromise('GET', ...)` and
-  `GET /accts?vendor=aws` via `src/vuex/api/accounts.js`.
+  `GET billing/v1/billinggroups` via `streamPromise('GET', ...)` on the Blue
+  base `/m/blue/`, giving `/m/blue/billing/v1/billinggroups`, and
+  `GET /accts?vendor=aws` on the basic `/m/ripple/` base, giving
+  `/m/ripple/accts?vendor=aws`.
 - **Backend proof:** Ouchan `billingd` `ListBillingGroups` streams billing
   group data through read helpers; no write method is called. Ripple API
   routing maps `GET /accts` to `App\\Handler\\Account::getAccountVendor`.
@@ -126,10 +131,10 @@ backend read methods, and their UI state transitions differ.
 
 | Intentional/required source behavior | Class | Proof status | Contract status |
 |---|---|---|---|
-| `GET /v2/payer/exchange_rate/{month}` | `KNOWN_READ` | Ripple UI action → Ripple API route → `ExchangeRate::getAccountExchangeForMonth`; only reads/response assembly | Approved |
-| `GET /exchange_rate/global/{vendor}` | `KNOWN_READ` | Ripple UI action → Ripple API route → `ExchangeRate::getCommonExchangeRate`; only reads/response assembly | Approved |
-| `GET /billing/v1/billinggroups` | `KNOWN_READ` | Ripple UI `streamPromise('GET')` → Blue Billing list RPC → Ouchan list/read helpers | Approved |
-| `GET /accts?vendor=aws` | `KNOWN_READ` | Ripple UI action → Ripple API route → `Account::getAccountVendor`; read/cache assembly | Approved |
+| `GET /m/ripple/v2/payer/exchange_rate/{month}` | `KNOWN_READ` | Ripple UI action + basic API base → Ripple API route → `ExchangeRate::getAccountExchangeForMonth`; only reads/response assembly | Approved |
+| `GET /m/ripple/exchange_rate/global/{vendor}` | `KNOWN_READ` | Ripple UI action + basic API base → Ripple API route → `ExchangeRate::getCommonExchangeRate`; only reads/response assembly | Approved |
+| `GET /m/blue/billing/v1/billinggroups` | `KNOWN_READ` | Ripple UI `streamPromise('GET')` + Blue API base → Blue Billing list RPC → Ouchan list/read helpers | Approved |
+| `GET /m/ripple/accts?vendor=aws` | `KNOWN_READ` | Ripple UI action + basic API base → Ripple API route → `Account::getAccountVendor`; read/cache assembly | Approved |
 | `POST /v2/payer/exchange_rate/{month}` | `KNOWN_MUTATION` | Maps to `saveAccountExchangeForMonth` and table updates | Prohibited; never triggered |
 | `POST /exchange_rate/global/{vendor}/{month}` | `KNOWN_MUTATION` | Maps to `setCommonExchangeRate` and `createItem` | Prohibited; never triggered |
 | `POST /billing/v1/...` and any account POST/PUT/DELETE | `KNOWN_MUTATION` or out of contract | Source mutation handlers exist | Prohibited; never triggered |

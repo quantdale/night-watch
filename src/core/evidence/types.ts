@@ -26,7 +26,9 @@ export type RunEventType =
   | 'stability'
   | 'download'
   | 'service-worker'
-  | 'bootstrap';
+  | 'bootstrap'
+  | 'journey'
+  | 'journey-step';
 
 export type RunSeverity = 'info' | 'warn' | 'error' | 'fatal';
 

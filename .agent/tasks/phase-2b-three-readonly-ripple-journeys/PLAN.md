@@ -101,7 +101,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: reasonable candidate pool completed and rejected
   candidates have explicit reasons.
 - Validation commands: read-only git/source checks; no runtime target.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Semantic proof, selection, and three journey contracts
 
@@ -114,7 +114,7 @@ unbounded Ripple archaeology.
   has source proof and no contract requires an unknown endpoint.
 - Validation commands: source evidence review and contract consistency tests
   once schemas exist.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M3 — Reusable journey engine design checkpoint
 
@@ -127,7 +127,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: a fourth journey can be represented mostly by a
   contract and small selectors/actions, with no duplicated runner boot logic.
 - Validation commands: type-level/design review; no real target.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M4 — Implement engine and semantic/evidence integration
 
@@ -140,7 +140,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: no per-journey bespoke runner duplication; fail-closed
   unknown/mutation behavior is enforced in code.
 - Validation commands: focused unit tests, `npx tsc --noEmit`.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M5 — Synthetic/local validation
 
@@ -152,7 +152,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: tests exercise real parser/classifier/executor/evidence/
   comparator code and all Phase 2B fixture cases pass.
 - Validation commands: focused suite; `npx playwright test`.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Pre-real full validation and adversarial review
 

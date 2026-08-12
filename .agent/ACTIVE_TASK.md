@@ -8,12 +8,13 @@ Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
 Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
 Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
-Current milestone: M1 — Ripple archaeology and candidate inventory (IN_PROGRESS)
-Last checkpoint: 2026-08-12 — M0 task-routing checkpoint `5797ac8`; Phase 2A
-closure reconciled against Git and Phase 2B frozen SPEC/task files created
-before source archaeology.
-Next action: inventory Ripple candidates from minimal source and record
-repository freshness before selecting any journey.
+Current milestone: M5 — synthetic/local validation (IN_PROGRESS)
+Last checkpoint: 2026-08-12 — M2/M3/M4 contract, semantic-registry, generic
+engine, tripwire, evidence, replay, and local-fixture implementation is ready
+for Nightwatch-only commit/checkpoint; focused suite 12 passed.
+Next action: complete full local validation, adversarial self-review, then add
+the serial gated real-run harness. No DEV context is authorized until both
+pre-real checkpoints are recorded.
 
 ## Phase 2A closure handoff
 

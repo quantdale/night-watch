@@ -53,7 +53,11 @@ import { resolveStorageStatePath, validateStorageStateFile } from './fixtures/st
 import { installFetchGuard } from './network/fetchGuard';
 import { checkProxyHealth, requireProxyRuntime } from '../proxy/runtime';
 import type { ProxyRuntimeState } from '../proxy/types';
-import { classifyRippleEndpoint } from '../core/safety/endpointSemantics';
+import {
+  classifyRippleEndpoint,
+  matchRippleEndpoint,
+  type EndpointSemanticRule,
+} from '../core/safety/endpointSemantics';
 
 export interface NightwatchContextOptions {
   env: EnvironmentConfig;
@@ -73,6 +77,8 @@ export interface NightwatchContextOptions {
   proxyPollIntervalMs?: number;
   /** Opt-in fixed-category bootstrap/runtime diagnostics for Phase 2A. */
   bootstrapDiagnostics?: boolean;
+  /** Explicit source-reviewed endpoint rules for a Phase 2B journey run. */
+  endpointRegistry?: readonly EndpointSemanticRule[];
 }
 
 export interface NightwatchContext {
@@ -301,6 +307,7 @@ export async function createNightwatchContext(
     recorder,
     monitor,
     endpointClassifier: (url, method) => classifyRippleEndpoint(url, method, opts.env),
+    endpointMatcher: (url, method) => matchRippleEndpoint(url, method, opts.env, opts.endpointRegistry),
     optionalSupportBlockedHosts,
     browserBackgroundBlockedHosts,
   });

@@ -30,7 +30,10 @@ import { decideBrowserHttp, decideBrowserWebSocket } from '../../core/safety/pol
 import { isBrowserBackgroundClassification, isNonFatalBlock, type BrowserBackgroundClassification } from '../../core/safety/types';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
-import type { EndpointSemanticClassification } from '../../core/safety/endpointSemantics';
+import type {
+  EndpointSemanticClassification,
+  EndpointSemanticMatch,
+} from '../../core/safety/endpointSemantics';
 import {
   checkUnexpectedStatus,
   checkJsonBody,
@@ -47,8 +50,8 @@ const MAX_BODY_CHARS = 1_000_000;
  */
 const OBSERVATION_GRACE_MS = 150;
 
-/** No path-level endpoint registry exists in the capture observer. HTTP
- * method alone is deliberately insufficient to label a request read/mutate. */
+/** HTTP method alone is deliberately insufficient to label a request
+ * read/mutate; the optional matcher is populated only by reviewed journeys. */
 const OBSERVED_ENDPOINT_CLASSIFICATION = 'UNKNOWN' as const;
 
 function safeProtocolLocation(url: string): { origin?: string; path?: string } {
@@ -88,6 +91,27 @@ export interface NetworkObserver {
   telemetryBlockedHosts(): Set<string>;
   /** Exact browser-background hosts and their semantic categories. */
   browserBackgroundBlockedHosts(): Map<string, BrowserBackgroundClassification>;
+  /** Mark the one declarative journey action currently being executed. */
+  beginJourneyIntent(stepId: string, actionType: string): void;
+  /** End the current declarative journey action. */
+  endJourneyIntent(stepId: string): void;
+  /** Sanitized semantic request ledger for the current run. */
+  semanticRequests(): readonly SemanticRequestObservation[];
+}
+
+export type SemanticRequestDisposition =
+  | 'KNOWN_READ'
+  | 'KNOWN_MUTATION'
+  | 'PASSIVE_UNKNOWN_OBSERVED'
+  | 'ACTION_CAUSED_UNKNOWN';
+
+export interface SemanticRequestObservation {
+  ruleId: string;
+  classification: EndpointSemanticClassification;
+  disposition: SemanticRequestDisposition;
+  method: string;
+  stepId: string | null;
+  actionType: string | null;
 }
 
 export function createNetworkObserver(opts: {
@@ -95,6 +119,7 @@ export function createNetworkObserver(opts: {
   recorder: RunRecorder;
   monitor: RunMonitor;
   endpointClassifier?: (url: string, method: string) => EndpointSemanticClassification | null;
+  endpointMatcher?: (url: string, method: string) => EndpointSemanticMatch | null;
   optionalSupportBlockedHosts?: Set<string>;
   browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
 }): NetworkObserver {
@@ -106,6 +131,74 @@ export function createNetworkObserver(opts: {
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
   const telemetryBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
+  const semanticLedger: SemanticRequestObservation[] = [];
+  let journeyIntent: { stepId: string; actionType: string } | null = null;
+
+  function matchEndpoint(rawUrl: string, method: string): EndpointSemanticMatch | null {
+    if (opts.endpointMatcher !== undefined) return opts.endpointMatcher(rawUrl, method);
+    const classification = opts.endpointClassifier?.(rawUrl, method) ?? null;
+    return classification === null ? null : { ruleId: 'legacy-classifier', classification };
+  }
+
+  function recordSemanticObservation(
+    match: EndpointSemanticMatch,
+    method: string,
+  ): SemanticRequestObservation {
+    const action = journeyIntent;
+    const disposition: SemanticRequestDisposition =
+      match.classification === 'KNOWN_READ'
+        ? 'KNOWN_READ'
+        : match.classification === 'KNOWN_MUTATION'
+          ? 'KNOWN_MUTATION'
+          : action?.actionType === 'NAVIGATE_APPROVED_ROUTE' || action === null
+            ? 'PASSIVE_UNKNOWN_OBSERVED'
+            : 'ACTION_CAUSED_UNKNOWN';
+    const observation: SemanticRequestObservation = {
+      ruleId: match.ruleId,
+      classification: match.classification,
+      disposition,
+      method,
+      stepId: action?.stepId ?? null,
+      actionType: action?.actionType ?? null,
+    };
+    semanticLedger.push(observation);
+    const event = recorder.event({
+      type: 'journey',
+      severity: disposition === 'KNOWN_MUTATION' || disposition === 'ACTION_CAUSED_UNKNOWN' ? 'fatal' : 'info',
+      message: `semantic endpoint ${disposition}`,
+      data: {
+        ruleId: observation.ruleId,
+        classification: observation.classification,
+        disposition: observation.disposition,
+        method: observation.method,
+        ...(observation.stepId === null ? {} : { stepId: observation.stepId }),
+        ...(observation.actionType === null ? {} : { actionType: observation.actionType }),
+      },
+    });
+    if (disposition === 'ACTION_CAUSED_UNKNOWN') {
+      const failureEvent = recorder.event({
+        type: 'hard-failure',
+        severity: 'fatal',
+        message: 'HARD FAILURE: journey action caused an unknown API request',
+        data: {
+          reason: 'action-caused-unknown',
+          path: 'semantic-endpoint',
+          ruleId: observation.ruleId,
+          stepId: observation.stepId,
+        },
+      });
+      monitor.recordHardFailure(failureEvent, {
+        url: 'https://semantic-endpoint.invalid/',
+        verdict: 'deny',
+        hostClass: 'semantic-endpoint',
+        reason: 'action-caused-unknown',
+        monitorReason: 'POLICY_VIOLATION',
+        guardType: 'semantic-endpoint',
+        path: 'semantic-endpoint',
+      });
+    }
+    return observation;
+  }
 
   async function handleRoute(route: Route): Promise<void> {
     try {
@@ -121,7 +214,11 @@ export function createNetworkObserver(opts: {
       }
 
       const decision = decideBrowserHttp(policy, rawUrl);
-      const endpointClassification = opts.endpointClassifier?.(rawUrl, request.method()) ?? null;
+      const endpointMatch = matchEndpoint(rawUrl, request.method());
+      const endpointClassification = endpointMatch?.classification ?? null;
+      const semanticObservation = endpointMatch === null
+        ? null
+        : recordSemanticObservation(endpointMatch, request.method());
 
       // Register secrets BEFORE recording anything: every sensitive header
       // value plus the full Cookie header becomes a redaction secret.
@@ -150,6 +247,7 @@ export function createNetworkObserver(opts: {
             url: redactedUrl,
             method: request.method(),
             endpointClassification,
+            semanticRuleId: endpointMatch?.ruleId,
             verdict: 'deny',
             reason: 'known-mutation-endpoint',
             path: 'semantic-endpoint',
@@ -164,6 +262,15 @@ export function createNetworkObserver(opts: {
           guardType: 'semantic-endpoint',
           path: 'semantic-endpoint',
         });
+        try {
+          await route.abort('blockedbyclient');
+        } catch {
+          // The Fetch guard may have handled the same request first.
+        }
+        return;
+      }
+
+      if (decision.verdict === 'allow' && semanticObservation?.disposition === 'ACTION_CAUSED_UNKNOWN') {
         try {
           await route.abort('blockedbyclient');
         } catch {
@@ -190,6 +297,7 @@ export function createNetworkObserver(opts: {
             policyHostClass: decision.hostClass,
             reason: decision.reason,
             ...(endpointClassification === null ? {} : { endpointClassification }),
+            ...(endpointMatch === null ? {} : { endpointRuleId: endpointMatch.ruleId }),
           },
         });
         await route.continue();
@@ -396,7 +504,7 @@ export function createNetworkObserver(opts: {
       const contentType = responseHeaders['content-type'];
       const contentLength = responseHeaders['content-length'];
       const method = response.request().method();
-      const endpointClassification = opts.endpointClassifier?.(rawUrl, method) ?? null;
+      const endpointClassification = matchEndpoint(rawUrl, method)?.classification ?? null;
       active = Math.max(0, active - 1);
       lastActivity = Date.now();
 
@@ -627,5 +735,15 @@ export function createNetworkObserver(opts: {
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
     telemetryBlockedHosts: () => telemetryBlockedHosts,
     browserBackgroundBlockedHosts: () => browserBackgroundBlockedHosts,
+    beginJourneyIntent: (stepId: string, actionType: string): void => {
+      if (journeyIntent !== null) {
+        throw new Error('fail-closed: a journey action is already active');
+      }
+      journeyIntent = { stepId, actionType };
+    },
+    endJourneyIntent: (stepId: string): void => {
+      if (journeyIntent !== null && journeyIntent.stepId === stepId) journeyIntent = null;
+    },
+    semanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.map((item) => ({ ...item })),
   };
 }

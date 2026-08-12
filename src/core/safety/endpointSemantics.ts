@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
-// Nightwatch — Ripple endpoint semantic registry (Phase 2A).
+// Nightwatch — Ripple endpoint semantic registry.
 //
 // HTTP method is not a read/write contract. Only source-backed, exact rules
 // may classify an API endpoint as KNOWN_READ or KNOWN_MUTATION. The initial
-// real-observation registry is intentionally empty: an encountered API call
-// therefore remains UNKNOWN and is recorded without being deliberately
-// replayed or invoked by Nightwatch.
+// the default registry remains intentionally empty. Product journey contracts
+// supply a reviewed registry explicitly; unrelated observations therefore
+// remain UNKNOWN and are never deliberately replayed or invoked.
 // ---------------------------------------------------------------------------
 
 import type { EnvironmentConfig } from '../environment/types';
@@ -16,13 +16,21 @@ export interface EndpointSemanticRule {
   id: string;
   host: string;
   method: string;
-  path: string;
+  /** Exact URL pathname. */
+  path?: string;
+  /** Anchored source-reviewed pathname pattern for dynamic route segments. */
+  pathPattern?: string;
   classification: EndpointSemanticClassification;
   provenance: string;
 }
 
 /** No API semantics are asserted without a reviewed exact source-backed rule. */
 export const RIPPLE_ENDPOINT_SEMANTIC_REGISTRY: readonly EndpointSemanticRule[] = [];
+
+export interface EndpointSemanticMatch {
+  ruleId: string;
+  classification: EndpointSemanticClassification;
+}
 
 function hostMatches(url: URL, configuredHost: string): boolean {
   const normalized = configuredHost.toLowerCase();
@@ -46,21 +54,46 @@ export function classifyRippleEndpoint(
   env: EnvironmentConfig,
   registry: readonly EndpointSemanticRule[] = RIPPLE_ENDPOINT_SEMANTIC_REGISTRY,
 ): EndpointSemanticClassification | null {
+  return matchRippleEndpoint(rawUrl, method, env, registry)?.classification ??
+    (isApiUrl(rawUrl, env) ? 'UNKNOWN' : null);
+}
+
+/**
+ * Return the reviewed rule identity as well as its semantic class. The rule
+ * identity is metadata-only evidence; URL paths and query values are never
+ * returned to callers for persistence.
+ */
+export function matchRippleEndpoint(
+  rawUrl: string,
+  method: string,
+  env: EnvironmentConfig,
+  registry: readonly EndpointSemanticRule[] = RIPPLE_ENDPOINT_SEMANTIC_REGISTRY,
+): EndpointSemanticMatch | null {
   let url: URL;
   try {
     url = new URL(rawUrl);
   } catch {
-    return 'UNKNOWN';
+    return { ruleId: 'invalid-url', classification: 'UNKNOWN' };
   }
   if (!isApiHost(url, env)) return null;
 
   const normalizedMethod = method.toUpperCase();
   const rule = registry.find(
     (candidate) =>
-      candidate.host.toLowerCase() === url.hostname.toLowerCase() &&
+      hostMatches(url, candidate.host) &&
       candidate.method.toUpperCase() === normalizedMethod &&
-      candidate.path === url.pathname,
+      (candidate.path === url.pathname ||
+        (candidate.pathPattern !== undefined && new RegExp(candidate.pathPattern).test(url.pathname))),
   );
-  return rule?.classification ?? 'UNKNOWN';
+  return rule === undefined
+    ? { ruleId: 'unreviewed-api-endpoint', classification: 'UNKNOWN' }
+    : { ruleId: rule.id, classification: rule.classification };
 }
 
+function isApiUrl(rawUrl: string, env: EnvironmentConfig): boolean {
+  try {
+    return isApiHost(new URL(rawUrl), env);
+  } catch {
+    return true;
+  }
+}
