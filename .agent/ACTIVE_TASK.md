@@ -12,9 +12,11 @@ Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
 datastore environment mapping.
 Last checkpoint: 8f2c2a5ed6e7d794f9d2b159c1f6f39923c7fee3 — local Phase 6 architecture, synthetic matrix,
 privacy review, and full validation completed; no datastore query has run.
-Next action: obtain a source/config-backed proof of the selected DEV runtime's
-datastore environment and designated Nightwatch scope before any auth probe or
-read-only query; do not guess or bypass the gate.
+Next action: obtain authoritative deployment/config proof of the selected DEV
+`ripple-api-micro` runtime's datastore environment and designated Nightwatch
+scope before any auth probe or read-only query; checked-in source and approved
+local cluster metadata do not contain that proof. Do not guess or bypass the
+gate.
 
 ## Prior phase closure handoff
 

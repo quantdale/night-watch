@@ -35,21 +35,34 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
 - Approved tooling inventory: `dynamo-ro`, `bq-ro`, `spanner-ro`, and
   `gcloud-ro` available; raw aliases unavailable; underlying aws/bq/gcloud
   binaries present. No tool was invoked against a datastore.
+- Deployment/source re-audit completed 2026-08-12: Nightwatch DEV resolves to
+  `apidev.alphaus.cloud`; the Ripple master branch is cloned as `apidev` by
+  `ouchan/services/ripple-api-micro/Makefile`; the PHP API's data-plane
+  configuration is deployment-provided through `API_ENV`, `AWS_REGION`, and
+  `AWS_ARN_ROLE_DYNAMODB`, whose values are not checked into the read-only
+  source, while its Dynamo client consumes the role/region values. The
+  approved GKE inventory contains `mochi-next-pong` and
+  `mochi-prod-ping` but no DEV cluster, and the local kubeconfig has no DEV
+  context. This strengthens, but does not resolve, the environment gate.
 
 ## Work In Progress
 
 Local work is complete. Keep the external data gate closed: the selected DEV
 runtime's actual datastore environment and designated Nightwatch scope remain
-unconfirmed. No datastore auth probe is justified until that mapping is
-proved.
+unconfirmed. Source proves the image/branch path and configuration slots, not
+their deployment values. No datastore auth probe is justified until that
+mapping is proved.
 
 ## Exact Next Action
 
-The exact next action is external/source configuration verification of the
-selected DEV runtime's datastore environment and designated scope. After that
-proof, re-read this task state, validate one frozen plan, and only then assess
-the auth/tool gate. Never run a real datastore query before the environment
-gate passes.
+The exact next action is deployment-level configuration verification for the
+selected DEV `ripple-api-micro` runtime: prove the effective datastore target
+(`API_ENV`/AWS role and region or equivalent) and obtain the designated
+Nightwatch test scope. The local approved cluster metadata has no DEV context,
+so this proof must come from an authoritative deployment/config source. After
+that proof, re-read this task state, validate one frozen plan, and only then
+assess the auth/tool gate. Never run a real datastore query before the
+environment gate passes.
 
 ## CURRENT_GOAL
 
@@ -139,9 +152,19 @@ tool invocation has occurred. Raw aliases `dynamo_query`, `bq_query`, and
 ## DATA_ENVIRONMENT_MAP
 
 `RUNTIME_DATA_ENV_SOURCE_DERIVED` only. Phase 5 runtime target is DEV API
-`apidev.alphaus.cloud`. PIPELINE_MAP/source evidence indicates DEV/next service
-paths can read the production data plane, but the exact runtime binding and a
-designated Nightwatch test scope were not executed or independently confirmed.
+`apidev.alphaus.cloud`; Nightwatch's DEV config is explicit at
+`config/environments/dev.json:4-12`. The current read-only source audit proves
+that the Ripple master branch is built as the `apidev` image input by
+`mobingilabs/ouchan/services/ripple-api-micro/Makefile:12-26`, and that the PHP
+API selects its Dynamo client from deployment-provided `API_ENV`,
+`AWS_REGION`, and `AWS_ARN_ROLE_DYNAMODB` slots
+(`mobingilabs/ripple-api/docker/ripple-api.env.dist:15-55` and
+`src/App/Core/Factory/AwsSdkClientFactory.php:63-80`). It does not prove the
+effective values for the selected running deployment. The approved GKE
+metadata lists `mochi-next-pong`, `mochi-prod-ping`, `curmx`, and
+`mcx-us-east1-cfg-ping`; the local kubeconfig exposes only next/prod mochi
+contexts and no DEV context. No context was switched and no deployment or
+datastore query was run. The designated Nightwatch scope is also absent.
 No cross-layer comparison or real query is allowed while this remains
 unconfirmed. Application auth is not datastore auth.
 
@@ -236,10 +259,20 @@ and query-widening fallbacks are rejected by frozen intent.
   it fetches the MSP inventory and derives groups in memory.
 - The real adapter default is fail-closed; a synthetic invoker is the only
   exercised execution path in this checkpoint.
+- The current deployment/source audit cannot close the runtime gate: the
+  checked-in legacy deployment path does not carry effective AWS role/region
+  or `API_ENV` values, and the approved local cluster metadata has no DEV
+  context. `billingd` and `costd` source also contains production Spanner
+  bindings for their current non-local paths, but that is not proof of the
+  selected legacy `apidev` runtime and must not be substituted for deployment
+  evidence.
 
 ## UNRESOLVED
 
 - Runtime DEV datastore environment and designated scope.
+- Effective deployment values for the selected `ripple-api-micro` runtime
+  (`API_ENV`, AWS role/region or equivalent) are not available in checked-in
+  source or the approved local cluster metadata.
 - Current live auth state for approved datastore tooling.
 - Exact runtime DEV→datastore binding and designated Nightwatch test scope.
 - Datastore-tool auth status; no auth probe was attempted.
@@ -267,9 +300,9 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## NEXT_EXACT_ACTION
 
-Obtain source/config-backed proof of the selected DEV runtime's datastore
-environment and designated Nightwatch scope. If that proof remains absent,
-keep this task blocked and do not run a datastore query or auth probe.
+Obtain authoritative deployment/config proof of the selected DEV runtime's
+datastore environment and designated Nightwatch scope. If that proof remains
+absent, keep this task blocked and do not run a datastore query or auth probe.
 
 ## RESUME_RECIPE
 

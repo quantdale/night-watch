@@ -194,7 +194,10 @@ The real data gate remains closed as
 source evidence do not prove which datastore environment the selected DEV API
 runtime reads or establish a designated Nightwatch scope. No datastore auth
 probe, query, scan, or write ran, and no live datastore verification is
-claimed. Phase 7 has not started.
+claimed. The 2026-08-12 deployment/source re-audit confirms the DEV
+`ripple-api-micro` image/branch path and deployment-provided AWS configuration
+slots, but the approved local cluster metadata exposes no DEV context and no
+effective datastore binding. Phase 7 has not started.
 
 ## Environment (machine facts)
 

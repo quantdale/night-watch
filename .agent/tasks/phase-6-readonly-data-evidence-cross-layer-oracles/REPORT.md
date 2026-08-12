@@ -158,6 +158,40 @@ first and one fresh replay for each of D1–D3, serially. The real query ledger 
 0 executed, 0 production writes, 0 protected scans, 0 DB mutations, and 0
 credentials exposed. No result is labeled `DATASTORE_VERIFIED`.
 
+### Deployment/source re-audit — 2026-08-12
+
+The re-audit narrowed the missing proof without weakening the gate:
+
+- `config/environments/dev.json:4-12` identifies the UI/API runtime as
+  `apidev.alphaus.cloud` and records the existing caveat that DEV services may
+  share production data-plane resources.
+- The read-only `ripple-api-micro` build path clones `ripple-api` and checks out
+  `origin/master` as `apidev` (`ouchan/services/ripple-api-micro/Makefile:12-26`).
+  This proves the image/branch lineage, not the data environment.
+- The PHP API's deployment template exposes `API_ENV`, `AWS_REGION`, and
+  `AWS_ARN_ROLE_DYNAMODB` (`ripple-api/docker/ripple-api.env.dist:15-55`), and
+  the AWS client factory consumes those deployment-provided values for its
+  Dynamo client (`ripple-api/src/App/Core/Factory/AwsSdkClientFactory.php:63-80`).
+  Their effective values are not in the checked-in source.
+- The current source also shows mixed service behavior: `billingd` declares a
+  separate DEV Spanner identifier but selects its production identifier in the
+  current `run` path, while `costd` constructs the production Spanner and
+  BigQuery clients directly. Those services are not proof of the selected
+  legacy `apidev` PHP runtime and cannot be used as a substitute for its
+  deployment binding.
+- The approved read-only GKE metadata command listed
+  `mochi-next-pong`, `mochi-prod-ping`, `curmx`, and
+  `mcx-us-east1-cfg-ping`. `kubectl config get-contexts -o name` exposed only
+  next/prod mochi contexts and no DEV context. No context was switched; no
+  deployment metadata, datastore tool, auth probe, or application request was
+  run.
+
+Therefore the state remains `RUNTIME_DATA_ENV_SOURCE_DERIVED`, not confirmed.
+The exact deployment-level datastore target and designated Nightwatch scope
+must come from an authoritative external deployment/config source before any
+datastore authentication or read. A production read would otherwise risk a
+cross-environment comparison.
+
 ## Local synthetic validation
 
 The local matrix exercised the actual typed plan, validator, adapter,

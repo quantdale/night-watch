@@ -173,6 +173,11 @@ is captured in memory and reduced before evidence.
 - `DB_SCHEMA_REFERENCE.md` §3.3 conflicts with the current `spanner-ro` source
   and its own §3/§5 on `--database=main`; this is retained as a documentation
   conflict and does not authorize bypassing Nightwatch validation.
+- The 2026-08-12 deployment/source re-audit proves the DEV image/branch path
+  but not its effective datastore binding: `ripple-api-micro` builds the
+  Ripple master branch as `apidev`, while `API_ENV`, AWS role, and AWS region
+  remain deployment-provided. Approved local GKE metadata has no DEV context,
+  so the runtime/data gate remains blocked.
 
 ## Deferred Work
 
