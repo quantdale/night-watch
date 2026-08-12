@@ -692,3 +692,54 @@ parser. No endpoint or host is broadly suppressed.
 
 **Phase applicability.** Phase 2A authentication capture and later workflows
 that reuse the monitor contract.
+
+## D-31 — Designated DEV credential refresh is external, narrow, and subordinate to Nightwatch safety
+
+**Decision.** Automatic login is permitted only for the designated DEV test
+account and only after the exact DEV UI target, DEV auth/API host allowlist,
+production deny canary, healthy loopback proxy, browser containment contract,
+and authenticated metadata-only evidence policy all pass. A valid external
+storage state is reused first. A missing, expired, or semantically invalid
+state is refreshed through the source-backed Ripple username/password controls
+with one bounded submission, then validated in a fresh guarded context and
+atomically replaced.
+
+The credential provider is auth-only and stores the record outside the
+workspace at the owner-only-file storage class under the operator's local
+Nightwatch namespace. OS keychain facilities were not available in the
+validated environment, so the provider uses a `0700` directory and `0600`
+atomic file writes. The interactive configuration command accepts no secret
+arguments or environment values and disables terminal echo for both fields.
+No username/password value is returned in metadata, evidence, task state,
+logs, exceptions, or browser/MCP records.
+
+Chrome DevTools MCP remains optional and subordinate. Its discovered capability
+is recorded as server `mcp__chrome_devtools` with 29 tools, but real
+authenticated attachment is disabled unless a dedicated Nightwatch-owned
+loopback CDP architecture proves the proxy, production deny, unknown-host,
+WebSocket, privacy, and lifecycle facts. MCP never receives credential-bearing
+arguments; Nightwatch/Playwright remains the sole executor.
+
+**Threat-model mitigations.**
+
+| threat | mitigation |
+|---|---|
+| `SECRET_IN_SOURCE`, `SECRET_IN_GIT`, task/docs/fixtures | only fake synthetic values appear in tests; the real record is external and never serialized into Nightwatch |
+| `SECRET_IN_SHELL_HISTORY`, `SECRET_IN_PROCESS_ARGS` | hidden TTY prompts; configuration accepts no credential flags, and the provider does not read credential environment variables |
+| `SECRET_IN_MCP_TRANSCRIPT` | `MCP_SECRET_INPUT_ALLOWED=false`; login is in-process Playwright and no MCP fill/type/evaluate call receives the secret |
+| `SECRET_IN_CONSOLE`, `SECRET_IN_NETWORK_EVIDENCE`, `SECRET_IN_EXCEPTION` | the credential is not passed to recorder/event data; authenticated metadata-only recording, redaction, and sanitized failure codes are used |
+| `SECRET_IN_STORAGE_STATE_REPORTING` | only safe state diagnostics and capture IDs are reported; storage contents remain external and are never copied to evidence |
+| production or non-DEV retrieval/use | exact DEV target and environment checks happen before provider access; production hosts are denied by both policy and preflight canary |
+| MCP personal-browser attachment or containment bypass | no personal profile is attachable; real attachment is disabled without a dedicated Nightwatch profile, loopback binding, lifecycle ownership, and proxy proof |
+| MCP arbitrary control, DOM, screenshot, heap, or raw-body leak | Nightwatch remains primary executor; catalog IDs are authoritative; authenticated screenshot, heap, snapshot, broad script, and raw request inspection are prohibited |
+| account lockout | exactly one credential submission per refresh; rejected login stops with a sanitized code and is never retried automatically |
+| MFA bypass | MFA selectors cause `HUMAN_MFA_WAIT`; only the human completion callback may continue, with no OTP retrieval or bypass |
+
+**Consequences.** Authentication session establishment is recorded as
+`AUTH_SESSION_CREATION` with `productStateMutation=false`; it is a narrowly
+authorized control-plane exception and does not widen Phase 4's passive
+product-action catalog. If safe MCP attachment cannot be proven, Phase 4
+continues through Playwright without MCP.
+
+**Phase applicability.** Phase 4 DEV auth refresh and later workflows that
+reuse the same boundary.

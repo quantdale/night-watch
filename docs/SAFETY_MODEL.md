@@ -465,7 +465,49 @@ implementation.
 
 ---
 
-## 14. Verification / test mapping
+## 14. DEV credential refresh and MCP boundary
+
+Automatic authentication is a narrowly authorized DEV control-plane action,
+not a product mutation. The designated account's username/password is stored
+only in the external owner-only-file class (`$HOME/.nightwatch/secrets/` on
+this host), with a private directory and atomic owner-only file write. The
+interactive `npm run auth:configure` command accepts no credential arguments
+or environment values and disables terminal echo. The provider API is
+auth-only; exploration, planning, evidence, and change-intelligence code do
+not receive the plaintext credential.
+
+The refresh order is mandatory:
+
+```text
+exact DEV target + allowlist + production deny + proxy health
+  + browser containment + authenticated privacy policy
+→ source-backed login controls ready
+→ retrieve credential
+→ one username/password submission
+→ human MFA wait if required
+→ page-visible auth/readiness verification
+→ temporary storage state validation in a fresh guarded context
+→ atomic replacement of the previous external capture
+```
+
+An existing valid state is reused before this refresh path. A rejected
+credential stops without retry. MFA is never bypassed. Login failures produce
+only sanitized categories. Authentication is recorded as
+`AUTH_SESSION_CREATION` with `productStateMutation=false`; the Phase 4
+`mutations=0` invariant continues to mean prohibited product-state changes.
+
+The discovered Chrome DevTools MCP server is `mcp__chrome_devtools` with 29
+tools. MCP is optional and subordinate to Nightwatch's production deny,
+canonical `OutboundPolicy`, mandatory proxy, semantic mutation/UNKNOWN
+tripwire, approved action catalog, and browser containment. The current
+architecture does not prove a dedicated Nightwatch-owned loopback CDP
+attachment, so real authenticated attachment is disabled by safety. MCP does
+not receive credentials, cannot attach to a personal browser, and cannot
+replace primary Playwright evidence. Authenticated screenshots, heap
+snapshots, broad DOM snapshots/evaluations, raw request inspection, and raw
+console/customer text persistence remain prohibited.
+
+## 15. Verification / test mapping
 
 Nightwatch's own self-tests prove each guarantee. Mapping of guarantee →
 test (all under `tests/unit` unless noted):
@@ -490,8 +532,12 @@ test (all under `tests/unit` unless noted):
 | L5 upstream zero-connection evidence | `tests/smoke/proxy.smoke.ts` — allowed A (`127.0.0.1`) succeeds; denied B (`127.0.0.2`) receives zero TCP connections for direct HTTP, redirect, immediate popup, SharedWorker, Service Worker, and WebSocket attempts |
 | L5 defense in depth | `tests/smoke/proxy.smoke.ts` — outer-only redirect records proxy DENY and sink count 0; normal Nightwatch context independently records browser hard failure for the same destination |
 | Proxy failure modes | `tests/unit/proxy.test.ts` — unavailable startup health, close-during-run health state, malformed CONNECT, invalid hostname/port, IPv4/IPv6 forms, casing, trailing dot, embedded credentials, and unexpected port; context liveness polling converts a mid-run loss to a hard failure |
+| DEV credential provider | `tests/unit/devCredentialProvider.test.ts` — external-only location, owner-only permissions, missing/unsafe state, safe metadata, and no credential CLI arguments |
+| DEV login safety ordering | `tests/unit/devLoginSecurity.test.ts` — source-backed synthetic form, production-target rejection before provider retrieval, and synthetic MCP policy |
+| Atomic refreshed auth state | `tests/unit/storageState.test.ts` — validated pending replacement and failed pending preservation |
 
 ---
 
-*End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2; changes require a DECISIONS
-entry and a test update.*
+*End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2 and the Phase 4
+authentication/MCP boundary; changes require a DECISIONS entry and a test
+update.*

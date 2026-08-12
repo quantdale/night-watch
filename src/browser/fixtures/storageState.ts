@@ -41,6 +41,11 @@ export interface StorageStateOutputOptions extends StorageStateOptions {
   allowExisting?: boolean;
 }
 
+export interface AtomicStorageStateOptions extends StorageStateOptions {
+  /** The destination may already exist only for an approved auth refresh. */
+  allowExisting?: boolean;
+}
+
 function defaultRoots(opts?: StorageStateOptions): { nightwatchRoot: string; workspaceRoot: string } {
   const nightwatchRoot = opts?.nightwatchRoot ?? path.resolve(__dirname, '..', '..', '..');
   const workspaceRoot = opts?.workspaceRoot ?? path.resolve(nightwatchRoot, '..');
@@ -335,6 +340,34 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOut
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is world-writable without sticky protection`);
   }
   return abs;
+}
+
+/**
+ * Commit a validated Playwright storage state without ever overwriting the
+ * previous capture in place. The pending file must be in the same directory
+ * as the destination so rename is atomic on the local filesystem.
+ */
+export function atomicallyReplaceValidatedStorageState(
+  pendingPath: string,
+  outputPath: string,
+  opts?: AtomicStorageStateOptions,
+): string {
+  const pending = validateStorageStateFile(pendingPath, opts);
+  const output = validateStorageStateOutputPath(outputPath, { ...opts, allowExisting: opts?.allowExisting ?? true });
+  if (path.dirname(pending) !== path.dirname(output)) {
+    throw new Error('fail-closed: pending storage state and destination must share a directory');
+  }
+  try {
+    fs.chmodSync(pending, 0o600);
+    const pendingStat = fs.lstatSync(pending);
+    if (!pendingStat.isFile() || pendingStat.isSymbolicLink() || (pendingStat.mode & 0o077) !== 0) {
+      throw new Error('pending storage state permissions are unsafe');
+    }
+    fs.renameSync(pending, output);
+  } catch (error) {
+    throw new Error(`fail-closed: atomic storage-state replacement failed: ${(error as Error).message}`);
+  }
+  return output;
 }
 
 /** Resolve the storage-state path from the environment; null when unset. */

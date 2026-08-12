@@ -15,6 +15,7 @@ import {
   NIGHTWATCH_STORAGE_STATE_VAR,
   validateStorageStateFile,
   validateStorageStateOutputPath,
+  atomicallyReplaceValidatedStorageState,
   resolveStorageStatePath,
   isAuthenticatedRun,
   inspectStorageStateKeyPresence,
@@ -62,6 +63,39 @@ test.describe('storage-state secret handling', () => {
     expect(() =>
       validateStorageStateFile('/nonexistent/nw-state.json', { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })
     ).toThrow(/missing file/);
+  });
+
+  test('validated pending state replaces the old capture atomically and keeps owner-only mode', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-atomic-state-'));
+    const output = path.join(directory, 'state.json');
+    const pending = path.join(directory, '.state.pending.json');
+    const oldState = { cookies: [{ name: 'old', value: 'old-value' }], origins: [] };
+    const newState = { cookies: [{ name: 'new', value: 'new-value' }], origins: [] };
+    fs.writeFileSync(output, JSON.stringify(oldState), { mode: 0o600 });
+    fs.writeFileSync(pending, JSON.stringify(newState), { mode: 0o600 });
+    try {
+      expect(atomicallyReplaceValidatedStorageState(pending, output, { allowExisting: true })).toBe(path.resolve(output));
+      expect(JSON.parse(fs.readFileSync(output, 'utf8'))).toEqual(newState);
+      expect(fs.statSync(output).mode & 0o077).toBe(0);
+      expect(fs.existsSync(pending)).toBe(false);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('invalid pending state leaves the previous capture untouched', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-atomic-state-fail-'));
+    const output = path.join(directory, 'state.json');
+    const pending = path.join(directory, '.state.pending.json');
+    const oldState = { cookies: [{ name: 'old', value: 'old-value' }], origins: [] };
+    fs.writeFileSync(output, JSON.stringify(oldState), { mode: 0o600 });
+    fs.writeFileSync(pending, JSON.stringify({ cookies: [] }), { mode: 0o600 });
+    try {
+      expect(() => atomicallyReplaceValidatedStorageState(pending, output, { allowExisting: true })).toThrow();
+      expect(JSON.parse(fs.readFileSync(output, 'utf8'))).toEqual(oldState);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('relative paths are rejected', () => {

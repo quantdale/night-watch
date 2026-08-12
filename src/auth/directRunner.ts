@@ -17,6 +17,7 @@ import {
   nightwatchChromiumLaunchOptions,
 } from '../browser/contract';
 import {
+  atomicallyReplaceValidatedStorageState,
   validateStorageStateFile,
   validateStorageStateOutputPath,
 } from '../browser/fixtures/storageState';
@@ -517,7 +518,7 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       // Keep the old external state untouched until the fresh capture has
       // passed shape validation, then replace it atomically within the same
       // user-owned directory. No state contents enter evidence.
-      fs.renameSync(pendingOutputPath, outputPath);
+      atomicallyReplaceValidatedStorageState(pendingOutputPath, outputPath, { allowExisting: true });
       stateCommitted = true;
       return outputPath;
     });

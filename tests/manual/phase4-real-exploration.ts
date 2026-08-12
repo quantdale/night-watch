@@ -10,12 +10,13 @@
 import { test, expect, type Browser } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { spawnSync } from 'node:child_process';
 import { assertSupportedEnvironment, loadEnvironmentConfig } from '../../src/core/environment';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
-import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemantics, validateStorageStateFile } from '../../src/browser/fixtures/storageState';
+import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemantics, validateStorageStateFile, validateStorageStateOutputPath } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { runRealRunGate, assertRealRunGate } from '../../src/core/safety/realRunGate';
@@ -30,6 +31,8 @@ import { deriveSeed } from '../../src/core/exploration/rng';
 import { replayExactSequence, runExploration } from '../../src/core/exploration/engine';
 import { catalogFingerprint, modelFingerprint } from '../../src/core/exploration/state';
 import type { ExplorationEvidence, ExactReplayResult, SafetyVector } from '../../src/core/exploration/types';
+import { DevAuthFailure, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
+import { MCP_OBSERVATION_STATUS, MCP_SECRET_INPUT_ALLOWED } from '../../src/mcp/chromeDevtoolsPolicy';
 
 export const PHASE4_SEED_CORPUS = [
   { envelopeId: 'E1-J1-payer-exchange', seed: '0x0000000000000101', ordinal: 0 },
@@ -63,6 +66,12 @@ interface RealRecord {
   readonly coverage?: ExplorationEvidence['coverage'];
   readonly replayStatus?: ExactReplayResult['status'];
   readonly safety: SafetyVector;
+  readonly authProvenance: 'REUSED_EXTERNAL_STATE' | 'AUTO_REFRESHED_DEV_STATE';
+  readonly autoRefresh: boolean;
+  readonly mfaOccurred: boolean;
+  readonly authCaptureId?: string;
+  readonly mcpAttached: false;
+  readonly mcpObservationStatus: typeof MCP_OBSERVATION_STATUS;
 }
 
 function rootDirectory(): string {
@@ -112,6 +121,45 @@ function authFacts(statePath: string, target: string, env: EnvironmentConfig): A
     provenanceMatch, tokenStructurallyValid, environmentSemanticsValid,
     pageReadable: readability.pageReadable, stateExists,
   };
+}
+
+interface Phase4AuthResult {
+  readonly autoRefresh: boolean;
+  readonly mfaOccurred: boolean;
+  readonly storageStatePath: string;
+  readonly authCaptureId?: string;
+}
+
+function waitForHumanMfa(): Promise<void> {
+  if (!process.stdin.isTTY) throw new DevAuthFailure('MFA_REQUIRED');
+  console.log('HUMAN_MFA_WAIT: complete the DEV MFA step in the guarded browser, then press ENTER here.');
+  const prompt = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      prompt.close();
+      resolve();
+    };
+    prompt.once('line', finish);
+    prompt.once('SIGINT', () => {
+      prompt.close();
+      reject(new DevAuthFailure('MFA_REQUIRED'));
+    });
+  });
+}
+
+async function ensurePhase4Auth(browser: Browser, env: EnvironmentConfig, target: string, statePath: string): Promise<Phase4AuthResult> {
+  if (env.name === 'dev') {
+    return await runDevAuthRefresh({
+      browser,
+      environment: env,
+      uiUrl: target,
+      storageStatePath: statePath,
+      mfaCompletion: { wait: waitForHumanMfa },
+    });
+  }
+  const auth = authFacts(statePath, target, env);
+  if (!auth.valid) throw new Error('HUMAN_AUTH_ACTION_REQUIRED: external NEXT auth state failed boolean preflight');
+  return { autoRefresh: false, mfaOccurred: false, storageStatePath: statePath };
 }
 
 async function repositoryFacts(root: string) {
@@ -216,10 +264,11 @@ async function runExplorationContext(opts: {
   envelopeId: string;
   seed: string;
   runId: string;
-}): Promise<{ evidence: ExplorationEvidence; safety: SafetyVector }> {
+}): Promise<{ evidence: ExplorationEvidence; safety: SafetyVector; authRefresh: Phase4AuthResult }> {
   const { envelope, contract } = anchorFor(opts.envelopeId);
+  const authRefresh = await ensurePhase4Auth(opts.browser, opts.env, opts.target, opts.statePath);
   const auth = authFacts(opts.statePath, opts.target, opts.env);
-  if (!auth.valid) throw new Error('HUMAN_AUTH_ACTION_REQUIRED: external DEV auth state failed boolean preflight');
+  if (!auth.valid) throw new Error('HUMAN_AUTH_ACTION_REQUIRED: external auth state failed boolean preflight after refresh decision');
   const gate = await runRealRunGate({
     environment: opts.env,
     uiUrl: opts.target,
@@ -249,7 +298,7 @@ async function runExplorationContext(opts: {
     writeAtomic(path.join(recorder.dir, 'exploration.json'), evidence);
     const zero = safetyIsZero(evidenceSafety);
     await recorder.finalize({ passed: zero && evidence.terminationReason !== 'RUN_INCOMPLETE', notes: [`Phase 4 validation exploration ${opts.envelopeId}`, `termination=${evidence.terminationReason}`, `safety=${JSON.stringify(evidenceSafety)}`] });
-    return { evidence, safety: evidenceSafety };
+    return { evidence, safety: evidenceSafety, authRefresh };
   } finally {
     await context.context.close();
   }
@@ -267,6 +316,7 @@ async function runExactReplayContext(opts: {
   runId: string;
 }): Promise<RealRecord> {
   const { envelope } = anchorFor(opts.envelopeId);
+  const authRefresh = await ensurePhase4Auth(opts.browser, opts.env, opts.target, opts.statePath);
   const auth = authFacts(opts.statePath, opts.target, opts.env);
   if (!auth.valid) throw new Error('HUMAN_AUTH_ACTION_REQUIRED: external DEV auth state failed before exact replay');
   const gate = await runRealRunGate({ environment: opts.env, uiUrl: opts.target, storageStatePath: opts.statePath, storageStateEnvironment: opts.env.name, browser: AUTHENTICATED_BROWSER_CONTRACT,
@@ -284,7 +334,7 @@ async function runExactReplayContext(opts: {
     const safety = safetyFromRun(context.context, recorder);
     writeAtomic(path.join(recorder.dir, 'replay.json'), { schemaVersion: 'nightwatch.exploration.phase4.v1', envelopeId: opts.envelopeId, seed: opts.seed, replay, safety, trace: false, screenshots: false });
     await recorder.finalize({ passed: replay.status === 'STRICT_MATCH' && safetyIsZero(safety), notes: [`Phase 4 exact sequence replay ${opts.envelopeId}`, `status=${replay.status}`, `safety=${JSON.stringify(safety)}`] });
-    return { kind: 'EXACT_SEQUENCE_REPLAY', runId: opts.runId, envelopeId: opts.envelopeId, seed: opts.seed, derivedSeed: opts.seed, plannedActions: opts.original.plannedActions, observedActions: replay.observedActions, stateIds: replay.stateIds, transitionIds: replay.transitionIds, terminationReason: replay.terminationReason ?? 'STRICT_MATCH', replayStatus: replay.status, safety };
+    return { kind: 'EXACT_SEQUENCE_REPLAY', runId: opts.runId, envelopeId: opts.envelopeId, seed: opts.seed, derivedSeed: opts.seed, plannedActions: opts.original.plannedActions, observedActions: replay.observedActions, stateIds: replay.stateIds, transitionIds: replay.transitionIds, terminationReason: replay.terminationReason ?? 'STRICT_MATCH', replayStatus: replay.status, safety, authProvenance: authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: authRefresh.autoRefresh, mfaOccurred: authRefresh.mfaOccurred, authCaptureId: authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
   } finally {
     await context.context.close();
   }
@@ -298,7 +348,9 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   const target = targetFor(env);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;
   if (statePath === undefined || statePath.trim() === '') throw new Error('HUMAN_AUTH_ACTION_REQUIRED: Phase 4 requires an external storage state path');
-  const validatedStatePath = validateStorageStateFile(statePath);
+  const validatedStatePath = envName === 'dev'
+    ? validateStorageStateOutputPath(statePath, { allowExisting: true })
+    : validateStorageStateFile(statePath);
   const baseRunId = process.env.NIGHTWATCH_RUN_ID ?? createRunId();
   if (!/^[A-Za-z0-9._-]+$/.test(baseRunId)) throw new Error('fail-closed: unsafe Phase 4 run ID');
   const root = rootDirectory();
@@ -309,7 +361,7 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   for (const seedEntry of PHASE4_SEED_CORPUS) {
     const runId = `${baseRunId}-${seedEntry.envelopeId}-${seedEntry.ordinal}`;
     const result = await runExplorationContext({ browser, env, target, statePath: validatedStatePath, repository, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, runId });
-    const record: RealRecord = { kind: 'EXPLORATION', runId, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, derivedSeed: result.evidence.derivedSeed, plannedActions: result.evidence.plannedActions, observedActions: result.evidence.observedActions, stateIds: result.evidence.states.map((state) => state.stateId), transitionIds: result.evidence.transitions.map((transition) => transition.transitionId), terminationReason: result.evidence.terminationReason, coverage: result.evidence.coverage, safety: result.safety };
+    const record: RealRecord = { kind: 'EXPLORATION', runId, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, derivedSeed: result.evidence.derivedSeed, plannedActions: result.evidence.plannedActions, observedActions: result.evidence.observedActions, stateIds: result.evidence.states.map((state) => state.stateId), transitionIds: result.evidence.transitions.map((transition) => transition.transitionId), terminationReason: result.evidence.terminationReason, coverage: result.evidence.coverage, safety: result.safety, authProvenance: result.authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: result.authRefresh.autoRefresh, mfaOccurred: result.authRefresh.mfaOccurred, authCaptureId: result.authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
     records.push(record);
     if (!firstByEnvelope.has(seedEntry.envelopeId) && result.evidence.plannedActions.length > 1 && safetyIsZero(result.safety)) firstByEnvelope.set(seedEntry.envelopeId, result.evidence);
     if (!safetyIsZero(result.safety)) throw new Error(`PHASE_4_SAFETY_BLOCK: ${seedEntry.envelopeId} ${seedEntry.seed}`);
@@ -322,7 +374,9 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
     expect(replay.replayStatus, `exact replay diverged for ${envelopeId}`).toBe('STRICT_MATCH');
     expect(safetyIsZero(replay.safety)).toBeTruthy();
   }
-  writeAtomic(path.join(root, 'artifacts', `phase4-${baseRunId}-matrix.json`), { schemaVersion: 'nightwatch.exploration.phase4.v1', mode: 'PHASE_4_VALIDATION_EXPLORATION', seedCorpus: PHASE4_SEED_CORPUS, records, catalogFingerprint: catalogFingerprint(RIPPLE_PHASE4_ACTIONS), budget: RIPPLE_PHASE4_BUDGET, trace: false, screenshots: false });
+  const authRecords = records.filter((record) => record.autoRefresh || record.mfaOccurred || record.authCaptureId !== undefined);
+  const authCaptureIds = [...new Set(records.map((record) => record.authCaptureId).filter((value): value is string => value !== undefined))];
+  writeAtomic(path.join(root, 'artifacts', `phase4-${baseRunId}-matrix.json`), { schemaVersion: 'nightwatch.exploration.phase4.v1', mode: 'PHASE_4_VALIDATION_EXPLORATION', seedCorpus: PHASE4_SEED_CORPUS, records, auth: { mcpCredentialInputAllowed: MCP_SECRET_INPUT_ALLOWED, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS, autoRefreshCount: authRecords.filter((record) => record.autoRefresh).length, mfaCount: authRecords.filter((record) => record.mfaOccurred).length, authCaptureIds }, catalogFingerprint: catalogFingerprint(RIPPLE_PHASE4_ACTIONS), budget: RIPPLE_PHASE4_BUDGET, trace: false, screenshots: false });
   expect(records.filter((record) => record.kind === 'EXPLORATION')).toHaveLength(6);
   expect(records.every((record) => safetyIsZero(record.safety))).toBeTruthy();
 });

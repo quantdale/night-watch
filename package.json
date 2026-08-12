@@ -22,6 +22,7 @@
     "change:shadow": "node bin/change-intelligence.mjs",
     "explore:phase4": "node bin/phase4-real.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
+    "auth:configure": "node bin/auth-configure.mjs",
     "scenario": "node bin/nightwatch.mjs",
     "nightwatch": "node bin/nightwatch.mjs"
   },

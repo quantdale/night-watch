@@ -43,11 +43,13 @@ test('Phase 2A pre-real-run safety gate', async () => {
     ? process.env.NIGHTWATCH_TRACKED_REPOS.split(',').map((item) => item.trim()).filter(Boolean)
     : workspaceRepos(reposRoot);
   const snapshots = await snapshotRepositories({ reposRoot, repos });
-  const statePath = process.env[NIGHTWATCH_STORAGE_STATE_VAR] ?? null;
+  const authRefreshPreflight = env.name === 'dev' && process.env.NIGHTWATCH_PHASE_4_AUTH_REFRESH === '1';
+  const statePath = authRefreshPreflight ? null : process.env[NIGHTWATCH_STORAGE_STATE_VAR] ?? null;
   const result = await runRealRunGate({
     environment: env,
     uiUrl: target,
     storageStatePath: statePath,
+    requireAuthenticationState: !authRefreshPreflight,
     proxyStateFile: undefined,
     browser: AUTHENTICATED_BROWSER_CONTRACT,
     evidence: {
