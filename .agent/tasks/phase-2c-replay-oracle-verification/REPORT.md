@@ -1,8 +1,8 @@
 # NIGHTWATCH PHASE 2C — REPLAY + ORACLE VERIFICATION
 
-Status: `IN_PROGRESS`; shared Phase 2C implementation and synthetic matrix are
-complete; the bounded DEV matrix and closure validation remain. No Phase 2C
-real context has run.
+Status: `IN_PROGRESS`; shared Phase 2C implementation, synthetic matrix, and
+the six-context DEV matrix are complete. Differential review found one shared
+Nightwatch comparator defect that must be repaired before closure.
 
 ## Starting identity
 
@@ -33,9 +33,45 @@ task does not reopen either phase.
 
 ## Current blocker
 
-None. The exact next action is full local validation and the pre-real
-adversarial checkpoint; real DEV execution is not authorized until that
-checkpoint.
+`PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`: the V1 replay comparator treated a
+one-count difference in expected third-party `CANCELED_BY_POLICY` containment
+as strict `resource-lifecycle` divergence for J1. The real journey and safety
+result passed; the comparator classification is not defensible until expected
+containment is bounded. J2 and J3 comparisons passed. V1 evidence is retained
+and no product anomaly is admitted from this event.
+
+## Phase 2C v1 real matrix
+
+Artifact: `artifacts/phase2c-nightwatch-20260812T041319Z-6552-matrix.json`.
+Implementation: `043c2cc02b96ce9aec42c6b529978150c09dabfe`.
+Contract/oracle/evidence versions: `nightwatch.journey.phase2c.v1`,
+`nightwatch.oracle.phase2c.v1`, `nightwatch.evidence.phase2c.v1`.
+
+All six contexts ran serially with valid storage-state facts and page-visible
+auth. J1-C1 `nightwatch-20260812T041319Z-6552-j1-c1` and J1-C2
+`nightwatch-20260812T041319Z-6552-j1-c2` both finished PASS. J2-C1
+`nightwatch-20260812T041319Z-6552-j2-c1` and J2-C2
+`nightwatch-20260812T041319Z-6552-j2-c2` both finished PASS. J3-C1
+`nightwatch-20260812T041319Z-6552-j3-c1` and J3-C2
+`nightwatch-20260812T041319Z-6552-j3-c2` both finished PASS.
+
+The J1 differential had identical route, structural markers, semantic read
+families/ledger, auth, safety, and zero oracle observations. Its only
+difference was six versus five `THIRD_PARTY/CANCELED_BY_POLICY` resource
+records, which are expected containment and must be compared as bounded
+variance. V1 therefore produced a false replay divergence:
+`ORACLE_DIVERGENCE`, strict mismatch `resource-lifecycle`, timing variance
+52 ms. J2 was a bounded match with 58 ms timing variance; J3 was a bounded
+match with 6 ms timing variance. No J2 font-502 fingerprint and no historical
+malformed-JSON event recurred naturally.
+
+This is admitted as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT`, not a product
+bug. V1 is preserved as pre-fix evidence. The repair is to exclude expected
+policy/navigation/browser cancellation from strict resource-failure keys while
+retaining it in containment/lifecycle evidence; a synthetic regression and
+one narrowly scoped post-fix J1 diagnostic context are required before final
+closure. Pre-fix and post-fix observations will not be treated as one replay
+contract.
 
 ## Static replay/oracle audit checkpoint
 

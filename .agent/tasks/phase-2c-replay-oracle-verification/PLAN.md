@@ -154,7 +154,7 @@ of historical anomalies, and broad source archaeology.
   each result is metadata-only, and no safety/privacy event occurs.
 - Validation commands: approved real-run launcher only; no parallelism,
   exploratory reruns, or anomaly chasing.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Differential analysis and failure attribution
 
@@ -168,7 +168,7 @@ of historical anomalies, and broad source archaeology.
 - Acceptance criteria: exact frequencies and fingerprints are preserved;
   causal confidence is explicit; no body/DOM/data-store work is performed.
 - Validation commands: local report/check scripts and privacy scan.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M7 — Final privacy, architecture, adversarial review, and validation
 

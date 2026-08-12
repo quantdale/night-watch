@@ -8,12 +8,13 @@ Task directory: .agent/tasks/phase-2c-replay-oracle-verification
 Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
 Current SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
 Last validated implementation SHA: 043c2cc02b96ce9aec42c6b529978150c09dabfe
-Current milestone: M5 — bounded serial Phase 2C real matrix
+Current milestone: M6 — differential analysis and failure attribution
 Last checkpoint: 2026-08-12 — `PHASE_2C_PRE_REAL_MATRIX_READY` at
 implementation `043c2cc`; all local validation and adversarial review passed.
 No Phase 2C real context has run.
-Next action: run the exact gated serial command in STATE for the six frozen
-DEV contexts; stop immediately on any safety, privacy, or auth-integrity event.
+Next action: repair the proven shared comparator defect, add its synthetic
+regression, revalidate locally, then run at most one narrowly scoped J1
+diagnostic context under a new matrix version.
 
 ## Phase 2A/2B closure handoff
 
