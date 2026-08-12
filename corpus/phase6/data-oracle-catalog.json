@@ -1,10 +1,74 @@
 {
   "schemaVersion": "nightwatch.data-oracle-catalog.phase6.v1",
   "queryPlanVersion": "nightwatch.readonly-query-plan.phase6.v1",
+  "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
   "oracles": [
-    { "oracleId": "D1.j1.payer-exchange", "journeyIds": ["ripple-payer-exchange-read"], "apiOperationIds": ["ripple.payer-exchange.read"], "queryPlanIds": ["phase6.d1.j1.payer-jpy", "phase6.d1.j1.payer-non-jpy"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
-    { "oracleId": "D2.j2.common-exchange", "journeyIds": ["ripple-common-exchange-read"], "apiOperationIds": ["ripple.common-exchange.read"], "queryPlanIds": ["phase6.d2.j2.common-aws-jpy", "phase6.d2.j2.common-non-jpy"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
-    { "oracleId": "D3.j3.account-inventory", "journeyIds": ["ripple-account-inventory"], "apiOperationIds": ["ripple.billing-groups.read", "ripple.account-inventory.read"], "queryPlanIds": ["phase6.d3.j3.companies-msp", "phase6.d3.j3.accounts-by-company"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DERIVED_SYNCHRONOUS", "comparisonMode": "MEMBERSHIP", "realExecutionEligibility": "ENVIRONMENT_BLOCKED" },
-    { "oracleId": "P5.billing-group-exchange.metadata", "journeyIds": [], "apiOperationIds": ["ripple.billing-group-exchange.read"], "queryPlanIds": ["phase6.p5.billing-group-exchange.metadata"], "datastore": "DYNAMODB", "authority": "AUTHORITATIVE", "consistencyClass": "DIRECT_READ", "comparisonMode": "SCHEMA_SHAPE", "realExecutionEligibility": "SPEC_BLOCKED" }
+    {
+      "oracleId": "D1.j1.payer-exchange",
+      "customerBehavior": "J1 payer exchange response has source-proven stored-rate rows for the selected month.",
+      "journeyIds": ["ripple-payer-exchange-read"],
+      "apiOperationIds": ["ripple.payer-exchange.read"],
+      "sourceLineage": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getAccountExchangeForMonth"}],
+      "queryPlanIds": ["phase6.d1.j1.payer-jpy", "phase6.d1.j1.payer-non-jpy"],
+      "authority": "AUTHORITATIVE",
+      "datastore": "DYNAMODB",
+      "consistencyClass": "DIRECT_READ",
+      "allowedLagMs": 0,
+      "comparisonMode": "SCHEMA_SHAPE",
+      "realExecutionEligibility": "ENVIRONMENT_BLOCKED",
+      "replayPolicy": "FIRST_PLUS_FRESH_REPLAY",
+      "notes": ["Partial oracle: response user scope and API transformation are not reproduced by a raw row query."]
+    },
+    {
+      "oracleId": "D2.j2.common-exchange",
+      "customerBehavior": "J2 common exchange response exposes source-proven common-rate rows for the selected vendor/month.",
+      "journeyIds": ["ripple-common-exchange-read"],
+      "apiOperationIds": ["ripple.common-exchange.read"],
+      "sourceLineage": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getCommonExchangeRate"}],
+      "queryPlanIds": ["phase6.d2.j2.common-aws-jpy", "phase6.d2.j2.common-non-jpy"],
+      "authority": "AUTHORITATIVE",
+      "datastore": "DYNAMODB",
+      "consistencyClass": "DIRECT_READ",
+      "allowedLagMs": 0,
+      "comparisonMode": "SCHEMA_SHAPE",
+      "realExecutionEligibility": "ENVIRONMENT_BLOCKED",
+      "replayPolicy": "FIRST_PLUS_FRESH_REPLAY",
+      "notes": ["J2 uses a distinct key family and a user-defined 13-month response window; never reuse J1 keys."]
+    },
+    {
+      "oracleId": "D3.j3.account-inventory",
+      "customerBehavior": "J3 billing-group membership is derivable from authoritative Companies and account registry metadata.",
+      "journeyIds": ["ripple-account-inventory"],
+      "apiOperationIds": ["ripple.billing-groups.read"],
+      "sourceLineage": [
+        {"repoId": "mobingilabs/ouchan", "sourceSHA": "565f00a87fb7616cc23c45d4ffeabee38a41c65f", "path": "pkg/billing/billing.go", "symbol": "GetCompaniesFromMspId"},
+        {"repoId": "mobingilabs/ouchan", "sourceSHA": "565f00a87fb7616cc23c45d4ffeabee38a41c65f", "path": "services/costd/vendors/aws/accts/accts.go", "symbol": "GetCustomersFromCompanyId"}
+      ],
+      "queryPlanIds": ["phase6.d3.j3.companies-msp", "phase6.d3.j3.accounts-by-company"],
+      "authority": "AUTHORITATIVE",
+      "datastore": "DYNAMODB",
+      "consistencyClass": "DERIVED_SYNCHRONOUS",
+      "allowedLagMs": 0,
+      "comparisonMode": "MEMBERSHIP",
+      "realExecutionEligibility": "ENVIRONMENT_BLOCKED",
+      "replayPolicy": "FIRST_PLUS_FRESH_REPLAY",
+      "notes": ["Modern billing-group response groups the MSP account inventory by company_id in memory. Cache-backed legacy account-inventory values remain shape-only and are not mapped to this datastore oracle."]
+    },
+    {
+      "oracleId": "P5.billing-group-exchange.metadata",
+      "customerBehavior": "Phase 5 billing-group exchange read has source-proven metadata rows for a bounded month.",
+      "journeyIds": [],
+      "apiOperationIds": ["ripple.billing-group-exchange.read"],
+      "sourceLineage": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getExchangeRateForBillingGroup"}],
+      "queryPlanIds": ["phase6.p5.billing-group-exchange.metadata"],
+      "authority": "AUTHORITATIVE",
+      "datastore": "DYNAMODB",
+      "consistencyClass": "DIRECT_READ",
+      "allowedLagMs": 0,
+      "comparisonMode": "SCHEMA_SHAPE",
+      "realExecutionEligibility": "SPEC_BLOCKED",
+      "replayPolicy": "LOCAL_ONLY",
+      "notes": ["Strong source candidate, intentionally outside the frozen D1-D3 real query budget."]
+    }
   ]
 }

@@ -17,6 +17,10 @@ function roleValue(scope: RuntimeDataScope, role: ScopeRole): string {
   return value;
 }
 
+function sqlLiteral(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
 function fingerprint(plan: ReadOnlyQueryPlan, scope: RuntimeDataScope): string {
   const values = plan.scopeRoles.map((role) => [role, roleValue(scope, role)] as const);
   return `qf:sha256:${crypto.createHash('sha256').update(JSON.stringify({ planId: plan.planId, values }), 'utf8').digest('hex').slice(0, 24)}`;
@@ -100,19 +104,15 @@ function compileDynamo(plan: DynamoReadPlan, scope: RuntimeDataScope): CompiledT
 
 function compileBigQuery(plan: BigQueryReadPlan, scope: RuntimeDataScope): CompiledToolRequest {
   const fields = plan.fields.join(', ');
-  const dataset = `msp_${roleValue(scope, 'mspId')}`;
+  const dataset = `msp_${roleValue(scope, 'mspDatasetSuffix')}`;
   const table = `${roleValue(scope, 'monthCompact')}_${roleValue(scope, 'payerAccountId')}`;
   const compact = roleValue(scope, 'monthCompact');
   const year = Number(compact.slice(0, 4));
   const month = Number(compact.slice(4, 6));
   const firstDay = `${compact.slice(0, 4)}-${compact.slice(4, 6)}-01`;
   const lastDay = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
-  const sql = `SELECT ${fields} FROM \`mobingi-main.${dataset}.${table}\` WHERE lineitem_usageaccountid = @payer_account_id AND lineitem_usagestartdate >= @date_start AND lineitem_usagestartdate <= @date_end LIMIT ${plan.resultPolicy.limit}`;
+  const sql = `SELECT ${fields} FROM \`mobingi-main.${dataset}.${table}\` WHERE lineitem_usageaccountid = ${sqlLiteral(roleValue(scope, 'payerAccountId'))} AND lineitem_usagestartdate >= TIMESTAMP(${sqlLiteral(firstDay)}) AND lineitem_usagestartdate <= TIMESTAMP(${sqlLiteral(lastDay)}) LIMIT ${plan.resultPolicy.limit}`;
   const argv = [
-    'query', '--nouse_legacy_sql', '--format=json',
-    '--parameter', `payer_account_id::${roleValue(scope, 'payerAccountId')}`,
-    '--parameter', `date_start::${firstDay}`,
-    '--parameter', `date_end::${lastDay}`,
     sql,
   ];
   return {
@@ -127,12 +127,9 @@ function compileBigQuery(plan: BigQueryReadPlan, scope: RuntimeDataScope): Compi
 
 function compileSpanner(plan: SpannerReadPlan, scope: RuntimeDataScope): CompiledToolRequest {
   const sql = plan.table === 'awsdaily2'
-    ? `SELECT ${plan.fields.join(', ')} FROM awsdaily2 WHERE id = @linked_account_id AND usage_date >= @date_start AND usage_date <= @date_end LIMIT ${plan.resultPolicy.limit}`
-    : `SELECT ${plan.fields.join(', ')} FROM ${plan.table} WHERE msp_id = @msp_id LIMIT ${plan.resultPolicy.limit}`;
-  const parameters = plan.table === 'awsdaily2'
-    ? ([['linked_account_id', 'linkedAccountId'], ['date_start', 'dateStart'], ['date_end', 'dateEnd']] as const).map(([name, role]) => `--parameter=${name}::${roleValue(scope, role)}`)
-    : [`--parameter=msp_id::${roleValue(scope, 'mspId')}`];
-  const argv = ['--database=main', '--project=mobingi-main', '--instance=alphaus-prod', '--sql', sql, ...parameters];
+    ? `SELECT ${plan.fields.join(', ')} FROM awsdaily2 WHERE id = ${sqlLiteral(roleValue(scope, 'linkedAccountId'))} AND date >= ${sqlLiteral(roleValue(scope, 'dateStart'))} AND date <= ${sqlLiteral(roleValue(scope, 'dateEnd'))} LIMIT ${plan.resultPolicy.limit}`
+    : `SELECT ${plan.fields.join(', ')} FROM ${plan.table} WHERE mspId = ${sqlLiteral(roleValue(scope, 'mspId'))} LIMIT ${plan.resultPolicy.limit}`;
+  const argv = [sql, '--database=main', '--project=mobingi-main', '--instance=alphaus-prod'];
   return {
     adapterVersion: 'nightwatch.data-adapter.phase6.v1',
     datastore: 'SPANNER',

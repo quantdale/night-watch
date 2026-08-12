@@ -141,7 +141,7 @@ function requireRoles(value: unknown): ScopeRole[] {
 }
 
 function isScopeRole(value: string): value is ScopeRole {
-  return ['mspId', 'companyId', 'billingGroupId', 'payerAccountId', 'awsAccountId', 'linkedAccountId', 'vendor', 'month', 'monthCompact', 'dateStart', 'dateEnd'].includes(value);
+  return ['mspId', 'mspDatasetSuffix', 'companyId', 'billingGroupId', 'payerAccountId', 'awsAccountId', 'linkedAccountId', 'vendor', 'month', 'monthCompact', 'dateStart', 'dateEnd'].includes(value);
 }
 
 function sameRoles(actual: readonly ScopeRole[], expected: readonly ScopeRole[]): boolean {
@@ -231,7 +231,7 @@ function validateBigQuery(plan: Record<string, unknown>): BigQueryReadPlan {
   const allowed = new Set(['lineitem_usageaccountid', 'lineitem_unblendedcost', 'lineitem_currencycode', 'lineitem_lineitemtype', 'lineitem_usagestartdate']);
   if (fields.some((field) => !allowed.has(field))) throw new QueryPlanValidationError('BQ_FIELD_NOT_ALLOWLISTED');
   if (plan['requiresCostEstimate'] !== true) throw new QueryPlanValidationError('BQ_COST_GATE_MISSING');
-  if (!sameRoles(requireRoles(plan['scopeRoles']), ['mspId', 'monthCompact', 'payerAccountId'])) throw new QueryPlanValidationError('BQ_SCOPE_REQUIRED');
+  if (!sameRoles(requireRoles(plan['scopeRoles']), ['mspDatasetSuffix', 'monthCompact', 'payerAccountId'])) throw new QueryPlanValidationError('BQ_SCOPE_REQUIRED');
   return plan as unknown as BigQueryReadPlan;
 }
 
@@ -242,7 +242,7 @@ function validateSpanner(plan: Record<string, unknown>): SpannerReadPlan {
   if (!['awsdaily2', 'customers', 'companies'].includes(String(plan['table']))) throw new QueryPlanValidationError('SPANNER_TABLE_NOT_ALLOWLISTED');
   const fields = plan['fields'];
   if (!Array.isArray(fields) || fields.length === 0 || fields.some((field) => typeof field !== 'string' || field === '*')) throw new QueryPlanValidationError('SPANNER_FIELDS_INVALID');
-  const allowed = new Set(['id', 'company_id', 'msp_id', 'account_id', 'usage_date', 'vendor']);
+  const allowed = new Set(['id', 'companyId', 'mspId', 'payerId', 'date', 'vendor']);
   if (fields.some((field) => !allowed.has(field))) throw new QueryPlanValidationError('SPANNER_FIELD_NOT_ALLOWLISTED');
   if (plan['requiresCostEstimate'] !== false) throw new QueryPlanValidationError('SPANNER_COST_FLAG_INVALID');
   const roles = requireRoles(plan['scopeRoles']);

@@ -5,6 +5,7 @@ import {
   BigQueryReadAdapter,
   DynamoReadAdapter,
   GatedReadToolInvoker,
+  assertRealDataReadAllowed,
   DATA_ORACLE_CATALOG_VERSION,
   PHASE6_DATA_ORACLE_CATALOG,
   PHASE6_QUERY_PLANS,
@@ -61,7 +62,7 @@ function bqPlan(): BigQueryReadPlan {
     fields: ['lineitem_usageaccountid', 'lineitem_usagestartdate'],
     requiresCostEstimate: true,
     sourceProvenance: source(),
-    scopeRoles: ['mspId', 'monthCompact', 'payerAccountId'],
+    scopeRoles: ['mspDatasetSuffix', 'monthCompact', 'payerAccountId'],
     resultPolicy,
     privacyPolicy: policy,
     consistencyClass: 'SNAPSHOT_MONTHLY',
@@ -79,7 +80,7 @@ function spannerPlan(): SpannerReadPlan {
     instance: 'alphaus-prod',
     database: 'main',
     table: 'awsdaily2',
-    fields: ['id', 'usage_date'],
+    fields: ['id', 'date'],
     requiresCostEstimate: false,
     sourceProvenance: source(),
     scopeRoles: ['linkedAccountId', 'dateStart', 'dateEnd'],
@@ -92,10 +93,13 @@ function spannerPlan(): SpannerReadPlan {
 
 test('Phase 6 durable catalogs are versioned, source-bound, and value-free', () => {
   const queryCatalog = JSON.parse(fs.readFileSync(path.resolve('corpus/phase6/query-plan-catalog.json'), 'utf8')) as { plans: Array<{ planId: string; scopeRoles?: string[] }> };
-  const oracleCatalog = JSON.parse(fs.readFileSync(path.resolve('corpus/phase6/data-oracle-catalog.json'), 'utf8')) as { schemaVersion: string; oracles: Array<{ oracleId: string }> };
+  const oracleCatalog = JSON.parse(fs.readFileSync(path.resolve('corpus/phase6/data-oracle-catalog.json'), 'utf8')) as { schemaVersion: string; privacyPolicy: { rawRowsPersisted: boolean; customerIdentifiersPersisted: boolean; financialValuesPersisted: boolean }; oracles: Array<{ oracleId: string; sourceLineage: unknown[]; queryPlanIds: string[]; realExecutionEligibility: string }> };
   expect(oracleCatalog.schemaVersion).toBe(DATA_ORACLE_CATALOG_VERSION);
   expect(queryCatalog.plans.map((plan) => plan.planId)).toEqual(PHASE6_QUERY_PLANS.map((plan) => plan.planId));
   expect(oracleCatalog.oracles.map((oracle) => oracle.oracleId)).toEqual(PHASE6_DATA_ORACLE_CATALOG.oracles.map((oracle) => oracle.oracleId));
+  expect(queryCatalog.plans.every((plan) => Array.isArray(plan.scopeRoles) && plan.scopeRoles.length > 0)).toBe(true);
+  expect(oracleCatalog.oracles.every((oracle) => oracle.sourceLineage.length > 0 && oracle.queryPlanIds.length > 0 && typeof oracle.realExecutionEligibility === 'string')).toBe(true);
+  expect(oracleCatalog.privacyPolicy).toEqual({ rawRowsPersisted: false, customerIdentifiersPersisted: false, financialValuesPersisted: false, projectionPurpose: 'metadata-only predicate evaluation' });
   expect(JSON.stringify(queryCatalog)).not.toContain('company-');
   expect(JSON.stringify(queryCatalog)).not.toContain('customer-');
 });
@@ -146,11 +150,11 @@ test('malicious or unsafe plans reject before any adapter invocation', async () 
 
 test('BigQuery and Spanner are generated from explicit scoped fields, never SELECT * or unscoped targets', () => {
   const bq = validateReadOnlyPlan(bqPlan());
-  const bqRequest = compileValidatedReadPlan(bq, { mspId: 'mspSynthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
+  const bqRequest = compileValidatedReadPlan(bq, { mspDatasetSuffix: 'synthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
   expect(bqRequest.tool).toBe('bq-ro');
   expect(bqRequest.argv.join(' ')).toContain('SELECT lineitem_usageaccountid, lineitem_usagestartdate');
   expect(bqRequest.argv.join(' ')).not.toContain('SELECT *');
-  expect(() => compileValidatedReadPlan(bq, { mspId: 'mspSynthetic', monthCompact: '202608', payerAccountId: 'payer;DROP' })).toThrow('SCOPE_VALUE_UNSAFE');
+  expect(() => compileValidatedReadPlan(bq, { mspDatasetSuffix: 'synthetic', monthCompact: '202608', payerAccountId: 'payer;DROP' })).toThrow('SCOPE_VALUE_UNSAFE');
 
   const spanner = validateReadOnlyPlan(spannerPlan());
   const spannerRequest = compileValidatedReadPlan(spanner, { linkedAccountId: 'linkedSynthetic', dateStart: '2026-08-01', dateEnd: '2026-08-31' });
@@ -176,6 +180,9 @@ test('synthetic adapters, normalization, privacy reduction, and query budget sta
   expect(normalized.fieldNames).toEqual(['account_id', 'company_id', 'customer_id']);
   expect(JSON.stringify(normalized)).not.toContain(sentinel);
 
+  const unsafeEnum = normalizeDataResult({ rows: [{ state: sentinel }], bytes: 20, durationMs: 1, source: 'SYNTHETIC' }, { enumField: 'state' });
+  expect(unsafeEnum.enumValues).toEqual([]);
+
   const budget = new QueryBudgetManager(2, 10, 2048);
   const permit = budget.begin('D3.j3.account-inventory', plan, scope, 'FIRST');
   budget.complete(permit, result.rows.length, result.bytes);
@@ -192,16 +199,16 @@ test('synthetic adapters, normalization, privacy reduction, and query budget sta
 
   const bqInvoker = new SyntheticReadToolInvoker();
   const bqValidated = validateReadOnlyPlan(bqPlan());
-  const bqRequest = compileValidatedReadPlan(bqValidated, { mspId: 'mspSynthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
+  const bqRequest = compileValidatedReadPlan(bqValidated, { mspDatasetSuffix: 'synthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
   bqInvoker.setResponse(bqRequest.queryFingerprint, { rows: [{ lineitem_lineitemtype: 'Usage' }], bytes: 40, durationMs: 1 });
-  const bqResult = await new BigQueryReadAdapter(bqInvoker).execute(bqValidated, { mspId: 'mspSynthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
+  const bqResult = await new BigQueryReadAdapter(bqInvoker).execute(bqValidated, { mspDatasetSuffix: 'synthetic', monthCompact: '202608', payerAccountId: 'payerSynthetic' });
   expect(normalizeDataResult(bqResult).cardinality).toBe('ONE');
 
   const spannerInvoker = new SyntheticReadToolInvoker();
   const spannerValidated = validateReadOnlyPlan(spannerPlan());
   const spannerScope = { linkedAccountId: 'linkedSynthetic', dateStart: '2026-08-01', dateEnd: '2026-08-31' };
   const spannerRequest = compileValidatedReadPlan(spannerValidated, spannerScope);
-  spannerInvoker.setResponse(spannerRequest.queryFingerprint, { rows: [{ id: 'linkedSynthetic', usage_date: '2026-08-01' }], bytes: 30, durationMs: 1 });
+  spannerInvoker.setResponse(spannerRequest.queryFingerprint, { rows: [{ id: 'linkedSynthetic', date: '2026-08-01' }], bytes: 30, durationMs: 1 });
   const spannerResult = await new SpannerReadAdapter(spannerInvoker).execute(spannerValidated, spannerScope);
   expect(normalizeDataResult(spannerResult).cardinality).toBe('ONE');
 
@@ -225,4 +232,22 @@ test('Phase 3 staleness reaches Phase 6 data oracles without reclassifying API s
   expect(dataOracleAffectedByChange(d1, [{ repoId: 'mobingilabs/ripple-api', path: 'src/App/Handler/ExchangeRate.php', status: 'modify' }])).toBe(true);
   expect(dataOracleAffectedByChange(d1, [{ repoId: 'mobingilabs/ripple-ui', path: 'src/pages/Unrelated.vue', status: 'modify' }])).toBe(false);
   expect(PHASE5_API_CATALOG.operations.filter((operation) => operation.semanticClass === 'KNOWN_MUTATION')).toHaveLength(4);
+});
+
+test('pre-real gate remains closed for source-derived environment and unprobed auth', () => {
+  const budget = new QueryBudgetManager();
+  expect(() => assertRealDataReadAllowed({
+    environment: {
+      runtimeHostClass: 'DEV_API',
+      runtimeHost: 'apidev.alphaus.cloud',
+      datastoreEnvironment: 'UNKNOWN',
+      status: 'RUNTIME_DATA_ENV_SOURCE_DERIVED',
+      designatedScopeApproved: false,
+      sourceProvenance: ['Nightwatch config + PIPELINE_MAP E8'],
+    },
+    authStatus: 'NOT_PROBED',
+    scopeAvailable: false,
+    privacyPass: true,
+    budget,
+  })).toThrow('PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED');
 });

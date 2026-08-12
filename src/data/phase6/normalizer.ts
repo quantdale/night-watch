@@ -47,11 +47,11 @@ export function normalizeDataResult(raw: RawDataResult, options: NormalizationOp
   if (raw.bytes > 4 * 1024 * 1024) throw new Error('QUERY_RESULT_BYTES_EXCEEDED');
   const records = raw.rows.filter(isRecord);
   const fields = [...new Set(records.flatMap((row) => Object.keys(row).filter((key) => /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key))))].sort();
-  const enumValues = options.enumField === undefined
+  const enumValues = options.enumField === undefined || options.allowedEnumValues === undefined
     ? []
     : [...new Set(records
       .map((row) => row[options.enumField!])
-      .filter((value): value is string => typeof value === 'string' && (options.allowedEnumValues === undefined || options.allowedEnumValues.includes(value))))].sort();
+      .filter((value): value is string => typeof value === 'string' && options.allowedEnumValues!.includes(value)))].sort();
   let membershipFingerprint: string | undefined;
   if (options.membershipField !== undefined && options.runLocalSalt !== undefined) {
     const ids = records

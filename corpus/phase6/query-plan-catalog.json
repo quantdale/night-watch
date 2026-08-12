@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nightwatch.readonly-query-plan.phase6.v1",
-  "policy": {
+  "safety": {
     "allowedKinds": ["DYNAMO_GET", "DYNAMO_QUERY_PREFIX", "DYNAMO_QUERY_GSI", "BQ_SELECT_SCOPED", "SPANNER_SELECT_SCOPED"],
     "rawSql": false,
     "dynamoScan": false,
@@ -9,12 +9,98 @@
     "rawRowsPersisted": false
   },
   "plans": [
-    { "planId": "phase6.d1.j1.payer-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J1_PAYER_JPY", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] },
-    { "planId": "phase6.d1.j1.payer-non-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J1_PAYER_NON_JPY", "scopeRoles": ["mspId", "month", "vendor"], "projection": ["id", "sort_key"] },
-    { "planId": "phase6.d2.j2.common-aws-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J2_COMMON_AWS_JPY", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] },
-    { "planId": "phase6.d2.j2.common-non-jpy", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J2_COMMON_NON_AWS_JPY", "scopeRoles": ["mspId", "month", "vendor"], "projection": ["id", "sort_key"] },
-    { "planId": "phase6.d3.j3.companies-msp", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_GSI", "table": "Companies", "grammar": "COMPANIES_MSP_INDEX", "index": "msp_id-index", "scopeRoles": ["mspId"], "projection": ["company_id", "billinggroup_id"] },
-    { "planId": "phase6.d3.j3.accounts-by-company", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_GSI", "table": "WAVE_CB_CUSTOMER", "grammar": "WAVE_CUSTOMER_COMPANY_INDEX", "index": "company_id-index", "scopeRoles": ["companyId"], "projection": ["customer_id", "company_id", "account_id"] },
-    { "planId": "phase6.p5.billing-group-exchange.metadata", "datastore": "DYNAMODB", "kind": "DYNAMO_QUERY_PREFIX", "table": "RIPPLE", "grammar": "RIPPLE_J3_BILLING_GROUP_RATE", "scopeRoles": ["mspId", "month"], "projection": ["id", "sort_key"] }
+    {
+      "planId": "phase6.d1.j1.payer-jpy",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_PREFIX",
+      "table": "RIPPLE",
+      "grammar": "RIPPLE_J1_PAYER_JPY",
+      "scopeRoles": ["mspId", "month"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getAccountExchangeForMonth"}],
+      "resultPolicy": {"projection": ["id", "sort_key"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.d1.j1.payer-non-jpy",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_PREFIX",
+      "table": "RIPPLE",
+      "grammar": "RIPPLE_J1_PAYER_NON_JPY",
+      "scopeRoles": ["mspId", "month", "vendor"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getAccountExchangeForMonth"}],
+      "resultPolicy": {"projection": ["id", "sort_key"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.d2.j2.common-aws-jpy",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_PREFIX",
+      "table": "RIPPLE",
+      "grammar": "RIPPLE_J2_COMMON_AWS_JPY",
+      "scopeRoles": ["mspId", "month"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getCommonExchangeRate"}],
+      "resultPolicy": {"projection": ["id", "sort_key"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.d2.j2.common-non-jpy",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_PREFIX",
+      "table": "RIPPLE",
+      "grammar": "RIPPLE_J2_COMMON_NON_AWS_JPY",
+      "scopeRoles": ["mspId", "month", "vendor"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getCommonExchangeRate"}],
+      "resultPolicy": {"projection": ["id", "sort_key"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.d3.j3.companies-msp",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_GSI",
+      "table": "Companies",
+      "index": "msp_id-index",
+      "grammar": "COMPANIES_MSP_INDEX",
+      "scopeRoles": ["mspId"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ouchan", "sourceSHA": "565f00a87fb7616cc23c45d4ffeabee38a41c65f", "path": "pkg/billing/billing.go", "symbol": "GetCompaniesFromMspId"}],
+      "resultPolicy": {"projection": ["company_id", "billinggroup_id"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.d3.j3.accounts-by-company",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_GSI",
+      "table": "WAVE_CB_CUSTOMER",
+      "index": "company_id-index",
+      "grammar": "WAVE_CUSTOMER_COMPANY_INDEX",
+      "scopeRoles": ["companyId"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ouchan", "sourceSHA": "565f00a87fb7616cc23c45d4ffeabee38a41c65f", "path": "services/costd/vendors/aws/accts/accts.go", "symbol": "GetCustomersFromCompanyId"}],
+      "resultPolicy": {"projection": ["customer_id", "company_id", "account_id"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    },
+    {
+      "planId": "phase6.p5.billing-group-exchange.metadata",
+      "datastore": "DYNAMODB",
+      "kind": "DYNAMO_QUERY_PREFIX",
+      "table": "RIPPLE",
+      "grammar": "RIPPLE_J3_BILLING_GROUP_RATE",
+      "scopeRoles": ["mspId", "month"],
+      "sourceProvenance": [{"repoId": "mobingilabs/ripple-api", "sourceSHA": "27bb007ad0c798800b6bd3b29760c966422966e7", "path": "src/App/Handler/ExchangeRate.php", "symbol": "getExchangeRateForBillingGroup"}],
+      "resultPolicy": {"projection": ["id", "sort_key"], "limit": 100, "maxRows": 100, "maxBytes": 524288, "expectedCardinality": "ANY"},
+      "privacyPolicy": {"rawRowsPersisted": false, "customerIdentifiersPersisted": false, "financialValuesPersisted": false, "projectionPurpose": "metadata-only predicate evaluation"},
+      "consistencyClass": "DIRECT_READ",
+      "authority": "AUTHORITATIVE"
+    }
   ]
 }

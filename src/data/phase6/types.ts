@@ -26,6 +26,7 @@ export type QueryPlanKind =
 
 export type ScopeRole =
   | 'mspId'
+  | 'mspDatasetSuffix'
   | 'companyId'
   | 'billingGroupId'
   | 'payerAccountId'
@@ -39,6 +40,7 @@ export type ScopeRole =
 
 export interface RuntimeDataScope {
   readonly mspId?: string;
+  readonly mspDatasetSuffix?: string;
   readonly companyId?: string;
   readonly billingGroupId?: string;
   readonly payerAccountId?: string;
@@ -90,7 +92,7 @@ export type BqField =
   | 'lineitem_usagestartdate';
 
 export type SpannerTable = 'awsdaily2' | 'customers' | 'companies';
-export type SpannerField = 'id' | 'company_id' | 'msp_id' | 'account_id' | 'usage_date' | 'vendor';
+export type SpannerField = 'id' | 'companyId' | 'mspId' | 'payerId' | 'date' | 'vendor';
 
 export type ConsistencyClass =
   | 'DIRECT_READ'

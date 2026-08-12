@@ -177,7 +177,7 @@ export const PHASE6_DATA_ORACLE_CATALOG: DataOracleCatalog = Object.freeze({
       oracleId: 'D3.j3.account-inventory',
       customerBehavior: 'J3 billing-group membership is derivable from authoritative Companies and account registry metadata.',
       journeyIds: ['ripple-account-inventory'],
-      apiOperationIds: ['ripple.billing-groups.read', 'ripple.account-inventory.read'],
+      apiOperationIds: ['ripple.billing-groups.read'],
       sourceLineage: [
         ouchan('pkg/billing/billing.go', 'GetCompaniesFromMspId'),
         ouchan('services/costd/vendors/aws/accts/accts.go', 'GetCustomersFromCompanyId'),
@@ -190,7 +190,7 @@ export const PHASE6_DATA_ORACLE_CATALOG: DataOracleCatalog = Object.freeze({
       comparisonMode: 'MEMBERSHIP',
       realExecutionEligibility: 'ENVIRONMENT_BLOCKED',
       replayPolicy: 'FIRST_PLUS_FRESH_REPLAY',
-      notes: ['Modern billing-group response groups the MSP account inventory by company_id in memory; cache-backed legacy values are not treated as equivalent.'],
+      notes: ['Modern billing-group response groups the MSP account inventory by company_id in memory. Cache-backed legacy account-inventory values remain shape-only and are not mapped to this datastore oracle.'],
     }),
     oracle({
       oracleId: 'P5.billing-group-exchange.metadata',
