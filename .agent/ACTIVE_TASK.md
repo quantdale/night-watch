@@ -1,18 +1,18 @@
 # Active Task
 
-Task ID: phase-4-seeded-model-based-exploration
-Phase: 4
-Title: Seeded / Model-Based Exploration
-Status: COMPLETE
-Task directory: .agent/tasks/phase-4-seeded-model-based-exploration
-Starting SHA: acdb4a27a953dbff2c3408815efe634468d4ad20
-Current SHA: 6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b
-Last validated implementation SHA: 6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b
-Current milestone: M8 — cross-seed analysis, architecture review, and closure
-Last checkpoint: 2026-08-12 — final guarded DEV corpus and closure validation at
-`6bc3cfc`.
-Next action: Phase 4 is complete. The only recommended next task is Phase 5;
-do not start it in this task.
+Task ID: phase-5-oops-api-generation-expansion
+Phase: 5
+Title: Restricted OOPS Integration + Source-Generated Read-Only API Corpus
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
+Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
+Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
+Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
+Current milestone: M0 — Phase 4 closure audit and native Phase 5 task
+Last checkpoint: 2026-08-12 — `PHASE_4_CLOSURE_AUDIT_ACCEPTED`; Phase 5 frozen
+SPEC/PLAN/STATE/REPORT created, before implementation.
+Next action: Audit current alphauslabs/oops source and installed binary
+read-only; do not execute OOPS scenarios.
 
 ## Prior phase closure handoff
 
