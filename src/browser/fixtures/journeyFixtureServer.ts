@@ -20,7 +20,14 @@ export type JourneyFixtureVariant =
   | 'cancellation'
   | 'production-destination'
   | 'unknown-destination'
-  | 'privacy-secret';
+  | 'privacy-secret'
+  | 'critical-js-500'
+  | 'font-502'
+  | 'optional-image-failure'
+  | 'js-html'
+  | 'csp-block'
+  | 'unhandled-rejection'
+  | 'console-warning';
 
 export interface JourneyFixtureHandle {
   origin: string;
@@ -66,6 +73,20 @@ function pageHtml(pathname: string, variant: JourneyFixtureVariant): string {
   const secret = variant === 'privacy-secret'
     ? "fetch('/m/ripple/privacy-read', {headers: {Authorization: 'Bearer SYNTHETIC_FAKE_SECRET'}}).catch(() => {});"
     : '';
+  const csp = variant === 'csp-block'
+    ? '<meta http-equiv="Content-Security-Policy" content="script-src \'none\'">'
+    : '';
+  const resourceTags = [
+    variant === 'critical-js-500' || variant === 'js-html' ? '<script src="/static/js/app.js"></script>' : '',
+    variant === 'font-502' ? '<link rel="preload" as="font" href="/static/fonts/synthetic.woff2" crossorigin>' : '',
+    variant === 'optional-image-failure' ? '<img src="/optional/missing.png" alt="synthetic optional asset">' : '',
+  ].join('');
+  const rejection = variant === 'unhandled-rejection'
+    ? "setTimeout(() => window.dispatchEvent(new Event('unhandledrejection')), 0);"
+    : '';
+  const warning = variant === 'console-warning'
+    ? "console.warn('synthetic warning');"
+    : '';
   const readScript = pathname.includes('payer-exchange-rate')
     ? "fetch('/m/ripple/v2/payer/exchange_rate/2026-08').then(() => {}).catch(() => {});"
     : pathname.includes('global-exchange-rate')
@@ -73,7 +94,7 @@ function pageHtml(pathname: string, variant: JourneyFixtureVariant): string {
       : "fetch('/m/blue/billing/v1/billinggroups').then(() => {}).catch(() => {}); fetch('/m/ripple/accts?vendor=aws').then(() => {}).catch(() => {});";
   const passiveUnknown = "fetch('/m/ripple/passive-bootstrap').catch(() => {});";
   return `<!doctype html>
-<html><head><meta charset="utf-8"><title>Synthetic Ripple Journey</title></head>
+<html><head><meta charset="utf-8">${csp}<title>Synthetic Ripple Journey</title>${resourceTags}</head>
 <body><div id="app"><div class="q-layout-container layout">${markerHtml}${button}</div></div>
 <script>
 ${readScript}
@@ -84,6 +105,8 @@ ${runtime}
 ${destination}
 ${cancel}
 ${secret}
+${rejection}
+${warning}
 </script></body></html>`;
 }
 
@@ -98,6 +121,24 @@ export function startJourneyFixtureServer(
 
     if (pathname === '/api/cancel') {
       setTimeout(() => send(res, 200, 'application/json', '{"cancelled":false}'), 100);
+      return;
+    }
+    if (pathname === '/static/js/app.js') {
+      if (variant === 'critical-js-500') {
+        send(res, 500, 'application/javascript', 'window.__syntheticApp = false;');
+      } else if (variant === 'js-html') {
+        send(res, 200, 'text/html', '<html>synthetic wrong content</html>');
+      } else {
+        send(res, 200, 'application/javascript', 'window.__syntheticApp = true;');
+      }
+      return;
+    }
+    if (pathname === '/static/fonts/synthetic.woff2') {
+      send(res, variant === 'font-502' ? 502 : 200, variant === 'font-502' ? 'text/plain' : 'font/woff2', 'synthetic-font');
+      return;
+    }
+    if (pathname === '/optional/missing.png') {
+      send(res, 404, 'image/png', 'missing');
       return;
     }
     if (variant === 'malformed-json' && pathname.startsWith('/m/ripple/')) {

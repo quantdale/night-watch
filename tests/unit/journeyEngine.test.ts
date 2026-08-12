@@ -40,6 +40,12 @@ function fixtureEnvironment(server: JourneyFixtureHandle): EnvironmentConfig {
       'malformed-ndjson',
       'navigation-failed',
       'stability-timeout',
+      'critical-resource-status',
+      'known-read-status',
+      'critical-resource-content-type',
+      'known-read-content-type',
+      'unhandled-rejection',
+      'csp-failure',
     ],
   };
 }
@@ -49,6 +55,7 @@ async function runFixture(
   variant: JourneyFixtureVariant,
   definition: JourneyDefinition = getRippleJourneyDefinition('ripple-payer-exchange-read'),
   authenticated = false,
+  authValid = true,
 ): Promise<{
   evidence: Awaited<ReturnType<typeof runDeclarativeJourney>>;
   recorder: RunRecorder;
@@ -70,7 +77,9 @@ async function runFixture(
     recorder,
     uiBaseUrl: server.origin,
     trace: 'off',
+    bootstrapDiagnostics: true,
     endpointRegistry: buildRippleJourneyEndpointRegistry(env),
+    journeyId: definition.journeyId,
   });
   let evidence: Awaited<ReturnType<typeof runDeclarativeJourney>>;
   try {
@@ -78,7 +87,7 @@ async function runFixture(
       ctx.page,
       { recorder, monitor: ctx.monitor, network: ctx.network },
       definition,
-      { uiBaseUrl: server.origin },
+      { uiBaseUrl: server.origin, authValid },
     );
     await recorder.finalize({ passed: evidence.passed });
   } finally {
@@ -186,6 +195,16 @@ test('authenticated evidence remains metadata-only for fake secret traffic', asy
   expect(run.evidence.passed).toBe(true);
 });
 
+test('expired or page-unreadable auth is an auth-state result before any journey action', async ({ browser }) => {
+  const run = await runFixture(browser, 'good', undefined, false, false);
+  expect(run.evidence.passed).toBe(false);
+  expect(run.evidence.authValid).toBe(false);
+  expect(run.evidence.finalRouteClass).toBe('AUTH_STATE_INVALID');
+  expect(run.evidence.failureAttribution?.primaryFailure).toBe('AUTH_STATE_INVALID');
+  expect(run.evidence.oracleObservations?.map((item) => item.anomalyClass)).toContain('AUTH_STATE_INVALID');
+  expect(run.server.requests.filter((item) => item.url.includes('/m/'))).toHaveLength(0);
+});
+
 test('fresh replay comparator accepts bounded timing/request variance', () => {
   const definition = getRippleJourneyDefinition('ripple-payer-exchange-read');
   const base = {
@@ -245,4 +264,49 @@ test('fresh replay comparator rejects structural divergence', () => {
   expect(comparison.passed).toBe(false);
   expect(comparison.strictInvariantMismatches).toContain('structural-checkpoints');
   expect(comparison.categories).toContain('STRUCTURAL_DIVERGENCE');
+});
+
+test('Phase 2C real observer matrix separates critical, asset, optional, and protocol failures', async ({ browser }) => {
+  const critical = await runFixture(browser, 'critical-js-500');
+  expect(critical.evidence.passed).toBe(false);
+  expect(critical.evidence.oracleStatus).toBe('FAIL');
+  expect(critical.evidence.resourceObservations).toEqual(expect.arrayContaining([
+    expect.objectContaining({ role: 'APPLICATION_ENTRY', state: 'HTTP_FAILED' }),
+  ]));
+  expect(critical.evidence.oracleObservations?.map((item) => item.oracleId)).toContain('critical-resource-status');
+
+  const font = await runFixture(browser, 'font-502');
+  expect(font.evidence.passed).toBe(true);
+  expect(font.monitorFailed).toBe(false);
+  expect(font.evidence.resourceObservations).toEqual(expect.arrayContaining([
+    expect.objectContaining({ role: 'FONT', state: 'HTTP_FAILED' }),
+  ]));
+  expect(font.evidence.oracleObservations?.map((item) => item.oracleId)).toContain('unexpected-status');
+  expect(font.evidence.oracleObservations?.map((item) => item.anomalyClass)).toContain('DEV_INFRA_TRANSIENT');
+
+  const optionalImage = await runFixture(browser, 'optional-image-failure');
+  expect(optionalImage.evidence.passed).toBe(true);
+  expect(optionalImage.monitorFailed).toBe(false);
+  expect(optionalImage.evidence.resourceObservations).toEqual(expect.arrayContaining([
+    expect.objectContaining({ role: 'IMAGE', state: 'HTTP_FAILED' }),
+  ]));
+
+  const wrongContent = await runFixture(browser, 'js-html');
+  expect(wrongContent.evidence.passed).toBe(false);
+  expect(wrongContent.evidence.oracleObservations?.map((item) => item.oracleId)).toContain('critical-resource-content-type');
+});
+
+test('Phase 2C runtime/security oracles are admitted separately from warnings', async ({ browser }) => {
+  const rejection = await runFixture(browser, 'unhandled-rejection');
+  expect(rejection.evidence.passed).toBe(false);
+  expect(rejection.evidence.oracleObservations?.map((item) => item.oracleId)).toContain('unhandled-rejection');
+
+  const csp = await runFixture(browser, 'csp-block');
+  expect(csp.evidence.passed).toBe(false);
+  expect(csp.evidence.oracleObservations?.map((item) => item.oracleId)).toContain('csp-failure');
+
+  const warning = await runFixture(browser, 'console-warning');
+  expect(warning.evidence.passed).toBe(true);
+  expect(warning.monitorFailed).toBe(false);
+  expect(warning.evidence.oracleObservations?.map((item) => item.oracleId)).not.toContain('console-warning');
 });

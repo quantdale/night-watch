@@ -52,6 +52,12 @@
     "malformed-json",
     "malformed-ndjson",
     "navigation-failed",
-    "stability-timeout"
+    "stability-timeout",
+    "critical-resource-status",
+    "known-read-status",
+    "critical-resource-content-type",
+    "known-read-content-type",
+    "unhandled-rejection",
+    "csp-failure"
   ]
 }

@@ -8,6 +8,7 @@
 
 import type { BrowserContext } from '@playwright/test';
 import type { RunRecorder } from '../../core/evidence/runRecorder';
+import type { RunMonitor } from '../../state/run';
 import {
   type RippleRootRenderBranch,
 } from '../../products/ripple/readiness';
@@ -581,6 +582,7 @@ export function bootstrapDiagnosticInitScript(): void {
 export async function installBootstrapDiagnosticHooks(
   context: BrowserContext,
   recorder: RunRecorder,
+  monitor?: RunMonitor,
 ): Promise<void> {
   await context.exposeBinding(
     BOOTSTRAP_DIAGNOSTIC_BINDING,
@@ -593,6 +595,36 @@ export async function installBootstrapDiagnosticHooks(
         message: 'sanitized bootstrap diagnostic event',
         data: { ...payload },
       });
+      if (monitor !== undefined && payload.category === 'unhandled-rejection') {
+        const event = recorder.event({
+          type: 'oracle',
+          severity: 'error',
+          message: 'unhandled-rejection',
+          data: {
+            reason: 'unhandled-rejection',
+            oracleId: 'unhandled-rejection',
+            oracleCategory: 'runtime',
+            anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
+            causalToPrimaryFailure: 'UNRESOLVED',
+          },
+        });
+        monitor.recordIssue(event);
+      }
+      if (monitor !== undefined && payload.category === 'csp-violation') {
+        const event = recorder.event({
+          type: 'oracle',
+          severity: 'error',
+          message: 'csp-failure',
+          data: {
+            reason: 'csp-failure',
+            oracleId: 'csp-failure',
+            oracleCategory: 'security',
+            anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
+            causalToPrimaryFailure: 'UNRESOLVED',
+          },
+        });
+        monitor.recordIssue(event);
+      }
     },
   );
   await context.addInitScript(bootstrapDiagnosticInitScript);

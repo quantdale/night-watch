@@ -39,6 +39,15 @@ import {
   checkJsonBody,
   checkNdjsonBody,
 } from '../../oracles/protocol/passiveChecks';
+import {
+  classifyRequestFailure,
+  classifyResourceRole,
+  checkResourceContentType,
+  resourceImpact,
+  type ResourceLifecycleState,
+  type ResourceRole,
+} from '../../oracles/protocol/resourceChecks';
+import { fingerprintAnomaly } from '../../core/journeys/fingerprint';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
@@ -97,6 +106,22 @@ export interface NetworkObserver {
   endJourneyIntent(stepId: string): void;
   /** Sanitized semantic request ledger for the current run. */
   semanticRequests(): readonly SemanticRequestObservation[];
+  /** Mark the start of intentional journey actions after auth/bootstrap preflight. */
+  beginJourneyObservation(): void;
+  /** Semantic ledger limited to the current intentional journey boundary. */
+  journeySemanticRequests(): readonly SemanticRequestObservation[];
+  /** Metadata-only resource lifecycle observations. */
+  resourceObservations(): readonly ResourceObservation[];
+  requestCount(): number;
+}
+
+export interface ResourceObservation {
+  role: ResourceRole;
+  state: ResourceLifecycleState;
+  method: string;
+  stepId: string | null;
+  status: number | null;
+  contentTypeClass: string | null;
 }
 
 export type SemanticRequestDisposition =
@@ -122,6 +147,8 @@ export function createNetworkObserver(opts: {
   endpointMatcher?: (url: string, method: string) => EndpointSemanticMatch | null;
   optionalSupportBlockedHosts?: Set<string>;
   browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
+  targetOrigin?: string;
+  journeyId?: string;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -132,7 +159,11 @@ export function createNetworkObserver(opts: {
   const telemetryBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
   const semanticLedger: SemanticRequestObservation[] = [];
+  const resourceLedger: ResourceObservation[] = [];
+  const completedRequests = new WeakSet<Request>();
+  let requestCount = 0;
   let journeyIntent: { stepId: string; actionType: string } | null = null;
+  let journeyObservationStart = 0;
 
   function matchEndpoint(rawUrl: string, method: string): EndpointSemanticMatch | null {
     if (opts.endpointMatcher !== undefined) return opts.endpointMatcher(rawUrl, method);
@@ -198,6 +229,95 @@ export function createNetworkObserver(opts: {
       });
     }
     return observation;
+  }
+
+  function contentTypeClass(contentType: string | undefined): string | null {
+    if (contentType === undefined || contentType.trim() === '') return null;
+    const value = contentType.toLowerCase();
+    if (value.includes('json')) return 'json';
+    if (value.includes('html')) return 'html';
+    if (value.includes('javascript') || value.includes('ecmascript')) return 'javascript';
+    if (value.includes('css')) return 'css';
+    if (value.includes('font') || value.includes('octet-stream')) return 'font-or-binary';
+    if (value.includes('text')) return 'text';
+    return 'other';
+  }
+
+  function resourceRole(rawUrl: string, resourceType: string, endpointClassification: EndpointSemanticClassification | null): ResourceRole {
+    return classifyResourceRole({
+      url: rawUrl,
+      resourceType,
+      endpointClassification,
+      targetOrigin: opts.targetOrigin,
+    });
+  }
+
+  function recordResource(
+    rawUrl: string,
+    role: ResourceRole,
+    state: ResourceLifecycleState,
+    method: string,
+    status: number | null,
+    contentType: string | undefined,
+  ): void {
+    resourceLedger.push({
+      role,
+      state,
+      method,
+      stepId: journeyIntent?.stepId ?? null,
+      status,
+      contentTypeClass: contentTypeClass(contentType),
+    });
+  }
+
+  function recordOracleIssue(input: {
+    reason: string;
+    message: string;
+    rawUrl: string;
+    redactedUrl: string;
+    role: ResourceRole;
+    status?: number | null;
+    contentType?: string | null;
+    routeClass?: string | null;
+    data?: Record<string, unknown>;
+  }): void {
+    const impact = resourceImpact(input.role);
+    const fingerprint = fingerprintAnomaly({
+      journeyId: opts.journeyId ?? 'unbound',
+      stepId: journeyIntent?.stepId ?? null,
+      oracleId: input.reason,
+      resourceRole: input.role,
+      host: (() => { try { return new URL(input.rawUrl).hostname; } catch { return undefined; } })(),
+      path: input.rawUrl,
+      status: input.status,
+      contentType: input.contentType,
+      routeClass: input.routeClass,
+    });
+    const ev = recorder.event({
+      type: 'oracle',
+      severity: impact === 'BOOTSTRAP' || impact === 'KNOWN_READ' ? 'error' : 'warn',
+      message: input.message,
+      data: {
+        url: input.redactedUrl,
+        reason: input.reason,
+        oracleId: input.reason,
+        oracleCategory: input.reason,
+        oracleSeverity: impact === 'BOOTSTRAP' || impact === 'KNOWN_READ' ? 'error' : 'anomaly',
+        anomalyClass: impact === 'ASSET' || impact === 'OPTIONAL'
+          ? 'DEV_INFRA_TRANSIENT'
+          : impact === 'BOOTSTRAP' || impact === 'KNOWN_READ'
+            ? 'PRODUCT_BEHAVIOR_ANOMALY'
+            : 'UNKNOWN',
+        causalToPrimaryFailure: impact === 'ASSET' || impact === 'OPTIONAL' ? 'NOT_CAUSAL' : 'UNRESOLVED',
+        fingerprint,
+        resourceRole: input.role,
+        impact,
+        ...(input.status === undefined ? {} : { status: input.status }),
+        ...(input.contentType === undefined || input.contentType === null ? {} : { contentType: contentTypeClass(input.contentType) }),
+        ...(input.data ?? {}),
+      },
+    });
+    monitor.recordIssue(ev);
   }
 
   async function handleRoute(route: Route): Promise<void> {
@@ -281,7 +401,9 @@ export function createNetworkObserver(opts: {
 
       if (decision.verdict === 'allow') {
         active += 1;
+        requestCount += 1;
         lastActivity = Date.now();
+        recordResource(rawUrl, resourceRole(rawUrl, request.resourceType(), endpointClassification), 'REQUESTED', request.method(), null, undefined);
         recorder.event({
           type: 'request',
           severity: 'info',
@@ -314,6 +436,10 @@ export function createNetworkObserver(opts: {
           if (decision.verdict === 'block-browser-background' && isBrowserBackgroundClassification(decision.classification)) {
             browserBackgroundBlockedHosts.set(decision.host, decision.classification);
           }
+          if (decision.verdict === 'block-optional-support') monitor.recordContainment('OPTIONAL_THIRD_PARTY_SUPPORT');
+          if (decision.verdict === 'block-telemetry') monitor.recordContainment('TELEMETRY');
+          if (decision.verdict === 'block-browser-background') monitor.recordContainment('BROWSER_BACKGROUND');
+          recordResource(rawUrl, resourceRole(rawUrl, request.resourceType(), endpointClassification), 'CANCELED_BY_POLICY', request.method(), null, undefined);
           recorder.event({
             type: decision.verdict === 'block-optional-support'
               ? 'optional-support'
@@ -354,6 +480,7 @@ export function createNetworkObserver(opts: {
       // verdict === 'deny' — HARD FAILURE. Abort before any network I/O.
       if (!blockedUrls.has(rawUrl)) {
         blockedUrls.add(rawUrl);
+        recordResource(rawUrl, resourceRole(rawUrl, request.resourceType(), endpointClassification), 'CANCELED_BY_POLICY', request.method(), null, undefined);
         recorder.event({
           type: 'request',
           severity: 'info',
@@ -505,8 +632,11 @@ export function createNetworkObserver(opts: {
       const contentLength = responseHeaders['content-length'];
       const method = response.request().method();
       const endpointClassification = matchEndpoint(rawUrl, method)?.classification ?? null;
+      const role = resourceRole(rawUrl, response.request().resourceType(), endpointClassification);
       active = Math.max(0, active - 1);
       lastActivity = Date.now();
+      completedRequests.add(response.request());
+      recordResource(rawUrl, role, status >= 400 ? 'HTTP_FAILED' : 'COMPLETED', method, status, contentType);
 
       const data: Record<string, unknown> = {
         url: redactedUrl,
@@ -555,13 +685,37 @@ export function createNetworkObserver(opts: {
       // are typed 'oracle' with the semantic check name in data.reason.
       // Body-dependent oracles run only when capture succeeded.
       const issues = [
-        checkUnexpectedStatus(status, redactedUrl),
+        checkUnexpectedStatus(status, redactedUrl, role),
         body !== undefined ? checkJsonBody(body, redactedUrl, contentType, status, bodyCapture === 'complete') : null,
         body !== undefined ? checkNdjsonBody(body, redactedUrl, contentType, status, bodyCapture === 'complete') : null,
       ];
       for (const issue of issues) {
         if (issue !== null) {
+          if (issue.type === 'unexpected-status') {
+            const impact = resourceImpact(role);
+            recordOracleIssue({
+              reason: impact === 'BOOTSTRAP' ? 'critical-resource-status' : impact === 'KNOWN_READ' ? 'known-read-status' : 'unexpected-status',
+              message: `${issue.type}: ${redactedUrl}`,
+              rawUrl,
+              redactedUrl,
+              role,
+              status,
+              contentType,
+              data: { protocolExpected: issue.protocolExpected, protocolObserved: issue.protocolObserved },
+            });
+            continue;
+          }
           const location = safeProtocolLocation(redactedUrl);
+          const fingerprint = fingerprintAnomaly({
+            journeyId: opts.journeyId ?? 'unbound',
+            stepId: journeyIntent?.stepId ?? null,
+            oracleId: issue.type,
+            resourceRole: role,
+            host: (() => { try { return new URL(rawUrl).hostname; } catch { return undefined; } })(),
+            path: rawUrl,
+            status,
+            contentType,
+          });
           const ev = recorder.event({
             type: 'oracle',
             severity: 'warn',
@@ -571,6 +725,10 @@ export function createNetworkObserver(opts: {
               reason: issue.type,
               oracleCategory: issue.type,
               oracleSeverity: issue.oracleSeverity,
+              anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
+              causalToPrimaryFailure: 'UNRESOLVED',
+              fingerprint,
+              resourceRole: role,
               origin: location.origin,
               path: location.path,
               method,
@@ -585,6 +743,20 @@ export function createNetworkObserver(opts: {
           monitor.recordIssue(ev);
         }
       }
+      const contentIssue = checkResourceContentType(role, status, contentType, redactedUrl);
+      if (contentIssue !== null) {
+        const impact = resourceImpact(role);
+        recordOracleIssue({
+          reason: impact === 'BOOTSTRAP' ? 'critical-resource-content-type' : impact === 'KNOWN_READ' ? 'known-read-content-type' : 'asset-content-type-anomaly',
+          message: contentIssue.message,
+          rawUrl,
+          redactedUrl,
+          role,
+          status,
+          contentType,
+          data: { expectedContentType: contentIssue.expected, observedContentType: contentIssue.observed },
+        });
+      }
     } catch {
       // An observer must never crash the run.
     }
@@ -596,6 +768,9 @@ export function createNetworkObserver(opts: {
       const redactedUrl = recorder.redactUrl(rawUrl);
       if (blockedUrls.has(rawUrl)) {
         const decision = policy.decide(rawUrl);
+        const endpointClassification = matchEndpoint(rawUrl, request.method())?.classification ?? null;
+        const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
+        recordResource(rawUrl, role, 'CANCELED_BY_POLICY', request.method(), null, undefined);
         recorder.event({
           type: 'requestfailed',
           severity: 'info',
@@ -614,6 +789,16 @@ export function createNetworkObserver(opts: {
         return;
       }
       const errorText = request.failure()?.errorText ?? 'unknown';
+      const endpointClassification = matchEndpoint(rawUrl, request.method())?.classification ?? null;
+      const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
+      const lifecycleState = classifyRequestFailure(errorText, journeyIntent?.actionType === 'NAVIGATE_APPROVED_ROUTE');
+      // Chromium can emit a follow-up ERR_ABORTED after a response has
+      // already been delivered while a document is replaced. The response
+      // lifecycle is authoritative in that case; do not relabel an HTTP
+      // failure as a navigation cancellation.
+      if (!completedRequests.has(request)) {
+        recordResource(rawUrl, role, lifecycleState, request.method(), null, undefined);
+      }
       // Client-side aborts (net::ERR_ABORTED) are ordinary application
       // behavior (e.g. EventSource.close(), fetch AbortController) and
       // net::ERR_BLOCKED_BY_CLIENT is Nightwatch's OWN Fetch-guard action —
@@ -634,6 +819,8 @@ export function createNetworkObserver(opts: {
             completed: false,
             errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText,
             failureCategory: recorder.classifyNetworkFailure(errorText),
+            resourceRole: role,
+            lifecycleState,
           },
         });
         return;
@@ -649,15 +836,20 @@ export function createNetworkObserver(opts: {
           completed: false,
           errorText: recorder.isAuthenticated ? recorder.classifyNetworkFailure(errorText) : errorText,
           failureCategory: recorder.classifyNetworkFailure(errorText),
+          resourceRole: role,
+          lifecycleState,
         },
       });
-      const issueEvent = recorder.event({
-        type: 'issue',
-        severity: 'error',
+      const critical = role === 'MAIN_DOCUMENT' || role === 'APPLICATION_ENTRY' || role === 'CRITICAL_SCRIPT' ||
+        role === 'CRITICAL_STYLESHEET' || role === 'API_KNOWN_READ';
+      recordOracleIssue({
+        reason: critical ? 'request-failed' : 'optional-resource-failure',
         message: `request-failed: ${redactedUrl}`,
-        data: { reason: 'request-failed' },
+        rawUrl,
+        redactedUrl,
+        role,
+        data: { lifecycleState },
       });
-      monitor.recordIssue(issueEvent);
     } catch {
       // observer must never crash the run
     }
@@ -745,5 +937,11 @@ export function createNetworkObserver(opts: {
       if (journeyIntent !== null && journeyIntent.stepId === stepId) journeyIntent = null;
     },
     semanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.map((item) => ({ ...item })),
+    beginJourneyObservation: (): void => {
+      journeyObservationStart = semanticLedger.length;
+    },
+    journeySemanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.slice(journeyObservationStart).map((item) => ({ ...item })),
+    resourceObservations: (): readonly ResourceObservation[] => resourceLedger.map((item) => ({ ...item })),
+    requestCount: (): number => requestCount,
   };
 }

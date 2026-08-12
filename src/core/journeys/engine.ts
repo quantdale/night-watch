@@ -13,10 +13,18 @@ import {
 } from '../../products/ripple/readiness';
 import { waitForRippleStability } from '../../browser/observers/stability';
 import type { SemanticRequestObservation } from '../../browser/observers/networkObserver';
+import { buildJourneyFailureAttribution } from './attribution';
+import {
+  EVIDENCE_SCHEMA_VERSION,
+  JOURNEY_CONTRACT_VERSION,
+  ORACLE_VERSION,
+  journeyContractDigest,
+} from './contract';
 import type {
   JourneyContext,
   JourneyDefinition,
   JourneyEvidence,
+  JourneySemanticRequest,
   JourneyStep,
   JourneyStepResult,
 } from './types';
@@ -148,6 +156,7 @@ function semanticSummary(observations: readonly SemanticRequestObservation[]): {
   passiveUnknownCount: number;
   actionUnknownCount: number;
   mutationCount: number;
+  requests: JourneySemanticRequest[];
 } {
   return {
     ruleIds: [...new Set(observations.map((item) => item.ruleId))].sort(),
@@ -155,6 +164,7 @@ function semanticSummary(observations: readonly SemanticRequestObservation[]): {
     passiveUnknownCount: observations.filter((item) => item.disposition === 'PASSIVE_UNKNOWN_OBSERVED').length,
     actionUnknownCount: observations.filter((item) => item.disposition === 'ACTION_CAUSED_UNKNOWN').length,
     mutationCount: observations.filter((item) => item.disposition === 'KNOWN_MUTATION').length,
+    requests: observations.map((item) => ({ ...item })),
   };
 }
 
@@ -190,13 +200,25 @@ function recordIssue(ctx: JourneyContext, reason: string, data: Record<string, u
   ctx.monitor.recordIssue(event);
 }
 
+function statusClass(status: number | null): string | null {
+  if (status === null) return null;
+  if (status >= 500) return '5xx';
+  if (status >= 400) return '4xx';
+  if (status >= 300) return '3xx';
+  if (status >= 200) return '2xx';
+  return '0xx';
+}
+
 function requiredNetworkSatisfied(
   observations: readonly SemanticRequestObservation[],
   step: JourneyStep,
 ): boolean {
   const ids = step.expectedNetworkResult.requiredRuleIds;
   if (ids.length === 0) return true;
-  const matches = observations.filter((item) => ids.includes(item.ruleId) && item.classification === 'KNOWN_READ');
+  const scoped = step.expectedNetworkResult.scope === 'step'
+    ? observations.filter((item) => item.stepId === step.stepId)
+    : observations;
+  const matches = scoped.filter((item) => ids.includes(item.ruleId) && item.classification === 'KNOWN_READ');
   return matches.length >= step.expectedNetworkResult.minimumRequiredMatches;
 }
 
@@ -205,11 +227,13 @@ async function waitForRequiredNetwork(
   step: JourneyStep,
   timeoutMs: number,
   sleep: (ms: number) => Promise<void>,
+  now: () => number,
 ): Promise<boolean> {
   if (step.expectedNetworkResult.scope !== 'step' && step.expectedNetworkResult.requiredRuleIds.length === 0) return true;
-  const deadline = Date.now() + timeoutMs;
-  while (!requiredNetworkSatisfied(ctx.network.semanticRequests(), step)) {
-    if (Date.now() >= deadline) return false;
+  const deadline = now() + timeoutMs;
+  while (!requiredNetworkSatisfied(ctx.network.journeySemanticRequests(), step)) {
+    if (ctx.monitor.failed) return false;
+    if (now() >= deadline) return false;
     await sleep(ROUTE_POLL_MS);
   }
   return true;
@@ -281,7 +305,7 @@ async function executeStep(
           definition.globalShellRequirement.minimumCount,
         );
         if (!structuralPresent) fail('global-shell-structural-failure');
-        if (!await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep)) fail('required-read-not-observed');
+        if (!await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep, opts.now ?? Date.now)) fail('required-read-not-observed');
       } finally {
         ctx.network.endJourneyIntent(step.stepId);
       }
@@ -311,8 +335,8 @@ async function executeStep(
         } finally {
           ctx.network.endJourneyIntent(step.stepId);
         }
-        if (!requiredNetworkSatisfied(ctx.network.semanticRequests(), step)) {
-          const networkReady = await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep);
+        if (!requiredNetworkSatisfied(ctx.network.journeySemanticRequests(), step)) {
+          const networkReady = await waitForRequiredNetwork(ctx, step, step.timeoutMs, sleep, opts.now ?? Date.now);
           if (!networkReady) fail('required-read-not-observed');
         }
         structuralPresent = await markerPresent(page, step.expectedStructuralResult.selector, step.expectedStructuralResult.minimumCount);
@@ -325,7 +349,7 @@ async function executeStep(
 
   routeResult = routeClass(base, page.url(), step.expectedRouteResult);
   if (!routeResult.expected) fail('route-contradiction');
-  if (step.expectedNetworkResult.scope === 'step' && !requiredNetworkSatisfied(ctx.network.semanticRequests(), step)) {
+  if (step.expectedNetworkResult.scope === 'step' && !requiredNetworkSatisfied(ctx.network.journeySemanticRequests(), step)) {
     fail('required-read-not-observed');
   }
 
@@ -352,10 +376,66 @@ export async function runDeclarativeJourney(
   opts: JourneyRunOptions,
 ): Promise<JourneyEvidence> {
   validateDefinition(definition);
+  const contractDigest = journeyContractDigest(definition);
+  const contractVersion = definition.contractVersion ?? JOURNEY_CONTRACT_VERSION;
+  const authValid = opts.authValid ?? true;
   const base = normalizedBase(opts.uiBaseUrl);
   const steps: JourneyStepResult[] = [];
   const markers: Record<string, boolean> = {};
   let routeStabilityMs = 0;
+
+  // Authentication is a precondition. A stale/expired/unreadable state must
+  // stop before any intentional action, and must never be reported as a
+  // product journey failure. The caller has already reduced the auth check to
+  // booleans; no token or cookie value crosses this boundary.
+  if (!authValid) {
+    const authEvent = ctx.recorder.event({
+      type: 'oracle',
+      severity: 'warn',
+      message: 'AUTH_STATE_INVALID',
+      data: {
+        reason: 'auth-state-invalid',
+        oracleId: 'auth-state-invalid',
+        anomalyClass: 'AUTH_STATE_INVALID',
+        causalToPrimaryFailure: 'NOT_CAUSAL',
+      },
+    });
+    ctx.monitor.recordIssue(authEvent);
+    for (const marker of definition.journeySpecificStructuralMarkers) markers[marker.id] = false;
+    const evidence: JourneyEvidence = {
+      journeyId: definition.journeyId,
+      contractSourceSha: definition.sourceSha,
+      passed: false,
+      finalRouteClass: 'AUTH_STATE_INVALID',
+      globalShellReady: false,
+      journeyMarkers: markers,
+      stepResults: [],
+      semanticRuleIds: [],
+      semanticClasses: [],
+      passiveUnknownCount: 0,
+      actionUnknownCount: 0,
+      mutationCount: 0,
+      routeStabilityMs: 0,
+      authValid: false,
+      oracleStatus: 'PASS',
+      privacyStatus: 'PASS',
+      safetyStatus: 'PASS',
+      evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+      contractVersion,
+      contractDigest,
+      oracleVersion: ORACLE_VERSION,
+      semanticRequests: [],
+      safetyCounts: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, mutations: 0, dbQueries: 0, actionCausedUnknown: 0 },
+      boundedVariance: { requestCount: ctx.network.requestCount() },
+      oracleObservations: ctx.monitor.oracleObservations.map((item) => ({ oracleId: item.oracleId, triggered: true, severity: item.severity, anomalyClass: item.anomalyClass as import('./types').JourneyOracleObservation['anomalyClass'], causalToPrimaryFailure: item.causalToPrimaryFailure })),
+      anomalyFingerprints: [],
+      failureAttribution: buildJourneyFailureAttribution({ steps, monitor: ctx.monitor, authValid: false }),
+      resourceObservations: ctx.network.resourceObservations().map((item) => ({ role: item.role, state: item.state, method: item.method, stepId: item.stepId, statusClass: statusClass(item.status), contentTypeClass: item.contentTypeClass })),
+      containmentCounts: { optionalSupportBlocked: ctx.network.optionalSupportBlockedHosts().size, telemetryBlocked: ctx.network.telemetryBlockedHosts().size, browserBackgroundBlocked: ctx.network.browserBackgroundBlockedHosts().size, containmentEvents: [...ctx.monitor.containmentEvents] },
+    };
+    ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion });
+    return evidence;
+  }
 
   for (const step of definition.allowedSteps) {
     const result = await executeStep(page, ctx, definition, step, base, opts);
@@ -369,8 +449,10 @@ export async function runDeclarativeJourney(
     if (!markers[marker.id]) recordIssue(ctx, 'journey-structural-readiness-failure', { journeyId: definition.journeyId, markerId: marker.id });
   }
 
-  const observations = ctx.network.semanticRequests();
+  const observations = ctx.network.journeySemanticRequests();
   const semantics = semanticSummary(observations);
+  const contractUnchanged = journeyContractDigest(definition) === contractDigest;
+  if (!contractUnchanged) recordIssue(ctx, 'journey-contract-changed', { journeyId: definition.journeyId });
   const requiredReads = new Set(definition.knownReadEndpoints);
   const observedRequiredReads = new Set(observations
     .filter((item) => item.classification === 'KNOWN_READ')
@@ -393,7 +475,9 @@ export async function runDeclarativeJourney(
     journeyMarkersReady &&
     requiredReadsPresent &&
     safetyStatus === 'PASS' &&
-    !ctx.monitor.failed;
+    !ctx.monitor.failed &&
+    authValid &&
+    contractUnchanged;
 
   const evidence: JourneyEvidence = {
     journeyId: definition.journeyId,
@@ -409,10 +493,56 @@ export async function runDeclarativeJourney(
     actionUnknownCount: semantics.actionUnknownCount,
     mutationCount: semantics.mutationCount,
     routeStabilityMs,
-    authValid: opts.authValid ?? true,
+    authValid,
     oracleStatus: ctx.monitor.oracleFailed ? 'FAIL' : 'PASS',
     privacyStatus: 'PASS',
     safetyStatus,
+    evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+    contractVersion,
+    contractDigest,
+    oracleVersion: ORACLE_VERSION,
+    semanticRequests: semantics.requests,
+    safetyCounts: {
+      productionAttempts: 0,
+      proxyViolations: 0,
+      unknownDestinations: 0,
+      unknownApprovals: 0,
+      mutations: semantics.mutationCount,
+      dbQueries: 0,
+      actionCausedUnknown: semantics.actionUnknownCount,
+    },
+    boundedVariance: {
+      routeStabilityDeltaMs: 0,
+      passiveUnknownDelta: 0,
+      requestCount: ctx.network.requestCount(),
+      requestCountDelta: ctx.network.requestCount(),
+    },
+    oracleObservations: ctx.monitor.oracleObservations.map((item) => ({
+      oracleId: item.oracleId,
+      triggered: true,
+      severity: item.severity,
+      anomalyClass: item.anomalyClass as import('./types').JourneyOracleObservation['anomalyClass'],
+      causalToPrimaryFailure: item.causalToPrimaryFailure,
+      ...(item.fingerprint === undefined ? {} : { fingerprint: item.fingerprint }),
+    })),
+    anomalyFingerprints: ctx.monitor.oracleObservations
+      .map((item) => item.fingerprint)
+      .filter((value): value is string => value !== undefined),
+    failureAttribution: buildJourneyFailureAttribution({ steps, monitor: ctx.monitor, authValid }),
+    resourceObservations: ctx.network.resourceObservations().map((item) => ({
+      role: item.role,
+      state: item.state,
+      method: item.method,
+      stepId: item.stepId,
+      statusClass: statusClass(item.status),
+      contentTypeClass: item.contentTypeClass,
+    })),
+    containmentCounts: {
+      optionalSupportBlocked: ctx.network.optionalSupportBlockedHosts().size,
+      telemetryBlocked: ctx.network.telemetryBlockedHosts().size,
+      browserBackgroundBlocked: ctx.network.browserBackgroundBlockedHosts().size,
+      containmentEvents: [...ctx.monitor.containmentEvents],
+    },
   };
   ctx.recorder.addManifestEntry('journeyEvidence', {
     journeyId: evidence.journeyId,
@@ -432,6 +562,13 @@ export async function runDeclarativeJourney(
     oracleStatus: evidence.oracleStatus,
     privacyStatus: evidence.privacyStatus,
     safetyStatus: evidence.safetyStatus,
+    evidenceSchemaVersion: evidence.evidenceSchemaVersion,
+    contractVersion: evidence.contractVersion,
+    contractDigest: evidence.contractDigest,
+    oracleVersion: evidence.oracleVersion,
+    anomalyFingerprints: evidence.anomalyFingerprints,
+    failureAttribution: evidence.failureAttribution,
+    containmentCounts: evidence.containmentCounts,
   });
   ctx.recorder.event({
     type: 'journey',

@@ -1,25 +1,23 @@
 # Active Task
 
-Task ID: phase-2b-three-readonly-ripple-journeys
-Phase: 2B
-Title: Three Deterministic Read-Only Ripple Journeys
-Status: COMPLETE
-Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
-Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
+Task ID: phase-2c-replay-oracle-verification
+Phase: 2C
+Title: Replay + Oracle Verification
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-2c-replay-oracle-verification
+Starting SHA: 1760e594419cabdcec12f6506cabe3aa242331c4
 Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
-Current milestone: M11 — final validation and Phase 2B closure (COMPLETE)
-Last checkpoint: 2026-08-12 — `1b6e7a5`; Journey 3's first/replay pair,
-cross-journey review, privacy/safety accounting, and final adversarial review
-are complete; final validation passed.
-Next action: none. Phase 2B is closed; verify the terminal tree if resuming
-and stop before Phase 2C.
+Current milestone: M4 — pre-real validation and adversarial self-review
+Last checkpoint: 2026-08-12 — shared Phase 2C hardening and synthetic matrix
+validated locally; implementation checkpoint is being prepared. No Phase 2C
+real context has run.
+Next action: freeze the implementation/oracle/contract/matrix versions in the
+pre-real checkpoint, then run the declared serial six-context DEV matrix.
 
-## Phase 2A closure handoff
+## Phase 2A/2B closure handoff
 
-Phase 2A remains closed. Its implementation baseline is `a6d7c8b`, validated
-closure checkpoint is `9bf2c45`, and clean terminal HEAD is `ec4c143`; the
-descendants after the implementation baseline are documentation/continuity
-updates. The fresh capture and two successful authenticated landing contexts
-remain external/sanitized historical evidence. Phase 2B is now the sole active
-engineering target.
+Phase 2A remains closed at implementation `a6d7c8b`, closure checkpoint
+`9bf2c45`, terminal clean HEAD `ec4c143`. Phase 2B remains closed at
+implementation `78e5d1f`, completion checkpoint `1b6e7a5`, terminal clean HEAD
+`1760e594`. The three Phase 2B journeys are the only Phase 2C canaries.

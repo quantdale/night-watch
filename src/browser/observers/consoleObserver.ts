@@ -43,6 +43,7 @@ export function createConsoleObserver(opts: {
             ? opts.classifyExpectedContainmentEffect?.(msg.text(), msg.location().url)
             : null;
           if (expectedContainment !== null && expectedContainment !== undefined) {
+            monitor.recordContainment(expectedContainment.classification);
             recorder.event({
               type: 'console',
               severity: 'warn',

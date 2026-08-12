@@ -79,6 +79,8 @@ export interface JourneyDefinition<JourneyId extends string = string> {
   boundedVariance: readonly string[];
   stopConditions: readonly string[];
   sourceEvidence: readonly string[];
+  /** Optional explicit version for persisted/replayed contract evidence. */
+  contractVersion?: string;
 }
 
 export interface JourneyContext {
@@ -120,10 +122,116 @@ export interface JourneyEvidence {
   oracleStatus: 'PASS' | 'FAIL';
   privacyStatus: 'PASS' | 'FAIL';
   safetyStatus: 'PASS' | 'FAIL';
+  /** Added in the Phase 2C evidence model; absent on legacy Phase 2A/2B files. */
+  evidenceSchemaVersion?: string;
+  contractVersion?: string;
+  contractDigest?: string;
+  oracleVersion?: string;
+  semanticRequests?: readonly JourneySemanticRequest[];
+  safetyCounts?: JourneySafetyCounts;
+  boundedVariance?: JourneyVarianceEvidence;
+  oracleObservations?: readonly JourneyOracleObservation[];
+  anomalyFingerprints?: readonly string[];
+  failureAttribution?: JourneyFailureAttribution;
+  resourceObservations?: readonly JourneyResourceObservation[];
+  containmentCounts?: JourneyContainmentCounts;
+}
+
+export interface JourneySemanticRequest {
+  ruleId: string;
+  classification: EndpointSemanticClassification;
+  disposition: SemanticRequestDisposition;
+  method: string;
+  stepId: string | null;
+  actionType: string | null;
+  /** Count is optional for legacy observations and populated in Phase 2C summaries. */
+  count?: number;
+}
+
+export type SemanticRequestDisposition =
+  | 'KNOWN_READ'
+  | 'KNOWN_MUTATION'
+  | 'PASSIVE_UNKNOWN_OBSERVED'
+  | 'ACTION_CAUSED_UNKNOWN';
+
+export interface JourneySafetyCounts {
+  productionAttempts: number;
+  proxyViolations: number;
+  unknownDestinations: number;
+  unknownApprovals: number;
+  mutations: number;
+  dbQueries: number;
+  actionCausedUnknown: number;
+}
+
+export interface JourneyResourceObservation {
+  role: string;
+  state: string;
+  method: string;
+  stepId: string | null;
+  statusClass: string | null;
+  contentTypeClass: string | null;
+}
+
+export interface JourneyContainmentCounts {
+  optionalSupportBlocked: number;
+  telemetryBlocked: number;
+  browserBackgroundBlocked: number;
+  containmentEvents: readonly string[];
+}
+
+export interface JourneyVarianceEvidence {
+  routeStabilityDeltaMs?: number;
+  passiveUnknownDelta?: number;
+  requestCount?: number;
+  requestCountDelta?: number;
+  optionalSupportBlockedDelta?: number;
+  telemetryBlockedDelta?: number;
+  browserBackgroundBlockedDelta?: number;
+  nonCriticalResourceFailureDelta?: number;
+  cleanupIncompleteDelta?: number;
+  networkConcurrencyDelta?: number;
+}
+
+export type JourneyOracleSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
+export type JourneyAnomalyClass =
+  | 'NIGHTWATCH_DEFECT'
+  | 'PRODUCT_BEHAVIOR_ANOMALY'
+  | 'DEV_INFRA_TRANSIENT'
+  | 'BROWSER_BACKGROUND'
+  | 'EXPECTED_CONTAINMENT'
+  | 'AUTH_STATE_INVALID'
+  | 'SOURCE_CONTRACT_STALE'
+  | 'KNOWN_TRANSIENT'
+  | 'UNKNOWN';
+
+export type JourneyCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
+
+export interface JourneyOracleObservation {
+  oracleId: string;
+  triggered: boolean;
+  severity: JourneyOracleSeverity;
+  anomalyClass: JourneyAnomalyClass;
+  causalToPrimaryFailure: JourneyCausality;
+  fingerprint?: string;
+}
+
+export interface JourneyFailureAttribution {
+  primaryFailure: string | null;
+  secondaryOracles: readonly string[];
+  safetyFailure: string | null;
+  containmentEvents: readonly string[];
+  likelyCause: JourneyAnomalyClass | 'NONE' | 'UNRESOLVED';
+  causalityConfidence: JourneyCausality;
+  lastSuccessfulStep: string | null;
+  firstFailingStep: string | null;
 }
 
 export type ReplayComparisonCategory =
   | 'MATCH'
+  | 'STRICT_MATCH'
+  | 'BOUNDED_MATCH'
+  | 'EXPECTED_VARIANCE'
   | 'EXPECTED_TIMING_VARIANCE'
   | 'EXPECTED_REQUEST_COUNT_VARIANCE'
   | 'EXPECTED_BACKGROUND_VARIANCE'
@@ -139,4 +247,19 @@ export interface ReplayComparison {
   categories: readonly ReplayComparisonCategory[];
   strictInvariantMismatches: readonly string[];
   boundedVariance: readonly string[];
+  differential?: ReplayDifferentialEvidence;
+}
+
+export interface ReplayDifferentialEvidence {
+  routeClassSame: boolean;
+  structuralMarkersSame: boolean;
+  semanticReadFamiliesSame: boolean;
+  semanticStrictLedgerSame: boolean;
+  timingDeltaMs: number | null;
+  requestCountDelta: number | null;
+  passiveUnknownDelta: number | null;
+  oracleIdsOnlyInFirst: readonly string[];
+  oracleIdsOnlyInReplay: readonly string[];
+  authEquivalent: boolean;
+  safetyEquivalent: boolean;
 }

@@ -11,12 +11,16 @@
 // included in an oracle message.
 // ---------------------------------------------------------------------------
 
+import { checkResourceStatus, type ResourceImpact, type ResourceRole } from './resourceChecks';
+
 export interface UnexpectedStatusIssue {
   type: 'unexpected-status';
   severity: 'error' | 'warn';
   oracleSeverity: 'anomaly';
   protocolExpected: 'http-status';
   protocolObserved: 'unexpected-status';
+  resourceRole?: ResourceRole;
+  impact?: ResourceImpact;
   message: string;
 }
 
@@ -47,19 +51,10 @@ export interface MalformedNdjsonIssue {
  */
 export function checkUnexpectedStatus(
   status: number,
-  url: string
+  url: string,
+  resourceRole: ResourceRole = 'OTHER',
 ): UnexpectedStatusIssue | null {
-  if (status >= 500) {
-    return {
-      type: 'unexpected-status',
-      severity: 'error',
-      oracleSeverity: 'anomaly',
-      protocolExpected: 'http-status',
-      protocolObserved: 'unexpected-status',
-      message: `unexpected-status: HTTP ${status} for ${url}`,
-    };
-  }
-  return null;
+  return checkResourceStatus({ status, role: resourceRole, url });
 }
 
 /**
@@ -144,6 +139,10 @@ function wantsNdjson(body: string, contentType: string | undefined): boolean {
   ) {
     return true;
   }
+  // A declared non-streaming type is authoritative. Do not sniff an
+  // application/html or text/plain response as NDJSON merely because it has
+  // multiple brace-prefixed lines.
+  if (normalizedContentType !== undefined) return false;
   return looksLikeNdjson(body);
 }
 

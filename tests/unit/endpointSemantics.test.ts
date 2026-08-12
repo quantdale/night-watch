@@ -67,3 +67,18 @@ test('Phase 2B registry preserves source-backed path and rule identity semantics
     registry,
   )).toEqual({ ruleId: 'ripple.account-inventory.write.delete', classification: 'KNOWN_MUTATION' });
 });
+
+test('semantic path patterns must be anchored to the complete pathname', () => {
+  const env = loadEnvironmentConfig('dev');
+  const rules: readonly EndpointSemanticRule[] = [{
+    id: 'synthetic-anchored',
+    host: 'apidev.alphaus.cloud',
+    method: 'GET',
+    pathPattern: '^/reviewed/[0-9]+$',
+    classification: 'KNOWN_READ',
+    provenance: 'synthetic-unit-test',
+  }];
+  expect(classifyRippleEndpoint('https://apidev.alphaus.cloud/reviewed/123', 'GET', env, rules)).toBe('KNOWN_READ');
+  expect(classifyRippleEndpoint('https://apidev.alphaus.cloud/reviewed/123/other', 'GET', env, rules)).toBe('UNKNOWN');
+  expect(classifyRippleEndpoint('https://apidev.alphaus.cloud/prefix/reviewed/123', 'GET', env, rules)).toBe('UNKNOWN');
+});

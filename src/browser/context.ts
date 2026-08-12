@@ -79,6 +79,8 @@ export interface NightwatchContextOptions {
   bootstrapDiagnostics?: boolean;
   /** Explicit source-reviewed endpoint rules for a Phase 2B journey run. */
   endpointRegistry?: readonly EndpointSemanticRule[];
+  /** Metadata-only identity for anomaly fingerprints; never page data. */
+  journeyId?: string;
 }
 
 export interface NightwatchContext {
@@ -273,7 +275,7 @@ export async function createNightwatchContext(
   // L3 — init scripts + serviceworker alarm (defense in depth).
   await context.addInitScript(containmentInitScript);
   if (opts.bootstrapDiagnostics === true) {
-    await installBootstrapDiagnosticHooks(context, recorder);
+    await installBootstrapDiagnosticHooks(context, recorder, monitor);
   }
   context.on('serviceworker', (worker) => {
     const ev = recorder.event({
@@ -310,6 +312,8 @@ export async function createNightwatchContext(
     endpointMatcher: (url, method) => matchRippleEndpoint(url, method, opts.env, opts.endpointRegistry),
     optionalSupportBlockedHosts,
     browserBackgroundBlockedHosts,
+    targetOrigin: new URL(validated).origin,
+    journeyId: opts.journeyId,
   });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;

@@ -46,6 +46,10 @@ function isApiHost(url: URL, env: EnvironmentConfig): boolean {
 function pathMatches(candidate: EndpointSemanticRule, pathname: string): boolean {
   if (candidate.path === pathname) return true;
   if (candidate.pathPattern === undefined) return false;
+  // A semantic rule must describe the whole pathname. Substring matching
+  // could silently classify a different customer/resource surface as the
+  // reviewed endpoint and erase a meaningful replay divergence.
+  if (!candidate.pathPattern.startsWith('^') || !candidate.pathPattern.endsWith('$')) return false;
   try {
     return new RegExp(candidate.pathPattern).test(pathname);
   } catch {

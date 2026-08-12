@@ -42,6 +42,17 @@ export interface SafetyMonitorDiagnostic {
   issueCategory?: string;
 }
 
+export type MonitorOracleCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
+
+/** Sanitized oracle trigger metadata; no URL, body, DOM, or exception text. */
+export interface MonitorOracleObservation {
+  oracleId: string;
+  severity: 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
+  anomalyClass: string;
+  causalToPrimaryFailure: MonitorOracleCausality;
+  fingerprint?: string;
+}
+
 function safeLocation(rawUrl: string | undefined): Pick<SafetyMonitorDiagnostic, 'host' | 'origin' | 'path'> {
   if (rawUrl === undefined) return {};
   try {
@@ -123,6 +134,10 @@ export class RunMonitor {
   readonly oracleFailures: RunEvent[] = [];
   /** Sanitized causes, in first-observed order. */
   readonly monitorFailures: SafetyMonitorDiagnostic[] = [];
+  /** Every oracle trigger, including nonfatal and expected-containment signals. */
+  readonly oracleObservations: MonitorOracleObservation[] = [];
+  /** Fixed containment categories observed during the run. */
+  readonly containmentEvents: string[] = [];
   /** True after any hard failure or any issue whose type is in failOn. */
   failed = false;
   /** True only after a safety-policy, containment, or lifecycle failure. */
@@ -168,11 +183,29 @@ export class RunMonitor {
    */
   recordIssue(event: RunEvent): void {
     this.issues.push(event);
+    const data = event.data ?? {};
+    const severity = event.severity === 'fatal' ? 'FATAL' : event.severity === 'error' ? 'ERROR' : event.severity === 'warn' ? 'WARNING' : 'INFO';
+    const anomalyClass = typeof data.anomalyClass === 'string'
+      ? data.anomalyClass
+      : data.reason === 'expected-containment-effect'
+        ? 'EXPECTED_CONTAINMENT'
+        : 'UNKNOWN';
+    const causality = data.causalToPrimaryFailure === 'PROVEN' || data.causalToPrimaryFailure === 'LIKELY' ||
+      data.causalToPrimaryFailure === 'NOT_CAUSAL' ? data.causalToPrimaryFailure : 'UNRESOLVED';
+    const oracleId = typeof data.oracleId === 'string'
+      ? data.oracleId
+      : typeof data.reason === 'string' ? data.reason : event.type;
+    const fingerprint = typeof data.fingerprint === 'string' ? data.fingerprint : undefined;
+    this.oracleObservations.push({ oracleId, severity, anomalyClass, causalToPrimaryFailure: causality, ...(fingerprint === undefined ? {} : { fingerprint }) });
     if (this.failOnSet.has(event.type) || this.failOnSet.has(semanticTypeOf(event))) {
       this.oracleFailures.push(event);
       this.oracleFailed = true;
       this.failed = true;
     }
+  }
+
+  recordContainment(category: string): void {
+    if (!this.containmentEvents.includes(category)) this.containmentEvents.push(category);
   }
 
   /** Record an observer failure without exposing the underlying exception. */
