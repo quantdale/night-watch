@@ -192,4 +192,44 @@ test.describe('Phase 4 exploration model', () => {
     expect(result.observedActions).toEqual([]);
     expect(result.decisions[0]?.excludedActions).toEqual([{ actionId: action.actionId, reason: 'STALE_SOURCE' }]);
   });
+
+  test('failed modeled actions retain an invalidated transition record', async () => {
+    const action = SYNTHETIC_ACTIONS.find((candidate) => candidate.actionId === 'fixture.runtime-failure')!;
+    const fixture = createSyntheticFixture({ mode: 'runtime-failure' });
+    const result = await runExploration({
+      runId: 'failed-transition',
+      seed: '0x0000000000000001',
+      catalog: [{ ...action, status: 'APPROVED', semanticClass: 'LOCAL_ONLY' }],
+      envelope: envelope([action.actionId], ['/start']),
+      budget,
+      runtime: fixture.runtime,
+    });
+    expect(result.terminationReason).toBe('RUNTIME_FAILURE');
+    expect(result.transitions).toHaveLength(1);
+    expect(result.transitions[0]?.actionOutcome).toBe('FAILED');
+    expect(result.transitions[0]?.verification).toBe('INVALIDATED');
+    expect(result.transitions[0]?.oracleResults).toContain('ACTION_TRANSITION_FAILED');
+  });
+
+  test('declared action structural/read contracts are independently enforced', async () => {
+    const fixture = createSyntheticFixture();
+    const action = SYNTHETIC_ACTIONS.find((candidate) => candidate.actionId === 'fixture.safe-a')!;
+    const runtime = {
+      ...fixture.runtime,
+      execute: async (catalogAction: SafeAction) => {
+        const result = await fixture.runtime.execute(action);
+        return { ...result, structuralDelta: { view: 'actual' } };
+      },
+    };
+    const result = await runExploration({
+      runId: 'contract-mismatch',
+      seed: '0x0000000000000001',
+      catalog: [{ ...action, expectedStructuralDelta: { view: 'wrong' } }],
+      envelope: envelope([action.actionId], ['/start']),
+      budget,
+      runtime,
+    });
+    expect(result.terminationReason).toBe('RUNTIME_FAILURE');
+    expect(result.transitions[0]?.oracleResults).toContain('ACTION_TRANSITION_FAILED');
+  });
 });

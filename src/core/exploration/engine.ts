@@ -107,6 +107,20 @@ function isFatalOracle(oracles: readonly string[]): boolean {
   return oracles.some((oracle) => oracle.startsWith('FATAL:'));
 }
 
+function actionOutcomeMismatch(action: SafeAction, result: ActionExecutionResult): string | null {
+  if (result.status !== 'COMPLETED') return null;
+  for (const [key, value] of Object.entries(action.expectedStructuralDelta)) {
+    if (result.structuralDelta[key] !== value) return `expected structural delta missing: ${key}`;
+  }
+  const knownReadFamilies = new Set(result.semanticRequestDelta
+    .filter((request) => request.classification === 'KNOWN_READ')
+    .map((request) => request.family));
+  for (const family of action.expectedReadFamilies) {
+    if (!knownReadFamilies.has(family)) return `expected read family missing: ${family}`;
+  }
+  return null;
+}
+
 function createCoverage(args: {
   approvedActions: number;
   decisions: number;
@@ -189,6 +203,16 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
   let newStates = 0;
   let newTransitions = 0;
   let terminationReason: ExplorationTerminationReason = 'SAFE_FRONTIER_EXHAUSTED';
+  const recordTransition = (input: Parameters<typeof createTransition>[0]): ReturnType<typeof createTransition> => {
+    const transition = createTransition(input);
+    transitions.push(transition);
+    if (!transitionIds.has(transition.transitionId)) {
+      transitionIds.add(transition.transitionId);
+      newTransitions += 1;
+      novelty.transitions = (novelty.transitions ?? 0) + 1;
+    }
+    return transition;
+  };
 
   if (state.authStateClass !== 'AUTHENTICATED_DEV') terminationReason = 'AUTH_INVALID';
   else if (!routeAllowed(state, opts.envelope)) terminationReason = 'UNEXPECTED_ROUTE_ESCAPE';
@@ -220,13 +244,34 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
     transitionsAttempted += 1;
     const result = await opts.runtime.execute(action);
     observedActions.push(action.actionId);
+    const resultSafety = safetyFromResult(result);
     if (result.status === 'ACTION_NOT_AVAILABLE_AT_RUNTIME') {
       unavailable += 1;
+      const unavailableState = createExplorationState(result.nextState);
+      states.set(unavailableState.stateId, unavailableState);
+      recordTransition({
+        fromStateId: state.stateId,
+        actionId: action.actionId,
+        seedDecisionIndex: selected.decision.index,
+        toStateId: unavailableState.stateId,
+        actionOutcome: result.status,
+        routeDelta: result.routeDelta,
+        structuralDelta: result.structuralDelta,
+        semanticRequestDelta: result.semanticRequestDelta,
+        oracleResults: ['ACTION_NOT_AVAILABLE_AT_RUNTIME'],
+        safetyResult: resultSafety,
+        durationClass: result.durationClass,
+        verification: 'BLOCKED',
+      });
       terminationReason = 'RUNTIME_FAILURE';
       break;
     }
-    const resultSafety = safetyFromResult(result);
     safety = addSafety(safety, resultSafety);
+    const mismatch = actionOutcomeMismatch(action, result);
+    const actionFailure = result.status === 'FAILED' || mismatch !== null;
+    const actionOracleResults = actionFailure && !result.oracleResults.includes('ACTION_TRANSITION_FAILED')
+      ? [...result.oracleResults, 'ACTION_TRANSITION_FAILED']
+      : result.oracleResults;
     for (const oracle of result.oracleResults) {
       oracles.add(oracle);
       if (oracle.startsWith('FINGERPRINT:')) anomalyFingerprints.add(oracle.slice('FINGERPRINT:'.length));
@@ -238,26 +283,40 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
       terminationReason = safetyTermination;
       const blockedState = createExplorationState(result.nextState);
       states.set(blockedState.stateId, blockedState);
-      const transition = createTransition({
+      recordTransition({
         fromStateId: state.stateId,
         actionId: action.actionId,
         seedDecisionIndex: selected.decision.index,
         toStateId: blockedState.stateId,
-        actionOutcome: result.status,
+        actionOutcome: actionFailure ? 'FAILED' : result.status,
         routeDelta: result.routeDelta,
         structuralDelta: result.structuralDelta,
         semanticRequestDelta: result.semanticRequestDelta,
-        oracleResults: result.oracleResults,
+        oracleResults: actionOracleResults,
         safetyResult: resultSafety,
         durationClass: result.durationClass,
         verification: 'INVALIDATED',
       });
-      transitions.push(transition);
-      transitionIds.add(transition.transitionId);
       break;
     }
-    if (result.status === 'FAILED') {
+    if (actionFailure || isFatalOracle(result.oracleResults)) {
       terminationReason = isFatalOracle(result.oracleResults) ? 'FATAL_ORACLE' : 'RUNTIME_FAILURE';
+      const failedState = createExplorationState(result.nextState);
+      states.set(failedState.stateId, failedState);
+      recordTransition({
+        fromStateId: state.stateId,
+        actionId: action.actionId,
+        seedDecisionIndex: selected.decision.index,
+        toStateId: failedState.stateId,
+        actionOutcome: actionFailure ? 'FAILED' : result.status,
+        routeDelta: result.routeDelta,
+        structuralDelta: result.structuralDelta,
+        semanticRequestDelta: result.semanticRequestDelta,
+        oracleResults: actionOracleResults,
+        safetyResult: resultSafety,
+        durationClass: result.durationClass,
+        verification: 'INVALIDATED',
+      });
       break;
     }
     const fromStateId = state.stateId;
@@ -271,7 +330,7 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
     const wasKnownRoute = routes.has(state.routeClass);
     routes.add(state.routeClass);
     for (const family of state.semanticReadFamilies) families.add(family);
-    const transition = createTransition({
+    recordTransition({
       fromStateId,
       actionId: action.actionId,
       seedDecisionIndex: selected.decision.index,
@@ -287,12 +346,7 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
     });
     // Transition identity contains only the logical source/action/destination;
     // run IDs and timestamps never enter it.
-    transitions.push(transition);
-    if (!transitionIds.has(transition.transitionId)) {
-      transitionIds.add(transition.transitionId);
-      newTransitions += 1;
-      novelty.transitions = (novelty.transitions ?? 0) + 1;
-    }
+    const transition = transitions[transitions.length - 1]!;
     if (!wasKnownState) {
       newStates += 1;
       novelty.states = (novelty.states ?? 0) + 1;
@@ -314,7 +368,7 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
     encountered,
     executed,
     unavailable: unavailable + decisions.reduce((count, decision) => count + decision.excludedActions.filter((item) => item.reason === 'RUNTIME_CONTROL_ABSENT').length, 0),
-    states: stateVisits,
+    states: new Map([...states.keys()].map((stateId) => [stateId, stateVisits.get(stateId) ?? 1])),
     transitionsAttempted,
     transitionsCompleted,
     transitionsReproduced: 0,
@@ -387,8 +441,11 @@ export async function replayExactSequence(args: {
     if (result.status !== 'COMPLETED') {
       return { status: 'INVARIANT_DIVERGENCE', observedActions, stateIds, transitionIds, firstDivergentIndex: index, terminationReason: 'REPLAY_DIVERGENCE' };
     }
+    if (actionOutcomeMismatch(action, result) !== null) {
+      return { status: 'INVARIANT_DIVERGENCE', observedActions, stateIds, transitionIds, firstDivergentIndex: index, terminationReason: 'REPLAY_DIVERGENCE' };
+    }
     const nextState = createExplorationState(result.nextState);
-    if (nextState.routeClass !== action.expectedRouteClass) {
+    if (!args.envelope.allowedRoutes.includes(nextState.routeClass) || nextState.routeClass !== action.expectedRouteClass) {
       return { status: 'INVARIANT_DIVERGENCE', observedActions, stateIds, transitionIds, firstDivergentIndex: index, terminationReason: 'UNEXPECTED_ROUTE_ESCAPE' };
     }
     const stableTransitionId = createTransition({

@@ -50,6 +50,9 @@ function assertSafeScalar(value: SafeScalar, path: string): void {
   if (typeof value === 'string' && (value.length > 80 || /[\r\n]/.test(value))) {
     throw new Error(`privacy-unsafe state value: ${path}`);
   }
+  if (typeof value === 'string' && !/^[A-Za-z0-9_.:-]{1,80}$/.test(value)) {
+    throw new Error(`non-canonical state value: ${path}`);
+  }
 }
 
 function assertSafeMap(map: Readonly<Record<string, SafeScalar>>, path: string): void {
