@@ -4,14 +4,14 @@
 
 Task ID: phase-5-oops-api-generation-expansion
 Phase: 5
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
 Last validated implementation SHA: 83f9d610f9ecc5c35422e91a83b9a3bc760ccadd
 Branch: main
-Last checkpoint: 3f989a2e31bed3c128be62e8fe0a60ba94723f0a — M2–M7
-implementation, durable corpus, native relay runner, and local validation
-checkpoint. No Phase 5 real DEV request has run.
+Last checkpoint: 8f6b7923044d7ce5ba6401da84941e40e70feaf0 — repaired preflight
+snapshot-root defect checkpoint; no real API request reached the relay before
+the subsequent successful run.
 
 ## Objective
 
@@ -21,11 +21,11 @@ destinations, semantics, or durable privacy.
 
 ## Current Milestone
 
-M9 — bounded DEV first/replay corpus. M2–M8 local implementation,
+M10 — final review, validation, and clean closure. M2–M9 local implementation,
 source inventory, corpus generation, relay controls, lineage hooks, actual
 current-source OOPS fixture execution, security review, and pre-real validation
-are complete. Remaining work is the single gated DEV first/replay run and
-post-run closure review.
+are complete. Final validation, privacy/integrity review, task closure, and the
+clean Nightwatch handoff are complete.
 
 ## Completed Milestones
 
@@ -43,10 +43,14 @@ post-run closure review.
   assertion-failure privacy sentinel, and child-environment sentinel.
 - M7 J1/J2/J3 API lineage plus two API-only expansion operations and Phase 3
   staleness checks.
+- M8 pre-real security review, frozen operation set, budget, and validation
+  gate accepted as `PHASE_5_PRE_REAL_API_READY`.
+- M9 frozen DEV first/replay corpus completed through the native Nightwatch
+  relay fallback: six first executions and six fresh replays passed.
 
 ## Work In Progress
 
-M8 is complete and M9 is frozen around six eligible operations and a
+M10 is complete; the six eligible operations had a
 twelve-request maximum:
 first execution plus one fresh replay for each operation, serially, with a
 350ms delay. OOPS authenticated DEV execution is disabled because the verified
@@ -56,10 +60,8 @@ remains exercised against local fixtures only.
 
 ## Exact Next Action
 
-Run `npm run api:phase5 -- --env=dev` once after the clean-worktree, auth,
-proxy, source-freshness, relay, privacy, and budget gates pass. Record the
-sanitized first/replay ledger before final closure review; if a gate fails,
-record the blocker and do not retry real traffic.
+No further Phase 5 action. Preserve this clean handoff and do not start Phase 6
+from this task state.
 
 ## CURRENT_GOAL
 
@@ -68,8 +70,7 @@ OOPS subordinate to Nightwatch policy and preserving all Phase 4 caveats.
 
 ## CURRENT_PHASE
 
-M9 — bounded DEV first/replay corpus; no real API request has executed in this
-Phase 5 task.
+M10 — final review and clean closure after the bounded DEV corpus.
 
 ## CURRENT_EVIDENCE
 
@@ -111,6 +112,22 @@ Phase 5 task.
   `NIGHTWATCH_GATE_DEFECT`, repaired by resolving repositories beside the
   Nightwatch checkout. After repair, TypeScript and the 15-test Phase 5 suite
   passed; no real endpoint was reached.
+- The repaired frozen DEV run completed as
+  `nightwatch-20260812T141849Z-ca02` in DEV using
+  `NATIVE_NIGHTWATCH_RELAY_FALLBACK`. It executed exactly 12 serial requests:
+  six first executions and six fresh replays. All six first results were
+  `DEV_VERIFIED_FIRST`; all six replays were `DEV_VERIFIED_REPLAY`.
+- The J1 payer-exchange, J2 common-exchange, J3 account-inventory, legacy
+  billing-groups expansion, and billing-group-exchange expansion each returned
+  `2xx`/`application/json`/`json-valid` with matching first/replay
+  fingerprints. The J3 billing-groups stream returned
+  `2xx`/`application/json`/`json-chunks-valid`/`json-chunks-complete` with a
+  matching first/replay fingerprint. Every operation lineage was `FRESH`.
+- Real ledger safety is zero for production attempts, proxy violations,
+  unknown destinations, unknown approvals, KNOWN_MUTATION invocations,
+  scenario-caused UNKNOWN, product mutations, DB queries, and secret leaks.
+  Privacy is metadata-only: raw bodies, forwarded response bodies, credentials,
+  and customer identifiers persisted are all zero.
 
 ## PRE_REAL_SECURITY_REVIEW
 
@@ -199,8 +216,8 @@ nightwatch.api-catalog.phase5.v1
 ## API_OPERATION_COUNTS
 
 inventoried=11; KNOWN_READ=6; KNOWN_MUTATION=4; UNKNOWN=1;
-generationEligible=6; generated=6; localOopsVerified=6; devFirst=0;
-devReplay=0; blocked=5; anomalous=0.
+generationEligible=6; generated=6; localOopsVerified=6; devFirst=6;
+devReplay=6; blocked=5; anomalous=0.
 
 ## KNOWN_READ_OPERATIONS
 
@@ -246,25 +263,25 @@ bounded and sanitized, and workspaces cleaned.
 
 ## DEV_API_RUN_LEDGER
 
-Frozen set is six KNOWN_READ operations; maximum 12 serial calls. The first
-guarded attempt was blocked before relay/API execution by a repaired
-Nightwatch repository-snapshot path defect; no real endpoint was reached.
-real runner is native Nightwatch through the catalog-resolving relay because
-authenticated OOPS is disabled by the sandbox decision.
+Run `nightwatch-20260812T141849Z-ca02`: six first executions and six fresh
+replays, all passed; serial budget 12/12 and delay 350ms. The runner used
+native Nightwatch through the catalog-resolving relay because authenticated
+OOPS is disabled by the sandbox decision. The first preflight-only attempt was
+blocked before relay/API execution by the repaired snapshot-root defect.
 
 ## REPLAY_LEDGER
 
 Phase 4 inherited 0/3 exact real replays — NOT_APPLICABLE.
-Phase 5 real budget is one first plus one fresh replay for each of the six
-frozen operation IDs; no Phase 5 replay has executed yet.
+Phase 5 replay ledger: all six fresh replays completed with the same safe
+semantic oracle and fingerprint as their corresponding first execution.
 
 ## AUTH_STATUS
 
 Phase 4 external owner-only DEV state remains outside Nightwatch and is never
-passed to OOPS. Phase 5 synthetic auth bridge passed: it validates the same
-Phase 4 storage-state semantics and creates a bearer header only in relay
-memory. Real runner refreshes only through existing runDevAuthRefresh; OOPS
-receives neither password, storage-state path, browser state, nor token.
+passed to OOPS. The real run reused the valid external state with no refresh or
+MFA. The Phase 5 synthetic auth bridge validates the same storage-state
+semantics and creates a bearer header only in relay memory. OOPS received
+neither password, storage-state path, browser state, nor token.
 
 ## FILES_CHANGED
 
@@ -294,6 +311,8 @@ REPORT.md are also being checkpointed. No Alphaus repository is changed.
 - Pre-real gate: PASS; no real request has executed yet.
 - Post-gate repair validation: TypeScript PASS; focused Phase 5 suite 15
   passed; diff check PASS.
+- Guarded DEV runner: PASS; one completed run, 12/12 requests, six first and
+  six fresh replays.
 
 ## BUG_CANDIDATES
 
@@ -302,7 +321,7 @@ resolved the Alphaus repository root two levels above `REPOSITORIES`, making
 all source snapshots invalid. It stopped before API execution and was fixed in
 `83f9d610f9ecc5c35422e91a83b9a3bc760ccadd`. No product/API anomaly is admitted.
 Phase 4 runtime artifacts and historical J2 font signal remain classified as
-above.
+above. No Phase 5 API anomaly candidate was admitted.
 
 ## REJECTED_OPERATIONS
 
@@ -322,18 +341,15 @@ customer identifiers; unbounded bodies.
 
 ## UNRESOLVED
 
-- Actual DEV first/replay outcomes for the frozen six-operation set.
-- Whether any current DEV endpoint returns a source-contract-compatible body;
-  failures will be classified without widening the operation set.
 - Authenticated OOPS execution remains intentionally disabled by the network
   namespace/relay incompatibility; local OOPS and native DEV fallback are the
-  approved scope.
+  approved scope. This is an explicit containment limitation, not a safety
+  exception.
 
 ## SAFETY_EVENTS
 
-Phase 5 real safety counters remain zero because the guarded attempt stopped
-before any real API call. The source-snapshot gate defect was repaired before
-the next checkpoint.
+Phase 5 real safety counters are all zero in the completed ledger. The
+preflight snapshot-root defect was repaired before the successful run.
 Local synthetic safety blocks (arbitrary target, UNKNOWN, mutation, redirect)
 were rejected before target execution. No production attempt, proxy violation,
 unknown approval, product mutation, action-caused UNKNOWN, DB query, or
@@ -341,7 +357,7 @@ Alphaus write occurred.
 
 ## PRIVACY_STATUS
 
-PASS_LOCAL; REAL_GATE_PENDING. Generated corpus contains no credentials,
+PASS. Generated corpus and sanitized real ledger contain no credentials,
 customer identifiers, request bodies, response bodies, browser state,
 screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
@@ -355,11 +371,8 @@ screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## NEXT_EXACT_ACTION
 
-After the repaired runner is checkpointed, run `npm run api:phase5 -- --env=dev`
-once. On completion, inspect only the
-sanitized ledger, update the corpus/task closure records, and run final
-validation. If a preflight or auth gate fails, record the exact blocker and do
-not retry real traffic.
+No further Phase 5 action. Preserve this clean handoff and do not start Phase 6
+from this task state.
 
 ## RESUME_RECIPE
 
@@ -375,9 +388,8 @@ not retry real traffic.
 
 ## Completion Snapshot
 
-Not complete. Finalize only after the frozen DEV first/replay decision,
-privacy/safety audit, full validation, task closure, and clean Nightwatch
-checkpoint. Do not create or start Phase 6 from this state.
+Complete. Final validation, privacy/safety audit, task closure, and clean
+Nightwatch checkpoint are recorded. Phase 6 is not started from this task.
 
 ## Files Changed
 
@@ -388,8 +400,8 @@ repository is changed.
 ## Validation Ledger
 
 The current validation results are recorded in VALIDATION_LEDGER above. The
-pre-real validation checkpoint is complete; the frozen DEV ledger and final
-post-run closure validation remain pending.
+pre-real validation checkpoint, frozen DEV ledger, and final closure
+validation are complete.
 
 ## Decisions Made During This Task
 

@@ -222,7 +222,8 @@ other-repository writes, and Phase 6.
   remains zero, every promoted operation has first + fresh replay, anomalies
   retain L0/L1/L2 status, budget is not exceeded.
 - Validation commands: guarded DEV runner and post-run privacy/safety audit.
-- Status: `IN_PROGRESS`
+- Status: `COMPLETED`; the frozen native-relay run executed six first
+  requests and six fresh replays with zero safety/privacy events.
 
 ### M10 — Final review, validation, and clean closure
 
@@ -235,7 +236,8 @@ other-repository writes, and Phase 6.
   Nightwatch clean; Alphaus repos unchanged; `ACTIVE_TASK` complete.
 - Validation commands: full required validation plus all adapter/generator/
   sandbox/privacy regressions.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; final safety/privacy/adversarial review, full validation,
+  Alphaus integrity review, corpus promotion, and clean handoff passed.
 
 ## Validation Strategy
 

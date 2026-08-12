@@ -18,10 +18,20 @@
     "generationEligible": 6,
     "generated": 6,
     "localOopsVerified": 6,
-    "devFirstVerified": 0,
-    "devReplayVerified": 0,
+    "devFirstVerified": 6,
+    "devReplayVerified": 6,
     "blocked": 5,
     "anomalous": 0
+  },
+  "devRun": {
+    "runId": "nightwatch-20260812T141849Z-ca02",
+    "ledgerFile": "artifacts/nightwatch-20260812T141849Z-ca02-phase5-api-ledger.json",
+    "mode": "NATIVE_NIGHTWATCH_RELAY_FALLBACK",
+    "requests": 12,
+    "firstStatus": "DEV_VERIFIED_FIRST",
+    "replayStatus": "DEV_VERIFIED_REPLAY",
+    "safety": "ZERO",
+    "privacy": "PASS_METADATA_ONLY"
   },
   "operations": [
     {
@@ -32,7 +42,7 @@
       "scenarioId": "nw-s5-5a0630ca92ca24d00349d53b",
       "scenarioFile": "scenarios/ripple.payer-exchange.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.common-exchange.read",
@@ -42,7 +52,7 @@
       "scenarioId": "nw-s5-b928e70a21dcf49838b3faf4",
       "scenarioFile": "scenarios/ripple.common-exchange.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.account-inventory.read",
@@ -52,7 +62,7 @@
       "scenarioId": "nw-s5-2a9f447b4437883efd1d504a",
       "scenarioFile": "scenarios/ripple.account-inventory.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.billing-groups.read",
@@ -62,7 +72,7 @@
       "scenarioId": "nw-s5-19120f948294275d3d8cbb18",
       "scenarioFile": "scenarios/ripple.billing-groups.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.billing-groups-legacy.read",
@@ -72,7 +82,7 @@
       "scenarioId": "nw-s5-82b419ed9049519ae61eb312",
       "scenarioFile": "scenarios/ripple.billing-groups-legacy.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.billing-group-exchange.read",
@@ -82,7 +92,7 @@
       "scenarioId": "nw-s5-e93116bd803fc423c635a0cd",
       "scenarioFile": "scenarios/ripple.billing-group-exchange.read.yaml",
       "localStatus": "GENERATED_LOCAL_ONLY",
-      "devStatus": "PENDING_FROZEN_DEV_RUN"
+      "devStatus": "DEV_VERIFIED_REPLAY"
     },
     {
       "operationId": "ripple.payer-exchange.write",

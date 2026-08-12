@@ -18,3 +18,8 @@ The `:0` port is a logical placeholder. The adapter materializes an ephemeral
 loopback port immediately before local execution and validates the resulting
 document again. These are templates, not existing Alphaus OOPS scenarios, and
 are never copied into another repository.
+
+The frozen DEV set completed six first executions and six fresh replays through
+the native Nightwatch relay fallback on 2026-08-12. The sanitized run ledger is
+kept under the ignored local `artifacts/` evidence directory; the corpus index
+records its run ID, status, safety, and privacy summary without customer data.
