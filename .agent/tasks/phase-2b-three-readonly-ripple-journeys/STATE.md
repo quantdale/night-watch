@@ -2,11 +2,34 @@
 
 ## Identity
 
-Task ID: `phase-2b-three-readonly-ripple-journeys`
-Phase: `2B`
-Status: `IN_PROGRESS`
-Starting SHA: `ec4c14376923ffbe12356dd180218eb09cf4f75f`
+Task ID: phase-2b-three-readonly-ripple-journeys
+Phase: 2B
+Status: IN_PROGRESS
+Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
+Current SHA: 7b57d559dad039fb491ca9e539d174dc40357d58
+Last validated implementation SHA: 7b57d559dad039fb491ca9e539d174dc40357d58
 Branch: `main`
+
+## Objective
+
+The objective is recorded in `CURRENT_GOAL` below: establish the reusable
+engine and exactly three source-backed, semantically read-only Ripple
+journeys.
+
+## Current Milestone
+
+M5 — synthetic/local validation after the contract and engine checkpoint.
+
+## Completed Milestones
+
+M0 continuity/task creation, M1 archaeology/inventory/freshness, M2 semantic
+proof/selection/contracts, M3 generic engine design, and M4 implementation are
+complete. M5 is in progress; M6–M11 remain pending.
+
+## Work In Progress
+
+Full local validation, adversarial pre-real review, and the serial gated
+real-run harness remain. No DEV context is authorized yet.
 
 ## CURRENT_GOAL
 
@@ -36,6 +59,7 @@ engine, tripwire, evidence, and replay-comparison implementation.
   in the registry or any journey.
 - The semantic observer now records only rule IDs/classes, action IDs/types,
   and dispositions; passive unknowns are distinct from action-caused unknowns.
+- The contract/engine implementation checkpoint is `7b57d559dad039fb491ca9e539d174dc40357d58`.
 - `npx tsc --noEmit`: PASS.
 - Focused endpoint plus journey suite: `12 passed`; real local fixture HTTP,
   engine, recorder, observer, tripwire, privacy, and replay comparator paths
@@ -69,7 +93,7 @@ an interaction. No selected action intentionally requires UNKNOWN.
 
 ## IMPLEMENTATION_STATUS
 
-CONTRACT_AND_ENGINE_IMPLEMENTED; synthetic validation PASS. The generic
+CONTRACT_AND_ENGINE_IMPLEMENTED at `7b57d559dad039fb491ca9e539d174dc40357d58`; synthetic validation PASS. The generic
 declarative engine is in `src/core/journeys/engine.ts`, generic contract/result
 types in `src/core/journeys/types.ts`, and fresh-context comparison in
 `src/core/journeys/replay.ts`. Real-run harness and pre-real review remain.
@@ -95,7 +119,10 @@ types in `src/core/journeys/types.ts`, and fresh-context comparison in
 
 - `npx tsc --noEmit`: PASS.
 - `NIGHTWATCH_ENV=local npx playwright test tests/unit/endpointSemantics.test.ts tests/unit/journeyEngine.test.ts --project=nightwatch --workers=1`: **12 passed**.
-- `git diff --check`: PASS before this documentation checkpoint.
+- `git diff --check`: PASS before the implementation commit.
+- Nightwatch commit `7b57d559dad039fb491ca9e539d174dc40357d58` contains only
+  the Phase 2B contracts, engine, safety integration, fixture, tests, and
+  task documentation; the worktree was clean after commit.
 - Real DEV contexts: NONE. Real journey/replay IDs: NONE. DB queries: NONE.
 - Alphaus repositories: read-only source inspection only; pre-existing Ripple
   UI/API worktree entries remain untouched.
@@ -179,13 +206,14 @@ pending.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c` (Phase 2A baseline; the current
-Phase 2B implementation is still an uncommitted working tree at this point).
+`7b57d559dad039fb491ca9e539d174dc40357d58` (Phase 2B contract/engine
+implementation checkpoint; Phase 2A baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`b693b48f3f5fa1e3addfa53d44d0638fe3b10df7` (M1 inventory checkpoint). The
-contract/engine checkpoint will be written after this implementation commit.
+`7b57d559dad039fb491ca9e539d174dc40357d58` (`CHECKPOINT_ADVANCE`: contracts,
+semantic registry, generic engine, fixture, and focused validation are
+checkpointed; pre-real full validation is still pending).
 
 ## NEXT_EXACT_ACTION
 
@@ -195,6 +223,50 @@ before every context, uses the three definitions and explicit registry, runs
 fresh contexts, compares replay evidence, and stops fail-closed. Do not run
 DEV until the full pre-real validation and adversarial self-review are
 checkpointed.
+
+## Exact Next Action
+
+Run full local validation, inspect the diff, implement the serial gated
+real-run harness, and checkpoint both pre-real readiness and self-review
+before contacting DEV.
+
+## Files Changed
+
+See `FILES_CHANGED` above. All implementation paths are inside Nightwatch;
+Alphaus repositories remain read-only.
+
+## Validation Ledger
+
+See `VALIDATION_LEDGER` above; the focused contract/engine suite is 12 passed
+and the implementation checkpoint is 7b57d559dad039fb491ca9e539d174dc40357d58.
+
+## Decisions Made During This Task
+
+See `DECISIONS` above. The three selected journeys and fail-closed semantic
+registry are frozen before real execution.
+
+## Discoveries
+
+See `CURRENT_EVIDENCE` and `REJECTED_JOURNEYS` above; no real anomaly exists.
+
+## Blockers
+
+None currently. Human auth recapture is a possible external blocker only if
+the existing state fails the fresh boolean page-readability gate.
+
+## Safety Events
+
+No real safety event. Synthetic safety-stop cases are expected local tests.
+
+## Deferred / Follow-Up
+
+Phase 2C and all later functionality are deferred and prohibited in this
+task.
+
+## Resume Recipe
+
+Follow the numbered `RESUME_RECIPE` below from a fresh context; do not infer
+semantic decisions from conversation memory.
 
 ## RESUME_RECIPE
 

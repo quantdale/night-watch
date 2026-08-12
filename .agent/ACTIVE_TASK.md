@@ -6,8 +6,8 @@ Title: Three Deterministic Read-Only Ripple Journeys
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
-Current SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
-Last validated implementation SHA: a6d7c8ba9237ca0ffb1acd9442b23d21d0abf56c
+Current SHA: 7b57d559dad039fb491ca9e539d174dc40357d58
+Last validated implementation SHA: 7b57d559dad039fb491ca9e539d174dc40357d58
 Current milestone: M5 — synthetic/local validation (IN_PROGRESS)
 Last checkpoint: 2026-08-12 — M2/M3/M4 contract, semantic-registry, generic
 engine, tripwire, evidence, replay, and local-fixture implementation is ready
