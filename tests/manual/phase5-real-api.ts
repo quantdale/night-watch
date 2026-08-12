@@ -108,7 +108,11 @@ function mfaWait(): Promise<void> {
 }
 
 async function repositoryFacts(root: string): Promise<{ snapshotsValid: boolean; nightwatchDirtyPaths: string[]; snapshots: unknown[] }> {
-  const workspaceRoot = path.resolve(root, '..', '..');
+  // root is .../REPOSITORIES/nightwatch; source snapshots live beside the
+  // Nightwatch checkout under .../REPOSITORIES. Keeping this path explicit
+  // prevents the pre-real gate from silently snapshotting a non-existent
+  // workspace-level path.
+  const workspaceRoot = path.resolve(root, '..');
   const repos = [
     'mobingilabs/ripple-ui',
     'mobingilabs/ripple-api',
