@@ -203,6 +203,16 @@ test('uncommitted approved task state is checkpoint advance', () => {
   expect(result.stderr).not.toContain('STALE STATE');
 });
 
+test('uncommitted approved exploration ledger is checkpoint advance', () => {
+  const { root } = fixture();
+  const ledger = path.join(root, '.agent', 'tasks', 'phase-test', 'ACTIONS.md');
+  fs.writeFileSync(ledger, '# Synthetic action ledger\n');
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('STALE STATE');
+});
+
 test('missing required state section fails', () => {
   const { root } = fixture();
   const file = path.join(root, '.agent', 'tasks', 'phase-test', 'STATE.md');

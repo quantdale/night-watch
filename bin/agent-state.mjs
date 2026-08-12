@@ -154,7 +154,7 @@ function gitHead(root, errors) {
 const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
-  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT)\.md$/,
+  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS)\.md$/,
   /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP)\.md$/,
 ];
 
