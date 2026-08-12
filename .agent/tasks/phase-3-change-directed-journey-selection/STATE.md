@@ -20,18 +20,24 @@ or starting Phase 4.
 
 ## Current Milestone
 
-M1 — repository routing, product change-surface, freshness, and baseline audit.
+M2 — dependency-map contract and deterministic model implementation.
 
 ## Completed Milestones
 
 - M0 — COMPLETE. Phase 2A/2B/2C closure chain independently reconciled;
   Phase 2C full inherited suite passed (`263 passed`); native Phase 3 task
   artifacts created before implementation.
+- M1 — COMPLETE. Routing/index guidance was consulted first. The six included
+  repositories and six reviewed exclusions are recorded in `REPOSITORY_SCOPE.md`;
+  the three canary maps and shared edges are recorded in `DEPENDENCY_MAP.md`.
+  Local tracking refs were recorded without fetch, and dirty Alphaus states
+  were preserved and excluded from the committed window.
 
 ## Work In Progress
 
-No Phase 3 implementation has started. The next work is read-only routing and
-source inspection followed by the repository/freshness ledger.
+The source-backed scope and dependency contract are complete. The next work is
+to implement the pure Git/change representation, impact graph, selector, and
+baseline state without touching Alphaus repositories.
 
 ## CURRENT_GOAL
 
@@ -55,20 +61,27 @@ freshness audit.
   the inherited full suite result is `263 passed`.
 - Phase 2C safety vector across seven controlled contexts is zero and privacy
   is PASS; no Phase 3 live execution has occurred.
+- M1 evidence is in `REPOSITORY_SCOPE.md` and `DEPENDENCY_MAP.md`; freshness is
+  `LOCAL_TRACKING_REF_ONLY`, not remote/deployment confirmation.
 
 ## REPO_BASELINES
 
-Status: `PENDING_M1_AUDIT`. Candidate scope is the Ripple cluster only; final
-in-scope repositories must be justified from `.github/codebase-index.md` and
-source tracing. Every entry will record role, canary dependency, source,
-branch, checked-out SHA, tracking SHA/ref, ahead/behind, dirty state, and
-`READ_ONLY_ONLY=true`.
+Status: `COMPLETE_M1`. Included: `mobingilabs/ripple-ui@d80b161b`,
+`mobingilabs/ripple-api@27bb007a`, `mobingilabs/ouchan@565f00a8`,
+`alphauslabs/blueapi@691422e5`, `alphauslabs/blue-sdk-go@8883ee3d`, and
+`alphauslabs/grpc-chunk-parser@66802f28`. Full branches, tracking refs,
+ahead/behind counts, dirty states, roles, provenance, and
+`READ_ONLY_ONLY=true` are recorded in `REPOSITORY_SCOPE.md`. Reviewed but
+excluded: `alupi`, dashboard, cost-finalization, blueinternal, blue-sdk-ts,
+and mobingilabs/protobuf. No remote fetch or deployment inference occurred.
 
 ## CHANGE_WINDOW
 
-Status: `PENDING_M1_AUDIT`. Frozen default is per-repository verified baseline
-SHA to checked-out HEAD, with dirty worktree changes excluded from committed /
-nightly selection. Bootstrap baselines are not treated as verified coverage.
+Status: `FROZEN_M1`. Default is explicit per-repository verified baseline SHA
+to checked-out HEAD, with merge-base recorded when applicable; dirty worktree
+changes are a separate `DIRTY_WORKTREE_CHANGE` source and excluded from
+committed/nightly selection. Initial records are `BOOTSTRAP_BASELINE`, not
+verified coverage. The selector never claims deployment status from Git alone.
 
 ## CANARY_SET
 
@@ -83,14 +96,15 @@ are authoritative; no canary or action is added here.
 
 ## DEPENDENCY_MAP_STATUS
 
-`NOT_STARTED`. Required output: `nightwatch.dependency-map.phase3.v1`, with
-source SHA, journey contract version, edge provenance, stale-edge detection,
-and direct/shared/transitive evidence for J1/J2/J3.
+`SOURCE_AUDITED`. Durable source contract is
+`nightwatch.ripple-dependency-map.v1` in `DEPENDENCY_MAP.md`; implementation
+must carry source SHA, journey contract version, edge provenance, and stale
+edge detection for J1/J2/J3.
 
 ## IMPACT_GRAPH_STATUS
 
-`NOT_STARTED`. Required output includes path/file, component/route, API client,
-backend, contract, shared-core, and unresolved edges with stable reason codes.
+`CONTRACT_DEFINED`. Required graph levels and stable reason codes are defined
+in `DEPENDENCY_MAP.md`; implementation pending.
 
 ## SELECTION_MODEL_VERSION
 
@@ -98,29 +112,29 @@ backend, contract, shared-core, and unresolved edges with stable reason codes.
 
 ## SELECTED_JOURNEYS
 
-`PENDING`. No current changeset has been collected and no journey has been
-selected.
+`PENDING_IMPLEMENTATION`. No current changeset has been collected and no
+journey has been selected.
 
 ## SELECTION_RATIONALE
 
-`PENDING`. Must contain source-backed positive reasons, confidence, risk,
+`PENDING_IMPLEMENTATION`. Must contain source-backed positive reasons, confidence, risk,
 priority, provenance, and deterministic explanations.
 
 ## NEGATIVE_SELECTIONS
 
-`PENDING`. Every J1/J2/J3 not selected must have an explicit reason; unknown
+`PENDING_IMPLEMENTATION`. Every J1/J2/J3 not selected must have an explicit reason; unknown
 relevant impact must not be represented as a silent empty result.
 
 ## BACKTEST_LEDGER
 
-`NOT_STARTED`. Expected categories are true-positive selection, false-positive
+`PENDING_IMPLEMENTATION`. Expected categories are true-positive selection, false-positive
 selection, false-negative selection, safe conservative fallback, correct
 non-selection, and ground-truth unresolved. Ground truth must be independently
 source-traced before selector comparison.
 
 ## SHADOW_RUN_LEDGER
 
-`NOT_STARTED`. Shadow mode will collect a reproducible current source window,
+`PENDING_IMPLEMENTATION`. Shadow mode will collect a reproducible current source window,
 exclude dirty changes, and produce a human-reviewable selection without
 automatically invoking DEV.
 
@@ -132,8 +146,9 @@ recorded as not required.
 
 ## FILES_CHANGED
 
-Task creation only so far: `.agent/ACTIVE_TASK.md` and the four Phase 3 task
-artifacts. No source implementation files have changed.
+Task and M1 evidence: `.agent/ACTIVE_TASK.md`, `SPEC.md`, `PLAN.md`, `STATE.md`,
+`REPORT.md`, `REPOSITORY_SCOPE.md`, and `DEPENDENCY_MAP.md`. No selector source
+implementation has changed.
 
 ## VALIDATION_LEDGER
 
@@ -144,6 +159,8 @@ artifacts. No source implementation files have changed.
 - `npx tsc --noEmit`: PASS.
 - `npx playwright test --project=nightwatch`: PASS, `263 passed`.
 - `git diff --check`: PASS before Phase 3 task creation.
+- M1 focused validation: source/route/API/backend/proto inspection complete;
+  Alphaus status checks were read-only and no Alphaus diff changed.
 - Phase 3 focused validation: pending implementation.
 
 ## BUGS_FOUND
@@ -155,14 +172,14 @@ closed as `PHASE_2C_DISCOVERED_SHARED_INFRA_DEFECT` and is not reopened.
 
 - Phase 2A/2B/2C are not stale or reopened merely because this task starts.
 - A Ripple repository name alone is not proof that all three canaries depend on
-  it.
+  it; `REPOSITORY_SCOPE.md` records reviewed exclusions.
 - A commit message is not impact evidence.
 - Dirty local Alphaus work is not a deployed/nightly change by default.
 
 ## UNRESOLVED
 
-- Final repository scope and freshness values pending read-only M1 audit.
-- Current committed change window and bootstrap-baseline disposition pending.
+- Current committed change window and bootstrap-baseline disposition pending
+  selector implementation.
 - Historical direct J2 isolation may not exist; if unavailable it will be
   recorded as unresolved rather than fabricated.
 
@@ -189,15 +206,14 @@ checkpoint for Phase 3 task creation.
 
 ## NEXT_EXACT_ACTION
 
-Read `.github/codebase-index.md`, route the three canaries to actual source,
-inspect only the justified Ripple candidate repositories, and write the
-REPO_BASELINES / change-surface ledger with before/after integrity evidence.
+Implement the pure Phase 3 model: typed changesets, source-backed Ripple
+dependency edges, deterministic impact classification/selection, and atomic
+baseline state. Add unit tests before collecting historical backtests.
 
 ## Exact Next Action
 
-Run read-only routing/source inspection and Git freshness commands. Do not
-modify Alphaus repositories and do not implement selection until the scope and
-dependency contract evidence are recorded.
+Implement and test the offline selection core from the frozen M1 scope and
+dependency contract. Keep Git collection separate from impact/selection.
 
 ## Files Changed
 
@@ -246,5 +262,5 @@ correlation remain out of scope.
 
 ## Completion Snapshot
 
-Not complete. Native Phase 3 task is created; closure audit is complete; M1
-repository/change-surface audit is the next exact action.
+Not complete. Native Phase 3 task, repository scope, and dependency contract
+are created; M2 model implementation is the next exact action.

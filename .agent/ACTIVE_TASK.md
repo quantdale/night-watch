@@ -8,11 +8,11 @@ Task directory: .agent/tasks/phase-3-change-directed-journey-selection
 Starting SHA: 427f10295ae2037d09741de98ebea9210f14f85a
 Current SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
 Last validated implementation SHA: efc03de2f7396a96baaca485894df300ddcc4ce0
-Current milestone: M1 — repository routing, change-surface, and freshness audit
+Current milestone: M2 — dependency-map contract and deterministic model implementation
 Last checkpoint: 2026-08-12 — Phase 2A/2B/2C closure independently reconciled;
 native Phase 3 task created before implementation.
-Next action: read codebase routing, inspect justified Ripple source surfaces, and
-record the repository/freshness ledger in the Phase 3 STATE.
+Next action: implement and unit-test the pure Phase 3 changeset, impact graph,
+selector, and baseline model from the frozen M1 evidence.
 
 ## Prior phase closure handoff
 
