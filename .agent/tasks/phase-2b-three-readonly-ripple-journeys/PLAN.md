@@ -152,7 +152,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: tests exercise real parser/classifier/executor/evidence/
   comparator code and all Phase 2B fixture cases pass.
 - Validation commands: focused suite; `npx playwright test`.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Pre-real full validation and adversarial review
 
@@ -166,7 +166,7 @@ unbounded Ripple archaeology.
   registry are approved; exact next real command is in STATE.
 - Validation commands: `npx tsc --noEmit`; `npx playwright test`; `npm run
   agent:check`; `git diff --check`; `git status --short`.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M7 — Journey 1 first observation and fresh-context replay
 
@@ -178,7 +178,7 @@ unbounded Ripple archaeology.
   classified; safety/privacy counters are zero.
 - Validation commands: exact approved journey runner commands and artifact
   review; no third run.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M8 — Journey 2 first observation and fresh-context replay
 
