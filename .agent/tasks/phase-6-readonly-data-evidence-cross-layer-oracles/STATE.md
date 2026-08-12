@@ -51,6 +51,26 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
   emitted or persisted. Bounded searches for literal `API_ENV=dev` in text and
   structured message fields returned no timestamps, so this does not prove
   the effective service environment value.
+- External metadata-channel audit completed 2026-08-13: `gcloud`, `kubectl`,
+  `gh`, `jq`, and the approved `gcloud-ro`/datastore wrappers are available;
+  GCP read access is confirmed for `labs-169405` and `mobingi-main`; Cloud
+  Asset Inventory, Artifact Registry, Cloud Build metadata, and authenticated
+  GitHub CLI channels are available. AWS STS is
+  `AUTH_REQUIRED_OR_UNAVAILABLE` and was not retried. No datastore tool or
+  auth probe was invoked.
+- Temporary isolated GKE metadata context completed 2026-08-13 without
+  changing the normal kube context. Read-only Kubernetes API access proved the
+  live owner chain `Pod ripple-api-micro-666f6b6b44-pc8cc` → `ReplicaSet
+  ripple-api-micro-666f6b6b44` → `Deployment ripple-api-micro` in
+  `default`; the pod is `Running`/`Ready` with zero restarts. The deployment
+  uses `default` ServiceAccount, has no GKE workload-identity annotation, and
+  runs image `asia.gcr.io/labs-169405/ripple-api-micro:b7d124bb517632050de59ccd5ba9032d2caac0e2`
+  at live digest `sha256:48f3e00b4ee417619d080119a83a2e387e77405af4cdcc26158beb9378dcab23`.
+  `API_ENV`, `AWS_REGION`, and `AWS_ARN_ROLE_DYNAMODB` are SecretKeyRefs in
+  `ripple-api-micro-envvars`; AWS STS key refs are in `common-envvars`.
+  Secret payloads were not read. The exact GCR tag/digest metadata is present
+  and dated 2026-08-12 09:47:40 +08:00; no Cloud Build record was returned by
+  the exact image/tag searches.
 
 ## Work In Progress
 
@@ -153,8 +173,13 @@ will not edit the Alphaus documentation. Live schema freshness is not claimed.
 
 AVAILABLE: `/home/dalepalaca/go/src/alphaus-main/alphaus-tools/bin/dynamo-ro`,
 `bq-ro`, `spanner-ro`, `gcloud-ro`; underlying `/usr/local/bin/aws`,
-`/snap/bin/bq`, `/snap/bin/gcloud` present. AUTH_STATUS: NOT_PROBED; no real
-datastore tool invocation has occurred. `gcloud-ro` metadata-only
+`/snap/bin/bq`, `/snap/bin/gcloud` present. GCP project metadata access is
+`AVAILABLE` for `labs-169405` and `mobingi-main`; Cloud Asset Inventory,
+Artifact Registry, Cloud Build metadata, and authenticated GitHub CLI are
+`AVAILABLE`; AWS STS is `AUTH_REQUIRED_OR_UNAVAILABLE`. AUTH_STATUS:
+`NOT_PROBED`; no real datastore tool invocation has occurred. GKE metadata
+access is `AVAILABLE` through a temporary isolated kubeconfig; the normal
+context was unchanged. `gcloud-ro` metadata-only
 cluster-listing/describe and sanitized logging resource-label checks succeeded
 for `labs-169405`; no workload environment payload or datastore query was run.
 Raw aliases `dynamo_query`, `bq_query`, and `spanner_query`
@@ -180,6 +205,44 @@ switched and no deployment or datastore query was run. The designated
 Nightwatch scope is also absent.
 No cross-layer comparison or real query is allowed while this remains
 unconfirmed. Application auth is not datastore auth.
+
+### DEPLOYMENT_BINDING_MATRIX
+
+| Question | Evidence path | Result | Confidence | Next discriminator |
+|---|---|---|---|---|
+| Live workload | GKE Deployment/Pod API, exact `ripple-api-micro` objects | Confirmed in `labs-169405/mochi-dev-pong/default`; Ready | LIVE_METADATA | none for presence |
+| Owner chain | Pod and ReplicaSet ownerReferences | Pod → ReplicaSet → Deployment confirmed | LIVE_METADATA | none |
+| Image | Pod status `imageID`; Deployment spec | GCR image/tag and digest confirmed | LIVE_METADATA | registry/source provenance |
+| Effective `API_ENV` | Deployment env source | SecretKeyRef `ripple-api-micro-envvars/API_ENV`; value not read | UNRESOLVED | non-secret deployment/build/source evidence |
+| AWS region | Deployment env source | SecretKeyRef `ripple-api-micro-envvars/AWS_REGION`; value not read | UNRESOLVED | non-secret deployment/build/source evidence |
+| Dynamo role/account | Deployment env source + source client | SecretKeyRef `ripple-api-micro-envvars/AWS_ARN_ROLE_DYNAMODB`; value not read | UNRESOLVED | image/deployment provenance or sanitized platform mapping |
+| AWS credential path | Deployment env source | `common-envvars` keys `AWS_ACCESS_KEY_ID_ASSUME`/`AWS_SECRET_ACCESS_KEY_ASSUME` are referenced; values not read | SOURCE_DERIVED | non-secret platform binding |
+| GCP workload identity | Pod/ServiceAccount metadata | `default` ServiceAccount; no relevant annotation | LIVE_METADATA | source/deployment config only |
+| GCP BQ/Spanner target | Live workload config + selected service source | No binding proven for this legacy PHP workload | UNRESOLVED/NOT_PROVEN | source/deployment evidence |
+| Designated Nightwatch scope | approved runtime/API evidence | Not obtained during metadata-only stage | UNRESOLVED | after binding proof, existing KNOWN_READ scope bridge |
+
+`DynamoDB` is source-proven as the selected legacy PHP client family for J1/J2,
+but its effective AWS account/region/table environment remains
+`POSSIBLY_USED`, not `CONFIRMED_USED`, until the Secret-backed binding is
+independently established. No candidate datastore was queried.
+
+### GKE metadata safety result — 2026-08-13
+
+`get-credentials` wrote only a mode-700 temporary kubeconfig outside the
+repository; it was removed after the read-only checks. The normal context was
+unchanged. Reads were limited to exact Deployment/Pod/ReplicaSet/
+ServiceAccount/Secret metadata and image identity. No Secret payload, pod exec,
+port-forward, ConfigMap value, datastore tool, or application request was used.
+
+### Metadata-channel waypoint — 2026-08-13
+
+The external read-only environment can reach both candidate GCP projects and
+the DEV cluster API metadata path. Cloud Asset Inventory, Artifact Registry,
+Cloud Build metadata, and authenticated GitHub CLI are available for targeted
+follow-up. AWS STS cannot establish an identity without unavailable/expired
+credentials and remains out of scope. The checked-in kubeconfig is still not
+used. The next discriminator is a temporary isolated GKE metadata context;
+no secret payload, pod exec, port-forward, or datastore command is permitted.
 
 ## DATA_CATALOG_VERSION
 
@@ -317,11 +380,12 @@ rows, bodies, or datastore output entered Nightwatch.
 
 ## NEXT_EXACT_ACTION
 
-Obtain authoritative `mochi` deployment/config proof of the selected DEV
-`ripple-api-micro` runtime's effective datastore environment (`API_ENV`, AWS
-role/region or equivalent) and designated Nightwatch scope. If that proof
-remains absent, keep this task blocked and do not run a datastore query or
-auth probe.
+Correlate the live image tag/digest with current source/deployment provenance:
+check the exact image commit in authenticated GitHub metadata, inspect only
+targeted read-only `ouchan` deployment manifests/build rules, and use exact
+GCR/Cloud Build metadata paths. Do not read Secret payloads. If effective
+`API_ENV`/AWS binding remains available only inside Secret values, keep this
+task blocked and do not run a datastore query or auth probe.
 
 ## RESUME_RECIPE
 
@@ -332,6 +396,8 @@ auth probe.
    or runtime scope from memory.
 5. Keep all real data execution behind the frozen validators and environment/
    auth/privacy gates.
+6. Reuse only a temporary isolated kubeconfig for metadata-only GKE reads;
+   never read Secret payloads, exec into a pod, or switch the normal context.
 
 ## Completion Snapshot
 

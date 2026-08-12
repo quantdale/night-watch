@@ -12,11 +12,13 @@ Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
 datastore environment mapping.
 Last checkpoint: 9a2db44a3e48787b285523f8a0a9f2af3c65fefc — deployment/source re-audit checkpoint; local Phase 6 architecture, synthetic matrix,
 privacy review, and full validation completed; no datastore query has run.
-Next action: obtain authoritative `mochi` deployment/config proof of the
-selected DEV `ripple-api-micro` runtime's effective datastore environment and
-designated Nightwatch scope before any auth probe or read-only query. The DEV
-cluster is now confirmed, but checked-in service configuration does not carry
-the effective AWS/API environment values. Do not guess or bypass the gate.
+Next action: correlate the live image tag/digest with current source/deployment
+provenance using exact authenticated GitHub metadata, targeted read-only
+`ouchan` deployment manifests/build rules, and exact GCR/Cloud Build metadata.
+The GKE workload is proven, but `API_ENV`/AWS binding remains Secret-backed;
+do not read Secret payloads. Prove the effective datastore environment and
+designated Nightwatch scope before any auth probe or read-only query. Do not
+exec, switch the normal context, guess, or bypass the gate.
 
 ## Prior phase closure handoff
 
