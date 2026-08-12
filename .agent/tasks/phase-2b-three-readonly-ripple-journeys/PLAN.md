@@ -210,7 +210,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: exact per-run and total counters, privacy PASS, no
   duplicate safety forks, fourth-journey extensibility review PASS.
 - Validation commands: artifact scans, focused regressions, Alphaus status.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M11 — Final validation and Phase 2B closure
 
@@ -221,7 +221,7 @@ unbounded Ripple archaeology.
 - Acceptance criteria: all SPEC criteria pass, worktree clean, no Phase 2C.
 - Validation commands: required full suite, typecheck, agent check, diff check,
   status, Alphaus repository status comparison.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 

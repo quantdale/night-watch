@@ -3,17 +3,17 @@
 Task ID: phase-2b-three-readonly-ripple-journeys
 Phase: 2B
 Title: Three Deterministic Read-Only Ripple Journeys
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-2b-three-readonly-ripple-journeys
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
 Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
-Current milestone: M10 — cross-journey, safety, privacy, and architecture review (IN_PROGRESS)
-Last checkpoint: 2026-08-12 — `6cbe409`; Journey 3's first/replay pair passed
-in fresh contexts with strict invariants and bounded timing/passive-unknown
-variance.
-Next action: complete the cross-journey review and final validation; do not run
-additional real journeys, inspect response bodies, or start Phase 2C.
+Current milestone: M11 — final validation and Phase 2B closure (COMPLETE)
+Last checkpoint: 2026-08-12 — `1b6e7a5`; Journey 3's first/replay pair,
+cross-journey review, privacy/safety accounting, and final adversarial review
+are complete; final validation passed.
+Next action: none. Phase 2B is closed; verify the terminal tree if resuming
+and stop before Phase 2C.
 
 ## Phase 2A closure handoff
 

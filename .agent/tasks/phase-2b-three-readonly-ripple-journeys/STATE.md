@@ -4,7 +4,7 @@
 
 Task ID: phase-2b-three-readonly-ripple-journeys
 Phase: 2B
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ec4c14376923ffbe12356dd180218eb09cf4f75f
 Current SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
 Last validated implementation SHA: 78e5d1f049064e594f99ed7e600ecffb081d6b23
@@ -18,7 +18,7 @@ journeys.
 
 ## Current Milestone
 
-M10 — cross-journey, safety, privacy, and architecture review (IN_PROGRESS).
+M11 — final validation and Phase 2B closure (COMPLETE).
 
 ## Completed Milestones
 
@@ -26,7 +26,7 @@ M0 continuity/task creation, M1 archaeology/inventory/freshness, M2 semantic
 proof/selection/contracts, M3 generic engine design, M4 implementation, M5
 synthetic/local validation, M6 pre-real validation/self-review, the Journey 1
 pair, the Journey 2 pair (after one bounded diagnostic pair), and the Journey 3
-pair are complete. M10 is in progress; M11 remains pending.
+pair are complete. M10 and M11 are complete.
 
 ## Work In Progress
 
@@ -35,8 +35,9 @@ passed in a first observation and fresh-context replay. Journey 2 first
 observation reached its structural/read checkpoint but failed a generic
 oracle on one allowed DEV font response; its one bounded fresh diagnostic pair
 then passed with strict invariants. Journey 3 passed in a first observation and
-fresh-context replay with strict invariants. Cross-journey and final validation
-remain before closure.
+fresh-context replay with strict invariants. Cross-journey review is PASS.
+Final TypeScript, full local Playwright, task-integrity, diff, and worktree
+checks are PASS; the Nightwatch-only closure commit is the terminal handoff.
 
 ## CURRENT_GOAL
 
@@ -46,8 +47,8 @@ Ripple customer journeys with one fresh-context replay each.
 
 ## CURRENT_PHASE
 
-M10 — cross-journey, safety, privacy, and architecture review after all three
-controlled first/replay pairs.
+M11 — final validation and Phase 2B closure after all three controlled
+first/replay pairs and the cross-journey review.
 
 ## CURRENT_EVIDENCE
 
@@ -157,6 +158,7 @@ was not used as a Phase 2B implementation path.
 - `.agent/tasks/phase-2b-three-readonly-ripple-journeys/CANDIDATES.md`
 - `.agent/tasks/phase-2b-three-readonly-ripple-journeys/FRESHNESS.md`
 - `.agent/tasks/phase-2b-three-readonly-ripple-journeys/JOURNEYS.md`
+- `.agent/tasks/phase-2b-three-readonly-ripple-journeys/REPORT.md`
 - `src/core/evidence/types.ts`
 - `src/core/safety/endpointSemantics.ts`
 - `src/browser/context.ts`
@@ -205,6 +207,10 @@ was not used as a Phase 2B implementation path.
 - Cross-journey replay audit: all three comparison files PASS with empty strict
   mismatch sets; each variance set is limited to route-stability timing and
   passive-unknown count/request-count variance.
+- Final validation: `npx tsc --noEmit` PASS; `NIGHTWATCH_ENV=local npx
+  playwright test --project=nightwatch --workers=1` **251 passed** in 1.0m;
+  `npm run agent:check` PASS with the expected approved continuity warning;
+  `git diff --check` PASS.
 
 ## REAL_RUN_LEDGER
 
@@ -320,8 +326,8 @@ PRE_REAL_SELF_REVIEW_PASS: PASS
 
 ## FINAL_ADVERSARIAL_SELF_REVIEW
 
-Pending only the final command run and closure commit; the substantive review
-is PASS:
+PASS after the final command run; the documentation-only closure commit is the
+remaining terminal action:
 
 1. No selected journey hid a mutation; all seven real contexts recorded zero
    mutations and mutation rules are blocked before I/O.
@@ -401,8 +407,9 @@ repaired in `a2bde6a`.
 - Journey 2's single allowed DEV font HTTP 502/console-error did not recur in
   its one bounded diagnostic pair; retain it as L0 only and do not inspect its
   body or relax the generic oracle.
-- Cross-journey analysis, final full validation, documentation closure, and
-  the Nightwatch-only clean commit remain.
+- Cross-journey analysis, final full validation, and documentation closure
+  are complete; the remaining findings are non-blocking and recorded in the
+  final report.
 - Real source/deployment freshness remains the recorded local-source caveat;
   no fetch/pull is authorized.
 
@@ -430,22 +437,20 @@ documentation checkpoint `15c3c9f`, and Phase 2A baseline remains `a6d7c8b`).
 
 ## LAST_CHECKPOINT_SHA
 
-`6cbe409` (`CHECKPOINT_ADVANCE`: Journey 2 diagnostic first/replay passed in
-fresh contexts with strict invariants, and the original L0 anomaly did not
-recur.) The next checkpoint will record the completed Journey 3 pair and the
-cross-journey review.
+`1b6e7a5ad2d0566aca84a370caa6989e71573f57` (`CHECKPOINT_ADVANCE`: Journey 3
+pair, cross-journey review, exact safety/privacy accounting, and final
+adversarial review are recorded; final validation is PASS.)
 
 ## NEXT_EXACT_ACTION
 
-Perform the cross-journey consistency review, exact safety/privacy accounting,
-final adversarial review, and then run the required final validation commands.
-Do not run any additional real journey or replay; do not inspect response
-bodies; do not alter the frozen contracts or oracle policy.
+No further task action. Phase 2B is closed; if resumed, verify the terminal
+tree and stop. Do not run any additional real journey or replay, inspect
+response bodies, or start Phase 2C.
 
 ## Exact Next Action
 
-Cross-review the shared engine, semantic registry, replay comparator, and all
-seven real contexts; then run final validation and prepare closure docs.
+No next task was started. The final report and closure state are committed;
+verify `git status --short` is empty plus Alphaus worktrees are unchanged.
 
 ## Files Changed
 
@@ -455,8 +460,8 @@ Alphaus repositories remain read-only.
 ## Validation Ledger
 
 See `VALIDATION_LEDGER` above; the focused contract/engine suite is 12 passed,
-the full local suite is 251 passed, and the latest implementation checkpoint
-is `a2bde6aeb3d3a72c25029287ba45b7a0262fc3ba`.
+the full local suite is 251 passed, the final implementation is `78e5d1f`,
+and the final continuity checkpoint is `1b6e7a5`.
 
 ## Decisions Made During This Task
 
@@ -465,7 +470,8 @@ registry are frozen before real execution.
 
 ## Discoveries
 
-See `CURRENT_EVIDENCE` and `REJECTED_JOURNEYS` above; no real anomaly exists.
+See `CURRENT_EVIDENCE` and `REJECTED_JOURNEYS` above; no deterministic product
+bug was established. The single L0 font anomaly candidate is preserved.
 
 ## Blockers
 
@@ -490,20 +496,15 @@ semantic decisions from conversation memory.
 
 1. Read root `AGENTS.md`, `docs/CURRENT_STATE.md`, this task's `SPEC.md`,
    `PLAN.md`, `STATE.md`, and `JOURNEYS.md`.
-2. Run `git status --short`, `git log --oneline -12`, `npx tsc --noEmit`, and
-   `npm run agent:check`; reconcile any SHA checkpoint warning against Git.
-3. Confirm focused synthetic validation remains 12 passed and review the
-   current diff. Continue from `NEXT_EXACT_ACTION`.
-4. Before any external target, require `PRE_REAL_PHASE_2B_IMPLEMENTATION_READY`
-   and `PRE_REAL_SELF_REVIEW_PASS` in this state and run the exact gated
-   command recorded here.
-5. After each real first/replay pair, update `REAL_RUN_LEDGER`,
-   `REPLAY_LEDGER`, safety/privacy totals, and `NEXT_EXACT_ACTION` before the
-   next pair. Never reconstruct semantics from conversation memory.
+2. Verify `git status --short` is empty, inspect the terminal closure commit,
+   and run `npm run agent:check` if continuity needs confirmation.
+3. Treat this task as closed. Do not run another real journey, replay, source
+   mutation, datastore query, or Phase 2C task from this state.
 
 ## Completion Snapshot
 
 Three journey pairs are complete, including fresh-context replays. The J2
 original first observation remains an L0 non-reproduced DEV font anomaly; its
 single bounded diagnostic pair passed and no third replay was run. Cross-review
-and final validation are the remaining closure gates. Do not start Phase 2C.
+and final validation are PASS. The documentation-only Nightwatch closure is
+complete; no Phase 2C work is started.
