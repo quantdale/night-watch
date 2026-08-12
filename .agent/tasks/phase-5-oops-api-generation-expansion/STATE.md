@@ -9,9 +9,9 @@ Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Branch: main
-Last checkpoint: 2026-08-12 — Phase 4 closure independently reconciled and
-Phase 5 frozen task artifacts committed at `7019de0005a3d288de079236f30049b605f13bd7`;
-implementation has not started.
+Last checkpoint: 2026-08-12 — Phase 5 task setup was checkpointed at
+`78ee69a1b5e4fa55915039f8c7dcc71860b80a5e`; M1 source inspection is complete
+and no OOPS scenario has been executed.
 
 ## CURRENT_GOAL
 
@@ -21,7 +21,8 @@ destinations, semantics, or durable privacy.
 
 ## CURRENT_PHASE
 
-M0 — Phase 4 closure audit and Phase 5 task creation. `PHASE_4_CLOSURE_AUDIT_ACCEPTED`.
+M1 — Current OOPS source, binary, and security capability audit. Audit complete;
+M2 restricted adapter implementation is next.
 
 ## Objective
 
@@ -31,24 +32,29 @@ boundaries.
 
 ## Current Milestone
 
-M0 — Phase 4 closure audit and native Phase 5 task creation. Status:
-`IN_PROGRESS`; the next concrete action is the current OOPS audit.
+M1 — Current OOPS source, binary, and security capability audit. Status:
+`COMPLETED`; the next concrete action is to implement the Nightwatch-owned
+restricted dialect and process adapter.
 
 ## Completed Milestones
 
 - Phase 4 closure audit: accepted from native Git, code, matrix, and focused
   validation evidence.
 - Phase 5 frozen task artifacts: created before implementation.
+- M1 OOPS source/binary/security audit: current source pinned, installed
+  binary mismatch recorded, and no scenario executed.
 
 ## Work In Progress
 
-No implementation is in progress. M1 source/binary capability audit is the
-next unit of work.
+M2 implementation is not started. The adapter must build around the current
+OOPS limitations rather than relying on OOPS for policy, secrets, destination,
+or result authority.
 
 ## Exact Next Action
 
-Audit the current `alphauslabs/oops` source and installed `oops` binary
-read-only; do not execute a scenario.
+Implement `src/core/oops/` restricted profile validation, deterministic
+scenario encoding, environment scrubbing, bounded subprocess control, and
+sanitized result taxonomy. Begin with rejection-before-spawn tests.
 
 ## CURRENT_EVIDENCE
 
@@ -84,18 +90,76 @@ read-only; do not execute a scenario.
 - Read-only Alphaus integrity snapshot at task start preserved all checkout
   SHAs and dirty states. Current local tracking refs are recorded as external
   freshness inputs only; Nightwatch does not update them.
+- Current OOPS checkout: branch `master`, tracking `origin/master`, ahead/behind
+  `0/0`, clean worktree, HEAD
+  `c4a129feb0b97dc0ae39f32c39a92abe834567f2`, merge commit dated
+  `2026-07-29T20:55:53-04:00` (`skip-notif`). The inspected source is the
+  latest locally available `master` checkout; no fetch or other OOPS write was
+  performed.
+- Installed `/home/linuxbrew/.linuxbrew/bin/oops` resolves to Homebrew OOPS
+  `1.2.8`, SHA-256
+  `8a52c99261875657553149ff79d3ba07b4bcae9ea1b5f19a2c99af57797a4fd0`.
+  Embedded Go build metadata identifies commit
+  `009440549ac37582296a26e668d1f6f105e14b6b`, Go `1.22.1`, and build date
+  `2024-04-01T06:30:13Z`; this is a `BINARY_SOURCE_MISMATCH` and is not a
+  Phase 5 execution binary.
+- Current OOPS source confirms a broad YAML dialect: arbitrary HTTP method/URL,
+  headers/query/forms/files/payload, response-file output, status and JSON
+  assertions, plus `prepare`, `check`, and assertion scripts. Any value that
+  begins with `#!` is extracted to a temporary file and executed.
+- Current source writes extracted scripts with `os.ModePerm` (0777), invokes
+  external commands with `exec.Command`, and appends `os.Environ()` to the
+  script environment. There is no `exec.CommandContext` timeout around script
+  execution.
+- Current source logs header values and, when `response_out` is used, writes
+  and logs the raw response body. Assertion/error paths can include raw body or
+  script text. OOPS stdout/stderr therefore remains untrusted output and is not
+  suitable for direct evidence persistence.
+- Current source reads scenario YAML directly with no Nightwatch-style
+  restricted schema. Its `run` path returns after logging `s.errs`; root
+  `Execute` errors are not converted into a reliable scenario result contract.
+  Exit status alone cannot be the Nightwatch oracle.
+- Current source supports pre-process hooks, AWS credentials, GCP Secret
+  Manager, Pub/Sub, SNS/SQS, Spanner cancellation, Slack webhook, GitHub token,
+  commit-status, and repository-dispatch integrations. These are all outside
+  the restricted profile and must be disabled/rejected before spawn.
+- Current `httpexpect` v2.17.0 source (the exact module selected by OOPS
+  `go.mod`) shows a default `http.Client` with nil `Transport`; Go therefore
+  supplies `http.DefaultTransport`, whose `Proxy` is `ProxyFromEnvironment`.
+  The default transport uses a normal `net.Dialer`, so direct sockets/DNS are
+  possible when proxy variables do not select a proxy. Default redirects are
+  followed by `http.Client` (up to its default limit), and OOPS does not install
+  a host-revalidating redirect policy. Direct OOPS Alphaus egress is therefore
+  prohibited; the Nightwatch loopback operation relay is required for any
+  future authenticated path.
 
 ## OOPS_SOURCE_SHA
 
-`PENDING_M1_AUDIT` — current `alphauslabs/oops` source branch/HEAD/tracking/
-dirty/binary identity has not yet been inspected for this task.
+`alphauslabs/oops@c4a129feb0b97dc0ae39f32c39a92abe834567f2` (`master`,
+`origin/master`, clean, 0/0). The installed binary is not source-matched:
+Homebrew `oops 1.2.8` embeds `009440549ac37582296a26e668d1f6f105e14b6b`.
+Any source build, if needed, must be emitted into a Nightwatch-controlled
+temporary/cache directory and must retain the source SHA in its run ledger.
 
 ## OOPS_CAPABILITY_AUDIT
 
-`PENDING_M1_AUDIT` — schema, HTTP execution, scripts/chaining/assertions,
-output, environment/temp files, notifications, distribution, secret manager,
-AWS config, hooks, exit codes, and error paths remain to be audited from
-current source. No OOPS scenario has been executed.
+`COMPLETE_READ_ONLY_AUDIT`. Current findings:
+
+- schema/HTTP: arbitrary YAML HTTP URL/method and request fields;
+- chaining: `prepare`, `check`, `#!` values, and assertion scripts execute
+  external commands; response files are arbitrary paths;
+- assertions: status, JSON schema, and script; errors are accumulated/logged;
+- result: no reliable structured scenario result; process success is not a
+  sufficient scenario oracle;
+- environment/temp: scripts inherit `os.Environ()`, temporary script paths use
+  shared `os.TempDir()`, and script mode is 0777;
+- network: `httpexpect` default client honors proxy environment variables and
+  follows redirects without Nightwatch host revalidation;
+- integrations: Slack, GitHub, Pub/Sub, SNS/SQS, Secret Manager, AWS, and
+  Spanner paths exist in current source;
+- hooks/distribution: pre-process hook and distributed worker/controller modes
+  exist and are prohibited;
+- no current OOPS scenario was executed during this audit.
 
 ## OOPS_SECURITY_POSTURE
 
@@ -105,8 +169,11 @@ relay/sandbox, redirect, and output privacy proofs are complete.
 
 ## SANDBOX_STATUS
 
-`PENDING_M1_AUDIT` — available OS-level process/network containment is not yet
-known. Direct OOPS egress is prohibited.
+`DIRECT_EGRESS_PROHIBITED; LOOPBACK_RELAY_REQUIRED; OS_SANDBOX_PENDING`.
+The current OOPS HTTP client can use proxy-selected or direct sockets and can
+follow redirects. M2/M3 must establish a Nightwatch loopback-only relay and
+record whether an unprivileged OS-level network sandbox is available. If it is
+not available, authenticated OOPS DEV execution remains disabled.
 
 ## API_CATALOG_VERSION
 
@@ -156,15 +223,15 @@ plannedActions.length > 1 predicate. Phase 5: none.`
 ## AUTH_STATUS
 
 Phase 4 external DEV auth remains outside the repository and is not passed to
-OOPS. Phase 5 API auth strategy is `PENDING_M1/M4`; password, provider path,
+OOPS. Phase 5 API auth strategy is `PENDING_M3/M8`; password, provider path,
 storage state, and tokens are prohibited from OOPS and durable artifacts.
 
 ## Files Changed
 
-M0 task artifacts only: `.agent/ACTIVE_TASK.md` and
+M0/M1 task artifacts only: `.agent/ACTIVE_TASK.md` and
 `.agent/tasks/phase-5-oops-api-generation-expansion/{SPEC,PLAN,STATE,REPORT}.md`.
 No implementation, generated scenario, or Alphaus repository file has been
-changed.
+changed. M1 was source inspection only.
 
 ## Validation Ledger
 
@@ -180,6 +247,12 @@ changed.
 - Alphaus read-only integrity: checkout SHAs unchanged; pre-existing dirty
   states preserved. Current local tracking-ref drift is a freshness caveat,
   not a Nightwatch mutation.
+- OOPS source identity/capability inspection: PASS; branch, tracking, SHA,
+  ahead/behind, dirty state, source paths, and installed binary metadata were
+  read without executing a scenario.
+- OOPS network-client inspection: PASS; `httpexpect` v2.17.0 and Go
+  `net/http` defaults establish proxy-environment inheritance, direct-socket
+  fallback, and default redirect following.
 
 ## BUG_CANDIDATES
 
@@ -189,8 +262,10 @@ historical `GENUINE_PROTOCOL_ANOMALY` and is not a generated operation.
 
 ## REJECTED_OPERATIONS
 
-No Phase 5 source inventory yet. The generator will reject all mutations,
-UNKNOWNs, stale operations, arbitrary URLs, and unsupported OOPS features.
+No source operation catalog entries yet. Independently of the future catalog,
+the adapter rejects all mutations, UNKNOWNs, stale operations, arbitrary URLs,
+scripts, shell, command, pre-process, response-file, notification, and
+distributed features.
 
 ## REJECTED_HYPOTHESES
 
@@ -198,6 +273,10 @@ UNKNOWNs, stale operations, arbitrary URLs, and unsupported OOPS features.
 - A proto RPC or HTTP method/name does not prove read semantics.
 - An installed OOPS binary is not assumed to match inspected source.
 - A Phase 4 exact-replay count of zero is not equivalent to a passing replay.
+- The current OOPS source has every previously reported security concern still
+  present: arbitrary shell/script execution, 0777 script files, inherited
+  environment, weak tests, ignored errors, and external optional integrations;
+  each is `CONFIRMED_CURRENT`.
 
 ## Decisions Made During This Task
 
@@ -213,30 +292,38 @@ UNKNOWNs, stale operations, arbitrary URLs, and unsupported OOPS features.
   `plannedActions.length > 1 && safetyIsZero(...)`.
 - Both Phase 4 runtime failures have no response-level API anomaly evidence;
   the narrow supported classification is `NIGHTWATCH_RUNTIME_ARTIFACT`.
+- The installed OOPS binary is materially older/different from the current
+  inspected source; using it would invalidate source-backed compatibility
+  evidence.
+- The current OOPS HTTP path has no relay-safe destination authority and its
+  redirect behavior is not environment-aware. Nightwatch must resolve an
+  operation ID to the destination and perform redirect revalidation itself.
 
 ## Blockers
 
-None at M0. Potential M1/M2 sandbox or output-privacy blockers remain
+None at M1. Potential M2/M3 sandbox or output-privacy blockers remain
 unresolved, not silently waived.
 
 ## UNRESOLVED
 
-- Current OOPS source/binary capability and security posture.
 - Whether a safe OS egress sandbox is available.
 - Which additional source operations can be proven `KNOWN_READ` without
   customer-specific durable hydration.
 - Whether authenticated OOPS DEV execution can pass privacy and containment.
+- Whether OOPS assertion/error output can be fully sanitized for all local
+  failure paths; the current raw-body behavior makes this a hard gate.
 
 ## Safety Events
 
-`NONE` in M0. No OOPS scenario, DEV API request, production attempt, mutation,
+`NONE` in M0/M1. No OOPS scenario, DEV API request, production attempt, mutation,
 database query, or Alphaus write occurred.
 
 ## PRIVACY_STATUS
 
-`PASS` for the Phase 4 audit and M0 task state. No credential, auth value,
-customer value, body, DOM, screenshot, trace, or raw OOPS output entered the
-new task artifacts.
+`PASS_FOR_M0_M1_AUDIT`. No credential, auth value, customer value, body, DOM,
+screenshot, trace, or raw OOPS output entered the new task artifacts. OOPS
+stdout/stderr is explicitly classified as untrusted until the M2 sanitizer and
+sentinel tests pass.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
@@ -245,15 +332,17 @@ implementation yet).
 
 ## LAST_CHECKPOINT_SHA
 
-`7019de0005a3d288de079236f30049b605f13bd7` — M0 task-document checkpoint;
-the validated implementation baseline remains `1d05c460ec0762c4587bb76f5d050a322f8f47a6`.
+`78ee69a1b5e4fa55915039f8c7dcc71860b80a5e` — M0 task-setup checkpoint; M1
+source findings are currently uncommitted and must be checkpointed before M2
+implementation. The validated implementation baseline remains
+`1d05c460ec0762c4587bb76f5d050a322f8f47a6`.
 
 ## NEXT_EXACT_ACTION
 
-Audit the current `alphauslabs/oops` repository and installed `oops` binary
-read-only. Record branch, HEAD, tracking ref, ahead/behind, dirty state,
-source/binary relationship, and every relevant capability/security finding in
-the M1 ledger. Do not execute any OOPS scenario.
+Update `ACTIVE_TASK.md`, `PLAN.md`, `REPORT.md`, and this state with the M1
+audit, checkpoint the documentation, then implement the M2 restricted adapter
+and its rejection-before-spawn tests. Do not execute an authenticated OOPS
+scenario or use the mismatched installed binary.
 
 ## Deferred / Follow-Up
 

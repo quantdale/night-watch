@@ -8,12 +8,13 @@ Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current milestone: M0 — Phase 4 closure audit and native Phase 5 task
-Last checkpoint: 2026-08-12 — `PHASE_4_CLOSURE_AUDIT_ACCEPTED`; Phase 5 frozen
-SPEC/PLAN/STATE/REPORT created and committed at `7019de0`, before
-implementation.
-Next action: Audit current alphauslabs/oops source and installed binary
-read-only; do not execute OOPS scenarios.
+Current milestone: M1 — current OOPS source, binary, and security capability
+audit complete; M2 restricted adapter implementation is next.
+Last checkpoint: 2026-08-12 — Phase 5 task setup checkpointed at `78ee69a`;
+current OOPS source `c4a129f` was audited read-only and the installed Homebrew
+binary was recorded as source-mismatched. No OOPS scenario was executed.
+Next action: Implement the Nightwatch-owned restricted OOPS profile,
+environment scrub, bounded process adapter, and rejection-before-spawn tests.
 
 ## Prior phase closure handoff
 

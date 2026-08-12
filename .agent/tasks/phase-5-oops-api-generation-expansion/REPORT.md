@@ -1,7 +1,7 @@
 # Nightwatch Phase 5 — Restricted OOPS + Generated Read-Only API Corpus
 
-Status: `IN_PROGRESS` — M0 task creation and Phase 4 closure audit are
-complete; implementation and OOPS/source/API work have not started.
+Status: `IN_PROGRESS` — M0/M1 task creation, Phase 4 closure audit, and the
+current OOPS source/binary audit are complete; adapter/source/API work remains.
 
 ## Starting identity
 
@@ -40,6 +40,25 @@ and binary provenance, adapter/relay/sandbox results, catalog counts and
 operation ledger, scenario/replay corpus, DEV results, anomaly levels,
 privacy/safety accounting, validation, and the final adversarial review. A
 successful closure must leave Nightwatch clean and must not start Phase 6.
+
+## M1 OOPS audit checkpoint
+
+The current read-only OOPS source is `master` at
+`c4a129feb0b97dc0ae39f32c39a92abe834567f2`, tracking `origin/master`, clean,
+0 ahead/behind. The installed Homebrew binary is `oops 1.2.8`, SHA-256
+`8a52c99261875657553149ff79d3ba07b4bcae9ea1b5f19a2c99af57797a4fd0`, and
+embeds commit `009440549ac37582296a26e668d1f6f105e14b6b`; it is therefore a
+`BINARY_SOURCE_MISMATCH` and will not be used as Phase 5 source evidence.
+
+The current source confirms arbitrary HTTP URLs/methods, `#!` script expansion,
+`prepare`/`check`/assertion scripts, inherited script environment, 0777 script
+files, raw response logging/file output, pre-process hooks, distributed/cloud
+integrations, and optional Slack/GitHub reporting. Its `httpexpect` client uses
+Go's proxy-aware default transport and follows redirects without Nightwatch
+host revalidation. Each previously reported OOPS security finding is
+`CONFIRMED_CURRENT`. No OOPS scenario was executed. Direct authenticated OOPS
+egress is prohibited; the Nightwatch restricted adapter and loopback relay are
+the next implementation boundary.
 
 ## Current next action
 

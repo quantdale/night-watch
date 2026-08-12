@@ -92,7 +92,7 @@ other-repository writes, and Phase 6.
   broad implementation; ACTIVE_TASK routes to Phase 5.
 - Validation commands: `git status --short --branch`; SHA/object checks;
   Phase 4 focused suite; `npx tsc --noEmit`; `npm run agent:check`.
-- Status: `IN_PROGRESS`
+- Status: `COMPLETED`; `PHASE_4_CLOSURE_AUDIT_ACCEPTED`.
 
 ### M1 — Current OOPS source, binary, and security capability audit
 
@@ -105,7 +105,9 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: current source audit and `OOPS_CAPABILITY_AUDIT` are
   complete; no real scenario is executed; source/binary mismatch is explicit.
 - Validation commands: read-only Git/source inspection; no OOPS scenario run.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; current source pinned at
+  `alphauslabs/oops@c4a129feb0b97dc0ae39f32c39a92abe834567f2`, installed
+  binary mismatch recorded, and no scenario executed.
 
 ### M2 — Restricted OOPS adapter, profile validator, and process sandbox
 
@@ -118,7 +120,7 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: forbidden synthetic scenarios are rejected before OOPS;
   child sentinel and argv tests pass; no shell/script path is entered.
 - Validation commands: focused adapter/dialect/env/process/privacy tests.
-- Status: `NOT_STARTED`
+- Status: `IN_PROGRESS`
 
 ### M3 — Loopback relay, outbound containment, and redirect controls
 
