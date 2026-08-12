@@ -9,357 +9,370 @@ Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Branch: main
-Last checkpoint: 2026-08-12 — Phase 5 task setup was checkpointed at
-`78ee69a1b5e4fa55915039f8c7dcc71860b80a5e`; M1 source inspection is complete
-and no OOPS scenario has been executed.
+Last checkpoint: ba56ef0a37948f333651d634c778436210e6c4c1 — current OOPS
+source/security audit checkpoint. This STATE update reconciles the uncommitted
+M2–M7 implementation slice; no Phase 5 real DEV request has run.
 
-## CURRENT_GOAL
+## Objective
 
 Prove that Nightwatch can derive a small source-backed read-only API corpus and
 reuse Alphaus OOPS without giving OOPS authority over safety, secrets,
 destinations, semantics, or durable privacy.
 
-## CURRENT_PHASE
-
-M1 — Current OOPS source, binary, and security capability audit. Audit complete;
-M2 restricted adapter implementation is next.
-
-## Objective
-
-Build and validate the restricted source-to-API corpus described by SPEC while
-preserving the Nightwatch-only modification and read-only production-support
-boundaries.
-
 ## Current Milestone
 
-M1 — Current OOPS source, binary, and security capability audit. Status:
-`COMPLETED`; the next concrete action is to implement the Nightwatch-owned
-restricted dialect and process adapter.
+M8 — pre-real gate and frozen serial DEV ledger. M2–M7 local implementation,
+source inventory, corpus generation, relay controls, lineage hooks, and actual
+current-source OOPS fixture execution are complete. Remaining work is the
+security gate, validation, and bounded DEV first/replay run if the existing
+external DEV auth state and Nightwatch policy pass.
 
 ## Completed Milestones
 
-- Phase 4 closure audit: accepted from native Git, code, matrix, and focused
-  validation evidence.
-- Phase 5 frozen task artifacts: created before implementation.
-- M1 OOPS source/binary/security audit: current source pinned, installed
-  binary mismatch recorded, and no scenario executed.
+- M0 Phase 4 closure audit and native Phase 5 task creation.
+- M1 current OOPS source, binary, network behavior, and security audit.
+- M2 restricted dialect, rejection-before-spawn, private workspace, explicit
+  child environment, bounded subprocess, argv checks, timeout, and sanitizer.
+- M3 loopback-only operation relay, catalog destination resolution, in-memory
+  auth injection, redirect revalidation, production/unknown/mutation blocks.
+- M4 targeted source-backed catalog with explicit reads, mutations, and
+  historical UNKNOWN.
+- M5 deterministic generator, typed runtime placeholders, metadata-only
+  response oracle, safe fingerprints, and durable corpus templates.
+- M6 local fixture matrix, current source-built OOPS subprocess differential,
+  assertion-failure privacy sentinel, and child-environment sentinel.
+- M7 J1/J2/J3 API lineage plus two API-only expansion operations and Phase 3
+  staleness checks.
 
 ## Work In Progress
 
-M2 implementation is not started. The adapter must build around the current
-OOPS limitations rather than relying on OOPS for policy, secrets, destination,
-or result authority.
+M8 is frozen around six eligible operations and a twelve-request maximum:
+first execution plus one fresh replay for each operation, serially, with a
+350ms delay. OOPS authenticated DEV execution is disabled because the verified
+unprivileged bubblewrap network namespace cannot reach the parent Nightwatch
+relay. The permitted fallback is the native Nightwatch relay path; OOPS
+remains exercised against local fixtures only.
 
 ## Exact Next Action
 
-Implement `src/core/oops/` restricted profile validation, deterministic
-scenario encoding, environment scrubbing, bounded subprocess control, and
-sanitized result taxonomy. Begin with rejection-before-spawn tests.
+Run the post-change focused suite and agent:check, checkpoint the
+implementation/docs, then run npm run api:phase5 -- --env=dev only after the
+clean-worktree, auth, proxy, source-freshness, relay, privacy, and budget gates
+pass. Record the sanitized first/replay ledger before final closure review.
+
+## CURRENT_GOAL
+
+Build and close a small reproducible read-only API canary corpus while keeping
+OOPS subordinate to Nightwatch policy and preserving all Phase 4 caveats.
+
+## CURRENT_PHASE
+
+M8 — pre-real API gate; no real API request has executed in this Phase 5 task.
 
 ## CURRENT_EVIDENCE
 
-- Nightwatch HEAD is clean at `1d05c460ec0762c4587bb76f5d050a322f8f47a6`.
-- Reported Phase 4 implementation `6bc3cfcebff749d477e3b65f8642db3ecfb6dd8b`
-  and closure `1d05c460ec0762c4587bb76f5d050a322f8f47a6` exist and are
-  ancestral in the current Nightwatch repository.
-- Phase 4 focused exploration suite: 16 passed. `npx tsc --noEmit`,
-  `npm run agent:check` (PASS with its documented approved-document warning),
-  and `git diff --check` passed before this task was created.
-- The native Phase 4 matrix
-  `artifacts/phase4-nightwatch-20260812T121232Z-2e48-matrix.json` contains six
-  fresh exploration records and no exact replay records. Every planned-action
-  list has length one; therefore `PHASE_4_EXACT_REAL_REPLAY=NOT_APPLICABLE`.
-- Phase 4 E1/J1 seed `0x0000000000000102`:
-  `nightwatch-20260812T121232Z-2e48-E1-J1-payer-exchange-1`, action
-  `p4.j1.vendor-local.azure`, `RUNTIME_FAILURE`, `FAILED`/
-  `ACTION_TRANSITION_FAILED`, invalidated transition
-  `transition_4aa9b6a86d48ce77b19289174d9298ce21c8d74e293bdf8da3ab3f5c46d4c29f`,
-  no request delta/fingerprint, zero safety. Classified
-  `NIGHTWATCH_RUNTIME_ARTIFACT`.
-- Phase 4 E2/J2 seed `0x0000000000000201`:
-  `nightwatch-20260812T121232Z-2e48-E2-J2-common-exchange-0`, action
-  `p4.j2.vendor-read.aws`, `RUNTIME_FAILURE`, `FAILED`/
-  `ACTION_TRANSITION_FAILED`, invalidated transition
-  `transition_b75419fdd03065010146d1706d06f9fa39bed4e50fc2fa75fa5d4371797714a5`,
-  no request delta/fingerprint, zero safety. The run also had non-causal
-  optional font transport failures (`DEV_INFRA_TRANSIENT` fingerprints), not
-  a product anomaly. Classified `NIGHTWATCH_RUNTIME_ARTIFACT`.
-- Phase 4’s real safety vector is zero for all six records; no product anomaly
-  was admitted. Authentication refresh and MCP absence remain separately
-  documented control-plane facts.
-- Read-only Alphaus integrity snapshot at task start preserved all checkout
-  SHAs and dirty states. Current local tracking refs are recorded as external
-  freshness inputs only; Nightwatch does not update them.
-- Current OOPS checkout: branch `master`, tracking `origin/master`, ahead/behind
-  `0/0`, clean worktree, HEAD
-  `c4a129feb0b97dc0ae39f32c39a92abe834567f2`, merge commit dated
-  `2026-07-29T20:55:53-04:00` (`skip-notif`). The inspected source is the
-  latest locally available `master` checkout; no fetch or other OOPS write was
-  performed.
-- Installed `/home/linuxbrew/.linuxbrew/bin/oops` resolves to Homebrew OOPS
-  `1.2.8`, SHA-256
-  `8a52c99261875657553149ff79d3ba07b4bcae9ea1b5f19a2c99af57797a4fd0`.
-  Embedded Go build metadata identifies commit
-  `009440549ac37582296a26e668d1f6f105e14b6b`, Go `1.22.1`, and build date
-  `2024-04-01T06:30:13Z`; this is a `BINARY_SOURCE_MISMATCH` and is not a
-  Phase 5 execution binary.
-- Current OOPS source confirms a broad YAML dialect: arbitrary HTTP method/URL,
-  headers/query/forms/files/payload, response-file output, status and JSON
-  assertions, plus `prepare`, `check`, and assertion scripts. Any value that
-  begins with `#!` is extracted to a temporary file and executed.
-- Current source writes extracted scripts with `os.ModePerm` (0777), invokes
-  external commands with `exec.Command`, and appends `os.Environ()` to the
-  script environment. There is no `exec.CommandContext` timeout around script
-  execution.
-- Current source logs header values and, when `response_out` is used, writes
-  and logs the raw response body. Assertion/error paths can include raw body or
-  script text. OOPS stdout/stderr therefore remains untrusted output and is not
-  suitable for direct evidence persistence.
-- Current source reads scenario YAML directly with no Nightwatch-style
-  restricted schema. Its `run` path returns after logging `s.errs`; root
-  `Execute` errors are not converted into a reliable scenario result contract.
-  Exit status alone cannot be the Nightwatch oracle.
-- Current source supports pre-process hooks, AWS credentials, GCP Secret
-  Manager, Pub/Sub, SNS/SQS, Spanner cancellation, Slack webhook, GitHub token,
-  commit-status, and repository-dispatch integrations. These are all outside
-  the restricted profile and must be disabled/rejected before spawn.
-- Current `httpexpect` v2.17.0 source (the exact module selected by OOPS
-  `go.mod`) shows a default `http.Client` with nil `Transport`; Go therefore
-  supplies `http.DefaultTransport`, whose `Proxy` is `ProxyFromEnvironment`.
-  The default transport uses a normal `net.Dialer`, so direct sockets/DNS are
-  possible when proxy variables do not select a proxy. Default redirects are
-  followed by `http.Client` (up to its default limit), and OOPS does not install
-  a host-revalidating redirect policy. Direct OOPS Alphaus egress is therefore
-  prohibited; the Nightwatch loopback operation relay is required for any
-  future authenticated path.
+- Phase 4 closure remains independently reconciled: exact real replay is
+  NOT_APPLICABLE because the frozen predicate requires
+  plannedActions.length > 1 && safetyIsZero, while all six real records had
+  one planned action.
+- Phase 4 E1/J1 seed 0x0000000000000102 and E2/J2 seed
+  0x0000000000000201 remain NIGHTWATCH_RUNTIME_ARTIFACT; both had failed
+  invalidated transitions, no request delta/fingerprint, zero safety, and no
+  product anomaly admission. E2 optional font failures were non-causal
+  DEV_INFRA_TRANSIENT signals.
+- OOPS source checkout is clean master/origin/master at
+  c4a129feb0b97dc0ae39f32c39a92abe834567f2, ahead/behind 0/0.
+- Installed Homebrew OOPS 1.2.8 is a source mismatch and is not used. The
+  Nightwatch-controlled source build is module v1.2.46, source SHA c4a129...,
+  binary SHA-256
+  ffa29496cf65b4e239ab4ade6001322f2be546492be26901bd4e2d8c092ad57c.
+- Current OOPS dangerous capabilities remain confirmed in source: arbitrary
+  URL/method, shell/script/pre-process paths, 0777 temporary scripts,
+  inherited environment, raw response/error output, default proxy/direct
+  sockets, default redirects, cloud/distribution/notification integrations,
+  and no reliable structured result.
+- Current source-built OOPS executed only Nightwatch-generated local fixture
+  scenarios: six eligible reads succeeded; a synthetic 500 assertion case was
+  classified as a scenario assertion failure; no raw fixture body reached the
+  OOPS process or durable output.
+- Bubblewrap 0.9.0 network-namespace probe passed. Its isolated loopback is
+  not reachable from the parent relay, so it is available but not compatible
+  with authenticated OOPS relay execution. Native Nightwatch relay fallback
+  is the only real DEV path considered.
+
+## PHASE_4_CLOSURE_AUDIT
+
+PHASE_4_CLOSURE_AUDIT_ACCEPTED.
+
+## PHASE_4_EXACT_REAL_REPLAY
+
+NOT_APPLICABLE — proven from the frozen runner predicate, not a pass label.
+
+## PHASE_4_RUNTIME_FAILURES
+
+1. Run nightwatch-20260812T121232Z-2e48-E1-J1-payer-exchange-1, seed
+   0x0000000000000102, envelope E1/J1: RUNTIME_FAILURE at
+   p4.j1.vendor-local.azure; failed ACTION_TRANSITION_FAILED, invalidated
+   transition transition_4aa9...d4c29f, no exploration request delta or
+   fingerprint, fatal to that sequence but nonfatal to the corpus. Class:
+   NIGHTWATCH_RUNTIME_ARTIFACT; not reproduced as a product anomaly.
+2. Run nightwatch-20260812T121232Z-2e48-E2-J2-common-exchange-0, seed
+   0x0000000000000201, envelope E2/J2: RUNTIME_FAILURE at
+   p4.j2.vendor-read.aws; failed ACTION_TRANSITION_FAILED, invalidated
+   transition transition_b754...7714a5, no exploration request delta or
+   fingerprint, fatal to that sequence but nonfatal to the corpus. Class:
+   NIGHTWATCH_RUNTIME_ARTIFACT; optional font fingerprints were non-causal
+   DEV_INFRA_TRANSIENT signals.
 
 ## OOPS_SOURCE_SHA
 
-`alphauslabs/oops@c4a129feb0b97dc0ae39f32c39a92abe834567f2` (`master`,
-`origin/master`, clean, 0/0). The installed binary is not source-matched:
-Homebrew `oops 1.2.8` embeds `009440549ac37582296a26e668d1f6f105e14b6b`.
-Any source build, if needed, must be emitted into a Nightwatch-controlled
-temporary/cache directory and must retain the source SHA in its run ledger.
+alphauslabs/oops@c4a129feb0b97dc0ae39f32c39a92abe834567f2; branch master,
+tracking origin/master, clean, ahead/behind 0/0, latest locally available
+source. No OOPS repository write, fetch, reset, stash, clean, or commit.
 
 ## OOPS_CAPABILITY_AUDIT
 
-`COMPLETE_READ_ONLY_AUDIT`. Current findings:
-
-- schema/HTTP: arbitrary YAML HTTP URL/method and request fields;
-- chaining: `prepare`, `check`, `#!` values, and assertion scripts execute
-  external commands; response files are arbitrary paths;
-- assertions: status, JSON schema, and script; errors are accumulated/logged;
-- result: no reliable structured scenario result; process success is not a
-  sufficient scenario oracle;
-- environment/temp: scripts inherit `os.Environ()`, temporary script paths use
-  shared `os.TempDir()`, and script mode is 0777;
-- network: `httpexpect` default client honors proxy environment variables and
-  follows redirects without Nightwatch host revalidation;
-- integrations: Slack, GitHub, Pub/Sub, SNS/SQS, Secret Manager, AWS, and
-  Spanner paths exist in current source;
-- hooks/distribution: pre-process hook and distributed worker/controller modes
-  exist and are prohibited;
-- no current OOPS scenario was executed during this audit.
+COMPLETE_READ_ONLY_AUDIT; ALL_PRIOR_FINDINGS_CONFIRMED_CURRENT.
+OOPS is an untrusted execution mechanism. Nightwatch passes only fixed
+--scenarios <private-file> --skip-result-notif arguments, a JSON-subset YAML
+document, an explicit environment allowlist, and a loopback relay URL.
 
 ## OOPS_SECURITY_POSTURE
 
-`UNPROVEN_FAIL_CLOSED` — OOPS is not trusted and cannot be used for real
-authenticated traffic until the restricted adapter, environment scrub,
-relay/sandbox, redirect, and output privacy proofs are complete.
+LOCAL_RESTRICTED_ONLY; REAL_AUTHENTICATED_OOPS_DISABLED_BY_SANDBOX.
+Shell/script/command/pre-process/notification/distributed/cloud capabilities
+are rejected before spawn or absent from the generated dialect. Direct OOPS
+DEV egress is never used.
 
 ## SANDBOX_STATUS
 
-`DIRECT_EGRESS_PROHIBITED; LOOPBACK_RELAY_REQUIRED; OS_SANDBOX_PENDING`.
-The current OOPS HTTP client can use proxy-selected or direct sockets and can
-follow redirects. M2/M3 must establish a Nightwatch loopback-only relay and
-record whether an unprivileged OS-level network sandbox is available. If it is
-not available, authenticated OOPS DEV execution remains disabled.
+BUBBLEWRAP_AVAILABLE_0.9.0_NAMESPACE_PROBE_PASS; RELAY_NAMESPACE_INCOMPATIBLE;
+NATIVE_RELAY_FALLBACK. The actual OOPS local path is protected by fixed
+operation-ID scenarios, loopback binding, no proxy variables, no credentials,
+and Nightwatch relay resolution. Authenticated OOPS is not enabled merely
+because bubblewrap is installed.
 
 ## API_CATALOG_VERSION
 
-`nightwatch.api-catalog.phase5.v1` — schema frozen; catalog not yet populated.
+nightwatch.api-catalog.phase5.v1
 
 ## API_OPERATION_COUNTS
 
-`inventoried=0; KNOWN_READ=0; KNOWN_MUTATION=0; UNKNOWN=0; generationEligible=0;
-generated=0; localOopsVerified=0; devFirst=0; devReplay=0; blocked=0;
-anomalous=0`.
+inventoried=11; KNOWN_READ=6; KNOWN_MUTATION=4; UNKNOWN=1;
+generationEligible=6; generated=6; localOopsVerified=6; devFirst=0;
+devReplay=0; blocked=5; anomalous=0.
 
 ## KNOWN_READ_OPERATIONS
 
-None admitted yet. J1/J2/J3 bridge candidates are pending source inventory.
+ripple.payer-exchange.read (J1 bridge);
+ripple.common-exchange.read (J2 bridge);
+ripple.account-inventory.read (J3 bridge);
+ripple.billing-groups.read (J3 bridge stream);
+ripple.billing-groups-legacy.read (API-only expansion);
+ripple.billing-group-exchange.read (API-only expansion).
 
 ## KNOWN_MUTATION_OPERATIONS
 
-None inventoried yet. Mutations must be cataloged explicitly before any
-generation decision.
+ripple.payer-exchange.write, ripple.common-exchange.write,
+ripple.account-inventory.write, ripple.billing-group-exchange.write.
+All are cataloged with GENERATION_BLOCKED and DEV=NEVER.
 
 ## UNKNOWN_OPERATIONS
 
-None inventoried yet. The historical malformed-JSON operation remains outside
-the corpus pending independent source admission.
+ripple.historical-blue-cost.unknown — historical malformed-JSON finding;
+current semantic class remains UNKNOWN, HISTORICAL_ANOMALY_PRESENT, and it is
+neither generated nor deliberately replayed.
 
 ## SCENARIO_GENERATOR_VERSION
 
-`nightwatch.scenario-generator.phase5.v1` — implementation not started.
+nightwatch.scenario-generator.phase5.v1; adapter
+nightwatch.oops-adapter.phase5.v1; restricted profile
+nightwatch.oops-profile.phase5.v1.
 
 ## GENERATED_SCENARIO_LEDGER
 
-`none`; no YAML or scenario metadata exists yet.
+Six deterministic templates under corpus/phase5/scenarios/:
+nw-s5-5a0630ca92ca24d00349d53b, nw-s5-b928e70a21dcf49838b3faf4,
+nw-s5-2a9f447b4437883efd1d504a, nw-s5-19120f948294275d3d8cbb18,
+nw-s5-82b419ed9049519ae61eb312, nw-s5-e93116bd803fc423c635a0cd.
+Durable corpus index: corpus/phase5/api-corpus-index.json.
 
 ## LOCAL_OOPS_RUN_LEDGER
 
-`none`; no OOPS scenario has been executed, including locally, during M0.
+6/6 current-source OOPS local restricted scenarios passed. Synthetic
+assertion failure passed privacy checks and remained separate from process
+failure. OOPS workspace was owner-only, scenario files mode 0600, stdout/stderr
+bounded and sanitized, and workspaces cleaned.
 
 ## DEV_API_RUN_LEDGER
 
-`none`; no Phase 5 DEV API execution is authorized before the pre-real gate.
+none yet; frozen set is six KNOWN_READ operations; maximum 12 serial calls;
+real runner is native Nightwatch through the catalog-resolving relay because
+authenticated OOPS is disabled by the sandbox decision.
 
 ## REPLAY_LEDGER
 
-`Phase 4 inherited: 0/3 exact real replays, NOT_APPLICABLE by frozen
-plannedActions.length > 1 predicate. Phase 5: none.`
+Phase 4 inherited 0/3 exact real replays — NOT_APPLICABLE.
+Phase 5 real budget is one first plus one fresh replay for each of the six
+frozen operation IDs; no Phase 5 replay has executed yet.
 
 ## AUTH_STATUS
 
-Phase 4 external DEV auth remains outside the repository and is not passed to
-OOPS. Phase 5 API auth strategy is `PENDING_M3/M8`; password, provider path,
-storage state, and tokens are prohibited from OOPS and durable artifacts.
+Phase 4 external owner-only DEV state remains outside Nightwatch and is never
+passed to OOPS. Phase 5 synthetic auth bridge passed: it validates the same
+Phase 4 storage-state semantics and creates a bearer header only in relay
+memory. Real runner refreshes only through existing runDevAuthRefresh; OOPS
+receives neither password, storage-state path, browser state, nor token.
 
-## Files Changed
+## FILES_CHANGED
 
-M0/M1 task artifacts only: `.agent/ACTIVE_TASK.md` and
-`.agent/tasks/phase-5-oops-api-generation-expansion/{SPEC,PLAN,STATE,REPORT}.md`.
-No implementation, generated scenario, or Alphaus repository file has been
-changed. M1 was source inspection only.
+Uncommitted Nightwatch-only Phase 5 implementation and tests:
+src/api/phase5/{types,catalog,generator,restrictedProfile,oracle,relay,lineage,auth}.ts,
+src/core/oops/{process,sandbox}.ts, tests/unit/phase5Api.test.ts,
+tests/unit/phase5Fixture.test.ts, tests/manual/phase5-real-api.ts,
+playwright.phase5.config.ts, bin/phase5-real.mjs, package.json, and
+corpus/phase5/. Task docs ACTIVE_TASK.md, this task's PLAN.md, STATE.md, and
+REPORT.md are also being checkpointed. No Alphaus repository is changed.
 
-## Validation Ledger
+## VALIDATION_LEDGER
 
-- `git status --short --branch`: PASS before task creation; clean `main` at
-  `1d05c46`.
-- Phase 4 SHA object/ancestry checks: PASS.
-- `npx tsc --noEmit`: PASS before task creation.
-- `npx playwright test tests/unit/exploration.test.ts --project=nightwatch
-  --workers=1`: 16 passed.
-- `npm run agent:check`: PASS with the expected Phase 4 approved-document
-  `CHECKPOINT_ADVANCE` warning.
-- `git diff --check`: PASS before task creation.
-- Alphaus read-only integrity: checkout SHAs unchanged; pre-existing dirty
-  states preserved. Current local tracking-ref drift is a freshness caveat,
-  not a Nightwatch mutation.
-- OOPS source identity/capability inspection: PASS; branch, tracking, SHA,
-  ahead/behind, dirty state, source paths, and installed binary metadata were
-  read without executing a scenario.
-- OOPS network-client inspection: PASS; `httpexpect` v2.17.0 and Go
-  `net/http` defaults establish proxy-environment inheritance, direct-socket
-  fallback, and default redirect following.
+- TypeScript: PASS after current Phase 5 implementation.
+- Focused Phase 5 API/fixture suite: 15 passed after corpus, auth, sandbox,
+  and argument-rejection coverage.
+- Actual current-source OOPS local fixture execution: 6/6 PASS plus one
+  sanitized assertion-failure regression.
+- Durable corpus-vs-generator test: PASS.
+- Bubblewrap read-only network namespace probe: PASS on this host.
+- Phase 4 inherited focused suite: 16 passed; Phase 4 full suite: 318 passed
+  at closure.
+- Full Playwright, agent:check, and final diff-check remain pending after the
+  implementation checkpoint.
 
 ## BUG_CANDIDATES
 
-None for Phase 5. Inherited Phase 4 runtime failures are classified
-`NIGHTWATCH_RUNTIME_ARTIFACT`; inherited malformed JSON remains unresolved
-historical `GENUINE_PROTOCOL_ANOMALY` and is not a generated operation.
+None admitted for Phase 5. Phase 4 runtime artifacts and historical J2 font
+signal remain classified as above; no API anomaly has executed.
 
 ## REJECTED_OPERATIONS
 
-No source operation catalog entries yet. Independently of the future catalog,
-the adapter rejects all mutations, UNKNOWNs, stale operations, arbitrary URLs,
-scripts, shell, command, pre-process, response-file, notification, and
-distributed features.
+All shell/script/command/pre-process/response-file/form/payload/notification/
+distributed/cloud OOPS features; arbitrary URLs/queries; all four known
+mutations; the historical UNKNOWN; stale source operations; literal auth or
+customer identifiers; unbounded bodies.
 
 ## REJECTED_HYPOTHESES
 
-- OOPS is not a safety authority.
-- A proto RPC or HTTP method/name does not prove read semantics.
-- An installed OOPS binary is not assumed to match inspected source.
-- A Phase 4 exact-replay count of zero is not equivalent to a passing replay.
-- The current OOPS source has every previously reported security concern still
-  present: arbitrary shell/script execution, 0777 script files, inherited
-  environment, weak tests, ignored errors, and external optional integrations;
-  each is `CONFIRMED_CURRENT`.
-
-## Decisions Made During This Task
-
-- OOPS is an untrusted executor; Nightwatch remains the safety authority.
-- The initial generated corpus target is three browser bridges plus two to
-  four API-only reads, subject to a source-backed semantic frontier.
-- Direct authenticated OOPS egress is prohibited until relay, sandbox, and
-  response-privacy proofs pass.
-
-## Discoveries
-
-- The Phase 4 replay predicate is implemented in the real runner as
-  `plannedActions.length > 1 && safetyIsZero(...)`.
-- Both Phase 4 runtime failures have no response-level API anomaly evidence;
-  the narrow supported classification is `NIGHTWATCH_RUNTIME_ARTIFACT`.
-- The installed OOPS binary is materially older/different from the current
-  inspected source; using it would invalidate source-backed compatibility
-  evidence.
-- The current OOPS HTTP path has no relay-safe destination authority and its
-  redirect behavior is not environment-aware. Nightwatch must resolve an
-  operation ID to the destination and perform redirect revalidation itself.
-
-## Blockers
-
-None at M1. Potential M2/M3 sandbox or output-privacy blockers remain
-unresolved, not silently waived.
+- OOPS source compatibility does not imply OOPS safety.
+- Bubblewrap availability does not prove compatibility with a parent relay.
+- HTTP method/name or proto List/Get naming alone does not prove read semantics.
+- A first API result is not a promoted canary; fresh replay is required.
+- HTTP 200 alone is not an API oracle pass.
+- Historical malformed JSON does not admit its endpoint.
 
 ## UNRESOLVED
 
-- Whether a safe OS egress sandbox is available.
-- Which additional source operations can be proven `KNOWN_READ` without
-  customer-specific durable hydration.
-- Whether authenticated OOPS DEV execution can pass privacy and containment.
-- Whether OOPS assertion/error output can be fully sanitized for all local
-  failure paths; the current raw-body behavior makes this a hard gate.
+- Actual DEV first/replay outcomes for the frozen six-operation set.
+- Whether any current DEV endpoint returns a source-contract-compatible body;
+  failures will be classified without widening the operation set.
+- Authenticated OOPS execution remains intentionally disabled by the network
+  namespace/relay incompatibility; local OOPS and native DEV fallback are the
+  approved scope.
 
-## Safety Events
+## SAFETY_EVENTS
 
-`NONE` in M0/M1. No OOPS scenario, DEV API request, production attempt, mutation,
-database query, or Alphaus write occurred.
+Phase 5 real safety counters remain zero because no real API call has run.
+Local synthetic safety blocks (arbitrary target, UNKNOWN, mutation, redirect)
+were rejected before target execution. No production attempt, proxy violation,
+unknown approval, product mutation, action-caused UNKNOWN, DB query, or
+Alphaus write occurred.
 
 ## PRIVACY_STATUS
 
-`PASS_FOR_M0_M1_AUDIT`. No credential, auth value, customer value, body, DOM,
-screenshot, trace, or raw OOPS output entered the new task artifacts. OOPS
-stdout/stderr is explicitly classified as untrusted until the M2 sanitizer and
-sentinel tests pass.
+PASS_LOCAL; REAL_GATE_PENDING. Generated corpus contains no credentials,
+customer identifiers, request bodies, response bodies, browser state,
+screenshots, or traces. Local OOPS output/body sentinel tests found zero leaks.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`1d05c460ec0762c4587bb76f5d050a322f8f47a6` (clean Phase 4 closure; no Phase 5
-implementation yet).
+1d05c460ec0762c4587bb76f5d050a322f8f47a6 until the current implementation
+checkpoint is committed and revalidated.
 
 ## LAST_CHECKPOINT_SHA
 
-`78ee69a1b5e4fa55915039f8c7dcc71860b80a5e` — M0 task-setup checkpoint; M1
-source findings are currently uncommitted and must be checkpointed before M2
-implementation. The validated implementation baseline remains
-`1d05c460ec0762c4587bb76f5d050a322f8f47a6`.
+ba56ef0a37948f333651d634c778436210e6c4c1 (last committed OOPS audit;
+current M2–M7 implementation remains uncommitted).
 
 ## NEXT_EXACT_ACTION
 
-Update `ACTIVE_TASK.md`, `PLAN.md`, `REPORT.md`, and this state with the M1
-audit, checkpoint the documentation, then implement the M2 restricted adapter
-and its rejection-before-spawn tests. Do not execute an authenticated OOPS
-scenario or use the mismatched installed binary.
+Run npx tsc --noEmit, the focused 15-test Phase 5 suite, npm run agent:check,
+npm run api:phase5 -- --help, and git diff --check; then checkpoint the
+implementation. After the clean checkpoint, run the frozen DEV command once.
 
-## Deferred / Follow-Up
+## RESUME_RECIPE
 
-- Phase 6 data-layer evidence, broad API coverage/fuzzing, distributed OOPS,
-  AI planning, and production/mutation verification remain out of scope.
-
-## Resume Recipe
-
-1. Read Nightwatch `AGENTS.md`, `.agent/ACTIVE_TASK.md`, this task’s SPEC,
-   PLAN, and STATE.
-2. Verify `git status --short --branch`, current SHA, and current diff.
-3. Continue only from `NEXT_EXACT_ACTION`; keep OOPS and every Alphaus repo
-   read-only.
-4. After each milestone, update this state with the required OOPS/catalog/
-   scenario/run/validation/privacy/safety fields before changing subproblem.
+1. Read AGENTS.md, ACTIVE_TASK.md, this task SPEC/PLAN/REPORT/STATE.
+2. Confirm no concurrent Nightwatch editor and inspect git status --short.
+3. Reconfirm OOPS SHA c4a129..., source-built binary identity, sandbox result,
+   catalog/index counts, and the six frozen operation IDs.
+4. Run the smallest pending validation, then resume exactly at NEXT_EXACT_ACTION;
+   never reconstruct an operation from memory.
+5. Before any DEV request, require a clean committed checkpoint, valid auth,
+   healthy loopback proxy, fresh source lineage, relay, privacy writer, and
+   remaining budget.
 
 ## Completion Snapshot
 
-Not complete. Populate at M10 only after all SPEC criteria or an explicit
-sandbox/privacy/semantic-frontier blocker are durably reported.
+Not complete. Finalize only after the frozen DEV first/replay decision,
+privacy/safety audit, full validation, task closure, and clean Nightwatch
+checkpoint. Do not create or start Phase 6 from this state.
+
+## Files Changed
+
+The Phase 5 implementation, local corpus, real-run harness, tests, and task
+documents listed in FILES_CHANGED above are Nightwatch-only. No Alphaus
+repository is changed.
+
+## Validation Ledger
+
+The current validation results are recorded in VALIDATION_LEDGER above. The
+full suite and final clean-checkpoint validation remain pending.
+
+## Decisions Made During This Task
+
+- OOPS remains an untrusted executor and never receives auth or destination
+  authority.
+- Bubblewrap is recorded as available but is not used for authenticated OOPS
+  because its isolated namespace cannot reach the parent relay.
+- Native Nightwatch relay execution is the only real DEV fallback.
+- Six source-proven reads are frozen; no endpoint expansion is permitted.
+
+## Discoveries
+
+- The current OOPS source still confirms all previously reported dangerous
+  capabilities.
+- The current source-built OOPS process returns success at the process level
+  for a status assertion failure; Nightwatch must use relay/oracle metadata.
+- The generated scenario is a JSON-subset YAML document so no broad YAML
+  parser or permissive external schema is introduced.
+
+## Blockers
+
+No human blocker yet. Authenticated OOPS execution is intentionally disabled
+by the relay/network-namespace incompatibility; native Nightwatch relay
+execution remains in scope.
+
+## Safety Events
+
+No Phase 5 real request, production attempt, proxy violation, unknown
+destination/approval, mutation, database query, or Alphaus write occurred.
+Local synthetic safety rejection tests passed.
+
+## Deferred / Follow-Up
+
+Phase 6 data-layer evidence, broad API coverage/fuzzing, distributed OOPS, AI
+planning, and production/mutation verification remain deferred.
+
+## Resume Recipe
+
+Use the exact RESUME_RECIPE above after rereading AGENTS.md, ACTIVE_TASK, SPEC,
+PLAN, REPORT, and STATE. Never reconstruct operation semantics from memory.

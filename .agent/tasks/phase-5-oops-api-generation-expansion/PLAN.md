@@ -120,7 +120,9 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: forbidden synthetic scenarios are rejected before OOPS;
   child sentinel and argv tests pass; no shell/script path is entered.
 - Validation commands: focused adapter/dialect/env/process/privacy tests.
-- Status: `IN_PROGRESS`
+- Status: `COMPLETED`; restricted parser, environment scrub, private
+  workspace, bounded subprocess, sanitizer, and rejection-before-spawn tests
+  are implemented.
 
 ### M3 — Loopback relay, outbound containment, and redirect controls
 
@@ -133,7 +135,8 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: local sink tests prove direct/redirect/unknown/
   production paths; relay is not reachable on LAN and has no arbitrary target.
 - Validation commands: relay/network containment tests and policy tests.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; loopback relay, operation-ID destination resolution,
+  policy checks, auth injection boundary, and redirect fixtures pass.
 
 ### M4 — Source inventory and semantic API catalog
 
@@ -147,7 +150,8 @@ other-repository writes, and Phase 6.
   backed; no method/name-only admission; unknown/mutation entries are explicit.
 - Validation commands: catalog schema/semantic/staleness tests and source
   provenance checks.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; the catalog contains 11 inventoried operations with
+  six reads, four mutations, and one UNKNOWN, all source-provenanced.
 
 ### M5 — Deterministic hydration, scenario generation, and oracle adapter
 
@@ -161,7 +165,8 @@ other-repository writes, and Phase 6.
   not bespoke execution code.
 - Validation commands: generator/determinism/hydration/oracle/replay/privacy
   tests.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; deterministic generator, typed runtime placeholders,
+  metadata-only oracle, fingerprints, and durable corpus index/templates pass.
 
 ### M6 — Local OOPS fixture matrix and native differential
 
@@ -173,7 +178,9 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: fixture matrix passes; raw bodies never persist; OOPS
   engine failures are separated from API failures; local OOPS output is safe.
 - Validation commands: focused Phase 5 fixture/differential/privacy suite.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; current source-built OOPS passed six loopback scenarios,
+  native-vs-OOPS semantic differential, assertion/privacy sentinel, and the
+  fixture matrix.
 
 ### M7 — Browser/API bridge, expansion, and Phase 3 lineage
 
@@ -186,7 +193,8 @@ other-repository writes, and Phase 6.
 - Acceptance criteria: exact counts and bridge/expansion labels are durable;
   stale operations become review-required and cannot execute.
 - Validation commands: lineage/staleness/catalog tests; no real traffic yet.
-- Status: `NOT_STARTED`
+- Status: `COMPLETED`; J1/J2/J3 bridges, two API-only expansions, and Phase 3
+  staleness integration are durable and tested.
 
 ### M8 — Pre-real gate and frozen operation/budget ledger
 
@@ -199,7 +207,8 @@ other-repository writes, and Phase 6.
   blocker prevents real execution.
 - Validation commands: typecheck, focused suites, full Playwright,
   `npm run agent:check`, diff check, privacy scans.
-- Status: `NOT_STARTED`
+- Status: `IN_PROGRESS`; the frozen six-operation, twelve-call serial budget
+  and native-relay fallback are implemented; the real gate and ledger remain.
 
 ### M9 — Bounded DEV first/replay corpus
 

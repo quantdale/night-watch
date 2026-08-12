@@ -1,0 +1,21 @@
+{
+  "maintainers": ["nightwatch"],
+  "tags": {
+    "profile": "nightwatch.oops-profile.phase5.v1",
+    "operation_id": "ripple.account-inventory.read",
+    "scenario_id": "nw-s5-2a9f447b4437883efd1d504a",
+    "generator": "nightwatch.scenario-generator.phase5.v1"
+  },
+  "run": [{
+    "http": {
+      "method": "GET",
+      "url": "http://127.0.0.1:0/v1/operations/ripple.account-inventory.read",
+      "headers": {
+        "Accept": "application/json",
+        "X-Nightwatch-Operation-Id": "ripple.account-inventory.read"
+      },
+      "query_params": {},
+      "asserts": {"status_code": 200}
+    }
+  }]
+}

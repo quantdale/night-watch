@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "nightwatch.api-corpus.phase5.v1",
+  "catalogVersion": "nightwatch.api-catalog.phase5.v1",
+  "profileVersion": "nightwatch.oops-profile.phase5.v1",
+  "adapterVersion": "nightwatch.oops-adapter.phase5.v1",
+  "generatorVersion": "nightwatch.scenario-generator.phase5.v1",
+  "oops": {
+    "sourceSHA": "c4a129feb0b97dc0ae39f32c39a92abe834567f2",
+    "binarySHA256": "ffa29496cf65b4e239ab4ade6001322f2be546492be26901bd4e2d8c092ad57c",
+    "binarySourceMatch": true,
+    "executionMode": "LOCAL_RESTRICTED_ONLY; NATIVE_NIGHTWATCH_FOR_DEV"
+  },
+  "counts": {
+    "operationsInventoried": 11,
+    "knownRead": 6,
+    "knownMutation": 4,
+    "unknown": 1,
+    "generationEligible": 6,
+    "generated": 6,
+    "localOopsVerified": 6,
+    "devFirstVerified": 0,
+    "devReplayVerified": 0,
+    "blocked": 5,
+    "anomalous": 0
+  },
+  "operations": [
+    {
+      "operationId": "ripple.payer-exchange.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "UI_BRIDGED_API",
+      "journeyLinks": ["ripple-payer-exchange-read"],
+      "scenarioId": "nw-s5-5a0630ca92ca24d00349d53b",
+      "scenarioFile": "scenarios/ripple.payer-exchange.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.common-exchange.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "UI_BRIDGED_API",
+      "journeyLinks": ["ripple-common-exchange-read"],
+      "scenarioId": "nw-s5-b928e70a21dcf49838b3faf4",
+      "scenarioFile": "scenarios/ripple.common-exchange.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.account-inventory.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "UI_BRIDGED_API",
+      "journeyLinks": ["ripple-account-inventory"],
+      "scenarioId": "nw-s5-2a9f447b4437883efd1d504a",
+      "scenarioFile": "scenarios/ripple.account-inventory.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.billing-groups.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "UI_BRIDGED_API",
+      "journeyLinks": ["ripple-account-inventory"],
+      "scenarioId": "nw-s5-19120f948294275d3d8cbb18",
+      "scenarioFile": "scenarios/ripple.billing-groups.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.billing-groups-legacy.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "API_ONLY_EXPANSION",
+      "journeyLinks": [],
+      "scenarioId": "nw-s5-82b419ed9049519ae61eb312",
+      "scenarioFile": "scenarios/ripple.billing-groups-legacy.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.billing-group-exchange.read",
+      "class": "KNOWN_READ",
+      "corpusClass": "API_ONLY_EXPANSION",
+      "journeyLinks": [],
+      "scenarioId": "nw-s5-e93116bd803fc423c635a0cd",
+      "scenarioFile": "scenarios/ripple.billing-group-exchange.read.yaml",
+      "localStatus": "GENERATED_LOCAL_ONLY",
+      "devStatus": "PENDING_FROZEN_DEV_RUN"
+    },
+    {
+      "operationId": "ripple.payer-exchange.write",
+      "class": "KNOWN_MUTATION",
+      "corpusClass": "REJECTED",
+      "journeyLinks": ["ripple-payer-exchange-read"],
+      "localStatus": "GENERATION_BLOCKED",
+      "devStatus": "NEVER"
+    },
+    {
+      "operationId": "ripple.common-exchange.write",
+      "class": "KNOWN_MUTATION",
+      "corpusClass": "REJECTED",
+      "journeyLinks": ["ripple-common-exchange-read"],
+      "localStatus": "GENERATION_BLOCKED",
+      "devStatus": "NEVER"
+    },
+    {
+      "operationId": "ripple.account-inventory.write",
+      "class": "KNOWN_MUTATION",
+      "corpusClass": "REJECTED",
+      "journeyLinks": ["ripple-account-inventory"],
+      "localStatus": "GENERATION_BLOCKED",
+      "devStatus": "NEVER"
+    },
+    {
+      "operationId": "ripple.billing-group-exchange.write",
+      "class": "KNOWN_MUTATION",
+      "corpusClass": "REJECTED",
+      "journeyLinks": [],
+      "localStatus": "GENERATION_BLOCKED",
+      "devStatus": "NEVER"
+    },
+    {
+      "operationId": "ripple.historical-blue-cost.unknown",
+      "class": "UNKNOWN",
+      "corpusClass": "SEMANTIC_REVIEW_REQUIRED",
+      "journeyLinks": [],
+      "localStatus": "SEMANTIC_REVIEW_REQUIRED",
+      "devStatus": "NEVER",
+      "historicalAnomaly": "HISTORICAL_ANOMALY_PRESENT"
+    }
+  ]
+}

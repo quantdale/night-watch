@@ -8,13 +8,16 @@ Task directory: .agent/tasks/phase-5-oops-api-generation-expansion
 Starting SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Current SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
 Last validated implementation SHA: 1d05c460ec0762c4587bb76f5d050a322f8f47a6
-Current milestone: M1 — current OOPS source, binary, and security capability
-audit complete; M2 restricted adapter implementation is next.
-Last checkpoint: 2026-08-12 — Phase 5 task setup checkpointed at `78ee69a`;
-current OOPS source `c4a129f` was audited read-only and the installed Homebrew
-binary was recorded as source-mismatched. No OOPS scenario was executed.
-Next action: Implement the Nightwatch-owned restricted OOPS profile,
-environment scrub, bounded process adapter, and rejection-before-spawn tests.
+Current milestone: M8 — pre-real gate and frozen serial DEV ledger; M2–M7
+local implementation and validation are complete, with the implementation
+checkpoint still pending.
+Last checkpoint: 2026-08-12 — current OOPS source/security audit at
+`ba56ef0`; the uncommitted M2–M7 implementation slice is reconciled in STATE.
+No Phase 5 real DEV API request has executed.
+Next action: run the post-change validation, checkpoint Nightwatch, then run
+the frozen six-operation native-relay DEV first/replay ledger if all gates
+pass. Authenticated OOPS remains local-fixture-only because its isolated
+network namespace cannot reach the parent relay.
 
 ## Prior phase closure handoff
 
