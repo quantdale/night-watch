@@ -45,6 +45,12 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
   `labs-169405` with `env=dev` and `network=dev` when queried explicitly by
   project. Master-to-DEV cluster mapping is therefore proven; effective
   service environment values and designated scope remain unresolved.
+- Deployment-presence recheck completed 2026-08-13 through approved
+  `gcloud-ro logging read`: sanitized resource labels matched a live
+  `ripple-api-micro` container in `mochi-dev-pong/default`. Payloads were not
+  emitted or persisted. Bounded searches for literal `API_ENV=dev` in text and
+  structured message fields returned no timestamps, so this does not prove
+  the effective service environment value.
 
 ## Work In Progress
 
@@ -148,9 +154,10 @@ will not edit the Alphaus documentation. Live schema freshness is not claimed.
 AVAILABLE: `/home/dalepalaca/go/src/alphaus-main/alphaus-tools/bin/dynamo-ro`,
 `bq-ro`, `spanner-ro`, `gcloud-ro`; underlying `/usr/local/bin/aws`,
 `/snap/bin/bq`, `/snap/bin/gcloud` present. AUTH_STATUS: NOT_PROBED; no real
-datastore tool invocation has occurred. `gcloud-ro` metadata-only cluster
-listing/describe succeeded for `labs-169405`; no workload or datastore query
-was run. Raw aliases `dynamo_query`, `bq_query`, and `spanner_query`
+datastore tool invocation has occurred. `gcloud-ro` metadata-only
+cluster-listing/describe and sanitized logging resource-label checks succeeded
+for `labs-169405`; no workload environment payload or datastore query was run.
+Raw aliases `dynamo_query`, `bq_query`, and `spanner_query`
 unavailable.
 
 ## DATA_ENVIRONMENT_MAP

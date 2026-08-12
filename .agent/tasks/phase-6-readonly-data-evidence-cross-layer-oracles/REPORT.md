@@ -190,6 +190,12 @@ The re-audit narrowed the missing proof without weakening the gate:
   local repository set, and an unauthenticated read-only remote lookup did not
   resolve it. Its absence leaves the effective `API_ENV`, AWS role/region, and
   secret/config references unproven.
+- On 2026-08-13, an approved `gcloud-ro logging read` query restricted to
+  resource labels confirmed a live `ripple-api-micro` container in the DEV
+  cluster/default namespace. The command emitted labels only; no log payload
+  was retained. Bounded text/structured-message searches for `API_ENV=dev`
+  returned no timestamps, so deployment presence is corroborated but the
+  effective environment/datastore value remains unproven.
 
 Therefore the compute environment is confirmed as DEV, but the state remains
 `RUNTIME_DATA_ENV_SOURCE_DERIVED` for the datastore binding. The exact
