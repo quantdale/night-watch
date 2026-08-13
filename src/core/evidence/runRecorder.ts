@@ -93,6 +93,7 @@ export class RunRecorder {
     const artifactsRoot = opts.artifactsRoot ?? path.join(__dirname, '..', '..', '..', 'artifacts');
     this.dir = path.join(artifactsRoot, opts.runId);
     fs.mkdirSync(this.dir, { recursive: true });
+    if (this.authenticated) fs.chmodSync(this.dir, 0o700);
     this.startedAt = this.now().toISOString();
 
     // Manifest: run ID, timestamp, environment, product, browser, scenario,
@@ -107,8 +108,15 @@ export class RunRecorder {
     };
     if (opts.seed !== undefined) manifest.seed = opts.seed;
     if (opts.nightwatchSha != null) manifest.nightwatchSha = opts.nightwatchSha;
-    fs.writeFileSync(path.join(this.dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    const manifestFile = path.join(this.dir, 'manifest.json');
+    fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+    this.secureAuthenticatedArtifact(manifestFile);
     if (this.authenticated) this.enableAuthenticatedEvidence();
+  }
+
+  /** Keep authenticated metadata owner-only even when the process umask is permissive. */
+  private secureAuthenticatedArtifact(file: string): void {
+    if (this.authenticated) fs.chmodSync(file, 0o600);
   }
 
   get isAuthenticated(): boolean {
@@ -188,6 +196,7 @@ export class RunRecorder {
     }
     manifest[key] = this.authenticated ? this.sanitizeAuthenticatedData({ value }).value : value;
     fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+    this.secureAuthenticatedArtifact(file);
   }
 
   /** Bind this recorder to the already-running Nightwatch outer proxy. */
@@ -223,7 +232,9 @@ export class RunRecorder {
       const failureEvent = this.onProxyViolation(event);
       this.proxy.onViolation?.(event, failureEvent);
     }
-    fs.writeFileSync(path.join(this.dir, 'proxy.jsonl'), relevant.map((e) => `${JSON.stringify(e)}\n`).join(''));
+    const file = path.join(this.dir, 'proxy.jsonl');
+    fs.writeFileSync(file, relevant.map((e) => `${JSON.stringify(e)}\n`).join(''));
+    this.secureAuthenticatedArtifact(file);
     return summarizeProxyEvents(relevant);
   }
 
@@ -271,11 +282,17 @@ export class RunRecorder {
     };
     if (data !== undefined) ev.data = data;
     const line = `${JSON.stringify(ev)}\n`;
-    fs.appendFileSync(path.join(this.dir, 'events.jsonl'), line);
+    const eventsFile = path.join(this.dir, 'events.jsonl');
+    fs.appendFileSync(eventsFile, line);
+    this.secureAuthenticatedArtifact(eventsFile);
     if (input.type === 'request' || input.type === 'response') {
-      fs.appendFileSync(path.join(this.dir, 'network.jsonl'), line);
+      const networkFile = path.join(this.dir, 'network.jsonl');
+      fs.appendFileSync(networkFile, line);
+      this.secureAuthenticatedArtifact(networkFile);
     } else if (input.type === 'console') {
-      fs.appendFileSync(path.join(this.dir, 'console.jsonl'), line);
+      const consoleFile = path.join(this.dir, 'console.jsonl');
+      fs.appendFileSync(consoleFile, line);
+      this.secureAuthenticatedArtifact(consoleFile);
     }
     this.events.push(ev);
     return ev;
@@ -319,6 +336,7 @@ export class RunRecorder {
   async writeRepositories(snapshots: RepoSnapshotRecord[]): Promise<string> {
     const file = path.join(this.dir, 'repositories.json');
     fs.writeFileSync(file, JSON.stringify(snapshots, null, 2));
+    this.secureAuthenticatedArtifact(file);
     return file;
   }
 
@@ -365,7 +383,9 @@ export class RunRecorder {
     };
     if (proxySummary !== null) summary.proxy = proxySummary;
     if (input.notes !== undefined) summary.notes = input.notes;
-    fs.writeFileSync(path.join(this.dir, 'summary.json'), JSON.stringify(summary, null, 2));
+    const file = path.join(this.dir, 'summary.json');
+    fs.writeFileSync(file, JSON.stringify(summary, null, 2));
+    this.secureAuthenticatedArtifact(file);
     return summary;
   }
 }

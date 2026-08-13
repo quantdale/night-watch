@@ -264,6 +264,17 @@ test.describe('RunRecorder', () => {
     expect(requestData.url).toBe('https://api.example.com/companies/<ID>');
   });
 
+  test('authenticated artifacts are owner-only', async () => {
+    const rec = new RunRecorder({ ...baseOpts('auth-permissions-run'), authenticated: true });
+    rec.event({ type: 'start', severity: 'info', message: 'authenticated metadata run' });
+    await rec.finalize({ passed: true });
+
+    expect(fs.statSync(rec.dir).mode & 0o077).toBe(0);
+    for (const file of ['manifest.json', 'events.jsonl', 'summary.json']) {
+      expect(fs.statSync(path.join(rec.dir, file)).mode & 0o077).toBe(0);
+    }
+  });
+
   test('captureScreenshot failure returns null and records a warn event', async () => {
     const rec = new RunRecorder(baseOpts('shot-fail-run'));
     const page = {
