@@ -93,7 +93,7 @@ Use a small set of typed runtime boundaries rather than trusting interfaces:
 - Acceptance criteria: no implementation begins from an unverified checklist
   item; owner freeze and no-go boundaries are explicit.
 - Validation commands: focused read-only inspection, existing tests as needed.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Manifest, checkpoint, continuity, and budget integrity
 
@@ -107,7 +107,7 @@ Use a small set of typed runtime boundaries rather than trusting interfaces:
 - Acceptance criteria: all malformed/tampered fixtures reject; budget cannot
   reset; impossible reproduction promises fail or are truthfully marked.
 - Validation commands: focused campaign tests, typecheck, synthetic campaign.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M3 — Process, filesystem, configuration, target, and executable boundaries
 
@@ -182,8 +182,12 @@ validate a source-only checkout without owner state or Alphaus repositories.
 
 - Bootstrap `git fetch origin` completed after full access was enabled; local
   `HEAD` and `origin/main` both equal the reported starting SHA.
-- The current Phase 7 manifest/checkpoint/brief behavior and bounded profile
-  require independent runtime verification before any finding is accepted.
+- Five bounded read-only tracks completed on 2026-08-14. Direct source
+  reconciliation confirmed the manifest fingerprint, checkpoint, budget,
+  child environment, filesystem/config, Oops, brief/privacy, and coverage/CI
+  findings recorded in STATE.
+- The hardening implementation order is M2 persistence/budget, M3 process and
+  policy boundaries, then M4 brief/privacy/static/CI/auditability.
 
 ## Deferred Work
 
