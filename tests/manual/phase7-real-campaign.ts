@@ -131,6 +131,30 @@ function gitResolve(repoPath: string, ref: string): string | null {
   return result.status === 0 && /^[0-9a-f]{40}$/i.test(value) ? value : null;
 }
 
+/**
+ * Continuity/docs checkpoints are allowed to advance after a manifest is
+ * frozen. The campaign version must still change for implementation, test,
+ * catalog, or launcher changes, so identify the latest commit touching the
+ * executable Nightwatch tree rather than treating an approved state-doc
+ * commit as a runtime implementation change.
+ */
+function nightwatchImplementationSha(root: string): string | null {
+  const result = spawnSync('git', [
+    '-C', root,
+    'log',
+    '-1',
+    '--format=%H',
+    'HEAD',
+    '--',
+    '.',
+    ':(exclude)AGENTS.md',
+    ':(exclude).agent/**',
+    ':(exclude)docs/**',
+  ], { encoding: 'utf8' });
+  const value = (result.stdout ?? '').trim();
+  return result.status === 0 && /^[0-9a-f]{40}$/i.test(value) ? value : null;
+}
+
 function currentNightwatchDirtyPaths(root: string): readonly string[] {
   const result = spawnSync('git', ['-C', root, 'status', '--porcelain=v1', '--untracked-files=all'], { encoding: 'utf8' });
   if (result.status !== 0) return ['<status-unavailable>'];
@@ -195,7 +219,7 @@ async function buildRealContext(root: string, environment: EnvironmentConfig, ta
 }
 
 function versionFingerprint(root: string): CampaignVersionFingerprint {
-  const nightwatchSourceSha = gitResolve(root, 'HEAD');
+  const nightwatchSourceSha = nightwatchImplementationSha(root);
   if (nightwatchSourceSha === null) throw new Error('NIGHTWATCH_SOURCE_SNAPSHOT_INVALID');
   return {
     campaignSchemaVersion: CAMPAIGN_SCHEMA_VERSION,
