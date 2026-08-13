@@ -107,7 +107,7 @@ Use a small set of typed runtime boundaries rather than trusting interfaces:
 - Acceptance criteria: all malformed/tampered fixtures reject; budget cannot
   reset; impossible reproduction promises fail or are truthfully marked.
 - Validation commands: focused campaign tests, typecheck, synthetic campaign.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M3 — Process, filesystem, configuration, target, and executable boundaries
 
@@ -123,7 +123,7 @@ Use a small set of typed runtime boundaries rather than trusting interfaces:
   owner-frozen classes remain impossible.
 - Validation commands: focused auth/process/filesystem/policy/Oops suites,
   static hardening check, typecheck.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M4 — Evidence truthfulness, privacy structure, static coverage, CI,
 maintainability

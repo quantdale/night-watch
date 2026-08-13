@@ -6,15 +6,16 @@ Title: Nightwatch Codebase Hardening Campaign I
 Status: IN_PROGRESS
 Task directory: .agent/tasks/codebase-hardening-campaign-1
 Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Current SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Last validated implementation SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Current milestone: M1 — independent read-only review and finding ledger (IN_PROGRESS).
+Current SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+Last validated implementation SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+Current milestone: M3 — process/filesystem/config/policy boundaries (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: M0 task routing validated by `npm run agent:check`.
-Next action: perform bounded independent read-only review tracks and record
-confirmed/rejected findings before source implementation.
+Last checkpoint: M2 manifest/checkpoint/budget implementation pushed as
+`37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
+Next action: replace sensitive child environment inheritance and harden
+filesystem/config/provenance boundaries with local sentinel fixtures.
 Phase 7 remains COMPLETE and Phase 6 remains permanently frozen by owner.
 
 ## Prior phase closure handoff

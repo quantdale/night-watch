@@ -6,11 +6,11 @@ Task ID: codebase-hardening-campaign-1
 Phase: Private/local hardening campaign I
 Status: IN_PROGRESS
 Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Current SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Last validated implementation SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+Current SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+Last validated implementation SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
 Branch: main
-Last checkpoint: 2026-08-14 review ledger committed/pushed as
-`54368fc0bacd973d50099aa780491cb217d3f7c1`; clean HEAD equals origin/main.
+Last checkpoint: 2026-08-14 M2 persistence checkpoint committed/pushed as
+`37daa755b6ff815145bb2b8ccf922cddfb1bde48`; clean HEAD equals origin/main.
 
 ## Objective
 
@@ -20,11 +20,11 @@ boundaries using local/synthetic/static evidence only.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Status: IN_PROGRESS
-What is being attempted: Repair persisted manifest/checkpoint integrity,
-resume budget arithmetic, deterministic reproduction feasibility, and
-continuity validation before moving to process/filesystem boundaries.
+What is being attempted: Remove arbitrary parent environment and CWD/config
+authority, strengthen private/storage filesystem boundaries, enforce explicit
+real-target provenance, and bind Oops execution to actual binary bytes.
 
 ## Completed Milestones
 
@@ -38,18 +38,23 @@ continuity validation before moving to process/filesystem boundaries.
 - M1 independent review: five bounded read-only tracks were reconciled against
   current implementation and tests. Confirmed findings are recorded below;
   Phase 7 and the Phase 6 owner freeze remain unchanged.
+- M2 persistence/budget repair: strict manifest and checkpoint validators,
+  tamper/corruption fixtures, checkpoint ordinals, exact budget arithmetic,
+  and deterministic real-profile reserve planning passed typecheck,
+  `campaign:synthetic`, and 19 focused campaign tests. Implementation was
+  pushed as `37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
 
 ## Work In Progress
 
-M0 and M1 are complete. M2 implementation is now scoped to persistence,
-resume, budget, and continuity boundaries. No runtime artifacts, credentials,
-or Alphaus repositories may be changed.
+M0, M1, and M2 are complete. M3 is scoped to process, filesystem,
+configuration, target-policy, and executable provenance boundaries. No runtime
+artifacts, credentials, or Alphaus repositories may be changed.
 
 ## Exact Next Action
 
-Implement the strict manifest/checkpoint validators and deterministic bounded
-profile feasibility plan. Begin with runtime identity reconstruction and
-fixture tests; do not change process/filesystem code until M2 validation passes.
+Implement the canonical child environment builder first, then adversarial
+storage/CWD/config tests and Oops executable digest binding. Keep all checks
+local and synthetic.
 
 ## Files Changed
 
@@ -64,8 +69,8 @@ fixture tests; do not change process/filesystem code until M2 validation passes.
 ## Validation Ledger
 
 Command: `git rev-parse --show-toplevel && git status --short && git branch --show-current && git rev-parse HEAD && git rev-parse origin/main`
-Result: PASS; canonical root, `main`, clean tree after the documentation
-checkpoint, and `HEAD == origin/main == 60ecbb76e09cd650ae834e0562beb9d08503433a`.
+Result: PASS; canonical root, `main`, clean tree after the M2 implementation
+checkpoint, and `HEAD == origin/main == 37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
 When: 2026-08-14
 Relevant failure/output summary: none.
 
@@ -83,6 +88,21 @@ When: 2026-08-14
 Relevant failure/output summary: findings and classifications are recorded in
 the review ledger below; worker output was treated as evidence to verify, not
 as authority.
+
+Command: `npm run typecheck`
+Result: PASS after M2 implementation.
+When: 2026-08-14
+Relevant failure/output summary: no compiler errors.
+
+Command: `npm run campaign:synthetic`
+Result: PASS; 19 local campaign/manifest/checkpoint/budget tests passed.
+When: 2026-08-14
+Relevant failure/output summary: no product network or external runtime state.
+
+Command: `git diff --check`
+Result: PASS before M2 commit/push.
+When: 2026-08-14
+Relevant failure/output summary: none.
 
 ## Decisions Made During This Task
 
@@ -194,18 +214,18 @@ Recommended next task: none; do not start another phase.
 ## Hardening Status Matrix
 
 CURRENT_GOAL: HIDDEN_STATE_AND_BOUNDARY_HARDENING
-CURRENT_MILESTONE: M2_MANIFEST_CHECKPOINT_BUDGET
+CURRENT_MILESTONE: M3_PROCESS_FILESYSTEM_POLICY
 STARTING_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-CURRENT_LOCAL_HEAD: 54368fc0bacd973d50099aa780491cb217d3f7c1
-CURRENT_REMOTE_HEAD: 54368fc0bacd973d50099aa780491cb217d3f7c1
+CURRENT_LOCAL_HEAD: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+CURRENT_REMOTE_HEAD: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
 OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
 REVIEW_FINDINGS: five bounded read-only tracks reconciled on 2026-08-14
 CONFIRMED_FINDINGS: manifest fingerprint/cross-field gap; absent strict checkpoint validation; replay/browser/API feasibility gap; replay double-charge and static ordinal gap; full child-env inheritance; storage/private-root/CWD config gaps; Oops byte provenance; brief L0/budget collapse; structural private DTO gap; omitted root TS configs; absent hardening check/CI; substring error taxonomy
 REJECTED_FINDINGS: automated NEXT widening not present; production deny and Phase 6 owner gate remain effective; Oops shell/argv/output allowlist remains strong
-FILES_CHANGED: task artifacts only (implementation not yet changed)
-MANIFEST_INTEGRITY_STATUS: CONFIRMED GAP — repair queued M2
-CHECKPOINT_INTEGRITY_STATUS: CONFIRMED GAP — repair queued M2
-BUDGET_FEASIBILITY_STATUS: CONFIRMED GAP — deterministic reserve plan queued M2
+FILES_CHANGED: M2 campaign runtime validators/budget/selection/orchestrator plus focused adversarial tests
+MANIFEST_INTEGRITY_STATUS: PASS — ID, fingerprint, selection lineage, work-item schema/order, cross-fields, and unknown fields validated; tamper matrix PASS
+CHECKPOINT_INTEGRITY_STATUS: PASS — strict pre-resume validator, exact ledger coverage, counter arithmetic, references, state/result semantics, malformed wrapper tests PASS
+BUDGET_FEASIBILITY_STATUS: PASS — real bounded profile reserves one reproduction within unchanged caps; optional exploration suppressed and linked API coverage reduced deterministically
 CHILD_ENV_STATUS: CONFIRMED GAP — repair queued M3
 FILESYSTEM_BOUNDARY_STATUS: CONFIRMED GAP — repair queued M3
 ENV_CONFIG_PROVENANCE_STATUS: CONFIRMED GAP — repair queued M3
@@ -215,14 +235,14 @@ MORNING_BRIEF_STATUS: CONFIRMED GAP — repair queued M4
 TYPECHECK_COVERAGE_STATUS: CONFIRMED GAP — repair queued M4
 CI_STATUS: NOT IMPLEMENTED — safe private workflow queued M4
 MAINTAINABILITY_STATUS: review complete; orchestrator extraction deferred pending focused characterization
-TEST_LEDGER: bootstrap/agent-check PASS; review was read-only
-ADVERSARIAL_TEST_LEDGER: not started
-PUSH_LEDGER: bc8e3fa task creation PASS; 60ecbb7 documentation checkpoint PASS; both pushed and origin-verified
+TEST_LEDGER: bootstrap/agent-check PASS; typecheck PASS; campaign:synthetic PASS (19 tests)
+ADVERSARIAL_TEST_LEDGER: manifest tamper matrix PASS; checkpoint corruption/malformed JSON matrix PASS; real-profile reserve fixture PASS
+PUSH_LEDGER: bc8e3fa task creation PASS; 60ecbb7/54368fc/1f8d9a9 documentation review checkpoints PASS; 37daa75 M2 implementation PASS; all pushed and origin-verified
 SAFETY_EVENTS: NONE
 PRIVACY_STATUS: no runtime/private data touched
-LAST_VALIDATED_IMPLEMENTATION_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: NOT_APPLICABLE_AT_TASK_START
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 54368fc0bacd973d50099aa780491cb217d3f7c1
-LAST_PUSHED_SHA: 54368fc0bacd973d50099aa780491cb217d3f7c1
-NEXT_EXACT_ACTION: implement runtime manifest/checkpoint validators and deterministic real-profile budget feasibility, then run focused campaign fixtures
+LAST_VALIDATED_IMPLEMENTATION_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 1f8d9a96f599cf0b37eb7b82ef8b0c6e75657a9a
+LAST_PUSHED_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
+NEXT_EXACT_ACTION: add allowlisted child environment builder and replace sensitive launcher spreads; then run sentinel child fixtures
 RESUME_RECIPE: read task state, inspect Git/diff, run smallest milestone validation, continue exact next action
