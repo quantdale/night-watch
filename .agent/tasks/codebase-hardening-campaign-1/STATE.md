@@ -9,8 +9,8 @@ Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Current SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Last validated implementation SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Branch: main
-Last checkpoint: 2026-08-14 documentation checkpoint committed/pushed as
-`60ecbb76e09cd650ae834e0562beb9d08503433a`; clean HEAD equals origin/main.
+Last checkpoint: 2026-08-14 review ledger committed/pushed as
+`54368fc0bacd973d50099aa780491cb217d3f7c1`; clean HEAD equals origin/main.
 
 ## Objective
 
@@ -196,8 +196,8 @@ Recommended next task: none; do not start another phase.
 CURRENT_GOAL: HIDDEN_STATE_AND_BOUNDARY_HARDENING
 CURRENT_MILESTONE: M2_MANIFEST_CHECKPOINT_BUDGET
 STARTING_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-CURRENT_LOCAL_HEAD: 60ecbb76e09cd650ae834e0562beb9d08503433a
-CURRENT_REMOTE_HEAD: 60ecbb76e09cd650ae834e0562beb9d08503433a
+CURRENT_LOCAL_HEAD: 54368fc0bacd973d50099aa780491cb217d3f7c1
+CURRENT_REMOTE_HEAD: 54368fc0bacd973d50099aa780491cb217d3f7c1
 OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
 REVIEW_FINDINGS: five bounded read-only tracks reconciled on 2026-08-14
 CONFIRMED_FINDINGS: manifest fingerprint/cross-field gap; absent strict checkpoint validation; replay/browser/API feasibility gap; replay double-charge and static ordinal gap; full child-env inheritance; storage/private-root/CWD config gaps; Oops byte provenance; brief L0/budget collapse; structural private DTO gap; omitted root TS configs; absent hardening check/CI; substring error taxonomy
@@ -222,7 +222,7 @@ SAFETY_EVENTS: NONE
 PRIVACY_STATUS: no runtime/private data touched
 LAST_VALIDATED_IMPLEMENTATION_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: NOT_APPLICABLE_AT_TASK_START
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 60ecbb76e09cd650ae834e0562beb9d08503433a
-LAST_PUSHED_SHA: 60ecbb76e09cd650ae834e0562beb9d08503433a
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 54368fc0bacd973d50099aa780491cb217d3f7c1
+LAST_PUSHED_SHA: 54368fc0bacd973d50099aa780491cb217d3f7c1
 NEXT_EXACT_ACTION: implement runtime manifest/checkpoint validators and deterministic real-profile budget feasibility, then run focused campaign fixtures
 RESUME_RECIPE: read task state, inspect Git/diff, run smallest milestone validation, continue exact next action
