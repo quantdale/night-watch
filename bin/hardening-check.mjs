@@ -78,7 +78,7 @@ function checkTargetPolicy() {
   }
   const capture = read('bin/auth-capture.mjs');
   if (!/new Set\(\['dev', 'next'\]\)/.test(capture) || !/human-led|human login/i.test(capture)) fail('auth:capture NEXT exception is not visibly human-led and explicit');
-  for (const file of gitFiles().filter((item) => item.startsWith('bin/'))) {
+  for (const file of gitFiles().filter((item) => item.startsWith('bin/') && item !== 'bin/hardening-check.mjs')) {
     if (/MULTI_HOUR_CAMPAIGN_BUDGET/.test(read(file))) fail(`${file} references the unauthorized multi-hour budget profile`);
   }
 }

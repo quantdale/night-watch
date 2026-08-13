@@ -145,6 +145,9 @@ test.describe('authenticated storage state is secret material', () => {
         ],
       })
     );
+    // The production validator requires owner-only permissions even for this
+    // synthetic secret-bearing fixture.
+    fs.chmodSync(stateFile, 0o600);
 
     const server = await startFixtureServer('good');
     try {
@@ -288,6 +291,7 @@ test.describe('authenticated storage state is secret material', () => {
       //     MUST fail closed.
       const badShape = path.join(tmpBadShape, 'bad.json');
       fs.writeFileSync(badShape, '{}');
+      fs.chmodSync(badShape, 0o600);
       expect(() => validateStorageStateFile(badShape)).toThrow(/storage-state shape/);
       await expect(
         createNightwatchContext(browser, {
