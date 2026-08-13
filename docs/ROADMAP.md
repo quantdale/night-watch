@@ -398,7 +398,7 @@ deployment-owner, SRE, or database-owner handoff is required.
 
 ---
 
-## Phase 7 — Private autonomous nightly campaigns (implemented; historical auth block preserved; DEV auth ready)
+## Phase 7 — Private autonomous nightly campaigns (complete; historical auth block preserved; DEV auth ready)
 
 Phase 7 coordinates the existing trusted selector, journey, safe exploration,
 restricted API, replay/oracle, clustering, bounded minimization, private
@@ -417,10 +417,13 @@ existing guarded auth system later completed one bounded refresh with no MFA
 step, and fresh page-valid DEV status passed. The real launcher now requires a
 two-step `--prepare-only` manifest/checkpoint freeze followed by an explicit
 `--resume-campaign=<id>` execution, so the readiness state can be pushed before
-product work. The final current-version manifest is now frozen at ordinal zero;
+product work. The final current-version manifest was frozen at ordinal zero;
 the earlier provisional manifest was never executed. The old auth-blocked
-manifest is never silently resumed across a Nightwatch source-version change;
-exactly one resume run and closure validation remain. Phase 6 remains
+manifest was never resumed across a Nightwatch source-version change. The one
+permitted current campaign completed all 9 work items, recorded 7 sanitized
+observations across 4 clusters, admitted no product finding, and finalized at
+the bounded `BUDGET_EXHAUSTED` stop with a READY no-findings brief. Full
+validation and architecture/adversarial review passed. Phase 6 remains
 permanently
 `FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
 

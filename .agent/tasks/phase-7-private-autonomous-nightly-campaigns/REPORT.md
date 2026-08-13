@@ -1,18 +1,18 @@
-# NIGHTWATCH PHASE 7 — DEV AUTH ACTION REQUIRED
+# NIGHTWATCH PHASE 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS COMPLETE
 
-Status: `BLOCKED` at the real-DEV gate. The Phase 7 local orchestrator,
+Status: `COMPLETE` after the bounded real-DEV campaign. The Phase 7 local orchestrator,
 synthetic campaign, checkpoint/recovery model, private evidence path, and
-policy guards are implemented. The one permitted bounded real campaign did
-not reach product execution because designated DEV authentication could not
-be refreshed safely.
+policy guards are implemented. Designated DEV authentication was restored
+through the existing guarded flow, the final manifest was frozen and pushed,
+and exactly one bounded real DEV campaign completed all selected work.
 
 ## Reconciliation
 
 - Starting SHA: `4f8263206f82740c47f1b25554269b59d8e03b8d`.
 - Prior private-triage implementation: `ea434b57fc132c6544c4527cbaa494cb8412db92`.
 - Prior closure checkpoint: `6c5e298c4b2423ce7ffc13715e259be691d71162`.
-- Final implementation checkpoint before this handoff:
-  `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
+- Final validated implementation checkpoint before this handoff:
+  `b95b06dab3fe60208d412ea9811c0c36c399ed9b`.
 - Current source remote: `PRIVATE_REMOTE_CONFIRMED` — `origin` at
   `https://github.com/quantdale/night-watch.git`, branch `main`.
 - Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
@@ -35,15 +35,14 @@ identity value entered the report or repository. Authenticated evidence was
 kept owner-only locally, and the recorder now enforces owner-only modes for
 authenticated artifacts.
 
-The auth-ready implementation checkpoint is
+The auth-ready implementation checkpoint was
 `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`. The frozen-manifest workflow
 implementation checkpoint is
 `a9783ebe244381fe50e8387bd69af3f65a2f558d`, pushed to `origin/main`. The
 implementation-SHA drift fix is `b95b06dab3fe60208d412ea9811c0c36c399ed9b`,
-also pushed to `origin/main`. The next
-action is to run the guarded `--prepare-only` command, push the sanitized
-`PHASE_7_NEW_REAL_CAMPAIGN_READY` state, and then execute one new campaign by
-its frozen ID; the historical campaign ID remains immutable and is not reused.
+also pushed to `origin/main`. The final readiness state was then pushed before
+the one permitted resume invocation; the historical campaign ID remains
+immutable and was not reused.
 
 ## Continuation — current campaign frozen
 
@@ -56,13 +55,27 @@ pushed. The final owner-only manifest is
 `manifest:sha256:f30e691c334222281608ab01`, based on implementation source SHA
 `b95b06dab3fe60208d412ea9811c0c36c399ed9b`. It is `CHANGE_DIRECTED`, selects
 J1/J2/J3 with linked E1/E2/E3 envelopes and read-only API scenarios, contains
-9 ordered work items, and has an ordinal-zero `IN_PROGRESS` checkpoint with
-all work pending. Manifest and checkpoint are owner-only mode `0600`; product
-execution is `NOT_STARTED`.
+9 ordered work items, and had an ordinal-zero `IN_PROGRESS` checkpoint with
+all work pending. Manifest and checkpoint were owner-only mode `0600` before
+execution.
 
-The only permitted next product action is one resume invocation using this
-campaign ID. The final readiness state is pushed before that invocation. The
-historical auth-blocked ID remains immutable and is not resumed.
+The only permitted product action was one resume invocation using this campaign
+ID. It completed; no further campaign invocation is authorized by this task.
+
+## Continuation — final bounded real DEV campaign
+
+The single resume run completed all 9 frozen work items: 3 trusted journeys,
+3 linked read-only API scenarios, and 3 linked safe-exploration envelopes. It
+used 6 browser contexts, 3 journey contexts, 3 exploration contexts, 6 API
+executions, 4 replays, 0 minimization candidates, 7 actions, and 807255
+private evidence bytes. It recorded 7 sanitized observations across 4 unique
+clusters and 1 candidate; no candidate was admitted to a product dossier.
+
+The terminal result was `PARTIAL_BUDGET_EXHAUSTED` with stop reason
+`BUDGET_EXHAUSTED`, a valid bounded terminal state. The READY private morning
+brief headline is `NO ADMITTED PRODUCT ANOMALIES`, with 0 top findings and
+external publication `PROHIBITED`. The real safety vector is zero and the
+real privacy vector is `PASS`.
 
 ## Campaign architecture
 
@@ -87,7 +100,7 @@ historical auth-blocked ID remains immutable and is not resumed.
 
 ## Synthetic result
 
-The real orchestrator passed its 14-test fixture matrix: J1-only, J2/J3/shared
+The real orchestrator passed its 16-test fixture matrix: J1-only, J2/J3/shared
 selection, baseline/fallback, deterministic ordering, budget/time ceilings,
 safe exploration/API lineage, UI/API/irreducible/transient/false-positive
 fixtures, duplicate failure storm suppression, interruption recovery,
@@ -152,15 +165,25 @@ deployment evidence.
 - Final prepare-only run: PASS; campaign
   `campaign:sha256:aaf0cb8019c08c00132e71fb`, ordinal-zero checkpoint, and
   zero product execution.
-- `npx playwright test --workers=1`: PASS, 375/375.
+- `npm run test:unit -- --workers=1`: PASS, 344/344.
+- `npx playwright test --workers=1`: PASS, 378/378.
 - `npm run agent:check`: PASS with one expected approved-checkpoint warning.
 - `git diff --check`: PASS.
-- Final documentation commit and clean-tree review remain for handoff.
+- Alphaus source-snapshot HEAD integrity: PASS; all 6 manifest snapshots match
+  current read-only HEADs and no Alphaus files were modified.
+- Owner-only private artifact audit: PASS; root/directories `0700`, all 62
+  files `0600`, sanitized secret-pattern scan clean.
+- Architecture review: PASS; existing safety, source, campaign, triage, and
+  publication-boundary contracts remained authoritative.
+- Adversarial review: PASS; topology, remote equality, parent retirement,
+  auth/page validity, historical immutability, current manifest/version,
+  budgets, tripwires, owner freeze, privacy, and no-next-phase boundary pass.
+- Final documentation commit, push, and clean-tree review complete this handoff.
 
 ## Exact safe next action
 
-The next safe action is to create a new current-version manifest with
-`--prepare-only`, push its sanitized readiness checkpoint, and execute exactly
-one bounded local DEV campaign by the frozen ID. Do not unfreeze Phase 6, query
-infrastructure/databases, contact production, publish the private artifacts,
-use an alternative credential, or rerun the incompatible historical manifest.
+The next safe action is to retain the completed Phase 7 state. Any future work
+requires a separately approved private/local task. Do not unfreeze Phase 6,
+query infrastructure/databases, contact production, publish private artifacts,
+use an alternative credential, rerun either completed campaign, or begin the
+next phase.

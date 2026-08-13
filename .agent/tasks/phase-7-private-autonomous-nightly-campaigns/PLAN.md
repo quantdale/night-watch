@@ -105,7 +105,7 @@ morning brief with no-findings behavior.
 
 ### M5 — Realistic synthetic campaign matrix
 
-Status: `COMPLETE`: 14 focused tests passed, covering selection, lineage,
+Status: `COMPLETE`: 16 focused tests passed, covering selection, lineage,
 budget, clustering, failure storms, recovery, privacy, no-findings, drift,
 owner policy, and operational `REPRODUCTION_ONLY` replay/minimization.
 
@@ -116,9 +116,9 @@ regressions.
 
 ### M6 — Bounded real DEV campaign and closure
 
-Status: `IN_PROGRESS` — the historical auth-blocked campaign remains
-immutable; designated DEV page-valid auth has been restored and a new
-compatible campaign is now required.
+Status: `COMPLETE` — the historical auth-blocked campaign remains immutable;
+designated DEV page-valid auth was restored, a current manifest was frozen and
+pushed, and exactly one compatible bounded DEV campaign completed.
 
 The initial frozen real profile was run once after a clean implementation
 checkpoint. It selected `CHANGE_DIRECTED` coverage but stopped at the guarded
@@ -126,10 +126,13 @@ auth preflight before any product work because the designated external DEV
 state was not page-valid and MFA refresh could not complete. That campaign is
 historical evidence and cannot be resumed. The existing guarded credential
 provider then completed one bounded refresh with no MFA step, and fresh
-page-level validation passed. The launcher now requires a separate
+page-level validation passed. The launcher required a separate
 `--prepare-only` manifest/checkpoint freeze and `--resume-campaign=<id>`
 execution phase, so the new manifest can be validated and pushed before any
-product execution. No alternative credential or scope is permitted.
+product execution. The final campaign completed all 9 work items with zero
+safety/privacy violations, no admitted finding, a READY no-findings brief, and
+the bounded `BUDGET_EXHAUSTED` terminal result. No alternative credential or
+scope was permitted.
 
 ## Validation Strategy
 
@@ -137,8 +140,9 @@ Per milestone: `npx tsc --noEmit`, focused campaign tests, `git diff --check`,
 and `npm run agent:check` after task-state changes. Before real DEV: clean
 Nightwatch tree, focused campaign matrix, existing owner-policy/private triage
 tests, Phase 3/4/5 integrations, full Playwright, and no Alphaus changes.
-After real DEV: campaign ledger/brief privacy scan, `npx playwright test`,
-`npm run agent:check`, `git diff --check`, and final status/history review.
+After real DEV: campaign ledger/brief privacy scan, architecture/adversarial
+review, `npx playwright test`, `npm run agent:check`, `git diff --check`,
+Alphaus HEAD integrity, and final status/history review.
 
 ## Decision Log
 

@@ -4,7 +4,7 @@
 
 Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
 Current SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
 Last validated implementation SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: c908b523ded8812e15d02c4f019cc3bd0307089a
+REMOTE_HEAD: 2690e5c015087a29ced8ccc3c16d1d4146b244ba (pre-closure HEAD)
 
 ## Objective
 
@@ -39,22 +39,20 @@ dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9.
 
 ## Work In Progress
 
-The single bounded real DEV campaign stopped correctly at the guarded auth
-gate and remains immutable historical evidence. Remote reconciliation is
-complete. Designated DEV page-valid auth is now restored through the existing
-guarded provider. The real launcher now has an explicit prepare-only freeze
-and resume-by-campaign-ID path; final manifest creation, one campaign
-execution, architecture review, adversarial review, and clean closure remain.
+The historical bounded real DEV campaign stopped correctly at the guarded auth
+gate and remains immutable evidence. The final current-version campaign has
+completed its one allowed serial run from the frozen manifest. It finished all
+9 work items and produced a private brief with no admitted product anomaly; it
+finalized safely at `PARTIAL_BUDGET_EXHAUSTED` with `BUDGET_EXHAUSTED`.
+Architecture/adversarial review and full closure validation passed.
 
 ## Exact Next Action
 
-Run `npm run campaign:real -- --env=dev --prepare-only` to create and freeze
-one new current-version bounded campaign manifest, checkpoint the result as
-`PHASE_7_NEW_REAL_CAMPAIGN_READY`, push the sanitized state, and then run
-exactly one `--resume-campaign=<new-id>` bounded DEV campaign. Do not rerun
-the historical campaign: its single attempt is durably recorded as
-`PARTIAL_AUTH_BLOCKED` and the implementation SHA changed afterward, so it
-cannot be silently resumed.
+The final manifest was prepared and pushed as
+`PHASE_7_NEW_REAL_CAMPAIGN_READY`, then executed exactly once by its frozen
+ID. Do not rerun either the historical auth-blocked campaign or the completed
+current campaign; closure validation is read-only and must not invoke another
+campaign.
 
 ## Files Changed
 
@@ -94,12 +92,12 @@ auth-blocked DEV campaign is valid evidence; no anomaly is manufactured.
 
 ## Blockers
 
-The historical designated external DEV auth state was not page-valid and the
-single campaign's bounded refresh could not complete its MFA step. That
-blocker is resolved by one later guarded refresh using the same designated
-provider; no alternate credential or scope was used. The old auth-blocked
-manifest is retained as evidence and is incompatible with the current
-Nightwatch source version.
+No active blocker remains. The historical designated external DEV auth failure
+was resolved by one later guarded refresh using the same designated provider;
+no alternate credential or scope was used. The old auth-blocked manifest is
+retained as immutable evidence and is incompatible with the current Nightwatch
+source version. `BUDGET_EXHAUSTED` is the final campaign's bounded terminal
+stop, not an execution failure.
 
 ## Safety Events
 
@@ -127,8 +125,8 @@ completed work or widen catalogs/policy.
 Implementation checkpoint b95b06dab3fe60208d412ea9811c0c36c399ed9b is clean;
 synthetic matrix, focused tests, typecheck, auth refresh, page-validity,
 authenticated privacy hardening, frozen-manifest workflow, implementation-SHA
-drift handling, and remote push pass. The final current campaign is frozen and
-awaits its single resume execution.
+drift handling, and remote push pass. The final current campaign executed once
+and finalized safely; closure evidence is now being recorded.
 
 ## CURRENT_GOAL
 
@@ -181,11 +179,12 @@ Current manifest fingerprint: `manifest:sha256:f30e691c334222281608ab01`.
 ## MANIFEST_STATUS
 
 Historical manifest/checkpoint: immutable and not resumable. Current manifest:
-frozen and pushed as `PHASE_7_NEW_REAL_CAMPAIGN_READY`; it uses Nightwatch
+was frozen and pushed as `PHASE_7_NEW_REAL_CAMPAIGN_READY`; it used Nightwatch
 implementation source SHA `b95b06dab3fe60208d412ea9811c0c36c399ed9b`, current schema,
 orchestrator/catalog versions, current read-only source snapshots and
 selection, fixed lineage/seeds, bounded budget, private policy, and frozen
-owner-scope policy. Product execution is not started.
+owner-scope policy. It completed all 9 work items and finalized
+`PARTIAL_BUDGET_EXHAUSTED`.
 
 ## CAMPAIGN_MODE
 
@@ -200,9 +199,10 @@ before its manifest, including branch, HEAD, tracking ref/SHA, ahead/behind,
 dirty state, source-map SHA, freshness, and `readOnly=true`. It recorded
 `COMMITTED_ONLY`, 940 changed files, and 82 dirty files; dirty files remained
 excluded from committed/deployment inference. Closure read-only verification
-found all relevant Alphaus HEADs unchanged. The current `ouchan` worktree has
-79 dirty entries versus the campaign manifest's 71; this pre-existing dirty
-worktree drift was not touched, cleaned, or used as deployment evidence.
+found all 6 relevant Alphaus HEADs unchanged. A fresh read-only status showed
+90 dirty entries across the six snapshots, including `ouchan` at 79 versus its
+manifest snapshot of 71; this pre-existing dirty drift was not touched,
+cleaned, or used as deployment evidence.
 
 ## SELECTION_RESULT
 
@@ -217,8 +217,8 @@ deployed.
 Synthetic lineage is deterministic and ordered `JOURNEY → API → EXPLORATION`.
 Real selected and ordered J1/J2/J3, one linked E1/E2/E3 envelope/seed each,
 and one linked Phase 5 read-only API operation each. The current frozen
-manifest contains 9 ordered work items; all are pending at checkpoint ordinal
-0 and the next exact action is the first J1 journey.
+manifest contained 9 ordered work items; all 9 completed in deterministic
+JOURNEY → API → EXPLORATION order.
 
 ## SEED_LEDGER
 
@@ -234,42 +234,49 @@ exploration contexts, 6 API executions, 8 replays, 4 minimization candidates,
 private evidence. The 8 replay maximum covers 3 required API fresh replays
 plus one representative replay and the existing one-exact/four-candidate
 triage allowance. Historical real artifacts account for 807202 private
-evidence bytes. The current frozen checkpoint budget is unused: browser 0,
-journey 0, exploration 0, API 0, replays 0, minimization candidates 0,
-actions 0, private evidence bytes 0. Current remaining: browser 6, journey 3,
-exploration 3, API 6, replays 8, minimization candidates 4, actions 24,
-evidence 10485760 bytes.
+evidence bytes. The final current campaign used browser 6, journey 3,
+exploration 3, API 6, replays 4, minimization candidates 0, total actions 7,
+and 807255 private evidence bytes. Remaining bounded budget is browser 0,
+journey 0, exploration 0, API 0, replays 4, minimization candidates 4, total
+actions 17, and 9678505 evidence bytes; the stop code is `BUDGET_EXHAUSTED`.
 
 ## EXECUTION_LEDGER
 
 Synthetic orchestrator execution ledger, checkpoint writes, at-least-once
 replay-required interruption, and completed-work skip behavior passed. The
 historical real ledger remains auth-blocked and immutable. The current ledger
-is atomic at checkpoint ordinal 0: all 9 selected work items remain `PENDING`,
-no attempt ran, and the next exact action is the first J1 journey.
+finalized with checkpoint ordinal 0, all 9 selected work items `COMPLETED`, 0
+remaining work items, and no safety events. The persisted `nextExactAction` is
+the initial journey label even though the completed-work ledger is authoritative
+for terminal status; no resume is authorized.
 
 ## ANOMALY_CLUSTERS
 
 Synthetic matrix: 5 stable clusters, including UI, API, irreducible, transient,
 and known Nightwatch false-positive cases. A two-surface shared fingerprint
-storm stopped before reproduction. Real clusters: 0; no product work ran.
+storm stopped before reproduction. The final real run recorded 7 sanitized
+observations across 4 clusters and 1 candidate, but admitted 0 findings. The
+candidate was browser-only with no independent API contradiction; source
+correlation was `DIRECT_CHANGE_RELEVANCE` but not causal proof, and deployment
+status/datastore evidence remained unresolved/out of scope. Fault boundary was
+not promoted.
 
 ## REPRODUCTION_QUEUE / MINIMIZATION_QUEUE
 
 Synthetic representative admission, reproduction prioritization, bounded
-minimization, and reproduction-only execution passed. Real reproduction and
-minimization queues are empty because the current campaign is at ordinal zero
-before anomaly intake; no product failure is manufactured.
+minimization, and reproduction-only execution passed. The final real
+checkpoint retains 3 reproduction and 2 minimization queue entries after the
+budget stop; no dossier or product failure is manufactured.
 
 ## DOSSIER_LEDGER / MORNING_BRIEF_STATUS
 
 Synthetic matrix produced 3 private dossiers and a concise top-3 brief; clean
-baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The historical real
-owner-only brief is READY with headline `NO ADMITTED PRODUCT ANOMALIES`; the
-current campaign brief is `NOT_STARTED` at ordinal zero, with no current
-dossier or finding.
+baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The historical and current
+owner-only briefs are READY with headline `NO ADMITTED PRODUCT ANOMALIES`; the
+current campaign produced 0 top findings and 0 dossiers.
 Private artifacts remain outside Git under `/home/dalepalaca/.nightwatch/findings/`
-with mode 0600; there is no runtime findings remote or external publication.
+with root/directories mode 0700 and files mode 0600; there is no runtime
+findings remote or external publication.
 
 ## FILES_CHANGED
 
@@ -286,8 +293,13 @@ native Phase 7 task artifacts.
 - Phase 6 freeze and owner-policy tripwires: PASS in focused tests.
 - `npx tsc --noEmit`: PASS after the replay/drift guard checkpoint.
 - `npx playwright test tests/unit/campaign.test.ts --workers=1`: PASS, 16/16.
+- A concurrent closure-check attempt hit the shared fixture port (`EADDRINUSE`)
+  because the synthetic campaign and full unit suite were launched together;
+  the serial synthetic rerun below passed with no source failure.
 - `npm run campaign:synthetic`: PASS, 16/16.
-- `npx playwright test --workers=1`: PASS, 375/375.
+- `npx playwright test --workers=1`: PASS, 378/378 after the single real
+  campaign.
+- `npm run test:unit -- --workers=1`: PASS, 344/344.
 - `npm run agent:check`: PASS with one expected approved-checkpoint warning.
 - `git diff --check`: PASS.
 - `npm run campaign:real -- --help`: PASS; launcher is opt-in, DEV-only, and
@@ -296,12 +308,32 @@ native Phase 7 task artifacts.
   ordinal-zero checkpoint are owner-only mode `0600`, with
   `PHASE_7_NEW_REAL_CAMPAIGN_READY`, zero product execution, and zero current
   budget usage.
-- Real campaign: PASS for fail-closed auth stop; `PARTIAL_AUTH_BLOCKED`, zero
-  product work, zero anomalies, private brief READY.
-- Owner-only private artifact permissions/privacy audit: PASS.
-- Relevant Alphaus repository HEAD integrity: PASS; all unchanged. Current
-  `ouchan` dirty count is 79 and is treated as pre-existing/unowned drift, not
-  as a Nightwatch change or deployment claim.
+- Final single resume run: PASS; campaign
+  `campaign:sha256:aaf0cb8019c08c00132e71fb` completed all 9 frozen work items,
+  observed 7 sanitized observations across 4 clusters, produced 0 dossiers/
+  admitted findings, and finalized `PARTIAL_BUDGET_EXHAUSTED` with
+  `BUDGET_EXHAUSTED` as the only unresolved code.
+- Final private artifact permission/privacy audit: PASS; root and directories
+  are `0700`, all 62 files are `0600`, privacy is `PASS`, and the brief is
+  `READY` with 0 top findings and external publication `PROHIBITED`.
+- Historical real campaign: PASS for fail-closed auth stop;
+  `PARTIAL_AUTH_BLOCKED`, zero product work, immutable.
+- Final real campaign: PASS; all 9 frozen work items completed, 7 sanitized
+  observations across 4 clusters, 0 admitted findings, `PARTIAL_BUDGET_EXHAUSTED`
+  with `BUDGET_EXHAUSTED`, and a READY no-findings brief.
+- Owner-only private artifact permissions/privacy audit: PASS; 62 files are
+  owner-only and the sanitized secret-pattern scan found no matches.
+- Relevant Alphaus repository HEAD integrity: PASS; all 6 manifest snapshots
+  match current read-only HEADs. Current `ouchan` dirty state remains
+  pre-existing/unowned drift and was not interpreted as deployment evidence.
+- Architecture review: PASS; existing Phase 2C/3/4/5, owner-policy, private
+  triage, proxy, and evidence contracts remain authoritative; runtime has no
+  Git push/publication path.
+- Adversarial review: PASS; canonical root, remote equality, parent retirement,
+  auth/page validity, historical immutability, distinct current identity,
+  current source/version manifest, frozen budgets, production/UNKNOWN/mutation
+  tripwires, permanent Phase 6 freeze, private findings, and no-next-phase
+  boundary all verified.
 - Final clean-tree check remains until this documentation checkpoint is committed.
 
 ## BUG_CANDIDATES
@@ -320,11 +352,11 @@ reported as product findings.
 
 ## UNRESOLVED
 
-No naturally admitted DEV anomaly is available for minimization. The historical
-campaign is blocked on its prior designated DEV auth state/MFA completion; that
-blocker is resolved for the next attempt. A fresh compatible campaign must be
-created from the current Nightwatch source SHA; the previous manifest cannot
-be silently resumed.
+No naturally admitted DEV anomaly is available for dossier promotion. The
+current campaign's only unresolved code is `BUDGET_EXHAUSTED`; its 9 logical
+work items completed, while bounded reproduction/minimization queues remain
+private checkpoint metadata for owner review. No product finding is
+manufactured and no additional run is authorized by this task.
 
 ## SAFETY_EVENTS
 
@@ -336,7 +368,8 @@ infrastructure queries 0, and external publication attempts 0. L4 remains
 
 ## PRIVACY_STATUS
 
-Synthetic privacy PASS. Real privacy PASS: owner-only local storage, mode 0600;
+Synthetic privacy PASS. Real privacy PASS: owner-only local storage, root and
+directories mode 0700, files mode 0600;
 credentials, cookies, tokens, customer values, raw bodies, DOM, screenshots,
 and authenticated traces were absent from campaign artifacts.
 
@@ -364,9 +397,10 @@ and authenticated traces were absent from campaign artifacts.
 
 ## NEXT_EXACT_ACTION
 
-Run exactly one `npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:aaf0cb8019c08c00132e71fb`
-against the frozen ordinal-zero checkpoint. Never reuse the historical campaign
-ID, use an alternative credential, or widen scope.
+Retain the completed Phase 7 state. Any future work requires a separately
+approved private/local task. Do not invoke another campaign, reuse the
+historical campaign ID, use an alternative credential, widen scope, or begin
+the next phase.
 
 ## RESUME_RECIPE
 

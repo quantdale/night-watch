@@ -1,9 +1,8 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-13** at
-> the Phase 7 frozen-manifest workflow checkpoint. Phase 0–5 are complete;
-> Phase 6 is frozen by owner; Phase 7 orchestration is implemented, designated
-> DEV auth is page-valid, and the new campaign has not yet executed.
+> Durable memory for the next agent/session. Last updated: **2026-08-14** at
+> the Phase 7 closure checkpoint. Phase 0–5 are complete; Phase 6 is frozen by
+> owner; Phase 7 is complete after one bounded real DEV campaign.
 
 ---
 
@@ -261,7 +260,7 @@ tests 25/25 PASS; full Playwright 358/358 PASS; no real DEV minimization was
 needed because no natural anomaly was admitted. Bounded AI assistance remains
 deferred and any future model remains prohibited from acting as an oracle.
 
-## Phase 7 — Private autonomous nightly campaigns (implemented; historical auth block preserved; DEV auth ready)
+## Phase 7 — Private autonomous nightly campaigns (complete; historical auth block preserved; DEV auth ready)
 
 The native task is `.agent/tasks/phase-7-private-autonomous-nightly-campaigns/`.
 The campaign schema is `nightwatch.campaign.private.v1` and the orchestrator
@@ -300,27 +299,32 @@ bounded refresh with no MFA step. Current sanitized status is
 `AUTH_STATUS=VALID`, `AUTH_ENV=DEV`, `PAGE_VALID=true`, `MFA_USED=false`, with
 capture ID `nightwatch-20260813T151556Z-3210`. Structural, provenance,
 freshness, page-readability, authenticated-shell, metadata-only privacy, and
-atomic-replacement checks passed. A new current manifest is now frozen in
-owner-only local state at checkpoint ordinal 0; product execution has not
-started.
+atomic-replacement checks passed. The final current manifest was frozen in
+owner-only local state at checkpoint ordinal 0 before product execution.
 
 The current launcher requires an explicit two-step real workflow:
 `--prepare-only` validates the guarded auth/safety gate and writes a fresh
 owner-only manifest plus ordinal-zero checkpoint without invoking an executor;
 the sanitized `PHASE_7_NEW_REAL_CAMPAIGN_READY` state is then pushed before
 `--resume-campaign=<id>` may execute the frozen campaign exactly once.
-The final prepared campaign is `campaign:sha256:aaf0cb8019c08c00132e71fb` with
+The final campaign was `campaign:sha256:aaf0cb8019c08c00132e71fb` with
 manifest fingerprint `manifest:sha256:f30e691c334222281608ab01` and
 implementation source SHA `b95b06dab3fe60208d412ea9811c0c36c399ed9b`.
 An earlier provisional manifest was never executed and is retained only as
 owner-only local superseded state.
 
+The one permitted real run completed all 9 work items in deterministic order,
+recorded 7 sanitized observations across 4 clusters and 1 candidate, admitted
+0 findings/dossiers, and finalized safely as `PARTIAL_BUDGET_EXHAUSTED` with
+`BUDGET_EXHAUSTED`. The owner-only morning brief is `READY` with headline
+`NO ADMITTED PRODUCT ANOMALIES`.
+
 Real campaign safety vector: production attempts 0, proxy violations 0,
 unknown destinations 0, unknown approvals 0, product mutations 0,
 action-caused `UNKNOWN` 0, database queries 0, infrastructure queries 0, and
-external publication attempts 0. Private evidence audit passed. Real anomaly
-counts are zero because no product work ran; a clean or auth-blocked campaign
-does not manufacture a finding. Phase 6 remains permanently
+external publication attempts 0. Privacy is `PASS`; no credentials, cookies,
+tokens, customer values, raw bodies, DOM, screenshots, or authenticated traces
+were persisted. Phase 6 remains permanently
 `FROZEN_BY_OWNER`, with L4 `OUT_OF_SCOPE_BY_OWNER`.
 
 The source repository now has a verified private canonical remote:
