@@ -1,8 +1,10 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-13** at
-> the Phase 6 owner-freeze / private-triage task checkpoint. Phase 0–5 are
-> complete; Phase 6 is frozen by owner and private local triage is active.
+> the Phase 7 bounded DEV campaign checkpoint. Phase 0–5 are complete; Phase 6
+> is frozen by owner; Phase 7 orchestration is implemented but the one bounded
+> real DEV campaign stopped before product work because guarded auth refresh
+> could not complete.
 
 ---
 
@@ -225,9 +227,9 @@ implementation and investigation record; the active roadmap must not refresh
 deployment metadata, repeat infrastructure archaeology, request a handoff, or
 reopen the gate. The owner decision makes that path permanently out of scope.
 
-## Private evidence minimization + autonomous triage
+## Private evidence minimization + autonomous triage (completed prerequisite)
 
-The active task is `.agent/tasks/private-evidence-minimization-and-triage/`.
+The completed prerequisite task was `.agent/tasks/private-evidence-minimization-and-triage/`.
 Its local implementation checkpoint is
 `ea434b57fc132c6544c4527cbaa494cb8412db92`. It adds the executable
 `FROZEN_BY_OWNER` scope gate, owner-only atomic artifact storage, bounded
@@ -239,8 +241,52 @@ packages, and overnight/morning summaries. L4 is recorded as
 
 Validation at this checkpoint: TypeScript PASS; focused policy/Phase 6/triage
 tests 25/25 PASS; full Playwright 358/358 PASS; no real DEV minimization was
-needed because no natural anomaly was admitted. Phase 7 AI work remains
+needed because no natural anomaly was admitted. Bounded AI assistance remains
 deferred and any future model remains prohibited from acting as an oracle.
+
+## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked)
+
+The native task is `.agent/tasks/phase-7-private-autonomous-nightly-campaigns/`.
+The campaign schema is `nightwatch.campaign.private.v1` and the orchestrator
+is `nightwatch.orchestrator.private.v1`. It coordinates the existing Phase
+3 selector, Phase 4 safe exploration envelopes, Phase 5 restricted API
+scenarios, Phase 2C replay/oracle evidence, and private triage/minimization.
+Campaign modes are explicit: `CHANGE_DIRECTED`, `BASELINE_HEALTH`,
+`COVERAGE_EXPANSION`, `REPRODUCTION_ONLY`, and `LOCAL_SYNTHETIC`.
+
+Manifest identity is a stable digest over mode, committed-only source
+snapshots/window, selected lineage, seed set, version fingerprints, budget,
+privacy policy, and (when present) the reproduction target. A frozen manifest
+is checkpointed atomically before execution and after each major work unit.
+The runtime checks Nightwatch source/catalog/model versions before resuming and
+between work items; drift stops the campaign as `CAMPAIGN_VERSION_DRIFT`.
+
+The initial real profile is deliberately bounded: J1/J2/J3 trusted canaries,
+one linked envelope/seed each, one linked read-only API scenario each, a
+15-minute ceiling, bounded replay/minimization budgets, and at most three
+promoted clusters. Ordering is deterministic: journeys, APIs, exploration,
+then admitted-cluster reproduction/minimization. Failure storms stop duplicate
+spending and are summarized as a shared DEV degradation.
+
+Synthetic acceptance passed deterministic selection, baseline/fallback,
+lineage, budget/time ceilings, interruption recovery, duplicate clustering,
+failure-storm suppression, reproduction, bounded minimization, dossiers,
+morning briefs, privacy, and owner-policy tripwires. The one real campaign
+created owner-only local artifacts with campaign ID
+`campaign:sha256:ed4520e8fa7c3a9d2b1481f5`, selected `CHANGE_DIRECTED` J1/J2/J3
+under the Phase 3 conservative fallback, and stopped at `AUTH_BLOCKED` before
+any journey, exploration, API, or product observation. The designated external
+DEV auth state was not page-valid and MFA completion was unavailable. No
+alternative credential or scope was used; the retained manifest/checkpoint is
+not silently resumed after the Nightwatch version changed.
+
+Real campaign safety vector: production attempts 0, proxy violations 0,
+unknown destinations 0, unknown approvals 0, product mutations 0,
+action-caused `UNKNOWN` 0, database queries 0, infrastructure queries 0, and
+external publication attempts 0. Private evidence audit passed. Real anomaly
+counts are zero because no product work ran; a clean or auth-blocked campaign
+does not manufacture a finding. Phase 6 remains permanently
+`FROZEN_BY_OWNER`, with L4 `OUT_OF_SCOPE_BY_OWNER`.
 
 ## Environment (machine facts)
 

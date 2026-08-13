@@ -4,11 +4,11 @@
 
 Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
-Last validated implementation SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
-Last implementation checkpoint: 9d260689065fb1ba38cf144ae336d181c248c67c
+Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
+Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
+Last implementation checkpoint: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Branch: main
 Nightwatch remote: NO_REMOTE
 
@@ -29,32 +29,35 @@ M0 recovery/task creation, M1 contracts/manifest/budget, M2 Phase 3/4/5
 lineage selection, M3 checkpoint/resume/drift/storm control, M4 anomaly
 admission/replay/minimization/dossier/brief integration, and M5 synthetic
 campaign validation are complete at implementation checkpoint
-9d260689065fb1ba38cf144ae336d181c248c67c.
+dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9.
 
 ## Work In Progress
 
-The single bounded real DEV campaign, final validation, architecture review,
-adversarial review, and clean closure remain.
+The single bounded real DEV campaign stopped correctly at the guarded auth
+gate. Final validation, architecture review, adversarial review, and clean
+closure remain; the real campaign must not be rerun in this task.
 
 ## Exact Next Action
 
-Commit this task-state checkpoint, verify a clean Nightwatch tree, then run
-exactly one bounded `npm run campaign:real -- --env=dev` campaign with the
-external owner-only DEV storage state. Stop with the precise auth/safety/
-owner-policy/privacy blocker if preflight cannot pass.
+Finish the durable report/state/docs, run the final local validation suite, and
+leave a clean Nightwatch tree. Do not rerun the real DEV campaign: its single
+attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and the implementation
+SHA changed afterward, so it cannot be silently resumed.
 
 ## Files Changed
 
-Phase 7 task state/plan/active routing plus the implementation checkpoint's
-campaign orchestrator, fixture corpus, real launcher/adapter, and focused
-tests. No Alphaus repository files or real private evidence are included.
+Phase 7 task state/plan/active routing, campaign orchestrator and version/drift
+guards, fixture corpus, real launcher/adapter, focused tests, and project-state
+documentation. No Alphaus repository files or real private evidence are
+included.
 
 ## Validation Ledger
 
 Single-writer check PASS; prior task SHA reconciliation PASS; Phase 6 owner
-freeze tripwires PASS; TypeScript PASS; `npm run campaign:synthetic` PASS with
-13 tests; `git diff --check` PASS; real launcher help PASS; Nightwatch remote
-is `NO_REMOTE`; real campaign pending.
+freeze tripwires PASS; TypeScript PASS; focused campaign tests PASS (14/14);
+synthetic campaign PASS; `git diff --check` PASS at implementation
+checkpoints; real launcher help PASS; Nightwatch remote is `NO_REMOTE`; the
+single real campaign is `PARTIAL_AUTH_BLOCKED` before product work.
 
 ## Decisions Made During This Task
 
@@ -66,20 +69,26 @@ reproduction callback and bounded triage path without fresh coverage.
 ## Discoveries
 
 The existing Phase 2C/3/4/5/private-triage contracts are sufficient for
-orchestration through typed callbacks. A clean DEV campaign is valid evidence;
-no anomaly is manufactured.
+orchestration through typed callbacks. The real adapter now maps admitted
+representatives back to the existing guarded journey, exploration, or API
+runner and reserves its declared reproduction resources. A clean or
+auth-blocked DEV campaign is valid evidence; no anomaly is manufactured.
 
 ## Blockers
 
-None at implementation checkpoint. Real DEV auth or safety may fail closed;
-that would be a precise campaign blocker, not permission to widen scope.
+The designated external DEV auth state was not page-valid and the bounded
+guarded refresh could not complete its MFA step. This is a precise
+`DEV_AUTH_ACTION_REQUIRED` blocker, not permission to use another credential,
+rerun the campaign, or widen scope. The old auth-blocked manifest is retained
+as evidence and is incompatible with the post-run Nightwatch source version.
 
 ## Safety Events
 
-No Phase 7 external execution yet. Synthetic and implementation safety vectors
-are zero. Required real values are zero for production, proxy, unknown
-destinations/approvals, mutations, action-caused UNKNOWN, database,
-infrastructure, and external publication.
+Synthetic and real safety vectors are zero. The real preflight created no
+product context and recorded production attempts 0, proxy violations 0,
+unknown destinations 0, unknown approvals 0, product mutations 0,
+action-caused UNKNOWN 0, database queries 0, infrastructure queries 0, and
+external publication attempts 0.
 
 ## Deferred / Follow-Up
 
@@ -96,8 +105,10 @@ completed work or widen catalogs/policy.
 
 ## Completion Snapshot
 
-Implementation checkpoint 9d260689065fb1ba38cf144ae336d181c248c67c is clean;
-synthetic matrix passes; real campaign and final closure are pending.
+Implementation checkpoint dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9 is clean;
+synthetic matrix, focused tests, full Playwright, typecheck, and agent check
+pass; the real campaign is durably auth-blocked; documentation checkpoint is
+ready to commit.
 
 ## CURRENT_GOAL
 
@@ -127,37 +138,39 @@ external publication, and coworker/platform-owner requests remain blocked.
 
 ## CAMPAIGN_ID
 
-Real campaign not created yet; identity will be derived from the frozen
-manifest, source snapshots, catalogs, seeds, budget, and policy versions.
-Timestamp is not an identity input.
+Real campaign: `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`. Manifest fingerprint:
+`manifest:sha256:861ae8b3dffdb88ea8a262e7`. Identity was derived from the frozen
+manifest inputs; timestamp was not an identity input.
 
 ## CAMPAIGN_MODE
 
-Real mode is selected from the committed source window only:
-`CHANGE_DIRECTED` when non-empty, otherwise explicit `BASELINE_HEALTH`.
+Real mode: `CHANGE_DIRECTED`; the committed-only source window was non-empty.
 Synthetic coverage also passed `LOCAL_SYNTHETIC`; manifest tests cover
-`COVERAGE_EXPANSION` and `REPRODUCTION_ONLY` contracts.
+`BASELINE_HEALTH`, `COVERAGE_EXPANSION`, and `REPRODUCTION_ONLY` contracts.
 
 ## SOURCE_SNAPSHOTS
 
-Synthetic snapshots are deterministic read-only fixtures. The real run will
-capture only the Phase 3-relevant Ripple repositories immediately before its
-manifest, including branch, HEAD, tracking ref/SHA, ahead/behind, dirty state,
-source-map SHA, freshness, and `readOnly=true`. Dirty files remain excluded
-from committed/deployment inference.
+The real run captured only the Phase 3-relevant Ripple repositories immediately
+before its manifest, including branch, HEAD, tracking ref/SHA, ahead/behind,
+dirty state, source-map SHA, freshness, and `readOnly=true`. It recorded
+`COMMITTED_ONLY`, 940 changed files, and 82 dirty files; dirty files remained
+excluded from committed/deployment inference. Relevant Alphaus repo HEADs and
+dirty counts were read back afterward and remained unchanged.
 
 ## SELECTION_RESULT
 
 Synthetic selection passed J1-only, J2/J3/shared-change, baseline, fallback,
-negative-selection, and reproduction-only checks. Real selection is pending
-the current committed source snapshot and will reuse Phase 3 unchanged.
+negative-selection, and reproduction-only checks. Real Phase 3 selection
+conservatively selected all three trusted journeys under fallback, with linked
+E1/E2/E3 envelopes and J1/J2/J3 API scenarios; no dirty change was treated as
+deployed.
 
 ## SELECTED_JOURNEYS / SELECTED_ENVELOPES / SELECTED_API_SCENARIOS
 
-Synthetic lineage is deterministic and ordered `JOURNEY → API → EXPLORATION`;
-real selection is pending. The initial real profile permits only linked J1/J2/
-J3 canaries, one linked Phase 4 envelope/seed each, and one linked Phase 5
-read-only API operation each.
+Synthetic lineage is deterministic and ordered `JOURNEY → API → EXPLORATION`.
+Real selected and ordered J1/J2/J3, one linked E1/E2/E3 envelope/seed each,
+and one linked Phase 5 read-only API operation each. No work item completed
+because preflight stopped at auth.
 
 ## SEED_LEDGER
 
@@ -172,34 +185,39 @@ exploration contexts, 6 API executions, 8 replays, 4 minimization candidates,
 24 actions, 15 minutes, 120 seconds/test, 3 promoted clusters, and 10 MiB
 private evidence. The 8 replay maximum covers 3 required API fresh replays
 plus one representative replay and the existing one-exact/four-candidate
-triage allowance. Real used/remaining is not yet created.
+triage allowance. Real used: browser 0, journey 0, exploration 0, API 0,
+replays 0, minimization candidates 0, actions 0, evidence 807202 bytes.
+Real remaining: browser 6, journey 3, exploration 3, API 6, replays 8,
+minimization candidates 4, actions 24, evidence 9678558 bytes.
 
 ## EXECUTION_LEDGER
 
 Synthetic orchestrator execution ledger, checkpoint writes, at-least-once
-replay-required interruption, and completed-work skip behavior passed. Real
-ledger will be written atomically after manifest creation and each major work
-unit.
+replay-required interruption, and completed-work skip behavior passed. The real
+ledger is atomic at checkpoint ordinal 0: all 9 selected work items remain
+PENDING, no attempt ran, and the next exact action is the first J1 journey only
+after a new compatible campaign is created.
 
 ## ANOMALY_CLUSTERS
 
-Synthetic matrix: 5 stable clusters, including UI, API, irreducible,
-transient, and known Nightwatch false-positive cases. A two-surface shared
-fingerprint storm stopped before reproduction. Real clusters: none observed
-yet.
+Synthetic matrix: 5 stable clusters, including UI, API, irreducible, transient,
+and known Nightwatch false-positive cases. A two-surface shared fingerprint
+storm stopped before reproduction. Real clusters: 0; no product work ran.
 
 ## REPRODUCTION_QUEUE / MINIMIZATION_QUEUE
 
 Synthetic representative admission, reproduction prioritization, bounded
-minimization, and reproduction-only execution passed. Real queues are empty
-until a natural anomaly is admitted; no product failure is manufactured.
+minimization, and reproduction-only execution passed. Real reproduction and
+minimization queues are empty because auth blocked before anomaly intake; no
+product failure is manufactured.
 
 ## DOSSIER_LEDGER / MORNING_BRIEF_STATUS
 
 Synthetic matrix produced 3 private dossiers and a concise top-3 brief; clean
-baseline produced `NO ADMITTED PRODUCT ANOMALIES`. Real owner-only findings
-remain outside Git under `$HOME/.nightwatch/findings/`; no remote or external
-publication exists.
+baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The real owner-only brief is
+READY with headline `NO ADMITTED PRODUCT ANOMALIES`; no dossier was produced.
+Private artifacts remain outside Git under `/home/dalepalaca/.nightwatch/findings/`
+with mode 0600; no remote or external publication exists.
 
 ## FILES_CHANGED
 
@@ -214,11 +232,18 @@ native Phase 7 task artifacts.
   exist and starting clean HEAD is `4f826320...`.
 - Single-writer check: PASS; no competing Nightwatch writer was present.
 - Phase 6 freeze and owner-policy tripwires: PASS in focused tests.
-- `npx tsc --noEmit`: PASS at implementation checkpoint.
-- `npm run campaign:synthetic`: PASS, 13 tests.
-- `git diff --check`: PASS at implementation checkpoint.
+- `npx tsc --noEmit`: PASS after the replay/drift guard checkpoint.
+- `npx playwright test tests/unit/campaign.test.ts --workers=1`: PASS, 14/14.
+- `npm run campaign:synthetic`: PASS, 14/14.
+- `npx playwright test --workers=1`: PASS, 375/375.
+- `npm run agent:check`: PASS with one expected approved-checkpoint warning.
+- `git diff --check`: PASS.
 - `npm run campaign:real -- --help`: PASS; launcher is opt-in and DEV-only.
-- Real campaign: pending auth/preflight and bounded execution.
+- Real campaign: PASS for fail-closed auth stop; `PARTIAL_AUTH_BLOCKED`, zero
+  product work, zero anomalies, private brief READY.
+- Owner-only private artifact permissions/privacy audit: PASS.
+- Relevant Alphaus repository before/after integrity: PASS; unchanged.
+- Final clean-tree check remains until this documentation checkpoint is committed.
 
 ## BUG_CANDIDATES
 
@@ -236,38 +261,39 @@ reported as product findings.
 
 ## UNRESOLVED
 
-No naturally admitted DEV anomaly is currently available for minimization.
-Real auth/DEV availability and current source-window mode remain to be
-observed by the frozen bounded gate.
+No naturally admitted DEV anomaly is available for minimization. The one real
+campaign is blocked on designated DEV auth state/MFA completion. A fresh
+compatible campaign requires owner action after auth is repaired; the previous
+manifest cannot be silently resumed across the current Nightwatch source SHA.
 
 ## SAFETY_EVENTS
 
-Implementation and synthetic safety vectors are zero. Required real vector:
-production attempts 0, proxy violations 0, unknown destinations 0, unknown
-approvals 0, product mutations 0, action-caused UNKNOWN 0, database queries 0,
-infrastructure queries 0, external publication attempts 0.
+Implementation, synthetic, and real safety vectors are zero: production
+attempts 0, proxy violations 0, unknown destinations 0, unknown approvals 0,
+product mutations 0, action-caused UNKNOWN 0, database queries 0,
+infrastructure queries 0, and external publication attempts 0. L4 remains
+`OUT_OF_SCOPE_BY_OWNER`.
 
 ## PRIVACY_STATUS
 
-Synthetic privacy PASS. Real evidence destination is owner-only local storage;
+Synthetic privacy PASS. Real privacy PASS: owner-only local storage, mode 0600;
 credentials, cookies, tokens, customer values, raw bodies, DOM, screenshots,
-and authenticated traces must remain absent.
+and authenticated traces were absent from campaign artifacts.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`9d260689065fb1ba38cf144ae336d181c248c67c`
+`dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`
 
 ## LAST_CHECKPOINT_SHA
 
-`9d260689065fb1ba38cf144ae336d181c248c67c`
+`dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`
 
 ## NEXT_EXACT_ACTION
 
-Commit this task-state checkpoint, verify the Nightwatch tree is clean, then
-run exactly one bounded `npm run campaign:real -- --env=dev` campaign with the
-external owner-only DEV storage state. If auth or safety cannot pass, stop
-with the precise blocker class and do not use an alternative credential or
-scope.
+Finish and commit the report/state/docs, run final local validation, and verify
+the Nightwatch tree is clean. Do not rerun DEV in this task. If the owner later
+repairs the designated auth state, create a new compatible bounded manifest;
+never use an alternative credential or scope.
 
 ## RESUME_RECIPE
 

@@ -398,7 +398,26 @@ deployment-owner, SRE, or database-owner handoff is required.
 
 ---
 
-## Phase 7 — Bounded AI assistance (deferred)
+## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked)
+
+Phase 7 coordinates the existing trusted selector, journey, safe exploration,
+restricted API, replay/oracle, clustering, bounded minimization, private
+dossier, and morning-brief primitives under
+`nightwatch.campaign.private.v1`. It is local, private, DEV-only, read-only at
+product level, deterministic, checkpointed, and fail-closed. Its explicit
+modes are `CHANGE_DIRECTED`, `BASELINE_HEALTH`, `COVERAGE_EXPANSION`,
+`REPRODUCTION_ONLY`, and `LOCAL_SYNTHETIC`.
+
+The implementation and synthetic matrix are complete. The single bounded real
+campaign created an owner-only manifest/checkpoint but stopped at
+`PARTIAL_AUTH_BLOCKED` before product work because the designated external DEV
+auth state was not page-valid and guarded MFA refresh could not complete. No
+alternative credentials were used. A new compatible bounded campaign requires
+owner action; the retained manifest is not silently resumed across a Nightwatch
+source-version change. Phase 6 remains permanently
+`FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
+
+## Phase 7B — Bounded AI assistance (deferred)
 
 **Goal.** Use a model as a *review assistant*, not a decision-maker:
 triaging candidate bugs (L2+) into drafts and generating oracle-check
@@ -440,7 +459,7 @@ over Alphaus repos is absolute.
 **Non-goals / exclusions.** Editing any Alphaus repository; weakening or
 bypassing the safety kernel; production; unmeasured autonomy.
 
-**Dependencies.** Phase 7 assistance; a stable Phase 0/1 self-test suite as
+**Dependencies.** Phase 7B assistance; a stable Phase 0/1 self-test suite as
 the evaluation gate.
 
 ---

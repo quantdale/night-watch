@@ -3,16 +3,16 @@
 Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
 Title: Private Autonomous Nightly Campaigns
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
-Last validated implementation SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
+Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
+Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Current milestone: M6 — bounded real DEV campaign and closure.
-Last checkpoint: implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
-Next action: commit task-state reconciliation, verify a clean Nightwatch tree,
-then run the single frozen bounded private DEV campaign. Phase 6 remains
-permanently frozen by owner.
+Last checkpoint: implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
+Next action: finish the auth-blocked campaign handoff, run final local
+validation, and verify a clean Nightwatch tree. Do not rerun the single frozen
+bounded DEV campaign. Phase 6 remains permanently frozen by owner.
 
 ## Prior phase closure handoff
 

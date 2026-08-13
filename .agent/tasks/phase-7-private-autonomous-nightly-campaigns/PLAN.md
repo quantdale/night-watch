@@ -69,7 +69,7 @@ and create this SPEC/PLAN/STATE/REPORT plus ACTIVE_TASK before implementation.
 
 ### M1 — Campaign contracts, manifest, and budget
 
-Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
+Status: `COMPLETE` at implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
 
 Implement canonical identity, explicit modes, sanitized manifest, source
 snapshot descriptors, preflight result, budget manager, result/status classes,
@@ -77,7 +77,7 @@ and deterministic ordering. Add pure unit coverage.
 
 ### M2 — Selection and trusted primitive lineage
 
-Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
+Status: `COMPLETE` at implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
 
 Reuse Phase 3 selection and map selected J1/J2/J3 to existing Phase 4/5
 lineage. Add baseline-health and coverage-expansion selection explanations,
@@ -85,7 +85,7 @@ negative selection records, and reproduction-only isolation.
 
 ### M3 — Checkpoint/resume, drift, and failure-storm control
 
-Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
+Status: `COMPLETE` at implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
 
 Implement atomic owner-only campaign checkpoints, interruption recovery,
 completed-work skip semantics, version drift, health gates, shared-root storm
@@ -93,7 +93,7 @@ suppression, and retention planning.
 
 ### M4 — Anomaly admission, replay/minimization, dossiers, and brief
 
-Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
+Status: `COMPLETE` at implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
 
 Adapt Phase 2C fingerprints/admission and existing private triage. Promote
 only deterministic representatives, honor L0–L5 scope, invoke the existing
@@ -102,7 +102,7 @@ morning brief with no-findings behavior.
 
 ### M5 — Realistic synthetic campaign matrix
 
-Status: `COMPLETE`: 13 focused tests passed, covering selection, lineage,
+Status: `COMPLETE`: 14 focused tests passed, covering selection, lineage,
 budget, clustering, failure storms, recovery, privacy, no-findings, drift,
 owner policy, and operational `REPRODUCTION_ONLY` replay/minimization.
 
@@ -113,13 +113,15 @@ regressions.
 
 ### M6 — Bounded real DEV campaign and closure
 
-Status: `IN_PROGRESS`.
+Status: `BLOCKED` — `DEV_AUTH_ACTION_REQUIRED` after the one permitted bounded
+real campaign stopped before product work.
 
-Run the initial frozen real profile once after a clean implementation
-checkpoint, using current source state and either CHANGE_DIRECTED or explicit
-BASELINE_HEALTH. Process natural anomalies conservatively, audit safety/privacy,
-run full validation, complete architecture/adversarial review, update docs,
-and leave a clean Nightwatch handoff.
+The initial frozen real profile was run once after a clean implementation
+checkpoint. It selected `CHANGE_DIRECTED` coverage but stopped at the guarded
+auth preflight before any product work because the designated external DEV
+state was not page-valid and MFA refresh could not complete. No alternative
+credential or rerun is authorized in this task. Local validation, architecture
+review, adversarial review, and the durable blocker handoff remain required.
 
 ## Validation Strategy
 

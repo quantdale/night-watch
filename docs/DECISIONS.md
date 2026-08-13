@@ -7,6 +7,29 @@ unless marked superseded; changing one requires a new entry, not an edit.
 
 ---
 
+## D-33 — Campaign manifests freeze the executable surface
+
+**Decision.** A private campaign is identified by a stable manifest digest over
+its mode, committed-only source snapshots/window, Phase 3 selection and
+lineage, seeds, version fingerprints, budget, privacy policy, and optional
+reproduction target. The manifest is written before execution and is immutable
+for that campaign. Resume checks the manifest fingerprint and current
+Nightwatch/catalog/model versions; drift stops the campaign rather than mixing
+evidence from incompatible runtimes.
+
+**Rationale.** An unattended campaign must be recoverable without relying on
+process memory, wall-clock identity, filesystem order, or silently changing
+coverage after a source/catalog update. A stable frozen input is the boundary
+between one evidence set and the next campaign.
+
+**Consequences.** Logical ledger writes and checkpoints are exactly-once;
+browser/API work is at-least-once-safe and interrupted work is explicitly
+`REPLAY_REQUIRED`. The campaign may stop as
+`CAMPAIGN_VERSION_DRIFT` and requires a new compatible manifest. Dirty source
+files remain observations only and never become deployment proof.
+
+**Phase applicability.** Phase 7 and all later private campaign orchestration.
+
 ## D-29 — Owner-frozen infrastructure/data boundary
 
 **Decision.** Nightwatch is permanently confined to local source intelligence,
