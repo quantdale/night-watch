@@ -1,0 +1,590 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { expect, test } from '@playwright/test';
+import {
+  CAMPAIGN_ORCHESTRATOR_VERSION,
+  CAMPAIGN_SCHEMA_VERSION,
+  CampaignBudgetManager,
+  CampaignCheckpointStore,
+  CampaignProcessInterruptionError,
+  CampaignTimeBudget,
+  INITIAL_REAL_CAMPAIGN_BUDGET,
+  assertManifestCompatible,
+  createCampaignManifest,
+  emptyBudgetUsage,
+  resumeCampaign,
+  runCampaign,
+  type CampaignAnomalyCandidate,
+  type CampaignBudgetPolicy,
+  type CampaignExecutionOutcome,
+  type CampaignInput,
+  type CampaignPrivacyPolicy,
+  type CampaignVersionFingerprint,
+  type CampaignWorkItem,
+  type CampaignSourceSnapshot,
+} from '../../src/core/campaign';
+import { PHASE5_API_CATALOG } from '../../src/api/phase5/catalog';
+import { API_CATALOG_VERSION, SCENARIO_GENERATOR_VERSION } from '../../src/api/phase5/types';
+import { DEPENDENCY_MAP_VERSION, RIPPLE_REPOSITORIES, SELECTOR_VERSION, changesetId, selectJourneys, type ChangeSet, type ChangedFile } from '../../src/core/changeIntelligence';
+import { RIPPLE_PHASE4_ACTIONS, RIPPLE_PHASE4_ENVELOPES } from '../../src/products/ripple/explorationCatalog';
+import { EXPLORATION_MODEL_VERSION, PLANNER_VERSION, SAFE_ACTION_CATALOG_VERSION, type SafetyVector } from '../../src/core/exploration/types';
+import { JOURNEY_CONTRACT_VERSION, ORACLE_VERSION } from '../../src/core/journeys/contract';
+import { ANOMALY_CLUSTER_VERSION, FAILURE_MINIMIZATION_VERSION, DOSSIER_VERSION, type MinimizationAction, type SourceFreshness } from '../../src/core/triage/types';
+import { clusterAnomalies } from '../../src/core/triage/clustering';
+import { PRIVATE_ARTIFACT_POLICY_VERSION, OWNER_SCOPE_POLICY_VERSION, PrivateArtifactStore, assertOwnerPolicyAllows } from '../../src/core/policy';
+
+const STATIC_NOW = '2026-08-13T01:00:00.000Z';
+const SEEDS = ['0x0000000000000101', '0x0000000000000201', '0x0000000000000301'] as const;
+const SAFE_TRIAGE: SafetyVector = {
+  productionAttempts: 0,
+  proxyViolations: 0,
+  unknownDestinations: 0,
+  unknownApprovals: 0,
+  knownMutations: 0,
+  actionCausedUnknown: 0,
+  dbQueries: 0,
+};
+
+const TEST_BUDGET: CampaignBudgetPolicy = Object.freeze({
+  ...INITIAL_REAL_CAMPAIGN_BUDGET,
+  maxTotalBrowserContexts: 6,
+  maxJourneyContexts: 3,
+  maxExplorationContexts: 3,
+  maxApiExecutions: 12,
+  maxReplays: 70,
+  maxMinimizationCandidates: 64,
+  maxTotalActions: 100,
+  maxRuntimeMs: 60_000,
+  maxPerTestTimeoutMs: 5_000,
+  maxPromotedClusters: 3,
+  maxPrivateEvidenceBytes: 20 * 1024 * 1024,
+});
+
+const PRIVACY_POLICY: CampaignPrivacyPolicy = {
+  storageClass: 'OWNER_ONLY_LOCAL',
+  remotePrivacy: 'NO_REMOTE',
+  externalPublication: 'PROHIBITED',
+  rawBodiesPersisted: false,
+  customerValuesPersisted: false,
+  credentialsPersisted: false,
+  cookiesPersisted: false,
+  tokensPersisted: false,
+  domPersisted: false,
+  screenshotsPersisted: false,
+  authenticatedTracesPersisted: false,
+};
+
+const VERSIONS: CampaignVersionFingerprint = {
+  campaignSchemaVersion: CAMPAIGN_SCHEMA_VERSION,
+  orchestratorVersion: CAMPAIGN_ORCHESTRATOR_VERSION,
+  selectorVersion: SELECTOR_VERSION,
+  dependencyMapVersion: DEPENDENCY_MAP_VERSION,
+  journeyContractVersion: JOURNEY_CONTRACT_VERSION,
+  journeyOracleVersion: ORACLE_VERSION,
+  explorationCatalogVersion: SAFE_ACTION_CATALOG_VERSION,
+  explorationModelVersion: EXPLORATION_MODEL_VERSION,
+  explorationPlannerVersion: PLANNER_VERSION,
+  apiCatalogVersion: API_CATALOG_VERSION,
+  apiGeneratorVersion: SCENARIO_GENERATOR_VERSION,
+  apiOracleVersion: 'nightwatch.api-oracle.phase5.v1',
+  triageClusterVersion: ANOMALY_CLUSTER_VERSION,
+  triageMinimizerVersion: FAILURE_MINIMIZATION_VERSION,
+  dossierVersion: DOSSIER_VERSION,
+  ownerScopePolicyVersion: OWNER_SCOPE_POLICY_VERSION,
+  privateArtifactPolicyVersion: PRIVATE_ARTIFACT_POLICY_VERSION,
+  seedCorpusVersion: 'nightwatch.phase7.synthetic-seeds.v1',
+  budgetPolicyVersion: 'nightwatch.campaign-budget.private.v1',
+};
+
+function snapshots(): readonly CampaignSourceSnapshot[] {
+  return RIPPLE_REPOSITORIES.map((repo) => ({
+    repoId: repo.repoId,
+    branch: repo.branch,
+    headSha: repo.checkedOutSha,
+    trackingRef: repo.trackingRef,
+    trackingSha: repo.trackingSha,
+    ahead: repo.ahead,
+    behind: repo.behind,
+    dirty: false,
+    dirtyFileCount: 0,
+    sourceMapSha: repo.sourceMapSha,
+    freshness: 'LOCAL_TRACKING_REF_ONLY' as SourceFreshness,
+    readOnly: true as const,
+  }));
+}
+
+function makeChangeSet(changedFiles: readonly ChangedFile[]): ChangeSet {
+  const repoBaselines = RIPPLE_REPOSITORIES.map((repo) => ({
+    repoId: repo.repoId,
+    baseSha: repo.checkedOutSha,
+    headSha: repo.checkedOutSha,
+    mergeBase: repo.checkedOutSha,
+    rangeSemantics: 'BASE_SHA_TO_HEAD_SHA' as const,
+    source: 'LOCAL_COMMITTED_CHANGE' as const,
+    dirtyExcluded: true,
+  }));
+  const id = changesetId({ repoBaselines, changedFiles, selectorVersion: SELECTOR_VERSION });
+  return {
+    schemaVersion: 'nightwatch.change-intelligence.phase3.v1',
+    selectorVersion: SELECTOR_VERSION,
+    changesetId: id,
+    generatedAt: STATIC_NOW,
+    repoBaselines,
+    changedRepos: [...new Set(changedFiles.map((file) => file.repoId))].sort(),
+    changedFiles,
+    commits: [],
+    dirtyFiles: [],
+    sourceWindow: 'COMMITTED_ONLY',
+    deploymentStatus: 'DEPLOYMENT_STATUS_UNRESOLVED',
+  };
+}
+
+function sourceWindow(changedFiles: readonly ChangedFile[] = []) {
+  return {
+    changesetId: changedFiles.length === 0 ? 'cs-empty-phase7' : changesetId({ repoBaselines: makeChangeSet(changedFiles).repoBaselines, changedFiles, selectorVersion: SELECTOR_VERSION }),
+    baselines: RIPPLE_REPOSITORIES.map((repo) => ({ repoId: repo.repoId, baseSha: repo.checkedOutSha, headSha: repo.checkedOutSha, dirtyExcluded: true as const })),
+    changedFiles,
+    dirtyFiles: [],
+    sourceWindow: 'COMMITTED_ONLY' as const,
+    deploymentStatus: 'DEPLOYMENT_STATUS_UNRESOLVED' as const,
+  };
+}
+
+function inputFor(mode: CampaignInput['mode'] = 'LOCAL_SYNTHETIC', changedFiles: readonly ChangedFile[] = [], budget: CampaignBudgetPolicy = TEST_BUDGET): CampaignInput {
+  const changeset = changedFiles.length > 0 ? makeChangeSet(changedFiles) : null;
+  return {
+    mode,
+    createdAt: STATIC_NOW,
+    sourceSnapshots: snapshots(),
+    sourceWindow: sourceWindow(changedFiles),
+    changeset,
+    phase3Selection: changeset === null ? null : selectJourneys(changeset),
+    seedCorpusVersion: VERSIONS.seedCorpusVersion,
+    seedSet: SEEDS,
+    safeActions: RIPPLE_PHASE4_ACTIONS,
+    explorationEnvelopes: RIPPLE_PHASE4_ENVELOPES,
+    apiOperations: PHASE5_API_CATALOG.operations,
+    versions: VERSIONS,
+    budgetPolicy: budget,
+    privacyPolicy: PRIVACY_POLICY,
+  };
+}
+
+function action(actionId: string, routeClass = '/payer-exchange-rate-v2'): MinimizationAction {
+  return {
+    actionId,
+    semanticClass: 'KNOWN_READ',
+    routeClass,
+    sourceApproved: true,
+    catalogVersion: 'nightwatch.phase7.synthetic-action.v1',
+  };
+}
+
+function candidate(options: {
+  readonly runId: string;
+  readonly fingerprint: string;
+  readonly journeyId: 'ripple-payer-exchange-read' | 'ripple-common-exchange-read' | 'ripple-account-inventory';
+  readonly operationFamily?: string;
+  readonly timingClass?: 'NONE' | 'BOUNDED' | 'TRANSIENT';
+  readonly knownNightwatchDefect?: boolean;
+  readonly sourceRelevance?: 'DIRECT_CHANGE_RELEVANCE' | 'SHARED_CHANGE_RELEVANCE' | 'TRANSITIVE_CHANGE_RELEVANCE' | 'NO_CURRENT_CHANGE_RELEVANCE' | 'UNKNOWN';
+  readonly apiFailed?: boolean;
+  readonly sequence?: readonly string[];
+  readonly predicate?: (ids: readonly string[]) => boolean;
+}): CampaignAnomalyCandidate {
+  const operationFamily = options.operationFamily ?? options.journeyId;
+  const routeClass = options.journeyId === 'ripple-payer-exchange-read'
+    ? '/payer-exchange-rate-v2'
+    : options.journeyId === 'ripple-common-exchange-read' ? '/global-exchange-rate-v2' : '/account-management';
+  const sequence = (options.sequence ?? ['phase7.read.primary', 'phase7.read.secondary']).map((id) => action(id, routeClass));
+  const apiFailed = options.apiFailed ?? false;
+  const fingerprint = options.fingerprint;
+  const browser = {
+    failed: true,
+    routeClass,
+    structuralState: 'table-missing',
+    operationFamily,
+    statusClass: '5xx',
+    contentTypeClass: 'json',
+    oracleFingerprint: fingerprint,
+    runtimeCategory: 'product',
+  } as const;
+  const api = options.apiFailed === undefined ? null : {
+    available: true,
+    failed: apiFailed,
+    operationFamily,
+    routeClass,
+    structuralState: apiFailed ? 'api-error' : 'api-ready',
+    statusClass: apiFailed ? '5xx' : '2xx',
+    contentTypeClass: 'json',
+    parseCategory: apiFailed ? 'invalid' : 'valid',
+    oracleFingerprint: apiFailed ? fingerprint : 'fp:sha256:eeeeeeeeeeeeeeeeeeeeeeee',
+  } as const;
+  const predicate = options.predicate ?? ((ids: readonly string[]) => ids.length > 0);
+  const replay = (sequenceToReplay: readonly MinimizationAction[]) => ({
+    status: predicate(sequenceToReplay.map((item) => item.actionId)) ? 'FAILURE' as const : 'PASS' as const,
+    ...(predicate(sequenceToReplay.map((item) => item.actionId)) ? { anomalyFingerprint: fingerprint } : {}),
+    safety: SAFE_TRIAGE,
+  });
+  return {
+    observation: {
+      runId: options.runId,
+      observedAt: STATIC_NOW,
+      fingerprint,
+      features: {
+        journeyId: options.journeyId,
+        envelopeId: options.journeyId === 'ripple-payer-exchange-read' ? 'E1-J1-payer-exchange' : options.journeyId === 'ripple-common-exchange-read' ? 'E2-J2-common-exchange' : 'E3-J3-account-inventory',
+        oracleId: 'oracle.phase7.synthetic',
+        routeClass,
+        operationFamily,
+        statusClass: '5xx',
+        contentTypeClass: 'json',
+        runtimeCategory: 'product',
+        structuralState: 'table-missing',
+        failureActionId: sequence[0]?.actionId ?? null,
+        sourceImpactRegion: 'synthetic.phase7',
+        browserApiResultClass: api === null ? 'browser-only' : api.failed === browser.failed ? 'same' : 'diverge',
+      },
+      timingClass: options.timingClass ?? 'NONE',
+      reproduced: false,
+      minimized: false,
+      sourceFreshness: 'LOCAL_TRACKING_REF_ONLY',
+    },
+    journeyId: options.journeyId,
+    contractVersion: JOURNEY_CONTRACT_VERSION,
+    contractDigest: 'contract:phase7-synthetic',
+    contextKind: 'FIRST_OBSERVATION',
+    originalSequence: sequence,
+    technicalSeverity: 'HIGH',
+    breadth: 'NARROW',
+    browser,
+    api,
+    sourceCorrelation: {
+      journeyIds: [options.journeyId],
+      changedFiles: [],
+      sourceFreshness: 'LOCAL_TRACKING_REF_ONLY',
+      sourceVersion: 'synthetic.phase7.source.v1',
+    },
+    sourceRelevance: options.sourceRelevance ?? 'NO_CURRENT_CHANGE_RELEVANCE',
+    alternativesRuledOut: ['auth-valid', 'safe-read-only-contract', 'known-cancellation-not-applicable'],
+    missingEvidence: ['deployment-status-unresolved', 'datastore-evidence-out-of-scope-by-owner'],
+    knownNightwatchDefect: options.knownNightwatchDefect ?? false,
+    replay,
+  };
+}
+
+function defaultOutcome(overrides: Partial<CampaignExecutionOutcome> = {}): CampaignExecutionOutcome {
+  return {
+    result: 'PASS',
+    safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0, infrastructureQueries: 0, externalPublicationAttempts: 0 },
+    privacy: { result: 'PASS', rawBodiesPersisted: 0, customerValuesPersisted: 0, credentialsPersisted: 0, cookiesPersisted: 0, tokensPersisted: 0, domPersisted: 0, screenshotsPersisted: 0, authenticatedTracesPersisted: 0 },
+    actionsExecuted: 0,
+    apiExecutions: 0,
+    browserContextCreated: false,
+    replay: false,
+    observations: [],
+    ...overrides,
+  };
+}
+
+function passingExecutor(script: ReadonlyMap<string, readonly CampaignAnomalyCandidate[]> = new Map(), options: { readonly throwOnWorkItemId?: string } = {}) {
+  return {
+    preflight: () => ({ passed: true, code: 'PREFLIGHT_PASS' as const, failedChecks: [], checkedAt: STATIC_NOW }),
+    execute: async ({ workItem }: { readonly workItem: CampaignWorkItem }) => {
+      if (options.throwOnWorkItemId === workItem.workItemId) throw new CampaignProcessInterruptionError();
+      const observations = [...(script.get(workItem.workItemId) ?? [])];
+      return defaultOutcome({
+        result: observations.length > 0 ? 'ANOMALY' : 'PASS',
+        actionsExecuted: observations.length > 0 ? observations[0]!.originalSequence.length : 1,
+        apiExecutions: workItem.kind === 'API' && workItem.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : workItem.kind === 'API' ? 1 : 0,
+        browserContextCreated: workItem.kind !== 'API',
+        replay: workItem.kind === 'API' && workItem.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY',
+        observations,
+      });
+    },
+    reproduce: async ({ representative }: { readonly representative: CampaignAnomalyCandidate }) => {
+      const outcome = representative.replay?.(representative.originalSequence, 'FRESH_EXACT_REPLAY');
+      const resolved = await outcome;
+      if (resolved?.status !== 'FAILURE') return { result: 'NOT_REPRODUCED' as const, runId: `${representative.observation.runId}-fresh`, fingerprint: null, safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0, infrastructureQueries: 0, externalPublicationAttempts: 0 }, privacy: { result: 'PASS' as const, rawBodiesPersisted: 0, customerValuesPersisted: 0, credentialsPersisted: 0, cookiesPersisted: 0, tokensPersisted: 0, domPersisted: 0, screenshotsPersisted: 0, authenticatedTracesPersisted: 0 } };
+      return {
+        result: 'REPRODUCED' as const,
+        runId: `${representative.observation.runId}-fresh`,
+        fingerprint: representative.observation.fingerprint,
+        safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0, infrastructureQueries: 0, externalPublicationAttempts: 0 },
+        privacy: { result: 'PASS' as const, rawBodiesPersisted: 0, customerValuesPersisted: 0, credentialsPersisted: 0, cookiesPersisted: 0, tokensPersisted: 0, domPersisted: 0, screenshotsPersisted: 0, authenticatedTracesPersisted: 0 },
+        candidate: { ...representative, observation: { ...representative.observation, runId: `${representative.observation.runId}-fresh`, reproduced: true, timingClass: 'BOUNDED' as const } },
+      };
+    },
+  };
+}
+
+function tempStore(): { readonly root: string; readonly store: PrivateArtifactStore } {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase7-'));
+  return { root, store: new PrivateArtifactStore({ root }) };
+}
+
+test.describe('Phase 7 campaign identity, selection, and policy', () => {
+  test('manifest identity is deterministic and source-change selection preserves Phase 3 explanations', () => {
+    const j1File: ChangedFile = { repoId: 'mobingilabs/ripple-ui', path: 'src/vuex/api/exchangeRatePayer_v2.js', status: 'modify' };
+    const first = createCampaignManifest(inputFor('CHANGE_DIRECTED', [j1File]));
+    const second = createCampaignManifest(inputFor('CHANGE_DIRECTED', [j1File]));
+    expect(first.campaignId).toBe(second.campaignId);
+    expect(first.manifestFingerprint).toBe(second.manifestFingerprint);
+    expect(first.selectedJourneys).toEqual(['ripple-payer-exchange-read']);
+    expect(first.selectedApiScenarios).toEqual(['ripple.payer-exchange.read']);
+    expect(first.selectedEnvelopes).toEqual(['E1-J1-payer-exchange']);
+    expect(first.selection.nonSelectedJourneys).toHaveLength(2);
+    expect(first.selection.explanations.find((entry) => entry.workItemKey === 'journey:ripple-payer-exchange-read')?.explanation.selected).toBe(true);
+    expect(first.workItems.map((item) => item.kind)).toEqual(['JOURNEY', 'API', 'EXPLORATION']);
+    expect(() => assertManifestCompatible(first, { campaignId: first.campaignId, manifestFingerprint: first.manifestFingerprint })).not.toThrow();
+  });
+
+  test('baseline, shared-change, and conservative fallback modes are explicit', () => {
+    const baseline = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+    expect(baseline.selectedJourneys).toHaveLength(3);
+    expect(baseline.selection.zeroSelectionJustified).toBe(false);
+
+    const shared = createCampaignManifest(inputFor('CHANGE_DIRECTED', [{ repoId: 'mobingilabs/ripple-ui', path: 'src/router.js', status: 'modify' }]));
+    expect(shared.selectedJourneys).toEqual([
+      'ripple-payer-exchange-read',
+      'ripple-common-exchange-read',
+      'ripple-account-inventory',
+    ]);
+    expect(shared.selection.fallbackTriggered).toBe(false);
+
+    const unknown = createCampaignManifest(inputFor('CHANGE_DIRECTED', [{ repoId: 'mobingilabs/ripple-ui', path: 'src/new-runtime-entry.ts', status: 'modify' }]));
+    expect(unknown.selection.fallbackTriggered).toBe(true);
+    expect(unknown.selectedJourneys).toHaveLength(3);
+    expect(unknown.selection.explanations.every((entry) => entry.explanation.selected || entry.explanation.reason.length > 0)).toBe(true);
+  });
+
+  test('reproduction-only mode persists one target and selects no new coverage', () => {
+    const target = candidate({ runId: 'run-reproduction-target', fingerprint: 'fp:sha256:888888888888888888888888', journeyId: 'ripple-payer-exchange-read' });
+    const input = { ...inputFor('LOCAL_SYNTHETIC'), mode: 'REPRODUCTION_ONLY' as const, reproductionTarget: { clusterId: 'cluster:synthetic-target', candidate: target } };
+    const manifest = createCampaignManifest(input);
+    expect(manifest.mode).toBe('REPRODUCTION_ONLY');
+    expect(manifest.selectedJourneys).toEqual([]);
+    expect(manifest.selectedEnvelopes).toEqual([]);
+    expect(manifest.selectedApiScenarios).toEqual([]);
+    expect(manifest.workItems.map((item) => item.kind)).toEqual(['REPRODUCTION']);
+    expect(manifest.workItems[0]!.workItemId).toBe('reproduction:cluster:synthetic-target');
+    expect('replay' in (manifest.reproductionTarget?.candidate ?? {})).toBe(false);
+  });
+
+  test('reproduction-only mode executes the admitted target and bounded triage without fresh coverage', async () => {
+    const { root, store } = tempStore();
+    try {
+      const target = candidate({ runId: 'run-reproduction-execution', fingerprint: 'fp:sha256:999999999999999999999999', journeyId: 'ripple-payer-exchange-read', sequence: ['phase7.target', 'phase7.reduce'], predicate: (ids) => ids.includes('phase7.target') });
+      const cluster = clusterAnomalies([target.observation])[0];
+      expect(cluster).toBeDefined();
+      const input = { ...inputFor('LOCAL_SYNTHETIC'), mode: 'REPRODUCTION_ONLY' as const, reproductionTarget: { clusterId: cluster!.clusterId, candidate: target } };
+      const manifest = createCampaignManifest(input);
+      const executor = {
+        preflight: () => ({ passed: true, code: 'PREFLIGHT_PASS' as const, failedChecks: [], checkedAt: STATIC_NOW }),
+        execute: async () => { throw new Error('REPRODUCTION_ONLY_MUST_NOT_EXECUTE_NEW_WORK'); },
+        reproduce: async ({ representative }: { readonly representative: CampaignAnomalyCandidate }) => {
+          const replay = (sequence: readonly MinimizationAction[]) => ({
+            status: sequence.some((actionItem) => actionItem.actionId === 'phase7.target') ? 'FAILURE' as const : 'PASS' as const,
+            ...(sequence.some((actionItem) => actionItem.actionId === 'phase7.target') ? { anomalyFingerprint: representative.observation.fingerprint } : {}),
+            safety: SAFE_TRIAGE,
+          });
+          return {
+            result: 'REPRODUCED' as const,
+            runId: `${representative.observation.runId}-fresh`,
+            fingerprint: representative.observation.fingerprint,
+            safety: {
+              productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0,
+              productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0, infrastructureQueries: 0,
+              externalPublicationAttempts: 0,
+            },
+            privacy: {
+              result: 'PASS' as const, rawBodiesPersisted: 0, customerValuesPersisted: 0,
+              credentialsPersisted: 0, cookiesPersisted: 0, tokensPersisted: 0, domPersisted: 0,
+              screenshotsPersisted: 0, authenticatedTracesPersisted: 0,
+            },
+            candidate: { ...representative, replay, observation: { ...representative.observation, runId: `${representative.observation.runId}-fresh`, reproduced: true, timingClass: 'BOUNDED' as const } },
+          };
+        },
+      };
+      const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+      expect(result.checkpoint.selectedJourneys).toEqual([]);
+      expect(result.checkpoint.selectedEnvelopes).toEqual([]);
+      expect(result.checkpoint.selectedApiScenarios).toEqual([]);
+      expect(result.checkpoint.executionLedger[0]?.state).toBe('COMPLETED');
+      expect(result.checkpoint.budgetUsed.browserContexts).toBe(0);
+      expect(result.checkpoint.budgetUsed.apiExecutions).toBe(0);
+      expect(result.dossiers).toHaveLength(1);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('budget dimensions and accelerated time ceilings fail closed', () => {
+    const budget = new CampaignBudgetManager(INITIAL_REAL_CAMPAIGN_BUDGET, emptyBudgetUsage());
+    budget.reserveWork('JOURNEY');
+    expect(budget.used().journeyContexts).toBe(1);
+    expect(budget.used().browserContexts).toBe(1);
+    expect(() => budget.consume('totalActions', INITIAL_REAL_CAMPAIGN_BUDGET.maxTotalActions + 1)).toThrow(/CAMPAIGN_BUDGET_EXHAUSTED/);
+
+    let clock = 1_000;
+    const time = new CampaignTimeBudget(100, () => clock, 1_000);
+    expect(time.remainingMs()).toBe(100);
+    clock += 100;
+    expect(() => time.assertAvailable()).toThrow('CAMPAIGN_RUNTIME_TIMEOUT');
+  });
+
+  test('frozen infrastructure, datastore, and publication operations block before execution', () => {
+    for (const operation of ['GKE_METADATA_INVESTIGATION', 'KUBERNETES', 'DYNAMODB_DATA_ORACLE', 'BIGQUERY_DATA_ORACLE', 'SPANNER_DATA_ORACLE', 'EXTERNAL_PUBLICATION']) {
+      expect(() => assertOwnerPolicyAllows(operation)).toThrow('OWNER_POLICY_BLOCKED');
+    }
+  });
+});
+
+test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
+  test('runs the real orchestrator through safe execution, clustering, reproduction, minimization, dossier, brief, and privacy boundaries', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const uiBug = candidate({ runId: 'run-ui-bug', fingerprint: 'fp:sha256:111111111111111111111111', journeyId: 'ripple-payer-exchange-read', sequence: ['phase7.open', 'phase7.trigger', 'phase7.close'], predicate: (ids) => ids.includes('phase7.open') && ids.includes('phase7.trigger'), sourceRelevance: 'NO_CURRENT_CHANGE_RELEVANCE' });
+      const apiBug = candidate({ runId: 'run-api-bug', fingerprint: 'fp:sha256:222222222222222222222222', journeyId: 'ripple-common-exchange-read', operationFamily: 'ripple.common-exchange.read', apiFailed: true, sourceRelevance: 'SHARED_CHANGE_RELEVANCE' });
+      const irreducible = candidate({ runId: 'run-irreducible', fingerprint: 'fp:sha256:333333333333333333333333', journeyId: 'ripple-account-inventory', sequence: ['phase7.first', 'phase7.second', 'phase7.third'], predicate: (ids) => ids.join('|') === 'phase7.first|phase7.second|phase7.third' });
+      const transient = candidate({ runId: 'run-transient', fingerprint: 'fp:sha256:444444444444444444444444', journeyId: 'ripple-account-inventory', timingClass: 'TRANSIENT' });
+      const falsePositive = candidate({ runId: 'run-false-positive', fingerprint: 'fp:sha256:555555555555555555555555', journeyId: 'ripple-account-inventory', knownNightwatchDefect: true });
+      const script = new Map<string, readonly CampaignAnomalyCandidate[]>([
+        ['journey:ripple-payer-exchange-read', [uiBug]],
+        ['api:ripple.common-exchange.read', [apiBug]],
+        ['explore:E3-J3-account-inventory:0x0000000000000301', [irreducible, transient, falsePositive]],
+      ]);
+      const result = await runCampaign(manifest, passingExecutor(script), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+      expect(result.checkpoint.budgetUsed.apiExecutions).toBe(6);
+      expect(result.checkpoint.budgetUsed.replays).toBeGreaterThanOrEqual(2);
+      expect(result.checkpoint.anomalyClusters.length).toBe(5);
+      expect(result.dossiers.length).toBe(3);
+      expect(result.dossiers.some((dossier) => dossier.reproduction.result === 'REPRODUCED')).toBe(true);
+      expect(result.dossiers.some((dossier) => dossier.reproduction.minimalityGuarantee === '1-MINIMAL' || dossier.reproduction.minimalityGuarantee === 'BOUNDED_MINIMAL')).toBe(true);
+      expect(result.morningBrief.headline).toContain('finding');
+      expect(result.morningBrief.topFindings.length).toBeLessThanOrEqual(3);
+      expect(result.morningBrief.externalPublication).toBe('PROHIBITED');
+      expect(result.checkpoint.privacyStatus).toBe('PASS');
+      expect(result.checkpoint.safety).toEqual({ productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0, infrastructureQueries: 0, externalPublicationAttempts: 0 });
+      expect(fs.readdirSync(root).some((file) => file.endsWith('.morning-brief.json'))).toBe(true);
+      for (const file of fs.readdirSync(root)) expect(fs.statSync(path.join(root, file)).mode & 0o077).toBe(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('deduplicates a shared failure storm and stops broader work before replay spending', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const first = candidate({ runId: 'run-storm-j1', fingerprint: 'fp:sha256:666666666666666666666666', journeyId: 'ripple-payer-exchange-read', operationFamily: 'shared-runtime-root' });
+      const second = candidate({ runId: 'run-storm-j2', fingerprint: 'fp:sha256:666666666666666666666666', journeyId: 'ripple-common-exchange-read', operationFamily: 'shared-runtime-root' });
+      const script = new Map<string, readonly CampaignAnomalyCandidate[]>([
+        ['journey:ripple-payer-exchange-read', [first]],
+        ['journey:ripple-common-exchange-read', [second]],
+      ]);
+      const result = await runCampaign(manifest, passingExecutor(script), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(result.stopReason).toBe('FAILURE_STORM_SHARED_ROOT_SYMPTOM');
+      expect(result.checkpoint.anomalyClusters).toHaveLength(2);
+      expect(result.checkpoint.reproductionQueue).toHaveLength(0);
+      expect(result.checkpoint.budgetUsed.replays).toBe(0);
+      expect(result.morningBrief.headline).toContain('SHARED DEV FAILURE');
+      expect(result.dossiers).toHaveLength(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('resumes from an interrupted work item without re-running completed logical work', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const calls: string[] = [];
+      const executor = {
+        ...passingExecutor(),
+        execute: async ({ workItem }: { readonly workItem: CampaignWorkItem }) => {
+          calls.push(workItem.workItemId);
+          return defaultOutcome({ apiExecutions: workItem.kind === 'API' ? (workItem.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1) : 0, browserContextCreated: workItem.kind !== 'API' });
+        },
+      };
+      const interrupted = await runCampaign(manifest, executor, { store, stopAfterWorkItemId: manifest.workItems[0]!.workItemId, now: () => new Date(STATIC_NOW) });
+      expect(interrupted.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+      expect(interrupted.checkpoint.completedWorkItemIds).toContain(manifest.workItems[0]!.workItemId);
+      const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
+      expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
+      expect(calls.filter((id) => id === manifest.workItems[0]!.workItemId)).toHaveLength(1);
+      expect(resumed.checkpoint.completedWorkItemIds).toHaveLength(manifest.workItems.length);
+      expect(resumed.morningBrief.headline).toBe('NO ADMITTED PRODUCT ANOMALIES');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('process interruption thrown by an executor is persisted as replay-required', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const result = await runCampaign(manifest, passingExecutor(new Map(), { throwOnWorkItemId: manifest.workItems[0]!.workItemId }), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+      expect(result.checkpoint.executionLedger[0]!.state).toBe('REPLAY_REQUIRED');
+      expect(result.checkpoint.nextExactAction).toContain('replay');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('privacy sentinels are rejected before anomaly metadata reaches the durable ledger', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const unsafeBase = candidate({ runId: 'run-privacy-sentinel', fingerprint: 'fp:sha256:777777777777777777777777', journeyId: 'ripple-payer-exchange-read' });
+      const unsafe = {
+        ...unsafeBase,
+        observation: {
+          ...unsafeBase.observation,
+          features: { ...unsafeBase.observation.features, structuralState: 'CUSTOMER_SENTINEL' },
+        },
+      };
+      const script = new Map<string, readonly CampaignAnomalyCandidate[]>([['journey:ripple-payer-exchange-read', [unsafe]]]);
+      const result = await runCampaign(manifest, passingExecutor(script), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_SAFETY_BLOCKED');
+      expect(result.stopReason).toBe('PRIVACY_BLOCKED');
+      expect(result.checkpoint.privacyStatus).toBe('BLOCKED');
+      expect(result.checkpoint.anomalyObservations).toHaveLength(0);
+      expect(result.dossiers).toHaveLength(0);
+      for (const file of fs.readdirSync(root)) expect(fs.readFileSync(path.join(root, file), 'utf8')).not.toContain('CUSTOMER_SENTINEL');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+test.describe('Phase 7 no-finding and drift contracts', () => {
+  test('a clean baseline is a complete, useful campaign result', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const result = await runCampaign(manifest, passingExecutor(), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(result.morningBrief.headline).toBe('NO ADMITTED PRODUCT ANOMALIES');
+      expect(result.morningBrief.topFindings).toEqual([]);
+      expect(result.morningBrief.coverageGaps).toEqual([]);
+      expect(result.morningBrief.transientsAndNonFindings).toContain('Historical J2 font 502: L0_NOT_REPRODUCED; not promoted.');
+      expect(result.morningBrief.transientsAndNonFindings).toContain('Historical malformed JSON: UNKNOWN/HISTORICAL_ANOMALY_PRESENT; not deliberately replayed.');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('manifest drift is rejected before a resumed campaign can mix versions', () => {
+    const first = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+    const changed = createCampaignManifest(inputFor('COVERAGE_EXPANSION', [], { ...TEST_BUDGET, maxTotalActions: TEST_BUDGET.maxTotalActions - 1 }));
+    expect(changed.campaignId).not.toBe(first.campaignId);
+    expect(() => assertManifestCompatible(changed, { campaignId: first.campaignId, manifestFingerprint: first.manifestFingerprint })).toThrow('CAMPAIGN_VERSION_DRIFT');
+  });
+});

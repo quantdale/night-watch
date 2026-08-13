@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "nightwatch.campaign-fixture.private.v1",
+  "mode": "LOCAL_SYNTHETIC",
+  "selectionCases": [
+    "source-change-selects-J1-only",
+    "source-change-selects-J2-and-J3",
+    "shared-change-selects-all",
+    "no-change-baseline-health"
+  ],
+  "executionCases": [
+    "safe-exploration-branches",
+    "linked-api-operations",
+    "deterministic-ui-bug",
+    "deterministic-api-bug",
+    "duplicate-failure-storm",
+    "transient-not-reproduced",
+    "nightwatch-false-positive",
+    "minimizable-sequence",
+    "irreducible-failure",
+    "process-interruption",
+    "privacy-sentinel",
+    "owner-policy-blocked-infrastructure-request"
+  ],
+  "determinism": "same-frozen-manifest-and-seeded-adapter-results-produce-the-same-logical-output"
+}

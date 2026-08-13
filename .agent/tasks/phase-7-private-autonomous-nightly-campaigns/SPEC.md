@@ -125,11 +125,15 @@ The first bounded real campaign is deliberately small:
 - serial execution and no load generation.
 
 The initial profile maximums are: 6 browser contexts, 3 journey contexts, 3
-exploration contexts, 6 API executions, 3 replays, 4 minimization candidates,
+exploration contexts, 6 API executions, 8 replays, 4 minimization candidates,
 24 total actions, 15 minutes, 120 seconds per test, 3 promoted clusters, and
-10 MiB private evidence. These are maximums, not quotas. The general policy
-supports multi-hour campaigns up to the explicitly supplied runtime ceiling;
-short synthetic clocks and local fixtures prove time control without waiting.
+10 MiB private evidence. The eight-replay ceiling is the sum of three required
+Phase 5 fresh replays, one representative reproduction allowance, and the
+existing private-triage allowance of one exact replay plus up to four reduced
+candidate evaluations. The minimizer still cannot exceed its own five-call
+policy. These are maximums, not quotas. The general policy supports multi-hour
+campaigns up to the explicitly supplied runtime ceiling; short synthetic
+clocks and local fixtures prove time control without waiting.
 
 ## Budget policy
 
