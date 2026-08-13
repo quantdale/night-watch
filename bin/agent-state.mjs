@@ -155,6 +155,7 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
+  /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP)\.md$/,
 ];
 

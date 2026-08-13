@@ -213,6 +213,17 @@ test('uncommitted approved exploration ledger is checkpoint advance', () => {
   expect(result.stderr).not.toContain('STALE STATE');
 });
 
+test('uncommitted Phase 6 binding audit is checkpoint advance', () => {
+  const { root } = fixture();
+  const audit = path.join(root, 'corpus', 'phase6', 'runtime-binding-audit.json');
+  fs.mkdirSync(path.dirname(audit), { recursive: true });
+  fs.writeFileSync(audit, '{"schema":"synthetic.phase6.audit"}\n');
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('STALE STATE');
+});
+
 test('missing required state section fails', () => {
   const { root } = fixture();
   const file = path.join(root, '.agent', 'tasks', 'phase-test', 'STATE.md');
