@@ -18,6 +18,7 @@ import type {
   CampaignSelectionResult,
   CampaignWorkItem,
 } from './types';
+import { isInitialRealCampaignBudget } from './budget';
 
 const JOURNEY_ORDER: readonly JourneyId[] = [...RIPPLE_JOURNEY_IDS];
 
@@ -145,6 +146,22 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
   const apiWork: CampaignWorkItem[] = [];
   const explorationWork: CampaignWorkItem[] = [];
   const reproductionWork: CampaignWorkItem[] = [];
+  const boundedRealProfile = isInitialRealCampaignBudget(input.budgetPolicy);
+  const selectedApiOperationIds = new Set<string>();
+  if (input.mode !== 'REPRODUCTION_ONLY') {
+    const apiReplayReserve = boundedRealProfile && input.budgetPolicy.maxPromotedClusters > 0 ? 1 : 0;
+    let apiCost = 0;
+    for (const selectedJourney of selectedEntries) {
+      for (const operationId of API_BY_JOURNEY[selectedJourney.journeyId] ?? []) {
+        const operation = findApiOperation(input.apiOperations, operationId);
+        const cost = operation.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1;
+        if (!boundedRealProfile || apiCost + cost <= input.budgetPolicy.maxApiExecutions - apiReplayReserve) {
+          selectedApiOperationIds.add(operationId);
+          apiCost += cost;
+        }
+      }
+    }
+  }
 
   if (input.mode !== 'REPRODUCTION_ONLY') {
     for (const selectedJourney of selectedEntries) {
@@ -178,6 +195,13 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
       const linkedApiIds = API_BY_JOURNEY[journeyId] ?? [];
       for (const operationId of linkedApiIds) {
         const operation = findApiOperation(input.apiOperations, operationId);
+        if (!selectedApiOperationIds.has(operationId)) {
+          explanations.push({
+            workItemKey: `api:${operationId}`,
+            explanation: explanationFor({ selected: false, mode: input.mode, journeyId, selectedJourney, apiOperationId: operationId, reason: 'Omitted before freeze to reserve one bounded API reproduction execution.' }),
+          });
+          continue;
+        }
         const apiExplanation = explanationFor({ selected: true, mode: input.mode, journeyId, selectedJourney, apiOperationId: operationId, reason: `Explicit Phase 5 lineage from ${journeyId}; no API-only expansion.` });
         const apiWorkItemId = `api:${operationId}`;
         apiWork.push({
@@ -197,6 +221,13 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
 
       if (input.mode === 'BASELINE_HEALTH' || input.mode === 'COVERAGE_EXPANSION' || input.mode === 'LOCAL_SYNTHETIC' || input.mode === 'CHANGE_DIRECTED') {
         const seed = seeds[journeyRank(journeyId)] ?? DEFAULT_SEEDS[journeyRank(journeyId)]!;
+        if (boundedRealProfile && input.budgetPolicy.maxExplorationContexts === 0) {
+          explanations.push({
+            workItemKey: `explore:${ENVELOPE_BY_JOURNEY[journeyId]}:${seed}`,
+            explanation: explanationFor({ selected: false, mode: input.mode, journeyId, selectedJourney, envelopeId: ENVELOPE_BY_JOURNEY[journeyId], reason: 'Omitted before freeze to reserve browser capacity for qualifying reproduction.' }),
+          });
+          continue;
+        }
         const envelope = input.explorationEnvelopes.find((candidate) => candidate.envelopeId === envelopeId);
         if (envelope === undefined) throw new Error(`CAMPAIGN_ENVELOPE_MISSING:${envelopeId}`);
         const envelopeActions = actionIdsForEnvelope(input.safeActions, envelopeId, envelope.allowedActionIds);
@@ -266,8 +297,11 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
     }
   }
   if (input.mode === 'REPRODUCTION_ONLY') {
+    const explanationKeys = new Set(explanations.map((entry) => entry.workItemKey));
     for (const journeyId of JOURNEY_ORDER) {
-      explanations.push({ workItemKey: `journey:${journeyId}`, explanation: explanationFor({ selected: false, mode: input.mode, journeyId, reason: 'REPRODUCTION_ONLY does not select new journey coverage.' }) });
+      if (!explanationKeys.has(`journey:${journeyId}`)) {
+        explanations.push({ workItemKey: `journey:${journeyId}`, explanation: explanationFor({ selected: false, mode: input.mode, journeyId, reason: 'REPRODUCTION_ONLY does not select new journey coverage.' }) });
+      }
     }
   }
 

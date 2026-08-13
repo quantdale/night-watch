@@ -21,7 +21,7 @@ import type {
 } from '../triage/types';
 import { buildCampaignMorningBrief, renderCampaignMorningBrief } from './brief';
 import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage } from './budget';
-import { CampaignCheckpointStore } from './checkpoint';
+import { CampaignCheckpointStore, validateCampaignCheckpoint } from './checkpoint';
 import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
 import { detectFailureStorm, type FailureStorm } from './storm';
 import {
@@ -395,6 +395,7 @@ export class CampaignOrchestrator {
     this.now = options.now ?? (() => new Date());
     this.currentVersions = options.currentVersions;
     this.state = options.checkpoint === undefined ? initialCheckpoint(manifest, this.now) : options.checkpoint;
+    validateCampaignCheckpoint(this.state, manifest);
     assertManifestCompatible(manifest, this.state);
     try {
       this.assertCurrentVersions();
@@ -442,6 +443,7 @@ export class CampaignOrchestrator {
   checkpoint(): CampaignCheckpoint {
     const checkpoint: CampaignCheckpoint = {
       ...this.state,
+      checkpointOrdinal: this.state.checkpointOrdinal + 1,
       budgetUsed: this.budget.used(),
       budgetRemaining: this.budget.remaining(),
       runtimeElapsedMs: this.time.elapsedMs(),
@@ -449,8 +451,9 @@ export class CampaignOrchestrator {
       completedWorkItemIds: completedWorkItems(this.state.executionLedger),
       remainingWorkItemIds: remainingWorkItems(this.manifest, this.state.executionLedger),
     };
+    validateCampaignCheckpoint(checkpoint, this.manifest);
     this.state = checkpoint;
-    const checkpointPath = this.checkpointStore.writeCheckpoint(checkpoint);
+    const checkpointPath = this.checkpointStore.writeCheckpoint(checkpoint, this.manifest);
     this.chargeArtifact(checkpointPath);
     return checkpoint;
   }
@@ -547,7 +550,10 @@ export class CampaignOrchestrator {
   private async finalize(resultClass: CampaignResultClass, stopReason: CampaignCheckpoint['stopReason']): Promise<CampaignRunResult> {
     const safety = this.state.safety;
     const privacy = this.state.privacy;
-    this.state = { ...this.state, campaignStatus: resultClass, stopReason, morningBriefStatus: 'IN_PROGRESS' };
+    const unresolved = resultClass === 'COMPLETE_CLEAN'
+      ? this.state.unresolved.filter((item) => item !== 'PROCESS_INTERRUPTION' && item !== 'PROCESS_INTERRUPTION_SIMULATED')
+      : this.state.unresolved;
+    this.state = { ...this.state, campaignStatus: resultClass, stopReason, unresolved, morningBriefStatus: 'IN_PROGRESS' };
     this.checkpoint();
     const brief = this.buildBrief(resultClass, safety, privacy);
     this.state = { ...this.state, morningBriefStatus: 'READY' };
@@ -733,7 +739,7 @@ export class CampaignOrchestrator {
           ? { ...reproCandidate.observation, runId: reproduction.runId, reproduced: true, observedAt: nowIso(this.now) }
           : null;
         if (reproducedObservation !== null) {
-          this.observations.push(reproducedObservation);
+          if (!this.observations.some((observation) => observation.runId === reproducedObservation.runId)) this.observations.push(reproducedObservation);
           this.candidates.set(reproducedObservation.runId, { ...reproCandidate, observation: reproducedObservation });
         }
         this.state = {
@@ -1048,7 +1054,7 @@ export function prepareCampaign(manifest: CampaignManifest, options: CampaignPre
   const checkpoint = initialCheckpoint(manifest, now);
   assertManifestCompatible(manifest, checkpoint);
   store.writeManifest(manifest);
-  store.writeCheckpoint(checkpoint);
+  store.writeCheckpoint(checkpoint, manifest);
   return checkpoint;
 }
 

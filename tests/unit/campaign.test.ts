@@ -16,6 +16,7 @@ import {
   prepareCampaign,
   resumeCampaign,
   runCampaign,
+  validateCampaignManifest,
   type CampaignAnomalyCandidate,
   type CampaignBudgetPolicy,
   type CampaignExecutionOutcome,
@@ -641,5 +642,111 @@ test.describe('Phase 7 no-finding and drift contracts', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+test.describe('Campaign hardening adversarial persistence fixtures', () => {
+  test('rejects the manifest tamper matrix before execution authority is rebuilt', () => {
+    const base = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+    const mutate = (change: (value: Record<string, any>) => void): Record<string, any> => {
+      const value = JSON.parse(JSON.stringify(base)) as Record<string, any>;
+      change(value);
+      return value;
+    };
+    const journey = base.workItems.find((item) => item.kind === 'JOURNEY')!;
+    const api = base.workItems.find((item) => item.kind === 'API')!;
+    const exploration = base.workItems.find((item) => item.kind === 'EXPLORATION')!;
+    const cases: readonly [string, (value: Record<string, any>) => void][] = [
+      ['changed workItemId', (value) => { value.workItems[0].workItemId = 'journey:tampered'; }],
+      ['changed kind', (value) => { value.workItems[0].kind = 'API'; }],
+      ['changed journeyId', (value) => { value.workItems[0].journeyId = 'ripple-common-exchange-read'; }],
+      ['changed API operation ID', (value) => { value.workItems.find((item: any) => item.kind === 'API').apiOperationId = 'ripple.tampered.read'; }],
+      ['changed seed', (value) => { value.workItems.find((item: any) => item.kind === 'EXPLORATION').seed = '0x0000000000000999'; }],
+      ['changed order', (value) => { value.workItems[0].order = 1; value.workItems[1].order = 0; }],
+      ['duplicate order', (value) => { value.workItems[1].order = value.workItems[0].order; }],
+      ['duplicate work item', (value) => { value.workItems.push({ ...value.workItems[0], order: value.workItems.length }); }],
+      ['removed work item', (value) => { value.workItems.pop(); }],
+      ['changed selection', (value) => { value.selection.selectedJourneys = []; }],
+      ['changed selected arrays', (value) => { value.selectedJourneys = []; }],
+      ['changed budget', (value) => { value.budgetPolicy.maxTotalActions -= 1; }],
+      ['changed source snapshot', (value) => { value.sourceSnapshots[0].headSha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; }],
+      ['changed source window', (value) => { value.sourceWindow.changesetId = 'tampered-window'; }],
+      ['changed owner scope', (value) => { value.ownerScopePolicy.l4 = 'IN_SCOPE'; }],
+      ['changed versions', (value) => { value.versions.nightwatchSourceSha = 'tampered-version'; }],
+      ['changed fingerprint', (value) => { value.manifestFingerprint = 'manifest:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'; }],
+      ['valid old fingerprint plus modified executable field', (value) => { value.workItems[0].selection.reason = 'tampered executable selection'; }],
+      ['extra execution material', (value) => { value.workItems[0].unexpectedExecutionField = 'unexpected'; }],
+    ];
+    expect(journey).toBeDefined();
+    expect(api).toBeDefined();
+    expect(exploration).toBeDefined();
+    for (const [label, change] of cases) {
+      expect(() => validateCampaignManifest(mutate(change)), label).toThrow(/CAMPAIGN_MANIFEST_(?:INTEGRITY_INVALID|FINGERPRINT_INVALID)|CAMPAIGN_ID_RECOMPUTATION_MISMATCH|CAMPAIGN_WORK/);
+    }
+  });
+
+  test('rejects checkpoint corruption and malformed durable wrappers before callbacks', () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const checkpoint = prepareCampaign(manifest, { store, now: () => new Date(STATIC_NOW) });
+      const checkpointPath = new CampaignCheckpointStore(store).paths(manifest.campaignId).checkpoint;
+      const writeRaw = (value: unknown): void => fs.writeFileSync(checkpointPath, JSON.stringify({ status: 'READY', checkpoint: value }));
+      const mutate = (change: (value: Record<string, any>) => void): void => {
+        const value = JSON.parse(JSON.stringify(checkpoint)) as Record<string, any>;
+        change(value);
+        writeRaw(value);
+        expect(() => new CampaignCheckpointStore(store).readCheckpoint(manifest.campaignId, manifest)).toThrow(/CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID|CAMPAIGN_ARTIFACT_INVALID|CAMPAIGN_VERSION_DRIFT/);
+      };
+      mutate((value) => { value.budgetUsed.totalActions = -1; });
+      mutate((value) => { value.budgetUsed.totalActions = 0; value.budgetRemaining.totalActions = 0; });
+      mutate((value) => { value.budgetUsed.totalActions = manifest.budgetPolicy.maxTotalActions + 1; });
+      mutate((value) => { value.budgetRemaining.totalActions -= 1; });
+      mutate((value) => { value.executionLedger.push({ ...value.executionLedger[0] }); });
+      mutate((value) => { value.executionLedger[0].workItemId = 'journey:unknown'; });
+      mutate((value) => { value.executionLedger[0].kind = 'API'; });
+      mutate((value) => { value.completedWorkItemIds = [manifest.workItems[0]!.workItemId]; value.remainingWorkItemIds = [manifest.workItems[0]!.workItemId, ...value.remainingWorkItemIds]; });
+      mutate((value) => { value.executionLedger.pop(); });
+      mutate((value) => { value.campaignStatus = 'COMPLETE_CLEAN'; });
+      mutate((value) => { value.campaignStatus = 'PARTIAL_BUDGET_EXHAUSTED'; value.stopReason = 'BUDGET_EXHAUSTED'; });
+      mutate((value) => { value.campaignStatus = 'PARTIAL_AUTH_BLOCKED'; value.stopReason = 'AUTH_BLOCKED'; value.completedWorkItemIds = [manifest.workItems[0]!.workItemId]; });
+      mutate((value) => { value.safety.productionAttempts = -1; });
+      mutate((value) => { value.privacyStatus = 'PASS'; value.privacy.rawBodiesPersisted = 1; });
+      mutate((value) => { value.campaignId = 'campaign:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'; });
+      mutate((value) => { value.manifestFingerprint = 'manifest:sha256:aaaaaaaaaaaaaaaaaaaaaaaa'; });
+      mutate((value) => { value.checkpointOrdinal = 'not-a-number'; });
+      mutate((value) => { value.budgetUsed.totalActions = '0'; });
+      mutate((value) => {
+        value.anomalyObservations = [{ runId: 'observation:unknown', fingerprint: 'fp:unknown' }];
+        value.anomalyClusters = [{ clusterId: 'cluster:unknown', primaryRunId: 'observation:unknown', runIds: ['observation:unknown'] }];
+        value.reproductionQueue = [
+          { clusterId: 'cluster:not-present', representativeRunId: 'observation:unknown', state: 'PENDING', result: null, admissionLevel: 'L0', reasonCode: null, runId: null, safety: checkpoint.safety, privacy: checkpoint.privacy },
+        ];
+      });
+      mutate((value) => {
+        value.anomalyObservations = [{ runId: 'observation:known', fingerprint: 'fp:known' }];
+        value.anomalyClusters = [{ clusterId: 'cluster:known', primaryRunId: 'observation:known', runIds: ['observation:known'] }];
+        const reproduction = { clusterId: 'cluster:known', representativeRunId: 'observation:known', state: 'PENDING', result: null, admissionLevel: 'L0', reasonCode: null, runId: null, safety: checkpoint.safety, privacy: checkpoint.privacy };
+        value.reproductionQueue = [reproduction, { ...reproduction }];
+      });
+      fs.writeFileSync(checkpointPath, '{"status":"READY","checkpoint":');
+      expect(() => new CampaignCheckpointStore(store).readCheckpoint(manifest.campaignId, manifest)).toThrow('MALFORMED_JSON');
+      fs.writeFileSync(checkpointPath, '{"status":"READY"');
+      expect(() => new CampaignCheckpointStore(store).readCheckpoint(manifest.campaignId, manifest)).toThrow('MALFORMED_JSON');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the initial real profile freezes a deterministic reproduction reserve without raising caps', () => {
+    const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+    expect(manifest.budgetPolicy.maxTotalBrowserContexts).toBe(6);
+    expect(manifest.budgetPolicy.maxApiExecutions).toBe(6);
+    expect(manifest.budgetPolicy.maxReplays).toBe(8);
+    expect(manifest.budgetPolicy.maxPromotedClusters).toBe(1);
+    expect(manifest.selectedJourneys).toHaveLength(3);
+    expect(manifest.selectedEnvelopes).toEqual([]);
+    expect(manifest.selectedApiScenarios).toHaveLength(2);
+    expect(manifest.selection.explanations.some((entry) => !entry.explanation.selected && entry.explanation.reason.includes('reserve'))).toBe(true);
   });
 });

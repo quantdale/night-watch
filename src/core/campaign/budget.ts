@@ -8,13 +8,17 @@ import {
   type CampaignBudgetSnapshot,
   type CampaignBudgetUsage,
   type CampaignWorkKind,
+  type CampaignWorkItem,
 } from './types';
 
 export const INITIAL_REAL_CAMPAIGN_BUDGET: CampaignBudgetPolicy = Object.freeze({
   policyVersion: CAMPAIGN_BUDGET_POLICY_VERSION,
   maxTotalBrowserContexts: 6,
   maxJourneyContexts: 3,
-  maxExplorationContexts: 3,
+  // Keep three browser contexts available after the three trusted journeys;
+  // optional exploration is suppressed in the real bounded profile so a
+  // qualifying browser reproduction is not promised and then starved.
+  maxExplorationContexts: 0,
   maxApiExecutions: 6,
   // Three linked Phase 5 fresh replays plus the existing one-exact/four-
   // candidate private triage allowance. This is still a bounded maximum;
@@ -24,7 +28,10 @@ export const INITIAL_REAL_CAMPAIGN_BUDGET: CampaignBudgetPolicy = Object.freeze(
   maxTotalActions: 24,
   maxRuntimeMs: 15 * 60 * 1000,
   maxPerTestTimeoutMs: 120 * 1000,
-  maxPromotedClusters: 3,
+  // One promoted cluster is the deterministic bounded triage reserve. A
+  // larger breadth would consume the same replay/context reserve before the
+  // first finding could be reproduced.
+  maxPromotedClusters: 1,
   maxPrivateEvidenceBytes: 10 * 1024 * 1024,
 });
 
@@ -56,6 +63,35 @@ const ZERO_USAGE: CampaignBudgetUsage = Object.freeze({
 
 type BudgetDimension = keyof CampaignBudgetUsage;
 
+export interface CampaignBudgetFeasibility {
+  readonly applicable: boolean;
+  readonly feasible: boolean;
+  readonly mandatoryBrowserContexts: number;
+  readonly mandatoryApiExecutions: number;
+  readonly reservedBrowserContexts: number;
+  readonly reservedApiExecutions: number;
+  readonly reservedReplays: number;
+  readonly reasons: readonly string[];
+}
+
+export function isInitialRealCampaignBudget(policy: CampaignBudgetPolicy): boolean {
+  return policy.maxTotalBrowserContexts === INITIAL_REAL_CAMPAIGN_BUDGET.maxTotalBrowserContexts
+    && policy.maxJourneyContexts === INITIAL_REAL_CAMPAIGN_BUDGET.maxJourneyContexts
+    && policy.maxExplorationContexts === INITIAL_REAL_CAMPAIGN_BUDGET.maxExplorationContexts
+    && policy.maxApiExecutions === INITIAL_REAL_CAMPAIGN_BUDGET.maxApiExecutions
+    && policy.maxReplays === INITIAL_REAL_CAMPAIGN_BUDGET.maxReplays
+    && policy.maxMinimizationCandidates === INITIAL_REAL_CAMPAIGN_BUDGET.maxMinimizationCandidates
+    && policy.maxTotalActions === INITIAL_REAL_CAMPAIGN_BUDGET.maxTotalActions
+    && policy.maxRuntimeMs === INITIAL_REAL_CAMPAIGN_BUDGET.maxRuntimeMs
+    && policy.maxPerTestTimeoutMs === INITIAL_REAL_CAMPAIGN_BUDGET.maxPerTestTimeoutMs
+    && policy.maxPromotedClusters === INITIAL_REAL_CAMPAIGN_BUDGET.maxPromotedClusters
+    && policy.maxPrivateEvidenceBytes === INITIAL_REAL_CAMPAIGN_BUDGET.maxPrivateEvidenceBytes;
+}
+
+export function isRealScaleBudget(policy: CampaignBudgetPolicy): boolean {
+  return policy.maxRuntimeMs >= INITIAL_REAL_CAMPAIGN_BUDGET.maxRuntimeMs;
+}
+
 const LIMIT_FOR: Readonly<Record<BudgetDimension, keyof CampaignBudgetPolicy>> = {
   browserContexts: 'maxTotalBrowserContexts',
   journeyContexts: 'maxJourneyContexts',
@@ -80,6 +116,43 @@ export function validateBudgetPolicy(policy: CampaignBudgetPolicy): void {
   if (policy.maxPromotedClusters > 3) throw new Error('CAMPAIGN_CLUSTER_POLICY_EXCEEDED');
 }
 
+/**
+ * Check the frozen real-profile promise before a manifest becomes authority.
+ * Synthetic campaigns intentionally bypass this profile planner because their
+ * fixture executors do not represent real browser/API resource consumption.
+ */
+export function analyzeCampaignBudgetFeasibility(input: {
+  readonly mode: string;
+  readonly policy: CampaignBudgetPolicy;
+  readonly workItems: readonly CampaignWorkItem[];
+  readonly applicable?: boolean;
+}): CampaignBudgetFeasibility {
+  const applicable = input.applicable ?? input.mode !== 'LOCAL_SYNTHETIC';
+  const mandatoryBrowserContexts = input.workItems.filter((item) => item.kind === 'JOURNEY' || item.kind === 'EXPLORATION').length;
+  const mandatoryApiExecutions = input.workItems
+    .filter((item) => item.kind === 'API')
+    .reduce((total, item) => total + (item.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1), 0);
+  const reservedBrowserContexts = input.policy.maxPromotedClusters > 0 ? 1 : 0;
+  const reservedApiExecutions = input.policy.maxPromotedClusters > 0 ? 1 : 0;
+  const reservedReplays = input.policy.maxPromotedClusters > 0 ? 1 : 0;
+  const reasons: string[] = [];
+  if (applicable && mandatoryBrowserContexts + reservedBrowserContexts > input.policy.maxTotalBrowserContexts) reasons.push('BROWSER_REPRODUCTION_RESERVE_UNAVAILABLE');
+  if (applicable && mandatoryApiExecutions + reservedApiExecutions > input.policy.maxApiExecutions) reasons.push('API_REPRODUCTION_RESERVE_UNAVAILABLE');
+  const mandatoryReplayReservations = input.workItems.filter((item) => item.kind === 'API' && item.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY').length;
+  if (applicable && mandatoryReplayReservations + reservedReplays > input.policy.maxReplays) reasons.push('REPLAY_RESERVE_UNAVAILABLE');
+  if (applicable && input.mode === 'REPRODUCTION_ONLY' && input.policy.maxReplays < 1) reasons.push('REPRODUCTION_ONLY_REPLAY_UNAVAILABLE');
+  return {
+    applicable,
+    feasible: reasons.length === 0,
+    mandatoryBrowserContexts,
+    mandatoryApiExecutions,
+    reservedBrowserContexts,
+    reservedApiExecutions,
+    reservedReplays,
+    reasons,
+  };
+}
+
 export class CampaignBudgetManager {
   readonly policy: CampaignBudgetPolicy;
   private usage: CampaignBudgetUsage;
@@ -94,6 +167,7 @@ export class CampaignBudgetManager {
   private assertWithinLimits(): void {
     for (const dimension of Object.keys(LIMIT_FOR) as BudgetDimension[]) {
       const limit = this.policy[LIMIT_FOR[dimension]] as number;
+      if (!Number.isInteger(this.usage[dimension]) || this.usage[dimension] < 0) throw new Error(`CAMPAIGN_BUDGET_USAGE_INVALID:${dimension}`);
       if (this.usage[dimension] > limit) throw new Error(`CAMPAIGN_BUDGET_ALREADY_EXCEEDED:${dimension}`);
     }
   }
@@ -106,7 +180,7 @@ export class CampaignBudgetManager {
     const result = {} as CampaignBudgetUsage;
     for (const dimension of Object.keys(LIMIT_FOR) as BudgetDimension[]) {
       const limit = this.policy[LIMIT_FOR[dimension]] as number;
-      Object.assign(result, { [dimension]: Math.max(0, limit - this.usage[dimension]) });
+      Object.assign(result, { [dimension]: limit - this.usage[dimension] });
     }
     return result;
   }
