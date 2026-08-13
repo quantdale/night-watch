@@ -1023,6 +1023,35 @@ export class CampaignOrchestrator {
   }
 }
 
+export interface CampaignPrepareOptions {
+  readonly store?: PrivateArtifactStore;
+  readonly now?: () => Date;
+  /** Optional runtime fingerprint check used before a manifest is frozen. */
+  readonly currentVersions?: CampaignRunOptions['currentVersions'];
+}
+
+/**
+ * Persist a fresh manifest and its ordinal-zero checkpoint without invoking
+ * any executor callback. Real adapters use this as the explicit freeze point
+ * before the separate resume command is allowed to perform product work.
+ */
+export function prepareCampaign(manifest: CampaignManifest, options: CampaignPrepareOptions = {}): CampaignCheckpoint {
+  validateCampaignManifest(manifest);
+  const store = new CampaignCheckpointStore(options.store ?? new PrivateArtifactStore());
+  const paths = store.paths(manifest.campaignId);
+  if (fs.existsSync(paths.manifest) || fs.existsSync(paths.checkpoint)) throw new Error('CAMPAIGN_ALREADY_PREPARED');
+  if (options.currentVersions !== undefined) {
+    const current = typeof options.currentVersions === 'function' ? options.currentVersions() : options.currentVersions;
+    if (stableCampaignJson(current) !== stableCampaignJson(manifest.versions)) throw new Error('CAMPAIGN_VERSION_DRIFT');
+  }
+  const now = options.now ?? (() => new Date());
+  const checkpoint = initialCheckpoint(manifest, now);
+  assertManifestCompatible(manifest, checkpoint);
+  store.writeManifest(manifest);
+  store.writeCheckpoint(checkpoint);
+  return checkpoint;
+}
+
 export async function runCampaign(manifest: CampaignManifest, executor: CampaignExecutor, options: CampaignRunOptions = {}): Promise<CampaignRunResult> {
   const orchestrator = new CampaignOrchestrator(manifest, executor, options);
   return await orchestrator.run(options);

@@ -13,6 +13,7 @@ import {
   assertManifestCompatible,
   createCampaignManifest,
   emptyBudgetUsage,
+  prepareCampaign,
   resumeCampaign,
   runCampaign,
   type CampaignAnomalyCandidate,
@@ -521,6 +522,34 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
       expect(calls.filter((id) => id === manifest.workItems[0]!.workItemId)).toHaveLength(1);
       expect(resumed.checkpoint.completedWorkItemIds).toHaveLength(manifest.workItems.length);
       expect(resumed.morningBrief.headline).toBe('NO ADMITTED PRODUCT ANOMALIES');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('prepares an ordinal-zero checkpoint without invoking an executor', () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const checkpoint = prepareCampaign(manifest, { store, now: () => new Date(STATIC_NOW), currentVersions: manifest.versions });
+      expect(checkpoint.checkpointOrdinal).toBe(0);
+      expect(checkpoint.campaignStatus).toBe('IN_PROGRESS');
+      expect(checkpoint.completedWorkItemIds).toEqual([]);
+      expect(store.root).toContain(root);
+      const checkpointStore = new CampaignCheckpointStore(store);
+      expect(checkpointStore.readManifest(manifest.campaignId).manifestFingerprint).toBe(manifest.manifestFingerprint);
+      expect(checkpointStore.readCheckpoint(manifest.campaignId, manifest).remainingWorkItemIds).toEqual(manifest.workItems.map((item) => item.workItemId));
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('refuses to overwrite an already prepared campaign', () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      prepareCampaign(manifest, { store, now: () => new Date(STATIC_NOW) });
+      expect(() => prepareCampaign(manifest, { store, now: () => new Date(STATIC_NOW) })).toThrow('CAMPAIGN_ALREADY_PREPARED');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

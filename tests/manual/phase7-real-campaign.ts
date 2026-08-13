@@ -57,8 +57,12 @@ import {
   CAMPAIGN_ORCHESTRATOR_VERSION,
   CAMPAIGN_SCHEMA_VERSION,
   INITIAL_REAL_CAMPAIGN_BUDGET,
+  CampaignCheckpointStore,
   createCampaignManifest,
+  prepareCampaign,
+  resumeCampaign,
   runCampaign,
+  stableCampaignJson,
   type CampaignAnomalyCandidate,
   type CampaignExecutionOutcome,
   type CampaignInput,
@@ -739,6 +743,17 @@ function privacyAudit(root: string): void {
   walk(root);
 }
 
+function assertFrozenSourceSnapshots(context: RealCampaignContext, manifest: CampaignManifest): void {
+  const current = [...context.sourceSnapshots].sort((left, right) => left.repoId.localeCompare(right.repoId));
+  const frozen = [...manifest.sourceSnapshots].sort((left, right) => left.repoId.localeCompare(right.repoId));
+  if (stableCampaignJson(current) !== stableCampaignJson(frozen)) throw new Error('CAMPAIGN_SOURCE_VERSION_DRIFT');
+}
+
+function failedPreflight(gate: RealRunGateResult): never {
+  const failed = gate.checks.filter((check) => check.status === 'FAIL').map((check) => check.name);
+  throw new Error(`PHASE7_PREPARE_PREFLIGHT_FAILED:${failed.join(',')}`);
+}
+
 test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
   if (process.env.NIGHTWATCH_PHASE_7_REAL !== '1') { test.skip(); return; }
   const root = rootDirectory();
@@ -749,9 +764,45 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
   const statePath = validateStorageStateFile(stateValue);
   const privateStore = new PrivateArtifactStore();
   const context = await buildRealContext(root, environment, target, statePath, privateStore);
-  const mode: CampaignInput['mode'] = context.changeset.changedFiles.length > 0 ? 'CHANGE_DIRECTED' : 'BASELINE_HEALTH';
-  const input = buildInput(context, mode);
-  const manifest = createCampaignManifest(input);
+  const resumeId = (process.env.NIGHTWATCH_PHASE_7_RESUME_CAMPAIGN ?? '').trim();
+  const prepareOnly = process.env.NIGHTWATCH_PHASE_7_PREPARE_ONLY === '1';
+  if (prepareOnly && resumeId !== '') throw new Error('PHASE7_PREPARE_RESUME_CONFLICT');
+  if (!prepareOnly && resumeId === '') throw new Error('PHASE7_FROZEN_MANIFEST_REQUIRED');
+  const manifest = resumeId === ''
+    ? createCampaignManifest(buildInput(context, context.changeset.changedFiles.length > 0 ? 'CHANGE_DIRECTED' : 'BASELINE_HEALTH'))
+    : new CampaignCheckpointStore(privateStore).readManifest(resumeId);
+  assertFrozenSourceSnapshots(context, manifest);
+
+  if (prepareOnly) {
+    await ensureAuth(browser, context);
+    const gate = await preflightGate(context);
+    if (!gate.pass) failedPreflight(gate);
+    if (context.nightwatchDirtyPaths.length > 0 || currentNightwatchDirtyPaths(context.root).length > 0) {
+      throw new Error('PHASE7_PREPARE_WORKTREE_DIRTY');
+    }
+    const checkpoint = prepareCampaign(manifest, { store: privateStore, currentVersions: () => versionFingerprint(context.root) });
+    console.log(JSON.stringify({
+      checkpoint: 'PHASE_7_NEW_REAL_CAMPAIGN_READY',
+      campaignId: manifest.campaignId,
+      manifestFingerprint: manifest.manifestFingerprint,
+      nightwatchSourceSha: manifest.versions.nightwatchSourceSha,
+      campaignSchemaVersion: manifest.campaignSchemaVersion,
+      orchestratorVersion: manifest.versions.orchestratorVersion,
+      mode: manifest.mode,
+      selectedJourneys: manifest.selectedJourneys,
+      selectedEnvelopes: manifest.selectedEnvelopes,
+      selectedApiScenarios: manifest.selectedApiScenarios,
+      workItemCount: manifest.workItems.length,
+      seedCount: manifest.seedSet.length,
+      budgetPolicyVersion: manifest.versions.budgetPolicyVersion,
+      checkpointOrdinal: checkpoint.checkpointOrdinal,
+      nextExactAction: checkpoint.nextExactAction,
+      productExecution: 'NOT_STARTED',
+      safety: 'PREPARE_GATE_PASS',
+    }, null, 2));
+    return;
+  }
+
   const executor = {
     preflight: async () => {
       try {
@@ -779,7 +830,7 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
       throw new Error('CAMPAIGN_REPRODUCTION_ADAPTER_NOT_CONFIGURED');
     },
   };
-  const result = await runCampaign(manifest, executor, { store: privateStore, maxTopFindings: 3, currentVersions: () => versionFingerprint(context.root) });
+  const result = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(privateStore), maxTopFindings: 3, currentVersions: () => versionFingerprint(context.root) });
   privacyAudit(privateStore.root);
   expect(result.checkpoint.safety.productionAttempts).toBe(0);
   expect(result.checkpoint.safety.proxyViolations).toBe(0);
