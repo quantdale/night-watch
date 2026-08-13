@@ -398,7 +398,7 @@ deployment-owner, SRE, or database-owner handoff is required.
 
 ---
 
-## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked)
+## Phase 7 — Private autonomous nightly campaigns (implemented; historical auth block preserved; DEV auth ready)
 
 Phase 7 coordinates the existing trusted selector, journey, safe exploration,
 restricted API, replay/oracle, clustering, bounded minimization, private
@@ -408,13 +408,15 @@ product level, deterministic, checkpointed, and fail-closed. Its explicit
 modes are `CHANGE_DIRECTED`, `BASELINE_HEALTH`, `COVERAGE_EXPANSION`,
 `REPRODUCTION_ONLY`, and `LOCAL_SYNTHETIC`.
 
-The implementation and synthetic matrix are complete. The single bounded real
-campaign created an owner-only manifest/checkpoint but stopped at
+The implementation and synthetic matrix are complete. The single historical
+bounded real campaign created an owner-only manifest/checkpoint but stopped at
 `PARTIAL_AUTH_BLOCKED` before product work because the designated external DEV
 auth state was not page-valid and guarded MFA refresh could not complete. No
-alternative credentials were used. A new compatible bounded campaign requires
-owner action; the retained manifest is not silently resumed across a Nightwatch
-source-version change. Phase 6 remains permanently
+alternative credentials were used and that manifest is immutable. The same
+existing guarded auth system later completed one bounded refresh with no MFA
+step, and fresh page-valid DEV status passed. A new current-version bounded
+campaign must now be created; the old manifest is never silently resumed
+across a Nightwatch source-version change. Phase 6 remains permanently
 `FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
 
 ## Phase 7B — Bounded AI assistance (deferred)

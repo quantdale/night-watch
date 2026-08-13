@@ -3,19 +3,19 @@
 Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
 Title: Private Autonomous Nightly Campaigns
-Status: BLOCKED
+Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
-Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
+Current SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
+Last validated implementation SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
 Current milestone: M6 — bounded real DEV campaign and closure.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
-Current documentation/remote checkpoint: `cb0927534ea42bd27849c2c2810602263ff3a337`.
-Next action: recover the designated DEV auth through the existing guarded
-flow, then create a new compatible bounded campaign. Do not rerun the single
+Last checkpoint: implementation checkpoint `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`.
+Current documentation/remote checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`.
+Next action: create and freeze one new current-version bounded DEV campaign
+manifest using the now page-valid designated auth state. Do not rerun the
 historical campaign or use alternate credentials. Phase 6 remains permanently
 frozen by owner.
 

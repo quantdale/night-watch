@@ -4,11 +4,11 @@
 
 Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
-Status: BLOCKED
+Status: IN_PROGRESS
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
-Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
-Last implementation checkpoint: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
+Current SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
+Last validated implementation SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
+Last implementation checkpoint: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
 Branch: main
 REMOTE_STATUS: PRIVATE_REMOTE_CONFIRMED
 REMOTE: origin
@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: cb0927534ea42bd27849c2c2810602263ff3a337
+REMOTE_HEAD: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
 
 ## Objective
 
@@ -40,22 +40,24 @@ dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9.
 ## Work In Progress
 
 The single bounded real DEV campaign stopped correctly at the guarded auth
-gate. Remote reconciliation is complete. Final validation, architecture
-review, adversarial review, and clean closure remain; the real campaign must
-not be rerun in this task.
+gate and remains immutable historical evidence. Remote reconciliation is
+complete. Designated DEV page-valid auth is now restored through the existing
+guarded provider; final validation, new-campaign execution, architecture
+review, adversarial review, and clean closure remain.
 
 ## Exact Next Action
 
-Use the existing guarded auth flow to repair designated DEV page-valid auth,
-then create a new current-version bounded campaign. Do not rerun the real DEV
-campaign: its single attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and
-the implementation SHA changed afterward, so it cannot be silently resumed.
+Create and freeze one new current-version bounded campaign manifest, then run
+exactly one bounded DEV campaign. Do not rerun the historical campaign: its
+single attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and the
+implementation SHA changed afterward, so it cannot be silently resumed.
 
 ## Files Changed
 
 Phase 7 task state/plan/active routing, campaign orchestrator and version/drift
 guards, fixture corpus, real launcher/adapter, focused tests, and project-state
-documentation. No Alphaus repository files or real private evidence are
+documentation, plus authenticated-artifact permission hardening and its
+regression test. No Alphaus repository files or real private evidence are
 included.
 
 ## Validation Ledger
@@ -63,9 +65,12 @@ included.
 Single-writer check PASS; prior task SHA reconciliation PASS; Phase 6 owner
 freeze tripwires PASS; TypeScript PASS; focused campaign tests PASS (14/14);
 synthetic campaign PASS; `git diff --check` PASS at implementation
-checkpoints; real launcher help PASS; source remote is
-`PRIVATE_REMOTE_CONFIRMED` on `origin/main`; the
-single real campaign is `PARTIAL_AUTH_BLOCKED` before product work.
+checkpoints; real launcher help PASS; auth preflight PASS; 33 focused
+auth/storage tests PASS; guarded DEV refresh PASS with page-valid state and no
+MFA; authenticated artifact permission regression PASS; source remote is
+`PRIVATE_REMOTE_CONFIRMED` on `origin/main`; the historical single real
+campaign is `PARTIAL_AUTH_BLOCKED` before product work; the existing guarded
+auth refresh completed with page-valid DEV state and no MFA.
 
 ## Decisions Made During This Task
 
@@ -84,11 +89,12 @@ auth-blocked DEV campaign is valid evidence; no anomaly is manufactured.
 
 ## Blockers
 
-The designated external DEV auth state was not page-valid and the bounded
-guarded refresh could not complete its MFA step. This is a precise
-`DEV_AUTH_ACTION_REQUIRED` blocker, not permission to use another credential,
-rerun the campaign, or widen scope. The old auth-blocked manifest is retained
-as evidence and is incompatible with the post-run Nightwatch source version.
+The historical designated external DEV auth state was not page-valid and the
+single campaign's bounded refresh could not complete its MFA step. That
+blocker is resolved by one later guarded refresh using the same designated
+provider; no alternate credential or scope was used. The old auth-blocked
+manifest is retained as evidence and is incompatible with the current
+Nightwatch source version.
 
 ## Safety Events
 
@@ -113,10 +119,10 @@ completed work or widen catalogs/policy.
 
 ## Completion Snapshot
 
-Implementation checkpoint dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9 is clean;
-synthetic matrix, focused tests, full Playwright, typecheck, and agent check
-pass; the real campaign is durably auth-blocked; documentation checkpoint is
-ready to commit.
+Implementation checkpoint adb8aa11caf5d74dafd091c8ff9680b3bd7ba460 is clean;
+synthetic matrix, focused tests, typecheck, auth refresh, page-validity,
+authenticated privacy hardening, and remote push pass. The historical real
+campaign remains durably auth-blocked; a new campaign is not yet created.
 
 ## CURRENT_GOAL
 
@@ -136,6 +142,17 @@ Phase 6 real datastore budget: maximum 6, used 0. L4 is
 STS, DynamoDB, BigQuery, Spanner, production SQL, deployment archaeology,
 external publication, and coworker/platform-owner requests remain blocked.
 
+## AUTH_STATUS / AUTH_REFRESH_LEDGER
+
+`AUTH_STATUS=VALID`; `AUTH_ENV=DEV`; `PAGE_VALID=true`; `MFA_USED=false`.
+The existing guarded refresh completed once on 2026-08-13 with sanitized
+capture/run ID `nightwatch-20260813T151556Z-3210`; `refresh_attempts=1`.
+Structural storage validation, DEV provenance, token freshness, cookie
+domain/path applicability, page-JavaScript readability, authenticated Ripple
+shell/readiness, metadata-only evidence, and atomic replacement all passed.
+Credential contents, storage-state contents, and identity values remain
+outside Nightwatch state.
+
 ## CAMPAIGN_SCHEMA_VERSION
 
 `nightwatch.campaign.private.v1`
@@ -144,11 +161,18 @@ external publication, and coworker/platform-owner requests remain blocked.
 
 `nightwatch.orchestrator.private.v1`
 
-## CAMPAIGN_ID
+## HISTORICAL_BLOCKED_CAMPAIGN_ID / CURRENT_CAMPAIGN_ID
 
-Real campaign: `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`. Manifest fingerprint:
+Historical real campaign: `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`. Manifest fingerprint:
 `manifest:sha256:861ae8b3dffdb88ea8a262e7`. Identity was derived from the frozen
 manifest inputs; timestamp was not an identity input.
+Current campaign: `NONE — create a new manifest from current SHA before product execution`.
+
+## MANIFEST_STATUS
+
+Historical manifest/checkpoint: immutable and not resumable. New manifest:
+not created; it must use current Nightwatch versions, source snapshots,
+selection, lineage, seeds, budget, privacy policy, and owner-scope policy.
 
 ## CAMPAIGN_MODE
 
@@ -273,10 +297,11 @@ reported as product findings.
 
 ## UNRESOLVED
 
-No naturally admitted DEV anomaly is available for minimization. The one real
-campaign is blocked on designated DEV auth state/MFA completion. A fresh
-compatible campaign requires owner action after auth is repaired; the previous
-manifest cannot be silently resumed across the current Nightwatch source SHA.
+No naturally admitted DEV anomaly is available for minimization. The historical
+campaign is blocked on its prior designated DEV auth state/MFA completion; that
+blocker is resolved for the next attempt. A fresh compatible campaign must be
+created from the current Nightwatch source SHA; the previous manifest cannot
+be silently resumed.
 
 ## SAFETY_EVENTS
 
@@ -294,18 +319,28 @@ and authenticated traces were absent from campaign artifacts.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`
+`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
 
 ## LAST_CHECKPOINT_SHA
 
-`dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`
+`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
+
+## LAST_PUSHED_SHA
+
+`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
+
+## PUSH_LEDGER
+
+- Remote reconciliation checkpoint: `2aa2742d6a062e633fcb3faf2ca119a408b06758` pushed to `origin/main`.
+- Authenticated-artifact implementation checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460` pushed to `origin/main`.
+- Auth-ready state update: current implementation and auth evidence are
+  recorded above; its documentation commit is the next validated push.
 
 ## NEXT_EXACT_ACTION
 
-Finish and commit the report/state/docs, run final local validation, and verify
-the Nightwatch tree is clean. Do not rerun DEV in this task. If the owner later
-repairs the designated auth state, create a new compatible bounded manifest;
-never use an alternative credential or scope.
+Create and freeze one new compatible current-version bounded DEV manifest, then
+run exactly one bounded DEV campaign. Never reuse the historical campaign ID,
+use an alternative credential, or widen scope.
 
 ## RESUME_RECIPE
 

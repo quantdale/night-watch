@@ -116,15 +116,19 @@ regressions.
 
 ### M6 — Bounded real DEV campaign and closure
 
-Status: `BLOCKED` — `DEV_AUTH_ACTION_REQUIRED` after the one permitted bounded
-real campaign stopped before product work.
+Status: `IN_PROGRESS` — the historical auth-blocked campaign remains
+immutable; designated DEV page-valid auth has been restored and a new
+compatible campaign is now required.
 
 The initial frozen real profile was run once after a clean implementation
 checkpoint. It selected `CHANGE_DIRECTED` coverage but stopped at the guarded
 auth preflight before any product work because the designated external DEV
-state was not page-valid and MFA refresh could not complete. No alternative
-credential or rerun is authorized in this task. Local validation, architecture
-review, adversarial review, and the durable blocker handoff remain required.
+state was not page-valid and MFA refresh could not complete. That campaign is
+historical evidence and cannot be resumed. The existing guarded credential
+provider then completed one bounded refresh with no MFA step, and fresh
+page-level validation passed. Create a new manifest from the current
+Nightwatch SHA before any product execution; no alternative credential or
+scope is permitted.
 
 ## Validation Strategy
 

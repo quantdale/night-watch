@@ -262,7 +262,7 @@ tests 25/25 PASS; full Playwright 358/358 PASS; no real DEV minimization was
 needed because no natural anomaly was admitted. Bounded AI assistance remains
 deferred and any future model remains prohibited from acting as an oracle.
 
-## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked; private remote confirmed)
+## Phase 7 — Private autonomous nightly campaigns (implemented; historical auth block preserved; DEV auth ready)
 
 The native task is `.agent/tasks/phase-7-private-autonomous-nightly-campaigns/`.
 The campaign schema is `nightwatch.campaign.private.v1` and the orchestrator
@@ -289,14 +289,19 @@ spending and are summarized as a shared DEV degradation.
 Synthetic acceptance passed deterministic selection, baseline/fallback,
 lineage, budget/time ceilings, interruption recovery, duplicate clustering,
 failure-storm suppression, reproduction, bounded minimization, dossiers,
-morning briefs, privacy, and owner-policy tripwires. The one real campaign
-created owner-only local artifacts with campaign ID
+morning briefs, privacy, and owner-policy tripwires. The one historical real
+campaign created owner-only local artifacts with campaign ID
 `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`, selected `CHANGE_DIRECTED` J1/J2/J3
 under the Phase 3 conservative fallback, and stopped at `AUTH_BLOCKED` before
-any journey, exploration, API, or product observation. The designated external
-DEV auth state was not page-valid and MFA completion was unavailable. No
-alternative credential or scope was used; the retained manifest/checkpoint is
-not silently resumed after the Nightwatch version changed.
+any journey, exploration, API, or product observation. Its manifest/checkpoint
+is immutable and is not silently resumed after the Nightwatch version changed.
+
+The existing guarded designated-DEV auth system subsequently completed one
+bounded refresh with no MFA step. Current sanitized status is
+`AUTH_STATUS=VALID`, `AUTH_ENV=DEV`, `PAGE_VALID=true`, `MFA_USED=false`, with
+capture ID `nightwatch-20260813T151556Z-3210`. Structural, provenance,
+freshness, page-readability, authenticated-shell, metadata-only privacy, and
+atomic-replacement checks passed. No new campaign has been created yet.
 
 Real campaign safety vector: production attempts 0, proxy violations 0,
 unknown destinations 0, unknown approvals 0, product mutations 0,

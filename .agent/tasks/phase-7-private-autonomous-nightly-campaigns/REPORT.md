@@ -22,6 +22,24 @@ be refreshed safely.
   `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; real datastore budget 6 max,
   0 used; L4 `OUT_OF_SCOPE_BY_OWNER`.
 
+## Continuation — designated DEV auth ready
+
+After the historical campaign remained frozen, the existing guarded DEV auth
+system performed one bounded refresh using the designated external provider.
+The resulting state passed structural validation, DEV provenance, token
+freshness, domain/path applicability, page-JavaScript readability, and fresh
+authenticated Ripple shell/readiness validation. `AUTH_STATUS=VALID`,
+`AUTH_ENV=DEV`, `PAGE_VALID=true`, `MFA_USED=false`; sanitized capture ID:
+`nightwatch-20260813T151556Z-3210`. No credential, storage-state content, or
+identity value entered the report or repository. Authenticated evidence was
+kept owner-only locally, and the recorder now enforces owner-only modes for
+authenticated artifacts.
+
+The auth-ready implementation checkpoint is
+`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`. The next action is to create a new
+current-version manifest; the historical campaign ID remains immutable and is
+not reused.
+
 ## Campaign architecture
 
 - Schema: `nightwatch.campaign.private.v1`.
@@ -114,8 +132,7 @@ deployment evidence.
 
 ## Exact safe next action
 
-The owner must refresh the designated owner-only DEV authentication state
-through the existing guarded flow, without supplying an alternative
-credential. Then start a new compatible bounded local DEV campaign. Do not
-unfreeze Phase 6, query infrastructure/databases, contact production, publish
-the private artifacts, or rerun the incompatible manifest.
+The next safe action is to create a new current-version manifest and execute
+exactly one bounded local DEV campaign. Do not unfreeze Phase 6, query
+infrastructure/databases, contact production, publish the private artifacts,
+use an alternative credential, or rerun the incompatible historical manifest.
