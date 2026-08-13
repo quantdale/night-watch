@@ -12,12 +12,10 @@ import {
 
 export const INITIAL_REAL_CAMPAIGN_BUDGET: CampaignBudgetPolicy = Object.freeze({
   policyVersion: CAMPAIGN_BUDGET_POLICY_VERSION,
-  // Six coverage contexts plus two bounded representative-replay contexts.
-  maxTotalBrowserContexts: 8,
-  maxJourneyContexts: 4,
-  maxExplorationContexts: 4,
-  // Three Phase 5 first/fresh pairs plus one admitted API reproduction.
-  maxApiExecutions: 7,
+  maxTotalBrowserContexts: 6,
+  maxJourneyContexts: 3,
+  maxExplorationContexts: 3,
+  maxApiExecutions: 6,
   // Three linked Phase 5 fresh replays plus the existing one-exact/four-
   // candidate private triage allowance. This is still a bounded maximum;
   // unused replay capacity is normal on a clean campaign.
