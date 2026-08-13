@@ -219,17 +219,28 @@ covered it with a regression test; SHA semantics remain `SYNCED`,
 
 The former real data gate remains preserved as historical evidence:
 `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. No datastore auth probe,
-query, scan, or write ran, and no live datastore verification is claimed. The
-owner decision now makes that path permanently out of scope; the 2026-08-12
-deployment/source re-audit confirms the DEV
-`ripple-api-micro` image/branch path and deployment-provided AWS configuration
-slots. Explicit read-only GKE metadata now confirms the live
-`ripple-api-micro` Pod → ReplicaSet → Deployment chain, image digest, default
-ServiceAccount, and Secret reference names in `mochi-dev-pong`/`labs-169405`.
-GCR/Cloud Build/GitHub/source checks did not expose effective Secret-backed
-`API_ENV`/AWS binding or designated scope, so the data environment remains
-unresolved, but no external handoff or datastore query is authorized or
-required. Private local triage is active; Phase 7 AI work remains deferred.
+query, scan, or write ran in the owner-freeze decision, and no live datastore
+verification is claimed. Historical Phase 6 artifacts retain their prior
+implementation and investigation record; the active roadmap must not refresh
+deployment metadata, repeat infrastructure archaeology, request a handoff, or
+reopen the gate. The owner decision makes that path permanently out of scope.
+
+## Private evidence minimization + autonomous triage
+
+The active task is `.agent/tasks/private-evidence-minimization-and-triage/`.
+Its local implementation checkpoint is
+`1e694c8966a68779fb3cbd4059b0b67a0d427a7a`. It adds the executable
+`FROZEN_BY_OWNER` scope gate, owner-only atomic artifact storage, bounded
+original-sequence minimization, stable sanitized clustering/deduplication,
+browser/API differential, source relevance, conservative application-layer
+fault boundaries, deterministic private dossiers/recipes, AI-ready data-only
+packages, and overnight/morning summaries. L4 is recorded as
+`OUT_OF_SCOPE_BY_OWNER`; no datastore branch exists in the active stack.
+
+Validation at this checkpoint: TypeScript PASS; focused policy/Phase 6/triage
+tests 25/25 PASS; full Playwright 358/358 PASS; no real DEV minimization was
+needed because no natural anomaly was admitted. Phase 7 AI work remains
+deferred and any future model remains prohibited from acting as an oracle.
 
 ## Environment (machine facts)
 

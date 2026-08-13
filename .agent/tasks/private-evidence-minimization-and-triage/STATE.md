@@ -6,11 +6,12 @@ Task ID: private-evidence-minimization-and-triage
 Phase: PRIVATE_LOCAL_TRIAGE
 Status: IN_PROGRESS
 Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Last validated implementation SHA: 2792795ae69a5535a769180e3e2f38096a186769
+Current SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
+Last validated implementation SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
 Branch: main
-Last checkpoint: `2792795ae69a5535a769180e3e2f38096a186769` — fresh owner-freeze
-and task-creation checkpoint.
+Last checkpoint: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a` — Nightwatch-only
+implementation checkpoint; TypeScript, focused tests, and full Playwright
+passed.
 
 ## Objective
 
@@ -20,7 +21,7 @@ datastore expansion.
 
 ## Current Milestone
 
-M0 — owner freeze and task creation.
+M5 — compatibility, adversarial privacy, and full validation.
 
 ## Completed Milestones
 
@@ -32,30 +33,47 @@ M0 — owner freeze and task creation.
   `NO_REMOTE` and no push is authorized.
 - Phase 6 owner decision is recorded as
   `FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+- M1–M4 are implemented in Nightwatch only: the executable owner gate and
+  private atomic store; bounded subsequence minimizer; stable cluster/dedup,
+  browser/API differential, source relevance, and app-layer boundary model;
+  and deterministic dossiers, recipes, false-positive catalog, confidence,
+  overnight summary, and morning brief.
+- The owner regression matrix covers every frozen cloud/datastore operation,
+  and the Phase 6 real invoker fails with `OWNER_POLICY_BLOCKED` before an
+  external executor can be reached.
 
 ## Work In Progress
 
-The active task files and Phase 6 superseding handoff are being established.
-Implementation has not yet changed source, tests, configs, or Alphaus repos.
+M5 is completing the final review ledger, privacy/remote audit, narrow
+Alphaus read-only integrity record, and closure documentation. No real DEV
+minimization is required because no naturally admitted anomaly was present;
+synthetic/local fixtures are the validation authority for this task.
 
 ## Exact Next Action
 
-Implement `src/core/policy/ownerScope.ts` and `src/core/policy/privateArtifacts.ts`,
-wire the Phase 6 real invoker to return `OWNER_POLICY_BLOCKED`, and add focused
-policy/storage regression tests. Do not run any cloud/datastore command.
+Complete the final local architecture/adversarial review, record the 358/358
+full Playwright result and 25/25 focused result, run `npm run agent:check` and
+`git diff --check`, then write the final report and closure checkpoint. Do not
+run any cloud/datastore command or real DEV minimization.
 
 ## Files Changed
 
-Task-state/documentation files only at this checkpoint; no implementation
-files, Alphaus repository files, private real evidence, or external artifacts.
+Nightwatch-only policy, triage, compatibility, test, package, safety, and
+owner-freeze documentation files. No Alphaus repository files, private real
+evidence, or external artifacts were written.
 
 ## Validation Ledger
 
 - Starting `git status --short --branch`: clean `main`.
 - Nightwatch remote audit: `NO_REMOTE`.
 - Durable Phase 6 recovery: confirmed expected SHA/budget/query ledger.
-- Full implementation validation: pending; no DEV run is required before the
-  local policy/minimization architecture is complete.
+- `npx tsc --noEmit`: PASS.
+- Focused policy/Phase 6/triage suite: PASS, 25/25.
+- Full Playwright suite: PASS, 358/358.
+- `git diff --check`: PASS at the implementation checkpoint.
+- Narrow Alphaus read-only baseline captured for seven relevant repositories;
+  no Nightwatch writes were made to them. Existing dirty counts remain
+  pre-existing and are not attributed to Nightwatch.
 
 ## Decisions Made During This Task
 
@@ -96,5 +114,7 @@ owner policy frozen and use synthetic fixtures first.
 
 ## Completion Snapshot
 
-M0 complete as a documentation checkpoint; implementation work pending.
-
+Implementation checkpoint complete at `1e694c8966a68779fb3cbd4059b0b67a0d427a7a`.
+M5 closure documentation and final `agent:check` synchronization remain the
+only local actions. Phase 6 remains `FROZEN_BY_OWNER`; no external action is
+required or recommended.

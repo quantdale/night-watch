@@ -40,6 +40,9 @@ const FAILURE: SafetyVector = {
   dbQueries: 0,
 };
 const FP = 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
+const FP_API = 'fp:sha256:bbbbbbbbbbbbbbbbbbbbbbbb';
+const FP_SHARED = 'fp:sha256:cccccccccccccccccccccccc';
+const FP_RESOURCE = 'fp:sha256:dddddddddddddddddddddddd';
 
 function action(actionId: string, routeClass = '/ripple/test'): MinimizationAction {
   return { actionId, semanticClass: 'KNOWN_READ', routeClass, sourceApproved: true, catalogVersion: 'synthetic.catalog.v1' };
@@ -149,6 +152,21 @@ test.describe('private deterministic failure minimizer', () => {
     expect(result.status).toBe('INVALID_ORIGINAL');
     expect(calls).toBe(0);
   });
+
+  test('route divergence is invalid rather than being promoted to a product failure', async () => {
+    const invalidRoute = await runMinimizer(['a1'], (ids) => outcome(ids.includes('a1')), SYNTHETIC_MINIMIZATION_BUDGET, () => ({ valid: false, reason: 'PRECONDITION_DIVERGENCE' }));
+    expect(invalidRoute.status).toBe('INVALID_ORIGINAL');
+
+    const routeEnvelope = await minimizeFailure({
+      originalSequence: [action('a1', 'customer-route')],
+      anomalyFingerprint: FP,
+      sourceVersion: 'synthetic.source.v1',
+      catalogVersion: 'synthetic.catalog.v1',
+      approvedActionIds: new Set(['a1']),
+      replay: () => outcome(true),
+    });
+    expect(routeEnvelope.status).toBe('INVALID_ORIGINAL');
+  });
 });
 
 function observation(overrides: Partial<Parameters<typeof clusterAnomalies>[0][number]> = {}) {
@@ -234,6 +252,28 @@ test.describe('private clustering and app-layer differential', () => {
     expect(journey[0]?.fingerprint).toBe(FP);
     expect(exploration[0]?.fingerprint).toBe(FP);
     expect(api[0]?.features.operationFamily).toBe('exchange.read');
+  });
+
+  test('synthetic dossier matrix keeps product, protocol, transient, false-positive, and source cases separate', async () => {
+    const matrix = [
+      observation({ runId: 'matrix-ui', fingerprint: FP, features: { ...observation().features, runtimeCategory: 'ui-structure' } }),
+      observation({ runId: 'matrix-api', fingerprint: FP_API, features: { ...observation().features, oracleId: 'oracle.protocol', statusClass: '5xx', runtimeCategory: 'api-protocol' } }),
+      observation({ runId: 'matrix-shared', fingerprint: FP_SHARED, features: { ...observation().features, browserApiResultClass: 'same' } }),
+      observation({ runId: 'matrix-resource', fingerprint: FP_RESOURCE, timingClass: 'TRANSIENT', features: { ...observation().features, runtimeCategory: 'resource-loading' } }),
+      observation({ runId: 'matrix-fp', fingerprint: 'fp:sha256:eeeeeeeeeeeeeeeeeeeeeeee', knownFalsePositiveId: 'NW-CANCELED-BY-POLICY' }),
+      observation({ runId: 'matrix-nonrepro', fingerprint: 'fp:sha256:ffffffffffffffffffffffff', reproduced: false, minimized: false }),
+      observation({ runId: 'matrix-source', fingerprint: 'fp:sha256:111111111111111111111111', features: { ...observation().features, sourceImpactRegion: 'ripple-ui:exchange' } }),
+      observation({ runId: 'matrix-unrelated', fingerprint: 'fp:sha256:222222222222222222222222', features: { ...observation().features, sourceImpactRegion: 'unrelated:change' } }),
+    ];
+    const clusters = clusterAnomalies(matrix);
+    expect(clusters).toHaveLength(matrix.length);
+    expect(clusters.find((cluster) => cluster.knownFalsePositiveId === 'NW-CANCELED-BY-POLICY')?.timingVariance).toBe('NONE');
+    expect(clusters.find((cluster) => cluster.features.runtimeCategory === 'resource-loading')?.timingVariance).toBe('TRANSIENT');
+
+    const fiveStep = await runMinimizer(['a1', 'a2', 'a3', 'a4', 'a5'], (ids) => outcome(ids.includes('a1') && ids.includes('a5')));
+    const irreducible = await runMinimizer(['a1', 'a2'], (ids) => outcome(ids.length === 2));
+    expect(fiveStep.minimalReproducingSequence).toEqual(['a1', 'a5']);
+    expect(irreducible.minimalReproducingSequence).toEqual(['a1', 'a2']);
   });
 });
 

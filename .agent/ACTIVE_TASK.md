@@ -6,14 +6,14 @@ Title: Private Evidence Minimization + Autonomous Triage
 Status: IN_PROGRESS
 Task directory: .agent/tasks/private-evidence-minimization-and-triage
 Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Last validated implementation SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current milestone: M0 — owner freeze and task creation.
-Last checkpoint: 2792795ae69a5535a769180e3e2f38096a186769 — clean recovery
-checkpoint before implementation.
-Next action: implement the central owner policy gate and private atomic
-artifact store; wire the frozen Phase 6 invoker to `OWNER_POLICY_BLOCKED` and
-add focused regression tests. No cloud/datastore/external command is allowed.
+Current SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
+Last validated implementation SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
+Current milestone: M5 — compatibility, adversarial privacy, and full validation.
+Last checkpoint: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a — Nightwatch-only
+implementation checkpoint; focused and full Playwright validation passed.
+Next action: complete final local architecture/adversarial review, synchronize
+the final report and `agent:check`, and leave a clean Nightwatch checkpoint.
+No cloud/datastore/external command is allowed.
 
 ## Prior phase closure handoff
 

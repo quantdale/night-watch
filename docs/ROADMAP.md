@@ -321,10 +321,13 @@ surface (replay sources).
 
 ---
 
-## Phase 6 — Read-only data oracles (FROZEN BY OWNER)
+## Phase 6 — Read-only data oracles (FROZEN BY OWNER; HISTORICAL ONLY)
 
-**Goal.** Add the strongest oracle class: store-vs-store equality checks
-that can prove "actual wrong" at L3–L4 (RECON_B §1.2, §6.2–6.3).
+**Historical intent (not an active goal).** Add the strongest oracle class:
+store-vs-store equality checks that could prove "actual wrong" at L3–L4
+(RECON_B §1.2, §6.2–6.3). The owner has frozen this entire infrastructure and
+data-layer expansion; the implementation is retained only for local synthetic
+compatibility and historical traceability.
 
 **Key deliverables.**
 

@@ -59,7 +59,7 @@ publication method that can succeed.
 
 ### M0 — Owner freeze and task creation
 
-- Status: IN_PROGRESS.
+- Status: COMPLETE.
 - Update Phase 6 state/report/current-state/roadmap/decisions, establish the
   new active task, audit Nightwatch remote privacy, and capture relevant
   Alphaus read-only before-state only when source correlation is exercised.
@@ -67,33 +67,33 @@ publication method that can succeed.
 
 ### M1 — Central owner policy and private storage
 
-- Status: NOT_STARTED.
+- Status: COMPLETE.
 - Add the frozen operation policy, Phase 6 gate integration, atomic owner-only
   artifact store, no-publication guard, and policy regression tests.
 
 ### M2 — Deterministic minimization
 
-- Status: NOT_STARTED.
+- Status: COMPLETE.
 - Add subsequence-only bounded minimization with precondition/safety gates,
   exact fingerprint matching, explicit minimality guarantees, and synthetic
   matrix.
 
 ### M3 — Cluster, dedup, differential, and source relevance
 
-- Status: NOT_STARTED.
+- Status: COMPLETE.
 - Add sanitized clustering, duplicate suppression, browser/API differential,
   Phase 3 change relevance, source freshness, and fault-boundary localization.
 
 ### M4 — Dossiers, false positives, confidence, and summaries
 
-- Status: NOT_STARTED.
+- Status: COMPLETE.
 - Add versioned dossier/recipe/AI-ready schemas, false-positive catalog,
   categorical confidence and priority ranking, overnight summary, and morning
   brief.
 
 ### M5 — Compatibility, adversarial privacy, and full validation
 
-- Status: NOT_STARTED.
+- Status: IN_PROGRESS.
 - Exercise synthetic dossier matrix, legacy evidence compatibility, storage
   crash recovery, owner-policy regression, privacy sentinels, existing safety
   suite, and bounded DEV checks only if naturally useful.
@@ -144,4 +144,3 @@ change remain deferred. No Phase 6 cloud/datastore resumption is recommended.
 All SPEC criteria pass, no external operation is invoked, no Alphaus repo is
 modified, private findings are local-only, and the final report records exact
 validation and unresolved questions without overstating root cause.
-

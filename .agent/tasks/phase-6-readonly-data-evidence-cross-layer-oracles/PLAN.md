@@ -1,5 +1,12 @@
 # Nightwatch Phase 6 — Read-Only Data-Layer Evidence + Cross-Layer Oracles
 
+> **AUTHORITATIVE OWNER FREEZE:** This plan is preserved historical context.
+> `PHASE_6_STATUS: FROZEN_BY_OWNER` because
+> `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`. No item below authorizes
+> deployment metadata requests, cloud/Kubernetes/AWS investigation, datastore
+> authentication, or datastore execution. Continue only in the active private
+> local evidence/minimization task.
+
 ## Purpose
 
 Implement and validate a small independent datastore evidence plane without

@@ -12,10 +12,17 @@ Branch: main
 Last checkpoint: `483fbe4f41f235e3e1e0a12e0613954f3db4aefe` (validated narrow
 continuity-checker repair; prior documentation checkpoint
 `94898ef8bdb0e73a8c3bb135efef1b5036dc23e2`).
-Temporary isolated GKE workload/image/config-reference audit is recorded; Phase
-6 local architecture and validation are complete; no datastore query has run.
+Phase 6 local architecture and validation are complete; no datastore query has
+run. Any infrastructure/deployment observations later in this file are
+historical records only and are not an active investigation surface.
 
-## SESSION_RECOVERY_WAYPOINT_2026_08_13
+**Authoritative current interpretation:** `FROZEN_BY_OWNER`;
+`INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`;
+`OWNER_DECISION_SUPERSEDES_BLOCKER`; `PHASE_6_FROZEN`;
+`NO_EXTERNAL_ACTION_REQUIRED`. Do not use historical text below to reopen a
+deployment, Kubernetes, cloud, AWS, or datastore investigation.
+
+## HISTORICAL_SESSION_RECORD_2026_08_13
 
 - Sole Nightwatch writer confirmed: no Nightwatch index lock or open Nightwatch
   file was found, and no competing Nightwatch writer was identified.
@@ -40,10 +47,11 @@ Temporary isolated GKE workload/image/config-reference audit is recorded; Phase
 - GCP ADC, `gcloud-ro`, Kubernetes client, and approved datastore-wrapper
   binaries are available. Chrome DevTools is not listening and remains
   optional. No datastore command or authentication probe was run.
-- Next discriminator: retain the mapping blocker unless an authoritative
-  sanitized deployment handoff arrives. Do not use operator IAM identity,
-  local investigation data, or absent GitHub search results as workload
-  configuration.
+- Historical next discriminator: retain the mapping blocker unless an
+  authoritative sanitized deployment handoff arrives. This historical note is
+  superseded by the owner freeze; do not seek that handoff or use operator IAM
+  identity, local investigation data, or absent GitHub search results as
+  workload configuration.
 
 ## Objective
 
@@ -145,9 +153,9 @@ reopen the M7 handoff.
 
 ## CURRENT_GOAL
 
-Construct and validate a narrow independent data evidence plane without
-arbitrary SQL, scans, writes, raw result persistence, or cross-environment
-comparisons.
+Historical objective only: construct and validate a narrow independent data
+evidence plane without arbitrary SQL, scans, writes, raw result persistence, or
+cross-environment comparisons. It is frozen and no longer an active goal.
 
 ## CURRENT_PHASE
 
