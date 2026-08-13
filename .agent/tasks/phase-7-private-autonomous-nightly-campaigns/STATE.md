@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: 2690e5c015087a29ced8ccc3c16d1d4146b244ba (pre-closure HEAD)
+REMOTE_HEAD: a3ce80834741635abecefbb429966912f6886845 (validated closure checkpoint; state-only reconciliation follows)
 
 ## Objective
 
@@ -379,11 +379,11 @@ and authenticated traces were absent from campaign artifacts.
 
 ## LAST_CHECKPOINT_SHA
 
-`b95b06dab3fe60208d412ea9811c0c36c399ed9b`
+`a3ce80834741635abecefbb429966912f6886845`
 
 ## LAST_PUSHED_SHA
 
-`b95b06dab3fe60208d412ea9811c0c36c399ed9b`
+`a3ce80834741635abecefbb429966912f6886845`
 
 ## PUSH_LEDGER
 
@@ -392,6 +392,9 @@ and authenticated traces were absent from campaign artifacts.
 - Frozen-manifest workflow implementation checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d` pushed to `origin/main`.
 - Implementation-SHA drift fix checkpoint: `b95b06dab3fe60208d412ea9811c0c36c399ed9b` pushed to `origin/main`.
 - Final manifest readiness documentation checkpoint: `c908b523ded8812e15d02c4f019cc3bd0307089a` pushed to `origin/main`.
+- Phase 7 closure checkpoint: `a3ce80834741635abecefbb429966912f6886845` pushed
+  to `origin/main`; the follow-up state-only reconciliation records this
+  validated closure SHA.
 - Auth-ready state update: current implementation and auth evidence are
   recorded above; the current campaign readiness state is recorded here.
 

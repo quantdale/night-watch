@@ -13,6 +13,8 @@ and exactly one bounded real DEV campaign completed all selected work.
 - Prior closure checkpoint: `6c5e298c4b2423ce7ffc13715e259be691d71162`.
 - Final validated implementation checkpoint before this handoff:
   `b95b06dab3fe60208d412ea9811c0c36c399ed9b`.
+- Final closure checkpoint: `a3ce80834741635abecefbb429966912f6886845`, pushed
+  to `origin/main`; the final state-only reconciliation records this SHA.
 - Current source remote: `PRIVATE_REMOTE_CONFIRMED` — `origin` at
   `https://github.com/quantdale/night-watch.git`, branch `main`.
 - Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.

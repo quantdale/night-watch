@@ -12,8 +12,8 @@ Current milestone: M6 — bounded real DEV campaign and closure (COMPLETE).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: final closure documentation checkpoint (being committed).
-Current documentation/remote checkpoint: final closure checkpoint.
+Last checkpoint: final closure checkpoint `a3ce80834741635abecefbb429966912f6886845`.
+Current documentation/remote checkpoint: `a3ce80834741635abecefbb429966912f6886845` (state-only reconciliation follows).
 Next action: retain the completed Phase 7 state. Any future work requires a
 separately approved private/local task; do not start the next phase. Do not
 rerun either completed campaign, use alternate credentials, or widen scope.
