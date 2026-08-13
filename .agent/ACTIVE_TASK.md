@@ -6,12 +6,13 @@ Title: Private Autonomous Nightly Campaigns
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Last validated implementation SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current milestone: M1 — campaign contracts, manifest, budget, and ordering.
-Last checkpoint: task creation before implementation.
-Next action: implement the Phase 7 campaign contracts and deterministic
-manifest/budget layer. Phase 6 remains permanently frozen by owner.
+Current SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
+Last validated implementation SHA: 9d260689065fb1ba38cf144ae336d181c248c67c
+Current milestone: M6 — bounded real DEV campaign and closure.
+Last checkpoint: implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
+Next action: commit task-state reconciliation, verify a clean Nightwatch tree,
+then run the single frozen bounded private DEV campaign. Phase 6 remains
+permanently frozen by owner.
 
 ## Prior phase closure handoff
 

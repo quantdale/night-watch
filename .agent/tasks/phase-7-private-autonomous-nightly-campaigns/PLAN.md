@@ -69,7 +69,7 @@ and create this SPEC/PLAN/STATE/REPORT plus ACTIVE_TASK before implementation.
 
 ### M1 — Campaign contracts, manifest, and budget
 
-Status: `IN_PROGRESS`.
+Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
 
 Implement canonical identity, explicit modes, sanitized manifest, source
 snapshot descriptors, preflight result, budget manager, result/status classes,
@@ -77,7 +77,7 @@ and deterministic ordering. Add pure unit coverage.
 
 ### M2 — Selection and trusted primitive lineage
 
-Status: `NOT_STARTED`.
+Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
 
 Reuse Phase 3 selection and map selected J1/J2/J3 to existing Phase 4/5
 lineage. Add baseline-health and coverage-expansion selection explanations,
@@ -85,7 +85,7 @@ negative selection records, and reproduction-only isolation.
 
 ### M3 — Checkpoint/resume, drift, and failure-storm control
 
-Status: `NOT_STARTED`.
+Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
 
 Implement atomic owner-only campaign checkpoints, interruption recovery,
 completed-work skip semantics, version drift, health gates, shared-root storm
@@ -93,7 +93,7 @@ suppression, and retention planning.
 
 ### M4 — Anomaly admission, replay/minimization, dossiers, and brief
 
-Status: `NOT_STARTED`.
+Status: `COMPLETE` at implementation checkpoint `9d260689065fb1ba38cf144ae336d181c248c67c`.
 
 Adapt Phase 2C fingerprints/admission and existing private triage. Promote
 only deterministic representatives, honor L0–L5 scope, invoke the existing
@@ -102,7 +102,9 @@ morning brief with no-findings behavior.
 
 ### M5 — Realistic synthetic campaign matrix
 
-Status: `NOT_STARTED`.
+Status: `COMPLETE`: 13 focused tests passed, covering selection, lineage,
+budget, clustering, failure storms, recovery, privacy, no-findings, drift,
+owner policy, and operational `REPRODUCTION_ONLY` replay/minimization.
 
 Run the actual orchestrator against deterministic fixtures covering all frozen
 selection, ordering, anomaly, storm, recovery, privacy, and owner-policy
@@ -111,7 +113,7 @@ regressions.
 
 ### M6 — Bounded real DEV campaign and closure
 
-Status: `NOT_STARTED`.
+Status: `IN_PROGRESS`.
 
 Run the initial frozen real profile once after a clean implementation
 checkpoint, using current source state and either CHANGE_DIRECTED or explicit
