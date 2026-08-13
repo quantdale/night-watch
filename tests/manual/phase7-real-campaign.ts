@@ -64,6 +64,8 @@ import {
   type CampaignInput,
   type CampaignManifest,
   type CampaignPrivacyStatus,
+  type CampaignReproductionBudgetEstimate,
+  type CampaignReproductionOutcome,
   type CampaignSafetyVector,
   type CampaignSourceSnapshot,
   type CampaignVersionFingerprint,
@@ -188,10 +190,13 @@ async function buildRealContext(root: string, environment: EnvironmentConfig, ta
   };
 }
 
-function versionFingerprint(): CampaignVersionFingerprint {
+function versionFingerprint(root: string): CampaignVersionFingerprint {
+  const nightwatchSourceSha = gitResolve(root, 'HEAD');
+  if (nightwatchSourceSha === null) throw new Error('NIGHTWATCH_SOURCE_SNAPSHOT_INVALID');
   return {
     campaignSchemaVersion: CAMPAIGN_SCHEMA_VERSION,
     orchestratorVersion: CAMPAIGN_ORCHESTRATOR_VERSION,
+    nightwatchSourceSha,
     selectorVersion: SELECTOR_VERSION,
     dependencyMapVersion: DEPENDENCY_MAP_VERSION,
     journeyContractVersion: JOURNEY_CONTRACT_VERSION,
@@ -616,6 +621,81 @@ async function runApi(context: RealCampaignContext, browser: Browser, manifest: 
   return { result: observations.length > 0 ? 'ANOMALY' : Object.values(safety).some((value) => value !== 0) ? 'SAFETY_BLOCKED' : 'PASS', safety: safetyMerged, privacy: privacyPass(), actionsExecuted: 0, apiExecutions: 2, browserContextCreated: false, replay: true, observations, reasonCode: observations.length > 0 ? 'API_ORACLE_FAILURE' : undefined };
 }
 
+function reproductionWorkItem(cluster: { readonly clusterId: string }, representative: CampaignAnomalyCandidate): CampaignWorkItem {
+  const envelopeId = representative.observation.features.envelopeId;
+  const apiOperationId = representative.api?.available === true ? representative.api.operationFamily : null;
+  const kind = apiOperationId !== null ? 'API' : envelopeId !== null ? 'EXPLORATION' : 'JOURNEY';
+  return {
+    workItemId: `reproduction:${cluster.clusterId}`,
+    kind,
+    order: 0,
+    journeyId: representative.journeyId,
+    envelopeId,
+    apiOperationId,
+    seed: envelopeId === null ? null : REAL_SEEDS[envelopeId as keyof typeof REAL_SEEDS] ?? null,
+    linkedWorkItemIds: [],
+    replayPolicy: 'ON_ADMISSION',
+    selection: {
+      selected: false,
+      reason: 'admitted deterministic representative',
+      sourceImpact: 'ADMITTED_ANOMALY',
+      confidence: 'UNRESOLVED',
+      riskClass: 'TRIAGE',
+      linkedJourneyId: representative.journeyId,
+      linkedEnvelopeId: envelopeId,
+      linkedApiOperationId: apiOperationId,
+    },
+  };
+}
+
+function reproductionBudgetEstimate(representative: CampaignAnomalyCandidate): CampaignReproductionBudgetEstimate {
+  if (representative.api?.available === true) return { apiExecutions: 1 };
+  if (representative.observation.features.envelopeId !== null) {
+    return { browserContexts: 1, explorationContexts: 1, totalActions: representative.originalSequence.length };
+  }
+  return { browserContexts: 1, journeyContexts: 1, totalActions: representative.originalSequence.length };
+}
+
+async function reproduceReal(context: RealCampaignContext, browser: Browser, manifest: CampaignManifest, cluster: { readonly clusterId: string; readonly fingerprint: string }, representative: CampaignAnomalyCandidate): Promise<CampaignReproductionOutcome> {
+  const workItem = reproductionWorkItem(cluster, representative);
+  const runId = safeRunId(workItem, representative.observation.runId.length + 1);
+  let outcome: CampaignExecutionOutcome;
+  if (workItem.kind === 'API') {
+    const operationId = workItem.apiOperationId;
+    if (operationId === null) throw new Error('CAMPAIGN_API_REPRODUCTION_LINEAGE_MISSING');
+    const observation = await oneApiExecution(context, operationId);
+    const candidate = apiCandidate({ manifest, workItem, operationId, runId, observation, first: false });
+    outcome = {
+      result: candidate === null ? 'PASS' : 'ANOMALY',
+      safety: apiSafety(observation),
+      privacy: privacyPass(),
+      actionsExecuted: 0,
+      apiExecutions: 1,
+      browserContextCreated: false,
+      replay: true,
+      observations: candidate === null ? [] : [candidate],
+      reasonCode: candidate === null ? undefined : 'API_REPRODUCTION_ORACLE_FAILURE',
+    };
+  } else if (workItem.kind === 'EXPLORATION') {
+    outcome = await runExploration(context, browser, manifest, workItem, 1);
+  } else {
+    outcome = await runJourney(context, browser, manifest, workItem, 1);
+  }
+  if (outcome.result === 'AUTH_BLOCKED') throw new DevAuthFailure('AUTH_NETWORK_FAILURE');
+  if (outcome.result === 'SAFETY_BLOCKED' || !Object.values(outcome.safety).every((value) => value === 0)) {
+    return { result: 'SAFETY_BLOCKED', runId, fingerprint: null, safety: outcome.safety, privacy: outcome.privacy, reasonCode: outcome.reasonCode ?? 'SAFETY_DURING_REPRODUCTION' };
+  }
+  const match = outcome.observations.find((candidate) => candidate.observation.fingerprint === cluster.fingerprint);
+  if (match === undefined) {
+    return { result: 'NOT_REPRODUCED', runId, fingerprint: null, safety: outcome.safety, privacy: outcome.privacy, reasonCode: outcome.reasonCode ?? 'FRESH_REPLAY_FINGERPRINT_NOT_SEEN' };
+  }
+  const candidate: CampaignAnomalyCandidate = {
+    ...match,
+    observation: { ...match.observation, runId, reproduced: true, timingClass: 'BOUNDED' },
+  };
+  return { result: 'REPRODUCED', runId, fingerprint: cluster.fingerprint, safety: outcome.safety, privacy: outcome.privacy, candidate };
+}
+
 function buildInput(context: RealCampaignContext, mode: CampaignInput['mode']): CampaignInput {
   const sourceWindow = {
     changesetId: context.changeset.changesetId,
@@ -638,7 +718,7 @@ function buildInput(context: RealCampaignContext, mode: CampaignInput['mode']): 
     safeActions: RIPPLE_PHASE4_ACTIONS,
     explorationEnvelopes: RIPPLE_PHASE4_ENVELOPES,
     apiOperations: PHASE5_API_CATALOG.operations,
-    versions: versionFingerprint(),
+    versions: versionFingerprint(context.root),
     budgetPolicy: INITIAL_REAL_CAMPAIGN_BUDGET,
     privacyPolicy: { storageClass: 'OWNER_ONLY_LOCAL', remotePrivacy: 'NO_REMOTE', externalPublication: 'PROHIBITED', rawBodiesPersisted: false, customerValuesPersisted: false, credentialsPersisted: false, cookiesPersisted: false, tokensPersisted: false, domPersisted: false, screenshotsPersisted: false, authenticatedTracesPersisted: false },
   };
@@ -690,6 +770,8 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
         return { passed: false, code: 'PREFLIGHT_FAILED' as const, failedChecks: ['preflight-exception'], checkedAt: new Date().toISOString() };
       }
     },
+    estimateReproduction: ({ representative }: { readonly representative: CampaignAnomalyCandidate }) => reproductionBudgetEstimate(representative),
+    reproduce: async ({ manifest: frozenManifest, cluster, representative }: { readonly manifest: CampaignManifest; readonly cluster: { readonly clusterId: string; readonly fingerprint: string }; readonly representative: CampaignAnomalyCandidate }) => reproduceReal(context, browser, frozenManifest, cluster, representative),
     execute: async ({ manifest: frozenManifest, workItem, attempt }: { readonly manifest: CampaignManifest; readonly workItem: CampaignWorkItem; readonly attempt: number }) => {
       if (workItem.kind === 'JOURNEY') return await runJourney(context, browser, frozenManifest, workItem, attempt);
       if (workItem.kind === 'EXPLORATION') return await runExploration(context, browser, frozenManifest, workItem, attempt);
@@ -697,7 +779,7 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
       throw new Error('CAMPAIGN_REPRODUCTION_ADAPTER_NOT_CONFIGURED');
     },
   };
-  const result = await runCampaign(manifest, executor, { store: privateStore, maxTopFindings: 3 });
+  const result = await runCampaign(manifest, executor, { store: privateStore, maxTopFindings: 3, currentVersions: () => versionFingerprint(context.root) });
   privacyAudit(privateStore.root);
   expect(result.checkpoint.safety.productionAttempts).toBe(0);
   expect(result.checkpoint.safety.proxyViolations).toBe(0);
@@ -714,7 +796,7 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
       '# NIGHTWATCH PHASE 7 — DEV AUTH ACTION REQUIRED',
       `campaign ID: ${result.campaignId}`,
       'reason: the external DEV auth state was not page-valid and the bounded guarded refresh could not complete; no product work ran',
-      'exact safe next action: refresh the designated owner-only DEV state through the existing guarded auth flow, then resume this manifest',
+      'exact safe next action: refresh the designated owner-only DEV state through the existing guarded auth flow, then start a new compatible bounded campaign; this manifest is retained as evidence and is not silently resumed across a Nightwatch version change',
       'credential policy: do not use alternative credentials; raw auth material remains outside Nightwatch evidence',
     ].join('\n'));
   }

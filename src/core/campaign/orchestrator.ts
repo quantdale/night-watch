@@ -22,7 +22,7 @@ import type {
 import { buildCampaignMorningBrief, renderCampaignMorningBrief } from './brief';
 import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage } from './budget';
 import { CampaignCheckpointStore } from './checkpoint';
-import { assertManifestCompatible, validateCampaignManifest } from './identity';
+import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
 import { detectFailureStorm, type FailureStorm } from './storm';
 import {
   CAMPAIGN_CHECKPOINT_VERSION,
@@ -37,6 +37,7 @@ import {
   type CampaignMorningBrief,
   type CampaignPreflightResult,
   type CampaignPrivacyStatus,
+  type CampaignReproductionBudgetEstimate,
   type CampaignReproductionOutcome,
   type CampaignReproductionRecord,
   type CampaignResultClass,
@@ -78,6 +79,7 @@ function safeErrorCode(error: unknown): string {
   if (error instanceof CampaignProcessInterruptionError) return 'PROCESS_INTERRUPTION';
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('CAMPAIGN_BUDGET_EXHAUSTED')) return 'BUDGET_EXHAUSTED';
+  if (message.includes('CAMPAIGN_VERSION_DRIFT')) return 'CAMPAIGN_VERSION_DRIFT';
   if (message.includes('CAMPAIGN_RUNTIME_TIMEOUT')) return 'RUNTIME_TIMEOUT';
   if (message.includes('AUTH')) return 'AUTH_BLOCKED';
   if (message.includes('SAFETY') || message.includes('PRODUCTION') || message.includes('UNKNOWN') || message.includes('MUTATION')) return 'SAFETY_EVENT';
@@ -382,6 +384,8 @@ export class CampaignOrchestrator {
   private readonly clusterIdAliases = new Map<string, string>();
   private readonly precompletedReproductions = new Map<string, CampaignReproductionOutcome>();
   private readonly maxTopFindings: number;
+  private readonly currentVersions?: CampaignRunOptions['currentVersions'];
+  private promotionStop: { readonly resultClass: CampaignResultClass; readonly stopReason: CampaignCheckpoint['stopReason'] } | null = null;
 
   constructor(manifest: CampaignManifest, executor: CampaignExecutor, options: CampaignRunOptions = {}) {
     validateCampaignManifest(manifest);
@@ -389,8 +393,18 @@ export class CampaignOrchestrator {
     this.executor = executor;
     this.checkpointStore = new CampaignCheckpointStore(options.store ?? new PrivateArtifactStore());
     this.now = options.now ?? (() => new Date());
+    this.currentVersions = options.currentVersions;
     this.state = options.checkpoint === undefined ? initialCheckpoint(manifest, this.now) : options.checkpoint;
     assertManifestCompatible(manifest, this.state);
+    try {
+      this.assertCurrentVersions();
+    } catch {
+      this.state = {
+        ...this.state,
+        versionDrift: [...new Set([...this.state.versionDrift, 'CAMPAIGN_VERSION_DRIFT'])],
+        unresolved: [...new Set([...this.state.unresolved, 'CAMPAIGN_VERSION_DRIFT'])],
+      };
+    }
     const startedAt = this.now().getTime() - this.state.runtimeElapsedMs;
     this.budget = new CampaignBudgetManager(manifest.budgetPolicy, this.state.budgetUsed);
     this.time = new CampaignTimeBudget(manifest.runtimeCeilingMs, () => this.now().getTime(), startedAt);
@@ -404,6 +418,12 @@ export class CampaignOrchestrator {
     }
     this.maxTopFindings = Math.max(1, Math.min(3, options.maxTopFindings ?? 3));
     this.loadDossiers();
+  }
+
+  private assertCurrentVersions(): void {
+    if (this.currentVersions === undefined) return;
+    const current = typeof this.currentVersions === 'function' ? this.currentVersions() : this.currentVersions;
+    if (stableCampaignJson(current) !== stableCampaignJson(this.manifest.versions)) throw new Error('CAMPAIGN_VERSION_DRIFT');
   }
 
   private loadDossiers(): void {
@@ -556,6 +576,7 @@ export class CampaignOrchestrator {
     if (existing?.state === 'COMPLETED' || existing?.state === 'SKIPPED' || existing?.state === 'BLOCKED') return { stopped: null };
     try {
       this.time.assertAvailable();
+      this.assertCurrentVersions();
       const preflight = await this.preflight(item);
       if (!preflight.passed) {
         this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: preflight.code });
@@ -644,6 +665,11 @@ export class CampaignOrchestrator {
       if (code === 'SAFETY_EVENT') return { stopped: { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'SAFETY_EVENT' } };
       if (code === 'BUDGET_EXHAUSTED') return { stopped: { resultClass: 'PARTIAL_BUDGET_EXHAUSTED', stopReason: 'BUDGET_EXHAUSTED' } };
       if (code === 'RUNTIME_TIMEOUT') return { stopped: { resultClass: 'PARTIAL_BUDGET_EXHAUSTED', stopReason: 'RUNTIME_TIMEOUT' } };
+      if (code === 'CAMPAIGN_VERSION_DRIFT') {
+        this.state = { ...this.state, versionDrift: [...this.state.versionDrift, 'CAMPAIGN_VERSION_DRIFT'] };
+        this.checkpoint();
+        return { stopped: { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'CAMPAIGN_VERSION_DRIFT' } };
+      }
       if (code === 'PRIVACY_BLOCKED') return { stopped: { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'PRIVACY_BLOCKED' } };
       return { stopped: { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' } };
     }
@@ -686,7 +712,10 @@ export class CampaignOrchestrator {
       try {
         this.globalOwnerPreflight({ workItemId: `reproduce:${cluster.clusterId}`, kind: 'JOURNEY', order: 0, journeyId: representative.journeyId, envelopeId: representative.observation.features.envelopeId, apiOperationId: representative.observation.features.operationFamily, seed: null, linkedWorkItemIds: [], replayPolicy: 'ON_ADMISSION', selection: { selected: false, reason: 'derived representative', sourceImpact: 'ADMITTED_ANOMALY', confidence: 'UNRESOLVED', riskClass: 'TRIAGE', linkedJourneyId: representative.journeyId, linkedEnvelopeId: representative.observation.features.envelopeId, linkedApiOperationId: representative.observation.features.operationFamily } });
         const precompleted = this.precompletedReproductions.get(cluster.clusterId);
-        if (precompleted === undefined) this.budget.reserveWork('REPRODUCTION');
+        if (precompleted === undefined) {
+          this.budget.reserveWork('REPRODUCTION');
+          this.reserveReproductionEstimate(cluster, representative);
+        }
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'RUNNING' } : item) };
         this.checkpoint();
         const reproduction = precompleted ?? await this.executor.reproduce({ manifest: this.manifest, cluster, representative });
@@ -816,11 +845,44 @@ export class CampaignOrchestrator {
         }
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...this.state.unresolved, code] };
         this.checkpoint();
+        if (code === 'AUTH_BLOCKED') {
+          this.markPendingSkipped(code);
+          this.promotionStop = { resultClass: 'PARTIAL_AUTH_BLOCKED', stopReason: 'AUTH_BLOCKED' };
+          break;
+        }
+        if (code === 'SAFETY_EVENT') {
+          this.markPendingSkipped(code);
+          this.promotionStop = { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'SAFETY_EVENT' };
+          break;
+        }
+        if (code === 'PRIVACY_BLOCKED') {
+          this.markPendingSkipped(code);
+          this.promotionStop = { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'PRIVACY_BLOCKED' };
+          break;
+        }
+        if (code === 'BUDGET_EXHAUSTED') {
+          this.promotionStop = { resultClass: 'PARTIAL_BUDGET_EXHAUSTED', stopReason: 'BUDGET_EXHAUSTED' };
+          break;
+        }
+        if (code === 'CAMPAIGN_VERSION_DRIFT') {
+          this.promotionStop = { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'CAMPAIGN_VERSION_DRIFT' };
+          break;
+        }
         if (code === 'OWNER_POLICY_BLOCKED') {
           this.currentStorm = { kind: 'FAILURE_STORM', reasonCode: 'SHARED_ROOT_SYMPTOM', rootKey: 'owner-policy', fingerprint: cluster.fingerprint, oracleId: cluster.features.oracleId, runtimeCategory: 'OWNER_POLICY', affectedRunIds: cluster.runIds, affectedSurfaces: [candidateSurface(representative)], occurrenceCount: cluster.occurrenceCount };
           break;
         }
       }
+    }
+  }
+
+  private reserveReproductionEstimate(cluster: AnomalyCluster, representative: CampaignAnomalyCandidate): void {
+    const estimate: CampaignReproductionBudgetEstimate | undefined = this.executor.estimateReproduction?.({ manifest: this.manifest, cluster, representative });
+    if (estimate === undefined) return;
+    for (const dimension of ['browserContexts', 'journeyContexts', 'explorationContexts', 'apiExecutions', 'totalActions'] as const) {
+      const amount = estimate[dimension] ?? 0;
+      if (!Number.isInteger(amount) || amount < 0) throw new Error(`CAMPAIGN_REPRODUCTION_ESTIMATE_INVALID:${dimension}`);
+      if (amount > 0) this.budget.consume(dimension, amount);
     }
   }
 
@@ -859,6 +921,7 @@ export class CampaignOrchestrator {
         this.updateRecord(item.workItemId, { state: 'RUNNING', attemptCount: (existing?.attemptCount ?? 0) + 1, executionGuarantee: 'REPLAY_REQUIRED' });
         this.checkpoint();
         this.budget.reserveWork('REPRODUCTION');
+        this.reserveReproductionEstimate(cluster, representative);
         if (this.executor.reproduce === undefined) throw new Error('REPRODUCTION_ADAPTER_UNAVAILABLE');
         const reproduction = await this.executor.reproduce({ manifest: this.manifest, cluster, representative });
         this.precompletedReproductions.set(cluster.clusterId, reproduction);
@@ -905,6 +968,7 @@ export class CampaignOrchestrator {
     }
     await this.promoteFindings();
     if (this.interruptionRequested) return await this.finalize('INCOMPLETE_PROCESS_INTERRUPTION', 'PROCESS_INTERRUPTION');
+    if (this.promotionStop !== null) return await this.finalize(this.promotionStop.resultClass, this.promotionStop.stopReason);
     if (this.currentStorm !== null) return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'FAILURE_STORM_SHARED_ROOT_SYMPTOM');
     return await this.finalize(this.dossiers.length > 0 ? 'COMPLETE_WITH_FINDINGS' : 'COMPLETE_CLEAN', 'NONE');
   }
@@ -913,6 +977,16 @@ export class CampaignOrchestrator {
     this.persistManifest();
     if (this.state.campaignStatus !== 'IN_PROGRESS' && this.state.campaignStatus !== 'INCOMPLETE_PROCESS_INTERRUPTION') {
       return await this.finalize(this.state.campaignStatus, this.state.stopReason);
+    }
+    try {
+      this.assertCurrentVersions();
+    } catch {
+      this.state = {
+        ...this.state,
+        versionDrift: [...new Set([...this.state.versionDrift, 'CAMPAIGN_VERSION_DRIFT'])],
+        unresolved: [...new Set([...this.state.unresolved, 'CAMPAIGN_VERSION_DRIFT'])],
+      };
+      return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'CAMPAIGN_VERSION_DRIFT');
     }
     const globalPreflight = await this.preflight(null);
     if (!globalPreflight.passed) {
@@ -940,6 +1014,7 @@ export class CampaignOrchestrator {
     if (stop === null) {
       await this.promoteFindings();
       if (this.interruptionRequested) stop = { resultClass: 'INCOMPLETE_PROCESS_INTERRUPTION', stopReason: 'PROCESS_INTERRUPTION' };
+      else if (this.promotionStop !== null) stop = this.promotionStop;
       else if (this.currentStorm !== null) stop = { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: this.currentStorm.reasonCode === 'SHARED_ROOT_SYMPTOM' ? 'FAILURE_STORM_SHARED_ROOT_SYMPTOM' : 'SAFETY_EVENT' };
     }
     if (stop !== null) return await this.finalize(stop.resultClass, stop.stopReason);

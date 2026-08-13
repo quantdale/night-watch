@@ -123,6 +123,8 @@ export interface CampaignSourceWindow {
 export interface CampaignVersionFingerprint {
   readonly campaignSchemaVersion: typeof CAMPAIGN_SCHEMA_VERSION;
   readonly orchestratorVersion: typeof CAMPAIGN_ORCHESTRATOR_VERSION;
+  /** Current Nightwatch source identity; changes force a new/resumed campaign check. */
+  readonly nightwatchSourceSha: string;
   readonly selectorVersion: string;
   readonly dependencyMapVersion: string;
   readonly journeyContractVersion: string;
@@ -391,9 +393,14 @@ export interface CampaignReproductionOutcome {
   readonly reasonCode?: string;
 }
 
+export type CampaignReproductionBudgetEstimate = Partial<Pick<CampaignBudgetUsage,
+  'browserContexts' | 'journeyContexts' | 'explorationContexts' | 'apiExecutions' | 'totalActions'>>;
+
 export interface CampaignExecutor {
   readonly preflight: (input: { readonly manifest: CampaignManifest; readonly workItem: CampaignWorkItem | null }) => Promise<CampaignPreflightResult> | CampaignPreflightResult;
   readonly execute: (context: CampaignExecutionContext) => Promise<CampaignExecutionOutcome>;
+  /** Optional pre-execution estimate used by adapters that create fresh real contexts. */
+  readonly estimateReproduction?: (input: { readonly manifest: CampaignManifest; readonly cluster: AnomalyCluster; readonly representative: CampaignAnomalyCandidate }) => CampaignReproductionBudgetEstimate;
   readonly reproduce?: (input: { readonly manifest: CampaignManifest; readonly cluster: AnomalyCluster; readonly representative: CampaignAnomalyCandidate }) => Promise<CampaignReproductionOutcome>;
 }
 
@@ -533,6 +540,8 @@ export interface CampaignRunOptions {
   readonly now?: () => Date;
   readonly maxTopFindings?: number;
   readonly stopAfterWorkItemId?: string;
+  /** Optional runtime fingerprint check used by long-running real adapters. */
+  readonly currentVersions?: CampaignVersionFingerprint | (() => CampaignVersionFingerprint);
 }
 
 // Keep these imports in the public type surface useful to adapters without

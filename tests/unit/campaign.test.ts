@@ -78,6 +78,7 @@ const PRIVACY_POLICY: CampaignPrivacyPolicy = {
 const VERSIONS: CampaignVersionFingerprint = {
   campaignSchemaVersion: CAMPAIGN_SCHEMA_VERSION,
   orchestratorVersion: CAMPAIGN_ORCHESTRATOR_VERSION,
+  nightwatchSourceSha: 'synthetic-phase7-source.v1',
   selectorVersion: SELECTOR_VERSION,
   dependencyMapVersion: DEPENDENCY_MAP_VERSION,
   journeyContractVersion: JOURNEY_CONTRACT_VERSION,
@@ -586,5 +587,30 @@ test.describe('Phase 7 no-finding and drift contracts', () => {
     const changed = createCampaignManifest(inputFor('COVERAGE_EXPANSION', [], { ...TEST_BUDGET, maxTotalActions: TEST_BUDGET.maxTotalActions - 1 }));
     expect(changed.campaignId).not.toBe(first.campaignId);
     expect(() => assertManifestCompatible(changed, { campaignId: first.campaignId, manifestFingerprint: first.manifestFingerprint })).toThrow('CAMPAIGN_VERSION_DRIFT');
+  });
+
+  test('runtime source-version drift stops a resumed campaign before new work', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      let executed = 0;
+      const executor = {
+        ...passingExecutor(),
+        execute: async (context: { readonly workItem: CampaignWorkItem }) => {
+          executed += 1;
+          return passingExecutor().execute(context);
+        },
+      };
+      const result = await runCampaign(manifest, executor, {
+        store,
+        currentVersions: { ...VERSIONS, nightwatchSourceSha: 'synthetic-phase7-source.changed.v1' },
+      });
+      expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(result.stopReason).toBe('CAMPAIGN_VERSION_DRIFT');
+      expect(result.checkpoint.versionDrift).toEqual(['CAMPAIGN_VERSION_DRIFT']);
+      expect(executed).toBe(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

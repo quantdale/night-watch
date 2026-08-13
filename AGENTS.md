@@ -67,6 +67,13 @@ remote repository, or Alphaus repository. Chrome DevTools MCP remains optional
 and subordinate to Playwright containment; it never receives credentials or
 raw authenticated evidence.
 
+Phase 7 campaign commands are local and bounded: `npm run campaign:synthetic`
+executes the repository-owned deterministic fixture matrix, while
+`npm run campaign:real -- --env=dev` is an explicit opt-in for one guarded
+DEV campaign and requires the external owner-only storage state. The real
+launcher is serial, fail-closed, and never runs in production, publishes
+findings, or performs infrastructure/data operations.
+
 ## Task and checkpoint discipline
 
 Any multi-milestone, long-running, architecture-changing, safety-sensitive,

@@ -114,6 +114,7 @@ function validateManifestIdentity(manifest: CampaignManifest): void {
   }
   if (!/^campaign:sha256:[a-f0-9]{24}$/i.test(manifest.campaignId)) throw new Error('CAMPAIGN_ID_INVALID');
   if (!/^manifest:sha256:[a-f0-9]{24}$/i.test(manifest.manifestFingerprint)) throw new Error('CAMPAIGN_MANIFEST_FINGERPRINT_INVALID');
+  if (!ID_RE.test(manifest.versions.nightwatchSourceSha)) throw new Error('CAMPAIGN_NIGHTWATCH_SOURCE_VERSION_INVALID');
   if (!ID_RE.test(manifest.seedCorpusVersion)) throw new Error('CAMPAIGN_SEED_CORPUS_VERSION_INVALID');
   for (const seed of manifest.seedSet) if (!SEED_RE.test(seed)) throw new Error('CAMPAIGN_SEED_INVALID');
   if (manifest.deploymentStatus !== 'DEPLOYMENT_STATUS_UNRESOLVED') throw new Error('CAMPAIGN_DEPLOYMENT_CLAIM_INVALID');
