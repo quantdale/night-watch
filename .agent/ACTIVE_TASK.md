@@ -6,19 +6,20 @@ Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
 Status: BLOCKED
 Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
-Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
+Current SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
+Last validated implementation SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
 Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
 datastore environment mapping.
-Last checkpoint: a5aeaf0684d02c62ab71c0aec9273b33f2e22973 — temporary isolated
-GKE workload/image/config-reference checkpoint; local Phase 6 architecture,
-synthetic matrix, privacy review, and full validation completed; no datastore
-query has run.
-Next action: reconcile the completed GKE, GCR, Cloud Build, GitHub, and source
-cross-check in STATE/REPORT, then retain the blocker unless an authoritative
-deployment artifact supplies effective `API_ENV`/AWS binding and approved
-designated scope. Do not read Secret payloads, run an auth probe, query a
-datastore, exec, switch the normal context, guess, or bypass the gate.
+Last checkpoint: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe — validated narrow
+Phase 6 continuity-checker repair; prior documentation checkpoint was
+94898ef8bdb0e73a8c3bb135efef1b5036dc23e2. The real-data gate remains closed;
+no datastore query has run.
+Next action: run final local validation, reconcile the repaired checker and
+current binding audit in STATE/REPORT, then retain the blocker unless an
+authoritative deployment artifact supplies effective `API_ENV`/AWS binding
+and approved designated scope. Do not read Secret payloads, run a datastore
+auth probe, query a datastore, exec, switch the normal context, guess, or
+bypass the gate.
 
 ## Prior phase closure handoff
 

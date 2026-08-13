@@ -135,7 +135,8 @@ AI planning, scheduler, and Phase 7.
 
 ### M8 — Final validation, adversarial review, and clean closure
 
-- Status: COMPLETED — local validation and blocker handoff.
+- Status: COMPLETED — local validation, blocker handoff, and narrow continuity
+  checker repair.
 - Run all focused suites, Phase 5 lineage tests, full Playwright, typecheck,
   agent check, diff check, Alphaus integrity audit, privacy scan, and closure
   review. Commit Nightwatch only; keep the task BLOCKED because the explicit
@@ -186,6 +187,11 @@ is captured in memory and reduced before evidence.
   no non-secret effective AWS/API_ENV mapping or designated scope. The image
   tag's temporal proximity to Ripple master is not promoted to provenance;
   the real-data gate remains blocked.
+- The fresh 2026-08-13 session found that `agent:check` classified the
+  already-approved Phase 6 runtime-binding audit artifact as `STALE` because
+  the shared checkpoint allowlist omitted its exact README/audit paths. This
+  was repaired in Nightwatch only with a regression test; the checker retains
+  the existing `SYNCED`, `CHECKPOINT_ADVANCE`, and `STALE` semantics.
 
 ## Deferred Work
 

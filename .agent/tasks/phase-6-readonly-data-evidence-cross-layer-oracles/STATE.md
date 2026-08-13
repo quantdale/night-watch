@@ -6,12 +6,44 @@ Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
 Status: BLOCKED
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
-Last validated implementation SHA: 6de063325f2afc1bafc14ce4889c6d53d2e76bed
+Current SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
+Last validated implementation SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
 Branch: main
-Last checkpoint: `a5aeaf0684d02c62ab71c0aec9273b33f2e22973`; temporary isolated
-GKE workload/image/config-reference audit recorded; Phase 6 local architecture
-and validation complete; no datastore query has run.
+Last checkpoint: `483fbe4f41f235e3e1e0a12e0613954f3db4aefe` (validated narrow
+continuity-checker repair; prior documentation checkpoint
+`94898ef8bdb0e73a8c3bb135efef1b5036dc23e2`).
+Temporary isolated GKE workload/image/config-reference audit is recorded; Phase
+6 local architecture and validation are complete; no datastore query has run.
+
+## SESSION_RECOVERY_WAYPOINT_2026_08_13
+
+- Sole Nightwatch writer confirmed: no Nightwatch index lock or open Nightwatch
+  file was found, and no competing Nightwatch writer was identified.
+- Repository recovery is `SYNCED` for the repaired implementation at
+  `483fbe4f41f235e3e1e0a12e0613954f3db4aefe`; the prior clean documentation
+  HEAD was `94898ef8bdb0e73a8c3bb135efef1b5036dc23e2`.
+- `alphaus-tools/bin/envcheck` passed all hard checks on this session. It
+  reports a currently available AWS SSO/ADC-backed STS metadata session; this
+  is a newly available operator identity path only, not workload-role proof,
+  datastore authorization, or permission to query.
+- Direct `aws sts get-caller-identity` succeeded for the operator SSO session.
+  The account literal is intentionally not retained because the same class of
+  value appears in unrelated customer/payer evidence; only the non-secret
+  role class `AWSReservedSSO_PowerUserAccessForPayer` is recorded. This is
+  `OPERATOR_METADATA_ONLY`, not the pod's assumed role, effective deployment
+  configuration, or datastore evidence.
+- A bounded exact local search using the operator identity as a discriminator
+  found only unrelated investigation/customer evidence, not a deployment
+  manifest or workload-role mapping. Exact `mochi-dev-pong` hits were existing
+  documentation mirrors, and `ripple-api-micro-envvars` had no local hit. No
+  value from those files was copied into Nightwatch.
+- GCP ADC, `gcloud-ro`, Kubernetes client, and approved datastore-wrapper
+  binaries are available. Chrome DevTools is not listening and remains
+  optional. No datastore command or authentication probe was run.
+- Next discriminator: retain the mapping blocker unless an authoritative
+  sanitized deployment handoff arrives. Do not use operator IAM identity,
+  local investigation data, or absent GitHub search results as workload
+  configuration.
 
 ## Objective
 
@@ -58,8 +90,11 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
   Registry metadata, Cloud Build metadata, and authenticated GitHub CLI
   channels are available. Cloud Asset Inventory is
   `AUTH_REQUIRED/UNAVAILABLE` for this target because the API is disabled or
-  inaccessible. AWS STS is `AUTH_REQUIRED_OR_UNAVAILABLE` and was not retried.
-  No datastore tool or auth probe was invoked.
+  inaccessible. The GitHub MCP search channel is `AUTH_REQUIRED`, while the
+  authenticated `gh` CLI metadata channel is available; two new exact
+  deployment searches returned no matches. AWS STS is
+  `AVAILABLE_OPERATOR_IDENTITY_ONLY`. No datastore tool or auth probe was
+  invoked.
 - Temporary isolated GKE metadata context completed 2026-08-13 without
   changing the normal kube context. Read-only Kubernetes API access proved the
   live owner chain `Pod ripple-api-micro-666f6b6b44-pc8cc` → `ReplicaSet
@@ -144,14 +179,14 @@ scope are not proven.
   responses. The strongest additional candidate is the non-user-scoped
   billing-group exchange read; it remains outside the frozen D1-D3 real budget
   unless the SPEC is amended.
-- Phase 6 hardened implementation checkpoint `6de063325f2afc1bafc14ce4889c6d53d2e76bed`
+- Phase 6 hardened implementation checkpoint `483fbe4f41f235e3e1e0a12e0613954f3db4aefe`
   adds `src/data/phase6`, Nightwatch-owned corpus artifacts, and the
   focused synthetic test. The runtime API accepts only `ValidatedReadPlan`;
   the default `GatedReadToolInvoker` cannot invoke an external datastore.
 - Current catalog counts: 7 structured query plans, 4 data-oracle records, 11
   lineage edges. Phase 5 remains 11 inventoried / 6 KNOWN_READ / 4
   KNOWN_MUTATION / 1 UNKNOWN.
-- Focused Phase 5 + Phase 6 suite is 23/23 PASS; full Playwright is 341/341
+- Focused Phase 5 + Phase 6 suite is 23/23 PASS; full Playwright is 342/342
   PASS; TypeScript is PASS. No datastore tool, auth probe, query, scan, or
   write has executed.
 
@@ -178,11 +213,14 @@ AVAILABLE: `/home/dalepalaca/go/src/alphaus-main/alphaus-tools/bin/dynamo-ro`,
 `bq-ro`, `spanner-ro`, `gcloud-ro`; underlying `/usr/local/bin/aws`,
 `/snap/bin/bq`, `/snap/bin/gcloud` present. GCP project metadata access is
 `AVAILABLE` for `labs-169405` and `mobingi-main`; Artifact Registry metadata,
-Cloud Build metadata, and authenticated GitHub CLI are `AVAILABLE`; Cloud
+Cloud Build metadata, and authenticated GitHub CLI are `AVAILABLE`; the
+GitHub MCP search channel is `AUTH_REQUIRED`; Cloud
 Asset Inventory is `AUTH_REQUIRED/UNAVAILABLE` for this target because its API
-is disabled or inaccessible; AWS STS identity is
-`AUTH_REQUIRED_OR_UNAVAILABLE`. `DATASTORE_AUTH_STATUS` is `NOT_PROBED`; no
-real datastore tool invocation has occurred. GKE metadata
+is disabled or inaccessible; AWS STS is `AVAILABLE_OPERATOR_IDENTITY_ONLY`.
+`DATASTORE_AUTH_STATUS` is
+`NOT_PROBED`; no real datastore tool invocation or datastore auth probe has
+occurred. AWS STS is `AVAILABLE_OPERATOR_IDENTITY_ONLY`; it has not been used
+for DynamoDB, BigQuery, or Spanner access. GKE metadata
 access is `AVAILABLE` through a temporary isolated kubeconfig; the normal
 context was unchanged. `gcloud-ro` metadata-only
 cluster-listing/describe and sanitized logging resource-label checks succeeded
@@ -213,6 +251,63 @@ but no normal context was changed. The designated Nightwatch scope is absent
 from the durable Phase 5 runtime/API evidence.
 No cross-layer comparison or real query is allowed while this remains
 unconfirmed. Application auth is not datastore auth.
+
+## LIVE_WORKLOAD_IDENTITY
+
+`CONFIRMED` from exact read-only GKE metadata: project `labs-169405`, cluster
+`mochi-dev-pong`, location `asia-northeast1-a`, namespace `default`, Pod →
+ReplicaSet → Deployment owner chain for `ripple-api-micro`, Ready workload,
+image tag/digest recorded in `corpus/phase6/runtime-binding-audit.json`, and
+Kubernetes ServiceAccount `default`. Only Secret reference names are known;
+Secret payloads remain unread.
+
+## DEPLOYMENT_BINDING_MATRIX
+
+Canonical sanitized matrix: `corpus/phase6/runtime-binding-audit.json`.
+Workload/pod/deployment/image identity: `CONFIRMED`. Deployment source/image
+correlation: `PARTIAL_METADATA`. Effective `API_ENV`, AWS account/role/region,
+physical Dynamo namespace, and any BQ/Spanner target: `UNRESOLVED` or
+`NOT_PROVEN`. Designated Nightwatch scope: `UNRESOLVED`.
+
+## EFFECTIVE_ENV_STATUS
+
+`API_ENV_UNRESOLVED`; no `API_ENV_LIVE_VERIFIED`,
+`API_ENV_DEPLOYMENT_DERIVED`, or `API_ENV_AUTHORITATIVE_HANDOFF` evidence is
+available. Operator STS identity is explicitly excluded from this proof.
+
+## DATASTORE_BINDINGS
+
+- DynamoDB: source family `POSSIBLY_USED`; effective AWS account/role/region
+  and physical table namespace unresolved; real execution blocked.
+- BigQuery: `NOT_PROVEN_FOR_SELECTED_LEGACY_PHP_WORKLOAD`; no query allowed.
+- Spanner: `NOT_PROVEN_FOR_SELECTED_LEGACY_PHP_WORKLOAD`; no query allowed.
+
+## DESIGNATED_SCOPE_STATUS
+
+`DESIGNATED_SCOPE_UNRESOLVED`. No MSP/company/payer/billing-group/account value
+is retained in Nightwatch. The only approved next path is ephemeral derivation
+from an already-approved KNOWN_READ after deployment/data binding proof; DB
+discovery by email, name, scan, or broad search remains prohibited.
+
+## SOURCE_PROVENANCE
+
+J1/J2 source lineage is pinned to `mobingilabs/ripple-api@27bb007a`; J3 lineage
+to `mobingilabs/ouchan@565f00a8`; the live image/deployment trigger is recorded
+as partial provenance in the sanitized matrix. Current source explains how
+deployment-provided values are consumed but does not supply their effective
+values. The targeted `alphauslabs/mochi` repository lookup also returned not
+found.
+
+## EXHAUSTED_EVIDENCE_PATHS
+
+Exact live GKE metadata, image/GCR metadata, Cloud Build exact image/tag
+searches, deployment-trigger/GitHub metadata, authenticated `gh` exact
+searches for `ripple-api-micro-envvars` and `mochi-dev-pong`, targeted
+`mobingilabs/mochi` and `alphauslabs/mochi` lookups, current service-source
+resolution, ConfigMap/annotation checks, and bounded Cloud Logging metadata
+checks are exhausted. Cloud Asset Inventory is unavailable. AWS STS now proves
+only operator identity. No Secret payload, pod exec, port-forward, datastore
+auth probe, or datastore query is an admissible substitute.
 
 ### DEPLOYMENT_BINDING_MATRIX
 
@@ -308,8 +403,9 @@ optional D4 without SPEC amendment; currently remaining=6.
 ## REAL_QUERY_LEDGER
 
 0 executed; 0 production writes; 0 protected scans; 0 DB credentials exposed;
-no auth or environment probe performed; remaining=6. This is intentionally
-not `DATASTORE_VERIFIED`.
+no datastore auth or runtime-data environment probe performed; operator STS
+identity metadata only; remaining=6. This is intentionally not
+`DATASTORE_VERIFIED`.
 
 ## CROSS_LAYER_LEDGER
 
@@ -336,24 +432,42 @@ data evidence exists. J1/J2/J3 lineage is source-derived, not live-verified.
 
 ## FILES_CHANGED
 
-Phase 6 task docs, `src/data/phase6/*`, `corpus/phase6/*`, and
-`tests/unit/phase6Data.test.ts`. `corpus/phase6/runtime-binding-audit.json`
-contains only sanitized deployment-binding metadata; no live datastore
-evidence file exists.
+Phase 6 task docs, `src/data/phase6/*`, `corpus/phase6/*`,
+`bin/agent-state.mjs`, and the agent-state regression test.
+`corpus/phase6/runtime-binding-audit.json` contains only sanitized
+deployment-binding metadata; no live datastore evidence file exists. This
+session changed the Phase 6 `STATE.md` waypoint and the narrow shared
+continuity allowlist/test repair; no Alphaus repository or real-data adapter
+was changed.
 
 ## VALIDATION_LEDGER
 
 Phase 5 terminal validation remains: TypeScript PASS, focused Phase 5 15
 passed, full Playwright 333 passed, agent:check PASS with approved continuity
-warning, diff-check PASS. Phase 6 final validation: focused Phase 5 + Phase 6
-23/23 passed, full Playwright 341/341 passed, TypeScript PASS, agent:check
-PASS with the approved continuity warning, diff-check PASS, privacy scan PASS,
-and Alphaus integrity audit PASS.
+warning, diff-check PASS. Phase 6 final validation before this continuation:
+focused Phase 5 + Phase 6 23/23 passed, full Playwright 341/341 passed,
+TypeScript PASS, agent:check PASS with the approved continuity warning,
+diff-check PASS, privacy scan PASS, and Alphaus integrity audit PASS.
+Post-repair validation: agent-state focused 14/14 passed, TypeScript PASS, full
+Playwright 342/342 passed, agent:check PASS with `CHECKPOINT_ADVANCE` only for
+approved task/docs paths, and `git diff --check` PASS. The exact account-literal
+scan returned no matches.
 
 ## BUG_CANDIDATES
 
-None. Phase 5's repaired snapshot-root defect remains in its own report and is
-not a data-layer finding.
+- `NW6-SESSION-PRIVACY-LITERAL`: a raw operator account literal was briefly
+  written to an uncommitted STATE edit during metadata recovery. It was removed
+  before checkpointing, verified absent from Nightwatch, and no committed or
+  final durable artifact contains it. This is a repaired Nightwatch evidence-
+  handling defect, not a product/data finding.
+- `PHASE_6_DISCOVERED_SHARED_INFRA_DEFECT`: `bin/agent-state.mjs` did not
+  recognize the Phase 6 sanitized runtime-binding artifact as an approved
+  checkpoint path, so the valid documentation-only descendant was reported as
+  `STALE` rather than `CHECKPOINT_ADVANCE`. Repair is scoped to the exact
+  Phase 6 README/audit paths plus a regression test; prior phase history is not
+  reopened.
+- Phase 5's repaired snapshot-root defect remains in its own report and is not
+  a data-layer finding.
 
 ## REJECTED_QUERY_PLANS
 
@@ -406,20 +520,28 @@ and query-widening fallbacks are rejected by frozen intent.
 ## SAFETY_EVENTS
 
 0 datastore queries; 0 writes; 0 scans; 0 production attempts; 0 unknown
-approvals; 0 privacy events.
+approvals; 0 final durable customer identifiers. One transient local STATE
+privacy repair was required and completed before checkpointing; no live data,
+credential, Secret payload, or datastore output was involved.
 
 ## PRIVACY_STATUS
 
-PASS for task creation. No customer values, credentials, query parameters,
-rows, bodies, or datastore output entered Nightwatch.
+PASS after local repair. During session recovery, an operator AWS account
+literal was briefly written to the uncommitted STATE edit as metadata; because
+the same class of literal occurs in unrelated customer/payer evidence, it was
+removed immediately before checkpointing. No raw account literal remains in
+Nightwatch, no customer value entered a committed artifact, and no raw query
+or datastore value was handled. Treat this as a repaired Nightwatch privacy
+handling defect, not as live-data evidence.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-6de063325f2afc1bafc14ce4889c6d53d2e76bed.
+483fbe4f41f235e3e1e0a12e0613954f3db4aefe.
 
 ## LAST_CHECKPOINT_SHA
 
-a5aeaf0684d02c62ab71c0aec9273b33f2e22973.
+483fbe4f41f235e3e1e0a12e0613954f3db4aefe (validated implementation
+checkpoint).
 
 ## NEXT_EXACT_ACTION
 
@@ -459,11 +581,17 @@ current-state handoff; no Alphaus repo changed and no datastore query executed.
 
 ## Validation Ledger
 
-Phase 6 focused Phase 5 + Phase 6: 23/23 PASS; full Playwright: 341/341 PASS;
-`npx tsc --noEmit`: PASS; `npm run agent:check`: PASS with the approved
-continuity warning; `git diff --check`: PASS. Privacy scan and Alphaus
+Phase 6 focused Phase 5 + Phase 6: 23/23 PASS; full Playwright: 342/342 PASS;
+`npx tsc --noEmit`: PASS; `npm run agent:check`: PASS with
+`CHECKPOINT_ADVANCE` for approved documentation paths; `git diff --check`:
+PASS. Privacy scan and Alphaus
 integrity audit: PASS. Four read-only source archaeology tracks completed; no
-datastore command was invoked.
+datastore command was invoked. Session recovery checks: `envcheck` hard checks
+PASS; operator STS identity metadata read PASS and classified
+`OPERATOR_METADATA_ONLY`; authenticated `gh` exact deployment searches returned
+no matches; GitHub MCP exact searches were `AUTH_REQUIRED`; Nightwatch raw
+account-literal scan returned none after repair. Post-repair full validation is
+`342/342`, and the continuity checker regression is `14/14`.
 
 ## Decisions Made During This Task
 
@@ -501,7 +629,9 @@ first, would be unsafe and potentially misleading.
 
 ## Safety Events
 
-None.
+No datastore, production, mutation, or secret-boundary safety event occurred.
+The transient local STATE privacy repair is recorded above and was completed
+before checkpointing.
 
 ## Deferred / Follow-Up
 

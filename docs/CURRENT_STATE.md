@@ -1,7 +1,8 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-12** at
-> Phase 6 task creation. Phase 4 and Phase 5 are complete; Phase 6 is active.
+> Durable memory for the next agent/session. Last updated: **2026-08-13** at
+> the Phase 6 fresh-session checkpoint. Phase 4 and Phase 5 are complete;
+> Phase 6 is active.
 
 ---
 
@@ -186,8 +187,11 @@ Phase 6 has versioned typed query plans, DynamoDB/BigQuery/Spanner validators
 and thin adapters, metadata-only normalization, cross-layer comparison,
 source-to-store lineage, Phase 3 staleness integration, Phase 5 API linkage,
 and synthetic adversarial coverage. The focused Phase 5 + Phase 6 suite passed
-23/23 and the full Playwright suite passed 341/341; TypeScript, agent-check,
-and diff-check passed.
+23/23 and the full Playwright suite passed 342/342; TypeScript, agent-check,
+and diff-check passed. The 2026-08-13 continuation also repaired the narrow
+agent-state allowlist for the sanitized Phase 6 runtime-binding checkpoint and
+covered it with a regression test; SHA semantics remain `SYNCED`,
+`CHECKPOINT_ADVANCE`, and `STALE`.
 
 The real data gate remains closed as
 `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`: current configuration and

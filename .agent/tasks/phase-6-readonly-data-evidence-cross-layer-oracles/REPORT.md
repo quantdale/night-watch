@@ -10,11 +10,50 @@ probe, read, scan, or write was executed.
 ## Checkpoint identity
 
 - Starting SHA: `abb0d446f52206390272f8d7a17e6bf6d9ecf0bf`.
-- Final validated implementation SHA: `6de063325f2afc1bafc14ce4889c6d53d2e76bed`.
-- Prior documentation checkpoint SHA: `a5aeaf0684d02c62ab71c0aec9273b33f2e22973`.
+- Final validated implementation SHA: `483fbe4f41f235e3e1e0a12e0613954f3db4aefe`.
+- Prior documentation checkpoint SHA: `94898ef8bdb0e73a8c3bb135efef1b5036dc23e2`.
 - Terminal clean HEAD: verified after the final documentation sync; Git HEAD
   is the authoritative exact value and is emitted in the final handoff.
 - Nightwatch only was modified. Phase 7 was not created or started.
+
+## Fresh-session continuation — 2026-08-13
+
+The fresh session recovered the repository from its durable task files and
+confirmed no competing Nightwatch writer. The starting clean documentation
+HEAD was `94898ef8bdb0e73a8c3bb135efef1b5036dc23e2`; the validated
+implementation was `6de063325f2afc1bafc14ce4889c6d53d2e76bed`.
+
+Safe independent metadata paths were rechecked or newly tested without any
+datastore operation: `envcheck` passed; AWS STS yielded operator identity
+metadata only; the GitHub MCP search channel required authentication; the
+authenticated `gh` CLI returned no exact matches for the two deployment
+identifiers; and the alternate `alphauslabs/mochi` repository lookup was not
+found. None of these facts proves the workload role, effective `API_ENV`,
+physical DynamoDB namespace, BQ/Spanner target, or designated test scope.
+Secret payloads, pod exec, port-forward, application requests, datastore auth,
+and datastore queries remained unused.
+
+The session found and repaired one Nightwatch continuity defect: the agent
+state checker did not allow the Phase 6 sanitized runtime-binding audit as a
+documentation checkpoint path. Commit
+`483fbe4f41f235e3e1e0a12e0613954f3db4aefe` adds only the exact Phase 6 audit/
+README allowlist entries and one regression test; the existing
+`SYNCED`/`CHECKPOINT_ADVANCE`/`STALE` semantics remain unchanged. A transient
+operator account literal was removed from an uncommitted STATE edit after it
+was identified as unsafe to retain; no raw account literal remains in
+Nightwatch or any committed artifact.
+
+The real-data gate remains closed as
+`PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. The frozen budget remains six
+queries, with zero executed; the designated scope is independently
+`DESIGNATED_SCOPE_UNRESOLVED`.
+
+Post-repair validation passed: the focused Phase 5 + Phase 6 suite was 23/23,
+the continuity-checker suite was 14/14, TypeScript passed, the full Playwright
+suite was 342/342, `npm run agent:check` passed with the expected
+`CHECKPOINT_ADVANCE` classification for approved documentation paths, and
+`git diff --check` passed. The Alphaus integrity fingerprint remained at the
+prior recorded HEADs and dirty counts.
 
 ## Phase 5 closure reconciliation
 
