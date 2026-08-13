@@ -6,14 +6,14 @@ Title: Private Autonomous Nightly Campaigns
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
-Last validated implementation SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
+Current SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
+Last validated implementation SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
 Current milestone: M6 — bounded real DEV campaign and closure.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: implementation checkpoint `a9783ebe244381fe50e8387bd69af3f65a2f558d`.
-Current documentation/remote checkpoint: `57dae72a6747d8042bc1577755489b4258f87674`.
+Last checkpoint: implementation checkpoint `b95b06dab3fe60208d412ea9811c0c36c399ed9b`.
+Current documentation/remote checkpoint: `564948de32643b630216b41c234090f7bff9a8ce`.
 Next action: run the explicit `--prepare-only` command to create and freeze
 one new current-version bounded DEV campaign manifest, then push the
 `PHASE_7_NEW_REAL_CAMPAIGN_READY` state before one `--resume-campaign` run.

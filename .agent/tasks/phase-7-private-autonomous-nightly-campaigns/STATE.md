@@ -6,9 +6,9 @@ Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
 Status: IN_PROGRESS
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
-Last validated implementation SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
-Last implementation checkpoint: a9783ebe244381fe50e8387bd69af3f65a2f558d
+Current SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
+Last validated implementation SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
+Last implementation checkpoint: b95b06dab3fe60208d412ea9811c0c36c399ed9b
 Branch: main
 REMOTE_STATUS: PRIVATE_REMOTE_CONFIRMED
 REMOTE: origin
@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: 57dae72a6747d8042bc1577755489b4258f87674
+REMOTE_HEAD: 564948de32643b630216b41c234090f7bff9a8ce
 
 ## Objective
 
@@ -124,11 +124,11 @@ completed work or widen catalogs/policy.
 
 ## Completion Snapshot
 
-Implementation checkpoint a9783ebe244381fe50e8387bd69af3f65a2f558d is clean;
+Implementation checkpoint b95b06dab3fe60208d412ea9811c0c36c399ed9b is clean;
 synthetic matrix, focused tests, typecheck, auth refresh, page-validity,
-authenticated privacy hardening, frozen-manifest workflow, and remote push
-pass. The historical real campaign remains durably auth-blocked; a new
-campaign is not yet created.
+authenticated privacy hardening, frozen-manifest workflow, implementation-SHA
+drift handling, and remote push pass. The final current campaign is frozen and
+awaits its single resume execution.
 
 ## CURRENT_GOAL
 
@@ -172,14 +172,17 @@ outside Nightwatch state.
 Historical real campaign: `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`. Manifest fingerprint:
 `manifest:sha256:861ae8b3dffdb88ea8a262e7`. Identity was derived from the frozen
 manifest inputs; timestamp was not an identity input.
-Current campaign: `campaign:sha256:5c4ab13ab8ba103625a43cd7`.
-Current manifest fingerprint: `manifest:sha256:463df2b9a375326fe1c4389f`.
+Provisional prepared campaign (never executed):
+`campaign:sha256:5c4ab13ab8ba103625a43cd7`; it was superseded before product
+work when the implementation-SHA drift fix was pushed.
+Current campaign: `campaign:sha256:aaf0cb8019c08c00132e71fb`.
+Current manifest fingerprint: `manifest:sha256:f30e691c334222281608ab01`.
 
 ## MANIFEST_STATUS
 
 Historical manifest/checkpoint: immutable and not resumable. Current manifest:
 frozen and pushed as `PHASE_7_NEW_REAL_CAMPAIGN_READY`; it uses Nightwatch
-source SHA `57dae72a6747d8042bc1577755489b4258f87674`, current schema,
+implementation source SHA `b95b06dab3fe60208d412ea9811c0c36c399ed9b`, current schema,
 orchestrator/catalog versions, current read-only source snapshots and
 selection, fixed lineage/seeds, bounded budget, private policy, and frozen
 owner-scope policy. Product execution is not started.
@@ -339,28 +342,29 @@ and authenticated traces were absent from campaign artifacts.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`a9783ebe244381fe50e8387bd69af3f65a2f558d`
+`b95b06dab3fe60208d412ea9811c0c36c399ed9b`
 
 ## LAST_CHECKPOINT_SHA
 
-`a9783ebe244381fe50e8387bd69af3f65a2f558d`
+`b95b06dab3fe60208d412ea9811c0c36c399ed9b`
 
 ## LAST_PUSHED_SHA
 
-`a9783ebe244381fe50e8387bd69af3f65a2f558d`
+`b95b06dab3fe60208d412ea9811c0c36c399ed9b`
 
 ## PUSH_LEDGER
 
 - Remote reconciliation checkpoint: `2aa2742d6a062e633fcb3faf2ca119a408b06758` pushed to `origin/main`.
 - Authenticated-artifact implementation checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460` pushed to `origin/main`.
 - Frozen-manifest workflow implementation checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d` pushed to `origin/main`.
-- Frozen-manifest workflow documentation checkpoint: `57dae72a6747d8042bc1577755489b4258f87674` pushed to `origin/main`.
+- Implementation-SHA drift fix checkpoint: `b95b06dab3fe60208d412ea9811c0c36c399ed9b` pushed to `origin/main`.
+- Final manifest readiness documentation checkpoint: pending this push.
 - Auth-ready state update: current implementation and auth evidence are
   recorded above; the current campaign readiness state is recorded here.
 
 ## NEXT_EXACT_ACTION
 
-Run exactly one `npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:5c4ab13ab8ba103625a43cd7`
+Run exactly one `npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:aaf0cb8019c08c00132e71fb`
 against the frozen ordinal-zero checkpoint. Never reuse the historical campaign
 ID, use an alternative credential, or widen scope.
 

@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `57dae72a6747d8042bc1577755489b4258f87674` (verified equal to local `HEAD`) |
+| `REMOTE_HEAD` | `b95b06dab3fe60208d412ea9811c0c36c399ed9b` (verified equal to local `HEAD`) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -309,9 +309,11 @@ The current launcher requires an explicit two-step real workflow:
 owner-only manifest plus ordinal-zero checkpoint without invoking an executor;
 the sanitized `PHASE_7_NEW_REAL_CAMPAIGN_READY` state is then pushed before
 `--resume-campaign=<id>` may execute the frozen campaign exactly once.
-The prepared campaign is `campaign:sha256:5c4ab13ab8ba103625a43cd7` with
-manifest fingerprint `manifest:sha256:463df2b9a375326fe1c4389f` and source
-SHA `57dae72a6747d8042bc1577755489b4258f87674`.
+The final prepared campaign is `campaign:sha256:aaf0cb8019c08c00132e71fb` with
+manifest fingerprint `manifest:sha256:f30e691c334222281608ab01` and
+implementation source SHA `b95b06dab3fe60208d412ea9811c0c36c399ed9b`.
+An earlier provisional manifest was never executed and is retained only as
+owner-only local superseded state.
 
 Real campaign safety vector: production attempts 0, proxy violations 0,
 unknown destinations 0, unknown approvals 0, product mutations 0,

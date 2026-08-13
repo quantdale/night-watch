@@ -38,7 +38,9 @@ authenticated artifacts.
 The auth-ready implementation checkpoint is
 `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`. The frozen-manifest workflow
 implementation checkpoint is
-`a9783ebe244381fe50e8387bd69af3f65a2f558d`, pushed to `origin/main`. The next
+`a9783ebe244381fe50e8387bd69af3f65a2f558d`, pushed to `origin/main`. The
+implementation-SHA drift fix is `b95b06dab3fe60208d412ea9811c0c36c399ed9b`,
+also pushed to `origin/main`. The next
 action is to run the guarded `--prepare-only` command, push the sanitized
 `PHASE_7_NEW_REAL_CAMPAIGN_READY` state, and then execute one new campaign by
 its frozen ID; the historical campaign ID remains immutable and is not reused.
@@ -46,18 +48,21 @@ its frozen ID; the historical campaign ID remains immutable and is not reused.
 ## Continuation — current campaign frozen
 
 The guarded prepare-only run passed with `PHASE_7_NEW_REAL_CAMPAIGN_READY`.
-The new owner-only manifest is
-`campaign:sha256:5c4ab13ab8ba103625a43cd7`, fingerprint
-`manifest:sha256:463df2b9a375326fe1c4389f`, based on Nightwatch source SHA
-`57dae72a6747d8042bc1577755489b4258f87674`. It is `CHANGE_DIRECTED`, selects
+The first prepared owner-only manifest
+`campaign:sha256:5c4ab13ab8ba103625a43cd7` was never executed and was
+superseded before product work when the implementation-SHA drift fix was
+pushed. The final owner-only manifest is
+`campaign:sha256:aaf0cb8019c08c00132e71fb`, fingerprint
+`manifest:sha256:f30e691c334222281608ab01`, based on implementation source SHA
+`b95b06dab3fe60208d412ea9811c0c36c399ed9b`. It is `CHANGE_DIRECTED`, selects
 J1/J2/J3 with linked E1/E2/E3 envelopes and read-only API scenarios, contains
 9 ordered work items, and has an ordinal-zero `IN_PROGRESS` checkpoint with
 all work pending. Manifest and checkpoint are owner-only mode `0600`; product
 execution is `NOT_STARTED`.
 
 The only permitted next product action is one resume invocation using this
-campaign ID. The historical auth-blocked ID remains immutable and is not
-resumed.
+campaign ID. The final readiness state is pushed before that invocation. The
+historical auth-blocked ID remains immutable and is not resumed.
 
 ## Campaign architecture
 
@@ -144,6 +149,9 @@ deployment evidence.
 - Focused campaign suite: PASS, 16/16.
 - Synthetic campaign: PASS, 16/16.
 - Real launcher help: PASS; explicit prepare-only/resume-by-ID workflow.
+- Final prepare-only run: PASS; campaign
+  `campaign:sha256:aaf0cb8019c08c00132e71fb`, ordinal-zero checkpoint, and
+  zero product execution.
 - `npx playwright test --workers=1`: PASS, 375/375.
 - `npm run agent:check`: PASS with one expected approved-checkpoint warning.
 - `git diff --check`: PASS.
