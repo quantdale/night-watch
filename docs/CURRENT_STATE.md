@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `b95b06dab3fe60208d412ea9811c0c36c399ed9b` (verified equal to local `HEAD`) |
+| `REMOTE_HEAD` | `c908b523ded8812e15d02c4f019cc3bd0307089a` (verified equal to local `HEAD`) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime

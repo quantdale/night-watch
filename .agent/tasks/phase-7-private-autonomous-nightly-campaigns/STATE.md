@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: 564948de32643b630216b41c234090f7bff9a8ce
+REMOTE_HEAD: c908b523ded8812e15d02c4f019cc3bd0307089a
 
 ## Objective
 
@@ -358,7 +358,7 @@ and authenticated traces were absent from campaign artifacts.
 - Authenticated-artifact implementation checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460` pushed to `origin/main`.
 - Frozen-manifest workflow implementation checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d` pushed to `origin/main`.
 - Implementation-SHA drift fix checkpoint: `b95b06dab3fe60208d412ea9811c0c36c399ed9b` pushed to `origin/main`.
-- Final manifest readiness documentation checkpoint: pending this push.
+- Final manifest readiness documentation checkpoint: `c908b523ded8812e15d02c4f019cc3bd0307089a` pushed to `origin/main`.
 - Auth-ready state update: current implementation and auth evidence are
   recorded above; the current campaign readiness state is recorded here.
 
