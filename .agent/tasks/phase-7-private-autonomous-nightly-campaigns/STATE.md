@@ -10,7 +10,13 @@ Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Last implementation checkpoint: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Branch: main
-Nightwatch remote: NO_REMOTE
+REMOTE_STATUS: PRIVATE_REMOTE_CONFIRMED
+REMOTE: origin
+REMOTE_REPOSITORY: quantdale/night-watch
+REMOTE_BRANCH: main
+CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
+PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
+REMOTE_HEAD: cb0927534ea42bd27849c2c2810602263ff3a337
 
 ## Objective
 
@@ -34,15 +40,16 @@ dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9.
 ## Work In Progress
 
 The single bounded real DEV campaign stopped correctly at the guarded auth
-gate. Final validation, architecture review, adversarial review, and clean
-closure remain; the real campaign must not be rerun in this task.
+gate. Remote reconciliation is complete. Final validation, architecture
+review, adversarial review, and clean closure remain; the real campaign must
+not be rerun in this task.
 
 ## Exact Next Action
 
-Finish the durable report/state/docs, run the final local validation suite, and
-leave a clean Nightwatch tree. Do not rerun the real DEV campaign: its single
-attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and the implementation
-SHA changed afterward, so it cannot be silently resumed.
+Use the existing guarded auth flow to repair designated DEV page-valid auth,
+then create a new current-version bounded campaign. Do not rerun the real DEV
+campaign: its single attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and
+the implementation SHA changed afterward, so it cannot be silently resumed.
 
 ## Files Changed
 
@@ -56,7 +63,8 @@ included.
 Single-writer check PASS; prior task SHA reconciliation PASS; Phase 6 owner
 freeze tripwires PASS; TypeScript PASS; focused campaign tests PASS (14/14);
 synthetic campaign PASS; `git diff --check` PASS at implementation
-checkpoints; real launcher help PASS; Nightwatch remote is `NO_REMOTE`; the
+checkpoints; real launcher help PASS; source remote is
+`PRIVATE_REMOTE_CONFIRMED` on `origin/main`; the
 single real campaign is `PARTIAL_AUTH_BLOCKED` before product work.
 
 ## Decisions Made During This Task
@@ -219,7 +227,7 @@ Synthetic matrix produced 3 private dossiers and a concise top-3 brief; clean
 baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The real owner-only brief is
 READY with headline `NO ADMITTED PRODUCT ANOMALIES`; no dossier was produced.
 Private artifacts remain outside Git under `/home/dalepalaca/.nightwatch/findings/`
-with mode 0600; no remote or external publication exists.
+with mode 0600; there is no runtime findings remote or external publication.
 
 ## FILES_CHANGED
 

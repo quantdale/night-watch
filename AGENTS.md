@@ -5,6 +5,23 @@ implementation changes belong here. Do not contact a real Alphaus environment,
 query a database, mutate production data, or modify Alphaus repositories as
 part of normal development.
 
+## Canonical Git topology and checkpoint policy
+
+The canonical writable Git root is
+`/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`. Its canonical
+remote is the private `origin`
+(`https://github.com/quantdale/night-watch.git`) on `main`. The parent
+workspace is intentionally not a Git repository; do not restore its retired
+`.git` metadata or use the preserved accidental-Git backup.
+
+Nightwatch development sessions may commit and push only validated durable
+checkpoints from this repository to `origin main`. Before each push, validate
+the scoped work, inspect the diff and privacy surface, and verify local
+`HEAD == origin/main` after the push. If `origin/main` advances or a push is
+rejected, stop and reconcile; never force-push. The campaign runtime never
+commits, pushes, or publishes runtime findings. Real findings remain in the
+owner-only local store outside GitHub.
+
 ## Session bootstrap
 
 Before substantial work:

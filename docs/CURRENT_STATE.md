@@ -1,10 +1,10 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-13** at
-> the Phase 7 bounded DEV campaign checkpoint. Phase 0–5 are complete; Phase 6
-> is frozen by owner; Phase 7 orchestration is implemented but the one bounded
-> real DEV campaign stopped before product work because guarded auth refresh
-> could not complete.
+> the Phase 7 remote-reconciliation checkpoint. Phase 0–5 are complete; Phase
+> 6 is frozen by owner; Phase 7 orchestration is implemented but the one
+> bounded real DEV campaign stopped before product work because guarded auth
+> refresh could not complete.
 
 ---
 
@@ -12,9 +12,27 @@
 
 Phase 0/1, Phase 1.1 (browser safety hardening), and Phase 1.2 (outer egress
 containment) are complete. Nightwatch lives in
-`REPOSITORIES/nightwatch/` as its own git repository (no remote). It reads the
-Alphaus repos under `REPOSITORIES/alphauslabs` and `REPOSITORIES/mobingilabs`
-strictly read-only.
+`REPOSITORIES/nightwatch/` as its own private Git repository with the
+canonical `origin` remote. It reads the Alphaus repos under
+`REPOSITORIES/alphauslabs` and `REPOSITORIES/mobingilabs` strictly read-only.
+
+## Current Git topology
+
+| Field | Current value |
+|---|---|
+| `REMOTE_STATUS` | `PRIVATE_REMOTE_CONFIRMED` |
+| `REMOTE` | `origin` |
+| `REMOTE_REPOSITORY` | `quantdale/night-watch` |
+| `REMOTE_BRANCH` | `main` |
+| `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
+| `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
+| `REMOTE_HEAD` | `cb0927534ea42bd27849c2c2810602263ff3a337` (verified equal to local `HEAD`) |
+
+This private development remote contains Nightwatch source, tests, schemas,
+synthetic fixtures, and sanitized continuity state only. Real runtime
+credentials, storage state, authenticated evidence, customer values, and
+private findings remain outside GitHub under the owner-only local storage
+policy.
 
 ### Phase 1.3 additions — durable agent continuity
 
@@ -244,7 +262,7 @@ tests 25/25 PASS; full Playwright 358/358 PASS; no real DEV minimization was
 needed because no natural anomaly was admitted. Bounded AI assistance remains
 deferred and any future model remains prohibited from acting as an oracle.
 
-## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked)
+## Phase 7 — Private autonomous nightly campaigns (implemented; real DEV auth blocked; private remote confirmed)
 
 The native task is `.agent/tasks/phase-7-private-autonomous-nightly-campaigns/`.
 The campaign schema is `nightwatch.campaign.private.v1` and the orchestrator
@@ -287,6 +305,11 @@ external publication attempts 0. Private evidence audit passed. Real anomaly
 counts are zero because no product work ran; a clean or auth-blocked campaign
 does not manufacture a finding. Phase 6 remains permanently
 `FROZEN_BY_OWNER`, with L4 `OUT_OF_SCOPE_BY_OWNER`.
+
+The source repository now has a verified private canonical remote:
+`origin` → `quantdale/night-watch`, branch `main`. This changes only the
+development checkpoint/review path; runtime findings remain local and are
+never pushed or published.
 
 ## Environment (machine facts)
 

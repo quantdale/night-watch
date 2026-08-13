@@ -5,6 +5,39 @@ its rationale (grounded in `NIGHTWATCH_RECON_B.md` facts, cited by ID),
 the consequences, and the phases where it applies. Decisions are accepted
 unless marked superseded; changing one requires a new entry, not an edit.
 
+## D-34 — Private canonical GitHub remote with validated direct-to-main checkpoints
+
+**Decision.** Nightwatch's canonical writable Git root is
+`/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`, with private
+remote `origin` at `https://github.com/quantdale/night-watch.git` and canonical
+branch `main`. Development sessions use a direct-to-main workflow only for
+validated durable checkpoints: complete the scoped unit, run its required
+validation and privacy checks, inspect the diff, commit locally, push
+`origin main`, and verify local `HEAD == origin/main`. Normal development never
+force-pushes and stops to reconcile if the remote advances.
+
+The parent workspace is intentionally not a Git repository and its retired
+accidental metadata is not restored. This source-review remote does not change
+the private-runtime boundary: the campaign runtime never commits or pushes,
+and real findings, credentials, storage state, and authenticated evidence
+remain owner-only outside GitHub.
+
+**Rationale.** A private canonical source remote gives the owner a durable,
+directly inspectable checkpoint without turning runtime evidence into a shared
+artifact or publication channel. Explicit push verification prevents a local
+checkout from being mistaken for the reviewable state.
+
+**Consequences.** Current project and active-task state record
+`REMOTE_STATUS=PRIVATE_REMOTE_CONFIRMED`, `REMOTE=origin`,
+`REMOTE_REPOSITORY=quantdale/night-watch`, `REMOTE_BRANCH=main`, the canonical
+Nightwatch root, and the retired parent-workspace Git status. Historical
+reports retain earlier `NO_REMOTE` observations when they are clearly
+temporal; private artifact policy may still report no remote destination for
+runtime findings.
+
+**Phase applicability.** Phase 7 development checkpoints and all later
+Nightwatch source-development sessions.
+
 ---
 
 ## D-33 — Campaign manifests freeze the executable surface

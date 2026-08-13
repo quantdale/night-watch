@@ -14,7 +14,9 @@ owner-only morning brief.
 - Phase 6 remains `FROZEN_BY_OWNER` for
   `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; real data budget is 6 max,
   0 used, and no external continuation is allowed.
-- Nightwatch has no Git remote. Real evidence is owner-only local state.
+- Nightwatch uses the verified private `origin` remote
+  (`quantdale/night-watch`, `main`) for validated source checkpoints. Real
+  evidence remains owner-only local state and is never pushed.
 - Phase 3/4/5/2C/private-triage contracts are frozen inputs. Do not recreate
   runners, selectors, explorers, API semantics, or minimizer logic.
 
@@ -64,7 +66,8 @@ campaign before new work.
 
 Status: `COMPLETE`.
 
-Reconcile prior task SHAs, clean Nightwatch HEAD, no remote, Phase 6 freeze,
+Reconcile prior task SHAs, clean Nightwatch HEAD, private remote topology,
+Phase 6 freeze,
 and create this SPEC/PLAN/STATE/REPORT plus ACTIVE_TASK before implementation.
 
 ### M1 — Campaign contracts, manifest, and budget

@@ -13,7 +13,11 @@ be refreshed safely.
 - Prior closure checkpoint: `6c5e298c4b2423ce7ffc13715e259be691d71162`.
 - Final implementation checkpoint before this handoff:
   `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
-- Nightwatch remote: `NO_REMOTE`.
+- Current source remote: `PRIVATE_REMOTE_CONFIRMED` — `origin` at
+  `https://github.com/quantdale/night-watch.git`, branch `main`.
+- Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
+- Parent workspace Git: `RETIRED`; `/home/dalepalaca/go/src/alphaus-main` is
+  not a Git repository.
 - Phase 6: `FROZEN_BY_OWNER`; reason
   `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; real datastore budget 6 max,
   0 used; L4 `OUT_OF_SCOPE_BY_OWNER`.
@@ -80,7 +84,8 @@ product browser/API context ran. The manifest, checkpoint, and brief are
 owner-only mode `0600` files under `/home/dalepalaca/.nightwatch/findings/`.
 The implementation SHA changed after this campaign, so the old manifest is
 retained as evidence and must not be silently resumed; after owner auth repair,
-create a new compatible bounded campaign.
+create a new compatible bounded campaign. The private runtime artifacts remain
+owner-only local files; the source remote is not a runtime findings channel.
 
 Historical J2 font 502 remains `L0_NOT_REPRODUCED`; historical malformed JSON
 was not deliberately triggered.

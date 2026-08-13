@@ -9,10 +9,15 @@ Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
 Current SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Last validated implementation SHA: dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9
 Current milestone: M6 — bounded real DEV campaign and closure.
+Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
+Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
+Parent workspace Git: RETIRED (parent is not a Git repository).
 Last checkpoint: implementation checkpoint `dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9`.
-Next action: finish the auth-blocked campaign handoff, run final local
-validation, and verify a clean Nightwatch tree. Do not rerun the single frozen
-bounded DEV campaign. Phase 6 remains permanently frozen by owner.
+Current documentation/remote checkpoint: `cb0927534ea42bd27849c2c2810602263ff3a337`.
+Next action: recover the designated DEV auth through the existing guarded
+flow, then create a new compatible bounded campaign. Do not rerun the single
+historical campaign or use alternate credentials. Phase 6 remains permanently
+frozen by owner.
 
 ## Prior phase closure handoff
 
