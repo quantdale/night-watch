@@ -9,7 +9,8 @@ Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Current SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Last validated implementation SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 Branch: main
-Last checkpoint: 2026-08-14 bootstrap reconciled; clean HEAD equals origin/main.
+Last checkpoint: 2026-08-14 M0 task route committed/pushed as
+`bc8e3fa785564fee6e720089a329af21cdc0ab62`; clean HEAD equals origin/main.
 
 ## Objective
 
@@ -159,7 +160,7 @@ SAFETY_EVENTS: NONE
 PRIVACY_STATUS: no runtime/private data touched
 LAST_VALIDATED_IMPLEMENTATION_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: not applicable at task start
-LAST_DOCUMENTATION_CHECKPOINT_SHA: not applicable at task start
-LAST_PUSHED_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-NEXT_EXACT_ACTION: route ACTIVE_TASK, run agent:check, and launch read-only review tracks
+LAST_DOCUMENTATION_CHECKPOINT_SHA: bc8e3fa785564fee6e720089a329af21cdc0ab62
+LAST_PUSHED_SHA: bc8e3fa785564fee6e720089a329af21cdc0ab62
+NEXT_EXACT_ACTION: launch read-only review tracks and reconcile findings
 RESUME_RECIPE: read task state, inspect Git/diff, run smallest milestone validation, continue exact next action
