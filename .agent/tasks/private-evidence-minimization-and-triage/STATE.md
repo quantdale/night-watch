@@ -64,8 +64,8 @@ evidence, or external artifacts were written.
 - Nightwatch remote audit: `NO_REMOTE`.
 - Durable Phase 6 recovery: confirmed expected SHA/budget/query ledger.
 - `npx tsc --noEmit`: PASS.
-- Focused policy/Phase 6/triage suite: PASS, 25/25.
-- Full Playwright suite: PASS, 358/358.
+- Focused policy/Phase 6/triage suite: PASS, 27/27.
+- Full Playwright suite: PASS, 361/361.
 - `git diff --check`: PASS at the implementation checkpoint.
 - Narrow Alphaus read-only baseline captured for seven relevant repositories;
   no Nightwatch writes were made to them. Existing dirty counts remain
@@ -113,4 +113,5 @@ owner policy frozen and use synthetic fixtures first.
 Implementation and validation-matrix checkpoint complete at
 `ea434b57fc132c6544c4527cbaa494cb8412db92`.
 Phase 6 remains `FROZEN_BY_OWNER`; no external action is required or
-recommended. The final documentation checkpoint SHA is recorded in REPORT.md.
+recommended. Closure checkpoint is `6c5e298c4b2423ce7ffc13715e259be691d71162`;
+terminal documentation sync is a clean child of that checkpoint.
