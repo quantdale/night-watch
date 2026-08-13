@@ -133,7 +133,13 @@ function checkContinuity(stateFields, root, head, errors) {
   // the recorded continuity pair below; the caller separately verifies the
   // actual checkout before pushing.
   const remoteHead = commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null;
-  if (remoteHead && remote && remote !== remoteHead) errors.push(`STATE CURRENT_REMOTE_HEAD does not match origin/main: ${remote} != ${remoteHead}`);
+  const baseline = validated ?? stateFields.get('Current SHA');
+  const baselineResult = baseline ? classifySha(root, baseline) : null;
+  const documentationOnlyAdvance = baselineResult?.status === 'CHECKPOINT_ADVANCE'
+    && baselineResult.paths.every((file) => isApprovedCheckpointPath(file));
+  if (remoteHead && remote && remote !== remoteHead && !documentationOnlyAdvance) {
+    errors.push(`STATE CURRENT_REMOTE_HEAD does not match origin/main: ${remote} != ${remoteHead}`);
+  }
   if (local && remote && local !== remote) errors.push(`STATE local/remote continuity diverged: ${local} != ${remote}`);
   if (substantive && pushed) {
     const result = spawnSync('git', ['merge-base', '--is-ancestor', substantive, pushed], { cwd: root, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 10_000, maxBuffer: 256 * 1024 });
