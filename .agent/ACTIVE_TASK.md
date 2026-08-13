@@ -1,23 +1,21 @@
 # Active Task
 
-Task ID: phase-7-private-autonomous-nightly-campaigns
-Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
-Title: Private Autonomous Nightly Campaigns
-Status: COMPLETE
-Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
-Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
-Last validated implementation SHA: b95b06dab3fe60208d412ea9811c0c36c399ed9b
-Current milestone: M6 — bounded real DEV campaign and closure (COMPLETE).
+Task ID: codebase-hardening-campaign-1
+Phase: Private/local hardening campaign I
+Title: Nightwatch Codebase Hardening Campaign I
+Status: IN_PROGRESS
+Task directory: .agent/tasks/codebase-hardening-campaign-1
+Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+Current SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+Last validated implementation SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+Current milestone: M1 — independent read-only review and finding ledger (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: final closure checkpoint `a3ce80834741635abecefbb429966912f6886845`.
-Current documentation/remote checkpoint: `a3ce80834741635abecefbb429966912f6886845` (state-only reconciliation follows).
-Next action: retain the completed Phase 7 state. Any future work requires a
-separately approved private/local task; do not start the next phase. Do not
-rerun either completed campaign, use alternate credentials, or widen scope.
-Phase 6 remains permanently frozen by owner.
+Last checkpoint: M0 task routing validated by `npm run agent:check`.
+Next action: perform bounded independent read-only review tracks and record
+confirmed/rejected findings before source implementation.
+Phase 7 remains COMPLETE and Phase 6 remains permanently frozen by owner.
 
 ## Prior phase closure handoff
 
