@@ -2,7 +2,7 @@
   "name": "nightwatch",
   "version": "0.1.0",
   "private": true,
-  "description": "Private local autonomous bug-hunting framework for Alphaus products (Phase 0/1/1.1/1.2)",
+  "description": "Private local autonomous bug-hunting and evidence-triage framework for Alphaus products",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20"

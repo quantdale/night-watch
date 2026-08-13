@@ -123,7 +123,8 @@ AI planning, scheduler, and Phase 7.
 
 ### M7 — Pre-real audit and optional bounded real data
 
-- Status: BLOCKED — `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`.
+- Status: BLOCKED historically; superseded by `FROZEN_BY_OWNER` on 2026-08-13
+  because `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
 - Freeze at most D1–D3 and six total read queries. Prove environment, exact
   scope, designated-account policy, auth, budget, privacy, and tool health.
 - Execute serially only if every gate passes; otherwise record exact blocker and
@@ -161,6 +162,10 @@ is captured in memory and reduced before evidence.
 - Real execution is optional and cannot be claimed when zero queries run.
 - Initial real frontier is D1/D2/D3 only; no endpoint/data expansion is allowed
   because a first result is interesting.
+- Owner decision supersedes the M7 external environment blocker. No deployment
+  metadata, cloud/Kubernetes/AWS investigation, datastore auth, or query is a
+  valid next action. Preserve all Phase 6 local implementation/history and
+  route the roadmap to the private local triage task.
 
 ## Discoveries
 
@@ -200,7 +205,7 @@ frozen budget, scheduled overnight execution, mutation/remediation, and Phase 7.
 
 ## Completion Criteria
 
-All frozen SPEC criteria pass, or the task closes with an explicit
-`DATA_TOOL_AUTH_REQUIRED`, `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`,
-`DATA_ORACLE_SAFETY_BLOCKED`, or semantic-frontier blocker. No blocker may be
-used to weaken read-only or privacy policy.
+All frozen SPEC criteria were validated locally, while the owner intentionally
+freezes the live data boundary. The task status is `FROZEN_BY_OWNER`, not
+complete; no external handoff is required and no blocker may be used to
+weaken read-only or privacy policy.

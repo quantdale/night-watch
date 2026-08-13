@@ -1,6 +1,7 @@
 # Nightwatch Safety Model
 
-Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2.
+Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2
+and the private local evidence-triage task.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -43,6 +44,26 @@ Retained local Nightwatch artifacts were inspected before implementation and
 contain no matching event. Therefore the exact attempted URL/path, method,
 whether credentials were attached, and whether a response was received are
 all **UNKNOWN**. No new production request was made to investigate this note.
+
+### Permanent owner scope freeze
+
+The infrastructure and data layer is permanently out of scope for the active
+Nightwatch roadmap. The executable owner policy in
+`src/core/policy/ownerScope.ts` is authoritative and fails closed with
+`OWNER_POLICY_BLOCKED` before any operation in these classes can run:
+
+- GCP/GKE/Kubernetes, `kubectl`, Cloud Asset, deployment, logging,
+  Artifact Registry, and service-account archaeology;
+- AWS STS/IAM/runtime-role/account/infrastructure discovery;
+- DynamoDB, BigQuery, Spanner, production SQL, and datastore metadata;
+- deployment-configuration lookup, infrastructure-owner requests, or any
+  external disclosure/publication.
+
+This is `FROZEN_BY_OWNER` with reason
+`INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`. It is an intentional boundary,
+not a completion claim, implementation failure, or pending handoff. Historical
+Phase 6 evidence and generic local safety models remain preserved, while real
+datastore execution is quarantined behind the same policy gate.
 
 ---
 
@@ -538,6 +559,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-*End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2 and the Phase 4
+*End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
+and the Phase 4
 authentication/MCP boundary; changes require a DECISIONS entry and a test
 update.*

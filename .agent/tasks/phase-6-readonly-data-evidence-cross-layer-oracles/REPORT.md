@@ -1,11 +1,32 @@
-# NIGHTWATCH PHASE 6 — RUNTIME/DATA ENVIRONMENT MAPPING UNRESOLVED
+# NIGHTWATCH PHASE 6 — FROZEN BY OWNER
 
-Status: `BLOCKED`, not complete. The Phase 6 data-evidence architecture,
+Status: `FROZEN_BY_OWNER`, not complete. The Phase 6 data-evidence architecture,
 source lineage, typed read-only validators, synthetic data plane, privacy
 boundary, and full local validation are complete. The pre-real gate correctly
 remains closed because the selected DEV runtime's actual datastore environment
 and designated Nightwatch scope are not proven. No datastore command, auth
 probe, read, scan, or write was executed.
+
+## Owner decision supersession — 2026-08-13
+
+PHASE_6_STATUS: `FROZEN_BY_OWNER`
+Reason: `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`
+
+The former M7 status was `BLOCKED` because the selected DEV runtime's actual
+datastore environment and designated Nightwatch scope were not proven. The
+owner intentionally froze that phase and superseded the blocker. This is not
+`COMPLETE`, `FAILED`, `BLOCKED_WAITING_FOR_HANDOFF`, or
+`ABANDONED_DUE_TO_IMPLEMENTATION_DEFECT`.
+
+Durable state is `OWNER_DECISION_SUPERSEDES_BLOCKER`, `PHASE_6_FROZEN`, and
+`NO_EXTERNAL_ACTION_REQUIRED`. No future session should request effective
+deployment metadata or inspect GCP/GKE/Kubernetes/AWS/datastore state for
+Nightwatch. The implementation and history remain preserved; only real
+datastore execution is quarantined behind the owner policy.
+
+The new active task is
+`.agent/tasks/private-evidence-minimization-and-triage/`, using local source
+intelligence and contained DEV application evidence only.
 
 ## Checkpoint identity
 
@@ -367,12 +388,7 @@ corrected, catalog provenance/privacy fields were completed, and the structured
 compiler was aligned with the approved wrapper argument forms. No product,
 datastore, or Alphaus-repository defect was found.
 
-Acceptance verdict: **PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED**. Phase 6
-must not be marked complete or promoted to live data verification until the
-selected DEV runtime's actual datastore environment and designated scope are
-proven. The local implementation is validated and the task is durably blocked
-at that safety gate.
-
-Recommended next task only: verify the DEV service configuration/source and
-designated Nightwatch test scope, then resume from `STATE.md` before probing
-datastore auth. Do not start Phase 7.
+Acceptance verdict: **FROZEN_BY_OWNER**. Phase 6 local implementation and
+synthetic validation are preserved; no live data verification is claimed or
+needed. Its former environment blocker is historical only and no longer a
+recommended handoff. Do not return to Phase 6 cloud/datastore work.

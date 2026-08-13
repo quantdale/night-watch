@@ -321,7 +321,7 @@ surface (replay sources).
 
 ---
 
-## Phase 6 — Read-only data oracles
+## Phase 6 — Read-only data oracles (FROZEN BY OWNER)
 
 **Goal.** Add the strongest oracle class: store-vs-store equality checks
 that can prove "actual wrong" at L3–L4 (RECON_B §1.2, §6.2–6.3).
@@ -346,9 +346,56 @@ evidence exists.
 **Dependencies.** Phase 5 ladder (data probes are L4 evidence); Phase 3
 freshness; wrapper availability.
 
+**Owner decision (2026-08-13).** `PHASE_6_STATUS: FROZEN_BY_OWNER` because
+`INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`. The prior runtime/datastore
+mapping blocker is superseded by owner scope; this is not complete, failed, or
+waiting for an external handoff. Phase 6 types, validators, comparators,
+privacy models, source lineage, catalogs, and synthetic tests remain useful
+local abstractions and are preserved. Real datastore execution and all L4
+claims are permanently out of scope. The six-query historical budget remains
+unused. Nightwatch must not request deployment metadata or perform GCP/GKE,
+Kubernetes, AWS infrastructure, DynamoDB, BigQuery, Spanner, production SQL,
+or datastore metadata investigation.
+
+The Phase 6 real-query path is quarantined by executable owner policy and
+returns `OWNER_POLICY_BLOCKED` before an external invocation. No external
+action is required to advance the roadmap.
+
+## Private evidence minimization + autonomous triage (active)
+
+**Goal.** Turn a long local DEV browser/API run into the smallest reproducible,
+sanitized, useful bug dossier without infrastructure access or another human
+in the loop.
+
+**Key deliverables.**
+
+- Deterministic bounded subsequence minimization over only original safe action
+  IDs, with explicit `1-MINIMAL`/`BOUNDED_MINIMAL` guarantees and real-DEV
+  replay budgets.
+- Stable sanitized anomaly clustering and duplicate suppression; browser/API
+  differential; Phase 3 direct/shared/transitive source-change candidates;
+  conservative app-layer fault-boundary and categorical confidence models.
+- Versioned `nightwatch.bug-dossier.private.v1` dossiers, human reproduction
+  recipes, deterministic AI-ready packages, overnight summaries, morning
+  briefs, and a durable Nightwatch false-positive catalog.
+- Owner-only atomic local storage outside the repository by default. No
+  automatic Slack, GitHub, Jira, Linear, email, Drive, Notion, upload, PR, or
+  customer response path.
+
+**Non-goals / exclusions.** All infrastructure/deployment/cloud/datastore
+work, production or staging testing, mutations, arbitrary exploration,
+credential persistence, authenticated screenshots/traces, LLM execution, and
+external disclosure.
+
+**Dependencies.** Closed Phase 2C/3/4/5 evidence contracts and existing
+Playwright/proxy/safe-action containment. No coworker, platform-owner,
+deployment-owner, SRE, or database-owner handoff is required.
+
+**Task route.** `.agent/tasks/private-evidence-minimization-and-triage/`.
+
 ---
 
-## Phase 7 — Bounded AI assistance
+## Phase 7 — Bounded AI assistance (deferred)
 
 **Goal.** Use a model as a *review assistant*, not a decision-maker:
 triaging candidate bugs (L2+) into drafts and generating oracle-check
@@ -365,8 +412,9 @@ candidates from contract diffs — all human-reviewed.
 **Non-goals / exclusions.** Autonomous filing (L3+ gate stays); model-driven
 mutation choices; unbounded exploration budgets.
 
-**Dependencies.** Phase 5/6 pipelines (the evidence they produce is the
-assistant's input).
+**Dependencies.** The private deterministic dossier layer above; any future AI
+remains a review assistant and never an oracle. No Phase 6 datastore work is a
+prerequisite or recommendation.
 
 ---
 

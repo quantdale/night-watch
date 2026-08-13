@@ -1,4 +1,5 @@
 import { compileValidatedReadPlan } from './compiler';
+import { assertOwnerPolicyAllows } from '../../core/policy/ownerScope';
 import type {
   CompiledToolRequest,
   RawDataResult,
@@ -13,6 +14,9 @@ export interface ReadToolInvoker {
 /** Default real-data posture: no external datastore command is reachable. */
 export class GatedReadToolInvoker implements ReadToolInvoker {
   async invoke(_request: CompiledToolRequest): Promise<RawDataResult> {
+    // The owner freeze is the first and permanent boundary. This intentionally
+    // throws before any future external command/connector can be added here.
+    assertOwnerPolicyAllows(`${_request.datastore}_DATA_ORACLE`);
     throw new Error('REAL_DATA_GATE_BLOCKED: environment, scope, auth, and privacy gates are not confirmed');
   }
 }

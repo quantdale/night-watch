@@ -4,7 +4,7 @@
 
 Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
 Phase: 6
-Status: BLOCKED
+Status: FROZEN_BY_OWNER
 Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
 Current SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
 Last validated implementation SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
@@ -52,9 +52,29 @@ plane linked to Phase 5 API and Phase 2 browser behavior.
 
 ## Current Milestone
 
-M7 — pre-real gate blocked by unresolved runtime-to-datastore environment
-mapping. Typed schemas, validators, adapters, privacy/oracle logic, catalogs,
-synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
+OWNER FREEZE — Phase 6 implementation/history preserved; real infrastructure
+and datastore execution are out of scope for the current roadmap. Typed
+schemas, validators, adapters, privacy/oracle logic, catalogs, synthetic
+matrices, and Phase 3/Phase 5 lineage remain preserved.
+
+## OWNER_DECISION_2026_08_13
+
+PHASE_6_STATUS: FROZEN_BY_OWNER
+Reason: INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
+Durable interpretation: OWNER_DECISION_SUPERSEDES_BLOCKER;
+PHASE_6_FROZEN; NO_EXTERNAL_ACTION_REQUIRED.
+
+This is intentional scope control, not COMPLETE, FAILED,
+BLOCKED_WAITING_FOR_HANDOFF, or ABANDONED_DUE_TO_IMPLEMENTATION_DEFECT.
+Phase 6 implementation/history and synthetic safety tests remain intact. Its
+real datastore execution path is owner-policy quarantined and must return
+`OWNER_POLICY_BLOCKED` before any external invocation. No future session should
+request effective deployment metadata, coworker/platform handoff, Kubernetes,
+GCP, AWS, or datastore investigation to advance Nightwatch.
+
+The frozen datastore budget remains maximum 6, used 0, remaining 6; real data
+oracles D1/D2/D3 remain preserved design artifacts; datastore execution is
+permanently out of scope and the query ledger remains 0.
 
 ## Completed Milestones
 
@@ -112,23 +132,16 @@ synthetic matrices, and Phase 3/Phase 5 lineage are complete and validated.
 
 ## Work In Progress
 
-Local work is complete. Keep the external data gate closed: the selected DEV
-runtime's actual datastore environment and designated Nightwatch scope remain
-unconfirmed. Source proves the image/branch path and configuration slots, not
-their deployment values. No datastore auth probe is justified until that
-mapping is proved.
+Phase 6 local work is preserved. The active roadmap has moved to
+`.agent/tasks/private-evidence-minimization-and-triage/`; no external data
+gate, deployment handoff, or cloud investigation is pending.
 
 ## Exact Next Action
 
-Keep the Phase 6 real-data gate closed. The safe GKE, GCR, Cloud Build,
-authenticated GitHub, and current service-source paths have been exhausted:
-they prove the live compute workload and deployment-provided Secret reference
-names, but not effective `API_ENV`/AWS binding or designated scope. Update the
-blocker handoff from the exact matrix, run only local Nightwatch validation,
-and wait for one of the listed authoritative external artifacts. If such an
-artifact arrives, re-read SPEC/PLAN/STATE, recheck the mandatory data docs,
-derive the approved scope ephemerally, and only then resume the frozen D1-D3
-preflight. Never run a datastore query or auth probe while this gate is closed.
+No Phase 6 external action is required. Continue only with the active private
+local evidence/minimization task. Do not request deployment metadata, inspect
+Kubernetes/cloud runtime state, probe datastore auth, query a datastore, or
+reopen the M7 handoff.
 
 ## CURRENT_GOAL
 
@@ -138,8 +151,7 @@ comparisons.
 
 ## CURRENT_PHASE
 
-M7 — pre-real gate BLOCKED: runtime-to-datastore environment and designated
-scope are not proven.
+OWNER FREEZE: Phase 6 infrastructure/data work is out of scope by owner.
 
 ## CURRENT_EVIDENCE
 
@@ -545,34 +557,26 @@ checkpoint).
 
 ## NEXT_EXACT_ACTION
 
-Keep the real-data gate closed. The safe GKE, GCR, Cloud Build, authenticated
-GitHub, and current service-source paths have been exhausted: they prove the
-live compute workload and deployment-provided Secret reference names, but not
-effective `API_ENV`/AWS binding or designated scope. If an authoritative
-sanitized deployment artifact arrives, re-read SPEC/PLAN/STATE, recheck the
-mandatory data docs, derive approved scope ephemerally, and only then resume
-the frozen D1-D3 preflight. Never run a datastore query or auth probe while
-this gate is closed.
+No Phase 6 external action is required. The owner decision permanently
+supersedes the former M7 handoff. Continue via the active private local
+evidence/minimization task; never request deployment metadata or reopen a
+datastore/auth preflight.
 
 ## RESUME_RECIPE
 
-1. Read Nightwatch AGENTS.md, ACTIVE_TASK, this SPEC/PLAN/STATE/REPORT.
-2. Reconfirm Phase 5 COMPLETE and current clean Git state.
-3. Read the mandatory four data documents in order if context is uncertain.
-4. Recover versions/catalogs/budget from this STATE; never reconstruct a plan
-   or runtime scope from memory.
-5. Keep all real data execution behind the frozen validators and environment/
-   auth/privacy gates.
-6. Reuse only a temporary isolated kubeconfig for metadata-only GKE reads if a
-   genuinely new exact discriminator appears; never read Secret payloads, exec
-   into a pod, or switch the normal context.
+1. Read Nightwatch AGENTS.md, ACTIVE_TASK, and the active private task files.
+2. Treat this Phase 6 task as preserved historical context with
+   `FROZEN_BY_OWNER` status.
+3. Do not read deployment metadata, use Kubernetes/cloud tooling, probe auth,
+   query a datastore, or request external handoff.
+4. Continue only with local source/app evidence and synthetic compatibility.
 
 ## Completion Snapshot
 
-Blocked, not complete. Phase 6 architecture, synthetic boundary, adversarial
-matrix, privacy review, and full local validation are complete. No live
-datastore evidence exists and no real-read decision is possible until the
-runtime-to-datastore environment and designated scope are proven.
+Frozen by owner, not complete. Phase 6 architecture, synthetic boundary,
+adversarial matrix, privacy review, and full local validation are preserved.
+No live datastore evidence exists; no real-read decision is needed because the
+owner selected the application-level roadmap.
 
 ## Files Changed
 
@@ -600,8 +604,9 @@ account-literal scan returned none after repair. Post-repair full validation is
 - Real data is optional under the frozen SPEC and never claimed when absent.
 - Worker evidence is recorded as source-derived conclusions only; raw worker
   transcripts and any customer-like values are not durable Nightwatch evidence.
-- A real read is not eligible while the effective data environment is
-  `RUNTIME_DATA_ENV_UNRESOLVED`; no live result is labeled verified.
+- The former real-read gate is preserved as historical evidence; owner policy
+  now blocks the real path before invocation and no live result is labeled
+  verified.
 
 ## Discoveries
 
@@ -621,11 +626,10 @@ account-literal scan returned none after repair. Post-repair full validation is
 
 ## Blockers
 
-BLOCKED: `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. Nightwatch config and
-PIPELINE_MAP/source evidence show possible DEV/production data-plane sharing,
-but do not prove the exact datastore selected by `apidev.alphaus.cloud` or a
-designated safe runtime scope. Comparing against production, or probing DB auth
-first, would be unsafe and potentially misleading.
+None for the active roadmap. The former
+`PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED` condition is preserved as
+historical evidence, but the owner decision supersedes it and removes the
+external-handoff requirement.
 
 ## Safety Events
 
@@ -635,9 +639,9 @@ before checkpointing.
 
 ## Deferred / Follow-Up
 
-Any real read stage remains blocked on environment/scope proof. Broader data
-coverage, multi-hop escalation, scheduling, mutation/remediation, and Phase 7
-remain out of scope; Phase 7 is not started.
+Real reads, broader data coverage, multi-hop escalation, scheduling,
+mutation/remediation, and Phase 7 remain out of scope. Local synthetic
+compatibility is retained for the private triage task.
 
 ## Resume Recipe
 

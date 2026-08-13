@@ -1,25 +1,19 @@
 # Active Task
 
-Task ID: phase-6-readonly-data-evidence-cross-layer-oracles
-Phase: 6
-Title: Read-Only Data-Layer Evidence + Cross-Layer Oracles
-Status: BLOCKED
-Task directory: .agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles
-Starting SHA: abb0d446f52206390272f8d7a17e6bf6d9ecf0bf
-Current SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
-Last validated implementation SHA: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe
-Current milestone: M7 — pre-real data gate BLOCKED by unresolved runtime-to-
-datastore environment mapping.
-Last checkpoint: 483fbe4f41f235e3e1e0a12e0613954f3db4aefe — validated narrow
-Phase 6 continuity-checker repair; prior documentation checkpoint was
-94898ef8bdb0e73a8c3bb135efef1b5036dc23e2. The real-data gate remains closed;
-no datastore query has run.
-Next action: run final local validation, reconcile the repaired checker and
-current binding audit in STATE/REPORT, then retain the blocker unless an
-authoritative deployment artifact supplies effective `API_ENV`/AWS binding
-and approved designated scope. Do not read Secret payloads, run a datastore
-auth probe, query a datastore, exec, switch the normal context, guess, or
-bypass the gate.
+Task ID: private-evidence-minimization-and-triage
+Phase: PRIVATE_LOCAL_TRIAGE
+Title: Private Evidence Minimization + Autonomous Triage
+Status: IN_PROGRESS
+Task directory: .agent/tasks/private-evidence-minimization-and-triage
+Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
+Current SHA: 2792795ae69a5535a769180e3e2f38096a186769
+Last validated implementation SHA: 2792795ae69a5535a769180e3e2f38096a186769
+Current milestone: M0 — owner freeze and task creation.
+Last checkpoint: 2792795ae69a5535a769180e3e2f38096a186769 — clean recovery
+checkpoint before implementation.
+Next action: implement the central owner policy gate and private atomic
+artifact store; wire the frozen Phase 6 invoker to `OWNER_POLICY_BLOCKED` and
+add focused regression tests. No cloud/datastore/external command is allowed.
 
 ## Prior phase closure handoff
 

@@ -1,9 +1,9 @@
 # Nightwatch
 
 Private, local, autonomous bug-hunting framework for Alphaus products.
-**Phase 1.2** — scaffold, layered browser safety, mandatory loopback egress
-proxy, passive Ripple observer, evidence recorder, and synthetic containment
-self-tests. Phase 2 product testing has not started.
+The active roadmap is **private evidence minimization and autonomous triage**:
+contained DEV application evidence is reduced to deterministic, sanitized,
+owner-reviewable dossiers.
 
 > The default `local` scenario targets a built-in fixture app and performs
 > **zero** network I/O beyond `127.0.0.1`. No production request can pass the
@@ -65,7 +65,20 @@ docs/                   ARCHITECTURE, SAFETY_MODEL, CURRENT_STATE, ROADMAP, DECI
 artifacts/              run evidence (gitignored)
 ```
 
-## Boundaries
+## Permanent boundaries
+
+- Phase 6 infrastructure/data-layer work is frozen by owner. The executable
+  policy is `FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`;
+  cloud, deployment, Kubernetes, AWS infrastructure, and datastore operation
+  classes fail locally with `OWNER_POLICY_BLOCKED`.
+- Nightwatch never asks coworkers for deployment metadata and never performs
+  GCP/GKE/Kubernetes archaeology, AWS STS/IAM/runtime-role discovery, DynamoDB,
+  BigQuery, Spanner, production SQL, or datastore metadata discovery.
+- Nightwatch never posts to Slack, opens GitHub/Jira/Linear items, sends email,
+  writes shared Drive/Notion/docs, uploads evidence, or creates PRs. Findings
+  stop at owner-reviewed local dossiers.
+
+## Repository boundaries
 
 - Nightwatch may READ repos under `REPOSITORIES/alphauslabs` and
   `REPOSITORIES/mobingilabs` but never edits, commits, or installs into them.
@@ -75,3 +88,7 @@ artifacts/              run evidence (gitignored)
   mutation. If an interaction cannot be proven passive, it is skipped.
 - Credentials are never hardcoded, never copied into artifacts; authenticated
   state is referenced by file path (`NIGHTWATCH_STORAGE_STATE`) or not at all.
+
+Private real findings use owner-only local storage outside this repository by
+default (`$HOME/.nightwatch/findings/`). Synthetic fixtures and schemas may be
+versioned; private real evidence is not.

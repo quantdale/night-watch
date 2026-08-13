@@ -45,6 +45,28 @@ model. No credentials, auth state, bearer tokens, cookies, customer data, or
 other secrets may enter source, artifacts, or `.agent` files. Safe path
 references are allowed; tests use synthetic fake values only.
 
+## Permanent owner scope freeze
+
+Nightwatch is a private local project. The active roadmap is confined to local
+source intelligence, contained DEV browser/API testing, deterministic replay,
+failure minimization, sanitized evidence, and private local triage. The owner
+decision is executable in `src/core/policy/ownerScope.ts`:
+`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+
+Nightwatch must not autonomously execute or request GCP/GKE/Kubernetes/cloud
+deployment archaeology, AWS infrastructure/IAM/STS/runtime-role discovery,
+DynamoDB/BigQuery/Spanner/production SQL or datastore metadata operations,
+deployment-owner handoffs, or external publication. Unknown operation classes
+fail closed with `OWNER_POLICY_BLOCKED` before an executor callback. Existing
+Phase 6 types and synthetic adapters are preserved for compatibility, while
+real data execution is quarantined behind that owner gate.
+
+Real findings belong in owner-only local state (default
+`$HOME/.nightwatch/findings/`), never in a shared connector, message system,
+remote repository, or Alphaus repository. Chrome DevTools MCP remains optional
+and subordinate to Playwright containment; it never receives credentials or
+raw authenticated evidence.
+
 ## Task and checkpoint discipline
 
 Any multi-milestone, long-running, architecture-changing, safety-sensitive,

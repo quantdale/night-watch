@@ -23,6 +23,7 @@ import {
   privacyScanEvidence,
   validateReadOnlyPlan,
   type BigQueryReadPlan,
+  type CompiledToolRequest,
   type DynamoReadPlan,
   type RawDataResult,
   type SpannerReadPlan,
@@ -212,7 +213,7 @@ test('synthetic adapters, normalization, privacy reduction, and query budget sta
   const spannerResult = await new SpannerReadAdapter(spannerInvoker).execute(spannerValidated, spannerScope);
   expect(normalizeDataResult(spannerResult).cardinality).toBe('ONE');
 
-  await expect(new (class extends GatedReadToolInvoker {})().invoke(bqRequest)).rejects.toThrow('REAL_DATA_GATE_BLOCKED');
+  await expect(new (class extends GatedReadToolInvoker {})().invoke(bqRequest)).rejects.toThrow('OWNER_POLICY_BLOCKED');
 });
 
 test('cross-layer comparator distinguishes matches, contradictions, async lag, and numeric semantics', () => {
@@ -249,5 +250,12 @@ test('pre-real gate remains closed for source-derived environment and unprobed a
     scopeAvailable: false,
     privacyPass: true,
     budget,
-  })).toThrow('PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED');
+})).toThrow('PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED');
+});
+
+test('owner freeze blocks every real Phase 6 datastore invoker before external execution', async () => {
+  const invoker = new GatedReadToolInvoker();
+  for (const datastore of ['DYNAMODB', 'BIGQUERY', 'SPANNER'] as const) {
+    await expect(invoker.invoke({ datastore } as CompiledToolRequest)).rejects.toThrow('OWNER_POLICY_BLOCKED');
+  }
 });

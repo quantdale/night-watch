@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-13** at
-> the Phase 6 fresh-session checkpoint. Phase 4 and Phase 5 are complete;
-> Phase 6 is active.
+> the Phase 6 owner-freeze / private-triage task checkpoint. Phase 0–5 are
+> complete; Phase 6 is frozen by owner and private local triage is active.
 
 ---
 
@@ -177,9 +177,33 @@ The Phase 4 closure report and full run ledger are in
 `.agent/tasks/phase-4-seeded-model-based-exploration/REPORT.md`.
 
 Phase 2B, Phase 2C, Phase 3, Phase 4, and Phase 5 are completed predecessor
-phases. Phase 6 local architecture and validation are complete, but its native
-task is blocked under the explicit runtime/data environment gate:
+phases. Phase 6 local architecture and validation are preserved, but its
+native task is intentionally `FROZEN_BY_OWNER`:
 `.agent/tasks/phase-6-readonly-data-evidence-cross-layer-oracles/`.
+
+## Phase 6 owner freeze / active roadmap boundary
+
+`PHASE_6_STATUS: FROZEN_BY_OWNER`.
+
+Reason: `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+
+The previous `M7 BLOCKED` state was an infrastructure/data mapping blocker.
+The owner decision supersedes it: `OWNER_DECISION_SUPERSEDES_BLOCKER`,
+`PHASE_6_FROZEN`, `NO_EXTERNAL_ACTION_REQUIRED`. This is not complete, failed,
+handoff-blocked, or abandoned. Phase 6 implementation/history remains intact,
+but real D1/D2/D3 datastore execution is permanently owner-policy blocked;
+the six-query historical budget remains 0 used / 6 remaining.
+
+Nightwatch must not request deployment metadata or investigate GCP/GKE,
+Kubernetes, AWS infrastructure, DynamoDB, BigQuery, Spanner, production SQL,
+or datastore metadata. The active task is
+`.agent/tasks/private-evidence-minimization-and-triage/` and requires no
+external team dependency.
+
+Real findings remain owner-only local artifacts under the private storage
+policy. No Slack, GitHub/Jira/Linear, email, shared Drive/Notion/docs, upload,
+or customer-facing response is automatic. Chrome DevTools MCP remains
+optional and subordinate to Playwright containment.
 
 ## Phase 6 — read-only data evidence (local architecture; blocked before live data)
 
@@ -193,19 +217,19 @@ agent-state allowlist for the sanitized Phase 6 runtime-binding checkpoint and
 covered it with a regression test; SHA semantics remain `SYNCED`,
 `CHECKPOINT_ADVANCE`, and `STALE`.
 
-The real data gate remains closed as
-`PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`: current configuration and
-source evidence do not prove which datastore environment the selected DEV API
-runtime reads or establish a designated Nightwatch scope. No datastore auth
-probe, query, scan, or write ran, and no live datastore verification is
-claimed. The 2026-08-12 deployment/source re-audit confirms the DEV
+The former real data gate remains preserved as historical evidence:
+`PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. No datastore auth probe,
+query, scan, or write ran, and no live datastore verification is claimed. The
+owner decision now makes that path permanently out of scope; the 2026-08-12
+deployment/source re-audit confirms the DEV
 `ripple-api-micro` image/branch path and deployment-provided AWS configuration
 slots. Explicit read-only GKE metadata now confirms the live
 `ripple-api-micro` Pod → ReplicaSet → Deployment chain, image digest, default
 ServiceAccount, and Secret reference names in `mochi-dev-pong`/`labs-169405`.
 GCR/Cloud Build/GitHub/source checks did not expose effective Secret-backed
 `API_ENV`/AWS binding or designated scope, so the data environment remains
-unresolved and no datastore query is authorized. Phase 7 has not started.
+unresolved, but no external handoff or datastore query is authorized or
+required. Private local triage is active; Phase 7 AI work remains deferred.
 
 ## Environment (machine facts)
 

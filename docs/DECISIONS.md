@@ -7,6 +7,85 @@ unless marked superseded; changing one requires a new entry, not an edit.
 
 ---
 
+## D-29 — Owner-frozen infrastructure/data boundary
+
+**Decision.** Nightwatch is permanently confined to local source intelligence,
+contained DEV browser/API testing, deterministic replay, failure minimization,
+sanitized evidence, and private local triage. Phase 6 real infrastructure and
+datastore work is `FROZEN_BY_OWNER` because
+`INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+
+**Rationale.** Application-level debugging provides the intended competitive
+value without expanding operational or disclosure risk. The previous Phase 6
+runtime-to-datastore blocker is intentionally superseded rather than handed
+off to coworkers or infrastructure owners.
+
+**Consequences.** `src/core/policy/ownerScope.ts` blocks GCP/GKE/Kubernetes,
+AWS infrastructure, deployment configuration, DynamoDB/BigQuery/Spanner/
+production SQL, datastore metadata discovery, external-team requests, and
+external publication before an executor callback. Existing Phase 6 code and
+history remain available for local synthetic compatibility; its real invoker
+returns `OWNER_POLICY_BLOCKED`. L4 is recorded as
+`OUT_OF_SCOPE_BY_OWNER`, never as missing work.
+
+**Phase applicability.** All current and future phases unless the owner makes
+an explicit new scope decision.
+
+---
+
+## D-30 — Private local evidence is the terminal output
+
+**Decision.** Nightwatch produces owner-only local dossiers and summaries. It
+does not automatically post to Slack, create GitHub/Jira/Linear issues or PRs,
+send email, write shared Drive/Notion/docs, upload evidence, or generate
+customer-facing responses.
+
+**Rationale.** Nightwatch is a private local project and findings may contain
+competitive or internal engineering information. Human review outside the
+autonomous loop is required for any later disclosure.
+
+**Consequences.** The default artifact root is `$HOME/.nightwatch/findings/`,
+owner-only with atomic writes. A dossier is `INCOMPLETE` until packaging
+finishes; private remote status is audited before any storage decision, and a
+repository with no remote is classified `NO_REMOTE`.
+
+**Phase applicability.** All current and future phases.
+
+---
+
+## D-31 — Deterministic minimization is subsequence-only replay
+
+**Decision.** Failure minimization can execute only action IDs already present
+in the original source-approved safe sequence. It never generates an action or
+widens the safe-action catalog. Real DEV minimization is bounded at one fresh
+exact replay plus four reduced candidates by default.
+
+**Rationale.** Minimization must reduce evidence without becoming a second
+exploration engine or a path to arbitrary controls. Exact fingerprint equality
+is required to call a candidate reproducing the same anomaly.
+
+**Consequences.** The reducer reports `1-MINIMAL` only after a complete
+one-deletion proof; otherwise it reports `BOUNDED_MINIMAL` or budget exhaustion.
+Invalid preconditions are not product failures.
+
+**Phase applicability.** Private evidence minimization and later local triage.
+
+---
+
+## D-32 — Deterministic evidence outranks AI
+
+**Decision.** AI-ready packages are deterministic evidence projections only.
+Any future local/private model may summarize, rank, hypothesize, or suggest
+source locations, but may not decide failure, override safety/oracles, invent
+results, or trigger external access.
+
+**Consequences.** The current task adds no LLM integration; dossier validity,
+oracle outcome, safety counters, and privacy remain Nightwatch-owned.
+
+**Phase applicability.** Private evidence minimization and later AI review.
+
+---
+
 ## D-1 — Playwright Test as the single runner for unit, smoke, and scenario suites
 
 **Decision.** All Nightwatch code — unit tests, smoke tests, and runnable

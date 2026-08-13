@@ -12,6 +12,10 @@ test-results-*/
 artifacts/*
 !artifacts/.gitkeep
 
+# owner-only private findings should remain outside Git even if a test/operator
+# explicitly injects a repository-local root
+.nightwatch/
+
 # test fixtures / scratch
 .tmp-*/
 .tmp-test/

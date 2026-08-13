@@ -1,6 +1,6 @@
 # Nightwatch Architecture
 
-Status: Phase 1.2. This document describes the implemented scaffold, browser
+Status: Phase 1.2 plus private local evidence triage. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -31,6 +31,14 @@ Phase 0/1 goals:
 4. **Self-tested.** Nightwatch's own unit and smoke tests prove the safety
    guarantees (see `docs/SAFETY_MODEL.md` §14).
 
+The active roadmap is intentionally application-level: local source
+intelligence, approved DEV browser/API execution, deterministic replay,
+failure minimization, sanitized evidence, and private local triage. Phase 6's
+real datastore execution and all infrastructure/deployment archaeology are
+frozen by owner policy. They are not prerequisites for useful Nightwatch
+operation and must fail locally before an external command or adapter is
+invoked.
+
 The platform reality that motivates the architecture (RECON_B §4, E1–E10):
 application-level environment selection (SDK defaults, CLI flags, UI cookies,
 hardcoded URLs) is *not* a boundary — most Alphaus clients default to
@@ -59,6 +67,9 @@ browser. Hence the architecture is built around request-level policy.
 | `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, sanitized event log and runtime health state. | implemented |
 | `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | *in flight* |
 | `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | *in flight* |
+| `src/core/policy/ownerScope.ts` | Central owner-scope gate. Allows local/source/contained DEV/replay/evidence operations and rejects frozen infrastructure, datastore, deployment, and external-publication classes with `OWNER_POLICY_BLOCKED`. | implemented |
+| `src/core/policy/privateArtifacts.ts` | Owner-only local atomic JSON store for private dossiers and summaries; default root is outside the repository and has no publication API. | implemented |
+| `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
 | `config/environments/` | Per-environment allowlists and labels with provenance: `local.json`, `dev.json`, `next.json`; `production.json` documents the rejected surface only. | implemented |
@@ -132,6 +143,22 @@ mandatory loopback L5 proxy  ──► approved target only
           │
           └── denied / unknown / malformed: local response, no DNS/TCP
 ```
+
+The post-run evidence topology is:
+
+```
+source/change intelligence + contained browser/API evidence
+        ↓
+safe replay and bounded subsequence minimization
+        ↓
+sanitized fingerprint clustering and browser/API differential
+        ↓
+source relevance + conservative application-layer boundary
+        ↓
+owner-only local bug dossier / overnight summary / morning brief
+```
+
+There is deliberately no datastore or infrastructure branch in this flow.
 
 ---
 
@@ -257,6 +284,10 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
 - The snapshotter runs read-only git commands only (`status --porcelain`,
   `rev-parse`, `log`, `for-each-ref`); it never fetches, checks out, or
   writes config (D-8).
+- The active evidence store is private and local. Dossiers are written
+  atomically with owner-only permissions under the external default root
+  `$HOME/.nightwatch/findings/`; repository-local `.nightwatch/` is ignored
+  for injected test stores. No external publication connector exists.
 
 ---
 
