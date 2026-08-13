@@ -419,7 +419,8 @@ two-step `--prepare-only` manifest/checkpoint freeze followed by an explicit
 `--resume-campaign=<id>` execution, so the readiness state can be pushed before
 product work. A new current-version bounded campaign must now be created; the
 old manifest is never silently resumed across a Nightwatch source-version
-change. Phase 6 remains permanently
+change. The new manifest is frozen at ordinal zero; exactly one resume run and
+closure validation remain. Phase 6 remains permanently
 `FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
 
 ## Phase 7B — Bounded AI assistance (deferred)

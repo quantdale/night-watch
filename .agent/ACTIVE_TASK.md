@@ -13,7 +13,7 @@ Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
 Last checkpoint: implementation checkpoint `a9783ebe244381fe50e8387bd69af3f65a2f558d`.
-Current documentation/remote checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d`.
+Current documentation/remote checkpoint: `57dae72a6747d8042bc1577755489b4258f87674`.
 Next action: run the explicit `--prepare-only` command to create and freeze
 one new current-version bounded DEV campaign manifest, then push the
 `PHASE_7_NEW_REAL_CAMPAIGN_READY` state before one `--resume-campaign` run.

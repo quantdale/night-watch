@@ -43,6 +43,22 @@ action is to run the guarded `--prepare-only` command, push the sanitized
 `PHASE_7_NEW_REAL_CAMPAIGN_READY` state, and then execute one new campaign by
 its frozen ID; the historical campaign ID remains immutable and is not reused.
 
+## Continuation — current campaign frozen
+
+The guarded prepare-only run passed with `PHASE_7_NEW_REAL_CAMPAIGN_READY`.
+The new owner-only manifest is
+`campaign:sha256:5c4ab13ab8ba103625a43cd7`, fingerprint
+`manifest:sha256:463df2b9a375326fe1c4389f`, based on Nightwatch source SHA
+`57dae72a6747d8042bc1577755489b4258f87674`. It is `CHANGE_DIRECTED`, selects
+J1/J2/J3 with linked E1/E2/E3 envelopes and read-only API scenarios, contains
+9 ordered work items, and has an ordinal-zero `IN_PROGRESS` checkpoint with
+all work pending. Manifest and checkpoint are owner-only mode `0600`; product
+execution is `NOT_STARTED`.
+
+The only permitted next product action is one resume invocation using this
+campaign ID. The historical auth-blocked ID remains immutable and is not
+resumed.
+
 ## Campaign architecture
 
 - Schema: `nightwatch.campaign.private.v1`.

@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: a9783ebe244381fe50e8387bd69af3f65a2f558d
+REMOTE_HEAD: 57dae72a6747d8042bc1577755489b4258f87674
 
 ## Objective
 
@@ -172,13 +172,17 @@ outside Nightwatch state.
 Historical real campaign: `campaign:sha256:ed4520e8fa7c3a9d2b1481f5`. Manifest fingerprint:
 `manifest:sha256:861ae8b3dffdb88ea8a262e7`. Identity was derived from the frozen
 manifest inputs; timestamp was not an identity input.
-Current campaign: `NONE — create a new manifest from current SHA before product execution`.
+Current campaign: `campaign:sha256:5c4ab13ab8ba103625a43cd7`.
+Current manifest fingerprint: `manifest:sha256:463df2b9a375326fe1c4389f`.
 
 ## MANIFEST_STATUS
 
-Historical manifest/checkpoint: immutable and not resumable. New manifest:
-not created; it must use current Nightwatch versions, source snapshots,
-selection, lineage, seeds, budget, privacy policy, and owner-scope policy.
+Historical manifest/checkpoint: immutable and not resumable. Current manifest:
+frozen and pushed as `PHASE_7_NEW_REAL_CAMPAIGN_READY`; it uses Nightwatch
+source SHA `57dae72a6747d8042bc1577755489b4258f87674`, current schema,
+orchestrator/catalog versions, current read-only source snapshots and
+selection, fixed lineage/seeds, bounded budget, private policy, and frozen
+owner-scope policy. Product execution is not started.
 
 ## CAMPAIGN_MODE
 
@@ -209,8 +213,9 @@ deployed.
 
 Synthetic lineage is deterministic and ordered `JOURNEY → API → EXPLORATION`.
 Real selected and ordered J1/J2/J3, one linked E1/E2/E3 envelope/seed each,
-and one linked Phase 5 read-only API operation each. No work item completed
-because preflight stopped at auth.
+and one linked Phase 5 read-only API operation each. The current frozen
+manifest contains 9 ordered work items; all are pending at checkpoint ordinal
+0 and the next exact action is the first J1 journey.
 
 ## SEED_LEDGER
 
@@ -225,18 +230,20 @@ exploration contexts, 6 API executions, 8 replays, 4 minimization candidates,
 24 actions, 15 minutes, 120 seconds/test, 3 promoted clusters, and 10 MiB
 private evidence. The 8 replay maximum covers 3 required API fresh replays
 plus one representative replay and the existing one-exact/four-candidate
-triage allowance. Real used: browser 0, journey 0, exploration 0, API 0,
-replays 0, minimization candidates 0, actions 0, evidence 807202 bytes.
-Real remaining: browser 6, journey 3, exploration 3, API 6, replays 8,
-minimization candidates 4, actions 24, evidence 9678558 bytes.
+triage allowance. Historical real artifacts account for 807202 private
+evidence bytes. The current frozen checkpoint budget is unused: browser 0,
+journey 0, exploration 0, API 0, replays 0, minimization candidates 0,
+actions 0, private evidence bytes 0. Current remaining: browser 6, journey 3,
+exploration 3, API 6, replays 8, minimization candidates 4, actions 24,
+evidence 10485760 bytes.
 
 ## EXECUTION_LEDGER
 
 Synthetic orchestrator execution ledger, checkpoint writes, at-least-once
-replay-required interruption, and completed-work skip behavior passed. The real
-ledger is atomic at checkpoint ordinal 0: all 9 selected work items remain
-PENDING, no attempt ran, and the next exact action is the first J1 journey only
-after a new compatible campaign is created.
+replay-required interruption, and completed-work skip behavior passed. The
+historical real ledger remains auth-blocked and immutable. The current ledger
+is atomic at checkpoint ordinal 0: all 9 selected work items remain `PENDING`,
+no attempt ran, and the next exact action is the first J1 journey.
 
 ## ANOMALY_CLUSTERS
 
@@ -248,14 +255,16 @@ storm stopped before reproduction. Real clusters: 0; no product work ran.
 
 Synthetic representative admission, reproduction prioritization, bounded
 minimization, and reproduction-only execution passed. Real reproduction and
-minimization queues are empty because auth blocked before anomaly intake; no
-product failure is manufactured.
+minimization queues are empty because the current campaign is at ordinal zero
+before anomaly intake; no product failure is manufactured.
 
 ## DOSSIER_LEDGER / MORNING_BRIEF_STATUS
 
 Synthetic matrix produced 3 private dossiers and a concise top-3 brief; clean
-baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The real owner-only brief is
-READY with headline `NO ADMITTED PRODUCT ANOMALIES`; no dossier was produced.
+baseline produced `NO ADMITTED PRODUCT ANOMALIES`. The historical real
+owner-only brief is READY with headline `NO ADMITTED PRODUCT ANOMALIES`; the
+current campaign brief is `NOT_STARTED` at ordinal zero, with no current
+dossier or finding.
 Private artifacts remain outside Git under `/home/dalepalaca/.nightwatch/findings/`
 with mode 0600; there is no runtime findings remote or external publication.
 
@@ -280,6 +289,10 @@ native Phase 7 task artifacts.
 - `git diff --check`: PASS.
 - `npm run campaign:real -- --help`: PASS; launcher is opt-in, DEV-only, and
   requires an explicit prepare-only or resume-by-ID phase.
+- `npm run campaign:real -- --env=dev --prepare-only`: PASS; new manifest and
+  ordinal-zero checkpoint are owner-only mode `0600`, with
+  `PHASE_7_NEW_REAL_CAMPAIGN_READY`, zero product execution, and zero current
+  budget usage.
 - Real campaign: PASS for fail-closed auth stop; `PARTIAL_AUTH_BLOCKED`, zero
   product work, zero anomalies, private brief READY.
 - Owner-only private artifact permissions/privacy audit: PASS.
@@ -341,15 +354,15 @@ and authenticated traces were absent from campaign artifacts.
 - Remote reconciliation checkpoint: `2aa2742d6a062e633fcb3faf2ca119a408b06758` pushed to `origin/main`.
 - Authenticated-artifact implementation checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460` pushed to `origin/main`.
 - Frozen-manifest workflow implementation checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d` pushed to `origin/main`.
+- Frozen-manifest workflow documentation checkpoint: `57dae72a6747d8042bc1577755489b4258f87674` pushed to `origin/main`.
 - Auth-ready state update: current implementation and auth evidence are
-  recorded above; this documentation checkpoint is the next validated push.
+  recorded above; the current campaign readiness state is recorded here.
 
 ## NEXT_EXACT_ACTION
 
-Run the guarded prepare-only command, record the new campaign ID/fingerprint
-and selected lineage here, push `PHASE_7_NEW_REAL_CAMPAIGN_READY`, then run
-exactly one bounded DEV campaign by that frozen ID. Never reuse the historical
-campaign ID, use an alternative credential, or widen scope.
+Run exactly one `npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:5c4ab13ab8ba103625a43cd7`
+against the frozen ordinal-zero checkpoint. Never reuse the historical campaign
+ID, use an alternative credential, or widen scope.
 
 ## RESUME_RECIPE
 

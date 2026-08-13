@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `a9783ebe244381fe50e8387bd69af3f65a2f558d` (verified equal to local `HEAD`) |
+| `REMOTE_HEAD` | `57dae72a6747d8042bc1577755489b4258f87674` (verified equal to local `HEAD`) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -300,13 +300,18 @@ bounded refresh with no MFA step. Current sanitized status is
 `AUTH_STATUS=VALID`, `AUTH_ENV=DEV`, `PAGE_VALID=true`, `MFA_USED=false`, with
 capture ID `nightwatch-20260813T151556Z-3210`. Structural, provenance,
 freshness, page-readability, authenticated-shell, metadata-only privacy, and
-atomic-replacement checks passed. No new campaign has been created yet.
+atomic-replacement checks passed. A new current manifest is now frozen in
+owner-only local state at checkpoint ordinal 0; product execution has not
+started.
 
 The current launcher requires an explicit two-step real workflow:
 `--prepare-only` validates the guarded auth/safety gate and writes a fresh
 owner-only manifest plus ordinal-zero checkpoint without invoking an executor;
 the sanitized `PHASE_7_NEW_REAL_CAMPAIGN_READY` state is then pushed before
 `--resume-campaign=<id>` may execute the frozen campaign exactly once.
+The prepared campaign is `campaign:sha256:5c4ab13ab8ba103625a43cd7` with
+manifest fingerprint `manifest:sha256:463df2b9a375326fe1c4389f` and source
+SHA `57dae72a6747d8042bc1577755489b4258f87674`.
 
 Real campaign safety vector: production attempts 0, proxy violations 0,
 unknown destinations 0, unknown approvals 0, product mutations 0,
