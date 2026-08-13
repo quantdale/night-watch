@@ -343,7 +343,7 @@ async function runExactReplayContext(opts: {
 test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   if (process.env.NIGHTWATCH_PHASE_4_REAL !== '1') { test.skip(); return; }
   const envName = assertSupportedEnvironment(process.env.NIGHTWATCH_ENV);
-  if (envName !== 'dev' && envName !== 'next') throw new Error('fail-closed: Phase 4 real exploration requires dev or next');
+  if (envName !== 'dev') throw new Error('fail-closed: Phase 4 real exploration requires DEV; NEXT is reserved for human-led auth capture');
   const env = loadEnvironmentConfig(envName);
   const target = targetFor(env);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;

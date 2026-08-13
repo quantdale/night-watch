@@ -358,7 +358,7 @@ test('Phase 2B three controlled read-only Ripple journey pairs', async ({ browse
     throw new Error('fail-closed: Phase 2B real journeys require NIGHTWATCH_PHASE_2B_REAL=1 and the gated launcher');
   }
   const envName = assertSupportedEnvironment(process.env.NIGHTWATCH_ENV);
-  if (envName !== 'dev' && envName !== 'next') throw new Error('fail-closed: Phase 2B real journeys require dev or next');
+  if (envName !== 'dev') throw new Error('fail-closed: Phase 2B real journeys require DEV; NEXT is reserved for human-led auth capture');
   const env = loadEnvironmentConfig(envName);
   const target = targetFor(env);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;

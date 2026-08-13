@@ -68,9 +68,13 @@ export interface CampaignBudgetFeasibility {
   readonly feasible: boolean;
   readonly mandatoryBrowserContexts: number;
   readonly mandatoryApiExecutions: number;
+  readonly mandatoryReplays: number;
+  readonly mandatoryActions: number;
   readonly reservedBrowserContexts: number;
   readonly reservedApiExecutions: number;
   readonly reservedReplays: number;
+  readonly reservedMinimizationCandidates: number;
+  readonly reservedActions: number;
   readonly reasons: readonly string[];
 }
 
@@ -132,23 +136,36 @@ export function analyzeCampaignBudgetFeasibility(input: {
   const mandatoryApiExecutions = input.workItems
     .filter((item) => item.kind === 'API')
     .reduce((total, item) => total + (item.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1), 0);
-  const reservedBrowserContexts = input.policy.maxPromotedClusters > 0 ? 1 : 0;
-  const reservedApiExecutions = input.policy.maxPromotedClusters > 0 ? 1 : 0;
-  const reservedReplays = input.policy.maxPromotedClusters > 0 ? 1 : 0;
+  const mandatoryReplays = input.workItems.filter((item) => item.kind === 'REPRODUCTION' || (item.kind === 'API' && item.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY')).length;
+  // A browser work item has at least one safe action. API work can be a
+  // zero-action read at this layer; adapters report actual actions and are
+  // bounded again by CampaignBudgetManager before persistence.
+  const mandatoryActions = input.workItems.filter((item) => item.kind === 'JOURNEY' || item.kind === 'EXPLORATION').length;
+  const reservationCount = input.mode === 'REPRODUCTION_ONLY' ? 1 : input.policy.maxPromotedClusters;
+  const reservedBrowserContexts = reservationCount;
+  const reservedApiExecutions = reservationCount;
+  const reservedReplays = reservationCount;
+  const reservedMinimizationCandidates = reservationCount;
+  const reservedActions = reservationCount;
   const reasons: string[] = [];
   if (applicable && mandatoryBrowserContexts + reservedBrowserContexts > input.policy.maxTotalBrowserContexts) reasons.push('BROWSER_REPRODUCTION_RESERVE_UNAVAILABLE');
   if (applicable && mandatoryApiExecutions + reservedApiExecutions > input.policy.maxApiExecutions) reasons.push('API_REPRODUCTION_RESERVE_UNAVAILABLE');
-  const mandatoryReplayReservations = input.workItems.filter((item) => item.kind === 'API' && item.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY').length;
-  if (applicable && mandatoryReplayReservations + reservedReplays > input.policy.maxReplays) reasons.push('REPLAY_RESERVE_UNAVAILABLE');
+  if (applicable && mandatoryReplays + reservedReplays > input.policy.maxReplays) reasons.push('REPLAY_RESERVE_UNAVAILABLE');
+  if (applicable && mandatoryActions + reservedActions > input.policy.maxTotalActions) reasons.push('ACTION_RESERVE_UNAVAILABLE');
+  if (applicable && reservedMinimizationCandidates > input.policy.maxMinimizationCandidates) reasons.push('MINIMIZATION_RESERVE_UNAVAILABLE');
   if (applicable && input.mode === 'REPRODUCTION_ONLY' && input.policy.maxReplays < 1) reasons.push('REPRODUCTION_ONLY_REPLAY_UNAVAILABLE');
   return {
     applicable,
     feasible: reasons.length === 0,
     mandatoryBrowserContexts,
     mandatoryApiExecutions,
+    mandatoryReplays,
+    mandatoryActions,
     reservedBrowserContexts,
     reservedApiExecutions,
     reservedReplays,
+    reservedMinimizationCandidates,
+    reservedActions,
     reasons,
   };
 }
@@ -196,25 +213,44 @@ export class CampaignBudgetManager {
   }
 
   consume(dimension: BudgetDimension, amount = 1): void {
-    if (!this.canConsume(dimension, amount)) throw new Error(`CAMPAIGN_BUDGET_EXHAUSTED:${dimension}`);
-    this.usage = { ...this.usage, [dimension]: this.usage[dimension] + amount };
+    this.consumeBundle({ [dimension]: amount });
+  }
+
+  /** Consume a multi-dimensional reservation atomically. */
+  consumeBundle(requirements: Partial<Readonly<Record<BudgetDimension, number>>>): void {
+    const next = { ...this.usage } as Record<BudgetDimension, number>;
+    for (const [rawDimension, amount] of Object.entries(requirements)) {
+      const dimension = rawDimension as BudgetDimension;
+      if (!(dimension in LIMIT_FOR) || !Number.isInteger(amount) || (amount ?? 0) < 0) {
+        throw new Error('CAMPAIGN_BUDGET_AMOUNT_INVALID');
+      }
+      if (!this.canConsume(dimension, amount)) throw new Error(`CAMPAIGN_BUDGET_EXHAUSTED:${dimension}`);
+      next[dimension] += amount;
+    }
+    this.usage = next;
   }
 
   reserveWork(kind: CampaignWorkKind, replay = false): void {
+    const requirements: Partial<Record<BudgetDimension, number>> = {};
     if (kind === 'JOURNEY') {
-      this.consume('browserContexts');
-      this.consume('journeyContexts');
+      requirements.browserContexts = 1;
+      requirements.journeyContexts = 1;
     } else if (kind === 'EXPLORATION') {
-      this.consume('browserContexts');
-      this.consume('explorationContexts');
+      requirements.browserContexts = 1;
+      requirements.explorationContexts = 1;
     } else if (kind === 'API') {
-      this.consume('apiExecutions');
+      requirements.apiExecutions = 1;
     } else if (kind === 'REPRODUCTION') {
-      this.consume('replays');
+      requirements.replays = 1;
     } else if (kind === 'MINIMIZATION') {
-      this.consume('minimizationCandidates');
+      requirements.minimizationCandidates = 1;
     }
-    if (replay && kind !== 'MINIMIZATION') this.consume('replays');
+    if (replay && kind !== 'MINIMIZATION') requirements.replays = (requirements.replays ?? 0) + 1;
+    this.consumeBundle(requirements);
+  }
+
+  reserveFirstPlusApi(): void {
+    this.consumeBundle({ apiExecutions: 2, replays: 1 });
   }
 
   addActions(amount: number): void {

@@ -11,6 +11,13 @@
 
 import { spawnSync } from 'node:child_process';
 
+const OOPS_PROBE_ENV: NodeJS.ProcessEnv = {
+  PATH: '/usr/local/bin:/usr/bin:/bin',
+  HOME: '/nonexistent',
+  LANG: 'C',
+  LC_ALL: 'C',
+};
+
 export interface OopsSandboxStatus {
   tool: 'bubblewrap' | null;
   toolVersion: string | null;
@@ -21,7 +28,7 @@ export interface OopsSandboxStatus {
 }
 
 function bubblewrapVersion(): string | null {
-  const result = spawnSync('bwrap', ['--version'], { encoding: 'utf8', timeout: 2_000 });
+  const result = spawnSync('bwrap', ['--version'], { encoding: 'utf8', env: OOPS_PROBE_ENV, timeout: 2_000, maxBuffer: 64 * 1024 });
   if (result.status !== 0) return null;
   const value = (result.stdout ?? '').trim();
   return value === '' ? null : value.slice(0, 80);
@@ -47,7 +54,7 @@ export function inspectOopsSandbox(): OopsSandboxStatus {
   const probe = spawnSync(
     'bwrap',
     ['--unshare-net', '--ro-bind', '/', '/', '--dev', '/dev', '--proc', '/proc', '/usr/bin/true'],
-    { encoding: 'utf8', timeout: 5_000, stdio: ['ignore', 'pipe', 'pipe'] },
+    { encoding: 'utf8', env: OOPS_PROBE_ENV, timeout: 5_000, maxBuffer: 64 * 1024, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   return {
     tool: 'bubblewrap',

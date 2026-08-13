@@ -9,6 +9,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -48,8 +49,10 @@ const preflightArgs = [preflight, `--env=${env}`];
 if (uiUrl !== undefined) preflightArgs.push(`--ui-url=${uiUrl}`);
 const preflightResult = spawnSync(process.execPath, preflightArgs, {
   cwd: root,
-  env: { ...process.env, NIGHTWATCH_ENV: env, ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }) },
-  stdio: 'inherit',
+  env: buildChildEnvironment(process.env, { NIGHTWATCH_ENV: env, ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }) }),
+  stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 120_000,
+  maxBuffer: 2 * 1024 * 1024,
 });
 if ((preflightResult.status ?? 1) !== 0) process.exit(preflightResult.status ?? 2);
 
@@ -57,15 +60,16 @@ const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
 const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
 const result = spawnSync(cmd, ['test', '--config=playwright.canary.config.ts', '--project=nightwatch'], {
   cwd: root,
-  env: {
-    ...process.env,
+  env: buildChildEnvironment(process.env, {
     NIGHTWATCH_ENV: env,
     ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }),
     // An unauthenticated canary must not inherit a user's real state.
     NIGHTWATCH_STORAGE_STATE: '',
     NIGHTWATCH_TRACE: 'off',
     NIGHTWATCH_HEADED: '0',
-  },
-  stdio: 'inherit',
+  }),
+  stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 120_000,
+  maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(result.status ?? 1);

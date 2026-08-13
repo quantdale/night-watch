@@ -20,7 +20,7 @@ import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from './outboundPolicy';
 import { runCanary } from './canary';
 import { isKnownProductionHost } from './hosts';
 
-export const REAL_OBSERVATION_ENVIRONMENTS: readonly EnvironmentName[] = ['dev', 'next'];
+export const REAL_OBSERVATION_ENVIRONMENTS: readonly EnvironmentName[] = ['dev'];
 
 export interface AuthenticatedEvidenceContract {
   metadataFirst: boolean;
@@ -164,7 +164,11 @@ export function evaluateRealRunGate(input: RealRunGateInput): RealRunGateResult 
   const env = input.environment;
   const policy = new OutboundPolicy(env);
 
-  const realEnv = REAL_OBSERVATION_ENVIRONMENTS.includes(env.name);
+  const requiresAuth = input.requireAuthenticationState !== false;
+  // Automated credential-bearing observation is DEV-only. NEXT remains
+  // available only to the separately documented human-led auth:capture flow;
+  // an unauthenticated canary may still validate policy there.
+  const realEnv = env.name === 'dev' || (!requiresAuth && env.name === 'next');
   checks.push(
     check(
       'environment-selection',
@@ -212,11 +216,12 @@ export function evaluateRealRunGate(input: RealRunGateInput): RealRunGateResult 
 
   checks.push(...evaluateProxy(input));
 
-  const requiresAuth = input.requireAuthenticationState !== false;
   const storagePass = requiresAuth
     ? input.storageStatePath !== null && input.storageStateValid
     : input.storageStatePath === null && !input.storageStateValid;
-  const provenancePass = !requiresAuth || input.storageStateEnvironment === undefined || input.storageStateEnvironment === null || input.storageStateEnvironment === env.name;
+  const provenancePass = requiresAuth
+    ? input.storageStateEnvironment === env.name
+    : input.storageStateEnvironment == null;
   checks.push(
     check(
       'authentication-state',

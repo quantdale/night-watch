@@ -12,6 +12,7 @@
     "test:unit": "playwright test tests/unit",
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
+    "hardening:check": "node bin/hardening-check.mjs",
     "agent:check": "node bin/agent-state.mjs",
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",

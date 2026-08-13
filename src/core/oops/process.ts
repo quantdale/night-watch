@@ -42,6 +42,7 @@ export interface OopsRunResult {
     exitCode: number | null;
     signal: NodeJS.Signals | null;
     timedOut: boolean;
+    binarySHA256: string;
     argvSafe: true;
     shell: false;
   };
@@ -53,7 +54,7 @@ export interface OopsRunResult {
     credentialNamesPassed: 0;
   };
   workspace: {
-  ownerOnly: boolean;
+    ownerOnly: boolean;
     scenarioMode: '0600';
     cleaned: boolean;
   };
@@ -63,6 +64,8 @@ export interface RunRestrictedOopsOptions {
   binaryPath: string;
   binarySourceSHA: string;
   expectedSourceSHA: string;
+  /** SHA-256 recorded from the controlled local build artifact. */
+  expectedBinarySHA256: string;
   scenario: GeneratedScenario;
   operation: ApiOperation;
   relay: Phase5Relay;
@@ -91,6 +94,34 @@ function ensurePrivateDirectory(directory: string): void {
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
   fs.chmodSync(directory, 0o700);
   if (!ownerOnly(directory)) throw new Error('OOPS workspace is not owner-only');
+}
+
+function assertNoSymlinkComponents(target: string): void {
+  const parsed = path.parse(target);
+  let current = parsed.root;
+  for (const component of target.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, component);
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('OOPS_BINARY_MISSING');
+      throw new Error('OOPS_BINARY_PATH_UNREADABLE');
+    }
+    if (stat.isSymbolicLink()) throw new Error('OOPS_BINARY_SYMLINK');
+  }
+}
+
+/** Validate and hash the exact regular executable that will be spawned. */
+export function sha256Executable(binaryPath: string): string {
+  if (!path.isAbsolute(binaryPath)) throw new Error('OOPS_BINARY_PATH_NOT_ABSOLUTE');
+  assertNoSymlinkComponents(binaryPath);
+  const stat = fs.lstatSync(binaryPath);
+  if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('OOPS_BINARY_NOT_REGULAR_FILE');
+  if ((stat.mode & 0o111) === 0) throw new Error('OOPS_BINARY_NOT_EXECUTABLE');
+  if ((stat.mode & 0o022) !== 0) throw new Error('OOPS_BINARY_PERMISSIONS_UNSAFE');
+  if (process.getuid !== undefined && stat.uid !== process.getuid()) throw new Error('OOPS_BINARY_OWNER_UNTRUSTED');
+  return crypto.createHash('sha256').update(fs.readFileSync(binaryPath)).digest('hex');
 }
 
 function writePrivateAtomic(file: string, contents: string): void {
@@ -238,6 +269,9 @@ function classifyOutcome(capture: ProcessCapture, observation: RelayObservation 
 
 export async function runRestrictedOops(options: RunRestrictedOopsOptions): Promise<OopsRunResult> {
   if (options.binarySourceSHA !== options.expectedSourceSHA) throw new Error('BINARY_SOURCE_MISMATCH');
+  if (!/^[a-f0-9]{64}$/.test(options.expectedBinarySHA256)) throw new Error('OOPS_BINARY_DIGEST_INVALID');
+  const actualBinarySHA256 = sha256Executable(options.binaryPath);
+  if (actualBinarySHA256 !== options.expectedBinarySHA256) throw new Error('OOPS_BINARY_DIGEST_MISMATCH');
   if (options.operation.semanticClass !== 'KNOWN_READ') throw new Error('fail-closed: OOPS adapter only accepts KNOWN_READ');
   const logicalYaml = options.scenario.logicalYaml;
   assertGeneratedScenarioSafe(logicalYaml, options.operation.operationId);
@@ -264,7 +298,7 @@ export async function runRestrictedOops(options: RunRestrictedOopsOptions): Prom
       scenarioId: options.scenario.scenarioId,
       operationId: options.operation.operationId,
       outcome: classifyOutcome(capture, observation),
-      process: { exitCode: capture.exitCode, signal: capture.signal, timedOut: capture.timedOut, argvSafe: true, shell: false },
+      process: { exitCode: capture.exitCode, signal: capture.signal, timedOut: capture.timedOut, binarySHA256: actualBinarySHA256, argvSafe: true, shell: false },
       ...(observation ? { relayObservation: observation } : {}),
       output,
       childEnvironment: { allowlistOnly: true, parentSentinelInherited: false, credentialNamesPassed: 0 },

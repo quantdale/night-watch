@@ -14,6 +14,7 @@ import readline from 'node:readline';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SUPPORTED = new Set(['dev', 'next']);
@@ -152,8 +153,11 @@ async function main() {
   printStage({ stage: 'PREFLIGHT', status: 'START' });
   const preflight = spawnSync(process.execPath, [path.join(root, 'bin', 'observe-preflight.mjs'), `--env=${env}`, ...(uiUrl === undefined ? [] : [`--ui-url=${uiUrl}`])], {
     cwd: root,
+    env: buildChildEnvironment(process.env, { NIGHTWATCH_ENV: env, ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }) }),
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 120_000,
+    maxBuffer: 256 * 1024,
   });
   if (preflight.stdout) process.stdout.write(preflight.stdout);
   if (preflight.status !== 0) {

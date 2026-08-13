@@ -15,6 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const args = process.argv.slice(2);
 const envVars = {};
@@ -50,7 +51,9 @@ const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
 
 const res = spawnSync(cmd, ['test', scenarioPath, '--project=nightwatch', ...rest], {
   cwd: root,
-  env: { ...process.env, ...envVars },
-  stdio: 'inherit',
+  env: buildChildEnvironment(process.env, envVars),
+  stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 15 * 60 * 1000,
+  maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(res.status ?? 1);

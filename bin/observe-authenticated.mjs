@@ -26,6 +26,7 @@ if (parsed.help) {
   process.exit(0);
 }
 const { env, storage, uiUrl } = parsed;
+if (env !== 'dev') throw new Error('observe-authenticated requires --env=dev; NEXT is reserved for human-led auth capture');
 
 const gate = path.join(root, 'bin', 'observe-gate.mjs');
 const gateArgs = [gate, `--env=${env}`, `--storage-state=${storage}`];
@@ -33,7 +34,9 @@ if (uiUrl !== undefined) gateArgs.push(`--ui-url=${uiUrl}`);
 const gateResult = spawnSync(process.execPath, gateArgs, {
   cwd: root,
   env: buildObserveAuthenticatedEnvironment(process.env, { env, storage, uiUrl }),
-  stdio: 'inherit',
+  stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 120_000,
+  maxBuffer: 2 * 1024 * 1024,
 });
 if ((gateResult.status ?? 1) !== 0) process.exit(gateResult.status ?? 2);
 
@@ -46,6 +49,8 @@ const result = spawnSync(cmd, ['test', '--config=playwright.authenticated.config
     NIGHTWATCH_TRACE: 'off',
     NIGHTWATCH_HEADED: '0',
   },
-  stdio: 'inherit',
+  stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 15 * 60 * 1000,
+  maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(result.status ?? 1);

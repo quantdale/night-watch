@@ -369,7 +369,7 @@ test('Phase 2C six serial fresh-context Ripple canary observations', async ({ br
     return;
   }
   const envName = assertSupportedEnvironment(process.env.NIGHTWATCH_ENV);
-  if (envName !== 'dev' && envName !== 'next') throw new Error('fail-closed: Phase 2C real journeys require dev or next');
+  if (envName !== 'dev') throw new Error('fail-closed: Phase 2C real journeys require DEV; NEXT is reserved for human-led auth capture');
   const env = loadEnvironmentConfig(envName);
   const target = targetFor(env);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;

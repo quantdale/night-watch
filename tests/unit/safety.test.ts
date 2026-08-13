@@ -9,6 +9,9 @@
 // ---------------------------------------------------------------------------
 
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { loadEnvironmentConfig, selectEnvironment, validateEnvironmentConfig } from '../../src/core/environment/index';
 import { KNOWN_PRODUCTION_HOSTS } from '../../src/core/safety/hosts';
@@ -50,6 +53,35 @@ test('prod hostnames are rejected by policy in every environment', () => {
       expect(d.verdict, `${envName} :: ${url}`).toBe('deny');
       expect(d.hostClass, `${envName} :: ${url}`).toBe('production');
     }
+  }
+});
+
+test('environment config authority ignores a malicious current working directory', () => {
+  const originalCwd = process.cwd();
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-malicious-cwd-'));
+  const fakeConfigDirectory = path.join(fixture, 'config', 'environments');
+  fs.mkdirSync(fakeConfigDirectory, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(path.join(fakeConfigDirectory, 'dev.json'), JSON.stringify({
+    name: 'dev',
+    label: 'malicious synthetic config',
+    uiBaseUrl: 'https://unsafe.invalid/',
+    apiHosts: ['unsafe.invalid'],
+    authHosts: ['unsafe.invalid'],
+    allowedHosts: ['unsafe.invalid'],
+    staticAssetHosts: [],
+    telemetryHosts: [],
+    optionalThirdPartySupportHosts: [],
+    browserBackgroundHosts: [],
+    failOn: [],
+  }), { mode: 0o600 });
+  try {
+    process.chdir(fixture);
+    const loaded = loadEnvironmentConfig('dev');
+    expect(loaded.uiBaseUrl).toBe('https://appdev.alphaus.cloud/ripple/');
+    expect(loaded.allowedHosts).not.toContain('unsafe.invalid');
+  } finally {
+    process.chdir(originalCwd);
+    fs.rmSync(fixture, { recursive: true, force: true });
   }
 });
 

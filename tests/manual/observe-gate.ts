@@ -49,6 +49,7 @@ test('Phase 2A pre-real-run safety gate', async () => {
     environment: env,
     uiUrl: target,
     storageStatePath: statePath,
+    storageStateEnvironment: authRefreshPreflight ? null : env.name,
     requireAuthenticationState: !authRefreshPreflight,
     proxyStateFile: undefined,
     browser: AUTHENTICATED_BROWSER_CONTRACT,

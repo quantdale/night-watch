@@ -44,7 +44,7 @@ const FAKE_STATE = {
 function tmpStateFile(content: unknown = FAKE_STATE, name = 'state.json'): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-test-'));
   const file = path.join(dir, name);
-  fs.writeFileSync(file, typeof content === 'string' ? content : JSON.stringify(content));
+  fs.writeFileSync(file, typeof content === 'string' ? content : JSON.stringify(content), { mode: 0o600 });
   return file;
 }
 
@@ -63,6 +63,35 @@ test.describe('storage-state secret handling', () => {
     expect(() =>
       validateStorageStateFile('/nonexistent/nw-state.json', { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })
     ).toThrow(/missing file/);
+  });
+
+  test('symlinked storage files, parent components, and group-readable files fail closed', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-storage-boundary-'));
+    const realDirectory = path.join(directory, 'real');
+    const linkedDirectory = path.join(directory, 'linked');
+    fs.mkdirSync(realDirectory, { mode: 0o700 });
+    const realFile = path.join(realDirectory, 'state.json');
+    fs.writeFileSync(realFile, JSON.stringify(FAKE_STATE), { mode: 0o600 });
+    fs.symlinkSync(realDirectory, linkedDirectory, 'dir');
+    try {
+      expect(() => validateStorageStateFile(path.join(realDirectory, '..', 'linked', 'state.json'), { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/SYMLINK/);
+      fs.chmodSync(realFile, 0o640);
+      expect(() => validateStorageStateFile(realFile, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/PERMISSIONS_UNSAFE/);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('group-readable storage-state parent directories fail closed', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-storage-parent-'));
+    const file = path.join(directory, 'state.json');
+    fs.writeFileSync(file, JSON.stringify(FAKE_STATE), { mode: 0o600 });
+    fs.chmodSync(directory, 0o750);
+    try {
+      expect(() => validateStorageStateFile(file, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/STORAGE_STATE_PARENT_PERMISSIONS_UNSAFE/);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('validated pending state replaces the old capture atomically and keeps owner-only mode', () => {
@@ -315,6 +344,22 @@ test.describe('storage-state secret handling', () => {
       expect(() => validateStorageStateOutputPath(path.join(NIGHTWATCH_ROOT, 'captured.json'), { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/outside/);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('capture output rejects a destination symlink and an unsafe parent', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-output-boundary-'));
+    const target = path.join(directory, 'target.json');
+    const destination = path.join(directory, 'state.json');
+    fs.writeFileSync(target, JSON.stringify(FAKE_STATE), { mode: 0o600 });
+    fs.symlinkSync(target, destination);
+    try {
+      expect(() => validateStorageStateOutputPath(destination, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT, allowExisting: true })).toThrow(/SYMLINK/);
+      fs.unlinkSync(destination);
+      fs.chmodSync(directory, 0o755);
+      expect(() => validateStorageStateOutputPath(path.join(directory, 'new.json'), { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })).toThrow(/group\/world accessible/);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
     }
   });
 

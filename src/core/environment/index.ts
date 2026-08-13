@@ -40,12 +40,9 @@ export function assertSupportedEnvironment(name: string | undefined): Environmen
 }
 
 function configPath(name: EnvironmentName): string {
-  // <root>/config/environments/<name>.json — resolved relative to this file
-  // (src/core/environment/index.ts -> <root>), with a cwd-based fallback so
-  // the same code works when run from the nightwatch root via the CLI.
-  const fromFile = path.join(__dirname, '..', '..', '..', 'config', 'environments', `${name}.json`);
-  if (fs.existsSync(fromFile)) return fromFile;
-  return path.join(process.cwd(), 'config', 'environments', `${name}.json`);
+  // The repository source tree is the sole authority. Ambient process.cwd()
+  // is untrusted launch state and must never select a safety policy.
+  return path.join(__dirname, '..', '..', '..', 'config', 'environments', `${name}.json`);
 }
 
 /** Load and validate the JSON config for a supported environment. */

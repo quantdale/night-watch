@@ -188,6 +188,93 @@ function validateWorkItemShape(value: unknown, code: string): RuntimeRecord {
   return item;
 }
 
+function assertNullableStringValue(value: unknown, code: string): void {
+  if (value !== null) assertString(value, code);
+}
+
+/**
+ * Validate the metadata-only candidate DTO that may cross a durable boundary.
+ * The executable replay callback is intentionally absent; nested structures
+ * are allowlisted so recomputing a digest cannot make arbitrary execution
+ * material authoritative.
+ */
+export function assertPersistedCandidateShape(value: unknown, code: string): void {
+  const candidate = requireRuntimeRecord(value, code);
+  assertExactKeys(candidate, [
+    'observation', 'journeyId', 'contractVersion', 'contractDigest', 'contextKind',
+    'originalSequence', 'technicalSeverity', 'breadth', 'browser', 'api',
+    'sourceCorrelation', 'alternativesRuledOut', 'missingEvidence', 'knownNightwatchDefect',
+  ], code, ['sourceRelevance']);
+  assertNullableStringValue(candidate.journeyId, `${code}:JOURNEY_ID`);
+  for (const key of ['contractVersion', 'contractDigest']) assertString(candidate[key], `${code}:${key.toUpperCase()}`);
+  assertEnum(candidate.contextKind, ['FIRST_OBSERVATION', 'FRESH_CONTEXT_REPLAY', 'BOUNDED_REPETITION'], `${code}:CONTEXT_KIND`);
+  assertEnum(candidate.technicalSeverity, ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'], `${code}:TECHNICAL_SEVERITY`);
+  assertEnum(candidate.breadth, ['NARROW', 'MULTI_JOURNEY', 'SHARED_CORE'], `${code}:BREADTH`);
+  if (candidate.sourceRelevance !== undefined) assertEnum(candidate.sourceRelevance, ['DIRECT_CHANGE_RELEVANCE', 'SHARED_CHANGE_RELEVANCE', 'TRANSITIVE_CHANGE_RELEVANCE', 'NO_CURRENT_CHANGE_RELEVANCE', 'UNKNOWN'], `${code}:SOURCE_RELEVANCE`);
+  assertBoolean(candidate.knownNightwatchDefect, `${code}:KNOWN_NIGHTWATCH_DEFECT`);
+
+  const observation = requireRuntimeRecord(candidate.observation, `${code}:OBSERVATION`);
+  assertExactKeys(observation, ['runId', 'observedAt', 'fingerprint', 'features', 'reproduced', 'minimized', 'sourceFreshness'], `${code}:OBSERVATION`, ['timingClass', 'knownFalsePositiveId']);
+  for (const key of ['runId', 'observedAt', 'fingerprint']) assertString(observation[key], `${code}:OBSERVATION_${key.toUpperCase()}`);
+  assertIsoTimestamp(observation.observedAt, `${code}:OBSERVATION_TIMESTAMP`);
+  assertBoolean(observation.reproduced, `${code}:OBSERVATION_REPRODUCED`);
+  assertBoolean(observation.minimized, `${code}:OBSERVATION_MINIMIZED`);
+  assertEnum(observation.sourceFreshness, ['SOURCE_CURRENT_LOCALLY', 'LOCAL_TRACKING_REF_ONLY', 'REMOTE_FRESHNESS_CONFIRMED', 'UNKNOWN'], `${code}:OBSERVATION_SOURCE_FRESHNESS`);
+  if (observation.timingClass !== undefined) assertEnum(observation.timingClass, ['NONE', 'BOUNDED', 'TRANSIENT'], `${code}:OBSERVATION_TIMING`);
+  if (observation.knownFalsePositiveId !== undefined) assertString(observation.knownFalsePositiveId, `${code}:OBSERVATION_FALSE_POSITIVE`);
+  const features = requireRuntimeRecord(observation.features, `${code}:FEATURES`);
+  const featureKeys = ['journeyId', 'envelopeId', 'oracleId', 'routeClass', 'operationFamily', 'statusClass', 'contentTypeClass', 'runtimeCategory', 'structuralState', 'failureActionId', 'sourceImpactRegion', 'browserApiResultClass'];
+  assertExactKeys(features, featureKeys, `${code}:FEATURES`);
+  for (const key of featureKeys) assertNullableStringValue(features[key], `${code}:FEATURES_${key.toUpperCase()}`);
+
+  const sequence = requireRuntimeArray(candidate.originalSequence, `${code}:ORIGINAL_SEQUENCE`);
+  for (const action of sequence) {
+    const record = requireRuntimeRecord(action, `${code}:ACTION`);
+    assertExactKeys(record, ['actionId', 'semanticClass', 'routeClass', 'sourceApproved', 'catalogVersion'], `${code}:ACTION`, ['preconditionKey']);
+    for (const key of ['actionId', 'routeClass', 'catalogVersion']) assertString(record[key], `${code}:ACTION_${key.toUpperCase()}`);
+    assertEnum(record.semanticClass, ['KNOWN_READ', 'LOCAL_ONLY'], `${code}:ACTION_SEMANTIC`);
+    if (record.sourceApproved !== true) throw new Error(`${code}:ACTION_SOURCE_NOT_APPROVED`);
+    if (record.preconditionKey !== undefined) assertString(record.preconditionKey, `${code}:ACTION_PRECONDITION`);
+  }
+
+  const browser = requireRuntimeRecord(candidate.browser, `${code}:BROWSER`);
+  assertExactKeys(browser, ['failed', 'routeClass', 'structuralState', 'operationFamily', 'statusClass', 'contentTypeClass', 'oracleFingerprint', 'runtimeCategory'], `${code}:BROWSER`);
+  assertBoolean(browser.failed, `${code}:BROWSER_FAILED`);
+  for (const key of ['routeClass', 'structuralState', 'operationFamily', 'statusClass', 'contentTypeClass', 'oracleFingerprint', 'runtimeCategory']) assertString(browser[key], `${code}:BROWSER_${key.toUpperCase()}`);
+
+  if (candidate.api !== null) {
+    const api = requireRuntimeRecord(candidate.api, `${code}:API`);
+    assertExactKeys(api, ['available', 'failed', 'operationFamily', 'statusClass', 'contentTypeClass', 'parseCategory', 'oracleFingerprint'], `${code}:API`, ['routeClass', 'structuralState']);
+    assertBoolean(api.available, `${code}:API_AVAILABLE`);
+    assertBoolean(api.failed, `${code}:API_FAILED`);
+    for (const key of ['operationFamily', 'statusClass', 'contentTypeClass', 'parseCategory', 'oracleFingerprint']) assertString(api[key], `${code}:API_${key.toUpperCase()}`);
+    for (const key of ['routeClass', 'structuralState']) if (api[key] !== undefined) assertString(api[key], `${code}:API_${key.toUpperCase()}`);
+  }
+
+  const source = requireRuntimeRecord(candidate.sourceCorrelation, `${code}:SOURCE_CORRELATION`);
+  assertExactKeys(source, ['journeyIds', 'changedFiles', 'sourceFreshness'], `${code}:SOURCE_CORRELATION`, ['sourceVersion']);
+  const journeyIds = requireRuntimeArray(source.journeyIds, `${code}:SOURCE_JOURNEYS`);
+  for (const journeyId of journeyIds) assertString(journeyId, `${code}:SOURCE_JOURNEY`);
+  assertEnum(source.sourceFreshness, ['SOURCE_CURRENT_LOCALLY', 'LOCAL_TRACKING_REF_ONLY', 'REMOTE_FRESHNESS_CONFIRMED', 'UNKNOWN'], `${code}:SOURCE_FRESHNESS`);
+  if (source.sourceVersion !== undefined) assertString(source.sourceVersion, `${code}:SOURCE_VERSION`);
+  const changedFiles = requireRuntimeArray(source.changedFiles, `${code}:CHANGED_FILES`);
+  for (const changedFile of changedFiles) {
+    const record = requireRuntimeRecord(changedFile, `${code}:CHANGED_FILE`);
+    assertExactKeys(record, ['repoId', 'path', 'status'], `${code}:CHANGED_FILE`, ['previousPath', 'additions', 'deletions', 'symbols']);
+    for (const key of ['repoId', 'path', 'status']) assertString(record[key], `${code}:CHANGED_FILE_${key.toUpperCase()}`);
+    for (const key of ['previousPath']) if (record[key] !== undefined) assertString(record[key], `${code}:CHANGED_FILE_${key.toUpperCase()}`);
+    for (const key of ['additions', 'deletions']) if (record[key] !== undefined) assertNonNegativeInteger(record[key], `${code}:CHANGED_FILE_${key.toUpperCase()}`);
+    if (record.symbols !== undefined) {
+      const symbols = requireRuntimeArray(record.symbols, `${code}:CHANGED_FILE_SYMBOLS`);
+      for (const symbol of symbols) assertString(symbol, `${code}:CHANGED_FILE_SYMBOL`);
+    }
+  }
+  for (const key of ['alternativesRuledOut', 'missingEvidence']) {
+    const values = requireRuntimeArray(candidate[key], `${code}:${key.toUpperCase()}`);
+    for (const item of values) assertString(item, `${code}:${key.toUpperCase()}_ITEM`);
+  }
+}
+
 type RuntimeWorkRecord = RuntimeRecord & {
   readonly workItemId: string;
   readonly kind: string;
@@ -433,6 +520,7 @@ function validateManifestRuntimeShape(value: unknown): asserts value is Campaign
       assertId(target.clusterId, 'MANIFEST_REPRODUCTION_CLUSTER');
       const candidate = requireRuntimeRecord(target.candidate, 'MANIFEST_REPRODUCTION_CANDIDATE');
       if ('replay' in candidate) manifestIntegrity('REPRODUCTION_TARGET_CONTAINS_EXECUTABLE');
+      assertPersistedCandidateShape(candidate, 'MANIFEST_REPRODUCTION_CANDIDATE');
     }
   } catch (error) {
     if (error instanceof Error && (error.message.startsWith('CAMPAIGN_MANIFEST_INTEGRITY_INVALID:') || error.message.startsWith('CAMPAIGN_MANIFEST_SCHEMA_INVALID:') || error.message.startsWith('CAMPAIGN_ID_INVALID:') || error.message.startsWith('CAMPAIGN_MANIFEST_FINGERPRINT_INVALID:'))) throw error;

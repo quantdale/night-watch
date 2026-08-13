@@ -50,7 +50,7 @@ async function baseOptions(
   events: AuthCaptureStageEvent[],
   overrides: Partial<DirectAuthCaptureOptions> = {}
 ): Promise<DirectAuthCaptureOptions> {
-  fs.mkdirSync(temp, { recursive: true });
+  fs.mkdirSync(temp, { recursive: true, mode: 0o700 });
   return {
     environment: localSyntheticEnvironment(),
     uiUrl: `${serverOrigin}/`,
@@ -319,7 +319,7 @@ test('successful capture atomically replaces an existing external state after va
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-replace-'));
   const output = path.join(temp, 'state.json');
   try {
-    fs.writeFileSync(output, JSON.stringify({ cookies: [], origins: [], marker: 'OLD_STATE_MARKER' }));
+    fs.writeFileSync(output, JSON.stringify({ cookies: [], origins: [], marker: 'OLD_STATE_MARKER' }), { mode: 0o600 });
     const result = await runDirectAuthCapture(await baseOptions(server.origin, temp, [], {
       completion: {
         kind: 'synthetic-test-only',

@@ -442,14 +442,33 @@ export interface CampaignDossierRecord {
   readonly triagePriority: TriagePriority;
 }
 
+export interface CampaignBriefCampaignMetadata {
+  readonly campaignId: string;
+  readonly mode: CampaignMode;
+  readonly manifestFingerprint: string;
+  readonly datastoreStatus: 'OUT_OF_SCOPE_BY_OWNER';
+  readonly phase6: 'FROZEN_BY_OWNER';
+}
+
+export interface CampaignBriefFinding {
+  readonly candidateId: string;
+  readonly title: string;
+  readonly priority: TriagePriority;
+  readonly confidence: TriageConfidence;
+  readonly evidenceLevel: EvidenceLevel;
+  readonly minimalSequence: readonly string[];
+  readonly faultBoundary: string;
+  readonly reproductionCount: number;
+}
+
 export interface CampaignMorningBrief {
   readonly schemaVersion: typeof CAMPAIGN_MORNING_BRIEF_VERSION;
   readonly campaignId: string;
   readonly resultClass: CampaignResultClass;
   readonly headline: string;
-  readonly campaign: Readonly<Record<string, unknown>>;
+  readonly campaign: CampaignBriefCampaignMetadata;
   readonly whatRan: readonly string[];
-  readonly topFindings: readonly Readonly<Record<string, unknown>>[];
+  readonly topFindings: readonly CampaignBriefFinding[];
   readonly strongestReproductions: readonly string[];
   readonly sourceAreasToInspect: readonly string[];
   readonly transientsAndNonFindings: readonly string[];

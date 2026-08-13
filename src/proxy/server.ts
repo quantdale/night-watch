@@ -23,6 +23,7 @@ export const DEFAULT_PROXY_HOST = '127.0.0.1' as const;
 export const DEFAULT_PROXY_PORT = 18987;
 export const DEFAULT_PROXY_STATE_PATH = '.tmp-nightwatch/proxy-state.json';
 export const DEFAULT_PROXY_EVENT_LOG = '.tmp-nightwatch/proxy-events.jsonl';
+const NIGHTWATCH_REPOSITORY_ROOT = path.resolve(__dirname, '..', '..');
 
 function isLoopback(host: string): host is '127.0.0.1' | '::1' {
   return host === '127.0.0.1' || host === '::1';
@@ -252,15 +253,15 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
   };
 }
 
-export function proxyStatePath(root = process.cwd()): string {
-  return `${root}/${DEFAULT_PROXY_STATE_PATH}`;
+export function proxyStatePath(root = NIGHTWATCH_REPOSITORY_ROOT): string {
+  return path.join(root, DEFAULT_PROXY_STATE_PATH);
 }
 
-export function proxyEventLogPath(root = process.cwd()): string {
-  return `${root}/${DEFAULT_PROXY_EVENT_LOG}`;
+export function proxyEventLogPath(root = NIGHTWATCH_REPOSITORY_ROOT): string {
+  return path.join(root, DEFAULT_PROXY_EVENT_LOG);
 }
 
-export function proxyServerUrl(root = process.cwd()): string {
+export function proxyServerUrl(_root = NIGHTWATCH_REPOSITORY_ROOT): string {
   const rawPort = process.env.NIGHTWATCH_PROXY_PORT ?? String(DEFAULT_PROXY_PORT);
   const port = Number(rawPort);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) {

@@ -46,6 +46,9 @@ const SECRET_SHAPE_RE = /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|eyJ[A-Za-z0-9_-]{8,}
 const PRIVATE_SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL)/i;
 const PRIVATE_VALUE_RE = /(?:customer|account|billing[_-]?group|payer|cost|amount|email|cookie|token|password|secret|authorization)\s*[:=]\s*["']?[A-Za-z0-9@._:+/=-]{6,}/i;
 
+const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..');
+const WORKSPACE_ROOT = path.resolve(REPOSITORY_ROOT, '..');
+
 function defaultRoot(): string {
   const configured = process.env[PRIVATE_ARTIFACT_ROOT_ENV];
   return configured === undefined || configured.trim() === ''
@@ -53,25 +56,53 @@ function defaultRoot(): string {
     : configured;
 }
 
-function assertOutsideCurrentRepository(root: string): void {
-  const current = path.resolve(process.cwd());
-  const relative = path.relative(current, root);
-  if (relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))) {
+function isInside(dir: string, candidate: string): boolean {
+  const relative = path.relative(dir, candidate);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function assertOutsideCanonicalWorkspace(root: string): void {
+  if (isInside(REPOSITORY_ROOT, root) || isInside(WORKSPACE_ROOT, root)) {
     throw new Error('PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY');
   }
 }
 
 function ensureAbsolute(root: string): string {
-  const resolved = path.resolve(root);
-  if (!path.isAbsolute(resolved)) throw new Error('PRIVATE_ARTIFACT_ROOT_NOT_ABSOLUTE');
+  if (!path.isAbsolute(root)) throw new Error('PRIVATE_ARTIFACT_ROOT_NOT_ABSOLUTE');
+  const resolved = path.normalize(root);
   return resolved;
 }
 
+function assertNoSymlinkComponents(target: string, errorCode: string): void {
+  const resolved = ensureAbsolute(target);
+  const parsed = path.parse(resolved);
+  let current = parsed.root;
+  for (const component of resolved.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, component);
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw new Error(`${errorCode}:${(error as Error).message}`);
+    }
+    if (stat.isSymbolicLink()) throw new Error(errorCode);
+  }
+}
+
+function assertOwnerOnly(stat: fs.Stats, errorCode: string): void {
+  if (process.getuid !== undefined && stat.uid !== process.getuid()) throw new Error(`${errorCode}_OWNER`);
+  if ((stat.mode & 0o077) !== 0) throw new Error(`${errorCode}_PERMISSIONS_UNSAFE`);
+}
+
 function ensureOwnerDirectory(root: string): void {
+  assertNoSymlinkComponents(root, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   fs.chmodSync(root, 0o700);
-  const mode = fs.statSync(root).mode & 0o777;
-  if ((mode & 0o077) !== 0) throw new Error('PRIVATE_ARTIFACT_ROOT_PERMISSIONS_UNSAFE');
+  assertNoSymlinkComponents(root, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
+  const stat = fs.lstatSync(root);
+  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('PRIVATE_ARTIFACT_ROOT_NOT_DIRECTORY');
+  assertOwnerOnly(stat, 'PRIVATE_ARTIFACT_ROOT');
 }
 
 function safeFileName(fileName: string): string {
@@ -88,7 +119,7 @@ function assertPrivatePayload(value: unknown): void {
 
 export function privateArtifactRoot(injectedRoot?: string): string {
   const root = ensureAbsolute(injectedRoot ?? defaultRoot());
-  if (injectedRoot === undefined) assertOutsideCurrentRepository(root);
+  if (injectedRoot === undefined) assertOutsideCanonicalWorkspace(root);
   return root;
 }
 
@@ -117,8 +148,15 @@ export class PrivateArtifactStore {
   writeJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
     safeFileName(fileName);
     assertPrivatePayload(value);
+    ensureOwnerDirectory(this.root);
     const destination = path.join(this.root, fileName);
     const temporary = path.join(this.root, `.${fileName}.${process.pid}.${this.nonce++}.tmp`);
+    assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_DESTINATION_SYMLINK');
+    if (fs.existsSync(destination)) {
+      const existing = fs.lstatSync(destination);
+      if (existing.isSymbolicLink() || !existing.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
+      assertOwnerOnly(existing, 'PRIVATE_ARTIFACT_DESTINATION');
+    }
     const payloadValue = value !== null && typeof value === 'object' ? value : { value };
     const payload = JSON.stringify({ ...(payloadValue as Record<string, unknown>), status }, null, 2) + '\n';
     const descriptor = fs.openSync(temporary, 'wx', 0o600);
@@ -128,8 +166,29 @@ export class PrivateArtifactStore {
     } finally {
       fs.closeSync(descriptor);
     }
-    fs.chmodSync(temporary, 0o600);
-    fs.renameSync(temporary, destination);
+    try {
+      fs.chmodSync(temporary, 0o600);
+      const temporaryStat = fs.lstatSync(temporary);
+      if (temporaryStat.isSymbolicLink() || !temporaryStat.isFile()) throw new Error('PRIVATE_ARTIFACT_TEMP_UNSAFE');
+      assertOwnerOnly(temporaryStat, 'PRIVATE_ARTIFACT_TEMP');
+      fs.renameSync(temporary, destination);
+      const written = fs.lstatSync(destination);
+      if (written.isSymbolicLink() || !written.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
+      assertOwnerOnly(written, 'PRIVATE_ARTIFACT_DESTINATION');
+      const directory = fs.openSync(this.root, 'r');
+      try {
+        fs.fsyncSync(directory);
+      } finally {
+        fs.closeSync(directory);
+      }
+    } catch (error) {
+      try {
+        if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+      } catch {
+        // Preserve the original safety failure; cleanup is best effort.
+      }
+      throw error;
+    }
     return destination;
   }
 
@@ -147,6 +206,8 @@ export class PrivateArtifactStore {
 export function assertPrivateArtifactPath(filePath: string, root: string): void {
   const resolvedRoot = ensureAbsolute(root);
   const resolvedFile = ensureAbsolute(filePath);
+  assertNoSymlinkComponents(resolvedRoot, 'PRIVATE_ARTIFACT_ROOT_SYMLINK');
+  assertNoSymlinkComponents(resolvedFile, 'PRIVATE_ARTIFACT_PATH_SYMLINK');
   const relative = path.relative(resolvedRoot, resolvedFile);
   if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('PRIVATE_ARTIFACT_PATH_ESCAPE');
 }

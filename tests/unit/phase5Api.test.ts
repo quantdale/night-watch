@@ -9,7 +9,7 @@ import { evaluateApiLineage, apiOperationAffectedByChange } from '../../src/api/
 import { apiFingerprint, evaluateApiResponse } from '../../src/api/phase5/oracle';
 import { API_CATALOG_VERSION, OOPS_ADAPTER_VERSION, OOPS_PROFILE_VERSION, SCENARIO_GENERATOR_VERSION, type ApiCatalog, type ApiOperation } from '../../src/api/phase5/types';
 import { executeNativePhase5Operation, startPhase5Relay } from '../../src/api/phase5/relay';
-import { buildOOPSAllowlistedEnvironment, runRestrictedOops, validateRestrictedOopsInvocationArgs } from '../../src/core/oops/process';
+import { buildOOPSAllowlistedEnvironment, runRestrictedOops, sha256Executable, validateRestrictedOopsInvocationArgs } from '../../src/core/oops/process';
 import { inspectOopsSandbox } from '../../src/core/oops/sandbox';
 import { createEphemeralRippleApiAuthProvider } from '../../src/api/phase5/auth';
 import { loadEnvironmentConfig } from '../../src/core/environment';
@@ -158,6 +158,31 @@ test('Phase 5 records the available OS namespace probe without enabling an incom
   expect(status.localRestrictedExecution).toBe('ALLOWED_LOOPBACK_RELAY');
 });
 
+test('restricted OOPS binds the expected digest to an owner-controlled executable and rejects substitution paths', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-oops-provenance-'));
+  const binary = path.join(directory, 'synthetic-oops');
+  const link = path.join(directory, 'synthetic-oops-link');
+  fs.writeFileSync(binary, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  fs.chmodSync(binary, 0o700);
+  fs.symlinkSync(binary, link);
+  try {
+    const digest = sha256Executable(binary);
+    expect(digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(() => sha256Executable(link)).toThrow('OOPS_BINARY_SYMLINK');
+    await expect(runRestrictedOops({
+      binaryPath: binary,
+      binarySourceSHA: 'synthetic-source-sha',
+      expectedSourceSHA: 'synthetic-source-sha',
+      expectedBinarySHA256: '0'.repeat(64),
+      scenario: undefined as never,
+      operation: undefined as never,
+      relay: undefined as never,
+    })).rejects.toThrow('OOPS_BINARY_DIGEST_MISMATCH');
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('Phase 3 lineage marks relevant browser/client changes stale without reading customer data', () => {
   const operation = PHASE5_API_CATALOG.operations.find((candidate) => candidate.operationId === 'ripple.payer-exchange.read');
   if (operation === undefined) throw new Error('operation missing');
@@ -193,6 +218,7 @@ test('current-source OOPS subprocess runs the restricted local relay path withou
       binaryPath,
       binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
       expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
+      expectedBinarySHA256: sha256Executable(binaryPath),
       scenario,
       operation,
       relay,
@@ -232,6 +258,7 @@ test('restricted OOPS assertion failure remains a target/oracle result and not a
       binaryPath,
       binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
       expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
+      expectedBinarySHA256: sha256Executable(binaryPath),
       scenario: generateRestrictedScenario(operation, catalog),
       operation,
       relay,
@@ -269,6 +296,7 @@ test('current-source OOPS validates every Phase 5 generated KNOWN_READ template 
         binaryPath,
         binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
         expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
+        expectedBinarySHA256: sha256Executable(binaryPath),
         scenario: generateRestrictedScenario(operation, PHASE5_API_CATALOG),
         operation,
         relay,

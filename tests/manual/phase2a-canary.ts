@@ -98,6 +98,7 @@ test('Phase 2A unauthenticated Ripple connectivity canary', async ({ browser }) 
     environment: env,
     uiUrl: target,
     storageStatePath: null,
+    storageStateEnvironment: null,
     requireAuthenticationState: false,
     browser: AUTHENTICATED_BROWSER_CONTRACT,
     evidence: {

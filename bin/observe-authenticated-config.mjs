@@ -1,3 +1,5 @@
+import { buildChildEnvironment } from './child-environment.mjs';
+
 /**
  * Child-process configuration for the Phase 2A authenticated observer.
  *
@@ -39,10 +41,9 @@ export function parseObserveAuthenticatedArgs(args) {
 
 export function buildObserveAuthenticatedEnvironment(parentEnvironment, options) {
   const { NIGHTWATCH_UI_URL: _ambientUiUrl, ...inheritedEnvironment } = parentEnvironment;
-  return {
-    ...inheritedEnvironment,
+  return buildChildEnvironment(inheritedEnvironment, {
     NIGHTWATCH_ENV: options.env,
     NIGHTWATCH_STORAGE_STATE: options.storage,
     ...(options.uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: options.uiUrl }),
-  };
+  });
 }

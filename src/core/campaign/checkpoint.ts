@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
 import { PrivateArtifactStore } from '../policy/privateArtifacts';
-import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
+import { assertManifestCompatible, assertPersistedCandidateShape, stableCampaignJson, validateCampaignManifest } from './identity';
 import { validateBudgetPolicy } from './budget';
 import {
   arraysExactlyEqual,
@@ -148,6 +148,7 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
   for (const value of requireRuntimeArray(checkpoint.anomalyCandidates, 'CHECKPOINT_CANDIDATES')) {
     const candidate = requireRuntimeRecord(value, 'CHECKPOINT_CANDIDATE');
     if ('replay' in candidate) checkpointIntegrity('PERSISTED_CANDIDATE_CONTAINS_EXECUTABLE');
+    assertPersistedCandidateShape(candidate, 'CAMPAIGN_CHECKPOINT_CANDIDATE');
     const observation = requireRuntimeRecord(candidate.observation, 'CHECKPOINT_CANDIDATE_OBSERVATION');
     assertString(observation.runId, 'CHECKPOINT_CANDIDATE_RUN_ID');
     if (!observationIds.has(observation.runId)) checkpointIntegrity(`CANDIDATE_UNKNOWN_OBSERVATION:${observation.runId}`);
@@ -331,8 +332,11 @@ export class CampaignCheckpointStore {
     const filePath = path.join(this.store.root, `${fileStem(campaignId)}.checkpoint.json`);
     const checkpoint = readWrapper<CampaignCheckpoint>(filePath, 'checkpoint');
     const effectiveManifest = manifest ?? this.readManifest(campaignId);
-    assertManifestCompatible(effectiveManifest, checkpoint);
     validateCampaignCheckpoint(checkpoint, effectiveManifest);
+    // Keep the compatibility check as a separate, explicit guard for callers
+    // that pass a manifest object. The strict validator above gives malformed
+    // persisted identity a precise integrity classification before resume.
+    assertManifestCompatible(effectiveManifest, checkpoint);
     return checkpoint;
   }
 

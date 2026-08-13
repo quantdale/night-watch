@@ -18,6 +18,7 @@ import {
 } from '../browser/contract';
 import {
   atomicallyReplaceValidatedStorageState,
+  prepareStorageStateFileForValidation,
   validateStorageStateFile,
   validateStorageStateOutputPath,
 } from '../browser/fixtures/storageState';
@@ -504,6 +505,10 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       } else {
         await guarded!.context.storageState({ path: pendingOutputPath });
       }
+      // Playwright may create the path with a platform-default mode. Establish
+      // the secret-file boundary before any validator or replacement can read
+      // the pending capture.
+      prepareStorageStateFileForValidation(pendingOutputPath);
     });
     await runStage(opts, 'PROVENANCE_WRITE', () => {
       recorder.addManifestEntry('captureResult', {

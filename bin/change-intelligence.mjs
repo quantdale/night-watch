@@ -8,16 +8,17 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { buildChildEnvironment } from './child-environment.mjs';
 
-const nightwatchRoot = process.cwd();
+const nightwatchRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceRoot = path.resolve(nightwatchRoot, '../..');
 const outputPath = path.join(nightwatchRoot, 'artifacts', 'change-intelligence-shadow', 'current.json');
 const compileRoot = path.join(nightwatchRoot, '.tmp-nightwatch', 'change-intelligence');
 
 function run(command, args, cwd = nightwatchRoot) {
-  const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
+  const result = spawnSync(command, args, { cwd, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 120_000, maxBuffer: 2 * 1024 * 1024 });
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(`${command} ${args.join(' ')} failed: ${(result.stderr || result.stdout || '').trim().slice(0, 300)}`);

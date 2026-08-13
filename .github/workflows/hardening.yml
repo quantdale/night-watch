@@ -1,0 +1,46 @@
+name: Nightwatch hardening
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  local-hardening:
+    name: Local hardening checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          # agent:check verifies the recorded substantive/documentation SHAs
+          # are ancestors of the checked-out checkpoint; a complete local
+          # history is required for that read-only comparison.
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Offline hardening check
+        run: npm run hardening:check
+      - name: Agent-state check
+        run: npm run agent:check
+      - name: Synthetic campaign
+        run: npm run campaign:synthetic
+      - name: Check patch whitespace
+        run: git diff --check
+
+# This workflow intentionally does not run authenticated browsers, campaign:real,
+# auth:capture, product journeys, DEV/NEXT targets, databases, infrastructure,
+# external publication, or artifact upload. It proves source/fixture invariants
+# independently on GitHub; it does not prove target-environment behavior.

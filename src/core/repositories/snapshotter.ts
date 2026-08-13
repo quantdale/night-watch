@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import type { RepoSnapshotRecord } from '../evidence/types';
+import { buildGitChildEnvironment } from '../process/childEnvironment';
 
 export interface SnapshotOptions {
   /** Root directory containing the repositories (each repo is one subdir). */
@@ -37,7 +38,12 @@ interface GitResult {
 const MAX_ERROR_LENGTH = 300;
 
 function runGit(abs: string, args: string[]): GitResult {
-  const res = spawnSync('git', ['-C', abs, ...args], { encoding: 'utf8' });
+  const res = spawnSync('git', ['-C', abs, ...args], {
+    encoding: 'utf8',
+    env: buildGitChildEnvironment(),
+    timeout: 10_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
   if (res.error) throw res.error; // spawn failure (e.g. git missing)
   return { status: res.status ?? -1, stdout: res.stdout ?? '', stderr: res.stderr ?? '' };
 }

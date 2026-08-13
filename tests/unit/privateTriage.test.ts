@@ -27,7 +27,7 @@ import {
   type MinimizationAction,
   type MinimizationResult,
 } from '../../src/core/triage';
-import { PrivateArtifactStore } from '../../src/core/policy';
+import { PrivateArtifactStore, assertPrivateArtifactPath, privateArtifactRoot } from '../../src/core/policy';
 import type { SafetyVector } from '../../src/core/exploration/types';
 
 const FAILURE: SafetyVector = {
@@ -386,6 +386,37 @@ test.describe('private dossier, storage, and summaries', () => {
       expect(fs.statSync(incompletePath).mode & 0o077).toBe(0);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('private artifact roots are CWD-independent and symlink/path redirects fail closed', () => {
+    const originalCwd = process.cwd();
+    const originalConfiguredRoot = process.env.NIGHTWATCH_PRIVATE_STATE_DIR;
+    delete process.env.NIGHTWATCH_PRIVATE_STATE_DIR;
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-private-boundary-'));
+    const linkedRoot = path.join(fixture, 'linked-root');
+    const realRoot = path.join(fixture, 'real-root');
+    fs.mkdirSync(realRoot, { mode: 0o700 });
+    fs.symlinkSync(realRoot, linkedRoot, 'dir');
+    try {
+      const expected = privateArtifactRoot();
+      for (const cwd of [path.resolve(__dirname, '../..'), path.resolve(__dirname, '../../..'), fixture, path.join(fixture, 'nested')]) {
+        fs.mkdirSync(cwd, { recursive: true, mode: 0o700 });
+        process.chdir(cwd);
+        expect(privateArtifactRoot()).toBe(expected);
+      }
+      expect(() => new PrivateArtifactStore({ root: linkedRoot })).toThrow(/PRIVATE_ARTIFACT_ROOT_SYMLINK/);
+      const store = new PrivateArtifactStore({ root: realRoot });
+      const target = path.join(fixture, 'redirected.json');
+      fs.writeFileSync(target, '{}', { mode: 0o600 });
+      fs.symlinkSync(target, path.join(realRoot, 'candidate.json'));
+      expect(() => store.writeJson('candidate.json', { safe: true })).toThrow(/PRIVATE_ARTIFACT_DESTINATION_SYMLINK|PRIVATE_ARTIFACT_DESTINATION_UNSAFE/);
+      expect(() => assertPrivateArtifactPath(path.join(linkedRoot, 'candidate.json'), realRoot)).toThrow(/SYMLINK/);
+    } finally {
+      process.chdir(originalCwd);
+      if (originalConfiguredRoot === undefined) delete process.env.NIGHTWATCH_PRIVATE_STATE_DIR;
+      else process.env.NIGHTWATCH_PRIVATE_STATE_DIR = originalConfiguredRoot;
+      fs.rmSync(fixture, { recursive: true, force: true });
     }
   });
 

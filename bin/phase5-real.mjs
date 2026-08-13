@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -49,17 +50,18 @@ const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
 const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
 const result = spawnSync(cmd, ['test', '--config=playwright.phase5.config.ts', '--project=nightwatch', '--workers=1'], {
   cwd: root,
-  env: {
-    ...process.env,
+  env: buildChildEnvironment(process.env, {
     NIGHTWATCH_ENV: env,
     NIGHTWATCH_STORAGE_STATE: storage,
     NIGHTWATCH_PHASE_5_REAL: '1',
-    NIGHTWATCH_PHASE_5_AUTH_REFRESH: process.env.NIGHTWATCH_PHASE_5_AUTH_REFRESH ?? '1',
+    NIGHTWATCH_PHASE_5_AUTH_REFRESH: process.env.NIGHTWATCH_PHASE_5_AUTH_REFRESH === '0' ? '0' : '1',
     NIGHTWATCH_PHASE_5_OOPS_REAL: '0',
     NIGHTWATCH_TRACE: 'off',
-    NIGHTWATCH_HEADED: process.env.NIGHTWATCH_HEADED ?? '0',
+    NIGHTWATCH_HEADED: process.env.NIGHTWATCH_HEADED === '1' ? '1' : '0',
     ...(uiUrl === undefined ? {} : { NIGHTWATCH_UI_URL: uiUrl }),
-  },
-  stdio: 'inherit',
+  }),
+  timeout: 15 * 60 * 1000,
+  stdio: ['ignore', 'pipe', 'pipe'],
+  maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(result.status ?? 1);

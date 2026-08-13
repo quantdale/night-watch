@@ -10,6 +10,7 @@ import type {
 } from './types';
 import { CHANGE_INTELLIGENCE_SCHEMA_VERSION, SELECTOR_VERSION } from './types';
 import { changesetId } from './selection';
+import { buildGitChildEnvironment } from '../process/childEnvironment';
 
 interface GitResult {
   status: number;
@@ -18,7 +19,12 @@ interface GitResult {
 }
 
 function runGit(repoPath: string, args: readonly string[]): GitResult {
-  const result = spawnSync('git', ['-C', repoPath, ...args], { encoding: 'utf8' });
+  const result = spawnSync('git', ['-C', repoPath, ...args], {
+    encoding: 'utf8',
+    env: buildGitChildEnvironment(),
+    timeout: 10_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
   if (result.error) throw result.error;
   return { status: result.status ?? -1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
 }

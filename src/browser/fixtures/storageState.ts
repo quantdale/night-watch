@@ -57,6 +57,34 @@ function isInside(dir: string, file: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
 }
 
+function assertNoSymlinkComponents(target: string, errorCode: string): void {
+  const parsed = path.parse(target);
+  let current = parsed.root;
+  for (const component of target.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, component);
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw new Error(`${errorCode}: ${(error as Error).message}`);
+    }
+    if (stat.isSymbolicLink()) throw new Error(errorCode);
+  }
+}
+
+function assertOwnerOnlyFile(stat: fs.Stats, errorCode: string): void {
+  if (process.getuid !== undefined && stat.uid !== process.getuid()) throw new Error(`${errorCode}_OWNER`);
+  if ((stat.mode & 0o077) !== 0) throw new Error(`${errorCode}_PERMISSIONS_UNSAFE`);
+}
+
+function assertOwnerOnlyDirectory(directory: string, errorCode: string): void {
+  const stat = fs.lstatSync(directory);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${errorCode}_NOT_DIRECTORY`);
+  if (process.getuid !== undefined && stat.uid !== process.getuid()) throw new Error(`${errorCode}_OWNER`);
+  if ((stat.mode & 0o077) !== 0) throw new Error(`${errorCode}_PERMISSIONS_UNSAFE`);
+}
+
 /** Validate a storage-state path + content. Returns the canonical path. */
 export function validateStorageStateFile(p: string, opts?: StorageStateOptions): string {
   const { nightwatchRoot, workspaceRoot } = defaultRoots(opts);
@@ -78,10 +106,13 @@ export function validateStorageStateFile(p: string, opts?: StorageStateOptions):
   if (!fs.existsSync(abs)) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} points to a missing file: ${abs}`);
   }
-  const st = fs.statSync(abs);
-  if (!st.isFile()) {
+  assertNoSymlinkComponents(abs, 'STORAGE_STATE_SYMLINK_COMPONENT');
+  const st = fs.lstatSync(abs);
+  if (st.isSymbolicLink() || !st.isFile()) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} is not a regular file: ${abs}`);
   }
+  assertOwnerOnlyFile(st, 'STORAGE_STATE_FILE');
+  assertOwnerOnlyDirectory(path.dirname(abs), 'STORAGE_STATE_PARENT');
   if (st.size > MAX_STORAGE_STATE_BYTES) {
     throw new Error(
       `fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} file exceeds ${MAX_STORAGE_STATE_BYTES} bytes: ${abs}`
@@ -313,6 +344,7 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOut
   if (isInside(nightwatchRoot, abs) || isInside(workspaceRoot, abs)) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must be outside the Nightwatch repo and Alphaus workspace`);
   }
+  assertNoSymlinkComponents(abs, 'STORAGE_STATE_OUTPUT_SYMLINK_COMPONENT');
   if (!abs.toLowerCase().endsWith('.json')) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output must use a .json filename`);
   }
@@ -320,12 +352,15 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOut
     if (!opts?.allowExisting) {
       throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output already exists; refusing to overwrite secret state`);
     }
-    if (!fs.statSync(abs).isFile()) {
+    const existing = fs.lstatSync(abs);
+    if (existing.isSymbolicLink() || !existing.isFile()) {
       throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output is not a regular file: ${abs}`);
     }
+    assertOwnerOnlyFile(existing, 'STORAGE_STATE_OUTPUT');
   }
   const parent = path.dirname(abs);
-  if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) {
+  assertNoSymlinkComponents(parent, 'STORAGE_STATE_OUTPUT_PARENT_SYMLINK');
+  if (!fs.existsSync(parent) || !fs.lstatSync(parent).isDirectory()) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent directory does not exist`);
   }
   try {
@@ -333,13 +368,55 @@ export function validateStorageStateOutputPath(p: string, opts?: StorageStateOut
   } catch (err) {
     throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is not writable: ${(err as Error).message}`);
   }
-  const mode = fs.statSync(parent).mode;
-  // Sticky world-writable directories such as /tmp are acceptable; an
-  // ordinary world-writable parent is an obvious unsafe destination.
-  if ((mode & 0o002) !== 0 && (mode & 0o1000) === 0) {
-    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is world-writable without sticky protection`);
+  const parentStat = fs.lstatSync(parent);
+  if (parentStat.isSymbolicLink()) throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is a symlink`);
+  if (process.getuid !== undefined && parentStat.uid !== process.getuid()) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent is not owner-controlled`);
+  }
+  if ((parentStat.mode & 0o077) !== 0) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} output parent must not be group/world accessible`);
   }
   return abs;
+}
+
+/**
+ * Harden a newly-created pending capture before any content validation reads
+ * it. Playwright's `context.storageState({ path })` does not promise a
+ * restrictive mode on every platform, so the capture boundary must establish
+ * owner-only permissions itself. This helper is only for a freshly-created
+ * pending file in an already-validated external output directory; it never
+ * relaxes ownership, symlink, or repository-boundary checks.
+ */
+export function prepareStorageStateFileForValidation(p: string, opts?: StorageStateOptions): string {
+  if (!path.isAbsolute(p)) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} pending path must be absolute`);
+  }
+  const abs = path.resolve(p);
+  const { nightwatchRoot, workspaceRoot } = defaultRoots(opts);
+  if (isInside(nightwatchRoot, abs) || isInside(workspaceRoot, abs)) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} pending path must be outside the Nightwatch workspace`);
+  }
+  assertNoSymlinkComponents(abs, 'STORAGE_STATE_PENDING_SYMLINK_COMPONENT');
+  let stat = fs.lstatSync(abs);
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} pending path is not a regular file`);
+  }
+  if (process.getuid !== undefined && stat.uid !== process.getuid()) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} pending path is not owner-controlled`);
+  }
+  fs.chmodSync(abs, 0o600);
+  stat = fs.lstatSync(abs);
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    throw new Error(`fail-closed: ${NIGHTWATCH_STORAGE_STATE_VAR} pending path changed to a non-file`);
+  }
+  assertOwnerOnlyFile(stat, 'STORAGE_STATE_PENDING');
+  const directory = fs.openSync(path.dirname(abs), 'r');
+  try {
+    fs.fsyncSync(directory);
+  } finally {
+    fs.closeSync(directory);
+  }
+  return validateStorageStateOutputPath(abs, { ...opts, allowExisting: true });
 }
 
 /**
@@ -352,7 +429,8 @@ export function atomicallyReplaceValidatedStorageState(
   outputPath: string,
   opts?: AtomicStorageStateOptions,
 ): string {
-  const pending = validateStorageStateFile(pendingPath, opts);
+  const pending = prepareStorageStateFileForValidation(pendingPath, opts);
+  validateStorageStateFile(pending, opts);
   const output = validateStorageStateOutputPath(outputPath, { ...opts, allowExisting: opts?.allowExisting ?? true });
   if (path.dirname(pending) !== path.dirname(output)) {
     throw new Error('fail-closed: pending storage state and destination must share a directory');
@@ -364,6 +442,15 @@ export function atomicallyReplaceValidatedStorageState(
       throw new Error('pending storage state permissions are unsafe');
     }
     fs.renameSync(pending, output);
+    const written = fs.lstatSync(output);
+    if (written.isSymbolicLink() || !written.isFile()) throw new Error('written storage state is not a regular file');
+    assertOwnerOnlyFile(written, 'STORAGE_STATE_OUTPUT');
+    const directory = fs.openSync(path.dirname(output), 'r');
+    try {
+      fs.fsyncSync(directory);
+    } finally {
+      fs.closeSync(directory);
+    }
   } catch (error) {
     throw new Error(`fail-closed: atomic storage-state replacement failed: ${(error as Error).message}`);
   }

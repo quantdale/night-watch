@@ -431,6 +431,19 @@ test.describe('Phase 7 campaign identity, selection, and policy', () => {
     expect(budget.used().browserContexts).toBe(1);
     expect(() => budget.consume('totalActions', INITIAL_REAL_CAMPAIGN_BUDGET.maxTotalActions + 1)).toThrow(/CAMPAIGN_BUDGET_EXHAUSTED/);
 
+    const atomic = new CampaignBudgetManager({
+      ...INITIAL_REAL_CAMPAIGN_BUDGET,
+      maxTotalBrowserContexts: 1,
+      maxJourneyContexts: 0,
+      maxExplorationContexts: 0,
+      maxApiExecutions: 2,
+      maxReplays: 0,
+    }, emptyBudgetUsage());
+    expect(() => atomic.reserveWork('JOURNEY')).toThrow(/CAMPAIGN_BUDGET_EXHAUSTED:journeyContexts/);
+    expect(atomic.used().browserContexts).toBe(0);
+    expect(() => atomic.reserveFirstPlusApi()).toThrow(/CAMPAIGN_BUDGET_EXHAUSTED:replays/);
+    expect(atomic.used().apiExecutions).toBe(0);
+
     let clock = 1_000;
     const time = new CampaignTimeBudget(100, () => clock, 1_000);
     expect(time.remainingMs()).toBe(100);
@@ -503,6 +516,38 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('surfaces an L0 candidate when reproduction/minimization is blocked by budget', async () => {
+    const { root, store } = tempStore();
+    try {
+      const budget = { ...TEST_BUDGET, maxMinimizationCandidates: 0 };
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC', [], budget));
+      const observation = candidate({ runId: 'run-budget-l0', fingerprint: 'fp:sha256:888888888888888888888888', journeyId: 'ripple-payer-exchange-read' });
+      const result = await runCampaign(manifest, passingExecutor(new Map([['journey:ripple-payer-exchange-read', [observation]]])), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
+      expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
+      expect(result.dossiers).toHaveLength(0);
+      expect(result.checkpoint.reproductionQueue[0]).toMatchObject({ state: 'BLOCKED', reasonCode: 'MINIMIZATION_BUDGET_UNAVAILABLE' });
+      expect(result.morningBrief.headline).toBe('UNRESOLVED L0 CANDIDATES — REPRODUCTION BLOCKED BY BUDGET');
+      expect(result.morningBrief.coverageGaps.some((gap) => gap.includes('MINIMIZATION_BUDGET_UNAVAILABLE'))).toBe(true);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('distinguishes a transient observation from a zero-observation clean campaign', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const transient = candidate({ runId: 'run-transient-brief', fingerprint: 'fp:sha256:999999999999999999999999', journeyId: 'ripple-account-inventory', timingClass: 'TRANSIENT' });
+      const result = await runCampaign(manifest, passingExecutor(new Map([['explore:E3-J3-account-inventory:0x0000000000000301', [transient]]])), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(result.morningBrief.headline).toBe('TRANSIENTS NOT REPRODUCED');
+      expect(result.morningBrief.topFindings).toEqual([]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('resumes from an interrupted work item without re-running completed logical work', async () => {
     const { root, store } = tempStore();
     try {
@@ -522,7 +567,7 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
       expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
       expect(calls.filter((id) => id === manifest.workItems[0]!.workItemId)).toHaveLength(1);
       expect(resumed.checkpoint.completedWorkItemIds).toHaveLength(manifest.workItems.length);
-      expect(resumed.morningBrief.headline).toBe('NO ADMITTED PRODUCT ANOMALIES');
+      expect(resumed.morningBrief.headline).toBe('NO ANOMALIES OBSERVED');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -569,6 +614,54 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('resume after a partially consumed reservation charges the retry without resetting budget', async () => {
+    const { root, store } = tempStore();
+    try {
+      const budget = {
+        ...TEST_BUDGET,
+        maxTotalBrowserContexts: 10,
+        maxJourneyContexts: 5,
+        maxApiExecutions: 40,
+        maxReplays: 100,
+        maxTotalActions: 1_000,
+        maxPrivateEvidenceBytes: 64 * 1024 * 1024,
+      };
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], budget));
+      const attempts = new Map<string, number>();
+      let interruptedOnce = false;
+      const executor = {
+        ...passingExecutor(),
+        execute: async ({ workItem }: { readonly workItem: CampaignWorkItem }) => {
+          const count = (attempts.get(workItem.workItemId) ?? 0) + 1;
+          attempts.set(workItem.workItemId, count);
+          if (!interruptedOnce) {
+            interruptedOnce = true;
+            throw new CampaignProcessInterruptionError();
+          }
+          return defaultOutcome({
+            apiExecutions: workItem.kind === 'API' ? (workItem.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1) : 0,
+            browserContextCreated: workItem.kind !== 'API',
+          });
+        },
+      };
+      const interrupted = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      const interruptedBrowser = interrupted.checkpoint.budgetUsed.browserContexts;
+      const interruptedApi = interrupted.checkpoint.budgetUsed.apiExecutions;
+      expect(interrupted.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+      expect(interrupted.checkpoint.executionLedger[0]?.state).toBe('REPLAY_REQUIRED');
+      expect(interruptedBrowser + interrupted.checkpoint.budgetRemaining.browserContexts).toBe(budget.maxTotalBrowserContexts);
+      const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
+      expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
+      expect(attempts.get(manifest.workItems[0]!.workItemId)).toBe(2);
+      expect(resumed.checkpoint.budgetUsed.browserContexts).toBeGreaterThan(interruptedBrowser);
+      expect(resumed.checkpoint.budgetUsed.apiExecutions).toBeGreaterThanOrEqual(interruptedApi);
+      expect(resumed.checkpoint.budgetUsed.browserContexts + resumed.checkpoint.budgetRemaining.browserContexts).toBe(budget.maxTotalBrowserContexts);
+      expect(resumed.checkpoint.budgetUsed.apiExecutions + resumed.checkpoint.budgetRemaining.apiExecutions).toBe(budget.maxApiExecutions);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('privacy sentinels are rejected before anomaly metadata reaches the durable ledger', async () => {
     const { root, store } = tempStore();
     try {
@@ -602,11 +695,27 @@ test.describe('Phase 7 no-finding and drift contracts', () => {
       const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
       const result = await runCampaign(manifest, passingExecutor(), { store, now: () => new Date(STATIC_NOW) });
       expect(result.resultClass).toBe('COMPLETE_CLEAN');
-      expect(result.morningBrief.headline).toBe('NO ADMITTED PRODUCT ANOMALIES');
+      expect(result.morningBrief.headline).toBe('NO ANOMALIES OBSERVED');
       expect(result.morningBrief.topFindings).toEqual([]);
       expect(result.morningBrief.coverageGaps).toEqual([]);
       expect(result.morningBrief.transientsAndNonFindings).toContain('Historical J2 font 502: L0_NOT_REPRODUCED; not promoted.');
       expect(result.morningBrief.transientsAndNonFindings).toContain('Historical malformed JSON: UNKNOWN/HISTORICAL_ANOMALY_PRESENT; not deliberately replayed.');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('auth blocked before product work is explicit in the owner brief', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const executor = {
+        ...passingExecutor(),
+        preflight: () => ({ passed: false, code: 'AUTH_BLOCKED' as const, failedChecks: ['synthetic-auth'], checkedAt: STATIC_NOW }),
+      };
+      const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_AUTH_BLOCKED');
+      expect(result.morningBrief.headline).toBe('AUTH BLOCKED BEFORE PRODUCT WORK');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -748,5 +857,15 @@ test.describe('Campaign hardening adversarial persistence fixtures', () => {
     expect(manifest.selectedEnvelopes).toEqual([]);
     expect(manifest.selectedApiScenarios).toHaveLength(2);
     expect(manifest.selection.explanations.some((entry) => !entry.explanation.selected && entry.explanation.reason.includes('reserve'))).toBe(true);
+  });
+
+  test('rejects a real-scale manifest whose frozen work cannot leave its reproduction reserve', () => {
+    const impossible = {
+      ...INITIAL_REAL_CAMPAIGN_BUDGET,
+      maxTotalBrowserContexts: 3,
+      maxJourneyContexts: 3,
+      maxExplorationContexts: 0,
+    };
+    expect(() => createCampaignManifest(inputFor('BASELINE_HEALTH', [], impossible))).toThrow('CAMPAIGN_BUDGET_FEASIBILITY_INVALID');
   });
 });

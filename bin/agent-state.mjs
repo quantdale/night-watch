@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { buildChildEnvironment } from './child-environment.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -105,6 +106,45 @@ function checkSha(value, label, errors) {
   }
 }
 
+function checkContinuity(stateFields, root, head, errors) {
+  const names = [
+    'LAST_VALIDATED_IMPLEMENTATION_SHA',
+    'LAST_SUBSTANTIVE_CHECKPOINT_SHA',
+    'LAST_DOCUMENTATION_CHECKPOINT_SHA',
+    'LAST_PUSHED_SHA',
+    'CURRENT_LOCAL_HEAD',
+    'CURRENT_REMOTE_HEAD',
+  ];
+  for (const name of names) {
+    if (stateFields.has(name)) checkSha(stateFields.get(name), `STATE ${name}`, errors);
+  }
+  const validated = stateFields.get('LAST_VALIDATED_IMPLEMENTATION_SHA');
+  const substantive = stateFields.get('LAST_SUBSTANTIVE_CHECKPOINT_SHA');
+  const documentation = stateFields.get('LAST_DOCUMENTATION_CHECKPOINT_SHA');
+  const pushed = stateFields.get('LAST_PUSHED_SHA');
+  const local = stateFields.get('CURRENT_LOCAL_HEAD');
+  const remote = stateFields.get('CURRENT_REMOTE_HEAD');
+  if (validated && stateFields.get('Current SHA') && validated !== stateFields.get('Current SHA')) errors.push('STATE LAST_VALIDATED_IMPLEMENTATION_SHA must equal Current SHA');
+  // A state-only documentation commit changes git HEAD while the durable
+  // implementation/checkpoint SHA intentionally remains the last validated
+  // source checkpoint. Do not make the validator self-referential by
+  // requiring a field inside STATE.md to equal the SHA of the commit that
+  // contains that same field. Current local/remote equality is checked from
+  // the recorded continuity pair below; the caller separately verifies the
+  // actual checkout before pushing.
+  const remoteHead = commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null;
+  if (remoteHead && remote && remote !== remoteHead) errors.push(`STATE CURRENT_REMOTE_HEAD does not match origin/main: ${remote} != ${remoteHead}`);
+  if (local && remote && local !== remote) errors.push(`STATE local/remote continuity diverged: ${local} != ${remote}`);
+  if (substantive && pushed) {
+    const result = spawnSync('git', ['merge-base', '--is-ancestor', substantive, pushed], { cwd: root, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 10_000, maxBuffer: 256 * 1024 });
+    if (result.status !== 0) errors.push('STATE substantive checkpoint is not an ancestor of the last pushed SHA');
+  }
+  if (documentation && pushed) {
+    const result = spawnSync('git', ['merge-base', '--is-ancestor', documentation, pushed], { cwd: root, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 10_000, maxBuffer: 256 * 1024 });
+    if (result.status !== 0) errors.push('STATE documentation checkpoint is not an ancestor of the last pushed SHA');
+  }
+}
+
 // These patterns intentionally target value shapes, not words such as
 // "secret" or "cookie" in prose. The test suite plants synthetic values only.
 const SECRET_PATTERNS = [
@@ -140,6 +180,9 @@ function gitHead(root, errors) {
   const result = spawnSync('git', ['rev-parse', 'HEAD'], {
     cwd: root,
     encoding: 'utf8',
+    env: buildChildEnvironment(process.env),
+    timeout: 10_000,
+    maxBuffer: 256 * 1024,
   });
   if (result.status !== 0) {
     errors.push('unable to read git HEAD');
@@ -156,7 +199,7 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
-  /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP)\.md$/,
+  /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
 ];
 
 function isApprovedCheckpointPath(file) {
@@ -167,6 +210,9 @@ function commandOutput(root, args) {
   const result = spawnSync('git', args, {
     cwd: root,
     encoding: 'utf8',
+    env: buildChildEnvironment(process.env),
+    timeout: 10_000,
+    maxBuffer: 2 * 1024 * 1024,
   });
   if (result.status !== 0) return null;
   return result.stdout ?? '';
@@ -216,6 +262,9 @@ export function classifySha(root, recordedSha) {
   const ancestorCheck = spawnSync('git', ['merge-base', '--is-ancestor', recordedSha, head], {
     cwd: root,
     encoding: 'utf8',
+    env: buildChildEnvironment(process.env),
+    timeout: 10_000,
+    maxBuffer: 256 * 1024,
   });
   if (ancestorCheck.status !== 0) {
     return { status: 'STALE', head, paths: [], reason: 'recorded SHA is not an ancestor of HEAD' };
@@ -293,6 +342,7 @@ export function validate(root) {
     if (state && status !== stateFields.get('Status')) {
       errors.push(`STATE status does not match ACTIVE_TASK: ${stateFields.get('Status') ?? '<missing>'} != ${status}`);
     }
+    const head = gitHead(root, errors);
     checkSha(active.get('Starting SHA'), 'ACTIVE_TASK Starting SHA', errors);
     checkSha(active.get('Current SHA'), 'ACTIVE_TASK Current SHA', errors);
     checkSha(active.get('Last validated implementation SHA'), 'ACTIVE_TASK Last validated implementation SHA', errors);
@@ -307,8 +357,8 @@ export function validate(root) {
       ) {
         errors.push('STATE Current SHA must equal Last validated implementation SHA');
       }
+      checkContinuity(stateFields, root, head, errors);
     }
-    const head = gitHead(root, errors);
     const currentSha = active.get('Last validated implementation SHA');
     if (head && currentSha) {
       const shaResult = classifySha(root, currentSha);

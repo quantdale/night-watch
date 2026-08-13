@@ -852,7 +852,7 @@ function writeComparison(root: string, runId: string, first: ObservationResult, 
 
 test('Phase 2A first controlled authenticated Ripple observation', async ({ browser }) => {
   const envName = assertSupportedEnvironment(process.env.NIGHTWATCH_ENV);
-  if (envName !== 'dev' && envName !== 'next') throw new Error('fail-closed: authenticated observation requires exactly dev or next');
+  if (envName !== 'dev') throw new Error('fail-closed: automated authenticated observation requires DEV; NEXT is reserved for human-led auth capture');
   const env = loadEnvironmentConfig(envName);
   const target = targetFor(env);
   const statePath = process.env.NIGHTWATCH_STORAGE_STATE;

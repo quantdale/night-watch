@@ -18,6 +18,7 @@ import {
   assertRealRunGate,
   evaluateRealRunGate,
   runRealRunGate,
+  REAL_OBSERVATION_ENVIRONMENTS,
   type AuthenticatedEvidenceContract,
   type PassiveActionContract,
   type RealRunGateInput,
@@ -68,6 +69,7 @@ function baseInput(overrides: Partial<RealRunGateInput> = {}): RealRunGateInput 
     uiUrl: ENV.uiBaseUrl,
     storageStatePath: '/tmp/synthetic-external-state.json',
     storageStateValid: true,
+    storageStateEnvironment: 'dev',
     proxy: proxyFacts(),
     browser: AUTHENTICATED_BROWSER_CONTRACT,
     evidence: EVIDENCE,
@@ -100,6 +102,7 @@ test('pre-auth canary mode requires that storage state is explicitly absent', ()
     storageStatePath: null,
     storageStateValid: false,
     requireAuthenticationState: false,
+    storageStateEnvironment: null,
   }));
   expect(canary.pass).toBe(true);
 
@@ -107,8 +110,20 @@ test('pre-auth canary mode requires that storage state is explicitly absent', ()
     storageStatePath: '/tmp/unexpected-state.json',
     storageStateValid: true,
     requireAuthenticationState: false,
+    storageStateEnvironment: null,
   }));
   expect(accidentalState.checks.filter((item) => item.status === 'FAIL').map((item) => item.name)).toContain('authentication-state');
+});
+
+test('authenticated runs require exact storage-state environment provenance', () => {
+  expect(failedNames(baseInput({ storageStateEnvironment: undefined }))).toContain('authentication-state');
+  expect(failedNames(baseInput({ storageStateEnvironment: 'next' }))).toContain('authentication-state');
+  expect(evaluateRealRunGate(baseInput({ storageStateEnvironment: 'dev' })).pass).toBe(true);
+});
+
+test('automated authenticated observation policy is explicitly DEV-only', () => {
+  expect([...REAL_OBSERVATION_ENVIRONMENTS]).toEqual(['dev']);
+  expect(evaluateRealRunGate(baseInput({ environment: { ...ENV, name: 'next' }, storageStateEnvironment: 'next' })).pass).toBe(false);
 });
 
 test('environment, target, and production policy ambiguity fail closed', () => {
@@ -191,7 +206,8 @@ test('runtime gate validates synthetic external state and loopback proxy health 
     JSON.stringify({
       cookies: [{ name: 'session', value: 'FAKE_SESSION_SECRET_123' }],
       origins: [{ origin: 'https://appdev.alphaus.cloud', localStorage: [{ name: 'token', value: 'FAKE_JWT_SECRET_456' }] }],
-    })
+    }),
+    { mode: 0o600 },
   );
 
   const proxy = await startOutboundProxy({
@@ -219,6 +235,7 @@ test('runtime gate validates synthetic external state and loopback proxy health 
       environment: ENV,
       uiUrl: ENV.uiBaseUrl,
       storageStatePath: stateFile,
+      storageStateEnvironment: 'dev',
       proxyStateFile,
       browser: AUTHENTICATED_BROWSER_CONTRACT,
       evidence: EVIDENCE,

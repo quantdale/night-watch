@@ -19,9 +19,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const environment = selectEnvironment(process.env.NIGHTWATCH_ENV ?? 'local');
   const configuredAddress = proxyServerUrl();
   const configuredPort = Number(new URL(configuredAddress).port);
-  const root = process.cwd();
-  const stateFile = proxyStatePath(root);
-  const eventLog = proxyEventLogPath(root);
+  const stateFile = proxyStatePath();
+  const eventLog = proxyEventLogPath();
   const proxy = await startOutboundProxy({
     policy: new OutboundPolicy(environment),
     environment: environment.name,
