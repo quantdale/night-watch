@@ -3,17 +3,17 @@
 Task ID: private-evidence-minimization-and-triage
 Phase: PRIVATE_LOCAL_TRIAGE
 Title: Private Evidence Minimization + Autonomous Triage
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/private-evidence-minimization-and-triage
 Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
-Last validated implementation SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
-Current milestone: M5 — compatibility, adversarial privacy, and full validation.
-Last checkpoint: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a — Nightwatch-only
-implementation checkpoint; focused and full Playwright validation passed.
-Next action: complete final local architecture/adversarial review, synchronize
-the final report and `agent:check`, and leave a clean Nightwatch checkpoint.
-No cloud/datastore/external command is allowed.
+Current SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
+Last validated implementation SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
+Current milestone: M6 — closure and clean checkpoint.
+Last checkpoint: ea434b57fc132c6544c4527cbaa494cb8412db92 — final implementation
+and synthetic validation-matrix checkpoint; focused and full Playwright
+validation passed.
+Next action: none for this completed task. Any future task must remain
+private/local and must not reopen Phase 6 cloud/datastore work.
 
 ## Prior phase closure handoff
 

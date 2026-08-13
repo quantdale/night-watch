@@ -1,9 +1,7 @@
 # NIGHTWATCH — PRIVATE EVIDENCE MINIMIZATION + AUTONOMOUS TRIAGE
 
-Status: `IN_PROGRESS` pending the final documentation checkpoint. The
-implementation is complete and validated locally; this report records the
-owner freeze, the application-only architecture, and the exact remaining
-closure action.
+Status: `COMPLETE`. The implementation is complete and validated locally; this
+report records the owner freeze and the application-only architecture.
 
 ## 1. Checkpoint identity
 
@@ -11,10 +9,10 @@ closure action.
 - Phase 6 implementation/history preserved: latest significant implementation
   `483fbe4f41f235e3e1e0a12e0613954f3db4aefe`; prior clean checkpoint
   `2792795ae69a5535a769180e3e2f38096a186769`.
-- Final implementation SHA: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a`.
-- Final checkpoint SHA: recorded in the final closure commit after this report
-  is synchronized.
-- Final clean HEAD: recorded with the final checkpoint SHA.
+- Initial core implementation SHA: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a`.
+- Final implementation SHA: `ea434b57fc132c6544c4527cbaa494cb8412db92`.
+- Final checkpoint SHA: recorded in the final documentation checkpoint below.
+- Final clean HEAD: recorded with the final documentation checkpoint below.
 - Nightwatch branch: `main`.
 - Nightwatch Git remote privacy: `NO_REMOTE`; no remote was configured or
   pushed.
@@ -258,8 +256,7 @@ source correlation, dossiers, summaries, and clean recovery state exist; full
 validation passes; Alphaus repositories remain read-only and unchanged; and no
 external action is required.
 
-Final verdict: pending the final documentation-only closure commit, then
-`COMPLETE`.
+Final verdict: `COMPLETE` after the final documentation-only closure commit.
 
 ## 16. Recommended next private/local task
 

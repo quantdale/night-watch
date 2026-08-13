@@ -4,10 +4,10 @@
 
 Task ID: private-evidence-minimization-and-triage
 Phase: PRIVATE_LOCAL_TRIAGE
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
-Last validated implementation SHA: 1e694c8966a68779fb3cbd4059b0b67a0d427a7a
+Current SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
+Last validated implementation SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
 Branch: main
 Last checkpoint: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a` — Nightwatch-only
 implementation checkpoint; TypeScript, focused tests, and full Playwright
@@ -21,7 +21,7 @@ datastore expansion.
 
 ## Current Milestone
 
-M5 — compatibility, adversarial privacy, and full validation.
+M6 — closure and clean checkpoint.
 
 ## Completed Milestones
 
@@ -44,17 +44,14 @@ M5 — compatibility, adversarial privacy, and full validation.
 
 ## Work In Progress
 
-M5 is completing the final review ledger, privacy/remote audit, narrow
-Alphaus read-only integrity record, and closure documentation. No real DEV
-minimization is required because no naturally admitted anomaly was present;
+None. The final local architecture/adversarial review passed. No real DEV
+minimization was required because no naturally admitted anomaly was present;
 synthetic/local fixtures are the validation authority for this task.
 
 ## Exact Next Action
 
-Complete the final local architecture/adversarial review, record the 358/358
-full Playwright result and 25/25 focused result, run `npm run agent:check` and
-`git diff --check`, then write the final report and closure checkpoint. Do not
-run any cloud/datastore command or real DEV minimization.
+No further action is required for this task. Any future task must remain
+private/local and must not reopen Phase 6 cloud, deployment, or datastore work.
 
 ## Files Changed
 
@@ -114,7 +111,7 @@ owner policy frozen and use synthetic fixtures first.
 
 ## Completion Snapshot
 
-Implementation checkpoint complete at `1e694c8966a68779fb3cbd4059b0b67a0d427a7a`.
-M5 closure documentation and final `agent:check` synchronization remain the
-only local actions. Phase 6 remains `FROZEN_BY_OWNER`; no external action is
-required or recommended.
+Implementation and validation-matrix checkpoint complete at
+`ea434b57fc132c6544c4527cbaa494cb8412db92`.
+Phase 6 remains `FROZEN_BY_OWNER`; no external action is required or
+recommended. The final documentation checkpoint SHA is recorded in REPORT.md.

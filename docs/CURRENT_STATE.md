@@ -229,7 +229,7 @@ reopen the gate. The owner decision makes that path permanently out of scope.
 
 The active task is `.agent/tasks/private-evidence-minimization-and-triage/`.
 Its local implementation checkpoint is
-`1e694c8966a68779fb3cbd4059b0b67a0d427a7a`. It adds the executable
+`ea434b57fc132c6544c4527cbaa494cb8412db92`. It adds the executable
 `FROZEN_BY_OWNER` scope gate, owner-only atomic artifact storage, bounded
 original-sequence minimization, stable sanitized clustering/deduplication,
 browser/API differential, source relevance, conservative application-layer

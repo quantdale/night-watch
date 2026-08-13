@@ -93,14 +93,17 @@ publication method that can succeed.
 
 ### M5 — Compatibility, adversarial privacy, and full validation
 
-- Status: IN_PROGRESS.
+- Status: COMPLETE.
 - Exercise synthetic dossier matrix, legacy evidence compatibility, storage
   crash recovery, owner-policy regression, privacy sentinels, existing safety
   suite, and bounded DEV checks only if naturally useful.
 
 ### M6 — Closure and clean checkpoint
 
-- Status: NOT_STARTED.
+- Status: COMPLETE.
+- Final architecture/adversarial review passed; no natural DEV anomaly was
+  admitted, no real minimization was run, and the terminal task state is
+  documentation-only and private/local.
 - Complete architecture/adversarial reviews, update durable state/report,
   commit Nightwatch only, verify clean/recoverable tree, and leave the next
   private/local task exact.
