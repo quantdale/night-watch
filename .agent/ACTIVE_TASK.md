@@ -1,18 +1,17 @@
 # Active Task
 
-Task ID: private-evidence-minimization-and-triage
-Phase: PRIVATE_LOCAL_TRIAGE
-Title: Private Evidence Minimization + Autonomous Triage
-Status: COMPLETE
-Task directory: .agent/tasks/private-evidence-minimization-and-triage
-Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
-Current SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
-Last validated implementation SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
-Current milestone: M6 — closure and clean checkpoint.
-Last checkpoint: 6c5e298c4b2423ce7ffc13715e259be691d71162 — closure checkpoint;
-focused and full Playwright validation passed.
-Next action: none for this completed task. Any future task must remain
-private/local and must not reopen Phase 6 cloud/datastore work.
+Task ID: phase-7-private-autonomous-nightly-campaigns
+Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
+Title: Private Autonomous Nightly Campaigns
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-7-private-autonomous-nightly-campaigns
+Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
+Current SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
+Last validated implementation SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
+Current milestone: M1 — campaign contracts, manifest, budget, and ordering.
+Last checkpoint: task creation before implementation.
+Next action: implement the Phase 7 campaign contracts and deterministic
+manifest/budget layer. Phase 6 remains permanently frozen by owner.
 
 ## Prior phase closure handoff
 
