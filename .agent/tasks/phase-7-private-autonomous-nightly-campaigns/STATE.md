@@ -154,8 +154,10 @@ The real run captured only the Phase 3-relevant Ripple repositories immediately
 before its manifest, including branch, HEAD, tracking ref/SHA, ahead/behind,
 dirty state, source-map SHA, freshness, and `readOnly=true`. It recorded
 `COMMITTED_ONLY`, 940 changed files, and 82 dirty files; dirty files remained
-excluded from committed/deployment inference. Relevant Alphaus repo HEADs and
-dirty counts were read back afterward and remained unchanged.
+excluded from committed/deployment inference. Closure read-only verification
+found all relevant Alphaus HEADs unchanged. The current `ouchan` worktree has
+79 dirty entries versus the campaign manifest's 71; this pre-existing dirty
+worktree drift was not touched, cleaned, or used as deployment evidence.
 
 ## SELECTION_RESULT
 
@@ -242,7 +244,9 @@ native Phase 7 task artifacts.
 - Real campaign: PASS for fail-closed auth stop; `PARTIAL_AUTH_BLOCKED`, zero
   product work, zero anomalies, private brief READY.
 - Owner-only private artifact permissions/privacy audit: PASS.
-- Relevant Alphaus repository before/after integrity: PASS; unchanged.
+- Relevant Alphaus repository HEAD integrity: PASS; all unchanged. Current
+  `ouchan` dirty count is 79 and is treated as pre-existing/unowned drift, not
+  as a Nightwatch change or deployment claim.
 - Final clean-tree check remains until this documentation checkpoint is committed.
 
 ## BUG_CANDIDATES

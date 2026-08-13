@@ -90,8 +90,11 @@ was not deliberately triggered.
 Production attempts: 0. Proxy violations: 0. Unknown destinations: 0.
 Unknown approvals: 0. Product mutations: 0. Action-caused `UNKNOWN`: 0.
 Database queries: 0. Infrastructure queries: 0. External publication attempts:
-0. Privacy: `PASS`. No Alphaus repository changed; current read-only
-before/after integrity checks remained equal.
+0. Privacy: `PASS`. No Nightwatch write targeted an Alphaus repository and all
+relevant Alphaus HEADs remained unchanged. Closure read-only observation found
+the `ouchan` worktree at 79 dirty entries versus the campaign manifest's 71;
+that pre-existing/unowned dirty drift was not touched, cleaned, or used as
+deployment evidence.
 
 ## Validation
 
