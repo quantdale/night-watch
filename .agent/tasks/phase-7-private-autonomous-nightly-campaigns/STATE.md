@@ -6,9 +6,9 @@ Task ID: phase-7-private-autonomous-nightly-campaigns
 Phase: 7 — PRIVATE AUTONOMOUS NIGHTLY CAMPAIGNS
 Status: IN_PROGRESS
 Starting SHA: 4f8263206f82740c47f1b25554269b59d8e03b8d
-Current SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
-Last validated implementation SHA: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
-Last implementation checkpoint: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
+Current SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
+Last validated implementation SHA: a9783ebe244381fe50e8387bd69af3f65a2f558d
+Last implementation checkpoint: a9783ebe244381fe50e8387bd69af3f65a2f558d
 Branch: main
 REMOTE_STATUS: PRIVATE_REMOTE_CONFIRMED
 REMOTE: origin
@@ -16,7 +16,7 @@ REMOTE_REPOSITORY: quantdale/night-watch
 REMOTE_BRANCH: main
 CANONICAL_GIT_ROOT: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 PARENT_WORKSPACE_GIT: RETIRED (parent workspace is not a Git repository)
-REMOTE_HEAD: adb8aa11caf5d74dafd091c8ff9680b3bd7ba460
+REMOTE_HEAD: a9783ebe244381fe50e8387bd69af3f65a2f558d
 
 ## Objective
 
@@ -42,15 +42,19 @@ dd5cef0a65f00721adf2e68db1f23ca9efc8d7b9.
 The single bounded real DEV campaign stopped correctly at the guarded auth
 gate and remains immutable historical evidence. Remote reconciliation is
 complete. Designated DEV page-valid auth is now restored through the existing
-guarded provider; final validation, new-campaign execution, architecture
-review, adversarial review, and clean closure remain.
+guarded provider. The real launcher now has an explicit prepare-only freeze
+and resume-by-campaign-ID path; final manifest creation, one campaign
+execution, architecture review, adversarial review, and clean closure remain.
 
 ## Exact Next Action
 
-Create and freeze one new current-version bounded campaign manifest, then run
-exactly one bounded DEV campaign. Do not rerun the historical campaign: its
-single attempt is durably recorded as `PARTIAL_AUTH_BLOCKED` and the
-implementation SHA changed afterward, so it cannot be silently resumed.
+Run `npm run campaign:real -- --env=dev --prepare-only` to create and freeze
+one new current-version bounded campaign manifest, checkpoint the result as
+`PHASE_7_NEW_REAL_CAMPAIGN_READY`, push the sanitized state, and then run
+exactly one `--resume-campaign=<new-id>` bounded DEV campaign. Do not rerun
+the historical campaign: its single attempt is durably recorded as
+`PARTIAL_AUTH_BLOCKED` and the implementation SHA changed afterward, so it
+cannot be silently resumed.
 
 ## Files Changed
 
@@ -63,9 +67,10 @@ included.
 ## Validation Ledger
 
 Single-writer check PASS; prior task SHA reconciliation PASS; Phase 6 owner
-freeze tripwires PASS; TypeScript PASS; focused campaign tests PASS (14/14);
+freeze tripwires PASS; TypeScript PASS; focused campaign tests PASS (16/16);
 synthetic campaign PASS; `git diff --check` PASS at implementation
-checkpoints; real launcher help PASS; auth preflight PASS; 33 focused
+checkpoints; real launcher help PASS; explicit prepare/resume workflow PASS;
+auth preflight PASS; 33 focused
 auth/storage tests PASS; guarded DEV refresh PASS with page-valid state and no
 MFA; authenticated artifact permission regression PASS; source remote is
 `PRIVATE_REMOTE_CONFIRMED` on `origin/main`; the historical single real
@@ -119,10 +124,11 @@ completed work or widen catalogs/policy.
 
 ## Completion Snapshot
 
-Implementation checkpoint adb8aa11caf5d74dafd091c8ff9680b3bd7ba460 is clean;
+Implementation checkpoint a9783ebe244381fe50e8387bd69af3f65a2f558d is clean;
 synthetic matrix, focused tests, typecheck, auth refresh, page-validity,
-authenticated privacy hardening, and remote push pass. The historical real
-campaign remains durably auth-blocked; a new campaign is not yet created.
+authenticated privacy hardening, frozen-manifest workflow, and remote push
+pass. The historical real campaign remains durably auth-blocked; a new
+campaign is not yet created.
 
 ## CURRENT_GOAL
 
@@ -267,12 +273,13 @@ native Phase 7 task artifacts.
 - Single-writer check: PASS; no competing Nightwatch writer was present.
 - Phase 6 freeze and owner-policy tripwires: PASS in focused tests.
 - `npx tsc --noEmit`: PASS after the replay/drift guard checkpoint.
-- `npx playwright test tests/unit/campaign.test.ts --workers=1`: PASS, 14/14.
-- `npm run campaign:synthetic`: PASS, 14/14.
+- `npx playwright test tests/unit/campaign.test.ts --workers=1`: PASS, 16/16.
+- `npm run campaign:synthetic`: PASS, 16/16.
 - `npx playwright test --workers=1`: PASS, 375/375.
 - `npm run agent:check`: PASS with one expected approved-checkpoint warning.
 - `git diff --check`: PASS.
-- `npm run campaign:real -- --help`: PASS; launcher is opt-in and DEV-only.
+- `npm run campaign:real -- --help`: PASS; launcher is opt-in, DEV-only, and
+  requires an explicit prepare-only or resume-by-ID phase.
 - Real campaign: PASS for fail-closed auth stop; `PARTIAL_AUTH_BLOCKED`, zero
   product work, zero anomalies, private brief READY.
 - Owner-only private artifact permissions/privacy audit: PASS.
@@ -319,28 +326,30 @@ and authenticated traces were absent from campaign artifacts.
 
 ## LAST_VERIFIED_IMPLEMENTATION_SHA
 
-`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
+`a9783ebe244381fe50e8387bd69af3f65a2f558d`
 
 ## LAST_CHECKPOINT_SHA
 
-`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
+`a9783ebe244381fe50e8387bd69af3f65a2f558d`
 
 ## LAST_PUSHED_SHA
 
-`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`
+`a9783ebe244381fe50e8387bd69af3f65a2f558d`
 
 ## PUSH_LEDGER
 
 - Remote reconciliation checkpoint: `2aa2742d6a062e633fcb3faf2ca119a408b06758` pushed to `origin/main`.
 - Authenticated-artifact implementation checkpoint: `adb8aa11caf5d74dafd091c8ff9680b3bd7ba460` pushed to `origin/main`.
+- Frozen-manifest workflow implementation checkpoint: `a9783ebe244381fe50e8387bd69af3f65a2f558d` pushed to `origin/main`.
 - Auth-ready state update: current implementation and auth evidence are
-  recorded above; its documentation commit is the next validated push.
+  recorded above; this documentation checkpoint is the next validated push.
 
 ## NEXT_EXACT_ACTION
 
-Create and freeze one new compatible current-version bounded DEV manifest, then
-run exactly one bounded DEV campaign. Never reuse the historical campaign ID,
-use an alternative credential, or widen scope.
+Run the guarded prepare-only command, record the new campaign ID/fingerprint
+and selected lineage here, push `PHASE_7_NEW_REAL_CAMPAIGN_READY`, then run
+exactly one bounded DEV campaign by that frozen ID. Never reuse the historical
+campaign ID, use an alternative credential, or widen scope.
 
 ## RESUME_RECIPE
 

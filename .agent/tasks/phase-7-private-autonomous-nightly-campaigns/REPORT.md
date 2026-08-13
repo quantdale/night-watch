@@ -36,9 +36,12 @@ kept owner-only locally, and the recorder now enforces owner-only modes for
 authenticated artifacts.
 
 The auth-ready implementation checkpoint is
-`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`. The next action is to create a new
-current-version manifest; the historical campaign ID remains immutable and is
-not reused.
+`adb8aa11caf5d74dafd091c8ff9680b3bd7ba460`. The frozen-manifest workflow
+implementation checkpoint is
+`a9783ebe244381fe50e8387bd69af3f65a2f558d`, pushed to `origin/main`. The next
+action is to run the guarded `--prepare-only` command, push the sanitized
+`PHASE_7_NEW_REAL_CAMPAIGN_READY` state, and then execute one new campaign by
+its frozen ID; the historical campaign ID remains immutable and is not reused.
 
 ## Campaign architecture
 
@@ -122,9 +125,9 @@ deployment evidence.
 ## Validation
 
 - `npx tsc --noEmit`: PASS.
-- Focused campaign suite: PASS, 14/14.
-- Synthetic campaign: PASS, 14/14.
-- Real launcher help: PASS.
+- Focused campaign suite: PASS, 16/16.
+- Synthetic campaign: PASS, 16/16.
+- Real launcher help: PASS; explicit prepare-only/resume-by-ID workflow.
 - `npx playwright test --workers=1`: PASS, 375/375.
 - `npm run agent:check`: PASS with one expected approved-checkpoint warning.
 - `git diff --check`: PASS.
@@ -132,7 +135,8 @@ deployment evidence.
 
 ## Exact safe next action
 
-The next safe action is to create a new current-version manifest and execute
-exactly one bounded local DEV campaign. Do not unfreeze Phase 6, query
+The next safe action is to create a new current-version manifest with
+`--prepare-only`, push its sanitized readiness checkpoint, and execute exactly
+one bounded local DEV campaign by the frozen ID. Do not unfreeze Phase 6, query
 infrastructure/databases, contact production, publish the private artifacts,
 use an alternative credential, or rerun the incompatible historical manifest.

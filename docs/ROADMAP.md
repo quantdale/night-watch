@@ -414,9 +414,12 @@ bounded real campaign created an owner-only manifest/checkpoint but stopped at
 auth state was not page-valid and guarded MFA refresh could not complete. No
 alternative credentials were used and that manifest is immutable. The same
 existing guarded auth system later completed one bounded refresh with no MFA
-step, and fresh page-valid DEV status passed. A new current-version bounded
-campaign must now be created; the old manifest is never silently resumed
-across a Nightwatch source-version change. Phase 6 remains permanently
+step, and fresh page-valid DEV status passed. The real launcher now requires a
+two-step `--prepare-only` manifest/checkpoint freeze followed by an explicit
+`--resume-campaign=<id>` execution, so the readiness state can be pushed before
+product work. A new current-version bounded campaign must now be created; the
+old manifest is never silently resumed across a Nightwatch source-version
+change. Phase 6 remains permanently
 `FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
 
 ## Phase 7B — Bounded AI assistance (deferred)

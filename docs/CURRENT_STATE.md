@@ -1,10 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-13** at
-> the Phase 7 remote-reconciliation checkpoint. Phase 0–5 are complete; Phase
-> 6 is frozen by owner; Phase 7 orchestration is implemented but the one
-> bounded real DEV campaign stopped before product work because guarded auth
-> refresh could not complete.
+> the Phase 7 frozen-manifest workflow checkpoint. Phase 0–5 are complete;
+> Phase 6 is frozen by owner; Phase 7 orchestration is implemented, designated
+> DEV auth is page-valid, and the new campaign has not yet executed.
 
 ---
 
@@ -26,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `cb0927534ea42bd27849c2c2810602263ff3a337` (verified equal to local `HEAD`) |
+| `REMOTE_HEAD` | `a9783ebe244381fe50e8387bd69af3f65a2f558d` (verified equal to local `HEAD`) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -302,6 +301,12 @@ bounded refresh with no MFA step. Current sanitized status is
 capture ID `nightwatch-20260813T151556Z-3210`. Structural, provenance,
 freshness, page-readability, authenticated-shell, metadata-only privacy, and
 atomic-replacement checks passed. No new campaign has been created yet.
+
+The current launcher requires an explicit two-step real workflow:
+`--prepare-only` validates the guarded auth/safety gate and writes a fresh
+owner-only manifest plus ordinal-zero checkpoint without invoking an executor;
+the sanitized `PHASE_7_NEW_REAL_CAMPAIGN_READY` state is then pushed before
+`--resume-campaign=<id>` may execute the frozen campaign exactly once.
 
 Real campaign safety vector: production attempts 0, proxy violations 0,
 unknown destinations 0, unknown approvals 0, product mutations 0,

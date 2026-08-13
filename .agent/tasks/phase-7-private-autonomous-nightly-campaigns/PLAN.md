@@ -126,9 +126,10 @@ auth preflight before any product work because the designated external DEV
 state was not page-valid and MFA refresh could not complete. That campaign is
 historical evidence and cannot be resumed. The existing guarded credential
 provider then completed one bounded refresh with no MFA step, and fresh
-page-level validation passed. Create a new manifest from the current
-Nightwatch SHA before any product execution; no alternative credential or
-scope is permitted.
+page-level validation passed. The launcher now requires a separate
+`--prepare-only` manifest/checkpoint freeze and `--resume-campaign=<id>`
+execution phase, so the new manifest can be validated and pushed before any
+product execution. No alternative credential or scope is permitted.
 
 ## Validation Strategy
 
