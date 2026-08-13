@@ -709,6 +709,15 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
   expect(result.checkpoint.safety.infrastructureQueries).toBe(0);
   expect(result.checkpoint.safety.externalPublicationAttempts).toBe(0);
   expect(result.checkpoint.privacyStatus).toBe('PASS');
+  if (result.resultClass === 'PARTIAL_AUTH_BLOCKED') {
+    console.log([
+      '# NIGHTWATCH PHASE 7 — DEV AUTH ACTION REQUIRED',
+      `campaign ID: ${result.campaignId}`,
+      'reason: the external DEV auth state was not page-valid and the bounded guarded refresh could not complete; no product work ran',
+      'exact safe next action: refresh the designated owner-only DEV state through the existing guarded auth flow, then resume this manifest',
+      'credential policy: do not use alternative credentials; raw auth material remains outside Nightwatch evidence',
+    ].join('\n'));
+  }
   console.log(JSON.stringify({
     campaignId: result.campaignId,
     mode: manifest.mode,
