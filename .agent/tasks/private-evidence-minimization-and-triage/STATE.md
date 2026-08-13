@@ -9,9 +9,8 @@ Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
 Current SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
 Last validated implementation SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
 Branch: main
-Last checkpoint: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a` — Nightwatch-only
-implementation checkpoint; TypeScript, focused tests, and full Playwright
-passed.
+Last checkpoint: `6c5e298c4b2423ce7ffc13715e259be691d71162` — closure
+checkpoint; TypeScript, focused tests, and full Playwright passed.
 
 ## Objective
 

@@ -9,9 +9,8 @@ Starting SHA: 2792795ae69a5535a769180e3e2f38096a186769
 Current SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
 Last validated implementation SHA: ea434b57fc132c6544c4527cbaa494cb8412db92
 Current milestone: M6 — closure and clean checkpoint.
-Last checkpoint: ea434b57fc132c6544c4527cbaa494cb8412db92 — final implementation
-and synthetic validation-matrix checkpoint; focused and full Playwright
-validation passed.
+Last checkpoint: 6c5e298c4b2423ce7ffc13715e259be691d71162 — closure checkpoint;
+focused and full Playwright validation passed.
 Next action: none for this completed task. Any future task must remain
 private/local and must not reopen Phase 6 cloud/datastore work.
 

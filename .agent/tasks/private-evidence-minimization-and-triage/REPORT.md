@@ -11,8 +11,10 @@ report records the owner freeze and the application-only architecture.
   `2792795ae69a5535a769180e3e2f38096a186769`.
 - Initial core implementation SHA: `1e694c8966a68779fb3cbd4059b0b67a0d427a7a`.
 - Final implementation SHA: `ea434b57fc132c6544c4527cbaa494cb8412db92`.
-- Final checkpoint SHA: recorded in the final documentation checkpoint below.
-- Final clean HEAD: recorded with the final documentation checkpoint below.
+- Final checkpoint SHA: `6c5e298c4b2423ce7ffc13715e259be691d71162`.
+- Final clean HEAD at the closure checkpoint: `6c5e298c4b2423ce7ffc13715e259be691d71162`.
+- A subsequent documentation-only terminal sync may be a child of this clean
+  checkpoint; it does not change the validated implementation or task result.
 - Nightwatch branch: `main`.
 - Nightwatch Git remote privacy: `NO_REMOTE`; no remote was configured or
   pushed.
