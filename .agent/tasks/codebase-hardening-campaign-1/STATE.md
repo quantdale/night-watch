@@ -4,245 +4,389 @@
 
 Task ID: codebase-hardening-campaign-1
 Phase: Private/local hardening campaign I
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Current SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-Last validated implementation SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-Branch: main
-Last checkpoint: 2026-08-14 M2 persistence checkpoint committed/pushed as
-`37daa755b6ff815145bb2b8ccf922cddfb1bde48`; clean HEAD equals origin/main.
+Current SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+Last validated implementation SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+Branch: `main`
+Remote: private `origin` → `quantdale/night-watch`, branch `main`
+Last source checkpoint: continuity validation correction 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4, pushed and verified with `HEAD == origin/main`.
+
+Phase 7 remains `COMPLETE`. Phase 6 remains
+`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
 
 ## Objective
 
-Harden Nightwatch's durable state, resume, budget, process, filesystem,
-configuration, policy, evidence, compile, CI, privacy, and auditability
-boundaries using local/synthetic/static evidence only.
+Harden deterministic state integrity, resume safety, frozen-manifest
+integrity, bounded budgets, child-process secret isolation, private filesystem
+and configuration provenance, target policy, executable provenance, evidence
+truthfulness, compile/test coverage, independent CI, privacy structure, and
+safety-code auditability using local/synthetic/static/fixture evidence only.
+
+## Status Fields
+
+CURRENT_GOAL: HIDDEN_STATE_AND_BOUNDARY_HARDENING
+CURRENT_MILESTONE: M5_INTEGRATED_VALIDATION
+STARTING_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
+REVIEW_FINDINGS: Five bounded read-only tracks reconciled against current source and tests.
+CONFIRMED_FINDINGS: Manifest, checkpoint, budget, child environment, filesystem, config, Oops, brief, DTO, typecheck, static, CI, and continuity gaps repaired.
+REJECTED_FINDINGS: Automated NEXT widening, production reachability, multi-hour default reachability, and existing Oops shell/argument controls were not confirmed defects.
+FILES_CHANGED: Campaign validators/orchestrator/tests; launchers/process env; storage/private artifacts/config; target/Oops/brief; static/CI; task state.
+MANIFEST_INTEGRITY_STATUS: PASS — persisted IDs, fingerprint, selection, seeds, work order, lineage, budget, versions, and unknown fields are fail-closed.
+CHECKPOINT_INTEGRITY_STATUS: PASS — strict runtime validation precedes resume/executor callbacks.
+BUDGET_FEASIBILITY_STATUS: PASS — deterministic reserve planning and atomic accounting preserve bounded replay/minimization capacity.
+CHILD_ENV_STATUS: PASS — sensitive children use explicit allowlists; fake secret sentinel test passes.
+FILESYSTEM_BOUNDARY_STATUS: PASS — stable roots, permissions, path, symlink, atomic-write, and CWD tests pass.
+ENV_CONFIG_PROVENANCE_STATUS: PASS — canonical repository configuration is authoritative; ambient CWD fallback removed.
+REAL_TARGET_POLICY_STATUS: PASS — automated credential-bearing execution is DEV-only; production and unknown hosts remain denied.
+OOPS_PROVENANCE_STATUS: PASS — restricted executable bytes are SHA-256 hashed and compared to expected digest.
+MORNING_BRIEF_STATUS: PASS — unresolved L0, budget blocks, transients, auth, failures, internal defects, and admitted findings are distinct.
+TYPECHECK_COVERAGE_STATUS: PASS — root Playwright config glob and source typecheck pass.
+CI_STATUS: PASS BY DESIGN — private read-only workflow has no secrets, target execution, database, infrastructure, or artifact upload.
+MAINTAINABILITY_STATUS: PASS — large modules audited; characterization coverage retained; broad refactor deferred.
+TEST_LEDGER: Full Playwright 396/396; focused hardening 135/135; agent-state 14/14; storage/auth 30/30; synthetic campaign 24/24.
+ADVERSARIAL_TEST_LEDGER: Manifest tamper, checkpoint corruption, budget feasibility, env sentinels, CWD, symlink, policy, brief, interruption, and privacy matrices pass.
+PUSH_LEDGER: Source checkpoints 428cfee, ddfbc9a, and 78cd8d6 pushed and verified against origin/main.
+SAFETY_EVENTS: NONE; prohibited operation counts remain zero.
+PRIVACY_STATUS: PASS — no runtime credentials, storage state, private findings, customer values, or authenticated evidence entered the repository.
+NEXT_EXACT_ACTION: None; preserve the completed hardening checkpoint and do not start another feature phase.
+RESUME_RECIPE: Read AGENTS.md, required project docs, ACTIVE_TASK, SPEC, PLAN, STATE; inspect Git; continue from NEXT_EXACT_ACTION without real target operations.
 
 ## Current Milestone
 
-Milestone ID: M3
-Status: IN_PROGRESS
-What is being attempted: Remove arbitrary parent environment and CWD/config
-authority, strengthen private/storage filesystem boundaries, enforce explicit
-real-target provenance, and bind Oops execution to actual binary bytes.
+Milestone ID: M5 — integrated adversarial validation and closure
+Status: COMPLETE
+Source implementation, full local validation, clean source-only checkout,
+architecture/adversarial review, durable report/state closure, and final push
+are complete.
 
 ## Completed Milestones
 
-- Bootstrap/recovery: repository root, branch, private remote, clean worktree,
-  and `HEAD == origin/main == c14aebff9ae85814aa31f518e7f8fa4afbdeb7da`
-  verified on 2026-08-14. Phase 7 is `COMPLETE`; Phase 6 is
-  `FROZEN_BY_OWNER`.
-- M0 task routing: new hardening SPEC/PLAN/STATE/REPORT created, ACTIVE_TASK
-  routed to this task, and `npm run agent:check` passed with one expected
-  documentation-only checkpoint warning.
-- M1 independent review: five bounded read-only tracks were reconciled against
-  current implementation and tests. Confirmed findings are recorded below;
-  Phase 7 and the Phase 6 owner freeze remain unchanged.
-- M2 persistence/budget repair: strict manifest and checkpoint validators,
-  tamper/corruption fixtures, checkpoint ordinals, exact budget arithmetic,
-  and deterministic real-profile reserve planning passed typecheck,
-  `campaign:synthetic`, and 19 focused campaign tests. Implementation was
-  pushed as `37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
-
-## Work In Progress
-
-M0, M1, and M2 are complete. M3 is scoped to process, filesystem,
-configuration, target-policy, and executable provenance boundaries. No runtime
-artifacts, credentials, or Alphaus repositories may be changed.
+- M0 recovery/task routing/threat-model freeze: COMPLETE.
+- M1 five bounded independent read-only review tracks and reconciled finding
+  ledger: COMPLETE.
+- M2 manifest/checkpoint/continuity/budget integrity: COMPLETE; source pushed
+  as `37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
+- M3 process/filesystem/configuration/target/Oops boundaries: COMPLETE in
+  428cfee93e478c3730de2725d2690ad91f5ea150.
+- M4 brief/privacy/static/typecheck/CI/maintainability audit: COMPLETE in
+  428cfee93e478c3730de2725d2690ad91f5ea150.
+- M5 source validation corrections and closure: COMPLETE in
+  78cd8d60f6a743985d5b0eae2560f6d06c40dbe4 plus the final documentation
+  checkpoint.
 
 ## Exact Next Action
 
-Implement the canonical child environment builder first, then adversarial
-storage/CWD/config tests and Oops executable digest binding. Keep all checks
-local and synthetic.
+No further task action. Preserve the completed local/source checkpoint and do
+not start another feature phase.
+
+## Work In Progress
+
+No implementation edits are queued. Only closure validation and durable task
+documentation remain. Do not execute `campaign:real`, `auth:capture`, real
+journeys, real exploration, real Phase 5 APIs, or any prohibited external
+operation.
+
+## Review Tracks
+
+Five bounded read-only tracks were run and then reconciled against current
+source/tests; workers did not edit:
+
+- A — campaign persistence, resume, and budget: manifest fingerprint and
+  cross-field validation gaps; narrow checkpoint validation; replay/resource
+  reservation risks.
+- B — process, environment, secret, and filesystem boundaries: full parent
+  environment spreads; storage/private-root symlink, mode, and CWD gaps.
+- C — network, environment, owner policy, and executable safety: Oops caller
+  SHA was not a byte binding; automated target policy needed explicit DEV
+  provenance; production/owner gates were otherwise fail closed.
+- D — triage and morning-brief truthfulness: unresolved L0/budget state could
+  read like a clean campaign; persisted DTO structure was too permissive.
+- E — maintainability, typecheck, test, and CI: omitted root Playwright
+  configs, no repository hardening check/CI, and substring error taxonomy.
+
+## Confirmed Findings and Repairs
+
+- `CONFIRMED_DEFECT`: persisted manifest fingerprint was syntax-checked but not
+  recomputed; fixed with exact ID/fingerprint reconstruction and selection,
+  seed, work-order, identity, lineage, budget, version, owner-scope, and
+  unknown-field checks.
+- `CONFIRMED_DEFECT`: checkpoint/resume accepted typed JSON without a strict
+  runtime boundary; fixed with fail-closed schema, counter, ledger, queue,
+  reference, state/result, safety/privacy, timestamp, version-drift, and
+  terminal-state validation before callbacks.
+- `CONFIRMED_HARDENING_GAP`: first coverage consumed the real browser/API
+  capacity needed for reproduction; fixed with deterministic reserve planning
+  inside the unchanged bounded profile. Optional exploration is suppressed
+  and API breadth is reduced when the reserve requires it.
+- `CONFIRMED_DEFECT`: multi-dimensional reservations could partially charge
+  before failure and interruption could checkpoint a RUNNING marker before its
+  reservation; fixed with atomic bundles and reservation/ledger checkpoint
+  ordering.
+- `CONFIRMED_DEFECT`: sensitive children inherited ambient `process.env`; fixed
+  with one explicit allowlist builder and fake sentinel inspection fixtures.
+- `CONFIRMED_HARDENING_GAP`: private/storage roots depended on arbitrary CWD
+  or weak path/permission checks; fixed with stable repository roots, external
+  root checks, lstat/no-symlink components, owner-only modes, atomic writes,
+  fsync, and post-write checks.
+- `CONFIRMED_DEFECT`: environment loader used a CWD fallback; removed. The
+  canonical repository config is authoritative; malicious-CWD tests pass.
+- `CONFIRMED_DEFECT`: Oops compared caller source SHA strings without hashing
+  the executable; fixed with absolute regular owner-controlled no-symlink
+  executable validation and actual SHA-256 equality against an expected
+  controlled-build digest. Source SHA remains separate metadata.
+- `CONFIRMED_HARDENING_GAP`: morning brief collapsed unresolved observations;
+  fixed with explicit unresolved L0, budget-blocked, transient, auth,
+  shared-failure, internal-defect, admitted-finding, and no-observation
+  semantics plus a strict brief DTO validator.
+- `CONFIRMED_HARDENING_GAP`: persisted candidate material was not fully
+  allowlisted; fixed with a shared nested candidate DTO validator that rejects
+  executable callbacks and unknown nested fields.
+- `CONFIRMED_HARDENING_GAP`: root Playwright configs were omitted from
+  TypeScript coverage; fixed with `playwright*.config.ts` inclusion.
+- `CONFIRMED_HARDENING_GAP`: launcher static checking/CI was absent; fixed with
+  `npm run hardening:check`, `// @ts-check` launchers, explicit bounded child
+  output pipes, and private read-only GitHub Actions.
+- `CONFIRMED_HARDENING_GAP`: error classification used broad message
+  substrings; fixed with sanitized code-prefix classification distinguishing
+  corrupt state and Nightwatch internal defects.
+
+## Rejected / Expected Findings
+
+- `FALSE_POSITIVE`: automated NEXT execution was not an existing Phase 7
+  widening defect after direct source review. Current automated credential
+  execution is DEV-only; NEXT is an explicit human-led `auth:capture`
+  exception, and unauthenticated canary policy remains separately testable.
+- `EXPECTED_BY_DESIGN`: production selection, known production hosts,
+  unknown hosts, mutation/UNKNOWN tripwires, and the Phase 6 owner gate remain
+  fail closed.
+- `EXPECTED_BY_DESIGN`: Oops shell=false, fixed arguments, explicit env,
+  bounded output, restricted KNOWN_READ, and prohibited capability checks were
+  already strong and were preserved.
+- `EXPECTED_BY_DESIGN`: the multi-hour budget remains a library constant with
+  no supported launcher selection path; hardening check rejects launcher
+  references and no default/resume path upgrades to it.
+- `DEFERRED_WITH_REASON`: no broad orchestrator rewrite or mass JS migration;
+  characterization tests and strict boundaries improved auditability without
+  adding refactor risk.
 
 ## Files Changed
 
-| Path | Reason | Status |
-|---|---|---|
-| `.agent/tasks/codebase-hardening-campaign-1/SPEC.md` | Frozen intent and threat model | created |
-| `.agent/tasks/codebase-hardening-campaign-1/PLAN.md` | Living milestones and validation | created |
-| `.agent/tasks/codebase-hardening-campaign-1/STATE.md` | Resumable waypoint | created |
-| `.agent/tasks/codebase-hardening-campaign-1/REPORT.md` | Completion handoff placeholder | created |
-| `.agent/ACTIVE_TASK.md` | Routes active work to hardening task | complete |
+- Campaign authority: `src/core/campaign/{identity,checkpoint,budget,brief,orchestrator,types,runtimeValidation}.ts` and campaign tests.
+- Process boundaries: `bin/child-environment.mjs`, all sensitive launchers,
+  `src/core/process/childEnvironment.ts`, Git/snapshot/Oops child sites.
+- Filesystem/config/policy: storage-state validation, private artifact store,
+  environment loader, proxy stable roots, direct auth runner, safety gate.
+- Static/CI: `bin/hardening-check.mjs`, `package.json`, `tsconfig.json`,
+  `.github/workflows/hardening.yml`, `docs/CI_HARDENING.md`.
+- Synthetic coverage: child-env fixture and focused unit/adversarial tests.
+- Durable task state is intentionally not part of the source checkpoint and
+  is being advanced in the following documentation checkpoint.
 
 ## Validation Ledger
 
-Command: `git rev-parse --show-toplevel && git status --short && git branch --show-current && git rev-parse HEAD && git rev-parse origin/main`
-Result: PASS; canonical root, `main`, clean tree after the M2 implementation
-checkpoint, and `HEAD == origin/main == 37daa755b6ff815145bb2b8ccf922cddfb1bde48`.
-When: 2026-08-14
-Relevant failure/output summary: none.
-
-Command: `npm run agent:check`
-Result: PASS with one expected `CHECKPOINT_ADVANCE` warning for the new task
-documentation and ACTIVE_TASK route; no secret-like values or structural
-errors.
-When: 2026-08-14
-Relevant failure/output summary: approved continuity/documentation paths only.
-
-Command: bounded read-only review tracks A-E plus direct source/test
-reconciliation.
-Result: PASS; five tracks completed without edits or external operations.
-When: 2026-08-14
-Relevant failure/output summary: findings and classifications are recorded in
-the review ledger below; worker output was treated as evidence to verify, not
-as authority.
-
-Command: `npm run typecheck`
-Result: PASS after M2 implementation.
-When: 2026-08-14
-Relevant failure/output summary: no compiler errors.
-
-Command: `npm run campaign:synthetic`
-Result: PASS; 19 local campaign/manifest/checkpoint/budget tests passed.
-When: 2026-08-14
-Relevant failure/output summary: no product network or external runtime state.
-
-Command: `git diff --check`
-Result: PASS before M2 commit/push.
-When: 2026-08-14
-Relevant failure/output summary: none.
-
-## Decisions Made During This Task
-
-Decision: use a separate native hardening task and preserve Phase 7 as
-complete.
-Reason: the user explicitly approved a new private/local hardening campaign;
-Phase 7 is historical closure, not an active task.
-Evidence/constraint: `.agent/ACTIVE_TASK.md`, Phase 7 SPEC/REPORT, and current
-Git state.
-
-Decision: use the accidental-corruption/stale-state/secret-boundary threat
-model and avoid malicious-root cryptography.
-Reason: it matches the approved scope and keeps repairs auditable.
-Evidence/constraint: frozen task instructions and repository safety contract.
-
-Decision: repair the real bounded profile by reserving reproduction capacity
-inside the existing caps, even if optional exploration/API breadth is reduced.
-Reason: the current six browser-context cap is consumed by three journeys and
-three explorations before a browser reproduction can run; six API executions
-are also consumed by three first-plus-fresh-replay API items. The owner values
-truthful, reproducible evidence over silently promising unavailable work.
-Evidence/constraint: current `INITIAL_REAL_CAMPAIGN_BUDGET`, selection order,
-and Phase 7 historical report.
+| Validation | Result |
+|---|---|
+| Bootstrap root/branch/remote/fetch/clean `HEAD == origin/main` | PASS at starting SHA `c14aebf` |
+| Five independent read-only review tracks | PASS; no worker edits or external operations |
+| `npm run typecheck` after source checkpoint | PASS |
+| `npm run hardening:check` | PASS; offline structural invariants |
+| `node --check bin/*.mjs` | PASS |
+| `git diff --check` before source commit | PASS |
+| `npm run campaign:synthetic` | PASS; 24/24 |
+| Integrated focused sweep | PASS; 135/135 with one worker |
+| Source privacy scan | PASS; only synthetic sentinel names/values and pre-existing source metadata matched |
+| Source commit/push/fetch | PASS; 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4 == origin/main |
+| Focused storage/auth regression suite | PASS; 30/30 after owner-only synthetic fixtures were corrected |
+| Full existing Playwright suite | PASS; 396/396 with one worker |
+| Post-suite typecheck | PASS |
+| Post-suite synthetic campaign | PASS; 24/24 |
+| Post-suite hardening check | PASS after excluding the checker from its own multi-hour marker scan |
+| Post-suite `node --check bin/*.mjs` | PASS |
+| Post-suite `git diff --check` | PASS after removing accidental markdown trailing whitespace |
+| Clean source-only checkout | PASS at 78cd8d6; clone has no runtime/private files; npm ci, typecheck, hardening, and synthetic 24/24 pass |
+| Final `npm run agent:check` | PASS with expected approved-documentation checkpoint warning |
 
 ## Discoveries
 
-- `git fetch origin` is available and succeeded after the environment changed
-  to full access.
-- Current durable docs describe Phase 7 as complete and preserve the owner
-  freeze; neither should be reopened by this task.
-- Manifest identity: `validateCampaignManifest` recomputes campaign ID but
-  only syntax-checks `manifestFingerprint`; it does not recompute the
-  fingerprint or validate selected arrays, seed lineage, and executable work
-  material against the selection. Confirmed hardening defect.
-- Checkpoint/resume: `CampaignCheckpointStore.readCheckpoint` and
-  `writeCheckpoint` do not run a strict checkpoint validator. The orchestrator
-  accepts a typed JSON cast, so malformed counters, ledgers, references, and
-  result/state combinations can reach resume. `checkpointOrdinal` remains 0,
-  and replay reservation can be charged again after interruption. Confirmed
-  hardening defects.
-- Budget feasibility: the real profile allows three journeys plus three
-  explorations against six browser contexts, and three API items consume all
-  six API executions when fresh replays are included. Reproduction can
-  therefore be unavailable only after a candidate is observed. Confirmed
-  design gap; repair must remain within existing absolute caps.
-- Process boundary: authenticated Phase 7/5/4/2B and generic launcher paths
-  spread the full parent `process.env` into Playwright children. Auth-capture's
-  preflight child also inherits the parent environment. Confirmed secret
-  isolation gap; Oops already uses an explicit allowlist.
-- Filesystem/config boundary: storage-state read validation follows symlinks
-  and lacks strict ownership/mode checks; private artifact root checks use
-  arbitrary `process.cwd()` and write-side symlink/parent hardening is
-  incomplete; environment loading falls back to CWD config. Confirmed gaps.
-- Target/provenance: automated credential-bearing Phase 7 paths are DEV-only
-  and production/owner gates remain fail-closed. NEXT support is limited to
-  the explicitly human-led auth-capture exception. Oops checks two
-  caller-supplied source SHA strings but does not hash the actual executable.
-  The Oops provenance issue is confirmed; the NEXT widening hypothesis is
-  rejected as a current automated-path defect.
-- Evidence/privacy: budget-blocked reproduced clusters are represented only by
-  a transient and can end with `COMPLETE_CLEAN`; the brief headline uses
-  `NO ADMITTED PRODUCT ANOMALIES` for both zero observations and unresolved
-  L0 candidates. Private artifacts rely on a generic regex denylist instead of
-  structural DTO validation. Confirmed gaps.
-- Compile/CI/auditability: root Playwright configs for phase2b, phase4,
-  phase5, and phase7 are omitted from `tsconfig.json`; no repository-native
-  hardening check or private read-only CI workflow exists. The orchestrator's
-  error classification uses message substring matching. Confirmed gaps.
-- Multi-hour profile: direct static review found the larger budget as a
-  library constant with no current CLI/runtime selection path; this remains
-  to be verified by the hardening static check and is not enabled.
+- The first full-suite run exposed two fixture-only regressions from the new
+  storage-state permission contract: synthetic secret files were created with
+  default permissions, and a malformed-shape fixture reached the permission
+  check first. The fixtures now explicitly use owner-only `0600` mode; the
+  security boundary was not weakened.
+- The repository hardening checker initially matched its own
+  `MULTI_HOUR_CAMPAIGN_BUDGET` detection marker. Its scan now excludes only
+  the checker itself while still rejecting that profile in every launcher.
+- Continuity state intentionally records the last verified source checkpoint;
+  documentation-only descendants are accepted when every changed path is on
+  the narrow checkpoint allowlist. The validator now permits the recorded
+  remote pair to precede such a documentation-only remote descendant without
+  allowing source drift.
 
-## Blockers
+## Adversarial Test Ledger
 
-None.
+- Manifest: changed work-item ID/kind/lineage/API/seed/order, duplicate order,
+  duplicate/removed/extra work, selection arrays, budget, source snapshot/window,
+  owner scope, versions, fingerprint, old fingerprint plus executable-field
+  change, and extra execution material all reject.
+- Checkpoint: negative/reset/excess/incorrect budget, duplicate/unknown/wrong
+  kind ledger, overlap/missing IDs, impossible terminal classes, budget/auth
+  contradictions, negative safety, privacy mismatch, identity/fingerprint
+  drift, unknown cluster/reproduction/dossier refs, duplicate queues, wrong
+  types, truncated JSON, and malformed wrappers reject before executor callback.
+- Resume: interrupted work is `REPLAY_REQUIRED`; atomic reservations preserve
+  used+remaining arithmetic and charge retry budget without reset.
+- Budget: initial real-scale reserve, impossible profile, anomaly at early/final
+  coverage, API/failure-storm paths, minimization reserve, and exact-boundary
+  synthetic cases are covered by the campaign fixture matrix.
+- Process: AWS/Google/GitHub/Slack/OpenAI/Anthropic/NPM/SSH/custom/random
+  synthetic parent sentinels are absent from the inspected child.
+- Filesystem/CWD: root/file/parent/destination/state symlinks, path escapes,
+  group-readable modes, CWD changes, interrupted atomic writes, and malicious
+  CWD configuration are covered with temporary synthetic paths.
+- Brief/policy: zero observations, transient-only, unresolved L0/budget,
+  auth-blocked, shared failure, internal defect, and clean campaign headlines
+  are exercised; production and NEXT automated policy remain denied.
+
+## Decisions Made During This Task
+
+- Keep the threat model at accidental corruption, stale state, secret leakage,
+  boundary confusion, and auditability; do not add cryptographic key
+  management for a malicious-root threat that is explicitly out of scope.
+- Preserve existing real caps and reserve reproduction by deterministic
+  selection reduction rather than increasing load.
+- Treat all persisted JSON and child environments as untrusted until runtime
+  validation/allowlisting; TypeScript casts are not authority.
+- Use `stdio` pipes with finite buffers for launcher children and do not forward
+  raw child output. Human auth remains a parent-terminal wait around a headed
+  browser, not a child environment exception.
+- Do not refactor the monolithic orchestrator wholesale; current strict
+  boundaries plus characterization fixtures provide a safer audit seam.
 
 ## Safety Events
 
-NONE. Product network, production, DEV, NEXT, database, infrastructure, and
-external publication activity remain zero. Review workers were read-only and
-used no Alphaus repository or runtime/private artifact access.
+`NONE`. Product network contacts: 0. Production attempts: 0. DEV: 0. NEXT: 0.
+Database queries: 0. Infrastructure queries: 0. External publication attempts:
+0. Alphaus repositories were not modified. No credentials, storage state,
+private findings, customer identifiers, financial values, or authenticated
+evidence were read or persisted.
+
+## Privacy Status
+
+PASS. The source tree contains no runtime credentials/findings/storage state.
+Synthetic test sentinels are fake values only. Durable campaign/brief/candidate
+DTOs now structurally allowlist persisted fields; regex/marker checks remain
+defense in depth. CI has read-only contents permission, no secrets, and no
+artifact upload.
+
+## Maintainability / Exhaustiveness
+
+Large/high-risk modules were reviewed by responsibility, state/branch density,
+trust-boundary mixing, error paths, and focused coverage. The campaign
+orchestrator remains large, but characterization tests now cover its principal
+state transitions and strict validation is centralized at persistence edges.
+No size-only refactor was justified. Runtime enum validators cover manifest,
+checkpoint, brief, work states, result/stop classes, reproduction states, and
+evidence/privacy classes. A broad `assertNever` rewrite is deferred because
+the current validators provide the higher-value boundary without changing
+behavior.
+
+Dependencies remain unchanged and minimal: Playwright, TypeScript/Node types,
+and Vue are existing declared development dependencies; no new package or
+network advisory gate was added.
+
+## Continuity SHA Model
+
+The fields below are the last verified checkpoint values, not a self-referential
+claim that a documentation file contains its own commit SHA:
+
+CURRENT_GOAL: HIDDEN_STATE_AND_BOUNDARY_HARDENING
+CURRENT_MILESTONE: M5_INTEGRATED_VALIDATION
+STARTING_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
+CURRENT_LOCAL_HEAD: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+CURRENT_REMOTE_HEAD: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
+LAST_VALIDATED_IMPLEMENTATION_SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+LAST_DOCUMENTATION_CHECKPOINT_SHA: f99c50bcc1c45c1b8f8c241a3c4a89146b5aafff
+LAST_PUSHED_SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
+
+## Push Ledger
+
+- `bc8e3fa` task creation: PASS, origin verified.
+- `60ecbb7`, `54368fc`, `1f8d9a9`, `f99c50b` documentation/review/state
+  checkpoints: PASS, origin verified.
+- `37daa75` M2 persistence/checkpoint/budget source: PASS, origin verified.
+- `428cfee93e478c3730de2725d2690ad91f5ea150` M3/M4 implementation: PASS,
+  origin verified after fetch; no private runtime evidence included.
+- `ddfbc9a85f69e6bac644d366c87ade89ff4b2556` fixture/checker correction:
+  PASS, origin verified after fetch; no private runtime evidence included.
+- `78cd8d60f6a743985d5b0eae2560f6d06c40dbe4` continuity validator correction:
+  PASS, origin verified after fetch; no private runtime evidence included.
+
+## Blockers
+
+None. A real DEV regression is intentionally not required for the local
+contracts changed here; if closure discovers a behavior that cannot be proven
+synthetically it must be recorded as `REAL_DEV_REGRESSION_CHECK_REQUIRED`
+without execution.
 
 ## Deferred / Follow-Up
 
-- Do not execute a real DEV regression check. Record an exact blocker if a
-  scoped repair cannot be validated locally.
+- Do not execute a real DEV campaign or auth capture.
 - Do not reopen Phase 6 or start Phase 8.
+- A future owner-approved task may consider narrower orchestrator extraction,
+  but it is not a closure blocker.
+- Remote GitHub Actions execution result is not claimed until GitHub runs it;
+  the workflow design and local-equivalent checks are validated here.
+
+## Architecture Review Snapshot
+
+- Corrupted manifest execute undetected: **NO** — runtime ID/fingerprint and
+  cross-field/lineage validation fail closed.
+- Corrupted checkpoint reset budget or reference unknown work: **NO** — exact
+  budget arithmetic and strict ledger/reference validation precede resume.
+- Arbitrary parent secret enter authenticated child: **NO** for audited child
+  sites — allowlisted env plus sentinel tests.
+- CWD change config/artifact authority: **NO** — stable canonical roots and
+  malicious-CWD tests.
+- Symlink redirect real private artifacts: **NO** within supported owner/mode
+  checks — lstat/no-symlink and atomic post-write checks.
+- NEXT become automated credential target: **NO** — DEV-only automation and
+  explicit human-led auth-capture exception.
+- Unverified Oops executable masquerade: **NO** for restricted adapter — actual
+  executable bytes are hashed and compared to expected digest.
+- Initial coverage silently starve promised reproduction: **NO** for the
+  frozen real profile — reserve is analyzed before freeze.
+- Unresolved L0 disappear behind clean headline: **NO** — brief semantics
+  distinguish unresolved/budget-blocked states.
+- All root TypeScript configs checked: **YES** via `playwright*.config.ts`.
+- Remote CI proves useful source/fixture invariants independently: **YES**, by
+  design; it explicitly does not prove authenticated target behavior or local
+  owner filesystem permissions.
+- Orchestrator reasonably auditable: **YES**, with strict persistence seams
+  and characterization coverage; broad decomposition remains deferred.
 
 ## Resume Recipe
 
-1. Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
-   `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and this
+1. Read `AGENTS.md`, required project docs, `.agent/ACTIVE_TASK.md`, and this
    task's SPEC/PLAN/STATE.
-2. Inspect `git status --short`, `git diff`, `git log -1`, and `origin/main`.
-3. Run the smallest validation for the current milestone.
-4. Continue from Exact Next Action and update this STATE before changing
-   subproblems.
+2. Inspect `git status --short`, `git log -1`, and `origin/main`.
+3. Run the exact next action above; update this STATE before changing scope.
+4. Never run real target/auth/infrastructure/database/publication operations.
 
 ## Completion Snapshot
 
-Populate only when complete:
-
-Final SHA: pending
-Tests: pending
-Artifacts: pending
-Known issues: pending
-Recommended next task: none; do not start another phase.
-
-## Hardening Status Matrix
-
-CURRENT_GOAL: HIDDEN_STATE_AND_BOUNDARY_HARDENING
-CURRENT_MILESTONE: M3_PROCESS_FILESYSTEM_POLICY
-STARTING_SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-CURRENT_LOCAL_HEAD: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-CURRENT_REMOTE_HEAD: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
-REVIEW_FINDINGS: five bounded read-only tracks reconciled on 2026-08-14
-CONFIRMED_FINDINGS: manifest fingerprint/cross-field gap; absent strict checkpoint validation; replay/browser/API feasibility gap; replay double-charge and static ordinal gap; full child-env inheritance; storage/private-root/CWD config gaps; Oops byte provenance; brief L0/budget collapse; structural private DTO gap; omitted root TS configs; absent hardening check/CI; substring error taxonomy
-REJECTED_FINDINGS: automated NEXT widening not present; production deny and Phase 6 owner gate remain effective; Oops shell/argv/output allowlist remains strong
-FILES_CHANGED: M2 campaign runtime validators/budget/selection/orchestrator plus focused adversarial tests
-MANIFEST_INTEGRITY_STATUS: PASS — ID, fingerprint, selection lineage, work-item schema/order, cross-fields, and unknown fields validated; tamper matrix PASS
-CHECKPOINT_INTEGRITY_STATUS: PASS — strict pre-resume validator, exact ledger coverage, counter arithmetic, references, state/result semantics, malformed wrapper tests PASS
-BUDGET_FEASIBILITY_STATUS: PASS — real bounded profile reserves one reproduction within unchanged caps; optional exploration suppressed and linked API coverage reduced deterministically
-CHILD_ENV_STATUS: CONFIRMED GAP — repair queued M3
-FILESYSTEM_BOUNDARY_STATUS: CONFIRMED GAP — repair queued M3
-ENV_CONFIG_PROVENANCE_STATUS: CONFIRMED GAP — repair queued M3
-REAL_TARGET_POLICY_STATUS: AUTOMATED DEV-ONLY PASS; human NEXT exception must be documented/tested
-OOPS_PROVENANCE_STATUS: CONFIRMED GAP — repair queued M3
-MORNING_BRIEF_STATUS: CONFIRMED GAP — repair queued M4
-TYPECHECK_COVERAGE_STATUS: CONFIRMED GAP — repair queued M4
-CI_STATUS: NOT IMPLEMENTED — safe private workflow queued M4
-MAINTAINABILITY_STATUS: review complete; orchestrator extraction deferred pending focused characterization
-TEST_LEDGER: bootstrap/agent-check PASS; typecheck PASS; campaign:synthetic PASS (19 tests)
-ADVERSARIAL_TEST_LEDGER: manifest tamper matrix PASS; checkpoint corruption/malformed JSON matrix PASS; real-profile reserve fixture PASS
-PUSH_LEDGER: bc8e3fa task creation PASS; 60ecbb7/54368fc/1f8d9a9 documentation review checkpoints PASS; 37daa75 M2 implementation PASS; all pushed and origin-verified
-SAFETY_EVENTS: NONE
-PRIVACY_STATUS: no runtime/private data touched
-LAST_VALIDATED_IMPLEMENTATION_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 1f8d9a96f599cf0b37eb7b82ef8b0c6e75657a9a
-LAST_PUSHED_SHA: 37daa755b6ff815145bb2b8ccf922cddfb1bde48
-NEXT_EXACT_ACTION: add allowlisted child environment builder and replace sensitive launcher spreads; then run sentinel child fixtures
-RESUME_RECIPE: read task state, inspect Git/diff, run smallest milestone validation, continue exact next action
+- Final validated implementation SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4.
+- Final substantive source checkpoint SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4.
+- Final documentation checkpoint: pushed and verified after this state was
+  written; its exact non-self-referential Git SHA is recorded in the final
+  completion response.
+- Final local/remote equality: PASS after final documentation push.
+- Full local Playwright: 396/396; focused hardening: 135/135; synthetic:
+  24/24; agent-state: 14/14; storage/auth: 30/30.
+- Clean source-only checkout: PASS at source checkpoint 78cd8d6.
+- Acceptance verdict: PASS. No real DEV, production, database,
+  infrastructure, Alphaus-repository, credential, customer-data, or external
+  publication activity occurred.

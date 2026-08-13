@@ -123,7 +123,7 @@ Use a small set of typed runtime boundaries rather than trusting interfaces:
   owner-frozen classes remain impossible.
 - Validation commands: focused auth/process/filesystem/policy/Oops suites,
   static hardening check, typecheck.
-- Status: IN_PROGRESS
+- Status: COMPLETE — pushed implementation checkpoint `428cfee93e478c3730de2725d2690ad91f5ea150`
 
 ### M4 — Evidence truthfulness, privacy structure, static coverage, CI,
 maintainability
@@ -139,7 +139,9 @@ maintainability
   upload findings; hardening checks are deterministic and local.
 - Validation commands: brief/privacy/unit suites, typecheck, hardening check,
   CI YAML inspection, agent check.
-- Status: NOT_STARTED
+- Status: COMPLETE — included in the same validated implementation checkpoint;
+  brief DTOs, TypeScript coverage, launcher checks, hardening check, and
+  private read-only CI are present.
 
 ### M5 — Integrated adversarial validation and checkpoint
 
@@ -154,7 +156,8 @@ maintainability
   prohibited operations occurred, and local/remote HEADs agree on a clean tree.
 - Validation commands: full required validation ledger, `git diff --check`,
   `npm run agent:check`, `git push origin main`, `git fetch origin`.
-- Status: NOT_STARTED
+- Status: COMPLETE — source, full-suite, clean-checkout, final state/report,
+  and closure verification are recorded and pushed.
 
 ## Validation Strategy
 
