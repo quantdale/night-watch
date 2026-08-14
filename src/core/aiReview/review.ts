@@ -136,11 +136,11 @@ function projectArtifact<TArtifact extends AiReadableReviewArtifact>(
   return decisionProjection(artifact, record);
 }
 
-export function projectEffectiveBugReview(draft: AiBugDraft | AiBugDraftV1, record: AiReadableHumanReviewRecord | readonly AiReadableHumanReviewRecord[] | null | undefined, currentInput: AiBugReviewInput): AiReviewProjection<AiBugDraft | AiBugDraftV1> {
+export function projectEffectiveBugReview(draft: AiBugDraft | AiBugDraftV1, record: AiReadableHumanReviewRecord | readonly AiReadableHumanReviewRecord[] | null | undefined, currentInput?: AiBugReviewInput): AiReviewProjection<AiBugDraft | AiBugDraftV1> {
   return projectArtifact(draft, record, currentInput);
 }
 
-export function projectEffectiveOracleReview(suggestion: AiOracleSuggestion | AiOracleSuggestionV1, record: AiReadableHumanReviewRecord | readonly AiReadableHumanReviewRecord[] | null | undefined, currentInput: AiOracleReviewInput): AiReviewProjection<AiOracleSuggestion | AiOracleSuggestionV1> {
+export function projectEffectiveOracleReview(suggestion: AiOracleSuggestion | AiOracleSuggestionV1, record: AiReadableHumanReviewRecord | readonly AiReadableHumanReviewRecord[] | null | undefined, currentInput?: AiOracleReviewInput): AiReviewProjection<AiOracleSuggestion | AiOracleSuggestionV1> {
   return projectArtifact(suggestion, record, currentInput);
 }
 

@@ -174,6 +174,33 @@ function checkAiInvocationAuthority() {
   if (/new\s+AiReviewSession\s*\(/.test(sourceFiles.filter((file) => !file.startsWith('src/core/aiReview/')).map((file) => read(file)).join('\n'))) fail('runtime source creates automatic AI review sessions outside the AI subsystem');
 }
 
+function checkOwnerReviewCliBoundary() {
+  const file = 'bin/ai-owner-review.mjs';
+  const source = read(file);
+  if (!source) return;
+  if (!source.includes('ownerReview.ts')) fail(`${file} does not load the provider-free owner-review service`);
+  const forbidden = [
+    /\bAiReviewSession\b/,
+    /\bSyntheticAiReviewProvider\b/,
+    /\bLoopbackAiReviewProvider\b/,
+    /\bfetch\s*\(/,
+    /\b(?:http|https)\.request\s*\(/,
+    /\bnet\.connect\s*\(/,
+    /\bspawn\s*\(/,
+    /\bexec(?:File)?\s*\(/,
+    /\bchild_process\b/,
+    /\bgit\s+push\b/i,
+    /\bGitHub\b/,
+    /\bSlack\b/,
+    /\b(?:publish|publication|share|export|clipboard|editor|pager)\b/i,
+  ];
+  for (const pattern of forbidden) if (pattern.test(source)) fail(`${file} references a prohibited execution, transport, publication, or external capability`);
+  if (/--(?:approve|reject|supersede|decision(?:=|\b)|yes|force|non-interactive)\b/i.test(source)) fail(`${file} contains a decision argument shortcut`);
+  if (/from\s+['"][^'"]*aiReview(?:['"]|\/index)/i.test(source) || /from\s+['"][^'"]*(?:pipeline|syntheticProvider|loopbackProvider)[^'"]*['"]/i.test(source)) fail(`${file} imports an AI execution path rather than the owner-review service`);
+  if (/\bwrite(?:Json|File|ImmutableJson|Incomplete)\s*\(/.test(source)) fail(`${file} writes private state directly instead of routing through the owner-review service`);
+  if (!/record(?:Confirmed)?OwnerDecision/.test(source) || !/AiReviewArtifactStore/.test(source)) fail(`${file} does not route its sole write through owner-review service/storage`);
+}
+
 function checkSyntax() {
   for (const file of fs.readdirSync(path.join(root, 'bin')).filter((item) => item.endsWith('.mjs'))) {
     const result = spawnSync(process.execPath, ['--check', path.join(root, 'bin', file)], { cwd: root, encoding: 'utf8', timeout: 10_000, maxBuffer: 256 * 1024, env: childEnvironment });
@@ -187,6 +214,7 @@ checkTypecheckCoverage();
 checkPrivateSurface();
 checkAiReviewBoundary();
 checkAiInvocationAuthority();
+checkOwnerReviewCliBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

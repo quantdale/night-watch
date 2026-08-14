@@ -11,3 +11,4 @@ export type { AiReviewResult, AiReviewRunOptions } from './pipeline';
 export * from './storage';
 export * from './review';
 export * from './render';
+export * from './ownerReview';
