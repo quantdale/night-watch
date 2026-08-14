@@ -925,3 +925,52 @@ owner-policy bypass and blur the permanent Phase 6 freeze.
 no AI provider is a campaign dependency or safety decision-maker.
 
 **Phase applicability.** Phase 7B.
+
+## D-35 — Phase 7B.1 provider exposure has one mandatory session authority
+
+**Decision.** `AiReviewSession` is the only supported runtime authority that
+can expose a provider. Candidate and oracle request attempts are reserved
+synchronously at the owner boundary; actual provider exposure is reserved
+synchronously immediately before the one private registered-handler boundary
+and shares a three-call session cap. The public index and direct pipeline
+module do not export raw review functions or provider methods. A new session is
+an explicit new owner invocation; no process-global counter or automatic
+session factory is added.
+
+**Rationale.** A wrapper cannot enforce a safety budget if callers can choose a
+raw primitive instead. Separating attempt accounting from provider exposure
+also keeps invalid input bounded without misreporting an uncalled provider.
+
+**Consequences.** Invalid, disabled, and non-local requests consume their
+request-attempt budget but leave `providerCalls` at zero. Timeout, unavailable,
+malformed, schema-invalid, and storage-failed calls after handler entry consume
+the provider-call unit and are never refunded. The source hardening check
+rejects a second call path or runtime session factory.
+
+**Phase applicability.** Phase 7B.1 and later AI review consumers.
+
+## D-36 — AI artifacts are immutable v2 material with companion owner provenance
+
+**Decision.** Generated bug drafts and oracle suggestions use v2 schemas with
+stored status `AI_GENERATED_UNREVIEWED`; owner decisions are separate exact-key
+v2 records containing deterministic review identity, artifact ID/kind/schema,
+full artifact digest, owner reviewer class, and publication prohibition. A
+validated effective-state projection combines artifact, one matching record,
+and current deterministic input. One terminal decision is allowed per exact
+artifact; conflicting decisions fail closed. Owner `SUPERSEDE` and input-driven
+`STALE` remain distinct reasons. Historical v1 artifacts are readable only as
+explicit legacy data and their status never proves approval without a matching
+validated record.
+
+**Rationale.** Approval represented by an editable artifact enum is not
+auditable provenance. Keeping model identity and owner identity separate makes
+forgery, corruption, digest mismatch, stale input, and conflicting decisions
+deterministically visible without rewriting history.
+
+**Consequences.** Storage writes generated artifacts and review records as
+separate owner-only files; renderers consume effective projection rather than
+artifact status. Bug approval remains a draft and oracle approval remains
+manual implementation review only. No deterministic evidence, catalog,
+campaign, execution, publication, source, or Phase 6 authority changes.
+
+**Phase applicability.** Phase 7B.1 and later AI review consumers.

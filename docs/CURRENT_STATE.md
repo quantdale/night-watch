@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B closeout. Phase 0–5 are complete;
+> the Nightwatch Phase 7B.1 authority-hardening closeout. Phase 0–5 are complete;
 > Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, and Phase 7B
 > are complete. Phase 8 remains unstarted.
 
@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `34775913c122d2e8eed6a70072487e28c2eb02e0` (validated Phase 7B implementation checkpoint; final closure documentation is a documentation-only descendant) |
+| `REMOTE_HEAD` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (validated Phase 7B.1 implementation checkpoint; final closure documentation is a documentation-only descendant) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -367,6 +367,43 @@ remains `FROZEN_BY_OWNER` with L4 `OUT_OF_SCOPE_BY_OWNER`; Phase 8 autonomous
 self-development was not started. Full validation passed with 437/437
 Playwright tests, including the Phase 7B synthetic and loopback matrix, plus
 TypeScript, hardening, synthetic campaign, owner-scope, and Phase 6 checks.
+
+## Phase 7B.1 — AI review authority hardening (complete)
+
+Phase 7B.1 is the narrow hardening descendant of historical Phase 7B. It does
+not broaden AI capability and does not rewrite the Phase 7B task report. The
+validated implementation checkpoint is
+`40e59ecf6209dac7ef88ac2af0bcef781562a837`.
+
+- `AiReviewSession` is the only supported provider-execution authority. Raw
+  low-level review functions and provider methods are no longer exported;
+  source hardening checks the single private provider boundary and forbids
+  campaign/runtime execution imports or automatic session factories.
+- `candidateReviewAttempts` and `oracleSuggestionAttempts` are bounded owner
+  request attempts, including invalid/disabled/non-local attempts.
+  `providerCalls` is the actual synchronously reserved provider-boundary
+  exposure, shared across both products and never refunded after entry.
+- Generated artifacts use v2 unreviewed-only schemas:
+  `nightwatch.ai-bug-draft.private.v2` and
+  `nightwatch.ai-oracle-suggestion.private.v2`. Owner decisions are separate
+  exact-key `nightwatch.ai-human-review.private.v2` records with deterministic
+  review identity, owner/publication constraints, artifact schema binding, and
+  full-artifact digest binding.
+- Effective review state is projected from artifact, validated review record,
+  matching digest, and current deterministic input. A status field alone
+  cannot prove approval. Bug approval remains a draft; oracle approval remains
+  manual implementation review only. Rejection, owner supersede, input-driven
+  staleness, conflicts, corruption, and legacy v1 status are distinct and
+  fail closed or remain explicitly unverified.
+- Phase 7 campaign behavior, deterministic evidence, action/oracle catalogs,
+  safety/privacy vectors, owner scope, Phase 6 freeze, and publication/source
+  boundaries are unchanged. Phase 8 remains unstarted.
+
+The current 7B/7B.1 AI/loopback matrix passes 54/54; the synthetic campaign
+passes 27/27; the full Playwright suite passes 453/453; TypeScript,
+hardening, agent-state, privacy review, and diff checks pass. No real model,
+cloud provider, product traffic, database/infrastructure operation, or real
+AI artifact was used.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

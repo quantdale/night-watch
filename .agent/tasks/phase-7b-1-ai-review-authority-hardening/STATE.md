@@ -6,13 +6,13 @@ Task ID: phase-7b-1-ai-review-authority-hardening
 Phase: 7B.1 — AI REVIEW AUTHORITY HARDENING
 Status: IN_PROGRESS
 Starting SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Current SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Last validated implementation SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Last substantive checkpoint SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Current SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last substantive checkpoint SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
 Last documentation checkpoint SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Last pushed SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Current local head: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Current remote head: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Last pushed SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Current local head: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Current remote head: 40e59ecf6209dac7ef88ac2af0bcef781562a837
 Branch: main
 Remote: origin -> quantdale/night-watch/main
 
@@ -24,7 +24,7 @@ Nightwatch truth and execution.
 
 ## Current Milestone
 
-M6 — full local and isolated validation.
+M7 — durable closure and remote verification.
 
 ## Completed Milestones
 
@@ -37,16 +37,16 @@ M6 — full local and isolated validation.
 
 ## Work In Progress
 
-The implementation and focused regression matrix are complete. Full local
-validation, project documentation reconciliation, clean-checkout validation,
-and durable checkpoint pushes remain.
+The implementation checkpoint is pushed and synchronized. Project
+documentation reconciliation, isolated clean-checkout validation, final task
+reporting, and the documentation checkpoint remain.
 
 ## Exact Next Action
 
-Run `npm run campaign:synthetic`, the full Playwright suite, `npm run
-agent:check`, privacy/secret checks, and manual diff review. Then commit and
-push the validated implementation checkpoint before the documentation closure
-checkpoint.
+Reconcile `CURRENT_STATE.md`, `SAFETY_MODEL.md`, `ARCHITECTURE.md`,
+`DECISIONS.md`, and `ROADMAP.md`; run the isolated clean-checkout checks; then
+commit/push the documentation checkpoint, read its exact remote workflow, and
+then record the terminal state push.
 
 ## Files Changed
 
@@ -72,7 +72,45 @@ checkpoint.
 - Full Playwright: PASS — 453/453.
 - `npm run agent:check`: PASS with the expected uncommitted implementation
   baseline warning.
-- Clean checkout and final post-checkpoint validation: PENDING.
+- Clean checkout: PASS — isolated `npm ci --ignore-scripts`, typecheck,
+  hardening, focused 54/54, campaign 27/27, and agent-state.
+- Final post-documentation-checkpoint validation and remote CI: PENDING.
+
+## Continuity Vector
+
+CURRENT_GOAL: Enforce one non-bypassable bounded AI provider authority and
+digest-bound immutable owner-review provenance while preserving zero AI
+authority over Nightwatch truth and execution.
+CURRENT_MILESTONE: M7 — durable closure and remote verification.
+STARTING_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+STARTING_REMOTE_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+CURRENT_LOCAL_HEAD: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+CURRENT_REMOTE_HEAD: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+PHASE_7B_STATUS: COMPLETE (historical architecture milestone preserved)
+PHASE_8_STATUS: NOT_STARTED
+OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
+INVOCATION_PUBLIC_API: AiReviewSession only for provider execution
+INVOCATION_BUDGET_AUTHORITY: one explicit session; raw provider execution private
+CANDIDATE_ATTEMPTS: max 3 synchronous owner requests per session
+ORACLE_ATTEMPTS: max 3 synchronous owner requests per session
+PROVIDER_CALL_SEMANTICS: actual shared synchronous provider-boundary exposure, max 3
+CONCURRENCY_STATUS: PASS — four pending requests yielded exactly three invocations
+REVIEW_PROVENANCE_MODEL: immutable v2 artifact plus separate digest-bound owner record
+ARTIFACT_IMMUTABILITY_STATUS: PASS — generated status unreviewed-only; storage write-once
+HUMAN_REVIEW_RECORD_STATUS: PASS — exact-key v2 record with deterministic review ID
+STALE_STATE_STATUS: PASS — changed deterministic input projects STALE and preserves history
+SCHEMA_VERSION_DECISION: v2 generated artifacts; explicit flat-v1 read compatibility
+FILES_CHANGED: implementation, tests, hardening, workflow, task state, and project docs
+FOCUSED_TEST_LEDGER: PASS — AI/loopback 54/54; synthetic campaign 27/27; full suite 453/453
+ADVERSARIAL_TEST_LEDGER: PASS — bypass, concurrency, accounting, forgery, digest, stale, conflict, corruption, self-approval, scope, and isolation cases
+HARDENING_STATUS: PASS — public export, provider call-graph, local-only, storage, and campaign checks
+CI_STATUS: PENDING — exact final workflow run after terminal documentation push
+PRIVACY_STATUS: PASS — zero real credentials, customer data, findings, or AI output
+SAFETY_EVENTS: NONE — DEV/NEXT/production/product/data/infrastructure/publication/AI-tool vectors all zero
+LAST_VALIDATED_IMPLEMENTATION_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+LAST_DOCUMENTATION_CHECKPOINT_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+LAST_PUSHED_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
 
 ## Decisions Made During This Task
 
@@ -127,7 +165,7 @@ Phase 7: COMPLETE
 Hardening I: COMPLETE
 Hardening I.1: COMPLETE
 Phase 7B: COMPLETE (historical architecture milestone)
-Phase 7B.1: IN_PROGRESS
+Phase 7B.1: IN_PROGRESS — source/docs complete; final remote verification pending
 Phase 8: NOT_STARTED
 Owner scope: local/static/synthetic/loopback-fixture-only
 Invocation public API: `AiReviewSession` only for provider execution
@@ -145,7 +183,7 @@ Hardening status: PASS — export, call-graph, local-only, and isolation checks
 CI status: PENDING final pushed workflow read
 Privacy status: PASS — no real credentials, customer data, findings, or AI output
 Safety vector: DEV 0; NEXT 0; production 0; product mutations 0; database 0; infrastructure 0; publication 0; external AI 0; AI tools 0; AI source edits 0
-Last validated implementation SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Last substantive checkpoint SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last substantive checkpoint SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
 Last documentation checkpoint SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
 Last pushed SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7

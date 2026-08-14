@@ -560,7 +560,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-## 16. Phase 7B bounded AI review safety
+## 16. Phase 7B/7B.1 bounded AI review safety
 
 Phase 7B is an optional post-processing branch over sanitized deterministic
 evidence. It is not a campaign stage, oracle, action planner, browser/API
@@ -587,11 +587,23 @@ secret/PII sentinels. Errors contain only safe class/size/digest metadata.
 Validated artifacts are explicitly `AI_GENERATED_UNREVIEWED`, carry visible AI
 provenance, retain deterministic facts copied from input, and are written as
 owner-only private companions through the existing atomic store outside Git.
-Human approval is a separate digest-bound record. Bug approval does not admit
-evidence or publish it. Oracle approval means only
-`APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest, action,
-source, request, or callback can be changed. Input digest/snapshot changes
-make old artifacts stale/superseded.
+The v2 generated schemas are immutable model artifacts; the v1 status-bearing
+schemas are read-compatible only and never trusted as current owner authority
+without a matching record. Human approval is a separate exact-key v2 record
+bound to artifact ID, artifact kind/schema, full artifact digest, deterministic
+review ID, `reviewerClass=OWNER`, and `publication=PROHIBITED`.
+
+`AiReviewSession` is the only supported provider-execution authority. Candidate
+and oracle attempt maxima are owner-request bounds; `providerCalls` is the
+shared actual provider-boundary exposure count. Attempt and provider-call
+reservations are synchronous, so invalid input consumes only an attempt and
+concurrent requests cannot exceed the shared cap. Provider errors, rejected
+output, and private-storage failures after entry consume the call and are not
+refunded. Bug approval does not admit evidence or publish it. Oracle approval
+means only `APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest,
+action, source, request, or callback can be changed. Effective approval is
+derived from the artifact, validated record, digest match, and current input;
+input digest/snapshot changes make old artifacts `STALE`.
 
 The deterministic Phase 7 campaign is validated independently with AI absent;
 there is no campaign-to-provider hook. Current safety acceptance requires zero
@@ -600,15 +612,16 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
-prompt-injection/hallucination, human review, staleness, owner scope, and
-oracle isolation; `tests/unit/aiReviewLoopback.test.ts` covers endpoint class,
-request privacy, redirect, response-size, and timeout containment;
-`bin/hardening-check.mjs` enforces the source-level no-capability boundary.
+prompt-injection/hallucination, invocation budgets, accounting, concurrency,
+human review, staleness, forgery/corruption, owner scope, and oracle isolation;
+`tests/unit/aiReviewLoopback.test.ts` covers endpoint class, request privacy,
+redirect, response-size, and timeout containment; `bin/hardening-check.mjs`
+enforces the source-level no-capability and single-call-graph boundary.
 
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1 AI review;
 changes require a DECISIONS entry and a test update.*

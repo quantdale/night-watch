@@ -467,6 +467,42 @@ the owner-only private findings store.
 
 ---
 
+## Phase 7B.1 — AI review authority hardening (complete)
+
+This narrow descendant preserves historical Phase 7B as `COMPLETE` while
+closing its implementation-review findings. The validated implementation
+checkpoint is `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
+
+**Key deliverables.**
+
+- `AiReviewSession` is the single supported provider-execution authority;
+  raw low-level functions, direct provider methods, campaign hooks, and
+  automatic session factories are absent. Offline hardening checks the public
+  exports and source-derived provider call graph.
+- Candidate/oracle request attempts remain independently bounded at three;
+  actual provider exposure is a shared three-call budget reserved
+  synchronously immediately before the private handler boundary. Invalid,
+  disabled, and non-local requests consume attempts but not provider calls;
+  provider failures and output/storage rejection after entry consume calls.
+- Generated bug/oracle artifacts use immutable v2 unreviewed-only schemas.
+  Separate exact-key owner review records carry deterministic identity,
+  artifact schema and full-artifact digest binding, owner provenance, and
+  publication prohibition. Effective approval requires the record, digest
+  match, and fresh deterministic input; forged status, changed artifacts,
+  mismatched records, conflicts, stale input, corruption, and unverified v1
+  status cannot create current approval.
+- Synthetic/loopback tests cover direct bypass, mixed/concurrent budgets,
+  accounting, provider failures, model self-approval, renderer/storage
+  authority, review provenance, legacy compatibility, and oracle/catalog
+  isolation. Current focused matrix is 54/54; synthetic campaign is 27/27;
+  full Playwright is 453/453.
+
+**Non-goals / exclusions.** No owner review CLI, real model, cloud provider,
+real campaign, auth capture, product traffic, database/infrastructure work,
+publication, source modification by AI, or Phase 8 functionality.
+
+---
+
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)
 
 **Goal.** Nightwatch extends itself: generating scenarios and tests for

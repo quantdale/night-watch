@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, and Phase 7B/7B.1 bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -165,13 +165,19 @@ Optional owner-invoked Phase 7B review is a one-way companion branch:
 ```
 sanitized deterministic AI-ready package or Phase 3 structural change DTO
         ↓
-synthetic provider or explicit loopback-local provider
+AiReviewSession attempt/deadline authority
+        ↓
+strict input/local-provider validation and shared provider-call reservation
+        ↓
+private synthetic provider or explicit loopback-local provider
         ↓
 strict hostile-output validator
         ↓
-owner-only AI-generated/unreviewed companion artifact
+immutable owner-only AI-generated/unreviewed v2 companion artifact
         ↓
-separate owner review record
+separate exact-key digest-bound owner review record
+        ↓
+validated effective review projection with current-input freshness
 ```
 
 The branch cannot flow back into anomaly admission, evidence level, campaign
@@ -317,6 +323,11 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
   The loopback adapter fixes the endpoint path, requires `http:` loopback
   hosts, bounds bytes/time, sends no credentials, follows no redirects, and
   has no proxy/cloud fallback.
+- The public AI execution surface is `AiReviewSession`; exported validators,
+  storage, rendering, and review helpers cannot invoke a provider. The shared
+  provider reservation is the only provider call path. Generated v2 artifacts
+  remain unreviewed; owner decisions are companion records and never rewrite
+  model identity or artifact bytes.
 
 ---
 

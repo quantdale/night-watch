@@ -103,13 +103,13 @@ and oracle/catalog isolation are covered by deterministic tests.
 provider boundary, non-AI import surface, local provider allowlist, private
 storage, campaign isolation, and loopback containment.
 
-### M6 — Full local and isolated validation — IN_PROGRESS
+### M6 — Full local and isolated validation — COMPLETE
 
-Focused 7B/7B.1 tests, typecheck, hardening, and diff-whitespace validation
-pass. Run the synthetic campaign, full Playwright suite, agent-state/privacy
-checks, manual diff review, and an isolated clean checkout next.
+Focused 7B/7B.1 tests, typecheck, hardening, synthetic campaign, full
+Playwright suite, agent-state, privacy review, and diff-whitespace validation
+pass. The isolated clean checkout is the remaining validation item.
 
-### M7 — Durable closure and remote verification — PENDING
+### M7 — Durable closure and remote verification — IN_PROGRESS
 
 Commit and push a validated implementation checkpoint, complete project/task
 documentation without rewriting historical Phase 7B evidence, push the final
