@@ -23,7 +23,10 @@ test('Phase 8A.1 verify CLI accepts only one exact ID and performs no write', ()
   expect(verifySource).toContain('--artifact-id');
   expect(verifySource).toContain('readOnly: true');
   expect(verifySource).toContain('assessSelfDevArtifactIntegrity');
-  const privateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-selfdev-cli-'));
+  // The private-artifact policy rejects roots inside the detected workspace.
+  // A fresh clone under /tmp makes os.tmpdir() part of that workspace, so
+  // keep this synthetic injected root under the operator home instead.
+  const privateRoot = fs.mkdtempSync(path.join(os.homedir(), 'nightwatch-selfdev-cli-'));
   try {
     const env = { ...process.env, NIGHTWATCH_PRIVATE_STATE_DIR: privateRoot };
     const missing = spawnSync(process.execPath, ['bin/selfdev-verify.mjs', '--artifact-id', `session:sha256:${'a'.repeat(64)}`], {

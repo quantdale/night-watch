@@ -25,7 +25,7 @@ adoption or mutation authority.
 ## Current Milestone
 
 CURRENT_MILESTONE:
-M7 — substantive checkpoint, acceptance artifact, and CI (IN_PROGRESS).
+M6 — full validation and isolated checkout (IN_PROGRESS).
 
 ## Historical status
 
@@ -79,12 +79,17 @@ v2 persistence and sanitized summary.
   hardening checks.
 - M5 completed: 36 focused Phase 8A/8A.1 tests, dedicated CI step, and
   adversarial identity/state/replay/provenance matrix.
-- M6 completed: full `npm test` Playwright regression passed 562/562;
+- M6 local validation: full `npm test` Playwright regression passed 562/562;
   `npm run test:owner-provenance` passed 91/91; serial
   `npm run campaign:synthetic` passed 27/27; typecheck, hardening,
   agent-state, whitespace, and staged privacy checks passed. A parallel test
   attempt briefly collided on the synthetic fixture port and was rerun
   serially; no source failure or safety event resulted.
+- The first e56e068 full-history clone failed one verify-CLI test because its
+  `/tmp` private root was inside the clone's detected workspace. The policy
+  behavior was correct; the fixture was repaired to use a home-directory
+  temporary root, and the local focused 39-test plus full 562-test rerun
+  passed.
 
 ## Gap reconfirmation
 
@@ -100,16 +105,19 @@ real owner state was touched.
 
 ## Work In Progress
 
-Implementation, focused tests, hardening, full current regression, and the
-dedicated CI matrix are complete in the working tree. The implementation
-checkpoint, isolated checkout, acceptance artifact, documentation closure,
-and exact remote CI observation remain.
+Implementation, focused tests, hardening, and full current regression are
+complete in the working tree. The first clean clone of e56e068 exposed a
+test-fixture portability defect: its temporary private root was under `/tmp`,
+which is the detected workspace when a clone is placed there. The policy
+correctly rejected that root; the test now uses a temporary home-directory
+root. A replacement checkpoint and fresh clean-clone validation remain before
+acceptance-artifact generation.
 
 ## Exact Next Action
 
-Commit and push the validated implementation after the scoped diff/privacy
-review, then create a fresh full-history checkout from that checkpoint and run
-the deterministic validation slice there.
+Stage and push the clean-checkout fixture repair as a replacement substantive
+checkpoint, then create a fresh full-history checkout from that exact SHA and
+rerun the deterministic validation slice.
 
 ## Files Changed
 
@@ -131,12 +139,15 @@ ACCEPTANCE_ARTIFACT_FINAL_DOC_DESCENDANT_STATUS: NONE
 ## Validation Ledger
 
 FOCUSED_TEST_LEDGER: PASS — `npm run typecheck`; `npm run hardening:check`;
-36 tests in selfDevSchema/selfDev/selfDevProvenance/selfDevCli; `git diff
+39 tests in selfDevSchema/selfDev/selfDevProvenance/selfDevCli; `git diff
 --check`.
 FULL_TEST_LEDGER: PASS — `npm test` 562/562; `npm run
 test:owner-provenance` 91/91; `npm run campaign:synthetic` 27/27.
-CLEAN_CHECKOUT_STATUS: NOT_RUN
-CI_STATUS: NOT_RUN
+CLEAN_CHECKOUT_STATUS: E56_REPAIR_REQUIRED — one test-fixture portability
+failure in the first isolated clone; repair is present locally and a fresh
+replacement checkpoint validation is pending.
+CI_STATUS: PASS — substantive e56e068 workflow 31821592114 passed, including
+the Phase 8A.1 step; replacement checkpoint CI remains pending.
 SAFETY_EVENTS: NONE
 PRIVACY_STATUS: PASS — staged diff secret/privacy-shape scan found no
 credential, token, customer, auth, model, or private-artifact content.
@@ -157,6 +168,10 @@ credential, token, customer, auth, model, or private-artifact content.
 - Rejected raw proposals are unnecessary for replay because the bounded
   proposer descriptor regenerates the exact sequence and the evaluator emits
   safe identity metadata for rejected inputs.
+- An isolated clone under `/tmp` detects `/tmp` as its workspace parent, so
+  CLI tests must place injected private roots outside that workspace. This is
+  a test-fixture portability constraint, not a relaxation of private-root
+  safety.
 
 ## Blockers
 
@@ -178,9 +193,9 @@ read-only provenance commands were used in tests.
 
 ## Exact Next Action
 
-Commit and push the validated implementation checkpoint, then validate a fresh
-full-history clean checkout from that exact SHA before generating the local
-acceptance artifact.
+Stage and push the clean-checkout fixture repair, then validate a fresh
+full-history clean checkout from the replacement SHA before generating the
+local acceptance artifact.
 
 ## Resume Recipe
 
@@ -193,7 +208,7 @@ runtime Git writes, source writes, or publication.
 
 ## Completion Snapshot
 
-Not complete. Stable historical anchors currently point to the synchronized
-starting SHA until the implementation-bearing commit is created; live HEAD
-remains discovered from Git. The next checkpoint must be that implementation
-commit, not a self-referential state claim.
+Not complete. e56e068 is a pushed substantive checkpoint with a clean-clone
+test-fixture defect; the repaired replacement checkpoint must pass isolated
+validation before it becomes the validated implementation anchor. Live HEAD
+remains discovered from Git.

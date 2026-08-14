@@ -137,17 +137,20 @@ is clean with Phase 8B still NOT_STARTED.
 - Add a dedicated Phase 8A.1 CI step while preserving early hardening and
   read-only permissions/full history.
 
-### M6 — Full validation and isolated checkout (`COMPLETED`)
+### M6 — Full validation and isolated checkout (`IN_PROGRESS`)
 
 - Run focused tests first, then typecheck, hardening, applicable AI/canary,
   owner/provenance, agent-state, campaign, Playwright, whitespace, privacy,
-  and manual scoped diff review. Completed locally: 562/562 full Playwright
-  tests, 91/91 owner/provenance tests, and 27/27 synthetic campaign tests;
-  typecheck, hardening, agent-state, whitespace, and privacy checks passed.
+  and manual scoped diff review. Local validation is green: 562/562 full
+  Playwright tests, 91/91 owner/provenance tests, and 27/27 synthetic campaign
+  tests; typecheck, hardening, agent-state, whitespace, and privacy checks
+  passed. The first clean clone exposed a test-fixture portability defect in
+  the injected private-root location; the fixture was repaired to use a
+  temporary home-directory root and must be revalidated from a new checkpoint.
 - Validate a fresh full-history clone with `npm ci --ignore-scripts` and the
   deterministic checks, including a temp private root and Git provenance.
 
-### M7 — Substantive checkpoint, acceptance artifact, and CI (`IN_PROGRESS`)
+### M7 — Substantive checkpoint, acceptance artifact, and CI (`PENDING`)
 
 - Update state with stable anchors, validate diff/privacy, commit/push the
   implementation-bearing checkpoint, verify `HEAD == origin/main`, and inspect
