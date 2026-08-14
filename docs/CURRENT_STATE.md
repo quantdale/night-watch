@@ -33,6 +33,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
 | `LAST_VALIDATED_IMPLEMENTATION_SHA` | `4602fac417746a30927fc19f8e4ca48ab9143cac` (stable validated Phase 8A.1 implementation/substantive anchor) |
+| `LAST_DOCUMENTATION_CHECKPOINT_SHA` | `488b4e41dc12840a1e0c029ae76b24f3ce8abee4` (Phase 8A.1 documentation descendant; live HEAD remains discovered from Git) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |

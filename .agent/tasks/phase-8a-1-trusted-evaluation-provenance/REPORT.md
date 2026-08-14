@@ -1,6 +1,6 @@
 # NIGHTWATCH PHASE 8A.1 — TRUSTED EVALUATION PROVENANCE + REPLAY INTEGRITY CLOSEOUT
 
-Status: `DOCUMENTATION CLOSURE IN PROGRESS`
+Status: `COMPLETE`
 
 ## Checkpoints and gap reconfirmation
 
@@ -15,8 +15,9 @@ Status: `DOCUMENTATION CLOSURE IN PROGRESS`
   `4602fac417746a30927fc19f8e4ca48ab9143cac`.
 - Prior implementation checkpoint `e56e068` passed CI but exposed a clean-clone
   test-fixture portability defect; the repair is in the validated checkpoint.
-- Documentation anchor and final live SHA are pending the documentation
-  descendant push. Live Git is the only current-head authority.
+- Documentation anchor: `488b4e41dc12840a1e0c029ae76b24f3ce8abee4`.
+- Final live SHA: discover from Git after the metadata-only closure commit;
+  live Git is the only current-head authority.
 
 ## Versioned trust contracts
 
@@ -117,8 +118,8 @@ patch, or adoption result. Verification is read-only.
 - Counts: 3 candidates, 1 pass, 1 duplicate, 1 rejected.
 - Adoption/publication: `NOT_AUTHORIZED_PHASE_8A` / `PROHIBITED`.
 - Side effects: source writes 0, Git writes 0, external calls 0.
-- Final documentation-descendant status: pending documentation push and
-  exact-ID re-verification.
+- Final documentation-descendant status at the documentation anchor:
+  `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`; replay `PASS`.
 
 ## Validation and CI ledger
 
@@ -139,6 +140,9 @@ patch, or adoption result. Verification is read-only.
 - Substantive CI run `31822125738` at `4602fac`: success; dedicated
   `Phase 8A.1 evaluation provenance and replay integrity matrix` executed and
   passed. Earlier implementation run `31821592114` also passed.
+- Documentation CI run `31823224468` at `488b4e4`: success; the same Phase
+  8A.1 matrix executed and passed. The final metadata-only closure workflow is
+  observed from live Git after this report is committed.
 - No model, local-model canary, product, DEV/NEXT/production, database,
   infrastructure, Alphaus write, runtime Git write, or external publication
   occurred.
@@ -146,8 +150,9 @@ patch, or adoption result. Verification is read-only.
 ## Closure status
 
 Phase 8 remains `IN_PROGRESS`; Phase 8A remains historically `COMPLETE`;
-Phase 8A.1 is implementation-complete pending documentation-descendant
-verification and final CI/state closure; Phase 8B remains `NOT_STARTED`.
+Phase 8A.1 is `COMPLETE`; Phase 8B remains `NOT_STARTED`. The implementation
+and documentation anchors are durable; final live Git/CI are discovered after
+the metadata-only closure commit.
 The residual threat model excludes a malicious machine owner who rewrites
 Nightwatch source, private artifacts, and verifier together. Recommended next
 task, only after a new authorization and design review, is

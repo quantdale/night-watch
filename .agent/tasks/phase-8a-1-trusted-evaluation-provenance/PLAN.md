@@ -1,6 +1,6 @@
 # Nightwatch Phase 8A.1 — Living ExecPlan
 
-Status: `IN_PROGRESS`
+Status: `COMPLETE`
 
 ## Purpose
 
@@ -161,13 +161,16 @@ is clean with Phase 8B still NOT_STARTED.
   `4602fac417746a30927fc19f8e4ca48ab9143cac`; exact CI run `31822125738`
   passed and the artifact verified `VERIFIED_EXACT_BASE` with replay `PASS`.
 
-### M8 — Documentation closure and final CI (`IN_PROGRESS`)
+### M8 — Documentation closure and final CI (`COMPLETED`)
 
 - Update project state/safety/decisions/roadmap/architecture and task report;
   close ACTIVE_TASK only after all acceptance evidence is recorded.
 - Push documentation-only descendant, reverify the same artifact as a source-
   equivalent descendant, inspect exact final CI step, and leave clean synced
-  `main` without starting Phase 8B.
+  `main` without starting Phase 8B. Documentation anchor
+  `488b4e41dc12840a1e0c029ae76b24f3ce8abee4` passed source-equivalent replay;
+  final metadata closure and final CI observation remain only as live Git
+  confirmation after this report commit.
 
 ## Expected implementation surface
 

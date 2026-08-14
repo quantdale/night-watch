@@ -4,11 +4,11 @@
 
 Task ID: phase-8a-1-trusted-evaluation-provenance
 Phase: 8A.1 — TRUSTED EVALUATION PROVENANCE + REPLAY INTEGRITY CLOSEOUT
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: f75a547233a2a5189f157b959d309170a4ebdb57
 LAST_VALIDATED_IMPLEMENTATION_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 488b4e41dc12840a1e0c029ae76b24f3ce8abee4
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -25,7 +25,7 @@ adoption or mutation authority.
 ## Current Milestone
 
 CURRENT_MILESTONE:
-M8 — documentation closure and final CI (IN_PROGRESS).
+M8 — documentation closure and final CI (COMPLETE).
 
 ## Historical status
 
@@ -115,15 +115,14 @@ real owner state was touched.
 ## Work In Progress
 
 Implementation, focused tests, hardening, full current regression, isolated
-checkout, substantive checkpoint, exact-base acceptance artifact, and
-substantive CI are complete. Documentation closure is in progress. The
-artifact remains owner-only local state and is not committed.
+checkout, substantive checkpoint, exact-base acceptance artifact, substantive
+CI, documentation anchor, and source-equivalent descendant verification are
+complete. The artifact remains owner-only local state and is not committed.
 
 ## Exact Next Action
 
-Commit and push the documentation closure, verify the same artifact as a
-source-equivalent descendant, then perform final CI/state closure without
-starting Phase 8B.
+Inspect final live Git/CI state after this metadata closure and stop. Do not
+start Phase 8B.
 
 ## Files Changed
 
@@ -140,7 +139,7 @@ ACCEPTANCE_ARTIFACT_BASE_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
 ACCEPTANCE_ARTIFACT_SOURCE_DIGEST: sha256:80b0db2df5d8ac7b87eded03c0b8be7ee2d58103fa83251b0b31d784d5ca3493
 ACCEPTANCE_ARTIFACT_CONTRACT_DIGEST: sha256:05ad2ecf035381b58c47f3126bc844864137c57e5645df89a338cb7995a367a4
 ACCEPTANCE_ARTIFACT_INITIAL_TRUST_STATUS: VERIFIED_EXACT_BASE / REPLAY_PASS
-ACCEPTANCE_ARTIFACT_FINAL_DOC_DESCENDANT_STATUS: NONE
+ACCEPTANCE_ARTIFACT_FINAL_DOC_DESCENDANT_STATUS: VERIFIED_SOURCE_EQUIVALENT_DESCENDANT / REPLAY_PASS at 488b4e41dc12840a1e0c029ae76b24f3ce8abee4
 
 ## Validation Ledger
 
@@ -153,10 +152,10 @@ CLEAN_CHECKOUT_STATUS: PASS — fresh full-history clone at 4602fac passed
 `npm ci --ignore-scripts`, typecheck, hardening, 39 focused tests, 91
 owner/provenance tests, 27 campaign tests, synthetic v2 CLI, agent-state, and
 diff check.
-CI_STATUS: PASS — workflow 31822125738 at 4602fac passed; its Phase 8A.1
-evaluation provenance and replay integrity matrix executed and passed. Prior
-e56e068 workflow 31821592114 also passed before the clean-checkout fixture
-repair.
+CI_STATUS: PASS — workflow 31822125738 at 4602fac and documentation workflow
+31823224468 at 488b4e4 passed; each executed the Phase 8A.1 evaluation
+provenance and replay integrity matrix. Final metadata-closure workflow is
+the remaining live observation.
 SAFETY_EVENTS: NONE
 PRIVACY_STATUS: PASS — staged diff secret/privacy-shape scan found no
 credential, token, customer, auth, model, or private-artifact content.
@@ -202,8 +201,8 @@ read-only provenance commands were used in tests.
 
 ## Exact Next Action
 
-Commit and push the documentation closure, then verify the same acceptance
-artifact as a source-equivalent descendant and run final CI/state closure.
+Inspect final live Git/CI state after this metadata closure and stop. Do not
+start Phase 8B.
 
 ## Resume Recipe
 
@@ -216,7 +215,6 @@ runtime Git writes, source writes, or publication.
 
 ## Completion Snapshot
 
-Not complete. The validated implementation anchor is
-`4602fac417746a30927fc19f8e4ca48ab9143cac`; the exact-base acceptance artifact
-and replacement CI are green. Documentation closure and descendant/final CI
-verification remain. Live HEAD remains discovered from Git.
+Complete at the implementation and documentation anchors recorded above. The
+final live Git SHA and final workflow are discovered from Git/GitHub after
+this metadata-only closure commit; no self-referential current SHA is stored.
