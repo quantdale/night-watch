@@ -6,9 +6,9 @@ Task ID: phase-8a-evaluated-self-development-sandbox
 Phase: 8A — EVALUATED SELF-DEVELOPMENT SANDBOX FOUNDATION
 Status: IN_PROGRESS
 Starting SHA: 9cb70d2b74075f731f787884cd1837e7b36fcf48
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5e7bad758efa7e5d87610c8b7878f6690bb0b821
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5e7bad758efa7e5d87610c8b7878f6690bb0b821
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 9cb70d2b74075f731f787884cd1837e7b36fcf48
+LAST_VALIDATED_IMPLEMENTATION_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -22,8 +22,7 @@ authority.
 
 ## Current Milestone
 
-M8 — full validation, clean-checkout validation, and scoped architecture
-review (IN_PROGRESS).
+M9 — validated checkpoint, documentation closure, and stop (IN_PROGRESS).
 
 ## Completed Milestones
 
@@ -39,15 +38,15 @@ review (IN_PROGRESS).
 ## Work In Progress
 
 The focused implementation and existing regression gates pass. The full
-current Playwright suite and scoped privacy/diff review also pass. Isolated
-full-history checkout, final scoped architecture review, checkpoint commits,
-documentation closure, and exact final CI remain.
+current Playwright suite, scoped privacy/diff review, and isolated full-history
+checkout also pass. The implementation checkpoint is pushed; documentation
+closure and exact final CI remain.
 
 ## Exact Next Action
 
-Run the full current Playwright suite and inspect the complete scoped diff and
-privacy surface; then validate the same deterministic checks from a fresh
-full-history isolated checkout.
+Finish the closure report and project documentation, push the documentation
+checkpoint, inspect the exact hardening workflow and Phase 8A CI step, then
+close ACTIVE_TASK only after the final synchronized Git check.
 
 ## Files Changed
 
@@ -99,7 +98,12 @@ Continuity/task files:
 - Full current Playwright suite: PASS, 546/546.
 - Scoped secret-shape/privacy scan: PASS; no credential-like values.
 - Git diff check: PASS.
-- agent:check metadata format repair: IN PROGRESS; rerun after this repair.
+- Isolated full-history checkout at d2a2978: PASS — npm ci, typecheck,
+  hardening, Phase 8A 23/23, AI/canary/provenance 106/106, agent-state 32/32,
+  campaign 27/27, agent check, and diff check.
+- agent:check after implementation checkpoint: PASS with one expected stale
+  baseline warning before this anchor update.
+- Exact remote Phase 8A CI: PENDING documentation-closure push.
 
 ## Decisions Made During This Task
 

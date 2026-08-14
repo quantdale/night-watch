@@ -1,7 +1,9 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
+review assistance, and the Phase 8A evaluated self-development sandbox
+foundation. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -73,6 +75,8 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
+| `src/core/selfDev/` | Explicit Phase 8A companion subsystem: strict candidate/evaluation DTOs, canonical identity, fixed local synthetic registries, deterministic proposer/evaluator, bounded budgets, and no-adoption results. | implemented; no adopter |
+| `bin/selfdev-synthetic.mjs` | Thin CLI wrapper for one bounded `SYNTHETIC_DETERMINISTIC` candidate/evaluation matrix; accepts only help or the fixed synthetic run. | implemented |
 | `src/core/aiReview/ownerReview.ts` | Provider-free exact-ID owner snapshot loader, terminal-safe bug/oracle renderer, fixed confirmation semantics, projections, and v1 read-only handling. Read-only public service; no decision writer. | implemented |
 | `src/core/aiReview/ownerDecision.ts` | Internal digest-bound decision writer; raw helper is private and the confirmed entry is loaded only by the owner-review CLI. Creates review provenance, atomically persists it, and strictly reads it back. | implemented |
 | `bin/ai-owner-review.mjs` | Private human interface with only `show`, `status`, `decide`, and help; TTY gate, fixed decision boundary, sole tracked runtime loader of the internal decision writer, and no provider/network/Git/publication path. | implemented |
@@ -253,6 +257,35 @@ Phase 6, publication, Git, or source. Phase 7 campaign execution remains
 deterministic and does not invoke this branch.
 
 There is deliberately no datastore or infrastructure branch in this flow.
+
+Phase 8A is a separate companion branch and never enters the campaign or AI
+review authority graph:
+
+```
+SYNTHETIC_DETERMINISTIC proposer (untrusted declarative data)
+        ↓
+strict nightwatch.selfdev-candidate.private.v1 DTO
+        ↓
+fixed LOCAL_SYNTHETIC fixture/action/assertion registries
+        ↓
+schema/scope/safety/privacy/duplicate/budget checks
+        ↓
+deterministic structural execution and computed coverage delta
+        ↓
+nightwatch.selfdev-evaluation.private.v1
+        ↓
+owner-only immutable self-development artifact → STOP
+```
+
+The candidate schema has no code, source, patch, diff, path, command, shell,
+URL, endpoint, prompt, model, tool, function, Git, or output-path field.
+Unknown action/assertion IDs and unsafe fixture or scope claims fail before
+execution. The evaluator contains no `eval`, `Function`, callback, network,
+browser, auth, database, infrastructure, AI-review, campaign, oracle
+registration, Git, or repository-source-write capability. Results always carry
+`adoptionStatus=NOT_AUTHORIZED_PHASE_8A`, `publication=PROHIBITED`, and zero
+runtime writes/calls. Phase 8B source adoption is a future separate boundary,
+not a hidden continuation of this graph.
 
 Git continuity is intentionally separate from runtime authority. A validated
 substantive implementation SHA is a stable historical anchor; approved

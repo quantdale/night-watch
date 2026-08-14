@@ -1158,3 +1158,45 @@ compatible local runtime/model, so no real provider call was made.
 
 **Phase applicability.** Phase 7B.3 and later local AI review canaries. Phase
 8 remains a separate, unstarted task.
+
+## D-44 — Phase 8A is declarative evaluation authority without adoption authority
+
+**Decision.** The owner-authorized first slice of Phase 8 is a separate
+self-development companion subsystem, not an extension of AI review or the
+campaign runtime. Phase 8A accepts only the exact-key
+`nightwatch.selfdev-candidate.private.v1` schema and the
+`SYNTHETIC_REGRESSION_CASE` data kind. The sole proposer is
+`SYNTHETIC_DETERMINISTIC`; candidates may reference only fixed local synthetic
+fixtures, safe structural action IDs, deterministic assertion IDs, bounded
+coverage metadata, and sanitized source references. Candidate identity is a
+canonical SHA-256 of stable semantics and excludes timestamps, filesystem
+paths, and randomness.
+
+The deterministic evaluator owns schema, scope, privacy, safety, duplicate,
+budget, execution, regression, and computed coverage truth. It produces the
+strict `nightwatch.selfdev-evaluation.private.v1` result and may persist only a
+sanitized owner-only private artifact under the separate `self-development`
+namespace. A passing case is `EVALUATED_PASS_NOT_ADOPTED` with
+`adoptionStatus=NOT_AUTHORIZED_PHASE_8A` and `publication=PROHIBITED`.
+There is no adopter, source writer, Git runtime authority, model provider,
+product/browser/API path, database/infrastructure path, publication path, or
+oracle registration path. Phase 8B controlled source adoption remains a
+separate future authorization and is not started by a passing evaluation.
+
+**Rationale.** Phase 8 must begin with a measurable evaluation boundary while
+preserving Nightwatch's read-only-by-default contract. A data-only candidate
+class makes the trust boundary explicit and lets deterministic tests exercise
+identity, duplicate, coverage, safety, privacy, and no-side-effect behavior
+without accepting generated code or patches.
+
+**Consequences.** The bounded synthetic session is limited to 3 candidates, 8
+actions, 8 assertions, 30 seconds per candidate, and 120 seconds total. The
+evaluation result is companion evidence only: it cannot alter deterministic
+evidence, campaign admission, source relevance, fault boundaries, existing
+oracle truth, owner-review drafts, Git state, or Phase 8 status. Runtime
+safety-vector counters for product/data/infrastructure/AI/publication/Git/
+source/Alphaus activity remain explicit zeroes. The implementation checkpoint
+is `d2a2978ede7c29d04e95f1625a736ce7c26004f9`.
+
+**Phase applicability.** Phase 8A and any later phase that consumes its
+evaluation results. Phase 8 remains `IN_PROGRESS`; Phase 8B is `NOT_STARTED`.

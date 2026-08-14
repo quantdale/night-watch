@@ -103,15 +103,15 @@ Implemented and passed forbidden-field, unsafe-scope, unknown registry,
 privacy, safety-vector, flood, duplicate, coverage, order, timestamp,
 repeatability, private persistence, and no-adoption tests.
 
-### M8 — Full validation, clean checkout, and architecture review (IN_PROGRESS)
+### M8 — Full validation, clean checkout, and architecture review (COMPLETE)
 
-Run focused and existing regression gates, full Playwright, privacy and
-diff checks, isolated full-history validation, and the final scoped authority
-review. Repair any failure before checkpointing.
+Focused and existing regression gates, full Playwright, privacy and diff
+checks, isolated full-history validation, and the final scoped authority
+review passed. No repair was required.
 
-### M9 — Validated checkpoint, documentation closure, and stop (PENDING)
+### M9 — Validated checkpoint, documentation closure, and stop (IN_PROGRESS)
 
-Commit and push the validated implementation, record stable anchors, update
+The implementation checkpoint is pushed. Record stable anchors, finish
 project/task closure records, push documentation closure, inspect exact final
 CI, close ACTIVE_TASK, verify synchronization, and stop without Phase 8B.
 

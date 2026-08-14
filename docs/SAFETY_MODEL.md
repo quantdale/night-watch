@@ -2,7 +2,8 @@
 
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
-7B/7B.1/7B.1.1/7B.1.2/7B.2.1 bounded private AI review assistance.
+7B/7B.1/7B.1.1/7B.1.2/7B.2.1/7B.3 bounded private AI review assistance and
+Phase 8A evaluated self-development sandbox safety.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -675,7 +676,7 @@ there is no campaign-to-provider hook. Current safety acceptance requires zero
 DEV/NEXT/production contacts, product mutations, database/infrastructure
 queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
-Phase 8 remains unstarted.
+Phase 8A remains a separate declarative evaluation companion.
 
 Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
@@ -700,6 +701,63 @@ execution surface and the owner-review CLI. `tests/unit/aiLocalCanary.test.ts`
 covers the fixed fixture/privacy adversary, strict CLI and endpoint matrix,
 loopback request shape, one-call/no-retry controller behavior, failure
 classification, no persistence, and sanitized output.
+
+## 17. Phase 8A evaluated self-development sandbox safety
+
+Phase 8A is evaluation authority only. Its trust model is
+
+```
+untrusted synthetic declarative proposal
+        ↓
+exact-key candidate DTO
+        ↓
+deterministic scope/safety/privacy/budget validation
+        ↓
+allowlisted local synthetic fixture/actions/assertions
+        ↓
+deterministic execution, duplicate, regression, and coverage gates
+        ↓
+private sanitized result → STOP
+```
+
+The only candidate schema is
+`nightwatch.selfdev-candidate.private.v1`; the only kind is
+`SYNTHETIC_REGRESSION_CASE`; and the only proposer class is
+`SYNTHETIC_DETERMINISTIC`. The candidate is data, not code. Runtime exact-key
+validation rejects unknown fields, code/source/patch/diff/file/path/command/
+shell/script/URL/endpoint/prompt/model/tool/function/Git/output-path fields,
+control characters, oversized values, unsafe fixture IDs, unknown actions,
+unknown assertions, arbitrary expressions, fake coverage, and nonzero safety
+vectors before fixture execution. No `eval`, `Function`, callback, source
+patch, executable oracle, or generated oracle registration exists.
+
+Only fixed `LOCAL_SYNTHETIC` fixtures run. Budgets are 3 candidates per
+session, 8 actions and 8 assertions per candidate, 30 seconds per candidate,
+and 120 seconds per session. Collections are bounded and deterministic;
+semantic identity excludes timestamps, paths, and random values. Duplicate
+and coverage results come from registered structural evidence, never from an
+AI score or candidate claim.
+
+Every evaluation uses
+`nightwatch.selfdev-evaluation.private.v1`, carries
+`adoptionStatus=NOT_AUTHORIZED_PHASE_8A`, `publication=PROHIBITED`, and
+explicitly reports zero DEV/NEXT/production contacts, product mutations,
+database/infrastructure queries, external AI/model calls, publication, Git
+writes, Nightwatch runtime source writes, and Alphaus writes. A passing result
+is `EVALUATED_PASS_NOT_ADOPTED`; there is no `AUTO_APPROVED`, `AUTO_ADOPTED`,
+or `AUTO_COMMITTED` class.
+
+The synthetic CLI has no network, browser, auth, database, infrastructure,
+model, child-process, Git, or repository-source-write capability. Private
+results, if persisted, use the hardened owner-only immutable store under the
+separate `self-development` namespace and never enter campaign findings,
+morning briefs, AI owner-review drafts, or public publication. Phase 8B source
+adoption is not implemented and cannot be triggered by a passing candidate.
+
+Phase 8A validation at implementation checkpoint
+`d2a2978ede7c29d04e95f1625a736ce7c26004f9` passed typecheck, hardening, the
+23-test focused matrix, the 546-test current suite, the isolated deterministic
+checkout, and the existing AI/canary/provenance/agent-state/campaign gates.
 
 ---
 

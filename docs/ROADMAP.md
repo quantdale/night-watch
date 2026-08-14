@@ -657,27 +657,73 @@ protocol compatibility and would not authorize Phase 8.
 
 ---
 
-## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)
+## Phase 8 — Evaluated self-development (in progress)
 
-**Goal.** Nightwatch extends itself: generating scenarios and tests for
-its own suite, evaluated before adoption — while the read-only boundary
-over Alphaus repos is absolute.
+Phase 8 is now `IN_PROGRESS` under the owner authorization recorded for this
+session: `PROCEED WITH THE NEXT PHASE.` That authorization starts Phase 8A
+only. It does not authorize real-model self-development, source adoption,
+automatic Git operations, Alphaus changes, product traffic, data or
+infrastructure access, publication, or any later Phase 8 capability.
 
-**Key deliverables.**
+### Phase 8A — Evaluated self-development sandbox foundation (implementation complete; closure pending exact CI)
 
-- Self-development loop confined to `REPOSITORIES/nightwatch/`: candidate
-  scenarios/tests/oracles proposed by the system, run through the full
-  self-test + canary gate, adopted only when green.
-- Evaluation harness: safety guarantees (SAFETY_MODEL §14) re-run on every
-  candidate; any candidate that weakens a guarantee is rejected.
-- Budget and blast-radius limits: bounded generation budget per session;
-  changes are additive; rollback via git.
+Phase 8A establishes evaluation authority without mutation authority. The
+implemented boundary is:
 
-**Non-goals / exclusions.** Editing any Alphaus repository; weakening or
-bypassing the safety kernel; production; unmeasured autonomy.
+```
+synthetic declarative proposal
+        ↓
+strict exact-key candidate DTO
+        ↓
+allowlisted local fixture/actions/assertions
+        ↓
+deterministic validation, duplicate, coverage, safety, privacy, and execution gates
+        ↓
+private immutable evaluation artifact
+        ↓
+STOP — no adopter exists
+```
 
-**Dependencies.** Phase 7B assistance; a stable Phase 0/1 self-test suite as
-the evaluation gate.
+The only candidate schema is
+`nightwatch.selfdev-candidate.private.v1`; the only candidate kind is
+`SYNTHETIC_REGRESSION_CASE`, a bounded data object. The corresponding result
+schema is `nightwatch.selfdev-evaluation.private.v1`. Unknown fields, code,
+patches, diffs, file paths, commands, URLs, models, prompts, Git requests,
+unsafe fixtures, unknown actions, unknown assertions, and privacy/safety
+escalations fail closed before execution. No expression interpreter, `eval`,
+callback, executable oracle, source writer, Git runtime path, model provider,
+browser/product path, database/infrastructure path, or publication path is
+present.
+
+The sole proposer class is `SYNTHETIC_DETERMINISTIC`. The session is capped at
+3 candidates, 8 actions and 8 assertions per candidate, 30 seconds per
+candidate, and 120 seconds total. Candidate identity is a canonical SHA-256
+of stable semantic fields and excludes timestamps, filesystem paths, and
+random values. Duplicate detection and coverage delta use fixed registries;
+candidate claims do not supply evaluation truth. A passing case is classified
+`EVALUATED_PASS_NOT_ADOPTED` with
+`adoptionStatus=NOT_AUTHORIZED_PHASE_8A` and `publication=PROHIBITED`.
+
+The synthetic CLI is `npm run selfdev:synthetic`. Runtime persistence, when
+enabled, uses the existing owner-only immutable private store in a separate
+`self-development` namespace outside Git. The synthetic A/B/C matrix produced
+one valid new edge, one `REJECTED_DUPLICATE`, and one `REJECTED_SAFETY`; all
+safety-vector counters were zero. The implementation checkpoint is
+`d2a2978ede7c29d04e95f1625a736ce7c26004f9`, with local full Playwright
+validation `546/546` and an isolated full-history deterministic checkout
+passing typecheck, hardening, Phase 8A `23/23`, AI/canary/provenance `106/106`,
+agent-state `32/32`, and synthetic campaign `27/27`. Exact remote CI is the
+remaining closure observation for this documentation checkpoint.
+
+Phase 8A remains strictly separate from Phase 7B AI review and cannot change
+evidence level, campaign results, anomaly admission, source relevance, fault
+boundaries, existing oracle truth, or owner-review drafts.
+
+### Phase 8B — Controlled candidate source adoption (not started)
+
+Phase 8B is a possible future, separately authorized task. It is not
+implemented, must not be inferred from a passing Phase 8A evaluation, and must
+not be started from this checkpoint.
 
 ---
 
