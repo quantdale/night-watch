@@ -5,13 +5,16 @@
 // campaign state, safety policy, or the existing AI-ready dossier projection.
 // ---------------------------------------------------------------------------
 
-import type { ChangeSet, SelectionResult } from '../changeIntelligence/types';
+import type { ChangeSet } from '../changeIntelligence/types';
 import type { AiReadyEvidencePackage, BugDossier, EvidenceLevel, SourceChangeRelevance } from '../triage/types';
 
 export const AI_REVIEW_INPUT_SCHEMA_VERSION = 'nightwatch.ai-review-input.private.v1' as const;
-export const AI_BUG_DRAFT_SCHEMA_VERSION = 'nightwatch.ai-bug-draft.private.v1' as const;
-export const AI_ORACLE_SUGGESTION_SCHEMA_VERSION = 'nightwatch.ai-oracle-suggestion.private.v1' as const;
-export const AI_HUMAN_REVIEW_SCHEMA_VERSION = 'nightwatch.ai-human-review.private.v1' as const;
+export const AI_BUG_DRAFT_SCHEMA_VERSION = 'nightwatch.ai-bug-draft.private.v2' as const;
+export const AI_ORACLE_SUGGESTION_SCHEMA_VERSION = 'nightwatch.ai-oracle-suggestion.private.v2' as const;
+export const AI_HUMAN_REVIEW_SCHEMA_VERSION = 'nightwatch.ai-human-review.private.v2' as const;
+export const AI_LEGACY_BUG_DRAFT_SCHEMA_VERSION = 'nightwatch.ai-bug-draft.private.v1' as const;
+export const AI_LEGACY_ORACLE_SUGGESTION_SCHEMA_VERSION = 'nightwatch.ai-oracle-suggestion.private.v1' as const;
+export const AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION = 'nightwatch.ai-human-review.private.v1' as const;
 export const AI_REVIEW_PROMPT_TEMPLATE_VERSION = 'nightwatch.ai-review-prompt.private.v1' as const;
 export const AI_PROVIDER_ADAPTER_VERSION = 'nightwatch.ai-provider-adapter.private.v1' as const;
 export const AI_BUG_DRAFT_OUTPUT_SCHEMA_VERSION = 'nightwatch.ai-bug-draft-output.private.v1' as const;
@@ -25,6 +28,24 @@ export type AiArtifactStatus =
   | 'SUPERSEDED'
   | 'INVALID'
   | 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW';
+
+export type AiStoredArtifactStatus = 'AI_GENERATED_UNREVIEWED';
+export type AiEffectiveReviewStatus =
+  | 'UNREVIEWED'
+  | 'OWNER_APPROVED_DRAFT'
+  | 'OWNER_REJECTED'
+  | 'SUPERSEDED'
+  | 'STALE'
+  | 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW'
+  | 'UNVERIFIED_LEGACY_REVIEW_STATE';
+
+export type AiEffectiveReviewReason =
+  | 'NO_OWNER_REVIEW_RECORD'
+  | 'OWNER_APPROVED'
+  | 'OWNER_REJECTED'
+  | 'OWNER_SUPERSEDED'
+  | 'INPUT_STALE'
+  | 'LEGACY_STATUS_WITHOUT_REVIEW_RECORD';
 
 export interface AiSafetyVector {
   readonly devContacts: number;
@@ -110,7 +131,18 @@ export type AiReviewFailureCode =
   | 'AI_OUTPUT_REFERENCE_INVALID'
   | 'AI_OUTPUT_PRIVACY_BLOCKED'
   | 'AI_INPUT_NOT_ELIGIBLE'
-  | 'AI_INPUT_PRIVACY_BLOCKED';
+  | 'AI_INPUT_PRIVACY_BLOCKED'
+  | 'AI_REVIEW_BUDGET_EXHAUSTED'
+  | 'AI_REVIEW_PROVIDER_BUDGET_EXHAUSTED'
+  | 'AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED'
+  | 'AI_REVIEW_ARTIFACT_DIGEST_MISMATCH'
+  | 'AI_REVIEW_RECORD_REQUIRED'
+  | 'AI_REVIEW_STATE_INVALID'
+  | 'AI_REVIEW_CONFLICTING_DECISIONS'
+  | 'AI_REVIEW_ARTIFACT_IMMUTABLE'
+  | 'AI_REVIEW_STORAGE_FAILED'
+  | 'AI_ARTIFACT_STALE'
+  | 'AI_REVIEW_OWNER_RECORD_INVALID';
 
 export interface AiBugReviewFacts {
   readonly candidateId: string;
@@ -233,7 +265,7 @@ export interface AiBugDraft {
   readonly providerAdapterVersion: string;
   readonly dossierVersion: BugDossier['schemaVersion'];
   readonly generatedAt: string;
-  readonly status: Extract<AiArtifactStatus, 'AI_GENERATED_UNREVIEWED' | 'OWNER_APPROVED_DRAFT' | 'OWNER_REJECTED' | 'SUPERSEDED' | 'INVALID'>;
+  readonly status: AiStoredArtifactStatus;
   readonly provenanceLabel: 'AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED';
   readonly summaryDraft: string;
   readonly reproductionDraft: string;
@@ -276,7 +308,7 @@ export interface AiOracleSuggestion {
   readonly riskNotes: readonly string[];
   readonly humanReviewRequired: true;
   readonly executable: false;
-  readonly status: Extract<AiArtifactStatus, 'AI_GENERATED_UNREVIEWED' | 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW' | 'OWNER_REJECTED' | 'SUPERSEDED' | 'INVALID'>;
+  readonly status: AiStoredArtifactStatus;
   readonly provenanceLabel: 'AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED';
   readonly externalPublication: 'PROHIBITED';
   readonly safety: AiSafetyVector;
@@ -286,8 +318,10 @@ export interface AiOracleSuggestion {
 
 export interface AiHumanReviewRecord {
   readonly schemaVersion: typeof AI_HUMAN_REVIEW_SCHEMA_VERSION;
+  readonly reviewId: string;
   readonly artifactId: string;
   readonly artifactKind: 'BUG_DRAFT' | 'ORACLE_SUGGESTION';
+  readonly artifactSchemaVersion: typeof AI_BUG_DRAFT_SCHEMA_VERSION | typeof AI_ORACLE_SUGGESTION_SCHEMA_VERSION;
   readonly decision: 'APPROVE_DRAFT' | 'REJECT' | 'SUPERSEDE';
   readonly reviewedAt: string;
   readonly reviewerClass: 'OWNER';
@@ -297,12 +331,46 @@ export interface AiHumanReviewRecord {
   readonly publication: 'PROHIBITED';
 }
 
+export type AiBugDraftV1 = Omit<AiBugDraft, 'schemaVersion' | 'status'> & {
+  readonly schemaVersion: typeof AI_LEGACY_BUG_DRAFT_SCHEMA_VERSION;
+  readonly status: Extract<AiArtifactStatus, 'AI_GENERATED_UNREVIEWED' | 'OWNER_APPROVED_DRAFT' | 'OWNER_REJECTED' | 'SUPERSEDED' | 'INVALID'>;
+};
+
+export type AiOracleSuggestionV1 = Omit<AiOracleSuggestion, 'schemaVersion' | 'status'> & {
+  readonly schemaVersion: typeof AI_LEGACY_ORACLE_SUGGESTION_SCHEMA_VERSION;
+  readonly status: Extract<AiArtifactStatus, 'AI_GENERATED_UNREVIEWED' | 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW' | 'OWNER_REJECTED' | 'SUPERSEDED' | 'INVALID'>;
+};
+
+export interface AiHumanReviewRecordV1 {
+  readonly schemaVersion: typeof AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION;
+  readonly artifactId: string;
+  readonly artifactKind: 'BUG_DRAFT' | 'ORACLE_SUGGESTION';
+  readonly decision: 'APPROVE_DRAFT' | 'REJECT' | 'SUPERSEDE';
+  readonly reviewedAt: string;
+  readonly reviewerClass: 'OWNER';
+  readonly notes: string;
+  readonly artifactDigest: string;
+  readonly reviewSchemaVersion: typeof AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION;
+  readonly publication: 'PROHIBITED';
+}
+
+export type AiReviewArtifact = AiBugDraft | AiOracleSuggestion;
+export type AiLegacyReviewArtifact = AiBugDraftV1 | AiOracleSuggestionV1;
+export type AiReadableReviewArtifact = AiReviewArtifact | AiLegacyReviewArtifact;
+export type AiReadableHumanReviewRecord = AiHumanReviewRecord | AiHumanReviewRecordV1;
+
+export interface AiReviewProjection<TArtifact extends AiReadableReviewArtifact = AiReadableReviewArtifact> {
+  readonly artifact: TArtifact;
+  readonly reviewRecord: AiReadableHumanReviewRecord | null;
+  readonly effectiveStatus: AiEffectiveReviewStatus;
+  readonly reason: AiEffectiveReviewReason;
+  readonly current: boolean;
+}
+
 export interface AiReviewProvider {
   readonly providerClass: AiProviderClass;
   readonly adapterVersion: string;
   readonly modelIdentifier: string;
-  reviewBugCandidate(input: AiBugReviewInput): Promise<string | Uint8Array>;
-  suggestOracle(input: AiOracleReviewInput): Promise<string | Uint8Array>;
 }
 
 export interface BugReviewBuildOptions {

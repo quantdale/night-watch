@@ -4,10 +4,9 @@ import {
   AI_REVIEW_INPUT_SCHEMA_VERSION,
   LoopbackAiReviewProvider,
   PASS_AI_PRIVACY,
-  SyntheticAiReviewProvider,
+  AiReviewSession,
   ZERO_AI_SAFETY,
   digest,
-  reviewBugCandidate,
   validateAiBugReviewInput,
   validateLoopbackEndpoint,
   type AiBugReviewInput,
@@ -84,6 +83,25 @@ async function close(server: http.Server): Promise<void> {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 }
 
+function validBugModelContent(input: AiBugReviewInput): string {
+  return JSON.stringify({
+    schemaVersion: 'nightwatch.ai-bug-draft-output.private.v1',
+    candidateId: input.facts.candidateId,
+    inputPackageId: input.inputPackageId,
+    inputPackageDigest: input.inputPackageDigest,
+    evidenceLevelAtGeneration: input.facts.evidenceLevel,
+    summaryDraft: 'The deterministic evidence describes a bounded application behavior for owner review.',
+    reproductionDraft: 'Repeat the existing approved read-only sequence and compare the same deterministic fingerprint.',
+    observedBehaviorDraft: 'The input package records the observed structural/oracle class; this text is not new evidence.',
+    expectedBehaviorDraft: 'The existing deterministic contract should remain satisfied for the supplied operation family.',
+    impactDraft: 'Potential application impact is described for owner review only; severity and priority remain deterministic facts.',
+    hypotheses: [{ label: 'UNVERIFIED_HYPOTHESIS', text: 'A client-side or protocol boundary may explain the observed class; this is not causal proof.', supportingEvidenceRefs: input.evidenceRefs.slice(0, 2), contradictingEvidenceRefs: [], whatWouldDiscriminate: 'A separate deterministic reproduction or contradiction would distinguish the alternatives.' }],
+    evidenceRefs: input.evidenceRefs,
+    sourceRefs: input.sourceRefs,
+    uncertainties: ['Deployment identity remains unresolved.', 'Human review is required before any owner use.'],
+  });
+}
+
 test.describe('Phase 7B loopback provider containment', () => {
   test('accepts only explicit loopback endpoint classes', () => {
     expect(validateLoopbackEndpoint('http://127.0.0.1:1234/v1/chat/completions').hostname).toBe('127.0.0.1');
@@ -101,8 +119,7 @@ test.describe('Phase 7B loopback provider containment', () => {
 
   test('uses a bounded no-credential request and validates an OpenAI-compatible fixture response', async () => {
     const input = inputFixture();
-    const synthetic = new SyntheticAiReviewProvider('VALID_BUG_DRAFT');
-    const content = await synthetic.reviewBugCandidate(input);
+    const content = validBugModelContent(input);
     let observedPath = '';
     let observedAuthorization = false;
     let observedCookie = false;
@@ -115,12 +132,11 @@ test.describe('Phase 7B loopback provider containment', () => {
     });
     try {
       const provider = new LoopbackAiReviewProvider({ endpoint: fixture.endpoint, modelIdentifier: 'local-fixture.v1' });
-      const raw = await provider.reviewBugCandidate(input);
-      expect(typeof raw).toBe('string');
+      const session = new AiReviewSession(provider, { now: () => new Date('2026-08-14T00:00:00.000Z') });
+      const result = await session.reviewBugCandidate(input);
       expect(observedPath).toBe('/v1/chat/completions');
       expect(observedAuthorization).toBe(false);
       expect(observedCookie).toBe(false);
-      const result = await reviewBugCandidate(input, provider, { now: () => new Date('2026-08-14T00:00:00.000Z') });
       expect(result.artifact.modelProviderClass).toBe('LOOPBACK_LOCAL');
       expect(result.artifact.status).toBe('AI_GENERATED_UNREVIEWED');
     } finally {
@@ -136,7 +152,7 @@ test.describe('Phase 7B loopback provider containment', () => {
     });
     try {
       const provider = new LoopbackAiReviewProvider({ endpoint: fixture.endpoint, modelIdentifier: 'local-fixture.v1' });
-      await expect(provider.reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_NOT_LOCAL' });
+      await expect(new AiReviewSession(provider).reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_NOT_LOCAL' });
     } finally {
       await close(fixture.server);
     }
@@ -149,7 +165,7 @@ test.describe('Phase 7B loopback provider containment', () => {
     });
     try {
       const provider = new LoopbackAiReviewProvider({ endpoint: oversized.endpoint, modelIdentifier: 'local-fixture.v1' });
-      await expect(provider.reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_OUTPUT_TOO_LARGE' });
+      await expect(new AiReviewSession(provider).reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_OUTPUT_TOO_LARGE' });
     } finally {
       await close(oversized.server);
     }
@@ -159,7 +175,7 @@ test.describe('Phase 7B loopback provider containment', () => {
     });
     try {
       const provider = new LoopbackAiReviewProvider({ endpoint: slow.endpoint, modelIdentifier: 'local-fixture.v1', timeoutMs: 20 });
-      await expect(provider.reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_TIMEOUT' });
+      await expect(new AiReviewSession(provider).reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_TIMEOUT' });
     } finally {
       await close(slow.server);
     }

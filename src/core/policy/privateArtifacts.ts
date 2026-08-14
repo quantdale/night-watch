@@ -196,6 +196,33 @@ export class PrivateArtifactStore {
     return this.writeJson(fileName, value, 'INCOMPLETE');
   }
 
+  /**
+   * Read one owner-only JSON object for a narrowly scoped local reader.
+   * Callers remain responsible for strict schema validation; malformed or
+   * unsafe files fail closed and never become an implicit valid artifact.
+   */
+  readJson(fileName: string): unknown | null {
+    safeFileName(fileName);
+    ensureOwnerDirectory(this.root);
+    const destination = path.join(this.root, fileName);
+    assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_PATH_SYMLINK');
+    if (!fs.existsSync(destination)) return null;
+    const stat = fs.lstatSync(destination);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
+    assertOwnerOnly(stat, 'PRIVATE_ARTIFACT_DESTINATION');
+    try {
+      return JSON.parse(fs.readFileSync(destination, 'utf8')) as unknown;
+    } catch {
+      throw new Error('PRIVATE_ARTIFACT_CORRUPT');
+    }
+  }
+
+  /** Write once; an existing destination can never be silently replaced. */
+  writeImmutableJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
+    if (this.readJson(fileName) !== null) throw new Error('PRIVATE_ARTIFACT_IMMUTABLE');
+    return this.writeJson(fileName, value, status);
+  }
+
   /** Always throws; external publication is not a Nightwatch capability. */
   publish(_operation: OwnerScopedOperation = 'EXTERNAL_PUBLICATION'): never {
     assertOwnerPolicyAllows(_operation);

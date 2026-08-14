@@ -1,9 +1,9 @@
-import type { AiBugDraft, AiBugReviewInput } from './types';
-import { assertCurrentBugDraft } from './review';
+import type { AiBugDraft, AiBugReviewInput, AiReadableHumanReviewRecord } from './types';
+import { projectEffectiveBugReview } from './review';
 
 /** Private text rendering keeps deterministic facts and model prose visibly separate. */
-export function renderBugDraft(draft: AiBugDraft, input: AiBugReviewInput): string {
-  assertCurrentBugDraft(draft, input);
+export function renderBugDraft(draft: AiBugDraft, input: AiBugReviewInput, reviewRecord?: AiReadableHumanReviewRecord): string {
+  const projection = projectEffectiveBugReview(draft, reviewRecord, input);
   const facts = input.facts;
   return [
     'AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED',
@@ -41,7 +41,8 @@ export function renderBugDraft(draft: AiBugDraft, input: AiBugReviewInput): stri
     'UNRESOLVED QUESTIONS',
     ...draft.uncertainties.map((uncertainty) => `- ${uncertainty}`),
     '',
-    `HUMAN REVIEW STATUS: ${draft.status}`,
+    `HUMAN REVIEW STATUS: ${projection.effectiveStatus}`,
+    `HUMAN REVIEW PROVENANCE: ${projection.reason}`,
     'External publication: PROHIBITED',
   ].join('\n');
 }

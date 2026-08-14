@@ -1,8 +1,10 @@
 // ---------------------------------------------------------------------------
 // Explicit owner-invoked AI review pipeline.
 //
-// It is post-processing only. No campaign, oracle, action, browser, API,
-// database, infrastructure, Git, or publication callback is available here.
+// AiReviewSession is the only supported provider-execution authority. Provider
+// adapters register an internal handler here; callers receive only provider
+// metadata and cannot invoke a review operation without passing through the
+// session's attempt, deadline, and shared provider-call reservations.
 // ---------------------------------------------------------------------------
 
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
@@ -36,6 +38,7 @@ import {
 export interface AiReviewRunOptions {
   readonly store?: AiReviewArtifactStore;
   readonly now?: () => Date;
+  readonly clock?: () => number;
   readonly timeoutMs?: number;
 }
 
@@ -44,6 +47,30 @@ export interface AiReviewResult<T> {
   readonly artifactPath: string | null;
   readonly responseDigest: string;
   readonly modelInvocationId: string;
+}
+
+type ProviderOperation = 'BUG_CANDIDATE' | 'ORACLE_SUGGESTION';
+export type AiReviewProviderHandler = (
+  operation: ProviderOperation,
+  input: AiBugReviewInput | AiOracleReviewInput,
+) => Promise<string | Uint8Array>;
+
+const providerHandlers = new WeakMap<object, AiReviewProviderHandler>();
+
+/** @internal Provider adapters register behavior; this is not an execution API. */
+export function registerAiReviewProvider(provider: AiReviewProvider, handler: AiReviewProviderHandler): void {
+  if (providerHandlers.has(provider)) throw new Error('AI_PROVIDER_ALREADY_REGISTERED');
+  providerHandlers.set(provider, handler);
+}
+
+function invokeRegisteredProvider(
+  provider: AiReviewProvider,
+  operation: ProviderOperation,
+  input: AiBugReviewInput | AiOracleReviewInput,
+): Promise<string | Uint8Array> {
+  const handler = providerHandlers.get(provider);
+  if (handler === undefined) throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
+  return handler(operation, input);
 }
 
 function nowIso(now: () => Date): string {
@@ -72,19 +99,23 @@ function mapOutputError(error: unknown, metadata: { readonly schemaVersion: stri
 function assertLocalProvider(provider: AiReviewProvider | null): AiReviewProvider {
   if (provider === null) throw new AiReviewError('AI_PROVIDER_DISABLED');
   if (provider.providerClass !== 'SYNTHETIC_LOCAL' && provider.providerClass !== 'LOOPBACK_LOCAL') throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
-  if (typeof provider.reviewBugCandidate !== 'function' || typeof provider.suggestOracle !== 'function') throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
+  if (!providerHandlers.has(provider)) throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
   if (!/^[A-Za-z0-9_.:/-]{1,100}$/.test(provider.modelIdentifier)) throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
-  assertProviderAdapterVersion(provider.adapterVersion);
+  try {
+    assertProviderAdapterVersion(provider.adapterVersion);
+  } catch {
+    throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
+  }
   return provider;
 }
 
-async function callProvider(provider: AiReviewProvider, call: () => Promise<string | Uint8Array>, timeoutMs: number, schemaVersion: string): Promise<string | Uint8Array> {
+async function callProvider(provider: AiReviewProvider, operation: ProviderOperation, input: AiBugReviewInput | AiOracleReviewInput, timeoutMs: number, schemaVersion: string): Promise<string | Uint8Array> {
   const boundedTimeout = Math.min(Math.max(1, timeoutMs), AI_REVIEW_BUDGET.perCallTimeoutMs);
   let timer: NodeJS.Timeout | undefined;
   try {
     return await new Promise<string | Uint8Array>((resolve, reject) => {
       timer = setTimeout(() => reject(new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion })), boundedTimeout);
-      call().then(resolve, (error: unknown) => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion })));
+      invokeRegisteredProvider(provider, operation, input).then(resolve, (error: unknown) => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion })));
     });
   } finally {
     if (timer !== undefined) clearTimeout(timer);
@@ -184,100 +215,149 @@ function oracleSuggestion(input: AiOracleReviewInput, output: AiOracleModelOutpu
   });
 }
 
-export async function reviewBugCandidate(inputValue: unknown, providerValue: AiReviewProvider | null, options: AiReviewRunOptions = {}): Promise<AiReviewResult<AiBugDraft>> {
-  assertOwnerPolicyAllows('AI_REVIEW_LOCAL');
-  let input: AiBugReviewInput;
-  try {
-    input = validateAiBugReviewInput(inputValue);
-  } catch (error) {
-    throw mapInputError(error, { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION });
-  }
-  if (inputBytes(input) > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: inputBytes(input) });
-  const provider = assertLocalProvider(providerValue);
-  const started = Date.now();
-  let raw: string | Uint8Array;
-  try {
-    raw = await callProvider(provider, () => provider.reviewBugCandidate(input), options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_BUG_DRAFT_SCHEMA_VERSION);
-  } catch (error) {
-    throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
-  }
-  if (Date.now() - started > AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
-  const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
-  if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, outputBytes });
-  const rawDigest = responseDigest(raw);
-  let output: AiBugModelOutput;
-  try {
-    output = parseAndValidateBugModelOutput(raw);
-    assertBugReferences(output, input);
-  } catch (error) {
-    throw mapOutputError(error, { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, outputBytes, responseDigest: rawDigest });
-  }
-  const artifact = bugDraft(input, output, provider, raw, options.now ?? (() => new Date()));
-  const artifactPath = options.store?.writeBugDraft(artifact) ?? null;
-  return { artifact, artifactPath, responseDigest: rawDigest, modelInvocationId: artifact.modelInvocationId };
-}
-
-export async function suggestOracle(inputValue: unknown, providerValue: AiReviewProvider | null, options: AiReviewRunOptions = {}): Promise<AiReviewResult<AiOracleSuggestion>> {
-  assertOwnerPolicyAllows('AI_ORACLE_SUGGESTION_LOCAL');
-  let input: AiOracleReviewInput;
-  try {
-    input = validateAiOracleReviewInput(inputValue);
-  } catch (error) {
-    throw mapInputError(error, { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION });
-  }
-  if (inputBytes(input) > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: inputBytes(input) });
-  const provider = assertLocalProvider(providerValue);
-  const started = Date.now();
-  let raw: string | Uint8Array;
-  try {
-    raw = await callProvider(provider, () => provider.suggestOracle(input), options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_ORACLE_SUGGESTION_SCHEMA_VERSION);
-  } catch (error) {
-    throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
-  }
-  if (Date.now() - started > AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
-  const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
-  if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, outputBytes });
-  const rawDigest = responseDigest(raw);
-  let output: AiOracleModelOutput;
-  try {
-    output = parseAndValidateOracleModelOutput(raw);
-    assertOracleReferences(output, input);
-  } catch (error) {
-    throw mapOutputError(error, { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, outputBytes, responseDigest: rawDigest });
-  }
-  const artifact = oracleSuggestion(input, output, provider, raw, options.now ?? (() => new Date()));
-  const artifactPath = options.store?.writeOracleSuggestion(artifact) ?? null;
-  return { artifact, artifactPath, responseDigest: rawDigest, modelInvocationId: artifact.modelInvocationId };
+function mapStorageError(error: unknown): AiReviewError {
+  if (error instanceof AiReviewError) return error;
+  if (error instanceof Error && error.message === 'AI_REVIEW_ARTIFACT_IMMUTABLE') return new AiReviewError('AI_REVIEW_ARTIFACT_IMMUTABLE');
+  if (error instanceof Error && error.message === 'AI_REVIEW_CONFLICTING_DECISIONS') return new AiReviewError('AI_REVIEW_CONFLICTING_DECISIONS');
+  return new AiReviewError('AI_REVIEW_STORAGE_FAILED');
 }
 
 export class AiReviewSession {
   readonly provider: AiReviewProvider | null;
   readonly options: AiReviewRunOptions;
-  private candidateReviews = 0;
-  private oracleSuggestions = 0;
+  private candidateReviewAttempts = 0;
+  private oracleSuggestionAttempts = 0;
   private providerCalls = 0;
-  private startedAt = Date.now();
+  private readonly startedAt: number;
+  private readonly clock: () => number;
 
   constructor(provider: AiReviewProvider | null, options: AiReviewRunOptions = {}) {
     this.provider = provider;
     this.options = options;
+    this.clock = options.clock ?? (() => Date.now());
+    this.startedAt = this.clock();
   }
 
   async reviewBugCandidate(input: unknown): Promise<AiReviewResult<AiBugDraft>> {
-    if (this.candidateReviews >= AI_REVIEW_BUDGET.maxCandidateReviews || this.providerCalls >= AI_REVIEW_BUDGET.maxProviderCalls || Date.now() - this.startedAt >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_DISABLED');
-    this.candidateReviews += 1;
-    this.providerCalls += 1;
-    return reviewBugCandidate(input, this.provider, this.options);
+    this.reserveAttempt('BUG_CANDIDATE');
+    assertOwnerPolicyAllows('AI_REVIEW_LOCAL');
+    let validatedInput: AiBugReviewInput;
+    try {
+      validatedInput = validateAiBugReviewInput(input);
+    } catch (error) {
+      throw mapInputError(error, { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION });
+    }
+    return this.runBugReview(validatedInput);
   }
 
   async suggestOracle(input: unknown): Promise<AiReviewResult<AiOracleSuggestion>> {
-    if (this.oracleSuggestions >= AI_REVIEW_BUDGET.maxOracleSuggestions || this.providerCalls >= AI_REVIEW_BUDGET.maxProviderCalls || Date.now() - this.startedAt >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_DISABLED');
-    this.oracleSuggestions += 1;
-    this.providerCalls += 1;
-    return suggestOracle(input, this.provider, this.options);
+    this.reserveAttempt('ORACLE_SUGGESTION');
+    assertOwnerPolicyAllows('AI_ORACLE_SUGGESTION_LOCAL');
+    let validatedInput: AiOracleReviewInput;
+    try {
+      validatedInput = validateAiOracleReviewInput(input);
+    } catch (error) {
+      throw mapInputError(error, { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION });
+    }
+    return this.runOracleReview(validatedInput);
   }
 
-  usage(): { readonly candidateReviews: number; readonly oracleSuggestions: number; readonly providerCalls: number } {
-    return { candidateReviews: this.candidateReviews, oracleSuggestions: this.oracleSuggestions, providerCalls: this.providerCalls };
+  usage(): { readonly candidateReviewAttempts: number; readonly oracleSuggestionAttempts: number; readonly providerCalls: number } {
+    return {
+      candidateReviewAttempts: this.candidateReviewAttempts,
+      oracleSuggestionAttempts: this.oracleSuggestionAttempts,
+      providerCalls: this.providerCalls,
+    };
+  }
+
+  private reserveAttempt(operation: ProviderOperation): void {
+    if (operation === 'BUG_CANDIDATE') {
+      if (this.candidateReviewAttempts >= AI_REVIEW_BUDGET.maxCandidateReviews) throw new AiReviewError('AI_REVIEW_BUDGET_EXHAUSTED');
+      this.candidateReviewAttempts += 1;
+    } else {
+      if (this.oracleSuggestionAttempts >= AI_REVIEW_BUDGET.maxOracleSuggestions) throw new AiReviewError('AI_REVIEW_BUDGET_EXHAUSTED');
+      this.oracleSuggestionAttempts += 1;
+    }
+    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED');
+  }
+
+  private reserveProviderCall(provider: AiReviewProvider): void {
+    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
+    if (this.providerCalls >= AI_REVIEW_BUDGET.maxProviderCalls) throw new AiReviewError('AI_REVIEW_PROVIDER_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
+    // This synchronous reservation happens before Promise creation and before
+    // the provider handler can observe the request.
+    this.providerCalls += 1;
+  }
+
+  private elapsedMs(): number {
+    return Math.max(0, this.clock() - this.startedAt);
+  }
+
+  private async runBugReview(input: AiBugReviewInput): Promise<AiReviewResult<AiBugDraft>> {
+    const bytes = inputBytes(input);
+    if (bytes > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: bytes });
+    const provider = assertLocalProvider(this.provider);
+    this.reserveProviderCall(provider);
+    let raw: string | Uint8Array;
+    try {
+      raw = await callProvider(provider, 'BUG_CANDIDATE', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_BUG_DRAFT_SCHEMA_VERSION);
+    } catch (error) {
+      throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
+    }
+    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
+    const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
+    if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, outputBytes });
+    const rawDigest = responseDigest(raw);
+    let output: AiBugModelOutput;
+    try {
+      output = parseAndValidateBugModelOutput(raw);
+      assertBugReferences(output, input);
+    } catch (error) {
+      throw mapOutputError(error, { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, outputBytes, responseDigest: rawDigest });
+    }
+    const artifact = bugDraft(input, output, provider, raw, this.options.now ?? (() => new Date()));
+    let artifactPath: string | null = null;
+    if (this.options.store !== undefined) {
+      try {
+        artifactPath = this.options.store.writeBugDraft(artifact);
+      } catch (error) {
+        throw mapStorageError(error);
+      }
+    }
+    return { artifact, artifactPath, responseDigest: rawDigest, modelInvocationId: artifact.modelInvocationId };
+  }
+
+  private async runOracleReview(input: AiOracleReviewInput): Promise<AiReviewResult<AiOracleSuggestion>> {
+    const bytes = inputBytes(input);
+    if (bytes > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: bytes });
+    const provider = assertLocalProvider(this.provider);
+    this.reserveProviderCall(provider);
+    let raw: string | Uint8Array;
+    try {
+      raw = await callProvider(provider, 'ORACLE_SUGGESTION', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_ORACLE_SUGGESTION_SCHEMA_VERSION);
+    } catch (error) {
+      throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
+    }
+    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
+    const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
+    if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, outputBytes });
+    const rawDigest = responseDigest(raw);
+    let output: AiOracleModelOutput;
+    try {
+      output = parseAndValidateOracleModelOutput(raw);
+      assertOracleReferences(output, input);
+    } catch (error) {
+      throw mapOutputError(error, { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, outputBytes, responseDigest: rawDigest });
+    }
+    const artifact = oracleSuggestion(input, output, provider, raw, this.options.now ?? (() => new Date()));
+    let artifactPath: string | null = null;
+    if (this.options.store !== undefined) {
+      try {
+        artifactPath = this.options.store.writeOracleSuggestion(artifact);
+      } catch (error) {
+        throw mapStorageError(error);
+      }
+    }
+    return { artifact, artifactPath, responseDigest: rawDigest, modelInvocationId: artifact.modelInvocationId };
   }
 }

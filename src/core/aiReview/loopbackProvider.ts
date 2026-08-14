@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { AiReviewError } from './errors';
+import { registerAiReviewProvider } from './pipeline';
 import { renderFixedPrompt } from './prompt';
 import { AI_PROVIDER_ADAPTER_VERSION, AI_REVIEW_BUDGET, type AiBugReviewInput, type AiOracleReviewInput, type AiReviewProvider } from './types';
 import { assertProviderAdapterVersion, validateAiBugReviewInput, validateAiOracleReviewInput } from './validation';
@@ -45,25 +46,17 @@ export class LoopbackAiReviewProvider implements AiReviewProvider {
     this.modelIdentifier = options.modelIdentifier;
     this.timeoutMs = Math.min(options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_REVIEW_BUDGET.perCallTimeoutMs);
     assertProviderAdapterVersion(this.adapterVersion);
+    registerAiReviewProvider(this, async (operation, input) => {
+      try {
+        if (operation === 'BUG_CANDIDATE') return this.#request({ kind: 'BUG_CANDIDATE', input: validateAiBugReviewInput(input) });
+        return this.#request({ kind: 'ORACLE_SUGGESTION', input: validateAiOracleReviewInput(input) });
+      } catch {
+        return Promise.reject(new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { providerClass: this.providerClass }));
+      }
+    });
   }
 
-  reviewBugCandidate(input: AiBugReviewInput): Promise<string | Uint8Array> {
-    try {
-      return this.request({ kind: 'BUG_CANDIDATE', input: validateAiBugReviewInput(input) });
-    } catch {
-      return Promise.reject(new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { providerClass: this.providerClass }));
-    }
-  }
-
-  suggestOracle(input: AiOracleReviewInput): Promise<string | Uint8Array> {
-    try {
-      return this.request({ kind: 'ORACLE_SUGGESTION', input: validateAiOracleReviewInput(input) });
-    } catch {
-      return Promise.reject(new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { providerClass: this.providerClass }));
-    }
-  }
-
-  private request(request: LoopbackRequest): Promise<string | Uint8Array> {
+  #request(request: LoopbackRequest): Promise<string | Uint8Array> {
     const body = JSON.stringify({
       model: this.modelIdentifier,
       stream: false,

@@ -2,6 +2,9 @@ import {
   AI_BUG_DRAFT_OUTPUT_SCHEMA_VERSION,
   AI_BUG_DRAFT_SCHEMA_VERSION,
   AI_HUMAN_REVIEW_SCHEMA_VERSION,
+  AI_LEGACY_BUG_DRAFT_SCHEMA_VERSION,
+  AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION,
+  AI_LEGACY_ORACLE_SUGGESTION_SCHEMA_VERSION,
   AI_ORACLE_SUGGESTION_OUTPUT_SCHEMA_VERSION,
   AI_ORACLE_SUGGESTION_SCHEMA_VERSION,
   AI_REVIEW_INPUT_SCHEMA_VERSION,
@@ -10,12 +13,16 @@ import {
   PASS_AI_PRIVACY,
   ZERO_AI_SAFETY,
   type AiBugDraft,
+  type AiBugDraftV1,
   type AiBugModelOutput,
   type AiBugReviewInput,
   type AiHumanReviewRecord,
+  type AiHumanReviewRecordV1,
   type AiOracleModelOutput,
   type AiOracleReviewInput,
   type AiOracleSuggestion,
+  type AiOracleSuggestionV1,
+  type AiReadableReviewArtifact,
   type AiPrivacyVector,
   type AiSafetyVector,
 } from './types';
@@ -301,10 +308,12 @@ function validateCommonDraftVectors(value: UnknownRecord): void {
   assertPassPrivacy(value.privacy);
 }
 
-export function validateAiBugDraft(value: unknown): AiBugDraft {
-  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_record');
-  exactKeys(value, ['schemaVersion', 'draftId', 'inputPackageId', 'inputPackageDigest', 'candidateId', 'evidenceLevelAtGeneration', 'modelProviderClass', 'modelIdentifier', 'modelInvocationId', 'promptTemplateVersion', 'inputSchemaVersion', 'providerAdapterVersion', 'dossierVersion', 'generatedAt', 'status', 'provenanceLabel', 'summaryDraft', 'reproductionDraft', 'observedBehaviorDraft', 'expectedBehaviorDraft', 'impactDraft', 'hypotheses', 'evidenceRefs', 'sourceRefs', 'sourceSnapshotRefs', 'uncertainties', 'humanReviewRequired', 'externalPublication', 'safety', 'privacy', 'responseDigest'], 'AI_OUTPUT_SCHEMA_INVALID:draft_keys');
-  if (value.schemaVersion !== AI_BUG_DRAFT_SCHEMA_VERSION) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_version');
+const ARTIFACT_KEYS = ['schemaVersion', 'draftId', 'inputPackageId', 'inputPackageDigest', 'candidateId', 'evidenceLevelAtGeneration', 'modelProviderClass', 'modelIdentifier', 'modelInvocationId', 'promptTemplateVersion', 'inputSchemaVersion', 'providerAdapterVersion', 'dossierVersion', 'generatedAt', 'status', 'provenanceLabel', 'summaryDraft', 'reproductionDraft', 'observedBehaviorDraft', 'expectedBehaviorDraft', 'impactDraft', 'hypotheses', 'evidenceRefs', 'sourceRefs', 'sourceSnapshotRefs', 'uncertainties', 'humanReviewRequired', 'externalPublication', 'safety', 'privacy', 'responseDigest'] as const;
+const ORACLE_KEYS = ['schemaVersion', 'suggestionId', 'inputChangePackageId', 'inputChangePackageDigest', 'modelProviderClass', 'modelIdentifier', 'modelInvocationId', 'promptTemplateVersion', 'inputSchemaVersion', 'providerAdapterVersion', 'generatedAt', 'changeEvidenceRefs', 'sourceSnapshotRefs', 'affectedSurface', 'proposedInvariant', 'proposedObservationClasses', 'rationale', 'possibleFalsePositiveModes', 'requiredDeterministicEvidence', 'requiredFixtureCoverage', 'riskNotes', 'humanReviewRequired', 'executable', 'status', 'provenanceLabel', 'externalPublication', 'safety', 'privacy', 'responseDigest'] as const;
+
+function validateBugDraftFields(value: UnknownRecord, schemaVersion: string, statuses: readonly string[]): void {
+  exactKeys(value, ARTIFACT_KEYS, 'AI_OUTPUT_SCHEMA_INVALID:draft_keys');
+  if (value.schemaVersion !== schemaVersion) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_version');
   assertSafeId(value.draftId, 'draftId', 240);
   assertSafeId(value.inputPackageId, 'inputPackageId', 240);
   assertDigest(value.inputPackageDigest, 'inputPackageDigest');
@@ -317,7 +326,7 @@ export function validateAiBugDraft(value: unknown): AiBugDraft {
   assertBoundedString(value.providerAdapterVersion, 'providerAdapterVersion', 120);
   assertProviderAdapterVersion(value.providerAdapterVersion);
   assertDate(value.generatedAt, 'generatedAt');
-  assertEnum(value.status, ['AI_GENERATED_UNREVIEWED', 'OWNER_APPROVED_DRAFT', 'OWNER_REJECTED', 'SUPERSEDED', 'INVALID'], 'status');
+  assertEnum(value.status, statuses, 'status');
   if (value.provenanceLabel !== 'AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED' || value.humanReviewRequired !== true || value.externalPublication !== 'PROHIBITED') throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_boundary');
   for (const field of ['summaryDraft', 'reproductionDraft', 'observedBehaviorDraft', 'expectedBehaviorDraft', 'impactDraft']) assertBoundedString(value[field], field, 2_000);
   assertUniqueStrings(value.evidenceRefs, 'evidenceRefs', 64, 200);
@@ -327,16 +336,26 @@ export function validateAiBugDraft(value: unknown): AiBugDraft {
   validateHypotheses(value.hypotheses, value.evidenceRefs as readonly string[]);
   validateCommonDraftVectors(value);
   assertDigest(value.responseDigest, 'responseDigest');
-  if (value.draftId !== `draft:${digest({ schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, inputPackageDigest: value.inputPackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: value.promptTemplateVersion, inputSchemaVersion: value.inputSchemaVersion, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_identity');
+  if (value.draftId !== `draft:${digest({ schemaVersion, inputPackageDigest: value.inputPackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: value.promptTemplateVersion, inputSchemaVersion: value.inputSchemaVersion, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_identity');
   if (value.modelInvocationId !== `invocation:${digest({ inputPackageDigest: value.inputPackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: AI_REVIEW_PROMPT_TEMPLATE_VERSION, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:invocation_identity');
   outputPrivacyScan(value);
+}
+
+export function validateAiBugDraft(value: unknown): AiBugDraft {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_record');
+  validateBugDraftFields(value, AI_BUG_DRAFT_SCHEMA_VERSION, ['AI_GENERATED_UNREVIEWED']);
   return value as unknown as AiBugDraft;
 }
 
-export function validateAiOracleSuggestion(value: unknown): AiOracleSuggestion {
-  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_record');
-  exactKeys(value, ['schemaVersion', 'suggestionId', 'inputChangePackageId', 'inputChangePackageDigest', 'modelProviderClass', 'modelIdentifier', 'modelInvocationId', 'promptTemplateVersion', 'inputSchemaVersion', 'providerAdapterVersion', 'generatedAt', 'changeEvidenceRefs', 'sourceSnapshotRefs', 'affectedSurface', 'proposedInvariant', 'proposedObservationClasses', 'rationale', 'possibleFalsePositiveModes', 'requiredDeterministicEvidence', 'requiredFixtureCoverage', 'riskNotes', 'humanReviewRequired', 'executable', 'status', 'provenanceLabel', 'externalPublication', 'safety', 'privacy', 'responseDigest'], 'AI_OUTPUT_SCHEMA_INVALID:suggestion_keys');
-  if (value.schemaVersion !== AI_ORACLE_SUGGESTION_SCHEMA_VERSION) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_version');
+export function validateLegacyAiBugDraft(value: unknown): AiBugDraftV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_record');
+  validateBugDraftFields(value, AI_LEGACY_BUG_DRAFT_SCHEMA_VERSION, ['AI_GENERATED_UNREVIEWED', 'OWNER_APPROVED_DRAFT', 'OWNER_REJECTED', 'SUPERSEDED', 'INVALID']);
+  return value as unknown as AiBugDraftV1;
+}
+
+function validateOracleFields(value: UnknownRecord, schemaVersion: string, statuses: readonly string[]): void {
+  exactKeys(value, ORACLE_KEYS, 'AI_OUTPUT_SCHEMA_INVALID:suggestion_keys');
+  if (value.schemaVersion !== schemaVersion) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_version');
   assertSafeId(value.suggestionId, 'suggestionId', 240);
   assertSafeId(value.inputChangePackageId, 'inputChangePackageId', 240);
   assertDigest(value.inputChangePackageDigest, 'inputChangePackageDigest');
@@ -358,20 +377,64 @@ export function validateAiOracleSuggestion(value: unknown): AiOracleSuggestion {
   assertStringList(value.riskNotes, 'riskNotes', 16, 600);
   if ((value.riskNotes as readonly string[]).length === 0 || (value.requiredDeterministicEvidence as readonly string[]).length === 0 || (value.requiredFixtureCoverage as readonly string[]).length === 0) throw new Error('AI_OUTPUT_SCHEMA_INVALID:oracle_review_fields_required');
   if (value.humanReviewRequired !== true || value.executable !== false || value.externalPublication !== 'PROHIBITED') throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_boundary');
-  assertEnum(value.status, ['AI_GENERATED_UNREVIEWED', 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW', 'OWNER_REJECTED', 'SUPERSEDED', 'INVALID'], 'status');
+  assertEnum(value.status, statuses, 'status');
   if (value.provenanceLabel !== 'AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED') throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_label');
   validateCommonDraftVectors(value);
   assertDigest(value.responseDigest, 'responseDigest');
-  if (value.suggestionId !== `suggestion:${digest({ schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, inputChangePackageDigest: value.inputChangePackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: value.promptTemplateVersion, inputSchemaVersion: value.inputSchemaVersion, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_identity');
+  if (value.suggestionId !== `suggestion:${digest({ schemaVersion, inputChangePackageDigest: value.inputChangePackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: value.promptTemplateVersion, inputSchemaVersion: value.inputSchemaVersion, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_identity');
   if (value.modelInvocationId !== `invocation:${digest({ inputChangePackageDigest: value.inputChangePackageDigest, providerClass: value.modelProviderClass, modelIdentifier: value.modelIdentifier, promptTemplateVersion: AI_REVIEW_PROMPT_TEMPLATE_VERSION, responseDigest: value.responseDigest })}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_invocation_identity');
   outputPrivacyScan(value);
+}
+
+export function validateAiOracleSuggestion(value: unknown): AiOracleSuggestion {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_record');
+  validateOracleFields(value, AI_ORACLE_SUGGESTION_SCHEMA_VERSION, ['AI_GENERATED_UNREVIEWED']);
   return value as unknown as AiOracleSuggestion;
+}
+
+export function validateLegacyAiOracleSuggestion(value: unknown): AiOracleSuggestionV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_record');
+  validateOracleFields(value, AI_LEGACY_ORACLE_SUGGESTION_SCHEMA_VERSION, ['AI_GENERATED_UNREVIEWED', 'APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW', 'OWNER_REJECTED', 'SUPERSEDED', 'INVALID']);
+  return value as unknown as AiOracleSuggestionV1;
+}
+
+export function validateAnyAiBugDraft(value: unknown): AiBugDraft | AiBugDraftV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_record');
+  if (value.schemaVersion === AI_BUG_DRAFT_SCHEMA_VERSION) return validateAiBugDraft(value);
+  if (value.schemaVersion === AI_LEGACY_BUG_DRAFT_SCHEMA_VERSION) return validateLegacyAiBugDraft(value);
+  throw new Error('AI_OUTPUT_SCHEMA_INVALID:draft_version');
+}
+
+export function validateAnyAiOracleSuggestion(value: unknown): AiOracleSuggestion | AiOracleSuggestionV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_record');
+  if (value.schemaVersion === AI_ORACLE_SUGGESTION_SCHEMA_VERSION) return validateAiOracleSuggestion(value);
+  if (value.schemaVersion === AI_LEGACY_ORACLE_SUGGESTION_SCHEMA_VERSION) return validateLegacyAiOracleSuggestion(value);
+  throw new Error('AI_OUTPUT_SCHEMA_INVALID:suggestion_version');
 }
 
 export function validateAiHumanReviewRecord(value: unknown): AiHumanReviewRecord {
   if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_record');
-  exactKeys(value, ['schemaVersion', 'artifactId', 'artifactKind', 'decision', 'reviewedAt', 'reviewerClass', 'notes', 'artifactDigest', 'reviewSchemaVersion', 'publication'], 'AI_OUTPUT_SCHEMA_INVALID:review_keys');
+  exactKeys(value, ['schemaVersion', 'reviewId', 'artifactId', 'artifactKind', 'artifactSchemaVersion', 'decision', 'reviewedAt', 'reviewerClass', 'notes', 'artifactDigest', 'reviewSchemaVersion', 'publication'], 'AI_OUTPUT_SCHEMA_INVALID:review_keys');
   if (value.schemaVersion !== AI_HUMAN_REVIEW_SCHEMA_VERSION || value.reviewSchemaVersion !== AI_HUMAN_REVIEW_SCHEMA_VERSION) throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_version');
+  assertSafeId(value.reviewId, 'reviewId', 280);
+  assertSafeId(value.artifactId, 'artifactId', 240);
+  assertEnum(value.artifactKind, ['BUG_DRAFT', 'ORACLE_SUGGESTION'], 'artifactKind');
+  assertEnum(value.artifactSchemaVersion, [AI_BUG_DRAFT_SCHEMA_VERSION, AI_ORACLE_SUGGESTION_SCHEMA_VERSION], 'artifactSchemaVersion');
+  assertEnum(value.decision, ['APPROVE_DRAFT', 'REJECT', 'SUPERSEDE'], 'decision');
+  assertDate(value.reviewedAt, 'reviewedAt');
+  if (value.reviewerClass !== 'OWNER' || value.publication !== 'PROHIBITED') throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_boundary');
+  assertBoundedString(value.notes, 'notes', 2_000);
+  assertDigest(value.artifactDigest, 'artifactDigest');
+  const identity = digest({ schemaVersion: value.schemaVersion, artifactId: value.artifactId, artifactKind: value.artifactKind, artifactSchemaVersion: value.artifactSchemaVersion, decision: value.decision, reviewedAt: value.reviewedAt, reviewerClass: value.reviewerClass, notes: value.notes, artifactDigest: value.artifactDigest, reviewSchemaVersion: value.reviewSchemaVersion, publication: value.publication });
+  if (value.reviewId !== `review:${identity}`) throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_identity');
+  outputPrivacyScan(value);
+  return value as unknown as AiHumanReviewRecord;
+}
+
+export function validateLegacyAiHumanReviewRecord(value: unknown): AiHumanReviewRecordV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_record');
+  exactKeys(value, ['schemaVersion', 'artifactId', 'artifactKind', 'decision', 'reviewedAt', 'reviewerClass', 'notes', 'artifactDigest', 'reviewSchemaVersion', 'publication'], 'AI_OUTPUT_SCHEMA_INVALID:legacy_review_keys');
+  if (value.schemaVersion !== AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION || value.reviewSchemaVersion !== AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION) throw new Error('AI_OUTPUT_SCHEMA_INVALID:legacy_review_version');
   assertSafeId(value.artifactId, 'artifactId', 240);
   assertEnum(value.artifactKind, ['BUG_DRAFT', 'ORACLE_SUGGESTION'], 'artifactKind');
   assertEnum(value.decision, ['APPROVE_DRAFT', 'REJECT', 'SUPERSEDE'], 'decision');
@@ -380,7 +443,14 @@ export function validateAiHumanReviewRecord(value: unknown): AiHumanReviewRecord
   assertBoundedString(value.notes, 'notes', 2_000);
   assertDigest(value.artifactDigest, 'artifactDigest');
   outputPrivacyScan(value);
-  return value as unknown as AiHumanReviewRecord;
+  return value as unknown as AiHumanReviewRecordV1;
+}
+
+export function validateAnyAiHumanReviewRecord(value: unknown): AiHumanReviewRecord | AiHumanReviewRecordV1 {
+  if (!isRecord(value)) throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_record');
+  if (value.schemaVersion === AI_HUMAN_REVIEW_SCHEMA_VERSION) return validateAiHumanReviewRecord(value);
+  if (value.schemaVersion === AI_LEGACY_HUMAN_REVIEW_SCHEMA_VERSION) return validateLegacyAiHumanReviewRecord(value);
+  throw new Error('AI_OUTPUT_SCHEMA_INVALID:review_version');
 }
 
 export function parseAndValidateBugModelOutput(value: string | Uint8Array): AiBugModelOutput {
@@ -395,11 +465,11 @@ export function assertProviderAdapterVersion(value: string): void {
   if (value !== AI_PROVIDER_ADAPTER_VERSION && !/^nightwatch\.ai-provider-adapter\.private\.v1(?:\.[A-Za-z0-9_.-]+)?$/.test(value)) throw new Error('AI_PROVIDER_NOT_LOCAL');
 }
 
-export function assertBugInputFreshForDraft(draft: AiBugDraft, input: AiBugReviewInput): void {
+export function assertBugInputFreshForDraft(draft: AiBugDraft | AiBugDraftV1, input: AiBugReviewInput): void {
   if (draft.inputPackageId !== input.inputPackageId || draft.inputPackageDigest !== input.inputPackageDigest || draft.candidateId !== input.facts.candidateId || draft.evidenceLevelAtGeneration !== input.facts.evidenceLevel || draft.dossierVersion !== input.dossierVersion || draft.promptTemplateVersion !== AI_REVIEW_PROMPT_TEMPLATE_VERSION || draft.inputSchemaVersion !== AI_REVIEW_INPUT_SCHEMA_VERSION || draft.sourceSnapshotRefs.join('|') !== input.sourceSnapshotRefs.join('|') || draft.evidenceRefs.some((reference) => !input.availableEvidenceRefs.includes(reference)) || draft.sourceRefs.some((reference) => !input.availableSourceRefs.includes(reference))) throw new Error('AI_ARTIFACT_STALE');
 }
 
-export function assertOracleFreshForSuggestion(suggestion: AiOracleSuggestion, input: AiOracleReviewInput): void {
+export function assertOracleFreshForSuggestion(suggestion: AiOracleSuggestion | AiOracleSuggestionV1, input: AiOracleReviewInput): void {
   if (suggestion.inputChangePackageId !== input.inputChangePackageId || suggestion.inputChangePackageDigest !== input.inputChangePackageDigest || suggestion.changeEvidenceRefs.some((reference) => !input.changeEvidenceRefs.includes(reference)) || suggestion.sourceSnapshotRefs.some((reference) => !input.sourceSnapshotRefs.includes(reference)) || !input.affectedSurfaces.includes(suggestion.affectedSurface)) throw new Error('AI_ARTIFACT_STALE');
 }
 

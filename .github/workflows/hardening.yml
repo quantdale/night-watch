@@ -33,7 +33,7 @@ jobs:
         run: npm run typecheck
       - name: Offline hardening check
         run: npm run hardening:check
-      - name: Phase 7B synthetic AI review boundary
+      - name: Phase 7B/7B.1 synthetic AI review authority and provenance
         run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
       - name: Agent-state check
         run: npm run agent:check

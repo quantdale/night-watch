@@ -1,23 +1,24 @@
 # Active Task
 
-Task ID: phase-7b-bounded-ai-review-assistance
-Phase: 7B — Bounded Private AI Review Assistance
-Title: Nightwatch Phase 7B — Bounded Private AI Review Assistance
-Status: COMPLETE
-Task directory: .agent/tasks/phase-7b-bounded-ai-review-assistance
-Starting SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Current SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
-Last validated implementation SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
-Current milestone: M8 — closure and validated checkpoint.
+Task ID: phase-7b-1-ai-review-authority-hardening
+Phase: 7B.1 — AI Review Authority Hardening
+Title: Nightwatch Phase 7B.1 — AI Review Authority Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-7b-1-ai-review-authority-hardening
+Starting SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Current SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Last validated implementation SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
+Current milestone: M6 — full local and isolated validation.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: Phase 7B implementation and closure documentation validated;
-the substantive implementation checkpoint is pushed and this closing
-documentation checkpoint is the final task handoff.
-Next action: none for this task. Do not start Phase 8; any follow-up requires
-a separate explicit owner-approved task. Preserve Hardening I/I.1 COMPLETE,
-Phase 7 COMPLETE, and Phase 6 FROZEN_BY_OWNER.
+Last checkpoint: Phase 7B.1 focused implementation, hardening, typecheck,
+campaign, and full Playwright validation are green; durable checkpoint push
+and closure documentation remain.
+Next action: read the Phase 7B.1 STATE.md and commit/push the validated
+implementation checkpoint, then complete documentation closure.
+Do not start Phase 8; preserve Hardening I/I.1 COMPLETE, Phase 7 COMPLETE,
+and Phase 6 FROZEN_BY_OWNER.
 
 ## Prior phase closure handoff
 
