@@ -15,14 +15,14 @@ import {
   decisionFromMenuChoice,
   digest,
   loadOwnerReviewSnapshot,
-  recordConfirmedOwnerDecision,
-  recordOwnerDecision,
   renderOwnerReviewSnapshot,
   renderOwnerReviewStatus,
   sanitizeTerminalText,
   type AiHumanReviewRecord,
   type AiReadableHumanReviewRecord,
 } from '../../src/core/aiReview';
+import { recordConfirmedOwnerDecision } from '../../src/core/aiReview/ownerDecision';
+import * as publicAiReview from '../../src/core/aiReview';
 import { PrivateArtifactStore } from '../../src/core/policy';
 import { createBugDossier, minimizeFailure, PASSIVE_MINIMIZATION_SAFETY } from '../../src/core/triage';
 import { compareBrowserAndApi } from '../../src/core/triage/differential';
@@ -31,8 +31,10 @@ import { localizeFaultBoundary } from '../../src/core/triage/localization';
 import { rankConfidence } from '../../src/core/triage/confidence';
 import { rankTriagePriority } from '../../src/core/triage/summaries';
 import { CHANGE_INTELLIGENCE_SCHEMA_VERSION, SELECTOR_VERSION, selectJourneys, type ChangeSet } from '../../src/core/changeIntelligence';
+import { runNodeRace } from './support/crossProcessRace';
 
 const ROOT = path.resolve(__dirname, '../..');
+const OWNER_RACE_CHILD = path.resolve(__dirname, '../fixtures/ai-owner-decision-race-child.mjs');
 const BUG_FINGERPRINT = 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
 const FAILURE_SAFETY = {
   productionAttempts: 0,
@@ -121,6 +123,13 @@ function cleanup(root: string): void {
 
 function privateFile(id: string, suffix: string): string {
   return `${id.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 150)}.${suffix}.json`;
+}
+
+type DecisionInput = Omit<Parameters<typeof recordConfirmedOwnerDecision>[0], 'confirmation' | 'expectedArtifactDigest'> & { expectedArtifactDigest?: string };
+
+function recordDecision(input: DecisionInput) {
+  const expectedArtifactDigest = input.expectedArtifactDigest ?? loadOwnerReviewSnapshot(input.store, input.target).artifactDigest;
+  return recordConfirmedOwnerDecision({ ...input, expectedArtifactDigest, confirmation: confirmationTokenForDecision(input.decision) });
 }
 
 function cli(args: string[], privateRoot?: string) {
@@ -239,7 +248,7 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
       try {
         const artifactPath = fixture.result.artifactPath!;
         const beforeBytes = fs.readFileSync(artifactPath);
-        const result = recordOwnerDecision({ store: fixture.store, target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision, reviewedAt: '2026-08-14T01:00:00.000Z' });
+        const result = recordDecision({ store: fixture.store, target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision, reviewedAt: '2026-08-14T01:00:00.000Z' });
         expect(result.projection.effectiveStatus).toBe(expected);
         expect(result.artifact.status).toBe('AI_GENERATED_UNREVIEWED');
         expect(fs.readFileSync(artifactPath)).toEqual(beforeBytes);
@@ -254,7 +263,7 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
   test('oracle approval is manual implementation review only and catalog/source remain untouched', async () => {
     const fixture = await oracleArtifact();
     try {
-      const result = recordOwnerDecision({ store: fixture.store, target: { kind: 'oracle', artifactId: fixture.result.artifact.suggestionId }, decision: 'APPROVE_DRAFT', reviewedAt: '2026-08-14T01:01:00.000Z' });
+      const result = recordDecision({ store: fixture.store, target: { kind: 'oracle', artifactId: fixture.result.artifact.suggestionId }, decision: 'APPROVE_DRAFT', reviewedAt: '2026-08-14T01:01:00.000Z' });
       expect(result.projection.effectiveStatus).toBe('APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW');
       expect(result.artifact.status).toBe('AI_GENERATED_UNREVIEWED');
       expect((result.artifact as { executable: boolean }).executable).toBe(false);
@@ -268,9 +277,9 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
     const fixture = await bugArtifact();
     try {
       const target = { kind: 'bug' as const, artifactId: fixture.result.artifact.draftId };
-      const first = recordOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', reviewedAt: '2026-08-14T01:02:00.000Z' });
+      const first = recordDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', reviewedAt: '2026-08-14T01:02:00.000Z' });
       const filesBefore = fs.readdirSync(fixture.root).sort().map((file) => [file, fs.readFileSync(path.join(fixture.root, file))]);
-      expect(() => recordOwnerDecision({ store: fixture.store, target, decision: 'REJECT', reviewedAt: '2026-08-14T01:03:00.000Z' })).toThrow('AI_REVIEW_ALREADY_REVIEWED');
+      expect(() => recordDecision({ store: fixture.store, target, decision: 'REJECT', reviewedAt: '2026-08-14T01:03:00.000Z' })).toThrow('AI_REVIEW_ALREADY_REVIEWED');
       const filesAfter = fs.readdirSync(fixture.root).sort().map((file) => [file, fs.readFileSync(path.join(fixture.root, file))]);
       expect(filesAfter).toEqual(filesBefore);
       const stored = fixture.store.readHumanReview(fixture.result.artifact.draftId);
@@ -281,14 +290,92 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
     }
   });
 
+  test('competing APPROVE_DRAFT and REJECT processes leave exactly one valid digest-bound winner', async () => {
+    const fixture = await bugArtifact();
+    try {
+      const artifactId = fixture.result.artifact.draftId;
+      const artifactBefore = fs.readFileSync(fixture.result.artifactPath!);
+      const results = await runNodeRace({
+        script: OWNER_RACE_CHILD,
+        labels: ['approve', 'reject'],
+        argsForLabel: (label, barrierRoot) => [
+          fixture.root,
+          barrierRoot,
+          label,
+          'bug',
+          artifactId,
+          label === 'approve' ? 'APPROVE_DRAFT' : 'REJECT',
+          label === 'approve' ? '2026-08-14T02:00:00.000Z' : '2026-08-14T02:00:01.000Z',
+        ],
+      });
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => result.code === 'AI_REVIEW_ALREADY_REVIEWED')).toHaveLength(1);
+      const reviewFiles = fs.readdirSync(fixture.root).filter((file) => file.endsWith('.human-review.json'));
+      expect(reviewFiles).toHaveLength(1);
+      const snapshot = loadOwnerReviewSnapshot(fixture.store, { kind: 'bug', artifactId });
+      expect(['APPROVE_DRAFT', 'REJECT']).toContain(snapshot.reviewRecord?.decision);
+      expect(snapshot.reviewRecord?.artifactId).toBe(artifactId);
+      expect(snapshot.reviewRecord?.artifactDigest).toBe(artifactDigest(fixture.result.artifact));
+      expect(fs.readFileSync(fixture.result.artifactPath!)).toEqual(artifactBefore);
+    } finally {
+      cleanup(fixture.root);
+    }
+  });
+
+  test('competing oracle APPROVE_DRAFT and SUPERSEDE processes use the same first-writer-wins review path', async () => {
+    const fixture = await oracleArtifact();
+    try {
+      const artifactId = fixture.result.artifact.suggestionId;
+      const artifactBefore = fs.readFileSync(fixture.result.artifactPath!);
+      const results = await runNodeRace({
+        script: OWNER_RACE_CHILD,
+        labels: ['oracle-approve', 'oracle-supersede'],
+        argsForLabel: (label, barrierRoot) => [
+          fixture.root,
+          barrierRoot,
+          label,
+          'oracle',
+          artifactId,
+          label === 'oracle-approve' ? 'APPROVE_DRAFT' : 'SUPERSEDE',
+          label === 'oracle-approve' ? '2026-08-14T02:01:00.000Z' : '2026-08-14T02:01:01.000Z',
+        ],
+      });
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => result.code === 'AI_REVIEW_ALREADY_REVIEWED')).toHaveLength(1);
+      const snapshot = loadOwnerReviewSnapshot(fixture.store, { kind: 'oracle', artifactId });
+      expect(['APPROVE_DRAFT', 'SUPERSEDE']).toContain(snapshot.reviewRecord?.decision);
+      expect(snapshot.reviewRecord?.artifactDigest).toBe(artifactDigest(fixture.result.artifact));
+      expect(snapshot.artifact).toMatchObject({ suggestionId: artifactId, executable: false, status: 'AI_GENERATED_UNREVIEWED' });
+      expect(fs.readFileSync(fixture.result.artifactPath!)).toEqual(artifactBefore);
+    } finally {
+      cleanup(fixture.root);
+    }
+  });
+
+  test('byte-identical review persistence is idempotent and creates no second record', async () => {
+    const fixture = await bugArtifact();
+    try {
+      const target = { kind: 'bug' as const, artifactId: fixture.result.artifact.draftId };
+      const first = recordDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', reviewedAt: '2026-08-14T02:02:00.000Z' });
+      const reviewPath = path.join(fixture.root, privateFile(target.artifactId, 'human-review'));
+      const before = fs.readFileSync(reviewPath);
+      expect(fixture.store.writeHumanReview(first.reviewRecord as AiHumanReviewRecord)).toBe(reviewPath);
+      expect(fs.readFileSync(reviewPath)).toEqual(before);
+      expect(fs.readdirSync(fixture.root).filter((file) => file.endsWith('.human-review.json'))).toHaveLength(1);
+    } finally {
+      cleanup(fixture.root);
+    }
+  });
+
   test('wrong confirmation cancels without a write and exact confirmation creates one record', async () => {
     const fixture = await bugArtifact();
     try {
       const target = { kind: 'bug' as const, artifactId: fixture.result.artifact.draftId };
       const before = fs.readdirSync(fixture.root).sort();
-      expect(() => recordConfirmedOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', confirmation: 'REJECT' })).toThrow('AI_OWNER_REVIEW_CANCELLED');
+      const expectedArtifactDigest = loadOwnerReviewSnapshot(fixture.store, target).artifactDigest;
+      expect(() => recordConfirmedOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', confirmation: 'REJECT', expectedArtifactDigest })).toThrow('AI_OWNER_REVIEW_CANCELLED');
       expect(fs.readdirSync(fixture.root).sort()).toEqual(before);
-      const result = recordConfirmedOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', confirmation: 'APPROVE', reviewedAt: '2026-08-14T01:02:30.000Z' });
+      const result = recordConfirmedOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT', confirmation: 'APPROVE', expectedArtifactDigest, reviewedAt: '2026-08-14T01:02:30.000Z' });
       expect(result.reviewRecord).not.toBeNull();
       expect(fixture.store.readHumanReviewOrNull(target.artifactId)).not.toBeNull();
     } finally {
@@ -320,7 +407,7 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
           throw new Error('synthetic write failure');
         }
       }
-      expect(() => recordOwnerDecision({ store: new FailingStore(fixture.privateStore), target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision: 'REJECT' })).toThrow('AI_REVIEW_STORAGE_FAILED');
+      expect(() => recordDecision({ store: new FailingStore(fixture.privateStore), target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision: 'REJECT' })).toThrow('AI_REVIEW_STORAGE_FAILED');
 
       class MismatchStore extends AiReviewArtifactStore {
         override readHumanReviewOrNull(id: string): AiReadableHumanReviewRecord | null {
@@ -329,7 +416,7 @@ test.describe('Phase 7B.2 immutable owner decisions', () => {
           return value;
         }
       }
-      expect(() => recordOwnerDecision({ store: new MismatchStore(fixture.privateStore), target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision: 'REJECT' })).toThrow('AI_REVIEW_STATE_INVALID');
+      expect(() => recordDecision({ store: new MismatchStore(fixture.privateStore), target: { kind: 'bug', artifactId: fixture.result.artifact.draftId }, decision: 'REJECT' })).toThrow('AI_REVIEW_STATE_INVALID');
     } finally {
       cleanup(fixture.root);
     }
@@ -392,7 +479,7 @@ test.describe('Phase 7B.2 exact identity, legacy, and corrupt-state handling', (
       const target = { kind: 'bug' as const, artifactId: artifact.draftId };
       const unverified = loadOwnerReviewSnapshot(fixture.store, target);
       expect(unverified.projection.effectiveStatus).toBe('UNVERIFIED_LEGACY_REVIEW_STATE');
-      expect(() => recordOwnerDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT' })).toThrow('AI_OWNER_REVIEW_LEGACY_READ_ONLY');
+      expect(() => recordDecision({ store: fixture.store, target, decision: 'APPROVE_DRAFT' })).toThrow('AI_OWNER_REVIEW_LEGACY_READ_ONLY');
 
       const historical = {
         schemaVersion: 'nightwatch.ai-human-review.private.v1' as const,
@@ -410,7 +497,7 @@ test.describe('Phase 7B.2 exact identity, legacy, and corrupt-state handling', (
       const reviewed = loadOwnerReviewSnapshot(fixture.store, target);
       expect(reviewed.projection.effectiveStatus).toBe('OWNER_APPROVED_DRAFT');
       expect(renderOwnerReviewStatus(reviewed)).toContain('HISTORICAL_V1_NO_REVIEW_ID');
-      expect(() => recordOwnerDecision({ store: fixture.store, target, decision: 'REJECT' })).toThrow('AI_REVIEW_ALREADY_REVIEWED');
+      expect(() => recordDecision({ store: fixture.store, target, decision: 'REJECT' })).toThrow('AI_REVIEW_ALREADY_REVIEWED');
     } finally {
       cleanup(fixture.root);
     }
@@ -423,7 +510,7 @@ test.describe('Phase 7B.2 exact identity, legacy, and corrupt-state handling', (
       fixture.privateStore.writeJson(privateFile(artifact.suggestionId, 'oracle-suggestion'), { schemaVersion: artifact.schemaVersion, artifactId: artifact.suggestionId, artifact });
       const snapshot = loadOwnerReviewSnapshot(fixture.store, { kind: 'oracle', artifactId: artifact.suggestionId });
       expect(snapshot.projection.effectiveStatus).toBe('UNVERIFIED_LEGACY_REVIEW_STATE');
-      expect(() => recordOwnerDecision({ store: fixture.store, target: { kind: 'oracle', artifactId: artifact.suggestionId }, decision: 'APPROVE_DRAFT' })).toThrow('AI_OWNER_REVIEW_LEGACY_READ_ONLY');
+      expect(() => recordDecision({ store: fixture.store, target: { kind: 'oracle', artifactId: artifact.suggestionId }, decision: 'APPROVE_DRAFT' })).toThrow('AI_OWNER_REVIEW_LEGACY_READ_ONLY');
     } finally {
       cleanup(fixture.root);
     }
@@ -434,11 +521,23 @@ test.describe('Phase 7B.2 fixed human gate and CLI boundary', () => {
   test('owner CLI and service remain outside provider, network, enumeration, and publication paths', () => {
     const cliSource = fs.readFileSync(path.join(ROOT, 'bin', 'ai-owner-review.mjs'), 'utf8');
     const serviceSource = fs.readFileSync(path.join(ROOT, 'src', 'core', 'aiReview', 'ownerReview.ts'), 'utf8');
+    const decisionSource = fs.readFileSync(path.join(ROOT, 'src', 'core', 'aiReview', 'ownerDecision.ts'), 'utf8');
     expect(cliSource).not.toMatch(/AiReviewSession|SyntheticAiReviewProvider|LoopbackAiReviewProvider|fetch\s*\(|http\.request|https\.request|net\.connect|child_process|readdirSync|writeFileSync/);
     expect(serviceSource).not.toMatch(/AiReviewSession|SyntheticAiReviewProvider|LoopbackAiReviewProvider|fetch\s*\(|http\.request|https\.request|net\.connect|child_process|readdirSync|writeFileSync/);
     expect(cliSource).toContain('ownerReview.ts');
-    expect(serviceSource).toContain('createHumanReviewRecord');
-    expect(serviceSource).toContain('writeHumanReview');
+    expect(cliSource).toContain('ownerDecision.ts');
+    expect(serviceSource).not.toMatch(/createHumanReviewRecord|writeHumanReview/);
+    expect(decisionSource).toContain('createHumanReviewRecord');
+    expect(decisionSource).toContain('writeHumanReview');
+  });
+
+  test('the public AI-review index does not expose human-decision write authority', () => {
+    expect('recordOwnerDecision' in publicAiReview).toBe(false);
+    expect('recordConfirmedOwnerDecision' in publicAiReview).toBe(false);
+    expect('createHumanReviewRecord' in publicAiReview).toBe(false);
+    const indexSource = fs.readFileSync(path.join(ROOT, 'src', 'core', 'aiReview', 'index.ts'), 'utf8');
+    expect(indexSource).not.toMatch(/export\s+\*\s+from\s+['"]\.\/ownerReview['"]/);
+    expect(indexSource).not.toMatch(/ownerDecision|recordOwnerDecision|recordConfirmedOwnerDecision|createHumanReviewRecord/);
   });
 
   test('menu and exact confirmation helpers fail closed on accidental or wrong input', () => {

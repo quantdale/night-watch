@@ -3,14 +3,12 @@
 //
 // This module deliberately has no provider, execution, network, or terminal
 // dependency. The bin wrapper supplies prompts and output. This service only
-// reads one exact artifact, renders a safe snapshot, and records one confirmed
-// digest-bound owner review through the existing hardened review primitives.
+// reads one exact artifact and renders a safe snapshot. Write-capable owner
+// decision logic lives in the non-public ownerDecision.ts module.
 // ---------------------------------------------------------------------------
 
 import {
-  applyHumanDecision,
   artifactDigest,
-  createHumanReviewRecord,
   projectEffectiveBugReview,
   projectEffectiveOracleReview,
 } from './review';
@@ -26,8 +24,6 @@ import type {
   AiReadableReviewArtifact,
   AiReviewProjection,
 } from './types';
-
-export { AiReviewArtifactStore } from './storage';
 
 export type OwnerReviewArtifactKind = 'bug' | 'oracle';
 export type OwnerReviewDecision = AiHumanReviewRecord['decision'];
@@ -173,73 +169,6 @@ export function loadOwnerReviewSnapshot(store: AiReviewArtifactStore, target: Ow
     if (error instanceof OwnerReviewError) throw error;
     throw new OwnerReviewError('AI_REVIEW_STATE_INVALID');
   }
-}
-
-function verifyReadBack(artifact: AiBugDraft | AiOracleSuggestion, expected: AiHumanReviewRecord, actual: AiReadableHumanReviewRecord | null): AiHumanReviewRecord {
-  if (actual === null || !('reviewId' in actual) || actual.reviewId !== expected.reviewId || actual.artifactId !== expected.artifactId || actual.artifactDigest !== expected.artifactDigest || actual.decision !== expected.decision || actual.reviewerClass !== 'OWNER' || actual.publication !== 'PROHIBITED') throw new OwnerReviewError('AI_REVIEW_STATE_INVALID');
-  try {
-    applyHumanDecision(artifact, actual);
-  } catch {
-    throw new OwnerReviewError('AI_REVIEW_STATE_INVALID');
-  }
-  return actual;
-}
-
-export function recordOwnerDecision(input: {
-  readonly store: AiReviewArtifactStore;
-  readonly target: OwnerReviewTarget;
-  readonly decision: OwnerReviewDecision;
-  readonly reviewedAt?: string;
-  readonly expectedArtifactDigest?: string;
-}): OwnerReviewSnapshot {
-  const before = loadOwnerReviewSnapshot(input.store, input.target);
-  if (input.expectedArtifactDigest !== undefined && before.artifactDigest !== input.expectedArtifactDigest) throw new OwnerReviewError('AI_REVIEW_STATE_INVALID');
-  assertOwnerDecisionWritable(before);
-  const artifact = before.artifact as AiBugDraft | AiOracleSuggestion;
-  let review: AiHumanReviewRecord;
-  try {
-    review = createHumanReviewRecord({ artifact, decision: input.decision, reviewedAt: input.reviewedAt ?? new Date().toISOString(), notes: OWNER_REVIEW_FIXED_NOTE });
-  } catch {
-    throw new OwnerReviewError('AI_REVIEW_STATE_INVALID');
-  }
-  try {
-    input.store.writeHumanReview(review);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    if (message === 'AI_REVIEW_CONFLICTING_DECISIONS') {
-      const existing = loadOwnerReviewSnapshot(input.store, input.target);
-      if (existing.reviewRecord !== null) throw new OwnerReviewError('AI_REVIEW_ALREADY_REVIEWED');
-    }
-    throw new OwnerReviewError('AI_REVIEW_STORAGE_FAILED');
-  }
-  const readBack = readReview(input.store, input.target.artifactId);
-  const validated = verifyReadBack(artifact, review, readBack);
-  const projection = applyHumanDecision(artifact, validated);
-  return {
-    target: input.target,
-    artifact,
-    reviewRecord: validated,
-    projection,
-    artifactDigest: artifactDigest(artifact),
-    freshness: OWNER_REVIEW_FRESHNESS,
-  };
-}
-
-export function recordConfirmedOwnerDecision(input: {
-  readonly store: AiReviewArtifactStore;
-  readonly target: OwnerReviewTarget;
-  readonly decision: OwnerReviewDecision;
-  readonly confirmation: string;
-  readonly reviewedAt?: string;
-  readonly expectedArtifactDigest?: string;
-}): OwnerReviewSnapshot {
-  if (!confirmationMatches(input.decision, input.confirmation)) throw new OwnerReviewError('AI_OWNER_REVIEW_CANCELLED');
-  return recordOwnerDecision(input);
-}
-
-export function assertOwnerDecisionWritable(snapshot: OwnerReviewSnapshot): void {
-  if (snapshot.reviewRecord !== null) throw new OwnerReviewError('AI_REVIEW_ALREADY_REVIEWED');
-  if (isLegacyArtifact(snapshot.artifact) || !isV2Bug(snapshot.artifact) && !isV2Oracle(snapshot.artifact)) throw new OwnerReviewError('AI_OWNER_REVIEW_LEGACY_READ_ONLY');
 }
 
 export function decisionFromMenuChoice(value: string): OwnerReviewDecision | 'CANCEL' | null {

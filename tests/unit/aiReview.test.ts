@@ -11,16 +11,10 @@ import {
   SyntheticAiReviewProvider,
   ZERO_AI_SAFETY,
   type SyntheticProviderMode,
-  applyHumanDecision,
-  artifactDigest,
   buildBugReviewInput,
   buildOracleReviewInput,
-  createHumanReviewRecord,
   digest,
-  projectEffectiveBugReview,
-  projectEffectiveOracleReview,
   renderBugDraft,
-  validateReviewedArtifact,
   validateAiBugReviewInput,
   validateAiBugDraft,
   validateAiReadyEvidencePackage,
@@ -30,6 +24,14 @@ import {
   type AiReviewRunOptions,
   type AiReviewProvider,
 } from '../../src/core/aiReview';
+import {
+  applyHumanDecision,
+  artifactDigest,
+  createHumanReviewRecord,
+  projectEffectiveBugReview,
+  projectEffectiveOracleReview,
+  validateReviewedArtifact,
+} from '../../src/core/aiReview/review';
 import { createBugDossier, minimizeFailure, PASSIVE_MINIMIZATION_SAFETY } from '../../src/core/triage';
 import { compareBrowserAndApi } from '../../src/core/triage/differential';
 import { correlateSourceChanges } from '../../src/core/triage/correlation';
@@ -41,8 +43,10 @@ import { PrivateArtifactStore } from '../../src/core/policy';
 import { decideOwnerScope } from '../../src/core/policy/ownerScope';
 import { RIPPLE_DEPENDENCY_EDGES } from '../../src/core/changeIntelligence/map';
 import type { SafetyVector } from '../../src/core/exploration/types';
+import { runNodeRace } from './support/crossProcessRace';
 
 const FP = 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
+const ARTIFACT_RACE_CHILD = path.resolve(__dirname, '../fixtures/private-artifact-race-child.mjs');
 const FAILURE: SafetyVector = {
   productionAttempts: 0,
   proxyViolations: 0,
@@ -709,6 +713,90 @@ test.describe('Phase 7B oracle suggestion and owner review', () => {
     for (const operation of ['DATABASE_QUERY', 'GKE_INSPECTION', 'AWS_STS', 'PRODUCTION_REQUEST', 'EXTERNAL_PUBLICATION', 'SLACK_SEND', 'GITHUB_ISSUE_CREATE', 'PRODUCT_MUTATION', 'NIGHTWATCH_SELF_EDIT']) {
       expect(decideOwnerScope(operation).allowed).toBe(false);
       expect(decideOwnerScope(operation).code).toBe('OWNER_POLICY_BLOCKED');
+    }
+  });
+});
+
+test.describe('Phase 7B.2.1 immutable generated-artifact races', () => {
+  test('same-ID bug drafts with different generatedAt bytes cannot replace the first winner', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-ai-bug-race-'));
+    try {
+      const input = await bugInput();
+      const first = await runBug(input, new SyntheticAiReviewProvider('VALID_BUG_DRAFT'), { now: () => new Date('2026-08-14T00:00:00.000Z') });
+      const second = await runBug(input, new SyntheticAiReviewProvider('VALID_BUG_DRAFT'), { now: () => new Date('2026-08-14T00:00:01.000Z') });
+      expect(second.artifact.draftId).toBe(first.artifact.draftId);
+      expect(second.artifact.generatedAt).not.toBe(first.artifact.generatedAt);
+      const results = await runNodeRace({
+        script: ARTIFACT_RACE_CHILD,
+        labels: ['bug-a', 'bug-b'],
+        argsForLabel: (label, barrierRoot) => [root, barrierRoot, label, 'bug', first.artifact.draftId, JSON.stringify(label === 'bug-a' ? first.artifact : second.artifact)],
+      });
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => result.code === 'AI_REVIEW_ARTIFACT_IMMUTABLE')).toHaveLength(1);
+      const stored = JSON.parse(fs.readFileSync(path.join(root, `${first.artifact.draftId.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 150)}.bug-draft.json`), 'utf8')) as { status: string; artifact: typeof first.artifact };
+      expect(stored.status).toBe('READY');
+      expect([first.artifact.generatedAt, second.artifact.generatedAt]).toContain(stored.artifact.generatedAt);
+      expect(fs.statSync(path.join(root, `${first.artifact.draftId.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 150)}.bug-draft.json`)).mode & 0o777).toBe(0o600);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('same-ID oracle suggestions with different generatedAt bytes cannot replace the first winner', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-ai-oracle-race-'));
+    try {
+      const { changeSet, selection } = changeFixture();
+      const input = buildOracleReviewInput(changeSet, selection, { knownDeterministicInvariants: ['known-json-invariant'], missingCoverageClasses: ['content-type'] });
+      const first = await runOracle(input, new SyntheticAiReviewProvider('VALID_ORACLE_SUGGESTION'), { now: () => new Date('2026-08-14T00:00:00.000Z') });
+      const second = await runOracle(input, new SyntheticAiReviewProvider('VALID_ORACLE_SUGGESTION'), { now: () => new Date('2026-08-14T00:00:01.000Z') });
+      expect(second.artifact.suggestionId).toBe(first.artifact.suggestionId);
+      expect(second.artifact.generatedAt).not.toBe(first.artifact.generatedAt);
+      const results = await runNodeRace({
+        script: ARTIFACT_RACE_CHILD,
+        labels: ['oracle-a', 'oracle-b'],
+        argsForLabel: (label, barrierRoot) => [root, barrierRoot, label, 'oracle', first.artifact.suggestionId, JSON.stringify(label === 'oracle-a' ? first.artifact : second.artifact)],
+      });
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => result.code === 'AI_REVIEW_ARTIFACT_IMMUTABLE')).toHaveLength(1);
+      const file = path.join(root, `${first.artifact.suggestionId.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 150)}.oracle-suggestion.json`);
+      const stored = JSON.parse(fs.readFileSync(file, 'utf8')) as { status: string; artifact: typeof first.artifact };
+      expect(stored.status).toBe('READY');
+      expect([first.artifact.generatedAt, second.artifact.generatedAt]).toContain(stored.artifact.generatedAt);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('exact duplicate artifacts remain idempotent while same-ID different bytes remain immutable', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-ai-duplicate-'));
+    try {
+      const input = await bugInput();
+      const first = await runBug(input, new SyntheticAiReviewProvider('VALID_BUG_DRAFT'), { now: () => new Date('2026-08-14T00:00:00.000Z') });
+      const store = new AiReviewArtifactStore(new PrivateArtifactStore({ root, remotePrivacy: 'NO_REMOTE' }));
+      const destination = store.writeBugDraft(first.artifact);
+      const before = fs.readFileSync(destination);
+      expect(store.writeBugDraft(first.artifact)).toBe(destination);
+      expect(fs.readFileSync(destination)).toEqual(before);
+      const changed = { ...first.artifact, generatedAt: '2026-08-14T00:00:02.000Z' };
+      expect(() => store.writeBugDraft(changed)).toThrow('AI_REVIEW_ARTIFACT_IMMUTABLE');
+      expect(fs.readFileSync(destination)).toEqual(before);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('a corrupt existing bug artifact cannot be overwritten or self-healed', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-ai-corrupt-winner-'));
+    try {
+      const input = await bugInput();
+      const first = await runBug(input, new SyntheticAiReviewProvider('VALID_BUG_DRAFT'), { now: () => new Date('2026-08-14T00:00:00.000Z') });
+      const store = new AiReviewArtifactStore(new PrivateArtifactStore({ root, remotePrivacy: 'NO_REMOTE' }));
+      const destination = store.writeBugDraft(first.artifact);
+      fs.writeFileSync(destination, '{', { encoding: 'utf8', mode: 0o600 });
+      expect(() => store.writeBugDraft(first.artifact)).toThrow('AI_REVIEW_STATE_INVALID');
+      expect(fs.readFileSync(destination, 'utf8')).toBe('{');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
     }
   });
 });

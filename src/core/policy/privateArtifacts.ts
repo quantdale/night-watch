@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import fs from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { assertOwnerPolicyAllows, type OwnerScopedOperation } from './ownerScope';
@@ -137,7 +138,6 @@ export function privateArtifactPolicyRecord(remotePrivacy: PrivateArtifactPolicy
 export class PrivateArtifactStore {
   readonly root: string;
   readonly policy: PrivateArtifactPolicyRecord;
-  private nonce = 0;
 
   constructor(options: { root?: string; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy'] } = {}) {
     this.root = privateArtifactRoot(options.root);
@@ -145,12 +145,71 @@ export class PrivateArtifactStore {
     this.policy = privateArtifactPolicyRecord(options.remotePrivacy ?? 'NO_REMOTE', options.root);
   }
 
+  private temporaryPayload(payload: string): string {
+    // The name is deliberately independent of the destination and includes
+    // process randomness.  `wx` remains the actual collision primitive; the
+    // random component prevents separate store instances in one process from
+    // colliding merely because their local counters start at zero.
+    const temporary = path.join(this.root, `.nightwatch-${process.pid}-${randomBytes(16).toString('hex')}.tmp`);
+    let descriptor: number | undefined;
+    try {
+      descriptor = fs.openSync(temporary, 'wx', 0o600);
+      fs.writeFileSync(descriptor, payload, { encoding: 'utf8' });
+      fs.fsyncSync(descriptor);
+      fs.closeSync(descriptor);
+      descriptor = undefined;
+      fs.chmodSync(temporary, 0o600);
+      const stat = fs.lstatSync(temporary);
+      if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('PRIVATE_ARTIFACT_TEMP_UNSAFE');
+      assertOwnerOnly(stat, 'PRIVATE_ARTIFACT_TEMP');
+      return temporary;
+    } catch (error) {
+      if (descriptor !== undefined) {
+        try {
+          fs.closeSync(descriptor);
+        } catch {
+          // Preserve the original failure; cleanup below is best effort.
+        }
+      }
+      try {
+        if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+      } catch {
+        // Preserve the original safety failure; cleanup is best effort.
+      }
+      throw error;
+    }
+  }
+
+  private fsyncDirectory(): void {
+    let descriptor: number | undefined;
+    try {
+      descriptor = fs.openSync(this.root, 'r');
+      fs.fsyncSync(descriptor);
+    } catch {
+      throw new Error('PRIVATE_ARTIFACT_DIRECTORY_FSYNC_FAILED');
+    } finally {
+      if (descriptor !== undefined) {
+        try {
+          fs.closeSync(descriptor);
+        } catch {
+          // Directory durability failure is already represented above when
+          // fsync itself failed. Close cleanup must not hide it.
+        }
+      }
+    }
+  }
+
+  private verifyPublishedFile(destination: string): void {
+    const written = fs.lstatSync(destination);
+    if (written.isSymbolicLink() || !written.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
+    assertOwnerOnly(written, 'PRIVATE_ARTIFACT_DESTINATION');
+  }
+
   writeJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
     safeFileName(fileName);
     assertPrivatePayload(value);
     ensureOwnerDirectory(this.root);
     const destination = path.join(this.root, fileName);
-    const temporary = path.join(this.root, `.${fileName}.${process.pid}.${this.nonce++}.tmp`);
     assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_DESTINATION_SYMLINK');
     if (fs.existsSync(destination)) {
       const existing = fs.lstatSync(destination);
@@ -159,31 +218,16 @@ export class PrivateArtifactStore {
     }
     const payloadValue = value !== null && typeof value === 'object' ? value : { value };
     const payload = JSON.stringify({ ...(payloadValue as Record<string, unknown>), status }, null, 2) + '\n';
-    const descriptor = fs.openSync(temporary, 'wx', 0o600);
+    let temporary: string | undefined;
     try {
-      fs.writeFileSync(descriptor, payload, { encoding: 'utf8' });
-      fs.fsyncSync(descriptor);
-    } finally {
-      fs.closeSync(descriptor);
-    }
-    try {
-      fs.chmodSync(temporary, 0o600);
-      const temporaryStat = fs.lstatSync(temporary);
-      if (temporaryStat.isSymbolicLink() || !temporaryStat.isFile()) throw new Error('PRIVATE_ARTIFACT_TEMP_UNSAFE');
-      assertOwnerOnly(temporaryStat, 'PRIVATE_ARTIFACT_TEMP');
+      temporary = this.temporaryPayload(payload);
       fs.renameSync(temporary, destination);
-      const written = fs.lstatSync(destination);
-      if (written.isSymbolicLink() || !written.isFile()) throw new Error('PRIVATE_ARTIFACT_DESTINATION_UNSAFE');
-      assertOwnerOnly(written, 'PRIVATE_ARTIFACT_DESTINATION');
-      const directory = fs.openSync(this.root, 'r');
-      try {
-        fs.fsyncSync(directory);
-      } finally {
-        fs.closeSync(directory);
-      }
+      temporary = undefined;
+      this.verifyPublishedFile(destination);
+      this.fsyncDirectory();
     } catch (error) {
       try {
-        if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+        if (temporary !== undefined && fs.existsSync(temporary)) fs.unlinkSync(temporary);
       } catch {
         // Preserve the original safety failure; cleanup is best effort.
       }
@@ -219,8 +263,48 @@ export class PrivateArtifactStore {
 
   /** Write once; an existing destination can never be silently replaced. */
   writeImmutableJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
-    if (this.readJson(fileName) !== null) throw new Error('PRIVATE_ARTIFACT_IMMUTABLE');
-    return this.writeJson(fileName, value, status);
+    safeFileName(fileName);
+    assertPrivatePayload(value);
+    ensureOwnerDirectory(this.root);
+    const destination = path.join(this.root, fileName);
+    // This is a path-safety check only.  It is intentionally not used as an
+    // existence/exclusion check; linkSync below is the filesystem race
+    // primitive that decides the winner.
+    assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_DESTINATION_SYMLINK');
+    const payloadValue = value !== null && typeof value === 'object' ? value : { value };
+    const payload = JSON.stringify({ ...(payloadValue as Record<string, unknown>), status }, null, 2) + '\n';
+    let temporary: string | undefined;
+    try {
+      temporary = this.temporaryPayload(payload);
+      // Re-check path components immediately before publication, but never
+      // replace a path that became unsafe after the earlier check.
+      assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_DESTINATION_SYMLINK');
+      try {
+        // POSIX link creation is atomic and fails with EEXIST without
+        // replacing an existing regular file, directory, or symlink.
+        fs.linkSync(temporary, destination);
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === 'EEXIST') throw new Error('PRIVATE_ARTIFACT_IMMUTABLE');
+        if (code === 'ENOTSUP' || code === 'EOPNOTSUPP' || code === 'EXDEV' || code === 'EINVAL' || code === 'EPERM') {
+          throw new Error('PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED');
+        }
+        throw error;
+      }
+      this.verifyPublishedFile(destination);
+      fs.unlinkSync(temporary);
+      temporary = undefined;
+      this.fsyncDirectory();
+      this.verifyPublishedFile(destination);
+    } catch (error) {
+      try {
+        if (temporary !== undefined && fs.existsSync(temporary)) fs.unlinkSync(temporary);
+      } catch {
+        // Preserve the original safety failure; cleanup is best effort.
+      }
+      throw error;
+    }
+    return destination;
   }
 
   /** Always throws; external publication is not a Nightwatch capability. */

@@ -144,12 +144,58 @@ function checkAiReviewBoundary() {
   if (!/performance\.now\(\)/.test(pipeline) || /options\.clock\s*\?\?\s*\(\)\s*=>\s*Date\.now\(\)/.test(pipeline)) fail('AI runtime budget must use a monotonic default clock');
   if (!/signal:\s*AbortSignal/.test(pipeline) || !/timeoutMs:\s*number/.test(pipeline) || !/controller\.abort\(\)/.test(pipeline) || !/remainingRuntimeMs/.test(pipeline)) fail('AI provider boundary is missing monotonic deadline cancellation context');
   const storage = read('src/core/aiReview/storage.ts');
-  if (!/PrivateArtifactStore/.test(storage) || !/writeIncomplete/.test(storage)) fail('AI artifacts are not routed through private incomplete-to-ready storage');
+  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('AI artifacts are not routed through immutable private storage');
+  if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable artifacts retain a replacement-capable write path');
   if (/aiReview|AI_REVIEW/i.test(read('bin/phase7-real.mjs'))) fail('Phase 7 real launcher must not invoke AI review');
   for (const file of gitFiles().filter((item) => item.startsWith('src/core/campaign/') || item.startsWith('src/oracles/'))) {
     if (/aiReview|AI_REVIEW/i.test(read(file))) fail(`${file} imports or references AI review authority`);
   }
   if (!/SYNTHETIC_LOCAL.*LOOPBACK_LOCAL/.test(read('src/core/aiReview/types.ts').replace(/\s+/g, ' '))) fail('AI provider class allowlist is not local-only');
+}
+
+function checkImmutablePrivatePublication() {
+  const source = read('src/core/policy/privateArtifacts.ts');
+  const start = source.indexOf('  writeImmutableJson(');
+  const end = source.indexOf('\n  /** Always throws', start);
+  const method = start >= 0 && end > start ? source.slice(start, end) : '';
+  if (!method) {
+    fail('writeImmutableJson method is missing');
+    return;
+  }
+  if (!/fs\.linkSync\(temporary, destination\)/.test(method)) fail('immutable publication does not use atomic linkSync create-if-absent');
+  if (/renameSync|\.writeJson\s*\(|\.readJson\s*\(|unlinkSync\(destination\)|copyFileSync|writeFileSync\(destination/.test(method)) fail('immutable publication contains a replacement-capable or unsafe fallback');
+  if (!/openSync\(temporary, ['"]wx['"], 0o600\)/.test(source) || !/fs\.fsyncSync\(descriptor\)/.test(source)) fail('private temporary publication is not wx/0600 and file-fsynced');
+  if (!/randomBytes\(/.test(source) || !/\.tmp/.test(source)) fail('private temporary names are not process-collision-resistant hidden files');
+  if (!/fs\.unlinkSync\(temporary\)/.test(method)) fail('immutable publication does not clean its temporary name');
+  if (!/fsyncDirectory\(\)/.test(method) || !/fs\.fsyncSync\(descriptor\)/.test(source)) fail('immutable publication does not fsync the containing directory');
+  if (!/PRIVATE_ARTIFACT_NO_REPLACE_UNSUPPORTED/.test(method)) fail('immutable publication lacks a precise unsupported no-replace failure');
+  const storage = read('src/core/aiReview/storage.ts');
+  if (!/writeBugDraft[\s\S]*writeImmutableJson/.test(storage) || !/writeOracleSuggestion[\s\S]*writeImmutableJson/.test(storage) || !/writeHumanReview[\s\S]*writeImmutableJson/.test(storage)) fail('AI bug/oracle/review writes do not all use immutable publication');
+  if (/writeIncomplete\s*\(|\.writeJson\s*\(/.test(storage)) fail('AI immutable storage uses replacement-capable writeJson/writeIncomplete');
+}
+
+function checkOwnerDecisionAuthority() {
+  const index = read('src/core/aiReview/index.ts');
+  if (/export\s+\*\s+from\s+['"]\.\/ownerReview['"]/.test(index)) fail('AI public index wildcard-exports owner review authority');
+  if (/ownerDecision|recordOwnerDecision|recordConfirmedOwnerDecision|createHumanReviewRecord/.test(index)) fail('AI public index exposes owner-decision write authority');
+
+  const internal = 'src/core/aiReview/ownerDecision.ts';
+  const internalSource = read(internal);
+  if (!/function\s+recordOwnerDecision\s*\(/.test(internalSource) || /export\s+function\s+recordOwnerDecision\s*\(/.test(internalSource)) fail('raw unconfirmed owner decision helper is not private');
+  if (!/export\s+function\s+recordConfirmedOwnerDecision\s*\(/.test(internalSource) || !/confirmationMatches\(/.test(internalSource) || !/expectedArtifactDigest/.test(internalSource)) fail('internal owner decision boundary is missing confirmation/digest requirements');
+
+  const sourceFiles = gitFiles()
+    .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
+    .filter((file) => file !== 'bin/hardening-check.mjs' && file !== internal && file !== 'src/core/aiReview/review.ts');
+  for (const file of sourceFiles) {
+    const source = read(file);
+    if (file !== 'bin/ai-owner-review.mjs' && /[\'\"]ownerDecision\.ts[\'\"]|recordConfirmedOwnerDecision|\bcreateHumanReviewRecord\s*\(|\.writeHumanReview\s*\(/.test(source)) fail(`${file} reaches owner-decision write authority outside the approved boundary`);
+  }
+  const cli = read('bin/ai-owner-review.mjs');
+  if (!/ownerDecision\.ts/.test(cli) || !/recordConfirmedOwnerDecision/.test(cli)) fail('owner-review CLI is not the sole internal owner-decision loader');
+  if (!/process\.stdin\.isTTY/.test(cli) || !/process\.stdout\.isTTY/.test(cli)) fail('owner-review CLI is missing its TTY boundary');
+  if (!/A = approve draft, R = reject, S = supersede, Q = cancel/.test(cli)) fail('owner-review CLI fixed decision menu is missing');
+  if (!/Type \$\{token\} to confirm exactly/.test(cli)) fail('owner-review CLI exact second confirmation is missing');
 }
 
 function checkAiInvocationAuthority() {
@@ -215,6 +261,8 @@ checkPrivateSurface();
 checkAiReviewBoundary();
 checkAiInvocationAuthority();
 checkOwnerReviewCliBoundary();
+checkImmutablePrivatePublication();
+checkOwnerDecisionAuthority();
 checkSyntax();
 
 if (errors.length > 0) {

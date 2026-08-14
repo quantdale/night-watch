@@ -37,6 +37,8 @@ jobs:
         run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
       - name: Phase 7B.2 synthetic private owner-review matrix
         run: npx playwright test tests/unit/aiOwnerReview.test.ts --project=nightwatch --workers=1
+      - name: Phase 7B.2.1 atomic private artifact and owner provenance matrix
+        run: npm run test:owner-provenance
       - name: Synthetic agent-state continuity matrix
         run: npx playwright test tests/unit/agent-state.test.ts --project=nightwatch --workers=1
       - name: Agent-state check

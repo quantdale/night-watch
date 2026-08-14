@@ -13,6 +13,7 @@
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
     "hardening:check": "node bin/hardening-check.mjs",
+    "test:owner-provenance": "playwright test tests/unit/privateArtifactAtomic.test.ts tests/unit/aiOwnerReview.test.ts tests/unit/aiReview.test.ts --project=nightwatch --workers=1",
     "agent:check": "node bin/agent-state.mjs",
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
