@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { test, expect } from '@playwright/test';
 import {
+  AI_REVIEW_BUDGET,
   AI_REVIEW_INPUT_SCHEMA_VERSION,
   LoopbackAiReviewProvider,
   PASS_AI_PRIVACY,
@@ -178,6 +179,38 @@ test.describe('Phase 7B loopback provider containment', () => {
       await expect(new AiReviewSession(provider).reviewBugCandidate(inputFixture())).rejects.toMatchObject({ code: 'AI_PROVIDER_TIMEOUT' });
     } finally {
       await close(slow.server);
+    }
+  });
+
+  test('aggregate session deadline aborts a hanging loopback request and closes its socket', async () => {
+    let receivedRequest!: () => void;
+    let closedRequest!: () => void;
+    const requestReceived = new Promise<void>((resolve) => { receivedRequest = resolve; });
+    const requestClosed = new Promise<void>((resolve) => { closedRequest = resolve; });
+    let observedClosed = false;
+    const fixture = await listen((request) => {
+      receivedRequest();
+      request.on('close', () => {
+        observedClosed = true;
+        closedRequest();
+      });
+      // Intentionally leave the response open. The client must close it at
+      // the aggregate deadline rather than waiting for the normal 5s cap.
+    });
+    try {
+      let now = 0;
+      const provider = new LoopbackAiReviewProvider({ endpoint: fixture.endpoint, modelIdentifier: 'local-fixture.v1' });
+      const session = new AiReviewSession(provider, { clock: () => now });
+      now = AI_REVIEW_BUDGET.maxTotalRuntimeMs - 100;
+      const review = session.reviewBugCandidate(inputFixture());
+      await requestReceived;
+      await expect(review).rejects.toMatchObject({ code: 'AI_PROVIDER_TIMEOUT' });
+      await expect.poll(() => observedClosed, { timeout: 1_000 }).toBe(true);
+      await requestClosed;
+      expect(session.usage().providerCalls).toBe(1);
+    } finally {
+      fixture.server.closeAllConnections();
+      await close(fixture.server);
     }
   });
 });

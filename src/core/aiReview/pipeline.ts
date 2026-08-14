@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
+import { performance } from 'node:perf_hooks';
 import { AiReviewError, asAiReviewError, responseDigest } from './errors';
 import { AiReviewArtifactStore } from './storage';
 import {
@@ -50,9 +51,17 @@ export interface AiReviewResult<T> {
 }
 
 type ProviderOperation = 'BUG_CANDIDATE' | 'ORACLE_SUGGESTION';
+
+/** Internal transport control; it never grants a provider Nightwatch authority. */
+export interface AiReviewProviderContext {
+  readonly signal: AbortSignal;
+  readonly timeoutMs: number;
+}
+
 export type AiReviewProviderHandler = (
   operation: ProviderOperation,
   input: AiBugReviewInput | AiOracleReviewInput,
+  context: AiReviewProviderContext,
 ) => Promise<string | Uint8Array>;
 
 const providerHandlers = new WeakMap<object, AiReviewProviderHandler>();
@@ -67,10 +76,11 @@ function invokeRegisteredProvider(
   provider: AiReviewProvider,
   operation: ProviderOperation,
   input: AiBugReviewInput | AiOracleReviewInput,
+  context: AiReviewProviderContext,
 ): Promise<string | Uint8Array> {
   const handler = providerHandlers.get(provider);
   if (handler === undefined) throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
-  return handler(operation, input);
+  return handler(operation, input, context);
 }
 
 function nowIso(now: () => Date): string {
@@ -109,17 +119,76 @@ function assertLocalProvider(provider: AiReviewProvider | null): AiReviewProvide
   return provider;
 }
 
-async function callProvider(provider: AiReviewProvider, operation: ProviderOperation, input: AiBugReviewInput | AiOracleReviewInput, timeoutMs: number, schemaVersion: string): Promise<string | Uint8Array> {
-  const boundedTimeout = Math.min(Math.max(1, timeoutMs), AI_REVIEW_BUDGET.perCallTimeoutMs);
-  let timer: NodeJS.Timeout | undefined;
-  try {
-    return await new Promise<string | Uint8Array>((resolve, reject) => {
-      timer = setTimeout(() => reject(new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion })), boundedTimeout);
-      invokeRegisteredProvider(provider, operation, input).then(resolve, (error: unknown) => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion })));
-    });
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
+function effectiveProviderTimeoutMs(
+  requestedTimeoutMs: number,
+  remainingRuntimeMs: number,
+  provider: AiReviewProvider,
+  schemaVersion: string,
+): number {
+  const timeoutInputs = [requestedTimeoutMs, AI_REVIEW_BUDGET.perCallTimeoutMs, remainingRuntimeMs];
+  if (timeoutInputs.some((value) => !Number.isFinite(value) || value <= 0)) {
+    throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion });
   }
+  const effective = Math.min(...timeoutInputs);
+  if (!Number.isFinite(effective) || effective <= 0 || effective > AI_REVIEW_BUDGET.perCallTimeoutMs) {
+    throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion });
+  }
+  return effective;
+}
+
+async function callProvider(
+  provider: AiReviewProvider,
+  operation: ProviderOperation,
+  input: AiBugReviewInput | AiOracleReviewInput,
+  requestedTimeoutMs: number,
+  remainingRuntimeMs: () => number,
+  schemaVersion: string,
+): Promise<string | Uint8Array> {
+  const remaining = remainingRuntimeMs();
+  if (remaining <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass, schemaVersion });
+  const effectiveTimeoutMs = effectiveProviderTimeoutMs(requestedTimeoutMs, remaining, provider, schemaVersion);
+  const controller = new AbortController();
+
+  return new Promise<string | Uint8Array>((resolve, reject) => {
+    let settled = false;
+    let timer: NodeJS.Timeout | undefined;
+
+    const settle = (settleFn: () => void): void => {
+      if (settled) return;
+      settled = true;
+      if (timer !== undefined) clearTimeout(timer);
+      settleFn();
+    };
+
+    const timeout = (): void => {
+      if (settled) return;
+      // Mark the outer operation terminal before aborting. Provider abort
+      // listeners may synchronously reject their own promise; the timeout is
+      // still the first terminal cause for this boundary.
+      settled = true;
+      if (timer !== undefined) clearTimeout(timer);
+      controller.abort();
+      reject(new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion }));
+    };
+
+    timer = setTimeout(timeout, effectiveTimeoutMs);
+
+    let providerPromise: Promise<string | Uint8Array>;
+    try {
+      providerPromise = invokeRegisteredProvider(provider, operation, input, {
+        signal: controller.signal,
+        timeoutMs: effectiveTimeoutMs,
+      });
+    } catch (error) {
+      settle(() => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion })));
+      return;
+    }
+
+    Promise.resolve(providerPromise).then(
+      (value) => settle(() => resolve(value)),
+      (error: unknown) => settle(() => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion }))),
+    );
+  });
 }
 
 function assertBugReferences(output: AiBugModelOutput, input: AiBugReviewInput): void {
@@ -234,7 +303,7 @@ export class AiReviewSession {
   constructor(provider: AiReviewProvider | null, options: AiReviewRunOptions = {}) {
     this.provider = provider;
     this.options = options;
-    this.clock = options.clock ?? (() => Date.now());
+    this.clock = options.clock ?? (() => performance.now());
     this.startedAt = this.clock();
   }
 
@@ -278,11 +347,11 @@ export class AiReviewSession {
       if (this.oracleSuggestionAttempts >= AI_REVIEW_BUDGET.maxOracleSuggestions) throw new AiReviewError('AI_REVIEW_BUDGET_EXHAUSTED');
       this.oracleSuggestionAttempts += 1;
     }
-    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED');
+    if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED');
   }
 
   private reserveProviderCall(provider: AiReviewProvider): void {
-    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
+    if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
     if (this.providerCalls >= AI_REVIEW_BUDGET.maxProviderCalls) throw new AiReviewError('AI_REVIEW_PROVIDER_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
     // This synchronous reservation happens before Promise creation and before
     // the provider handler can observe the request.
@@ -293,6 +362,10 @@ export class AiReviewSession {
     return Math.max(0, this.clock() - this.startedAt);
   }
 
+  private remainingRuntimeMs(): number {
+    return Math.max(0, AI_REVIEW_BUDGET.maxTotalRuntimeMs - this.elapsedMs());
+  }
+
   private async runBugReview(input: AiBugReviewInput): Promise<AiReviewResult<AiBugDraft>> {
     const bytes = inputBytes(input);
     if (bytes > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: bytes });
@@ -300,11 +373,11 @@ export class AiReviewSession {
     this.reserveProviderCall(provider);
     let raw: string | Uint8Array;
     try {
-      raw = await callProvider(provider, 'BUG_CANDIDATE', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_BUG_DRAFT_SCHEMA_VERSION);
+      raw = await callProvider(provider, 'BUG_CANDIDATE', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, () => this.remainingRuntimeMs(), AI_BUG_DRAFT_SCHEMA_VERSION);
     } catch (error) {
       throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
     }
-    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
+    if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
     const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
     if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION, outputBytes });
     const rawDigest = responseDigest(raw);
@@ -334,11 +407,11 @@ export class AiReviewSession {
     this.reserveProviderCall(provider);
     let raw: string | Uint8Array;
     try {
-      raw = await callProvider(provider, 'ORACLE_SUGGESTION', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, AI_ORACLE_SUGGESTION_SCHEMA_VERSION);
+      raw = await callProvider(provider, 'ORACLE_SUGGESTION', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, () => this.remainingRuntimeMs(), AI_ORACLE_SUGGESTION_SCHEMA_VERSION);
     } catch (error) {
       throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
     }
-    if (this.elapsedMs() >= AI_REVIEW_BUDGET.maxTotalRuntimeMs) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
+    if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
     const outputBytes = typeof raw === 'string' ? Buffer.byteLength(raw, 'utf8') : raw.byteLength;
     if (outputBytes > AI_REVIEW_BUDGET.maxOutputBytes) throw new AiReviewError('AI_PROVIDER_OUTPUT_TOO_LARGE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION, outputBytes });
     const rawDigest = responseDigest(raw);

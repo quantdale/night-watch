@@ -1,5 +1,5 @@
 import { AiReviewError } from './errors';
-import { registerAiReviewProvider, type AiReviewProviderHandler } from './pipeline';
+import { registerAiReviewProvider, type AiReviewProviderContext, type AiReviewProviderHandler } from './pipeline';
 import { AI_PROVIDER_ADAPTER_VERSION, type AiBugModelOutput, type AiBugReviewInput, type AiOracleModelOutput, type AiOracleReviewInput, type AiReviewProvider } from './types';
 import { stableJson } from './util';
 import { validateAiBugReviewInput, validateAiOracleReviewInput } from './validation';
@@ -78,6 +78,10 @@ function oracleOutput(input: AiOracleReviewInput, mode: SyntheticProviderMode): 
   return base;
 }
 
+interface PendingSyntheticCall {
+  readonly complete: () => void;
+}
+
 /** Deterministic offline fixture; it never performs network, tool, or file I/O. */
 export class SyntheticAiReviewProvider implements AiReviewProvider {
   readonly providerClass = 'SYNTHETIC_LOCAL' as const;
@@ -85,22 +89,26 @@ export class SyntheticAiReviewProvider implements AiReviewProvider {
   readonly modelIdentifier = 'synthetic-review-fixture.v1';
   readonly mode: SyntheticProviderMode;
   readonly invocationIdentity: string;
-  private readonly pendingBug: Array<() => void> = [];
-  private readonly pendingOracle: Array<() => void> = [];
+  private readonly pendingBug: PendingSyntheticCall[] = [];
+  private readonly pendingOracle: PendingSyntheticCall[] = [];
   private _invocationCount = 0;
+  private _abortCount = 0;
+  readonly timeoutObservations: number[] = [];
 
   constructor(mode: SyntheticProviderMode = 'VALID_BUG_DRAFT', invocationIdentity = 'fixture-1') {
     this.mode = mode;
     this.invocationIdentity = invocationIdentity;
-    const handler: AiReviewProviderHandler = async (operation, input) => {
+    const handler: AiReviewProviderHandler = async (operation, input, context) => {
       this._invocationCount += 1;
-      if (operation === 'BUG_CANDIDATE') return this.#respondBug(input as AiBugReviewInput);
-      return this.#respondOracle(input as AiOracleReviewInput);
+      this.timeoutObservations.push(context.timeoutMs);
+      context.signal.addEventListener('abort', () => { this._abortCount += 1; }, { once: true });
+      if (operation === 'BUG_CANDIDATE') return this.#respondBug(input as AiBugReviewInput, context);
+      return this.#respondOracle(input as AiOracleReviewInput, context);
     };
     registerAiReviewProvider(this, handler);
   }
 
-  async #respondBug(input: AiBugReviewInput): Promise<string> {
+  async #respondBug(input: AiBugReviewInput, context: AiReviewProviderContext): Promise<string> {
     let safeInput: AiBugReviewInput;
     try {
       safeInput = validateAiBugReviewInput(input);
@@ -109,14 +117,14 @@ export class SyntheticAiReviewProvider implements AiReviewProvider {
     }
     if (this.mode === 'TIMEOUT') throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: this.providerClass });
     if (this.mode === 'UNAVAILABLE') throw new AiReviewError('AI_PROVIDER_UNAVAILABLE', { providerClass: this.providerClass });
-    if (this.mode === 'PENDING') return new Promise<string>((resolve) => this.pendingBug.push(() => resolve(json(bugOutput(safeInput, 'VALID_BUG_DRAFT')))));
+    if (this.mode === 'PENDING') return this.#pending(this.pendingBug, () => json(bugOutput(safeInput, 'VALID_BUG_DRAFT')), context);
     if (this.mode === 'MALFORMED_JSON') return '{"summaryDraft":';
     if (this.mode === 'OVERSIZED_RESPONSE') return 'x'.repeat(33 * 1024);
     const output = bugOutput(safeInput, this.mode);
     return json(this.mode === 'NONDETERMINISTIC_LOOKING_TEXT' && 'summaryDraft' in output ? { ...output, summaryDraft: `${output.summaryDraft} ${this.invocationIdentity}` } : output);
   }
 
-  async #respondOracle(input: AiOracleReviewInput): Promise<string> {
+  async #respondOracle(input: AiOracleReviewInput, context: AiReviewProviderContext): Promise<string> {
     let safeInput: AiOracleReviewInput;
     try {
       safeInput = validateAiOracleReviewInput(input);
@@ -125,7 +133,7 @@ export class SyntheticAiReviewProvider implements AiReviewProvider {
     }
     if (this.mode === 'TIMEOUT') throw new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: this.providerClass });
     if (this.mode === 'UNAVAILABLE') throw new AiReviewError('AI_PROVIDER_UNAVAILABLE', { providerClass: this.providerClass });
-    if (this.mode === 'PENDING') return new Promise<string>((resolve) => this.pendingOracle.push(() => resolve(json(oracleOutput(safeInput, 'VALID_ORACLE_SUGGESTION')))));
+    if (this.mode === 'PENDING') return this.#pending(this.pendingOracle, () => json(oracleOutput(safeInput, 'VALID_ORACLE_SUGGESTION')), context);
     if (this.mode === 'MALFORMED_JSON') return '{"proposedInvariant":';
     if (this.mode === 'OVERSIZED_RESPONSE') return 'x'.repeat(33 * 1024);
     return json(oracleOutput(safeInput, this.mode));
@@ -135,10 +143,50 @@ export class SyntheticAiReviewProvider implements AiReviewProvider {
     return this._invocationCount;
   }
 
+  get abortCount(): number {
+    return this._abortCount;
+  }
+
+  get pendingCount(): number {
+    return this.pendingBug.length + this.pendingOracle.length;
+  }
+
+  #pending(queue: PendingSyntheticCall[], response: () => string, context: AiReviewProviderContext): Promise<string> {
+    if (context.signal.aborted) return Promise.reject(new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: this.providerClass }));
+    return new Promise<string>((resolve, reject) => {
+      let active = true;
+      let entry: PendingSyntheticCall;
+      const cleanup = (): void => context.signal.removeEventListener('abort', onAbort);
+      const remove = (): void => {
+        const index = queue.indexOf(entry);
+        if (index >= 0) queue.splice(index, 1);
+      };
+      const onAbort = (): void => {
+        if (!active) return;
+        active = false;
+        remove();
+        cleanup();
+        reject(new AiReviewError('AI_PROVIDER_TIMEOUT', { providerClass: this.providerClass }));
+      };
+      entry = {
+        complete: () => {
+          if (!active) return;
+          active = false;
+          remove();
+          cleanup();
+          resolve(response());
+        },
+      };
+      queue.push(entry);
+      context.signal.addEventListener('abort', onAbort, { once: true });
+      if (context.signal.aborted) onAbort();
+    });
+  }
+
   /** Release deterministic pending calls used by the concurrency regression. */
   releasePending(): void {
-    while (this.pendingBug.length > 0) this.pendingBug.shift()?.();
-    while (this.pendingOracle.length > 0) this.pendingOracle.shift()?.();
+    while (this.pendingBug.length > 0) this.pendingBug.shift()?.complete();
+    while (this.pendingOracle.length > 0) this.pendingOracle.shift()?.complete();
   }
 
   /** Stable fixture identity is useful in tests without claiming prose determinism. */

@@ -401,6 +401,80 @@ test.describe('Phase 7B oracle suggestion and owner review', () => {
     expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 0 });
   });
 
+  test('runtime budget defaults to a monotonic clock rather than Date.now', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../../src/core/aiReview/pipeline.ts'), 'utf8');
+    expect(source).toContain('performance.now()');
+    expect(source).not.toContain('options.clock ?? (() => Date.now())');
+  });
+
+  test('near-expiry provider timeout is capped by the remaining session budget and aborts PENDING work', async () => {
+    const input = await bugInput();
+    let now = 0;
+    const provider = new SyntheticAiReviewProvider('PENDING');
+    const session = new AiReviewSession(provider, { clock: () => now });
+    const remaining = 35;
+    now = AI_REVIEW_BUDGET.maxTotalRuntimeMs - remaining;
+
+    await expect(session.reviewBugCandidate(input)).rejects.toMatchObject({ code: 'AI_PROVIDER_TIMEOUT' });
+    expect(provider.timeoutObservations).toEqual([remaining]);
+    expect(provider.abortCount).toBe(1);
+    expect(provider.pendingCount).toBe(0);
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 1 });
+  });
+
+  test('an expired session never invokes a provider or creates pending work', async () => {
+    const input = await bugInput();
+    let now = 0;
+    const provider = new SyntheticAiReviewProvider('PENDING');
+    const session = new AiReviewSession(provider, { clock: () => now });
+    now = AI_REVIEW_BUDGET.maxTotalRuntimeMs;
+
+    await expect(session.reviewBugCandidate(input)).rejects.toMatchObject({ code: 'AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED' });
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 0 });
+    expect(provider.invocationCount).toBe(0);
+    expect(provider.pendingCount).toBe(0);
+  });
+
+  test('concurrent near-expiry providers share one absolute cancellation deadline', async () => {
+    const bug = await bugInput();
+    const { changeSet, selection } = changeFixture();
+    const oracle = buildOracleReviewInput(changeSet, selection, { knownDeterministicInvariants: [], missingCoverageClasses: ['content-type'] });
+    let now = 0;
+    const provider = new SyntheticAiReviewProvider('PENDING');
+    const session = new AiReviewSession(provider, { clock: () => now });
+    const remaining = 40;
+    now = AI_REVIEW_BUDGET.maxTotalRuntimeMs - remaining;
+
+    const settled = await Promise.all([
+      session.reviewBugCandidate(bug),
+      session.reviewBugCandidate(bug),
+      session.reviewBugCandidate(bug),
+      session.suggestOracle(oracle),
+    ].map((promise) => promise.then(() => 'fulfilled', (error: unknown) => error instanceof AiReviewError ? error.code : 'unknown')));
+
+    expect(provider.timeoutObservations).toHaveLength(3);
+    expect(provider.timeoutObservations.every((timeout) => timeout === remaining && timeout < AI_REVIEW_BUDGET.perCallTimeoutMs)).toBeTruthy();
+    expect(provider.abortCount).toBe(3);
+    expect(provider.pendingCount).toBe(0);
+    expect(provider.invocationCount).toBe(3);
+    expect(session.usage().providerCalls).toBe(3);
+    expect(settled.filter((value) => value === 'AI_PROVIDER_TIMEOUT')).toHaveLength(3);
+    expect(settled.filter((value) => value === 'AI_REVIEW_PROVIDER_BUDGET_EXHAUSTED')).toHaveLength(1);
+  });
+
+  test('successful provider response clears the aggregate operation timer without aborting later', async () => {
+    const input = await bugInput();
+    let now = 0;
+    const provider = new SyntheticAiReviewProvider('VALID_BUG_DRAFT');
+    const session = new AiReviewSession(provider, { clock: () => now });
+    now = AI_REVIEW_BUDGET.maxTotalRuntimeMs - 25;
+
+    await session.reviewBugCandidate(input);
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    expect(provider.abortCount).toBe(0);
+    expect(session.usage().providerCalls).toBe(1);
+  });
+
   test('mixed bug and oracle requests consume one shared provider-call budget', async () => {
     const bug = await bugInput();
     const { changeSet, selection } = changeFixture();
