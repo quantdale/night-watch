@@ -122,7 +122,7 @@ are parsed only as deprecated historical data and never compared to live HEAD.
 - Acceptance criteria: typecheck, hardening, focused/full tests, synthetic
   campaign, agent check, privacy/diff checks, clean checkout all pass.
 - Validation commands: acceptance command set in SPEC.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Architecture/adversarial review and durable closure
 
@@ -133,7 +133,7 @@ are parsed only as deprecated historical data and never compared to live HEAD.
   worktree, live `HEAD == origin/main`, exact CI result reported only if read.
 - Validation commands: manual review, `git diff --check`, `git fetch origin`,
   `git rev-parse HEAD`, `git rev-parse origin/main`.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 

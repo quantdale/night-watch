@@ -4,17 +4,18 @@
 
 Task ID: phase-7b-1-1-runtime-continuity-closeout
 Phase: 7B.1.1 — RUNTIME DEADLINE AND CONTINUITY SEMANTICS CLOSEOUT
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 102f40763da45e8866b4150869f45b152168f2bc
-Last validated implementation SHA: 9054845203797cf16125e6a517b2268a99745c96
+Last validated implementation SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
 Branch: main
 Remote: origin -> quantdale/night-watch/main
-Last checkpoint: 2026-08-14 bootstrap verified clean synchronized canonical Git state.
+Last checkpoint: 2026-08-14 runtime/continuity implementation, full local and
+isolated-checkout validation, review, and documentation closure completed.
 
 STARTING_SHA: 102f40763da45e8866b4150869f45b152168f2bc
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9054845203797cf16125e6a517b2268a99745c96
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9054845203797cf16125e6a517b2268a99745c96
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 9054845203797cf16125e6a517b2268a99745c96
+LAST_VALIDATED_IMPLEMENTATION_SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -28,10 +29,11 @@ anchors while Git supplies live HEAD.
 
 ## Current Milestone
 
-Milestone ID: M5
-Status: IN_PROGRESS
-What is being attempted: run full local validation, privacy/diff review, and an
-isolated clean-checkout validation after the runtime/continuity implementations.
+Milestone ID: M6
+Status: COMPLETE
+What was completed: full local validation, isolated clean-checkout validation,
+privacy/diff review, architecture/adversarial review, stable-anchor closure,
+and validated private Git checkpoints.
 
 ## Completed Milestones
 
@@ -52,17 +54,25 @@ isolated clean-checkout validation after the runtime/continuity implementations.
 - Protocol M4: templates, AGENTS/.agent guidance, architecture/safety/
   decision/roadmap docs, and CURRENT_STATE terminology now use stable anchors
   and `LIVE_HEAD_AUTHORITY: GIT`.
+- Full validation M5: focused AI/loopback tests `60/60 PASS`, agent-state tests
+  `24/24 PASS`, full Playwright suite `469/469 PASS`, synthetic campaign
+  `27/27 PASS`, typecheck `PASS`, hardening `PASS`, `agent:check PASS`,
+  `git diff --check PASS`, and privacy review found no real secret/customer
+  data. A fresh local clone passed `npm ci --ignore-scripts`, typecheck,
+  hardening, the focused AI/continuity suite `84/84`, campaign `27/27`, and
+  agent check with the expected documentation/source-baseline warning before
+  the stable anchor was advanced.
+- Durable closure M6: architecture and adversarial review passed; the stable
+  substantive implementation anchor is `198f26ca79803c1bedac9aa08a71ecbd542ee804`.
+  Final documentation does not record its containing commit SHA.
 
 ## Work In Progress
 
-Runtime and continuity implementations are complete. Full repository,
-isolated-checkout, privacy, Git checkpoint, and remote CI validation remain.
+None. The task is complete; live local and remote HEAD remain Git-discovered.
 
 ## Exact Next Action
 
-Run the full local acceptance set (`npm run typecheck`, hardening, focused and
-full Playwright, synthetic campaign, agent check, diff/privacy scans), then
-review the diff before the continuity checkpoint commit.
+Stop. Do not begin the owner-review CLI or Phase 8.
 
 ## Files Changed
 
@@ -102,8 +112,19 @@ review the diff before the continuity checkpoint commit.
   semantic role/ancestry failures, COMPLETE drift, live-head discovery, and
   legacy compatibility.
 - Command: `npm run agent:check`
-  Result: PASS with expected `STALE_IMPLEMENTATION_BASELINE` warning while
-  continuity implementation is uncommitted after the runtime baseline.
+  Result: PASS with `CHECKPOINT_ADVANCE` for the final documentation-only
+  descendant; live local and remote heads were equal at closure.
+- Command: `npx playwright test --project=nightwatch --workers=1`
+  Result: PASS — `469/469`.
+- Command: `npm run campaign:synthetic`
+  Result: PASS — `27/27`.
+- Command: `git diff --check` and synthetic privacy/secret scan
+  Result: PASS — no whitespace errors; the only credential-shaped match was an
+  explicit redaction-test sentinel, with no real credential or customer data.
+- Command: isolated `git clone`, `npm ci --ignore-scripts`, typecheck,
+  hardening, focused AI/continuity tests, campaign, and `agent:check`
+  Result: PASS — clean checkout; focused suite `84/84`, campaign `27/27`, and
+  no uncommitted files.
 
 ## Decisions Made During This Task
 
@@ -114,13 +135,10 @@ review the diff before the continuity checkpoint commit.
 
 ## Discoveries
 
-- `AiReviewSession` defaults its budget clock to `Date.now()`.
-- `callProvider()` bounds only an outer promise timer and does not abort the
-  registered provider handler.
-- Loopback HTTP has a local timeout but no session cancellation signal; the
-  synthetic PENDING fixture queues resolvers without abort cleanup.
-- `agent-state.mjs` currently requires implementation SHA equality with
-  `Current SHA` and compares persisted current local/remote fields.
+- Bootstrap source inspection confirmed the original runtime and continuity
+  defects before implementation: wall-clock budgeting, outer-only timeout
+  rejection, missing provider transport cancellation, and self-referential SHA
+  equality.
 - Phase 7B.1 history is `40e59ec` substantive, followed by documentation/
   continuity/status/handoff descendants through current `102f407`.
 - Runtime provider timers now actively abort the registered handler; no
@@ -142,14 +160,17 @@ no real model, product, database, infrastructure, or external AI activity.
 
 ## Resume Recipe
 
-1. Read `AGENTS.md`, required project docs, `ACTIVE_TASK.md`, then this task's
-   SPEC/PLAN/STATE.
-2. Inspect `git status --short` and the relevant diff.
-3. Implement the exact M1 action above and run its focused tests/typecheck.
-4. Update this STATE before advancing to M4.
+No resume action. If historical verification is needed, read the completed
+REPORT and obtain live local/remote HEAD with read-only Git commands.
 
 ## Completion Snapshot
 
-Populate only at closure. Final fields must retain stable anchors and say
-`LIVE_HEAD_AUTHORITY: GIT`; do not write the final containing commit's SHA into
-this file.
+- Status: COMPLETE.
+- Stable validated implementation/substantive/documentation anchor:
+  `198f26ca79803c1bedac9aa08a71ecbd542ee804`.
+- Runtime implementation checkpoint: `9054845203797cf16125e6a517b2268a99745c96`.
+- Final containing documentation commit: discover from Git; it is intentionally
+  not serialized here.
+- `LIVE_HEAD_AUTHORITY: GIT`; `CURRENT_LOCAL_HEAD` and `CURRENT_REMOTE_HEAD`:
+  `DISCOVER_FROM_GIT`.
+- Phase 7B.1 remains historical COMPLETE; Phase 8 remains NOT_STARTED.

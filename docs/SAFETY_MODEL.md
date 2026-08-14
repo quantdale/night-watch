@@ -1,8 +1,8 @@
 # Nightwatch Safety Model
 
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
-private local evidence triage, Phase 7 deterministic campaigns, and Phase 7B
-bounded private AI review assistance.
+private local evidence triage, Phase 7 deterministic campaigns, and Phase
+7B/7B.1/7B.1.1 bounded private AI review assistance.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -560,7 +560,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-## 16. Phase 7B/7B.1 bounded AI review safety
+## 16. Phase 7B/7B.1/7B.1.1 bounded AI review safety
 
 Phase 7B is an optional post-processing branch over sanitized deterministic
 evidence. It is not a campaign stage, oracle, action planner, browser/API
@@ -624,7 +624,7 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B/7B.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1/7B.1.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
 prompt-injection/hallucination, invocation budgets, accounting, concurrency,
 human review, staleness, forgery/corruption, owner scope, and oracle isolation;
@@ -635,5 +635,5 @@ enforces the source-level no-capability and single-call-graph boundary.
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1 AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1 AI review;
 changes require a DECISIONS entry and a test update.*

@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B.1 authority-hardening closeout. Phase 0–5 are complete;
+> the Nightwatch Phase 7B.1.1 runtime/continuity closeout. Phase 0–5 are complete;
 > Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, and Phase 7B
 > are complete. Phase 8 remains unstarted.
 
@@ -25,7 +25,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (stable validated Phase 7B.1 substantive implementation anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `198f26ca79803c1bedac9aa08a71ecbd542ee804` (stable validated Phase 7B.1.1 substantive implementation anchor) |
+| `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -369,8 +370,8 @@ prompts, raw responses, real findings, and transcripts are not persisted.
 
 The Phase 7 campaign remains deterministic and does not invoke AI. Phase 6
 remains `FROZEN_BY_OWNER` with L4 `OUT_OF_SCOPE_BY_OWNER`; Phase 8 autonomous
-self-development was not started. Full validation passed with 437/437
-Playwright tests, including the Phase 7B synthetic and loopback matrix, plus
+self-development was not started. Full validation passed with 469/469
+Playwright tests, including the Phase 7B.1.1 synthetic and loopback matrix, plus
 TypeScript, hardening, synthetic campaign, owner-scope, and Phase 6 checks.
 
 ## Phase 7B.1 — AI review authority hardening (complete)
@@ -404,11 +405,31 @@ validated implementation checkpoint is
   safety/privacy vectors, owner scope, Phase 6 freeze, and publication/source
   boundaries are unchanged. Phase 8 remains unstarted.
 
-The current 7B/7B.1 AI/loopback matrix passes 54/54; the synthetic campaign
-passes 27/27; the full Playwright suite passes 453/453; TypeScript,
+The historical 7B/7B.1 AI/loopback matrix was 54/54; the Phase 7B.1.1
+AI/loopback matrix passes 60/60; the synthetic campaign passes 27/27; the
+full Playwright suite passes 469/469; TypeScript,
 hardening, agent-state, privacy review, and diff checks pass. No real model,
 cloud provider, product traffic, database/infrastructure operation, or real
 AI artifact was used.
+
+## Phase 7B.1.1 — Runtime deadline and continuity semantics closeout (complete)
+
+This narrow local/static/synthetic hardening descendant closed the aggregate
+provider-work deadline gap with monotonic construction-time budgeting,
+remaining-time caps, active `AbortSignal` cancellation through the private
+provider boundary, loopback transport destruction, and synthetic PENDING
+cleanup. It also replaced self-referential task SHA semantics with stable
+validated implementation/substantive/documentation anchors while live local
+and remote HEAD come from Git.
+
+The stable implementation checkpoint is
+`198f26ca79803c1bedac9aa08a71ecbd542ee804`; final documentation descendants
+remain documentation and their containing SHA is discovered from Git rather
+than embedded in the files that record it. Runtime and continuity validation
+passed, with no real model, product traffic, campaign, authentication,
+database, infrastructure, publication, or owner-review CLI activity. Phase
+7B.1 remains a complete historical predecessor and Phase 8 remains
+`NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

@@ -3,18 +3,20 @@
 Task ID: phase-7b-1-1-runtime-continuity-closeout
 Phase: 7B.1.1 — Runtime Deadline and Continuity Semantics Closeout
 Title: Nightwatch Phase 7B.1.1 — Runtime Deadline and Continuity Semantics Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-7b-1-1-runtime-continuity-closeout
 Starting SHA: 102f40763da45e8866b4150869f45b152168f2bc
-Last validated implementation SHA: 9054845203797cf16125e6a517b2268a99745c96
-Current milestone: M0 — bootstrap, recovery, and defect reconfirmation.
+Last validated implementation SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
+Current milestone: M6 — architecture/adversarial review and durable closure (COMPLETE).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: task created from synchronized live Git state; live HEAD is
-always discovered from Git and is not persisted as a required task field.
-Next action: write the frozen SPEC/PLAN/STATE/REPORT, then implement the
-monotonic deadline and active provider cancellation boundary.
+Last checkpoint: runtime and continuity implementations, full local validation,
+isolated checkout, review, and final documentation closure completed from the
+stable substantive checkpoint; live HEAD is always discovered from Git and is
+not persisted as a required task field.
+Live local/remote HEAD: DISCOVER_FROM_GIT.
+Next action: stop at this completed task. Do not start Phase 8 or the owner-review CLI.
 Do not start Phase 8; preserve Phase 7B.1 historical COMPLETE, Hardening I/I.1
 COMPLETE, Phase 7 COMPLETE, and Phase 6 FROZEN_BY_OWNER.
 

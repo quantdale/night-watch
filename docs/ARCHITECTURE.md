@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B/7B.1 bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, and Phase 7B/7B.1/7B.1.1 bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
