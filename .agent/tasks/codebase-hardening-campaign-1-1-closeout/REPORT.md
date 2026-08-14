@@ -1,7 +1,7 @@
 # Nightwatch Codebase Hardening Campaign I.1 Closeout — Report
 
-Status: IN_PROGRESS — source fix and local validation complete; final
-documentation/remote-CI disposition pending.
+Status: COMPLETE — final documentation-descendant workflow verification is
+the final out-of-band check.
 
 This report is the handoff for the narrow I.1 corrective closeout. It keeps
 the historical Hardening Campaign I report unchanged and records the
@@ -65,8 +65,12 @@ and owner policy were not changed.
 - Validated implementation SHA: `5de817764a4d58eaa1a5c0109464667f552cda5e`.
 - Substantive checkpoint SHA: `5de817764a4d58eaa1a5c0109464667f552cda5e`.
 - Source push: PASS; local `HEAD == origin/main` at the implementation SHA.
-- Documentation checkpoint: pending; its SHA will be reported without
-  embedding a self-referential value in this report.
+- Documentation checkpoint `801c307f77c27f33e4612462fffd08c4cf60fc60`:
+  PASS; exact workflow run `31758018614` completed successfully.
+- A final completion-state documentation descendant is being pushed after
+  this report update. Its SHA is intentionally not embedded in this report;
+  the exact SHA and its own workflow result are recorded in the completion
+  response.
 
 ## Validation and safety
 
@@ -97,7 +101,8 @@ and owner policy were not changed.
 - Phase 6: `FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
 - Historical closure CI for `ba5b518736281f48640982fcbdb6c874bc3e3123`:
   `CONFIRMED_PASS_AT_HARDENING_CLOSURE`.
-- New final documentation-SHA CI: pending until the exact pushed SHA is read.
+- New documentation checkpoint CI: confirmed PASS for run `31758018614`;
+  final descendant CI is verified after its push and reported out of band.
 - Branch protection and workspace-root naming remain out of scope; no Phase 8
   work is started.
 

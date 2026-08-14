@@ -365,8 +365,7 @@ Main hardening results were:
 
 ### Hardening Campaign I.1
 
-`Nightwatch Codebase Hardening Campaign I.1: SOURCE FIX COMPLETE; FINAL
-DOCUMENTATION CHECKPOINT IN PROGRESS`.
+`Nightwatch Codebase Hardening Campaign I.1: COMPLETE`.
 
 The confirmed defect was checkpoint integrity only. It was not evidence of
 production reachability, budget overrun, mutation, credential exposure, or a
@@ -391,11 +390,12 @@ genuinely-exhausted dimensions are accepted. Current local validation is
 399/399 Playwright tests, TypeScript PASS, hardening check PASS, synthetic
 campaign PASS, agent-state PASS, and diff check PASS.
 
-The final documentation checkpoint is intentionally not self-referenced in
-this file. Its documentation-only descendant relationship, final local/remote
-SHA equality, and exact new GitHub Actions result are recorded in the I.1
-task handoff and completion response. No new final-SHA CI success is claimed
-here before that workflow completes.
+The first documentation checkpoint passed the private read-only workflow
+(`Nightwatch hardening`, run `31758018614`, head
+`801c307f77c27f33e4612462fffd08c4cf60fc60`). A final completion-state
+documentation-only descendant is intentionally not self-referenced in this
+file; its exact local/remote equality and workflow result are recorded in the
+I.1 task handoff and completion response after verification.
 
 ## Environment (machine facts)
 

@@ -4,7 +4,7 @@
 
 Task ID: codebase-hardening-campaign-1-1-closeout
 Phase: Nightwatch Codebase Hardening Campaign I.1 Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
 Current SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
 Last validated implementation SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
@@ -28,20 +28,20 @@ STARTING_SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
 STARTING_REMOTE_SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
 CONFIRMED_DEFECT: ZERO_LIMIT_DIMENSION_ACCEPTED_AS_BUDGET_EXHAUSTION
 DEFECT_CLASSIFICATION: CHECKPOINT_INTEGRITY_ONLY; NOT_PRODUCTION_REACHABILITY; NOT_OVERRUN; NOT_MUTATION; NOT_CREDENTIAL_EXPOSURE
-FILES_CHANGED: src/core/campaign/checkpoint.ts; tests/unit/campaign.test.ts; I.1 task continuity files; ACTIVE_TASK; docs pending
+FILES_CHANGED: src/core/campaign/checkpoint.ts; tests/unit/campaign.test.ts; docs/CURRENT_STATE.md; I.1 task continuity files; ACTIVE_TASK
 CHECKPOINT_TERMINAL_INTEGRITY_STATUS: PASS — positive-limit/full-consumption invariant enforced generically
 ZERO_LIMIT_DIMENSION_TEST: PASS — exact bounded-policy false-positive rejects before executor callback
 POSITIVE_EXHAUSTION_TEST: PASS — real orchestrator terminal checkpoint with positive totalActions cap accepted
 MULTI_DIMENSION_TEST: PASS — disabled exploration plus genuine browser-cap exhaustion accepted
-CURRENT_STATE_RECONCILIATION_STATUS: IN PROGRESS after source checkpoint push
+CURRENT_STATE_RECONCILIATION_STATUS: PASS — Hardening I and I.1 truth reconciled without rewriting historical reports
 HISTORICAL_CI_STATUS: CONFIRMED_PASS_AT_HARDENING_CLOSURE for ba5b518736281f48640982fcbdb6c874bc3e3123
-FINAL_CI_STATUS: PENDING_FINAL_SHA
+FINAL_CI_STATUS: CONFIRMED_PASS_AT_DOCUMENTATION_CHECKPOINT_801C307_RUN_31758018614; final descendant workflow verification follows push
 TYPECHECK_STATUS: PASS — npm run typecheck
 HARDENING_CHECK_STATUS: PASS — npm run hardening:check
 SYNTHETIC_STATUS: PASS — 27/27 campaign tests via npm run campaign:synthetic
 FULL_TEST_STATUS: PASS — 399/399 current Playwright tests with one worker
 AGENT_CHECK_STATUS: PASS with expected stale-source warning before source commit; focused agent-state 14/14
-PRIVACY_STATUS: PASS preliminary — changed-file secret scan clean; final audit pending push
+PRIVACY_STATUS: PASS — changed-file and durable-state scans clean; no private material
 PRODUCT_NETWORK_CONTACTS: 0
 PRODUCTION_ATTEMPTS: 0
 DATABASE_QUERIES: 0
@@ -50,17 +50,19 @@ EXTERNAL_PUBLICATION_ATTEMPTS: 0
 ALPHAUS_REPOSITORY_MODIFICATIONS: 0
 LAST_VALIDATED_IMPLEMENTATION_SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
-LAST_DOCUMENTATION_CHECKPOINT_SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
-LAST_PUSHED_SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
-CURRENT_LOCAL_HEAD: 5de817764a4d58eaa1a5c0109464667f552cda5e
-CURRENT_REMOTE_HEAD: 5de817764a4d58eaa1a5c0109464667f552cda5e
-NEXT_EXACT_ACTION: Reconcile docs/CURRENT_STATE.md and complete I.1 STATE/REPORT with non-self-referential SHA fields, then validate and push the final documentation checkpoint.
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 801c307f77c27f33e4612462fffd08c4cf60fc60
+LAST_PUSHED_SHA: 801c307f77c27f33e4612462fffd08c4cf60fc60
+CURRENT_LOCAL_HEAD: 801c307f77c27f33e4612462fffd08c4cf60fc60
+CURRENT_REMOTE_HEAD: 801c307f77c27f33e4612462fffd08c4cf60fc60
+NEXT_EXACT_ACTION: Commit this final completion-state documentation descendant, push it, verify the exact final workflow, then leave the clean synchronized tree and report the final SHA without embedding it here.
 RESUME_RECIPE: Read AGENTS.md, docs/CURRENT_STATE.md, ACTIVE_TASK.md, this task SPEC/PLAN/STATE; inspect git status/log/origin; run the exact next action; never run real target/auth/data/infrastructure operations.
 
 ## Current Milestone
 
-M4 — Durable reconciliation and final closure. M0–M3 bootstrap, reproduction,
-adjacent-state review, fix, local validation, and source push are complete.
+M4 — Durable reconciliation and final closure: COMPLETE after source push,
+current-state reconciliation, first documentation checkpoint, and successful
+run `31758018614` for `801c307f77c27f33e4612462fffd08c4cf60fc60`. The final
+documentation descendant's exact workflow is the last external check.
 
 ## Completed Milestones
 
@@ -75,14 +77,16 @@ adjacent-state review, fix, local validation, and source push are complete.
 
 ## Work In Progress
 
-Reconcile project current state and final task report, then commit and push
-the documentation checkpoint and verify exact final remote CI.
+The first documentation checkpoint and its exact remote workflow are complete;
+commit the final completion-state descendant, then verify that descendant's
+exact workflow.
 
 ## Exact Next Action
 
 The pre-fix reproduction accepted the corrupted terminal classification. The
 generic fix now rejects it and accepts only positive-cap full consumption.
-Source checkpoint `5de817764a4d58eaa1a5c0109464667f552cda5e` is pushed and
+Source checkpoint `5de817764a4d58eaa1a5c0109464667f552cda5e` and first docs
+checkpoint `801c307f77c27f33e4612462fffd08c4cf60fc60` are pushed and
 synchronized.
 
 ## Files Changed
@@ -99,8 +103,8 @@ At bootstrap: `.agent/ACTIVE_TASK.md` and the four files under
 | Clean synchronized starting state | PASS at `ba5b518736281f48640982fcbdb6c874bc3e3123` |
 | Single primary writer | PASS; only this Nightwatch session has the repository working directory |
 | Historical status preservation | PASS |
-| M0 `npm run agent:check` | PENDING |
-| M0 `git diff --check` | PENDING |
+| M0 `npm run agent:check` | PASS with approved-checkpoint warning |
+| M0 `git diff --check` | PASS |
 | M1 pre-fix bounded-policy false-positive reproduction | PASS: validator accepted corrupted terminal labels with disabled exploration `0/0` |
 | M1 adjacent terminal-state review | PASS: no additional directly adjacent repair admitted |
 | Focused campaign tests | PASS: 27/27 |
@@ -111,6 +115,8 @@ At bootstrap: `.agent/ACTIVE_TASK.md` and the four files under
 | Diff check | PASS |
 | Full local Playwright suite | PASS: 399/399 with one worker |
 | Source checkpoint push/equality | PASS: `5de817764a4d58eaa1a5c0109464667f552cda5e` equals `origin/main` |
+| Documentation checkpoint push/equality | PASS: `801c307f77c27f33e4612462fffd08c4cf60fc60` equals `origin/main` |
+| Documentation checkpoint workflow | PASS: run `31758018614` |
 
 ## Decisions Made During This Task
 
