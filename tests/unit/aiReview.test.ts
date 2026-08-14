@@ -407,6 +407,56 @@ test.describe('Phase 7B oracle suggestion and owner review', () => {
     expect(source).not.toContain('options.clock ?? (() => Date.now())');
   });
 
+  test('final deadline expiry before handler entry consumes no provider call', async () => {
+    const input = await bugInput();
+    const provider = new SyntheticAiReviewProvider('PENDING');
+    const clockReadings = [0, 0, AI_REVIEW_BUDGET.maxTotalRuntimeMs];
+    const session = new AiReviewSession(provider, { clock: () => clockReadings.shift() ?? AI_REVIEW_BUDGET.maxTotalRuntimeMs });
+
+    await expect(session.reviewBugCandidate(input)).rejects.toMatchObject({ code: 'AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED' });
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 0 });
+    expect(provider.invocationCount).toBe(0);
+    expect(provider.pendingCount).toBe(0);
+  });
+
+  test('positive final admission counts exactly one exposure and caps timeout at admitted remaining runtime', async () => {
+    const input = await bugInput();
+    const remaining = 37;
+    const finalClock = AI_REVIEW_BUDGET.maxTotalRuntimeMs - remaining;
+    const provider = new SyntheticAiReviewProvider('VALID_BUG_DRAFT');
+    const clockReadings = [0, 0, finalClock, finalClock];
+    const session = new AiReviewSession(provider, { clock: () => clockReadings.shift() ?? finalClock });
+
+    const result = await session.reviewBugCandidate(input);
+    expect(result.artifact.status).toBe('AI_GENERATED_UNREVIEWED');
+    expect(provider.timeoutObservations).toEqual([remaining]);
+    expect(provider.invocationCount).toBe(1);
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 1 });
+  });
+
+  test('synchronous provider handler throw is a consumed provider exposure', async () => {
+    const input = await bugInput();
+    const provider = new SyntheticAiReviewProvider('SYNC_THROW');
+    const session = new AiReviewSession(provider);
+
+    await expect(session.reviewBugCandidate(input)).rejects.toMatchObject({ code: 'AI_PROVIDER_UNAVAILABLE' });
+    expect(provider.invocationCount).toBe(1);
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 1 });
+  });
+
+  test('locality and registration validation happen before provider accounting', async () => {
+    const input = await bugInput();
+    const unregistered = {
+      providerClass: 'SYNTHETIC_LOCAL',
+      adapterVersion: 'nightwatch.ai-provider-adapter.private.v1',
+      modelIdentifier: 'unregistered-fixture',
+    } as unknown as AiReviewProvider;
+    const session = new AiReviewSession(unregistered);
+
+    await expect(session.reviewBugCandidate(input)).rejects.toMatchObject({ code: 'AI_PROVIDER_NOT_LOCAL' });
+    expect(session.usage()).toEqual({ candidateReviewAttempts: 1, oracleSuggestionAttempts: 0, providerCalls: 0 });
+  });
+
   test('near-expiry provider timeout is capped by the remaining session budget and aborts PENDING work', async () => {
     const input = await bugInput();
     let now = 0;

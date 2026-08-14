@@ -126,6 +126,44 @@ function committedChangedPaths(root, from, to) {
   return output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).sort();
 }
 
+/**
+ * Inspect only the paths directly changed by one claimed commit. A range
+ * cannot prove the role of its tip: a real implementation followed by a
+ * documentation commit would make the range look substantive. Merge commits
+ * are deliberately ambiguous here because a combined diff cannot safely
+ * attribute a path to the claimed checkpoint without choosing a parent.
+ */
+function committedPathsForCommit(root, commit) {
+  if (!isCommit(root, commit)) return { status: 'UNKNOWN', paths: null, reason: 'commit does not identify a repository commit' };
+  const parentLine = commandOutput(root, ['rev-list', '--parents', '-n', '1', commit]);
+  if (parentLine === null) return { status: 'UNKNOWN', paths: null, reason: 'unable to inspect commit parents' };
+  const parentFields = parentLine.trim().split(/\s+/).filter(Boolean);
+  if (parentFields[0]?.toLowerCase() !== commit.toLowerCase()) return { status: 'UNKNOWN', paths: null, reason: 'commit parent inspection returned an unexpected object' };
+  const parents = parentFields.slice(1);
+  if (parents.length > 1) return { status: 'AMBIGUOUS', paths: null, reason: 'merge commit role attribution is ambiguous' };
+  const output = commandOutput(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', commit]);
+  if (output === null) return { status: 'UNKNOWN', paths: null, reason: 'unable to inspect commit paths' };
+  return {
+    status: 'KNOWN',
+    paths: output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).sort(),
+    parents,
+    reason: parents.length === 0 ? 'root commit paths inspected' : 'single-parent commit paths inspected',
+  };
+}
+
+function classifyCommitRole(root, commit) {
+  const inspected = committedPathsForCommit(root, commit);
+  if (inspected.status !== 'KNOWN') return { ...inspected, role: 'AMBIGUOUS' };
+  const paths = inspected.paths;
+  if (paths.length === 0) return { ...inspected, role: 'DOCUMENTATION_ONLY', reason: 'commit changes no paths' };
+  const substantivePaths = paths.filter((file) => !isApprovedCheckpointPath(file));
+  return {
+    ...inspected,
+    role: substantivePaths.length === 0 ? 'DOCUMENTATION_ONLY' : 'IMPLEMENTATION',
+    substantivePaths,
+  };
+}
+
 function continuityValue(stateFields, upperName, legacyName) {
   return stateFields.get(upperName) ?? stateFields.get(legacyName);
 }
@@ -158,10 +196,15 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 
   const validatedOk = validateAnchor(root, validated, 'STATE LAST_VALIDATED_IMPLEMENTATION_SHA', head, errors);
   const substantiveOk = validateAnchor(root, substantive, 'STATE LAST_SUBSTANTIVE_CHECKPOINT_SHA', head, errors);
+  const startingOk = validateAnchor(root, starting, 'STATE STARTING_SHA', head, errors);
   if (!stateFields.has('LAST_SUBSTANTIVE_CHECKPOINT_SHA') && substantive) {
     warnings.push('LEGACY_CONTINUITY: LAST_SUBSTANTIVE_CHECKPOINT_SHA inferred from the validated implementation anchor');
   }
-  if (starting) validateAnchor(root, starting, 'STATE STARTING_SHA', head, errors);
+
+  const validSha = (value) => /^[0-9a-f]{40}$/i.test(value ?? '') && isCommit(root, value);
+  if (validSha(validated) && validSha(starting) && !isAncestor(root, validated, starting) && !isAncestor(root, starting, validated)) {
+    errors.push(`INVALID_IMPLEMENTATION_LINEAGE: validated implementation ${validated} and STARTING_SHA ${starting} are unrelated commits`);
+  }
 
   if (validatedOk && substantiveOk && validated !== substantive) {
     const rolePaths = isAncestor(root, substantive, validated) ? committedChangedPaths(root, substantive, validated) : null;
@@ -171,6 +214,24 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
         ? `INVALID_IMPLEMENTATION_ROLE: LAST_VALIDATED_IMPLEMENTATION_SHA ${validated} is a documentation-only descendant of substantive checkpoint ${substantive}`
         : `INVALID_IMPLEMENTATION_ROLE: LAST_VALIDATED_IMPLEMENTATION_SHA ${validated} must equal LAST_SUBSTANTIVE_CHECKPOINT_SHA ${substantive}`,
     );
+  }
+
+  if (validatedOk && substantiveOk && startingOk && validated === substantive) {
+    // An anchor carried from before this task is historical implementation
+    // truth. Only a different descendant of STARTING_SHA is a new claim whose
+    // own commit role must be proven.
+    if (isAncestor(root, validated, starting)) {
+      // carried-forward implementation or validated == STARTING_SHA
+    } else if (!isAncestor(root, starting, validated)) {
+      errors.push(`INVALID_IMPLEMENTATION_LINEAGE: validated implementation ${validated} is neither an ancestor of STARTING_SHA ${starting} nor a descendant of it`);
+    } else {
+      const role = classifyCommitRole(root, validated);
+      if (role.role === 'DOCUMENTATION_ONLY') {
+        errors.push(`INVALID_IMPLEMENTATION_ROLE: claimed implementation checkpoint ${validated} is documentation-only in its own commit; changing labels cannot create implementation truth`);
+      } else if (role.role === 'AMBIGUOUS') {
+        errors.push(`INVALID_IMPLEMENTATION_ROLE: unable to prove the claimed implementation checkpoint ${validated} role: ${role.reason}`);
+      }
+    }
   }
 
   if (documentation) {
@@ -410,6 +471,9 @@ export function validate(root) {
       const stateValidated = continuityValue(stateFields, 'LAST_VALIDATED_IMPLEMENTATION_SHA', 'Last validated implementation SHA');
       checkSha(stateFields.get('Starting SHA'), 'STATE Starting SHA', errors);
       checkSha(stateValidated, 'STATE Last validated implementation SHA', errors);
+      if (stateFields.get('Starting SHA') && active.get('Starting SHA') && stateFields.get('Starting SHA') !== active.get('Starting SHA')) {
+        errors.push(`STATE/ACTIVE_TASK starting anchors differ: ${stateFields.get('Starting SHA')} != ${active.get('Starting SHA')}`);
+      }
       if (stateValidated && active.get('Last validated implementation SHA') && stateValidated !== active.get('Last validated implementation SHA')) {
         errors.push(`STATE/ACTIVE_TASK validated implementation anchors differ: ${stateValidated} != ${active.get('Last validated implementation SHA')}`);
       }

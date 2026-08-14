@@ -77,9 +77,13 @@ function invokeRegisteredProvider(
   operation: ProviderOperation,
   input: AiBugReviewInput | AiOracleReviewInput,
   context: AiReviewProviderContext,
+  beforeInvoke: () => void,
 ): Promise<string | Uint8Array> {
   const handler = providerHandlers.get(provider);
   if (handler === undefined) throw new AiReviewError('AI_PROVIDER_NOT_LOCAL');
+  // This callback and the handler call are intentionally adjacent in the same
+  // synchronous stack. It is the exact provider-exposure boundary.
+  beforeInvoke();
   return handler(operation, input, context);
 }
 
@@ -136,16 +140,23 @@ function effectiveProviderTimeoutMs(
   return effective;
 }
 
+interface ProviderCallAdmission {
+  readonly assertAvailable: () => void;
+  readonly beforeInvoke: () => void;
+}
+
 async function callProvider(
   provider: AiReviewProvider,
   operation: ProviderOperation,
   input: AiBugReviewInput | AiOracleReviewInput,
   requestedTimeoutMs: number,
+  admission: ProviderCallAdmission,
   remainingRuntimeMs: () => number,
   schemaVersion: string,
 ): Promise<string | Uint8Array> {
   const remaining = remainingRuntimeMs();
   if (remaining <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass, schemaVersion });
+  admission.assertAvailable();
   const effectiveTimeoutMs = effectiveProviderTimeoutMs(requestedTimeoutMs, remaining, provider, schemaVersion);
   const controller = new AbortController();
 
@@ -175,10 +186,13 @@ async function callProvider(
 
     let providerPromise: Promise<string | Uint8Array>;
     try {
-      providerPromise = invokeRegisteredProvider(provider, operation, input, {
-        signal: controller.signal,
-        timeoutMs: effectiveTimeoutMs,
-      });
+      providerPromise = invokeRegisteredProvider(
+        provider,
+        operation,
+        input,
+        { signal: controller.signal, timeoutMs: effectiveTimeoutMs },
+        admission.beforeInvoke,
+      );
     } catch (error) {
       settle(() => reject(asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion })));
       return;
@@ -350,11 +364,13 @@ export class AiReviewSession {
     if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED');
   }
 
-  private reserveProviderCall(provider: AiReviewProvider): void {
-    if (this.remainingRuntimeMs() <= 0) throw new AiReviewError('AI_REVIEW_RUNTIME_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
+  private assertProviderCallAvailable(provider: AiReviewProvider): void {
     if (this.providerCalls >= AI_REVIEW_BUDGET.maxProviderCalls) throw new AiReviewError('AI_REVIEW_PROVIDER_BUDGET_EXHAUSTED', { providerClass: provider.providerClass });
-    // This synchronous reservation happens before Promise creation and before
-    // the provider handler can observe the request.
+  }
+
+  private reserveProviderCall(_provider: AiReviewProvider): void {
+    // This synchronous reservation is immediately adjacent to the internal
+    // registered-handler call. It is never refunded after handler entry.
     this.providerCalls += 1;
   }
 
@@ -370,10 +386,17 @@ export class AiReviewSession {
     const bytes = inputBytes(input);
     if (bytes > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: bytes });
     const provider = assertLocalProvider(this.provider);
-    this.reserveProviderCall(provider);
     let raw: string | Uint8Array;
     try {
-      raw = await callProvider(provider, 'BUG_CANDIDATE', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, () => this.remainingRuntimeMs(), AI_BUG_DRAFT_SCHEMA_VERSION);
+      raw = await callProvider(
+        provider,
+        'BUG_CANDIDATE',
+        input,
+        this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs,
+        { assertAvailable: () => this.assertProviderCallAvailable(provider), beforeInvoke: () => this.reserveProviderCall(provider) },
+        () => this.remainingRuntimeMs(),
+        AI_BUG_DRAFT_SCHEMA_VERSION,
+      );
     } catch (error) {
       throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_BUG_DRAFT_SCHEMA_VERSION });
     }
@@ -404,10 +427,17 @@ export class AiReviewSession {
     const bytes = inputBytes(input);
     if (bytes > AI_REVIEW_BUDGET.maxInputBytes) throw new AiReviewError('AI_INPUT_PRIVACY_BLOCKED', { schemaVersion: AI_REVIEW_INPUT_SCHEMA_VERSION, inputBytes: bytes });
     const provider = assertLocalProvider(this.provider);
-    this.reserveProviderCall(provider);
     let raw: string | Uint8Array;
     try {
-      raw = await callProvider(provider, 'ORACLE_SUGGESTION', input, this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs, () => this.remainingRuntimeMs(), AI_ORACLE_SUGGESTION_SCHEMA_VERSION);
+      raw = await callProvider(
+        provider,
+        'ORACLE_SUGGESTION',
+        input,
+        this.options.timeoutMs ?? AI_REVIEW_BUDGET.perCallTimeoutMs,
+        { assertAvailable: () => this.assertProviderCallAvailable(provider), beforeInvoke: () => this.reserveProviderCall(provider) },
+        () => this.remainingRuntimeMs(),
+        AI_ORACLE_SUGGESTION_SCHEMA_VERSION,
+      );
     } catch (error) {
       throw asAiReviewError(error, 'AI_PROVIDER_UNAVAILABLE', { providerClass: provider.providerClass, schemaVersion: AI_ORACLE_SUGGESTION_SCHEMA_VERSION });
     }

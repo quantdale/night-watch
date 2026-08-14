@@ -158,7 +158,7 @@ function setField(root: string, relativePath: string, key: string, value: string
   fs.writeFileSync(file, pattern.test(text) ? text.replace(pattern, line) : `${text.trimEnd()}\n${line}\n`);
 }
 
-function setContinuity(root: string, options: { readonly baseline?: string; readonly substantive?: string; readonly documentation?: string; readonly persistedHead?: string }): void {
+function setContinuity(root: string, options: { readonly baseline?: string; readonly substantive?: string; readonly documentation?: string; readonly starting?: string; readonly persistedHead?: string }): void {
   if (options.baseline !== undefined) {
     setField(root, '.agent/ACTIVE_TASK.md', 'Last validated implementation SHA', options.baseline);
     setField(root, '.agent/tasks/phase-test/STATE.md', 'Last validated implementation SHA', options.baseline);
@@ -171,6 +171,11 @@ function setContinuity(root: string, options: { readonly baseline?: string; read
   if (options.documentation !== undefined) {
     setField(root, '.agent/tasks/phase-test/STATE.md', 'Last documentation checkpoint SHA', options.documentation);
     setField(root, '.agent/tasks/phase-test/STATE.md', 'LAST_DOCUMENTATION_CHECKPOINT_SHA', options.documentation);
+  }
+  if (options.starting !== undefined) {
+    setField(root, '.agent/ACTIVE_TASK.md', 'Starting SHA', options.starting);
+    setField(root, '.agent/tasks/phase-test/STATE.md', 'Starting SHA', options.starting);
+    setField(root, '.agent/tasks/phase-test/STATE.md', 'STARTING_SHA', options.starting);
   }
   if (options.persistedHead !== undefined) {
     setField(root, '.agent/tasks/phase-test/STATE.md', 'CURRENT_LOCAL_HEAD', options.persistedHead);
@@ -264,6 +269,74 @@ test('substantive implementation anchor survives a docs-only checkpoint chain', 
   expect(fs.readFileSync(path.join(root, '.agent/tasks/phase-test/STATE.md'), 'utf8')).toContain(`LAST_VALIDATED_IMPLEMENTATION_SHA: ${sha}`);
 });
 
+test('same-value documentation implementation forgery fails when the claimed commit is HEAD', () => {
+  const { root, initialSha } = fixture();
+  const documentationSha = commitFile(root, 'AGENTS.md', '# Documentation-only HEAD\n', 'documentation-only HEAD');
+  setContinuity(root, { starting: initialSha, baseline: documentationSha, substantive: documentationSha, documentation: documentationSha });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('INVALID_IMPLEMENTATION_ROLE');
+  expect(result.stderr).toContain(`claimed implementation checkpoint ${documentationSha}`);
+  expect(result.stderr).toContain('documentation-only in its own commit');
+});
+
+test('same-value documentation implementation forgery fails at a later docs-only descendant', () => {
+  const { root, initialSha } = fixture();
+  commitFile(root, 'AGENTS.md', '# Documentation checkpoint C\n', 'documentation checkpoint C');
+  const laterDocumentationSha = commitFile(root, 'docs/CURRENT_STATE.md', '# Documentation checkpoint D\n', 'documentation checkpoint D');
+  setContinuity(root, { starting: initialSha, baseline: laterDocumentationSha, substantive: laterDocumentationSha, documentation: laterDocumentationSha });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('INVALID_IMPLEMENTATION_ROLE');
+  expect(result.stderr).toContain('documentation-only in its own commit');
+});
+
+test('source implementation B followed by documentation C remains a valid checkpoint advance', () => {
+  const { root, initialSha, sha } = fixture();
+  const documentationSha = commitFile(root, 'AGENTS.md', '# Documentation after source B\n', 'documentation after source B');
+  setContinuity(root, { starting: initialSha, baseline: sha, substantive: sha, documentation: documentationSha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('INVALID_IMPLEMENTATION_ROLE');
+});
+
+test('carried-forward implementation remains valid when the new task starts at a docs descendant', () => {
+  const { root, sha } = fixture();
+  const startingSha = commitFile(root, 'AGENTS.md', '# Previous task documentation closure\n', 'previous task documentation closure');
+  setContinuity(root, { starting: startingSha, baseline: sha, substantive: sha, documentation: startingSha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('INVALID_IMPLEMENTATION_ROLE');
+});
+
+test('new source implementation descendant proves its own implementation role', () => {
+  const { root, initialSha } = fixture();
+  const implementationSha = commitFile(root, 'src/runtime.ts', 'new implementation checkpoint\n', 'new implementation checkpoint');
+  fs.appendFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+  setContinuity(root, { starting: initialSha, baseline: implementationSha, substantive: implementationSha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('[agent-check] SHA SYNCED');
+  expect(result.stderr).not.toContain('INVALID_IMPLEMENTATION_ROLE');
+});
+
+test('merge implementation role is rejected when direct attribution is ambiguous', () => {
+  const { root, initialSha } = fixture();
+  git(root, ['checkout', '-b', 'role-side']);
+  commitFile(root, 'side-source.ts', 'side implementation\n', 'side implementation');
+  git(root, ['checkout', 'main']);
+  commitFile(root, 'main-source.ts', 'main implementation\n', 'main implementation');
+  git(root, ['merge', '--no-ff', '--no-edit', 'role-side']);
+  const mergeSha = git(root, ['rev-parse', 'HEAD']);
+  setContinuity(root, { starting: initialSha, baseline: mergeSha, substantive: mergeSha });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('INVALID_IMPLEMENTATION_ROLE');
+  expect(result.stderr).toContain('merge commit role attribution is ambiguous');
+});
+
 test('documentation-only SHA cannot masquerade as the validated implementation role', () => {
   const { root, sha } = fixture();
   const documentationSha = commitFile(root, 'AGENTS.md', '# Documentation-only descendant\n', 'documentation descendant');
@@ -328,6 +401,27 @@ test('substantive implementation anchor on an unrelated branch is rejected', () 
   expect(result.status).toBe(1);
   expect(result.stderr).toContain('STATE LAST_VALIDATED_IMPLEMENTATION_SHA');
   expect(result.stderr).toContain('not an ancestor of live Git HEAD');
+});
+
+test('STARTING_SHA and the implementation anchor on unrelated lineages fail precisely', () => {
+  const { root, sha, initialSha } = fixture();
+  git(root, ['checkout', '-b', 'unrelated-start', initialSha]);
+  const unrelatedStartingSha = commitFile(root, 'start-source.ts', 'unrelated task start\n', 'unrelated task start');
+  git(root, ['checkout', 'main']);
+  setContinuity(root, { starting: unrelatedStartingSha, baseline: sha, substantive: sha });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('INVALID_IMPLEMENTATION_LINEAGE');
+  expect(result.stderr).toContain('unrelated commits');
+});
+
+test('ACTIVE_TASK and STATE starting anchors must agree', () => {
+  const { root, initialSha } = fixture();
+  setField(root, '.agent/tasks/phase-test/STATE.md', 'Starting SHA', initialSha);
+  setField(root, '.agent/tasks/phase-test/STATE.md', 'STARTING_SHA', initialSha);
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('STATE/ACTIVE_TASK starting anchors differ');
 });
 
 test('untracked source changes remain a stale implementation baseline', () => {

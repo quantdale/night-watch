@@ -1,24 +1,24 @@
 # Active Task
 
-Task ID: phase-7b-1-1-runtime-continuity-closeout
-Phase: 7B.1.1 — Runtime Deadline and Continuity Semantics Closeout
-Title: Nightwatch Phase 7B.1.1 — Runtime Deadline and Continuity Semantics Closeout
-Status: COMPLETE
-Task directory: .agent/tasks/phase-7b-1-1-runtime-continuity-closeout
-Starting SHA: 102f40763da45e8866b4150869f45b152168f2bc
+Task ID: phase-7b-1-2-final-integrity-closeout
+Phase: 7B.1.2 — Final Integrity Closeout
+Title: Nightwatch Phase 7B.1.2 — Final Integrity Closeout
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-7b-1-2-final-integrity-closeout
+Starting SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
 Last validated implementation SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
-Current milestone: M6 — architecture/adversarial review and durable closure (COMPLETE).
+Current milestone: M5 — private CI continuity gate (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: runtime and continuity implementations, full local validation,
-isolated checkout, review, and final documentation closure completed from the
-stable substantive checkpoint; live HEAD is always discovered from Git and is
-not persisted as a required task field.
+Last checkpoint: 2026-08-14 provider/continuity implementation and complete
+local validation; live HEAD remains discovered from Git and is not persisted as
+self-reference.
 Live local/remote HEAD: DISCOVER_FROM_GIT.
-Next action: stop at this completed task. Do not start Phase 8 or the owner-review CLI.
-Do not start Phase 8; preserve Phase 7B.1 historical COMPLETE, Hardening I/I.1
-COMPLETE, Phase 7 COMPLETE, and Phase 6 FROZEN_BY_OWNER.
+Next action: commit and push the validated substantive checkpoint, then verify
+the isolated checkout and exact final GitHub Actions run.
+Do not start Phase 8 or the owner-review CLI; preserve Phase 7B.1 historical
+COMPLETE, Hardening I/I.1 COMPLETE, Phase 7 COMPLETE, and Phase 6 frozen.
 
 ## Prior phase closure handoff
 

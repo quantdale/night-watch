@@ -24,6 +24,7 @@ export type SyntheticProviderMode =
   | 'ACCOUNT_SENTINEL'
   | 'COST_SENTINEL'
   | 'TIMEOUT'
+  | 'SYNC_THROW'
   | 'UNAVAILABLE'
   | 'PENDING'
   | 'NONDETERMINISTIC_LOOKING_TEXT'
@@ -98,10 +99,11 @@ export class SyntheticAiReviewProvider implements AiReviewProvider {
   constructor(mode: SyntheticProviderMode = 'VALID_BUG_DRAFT', invocationIdentity = 'fixture-1') {
     this.mode = mode;
     this.invocationIdentity = invocationIdentity;
-    const handler: AiReviewProviderHandler = async (operation, input, context) => {
+    const handler: AiReviewProviderHandler = (operation, input, context) => {
       this._invocationCount += 1;
       this.timeoutObservations.push(context.timeoutMs);
       context.signal.addEventListener('abort', () => { this._abortCount += 1; }, { once: true });
+      if (this.mode === 'SYNC_THROW') throw new AiReviewError('AI_PROVIDER_UNAVAILABLE', { providerClass: this.providerClass });
       if (operation === 'BUG_CANDIDATE') return this.#respondBug(input as AiBugReviewInput, context);
       return this.#respondOracle(input as AiOracleReviewInput, context);
     };
