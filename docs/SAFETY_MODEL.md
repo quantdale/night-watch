@@ -560,7 +560,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-## 16. Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 bounded AI review safety
+## 16. Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.3 bounded AI review safety
 
 Phase 7B is an optional post-processing branch over sanitized deterministic
 evidence. It is not a campaign stage, oracle, action planner, browser/API
@@ -645,6 +645,19 @@ fixed decision boundary use `[SYSTEM]`. The display says
 `SNAPSHOT_ONLY_NOT_REEVALUATED`, so owner review of an exact artifact snapshot
 is never presented as current product verification or root-cause verification.
 
+Phase 7B.3 is a separately invoked, one-shot local-model integration canary.
+Its only input is a repository-defined synthetic L2 fixture and its only
+operation is `BUG_CANDIDATE`. The controller creates no artifact store, makes
+no oracle request, permits no retry, and keeps the validated v2 draft in
+memory only long enough to produce sanitized metadata. The canonical loopback
+provider remains unchanged: explicit loopback host, explicit port, fixed chat
+path, no credentials, no redirects, no proxy, bounded request/response/time,
+`stream:false`, no tools/functions, and no cloud fallback. A runtime/model
+absence or unsafe/ambiguous endpoint is `NOT_RUN`, not an excuse to install or
+download anything. A successful canary proves protocol compatibility only; it
+does not promote evidence, create owner provenance, contact a product
+environment, or authorize Phase 8.
+
 The session runtime budget is separate from wall-clock artifact metadata. Its
 default authority is Node's monotonic `performance.now()` in milliseconds;
 tests may inject a monotonic synthetic clock. A single remaining-runtime
@@ -664,7 +677,7 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
 prompt-injection/hallucination, invocation budgets, accounting, concurrency,
 human review, staleness, forgery/corruption, owner scope, and oracle isolation;
@@ -680,13 +693,16 @@ and `tests/unit/aiReview.test.ts` cover the 91-test atomic/no-replace,
 cross-process, exact-ID, terminal-sanitization, double-confirmation,
 read-back, legacy, immutability, no-provider, and corrupt/symlink fixture
 matrix; private CI runs that matrix independently. Full local validation passed
-513/513 Playwright tests and the isolated clone passed the deterministic
+523/523 Playwright tests and the isolated clone passed the deterministic
 acceptance checks. `bin/hardening-check.mjs` enforces the source-level
 no-capability, no-replacement, and single-call-graph boundaries for both the AI
-execution surface and the owner-review CLI.
+execution surface and the owner-review CLI. `tests/unit/aiLocalCanary.test.ts`
+covers the fixed fixture/privacy adversary, strict CLI and endpoint matrix,
+loopback request shape, one-call/no-retry controller behavior, failure
+classification, no persistence, and sanitized output.
 
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2.1 AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review;
 changes require a DECISIONS entry and a test update.*

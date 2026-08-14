@@ -89,21 +89,21 @@ databases, infrastructure, publication, Phase 8, and sibling repositories.
   tests.
 - Extend hardening and CI without adding a real model service or runtime.
 
-### M3 — Full deterministic validation and clean checkout (IN_PROGRESS)
+### M3 — Full deterministic validation and clean checkout (COMPLETE)
 
 - Run focused tests, typecheck, hardening, existing AI/loopback and owner
   provenance tests, agent-state tests, synthetic campaign, full suite,
   privacy/secret scan, diff checks, and isolated clean-checkout validation.
 - Repair any deterministic failure before advancing.
 
-### M4 — Validated source checkpoint and deterministic CI (PENDING)
+### M4 — Validated source checkpoint and deterministic CI (COMPLETE)
 
 - Inspect the scoped diff/privacy surface, commit the validated harness,
   push `origin main`, fetch, and verify local `HEAD == origin/main`.
 - Inspect the exact deterministic GitHub workflow and canary harness step for
   the implementation SHA; do not run a real model in CI.
 
-### M5 — Safe local runtime gate and single canary (PENDING)
+### M5 — Safe local runtime gate and single canary (COMPLETE)
 
 - Use only narrow local evidence to establish a compatible already-installed
   runtime, exact endpoint, and exact present model identifier. Never install,
@@ -113,7 +113,7 @@ databases, infrastructure, publication, Phase 8, and sibling repositories.
   evidence and perform no retry. Stop any task-started child only if the
   separately proven lifecycle path is used.
 
-### M6 — Documentation closure and final deterministic CI (PENDING)
+### M6 — Documentation closure and final deterministic CI (COMPLETE)
 
 - Update current state, roadmap/architecture/decision memory as needed, task
   state/report, and ACTIVE_TASK with no raw model prose or private data.

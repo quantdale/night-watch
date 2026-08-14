@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1 bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -72,9 +72,11 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/privateArtifacts.ts` | Owner-only local JSON store for private dossiers and summaries; immutable AI publication uses complete fsynced same-directory temporaries plus no-replace `linkSync`, while non-immutable workflows retain staged replacement semantics. Default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
+| `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
 | `src/core/aiReview/ownerReview.ts` | Provider-free exact-ID owner snapshot loader, terminal-safe bug/oracle renderer, fixed confirmation semantics, projections, and v1 read-only handling. Read-only public service; no decision writer. | implemented |
 | `src/core/aiReview/ownerDecision.ts` | Internal digest-bound decision writer; raw helper is private and the confirmed entry is loaded only by the owner-review CLI. Creates review provenance, atomically persists it, and strictly reads it back. | implemented |
 | `bin/ai-owner-review.mjs` | Private human interface with only `show`, `status`, `decide`, and help; TTY gate, fixed decision boundary, sole tracked runtime loader of the internal decision writer, and no provider/network/Git/publication path. | implemented |
+| `bin/ai-local-canary.mjs` | One-shot synthetic local-model canary wrapper; accepts only strict endpoint/model/timeout arguments and never reads findings or owns transport/process/publication authority. | implemented |
 | `bin/agent-state.mjs` | Read-only task continuity validator: claimed-commit implementation/documentation SHA roles, STARTING_SHA lineage, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
@@ -217,6 +219,33 @@ companion review for an unreviewed exact artifact; the AI artifact, evidence,
 campaign, catalog, source, executable, publication, and Phase 8 state remain
 unchanged. Terminal sanitizer output is plain text and marks freshness
 `SNAPSHOT_ONLY_NOT_REEVALUATED`.
+
+Phase 7B.3 adds a separate one-shot local-model canary branch. It is a
+synthetic protocol check, not a campaign or product path:
+
+```
+fixed repository-owned synthetic L2 input
+        ↓
+strict endpoint/model argument validation
+        ↓
+fresh AiReviewSession without AiReviewArtifactStore
+        ↓
+one reviewBugCandidate call only
+        ↓
+LoopbackAiReviewProvider → /v1/chat/completions on explicit loopback only
+        ↓
+strict v2/reference/privacy/control validation in memory
+        ↓
+sanitized canary metadata → discard draft and model prose
+```
+
+`bin/ai-local-canary.mjs` accepts no prompt, evidence, file, finding, owner
+decision, oracle, retry, tool/function, browser, product, publication, Git, or
+runtime-installation argument. The controller fixes the operation to
+`BUG_CANDIDATE`, enforces `providerCalls <= 1`, keeps `artifactPath=null`, and
+does not load private findings. CI uses only the local HTTP fixture; a real
+canary is optional and cannot run unless an already-installed model, exact
+model identifier, and exact safe loopback endpoint are independently proven.
 
 The branch cannot flow back into anomaly admission, evidence level, campaign
 state, safety/privacy vectors, action/oracle catalogs, browser/API execution,

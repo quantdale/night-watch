@@ -625,6 +625,38 @@ Phase 8 remains `NOT_STARTED`.
 
 ---
 
+## Phase 7B.3 — Single bounded local-model canary (harness complete; real canary not run)
+
+This narrow milestone adds a future owner-invoked integration canary over the
+already-hardened Phase 7B loopback provider. It is not Phase 8 and does not
+change the review-assistant authority boundary. The harness accepts only one
+fixed synthetic L2 `BUG_CANDIDATE` fixture, a strictly validated model
+identifier, and an explicit canonical loopback chat-completions endpoint. A
+fresh `AiReviewSession` makes at most one provider call, with no oracle,
+retry, artifact store, owner review, tool/function calling, cloud fallback,
+product/browser/campaign path, or publication path. The model output is
+validated in memory and only sanitized metadata is exposed.
+
+The fixture version is
+`nightwatch.local-model-canary-input.private.v1`; its digest is
+`sha256:34db4fb404008607b0ab4980155b17d7e36540107fec5163888803ae997263c6`.
+Deterministic tests cover argument and endpoint rejection, fixture privacy,
+loopback request shape, one-call accounting, timeout/failure classes, no
+retry, no persistence, and sanitized output. The implementation checkpoint
+`5e7bad758efa7e5d87610c8b7878f6690bb0b821` passed exact deterministic CI run
+`31807365893`, including the dedicated synthetic canary step, and the
+full-history clean checkout passed.
+
+The real canary was `LOCAL_MODEL_CANARY_NOT_RUN / LOCAL_RUNTIME_NOT_AVAILABLE`:
+narrow local discovery found no supported runtime executable, no independently
+identifiable compatible preexisting runtime/model, and no explicit endpoint/
+model configuration. No installation or download was attempted and no model
+request was made. A future run remains separately owner-authorized and must
+repeat the exact runtime/model gate; a passing canary would prove only local
+protocol compatibility and would not authorize Phase 8.
+
+---
+
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)
 
 **Goal.** Nightwatch extends itself: generating scenarios and tests for

@@ -1129,3 +1129,32 @@ the existing digest-bound read-back and terminal-safety model.
 
 **Phase applicability.** Phase 7B.2.1 and all later private AI artifact
 consumers. Phase 8 remains a separate, unstarted task.
+
+## D-43 — Phase 7B.3 local-model integration is one-shot and non-authoritative
+
+**Decision.** The Phase 7B.3 canary is a separate, explicitly invoked
+synthetic integration check over the existing `LoopbackAiReviewProvider`. Its
+controller owns one fixed L2 `BUG_CANDIDATE` input, one fresh
+`AiReviewSession`, one maximum provider exposure, zero oracle suggestions, and
+zero retries. It validates the model response and v2 draft in memory without
+an `AiReviewArtifactStore`, returns only sanitized metadata, and discards all
+model prose. The CLI accepts only a strict loopback endpoint, strict model
+identifier, and bounded timeout; it cannot accept prompt/evidence text, read
+private findings, invoke product/browser/campaign/auth paths, call tools, use
+cloud fallback, install/download a runtime/model, publish, or write Git.
+
+**Rationale.** A real local response can test transport and hostile-output
+compatibility without creating a new authority path. Keeping the model call
+last, bounded, synthetic, and non-persistent makes runtime/model absence a
+valid `NOT_RUN` result rather than a reason to weaken safety controls.
+
+**Consequences.** CI remains deterministic and uses only the existing local
+HTTP fixture. A safe real run requires independent proof of an already-present
+runtime/model and an exact allowed loopback endpoint; otherwise the canary is
+`LOCAL_MODEL_CANARY_NOT_RUN / LOCAL_RUNTIME_NOT_AVAILABLE`. A PASS, FAIL, or
+NOT_RUN result does not promote evidence, create owner provenance, or
+authorize Phase 8. The first bounded discovery for this milestone found no
+compatible local runtime/model, so no real provider call was made.
+
+**Phase applicability.** Phase 7B.3 and later local AI review canaries. Phase
+8 remains a separate, unstarted task.

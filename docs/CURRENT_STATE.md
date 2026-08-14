@@ -1,10 +1,13 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B.2.1 atomic owner-provenance closure. Phase 0–5 are
+> the Nightwatch Phase 7B.3 single bounded local-model canary harness closure.
+> Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
-> Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. Phase 8 remains
-> unstarted.
+> Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
+> Phase 7B.3 harness is complete; its real local-model canary was not run
+> because no compatible local runtime/model was available. Phase 8 remains
+> `NOT_STARTED`.
 
 ---
 
@@ -26,11 +29,12 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `3916594f6e947f7f4665b23751c1d3ec03f5928b` (stable validated Phase 7B.2.1 implementation/substantive anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `5e7bad758efa7e5d87610c8b7878f6690bb0b821` (stable validated Phase 7B.3 harness implementation/substantive anchor) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
 | `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
+| `PHASE_7B_3_STATUS` | `HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN` — no compatible already-local runtime/model or explicit endpoint/model configuration was available; no installation/download was attempted |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -552,6 +556,40 @@ Git-discovered rather than serialized into this document.
   acceptance checks. No model, product traffic, database/infrastructure
   operation, publication, credential, customer value, or real AI artifact was
   used.
+
+## Phase 7B.3 — Single bounded local-model canary (harness complete; real canary not run)
+
+This narrow local/static/synthetic milestone adds a future owner-invoked
+one-shot canary over the existing loopback provider. It accepts only one
+repository-defined synthetic L2 `BUG_CANDIDATE` input, one strict model
+identifier, and one canonical loopback `/v1/chat/completions` endpoint. The
+controller constructs a fresh `AiReviewSession` without an artifact store,
+allows no oracle suggestion or retry, validates the in-memory v2 draft, and
+returns sanitized metadata before discarding it. The CLI has no prompt,
+input-file, findings, model-installation, browser, product, Git, publication,
+or owner-review path.
+
+The fixed fixture is
+`nightwatch.local-model-canary-input.private.v1` with digest
+`sha256:34db4fb404008607b0ab4980155b17d7e36540107fec5163888803ae997263c6`.
+Its values are synthetic only, with L2 evidence, PASS privacy, and zero safety
+vectors. Deterministic local validation passed the focused canary suite
+`10/10`, combined AI/loopback/canary `78/78`, owner-provenance `91/91`,
+agent-state `32/32`, synthetic campaign `27/27`, and full Playwright `523/523`.
+The full-history clean checkout passed `npm ci --ignore-scripts` and the
+deterministic acceptance gates. Exact GitHub Actions run `31807365893` passed
+at implementation checkpoint
+`5e7bad758efa7e5d87610c8b7878f6690bb0b821`, including the dedicated Phase 7B.3
+synthetic canary step.
+
+`LOCAL_MODEL_CANARY: NOT_RUN — LOCAL_RUNTIME_NOT_AVAILABLE`. Narrow discovery
+found no supported local runtime executable, no independently identifiable
+compatible preexisting model process, and no explicit repository endpoint/model
+configuration. Installation/download was not attempted; no endpoint was
+probed; provider calls, loopback model requests, external AI calls, product
+contacts, artifact writes, owner-review writes, and raw model output are all
+zero. Phase 8 remains `NOT_STARTED` and this harness result does not authorize
+it.
 
 ## Hardening Campaign I / I.1 — current durable closure
 
