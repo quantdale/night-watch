@@ -1251,3 +1251,56 @@ not start Phase 8B.
 **Phase applicability.** Phase 8A.1 and any future read-only consumer of its
 v2 integrity assessment. Phase 8 remains `IN_PROGRESS`; Phase 8B is
 `NOT_STARTED`.
+
+## D-46 — Artifact integrity and future-review candidate eligibility are separate authorities
+
+**Decision.** Phase 8A.1's trust assessment
+(`assessSelfDevArtifactIntegrity`) answers only artifact/provenance/replay
+integrity; it does not and must not mean "contains an eligible candidate." A
+replay-valid, source-attested `VERIFIED_EXACT_BASE` (or
+`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`) artifact with zero pass candidates is
+genuinely trust-valid but future-review ineligible. The pre-fix
+`isFutureReviewPrerequisitePass` conflated these by ignoring `replayStatus`
+and `passCandidateCount`; a synthetic reproduction proved this as a true
+positive before the fix landed.
+
+The corrected `isFutureReviewPrerequisitePass` requires `replayStatus ===
+'PASS'`, a runtime-validated genuine positive-integer `passCandidateCount`
+(`Number.isInteger(value) && value > 0`, not merely a non-zero check and not
+only a TypeScript compile-time guarantee), matching
+`sourceBundleMatch`/`contractDigestMatch`, and intact
+`adoptionStatus`/`publication`/zero-counter invariants — defensive checks
+against a hand-forged assessment DTO whose `trustStatus` string disagrees
+with its own match/authority fields. The new canonical
+`assessFutureReviewEligibility(value, current)` is the one
+source-currentness-aware future-review candidate gate: `current` is a
+required parameter, so a caller cannot obtain an eligibility verdict while
+skipping current-source trust by calling the existing replay-only
+`verifiedPassCandidates` instead. It always derives its own assessment,
+applies the corrected prerequisite, and — only on pass — regenerates
+candidates via replay and cross-checks the regenerated count against the
+assessment's `passCandidateCount`, failing closed on any disagreement rather
+than reconciling it (no `Math.min()`, no trusting one side).
+
+**Rationale.** A future Phase 8B design needs one unambiguous entry gate that
+cannot be satisfied by artifact authenticity alone. Keeping
+`VERIFIED_EXACT_BASE`/`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` semantics
+unchanged (rather than redefining them to require a positive pass count)
+preserves the existing Phase 8A.1 trust boundary while adding a distinct,
+narrower eligibility layer on top of it.
+
+**Consequences.** `verifiedPassCandidates` (`replay.ts`) keeps its existing
+signature — it has no runtime callers and existing deterministic replay tests
+depend on it — with its replay-only, non-source-currentness-aware scope now
+documented explicitly so it is not mistaken for the future-review authority.
+No new persisted schema or contract-version constant was introduced:
+`trust.ts` is already a member of `SELFDEV_AUTHORITATIVE_PATHS`, so any
+eligibility-logic change already advances `sourceBundleDigest` without a
+separate version field; `contractDigest` is unchanged because the declared
+evaluator/schema/budget/registry contract itself did not change. The
+validated implementation checkpoint is
+`d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`.
+
+**Phase applicability.** Phase 8A.1.1 and any future Phase 8B design that
+consumes a future-review eligibility verdict. Phase 8 remains `IN_PROGRESS`;
+Phase 8B is `NOT_STARTED`.

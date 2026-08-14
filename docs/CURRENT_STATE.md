@@ -1,15 +1,14 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8A.1 trusted evaluation provenance and replay integrity
-> closeout.
+> the Nightwatch Phase 8A.1.1 future-review eligibility gate closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A and Phase 8A.1 are `COMPLETE` with no source
-> adoption authority, and
+> `IN_PROGRESS`; Phase 8A, Phase 8A.1, and Phase 8A.1.1 are `COMPLETE` with no
+> source adoption authority, and
 > Phase 8B remains `NOT_STARTED`.
 
 ---
@@ -42,8 +41,9 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8_STATUS` | `IN_PROGRESS` — Phase 8A.1 closes provenance/replay prerequisites; controlled adoption remains separate |
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
+| `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
 | `PHASE_8B_STATUS` | `NOT_STARTED` |
-| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8A.1 CLOSEOUT ONLY` — no Phase 8B adoption authority |
+| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8A.1.1 CLOSEOUT ONLY` — no Phase 8B adoption authority |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -688,6 +688,67 @@ fresh full-history clone at the implementation checkpoint passed the same
 deterministic gate. CI runs `31821592114` and `31822125738` passed for the
 implementation checkpoints; the latter executed the dedicated Phase 8A.1
 matrix. Phase 8 remains `IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
+
+## Phase 8A.1.1 — future-review eligibility gate closeout (complete)
+
+Phase 8A.1.1 closes a narrow but security-relevant gap confirmed in Phase
+8A.1: artifact provenance/replay validity and future-review candidate
+eligibility are distinct, and the pre-fix `isFutureReviewPrerequisitePass`
+conflated them. A replay-valid, source-attested `VERIFIED_EXACT_BASE` artifact
+built from an ordinary zero-pass proposer fixture (`UNSAFE_ACTION`) is
+genuinely trust-valid with `passCandidateCount = 0`, yet the pre-fix helper
+returned `true` for it — confirmed as a true-positive reproduction against a
+synthetic temporary Git checkout before any fix landed.
+
+`isFutureReviewPrerequisitePass` now requires, in addition to `trustStatus`
+∈ {`VERIFIED_EXACT_BASE`, `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`}:
+`replayStatus === 'PASS'`; a runtime-validated genuine positive integer
+`passCandidateCount` (`Number.isInteger(value) && value > 0`, rejecting
+`NaN`/`Infinity`/negative/non-integer values, not merely by TypeScript's
+compile-time type); matching `sourceBundleMatch`/`contractDigestMatch`; and
+intact `adoptionStatus`/`publication`/zero-counter invariants. A new
+`assessFutureReviewEligibility(value, current)` in `src/core/selfDev/trust.ts`
+is the one canonical, source-currentness-aware future-review candidate gate:
+`current` is a required parameter (a caller cannot obtain an eligibility
+verdict while skipping current-source trust), it always derives its own
+assessment, and — only on prerequisite pass — regenerates candidates via the
+existing replay-only `verifiedPassCandidates` and cross-checks the
+regenerated count against the assessment's `passCandidateCount`, failing
+closed (`eligible: false, candidates: []`) on any disagreement rather than
+reconciling it. `verifiedPassCandidates` keeps its existing signature (no
+runtime callers; existing tests depend on it) with its replay-only scope now
+documented explicitly as non-authoritative on its own.
+
+No new persisted schema or contract-version constant was introduced:
+`trust.ts` is already a member of `SELFDEV_AUTHORITATIVE_PATHS`, so this
+change alone advances `sourceBundleDigest` without a separate version field;
+`contractDigest` is unchanged because the evaluator/schema/budget/registry
+contract itself did not change. `VERIFIED_EXACT_BASE`/
+`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` trust semantics are unchanged — a
+zero-pass artifact remains genuinely provenance/trust valid; it is simply
+future-review ineligible.
+
+The validated implementation checkpoint is
+`d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`. Local validation passed 577/577
+full Playwright tests (15 new focused eligibility tests plus the unchanged
+39 Phase 8A/8A.1 selfDev tests), typecheck, hardening (including a new
+authority-boundary assertion), `agent:check`, and 27/27 synthetic campaign
+tests. A fresh isolated full-history clone passed `npm ci --ignore-scripts`
+plus the same focused/typecheck/hardening/campaign/diff gates. Exact CI run
+`31847511710` passed at this checkpoint, including the dedicated "Phase
+8A.1.1 future-review eligibility gate matrix" step (15/15). The new v2
+acceptance artifact is
+`session:sha256:0cdcbb79062e93582db244feb6321c85398c323243f6cba53fbc071ecc1deff4`,
+bound to `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`, with source digest
+`sha256:38258a2d2d04e44bfbd9ccbeeee837249ae22281bcf67aed56d84cf3eb514f04`
+(new, confirming the source-bundle-advances-automatically decision) and
+contract digest
+`sha256:05ad2ecf035381b58c47f3126bc844864137c57e5645df89a338cb7995a367a4`
+(unchanged). It verified `VERIFIED_EXACT_BASE` with replay `PASS`, one pass,
+one duplicate, one rejected candidate, and — via the new canonical gate —
+`eligible: true` with exactly one regenerated candidate. The historical Phase
+8A.1 acceptance artifact was not touched or migrated. Phase 8 remains
+`IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

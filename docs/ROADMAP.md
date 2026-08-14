@@ -750,6 +750,38 @@ artifact verified `VERIFIED_EXACT_BASE` with replay `PASS`; it remains
 Phase 8A.1 is complete, Phase 8 remains `IN_PROGRESS`, and Phase 8B remains
 `NOT_STARTED`.
 
+### Phase 8A.1.1 — Future review eligibility gate closeout (complete)
+
+Phase 8A.1.1 closes the confirmed gap between "this artifact is authentic/
+current/replay-valid" and "this artifact contains at least one candidate
+eligible to enter a future controlled review/adoption design." Those were
+proven distinct: a replay-valid, source-attested `VERIFIED_EXACT_BASE`
+artifact built from an ordinary zero-pass proposer fixture had
+`passCandidateCount = 0` yet still satisfied the pre-fix
+`isFutureReviewPrerequisitePass`.
+
+`isFutureReviewPrerequisitePass` now additionally requires `replayStatus ===
+'PASS'`, a runtime-validated genuine positive-integer `passCandidateCount`,
+matching `sourceBundleMatch`/`contractDigestMatch`, and intact no-authority
+invariants. The new canonical `assessFutureReviewEligibility(value, current)`
+is the one source-currentness-aware future-review candidate gate: it always
+derives its own assessment (`current` is required, so a caller cannot skip
+current-source trust) and cross-checks replay-regenerated candidates against
+the assessment's pass count, failing closed on disagreement. Trust semantics
+(`VERIFIED_EXACT_BASE`/`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`) are unchanged;
+a zero-pass artifact remains genuinely trust-valid but is now correctly
+future-review ineligible. No new persisted schema or contract version was
+needed, since `trust.ts` is already part of the authoritative source bundle.
+
+The validated implementation checkpoint is
+`d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`. Validation passed 577/577 full
+Playwright tests (15 new focused eligibility tests), typecheck, hardening, an
+isolated full-history clone, and 27/27 synthetic campaign tests. Exact CI run
+`31847511710` passed, executing the dedicated eligibility-matrix step. The new
+v2 acceptance artifact verified `VERIFIED_EXACT_BASE`, replay `PASS`, and
+`eligible: true` with one regenerated candidate; no historical artifact was
+rewritten. Phase 8 remains `IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
+
 ### Phase 8B — Controlled candidate source adoption (not started)
 
 Phase 8B is a possible future, separately authorized task. It is not

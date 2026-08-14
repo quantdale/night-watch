@@ -4,20 +4,22 @@
 
 Task ID: phase-8a-1-1-future-review-eligibility-gate
 Phase: 8A.1.1 — FUTURE REVIEW ELIGIBILITY GATE CLOSEOUT
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7a59b9a6a76d5213b938383fea14a773c5282a30
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7a59b9a6a76d5213b938383fea14a773c5282a30
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7a59b9a6a76d5213b938383fea14a773c5282a30
+LAST_VALIDATED_IMPLEMENTATION_SHA: d33a8c1cc062b435a7b2bc4f69567286dd56ebb4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d33a8c1cc062b435a7b2bc4f69567286dd56ebb4
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 Remote: origin -> quantdale/night-watch, main
 
-Note: `LAST_VALIDATED_IMPLEMENTATION_SHA`/`LAST_SUBSTANTIVE_CHECKPOINT_SHA`
-are carried forward from `STARTING_SHA` during this docs-plus-reproduction
-window (no new implementation checkpoint has been proven yet). They will be
-advanced to the real substantive implementation commit once it lands and
-passes validation (M9), per D-40/D-38 continuity semantics.
+Note: `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4` is the substantive
+implementation commit ("Add Phase 8A.1.1 future-review eligibility gate"),
+pushed and confirmed `HEAD == origin/main`. It was validated locally (full
+577/577 Playwright, typecheck, hardening, 27/27 synthetic campaign,
+`git diff --check`) and in a fresh isolated full-history clone (86/86 focused
+selfDev/agent-state tests, typecheck, hardening, 27/27 synthetic campaign,
+`git diff --check`) before this file was updated to name it.
 
 ## Objective
 
@@ -29,8 +31,8 @@ future-review candidate eligibility (see `SPEC.md`), without starting Phase
 ## Current Milestone
 
 CURRENT_MILESTONE:
-M3 — implement the minimal correct eligibility contract (COMPLETE); proceeding
-to M4 (adversarial test matrix hardening/expansion) and M5-M8 validation.
+M14 — final report (this documentation-closure commit). All milestones
+M1–M13 complete.
 
 ## Completed Milestones
 
@@ -88,25 +90,31 @@ to M4 (adversarial test matrix hardening/expansion) and M5-M8 validation.
 
 ## Work In Progress
 
-Running the remaining validation ledger (M4-M8): existing selfDev regression
-suites, typecheck, hardening, `agent:check`, synthetic campaign, full
-Playwright, CI wiring review, then the substantive commit/push/verify and
-isolated-checkout sequence (M9-M13).
+None. All milestones M1–M14 are complete. This is the documentation-closure
+commit; after it pushes, a final read-only verification confirms the
+acceptance artifact reads `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` against the
+new (docs-only) HEAD with the same source bundle digest and replay `PASS`.
 
 ## Exact Next Action
 
-Run `npm run agent:check`, fix any remaining structural issues in this task's
-own docs, then run the full validation ledger before the substantive commit.
+None. Task complete. Do not begin Phase 8B from this checkpoint.
 
 ## Files Changed
 
+Implementation commit `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`:
 - `src/core/selfDev/trust.ts` (fix + new export)
 - `src/core/selfDev/types.ts` (new type)
 - `src/core/selfDev/replay.ts` (doc comment only)
 - `src/core/selfDev/index.ts` (new export)
 - `bin/hardening-check.mjs` (new assertion)
+- `.github/workflows/hardening.yml` (new CI step)
 - `tests/unit/selfDevEligibility.test.ts` (new file, 15 tests)
-- `.agent/tasks/phase-8a-1-1-future-review-eligibility-gate/{SPEC,PLAN,STATE,REPORT}.md`
+- `.agent/tasks/phase-8a-1-1-future-review-eligibility-gate/{PLAN,STATE}.md`
+- `.agent/ACTIVE_TASK.md`
+
+Documentation-closure commit (this one):
+- `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md` (D-46)
+- `.agent/tasks/phase-8a-1-1-future-review-eligibility-gate/{STATE,REPORT}.md`
 - `.agent/ACTIVE_TASK.md`
 
 ## Validation Ledger
@@ -115,9 +123,31 @@ own docs, then run the full validation ledger before the substantive commit.
 - `npx playwright test tests/unit/selfDevEligibility.test.ts --project=nightwatch --workers=1` — **15 passed**.
 - `npx playwright test tests/unit/selfDevProvenance.test.ts tests/unit/selfDev.test.ts tests/unit/selfDevSchema.test.ts tests/unit/selfDevCli.test.ts --project=nightwatch --workers=1` — **39 passed** (no regressions).
 - `npm run hardening:check` — PASS (including the new eligibility-gate assertion).
-- Remaining: `npm run agent:check`, `npm run campaign:synthetic`,
-  `tests/unit/agent-state.test.ts`, full `npx playwright test`, `git diff
-  --check`, isolated full-history checkout, remote CI.
+- `npm run agent:check` — PASS with 1 expected warning (`STALE_IMPLEMENTATION_BASELINE`) before the SHA-recording step; PASS clean after.
+- `npm run campaign:synthetic` — **27/27 passed**.
+- Full `npx playwright test` (no filter) — **577 passed, 0 failed**.
+- `git diff --check` — clean (after fixing one trailing-whitespace line in
+  this task's own STATE.md).
+- Isolated full-history checkout (`git clone` + `npm ci --ignore-scripts` at
+  `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`): typecheck PASS, hardening PASS,
+  focused selfDev/agent-state matrix **86/86 passed**, synthetic campaign
+  **27/27 passed**, `agent:check` PASS (same expected warning),
+  `git diff --check` clean.
+- Remote CI: exact GitHub Actions run `31847511710` (`Nightwatch hardening`)
+  — `completed`/`success` at SHA `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`;
+  confirmed via job log that the "Phase 8A.1.1 future-review eligibility gate
+  matrix" step ran and passed 15/15.
+- New acceptance artifact
+  `session:sha256:0cdcbb79062e93582db244feb6321c85398c323243f6cba53fbc071ecc1deff4`
+  (`npm run selfdev:synthetic`): `VERIFIED_EXACT_BASE`, replay `PASS`, one
+  pass/one duplicate/one rejected candidate,
+  `sourceBundleDigest=sha256:38258a2d2d04e44bfbd9ccbeeee837249ae22281bcf67aed56d84cf3eb514f04`
+  (new), `contractDigest=sha256:05ad2ecf035381b58c47f3126bc844864137c57e5645df89a338cb7995a367a4`
+  (unchanged from the Phase 8A.1 acceptance artifact, confirming the
+  contract-versioning decision). `npm run selfdev:verify` confirmed the same
+  result read-only. A direct call to `assessFutureReviewEligibility` against
+  this artifact returned `{ eligible: true, candidateCount: 1, trustStatus:
+  'VERIFIED_EXACT_BASE' }`.
 
 ## Decisions Made During This Task
 
@@ -153,5 +183,14 @@ Read this file's "Exact Next Action"; if context was lost, re-run
 
 ## Completion Snapshot
 
-Not yet complete. This section is filled in at task closure (M14) alongside
-`REPORT.md`.
+Status: COMPLETE. Starting SHA `7a59b9a6a76d5213b938383fea14a773c5282a30`;
+substantive implementation SHA `d33a8c1cc062b435a7b2bc4f69567286dd56ebb4`
+(pushed, `HEAD == origin/main` confirmed, CI `31847511710` green including
+the dedicated eligibility step). Phase 8A.1 remains historically `COMPLETE`;
+Phase 8A.1.1 is `COMPLETE`; Phase 8B remains `NOT_STARTED`. New v2 acceptance
+artifact
+`session:sha256:0cdcbb79062e93582db244feb6321c85398c323243f6cba53fbc071ecc1deff4`
+is `VERIFIED_EXACT_BASE`/replay `PASS`/`eligible: true`. No adoption, source-
+mutation, Git-write, publication, AI/model, browser/product/API, or database/
+infrastructure authority was added. See `REPORT.md` for the full completion
+report.
