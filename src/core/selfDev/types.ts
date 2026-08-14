@@ -307,6 +307,20 @@ export interface SelfDevReplayResult {
   readonly passCandidateCount: number;
 }
 
+/**
+ * Phase 8A.1.1 — the one canonical future-review candidate-eligibility
+ * result. `eligible` is true only when current-source trust, replay, and a
+ * positive cross-checked pass-candidate count all hold; `candidates` is
+ * populated only in that case and is always empty otherwise. This is
+ * read-only declarative data: it carries no adoption, patch, or source/Git
+ * mutation authority.
+ */
+export interface SelfDevFutureReviewEligibility {
+  readonly eligible: boolean;
+  readonly assessment: SelfDevTrustAssessment;
+  readonly candidates: readonly SelfDevCandidate[];
+}
+
 export interface SelfDevStoredArtifactV2 {
   readonly kind: 'V2';
   readonly artifact: SelfDevSessionArtifact;

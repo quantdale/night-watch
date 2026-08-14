@@ -121,9 +121,18 @@ export function replaySession(artifactInput: SelfDevSessionArtifact): SelfDevRep
 }
 
 /**
- * Read-only future-review helper. It returns only regenerated declarative
- * candidates after exact replay succeeds; it never returns source, patches,
- * diffs, or an adoption decision.
+ * Read-only, replay-only candidate regeneration. It returns only regenerated
+ * declarative candidates after exact replay succeeds; it never returns
+ * source, patches, diffs, or an adoption decision.
+ *
+ * This is deliberately NOT the future-review eligibility authority: it never
+ * inspects current-source trust (Git HEAD, source/contract digests,
+ * cleanliness), so a caller that used this function alone could obtain
+ * "regenerated pass candidates" for an artifact whose source has since
+ * drifted, gone dirty, or diverged onto an unrelated baseline. The canonical
+ * source-currentness-aware gate is `assessFutureReviewEligibility` in
+ * `./trust`, which always derives its own current-source assessment before
+ * calling this function.
  */
 export function verifiedPassCandidates(artifactInput: SelfDevSessionArtifact): readonly SelfDevCandidate[] {
   const result = replaySession(artifactInput);

@@ -13,6 +13,8 @@ import {
   SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION,
   SELFDEV_TRUST_ASSESSMENT_SCHEMA_VERSION,
   type SelfDevBaselineRelation,
+  type SelfDevCandidate,
+  type SelfDevFutureReviewEligibility,
   type SelfDevSessionArtifact,
   type SelfDevTrustAssessment,
 } from './types';
@@ -22,7 +24,7 @@ import {
   validateLegacySessionArtifact,
   validateSessionArtifact,
 } from './validation';
-import { replaySession } from './replay';
+import { replaySession, verifiedPassCandidates } from './replay';
 
 export interface CurrentSelfDevSourceView {
   readonly currentHeadSha: string;
@@ -155,8 +157,74 @@ export function assessSelfDevArtifactIntegrity(value: unknown, current?: Current
   );
 }
 
+function isPositivePassCandidateCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+/**
+ * Phase 8A.1.1 prerequisite check. This answers only "does this exact
+ * assessment satisfy every eligibility precondition" — it is not itself
+ * source-currentness-aware and trusts the assessment it is given. A caller
+ * that wants a gate which cannot be fed a stale or hand-forged assessment
+ * should use {@link assessFutureReviewEligibility}, which always derives its
+ * own assessment.
+ *
+ * A replay-valid, source-attested artifact with zero pass candidates is
+ * genuinely trust-valid (`VERIFIED_EXACT_BASE` /
+ * `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` are unchanged) but is not
+ * future-review eligible: it must also have replayed `PASS` and contain a
+ * genuine positive integer count of passing candidates. `sourceBundleMatch`/
+ * `contractDigestMatch` and the Phase 8A no-authority invariants are checked
+ * defensively so a hand-forged assessment object cannot claim a verified
+ * trust status while its own match/authority fields disagree.
+ */
 export function isFutureReviewPrerequisitePass(assessment: SelfDevTrustAssessment): boolean {
-  return assessment.trustStatus === 'VERIFIED_EXACT_BASE' || assessment.trustStatus === 'VERIFIED_SOURCE_EQUIVALENT_DESCENDANT';
+  const trustOk = assessment.trustStatus === 'VERIFIED_EXACT_BASE' || assessment.trustStatus === 'VERIFIED_SOURCE_EQUIVALENT_DESCENDANT';
+  if (!trustOk) return false;
+  if (assessment.sourceBundleMatch !== 'MATCH' || assessment.contractDigestMatch !== 'MATCH') return false;
+  if (assessment.replayStatus !== 'PASS') return false;
+  if (!isPositivePassCandidateCount(assessment.passCandidateCount)) return false;
+  if (assessment.adoptionStatus !== SELFDEV_ADOPTION_STATUS || assessment.publication !== SELFDEV_PUBLICATION) return false;
+  if (assessment.sourceWrites !== 0 || assessment.gitWrites !== 0 || assessment.externalCalls !== 0) return false;
+  return true;
+}
+
+/**
+ * Phase 8A.1.1 canonical future-review candidate-eligibility gate. This is
+ * the one authoritative source-currentness-aware entry point: `current` is a
+ * required parameter, so a caller cannot obtain an eligibility verdict while
+ * skipping current-source trust by calling a replay-only helper instead. It
+ * always derives its own assessment via {@link assessSelfDevArtifactIntegrity}
+ * — a caller-supplied assessment is never trusted directly.
+ *
+ * On prerequisite failure this returns `{ eligible: false, candidates: [] }`
+ * rather than throwing, so an ordinary ineligible artifact (invalid schema,
+ * drifted source, zero pass candidates, replay mismatch, legacy v1, ...)
+ * yields a stable structured result. On prerequisite pass it regenerates the
+ * pass candidates via ordered replay and cross-checks the regenerated count
+ * against the assessment's `passCandidateCount`; any disagreement fails
+ * closed rather than being silently reconciled (no `Math.min()`, no trusting
+ * one side).
+ *
+ * This function has no adoption, patch, source-write, or Git-write
+ * authority. It is a read-only prerequisite check for a future, separately
+ * authorized Phase 8B design.
+ */
+export function assessFutureReviewEligibility(value: unknown, current: CurrentSelfDevSourceView): SelfDevFutureReviewEligibility {
+  const assessment = assessSelfDevArtifactIntegrity(value, current);
+  if (!isFutureReviewPrerequisitePass(assessment)) {
+    return { eligible: false, assessment, candidates: [] };
+  }
+  let candidates: readonly SelfDevCandidate[];
+  try {
+    candidates = verifiedPassCandidates(value as SelfDevSessionArtifact);
+  } catch {
+    return { eligible: false, assessment, candidates: [] };
+  }
+  if (candidates.length !== assessment.passCandidateCount) {
+    return { eligible: false, assessment, candidates: [] };
+  }
+  return { eligible: true, assessment, candidates };
 }
 
 export function missingSelfDevArtifactAssessment(artifactId: string): SelfDevTrustAssessment {

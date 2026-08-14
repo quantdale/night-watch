@@ -6,9 +6,9 @@ Title: Nightwatch Phase 8A.1.1 — Future Review Eligibility Gate Closeout
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-8a-1-1-future-review-eligibility-gate
 Starting SHA: 7a59b9a6a76d5213b938383fea14a773c5282a30
-Last validated implementation SHA: (none yet)
-Last checkpoint: 2026-08-15 — M1 task initialization complete.
-Current milestone: M2 — reproduce the zero-pass eligibility defect before fixing it.
+Last validated implementation SHA: 7a59b9a6a76d5213b938383fea14a773c5282a30
+Last checkpoint: 2026-08-15 — M3 eligibility fix implemented (uncommitted).
+Current milestone: M4 — adversarial test matrix and remaining validation.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).

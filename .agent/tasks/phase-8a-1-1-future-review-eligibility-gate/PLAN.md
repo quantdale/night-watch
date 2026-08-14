@@ -1,113 +1,95 @@
-# Phase 8A.1.1 — Plan
+# Nightwatch Phase 8A.1.1 — Living ExecPlan
 
-Living document. Update as milestones complete.
+Task ID: phase-8a-1-1-future-review-eligibility-gate
 
-## M1 — Task initialization (docs only)
+## Purpose
 
-Create SPEC/PLAN/STATE/REPORT and update `.agent/ACTIVE_TASK.md`. No source
-change. Starting SHA `7a59b9a6a76d5213b938383fea14a773c5282a30`.
+Close the confirmed gap between "this self-development artifact is
+authentic/current/replay-valid" and "this self-development artifact contains
+at least one candidate eligible to enter a future controlled review/adoption
+design." See `SPEC.md` for the frozen intent and confirmed defect.
 
-## M2 — Reproduce the defect (true positive) before fixing it
+## Starting State
 
-Add a focused regression against the unfixed `isFutureReviewPrerequisitePass`
-proving simultaneously: `validateSessionArtifact` succeeds; `replaySession`
-returns `PASS`; `assessSelfDevArtifactIntegrity` returns `VERIFIED_EXACT_BASE`
-with `replayStatus: PASS` and `passCandidateCount: 0`; and the pre-fix helper
-still returns `true`. Use the `UNSAFE_ACTION` synthetic fixture (one
-candidate, rejected as `REJECTED_UNKNOWN_ACTION`) against a synthetic
-temporary Git repository for `LOCAL_GIT_SOURCE_ATTESTED` provenance. Establish
-a `VALID_MATRIX` positive control (`passCandidateCount = 1`, one regenerated
-pass candidate). Record the exact pre-fix result in `STATE.md`.
+Starting SHA `7a59b9a6a76d5213b938383fea14a773c5282a30`. Phase 8A.1 is
+historically `COMPLETE`. Phase 8B remains `NOT_STARTED`. Working tree clean;
+local `HEAD` and `origin/main` both equal the starting SHA at task open.
 
-## M3 — Implement the minimal correct eligibility contract
+## Scope
 
-- Strengthen `isFutureReviewPrerequisitePass` in `trust.ts`: require
-  `replayStatus === 'PASS'`, `sourceBundleMatch`/`contractDigestMatch ===
-  'MATCH'`, a genuine positive-integer `passCandidateCount`
-  (`Number.isInteger(...) && ... > 0`, not just non-zero), and the Phase 8A
-  no-authority invariants (`adoptionStatus`, `publication`,
-  `sourceWrites`/`gitWrites`/`externalCalls`).
-- Add `assessFutureReviewEligibility(value, current)` in `trust.ts`: always
-  derives its own assessment (current source view is a required parameter),
-  applies the corrected prerequisite, and — only on pass — regenerates
-  candidates via `verifiedPassCandidates` and cross-checks the regenerated
-  count against `assessment.passCandidateCount`, failing closed on
-  disagreement.
-- Export `assessFutureReviewEligibility` from `src/core/selfDev/index.ts`.
-- Strengthen the JSDoc on `verifiedPassCandidates` (`replay.ts`) to state
-  explicitly that it is replay-only and not the future-review authority.
-- No change to `assessSelfDevArtifactIntegrity`, `VERIFIED_EXACT_BASE`/
-  `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` semantics, persisted schemas, or the
-  contract manifest.
+`src/core/selfDev/trust.ts` (`isFutureReviewPrerequisitePass`, new
+`assessFutureReviewEligibility`), `src/core/selfDev/types.ts` (new
+`SelfDevFutureReviewEligibility`), `src/core/selfDev/replay.ts` (doc comment
+only), `src/core/selfDev/index.ts` (export), `bin/hardening-check.mjs`
+(narrow authority-boundary assertion), `.github/workflows/hardening.yml` (CI
+wiring if not already sufficient), and focused regression tests.
 
-## M4 — Adversarial test matrix
+## Non-Goals
 
-Extend `tests/unit/selfDevProvenance.test.ts` (or a new
-`tests/unit/selfDevEligibility.test.ts`) covering: zero-pass exact base;
-zero-pass documentation descendant; valid-matrix exact base (positive);
-valid-matrix documentation descendant (positive); replay-tamper; source-bundle
-mismatch; contract-digest mismatch; dirty authoritative source; unrelated
-baseline; legacy v1; malformed pass counts (`-1`, `NaN`, `Infinity`, `0.5`,
-absent field); forged positive count with bad replay status; forged verified
-trust status with mismatched match fields; count-agreement cross-check;
-zero-candidate-authority-on-failure; zero side effects.
+No Phase 8B, no adoption authority, no source/patch/candidate mutation
+authority, no runtime Git write authority, no publication authority, no
+AI/model authority, no browser/product/API authority, no database/
+infrastructure authority. No historical artifact rewritten.
 
-## M5 — Public export / authority-surface review
+## Safety Constraints
 
-Re-run the exact-usage search for `isFutureReviewPrerequisitePass`,
-`verifiedPassCandidates`, `assessSelfDevArtifactIntegrity`,
-`SelfDevTrustAssessment`. Confirm no Phase 8B code exists and no runtime
-caller can obtain candidates while skipping current-source trust.
+Read-only eligibility layer only. Zero source/Git/external-call authority
+added anywhere in this task's code paths. All Phase 8A no-authority
+invariants (`adoptionStatus`, `publication`, zero counters) remain intact and
+are defensively re-checked by the corrected prerequisite.
 
-## M6 — Hardening
+## Architecture / Approach
 
-Add a narrow `bin/hardening-check.mjs` assertion that the canonical gate
-exists and that the prerequisite validates the pass-count shape at runtime
-(not only via TypeScript types).
+`assessFutureReviewEligibility(value, current)` in `trust.ts` is the one
+canonical, source-currentness-aware future-review candidate gate: `current`
+is a required parameter, it always derives its own trust assessment, applies
+the corrected `isFutureReviewPrerequisitePass`, and — only on pass —
+regenerates candidates via the existing `verifiedPassCandidates` and
+cross-checks the regenerated count against `assessment.passCandidateCount`,
+failing closed on disagreement. `verifiedPassCandidates` is kept as-is
+(existing tests depend on it) with strengthened documentation that it is
+replay-only, not the future-review authority. See `SPEC.md` for the full
+architecture and contract/versioning decisions.
 
-## M7 — Validation
+## Validation Strategy
 
 Focused eligibility tests → existing selfDev provenance/schema/CLI tests →
 typecheck → hardening → `agent:check` → synthetic campaign → full Playwright
-→ `git diff --check`.
+→ isolated full-history checkout → `git diff --check` → remote CI at the
+substantive SHA.
 
-## M8 — CI wiring
+## Decision Log
 
-Confirm/extend `.github/workflows/hardening.yml` so the eligibility matrix is
-unmistakably exercised remotely (extend the existing Phase 8A.1 step rather
-than inventing unnecessary parallel structure, if that reads cleanly).
+- Kept `verifiedPassCandidates` exported as-is (no rename/removal) because it
+  has existing test call sites and no runtime call sites; renaming would be
+  aesthetic churn against explicit task guidance.
+- No new persisted schema or contract-version constant: `trust.ts` is already
+  in `SELFDEV_AUTHORITATIVE_PATHS`, so eligibility-logic changes already
+  produce a new `sourceBundleDigest` without a separate version field.
+- `isFutureReviewPrerequisitePass` defensively re-checks `sourceBundleMatch`,
+  `contractDigestMatch`, `adoptionStatus`, `publication`, and the zero-counter
+  invariants (not only `trustStatus`/`replayStatus`/`passCandidateCount`) so a
+  hand-forged assessment DTO cannot claim eligibility via a hand-forged
+  `trustStatus` alone.
 
-## M9 — Substantive commit + push + verify
+## Discoveries
 
-Commit implementation + tests + CI. Push. Verify `HEAD == origin/main`.
+`isFutureReviewPrerequisitePass` had zero runtime call sites and zero
+existing tests before this task (confirmed by repository-wide grep) — the
+defect was real but entirely dormant; no CLI or production code path was
+actually exposed to it.
 
-## M10 — Isolated full-history checkout validation
+## Deferred Work
 
-Fresh clone at the substantive SHA, `npm ci --ignore-scripts`, focused +
-typecheck + hardening + agent-state + synthetic campaign + diff check.
+None identified. Phase 8B (controlled candidate source adoption) remains a
+separate, future, separately authorized task.
 
-## M11 — Observe CI at substantive SHA
+## Completion Criteria
 
-Confirm the exact GitHub Actions run passes and executes the eligibility
-step.
+All Phase 8A.1.1 acceptance criteria in `SPEC.md`/the owner's task brief are
+met; see `REPORT.md` for the final verdict.
 
-## M12 — New Phase 8A.1.1 acceptance artifact
+## Milestones
 
-After the substantive commit, on a clean checkout, run
-`npm run selfdev:synthetic` to produce a new v2 artifact bound to the new
-implementation SHA; verify `VERIFIED_EXACT_BASE`, replay `PASS`,
-`passCandidateCount > 0`, and (via the new gate) `eligible: true`. Do not
-touch the historical Phase 8A.1 acceptance artifact.
-
-## M13 — Documentation closure
-
-Update `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md` (new
-decision entry), `.agent/ACTIVE_TASK.md`, `STATE.md`, `REPORT.md`. Commit
-docs-only. Push. Re-verify the acceptance artifact reads
-`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` against the new HEAD with the same
-source bundle digest and replay `PASS`.
-
-## M14 — Final report
-
-Produce the completion report per the owner's required format. Stop; do not
-begin Phase 8B.
+See `STATE.md` "Completed Milestones" / "Exact Next Action" for the current
+live milestone ledger.

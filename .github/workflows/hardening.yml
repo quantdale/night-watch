@@ -37,6 +37,8 @@ jobs:
         run: npx playwright test tests/unit/selfDevSchema.test.ts tests/unit/selfDev.test.ts --project=nightwatch --workers=1
       - name: Phase 8A.1 evaluation provenance and replay integrity matrix
         run: npx playwright test tests/unit/selfDevProvenance.test.ts tests/unit/selfDevCli.test.ts --project=nightwatch --workers=1
+      - name: Phase 8A.1.1 future-review eligibility gate matrix
+        run: npx playwright test tests/unit/selfDevEligibility.test.ts --project=nightwatch --workers=1
       - name: Phase 7B/7B.1 synthetic AI review authority and provenance
         run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
       - name: Phase 7B.3 synthetic local-model canary harness
