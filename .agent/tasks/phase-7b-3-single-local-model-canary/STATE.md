@@ -146,14 +146,18 @@ local validation: PASS — combined AI/loopback/canary 78/78, owner-provenance
 
 ## CI_STATUS
 
-Not run; source checkpoint not yet created. Local validation is deterministic
-only; no real model/provider call occurred.
+FAIL — exact implementation run `31807221660` at
+`6a336f0f323b864ffbe83a6b4208191d74922b5d` stopped at offline hardening:
+`src/core/aiReview/localCanary.ts` is an intentional one-call controller but
+was still matched by the general raw-operation scan. No model/provider call
+occurred. Repair is limited to the source-scoped hardening exception with
+the canary-specific exact-one-call check.
 
 ## NEXT EXACT ACTION
 
-Run privacy/static scope review and an isolated full-history clean checkout,
-then repair any failure before creating the implementation checkpoint. Do not
-discover or invoke a real runtime yet.
+Repair the source-scoped hardening false positive, rerun local hardening and
+focused checks, commit/push the repair, and inspect the replacement CI run.
+Do not discover or invoke a real runtime while CI is red.
 
 ## RESUME RECIPE
 
