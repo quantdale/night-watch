@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B.2 private owner-review CLI closure. Phase 0–5 are
+> the Nightwatch Phase 7B.2.1 atomic owner-provenance closure. Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
-> Phase 7B, Phase 7B.1.2, and Phase 7B.2 are complete. Phase 8 remains
+> Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. Phase 8 remains
 > unstarted.
 
 ---
@@ -26,10 +26,11 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `b26e6c30c1ae08e668ed718eea53d6f799bead59` (stable validated Phase 7B.2 substantive implementation anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `3916594f6e947f7f4665b23751c1d3ec03f5928b` (stable validated Phase 7B.2.1 implementation/substantive anchor) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
+| `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -511,6 +512,46 @@ isolated checkout validation. No real model, provider, product traffic,
 database/infrastructure operation, publication, credential, customer value,
 or real AI artifact was used. Phase 7B.1.2 remains `COMPLETE`; Phase 8 remains
 `NOT_STARTED`.
+
+## Phase 7B.2.1 — Atomic owner provenance closeout (complete)
+
+This narrow local/static/synthetic descendant repaired two integrity gaps found
+after Phase 7B.2: immutable persistence previously used a read-then-replacing
+`renameSync` race, and the public AI-review index exposed write-capable owner
+decision functions outside the CLI's TTY/two-confirmation boundary. Phase 7B.2
+remains historical `COMPLETE`; Phase 8 remains `NOT_STARTED`.
+
+The validated implementation/substantive checkpoint is
+`3916594f6e947f7f4665b23751c1d3ec03f5928b`. Live HEAD and `origin/main` remain
+Git-discovered rather than serialized into this document.
+
+- `PrivateArtifactStore.writeImmutableJson()` now creates a complete READY
+  envelope in a same-directory, owner-only `wx`/0600 temporary, fsyncs it,
+  publishes with POSIX `fs.linkSync(temp, destination)` create-if-absent
+  semantics, removes only its temporary name, and fsyncs the containing
+  directory. `EEXIST` is an immutable conflict; unsupported no-replace
+  primitives fail closed. Replacement-capable `writeJson` and `writeIncomplete`
+  remain available only for their existing non-immutable workflows.
+- Bug drafts, oracle suggestions, and human-review records all use the true
+  immutable primitive and are visible only as complete READY envelopes. Exact
+  duplicates are idempotent; same-ID different bytes, corrupt state, and
+  unsafe symlink state cannot be overwritten or self-healed. Strict identity,
+  schema, digest, reviewer, and publication read-back checks remain in force.
+- `src/core/aiReview/ownerDecision.ts` is internal and absent from the public
+  AI-review index. The raw unconfirmed helper is private; its sole exported
+  internal entry requires the selected decision, exact confirmation token, and
+  displayed artifact digest. Only `bin/ai-owner-review.mjs` loads it after the
+  TTY gate and fixed A/R/S/Q plus exact `APPROVE`/`REJECT`/`SUPERSEDE`
+  confirmation. Supported commands remain `show`, `status`, and `decide`;
+  help is exposed by `--help`/`-h`.
+- Synthetic child-process tests prove first-writer-wins for private files,
+  bug/oracle artifacts, and competing owner decisions. The final focused
+  matrix passed 91/91, full Playwright passed 513/513, the synthetic campaign
+  passed 27/27, typecheck/hardening/agent-state passed, and the isolated
+  clean checkout passed `npm ci --ignore-scripts` plus the deterministic
+  acceptance checks. No model, product traffic, database/infrastructure
+  operation, publication, credential, customer value, or real AI artifact was
+  used.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

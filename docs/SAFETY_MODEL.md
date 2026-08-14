@@ -2,7 +2,7 @@
 
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
-7B/7B.1/7B.1.1/7B.1.2 bounded private AI review assistance.
+7B/7B.1/7B.1.1/7B.1.2/7B.2.1 bounded private AI review assistance.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -586,7 +586,13 @@ secret/PII sentinels. Errors contain only safe class/size/digest metadata.
 
 Validated artifacts are explicitly `AI_GENERATED_UNREVIEWED`, carry visible AI
 provenance, retain deterministic facts copied from input, and are written as
-owner-only private companions through the existing atomic store outside Git.
+owner-only private companions outside Git. Phase 7B.2.1 makes their final
+immutable publication one-shot: a complete READY envelope is written and
+fsynced in a same-directory 0600 `wx` temporary, published with atomic
+no-replace `fs.linkSync`, followed by temporary cleanup and containing
+directory fsync. There is no rename/copy/unlink replacement fallback. Exact
+duplicates may be idempotent at the artifact service layer; conflicting,
+corrupt, or unsafe state fails closed.
 The v2 generated schemas are immutable model artifacts; the v1 status-bearing
 schemas are read-compatible only and never trusted as current owner authority
 without a matching record. Human approval is a separate exact-key v2 record
@@ -617,15 +623,19 @@ campaign execution, network, Git, directory enumeration, or publication.
 choice, and an exact second confirmation token. A wrong token, empty input,
 Q, or interrupt produces no review record.
 
-The owner service validates the requested ID against the persisted envelope and
-nested artifact, distinguishes missing from corrupt/invalid/mismatched state,
-reads an existing review without treating absence as corruption, and creates
+The read/render service is separate from the internal `ownerDecision.ts`
+writer, which is not exported by `src/core/aiReview/index.ts`. The raw
+unconfirmed decision helper is private. Only `bin/ai-owner-review.mjs` loads
+the confirmed writer, and only after the TTY gate, fixed menu, exact second
+confirmation, and displayed artifact digest are in hand. The writer creates
 only one v2 review through `createHumanReviewRecord()` and
-`AiReviewArtifactStore.writeHumanReview()`. It re-reads the record and checks
-review ID, artifact ID, full artifact digest, decision, owner reviewer class,
-and publication prohibition before applying the existing projection. The AI
-artifact stays immutable; deterministic evidence, campaign result, catalog,
-and executable/publication boundaries do not change. V1 artifacts remain
+`AiReviewArtifactStore.writeHumanReview()`, which uses the same atomic
+no-replace primitive. It re-reads the record and checks review ID, artifact ID,
+full artifact digest, decision, owner reviewer class, and publication
+prohibition before applying the existing projection. A competing valid review
+observes the winner as `AI_REVIEW_ALREADY_REVIEWED`; the AI artifact stays
+immutable and deterministic evidence, campaign result, catalog, and
+executable/publication boundaries do not change. V1 artifacts remain
 show/status-compatible and read-only for new decisions.
 
 Terminal output is a plain-text security boundary. Untrusted AI lines are
@@ -654,7 +664,7 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
 prompt-injection/hallucination, invocation budgets, accounting, concurrency,
 human review, staleness, forgery/corruption, owner scope, and oracle isolation;
@@ -665,15 +675,18 @@ throw, locality, cap, timeout, malformed output, storage failure, and active
 cancellation. `tests/unit/agent-state.test.ts` covers same-value documentation
 role forgery, direct claimed-commit role proof, STARTING_SHA lineage, carried-
 forward anchors, merge ambiguity, drift, and live Git authority;
-`tests/unit/aiOwnerReview.test.ts` covers the 16-test exact-ID,
-terminal-sanitization, double-confirmation, read-back, legacy, immutability,
-no-provider, and clean-checkout fixture matrix; private CI runs that matrix
-independently. `bin/hardening-check.mjs` enforces the source-level
-no-capability and single-call-graph boundary for both the AI execution surface
-and the owner-review CLI.
+`tests/unit/privateArtifactAtomic.test.ts`, `tests/unit/aiOwnerReview.test.ts`,
+and `tests/unit/aiReview.test.ts` cover the 91-test atomic/no-replace,
+cross-process, exact-ID, terminal-sanitization, double-confirmation,
+read-back, legacy, immutability, no-provider, and corrupt/symlink fixture
+matrix; private CI runs that matrix independently. Full local validation passed
+513/513 Playwright tests and the isolated clone passed the deterministic
+acceptance checks. `bin/hardening-check.mjs` enforces the source-level
+no-capability, no-replacement, and single-call-graph boundaries for both the AI
+execution surface and the owner-review CLI.
 
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2.1 AI review;
 changes require a DECISIONS entry and a test update.*

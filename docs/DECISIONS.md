@@ -1099,3 +1099,33 @@ real artifacts remain deferred.
 
 **Phase applicability.** Phase 7B.2 and all later consumers of private AI
 review artifacts.
+
+## D-42 — Immutable AI publication is create-if-absent and owner decisions have one tracked runtime writer
+
+**Decision.** Phase 7B.2.1 publishes every semantically immutable AI artifact
+(bug draft, oracle suggestion, and human-review record) as one complete READY
+envelope. The private store creates a random same-directory temporary with
+`wx`/0600, writes and fsyncs the full payload, publishes it with POSIX
+`fs.linkSync(temp, destination)` so an existing destination cannot be replaced,
+unlinks only the temporary name, and fsyncs the containing directory. `EEXIST`
+is an immutable conflict; unsupported no-replace behavior fails closed. The
+older replacement-capable `writeJson`/`writeIncomplete` paths remain only for
+non-immutable workflows.
+
+The general AI-review index exports no owner-decision writer or human-record
+constructor. `ownerDecision.ts` is an internal module with a private raw
+helper; its confirmed entry requires the exact decision token and displayed
+artifact digest. Only `bin/ai-owner-review.mjs` may load it in tracked runtime
+source, after the existing TTY, fixed A/R/S/Q, and exact second-confirmation
+boundary. Storage conflict handling strictly reads back a valid winner,
+returns idempotency for exact duplicates, and reports conflicting decisions or
+artifact bytes without overwriting.
+
+**Rationale.** Read-before-write is not a filesystem exclusion primitive, and
+rename-over-existing violates immutable provenance under competing processes.
+Separating read/render from the sole interactive runtime writer prevents an
+automated tracked path from manufacturing OWNER provenance while preserving
+the existing digest-bound read-back and terminal-safety model.
+
+**Phase applicability.** Phase 7B.2.1 and all later private AI artifact
+consumers. Phase 8 remains a separate, unstarted task.

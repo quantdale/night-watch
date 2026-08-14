@@ -129,13 +129,19 @@ publication, source self-editing, Phase 8, and all sibling Alphaus changes.
   implementation blocker. Isolated clean-checkout validation is also required
   as the final checkpoint gate and is tracked in M7.
 
-### M7 — Validated checkpoints and closure (IN_PROGRESS)
+### M7 — Validated checkpoints and closure (COMPLETE)
 
 - Commit and push the validated implementation-bearing checkpoint without
   force-push; fetch and verify exact local/remote equality.
 - Update project docs and final task report using stable anchor roles, push
   documentation closure, verify exact final `Nightwatch hardening` CI steps at
   the live final SHA, close `ACTIVE_TASK`, verify a clean tree, and stop.
+
+Closure evidence: implementation checkpoints `d78f93bc622e3d0548cbd4bd674775d02e7fb9b4`
+and `3916594f6e947f7f4665b23751c1d3ec03f5928b` are pushed and synchronized;
+the local and isolated deterministic validation is complete. The exact final
+GitHub workflow inspection is the remaining post-documentation handoff
+recorded in the final report checkpoint.
 
 ## Validation Strategy
 

@@ -4,11 +4,11 @@
 
 Task ID: phase-7b-2-1-atomic-owner-provenance-closeout
 Phase: 7B.2.1 — ATOMIC OWNER PROVENANCE CLOSEOUT
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 9d591ffd59719c2bba1dc155d614fd5c9b6a7078
-LAST_VALIDATED_IMPLEMENTATION_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 9634b02728c2b49b0ac0cf7efabc134596b806cc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -34,12 +34,11 @@ M6 — Full local, isolated, and adversarial validation.
 
 ## Work In Progress
 
-The implementation and focused matrix pass locally. Full current Playwright,
-synthetic campaign, and agent-state evidence pass. The first isolated clone
-found a test-fixture portability issue: its CLI helper placed the synthetic
-root under `/var/tmp`, which was the clone workspace parent and therefore
-correctly rejected by private-root policy. The helper now selects a sibling
-temporary base; the clean matrix must be rerun with fail-fast semantics.
+The implementation, focused matrix, full local suite, synthetic campaign,
+agent-state matrix, clean-checkout validation, and project documentation are
+complete. The clean-checkout fixture portability issue found during closure
+was repaired by selecting a sibling temporary base outside the clone
+workspace.
 
 ## IMMUTABLE_PUBLICATION_PRIMITIVE
 
@@ -186,13 +185,17 @@ clean-checkout validation and final manual review remain.
 
 ## CLEAN_CHECKOUT_STATUS
 
-PENDING: isolated full-history clone with `npm ci --ignore-scripts` and the
-required deterministic validation.
+PASS — isolated full-history clone at implementation checkpoint
+`3916594f6e947f7f4665b23751c1d3ec03f5928b` passed `npm ci --ignore-scripts`,
+typecheck, hardening, the 91-test provenance matrix, 32 agent-state tests, the
+27-test synthetic campaign, `agent:check`, and `git diff --check` with a
+minimal environment and synthetic roots.
 
 ## CI_STATUS
 
-PENDING: implementation and documentation pushes plus exact final
-`Nightwatch hardening` run/job inspection.
+PENDING at this documentation checkpoint: push and inspect the exact final
+`Nightwatch hardening` run/job steps, then record the first documentation
+descendant and final CI result in the final documentation-only checkpoint.
 
 ## Decisions Made During This Task
 
@@ -235,10 +238,9 @@ real owner-review activity performed. Synthetic local child processes only.
 
 ## Exact Next Action
 
-Rerun the isolated clean-checkout validation with fail-fast semantics after the
-CLI fixture-base repair; then complete the manual staged diff/privacy review,
-commit and push the validated follow-up implementation checkpoint, and proceed
-to documentation closure.
+Push this documentation closure, inspect the exact final GitHub Actions run
+and atomic/provenance step, then record its success and the first documentation
+descendant in the final documentation-only checkpoint.
 
 ## Resume Recipe
 
@@ -249,6 +251,7 @@ database, infrastructure, or publication workflows.
 
 ## Completion Snapshot
 
-Not yet complete. Stable implementation and documentation anchors will be
-recorded only after validated checkpoint commits; live HEAD and `origin/main`
-will be discovered from Git.
+Implementation/substantive anchor is `3916594f6e947f7f4665b23751c1d3ec03f5928b`.
+The documentation anchor is intentionally carried at that validated ancestor
+until the first documentation-only descendant is pushed and recorded; live
+HEAD and `origin/main` remain discovered from Git.

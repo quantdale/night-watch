@@ -587,6 +587,42 @@ and `agent:check`. No real model/provider, product traffic, database,
 infrastructure, publication, credential, customer value, or real AI artifact
 was used. Phase 7B.1.2 remains `COMPLETE` and Phase 8 remains `NOT_STARTED`.
 
+## Phase 7B.2.1 — Atomic owner provenance closeout (complete)
+
+This narrow local/static/synthetic descendant preserves Phase 7B.2 as a
+historical complete predecessor and closes its immutable-file race and public
+owner-decision write-authority gaps. It is not Phase 8 and adds no AI feature.
+The validated implementation/substantive checkpoint is
+`3916594f6e947f7f4665b23751c1d3ec03f5928b`.
+
+**Key deliverables.**
+
+- `writeImmutableJson()` uses complete fsynced same-directory `wx`/0600
+  temporaries and `fs.linkSync(temp, destination)` create-if-absent
+  publication. `EEXIST` is immutable conflict; unsupported no-replace
+  primitives fail closed; no replacement rename/copy/unlink fallback exists.
+- Bug drafts, oracle suggestions, and human reviews use one-shot READY
+  immutable publication. Exact duplicates remain idempotent at their service
+  layer, different same-ID bytes cannot replace the first winner, and corrupt
+  or symlink state is not self-healed.
+- `ownerDecision.ts` is internal and absent from the public AI-review index;
+  the raw writer is private. Only the explicit owner-review CLI reaches the
+  confirmed writer after TTY, fixed A/R/S/Q selection, exact second
+  confirmation, and displayed digest validation. Help remains `--help`/`-h`;
+  commands remain `show`, `status`, and `decide`.
+- Hardening checks enforce the no-replace primitive, immutable AI paths, and
+  the unique tracked runtime call graph. CI runs the 91-test atomic/provenance
+  matrix with `contents: read` and no secrets.
+
+**Validation.** The focused atomic/provenance matrix passed `91/91`; the full
+current Playwright suite passed `513/513`; the synthetic campaign passed
+`27/27`; typecheck, hardening, agent-state, whitespace/privacy review, and the
+isolated clean checkout (`npm ci --ignore-scripts` plus the deterministic
+acceptance commands) passed. No model, product traffic, database,
+infrastructure, publication, credential, customer value, or real AI artifact
+was used. Phase 6 remains `FROZEN_BY_OWNER`; Phase 7B.2 remains `COMPLETE`;
+Phase 8 remains `NOT_STARTED`.
+
 ---
 
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)
