@@ -270,8 +270,13 @@ export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, 
     if (typedCheckpoint.campaignStatus === 'COMPLETE_WITH_FINDINGS' && typedCheckpoint.dossierLedger.every((entry) => entry.state !== 'READY')) checkpointIntegrity('COMPLETE_WITH_FINDINGS_HAS_NO_READY_DOSSIER');
     if (typedCheckpoint.campaignStatus === 'PARTIAL_BUDGET_EXHAUSTED' && typedCheckpoint.stopReason !== 'BUDGET_EXHAUSTED' && typedCheckpoint.stopReason !== 'RUNTIME_TIMEOUT') checkpointIntegrity('BUDGET_RESULT_STOP_MISMATCH');
     if (typedCheckpoint.campaignStatus === 'PARTIAL_BUDGET_EXHAUSTED' && typedCheckpoint.stopReason === 'BUDGET_EXHAUSTED') {
-      const exhausted = Object.entries(typedCheckpoint.budgetRemaining).some(([key, value]) => value === 0 && (typedCheckpoint.budgetUsed as unknown as RuntimeRecord)[key] !== undefined);
-      if (!exhausted) checkpointIntegrity('BUDGET_STOP_WITH_REMAINING_CAPACITY');
+      const exhausted = dimensions.some((dimension) => {
+        const limit = limits[dimension];
+        return limit > 0
+          && (used[dimension] as number) === limit
+          && (remaining[dimension] as number) === 0;
+      });
+      if (!exhausted) checkpointIntegrity('BUDGET_STOP_WITHOUT_POSITIVE_LIMIT_EXHAUSTION');
     }
     if (typedCheckpoint.campaignStatus === 'PARTIAL_AUTH_BLOCKED' && typedCheckpoint.stopReason !== 'AUTH_BLOCKED') checkpointIntegrity('AUTH_RESULT_STOP_MISMATCH');
     if (typedCheckpoint.campaignStatus === 'ABORTED_OWNER_POLICY' && typedCheckpoint.stopReason !== 'OWNER_POLICY_BLOCKED') checkpointIntegrity('OWNER_RESULT_STOP_MISMATCH');

@@ -16,9 +16,11 @@ import {
   prepareCampaign,
   resumeCampaign,
   runCampaign,
+  validateCampaignCheckpoint,
   validateCampaignManifest,
   type CampaignAnomalyCandidate,
   type CampaignBudgetPolicy,
+  type CampaignExecutor,
   type CampaignExecutionOutcome,
   type CampaignInput,
   type CampaignPrivacyPolicy,
@@ -867,5 +869,116 @@ test.describe('Campaign hardening adversarial persistence fixtures', () => {
       maxExplorationContexts: 0,
     };
     expect(() => createCampaignManifest(inputFor('BASELINE_HEALTH', [], impossible))).toThrow('CAMPAIGN_BUDGET_FEASIBILITY_INVALID');
+  });
+
+  test('rejects the I.1 false-positive before any executor callback', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+      const checkpoint = prepareCampaign(manifest, { store, now: () => new Date(STATIC_NOW) });
+      const corrupted = {
+        ...checkpoint,
+        campaignStatus: 'PARTIAL_BUDGET_EXHAUSTED' as const,
+        stopReason: 'BUDGET_EXHAUSTED' as const,
+      };
+      expect(corrupted.budgetUsed.explorationContexts).toBe(0);
+      expect(corrupted.budgetRemaining.explorationContexts).toBe(0);
+      const positiveDimensions = [
+        'browserContexts', 'journeyContexts', 'apiExecutions', 'replays',
+        'minimizationCandidates', 'totalActions', 'privateEvidenceBytes',
+      ] as const;
+      for (const dimension of positiveDimensions) {
+        expect(corrupted.budgetUsed[dimension]).toBe(0);
+        expect(corrupted.budgetRemaining[dimension]).toBe(manifest.budgetPolicy[
+          dimension === 'browserContexts' ? 'maxTotalBrowserContexts'
+            : dimension === 'journeyContexts' ? 'maxJourneyContexts'
+              : dimension === 'apiExecutions' ? 'maxApiExecutions'
+                : dimension === 'replays' ? 'maxReplays'
+                  : dimension === 'minimizationCandidates' ? 'maxMinimizationCandidates'
+                    : dimension === 'totalActions' ? 'maxTotalActions'
+                      : 'maxPrivateEvidenceBytes'
+        ]);
+      }
+      const checkpointPath = new CampaignCheckpointStore(store).paths(manifest.campaignId).checkpoint;
+      fs.writeFileSync(checkpointPath, JSON.stringify({ status: 'READY', checkpoint: corrupted }));
+      let callbackCount = 0;
+      const executor: CampaignExecutor = {
+        preflight: () => {
+          callbackCount += 1;
+          return { passed: true, code: 'PREFLIGHT_PASS', failedChecks: [], checkedAt: STATIC_NOW };
+        },
+        execute: async () => {
+          callbackCount += 1;
+          return defaultOutcome();
+        },
+      };
+      let thrown: unknown;
+      try {
+        await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
+      } catch (error) {
+        thrown = error;
+      }
+      expect(thrown).toBeInstanceOf(Error);
+      expect((thrown as Error).message).toBe('CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:BUDGET_STOP_WITHOUT_POSITIVE_LIMIT_EXHAUSTION');
+      expect(callbackCount).toBe(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('accepts a legitimate positive-cap exhaustion checkpoint with exact arithmetic', async () => {
+    const { root, store } = tempStore();
+    try {
+      const budget = {
+        ...INITIAL_REAL_CAMPAIGN_BUDGET,
+        maxTotalActions: 1,
+        maxRuntimeMs: 60_000,
+        maxPerTestTimeoutMs: 5_000,
+      };
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], budget));
+      const result = await runCampaign(manifest, passingExecutor(), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
+      expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
+      expect(result.checkpoint.budgetUsed.totalActions).toBe(1);
+      expect(result.checkpoint.budgetRemaining.totalActions).toBe(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+      expect(result.checkpoint.budgetUsed.totalActions + result.checkpoint.budgetRemaining.totalActions).toBe(manifest.budgetPolicy.maxTotalActions);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('accepts mixed zero-cap and genuinely exhausted positive-cap dimensions', async () => {
+    const { root, store } = tempStore();
+    try {
+      const budget = {
+        ...TEST_BUDGET,
+        maxTotalBrowserContexts: 1,
+        maxJourneyContexts: 1,
+        maxExplorationContexts: 0,
+      };
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC', [], budget));
+      const result = await runCampaign(manifest, passingExecutor(), { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
+      expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
+      expect(result.checkpoint.budgetUsed.explorationContexts).toBe(0);
+      expect(result.checkpoint.budgetRemaining.explorationContexts).toBe(0);
+      expect(result.checkpoint.budgetUsed.browserContexts).toBe(1);
+      expect(result.checkpoint.budgetRemaining.browserContexts).toBe(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+      for (const dimension of Object.keys(result.checkpoint.budgetUsed) as (keyof typeof result.checkpoint.budgetUsed)[]) {
+        const limit = dimension === 'browserContexts' ? manifest.budgetPolicy.maxTotalBrowserContexts
+          : dimension === 'journeyContexts' ? manifest.budgetPolicy.maxJourneyContexts
+            : dimension === 'explorationContexts' ? manifest.budgetPolicy.maxExplorationContexts
+              : dimension === 'apiExecutions' ? manifest.budgetPolicy.maxApiExecutions
+                : dimension === 'replays' ? manifest.budgetPolicy.maxReplays
+                  : dimension === 'minimizationCandidates' ? manifest.budgetPolicy.maxMinimizationCandidates
+                    : dimension === 'totalActions' ? manifest.budgetPolicy.maxTotalActions
+                      : manifest.budgetPolicy.maxPrivateEvidenceBytes;
+        expect(result.checkpoint.budgetUsed[dimension] + result.checkpoint.budgetRemaining[dimension]).toBe(limit);
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
