@@ -4,11 +4,11 @@
 
 Task ID: phase-7b-2-private-owner-review-cli
 Phase: 7B.2 — PRIVATE OWNER REVIEW CLI
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 91bdc518088f575f7089fa9702197fb73793444f
 Last validated implementation SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
 Last substantive checkpoint SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
-Last documentation checkpoint SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+Last documentation checkpoint SHA: 9634b02728c2b49b0ac0cf7efabc134596b806cc
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -20,7 +20,7 @@ Remote: origin -> quantdale/night-watch, main
 STARTING_SHA: 91bdc518088f575f7089fa9702197fb73793444f
 LAST_VALIDATED_IMPLEMENTATION_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
-LAST_DOCUMENTATION_CHECKPOINT_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 9634b02728c2b49b0ac0cf7efabc134596b806cc
 
 ## Objective
 
@@ -31,9 +31,9 @@ deterministic Nightwatch authority.
 ## Current Milestone
 
 Milestone ID: M7
-Status: IN_PROGRESS
-What is being attempted: complete documentation closure and exact final remote
-CI verification after the validated implementation and isolated checkout.
+Status: COMPLETE
+What is being attempted: preserve the validated implementation, close
+documentation, and verify exact final CI without starting another task.
 
 ## Completed Milestones
 
@@ -51,9 +51,9 @@ CI verification after the validated implementation and isolated checkout.
 
 ## Work In Progress
 
-M7 implementation and isolated validation are complete. Documentation closure
-and exact final CI verification remain; no runtime owner artifact or real
-private state has been used.
+M7 implementation, isolated validation, documentation closure, push, and exact
+CI verification are complete. No runtime owner artifact or real private state
+has been used.
 
 ## Required Status Invariants
 
@@ -82,9 +82,8 @@ ID_INTEGRITY_STATUS: PASS — exact kind/id checks after artifact and review rea
 
 ## Exact Next Action
 
-Commit and push the documentation-only closure after the final diff/continuity
-check, then verify the exact final GitHub Actions run and owner-review CI step
-at live HEAD.
+Report the final live Git equality and exact successful workflow evidence, then
+stop. Do not start another task.
 
 ## Files Changed
 
@@ -122,7 +121,11 @@ Task scaffolding and M1–M7 implementation:
 - PASS — full-history isolated checkout: `npm ci --ignore-scripts`, typecheck,
   hardening, owner/AI/loopback `80/80`, agent-state `32/32`, campaign `27/27`,
   and `agent:check` (one expected stale-baseline warning).
-- PENDING — documentation closure and remote CI verification.
+- PASS — documentation checkpoint `9634b02728c2b49b0ac0cf7efabc134596b806cc`
+  pushed from the validated implementation.
+- PASS — exact `Nightwatch hardening` run `31793603895` at documentation
+  checkpoint, conclusion `success`; Phase 7B.2 owner-review step executed and
+  passed.
 
 ## Decisions Made During This Task
 
@@ -162,15 +165,15 @@ SAFETY_EVENTS: NONE
 ## Completion Snapshot
 
 CLEAN_CHECKOUT_STATUS: PASS — full-history isolated clone
-CI_STATUS: WORKFLOW UPDATED; remote execution pending checkpoint push
+CI_STATUS: PASS — run 31793603895, head 9634b02728c2b49b0ac0cf7efabc134596b806cc
 PRIVACY_STATUS: SYNTHETIC_FIXTURES_ONLY; no real private state touched
 SAFETY_VECTOR: DEV=0; NEXT=0; PRODUCTION=0; DATABASE=0; INFRASTRUCTURE=0;
 PUBLICATION=0; EXTERNAL_AI=0; AI_TOOLS=0; PRODUCT_MUTATIONS=0
 ALPHAUS_REPOSITORIES: UNCHANGED
+ACCEPTANCE_VERDICT: PASS — Phase 7B.2 complete; Phase 8 remains NOT_STARTED
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, then this task's SPEC.md, PLAN.md, and STATE.md;
-verify live Git root/status/HEAD/origin; inspect the diff; run the smallest
-pending validation; update STATE after each milestone; and continue from the
-exact next action. Never use the real private findings root in tests.
+Read `.agent/ACTIVE_TASK.md`, this task's SPEC.md, PLAN.md, and STATE.md only
+for historical context. Discover live Git state from Git, verify the final
+worktree is clean, and stop. Do not start a local-model canary or Phase 8.

@@ -145,7 +145,7 @@ and calls to the service.
   artifacts, model service, or product/network dependencies.
 - Run focused owner-review, existing AI/loopback, private-store, owner-policy,
   and agent-state validation.
-- Status: COMPLETE — focused owner suite 15/15, predecessor AI/loopback/
+- Status: COMPLETE — focused owner suite 16/16, predecessor AI/loopback/
   private-triage/owner-policy slice 83/83, typecheck, hardening, and agent
   state checks pass.
 
@@ -158,8 +158,8 @@ and calls to the service.
 - Record stable implementation/substantive/documentation anchors, push
   validated implementation then documentation, verify live equality and exact
   final CI owner-review step, close task, and stop before Phase 8.
-- Status: IN_PROGRESS — local implementation is ready for full validation and
-  checkpoint review.
+- Status: COMPLETE — local, isolated, documentation, push, and exact CI
+  closure are validated.
 
 ## Validation Strategy
 
