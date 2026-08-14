@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Hardening Campaign I.1 closeout. Phase 0–5 are complete;
+> the Nightwatch Phase 7B closeout. Phase 0–5 are complete;
 > Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, and Phase 7B
 > are complete. Phase 8 remains unstarted.
 
@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `5de817764a4d58eaa1a5c0109464667f552cda5e` (validated I.1 implementation checkpoint; final documentation is a documentation-only descendant) |
+| `REMOTE_HEAD` | `34775913c122d2e8eed6a70072487e28c2eb02e0` (validated Phase 7B implementation checkpoint; final closure documentation is a documentation-only descendant) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -364,7 +364,7 @@ prompts, raw responses, real findings, and transcripts are not persisted.
 
 The Phase 7 campaign remains deterministic and does not invoke AI. Phase 6
 remains `FROZEN_BY_OWNER` with L4 `OUT_OF_SCOPE_BY_OWNER`; Phase 8 autonomous
-self-development was not started. Full validation passed with 436/436
+self-development was not started. Full validation passed with 437/437
 Playwright tests, including the Phase 7B synthetic and loopback matrix, plus
 TypeScript, hardening, synthetic campaign, owner-scope, and Phase 6 checks.
 

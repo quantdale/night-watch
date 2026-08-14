@@ -3,20 +3,21 @@
 Task ID: phase-7b-bounded-ai-review-assistance
 Phase: 7B — Bounded Private AI Review Assistance
 Title: Nightwatch Phase 7B — Bounded Private AI Review Assistance
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-7b-bounded-ai-review-assistance
 Starting SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Current SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Last validated implementation SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Current milestone: M6 — adversarial authority/privacy matrix.
+Current SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+Last validated implementation SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+Current milestone: M8 — closure and validated checkpoint.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: focused Phase 7B implementation validation is green in the working tree; no commit yet.
-Next action: run M7 isolation/full validation, update durable project/task
-documentation, inspect privacy/diff, then create the first validated
-checkpoint. Preserve Hardening I/I.1 COMPLETE, Phase 7 COMPLETE, and Phase 6
-FROZEN_BY_OWNER.
+Last checkpoint: Phase 7B implementation and closure documentation validated;
+the substantive implementation checkpoint is pushed and this closing
+documentation checkpoint is the final task handoff.
+Next action: none for this task. Do not start Phase 8; any follow-up requires
+a separate explicit owner-approved task. Preserve Hardening I/I.1 COMPLETE,
+Phase 7 COMPLETE, and Phase 6 FROZEN_BY_OWNER.
 
 ## Prior phase closure handoff
 

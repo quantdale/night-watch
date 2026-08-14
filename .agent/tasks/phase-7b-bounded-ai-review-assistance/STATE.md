@@ -4,11 +4,11 @@
 
 Task ID: phase-7b-bounded-ai-review-assistance
 Phase: 7B — BOUNDED PRIVATE AI REVIEW ASSISTANCE
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
 Starting remote SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Current SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-Last validated implementation SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
+Current SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+Last validated implementation SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
 Branch: main
 Remote: private origin -> quantdale/night-watch, branch main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -22,8 +22,7 @@ oracle registration, campaign state, or Nightwatch source.
 
 ## Current Milestone
 
-M6 — adversarial authority/privacy matrix, with M7 isolation and full
-validation next.
+M8 — closure and validated checkpoint.
 
 ## Completed Milestones
 
@@ -34,18 +33,21 @@ validation next.
 - M3 structural Phase 3 input and non-executable oracle suggestions.
 - M4 owner review records, status transitions, labels, and staleness.
 - M5 loopback-only optional provider containment.
+- M6 adversarial authority, privacy, prompt-injection, hallucination,
+  staleness, owner-scope, and failure matrix.
+- M7 campaign/oracle isolation, hardening/CI integration, and full validation.
+- M8 closure documentation and substantive validated checkpoint.
 
 ## Work In Progress
 
-M6 adversarial validation is green for the current focused matrix. M7 remains:
-serial isolation validation, full deterministic suite, project documentation,
-clean-checkout validation, and checkpoint preparation.
+All implementation, isolation, adversarial, documentation, and full-suite
+validation work is complete. The optional live local-model canary was not run;
+no model runtime was installed or contacted.
 
 ## Exact Next Action
 
-Rerun the serial owner/campaign/Phase 6 companion tests, then run the full
-validation suite and update project/task closure documentation before the
-first validated checkpoint commit.
+No further implementation action. Do not start Phase 8. A future local-model
+canary or any oracle implementation requires a separate explicit task.
 
 ## Files Changed
 
@@ -57,7 +59,7 @@ task artifacts.
 
 ## Validation Ledger
 
-SYNTHETIC_PROVIDER_LEDGER: 37 focused Phase 7B tests PASS; valid, malformed,
+SYNTHETIC_PROVIDER_LEDGER: 38 focused Phase 7B tests PASS; valid, malformed,
 unknown, oversized, timeout, unavailable, prompt-injection, hallucination,
 privacy, and authority fixture modes covered.
 PROMPT_INJECTION_LEDGER: PASS — injected evidence is data; echoed control,
@@ -70,8 +72,9 @@ PRIVACY_LEDGER: PASS — raw-data keys, secret/PII sentinels, non-PASS privacy,
 and nonzero safety reject before provider invocation or persistence.
 OWNER_REVIEW_LEDGER: PASS — bug approval/rejection and oracle manual-review/
 rejection transitions are digest-bound; AI cannot self-approve.
-CI_LEDGER: PENDING_REMOTE — offline hardening and focused CI steps added;
-exact final workflow result awaits final push.
+CI_LEDGER: WORKFLOW_UPDATED — offline hardening and focused Phase 7B tests are
+in CI; exact remote workflow result for the final documentation-only descendant
+requires read access after its push.
 
 ## Decisions Made During This Task
 
@@ -92,7 +95,8 @@ exact final workflow result awaits final push.
 
 ## Blockers
 
-None. A live local model runtime has not been checked and is optional.
+None. A live local model runtime is optional and was intentionally not
+installed or contacted.
 
 ## Safety Events
 
@@ -116,7 +120,7 @@ PROMPT_TEMPLATE_VERSION: nightwatch.ai-review-prompt.private.v1
 UPSTREAM_AI_READY_SCHEMA: nightwatch.ai-ready-evidence.private.v1
 ELIGIBILITY_POLICY: BUG_DRAFT_L2_OR_L3_ONLY
 AI_PROVIDER_POLICY: SYNTHETIC_REQUIRED / LOOPBACK_OPTIONAL / CLOUD_PROHIBITED
-LOCAL_PROVIDER_STATUS: LOOPBACK_IMPLEMENTED / LIVE_RUNTIME_NOT_CHECKED
+LOCAL_PROVIDER_STATUS: LOOPBACK_IMPLEMENTED / LIVE_RUNTIME_NOT_AVAILABLE
 MODEL_DOWNLOAD_STATUS: PROHIBITED
 INVOCATION_BUDGET: 3 candidate; 3 oracle; 64KiB input; 32KiB output; 3 calls; 5s/call; 15s total
 
@@ -136,9 +140,9 @@ product journey/API, database, infrastructure, or publication commands.
 
 ## Completion Snapshot
 
-LAST_VALIDATED_IMPLEMENTATION_SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-LAST_PUSHED_SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-CURRENT_LOCAL_HEAD: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
-CURRENT_REMOTE_HEAD: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
+LAST_VALIDATED_IMPLEMENTATION_SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+LAST_PUSHED_SHA: 34775913c122d2e8eed6a70072487e28c2eb02e0
+CURRENT_LOCAL_HEAD: 34775913c122d2e8eed6a70072487e28c2eb02e0
+CURRENT_REMOTE_HEAD: 34775913c122d2e8eed6a70072487e28c2eb02e0

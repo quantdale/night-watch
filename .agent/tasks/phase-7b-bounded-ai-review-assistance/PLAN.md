@@ -43,56 +43,54 @@ authority; only an unreviewed owner-only companion artifact is persisted.
 
 ## Milestones
 
-## Milestones
-
-### M0 — Recovery, task routing, and threat-model freeze
+### M0 — Recovery, task routing, and threat-model freeze — COMPLETE
 
 Create native task artifacts, route `ACTIVE_TASK.md`, record the single-writer
 check and exact starting SHA, and freeze the non-oracle/privacy threat model.
 
-### M1 — Strict DTOs, gates, references, and private storage
+### M1 — Strict DTOs, gates, references, and private storage — COMPLETE
 
 Implement exact-key runtime validators, AI-ready compatibility validation,
 L2/L3 eligibility, input privacy/safety/owner gates, immutable references,
 versioned prompt identity, bounded budgets, and companion artifact storage.
 
-### M2 — Synthetic provider and bug-draft pipeline
+### M2 — Synthetic provider and bug-draft pipeline — COMPLETE
 
 Implement provider-neutral interfaces, deterministic synthetic response modes,
 opaque output parsing, strict bug-draft construction, response digest/error
 classes, and synthetic valid/malformed/adversarial coverage.
 
-### M3 — Structural change input and non-executable oracle suggestions
+### M3 — Structural change input and non-executable oracle suggestions — COMPLETE
 
 Build sanitized Phase 3 change DTOs, validate conceptual oracle suggestions,
 ensure no generated suggestion can execute/register/write, and cover direct,
 shared, transitive, unrelated, empty, unknown, and unsafe matrices.
 
-### M4 — Owner review lifecycle and stale semantics
+### M4 — Owner review lifecycle and stale semantics — COMPLETE
 
 Implement deterministic human-review records, explicit status transitions,
 artifact digest binding, self-approval rejection, stale/superseded detection,
 and AI-labeled rendering metadata without customer-facing text.
 
-### M5 — Loopback adapter and containment
+### M5 — Loopback adapter and containment — COMPLETE
 
 Implement one fixed local loopback-only adapter with bounded request/response,
 timeout, no redirects/proxy/auth/tools/fallback, then prove external/LAN/
 credential-bearing/redirect/oversize/slow endpoints fail closed offline.
 
-### M6 — Adversarial authority/privacy matrix
+### M6 — Adversarial authority/privacy matrix — COMPLETE
 
 Exercise prompt injection, fake L3/root cause/deployment/source facts, tool/
 shell/mutation/publication/Phase 6/Git requests, secret sentinels, malformed
 and unknown outputs, and owner-policy adversarial classes.
 
-### M7 — Isolation, hardening, CI, and full validation
+### M7 — Isolation, hardening, CI, and full validation — COMPLETE
 
 Prove Phase 7 semantics are unchanged without AI, oracle catalogs are unchanged,
 AI has no campaign/source/Git/publication path, extend offline hardening/CI,
 run all acceptance checks, inspect privacy/diff, and checkpoint the result.
 
-### M8 — Closure
+### M8 — Closure — COMPLETE
 
 Update task/project durable state and report, set `ACTIVE_TASK.md` complete,
 commit/push validated checkpoints without private runtime output, verify
