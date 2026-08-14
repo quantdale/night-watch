@@ -83,11 +83,12 @@ function rejectionMetadata(value: unknown): { readonly candidateId: string; read
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
     const raw = value as Record<string, unknown>;
     const candidateId = typeof raw.candidateId === 'string' && /^candidate:[0-9a-f]{64}$/.test(raw.candidateId) ? raw.candidateId : 'candidate:' + '0'.repeat(64);
-    const candidateDigest = typeof raw.candidateDigest === 'string' && /^sha256:[0-9a-f]{64}$/.test(raw.candidateDigest)
-      ? raw.candidateDigest
-      : candidateId.startsWith('candidate:')
-        ? `sha256:${candidateId.slice('candidate:'.length)}`
-        : 'sha256:' + '0'.repeat(64);
+    // Rejections still need a structurally coherent v2 pair. Never carry a
+    // caller-supplied digest through an invalid proposal; derive it only from
+    // the bounded candidate ID so replay/binding cannot be bypassed.
+    const candidateDigest = candidateId.startsWith('candidate:')
+      ? `sha256:${candidateId.slice('candidate:'.length)}`
+      : 'sha256:' + '0'.repeat(64);
     return { candidateId, candidateDigest, baseNightwatchSha: safeBaseSha(raw.baseNightwatchSha) };
   }
   return { candidateId: 'candidate:' + '0'.repeat(64), candidateDigest: 'sha256:' + '0'.repeat(64), baseNightwatchSha: '0'.repeat(40) };

@@ -3,8 +3,10 @@
  * Phase 8A synthetic self-development wrapper.
  *
  * This CLI accepts only --help. The TypeScript controller owns the fixed
- * deterministic proposer/evaluator and private artifact namespace. There is
- * no prompt, source, patch, model, product, network, or adoption option.
+ * deterministic proposer/evaluator and private artifact namespace. The
+ * narrow local provenance helper supplies the current clean Git/source DTO.
+ * There is no prompt, source, patch, model, product, network, or adoption
+ * option.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,9 +60,36 @@ function main() {
       usage();
       return;
     }
+    const provenanceService = loadTypeScriptModule(path.join(root, 'src', 'core', 'provenance', 'localGit.ts'));
+    const provenance = provenanceService.readLocalNightwatchProvenance({ repositoryRoot: root });
     const service = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'controller.ts'));
-    const report = service.runSyntheticSelfDevSession();
-    console.log(JSON.stringify(report));
+    const report = service.runSyntheticSelfDevSession({ provenance });
+    const trustService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'trust.ts'));
+    const { privateArtifact: _privateArtifact, ...artifact } = report;
+    const assessment = trustService.assessSelfDevArtifactIntegrity(artifact, provenanceService.currentCheckoutState({ repositoryRoot: root }));
+    if (assessment.trustStatus !== 'VERIFIED_EXACT_BASE' || assessment.replayStatus !== 'PASS') throw new Error('SELFDEV_TRUST_ASSESSMENT_FAILED');
+    const passCount = report.evaluations.filter((evaluation) => evaluation.resultClass === 'EVALUATED_PASS_NOT_ADOPTED').length;
+    const duplicateCount = report.evaluations.filter((evaluation) => evaluation.resultClass === 'REJECTED_DUPLICATE').length;
+    const rejectedCount = report.evaluations.length - passCount - duplicateCount;
+    console.log(JSON.stringify({
+      SESSION: 'PASS',
+      artifactId: report.artifactId,
+      schemaVersion: report.schemaVersion,
+      baseNightwatchSha: report.baseNightwatchSha,
+      sourceBundleDigest: report.provenance.sourceBundleDigest,
+      contractDigest: report.provenance.contractDigest,
+      candidateCount: report.candidateCount,
+      passCount,
+      duplicateCount,
+      rejectedCount,
+      trustStatus: assessment.trustStatus,
+      privateArtifactDisposition: report.privateArtifact.disposition,
+      adoptionStatus: report.adoptionStatus,
+      publication: report.publication,
+      sourceWrites: report.sourceWrites,
+      gitWrites: report.gitWrites,
+      externalCalls: report.externalCalls,
+    }));
   } catch {
     console.error('SELFDEV_SYNTHETIC_FAILED');
     process.exitCode = 1;

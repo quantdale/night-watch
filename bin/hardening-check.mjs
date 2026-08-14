@@ -198,6 +198,19 @@ function checkSelfDevelopmentBoundary() {
   }
   const sources = files.map((file) => [file, read(file)]);
   const combined = sources.map(([, source]) => source).join('\n');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  for (const file of files) {
+    if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDev source ${file}`);
+  }
+  const provenance = read('src/core/provenance/localGit.ts');
+  if (!/spawnSync\('git', \[\.\.\.args\]/.test(provenance) || !/shell:\s*false/.test(provenance) || !/timeout:\s*5_000/.test(provenance) || !/maxBuffer:\s*512 \* 1024/.test(provenance)) {
+    fail('read-only local Git provenance boundary is not fixed-argv, no-shell, and bounded');
+  }
+  if (!/GIT_OPTIONAL_LOCKS:\s*'0'/.test(provenance)) fail('read-only local Git provenance does not disable optional Git locks');
+  if (/\['(?:add|commit|push|pull|fetch|checkout|switch|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config)'/.test(provenance)) fail('local Git provenance contains a forbidden mutation or remote verb');
+  for (const file of gitFiles().filter((item) => item.startsWith('src/core/provenance/') && item.endsWith('.ts'))) {
+    if (file !== 'src/core/provenance/localGit.ts' && /node:child_process/.test(read(file))) fail(`${file} is an unapproved Git child-process boundary`);
+  }
   for (const [file, source] of sources) {
     if (/from\s+['"][^'"]*(?:aiReview|campaign|oracles?|browser|products?|phase6|oops|database|infrastructure|auth|network|git)[^'"]*['"]/i.test(source)) {
       fail(`${file} imports a prohibited Phase 8A authority or transport`);
@@ -225,12 +238,28 @@ function checkSelfDevelopmentBoundary() {
   const storage = read('src/core/selfDev/storage.ts');
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION|SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA/.test(controller)) fail('Phase 8A controller lacks its narrow owner/synthetic boundary');
   if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8A private results do not use the hardened immutable private store');
+  if (!/validateSessionArtifact/.test(storage) || !/replaySession/.test(storage) || !/readBack/.test(storage)) fail('Phase 8A.1 persistence is missing strict pre-write or read-back replay gates');
+  if (!/SELFDEV_PROVENANCE_REQUIRED/.test(controller) || !/provenance/.test(controller)) fail('Phase 8A.1 persistent controller does not require injected provenance');
+  const validation = read('src/core/selfDev/validation.ts');
+  if (!/sessionArtifactIdFor/.test(validation) || !/assertEvaluationStateInvariant/.test(validation) || !/SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION/.test(validation)) fail('Phase 8A.1 validation lacks v2 content identity or semantic state invariants');
+  const replay = read('src/core/selfDev/replay.ts');
+  if (!/canonicalJson\(actual\)/.test(replay) || !/proposals\[index\]/.test(replay) || !/DeterministicReplayClock/.test(replay)) fail('Phase 8A.1 replay is not ordered, exact, and clock-controlled');
+  const trust = read('src/core/selfDev/trust.ts');
+  if (!/VERIFIED_EXACT_BASE/.test(trust) || !/VERIFIED_SOURCE_EQUIVALENT_DESCENDANT/.test(trust) || !/LEGACY_UNVERIFIED_NOT_ELIGIBLE/.test(trust)) fail('Phase 8A.1 trust assessment is missing currentness or legacy quarantine');
   if (!/SELFDEV_PRIVATE_NAMESPACE/.test(storage) || !/self-development/.test(storage)) fail('Phase 8A private results lack a separate namespace');
   if (!/NOT_AUTHORIZED_PHASE_8A/.test(combined) || !/EVALUATED_PASS_NOT_ADOPTED/.test(combined) || !/PROHIBITED/.test(combined)) fail('Phase 8A result lacks explicit no-adoption/publication authority');
   const cli = read('bin/selfdev-synthetic.mjs');
   if (!/parseArgs/.test(cli) || !/runSyntheticSelfDevSession/.test(cli)) fail('Phase 8A CLI is not a thin synthetic controller wrapper');
   if (/\b(?:child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)|AiReview|owner-review|database|production|NIGHTWATCH_STORAGE_STATE)\b/i.test(cli)) fail('Phase 8A CLI exposes a prohibited capability');
   if (/fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(cli)) fail('Phase 8A CLI contains a filesystem-write path');
+  if (!/readLocalNightwatchProvenance/.test(cli)) fail('Phase 8A synthetic CLI does not derive local Git/source provenance');
+  const verifyCli = read('bin/selfdev-verify.mjs');
+  if (!/--artifact-id/.test(verifyCli) || !/readOnly:\s*true/.test(verifyCli) || !/assessSelfDevArtifactIntegrity/.test(verifyCli)) fail('Phase 8A.1 verifier CLI lacks exact-ID read-only assessment');
+  if (/(?:--latest|--all|--list|--root|--output|--patch|--adopt|--apply|--commit|--push|--model|--prompt|--url|--repo|--force)/.test(verifyCli) && !/SELFDEV_VERIFY_USAGE_INVALID/.test(verifyCli)) fail('Phase 8A.1 verifier CLI does not reject broad selection or mutation options');
+  const provenanceCli = read('bin/selfdev-provenance.mjs');
+  if (!/readLocalNightwatchProvenance/.test(provenanceCli) || /node:child_process|fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(provenanceCli)) fail('read-only provenance CLI boundary is incomplete');
+  const index = read('src/core/selfDev/index.ts');
+  if (/export\s+\*\s+from\s+['"]\.\/storage['"]/.test(index) || /createSessionArtifact/.test(index)) fail('selfDev public index exposes a raw artifact constructor or storage wildcard');
   const ownerPolicy = read('src/core/policy/ownerScope.ts');
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION/.test(ownerPolicy)) fail('Phase 8A lacks a distinct owner-policy capability');
 }

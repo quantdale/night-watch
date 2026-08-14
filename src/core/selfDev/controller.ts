@@ -1,15 +1,23 @@
 // ---------------------------------------------------------------------------
-// Nightwatch Phase 8A — bounded synthetic self-development controller.
+// Nightwatch Phase 8A.1 — bounded v2 synthetic session controller.
+//
+// This controller accepts an already-attested provenance DTO from the narrow
+// local wrapper. It does not inspect Git, the filesystem, or the environment.
 // ---------------------------------------------------------------------------
 
+import { createHash } from 'node:crypto';
 import { assertOwnerPolicyAllows } from '../policy/ownerScope';
 import {
   SELFDEV_ADOPTION_STATUS,
   SELFDEV_PUBLICATION,
   SELFDEV_PROPOSER_CLASS,
+  SELFDEV_REPLAY_ALGORITHM_VERSION,
+  SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION,
   SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION,
   ZERO_SELFDEV_SAFETY_VECTOR,
   type SelfDevPrivateArtifactReceipt,
+  type SelfDevProvenance,
+  type SelfDevReplayDescriptor,
   type SelfDevSessionReport,
 } from './types';
 import {
@@ -22,22 +30,70 @@ import {
   createSessionArtifact,
   SelfDevPrivateArtifactStore,
 } from './storage';
+import { replaySession } from './replay';
 
 export interface SelfDevControllerOptions extends SyntheticProposerOptions {
   readonly artifactStore?: SelfDevPrivateArtifactStore;
   readonly persist?: boolean;
+  readonly provenance?: SelfDevProvenance;
+}
+
+function syntheticDigest(value: unknown): string {
+  return `sha256:${createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex')}`;
+}
+
+function syntheticTestProvenance(baseNightwatchSha: string): SelfDevProvenance {
+  return {
+    schemaVersion: 'nightwatch.selfdev-provenance.private.v1',
+    gitHeadSha: baseNightwatchSha,
+    sourceBundleDigest: syntheticDigest({ testOnly: true, baseNightwatchSha }),
+    contractDigest: syntheticDigest({ testOnly: true, contract: 'synthetic' }),
+    algorithmVersion: SELFDEV_REPLAY_ALGORITHM_VERSION,
+    authoritativeSourceState: 'CLEAN',
+    runtimeNodeVersion: '20.0.0',
+    provenanceClass: 'SYNTHETIC_TEST_ONLY',
+  };
+}
+
+function replayDescriptor(options: SyntheticProposerOptions, baseNightwatchSha: string, expectedProposalCount: number): SelfDevReplayDescriptor {
+  return {
+    schemaVersion: SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION,
+    proposerClass: SELFDEV_PROPOSER_CLASS,
+    fixture: options.fixture ?? 'VALID_MATRIX',
+    seed: options.seed ?? 0,
+    baseNightwatchSha,
+    expectedProposalCount,
+  };
 }
 
 export class SelfDevController {
   run(options: SelfDevControllerOptions = {}): SelfDevSessionReport {
     assertOwnerPolicyAllows('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION');
-    const baseNightwatchSha = options.baseNightwatchSha ?? SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA;
+    const persist = options.persist !== false;
+    if (persist && options.provenance === undefined) throw new Error('SELFDEV_PROVENANCE_REQUIRED');
+
+    const baseNightwatchSha = options.provenance?.gitHeadSha ?? options.baseNightwatchSha ?? SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA;
+    if (options.provenance !== undefined && options.baseNightwatchSha !== undefined && options.baseNightwatchSha !== options.provenance.gitHeadSha) {
+      throw new Error('SELFDEV_BASELINE_MISMATCH');
+    }
     const proposer = new SyntheticDeterministicProposer();
-    const proposals = proposer.propose(options);
+    const proposerOptions: SyntheticProposerOptions = {
+      baseNightwatchSha,
+      seed: options.seed,
+      fixture: options.fixture,
+    };
+    const proposals = proposer.propose(proposerOptions);
     const evaluator = new SelfDevEvaluator();
     const evaluations = evaluator.evaluateSession(proposals);
-    const artifact = createSessionArtifact({ baseNightwatchSha, evaluations });
-    const persist = options.persist !== false;
+    const provenance = options.provenance ?? syntheticTestProvenance(baseNightwatchSha);
+    const descriptor = replayDescriptor(proposerOptions, baseNightwatchSha, proposals.length);
+    const artifact = createSessionArtifact({ baseNightwatchSha, provenance, replayDescriptor: descriptor, evaluations });
+
+    // Replay is required even for an in-memory report. Persistence adds the
+    // stronger locally-attested class and immutable read-back gate below.
+    const replay = replaySession(artifact);
+    if (replay.status !== 'PASS') throw new Error(`SELFDEV_REPLAY_FAILED:${replay.reason}`);
+
     let privateArtifact: SelfDevPrivateArtifactReceipt;
     if (!persist) {
       privateArtifact = {
@@ -57,7 +113,10 @@ export class SelfDevController {
     }
     return {
       schemaVersion: SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION,
-      baseNightwatchSha,
+      baseNightwatchSha: artifact.baseNightwatchSha,
+      artifactId: artifact.artifactId,
+      provenance: artifact.provenance,
+      replayDescriptor: artifact.replayDescriptor,
       proposerClass: SELFDEV_PROPOSER_CLASS,
       candidateCount: evaluations.length,
       evaluations,

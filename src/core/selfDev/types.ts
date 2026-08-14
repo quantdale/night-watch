@@ -6,8 +6,31 @@
 // ---------------------------------------------------------------------------
 
 export const SELFDEV_CANDIDATE_SCHEMA_VERSION = 'nightwatch.selfdev-candidate.private.v1' as const;
-export const SELFDEV_EVALUATION_SCHEMA_VERSION = 'nightwatch.selfdev-evaluation.private.v1' as const;
-export const SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION = 'nightwatch.selfdev-session.private.v1' as const;
+export const SELFDEV_LEGACY_EVALUATION_SCHEMA_VERSION = 'nightwatch.selfdev-evaluation.private.v1' as const;
+export const SELFDEV_EVALUATION_SCHEMA_VERSION = 'nightwatch.selfdev-evaluation.private.v2' as const;
+export const SELFDEV_LEGACY_SESSION_ARTIFACT_SCHEMA_VERSION = 'nightwatch.selfdev-session.private.v1' as const;
+export const SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION = 'nightwatch.selfdev-session.private.v2' as const;
+export const SELFDEV_PROVENANCE_SCHEMA_VERSION = 'nightwatch.selfdev-provenance.private.v1' as const;
+export const SELFDEV_TRUST_ASSESSMENT_SCHEMA_VERSION = 'nightwatch.selfdev-trust-assessment.private.v1' as const;
+export const SELFDEV_REPLAY_ALGORITHM_VERSION = 'nightwatch.selfdev-replay-algorithm.v1' as const;
+export const SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION = 'nightwatch.selfdev-replay-descriptor.private.v1' as const;
+export const SELFDEV_SYNTHETIC_FIXTURES = Object.freeze([
+  'VALID_MATRIX',
+  'UNKNOWN_FIELD',
+  'UNSAFE_ACTION',
+  'UNSAFE_ASSERTION',
+  'UNSAFE_FIXTURE',
+  'OVERSIZED',
+  'DUPLICATE',
+  'SCOPE_ESCALATION',
+  'FAKE_COVERAGE',
+  'CODE_FIELD',
+  'PATCH_FIELD',
+  'GIT_REQUEST',
+  'MODEL_REQUEST',
+  'PRIVACY_VALUE',
+] as const);
+export type SelfDevSyntheticFixture = (typeof SELFDEV_SYNTHETIC_FIXTURES)[number];
 
 export const SELFDEV_CANDIDATE_KIND = 'SYNTHETIC_REGRESSION_CASE' as const;
 export const SELFDEV_PROPOSER_CLASS = 'SYNTHETIC_DETERMINISTIC' as const;
@@ -37,6 +60,11 @@ export type SelfDevDuplicateStatus = 'UNIQUE' | 'DUPLICATE' | 'NOT_CHECKED';
 export type SelfDevExecutionStatus = 'EXECUTED' | 'NOT_STARTED' | 'SKIPPED';
 export type SelfDevRegressionStatus = 'PASS' | 'FAIL' | 'NOT_RUN';
 export type SelfDevGateStatus = 'PASS' | 'FAIL' | 'NOT_CHECKED';
+
+export type SelfDevSourceState = 'CLEAN';
+export type SelfDevProvenanceClass = 'LOCAL_GIT_SOURCE_ATTESTED' | 'SYNTHETIC_TEST_ONLY';
+export type SelfDevBaselineRelation = 'EXACT_BASE' | 'SOURCE_EQUIVALENT_DESCENDANT' | 'UNRELATED' | 'UNKNOWN';
+export type SelfDevReplayStatus = 'PASS' | 'FAIL' | 'NON_REPLAYABLE_BUDGET_RESULT';
 
 export type SelfDevResultClass =
   | 'REJECTED_SCHEMA'
@@ -160,13 +188,50 @@ export interface SelfDevEvaluation {
   readonly safetyVector: SelfDevSafetyVector;
 }
 
+export interface SelfDevReplayDescriptor {
+  readonly schemaVersion: typeof SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION;
+  readonly proposerClass: typeof SELFDEV_PROPOSER_CLASS;
+  readonly fixture: SelfDevSyntheticFixture;
+  readonly seed: number;
+  readonly baseNightwatchSha: string;
+  readonly expectedProposalCount: number;
+}
+
+export interface SelfDevProvenance {
+  readonly schemaVersion: typeof SELFDEV_PROVENANCE_SCHEMA_VERSION;
+  readonly gitHeadSha: string;
+  readonly sourceBundleDigest: string;
+  readonly contractDigest: string;
+  readonly algorithmVersion: typeof SELFDEV_REPLAY_ALGORITHM_VERSION;
+  readonly authoritativeSourceState: SelfDevSourceState;
+  readonly runtimeNodeVersion: string;
+  readonly provenanceClass: SelfDevProvenanceClass;
+}
+
 export interface SelfDevSessionArtifact {
   readonly schemaVersion: typeof SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION;
   readonly artifactId: string;
   readonly baseNightwatchSha: string;
+  readonly provenance: SelfDevProvenance;
+  readonly replayDescriptor: SelfDevReplayDescriptor;
   readonly proposerClass: typeof SELFDEV_PROPOSER_CLASS;
   readonly candidateCount: number;
   readonly evaluations: readonly SelfDevEvaluation[];
+  readonly adoptionStatus: typeof SELFDEV_ADOPTION_STATUS;
+  readonly publication: typeof SELFDEV_PUBLICATION;
+  readonly sourceWrites: 0;
+  readonly gitWrites: 0;
+  readonly externalCalls: 0;
+  readonly safetyVector: SelfDevSafetyVector;
+}
+
+export interface SelfDevLegacySessionArtifact {
+  readonly schemaVersion: typeof SELFDEV_LEGACY_SESSION_ARTIFACT_SCHEMA_VERSION;
+  readonly artifactId: string;
+  readonly baseNightwatchSha: string;
+  readonly proposerClass: typeof SELFDEV_PROPOSER_CLASS;
+  readonly candidateCount: number;
+  readonly evaluations: readonly Record<string, unknown>[];
   readonly adoptionStatus: typeof SELFDEV_ADOPTION_STATUS;
   readonly publication: typeof SELFDEV_PUBLICATION;
   readonly sourceWrites: 0;
@@ -185,6 +250,9 @@ export interface SelfDevPrivateArtifactReceipt {
 export interface SelfDevSessionReport {
   readonly schemaVersion: typeof SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION;
   readonly baseNightwatchSha: string;
+  readonly artifactId: string;
+  readonly provenance: SelfDevProvenance;
+  readonly replayDescriptor: SelfDevReplayDescriptor;
   readonly proposerClass: typeof SELFDEV_PROPOSER_CLASS;
   readonly candidateCount: number;
   readonly evaluations: readonly SelfDevEvaluation[];
@@ -196,3 +264,57 @@ export interface SelfDevSessionReport {
   readonly externalCalls: 0;
   readonly safetyVector: SelfDevSafetyVector;
 }
+
+export type SelfDevTrustStatus =
+  | 'VERIFIED_EXACT_BASE'
+  | 'VERIFIED_SOURCE_EQUIVALENT_DESCENDANT'
+  | 'LEGACY_UNVERIFIED_NOT_ELIGIBLE'
+  | 'INVALID_SCHEMA'
+  | 'SESSION_IDENTITY_MISMATCH'
+  | 'EVALUATION_STATE_INVALID'
+  | 'CANDIDATE_BINDING_MISMATCH'
+  | 'BASELINE_MISMATCH'
+  | 'SOURCE_BUNDLE_MISMATCH'
+  | 'CONTRACT_DIGEST_MISMATCH'
+  | 'AUTHORITATIVE_SOURCE_DIRTY'
+  | 'REPLAY_MISMATCH'
+  | 'PROVENANCE_UNAVAILABLE'
+  | 'ARTIFACT_NOT_FOUND'
+  | 'UNRELATED_BASELINE';
+
+export interface SelfDevTrustAssessment {
+  readonly schemaVersion: typeof SELFDEV_TRUST_ASSESSMENT_SCHEMA_VERSION;
+  readonly trustStatus: SelfDevTrustStatus;
+  readonly artifactId: string;
+  readonly schemaVersionInspected: string;
+  readonly baseNightwatchSha: string | null;
+  readonly currentHeadSha: string | null;
+  readonly sourceBundleMatch: 'MATCH' | 'MISMATCH' | 'NOT_CHECKED';
+  readonly contractDigestMatch: 'MATCH' | 'MISMATCH' | 'NOT_CHECKED';
+  readonly baselineRelation: SelfDevBaselineRelation;
+  readonly replayStatus: SelfDevReplayStatus | 'NOT_RUN';
+  readonly passCandidateCount: number;
+  readonly adoptionStatus: typeof SELFDEV_ADOPTION_STATUS;
+  readonly publication: typeof SELFDEV_PUBLICATION;
+  readonly sourceWrites: 0;
+  readonly gitWrites: 0;
+  readonly externalCalls: 0;
+}
+
+export interface SelfDevReplayResult {
+  readonly status: SelfDevReplayStatus;
+  readonly reason: string;
+  readonly passCandidateCount: number;
+}
+
+export interface SelfDevStoredArtifactV2 {
+  readonly kind: 'V2';
+  readonly artifact: SelfDevSessionArtifact;
+}
+
+export interface SelfDevStoredLegacyArtifact {
+  readonly kind: 'LEGACY_V1';
+  readonly artifact: SelfDevLegacySessionArtifact;
+}
+
+export type SelfDevStoredArtifact = SelfDevStoredArtifactV2 | SelfDevStoredLegacyArtifact;

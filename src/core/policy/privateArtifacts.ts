@@ -138,10 +138,12 @@ export function privateArtifactPolicyRecord(remotePrivacy: PrivateArtifactPolicy
 export class PrivateArtifactStore {
   readonly root: string;
   readonly policy: PrivateArtifactPolicyRecord;
+  readonly readOnly: boolean;
 
-  constructor(options: { root?: string; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy'] } = {}) {
+  constructor(options: { root?: string; remotePrivacy?: PrivateArtifactPolicyRecord['remotePrivacy']; createIfMissing?: boolean } = {}) {
     this.root = privateArtifactRoot(options.root);
-    ensureOwnerDirectory(this.root);
+    this.readOnly = options.createIfMissing === false;
+    if (!this.readOnly) ensureOwnerDirectory(this.root);
     this.policy = privateArtifactPolicyRecord(options.remotePrivacy ?? 'NO_REMOTE', options.root);
   }
 
@@ -206,6 +208,7 @@ export class PrivateArtifactStore {
   }
 
   writeJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
+    if (this.readOnly) throw new Error('PRIVATE_ARTIFACT_READ_ONLY');
     safeFileName(fileName);
     assertPrivatePayload(value);
     ensureOwnerDirectory(this.root);
@@ -247,7 +250,8 @@ export class PrivateArtifactStore {
    */
   readJson(fileName: string): unknown | null {
     safeFileName(fileName);
-    ensureOwnerDirectory(this.root);
+    if (!fs.existsSync(this.root)) return null;
+    if (!this.readOnly) ensureOwnerDirectory(this.root);
     const destination = path.join(this.root, fileName);
     assertNoSymlinkComponents(destination, 'PRIVATE_ARTIFACT_PATH_SYMLINK');
     if (!fs.existsSync(destination)) return null;
@@ -263,6 +267,7 @@ export class PrivateArtifactStore {
 
   /** Write once; an existing destination can never be silently replaced. */
   writeImmutableJson(fileName: string, value: unknown, status: PrivateArtifactStatus = 'READY'): string {
+    if (this.readOnly) throw new Error('PRIVATE_ARTIFACT_READ_ONLY');
     safeFileName(fileName);
     assertPrivatePayload(value);
     ensureOwnerDirectory(this.root);

@@ -12,7 +12,6 @@ import {
   SyntheticDeterministicProposer,
   type SyntheticProposalFixture,
   SelfDevEvaluator,
-  SelfDevPrivateArtifactStore,
   runSyntheticSelfDevSession,
   SelfDevSessionBudgetError,
   ZERO_SELFDEV_SAFETY_VECTOR,
@@ -24,8 +23,20 @@ import {
   validateCandidate,
   type SelfDevCandidate,
 } from '../../src/core/selfDev';
+import { SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
 
 const BASE_SHA = 'b'.repeat(40);
+
+const TEST_PROVENANCE = {
+  schemaVersion: 'nightwatch.selfdev-provenance.private.v1',
+  gitHeadSha: BASE_SHA,
+  sourceBundleDigest: `sha256:${'a'.repeat(64)}`,
+  contractDigest: `sha256:${'b'.repeat(64)}`,
+  algorithmVersion: 'nightwatch.selfdev-replay-algorithm.v1',
+  authoritativeSourceState: 'CLEAN',
+  runtimeNodeVersion: '20.0.0',
+  provenanceClass: 'LOCAL_GIT_SOURCE_ATTESTED',
+} as const;
 
 function proposer(): SyntheticDeterministicProposer {
   return new SyntheticDeterministicProposer();
@@ -187,8 +198,10 @@ test.describe('Phase 8A registries and deterministic evaluator', () => {
     }
     const artifact = {
       schemaVersion: report.schemaVersion,
-      artifactId: report.privateArtifact.artifactId,
+      artifactId: report.artifactId,
       baseNightwatchSha: report.baseNightwatchSha,
+      provenance: report.provenance,
+      replayDescriptor: report.replayDescriptor,
       proposerClass: report.proposerClass,
       candidateCount: report.candidateCount,
       evaluations: report.evaluations,
@@ -237,8 +250,8 @@ test.describe('Phase 8A registries and deterministic evaluator', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-selfdev-'));
     try {
       const store = new SelfDevPrivateArtifactStore({ root });
-      const first = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, seed: 3, artifactStore: store });
-      const second = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, seed: 3, artifactStore: store });
+      const first = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, seed: 3, provenance: TEST_PROVENANCE, artifactStore: store });
+      const second = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, seed: 3, provenance: TEST_PROVENANCE, artifactStore: store });
       expect(first.privateArtifact.persisted).toBe(true);
       expect(first.privateArtifact.namespace).toBe('self-development');
       expect(first.privateArtifact.disposition).toBe('CREATED');

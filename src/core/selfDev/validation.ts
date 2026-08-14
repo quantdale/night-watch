@@ -1,5 +1,11 @@
 // ---------------------------------------------------------------------------
-// Nightwatch Phase 8A — runtime exact-key validation and identity.
+// Nightwatch Phase 8A.1 — strict DTO validation, semantic state invariants,
+// and content-addressed identity.
+//
+// Candidate v1 remains the untrusted input contract. Evaluation/session v2
+// are the only contracts eligible for replay assessment. Structural validity,
+// semantic possibility, replay, and current-source provenance remain separate
+// authorities.
 // ---------------------------------------------------------------------------
 
 import { canonicalJson, sha256Digest, sha256Hex } from './canonical';
@@ -9,18 +15,28 @@ import {
   SELFDEV_CANDIDATE_KIND,
   SELFDEV_CANDIDATE_SCHEMA_VERSION,
   SELFDEV_EVALUATION_SCHEMA_VERSION,
+  SELFDEV_LEGACY_EVALUATION_SCHEMA_VERSION,
+  SELFDEV_LEGACY_SESSION_ARTIFACT_SCHEMA_VERSION,
   SELFDEV_PROPOSER_CLASS,
   SELFDEV_PUBLICATION,
+  SELFDEV_PROVENANCE_SCHEMA_VERSION,
+  SELFDEV_REPLAY_ALGORITHM_VERSION,
+  SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION,
   SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION,
+  SELFDEV_SYNTHETIC_FIXTURES,
   SELFDEV_TARGET_SURFACE,
   ZERO_SELFDEV_SAFETY_VECTOR,
   type SelfDevCandidate,
   type SelfDevEvaluation,
   type SelfDevExecutionSummary,
+  type SelfDevLegacySessionArtifact,
+  type SelfDevProvenance,
+  type SelfDevReplayDescriptor,
   type SelfDevReasonCode,
   type SelfDevResultClass,
   type SelfDevSafetyVector,
   type SelfDevSessionArtifact,
+  type SelfDevStoredArtifact,
 } from './types';
 
 export type SelfDevValidationCategory = 'SCHEMA' | 'SCOPE' | 'SAFETY' | 'PRIVACY';
@@ -32,6 +48,22 @@ export class SelfDevValidationError extends Error {
   ) {
     super(`SELFDEV_${category}_${reasonCode}`);
     this.name = 'SelfDevValidationError';
+  }
+}
+
+export type SelfDevIntegrityCode =
+  | 'SESSION_IDENTITY_MISMATCH'
+  | 'EVALUATION_STATE_INVALID'
+  | 'BASELINE_MISMATCH'
+  | 'CANDIDATE_BINDING_MISMATCH'
+  | 'REPLAY_MISMATCH'
+  | 'SOURCE_BUNDLE_MISMATCH'
+  | 'CONTRACT_DIGEST_MISMATCH';
+
+export class SelfDevIntegrityError extends Error {
+  constructor(readonly code: SelfDevIntegrityCode) {
+    super(`SELFDEV_${code}`);
+    this.name = 'SelfDevIntegrityError';
   }
 }
 
@@ -72,10 +104,25 @@ const EVALUATION_KEYS = [
   'adoptionStatus', 'publication', 'sourceWrites', 'gitWrites',
   'externalCalls', 'safetyVector',
 ] as const;
-const ARTIFACT_KEYS = [
+const ARTIFACT_V2_KEYS = [
+  'schemaVersion', 'artifactId', 'baseNightwatchSha', 'provenance',
+  'replayDescriptor', 'proposerClass', 'candidateCount', 'evaluations',
+  'adoptionStatus', 'publication', 'sourceWrites', 'gitWrites',
+  'externalCalls', 'safetyVector',
+] as const;
+const ARTIFACT_V1_KEYS = [
   'schemaVersion', 'artifactId', 'baseNightwatchSha', 'proposerClass',
   'candidateCount', 'evaluations', 'adoptionStatus', 'publication',
   'sourceWrites', 'gitWrites', 'externalCalls', 'safetyVector',
+] as const;
+const PROVENANCE_KEYS = [
+  'schemaVersion', 'gitHeadSha', 'sourceBundleDigest', 'contractDigest',
+  'algorithmVersion', 'authoritativeSourceState', 'runtimeNodeVersion',
+  'provenanceClass',
+] as const;
+const REPLAY_KEYS = [
+  'schemaVersion', 'proposerClass', 'fixture', 'seed', 'baseNightwatchSha',
+  'expectedProposalCount',
 ] as const;
 
 const ID_RE = /^[A-Za-z][A-Za-z0-9_.:-]{0,119}$/;
@@ -85,6 +132,7 @@ const CANDIDATE_ID_RE = /^candidate:[0-9a-f]{64}$/;
 const EVALUATION_ID_RE = /^evaluation:sha256:[0-9a-f]{64}$/;
 const ARTIFACT_ID_RE = /^session:sha256:[0-9a-f]{64}$/;
 const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+const NODE_VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 type RuntimeRecord = Record<string, unknown>;
 
@@ -112,7 +160,9 @@ function assertString(value: unknown, code: string): asserts value is string {
 }
 
 function assertNonNegativeInteger(value: unknown, code: string): asserts value is number {
-  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) throw new Error(`${code}:NON_NEGATIVE_INTEGER_REQUIRED`);
+  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${code}:NON_NEGATIVE_INTEGER_REQUIRED`);
+  }
 }
 
 function assertIsoTimestamp(value: unknown, code: string): asserts value is string {
@@ -128,7 +178,7 @@ function fail(reasonCode: SelfDevReasonCode, category: SelfDevValidationCategory
   throw new SelfDevValidationError(reasonCode, category);
 }
 
-function record(value: unknown, code: SelfDevReasonCode = 'SCHEMA_INVALID'): Record<string, unknown> {
+function record(value: unknown, code: SelfDevReasonCode = 'SCHEMA_INVALID'): RuntimeRecord {
   if (!isRuntimeRecord(value)) fail(code, 'SCHEMA');
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) fail(code, 'SCHEMA');
@@ -172,7 +222,7 @@ function assertZeroSafetyVector(value: unknown, category: SelfDevValidationCateg
     } catch {
       fail('SCHEMA_INVALID', 'SCHEMA');
     }
-    if (safety[key] !== 0) fail('CANDIDATE_SAFETY_VECTOR_NONZERO', category === 'SAFETY' ? 'SAFETY' : 'SAFETY');
+    if (safety[key] !== 0) fail('CANDIDATE_SAFETY_VECTOR_NONZERO', category);
   }
   return { ...ZERO_SELFDEV_SAFETY_VECTOR };
 }
@@ -283,14 +333,13 @@ function validateExecution(value: unknown): SelfDevExecutionSummary | null {
   } catch {
     fail('SCHEMA_INVALID', 'SCHEMA');
   }
-  const result = {
+  return {
     initialStateId: safeId(execution.initialStateId),
     finalStateId: safeId(execution.finalStateId),
     transitionClass: safeId(execution.transitionClass),
     oracleClass: safeId(execution.oracleClass),
     stableFingerprint: validateDigest(execution.stableFingerprint, 'SCHEMA_INVALID'),
   };
-  return result;
 }
 
 function evaluationIdentityFields(evaluation: Omit<SelfDevEvaluation, 'evaluationId'>): Record<string, unknown> {
@@ -324,6 +373,164 @@ export function evaluationIdFor(evaluation: Omit<SelfDevEvaluation, 'evaluationI
   return `evaluation:${sha256Digest(evaluationIdentityFields(evaluation))}`;
 }
 
+function assertCoverageShape(coverageDelta: { readonly added: readonly string[]; readonly count: number }): void {
+  if (coverageDelta.count !== coverageDelta.added.length) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  for (let index = 1; index < coverageDelta.added.length; index += 1) {
+    if (coverageDelta.added[index - 1]! >= coverageDelta.added[index]!) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+}
+
+function assertExactState(evaluation: SelfDevEvaluation, expected: Partial<SelfDevEvaluation>): void {
+  const fields: (keyof SelfDevEvaluation)[] = [
+    'validationStatus', 'scopeStatus', 'duplicateStatus', 'executionStatus',
+    'regressionStatus', 'safetyStatus', 'privacyStatus', 'reasonCode',
+    'resultClass',
+  ];
+  for (const field of fields) {
+    if (field in expected && evaluation[field] !== expected[field]) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+}
+
+function assertExecutionState(evaluation: SelfDevEvaluation, shouldExist: boolean): void {
+  if ((evaluation.execution !== null) !== shouldExist) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+}
+
+/**
+ * Canonical deterministic evaluator result-state machine. This deliberately
+ * rejects enum-valid cross-products even when a caller recomputes the ID.
+ */
+export function assertEvaluationStateInvariant(evaluation: SelfDevEvaluation): void {
+  assertCoverageShape(evaluation.coverageDelta);
+  if (evaluation.adoptionStatus !== SELFDEV_ADOPTION_STATUS || evaluation.publication !== SELFDEV_PUBLICATION) {
+    throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+  if (evaluation.sourceWrites !== 0 || evaluation.gitWrites !== 0 || evaluation.externalCalls !== 0) {
+    throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+  if (Object.values(evaluation.safetyVector).some((value) => value !== 0)) {
+    throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+
+  switch (evaluation.resultClass) {
+    case 'REJECTED_SCHEMA':
+      assertExactState(evaluation, {
+        validationStatus: 'REJECTED', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'NOT_CHECKED',
+        privacyStatus: 'NOT_CHECKED', resultClass: 'REJECTED_SCHEMA',
+      });
+      if (!['SCHEMA_INVALID', 'SCHEMA_UNKNOWN_FIELD', 'SCHEMA_MISSING_FIELD', 'SCHEMA_IDENTITY_MISMATCH'].includes(evaluation.reasonCode)) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_SCOPE':
+      if (!['SCOPE_INVALID', 'SCOPE_FIXTURE_UNKNOWN', 'SCOPE_SOURCE_REF_UNKNOWN', 'SCOPE_COVERAGE_CLAIM_UNKNOWN'].includes(evaluation.reasonCode)) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExactState(evaluation, {
+        validationStatus: 'PASS', scopeStatus: 'REJECTED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN',
+        safetyStatus: evaluation.reasonCode === 'SCOPE_INVALID' ? 'NOT_CHECKED' : 'PASS',
+        privacyStatus: evaluation.reasonCode === 'SCOPE_INVALID' ? 'NOT_CHECKED' : 'PASS',
+        resultClass: 'REJECTED_SCOPE',
+      });
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_UNKNOWN_ACTION':
+      assertExactState(evaluation, {
+        validationStatus: 'PASS', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'PASS',
+        privacyStatus: 'PASS', reasonCode: 'UNKNOWN_ACTION', resultClass: 'REJECTED_UNKNOWN_ACTION',
+      });
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_UNKNOWN_ASSERTION':
+      assertExactState(evaluation, {
+        validationStatus: 'PASS', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'PASS',
+        privacyStatus: 'PASS', reasonCode: 'UNKNOWN_ASSERTION', resultClass: 'REJECTED_UNKNOWN_ASSERTION',
+      });
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_SAFETY':
+      assertExactState(evaluation, {
+        validationStatus: 'REJECTED', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'FAIL',
+        privacyStatus: 'PASS', reasonCode: 'CANDIDATE_SAFETY_VECTOR_NONZERO', resultClass: 'REJECTED_SAFETY',
+      });
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_PRIVACY':
+      assertExactState(evaluation, {
+        validationStatus: 'REJECTED', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+        executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'PASS',
+        privacyStatus: 'FAIL', reasonCode: 'CANDIDATE_PRIVACY_BLOCKED', resultClass: 'REJECTED_PRIVACY',
+      });
+      if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, false);
+      return;
+    case 'REJECTED_DUPLICATE':
+      if (evaluation.validationStatus !== 'PASS' || evaluation.scopeStatus !== 'IN_SCOPE' || evaluation.safetyStatus !== 'PASS' || evaluation.privacyStatus !== 'PASS') throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      if (evaluation.reasonCode === 'DUPLICATE_SEMANTIC_IDENTITY'
+        || (evaluation.reasonCode === 'DUPLICATE_COVERAGE' && evaluation.executionStatus === 'NOT_STARTED')) {
+        assertExactState(evaluation, { duplicateStatus: 'DUPLICATE', executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN' });
+        if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+        assertExecutionState(evaluation, false);
+        return;
+      }
+      if (evaluation.reasonCode === 'DUPLICATE_COVERAGE') {
+        if (evaluation.duplicateStatus !== 'DUPLICATE' || evaluation.executionStatus !== 'EXECUTED' || evaluation.regressionStatus !== 'PASS' || evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+        assertExecutionState(evaluation, true);
+        return;
+      }
+      throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+    case 'EVALUATION_FAILED':
+      if (evaluation.reasonCode === 'SESSION_EVALUATION_BUDGET_EXCEEDED') {
+        assertExactState(evaluation, {
+          validationStatus: 'PASS', scopeStatus: 'NOT_CHECKED', duplicateStatus: 'NOT_CHECKED',
+          executionStatus: 'NOT_STARTED', regressionStatus: 'NOT_RUN', safetyStatus: 'NOT_CHECKED',
+          privacyStatus: 'NOT_CHECKED', resultClass: 'EVALUATION_FAILED',
+        });
+        if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+        assertExecutionState(evaluation, false);
+        return;
+      }
+      if (evaluation.reasonCode === 'FIXTURE_TRANSITION_INVALID') {
+        assertExactState(evaluation, {
+          validationStatus: 'PASS', scopeStatus: 'IN_SCOPE', duplicateStatus: 'UNIQUE',
+          executionStatus: 'EXECUTED', regressionStatus: 'FAIL', safetyStatus: 'PASS',
+          privacyStatus: 'PASS', resultClass: 'EVALUATION_FAILED',
+        });
+        if (evaluation.coverageDelta.count !== 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+        assertExecutionState(evaluation, false);
+        return;
+      }
+      if (evaluation.reasonCode === 'ASSERTION_FAILED' || evaluation.reasonCode === 'CANDIDATE_EVALUATION_BUDGET_EXCEEDED') {
+        assertExactState(evaluation, {
+          validationStatus: 'PASS', scopeStatus: 'IN_SCOPE', duplicateStatus: 'UNIQUE',
+          executionStatus: 'EXECUTED', regressionStatus: 'FAIL', safetyStatus: 'PASS',
+          privacyStatus: 'PASS', resultClass: 'EVALUATION_FAILED',
+        });
+        if (evaluation.coverageDelta.count === 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+        assertExecutionState(evaluation, true);
+        return;
+      }
+      throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+    case 'EVALUATED_PASS_NOT_ADOPTED':
+      assertExactState(evaluation, {
+        validationStatus: 'PASS', scopeStatus: 'IN_SCOPE', duplicateStatus: 'UNIQUE',
+        executionStatus: 'EXECUTED', regressionStatus: 'PASS', safetyStatus: 'PASS',
+        privacyStatus: 'PASS', reasonCode: 'VALIDATION_OK', resultClass: 'EVALUATED_PASS_NOT_ADOPTED',
+      });
+      if (evaluation.coverageDelta.count <= 0) throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+      assertExecutionState(evaluation, true);
+      return;
+    default:
+      throw new SelfDevIntegrityError('EVALUATION_STATE_INVALID');
+  }
+}
+
 export function validateEvaluation(value: unknown): SelfDevEvaluation {
   const evaluation = record(value);
   try {
@@ -334,7 +541,8 @@ export function validateEvaluation(value: unknown): SelfDevEvaluation {
   if (evaluation.schemaVersion !== SELFDEV_EVALUATION_SCHEMA_VERSION) fail('SCHEMA_INVALID', 'SCHEMA');
   if (typeof evaluation.evaluationId !== 'string' || !EVALUATION_ID_RE.test(evaluation.evaluationId)) fail('SCHEMA_INVALID', 'SCHEMA');
   if (typeof evaluation.candidateId !== 'string' || !CANDIDATE_ID_RE.test(evaluation.candidateId)) fail('SCHEMA_INVALID', 'SCHEMA');
-  validateDigest(evaluation.candidateDigest, 'SCHEMA_INVALID');
+  const candidateDigest = validateDigest(evaluation.candidateDigest, 'SCHEMA_INVALID');
+  if (candidateDigest !== `sha256:${evaluation.candidateId.slice('candidate:'.length)}`) throw new SelfDevIntegrityError('CANDIDATE_BINDING_MISMATCH');
   const baseNightwatchSha = boundedString(evaluation.baseNightwatchSha, 40);
   if (!SHA_RE.test(baseNightwatchSha)) fail('SCHEMA_INVALID', 'SCHEMA');
   if (evaluation.candidateKind !== SELFDEV_CANDIDATE_KIND) fail('SCHEMA_INVALID', 'SCHEMA');
@@ -385,26 +593,124 @@ export function validateEvaluation(value: unknown): SelfDevEvaluation {
   const safetyVector = assertZeroSafetyVector(evaluation.safetyVector, 'SAFETY');
   const normalized = {
     ...evaluation,
+    candidateDigest,
     baseNightwatchSha,
     coverageDelta: { added, count: added.length },
     execution,
     safetyVector,
   } as SelfDevEvaluation;
   if (normalized.evaluationId !== evaluationIdFor(normalized)) fail('SCHEMA_IDENTITY_MISMATCH', 'SCHEMA');
+  assertEvaluationStateInvariant(normalized);
   return normalized;
 }
 
-export function validateSessionArtifact(value: unknown): SelfDevSessionArtifact {
+function validateProvenance(value: unknown): SelfDevProvenance {
+  const provenance = record(value);
+  try {
+    assertExactKeys(provenance, PROVENANCE_KEYS, 'SELFDEV_PROVENANCE');
+  } catch {
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
+  const gitHeadSha = boundedString(provenance.gitHeadSha, 40);
+  if (!SHA_RE.test(gitHeadSha)) fail('SCHEMA_INVALID', 'SCHEMA');
+  const sourceBundleDigest = validateDigest(provenance.sourceBundleDigest, 'SCHEMA_INVALID');
+  const contractDigest = validateDigest(provenance.contractDigest, 'SCHEMA_INVALID');
+  if (provenance.schemaVersion !== SELFDEV_PROVENANCE_SCHEMA_VERSION || provenance.algorithmVersion !== SELFDEV_REPLAY_ALGORITHM_VERSION) fail('SCHEMA_INVALID', 'SCHEMA');
+  if (provenance.authoritativeSourceState !== 'CLEAN') fail('SCHEMA_INVALID', 'SCHEMA');
+  const runtimeNodeVersion = boundedString(provenance.runtimeNodeVersion, 40);
+  if (!NODE_VERSION_RE.test(runtimeNodeVersion)) fail('SCHEMA_INVALID', 'SCHEMA');
+  assertEnum(provenance.provenanceClass, ['LOCAL_GIT_SOURCE_ATTESTED', 'SYNTHETIC_TEST_ONLY'] as const, 'SELFDEV_PROVENANCE_CLASS');
+  return { ...provenance, gitHeadSha, sourceBundleDigest, contractDigest, runtimeNodeVersion } as SelfDevProvenance;
+}
+
+function validateReplayDescriptor(value: unknown): SelfDevReplayDescriptor {
+  const descriptor = record(value);
+  try {
+    assertExactKeys(descriptor, REPLAY_KEYS, 'SELFDEV_REPLAY_DESCRIPTOR');
+  } catch {
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
+  if (descriptor.schemaVersion !== SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION || descriptor.proposerClass !== SELFDEV_PROPOSER_CLASS) fail('SCHEMA_INVALID', 'SCHEMA');
+  assertEnum(descriptor.fixture, SELFDEV_SYNTHETIC_FIXTURES, 'SELFDEV_REPLAY_FIXTURE');
+  try {
+    assertNonNegativeInteger(descriptor.seed, 'SELFDEV_REPLAY_SEED');
+    assertNonNegativeInteger(descriptor.expectedProposalCount, 'SELFDEV_REPLAY_COUNT');
+  } catch {
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
+  if (descriptor.seed > 999 || descriptor.expectedProposalCount > SELFDEV_BUDGET.maxCandidatesPerSession) fail('SCHEMA_INVALID', 'SCHEMA');
+  const baseNightwatchSha = boundedString(descriptor.baseNightwatchSha, 40);
+  if (!SHA_RE.test(baseNightwatchSha)) fail('SCHEMA_INVALID', 'SCHEMA');
+  return { ...descriptor, baseNightwatchSha } as SelfDevReplayDescriptor;
+}
+
+function sessionIdentityFields(input: SelfDevSessionArtifact | Omit<SelfDevSessionArtifact, 'artifactId'>): Record<string, unknown> {
+  const { artifactId: _artifactId, ...identity } = input as SelfDevSessionArtifact;
+  return identity;
+}
+
+export function sessionArtifactIdFor(input: SelfDevSessionArtifact | Omit<SelfDevSessionArtifact, 'artifactId'>): string {
+  return `session:${sha256Digest(sessionIdentityFields(input))}`;
+}
+
+function validateLegacyEvaluation(value: unknown): Record<string, unknown> {
+  const evaluation = record(value);
+  if (evaluation.schemaVersion !== SELFDEV_LEGACY_EVALUATION_SCHEMA_VERSION) throw new Error('SELFDEV_LEGACY_EVALUATION_SCHEMA_INVALID');
+  if (typeof evaluation.evaluationId !== 'string' || !EVALUATION_ID_RE.test(evaluation.evaluationId)) throw new Error('SELFDEV_LEGACY_EVALUATION_ID_INVALID');
+  return { ...evaluation };
+}
+
+export function validateLegacySessionArtifact(value: unknown): SelfDevLegacySessionArtifact {
   const artifact = record(value);
   try {
-    assertExactKeys(artifact, ARTIFACT_KEYS, 'SELFDEV_SESSION_ARTIFACT');
+    assertExactKeys(artifact, ARTIFACT_V1_KEYS, 'SELFDEV_LEGACY_SESSION_ARTIFACT');
+  } catch {
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
+  if (artifact.schemaVersion !== SELFDEV_LEGACY_SESSION_ARTIFACT_SCHEMA_VERSION) fail('SCHEMA_INVALID', 'SCHEMA');
+  if (typeof artifact.artifactId !== 'string' || !ARTIFACT_ID_RE.test(artifact.artifactId)) fail('SCHEMA_INVALID', 'SCHEMA');
+  const baseNightwatchSha = boundedString(artifact.baseNightwatchSha, 40);
+  if (!SHA_RE.test(baseNightwatchSha)) fail('SCHEMA_INVALID', 'SCHEMA');
+  if (artifact.proposerClass !== SELFDEV_PROPOSER_CLASS) fail('SCOPE_INVALID', 'SCOPE');
+  try {
+    assertNonNegativeInteger(artifact.candidateCount, 'SELFDEV_LEGACY_CANDIDATE_COUNT');
+  } catch {
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
+  if (artifact.candidateCount > SELFDEV_BUDGET.maxCandidatesPerSession) fail('SCHEMA_INVALID', 'SCHEMA');
+  const evaluations = requireRuntimeArray(artifact.evaluations, 'SELFDEV_LEGACY_EVALUATIONS').map(validateLegacyEvaluation);
+  if (evaluations.length !== artifact.candidateCount) fail('SCHEMA_INVALID', 'SCHEMA');
+  if (artifact.adoptionStatus !== SELFDEV_ADOPTION_STATUS || artifact.publication !== SELFDEV_PUBLICATION) fail('SCOPE_INVALID', 'SCOPE');
+  for (const key of ['sourceWrites', 'gitWrites', 'externalCalls'] as const) {
+    if (artifact[key] !== 0) fail('CANDIDATE_SAFETY_VECTOR_NONZERO', 'SAFETY');
+  }
+  const safetyVector = assertZeroSafetyVector(artifact.safetyVector, 'SAFETY');
+  return { ...artifact, baseNightwatchSha, evaluations, safetyVector } as unknown as SelfDevLegacySessionArtifact;
+}
+
+export function validateSessionArtifact(value: unknown): SelfDevSessionArtifact | SelfDevLegacySessionArtifact {
+  const artifact = record(value);
+  if (artifact.schemaVersion === SELFDEV_LEGACY_SESSION_ARTIFACT_SCHEMA_VERSION) return validateLegacySessionArtifact(artifact);
+  try {
+    assertExactKeys(artifact, ARTIFACT_V2_KEYS, 'SELFDEV_SESSION_ARTIFACT');
   } catch {
     fail('SCHEMA_INVALID', 'SCHEMA');
   }
   if (artifact.schemaVersion !== SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION) fail('SCHEMA_INVALID', 'SCHEMA');
   if (typeof artifact.artifactId !== 'string' || !ARTIFACT_ID_RE.test(artifact.artifactId)) fail('SCHEMA_INVALID', 'SCHEMA');
+  try {
+    if (artifact.artifactId !== sessionArtifactIdFor(artifact as unknown as SelfDevSessionArtifact)) {
+      throw new SelfDevIntegrityError('SESSION_IDENTITY_MISMATCH');
+    }
+  } catch (error) {
+    if (error instanceof SelfDevIntegrityError) throw error;
+    fail('SCHEMA_INVALID', 'SCHEMA');
+  }
   const baseNightwatchSha = boundedString(artifact.baseNightwatchSha, 40);
   if (!SHA_RE.test(baseNightwatchSha)) fail('SCHEMA_INVALID', 'SCHEMA');
+  const provenance = validateProvenance(artifact.provenance);
+  const replayDescriptor = validateReplayDescriptor(artifact.replayDescriptor);
+  if (provenance.gitHeadSha !== baseNightwatchSha || replayDescriptor.baseNightwatchSha !== baseNightwatchSha) throw new SelfDevIntegrityError('BASELINE_MISMATCH');
   if (artifact.proposerClass !== SELFDEV_PROPOSER_CLASS) fail('SCOPE_INVALID', 'SCOPE');
   try {
     assertNonNegativeInteger(artifact.candidateCount, 'SELFDEV_ARTIFACT_CANDIDATE_COUNT');
@@ -414,6 +720,9 @@ export function validateSessionArtifact(value: unknown): SelfDevSessionArtifact 
   if (artifact.candidateCount > SELFDEV_BUDGET.maxCandidatesPerSession) fail('SCHEMA_INVALID', 'SCHEMA');
   const evaluations = requireRuntimeArray(artifact.evaluations, 'SELFDEV_ARTIFACT_EVALUATIONS').map(validateEvaluation);
   if (evaluations.length !== artifact.candidateCount) fail('SCHEMA_INVALID', 'SCHEMA');
+  for (const evaluation of evaluations) {
+    if (evaluation.baseNightwatchSha !== baseNightwatchSha) throw new SelfDevIntegrityError('BASELINE_MISMATCH');
+  }
   if (artifact.adoptionStatus !== SELFDEV_ADOPTION_STATUS || artifact.publication !== SELFDEV_PUBLICATION) fail('SCOPE_INVALID', 'SCOPE');
   for (const key of ['sourceWrites', 'gitWrites', 'externalCalls'] as const) {
     try {
@@ -424,7 +733,20 @@ export function validateSessionArtifact(value: unknown): SelfDevSessionArtifact 
     if (artifact[key] !== 0) fail('CANDIDATE_SAFETY_VECTOR_NONZERO', 'SAFETY');
   }
   const safetyVector = assertZeroSafetyVector(artifact.safetyVector, 'SAFETY');
-  return { ...artifact, baseNightwatchSha, evaluations, safetyVector } as unknown as SelfDevSessionArtifact;
+  const normalized = {
+    ...artifact,
+    baseNightwatchSha,
+    provenance,
+    replayDescriptor,
+    evaluations,
+    safetyVector,
+  } as unknown as SelfDevSessionArtifact;
+  if (normalized.artifactId !== sessionArtifactIdFor(normalized)) throw new SelfDevIntegrityError('SESSION_IDENTITY_MISMATCH');
+  return normalized;
+}
+
+export function isV2SessionArtifact(value: unknown): value is SelfDevSessionArtifact {
+  return isRuntimeRecord(value) && value.schemaVersion === SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION;
 }
 
 export function resultClassForValidation(error: SelfDevValidationError): SelfDevResultClass {
@@ -445,4 +767,9 @@ export function isRuntimeSafeForSelfDev(value: unknown): boolean {
   } catch {
     return false;
   }
+}
+
+export function classifyStoredArtifact(value: unknown): SelfDevStoredArtifact {
+  if (isV2SessionArtifact(value)) return { kind: 'V2', artifact: validateSessionArtifact(value) as SelfDevSessionArtifact };
+  return { kind: 'LEGACY_V1', artifact: validateLegacySessionArtifact(value) };
 }
