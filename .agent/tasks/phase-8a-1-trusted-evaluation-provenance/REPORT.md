@@ -141,8 +141,8 @@ patch, or adoption result. Verification is read-only.
   `Phase 8A.1 evaluation provenance and replay integrity matrix` executed and
   passed. Earlier implementation run `31821592114` also passed.
 - Documentation CI run `31823224468` at `488b4e4`: success; the same Phase
-  8A.1 matrix executed and passed. The final metadata-only closure workflow is
-  observed from live Git after this report is committed.
+  8A.1 matrix executed and passed. The final live workflow is checked directly
+  from GitHub at handoff; current SHA is intentionally not serialized.
 - No model, local-model canary, product, DEV/NEXT/production, database,
   infrastructure, Alphaus write, runtime Git write, or external publication
   occurred.

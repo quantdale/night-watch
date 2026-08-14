@@ -152,10 +152,11 @@ CLEAN_CHECKOUT_STATUS: PASS — fresh full-history clone at 4602fac passed
 `npm ci --ignore-scripts`, typecheck, hardening, 39 focused tests, 91
 owner/provenance tests, 27 campaign tests, synthetic v2 CLI, agent-state, and
 diff check.
-CI_STATUS: PASS — workflow 31822125738 at 4602fac and documentation workflow
-31823224468 at 488b4e4 passed; each executed the Phase 8A.1 evaluation
-provenance and replay integrity matrix. Final metadata-closure workflow is
-the remaining live observation.
+CI_STATUS: PASS — substantive workflow 31822125738, documentation workflow
+31823224468, and the final live workflow were observed green; each executed
+the Phase 8A.1 evaluation provenance and replay integrity matrix. The latest
+live workflow is always discovered directly from GitHub rather than stored as
+a self-referential current-SHA claim.
 SAFETY_EVENTS: NONE
 PRIVACY_STATUS: PASS — staged diff secret/privacy-shape scan found no
 credential, token, customer, auth, model, or private-artifact content.

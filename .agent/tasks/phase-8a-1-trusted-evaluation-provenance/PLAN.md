@@ -169,8 +169,8 @@ is clean with Phase 8B still NOT_STARTED.
   equivalent descendant, inspect exact final CI step, and leave clean synced
   `main` without starting Phase 8B. Documentation anchor
   `488b4e41dc12840a1e0c029ae76b24f3ce8abee4` passed source-equivalent replay;
-  final metadata closure and final CI observation remain only as live Git
-  confirmation after this report commit.
+  final metadata closure and final CI are confirmed directly from live Git and
+  GitHub; no current SHA is serialized in the task record.
 
 ## Expected implementation surface
 
