@@ -109,12 +109,12 @@ Focused 7B/7B.1 tests, typecheck, hardening, synthetic campaign, full
 Playwright suite, agent-state, privacy review, and diff-whitespace validation
 pass. The isolated clean checkout is the remaining validation item.
 
-### M7 — Durable closure and remote verification — IN_PROGRESS
+### M7 — Durable closure and remote verification — COMPLETE
 
-Commit and push a validated implementation checkpoint, complete project/task
-documentation without rewriting historical Phase 7B evidence, push the final
- documentation checkpoint, repair continuity state, verify synchronized origin,
- and read the exact final workflow result if safely available.
+Validated implementation and documentation checkpoints are pushed, continuity
+state is repaired, exact workflow `31767901883` passes, and the final status
+handoff remains bounded to task-state files. Historical Phase 7B evidence is
+unchanged and Phase 8 is unstarted.
 
 ## Validation Strategy
 

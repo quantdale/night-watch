@@ -1,7 +1,6 @@
 # NIGHTWATCH PHASE 7B.1 — AI REVIEW AUTHORITY HARDENING REPORT
 
-Status: `IN_PROGRESS` — source and documentation are complete; continuity
-repair and final remote workflow verification remain.
+Status: `COMPLETE`
 
 This is the narrow hardening descendant of historical Phase 7B. The historical
 Phase 7B report is unchanged. No Phase 8 capability was started.
@@ -12,8 +11,9 @@ Phase 7B report is unchanged. No Phase 8 capability was started.
 - Validated implementation SHA: `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
 - Substantive checkpoint: `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
 - Documentation checkpoint: `8ca71c7ce2849b1187f6e6989453ae397c2c4ce8`.
-- Final pushed SHA: terminal `HEAD`/`origin/main` at handoff; reported in the
-  final task response and continuity fields.
+- Continuity checkpoint: `595985affd86328b417a2c84b89fcf402158a63a`.
+- Final pushed SHA: terminal status-only handoff head, reported in the final
+  task response after synchronized push.
 
 ## Findings and fixes
 
@@ -151,6 +151,8 @@ references, and additional provider paths.
   --ignore-scripts`, typecheck, hardening, focused 54/54, campaign 27/27, and
   agent-state all **PASS**. npm reported only the repository's existing Vue EOL
   notice and audit summary; no installation or model download was performed.
+- Exact remote workflow verification: run `31767901883`, conclusion
+  **success**, head `595985affd86328b417a2c84b89fcf402158a63a`.
 - CI workflow retains `permissions: contents: read`, no secrets, no artifact
   upload, no external AI, and explicitly runs the 7B/7B.1 synthetic matrix.
 
@@ -184,7 +186,6 @@ tests use synthetic sentinel values only. No Alphaus repository was modified.
 
 The optional owner review CLI and local-model canary remain deferred. No cloud
 provider, real model, campaign hook, oracle registration, or Phase 8 work was
-started. Acceptance is **PASS** for Phase 7B.1, subject only to the exact final
-GitHub Actions result being reported from the final pushed SHA. Do not start a
-next task from this report; any future work requires a separate explicit owner
-request.
+started. Acceptance is **PASS** for Phase 7B.1. The terminal status-only
+handoff does not change source or workflow behavior. Do not start a next task
+from this report; any future work requires a separate explicit owner request.
