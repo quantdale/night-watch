@@ -6,9 +6,9 @@ Task ID: phase-7b-3-single-local-model-canary
 Phase: 7B.3 — SINGLE BOUNDED LOCAL-MODEL CANARY
 Status: IN_PROGRESS
 Starting SHA: 18bc3fa8f64322b8b43c9ccd0b07b182668d1932
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 18bc3fa8f64322b8b43c9ccd0b07b182668d1932
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5e7bad758efa7e5d87610c8b7878f6690bb0b821
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5e7bad758efa7e5d87610c8b7878f6690bb0b821
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5e7bad758efa7e5d87610c8b7878f6690bb0b821
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -82,8 +82,9 @@ PENDING
 
 ## DETERMINISTIC_PRECHECK_STATUS
 
-IN_PROGRESS — local deterministic suite and focused gates passed; clean
-checkout and source checkpoint pending.
+IN_PROGRESS — local deterministic suite, source checkpoint, and exact
+deterministic CI passed; isolated clean checkout is the remaining pre-canary
+gate.
 
 ## REAL_CANARY_EXECUTION_STATUS
 
@@ -146,18 +147,18 @@ local validation: PASS — combined AI/loopback/canary 78/78, owner-provenance
 
 ## CI_STATUS
 
-FAIL — exact implementation run `31807221660` at
-`6a336f0f323b864ffbe83a6b4208191d74922b5d` stopped at offline hardening:
-`src/core/aiReview/localCanary.ts` is an intentional one-call controller but
-was still matched by the general raw-operation scan. No model/provider call
-occurred. Repair is limited to the source-scoped hardening exception with
-the canary-specific exact-one-call check.
+PASS — exact repair checkpoint run `31807365893` at
+`5e7bad758efa7e5d87610c8b7878f6690bb0b821` completed successfully. Its
+dedicated `Phase 7B.3 synthetic local-model canary harness` step and all
+existing deterministic AI, owner-provenance, agent-state, campaign, and
+whitespace steps passed. The earlier run `31807221660` failed only on the
+source-scoped hardening false positive and was repaired before this checkpoint.
 
 ## NEXT EXACT ACTION
 
-Repair the source-scoped hardening false positive, rerun local hardening and
-focused checks, commit/push the repair, and inspect the replacement CI run.
-Do not discover or invoke a real runtime while CI is red.
+Run the full-history isolated clean checkout with `npm ci --ignore-scripts`
+and the deterministic gates. Do not discover or invoke a real runtime until
+that checkout passes.
 
 ## RESUME RECIPE
 
@@ -187,8 +188,9 @@ Task files: `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`; source list pending.
 
 ## Decisions Made During This Task
 
-- Carry forward `3916594f6e947f7f4665b23751c1d3ec03f5928b` as the stable
-  validated implementation anchor until this task's source checkpoint passes.
+- Promote `5e7bad758efa7e5d87610c8b7878f6690bb0b821` as the validated
+  implementation/substantive checkpoint after local validation and exact
+  deterministic CI passed.
 - Keep live HEAD and remote equality Git-discovered rather than persisted as
   authority.
 
