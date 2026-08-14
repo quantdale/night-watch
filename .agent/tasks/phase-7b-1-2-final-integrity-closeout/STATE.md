@@ -6,21 +6,22 @@ Task ID: phase-7b-1-2-final-integrity-closeout
 Phase: 7B.1.2 — FINAL INTEGRITY CLOSEOUT
 Status: IN_PROGRESS
 Starting SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
-Last validated implementation SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
-Last substantive checkpoint SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
-Last documentation checkpoint SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
+Last validated implementation SHA: 257cc294850344149fd4c5b657beeff07e511c91
+Last substantive checkpoint SHA: 257cc294850344149fd4c5b657beeff07e511c91
+Last documentation checkpoint SHA: 257cc294850344149fd4c5b657beeff07e511c91
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 Branch: main
-Last checkpoint: 2026-08-14 provider/continuity implementation and complete
-local validation complete; substantive checkpoint push is next.
+Last checkpoint: 2026-08-14 substantive implementation checkpoint
+257cc294850344149fd4c5b657beeff07e511c91 pushed; stable anchor recorded
+without self-reference.
 
 STARTING_SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 198f26ca79803c1bedac9aa08a71ecbd542ee804
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 257cc294850344149fd4c5b657beeff07e511c91
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 257cc294850344149fd4c5b657beeff07e511c91
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 257cc294850344149fd4c5b657beeff07e511c91
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective
@@ -32,11 +33,10 @@ Nightwatch authority.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Status: IN_PROGRESS
-What is being attempted: ensure private hardening CI independently executes
-the full synthetic agent-state continuity matrix with complete Git history
-and read-only permissions.
+What is being attempted: validate the pushed checkpoint from a fresh isolated
+checkout, then complete exact remote workflow verification.
 
 ## Completed Milestones
 
@@ -48,15 +48,15 @@ and read-only permissions.
 
 ## Work In Progress
 
-Provider accounting, continuity role proof, regressions, and local validation
-are complete. The active subproblem is checkpoint push, isolated checkout, and
-exact remote CI verification.
+Provider accounting, continuity role proof, regressions, complete local
+validation, and the substantive checkpoint push are complete. The active
+subproblem is isolated checkout and exact remote CI verification.
 
 ## Exact Next Action
 
-Commit/push the validated substantive checkpoint, verify local/remote equality,
-then run the isolated clean-checkout validation and inspect the exact final
-GitHub Actions run and synthetic agent-state step.
+Run the isolated clean-checkout validation against the pushed checkpoint,
+inspect the final documentation diff, then push documentation closure and
+verify the exact final GitHub Actions run and synthetic agent-state step.
 
 ## Files Changed
 
@@ -97,7 +97,7 @@ GitHub Actions run and synthetic agent-state step.
   ancestry, distinguishes carried-forward versus new implementation claims,
   classifies the claimed commit's own `git diff-tree` paths, rejects
   documentation-only and ambiguous merge claims, and reports unrelated
-  implementation lineage precisely. The synthetic matrix passes `30/30`,
+  implementation lineage precisely. The synthetic matrix passes `32/32`,
   including same-value docs forgery at HEAD and later docs, source-B/docs-C
   validity, carried-forward implementation, new source role, merge ambiguity,
   live Git authority, ancestry, drift, ACTIVE_TASK/STATE agreement, and legacy
