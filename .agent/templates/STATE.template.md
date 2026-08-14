@@ -6,10 +6,19 @@ Task ID: <task-id>
 Phase: <phase>
 Status: IN_PROGRESS
 Starting SHA: <sha>
-Current SHA: <sha>
 Last validated implementation SHA: <sha>
+Last substantive checkpoint SHA: <sha>
+Last documentation checkpoint SHA: <sha or optional>
+Live HEAD authority: GIT
+Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: <branch>
 Last checkpoint: <timestamp and fact>
+
+STARTING_SHA: <same stable task starting anchor>
+LAST_VALIDATED_IMPLEMENTATION_SHA: <stable substantive implementation anchor>
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: <same anchor unless documented otherwise>
+LAST_DOCUMENTATION_CHECKPOINT_SHA: <optional stable documentation descendant>
+LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective
 
@@ -80,7 +89,9 @@ NONE
 
 Populate only when complete:
 
-Final SHA: <sha>
+Final substantive checkpoint: <stable implementation SHA>
+Final documentation checkpoint: <optional stable documentation SHA>
+Live HEAD: DISCOVER_FROM_GIT
 Tests: <exact results>
 Artifacts: <files>
 Known issues: <...>

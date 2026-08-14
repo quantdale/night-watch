@@ -101,7 +101,7 @@ are parsed only as deprecated historical data and never compared to live HEAD.
 - Acceptance criteria: live HEAD authority, stable ancestor checks, precise
   role/ancestry diagnostics, docs-only checkpoint advance, COMPLETE strictness.
 - Validation commands: agent-state unit tests and `npm run agent:check`.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M4 — Protocol/template/current-state reconciliation
 
@@ -113,7 +113,7 @@ are parsed only as deprecated historical data and never compared to live HEAD.
 - Acceptance criteria: new templates use stable anchors/live Git; current
   state names validated implementation and Git authority explicitly.
 - Validation commands: `rg` continuity audit, agent-state tests/check.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M5 — Full local and isolated validation
 
@@ -122,7 +122,7 @@ are parsed only as deprecated historical data and never compared to live HEAD.
 - Acceptance criteria: typecheck, hardening, focused/full tests, synthetic
   campaign, agent check, privacy/diff checks, clean checkout all pass.
 - Validation commands: acceptance command set in SPEC.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Architecture/adversarial review and durable closure
 

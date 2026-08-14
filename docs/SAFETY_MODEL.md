@@ -605,6 +605,18 @@ action, source, request, or callback can be changed. Effective approval is
 derived from the artifact, validated record, digest match, and current input;
 input digest/snapshot changes make old artifacts `STALE`.
 
+The session runtime budget is separate from wall-clock artifact metadata. Its
+default authority is Node's monotonic `performance.now()` in milliseconds;
+tests may inject a monotonic synthetic clock. A single remaining-runtime
+calculation is evaluated from the construction-time session anchor. At actual
+provider entry the effective timeout is the minimum of the requested timeout,
+the 5-second per-call policy cap, and the remaining aggregate session time.
+The private handler receives an `AbortSignal`; when that bounded deadline fires
+the session actively aborts the transport and settles the operation once. The
+loopback adapter destroys its local HTTP request on abort, and the synthetic
+PENDING fixture removes its resolver. This is a bounded cancellation deadline,
+not a mathematically exact real-time OS guarantee.
+
 The deterministic Phase 7 campaign is validated independently with AI absent;
 there is no campaign-to-provider hook. Current safety acceptance requires zero
 DEV/NEXT/production contacts, product mutations, database/infrastructure

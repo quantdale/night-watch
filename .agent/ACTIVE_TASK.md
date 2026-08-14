@@ -6,7 +6,7 @@ Title: Nightwatch Phase 7B.1.1 — Runtime Deadline and Continuity Semantics Clo
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-7b-1-1-runtime-continuity-closeout
 Starting SHA: 102f40763da45e8866b4150869f45b152168f2bc
-Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last validated implementation SHA: 9054845203797cf16125e6a517b2268a99745c96
 Current milestone: M0 — bootstrap, recovery, and defect reconfirmation.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.

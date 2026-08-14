@@ -52,7 +52,18 @@ handoff within Nightwatch.
 
 The optional machine check is `npm run agent:check`; documentation remains the
 primary protocol and the validator is only a deterministic consistency guard.
-The active task's `Last validated implementation SHA` is the baseline: exact
-HEAD with no changes is `SYNCED`; descendants containing only approved
-continuity/documentation state are `CHECKPOINT_ADVANCE`; any source/test/config
-or unapproved change is `STALE`. The checker never rewrites task state.
+New task state records stable anchors: `LAST_VALIDATED_IMPLEMENTATION_SHA`
+identifies the validated substantive implementation, and
+`LAST_DOCUMENTATION_CHECKPOINT_SHA` is an optional approved descendant. Live
+local/remote HEAD is always discovered from Git; it is not a required field in
+the file that contains the state. `Current SHA`, `CURRENT_LOCAL_HEAD`,
+`CURRENT_REMOTE_HEAD`, and `LAST_PUSHED_SHA` are deprecated historical
+compatibility values only and never authority.
+
+The active task's validated implementation anchor is classified as `SYNCED`
+when it equals live HEAD with no changes; descendants containing only approved
+continuity/documentation state are `CHECKPOINT_ADVANCE`; source/test/config or
+unapproved changes are `STALE_IMPLEMENTATION_BASELINE`. A `COMPLETE` task
+fails closure on that stale classification. A documentation-only SHA supplied
+as the implementation role, or invalid checkpoint ancestry, is a precise
+semantic error. The checker never rewrites task state or fetches remote refs.

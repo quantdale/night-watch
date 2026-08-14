@@ -17,7 +17,6 @@ const REQUIRED_ACTIVE_FIELDS = [
   'Status',
   'Task directory',
   'Starting SHA',
-  'Current SHA',
   'Last validated implementation SHA',
   'Current milestone',
   'Last checkpoint',
@@ -106,49 +105,104 @@ function checkSha(value, label, errors) {
   }
 }
 
-function checkContinuity(stateFields, root, head, errors) {
-  const names = [
-    'LAST_VALIDATED_IMPLEMENTATION_SHA',
-    'LAST_SUBSTANTIVE_CHECKPOINT_SHA',
-    'LAST_DOCUMENTATION_CHECKPOINT_SHA',
-    'LAST_PUSHED_SHA',
-    'CURRENT_LOCAL_HEAD',
-    'CURRENT_REMOTE_HEAD',
-  ];
-  for (const name of names) {
-    if (stateFields.has(name)) checkSha(stateFields.get(name), `STATE ${name}`, errors);
+function isCommit(root, sha) {
+  return commandOutput(root, ['cat-file', '-e', `${sha}^{commit}`]) !== null;
+}
+
+function isAncestor(root, ancestor, descendant) {
+  const result = spawnSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], {
+    cwd: root,
+    encoding: 'utf8',
+    env: buildChildEnvironment(process.env),
+    timeout: 10_000,
+    maxBuffer: 256 * 1024,
+  });
+  return result.status === 0;
+}
+
+function committedChangedPaths(root, from, to) {
+  const output = commandOutput(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);
+  if (output === null) return null;
+  return output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).sort();
+}
+
+function continuityValue(stateFields, upperName, legacyName) {
+  return stateFields.get(upperName) ?? stateFields.get(legacyName);
+}
+
+function validateAnchor(root, value, label, head, errors) {
+  if (!value) {
+    errors.push(`${label} is required`);
+    return false;
   }
-  const validated = stateFields.get('LAST_VALIDATED_IMPLEMENTATION_SHA');
-  const substantive = stateFields.get('LAST_SUBSTANTIVE_CHECKPOINT_SHA');
-  const documentation = stateFields.get('LAST_DOCUMENTATION_CHECKPOINT_SHA');
-  const pushed = stateFields.get('LAST_PUSHED_SHA');
-  const local = stateFields.get('CURRENT_LOCAL_HEAD');
-  const remote = stateFields.get('CURRENT_REMOTE_HEAD');
-  if (validated && stateFields.get('Current SHA') && validated !== stateFields.get('Current SHA')) errors.push('STATE LAST_VALIDATED_IMPLEMENTATION_SHA must equal Current SHA');
-  // A state-only documentation commit changes git HEAD while the durable
-  // implementation/checkpoint SHA intentionally remains the last validated
-  // source checkpoint. Do not make the validator self-referential by
-  // requiring a field inside STATE.md to equal the SHA of the commit that
-  // contains that same field. Current local/remote equality is checked from
-  // the recorded continuity pair below; the caller separately verifies the
-  // actual checkout before pushing.
-  const remoteHead = commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null;
-  const baseline = validated ?? stateFields.get('Current SHA');
-  const baselineResult = baseline ? classifySha(root, baseline) : null;
-  const documentationOnlyAdvance = baselineResult?.status === 'CHECKPOINT_ADVANCE'
-    && baselineResult.paths.every((file) => isApprovedCheckpointPath(file));
-  if (remoteHead && remote && remote !== remoteHead && !documentationOnlyAdvance) {
-    errors.push(`STATE CURRENT_REMOTE_HEAD does not match origin/main: ${remote} != ${remoteHead}`);
+  if (!/^[0-9a-f]{40}$/i.test(value)) {
+    errors.push(`${label} must be a 40-character git SHA`);
+    return false;
   }
-  if (local && remote && local !== remote) errors.push(`STATE local/remote continuity diverged: ${local} != ${remote}`);
-  if (substantive && pushed) {
-    const result = spawnSync('git', ['merge-base', '--is-ancestor', substantive, pushed], { cwd: root, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 10_000, maxBuffer: 256 * 1024 });
-    if (result.status !== 0) errors.push('STATE substantive checkpoint is not an ancestor of the last pushed SHA');
+  if (!isCommit(root, value)) {
+    errors.push(`${label} does not identify a commit in repository history`);
+    return false;
   }
-  if (documentation && pushed) {
-    const result = spawnSync('git', ['merge-base', '--is-ancestor', documentation, pushed], { cwd: root, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 10_000, maxBuffer: 256 * 1024 });
-    if (result.status !== 0) errors.push('STATE documentation checkpoint is not an ancestor of the last pushed SHA');
+  if (head && !isAncestor(root, value, head)) {
+    errors.push(`${label} is not an ancestor of live Git HEAD ${head}`);
+    return false;
   }
+  return true;
+}
+
+function checkContinuity(stateFields, root, head, errors, warnings) {
+  const validated = continuityValue(stateFields, 'LAST_VALIDATED_IMPLEMENTATION_SHA', 'Last validated implementation SHA');
+  const substantive = continuityValue(stateFields, 'LAST_SUBSTANTIVE_CHECKPOINT_SHA', 'Last substantive checkpoint SHA') ?? validated;
+  const documentation = continuityValue(stateFields, 'LAST_DOCUMENTATION_CHECKPOINT_SHA', 'Last documentation checkpoint SHA');
+  const starting = continuityValue(stateFields, 'STARTING_SHA', 'Starting SHA');
+
+  const validatedOk = validateAnchor(root, validated, 'STATE LAST_VALIDATED_IMPLEMENTATION_SHA', head, errors);
+  const substantiveOk = validateAnchor(root, substantive, 'STATE LAST_SUBSTANTIVE_CHECKPOINT_SHA', head, errors);
+  if (!stateFields.has('LAST_SUBSTANTIVE_CHECKPOINT_SHA') && substantive) {
+    warnings.push('LEGACY_CONTINUITY: LAST_SUBSTANTIVE_CHECKPOINT_SHA inferred from the validated implementation anchor');
+  }
+  if (starting) validateAnchor(root, starting, 'STATE STARTING_SHA', head, errors);
+
+  if (validatedOk && substantiveOk && validated !== substantive) {
+    const rolePaths = isAncestor(root, substantive, validated) ? committedChangedPaths(root, substantive, validated) : null;
+    const docsOnly = rolePaths !== null && rolePaths.every((file) => isApprovedCheckpointPath(file));
+    errors.push(
+      docsOnly
+        ? `INVALID_IMPLEMENTATION_ROLE: LAST_VALIDATED_IMPLEMENTATION_SHA ${validated} is a documentation-only descendant of substantive checkpoint ${substantive}`
+        : `INVALID_IMPLEMENTATION_ROLE: LAST_VALIDATED_IMPLEMENTATION_SHA ${validated} must equal LAST_SUBSTANTIVE_CHECKPOINT_SHA ${substantive}`,
+    );
+  }
+
+  if (documentation) {
+    const documentationOk = validateAnchor(root, documentation, 'INVALID_DOCUMENTATION_CHECKPOINT: STATE LAST_DOCUMENTATION_CHECKPOINT_SHA', head, errors);
+    if (documentationOk && substantiveOk) {
+      if (!isAncestor(root, substantive, documentation)) {
+        errors.push(`INVALID_DOCUMENTATION_CHECKPOINT: ${documentation} is before or unrelated to substantive checkpoint ${substantive}`);
+      } else {
+        const documentationPaths = committedChangedPaths(root, substantive, documentation);
+        if (documentationPaths === null) {
+          errors.push('INVALID_DOCUMENTATION_CHECKPOINT: unable to inspect the checkpoint range');
+        } else {
+          const disallowed = documentationPaths.filter((file) => !isApprovedCheckpointPath(file));
+          if (disallowed.length > 0) {
+            errors.push(`INVALID_DOCUMENTATION_CHECKPOINT: range contains non-documentation paths: ${disallowed.join(', ')}`);
+          }
+        }
+      }
+    }
+  }
+
+  for (const name of ['LAST_PUSHED_SHA', 'CURRENT_LOCAL_HEAD', 'CURRENT_REMOTE_HEAD']) {
+    const value = stateFields.get(name);
+    if (value && value !== 'DISCOVER_FROM_GIT' && value !== 'DEPRECATED_HISTORICAL_ONLY') checkSha(value, `STATE ${name}`, errors);
+  }
+  const legacyCurrent = stateFields.get('Current SHA');
+  if (legacyCurrent) {
+    checkSha(legacyCurrent, 'STATE deprecated Current SHA', errors);
+    warnings.push('DEPRECATED_CONTINUITY_FIELD: STATE Current SHA is ignored; live HEAD comes from Git');
+  }
+  const liveRemoteHead = commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null;
+  if (head) console.log(`[agent-check] LIVE GIT HEAD: ${head}${liveRemoteHead ? `; LIVE origin/main: ${liveRemoteHead}` : ''}`);
 }
 
 // These patterns intentionally target value shapes, not words such as
@@ -205,7 +259,7 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
-  /^docs\/(?:CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
+  /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
 ];
 
 function isApprovedCheckpointPath(file) {
@@ -259,21 +313,16 @@ function changedPaths(root, recordedSha, head) {
  * Classify the recorded implementation baseline against committed and
  * uncommitted repository changes. This function never rewrites task state.
  */
-export function classifySha(root, recordedSha) {
-  const head = commandOutput(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+export function classifySha(root, recordedSha, suppliedHead = null) {
+  const head = suppliedHead ?? commandOutput(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
   if (!head || !/^[0-9a-f]{40}$/i.test(recordedSha ?? '')) {
-    return { status: 'STALE', head, paths: [], reason: 'recorded SHA or HEAD is unavailable/invalid' };
+    return { status: 'STALE', classification: 'INVALID_IMPLEMENTATION_ROLE', head, paths: [], reason: 'recorded SHA or live Git HEAD is unavailable/invalid' };
   }
-
-  const ancestorCheck = spawnSync('git', ['merge-base', '--is-ancestor', recordedSha, head], {
-    cwd: root,
-    encoding: 'utf8',
-    env: buildChildEnvironment(process.env),
-    timeout: 10_000,
-    maxBuffer: 256 * 1024,
-  });
-  if (ancestorCheck.status !== 0) {
-    return { status: 'STALE', head, paths: [], reason: 'recorded SHA is not an ancestor of HEAD' };
+  if (!isCommit(root, recordedSha)) {
+    return { status: 'STALE', classification: 'INVALID_IMPLEMENTATION_ROLE', head, paths: [], reason: 'recorded SHA does not identify a repository commit' };
+  }
+  if (!isAncestor(root, recordedSha, head)) {
+    return { status: 'STALE', classification: 'INVALID_IMPLEMENTATION_ROLE', head, paths: [], reason: 'recorded SHA is not an ancestor of live Git HEAD' };
   }
 
   const paths = changedPaths(root, recordedSha, head);
@@ -281,17 +330,19 @@ export function classifySha(root, recordedSha) {
   if (disallowed.length > 0) {
     return {
       status: 'STALE',
+      classification: 'STALE_IMPLEMENTATION_BASELINE',
       head,
       paths,
       disallowed,
-      reason: 'implementation/source/test/config or unapproved file changed after the recorded baseline',
+      reason: `implementation/source/test/config or unapproved file changed after the recorded baseline: ${disallowed.join(', ')}`,
     };
   }
   if (head === recordedSha && paths.length === 0) {
-    return { status: 'SYNCED', head, paths, reason: 'recorded baseline equals HEAD with no working-tree changes' };
+    return { status: 'SYNCED', classification: 'SYNCED', head, paths, reason: 'recorded baseline equals live HEAD with no working-tree changes' };
   }
   return {
     status: 'CHECKPOINT_ADVANCE',
+    classification: 'CHECKPOINT_ADVANCE',
     head,
     paths,
     reason: 'only approved continuity/documentation state changed after the recorded baseline',
@@ -350,34 +401,33 @@ export function validate(root) {
     }
     const head = gitHead(root, errors);
     checkSha(active.get('Starting SHA'), 'ACTIVE_TASK Starting SHA', errors);
-    checkSha(active.get('Current SHA'), 'ACTIVE_TASK Current SHA', errors);
     checkSha(active.get('Last validated implementation SHA'), 'ACTIVE_TASK Last validated implementation SHA', errors);
+    if (active.has('Current SHA')) {
+      checkSha(active.get('Current SHA'), 'ACTIVE_TASK deprecated Current SHA', errors);
+      warnings.push('DEPRECATED_CONTINUITY_FIELD: ACTIVE_TASK Current SHA is ignored; use Git for live HEAD');
+    }
     if (state) {
+      const stateValidated = continuityValue(stateFields, 'LAST_VALIDATED_IMPLEMENTATION_SHA', 'Last validated implementation SHA');
       checkSha(stateFields.get('Starting SHA'), 'STATE Starting SHA', errors);
-      checkSha(stateFields.get('Current SHA'), 'STATE Current SHA', errors);
-      checkSha(stateFields.get('Last validated implementation SHA'), 'STATE Last validated implementation SHA', errors);
-      if (
-        stateFields.get('Last validated implementation SHA') &&
-        stateFields.get('Current SHA') &&
-        stateFields.get('Last validated implementation SHA') !== stateFields.get('Current SHA')
-      ) {
-        errors.push('STATE Current SHA must equal Last validated implementation SHA');
+      checkSha(stateValidated, 'STATE Last validated implementation SHA', errors);
+      if (stateValidated && active.get('Last validated implementation SHA') && stateValidated !== active.get('Last validated implementation SHA')) {
+        errors.push(`STATE/ACTIVE_TASK validated implementation anchors differ: ${stateValidated} != ${active.get('Last validated implementation SHA')}`);
       }
-      checkContinuity(stateFields, root, head, errors);
+      checkContinuity(stateFields, root, head, errors, warnings);
     }
     const currentSha = active.get('Last validated implementation SHA');
     if (head && currentSha) {
-      const shaResult = classifySha(root, currentSha);
+      const shaResult = classifySha(root, currentSha, head);
       if (shaResult.status === 'SYNCED') {
         console.log(`[agent-check] SHA SYNCED: ${currentSha}`);
       } else if (shaResult.status === 'CHECKPOINT_ADVANCE') {
         warnings.push(
-          `CHECKPOINT_ADVANCE: validated implementation SHA ${currentSha} precedes HEAD ${shaResult.head}; approved paths only: ${shaResult.paths.join(', ') || '(none)'}`
+          `CHECKPOINT_ADVANCE: validated implementation SHA ${currentSha} precedes live HEAD ${shaResult.head}; approved paths only: ${shaResult.paths.join(', ') || '(none)'}`
         );
       } else {
-        warnings.push(
-          `STALE STATE: validated implementation SHA ${currentSha} vs git HEAD ${shaResult.head ?? '<unknown>'}; ${shaResult.reason}`
-        );
+        const message = `${shaResult.classification ?? 'STALE_IMPLEMENTATION_BASELINE'} (STALE STATE): validated implementation SHA ${currentSha} vs live Git HEAD ${shaResult.head ?? '<unknown>'}; ${shaResult.reason}`;
+        if (shaResult.classification === 'INVALID_IMPLEMENTATION_ROLE' || status === 'COMPLETE') errors.push(message);
+        else warnings.push(message);
       }
     }
     scanForSecrets(root, [

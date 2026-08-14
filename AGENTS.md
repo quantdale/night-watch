@@ -106,6 +106,17 @@ subproblem, before ending a session, and whenever context may be compacted or
 lost. Checkpoint often enough that losing the conversation costs at most one
 small unit of work.
 
+Durable Git continuity records stable historical anchors, not a prediction of
+the commit that contains the record. `LAST_VALIDATED_IMPLEMENTATION_SHA` names
+the substantive implementation that passed validation;
+`LAST_SUBSTANTIVE_CHECKPOINT_SHA` names that closure anchor, and
+`LAST_DOCUMENTATION_CHECKPOINT_SHA` may name an approved documentation
+descendant. Live local and remote HEAD are discovered from Git. `Current SHA`,
+`CURRENT_LOCAL_HEAD`, `CURRENT_REMOTE_HEAD`, and `LAST_PUSHED_SHA` are legacy
+historical compatibility fields only and must never be compared as persisted
+live authority. Documentation-only descendants remain checkpoint advances and
+must not be relabeled as implementation commits.
+
 For every milestone: implement, run its defined validation, repair failures,
 record the exact result in `STATE.md`, then advance. If required validation
 fails, stop accumulating unrelated changes and repair it first. Keep discoveries

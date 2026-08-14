@@ -974,3 +974,54 @@ manual implementation review only. No deterministic evidence, catalog,
 campaign, execution, publication, source, or Phase 6 authority changes.
 
 **Phase applicability.** Phase 7B.1 and later AI review consumers.
+
+## D-37 — Aggregate AI runtime authority is monotonic and actively cancellable
+
+**Decision.** `AiReviewSession` uses a monotonic millisecond clock for runtime
+budgeting (`performance.now()` by default; an injected clock remains available
+for deterministic tests). The session calculates remaining runtime from its
+construction-time anchor and caps every provider operation at the minimum of
+the requested timeout, the policy per-call timeout, and that remaining time.
+The private provider handler receives an `AbortSignal`; the operation timer
+actively aborts the handler transport, and completion/abort races settle once
+with timers cleared. Loopback HTTP destroys its request on abort and the
+synthetic pending fixture removes its resolver.
+
+**Rationale.** Rejecting an outer promise does not stop an underlying request.
+An absolute monotonic session deadline prevents a near-expiry provider call
+from receiving a fresh per-call extension while active cancellation makes the
+runtime bound meaningful for local transports.
+
+**Consequences.** Wall-clock dates remain artifact metadata only. Timeout and
+cancellation after provider-boundary entry consume the shared provider-call
+unit. Nightwatch claims a bounded cancellation deadline, not a mathematically
+exact real-time OS guarantee.
+
+**Phase applicability.** Phase 7B.1.1 and later local AI review consumers.
+
+## D-38 — Git continuity records stable anchors; live HEAD is discovered
+
+**Decision.** Durable task/project state records stable historical roles:
+`LAST_VALIDATED_IMPLEMENTATION_SHA` and
+`LAST_SUBSTANTIVE_CHECKPOINT_SHA` identify the validated substantive baseline;
+`LAST_DOCUMENTATION_CHECKPOINT_SHA`, when present, identifies an approved
+documentation descendant. `git rev-parse HEAD` and the local remote ref supply
+live state. `Current SHA`, `CURRENT_LOCAL_HEAD`, `CURRENT_REMOTE_HEAD`, and
+`LAST_PUSHED_SHA` are deprecated compatibility history only and never require
+equality with live HEAD. The validator must not self-heal state or require a
+file to predict the SHA of its containing commit.
+
+**Rationale.** A documentation/status commit after implementation is expected.
+Requiring the implementation field to equal current HEAD makes the field
+self-referential and encourages documentation commits to be mislabelled as
+validated implementation. Git is the only non-recursive authority for what
+HEAD is now; durable files should state what behavior was validated.
+
+**Consequences.** Documentation-only descendants classify as
+`CHECKPOINT_ADVANCE` and preserve the implementation anchor. A documentation
+SHA cannot occupy the implementation role, checkpoint ancestry is validated,
+and a `COMPLETE` task fails closure if source/test/config or other unapproved
+paths changed after its implementation anchor. Historical task files remain
+read-compatible without rewriting their reports.
+
+**Phase applicability.** Phase 7B.1.1 and all later Nightwatch development.

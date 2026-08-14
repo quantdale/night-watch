@@ -6,15 +6,15 @@ Task ID: phase-7b-1-1-runtime-continuity-closeout
 Phase: 7B.1.1 — RUNTIME DEADLINE AND CONTINUITY SEMANTICS CLOSEOUT
 Status: IN_PROGRESS
 Starting SHA: 102f40763da45e8866b4150869f45b152168f2bc
-Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last validated implementation SHA: 9054845203797cf16125e6a517b2268a99745c96
 Branch: main
 Remote: origin -> quantdale/night-watch/main
 Last checkpoint: 2026-08-14 bootstrap verified clean synchronized canonical Git state.
 
 STARTING_SHA: 102f40763da45e8866b4150869f45b152168f2bc
-LAST_VALIDATED_IMPLEMENTATION_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 102f40763da45e8866b4150869f45b152168f2bc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9054845203797cf16125e6a517b2268a99745c96
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9054845203797cf16125e6a517b2268a99745c96
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 9054845203797cf16125e6a517b2268a99745c96
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -28,10 +28,10 @@ anchors while Git supplies live HEAD.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M5
 Status: IN_PROGRESS
-What is being attempted: redesign agent-state continuity semantics around
-stable implementation/documentation anchors and live Git HEAD discovery.
+What is being attempted: run full local validation, privacy/diff review, and an
+isolated clean-checkout validation after the runtime/continuity implementations.
 
 ## Completed Milestones
 
@@ -43,17 +43,26 @@ stable implementation/documentation anchors and live Git HEAD discovery.
 - Runtime M1/M2: monotonic session deadline, active provider cancellation,
   loopback transport abort, synthetic PENDING cleanup, and focused regressions
   implemented; AI/loopback matrix is `60/60 PASS` and typecheck is `PASS`.
+- Runtime checkpoint `9054845203797cf16125e6a517b2268a99745c96` is pushed and
+  verified equal to live `origin/main`; it is now the stable task baseline.
+- Continuity M3: `bin/agent-state.mjs` now validates stable implementation,
+  substantive, and documentation roles against live Git, classifies docs-only
+  descendants as `CHECKPOINT_ADVANCE`, and makes COMPLETE source drift closure
+  blocking. Agent-state regression matrix is `24/24 PASS`.
+- Protocol M4: templates, AGENTS/.agent guidance, architecture/safety/
+  decision/roadmap docs, and CURRENT_STATE terminology now use stable anchors
+  and `LIVE_HEAD_AUTHORITY: GIT`.
 
 ## Work In Progress
 
-Runtime implementation and focused tests are complete. Continuity validator,
-synthetic Git-history matrix, and canonical protocol documentation remain.
+Runtime and continuity implementations are complete. Full repository,
+isolated-checkout, privacy, Git checkpoint, and remote CI validation remain.
 
 ## Exact Next Action
 
-Implement M3 in `bin/agent-state.mjs` and `tests/unit/agent-state.test.ts`:
-remove required Current SHA equality, validate stable SHA roles/ancestry, use
-live Git HEAD, and enforce COMPLETE-task source-drift closure strictness.
+Run the full local acceptance set (`npm run typecheck`, hardening, focused and
+full Playwright, synthetic campaign, agent check, diff/privacy scans), then
+review the diff before the continuity checkpoint commit.
 
 ## Files Changed
 
@@ -66,6 +75,9 @@ live Git HEAD, and enforce COMPLETE-task source-drift closure strictness.
 | `src/core/aiReview/syntheticProvider.ts` | abort cleanup/observability for PENDING fixture | modified |
 | `tests/unit/aiReview.test.ts` | deadline, expiry, concurrency, monotonic-clock, timer regressions | modified |
 | `tests/unit/aiReviewLoopback.test.ts` | hanging loopback cancellation regression | modified |
+| `bin/agent-state.mjs` | stable SHA roles, live Git authority, closure strictness | modified |
+| `tests/unit/agent-state.test.ts` | synthetic Git continuity/ancestry matrix | modified |
+| `.agent/`, `AGENTS.md`, `docs/` | corrected continuity protocol and project memory | modified |
 
 ## Validation Ledger
 
@@ -82,6 +94,16 @@ live Git HEAD, and enforce COMPLETE-task source-drift closure strictness.
   deadline, synthetic cleanup, loopback socket close, and timer cleanup.
 - Command: `npm run typecheck`
   Result: PASS — TypeScript emitted no errors after runtime changes.
+- Command: `npm run hardening:check`
+  Result: PASS — offline AI boundary, monotonic deadline, AbortSignal, and
+  loopback/synthetic cancellation structure all hold.
+- Command: `npx playwright test tests/unit/agent-state.test.ts --project=nightwatch --workers=1`
+  Result: PASS — `24/24`, including stable anchors, docs-only advances,
+  semantic role/ancestry failures, COMPLETE drift, live-head discovery, and
+  legacy compatibility.
+- Command: `npm run agent:check`
+  Result: PASS with expected `STALE_IMPLEMENTATION_BASELINE` warning while
+  continuity implementation is uncommitted after the runtime baseline.
 
 ## Decisions Made During This Task
 
@@ -124,7 +146,7 @@ no real model, product, database, infrastructure, or external AI activity.
    SPEC/PLAN/STATE.
 2. Inspect `git status --short` and the relevant diff.
 3. Implement the exact M1 action above and run its focused tests/typecheck.
-4. Update this STATE before advancing to M2.
+4. Update this STATE before advancing to M4.
 
 ## Completion Snapshot
 

@@ -25,7 +25,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (validated Phase 7B.1 implementation checkpoint; final closure documentation is a documentation-only descendant) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (stable validated Phase 7B.1 substantive implementation anchor) |
+| `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -46,10 +47,13 @@ recovery without conversational/model memory.
 
 `bin/agent-state.mjs`, exposed as `npm run agent:check`, performs a local
 consistency check for required files/headings, active status, task identity,
-synthetic secret-like values, and current-SHA drift. It reports stale SHA
-state without rewriting it. Phase 1.3 validation is local and synthetic only;
-no real Alphaus environment, product session, database query, or mutation is
-part of this phase.
+synthetic secret-like values, stable implementation/documentation SHA roles,
+ancestry, and live Git drift. It reports `SYNCED`, `CHECKPOINT_ADVANCE`, or
+`STALE_IMPLEMENTATION_BASELINE` without rewriting state. Deprecated `Current
+SHA`/persisted current-head fields are compatibility data only; Git supplies
+live HEAD. Phase 1.3 validation is local and synthetic only; no real Alphaus
+environment, product session, database query, or mutation is part of this
+phase.
 
 ### Phase 1.1 additions (this update)
 
@@ -233,8 +237,9 @@ and synthetic adversarial coverage. The focused Phase 5 + Phase 6 suite passed
 23/23 and the full Playwright suite passed 342/342; TypeScript, agent-check,
 and diff-check passed. The 2026-08-13 continuation also repaired the narrow
 agent-state allowlist for the sanitized Phase 6 runtime-binding checkpoint and
-covered it with a regression test; SHA semantics remain `SYNCED`,
-`CHECKPOINT_ADVANCE`, and `STALE`.
+covered it with a regression test; stable-anchor semantics remain `SYNCED`,
+`CHECKPOINT_ADVANCE`, and `STALE_IMPLEMENTATION_BASELINE`, with live HEAD from
+Git.
 
 The former real data gate remains preserved as historical evidence:
 `PHASE_6_RUNTIME_DATA_ENVIRONMENT_UNRESOLVED`. No datastore auth probe,

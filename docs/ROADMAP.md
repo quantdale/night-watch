@@ -501,6 +501,22 @@ checkpoint is `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
 real campaign, auth capture, product traffic, database/infrastructure work,
 publication, source modification by AI, or Phase 8 functionality.
 
+### Phase 7B.1.1 — Runtime deadline and continuity semantics closeout (current)
+
+This is a narrow local/static/synthetic hardening descendant, not a new AI
+capability milestone and not Phase 8. It closes the aggregate provider-work
+deadline gap with a monotonic construction-time session budget, effective
+remaining-time caps, active `AbortSignal` cancellation through the private
+provider boundary, loopback transport destruction, and synthetic PENDING
+cleanup. It also replaces self-referential task SHA semantics with stable
+validated implementation/substantive/documentation anchors while live local
+and remote HEAD come from Git.
+
+The task remains synthetic/loopback-fixture-only: no real model, product
+traffic, campaign, authentication, database, infrastructure, publication,
+owner-review CLI, or Phase 8 work is permitted. Phase 7B.1 remains a complete
+historical predecessor and Phase 8 remains `NOT_STARTED`.
+
 ---
 
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)

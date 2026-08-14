@@ -72,6 +72,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/privateArtifacts.ts` | Owner-only local atomic JSON store for private dossiers and summaries; default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
+| `bin/agent-state.mjs` | Read-only task continuity validator: stable implementation/documentation SHA roles, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
 | `config/environments/` | Per-environment allowlists and labels with provenance: `local.json`, `dev.json`, `next.json`; `production.json` documents the rejected surface only. | implemented |
@@ -171,6 +172,8 @@ strict input/local-provider validation and shared provider-call reservation
         ↓
 private synthetic provider or explicit loopback-local provider
         ↓
+monotonic remaining-runtime cap + AbortSignal transport cancellation
+        ↓
 strict hostile-output validator
         ↓
 immutable owner-only AI-generated/unreviewed v2 companion artifact
@@ -186,6 +189,14 @@ Phase 6, publication, Git, or source. Phase 7 campaign execution remains
 deterministic and does not invoke this branch.
 
 There is deliberately no datastore or infrastructure branch in this flow.
+
+Git continuity is intentionally separate from runtime authority. A validated
+substantive implementation SHA is a stable historical anchor; approved
+documentation descendants may advance live history without changing that
+anchor. `bin/agent-state.mjs` discovers local HEAD (and the available
+`origin/main` ref) from Git at check time. It does not require a persisted
+current-head field, does not compare a file to its containing commit, and never
+rewrites state.
 
 ---
 
