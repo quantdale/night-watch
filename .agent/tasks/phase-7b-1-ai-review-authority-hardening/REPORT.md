@@ -12,8 +12,10 @@ Phase 7B report is unchanged. No Phase 8 capability was started.
 - Substantive checkpoint: `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
 - Documentation checkpoint: `8ca71c7ce2849b1187f6e6989453ae397c2c4ce8`.
 - Continuity checkpoint: `595985affd86328b417a2c84b89fcf402158a63a`.
-- Final pushed SHA: terminal status-only handoff head, reported in the final
-  task response after synchronized push.
+- Final status-only handoff before this wording correction:
+  `c86cdbb2ae6031c58c15d5b63a354fda9496510c`, with workflow
+  `31768163245` successful. The final wording correction is state-only and
+  is reported as the terminal clean head in the task response.
 
 ## Findings and fixes
 
