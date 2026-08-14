@@ -547,6 +547,46 @@ diff check, isolated clean checkout, and the exact final GitHub Actions run
 passed. Phase 7B.1 remains historical `COMPLETE`, Phase 6 remains
 `FROZEN_BY_OWNER`, and Phase 8 remains `NOT_STARTED`.
 
+## Phase 7B.2 — Private owner-review CLI (complete)
+
+This narrow local/static/synthetic milestone adds a human-gated terminal
+interface over immutable Phase 7B v2 artifacts. It does not increase AI
+authority and is not Phase 8. The validated implementation/substantive
+checkpoint is `b26e6c30c1ae08e668ed718eea53d6f799bead59`; documentation is a
+separate checkpoint descendant.
+
+**Key deliverables.**
+
+- `npm run ai:owner-review` supports only exact-ID `show`, concise `status`,
+  interactive `decide`, and help for `bug` and `oracle` artifacts. It never
+  enumerates the private findings root and has no raw JSON, export, editor,
+  pager, clipboard, provider, model, root, network, Git, or publication mode.
+- A provider-free owner-review service validates persisted artifact and review
+  identities, renders deterministic metadata separately from sanitized
+  `[AI]` prose, marks the display
+  `SNAPSHOT_ONLY_NOT_REEVALUATED`, and uses the existing digest/projection
+  primitives.
+- `decide` requires a TTY, uses a fixed A/R/S/Q menu and exact second token,
+  writes one digest-bound v2 companion record through the existing factory and
+  hardened private store, re-reads and validates the record, and never mutates
+  the AI artifact or deterministic evidence.
+- Bug approval is `OWNER_APPROVED_DRAFT`; oracle approval is
+  `APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW` only. Rejection is
+  `OWNER_REJECTED`; supersession is `SUPERSEDED`. Existing reviews are
+  terminal, v1 is read-only/historical, and malformed state fails closed.
+- Plain-text terminal sanitization neutralizes ANSI/OSC/C0/C1/CR/backspace and
+  bidi controls. The fixed system decision boundary follows all AI content;
+  prose cannot select a decision or impersonate the prompt.
+
+**Validation.** The focused owner-review suite is `16/16`; the predecessor
+AI/loopback/private-triage/owner-policy slice is `83/83`; the synthetic
+campaign is `27/27`; the final local Playwright suite is `497/497`; the
+full-history isolated checkout passes `npm ci --ignore-scripts`, typecheck,
+hardening, owner/AI/loopback `80/80`, agent-state `32/32`, campaign `27/27`,
+and `agent:check`. No real model/provider, product traffic, database,
+infrastructure, publication, credential, customer value, or real AI artifact
+was used. Phase 7B.1.2 remains `COMPLETE` and Phase 8 remains `NOT_STARTED`.
+
 ---
 
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)

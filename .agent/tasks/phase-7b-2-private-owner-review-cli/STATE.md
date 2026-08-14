@@ -6,9 +6,9 @@ Task ID: phase-7b-2-private-owner-review-cli
 Phase: 7B.2 — PRIVATE OWNER REVIEW CLI
 Status: IN_PROGRESS
 Starting SHA: 91bdc518088f575f7089fa9702197fb73793444f
-Last validated implementation SHA: 257cc294850344149fd4c5b657beeff07e511c91
-Last substantive checkpoint SHA: 257cc294850344149fd4c5b657beeff07e511c91
-Last documentation checkpoint SHA: 746a578a2440c2087442819e92eeed77234836ef
+Last validated implementation SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+Last substantive checkpoint SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+Last documentation checkpoint SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -18,9 +18,9 @@ Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
 Remote: origin -> quantdale/night-watch, main
 
 STARTING_SHA: 91bdc518088f575f7089fa9702197fb73793444f
-LAST_VALIDATED_IMPLEMENTATION_SHA: 257cc294850344149fd4c5b657beeff07e511c91
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 257cc294850344149fd4c5b657beeff07e511c91
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 746a578a2440c2087442819e92eeed77234836ef
+LAST_VALIDATED_IMPLEMENTATION_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
+LAST_DOCUMENTATION_CHECKPOINT_SHA: b26e6c30c1ae08e668ed718eea53d6f799bead59
 
 ## Objective
 
@@ -32,8 +32,8 @@ deterministic Nightwatch authority.
 
 Milestone ID: M7
 Status: IN_PROGRESS
-What is being attempted: complete full local validation, privacy/architecture
-review, checkpointing, clean-checkout validation, and remote CI verification.
+What is being attempted: complete documentation closure and exact final remote
+CI verification after the validated implementation and isolated checkout.
 
 ## Completed Milestones
 
@@ -51,9 +51,9 @@ review, checkpointing, clean-checkout validation, and remote CI verification.
 
 ## Work In Progress
 
-M7 closure validation and checkpoint preparation are in progress. Source,
-tests, hardening, and CI changes are still uncommitted; no runtime owner
-artifact or real private state has been used.
+M7 implementation and isolated validation are complete. Documentation closure
+and exact final CI verification remain; no runtime owner artifact or real
+private state has been used.
 
 ## Required Status Invariants
 
@@ -82,9 +82,9 @@ ID_INTEGRITY_STATUS: PASS — exact kind/id checks after artifact and review rea
 
 ## Exact Next Action
 
-Run the final privacy/secret scan and staged diff review, verify the scoped
-validation ledger, then commit and push the validated implementation only
-after the remote freshness gate passes.
+Commit and push the documentation-only closure after the final diff/continuity
+check, then verify the exact final GitHub Actions run and owner-review CI step
+at live HEAD.
 
 ## Files Changed
 
@@ -107,7 +107,7 @@ Task scaffolding and M1–M7 implementation:
 
 ## Validation Ledger
 
-- PASS — owner-review matrix `15/15`.
+- PASS — owner-review matrix `16/16`.
 - PASS — predecessor AI/loopback/private-triage/owner-policy matrix `83/83`.
 - PASS — `npm run typecheck`.
 - PASS — `npm run hardening:check`.
@@ -118,7 +118,11 @@ Task scaffolding and M1–M7 implementation:
 - PASS — `npm run campaign:synthetic` (`27/27`).
 - PASS — full current Playwright suite at the implementation boundary
   (`497/497`).
-- PENDING — final privacy scan, clean checkout, and remote CI verification.
+- PASS — final staged privacy/secret scan found no credential-shaped additions.
+- PASS — full-history isolated checkout: `npm ci --ignore-scripts`, typecheck,
+  hardening, owner/AI/loopback `80/80`, agent-state `32/32`, campaign `27/27`,
+  and `agent:check` (one expected stale-baseline warning).
+- PENDING — documentation closure and remote CI verification.
 
 ## Decisions Made During This Task
 
@@ -136,6 +140,9 @@ Task scaffolding and M1–M7 implementation:
   changes remain uncommitted.
 - The owner CLI can remain provider-free by importing the service module
   directly rather than the aggregate AI-review index.
+- A shallow isolated clone is insufficient for continuity validation because
+  stable historical anchors must exist locally; the required clean checkout
+  therefore uses full Git history.
 
 ## Blockers
 
@@ -154,7 +161,7 @@ SAFETY_EVENTS: NONE
 
 ## Completion Snapshot
 
-CLEAN_CHECKOUT_STATUS: NOT_YET_RUN
+CLEAN_CHECKOUT_STATUS: PASS — full-history isolated clone
 CI_STATUS: WORKFLOW UPDATED; remote execution pending checkpoint push
 PRIVACY_STATUS: SYNTHETIC_FIXTURES_ONLY; no real private state touched
 SAFETY_VECTOR: DEV=0; NEXT=0; PRODUCTION=0; DATABASE=0; INFRASTRUCTURE=0;

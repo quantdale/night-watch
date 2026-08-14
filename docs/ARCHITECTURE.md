@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2 bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -72,6 +72,8 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/privateArtifacts.ts` | Owner-only local atomic JSON store for private dossiers and summaries; default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
+| `src/core/aiReview/ownerReview.ts` | Provider-free exact-ID owner snapshot loader, terminal-safe bug/oracle renderer, fixed confirmation semantics, digest-bound review write/read-back, projections, and v1 read-only handling. | implemented |
+| `bin/ai-owner-review.mjs` | Private human interface with only `show`, `status`, `decide`, and help; TTY gate, fixed decision boundary, and no provider/network/Git/publication path. | implemented |
 | `bin/agent-state.mjs` | Read-only task continuity validator: claimed-commit implementation/documentation SHA roles, STARTING_SHA lineage, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
@@ -186,6 +188,32 @@ separate exact-key digest-bound owner review record
         ↓
 validated effective review projection with current-input freshness
 ```
+
+The Phase 7B.2 human interface is a separate terminal-only branch over the
+persisted artifact and review nodes; it never points back to `AiReviewSession`
+or a provider:
+
+```
+explicit kind + exact artifact ID
+        ↓
+owner-only store read + persisted identity validation
+        ↓
+terminal-safe `[AI]`/`[SYSTEM]` snapshot rendering
+        ↓
+fixed owner decision boundary + TTY A/R/S/Q menu
+        ↓
+exact second confirmation token
+        ↓
+createHumanReviewRecord → writeHumanReview → read-back validation
+        ↓
+digest-bound snapshot projection
+```
+
+`show` and `status` perform no write. `decide` can create only one v2
+companion review for an unreviewed exact artifact; the AI artifact, evidence,
+campaign, catalog, source, executable, publication, and Phase 8 state remain
+unchanged. Terminal sanitizer output is plain text and marks freshness
+`SNAPSHOT_ONLY_NOT_REEVALUATED`.
 
 The branch cannot flow back into anomaly admission, evidence level, campaign
 state, safety/privacy vectors, action/oracle catalogs, browser/API execution,
@@ -333,7 +361,7 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
   atomically with owner-only permissions under the external default root
   `$HOME/.nightwatch/findings/`; repository-local `.nightwatch/` is ignored
   for injected test stores. No external publication connector exists.
-- Phase 7B AI review artifacts are companion data in the same owner-only
+- Phase 7B/7B.2 AI review artifacts are companion data in the same owner-only
   external store. Only synthetic fixtures, schemas, code, tests, and sanitized
   task/project documentation are committed. No raw prompt, response,
   credential, customer value, finding, transcript, or model secret enters Git.
@@ -346,6 +374,10 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
   final provider-admission boundary is the only provider call path. Generated v2 artifacts
   remain unreviewed; owner decisions are companion records and never rewrite
   model identity or artifact bytes.
+- The Phase 7B.2 owner CLI is a provider-free human interface. It accepts only
+  exact artifact IDs, never enumerates private findings, requires a TTY and
+  two-step decision confirmation, routes its sole write through the existing
+  review factory/private store, and cannot publish, execute, or write Git.
 
 ---
 

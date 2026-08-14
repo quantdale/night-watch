@@ -1068,3 +1068,34 @@ proof closes that bypass without rejecting legitimate docs descendants or
 historical carried-forward anchors.
 
 **Phase applicability.** Phase 7B.1.2 and all later Nightwatch development.
+
+## D-41 — Owner review is a terminal, snapshot-bound human interface
+
+**Decision.** Phase 7B.2 exposes persisted AI artifacts only through
+`npm run ai:owner-review` with exact-ID `show`, `status`, and TTY-gated
+`decide` commands. The CLI imports no AI execution/provider path, performs no
+network, Git, publication, browser/API, campaign, or directory-enumeration
+operation, and accepts no decision through argv, environment, file, or pipe.
+`decide` uses a fixed A/R/S/Q menu plus an exact second confirmation token;
+only an unreviewed v2 artifact may receive one new digest-bound companion
+review, created by `createHumanReviewRecord()` and written by the hardened
+private store. The artifact remains immutable. Existing reviews are terminal;
+v1 artifacts are read-only historical/unverified state. Terminal output is
+plain text with explicit sanitization and `[AI]`/`[SYSTEM]` separation, and
+the displayed freshness is `SNAPSHOT_ONLY_NOT_REEVALUATED`.
+
+**Rationale.** The owner must be able to inspect and record provenance without
+turning AI prose into execution, verification, publication, or current-state
+authority. A fixed prompt boundary, two deliberate actions, digest read-back,
+and exact identity checks preserve the distinction between “the owner reviewed
+this artifact” and “the product finding is verified.”
+
+**Consequences.** Bug approval projects only `OWNER_APPROVED_DRAFT`; oracle
+approval projects only `APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`. Rejection
+and supersession remain companion review states. Evidence level, campaign
+result, catalog, source, executable, publication, and Phase 8 state do not
+change. Free-form notes, export, bulk listing, current-input reevaluation, and
+real artifacts remain deferred.
+
+**Phase applicability.** Phase 7B.2 and all later consumers of private AI
+review artifacts.

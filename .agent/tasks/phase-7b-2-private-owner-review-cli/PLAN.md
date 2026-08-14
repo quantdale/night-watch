@@ -133,7 +133,7 @@ and calls to the service.
   confirmation, Q/Ctrl-C cleanup, write failure, read-back mismatch, and
   second decision.
 - Confirm no test accesses the real owner findings root.
-- Status: COMPLETE — 15 synthetic owner-review tests pass, including controls,
+- Status: COMPLETE — 16 synthetic owner-review tests pass, including controls,
   fake prompts, identity attacks, non-TTY, cancellation, write/read-back
   failures, and immutability.
 

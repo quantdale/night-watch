@@ -560,7 +560,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-## 16. Phase 7B/7B.1/7B.1.1/7B.1.2 bounded AI review safety
+## 16. Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 bounded AI review safety
 
 Phase 7B is an optional post-processing branch over sanitized deterministic
 evidence. It is not a campaign stage, oracle, action planner, browser/API
@@ -608,6 +608,33 @@ source, request, or callback can be changed. Effective approval is derived from
 the artifact, validated record, digest match, and current input; input
 digest/snapshot changes make old artifacts `STALE`.
 
+Phase 7B.2 adds only a private owner-review CLI over already-persisted
+artifacts. `bin/ai-owner-review.mjs` accepts one exact `bug` or `oracle` ID and
+only `show`, `status`, `decide`, and help. It imports a provider-free service;
+there is no path to `AiReviewSession`, any provider, browser/API execution,
+campaign execution, network, Git, directory enumeration, or publication.
+`show` and `status` are read-only. `decide` requires a TTY, a fixed A/R/S/Q
+choice, and an exact second confirmation token. A wrong token, empty input,
+Q, or interrupt produces no review record.
+
+The owner service validates the requested ID against the persisted envelope and
+nested artifact, distinguishes missing from corrupt/invalid/mismatched state,
+reads an existing review without treating absence as corruption, and creates
+only one v2 review through `createHumanReviewRecord()` and
+`AiReviewArtifactStore.writeHumanReview()`. It re-reads the record and checks
+review ID, artifact ID, full artifact digest, decision, owner reviewer class,
+and publication prohibition before applying the existing projection. The AI
+artifact stays immutable; deterministic evidence, campaign result, catalog,
+and executable/publication boundaries do not change. V1 artifacts remain
+show/status-compatible and read-only for new decisions.
+
+Terminal output is a plain-text security boundary. Untrusted AI lines are
+sanitized for ESC/ANSI, OSC/OSC52, C0/C1 controls, carriage return, backspace,
+and Unicode bidi controls, then prefixed `[AI]`; deterministic fields and the
+fixed decision boundary use `[SYSTEM]`. The display says
+`SNAPSHOT_ONLY_NOT_REEVALUATED`, so owner review of an exact artifact snapshot
+is never presented as current product verification or root-cause verification.
+
 The session runtime budget is separate from wall-clock artifact metadata. Its
 default authority is Node's monotonic `performance.now()` in milliseconds;
 tests may inject a monotonic synthetic clock. A single remaining-runtime
@@ -627,7 +654,7 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B/7B.1/7B.1.1/7B.1.2 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
 prompt-injection/hallucination, invocation budgets, accounting, concurrency,
 human review, staleness, forgery/corruption, owner scope, and oracle isolation;
@@ -637,12 +664,16 @@ also covers the stepped final-deadline edge, positive exposure, synchronous
 throw, locality, cap, timeout, malformed output, storage failure, and active
 cancellation. `tests/unit/agent-state.test.ts` covers same-value documentation
 role forgery, direct claimed-commit role proof, STARTING_SHA lineage, carried-
-forward anchors, merge ambiguity, drift, and live Git authority; private CI
-runs that matrix independently. `bin/hardening-check.mjs` enforces the
-source-level no-capability and single-call-graph boundary.
+forward anchors, merge ambiguity, drift, and live Git authority;
+`tests/unit/aiOwnerReview.test.ts` covers the 16-test exact-ID,
+terminal-sanitization, double-confirmation, read-back, legacy, immutability,
+no-provider, and clean-checkout fixture matrix; private CI runs that matrix
+independently. `bin/hardening-check.mjs` enforces the source-level
+no-capability and single-call-graph boundary for both the AI execution surface
+and the owner-review CLI.
 
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2 AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2 AI review;
 changes require a DECISIONS entry and a test update.*

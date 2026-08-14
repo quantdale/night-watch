@@ -1,9 +1,10 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B.1.2 final integrity closeout. Phase 0–5 are complete;
-> Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, Phase 7B, and
-> Phase 7B.1.2 are complete. Phase 8 remains unstarted.
+> the Nightwatch Phase 7B.2 private owner-review CLI closure. Phase 0–5 are
+> complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
+> Phase 7B, Phase 7B.1.2, and Phase 7B.2 are complete. Phase 8 remains
+> unstarted.
 
 ---
 
@@ -25,8 +26,10 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (stable validated Phase 7B.1.2 substantive implementation anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `b26e6c30c1ae08e668ed718eea53d6f799bead59` (stable validated Phase 7B.2 substantive implementation anchor) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
+| `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
+| `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -463,6 +466,51 @@ agent-state, diff, and isolated clean-checkout checks. The exact final
 final live SHA. No real model, product traffic, data/infrastructure query,
 publication, credential, customer value, or authenticated evidence was used.
 Phase 7B.1.1 remains historical `COMPLETE`; Phase 8 remains `NOT_STARTED`.
+
+## Phase 7B.2 — Private owner-review CLI (complete)
+
+Phase 7B.2 adds a thin private terminal interface over the hardened immutable
+Phase 7B review artifacts. It is a human review interface, not an AI execution
+interface. The validated implementation checkpoint is
+`b26e6c30c1ae08e668ed718eea53d6f799bead59`; the documentation checkpoint is a
+separate descendant recorded by the task continuity state.
+
+The only command is `npm run ai:owner-review`, with exact-ID `show`, concise
+`status`, and interactive `decide` commands for one `bug` or `oracle` artifact.
+There is no bulk scan, directory enumeration, raw JSON/export mode, output
+file, editor, pager, clipboard, provider/model option, network path, Git path,
+or publication path. The CLI imports a provider-free owner-review service and
+cannot instantiate `AiReviewSession`, a provider, a browser/API runner, or a
+campaign.
+
+`decide` requires a TTY, presents a fixed A/R/S/Q menu, prints a fixed system
+decision boundary after terminal-safe `[AI]`-prefixed prose, and requires the
+exact second token `APPROVE`, `REJECT`, or `SUPERSEDE`. It reads and validates
+the exact persisted artifact identity, creates one v2 review only through
+`createHumanReviewRecord()` and hardened private storage, re-reads the exact
+review, validates its ID/digest/decision/owner/publication fields, and applies
+the existing projection. AI artifacts remain unchanged; only a companion
+owner-review record is written.
+
+Bug approval projects `OWNER_APPROVED_DRAFT`; oracle approval projects
+`APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW` only. Rejection projects
+`OWNER_REJECTED`, supersession projects `SUPERSEDED`, and all keep the
+deterministic evidence, campaign, catalog, executable=false, and publication
+boundaries unchanged. Existing reviews are terminal, malformed state fails
+closed, and v1 artifacts are readable historical/unverified provenance only.
+The display explicitly says `SNAPSHOT_ONLY_NOT_REEVALUATED`; owner review is
+not product verification or root-cause verification.
+
+The synthetic owner-review matrix covers 16 tests for ID attacks, absent versus
+corrupt state, legacy behavior, ANSI/OSC/OSC52/control/bidi/fake-prompt text,
+double confirmation, non-TTY, read-back, write failure, duplicate decisions,
+artifact immutability, catalog isolation, and clean-checkout CLI fixture
+handling. Local closure also passed 497/497 Playwright tests, 27/27 synthetic
+campaign tests, typecheck, hardening, agent-state, privacy, and full-history
+isolated checkout validation. No real model, provider, product traffic,
+database/infrastructure operation, publication, credential, customer value,
+or real AI artifact was used. Phase 7B.1.2 remains `COMPLETE`; Phase 8 remains
+`NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 
