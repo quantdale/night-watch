@@ -8,7 +8,7 @@ Status: COMPLETE
 Starting SHA: 9d591ffd59719c2bba1dc155d614fd5c9b6a7078
 LAST_VALIDATED_IMPLEMENTATION_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 5bee133496d0eb9820e17a1c8fda41c45592692a
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -193,9 +193,11 @@ minimal environment and synthetic roots.
 
 ## CI_STATUS
 
-PENDING at this documentation checkpoint: push and inspect the exact final
-`Nightwatch hardening` run/job steps, then record the first documentation
-descendant and final CI result in the final documentation-only checkpoint.
+PASS for first documentation descendant: exact `Nightwatch hardening` run
+`31803168996`, head `5bee133496d0eb9820e17a1c8fda41c45592692a`, completed
+successfully. Its `Phase 7B.2.1 atomic private artifact and owner provenance
+matrix` step executed and succeeded. A final documentation-only checkpoint
+and its exact CI run remain to be pushed/inspected.
 
 ## Decisions Made During This Task
 
@@ -238,9 +240,9 @@ real owner-review activity performed. Synthetic local child processes only.
 
 ## Exact Next Action
 
-Push this documentation closure, inspect the exact final GitHub Actions run
-and atomic/provenance step, then record its success and the first documentation
-descendant in the final documentation-only checkpoint.
+Commit/push this final documentation-only anchor update, inspect its exact
+GitHub Actions run and atomic/provenance step, verify clean synchronized Git,
+then stop.
 
 ## Resume Recipe
 
@@ -252,6 +254,6 @@ database, infrastructure, or publication workflows.
 ## Completion Snapshot
 
 Implementation/substantive anchor is `3916594f6e947f7f4665b23751c1d3ec03f5928b`.
-The documentation anchor is intentionally carried at that validated ancestor
-until the first documentation-only descendant is pushed and recorded; live
-HEAD and `origin/main` remain discovered from Git.
+The first approved documentation descendant is
+`5bee133496d0eb9820e17a1c8fda41c45592692a`; the final live documentation
+head remains discovered from Git and is not serialized here.
