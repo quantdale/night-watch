@@ -174,6 +174,67 @@ function checkLocalCanaryBoundary() {
   if (!/parseLocalCanaryArgs/.test(cli) || !/runSingleLocalCanary/.test(cli) || !/formatLocalCanaryPass/.test(cli)) fail('local canary CLI is not a thin controller wrapper');
 }
 
+function selfDevelopmentSourceFiles() {
+  const directory = path.join(root, 'src', 'core', 'selfDev');
+  if (!fs.existsSync(directory)) return [];
+  const result = [];
+  const visit = (current, relative) => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const absolute = path.join(current, entry.name);
+      const child = path.join(relative, entry.name);
+      if (entry.isDirectory()) visit(absolute, child);
+      else if (entry.isFile() && child.endsWith('.ts')) result.push(child);
+    }
+  };
+  visit(directory, path.join('src', 'core', 'selfDev'));
+  return result.sort();
+}
+
+function checkSelfDevelopmentBoundary() {
+  const files = selfDevelopmentSourceFiles();
+  if (files.length === 0) {
+    fail('Phase 8A self-development source is missing');
+    return;
+  }
+  const sources = files.map((file) => [file, read(file)]);
+  const combined = sources.map(([, source]) => source).join('\n');
+  for (const [file, source] of sources) {
+    if (/from\s+['"][^'"]*(?:aiReview|campaign|oracles?|browser|products?|phase6|oops|database|infrastructure|auth|network|git)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a prohibited Phase 8A authority or transport`);
+    }
+    if (/node:(?:child_process|fs|net|http|https|dns|tls|worker_threads)/.test(source)) fail(`${file} imports a prohibited runtime capability`);
+    if (/\b(?:fetch|http\.request|https\.request|net\.connect|WebSocket|child_process|spawn|exec(?:File)?|eval|Function\s*\(|process\.env)\b/i.test(source)) fail(`${file} exposes a prohibited runtime capability`);
+    if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|copyFileSync|git\s+(?:apply|add|commit|push))\b/i.test(source)) fail(`${file} contains a source/filesystem/Git write path`);
+    if (/\b(?:AiReviewSession|LoopbackAiReviewProvider|SyntheticAiReviewProvider|reviewBugCandidate|suggestOracle|registerAiReviewProvider)\b/.test(source)) fail(`${file} enters Phase 7B AI review authority`);
+    if (/register[^\n]*(?:oracle|assertion)|(?:oracle|assertion)[^\n]*register/i.test(source)) fail(`${file} registers executable oracle/assertion authority`);
+  }
+  const candidateSource = read('src/core/selfDev/validation.ts');
+  const keyStart = candidateSource.indexOf('const CANDIDATE_KEYS');
+  const keyEnd = candidateSource.indexOf('const CANDIDATE_OPTIONAL_KEYS');
+  const keyBlock = keyStart >= 0 && keyEnd > keyStart ? candidateSource.slice(keyStart, keyEnd) : '';
+  for (const field of ['code', 'source', 'sourceCode', 'patch', 'diff', 'command', 'shell', 'script', 'url', 'endpoint', 'prompt', 'model', 'tools', 'functions', 'git', 'pathTraversal', 'outputPath']) {
+    if (new RegExp(`['"]${field}['"]`).test(keyBlock)) fail(`Phase 8A candidate schema contains forbidden field ${field}`);
+  }
+  const proposer = read('src/core/selfDev/proposer.ts');
+  if (!/class\s+SyntheticDeterministicProposer/.test(proposer)) fail('Phase 8A does not have the sole synthetic deterministic proposer');
+  if (/class\s+(?:Local|Cloud|Remote|Agent)[A-Za-z]*Proposer/.test(combined)) fail('Phase 8A contains an unauthorized proposer class');
+  const registry = read('src/core/selfDev/registry.ts');
+  if (!/SELFDEV_ACTIONS/.test(registry) || !/SELFDEV_ASSERTIONS/.test(registry) || !/resolveSelfDevAction/.test(registry) || !/resolveSelfDevAssertion/.test(registry)) fail('Phase 8A action/assertion allowlists are missing');
+  if (/\b(?:callback|executable\s*:\s*true|new\s+Function)\b/i.test(registry)) fail('Phase 8A registry exposes executable candidate behavior');
+  const controller = read('src/core/selfDev/controller.ts');
+  const storage = read('src/core/selfDev/storage.ts');
+  if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION|SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA/.test(controller)) fail('Phase 8A controller lacks its narrow owner/synthetic boundary');
+  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8A private results do not use the hardened immutable private store');
+  if (!/SELFDEV_PRIVATE_NAMESPACE/.test(storage) || !/self-development/.test(storage)) fail('Phase 8A private results lack a separate namespace');
+  if (!/NOT_AUTHORIZED_PHASE_8A/.test(combined) || !/EVALUATED_PASS_NOT_ADOPTED/.test(combined) || !/PROHIBITED/.test(combined)) fail('Phase 8A result lacks explicit no-adoption/publication authority');
+  const cli = read('bin/selfdev-synthetic.mjs');
+  if (!/parseArgs/.test(cli) || !/runSyntheticSelfDevSession/.test(cli)) fail('Phase 8A CLI is not a thin synthetic controller wrapper');
+  if (/\b(?:child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)|AiReview|owner-review|database|production|NIGHTWATCH_STORAGE_STATE)\b/i.test(cli)) fail('Phase 8A CLI exposes a prohibited capability');
+  if (/fs\.(?:write|append|rename|unlink|rm|copy|mkdir|link)/i.test(cli)) fail('Phase 8A CLI contains a filesystem-write path');
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION/.test(ownerPolicy)) fail('Phase 8A lacks a distinct owner-policy capability');
+}
+
 function checkImmutablePrivatePublication() {
   const source = read('src/core/policy/privateArtifacts.ts');
   const start = source.indexOf('  writeImmutableJson(');
@@ -285,6 +346,7 @@ checkAiInvocationAuthority();
 checkOwnerReviewCliBoundary();
 checkImmutablePrivatePublication();
 checkOwnerDecisionAuthority();
+checkSelfDevelopmentBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

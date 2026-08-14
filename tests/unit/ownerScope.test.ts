@@ -23,6 +23,7 @@ test.describe('owner infrastructure/data freeze', () => {
     expect(decideOwnerScope('future-cloud-command').allowed).toBe(false);
     expect(() => assertOwnerPolicyAllows('future-cloud-command')).toThrow(OwnerPolicyBlockedError);
     expect(executeOwnerScoped('SYNTHETIC_FIXTURE', () => 'local')).toBe('local');
+    expect(decideOwnerScope('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION').allowed).toBe(true);
+    expect(decideOwnerScope('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION').operation).not.toBe('AI_REVIEW_LOCAL');
   });
 });
-

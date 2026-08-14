@@ -25,6 +25,7 @@
     "explore:phase4": "node bin/phase4-real.mjs",
     "api:phase5": "node bin/phase5-real.mjs",
     "campaign:synthetic": "playwright test tests/unit/campaign.test.ts --workers=1",
+    "selfdev:synthetic": "node bin/selfdev-synthetic.mjs",
     "campaign:real": "node bin/phase7-real.mjs",
     "ai:local-canary": "node bin/ai-local-canary.mjs",
     "ai:owner-review": "node bin/ai-owner-review.mjs",
