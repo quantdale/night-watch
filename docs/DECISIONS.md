@@ -1200,3 +1200,54 @@ is `d2a2978ede7c29d04e95f1625a736ce7c26004f9`.
 
 **Phase applicability.** Phase 8A and any later phase that consumes its
 evaluation results. Phase 8 remains `IN_PROGRESS`; Phase 8B is `NOT_STARTED`.
+
+## D-45 — Phase 8A.1 v2 provenance is content-bound and replay-authoritative
+
+**Decision.** Phase 8A.1 adds prospective
+`nightwatch.selfdev-evaluation.private.v2` and
+`nightwatch.selfdev-session.private.v2` records. A v2 session ID is
+recomputed from canonical semantic fields with the ID omitted. A single
+canonical result-state invariant rejects enum-valid but impossible evaluator
+tuples, and exact candidate ID/digest/kind/base binding is required. The
+session carries only a bounded synthetic replay descriptor; the deterministic
+proposal sequence is regenerated in array order through one fresh stateful
+evaluator using a constant injected monotonic replay clock. Canonical bytes of
+each evaluation must match, so recomputed digests alone are not trust.
+
+The v2 provenance block contains a real local Git HEAD, a fixed-code-defined
+source bundle digest, a separate evaluator contract digest, an explicit
+algorithm version, clean-source state, and normalized Node version. The source
+bundle uses length-prefixed relative paths and exact bytes. Only the narrow
+provenance boundary may execute fixed no-shell read-only Git metadata commands
+for HEAD, cleanliness, fixed-path untracked state, and ancestry. No runtime Git
+mutation, source write, network, product, data, infrastructure, model, or
+publication authority is added.
+
+Legacy v1 artifacts remain readable where supported but are permanently
+`LEGACY_UNVERIFIED_NOT_ELIGIBLE`, are not replay-trusted, and are never
+auto-migrated or rewritten. Exact-base and source-equivalent documentation
+descendant status are derived at verification time; source/contract drift,
+dirty authoritative source, unrelated baselines, and provenance unavailability
+fail closed. A successful assessment remains
+`NOT_AUTHORIZED_PHASE_8A`/`PROHIBITED` and is only
+`INTEGRITY_VERIFIED_FOR_FUTURE_REVIEW`, never approval or adoption.
+
+**Rationale.** A syntactically valid ID or recomputed evaluation hash proves
+only internal consistency. The future consumer needs a deterministic answer
+about source state, semantic possibility, candidate binding, and ordered
+reproducibility without retaining unsafe raw proposals or granting adoption
+authority. Dual source/contract provenance and replay provide those claims
+within the local threat model, while excluding a malicious machine owner who
+rewrites source, artifacts, and verifier together.
+
+**Consequences.** Normal synthetic persistence requires a nonzero locally
+attested HEAD, strict pre-write validation, replay, immutable no-replace
+storage, and exact read-back. `selfdev:verify` accepts one exact artifact ID
+and is read-only; no latest/list/path/adoption/patch modes exist. Documentation
+commits can remain source-equivalent when authoritative bytes are unchanged.
+Phase 8A.1 closes provenance prerequisites for future design review but does
+not start Phase 8B.
+
+**Phase applicability.** Phase 8A.1 and any future read-only consumer of its
+v2 integrity assessment. Phase 8 remains `IN_PROGRESS`; Phase 8B is
+`NOT_STARTED`.

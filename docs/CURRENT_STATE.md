@@ -1,14 +1,15 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 8A evaluated self-development sandbox implementation
-> checkpoint.
+> Durable memory for the next agent/session. Last updated: **2026-08-15** at
+> the Nightwatch Phase 8A.1 trusted evaluation provenance and replay integrity
+> closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A is `COMPLETE` with no source adoption authority, and
+> `IN_PROGRESS`; Phase 8A and Phase 8A.1 are `COMPLETE` with no source
+> adoption authority, and
 > Phase 8B remains `NOT_STARTED`.
 
 ---
@@ -31,16 +32,17 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `d2a2978ede7c29d04e95f1625a736ce7c26004f9` (stable validated Phase 8A implementation/substantive anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `4602fac417746a30927fc19f8e4ca48ab9143cac` (stable validated Phase 8A.1 implementation/substantive anchor) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
 | `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
 | `PHASE_7B_3_STATUS` | `HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN` — no compatible already-local runtime/model or explicit endpoint/model configuration was available; no installation/download was attempted |
-| `PHASE_8_STATUS` | `IN_PROGRESS` — only the bounded Phase 8A evaluation foundation is authorized and implemented |
-| `PHASE_8A_STATUS` | `COMPLETE` — declarative synthetic candidates, deterministic evaluator, private result, and no-adoption boundary |
+| `PHASE_8_STATUS` | `IN_PROGRESS` — Phase 8A.1 closes provenance/replay prerequisites; controlled adoption remains separate |
+| `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
+| `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8B_STATUS` | `NOT_STARTED` |
-| `PHASE_8_OWNER_AUTHORIZATION` | `PROCEED WITH THE NEXT PHASE.` — Phase 8A only |
+| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8A.1 CLOSEOUT ONLY` — no Phase 8B adoption authority |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -635,6 +637,56 @@ agent-state `32/32`, synthetic campaign `27/27`, `agent:check`, and diff
 check. Exact documentation checkpoint CI run `31814440021` passed at head
 `1869031f810e629647bb7df40d840db83f12d865`, including the named Phase 8A
 matrix step. Phase 8 remains `IN_PROGRESS`; Phase 8B is `NOT_STARTED`.
+
+## Phase 8A.1 — trusted evaluation provenance + replay integrity closeout (complete)
+
+Phase 8A.1 preserves the v1 foundation and adds a prospective, read-only
+trust boundary. Persisted records use
+`nightwatch.selfdev-evaluation.private.v2` and
+`nightwatch.selfdev-session.private.v2`; provenance and derived assessment
+use `nightwatch.selfdev-provenance.private.v1` and
+`nightwatch.selfdev-trust-assessment.private.v1`. Legacy v1 records remain
+readable where supported but are `LEGACY_UNVERIFIED_NOT_ELIGIBLE`, are never
+replayed as trusted evidence, and are never migrated or rewritten.
+
+The v2 session ID is recomputed from canonical length-prefixed semantic
+session fields with `artifactId` omitted. A strict result-state invariant
+binds every result class and reason/status tuple to the deterministic
+evaluator, while candidate ID, candidate digest, candidate kind, evaluation
+ID, and one session baseline are cross-checked. A bounded replay descriptor
+regenerates the exact synthetic proposal sequence; one fresh stateful
+evaluator replays it in array order with an injected constant monotonic clock,
+and canonical evaluation bytes must match exactly.
+
+Source provenance is dual-bound. A fixed code-defined path manifest produces a
+length-prefixed SHA-256 `sourceBundleDigest`; a separate evaluator contract
+manifest produces `contractDigest`. The only new runtime authority is a
+narrow no-shell local Git metadata reader using fixed read-only commands for
+HEAD, cleanliness, fixed-path untracked state, and ancestry. It has zero Git
+mutation authority. Persisted v2 sessions require a nonzero real HEAD and
+clean authoritative source. Documentation-only descendants may be
+`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`; source/contract drift, dirty source,
+and unrelated baselines fail closed.
+
+`npm run selfdev:synthetic` now persists only v2 with local provenance and
+performs replay/read-back verification. `npm run selfdev:verify --
+--artifact-id <exact-id>` is read-only, exact-ID addressed, sanitized, and
+has no latest/list/path/adoption/patch mode. The acceptance artifact is
+`session:sha256:1266c08b365fbabc56f6bbdf631c8b979df17288c1898d40cd27dc0952bf5aed`,
+bound to `4602fac417746a30927fc19f8e4ca48ab9143cac`, with source digest
+`sha256:80b0db2df5d8ac7b87eded03c0b8be7ee2d58103fa83251b0b31d784d5ca3493`
+and contract digest
+`sha256:05ad2ecf035381b58c47f3126bc844864137c57e5645df89a338cb7995a367a4`.
+It verified `VERIFIED_EXACT_BASE` with replay `PASS`, one pass, one duplicate,
+one rejected candidate, and zero source/Git/external side-effect counters.
+
+Validation passed locally with 562/562 full Playwright tests, 39 focused
+Phase 8A/8A.1 tests, 91/91 owner/provenance tests, 27/27 synthetic campaign
+tests, typecheck, hardening, agent-state, and whitespace/privacy checks. A
+fresh full-history clone at the implementation checkpoint passed the same
+deterministic gate. CI runs `31821592114` and `31822125738` passed for the
+implementation checkpoints; the latter executed the dedicated Phase 8A.1
+matrix. Phase 8 remains `IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

@@ -6,9 +6,9 @@ Task ID: phase-8a-1-trusted-evaluation-provenance
 Phase: 8A.1 — TRUSTED EVALUATION PROVENANCE + REPLAY INTEGRITY CLOSEOUT
 Status: IN_PROGRESS
 Starting SHA: f75a547233a2a5189f157b959d309170a4ebdb57
-LAST_VALIDATED_IMPLEMENTATION_SHA: f75a547233a2a5189f157b959d309170a4ebdb57
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f75a547233a2a5189f157b959d309170a4ebdb57
-LAST_DOCUMENTATION_CHECKPOINT_SHA: f75a547233a2a5189f157b959d309170a4ebdb57
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -25,13 +25,13 @@ adoption or mutation authority.
 ## Current Milestone
 
 CURRENT_MILESTONE:
-M6 — full validation and isolated checkout (IN_PROGRESS).
+M8 — documentation closure and final CI (IN_PROGRESS).
 
 ## Historical status
 
 PHASE_8_STATUS: IN_PROGRESS
 PHASE_8A_STATUS: COMPLETE (historical v1 foundation)
-PHASE_8A_1_STATUS: IN_PROGRESS
+PHASE_8A_1_STATUS: COMPLETE
 PHASE_8B_STATUS: NOT_STARTED
 Phase 6: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
 
@@ -79,7 +79,7 @@ v2 persistence and sanitized summary.
   hardening checks.
 - M5 completed: 36 focused Phase 8A/8A.1 tests, dedicated CI step, and
   adversarial identity/state/replay/provenance matrix.
-- M6 local validation: full `npm test` Playwright regression passed 562/562;
+- M6 completed: full `npm test` Playwright regression passed 562/562;
   `npm run test:owner-provenance` passed 91/91; serial
   `npm run campaign:synthetic` passed 27/27; typecheck, hardening,
   agent-state, whitespace, and staged privacy checks passed. A parallel test
@@ -90,6 +90,15 @@ v2 persistence and sanitized summary.
   behavior was correct; the fixture was repaired to use a home-directory
   temporary root, and the local focused 39-test plus full 562-test rerun
   passed.
+- M6 clean-checkout closure: replacement checkpoint
+  `4602fac417746a30927fc19f8e4ca48ab9143cac` passed a fresh full-history
+  clone with `npm ci --ignore-scripts`, typecheck, hardening, 39 focused tests,
+  91 owner/provenance tests, 27 synthetic campaign tests, synthetic v2 CLI,
+  `agent:check`, and diff check.
+- M7 completed: replacement substantive checkpoint and push were verified
+  against `origin/main`; normal synthetic v2 persistence and exact-base
+  verification passed; CI run `31822125738` passed with the dedicated Phase
+  8A.1 step executed.
 
 ## Gap reconfirmation
 
@@ -105,19 +114,16 @@ real owner state was touched.
 
 ## Work In Progress
 
-Implementation, focused tests, hardening, and full current regression are
-complete in the working tree. The first clean clone of e56e068 exposed a
-test-fixture portability defect: its temporary private root was under `/tmp`,
-which is the detected workspace when a clone is placed there. The policy
-correctly rejected that root; the test now uses a temporary home-directory
-root. A replacement checkpoint and fresh clean-clone validation remain before
-acceptance-artifact generation.
+Implementation, focused tests, hardening, full current regression, isolated
+checkout, substantive checkpoint, exact-base acceptance artifact, and
+substantive CI are complete. Documentation closure is in progress. The
+artifact remains owner-only local state and is not committed.
 
 ## Exact Next Action
 
-Stage and push the clean-checkout fixture repair as a replacement substantive
-checkpoint, then create a fresh full-history checkout from that exact SHA and
-rerun the deterministic validation slice.
+Commit and push the documentation closure, verify the same artifact as a
+source-equivalent descendant, then perform final CI/state closure without
+starting Phase 8B.
 
 ## Files Changed
 
@@ -129,11 +135,11 @@ Tests: `tests/unit/selfDev*.test.ts`. Continuity: this task directory and
 
 ## Acceptance artifact
 
-ACCEPTANCE_ARTIFACT_ID: NONE
-ACCEPTANCE_ARTIFACT_BASE_SHA: NONE
-ACCEPTANCE_ARTIFACT_SOURCE_DIGEST: NONE
-ACCEPTANCE_ARTIFACT_CONTRACT_DIGEST: NONE
-ACCEPTANCE_ARTIFACT_INITIAL_TRUST_STATUS: NONE
+ACCEPTANCE_ARTIFACT_ID: session:sha256:1266c08b365fbabc56f6bbdf631c8b979df17288c1898d40cd27dc0952bf5aed
+ACCEPTANCE_ARTIFACT_BASE_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac
+ACCEPTANCE_ARTIFACT_SOURCE_DIGEST: sha256:80b0db2df5d8ac7b87eded03c0b8be7ee2d58103fa83251b0b31d784d5ca3493
+ACCEPTANCE_ARTIFACT_CONTRACT_DIGEST: sha256:05ad2ecf035381b58c47f3126bc844864137c57e5645df89a338cb7995a367a4
+ACCEPTANCE_ARTIFACT_INITIAL_TRUST_STATUS: VERIFIED_EXACT_BASE / REPLAY_PASS
 ACCEPTANCE_ARTIFACT_FINAL_DOC_DESCENDANT_STATUS: NONE
 
 ## Validation Ledger
@@ -143,11 +149,14 @@ FOCUSED_TEST_LEDGER: PASS — `npm run typecheck`; `npm run hardening:check`;
 --check`.
 FULL_TEST_LEDGER: PASS — `npm test` 562/562; `npm run
 test:owner-provenance` 91/91; `npm run campaign:synthetic` 27/27.
-CLEAN_CHECKOUT_STATUS: E56_REPAIR_REQUIRED — one test-fixture portability
-failure in the first isolated clone; repair is present locally and a fresh
-replacement checkpoint validation is pending.
-CI_STATUS: PASS — substantive e56e068 workflow 31821592114 passed, including
-the Phase 8A.1 step; replacement checkpoint CI remains pending.
+CLEAN_CHECKOUT_STATUS: PASS — fresh full-history clone at 4602fac passed
+`npm ci --ignore-scripts`, typecheck, hardening, 39 focused tests, 91
+owner/provenance tests, 27 campaign tests, synthetic v2 CLI, agent-state, and
+diff check.
+CI_STATUS: PASS — workflow 31822125738 at 4602fac passed; its Phase 8A.1
+evaluation provenance and replay integrity matrix executed and passed. Prior
+e56e068 workflow 31821592114 also passed before the clean-checkout fixture
+repair.
 SAFETY_EVENTS: NONE
 PRIVACY_STATUS: PASS — staged diff secret/privacy-shape scan found no
 credential, token, customer, auth, model, or private-artifact content.
@@ -193,9 +202,8 @@ read-only provenance commands were used in tests.
 
 ## Exact Next Action
 
-Stage and push the clean-checkout fixture repair, then validate a fresh
-full-history clean checkout from the replacement SHA before generating the
-local acceptance artifact.
+Commit and push the documentation closure, then verify the same acceptance
+artifact as a source-equivalent descendant and run final CI/state closure.
 
 ## Resume Recipe
 
@@ -208,7 +216,7 @@ runtime Git writes, source writes, or publication.
 
 ## Completion Snapshot
 
-Not complete. e56e068 is a pushed substantive checkpoint with a clean-clone
-test-fixture defect; the repaired replacement checkpoint must pass isolated
-validation before it becomes the validated implementation anchor. Live HEAD
-remains discovered from Git.
+Not complete. The validated implementation anchor is
+`4602fac417746a30927fc19f8e4ca48ab9143cac`; the exact-base acceptance artifact
+and replacement CI are green. Documentation closure and descendant/final CI
+verification remain. Live HEAD remains discovered from Git.

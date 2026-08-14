@@ -722,6 +722,34 @@ Phase 8A remains strictly separate from Phase 7B AI review and cannot change
 evidence level, campaign results, anomaly admission, source relevance, fault
 boundaries, existing oracle truth, or owner-review drafts.
 
+### Phase 8A.1 — Trusted evaluation provenance + replay integrity closeout (complete)
+
+Phase 8A.1 closes the provenance prerequisites required before any future
+controlled adoption design review. It introduces prospective v2 session and
+evaluation schemas with recomputed content identity, a canonical semantic
+result-state machine, candidate/evaluation/baseline cross-binding, a bounded
+ordered replay descriptor, and exact replay comparison. The session records
+only safe replay metadata; rejected raw proposal payloads are not retained.
+
+Local trust is dual-bound to a fixed authoritative source bundle and a
+separate evaluator contract digest. A narrow no-shell provenance boundary may
+read only fixed local Git metadata and fixed source bytes; it has zero Git
+mutation authority. Persisted v2 requires a real nonzero HEAD, clean
+authoritative source, immutable no-replace storage, strict read-back, and
+replay. Exact-base and source-equivalent documentation-descendant statuses
+are derived at verification time; source/contract drift, dirty source,
+unrelated bases, and legacy v1 records fail closed or remain unverified.
+
+The read-only verifier is `npm run selfdev:verify -- --artifact-id
+<exact-session-id>`. The validated implementation checkpoint is
+`4602fac417746a30927fc19f8e4ca48ab9143cac`; local and isolated validation
+passed 562/562 full tests, 39 focused Phase 8A/8A.1 tests, 91/91
+owner/provenance tests, and 27/27 synthetic campaign tests. The acceptance
+artifact verified `VERIFIED_EXACT_BASE` with replay `PASS`; it remains
+`NOT_AUTHORIZED_PHASE_8A` and cannot produce a patch or source mutation.
+Phase 8A.1 is complete, Phase 8 remains `IN_PROGRESS`, and Phase 8B remains
+`NOT_STARTED`.
+
 ### Phase 8B — Controlled candidate source adoption (not started)
 
 Phase 8B is a possible future, separately authorized task. It is not

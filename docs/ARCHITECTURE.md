@@ -2,8 +2,8 @@
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
-review assistance, and the Phase 8A evaluated self-development sandbox
-foundation. This document describes the implemented scaffold, browser
+review assistance, the Phase 8A evaluated self-development sandbox foundation,
+and the Phase 8A.1 trusted evaluation provenance/replay boundary. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -75,8 +75,10 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
-| `src/core/selfDev/` | Explicit Phase 8A companion subsystem: strict candidate/evaluation DTOs, canonical identity, fixed local synthetic registries, deterministic proposer/evaluator, bounded budgets, and no-adoption results. | implemented; no adopter |
-| `bin/selfdev-synthetic.mjs` | Thin CLI wrapper for one bounded `SYNTHETIC_DETERMINISTIC` candidate/evaluation matrix; accepts only help or the fixed synthetic run. | implemented |
+| `src/core/selfDev/` | Explicit Phase 8A/8A.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, and no-adoption results. | implemented; no adopter |
+| `src/core/provenance/` | Fixed-path source-bundle/contract provenance and no-shell local Git metadata boundary; read-only only. | implemented |
+| `bin/selfdev-synthetic.mjs` | Thin wrapper for one bounded synthetic v2 session with locally attested provenance, replay, immutable write, and read-back summary. | implemented |
+| `bin/selfdev-verify.mjs` | Exact-ID read-only v1/v2 classifier, current-source assessment, and ordered replay verifier; no enumeration or mutation mode. | implemented |
 | `src/core/aiReview/ownerReview.ts` | Provider-free exact-ID owner snapshot loader, terminal-safe bug/oracle renderer, fixed confirmation semantics, projections, and v1 read-only handling. Read-only public service; no decision writer. | implemented |
 | `src/core/aiReview/ownerDecision.ts` | Internal digest-bound decision writer; raw helper is private and the confirmed entry is loaded only by the owner-review CLI. Creates review provenance, atomically persists it, and strictly reads it back. | implemented |
 | `bin/ai-owner-review.mjs` | Private human interface with only `show`, `status`, `decide`, and help; TTY gate, fixed decision boundary, sole tracked runtime loader of the internal decision writer, and no provider/network/Git/publication path. | implemented |
@@ -286,6 +288,53 @@ registration, Git, or repository-source-write capability. Results always carry
 `adoptionStatus=NOT_AUTHORIZED_PHASE_8A`, `publication=PROHIBITED`, and zero
 runtime writes/calls. Phase 8B source adoption is a future separate boundary,
 not a hidden continuation of this graph.
+
+### Phase 8A.1 trusted provenance and replay branch
+
+Phase 8A.1 extends the companion branch without adding an adopter:
+
+```text
+untrusted bounded proposal descriptor
+        ↓
+strict candidate/evaluation v2 DTOs and canonical session ID
+        ↓
+semantic result-state + candidate/evaluation/baseline binding
+        ↓
+fixed sourceBundleDigest + evaluator contractDigest
+        ↓
+real local Git HEAD / clean authoritative paths
+        ↓
+ordered stateful replay with deterministic clock
+        ↓
+immutable exact-ID private v2 artifact + read-back
+        ↓
+derived trust assessment → STOP
+```
+
+The persisted envelope contains a strict bounded replay descriptor rather
+than raw rejected proposals. Array order is authoritative because duplicate
+and coverage state is stateful. `artifactId` is recomputed before a filename
+is derived, and replay compares canonical bytes for every evaluation, not only
+the result class. A valid hash over a forged stable fingerprint, coverage
+delta, result class, candidate binding, baseline, or order therefore cannot
+become trusted evidence.
+
+The code-defined authoritative path manifest covers the self-development
+core, local provenance boundary, owner-scope/private-artifact policy, runtime
+wrappers, package manifests, and lockfile. Source bytes are hashed with
+length-prefixed relative paths and exact bytes. The contract digest separately
+covers schema versions, registries, budgets, policies, result-state and
+replay versions. Only the provenance boundary may execute fixed no-shell
+read-only Git metadata commands; the self-development core remains free of
+Git, child-process, network, and source-write authority.
+
+`VERIFIED_EXACT_BASE` and
+`VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` are integrity/currentness statuses,
+not approval. Every successful assessment retains
+`NOT_AUTHORIZED_PHASE_8A`, `PROHIBITED`, and zero side-effect counters. The
+future Phase 8B guard returns only read-only verified metadata/pass-candidate
+data after trust succeeds; it never returns a patch, writes source, mutates
+Git, invokes a model, contacts a product, or starts Phase 8B.
 
 Git continuity is intentionally separate from runtime authority. A validated
 substantive implementation SHA is a stable historical anchor; approved

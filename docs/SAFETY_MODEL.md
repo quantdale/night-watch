@@ -2,8 +2,9 @@
 
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
-7B/7B.1/7B.1.1/7B.1.2/7B.2.1/7B.3 bounded private AI review assistance and
-Phase 8A evaluated self-development sandbox safety.
+7B/7B.1/7B.1.1/7B.1.2/7B.2.1/7B.3 bounded private AI review assistance,
+Phase 8A evaluated self-development sandbox safety, and Phase 8A.1 trusted
+evaluation provenance/replay safety.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -758,6 +759,58 @@ Phase 8A validation at implementation checkpoint
 `d2a2978ede7c29d04e95f1625a736ce7c26004f9` passed typecheck, hardening, the
 23-test focused matrix, the 546-test current suite, the isolated deterministic
 checkout, and the existing AI/canary/provenance/agent-state/campaign gates.
+
+## 18. Phase 8A.1 trusted evaluation provenance and replay safety
+
+Phase 8A.1 adds integrity authority, not adoption authority. The v2 trust
+chain is:
+
+```text
+clean local Nightwatch source
+  → fixed sourceBundleDigest + evaluator contractDigest
+  → real local Git HEAD and one session baseline
+  → bounded replay descriptor
+  → ordered stateful deterministic replay
+  → semantic result-state and candidate/evaluation binding
+  → content-addressed immutable v2 session
+  → derived read-only trust assessment
+  → stop
+```
+
+The session ID is recomputed from canonical semantic fields with the ID
+omitted; a syntactically valid caller-supplied ID cannot select a filename or
+pass validation. The evaluator state machine rejects enum-valid but impossible
+tuples even when evaluation and session digests are recomputed. Replay
+regenerates the exact bounded synthetic sequence in array order using a
+constant injected monotonic clock and compares canonical evaluation bytes,
+including execution fingerprint, coverage, candidate binding, baseline, and
+zero-side-effect fields.
+
+The authoritative source set is fixed in trusted code and includes the
+self-development core, provenance/runtime boundary, policy inputs, wrappers,
+package manifests, and lockfile. Its digest is length-prefixed over ordered
+relative paths and exact bytes. `contractDigest` is a separate digest of the
+declared schemas, registries, budgets, policies, state-machine version, and
+replay algorithm; neither digest substitutes for the other. Documentation and
+task files are outside this source set, so a clean documentation descendant
+may remain source-equivalent while source drift fails closed.
+
+Only `src/core/provenance/localGit.ts` may invoke Git at runtime, and only
+with fixed no-shell read-only metadata operations: `rev-parse --show-toplevel`,
+`rev-parse HEAD`, unstaged/staged `diff --quiet`, bounded fixed-path
+`ls-files --others --exclude-standard`, and `merge-base --is-ancestor`.
+There is no fetch, remote, checkout, reset, clean, add, commit, push, apply,
+config mutation, or arbitrary argv/path forwarding. Dirty, staged, untracked,
+non-Git, unavailable, non-ancestor, and zero-base conditions fail closed.
+
+Persisted v2 artifacts require locally computed nonzero provenance, strict
+validation, replay before write, immutable no-replace storage, exact-ID read,
+and read-back replay. The verify CLI derives status and never writes an
+assessment. Legacy v1 remains readable-only and unverified. A successful
+assessment still reports `adoptionStatus=NOT_AUTHORIZED_PHASE_8A`,
+`publication=PROHIBITED`, and zero source/Git-write/external-call counters.
+The threat model excludes a malicious machine owner who rewrites source,
+artifacts, and verifier together; no secret signing key is introduced.
 
 ---
 

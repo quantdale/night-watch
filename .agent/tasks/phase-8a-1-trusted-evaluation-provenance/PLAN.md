@@ -137,7 +137,7 @@ is clean with Phase 8B still NOT_STARTED.
 - Add a dedicated Phase 8A.1 CI step while preserving early hardening and
   read-only permissions/full history.
 
-### M6 — Full validation and isolated checkout (`IN_PROGRESS`)
+### M6 — Full validation and isolated checkout (`COMPLETED`)
 
 - Run focused tests first, then typecheck, hardening, applicable AI/canary,
   owner/provenance, agent-state, campaign, Playwright, whitespace, privacy,
@@ -146,19 +146,22 @@ is clean with Phase 8B still NOT_STARTED.
   tests; typecheck, hardening, agent-state, whitespace, and privacy checks
   passed. The first clean clone exposed a test-fixture portability defect in
   the injected private-root location; the fixture was repaired to use a
-  temporary home-directory root and must be revalidated from a new checkpoint.
+  temporary home-directory root and the replacement checkpoint passed a
+  fresh full-history clone.
 - Validate a fresh full-history clone with `npm ci --ignore-scripts` and the
   deterministic checks, including a temp private root and Git provenance.
 
-### M7 — Substantive checkpoint, acceptance artifact, and CI (`PENDING`)
+### M7 — Substantive checkpoint, acceptance artifact, and CI (`COMPLETED`)
 
 - Update state with stable anchors, validate diff/privacy, commit/push the
   implementation-bearing checkpoint, verify `HEAD == origin/main`, and inspect
   exact substantive CI if available.
 - At clean substantive SHA run one normal synthetic session, capture only its
-  sanitized ID/digests/counts, and verify exact-base trust.
+  sanitized ID/digests/counts, and verify exact-base trust. Completed at
+  `4602fac417746a30927fc19f8e4ca48ab9143cac`; exact CI run `31822125738`
+  passed and the artifact verified `VERIFIED_EXACT_BASE` with replay `PASS`.
 
-### M8 — Documentation closure and final CI (`PENDING`)
+### M8 — Documentation closure and final CI (`IN_PROGRESS`)
 
 - Update project state/safety/decisions/roadmap/architecture and task report;
   close ACTIVE_TASK only after all acceptance evidence is recorded.
