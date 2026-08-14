@@ -35,8 +35,11 @@ M6 — Full local, isolated, and adversarial validation.
 ## Work In Progress
 
 The implementation and focused matrix pass locally. Full current Playwright,
-synthetic campaign, agent-state, isolated clean-checkout, checkpoint, and exact
-final-CI evidence remain before task closure.
+synthetic campaign, and agent-state evidence pass. The first isolated clone
+found a test-fixture portability issue: its CLI helper placed the synthetic
+root under `/var/tmp`, which was the clone workspace parent and therefore
+correctly rejected by private-root policy. The helper now selects a sibling
+temporary base; the clean matrix must be rerun with fail-fast semantics.
 
 ## IMMUTABLE_PUBLICATION_PRIMITIVE
 
@@ -209,6 +212,9 @@ PENDING: implementation and documentation pushes plus exact final
   `generatedAt` bytes.
 - Directory fsync failure is reported after publication without removing the
   winner, so the durability claim remains precise rather than transactional.
+- Clean-checkout validation must keep CLI test roots outside the isolated
+  clone's workspace parent, just as production private roots stay outside the
+  repository/workspace.
 
 ## Blockers
 
@@ -229,9 +235,10 @@ real owner-review activity performed. Synthetic local child processes only.
 
 ## Exact Next Action
 
-Run the isolated clean-checkout validation, complete the manual staged diff
-and privacy review, then commit and push the validated implementation
-checkpoint. Repair any failure before the checkpoint.
+Rerun the isolated clean-checkout validation with fail-fast semantics after the
+CLI fixture-base repair; then complete the manual staged diff/privacy review,
+commit and push the validated follow-up implementation checkpoint, and proceed
+to documentation closure.
 
 ## Resume Recipe
 

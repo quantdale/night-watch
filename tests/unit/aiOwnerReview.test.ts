@@ -36,6 +36,17 @@ import { runNodeRace } from './support/crossProcessRace';
 const ROOT = path.resolve(__dirname, '../..');
 const OWNER_RACE_CHILD = path.resolve(__dirname, '../fixtures/ai-owner-decision-race-child.mjs');
 const BUG_FINGERPRINT = 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
+
+function externalTempBase(): string {
+  const workspaceRoot = path.resolve(ROOT, '..');
+  for (const candidate of ['/var/tmp', '/tmp']) {
+    const relative = path.relative(workspaceRoot, candidate);
+    const insideWorkspace = relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+    if (!insideWorkspace) return candidate;
+  }
+  throw new Error('SYNTHETIC_EXTERNAL_TEMP_BASE_UNAVAILABLE');
+}
+
 const FAILURE_SAFETY = {
   productionAttempts: 0,
   proxyViolations: 0,
@@ -138,10 +149,10 @@ function cli(args: string[], privateRoot?: string) {
   try {
     if (privateRoot !== undefined) {
       // The private-store policy treats an env override as an operator root
-      // and correctly rejects one inside the canonical workspace. A clean
-      // checkout under /tmp therefore needs its synthetic child root outside
-      // /tmp while retaining the same fixture bytes and owner-only modes.
-      childRoot = fs.mkdtempSync(path.join('/var/tmp', 'nightwatch-owner-review-cli-'));
+      // and correctly rejects one inside the checkout workspace. Select a
+      // sibling temporary base so this remains valid in both the canonical
+      // checkout and an isolated clone under /tmp or /var/tmp.
+      childRoot = fs.mkdtempSync(path.join(externalTempBase(), 'nightwatch-owner-review-cli-'));
       fs.chmodSync(childRoot, 0o700);
       for (const file of fs.readdirSync(privateRoot)) {
         const source = path.join(privateRoot, file);
