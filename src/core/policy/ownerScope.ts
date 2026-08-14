@@ -21,7 +21,9 @@ export type OwnerAllowedOperation =
   | 'DETERMINISTIC_REPLAY'
   | 'SYNTHETIC_FIXTURE'
   | 'PRIVATE_EVIDENCE'
-  | 'PRIVATE_TRIAGE';
+  | 'PRIVATE_TRIAGE'
+  | 'AI_REVIEW_LOCAL'
+  | 'AI_ORACLE_SUGGESTION_LOCAL';
 
 export type OwnerBlockedOperation =
   | 'GCP_INFRASTRUCTURE_ARCHAEOLOGY'
@@ -67,6 +69,8 @@ const ALLOWED_OPERATIONS = new Set<string>([
   'SYNTHETIC_FIXTURE',
   'PRIVATE_EVIDENCE',
   'PRIVATE_TRIAGE',
+  'AI_REVIEW_LOCAL',
+  'AI_ORACLE_SUGGESTION_LOCAL',
 ]);
 
 export const FROZEN_OWNER_OPERATIONS: readonly OwnerBlockedOperation[] = [
@@ -140,4 +144,3 @@ export function executeOwnerScoped<T>(operation: OwnerScopedOperation, executor:
 export function isOwnerPolicyBlocked(operation: string): boolean {
   return !decideOwnerScope(operation).allowed;
 }
-

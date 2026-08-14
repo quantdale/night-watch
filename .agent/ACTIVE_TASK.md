@@ -1,24 +1,22 @@
 # Active Task
 
-Task ID: codebase-hardening-campaign-1-1-closeout
-Phase: Private/local corrective closeout for Hardening Campaign I
-Title: Nightwatch Codebase Hardening Campaign I.1 Closeout
-Status: COMPLETE
-Task directory: .agent/tasks/codebase-hardening-campaign-1-1-closeout
-Starting SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
-Current SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
-Last validated implementation SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
-Current milestone: M4 — durable reconciliation and final closure (COMPLETE).
+Task ID: phase-7b-bounded-ai-review-assistance
+Phase: 7B — Bounded Private AI Review Assistance
+Title: Nightwatch Phase 7B — Bounded Private AI Review Assistance
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-7b-bounded-ai-review-assistance
+Starting SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
+Current SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
+Last validated implementation SHA: 123ffbce31c4c2b09ddb91d8aa59b6ddc611c908
+Current milestone: M6 — adversarial authority/privacy matrix.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: I.1 documentation checkpoint pushed at
-`801c307f77c27f33e4612462fffd08c4cf60fc60`; its exact workflow run
-`31758018614` passed. A final completion-state documentation descendant is
-pending.
-Next action: verify the exact final documentation-descendant workflow after
-the completion-state push, then leave the clean tree. Preserve the historical
-Hardening I task as COMPLETE, Phase 7 COMPLETE, and Phase 6 frozen by owner.
+Last checkpoint: focused Phase 7B implementation validation is green in the working tree; no commit yet.
+Next action: run M7 isolation/full validation, update durable project/task
+documentation, inspect privacy/diff, then create the first validated
+checkpoint. Preserve Hardening I/I.1 COMPLETE, Phase 7 COMPLETE, and Phase 6
+FROZEN_BY_OWNER.
 
 ## Prior phase closure handoff
 

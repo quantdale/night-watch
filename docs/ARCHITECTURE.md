@@ -1,6 +1,7 @@
 # Nightwatch Architecture
 
-Status: Phase 1.2 plus private local evidence triage. This document describes the implemented scaffold, browser
+Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
+campaigns, and Phase 7B bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -70,6 +71,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/ownerScope.ts` | Central owner-scope gate. Allows local/source/contained DEV/replay/evidence operations and rejects frozen infrastructure, datastore, deployment, and external-publication classes with `OWNER_POLICY_BLOCKED`. | implemented |
 | `src/core/policy/privateArtifacts.ts` | Owner-only local atomic JSON store for private dossiers and summaries; default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
+| `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
 | `config/environments/` | Per-environment allowlists and labels with provenance: `local.json`, `dev.json`, `next.json`; `production.json` documents the rejected surface only. | implemented |
@@ -157,6 +159,25 @@ source relevance + conservative application-layer boundary
         ↓
 owner-only local bug dossier / overnight summary / morning brief
 ```
+
+Optional owner-invoked Phase 7B review is a one-way companion branch:
+
+```
+sanitized deterministic AI-ready package or Phase 3 structural change DTO
+        ↓
+synthetic provider or explicit loopback-local provider
+        ↓
+strict hostile-output validator
+        ↓
+owner-only AI-generated/unreviewed companion artifact
+        ↓
+separate owner review record
+```
+
+The branch cannot flow back into anomaly admission, evidence level, campaign
+state, safety/privacy vectors, action/oracle catalogs, browser/API execution,
+Phase 6, publication, Git, or source. Phase 7 campaign execution remains
+deterministic and does not invoke this branch.
 
 There is deliberately no datastore or infrastructure branch in this flow.
 
@@ -288,6 +309,14 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
   atomically with owner-only permissions under the external default root
   `$HOME/.nightwatch/findings/`; repository-local `.nightwatch/` is ignored
   for injected test stores. No external publication connector exists.
+- Phase 7B AI review artifacts are companion data in the same owner-only
+  external store. Only synthetic fixtures, schemas, code, tests, and sanitized
+  task/project documentation are committed. No raw prompt, response,
+  credential, customer value, finding, transcript, or model secret enters Git.
+- The only AI provider classes are synthetic local and explicit loopback local.
+  The loopback adapter fixes the endpoint path, requires `http:` loopback
+  hosts, bounds bytes/time, sends no credentials, follows no redirects, and
+  has no proxy/cloud fallback.
 
 ---
 

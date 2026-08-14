@@ -1,7 +1,8 @@
 # Nightwatch Safety Model
 
-Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2
-and the private local evidence-triage task.
+Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
+private local evidence triage, Phase 7 deterministic campaigns, and Phase 7B
+bounded private AI review assistance.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -559,7 +560,55 @@ test (all under `tests/unit` unless noted):
 
 ---
 
+## 16. Phase 7B bounded AI review safety
+
+Phase 7B is an optional post-processing branch over sanitized deterministic
+evidence. It is not a campaign stage, oracle, action planner, browser/API
+client, credential consumer, database/infrastructure adapter, publication
+connector, Git writer, or self-development loop.
+
+The only accepted provider classes are `SYNTHETIC_LOCAL` and
+`LOOPBACK_LOCAL`. The synthetic provider is required for acceptance and CI.
+The loopback adapter requires an explicit `http:` endpoint at `localhost`,
+`127.0.0.1`, or `::1`, the fixed model path, bounded input/output and timeout,
+no credentials or arbitrary headers, no proxy, no redirect following, no
+tools/functions, and no remote fallback. No cloud AI dependency, API key,
+model download, or real model canary is required.
+
+The input boundary reuses `nightwatch.ai-ready-evidence.private.v1` and
+accepts bug drafting only at L2/L3. Exact-key runtime validators reject raw
+data-shaped fields, secret/PII sentinels, non-PASS privacy, nonzero safety,
+transient uncertainty, malformed input, invented references, and digest
+tampering before provider invocation. Output validators reject unknown keys,
+control fields, tool/shell/code/mutation/publication/Phase 6 language,
+invented references, immutable-fact changes, oversized/malformed output, and
+secret/PII sentinels. Errors contain only safe class/size/digest metadata.
+
+Validated artifacts are explicitly `AI_GENERATED_UNREVIEWED`, carry visible AI
+provenance, retain deterministic facts copied from input, and are written as
+owner-only private companions through the existing atomic store outside Git.
+Human approval is a separate digest-bound record. Bug approval does not admit
+evidence or publish it. Oracle approval means only
+`APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest, action,
+source, request, or callback can be changed. Input digest/snapshot changes
+make old artifacts stale/superseded.
+
+The deterministic Phase 7 campaign is validated independently with AI absent;
+there is no campaign-to-provider hook. Current safety acceptance requires zero
+DEV/NEXT/production contacts, product mutations, database/infrastructure
+queries, external publication, external AI calls, AI tool executions, and AI
+source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
+Phase 8 remains unstarted.
+
+Phase 7B mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+privacy/safety, references, immutable facts, synthetic failure modes,
+prompt-injection/hallucination, human review, staleness, owner scope, and
+oracle isolation; `tests/unit/aiReviewLoopback.test.ts` covers endpoint class,
+request privacy, redirect, response-size, and timeout containment;
+`bin/hardening-check.mjs` enforces the source-level no-capability boundary.
+
+---
+
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-and the Phase 4
-authentication/MCP boundary; changes require a DECISIONS entry and a test
-update.*
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B AI review;
+changes require a DECISIONS entry and a test update.*

@@ -878,3 +878,50 @@ continues through Playwright without MCP.
 
 **Phase applicability.** Phase 4 DEV auth refresh and later workflows that
 reuse the same boundary.
+
+## D-33 — Phase 7B AI is a private review assistant, never an authority
+
+**Decision.** Phase 7B consumes only the existing sanitized deterministic
+`nightwatch.ai-ready-evidence.private.v1` projection and emits owner-only
+companion artifacts. Runtime validators, not model instructions, enforce exact
+schemas, privacy/safety vectors, bounded references, immutable deterministic
+facts, L2/L3 eligibility, and explicit `AI_GENERATED_UNREVIEWED` status.
+Human review is a separate digest-bound record. Approval means only that the
+owner finds the text useful; it does not admit a finding, verify a cause,
+change evidence level or campaign state, execute an action, publish, or alter
+Nightwatch source.
+
+The two products are the versioned private bug draft and conceptual oracle
+suggestion. Oracle approval can only produce
+`APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest, action
+catalog, generated code, request, or callback is reachable from the artifact.
+
+**Rationale.** Model hallucination, prompt injection, unsupported causal
+language, and arbitrary output must remain harmless untrusted data. Keeping the
+deterministic evidence path one-way preserves Nightwatch's existing oracle,
+safety, privacy, owner-scope, and campaign authority.
+
+**Consequences.** The provider interface has no tools, filesystem, shell,
+browser, API, database, infrastructure, MCP, or Git capability. The required
+provider is synthetic local; the optional adapter accepts only an explicit
+loopback endpoint with bounded transport and no cloud fallback. Runtime AI
+artifacts use the existing owner-only private store outside Git.
+
+**Phase applicability.** Phase 7B and all later work that consumes AI review
+artifacts. Phase 8 remains a separate, unstarted task.
+
+## D-34 — AI owner-scope operations are explicit and narrowly local
+
+**Decision.** The owner policy permits only `AI_REVIEW_LOCAL` and
+`AI_ORACLE_SUGGESTION_LOCAL` for Phase 7B. Unknown AI operation classes and
+all product, datastore, infrastructure, publication, team-coordination,
+self-edit, and external-provider classes fail closed with
+`OWNER_POLICY_BLOCKED` before any executor callback.
+
+**Rationale.** Adding a broad AI or agent operation would create an accidental
+owner-policy bypass and blur the permanent Phase 6 freeze.
+
+**Consequences.** Phase 7 campaign commands remain independent of AI review;
+no AI provider is a campaign dependency or safety decision-maker.
+
+**Phase applicability.** Phase 7B.

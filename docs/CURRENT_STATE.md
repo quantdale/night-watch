@@ -2,7 +2,8 @@
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
 > the Nightwatch Hardening Campaign I.1 closeout. Phase 0–5 are complete;
-> Phase 6 is frozen by owner; Phase 7 and Hardening Campaign I are complete.
+> Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, and Phase 7B
+> are complete. Phase 8 remains unstarted.
 
 ---
 
@@ -331,6 +332,41 @@ The source repository now has a verified private canonical remote:
 `origin` → `quantdale/night-watch`, branch `main`. This changes only the
 development checkpoint/review path; runtime findings remain local and are
 never pushed or published.
+
+## Phase 7B — Bounded private AI review assistance (complete)
+
+The native task is `.agent/tasks/phase-7b-bounded-ai-review-assistance/`.
+Phase 7B adds an optional, owner-invoked review-assistance layer over the
+existing deterministic `nightwatch.ai-ready-evidence.private.v1` projection.
+The model receives only strict sanitized structural DTOs and returns opaque
+data that must pass exact-key runtime validation before it can become a
+private companion artifact.
+
+The bug-draft product is `nightwatch.ai-bug-draft.private.v1` and admits only
+L2/L3 candidates. It preserves deterministic candidate identity, evidence
+level, source relevance, browser/API differential, fault boundary, safety,
+privacy, and unresolved deployment status; AI prose is visibly labeled
+`AI-GENERATED — UNVERIFIED — HUMAN REVIEW REQUIRED`. The oracle product is
+`nightwatch.ai-oracle-suggestion.private.v1`; it contains only conceptual
+deterministic-check suggestions and `executable=false`. Owner approval of an
+oracle suggestion means `APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW` only and
+does not modify a registry, campaign manifest, action catalog, source file, or
+request path. Human review records use
+`nightwatch.ai-human-review.private.v1` and are digest-bound.
+
+The required provider is deterministic synthetic local. The optional provider
+is explicit HTTP loopback only (`localhost`, `127.0.0.1`, or `::1`) with fixed
+path, bounded bytes/time, no credentials, redirects, proxy, tools, shell,
+browser/API/database/infrastructure access, or remote fallback. No cloud AI
+SDK, credential, model download, or real model canary is required. Runtime AI
+artifacts use the existing owner-only atomic private store outside Git; raw
+prompts, raw responses, real findings, and transcripts are not persisted.
+
+The Phase 7 campaign remains deterministic and does not invoke AI. Phase 6
+remains `FROZEN_BY_OWNER` with L4 `OUT_OF_SCOPE_BY_OWNER`; Phase 8 autonomous
+self-development was not started. Full validation passed with 436/436
+Playwright tests, including the Phase 7B synthetic and loopback matrix, plus
+TypeScript, hardening, synthetic campaign, owner-scope, and Phase 6 checks.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

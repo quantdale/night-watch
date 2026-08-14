@@ -427,30 +427,47 @@ validation and architecture/adversarial review passed. Phase 6 remains
 permanently
 `FROZEN_BY_OWNER`/`OUT_OF_SCOPE_BY_OWNER`.
 
-## Phase 7B — Bounded AI assistance (deferred)
+## Phase 7B — Bounded private AI review assistance (complete)
 
-**Goal.** Use a model as a *review assistant*, not a decision-maker:
-triaging candidate bugs (L2+) into drafts and generating oracle-check
-candidates from contract diffs — all human-reviewed.
+**Goal.** Use an optional local model as a *review assistant*, not a
+decision-maker, over already-sanitized deterministic evidence. Phase 7B is
+complete as a private, offline-first companion-artifact boundary.
 
 **Key deliverables.**
 
-- Candidate triage: cluster L2+ observations, draft bug descriptions with
-  the RECON_B §12 bundle attached.
-- Contract-diff → oracle-suggestion pipeline over Phase 3 change data.
-- Review workflow: every AI-produced artifact is labeled AI-generated and
-  requires human sign-off before any filing.
+- Strict runtime input/output DTOs reuse the existing
+  `nightwatch.ai-ready-evidence.private.v1` package and admit bug drafts only
+  for L2/L3 evidence.
+- A deterministic synthetic provider covers valid, malformed, oversized,
+  prompt-injection, hallucination, privacy, timeout, and control-request
+  cases. The optional adapter accepts only an explicit HTTP loopback endpoint,
+  with bounded request/response/timeout and no credentials, redirects, proxy,
+  tools, or cloud fallback.
+- Bug drafts use `nightwatch.ai-bug-draft.private.v1`; oracle suggestions use
+  `nightwatch.ai-oracle-suggestion.private.v1`; human decisions use
+  `nightwatch.ai-human-review.private.v1`. All are owner-only private
+  companion artifacts with visible AI provenance and human-review gating.
+- Phase 3 change input is structural (paths, relations, journey/API links,
+  source relevance, snapshots, and coverage classes), not a source dump or
+  arbitrary diff. Oracle suggestions are conceptual and cannot register,
+  execute, or generate an oracle.
+- Offline `hardening:check`, CI, campaign-isolation, oracle-isolation,
+  staleness, reference-integrity, privacy, owner-scope, loopback, and full
+  Playwright validation preserve deterministic Nightwatch authority.
 
 **Non-goals / exclusions.** Autonomous filing (L3+ gate stays); model-driven
-mutation choices; unbounded exploration budgets.
+mutation choices; unbounded exploration budgets; cloud providers; real model
+downloads; campaign auto-hooks; product/browser/API/database/infrastructure
+operations; publication; Git writes; source modification; and Phase 8.
 
 **Dependencies.** The private deterministic dossier layer above; any future AI
 remains a review assistant and never an oracle. No Phase 6 datastore work is a
-prerequisite or recommendation.
+prerequisite or recommendation. Runtime AI artifacts remain outside Git under
+the owner-only private findings store.
 
 ---
 
-## Phase 8 — Evaluated autonomous self-development (with guardrails)
+## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)
 
 **Goal.** Nightwatch extends itself: generating scenarios and tests for
 its own suite, evaluated before adoption — while the read-only boundary
