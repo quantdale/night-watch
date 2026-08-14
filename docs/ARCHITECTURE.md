@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
-campaigns, and Phase 7B/7B.1/7B.1.1 bounded private AI review assistance. This document describes the implemented scaffold, browser
+campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2 bounded private AI review assistance. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -72,7 +72,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/privateArtifacts.ts` | Owner-only local atomic JSON store for private dossiers and summaries; default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
-| `bin/agent-state.mjs` | Read-only task continuity validator: stable implementation/documentation SHA roles, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
+| `bin/agent-state.mjs` | Read-only task continuity validator: claimed-commit implementation/documentation SHA roles, STARTING_SHA lineage, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
 | `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
 | `config/environments/` | Per-environment allowlists and labels with provenance: `local.json`, `dev.json`, `next.json`; `production.json` documents the rejected surface only. | implemented |
@@ -168,7 +168,11 @@ sanitized deterministic AI-ready package or Phase 3 structural change DTO
         ↓
 AiReviewSession attempt/deadline authority
         ↓
-strict input/local-provider validation and shared provider-call reservation
+strict input/local-provider validation
+        ↓
+final runtime/cap admission and cancellation context
+        ↓
+providerCalls += 1 immediately before private handler entry
         ↓
 private synthetic provider or explicit loopback-local provider
         ↓
@@ -193,10 +197,13 @@ There is deliberately no datastore or infrastructure branch in this flow.
 Git continuity is intentionally separate from runtime authority. A validated
 substantive implementation SHA is a stable historical anchor; approved
 documentation descendants may advance live history without changing that
-anchor. `bin/agent-state.mjs` discovers local HEAD (and the available
-`origin/main` ref) from Git at check time. It does not require a persisted
-current-head field, does not compare a file to its containing commit, and never
-rewrites state.
+anchor. For a new implementation claim, `bin/agent-state.mjs` inspects the
+claimed commit's own changed paths with read-only `git diff-tree` semantics and
+fails closed on documentation-only or ambiguous merge roles; it also validates
+the relationship to `STARTING_SHA`. The checker discovers local HEAD (and the
+available `origin/main` ref) from Git at check time. It does not require a
+persisted current-head field, does not compare a file to its containing commit,
+and never rewrites state.
 
 ---
 
@@ -336,7 +343,7 @@ No runtime dependencies beyond Playwright; all packages are devDependencies
   has no proxy/cloud fallback.
 - The public AI execution surface is `AiReviewSession`; exported validators,
   storage, rendering, and review helpers cannot invoke a provider. The shared
-  provider reservation is the only provider call path. Generated v2 artifacts
+  final provider-admission boundary is the only provider call path. Generated v2 artifacts
   remain unreviewed; owner decisions are companion records and never rewrite
   model identity or artifact bytes.
 

@@ -520,6 +520,33 @@ database, infrastructure, publication, owner-review CLI, or Phase 8 work was
 used. Phase 7B.1 remains a complete historical predecessor and Phase 8 remains
 `NOT_STARTED`.
 
+### Phase 7B.1.2 — Final integrity closeout (complete)
+
+This final local/static/synthetic descendant closed the remaining provider-call
+accounting and continuity-role gaps without adding AI capability. The stable
+implementation/substantive checkpoint is
+`257cc294850344149fd4c5b657beeff07e511c91`.
+
+**Key deliverables.**
+
+- The provider boundary performs final monotonic runtime and shared-cap
+  admission, then increments `providerCalls` immediately before the private
+  registered-handler call in the same synchronous stack. A final deadline
+  expiry cannot consume a call; handler-entry failures consume it and are not
+  refunded.
+- The read-only continuity validator proves the role of the claimed commit
+  itself, validates `STARTING_SHA` ancestry and ACTIVE_TASK/STATE agreement,
+  rejects same-value documentation role forgery and ambiguous merge claims,
+  and preserves carried-forward implementation anchors.
+- Private hardening CI independently executes the serialized synthetic
+  agent-state matrix with full Git history and read-only contents permission.
+
+**Validation.** AI/loopback `64/64`, continuity `32/32`, synthetic campaign
+`27/27`, full Playwright `481/481`, typecheck, hardening, privacy, agent check,
+diff check, isolated clean checkout, and the exact final GitHub Actions run
+passed. Phase 7B.1 remains historical `COMPLETE`, Phase 6 remains
+`FROZEN_BY_OWNER`, and Phase 8 remains `NOT_STARTED`.
+
 ---
 
 ## Phase 8 — Evaluated autonomous self-development (with guardrails; not started)

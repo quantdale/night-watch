@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Nightwatch Phase 7B.1.1 runtime/continuity closeout. Phase 0–5 are complete;
-> Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, and Phase 7B
-> are complete. Phase 8 remains unstarted.
+> the Nightwatch Phase 7B.1.2 final integrity closeout. Phase 0–5 are complete;
+> Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1, Phase 7B, and
+> Phase 7B.1.2 are complete. Phase 8 remains unstarted.
 
 ---
 
@@ -25,7 +25,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `198f26ca79803c1bedac9aa08a71ecbd542ee804` (stable validated Phase 7B.1.1 substantive implementation anchor) |
+| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (stable validated Phase 7B.1.2 substantive implementation anchor) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -430,6 +430,39 @@ passed, with no real model, product traffic, campaign, authentication,
 database, infrastructure, publication, or owner-review CLI activity. Phase
 7B.1 remains a complete historical predecessor and Phase 8 remains
 `NOT_STARTED`.
+
+## Phase 7B.1.2 — Final integrity closeout (complete)
+
+This narrow final hardening descendant closed the two remaining semantic
+integrity gaps and added an independent private CI recovery gate. The stable
+provider-accounting and continuity-role implementation/substantive checkpoint
+is `257cc294850344149fd4c5b657beeff07e511c91`; the first approved
+documentation checkpoint is `746a578a2440c2087442819e92eeed77234836ef`.
+The final documentation-containing SHA remains discoverable only from Git.
+
+- `providerCalls` now increments only in the synchronous final provider
+  boundary immediately before registered-handler entry. Final monotonic
+  runtime and shared-cap admission occur before that increment; a deadline
+  expiring before entry leaves both the counter and provider invocation count
+  at zero. Handler-entry throws, timeout, malformed/schema-invalid output,
+  and storage failures consume the already-entered call without refunds.
+- `bin/agent-state.mjs` validates `STARTING_SHA` lineage, distinguishes
+  carried-forward implementation anchors from new claims, and inspects the
+  claimed commit's own `git diff-tree` paths. Equal validated/substantive
+  documentation-only claims, ambiguous merges, and unrelated lineages fail
+  closed with role/lineage diagnostics; legitimate source-plus-docs and
+  carried-forward histories remain valid.
+- `.github/workflows/hardening.yml` independently runs the serialized
+  synthetic `tests/unit/agent-state.test.ts` matrix with full Git history and
+  `contents: read` permissions.
+
+Validation passed with AI/loopback `64/64`, continuity `32/32`, synthetic
+campaign `27/27`, full Playwright `481/481`, typecheck, hardening, privacy,
+agent-state, diff, and isolated clean-checkout checks. The exact final
+`Nightwatch hardening` workflow run and its continuity step passed at the
+final live SHA. No real model, product traffic, data/infrastructure query,
+publication, credential, customer value, or authenticated evidence was used.
+Phase 7B.1.1 remains historical `COMPLETE`; Phase 8 remains `NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

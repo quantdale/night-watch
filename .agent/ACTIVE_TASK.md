@@ -3,20 +3,21 @@
 Task ID: phase-7b-1-2-final-integrity-closeout
 Phase: 7B.1.2 — Final Integrity Closeout
 Title: Nightwatch Phase 7B.1.2 — Final Integrity Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-7b-1-2-final-integrity-closeout
 Starting SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
 Last validated implementation SHA: 257cc294850344149fd4c5b657beeff07e511c91
-Current milestone: M6 — full local and isolated validation (IN_PROGRESS).
+Current milestone: M7 — architecture/adversarial review and durable closure (COMPLETE).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: 2026-08-14 substantive implementation checkpoint
-257cc294850344149fd4c5b657beeff07e511c91 pushed; live HEAD remains discovered
+Last checkpoint: 2026-08-14 final documentation closure prepared from stable
+implementation `257cc294850344149fd4c5b657beeff07e511c91` and documentation
+anchor `746a578a2440c2087442819e92eeed77234836ef`; live HEAD remains discovered
 from Git and is not persisted as self-reference.
 Live local/remote HEAD: DISCOVER_FROM_GIT.
-Next action: record this stable anchor, run the isolated clean-checkout
-validation, and verify the exact final GitHub Actions run.
+Next action: report final live Git equality and exact successful CI run, then
+stop. Do not start another task.
 Do not start Phase 8 or the owner-review CLI; preserve Phase 7B.1 historical
 COMPLETE, Hardening I/I.1 COMPLETE, Phase 7 COMPLETE, and Phase 6 frozen.
 

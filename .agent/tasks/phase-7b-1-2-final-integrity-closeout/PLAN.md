@@ -152,7 +152,7 @@ role attribution rather than using a range-only proxy for the claimed commit.
 - Acceptance criteria: exact final workflow shows the step executed and
   succeeded.
 - Validation commands: local equivalent plus final GitHub Actions inspection.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Full local and isolated validation
 
@@ -164,7 +164,7 @@ role attribution rather than using a range-only proxy for the claimed commit.
 - Acceptance criteria: every applicable check passes; no forbidden activity;
   clean isolated checkout and clean canonical worktree.
 - Validation commands: acceptance command set in SPEC and task state ledger.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M7 — Architecture/adversarial review and durable closure
 
@@ -178,7 +178,7 @@ role attribution rather than using a range-only proxy for the claimed commit.
   self-reference; Phase 8 and owner-review CLI remain untouched.
 - Validation commands: `git diff --check`, `git fetch origin`, Git SHA
   equality, exact GitHub Actions run/job/step inspection.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 

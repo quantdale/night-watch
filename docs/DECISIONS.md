@@ -1025,3 +1025,46 @@ paths changed after its implementation anchor. Historical task files remain
 read-compatible without rewriting their reports.
 
 **Phase applicability.** Phase 7B.1.1 and all later Nightwatch development.
+
+## D-39 — Provider accounting is committed at the final exposure boundary
+
+**Decision.** `providerCalls` means an actual attempt to enter a registered
+provider handler. Final admission calculates the monotonic remaining session
+runtime, rejects expiry and the shared cap, computes the effective timeout,
+creates the cancellation context, increments the counter once, and enters the
+private handler immediately in the same synchronous stack. There is no await or
+second pre-handler check between the increment and entry. Locality/registration
+failure and final-deadline expiry therefore leave the counter at zero, while a
+synchronous handler throw counts because the handler was entered. Timeout,
+malformed/schema-invalid output, and storage failure after entry consume the
+call without refund.
+
+**Rationale.** A reservation before final deadline admission can report a
+provider exposure that never occurred. Colocating the increment with the
+registered-handler call makes the counter describe the semantic event it names
+and preserves the shared three-call cap under synchronous JavaScript
+interleaving.
+
+**Phase applicability.** Phase 7B.1.2 and all later local AI review consumers.
+
+## D-40 — New implementation anchors must prove the claimed commit's own role
+
+**Decision.** When a task advances `LAST_VALIDATED_IMPLEMENTATION_SHA` beyond
+`STARTING_SHA`, `bin/agent-state.mjs` validates that the claimed commit is a
+descendant and inspects its own changed paths with read-only `git diff-tree`
+semantics. A commit changing only the approved documentation/continuity
+allowlist is `INVALID_IMPLEMENTATION_ROLE`; ambiguous merge attribution and
+unrelated lineages fail closed. A carried-forward implementation anchor that
+predates or equals `STARTING_SHA` remains valid for documentation-only work.
+`LAST_SUBSTANTIVE_CHECKPOINT_SHA` remains equal to the validated implementation
+anchor for new implementation checkpoints, while documentation descendants
+remain a separate role. Live HEAD continues to come from Git and is never
+serialized self-referentially.
+
+**Rationale.** Range-only checks allow a docs commit after a real source commit
+to masquerade as the implementation checkpoint, including when validated and
+substantive fields are forged to the same docs SHA. Direct claimed-commit role
+proof closes that bypass without rejecting legitimate docs descendants or
+historical carried-forward anchors.
+
+**Phase applicability.** Phase 7B.1.2 and all later Nightwatch development.

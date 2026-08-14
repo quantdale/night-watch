@@ -2,7 +2,7 @@
 
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
-7B/7B.1/7B.1.1 bounded private AI review assistance.
+7B/7B.1/7B.1.1/7B.1.2 bounded private AI review assistance.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -560,7 +560,7 @@ test (all under `tests/unit` unless noted):
 
 ---
 
-## 16. Phase 7B/7B.1/7B.1.1 bounded AI review safety
+## 16. Phase 7B/7B.1/7B.1.1/7B.1.2 bounded AI review safety
 
 Phase 7B is an optional post-processing branch over sanitized deterministic
 evidence. It is not a campaign stage, oracle, action planner, browser/API
@@ -594,16 +594,19 @@ bound to artifact ID, artifact kind/schema, full artifact digest, deterministic
 review ID, `reviewerClass=OWNER`, and `publication=PROHIBITED`.
 
 `AiReviewSession` is the only supported provider-execution authority. Candidate
-and oracle attempt maxima are owner-request bounds; `providerCalls` is the
-shared actual provider-boundary exposure count. Attempt and provider-call
-reservations are synchronous, so invalid input consumes only an attempt and
-concurrent requests cannot exceed the shared cap. Provider errors, rejected
-output, and private-storage failures after entry consume the call and are not
-refunded. Bug approval does not admit evidence or publish it. Oracle approval
-means only `APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest,
-action, source, request, or callback can be changed. Effective approval is
-derived from the artifact, validated record, digest match, and current input;
-input digest/snapshot changes make old artifacts `STALE`.
+and oracle attempt maxima are owner-request bounds; `providerCalls` is exactly
+the number of attempts to enter a registered provider handler. The final
+boundary calculates monotonic remaining runtime, rejects expiry and shared-cap
+exhaustion, computes the effective timeout, creates cancellation context,
+increments once, and enters the handler immediately in the same synchronous
+stack. Invalid/locality failures and final-deadline expiry consume no provider
+call; handler-entry throws, provider errors, rejected output, and
+private-storage failures after entry consume the call and are not refunded.
+Bug approval does not admit evidence or publish it. Oracle approval means only
+`APPROVED_FOR_MANUAL_IMPLEMENTATION_REVIEW`; no registry, manifest, action,
+source, request, or callback can be changed. Effective approval is derived from
+the artifact, validated record, digest match, and current input; input
+digest/snapshot changes make old artifacts `STALE`.
 
 The session runtime budget is separate from wall-clock artifact metadata. Its
 default authority is Node's monotonic `performance.now()` in milliseconds;
@@ -624,16 +627,22 @@ queries, external publication, external AI calls, AI tool executions, and AI
 source modifications. Phase 6 remains permanently `FROZEN_BY_OWNER`, and
 Phase 8 remains unstarted.
 
-Phase 7B/7B.1/7B.1.1 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
+Phase 7B/7B.1/7B.1.1/7B.1.2 mapping: `tests/unit/aiReview.test.ts` covers DTOs, eligibility,
 privacy/safety, references, immutable facts, synthetic failure modes,
 prompt-injection/hallucination, invocation budgets, accounting, concurrency,
 human review, staleness, forgery/corruption, owner scope, and oracle isolation;
 `tests/unit/aiReviewLoopback.test.ts` covers endpoint class, request privacy,
-redirect, response-size, and timeout containment; `bin/hardening-check.mjs`
-enforces the source-level no-capability and single-call-graph boundary.
+redirect, response-size, and timeout containment; the focused provider matrix
+also covers the stepped final-deadline edge, positive exposure, synchronous
+throw, locality, cap, timeout, malformed output, storage failure, and active
+cancellation. `tests/unit/agent-state.test.ts` covers same-value documentation
+role forgery, direct claimed-commit role proof, STARTING_SHA lineage, carried-
+forward anchors, merge ambiguity, drift, and live Git authority; private CI
+runs that matrix independently. `bin/hardening-check.mjs` enforces the
+source-level no-capability and single-call-graph boundary.
 
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1 AI review;
+Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2 AI review;
 changes require a DECISIONS entry and a test update.*

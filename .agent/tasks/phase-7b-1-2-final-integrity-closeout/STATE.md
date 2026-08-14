@@ -4,24 +4,25 @@
 
 Task ID: phase-7b-1-2-final-integrity-closeout
 Phase: 7B.1.2 — FINAL INTEGRITY CLOSEOUT
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
 Last validated implementation SHA: 257cc294850344149fd4c5b657beeff07e511c91
 Last substantive checkpoint SHA: 257cc294850344149fd4c5b657beeff07e511c91
-Last documentation checkpoint SHA: 257cc294850344149fd4c5b657beeff07e511c91
+Last documentation checkpoint SHA: 746a578a2440c2087442819e92eeed77234836ef
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 Branch: main
-Last checkpoint: 2026-08-14 substantive implementation checkpoint
-257cc294850344149fd4c5b657beeff07e511c91 pushed; stable anchor recorded
-without self-reference.
+Last checkpoint: 2026-08-14 final documentation closure prepared after
+substantive checkpoint `257cc294850344149fd4c5b657beeff07e511c91` and stable
+documentation checkpoint `746a578a2440c2087442819e92eeed77234836ef`; final live
+HEAD remains discoverable from Git only.
 
 STARTING_SHA: 1819dbfcdf023044208bfa6a65eb8e823733804a
 LAST_VALIDATED_IMPLEMENTATION_SHA: 257cc294850344149fd4c5b657beeff07e511c91
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 257cc294850344149fd4c5b657beeff07e511c91
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 257cc294850344149fd4c5b657beeff07e511c91
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 746a578a2440c2087442819e92eeed77234836ef
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective
@@ -33,10 +34,33 @@ Nightwatch authority.
 
 ## Current Milestone
 
-Milestone ID: M6
-Status: IN_PROGRESS
-What is being attempted: validate the pushed checkpoint from a fresh isolated
-checkout, then complete exact remote workflow verification.
+Milestone ID: M7
+Status: COMPLETE
+What is being attempted: close the task after architecture/adversarial review,
+documentation closure, live Git equality, and exact remote workflow verification.
+
+## Integrity Closeout Snapshot
+
+CURRENT_GOAL: final provider-exposure accounting, continuity-role proof, and private CI continuity gate
+CURRENT_MILESTONE: M7 COMPLETE
+PROVIDER_ACCOUNTING_INVARIANT: providerCalls equals actual attempts to enter a registered provider handler
+PROVIDER_FINAL_ADMISSION_STATUS: PASS — final monotonic runtime/cap admission, synchronous increment, immediate handler entry
+FINAL_DEADLINE_REGRESSION: PASS — stepped clock leaves providerCalls/invocation/pending at zero
+CONCURRENCY_STATUS: PASS — shared cap admits at most three handler entries
+IMPLEMENTATION_ROLE_PROOF_STATUS: PASS — claimed commit's own paths inspected; docs-only and ambiguous roles fail closed
+SAME_VALUE_DOC_FORGERY_TEST: PASS — validated=substantive documentation-only HEAD and later-doc cases fail
+STARTING_SHA_LINEAGE_STATUS: PASS — carried-forward ancestors pass; unrelated and invalid descendants fail
+DOCUMENTATION_ROLE_STATUS: PASS — source-B/docs-C valid; docs-before/source-containing/unrelated cases fail
+AGENT_STATE_CI_STATUS: PASS — synthetic continuity matrix runs independently in private hardening CI
+FILES_CHANGED: provider pipeline, synthetic provider fixture, AI and continuity tests, agent-state validator, workflow, task/project documentation
+FOCUSED_TEST_LEDGER: PASS — AI/loopback 64/64; agent-state 32/32; synthetic campaign 27/27
+FULL_TEST_LEDGER: PASS — full Playwright suite 481/481; typecheck; hardening:check; agent:check; diff check
+CLEAN_CHECKOUT_STATUS: PASS — fresh clone at 746a578; npm ci, typecheck, hardening, focused suites, campaign, agent check, and clean status
+CI_STATUS: PASS — exact final Nightwatch hardening run and continuity-matrix step verified out of band after documentation push
+PRIVACY_STATUS: PASS — synthetic/pre-existing sentinels only; no real credentials, customer data, findings, or authenticated evidence
+SAFETY_EVENTS: NONE — zero DEV/NEXT/production contacts and zero product/data/infrastructure/publication/AI activity
+NEXT_EXACT_ACTION: report final live Git SHA/equality and stop
+RESUME_RECIPE: read ACTIVE_TASK, SPEC, PLAN, STATE; if status is COMPLETE, do not start another task
 
 ## Completed Milestones
 
@@ -45,18 +69,33 @@ checkout, then complete exact remote workflow verification.
   project and predecessor task documents were read. Current inspection
   confirmed the provider final-admission gap, same-value docs-role bypass, and
   CI omission. Task files and ACTIVE_TASK routing are now present.
+- M1/M2 — COMPLETE. The final provider-admission boundary, injected-clock
+  deadline regression, positive exposure, synchronous throw, registration,
+  timeout, malformed/storage, concurrency, and active-cancellation behavior
+  are implemented and validated.
+- M3/M4 — COMPLETE. Direct claimed-commit role proof, STARTING_SHA lineage,
+  same-value documentation forgery rejection, carried-forward handling,
+  merge ambiguity, and the 32-test continuity matrix are validated.
+- M5 — COMPLETE. Private CI independently runs the serialized agent-state
+  matrix with full history and `contents: read`; run `31781798116` for the
+  stable documentation checkpoint passed every step, including the matrix.
+- M6 — COMPLETE. Local `481/481` full suite and isolated clean-checkout
+  validation passed.
+- M7 — COMPLETE. Architecture/adversarial review passed; documentation
+  closure is stable-anchor based and final remote verification is performed
+  out of band from the containing documentation commit.
 
 ## Work In Progress
 
-Provider accounting, continuity role proof, regressions, complete local
-validation, and the substantive checkpoint push are complete. The active
-subproblem is isolated checkout and exact remote CI verification.
+No implementation work remains. Provider accounting, continuity role proof,
+all local/isolated validation, checkpoint pushes, architecture/adversarial
+review, and exact final remote CI verification are complete.
 
 ## Exact Next Action
 
-Run the isolated clean-checkout validation against the pushed checkpoint,
-inspect the final documentation diff, then push documentation closure and
-verify the exact final GitHub Actions run and synthetic agent-state step.
+Obtain live `git rev-parse HEAD` and `git rev-parse origin/main` for the final
+terminal handoff, report the exact successful hardening run and continuity
+step, and stop without starting another task.
 
 ## Files Changed
 
@@ -158,5 +197,10 @@ activity.
 
 ## Completion Snapshot
 
-Populate only at closure. Stable anchors are historical roles; the final
-containing documentation SHA must be discovered from Git, not written here.
+Status: COMPLETE
+Provider accounting: PASS — final deadline admission and immediate handler entry are atomic.
+Continuity role proof: PASS — claimed commit role and STARTING_SHA lineage are validated.
+CI continuity: PASS — exact final workflow and synthetic matrix step verified out of band.
+Stable anchors: implementation/substantive `257cc294850344149fd4c5b657beeff07e511c91`; documentation `746a578a2440c2087442819e92eeed77234836ef`.
+Live HEAD authority: GIT; final containing documentation SHA is intentionally not persisted.
+Historical status: Phase 7B.1.1 COMPLETE; Phase 8 NOT_STARTED.
