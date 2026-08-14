@@ -26,6 +26,7 @@
     "api:phase5": "node bin/phase5-real.mjs",
     "campaign:synthetic": "playwright test tests/unit/campaign.test.ts --workers=1",
     "campaign:real": "node bin/phase7-real.mjs",
+    "ai:local-canary": "node bin/ai-local-canary.mjs",
     "ai:owner-review": "node bin/ai-owner-review.mjs",
     "auth:capture": "node bin/auth-capture.mjs",
     "auth:configure": "node bin/auth-configure.mjs",

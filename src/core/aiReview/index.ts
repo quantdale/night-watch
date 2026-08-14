@@ -38,3 +38,4 @@ export type {
   OwnerReviewTarget,
   OwnerReviewSnapshot,
 } from './ownerReview';
+export * from './localCanary';

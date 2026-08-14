@@ -1,26 +1,24 @@
 # Active Task
 
-Task ID: phase-7b-2-1-atomic-owner-provenance-closeout
-Phase: 7B.2.1 — Atomic Owner Provenance Closeout
-Title: Nightwatch Phase 7B.2.1 — Atomic Owner Provenance Closeout
-Status: COMPLETE
-Task directory: .agent/tasks/phase-7b-2-1-atomic-owner-provenance-closeout
-Starting SHA: 9d591ffd59719c2bba1dc155d614fd5c9b6a7078
+Task ID: phase-7b-3-single-local-model-canary
+Phase: 7B.3 — Single Bounded Local-Model Canary
+Title: Nightwatch Phase 7B.3 — Single Bounded Local-Model Canary
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-7b-3-single-local-model-canary
+Starting SHA: 18bc3fa8f64322b8b43c9ccd0b07b182668d1932
 Last validated implementation SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
-Last checkpoint: 2026-08-14 — atomic publication, AI migration, authority split,
-focused concurrency regressions, hardening, full 513-test Playwright suite,
-91-test provenance matrix, synthetic campaign, isolated clean checkout, and
-exact final documentation CI run 31803341672 at
-9ff3ba445f8122a2c0d3832d97b49bd69365b9ec passed; final evidence snapshot
-workflow pending.
-Current milestone: M7 — validated checkpoints and closure (COMPLETE).
+Last checkpoint: 2026-08-14 — Phase 7B.3 bootstrap complete; fixed synthetic
+L2 one-call harness implementation is next. No model, runtime, product,
+private finding, owner review, database, infrastructure, or Phase 8 activity.
+Current milestone: M1 — fixed fixture and one-shot controller (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
 Live local/remote HEAD: DISCOVER_FROM_GIT.
-Next action: push this documentation-only evidence snapshot, verify exact
-GitHub CI including the atomic/provenance step for the resulting live SHA,
-and stop. Do not start a local-model canary or Phase 8.
+Next action: implement the fixed synthetic fixture/controller, thin CLI,
+deterministic tests, hardening, and CI; run no real model until every gate
+passes. Runtime/model absence must end as NOT_RUN, never PASS.
 
-Historical predecessor status: Phase 7B.2 COMPLETE. Phase 7B.1.2 remains
-COMPLETE. Phase 8 remains NOT_STARTED.
+Historical predecessor status: Phase 7B.2.1 COMPLETE. Phase 6 remains
+FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE. Phase 8 remains
+NOT_STARTED.

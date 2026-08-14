@@ -35,6 +35,8 @@ jobs:
         run: npm run hardening:check
       - name: Phase 7B/7B.1 synthetic AI review authority and provenance
         run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
+      - name: Phase 7B.3 synthetic local-model canary harness
+        run: npx playwright test tests/unit/aiLocalCanary.test.ts --project=nightwatch --workers=1
       - name: Phase 7B.2 synthetic private owner-review matrix
         run: npx playwright test tests/unit/aiOwnerReview.test.ts --project=nightwatch --workers=1
       - name: Phase 7B.2.1 atomic private artifact and owner provenance matrix
