@@ -1,7 +1,7 @@
 # NIGHTWATCH PHASE 7B.1 — AI REVIEW AUTHORITY HARDENING REPORT
 
-Status: `IN_PROGRESS` — source and documentation are complete; final remote
-workflow verification and terminal state push remain.
+Status: `IN_PROGRESS` — source and documentation are complete; continuity
+repair and final remote workflow verification remain.
 
 This is the narrow hardening descendant of historical Phase 7B. The historical
 Phase 7B report is unchanged. No Phase 8 capability was started.
@@ -11,8 +11,7 @@ Phase 7B report is unchanged. No Phase 8 capability was started.
 - Starting SHA: `a4f9ba7a761af233f1143d89d95ffa335d15fed7`.
 - Validated implementation SHA: `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
 - Substantive checkpoint: `40e59ecf6209dac7ef88ac2af0bcef781562a837`.
-- Documentation checkpoint: the closure descendant recorded by
-  `LAST_DOCUMENTATION_CHECKPOINT_SHA` in `STATE.md`.
+- Documentation checkpoint: `8ca71c7ce2849b1187f6e6989453ae397c2c4ce8`.
 - Final pushed SHA: terminal `HEAD`/`origin/main` at handoff; reported in the
   final task response and continuity fields.
 

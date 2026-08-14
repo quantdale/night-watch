@@ -6,17 +6,17 @@ Title: Nightwatch Phase 7B.1 — AI Review Authority Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-7b-1-ai-review-authority-hardening
 Starting SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Current SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Current SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+Last validated implementation SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 Current milestone: M7 — durable closure and remote verification.
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: Phase 7B.1 implementation `40e59ecf6209dac7ef88ac2af0bcef781562a837`
-is pushed and synchronized with `origin/main`; closure documentation and
-isolated checkout verification remain.
-Next action: reconcile project docs, run the isolated clean-checkout checks,
-then commit/push the documentation closure checkpoint.
+Last checkpoint: documentation checkpoint `8ca71c7ce2849b1187f6e6989453ae397c2c4ce8`
+is pushed; the terminal continuity state is being repaired after CI caught a
+stale recorded remote head.
+Next action: commit/push the repaired continuity state, rerun exact CI, then
+mark the task complete if that run passes.
 Do not start Phase 8; preserve Hardening I/I.1 COMPLETE, Phase 7 COMPLETE,
 and Phase 6 FROZEN_BY_OWNER.
 

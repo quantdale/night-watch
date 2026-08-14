@@ -113,8 +113,8 @@ pass. The isolated clean checkout is the remaining validation item.
 
 Commit and push a validated implementation checkpoint, complete project/task
 documentation without rewriting historical Phase 7B evidence, push the final
-documentation checkpoint, verify synchronized origin, and read the exact final
-workflow result if safely available.
+ documentation checkpoint, repair continuity state, verify synchronized origin,
+ and read the exact final workflow result if safely available.
 
 ## Validation Strategy
 

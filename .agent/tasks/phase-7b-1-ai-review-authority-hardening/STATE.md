@@ -6,13 +6,13 @@ Task ID: phase-7b-1-ai-review-authority-hardening
 Phase: 7B.1 — AI REVIEW AUTHORITY HARDENING
 Status: IN_PROGRESS
 Starting SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Current SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-Last validated implementation SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Current SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+Last validated implementation SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 Last substantive checkpoint SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-Last documentation checkpoint SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-Last pushed SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-Current local head: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-Current remote head: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+Last documentation checkpoint SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+Last pushed SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+Current local head: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+Current remote head: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 Branch: main
 Remote: origin -> quantdale/night-watch/main
 
@@ -84,8 +84,8 @@ authority over Nightwatch truth and execution.
 CURRENT_MILESTONE: M7 — durable closure and remote verification.
 STARTING_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
 STARTING_REMOTE_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-CURRENT_LOCAL_HEAD: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-CURRENT_REMOTE_HEAD: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+CURRENT_LOCAL_HEAD: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+CURRENT_REMOTE_HEAD: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 PHASE_7B_STATUS: COMPLETE (historical architecture milestone preserved)
 PHASE_8_STATUS: NOT_STARTED
 OWNER_SCOPE_POLICY: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE
@@ -107,10 +107,10 @@ HARDENING_STATUS: PASS — public export, provider call-graph, local-only, stora
 CI_STATUS: PENDING — exact final workflow run after terminal documentation push
 PRIVACY_STATUS: PASS — zero real credentials, customer data, findings, or AI output
 SAFETY_EVENTS: NONE — DEV/NEXT/production/product/data/infrastructure/publication/AI-tool vectors all zero
-LAST_VALIDATED_IMPLEMENTATION_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+LAST_VALIDATED_IMPLEMENTATION_SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
-LAST_DOCUMENTATION_CHECKPOINT_SHA: a4f9ba7a761af233f1143d89d95ffa335d15fed7
-LAST_PUSHED_SHA: 40e59ecf6209dac7ef88ac2af0bcef781562a837
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
+LAST_PUSHED_SHA: 8ca71c7ce2849b1187f6e6989453ae397c2c4ce8
 
 ## Decisions Made During This Task
 
@@ -165,7 +165,7 @@ Phase 7: COMPLETE
 Hardening I: COMPLETE
 Hardening I.1: COMPLETE
 Phase 7B: COMPLETE (historical architecture milestone)
-Phase 7B.1: IN_PROGRESS — source/docs complete; final remote verification pending
+Phase 7B.1: IN_PROGRESS — source/docs complete; continuity repair and final CI pending
 Phase 8: NOT_STARTED
 Owner scope: local/static/synthetic/loopback-fixture-only
 Invocation public API: `AiReviewSession` only for provider execution
