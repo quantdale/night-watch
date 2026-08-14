@@ -8,7 +8,7 @@ Status: COMPLETE
 Starting SHA: 9d591ffd59719c2bba1dc155d614fd5c9b6a7078
 LAST_VALIDATED_IMPLEMENTATION_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3916594f6e947f7f4665b23751c1d3ec03f5928b
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 5bee133496d0eb9820e17a1c8fda41c45592692a
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 9ff3ba445f8122a2c0d3832d97b49bd69365b9ec
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -21,7 +21,7 @@ human-review write authority to the explicit interactive owner-review CLI.
 
 ## Current Milestone
 
-M6 — Full local, isolated, and adversarial validation.
+M7 — Validated checkpoints and closure.
 
 ## Completed Milestones
 
@@ -180,8 +180,10 @@ processes use synthetic roots outside the repository.
 
 PASS — full current Playwright suite 513/513; synthetic campaign 27/27;
 agent-state suite included in the full run; typecheck, hardening, explicit
-agent check, whitespace check, and pre-checkpoint privacy scan pass. Isolated
-clean-checkout validation and final manual review remain.
+agent check, whitespace check, privacy scan, isolated clean-checkout
+validation, manual review, and the exact final workflow for the prior live
+documentation checkpoint all pass. This evidence snapshot is itself a
+documentation descendant; its exact workflow is the final post-push check.
 
 ## CLEAN_CHECKOUT_STATUS
 
@@ -193,11 +195,12 @@ minimal environment and synthetic roots.
 
 ## CI_STATUS
 
-PASS for first documentation descendant: exact `Nightwatch hardening` run
-`31803168996`, head `5bee133496d0eb9820e17a1c8fda41c45592692a`, completed
-successfully. Its `Phase 7B.2.1 atomic private artifact and owner provenance
-matrix` step executed and succeeded. A final documentation-only checkpoint
-and its exact CI run remain to be pushed/inspected.
+PASS — exact `Nightwatch hardening` run `31803341672`, head
+`9ff3ba445f8122a2c0d3832d97b49bd69365b9ec`, completed successfully. Its
+`Phase 7B.2.1 atomic private artifact and owner provenance matrix` step
+executed and succeeded. The containing SHA is intentionally not serialized in
+this documentation descendant; inspect the exact workflow for the resulting
+live SHA after pushing this evidence snapshot.
 
 ## Decisions Made During This Task
 
@@ -240,9 +243,9 @@ real owner-review activity performed. Synthetic local child processes only.
 
 ## Exact Next Action
 
-Commit/push this final documentation-only anchor update, inspect its exact
-GitHub Actions run and atomic/provenance step, verify clean synchronized Git,
-then stop.
+Commit/push this documentation-only evidence snapshot, inspect the exact
+GitHub Actions run for the resulting live SHA and its atomic/provenance step,
+verify clean synchronized Git, then stop.
 
 ## Resume Recipe
 
@@ -254,6 +257,6 @@ database, infrastructure, or publication workflows.
 ## Completion Snapshot
 
 Implementation/substantive anchor is `3916594f6e947f7f4665b23751c1d3ec03f5928b`.
-The first approved documentation descendant is
-`5bee133496d0eb9820e17a1c8fda41c45592692a`; the final live documentation
-head remains discovered from Git and is not serialized here.
+The prior approved documentation descendant is
+`9ff3ba445f8122a2c0d3832d97b49bd69365b9ec`; the containing live
+documentation head remains discovered from Git and is not serialized here.

@@ -3,10 +3,11 @@
 ## Status
 
 Local implementation, adversarial validation, isolated clean-checkout
-validation, checkpoint pushes, documentation closure, and the first exact
-GitHub Actions inspection are complete. The final documentation-only
-checkpoint's workflow inspection is the remaining post-push evidence; its
-containing SHA is intentionally not embedded here.
+validation, checkpoint pushes, documentation closure, and exact GitHub
+Actions inspection for the prior live documentation checkpoint are complete.
+This final evidence snapshot is a documentation-only descendant; its exact
+workflow is the remaining post-push check, and its containing SHA is
+intentionally not embedded here.
 
 ## Stable anchors
 
@@ -14,9 +15,9 @@ containing SHA is intentionally not embedded here.
 - Primary implementation checkpoint: `d78f93bc622e3d0548cbd4bd674775d02e7fb9b4`.
 - Validated implementation/substantive checkpoint:
   `3916594f6e947f7f4665b23751c1d3ec03f5928b`.
-- Documentation checkpoint: `5bee133496d0eb9820e17a1c8fda41c45592692a`, the
-  first approved documentation descendant. The final containing SHA remains
-  Git-discovered and is not serialized here.
+- Documentation checkpoint: `9ff3ba445f8122a2c0d3832d97b49bd69365b9ec`, the
+  prior approved documentation descendant whose exact workflow passed. The
+  final containing SHA remains Git-discovered and is not serialized here.
 - Live HEAD authority: discover local Git `HEAD` and `origin/main`.
 
 Phase 7B.2 remains `COMPLETE`. Phase 8 remains `NOT_STARTED`. Phase 6 remains
@@ -183,8 +184,9 @@ temporary cleanup; no broad cleaner was introduced. Crash consistency beyond
 file fsync, no-replace link, and directory fsync is intentionally not claimed.
 Local-model canary is a possible future task and was not started.
 
-First documentation CI verdict: PASS — run `31803168996` completed with
-success at the documentation checkpoint; the atomic/provenance matrix step
-executed and succeeded. Final acceptance remains pending the exact workflow
-inspection for the final documentation-only checkpoint. Stop after that
-verification; do not start another task.
+Exact prior documentation CI verdict: PASS — `Nightwatch hardening` run
+`31803341672` completed with success at head
+`9ff3ba445f8122a2c0d3832d97b49bd69365b9ec`; the atomic/provenance matrix
+step executed and succeeded. After pushing this evidence snapshot, inspect
+the exact workflow for its resulting live SHA, then stop; do not start
+another task.
