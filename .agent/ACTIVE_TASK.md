@@ -1,23 +1,23 @@
 # Active Task
 
-Task ID: codebase-hardening-campaign-1
-Phase: Private/local hardening campaign I
-Title: Nightwatch Codebase Hardening Campaign I
-Status: COMPLETE
-Task directory: .agent/tasks/codebase-hardening-campaign-1
-Starting SHA: c14aebff9ae85814aa31f518e7f8fa4afbdeb7da
-Current SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
-Last validated implementation SHA: 78cd8d60f6a743985d5b0eae2560f6d06c40dbe4
-Current milestone: M5 — integrated adversarial validation and closure (COMPLETE).
+Task ID: codebase-hardening-campaign-1-1-closeout
+Phase: Private/local corrective closeout for Hardening Campaign I
+Title: Nightwatch Codebase Hardening Campaign I.1 Closeout
+Status: IN_PROGRESS
+Task directory: .agent/tasks/codebase-hardening-campaign-1-1-closeout
+Starting SHA: ba5b518736281f48640982fcbdb6c874bc3e3123
+Current SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
+Last validated implementation SHA: 5de817764a4d58eaa1a5c0109464667f552cda5e
+Current milestone: M4 — durable reconciliation and final closure (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
-Last checkpoint: M5 continuity validation correction pushed as
-`78cd8d60f6a743985d5b0eae2560f6d06c40dbe4` after the full local suite and
-static checks.
-Next action: none; hardening closure is complete. Preserve Phase 7 COMPLETE,
-Phase 6 FROZEN_BY_OWNER, and do not start another feature phase.
-Phase 7 remains COMPLETE and Phase 6 remains permanently frozen by owner.
+Last checkpoint: I.1 validated source fix pushed at
+`5de817764a4d58eaa1a5c0109464667f552cda5e`; documentation checkpoint is
+pending.
+Next action: reconcile current-state and I.1 completion documents, validate,
+then push the final documentation checkpoint. Preserve the historical
+Hardening I task as COMPLETE, Phase 7 COMPLETE, and Phase 6 frozen by owner.
 
 ## Prior phase closure handoff
 

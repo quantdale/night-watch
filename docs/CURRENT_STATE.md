@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-14** at
-> the Phase 7 closure checkpoint. Phase 0–5 are complete; Phase 6 is frozen by
-> owner; Phase 7 is complete after one bounded real DEV campaign.
+> the Nightwatch Hardening Campaign I.1 closeout. Phase 0–5 are complete;
+> Phase 6 is frozen by owner; Phase 7 and Hardening Campaign I are complete.
 
 ---
 
@@ -24,7 +24,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `REMOTE_HEAD` | `a3ce80834741635abecefbb429966912f6886845` (validated closure checkpoint; state-only reconciliation follows) |
+| `REMOTE_HEAD` | `5de817764a4d58eaa1a5c0109464667f552cda5e` (validated I.1 implementation checkpoint; final documentation is a documentation-only descendant) |
 
 This private development remote contains Nightwatch source, tests, schemas,
 synthetic fixtures, and sanitized continuity state only. Real runtime
@@ -331,6 +331,71 @@ The source repository now has a verified private canonical remote:
 `origin` → `quantdale/night-watch`, branch `main`. This changes only the
 development checkpoint/review path; runtime findings remain local and are
 never pushed or published.
+
+## Hardening Campaign I / I.1 — current durable closure
+
+### Hardening Campaign I
+
+`Hardening Campaign I: COMPLETE`.
+
+- Hardening implementation checkpoint:
+  `78cd8d60f6a743985d5b0eae2560f6d06c40dbe4`.
+- Hardening closure documentation head before this I.1 task:
+  `ba5b518736281f48640982fcbdb6c874bc3e3123`.
+- `REMOTE_CI_STATUS=CONFIRMED_PASS_AT_HARDENING_CLOSURE` for
+  `ba5b518736281f48640982fcbdb6c874bc3e3123`. The historical Hardening I
+  report's pending-CI wording remains accurate for the time it was written.
+
+Main hardening results were:
+
+- strict manifest fingerprint reconstruction;
+- strict checkpoint validation;
+- atomic budget accounting;
+- bounded reproduction reserve;
+- explicit child environment allowlisting;
+- stable private filesystem roots;
+- no-symlink / owner-only boundaries;
+- canonical config provenance;
+- DEV-only automated credential execution;
+- Oops byte-digest provenance;
+- truthful morning brief semantics;
+- complete Playwright TypeScript config coverage;
+- offline hardening check;
+- private read-only GitHub Actions.
+
+### Hardening Campaign I.1
+
+`Nightwatch Codebase Hardening Campaign I.1: SOURCE FIX COMPLETE; FINAL
+DOCUMENTATION CHECKPOINT IN PROGRESS`.
+
+The confirmed defect was checkpoint integrity only. It was not evidence of
+production reachability, budget overrun, mutation, credential exposure, or a
+product bug. The old predicate accepted `PARTIAL_BUDGET_EXHAUSTED` plus
+`BUDGET_EXHAUSTED` when any remaining dimension was zero and its used key was
+present. Because the bounded real profile intentionally sets
+`maxExplorationContexts=0`, an unused ordinal-zero checkpoint could satisfy
+that condition.
+
+The fix requires a generic dimension to prove `policy limit > 0`,
+`used == policy limit`, and `remaining == 0`; the existing exact arithmetic
+invariant remains enforced for every dimension. No exact exhaustion-cause
+field existed in the current checkpoint schema, so no schema migration was
+introduced.
+
+The validated I.1 implementation checkpoint is
+`5de817764a4d58eaa1a5c0109464667f552cda5e`. Regression coverage proves the
+zero-limit false-positive rejects before executor work with the sanitized
+reason `BUDGET_STOP_WITHOUT_POSITIVE_LIMIT_EXHAUSTION`, a legitimate
+positive-cap exhaustion checkpoint is accepted, and mixed disabled-plus-
+genuinely-exhausted dimensions are accepted. Current local validation is
+399/399 Playwright tests, TypeScript PASS, hardening check PASS, synthetic
+campaign PASS, agent-state PASS, and diff check PASS.
+
+The final documentation checkpoint is intentionally not self-referenced in
+this file. Its documentation-only descendant relationship, final local/remote
+SHA equality, and exact new GitHub Actions result are recorded in the I.1
+task handoff and completion response. No new final-SHA CI success is claimed
+here before that workflow completes.
 
 ## Environment (machine facts)
 
