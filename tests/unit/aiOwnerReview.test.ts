@@ -125,8 +125,27 @@ function privateFile(id: string, suffix: string): string {
 
 function cli(args: string[], privateRoot?: string) {
   const env = { ...process.env };
-  if (privateRoot !== undefined) env.NIGHTWATCH_PRIVATE_STATE_DIR = privateRoot;
-  return spawnSync(process.execPath, [path.join(ROOT, 'bin', 'ai-owner-review.mjs'), ...args], { cwd: ROOT, encoding: 'utf8', env });
+  let childRoot: string | undefined;
+  try {
+    if (privateRoot !== undefined) {
+      // The private-store policy treats an env override as an operator root
+      // and correctly rejects one inside the canonical workspace. A clean
+      // checkout under /tmp therefore needs its synthetic child root outside
+      // /tmp while retaining the same fixture bytes and owner-only modes.
+      childRoot = fs.mkdtempSync(path.join('/var/tmp', 'nightwatch-owner-review-cli-'));
+      fs.chmodSync(childRoot, 0o700);
+      for (const file of fs.readdirSync(privateRoot)) {
+        const source = path.join(privateRoot, file);
+        const destination = path.join(childRoot, file);
+        fs.copyFileSync(source, destination);
+        fs.chmodSync(destination, 0o600);
+      }
+      env.NIGHTWATCH_PRIVATE_STATE_DIR = childRoot;
+    }
+    return spawnSync(process.execPath, [path.join(ROOT, 'bin', 'ai-owner-review.mjs'), ...args], { cwd: ROOT, encoding: 'utf8', env });
+  } finally {
+    if (childRoot !== undefined) cleanup(childRoot);
+  }
 }
 
 function legacyBug(artifact: Awaited<ReturnType<typeof bugArtifact>>['result']['artifact']) {
