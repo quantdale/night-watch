@@ -4,11 +4,11 @@
 
 Task ID: phase-8a-evaluated-self-development-sandbox
 Phase: 8A — EVALUATED SELF-DEVELOPMENT SANDBOX FOUNDATION
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 9cb70d2b74075f731f787884cd1837e7b36fcf48
 LAST_VALIDATED_IMPLEMENTATION_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
-LAST_DOCUMENTATION_CHECKPOINT_SHA: d2a2978ede7c29d04e95f1625a736ce7c26004f9
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 1869031f810e629647bb7df40d840db83f12d865
 LIVE_HEAD_AUTHORITY: DISCOVER_FROM_GIT
 Branch: main
 Canonical Git root: /home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch
@@ -22,7 +22,7 @@ authority.
 
 ## Current Milestone
 
-M9 — validated checkpoint, documentation closure, and stop (IN_PROGRESS).
+M9 — validated checkpoint, documentation closure, and stop (COMPLETE).
 
 ## Completed Milestones
 
@@ -38,15 +38,15 @@ M9 — validated checkpoint, documentation closure, and stop (IN_PROGRESS).
 ## Work In Progress
 
 The focused implementation and existing regression gates pass. The full
-current Playwright suite, scoped privacy/diff review, and isolated full-history
-checkout also pass. The implementation checkpoint is pushed; documentation
-closure and exact final CI remain.
+current Playwright suite, scoped privacy/diff review, isolated full-history
+checkout, documentation checkpoint, and exact documentation-checkpoint CI
+pass. The final live documentation descendant is verified from Git after its
+push; no implementation work remains.
 
 ## Exact Next Action
 
-Finish the closure report and project documentation, push the documentation
-checkpoint, inspect the exact hardening workflow and Phase 8A CI step, then
-close ACTIVE_TASK only after the final synchronized Git check.
+Verify the final pushed documentation descendant, inspect its exact hardening
+workflow and Phase 8A step, and stop. Do not begin Phase 8B.
 
 ## Files Changed
 
@@ -103,7 +103,9 @@ Continuity/task files:
   campaign 27/27, agent check, and diff check.
 - agent:check after implementation checkpoint: PASS with one expected stale
   baseline warning before this anchor update.
-- Exact remote Phase 8A CI: PENDING documentation-closure push.
+- Exact documentation-checkpoint CI: PASS — run 31814440021 at head
+  1869031f810e629647bb7df40d840db83f12d865; Phase 8A matrix step executed and
+  passed.
 
 ## Decisions Made During This Task
 
@@ -157,7 +159,7 @@ publication, or sibling-repository workflows.
 
 ## Completion Snapshot
 
-Not complete. Starting SHA and historical Phase 7B.3 anchors are recorded;
-the implementation/substantive anchor will be updated only after the actual
-validated implementation commit exists. Documentation closure and final
-live-head values must be discovered from Git, not predicted here.
+COMPLETE pending only the final external live-head/CI observation recorded in
+the final handoff. Starting SHA, implementation/substantive anchor, and prior
+documentation checkpoint are stable historical roles; live HEAD remains
+discovered from Git and is not serialized self-referentially.

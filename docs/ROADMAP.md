@@ -665,7 +665,7 @@ only. It does not authorize real-model self-development, source adoption,
 automatic Git operations, Alphaus changes, product traffic, data or
 infrastructure access, publication, or any later Phase 8 capability.
 
-### Phase 8A — Evaluated self-development sandbox foundation (implementation complete; closure pending exact CI)
+### Phase 8A — Evaluated self-development sandbox foundation (complete)
 
 Phase 8A establishes evaluation authority without mutation authority. The
 implemented boundary is:
@@ -712,8 +712,11 @@ safety-vector counters were zero. The implementation checkpoint is
 `d2a2978ede7c29d04e95f1625a736ce7c26004f9`, with local full Playwright
 validation `546/546` and an isolated full-history deterministic checkout
 passing typecheck, hardening, Phase 8A `23/23`, AI/canary/provenance `106/106`,
-agent-state `32/32`, and synthetic campaign `27/27`. Exact remote CI is the
-remaining closure observation for this documentation checkpoint.
+agent-state `32/32`, and synthetic campaign `27/27`. Exact documentation
+checkpoint CI run `31814440021` passed at head
+`1869031f810e629647bb7df40d840db83f12d865`; its job executed and passed the
+named Phase 8A synthetic self-development evaluation matrix. The final live
+documentation descendant is verified separately from Git after push.
 
 Phase 8A remains strictly separate from Phase 7B AI review and cannot change
 evidence level, campaign results, anomaly admission, source relevance, fault

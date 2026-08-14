@@ -109,11 +109,11 @@ Focused and existing regression gates, full Playwright, privacy and diff
 checks, isolated full-history validation, and the final scoped authority
 review passed. No repair was required.
 
-### M9 — Validated checkpoint, documentation closure, and stop (IN_PROGRESS)
+### M9 — Validated checkpoint, documentation closure, and stop (COMPLETE)
 
-The implementation checkpoint is pushed. Record stable anchors, finish
-project/task closure records, push documentation closure, inspect exact final
-CI, close ACTIVE_TASK, verify synchronization, and stop without Phase 8B.
+The implementation and documentation checkpoints are pushed. Exact hardening
+CI passed at the documentation checkpoint, the final live descendant is
+verified after push, ACTIVE_TASK is closed, and work stops without Phase 8B.
 
 ## Validation Strategy
 

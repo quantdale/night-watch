@@ -2,18 +2,19 @@
 
 ## Status
 
-Implementation, local regression, isolated full-history validation, and scoped
-architecture review are complete. Documentation closure is in progress; the
-exact final GitHub hardening workflow and its Phase 8A step remain to be
-observed after the documentation checkpoint push.
+Implementation, local regression, isolated full-history validation, scoped
+architecture review, documentation closure, and exact hardening CI are
+complete. The final documentation descendant's live workflow is verified
+externally after its push and is reported in the final handoff.
 
 ## Stable anchors
 
 - Starting SHA: `9cb70d2b74075f731f787884cd1837e7b36fcf48`.
 - Validated implementation SHA: `d2a2978ede7c29d04e95f1625a736ce7c26004f9`.
 - Substantive checkpoint: `d2a2978ede7c29d04e95f1625a736ce7c26004f9`.
-- Documentation checkpoint before this closure: the implementation
-  checkpoint; the final documentation descendant remains Git-discovered.
+- Documentation checkpoint: `1869031f810e629647bb7df40d840db83f12d865`.
+- Final live pushed SHA: discover from Git after the closure push; do not
+  serialize a self-referential current head in this report.
 - Live HEAD authority: discover local Git `HEAD` and `origin/main`.
 
 Phase 7B.3 remains `COMPLETE — HARNESS PASS; REAL CANARY NOT_RUN /
@@ -140,9 +141,21 @@ contacts 0; product mutations 0; database queries 0; infrastructure queries 0;
 external AI calls 0; real model calls 0; publication 0; runtime Git writes 0;
 Nightwatch runtime source writes 0; Alphaus writes 0.
 
-## Remaining debt and verdict
+## CI and acceptance verdict
+
+Exact documentation-checkpoint GitHub Actions run: `31814440021`.
+Workflow: `Nightwatch hardening`. Head:
+`1869031f810e629647bb7df40d840db83f12d865`. Conclusion: `success`.
+Job `94812602838` (`Local hardening checks`) executed the exact step
+`Phase 8A synthetic self-development evaluation matrix` as step 7 and its
+conclusion was `success`. The final live documentation descendant receives
+the same exact workflow inspection after its push.
+
+Acceptance verdict: PASS for Phase 8A. Phase 8 is `IN_PROGRESS`; Phase 8A is
+`COMPLETE`; Phase 8B is `NOT_STARTED`.
+
+## Remaining debt
 
 Phase 8B controlled source adoption, real-model proposers, executable oracle
 generation, and any broader self-development capability remain deferred and
-require new explicit authorization. The acceptance verdict is pending only
-the exact final remote CI observation; no implementation blocker remains.
+require new explicit authorization. No implementation blocker remains.

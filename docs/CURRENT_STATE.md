@@ -8,7 +8,7 @@
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A is implemented with closure pending exact CI, and
+> `IN_PROGRESS`; Phase 8A is `COMPLETE` with no source adoption authority, and
 > Phase 8B remains `NOT_STARTED`.
 
 ---
@@ -38,7 +38,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
 | `PHASE_7B_3_STATUS` | `HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN` — no compatible already-local runtime/model or explicit endpoint/model configuration was available; no installation/download was attempted |
 | `PHASE_8_STATUS` | `IN_PROGRESS` — only the bounded Phase 8A evaluation foundation is authorized and implemented |
-| `PHASE_8A_STATUS` | `IMPLEMENTED / CLOSURE_PENDING_EXACT_CI` — declarative synthetic candidates, deterministic evaluator, private result, and no-adoption boundary |
+| `PHASE_8A_STATUS` | `COMPLETE` — declarative synthetic candidates, deterministic evaluator, private result, and no-adoption boundary |
 | `PHASE_8B_STATUS` | `NOT_STARTED` |
 | `PHASE_8_OWNER_AUTHORIZATION` | `PROCEED WITH THE NEXT PHASE.` — Phase 8A only |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
@@ -597,7 +597,7 @@ contacts, artifact writes, owner-review writes, and raw model output are all
 zero. Phase 8 remains `NOT_STARTED` and this harness result does not authorize
 it.
 
-## Phase 8A — evaluated self-development sandbox foundation (implementation complete; closure pending exact CI)
+## Phase 8A — evaluated self-development sandbox foundation (complete)
 
 The owner authorization for this session starts Phase 8A only. The subsystem
 under `src/core/selfDev/` keeps proposer, evaluator, and any future adopter
@@ -632,8 +632,9 @@ The implementation anchor is
 `546/546`; the isolated full-history clone passed `npm ci --ignore-scripts`,
 typecheck, hardening, Phase 8A `23/23`, AI/canary/provenance `106/106`,
 agent-state `32/32`, synthetic campaign `27/27`, `agent:check`, and diff
-check. Exact remote CI observation remains pending for this closure slice.
-Phase 8 remains `IN_PROGRESS`; Phase 8B is `NOT_STARTED`.
+check. Exact documentation checkpoint CI run `31814440021` passed at head
+`1869031f810e629647bb7df40d840db83f12d865`, including the named Phase 8A
+matrix step. Phase 8 remains `IN_PROGRESS`; Phase 8B is `NOT_STARTED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 
