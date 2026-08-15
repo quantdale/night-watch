@@ -7,9 +7,10 @@ Phase: 8B.1.0
 Status: COMPLETE
 Starting SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
 Last validated implementation SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
-Current milestone: M12 — full normal regression (real checkout, empty catalog)
-Last checkpoint: 2026-08-15 — implementation complete; focused matrices green
-(M8/M9/M10/M11 done); M12 in progress.
+Current milestone: COMPLETE — all milestones M0–M18 closed
+Last checkpoint: 2026-08-15 — task complete; final report committed; exact
+final CI 31875200362 @ 10ecea296 success (all steps, incl. 8B.1.0 matrix +
+checkout cleanliness).
 Branch: main
 
 ## Objective
@@ -32,7 +33,7 @@ PHASE_8_STATUS: IN_PROGRESS
 PHASE_8B_STATUS: COMPLETE_SANDBOX_ONLY
 PHASE_8B_0_1_STATUS: COMPLETE
 PHASE_8B_1_STATUS: BLOCKED (BLOCKER_RESOLVED_RETRY_REQUIRES_NEW_OWNER_AUTHORIZATION once 8B.1.0 closes)
-PHASE_8B_1_0_STATUS: COMPLETE (pending M18 report)
+PHASE_8B_1_0_STATUS: COMPLETE
 
 BLOCKED_PHASE_8B_1_APPROVAL_STATUS: SPENT
   (approval canonical-promotion-approval:sha256:17c970356d9d2691c3f371ecda2c2acbcd9d367585db766aec41b23097f34c47,
@@ -55,8 +56,8 @@ ONE_ENTRY_STATE_PASS_COUNT: 1 (verified)
 EXHAUSTED_STATE_PASS_COUNT: 0 (verified)
 
 TEST_BASELINE_ISOLATION_STATUS: DONE (source fixtures + coherent stack)
-ONE_ENTRY_COMPATIBILITY_STATUS: PENDING (M13)
-EXHAUSTED_COMPATIBILITY_STATUS: PENDING (M14)
+ONE_ENTRY_COMPATIBILITY_STATUS: PASS
+EXHAUSTED_COMPATIBILITY_STATUS: PASS
 
 CONTRACT_MANIFEST_VERSION (post-fix): nightwatch.selfdev-contract.private.v2
 CONTRACT_DIGEST (post-fix, empty catalog): sha256:0336723f4b11129e1ffbd75b9212a88b7c50e023bfbc51a050235fecd2ec6bba
@@ -73,9 +74,8 @@ FULL_TEST_LEDGER: 682 passed / 1 skipped / 2 failed (dirty-tree-only CLI
   warning); privacy scan no new hits.
 ONE_ENTRY_CHECKOUT_LEDGER: 159 passed / 1 skipped / 0 failed — previously affected suites green in the one-entry checkout; the historical 47-50-test structural failure does NOT recur.
 EXHAUSTED_CHECKOUT_LEDGER: 160 passed / 1 skipped / 0 failed — A+B catalog; no structural collapse; exhaustion handled intentionally.
-EXHAUSTED_CHECKOUT_LEDGER: PENDING (M14)
 
-CI_STATUS: PENDING (M16)
+CI_STATUS: PASS
 PRIVACY_STATUS: PASS (no new sentinel/secret hits in task files)
 SAFETY_EVENTS: NONE so far (zero contacts/queries/writes; no promotion)
 
@@ -101,7 +101,7 @@ pending).
   sha256:0336723f... (empty catalog).
 - M8 — tests/helpers/selfDevSourceFixture.ts + selfDevStack.ts; all affected
   test files refactored to explicit states (EMPTY/EXPAND_ONLY/EXPAND_AND_COLLAPSE).
-- M9 — tests/unit/selfDevPortfolio.test.ts: 29/29 (selector, identity,
+- M9 — tests/unit/selfDevPortfolio.test.ts: 30/30 (selector, identity,
   controller states, contract binding, CLI under one-entry/exhausted).
 - M10 — planner/sandbox/promotion integration consume variant B
   (selfDevAdoptionPlan 14/14, selfDevAdoptionSandbox 15/15,
@@ -109,19 +109,32 @@ pending).
 - M11 — hardening checkPhase8B10PortfolioIntegrity (declarative portfolio,
   derived coverage, no test-bypass, real catalog empty) + CI matrix step +
   checkout-cleanliness step.
+- M12 — full normal regression (real checkout, empty catalog): 682 passed /
+  1 skipped / 2 dirty-tree-only CLI failures; the affected clean-tree slice
+  re-verified 17/17; owner provenance 91; AI regressions 98; campaign 27;
+  typecheck/hardening/diff-check/agent-state PASS.
+- M13 — one-entry isolated full-history checkout: 159 passed / 1 skipped /
+  0 failed (the historical blocker does NOT recur).
+- M14 — exhausted A+B isolated full-history checkout: 160 passed / 1
+  skipped / 0 failed.
+- M15 — architecture/adversarial review: PASS.
+- M16 — substantive commit/push/exact CI: implementation e3a8e2f + CI-fix
+  e02aebe; exact CI 31874715283 success (all steps).
+- M17 — documentation closure / final CI: docs committed; exact final CI
+  31875200362 @ 10ecea296 success (all steps).
+- M18 — final report + STOP: REPORT.md committed; task COMPLETE; no
+  promotion retry.
 
 ## Work In Progress
 
-M12 full regression (background). Two known dirty-tree-only failures
-(selfDevAdoptionCli inspect/run while the real checkout is uncommitted) are
-expected to pass on any clean tree — re-verified after the substantive commit.
+NONE. Task complete. (The historical M12 dirty-tree detail is preserved in
+the Validation Ledger below.)
 
 ## Exact Next Action
 
-Finish M12 (collect full Playwright result + remaining checks), then run M13
-(one-entry isolated full-history checkout: previously affected suites must
-pass) and M14 (exhausted isolated checkout) using /tmp/nightwatch-8b1p0/
-checkouts and the render-catalog helper.
+STOP — task complete. No further action within the Phase 8B.1.0
+authorization. Any Phase 8B.1 retry requires a separate fresh owner
+authorization.
 
 ## Files Changed
 
@@ -151,14 +164,16 @@ Command: `npx tsc --noEmit` — PASS (multiple runs).
 Command: `npm run hardening:check` — PASS (incl. new check).
 Command: `git diff --check` — PASS.
 Command: focused selfDev lineage (14 files) — 157 passed / 2 dirty-tree-only CLI failures.
-Command: `tests/unit/selfDevPortfolio.test.ts` — 29/29 PASS.
+Command: `tests/unit/selfDevPortfolio.test.ts` — 30/30 PASS.
 Command: adoption plan/sandbox/promotion suites — 14/14, 15/15, 5/5, 7/7 PASS.
 Command: full Playwright (real checkout) — 682 passed / 1 skipped / 2 failed (dirty-tree-only CLI inspect/run; both pass on the clean tree — re-verified 17/17 after commit).
 Command: clean-tree CLI tests — 17/17 PASS.
 Command: exact CI 31874715283 @ e02aebe — all steps success incl. 8B.1.0 matrix + cleanliness step.
 Command: spent-approval read-only recheck — APPROVAL_CONSUMED_READONLY: true; promotion intent present.
-Command: agent-state/owner-provenance/AI/campaign — PENDING (agent-state
-failed only on missing task-file fields, now fixed — re-run pending).
+Command: agent-state — PASS (1 expected docs-descendant warning);
+owner-provenance 91; AI regressions 98; campaign:synthetic 27.
+Command: exact CI 31875200362 @ 10ecea296 (final) — all steps success incl.
+8B.1.0 matrix + cleanliness step.
 
 ## Decisions Made During This Task
 
@@ -195,14 +210,15 @@ spent Phase 8B.1 approval was read (historical STATE) but never touched.
 2. Confirm git status clean and local HEAD == origin/main (fast-forward only).
 3. Do NOT run selfdev:promote-canonical approve/apply; the historical approval
    is SPENT; this task authorizes no promotion.
-4. Continue from Exact Next Action (M12 completion → M13 → M14 → M15 → M16 →
-   M17 → M18).
+4. Historical task COMPLETE; do NOT resume milestones M12–M18. A Phase 8B.1
+   retry (if ever separately authorized) starts from a fresh
+   session/candidate/plan/promotion/approval.
 
 ## Completion Snapshot
 
-Phase 8B.1.0 COMPLETE (pending M18 final report). Blocker resolved:
-one-entry and exhausted isolated full-history checkouts both green; real
-canonical catalog empty (digest ffe3d635... unchanged); no promotion
-attempted; historical approval spent; exact CI green with the dedicated
-8B.1.0 matrix step. Phase 8B.1 remains BLOCKED /
-READY_FOR_FRESH_OWNER_AUTHORIZATION.
+Phase 8B.1.0 COMPLETE. Blocker resolved: one-entry and exhausted isolated
+full-history checkouts both green; real canonical catalog empty (digest
+ffe3d635... unchanged); no promotion attempted; historical approval spent;
+exact CI green with the dedicated 8B.1.0 matrix step (runs 31874715283 @
+e02aebe and final 31875200362 @ 10ecea296, both all-steps success). Phase
+8B.1 remains BLOCKED / READY_FOR_FRESH_OWNER_AUTHORIZATION.

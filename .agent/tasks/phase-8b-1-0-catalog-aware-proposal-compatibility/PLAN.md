@@ -107,7 +107,7 @@ regardless of the checkout the test process runs in.
 - M6 controller/replay integration — DONE
 - M7 portfolio contract binding — DONE (manifest v2; digest changed)
 - M8 test baseline helpers + historical test refactor — DONE
-- M9 empty/one-entry/exhausted focused matrix — DONE (29/29 new tests)
+- M9 empty/one-entry/exhausted focused matrix — DONE (30/30 new tests)
 - M10 Phase 8B/8B.1 synthetic integration (planner/sandbox/promotion consume
   variant B) — DONE
 - M11 hardening + CI — DONE
@@ -117,7 +117,8 @@ regardless of the checkout the test process runs in.
 - M15 architecture/adversarial review — DONE
 - M16 substantive commit/push/exact CI — DONE (e3a8e2f implementation + e02aebe CI-fix; exact CI 31874715283 success)
 - M17 documentation closure / final CI — DONE
-- M18 final report + STOP (no promotion retry) — PENDING (final reply)
+- M18 final report + STOP (no promotion retry) — DONE (final report
+  committed at 10ecea296; exact final CI 31875200362 success, all steps)
 
 ## Validation Strategy
 

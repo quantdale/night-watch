@@ -15,16 +15,18 @@ the live checkout's catalog happens to be.
 ## Anchors
 
 - Starting SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca (CASE D bootstrap).
-- LAST_VALIDATED_IMPLEMENTATION_SHA: e3a8e2f946afb95ab1f4eadec5149afda3739088
-  (substantive implementation; its exact CI run 31874567136 passed every
-  test step; the task-introduced cleanliness step had a shell-quoting defect
-  fixed in the workflow-only commit below).
+- LAST_VALIDATED_IMPLEMENTATION_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
+  (== LAST_SUBSTANTIVE_CHECKPOINT_SHA; implementation commit e3a8e2f9 +
+  CI-fix commit e02aebe; exact CI run 31874715283 at e02aebe — ALL steps
+  success, including the dedicated "Phase 8B.1.0 catalog-aware proposal
+  compatibility matrix" and the checkout-cleanliness step).
 - LAST_SUBSTANTIVE_CHECKPOINT_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
-  (implementation + CI-fix; exact CI run 31874715283 — ALL steps success,
-  including the dedicated "Phase 8B.1.0 catalog-aware proposal compatibility
-  matrix" and the checkout-cleanliness step).
-- LAST_DOCUMENTATION_CHECKPOINT_SHA: docs closure commit (M17).
-- Final live SHA / origin/main: (filled at close).
+  (same as the validated implementation anchor).
+- LAST_DOCUMENTATION_CHECKPOINT_SHA: 01dbadf8e8d9d83936df545e7e7a4b169db19914.
+- Final live SHA / origin/main at Phase 8B.1.0 close:
+  10ecea296cf639b65e8a260fee54814737285c2d (exact final CI run 31875200362 —
+  completed success, all steps including the 8B.1.0 matrix and the
+  checkout-cleanliness step).
 - Real canonical catalog: EMPTY, file digest
   sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334
   (unchanged pre/post task).
@@ -94,3 +96,22 @@ index.ts, bin/selfdev-synthetic.mjs, bin/hardening-check.mjs,
 tests/helpers/selfDevStack.ts (new), 8 refactored selfDev test files,
 tests/unit/selfDevPortfolio.test.ts (new, 30 tests). Docs: CURRENT_STATE,
 ROADMAP, ARCHITECTURE, SAFETY_MODEL, DECISIONS (D-49), task records.
+
+## 8B.1.0.1 closure note (separate, appended after task acceptance)
+
+Phase 8B.1.0.1 (continuity ledger & clean full-regression closeout,
+authorization PHASE_8B_1_0_1_CONTINUITY_AND_REGRESSION_ONLY) subsequently
+reconciled the stale continuity prose in ACTIVE_TASK / STATE / REPORT /
+PLAN (milestones M12–M18, pending one-entry/exhausted statuses, duplicate
+exhausted ledger, pending CI, validated/docs/final SHAs, test counts) and
+proved the complete unfiltered Playwright suite green from clean source
+state. The earlier 682 passed / 1 skipped / 2 failed run remains historical
+fact: the two failures were dirty-tree-only CLI inspect/run tests whose
+clean-tree slice passed 17/17.
+
+A complete clean full-suite run was subsequently performed at
+10ecea296cf639b65e8a260fee54814737285c2d (clean tracked tree in the native
+workspace): 685 passed / 1 skipped / 0 failed, exit code 0. A second
+complete clean run was performed in an isolated full-history checkout at
+[FINAL_SHA]: [PASS] passed / [SKIP] skipped / 0 failed, exit code 0 (see
+the 8B.1.0.1 task records for the full evidence).
