@@ -6,9 +6,8 @@ Task ID: phase-8b-controlled-source-adoption-sandbox
 Phase: 8B — Controlled Source Adoption Sandbox
 Status: IN_PROGRESS
 Starting SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
-Last validated implementation SHA: (none yet)
-Last substantive checkpoint SHA: (none yet)
-Last documentation checkpoint SHA: (none yet)
+Last validated implementation SHA: f04bb928890b8d730665b24cfd303386608b2a5a
+Last substantive checkpoint SHA: f04bb928890b8d730665b24cfd303386608b2a5a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
@@ -22,9 +21,8 @@ hardening-check.mjs, selfDev*.test.ts, package.json, hardening.yml,
 DECISIONS.md, ROADMAP.md, ARCHITECTURE.md.
 
 STARTING_SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
-LAST_VALIDATED_IMPLEMENTATION_SHA: (none yet)
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: (none yet)
-LAST_DOCUMENTATION_CHECKPOINT_SHA: (none yet)
+LAST_VALIDATED_IMPLEMENTATION_SHA: f04bb928890b8d730665b24cfd303386608b2a5a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f04bb928890b8d730665b24cfd303386608b2a5a
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective

@@ -6,9 +6,13 @@ Title: Nightwatch Phase 8B — Controlled Source Adoption Sandbox
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-8b-controlled-source-adoption-sandbox
 Starting SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
-Last validated implementation SHA: (none yet)
-Last checkpoint: 2026-08-15 — Phase 8B task created; M0 bootstrap in progress.
-Current milestone: M0 — bootstrap + task scaffolding (IN_PROGRESS).
+Last validated implementation SHA: f04bb928890b8d730665b24cfd303386608b2a5a
+Last checkpoint: 2026-08-15 — Phase 8B substantive implementation checkpoint
+(M1-M11 complete; catalog/planner/sandbox/CLI/owner-policy/hardening/CI all
+implemented; full local suite 611/611, synthetic campaign 27/27, typecheck
+and hardening:check PASS, git diff --check clean). M12/M13 (full regression
++ isolated clean checkout) in progress.
+Current milestone: M12/M13 — full regression + isolated clean checkout (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
@@ -17,8 +21,8 @@ Owner authorization: PROCEED WITH PHASE 8B CONTROLLED SOURCE ADOPTION
 SANDBOX — narrow (sandbox-only source mutation; no canonical write, no
 Git commit/push beyond existing development-checkpoint pattern, no
 canonical-promotion authority).
-Next action: consume architecture research report, then begin M1 (freeze
-adopted-case/plan/result schemas against actual current selfDev source).
+Next action: run the isolated full-history clean checkout, then proceed to
+architecture review + push + exact CI (M14/M15).
 
 Historical status: Phase 8A.1.1 COMPLETE at implementation SHA
 d33a8c1cc062b435a7b2bc4f69567286dd56ebb4 (CI run 31847511710 green, including
