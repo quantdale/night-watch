@@ -1097,7 +1097,7 @@ Phase 8B.1 remains `COMPLETE VIA SUCCESSFUL RETRY R1`; Phase 8 stays
 promotion authority NONE. The next architecture is now DESIGNED, not
 implemented — see the design review record below. No Phase 8C exists.
 
-### Phase 8 design review — next architecture (design complete; implementation not authorized)
+### Phase 8 design review — next architecture (design complete; closure executed separately)
 
 The next-architecture design review (`phase-8-next-architecture-design-review`,
 Phase 8-DESIGN, authorization `PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`,
@@ -1129,15 +1129,36 @@ decision record is D-52;
 the machine-checked truth block is unchanged (count 1, B available,
 authority NONE).
 
-**Phase 8 closure is PROPOSED, NOT STARTED, NOT AUTHORIZED.** Closing
-Phase 8 (flipping `PHASE_8_STATUS` to COMPLETE) requires a separate
-authorized task because `bin/project-state-check.mjs:172-174` hard-pins
-`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:
-COMPLETE_VIA_SUCCESSFUL_RETRY_R1` — a source change this design review must
-not make. The proposed next task, "Phase 8 Final Closure & Phase 9 Roadmap
-Selection" (`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`), is
-DESIGNED / NOT_STARTED / NOT_AUTHORIZED and is specified in
-`docs/ARCHITECTURE.md` §45 (design-record section).
+**Phase 8 closure is COMPLETE.** The authorized closure task
+(`phase-8-final-closure-phase-9-roadmap-selection`,
+`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`) flipped `PHASE_8_STATUS` to
+COMPLETE (project-state pin + machine block + regression matrix +
+hardening), extended the continuity docs/design/*.md checkpoint allowlist
+narrowly (with negative tests), froze the canonical-promotion research
+boundary (machinery retained; authority stays NONE), and selected the next
+bug-hunting investment:
+
+```
+PHASE_8_STATUS:
+  COMPLETE
+PHASE_8_CLOSURE:
+  COMPLETE
+PHASE_9_STATUS:
+  DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+PHASE_9_DIRECTION:
+  DETERMINISTIC_ORACLE_DEPTH
+PHASE_9_TITLE:
+  Phase 9 — Deterministic Semantic Oracle Depth
+PHASE_9_IMPLEMENTATION_AUTHORITY:
+  NOT_GRANTED
+```
+
+The Phase 9 design (evidence-backed bottleneck, option matrix, selected
+architecture, implementation-ready future-task spec) is recorded in
+`docs/design/PHASE_9_ROADMAP.md`; decision record D-53. Phase 9 is NOT
+started and NOT authorized. Variant B remains AVAILABLE_NOT_ADOPTED;
+promotion authority NONE; catalog count 1 (digest `sha256:bd35b934...`).
+No Phase-8C status was invented; no catalog byte changed.
 
 ---
 

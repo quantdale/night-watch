@@ -1,14 +1,16 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.1-R1.1.1 canonical catalog authority wording
-> closeout.
+> the Nightwatch Phase 8 final closure & Phase 9 roadmap selection.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
+> `COMPLETE` (final closure executed: `PHASE_8_STATUS` pinned to COMPLETE,
+> the canonical-promotion research boundary is closed with the machinery
+> retained, and the Phase 9 roadmap selected); Phase 8A, Phase 8A.1,
+> Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
 > Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`,
 > Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`, Phase 8B.1-R1.1
 > (project-memory & canonical-source truth hardening) is `COMPLETE`, and
@@ -55,9 +57,15 @@
 > next-architecture design review (Phase 8-DESIGN, 2026-08-15) selected
 > `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8` — Phase 8's objective (one
 > owner-authorized canonical promotion + continuation) is fulfilled; Phase 8
-> closure is PROPOSED / NOT_AUTHORIZED (see the design-review record below
+> closure is COMPLETE (executed by
+> `phase-8-final-closure-phase-9-roadmap-selection`, authorization
+> `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY` — see the closure record below
 > and `docs/ARCHITECTURE.md` (Phase 8 next-architecture design review
-> section); decision D-52).
+> section); decisions D-52 + D-53). The selected next investment is
+> **Phase 9 — Deterministic Semantic Oracle Depth** (`PHASE_9_DIRECTION:
+> DETERMINISTIC_ORACLE_DEPTH`, design in `docs/design/PHASE_9_ROADMAP.md`),
+> DESIGNED / NOT_STARTED / NOT_AUTHORIZED
+> (`PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`).
 
 
 ---
@@ -87,7 +95,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
 | `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
 | `PHASE_7B_3_STATUS` | `HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN` — no compatible already-local runtime/model or explicit endpoint/model configuration was available; no installation/download was attempted |
-| `PHASE_8_STATUS` | `IN_PROGRESS` — Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1.0 lineage complete; Phase 8B.1 complete via retry R1 (one canonical adoption); next Phase 8 capability requires separate design and owner authorization |
+| `PHASE_8_STATUS` | `COMPLETE` — Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1.0 lineage complete; Phase 8B.1 complete via retry R1 (one canonical adoption); closure complete — the canonical-promotion research boundary is closed; future use of the retained machinery requires a separate concrete owner authorization |
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
@@ -143,7 +151,7 @@ CANONICAL_CATALOG_TARGET: src/core/selfDev/adoptedCaseCatalog.generated.ts
 CANONICAL_CATALOG_ENTRY_COUNT: 1
 CANONICAL_CATALOG_SHA256: sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
 CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION
-PHASE_8_STATUS: IN_PROGRESS
+PHASE_8_STATUS: COMPLETE
 PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1
 NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY: NONE
@@ -1273,7 +1281,7 @@ construction; `contractDigest` unchanged (`d8012fae...`); D-51 records the
 terminology decision (D-50 preserved as the historical R1.1 record). No
 variant-B adoption; promotion authority NONE.
 
-## Phase 8 design review — next architecture (design complete; implementation not authorized)
+## Phase 8 design review — next architecture (design complete; implementation executed separately)
 
 The next-architecture design review (`phase-8-next-architecture-design-review`,
 Phase 8-DESIGN, authorization `PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`,
@@ -1293,15 +1301,53 @@ The full analysis is in `docs/ARCHITECTURE.md` (Phase 8 next-architecture
 design review section); the
 decision record is D-52.
 
-Phase 8 closure is **PROPOSED, NOT STARTED, NOT AUTHORIZED**: flipping
-`PHASE_8_STATUS` to COMPLETE requires a separate authorized task because
-`bin/project-state-check.mjs:172-174` hard-pins `PHASE_8_STATUS:
-IN_PROGRESS` and `PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1`
-(source change). The proposed next task "Phase 8 Final Closure & Phase 9
-Roadmap Selection" (`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`) is
-DESIGNED / NOT_STARTED / NOT_AUTHORIZED (specification in the design
-artifact §45). Machine-checked truth block unchanged: catalog count 1,
-variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE.
+## Phase 8 final closure & Phase 9 roadmap selection (complete)
+
+The authorized closure task
+(`phase-8-final-closure-phase-9-roadmap-selection`, Phase 8-CLOSURE,
+authorization `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`, 2026-08-15)
+executed the design review's recommendation and closed Phase 8:
+
+- **Project-state pin transition.** `bin/project-state-check.mjs` now
+  requires `PHASE_8_STATUS: COMPLETE` (the pre-closure `IN_PROGRESS` pin is
+  gone); the machine-checked truth block in this file was regenerated to
+  `PHASE_8_STATUS: COMPLETE` while keeping `PHASE_8B_1_STATUS:
+  COMPLETE_VIA_SUCCESSFUL_RETRY_R1`, `CANONICAL_CATALOG_ENTRY_COUNT: 1`,
+  `NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED`, and
+  `NEXT_PROMOTION_AUTHORITY: NONE`. Project-state protocol version stays
+  `nightwatch.project-state.v1` (a normal value transition under the same
+  schema/authority contract). Regression matrix updated: COMPLETE passes,
+  IN_PROGRESS fails, arbitrary values fail, and the load-bearing invariant
+  "Phase 8 COMPLETE never grants promotion authority" is explicitly tested.
+- **docs/design checkpoint allowlist.** `bin/agent-state.mjs`
+  `APPROVED_CHECKPOINT_PATHS` gained the narrow single-level pattern
+  `/^docs\/design\/[^/]+\.md$/` so repository-native design documents are
+  legitimate documentation-only descendants; negative tests prove nested
+  directories, non-Markdown files, traversal forms, `docs/random.md`, and
+  `src/design/foo.md` are rejected, and a docs/design + source commit is
+  IMPLEMENTATION. Existing approved paths are unregressed; hardening guards
+  assert the pin and the narrow pattern.
+- **Canonical-promotion research boundary.** Phase 8 is COMPLETE, not
+  FROZEN: the owner-gated promotion machinery is retained intact; there is
+  no standing promotion authority; future use requires a concrete
+  bug-hunting-value candidate + fresh owner authorization + fresh
+  current-source evidence + fresh one-shot approval + one bounded APPLY.
+- **Phase 9 selection.** The evidence-backed primary bottleneck is
+  `insufficient semantic oracle depth` (protocol-only deterministic
+  oracles; zero DOMAIN/RELATIONAL/value-level oracles; zero admitted
+  findings across all real campaigns; the historical budget-starvation
+  finding fixed by Hardening I/I.1). Selected:
+  **`PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH`** —
+  **Phase 9 — Deterministic Semantic Oracle Depth** — with an
+  implementation-ready future-task spec in `docs/design/PHASE_9_ROADMAP.md`
+  (D-53 records the decision). `PHASE_9_STATUS:
+  DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;
+  `PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`.
+
+Machine-checked truth block (current): catalog count 1, digest
+`sha256:bd35b934...`, variant B AVAILABLE_NOT_ADOPTED, promotion authority
+NONE, `PHASE_8_STATUS: COMPLETE`. No Phase-8C status was invented; no
+catalog byte changed; no promotion machinery was used.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

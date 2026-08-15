@@ -175,6 +175,12 @@ derivable source:
 - CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B may remain
   `AVAILABLE_NOT_ADOPTED` while `NEXT_PROMOTION_AUTHORITY: NONE`; project:check
   enforces NONE exactly.
+- PHASE 8 IS COMPLETE (D-53): the canonical-promotion research boundary is
+  closed, but the owner-gated machinery is retained — not frozen. Candidate
+  availability never grants promotion authority, and any future canonical
+  promotion requires a separately authorized concrete task (concrete
+  bug-hunting-value candidate + fresh owner authorization + fresh
+  current-source evidence + fresh one-shot approval + one bounded APPLY).
 
 ## Recovery
 

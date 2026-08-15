@@ -334,9 +334,14 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
+  // Repository-native design documents: exactly one level under docs/design,
+  // Markdown only. Deliberately NOT docs/design/** (no nested directories)
+  // and NOT non-Markdown files, so arbitrary files under docs/design can
+  // never be classified as documentation checkpoints.
+  /^docs\/design\/[^/]+\.md$/,
 ];
 
-function isApprovedCheckpointPath(file) {
+export function isApprovedCheckpointPath(file) {
   return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));
 }
 

@@ -779,6 +779,15 @@ function checkAgentContinuityIntegrity() {
   if (!/Completed-task continuity audit/.test(workflow) || !/npm run agent:audit/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Completed-task continuity audit (npm run agent:audit)');
   }
+  // Phase 8 closure — docs/design checkpoint allowlist: exactly the narrow
+  // single-level Markdown pattern; never docs/design/** or non-Markdown.
+  const agentState = read('bin/agent-state.mjs');
+  if (!/docs\\\/design\\\/\[\^\/\]\+\\\.md\$/.test(agentState)) {
+    fail('bin/agent-state.mjs must approve single-level docs/design/*.md checkpoint paths narrowly');
+  }
+  if (/\^docs\\\/design\\\/\.\*/.test(agentState)) {
+    fail('bin/agent-state.mjs must not approve docs/design/** as a documentation checkpoint pattern');
+  }
 }
 
 function checkProjectStateIntegrity() {
@@ -804,6 +813,16 @@ function checkProjectStateIntegrity() {
   }
   if (!/PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE/.test(checker)) {
     fail('bin/project-state-check.mjs must require NEXT_PROMOTION_AUTHORITY NONE');
+  }
+  // Phase 8 final closure: the checker must now REQUIRE the terminal
+  // PHASE_8_STATUS COMPLETE (the pre-closure IN_PROGRESS pin is gone), while
+  // the promotion-authority NONE requirement above stays — closing the
+  // research phase never grants standing promotion authority.
+  if (!/PROJECT_STATE_PHASE_8_STATUS_MISMATCH/.test(checker)) {
+    fail('bin/project-state-check.mjs must enforce PHASE_8_STATUS exactly');
+  }
+  if (!/PHASE_8_STATUS'\) !== 'COMPLETE'/.test(checker)) {
+    fail('bin/project-state-check.mjs must pin PHASE_8_STATUS to COMPLETE (Phase 8 closed)');
   }
   if (/writeFileSync|appendFileSync|createWriteStream|rmSync|unlinkSync|mkdirSync/.test(checker)) {
     fail('bin/project-state-check.mjs contains a filesystem write path');

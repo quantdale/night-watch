@@ -248,7 +248,7 @@ function renderBlock(catalogState: 'EMPTY' | 'ONE', options: BlockOptions = {}):
     `CANONICAL_CATALOG_ENTRY_COUNT: ${options.catalogCount ?? count}`,
     `CANONICAL_CATALOG_SHA256: ${options.catalogDigest ?? digestOf(catalogSource)}`,
     'CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION',
-    `PHASE_8_STATUS: ${options.phase8Status ?? 'IN_PROGRESS'}`,
+    `PHASE_8_STATUS: ${options.phase8Status ?? 'COMPLETE'}`,
     `PHASE_8B_1_STATUS: ${options.phase8B1Status ?? 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1'}`,
     `NEXT_PORTFOLIO_MEMBER: ${options.nextPortfolioMember ?? 'AVAILABLE_NOT_ADOPTED'}`,
     `NEXT_PROMOTION_AUTHORITY: ${options.nextPromotionAuthority ?? 'NONE'}`,
@@ -374,6 +374,8 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
       expect(output.status).toBe('PASS');
       expect(output.projectStateProtocol).toBe('nightwatch.project-state.v1');
       expect(output.catalogCount).toBe(1);
+      expect(output.phase8Status).toBe('COMPLETE');
+      expect(output.phase8B1Status).toBe('COMPLETE_VIA_SUCCESSFUL_RETRY_R1');
       expect(output.nextPortfolioMember).toBe('AVAILABLE_NOT_ADOPTED');
       expect(output.nextPromotionAuthority).toBe('NONE');
       expect(output.activeTaskContinuity).toBe('PASS');
@@ -627,14 +629,62 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     }
   });
 
-  test('23. stale Phase 8 status fails', () => {
-    const fixture = makeFixture({ block: { phase8Status: 'COMPLETE' } });
+  test('23. stale pre-closure Phase 8 status fails (closure regression B)', () => {
+    // After Phase 8 closure, IN_PROGRESS is the stale token and must fail.
+    const fixture = makeFixture({ block: { phase8Status: 'IN_PROGRESS' } });
     try {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain('PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
     } finally {
       fixture.cleanup();
+    }
+  });
+
+  test('23a. arbitrary Phase 8 status fails (closure regression C)', () => {
+    const fixture = makeFixture({ block: { phase8Status: 'PARTIAL' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('23b. Phase 8 COMPLETE passes (closure regression A)', () => {
+    // Explicit named regression for the terminal closure state; the default
+    // fixture already renders PHASE_8_STATUS: COMPLETE (test 1).
+    const fixture = makeFixture({ block: { phase8Status: 'COMPLETE' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).phase8Status).toBe('COMPLETE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('23c. Phase 8 COMPLETE never grants promotion authority (closure safety invariant)', () => {
+    // Load-bearing: closing the research phase is NOT standing authorization
+    // to use the promotion machinery later. COMPLETE + NONE must stay healthy,
+    // and COMPLETE + anything-but-NONE must fail exactly.
+    const healthy = makeFixture({ block: { phase8Status: 'COMPLETE', nextPromotionAuthority: 'NONE' } });
+    try {
+      const result = run(healthy.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).phase8Status).toBe('COMPLETE');
+      expect(JSON.parse(result.stdout).nextPromotionAuthority).toBe('NONE');
+    } finally {
+      healthy.cleanup();
+    }
+    const granted = makeFixture({ block: { phase8Status: 'COMPLETE', nextPromotionAuthority: 'AUTHORIZED' } });
+    try {
+      const result = run(granted.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+    } finally {
+      granted.cleanup();
     }
   });
 

@@ -11,6 +11,7 @@ import {
   isTerminalResumeRecipeText,
   hasClosurePlaceholder,
 } from '../../bin/agent-continuity-protocol.mjs';
+import { classifySha, isApprovedCheckpointPath } from '../../bin/agent-state.mjs';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'agent-state.mjs');
 const GIT_FLAGS = ['-c', 'commit.gpgsign=false', '-c', 'user.email=nightwatch-test@example.invalid', '-c', 'user.name=Nightwatch Test'];
@@ -625,6 +626,112 @@ test('uncommitted Phase 6 binding audit is checkpoint advance', () => {
   expect(result.status).toBe(0);
   expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
   expect(result.stderr).not.toContain('STALE STATE');
+});
+
+test.describe('docs/design approved checkpoint path extension (Phase 8 closure)', () => {
+  test('allowed: single-level Markdown under docs/design', () => {
+    expect(isApprovedCheckpointPath('docs/design/PHASE_9_ROADMAP.md')).toBe(true);
+  });
+
+  test('rejected: nested directories under docs/design', () => {
+    expect(isApprovedCheckpointPath('docs/design/nested/foo.md')).toBe(false);
+  });
+
+  test('rejected: non-Markdown files under docs/design', () => {
+    expect(isApprovedCheckpointPath('docs/design/foo.ts')).toBe(false);
+    expect(isApprovedCheckpointPath('docs/design/foo.js')).toBe(false);
+    expect(isApprovedCheckpointPath('docs/design/foo.json')).toBe(false);
+  });
+
+  test('rejected: traversal and unrelated paths cannot be classified as design docs', () => {
+    // A repository path can never contain ".." (git normalizes it); the
+    // classification operates on repository paths, so the traversal form
+    // collapses to the real source path src/x.ts, which is not approved.
+    expect(isApprovedCheckpointPath('docs/design/../src/x.ts')).toBe(false);
+    expect(isApprovedCheckpointPath('docs/random.md')).toBe(false);
+    expect(isApprovedCheckpointPath('src/design/foo.md')).toBe(false);
+    expect(isApprovedCheckpointPath('docs/design/PHASE_9_ROADMAP.md.txt')).toBe(false);
+    expect(isApprovedCheckpointPath('docs/design/')).toBe(false);
+  });
+
+  test('existing approved paths do not regress', () => {
+    for (const approved of [
+      'AGENTS.md',
+      '.agent/ACTIVE_TASK.md',
+      '.agent/README.md',
+      '.agent/tasks/phase-test/STATE.md',
+      '.agent/tasks/phase-test/REPORT.md',
+      'corpus/phase6/README.md',
+      'corpus/phase6/runtime-binding-audit.json',
+      'docs/ARCHITECTURE.md',
+      'docs/CURRENT_STATE.md',
+      'docs/SAFETY_MODEL.md',
+      'docs/DECISIONS.md',
+      'docs/ROADMAP.md',
+      'docs/CI_HARDENING.md',
+    ]) {
+      expect(isApprovedCheckpointPath(approved)).toBe(true);
+    }
+  });
+
+  test('uncommitted docs/design design document is checkpoint advance', () => {
+    const { root } = fixture();
+    const design = path.join(root, 'docs', 'design', 'PHASE_9_ROADMAP.md');
+    fs.mkdirSync(path.dirname(design), { recursive: true });
+    fs.writeFileSync(design, '# Phase 9 roadmap (synthetic fixture)\n');
+    const result = run(root);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+    expect(result.stderr).not.toContain('STALE STATE');
+  });
+
+  test('committed docs/design design document is a valid docs-only descendant', () => {
+    const { root, sha } = fixture();
+    fs.writeFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+    const designSha = commitFile(root, 'docs/design/PHASE_9_ROADMAP.md', '# Phase 9 roadmap (synthetic fixture)\n', 'design document');
+    setContinuity(root, { documentation: designSha });
+    const result = run(root);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+    expect(result.stderr).not.toContain('INVALID_DOCUMENTATION_CHECKPOINT');
+    expect(result.stderr).not.toContain('STALE_IMPLEMENTATION_BASELINE');
+  });
+
+  test('committed nested docs/design path is NOT an approved checkpoint', () => {
+    const { root, sha } = fixture();
+    fs.writeFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+    commitFile(root, 'docs/design/nested/foo.md', '# nested (synthetic fixture)\n', 'nested design doc');
+    // COMPLETE tasks treat a non-approved committed path as an ERROR.
+    setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+    const result = run(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('STALE_IMPLEMENTATION_BASELINE');
+    expect(result.stderr).toContain('docs/design/nested/foo.md');
+  });
+
+  test('docs/design document plus a source file classifies as IMPLEMENTATION', () => {
+    const { root, initialSha, sha } = fixture();
+    // ONE commit changing both the design document and a source file.
+    const design = path.join(root, 'docs', 'design', 'PHASE_9_ROADMAP.md');
+    fs.mkdirSync(path.dirname(design), { recursive: true });
+    fs.writeFileSync(design, '# Phase 9 roadmap (synthetic fixture)\n');
+    fs.appendFileSync(path.join(root, 'source.ts'), 'implementation change in the same commit\n');
+    git(root, ['add', 'docs/design/PHASE_9_ROADMAP.md', 'source.ts']);
+    git(root, ['commit', '-m', 'mixed docs + source']);
+    const mixed = git(root, ['rev-parse', 'HEAD']);
+    // classifySha must NOT see the mixed commit as documentation-only.
+    const classified = classifySha(root, sha, mixed);
+    expect(classified.classification).toBe('STALE_IMPLEMENTATION_BASELINE');
+    expect(classified.disallowed).toContain('source.ts');
+    // A documentation checkpoint range covering the mixed commit is invalid.
+    setContinuity(root, { documentation: mixed });
+    const result = run(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('INVALID_DOCUMENTATION_CHECKPOINT');
+    expect(result.stderr).toContain('non-documentation paths');
+    expect(result.stderr).toContain('source.ts');
+    expect(result.stderr).not.toContain('docs/design/PHASE_9_ROADMAP.md');
+  });
 });
 
 test('missing required state section fails', () => {

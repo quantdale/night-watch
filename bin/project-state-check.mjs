@@ -170,7 +170,7 @@ function main() {
     if (declaredCount !== undefined && !/^[0-9]+$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
 
     if (fields.get('NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
-    if (fields.get('PHASE_8_STATUS') !== 'IN_PROGRESS') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
+    if (fields.get('PHASE_8_STATUS') !== 'COMPLETE') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
     if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
 
     // R1 task durable-status cross-check (deterministic mapping only): the
@@ -291,7 +291,7 @@ function main() {
     catalogDigest: digest,
     catalogStrategy: adoptedCases.SELFDEV_ADOPTION_STRATEGY_CLASS,
     rendererRoundTrip: true,
-    phase8Status: 'IN_PROGRESS',
+    phase8Status: 'COMPLETE',
     phase8B1Status: 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1',
     nextPortfolioMember: selection === null ? 'EXHAUSTED' : 'AVAILABLE_NOT_ADOPTED',
     nextPromotionAuthority: 'NONE',

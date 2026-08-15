@@ -1795,3 +1795,72 @@ change); ROADMAP records the design with DESIGNED / NOT_STARTED /
 NOT_AUTHORIZED markers; the machine-checked truth block is unchanged
 (count 1, B available, authority NONE). Variant B adoption, portfolio
 expansion, and any promotion remain separate-authorization-only.
+
+## D-53 — Phase 8 complete; Phase 9 roadmap selected
+
+**Decision.** Phase 8 is declared COMPLETE by the authorized closure task
+(`phase-8-final-closure-phase-9-roadmap-selection`, Phase 8-CLOSURE,
+authorization `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`, 2026-08-15),
+executing the D-52 recommendation `CLOSE_PHASE_8`:
+`PHASE_8_STATUS: COMPLETE` (project-state pin + machine-checked truth block
++ regression matrix + hardening), the canonical-promotion research boundary
+is closed, and the next bug-hunting investment is selected:
+`PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH` — **Phase 9 —
+Deterministic Semantic Oracle Depth** — with an implementation-ready
+future-task spec in `docs/design/PHASE_9_ROADMAP.md`.
+`PHASE_9_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;
+`PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`.
+
+**Rationale.** Phase 8's objective — one owner-authorized canonical
+self-development promotion with a complete source-bound evidence chain,
+plus continuation — is fulfilled with live evidence (R1 at `24fc437`,
+`CANONICAL_PROMOTION_COMMITTED_EXACT`, post-commit sessions select B) and
+its four completion criteria reconfirmed PASS from current source/docs:
+(1) owner-gated canonical promotion proven live; (2) continuation after
+adoption proven; (3) current-source truth hardened (continuity v2 +
+project-state v1 + catalog integrity + authority wording, all
+machine-enforced and CI-green); (4) no unresolved Phase-8 safety blocker
+(authority NONE). One canonical adoption suffices to prove the research
+goal; variant B (EXPAND_THEN_COLLAPSE) is a structural canary with zero
+bug-hunting value, so its adoption would be ceremony evidence without new
+capability. The Phase 9 selection is evidence-backed: the current primary
+bug-hunting bottleneck is insufficient semantic oracle depth — the
+deterministic oracle set is protocol/structural only (zero DOMAIN, zero
+RELATIONAL, zero value-level TEMPORAL/CROSS-SURFACE oracles), every real
+campaign from Phase 2A through Phase 7 produced zero admitted findings,
+and the historical browser budget-starvation finding was already repaired
+by Hardening Campaign I/I.1 (feasibility reproduction reserve, atomic
+budget accounting, exploration suppressed in the real profile). Raising
+P(detection) of semantic defects on the existing surface (3 journeys + 3
+API operations) multiplies useful yield more than more executions of
+shallow oracles (P9-A), post-hoc triage polishing (P9-C), class-level
+differential wiring (P9-D), selection narrowing among 3 journeys (P9-E),
+premature breadth (P9-F), or a second self-development adoption (P9-G,
+DEFER per D-52).
+
+**Alternatives.** P9-A (campaign yield/budget intelligence) VIABLE_LATER;
+P9-C (triage confidence) and P9-D (differential expansion)
+NEXT_AFTER_PHASE_9; P9-E (source-change-driven selection)
+NEXT_AFTER_PHASE_9; P9-F (multi-product expansion) REJECT as premature
+until Phase 9 shows measurable yield on Ripple; P9-G (second canonical
+adoption) DEFER unless a real bug-hunting-value candidate exists.
+
+**Owner authority boundary.** Unchanged and load-bearing:
+`NEXT_PROMOTION_AUTHORITY: NONE` machine-enforced; `PHASE_8_STATUS:
+COMPLETE` grants NO promotion authority — closing the research phase is not
+standing authorization to use the machinery later. The canonical-promotion
+machinery is retained intact; future use requires a concrete
+bug-hunting-value candidate + fresh owner authorization + fresh
+current-source evidence + fresh one-shot approval + one bounded APPLY.
+Phase 8 is COMPLETE, not FROZEN. The Phase 9 implementation task requires a
+separate owner authorization (`PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`);
+none is granted here.
+
+**Consequences.** Phase 8 = COMPLETE; Phase 8 closure = COMPLETE; Phase 9 =
+DESIGNED / NOT_STARTED / NOT_AUTHORIZED. `docs/design/PHASE_9_ROADMAP.md`
+is the durable Phase 9 design document (the docs/design single-level
+Markdown checkpoint allowlist makes it a legitimate documentation
+checkpoint). Project-state protocol stays `nightwatch.project-state.v1`;
+catalog count 1 and digest `sha256:bd35b934...` unchanged; variant B
+AVAILABLE_NOT_ADOPTED; promotion authority NONE. No Phase-8C status was
+invented. D-52 remains the historical design-review record, not rewritten.

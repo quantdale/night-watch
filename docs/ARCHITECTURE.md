@@ -950,3 +950,38 @@ durable truth protocols. Candidate B proves continuation; it does not
 establish that adopting B is valuable. The next Nightwatch capability worth
 new authority/complexity/proof is in bug hunting, not in further Phase 8
 promotion machinery.
+
+### Closure execution (Phase 8 final closure & Phase 9 roadmap selection)
+
+The authorized closure task
+(`phase-8-final-closure-phase-9-roadmap-selection`,
+`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`, 2026-08-15) executed the
+recommendation above (D-53):
+
+- **Phase 8 research boundary: COMPLETE.** `PHASE_8_STATUS` is pinned to
+  COMPLETE in `bin/project-state-check.mjs` and the machine-checked truth
+  block; the regression matrix proves COMPLETE passes, IN_PROGRESS and
+  arbitrary values fail, and `PHASE_8_STATUS COMPLETE` coexists with
+  `NEXT_PROMOTION_AUTHORITY NONE` (the closure-safety invariant).
+- **Implemented canonical promotion machinery: retained.** The owner-gated
+  chain (L3-L6, one-shot approvals, cardinality-agnostic CI) is untouched
+  and remains available for a future concrete candidate under fresh owner
+  authorization. Phase 8 is COMPLETE, not FROZEN; no global execution block
+  was added.
+- **Standing promotion authority: none.** `NEXT_PROMOTION_AUTHORITY: NONE`
+  machine-enforced; candidate availability (variant B) never grants
+  authority.
+- **Checkpoint model:** `docs/design/*.md` single-level Markdown is now an
+  approved documentation-checkpoint path (narrow pattern with negative
+  tests); `docs/design/PHASE_9_ROADMAP.md` is the repository-native Phase 9
+  design document.
+- **Phase 9: selected architecture only, implementation absent.** The
+  evidence-backed primary bottleneck is insufficient semantic oracle
+  depth; the selected direction is `DETERMINISTIC_ORACLE_DEPTH` (Phase 9 —
+  Deterministic Semantic Oracle Depth), fully specified (architecture,
+  state machine, test strategy, success criteria, future-task spec) in
+  `docs/design/PHASE_9_ROADMAP.md`. `PHASE_9_STATUS:
+  DESIGNED_NOT_STARTED_NOT_AUTHORIZED`;
+  `PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`. The architecture of the
+  retained machinery does not imply B adoption and grants no Phase 9
+  authority.
