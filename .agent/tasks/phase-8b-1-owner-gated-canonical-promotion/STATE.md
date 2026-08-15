@@ -6,24 +6,19 @@ Task ID: phase-8b-1-owner-gated-canonical-promotion
 Phase: 8B.1
 Status: IN_PROGRESS
 Starting SHA: 91149621e247a2996a3f5c97090684b68507418d
-Last validated implementation SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-Last substantive checkpoint SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-Last documentation checkpoint SHA: 91149621e247a2996a3f5c97090684b68507418d
+Last validated implementation SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+Last substantive checkpoint SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+Last documentation checkpoint SHA: (none yet — no documentation-only descendant of the implementation checkpoint exists)
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-15 — implementation ready to commit; see PLAN.md Decision Log and Discoveries.
+Last checkpoint: 2026-08-15 — implementation checkpoint committed locally as 04aef3b20e14c0735cbe8797bbae79534e14463b; not yet pushed.
 
 STARTING_SHA: 91149621e247a2996a3f5c97090684b68507418d
-LAST_VALIDATED_IMPLEMENTATION_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 91149621e247a2996a3f5c97090684b68507418d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+LAST_DOCUMENTATION_CHECKPOINT_SHA:
 LIVE_HEAD_AUTHORITY: GIT
-
-(The validated/substantive anchors above are still the carried-forward
-Phase 8B.0.1 anchor until this task's own implementation checkpoint commit
-exists; they will be updated to that new commit SHA immediately after it is
-created and validated, per M11 below.)
 
 ## Objective
 

@@ -6,8 +6,8 @@ Title: Nightwatch Phase 8B.1 — Owner-Gated Canonical Promotion
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-8b-1-owner-gated-canonical-promotion
 Starting SHA: 91149621e247a2996a3f5c97090684b68507418d
-Last validated implementation SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-Current milestone: M11 — implementation checkpoint push and exact CI, about to commit.
+Last validated implementation SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+Current milestone: M11 — implementation checkpoint committed (04aef3b20e14c0735cbe8797bbae79534e14463b); about to push and wait for exact CI.
 Last checkpoint: 2026-08-15 — implementation checkpoint ready to commit. New
 `src/core/selfDevPromotion/` canonical-promotion authority boundary (promotion
 intent, one-shot owner approval, atomic one-file canonical apply, fresh-load
