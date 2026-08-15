@@ -6,7 +6,7 @@ Title: Nightwatch Phase 8B — Controlled Source Adoption Sandbox
 Status: COMPLETE
 Task directory: .agent/tasks/phase-8b-controlled-source-adoption-sandbox
 Starting SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
-Last validated implementation SHA: 36495b4df2c013d671a4983cd7991e1aecd9a25e
+Last validated implementation SHA: f04bb928890b8d730665b24cfd303386608b2a5a
 Last checkpoint: 2026-08-15 — Phase 8B COMPLETE. Full implementation,
 tests, hardening, and CI wiring validated locally and in an isolated clean
 checkout (typecheck/hardening PASS, 611-test full suite, 90/90 focused

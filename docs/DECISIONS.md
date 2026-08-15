@@ -1402,8 +1402,9 @@ reach the sandbox source-write executor. No canonical source write
 authority, Git commit/push authority, AI/model authority, product/database/
 infrastructure authority, or publication authority exists anywhere in this
 boundary. The validated implementation checkpoint is
-`36495b4df2c013d671a4983cd7991e1aecd9a25e`; the real local acceptance run
-(plan `adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`,
+`f04bb928890b8d730665b24cfd303386608b2a5a`; the real local acceptance run
+was performed against the documentation-inclusive descendant
+`36495b4df2c013d671a4983cd7991e1aecd9a25e` (plan `adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`,
 result `adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`)
 confirmed the canonical adopted-case catalog, its digest, and `git status`
 were byte-for-byte unchanged before and after.

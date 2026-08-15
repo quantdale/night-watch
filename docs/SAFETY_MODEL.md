@@ -952,8 +952,10 @@ executor.
 source transformation produced the expected behavior in a private
 disposable source mirror. It does not mean canonical-applied, owner-
 approved-for-canonical-mutation, Git-commit-authorized, or Git-push-
-authorized. The real local acceptance exercise
-(implementation checkpoint `36495b4df2c013d671a4983cd7991e1aecd9a25e`)
+authorized. The real local acceptance exercise, performed against the
+documentation-inclusive descendant
+`36495b4df2c013d671a4983cd7991e1aecd9a25e` of the validated implementation
+checkpoint `f04bb928890b8d730665b24cfd303386608b2a5a`,
 confirmed the canonical adopted-case catalog file, its digest, and
 `git status --short` were byte-for-byte unchanged immediately before and
 after one full plan-and-run cycle; the disposable sandbox mirror directory

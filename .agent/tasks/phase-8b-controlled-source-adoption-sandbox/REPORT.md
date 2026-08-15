@@ -2,7 +2,11 @@
 
 - Starting SHA: `e7abed9c64252df2c3bd9809252d652bd95f045a`
 - Validated implementation / substantive checkpoint SHA:
-  `36495b4df2c013d671a4983cd7991e1aecd9a25e`
+  `f04bb928890b8d730665b24cfd303386608b2a5a`
+- Documentation-inclusive descendant used for exact CI verification and the
+  real acceptance run: `36495b4df2c013d671a4983cd7991e1aecd9a25e` (changes
+  no authoritative source beyond the validated checkpoint)
+- Final documentation checkpoint SHA: `93626fcebfab0f5c0f09094377d259af3f7cba59`
 - Task objective: prove Nightwatch can translate one exact, current-source-
   eligible declarative regression candidate into one deterministic tracked-
   source adoption, apply it only inside a disposable owner-private source
@@ -70,10 +74,13 @@
   the expected/normal state per `AGENTS.md`'s three-state model).
 - `git diff --check` — clean (both checkouts).
 - Secret-shape grep over the full diff — none found.
-- Exact substantive CI run `31853612222` at `36495b4df2c013d671a4983cd7991e1aecd9a25e`
-  — `completed`/`success`, including the dedicated "Phase 8B controlled
-  source adoption sandbox matrix" step (verified green individually, not
-  merely inferred from overall success).
+- Exact CI run `31853612222` at the documentation-inclusive descendant
+  `36495b4df2c013d671a4983cd7991e1aecd9a25e` — `completed`/`success`,
+  including the dedicated "Phase 8B controlled source adoption sandbox
+  matrix" step (verified green individually, not merely inferred from
+  overall success).
+- Final CI verification pending the closing documentation descendant (see
+  STATE.md Exact Next Action / Completion Snapshot for the final result).
 
 ## Real acceptance run (M16-M18)
 

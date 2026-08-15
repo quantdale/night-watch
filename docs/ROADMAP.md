@@ -851,13 +851,16 @@ call-graph containment proving only the CLI and the sandbox module itself
 can reach the sandbox source-write executor).
 
 The validated implementation checkpoint is
-`36495b4df2c013d671a4983cd7991e1aecd9a25e`. Local and isolated-clean-
+`f04bb928890b8d730665b24cfd303386608b2a5a`. Local and isolated-clean-
 checkout validation both passed the full suite (`611` total: `608` passed
 plus `3` environment-conditional skips in the isolated clone, `611` passed
 in the local dev checkout), 90/90 focused Phase 8A/8A.1/8A.1.1/8B tests,
 typecheck, hardening, 27/27 synthetic campaign, and `git diff --check`.
-Exact CI run `31853612222` passed, executing the dedicated "Phase 8B
-controlled source adoption sandbox matrix" step. The fresh v2 acceptance
+Exact CI run `31853612222` passed at the documentation-inclusive descendant
+`36495b4df2c013d671a4983cd7991e1aecd9a25e` (which changes no authoritative
+source beyond the validated checkpoint), executing the dedicated "Phase 8B
+controlled source adoption sandbox matrix" step. The real acceptance run
+was performed against that same descendant. The fresh v2 acceptance
 artifact is
 `session:sha256:27dbbd7f94e360af7e9fc564e9cdabf45d3d9ae5c67e84eccc676f78f047ac46`,
 bound to the validated checkpoint, `VERIFIED_EXACT_BASE` with replay `PASS`,
