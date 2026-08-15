@@ -6,17 +6,17 @@ Task ID: phase-8b-1-owner-gated-canonical-promotion
 Phase: 8B.1
 Status: IN_PROGRESS
 Starting SHA: 91149621e247a2996a3f5c97090684b68507418d
-Last validated implementation SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
-Last substantive checkpoint SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+Last validated implementation SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
+Last substantive checkpoint SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
 Last documentation checkpoint SHA: (none yet — no documentation-only descendant of the implementation checkpoint exists)
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-15 — implementation checkpoint committed locally as 04aef3b20e14c0735cbe8797bbae79534e14463b; not yet pushed.
+Last checkpoint: 2026-08-15 — implementation checkpoint bcdca80 pushed; exact CI run 31868447710 completed/success including the dedicated Phase 8B.1 matrix step, agent-state check, and diff check.
 
 STARTING_SHA: 91149621e247a2996a3f5c97090684b68507418d
-LAST_VALIDATED_IMPLEMENTATION_SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
+LAST_VALIDATED_IMPLEMENTATION_SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
 LAST_DOCUMENTATION_CHECKPOINT_SHA:
 LIVE_HEAD_AUTHORITY: GIT
 
@@ -29,11 +29,19 @@ acceptance chain this task is authorized to run.
 
 ## Current Milestone
 
-Milestone ID: M11 — implementation checkpoint push + exact CI
+Milestone ID: M12 — fresh pre-promotion selfDev session
 Status: IN_PROGRESS
-What is being attempted: about to commit the implementation (catalog still
-empty), push fast-forward to origin/main, and wait for the exact CI run to
-go green, including the new dedicated Phase 8B.1 matrix step.
+What is being attempted: M11 is COMPLETE (implementation checkpoint bcdca80
+pushed; exact CI run 31868447710 completed/success including the dedicated
+Phase 8B.1 matrix step, agent-state check, and diff check — every step
+succeeded, see the run's job/step list). A local hardening false negative
+was found and fixed en route: `checkPhase8BSandboxBoundary`'s call-graph
+scan uses `git ls-files`, which does not see untracked files, so it missed
+the new `selfDevPromotion/` cross-boundary reads until they were committed;
+narrowed and fixed in commit bcdca80 (see PLAN.md Decision Log). Now
+starting M12: run `npm run selfdev:synthetic` against the clean, CI-green
+implementation checkpoint to create a fresh current-source v2 session
+artifact for the one real promotion.
 
 ## Completed Milestones
 

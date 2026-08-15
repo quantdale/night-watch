@@ -6,9 +6,9 @@ Title: Nightwatch Phase 8B.1 — Owner-Gated Canonical Promotion
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-8b-1-owner-gated-canonical-promotion
 Starting SHA: 91149621e247a2996a3f5c97090684b68507418d
-Last validated implementation SHA: 04aef3b20e14c0735cbe8797bbae79534e14463b
-Current milestone: M11 — implementation checkpoint committed (04aef3b20e14c0735cbe8797bbae79534e14463b); about to push and wait for exact CI.
-Last checkpoint: 2026-08-15 — implementation checkpoint ready to commit. New
+Last validated implementation SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
+Current milestone: M12 — fresh pre-promotion selfDev session.
+Last checkpoint: 2026-08-15 — implementation checkpoint COMPLETE. New
 `src/core/selfDevPromotion/` canonical-promotion authority boundary (promotion
 intent, one-shot owner approval, atomic one-file canonical apply, fresh-load
 canonical verify, currentness assessor), new CLI
@@ -19,15 +19,16 @@ under a deliberate owner-scope policy version bump to
 matrix step, and a behavior-preserving extraction of the Phase 8B
 metamorphic-probe proof into a shared pure
 `src/core/selfDev/metamorphicProbes.ts` module (existing Phase
-8A/8A.1/8A.1.1/8B/8B.0.1 tests pass unmodified). Canonical adopted-case
-catalog remains empty at this checkpoint; no real promotion has occurred yet.
-Full local validation is green (typecheck, hardening, the new focused matrix,
-full Playwright modulo two pre-existing browser/proxy worker-count
-port-contention flakes confirmed unrelated and passing individually and under
---workers=1).
-Next action: commit the implementation checkpoint, push fast-forward, wait
-for exact CI green including the new dedicated Phase 8B.1 matrix step, then
-proceed to the fresh pre-promotion selfDev session and the one real
+8A/8A.1/8A.1.1/8B/8B.0.1 tests pass unmodified). A hardening false negative
+(the Phase 8B call-graph scan only sees tracked files) was found and fixed
+in a follow-up commit before CI ran clean. Canonical adopted-case catalog
+remains empty at this checkpoint; no real promotion has occurred yet.
+Implementation checkpoint `bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9` pushed
+fast-forward; exact CI run `31868447710` completed/success with every step
+green, including the dedicated "Phase 8B.1 owner-gated canonical promotion
+matrix" step, the agent-state check, and the diff check.
+Next action: run `npm run selfdev:synthetic` for a fresh current-source v2
+session, then the fresh Phase 8B sandbox plan/run, then the one real
 prepare/approve/apply/verify/commit acceptance chain this task is authorized
 to perform exactly once.
 
