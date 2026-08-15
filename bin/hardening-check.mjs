@@ -267,6 +267,118 @@ function checkSelfDevelopmentBoundary() {
   if (!/SELF_DEVELOPMENT_SYNTHETIC_EVALUATION/.test(ownerPolicy)) fail('Phase 8A lacks a distinct owner-policy capability');
 }
 
+function selfDevSandboxSourceFiles() {
+  const directory = path.join(root, 'src', 'core', 'selfDevSandbox');
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
+    .map((entry) => path.join('src', 'core', 'selfDevSandbox', entry.name))
+    .sort();
+}
+
+function checkPhase8BSandboxBoundary() {
+  const files = selfDevSandboxSourceFiles();
+  if (files.length === 0) {
+    fail('Phase 8B sandbox adoption source is missing');
+    return;
+  }
+  const sources = files.map((file) => [file, read(file)]);
+  const combined = sources.map(([, source]) => source).join('\n');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  for (const file of files) {
+    if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevSandbox source ${file}`);
+  }
+  if (!provenanceManifest.includes("'src/core/selfDev/adoptedCaseCatalog.generated.ts'") || !provenanceManifest.includes("'src/core/selfDev/adoptedCases.ts'")) {
+    fail('authoritative provenance manifest omits the adopted-case catalog or its schema module');
+  }
+  if (!provenanceManifest.includes("'bin/selfdev-adopt-sandbox.mjs'")) fail('authoritative provenance manifest omits the Phase 8B CLI');
+
+  for (const [file, source] of sources) {
+    if (/from\s+['"][^'"]*(?:aiReview|campaign|oracles?|browser|products?|phase6|oops|database|infrastructure|auth|network|git)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a prohibited Phase 8B authority or transport`);
+    }
+    if (/node:(?:child_process|net|http|https|dns|tls|worker_threads)/.test(source)) fail(`${file} imports a prohibited runtime capability`);
+    if (/\b(?:fetch|http\.request|https\.request|net\.connect|WebSocket|child_process|spawn|exec(?:File)?|eval|new\s+Function\s*\(|process\.env)\b/i.test(source)) fail(`${file} exposes a prohibited runtime capability`);
+    if (/\bspawnSync\s*\(\s*['"]git['"]/.test(source)) fail(`${file} spawns Git directly`);
+    if (/\b(?:AiReviewSession|LoopbackAiReviewProvider|SyntheticAiReviewProvider|reviewBugCandidate|suggestOracle)\b/.test(source)) fail(`${file} enters Phase 7B AI review authority`);
+  }
+  // The loader may require exactly one bare npm specifier: the already-installed local TypeScript compiler.
+  const loader = read('src/core/selfDevSandbox/sandboxLoader.ts');
+  const bareRequires = loader.match(/requireFn\(\s*'([^./][^']*)'\s*\)/g) ?? [];
+  for (const occurrence of bareRequires) {
+    if (!/'typescript'/.test(occurrence)) fail(`sandbox loader requires an unapproved bare module: ${occurrence}`);
+  }
+  if (!/loadInFlight/.test(loader) || !/SELFDEV_SANDBOX_LOADER_BUSY/.test(loader)) fail('sandbox loader is missing its serial-execution lock');
+  if (!/resolvedSandboxRoot/.test(loader) || !/SELFDEV_SANDBOX_LOADER_PATH_ESCAPE/.test(loader)) fail('sandbox loader is missing its path-confinement check');
+  if (!/delete requireFn\.cache/.test(loader)) fail('sandbox loader does not clear its module cache');
+
+  const mirror = read('src/core/selfDevSandbox/sandboxMirror.ts');
+  if (!/SELFDEV_AUTHORITATIVE_PATHS/.test(mirror)) fail('sandbox mirror does not copy the fixed authoritative source set');
+  if (!/isSymbolicLink/.test(mirror)) fail('sandbox mirror is missing symlink rejection');
+  if (!/mode:\s*0o700/.test(mirror) || !/mode:\s*0o600/.test(mirror)) fail('sandbox mirror does not use owner-only directory/file permissions');
+  if (!/resolvedBase\s*\+\s*path\.sep/.test(mirror)) fail('sandbox cleanup does not confine deletion to the fixed sandbox base');
+
+  const planner = read('src/core/selfDevSandbox/planner.ts');
+  if (!/assessFutureReviewEligibility/.test(planner)) fail('Phase 8B planner does not consume the canonical future-review eligibility gate');
+  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(planner)) fail('Phase 8B planner is missing its owner-policy gate');
+  if (!/ALREADY_ADOPTED/.test(planner) || !/CATALOG_FULL/.test(planner) || !/CATALOG_NONCANONICAL/.test(planner)) fail('Phase 8B planner is missing a required fail-closed gate');
+  if (!/sourceBundleDigestBefore\s*!==\s*plan\.sourceBundleDigestBefore/.test(planner) && !/current\.sourceBundleDigest\s*!==\s*plan\.sourceBundleDigestBefore/.test(planner)) {
+    fail('Phase 8B planner is missing TOCTOU source-bundle revalidation');
+  }
+
+  const executor = read('src/core/selfDevSandbox/sandboxExecutor.ts');
+  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(executor)) fail('Phase 8B sandbox executor is missing its owner-policy gate');
+  if (!/revalidatePlan/.test(executor)) fail('Phase 8B sandbox executor does not revalidate the plan before mutation');
+  if (!/diffSandboxAgainstCanonical/.test(executor) || !/changedFiles\.length\s*!==\s*1/.test(executor)) fail('Phase 8B sandbox executor does not enforce exactly one changed file');
+  if (!/cleanupSandboxMirror/.test(executor)) fail('Phase 8B sandbox executor does not clean up its sandbox mirror');
+  if (!/REJECTED_DUPLICATE/.test(executor) || !/EVALUATED_PASS_NOT_ADOPTED/.test(executor) || !/REJECTED_SAFETY/.test(executor)) {
+    fail('Phase 8B sandbox executor is missing a required metamorphic probe verdict');
+  }
+  if (!/SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED/.test(combined) || !/canonicalApply:\s*'PROHIBITED'/.test(combined) || !/publication:\s*'PROHIBITED'/.test(combined)) {
+    fail('Phase 8B sandbox result lacks explicit non-canonical/no-publication authority');
+  }
+
+  const storage = read('src/core/selfDevSandbox/storage.ts');
+  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B plan/result storage does not use the hardened immutable private store');
+  if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B plan/result storage retains a replacement-capable write path');
+
+  const index = read('src/core/selfDevSandbox/index.ts');
+  if (!/runSandboxAdoption/.test(index) || !/planAdoption/.test(index)) fail('Phase 8B public index is missing its plan/run entry points');
+
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  if (!/SELF_DEVELOPMENT_SANDBOX_ADOPTION/.test(ownerPolicy)) fail('Phase 8B lacks a distinct owner-policy capability');
+
+  const cli = read('bin/selfdev-adopt-sandbox.mjs');
+  if (!/inspectSelfDevAdoption/.test(cli) || !/planAdoption/.test(cli) || !/runSandboxAdoption/.test(cli)) fail('Phase 8B CLI is not a thin wrapper over inspect/plan/run');
+  if (!/SANDBOX_ONLY/.test(cli)) fail('Phase 8B CLI is missing its fixed confirmation token');
+  const forbiddenCliOptions = [
+    '--path', '--file', '--source', '--code', '--patch', '--diff', '--repo', '--root',
+    '--sandbox-root', '--target', '--command', '--shell', '--model', '--prompt', '--url',
+    '--endpoint', '--latest', '--all', '--apply', '--commit', '--push', '--publish', '--force', '--yes',
+  ];
+  for (const option of forbiddenCliOptions) if (cli.includes(option)) fail(`Phase 8B CLI references a forbidden option ${option}`);
+  for (const forbiddenCommand of ['apply', 'promote', 'commit', 'merge', 'install']) {
+    if (new RegExp(`command === '${forbiddenCommand}'`).test(cli)) fail(`Phase 8B CLI exposes a forbidden command ${forbiddenCommand}`);
+  }
+  if (/child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)/i.test(cli)) fail('Phase 8B CLI exposes a prohibited capability');
+
+  if (!/NOT_AUTHORIZED_PHASE_8A|SANDBOX_ONLY|PROHIBITED/.test(combined)) fail('Phase 8B source lacks explicit authority-boundary markers');
+
+  // Call-graph containment: only the Phase 8B CLI and the sandbox module
+  // itself may reach the sandbox source-write executor.
+  const approvedCallers = new Set([...files, 'bin/selfdev-adopt-sandbox.mjs']);
+  const otherSources = gitFiles()
+    .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
+    .filter((file) => !approvedCallers.has(file) && file !== 'bin/hardening-check.mjs' && !file.startsWith('tests/'));
+  for (const file of otherSources) {
+    const source = read(file);
+    if (/\brunSandboxAdoption\s*\(|\bSelfDevAdoptionPlanStore\b|\bSelfDevAdoptionResultStore\b/.test(source)) {
+      fail(`${file} reaches Phase 8B sandbox-write authority outside the approved boundary`);
+    }
+    if (/from\s+['"][^'"]*selfDevSandbox[^'"]*['"]/.test(source)) fail(`${file} imports the Phase 8B sandbox boundary outside its approved callers`);
+  }
+}
+
 function checkImmutablePrivatePublication() {
   const source = read('src/core/policy/privateArtifacts.ts');
   const start = source.indexOf('  writeImmutableJson(');
@@ -379,6 +491,7 @@ checkOwnerReviewCliBoundary();
 checkImmutablePrivatePublication();
 checkOwnerDecisionAuthority();
 checkSelfDevelopmentBoundary();
+checkPhase8BSandboxBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

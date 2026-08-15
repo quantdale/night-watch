@@ -265,12 +265,22 @@ export function candidateDigestFor(candidate: SelfDevCandidate): string {
   return `sha256:${candidateSemanticDigest(candidate)}`;
 }
 
-export function candidateEquivalentFingerprint(candidate: SelfDevCandidate): string {
+/**
+ * Shared source-derived equivalent-fingerprint computation. A Phase 8B
+ * adopted-case entry recomputes this same value so its seeded fingerprint
+ * genuinely matches what a real candidate with the same fixture/actions/
+ * assertions would produce — never a reimplementation that could drift.
+ */
+export function selfDevEquivalentFingerprint(fixtureId: string, actionIds: readonly string[], assertionIds: readonly string[]): string {
   return sha256Digest({
-    fixtureId: candidate.fixtureId,
-    actionIds: [...candidate.actionIds],
-    assertionIds: [...candidate.assertionIds].sort(),
+    fixtureId,
+    actionIds: [...actionIds],
+    assertionIds: [...assertionIds].sort(),
   });
+}
+
+export function candidateEquivalentFingerprint(candidate: SelfDevCandidate): string {
+  return selfDevEquivalentFingerprint(candidate.fixtureId, candidate.actionIds, candidate.assertionIds);
 }
 
 export function validateCandidate(value: unknown): SelfDevCandidate {

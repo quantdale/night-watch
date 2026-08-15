@@ -18,6 +18,7 @@ import { SyntheticDeterministicProposer } from './proposer';
 import { SelfDevEvaluator } from './evaluator';
 import { candidateDigestFor, validateCandidate, validateSessionArtifact } from './validation';
 import { canonicalJson } from './canonical';
+import { selfDevAdoptedCoverageClasses, selfDevAdoptedEquivalentFingerprints } from './adoptedCases';
 
 export class DeterministicReplayClock {
   now(): number {
@@ -73,7 +74,11 @@ export function replaySession(artifactInput: SelfDevSessionArtifact): SelfDevRep
 
   try {
     const proposals = replayProposals(artifact);
-    const evaluator = new SelfDevEvaluator({ clock: () => new DeterministicReplayClock().now() });
+    const evaluator = new SelfDevEvaluator({
+      clock: () => new DeterministicReplayClock().now(),
+      seedEquivalentFingerprints: selfDevAdoptedEquivalentFingerprints(),
+      seedCoverageClasses: selfDevAdoptedCoverageClasses(),
+    });
     const replayed = evaluator.evaluateSession(proposals);
     if (replayed.length !== artifact.evaluations.length) throw new Error('SELFDEV_REPLAY_COUNT_MISMATCH');
 

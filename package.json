@@ -27,6 +27,7 @@
     "campaign:synthetic": "playwright test tests/unit/campaign.test.ts --workers=1",
     "selfdev:synthetic": "node bin/selfdev-synthetic.mjs",
     "selfdev:verify": "node bin/selfdev-verify.mjs",
+    "selfdev:adopt-sandbox": "node bin/selfdev-adopt-sandbox.mjs",
     "campaign:real": "node bin/phase7-real.mjs",
     "ai:local-canary": "node bin/ai-local-canary.mjs",
     "ai:owner-review": "node bin/ai-owner-review.mjs",

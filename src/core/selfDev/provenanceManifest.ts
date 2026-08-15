@@ -11,6 +11,7 @@ export const SELFDEV_SOURCE_BUNDLE_MANIFEST_VERSION = 'nightwatch.selfdev-source
 export const SELFDEV_SOURCE_BUNDLE_ALGORITHM = 'sha256:length-prefixed-relative-path-and-bytes.v1' as const;
 
 export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
+  'bin/selfdev-adopt-sandbox.mjs',
   'bin/selfdev-provenance.mjs',
   'bin/selfdev-synthetic.mjs',
   'bin/selfdev-verify.mjs',
@@ -20,6 +21,8 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'src/core/policy/privateArtifacts.ts',
   'src/core/provenance/index.ts',
   'src/core/provenance/localGit.ts',
+  'src/core/selfDev/adoptedCaseCatalog.generated.ts',
+  'src/core/selfDev/adoptedCases.ts',
   'src/core/selfDev/canonical.ts',
   'src/core/selfDev/contract.ts',
   'src/core/selfDev/controller.ts',
@@ -33,6 +36,14 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'src/core/selfDev/trust.ts',
   'src/core/selfDev/types.ts',
   'src/core/selfDev/validation.ts',
+  'src/core/selfDevSandbox/index.ts',
+  'src/core/selfDevSandbox/planner.ts',
+  'src/core/selfDevSandbox/sandboxExecutor.ts',
+  'src/core/selfDevSandbox/sandboxLoader.ts',
+  'src/core/selfDevSandbox/sandboxMirror.ts',
+  'src/core/selfDevSandbox/storage.ts',
+  'src/core/selfDevSandbox/types.ts',
+  'src/core/selfDevSandbox/validation.ts',
   'tsconfig.json',
 ] as const);
 

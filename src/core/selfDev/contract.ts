@@ -25,6 +25,13 @@ import {
   SELFDEV_SESSION_ARTIFACT_SCHEMA_VERSION,
   SELFDEV_TARGET_SURFACE,
 } from './types';
+import {
+  SELFDEV_ADOPTED_CASE_SCHEMA_VERSION,
+  SELFDEV_ADOPTED_CASES,
+  SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES,
+  SELFDEV_ADOPTION_STRATEGY_CLASS,
+  SELFDEV_ADOPTION_STRATEGY_VERSION,
+} from './adoptedCases';
 
 export const SELFDEV_CONTRACT_MANIFEST_VERSION = 'nightwatch.selfdev-contract.private.v1' as const;
 export const SELFDEV_RESULT_STATE_MACHINE_VERSION = 'nightwatch.selfdev-result-state-machine.v1' as const;
@@ -46,6 +53,11 @@ export const SELFDEV_CONTRACT_MANIFEST = Object.freeze({
   coverageClasses: SELFDEV_COVERAGE_CLASSES,
   resultStateMachineVersion: SELFDEV_RESULT_STATE_MACHINE_VERSION,
   replayAlgorithmVersion: SELFDEV_REPLAY_ALGORITHM_VERSION,
+  adoptedCaseSchemaVersion: SELFDEV_ADOPTED_CASE_SCHEMA_VERSION,
+  adoptionStrategyVersion: SELFDEV_ADOPTION_STRATEGY_VERSION,
+  adoptionStrategyClass: SELFDEV_ADOPTION_STRATEGY_CLASS,
+  adoptedCatalogMaxEntries: SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES,
+  adoptedCases: SELFDEV_ADOPTED_CASES,
 } as const);
 
 export function selfDevContractManifestBytes(): string {

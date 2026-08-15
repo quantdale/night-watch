@@ -31,6 +31,7 @@ import {
   SelfDevPrivateArtifactStore,
 } from './storage';
 import { replaySession } from './replay';
+import { selfDevAdoptedCoverageClasses, selfDevAdoptedEquivalentFingerprints } from './adoptedCases';
 
 export interface SelfDevControllerOptions extends SyntheticProposerOptions {
   readonly artifactStore?: SelfDevPrivateArtifactStore;
@@ -83,7 +84,10 @@ export class SelfDevController {
       fixture: options.fixture,
     };
     const proposals = proposer.propose(proposerOptions);
-    const evaluator = new SelfDevEvaluator();
+    const evaluator = new SelfDevEvaluator({
+      seedEquivalentFingerprints: selfDevAdoptedEquivalentFingerprints(),
+      seedCoverageClasses: selfDevAdoptedCoverageClasses(),
+    });
     const evaluations = evaluator.evaluateSession(proposals);
     const provenance = options.provenance ?? syntheticTestProvenance(baseNightwatchSha);
     const descriptor = replayDescriptor(proposerOptions, baseNightwatchSha, proposals.length);

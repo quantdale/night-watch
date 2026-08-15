@@ -142,10 +142,10 @@ function assertClean(root: string): void {
   // exact code-defined roots without recursively hashing arbitrary content.
   const untracked = runGit(root, [
     'ls-files', '--others', '--exclude-standard', '--',
-    'src/core/selfDev', 'src/core/provenance', 'src/core/policy/ownerScope.ts',
+    'src/core/selfDev', 'src/core/selfDevSandbox', 'src/core/provenance', 'src/core/policy/ownerScope.ts',
     'src/core/policy/privateArtifacts.ts', 'bin/selfdev-provenance.mjs',
-    'bin/selfdev-synthetic.mjs', 'bin/selfdev-verify.mjs', 'package.json',
-    'package-lock.json', 'tsconfig.json',
+    'bin/selfdev-synthetic.mjs', 'bin/selfdev-verify.mjs', 'bin/selfdev-adopt-sandbox.mjs',
+    'package.json', 'package-lock.json', 'tsconfig.json',
   ]).stdout.trim();
   if (untracked !== '') throw new LocalProvenanceError('AUTHORITATIVE_SOURCE_UNTRACKED');
 }

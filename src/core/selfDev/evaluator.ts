@@ -73,6 +73,14 @@ interface ExecutionResult {
 
 export interface SelfDevEvaluatorOptions {
   readonly clock?: () => number;
+  /**
+   * Phase 8B adopted-case seeding. Values are merged into the evaluator's
+   * baseline duplicate/coverage state at construction time only — this is a
+   * plain data merge, never executable behavior. Defaults to the empty
+   * canonical catalog's contribution (nothing) when omitted.
+   */
+  readonly seedEquivalentFingerprints?: readonly string[];
+  readonly seedCoverageClasses?: readonly string[];
 }
 
 function safeBaseSha(value: unknown): string {
@@ -104,14 +112,15 @@ function isZeroVector(vector: SelfDevSafetyVector): boolean {
 
 export class SelfDevEvaluator {
   private readonly clock: () => number;
-  private readonly state: EvaluationState = {
-    candidateIds: new Set(),
-    equivalentFingerprints: new Set([SELFDEV_BASELINE_EQUIVALENT_FINGERPRINT]),
-    coveredCoverage: new Set(SELFDEV_BASELINE_COVERAGE),
-  };
+  private readonly state: EvaluationState;
 
   constructor(options: SelfDevEvaluatorOptions = {}) {
     this.clock = options.clock ?? (() => performance.now());
+    this.state = {
+      candidateIds: new Set(),
+      equivalentFingerprints: new Set([SELFDEV_BASELINE_EQUIVALENT_FINGERPRINT, ...(options.seedEquivalentFingerprints ?? [])]),
+      coveredCoverage: new Set([...SELFDEV_BASELINE_COVERAGE, ...(options.seedCoverageClasses ?? [])]),
+    };
   }
 
   validateCandidate(value: unknown): SelfDevCandidate {
