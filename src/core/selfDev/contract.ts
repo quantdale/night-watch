@@ -12,6 +12,11 @@ import {
   SELFDEV_COVERAGE_CLASSES,
   SELFDEV_FIXTURE,
 } from './registry';
+import {
+  SELFDEV_SELECTION_ALGORITHM_VERSION,
+  SELFDEV_SYNTHETIC_PORTFOLIO_VERSION,
+  SELFDEV_SYNTHETIC_PROPOSAL_VARIANTS,
+} from './portfolio';
 import { canonicalJson, sha256Digest } from './canonical';
 import {
   SELFDEV_ADOPTION_STATUS,
@@ -33,7 +38,14 @@ import {
   SELFDEV_ADOPTION_STRATEGY_VERSION,
 } from './adoptedCases';
 
-export const SELFDEV_CONTRACT_MANIFEST_VERSION = 'nightwatch.selfdev-contract.private.v1' as const;
+/**
+ * Phase 8B.1.0 — the contract manifest SHAPE gains a load-bearing semantic
+ * sub-manifest (the synthetic proposal portfolio and its selection algorithm),
+ * so the manifest version is deliberately bumped from v1 to v2. The version
+ * is part of the manifest and therefore of `contractDigest`; deterministic
+ * proposal semantics are now contract-bound.
+ */
+export const SELFDEV_CONTRACT_MANIFEST_VERSION = 'nightwatch.selfdev-contract.private.v2' as const;
 export const SELFDEV_RESULT_STATE_MACHINE_VERSION = 'nightwatch.selfdev-result-state-machine.v1' as const;
 
 export const SELFDEV_CONTRACT_MANIFEST = Object.freeze({
@@ -58,6 +70,17 @@ export const SELFDEV_CONTRACT_MANIFEST = Object.freeze({
   adoptionStrategyClass: SELFDEV_ADOPTION_STRATEGY_CLASS,
   adoptedCatalogMaxEntries: SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES,
   adoptedCases: SELFDEV_ADOPTED_CASES,
+  syntheticPortfolioVersion: SELFDEV_SYNTHETIC_PORTFOLIO_VERSION,
+  syntheticSelectionAlgorithmVersion: SELFDEV_SELECTION_ALGORITHM_VERSION,
+  syntheticProposalPortfolio: SELFDEV_SYNTHETIC_PROPOSAL_VARIANTS.map((entry) => ({
+    variantId: entry.variantId,
+    title: entry.title,
+    fixtureId: entry.fixtureId,
+    actionIds: entry.actionIds,
+    assertionIds: entry.assertionIds,
+    coverageClasses: entry.coverageClasses,
+    equivalentFingerprint: entry.equivalentFingerprint,
+  })),
 } as const);
 
 export function selfDevContractManifestBytes(): string {

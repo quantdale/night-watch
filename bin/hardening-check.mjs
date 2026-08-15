@@ -686,6 +686,56 @@ function checkPhase8B1CanonicalPromotionBoundary() {
   }
 }
 
+
+function checkPhase8B10PortfolioIntegrity() {
+  // Phase 8B.1.0 — bounded deterministic proposal portfolio.
+  const portfolio = read('src/core/selfDev/portfolio.ts');
+  if (!/SELFDEV_SYNTHETIC_PORTFOLIO_VERSION/.test(portfolio) || !/SELFDEV_SELECTION_ALGORITHM_VERSION/.test(portfolio)) {
+    fail('Phase 8B.1.0 portfolio version or selection-algorithm version is missing');
+  }
+  if (!/deriveAdoptedCaseCoverage/.test(portfolio) || !/selfDevEquivalentFingerprint/.test(portfolio)) {
+    fail('Phase 8B.1.0 portfolio must derive coverage/fingerprints from the trusted registry/validation, never free data');
+  }
+  if (!/SELFDEV_BASELINE_COVERAGE/.test(portfolio)) fail('Phase 8B.1.0 selection must consider the built-in baseline coverage');
+  if (/(?:new\s+Function|eval\s*\(|process\.env|Date\.now|Math\.random|performance\.now|node:(?:child_process|fs|net|http|https|dns|tls)|fetch\s*\()/i.test(portfolio)) {
+    fail('Phase 8B.1.0 portfolio contains an executable/random/time/network capability');
+  }
+  if (!/Object\.freeze/.test(portfolio)) fail('Phase 8B.1.0 portfolio is not frozen declarative data');
+
+  const proposer = read('src/core/selfDev/proposer.ts');
+  const types = read('src/core/selfDev/types.ts');
+  if (!/VALID_MATRIX_EXPAND/.test(proposer) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(proposer)) {
+    fail('Phase 8B.1.0 proposer lacks the concrete portfolio matrix fixtures');
+  }
+  if (!/VALID_MATRIX_EXPAND/.test(types) || !/VALID_MATRIX_EXPAND_COLLAPSE/.test(types)) {
+    fail('Phase 8B.1.0 replay-fixture enum lacks the concrete portfolio fixtures');
+  }
+
+  const controller = read('src/core/selfDev/controller.ts');
+  if (!/selectNextSyntheticProposalVariant/.test(controller)) fail('Phase 8B.1.0 controller does not consume the deterministic portfolio selector');
+  if (!/VALID_MATRIX_EXPAND_COLLAPSE/.test(controller)) fail('Phase 8B.1.0 controller does not resolve the default alias to a concrete portfolio fixture');
+
+  const contract = read('src/core/selfDev/contract.ts');
+  if (!/syntheticPortfolioVersion/.test(contract) || !/syntheticSelectionAlgorithmVersion/.test(contract) || !/syntheticProposalPortfolio/.test(contract)) {
+    fail('Phase 8B.1.0 contract manifest does not bind the portfolio/selection semantics');
+  }
+  if (!/nightwatch\.selfdev-contract\.private\.v2/.test(contract)) fail('Phase 8B.1.0 contract manifest version was not deliberately advanced to v2');
+
+  // Production CLIs must never reach the test-only baseline helpers.
+  for (const cli of ['bin/selfdev-synthetic.mjs', 'bin/selfdev-verify.mjs', 'bin/selfdev-adopt-sandbox.mjs', 'bin/selfdev-promote-canonical.mjs']) {
+    if (/tests\/helpers/.test(read(cli))) fail(`${cli} reaches the test-only source-fixture baseline helpers`);
+  }
+
+  // The real canonical adopted-case catalog must remain pure declarative data
+  // with zero entries until a real owner-authorized promotion exists (the
+  // Phase 8B.1.0 invariant; one-entry/exhausted states are exercised only in
+  // temporary source fixtures).
+  const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  if (/SELFDEV_ADOPTED_CASES\s*=\s*\[[^\]]/.test(catalog) || !/SELFDEV_ADOPTED_CASES = \[\];/.test(catalog)) {
+    fail('the real canonical adopted-case catalog is not empty (Phase 8B.1.0 invariant)');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -699,6 +749,7 @@ checkOwnerDecisionAuthority();
 checkSelfDevelopmentBoundary();
 checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
+checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
 checkSyntax();
 

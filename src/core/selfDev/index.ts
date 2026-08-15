@@ -6,6 +6,7 @@ export * from './canonical';
 export * from './types';
 export * from './validation';
 export * from './registry';
+export * from './portfolio';
 export * from './proposer';
 export { SelfDevEvaluator, SelfDevSessionBudgetError } from './evaluator';
 export { replaySession, verifiedPassCandidates, DeterministicReplayClock } from './replay';

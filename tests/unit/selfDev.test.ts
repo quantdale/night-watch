@@ -24,8 +24,29 @@ import {
   type SelfDevCandidate,
 } from '../../src/core/selfDev';
 import { SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
+import { createSyntheticSelfDevSourceFixture, type SelfDevSourceFixture } from '../helpers/selfDevSourceFixture';
+import { loadSelfDevStack, type SelfDevStack } from '../helpers/selfDevStack';
 
 const BASE_SHA = 'b'.repeat(40);
+
+// Phase 8B.1.0 — explicit adopted-catalog baseline (EXPAND_ONLY) with the
+// full selfDev stack loaded from it, for the one controller-level assertion
+// that requires a fresh EVALUATED_PASS_NOT_ADOPTED regardless of which
+// checkout the test process runs in.
+let baselineFixture: SelfDevSourceFixture | null = null;
+let baselineStack: SelfDevStack | null = null;
+function explicitBaseline(): SelfDevStack {
+  if (baselineStack === null) {
+    baselineFixture = createSyntheticSelfDevSourceFixture('EXPAND_ONLY');
+    baselineStack = loadSelfDevStack(baselineFixture.root, path.join(process.cwd(), 'package.json'));
+  }
+  return baselineStack;
+}
+test.afterAll(() => {
+  baselineFixture?.cleanup();
+  baselineFixture = null;
+  baselineStack = null;
+});
 
 const TEST_PROVENANCE = {
   schemaVersion: 'nightwatch.selfdev-provenance.private.v1',
@@ -267,7 +288,11 @@ test.describe('Phase 8A registries and deterministic evaluator', () => {
   });
 
   test('the controller can evaluate without persistence for isolated callers', () => {
-    const report = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false });
+    // Phase 8B.1.0 — the fresh-PASS expectation is state-explicit: the
+    // session runs against an EXPAND_ONLY adopted-catalog baseline (the
+    // stack's own fixture), so exactly one pass candidate exists no matter
+    // which checkout the test process runs in.
+    const report = explicitBaseline().runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false });
     expect(report.privateArtifact.persisted).toBe(false);
     expect(report.privateArtifact.disposition).toBe('NOT_PERSISTED');
     expect(report.evaluations[0]?.resultClass).toBe('EVALUATED_PASS_NOT_ADOPTED');

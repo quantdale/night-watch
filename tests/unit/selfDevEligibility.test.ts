@@ -5,33 +5,31 @@
 // provenance/replay validity: a replay-valid, source-attested,
 // VERIFIED_EXACT_BASE (or VERIFIED_SOURCE_EQUIVALENT_DESCENDANT) artifact with
 // zero pass candidates is genuinely trust-valid but future-review INELIGIBLE.
+//
+// Phase 8B.1.0 — every artifact is built from an EXPLICIT adopted-catalog
+// source fixture (EXPAND_ONLY) with the full selfDev stack loaded from that
+// fixture, so session evaluation, replay, eligibility, and digests all agree
+// on one catalog state regardless of the checkout the test process runs in.
 // ---------------------------------------------------------------------------
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import {
-  SELFDEV_AUTHORITATIVE_PATHS,
   assessSelfDevArtifactIntegrity,
-  assessFutureReviewEligibility,
-  isFutureReviewPrerequisitePass,
   evaluationIdFor,
-  replaySession,
-  runSyntheticSelfDevSession,
+  isFutureReviewPrerequisitePass,
   sessionArtifactIdFor,
   validateSessionArtifact,
-  verifiedPassCandidates,
+  type SelfDevEvaluation,
   type SelfDevSessionArtifact,
-  type SelfDevSessionReport,
   type SelfDevTrustAssessment,
 } from '../../src/core/selfDev';
-import { currentCheckoutState } from '../../src/core/provenance/localGit';
-
-function artifactFromReport(report: SelfDevSessionReport): SelfDevSessionArtifact {
-  const { privateArtifact: _privateArtifact, ...artifact } = report;
-  return artifact as SelfDevSessionArtifact;
-}
+import {
+  createSyntheticSelfDevSourceFixture,
+  type SelfDevSourceFixture,
+} from '../helpers/selfDevSourceFixture';
+import { loadSelfDevStack, type SelfDevStack } from '../helpers/selfDevStack';
 
 function gitEnvironment(root: string): NodeJS.ProcessEnv {
   return {
@@ -59,24 +57,23 @@ function git(root: string, args: readonly string[]): string {
   return (result.stdout ?? '').trim();
 }
 
-function makeGitRepo(): string {
-  const repository = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-eligibility-git-'));
-  for (const relative of SELFDEV_AUTHORITATIVE_PATHS) {
-    const source = path.join(process.cwd(), relative);
-    const destination = path.join(repository, relative);
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.copyFileSync(source, destination);
-  }
-  git(repository, ['init', '--quiet']);
-  git(repository, ['add', '--all']);
-  git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic baseline']);
-  return repository;
+const anchorPath = path.join(process.cwd(), 'package.json');
+
+/**
+ * Phase 8B.1.0 baseline fixture: explicit EXPAND_ONLY adopted catalog +
+ * coherent stack loaded from the fixture source root. In this state the
+ * default session selects EXPAND_THEN_COLLAPSE and yields exactly one pass
+ * candidate; adversarial fixtures (UNSAFE_ACTION) still yield zero passes.
+ */
+function makeFixture(): { readonly fixture: SelfDevSourceFixture; readonly stack: SelfDevStack; readonly repository: string } {
+  const fixture = createSyntheticSelfDevSourceFixture('EXPAND_ONLY');
+  return { fixture, stack: loadSelfDevStack(fixture.root, anchorPath), repository: fixture.root };
 }
 
-function attestedArtifact(repository: string, fixture: Parameters<typeof runSyntheticSelfDevSession>[0] extends infer T ? T : never): SelfDevSessionArtifact {
-  const baseline = currentCheckoutState({ repositoryRoot: repository });
-  const report = runSyntheticSelfDevSession({
-    ...(fixture as object),
+function attestedArtifact(stack: SelfDevStack, repository: string, fixture: Record<string, unknown> = {}) {
+  const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+  const report = stack.runSyntheticSelfDevSession({
+    ...fixture,
     baseNightwatchSha: baseline.gitHeadSha,
     provenance: {
       schemaVersion: 'nightwatch.selfdev-provenance.private.v1',
@@ -90,175 +87,176 @@ function attestedArtifact(repository: string, fixture: Parameters<typeof runSynt
     },
     persist: false,
   });
-  return artifactFromReport(report);
+  const { privateArtifact: _privateArtifact, ...artifact } = report;
+  return artifact;
 }
 
 test.describe('Phase 8A.1.1 defect reproduction and positive control', () => {
   test('zero-pass UNSAFE_ACTION fixture is genuinely VERIFIED_EXACT_BASE with replay PASS and zero pass candidates', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, { fixture: 'UNSAFE_ACTION' });
+      const artifact = attestedArtifact(stack, repository, { fixture: 'UNSAFE_ACTION' });
       expect(() => validateSessionArtifact(artifact)).not.toThrow();
-      expect(replaySession(artifact)).toMatchObject({ status: 'PASS' });
+      expect(stack.replaySession(artifact)).toMatchObject({ status: 'PASS' });
 
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
-      const assessment = assessSelfDevArtifactIntegrity(artifact, baseline);
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+      const assessment = stack.assessSelfDevArtifactIntegrity(artifact, baseline);
       expect(assessment.trustStatus).toBe('VERIFIED_EXACT_BASE');
       expect(assessment.replayStatus).toBe('PASS');
       expect(assessment.passCandidateCount).toBe(0);
 
       // The corrected prerequisite must reject this exact assessment.
-      expect(isFutureReviewPrerequisitePass(assessment)).toBe(false);
-      const eligibility = assessFutureReviewEligibility(artifact, baseline);
+      expect(isFutureReviewPrerequisitePass(assessment as unknown as SelfDevTrustAssessment)).toBe(false);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, baseline);
       expect(eligibility.eligible).toBe(false);
       expect(eligibility.candidates).toHaveLength(0);
       expect(eligibility.assessment.trustStatus).toBe('VERIFIED_EXACT_BASE');
       expect(eligibility.assessment.adoptionStatus).toBe('NOT_AUTHORIZED_PHASE_8A');
       expect(eligibility.assessment.publication).toBe('PROHIBITED');
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('VALID_MATRIX positive control is VERIFIED_EXACT_BASE, replay PASS, one pass candidate, eligible', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
-      const assessment = assessSelfDevArtifactIntegrity(artifact, baseline);
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+      const assessment = stack.assessSelfDevArtifactIntegrity(artifact, baseline);
       expect(assessment.trustStatus).toBe('VERIFIED_EXACT_BASE');
       expect(assessment.replayStatus).toBe('PASS');
       expect(assessment.passCandidateCount).toBe(1);
-      expect(isFutureReviewPrerequisitePass(assessment)).toBe(true);
+      expect(isFutureReviewPrerequisitePass(assessment as unknown as SelfDevTrustAssessment)).toBe(true);
 
-      const eligibility = assessFutureReviewEligibility(artifact, baseline);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, baseline);
       expect(eligibility.eligible).toBe(true);
       expect(eligibility.candidates).toHaveLength(1);
       expect(eligibility.candidates.length).toBe(eligibility.assessment.passCandidateCount);
-      expect(verifiedPassCandidates(artifact)).toHaveLength(1);
+      expect(stack.verifiedPassCandidates(artifact)).toHaveLength(1);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 });
 
 test.describe('Phase 8A.1.1 adversarial eligibility matrix', () => {
   test('zero-pass documentation descendant remains VERIFIED_SOURCE_EQUIVALENT_DESCENDANT and ineligible', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, { fixture: 'UNSAFE_ACTION' });
+      const artifact = attestedArtifact(stack, repository, { fixture: 'UNSAFE_ACTION' });
       fs.mkdirSync(path.join(repository, 'docs'), { recursive: true });
       fs.writeFileSync(path.join(repository, 'docs', 'closure.md'), 'synthetic documentation\n');
       git(repository, ['add', 'docs/closure.md']);
       git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'docs descendant']);
-      const descendant = currentCheckoutState({ repositoryRoot: repository });
-      const assessment = assessSelfDevArtifactIntegrity(artifact, descendant);
+      const descendant = stack.currentCheckoutState({ repositoryRoot: repository });
+      const assessment = stack.assessSelfDevArtifactIntegrity(artifact, descendant);
       expect(assessment.trustStatus).toBe('VERIFIED_SOURCE_EQUIVALENT_DESCENDANT');
       expect(assessment.replayStatus).toBe('PASS');
       expect(assessment.passCandidateCount).toBe(0);
-      expect(isFutureReviewPrerequisitePass(assessment)).toBe(false);
-      const eligibility = assessFutureReviewEligibility(artifact, descendant);
+      expect(isFutureReviewPrerequisitePass(assessment as unknown as SelfDevTrustAssessment)).toBe(false);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, descendant);
       expect(eligibility.eligible).toBe(false);
       expect(eligibility.candidates).toHaveLength(0);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('valid-matrix documentation descendant remains eligible with agreeing candidate count', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
+      const artifact = attestedArtifact(stack, repository, {});
       fs.mkdirSync(path.join(repository, 'docs'), { recursive: true });
       fs.writeFileSync(path.join(repository, 'docs', 'closure.md'), 'synthetic documentation\n');
       git(repository, ['add', 'docs/closure.md']);
       git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'docs descendant']);
-      const descendant = currentCheckoutState({ repositoryRoot: repository });
-      const eligibility = assessFutureReviewEligibility(artifact, descendant);
+      const descendant = stack.currentCheckoutState({ repositoryRoot: repository });
+      const eligibility = stack.assessFutureReviewEligibility(artifact, descendant);
       expect(eligibility.assessment.trustStatus).toBe('VERIFIED_SOURCE_EQUIVALENT_DESCENDANT');
       expect(eligibility.eligible).toBe(true);
       expect(eligibility.candidates).toHaveLength(1);
       expect(eligibility.candidates.length).toBe(eligibility.assessment.passCandidateCount);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('replay tamper fails eligibility and returns no candidates', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
-      const pass = artifact.evaluations[0]!;
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+      const pass = artifact.evaluations[0] as unknown as SelfDevEvaluation;
       const forgedExecution = pass.execution === null ? null : { ...pass.execution, stableFingerprint: `sha256:${'f'.repeat(64)}` };
       const { evaluationId: _evaluationId, ...passIdentity } = { ...pass, execution: forgedExecution };
       const tamperedEvaluation = { ...passIdentity, evaluationId: evaluationIdFor(passIdentity) };
-      const tampered = { ...artifact, evaluations: [tamperedEvaluation, ...artifact.evaluations.slice(1)] };
-      const reidentified = { ...tampered, artifactId: sessionArtifactIdFor(tampered) };
-      expect(validateSessionArtifact(reidentified)).toBeTruthy();
-      const eligibility = assessFutureReviewEligibility(reidentified, baseline);
+      const tampered = { ...(artifact as unknown as SelfDevSessionArtifact), evaluations: [tamperedEvaluation, ...artifact.evaluations.slice(1)] } as unknown as SelfDevSessionArtifact;
+      const reidentified = { ...tampered, artifactId: sessionArtifactIdFor(tampered) } as unknown as SelfDevSessionArtifact;
+      expect(() => validateSessionArtifact(reidentified)).not.toThrow();
+      const eligibility = stack.assessFutureReviewEligibility(reidentified, baseline);
       expect(eligibility.assessment.replayStatus).not.toBe('PASS');
       expect(eligibility.eligible).toBe(false);
       expect(eligibility.candidates).toHaveLength(0);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('source-bundle mismatch fails eligibility', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
       const forgedCurrent = { ...baseline, sourceBundleDigest: `sha256:${'d'.repeat(64)}` };
-      const eligibility = assessFutureReviewEligibility(artifact, forgedCurrent);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, forgedCurrent);
       expect(eligibility.assessment.trustStatus).toBe('SOURCE_BUNDLE_MISMATCH');
       expect(eligibility.eligible).toBe(false);
       expect(eligibility.candidates).toHaveLength(0);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('contract-digest mismatch fails eligibility', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
       const forgedCurrent = { ...baseline, contractDigest: `sha256:${'e'.repeat(64)}` };
-      const eligibility = assessFutureReviewEligibility(artifact, forgedCurrent);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, forgedCurrent);
       expect(eligibility.assessment.trustStatus).toBe('CONTRACT_DIGEST_MISMATCH');
       expect(eligibility.eligible).toBe(false);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('dirty authoritative source fails eligibility', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
       const dirtyCurrent = { ...baseline, authoritativeSourceState: 'DIRTY' as const };
-      const eligibility = assessFutureReviewEligibility(artifact, dirtyCurrent);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, dirtyCurrent);
       expect(eligibility.assessment.trustStatus).toBe('AUTHORITATIVE_SOURCE_DIRTY');
       expect(eligibility.eligible).toBe(false);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('unrelated baseline fails eligibility', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
       const unrelated = { ...baseline, currentHeadSha: 'f'.repeat(40), isAncestor: () => false };
-      const eligibility = assessFutureReviewEligibility(artifact, unrelated);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, unrelated);
       expect(eligibility.assessment.trustStatus).toBe('BASELINE_MISMATCH');
       expect(eligibility.eligible).toBe(false);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
@@ -283,7 +281,7 @@ test.describe('Phase 8A.1.1 adversarial eligibility matrix', () => {
     };
     const assessment = assessSelfDevArtifactIntegrity(legacy);
     expect(assessment.trustStatus).toBe('LEGACY_UNVERIFIED_NOT_ELIGIBLE');
-    expect(isFutureReviewPrerequisitePass(assessment)).toBe(false);
+    expect(isFutureReviewPrerequisitePass(assessment as unknown as SelfDevTrustAssessment)).toBe(false);
   });
 
   test('malformed pass counts are never eligible regardless of trust/replay status', () => {
@@ -358,43 +356,43 @@ test.describe('Phase 8A.1.1 adversarial eligibility matrix', () => {
   });
 
   test('regenerated pass-candidate count disagreement with the assessment fails closed', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, {});
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
-      const assessment = assessSelfDevArtifactIntegrity(artifact, baseline);
+      const artifact = attestedArtifact(stack, repository, {});
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+      const assessment = stack.assessSelfDevArtifactIntegrity(artifact, baseline);
       expect(assessment.passCandidateCount).toBe(1);
       // Directly forging a higher passCandidateCount on the assessment (as a
       // future caller might if it computed the count itself) must not make
       // the canonical gate report more candidates than replay regenerates.
       const forgedAssessment = { ...assessment, passCandidateCount: 2 };
-      expect(isFutureReviewPrerequisitePass(forgedAssessment)).toBe(true);
+      expect(isFutureReviewPrerequisitePass(forgedAssessment as unknown as SelfDevTrustAssessment)).toBe(true);
       // The canonical gate re-derives its own assessment from the artifact and
       // current view rather than trusting a caller-supplied one, so it still
       // cross-checks against the true regenerated count (1) and would only
       // disagree if fed a forged assessment directly. Prove the cross-check
       // exists by exercising it through the real (non-forged) path once more.
-      const eligibility = assessFutureReviewEligibility(artifact, baseline);
+      const eligibility = stack.assessFutureReviewEligibility(artifact, baseline);
       expect(eligibility.eligible).toBe(true);
       expect(eligibility.candidates).toHaveLength(assessment.passCandidateCount);
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 
   test('zero side effects: eligibility assessment never mutates counters', () => {
-    const repository = makeGitRepo();
+    const { fixture, stack, repository } = makeFixture();
     try {
-      const artifact = attestedArtifact(repository, { fixture: 'UNSAFE_ACTION' });
-      const baseline = currentCheckoutState({ repositoryRoot: repository });
-      const eligibility = assessFutureReviewEligibility(artifact, baseline);
+      const artifact = attestedArtifact(stack, repository, { fixture: 'UNSAFE_ACTION' });
+      const baseline = stack.currentCheckoutState({ repositoryRoot: repository });
+      const eligibility = stack.assessFutureReviewEligibility(artifact, baseline);
       expect(eligibility.assessment.sourceWrites).toBe(0);
       expect(eligibility.assessment.gitWrites).toBe(0);
       expect(eligibility.assessment.externalCalls).toBe(0);
       expect(eligibility.assessment.adoptionStatus).toBe('NOT_AUTHORIZED_PHASE_8A');
       expect(eligibility.assessment.publication).toBe('PROHIBITED');
     } finally {
-      fs.rmSync(repository, { recursive: true, force: true });
+      fixture.cleanup();
     }
   });
 });

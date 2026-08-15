@@ -32,9 +32,32 @@ import {
 import { sha256Digest, sha256LengthPrefixedEntries } from '../../src/core/selfDev/canonical';
 import { SELFDEV_LEGACY_FILE_PREFIX, SELFDEV_V2_FILE_PREFIX, SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
 import { currentCheckoutState, sourceBundleDigest } from '../../src/core/provenance/localGit';
+import { createSyntheticSelfDevSourceFixture, type SelfDevSourceFixture } from '../helpers/selfDevSourceFixture';
+import { loadSelfDevStack, type SelfDevStack } from '../helpers/selfDevStack';
 
 const BASE_SHA = 'b'.repeat(40);
 const ZERO_SHA = '0'.repeat(40);
+
+// Phase 8B.1.0 — explicit adopted-catalog baseline (EXPAND_ONLY) with the
+// full selfDev stack loaded from it, so the PASS-reference tests below
+// exercise real controller/replay semantics against ONE explicit catalog
+// state regardless of which checkout the test process runs in. In this state
+// the default session selects EXPAND_THEN_COLLAPSE and yields exactly one
+// EVALUATED_PASS_NOT_ADOPTED.
+let expandedFixture: SelfDevSourceFixture | null = null;
+let expandedStack: SelfDevStack | null = null;
+function expandedBaseline(): SelfDevStack {
+  if (expandedStack === null) {
+    expandedFixture = createSyntheticSelfDevSourceFixture('EXPAND_ONLY');
+    expandedStack = loadSelfDevStack(expandedFixture.root, path.join(process.cwd(), 'package.json'));
+  }
+  return expandedStack;
+}
+test.afterAll(() => {
+  expandedFixture?.cleanup();
+  expandedFixture = null;
+  expandedStack = null;
+});
 const TEST_PROVENANCE: SelfDevProvenance = {
   schemaVersion: 'nightwatch.selfdev-provenance.private.v1',
   gitHeadSha: BASE_SHA,
@@ -80,7 +103,7 @@ function withEvaluation(
 
 function validExecution(evaluation: SelfDevEvaluation): NonNullable<SelfDevEvaluation['execution']> {
   if (evaluation.execution !== null) return evaluation.execution;
-  const pass = runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false }).evaluations[0]!;
+  const pass = expandedBaseline().runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false }).evaluations[0] as unknown as SelfDevEvaluation;
   if (pass.execution === null) throw new Error('TEST_EXECUTION_MISSING');
   return pass.execution;
 }
@@ -98,13 +121,16 @@ function resultReferences(): readonly SelfDevEvaluation[] {
   const transitionCandidateDraft = { ...valid, actionIds: ['selfdev.synthetic.collapse-summary'] };
   const { candidateId: _transitionId, ...transitionWithoutId } = transitionCandidateDraft;
   const transitionCandidate = { ...transitionWithoutId, candidateId: candidateIdFor(transitionWithoutId) };
+  const stack = expandedBaseline();
+  const sessionOf = (options: { fixture?: string }): readonly SelfDevEvaluation[] =>
+    stack.runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false, ...options }).evaluations as unknown as readonly SelfDevEvaluation[];
   return [
-    ...runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false }).evaluations,
-    runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, fixture: 'UNKNOWN_FIELD', persist: false }).evaluations[0]!,
-    runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, fixture: 'SCOPE_ESCALATION', persist: false }).evaluations[0]!,
-    runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, fixture: 'UNSAFE_ACTION', persist: false }).evaluations[0]!,
-    runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, fixture: 'UNSAFE_ASSERTION', persist: false }).evaluations[0]!,
-    runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, fixture: 'PRIVACY_VALUE', persist: false }).evaluations[0]!,
+    ...sessionOf({}),
+    sessionOf({ fixture: 'UNKNOWN_FIELD' })[0]!,
+    sessionOf({ fixture: 'SCOPE_ESCALATION' })[0]!,
+    sessionOf({ fixture: 'UNSAFE_ACTION' })[0]!,
+    sessionOf({ fixture: 'UNSAFE_ASSERTION' })[0]!,
+    sessionOf({ fixture: 'PRIVACY_VALUE' })[0]!,
     new SelfDevEvaluator({ clock: () => 0 }).evaluateCandidate(assertionCandidate),
     new SelfDevEvaluator({ clock: () => 0 }).evaluateCandidate(transitionCandidate),
     candidateBudget,
@@ -261,19 +287,23 @@ test.describe('Phase 8A.1 v2 identity, semantics, and replay', () => {
   });
 
   test('ordered replay rejects stable fingerprint, coverage, result, and order tampering', () => {
-    const artifact = artifactFromReport(runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false }));
-    expect(replaySession(artifact)).toMatchObject({ status: 'PASS', reason: 'REPLAY_EXACT' });
+    const stack = expandedBaseline();
+    const artifact = artifactFromReport(stack.runSyntheticSelfDevSession({ baseNightwatchSha: BASE_SHA, persist: false }) as unknown as SelfDevSessionReport);
+    // Replay must run against the SAME explicit adopted-catalog state the
+    // session was generated under (the stack's EXPAND_ONLY fixture), never
+    // the test process's own live catalog.
+    expect(stack.replaySession(artifact)).toMatchObject({ status: 'PASS', reason: 'REPLAY_EXACT' });
 
     const pass = artifact.evaluations[0]!;
     const stableTampered = withEvaluation(artifact, 0, {
       execution: { ...validExecution(pass), stableFingerprint: `sha256:${'f'.repeat(64)}` },
     });
-    expect(replaySession(stableTampered).status).toBe('FAIL');
+    expect(stack.replaySession(stableTampered).status).toBe('FAIL');
 
     const coverageTampered = withEvaluation(artifact, 0, {
       coverageDelta: { added: ['state-action:ready:selfdev.synthetic.observe-ready'], count: 1 },
     });
-    expect(replaySession(coverageTampered).status).toBe('FAIL');
+    expect(stack.replaySession(coverageTampered).status).toBe('FAIL');
 
     const forgedPass = withEvaluation(artifact, 2, {
       validationStatus: pass.validationStatus,
@@ -289,13 +319,13 @@ test.describe('Phase 8A.1 v2 identity, semantics, and replay', () => {
       resultClass: pass.resultClass,
     });
     expect(validateSessionArtifact(forgedPass)).toBeTruthy();
-    expect(replaySession(forgedPass).status).toBe('FAIL');
+    expect(stack.replaySession(forgedPass).status).toBe('FAIL');
 
     const reordered = reidentifyArtifact(artifact, { evaluations: [artifact.evaluations[1]!, artifact.evaluations[0]!, artifact.evaluations[2]!] });
     expect(validateSessionArtifact(reordered)).toBeTruthy();
-    expect(replaySession(reordered).status).toBe('FAIL');
-    expect(verifiedPassCandidates(artifact)).toHaveLength(1);
-    expect(() => verifiedPassCandidates(reordered)).toThrow(/SELFDEV_FUTURE_REVIEW_NOT_VERIFIED/);
+    expect(stack.replaySession(reordered).status).toBe('FAIL');
+    expect(expandedBaseline().verifiedPassCandidates(artifact)).toHaveLength(1);
+    expect(() => expandedBaseline().verifiedPassCandidates(reordered)).toThrow(/SELFDEV_FUTURE_REVIEW_NOT_VERIFIED/);
   });
 
   test('replay descriptor is bounded, ordered, and part of session identity', () => {

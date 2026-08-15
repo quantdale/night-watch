@@ -29,6 +29,7 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'src/core/selfDev/evaluator.ts',
   'src/core/selfDev/index.ts',
   'src/core/selfDev/metamorphicProbes.ts',
+  'src/core/selfDev/portfolio.ts',
   'src/core/selfDev/proposer.ts',
   'src/core/selfDev/provenanceManifest.ts',
   'src/core/selfDev/registry.ts',

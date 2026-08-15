@@ -16,6 +16,12 @@ export const SELFDEV_REPLAY_ALGORITHM_VERSION = 'nightwatch.selfdev-replay-algor
 export const SELFDEV_REPLAY_DESCRIPTOR_SCHEMA_VERSION = 'nightwatch.selfdev-replay-descriptor.private.v1' as const;
 export const SELFDEV_SYNTHETIC_FIXTURES = Object.freeze([
   'VALID_MATRIX',
+  // Phase 8B.1.0 concrete portfolio fixtures. `VALID_MATRIX` remains the
+  // historical fixed expansion matrix for direct proposer callers and old
+  // replay descriptors; the controller resolves the default/live alias to one
+  // of these concrete fixtures BEFORE persisting a replay descriptor.
+  'VALID_MATRIX_EXPAND',
+  'VALID_MATRIX_EXPAND_COLLAPSE',
   'UNKNOWN_FIELD',
   'UNSAFE_ACTION',
   'UNSAFE_ASSERTION',

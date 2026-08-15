@@ -23,8 +23,12 @@ import {
 import {
   SELFDEV_SYNTHETIC_BASE_NIGHTWATCH_SHA,
   SyntheticDeterministicProposer,
+  type SyntheticProposalFixture,
   type SyntheticProposerOptions,
 } from './proposer';
+import {
+  selectNextSyntheticProposalVariant,
+} from './portfolio';
 import { SelfDevEvaluator } from './evaluator';
 import {
   createSessionArtifact,
@@ -67,6 +71,25 @@ function replayDescriptor(options: SyntheticProposerOptions, baseNightwatchSha: 
   };
 }
 
+/**
+ * Phase 8B.1.0 — the default/live alias (`VALID_MATRIX` or omitted fixture) is
+ * catalog-aware: it resolves to the first currently-novel portfolio member as
+ * a CONCRETE fixture, so the persisted replay descriptor always names the
+ * exact proposal semantics that were evaluated. When the portfolio is
+ * exhausted, a bounded diagnostic matrix using the first portfolio member is
+ * still generated deterministically (every candidate then correctly evaluates
+ * duplicate/rejected — `passCandidateCount` 0 is a valid terminal state).
+ * Explicit non-default fixtures (adversarial or concrete) bypass selection.
+ */
+function resolveDefaultFixture(adoptedFingerprints: readonly string[], adoptedCoverage: readonly string[]): SyntheticProposalFixture {
+  const selection = selectNextSyntheticProposalVariant({
+    adoptedEquivalentFingerprints: adoptedFingerprints,
+    adoptedCoverageClasses: adoptedCoverage,
+  });
+  if (selection === null) return 'VALID_MATRIX_EXPAND';
+  return selection.variantId === 'EXPAND_SUMMARY' ? 'VALID_MATRIX_EXPAND' : 'VALID_MATRIX_EXPAND_COLLAPSE';
+}
+
 export class SelfDevController {
   run(options: SelfDevControllerOptions = {}): SelfDevSessionReport {
     assertOwnerPolicyAllows('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION');
@@ -78,15 +101,20 @@ export class SelfDevController {
       throw new Error('SELFDEV_BASELINE_MISMATCH');
     }
     const proposer = new SyntheticDeterministicProposer();
+    const adoptedFingerprints = selfDevAdoptedEquivalentFingerprints();
+    const adoptedCoverage = selfDevAdoptedCoverageClasses();
+    const fixture: SyntheticProposalFixture = (options.fixture === undefined || options.fixture === 'VALID_MATRIX')
+      ? resolveDefaultFixture(adoptedFingerprints, adoptedCoverage)
+      : options.fixture;
     const proposerOptions: SyntheticProposerOptions = {
       baseNightwatchSha,
       seed: options.seed,
-      fixture: options.fixture,
+      fixture,
     };
     const proposals = proposer.propose(proposerOptions);
     const evaluator = new SelfDevEvaluator({
-      seedEquivalentFingerprints: selfDevAdoptedEquivalentFingerprints(),
-      seedCoverageClasses: selfDevAdoptedCoverageClasses(),
+      seedEquivalentFingerprints: adoptedFingerprints,
+      seedCoverageClasses: adoptedCoverage,
     });
     const evaluations = evaluator.evaluateSession(proposals);
     const provenance = options.provenance ?? syntheticTestProvenance(baseNightwatchSha);

@@ -71,6 +71,14 @@ function main() {
     const passCount = report.evaluations.filter((evaluation) => evaluation.resultClass === 'EVALUATED_PASS_NOT_ADOPTED').length;
     const duplicateCount = report.evaluations.filter((evaluation) => evaluation.resultClass === 'REJECTED_DUPLICATE').length;
     const rejectedCount = report.evaluations.length - passCount - duplicateCount;
+    // Phase 8B.1.0 diagnostics: re-derive the live portfolio selection with the
+    // same live adopted state the controller just used. Purely read-only.
+    const portfolioService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'portfolio.ts'));
+    const adoptedService = loadTypeScriptModule(path.join(root, 'src', 'core', 'selfDev', 'adoptedCases.ts'));
+    const selection = portfolioService.selectNextSyntheticProposalVariant({
+      adoptedEquivalentFingerprints: adoptedService.selfDevAdoptedEquivalentFingerprints(),
+      adoptedCoverageClasses: adoptedService.selfDevAdoptedCoverageClasses(),
+    });
     console.log(JSON.stringify({
       SESSION: 'PASS',
       artifactId: report.artifactId,
@@ -89,6 +97,9 @@ function main() {
       sourceWrites: report.sourceWrites,
       gitWrites: report.gitWrites,
       externalCalls: report.externalCalls,
+      replayDescriptorFixture: report.replayDescriptor.fixture,
+      portfolioStatus: selection === null ? 'EXHAUSTED' : 'SELECTED',
+      selectedVariant: selection === null ? null : selection.variantId,
     }));
   } catch {
     console.error('SELFDEV_SYNTHETIC_FAILED');

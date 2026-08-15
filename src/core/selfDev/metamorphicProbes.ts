@@ -11,7 +11,7 @@
 
 import type { SelfDevAdoptedCase } from './adoptedCases';
 import { deriveAdoptedCaseCoverage } from './adoptedCases';
-import { SELFDEV_ACTIONS, resolveSelfDevAction, resolveSelfDevFixture, SELFDEV_ASSERTIONS } from './registry';
+import { SELFDEV_ACTIONS, SELFDEV_BASELINE_COVERAGE, resolveSelfDevAction, resolveSelfDevFixture, SELFDEV_ASSERTIONS } from './registry';
 import {
   SELFDEV_CANDIDATE_KIND,
   SELFDEV_CANDIDATE_SCHEMA_VERSION,
@@ -162,7 +162,21 @@ export function runMetamorphicProbes(
       baseNightwatchSha: '0'.repeat(40), title: 'Metamorphic non overreach probe',
     });
     const nonOverreachEvaluation = freshEvaluator().evaluateCandidate(nonOverreachCandidate);
-    nonOverreachResult = nonOverreachEvaluation.resultClass === 'EVALUATED_PASS_NOT_ADOPTED' ? 'PASS' : 'FAIL';
+    // Phase 8B.1.0 — the probe's expectation is exact relative to the
+    // evaluator's novelty boundary (baseline + adopted coverage), not the
+    // adopted case alone:
+    //  * a sequence that adds genuinely new coverage must still evaluate
+    //    EVALUATED_PASS_NOT_ADOPTED (future self-development continues), and
+    //  * a sequence whose only extra classes are already baseline/adopted
+    //    (registry-saturated terminal state — the fixed registry has no
+    //    further edge) must be REJECTED_DUPLICATE (the saturation is
+    //    correctly recognized, not a write artifact).
+    // Both outcomes prove the adoption did not overreach.
+    const addsNovelCoverage = deriveAdoptedCaseCoverage(nonOverreachActionIds)
+      .some((coverageClass) => !SELFDEV_BASELINE_COVERAGE.includes(coverageClass as (typeof SELFDEV_BASELINE_COVERAGE)[number]) && !adoptedCase.coverageClasses.includes(coverageClass));
+    nonOverreachResult = addsNovelCoverage
+      ? (nonOverreachEvaluation.resultClass === 'EVALUATED_PASS_NOT_ADOPTED' ? 'PASS' : 'FAIL')
+      : (nonOverreachEvaluation.resultClass === 'REJECTED_DUPLICATE' ? 'PASS' : 'FAIL');
   }
 
   const unsafeCandidate = buildCandidate({
