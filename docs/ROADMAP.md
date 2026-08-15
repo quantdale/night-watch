@@ -874,6 +874,83 @@ canonical adopted-case catalog, its digest, and `git status` were
 byte-for-byte unchanged before and after. Phase 8 remains `IN_PROGRESS`;
 canonical candidate promotion remains `NOT_STARTED`/`NOT_AUTHORIZED`.
 
+### Phase 8B.0.1 — Sandbox promotion-readiness closeout (complete)
+
+Phase 8B.0.1 closed the four promotion-readiness integrity defects found
+after Phase 8B's sandbox-only acceptance (each reproduced pre-fix as a
+runtime `TRUE_POSITIVE`) and re-ran the sandbox-only acceptance on the fixed
+implementation. See `docs/DECISIONS.md` D-48 for the full decision.
+
+- **Sandbox base pre-validation (Defect A).** `ensurePrivateSandboxBase()`
+  validates the pathname chain component-wise BEFORE any mutation (lstat-
+  first; symlink/non-directory components fail closed; missing directories
+  created only beneath validated parents, 0700, immediately revalidated).
+  The base fails closed on open mode or wrong owner with no repair; the
+  private parent reuses the established private-artifact tightening
+  convention (never loosened); `$HOME`/ancestors are never chmodded or
+  created. Instances are realpath-contained beneath the validated base and
+  disjoint from the canonical repo, parent workspace, and findings root;
+  cleanup requires strict child containment (any doubt → FAIL, nothing
+  deleted); copy failures clean the partial mirror. No `--sandbox-root`
+  option; test-only module-level override not exported from the boundary
+  index.
+- **Adoption strategy binding (Defect B).** Plan and result `strategyClass`
+  must equal `SELFDEV_ADOPTION_STRATEGY_CLASS` exactly, checked before any
+  identity recomputation (a forged strategy + recomputed plan/result ID now
+  fails `PLAN_STRATEGY_INVALID`/`RESULT_STRATEGY_INVALID`); plans
+  cross-bind `plan.strategyClass === plan.adoptedCase.strategyClass`
+  (`PLAN_STRATEGY_MISMATCH`); the type is the literal
+  `SelfDevAdoptionStrategyClass`. The strategy version stays bound through
+  the contract manifest into `contractDigest` (no cosmetic field).
+- **Complete verified-result metamorphic invariants (Defect C).** A verified
+  result requires all five probes exactly `PASS`; `NOT_RUN`/`FAIL` per field
+  is rejected even with a recomputed resultId. The executor fails closed with
+  `NON_OVERREACH_PROBE_UNAVAILABLE` (no bounded probe) or
+  `NON_OVERREACH_REGRESSION` (probe ran and failed) — never a verified
+  result.
+- **Truthful failure-path write accounting (Defect D).** `sandboxSourceWrites`
+  tracks the actual executed effect (0 before the single allowed write, 1
+  immediately after its success); every result carries the true value;
+  validation bounds 0..1; success requires exactly 1; canonical/Git/external
+  counters remain ALWAYS 0.
+- **Additional finding (fixed).** The sandbox loader's serial lock is
+  released on every exit path (an early anchor-resolution throw previously
+  wedged all later sandbox loads).
+
+Coverage: new `tests/unit/selfDevSandboxConfinement.test.ts` (matrix A–J),
+strategy-binding tests in `selfDevAdoptionPlan.test.ts`, and strategy/
+invariant/accounting/executor tests in `selfDevAdoptionSandbox.test.ts`;
+hardening gained `checkPhase8B01CloseoutIntegrity`; the workflow gained the
+dedicated "Phase 8B.0.1 sandbox promotion-readiness closeout matrix" step.
+
+The validated implementation checkpoint is
+`c4537ab5e3e96859c7c472ac47c3143a15b20c26` (continuity commit
+`0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` records the anchors). Local
+validation: typecheck, hardening, focused matrix (110 passed/1 skip plus two
+dirty-worktree CLI tests that pass 7/7 at a clean tree), full Playwright 633
+passed / 1 environment-conditional skip (634 total), owner provenance 91, AI
+regressions 98, agent-state 32, campaign:synthetic 27, `git diff --check`
+clean; isolated full-history clean checkout green. Exact CI run
+`31857751099` at `0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` — completed/
+success with the dedicated 8B.0.1 step and the agent-state check verified
+individually. The fresh acceptance on the current implementation
+(session `session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`,
+`VERIFIED_EXACT_BASE`, replay `PASS`, one candidate; plan
+`adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`;
+result
+`adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`)
+verified `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` with all five probes
+`PASS`, `sandboxSourceWrites: 1`, zero canonical/Git/external counters,
+`cleanupStatus: PASS`, and the canonical catalog byte-identical (digest
+`sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`,
+still empty) before and after with a clean `git status`. New
+`sourceBundleDigest`: `sha256:89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`;
+`contractDigest` unchanged at
+`sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`
+(source-provenance hardening, not an evaluator-contract change). Phase 8B.1
+remains `NOT_STARTED`/`NOT_AUTHORIZED`, now
+`READY_FOR_SEPARATE_DESIGN_REVIEW`.
+
 ---
 
 ## Never in scope (any phase)

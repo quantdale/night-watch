@@ -111,11 +111,13 @@ for a SEPARATELY AUTHORIZED Phase 8B.1 design review.
   COMPLETE.
 - M7 — Hardening `checkPhase8B01CloseoutIntegrity` + dedicated CI step.
   COMPLETE.
-- M8 — Full local validation. IN PROGRESS.
-- M9 — Isolated full-history clean-checkout validation. PENDING.
-- M10 — Substantive checkpoint commit + push + exact CI. PENDING.
-- M11 — Fresh private sandbox-only acceptance. PENDING.
-- M12 — Docs closure + docs checkpoint + final CI. PENDING.
+- M8 — Full local validation. COMPLETE.
+- M9 — Isolated full-history clean-checkout validation. COMPLETE.
+- M10 — Substantive checkpoint commit + push + exact CI (run 31857751099 at
+  0f64ea6, green, dedicated step verified). COMPLETE.
+- M11 — Fresh private sandbox-only acceptance. COMPLETE (all five probes
+  PASS, sandboxSourceWrites 1, canonical catalog byte-identical empty).
+- M12 — Docs closure + docs checkpoint + final CI. IN PROGRESS.
 - M13 — Final report (102-field format), verdict PHASE_8B_0_1_COMPLETE.
   PENDING.
 

@@ -392,6 +392,44 @@ approved-for-canonical-mutation, or Git-commit/push-authorized. Canonical
 promotion is Phase 8B.1 — Owner-Gated Canonical Promotion — a separate,
 `NOT_STARTED`, `NOT_AUTHORIZED` future task.
 
+### Phase 8B.0.1 sandbox promotion-readiness closeout
+
+Phase 8B.0.1 hardened the four trust boundaries of the chain above without
+changing its shape:
+
+- **Sandbox base pre-validation.** The chain now begins with
+  `ensurePrivateSandboxBase()`: the code-defined base path
+  (`$HOME/.nightwatch/selfdev-sandboxes`) is validated component-wise
+  (lstat-first, symlink/non-directory fail closed, owner and private-mode
+  fail closed, missing directories created only beneath validated parents
+  with 0700 and immediately revalidated) BEFORE any chmod, mkdir beneath,
+  mkdtemp, file creation, or cleanup. The base itself is never chmod-
+  repaired; the private parent reuses the established private-artifact
+  tightening convention; `$HOME`/ancestors are never chmodded or created.
+  Sandbox instances are realpath-contained beneath the validated base and
+  disjoint from the canonical repository, the parent workspace, and the
+  findings root. Cleanup requires strict realpath child containment and
+  lstat before recursive removal.
+- **Adoption strategy binding.** Plans and results carry exactly one
+  strategy class (`SELFDEV_ADOPTION_STRATEGY_CLASS`), enforced at runtime
+  before any identity recomputation and cross-bound between plan and
+  adopted case; the strategy version remains bound through the contract
+  manifest into `contractDigest`.
+- **Complete verified-result metamorphic invariants.** A verified result
+  requires all five probes `PASS`; `NON_OVERREACH_PROBE_UNAVAILABLE` and
+  `NON_OVERREACH_REGRESSION` are distinct executor failure classes, and
+  neither can yield a verified result.
+- **Truthful failure-path write accounting.** `sandboxSourceWrites` records
+  the actual executed effect (0 before the single allowed write, 1 after),
+  on success and failure alike, bounded 0..1, with canonical/Git/external
+  counters always 0.
+
+The residual race assumption is unchanged: protection covers preexisting
+symlinked bases/parents, ordinary path confusion, accidental symlink
+configuration, and symlink-target mutation before detection — NOT a
+malicious machine owner who can rewrite the filesystem and
+source/verifier concurrently.
+
 Git continuity is intentionally separate from runtime authority. A validated
 substantive implementation SHA is a stable historical anchor; approved
 documentation descendants may advance live history without changing that

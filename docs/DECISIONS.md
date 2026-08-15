@@ -1413,3 +1413,90 @@ were byte-for-byte unchanged before and after.
 Canonical Promotion) design, which remains `NOT_STARTED`/`NOT_AUTHORIZED`
 and must consume this phase's plan/result identity rather than re-deriving
 adoption semantics. Phase 8 remains `IN_PROGRESS`.
+
+## D-48 — Promotion readiness requires validate-before-mutate sandbox bases, one bound strategy, complete verified probes, and truthful write accounting
+
+**Decision.** Phase 8B.0.1 hardened the four trust boundaries a future
+canonical-promotion design would consume, after each was reproduced as a
+runtime `TRUE_POSITIVE` against the Phase 8B implementation.
+
+1. **Sandbox base pre-validation.** The sandbox base is established by one
+   internal routine, `ensurePrivateSandboxBase()`, which validates the whole
+   pathname chain component-wise (lstat-first) before ANY mutation: symlink
+   components and non-directory components fail closed; ownership is
+   validated where the platform exposes uid semantics; the base fails closed
+   on group/world-accessible mode with no chmod repair; a missing directory
+   is created only beneath a previously validated parent, non-recursively,
+   with mode 0700, and immediately revalidated. The established
+   private-artifact convention (validate non-symlink owner-matched directory,
+   then tighten to 0700, never loosen) is reused for the private parent
+   (`.nightwatch`), which Nightwatch's own recursive mkdir historically
+   created at 0755; `$HOME` and arbitrary ancestors are never chmodded or
+   created. Sandbox instances are realpath-contained beneath the validated
+   base and disjoint from the canonical repository, the parent workspace, and
+   the findings root; cleanup requires strict realpath child containment and
+   lstat before recursive removal — any doubt returns FAIL and deletes
+   nothing (a residual directory is preferred to unsafe recursive deletion).
+   The base location stays code-defined (`$HOME/.nightwatch/selfdev-sandboxes`);
+   there is no `--sandbox-root` option; tests inject a module-level override
+   that is not exported from the boundary index.
+2. **Single adoption strategy binding.** Plan and result `strategyClass`
+   must equal the exact constant `SELFDEV_ADOPTION_STRATEGY_CLASS`
+   (`DECLARATIVE_REGRESSION_CATALOG_PROMOTION`) at runtime, checked before
+   any identity recomputation, so a forged object cannot change the strategy,
+   recompute its content-addressed ID, and pass validation. Plans additionally
+   cross-bind `plan.strategyClass === plan.adoptedCase.strategyClass`
+   (`PLAN_STRATEGY_MISMATCH`), and the TypeScript type is the literal
+   `SelfDevAdoptionStrategyClass`. The strategy version
+   (`nightwatch.selfdev-adoption-strategy.v1`) is deliberately NOT added to
+   plan/result records: it is already bound through the contract manifest
+   (`adoptionStrategyVersion`/`adoptionStrategyClass` in
+   `SELFDEV_CONTRACT_MANIFEST`) into `contractDigest`, which plans and results
+   carry and TOCTOU-revalidate; adding a field would be cosmetic. There is
+   exactly one production adoption strategy; no generic dispatch exists.
+3. **Complete verified-result metamorphic invariants.** A claimed
+   `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` result requires ALL FIVE probes
+   exactly `PASS` — preAdoption, postEquivalent, postVariantCoverage,
+   nonOverreach, unsafeRegression. `NOT_RUN` and `FAIL` are invalid per field
+   even with a recomputed resultId. The executor distinguishes
+   `NON_OVERREACH_PROBE_UNAVAILABLE` (no bounded new-coverage probe exists)
+   from `NON_OVERREACH_REGRESSION` (a probe ran and failed) and can never
+   produce a verified result when either occurs.
+4. **Truthful failure-path write accounting.** `sandboxSourceWrites` tracks
+   the ACTUAL executed effect: 0 before the single allowed target write, 1
+   immediately after its success; every result — success or failure —
+   carries the true value; validation bounds it to integer 0..1, success
+   requires exactly 1, and `canonicalSourceWrites`/`runtimeGitWrites`/
+   `externalCalls` remain ALWAYS 0. A failure result may truthfully say
+   `sandboxSourceWrites = 1` with `sandboxVerificationStatus = FAIL`; that is
+   accurate provenance, not a safety violation.
+
+A fifth, narrowly-scoped finding in the same boundary was fixed: the sandbox
+loader's serial-execution lock is now released on every exit path (an early
+anchor-resolution throw previously wedged every later sandbox load).
+
+**Rationale.** Phase 8B already proved one sandbox-confined adoption can be
+verified end-to-end; the residual risk for a future canonical-promotion
+design was in the EVIDENCE CHAIN, not the capability: an unvalidated base
+could be mutated through a symlink before rejection; an unknown strategy
+could be legalized by recomputing an ID; "verified" could mean a missing
+proof; and failure metadata could deny writes that actually happened. Each
+gap was reproducible pre-fix, each closes with runtime validation plus
+behavioral tests, and the real acceptance re-ran on the fixed implementation.
+
+**Consequences.** The canonical generated catalog remains empty and
+byte-identical; no canonical promotion authority, runtime Git authority, or
+new owner-policy capability was added. Hardening gained
+`checkPhase8B01CloseoutIntegrity` and the workflow gained a dedicated
+"Phase 8B.0.1 sandbox promotion-readiness closeout matrix" step. The
+validated implementation checkpoint is
+`c4537ab5e3e96859c7c472ac47c3143a15b20c26`; the fresh sandbox-only acceptance
+on the current implementation (session
+`session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`,
+plan `adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`,
+result
+`adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`)
+verified `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` with all five probes
+`PASS`, `sandboxSourceWrites: 1`, zero canonical/Git/external counters, and a
+byte-identical empty canonical catalog before and after. Phase 8B.1 remains
+`NOT_STARTED`/`NOT_AUTHORIZED`, now `READY_FOR_SEPARATE_DESIGN_REVIEW`.

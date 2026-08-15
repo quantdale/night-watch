@@ -4,8 +4,9 @@ Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
 7B/7B.1/7B.1.1/7B.1.2/7B.2.1/7B.3 bounded private AI review assistance,
 Phase 8A evaluated self-development sandbox safety, Phase 8A.1/8A.1.1
-trusted evaluation provenance/replay/eligibility safety, and Phase 8B
-controlled source adoption sandbox safety.
+trusted evaluation provenance/replay/eligibility safety, Phase 8B
+controlled source adoption sandbox safety, and Phase 8B.0.1
+sandbox promotion-readiness closeout safety.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -881,19 +882,36 @@ The sandbox mirror copies only the fixed authoritative path set into a
 fresh 0700 directory under a fixed sandbox base outside the repository, the
 parent workspace, and the private-findings root; every copy step rejects
 symlinks and verifies the mirror's pre-mutation digest matches canonical
-exactly before any write. Exactly one atomic write targets the approved
+exactly before any write. Since Phase 8B.0.1, the sandbox base itself is
+established by `ensurePrivateSandboxBase()`: the code-defined base path
+(`$HOME/.nightwatch/selfdev-sandboxes`) and its pathname chain are validated
+component-wise (lstat-first; symlink and non-directory components fail
+closed; ownership validated where uid semantics exist; unsafe permission
+state on the base fails closed with no chmod repair) BEFORE any chmod,
+mkdir beneath, mkdtemp, file creation, or cleanup; missing directories are
+created only beneath a previously validated parent, non-recursively, with
+mode 0700, and immediately revalidated. The private parent reuses the
+established private-artifact convention (a validated non-symlink
+owner-matched directory is tightened to 0700, never loosened); `$HOME` and
+arbitrary ancestors are never chmodded or created. Sandbox instances are
+realpath-contained beneath the validated base and disjoint from the
+canonical repository, the parent workspace, and the findings root. Exactly
+one atomic write targets the approved
 file; a post-write diff against canonical bytes must show exactly that one
 path changed, or the run fails closed as `UNEXPECTED_CHANGED_FILE`. Cleanup
 only ever removes a directory this module itself created beneath the fixed
-sandbox base, verified by realpath comparison immediately before deletion —
-never a broader path. The TypeScript module loader is bounded to exact
+sandbox base, verified by realpath strict-child comparison and lstat
+immediately before deletion — any doubt returns `FAIL` and deletes nothing;
+a residual directory is preferred to unsafe recursive deletion. The
+TypeScript module loader is bounded to exact
 absolute files beneath the resolved sandbox root (path-escape attempts throw
 `SELFDEV_SANDBOX_LOADER_PATH_ESCAPE`), requires only the already-installed
 local `typescript` package as a bare specifier, and is process-global-state
 serial (a concurrent load attempt throws `SELFDEV_SANDBOX_LOADER_BUSY`); it
 clears stale and newly-loaded module-cache entries under the sandbox root
 before and after every load, so independent sandbox runs never leak or
-inherit each other's state.
+inherit each other's state. Since Phase 8B.0.1 the serial lock is released
+on EVERY exit path, including an early anchor/compiler-resolution failure.
 
 The executor then evaluates the MODIFIED sandbox source directly — loading
 the sandbox's own `contract.ts`, `evaluator.ts`, and `adoptedCases.ts` and
@@ -910,6 +928,14 @@ safety vector) remains `REJECTED_SAFETY` regardless of adoption state. The
 post-mutation contract digest is required to differ from the pre-mutation
 one, or the run fails closed as `SANDBOX_CONTRACT_NOT_CHANGED`.
 
+Since Phase 8B.0.1, a claimed verified result means ALL FIVE proof fields —
+preAdoption, postEquivalent, postVariantCoverage, nonOverreach, and
+unsafeRegression — ran and passed: `NOT_RUN` is never an acceptable
+verified state, and `FAIL` is never either. The executor cannot produce a
+verified result when no bounded non-overreach probe exists
+(`NON_OVERREACH_PROBE_UNAVAILABLE`) or when a probe ran and failed
+(`NON_OVERREACH_REGRESSION`).
+
 Sanitized results (`nightwatch.selfdev-adoption-sandbox-result.private.v1`)
 never contain raw source, a patch/diff, or a sandbox filesystem path.
 `sandboxSourceWrites`, `canonicalSourceWrites`, `runtimeGitWrites`, and
@@ -917,16 +943,27 @@ never contain raw source, a patch/diff, or a sandbox filesystem path.
 `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` result requires
 `canonicalSourceWrites=0`, `runtimeGitWrites=0`, `externalCalls=0`,
 `sandboxSourceWrites=1`, exactly one changed file equal to the fixed target,
-differing pre/post source-bundle/contract/target digests, all metamorphic
-probes passing (or, for the new-coverage probe only, a documented `NOT_RUN`
-when the fixed registry has no further coverage to add), and successful
+differing pre/post source-bundle/contract/target digests, all five
+metamorphic proofs exactly `PASS` (preAdoption, postEquivalent,
+postVariantCoverage, nonOverreach, unsafeRegression — since Phase 8B.0.1
+there is no `NOT_RUN` allowance on any proof), and successful
 cleanup — enforced as a semantic invariant gate that a recomputed result ID
 cannot satisfy for an impossible tuple (mirroring the Phase 8A.1.1 forgery-
 resistance pattern from D-46). Plan and result records use the same
 immutable, exact-ID, no-replace private storage primitive as every other
 Phase 8A/8A.1 artifact, under a distinct `selfdev-adoption` namespace with
 separate `plans`/`results` subdirectories; there is no list/enumeration/
-latest lookup.
+latest lookup. Since Phase 8B.0.1 the plan and result `strategyClass` must
+equal exactly `SELFDEV_ADOPTION_STRATEGY_CLASS`
+(`DECLARATIVE_REGRESSION_CATALOG_PROMOTION`) — the single production
+adoption strategy — checked at runtime before any identity recomputation, so
+an unknown strategy cannot be legalized by recomputing a content-addressed
+ID; plans additionally cross-bind `plan.strategyClass ===
+plan.adoptedCase.strategyClass`. Failure records are truthful provenance:
+`sandboxSourceWrites` tracks the actual executed effect (0 before the single
+allowed write, 1 immediately after its success) on success and failure
+alike, bounded to integer 0..1, with the canonical/Git/external counters
+always 0.
 
 The narrow CLI (`bin/selfdev-adopt-sandbox.mjs`) exposes only exact-ID
 `inspect`, `plan`, and `run` subcommands; `run` requires the fixed
@@ -967,10 +1004,45 @@ separate, `NOT_STARTED`, `NOT_AUTHORIZED` future task; this phase's plan and
 result identities are designed to be consumable by that future gate without
 re-deriving adoption semantics, but no such consumer exists yet.
 
+### Phase 8B.0.1 closeout safety update
+
+Phase 8B.0.1 (see DECISIONS D-48) strengthened the four trust boundaries of
+this section and re-ran the real acceptance on the fixed implementation. The
+sandbox base is now validated before any mutation (component-wise
+lstat-first pathname chain; symlink/non-directory/owner/mode fail closed;
+create-only-beneath-validated-parent with immediate revalidation; no chmod
+of an unvalidated pathname or of `$HOME`/ancestors), instances are
+realpath-contained and disjoint from the canonical repo, parent workspace,
+and findings root, and cleanup requires strict realpath child containment.
+Plan/result `strategyClass` is bound to the exact single strategy constant
+before identity recomputation. A verified result requires all five
+metamorphic proofs exactly `PASS` (`NOT_RUN` and `FAIL` rejected per field),
+with `NON_OVERREACH_PROBE_UNAVAILABLE` and `NON_OVERREACH_REGRESSION` as
+distinct executor failure classes. `sandboxSourceWrites` truthfully records
+the actual executed effect (0 before the single allowed write, 1 after) on
+success and failure alike, bounded 0..1. The fresh acceptance on the fixed
+implementation — session
+`session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`
+(`VERIFIED_EXACT_BASE`, replay `PASS`), plan
+`adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`,
+result
+`adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`
+— verified `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` with all five probes
+`PASS`, `sandboxSourceWrites=1`, zero canonical/Git/external counters,
+`cleanupStatus=PASS`, and a byte-identical empty canonical catalog before and
+after with a clean `git status`; the sandbox base contained no residue.
+Zero DEV/NEXT/production contacts, product mutations, database/
+infrastructure queries, external AI/model calls, or publication occurred.
+The residual race assumption is unchanged: the implementation protects
+against preexisting symlinked bases/parents, ordinary path confusion,
+accidental symlink configuration, and symlink-target mutation before
+detection — NOT against a malicious machine owner who can rewrite the
+filesystem and source/verifier concurrently.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
 Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
-and Phase 8A/8A.1/8A.1.1/8B self-development evaluation and controlled
+and Phase 8A/8A.1/8A.1.1/8B/8B.0.1 self-development evaluation and controlled
 source adoption sandbox; changes require a DECISIONS entry and a test
 update.*

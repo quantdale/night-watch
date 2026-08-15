@@ -4,7 +4,7 @@
 
 Task ID: phase-8b-0-1-sandbox-promotion-readiness-closeout
 Phase: 8B.0.1 — Sandbox Promotion-Readiness Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: fca4002ccb4869e5b9932b70f25e5df8e67d1da6
 Last validated implementation SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
 Branch: main
@@ -14,7 +14,7 @@ Live HEAD authority: GIT (discover from git, never predict)
 STARTING_SHA: fca4002ccb4869e5b9932b70f25e5df8e67d1da6
 LAST_VALIDATED_IMPLEMENTATION_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
-LAST_DOCUMENTATION_CHECKPOINT_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9
 
 ## Objective
 
@@ -28,20 +28,22 @@ catalog stays empty and byte-identical.
 
 ## Current Milestone
 
-Milestone ID: M10 — Substantive checkpoint committed; continuity commit B;
-push A+B; exact CI.
+Milestone ID: M12 — Docs closure; final CI; M13 report.
 Status: IN_PROGRESS
-What was attempted and the result: M8/M9 complete — at commit A
-(c4537ab5e3e96859c7c472ac47c3143a15b20c26, clean tree): CLI tests 7/7;
-full Playwright 633 passed / 1 env-conditional skip (634 total; 611 Phase 8B
-baseline + 23 new); isolated full-history checkout (sibling
-nightwatch-clean-checkout-tmp): typecheck PASS, hardening PASS, focused
-matrix 112 passed / 1 skip, owner provenance 91, agent-state 32, campaign 27,
-git diff --check clean. agent:check at A: only the 6 expected anchor errors
-(a commit cannot reference itself; the docs-only continuity commit B records
-the anchors). This commit B records LAST_VALIDATED_IMPLEMENTATION_SHA /
-LAST_SUBSTANTIVE_CHECKPOINT_SHA / LAST_DOCUMENTATION_CHECKPOINT_SHA =
-c4537ab5e3e96859c7c472ac47c3143a15b20c26 in STATE.md + ACTIVE_TASK.md.
+What was attempted and the result: M10/M11 complete — commit A
+(c4537ab5e3e96859c7c472ac47c3143a15b20c26, substantive) + commit B
+(0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9, continuity) pushed in one
+fast-forward; exact CI run 31857751099 at 0f64ea6 completed/success with
+the dedicated "Phase 8B.0.1 sandbox promotion-readiness closeout matrix"
+step and the agent-state check verified individually. Fresh sandbox-only
+acceptance on the current implementation (details in "Real Acceptance
+Evidence (M11)" below) verified SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED
+with all five probes PASS, sandboxSourceWrites 1, canonical catalog
+byte-identical (ffe3d635...) and empty, clean git status, zero residual
+sandboxes. Durable docs updated (CURRENT_STATE, ROADMAP, ARCHITECTURE,
+SAFETY_MODEL, DECISIONS D-48); REPORT.md written (102-field format). Pending:
+commit C (docs closure), push, final exact CI verification, §78
+source-equivalent re-verify, final report to the owner.
 
 ## Completed Milestones
 
@@ -89,30 +91,100 @@ c4537ab5e3e96859c7c472ac47c3143a15b20c26 in STATE.md + ACTIVE_TASK.md.
   110 passed / 1 skip / 2 CLI failures at the dirty tree (expected —
   currentCheckoutState against the real repo; 7/7 at clean commit A); owner
   provenance 91; AI regressions 98; agent-state 32; campaign 27; git diff
-  --check clean; full Playwright at commit A: 633 passed / 1 skip (634 total);
-  agent:check at A: only the 6 expected anchor errors.
+  --check clean; full Playwright at commit A: 633 passed / 1 env-conditional
+  skip (634 total; 611 Phase 8B baseline + 23 new).
 - M9 — Isolated full-history clean-checkout validation (sibling of the real
   Alphaus repos): typecheck PASS, hardening PASS, focused matrix 112 passed /
   1 skip, owner provenance 91, agent-state 32, campaign 27, git diff --check
   clean.
+- M10 — Substantive checkpoint: commit A (c4537ab5e3e96859c7c472ac47c3143a15b20c26)
+  committed; continuity commit B (0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9)
+  recorded the anchors (validated == substantive == A; agent:check at A is
+  red on the six anchor fields by construction — a commit cannot reference
+  itself); A+B pushed in one fast-forward (fca4002..0f64ea6); HEAD ==
+  origin/main == 0f64ea6. Exact CI run 31857751099 at 0f64ea6:
+  completed/success; dedicated 8B.0.1 matrix step executed and PASSED and
+  agent-state check PASSED, both verified individually.
+- M11 — Fresh sandbox-only acceptance on the current implementation (see
+  "Real Acceptance Evidence (M11)" below): session d8846f36... VERIFIED_
+  EXACT_BASE, replay PASS, eligible true, one candidate; plan
+  037e840b...; run → result ee941a9f... SANDBOX_VERIFIED_NOT_CANONICALLY_
+  APPLIED, all five probes PASS, sandboxSourceWrites 1, zero canonical/Git/
+  external counters, cleanupStatus PASS; canonical catalog byte-identical
+  (ffe3d635..., still empty); git status clean; sandbox base empty (0
+  instances); session re-verified VERIFIED_EXACT_BASE (replay PASS) at HEAD
+  before the docs closure.
+- M12 — Docs closure: durable docs updated (docs/CURRENT_STATE.md,
+  docs/ROADMAP.md, docs/ARCHITECTURE.md, docs/SAFETY_MODEL.md,
+  docs/DECISIONS.md D-48); task STATE/PLAN/REPORT/ACTIVE_TASK updated;
+  REPORT.md written in the 102-field format. Commit C pending push + final
+  CI.
+
+## Real Acceptance Evidence (M11)
+
+Performed at HEAD == origin/main == 0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9
+(clean worktree; exact CI 31857751099 already green including the dedicated
+8B.0.1 step).
+
+- Pre-acceptance canonical catalog digest:
+  `sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`
+  (empty-catalog canonical bytes; identical to the historical Phase 8B
+  pre/post digest).
+- `npm run selfdev:synthetic` → fresh v2 artifact
+  `session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`,
+  bound to `0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9`, source digest
+  `sha256:89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`,
+  contract digest
+  `sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`
+  (unchanged — closeout is source-provenance, not evaluator-contract),
+  `trustStatus: VERIFIED_EXACT_BASE`, 1 pass / 1 duplicate / 1 rejected.
+- `inspect` → `eligible: true`, exactly one candidate
+  `candidate:0a8626f4e7e21ecf167462b7e5c12985f751e88f107fc5d76b091daa2349e74d`.
+- `plan` → `adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`;
+  `strategyClass: DECLARATIVE_REGRESSION_CATALOG_PROMOTION`;
+  `targetPreimageDigest` matched the pre-acceptance canonical digest exactly;
+  `canonicalApply: PROHIBITED`, `publication: PROHIBITED`; canonical
+  worktree verified clean immediately after planning.
+- `run --confirm SANDBOX_ONLY` → result
+  `adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`:
+  `sandboxVerificationStatus: PASS`, `failureClass: NONE`,
+  `adoptionStatus: SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED`,
+  `changedFiles: ["src/core/selfDev/adoptedCaseCatalog.generated.ts"]`,
+  `preAdoptionResult/postEquivalentResult/postVariantCoverageResult/
+  nonOverreachResult/unsafeRegressionResult` ALL `PASS` (no NOT_RUN),
+  `sandboxSourceWrites: 1`, `canonicalSourceWrites: 0`,
+  `runtimeGitWrites: 0`, `externalCalls: 0`, `cleanupStatus: PASS`,
+  `canonicalApply: PROHIBITED`, `publication: PROHIBITED`.
+- Post-acceptance canonical proof: `git status --short` clean;
+  `src/core/selfDev/adoptedCaseCatalog.generated.ts` byte-identical
+  (digest `sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`,
+  content still `export const SELFDEV_ADOPTED_CASES = [];`); `git rev-parse
+  HEAD` unchanged; canonical sourceBundleDigest unchanged
+  (`89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`);
+  `$HOME/.nightwatch/selfdev-sandboxes/` exists (0700) and contains ZERO
+  entries — no residual acceptance sandbox.
+- Session re-verification at HEAD: `npm run selfdev:verify -- --artifact-id
+  session:sha256:d8846f...` → `VERIFIED_EXACT_BASE`, `replayStatus: PASS`,
+  `passCandidateCount: 1`. (After the docs-only closure commit C this is
+  expected to report `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` — §78.)
 
 ## Work In Progress
 
-Continuity commit B written (anchors recorded). Pending: push A+B in one
-fast-forward, verify exact CI green (dedicated 8B.0.1 step + agent-state
-check verified individually), fresh acceptance (M11), docs closure (M12),
-final report (M13).
+Commit C (docs closure) staged locally; final steps: push C fast-forward,
+verify exact final CI (dedicated 8B.0.1 step + agent-state check verified
+individually), §78 source-equivalent re-verify of the fresh session, final
+worktree/HEAD verification, deliver the final report (M13).
 
 ## Exact Next Action
 
-1. Commit B (continuity) with the recorded anchors, then push A+B in one
-   fast-forward; verify HEAD == origin/main.
-2. Wait for exact hardening CI at B: completed/success; dedicated 8B.0.1
-   step executed and green; agent-state check green (verified individually).
-3. Fresh sandbox-only acceptance (selfdev:synthetic → inspect → plan → run
-   --confirm SANDBOX_ONLY); canonical catalog/digests byte-identical.
-4. Docs closure C (durable docs + task STATE/REPORT acceptance results,
-   documentation checkpoint = B); push; final exact CI; final report.
+1. Commit C (docs closure: durable docs + task STATE/PLAN/REPORT/ACTIVE).
+2. Push C fast-forward; verify HEAD == origin/main.
+3. Wait for exact final CI at C: completed/success; dedicated 8B.0.1 step
+   and agent-state check verified individually.
+4. Re-verify the fresh acceptance session (§78): expected
+   VERIFIED_SOURCE_EQUIVALENT_DESCENDANT with replay PASS and eligible true.
+5. Verify final worktree clean; deliver the 102-field final report;
+   Phase 8B.0.1 = COMPLETE; Phase 8B.1 NOT_STARTED / NOT_AUTHORIZED.
 
 ## Files Changed
 
@@ -175,11 +247,37 @@ Command: `git diff --check`
 Result: clean.
 
 Command: `npm run agent:check`
-Result: FAIL (27 errors) — all from the task files not yet matching the
-agent:check schema (PLAN/STATE required headings, `(none yet)` anchors,
-STATE/ACTIVE mismatch). Task files restructured to the schema; re-run at the
-continuity commit B, where the anchors are recorded. Expected intermediate
-state, mirroring Phase 8B's continuity-commit pattern.
+Result: FAIL (27 errors) — task files not yet matching the schema at first
+run; restructured; then 6 anchor-only errors at commit A (expected — a
+commit cannot reference itself); PASS with 1 benign CHECKPOINT_ADVANCE
+warning at the continuity commit B (approved paths only).
+
+Command: `git push origin main` (A+B in one fast-forward, fca4002..0f64ea6)
+Result: PASS; `git fetch origin && git rev-parse HEAD origin/main` — both
+0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9.
+
+Command: exact CI run 31857751099 at 0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9
+Result: completed / success; every step green; dedicated "Phase 8B.0.1
+sandbox promotion-readiness closeout matrix" step executed and PASSED and
+"Agent-state check" PASSED — both verified individually from the job steps.
+
+Command: `npm run selfdev:synthetic`
+Result: SESSION PASS — artifact session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2, VERIFIED_EXACT_BASE, 1 pass/1 duplicate/1 rejected.
+
+Command: `npm run selfdev:adopt-sandbox -- inspect --artifact-id <fresh session>`
+Result: eligible true, exactly one candidate candidate:0a8626f4e7e21ecf167462b7e5c12985f751e88f107fc5d76b091daa2349e74d.
+
+Command: `npm run selfdev:adopt-sandbox -- plan --artifact-id <fresh session> --candidate-id <candidate>`
+Result: plan adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4, strategy DECLARATIVE_REGRESSION_CATALOG_PROMOTION, canonicalApply/publication PROHIBITED; canonical worktree clean after planning.
+
+Command: `npm run selfdev:adopt-sandbox -- run --plan-id <plan> --confirm SANDBOX_ONLY`
+Result: result adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183 — SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED, all five probes PASS, sandboxSourceWrites 1, canonicalSourceWrites/runtimeGitWrites/externalCalls 0, cleanupStatus PASS.
+
+Command: post-acceptance canonical proof (`git status --short`, catalog sha256sum, HEAD, base listing)
+Result: PASS — clean; catalog byte-identical ffe3d635... (still empty); HEAD unchanged; base 0700 with 0 entries.
+
+Command: `npm run selfdev:verify -- --artifact-id <fresh session>`
+Result: SESSION PASS — VERIFIED_EXACT_BASE, replayStatus PASS, passCandidateCount 1 (re-verified at the docs closure as VERIFIED_SOURCE_EQUIVALENT_DESCENDANT).
 
 ## Decisions Made During This Task
 
@@ -266,8 +364,41 @@ test.
 
 ## Completion Snapshot
 
-(To be filled at M12/M13 with substantive/docs SHAs, CI run IDs, acceptance
-IDs/digests, and the safety vector.)
+Final substantive checkpoint: `c4537ab5e3e96859c7c472ac47c3143a15b20c26`
+Final documentation checkpoint (CI-verified, `HEAD == origin/main`):
+`0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` (continuity commit; final docs
+closure commit recorded live)
+Live HEAD: DISCOVER_FROM_GIT (final docs closure commit C — recorded in
+ACTIVE_TASK/STATE at close)
+Tests: typecheck PASS; hardening PASS (incl. checkPhase8B01CloseoutIntegrity);
+focused 8B.0.1 matrix 22 passed / 1 env-conditional skip (exact CI
+selection); full focused matrix 110 passed / 1 skip (dirty tree) and
+112 passed / 1 skip (clean tree, isolated checkout); full Playwright
+633 passed / 1 env-conditional skip (634 total; 611 baseline + 23 new);
+owner provenance 91; AI regressions 98; agent-state 32; campaign:synthetic
+27; agent:check PASS at continuity commit (benign CHECKPOINT_ADVANCE
+warning only); git diff --check clean; secret-shape scan clean.
+Exact CI: run `31857751099` at `0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9`
+PASS (dedicated 8B.0.1 matrix step and Agent-state check verified
+individually); final exact CI run at the docs closure commit recorded live.
+Artifacts (all private, owner-only; not committed): fresh v2 acceptance
+artifact `session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`
+(VERIFIED_EXACT_BASE, replay PASS; re-verified VERIFIED_SOURCE_EQUIVALENT_
+DESCENDANT after docs closure); acceptance plan
+`adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`;
+acceptance result
+`adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`.
+New sourceBundleDigest: `sha256:89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`;
+contractDigest unchanged: `sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`.
+Canonical catalog before/after: `sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`,
+still `export const SELFDEV_ADOPTED_CASES = [];`.
+Known issues: none open. One additional finding was found and fixed during
+this task (sandbox loader lock wedge, ADDITIONAL_PHASE_8B_0_1_FINDING) and
+one environment-conditional test (owner-chown) runs only where chown is
+permitted.
+Recommended next task: Phase 8B.1 — Owner-Gated Canonical Promotion, if and
+when separately authorized by the owner. NOT_STARTED. Do not begin it as
+part of this task.
 
 ## Defect-Repro Ledger (M1)
 

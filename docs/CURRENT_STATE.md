@@ -1,15 +1,20 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B controlled source adoption sandbox closeout.
+> the Nightwatch Phase 8B.0.1 sandbox promotion-readiness closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, and Phase 8B are
+> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, and Phase
+> 8B.0.1 are
 > `COMPLETE`. Phase 8B proved one sandbox-confined, metamorphically-verified
-> source adoption with zero canonical mutation; canonical candidate
+> source adoption with zero canonical mutation; Phase 8B.0.1 closed the
+> four promotion-readiness integrity gaps (sandbox base pre-validation,
+> adoption strategy binding, complete verified-result metamorphic
+> invariants, truthful failure-path sandbox-write accounting) with a fresh
+> sandbox-only acceptance; canonical candidate
 > promotion (a possible future Phase 8B.1) remains `NOT_STARTED`/
 > `NOT_AUTHORIZED`.
 
@@ -45,7 +50,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
 | `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption; canonical adopted-case catalog remains empty |
-| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B CONTROLLED SOURCE ADOPTION SANDBOX CLOSEOUT` — sandbox-only; no canonical adoption authority |
+| `PHASE_8B_0_1_STATUS` | `COMPLETE` — sandbox promotion-readiness closeout (base pre-validation, strategy binding, verified-result probe invariant, truthful write accounting); fresh sandbox-only acceptance re-verified |
+| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.0.1 SANDBOX PROMOTION-READINESS CLOSEOUT` — sandbox-only; no canonical adoption authority |
 | `PHASE_8B_1_STATUS` | `NOT_STARTED` / `NOT_AUTHORIZED` — Owner-Gated Canonical Promotion, a possible future separately authorized task |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -826,6 +832,108 @@ No AI/model, product traffic, database/infrastructure operation,
 publication, credential, customer value, or canonical/Alphaus source write
 was used. Phase 8 remains `IN_PROGRESS`; canonical candidate promotion
 remains `NOT_STARTED`/`NOT_AUTHORIZED`.
+
+## Phase 8B.0.1 — Sandbox promotion-readiness closeout (complete)
+
+Phase 8B.0.1 closed the four promotion-readiness integrity defects found
+after Phase 8B's sandbox-only acceptance, with pre-fix `TRUE_POSITIVE`
+reproductions for each and a fresh sandbox-only acceptance re-running the
+full chain on the current implementation.
+
+- **Sandbox base pre-validation (Defect A).** `sandboxMirror.ts` previously
+  ran `mkdirSync(recursive)` + `chmodSync(base)` before its lstat rejection:
+  a preexisting base symlink caused the external target's mode to be mutated
+  (reproduced: 755 → 700) before `SELFDEV_SANDBOX_BASE_UNSAFE`, and a
+  symlinked `.nightwatch` parent let the whole mirror be created inside the
+  symlink target with no error. The new internal `ensurePrivateSandboxBase()`
+  validates the pathname chain component-wise (lstat-first; symlink →
+  `SELFDEV_SANDBOX_BASE_SYMLINK`; non-directory →
+  `SELFDEV_SANDBOX_BASE_NOT_DIRECTORY`; missing ancestors →
+  `SELFDEV_SANDBOX_BASE_ANCESTOR_MISSING`) BEFORE any mutation. The base
+  fails closed on open mode (`_PERMISSIONS_UNSAFE`) or wrong owner
+  (`_OWNER`) with no repair; the private parent reuses the established
+  private-artifact convention (validated non-symlink owner-matched directory
+  tightened to 0700, never loosened). Missing directories are created only
+  beneath a validated parent, non-recursively, 0700, immediately
+  revalidated. Instances are realpath-contained beneath the validated base
+  and disjoint from the canonical repository, the parent workspace, and the
+  findings root; cleanup requires strict realpath child containment + lstat
+  before recursive removal (any doubt → FAIL, nothing deleted); copy
+  failures clean up the partial mirror. `$HOME` and arbitrary ancestors are
+  never chmodded or created. The base stays code-defined
+  (`$HOME/.nightwatch/selfdev-sandboxes`); tests use a module-level override
+  not exported from the boundary index; no `--sandbox-root` option exists.
+- **Adoption strategy binding (Defect B).** Plan and result validation
+  previously accepted any nonempty `strategyClass`; a forged plan/result with
+  `FUTURE_UNKNOWN_STRATEGY` and a recomputed content-addressed ID validated
+  (reproduced). Now `plan.strategyClass` and `result.strategyClass` must
+  equal `SELFDEV_ADOPTION_STRATEGY_CLASS`
+  (`DECLARATIVE_REGRESSION_CATALOG_PROMOTION`) exactly, checked before any
+  identity recomputation; an explicit plan↔adoptedCase cross-binding
+  (`PLAN_STRATEGY_MISMATCH`) is enforced; the TypeScript type is the literal
+  `SelfDevAdoptionStrategyClass`. The strategy version
+  (`nightwatch.selfdev-adoption-strategy.v1`) remains bound through the
+  contract manifest into `contractDigest` (no cosmetic field added).
+- **Complete verified-result metamorphic invariants (Defect C).** A claimed
+  `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` result previously accepted
+  `nonOverreachResult = NOT_RUN` (reproduced). A verified result now requires
+  all five probes exactly `PASS` (preAdoption, postEquivalent,
+  postVariantCoverage, nonOverreach, unsafeRegression); NOT_RUN and FAIL are
+  rejected per field even with a recomputed resultId. The executor cannot
+  produce a verified result when no bounded non-overreach probe exists
+  (`NON_OVERREACH_PROBE_UNAVAILABLE`) or when a probe ran and failed
+  (`NON_OVERREACH_REGRESSION`, both end-to-end tested).
+- **Truthful failure-path sandbox write accounting (Defect D).** The failure
+  builder previously hardcoded `sandboxSourceWrites = 0`; a failure after the
+  single sandbox target write (reproduced via post-write module-load
+  failure) reported 0 writes. The executor now tracks the actual executed
+  effect (0 before the single allowed write, 1 immediately after its
+  success) and every result — success or failure — carries the true value;
+  validation bounds it to integer 0..1; success requires exactly 1;
+  `canonicalSourceWrites`/`runtimeGitWrites`/`externalCalls` remain ALWAYS 0.
+- **Additional finding (fixed).** `sandboxLoader.ts` set its serial lock
+  before a possible early throw, permanently wedging every later sandbox
+  load; the lock is now released on every exit path.
+
+Focused coverage: new `tests/unit/selfDevSandboxConfinement.test.ts`
+(base-validation matrix A–J), strategy-binding tests in
+`selfDevAdoptionPlan.test.ts`, and strategy/invariant/accounting/executor
+tests in `selfDevAdoptionSandbox.test.ts`; hardening gained
+`checkPhase8B01CloseoutIntegrity`; the workflow gained a dedicated
+"Phase 8B.0.1 sandbox promotion-readiness closeout matrix" step.
+
+The validated implementation checkpoint is
+`c4537ab5e3e96859c7c472ac47c3143a15b20c26` (continuity commit
+`0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` records the anchors). Local
+validation: typecheck, hardening, focused matrix (110 passed/1 skip plus the
+two dirty-worktree CLI tests, which pass 7/7 at a clean tree), full
+Playwright 633 passed / 1 environment-conditional skip (634 total; 611 Phase
+8B baseline + 23 new), owner provenance 91, AI regressions 98, agent-state
+32, campaign:synthetic 27, `git diff --check` clean; isolated full-history
+clean checkout green (focused 112 passed/1 skip, owner provenance 91,
+agent-state 32, campaign 27). Exact CI run `31857751099` at
+`0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` — completed/success with the
+dedicated 8B.0.1 step and the agent-state check verified individually. The
+fresh sandbox-only acceptance on the current implementation:
+`session:sha256:d8846f36ae6784a1832b3b741eef619d2666f3f7325ebafabae85da36ea128e2`
+(`VERIFIED_EXACT_BASE`, replay PASS, eligible true, one candidate) →
+`adoption-plan:sha256:037e840b7efcadec4b09af18a7ceb7f49f95a29cf27d7ea8f88361bebd8597a4`
+→ `adoption-sandbox-result:sha256:ee941a9f52cb98a21545db4983ef061cd0ea6e22b3ab3d1c3db80f3c69ac8183`
+with `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED`, all five metamorphic probes
+`PASS`, `sandboxSourceWrites: 1`, zero canonical/Git/external counters,
+`cleanupStatus: PASS`, and the canonical catalog byte-identical (digest
+`sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`,
+still `export const SELFDEV_ADOPTED_CASES = [];`) before and after with a
+clean `git status`. The new `sourceBundleDigest` is
+`sha256:89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`;
+`contractDigest` is unchanged at
+`sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`
+(the closeout is source-provenance hardening, not an evaluator-contract
+change).
+
+Phase 8B.0.1 = `COMPLETE`. Phase 8B's historical sandbox acceptance is
+preserved. Phase 8B.1 — Owner-Gated Canonical Promotion remains
+`NOT_STARTED`/`NOT_AUTHORIZED`, now `READY_FOR_SEPARATE_DESIGN_REVIEW`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 
