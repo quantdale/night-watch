@@ -3,7 +3,8 @@
 Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
 review assistance, the Phase 8A evaluated self-development sandbox foundation,
-and the Phase 8A.1 trusted evaluation provenance/replay boundary. This document describes the implemented scaffold, browser
+the Phase 8A.1/8A.1.1 trusted evaluation provenance/replay/eligibility
+boundary, and the Phase 8B controlled source adoption sandbox. This document describes the implemented scaffold, browser
 containment, and mandatory out-of-process L5 proxy. The future restricted
 container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
@@ -75,10 +76,12 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
-| `src/core/selfDev/` | Explicit Phase 8A/8A.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, and no-adoption results. | implemented; no adopter |
+| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the empty data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`) whose live contents seed evaluator baseline state and are bound into `contractDigest`. | implemented; no canonical adopter |
+| `src/core/selfDevSandbox/` | Phase 8B sandbox-mutation authority boundary, distinct from the pure `selfDev` trust/evaluation domain: a pure deterministic adoption planner, immutable private plan/result storage, a disposable owner-private source mirror, and a bounded serial cache-isolated TypeScript sandbox loader that executes the modified sandbox evaluator to metamorphically prove one adoption's effect. Zero canonical source write, Git, AI, product, database/infrastructure, or publication authority. | implemented; sandbox-only, no canonical apply |
 | `src/core/provenance/` | Fixed-path source-bundle/contract provenance and no-shell local Git metadata boundary; read-only only. | implemented |
 | `bin/selfdev-synthetic.mjs` | Thin wrapper for one bounded synthetic v2 session with locally attested provenance, replay, immutable write, and read-back summary. | implemented |
 | `bin/selfdev-verify.mjs` | Exact-ID read-only v1/v2 classifier, current-source assessment, and ordered replay verifier; no enumeration or mutation mode. | implemented |
+| `bin/selfdev-adopt-sandbox.mjs` | Exact-ID `inspect`/`plan`/`run` CLI over the Phase 8B sandbox boundary; `run` requires the fixed `SANDBOX_ONLY` confirmation token. No latest/list/path/patch/model option and no apply/commit/push/promote/merge/install command. | implemented |
 | `src/core/aiReview/ownerReview.ts` | Provider-free exact-ID owner snapshot loader, terminal-safe bug/oracle renderer, fixed confirmation semantics, projections, and v1 read-only handling. Read-only public service; no decision writer. | implemented |
 | `src/core/aiReview/ownerDecision.ts` | Internal digest-bound decision writer; raw helper is private and the confirmed entry is loaded only by the owner-review CLI. Creates review provenance, atomically persists it, and strictly reads it back. | implemented |
 | `bin/ai-owner-review.mjs` | Private human interface with only `show`, `status`, `decide`, and help; TTY gate, fixed decision boundary, sole tracked runtime loader of the internal decision writer, and no provider/network/Git/publication path. | implemented |
@@ -286,8 +289,8 @@ execution. The evaluator contains no `eval`, `Function`, callback, network,
 browser, auth, database, infrastructure, AI-review, campaign, oracle
 registration, Git, or repository-source-write capability. Results always carry
 `adoptionStatus=NOT_AUTHORIZED_PHASE_8A`, `publication=PROHIBITED`, and zero
-runtime writes/calls. Phase 8B source adoption is a future separate boundary,
-not a hidden continuation of this graph.
+runtime writes/calls. Phase 8B source adoption is a distinct, separately
+implemented boundary (below), not a hidden continuation of this graph.
 
 ### Phase 8A.1 trusted provenance and replay branch
 
@@ -332,9 +335,62 @@ Git, child-process, network, and source-write authority.
 `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` are integrity/currentness statuses,
 not approval. Every successful assessment retains
 `NOT_AUTHORIZED_PHASE_8A`, `PROHIBITED`, and zero side-effect counters. The
-future Phase 8B guard returns only read-only verified metadata/pass-candidate
-data after trust succeeds; it never returns a patch, writes source, mutates
-Git, invokes a model, contacts a product, or starts Phase 8B.
+Phase 8B planner (below) consumes this trust chain's
+`assessFutureReviewEligibility` output directly; a passing assessment alone
+never writes source, mutates Git, invokes a model, or contacts a product.
+
+### Phase 8B controlled source adoption sandbox
+
+Phase 8B adds the first (and, deliberately, only) authority that may write
+source at runtime — confined entirely to a disposable private mirror:
+
+```text
+exact v2 session artifact + current local source provenance
+        ↓
+assessFutureReviewEligibility(...) [Phase 8A.1.1, reused verbatim]
+        ↓
+exact eligible candidate + matching EVALUATED_PASS_NOT_ADOPTED evaluation
+        ↓
+base-independent adopted-case derivation (coverage re-derived, never trusted)
+        ↓
+canonical on-disk catalog check + content-addressed immutable plan
+        ↓
+TOCTOU revalidation (source bundle / contract / target preimage digests)
+        ↓
+disposable owner-private source mirror (fixed authoritative path set only)
+        ↓
+exactly one atomic write to the fixed target + exactly-one-file diff check
+        ↓
+bounded serial cache-isolated load of the MODIFIED sandbox evaluator
+        ↓
+four metamorphic probes (duplicate under new base / duplicate under
+assertion variant / new coverage still passes / unsafe still rejected)
+        ↓
+sanitized immutable private result (SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED)
+        ↓
+sandbox cleanup
+        ↓
+canonical checkout proven byte-for-byte unchanged → STOP
+```
+
+There is deliberately no `→ CANONICAL SOURCE WRITE` and no
+`→ GIT COMMIT / PUSH` step. `src/core/selfDevSandbox/` is a boundary
+distinct from `src/core/selfDev/`: the planner and executor import the pure
+evaluation domain's trust/replay/validation functions but add no new Git,
+network, AI, product, or database/infrastructure capability, and the
+sandbox loader is confined by `fs.realpathSync` path comparison to a
+disposable 0700 root outside the repository, the parent workspace, and the
+private-findings root. The adopted-case catalog target file
+(`adoptedCaseCatalog.generated.ts`) is the only file the executor may ever
+rewrite, and only inside that disposable mirror; the canonical copy of that
+same file remains an empty array in this checkout.
+
+`SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` means exactly what it says: the
+deterministic source transformation produced the expected behavior in a
+private disposable mirror. It does not mean canonical-applied, owner-
+approved-for-canonical-mutation, or Git-commit/push-authorized. Canonical
+promotion is Phase 8B.1 — Owner-Gated Canonical Promotion — a separate,
+`NOT_STARTED`, `NOT_AUTHORIZED` future task.
 
 Git continuity is intentionally separate from runtime authority. A validated
 substantive implementation SHA is a stable historical anchor; approved

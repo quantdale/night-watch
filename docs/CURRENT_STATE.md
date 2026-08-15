@@ -1,15 +1,17 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8A.1.1 future-review eligibility gate closeout.
+> the Nightwatch Phase 8B controlled source adoption sandbox closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A, Phase 8A.1, and Phase 8A.1.1 are `COMPLETE` with no
-> source adoption authority, and
-> Phase 8B remains `NOT_STARTED`.
+> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, and Phase 8B are
+> `COMPLETE`. Phase 8B proved one sandbox-confined, metamorphically-verified
+> source adoption with zero canonical mutation; canonical candidate
+> promotion (a possible future Phase 8B.1) remains `NOT_STARTED`/
+> `NOT_AUTHORIZED`.
 
 ---
 
@@ -42,8 +44,9 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
-| `PHASE_8B_STATUS` | `NOT_STARTED` |
-| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8A.1.1 CLOSEOUT ONLY` — no Phase 8B adoption authority |
+| `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption; canonical adopted-case catalog remains empty |
+| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B CONTROLLED SOURCE ADOPTION SANDBOX CLOSEOUT` — sandbox-only; no canonical adoption authority |
+| `PHASE_8B_1_STATUS` | `NOT_STARTED` / `NOT_AUTHORIZED` — Owner-Gated Canonical Promotion, a possible future separately authorized task |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -748,7 +751,77 @@ contract digest
 one duplicate, one rejected candidate, and — via the new canonical gate —
 `eligible: true` with exactly one regenerated candidate. The historical Phase
 8A.1 acceptance artifact was not touched or migrated. Phase 8 remains
-`IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
+`IN_PROGRESS`; Phase 8B is now `COMPLETE` (below).
+
+## Phase 8B — Controlled source adoption sandbox (complete)
+
+Phase 8B proves Nightwatch can translate one exact, current-source-eligible
+declarative regression candidate into one deterministic tracked-source
+adoption, apply it only inside a disposable owner-private source mirror,
+execute the modified sandbox evaluator, and metamorphically prove the effect
+— while the canonical checkout remains byte-for-byte untouched. Canonical
+source promotion remains a future, separately authorized task (Phase
+8B.1 — Owner-Gated Canonical Promotion, `NOT_STARTED`).
+
+A strict, versioned, data-only adopted-case catalog
+(`nightwatch.selfdev-adopted-case.v1`) is split across a trusted schema
+module (`src/core/selfDev/adoptedCases.ts`) and a pure-data generated file
+(`src/core/selfDev/adoptedCaseCatalog.generated.ts`, the sole sandbox
+mutation target) that starts and remains empty in canonical source.
+Adopted-case identity is base-independent; coverage is always re-derived
+from the fixed action registry, never trusted from a supplied field. The
+evaluator seeds its baseline duplicate/coverage state from the catalog at
+construction time with zero behavior change while empty (confirmed: all 54
+pre-existing Phase 8A/8A.1/8A.1.1 tests pass unmodified); the catalog's live
+contents are embedded directly in the evaluator contract manifest, so
+adopting an entry changes `contractDigest` automatically.
+
+A pure, deterministic planner in the new `src/core/selfDevSandbox/`
+boundary consumes only `assessFutureReviewEligibility` output, requires a
+matching `EVALUATED_PASS_NOT_ADOPTED` evaluation with positive re-derived
+coverage overlap, rejects an already-adopted or full catalog, and requires
+the on-disk catalog to match its own canonical renderer output before
+producing a content-addressed, immutable, TOCTOU-revalidated plan bound to
+the fixed target path. The sandbox executor mirrors only the fixed
+authoritative source set into a disposable owner-private 0700 root,
+verifies pre/post digests and an exactly-one-file diff, then loads and
+executes the *modified* sandbox evaluator through a bounded serial
+cache-isolated local TypeScript loader confined to the sandbox root. Four
+metamorphic probes prove the adoption's effect: same semantics under a
+different base SHA become duplicate; a same-coverage assertion variant
+remains non-new; a genuinely new coverage edge still passes; an unsafe
+candidate remains rejected. The disposable mirror is always cleaned up.
+
+The narrow CLI `npm run selfdev:adopt-sandbox -- inspect|plan|run` is
+exact-ID only; `run` requires the fixed confirmation token `SANDBOX_ONLY`.
+There is no apply/commit/push/promote/merge/install command anywhere. A new
+owner-policy operation `SELF_DEVELOPMENT_SANDBOX_ADOPTION` authorizes
+sandbox-only writes; `SELF_DEVELOPMENT_CANONICAL_ADOPTION` remains unknown
+and fails closed. Hardening gained `checkPhase8BSandboxBoundary`, including
+call-graph containment.
+
+The validated implementation checkpoint is
+`36495b4df2c013d671a4983cd7991e1aecd9a25e`. Local and isolated-clean-
+checkout validation both passed the full suite (611 total: 611 passed
+locally; 608 passed + 3 environment-conditional skips in the isolated
+clone), 90/90 focused Phase 8A/8A.1/8A.1.1/8B tests, typecheck, hardening,
+27/27 synthetic campaign, and `git diff --check`. Exact CI run `31853612222`
+passed, executing the dedicated "Phase 8B controlled source adoption
+sandbox matrix" step. The fresh v2 acceptance artifact is
+`session:sha256:27dbbd7f94e360af7e9fc564e9cdabf45d3d9ae5c67e84eccc676f78f047ac46`,
+`VERIFIED_EXACT_BASE` with replay `PASS`, `eligible: true`, one candidate.
+The one real local acceptance plan/run —
+`adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`
+and
+`adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`
+— verified `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` with all four
+metamorphic probes `PASS` and confirmed the canonical adopted-case catalog,
+its digest, and `git status` were byte-for-byte unchanged before and after.
+
+No AI/model, product traffic, database/infrastructure operation,
+publication, credential, customer value, or canonical/Alphaus source write
+was used. Phase 8 remains `IN_PROGRESS`; canonical candidate promotion
+remains `NOT_STARTED`/`NOT_AUTHORIZED`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

@@ -3,8 +3,9 @@
 Normative reference for every safety guarantee Nightwatch makes. Phase 0/1/1.1/1.2,
 private local evidence triage, Phase 7 deterministic campaigns, and Phase
 7B/7B.1/7B.1.1/7B.1.2/7B.2.1/7B.3 bounded private AI review assistance,
-Phase 8A evaluated self-development sandbox safety, and Phase 8A.1 trusted
-evaluation provenance/replay safety.
+Phase 8A evaluated self-development sandbox safety, Phase 8A.1/8A.1.1
+trusted evaluation provenance/replay/eligibility safety, and Phase 8B
+controlled source adoption sandbox safety.
 This document is the contract that `src/core/safety/*`, the browser harness,
 and the self-tests must satisfy. Design input: `NIGHTWATCH_RECON_B.md`
 (cited by ID, E1–E10); host facts verified against
@@ -812,8 +813,162 @@ assessment still reports `adoptionStatus=NOT_AUTHORIZED_PHASE_8A`,
 The threat model excludes a malicious machine owner who rewrites source,
 artifacts, and verifier together; no secret signing key is introduced.
 
+## 19. Phase 8B controlled source adoption sandbox safety
+
+Phase 8B adds exactly one new authority: translating one exact, current-
+source-eligible declarative regression candidate into one deterministic
+tracked-source postimage, applied and executed only inside a disposable
+owner-private source mirror. The chain is:
+
+```text
+exact v2 session artifact + current local source provenance
+  → assessFutureReviewEligibility(...) [reused verbatim from Phase 8A.1.1]
+  → exact eligible candidate + matching EVALUATED_PASS_NOT_ADOPTED evaluation
+  → base-independent adopted-case derivation (coverage re-derived, never trusted)
+  → canonical on-disk catalog check + content-addressed immutable plan
+  → TOCTOU revalidation (source bundle / contract / target preimage digests)
+  → disposable owner-private source mirror (fixed authoritative path set only)
+  → exactly one atomic write to the fixed target + exactly-one-file diff check
+  → bounded serial cache-isolated load of the MODIFIED sandbox evaluator
+  → four metamorphic probes
+  → sanitized immutable private result
+  → sandbox cleanup
+  → canonical checkout proven byte-for-byte unchanged
+  → STOP
+```
+
+There is deliberately no canonical source write step and no Git commit/push
+step. `src/core/selfDevSandbox/` is a boundary distinct from the pure
+`src/core/selfDev/` trust/evaluation domain (goal: keep the evaluation
+domain free of filesystem-mutation authority). The only candidate source
+remains the existing Phase 8A/8A.1/8A.1.1 deterministic pipeline; there is
+no new proposer, no AI/model input, and no free-form patch/diff/path/
+command field at any boundary.
+
+The adopted-case catalog (`nightwatch.selfdev-adopted-case.v1`) is split
+across a trusted schema module (`adoptedCases.ts`) and a strictly data-only
+generated file (`adoptedCaseCatalog.generated.ts`) — the only file the
+sandbox executor may ever rewrite, and only inside the disposable mirror.
+Adopted-case identity is base-independent (excludes base SHA, current HEAD,
+timestamps, and sandbox paths); coverage classes are always re-derived from
+the fixed action registry via the same resolver the evaluator itself uses,
+never trusted from a caller- or catalog-supplied field. The live catalog is
+embedded directly in the evaluator contract manifest, so an adoption changes
+`contractDigest`; both new catalog files and the entire
+`src/core/selfDevSandbox/` module are members of `SELFDEV_AUTHORITATIVE_PATHS`,
+so they change `sourceBundleDigest` too.
+
+The planner is pure and deterministic: no filesystem mutation occurs during
+planning. It requires `assessFutureReviewEligibility(...).eligible === true`
+and the exact requested candidate ID to be present in that result's
+`candidates`; a caller cannot supply a raw candidate object, bypass the
+eligibility gate, or select an ambiguous evaluation binding (exactly one
+matching `EVALUATED_PASS_NOT_ADOPTED` evaluation with a positive, re-derived
+coverage-delta subset is required). An already-adopted entry (by ID or by
+equivalent fingerprint) or a full catalog fails closed before any digest
+computation; a non-canonical on-disk catalog fails closed before any plan is
+produced. The plan itself binds a fixed, code-defined target path
+(`src/core/selfDev/adoptedCaseCatalog.generated.ts`) that neither the
+candidate, the artifact, nor the CLI can override, and is content-addressed
+excluding its own ID, storage path, and any timestamp. `run` re-derives and
+compares current source-bundle/contract/target-preimage digests against the
+plan before any sandbox mutation; a documentation-only descendant (changed
+HEAD, unchanged source/contract/target) remains runnable, while genuine
+source drift, a newly-dirty tree, or a meanwhile-adopted duplicate fails
+closed as `PLAN_STALE`/`ALREADY_ADOPTED`.
+
+The sandbox mirror copies only the fixed authoritative path set into a
+fresh 0700 directory under a fixed sandbox base outside the repository, the
+parent workspace, and the private-findings root; every copy step rejects
+symlinks and verifies the mirror's pre-mutation digest matches canonical
+exactly before any write. Exactly one atomic write targets the approved
+file; a post-write diff against canonical bytes must show exactly that one
+path changed, or the run fails closed as `UNEXPECTED_CHANGED_FILE`. Cleanup
+only ever removes a directory this module itself created beneath the fixed
+sandbox base, verified by realpath comparison immediately before deletion —
+never a broader path. The TypeScript module loader is bounded to exact
+absolute files beneath the resolved sandbox root (path-escape attempts throw
+`SELFDEV_SANDBOX_LOADER_PATH_ESCAPE`), requires only the already-installed
+local `typescript` package as a bare specifier, and is process-global-state
+serial (a concurrent load attempt throws `SELFDEV_SANDBOX_LOADER_BUSY`); it
+clears stale and newly-loaded module-cache entries under the sandbox root
+before and after every load, so independent sandbox runs never leak or
+inherit each other's state.
+
+The executor then evaluates the MODIFIED sandbox source directly — loading
+the sandbox's own `contract.ts`, `evaluator.ts`, and `adoptedCases.ts` and
+constructing a fresh `SelfDevEvaluator` seeded from the sandbox catalog's
+own exported fingerprints/coverage — rather than simulating the postimage
+in canonical code. Four metamorphic probes, built from the adopted case's
+own base-independent semantics via a small trusted-code simulation of the
+fixed action registry (never the evaluator under test), prove: the same
+regression semantics under a different valid base SHA become
+`REJECTED_DUPLICATE`; a same-coverage assertion variant also remains
+non-new; a genuinely different coverage-adding action sequence still
+evaluates `EVALUATED_PASS_NOT_ADOPTED`; and an unsafe candidate (nonzero
+safety vector) remains `REJECTED_SAFETY` regardless of adoption state. The
+post-mutation contract digest is required to differ from the pre-mutation
+one, or the run fails closed as `SANDBOX_CONTRACT_NOT_CHANGED`.
+
+Sanitized results (`nightwatch.selfdev-adoption-sandbox-result.private.v1`)
+never contain raw source, a patch/diff, or a sandbox filesystem path.
+`sandboxSourceWrites`, `canonicalSourceWrites`, `runtimeGitWrites`, and
+`externalCalls` are explicit counters; a claimed
+`SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` result requires
+`canonicalSourceWrites=0`, `runtimeGitWrites=0`, `externalCalls=0`,
+`sandboxSourceWrites=1`, exactly one changed file equal to the fixed target,
+differing pre/post source-bundle/contract/target digests, all metamorphic
+probes passing (or, for the new-coverage probe only, a documented `NOT_RUN`
+when the fixed registry has no further coverage to add), and successful
+cleanup — enforced as a semantic invariant gate that a recomputed result ID
+cannot satisfy for an impossible tuple (mirroring the Phase 8A.1.1 forgery-
+resistance pattern from D-46). Plan and result records use the same
+immutable, exact-ID, no-replace private storage primitive as every other
+Phase 8A/8A.1 artifact, under a distinct `selfdev-adoption` namespace with
+separate `plans`/`results` subdirectories; there is no list/enumeration/
+latest lookup.
+
+The narrow CLI (`bin/selfdev-adopt-sandbox.mjs`) exposes only exact-ID
+`inspect`, `plan`, and `run` subcommands; `run` requires the fixed
+confirmation token `SANDBOX_ONLY` and no alternative (`--yes`, `--force`,
+`true`, or any other string) is accepted. There is no `--path`, `--file`,
+`--source`, `--code`, `--patch`, `--diff`, `--repo`, `--root`,
+`--sandbox-root`, `--target`, `--command`, `--shell`, `--model`, `--prompt`,
+`--url`, `--endpoint`, `--latest`, `--all`, `--apply`, `--commit`, `--push`,
+or `--publish` option, and no `apply`/`promote`/`commit`/`merge`/`install`
+command. A new narrow owner-policy operation
+`SELF_DEVELOPMENT_SANDBOX_ADOPTION` authorizes only this sandbox-confined
+write path; an unknown `SELF_DEVELOPMENT_CANONICAL_ADOPTION` operation
+continues to fail closed like any other unrecognized operation string.
+`bin/hardening-check.mjs` gained `checkPhase8BSandboxBoundary`, which
+verifies authoritative-source-manifest coverage of every new file, scans
+for forbidden imports/capabilities (network, child_process, AI review,
+campaign, browser, database/infrastructure, Git mutation verbs) across
+`src/core/selfDevSandbox/`, and proves via a call-graph scan that only the
+CLI and the sandbox module itself can reach the sandbox source-write
+executor.
+
+`SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` means only that the deterministic
+source transformation produced the expected behavior in a private
+disposable source mirror. It does not mean canonical-applied, owner-
+approved-for-canonical-mutation, Git-commit-authorized, or Git-push-
+authorized. The real local acceptance exercise
+(implementation checkpoint `36495b4df2c013d671a4983cd7991e1aecd9a25e`)
+confirmed the canonical adopted-case catalog file, its digest, and
+`git status --short` were byte-for-byte unchanged immediately before and
+after one full plan-and-run cycle; the disposable sandbox mirror directory
+was removed by cleanup and no residue remained under the fixed sandbox
+base. Zero DEV/NEXT/production contacts, product mutations, database/
+infrastructure queries, external AI/model calls, or publication occurred at
+any point. Phase 8B.1 — Owner-Gated Canonical Promotion — remains a
+separate, `NOT_STARTED`, `NOT_AUTHORIZED` future task; this phase's plan and
+result identities are designed to be consumable by that future gate without
+re-deriving adoption semantics, but no such consumer exists yet.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
-Phase 4 authentication/MCP, Phase 7 campaigns, and Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review;
-changes require a DECISIONS entry and a test update.*
+Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
+and Phase 8A/8A.1/8A.1.1/8B self-development evaluation and controlled
+source adoption sandbox; changes require a DECISIONS entry and a test
+update.*

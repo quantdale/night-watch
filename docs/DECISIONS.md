@@ -1304,3 +1304,111 @@ validated implementation checkpoint is
 **Phase applicability.** Phase 8A.1.1 and any future Phase 8B design that
 consumes a future-review eligibility verdict. Phase 8 remains `IN_PROGRESS`;
 Phase 8B is `NOT_STARTED`.
+
+## D-47 — Sandbox-confined source adoption is a distinct, narrower authority than evaluation or provenance
+
+**Decision.** Phase 8B adds exactly one new authority: translating one
+exact, current-source-eligible declarative regression candidate into one
+deterministic tracked-source postimage, applied and executed only inside a
+disposable owner-private source mirror, never in the canonical checkout.
+This authority is deliberately split from the pure `src/core/selfDev/`
+trust/evaluation domain into a distinct `src/core/selfDevSandbox/` boundary,
+matching the project's established pattern of narrow, separately-scrutinized
+authority modules (e.g. Phase 7B.2.1's unexported `ownerDecision.ts`).
+
+The adopted-case catalog itself is split across two files rather than one:
+`src/core/selfDev/adoptedCases.ts` (trusted schema/validation/identity/
+renderer logic) and `src/core/selfDev/adoptedCaseCatalog.generated.ts` (the
+actual sandbox mutation target — pure data, a single array literal with no
+imports, functions, or expressions beyond literals). This is a deliberate
+deviation from a single-file design: it lets hardening enforce data-only-
+ness on a small, easily-audited generated file while the schema/validation
+module remains normal trusted source that is never itself rewritten by the
+sandbox executor.
+
+Adopted-case identity (`adoptedCaseId`) is computed only from
+base-independent regression semantics — schema version, fixture ID, action
+IDs, sorted assertion IDs, re-derived coverage classes, and strategy class —
+explicitly excluding any base Nightwatch SHA, current Git HEAD, timestamp,
+sandbox path, or private artifact ID, so an adoption survives a future
+Nightwatch commit and duplicate detection works across a changed base SHA.
+Coverage classes are always re-derived from the fixed action registry via
+the same resolver the evaluator itself uses; they are never trusted from a
+caller- or catalog-supplied field, closing a class of corruption where a
+hand-edited catalog entry could claim coverage its actions don't actually
+produce. The adopted catalog's live contents are embedded directly in the
+evaluator contract manifest (`SELFDEV_CONTRACT_MANIFEST`), so adopting an
+entry changes `contractDigest` automatically with no separate contract-
+manifest version bump needed — the same reasoning as D-46: the manifest's
+fixed shape already covers newly bound fields under its existing version
+constant, and `sourceBundleDigest` already advances automatically because
+every new Phase 8B file (both `src/core/selfDev/adoptedCase*.ts` and all of
+`src/core/selfDevSandbox/*.ts`) is a member of `SELFDEV_AUTHORITATIVE_PATHS`.
+
+The planner is pure and deterministic: it consumes only
+`assessFutureReviewEligibility` output (never a caller-supplied candidate or
+a replay-only helper), requires exactly one matching
+`EVALUATED_PASS_NOT_ADOPTED` evaluation whose recorded coverage delta is a
+subset of the candidate's re-derived coverage, and requires the on-disk
+catalog file to byte-match its own canonical renderer output before
+producing a content-addressed plan bound to a single code-defined target
+path that neither the candidate nor the CLI can override. Plans are
+TOCTOU-revalidated against current source-bundle/contract/target-preimage
+digests immediately before any sandbox mutation — not HEAD SHA equality, so
+a documentation-only descendant remains runnable while genuine source drift
+fails closed, mirroring the `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`
+reasoning from Phase 8A.1.
+
+The sandbox executor mirrors only the fixed authoritative source set into a
+disposable owner-private 0700 directory outside the repository, verifies
+its pre-mutation digest matches canonical exactly, performs exactly one
+atomic write to the approved target, verifies exactly one path differs from
+canonical afterward, and only then loads and executes the *modified*
+sandbox evaluator through a bounded, serial (process-global require-hook
+state), cache-isolated local TypeScript loader confined by
+`fs.realpathSync` comparison to the sandbox root — never the canonical
+checkout. Four metamorphic probes, constructed from the adopted case's own
+semantics via a small trusted-code simulation of the fixed action registry
+(not the sandbox-loaded evaluator, which is what's being tested), prove: a
+same-semantics candidate under a different valid base SHA becomes
+`REJECTED_DUPLICATE`; a same-coverage assertion variant also remains
+non-new; a genuinely different coverage-adding action sequence still
+evaluates `EVALUATED_PASS_NOT_ADOPTED`; an unsafe candidate remains
+`REJECTED_SAFETY`. Sanitized results carry a validated semantic invariant
+gate — a `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` claim with nonzero
+canonical writes, equal pre/post digests, or a still-passing duplicate probe
+is rejected even after recomputing the result ID, closing the same class of
+forgery risk D-46 closed for trust assessments.
+
+**Rationale.** Canonical source promotion is a categorically higher-risk
+capability than anything Phase 8A/8A.1/8A.1.1 introduced, so its blast
+radius must be provably confined before any future phase considers granting
+canonical write authority. Splitting the sandbox-mutation boundary from the
+pure evaluation domain, keeping the mutable catalog file strictly
+data-only, deriving identity/coverage instead of trusting supplied values,
+and proving the effect through the actual modified sandbox source (not a
+canonical-code simulation of what the postimage "should" do) are all
+choices that keep this phase's real authority — one bounded, disposable,
+cleaned-up filesystem write plus a bounded in-process module load — as
+small and auditable as the capability it grants.
+
+**Consequences.** A new narrow owner-policy operation
+`SELF_DEVELOPMENT_SANDBOX_ADOPTION` authorizes only sandbox-confined writes;
+`SELF_DEVELOPMENT_CANONICAL_ADOPTION` was deliberately never added to the
+allowlist and fails closed like any unknown operation. Hardening gained
+`checkPhase8BSandboxBoundary`, including call-graph containment proving only
+the CLI (`bin/selfdev-adopt-sandbox.mjs`) and the sandbox module itself can
+reach the sandbox source-write executor. No canonical source write
+authority, Git commit/push authority, AI/model authority, product/database/
+infrastructure authority, or publication authority exists anywhere in this
+boundary. The validated implementation checkpoint is
+`36495b4df2c013d671a4983cd7991e1aecd9a25e`; the real local acceptance run
+(plan `adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`,
+result `adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`)
+confirmed the canonical adopted-case catalog, its digest, and `git status`
+were byte-for-byte unchanged before and after.
+
+**Phase applicability.** Phase 8B and any future Phase 8B.1 (Owner-Gated
+Canonical Promotion) design, which remains `NOT_STARTED`/`NOT_AUTHORIZED`
+and must consume this phase's plan/result identity rather than re-deriving
+adoption semantics. Phase 8 remains `IN_PROGRESS`.

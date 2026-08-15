@@ -4,7 +4,7 @@
 
 Task ID: phase-8b-controlled-source-adoption-sandbox
 Phase: 8B — Controlled Source Adoption Sandbox
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
 Last validated implementation SHA: f04bb928890b8d730665b24cfd303386608b2a5a
 Last substantive checkpoint SHA: f04bb928890b8d730665b24cfd303386608b2a5a
@@ -33,13 +33,53 @@ metamorphic proof and zero canonical mutation.
 
 ## Current Milestone
 
-Milestone ID: M14/M15 — Architecture/safety review + push + exact CI
+Milestone ID: M19/M20 — Docs closure + final push + final CI + STOP
 Status: IN_PROGRESS
-What is being attempted: M1-M13 complete (implementation, tests, hardening,
-CI wiring, full local + isolated-clean-checkout regression all PASS;
-substantive checkpoint committed locally as `f04bb92`/`54c21e7`). The
-architecture/safety self-review is now recorded below. Next: push to
-`origin main` and verify the exact remote CI run.
+What is being attempted: M1-M18 complete (see Real Acceptance Evidence
+below). Now updating durable docs and this task's own PLAN/STATE/REPORT,
+then a final docs-only push and exact final CI verification.
+
+## Real Acceptance Evidence (M16-M18)
+
+Performed on the pushed checkpoint `36495b4df2c013d671a4983cd7991e1aecd9a25e`
+(`HEAD == origin/main`, clean worktree, exact CI `31853612222` already
+green including the Phase 8B matrix step).
+
+- Pre-acceptance canonical catalog digest:
+  `sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`
+  (empty-catalog canonical bytes).
+- `npm run selfdev:synthetic` → fresh v2 artifact
+  `session:sha256:27dbbd7f94e360af7e9fc564e9cdabf45d3d9ae5c67e84eccc676f78f047ac46`,
+  bound to `36495b4df2c013d671a4983cd7991e1aecd9a25e`, source digest
+  `sha256:ca503583bb368676de30cf0e364446d0292aad845b38c5eaa0167ec2f6c87757`,
+  contract digest
+  `sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`,
+  `trustStatus: VERIFIED_EXACT_BASE`, 1 pass / 1 duplicate / 1 rejected.
+- `inspect` → `eligible: true`, exactly one candidate
+  `candidate:b2c360af5fd28f8db359069ba90636ae2c294b8d7c0e332e8f48afbfc0092208`.
+- `plan` → `adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`;
+  `targetPreimageDigest` matched the pre-acceptance canonical digest exactly;
+  canonical worktree verified clean/unchanged immediately after planning.
+- `run --confirm SANDBOX_ONLY` → result
+  `adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`:
+  `sandboxVerificationStatus: PASS`, `failureClass: NONE`,
+  `adoptionStatus: SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED`,
+  `changedFiles: ["src/core/selfDev/adoptedCaseCatalog.generated.ts"]`,
+  `sandboxSourceWrites: 1`, `canonicalSourceWrites: 0`,
+  `runtimeGitWrites: 0`, `externalCalls: 0`,
+  `preAdoptionResult/postEquivalentResult/postVariantCoverageResult/
+  nonOverreachResult/unsafeRegressionResult` all `PASS`,
+  `cleanupStatus: PASS`, `canonicalApply: PROHIBITED`,
+  `publication: PROHIBITED`.
+- Post-acceptance canonical proof: `git status --short` clean;
+  `src/core/selfDev/adoptedCaseCatalog.generated.ts` byte-identical
+  (digest `sha256:ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334`,
+  content still `export const SELFDEV_ADOPTED_CASES = [];`); `git rev-parse
+  HEAD` unchanged at `36495b4df2c013d671a4983cd7991e1aecd9a25e`;
+  `$HOME/.nightwatch/selfdev-sandboxes/` exists (0700) and is empty — no
+  residual sandbox mirror.
+- One real local sandbox adoption was performed, per the goal's "one
+  adoption is enough" guidance; no second candidate was exercised.
 
 ## Completed Milestones
 
@@ -69,23 +109,22 @@ below (M14). Ready to push (M15).
 
 ## Exact Next Action
 
-1. `git push origin main`; `git fetch origin`; confirm `HEAD == origin/main`.
-2. Poll/inspect the exact GitHub Actions "Nightwatch hardening" run for this
-   SHA; require `completed`/`success` and confirm the "Phase 8B controlled
-   source adoption sandbox matrix" step specifically executed and passed
-   (not merely inferred from overall green).
-3. Then M16: `npm run selfdev:synthetic` for a fresh v2 acceptance artifact
-   against this exact checkpoint; require `VERIFIED_EXACT_BASE`, replay
-   PASS, eligible true, >=1 candidate.
-4. M17: `inspect` -> `plan` -> `run --confirm SANDBOX_ONLY` against that
-   fresh artifact; capture sanitized IDs/digests only (no raw source, no
-   sandbox path) into this file's Completion Snapshot.
-5. M18: verify canonical catalog bytes/digest and `git status --short`
-   unchanged before/after the real acceptance run.
-6. M19/M20: update docs/CURRENT_STATE.md, docs/ROADMAP.md,
-   docs/ARCHITECTURE.md, docs/SAFETY_MODEL.md, docs/DECISIONS.md; update
-   this task's PLAN/STATE/REPORT + ACTIVE_TASK.md to COMPLETE; push the
-   docs-only descendant; verify final CI; STOP (do not start Phase 8B.1).
+1. Update docs/CURRENT_STATE.md, docs/ROADMAP.md, docs/ARCHITECTURE.md,
+   docs/SAFETY_MODEL.md, docs/DECISIONS.md (new D-47 entry) with Phase 8B
+   COMPLETE status, matching the existing style/precision of the Phase
+   8A.1.1 entries.
+2. Update this task's PLAN.md milestone statuses to COMPLETE and write
+   REPORT.md.
+3. Update .agent/ACTIVE_TASK.md to Status: COMPLETE.
+4. Re-verify the fresh acceptance artifact
+   (`session:sha256:27dbbd7f9...`) remains
+   `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT` (not `VERIFIED_EXACT_BASE`, since
+   HEAD will have advanced past it) with replay PASS and eligible true,
+   confirming only non-authoritative documentation changed.
+5. Commit the docs-only descendant, push, verify `HEAD == origin/main`,
+   verify the exact final CI run (completed/success, Phase 8B matrix step
+   executed), confirm final worktree clean, then STOP. Do not start
+   Phase 8B.1.
 
 ## Completed Milestones (M1-M3 detail)
 

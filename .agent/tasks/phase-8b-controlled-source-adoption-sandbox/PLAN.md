@@ -78,13 +78,13 @@ agent's report; default plan unless source disproves it):
 
 ### M0 — Bootstrap + task scaffolding
 - Objective: verify git/docs state, create this task, update ACTIVE_TASK.md.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M1 — Freeze trust model + schemas
 - Objective: finalize adopted-case schema, plan schema, result schema field
   lists (from `SPEC.md` + architecture research), confirm exact target file
   paths against actual current source layout.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M2 — Empty adopted catalog + validation + evaluator integration
 - Objective: `adoptedCases.ts` with empty `SELFDEV_ADOPTED_CASES`, strict
@@ -94,99 +94,99 @@ agent's report; default plan unless source disproves it):
 - Validation: `npx playwright test tests/unit/selfDev.test.ts
   tests/unit/selfDevSchema.test.ts tests/unit/selfDevEligibility.test.ts
   tests/unit/selfDevProvenance.test.ts`
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M3 — Contract + source provenance integration
 - Objective: adopted catalog changes affect `contractDigest`; new files join
   `SELFDEV_AUTHORITATIVE_PATHS`; document manifest-version bump decision.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M4 — Pure deterministic adoption planner
 - Objective: plan creation gate (goal-mode §34) fully implemented and pure;
   deterministic plan ID; strict plan validation.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M5 — Private plan storage + TOCTOU revalidation
 - Objective: immutable no-replace plan storage under
   `$HOME/.nightwatch/selfdev-adoption/`; `run` revalidates plan/source/
   eligibility/target-preimage before any sandbox mutation.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M6 — Private source-mirror sandbox executor
 - Objective: disposable 0700 sandbox root outside canonical/workspace/
   Alphaus; bounded authoritative-path copy; pre-mutation digest check;
   exactly one atomic sandbox target write; path-safety/symlink rejection.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M7 — Sandbox modified-source module loader
 - Objective: bounded local TypeScript loader for sandbox absolute paths
   only; module-cache isolation regression (A-then-B, B-then-A); execution
   seriality if the loader is process-global.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M8 — Metamorphic adoption verification
 - Objective: post-mutation contract/source digest change; same-semantics
   future-base duplicate; assertion-variant duplicate; new-coverage
   non-overreach PASS; unsafe-candidate-still-rejected.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M9 — Private result storage
 - Objective: sanitized immutable sandbox-result schema/storage; deterministic
   result ID; sanitized failure classes.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M10 — CLI inspect/plan/run
 - Objective: `bin/selfdev-adopt-sandbox.mjs`, `npm run selfdev:adopt-sandbox`
   script; forbidden-option rejection; sanitized output only.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M11 — Owner policy + hardening boundaries
 - Objective: `SELF_DEVELOPMENT_SANDBOX_ADOPTION` operation; hardening checks
   for call-graph, data-only catalog, no-Git-mutation, no-arbitrary-path.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M12 — Adversarial test matrix
 - Objective: focused test files per `SPEC.md` deliverable 9; cover goal-mode
   §85–§97 and §121–§123 forgery/injection/staleness/TOCTOU cases.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M13 — Full regression + clean checkout
 - Objective: typecheck, hardening, full Playwright, synthetic campaign,
   agent:check, diff-check, isolated `npm ci --ignore-scripts` full-history
   clone validation.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M14 — Architecture/safety review
 - Objective: answer goal-mode §163–§169 review questions with evidence from
   this implementation; record in STATE/REPORT.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M15 — Substantive commit/push/exact CI
 - Objective: privacy scan, `git diff --check`, commit, push to
   `origin main`, verify `HEAD == origin/main`, verify exact CI green
   including new Phase 8B matrix step.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M16 — Fresh v2 acceptance artifact
 - Objective: `npm run selfdev:synthetic` post-checkpoint; verify
   `VERIFIED_EXACT_BASE`, replay PASS, eligible true, >=1 candidate.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M17 — Real private plan + one sandbox adoption
 - Objective: inspect -> plan -> run with `SANDBOX_ONLY` against the fresh
   artifact; capture sanitized IDs/digests only.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M18 — Canonical-unchanged proof
 - Objective: `git status --short` clean; catalog bytes/digest unchanged;
   source bundle unchanged, both before/after comparison recorded.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M19 — Docs closure + final push + final CI
 - Objective: update durable docs + task files + ACTIVE_TASK.md; push;
   verify final CI green including Phase 8B matrix step; verify worktree
   clean and `HEAD == origin/main`.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M20 — STOP
 - Objective: final success report; do not start Phase 8B.1.

@@ -3,16 +3,22 @@
 Task ID: phase-8b-controlled-source-adoption-sandbox
 Phase: 8B — Controlled Source Adoption Sandbox
 Title: Nightwatch Phase 8B — Controlled Source Adoption Sandbox
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-8b-controlled-source-adoption-sandbox
 Starting SHA: e7abed9c64252df2c3bd9809252d652bd95f045a
-Last validated implementation SHA: f04bb928890b8d730665b24cfd303386608b2a5a
-Last checkpoint: 2026-08-15 — Phase 8B substantive implementation checkpoint
-(M1-M11 complete; catalog/planner/sandbox/CLI/owner-policy/hardening/CI all
-implemented; full local suite 611/611, synthetic campaign 27/27, typecheck
-and hardening:check PASS, git diff --check clean). M12/M13 (full regression
-+ isolated clean checkout) in progress.
-Current milestone: M12/M13 — full regression + isolated clean checkout (IN_PROGRESS).
+Last validated implementation SHA: 36495b4df2c013d671a4983cd7991e1aecd9a25e
+Last checkpoint: 2026-08-15 — Phase 8B COMPLETE. Full implementation,
+tests, hardening, and CI wiring validated locally and in an isolated clean
+checkout (typecheck/hardening PASS, 611-test full suite, 90/90 focused
+Phase 8A/8A.1/8A.1.1/8B tests, 27/27 synthetic campaign, git diff --check
+clean); pushed and exact CI run 31853612222 passed including the dedicated
+Phase 8B matrix step; one real local sandbox adoption
+(plan adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192,
+result adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7)
+verified SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED with all four
+metamorphic probes PASS and confirmed canonical source byte-for-byte
+unchanged before/after.
+Current milestone: M19/M20 — docs closure + final push + final CI + STOP (IN_PROGRESS).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
@@ -21,8 +27,8 @@ Owner authorization: PROCEED WITH PHASE 8B CONTROLLED SOURCE ADOPTION
 SANDBOX — narrow (sandbox-only source mutation; no canonical write, no
 Git commit/push beyond existing development-checkpoint pattern, no
 canonical-promotion authority).
-Next action: run the isolated full-history clean checkout, then proceed to
-architecture review + push + exact CI (M14/M15).
+Next action: push the docs-only descendant, verify final CI, confirm final
+worktree clean and HEAD == origin/main, then STOP. Do not start Phase 8B.1.
 
 Historical status: Phase 8A.1.1 COMPLETE at implementation SHA
 d33a8c1cc062b435a7b2bc4f69567286dd56ebb4 (CI run 31847511710 green, including
@@ -30,6 +36,6 @@ the dedicated eligibility-matrix step). Phase 8A.1 remains historically
 COMPLETE at 4602fac417746a30927fc19f8e4ca48ab9143cac. Phase 7B.3 COMPLETE
 (HARNESS PASS; REAL CANARY NOT_RUN / LOCAL_RUNTIME_NOT_AVAILABLE). Phase 6
 remains FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE. Phase 8
-is IN_PROGRESS; Phase 8A, Phase 8A.1, and Phase 8A.1.1 remain historically
-COMPLETE. Phase 8B is now IN_PROGRESS; canonical candidate promotion remains
-NOT_STARTED / NOT_AUTHORIZED.
+is IN_PROGRESS; Phase 8A, Phase 8A.1, Phase 8A.1.1, and Phase 8B are
+COMPLETE. Canonical candidate promotion (a possible future Phase 8B.1)
+remains NOT_STARTED / NOT_AUTHORIZED.

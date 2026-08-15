@@ -782,11 +782,94 @@ v2 acceptance artifact verified `VERIFIED_EXACT_BASE`, replay `PASS`, and
 `eligible: true` with one regenerated candidate; no historical artifact was
 rewritten. Phase 8 remains `IN_PROGRESS`; Phase 8B remains `NOT_STARTED`.
 
-### Phase 8B — Controlled candidate source adoption (not started)
+### Phase 8B — Controlled source adoption sandbox (complete)
 
-Phase 8B is a possible future, separately authorized task. It is not
-implemented, must not be inferred from a passing Phase 8A evaluation, and must
-not be started from this checkpoint.
+Phase 8B proves Nightwatch can translate one exact, current-source-eligible
+declarative regression candidate into one deterministic tracked-source
+adoption, apply it only inside a disposable owner-private source mirror,
+execute the modified sandbox evaluator, and metamorphically prove the effect
+— while the canonical checkout remains byte-for-byte untouched. Canonical
+source promotion is explicitly deferred to a future, separately authorized
+task (Phase 8B.1 — Owner-Gated Canonical Promotion, `NOT_STARTED`).
+
+A strict, versioned, data-only adopted-case catalog
+(`nightwatch.selfdev-adopted-case.v1`) is split across a trusted schema
+module (`src/core/selfDev/adoptedCases.ts`) and a pure-data generated file
+(`src/core/selfDev/adoptedCaseCatalog.generated.ts`, the sole sandbox
+mutation target) that starts and remains empty in canonical source. Adopted-
+case identity is base-independent (fixture/actions/assertions/coverage/
+strategy only); coverage is always re-derived from the fixed action
+registry, never trusted from a supplied field. The evaluator seeds its
+baseline duplicate/coverage state from the catalog at construction time with
+zero behavior change while the catalog is empty; the catalog's live contents
+are embedded directly in the evaluator contract manifest, so adopting an
+entry changes `contractDigest` automatically.
+
+A pure, deterministic planner
+(`src/core/selfDevSandbox/planner.ts`) consumes only
+`assessFutureReviewEligibility` output, requires a matching
+`EVALUATED_PASS_NOT_ADOPTED` evaluation with positive re-derived coverage
+overlap, rejects an already-adopted or full catalog, and requires the
+on-disk catalog to match its own canonical renderer output before producing
+a content-addressed `nightwatch.selfdev-adoption-plan.private.v1` bound to
+the fixed, code-defined target path. Plans are stored immutably (exact-ID,
+no-replace) and TOCTOU-revalidated against current source/contract/target-
+preimage digests before any sandbox mutation; a documentation-only
+descendant remains runnable, while genuine source drift or a duplicate
+catalog entry fails closed.
+
+The sandbox executor (`src/core/selfDevSandbox/sandboxExecutor.ts`) mirrors
+only the fixed authoritative source set into a disposable owner-private
+0700 root outside the repository, verifies the mirror's pre-mutation digest
+matches canonical, performs exactly one atomic target write, verifies
+exactly one file differs from canonical, then loads and executes the
+*modified* sandbox evaluator through a bounded, serial, cache-isolated local
+TypeScript loader (`sandboxLoader.ts`) confined to the sandbox root. Four
+metamorphic probes prove the adoption's effect: the same regression
+semantics under a different valid base SHA become `REJECTED_DUPLICATE`; a
+same-coverage assertion variant also remains non-new; a genuinely different
+coverage-adding action sequence still evaluates
+`EVALUATED_PASS_NOT_ADOPTED`; an unsafe candidate remains `REJECTED_SAFETY`.
+The disposable mirror is always cleaned up afterward, confined to a fixed
+sandbox base directory. Sanitized results
+(`nightwatch.selfdev-adoption-sandbox-result.private.v1`) carry
+`sandboxSourceWrites=1`, `canonicalSourceWrites=0`, `runtimeGitWrites=0`,
+`externalCalls=0`, and `adoptionStatus=SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED`
+— never canonical-apply or publication authority — with a validated
+semantic invariant gate that rejects an impossible tuple even if a caller
+recomputes the result ID.
+
+The narrow CLI `npm run selfdev:adopt-sandbox -- inspect|plan|run` is
+exact-ID only (no latest/list/path/patch/model option) and `run` requires
+the fixed confirmation token `SANDBOX_ONLY`; there is no
+apply/commit/push/promote/merge/install command anywhere. A new narrow
+owner-policy operation `SELF_DEVELOPMENT_SANDBOX_ADOPTION` authorizes
+sandbox-only writes; `SELF_DEVELOPMENT_CANONICAL_ADOPTION` remains unknown
+and fails closed. Hardening gained `checkPhase8BSandboxBoundary`
+(authoritative-source coverage, forbidden-capability/import scan, and
+call-graph containment proving only the CLI and the sandbox module itself
+can reach the sandbox source-write executor).
+
+The validated implementation checkpoint is
+`36495b4df2c013d671a4983cd7991e1aecd9a25e`. Local and isolated-clean-
+checkout validation both passed the full suite (`611` total: `608` passed
+plus `3` environment-conditional skips in the isolated clone, `611` passed
+in the local dev checkout), 90/90 focused Phase 8A/8A.1/8A.1.1/8B tests,
+typecheck, hardening, 27/27 synthetic campaign, and `git diff --check`.
+Exact CI run `31853612222` passed, executing the dedicated "Phase 8B
+controlled source adoption sandbox matrix" step. The fresh v2 acceptance
+artifact is
+`session:sha256:27dbbd7f94e360af7e9fc564e9cdabf45d3d9ae5c67e84eccc676f78f047ac46`,
+bound to the validated checkpoint, `VERIFIED_EXACT_BASE` with replay `PASS`,
+`eligible: true`, one candidate. The one real local acceptance plan/run —
+`adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`
+and
+`adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`
+— verified `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` with all four
+metamorphic probes `PASS`, `cleanupStatus: PASS`, and confirmed the
+canonical adopted-case catalog, its digest, and `git status` were
+byte-for-byte unchanged before and after. Phase 8 remains `IN_PROGRESS`;
+canonical candidate promotion remains `NOT_STARTED`/`NOT_AUTHORIZED`.
 
 ---
 
