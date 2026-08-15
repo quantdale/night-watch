@@ -144,7 +144,7 @@ classification.
   promotion base.
 - Validation commands: `git status`, `git push origin main`, GitHub Actions
   run inspection.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M5 — Fresh synthetic session + sandbox proof at the frozen base
 
@@ -156,7 +156,7 @@ classification.
   untouched.
 - Validation commands: `npm run selfdev:synthetic`,
   `npm run selfdev:adopt-sandbox -- inspect|plan|run`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M6 — Disposable one-entry future-state rehearsal
 
@@ -167,7 +167,7 @@ classification.
   semantics PASS with one entry; `selfdev:synthetic` selects B with
   passCandidateCount 1 and replay PASS.
 - Validation commands: all §21 commands in the disposable checkout.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M7 — Promotion prepare + exactly one approval
 
@@ -177,7 +177,7 @@ classification.
 - Acceptance criteria: intent pre/post digests exact; approval ID differs
   from historical; zero writes so far; no Git changes after prepare.
 - Validation commands: `npm run selfdev:promote-canonical -- prepare|approve`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M8 — Exactly one canonical APPLY + fresh-process verify
 
@@ -187,7 +187,7 @@ classification.
   approval consumed=true; dirty-tree shape exactly one file.
 - Acceptance criteria: all of §28–§30; failure -> classified STOP, no retry.
 - Validation commands: `npm run selfdev:promote-canonical -- apply|verify`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M9 — Post-apply real one-entry regression + canonical commit + exact CI
 
@@ -198,7 +198,7 @@ classification.
   classified STOP (no second attempt).
 - Validation commands: §31 suite; `git add/commit/push`; GitHub Actions run
   inspection; `promote-canonical -- status`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M10 — Post-commit continuation proof
 
@@ -209,7 +209,7 @@ classification.
   true via read-only inspect; isolated suite 0 failed.
 - Validation commands: `npm run selfdev:synthetic`, sandbox `inspect`, §40
   suite in an isolated clone.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M11 — Continuity v2 closure + docs finalization + final exact CI + report
 
@@ -221,7 +221,7 @@ classification.
   count 1.
 - Validation commands: `npm run agent:check`, `npm run agent:audit`,
   `git push origin main`, GitHub Actions run inspection.
-- Status: NOT_STARTED
+- Status: DONE
 
 ## Validation Strategy
 
@@ -247,6 +247,22 @@ canonical, final docs).
 ## Discoveries
 
 - (filled in as discovered)
+
+- 2026-08-15 — Decision: frozen promotion base stays exactly at the
+  readiness commit; task-doc edits during the promotion window preserved in
+  /tmp and restored only at finalization so the tree stayed fully clean for
+  prepare/approve/apply/verify (assertRepositoryFullyClean is whole-repo);
+  reason: any dirtiness blocks the promotion boundary, any mid-flight commit
+  moves the bound HEAD; evidence: SELFDEV_REPOSITORY_NOT_FULLY_CLEAN observed
+  when task docs were uncommitted.
+- 2026-08-15 — Decision: the 2 dirty-tree-only CLI test failures in the
+  post-apply regression window are documented deterministic behavior (tests
+  read the real repo's clean state; SELFDEV_AUTHORITATIVE_SOURCE_DIRTY for
+  ANY dirty tree) and pass at the clean committed one-entry state; reason:
+  §32 permits proceeding when the failure is not semantic; evidence: the same
+  tests passed in the clean one-entry rehearsal (751/4/0) and in the
+  post-commit isolated run; consequence: no rollback, canonical commit
+  proceeded.
 
 ## Deferred Work
 

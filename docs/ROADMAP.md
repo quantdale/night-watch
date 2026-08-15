@@ -982,7 +982,6 @@ full-history checkout (159 passed), and an exhausted A+B isolated checkout
 retry readiness: `READY_FOR_FRESH_OWNER_AUTHORIZATION` (a separate owner
 authorization is required; no promotion was retried). The canonical adopted
 case catalog remains EMPTY.
-
 ### Phase 8B.1.0.2 — Completed-task continuity protocol & historical ledger hardening (complete)
 
 Phase 8B.1.0.2 (COMPLETE) made completed-task contradictions mechanically
@@ -1005,6 +1004,54 @@ full clean Playwright 747 passed / 4 skipped / 0 failed. Phase 8B.1 remains
 `BLOCKED` / `RETRY_NOT_STARTED`; retry readiness:
 `READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION` (separate fresh owner
 authorization required; no promotion retried; catalog EMPTY).
+
+### Phase 8B.1-R1 — Owner-gated canonical promotion retry (complete)
+
+Phase 8B.1-R1 (COMPLETE) performed the ONE authorized fresh canonical
+promotion retry under continuity protocol v2, after a catalog-aware CI
+transition:
+
+- **Catalog-aware CI transition (readiness commit `a319849`).** The two
+  empty-only operational gates (workflow "Phase 8B.1.0 checkout cleanliness
+  (real catalog must stay empty)" and the `checkPhase8B10PortfolioIntegrity`
+  empty-only assertion) were replaced by the cardinality-agnostic
+  catalog-integrity invariant: the real catalog may legitimately hold
+  0..64 entries as long as it validates under `validateAdoptedCatalog`,
+  byte-matches `renderAdoptedCatalogSource`, stays pure declarative data,
+  and the checkout is clean. New read-only
+  `bin/selfdev-catalog-integrity.mjs` (reuses the established
+  validator/renderer; zero writes) runs from the "Phase 8B.1 catalog
+  integrity / checkout cleanliness" workflow step; hardening asserts pure
+  data shape, bin reuse, and workflow invocation; 4 focused tests added.
+  Exact CI 31886682576 green incl. the new step at EMPTY; catalog unchanged.
+- **Fresh chain at the frozen base `a319849`:** fresh v2 session
+  (`session:sha256:72da8503...`, VERIFIED_EXACT_BASE, replay PASS, candidate
+  A / EXPAND_SUMMARY), sandbox plan `4f79e22f...` + verified result
+  `e9d1d9bf...` (SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED, five probes PASS,
+  writes 1/0/0/0).
+- **One-entry future-state rehearsal** (disposable clone, exact postimage
+  committed locally, never pushed): full Playwright 751/4/0; CI-equivalent
+  gates PASS incl. catalog integrity at count 1; the fresh session in that
+  checkout SELECTS EXPAND_THEN_COLLAPSE (B) — the historical structural
+  blocker is resolved.
+- **Exactly one promotion** `7542c947...`, **one fresh approval**
+  `e065f088...` (old approval `17c97035...` stays spent), **one APPLY**
+  (APPLIED; one file; digest exact), fresh-process verify
+  `527a42fd...` (`CANONICAL_APPLIED_VERIFIED_UNCOMMITTED`, four probes
+  PASS), post-apply regression green (2 documented dirty-tree-only CLI
+  failures only), **canonical commit `24fc437`** (exactly the one catalog
+  file), exact CI 31887666112 green incl. catalog integrity at COUNT 1,
+  currentness `CANONICAL_PROMOTION_COMMITTED_EXACT`.
+- **Post-commit continuation proof:** fresh session at the committed HEAD
+  selects B (passCount 1, replay PASS); read-only B eligibility proven;
+  post-commit isolated full-history checkout at `24fc437` full Playwright
+  751/4/0.
+
+Phase 8B.1 = `COMPLETE VIA SUCCESSFUL RETRY R1`; original attempt remains the
+truthful BLOCKED/CLOSED historical record with its spent approval. Canonical
+catalog count = 1 (variant A); variant B AVAILABLE_NOT_ADOPTED; portfolio NOT
+exhausted. Next action: STOP — no second approval/APPLY, no B adoption
+(separate authorization required).
 
 ---
 

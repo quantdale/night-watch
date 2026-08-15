@@ -1,20 +1,23 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.1.0.2 completed-task continuity protocol &
-> historical ledger hardening closeout.
+> the Nightwatch Phase 8B.1-R1 owner-gated canonical promotion retry
+> closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
 > `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
-> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`. Phase 8B proved one sandbox-confined,
+> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`, and
+> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`. Phase 8B proved one sandbox-confined,
 > metamorphically-verified source adoption with zero canonical mutation;
 > Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
-> Phase 8B.1 (Owner-Gated Canonical Promotion) remains `BLOCKED` — its one
-> authorized real promotion was applied/verified then reverted because the
-> full regression suite assumed a permanently-fresh single candidate;
+> Phase 8B.1 (Owner-Gated Canonical Promotion) — its original attempt
+> remains the truthful `BLOCKED`/CLOSED historical record (one authorized
+> real promotion was applied/verified then reverted because the full
+> regression suite assumed a permanently-fresh single candidate, and its
+> one-shot approval is permanently spent);
 > Phase 8B.1.0 removed that structural blocker with a bounded deterministic
 > proposal portfolio (EXPAND_SUMMARY, EXPAND_THEN_COLLAPSE) and
 > state-explicit test baselines; Phase 8B.1.0.1 proved the complete clean
@@ -24,9 +27,22 @@
 > contradictions (stale milestones/WIP/next actions, duplicate structured
 > fields, future-value placeholders), added `npm run agent:audit` and the CI
 > "Completed-task continuity audit" step, and migrated the current 8B.1
-> lineage to strict v2, so a future fresh 8B.1 promotion attempt is possible
-> under a NEW separate owner authorization. The canonical adopted case
-> catalog remains EMPTY.
+> lineage to strict v2; Phase 8B.1-R1 then replaced the repository-wide
+> empty-only catalog CI assumption with a cardinality-agnostic
+> catalog-integrity invariant (readiness commit `a319849`, exact green CI)
+> and completed the ONE authorized fresh canonical promotion: a fresh
+> session/candidate A, fresh sandbox proof, an exact one-entry future-state
+> rehearsal (full suite 0 failed, portfolio selects B), one fresh promotion
+> intent, one fresh one-shot approval, one real APPLY (one file,
+> `src/core/selfDev/adoptedCaseCatalog.generated.ts`), fresh-process verify
+> PASS, full regression green, the canonical adoption commit `24fc437` with
+> exact green CI including the catalog-integrity step at count 1,
+> `CANONICAL_PROMOTION_COMMITTED_EXACT`, and a fresh post-commit session
+> selecting variant B. The canonical adopted-case catalog now contains
+> exactly ONE entry (digest `fa7b71d4...`); variant B
+> (EXPAND_THEN_COLLAPSE) remains available-not-adopted. No second approval,
+> no second APPLY, no B adoption.
+
 
 ---
 
@@ -59,10 +75,10 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
-| `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption; canonical adopted-case catalog remains empty |
+| `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption proven; canonical adopted-case catalog lifecycle per Phase 8B.1-R1 (now one entry) |
 | `PHASE_8B_0_1_STATUS` | `COMPLETE` — sandbox promotion-readiness closeout (base pre-validation, strategy binding, verified-result probe invariant, truthful write accounting); fresh sandbox-only acceptance re-verified |
-| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.0.1 SANDBOX PROMOTION-READINESS CLOSEOUT` — sandbox-only; no canonical adoption authority |
-| `PHASE_8B_1_STATUS` | `NOT_STARTED` / `NOT_AUTHORIZED` — Owner-Gated Canonical Promotion, a possible future separately authorized task |
+| `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.1-R1 OWNER-GATED CANONICAL PROMOTION RETRY` — executed exactly one fresh prepare/approve/apply/verify/commit chain; no further promotion authority |
+| `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -1036,6 +1052,81 @@ SHA 52a7c173; exact CI 31883287041 success including the Completed-task
 continuity audit step; full clean Playwright 747 passed / 4 skipped / 0
 failed at the substantive SHA. Phase 8B.1 remains
 `BLOCKED`/`RETRY_NOT_STARTED` — `READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION`.
+
+**Phase 8B.1-R1 — owner-gated canonical promotion retry (complete).**
+Phase 8B.1-R1 executed the ONE authorized fresh canonical promotion retry
+end to end under continuity protocol v2, after first making the CI
+catalog-aware:
+
+- **Catalog-aware CI transition (readiness commit `a319849a`, exact CI
+  31886682576 success).** The obsolete operational gates — the workflow step
+  "Phase 8B.1.0 checkout cleanliness (real catalog must stay empty)" and the
+  `checkPhase8B10PortfolioIntegrity` empty-only assertion — were replaced by
+  the cardinality-agnostic invariant "the real catalog must remain valid
+  canonical adopted-case data": new read-only `bin/selfdev-catalog-integrity.mjs`
+  reuses `validateAdoptedCatalog`/`renderAdoptedCatalogSource` to prove
+  checkout cleanliness, schema validity, byte-identical canonical rendering,
+  pure-data shape, and count <= 64 for ANY supported cardinality (EMPTY /
+  one-entry / future two-entry / exhausted). Workflow step became "Phase 8B.1
+  catalog integrity / checkout cleanliness"; hardening asserts pure-data
+  shape + bin reuse + workflow invocation. Four focused tests added
+  (live-file byte round-trip, one-entry fixture, two-entry fixture,
+  noncanonical-byte detection); existing tests unweakened. The generated
+  catalog stayed EMPTY through the readiness commit.
+- **Fresh chain at the frozen base `a319849`.** Fresh v2 session
+  `session:sha256:72da8503...` (VERIFIED_EXACT_BASE, replay PASS, 1 pass/1
+  duplicate/1 rejected, portfolio SELECTED EXPAND_SUMMARY — candidate A),
+  exactly one eligible candidate
+  `candidate:f6b8fefb...`, fresh sandbox plan
+  `adoption-plan:sha256:4f79e22f...` (strategy
+  DECLARATIVE_REGRESSION_CATALOG_PROMOTION, target exactly
+  `src/core/selfDev/adoptedCaseCatalog.generated.ts`, preimage
+  `sha256:ffe3d635...`, postimage `sha256:fa7b71d4...`) and verified result
+  `adoption-sandbox-result:sha256:e9d1d9bf...`
+  (`SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED`, all five probes PASS,
+  sandboxSourceWrites 1, canonical/Git/external 0, cleanup PASS).
+- **Exact one-entry future-state rehearsal** in a disposable full-history
+  clone (workspace /tmp/nw-r1-ws with read-only sibling mirrors): the exact
+  planned postimage committed locally (never pushed); full Playwright
+  751 passed / 4 skipped / 0 failed; local CI-equivalent gates all PASS
+  (incl. the new catalog-integrity step at count 1); fresh synthetic session
+  in that checkout SELECTED EXPAND_THEN_COLLAPSE (B) with passCount 1 and
+  replay PASS — the historical structural blocker does not recur.
+- **One promotion, one approval, one APPLY.** Fresh intent
+  `canonical-promotion:sha256:7542c947...` (bound to a319849); fresh one-shot
+  approval `canonical-promotion-approval:sha256:e065f088...` (exact
+  `CANONICAL_ONE_FILE_ONLY` token; ID differs from the spent historical
+  approval `17c97035...`); exactly one real APPLY — receipt
+  `canonical-apply-receipt:sha256:72f7216e...`, `applyOutcome APPLIED`,
+  canonicalSourceWrites 1, runtimeGitWrites 0, externalCalls 0, changed file
+  exactly the one target, observed postimage digest exact; approval consumed
+  once and permanently spent. Fresh-process verify
+  `canonical-promotion-verification:sha256:527a42fd...` —
+  `CANONICAL_APPLIED_VERIFIED_UNCOMMITTED`, all four canonical metamorphic
+  probes PASS, zero side effects. Post-apply real regression: full Playwright
+  752 passed / 1 skipped / 2 failed where the 2 are the documented
+  dirty-tree-only CLI tests (fail closed on `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`
+  against the deliberately dirty tree; they pass at the clean one-entry
+  state).
+- **Canonical adoption commit `24fc437f`** ("Phase 8B.1-R1: canonically adopt
+  first verified self-development case") containing exactly
+  `src/core/selfDev/adoptedCaseCatalog.generated.ts` (1 entry, digest
+  `sha256:fa7b71d4...`); exact CI 31887666112 success — all 22 steps green
+  including the catalog-integrity step WITH COUNT=1; committed currentness
+  `CANONICAL_PROMOTION_COMMITTED_EXACT`.
+- **Post-commit continuation proof.** Fresh session at the committed
+  one-entry HEAD
+  `session:sha256:31935308...` — SELECTED EXPAND_THEN_COLLAPSE (B),
+  passCount 1, replay PASS; read-only inspect proves B eligible with exactly
+  one candidate (`candidate:4deb8d42...`); post-commit isolated full-history
+  checkout at 24fc437 (`npm ci --ignore-scripts`) full Playwright
+  751 passed / 4 skipped / 0 failed.
+- **Status.** Phase 8B.1 = `COMPLETE VIA SUCCESSFUL RETRY R1` (the historical
+  original attempt remains the truthful `BLOCKED`/CLOSED record; its
+  approval stays spent). Canonical adopted-case count = 1 (variant A,
+  EXPAND_SUMMARY); portfolio NOT exhausted — variant B
+  (EXPAND_THEN_COLLAPSE) AVAILABLE_NOT_ADOPTED. No second approval, no
+  second APPLY, no B adoption.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

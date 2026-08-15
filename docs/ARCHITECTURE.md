@@ -382,8 +382,12 @@ sandbox loader is confined by `fs.realpathSync` path comparison to a
 disposable 0700 root outside the repository, the parent workspace, and the
 private-findings root. The adopted-case catalog target file
 (`adoptedCaseCatalog.generated.ts`) is the only file the executor may ever
-rewrite, and only inside that disposable mirror; the canonical copy of that
-same file remains an empty array in this checkout.
+rewrite, and only inside that disposable mirror. In canonical source the
+same file is pure declarative generated data whose cardinality is a normal
+supported state (Phase 8B.1-R1: 0..64 entries) enforced by the read-only
+`bin/selfdev-catalog-integrity.mjs` check (validate + byte-exact canonical
+render round-trip) in CI; the canonical catalog currently holds ONE adopted
+entry.
 
 `SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED` means exactly what it says: the
 deterministic source transformation produced the expected behavior in a
