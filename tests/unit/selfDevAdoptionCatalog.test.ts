@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
 import {
   SELFDEV_ADOPTED_CASE_SCHEMA_VERSION,
   SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES,
@@ -114,5 +115,78 @@ test.describe('Phase 8B adopted-case catalog', () => {
     })).toThrow(/ID_INVALID/);
     expect(() => validateAdoptedCase({ ...valid, fixtureId: "'); process.exit(1); //" })).toThrow(/FIXTURE_INVALID/);
     expect(() => validateAdoptedCase({ ...valid, actionIds: ["'); process.exit(1); //"] })).toThrow(/ACTION_IDS_INVALID/);
+  });
+
+  test('the live generated catalog file is byte-identical to the canonical renderer output (any cardinality)', () => {
+    // Phase 8B.1-R1 live-file invariant: the on-disk generated file must
+    // validate and byte-match renderAdoptedCatalogSource(...) for ANY
+    // legitimate cardinality (EMPTY canonical checkout today, a committed
+    // one-entry state, and future two-entry/exhausted states). This is the
+    // same property the CI catalog-integrity step enforces via
+    // bin/selfdev-catalog-integrity.mjs.
+    const generatedPath = path.join(process.cwd(), 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+    const bytes = fs.readFileSync(generatedPath, 'utf8');
+    const validated = validateAdoptedCatalog(SELFDEV_ADOPTED_CASES);
+    expect(validated.length).toBeLessThanOrEqual(SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES);
+    expect(renderAdoptedCatalogSource(validated)).toBe(bytes);
+    // Pure-data shape: no executable code outside the explanatory comments.
+    const codeLines = bytes.split('\n').filter((line) => !line.trim().startsWith('//'));
+    expect(codeLines.join('\n')).not.toMatch(/^\s*(?:import|require)\b|function\s+|=>|eval\s*\(|process\.|new\s+Function\s*\(/);
+    expect(bytes).toMatch(/export const SELFDEV_ADOPTED_CASES = (?:\[\]|\[)/);
+  });
+
+  test('a rendered one-entry catalog is valid canonical data (EXPAND_ONLY fixture)', () => {
+    // Phase 8B.1-R1: one adopted entry must remain a normal supported state
+    // (portfolio semantics: A adopted -> variant B selected next).
+    const fixture = createSyntheticSelfDevSourceFixture('EXPAND_ONLY');
+    try {
+      const stack = loadSelfDevStack(fixture.root, path.join(process.cwd(), 'package.json'));
+      expect(stack.SELFDEV_ADOPTED_CASES).toHaveLength(1);
+      const validated = validateAdoptedCatalog(stack.SELFDEV_ADOPTED_CASES);
+      const rendered = renderAdoptedCatalogSource(validated);
+      const generatedPath = path.join(fixture.root, 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+      expect(fs.readFileSync(generatedPath, 'utf8')).toBe(rendered);
+      expect(rendered).toContain('export const SELFDEV_ADOPTED_CASES = [');
+      expect(rendered).toContain('"strategyClass": "DECLARATIVE_REGRESSION_CATALOG_PROMOTION"');
+      expect(rendered).not.toMatch(/require\(|import\s+[^t]|function\s|=>|eval\(|process\./);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('a rendered two-entry catalog is valid canonical data (EXPAND_AND_COLLAPSE fixture)', () => {
+    // Phase 8B.1-R1: the future two-entry/exhausted-adjacent state must also
+    // remain valid canonical data (portfolio semantics: A+B adopted ->
+    // EXHAUSTED is a valid terminal state, not a catalog-invalid state).
+    const fixture = createSyntheticSelfDevSourceFixture('EXPAND_AND_COLLAPSE');
+    try {
+      const stack = loadSelfDevStack(fixture.root, path.join(process.cwd(), 'package.json'));
+      expect(stack.SELFDEV_ADOPTED_CASES).toHaveLength(2);
+      const validated = validateAdoptedCatalog(stack.SELFDEV_ADOPTED_CASES);
+      expect(validateAdoptedCatalog(validated)).toEqual(validated);
+      expect(new Set(validated.map((entry) => entry.adoptedCaseId)).size).toBe(2);
+      expect(new Set(validated.map((entry) => entry.equivalentFingerprint)).size).toBe(2);
+      const rendered = renderAdoptedCatalogSource(validated);
+      const generatedPath = path.join(fixture.root, 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+      expect(fs.readFileSync(generatedPath, 'utf8')).toBe(rendered);
+      expect(rendered).not.toMatch(/require\(|import\s+[^t]|function\s|=>|eval\(|process\./);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('noncanonical byte rendering is detectable by the byte round-trip', () => {
+    // Phase 8B.1-R1: the catalog-integrity check compares raw on-disk bytes
+    // with the deterministic renderer output, so any noncanonical formatting
+    // (extra whitespace, reordering, hand-editing) is rejected even when the
+    // semantic content would still validate.
+    const entry = deriveAdoptedCase('selfdev.fixture.local-regression.v1', ['selfdev.synthetic.expand-summary'], ['selfdev.assert.state.expanded']);
+    const canonical = renderAdoptedCatalogSource([entry]);
+    expect(renderAdoptedCatalogSource(validateAdoptedCatalog([entry]))).toBe(canonical);
+    const nonCanonical = canonical.replace('"schemaVersion"', ' "schemaVersion"');
+    expect(nonCanonical).not.toBe(canonical);
+    // The validator alone accepts the semantic content; only the byte-level
+    // round-trip (as performed by the integrity check) rejects the deviation.
+    expect(() => validateAdoptedCatalog([entry])).not.toThrow();
   });
 });

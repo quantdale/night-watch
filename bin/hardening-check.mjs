@@ -726,13 +726,30 @@ function checkPhase8B10PortfolioIntegrity() {
     if (/tests\/helpers/.test(read(cli))) fail(`${cli} reaches the test-only source-fixture baseline helpers`);
   }
 
-  // The real canonical adopted-case catalog must remain pure declarative data
-  // with zero entries until a real owner-authorized promotion exists (the
-  // Phase 8B.1.0 invariant; one-entry/exhausted states are exercised only in
-  // temporary source fixtures).
+  // Phase 8B.1-R1 — the real canonical adopted-case catalog may legitimately
+  // hold 0..SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES entries (EMPTY, one-entry,
+  // future two-entry/exhausted states are all supported). The enforced
+  // invariants are: the generated file stays pure declarative data (no
+  // imports/functions/executable code), the dedicated runtime integrity
+  // check reuses the real validator/renderer (never a cardinality-locked
+  // regex), and CI executes it. Runtime schema/byte-roundtrip validation
+  // happens in bin/selfdev-catalog-integrity.mjs.
   const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
-  if (/SELFDEV_ADOPTED_CASES\s*=\s*\[[^\]]/.test(catalog) || !/SELFDEV_ADOPTED_CASES = \[\];/.test(catalog)) {
-    fail('the real canonical adopted-case catalog is not empty (Phase 8B.1.0 invariant)');
+  if (!/^\/\/ GENERATED FILE/.test(catalog)) fail('the real canonical adopted-case catalog lost its generated-file header');
+  const catalogCode = catalog.split('\n').filter((line) => !line.trim().startsWith('//'));
+  if (/^\s*(?:import|require)\b|function\s+|=>|eval\s*\(|process\.|new\s+Function\s*\(/.test(catalogCode.join('\n'))) {
+    fail('the real canonical adopted-case catalog contains executable code');
+  }
+  if (!/export const SELFDEV_ADOPTED_CASES = (?:\[\]|\[)/.test(catalog)) {
+    fail('the real canonical adopted-case catalog does not declare the pure-data SELFDEV_ADOPTED_CASES array literal');
+  }
+  const integrityBin = read('bin/selfdev-catalog-integrity.mjs');
+  if (!/validateAdoptedCatalog/.test(integrityBin) || !/renderAdoptedCatalogSource/.test(integrityBin)) {
+    fail('bin/selfdev-catalog-integrity.mjs must reuse validateAdoptedCatalog/renderAdoptedCatalogSource');
+  }
+  const workflow = read('.github/workflows/hardening.yml');
+  if (!/Phase 8B\.1 catalog integrity \/ checkout cleanliness/.test(workflow) || !/selfdev-catalog-integrity\.mjs/.test(workflow)) {
+    fail('.github/workflows/hardening.yml must run the catalog-integrity check');
   }
 }
 

@@ -12,6 +12,7 @@ export const SELFDEV_SOURCE_BUNDLE_ALGORITHM = 'sha256:length-prefixed-relative-
 
 export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'bin/selfdev-adopt-sandbox.mjs',
+  'bin/selfdev-catalog-integrity.mjs',
   'bin/selfdev-provenance.mjs',
   'bin/selfdev-synthetic.mjs',
   'bin/selfdev-verify.mjs',
