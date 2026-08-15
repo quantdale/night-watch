@@ -331,8 +331,14 @@ function checkPhase8BSandboxBoundary() {
   if (!/revalidatePlan/.test(executor)) fail('Phase 8B sandbox executor does not revalidate the plan before mutation');
   if (!/diffSandboxAgainstCanonical/.test(executor) || !/changedFiles\.length\s*!==\s*1/.test(executor)) fail('Phase 8B sandbox executor does not enforce exactly one changed file');
   if (!/cleanupSandboxMirror/.test(executor)) fail('Phase 8B sandbox executor does not clean up its sandbox mirror');
-  if (!/REJECTED_DUPLICATE/.test(executor) || !/EVALUATED_PASS_NOT_ADOPTED/.test(executor) || !/REJECTED_SAFETY/.test(executor)) {
-    fail('Phase 8B sandbox executor is missing a required metamorphic probe verdict');
+  // The four metamorphic-probe verdicts are proved by the shared pure
+  // src/core/selfDev/metamorphicProbes.ts implementation (Phase 8B.1 extracted
+  // it so canonical verification can reuse the same proof logic); the
+  // executor must still be the one invoking it.
+  const metamorphicProbes = read('src/core/selfDev/metamorphicProbes.ts');
+  if (!/runMetamorphicProbes/.test(executor)) fail('Phase 8B sandbox executor does not invoke the shared metamorphic proof implementation');
+  if (!/REJECTED_DUPLICATE/.test(metamorphicProbes) || !/EVALUATED_PASS_NOT_ADOPTED/.test(metamorphicProbes) || !/REJECTED_SAFETY/.test(metamorphicProbes)) {
+    fail('shared metamorphic proof implementation is missing a required probe verdict');
   }
   if (!/SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED/.test(combined) || !/canonicalApply:\s*'PROHIBITED'/.test(combined) || !/publication:\s*'PROHIBITED'/.test(combined)) {
     fail('Phase 8B sandbox result lacks explicit non-canonical/no-publication authority');
@@ -541,6 +547,129 @@ function checkPhase8B01CloseoutIntegrity() {
   if (!/SelfDevAdoptionStrategyClass/.test(adoptedCases)) fail('8B.0.1: the single strategy class lacks a literal exported type');
 }
 
+function selfDevPromotionSourceFiles() {
+  const directory = path.join(root, 'src', 'core', 'selfDevPromotion');
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
+    .map((entry) => path.join('src', 'core', 'selfDevPromotion', entry.name))
+    .sort();
+}
+
+function checkPhase8B1CanonicalPromotionBoundary() {
+  const files = selfDevPromotionSourceFiles();
+  if (files.length === 0) {
+    fail('Phase 8B.1 canonical promotion source is missing');
+    return;
+  }
+  const sources = files.map((file) => [file, read(file)]);
+  const combined = sources.map(([, source]) => source).join('\n');
+  const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
+  for (const file of files) {
+    if (!provenanceManifest.includes(`'${file}'`)) fail(`authoritative provenance manifest omits tracked selfDevPromotion source ${file}`);
+  }
+  if (!provenanceManifest.includes("'bin/selfdev-promote-canonical.mjs'")) fail('authoritative provenance manifest omits the Phase 8B.1 CLI');
+
+  const ownerPolicy = read('src/core/policy/ownerScope.ts');
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(ownerPolicy)) fail('Phase 8B.1 lacks a distinct owner-policy capability');
+  if (!/owner-scope-policy\.v2/.test(ownerPolicy)) fail('Phase 8B.1 does not deliberately advance the owner-scope policy version');
+
+  for (const [file, source] of sources) {
+    // Deliberately excludes the substring "git" from this prohibited-import
+    // scan (unlike the Phase 8B sandbox check): every promotion file is
+    // REQUIRED to import the single approved read-only Git provenance
+    // boundary (`../provenance/localGit`); a broad "git" substring ban would
+    // reject that legitimate, required import.
+    if (/from\s+['"][^'"]*(?:aiReview|campaign|oracles?|browser|products?|phase6|oops|database|infrastructure|auth|network)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a prohibited Phase 8B.1 authority or transport`);
+    }
+    if (/node:(?:child_process|net|http|https|dns|tls|worker_threads)/.test(source)) fail(`${file} imports a prohibited runtime capability`);
+    if (/\b(?:fetch|http\.request|https\.request|net\.connect|WebSocket|child_process|spawn|exec(?:File)?|eval|new\s+Function\s*\(|process\.env)\b/i.test(source)) fail(`${file} exposes a prohibited runtime capability`);
+    if (/\bspawnSync\s*\(/.test(source)) fail(`${file} spawns a child process directly instead of using the localGit boundary`);
+    if (/\bgit\s+(?:add|commit|push|checkout|restore|reset|clean|stash|merge|rebase|branch|switch|cherry-pick|apply|am|tag)\b/.test(source)) fail(`${file} references a forbidden Git mutation verb`);
+    if (/\b(?:AiReviewSession|LoopbackAiReviewProvider|SyntheticAiReviewProvider|reviewBugCandidate|suggestOracle)\b/.test(source)) fail(`${file} enters Phase 7B AI review authority`);
+    if (/\brunSandboxAdoption\s*\(|\bplanAdoption\s*\(/.test(source)) fail(`${file} directly invokes Phase 8B sandbox-write/plan authority instead of only its read-only stores`);
+  }
+
+  const prepare = read('src/core/selfDevPromotion/prepare.ts');
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(prepare)) fail('Phase 8B.1 prepare is missing its owner-policy gate');
+  if (!/assertRepositoryFullyClean/.test(prepare)) fail('Phase 8B.1 prepare does not require whole-repository cleanliness');
+  if (!/assessFutureReviewEligibility/.test(prepare)) fail('Phase 8B.1 prepare does not consume the canonical future-review eligibility gate');
+  if (!/ALREADY_ADOPTED/.test(prepare)) fail('Phase 8B.1 prepare is missing its already-adopted fail-closed gate');
+
+  const approve = read('src/core/selfDevPromotion/approve.ts');
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(approve)) fail('Phase 8B.1 approve is missing its owner-policy gate');
+  if (!/SELFDEV_CANONICAL_PROMOTION_APPROVAL_CONFIRMATION/.test(approve)) fail('Phase 8B.1 approve does not require the fixed confirmation token');
+  if (!/assertRepositoryFullyClean/.test(approve)) fail('Phase 8B.1 approve does not require whole-repository cleanliness');
+  if (!/PROMOTION_SOURCE_ADVANCED/.test(approve)) fail('Phase 8B.1 approve does not fail closed when source has advanced');
+
+  const apply = read('src/core/selfDevPromotion/apply.ts');
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(apply)) fail('Phase 8B.1 apply is missing its owner-policy gate');
+  if (!/claimApprovalConsumption/.test(apply)) fail('Phase 8B.1 apply is missing one-shot approval consumption');
+  // The FIRST claim call must precede the LAST invocation of the write
+  // helper, so consumption is always claimed strictly before the canonical
+  // write is attempted.
+  const claimIndex = apply.indexOf('claimApprovalConsumption(');
+  const writeIndex = apply.lastIndexOf('atomicWriteTarget(');
+  if (claimIndex < 0 || writeIndex < 0 || claimIndex > writeIndex) fail('Phase 8B.1 apply does not consume the approval before the canonical write');
+  if (!/isSymbolicLink/.test(apply)) fail('Phase 8B.1 apply is missing symlink rejection on the canonical target');
+  if (!/originalMode/.test(apply) || !/chmodSync\(temporary, mode\)/.test(apply)) fail('Phase 8B.1 apply does not preserve the target file mode');
+  if (!/TARGET_PATH_ESCAPE/.test(apply)) fail('Phase 8B.1 apply is missing parent-path containment');
+  if (!/PROMOTION_SOURCE_ADVANCED/.test(apply)) fail('Phase 8B.1 apply does not require the exact prepared HEAD');
+  if (!/ALREADY_ADOPTED/.test(apply)) fail('Phase 8B.1 apply is missing its already-adopted fail-closed gate');
+  if (!/CHANGESET_INVALID/.test(apply)) fail('Phase 8B.1 apply does not verify the post-write changeset');
+  if (!/APPLIED_RECEIPT_PERSIST_FAILED/.test(apply)) fail('Phase 8B.1 apply does not surface a truthful receipt-persistence failure');
+
+  const verify = read('src/core/selfDevPromotion/verify.ts');
+  if (!/SELF_DEVELOPMENT_CANONICAL_ADOPTION/.test(verify)) fail('Phase 8B.1 verify is missing its owner-policy gate');
+  if (!/HEAD_ADVANCED/.test(verify)) fail('Phase 8B.1 verify does not require the exact pre-commit HEAD');
+  if (!/UNEXPECTED_CHANGESET/.test(verify) || !/UNEXPECTED_STAGED_CHANGE/.test(verify) || !/UNEXPECTED_UNTRACKED_FILE/.test(verify)) {
+    fail('Phase 8B.1 verify does not require exactly one dirty tracked file');
+  }
+  if (!/runMetamorphicProbes/.test(verify)) fail('Phase 8B.1 verify does not reuse the shared metamorphic proof implementation');
+
+  if (!/CANONICAL_APPLIED_VERIFIED_UNCOMMITTED/.test(combined) || !/NOT_PERFORMED_BY_RUNTIME/.test(combined) || !/NOT_AUTHORIZED/.test(combined)) {
+    fail('Phase 8B.1 canonical promotion lacks explicit uncommitted/no-runtime-Git authority markers');
+  }
+
+  const storage = read('src/core/selfDevPromotion/storage.ts');
+  if (!/PrivateArtifactStore/.test(storage) || !/writeImmutableJson/.test(storage)) fail('Phase 8B.1 promotion storage does not use the hardened immutable private store');
+  if (/\.writeJson\s*\(|writeIncomplete\s*\(/.test(storage)) fail('Phase 8B.1 promotion storage retains a replacement-capable write path');
+  if (!/claimApprovalConsumption/.test(storage)) fail('Phase 8B.1 storage is missing the approval one-shot consumption primitive');
+
+  const index = read('src/core/selfDevPromotion/index.ts');
+  if (!/applyPromotion/.test(index) || !/preparePromotion/.test(index) || !/approvePromotion/.test(index) || !/verifyCanonicalPromotion/.test(index)) {
+    fail('Phase 8B.1 public index is missing a required entry point');
+  }
+
+  const cli = read('bin/selfdev-promote-canonical.mjs');
+  if (!/preparePromotion/.test(cli) || !/approvePromotion/.test(cli) || !/applyPromotion/.test(cli) || !/verifyCanonicalPromotion/.test(cli)) {
+    fail('Phase 8B.1 CLI is not a thin wrapper over prepare/approve/apply/verify');
+  }
+  if (!/CANONICAL_ONE_FILE_ONLY/.test(cli)) fail('Phase 8B.1 CLI is missing its fixed approval confirmation token');
+  const forbiddenCliOptions = [
+    '--path', '--file', '--source', '--code', '--patch', '--diff', '--repo', '--root',
+    '--target', '--command', '--shell', '--model', '--prompt', '--url',
+    '--endpoint', '--latest', '--all', '--commit', '--push', '--publish', '--force', '--yes', '--rollback',
+  ];
+  for (const option of forbiddenCliOptions) if (cli.includes(option)) fail(`Phase 8B.1 CLI references a forbidden option ${option}`);
+  if (/child_process|fetch\s*\(|http\.request|https\.request|net\.connect|WebSocket|git\s+(?:add|commit|push|apply)/i.test(cli)) fail('Phase 8B.1 CLI exposes a prohibited capability');
+
+  // Call-graph containment: only the Phase 8B.1 CLI and the promotion module
+  // itself may reach the canonical-source-write executor.
+  const approvedCallers = new Set([...files, 'bin/selfdev-promote-canonical.mjs']);
+  const otherSources = gitFiles()
+    .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
+    .filter((file) => !approvedCallers.has(file) && file !== 'bin/hardening-check.mjs' && !file.startsWith('tests/'));
+  for (const file of otherSources) {
+    const source = read(file);
+    if (/\bapplyPromotion\s*\(|\bSelfDevCanonicalApplyReceiptStore\b|\bSelfDevCanonicalPromotionApprovalStore\b/.test(source)) {
+      fail(`${file} reaches Phase 8B.1 canonical-promotion authority outside the approved boundary`);
+    }
+    if (/from\s+['"][^'"]*selfDevPromotion[^'"]*['"]/.test(source)) fail(`${file} imports the Phase 8B.1 canonical-promotion boundary outside its approved callers`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -554,6 +683,7 @@ checkOwnerDecisionAuthority();
 checkSelfDevelopmentBoundary();
 checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
+checkPhase8B1CanonicalPromotionBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

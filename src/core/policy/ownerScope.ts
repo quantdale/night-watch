@@ -8,7 +8,7 @@
 // fail closed.
 // ---------------------------------------------------------------------------
 
-export const OWNER_SCOPE_POLICY_VERSION = 'nightwatch.owner-scope-policy.v1' as const;
+export const OWNER_SCOPE_POLICY_VERSION = 'nightwatch.owner-scope-policy.v2' as const;
 export const OWNER_SCOPE_STATUS = 'FROZEN_BY_OWNER' as const;
 export const OWNER_SCOPE_REASON = 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE' as const;
 export const OWNER_POLICY_BLOCKED = 'OWNER_POLICY_BLOCKED' as const;
@@ -25,7 +25,8 @@ export type OwnerAllowedOperation =
   | 'AI_REVIEW_LOCAL'
   | 'AI_ORACLE_SUGGESTION_LOCAL'
   | 'SELF_DEVELOPMENT_SYNTHETIC_EVALUATION'
-  | 'SELF_DEVELOPMENT_SANDBOX_ADOPTION';
+  | 'SELF_DEVELOPMENT_SANDBOX_ADOPTION'
+  | 'SELF_DEVELOPMENT_CANONICAL_ADOPTION';
 
 export type OwnerBlockedOperation =
   | 'GCP_INFRASTRUCTURE_ARCHAEOLOGY'
@@ -75,6 +76,7 @@ const ALLOWED_OPERATIONS = new Set<string>([
   'AI_ORACLE_SUGGESTION_LOCAL',
   'SELF_DEVELOPMENT_SYNTHETIC_EVALUATION',
   'SELF_DEVELOPMENT_SANDBOX_ADOPTION',
+  'SELF_DEVELOPMENT_CANONICAL_ADOPTION',
 ]);
 
 export const FROZEN_OWNER_OPERATIONS: readonly OwnerBlockedOperation[] = [

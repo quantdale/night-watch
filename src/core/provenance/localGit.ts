@@ -28,7 +28,8 @@ export type LocalProvenanceErrorCode =
   | 'AUTHORITATIVE_FILE_UNSAFE'
   | 'AUTHORITATIVE_FILE_MISSING'
   | 'SOURCE_BUNDLE_TOO_LARGE'
-  | 'BASELINE_NOT_FOUND';
+  | 'BASELINE_NOT_FOUND'
+  | 'REPOSITORY_NOT_FULLY_CLEAN';
 
 export class LocalProvenanceError extends Error {
   constructor(readonly code: LocalProvenanceErrorCode, message: string = code) {
@@ -188,6 +189,65 @@ export function readLocalNightwatchProvenance(options: LocalProvenanceOptions = 
     runtimeNodeVersion,
     provenanceClass: 'LOCAL_GIT_SOURCE_ATTESTED',
   };
+}
+
+export interface WorkingTreeStatus {
+  readonly unstagedFiles: readonly string[];
+  readonly stagedFiles: readonly string[];
+  readonly untrackedFiles: readonly string[];
+}
+
+function parseNameOnly(stdout: string): readonly string[] {
+  return stdout.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+}
+
+/**
+ * Phase 8B.1 whole-repository read-only working-tree inspection. Unlike
+ * {@link assertClean}, this is NOT scoped to `SELFDEV_AUTHORITATIVE_PATHS` —
+ * canonical promotion requires the ENTIRE working tree to be clean before a
+ * canonical write, and requires distinguishing "exactly the promotion target
+ * changed" from any other unstaged/staged/untracked state afterward. Uses
+ * only fixed read-only Git verbs; performs no mutation.
+ */
+export function readWorkingTreeStatus(options: LocalProvenanceOptions = {}): WorkingTreeStatus {
+  const root = canonicalRoot(options.repositoryRoot ?? path.resolve(__dirname, '../../..'));
+  requireHead(root);
+  const unstaged = runGit(root, ['diff', '--name-only']).stdout;
+  const staged = runGit(root, ['diff', '--cached', '--name-only']).stdout;
+  const untracked = runGit(root, ['ls-files', '--others', '--exclude-standard']).stdout;
+  return {
+    unstagedFiles: parseNameOnly(unstaged),
+    stagedFiles: parseNameOnly(staged),
+    untrackedFiles: parseNameOnly(untracked),
+  };
+}
+
+/** Fails closed unless the ENTIRE working tree (not just authoritative selfDev paths) has zero unstaged, staged, or untracked changes. */
+export function assertRepositoryFullyClean(options: LocalProvenanceOptions = {}): void {
+  const status = readWorkingTreeStatus(options);
+  if (status.unstagedFiles.length > 0 || status.stagedFiles.length > 0 || status.untrackedFiles.length > 0) {
+    throw new LocalProvenanceError('REPOSITORY_NOT_FULLY_CLEAN');
+  }
+}
+
+/**
+ * Read-only current HEAD with NO cleanliness requirement — used between a
+ * canonical Phase 8B.1 promotion APPLY and its development-session commit,
+ * when the working tree is deliberately dirty in exactly one tracked file and
+ * {@link currentCheckoutState} (which requires a clean authoritative source)
+ * cannot be used.
+ */
+export function currentHeadShaUnchecked(repositoryRoot: string): string {
+  const root = canonicalRoot(repositoryRoot);
+  return requireHead(root);
+}
+
+/** Read-only list of paths that differ between two exact commits (`git diff --name-only a b`). Used only for post-commit currentness assessment. */
+export function changedFilesBetweenCommits(repositoryRoot: string, fromSha: string, toSha: string): readonly string[] {
+  const root = canonicalRoot(repositoryRoot);
+  if (!SHA_RE.test(fromSha) || !SHA_RE.test(toSha)) throw new LocalProvenanceError('BASELINE_NOT_FOUND');
+  const result = runGit(root, ['diff', '--name-only', fromSha, toSha]);
+  return parseNameOnly(result.stdout);
 }
 
 export function provenanceManifestSummary(): { readonly manifestVersion: string; readonly algorithm: string; readonly pathCount: number } {
