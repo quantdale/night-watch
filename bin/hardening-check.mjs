@@ -371,17 +371,33 @@ function checkPhase8BSandboxBoundary() {
   if (!/NOT_AUTHORIZED_PHASE_8A|SANDBOX_ONLY|PROHIBITED/.test(combined)) fail('Phase 8B source lacks explicit authority-boundary markers');
 
   // Call-graph containment: only the Phase 8B CLI and the sandbox module
-  // itself may reach the sandbox source-write executor.
+  // itself may reach the sandbox source-WRITE executor (`runSandboxAdoption`)
+  // or its planner (`planAdoption`). Phase 8B.1's canonical-promotion
+  // boundary (`src/core/selfDevPromotion/` + its CLI) is a second, narrower,
+  // documented exception: it legitimately needs READ-ONLY access to existing
+  // Phase 8B plan/result artifacts (`SelfDevAdoptionPlanStore`/
+  // `SelfDevAdoptionResultStore`) and the bounded module loader
+  // (`loadSandboxModules`) as part of its trust chain — but never the write
+  // executor or planner themselves (enforced separately by
+  // checkPhase8B1CanonicalPromotionBoundary).
   const approvedCallers = new Set([...files, 'bin/selfdev-adopt-sandbox.mjs']);
+  const approvedReadOnlyCrossBoundaryCallers = new Set([
+    ...selfDevPromotionSourceFiles(), 'bin/selfdev-promote-canonical.mjs',
+  ]);
   const otherSources = gitFiles()
     .filter((file) => (file.startsWith('src/') || file.startsWith('bin/')) && /\.(?:ts|mjs|js)$/.test(file))
     .filter((file) => !approvedCallers.has(file) && file !== 'bin/hardening-check.mjs' && !file.startsWith('tests/'));
   for (const file of otherSources) {
     const source = read(file);
-    if (/\brunSandboxAdoption\s*\(|\bSelfDevAdoptionPlanStore\b|\bSelfDevAdoptionResultStore\b/.test(source)) {
-      fail(`${file} reaches Phase 8B sandbox-write authority outside the approved boundary`);
+    if (/\brunSandboxAdoption\s*\(|\bplanAdoption\s*\(/.test(source)) {
+      fail(`${file} reaches Phase 8B sandbox-write/plan authority outside the approved boundary`);
     }
-    if (/from\s+['"][^'"]*selfDevSandbox[^'"]*['"]/.test(source)) fail(`${file} imports the Phase 8B sandbox boundary outside its approved callers`);
+    if (!approvedReadOnlyCrossBoundaryCallers.has(file)) {
+      if (/\bSelfDevAdoptionPlanStore\b|\bSelfDevAdoptionResultStore\b/.test(source)) {
+        fail(`${file} reaches Phase 8B sandbox storage outside the approved boundary`);
+      }
+      if (/from\s+['"][^'"]*selfDevSandbox[^'"]*['"]/.test(source)) fail(`${file} imports the Phase 8B sandbox boundary outside its approved callers`);
+    }
   }
 }
 
