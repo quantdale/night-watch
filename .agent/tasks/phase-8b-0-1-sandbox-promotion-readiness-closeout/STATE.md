@@ -6,15 +6,15 @@ Task ID: phase-8b-0-1-sandbox-promotion-readiness-closeout
 Phase: 8B.0.1 — Sandbox Promotion-Readiness Closeout
 Status: IN_PROGRESS
 Starting SHA: fca4002ccb4869e5b9932b70f25e5df8e67d1da6
-Last validated implementation SHA: (none yet)
+Last validated implementation SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
 Branch: main
 Remote: origin (https://github.com/quantdale/night-watch.git)
 Live HEAD authority: GIT (discover from git, never predict)
 
 STARTING_SHA: fca4002ccb4869e5b9932b70f25e5df8e67d1da6
-LAST_VALIDATED_IMPLEMENTATION_SHA: (none yet)
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: (none yet)
-LAST_DOCUMENTATION_CHECKPOINT_SHA: (none yet)
+LAST_VALIDATED_IMPLEMENTATION_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
+LAST_DOCUMENTATION_CHECKPOINT_SHA: c4537ab5e3e96859c7c472ac47c3143a15b20c26
 
 ## Objective
 
@@ -28,18 +28,20 @@ catalog stays empty and byte-identical.
 
 ## Current Milestone
 
-Milestone ID: M8 — Full local validation.
+Milestone ID: M10 — Substantive checkpoint committed; continuity commit B;
+push A+B; exact CI.
 Status: IN_PROGRESS
-What was attempted and the result: M0-M7 complete (scaffolding, pre-fix
-defect reproductions, all four fixes, focused tests, hardening + CI step).
-Full focused matrix: 110 passed / 1 env-conditional skip / 2 CLI failures
-caused by the deliberately dirty worktree (SELFDEV_AUTHORITATIVE_SOURCE_DIRTY
-from the CLI's currentCheckoutState against the real repo — expected until the
-substantive commit lands). Owner provenance 91/91, AI regressions 98/98,
-agent-state 32/32, campaign:synthetic 27/27, git diff --check clean,
-typecheck clean, hardening PASS, dedicated 8B.0.1 CI selection 22 passed /
-1 skip. Task files restructured to the agent:check schema (REQUIRED_PLAN/
-STATE_HEADINGS; anchors `(none yet)` pending the substantive commit).
+What was attempted and the result: M8/M9 complete — at commit A
+(c4537ab5e3e96859c7c472ac47c3143a15b20c26, clean tree): CLI tests 7/7;
+full Playwright 633 passed / 1 env-conditional skip (634 total; 611 Phase 8B
+baseline + 23 new); isolated full-history checkout (sibling
+nightwatch-clean-checkout-tmp): typecheck PASS, hardening PASS, focused
+matrix 112 passed / 1 skip, owner provenance 91, agent-state 32, campaign 27,
+git diff --check clean. agent:check at A: only the 6 expected anchor errors
+(a commit cannot reference itself; the docs-only continuity commit B records
+the anchors). This commit B records LAST_VALIDATED_IMPLEMENTATION_SHA /
+LAST_SUBSTANTIVE_CHECKPOINT_SHA / LAST_DOCUMENTATION_CHECKPOINT_SHA =
+c4537ab5e3e96859c7c472ac47c3143a15b20c26 in STATE.md + ACTIVE_TASK.md.
 
 ## Completed Milestones
 
@@ -83,32 +85,33 @@ STATE_HEADINGS; anchors `(none yet)` pending the substantive commit).
   (confinement file + `-g "8B\.0\.1"` subset of plan/sandbox files).
   hardening:check PASS; local run of the exact CI selection: 22 passed /
   1 skip.
+- M8 — Full local validation: typecheck PASS; hardening PASS; focused matrix
+  110 passed / 1 skip / 2 CLI failures at the dirty tree (expected —
+  currentCheckoutState against the real repo; 7/7 at clean commit A); owner
+  provenance 91; AI regressions 98; agent-state 32; campaign 27; git diff
+  --check clean; full Playwright at commit A: 633 passed / 1 skip (634 total);
+  agent:check at A: only the 6 expected anchor errors.
+- M9 — Isolated full-history clean-checkout validation (sibling of the real
+  Alphaus repos): typecheck PASS, hardening PASS, focused matrix 112 passed /
+  1 skip, owner provenance 91, agent-state 32, campaign 27, git diff --check
+  clean.
 
 ## Work In Progress
 
-M8 validation sweep largely complete; remaining: commit A (substantive),
-re-run the two dirty-worktree CLI tests + agent:check at A, full Playwright
-at A, isolated full-history checkout (M9), then continuity commit B, push
-A+B, exact CI, fresh acceptance (M11), docs closure (M12), final report
-(M13).
+Continuity commit B written (anchors recorded). Pending: push A+B in one
+fast-forward, verify exact CI green (dedicated 8B.0.1 step + agent-state
+check verified individually), fresh acceptance (M11), docs closure (M12),
+final report (M13).
 
 ## Exact Next Action
 
-1. Final review of the working diff (privacy/secret scan, git diff --check).
-2. Commit A (substantive): implementation + tests + hardening + CI + task
-   scaffolding with `(none yet)` anchors (agent:check is red by construction
-   at the substantive commit; the docs-only continuity commit B records the
-   real anchors).
-3. At A (clean tree): re-run the two CLI tests, agent:check (expect only the
-   anchor errors), full Playwright, isolated full-history checkout.
-4. Write B (continuity): record LAST_VALIDATED_IMPLEMENTATION_SHA /
-   LAST_SUBSTANTIVE_CHECKPOINT_SHA = A in STATE.md + ACTIVE_TASK.md; push
-   A+B in one fast-forward; verify HEAD == origin/main.
-5. Wait for exact hardening CI at B: completed/success; dedicated 8B.0.1
+1. Commit B (continuity) with the recorded anchors, then push A+B in one
+   fast-forward; verify HEAD == origin/main.
+2. Wait for exact hardening CI at B: completed/success; dedicated 8B.0.1
    step executed and green; agent-state check green (verified individually).
-6. Fresh sandbox-only acceptance (selfdev:synthetic → inspect → plan → run
+3. Fresh sandbox-only acceptance (selfdev:synthetic → inspect → plan → run
    --confirm SANDBOX_ONLY); canonical catalog/digests byte-identical.
-7. Docs closure C (durable docs + task STATE/REPORT acceptance results,
+4. Docs closure C (durable docs + task STATE/REPORT acceptance results,
    documentation checkpoint = B); push; final exact CI; final report.
 
 ## Files Changed
