@@ -18,7 +18,7 @@ result adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c
 verified SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED with all four
 metamorphic probes PASS and confirmed canonical source byte-for-byte
 unchanged before/after.
-Current milestone: M19/M20 — docs closure + final push + final CI + STOP (IN_PROGRESS).
+Current milestone: M20 — STOP (COMPLETE).
 Remote status: PRIVATE_REMOTE_CONFIRMED (`origin` → `quantdale/night-watch`, `main`).
 Canonical Git root: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
 Parent workspace Git: RETIRED (parent is not a Git repository).
@@ -27,8 +27,11 @@ Owner authorization: PROCEED WITH PHASE 8B CONTROLLED SOURCE ADOPTION
 SANDBOX — narrow (sandbox-only source mutation; no canonical write, no
 Git commit/push beyond existing development-checkpoint pattern, no
 canonical-promotion authority).
-Next action: push the docs-only descendant, verify final CI, confirm final
-worktree clean and HEAD == origin/main, then STOP. Do not start Phase 8B.1.
+Next action: NONE. Task closed: final exact CI run 31854455364 at
+0a940d0792a5a9a302d325548ed294f34556b23e passed (Phase 8B matrix step and
+agent-state check both verified individually); final worktree clean;
+HEAD == origin/main confirmed. Do not start Phase 8B.1 without separate
+owner authorization.
 
 Historical status: Phase 8A.1.1 COMPLETE at implementation SHA
 d33a8c1cc062b435a7b2bc4f69567286dd56ebb4 (CI run 31847511710 green, including

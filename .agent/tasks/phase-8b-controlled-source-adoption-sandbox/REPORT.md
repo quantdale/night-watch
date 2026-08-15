@@ -79,8 +79,12 @@
   including the dedicated "Phase 8B controlled source adoption sandbox
   matrix" step (verified green individually, not merely inferred from
   overall success).
-- Final CI verification pending the closing documentation descendant (see
-  STATE.md Exact Next Action / Completion Snapshot for the final result).
+- Final exact CI run `31854455364` at the closing documentation checkpoint
+  `0a940d0792a5a9a302d325548ed294f34556b23e` — `completed`/`success`,
+  including the Phase 8B matrix step and the agent-state check (which
+  caught and confirmed the fix for a real continuity-anchor mislabeling
+  found during this closeout — see Discoveries in `STATE.md`). Final
+  worktree clean; `HEAD == origin/main` confirmed via `git fetch`.
 
 ## Real acceptance run (M16-M18)
 

@@ -35,11 +35,13 @@ metamorphic proof and zero canonical mutation.
 
 ## Current Milestone
 
-Milestone ID: M19/M20 — Docs closure + final push + final CI + STOP
-Status: IN_PROGRESS
-What is being attempted: M1-M18 complete (see Real Acceptance Evidence
-below). Now updating durable docs and this task's own PLAN/STATE/REPORT,
-then a final docs-only push and exact final CI verification.
+Milestone ID: M20 — STOP
+Status: COMPLETE
+What was attempted and the result: M1-M19 complete. Docs closure pushed;
+final exact CI run 31854455364 passed at 0a940d0792a5a9a302d325548ed294f34556b23e
+including the Phase 8B matrix step and the agent-state check; final
+worktree clean; HEAD == origin/main confirmed. PHASE_8B_COMPLETE_SANDBOX_ONLY.
+Canonical candidate promotion (Phase 8B.1) was not started. STOP.
 
 ## Real Acceptance Evidence (M16-M18)
 
@@ -316,6 +318,24 @@ constructor/class-field state.
   relative paths and fail with `git cat-file` errors when cloned in
   isolation elsewhere. Not a Phase 8B defect; recorded so a future session
   doesn't waste time rediscovering it.
+- A genuine continuity-anchor bug was found and fixed during M19: a
+  documentation-only commit (`36495b4d...`, which touched only
+  `STATE.md`) was mistakenly recorded in `ACTIVE_TASK.md` and in several
+  `docs/*.md` prose sections as "the validated implementation checkpoint,"
+  diverging from `STATE.md`'s correct value and from `AGENTS.md`'s explicit
+  rule that documentation-only descendants must not be relabeled as
+  implementation commits. This was caught by the real remote CI's
+  `agent-state check` step failing with "STATE/ACTIVE_TASK validated
+  implementation anchors differ" — not by any local check, since local
+  `agent:check` had been run against a state where the mismatch had not yet
+  been introduced. Fixed by restoring `f04bb928890b8d730665b24cfd303386608b2a5a`
+  (the true last commit with substantive source/test/CI-config changes) as
+  the validated implementation checkpoint everywhere, and by explicitly
+  labeling later commits as documentation-inclusive descendants used for
+  CI/acceptance verification. Direct evidence that the exact-CI-verification
+  requirement in this project's discipline is load-bearing, not a
+  formality: this real defect would have shipped past a purely local
+  validation pass.
 
 ## Blockers
 
@@ -409,4 +429,37 @@ runtime Git writes; nothing has been pushed yet (pending M15).
 
 ## Completion Snapshot
 
-(populate only at Phase 8B completion)
+Final substantive checkpoint: `f04bb928890b8d730665b24cfd303386608b2a5a`
+Final documentation checkpoint (CI-verified, `HEAD == origin/main`):
+`0a940d0792a5a9a302d325548ed294f34556b23e`
+Live HEAD: DISCOVER_FROM_GIT (was `0a940d0792a5a9a302d325548ed294f34556b23e`
+at task close, `git fetch origin` confirmed equal to `origin/main`, worktree
+clean)
+Tests: typecheck PASS; hardening:check PASS; full Playwright 611 (611
+passed locally; 608 passed + 3 environment-conditional skips in the
+isolated clean checkout); 90/90 focused Phase 8A/8A.1/8A.1.1/8B tests;
+27/27 synthetic campaign; `agent:check` PASS (benign `CHECKPOINT_ADVANCE`
+warning only); `git diff --check` clean; secret-shape grep clean
+Exact CI: run `31853612222` at documentation-inclusive descendant
+`36495b4df2c013d671a4983cd7991e1aecd9a25e` PASS (Phase 8B matrix step
+verified individually); run `31854126444` at `93626fc...` FAILED
+(agent-state check — a real continuity-anchor bug this task found and fixed,
+see Discoveries); run `31854455364` at final documentation checkpoint
+`0a940d0792a5a9a302d325548ed294f34556b23e` PASS (Phase 8B matrix step and
+Agent-state check both verified individually)
+Artifacts: fresh v2 acceptance artifact
+`session:sha256:27dbbd7f94e360af7e9fc564e9cdabf45d3d9ae5c67e84eccc676f78f047ac46`
+(re-verified `VERIFIED_SOURCE_EQUIVALENT_DESCENDANT`, replay PASS, at the
+final documentation checkpoint); acceptance plan
+`adoption-plan:sha256:70e2c7f1d4f934e8ae0828ed8ad583b7a71f321d5ed0ecce84c1a90d3662f192`;
+acceptance result
+`adoption-sandbox-result:sha256:de4a2de17c8fee9c4a496143165f78f48ff411091c3b92d3a5760c86a9f884d7`
+(all private, owner-only; not committed)
+Known issues: none open. One genuine bug was found and fixed during this
+task (see Discoveries): a result-identity hashing bug (object-spread field
+leakage) and a continuity-anchor mislabeling (a documentation-only
+descendant briefly recorded as the substantive checkpoint, caught by the
+final CI's agent-state check and corrected in the same session).
+Recommended next task: Phase 8B.1 — Owner-Gated Canonical Promotion, if and
+when separately authorized by the owner. NOT_STARTED. Do not begin it as
+part of this task.

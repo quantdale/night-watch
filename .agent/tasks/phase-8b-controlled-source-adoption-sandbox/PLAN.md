@@ -186,11 +186,13 @@ agent's report; default plan unless source disproves it):
 - Objective: update durable docs + task files + ACTIVE_TASK.md; push;
   verify final CI green including Phase 8B matrix step; verify worktree
   clean and `HEAD == origin/main`.
-- Status: IN_PROGRESS
+- Status: COMPLETE (final CI run `31854455364` at
+  `0a940d0792a5a9a302d325548ed294f34556b23e` passed, including the Phase 8B
+  matrix step and the agent-state check)
 
 ### M20 — STOP
 - Objective: final success report; do not start Phase 8B.1.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ## Validation Strategy
 
