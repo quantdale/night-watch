@@ -26,4 +26,14 @@ test.describe('owner infrastructure/data freeze', () => {
     expect(decideOwnerScope('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION').allowed).toBe(true);
     expect(decideOwnerScope('SELF_DEVELOPMENT_SYNTHETIC_EVALUATION').operation).not.toBe('AI_REVIEW_LOCAL');
   });
+
+  test('Phase 8B sandbox adoption is allowed; canonical adoption is unknown and fails closed', () => {
+    expect(decideOwnerScope('SELF_DEVELOPMENT_SANDBOX_ADOPTION').allowed).toBe(true);
+    expect(executeOwnerScoped('SELF_DEVELOPMENT_SANDBOX_ADOPTION', () => 'sandbox-only')).toBe('sandbox-only');
+    expect(decideOwnerScope('SELF_DEVELOPMENT_CANONICAL_ADOPTION').allowed).toBe(false);
+    expect(() => assertOwnerPolicyAllows('SELF_DEVELOPMENT_CANONICAL_ADOPTION')).toThrow(OwnerPolicyBlockedError);
+    let executed = false;
+    expect(() => executeOwnerScoped('SELF_DEVELOPMENT_CANONICAL_ADOPTION', () => { executed = true; })).toThrow(OWNER_POLICY_BLOCKED);
+    expect(executed).toBe(false);
+  });
 });
