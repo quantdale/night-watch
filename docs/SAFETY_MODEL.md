@@ -999,10 +999,11 @@ after one full plan-and-run cycle; the disposable sandbox mirror directory
 was removed by cleanup and no residue remained under the fixed sandbox
 base. Zero DEV/NEXT/production contacts, product mutations, database/
 infrastructure queries, external AI/model calls, or publication occurred at
-any point. Phase 8B.1 — Owner-Gated Canonical Promotion — remains a
-separate, `NOT_STARTED`, `NOT_AUTHORIZED` future task; this phase's plan and
-result identities are designed to be consumable by that future gate without
-re-deriving adoption semantics, but no such consumer exists yet.
+any point. Phase 8B.1 — Owner-Gated Canonical Promotion — was at that time
+a separate, `NOT_STARTED`, `NOT_AUTHORIZED` future task; this phase's plan
+and result identities were designed to be consumable by that future gate
+without re-deriving adoption semantics, and Phase 8B.1-R1 later consumed
+them (see the Phase 8B.1-R1 safety update below).
 
 ### Phase 8B.1.0 safety update — bounded portfolio and explicit test baselines
 
@@ -1026,9 +1027,43 @@ relaxation:
   never mutate the imported catalog array, never monkey-patch, never use an
   env-var bypass, and never let evaluation and replay disagree about the
   adopted state.
-- The real canonical adopted-case catalog stays EMPTY; one-entry/exhausted
-  states exist only in temporary fixtures. The historically spent Phase 8B.1
-  approval remains consumed; no new approval, no promotion retry.
+- At Phase 8B.1.0 the real canonical adopted-case catalog stayed EMPTY and
+  one-entry/exhausted states existed only in temporary fixtures (superseded
+  by the Phase 8B.1-R1 safety update below). The historically spent Phase 8B.1
+  approval remains consumed; no new approval, no promotion retry at that
+  checkpoint.
+
+### Phase 8B.1-R1 safety update — owner-gated canonical promotion executed; authority partition clarified
+
+Phase 8B.1-R1 (see DECISIONS D-49 lineage; R1 report in `.agent/tasks/`) ran
+the ONE authorized fresh canonical promotion end to end under continuity
+protocol v2, with no safety-model relaxation:
+
+- The canonical promotion authority is a distinct, separately owner-gated
+  capability (`SELF_DEVELOPMENT_CANONICAL_ADOPTION`): fresh session → fresh
+  sandbox proof → one-entry future-state rehearsal → one promotion intent →
+  one fresh one-shot approval (`CANONICAL_ONE_FILE_ONLY`, consumed exactly
+  once) → one APPLY (exactly one file: the generated adopted-case catalog)
+  → fresh-process verify (`CANONICAL_APPLIED_VERIFIED_UNCOMMITTED`) →
+  development-session commit. Runtime code never commits, pushes, or
+  publishes (`runtimeGitCommit NOT_AUTHORIZED`); the approval is permanently
+  spent and cannot be reused.
+- The adopted-case catalog became exactly one canonical entry (variant A);
+  the portfolio is NOT exhausted — variant B (EXPAND_THEN_COLLAPSE) is
+  AVAILABLE_NOT_ADOPTED while promotion authority remains NONE. Candidate
+  availability never implies promotion authorization.
+- Canonical Nightwatch source promotion is NOT an Alphaus/product mutation:
+  it changes only this private repository's generated declarative catalog,
+  inside the owner-gated chain above. All browser/product/DB/infrastructure/
+  publication boundaries are unchanged.
+- Phase 8B.1-R1.1 (project-memory & canonical-source truth hardening)
+  corrected the generated-source provenance comment (renderer + regenerated
+  catalog) to state the two-writer partition explicitly — Phase 8B sandbox
+  mirror-only writes OR Phase 8B.1 owner-gated canonical promotion, never a
+  generic runtime self-modification authority — and introduced the read-only
+  `nightwatch.project-state.v1` truth check. The historical R1 verification
+  remains exact historical evidence; current source after R1.1 is a later
+  validated state (strict provenance, not weakened).
 
 ### Phase 8B.0.1 closeout safety update
 
@@ -1069,6 +1104,6 @@ filesystem and source/verifier concurrently.
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
 Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
-and Phase 8A/8A.1/8A.1.1/8B/8B.0.1 self-development evaluation and controlled
-source adoption sandbox; changes require a DECISIONS entry and a test
-update.*
+and Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 self-development evaluation,
+controlled source adoption sandbox, and owner-gated canonical promotion;
+changes require a DECISIONS entry and a test update.*

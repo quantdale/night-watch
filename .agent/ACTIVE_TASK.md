@@ -1,51 +1,48 @@
 # Active Task
 
-Task ID: phase-8b-1-r1-owner-gated-canonical-promotion-retry
-Phase: 8B.1-R1
-Title: Nightwatch Phase 8B.1-R1 — Owner-Gated Canonical Promotion Retry
-Status: COMPLETE
-Task directory: .agent/tasks/phase-8b-1-r1-owner-gated-canonical-promotion-retry
-Starting SHA: a12431522d8545ba94c71ee7f4e6189837342961
-Last validated implementation SHA: 24fc437f8171a8cb6466423e069380d430bdac11
-Current milestone: COMPLETE / STOP
-Last checkpoint: 2026-08-15 — task complete: catalog-aware CI transition
-landed (readiness a319849, exact CI green); one fresh session/sandbox/
-rehearsal chain proven; exactly one promotion intent (7542c947...), one fresh
-approval (e065f088..., consumed once), one APPLY (APPLIED, one file), fresh-
-process verify PASS; canonical adoption commit 24fc437 pushed, exact CI
-31887666112 green incl. catalog integrity at count 1; COMMITTED_EXACT;
-post-commit session selects B; isolated regression green; continuity v2
-closure + docs finalization + final exact CI done.
-Next action: NONE WITHIN CURRENT AUTHORIZATION
-Authorization class: PHASE_8B_1_R1_OWNER_GATED_CANONICAL_PROMOTION_RETRY_ONLY
+Task ID: phase-8b-1-r1-1-project-memory-canonical-truth
+Phase: 8B.1-R1.1
+Title: Nightwatch Phase 8B.1-R1.1 — Project-Memory & Canonical-Source Truth Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-8b-1-r1-1-project-memory-canonical-truth
+Starting SHA: a8ba972ae7b0723c6812f982bcf93acdb17d28a5
+Last validated implementation SHA: a8ba972ae7b0723c6812f982bcf93acdb17d28a5
+Current milestone: M9 — docs corrections (complete); M10 focused validation in progress
+Last checkpoint: 2026-08-15 — implementation complete (M1-M9); catalog regenerated (401b2c67...); project:check + 25 tests + CI step + hardening guard; currentness strictness regression; docs corrected
+Next action: finish M10 focused validation, then M11 full regression → M13 source-bearing commit + push + exact CI
+Authorization class: PHASE_8B_1_R1_1_PROJECT_MEMORY_CANONICAL_SOURCE_TRUTH_HARDENING_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Catalog-aware CI transition, fresh selfDev/sandbox artifacts, one-entry
-disposable rehearsal, exactly one prepare/approve/apply/verify, canonical
-adoption commit + exact CI, post-commit continuation proof, continuity v2
-closure + docs finalization + final exact CI. NO second approval/APPLY; NO
-promotion of B; NO Phase 6 / product / AI / publication / DB / infrastructure.
+Correct the generated-catalog authority header (renderer + regenerated
+one-entry catalog; entry set unchanged); de-duplicate CURRENT_STATE live
+checkpoint authority (no competing generic SHAs; Git + continuity v2 own it);
+introduce nightwatch.project-state.v1 with a machine-checked CURRENT_STATE
+block and read-only `npm run project:check` (+ tests + CI step); audit
+repository-wide live-vs-historical truth; preserve promotion currentness
+strictness. NO variant-B adoption; NO new promotion intent/approval/APPLY; NO
+product/data/infra/AI activity; contractDigest must stay d8012fae....
 
 ## Continuity
 
-STARTING_SHA: a12431522d8545ba94c71ee7f4e6189837342961
-LAST_VALIDATED_IMPLEMENTATION_SHA: 24fc437f8171a8cb6466423e069380d430bdac11
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 24fc437f8171a8cb6466423e069380d430bdac11
+STARTING_SHA: a8ba972ae7b0723c6812f982bcf93acdb17d28a5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_8B_1_R1_STATUS: COMPLETE
-PHASE_8B_1_STATUS (overall): COMPLETE VIA SUCCESSFUL RETRY (historical
-original attempt remains BLOCKED / CLOSED; old approval SPENT)
-REAL_CANONICAL_CATALOG_ENTRY_COUNT: 1 (adopted case A; digest
-fa7b71d472ad4656aa9019a0ca35e264da31226c8af6612f3f649a397e9e4e7e)
+PHASE_8B_1_R1_1_STATUS: IN_PROGRESS
+PHASE_8B_1_STATUS (overall): COMPLETE VIA SUCCESSFUL RETRY R1 (unchanged; R1.1
+does not reopen R1)
+REAL_CANONICAL_CATALOG_ENTRY_COUNT: 1 (adopted case A; pre-R1.1 digest
+fa7b71d4...; raw digest expected to change after header regeneration —
+semantic entry unchanged)
 NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED (variant B / EXPAND_THEN_COLLAPSE)
+NEXT_PROMOTION_AUTHORITY: NONE
 
 ## STOP
 
-Task complete. Do not resume. No second approval. No second APPLY. Do not
-begin adoption of variant B.
+No variant-B adoption. No promotion prepare/approve/apply. No product/data/
+infra/AI activity. If contractDigest changes unexpectedly: STOP and
+investigate.

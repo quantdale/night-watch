@@ -1,0 +1,313 @@
+#!/usr/bin/env node
+/**
+ * Phase 8B.1-R1.1 — read-only Nightwatch project-state truth check
+ * (`nightwatch.project-state.v1`).
+ *
+ * Answers: "Do CURRENT project-level facts agree with mechanically derivable
+ * source and authority?" It is deliberately NARROW: it validates a structured
+ * truth block in docs/CURRENT_STATE.md against facts computed from trusted
+ * code (the real adopted-case validator/renderer and the real portfolio
+ * selector) plus repository authority markers. It never parses arbitrary
+ * prose, never re-implements selfDev/portfolio semantics, and never becomes
+ * its own authority.
+ *
+ * This is a separate authority boundary from `nightwatch.agent-continuity.v2`
+ * (which answers "is THIS TASK internally recoverable and truthful?").
+ * Project-state v1 assumes continuity v2 passes for the active task and
+ * verifies that itself by running `bin/agent-state.mjs` as a read-only
+ * subprocess.
+ *
+ * The check performs ZERO writes: no filesystem mutation, no Git mutation,
+ * no network, no model, no DB/infrastructure, no external calls. It only
+ * reads files and runs read-only Git commands.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v1';
+const BLOCK_SECTION_HEADING = '## Project-state v1 (machine-checked truth block)';
+const GENERIC_LIVE_IMPLEMENTATION_ANCHORS = [
+  'LAST_VALIDATED_IMPLEMENTATION_SHA',
+  'CURRENT_SHA',
+  'FINAL_SHA',
+  'CURRENT_LOCAL_HEAD',
+  'CURRENT_REMOTE_HEAD',
+  'LAST_PUSHED_SHA',
+];
+const GENERIC_LIVE_DOCUMENTATION_ANCHORS = ['LAST_DOCUMENTATION_CHECKPOINT_SHA'];
+const R1_TASK_STATE_PATH = '.agent/tasks/phase-8b-1-r1-owner-gated-canonical-promotion-retry/STATE.md';
+
+function parseArgs(argv) {
+  const rootIndex = argv.indexOf('--root');
+  if (rootIndex !== -1) {
+    const supplied = argv[rootIndex + 1];
+    if (!supplied || supplied.startsWith('--')) throw new Error('PROJECT_STATE_USAGE_INVALID: --root requires a directory');
+    return path.resolve(supplied);
+  }
+  return process.cwd();
+}
+
+function fail(errors, code) {
+  errors.push(code);
+}
+
+function gitEnv() {
+  return {
+    PATH: '/usr/bin:/bin',
+    LANG: 'C',
+    LC_ALL: 'C',
+    GIT_OPTIONAL_LOCKS: '0',
+    GIT_CONFIG_NOSYSTEM: '1',
+  };
+}
+
+function gitReadOnly(root, args) {
+  const result = spawnSync('git', args, {
+    cwd: root,
+    env: gitEnv(),
+    shell: false,
+    encoding: 'utf8',
+    timeout: 5_000,
+    maxBuffer: 512 * 1024,
+  });
+  if (result.status !== 0) return null;
+  return result.stdout ?? '';
+}
+
+function loadTypeScriptModule(root, file) {
+  const require = createRequire(import.meta.url);
+  const typescript = require('typescript');
+  const previous = require.extensions['.ts'];
+  require.extensions['.ts'] = (module, filename) => {
+    const source = fs.readFileSync(filename, 'utf8');
+    const output = typescript.transpileModule(source, {
+      fileName: filename,
+      compilerOptions: {
+        target: typescript.ScriptTarget.ES2022,
+        module: typescript.ModuleKind.CommonJS,
+        moduleResolution: typescript.ModuleResolutionKind.Node10,
+        esModuleInterop: true,
+        skipLibCheck: true,
+      },
+    }).outputText;
+    module._compile(output, filename);
+  };
+  try {
+    return require(path.join(root, file));
+  } finally {
+    if (previous === undefined) delete require.extensions['.ts'];
+    else require.extensions['.ts'] = previous;
+  }
+}
+
+function parseKeyValueBlock(text) {
+  const fields = new Map();
+  const lines = [];
+  const start = text.indexOf(BLOCK_SECTION_HEADING);
+  if (start === -1) return null;
+  const fenceStart = text.indexOf('\n```', start);
+  if (fenceStart === -1) return null;
+  const afterFence = text.indexOf('\n', fenceStart + 1);
+  const fenceEnd = text.indexOf('\n```', afterFence + 1);
+  if (fenceEnd === -1) return null;
+  const block = text.slice(afterFence + 1, fenceEnd);
+  for (const line of block.split(/\r?\n/)) {
+    if (line.trim() === '') continue;
+    const match = /^(?<key>[^:#][^:]*):\s*(?<value>.*)$/.exec(line);
+    if (!match?.groups) return { malformed: true, fields: null, lines };
+    const key = match.groups.key.trim();
+    if (fields.has(key)) return { malformed: true, fields: null, lines };
+    fields.set(key, match.groups.value.trim());
+    lines.push(key);
+  }
+  return { malformed: false, fields, lines };
+}
+
+function main() {
+  const root = parseArgs(process.argv.slice(2));
+  const errors = [];
+
+  // 1. Whole-checkout cleanliness (mirrors the catalog-integrity gate).
+  const porcelain = gitReadOnly(root, ['status', '--porcelain']);
+  if (porcelain === null) fail(errors, 'PROJECT_STATE_GIT_FAILED');
+  else if (porcelain.trim() !== '') fail(errors, 'PROJECT_STATE_CHECKOUT_DIRTY');
+
+  // 2. Structured project-state block.
+  let currentStateText;
+  try {
+    currentStateText = fs.readFileSync(path.join(root, 'docs/CURRENT_STATE.md'), 'utf8');
+  } catch {
+    fail(errors, 'PROJECT_STATE_CURRENT_STATE_MISSING');
+    currentStateText = '';
+  }
+  const parsed = parseKeyValueBlock(currentStateText);
+  if (parsed === null) {
+    fail(errors, 'PROJECT_STATE_BLOCK_MISSING');
+  } else if (parsed.malformed) {
+    fail(errors, 'PROJECT_STATE_BLOCK_MALFORMED');
+  } else {
+    const fields = parsed.fields;
+    if (!fields.has('PROJECT_STATE_PROTOCOL_VERSION')) fail(errors, 'PROJECT_STATE_PROTOCOL_MISSING');
+    else if (fields.get('PROJECT_STATE_PROTOCOL_VERSION') !== PROJECT_STATE_PROTOCOL_VERSION) fail(errors, 'PROJECT_STATE_PROTOCOL_UNSUPPORTED');
+
+    // 2a. No competing generic live authority fields (defect-B regression).
+    for (const key of GENERIC_LIVE_IMPLEMENTATION_ANCHORS) {
+      if (fields.has(key)) fail(errors, `PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY: ${key} duplicates live authority owned by Git/ACTIVE_TASK`);
+    }
+    for (const key of GENERIC_LIVE_DOCUMENTATION_ANCHORS) {
+      if (fields.has(key)) fail(errors, `PROJECT_STATE_DUPLICATE_DOCUMENTATION_AUTHORITY: ${key} duplicates documentation authority owned by task continuity`);
+    }
+
+    if (fields.get('LIVE_HEAD_AUTHORITY') !== 'GIT') fail(errors, 'PROJECT_STATE_LIVE_HEAD_AUTHORITY_INVALID');
+    if (fields.get('CURRENT_TASK_AUTHORITY') !== '.agent/ACTIVE_TASK.md') fail(errors, 'PROJECT_STATE_CURRENT_TASK_AUTHORITY_INVALID');
+    if (fields.get('VALIDATED_IMPLEMENTATION_AUTHORITY') !== '.agent/ACTIVE_TASK.md') fail(errors, 'PROJECT_STATE_VALIDATED_IMPLEMENTATION_AUTHORITY_INVALID');
+
+    const declaredCount = parsed !== null && !parsed.malformed ? fieldsGet(parsed, 'CANONICAL_CATALOG_ENTRY_COUNT') : undefined;
+    if (declaredCount !== undefined && !/^[0-9]+$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
+
+    if (fields.get('NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+    if (fields.get('PHASE_8_STATUS') !== 'IN_PROGRESS') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
+    if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
+
+    // R1 task durable-status cross-check (deterministic mapping only): the
+    // completed R1 task STATE's own structured status line.
+    let r1State = '';
+    try {
+      r1State = fs.readFileSync(path.join(root, R1_TASK_STATE_PATH), 'utf8');
+    } catch {
+      r1State = '';
+    }
+    const r1StatusMatch = /^Status:\s*(?<value>[^\r\n]+)$/m.exec(r1State);
+    if (!r1StatusMatch || r1StatusMatch.groups.value.trim() !== 'COMPLETE') fail(errors, 'PROJECT_STATE_R1_TASK_STATUS_MISMATCH');
+  }
+
+  // 3. Active task authority + continuity v2 (read-only subprocess).
+  const activeTaskPath = path.join(root, '.agent/ACTIVE_TASK.md');
+  if (!fs.existsSync(activeTaskPath) || !fs.statSync(activeTaskPath).isFile()) {
+    fail(errors, 'PROJECT_STATE_ACTIVE_TASK_MISSING');
+  } else {
+    const agentCheck = spawnSync(process.execPath, ['bin/agent-state.mjs'], {
+      cwd: root,
+      env: process.env,
+      shell: false,
+      encoding: 'utf8',
+      timeout: 30_000,
+      maxBuffer: 1024 * 1024,
+    });
+    if (agentCheck.status !== 0) fail(errors, 'PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED');
+  }
+
+  // 4. Canonical catalog truth (real validator + deterministic renderer).
+  let adoptedCases = null;
+  let catalogBytes = null;
+  try {
+    adoptedCases = loadTypeScriptModule(root, 'src/core/selfDev/adoptedCases.ts');
+  } catch {
+    fail(errors, 'PROJECT_STATE_CATALOG_MODULE_LOAD_FAILED');
+  }
+  if (adoptedCases !== null) {
+    const codeTarget = adoptedCases.SELFDEV_ADOPTED_CATALOG_TARGET_PATH;
+    const declaredTarget = parsed !== null && !parsed.malformed ? parsed.fields.get('CANONICAL_CATALOG_TARGET') : undefined;
+    if (declaredTarget !== codeTarget) fail(errors, 'PROJECT_STATE_CATALOG_TARGET_MISMATCH');
+
+    const absoluteTarget = path.join(root, codeTarget);
+    let targetStat;
+    try {
+      targetStat = fs.lstatSync(absoluteTarget);
+    } catch {
+      fail(errors, 'PROJECT_STATE_CATALOG_TARGET_MISSING');
+    }
+    if (targetStat?.isSymbolicLink() || (targetStat && !targetStat.isFile())) fail(errors, 'PROJECT_STATE_CATALOG_TARGET_NONCANONICAL');
+    const tracked = gitReadOnly(root, ['ls-files', '--error-unmatch', '--', codeTarget]);
+    if (tracked === null) fail(errors, 'PROJECT_STATE_CATALOG_TARGET_UNTRACKED');
+
+    try {
+      catalogBytes = fs.readFileSync(absoluteTarget, 'utf8');
+    } catch {
+      fail(errors, 'PROJECT_STATE_CATALOG_TARGET_MISSING');
+    }
+    if (catalogBytes !== null) {
+      let validated = null;
+      try {
+        validated = adoptedCases.validateAdoptedCatalog(adoptedCases.SELFDEV_ADOPTED_CASES);
+      } catch {
+        fail(errors, 'PROJECT_STATE_CATALOG_INVALID');
+      }
+      if (validated !== null) {
+        const rendered = adoptedCases.renderAdoptedCatalogSource(validated);
+        if (catalogBytes !== rendered) fail(errors, 'PROJECT_STATE_CATALOG_RENDERER_MISMATCH');
+
+        const digest = `sha256:${createHash('sha256').update(catalogBytes, 'utf8').digest('hex')}`;
+        if (parsed !== null && !parsed.malformed) {
+          const blockCount = fieldsGet(parsed, 'CANONICAL_CATALOG_ENTRY_COUNT');
+          if (blockCount !== undefined && blockCount !== String(validated.length)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
+          if (fieldsGet(parsed, 'CANONICAL_CATALOG_SHA256') !== digest) fail(errors, 'PROJECT_STATE_CATALOG_DIGEST_MISMATCH');
+          if (fieldsGet(parsed, 'CANONICAL_CATALOG_STRATEGY') !== adoptedCases.SELFDEV_ADOPTION_STRATEGY_CLASS) fail(errors, 'PROJECT_STATE_CATALOG_STRATEGY_MISMATCH');
+        }
+
+        // 5. Next portfolio member via the REAL selector (no reimplementation).
+        try {
+          const portfolio = loadTypeScriptModule(root, 'src/core/selfDev/portfolio.ts');
+          const selection = portfolio.selectNextSyntheticProposalVariant({
+            adoptedEquivalentFingerprints: adoptedCases.selfDevAdoptedEquivalentFingerprints(),
+            adoptedCoverageClasses: adoptedCases.selfDevAdoptedCoverageClasses(),
+          });
+          const projectedMember = selection === null ? 'EXHAUSTED' : 'AVAILABLE_NOT_ADOPTED';
+          if (parsed !== null && !parsed.malformed && fieldsGet(parsed, 'NEXT_PORTFOLIO_MEMBER') !== projectedMember) {
+            fail(errors, 'PROJECT_STATE_NEXT_PORTFOLIO_MEMBER_MISMATCH');
+          }
+        } catch {
+          fail(errors, 'PROJECT_STATE_PORTFOLIO_PROJECTION_FAILED');
+        }
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    for (const error of errors) console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+
+  const validated = adoptedCases.validateAdoptedCatalog(adoptedCases.SELFDEV_ADOPTED_CASES);
+  const digest = `sha256:${createHash('sha256').update(catalogBytes, 'utf8').digest('hex')}`;
+  const portfolio = loadTypeScriptModule(root, 'src/core/selfDev/portfolio.ts');
+  const selection = portfolio.selectNextSyntheticProposalVariant({
+    adoptedEquivalentFingerprints: adoptedCases.selfDevAdoptedEquivalentFingerprints(),
+    adoptedCoverageClasses: adoptedCases.selfDevAdoptedCoverageClasses(),
+  });
+  console.log(JSON.stringify({
+    status: 'PASS',
+    projectStateProtocol: PROJECT_STATE_PROTOCOL_VERSION,
+    liveHeadAuthority: 'GIT',
+    currentTaskAuthority: '.agent/ACTIVE_TASK.md',
+    validatedImplementationAuthority: '.agent/ACTIVE_TASK.md',
+    catalogTarget: adoptedCases.SELFDEV_ADOPTED_CATALOG_TARGET_PATH,
+    catalogCount: validated.length,
+    catalogDigest: digest,
+    catalogStrategy: adoptedCases.SELFDEV_ADOPTION_STRATEGY_CLASS,
+    rendererRoundTrip: true,
+    phase8Status: 'IN_PROGRESS',
+    phase8B1Status: 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1',
+    nextPortfolioMember: selection === null ? 'EXHAUSTED' : 'AVAILABLE_NOT_ADOPTED',
+    nextPromotionAuthority: 'NONE',
+    activeTaskContinuity: 'PASS',
+    checkoutClean: true,
+  }, null, 2));
+}
+
+function fieldsGet(parsed, key) {
+  return parsed.fields.get(key);
+}
+
+try {
+  main();
+} catch (error) {
+  const code = error instanceof Error ? error.message.split(':')[0] : 'PROJECT_STATE_CHECK_FAILED';
+  console.error(code);
+  process.exitCode = 1;
+}

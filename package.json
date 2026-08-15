@@ -16,6 +16,7 @@
     "test:owner-provenance": "playwright test tests/unit/privateArtifactAtomic.test.ts tests/unit/aiOwnerReview.test.ts tests/unit/aiReview.test.ts --project=nightwatch --workers=1",
     "agent:check": "node bin/agent-state.mjs",
     "agent:audit": "node bin/agent-state.mjs --audit-history",
+    "project:check": "node bin/project-state-check.mjs",
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
     "observe:canary": "node bin/observe-canary.mjs",

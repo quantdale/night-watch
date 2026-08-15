@@ -157,6 +157,25 @@ Under v2 the checker enforces a cross-file task-status state machine:
   (warnings only) — do not mass-migrate them; migrate individually only when a
   future task directly depends on them.
 
+## Project-memory truth (project-state v1)
+
+`npm run project:check` validates the machine-checked truth block in
+`docs/CURRENT_STATE.md` (`nightwatch.project-state.v1`) against mechanically
+derivable source:
+
+- `CURRENT_STATE` is a project SNAPSHOT, never its own Git/checkpoint
+  authority. Live HEAD comes from Git; the current implementation checkpoint
+  comes from `.agent/ACTIVE_TASK.md` + task `STATE.md` under continuity v2.
+  Do not add generic live anchor rows (e.g. `LAST_VALIDATED_IMPLEMENTATION_SHA`)
+  to CURRENT_STATE — they are rejected by project:check as competing
+  duplicate authority. Historical phase-qualified anchors stay valid.
+- The canonical adopted-case catalog is produced only through the
+  deterministic renderer; never hand-edit
+  `adoptedCaseCatalog.generated.ts`.
+- CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B may remain
+  `AVAILABLE_NOT_ADOPTED` while `NEXT_PROMOTION_AUTHORITY: NONE`; project:check
+  enforces NONE exactly.
+
 ## Recovery
 
 If context may have been compacted or certainty is lost: stop editing; read

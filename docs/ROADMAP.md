@@ -1053,6 +1053,51 @@ catalog count = 1 (variant A); variant B AVAILABLE_NOT_ADOPTED; portfolio NOT
 exhausted. Next action: STOP — no second approval/APPLY, no B adoption
 (separate authorization required).
 
+### Phase 8B.1-R1.1 — Project-memory & canonical-source truth hardening (complete)
+
+Phase 8B.1-R1.1 (COMPLETE) hardened project-level durable truth without
+changing adoption/evaluator semantics:
+
+- **Generated catalog authority header corrected.** The renderer
+  (`renderAdoptedCatalogSource` in `src/core/selfDev/adoptedCases.ts`) and
+  the regenerated one-entry `adoptedCaseCatalog.generated.ts` now describe
+  the real two-writer authority partition: Phase 8B sandbox adoption may
+  rewrite the target only inside a disposable private source mirror; the
+  Phase 8B.1 canonical-promotion executor may rewrite the exact canonical
+  target only after the complete owner-gated promotion evidence/approval
+  chain (development session commits; runtime never writes canonical
+  source). Ordinary development never hand-edits the generated file; no
+  generic self-modification authority exists. The obsolete sandbox-only
+  sentence is gone from live renderer text. Regeneration through the trusted
+  renderer preserved deep semantic equality (adoptedCaseId
+  `90248aae...`, fingerprint `6a322450...` unchanged; count 1); raw digest
+  `fa7b71d4...` → `401b2c67...` (header bytes only); `sourceBundleDigest`
+  changed; `contractDigest` unchanged (`d8012fae...`).
+- **Project-state v1 (`nightwatch.project-state.v1`).** New read-only
+  `npm run project:check` (`bin/project-state-check.mjs`) validates a
+  machine-checked truth block in CURRENT_STATE (authority markers, catalog
+  target/count/digest/strategy via the real validator/renderer, portfolio
+  projection via the real selector, phase statuses, promotion authority
+  NONE) and rejects competing generic live anchors. CI gained the dedicated
+  "Project-memory truth check" step; 25 focused tests added.
+- **Duplicate live authority removed.** CURRENT_STATE no longer carries
+  generic `LAST_VALIDATED_IMPLEMENTATION_SHA` /
+  `LAST_DOCUMENTATION_CHECKPOINT_SHA` rows; live HEAD comes from Git and the
+  current implementation checkpoint from ACTIVE_TASK under continuity v2;
+  the Phase 8A.1 anchors are preserved as explicitly historical
+  phase-qualified fields.
+- **Currentness strictness preserved.** A regression test proves an
+  authoritative source change after `CANONICAL_PROMOTION_COMMITTED_EXACT`
+  reports strict `CANONICAL_PROMOTION_SOURCE_MISMATCH` for the old
+  verification — the historical R1 evidence stays historical; current source
+  is a later validated state.
+
+Phase 8B.1 remains `COMPLETE VIA SUCCESSFUL RETRY R1`; Phase 8 stays
+`IN_PROGRESS`. Canonical catalog count = 1; variant B AVAILABLE_NOT_ADOPTED;
+promotion authority NONE; next architectural capability UNDESIGNED /
+requires a separate design review and owner authorization. No Phase 8C
+exists.
+
 ---
 
 ## Never in scope (any phase)

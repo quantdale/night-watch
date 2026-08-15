@@ -76,7 +76,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
-| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the empty data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; no canonical adopter |
+| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`, produced only by the deterministic renderer; currently ONE adopted entry, 0..64 cardinality a supported state) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; canonical promotion via the separate owner-gated Phase 8B.1 executor |
 | `src/core/selfDevSandbox/` | Phase 8B sandbox-mutation authority boundary, distinct from the pure `selfDev` trust/evaluation domain: a pure deterministic adoption planner, immutable private plan/result storage, a disposable owner-private source mirror, and a bounded serial cache-isolated TypeScript sandbox loader that executes the modified sandbox evaluator to metamorphically prove one adoption's effect. Zero canonical source write, Git, AI, product, database/infrastructure, or publication authority. | implemented; sandbox-only, no canonical apply |
 | `src/core/provenance/` | Fixed-path source-bundle/contract provenance and no-shell local Git metadata boundary; read-only only. | implemented |
 | `bin/selfdev-synthetic.mjs` | Thin wrapper for one bounded synthetic v2 session with locally attested provenance, replay, immutable write, and read-back summary. | implemented |
@@ -414,8 +414,21 @@ root, so evaluation, replay, digests, and eligibility always share one
 explicit state.
 
 The future canonical
-promotion is Phase 8B.1 — Owner-Gated Canonical Promotion — a separate,
-`NOT_STARTED`, `NOT_AUTHORIZED` future task.
+promotion was Phase 8B.1 — Owner-Gated Canonical Promotion — a separate,
+owner-gated task that has since completed via the authorized retry
+(Phase 8B.1-R1, commit `24fc437`; Phase 8B.1 = COMPLETE VIA SUCCESSFUL
+RETRY R1). Its canonical-promotion executor (`src/core/selfDevPromotion/`)
+may rewrite the exact canonical target only after the complete promotion
+evidence/approval chain (fresh session, sandbox proof, intent, one-shot
+approval, APPLY, fresh-process verify), and the development session —
+never runtime code — commits the promoted result. The Phase 8B sandbox
+executor remains strictly mirror-only. Together these are the ONLY two
+source-mutation authorities for the generated catalog; there is no generic
+runtime self-modification authority, and candidate availability never
+implies promotion authority (variant B is AVAILABLE_NOT_ADOPTED with
+NEXT_PROMOTION_AUTHORITY NONE). The generated file's header comment
+(produced by `renderAdoptedCatalogSource`) states this partition
+explicitly; ordinary development must not hand-edit the generated file.
 
 ### Phase 8B.0.1 sandbox promotion-readiness closeout
 

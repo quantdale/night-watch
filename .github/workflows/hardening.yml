@@ -51,6 +51,12 @@ jobs:
         run: |
           test -z "$(git status --porcelain)"
           node bin/selfdev-catalog-integrity.mjs
+      - name: Phase 8B.1-R1.1 project-state truth matrix
+        run: npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1
+      - name: Project-memory truth check
+        run: |
+          test -z "$(git status --porcelain)"
+          npm run project:check
       - name: Phase 7B/7B.1 synthetic AI review authority and provenance
         run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
       - name: Phase 7B.3 synthetic local-model canary harness

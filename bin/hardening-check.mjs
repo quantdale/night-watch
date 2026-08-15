@@ -758,7 +758,7 @@ function checkAgentContinuityIntegrity() {
   // deterministic: no filesystem mutation, no child processes in the pure
   // module, no network.
   const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
-  for (const file of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs']) {
+  for (const file of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/project-state-check.mjs']) {
     const source = read(file);
     if (mutationRe.test(source)) {
       fail(`${file} contains a filesystem mutation call (continuity checker must be read-only)`);
@@ -781,6 +781,63 @@ function checkAgentContinuityIntegrity() {
   }
 }
 
+function checkProjectStateIntegrity() {
+  // Phase 8B.1-R1.1 — project-memory truth (nightwatch.project-state.v1).
+  // The project-state checker must stay a deterministic read-only tool: no
+  // filesystem writes, no network, no model, no DB/infrastructure, and the
+  // canonical catalog target stays code-defined (no user-supplied path).
+  const checker = read('bin/project-state-check.mjs');
+  if (/\b(?:fetch\(|https?\.request|net\.|dns\.|WebSocket|child_process\.[a-z]+exec|execSync|spawnSync\([^)]*['"]git['"]\s*,\s*\[[^\]]*(?:add|commit|push|checkout|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config))/i.test(checker)) {
+    fail('bin/project-state-check.mjs must stay a read-only local checker (no network, no Git mutation verbs)');
+  }
+  if (!/SELFDEV_ADOPTED_CATALOG_TARGET_PATH/.test(checker)) fail('bin/project-state-check.mjs must derive the catalog target from the code-defined constant');
+  if (!/validateAdoptedCatalog/.test(checker) || !/renderAdoptedCatalogSource/.test(checker)) {
+    fail('bin/project-state-check.mjs must reuse the real validator/renderer (never regex/source-parsing truth)');
+  }
+  if (!/selectNextSyntheticProposalVariant/.test(checker)) {
+    fail('bin/project-state-check.mjs must derive the next portfolio member from the real selector');
+  }
+  if (!/agent-state\.mjs/.test(checker)) fail('bin/project-state-check.mjs must verify active-task continuity v2 through agent-state');
+  if (!/nightwatch\.project-state\.v1/.test(checker)) fail('bin/project-state-check.mjs must define the project-state v1 protocol version');
+  if (!/PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY/.test(checker)) {
+    fail('bin/project-state-check.mjs must reject competing generic live implementation anchors');
+  }
+  if (!/PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE/.test(checker)) {
+    fail('bin/project-state-check.mjs must require NEXT_PROMOTION_AUTHORITY NONE');
+  }
+  if (/writeFileSync|appendFileSync|createWriteStream|rmSync|unlinkSync|mkdirSync/.test(checker)) {
+    fail('bin/project-state-check.mjs contains a filesystem write path');
+  }
+  const pkg = read('package.json');
+  if (!/"project:check"\s*:\s*"node bin\/project-state-check\.mjs"/.test(pkg)) {
+    fail('package.json project:check must invoke the local project-state checker');
+  }
+  const workflow = read('.github/workflows/hardening.yml');
+  if (!/Project-memory truth check/.test(workflow) || !/npm run project:check/.test(workflow)) {
+    fail('.github/workflows/hardening.yml must run the Project-memory truth check (npm run project:check)');
+  }
+  // Generated-source provenance: the live renderer and the generated catalog
+  // must describe the CURRENT two-writer authority model (Phase 8B sandbox
+  // mirror-only + Phase 8B.1 owner-gated canonical promotion) and must NOT
+  // reintroduce the obsolete sandbox-only sentence.
+  const renderer = read('src/core/selfDev/adoptedCases.ts');
+  const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  if (/never in this canonical/.test(renderer) || /never in this canonical/.test(catalog)) {
+    fail('live renderer/generated catalog must not reintroduce the obsolete sandbox-only authority sentence');
+  }
+  for (const [label, source] of [['renderer', renderer], ['generated catalog', catalog]]) {
+    if (!/Phase 8B sandbox/.test(source) || !/disposable/.test(source) || !/private source mirror/.test(source)) {
+      fail(`${label} must keep the Phase 8B sandbox mirror-only write authority wording`);
+    }
+    if (!/owner-gated/.test(source) || !/canonical-promotion/.test(source)) {
+      fail(`${label} must describe the separately owner-gated Phase 8B.1 canonical-promotion authority`);
+    }
+    if (!/No generic self-modification authority/.test(source)) {
+      fail(`${label} must state there is no generic self-modification authority`);
+    }
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -796,6 +853,7 @@ checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
+checkProjectStateIntegrity();
 checkSyntax();
 
 if (errors.length > 0) {

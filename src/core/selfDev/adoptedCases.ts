@@ -3,11 +3,16 @@
 //
 // This is the trusted schema/validation/rendering module. The catalog DATA
 // itself lives in the separate, strictly data-only
-// `adoptedCaseCatalog.generated.ts` — the one file the sandbox adoption
-// executor (src/core/selfDevSandbox/) is ever permitted to rewrite, and only
-// inside a disposable private source mirror. This module never mutates that
-// file; it only validates it at load time, derives base-independent
-// identity, and renders a canonical postimage for the sandbox to write.
+// `adoptedCaseCatalog.generated.ts`, produced exclusively by the
+// deterministic renderer in this module (`renderAdoptedCatalogSource`) —
+// ordinary development must never hand-edit the generated file. Source
+// mutation of that target is strictly partitioned: the Phase 8B sandbox
+// adoption executor may rewrite it only inside a disposable private source
+// mirror, and the Phase 8B.1 canonical-promotion executor may rewrite the
+// exact canonical target only after the complete owner-gated promotion
+// evidence/approval chain (runtime code never commits; the development
+// session commits the promoted result). No generic self-modification
+// authority exists.
 //
 // An adopted case is candidate SEMANTICS (fixture + actions + assertions),
 // never candidate-supplied code, patch, path, or expression. Coverage is
@@ -232,10 +237,18 @@ export function renderAdoptedCatalogSource(catalog: readonly SelfDevAdoptedCase[
     '// nightwatch.selfdev-adopted-case-catalog.generated.v1',
     '//',
     '// This file must remain pure declarative data: no imports, no functions, no',
-    '// expressions beyond array/object/string literals. It is the one file the',
-    '// Phase 8B sandbox adoption executor is permitted to rewrite, and only ever',
-    '// inside a disposable private source mirror — never in this canonical',
-    '// checkout at runtime.',
+    '// expressions beyond array/object/string literals. Ordinary development',
+    '// must never hand-edit its contents; they are produced only through the',
+    '// deterministic renderer.',
+    '//',
+    '// Source-mutation authority is strictly partitioned. The Phase 8B sandbox',
+    '// adoption executor may rewrite this target only inside a disposable',
+    '// private source mirror. The Phase 8B.1 canonical-promotion executor may',
+    '// rewrite the exact canonical target only after the complete owner-gated',
+    '// promotion evidence/approval chain, with the development session',
+    '// committing the promoted result. No generic self-modification authority',
+    '// exists: runtime code never writes canonical source, and no candidate',
+    '// ever writes source.',
     '',
     `export const SELFDEV_ADOPTED_CASES = ${arrayLiteral};`,
     '',

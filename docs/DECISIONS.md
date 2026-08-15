@@ -1591,3 +1591,95 @@ step. Phase 8B.1.0 = COMPLETE; Phase 8B.1 stays BLOCKED with
 `READY_FOR_FRESH_OWNER_AUTHORIZATION` — the historical one-shot approval
 remains spent (read-only re-verified) and no promotion was retried. The real
 canonical catalog remains EMPTY (digest `sha256:ffe3d635...` unchanged).
+
+## D-50 — Project-memory live authority de-duplication and generated catalog lifecycle comment correction
+
+**Problem.** Two independent live-truth defects surfaced after Phase 8B.1-R1:
+
+1. `docs/CURRENT_STATE.md` carried generic project-level rows
+   `LAST_VALIDATED_IMPLEMENTATION_SHA: 4602fac...` and
+   `LAST_DOCUMENTATION_CHECKPOINT_SHA: 488b4e...` — Phase 8A.1-era anchors
+   presented as current project authority. They naturally drifted because the
+   same facts are already authoritatively owned by two stronger live systems:
+   Git (live HEAD) and the strict `nightwatch.agent-continuity.v2` task
+   continuity checker (current validated/substantive/documentation
+   checkpoints per task). CURRENT_STATE is a project SNAPSHOT; duplicating
+   live checkpoint authority inside it guarantees future drift (the duplicate
+   is what went stale, not the values — replacing the two hashes would have
+   recreated the same failure mechanism later).
+2. The generated adopted-case catalog's header (produced by
+   `renderAdoptedCatalogSource()` in `src/core/selfDev/adoptedCases.ts`)
+   stated the file is the one the "Phase 8B sandbox adoption executor is
+   permitted to rewrite, and only ever inside a disposable private source
+   mirror — never in this canonical checkout at runtime." That was Phase 8B
+   truth, but Phase 8B.1 added a distinct owner-gated canonical-promotion
+   authority that legitimately rewrites the exact canonical target before the
+   development session commits it. The generated file therefore described an
+   obsolete authority model (sandbox-only) while a second legitimate writer
+   already existed.
+
+**Decision (project memory).** Introduce the versioned project-memory
+protocol `nightwatch.project-state.v1` (separate from
+`nightwatch.agent-continuity.v2`; continuity v2 answers "is this TASK
+internally truthful", project-state v1 answers "do CURRENT project-level
+facts agree with mechanically derivable source and authority"):
+
+- CURRENT_STATE's generic live anchor rows are REMOVED; their Phase 8A.1
+  provenance is preserved in explicitly historical phase-qualified rows
+  (`PHASE_8A_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA`,
+  `PHASE_8A_1_HISTORICAL_DOCUMENTATION_CHECKPOINT_SHA`), matching the
+  established `PHASE_7B_1_HISTORICAL_*` convention.
+- A machine-checked structured truth block in CURRENT_STATE holds only facts
+  with deterministic sources: protocol version, authority markers
+  (`LIVE_HEAD_AUTHORITY: GIT`, `CURRENT_TASK_AUTHORITY` /
+  `VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md`), canonical
+  catalog target/count/digest/strategy, current phase statuses
+  (`PHASE_8_STATUS: IN_PROGRESS`,
+  `PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1`),
+  `NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED`, and
+  `NEXT_PROMOTION_AUTHORITY: NONE`. No self-referential live SHA is ever
+  stored; live HEAD is discovered from Git.
+- New deterministic read-only checker `bin/project-state-check.mjs`
+  (`npm run project:check`) validates the block against the real
+  `validateAdoptedCatalog` / `renderAdoptedCatalogSource` / real portfolio
+  selector, requires `.agent/ACTIVE_TASK.md` to exist AND continuity v2 to
+  pass, requires a clean checkout, and REJECTS reintroduction of competing
+  generic live implementation/documentation anchor keys inside the v1 block
+  (`PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY` /
+  `PROJECT_STATE_DUPLICATE_DOCUMENTATION_AUTHORITY`) — the direct regression
+  guard for this defect. Historical phase-qualified fields remain valid.
+  CI runs it as the dedicated "Project-memory truth check" step.
+- Availability never implies authorization: `NEXT_PORTFOLIO_MEMBER:
+  AVAILABLE_NOT_ADOPTED` (variant B exists as a candidate) coexists with
+  `NEXT_PROMOTION_AUTHORITY: NONE`; the checker enforces the latter exactly.
+
+**Decision (generated catalog lifecycle).** The renderer header AND the
+regenerated `adoptedCaseCatalog.generated.ts` now state the exact
+Phase 8B + Phase 8B.1 authority model: (A) the Phase 8B sandbox adoption
+executor may rewrite the target only inside a disposable private source
+mirror; (B) the Phase 8B.1 canonical-promotion executor may rewrite the
+exact canonical target only after the complete owner-gated promotion
+evidence/approval chain, with the development session committing the
+promoted result; (C) ordinary development must never hand-edit the generated
+file — it is produced only through the deterministic renderer; (D) no
+generic self-modification authority exists — runtime code never writes
+canonical source and no candidate ever writes source. The obsolete
+sandbox-only sentence ("never in this canonical checkout at runtime") is
+removed from all live renderer text and rejected by hardening if
+reintroduced.
+
+**Consequences.** The one-entry catalog was regenerated through the trusted
+renderer: deep semantic equality PASS (adoptedCaseId
+`adopted-case:sha256:90248aae...`, equivalentFingerprint
+`sha256:6a322450...`, actions/assertions/coverage/strategy unchanged; count
+exactly 1); raw file digest changed from `sha256:fa7b71d4...` to
+`sha256:401b2c67...` (generated header bytes only); `sourceBundleDigest`
+changes by construction; `contractDigest` unchanged
+(`sha256:d8012fae...`) — evaluator/adoption semantics untouched. Promotion
+currentness semantics were NOT weakened: the historical R1 verification
+stays exact historical evidence; a regression test proves an authoritative
+source change after `CANONICAL_PROMOTION_COMMITTED_EXACT` yields strict
+`CANONICAL_PROMOTION_SOURCE_MISMATCH` for the old verification, never a
+"semantically close" reclassification. CURRENT_STATE, ROADMAP, ARCHITECTURE,
+SAFETY_MODEL, and AGENTS were updated to the de-duplicated authority model;
+historical phase records and decisions were preserved unchanged.

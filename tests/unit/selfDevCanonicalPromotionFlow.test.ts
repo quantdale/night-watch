@@ -212,6 +212,67 @@ test.describe('Phase 8B.1 owner-gated canonical promotion — full synthetic cha
     }
   });
 
+  test('an authoritative source change after COMMITTED_EXACT yields strict SOURCE_MISMATCH (R1.1 header-correction semantics)', () => {
+    // Phase 8B.1-R1.1 regression: correcting generated-source provenance
+    // (a renderer/module header comment in adoptedCases.ts, an authoritative
+    // source-bundle path) is a REAL source change. The historical R1
+    // verification must NOT be reclassified as current exact evidence; the
+    // currentness vocabulary must report the strict source mismatch — never
+    // a "semantically close enough" status.
+    const { fixture, stack, repository } = makeFixture();
+    try {
+      const fixtureChain = buildEligibleFixture(stack, repository);
+      const stores = freshPromotionStores(stack);
+
+      const promotion = stack.preparePromotion({
+        artifactId: fixtureChain.plan.sourceSessionArtifactId, candidateId: fixtureChain.plan.candidateId,
+        adoptionPlanId: fixtureChain.plan.planId, sandboxResultId: fixtureChain.result.resultId,
+        repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, artifactStore: fixtureChain.artifactStore,
+        planStore: fixtureChain.planStore, resultStore: fixtureChain.resultStore, promotionStore: stores.promotionStore,
+      });
+      const approval = stack.approvePromotion({
+        promotionId: promotion.promotionId, confirm: 'CANONICAL_ONE_FILE_ONLY', repositoryRoot: repository,
+        promotionStore: stores.promotionStore, approvalStore: stores.approvalStore,
+      });
+      const receipt = stack.applyPromotion({
+        promotionId: promotion.promotionId, approvalId: approval.approvalId, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath,
+        promotionStore: stores.promotionStore, approvalStore: stores.approvalStore,
+        planStore: fixtureChain.planStore, receiptStore: stores.receiptStore,
+      });
+      expect(receipt.applyOutcome).toBe('APPLIED');
+      const verification = stack.verifyCanonicalPromotion({
+        promotionId: promotion.promotionId, receiptId: receipt.receiptId, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath,
+        promotionStore: stores.promotionStore, receiptStore: stores.receiptStore,
+        planStore: fixtureChain.planStore, sandboxResultStore: fixtureChain.resultStore, verificationStore: stores.verificationStore,
+      });
+      expect(verification.verificationStatus).toBe('CANONICAL_APPLIED_VERIFIED_UNCOMMITTED');
+
+      git(repository, ['add', '--', promotion.targetPath]);
+      git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'canonical promotion']);
+      const committedCurrent = stack.currentCheckoutState({ repositoryRoot: repository });
+      const committedCurrentForAssessment = { ...committedCurrent, contractDigest: verification.postContractDigest };
+      expect(stack.assessCanonicalPromotionCurrentness({ verification, current: committedCurrentForAssessment })).toBe('CANONICAL_PROMOTION_COMMITTED_EXACT');
+
+      // Authoritative source change: a header-comment edit in the renderer
+      // module (the R1.1 defect-A correction shape). This is a tracked
+      // authoritative source-bundle path, not the generated target itself.
+      const adoptedCasesPath = path.join(repository, 'src/core/selfDev/adoptedCases.ts');
+      const original = fs.readFileSync(adoptedCasesPath, 'utf8');
+      fs.writeFileSync(adoptedCasesPath, original.replace('// Nightwatch Phase 8B — declarative adopted-case catalog.', '// Nightwatch Phase 8B — declarative adopted-case catalog (provenance corrected).'));
+      git(repository, ['add', '--', 'src/core/selfDev/adoptedCases.ts']);
+      git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'authoritative source provenance correction']);
+      const changedCurrent = stack.currentCheckoutState({ repositoryRoot: repository });
+      const changedCurrentForAssessment = { ...changedCurrent, contractDigest: verification.postContractDigest };
+      const currentness = stack.assessCanonicalPromotionCurrentness({ verification, current: changedCurrentForAssessment });
+      // Strict provenance: the historical verification remains historical; the
+      // changed current source is a later validated state. Exactness is never
+      // weakened into a "semantically equivalent" reclassification.
+      expect(currentness).toBe('CANONICAL_PROMOTION_SOURCE_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
   test('the whole repository must be clean before prepare, approve, and apply', () => {
     const { fixture, stack, repository } = makeFixture();
     try {

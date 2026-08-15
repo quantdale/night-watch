@@ -4,10 +4,18 @@
 // nightwatch.selfdev-adopted-case-catalog.generated.v1
 //
 // This file must remain pure declarative data: no imports, no functions, no
-// expressions beyond array/object/string literals. It is the one file the
-// Phase 8B sandbox adoption executor is permitted to rewrite, and only ever
-// inside a disposable private source mirror — never in this canonical
-// checkout at runtime.
+// expressions beyond array/object/string literals. Ordinary development
+// must never hand-edit its contents; they are produced only through the
+// deterministic renderer.
+//
+// Source-mutation authority is strictly partitioned. The Phase 8B sandbox
+// adoption executor may rewrite this target only inside a disposable
+// private source mirror. The Phase 8B.1 canonical-promotion executor may
+// rewrite the exact canonical target only after the complete owner-gated
+// promotion evidence/approval chain, with the development session
+// committing the promoted result. No generic self-modification authority
+// exists: runtime code never writes canonical source, and no candidate
+// ever writes source.
 
 export const SELFDEV_ADOPTED_CASES = [
   {

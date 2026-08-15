@@ -1,16 +1,17 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.1-R1 owner-gated canonical promotion retry
-> closeout.
+> the Nightwatch Phase 8B.1-R1.1 project-memory & canonical-source truth
+> hardening closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
 > `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
-> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`, and
-> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`. Phase 8B proved one sandbox-confined,
+> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`,
+> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`, and Phase 8B.1-R1.1
+> (project-memory & canonical-source truth hardening) is `COMPLETE`. Phase 8B proved one sandbox-confined,
 > metamorphically-verified source adoption with zero canonical mutation;
 > Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
 > Phase 8B.1 (Owner-Gated Canonical Promotion) — its original attempt
@@ -38,10 +39,17 @@
 > PASS, full regression green, the canonical adoption commit `24fc437` with
 > exact green CI including the catalog-integrity step at count 1,
 > `CANONICAL_PROMOTION_COMMITTED_EXACT`, and a fresh post-commit session
-> selecting variant B. The canonical adopted-case catalog now contains
-> exactly ONE entry (digest `fa7b71d4...`); variant B
-> (EXPAND_THEN_COLLAPSE) remains available-not-adopted. No second approval,
-> no second APPLY, no B adoption.
+> selecting variant B. Phase 8B.1-R1.1 then corrected the generated-catalog
+> authority header (sandbox mirror-only + owner-gated canonical promotion —
+> no generic self-modification), removed the stale generic project-level
+> checkpoint anchors (authority de-duplication), introduced
+> `nightwatch.project-state.v1` with read-only `npm run project:check` and
+> a CI "Project-memory truth check" step, and preserved promotion-currentness
+> strictness. The canonical adopted-case catalog contains
+> exactly ONE entry (raw digest `401b2c67...` after the R1.1 header
+> regeneration); variant B
+> (EXPAND_THEN_COLLAPSE) remains available-not-adopted with promotion
+> authority NONE. No second approval, no second APPLY, no B adoption.
 
 
 ---
@@ -64,20 +72,21 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `REMOTE_BRANCH` | `main` |
 | `CANONICAL_GIT_ROOT` | `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch` |
 | `PARENT_WORKSPACE_GIT` | `RETIRED` — `/home/dalepalaca/go/src/alphaus-main` is not a Git repository |
-| `LAST_VALIDATED_IMPLEMENTATION_SHA` | `4602fac417746a30927fc19f8e4ca48ab9143cac` (stable validated Phase 8A.1 implementation/substantive anchor) |
-| `LAST_DOCUMENTATION_CHECKPOINT_SHA` | `488b4e41dc12840a1e0c029ae76b24f3ce8abee4` (Phase 8A.1 documentation descendant; live HEAD remains discovered from Git) |
+| `PHASE_8A_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `4602fac417746a30927fc19f8e4ca48ab9143cac` (historical Phase 8A.1 substantive anchor — no longer a live project-level authority) |
+| `PHASE_8A_1_HISTORICAL_DOCUMENTATION_CHECKPOINT_SHA` | `488b4e41dc12840a1e0c029ae76b24f3ce8abee4` (historical Phase 8A.1 documentation descendant — no longer a live project-level authority) |
 | `PHASE_7B_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `40e59ecf6209dac7ef88ac2af0bcef781562a837` (historical Phase 7B.1 substantive anchor) |
 | `PHASE_7B_1_2_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA` | `257cc294850344149fd4c5b657beeff07e511c91` (historical Phase 7B.1.2 substantive anchor) |
 | `PHASE_7B_2_STATUS` | `COMPLETE` — private owner-review CLI is local, synthetic, and owner-interface-only |
 | `PHASE_7B_2_1_STATUS` | `COMPLETE` — immutable private publication is atomic/no-replace and owner-decision write authority is CLI-unique |
 | `PHASE_7B_3_STATUS` | `HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN` — no compatible already-local runtime/model or explicit endpoint/model configuration was available; no installation/download was attempted |
-| `PHASE_8_STATUS` | `IN_PROGRESS` — Phase 8A.1 closes provenance/replay prerequisites; controlled adoption remains separate |
+| `PHASE_8_STATUS` | `IN_PROGRESS` — Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1.0 lineage complete; Phase 8B.1 complete via retry R1 (one canonical adoption); next Phase 8 capability requires separate design and owner authorization |
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
 | `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption proven; canonical adopted-case catalog lifecycle per Phase 8B.1-R1 (now one entry) |
 | `PHASE_8B_0_1_STATUS` | `COMPLETE` — sandbox promotion-readiness closeout (base pre-validation, strategy binding, verified-result probe invariant, truthful write accounting); fresh sandbox-only acceptance re-verified |
 | `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.1-R1 OWNER-GATED CANONICAL PROMOTION RETRY` — executed exactly one fresh prepare/approve/apply/verify/commit chain; no further promotion authority |
+| `PHASE_8B_1_R1_1_AUTHORIZATION` | `PROJECT-MEMORY & CANONICAL-SOURCE TRUTH HARDENING` — source/docs/tooling integrity only; NO promotion authority, NO variant-B adoption |
 | `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -86,6 +95,51 @@ synthetic fixtures, and sanitized continuity state only. Real runtime
 credentials, storage state, authenticated evidence, customer values, and
 private findings remain outside GitHub under the owner-only local storage
 policy.
+
+### Project-memory authority model (Phase 8B.1-R1.1)
+
+Project-level live authority is intentionally de-duplicated. This document is
+a SNAPSHOT of current project truth, never its own Git/checkpoint authority:
+
+- LIVE repository HEAD ← Git (discovered at check time; no persisted
+  current-head SHA anywhere).
+- CURRENT implementation checkpoint ← `.agent/ACTIVE_TASK.md` + task
+  `STATE.md` under `nightwatch.agent-continuity.v2` (strict cross-file task
+  state machine).
+- Task-specific history ← task `STATE.md` / `REPORT.md`.
+- Project architectural snapshot ← this file (`docs/CURRENT_STATE.md`).
+- Historical phase implementation anchors ← explicitly phase-qualified
+  fields only (e.g. `PHASE_8A_1_HISTORICAL_*_SHA` above).
+- Canonical adopted catalog ← validated live generated source produced by the
+  deterministic renderer (`renderAdoptedCatalogSource`); ordinary development
+  never hand-edits it.
+- Catalog mutation authority ← Phase 8B sandbox adoption (disposable private
+  source mirror only) OR Phase 8B.1 separately owner-gated canonical
+  promotion (complete evidence/approval chain; development session commits).
+  No generic runtime self-modification authority exists.
+- CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B is
+  `AVAILABLE_NOT_ADOPTED` while promotion authority remains `NONE`.
+
+The machine-checked truth block below holds only facts with a deterministic
+source; it is validated read-only by `npm run project:check`
+(`bin/project-state-check.mjs`).
+
+### Project-state v1 (machine-checked truth block)
+
+```
+PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v1
+LIVE_HEAD_AUTHORITY: GIT
+CURRENT_TASK_AUTHORITY: .agent/ACTIVE_TASK.md
+VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md
+CANONICAL_CATALOG_TARGET: src/core/selfDev/adoptedCaseCatalog.generated.ts
+CANONICAL_CATALOG_ENTRY_COUNT: 1
+CANONICAL_CATALOG_SHA256: sha256:401b2c673e8e0486f697f3af159833cca6102410f690e82731377829b1e95b6c
+CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION
+PHASE_8_STATUS: IN_PROGRESS
+PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1
+NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED
+NEXT_PROMOTION_AUTHORITY: NONE
+```
 
 ### Phase 1.3 additions — durable agent continuity
 
@@ -1127,6 +1181,58 @@ catalog-aware:
   EXPAND_SUMMARY); portfolio NOT exhausted — variant B
   (EXPAND_THEN_COLLAPSE) AVAILABLE_NOT_ADOPTED. No second approval, no
   second APPLY, no B adoption.
+
+**Phase 8B.1-R1.1 — project-memory & canonical-source truth hardening
+(complete).** Phase 8B.1-R1.1 fixed two live-truth defects without touching
+adoption/evaluator semantics:
+
+- **Generated catalog authority header corrected (Defect A).** The
+  renderer (`renderAdoptedCatalogSource()` in
+  `src/core/selfDev/adoptedCases.ts`) and the regenerated
+  `adoptedCaseCatalog.generated.ts` previously described the catalog target
+  as sandbox-only ("never in this canonical checkout at runtime") — obsolete
+  once Phase 8B.1 added the owner-gated canonical-promotion authority. The
+  corrected header states the exact partition: Phase 8B sandbox adoption may
+  rewrite the target only inside a disposable private source mirror; the
+  Phase 8B.1 canonical-promotion executor may rewrite the exact canonical
+  target only after the complete owner-gated promotion evidence/approval
+  chain, with the development session committing the promoted result;
+  ordinary development never hand-edits the generated file (deterministic
+  renderer only); no generic self-modification authority exists. The
+  existing one-entry catalog was regenerated through the trusted renderer:
+  deep semantic equality PASS (adoptedCaseId
+  `adopted-case:sha256:90248aae...`, equivalentFingerprint
+  `sha256:6a322450...`, fixture/actions/assertions/coverage/strategy
+  unchanged; count exactly 1); raw digest `fa7b71d4...` →
+  `401b2c67...` (header bytes only); `sourceBundleDigest` changed by
+  construction; `contractDigest` unchanged (`d8012fae...`).
+- **Duplicate live authority removed (Defect B).** The generic
+  `LAST_VALIDATED_IMPLEMENTATION_SHA` / `LAST_DOCUMENTATION_CHECKPOINT_SHA`
+  topology rows (Phase 8A.1-era) are gone; live HEAD is discovered from Git,
+  and the current implementation checkpoint comes from
+  `.agent/ACTIVE_TASK.md` under continuity v2. The Phase 8A.1 anchors are
+  preserved as explicitly historical phase-qualified rows
+  (`PHASE_8A_1_HISTORICAL_*_SHA`).
+- **Project-state v1.** New versioned project-memory protocol
+  `nightwatch.project-state.v1` with a machine-checked truth block in this
+  file (above), a deterministic read-only checker
+  `bin/project-state-check.mjs` (`npm run project:check`), 25 focused
+  tests, and the CI "Project-memory truth check" step. The checker validates
+  the block against the real validator/renderer/portfolio selector, requires
+  ACTIVE_TASK continuity v2 to pass, requires a clean checkout, and rejects
+  competing generic live anchors. `NEXT_PROMOTION_AUTHORITY: NONE` is
+  enforced exactly; variant B availability never implies authorization.
+- **Promotion currentness strictness preserved.** A regression test proves
+  an authoritative source change after `CANONICAL_PROMOTION_COMMITTED_EXACT`
+  yields strict `CANONICAL_PROMOTION_SOURCE_MISMATCH` for the old R1
+  verification — historical R1 evidence stays historical exact evidence;
+  current R1.1 source is a later validated state. Currentness logic was not
+  modified.
+- **Safety.** Zero DEV/NEXT/production contacts, product mutations, DB/infra
+  queries, AI/model calls, promotion prepares/approvals/APPLYs, adopted-case
+  mutations, or publication. Variant B remains AVAILABLE_NOT_ADOPTED;
+  promotion authority NONE; Phase 8 still IN_PROGRESS; next architectural
+  capability requires separate design + owner authorization.
 
 ## Hardening Campaign I / I.1 — current durable closure
 
