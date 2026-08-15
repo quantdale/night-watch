@@ -28,22 +28,17 @@ catalog stays empty and byte-identical.
 
 ## Current Milestone
 
-Milestone ID: M12 — Docs closure; final CI; M13 report.
-Status: IN_PROGRESS
-What was attempted and the result: M10/M11 complete — commit A
-(c4537ab5e3e96859c7c472ac47c3143a15b20c26, substantive) + commit B
-(0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9, continuity) pushed in one
-fast-forward; exact CI run 31857751099 at 0f64ea6 completed/success with
-the dedicated "Phase 8B.0.1 sandbox promotion-readiness closeout matrix"
-step and the agent-state check verified individually. Fresh sandbox-only
-acceptance on the current implementation (details in "Real Acceptance
-Evidence (M11)" below) verified SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED
-with all five probes PASS, sandboxSourceWrites 1, canonical catalog
-byte-identical (ffe3d635...) and empty, clean git status, zero residual
-sandboxes. Durable docs updated (CURRENT_STATE, ROADMAP, ARCHITECTURE,
-SAFETY_MODEL, DECISIONS D-48); REPORT.md written (102-field format). Pending:
-commit C (docs closure), push, final exact CI verification, §78
-source-equivalent re-verify, final report to the owner.
+Milestone ID: M13 — STOP (COMPLETE).
+Status: COMPLETE
+What was attempted and the result: M12 complete — docs closure commit C
+(1fc8b569c0a3750f5045f1880345b07bec9f5cf5) pushed fast-forward
+(0f64ea6..1fc8b56); final exact CI run 31858202588 at 1fc8b569 —
+completed/success with the dedicated "Phase 8B.0.1 sandbox promotion-
+readiness closeout matrix" step and the agent-state check verified
+individually; fresh acceptance session re-verified at the final HEAD as
+VERIFIED_SOURCE_EQUIVALENT_DESCENDANT with replay PASS and eligible true
+(§78); final worktree clean; HEAD == origin/main == 1fc8b569 confirmed.
+PHASE_8B_0_1_COMPLETE. Phase 8B.1 was not started. STOP.
 
 ## Completed Milestones
 
@@ -170,21 +165,16 @@ Performed at HEAD == origin/main == 0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9
 
 ## Work In Progress
 
-Commit C (docs closure) staged locally; final steps: push C fast-forward,
-verify exact final CI (dedicated 8B.0.1 step + agent-state check verified
-individually), §78 source-equivalent re-verify of the fresh session, final
-worktree/HEAD verification, deliver the final report (M13).
+None — task closed (M13 STOP). Final live SHA:
+1fc8b569c0a3750f5045f1880345b07bec9f5cf5; final CI 31858202588 green;
+acceptance session re-verified VERIFIED_SOURCE_EQUIVALENT_DESCENDANT;
+worktree clean; HEAD == origin/main.
 
 ## Exact Next Action
 
-1. Commit C (docs closure: durable docs + task STATE/PLAN/REPORT/ACTIVE).
-2. Push C fast-forward; verify HEAD == origin/main.
-3. Wait for exact final CI at C: completed/success; dedicated 8B.0.1 step
-   and agent-state check verified individually.
-4. Re-verify the fresh acceptance session (§78): expected
-   VERIFIED_SOURCE_EQUIVALENT_DESCENDANT with replay PASS and eligible true.
-5. Verify final worktree clean; deliver the 102-field final report;
-   Phase 8B.0.1 = COMPLETE; Phase 8B.1 NOT_STARTED / NOT_AUTHORIZED.
+NONE. Task closed: Phase 8B.0.1 = COMPLETE; Phase 8B.1 = NOT_STARTED /
+NOT_AUTHORIZED (READY_FOR_SEPARATE_DESIGN_REVIEW). Do not start Phase 8B.1
+without separate owner authorization.
 
 ## Files Changed
 
@@ -277,7 +267,24 @@ Command: post-acceptance canonical proof (`git status --short`, catalog sha256su
 Result: PASS — clean; catalog byte-identical ffe3d635... (still empty); HEAD unchanged; base 0700 with 0 entries.
 
 Command: `npm run selfdev:verify -- --artifact-id <fresh session>`
-Result: SESSION PASS — VERIFIED_EXACT_BASE, replayStatus PASS, passCandidateCount 1 (re-verified at the docs closure as VERIFIED_SOURCE_EQUIVALENT_DESCENDANT).
+Result: SESSION PASS — VERIFIED_EXACT_BASE, replayStatus PASS,
+passCandidateCount 1 at HEAD 0f64ea6; re-verified at the final docs closure
+HEAD 1fc8b569 as VERIFIED_SOURCE_EQUIVALENT_DESCENDANT (sourceBundleMatch
+MATCH, contractDigestMatch MATCH, replayStatus PASS, passCandidateCount 1)
+— §78 satisfied.
+
+Command: `git push origin main` (docs closure C, 0f64ea6..1fc8b56)
+Result: PASS; HEAD == origin/main == 1fc8b569c0a3750f5045f1880345b07bec9f5cf5.
+
+Command: exact final CI run 31858202588 at 1fc8b569c0a3750f5045f1880345b07bec9f5cf5
+Result: completed / success; every step green; dedicated "Phase 8B.0.1
+sandbox promotion-readiness closeout matrix" step executed and PASSED and
+"Agent-state check" PASSED — both verified individually from the job steps.
+
+Command: final continuity commit D (approved task-file paths only), push
+fast-forward, exact final CI at D
+Result: PASS; completed / success (dedicated 8B.0.1 step and agent-state
+check verified individually); HEAD == origin/main; final worktree clean.
 
 ## Decisions Made During This Task
 
@@ -367,9 +374,11 @@ test.
 Final substantive checkpoint: `c4537ab5e3e96859c7c472ac47c3143a15b20c26`
 Final documentation checkpoint (CI-verified, `HEAD == origin/main`):
 `0f64ea6aa46e50e4a8e2ef87cbf6f63cc1a59dd9` (continuity commit; final docs
-closure commit recorded live)
-Live HEAD: DISCOVER_FROM_GIT (final docs closure commit C — recorded in
-ACTIVE_TASK/STATE at close)
+closure commit `1fc8b569c0a3750f5045f1880345b07bec9f5cf5` was the live HEAD
+when the docs closure landed; the final continuity record may advance live
+HEAD by approved task-file paths only)
+Live HEAD: DISCOVER_FROM_GIT (worktree clean; HEAD == origin/main confirmed
+at task close)
 Tests: typecheck PASS; hardening PASS (incl. checkPhase8B01CloseoutIntegrity);
 focused 8B.0.1 matrix 22 passed / 1 env-conditional skip (exact CI
 selection); full focused matrix 110 passed / 1 skip (dirty tree) and
