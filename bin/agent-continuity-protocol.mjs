@@ -343,7 +343,12 @@ export function parsePlanMilestoneLines(milestoneLines) {
       /^(?:[-*]|\d+[.)])\s+/.test(trimmed) || /\[[ xX]\]/.test(trimmed) || /\bM\d+([./]\d+)?\b/.test(trimmed);
     if (!isItem) continue;
     const unchecked = /\[ \]/.test(trimmed);
-    const statusMatch = MILESTONE_STATUS_RE.exec(trimmed);
+    // The LAST status token wins: milestone lines conventionally close with
+    // the status ("M1 — DONE"), while the milestone TITLE may legitimately
+    // mention other states ("M12 self-host (IN_PROGRESS mode) — DONE").
+    const globalStatusRe = new RegExp(MILESTONE_STATUS_RE.source, 'gi');
+    const statusMatches = [...trimmed.matchAll(globalStatusRe)];
+    const statusMatch = statusMatches.length > 0 ? statusMatches[statusMatches.length - 1] : null;
     out.push({
       lineNumber,
       text: trimmed,
