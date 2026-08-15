@@ -4,9 +4,9 @@
 
 Task ID: phase-8b-1-0-catalog-aware-proposal-compatibility
 Phase: 8B.1.0
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
-Last validated implementation SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
+Last validated implementation SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 Current milestone: M12 — full normal regression (real checkout, empty catalog)
 Last checkpoint: 2026-08-15 — implementation complete; focused matrices green
 (M8/M9/M10/M11 done); M12 in progress.
@@ -23,8 +23,8 @@ centralized test-only source fixtures. Do NOT retry the canonical promotion.
 ## Continuity
 
 STARTING_SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
+LAST_VALIDATED_IMPLEMENTATION_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 LAST_DOCUMENTATION_CHECKPOINT_SHA: 01dbadf8e8d9d83936df545e7e7a4b169db19914
 LIVE_HEAD_AUTHORITY: GIT
 
