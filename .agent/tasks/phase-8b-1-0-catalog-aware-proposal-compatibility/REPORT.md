@@ -113,5 +113,8 @@ A complete clean full-suite run was subsequently performed at
 10ecea296cf639b65e8a260fee54814737285c2d (clean tracked tree in the native
 workspace): 685 passed / 1 skipped / 0 failed, exit code 0. A second
 complete clean run was performed in an isolated full-history checkout at
-[FINAL_SHA]: [PASS] passed / [SKIP] skipped / 0 failed, exit code 0 (see
-the 8B.1.0.1 task records for the full evidence).
+cf3a75732d6ce2bbe7cbdb607554fea7543ba25f: 682 passed / 4 skipped / 0
+failed, exit code 0 (the 4 skips are the intentional environment-conditional
+OOPS-binary and foreign-uid/chown cases; the finalization documentation
+descendant is source-equivalent). See the 8B.1.0.1 task records for the
+full evidence.

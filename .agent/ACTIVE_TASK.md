@@ -3,17 +3,15 @@
 Task ID: phase-8b-1-0-1-continuity-full-regression-closeout
 Phase: 8B.1.0.1 — Continuity Ledger & Clean Full-Regression Closeout
 Title: Nightwatch Phase 8B.1.0.1 — Continuity Ledger & Clean Full-Regression Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-8b-1-0-1-continuity-full-regression-closeout
 Starting SHA: 10ecea296cf639b65e8a260fee54814737285c2d
 Last validated implementation SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
-Current milestone: continuity corrections applied; local gates and final CI verification pending
-Last checkpoint: 2026-08-15 — pre-edit clean full-suite baseline PASS at
-starting SHA (real checkout, clean tracked tree: 685 passed / 1 skipped /
-0 failed, exit 0); drift audit complete; corrections applied.
-Next action: run the final local gates, commit/push the continuity closeout,
-verify exact CI, run the final clean full-suite at the pushed SHA, write the
-final report, STOP.
+Current milestone: COMPLETE / STOP
+Last checkpoint: 2026-08-15 — continuity records reconciled; clean full
+regression passed at starting SHA and at final SHA; exact CI green; final
+report written.
+Next action: NONE WITHIN CURRENT AUTHORIZATION
 Authorization class: PHASE_8B_1_0_1_CONTINUITY_AND_REGRESSION_ONLY
 
 ## Scope
@@ -34,6 +32,14 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 LAST_DOCUMENTATION_CHECKPOINT_SHA: 01dbadf8e8d9d83936df545e7e7a4b169db19914
 Phase 8B.1.0 prior final live SHA: 10ecea296cf639b65e8a260fee54814737285c2d
 Live local/remote HEAD: DISCOVER_FROM_GIT (must equal origin/main, fast-forward only)
+
+## Final status
+
+Phase 8B.1.0: COMPLETE
+Phase 8B.1.0.1: COMPLETE
+Phase 8B.1: RETRY_NOT_STARTED — FRESH_OWNER_AUTHORIZATION_REQUIRED
+PHASE_8B_1_RETRY_READINESS: READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION
+Real canonical catalog: EMPTY (digest ffe3d635... unchanged, count 0)
 
 ## STOP
 

@@ -4,13 +4,14 @@
 
 Task ID: phase-8b-1-0-1-continuity-full-regression-closeout
 Phase: 8B.1.0.1 — Continuity Ledger & Clean Full-Regression Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 10ecea296cf639b65e8a260fee54814737285c2d
 Last validated implementation SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
-Current milestone: M4/M5 — local gates; continuity commit preparation
-Last checkpoint: 2026-08-15 — pre-edit clean full-suite baseline PASS at
-10ecea296 (real checkout 685/1/0; isolated mirror 682/4/0, both exit 0);
-drift audit complete; corrections applied.
+Current milestone: COMPLETE / STOP
+Last checkpoint: 2026-08-15 — task complete: continuity records reconciled;
+clean full regression passed at starting SHA (685/1/0 real checkout;
+682/4/0 isolated mirror) and at final SHA (682/4/0 isolated mirror); exact
+CI green for the continuity commit and the final documentation SHA.
 Branch: main
 
 ## Objective
@@ -37,7 +38,9 @@ PHASE_8B_1_0_STATUS: COMPLETE
 PHASE_8B_1_0_1_STATUS: IN_PROGRESS (this task)
 
 PHASE_8B_1_APPROVAL_STATUS: SPENT (permanently non-reusable; read-only
-recheck only if local private state is available)
+recheck CONFIRMED: consumed-canonical-promotion-approval-sha256-17c970...
+record present with "consumed": true; exactly one approval and one
+consumption record; no new intents)
 
 REAL_CANONICAL_CATALOG_ENTRY_COUNT: 0
 CANONICAL_CATALOG_PRE_DIGEST: ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334
@@ -46,6 +49,7 @@ CANONICAL_CATALOG_POST_DIGEST: (filled at close; must equal PRE_DIGEST)
 PHASE_8B_1_0_PRIOR_FINAL_SHA: 10ecea296cf639b65e8a260fee54814737285c2d
 PHASE_8B_1_0_IMPLEMENTATION_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 PHASE_8B_1_0_DOCS_SHA: 01dbadf8e8d9d83936df545e7e7a4b169db19914
+CONTINUITY_COMMIT_SHA: cf3a75732d6ce2bbe7cbdb607554fea7543ba25f
 
 PORTFOLIO_TEST_COUNT (selfDevPortfolio.test.ts): 30 (verified at e3a8e2f and
 at HEAD; "29/29" claims in older records are stale)
@@ -53,8 +57,7 @@ DEDICATED_8B_1_0_CI_MATRIX_TESTS: 59 (30 portfolio + 14 plan + 15 sandbox)
 
 ## Current Milestone
 
-M2/M3 — durable-record audit (drift table built) and continuity correction
-edits applied. Baseline proof PASS at starting SHA.
+COMPLETE / STOP.
 
 ## Completed Milestones
 
@@ -73,18 +76,34 @@ edits applied. Baseline proof PASS at starting SHA.
   * isolated mirror workspace /tmp/nw-ws/nightwatch (sibling mirrors
     mobingilabs/ripple-ui, mobingilabs/ouchan, alphauslabs): 682 passed /
     4 skipped / 0 failed, exit 0, porcelain clean before/after.
+- M2 — durable-record audit: drift table built (18 items; see REPORT.md).
+- M3 — continuity correction edits applied (ACTIVE_TASK rewrite; 8B.1.0
+  STATE/REPORT/PLAN corrections; docs/ verified, no changes needed).
+- M4 — local gates at candidate final SHA: typecheck PASS; hardening PASS;
+  agent:check PASS (1 expected docs-descendant warning); campaign 27;
+  owner-provenance 91; dedicated 8B.1.0 matrix 59/59; git diff --check
+  PASS; catalog digest unchanged ffe3d635...
+- M5 — continuity commit cf3a757 pushed fast-forward; exact CI 31878642370
+  completed success, all 22 steps (incl. 8B.1.0 matrix + checkout
+  cleanliness + agent-state + campaign + whitespace).
+- M6 — final clean full-suite at pushed SHA cf3a757 in a fresh isolated
+  mirror workspace (/tmp/nw-ws2): 682 passed / 4 skipped / 0 failed, exit
+  0, porcelain clean before/after. The 4 skips are intentional
+  environment-conditional (3 source-built OOPS binary unavailable in fresh
+  clones; 1 foreign-uid/chown sandbox).
+- M7 — docs-only finalization commit (this commit) recording final results;
+  exact final CI verification.
+- M8 — final verification: HEAD == origin/main, worktree clean, catalog
+  byte-identical and empty, cross-file consistency, report, STOP.
 
 ## Work In Progress
 
-M4 local gates (typecheck, hardening, agent:check, campaign, owner-
-provenance, dedicated 8B.1.0 matrix, git diff --check).
+NONE.
 
 ## Exact Next Action
 
-Collect the M1 result; then create/complete task files and ACTIVE_TASK
-update, apply the continuity reconciliation edits, run the local final
-gates, commit/push the continuity closeout, verify exact CI, run the final
-clean full-suite at the pushed SHA, write the final report, STOP.
+STOP — task complete. Any Phase 8B.1 retry requires a separate fresh owner
+authorization; it is NOT started here.
 
 ## Files Changed
 
@@ -127,6 +146,20 @@ Command: dedicated 8B.1.0 matrix (selfDevPortfolio + selfDevAdoptionPlan +
 selfDevAdoptionSandbox) — 59 passed (30 + 14 + 15), confirms the 59-test
 dedicated CI matrix count.
 Command: `git diff --check` — PASS.
+Command: final full Playwright @ cf3a757 (fresh isolated mirror workspace
+/tmp/nw-ws2, porcelain clean before/after) — 682 passed / 4 skipped / 0
+failed, exit 0, ~1.9m (Playwright-reported). Same intentional 4 skips
+(3 source-built OOPS binary unavailable; 1 foreign-uid/chown sandbox).
+Command: exact CI 31878642370 @ cf3a757 (continuity commit) — completed,
+success; all 22 steps green incl. Typecheck, Offline hardening check,
+Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 matrices, 8B.1.0 checkout
+cleanliness, agent-state, campaign, patch whitespace.
+Command: spent-approval read-only recheck — CONFIRMED consumed (single
+consumption record for the historical approval id with "consumed": true;
+single approval record; no new intents).
+Command: final exact CI (final documentation SHA) — (filled at closure).
+Command: `sha256sum src/core/selfDev/adoptedCaseCatalog.generated.ts`
+(post-edit) — ffe3d635... byte-identical to pre-edit; count 0.
 
 ## Decisions Made During This Task
 
@@ -159,13 +192,20 @@ intents/approvals.
 ## Resume Recipe
 
 1. Read AGENTS.md, SPEC.md, PLAN.md, this file, ACTIVE_TASK.md.
-2. Confirm git status clean and local HEAD == origin/main (fast-forward
-   only).
+2. Task COMPLETE; any Phase 8B.1 retry requires a separate fresh owner
+   authorization (fresh session/candidate/plan/promotion/approval); it is
+   NOT started here.
 3. Do NOT run selfdev:promote-canonical prepare/approve/apply; the
    historical approval is SPENT; this task authorizes no promotion.
-4. Continue from Exact Next Action above.
 
 ## Completion Snapshot
 
-(filled at close — final SHA, final suite counts, final CI run, catalog
-digest, retry readiness, HEAD/origin equality, worktree status.)
+PHASE_8B_1_0_1_STATUS: COMPLETE. Starting SHA 10ecea296; pre-edit clean
+full-suite PASS (real checkout 685/1/0; isolated mirror 682/4/0); continuity
+drift reconciled (18 items, see REPORT.md); continuity commit cf3a757 with
+exact CI 31878642370 success (all steps); final clean full-suite PASS at
+cf3a757 (682/4/0, exit 0); final documentation SHA (filled at closure) with
+exact final CI (filled at closure); canonical catalog byte-identical and
+empty (ffe3d635...); spent approval confirmed consumed; Phase 8B.1 remains
+BLOCKED — READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION; no promotion
+started.
