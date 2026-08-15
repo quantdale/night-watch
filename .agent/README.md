@@ -50,6 +50,19 @@ and before likely context loss. A completed task updates PLAN, STATE,
 `REPORT.md`, project docs as needed, and ACTIVE_TASK, then commits the complete
 handoff within Nightwatch.
 
+## Continuity protocol v2
+
+Every non-NONE active task declares
+`CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2` in both
+`ACTIVE_TASK.md` and `STATE.md`. The checker (`npm run agent:check`) enforces
+the cross-file status state machine: COMPLETE tasks have terminal milestone /
+WIP / next action / resume recipe, a complete report and completion snapshot,
+closed PLAN milestones and no future-value placeholders; BLOCKED tasks have a
+real blocker; IN_PROGRESS tasks have a real milestone and next action.
+`npm run agent:audit` inventories every task directory (v2 strict, legacy v1
+warnings only). Live HEAD is Git authority; a tracked document never predicts
+the SHA or CI run of the commit containing itself.
+
 The optional machine check is `npm run agent:check`; documentation remains the
 primary protocol and the validator is only a deterministic consistency guard.
 New task state records stable anchors: `LAST_VALIDATED_IMPLEMENTATION_SHA`

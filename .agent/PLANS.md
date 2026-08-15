@@ -38,6 +38,16 @@ each milestone, implement → validate → repair → record exact results in ST
 → advance. Update STATE before a milestone commit and record stable
 implementation/documentation anchors at the next checkpoint. Do not write a
 field that claims to be the SHA of the commit containing that same field.
+
+## Protocol v2 milestone statuses
+
+Tasks declaring `CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2`
+(required for every non-NONE active task) must keep the `## Milestones`
+section statuses in the vocabulary NOT_STARTED / IN_PROGRESS / BLOCKED /
+COMPLETE; a task marked COMPLETE must have every milestone line terminal
+(DONE / COMPLETE / PASS / CLOSED) and no unresolved future-value placeholders
+in live/final fields. Historical legacy v1 tasks are not retroactively
+rewritten.
 `LAST_VALIDATED_IMPLEMENTATION_SHA` and
 `LAST_SUBSTANTIVE_CHECKPOINT_SHA` identify the validated substantive baseline;
 `LAST_DOCUMENTATION_CHECKPOINT_SHA`, when used, identifies an approved

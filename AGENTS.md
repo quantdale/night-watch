@@ -122,6 +122,41 @@ record the exact result in `STATE.md`, then advance. If required validation
 fails, stop accumulating unrelated changes and repair it first. Keep discoveries
 outside scope under `Deferred / Follow-Up`.
 
+## Continuity protocol v2 (agent continuity)
+
+Every non-NONE active task declares, in both `.agent/ACTIVE_TASK.md` and the
+matching `STATE.md`:
+
+```
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+```
+
+Under v2 the checker enforces a cross-file task-status state machine:
+
+- COMPLETE is a semantic state, not a label: ACTIVE/STATE/REPORT statuses
+  agree; the current phase-specific status (`PHASE_<TOKEN>_STATUS`) normalizes
+  to COMPLETE; current milestone, work-in-progress, next action and resume
+  recipe are terminal; the completion snapshot is complete; PLAN live
+  milestones are closed; no unresolved closure placeholders remain.
+- BLOCKED means actually blocked: `## Blockers` is non-empty and the exact
+  next action is STOP or a concrete unblock condition.
+- IN_PROGRESS means actually active: a real current milestone and a concrete
+  next action, and no false COMPLETE claim.
+- Duplicate canonical structured fields are errors even when values are
+  identical (`DUPLICATE_CONTINUITY_FIELD` with line numbers).
+- Future-value placeholders such as `(filled after push)` / `(filled at
+  close)` are rejected in COMPLETE live/final fields. `DISCOVER_FROM_GIT`,
+  `LIVE_HEAD_AUTHORITY: GIT` and `FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD`
+  are intentional authority markers, not placeholders.
+- Tracked documents record only SHAs and CI run IDs already known before the
+  document commit; live HEAD is discovered from Git; a document never predicts
+  the SHA or CI run of the commit that contains itself.
+- `npm run agent:check` strict-validates the active task and every v2 task
+  directory; `npm run agent:audit` reports the full history inventory.
+  Historical tasks without the marker remain readable legacy v1 records
+  (warnings only) — do not mass-migrate them; migrate individually only when a
+  future task directly depends on them.
+
 ## Recovery
 
 If context may have been compacted or certainty is lost: stop editing; read

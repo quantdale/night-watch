@@ -8,6 +8,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { buildChildEnvironment } from './child-environment.mjs';
+import {
+  PROTOCOL_V2,
+  validateTaskV2,
+  inspectLegacyTask,
+  parseMarkdownSections,
+  sectionBodyText,
+} from './agent-continuity-protocol.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -66,6 +73,12 @@ function parseArgs(argv) {
     return path.resolve(supplied);
   }
   return process.cwd();
+}
+
+function formatProtocolDiagnostic(diagnostic) {
+  const location = diagnostic.path === null || diagnostic.path === undefined ? '' : diagnostic.path;
+  const line = diagnostic.line === null || diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
+  return `${diagnostic.code}${location ? `: ${location}${line}` : ''}${diagnostic.detail ? ` — ${diagnostic.detail}` : ''}`;
 }
 
 function readFile(root, relativePath, errors) {
@@ -410,7 +423,128 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
   };
 }
 
-export function validate(root) {
+/**
+ * History audit of every `.agent/tasks/<dir>`.
+ * - v2 tasks (STATE declares nightwatch.agent-continuity.v2) are strictly
+ *   validated (semantics + Git continuity anchors); any error is fatal.
+ * - legacy v1 tasks are structurally inspected; warnings only.
+ * - task-directory symlinks are rejected/skipped (no traversal outside
+ *   `.agent/tasks`).
+ * Read-only: never writes, never follows symlinks.
+ */
+function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory) {
+  const stats = { total: 0, strictV2: 0, legacyV1: 0, strictErrors: 0, legacyWarnings: 0 };
+  const tasksRoot = path.join(root, '.agent', 'tasks');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(tasksRoot, { withFileTypes: true });
+  } catch {
+    return stats;
+  }
+  for (const entry of entries) {
+    if (skipDirectory && entry.name === skipDirectory) continue;
+    const dirPath = path.join(tasksRoot, entry.name);
+    let lstat;
+    try {
+      lstat = fs.lstatSync(dirPath);
+    } catch {
+      continue;
+    }
+    if (lstat.isSymbolicLink()) {
+      stats.legacyWarnings += 1;
+      warnings.push(`TASK_DIRECTORY_SYMLINK_REJECTED: .agent/tasks/${entry.name}`);
+      if (auditMode) console.log(`[agent-audit] ${entry.name} protocol=SYMLINK_REJECTED`);
+      continue;
+    }
+    if (!lstat.isDirectory()) continue;
+    stats.total += 1;
+    const readTaskFile = (file) => {
+      try {
+        return fs.readFileSync(path.join(dirPath, file), 'utf8');
+      } catch {
+        return null;
+      }
+    };
+    const specText = readTaskFile('SPEC.md');
+    const planText = readTaskFile('PLAN.md');
+    const stateText = readTaskFile('STATE.md');
+    const reportText = readTaskFile('REPORT.md');
+    const stateFields = stateText !== null ? parseKeyValueFile(stateText) : new Map();
+    const taskId = stateFields.get('Task ID') ?? entry.name;
+    const taskStatus = stateFields.get('Status') ?? 'UNKNOWN';
+    const protocol = stateFields.get('CONTINUITY_PROTOCOL_VERSION');
+    const isV2 = protocol === PROTOCOL_V2;
+    const taskErrors = [];
+    const taskWarnings = [];
+
+    if (isV2 && stateText !== null) {
+      stats.strictV2 += 1;
+      const result = validateTaskV2(
+        {
+          dir: entry.name,
+          stateText,
+          statePath: `.agent/tasks/${entry.name}/STATE.md`,
+          planText,
+          planPath: `.agent/tasks/${entry.name}/PLAN.md`,
+          reportText,
+          reportPath: `.agent/tasks/${entry.name}/REPORT.md`,
+        },
+        { bindActive: false }
+      );
+      taskErrors.push(...result.errors.map(formatProtocolDiagnostic));
+      if (head) {
+        const continuityErrors = [];
+        const continuityWarnings = [];
+        checkContinuity(stateFields, root, head, continuityErrors, continuityWarnings);
+        taskErrors.push(...continuityErrors);
+        taskWarnings.push(...continuityWarnings);
+      }
+      if (taskId !== entry.name) {
+        taskErrors.push(`TASK_ID_MISMATCH: .agent/tasks/${entry.name}/STATE.md — STATE task id ${taskId} != directory ${entry.name}`);
+      }
+      if (specText === null) taskWarnings.push(`LEGACY_TASK_MISSING_SPEC: .agent/tasks/${entry.name} (v2 task without SPEC.md)`);
+    } else {
+      stats.legacyV1 += 1;
+      taskWarnings.push(`LEGACY_TASK_NOT_STRICTLY_VALIDATED: .agent/tasks/${entry.name}`);
+      if (stateText !== null) {
+        const sections = parseMarkdownSections(stateText).sections;
+        const nextAction = sectionBodyText(sections.get('Exact Next Action'));
+        const findings = inspectLegacyTask(
+          { reportText, stateNextAction: nextAction, statePath: `.agent/tasks/${entry.name}/STATE.md` },
+          taskStatus
+        );
+        for (const finding of findings) {
+          taskWarnings.push(`LEGACY_HIGH_SEVERITY_CONTINUITY_FINDING: ${formatProtocolDiagnostic(finding)}`);
+        }
+      }
+    }
+
+    stats.strictErrors += taskErrors.length;
+    stats.legacyWarnings += taskWarnings.length;
+    if (auditMode) {
+      const protocolLabel = isV2 ? PROTOCOL_V2 : 'LEGACY_V1';
+      console.log(
+        `[agent-audit] ${entry.name} protocol=${protocolLabel} status=${taskStatus} strict=${isV2 ? 'true' : 'false'} errors=${taskErrors.length} warnings=${taskWarnings.length}`
+      );
+      for (const taskError of taskErrors) console.log(`[agent-audit]   ERROR: ${taskError}`);
+      for (const taskWarning of taskWarnings) console.log(`[agent-audit]   WARNING: ${taskWarning}`);
+    }
+    errors.push(...taskErrors);
+    // In default check mode, per-task legacy warnings stay summarized; only
+    // safety-relevant findings are surfaced individually. In audit mode the
+    // per-task lines above are the record; do not duplicate them globally.
+    if (!auditMode) {
+      for (const taskWarning of taskWarnings) {
+        if (taskWarning.startsWith('TASK_DIRECTORY_SYMLINK_REJECTED') || taskWarning.startsWith('LEGACY_HIGH_SEVERITY_CONTINUITY_FINDING')) {
+          warnings.push(taskWarning);
+        }
+      }
+    }
+  }
+  return stats;
+}
+
+export function validate(root, auditMode = false) {
   const errors = [];
   const warnings = [];
   const activeText = readFile(root, '.agent/ACTIVE_TASK.md', errors);
@@ -494,6 +628,27 @@ export function validate(root) {
         else warnings.push(message);
       }
     }
+    // Phase 8B.1.0.2 — protocol v2 strict validation of the ACTIVE task.
+    if (status && status !== 'NONE' && state) {
+      const planText = taskTexts.get('PLAN.md');
+      const reportText = taskTexts.get('REPORT.md');
+      const activeTextForProtocol = activeText;
+      const task = {
+        dir: taskDirectory,
+        stateText: state,
+        statePath: path.join(taskDirectory, 'STATE.md'),
+        planText: planText ?? null,
+        planPath: path.join(taskDirectory, 'PLAN.md'),
+        reportText: reportText ?? null,
+        reportPath: path.join(taskDirectory, 'REPORT.md'),
+        activeText: activeTextForProtocol,
+        activePath: '.agent/ACTIVE_TASK.md',
+      };
+      const protocolResult = validateTaskV2(task, { bindActive: true });
+      for (const diagnostic of protocolResult.errors) {
+        errors.push(formatProtocolDiagnostic(diagnostic));
+      }
+    }
     scanForSecrets(root, [
       'AGENTS.md',
       '.agent/ACTIVE_TASK.md',
@@ -508,11 +663,27 @@ export function validate(root) {
     scanForSecrets(root, ['AGENTS.md', '.agent/ACTIVE_TASK.md', '.agent/README.md', '.agent/PLANS.md'], errors);
   }
 
-  return { errors, warnings };
+  // Phase 8B.1.0.2 — history audit of every task directory (v2 strict,
+  // legacy summarized). Runs in both agent:check and --audit-history.
+  // The ACTIVE task directory is included; identical diagnostics produced by
+  // both the bindActive layer and the audit are deduplicated at return.
+  const auditHead = gitHead(root, errors);
+  const auditStats = auditTaskHistory(root, auditHead, auditMode, errors, warnings, null);
+  console.log(
+    `[agent-audit] tasks=${auditStats.total} strict_v2=${auditStats.strictV2} legacy_v1=${auditStats.legacyV1} strict_errors=${auditStats.strictErrors} legacy_warnings=${auditStats.legacyWarnings}`
+  );
+  if (auditStats.legacyV1 > 0) {
+    warnings.push(
+      `LEGACY_TASK_NOT_STRICTLY_VALIDATED: ${auditStats.legacyV1} legacy v1 task(s) are historical records; not strict-validated (agent:audit --audit-history for detail)`
+    );
+  }
+
+  return { errors: [...new Set(errors)], warnings };
 }
 
 function main() {
   let root;
+  const auditMode = process.argv.includes('--audit-history');
   try {
     root = parseArgs(process.argv.slice(2));
   } catch (error) {
@@ -520,7 +691,7 @@ function main() {
     process.exitCode = 2;
     return;
   }
-  const result = validate(root);
+  const result = validate(root, auditMode);
   for (const warning of result.warnings) console.warn(`[agent-check] WARNING: ${warning}`);
   if (result.errors.length > 0) {
     for (const error of result.errors) console.error(`[agent-check] ERROR: ${error}`);

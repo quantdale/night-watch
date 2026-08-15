@@ -1,45 +1,44 @@
 # Active Task
 
-Task ID: phase-8b-1-0-1-continuity-full-regression-closeout
-Phase: 8B.1.0.1 — Continuity Ledger & Clean Full-Regression Closeout
-Title: Nightwatch Phase 8B.1.0.1 — Continuity Ledger & Clean Full-Regression Closeout
-Status: COMPLETE
-Task directory: .agent/tasks/phase-8b-1-0-1-continuity-full-regression-closeout
-Starting SHA: 10ecea296cf639b65e8a260fee54814737285c2d
+Task ID: phase-8b-1-0-2-completed-task-continuity-protocol
+Phase: 8B.1.0.2 — Completed-Task Continuity Protocol & Historical Ledger Hardening
+Title: Nightwatch Phase 8B.1.0.2 — Completed-Task Continuity Protocol & Historical Ledger Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-8b-1-0-2-completed-task-continuity-protocol
+Starting SHA: 2e6c2cf08fd897427956834100175396e9a43e57
 Last validated implementation SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
-Current milestone: COMPLETE / STOP
-Last checkpoint: 2026-08-15 — continuity records reconciled; clean full
-regression passed at starting SHA and at final SHA; exact CI green; final
-report written.
-Next action: NONE WITHIN CURRENT AUTHORIZATION
-Authorization class: PHASE_8B_1_0_1_CONTINUITY_AND_REGRESSION_ONLY
+Current milestone: M16 — substantive commit preparation
+Last checkpoint: 2026-08-15 — M14 regression green (Phase 8 lineage 162/1,
+provenance 91, campaign 27, AI 98); lineage migration v2-clean.
+Next action: commit the substantive implementation (protocol module,
+checker, tests, workflow, docs), push, verify exact CI, then run the final
+full regression at the pushed SHA in an isolated mirror workspace.
+Authorization class: PHASE_8B_1_0_2_CONTINUITY_PROTOCOL_HARDENING_ONLY
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-(a) Independently prove the COMPLETE Playwright suite passes from clean
-source state (starting SHA and final SHA); (b) reconcile every durable
-Phase 8B.1.0 continuity record (ACTIVE_TASK, 8B.1.0 STATE/REPORT/PLAN) with
-what actually happened; (c) re-run exact final repository gates; (d) leave
-Phase 8B.1 requiring a completely separate fresh owner authorization. NO
-canonical promotion, NO approval creation/reuse, NO runtime Git mutation,
-NO source/test/workflow changes.
+Versioned continuity protocol v2: strict COMPLETE/BLOCKED/IN_PROGRESS state
+machine across ACTIVE_TASK/STATE/PLAN/REPORT; duplicate-field ambiguity
+rejection; unresolved-closure placeholder rejection; current-phase status
+binding; non-self-referential finalization; all-v2-task history audit;
+legacy task compatibility; future task template hardening; agent-state
+self-test expansion; CI enforcement; current 8B.1 lineage reconciliation.
+NO canonical promotion, NO approval, NO source/selfDev semantic changes.
 
 ## Continuity
 
-STARTING_SHA: 10ecea296cf639b65e8a260fee54814737285c2d
+STARTING_SHA: 2e6c2cf08fd897427956834100175396e9a43e57
 LAST_VALIDATED_IMPLEMENTATION_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
 LAST_DOCUMENTATION_CHECKPOINT_SHA: 01dbadf8e8d9d83936df545e7e7a4b169db19914
-Phase 8B.1.0 prior final live SHA: 10ecea296cf639b65e8a260fee54814737285c2d
-Live local/remote HEAD: DISCOVER_FROM_GIT (must equal origin/main, fast-forward only)
+LIVE_HEAD_AUTHORITY: GIT
 
-## Final status
+## Final status (target)
 
-Phase 8B.1.0: COMPLETE
-Phase 8B.1.0.1: COMPLETE
+Phase 8B.1.0.2: COMPLETE (at closure; IN_PROGRESS now)
 Phase 8B.1: RETRY_NOT_STARTED — FRESH_OWNER_AUTHORIZATION_REQUIRED
-PHASE_8B_1_RETRY_READINESS: READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION
-Real canonical catalog: EMPTY (digest ffe3d635... unchanged, count 0)
+Real canonical catalog: EMPTY (digest ffe3d635..., count 0)
 
 ## STOP
 

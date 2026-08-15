@@ -63,6 +63,8 @@ jobs:
         run: npx playwright test tests/unit/agent-state.test.ts --project=nightwatch --workers=1
       - name: Agent-state check
         run: npm run agent:check
+      - name: Completed-task continuity audit
+        run: npm run agent:audit
       - name: Synthetic campaign
         run: npm run campaign:synthetic
       - name: Check patch whitespace

@@ -3,6 +3,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import {
+  derivePhaseStatusKey,
+  normalizeTaskStatus,
+  isTerminalMilestoneText,
+  isTerminalNextActionText,
+  isTerminalResumeRecipeText,
+  hasClosurePlaceholder,
+} from '../../bin/agent-continuity-protocol.mjs';
 
 const CHECKER = path.join(__dirname, '..', '..', 'bin', 'agent-state.mjs');
 const GIT_FLAGS = ['-c', 'commit.gpgsign=false', '-c', 'user.email=nightwatch-test@example.invalid', '-c', 'user.name=Nightwatch Test'];
@@ -31,35 +39,68 @@ interface ProtocolOptions {
   readonly startingSha?: string;
   readonly legacyCurrentSha?: string;
   readonly persistedHeadSha?: string;
+  readonly phase?: string;
+  readonly activePhase?: string;
+  readonly phaseStatus?: string;
+  readonly protocolVersion?: string;
+  readonly omitProtocol?: boolean;
+  readonly activeMilestone?: string;
+  readonly activeNextAction?: string;
+  readonly stateMilestone?: string;
+  readonly stateWip?: string;
+  readonly stateNextAction?: string;
+  readonly stateBlockers?: string;
+  readonly stateResume?: string;
+  readonly stateSnapshot?: string;
+  readonly stateLedger?: string;
+  readonly planMilestones?: string;
+  readonly planDecisionLog?: string;
+  readonly reportStatus?: string;
+  readonly reportBody?: string;
+  readonly stateExtra?: string;
+  readonly activeExtra?: string;
 }
 
-function writeProtocol(root: string, options: ProtocolOptions = {}): string {
-  const taskId = options.taskId ?? 'phase-test';
-  const taskDirectory = `.agent/tasks/${taskId}`;
+function protocolStrings(taskId: string, options: ProtocolOptions): { active: string; spec: string; plan: string; state: string; report: string } {
   const baselineSha = options.baselineSha ?? options.currentSha ?? '0000000000000000000000000000000000000000';
   const substantiveSha = options.substantiveSha ?? baselineSha;
   const startingSha = options.startingSha ?? baselineSha;
   const legacyCurrentSha = options.legacyCurrentSha;
   const persistedHeadSha = options.persistedHeadSha ?? 'DISCOVER_FROM_GIT';
-  fs.mkdirSync(path.join(root, taskDirectory), { recursive: true });
-  fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Agent contract\n');
-  fs.mkdirSync(path.join(root, '.agent'), { recursive: true });
-  fs.writeFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), `# Active Task
+  const phase = options.phase ?? 'test';
+  const activePhase = options.activePhase ?? phase;
+  const protocolVersion = options.protocolVersion ?? 'nightwatch.agent-continuity.v2';
+  const activeMilestone = options.activeMilestone ?? 'M1';
+  const activeNextAction = options.activeNextAction ?? 'run the synthetic validator test';
+  const stateMilestone = options.stateMilestone ?? 'synthetic';
+  const stateWip = options.stateWip ?? 'synthetic';
+  const stateNextAction = options.stateNextAction ?? 'run the synthetic validator test';
+  const stateBlockers = options.stateBlockers ?? 'None.';
+  const stateResume = options.stateResume ?? '1. run the test';
+  const stateSnapshot = options.stateSnapshot ?? '';
+  const stateLedger = options.stateLedger ?? 'synthetic';
+  const planMilestones = options.planMilestones ?? '';
+  const reportStatusLine = options.reportStatus === undefined ? '' : `Status: ${options.reportStatus}\n`;
+  const protocolLine = options.omitProtocol === true ? '' : `CONTINUITY_PROTOCOL_VERSION: ${protocolVersion}\n`;
+  const phaseStatusKey = `PHASE_${phase.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_STATUS`;
+  const phaseStatusLine = options.phaseStatus === undefined ? '' : `${phaseStatusKey}: ${options.phaseStatus}\n`;
+  const taskDirectory = `.agent/tasks/${taskId}`;
+  const active = `# Active Task
 
 Task ID: ${taskId}
-Phase: test
+Phase: ${activePhase}
 Title: Synthetic validator fixture
 Status: ${options.status ?? 'IN_PROGRESS'}
 Task directory: ${taskDirectory}
 Starting SHA: ${startingSha}
 Last validated implementation SHA: ${baselineSha}
 ${legacyCurrentSha === undefined ? '' : `Current SHA: ${legacyCurrentSha}
-`}Current milestone: M1
+`}Current milestone: ${activeMilestone}
 Last checkpoint: synthetic
-Next action: run the synthetic validator test
-`);
-  fs.writeFileSync(path.join(root, taskDirectory, 'SPEC.md'), '# Synthetic task\n');
-  fs.writeFileSync(path.join(root, taskDirectory, 'PLAN.md'), `# Synthetic plan
+Next action: ${activeNextAction}
+${protocolLine}${options.activeExtra ?? ''}`;
+  const spec = '# Synthetic task\n';
+  const plan = `# Synthetic plan
 
 ## Purpose
 ## Starting State
@@ -68,18 +109,20 @@ Next action: run the synthetic validator test
 ## Safety Constraints
 ## Architecture / Approach
 ## Milestones
+${planMilestones}
 ## Validation Strategy
 ## Decision Log
+${options.planDecisionLog ?? ''}
 ## Discoveries
 ## Deferred Work
 ## Completion Criteria
-`);
+`;
   const state = options.state ?? `# Task State
 
 ## Identity
 
 Task ID: ${taskId}
-Phase: test
+Phase: ${phase}
 Status: ${options.status ?? 'IN_PROGRESS'}
 Starting SHA: ${startingSha}
 Last validated implementation SHA: ${baselineSha}
@@ -94,41 +137,118 @@ CURRENT_LOCAL_HEAD: ${persistedHeadSha}
 CURRENT_REMOTE_HEAD: ${persistedHeadSha}
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 ${legacyCurrentSha === undefined ? '' : `Current SHA: ${legacyCurrentSha}
-`}
+`}${phaseStatusLine}${protocolLine}
 Branch: main
 Last checkpoint: synthetic
 
 ## Objective
 synthetic
 ## Current Milestone
-synthetic
+${stateMilestone}
 ## Completed Milestones
 synthetic
 ## Work In Progress
-synthetic
+${stateWip}
 ## Exact Next Action
-run the synthetic validator test
+${stateNextAction}
 ## Files Changed
 synthetic
 ## Validation Ledger
-synthetic
+${stateLedger}
 ## Decisions Made During This Task
 synthetic
 ## Discoveries
 synthetic
 ## Blockers
-None.
+${stateBlockers}
 ## Safety Events
 NONE
 ## Deferred / Follow-Up
 None.
 ## Resume Recipe
-1. run the test
+${stateResume}
 ## Completion Snapshot
-`;
-  fs.writeFileSync(path.join(root, taskDirectory, 'STATE.md'), state);
-  fs.writeFileSync(path.join(root, taskDirectory, 'REPORT.md'), '# Synthetic report\n');
-  return taskDirectory;
+${stateSnapshot}
+${options.stateExtra ?? ''}`;
+  const report = `# Synthetic report
+${reportStatusLine}${options.reportBody ?? ''}`;
+  return { active, spec, plan, state, report };
+}
+
+function writeTaskDir(root: string, taskId: string, options: ProtocolOptions = {}): void {
+  const taskDirectory = `.agent/tasks/${taskId}`;
+  const strings = protocolStrings(taskId, options);
+  fs.mkdirSync(path.join(root, taskDirectory), { recursive: true });
+  fs.writeFileSync(path.join(root, taskDirectory, 'SPEC.md'), strings.spec);
+  fs.writeFileSync(path.join(root, taskDirectory, 'PLAN.md'), strings.plan);
+  fs.writeFileSync(path.join(root, taskDirectory, 'STATE.md'), strings.state);
+  fs.writeFileSync(path.join(root, taskDirectory, 'REPORT.md'), strings.report);
+}
+
+function writeProtocol(root: string, options: ProtocolOptions = {}): string {
+  const taskId = options.taskId ?? 'phase-test';
+  const strings = protocolStrings(taskId, options);
+  fs.mkdirSync(path.join(root, '.agent'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Agent contract\n');
+  fs.writeFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), strings.active);
+  writeTaskDir(root, taskId, options);
+  return `.agent/tasks/${taskId}`;
+}
+
+/** Valid COMPLETE v2 task directory (used for history-audit fixtures). */
+function writeClosedV2Task(root: string, taskId: string, phase: string, sha: string): void {
+  writeTaskDir(root, taskId, {
+    taskId,
+    phase,
+    status: 'COMPLETE',
+    phaseStatus: 'COMPLETE',
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeMilestone: 'COMPLETE / STOP',
+    activeNextAction: 'STOP',
+    stateMilestone: 'COMPLETE / STOP.',
+    stateWip: 'NONE.',
+    stateNextAction: 'STOP — task complete.',
+    stateResume: 'Task complete. Do not resume.',
+    stateSnapshot: 'Task complete. PASS.',
+    planMilestones: '- M1 — DONE',
+    reportStatus: 'COMPLETE',
+  });
+}
+
+function setCompleteV2(root: string, options: ProtocolOptions = {}): void {
+  writeProtocol(root, {
+    status: 'COMPLETE',
+    phaseStatus: 'COMPLETE',
+    activeMilestone: 'COMPLETE / STOP',
+    activeNextAction: 'STOP',
+    stateMilestone: 'COMPLETE / STOP.',
+    stateWip: 'NONE.',
+    stateNextAction: 'STOP — task complete.',
+    stateResume: 'Task complete. Do not resume.',
+    stateSnapshot: 'Task complete. PASS.',
+    planMilestones: '- M1 — DONE',
+    reportStatus: 'COMPLETE',
+    ...options,
+  });
+}
+
+function setBlockedV2(root: string, options: ProtocolOptions = {}): void {
+  writeProtocol(root, {
+    status: 'BLOCKED',
+    phaseStatus: 'BLOCKED',
+    activeMilestone: 'M1 — BLOCKED',
+    activeNextAction: 'STOP — retry requires a new owner authorization.',
+    stateMilestone: 'M1 — BLOCKED.',
+    stateWip: 'NONE.',
+    stateNextAction: 'STOP — retry requires a new owner authorization.',
+    stateBlockers: '**BLOCKED**: fresh owner authorization required for any retry.',
+    stateResume: 'Task blocked; do not resume.',
+    stateSnapshot: 'Task blocked; no completion claim.',
+    planMilestones: '- M1 — BLOCKED',
+    ...options,
+  });
 }
 
 function fixture(): { root: string; sha: string; initialSha: string } {
@@ -148,6 +268,10 @@ function fixture(): { root: string; sha: string; initialSha: string } {
 
 function run(root: string) {
   return spawnSync(process.execPath, [CHECKER, '--root', root], { encoding: 'utf8' });
+}
+
+function runAudit(root: string) {
+  return spawnSync(process.execPath, [CHECKER, '--root', root, '--audit-history'], { encoding: 'utf8' });
 }
 
 function setField(root: string, relativePath: string, key: string, value: string): void {
@@ -352,7 +476,7 @@ test('COMPLETE task closure fails after a source change beyond the validated bas
   const documentationSha = commitFile(root, 'AGENTS.md', '# Documentation checkpoint\n', 'documentation checkpoint');
   commitFile(root, 'source.ts', 'validated substantive implementation\nsource drift after closure\n', 'source drift after closure');
   setContinuity(root, { documentation: documentationSha });
-  setStatus(root, 'COMPLETE');
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, documentationSha });
   const result = run(root);
   expect(result.status).toBe(1);
   expect(result.stderr).toContain('STALE_IMPLEMENTATION_BASELINE');
@@ -527,4 +651,609 @@ test('synthetic secret-like value is rejected', () => {
   const result = run(root);
   expect(result.status).toBe(1);
   expect(result.stderr).toContain('secret-like Bearer token detected');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — happy paths
+// ---------------------------------------------------------------------------
+
+test('v2 valid COMPLETE task passes', () => {
+  const { root, sha } = fixture();
+  fs.appendFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('[agent-check] PASS');
+});
+
+test('v2 valid BLOCKED task passes', () => {
+  const { root, sha } = fixture();
+  fs.appendFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('[agent-check] PASS');
+});
+
+test('v2 COMPLETE task with docs-only descendant and live-head authority passes', () => {
+  const { root, sha } = fixture();
+  const documentationSha = commitFile(root, 'AGENTS.md', '# Documentation checkpoint\n', 'documentation checkpoint');
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, documentationSha });
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('INVALID_IMPLEMENTATION_ROLE');
+});
+
+test('v2 IN_PROGRESS with WIP NONE between milestones passes', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateWip: 'NONE.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('v2 DISCOVER_FROM_GIT final-head authority marker passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nFINAL_HEAD: DISCOVER_FROM_GIT\nFINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('all-v2 history audit passes with multiple closed tasks', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-a', '8A.1.1', sha);
+  writeClosedV2Task(root, 'phase-closed-b', '8B.0.1', sha);
+  const result = runAudit(root);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('strict_v2=3');
+  expect(result.stdout).toContain('legacy_v1=0');
+  expect(result.stdout).toContain('strict_errors=0');
+});
+
+test('legacy and v2 mix audit passes with legacy warnings only', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-v2', '8B.1.0', sha);
+  // A legacy v1 task (no protocol marker, COMPLETE).
+  writeTaskDir(root, 'phase-legacy-old', {
+    taskId: 'phase-legacy-old',
+    phase: '3',
+    status: 'COMPLETE',
+    omitProtocol: true,
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    stateMilestone: 'M5 — DONE',
+    stateWip: 'NONE.',
+    stateNextAction: 'STOP.',
+    stateSnapshot: 'Closed.',
+    reportStatus: 'COMPLETE',
+  });
+  const result = runAudit(root);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('strict_v2=2');
+  expect(result.stdout).toContain('legacy_v1=1');
+  expect(result.stdout).toContain('strict_errors=0');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — COMPLETE negative matrix
+// ---------------------------------------------------------------------------
+
+test('v2 COMPLETE with phase-specific IN_PROGRESS fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, phaseStatus: 'IN_PROGRESS' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('CURRENT_PHASE_STATUS_MISMATCH');
+});
+
+test('v2 COMPLETE with ACTIVE milestone M12 fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeMilestone: 'M12' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_MILESTONE_NONTERMINAL');
+});
+
+test('v2 COMPLETE with STATE current milestone pending fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateMilestone: 'M17 — finalization pending' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_MILESTONE_NONTERMINAL');
+});
+
+test('v2 COMPLETE with active WIP fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateWip: 'M12 — run tests' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_HAS_WORK_IN_PROGRESS');
+});
+
+test('v2 COMPLETE with ACTIVE next action run tests fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeNextAction: 'run tests' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_NEXT_ACTION_NONTERMINAL');
+});
+
+test('v2 COMPLETE with STATE next action continue fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateNextAction: 'continue M12 → M18' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_NEXT_ACTION_NONTERMINAL');
+});
+
+test('v2 COMPLETE with resume recipe continue fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateResume: 'Continue from Exact Next Action (M12 → M18).' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_RESUME_RECIPE_NONTERMINAL');
+});
+
+test('v2 COMPLETE with missing REPORT fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  fs.rmSync(path.join(root, '.agent', 'tasks', 'phase-test', 'REPORT.md'));
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_REPORT_MISSING');
+});
+
+test('v2 COMPLETE with REPORT IN_PROGRESS fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportStatus: 'IN_PROGRESS' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_REPORT_STATUS_MISMATCH');
+});
+
+test('v2 COMPLETE with REPORT missing status fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportStatus: undefined });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_REPORT_STATUS_MISSING');
+});
+
+test('v2 COMPLETE with empty snapshot fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateSnapshot: '' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_SNAPSHOT_INCOMPLETE');
+});
+
+test('v2 COMPLETE with fill-at-close placeholder fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateSnapshot: '(filled at close)' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('v2 COMPLETE with fill-after-finalization-push placeholder fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateLedger: 'Final exact CI (filled after finalization push)' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('v2 COMPLETE with angle-bracket final SHA placeholder fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateSnapshot: '<FINAL_SHA>' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('v2 COMPLETE with PLAN milestone PENDING fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, planMilestones: '- M1: DONE\n- M18: PENDING' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_PLAN_MILESTONE_PENDING');
+});
+
+test('v2 COMPLETE with unchecked milestone checkbox fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, planMilestones: '- [x] M1 — DONE\n- [ ] M2 — run tests' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_PLAN_MILESTONE_PENDING');
+});
+
+test('v2 duplicate conflicting CI_STATUS fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nCI_STATUS: PASS\nCI_STATUS: PENDING\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('DUPLICATE_CONTINUITY_FIELD');
+  expect(result.stderr).toContain('CI_STATUS');
+});
+
+test('v2 duplicate identical Status fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nStatus: COMPLETE\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('DUPLICATE_CONTINUITY_FIELD');
+  expect(result.stderr).toContain('Status');
+});
+
+test('v2 COMPLETE with ACTIVE/STATE phase mismatch fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activePhase: 'other' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_PHASE_MISMATCH');
+});
+
+test('v2 COMPLETE with REPORT task id mismatch fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportBody: 'Task ID: other-task\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_ID_MISMATCH');
+});
+
+test('v2 COMPLETE with REPORT anchor mismatch fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportBody: 'Starting SHA: 1111111111111111111111111111111111111111\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('CONTINUITY_ANCHOR_MISMATCH');
+});
+
+test('v2 COMPLETE with current phase BLOCKED fails', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, phaseStatus: 'BLOCKED' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('CURRENT_PHASE_STATUS_MISMATCH');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — BLOCKED matrix
+// ---------------------------------------------------------------------------
+
+test('v2 BLOCKED with no blocker fails', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateBlockers: 'None.' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('BLOCKED_WITHOUT_BLOCKER');
+});
+
+test('v2 BLOCKED with REPORT COMPLETE fails', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportStatus: 'COMPLETE' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('BLOCKED_REPORT_FALSE_COMPLETE');
+});
+
+test('v2 BLOCKED with phase-specific COMPLETE fails', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, phaseStatus: 'COMPLETE' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('CURRENT_PHASE_STATUS_MISMATCH');
+});
+
+test('v2 BLOCKED with STOP pending owner decision passes', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateNextAction: 'STOP pending owner decision.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('v2 BLOCKED with diagnostic unblock action passes', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateNextAction: 'Resolve the unblock prerequisite, then re-validate.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('v2 BLOCKED with consumed-approval historical record passes', () => {
+  const { root, sha } = fixture();
+  setBlockedV2(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    stateBlockers: 'Previous attempt closed. The one consumed approval is permanently spent; retry is blocked on fresh owner authorization.',
+  });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — IN_PROGRESS matrix
+// ---------------------------------------------------------------------------
+
+test('v2 IN_PROGRESS with REPORT COMPLETE fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportStatus: 'COMPLETE' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('IN_PROGRESS_REPORT_FALSE_COMPLETE');
+});
+
+test('v2 IN_PROGRESS with phase-specific COMPLETE fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, phaseStatus: 'COMPLETE' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('IN_PROGRESS_PHASE_STATUS_COMPLETE');
+});
+
+test('v2 IN_PROGRESS with terminal next action STOP fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeNextAction: 'STOP', stateNextAction: 'STOP' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('IN_PROGRESS_NEXT_ACTION_TERMINAL');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — duplicate parser precision
+// ---------------------------------------------------------------------------
+
+test('v2 duplicate structured key separated by many lines reports both lines', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nStatus: COMPLETE\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toMatch(/DUPLICATE_CONTINUITY_FIELD: .*STATE\.md:\d+,\d+ — key=Status/);
+});
+
+test('duplicate table labels do not count as structured keys', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\n| CI_STATUS | PASS |\n| CI_STATUS | PENDING |\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('duplicate prose colons do not count as structured keys', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nThe result was: PASS and later: PENDING.\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('repeated list items do not become structured keys', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\n- CI_STATUS: PASS\n- CI_STATUS: PENDING\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — placeholder scope precision
+// ---------------------------------------------------------------------------
+
+test('placeholder inside a code fence does not fail a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateSnapshot: '```\nFinal SHA: (filled after push)\n```\nTask complete. PASS.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('placeholder in a blockquote does not fail a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateSnapshot: '> Final CI: (filled at closure)\nTask complete. PASS.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('placeholder in PLAN Decision Log does not fail a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, planDecisionLog: 'Earlier M8 was PENDING (final values recorded at closure).' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('placeholder in a structured STATE field fails a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nFINAL_SHA_FIELD: (filled at close)\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('placeholder in a REPORT numbered final field fails a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportBody: '53. **Final documentation SHA**: (filled after finalization push)\n' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('placeholder in Validation Ledger fails a COMPLETE task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateLedger: 'Final exact CI — (filled at closure)' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — false-positive protections
+// ---------------------------------------------------------------------------
+
+test('narrative historical pending in Decision Log passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, planDecisionLog: 'At M4 the task was PENDING until CI completed.' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('report historical narrative IN_PROGRESS passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportBody: 'The previous run had status IN_PROGRESS at M4; it later closed.\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('deferred future retry NOT_STARTED passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\n## Deferred / Follow-Up\nFuture Phase 8B.1 retry NOT_STARTED; requires separate authorization.\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('parent phase IN_PROGRESS passes for a COMPLETE child task', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, stateExtra: '\nPHASE_8_STATUS: IN_PROGRESS\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('COMPLETE next action STOP with future authorization passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeNextAction: 'STOP — Phase 8B.1 retry requires separate owner authorization.',
+    stateNextAction: 'STOP — task complete; any Phase 8B.1 retry requires a separate fresh owner authorization.',
+  });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+test('COMPLETE report recording a historical failed CI passes', () => {
+  const { root, sha } = fixture();
+  setCompleteV2(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, reportBody: 'The first CI run failed; a later run succeeded. Final evidence above.\n' });
+  const result = run(root);
+  expect(result.status).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — active-task protocol enforcement
+// ---------------------------------------------------------------------------
+
+test('active task without protocol marker fails with ACTIVE_TASK_PROTOCOL_REQUIRED', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, omitProtocol: true });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('ACTIVE_TASK_PROTOCOL_REQUIRED');
+});
+
+test('unsupported protocol version fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, protocolVersion: 'nightwatch.agent-continuity.v3' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('UNSUPPORTED_PROTOCOL_VERSION');
+});
+
+test('ACTIVE/STATE protocol version mismatch fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, protocolVersion: 'nightwatch.agent-continuity.v2' });
+  setField(root, '.agent/ACTIVE_TASK.md', 'CONTINUITY_PROTOCOL_VERSION', 'nightwatch.agent-continuity.v3');
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('PROTOCOL_VERSION_MISMATCH');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — history audit protection of closed tasks
+// ---------------------------------------------------------------------------
+
+test('closed v2 task corruption: phase status IN_PROGRESS fails audit', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-x', '8B.1.0', sha);
+  setField(root, '.agent/tasks/phase-closed-x/STATE.md', 'PHASE_8B_1_0_STATUS', 'IN_PROGRESS');
+  const result = runAudit(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('CURRENT_PHASE_STATUS_MISMATCH');
+});
+
+test('closed v2 task corruption: placeholder added fails audit', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-y', '8B.1.0', sha);
+  fs.appendFileSync(path.join(root, '.agent/tasks/phase-closed-y/STATE.md'), '\nFinal CI: (filled after push)\n');
+  const result = runAudit(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_UNRESOLVED_PLACEHOLDER');
+});
+
+test('closed v2 task corruption: plan milestone reopened fails audit', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-z', '8B.1.0', sha);
+  const plan = path.join(root, '.agent/tasks/phase-closed-z/PLAN.md');
+  fs.writeFileSync(plan, fs.readFileSync(plan, 'utf8').replace('- M1 — DONE', '- M1 — PENDING'));
+  const result = runAudit(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_PLAN_MILESTONE_PENDING');
+});
+
+test('closed v2 task corruption: report status IN_PROGRESS fails audit', () => {
+  const { root, sha } = fixture();
+  writeClosedV2Task(root, 'phase-closed-w', '8B.1.0', sha);
+  const report = path.join(root, '.agent/tasks/phase-closed-w/REPORT.md');
+  fs.writeFileSync(report, fs.readFileSync(report, 'utf8').replace('Status: COMPLETE', 'Status: IN_PROGRESS'));
+  const result = runAudit(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('COMPLETE_REPORT_STATUS_MISMATCH');
+});
+
+// ---------------------------------------------------------------------------
+// Protocol v2 — pure helper unit tests
+// ---------------------------------------------------------------------------
+
+test('phase token derivation is deterministic for repository phase identifiers', () => {
+  expect(derivePhaseStatusKey('1.3')).toBe('PHASE_1_3_STATUS');
+  expect(derivePhaseStatusKey('2A')).toBe('PHASE_2A_STATUS');
+  expect(derivePhaseStatusKey('7B.2.1')).toBe('PHASE_7B_2_1_STATUS');
+  expect(derivePhaseStatusKey('8A.1.1')).toBe('PHASE_8A_1_1_STATUS');
+  expect(derivePhaseStatusKey('8B.0.1')).toBe('PHASE_8B_0_1_STATUS');
+  expect(derivePhaseStatusKey('8B.1.0.2 — Completed-Task Continuity Protocol')).toBe('PHASE_8B_1_0_2_STATUS');
+});
+
+test('status normalization handles parenthetical suffixes', () => {
+  expect(normalizeTaskStatus('BLOCKED (BLOCKER_RESOLVED_RETRY_REQUIRES_NEW_OWNER_AUTHORIZATION)')).toBe('BLOCKED');
+  expect(normalizeTaskStatus('COMPLETE (task closed)')).toBe('COMPLETE');
+  expect(normalizeTaskStatus('IN_PROGRESS (this task)')).toBe('IN_PROGRESS');
+  expect(normalizeTaskStatus('RUNNING')).toBeNull();
+});
+
+test('terminal matchers are explicit and narrow', () => {
+  expect(isTerminalMilestoneText('COMPLETE / STOP')).toBe(true);
+  expect(isTerminalMilestoneText('DONE / STOP')).toBe(true);
+  expect(isTerminalMilestoneText('COMPLETE — all milestones closed')).toBe(true);
+  expect(isTerminalMilestoneText('M17 — finalization pending')).toBe(false);
+  expect(isTerminalMilestoneText('COMPLETE (pending M18 report)')).toBe(false);
+  expect(isTerminalNextActionText('STOP')).toBe(true);
+  expect(isTerminalNextActionText('NONE WITHIN CURRENT AUTHORIZATION')).toBe(true);
+  expect(isTerminalNextActionText('STOP — task complete; Phase 8B.1 retry requires separate fresh owner authorization.')).toBe(true);
+  expect(isTerminalNextActionText('run tests')).toBe(false);
+  expect(isTerminalNextActionText('continue M12 → M18')).toBe(false);
+  expect(isTerminalResumeRecipeText('Task complete. Do not resume.')).toBe(true);
+  expect(isTerminalResumeRecipeText('Historical task COMPLETE; do NOT resume milestones M12–M18.')).toBe(true);
+  expect(isTerminalResumeRecipeText('Continue from Exact Next Action (M12 → M18).')).toBe(false);
+  expect(isTerminalResumeRecipeText('Resume M17 and finish remaining work.')).toBe(false);
+});
+
+test('placeholder sentinels are narrow', () => {
+  expect(hasClosurePlaceholder('(filled at close)')).toBe(true);
+  expect(hasClosurePlaceholder('(filled at closure)')).toBe(true);
+  expect(hasClosurePlaceholder('(filled after push)')).toBe(true);
+  expect(hasClosurePlaceholder('(filled after finalization push)')).toBe(true);
+  expect(hasClosurePlaceholder('<FINAL_SHA>')).toBe(true);
+  expect(hasClosurePlaceholder('<CI_RUN>')).toBe(true);
+  expect(hasClosurePlaceholder('TBD')).toBe(true);
+  expect(hasClosurePlaceholder('FILL_AT_CLOSE')).toBe(true);
+  expect(hasClosurePlaceholder('UNKNOWN_AT_CLOSE')).toBe(true);
+  expect(hasClosurePlaceholder('DISCOVER_FROM_GIT')).toBe(false);
+  expect(hasClosurePlaceholder('GITHUB_ACTIONS_FOR_LIVE_HEAD')).toBe(false);
+  expect(hasClosurePlaceholder('the placeholder rule forbids sentinels')).toBe(false);
+  expect(hasClosurePlaceholder('the run was pending until CI completed')).toBe(false);
 });

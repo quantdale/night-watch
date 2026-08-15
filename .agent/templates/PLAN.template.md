@@ -39,6 +39,11 @@
 - Validation commands: `<command>`
 - Status: NOT_STARTED
 
+(When the task closes COMPLETE, every milestone status line must be terminal:
+DONE / COMPLETE / PASS / CLOSED — no PENDING / IN_PROGRESS / NOT_STARTED /
+unchecked checkboxes. The v2 checker enforces this on the `## Milestones`
+section.)
+
 ## Validation Strategy
 
 <Focused and global checks.>

@@ -736,6 +736,34 @@ function checkPhase8B10PortfolioIntegrity() {
   }
 }
 
+function checkAgentContinuityIntegrity() {
+  // The continuity checker and its protocol layer must remain read-only and
+  // deterministic: no filesystem mutation, no child processes in the pure
+  // module, no network.
+  const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
+  for (const file of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs']) {
+    const source = read(file);
+    if (mutationRe.test(source)) {
+      fail(`${file} contains a filesystem mutation call (continuity checker must be read-only)`);
+    }
+  }
+  const protocolModule = read('bin/agent-continuity-protocol.mjs');
+  if (/\b(?:spawnSync|execSync|child_process|fetch\(|https?\.request|net\.)/.test(protocolModule)) {
+    fail('bin/agent-continuity-protocol.mjs must stay a pure parsing module (no child processes, no network)');
+  }
+  if (!/nightwatch\.agent-continuity\.v2/.test(protocolModule)) {
+    fail('bin/agent-continuity-protocol.mjs must define the v2 protocol version constant');
+  }
+  const pkg = read('package.json');
+  if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
+    fail('package.json agent:audit must invoke the local checker with --audit-history');
+  }
+  const workflow = read('.github/workflows/hardening.yml');
+  if (!/Completed-task continuity audit/.test(workflow) || !/npm run agent:audit/.test(workflow)) {
+    fail('.github/workflows/hardening.yml must run the Completed-task continuity audit (npm run agent:audit)');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();

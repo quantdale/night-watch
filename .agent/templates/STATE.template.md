@@ -13,12 +13,36 @@ Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: <branch>
 Last checkpoint: <timestamp and fact>
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: <same stable task starting anchor>
 LAST_VALIDATED_IMPLEMENTATION_SHA: <stable substantive implementation anchor>
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: <same anchor unless documented otherwise>
 LAST_DOCUMENTATION_CHECKPOINT_SHA: <optional stable documentation descendant>
 LIVE_HEAD_AUTHORITY: GIT
+
+<!--
+Continuity protocol v2 closure semantics (enforced by npm run agent:check /
+agent:audit for v2 tasks):
+
+- The task STATUS vocabulary is NONE / IN_PROGRESS / BLOCKED / COMPLETE.
+  If the repository convention declares PHASE_<TOKEN>_STATUS, its value must
+  normalize to the same status.
+- COMPLETE means: ACTIVE/STATE/REPORT statuses agree; current milestone and
+  next action are terminal (e.g. "COMPLETE / STOP", "STOP"); Work In Progress
+  is NONE; Resume Recipe does not instruct resuming milestones; Completion
+  Snapshot contains real evidence; PLAN ## Milestones has no PENDING /
+  IN_PROGRESS / NOT_STARTED / unchecked items; no future-value placeholders
+  such as "(filled at close)" / "(filled after push)" appear in live/final
+  fields.
+- BLOCKED means actually blocked: ## Blockers is non-empty and Exact Next
+  Action is STOP or a concrete unblock condition.
+- IN_PROGRESS means actually active: real Current Milestone and concrete
+  Exact Next Action; the Completion Snapshot must not claim completion.
+- Record only SHAs/CI run IDs already known before this document is
+  committed. Live HEAD: DISCOVER_FROM_GIT. Never write
+  "Final SHA: <fill after push>"-style placeholders into a completed record.
+-->
 
 ## Objective
 
@@ -27,7 +51,7 @@ LIVE_HEAD_AUTHORITY: GIT
 ## Current Milestone
 
 Milestone ID: <milestone>
-Status: IN_PROGRESS
+Milestone status: IN_PROGRESS
 What is being attempted: <concrete work>
 
 ## Completed Milestones
@@ -85,12 +109,16 @@ NONE
 4. Run the smallest relevant validation.
 5. Continue Exact Next Action.
 
+When the task is COMPLETE, rewrite this section to a terminal form, e.g.:
+"Task complete. Do not resume; any follow-up starts as a new authorized
+task."
+
 ## Completion Snapshot
 
-Populate only when complete:
+Populate only when complete — with real evidence, never placeholders:
 
-Final substantive checkpoint: <stable implementation SHA>
-Final documentation checkpoint: <optional stable documentation SHA>
+Final substantive checkpoint: <stable implementation SHA, known before commit>
+Final documentation checkpoint: <optional stable documentation SHA, known before commit>
 Live HEAD: DISCOVER_FROM_GIT
 Tests: <exact results>
 Artifacts: <files>
