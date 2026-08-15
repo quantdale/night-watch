@@ -63,35 +63,35 @@ promotion machinery use; NO catalog mutation.
 ## Milestones
 
 - M0 — bootstrap + task records + ACTIVE_TASK: CASE D confirmed; SPEC/PLAN/
-  STATE/REPORT created; ACTIVE_TASK.md updated to this task IN_PROGRESS.
+  STATE/REPORT created; ACTIVE_TASK.md updated to this task IN_PROGRESS — DONE
 - M1 — pre-fix reproductions: project-state pin (COMPLETE block → mismatch)
-  and docs/design path rejection (exact diagnostics recorded).
+  and docs/design path rejection (exact diagnostics recorded) — DONE
 - M2 — project-state transition: `bin/project-state-check.mjs` pin + output
   payload to COMPLETE; CURRENT_STATE machine block to COMPLETE; regression
   matrix (A-H) in tests/unit/projectState.test.ts; closure-safety invariant
-  (COMPLETE + NONE) test.
+  (COMPLETE + NONE) test — DONE
 - M3 — docs/design allowlist: `bin/agent-state.mjs` narrow pattern; positive
   (docs/design/PHASE_9_ROADMAP.md) + negative (nested/non-Markdown/
   traversal/random/src) tests; mixed docs+source commit = IMPLEMENTATION
-  proof; existing paths regression covered by untouched existing tests.
+  proof; existing paths regression covered by untouched existing tests — DONE
 - M4 — hardening: `bin/hardening-check.mjs` direct closure assumptions
-  (Phase 8 COMPLETE required; classification explicit); narrow assertions.
+  (Phase 8 COMPLETE required; classification explicit); narrow assertions — DONE
 - M5 — Phase 9 evidence + selection: pipeline reconstruction, oracle/triage
   inventory, campaign history (delegated); bottleneck statement; option
-  matrix; selection; docs/design/PHASE_9_ROADMAP.md (16 sections).
+  matrix; selection; docs/design/PHASE_9_ROADMAP.md (16 sections) — DONE
 - M6 — durable docs: D-53; ROADMAP transition; CURRENT_STATE narrative +
   machine block; ARCHITECTURE research-boundary update; AGENTS/SAFETY_MODEL
-  only if required.
+  only if required — DONE
 - M7 — local validation: typecheck, hardening, project-state matrix,
   agent-state matrix, agent:check, agent:audit, project:check (Phase 8
-  COMPLETE), catalog integrity, git diff --check.
+  COMPLETE), catalog integrity, git diff --check — DONE
 - M8 — full regression + isolated checkout: Phase 8A/8A.1/8A.1.1/8B/8B.0.1/
   8B.1 matrices, owner provenance, campaign synthetic, full clean Playwright
-  0 failed, isolated full-history workspace (`npm ci --ignore-scripts`).
+  0 failed, isolated full-history workspace (`npm ci --ignore-scripts`) — DONE
 - M9 — closure source commit + push + exact implementation CI (Project-
-  memory truth check PASS with PHASE_8_STATUS COMPLETE).
+  memory truth check PASS with PHASE_8_STATUS COMPLETE) — DONE
 - M10 — docs/design self-proof + final docs closure: commit + push + exact
-  final CI; terminal continuity fields; final report; STOP.
+  final CI; terminal continuity fields; final report; STOP — DONE
 
 ## Validation Strategy
 

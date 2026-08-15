@@ -3,19 +3,24 @@
 Task ID: phase-8-final-closure-phase-9-roadmap-selection
 Phase: 8-CLOSURE
 Title: Nightwatch Phase 8 Final Closure & Phase 9 Roadmap Selection
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-8-final-closure-phase-9-roadmap-selection
 Starting SHA: 27cc5a2c81d40a6afcee1d1a791e6c9b09cdafa2
-Last validated implementation SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
-Current milestone: M1 — pre-fix reproductions (project-state pin +
-docs/design checkpoint path)
-Last checkpoint: 2026-08-15 — bootstrap complete: CASE D (HEAD ==
-origin/main == 27cc5a2c, tracked tree clean); ground truth + D-52
-completion criteria verified; v2 task records created; Phase 9 evidence
-agents running.
-Next action: run the pre-fix reproductions (PHASE_8_STATUS COMPLETE
-fixture → PROJECT_STATE_PHASE_8_STATUS_MISMATCH; docs/design/example.md →
-not an approved checkpoint path) and record exact diagnostics.
+Last validated implementation SHA: 0e830b722aec3316e88e7cb3e7e8c3302bedcec6
+Current milestone: COMPLETE / STOP
+Last checkpoint: 2026-08-15 — Phase 8 closed: project-state pin +
+machine block + regression matrix + hardening now require PHASE_8_STATUS
+COMPLETE; docs/design/*.md single-level Markdown checkpoint allowlist with
+negative tests; canonical-promotion research boundary frozen (machinery
+retained; authority NONE; catalog byte-identical bd35b934...); Phase 9
+roadmap selected (DETERMINISTIC_ORACLE_DEPTH) in docs/design/
+PHASE_9_ROADMAP.md (D-53); substantive checkpoint 0e830b7 pushed with exact
+green CI 31913505877 (24/24 steps incl. Project-memory truth check with
+Phase 8 COMPLETE); full regression green (795/1/0 real, 792/4/0 isolated);
+final docs closure committed/pushed with exact final CI green; closed under
+continuity v2 with terminal fields; next action STOP.
+Next action: STOP — Phase 8 complete; selected Phase 9 implementation
+requires separate owner authorization.
 Authorization class: PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -34,30 +39,34 @@ verify exact implementation CI, then final docs closure + exact final CI,
 and close under nightwatch.agent-continuity.v2. NO Phase 9 implementation;
 NO variant-B adoption; NO promotion prepare/approve/apply; NO catalog
 mutation; NO owner-policy change; NO product/DEV/NEXT/production; NO
-DB/infra; NO AI/model; NO Alphaus writes; NO publication.
+DB/infra; NO AI/model; NO Alphaus writes; NO publication. FULFILLED: all
+deliverables produced, validated, CI-green, closed.
 
 ## Continuity
 
 STARTING_SHA: 27cc5a2c81d40a6afcee1d1a791e6c9b09cdafa2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
+LAST_VALIDATED_IMPLEMENTATION_SHA: 0e830b722aec3316e88e7cb3e7e8c3302bedcec6
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_8_FINAL_CLOSURE_STATUS: IN_PROGRESS
-PHASE_8_STATUS (transition target): IN_PROGRESS → COMPLETE
+PHASE_8_FINAL_CLOSURE_STATUS: COMPLETE
+PHASE_8_STATUS (transitioned): COMPLETE
 PHASE_8B_1_STATUS (unchanged): COMPLETE VIA SUCCESSFUL RETRY R1
 REAL_CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (adopted case A; digest
 bd35b934...)
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED (variant B)
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
-PHASE_9 (design target): DESIGNED / NOT_STARTED / NOT_AUTHORIZED
+PHASE_9 (selected): DESIGNED / NOT_STARTED / NOT_AUTHORIZED
+PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH
 
 ## STOP
 
-This task executes ONLY the authorized Phase-8 closure + Phase-9 roadmap
-selection. No Phase 9 implementation. No variant-B adoption. No promotion
-prepare/approve/apply. No catalog mutation. No product/data/infra/AI
-activity. Catalog digest must remain sha256:bd35b934... — any drift is a
-STOP.
+Task complete. Do not resume. Phase 8 is COMPLETE; the canonical-promotion
+research boundary is frozen with the machinery retained and no standing
+authority. The selected Phase 9 implementation (Deterministic Semantic
+Oracle Depth) requires a separate owner authorization
+(PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY) before any Phase 9 source
+change. No variant-B adoption. No promotion prepare/approve/apply. No
+catalog mutation. No product/data/infra/AI activity.
