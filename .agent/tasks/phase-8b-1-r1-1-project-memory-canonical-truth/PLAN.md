@@ -154,14 +154,14 @@ never a relaxed "semantically close" status. Do not alter currentness.ts.
 - [x] M7 one-entry catalog deterministic regeneration
 - [x] M8 promotion-currentness strictness regression
 - [x] M9 CURRENT_STATE / ROADMAP / ARCHITECTURE / DECISIONS / AGENTS corrections
-- [ ] M10 focused validation
-- [ ] M11 full regression
-- [ ] M12 isolated checkout
-- [ ] M13 source-bearing implementation commit + push + exact CI
-- [ ] M14 fresh current-source selfDev continuation proof
-- [ ] M15 v2 docs closure
-- [ ] M16 final exact CI / project:check / agent:audit
-- [ ] M17 STOP + report
+- [x] M10 focused validation
+- [x] M11 full regression
+- [x] M12 isolated checkout
+- [x] M13 source-bearing implementation commit + push + exact CI
+- [x] M14 fresh current-source selfDev continuation proof
+- [x] M15 v2 docs closure
+- [x] M16 final exact CI / project:check / agent:audit
+- [x] M17 STOP + report
 
 ## Validation Strategy
 
