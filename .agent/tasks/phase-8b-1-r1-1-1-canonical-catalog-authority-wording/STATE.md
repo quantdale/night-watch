@@ -4,21 +4,28 @@
 
 Task ID: phase-8b-1-r1-1-1-canonical-catalog-authority-wording
 Phase: 8B.1-R1.1.1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
-Last validated implementation SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
-Last substantive checkpoint SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
+Last validated implementation SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
+Last substantive checkpoint SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-15 — task created; pre-state captured; defect
-reproduced (CURRENT_FALSE: renderer line 250 + generated line 17 of
-adoptedCases.ts / adoptedCaseCatalog.generated.ts; ROADMAP:1068 variant).
+Last checkpoint: 2026-08-15 — task complete: authority wording corrected in
+module + renderer headers, one-entry catalog regenerated through the trusted
+renderer (semantics identical; digest 401b2c67... -> bd35b934...);
+regression tests (positive invariant + negative false absolutes + header-only
+semantic preservation) + hardening guard
+(PHASE_8B_1_CANONICAL_AUTHORITY_WORDING_DRIFT) added; project-state digest
+updated; ROADMAP corrected; D-51 appended; exact implementation CI
+31908896481 green at 044c4a6; isolated checkout 780/4/0; fresh current-source
+session replays PASS selecting B, eligible true, contractDigest unchanged;
+docs closed under continuity v2.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7d43162d8464f1f474b5c3cc987eacdc805cfffa
+LAST_VALIDATED_IMPLEMENTATION_SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -35,13 +42,11 @@ adoption; NO promotion chain; contractDigest unchanged at sha256:d8012fae....
 
 ## Current Milestone
 
-M2-M8 complete: source wording corrected, catalog regenerated (digest
-bd35b934...), regression tests + hardening guard added, docs corrected
-(CURRENT_STATE/ROADMAP/DECISIONS), focused + full regression green (full
-suite 781 passed / 1 skipped / 2 failed — the 2 failures are the documented
-dirty-tree-only CLI tests, SELFDEV_AUTHORITATIVE_SOURCE_DIRTY, reproduced
-and confirmed). Next: M9 isolated clean checkout validation at the
-substantive source commit.
+COMPLETE / STOP. (All milestones M0-M12 closed; substantive commit 044c4a6
+pushed with exact green CI 31908896481; isolated checkout 780/4/0; fresh
+current-source proof PASS; docs closure committed and pushed; final exact CI
+green; PHASE_8B_1_R1_1_1_STATUS COMPLETE; overall Phase 8B.1 stays
+COMPLETE VIA SUCCESSFUL RETRY R1; next action STOP.)
 
 ## Completed Milestones
 
@@ -119,16 +124,54 @@ substantive source commit.
   clean; agent:check PASS (expected STALE_IMPLEMENTATION_BASELINE +
   legacy-task warnings); agent:audit tasks=31 strict_v2=7 legacy_v1=24
   strict_errors=0.
+- M9 — isolated full-history checkout at /tmp/nw-r1-1-1-ws/nightwatch
+  (correct topology: dedicated workspace root, read-only sibling mirrors
+  alphauslabs/mobingilabs symlinked to the real org dirs, npm ci
+  --ignore-scripts): typecheck PASS; hardening PASS; agent:check PASS
+  (expected warnings); agent:audit PASS; project:check PASS; catalog
+  integrity PASS (count 1, digest bd35b934..., roundtrip true); git diff
+  --check clean; FULL Playwright 780 passed / 4 skipped / 0 failed.
+- M10 — substantive implementation commit 044c4a6
+  ("Phase 8B.1-R1.1.1: correct canonical catalog runtime authority wording")
+  containing renderer + regenerated catalog + tests + hardening + docs +
+  task records; clean-tree gates PASS before push (project:check PASS:
+  count 1, digest sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968,
+  next member AVAILABLE_NOT_ADOPTED, promotion authority NONE; catalog
+  integrity PASS); pushed fast-forward 7d43162..044c4a6; HEAD == origin/main
+  == 044c4a6; exact implementation CI run 31908896481: status completed,
+  conclusion success, all 26 job steps success (Typecheck, Offline hardening,
+  Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B [incl. R1.1.1 wording tests],
+  Phase 8B.0.1, Phase 8B.1 [incl. currentness regression], Phase 8B.1.0,
+  catalog integrity, R1.1 project-state truth matrix, Project-memory truth
+  check, agent-state matrix, Agent-state check, Completed-task continuity
+  audit, campaign synthetic, whitespace).
+- M11 — clean real project:check PASS (catalogCount 1, catalogDigest
+  bd35b934..., nextPortfolioMember AVAILABLE_NOT_ADOPTED, nextPromotionAuthority
+  NONE, rendererRoundTrip true); catalog integrity PASS; fresh current-source
+  synthetic proof at 044c4a6: session
+  session:sha256:12515f0e6a1d3ee1ea32566060e6bf20df764e36c68d006bea2c379ca5cb8699
+  — SESSION PASS, VERIFIED_EXACT_BASE, sourceBundleMatch MATCH,
+  contractDigestMatch MATCH, replayStatus PASS, passCandidateCount 1,
+  duplicateCount 1, rejectedCount 1, selectedVariant EXPAND_THEN_COLLAPSE (B),
+  future-review eligible TRUE (read-only assessFutureReviewEligibility),
+  sourceBundleDigest sha256:af1a8cf5737f6839070dd37a60befc72c1b6e95ec889b0ad47d9a1be97106a11
+  (changed as required — reflects R1.1.1 source), contractDigest
+  sha256:d8012fae... (UNCHANGED as required). No sandbox invocation, no B
+  adoption, no promotion chain.
+- M12 — continuity v2 docs closure: this record; ACTIVE_TASK and REPORT
+  finalized COMPLETE with terminal fields; closure commit pushed
+  fast-forward; final exact CI green; final project:check/agent:check/
+  agent:audit zero errors.
+- M13 — final report produced; STOP.
 
 ## Work In Progress
 
-M8 — full regression matrices + complete Playwright run.
+NONE.
 
 ## Exact Next Action
 
-Run the full Phase 8 matrices (8A, 8A.1, 8A.1.1, 8B, 8B.0.1, 8B.1, 8B.1.0,
-R1.1 project-state), owner provenance, campaign synthetic, and complete
-Playwright --project=nightwatch --workers=1.
+STOP — task complete; next Phase 8 capability requires separate design and
+owner authorization.
 
 ## Files Changed
 
@@ -173,10 +216,34 @@ None.
 
 ## Resume Recipe
 
-Resume by re-reading this STATE.md, verifying git status/diff, then executing
-the Exact Next Action. Pre-state and audit results are recorded above; do not
-re-run the repository-wide audit.
+Task complete. Do not resume.
 
 ## Completion Snapshot
 
-- (filled at close)
+- Status: COMPLETE; PHASE_8B_1_R1_1_1_STATUS: COMPLETE (ACTIVE_TASK, STATE,
+  and REPORT agree).
+- Current milestone: COMPLETE / STOP; Work In Progress: NONE; Exact Next
+  Action: STOP — task complete; next Phase 8 capability requires separate
+  design and owner authorization.
+- Substantive implementation: 044c4a6e0095d14004cd50b44ceb47998e44e3ec
+  (LAST_VALIDATED_IMPLEMENTATION_SHA = LAST_SUBSTANTIVE_CHECKPOINT_SHA);
+  exact implementation CI 31908896481 success at that SHA; final docs
+  closure commit pushed fast-forward; final exact CI success
+  (FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD; LIVE_HEAD_AUTHORITY:
+  GIT).
+- Catalog: count 1; raw digest sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968;
+  adoptedCaseId adopted-case:sha256:90248aae...; equivalentFingerprint
+  sha256:6a322450...; fixture/actions/assertions/coverage/strategy
+  unchanged; renderer roundtrip true; contractDigest unchanged
+  sha256:d8012fae....
+- Fresh proof: session:sha256:12515f0e6a1d3ee1ea32566060e6bf20df764e36c68d006bea2c379ca5cb8699 —
+  replay PASS, VERIFIED_EXACT_BASE, passCandidateCount 1, B selected,
+  eligible true; no sandbox invocation; no B adoption; no promotion chain.
+- Safety vector: new promotion intents 0, new approvals 0, canonical APPLY 0,
+  sandbox B adoption 0, new adopted cases 0, DEV/NEXT/production contacts 0,
+  product mutations 0, DB/infra queries 0, AI/model calls 0, Alphaus writes 0,
+  publication 0, runtime Git writes 0; Nightwatch development commits:
+  expected only.
+- Project truth: project:check PASS at 044c4a6 and at final HEAD (count 1,
+  digest bd35b934..., AVAILABLE_NOT_ADOPTED, NONE); agent:check PASS;
+  agent:audit strict_errors=0.

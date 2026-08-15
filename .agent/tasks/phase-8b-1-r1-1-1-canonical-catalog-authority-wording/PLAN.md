@@ -1,8 +1,8 @@
 # Nightwatch Phase 8B.1-R1.1.1 — Canonical Catalog Authority Wording Closeout — Living Plan
 
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-PHASE_8B_1_R1_1_1_STATUS: IN_PROGRESS
+PHASE_8B_1_R1_1_1_STATUS: COMPLETE
 
 ## Purpose
 
@@ -90,20 +90,25 @@ generated file.
 
 ## Milestones
 
-M0 bootstrap/task creation/pre-state capture
-M1 defect reproduction + repository-wide phrase audit
-M2 module + renderer authority wording correction
-M3 one-entry catalog deterministic regeneration + semantic deep-equality proof
-M4 regression guard tests (positive + negative) + semantic-preservation test
-M5 hardening guard extension
-M6 CURRENT_STATE digest + ROADMAP + DECISIONS corrections
-M7 focused validation
-M8 full regression matrices + Playwright
-M9 isolated clean checkout validation
-M10 source-bearing implementation commit + push + exact CI
-M11 clean project:check + catalog integrity + fresh current-source synthetic proof
-M12 v2 docs closure + final exact CI
-M13 STOP + report
+M0 bootstrap/task creation/pre-state capture — CLOSED (CASE D)
+M1 defect reproduction + repository-wide phrase audit — CLOSED (TRUE_POSITIVE)
+M2 module + renderer authority wording correction — CLOSED
+M3 one-entry catalog deterministic regeneration + semantic deep-equality
+    proof — CLOSED (digest 401b2c67.. -> bd35b934..; semantics identical)
+M4 regression guard tests (positive + negative) + semantic-preservation
+    test — CLOSED (3 new tests in selfDevAdoptionCatalog.test.ts)
+M5 hardening guard extension — CLOSED (PHASE_8B_1_CANONICAL_AUTHORITY_WORDING_DRIFT)
+M6 CURRENT_STATE digest + ROADMAP + DECISIONS corrections — CLOSED
+M7 focused validation — CLOSED (typecheck, hardening, 82/82 focused tests)
+M8 full regression matrices + Playwright — CLOSED (781/1/2 dirty-tree-only
+    documented failures; matrices green)
+M9 isolated clean checkout validation — CLOSED (780/4/0 + all gates)
+M10 source-bearing implementation commit + push + exact CI — CLOSED
+    (044c4a6; CI 31908896481 success)
+M11 clean project:check + catalog integrity + fresh current-source synthetic
+    proof — CLOSED (eligible true, B selected, contractDigest unchanged)
+M12 v2 docs closure + final exact CI — CLOSED
+M13 STOP + report — CLOSED
 
 ## Validation Strategy
 
