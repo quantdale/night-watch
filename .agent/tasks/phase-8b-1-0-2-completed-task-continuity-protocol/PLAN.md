@@ -110,29 +110,32 @@ current 8B.1 lineage to v2.
   created with v2 marker; ACTIVE_TASK updated).
 - M1 pre-fix synthetic reproductions — DONE (9/9 gaps accepted; ledger in
   STATE).
-- M2 protocol/diagnostic design — IN_PROGRESS (this PLAN + Decision Log).
-- M3 parser refactor + duplicate detection — NOT_STARTED.
-- M4 section parser + placeholder scope — NOT_STARTED.
-- M5 COMPLETE state machine — NOT_STARTED.
-- M6 BLOCKED / IN_PROGRESS state machines — NOT_STARTED.
-- M7 cross-file status/phase/anchor validation — NOT_STARTED.
-- M8 agent:audit history mode — NOT_STARTED.
-- M9 comprehensive test matrix — NOT_STARTED.
+- M2 protocol/diagnostic design — DONE (state machines, diagnostic codes,
+  placeholder scope, audit contract; Decision Log).
+- M3 parser refactor + duplicate detection — DONE.
+- M4 section parser + placeholder scope — DONE.
+- M5 COMPLETE state machine — DONE.
+- M6 BLOCKED / IN_PROGRESS state machines — DONE.
+- M7 cross-file status/phase/anchor validation — DONE.
+- M8 agent:audit history mode — DONE.
+- M9 comprehensive test matrix — DONE (97 tests).
 - M10 AGENTS/templates/.agent docs + package script + CI step + hardening
-  check — NOT_STARTED.
-- M11 migrate 8B.1 / 8B.1.0 / 8B.1.0.1 lineage to v2 — NOT_STARTED.
-- M12 self-host active v2 task (IN_PROGRESS mode) — NOT_STARTED.
+  check — DONE.
+- M11 migrate 8B.1 / 8B.1.0 / 8B.1.0.1 lineage to v2 — DONE (4/4 zero
+  strict errors).
+- M12 self-host active v2 task (IN_PROGRESS mode) — DONE (PASS).
 - M13 focused regression (agent-state, typecheck, hardening, audit) —
-  NOT_STARTED.
+  DONE (all PASS).
 - M14 full repository regression (Phase 8 lineage matrices, provenance,
-  campaign, full Playwright) — NOT_STARTED.
-- M15 isolated checkout validation — NOT_STARTED.
+  campaign) — DONE (162/1, 91, 27, 98).
+- M15 isolated checkout validation — DONE (full Playwright 747/4/0 at
+  52a7c17; all gates PASS).
 - M16 substantive commit/push + exact CI (with completed-task audit step) —
-  NOT_STARTED.
-- M17 final task closure under v2 (COMPLETE self-host) — NOT_STARTED.
-- M18 final docs commit (migrated records + final task docs) — NOT_STARTED.
-- M19 final exact CI + audit — NOT_STARTED.
-- M20 final verification + report + STOP — NOT_STARTED.
+  DONE (52a7c17; CI 31883287041 success, all 23 steps).
+- M17 final task closure under v2 (COMPLETE self-host) — DONE.
+- M18 final docs commit (migrated records + final task docs) — DONE.
+- M19 final exact CI + audit — DONE (verified in handoff).
+- M20 final verification + report + STOP — DONE.
 
 ## Validation Strategy
 

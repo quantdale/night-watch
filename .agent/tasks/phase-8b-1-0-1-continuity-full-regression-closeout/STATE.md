@@ -13,6 +13,7 @@ clean full regression passed at starting SHA (685/1/0 real checkout;
 682/4/0 isolated mirror) and at final SHA (682/4/0 isolated mirror); exact
 CI green for the continuity commit and the final documentation SHA.
 Branch: main
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Objective
 
@@ -35,7 +36,7 @@ PHASE_8B_STATUS: COMPLETE_SANDBOX_ONLY
 PHASE_8B_0_1_STATUS: COMPLETE
 PHASE_8B_1_STATUS: BLOCKED (BLOCKER_RESOLVED_RETRY_REQUIRES_NEW_OWNER_AUTHORIZATION)
 PHASE_8B_1_0_STATUS: COMPLETE
-PHASE_8B_1_0_1_STATUS: IN_PROGRESS (this task)
+PHASE_8B_1_0_1_STATUS: COMPLETE
 
 PHASE_8B_1_APPROVAL_STATUS: SPENT (permanently non-reusable; read-only
 recheck CONFIRMED: consumed-canonical-promotion-approval-sha256-17c970...
@@ -44,7 +45,7 @@ consumption record; no new intents)
 
 REAL_CANONICAL_CATALOG_ENTRY_COUNT: 0
 CANONICAL_CATALOG_PRE_DIGEST: ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334
-CANONICAL_CATALOG_POST_DIGEST: (filled at close; must equal PRE_DIGEST)
+CANONICAL_CATALOG_POST_DIGEST: ffe3d635680e110f3d225bcd9c61b2f59fe04d82ae1f2fa9d48204a8b1f2f334
 
 PHASE_8B_1_0_PRIOR_FINAL_SHA: 10ecea296cf639b65e8a260fee54814737285c2d
 PHASE_8B_1_0_IMPLEMENTATION_SHA: e02aebeb42b2b95995dc20f4123dade866ed71cd
@@ -157,7 +158,7 @@ cleanliness, agent-state, campaign, patch whitespace.
 Command: spent-approval read-only recheck — CONFIRMED consumed (single
 consumption record for the historical approval id with "consumed": true;
 single approval record; no new intents).
-Command: final exact CI (final documentation SHA) — (filled at closure).
+Command: final exact CI 31878877732 @ 2e6c2cf (final documentation SHA) — completed, success, all steps.
 Command: `sha256sum src/core/selfDev/adoptedCaseCatalog.generated.ts`
 (post-edit) — ffe3d635... byte-identical to pre-edit; count 0.
 
@@ -200,12 +201,13 @@ intents/approvals.
 
 ## Completion Snapshot
 
-PHASE_8B_1_0_1_STATUS: COMPLETE. Starting SHA 10ecea296; pre-edit clean
-full-suite PASS (real checkout 685/1/0; isolated mirror 682/4/0); continuity
-drift reconciled (18 items, see REPORT.md); continuity commit cf3a757 with
-exact CI 31878642370 success (all steps); final clean full-suite PASS at
-cf3a757 (682/4/0, exit 0); final documentation SHA (filled at closure) with
-exact final CI (filled at closure); canonical catalog byte-identical and
-empty (ffe3d635...); spent approval confirmed consumed; Phase 8B.1 remains
+Task status COMPLETE. Starting SHA 10ecea296; pre-edit clean full-suite
+PASS (real checkout 685 passed / 1 skipped / 0 failed; isolated mirror
+682 passed / 4 skipped / 0 failed); continuity drift reconciled (18 items,
+see REPORT.md); continuity commit cf3a757 with exact CI 31878642370 success
+(all steps); final clean full-suite PASS at cf3a757 (682/4/0, exit 0);
+final documentation SHA 2e6c2cf with exact final CI 31878877732 success
+(all steps); canonical catalog byte-identical and empty
+(ffe3d635...); spent approval confirmed consumed; Phase 8B.1 remains
 BLOCKED — READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION; no promotion
 started.

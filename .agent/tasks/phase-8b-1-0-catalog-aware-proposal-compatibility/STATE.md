@@ -12,6 +12,7 @@ Last checkpoint: 2026-08-15 — task complete; final report committed; exact
 final CI 31875200362 @ 10ecea296 success (all steps, incl. 8B.1.0 matrix +
 checkout cleanliness).
 Branch: main
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Objective
 
@@ -81,8 +82,9 @@ SAFETY_EVENTS: NONE so far (zero contacts/queries/writes; no promotion)
 
 ## Current Milestone
 
-M17 — documentation closure and final CI (docs committed; final CI run
-pending).
+COMPLETE / STOP. (All milestones M0–M18 are closed; the historical M17
+"documentation closure and final CI" milestone completed with the final CI
+run 31875200362 @ 10ecea296.)
 
 ## Completed Milestones
 
@@ -154,7 +156,7 @@ authorization.
 | `tests/helpers/selfDevSourceFixture.ts` | explicit catalog-state source fixtures | tests |
 | `tests/helpers/selfDevStack.ts` | coherent source-root-scoped stack | tests |
 | `tests/unit/selfDev*.test.ts` (8 files) | state-explicit baselines | tests |
-| `tests/unit/selfDevPortfolio.test.ts` | new 8B.1.0 matrix (29 tests) | tests |
+| `tests/unit/selfDevPortfolio.test.ts` | new 8B.1.0 matrix (30 tests) | tests |
 | `src/core/selfDev/adoptedCaseCatalog.generated.ts` | UNCHANGED (empty) | invariant |
 | `.agent/tasks/phase-8b-1-0-*/` | task records | docs |
 

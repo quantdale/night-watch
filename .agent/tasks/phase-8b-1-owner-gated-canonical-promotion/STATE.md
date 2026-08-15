@@ -13,12 +13,14 @@ Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
 Last checkpoint: 2026-08-15 — one real canonical promotion APPLIED and VERIFIED successfully, then the development session restored the pre-promotion catalog after full local regression revealed a structural, cross-phase test-suite incompatibility. See Blockers.
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 91149621e247a2996a3f5c97090684b68507418d
 LAST_VALIDATED_IMPLEMENTATION_SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: bcdca80d4ae59de88b1aa4447bd49ef4b09fd6d9
 LAST_DOCUMENTATION_CHECKPOINT_SHA:
 LIVE_HEAD_AUTHORITY: GIT
+PHASE_8B_1_STATUS: BLOCKED (attempt closed; retry requires fresh owner authorization)
 
 ## Objective
 
@@ -29,8 +31,7 @@ acceptance chain this task is authorized to run.
 
 ## Current Milestone
 
-Milestone ID: M17 — dirty-tree local validation (STOP triggered here)
-Status: BLOCKED
+Milestone ID: M17 — dirty-tree local validation (STOP triggered here); milestone status: BLOCKED
 What is being attempted: after a fully successful real APPLY and VERIFY
 (both PASS, see Completed Milestones), running the full local regression
 suite against the dirty (one-file-changed) tree revealed that dozens of
@@ -135,18 +136,11 @@ empty, `git diff` empty, local HEAD == origin/main).
 
 ## Exact Next Action
 
-None within this task's current authorization. A future task, under a new,
-separate owner authorization, would need to first resolve the root-cause
-incompatibility (make the historical Phase 8A/8A.1/8A.1.1/8B/8B.1 test
-suites resilient to a non-empty canonical adopted-case catalog — e.g. by
-having `controller.ts`'s callers/tests inject an explicit empty-seed
-evaluator for tests that specifically need the "always fresh pass" baseline,
-or by giving the deterministic proposer a second, distinct "genuinely new"
-synthetic fixture that survives one adoption) before a real canonical
-promotion can be committed and still leave the full regression suite green.
-Do NOT reattempt apply with the existing (consumed, spent) approval; do NOT
-create a new approval without fresh owner authorization for that follow-up
-work.
+STOP — a fresh Phase 8B.1 retry requires a new owner authorization. The
+structural blocker is already resolved by Phase 8B.1.0; the old approval is
+permanently spent; no apply continuation, no approval reuse. Any retry
+starts from fresh source state, a fresh selfDev artifact, a fresh sandbox
+proof, a fresh promotion intent, and a fresh one-shot approval.
 
 ## Files Changed
 
@@ -252,16 +246,14 @@ pressure immediately after a real, already-consumed one-shot approval.
 
 ## Blockers
 
-**BLOCKED**: real canonical promotion applied and verified successfully,
-then reverted, because completing it (committing) would permanently break
-the full regression suite for reasons entirely outside the promotion
-mechanism's own correctness — see Discoveries. Resolving this requires
-either reworking 8 historical test files across 4 previously-closed phases
-to no longer assume a permanently-fresh proposer candidate, or extending the
-deterministic proposer with a second genuinely-new fixture — both of which
-are architecture-level changes this task's own instructions say must not be
-improvised immediately after a real, already-consumed canonical write.
-A fresh, separately authorized task should address the root cause first.
+**BLOCKED**: the previous attempt is CLOSED — one real apply occurred and
+was verified, then reverted; its one-shot approval is permanently spent. A
+retry is currently blocked on a FRESH OWNER AUTHORIZATION (the structural
+cross-phase test-suite blocker was resolved by Phase 8B.1.0). Historical
+detail: the promotion applied and verified successfully, then the
+development session restored the pre-promotion catalog after full local
+regression revealed a structural, cross-phase test-suite incompatibility;
+the mechanism itself had no defect.
 
 ## Safety Events
 

@@ -1,15 +1,15 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.1.0 catalog-aware proposal & test-baseline
-> compatibility closeout.
+> the Nightwatch Phase 8B.1.0.2 completed-task continuity protocol &
+> historical ledger hardening closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
 > `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
-> and Phase 8B.1.0 are `COMPLETE`. Phase 8B proved one sandbox-confined,
+> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`. Phase 8B proved one sandbox-confined,
 > metamorphically-verified source adoption with zero canonical mutation;
 > Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
 > Phase 8B.1 (Owner-Gated Canonical Promotion) remains `BLOCKED` — its one
@@ -17,9 +17,16 @@
 > full regression suite assumed a permanently-fresh single candidate;
 > Phase 8B.1.0 removed that structural blocker with a bounded deterministic
 > proposal portfolio (EXPAND_SUMMARY, EXPAND_THEN_COLLAPSE) and
-> state-explicit test baselines, so a future fresh 8B.1 promotion attempt is
-> possible under a NEW separate owner authorization. The canonical adopted
-> case catalog remains EMPTY.
+> state-explicit test baselines; Phase 8B.1.0.1 proved the complete clean
+> full regression and reconciled the continuity records; Phase 8B.1.0.2
+> introduced the versioned continuity protocol
+> (`nightwatch.agent-continuity.v2`) that mechanically rejects completed-task
+> contradictions (stale milestones/WIP/next actions, duplicate structured
+> fields, future-value placeholders), added `npm run agent:audit` and the CI
+> "Completed-task continuity audit" step, and migrated the current 8B.1
+> lineage to strict v2, so a future fresh 8B.1 promotion attempt is possible
+> under a NEW separate owner authorization. The canonical adopted case
+> catalog remains EMPTY.
 
 ---
 
@@ -1006,6 +1013,29 @@ source state, a fresh selfDev artifact, a fresh sandbox proof, a fresh
 promotion intent, and a fresh one-shot approval; it was NOT retried here.
 The real canonical adopted-case catalog remains EMPTY (digest
 `sha256:ffe3d635...` unchanged).
+
+**Phase 8B.1.0.1 — continuity ledger & clean full-regression closeout
+(complete).** Proved the complete unfiltered Playwright suite green from
+clean source state at the starting and final SHAs (685/1/0 real checkout,
+682/4/0 isolated mirrors) and reconciled every durable continuity record
+with actual history. Exact CI runs 31878642370 @ cf3a757 and 31878877732 @
+2e6c2cf completed success.
+
+**Phase 8B.1.0.2 — completed-task continuity protocol & historical ledger
+hardening (complete).** Introduced the versioned continuity protocol
+`nightwatch.agent-continuity.v2`: strict COMPLETE / BLOCKED / IN_PROGRESS
+state machines across ACTIVE_TASK/STATE/PLAN/REPORT, duplicate structured
+field rejection, unresolved closure placeholder rejection, current-phase
+status binding, non-self-referential finalization (Git/GitHub-Actions live
+authority), all-v2 history auditing (`npm run agent:audit`), CI
+enforcement, legacy v1 compatibility, and the 8B.1 lineage migration
+(8B.1 BLOCKED, 8B.1.0 COMPLETE, 8B.1.0.1 COMPLETE — zero strict v2 errors;
+24 legacy tasks remain warnings-only). The pre-fix checker accepted 9/9
+impossible completed-task states; post-fix 0/9. Validated implementation
+SHA 52a7c173; exact CI 31883287041 success including the Completed-task
+continuity audit step; full clean Playwright 747 passed / 4 skipped / 0
+failed at the substantive SHA. Phase 8B.1 remains
+`BLOCKED`/`RETRY_NOT_STARTED` — `READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION`.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

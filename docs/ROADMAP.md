@@ -983,6 +983,29 @@ retry readiness: `READY_FOR_FRESH_OWNER_AUTHORIZATION` (a separate owner
 authorization is required; no promotion was retried). The canonical adopted
 case catalog remains EMPTY.
 
+### Phase 8B.1.0.2 — Completed-task continuity protocol & historical ledger hardening (complete)
+
+Phase 8B.1.0.2 (COMPLETE) made completed-task contradictions mechanically
+invalid: the repository-native continuity checker now enforces the
+`nightwatch.agent-continuity.v2` cross-file status state machine
+(ACTIVE/STATE/REPORT status agreement, current-phase status binding,
+terminal milestone/WIP/next-action/resume semantics for COMPLETE, real
+blockers for BLOCKED, real activity for IN_PROGRESS, duplicate structured
+field rejection, closure-placeholder rejection, non-self-referential
+finalization with Git/GitHub-Actions live authority), audits every v2 task
+directory (`npm run agent:audit`, CI "Completed-task continuity audit"
+step), and keeps legacy v1 tasks readable as warnings. The pre-fix checker
+accepted 9/9 impossible states (COMPLETE with IN_PROGRESS phase status,
+stale milestones, WIP, active next actions, fill-after-push placeholders,
+duplicate fields, pending plan milestones); post-fix 0/9. The 8B.1 lineage
+(8B.1 BLOCKED, 8B.1.0 COMPLETE, 8B.1.0.1 COMPLETE, 8B.1.0.2 COMPLETE) is
+migrated to strict v2 with zero errors; 24 older tasks remain legacy v1.
+Validated implementation SHA 52a7c173 (exact CI 31883287041 success);
+full clean Playwright 747 passed / 4 skipped / 0 failed. Phase 8B.1 remains
+`BLOCKED` / `RETRY_NOT_STARTED`; retry readiness:
+`READY_FOR_SEPARATE_FRESH_OWNER_AUTHORIZATION` (separate fresh owner
+authorization required; no promotion retried; catalog EMPTY).
+
 ---
 
 ## Never in scope (any phase)

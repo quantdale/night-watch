@@ -110,12 +110,13 @@ Status: COMPLETE
 51. **agent-state CI step**: ✓ executed (Agent-state check + Synthetic
    agent-state continuity matrix).
 52. **campaign CI step**: ✓ executed (Synthetic campaign).
-53. **Final documentation SHA**: (filled after finalization push).
-54. **Final exact CI run**: (filled after finalization push).
-55. **Final exact CI head SHA**: (filled after finalization push).
-56. **Final exact CI result**: (filled after finalization push).
+53. **Final documentation SHA**: `2e6c2cf08fd897427956834100175396e9a43e57`
+54. **Final exact CI run**: `31878877732`
+55. **Final exact CI head SHA**: `2e6c2cf08fd897427956834100175396e9a43e57`
+56. **Final exact CI result**: completed, success (3m26s); all steps ✓ incl.
+   Phase 8B.1.0 matrix + checkout-cleanliness + agent-state + campaign.
 57. **Docs-only descendant proof from clean-suite SHA**: `git diff --name-only
-   cf3a757..FINAL_SHA` contains only `.agent/**` paths (task records,
+   cf3a757..2e6c2cf` contains only `.agent/**` paths (task records,
    ACTIVE_TASK) — no src/tests/bin/package/tsconfig/playwright/workflow
    changes; the clean full-suite result is source-equivalent for the final
    SHA.
@@ -137,9 +138,9 @@ Status: COMPLETE
 71. **External AI/model calls**: 0.
 72. **Publication**: 0.
 73. **Alphaus writes**: 0.
-74. **Final HEAD**: (filled after finalization push).
-75. **origin/main**: (filled after finalization push).
-76. **Final worktree**: (filled after finalization push).
+74. **Final HEAD**: `2e6c2cf08fd897427956834100175396e9a43e57`
+75. **origin/main**: `2e6c2cf08fd897427956834100175396e9a43e57` (equal)
+76. **Final worktree**: clean (porcelain empty)
 77. **Continuity consistency verdict**: PASS — ACTIVE_TASK, 8B.1.0
    STATE/REPORT/PLAN, 8B.1.0.1 STATE/REPORT, CURRENT_STATE, ROADMAP agree
    on phase status (8B.1.0 COMPLETE, 8B.1 BLOCKED), implementation SHA
@@ -158,7 +159,7 @@ Status: COMPLETE
    fixed, continuity reconciled, clean full regression passed, promotion
    machinery available, old approval spent, new promotion NOT started. This
    does NOT mean authorized now.
-81. **Final verdict**: (filled after finalization push).
+81. **Final verdict**: `PHASE_8B_1_0_1_COMPLETE`
 82. **Recommended next action**: STOP within this authorization; any Phase
    8B.1 retry requires a separate fresh owner authorization.
 

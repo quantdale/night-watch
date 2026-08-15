@@ -97,21 +97,26 @@ retry requiring a completely separate fresh owner authorization.
 ## Milestones
 
 - M0 bootstrap + recovery reads — DONE (CASE A; all recovery docs read).
-- M1 pre-edit clean full-suite baseline @ 10ecea296 (isolated checkout) —
-  IN_PROGRESS (background run).
-- M2 task files + drift audit — NOT_STARTED.
+- M1 pre-edit clean full-suite baseline @ 10ecea296 — DONE (real checkout
+  clean-tree run 685/1/0; isolated mirror 682/4/0; first /tmp attempt
+  classified environment-specific).
+- M2 task files + drift audit — DONE (18-item drift ledger; task records
+  committed).
 - M3 continuity reconciliation edits (ACTIVE_TASK, 8B.1.0 STATE/REPORT/PLAN)
-  — NOT_STARTED.
+  — DONE.
 - M4 local final gates (typecheck, hardening:check, agent:check,
   campaign:synthetic, test:owner-provenance, git diff --check, dedicated
-  8B.1.0 matrix 59 tests) — NOT_STARTED.
-- M5 continuity commit + fast-forward push — NOT_STARTED.
-- M6 exact GitHub CI verification (per-step) — NOT_STARTED.
-- M7 final clean full-suite @ pushed SHA (isolated checkout) — NOT_STARTED.
+  8B.1.0 matrix 59 tests) — DONE (all PASS).
+- M5 continuity commit + fast-forward push — DONE (cf3a757; CI 31878642370
+  success).
+- M6 exact GitHub CI verification (per-step) — DONE (all 22 steps green).
+- M7 final clean full-suite @ pushed SHA (isolated checkout) — DONE
+  (682/4/0, exit 0).
 - M8 docs-only finalization commit (STATE/REPORT final numbers) + final CI —
-  NOT_STARTED.
+  DONE (2e6c2cf; CI 31878877732 success).
 - M9 final verification (HEAD==origin/main, clean worktree, catalog digest,
-  cross-file consistency) + final report + STOP — NOT_STARTED.
+  cross-file consistency) + final report + STOP — DONE (verdict
+  PHASE_8B_1_0_1_COMPLETE).
 
 ## Validation Strategy
 
