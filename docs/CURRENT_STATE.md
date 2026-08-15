@@ -51,7 +51,12 @@
 > exactly ONE entry (raw digest `bd35b934...` after the R1.1.1 authority
 > wording regeneration); variant B
 > (EXPAND_THEN_COLLAPSE) remains available-not-adopted with promotion
-> authority NONE. No second approval, no second APPLY, no B adoption.
+> authority NONE. No second approval, no second APPLY, no B adoption. The
+> next-architecture design review (Phase 8-DESIGN, 2026-08-15) selected
+> `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8` — Phase 8's objective (one
+> owner-authorized canonical promotion + continuation) is fulfilled; Phase 8
+> closure is PROPOSED / NOT_AUTHORIZED (see the design-review record below
+> and `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; decision D-52).
 
 
 ---
@@ -1266,6 +1271,35 @@ raw digest `401b2c67...` → `bd35b934...`; `sourceBundleDigest` changed by
 construction; `contractDigest` unchanged (`d8012fae...`); D-51 records the
 terminology decision (D-50 preserved as the historical R1.1 record). No
 variant-B adoption; promotion authority NONE.
+
+## Phase 8 design review — next architecture (design complete; implementation not authorized)
+
+The next-architecture design review (`phase-8-next-architecture-design-review`,
+Phase 8-DESIGN, authorization `PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`,
+2026-08-15) selected **`PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8`**
+(secondary: REPEATABLE_OWNER_GATED_ADOPTION VIABLE_LATER; rejected:
+autonomous promotion BY_DESIGN, runtime rollback machinery; deferred: owner
+review queue, portfolio expansion). Evidence basis: the Phase 8 objective —
+one owner-authorized canonical self-development promotion with a complete
+source-bound evidence chain, plus continuation — is fulfilled with live
+evidence (R1 at `24fc437`; `CANONICAL_PROMOTION_COMMITTED_EXACT`; post-commit
+sessions select B with eligible true); catalog states 0/1/2 and EXHAUSTED
+are fixture-proven; CI is cardinality-agnostic; a second adoption of
+variant B (a structural canary with zero bug-hunting value) would close
+only operational evidence gaps at the cost of ceremony and a source change.
+Nightwatch's next investment belongs in the campaign/oracle/triage space.
+The full analysis is in `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; the
+decision record is D-52.
+
+Phase 8 closure is **PROPOSED, NOT STARTED, NOT AUTHORIZED**: flipping
+`PHASE_8_STATUS` to COMPLETE requires a separate authorized task because
+`bin/project-state-check.mjs:172-174` hard-pins `PHASE_8_STATUS:
+IN_PROGRESS` and `PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1`
+(source change). The proposed next task "Phase 8 Final Closure & Phase 9
+Roadmap Selection" (`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`) is
+DESIGNED / NOT_STARTED / NOT_AUTHORIZED (specification in the design
+artifact §45). Machine-checked truth block unchanged: catalog count 1,
+variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

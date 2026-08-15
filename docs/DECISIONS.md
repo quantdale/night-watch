@@ -1728,3 +1728,69 @@ absolute as of Phase 8B.1-R1.1.1. Promotion currentness semantics unchanged:
 the historical R1 verification stays exact historical evidence, and a later
 authoritative source change keeps yielding strict
 `CANONICAL_PROMOTION_SOURCE_MISMATCH`.
+
+## D-52 — Phase 8 next-architecture design review: close Phase 8; freeze the canonical-promotion research boundary
+
+**Decision.** After the first canonical owner-gated self-development
+adoption (Phase 8B.1-R1, commit `24fc437`; catalog count 1; variant B
+AVAILABLE_NOT_ADOPTED; promotion authority NONE), the evidence-based
+next-architecture selection is **CLOSE_PHASE_8**: Phase 8's objective — one
+owner-authorized canonical self-development promotion with a complete
+source-bound evidence chain, plus continuation — is fulfilled with live
+evidence. No further Phase 8 implementation is recommended. Variant B
+remains available but unadopted; promotion authority remains NONE. The
+canonical-promotion machinery is preserved intact for any future concrete
+need. The full analysis is in
+`docs/design/PHASE_8_NEXT_ARCHITECTURE.md` (design review
+`phase-8-next-architecture-design-review`, authorization
+`PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`).
+
+**Rationale.** The promotion chain is generic and cardinality-agnostic;
+catalog states 0/1/2 and EXHAUSTED are fixture-proven; CI contains no
+hard-coded count assumption; a second adoption of variant B would close
+only operational evidence gaps (live ceremony, live status-pin transition)
+at the cost of a fresh authorization, ceremony, and a source change, while
+adding zero bug-hunting value (B is a structural canary — a synthetic
+regression case over the local fixture state machine, not a production
+finding capability). Nightwatch's purpose is Alphaus bug hunting; the next
+investment belongs in the campaign/oracle/triage space, not in more
+self-development promotion machinery. Closure itself requires a separate
+authorized task because `bin/project-state-check.mjs:172-174` hard-pins
+`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:
+COMPLETE_VIA_SUCCESSFUL_RETRY_R1` (a source change), so the design review
+records the design and stops.
+
+**Alternatives.** REPEATABLE_OWNER_GATED_ADOPTION (Option B) is
+VIABLE_LATER: the chain already supports it generically; it should be
+executed only for a real candidate with bug-hunting value under a fresh
+owner authorization per adoption (each with a fresh one-shot approval, one
+APPLY, no auto-loop, future-state rehearsal, STOP). Option C (owner review
+queue) and Option D (portfolio expansion) are DEFERRED: the queue is
+meaningless for a 2-member portfolio, and expansion belongs after closure
+with real bug-hunting semantics. Option E (first-class rollback machinery)
+is REJECTED: the development-session Git-restore model covers every
+failure scenario (proven in the original 8B.1 BLOCKED attempt), and a
+runtime revert would mirror the canonical write authority the model
+deliberately excludes. Option F (autonomous canonical promotion) is
+REJECTED_BY_DESIGN: it replaces per-adoption owner approval with standing
+runtime authority, violating the AGENTS.md principle of explicit owner
+authority for irreversible canonical promotion, the one-shot-approval and
+no-auto-loop principles, and the candidate-availability ≠
+promotion-authorization separation; it would also create generic
+self-modification authority that D-51 rules out.
+
+**Owner authority boundary.** Unchanged: owner-gated chain L3-L6
+(intent/approval/APPLY/commit) per adoption; `NEXT_PROMOTION_AUTHORITY:
+NONE` machine-enforced; one-shot approvals; no runtime Git mutation. This
+review grants NO promotion authority and NO implementation authority; the
+proposed closure task
+("Phase 8 Final Closure & Phase 9 Roadmap Selection",
+`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`) requires separate owner
+authorization.
+
+**Consequences.** `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8`; Phase 8
+closure PROPOSED (not executed — the project-state pins make it a source
+change); ROADMAP records the design with DESIGNED / NOT_STARTED /
+NOT_AUTHORIZED markers; the machine-checked truth block is unchanged
+(count 1, B available, authority NONE). Variant B adoption, portfolio
+expansion, and any promotion remain separate-authorization-only.

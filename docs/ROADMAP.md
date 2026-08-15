@@ -1094,9 +1094,49 @@ changing adoption/evaluator semantics:
 
 Phase 8B.1 remains `COMPLETE VIA SUCCESSFUL RETRY R1`; Phase 8 stays
 `IN_PROGRESS`. Canonical catalog count = 1; variant B AVAILABLE_NOT_ADOPTED;
-promotion authority NONE; next architectural capability UNDESIGNED /
-requires a separate design review and owner authorization. No Phase 8C
-exists.
+promotion authority NONE. The next architecture is now DESIGNED, not
+implemented — see the design review record below. No Phase 8C exists.
+
+### Phase 8 design review — next architecture (design complete; implementation not authorized)
+
+The next-architecture design review (`phase-8-next-architecture-design-review`,
+Phase 8-DESIGN, authorization `PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`,
+2026-08-15) selected:
+
+```
+PHASE_8_NEXT_ARCHITECTURE:
+  CLOSE_PHASE_8
+SECONDARY_LATER_OPTION:
+  REPEATABLE_OWNER_GATED_ADOPTION (VIABLE_LATER)
+REJECTED:
+  AUTONOMOUS_PROMOTION (BY_DESIGN) / RUNTIME_ROLLBACK_MACHINERY
+DEFERRED:
+  OWNER_REVIEW_QUEUE / PORTFOLIO_EXPANSION
+```
+
+Phase 8's objective — one owner-authorized canonical self-development
+promotion with a complete source-bound evidence chain, plus continuation —
+is fulfilled with live evidence (R1 at `24fc437`, committed currentness
+`CANONICAL_PROMOTION_COMMITTED_EXACT`, post-commit sessions select B).
+Further Phase 8 promotion machinery (B adoption, queue, expansion,
+rollback) re-demonstrates fixture-proven states or adds authority without
+bug-hunting value; Nightwatch's next investment belongs in the
+campaign/oracle/triage space. Variant B remains AVAILABLE_NOT_ADOPTED;
+promotion authority NONE; candidate availability never implies
+authorization. The full analysis is in
+`docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; the decision record is D-52;
+the machine-checked truth block is unchanged (count 1, B available,
+authority NONE).
+
+**Phase 8 closure is PROPOSED, NOT STARTED, NOT AUTHORIZED.** Closing
+Phase 8 (flipping `PHASE_8_STATUS` to COMPLETE) requires a separate
+authorized task because `bin/project-state-check.mjs:172-174` hard-pins
+`PHASE_8_STATUS: IN_PROGRESS` and `PHASE_8B_1_STATUS:
+COMPLETE_VIA_SUCCESSFUL_RETRY_R1` — a source change this design review must
+not make. The proposed next task, "Phase 8 Final Closure & Phase 9 Roadmap
+Selection" (`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`), is
+DESIGNED / NOT_STARTED / NOT_AUTHORIZED and is specified in
+`docs/design/PHASE_8_NEXT_ARCHITECTURE.md` §45.
 
 ---
 
