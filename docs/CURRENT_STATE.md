@@ -56,7 +56,8 @@
 > `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8` — Phase 8's objective (one
 > owner-authorized canonical promotion + continuation) is fulfilled; Phase 8
 > closure is PROPOSED / NOT_AUTHORIZED (see the design-review record below
-> and `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; decision D-52).
+> and `docs/ARCHITECTURE.md` (Phase 8 next-architecture design review
+> section); decision D-52).
 
 
 ---
@@ -1288,7 +1289,8 @@ are fixture-proven; CI is cardinality-agnostic; a second adoption of
 variant B (a structural canary with zero bug-hunting value) would close
 only operational evidence gaps at the cost of ceremony and a source change.
 Nightwatch's next investment belongs in the campaign/oracle/triage space.
-The full analysis is in `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; the
+The full analysis is in `docs/ARCHITECTURE.md` (Phase 8 next-architecture
+design review section); the
 decision record is D-52.
 
 Phase 8 closure is **PROPOSED, NOT STARTED, NOT AUTHORIZED**: flipping

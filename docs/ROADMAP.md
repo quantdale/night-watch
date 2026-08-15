@@ -1124,7 +1124,8 @@ bug-hunting value; Nightwatch's next investment belongs in the
 campaign/oracle/triage space. Variant B remains AVAILABLE_NOT_ADOPTED;
 promotion authority NONE; candidate availability never implies
 authorization. The full analysis is in
-`docs/design/PHASE_8_NEXT_ARCHITECTURE.md`; the decision record is D-52;
+`docs/ARCHITECTURE.md` (Phase 8 next-architecture design review section); the
+decision record is D-52;
 the machine-checked truth block is unchanged (count 1, B available,
 authority NONE).
 
@@ -1136,7 +1137,7 @@ COMPLETE_VIA_SUCCESSFUL_RETRY_R1` — a source change this design review must
 not make. The proposed next task, "Phase 8 Final Closure & Phase 9 Roadmap
 Selection" (`PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`), is
 DESIGNED / NOT_STARTED / NOT_AUTHORIZED and is specified in
-`docs/design/PHASE_8_NEXT_ARCHITECTURE.md` §45.
+`docs/ARCHITECTURE.md` §45 (design-record section).
 
 ---
 

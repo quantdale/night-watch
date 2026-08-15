@@ -1741,7 +1741,8 @@ evidence. No further Phase 8 implementation is recommended. Variant B
 remains available but unadopted; promotion authority remains NONE. The
 canonical-promotion machinery is preserved intact for any future concrete
 need. The full analysis is in
-`docs/design/PHASE_8_NEXT_ARCHITECTURE.md` (design review
+`docs/ARCHITECTURE.md` (Phase 8 next-architecture design review section;
+design review
 `phase-8-next-architecture-design-review`, authorization
 `PHASE_8_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`).
 

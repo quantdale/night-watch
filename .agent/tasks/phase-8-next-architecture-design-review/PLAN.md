@@ -40,8 +40,10 @@ No implementation, no promotion, no catalog mutation.
   capacity; evidence-gap analysis; decision matrix; one primary
   recommendation; phase-naming; PHASE_8_COMPLETE criteria; next-task spec.
 - Files: `.agent/tasks/phase-8-next-architecture-design-review/{SPEC,PLAN,
-  STATE,REPORT}.md`, `.agent/ACTIVE_TASK.md`, `docs/design/
-  PHASE_8_NEXT_ARCHITECTURE.md` (new), `docs/DECISIONS.md` (D-52),
+  STATE,REPORT}.md`, `.agent/ACTIVE_TASK.md`, `docs/ARCHITECTURE.md` (new
+  "Phase 8 next-architecture design review" section — the repository-native
+  design location; `docs/design/` was rejected because it lies outside the
+  continuity approved checkpoint paths), `docs/DECISIONS.md` (D-52),
   `docs/ROADMAP.md` (design record), `docs/CURRENT_STATE.md` (narrative only).
 
 ## Non-Goals
@@ -91,8 +93,9 @@ invention.
   tables, exactly one primary recommendation token selected — status:
   COMPLETE (see STATE; full detail in design artifact).
 - M3 — design artifact + decision record + roadmap + current-state
-  narrative — criteria: `docs/design/PHASE_8_NEXT_ARCHITECTURE.md` covers
-  every required section; D-52 appended; ROADMAP marks next task
+  narrative — criteria: `docs/ARCHITECTURE.md` "Phase 8 next-architecture
+  design review (record)" section covers every required element; D-52
+  appended; ROADMAP marks next task
   DESIGNED/NOT_STARTED/NOT_AUTHORIZED; CURRENT_STATE machine block
   unchanged; narrative states recommendation — status: COMPLETE.
 - M4 — validation — criteria: typecheck, hardening:check, agent:check,
@@ -135,9 +138,16 @@ invention.
   Phase 9). Reason: the recommended work closes the existing phase and
   selects the next investment; inventing 8C would imply Phase 8 capability
   work, and Phase 9 is a bug-hunting-phase concept for a separate decision.
-- D2 (2026-08-15): Design document location = new `docs/design/` (no
-  repository-native design location existed; verified absent). Consequence:
-  `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`.
+- D2 (2026-08-15): Design document location = `docs/ARCHITECTURE.md`
+  "Phase 8 next-architecture design review (record)" section — the
+  repository-native design location. The prompt-preferred
+  `docs/design/PHASE_8_NEXT_ARCHITECTURE.md` was created first but then
+  rejected: `docs/design/**` is outside `bin/agent-state.mjs`
+  `APPROVED_CHECKPOINT_PATHS`, which makes a COMPLETE docs-only task
+  closure impossible (STALE_IMPLEMENTATION_BASELINE becomes an error for
+  COMPLETE tasks), and §50 forbids changing `bin/**`. Consequence: the
+  design record lives in ARCHITECTURE.md; the closure task should add
+  `docs/design/**` to the allowlist for future design documents.
 
 ## Discoveries
 

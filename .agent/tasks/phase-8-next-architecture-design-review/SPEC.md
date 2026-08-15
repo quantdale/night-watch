@@ -63,25 +63,25 @@ catalog mutation, no source behavior change. Output is docs-only
 1. v2 design-review task records (`SPEC/PLAN/STATE/REPORT.md`) +
    `.agent/ACTIVE_TASK.md` under `nightwatch.agent-continuity.v2`, status
    IN_PROGRESS during the review, COMPLETE at closure with terminal fields.
-2. Dedicated design artifact `docs/design/PHASE_8_NEXT_ARCHITECTURE.md`
-   (repository-native design location; `docs/design/` is created here)
-   containing: current state; reconstructed Phase 8 objective; capability
-   evidence table (A-R); options A-F (+ any genuinely distinct additional
-   option) with 1-5 scoring on the 14 fixed criteria; authority ladder L0-L6;
-   candidate/eligibility/authority axis separation; repeatability analysis;
-   exhaustion analysis; artifact lifecycle map; source-change invalidation
-   model; rollback model; removal/unadoption analysis; catalog bound
-   analysis; owner experience; automation boundary; mandatory-manual
-   boundary; one-command readiness concept; B-as-second-canary verdict;
-   portfolio-expansion-before-B verdict; demonstration vs bug-hunting value;
-   opportunity cost; Phase 7/8 interaction; AI boundary; top-three threat
-   tables; recommended state machine; authority transition table; one-shot
-   semantics; identity requirements; concurrency; write accounting;
-   project-state implications; continuity implications; CI capacity;
-   test-baseline capacity; evidence-gap analysis; final decision matrix;
-   exactly one primary recommendation token; phase-naming decision; explicit
-   PHASE_8_COMPLETE criteria; non-goals; implementation boundary; migration
-   implications; proposed next task (implementation-ready spec).
+2. Dedicated design artifact recorded in `docs/ARCHITECTURE.md` under the
+   new top-level section "Phase 8 next-architecture design review (record)"
+   (the repository-native design location; the prompt-preferred
+   `docs/design/PHASE_8_NEXT_ARCHITECTURE.md` was evaluated and rejected
+   during the review because `docs/design/**` lies outside the continuity
+   protocol's approved checkpoint paths, which would make a COMPLETE
+   docs-only closure impossible without an unauthorized
+   `bin/agent-state.mjs` change). The section contains: current state;
+   reconstructed Phase 8 objective; capability evidence table (A-R);
+   options A-F (+ additional) with 1-5 scoring on the 14 fixed criteria;
+   authority ladder L0-L6; candidate/eligibility/authority axis separation;
+   repeatability analysis; exhaustion analysis; source-change invalidation
+   model; rollback model; one-shot semantics; identity requirements;
+   concurrency; write accounting; project-state implications; continuity
+   implications; CI capacity; test-baseline capacity; threat tables;
+   recommended state machine; authority transition table; final decision
+   matrix; exactly one primary recommendation token; phase-naming decision;
+   explicit PHASE_8_COMPLETE criteria; non-goals; implementation boundary;
+   migration implications; proposed next task (implementation-ready spec).
 3. One durable decision record appended to `docs/DECISIONS.md` (D-52)
    recording the selected architecture, rejected/deferred alternatives with
    reasons, owner authority boundary, and whether Phase 8 should close.
