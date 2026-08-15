@@ -33,14 +33,13 @@ metamorphic proof and zero canonical mutation.
 
 ## Current Milestone
 
-Milestone ID: M8 — Metamorphic adoption verification (end-to-end test)
+Milestone ID: M14/M15 — Architecture/safety review + push + exact CI
 Status: IN_PROGRESS
-What is being attempted: M1-M7 implemented and independently validated
-(catalog: 7/7 tests; planner: 12/12 tests; typecheck/hardening PASS). Now
-writing the full end-to-end sandbox-executor test
-(tests/unit/selfDevAdoptionSandbox.test.ts) to exercise the mirror/write/
-load/metamorphic-probe flow for real and catch integration bugs the
-planner/catalog unit tests can't reach.
+What is being attempted: M1-M13 complete (implementation, tests, hardening,
+CI wiring, full local + isolated-clean-checkout regression all PASS;
+substantive checkpoint committed locally as `f04bb92`/`54c21e7`). The
+architecture/safety self-review is now recorded below. Next: push to
+`origin main` and verify the exact remote CI run.
 
 ## Completed Milestones
 
@@ -64,35 +63,29 @@ planner/catalog unit tests can't reach.
 
 ## Work In Progress
 
-M1-M7 implementation complete: src/core/selfDevSandbox/{types,validation,
-storage,planner,sandboxMirror,sandboxLoader,sandboxExecutor,index}.ts,
-bin/selfdev-adopt-sandbox.mjs, package.json script, hardening-check.mjs
-`checkPhase8BSandboxBoundary`, provenanceManifest.ts + localGit.ts updated
-for the new authoritative paths. Catalog tests (7/7) and planner tests
-(12/12) pass; typecheck and hardening:check both PASS. Now writing the
-end-to-end sandbox-executor test.
+All implementation (M1-M11), full regression, and isolated clean checkout
+(M12/M13) complete and passing. Architecture/safety self-review recorded
+below (M14). Ready to push (M15).
 
 ## Exact Next Action
 
-1. Write and iterate tests/unit/selfDevAdoptionSandbox.test.ts against the
-   real sandboxExecutor.runSandboxAdoption implementation until green (this
-   is expected to surface integration bugs — module loader path resolution,
-   digest mismatches, probe construction — since it's the first real
-   end-to-end exercise of the mirror/write/load/probe/cleanup chain).
-2. Write tests/unit/selfDevAdoptionCli.test.ts (--help, forbidden options,
-   wrong confirmation, inspect/plan/run live-process smoke, mirroring
-   selfDevCli.test.ts's style).
-3. Add owner-policy regression coverage (SELF_DEVELOPMENT_SANDBOX_ADOPTION
-   allowed, SELF_DEVELOPMENT_CANONICAL_ADOPTION blocked) — likely appended
-   to one of the new test files rather than a new file.
-4. Add the "Phase 8B controlled source adoption sandbox matrix" CI step to
-   .github/workflows/hardening.yml (mirroring the Phase 8A.1.1 step shape),
-   listing the new test files.
-5. Run full regression (typecheck, hardening, full Playwright, synthetic
-   campaign, agent:check, git diff --check) + isolated clean checkout
-   (M12/M13), then architecture review + substantive commit/push + exact CI
-   (M14/M15), then the real acceptance run (M16-M18), then docs closure
-   (M19/M20).
+1. `git push origin main`; `git fetch origin`; confirm `HEAD == origin/main`.
+2. Poll/inspect the exact GitHub Actions "Nightwatch hardening" run for this
+   SHA; require `completed`/`success` and confirm the "Phase 8B controlled
+   source adoption sandbox matrix" step specifically executed and passed
+   (not merely inferred from overall green).
+3. Then M16: `npm run selfdev:synthetic` for a fresh v2 acceptance artifact
+   against this exact checkpoint; require `VERIFIED_EXACT_BASE`, replay
+   PASS, eligible true, >=1 candidate.
+4. M17: `inspect` -> `plan` -> `run --confirm SANDBOX_ONLY` against that
+   fresh artifact; capture sanitized IDs/digests only (no raw source, no
+   sandbox path) into this file's Completion Snapshot.
+5. M18: verify canonical catalog bytes/digest and `git status --short`
+   unchanged before/after the real acceptance run.
+6. M19/M20: update docs/CURRENT_STATE.md, docs/ROADMAP.md,
+   docs/ARCHITECTURE.md, docs/SAFETY_MODEL.md, docs/DECISIONS.md; update
+   this task's PLAN/STATE/REPORT + ACTIVE_TASK.md to COMPLETE; push the
+   docs-only descendant; verify final CI; STOP (do not start Phase 8B.1).
 
 ## Completed Milestones (M1-M3 detail)
 
@@ -134,11 +127,25 @@ end-to-end sandbox-executor test.
 
 | Path | Reason | Status |
 |---|---|---|
-| `.agent/tasks/phase-8b-controlled-source-adoption-sandbox/SPEC.md` | Frozen task intent | Created |
-| `.agent/tasks/phase-8b-controlled-source-adoption-sandbox/PLAN.md` | Living execution plan | Created |
-| `.agent/tasks/phase-8b-controlled-source-adoption-sandbox/STATE.md` | Waypoint | Created |
-| `.agent/tasks/phase-8b-controlled-source-adoption-sandbox/REPORT.md` | Handoff stub | Pending |
-| `.agent/ACTIVE_TASK.md` | Point at Phase 8B task | Pending |
+| `.agent/tasks/phase-8b-controlled-source-adoption-sandbox/{SPEC,PLAN,STATE,REPORT}.md` | Task scaffolding/continuity | Created |
+| `.agent/ACTIVE_TASK.md` | Point at Phase 8B task | Modified |
+| `src/core/selfDev/adoptedCaseCatalog.generated.ts` | Empty data-only sandbox mutation target | Created |
+| `src/core/selfDev/adoptedCases.ts` | Adopted-case schema/validation/renderer | Created |
+| `src/core/selfDev/validation.ts` | Added `selfDevEquivalentFingerprint` | Modified |
+| `src/core/selfDev/evaluator.ts` | Catalog-seeding constructor options | Modified |
+| `src/core/selfDev/controller.ts`, `replay.ts` | Wire catalog seeding into real/replay evaluators | Modified |
+| `src/core/selfDev/contract.ts` | Bind catalog into `contractDigest` | Modified |
+| `src/core/selfDev/provenanceManifest.ts` | Add new authoritative paths | Modified |
+| `src/core/selfDev/index.ts` | Export adopted-case surface | Modified |
+| `src/core/provenance/localGit.ts` | Add `selfDevSandbox`/new bin to untracked-check paths | Modified |
+| `src/core/policy/ownerScope.ts` | New `SELF_DEVELOPMENT_SANDBOX_ADOPTION` operation | Modified |
+| `src/core/selfDevSandbox/{types,validation,storage,planner,sandboxMirror,sandboxLoader,sandboxExecutor,index}.ts` | Sandbox-authority boundary | Created |
+| `bin/selfdev-adopt-sandbox.mjs` | inspect/plan/run CLI | Created |
+| `package.json` | `selfdev:adopt-sandbox` script | Modified |
+| `bin/hardening-check.mjs` | `checkPhase8BSandboxBoundary` | Modified |
+| `.github/workflows/hardening.yml` | Phase 8B CI matrix step | Modified |
+| `tests/unit/selfDevAdoptionCatalog.test.ts` (7), `selfDevAdoptionPlan.test.ts` (12), `selfDevAdoptionSandbox.test.ts` (7), `selfDevAdoptionCli.test.ts` (7) | New focused Phase 8B tests | Created |
+| `tests/unit/ownerScope.test.ts` | +1 Phase 8B owner-policy test | Modified |
 
 ## Validation Ledger
 
@@ -147,7 +154,45 @@ Result: PASS
 When: 2026-08-15
 Relevant failure/output summary: root correct, status clean, branch main,
 origin -> quantdale/night-watch, HEAD == origin/main ==
-e7abed9c64252df2c3bd9809252d652bd95f045a.
+e7abed9c64252df2c3bd9809252d652bd95f045a (starting state).
+
+Command: `npm run typecheck`
+Result: PASS (0 errors) — reconfirmed at every milestone and in the
+isolated clean checkout.
+
+Command: `npm run hardening:check`
+Result: PASS: offline structural invariants hold — reconfirmed in the
+isolated clean checkout.
+
+Command: `npx playwright test` (full suite, local dev checkout)
+Result: 611 passed.
+
+Command: `npx playwright test` (full suite, isolated clean checkout at
+`REPOSITORIES/nightwatch-clean-checkout-tmp`, sibling to real
+`alphauslabs`/`mobingilabs`)
+Result: 608 passed, 3 skipped (611 total — matches local dev count).
+
+Command: focused Phase 8B/8A matrix (selfDevSchema/selfDev/selfDevProvenance/
+selfDevCli/selfDevEligibility/selfDevAdoptionCatalog/selfDevAdoptionPlan/
+selfDevAdoptionSandbox/selfDevAdoptionCli/ownerScope, `--project=nightwatch
+--workers=1`)
+Result: 90/90 PASS, both in local dev checkout and isolated clean checkout.
+
+Command: `npm run campaign:synthetic`
+Result: 27/27 PASS (both checkouts).
+
+Command: `npm run agent:check`
+Result: PASS with 1 benign `CHECKPOINT_ADVANCE` warning (continuity files
+advance past the recorded implementation SHA, which is the correctly
+recorded substantive checkpoint `f04bb92`; the warning is expected/normal
+per `AGENTS.md`'s three-state model, not an error).
+
+Command: `git diff --check`
+Result: clean (both checkouts).
+
+Command: secret-shape grep over `git diff e7abed9..HEAD` (Bearer/AWS-key/
+PEM/password/api-key patterns)
+Result: none found.
 
 ## Decisions Made During This Task
 
@@ -210,8 +255,26 @@ constructor/class-field state.
 
 ## Discoveries
 
-- (none yet beyond confirming the goal-mode prompt's claimed baseline is
-  accurate against live Git and durable docs)
+- A genuine identity-hashing bug was found and fixed during M8 testing:
+  `resultIdentityFields` in `selfDevSandbox/validation.ts` initially used an
+  object spread (`{ ...result, changedFiles: [...] }`) instead of explicit
+  per-field enumeration (the pattern `planIdentityFields` and selfDev's own
+  `evaluationIdentityFields` correctly use). Because the spread copies
+  whatever properties the input object actually has at runtime (regardless
+  of the `Omit<..., 'resultId'>` compile-time type), re-validating an
+  already-round-tripped result object leaked its own `resultId` back into
+  the hash input it was being checked against, causing every legitimate
+  result to fail with `RESULT_ID_MISMATCH`. Fixed by enumerating fields
+  explicitly, matching the established safe pattern. Caught immediately by
+  the first real end-to-end sandbox test run, not by unit tests in
+  isolation — direct evidence for why the full integration test mattered.
+- The isolated full-history clean-checkout must be cloned as a *sibling* of
+  the real `alphauslabs`/`mobingilabs` directories (e.g. under
+  `REPOSITORIES/nightwatch-clean-checkout-tmp`), not under `/tmp`: several
+  pre-existing (non-Phase-8B) tests resolve sibling Alphaus repos via
+  relative paths and fail with `git cat-file` errors when cloned in
+  isolation elsewhere. Not a Phase 8B defect; recorded so a future session
+  doesn't waste time rediscovering it.
 
 ## Blockers
 
@@ -219,7 +282,75 @@ None.
 
 ## Safety Events
 
-NONE
+NONE. Zero DEV/NEXT/production contacts, product mutations, database/
+infrastructure queries, external AI/model calls, publication, or Alphaus
+writes at any point during implementation or validation. Local development
+Git commits (`78a47f0`, `f04bb92`, `54c21e7`) to the private `origin`
+history are the existing allowed development-checkpoint pattern, not
+runtime Git writes; nothing has been pushed yet (pending M15).
+
+## Architecture / Safety Self-Review (goal-mode §163-169 style)
+
+- Can sandbox adoption begin from a replay-only candidate helper, a
+  zero-pass artifact, a source-stale artifact, or legacy v1? NO — `planAdoption`
+  calls `assessFutureReviewEligibility` (the canonical source-currentness-aware
+  gate) and requires `eligibility.eligible === true`; a zero-pass/legacy/
+  stale artifact always yields `eligible: false` there, proven by
+  `selfDevAdoptionPlan.test.ts`'s "a zero-pass artifact cannot plan" case and
+  the pre-existing `selfDevEligibility.test.ts` matrix (unchanged/reused).
+- Can a caller supply raw candidate JSON instead of an exact eligible
+  candidate ID? NO — `planAdoption` takes only `artifactId` + `candidateId`
+  (both exact-format strings); the candidate object itself is always looked
+  up from `eligibility.candidates`, never accepted as input.
+- Can the candidate select the source path, provide source/patch/command, or
+  can the renderer emit uncontrolled candidate text? NO — `targetPath` is the
+  code-defined constant `SELFDEV_ADOPTED_CATALOG_TARGET_PATH`; the plan
+  schema's own validator rejects any other value
+  (`PLAN_TARGET_PATH_INVALID`); the renderer only ever serializes bounded
+  `ID_RE`-validated strings via `JSON.stringify`, never candidate-controlled
+  free text (proven by the source-injection tests in both
+  `selfDevAdoptionCatalog.test.ts` and the adopted-case validator).
+- Can the sandbox write escape its private root, mutate canonical/Alphaus
+  source, or invoke Git? NO — `sandboxMirror.ts` resolves and checks every
+  path against the sandbox root via `fs.realpathSync`, rejects symlinks at
+  every step, and `cleanupSandboxMirror` only ever deletes a path confirmed
+  to be beneath `SELFDEV_SANDBOX_ROOT_BASE`; no file in
+  `src/core/selfDevSandbox/` imports `node:child_process` or references a
+  Git verb (enforced by `checkPhase8BSandboxBoundary`); the end-to-end test
+  proves canonical bytes/digest/`git status --porcelain` are unchanged
+  after a full run.
+- Does the same regression become duplicate after adoption, including under
+  a changed base SHA, an assertion variant, while a genuinely new coverage
+  edge still passes, and an unsafe candidate remains rejected? YES to all
+  four — proven directly by `selfDevAdoptionSandbox.test.ts`'s metamorphic
+  assertions (`postEquivalentResult`, `postVariantCoverageResult`,
+  `nonOverreachResult`, `unsafeRegressionResult` all `'PASS'` against the
+  real, sandbox-loaded, modified `SelfDevEvaluator`).
+- Is the adopted catalog bound into provenance/contract? YES — the catalog's
+  live contents are embedded directly in `SELFDEV_CONTRACT_MANIFEST`
+  (contract digest changes automatically with catalog contents) and both
+  new files are in `SELFDEV_AUTHORITATIVE_PATHS` (source bundle digest
+  changes too); proven by the end-to-end test's
+  `postContractDigest !== preContractDigest` and
+  `postSourceBundleDigest !== preSourceBundleDigest` assertions.
+- Does a docs-only descendant remain plannable/runnable while genuine source
+  drift fails closed? YES/YES — proven by dedicated TOCTOU tests in both
+  `selfDevAdoptionPlan.test.ts` and `selfDevAdoptionSandbox.test.ts`.
+- Is there any canonical source write authority, runtime Git commit/push
+  authority, AI/model authority, product/browser/API authority, database/
+  infrastructure authority, or publication authority anywhere in this
+  boundary? NO to all — `canonicalSourceWrites`/`runtimeGitWrites`/
+  `externalCalls` are hardcoded `0` in both the plan and result schemas and
+  validated as invariants (`RESULT_AUTHORITY_COUNTERS_NONZERO` fails
+  closed); no AI/campaign/browser/database/infrastructure import exists
+  anywhere under `src/core/selfDevSandbox/` (enforced by
+  `checkPhase8BSandboxBoundary`'s forbidden-import scan).
+- Is canonical promotion automatically triggered by a sandbox-verified
+  result? NO — the result's own `adoptionStatus` is literally
+  `'SANDBOX_VERIFIED_NOT_CANONICALLY_APPLIED'`; there is no `apply`/
+  `promote`/`commit`/`merge`/`install` CLI command anywhere (enforced by
+  both a hardening check and a CLI test asserting those command strings are
+  absent from source).
 
 ## Deferred / Follow-Up
 
