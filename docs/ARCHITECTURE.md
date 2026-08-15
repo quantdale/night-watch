@@ -76,7 +76,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
-| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the empty data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`) whose live contents seed evaluator baseline state and are bound into `contractDigest`. | implemented; no canonical adopter |
+| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the empty data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; no canonical adopter |
 | `src/core/selfDevSandbox/` | Phase 8B sandbox-mutation authority boundary, distinct from the pure `selfDev` trust/evaluation domain: a pure deterministic adoption planner, immutable private plan/result storage, a disposable owner-private source mirror, and a bounded serial cache-isolated TypeScript sandbox loader that executes the modified sandbox evaluator to metamorphically prove one adoption's effect. Zero canonical source write, Git, AI, product, database/infrastructure, or publication authority. | implemented; sandbox-only, no canonical apply |
 | `src/core/provenance/` | Fixed-path source-bundle/contract provenance and no-shell local Git metadata boundary; read-only only. | implemented |
 | `bin/selfdev-synthetic.mjs` | Thin wrapper for one bounded synthetic v2 session with locally attested provenance, replay, immutable write, and read-back summary. | implemented |
@@ -389,6 +389,27 @@ same file remains an empty array in this checkout.
 deterministic source transformation produced the expected behavior in a
 private disposable mirror. It does not mean canonical-applied, owner-
 approved-for-canonical-mutation, or Git-commit/push-authorized. Canonical
+Phase 8B.1.0 establishes the bounded self-development model explicitly: the
+deterministic proposal portfolio is FINITE (two variants), novelty is derived
+from the live adopted catalog, and when every known safe case is represented
+the system's future-review eligibility naturally becomes false — a healthy
+terminal condition, not a defect. `passCandidateCount = 0` /
+`futureReviewEligible = false` is a normal, successful session outcome; the
+system never invents fake novelty (no timestamp/base-SHA/seed rotation, no
+random actions, no coverage re-claiming). A future phase may deliberately
+expand the portfolio or registry under separate authorization.
+
+The Phase 8B.1.0 replay contract: the persisted replay descriptor always
+names the CONCRETE selected portfolio fixture (`VALID_MATRIX_EXPAND` /
+`VALID_MATRIX_EXPAND_COLLAPSE`), so replay never depends on whichever catalog
+exists later; historical `VALID_MATRIX` descriptors remain exactly supported.
+Test baselines are explicit: temporary source fixtures render the desired
+adopted-catalog state (EMPTY / EXPAND_ONLY / EXPAND_AND_COLLAPSE) through the
+real renderer and the full selfDev stack is loaded from the fixture source
+root, so evaluation, replay, digests, and eligibility always share one
+explicit state.
+
+The future canonical
 promotion is Phase 8B.1 — Owner-Gated Canonical Promotion — a separate,
 `NOT_STARTED`, `NOT_AUTHORIZED` future task.
 

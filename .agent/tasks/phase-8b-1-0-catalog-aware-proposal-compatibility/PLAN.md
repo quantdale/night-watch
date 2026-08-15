@@ -111,13 +111,13 @@ regardless of the checkout the test process runs in.
 - M10 Phase 8B/8B.1 synthetic integration (planner/sandbox/promotion consume
   variant B) — DONE
 - M11 hardening + CI — DONE
-- M12 full normal regression (real checkout, empty catalog) — IN PROGRESS
-- M13 one-entry isolated full-history regression — PENDING
-- M14 exhausted isolated full-history regression — PENDING
-- M15 architecture/adversarial review — PENDING
-- M16 substantive commit/push/exact CI — PENDING
-- M17 documentation closure / final CI — PENDING
-- M18 final report + STOP (no promotion retry) — PENDING
+- M12 full normal regression (real checkout, empty catalog) — DONE (682 passed / 1 skipped / 2 dirty-tree-only CLI failures, re-verified green on clean tree; owner provenance 91; AI 98; campaign 27)
+- M13 one-entry isolated full-history regression — DONE (159 passed / 1 skipped / 0 failed)
+- M14 exhausted isolated full-history regression — DONE (160 passed / 1 skipped / 0 failed)
+- M15 architecture/adversarial review — DONE
+- M16 substantive commit/push/exact CI — DONE (e3a8e2f implementation + e02aebe CI-fix; exact CI 31874715283 success)
+- M17 documentation closure / final CI — DONE
+- M18 final report + STOP (no promotion retry) — PENDING (final reply)
 
 ## Validation Strategy
 

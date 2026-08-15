@@ -1,22 +1,25 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.0.1 sandbox promotion-readiness closeout.
+> the Nightwatch Phase 8B.1.0 catalog-aware proposal & test-baseline
+> compatibility closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
 > Phase 7B.3 harness is complete; its real local-model canary was not run
 > because no compatible local runtime/model was available. Phase 8 is
-> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, and Phase
-> 8B.0.1 are
-> `COMPLETE`. Phase 8B proved one sandbox-confined, metamorphically-verified
-> source adoption with zero canonical mutation; Phase 8B.0.1 closed the
-> four promotion-readiness integrity gaps (sandbox base pre-validation,
-> adoption strategy binding, complete verified-result metamorphic
-> invariants, truthful failure-path sandbox-write accounting) with a fresh
-> sandbox-only acceptance; canonical candidate
-> promotion (a possible future Phase 8B.1) remains `NOT_STARTED`/
-> `NOT_AUTHORIZED`.
+> `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
+> and Phase 8B.1.0 are `COMPLETE`. Phase 8B proved one sandbox-confined,
+> metamorphically-verified source adoption with zero canonical mutation;
+> Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
+> Phase 8B.1 (Owner-Gated Canonical Promotion) remains `BLOCKED` — its one
+> authorized real promotion was applied/verified then reverted because the
+> full regression suite assumed a permanently-fresh single candidate;
+> Phase 8B.1.0 removed that structural blocker with a bounded deterministic
+> proposal portfolio (EXPAND_SUMMARY, EXPAND_THEN_COLLAPSE) and
+> state-explicit test baselines, so a future fresh 8B.1 promotion attempt is
+> possible under a NEW separate owner authorization. The canonical adopted
+> case catalog remains EMPTY.
 
 ---
 
@@ -934,6 +937,75 @@ change).
 Phase 8B.0.1 = `COMPLETE`. Phase 8B's historical sandbox acceptance is
 preserved. Phase 8B.1 — Owner-Gated Canonical Promotion remains
 `NOT_STARTED`/`NOT_AUTHORIZED`, now `READY_FOR_SEPARATE_DESIGN_REVIEW`.
+
+## Phase 8B.1.0 — Catalog-aware synthetic proposal & test-baseline compatibility (complete)
+
+Phase 8B.1.0 repaired the structural compatibility blocker that stopped the
+first real Phase 8B.1 canonical promotion from being committed (see the
+blocked Phase 8B.1 record above and
+`.agent/tasks/phase-8b-1-owner-gated-canonical-promotion/`): the deterministic
+synthetic proposer had exactly ONE semantically-distinct "valid" candidate,
+so the first real adoption made that candidate a permanent duplicate and
+broke ~50 historical assertions across 8 test files that implicitly assumed
+the live adopted catalog is always empty and a fresh PASS always exists.
+
+**Production (portfolio).** `src/core/selfDev/portfolio.ts` defines the
+bounded deterministic proposal portfolio
+(`nightwatch.selfdev-synthetic-portfolio.v1`): EXPAND_SUMMARY (the historical
+expansion semantics, unchanged) and EXPAND_THEN_COLLAPSE, in a frozen fixed
+order, with coverage and fingerprints DERIVED from the trusted action
+registry. `selectNextSyntheticProposalVariant({adoptedEquivalentFingerprints,
+adoptedCoverageClasses})` is pure and deterministic (no base SHA/seed/time/
+randomness): a variant is novel only when its fingerprint is not adopted AND
+its coverage adds at least one class beyond baseline+adopted. The controller
+resolves the default/`VALID_MATRIX` alias to a CONCRETE replay fixture
+(`VALID_MATRIX_EXPAND` / `VALID_MATRIX_EXPAND_COLLAPSE`) before persisting the
+descriptor; historical `VALID_MATRIX` descriptors still replay exactly.
+Portfolio exhaustion is a valid terminal state: with A+B adopted the default
+session completes normally with `passCandidateCount 0`,
+`futureReviewEligible false`, and a bounded diagnostic matrix (no exception,
+no fake novelty, no `--variant`/bypass options). The contract manifest was
+deliberately bumped to `nightwatch.selfdev-contract.private.v2` binding the
+portfolio, its order, and the selection-algorithm version — `contractDigest`
+changed by construction. The shared metamorphic non-overreach probe is now
+exact relative to baseline+adopted coverage, so the terminal member's
+registry-saturated state is correctly recognized.
+
+**Tests (baselines).** `tests/helpers/selfDevSourceFixture.ts` renders
+explicit catalog states (EMPTY / EXPAND_ONLY / EXPAND_AND_COLLAPSE) into
+committed temporary source repos via the real renderer/validators;
+`tests/helpers/selfDevStack.ts` loads the full selfDev stack (session, replay,
+trust/eligibility, planner, sandbox, promotion) from one fixture source root,
+so evaluation, replay, digests, and eligibility share ONE explicit adopted
+state regardless of the checkout the test process runs in. All eight
+historically affected test files were refactored to state-explicit baselines;
+`tests/unit/selfDevPortfolio.test.ts` (30 tests) covers the selector, the
+empty/one-entry/exhausted controller states, contract binding, CLI behavior
+under each state, and historical replay-descriptor compatibility.
+
+**Validation.** Pre-fix reproduction: one adopted entry in a synthetic
+checkout → 47 failed / 58 passed (rendered one-entry catalog byte-matches the
+historical applied postimage `sha256:fa7b71d4...`). Post-fix: full selfDev
+lineage green in the real (empty) checkout, in a one-entry isolated
+full-history checkout (159 passed — the historical blocker does NOT recur),
+and in an exhausted A+B isolated checkout (160 passed — a second adoption
+would not recreate the failure; exhaustion is intentional). Full Playwright
+682 passed / 1 skipped (2 dirty-tree-only CLI failures, pass on any clean
+tree); owner provenance 91; AI regressions 98; campaign synthetic 27;
+typecheck, hardening (incl. new `checkPhase8B10PortfolioIntegrity`), git
+diff --check, agent-state, and privacy scan all pass. Exact CI run
+`31874715283` at `e02aebeb42b2b95995dc20f4123dade866ed71cd` — all steps
+success, including the dedicated "Phase 8B.1.0 catalog-aware proposal
+compatibility matrix" and the checkout-cleanliness step (real catalog stays
+empty).
+
+**Status.** Phase 8B.1.0 = `COMPLETE`. Phase 8B.1 = `BLOCKED` (historical
+attempt preserved; approval permanently spent) with retry readiness:
+`READY_FOR_FRESH_OWNER_AUTHORIZATION` — a future retry must begin from fresh
+source state, a fresh selfDev artifact, a fresh sandbox proof, a fresh
+promotion intent, and a fresh one-shot approval; it was NOT retried here.
+The real canonical adopted-case catalog remains EMPTY (digest
+`sha256:ffe3d635...` unchanged).
 
 ## Hardening Campaign I / I.1 — current durable closure
 

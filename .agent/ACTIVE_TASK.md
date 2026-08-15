@@ -3,15 +3,14 @@
 Task ID: phase-8b-1-0-catalog-aware-proposal-compatibility
 Phase: 8B.1.0 — Catalog-Aware Synthetic Proposal & Test-Baseline Compatibility Closeout
 Title: Nightwatch Phase 8B.1.0 — Catalog-Aware Synthetic Proposal & Test-Baseline Compatibility Closeout
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-8b-1-0-catalog-aware-proposal-compatibility
 Starting SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
 Last validated implementation SHA: 1bb8a369b65f9a580a9dc51e5cdb562dd187c0ca
-Current milestone: M12 — full normal regression (real checkout, empty catalog)
+Current milestone: M17 — documentation closure / final CI (task COMPLETE pending final report)
 Last checkpoint: 2026-08-15 — implementation complete; focused matrices green
 (157/157 selfDev lineage + 29/29 portfolio); M12 in progress.
-Next action: finish M12, then M13/M14 isolated checkouts, M15 review, M16
-commit/push/exact CI, M17 docs closure, M18 report + STOP.
+Next action: M18 — write the final report (per the authorization's §216 format) and STOP; no promotion retry.
 Authorization class: PHASE_8B_1_0_COMPATIBILITY_REPAIR_ONLY
 
 ## Scope

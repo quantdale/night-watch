@@ -947,9 +947,41 @@ still empty) before and after with a clean `git status`. New
 `sourceBundleDigest`: `sha256:89593fb15bee945f8f80fe57e283a9ac00342a5945bcd500ef64a360dfb062f7`;
 `contractDigest` unchanged at
 `sha256:91b45f1020048c00b81a04e795d11d57dcd17084058430ab76b7a7f48d2d2c74`
-(source-provenance hardening, not an evaluator-contract change). Phase 8B.1
-remains `NOT_STARTED`/`NOT_AUTHORIZED`, now
-`READY_FOR_SEPARATE_DESIGN_REVIEW`.
+(source-provenance hardening, not an evaluator-contract change).
+
+### Phase 8B.1.0 — Catalog-aware synthetic proposal & test-baseline compatibility (complete)
+
+Phase 8B.1.0 (COMPLETE) removed the structural blocker that stopped the
+first real Phase 8B.1 promotion from being committed: the deterministic
+proposer's single semantically-distinct candidate became a permanent
+duplicate once adopted, breaking ~50 historical assertions across 8 test
+files that implicitly assumed an always-empty live adopted catalog and an
+always-fresh PASS. The fix (both sides):
+
+- **Production** — bounded deterministic proposal portfolio
+  (`nightwatch.selfdev-synthetic-portfolio.v1`, `src/core/selfDev/portfolio.ts`):
+  EXPAND_SUMMARY and EXPAND_THEN_COLLAPSE in frozen order; pure
+  `selectNextSyntheticProposalVariant` (fingerprint-not-adopted AND
+  coverage-delta>0 vs baseline+adopted; no base/seed/time/random input);
+  controller resolves the default alias to a concrete replay fixture;
+  EXHAUSTED (A+B adopted) is a valid terminal state (0 PASS, not eligible,
+  session succeeds normally). Contract manifest deliberately advanced to
+  `nightwatch.selfdev-contract.private.v2`, binding the portfolio, its order,
+  and the selection-algorithm version.
+- **Tests** — explicit adopted-catalog baselines (EMPTY / EXPAND_ONLY /
+  EXPAND_AND_COLLAPSE) rendered via the real renderer into temp source repos
+  (`tests/helpers/selfDevSourceFixture.ts`) with the full selfDev stack loaded
+  coherently from each fixture (`tests/helpers/selfDevStack.ts`); all eight
+  affected historical test files refactored; new 30-test portfolio matrix.
+
+Validation: pre-fix reproduction 47 failed / 58 passed under a one-entry
+checkout; post-fix green in the real checkout, a one-entry isolated
+full-history checkout (159 passed), and an exhausted A+B isolated checkout
+(160 passed); exact CI green with the dedicated 8B.1.0 matrix step. Phase
+8B.1 remains `BLOCKED` (historical attempt and spent approval preserved);
+retry readiness: `READY_FOR_FRESH_OWNER_AUTHORIZATION` (a separate owner
+authorization is required; no promotion was retried). The canonical adopted
+case catalog remains EMPTY.
 
 ---
 

@@ -1004,6 +1004,32 @@ separate, `NOT_STARTED`, `NOT_AUTHORIZED` future task; this phase's plan and
 result identities are designed to be consumable by that future gate without
 re-deriving adoption semantics, but no such consumer exists yet.
 
+### Phase 8B.1.0 safety update — bounded portfolio and explicit test baselines
+
+Phase 8B.1.0 (see DECISIONS D-49) closed the structural blocker that
+stopped the first real Phase 8B.1 promotion, with no safety-model
+relaxation:
+
+- The proposal portfolio is a small bounded set of trusted declarative
+  descriptors (EXPAND_SUMMARY, EXPAND_THEN_COLLAPSE) with registry-derived
+  coverage and fingerprints; novelty selection is pure and deterministic and
+  never depends on `baseNightwatchSha`, `seed`, `createdAt`, `candidateId`,
+  time, randomness, or network. No new action capability, no callback, no
+  candidate-controlled behavior, no production catalog-bypass switch, no
+  `--variant`/`--empty-baseline` options.
+- Portfolio exhaustion (both variants adopted) is a healthy terminal
+  condition: sessions complete normally with zero pass candidates and
+  `futureReviewEligible false`; the system does not manufacture fake novelty.
+- Test baselines are explicit and isolated: temporary source fixtures render
+  EMPTY / EXPAND_ONLY / EXPAND_AND_COLLAPSE catalogs via the real renderer,
+  and the full selfDev stack is loaded coherently from each fixture. Tests
+  never mutate the imported catalog array, never monkey-patch, never use an
+  env-var bypass, and never let evaluation and replay disagree about the
+  adopted state.
+- The real canonical adopted-case catalog stays EMPTY; one-entry/exhausted
+  states exist only in temporary fixtures. The historically spent Phase 8B.1
+  approval remains consumed; no new approval, no promotion retry.
+
 ### Phase 8B.0.1 closeout safety update
 
 Phase 8B.0.1 (see DECISIONS D-48) strengthened the four trust boundaries of
