@@ -8,11 +8,13 @@
 // ordinary development must never hand-edit the generated file. Source
 // mutation of that target is strictly partitioned: the Phase 8B sandbox
 // adoption executor may rewrite it only inside a disposable private source
-// mirror, and the Phase 8B.1 canonical-promotion executor may rewrite the
-// exact canonical target only after the complete owner-gated promotion
-// evidence/approval chain (runtime code never commits; the development
-// session commits the promoted result). No generic self-modification
-// authority exists.
+// mirror, and the Phase 8B.1 canonical-promotion executor is the only
+// runtime authority that may perform the bounded canonical target write,
+// and only after the complete owner-gated promotion evidence/approval
+// chain. Runtime promotion code never commits or pushes Git; the
+// development session commits the promoted result. No generic
+// self-modification authority exists: candidates never directly write
+// source.
 //
 // An adopted case is candidate SEMANTICS (fixture + actions + assertions),
 // never candidate-supplied code, patch, path, or expression. Coverage is
@@ -242,13 +244,15 @@ export function renderAdoptedCatalogSource(catalog: readonly SelfDevAdoptedCase[
     '// deterministic renderer.',
     '//',
     '// Source-mutation authority is strictly partitioned. The Phase 8B sandbox',
-    '// adoption executor may rewrite this target only inside a disposable',
-    '// private source mirror. The Phase 8B.1 canonical-promotion executor may',
-    '// rewrite the exact canonical target only after the complete owner-gated',
-    '// promotion evidence/approval chain, with the development session',
-    '// committing the promoted result. No generic self-modification authority',
-    '// exists: runtime code never writes canonical source, and no candidate',
-    '// ever writes source.',
+    '// adoption executor may write this target only inside a disposable',
+    '// private source mirror. The Phase 8B.1 canonical-promotion executor is',
+    '// the only runtime authority that may perform the bounded canonical',
+    '// target write, and only after the complete owner-gated promotion',
+    '// evidence/approval chain. Runtime promotion code never commits or',
+    '// pushes Git; the development session performs the later verified Git',
+    '// commit. No generic self-modification authority exists: candidates',
+    '// never directly write source, and no generic runtime source-writing',
+    '// interface exists.',
     '',
     `export const SELFDEV_ADOPTED_CASES = ${arrayLiteral};`,
     '',

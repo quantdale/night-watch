@@ -1683,3 +1683,48 @@ source change after `CANONICAL_PROMOTION_COMMITTED_EXACT` yields strict
 "semantically close" reclassification. CURRENT_STATE, ROADMAP, ARCHITECTURE,
 SAFETY_MODEL, and AGENTS were updated to the de-duplicated authority model;
 historical phase records and decisions were preserved unchanged.
+
+## D-51 — Canonical runtime mutation authority terminology
+
+**Problem.** D-50's corrected header text still contained one false absolute:
+"no generic self-modification authority exists — runtime code never writes
+canonical source and no candidate ever writes source." The
+canonical-promotion executor IS runtime code and may legitimately perform the
+bounded canonical target write, so "runtime code never writes canonical
+source" contradicts the two-writer partition stated in the same header
+(`renderAdoptedCatalogSource()` in `src/core/selfDev/adoptedCases.ts` and the
+regenerated `adoptedCaseCatalog.generated.ts`, Phase 8B.1-R1.1.1).
+
+**Decision (terminology).** "Runtime source mutation" is NOT globally
+prohibited inside Nightwatch. The exact authority model is:
+
+- generic runtime code cannot write canonical source — no generic runtime
+  source-writing interface exists;
+- candidates never directly write source;
+- the Phase 8B sandbox executor may write the fixed target only inside a
+  disposable private source mirror;
+- the Phase 8B.1 canonical-promotion executor is the ONLY runtime authority
+  that may perform the bounded canonical target write, and only after the
+  complete owner-gated promotion evidence/approval chain;
+- runtime promotion code never commits or pushes Git — the development
+  session performs the later verified Git commit.
+
+The renderer header and the module-level header now state exactly this
+boundary; the regenerated one-entry catalog carries the same truthful header
+(bytes-only change: raw digest `sha256:401b2c67...` ->
+`sha256:bd35b934...`; deep semantic equality PASS; `contractDigest`
+`sha256:d8012fae...` unchanged). Deterministic regression tests
+(`tests/unit/selfDevAdoptionCatalog.test.ts`) assert the positive invariant
+AND reject the false absolutes ("runtime code never writes canonical
+source", "runtime never mutates canonical source", "canonical source is
+never written at runtime", "no runtime path can write canonical source", and
+equivalents); `bin/hardening-check.mjs` rejects reintroduction with
+`PHASE_8B_1_CANONICAL_AUTHORITY_WORDING_DRIFT` in the live renderer and the
+current generated target.
+
+**Consequences.** D-50 remains the historical R1.1 decision record and is
+preserved verbatim (including its quoted phrase); D-51 supersedes the false
+absolute as of Phase 8B.1-R1.1.1. Promotion currentness semantics unchanged:
+the historical R1 verification stays exact historical evidence, and a later
+authoritative source change keeps yielding strict
+`CANONICAL_PROMOTION_SOURCE_MISMATCH`.

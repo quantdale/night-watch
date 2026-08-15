@@ -189,4 +189,97 @@ test.describe('Phase 8B adopted-case catalog', () => {
     // round-trip (as performed by the integrity check) rejects the deviation.
     expect(() => validateAdoptedCatalog([entry])).not.toThrow();
   });
+
+  test('the generated catalog authority header states the truthful runtime authority model (R1.1.1 positive invariant)', () => {
+    // Phase 8B.1-R1.1.1: the authority header must express the exact
+    // five-way partition WITHOUT any false absolute. These are the exact
+    // stable phrases the renderer emits and the live generated file must
+    // carry byte-for-byte. The canonical-promotion executor IS runtime code,
+    // so "runtime code never writes canonical source" is a contradiction and
+    // is rejected by the negative test below. Phrase checks run on the
+    // comment-flattened header (each `// ` line join collapses to a space),
+    // matching the prose the renderer emits.
+    const generatedPath = path.join(process.cwd(), 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+    const bytes = fs.readFileSync(generatedPath, 'utf8');
+    const rendered = renderAdoptedCatalogSource(validateAdoptedCatalog(SELFDEV_ADOPTED_CASES));
+    expect(rendered).toBe(bytes);
+    const flatten = (source: string): string => source.replace(/\n\s*\/\/\s*/g, ' ');
+    for (const source of [flatten(bytes), flatten(rendered)]) {
+      // Generated declarative data; ordinary development never hand-edits.
+      expect(source).toMatch(/GENERATED FILE/);
+      expect(source).toMatch(/Do not hand-edit/);
+      // 1. Sandbox writer is mirror-only.
+      expect(source).toMatch(/Phase 8B sandbox/);
+      expect(source).toMatch(/disposable/);
+      expect(source).toMatch(/private source mirror/);
+      // 2. Owner-gated canonical-promotion executor: the ONLY runtime
+      //    authority, bounded exact canonical target write.
+      expect(source).toMatch(/canonical-promotion executor is/);
+      expect(source).toMatch(/the only runtime authority/);
+      expect(source).toMatch(/bounded canonical/);
+      expect(source).toMatch(/owner-gated promotion/);
+      // 3. Runtime promotion code never commits/pushes Git; the development
+      //    session performs the later verified Git commit.
+      expect(source).toMatch(/never commits or pushes Git/);
+      expect(source).toMatch(/development session performs the later verified Git commit/);
+      // 4. Candidates never directly write source.
+      expect(source).toMatch(/candidates never directly write source/);
+      // 5. No generic self-modification / source-writing authority.
+      expect(source).toMatch(/No generic self-modification authority/);
+      expect(source).toMatch(/no generic runtime source-writing interface exists/);
+    }
+  });
+
+  test('the generated catalog authority header rejects every false runtime-write absolute (R1.1.1 negative invariant)', () => {
+    // Phase 8B.1-R1.1.1 regression guard: the false absolute
+    // "runtime code never writes canonical source" (and its equivalents)
+    // contradicts the owner-gated canonical-promotion executor, which IS a
+    // runtime authority for the bounded canonical target write. Any
+    // reintroduction in the renderer output or the live generated file fails.
+    const generatedPath = path.join(process.cwd(), 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+    const bytes = fs.readFileSync(generatedPath, 'utf8');
+    const rendered = renderAdoptedCatalogSource(validateAdoptedCatalog(SELFDEV_ADOPTED_CASES));
+    const FALSE_ABSOLUTES = [
+      'runtime code never writes canonical source',
+      'runtime never writes canonical source',
+      'runtime never mutates canonical source',
+      'canonical source is never written at runtime',
+      'canonical source is never changed at runtime',
+      'no runtime path can write canonical source',
+      'sandbox executor may write canonical target',
+      'runtime promotion code commits Git',
+      'candidates may write generated source',
+      'canonical promotion may write arbitrary files',
+    ];
+    for (const phrase of FALSE_ABSOLUTES) {
+      expect(bytes).not.toContain(phrase);
+      expect(rendered).not.toContain(phrase);
+    }
+    // Case-insensitive safety for the Git-commit negation: only
+    // "never commits or pushes Git" may appear.
+    expect(bytes).not.toMatch(/runtime promotion code commits/i);
+    expect(rendered).not.toMatch(/runtime promotion code commits/i);
+  });
+
+  test('the live one-entry catalog round-trips with exact deep semantic equality (R1.1.1 header-only change property)', () => {
+    // Phase 8B.1-R1.1.1: the R1.1.1 change is header-comment-only by
+    // construction. Parsing the on-disk array literal, validating it, and
+    // requiring deep equality with the module's validated live entries
+    // mechanically proves no adopted-case semantics moved — whatever the
+    // current checkout's one-entry catalog holds.
+    const generatedPath = path.join(process.cwd(), 'src/core/selfDev/adoptedCaseCatalog.generated.ts');
+    const bytes = fs.readFileSync(generatedPath, 'utf8');
+    const arrayText = bytes.slice(bytes.indexOf('['), bytes.lastIndexOf(']') + 1);
+    const parsed = JSON.parse(arrayText) as unknown[];
+    const validatedParsed = validateAdoptedCatalog(parsed);
+    const validatedLive = validateAdoptedCatalog(SELFDEV_ADOPTED_CASES);
+    expect(validatedParsed).toEqual(validatedLive);
+    expect(renderAdoptedCatalogSource(validatedParsed)).toBe(bytes);
+    // The declarative code section below the header is exactly the export
+    // line plus the JSON literal — the only bytes that can differ between
+    // catalog states (blank lines separate the header from the export).
+    const codeLines = bytes.split('\n').filter((line) => line.trim() !== '' && !line.trim().startsWith('//'));
+    expect(codeLines[0]).toMatch(/^export const SELFDEV_ADOPTED_CASES = \[$/);
+    expect(codeLines[codeLines.length - 1]).toBe('];');
+  });
 });

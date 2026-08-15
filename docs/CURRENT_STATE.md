@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8B.1-R1.1 project-memory & canonical-source truth
-> hardening closeout.
+> the Nightwatch Phase 8B.1-R1.1.1 canonical catalog authority wording
+> closeout.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -10,8 +10,10 @@
 > because no compatible local runtime/model was available. Phase 8 is
 > `IN_PROGRESS`; Phase 8A, Phase 8A.1, Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
 > Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`,
-> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`, and Phase 8B.1-R1.1
-> (project-memory & canonical-source truth hardening) is `COMPLETE`. Phase 8B proved one sandbox-confined,
+> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`, Phase 8B.1-R1.1
+> (project-memory & canonical-source truth hardening) is `COMPLETE`, and
+> Phase 8B.1-R1.1.1 (canonical catalog authority wording closeout) is
+> `COMPLETE`. Phase 8B proved one sandbox-confined,
 > metamorphically-verified source adoption with zero canonical mutation;
 > Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
 > Phase 8B.1 (Owner-Gated Canonical Promotion) — its original attempt
@@ -46,8 +48,8 @@
 > `nightwatch.project-state.v1` with read-only `npm run project:check` and
 > a CI "Project-memory truth check" step, and preserved promotion-currentness
 > strictness. The canonical adopted-case catalog contains
-> exactly ONE entry (raw digest `401b2c67...` after the R1.1 header
-> regeneration); variant B
+> exactly ONE entry (raw digest `bd35b934...` after the R1.1.1 authority
+> wording regeneration); variant B
 > (EXPAND_THEN_COLLAPSE) remains available-not-adopted with promotion
 > authority NONE. No second approval, no second APPLY, no B adoption.
 
@@ -133,7 +135,7 @@ CURRENT_TASK_AUTHORITY: .agent/ACTIVE_TASK.md
 VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md
 CANONICAL_CATALOG_TARGET: src/core/selfDev/adoptedCaseCatalog.generated.ts
 CANONICAL_CATALOG_ENTRY_COUNT: 1
-CANONICAL_CATALOG_SHA256: sha256:401b2c673e8e0486f697f3af159833cca6102410f690e82731377829b1e95b6c
+CANONICAL_CATALOG_SHA256: sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
 CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION
 PHASE_8_STATUS: IN_PROGRESS
 PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1
@@ -1233,6 +1235,37 @@ adoption/evaluator semantics:
   mutations, or publication. Variant B remains AVAILABLE_NOT_ADOPTED;
   promotion authority NONE; Phase 8 still IN_PROGRESS; next architectural
   capability requires separate design + owner authorization.
+
+**Phase 8B.1-R1.1.1 — canonical catalog authority wording closeout
+(complete).** The R1.1 header still carried one false absolute: "runtime
+code never writes canonical source" — contradicting the same header's grant
+of the bounded canonical target write to the Phase 8B.1 canonical-promotion
+executor (which IS runtime code). The corrected authority model, now stated
+identically in the module header, the renderer
+(`renderAdoptedCatalogSource()` in `src/core/selfDev/adoptedCases.ts`), and
+the regenerated `adoptedCaseCatalog.generated.ts`:
+
+- the Phase 8B sandbox executor may write the fixed target only inside a
+  disposable private source mirror;
+- the Phase 8B.1 canonical-promotion executor is the ONLY runtime authority
+  that may perform the bounded canonical target write, and only after the
+  complete owner-gated promotion evidence/approval chain;
+- runtime promotion code never commits or pushes Git — the development
+  session performs the later verified Git commit;
+- candidates never directly write source; no generic runtime source-writing
+  interface exists.
+
+Deterministic regression tests (`tests/unit/selfDevAdoptionCatalog.test.ts`)
+assert the positive invariant and reject the false absolutes; the hardening
+check rejects reintroduction with
+`PHASE_8B_1_CANONICAL_AUTHORITY_WORDING_DRIFT`. Regeneration was
+header-bytes-only: deep semantic equality PASS (adoptedCaseId
+`adopted-case:sha256:90248aae...`, equivalentFingerprint `sha256:6a322450...`,
+fixture/actions/assertions/coverage/strategy unchanged; count exactly 1);
+raw digest `401b2c67...` → `bd35b934...`; `sourceBundleDigest` changed by
+construction; `contractDigest` unchanged (`d8012fae...`); D-51 records the
+terminology decision (D-50 preserved as the historical R1.1 record). No
+variant-B adoption; promotion authority NONE.
 
 ## Hardening Campaign I / I.1 — current durable closure
 

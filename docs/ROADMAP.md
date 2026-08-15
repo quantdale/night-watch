@@ -1065,8 +1065,8 @@ changing adoption/evaluator semantics:
   rewrite the target only inside a disposable private source mirror; the
   Phase 8B.1 canonical-promotion executor may rewrite the exact canonical
   target only after the complete owner-gated promotion evidence/approval
-  chain (development session commits; runtime never writes canonical
-  source). Ordinary development never hand-edits the generated file; no
+  chain (development session commits; runtime never commits Git). Ordinary
+  development never hand-edits the generated file; no
   generic self-modification authority exists. The obsolete sandbox-only
   sentence is gone from live renderer text. Regeneration through the trusted
   renderer preserved deep semantic equality (adoptedCaseId

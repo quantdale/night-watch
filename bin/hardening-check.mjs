@@ -819,11 +819,32 @@ function checkProjectStateIntegrity() {
   // Generated-source provenance: the live renderer and the generated catalog
   // must describe the CURRENT two-writer authority model (Phase 8B sandbox
   // mirror-only + Phase 8B.1 owner-gated canonical promotion) and must NOT
-  // reintroduce the obsolete sandbox-only sentence.
+  // reintroduce the obsolete sandbox-only sentence or any false
+  // runtime-write absolute (R1.1.1: the canonical-promotion executor IS a
+  // runtime authority, so "runtime code never writes canonical source" is a
+  // contradiction).
   const renderer = read('src/core/selfDev/adoptedCases.ts');
   const catalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
   if (/never in this canonical/.test(renderer) || /never in this canonical/.test(catalog)) {
     fail('live renderer/generated catalog must not reintroduce the obsolete sandbox-only authority sentence');
+  }
+  const FALSE_RUNTIME_WRITE_ABSOLUTES = [
+    'runtime code never writes canonical source',
+    'runtime never writes canonical source',
+    'runtime never mutates canonical source',
+    'canonical source is never written at runtime',
+    'canonical source is never changed at runtime',
+    'no runtime path can write canonical source',
+  ];
+  for (const [label, source] of [['renderer', renderer], ['generated catalog', catalog]]) {
+    // Check both raw and comment-flattened text so a reintroduction cannot
+    // evade the guard by wrapping across comment lines.
+    const flattened = source.replace(/\n\s*\/\/\s*/g, ' ');
+    for (const phrase of FALSE_RUNTIME_WRITE_ABSOLUTES) {
+      if (source.includes(phrase) || flattened.includes(phrase)) {
+        fail(`${label} reintroduces the false runtime-write absolute "${phrase}" (PHASE_8B_1_CANONICAL_AUTHORITY_WORDING_DRIFT)`);
+      }
+    }
   }
   for (const [label, source] of [['renderer', renderer], ['generated catalog', catalog]]) {
     if (!/Phase 8B sandbox/.test(source) || !/disposable/.test(source) || !/private source mirror/.test(source)) {
@@ -834,6 +855,19 @@ function checkProjectStateIntegrity() {
     }
     if (!/No generic self-modification authority/.test(source)) {
       fail(`${label} must state there is no generic self-modification authority`);
+    }
+    // Multi-line prose checks run on the comment-flattened header (each
+    // `// ` line join collapses to a single space), matching the phrases the
+    // renderer emits.
+    const flattened = source.replace(/\n\s*\/\/\s*/g, ' ');
+    if (!/never commits or pushes Git/.test(flattened)) {
+      fail(`${label} must state runtime promotion code never commits or pushes Git`);
+    }
+    if (!/development session/.test(flattened) || !/commit/.test(flattened)) {
+      fail(`${label} must state the development session performs the later verified Git commit`);
+    }
+    if (!/candidates never directly write source/.test(flattened)) {
+      fail(`${label} must state candidates never directly write source`);
     }
   }
 }
