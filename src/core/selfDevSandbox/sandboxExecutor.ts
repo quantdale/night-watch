@@ -204,6 +204,11 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
   assertOwnerPolicyAllows('SELF_DEVELOPMENT_SANDBOX_ADOPTION');
   const { plan, repositoryRoot, nodeModulesAnchorPath, current, artifactStore } = input;
 
+  // Truthful sandbox write accounting (Phase 8B.0.1): tracks the ACTUAL
+  // executed effect — 0 before the single allowed target write has completed,
+  // 1 immediately after it succeeds. Every result (success or failure) carries
+  // the actual value; it is never inferred from the final success state.
+  let sandboxSourceWrites = 0;
   const failure = (failureClass: SelfDevSandboxFailureClass, cleanupStatus: 'PASS' | 'FAIL'): SelfDevAdoptionSandboxResult => {
     const draft = {
       schemaVersion: SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION,
@@ -228,7 +233,7 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
       sandboxVerificationStatus: 'FAIL' as const,
       failureClass,
       cleanupStatus,
-      sandboxSourceWrites: 0,
+      sandboxSourceWrites,
       canonicalSourceWrites: 0 as const,
       runtimeGitWrites: 0 as const,
       externalCalls: 0 as const,
@@ -258,6 +263,7 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
 
     try {
       writeSandboxTarget(mirror, plan.targetPath, postimageBytes);
+      sandboxSourceWrites = 1;
     } catch {
       return failure('SANDBOX_WRITE_FAILED', cleanupSandboxMirror(mirror));
     }
@@ -300,7 +306,10 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
     const cleanupStatus = cleanupSandboxMirror(mirror);
     mirror = null;
 
+    // A verified result requires every metamorphic proof to have run AND
+    // passed (Phase 8B.0.1): NOT_RUN is never an acceptable verified state.
     if (probes.postEquivalentResult !== 'PASS' || probes.postVariantCoverageResult !== 'PASS') return failure('POST_ADOPTION_STILL_PASS', cleanupStatus);
+    if (probes.nonOverreachResult === 'NOT_RUN') return failure('NON_OVERREACH_PROBE_UNAVAILABLE', cleanupStatus);
     if (probes.nonOverreachResult === 'FAIL') return failure('NON_OVERREACH_REGRESSION', cleanupStatus);
     if (probes.unsafeRegressionResult !== 'PASS') return failure('POST_ADOPTION_STILL_PASS', cleanupStatus);
     if (cleanupStatus !== 'PASS') return failure('CLEANUP_FAILED', cleanupStatus);
@@ -328,7 +337,7 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
       sandboxVerificationStatus: 'PASS' as const,
       failureClass: 'NONE' as const,
       cleanupStatus: 'PASS' as const,
-      sandboxSourceWrites: 1,
+      sandboxSourceWrites,
       canonicalSourceWrites: 0 as const,
       runtimeGitWrites: 0 as const,
       externalCalls: 0 as const,
@@ -338,6 +347,6 @@ export function runSandboxAdoption(input: RunSandboxAdoptionInput): SelfDevAdopt
     };
     return validateAdoptionSandboxResult({ ...draft, resultId: resultIdFor(draft) });
   } catch {
-    return failure('SANDBOX_WRITE_FAILED', mirror ? cleanupSandboxMirror(mirror) : 'FAIL');
+    return failure('SANDBOX_WRITE_FAILED', mirror === null ? 'PASS' : cleanupSandboxMirror(mirror));
   }
 }

@@ -10,7 +10,7 @@ import {
 } from '../../src/core/selfDev';
 import { SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
 import { currentCheckoutState } from '../../src/core/provenance/localGit';
-import { deriveAdoptedCase, SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES } from '../../src/core/selfDev/adoptedCases';
+import { deriveAdoptedCase, SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES, SELFDEV_ADOPTION_STRATEGY_CLASS } from '../../src/core/selfDev/adoptedCases';
 import { planAdoption, inspectSelfDevAdoption, revalidatePlan } from '../../src/core/selfDevSandbox/planner';
 import { SelfDevAdoptionPlanStore } from '../../src/core/selfDevSandbox/storage';
 import { validateAdoptionPlan, planIdFor } from '../../src/core/selfDevSandbox/validation';
@@ -228,5 +228,30 @@ test.describe('Phase 8B deterministic adoption planner', () => {
     expect(() => validateAdoptionPlan({ ...withoutId, planId: planIdFor(withoutId as never) })).toThrow();
     const wrongTarget = { ...plan, targetPath: '../../etc/passwd' } as unknown as Record<string, unknown>;
     expect(() => validateAdoptionPlan(wrongTarget)).toThrow(/PLAN_TARGET_PATH_INVALID/);
+  });
+
+  test('8B.0.1 strategy binding: the plan strategy is exactly the single adoption strategy class; unknown strategies fail even with a recomputed planId', () => {
+    const repository = makeGitRepo();
+    const store = new SelfDevPrivateArtifactStore({ root: freshPrivateRoot() });
+    const { artifactId, candidateId } = buildEligibleArtifact(repository, store.store.root);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const plan = planAdoption({ artifactId, candidateId, current, repositoryRoot: repository, artifactStore: store });
+    expect(plan.strategyClass).toBe(SELFDEV_ADOPTION_STRATEGY_CLASS);
+
+    for (const unknownStrategy of ['FUTURE_UNKNOWN_STRATEGY', 'DECLARATIVE_REGRESSION_CATALOG_PROMOTION_2', 'catalog-promotion-v9']) {
+      const forged = { ...plan, strategyClass: unknownStrategy } as unknown as Record<string, unknown>;
+      const { planId: _omit, ...withoutId } = forged;
+      expect(() => validateAdoptionPlan({ ...withoutId, planId: planIdFor(withoutId as never) }), `strategy ${unknownStrategy}`).toThrow(/PLAN_STRATEGY_INVALID/);
+    }
+  });
+
+  test('8B.0.1 strategy binding: a plan whose strategyClass differs from its adoptedCase strategyClass fails (cross-binding)', () => {
+    const repository = makeGitRepo();
+    const store = new SelfDevPrivateArtifactStore({ root: freshPrivateRoot() });
+    const { artifactId, candidateId } = buildEligibleArtifact(repository, store.store.root);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const plan = planAdoption({ artifactId, candidateId, current, repositoryRoot: repository, artifactStore: store });
+    const mismatched = { ...plan, adoptedCase: { ...plan.adoptedCase, strategyClass: 'FUTURE_UNKNOWN_STRATEGY' } } as unknown as Record<string, unknown>;
+    expect(() => validateAdoptionPlan(mismatched)).toThrow(/STRATEGY_INVALID/);
   });
 });

@@ -33,46 +33,52 @@ export class SelfDevSandboxLoaderBusyError extends Error {
 export function loadSandboxModules(absoluteEntryPaths: readonly string[], sandboxRoot: string, nodeModulesAnchorPath: string): readonly unknown[] {
   if (loadInFlight) throw new SelfDevSandboxLoaderBusyError();
   loadInFlight = true;
-  const resolvedSandboxRoot = fs.realpathSync(sandboxRoot);
-  // Anchored inside the canonical repository (which has real node_modules),
-  // never inside the sandbox mirror. Absolute-path requires for mirrored
-  // `.ts` files below are unaffected by this anchor; only the loader's own
-  // bare `require('typescript')` actually needs node_modules resolution.
-  const requireFn = createRequire(nodeModulesAnchorPath);
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const typescript = requireFn('typescript') as typeof import('typescript');
-  const previousHandler = requireFn.extensions['.ts'];
-  const loadedIds: string[] = [];
-
-  requireFn.extensions['.ts'] = (module: NodeModule, filename: string) => {
-    const resolvedFilename = fs.realpathSync(filename);
-    if (resolvedFilename !== resolvedSandboxRoot && !resolvedFilename.startsWith(resolvedSandboxRoot + path.sep)) {
-      throw new Error('SELFDEV_SANDBOX_LOADER_PATH_ESCAPE');
-    }
-    loadedIds.push(filename);
-    const source = fs.readFileSync(filename, 'utf8');
-    const output = typescript.transpileModule(source, {
-      fileName: filename,
-      compilerOptions: {
-        target: typescript.ScriptTarget.ES2022,
-        module: typescript.ModuleKind.CommonJS,
-        moduleResolution: typescript.ModuleResolutionKind.Node10,
-        esModuleInterop: true,
-        skipLibCheck: true,
-      },
-    }).outputText;
-    (module as unknown as { _compile(code: string, filename: string): void })._compile(output, filename);
-  };
-
   try {
-    for (const key of Object.keys(requireFn.cache)) {
-      if (key === resolvedSandboxRoot || key.startsWith(resolvedSandboxRoot + path.sep)) delete requireFn.cache[key];
+    const resolvedSandboxRoot = fs.realpathSync(sandboxRoot);
+    // Anchored inside the canonical repository (which has real node_modules),
+    // never inside the sandbox mirror. Absolute-path requires for mirrored
+    // `.ts` files below are unaffected by this anchor; only the loader's own
+    // bare `require('typescript')` actually needs node_modules resolution.
+    const requireFn = createRequire(nodeModulesAnchorPath);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const typescript = requireFn('typescript') as typeof import('typescript');
+    const previousHandler = requireFn.extensions['.ts'];
+    const loadedIds: string[] = [];
+
+    requireFn.extensions['.ts'] = (module: NodeModule, filename: string) => {
+      const resolvedFilename = fs.realpathSync(filename);
+      if (resolvedFilename !== resolvedSandboxRoot && !resolvedFilename.startsWith(resolvedSandboxRoot + path.sep)) {
+        throw new Error('SELFDEV_SANDBOX_LOADER_PATH_ESCAPE');
+      }
+      loadedIds.push(filename);
+      const source = fs.readFileSync(filename, 'utf8');
+      const output = typescript.transpileModule(source, {
+        fileName: filename,
+        compilerOptions: {
+          target: typescript.ScriptTarget.ES2022,
+          module: typescript.ModuleKind.CommonJS,
+          moduleResolution: typescript.ModuleResolutionKind.Node10,
+          esModuleInterop: true,
+          skipLibCheck: true,
+        },
+      }).outputText;
+      (module as unknown as { _compile(code: string, filename: string): void })._compile(output, filename);
+    };
+
+    try {
+      for (const key of Object.keys(requireFn.cache)) {
+        if (key === resolvedSandboxRoot || key.startsWith(resolvedSandboxRoot + path.sep)) delete requireFn.cache[key];
+      }
+      return absoluteEntryPaths.map((entryPath) => requireFn(entryPath) as unknown);
+    } finally {
+      if (previousHandler === undefined) delete requireFn.extensions['.ts'];
+      else requireFn.extensions['.ts'] = previousHandler;
+      for (const id of loadedIds) delete requireFn.cache[id];
     }
-    return absoluteEntryPaths.map((entryPath) => requireFn(entryPath) as unknown);
   } finally {
-    if (previousHandler === undefined) delete requireFn.extensions['.ts'];
-    else requireFn.extensions['.ts'] = previousHandler;
-    for (const id of loadedIds) delete requireFn.cache[id];
+    // Phase 8B.0.1: the serial-execution lock must be released on EVERY exit
+    // path, including an early anchor/compiler resolution failure before the
+    // hook is installed. A stuck lock would wedge every later sandbox load.
     loadInFlight = false;
   }
 }

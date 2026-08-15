@@ -480,6 +480,67 @@ function checkSyntax() {
   }
 }
 
+/**
+ * Phase 8B.0.1 closeout integrity: sandbox-base pre-validation ordering,
+ * single-strategy binding, complete verified-result metamorphic invariants,
+ * and truthful sandbox write accounting. Behavioral tests are primary; these
+ * structural assertions guard the same invariants at source level.
+ */
+function checkPhase8B01CloseoutIntegrity() {
+  const mirror = read('src/core/selfDevSandbox/sandboxMirror.ts');
+  if (!/ensurePrivateSandboxBase/.test(mirror)) fail('8B.0.1: sandbox mirror lacks the validated base-establishment routine');
+  if (!/firstMissingPathnameComponent/.test(mirror)) fail('8B.0.1: sandbox mirror lacks component-wise pathname-chain validation');
+  if (!/SELFDEV_SANDBOX_BASE_SYMLINK/.test(mirror) || !/SELFDEV_SANDBOX_BASE_NOT_DIRECTORY/.test(mirror) || !/SELFDEV_SANDBOX_BASE_ANCESTOR_MISSING/.test(mirror)) {
+    fail('8B.0.1: sandbox mirror lacks fail-closed chain validation codes');
+  }
+  if (!/_PERMISSIONS_UNSAFE/.test(mirror) || !/_OWNER/.test(mirror)) {
+    fail('8B.0.1: sandbox mirror lacks owner/permission fail-closed validation');
+  }
+  // The validated base MUST be established before any instance mutation.
+  if (!/function createSandboxMirror[\s\S]{0,200}?ensurePrivateSandboxBase\(\);[\s\S]{0,200}?mkdtempSync/.test(mirror)) {
+    fail('8B.0.1: createSandboxMirror does not validate the base chain before mkdtemp');
+  }
+  // Parent mode tightening (established convention) may only chmod a path
+  // already proven to be a non-symlink owner-matched directory.
+  if (!/function ensureOwnerPrivateDirectory[\s\S]*?assertNoSymlink[\s\S]*?chmodSync/.test(mirror)) {
+    fail('8B.0.1: parent repair chmod may precede symlink/owner validation');
+  }
+  // The base itself must never be chmodded by the establishment routine.
+  if (/function ensurePrivateSandboxBase[\s\S]{0,1200}?chmodSync/.test(mirror)) {
+    fail('8B.0.1: ensurePrivateSandboxBase chmods a pathname');
+  }
+  // Cleanup stays confined to the validated base (mirror root strict child).
+  if (!/resolvedRoot === resolvedBase \|\| !resolvedRoot\.startsWith\(resolvedBase \+ path\.sep\)/.test(mirror)) {
+    fail('8B.0.1: cleanup does not require strict containment beneath the validated base');
+  }
+
+  const validation = read('src/core/selfDevSandbox/validation.ts');
+  if (!/SELFDEV_ADOPTION_STRATEGY_CLASS/.test(validation)) fail('8B.0.1: plan/result validation does not bind the single strategy constant');
+  if (!/PLAN_STRATEGY_MISMATCH/.test(validation)) fail('8B.0.1: plan/adopted-case strategy cross-binding is missing');
+  if (!/result\.nonOverreachResult !== 'PASS'/.test(validation)) fail('8B.0.1: verified-result invariant does not require the non-overreach proof PASS');
+  if (!/result\.sandboxSourceWrites > 1/.test(validation)) fail('8B.0.1: sandbox write count is not bounded to at most one');
+  if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(validation)) fail('8B.0.1: NON_OVERREACH_PROBE_UNAVAILABLE is not a valid failure class');
+
+  const executor = read('src/core/selfDevSandbox/sandboxExecutor.ts');
+  if (!/let sandboxSourceWrites = 0/.test(executor) || !/sandboxSourceWrites = 1/.test(executor)) fail('8B.0.1: executor does not track actual sandbox writes');
+  if (/sandboxSourceWrites:\s*[01],/.test(executor)) fail('8B.0.1: executor hardcodes the sandbox write count instead of the tracked value');
+  if (!/probes\.nonOverreachResult === 'NOT_RUN'/.test(executor) || !/NON_OVERREACH_PROBE_UNAVAILABLE/.test(executor)) fail('8B.0.1: executor does not fail closed when the non-overreach probe is unavailable');
+  if (!/probes\.nonOverreachResult === 'FAIL'/.test(executor) || !/NON_OVERREACH_REGRESSION/.test(executor)) fail('8B.0.1: executor does not distinguish a failed non-overreach probe');
+
+  const types = read('src/core/selfDevSandbox/types.ts');
+  if (!/NON_OVERREACH_PROBE_UNAVAILABLE/.test(types)) fail('8B.0.1: failure-class union lacks NON_OVERREACH_PROBE_UNAVAILABLE');
+  if (!/SelfDevAdoptionStrategyClass/.test(types)) fail('8B.0.1: plan/result strategyClass is not the literal single-strategy type');
+
+  const loader = read('src/core/selfDevSandbox/sandboxLoader.ts');
+  if (!/finally\s*\{[\s\S]{0,500}?loadInFlight = false/.test(loader)) fail('8B.0.1: sandbox loader lock is not released on every exit path');
+
+  const index = read('src/core/selfDevSandbox/index.ts');
+  if (/setSandboxBaseOverrideForTests/.test(index)) fail('8B.0.1: the test-only sandbox-base override leaked into the boundary index');
+
+  const adoptedCases = read('src/core/selfDev/adoptedCases.ts');
+  if (!/SelfDevAdoptionStrategyClass/.test(adoptedCases)) fail('8B.0.1: the single strategy class lacks a literal exported type');
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -492,6 +553,7 @@ checkImmutablePrivatePublication();
 checkOwnerDecisionAuthority();
 checkSelfDevelopmentBoundary();
 checkPhase8BSandboxBoundary();
+checkPhase8B01CloseoutIntegrity();
 checkSyntax();
 
 if (errors.length > 0) {

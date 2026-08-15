@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { sha256Digest } from '../selfDev/canonical';
-import { validateAdoptedCase } from '../selfDev/adoptedCases';
+import { SELFDEV_ADOPTION_STRATEGY_CLASS, validateAdoptedCase } from '../selfDev/adoptedCases';
 import {
   SELFDEV_ADOPTION_PLAN_SCHEMA_VERSION,
   SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION,
@@ -97,7 +97,11 @@ export function validateAdoptionPlan(value: unknown): SelfDevAdoptionPlan {
   const plan = record(value);
   assertExactKeys(plan, PLAN_KEYS, 'PLAN');
   if (plan.schemaVersion !== SELFDEV_ADOPTION_PLAN_SCHEMA_VERSION) fail('PLAN_SCHEMA_INVALID');
-  if (typeof plan.strategyClass !== 'string' || plan.strategyClass.length === 0 || plan.strategyClass.length > 120) fail('PLAN_STRATEGY_INVALID');
+  // Strict strategy binding (Phase 8B.0.1): exactly the one production
+  // adoption strategy class is accepted. A syntactically correct hash does
+  // not confer semantic validity — an unknown strategy fails here before any
+  // identity check, even with a recomputed planId.
+  if (plan.strategyClass !== SELFDEV_ADOPTION_STRATEGY_CLASS) fail('PLAN_STRATEGY_INVALID');
   if (typeof plan.sourceSessionArtifactId !== 'string' || !ARTIFACT_ID_RE.test(plan.sourceSessionArtifactId)) fail('PLAN_ARTIFACT_ID_INVALID');
   if (typeof plan.candidateId !== 'string' || !CANDIDATE_ID_RE.test(plan.candidateId)) fail('PLAN_CANDIDATE_ID_INVALID');
   const candidateDigest = digest(plan.candidateDigest);
@@ -109,6 +113,8 @@ export function validateAdoptionPlan(value: unknown): SelfDevAdoptionPlan {
   if (plan.targetPath !== 'src/core/selfDev/adoptedCaseCatalog.generated.ts') fail('PLAN_TARGET_PATH_INVALID');
   const targetPreimageDigest = digest(plan.targetPreimageDigest);
   const adoptedCase = validateAdoptedCase(plan.adoptedCase);
+  // Explicit plan/adopted-case strategy cross-binding (Phase 8B.0.1).
+  if (plan.strategyClass !== adoptedCase.strategyClass) fail('PLAN_STRATEGY_MISMATCH');
   const targetPostimageDigest = digest(plan.targetPostimageDigest);
   if (targetPreimageDigest === targetPostimageDigest) fail('PLAN_NO_ACTUAL_CHANGE');
   if (!Array.isArray(plan.expectedChangedFiles) || plan.expectedChangedFiles.length !== 1 || plan.expectedChangedFiles[0] !== plan.targetPath) {
@@ -153,8 +159,8 @@ const FAILURE_CLASSES: readonly SelfDevSandboxFailureClass[] = [
   'NONE', 'PLAN_STALE', 'CANDIDATE_NOT_ELIGIBLE', 'CATALOG_NONCANONICAL',
   'ALREADY_ADOPTED', 'CATALOG_FULL', 'SANDBOX_COPY_MISMATCH', 'SANDBOX_WRITE_FAILED',
   'POSTIMAGE_DIGEST_MISMATCH', 'UNEXPECTED_CHANGED_FILE', 'SANDBOX_MODULE_LOAD_FAILED',
-  'SANDBOX_CONTRACT_NOT_CHANGED', 'POST_ADOPTION_STILL_PASS', 'NON_OVERREACH_REGRESSION',
-  'CLEANUP_FAILED',
+  'SANDBOX_CONTRACT_NOT_CHANGED', 'POST_ADOPTION_STILL_PASS', 'NON_OVERREACH_PROBE_UNAVAILABLE',
+  'NON_OVERREACH_REGRESSION', 'CLEANUP_FAILED',
 ];
 
 function assertProbeResult(value: unknown): asserts value is SelfDevSandboxProbeResult {
@@ -210,7 +216,10 @@ export function validateAdoptionSandboxResult(value: unknown): SelfDevAdoptionSa
   assertExactKeys(result, RESULT_KEYS, 'RESULT');
   if (result.schemaVersion !== SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION) fail('RESULT_SCHEMA_INVALID');
   if (typeof result.planId !== 'string' || !PLAN_ID_RE.test(result.planId)) fail('RESULT_PLAN_ID_INVALID');
-  if (typeof result.strategyClass !== 'string' || result.strategyClass.length === 0) fail('RESULT_STRATEGY_INVALID');
+  // Strict strategy binding (Phase 8B.0.1): exactly the one production
+  // adoption strategy class is accepted; a recomputed resultId cannot
+  // legalize an unknown strategy.
+  if (result.strategyClass !== SELFDEV_ADOPTION_STRATEGY_CLASS) fail('RESULT_STRATEGY_INVALID');
   if (typeof result.sourceSessionArtifactId !== 'string' || !ARTIFACT_ID_RE.test(result.sourceSessionArtifactId)) fail('RESULT_ARTIFACT_ID_INVALID');
   if (typeof result.candidateId !== 'string' || !CANDIDATE_ID_RE.test(result.candidateId)) fail('RESULT_CANDIDATE_ID_INVALID');
   const candidateDigest = digest(result.candidateDigest);
@@ -231,7 +240,7 @@ export function validateAdoptionSandboxResult(value: unknown): SelfDevAdoptionSa
   if (result.sandboxVerificationStatus !== 'PASS' && result.sandboxVerificationStatus !== 'FAIL') fail('RESULT_VERIFICATION_STATUS_INVALID');
   if (typeof result.failureClass !== 'string' || !FAILURE_CLASSES.includes(result.failureClass as SelfDevSandboxFailureClass)) fail('RESULT_FAILURE_CLASS_INVALID');
   if (result.cleanupStatus !== 'PASS' && result.cleanupStatus !== 'FAIL') fail('RESULT_CLEANUP_STATUS_INVALID');
-  if (typeof result.sandboxSourceWrites !== 'number' || !Number.isInteger(result.sandboxSourceWrites) || result.sandboxSourceWrites < 0) fail('RESULT_SANDBOX_WRITES_INVALID');
+  if (typeof result.sandboxSourceWrites !== 'number' || !Number.isInteger(result.sandboxSourceWrites) || result.sandboxSourceWrites < 0 || result.sandboxSourceWrites > 1) fail('RESULT_SANDBOX_WRITES_INVALID');
   if (result.canonicalSourceWrites !== 0 || result.runtimeGitWrites !== 0 || result.externalCalls !== 0) fail('RESULT_AUTHORITY_COUNTERS_NONZERO');
   if (result.canonicalApply !== 'PROHIBITED') fail('RESULT_CANONICAL_APPLY_INVALID');
   if (result.publication !== 'PROHIBITED') fail('RESULT_PUBLICATION_INVALID');
@@ -247,8 +256,11 @@ export function validateAdoptionSandboxResult(value: unknown): SelfDevAdoptionSa
     if (preSourceBundleDigest === null || postSourceBundleDigest === null || preSourceBundleDigest === postSourceBundleDigest) fail('RESULT_VERIFIED_INVARIANT');
     if (preContractDigest === null || postContractDigest === null || preContractDigest === postContractDigest) fail('RESULT_VERIFIED_INVARIANT');
     if (targetPreimageDigest === null || targetPostimageDigest === null || targetPreimageDigest === targetPostimageDigest) fail('RESULT_VERIFIED_INVARIANT');
+    // A verified result means ALL FIVE metamorphic proofs ran and passed
+    // (Phase 8B.0.1). NOT_RUN or FAIL on any proof is impossible for a
+    // claimed verified result; a recomputed resultId cannot override this.
     if (result.preAdoptionResult !== 'PASS' || result.postEquivalentResult !== 'PASS' || result.postVariantCoverageResult !== 'PASS'
-      || result.nonOverreachResult === 'FAIL' || result.unsafeRegressionResult !== 'PASS') fail('RESULT_VERIFIED_INVARIANT');
+      || result.nonOverreachResult !== 'PASS' || result.unsafeRegressionResult !== 'PASS') fail('RESULT_VERIFIED_INVARIANT');
     if (result.cleanupStatus !== 'PASS') fail('RESULT_VERIFIED_INVARIANT');
   } else if (result.failureClass === 'NONE') {
     fail('RESULT_FAILED_INVARIANT');

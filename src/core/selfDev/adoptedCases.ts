@@ -28,6 +28,8 @@ import { SELFDEV_ADOPTED_CASES as RAW_ADOPTED_CASES } from './adoptedCaseCatalog
 export const SELFDEV_ADOPTED_CASE_SCHEMA_VERSION = 'nightwatch.selfdev-adopted-case.v1' as const;
 export const SELFDEV_ADOPTION_STRATEGY_VERSION = 'nightwatch.selfdev-adoption-strategy.v1' as const;
 export const SELFDEV_ADOPTION_STRATEGY_CLASS = 'DECLARATIVE_REGRESSION_CATALOG_PROMOTION' as const;
+/** The single production adoption strategy class (Phase 8B.0.1 strict binding). */
+export type SelfDevAdoptionStrategyClass = typeof SELFDEV_ADOPTION_STRATEGY_CLASS;
 export const SELFDEV_ADOPTED_CATALOG_MAX_ENTRIES = 64;
 export const SELFDEV_ADOPTED_CATALOG_TARGET_PATH = 'src/core/selfDev/adoptedCaseCatalog.generated.ts' as const;
 

@@ -8,7 +8,7 @@
 // source, never Git, never a candidate-supplied path/patch/command.
 // ---------------------------------------------------------------------------
 
-import type { SelfDevAdoptedCase } from '../selfDev/adoptedCases';
+import type { SelfDevAdoptedCase, SelfDevAdoptionStrategyClass } from '../selfDev/adoptedCases';
 
 export const SELFDEV_ADOPTION_PLAN_SCHEMA_VERSION = 'nightwatch.selfdev-adoption-plan.private.v1' as const;
 export const SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION = 'nightwatch.selfdev-adoption-sandbox-result.private.v1' as const;
@@ -16,7 +16,7 @@ export const SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION = 'nightwatch.selfde
 export interface SelfDevAdoptionPlan {
   readonly schemaVersion: typeof SELFDEV_ADOPTION_PLAN_SCHEMA_VERSION;
   readonly planId: string;
-  readonly strategyClass: string;
+  readonly strategyClass: SelfDevAdoptionStrategyClass;
   readonly sourceSessionArtifactId: string;
   readonly candidateId: string;
   readonly candidateDigest: string;
@@ -54,6 +54,7 @@ export type SelfDevSandboxFailureClass =
   | 'SANDBOX_MODULE_LOAD_FAILED'
   | 'SANDBOX_CONTRACT_NOT_CHANGED'
   | 'POST_ADOPTION_STILL_PASS'
+  | 'NON_OVERREACH_PROBE_UNAVAILABLE'
   | 'NON_OVERREACH_REGRESSION'
   | 'CLEANUP_FAILED';
 
@@ -61,7 +62,7 @@ export interface SelfDevAdoptionSandboxResult {
   readonly schemaVersion: typeof SELFDEV_ADOPTION_SANDBOX_RESULT_SCHEMA_VERSION;
   readonly resultId: string;
   readonly planId: string;
-  readonly strategyClass: string;
+  readonly strategyClass: SelfDevAdoptionStrategyClass;
   readonly sourceSessionArtifactId: string;
   readonly candidateId: string;
   readonly candidateDigest: string;

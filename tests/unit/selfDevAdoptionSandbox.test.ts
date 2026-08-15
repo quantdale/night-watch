@@ -10,8 +10,11 @@ import {
 } from '../../src/core/selfDev';
 import { SelfDevPrivateArtifactStore } from '../../src/core/selfDev/storage';
 import { currentCheckoutState } from '../../src/core/provenance/localGit';
+import { SELFDEV_ADOPTION_STRATEGY_CLASS } from '../../src/core/selfDev/adoptedCases';
+import { resolveSelfDevAction } from '../../src/core/selfDev/registry';
 import { planAdoption } from '../../src/core/selfDevSandbox/planner';
 import { runSandboxAdoption } from '../../src/core/selfDevSandbox/sandboxExecutor';
+import { validateAdoptionSandboxResult } from '../../src/core/selfDevSandbox/validation';
 import { SELFDEV_SANDBOX_ROOT_BASE } from '../../src/core/selfDevSandbox/sandboxMirror';
 import { SelfDevAdoptionResultStore } from '../../src/core/selfDevSandbox/storage';
 import type { SelfDevAdoptionPlan } from '../../src/core/selfDevSandbox/types';
@@ -69,6 +72,43 @@ function buildEligiblePlan(repository: string): { readonly plan: SelfDevAdoption
 }
 
 const anchorPath = path.join(process.cwd(), 'package.json');
+
+/**
+ * Phase 8B.0.1 test seam: rewrites the SELFDEV_ACTIONS array inside the
+ * COPIED registry file of a synthetic repository (never the real source), so
+ * the sandbox-loaded evaluator observes a modified registry while the
+ * in-process proposer/evaluator that generates the session artifact stays
+ * unchanged. `keep` filters action entries; entries named in
+ * `bogusCoverageActionIds` get their coverage replaced with a class that is
+ * NOT in SELFDEV_COVERAGE_CLASSES — the sandbox evaluator's coverage
+ * allowlist filters it out, so such an action adds zero real coverage.
+ */
+function rewriteCopiedRegistryActions(repository: string, keep: (entry: { actionId: string; fromStateId: string }) => boolean, bogusCoverageActionIds: readonly string[]): void {
+  const file = path.join(repository, 'src/core/selfDev/registry.ts');
+  const source = fs.readFileSync(file, 'utf8');
+  const entryRe = /  \{\n    actionId: '([^']*)',\n    fromStateId: '([^']*)',\n    toStateId: '([^']*)',\n    transitionClass: '([^']*)',\n    coverageClasses: \[([\s\S]*?)\],\n    oracleClass: '([^']*)',\n    semanticClass: '([^']*)',\n    mutation: false,\n    externalContact: false,\n  \}/g;
+  const entries: Array<{ text: string; actionId: string; fromStateId: string }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = entryRe.exec(source)) !== null) {
+    entries.push({ text: match[0]!, actionId: match[1]!, fromStateId: match[2]! });
+  }
+  if (entries.length === 0) throw new Error('TEST_REGISTRY_PARSE_FAILED');
+  const bogus = new Set(bogusCoverageActionIds);
+  const rewritten = entries.filter((entry) => keep(entry)).map((entry) => bogus.has(entry.actionId)
+    ? entry.text.replace(/coverageClasses: \[[\s\S]*?\],/, "coverageClasses: [\n      'state-action:expanded:selfdev.synthetic.bogus',\n    ],")
+    : entry.text);
+  for (const id of bogusCoverageActionIds) {
+    if (!entries.some((entry) => entry.actionId === id)) throw new Error(`TEST_REGISTRY_ACTION_NOT_FOUND:${id}`);
+    if (!rewritten.some((text) => text.includes(`actionId: '${id}'`) && text.includes('selfdev.synthetic.bogus'))) throw new Error(`TEST_REGISTRY_BOGUS_REWRITE_FAILED:${id}`);
+  }
+  const startMarker = 'SELFDEV_ACTIONS: readonly SelfDevActionDescriptor[] = Object.freeze([';
+  const endMarker = ']);';
+  const markerStart = source.indexOf(startMarker);
+  const arrayEnd = source.indexOf(endMarker, markerStart);
+  if (markerStart < 0 || arrayEnd < 0) throw new Error('TEST_REGISTRY_PARSE_FAILED');
+  const bodyStart = markerStart + startMarker.length;
+  fs.writeFileSync(file, `${source.slice(0, bodyStart)}\n${rewritten.join(',\n')}\n${source.slice(arrayEnd)}`);
+}
 
 test.describe('Phase 8B sandbox-confined adoption execution', () => {
   test('a full sandbox run is verified, confined, metamorphically proven, and leaves canonical source untouched', () => {
@@ -222,5 +262,187 @@ test.describe('Phase 8B sandbox-confined adoption execution', () => {
     expect(resultStore.writeResult(result)).toBe('EXACT_DUPLICATE');
     expect(resultStore.readResult(result.resultId).resultId).toBe(result.resultId);
     expect(() => resultStore.readResult('adoption-sandbox-result:sha256:' + 'f'.repeat(64))).toThrow(/NOT_FOUND/);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Phase 8B.0.1 — strategy binding, verified-result metamorphic invariants,
+  // and truthful failure-path sandbox write accounting.
+  // ---------------------------------------------------------------------------
+
+  test('8B.0.1 strategy binding: the result strategy is exactly the single adoption strategy class; recomputed resultId cannot legalize an unknown strategy', async () => {
+    const { validateAdoptionSandboxResult, resultIdFor } = await import('../../src/core/selfDevSandbox/validation');
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const real = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+    expect(real.sandboxVerificationStatus).toBe('PASS');
+    expect(real.strategyClass).toBe(SELFDEV_ADOPTION_STRATEGY_CLASS);
+
+    for (const unknownStrategy of ['FUTURE_UNKNOWN_STRATEGY', 'DECLARATIVE_REGRESSION_CATALOG_PROMOTION_2', 'catalog-promotion-v9']) {
+      const forged = { ...real, strategyClass: unknownStrategy } as unknown as Record<string, unknown>;
+      const { resultId: _omit, ...withoutId } = forged;
+      expect(() => validateAdoptionSandboxResult({ ...withoutId, resultId: resultIdFor(withoutId as never) }), `strategy ${unknownStrategy}`).toThrow(/RESULT_STRATEGY_INVALID/);
+    }
+  });
+
+  test('8B.0.1 verified-result invariant: all five metamorphic proofs must be PASS; NOT_RUN and FAIL are rejected for every proof field even with a recomputed resultId', async () => {
+    const { validateAdoptionSandboxResult, resultIdFor } = await import('../../src/core/selfDevSandbox/validation');
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const real = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+    expect(real.sandboxVerificationStatus).toBe('PASS');
+
+    const probeFields = ['preAdoptionResult', 'postEquivalentResult', 'postVariantCoverageResult', 'nonOverreachResult', 'unsafeRegressionResult'] as const;
+    for (const field of probeFields) {
+      for (const badValue of ['NOT_RUN', 'FAIL'] as const) {
+        const forged = { ...real, [field]: badValue } as unknown as Record<string, unknown>;
+        const { resultId: _omit, ...withoutId } = forged;
+        expect(() => validateAdoptionSandboxResult({ ...withoutId, resultId: resultIdFor(withoutId as never) }), `${field}=${badValue}`).toThrow(/RESULT_VERIFIED_INVARIANT/);
+      }
+    }
+  });
+
+  test('8B.0.1 executor: a sandbox registry without the continuation action still fails closed (the probe is evaluated against the MODIFIED mirrored source, never against canonical)', () => {
+    const repository = makeGitRepo();
+    // Remove every action that continues from the adopted candidate's final
+    // state from the COPIED registry (the in-process proposer/evaluator that
+    // generates the session is unaffected). The probe is selected against the
+    // canonical in-process registry but EVALUATED by the sandbox evaluator
+    // loaded from the mirror — which resolves the removed action as unknown
+    // and rejects the candidate, so no verified result can be produced.
+    const finalStateId = resolveSelfDevAction('selfdev.synthetic.expand-summary').toStateId;
+    rewriteCopiedRegistryActions(repository, (entry) => entry.fromStateId !== finalStateId, []);
+    git(repository, ['add', '--all']);
+    git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'registry without continuation action']);
+
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const result = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+
+    expect(result.sandboxVerificationStatus).toBe('FAIL');
+    expect(result.failureClass).toBe('NON_OVERREACH_REGRESSION');
+    expect(result.adoptionStatus).toBe('SANDBOX_ADOPTION_FAILED');
+    // The single sandbox target write DID happen before the probe gate; the
+    // failure metadata is truthful about it.
+    expect(result.sandboxSourceWrites).toBe(1);
+    expect(result.canonicalSourceWrites).toBe(0);
+    expect(git(repository, ['status', '--porcelain']).trim()).toBe('');
+  });
+
+  test('8B.0.1 executor: a non-overreach probe that runs and fails yields NON_OVERREACH_REGRESSION, never a verified result', () => {
+    const repository = makeGitRepo();
+    // Give the continuation action only bogus coverage classes: the sandbox
+    // evaluator filters them out (evaluator.ts coverage allowlist), so the
+    // probe candidate adds zero real coverage and is rejected as duplicate —
+    // a probe that RAN and FAILED.
+    rewriteCopiedRegistryActions(repository, () => true, ['selfdev.synthetic.collapse-summary']);
+    git(repository, ['add', '--all']);
+    git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'registry with bogus continuation coverage']);
+
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const result = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+
+    expect(result.sandboxVerificationStatus).toBe('FAIL');
+    expect(result.failureClass).toBe('NON_OVERREACH_REGRESSION');
+    expect(result.adoptionStatus).toBe('SANDBOX_ADOPTION_FAILED');
+    expect(result.sandboxSourceWrites).toBe(1);
+    expect(result.canonicalSourceWrites).toBe(0);
+    expect(git(repository, ['status', '--porcelain']).trim()).toBe('');
+  });
+
+  test('8B.0.1 executor/validation: NON_OVERREACH_PROBE_UNAVAILABLE is the distinct valid failure classification for a missing bounded probe (never REGRESSION, never a verified result)', async () => {
+    const { validateAdoptionSandboxResult, resultIdFor } = await import('../../src/core/selfDevSandbox/validation');
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const real = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+    expect(real.sandboxVerificationStatus).toBe('PASS');
+    // The current deterministic canonical registry always yields a bounded
+    // non-overreach probe (proven by the PASS above and by Phase 8B's
+    // historical acceptance), so the UNAVAILABLE branch cannot be forced
+    // end-to-end; its class semantics are enforced here:
+    // 1) a truthful failure record with the class validates as failure
+    //    provenance (post-write count 1, zero canonical writes);
+    // 2) the class can never appear on a claimed verified result.
+    const failureDraft = {
+      ...real,
+      sandboxVerificationStatus: 'FAIL',
+      failureClass: 'NON_OVERREACH_PROBE_UNAVAILABLE',
+      adoptionStatus: 'SANDBOX_ADOPTION_FAILED',
+      preAdoptionResult: 'NOT_RUN',
+      postEquivalentResult: 'NOT_RUN',
+      postVariantCoverageResult: 'NOT_RUN',
+      nonOverreachResult: 'NOT_RUN',
+      unsafeRegressionResult: 'NOT_RUN',
+      cleanupStatus: 'PASS',
+      sandboxSourceWrites: 1,
+    } as unknown as Record<string, unknown>;
+    const { resultId: _omit, ...failureWithoutId } = failureDraft;
+    const failureResult = validateAdoptionSandboxResult({ ...failureWithoutId, resultId: resultIdFor(failureWithoutId as never) });
+    expect(failureResult.failureClass).toBe('NON_OVERREACH_PROBE_UNAVAILABLE');
+    expect(failureResult.adoptionStatus).toBe('SANDBOX_ADOPTION_FAILED');
+    expect(failureResult.sandboxSourceWrites).toBe(1);
+
+    const verifiedWithUnavailable = { ...real, failureClass: 'NON_OVERREACH_PROBE_UNAVAILABLE' } as unknown as Record<string, unknown>;
+    const { resultId: _omit2, ...verifiedWithoutId } = verifiedWithUnavailable;
+    expect(() => validateAdoptionSandboxResult({ ...verifiedWithoutId, resultId: resultIdFor(verifiedWithoutId as never) })).toThrow(/RESULT_VERIFIED_INVARIANT/);
+  });
+
+  test('8B.0.1 failure accounting: a failure AFTER the single sandbox target write truthfully reports sandboxSourceWrites = 1', () => {
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+
+    // SANDBOX_MODULE_LOAD_FAILED is only reachable after the target write and
+    // the exactly-one-changed-file/postimage-digest checks all passed.
+    const result = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: '/nonexistent/phase8b01/package.json', current, artifactStore: store });
+
+    expect(result.sandboxVerificationStatus).toBe('FAIL');
+    expect(result.failureClass).toBe('SANDBOX_MODULE_LOAD_FAILED');
+    expect(result.adoptionStatus).toBe('SANDBOX_ADOPTION_FAILED');
+    expect(result.sandboxSourceWrites).toBe(1);
+    expect(result.canonicalSourceWrites).toBe(0);
+    expect(result.runtimeGitWrites).toBe(0);
+    expect(result.externalCalls).toBe(0);
+    expect(result.cleanupStatus).toBe('PASS');
+    // A truthful post-write failure record is itself valid provenance.
+    expect(() => validateAdoptionSandboxResult(result)).not.toThrow();
+  });
+
+  test('8B.0.1 failure accounting: a failure BEFORE any sandbox write reports sandboxSourceWrites = 0', () => {
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+
+    fs.appendFileSync(path.join(repository, 'src/core/selfDev/registry.ts'), '\n// drift\n');
+    git(repository, ['add', '--all']);
+    git(repository, ['commit', '--quiet', '--no-gpg-sign', '-m', 'source drift']);
+    const driftedCurrent = currentCheckoutState({ repositoryRoot: repository });
+
+    const result = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current: driftedCurrent, artifactStore: store });
+    expect(result.failureClass).toBe('PLAN_STALE');
+    expect(result.sandboxSourceWrites).toBe(0);
+    expect(result.canonicalSourceWrites).toBe(0);
+  });
+
+  test('8B.0.1 effect accounting: impossible sandbox write counts are rejected even with a recomputed resultId', async () => {
+    const { validateAdoptionSandboxResult, resultIdFor } = await import('../../src/core/selfDevSandbox/validation');
+    const repository = makeGitRepo();
+    const { plan, store } = buildEligiblePlan(repository);
+    const current = currentCheckoutState({ repositoryRoot: repository });
+    const real = runSandboxAdoption({ plan, repositoryRoot: repository, nodeModulesAnchorPath: anchorPath, current, artifactStore: store });
+    expect(real.sandboxVerificationStatus).toBe('PASS');
+    expect(real.sandboxSourceWrites).toBe(1);
+
+    for (const impossible of [-1, 2, 1.5, '1']) {
+      const forged = { ...real, sandboxSourceWrites: impossible } as unknown as Record<string, unknown>;
+      const { resultId: _omit, ...withoutId } = forged;
+      expect(() => validateAdoptionSandboxResult({ ...withoutId, resultId: resultIdFor(withoutId as never) }), `count ${String(impossible)}`).toThrow(/RESULT_SANDBOX_WRITES_INVALID/);
+    }
+    // Success still requires exactly one sandbox write.
+    const zeroWrites = { ...real, sandboxSourceWrites: 0 } as unknown as Record<string, unknown>;
+    const { resultId: _omit2, ...withoutId2 } = zeroWrites;
+    expect(() => validateAdoptionSandboxResult({ ...withoutId2, resultId: resultIdFor(withoutId2 as never) })).toThrow(/RESULT_VERIFIED_INVARIANT/);
   });
 });
