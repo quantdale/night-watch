@@ -55,6 +55,8 @@ jobs:
         run: npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1
       - name: Phase 9 deterministic semantic oracle depth matrix
         run: npx playwright test tests/unit/oracleCeilingReproduction.test.ts tests/unit/oracleProjection.test.ts tests/unit/oracleExpectation.test.ts tests/unit/oracleExpectationRealSource.test.ts tests/unit/oracleInvariant.test.ts tests/unit/oraclePrecision.test.ts tests/unit/semanticSentinel.test.ts tests/unit/semanticIntegration.test.ts tests/unit/semanticCampaign.test.ts --project=nightwatch --workers=1
+      - name: Phase 9A.1 real-source expectation admission matrix
+        run: npx playwright test tests/unit/phase9a1GapReproduction.test.ts tests/unit/realSourceExtraction.test.ts tests/unit/realSourceRecipeValidation.test.ts tests/unit/realSourceAdmission.test.ts tests/unit/realSourceCurrentness.test.ts tests/unit/semanticReceipt.test.ts tests/unit/semanticReceiptSentinel.test.ts tests/unit/realSourceConformingMutation.test.ts tests/unit/observerSemanticLedger.test.ts tests/unit/realSourceCanary.test.ts --project=nightwatch --workers=1
       - name: Project-memory truth check
         run: |
           test -z "$(git status --porcelain)"

@@ -1,0 +1,9 @@
+# ---------------------------------------------------------------------------
+# SYNTHETIC PHASE 9A.1 FIXTURE — NOT REAL ALPHAUS SOURCE.
+#
+# Second fixture repo (repo-b) route binding. Synthetic only.
+# ---------------------------------------------------------------------------
+
+"get:/settings/{vendor}":
+    client: App\Handler\Settings
+    method: getCompanySettings

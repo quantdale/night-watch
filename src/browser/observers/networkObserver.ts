@@ -49,10 +49,18 @@ import {
 } from '../../oracles/protocol/resourceChecks';
 import { fingerprintAnomaly } from '../../core/journeys/fingerprint';
 import { semanticFindingFingerprint } from '../../oracles/semantic';
-import { evaluateSemanticHook, type SemanticHookOracle } from '../../oracles/semantic/hook';
+import { buildInternalErrorReceipt, evaluateSemanticHook, type SemanticHookOracle } from '../../oracles/semantic/hook';
+import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
+
+/**
+ * Phase 9A.1 — bounded sanitized semantic-evaluation ledger. Overflow is
+ * EXPLICIT, never silent: receipts beyond the cap are dropped and the
+ * overflow flag is latched.
+ */
+const MAX_SEMANTIC_EVALUATION_LEDGER = 512;
 
 /**
  * Grace period for the unrouted-request detector: route handlers run
@@ -118,6 +126,11 @@ export interface NetworkObserver {
   resourceObservations(): readonly ResourceObservation[];
   /** Phase 9 sanitized semantic findings (safe DTOs only). */
   semanticFindings(): readonly import('../../oracles/semantic').SemanticOracleFinding[];
+  /** Phase 9A.1 bounded sanitized semantic-evaluation ledger (receipts
+   *  only; never raw bodies). */
+  semanticEvaluations(): readonly SemanticEvaluationReceipt[];
+  /** True when the evaluation ledger cap was hit (overflow is explicit). */
+  semanticEvaluationLedgerOverflow(): boolean;
   requestCount(): number;
 }
 
@@ -180,6 +193,8 @@ export function createNetworkObserver(opts: {
   const telemetryBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
   const semanticFindingLedger: import('../../oracles/semantic').SemanticOracleFinding[] = [];
+  const semanticEvaluationLedger: SemanticEvaluationReceipt[] = [];
+  let semanticEvaluationOverflow = false;
   const optionalResourceFailureUrls = new Set<string>();
   const semanticLedger: SemanticRequestObservation[] = [];
   const resourceLedger: ResourceObservation[] = [];
@@ -655,7 +670,8 @@ export function createNetworkObserver(opts: {
       const contentType = responseHeaders['content-type'];
       const contentLength = responseHeaders['content-length'];
       const method = response.request().method();
-      const endpointClassification = matchEndpoint(rawUrl, method)?.classification ?? null;
+      const endpointMatch = matchEndpoint(rawUrl, method);
+      const endpointClassification = endpointMatch?.classification ?? null;
       const role = resourceRole(rawUrl, response.request().resourceType(), endpointClassification);
       active = Math.max(0, active - 1);
       lastActivity = Date.now();
@@ -784,47 +800,111 @@ export function createNetworkObserver(opts: {
         });
       }
 
-      // Phase 9 semantic projection hook (SPEC §44): transient raw text ->
-      // safe projection -> finding. Only complete 2xx JSON bodies with an
-      // admitted source-backed expectation are evaluated; raw text never
-      // enters the event/ledger/recorder — only the safe finding DTO does.
+      // Phase 9 / 9A.1 semantic projection hook (SPEC §44, §19-§25):
+      // transient raw text -> safe projection -> safe evaluation receipt +
+      // safe finding. Only complete 2xx JSON bodies with an admitted
+      // source-backed expectation are evaluated; raw text never enters the
+      // event/ledger/recorder — only the receipt and the safe finding DTO
+      // do. NO_EXPECTATION / STALE / UNAVAILABLE / N/A / INTERNAL_ERROR are
+      // explicit receipt outcomes, never PASS.
       if (opts.semanticOracle !== undefined && rawText !== undefined && bodyCapture === 'complete') {
+        const recordEvaluation = (receipt: SemanticEvaluationReceipt): void => {
+          if (semanticEvaluationLedger.length < MAX_SEMANTIC_EVALUATION_LEDGER) {
+            semanticEvaluationLedger.push(receipt);
+          } else {
+            // Bounded ledger: overflow is explicit, never silent.
+            semanticEvaluationOverflow = true;
+          }
+        };
+        let hookResult;
         try {
-          const { findings } = evaluateSemanticHook({
+          hookResult = evaluateSemanticHook({
             oracle: opts.semanticOracle,
             rawText,
             status,
             contentType,
             url: rawUrl,
             method,
+            targetId: endpointMatch?.ruleId,
             journeyId: opts.journeyId ?? 'unbound',
             stepId: journeyIntent?.stepId ?? undefined,
           });
-          for (const finding of findings) {
-            semanticFindingLedger.push(finding);
-            const semanticFingerprint = semanticFindingFingerprint(finding);
-            const ev = recorder.event({
-              type: 'oracle',
-              severity: 'warn',
-              message: `semantic-oracle: ${finding.category}: ${redactedUrl}`,
-              data: {
-                url: redactedUrl,
-                reason: 'semantic-oracle',
-                oracleId: finding.oracleId,
-                oracleCategory: finding.category,
-                oracleSeverity: 'anomaly',
-                anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
-                causalToPrimaryFailure: 'UNRESOLVED',
-                fingerprint: semanticFingerprint,
-                semanticFinding: finding,
-                ...(contentLength !== undefined ? { contentLength } : {}),
-                endpointClassification: endpointClassification ?? OBSERVED_ENDPOINT_CLASSIFICATION,
-              },
-            });
-            monitor.recordIssue(ev);
-          }
         } catch {
-          // The semantic hook must never crash the run (observer contract).
+          // Defensive only: the hook core is total. A crash here must still
+          // surface as an observable safe INTERNAL_ERROR receipt, never as
+          // a silent miss or a crashed run.
+          const receipt = buildInternalErrorReceipt({
+            targetId: endpointMatch?.ruleId,
+            journeyId: opts.journeyId,
+            stepId: journeyIntent?.stepId ?? undefined,
+          });
+          recordEvaluation(receipt);
+          recorder.event({
+            type: 'oracle',
+            severity: 'warn',
+            message: 'semantic-oracle: internal error (safe receipt recorded)',
+            data: {
+              url: redactedUrl,
+              reason: 'semantic-oracle-internal-error',
+              oracleId: receipt.oracleId,
+              oracleCategory: 'INTERNAL_ERROR',
+              oracleSeverity: 'anomaly',
+              semanticReceipt: receipt,
+              endpointClassification: endpointClassification ?? OBSERVED_ENDPOINT_CLASSIFICATION,
+            },
+          });
+          hookResult = { receipt, findings: [] };
+        }
+        if (hookResult.receipt !== null) {
+          recordEvaluation(hookResult.receipt);
+        }
+        if (hookResult.privacyViolation === true) {
+          // A privacy-contract violation must never look benign: escalate
+          // through the existing Nightwatch safety architecture.
+          const failureEvent = recorder.event({
+            type: 'hard-failure',
+            severity: 'fatal',
+            message: 'HARD FAILURE: semantic privacy-contract violation',
+            data: {
+              url: redactedUrl,
+              reason: 'semantic-privacy-contract-violation',
+              oracleId: hookResult.receipt?.oracleId ?? 'real-source-semantic-hook',
+              semanticReceipt: hookResult.receipt,
+              path: 'semantic-hook',
+            },
+          });
+          monitor.recordHardFailure(failureEvent, {
+            url: rawUrl,
+            verdict: 'deny',
+            hostClass: 'semantic-hook',
+            reason: 'semantic-privacy-contract-violation',
+            monitorReason: 'MONITOR_INTERNAL_ERROR',
+            guardType: 'semantic-hook',
+            path: 'semantic-hook',
+          });
+        }
+        for (const finding of hookResult.findings) {
+          semanticFindingLedger.push(finding);
+          const semanticFingerprint = semanticFindingFingerprint(finding);
+          const ev = recorder.event({
+            type: 'oracle',
+            severity: 'warn',
+            message: `semantic-oracle: ${finding.category}: ${redactedUrl}`,
+            data: {
+              url: redactedUrl,
+              reason: 'semantic-oracle',
+              oracleId: finding.oracleId,
+              oracleCategory: finding.category,
+              oracleSeverity: 'anomaly',
+              anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
+              causalToPrimaryFailure: 'UNRESOLVED',
+              fingerprint: semanticFingerprint,
+              semanticFinding: finding,
+              ...(contentLength !== undefined ? { contentLength } : {}),
+              endpointClassification: endpointClassification ?? OBSERVED_ENDPOINT_CLASSIFICATION,
+            },
+          });
+          monitor.recordIssue(ev);
         }
       }
     } catch {
@@ -1014,6 +1094,8 @@ export function createNetworkObserver(opts: {
     journeySemanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.slice(journeyObservationStart).map((item) => ({ ...item })),
     resourceObservations: (): readonly ResourceObservation[] => resourceLedger.map((item) => ({ ...item })),
     semanticFindings: (): readonly import('../../oracles/semantic').SemanticOracleFinding[] => semanticFindingLedger.map((item) => ({ ...item })),
+    semanticEvaluations: (): readonly SemanticEvaluationReceipt[] => semanticEvaluationLedger.map((item) => ({ ...item })),
+    semanticEvaluationLedgerOverflow: (): boolean => semanticEvaluationOverflow,
     requestCount: (): number => requestCount,
   };
 }

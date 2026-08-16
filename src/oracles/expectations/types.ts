@@ -39,6 +39,12 @@ export interface SourceProvenance {
   /** Optional contract/model/symbol identifier in that source. */
   readonly symbol?: string;
   readonly derivationVersion: string;
+  /** Phase 9A.1: deterministic source-evidence digest over the normalized
+   *  source structure used to derive the expectation (ev:sha256:<24>).
+   *  Present ONLY on expectations admitted through the real-source bridge —
+   *  a provenance label without mechanically verified derivation evidence
+   *  cannot manufacture real semantic authority (SPEC §16). */
+  readonly evidenceDigest?: string;
 }
 
 export interface SourceSnapshot {

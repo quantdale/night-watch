@@ -27,7 +27,7 @@ import type {
   InvariantDefinition,
   SafePath,
 } from '../expectations/types';
-import { resolvePath } from './paths';
+import { resolvePath, resolvePathWithAmbiguity } from './paths';
 import type { InvariantEvaluation } from './types';
 
 function present(node: ProjectionNode | undefined): boolean {
@@ -77,19 +77,27 @@ export function evaluateInvariant(
     case 'FIELD_PRESENT': {
       const root = projections[0]?.root;
       if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
-      const isPresent = present(resolvePath(root, invariant.path));
+      const resolved = resolvePathWithAmbiguity(root, invariant.path);
+      // An empty/uninspected array along the path is structurally ambiguous
+      // (no item exists to inspect) — never an anomaly (SPEC §31).
+      if (resolved.na) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      const isPresent = present(resolved.node);
       return { invariantKind: invariant.kind, verdict: isPresent === invariant.expected ? 'PASS' : 'VIOLATED' };
     }
     case 'FIELD_ABSENT': {
       const root = projections[0]?.root;
       if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
-      const isPresent = present(resolvePath(root, invariant.path));
+      const resolved = resolvePathWithAmbiguity(root, invariant.path);
+      if (resolved.na) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      const isPresent = present(resolved.node);
       return { invariantKind: invariant.kind, verdict: isPresent ? 'VIOLATED' : 'PASS' };
     }
     case 'TYPE_MATCH': {
       const root = projections[0]?.root;
       if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
-      const node = resolvePath(root, invariant.path);
+      const resolved = resolvePathWithAmbiguity(root, invariant.path);
+      if (resolved.na) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      const node = resolved.node;
       if (node === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
       return { invariantKind: invariant.kind, verdict: node.type === invariant.expectedType ? 'PASS' : 'VIOLATED' };
     }

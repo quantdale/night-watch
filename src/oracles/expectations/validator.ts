@@ -90,13 +90,18 @@ export function validateSourceProvenance(value: unknown): SourceProvenance {
   }
   const derivationVersion = expectString(record['derivationVersion'], 'sourceProvenance.derivationVersion');
   const symbol = optionalString(record['symbol'], 'sourceProvenance.symbol');
-  assertNoUnknownFields(record, new Set(['repoId', 'sha', 'relativePath', 'symbol', 'derivationVersion']), 'sourceProvenance');
+  const evidenceDigest = optionalString(record['evidenceDigest'], 'sourceProvenance.evidenceDigest');
+  if (evidenceDigest !== undefined && !/^ev:sha256:[0-9a-f]{24}$/.test(evidenceDigest)) {
+    throw new Error('SEMANTIC_EXPECTATION_INVALID:sourceProvenance.evidenceDigest-malformed');
+  }
+  assertNoUnknownFields(record, new Set(['repoId', 'sha', 'relativePath', 'symbol', 'derivationVersion', 'evidenceDigest']), 'sourceProvenance');
   return {
     repoId,
     sha,
     relativePath,
     derivationVersion,
     ...(symbol === undefined ? {} : { symbol }),
+    ...(evidenceDigest === undefined ? {} : { evidenceDigest }),
   };
 }
 

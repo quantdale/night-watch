@@ -104,6 +104,36 @@ semantic core has no AI/selfDev/Phase6/infra/network/persistence authority
 (hardening-guarded). Contained DEV acceptance of the semantic layer requires
 a separate owner authorization (provisionally Phase 9B); none is standing.
 
+## Phase 9A.1 real-source expectation admission (permanent rule)
+
+Phase 9A.1 (D-55) established the ONLY route from real Alphaus source to a
+real-product semantic expectation: a versioned data-only recipe
+(`nightwatch.real-source-expectation-recipe.v1`) + fixed bounded
+syntax-aware extractor + deterministic source-evidence digest
+(`ev:sha256:<24>` over the normalized source structure used to derive) +
+approved read-only target + exact current source snapshot, admitted through
+`deriveRealSourceExpectations` (fail-closed on contract drift). Rules:
+
+- Alphaus repositories are NEVER annotated or modified for Nightwatch;
+  `@nightwatch-contract` remains valid for synthetic fixtures only.
+- A provenance label alone never grants semantic authority: an expectation
+  without mechanically verified derivation evidence is not a real-source
+  expectation (synthetic expectations can never be relabeled as real —
+  `REAL_SOURCE_EXPECTATION_PROOF_MISSING` semantics).
+- Expectations are never silently re-bound to a new SHA; a changed source
+  requires fresh derivation/re-admission.
+- Every semantic evaluation yields a safe receipt
+  (`nightwatch.semantic-evaluation-receipt.v1`); NO_EXPECTATION, SOURCE_
+  STALE, SOURCE_UNAVAILABLE, NOT_APPLICABLE and INTERNAL_ERROR are never
+  PASS; zero findings never proves PASS.
+- Semantic-hook failures are never silent: safe INTERNAL_ERROR receipts;
+  privacy-contract violations escalate through the existing safety
+  architecture.
+- The recipe/extractor/admission/resolver/receipt cores have no
+  eval/child-process/fs/network/DB/AI/selfDev/persistence authority
+  (hardening-guarded); the ONLY sibling-source access is the read-only
+  path-confined module `src/core/source/siblingSource.ts`.
+
 ## Task and checkpoint discipline
 
 Any multi-milestone, long-running, architecture-changing, safety-sensitive,

@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# SYNTHETIC PHASE 9A.1 FIXTURE — NOT REAL ALPHAUS SOURCE.
+#
+# Structural mirror of mobingilabs/ripple-api Routing.yaml route bindings for
+# the four admitted Phase 9A.1 candidates. Synthetic only.
+# ---------------------------------------------------------------------------
+
+"get:/exchange_rate/global/{vendor}":
+    action: getExchangeRate
+    client: App\Handler\ExchangeRate
+    method: getCommonExchangeRate
+    params:
+        -
+            vendor: args
+
+"get:/v2/payer/exchange_rate/{month}":
+    action: getAccountExchangeRate
+    client: App\Handler\ExchangeRate
+    method: getAccountExchangeForMonth
+    params:
+        -
+            month: args
+
+"get:/accts":
+    action: getAccounts
+    client: App\Handler\Account
+    method: getAccountVendor
+    params:
+        -
+            vendor: params
+
+"get:/exchange_rate/billing_group/{month}":
+    action: getExchangeRateforBillingGroup
+    client: App\Handler\BillingGroup
+    method: getExchangeRateForBillingGroup
+    params:
+        -
+            month: args

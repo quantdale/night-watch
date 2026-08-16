@@ -951,6 +951,93 @@ function checkPhase9IntegrationSeams() {
   }
 }
 
+/**
+ * Phase 9A.1 real-source expectation core purity: the recipe/extractor/
+ * admission/resolver/receipt cores must not execute application code, spawn
+ * child processes, touch the filesystem/network, import AI/selfDev/Phase6,
+ * or persist anything. The ONLY sibling-source access lives in
+ * src/core/source/siblingSource.ts behind injected interfaces.
+ */
+function checkPhase9A1RealSourceCorePurity() {
+  const directories = [
+    'src/oracles/expectations/recipes/',
+    'src/oracles/expectations/extract/',
+  ];
+  const singleFiles = [
+    'src/oracles/expectations/admission.ts',
+    'src/oracles/expectations/resolver.ts',
+    'src/oracles/semantic/receipts.ts',
+    'src/oracles/semantic/hook.ts',
+  ];
+  const files = [...singleFiles];
+  for (const directory of directories) {
+    const absolute = path.join(root, directory);
+    if (!fs.existsSync(absolute)) continue;
+    for (const entry of fs.readdirSync(absolute)) {
+      if (entry.endsWith('.ts')) files.push(`${directory}${entry}`);
+    }
+  }
+  if (files.length < 6) fail('Phase 9A.1 real-source core source files are missing');
+  for (const file of files) {
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops|runRecorder|storage|dossier|artifacts)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\(|child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|writeImmutableJson|PrivateArtifactStore|renameSync|unlinkSync|mkdirSync|rmSync)\b/i.test(source)) {
+      fail(`${file} exposes a code-execution, process, network, or persistence capability`);
+    }
+  }
+}
+
+/**
+ * Phase 9A.1 sibling-source reader boundary: the ONLY fs-touching module is
+ * strictly READ-ONLY, path-confined, and never spawns processes or touches
+ * the network. Write primitives are structurally forbidden.
+ */
+function checkPhase9A1SourceReaderBoundary() {
+  const reader = read('src/core/source/siblingSource.ts');
+  if (!/createSiblingSourceAccess/.test(reader) || !/resolveGitHead/.test(reader)) {
+    fail('sibling source access module is missing its factory/HEAD resolver');
+  }
+  if (!/readFileSync|existsSync/.test(reader)) fail('sibling source reader must be fs read-only');
+  if (/\b(?:writeFileSync|appendFileSync|createWriteStream|mkdirSync|renameSync|unlinkSync|rmSync|copyFileSync|chmodSync|chownSync)\b/.test(reader)) {
+    fail('sibling source reader exposes a write capability');
+  }
+  if (/child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket/.test(reader)) {
+    fail('sibling source reader must never spawn processes or touch the network');
+  }
+  if (!/startsWith\(resolvedRoot/.test(reader)) fail('sibling source reader must confine paths to the configured root');
+}
+
+/**
+ * Phase 9A.1 integration seams: receipts + the evaluation ledger are wired
+ * through the observer; the hook is total (never silent); the Phase 5
+ * composed stage exposes receipt outcomes.
+ */
+function checkPhase9A1IntegrationSeams() {
+  const observer = read('src/browser/observers/networkObserver.ts');
+  if (!/semanticEvaluations\(\)/.test(observer) || !/semanticEvaluationLedgerOverflow\(\)/.test(observer)) {
+    fail('network observer is missing the Phase 9A.1 evaluation ledger or its explicit overflow flag');
+  }
+  if (!/buildInternalErrorReceipt/.test(observer)) fail('network observer is missing the safe INTERNAL_ERROR receipt fallback');
+  if (!/privacyViolation/.test(observer) || !/semantic-privacy-contract-violation/.test(observer)) {
+    fail('network observer is missing the privacy-contract violation escalation');
+  }
+  const hook = read('src/oracles/semantic/hook.ts');
+  if (!/evaluateSemanticResolution/.test(hook) || !/receipt: SemanticEvaluationReceipt \| null/.test(hook)) {
+    fail('semantic hook must return a safe evaluation receipt');
+  }
+  if (!/NO_EXPECTATION/.test(hook)) fail('semantic hook lost the NO_EXPECTATION outcome');
+  const phase5Semantic = read('src/api/phase5/semantic.ts');
+  if (!/receipt: SemanticEvaluationReceipt \| null/.test(phase5Semantic)) {
+    fail('Phase 5 semantic stage must expose the evaluation receipt');
+  }
+  const resolver = read('src/oracles/expectations/resolver.ts');
+  if (!/RESOLVED/.test(resolver) || !/SOURCE_STALE/.test(resolver) || !/SOURCE_UNAVAILABLE/.test(resolver)) {
+    fail('real-source resolver lost the fail-closed resolution vocabulary');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -969,6 +1056,9 @@ checkPhase8B1CanonicalPromotionBoundary();
 checkProjectStateIntegrity();
 checkPhase9SemanticCorePurity();
 checkPhase9IntegrationSeams();
+checkPhase9A1RealSourceCorePurity();
+checkPhase9A1SourceReaderBoundary();
+checkPhase9A1IntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {

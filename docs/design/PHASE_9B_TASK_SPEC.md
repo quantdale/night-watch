@@ -1,0 +1,113 @@
+# Phase 9B — Contained DEV Semantic Acceptance (future-task spec, DESIGN ONLY)
+
+> Repository-native design document (`docs/design/*.md` approved checkpoint
+> path). Produced by Phase 9A.1 (`phase-9a-1-real-source-expectation-
+> admission`, authorization `PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY`)
+> as the next-task spec. This document DESIGNS Phase 9B; it does NOT
+> authorize or execute it.
+> `PHASE_9B_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`
+
+## 1. Status
+
+```
+PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+PHASE_9B_DEV_READINESS: (Phase 9A.1 verdict — see docs/CURRENT_STATE.md)
+```
+
+## 2. Task identity
+
+- **Task ID:** `phase-9b-contained-dev-semantic-acceptance`
+- **Phase:** `9B-CONTAINED-DEV-SEMANTIC-ACCEPTANCE`
+- **Title:** Nightwatch Phase 9B — Contained DEV Semantic Acceptance
+- **Authorization class (future):** `PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`
+- **Continuity:** `nightwatch.agent-continuity.v2`
+- **Prerequisite:** Phase 9A.1 COMPLETE with the readiness verdict
+  `READY_FOR_SEPARATE_AUTHORIZATION`.
+
+## 3. Objective
+
+Run ONE bounded contained DEV acceptance of the REAL-SOURCE-DERIVED AND
+ADMITTED semantic expectations (Phase 9A.1 bridge) against canonical DEV
+only, using already-approved read-only journeys, and produce safe
+semantic-evaluation receipt evidence proving:
+
+```
+EXPECTATION RESOLVED
+  + SEMANTIC EVALUATION RECEIPT EXISTS
+  + OUTCOME IS EXPLICIT
+  + ZERO PRIVACY / SAFETY FAILURE
+```
+
+## 4. What Phase 9B uses (from Phase 9A.1)
+
+- The fixed recipe registry (`nightwatch.real-source-expectation-recipe.v1`,
+  `REAL_SOURCE_EXPECTATION_RECIPES`) — data-only recipes admitted from the
+  current source audit.
+- The bounded syntax-aware extractors + admission bridge
+  (`deriveRealSourceExpectations`) — fresh derivation at run start against
+  the EXACT current source snapshot; NEVER a silent re-bind.
+- The atomic resolver (`createRealSourceResolver`) — per-expectation source
+  snapshot; fail-closed stale/unavailable.
+- Safe evaluation receipts (`nightwatch.semantic-evaluation-receipt.v1`)
+  with the nine-outcome vocabulary; NO_EXPECTATION/STALE/UNAVAILABLE/
+  NOT_APPLICABLE/INTERNAL_ERROR are never PASS.
+- The network observer semantic evaluation ledger (`semanticEvaluations()`)
+  and the no-silent-failure path (INTERNAL_ERROR receipts, privacy-violation
+  escalation).
+
+## 5. Execution contract (narrow by construction)
+
+- Canonical DEV environment ONLY (the existing approved contained DEV
+  surface); production and NEXT remain impossible.
+- Only the already-approved read-only journeys/operations (Phase 2B/2C/7
+  approved journeys; Phase 5 KNOWN_READ relay) — no new endpoint authority.
+- Semantic hook enabled ONLY for admitted real-source expectations bound to
+  the exact current source snapshots; a changed source -> STALE receipts ->
+  acceptance not proven (no silent refresh).
+- No mutation; no DB/infra; no screenshots/DOM/raw-body persistence; no new
+  network authority; one bounded run; STOP.
+- Safe receipt evidence required; `expectation count == 0` is NEVER an
+  acceptance result.
+
+## 6. Acceptance semantics (Phase 9B success must not require finding a bug)
+
+A healthy DEV run may produce:
+
+```
+semantic evaluations > 0
+PASS > 0
+anomalies = 0
+```
+
+and that IS valid acceptance evidence. The key proof is: real
+source-derived expectation + real contained DEV response + safe semantic
+evaluation receipt + no privacy leak + no safety violation. Any naturally
+observed anomaly is evidence to triage, not an acceptance requirement.
+
+DEV SEMANTIC ACCEPTANCE NOT PROVEN when ANY of: zero resolved expectations,
+zero evaluation receipts, stale source, internal errors. Zero anomalies
+alone proves nothing.
+
+## 7. Forbidden
+
+- Any mutation operation; DB/infra (Phase 6 freeze); AI authority; selfDev/
+  promotion; catalog mutation; variant-B adoption; publication; Alphaus
+  writes; new endpoint authority; expectation-count-zero acceptance;
+  synthetic expectations bound to real SHAs.
+
+## 8. STOP conditions
+
+One bounded run completes (or a fail-closed gate trips) -> STOP. Any
+privacy violation -> STOP + escalation record. Source advanced mid-run ->
+STOP + STALE receipts + re-derivation required before any retry.
+
+## 9. NOT_AUTHORIZED marker
+
+```
+PHASE_9B_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+```
+
+This spec is design only. Phase 9B requires a separate owner authorization
+(`PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`) before any execution.
+Phase 9A.1 performed zero DEV contact.

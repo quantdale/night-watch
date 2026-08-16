@@ -1,32 +1,45 @@
 // ---------------------------------------------------------------------------
-// Nightwatch Phase 9 — Phase 5 API semantic evaluation stage (SPEC §45).
+// Nightwatch Phase 9 / 9A.1 — Phase 5 API semantic evaluation stage (SPEC
+// §27, §45).
 //
 // `evaluateApiResponse` (protocol) stays untouched; this module composes it
 // with the deterministic semantic channel. Protocol failure short-circuits
 // semantic evaluation when the body cannot be safely interpreted. Protocol
 // PASS is NOT semantic PASS.
+//
+// Phase 9A.1: the semantic channel is atomic — the caller passes the
+// RESOLUTION (expectation + its exact source snapshot) and every evaluation
+// yields a safe semantic-evaluation receipt distinguishing PASS /
+// NO_EXPECTATION / STALE / UNAVAILABLE / N/A / ANOMALY / INVALID_INPUT /
+// PROJECTION_LIMIT_EXCEEDED / INTERNAL_ERROR. A later DEV run must never
+// infer PASS from findings.length === 0.
 // ---------------------------------------------------------------------------
 
 import { evaluateApiResponse } from './oracle';
 import type { ApiOperation, ApiOracleObservation } from './types';
-import { evaluateSemanticResponse, type SemanticEvaluationResult } from '../../oracles/semantic';
-import type { SemanticExpectation, SourceSnapshot } from '../../oracles/expectations';
+import { evaluateSemanticResolution } from '../../oracles/semantic/hook';
+import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
+import type { RealSourceResolution } from '../../oracles/expectations/resolver';
 
 export type SemanticChannelStatus =
   | 'PASS'
   | 'ANOMALY'
   | 'NOT_APPLICABLE'
-  | 'EXPECTATION_UNAVAILABLE'
+  | 'NO_EXPECTATION'
   | 'EXPECTATION_SOURCE_STALE'
-  | 'EXPECTATION_INVALID'
+  | 'EXPECTATION_SOURCE_UNAVAILABLE'
   | 'INVALID_INPUT'
   | 'PROJECTION_LIMIT_EXCEEDED'
+  | 'INTERNAL_ERROR'
   | 'NOT_EVALUATED';
 
 export interface SemanticChannelResult {
   readonly status: SemanticChannelStatus;
-  readonly findings: SemanticEvaluationResult['findings'];
-  readonly notEvaluatedReason?: 'PROTOCOL_NOT_PASS' | 'NO_EXPECTATION';
+  readonly findings: readonly import('../../oracles/semantic').SemanticOracleFinding[];
+  /** Phase 9A.1: the safe evaluation receipt (null only when the semantic
+   *  channel was not entered because the protocol stage failed). */
+  readonly receipt: SemanticEvaluationReceipt | null;
+  readonly notEvaluatedReason?: 'PROTOCOL_NOT_PASS';
 }
 
 export interface ComposedApiEvaluation {
@@ -40,42 +53,32 @@ export interface SemanticApiEvaluationInput {
   readonly headers: Readonly<Record<string, string | undefined>>;
   readonly body: Uint8Array;
   readonly complete?: boolean;
-  /** Admitted source-backed expectation for this operation, if any. */
-  readonly expectation?: SemanticExpectation | null;
-  readonly sourceSnapshot?: SourceSnapshot | null;
+  /** Atomic resolution (expectation + exact source snapshot). */
+  readonly resolution: RealSourceResolution;
   readonly journeyId?: string;
   readonly stepId?: string;
-}
-
-function notEvaluated(reason: 'PROTOCOL_NOT_PASS' | 'NO_EXPECTATION'): SemanticChannelResult {
-  return { status: 'NOT_EVALUATED', findings: [], notEvaluatedReason: reason };
 }
 
 /** Two-stage evaluation: existing protocol oracle + Phase 9 semantic oracle. */
 export function evaluateApiResponseSemantic(input: SemanticApiEvaluationInput): ComposedApiEvaluation {
   const protocol = evaluateApiResponse(input.operation, input.status, input.headers, input.body, input.complete);
   if (protocol.result !== 'ORACLE_PASS') {
-    return { protocol, semantic: notEvaluated('PROTOCOL_NOT_PASS') };
+    return { protocol, semantic: { status: 'NOT_EVALUATED', findings: [], receipt: null, notEvaluatedReason: 'PROTOCOL_NOT_PASS' } };
   }
-  const expectation = input.expectation ?? null;
-  if (expectation === null) {
-    return { protocol, semantic: notEvaluated('NO_EXPECTATION') };
-  }
-  let rawValue: unknown;
-  try {
-    rawValue = JSON.parse(Buffer.from(input.body).toString('utf8'));
-  } catch {
-    // The protocol oracle already proved parseability; this is defensive only.
-    return { protocol, semantic: { status: 'INVALID_INPUT', findings: [] } };
-  }
-  const evaluation = evaluateSemanticResponse({
-    oracleId: expectation.expectationId,
-    expectation,
-    rawValues: [rawValue],
-    sourceSnapshot: input.sourceSnapshot ?? null,
+  const result = evaluateSemanticResolution({
+    resolution: input.resolution,
+    rawText: Buffer.from(input.body).toString('utf8'),
+    targetId: input.operation.operationId,
     ...(input.journeyId === undefined ? {} : { journeyId: input.journeyId }),
     ...(input.stepId === undefined ? {} : { stepId: input.stepId }),
     operationId: input.operation.operationId,
   });
-  return { protocol, semantic: { status: evaluation.outcome, findings: evaluation.findings } };
+  return {
+    protocol,
+    semantic: {
+      status: result.receipt?.outcome === undefined ? 'NOT_EVALUATED' : result.receipt.outcome,
+      findings: result.findings,
+      receipt: result.receipt,
+    },
+  };
 }
