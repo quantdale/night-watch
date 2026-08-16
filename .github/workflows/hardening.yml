@@ -61,6 +61,8 @@ jobs:
         run: npx playwright test tests/unit/phase9bFreshness.test.ts tests/unit/phase9bHarness.test.ts --project=nightwatch --workers=1
       - name: Phase 10 deeper real-source semantic contracts matrix
         run: npx playwright test tests/unit/phase10TypeFlowExtraction.test.ts tests/unit/phase10RecipeValidation.test.ts tests/unit/phase10Admission.test.ts tests/unit/phase10TypeInSetInvariant.test.ts tests/unit/phase10CorpusPrecision.test.ts tests/unit/phase10Privacy.test.ts tests/unit/phase10Currentness.test.ts tests/unit/phase10Identity.test.ts tests/unit/phase10Campaign.test.ts tests/unit/phase10Canary.test.ts --project=nightwatch --workers=1
+      - name: Phase 10B contained DEV deep-semantic acceptance harness matrix
+        run: npx playwright test tests/unit/phase10bHarness.test.ts --project=nightwatch --workers=1
       - name: Project-memory truth check
         run: |
           test -z "$(git status --porcelain)"
@@ -88,6 +90,6 @@ jobs:
 # auth:capture, product journeys, DEV/NEXT targets, databases, infrastructure,
 # external publication, or artifact upload. It proves source/fixture invariants
 # independently on GitHub; it does not prove target-environment behavior.
-# The Phase 9B matrix step is LOCAL/SYNTHETIC ONLY (synthetic remote/local SHA
-# fixtures; no GitHub dependency): authenticated product runs are never
-# executed in CI.
+# The Phase 9B and Phase 10B matrix steps are LOCAL/SYNTHETIC ONLY (synthetic
+# remote/local SHA fixtures; no GitHub dependency): authenticated product runs
+# are never executed in CI.
