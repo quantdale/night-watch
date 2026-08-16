@@ -1133,7 +1133,9 @@ to the read-only observation plane. Safety properties:
   `src/core/source/siblingSource.ts`.
 - Contained DEV semantic acceptance (Phase 9B) requires a separate owner
   authorization; the Phase 9B acceptance task (D-56) was authorized and
-  executed once (see §21); any retry requires a fresh owner authorization.
+  executed once (see §21); the Phase 9B-R1 auth-refreshed retry (D-57)
+  completed VERIFIED (see §22); any further DEV semantic acceptance
+  requires a fresh owner authorization.
 
 ## 21. Phase 9B contained DEV semantic acceptance safety
 
@@ -1181,6 +1183,37 @@ fail-closed at the pre-browser auth gate):
   (hardening): no network/fs/child-process/eval/persistence authority; the
   runner collects facts and injects them.
 
+## 22. Phase 9B-R1 auth-refreshed retry safety (verified acceptance)
+
+The Phase 9B-R1 retry (D-57, 2026-08-16) ran the same harness (zero source
+changes) with a human-refreshed DEV session and achieved the clean
+acceptance branch. Safety properties proven by the execution:
+
+- **One invocation, two fresh contexts, zero violations**: exactly one
+  launcher invocation created exactly two browser contexts (FIRST + REPLAY)
+  and completed one journey pair; production attempts, NEXT contacts,
+  KNOWN_MUTATION requests, ACTION_CAUSED_UNKNOWN requests, unknown
+  destinations, proxy hard violations, DB/infra queries, screenshots,
+  authenticated traces, and raw-body persistence were all zero in both
+  passes; both recorders finalized passed=true.
+- **Auth gating held end-to-end**: the structural/boolean precheck
+  (expired=false) and the runner's own per-context auth validation
+  (structural + live page readability) both passed; live page auth
+  readability was VALID in both passes.
+- **Freshness held**: remote heads re-discovered read-only and the selected
+  expectation re-derived at the exact approved snapshot; resolver RESOLVED
+  immediately before browser launch; no stale-SHA fallback.
+- **Privacy audit PASS**: bounded structural/schema checks over the run
+  evidence found no screenshots, no trace files, no storage-state copies,
+  no media, no raw semantic scalars; receipts carried safe metadata only;
+  evidence stayed owner-local (artifacts/<run-id>/, mode 0700,
+  gitignored); no publication.
+- **No post-hoc patching**: after the launcher invocation the Nightwatch
+  implementation was not modified; the closure is docs-only.
+- A clean PASS produced zero semantic-oracle recorder events (PASS receipts
+  live in the observer's in-memory ledger, reduced to the safe acceptance
+  summary) — consistent with the design, not a silent failure.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
@@ -1188,7 +1221,8 @@ Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/
 and Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 self-development evaluation,
 controlled source adoption sandbox, and owner-gated canonical promotion;
 Phase 9 deterministic semantic oracle depth; Phase 9A.1 real-source
-expectation admission & semantic evaluation observability; and Phase 9B
+expectation admission & semantic evaluation observability; Phase 9B
 contained DEV semantic acceptance harness (implemented; acceptance BLOCKED
-at the pre-browser auth gate); changes require a DECISIONS entry and a test
-update.*
+at the pre-browser auth gate); and Phase 9B-R1 auth-refreshed retry
+(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); changes require a
+DECISIONS entry and a test update.*

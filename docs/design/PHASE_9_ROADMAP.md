@@ -625,3 +625,40 @@ cookie EXPIRED — boolean-only diagnostics). No browser context was created;
 zero DEV contact; zero artifacts. DEV semantic acceptance NOT proven. A
 retry requires a human-led `npm run auth:capture` refresh of the DEV
 session plus a FRESH owner authorization for one more Phase 9B pair.
+
+## 20. Phase 9B-R1 implementation record (2026-08-16, owner-authorized)
+
+```
+PHASE_9B_R1_IMPLEMENTATION_AUTHORITY: GRANTED (once) — PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY
+PHASE_9B_R1_STATUS: COMPLETE
+PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
+PHASE_9B_R1_DEV_RESULT: PASS
+PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED
+PHASE_9_STATUS: COMPLETE
+```
+
+Executed by task `phase-9b-r1-auth-refreshed-dev-semantic-acceptance`
+(starting SHA `05def7abf92818c7de48fba658579397b236def7`; NO source
+changes — the validated Phase 9B harness `cdfdf314839fd782a962e4096b68b32641a93db2`
+with exact implementation CI 31934803846 ran unmodified; R1 docs checkpoint
+`f88b6f1` with exact CI 31938800275, 29/29 steps green). Decision D-57;
+architecture and safety records in `docs/ARCHITECTURE.md` /
+`docs/SAFETY_MODEL.md` §22.
+
+The ONE authorized launcher invocation
+(`NIGHTWATCH_PHASE_9B_CI_RUN_ID=31938800275`, `--env=dev`, canonical DEV
+URL) produced the clean acceptance: pre-browser gates all PASS (fresh
+remote heads ripple-api master `169df39d…` / ripple-ui dev `818ce2da…`
+re-discovered read-only; fresh re-derivation at the approved snapshot,
+derivationOk true, restricted resolver RESOLVED; human-refreshed auth
+structural/boolean gates expired=false; exact-head CI; proxy/containment;
+canonical target). FIRST and REPLAY (fresh BrowserContext) each: resolved 1,
+receipts 1, PASS 1, ANOMALY 0, NOT_APPLICABLE 0, decisive 1, invariants
+passed 3, safety all zero — expectation `ripple.common-exchange.read.real-
+source-shape` @ `169df39d` (digest `ev:sha256:608265368c9a086f43c94e5c`);
+semantic + journey replay deterministic; zero hard semantic outcomes; zero
+safety violations; privacy audit PASS; product contact accounting
+launcherInvocations 1 / browserContextsCreated 2 / devObservationPasses 2 /
+completedJourneyPairs 1. Original Phase 9B stays BLOCKED historical
+(D-56). Next project step: fresh roadmap/design review for the next
+bug-hunting bottleneck.

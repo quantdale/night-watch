@@ -1143,3 +1143,45 @@ matrices) is implemented, validated and CI-proven. Phase 6 remains
 `FROZEN_BY_OWNER`; AI remains non-authoritative; catalog byte-identical
 `sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
 `NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`.
+
+## Phase 9B-R1 auth-refreshed contained DEV semantic acceptance (record)
+
+> Task `phase-9b-r1-auth-refreshed-dev-semantic-acceptance` (Phase
+> 9B-R1-CONTAINED-DEV-SEMANTIC-ACCEPTANCE), authorization
+> `PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY`, 2026-08-16,
+> starting SHA `05def7abf92818c7de48fba658579397b236def7`. NO source
+> changes: the validated Phase 9B harness (`cdfdf314839fd782a962e4096b68b32641a93db2`,
+> exact implementation CI 31934803846) ran unmodified; R1 docs checkpoint
+> `f88b6f1` (exact CI 31938800275, 29/29 steps green). Decision D-57;
+> design record `docs/design/PHASE_9_ROADMAP.md` §20.
+> Terminal: `PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` /
+> `PHASE_9B_R1_DEV_RESULT: PASS` / `PRODUCT_SEMANTIC_MISMATCH:
+> NONE_OBSERVED` / `PHASE_9_STATUS: COMPLETE`.
+
+### R1 execution (ONE launcher invocation, clean acceptance)
+
+The gated launcher ran exactly once (`NIGHTWATCH_PHASE_9B_CI_RUN_ID=
+31938800275`, `--env=dev`, canonical DEV URL). Pre-browser gates all PASS:
+fresh remote source truth (ripple-api master `169df39d…`, ripple-ui dev
+`818ce2da…` re-discovered read-only; disposable /tmp mirrors at the exact
+SHAs), fresh re-derivation at the approved snapshot (REDERIVE_FRESH_
+SNAPSHOT, derivationOk true) + restricted resolver RESOLVED, human-refreshed
+auth structural/boolean gates (expired=false), exact-head CI, proxy/
+containment, canonical target. FIRST and REPLAY (fresh BrowserContext)
+each produced: resolvedExpectationCount 1, receiptCount 1, PASS 1,
+ANOMALY 0, NOT_APPLICABLE 0, decisiveEvaluationCount 1, invariantPassCount
+3, safety all zero — under expectation `ripple.common-exchange.read.real-
+source-shape` @ `mobingilabs/ripple-api` `169df39d` (evidence digest
+`ev:sha256:608265368c9a086f43c94e5c`). Semantic and journey replay
+comparisons deterministic; zero hard semantic outcomes; zero safety
+violations; structural privacy audit PASS (no screenshots/traces/
+storage-state copies/media; trace disabled; live auth readability VALID
+both passes; zero semantic-oracle events); recorders finalized passed=true.
+Product contact accounting: launcherInvocations 1, browserContextsCreated
+2, devObservationPasses 2, completedJourneyPairs 1. The bridge is proven
+end-to-end on canonical contained DEV with the privacy/safety contract
+intact. Original Phase 9B stays BLOCKED historical (D-56); Phase 6 remains
+`FROZEN_BY_OWNER`; AI remains non-authoritative; catalog byte-identical
+`sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`;
+`PHASE_9_STATUS: COMPLETE`.

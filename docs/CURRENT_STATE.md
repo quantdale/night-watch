@@ -1,9 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Phase 9B contained DEV semantic acceptance close (harness
-> implemented + validated; DEV acceptance BLOCKED at the pre-browser auth
-> gate — PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED).
+> the Nightwatch Phase 9B-R1 contained DEV semantic acceptance close
+> (COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS; Phase 9 COMPLETE).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1568,15 +1567,22 @@ the pre-browser readiness gate (D-56; records in
   browser context was created; zero DEV contact; zero artifacts; DEV
   semantic acceptance NOT proven; retry requires a human-led
   `npm run auth:capture` refresh plus a fresh owner authorization.
-- **Phase 9B-R1 (2026-08-16)**: the owner granted
-  `PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY` after a
-  human-led auth refresh and the owner states the external DEV auth state
-  was refreshed before the R1 session. R1 is authorized but NOT yet
-  executed: task `phase-9b-r1-auth-refreshed-dev-semantic-acceptance`
-  (IN_PROGRESS) will run the already-validated harness (cdfdf31 / exact CI
-  31934803846, no reimplementation) for ONE fixed common-exchange FIRST +
-  one fresh-context REPLAY after fresh source truth + exact-head CI gates.
-  The original Phase 9B authorization remains spent; D-56 unchanged.
+- **Phase 9B-R1 (2026-08-16)**: the fresh owner authorization
+  (`PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY`) after the
+  owner's human-led auth refresh succeeded:
+  `PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` /
+  `PHASE_9B_R1_DEV_RESULT: PASS` / `PRODUCT_SEMANTIC_MISMATCH:
+  NONE_OBSERVED` / `PHASE_9_STATUS: COMPLETE`. The already-validated harness
+  (cdfdf31 / exact CI 31934803846, zero source changes) ran exactly once:
+  ripple-common-exchange-read FIRST + one fresh-context REPLAY against
+  canonical DEV, both decisive PASS (resolved 1, receipts 1, PASS 1,
+  decisive 1, invariants passed 3, anomalies 0) under expectation
+  ripple.common-exchange.read.real-source-shape @ ripple-api 169df39d
+  (digest ev:sha256:608265368c9a086f43c94e5c); replay deterministic; zero
+  hard semantic outcomes; zero safety violations; privacy audit PASS;
+  launcherInvocations 1 / browserContextsCreated 2 / devObservationPasses
+  2 / completedJourneyPairs 1 (D-57). The original Phase 9B authorization
+  remains spent and its task stays BLOCKED historical (D-56).
 
 ## Environment (machine facts)
 

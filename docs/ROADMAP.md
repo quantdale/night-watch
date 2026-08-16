@@ -1341,8 +1341,49 @@ resolver RESOLVED, exact-head CI, proxy, and target checks, then FAILED the
 auth structural gate — the external DEV storage-state `mo_access_token`
 cookie is EXPIRED (boolean-only diagnostics). No browser context was
 created; zero DEV contact; zero artifacts; DEV semantic acceptance NOT
-proven. Next step: a human-led `npm run auth:capture` refresh of the DEV
-session plus a FRESH owner authorization for one more Phase 9B pair.
+proven. Retry required a human-led `npm run auth:capture` refresh plus a
+fresh owner authorization.
+
+## Phase 9B-R1 — Auth-Refreshed Contained DEV Semantic Acceptance Retry (complete, PASS)
+
+**Status:** `PHASE_9B_R1_STATUS: COMPLETE` /
+`PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` /
+`PHASE_9B_R1_DEV_RESULT: PASS` / `PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED`
+/ `PHASE_9_STATUS: COMPLETE` (2026-08-16). The fresh owner authorization
+(`PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY`, D-57) after the
+owner's human-led auth refresh ran the ALREADY-VALIDATED Phase 9B harness
+(`cdfdf314839fd782a962e4096b68b32641a93db2`, exact implementation CI
+31934803846) with ZERO source changes. See
+`docs/design/PHASE_9_ROADMAP.md` §20 (implementation record), D-57, and the
+task records under `.agent/tasks/phase-9b-r1-auth-refreshed-dev-semantic-
+acceptance/`.
+
+- **Gates**: harness source byte-identical between cdfdf31 and HEAD; R1
+  docs checkpoint `f88b6f1` with exact green CI 31938800275 (29/29 steps
+  incl. the Phase 9B harness matrix step); fresh remote heads re-discovered
+  read-only (ripple-api master `169df39d…`, ripple-ui dev `818ce2da…` —
+  unchanged; disposable /tmp mirrors verified at the exact SHAs); runner
+  re-derived the selected expectation at the exact current snapshot
+  (REDERIVE_FRESH_SNAPSHOT, derivationOk true) and required resolver
+  RESOLVED before browser launch; human-refreshed auth state passed all
+  structural/boolean gates (cookie pageReadable=true, expired=false; no
+  auth:capture in-session); exact-head CI gate PASS; containment unchanged.
+- **Execution (ONE invocation)**: `npm run phase9b:real` with
+  `NIGHTWATCH_PHASE_9B_CI_RUN_ID=31938800275`, LAUNCHER-EXIT=0. FIRST and
+  REPLAY both decisive PASS (resolved 1, receipts 1, PASS 1, ANOMALY 0,
+  NOT_APPLICABLE 0, decisive 1, invariants passed 3, safety all zero);
+  semantic + journey replay deterministic; zero hard semantic outcomes.
+  Expectation `ripple.common-exchange.read.real-source-shape` @
+  ripple-api `169df39d` (evidence digest
+  `ev:sha256:608265368c9a086f43c94e5c`).
+- **Audit**: structural privacy audit PASS (no screenshots/traces/
+  storage-state copies/media; trace disabled; live auth readability VALID
+  both passes; zero semantic-oracle events); siblings pinned and unchanged;
+  worktree clean. Product contact accounting: launcherInvocations 1 /
+  browserContextsCreated 2 / devObservationPasses 2 / completedJourneyPairs
+  1.
+- **Next step**: a fresh roadmap/design review for the next bug-hunting
+  bottleneck (Phase 9 complete; no next phase implementation in R1).
 
 ## Never in scope (any phase)
 

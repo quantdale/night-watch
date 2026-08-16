@@ -95,19 +95,24 @@ next-phase implementation; no reopening of the original Phase 9B task.
 ## Milestones
 
 - M0 — Bootstrap + harness integrity + R1 task records + ACTIVE_TASK.
-  Acceptance: agent:check PASS for the new task. Status: NOT_STARTED.
+  Acceptance: agent:check PASS for the new task. Status: COMPLETE.
 - M1 — R1 docs checkpoint commit + push + exact CI green (incl. Phase 9B
-  harness matrix). Status: NOT_STARTED.
+  harness matrix). Status: COMPLETE (f88b6f1; exact CI 31938800275,
+  29/29 green).
 - M2 — Fresh remote source check + freshness decision + re-derivation +
-  resolver RESOLVED. Status: NOT_STARTED.
+  resolver RESOLVED. Status: COMPLETE (remotes unchanged; runner re-derived
+  at 169df39d; resolver RESOLVED pre-browser).
 - M3 — Auth structural precheck (refreshed state) + pre-DEV readiness +
-  exact-head CI gate. Status: NOT_STARTED.
+  exact-head CI gate. Status: COMPLETE (auth PASS, expired=false; all
+  gates green).
 - M4 — ONE launcher invocation: FIRST + one fresh-context REPLAY; safe
-  receipts; zero-counts; replay determinism. Status: NOT_STARTED.
+  receipts; zero-counts; replay determinism. Status: COMPLETE (launcher
+  exit 0; FIRST and REPLAY decisive PASS; deterministic).
 - M5 — Post-run privacy audit + safety vector + sibling integrity +
-  product-contact accounting. Status: NOT_STARTED.
+  product-contact accounting. Status: COMPLETE (audit PASS; vector zero;
+  siblings unchanged; 1 launcher / 2 contexts / 2 passes / 1 pair).
 - M6 — Docs closure (D-57) + final exact CI + 96-item report + STOP.
-  Status: NOT_STARTED.
+  Status: COMPLETE (this closure; final CI pending at close time).
 
 ## Validation Strategy
 

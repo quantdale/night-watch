@@ -10,20 +10,26 @@
 ## 1. Status
 
 ```
-PHASE_9B_STATUS: BLOCKED (2026-08-16, after the ONE authorized execution)
-PHASE_9B_DEV_RESULT: NOT_PROVEN
-PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
+PHASE_9B_STATUS: BLOCKED (original authorization, 2026-08-16 — D-56)
+PHASE_9B_R1_STATUS: COMPLETE (auth-refreshed retry, 2026-08-16 — D-57)
+PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
+PHASE_9B_R1_DEV_RESULT: PASS
+PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED
+PHASE_9_STATUS: COMPLETE
 PHASE_9B_DEV_READINESS: (Phase 9A.1 verdict — see docs/CURRENT_STATE.md)
 ```
 
 Execution history: this spec was design-only until the owner granted
 `PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` (2026-08-16). The Phase 9B
-task (`phase-9b-contained-dev-semantic-acceptance`, D-56) built and
-validated the harness, executed the ONE authorized acceptance pair through
-the gated launcher, and stopped fail-closed at the pre-browser auth gate
-(expired external DEV storage-state cookie). DEV semantic acceptance is NOT
-proven; a retry requires a human-led auth refresh and a fresh owner
-authorization.
+task (D-56) built and validated the harness, executed the ONE authorized
+acceptance pair through the gated launcher, and stopped fail-closed at the
+pre-browser auth gate (expired external DEV storage-state cookie). The
+owner then human-refreshed the DEV session and granted the fresh retry
+authorization `PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY`
+(D-57): the already-validated harness ran unmodified (zero source changes)
+and the ONE launcher invocation produced FIRST + REPLAY decisive PASS with
+zero anomalies and zero safety violations —
+`COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` / `PASS`; Phase 9 is COMPLETE.
 
 ## 2. Task identity
 
@@ -116,15 +122,21 @@ STOP + STALE receipts + re-derivation required before any retry.
 
 ```
 PHASE_9B_IMPLEMENTATION_AUTHORITY: GRANTED_ONCE (PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY, 2026-08-16)
-PHASE_9B_STATUS: BLOCKED
-PHASE_9B_DEV_RESULT: NOT_PROVEN
-PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
+PHASE_9B_R1_IMPLEMENTATION_AUTHORITY: GRANTED_ONCE (PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY, 2026-08-16)
+PHASE_9B_STATUS: BLOCKED (original, D-56)
+PHASE_9B_R1_STATUS: COMPLETE (D-57)
+PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
+PHASE_9B_R1_DEV_RESULT: PASS
 ```
 
 This spec designed Phase 9B; the one-time owner authorization
 (`PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`) was granted and
-executed once (D-56): the harness is implemented/validated/CI-proven, and
+executed once (D-56): the harness was implemented/validated/CI-proven, and
 the one acceptance run stopped fail-closed at the pre-browser auth gate
-(expired external DEV auth cookie) with zero DEV contact. No further
-execution is authorized: a retry requires a fresh owner authorization and a
-human-refreshed DEV session.
+(expired external DEV auth cookie) with zero DEV contact. The fresh retry
+authorization (`PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY`)
+was granted after the owner's human-led auth refresh and executed once
+(D-57): the unmodified harness produced FIRST + REPLAY decisive PASS with
+zero violations — DEV semantic acceptance VERIFIED, Phase 9 COMPLETE. No
+further execution is authorized: any further DEV semantic acceptance
+requires a fresh owner authorization.
