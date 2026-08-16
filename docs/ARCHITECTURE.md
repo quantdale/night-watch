@@ -1086,3 +1086,60 @@ DESIGNED_NOT_STARTED_NOT_AUTHORIZED`. Phase 6 remains `FROZEN_BY_OWNER`; AI
 remains non-authoritative; catalog byte-identical `sha256:bd35b934...`; B
 AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`;
 `PHASE_8_STATUS: COMPLETE`.
+
+## Phase 9B contained DEV semantic acceptance (record)
+
+> Task `phase-9b-contained-dev-semantic-acceptance` (Phase
+> 9B-CONTAINED-DEV-SEMANTIC-ACCEPTANCE), authorization
+> `PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`, 2026-08-16, starting
+> SHA `62ec80426035e979b563135d858bdc1438d84fb4`, substantive implementation
+> `cdfdf314839fd782a962e4096b68b32641a93db2` (exact implementation CI
+> 31934803846, 29/29 steps green incl. the Phase 9B harness matrix step).
+> Decision D-56; design record `docs/design/PHASE_9_ROADMAP.md` §19.
+> Terminal: `PHASE_9B_STATUS: BLOCKED` /
+> `PHASE_9B_DEV_RESULT: NOT_PROVEN` /
+> `PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED` — the ONE authorized
+> launcher execution stopped fail-closed at the pre-browser auth gate
+> (expired external DEV storage-state cookie); zero DEV contact.
+
+### Phase 9B harness (implemented)
+
+```
+NIGHTWATCH CONTEXT                    src/browser/context.ts
+  NightwatchContextOptions.semanticOracle?  (optional; no global default)
+    -> createNetworkObserver({ semanticOracle })  (Phase 9A.1 seam)
+PHASE 9B PURE CORE                    src/core/phase9b/**
+  freshness.ts   A-F classifier: USE_REVIEWED_SNAPSHOT /
+                 REDERIVE_FRESH_SNAPSHOT / BLOCK + exact tokens
+  preflight.ts   13-check metadata-only readiness gate (ANY FAIL ->
+                 NO DEV CONTACT; no browser context is created)
+  summary.ts     normalized safe pass summaries + one-pass acceptance gate
+                 (decisive = invariantPassCount > 0 or ANOMALY) + replay
+                 comparison (never raw values, never receiptId equality)
+GATED LAUNCHER                        bin/phase9b-real.mjs (+ pure arg
+  parser bin/phase9b-launcher-args.mjs): --env=dev + --storage-state only;
+  no journey selector, no URL override; one-shot NIGHTWATCH_PHASE_9B_REAL=1
+RUNNER                               tests/manual/phase9b-contained-dev-semantic.ts
+  fixed ripple-common-exchange-read pair (FIRST + ONE fresh-context replay)
+  through the existing Phase 2B machinery (runRealRunGate,
+  createNightwatchContext, runDeclarativeJourney, endpoint registry, auth
+  readability, replay comparison, proxy/safety accounting); resolver
+  exposed ONLY for ripple.common-exchange.read bound to the freshness-
+  approved snapshot (ripple-api @ 169df39d, digest
+  ev:sha256:608265368c9a086f43c94e5c); safe receipt summaries; structural
+  privacy audit
+```
+
+The freshness gate is read-only remote metadata (`gh api` branch heads) +
+disposable /tmp mirrors at the exact remote SHAs (gh api tarballs + a
+synthetic pinned git ref; no canonical sibling mutation, no source
+commits). The pre-dev readiness gate includes: nightwatch HEAD clean, exact
+implementation CI green, source freshness PASS, real expectation
+derived=1/current=1, DEV-reachable + KNOWN_READ, mutation steps 0, auth
+structural PASS, proxy healthy, canonical DEV target exact, traces/
+screenshots off. The gated launcher ran exactly once and failed closed at
+the auth gate; the harness (wiring, classifier, gate, summaries, launcher,
+matrices) is implemented, validated and CI-proven. Phase 6 remains
+`FROZEN_BY_OWNER`; AI remains non-authoritative; catalog byte-identical
+`sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`.

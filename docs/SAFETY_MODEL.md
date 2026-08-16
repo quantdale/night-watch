@@ -1132,7 +1132,54 @@ to the read-only observation plane. Safety properties:
   only sibling-source access is the read-only path-confined
   `src/core/source/siblingSource.ts`.
 - Contained DEV semantic acceptance (Phase 9B) requires a separate owner
-  authorization; none is standing.
+  authorization; the Phase 9B acceptance task (D-56) was authorized and
+  executed once (see §21); any retry requires a fresh owner authorization.
+
+## 21. Phase 9B contained DEV semantic acceptance safety
+
+The Phase 9B acceptance task (D-56) executed the ONE owner-authorized
+contained DEV journey pair through a dedicated gated launcher. Safety
+properties (all proven in the 2026-08-16 execution, which stopped
+fail-closed at the pre-browser auth gate):
+
+- **No shortcut context**: the full L0-L5 containment stack is unchanged
+  (CDP Fetch guard, route + WebSocket policy, SW/SharedWorker blocking,
+  unrouted-request detection, mandatory loopback proxy; QUIC and non-proxied
+  WebRTC disabled; authenticated traces and screenshots always off). The
+  Phase 9B runner reuses `createNightwatchContext`; there is no separate
+  Phase 9B browser path.
+- **No silent semantic authority**: the semantic oracle is an explicit
+  caller option (`NightwatchContextOptions.semanticOracle?`); no global
+  default, no environment-variable-created authority, no automatic
+  expectation registry; the acceptance resolver exposes ONLY
+  `ripple.common-exchange.read`, bound to the freshness-approved exact
+  source snapshot.
+- **Pre-browser metadata-only readiness gate** (`src/core/phase9b/
+  preflight.ts`, 13 checks): nightwatch HEAD clean, exact-head
+  implementation CI green, source freshness PASS, real expectation
+  derived=1/current=1, target DEV-reachable + KNOWN_READ, mutation steps 0,
+  auth structural PASS, proxy healthy, canonical DEV target exact,
+  traces/screenshots off. ANY failure -> NO DEV CONTACT; the 2026-08-16 run
+  proved the gate: it stopped on an expired DEV auth cookie before any
+  browser context existed (zero DEV contact, zero artifacts).
+- **Source freshness is remote, not local**: a local checkout HEAD is never
+  automatically "current". Remote branch heads are established read-only
+  (`gh api`) and classified (A-F); on advance, a disposable /tmp mirror at
+  the exact remote SHA + fresh mechanical derivation are required; drift ->
+  exact `PHASE_9B_BLOCKED_*` tokens. Canonical Alphaus sibling checkouts
+  are never fetched/checked-out/reset/cleaned.
+- **One pair, no retry**: exactly one FIRST + one fresh-context REPLAY per
+  authorization; no second journey, no fallback, no third attempt, no
+  campaign; auth between passes is re-gated; the launcher never re-runs
+  itself.
+- **Raw bodies stay ephemeral**: transient in-memory JSON text feeds the
+  semantic projection only; receipts/findings/ledgers/reports carry safe
+  metadata; a post-run structural audit (schema/key-level, never a dump)
+  is part of the runner; evidence stays owner-local
+  (`artifacts/<run-id>/`, mode 0700, gitignored).
+- **The Phase 9B pure core** (`src/core/phase9b/`) is statically guarded
+  (hardening): no network/fs/child-process/eval/persistence authority; the
+  runner collects facts and injects them.
 
 ---
 
@@ -1140,6 +1187,8 @@ to the read-only observation plane. Safety properties:
 Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
 and Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 self-development evaluation,
 controlled source adoption sandbox, and owner-gated canonical promotion;
-Phase 9 deterministic semantic oracle depth; and Phase 9A.1 real-source
-expectation admission & semantic evaluation observability; changes require a
-DECISIONS entry and a test update.*
+Phase 9 deterministic semantic oracle depth; Phase 9A.1 real-source
+expectation admission & semantic evaluation observability; and Phase 9B
+contained DEV semantic acceptance harness (implemented; acceptance BLOCKED
+at the pre-browser auth gate); changes require a DECISIONS entry and a test
+update.*

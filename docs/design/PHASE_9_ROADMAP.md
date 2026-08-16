@@ -575,3 +575,53 @@ EVALUATION RECEIPT EXISTS + OUTCOME IS EXPLICIT + ZERO PRIVACY/SAFETY
 FAILURE; zero anomalies is valid healthy evidence; zero resolved
 expectations / zero receipts / stale source / internal errors mean NOT
 PROVEN.
+
+## 19. Phase 9B implementation record (2026-08-16, owner-authorized)
+
+```
+PHASE_9B_IMPLEMENTATION_AUTHORITY: GRANTED (once) — PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY
+PHASE_9B_STATUS: BLOCKED
+PHASE_9B_DEV_RESULT: NOT_PROVEN
+PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
+PHASE_9_STATUS: COMPLETE_LOCAL_SYNTHETIC (unchanged)
+```
+
+Executed by task `phase-9b-contained-dev-semantic-acceptance` (starting SHA
+`62ec80426035e979b563135d858bdc1438d84fb4`; substantive implementation
+`cdfdf314839fd782a962e4096b68b32641a93db2`; exact implementation CI
+31934803846, 29/29 steps green incl. the new "Phase 9B contained DEV
+semantic acceptance harness matrix" step). Decision D-56; architecture and
+safety records in `docs/ARCHITECTURE.md` / `docs/SAFETY_MODEL.md` §21.
+
+Built and validated the contained DEV semantic acceptance harness:
+
+- **Wiring**: `NightwatchContextOptions.semanticOracle?` ->
+  `createNetworkObserver` (no global default, no env-created authority).
+- **Pure core** (`src/core/phase9b/`): source-freshness classifier (A-F),
+  metadata-only pre-dev readiness gate (13 checks; ANY failure -> NO DEV
+  CONTACT), normalized safe pass summaries + one-pass acceptance gate
+  (decisive = invariantPassCount > 0 or ANOMALY) + replay comparison.
+- **Gated launcher** (`bin/phase9b-real.mjs`, `--env=dev` +
+  `--storage-state` only, `NIGHTWATCH_PHASE_9B_REAL=1`) + runner
+  (`tests/manual/phase9b-contained-dev-semantic.ts`): the fixed
+  `ripple-common-exchange-read` pair (FIRST + ONE fresh-context replay) via
+  the existing Phase 2B machinery, expectation
+  `ripple.common-exchange.read.real-source-shape` exposed ONLY.
+- **Validation**: unit matrices 34 passed; full regression 1026/1/2
+  dirty-tree (2 = documented dirty-gate only); isolated clean checkout
+  1017/4/0; exact implementation CI green at `cdfdf31`.
+
+Source freshness (read-only, F2): ripple-api master `169df39d` and ripple-ui
+dev `818ce2da` advanced; relevant contract + journey source mechanically
+unchanged; the expectation was bound to the fresh exact snapshot `169df39d`
+(fresh derivation: 4 derived / 0 failures; selected digest
+`ev:sha256:608265368c9a086f43c94e5c`); disposable /tmp mirrors only; no
+canonical sibling mutation.
+
+Execution: the ONE authorized launcher run passed source freshness,
+derivation, resolver RESOLVED, exact-head CI, proxy and target checks, then
+FAILED the auth structural gate (external DEV storage-state `mo_access_token`
+cookie EXPIRED — boolean-only diagnostics). No browser context was created;
+zero DEV contact; zero artifacts. DEV semantic acceptance NOT proven. A
+retry requires a human-led `npm run auth:capture` refresh of the DEV
+session plus a FRESH owner authorization for one more Phase 9B pair.

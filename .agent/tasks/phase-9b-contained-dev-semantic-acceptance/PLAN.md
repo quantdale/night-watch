@@ -125,27 +125,32 @@ changes without a proven defect; no raw values in any output.
 ## Milestones
 
 - M0 — Task records + ACTIVE_TASK (IN_PROGRESS). Acceptance: `agent:check`
-  passes for the new task. Status: NOT_STARTED.
+  passes for the new task. Status: COMPLETE (2026-08-16).
 - M1 — Wiring + Phase 9B core modules + launcher + config + runner source.
-  Acceptance: typecheck + hardening PASS. Status: NOT_STARTED.
+  Acceptance: typecheck + hardening PASS. Status: COMPLETE (2026-08-16).
 - M2 — Unit matrices (21-item harness + A-F freshness + launcher args +
-  wiring). Acceptance: focused matrix green. Status: NOT_STARTED.
+  wiring). Acceptance: focused matrix green. Status: COMPLETE (34 passed).
 - M3 — CI matrix step. Acceptance: workflow edit, no DEV references.
-  Status: NOT_STARTED.
+  Status: COMPLETE.
 - M4 — Local validation: typecheck, hardening, Phase 9/9A.1/9B matrices,
   journey/observer/auth/proxy tests, campaign synthetic, owner-provenance,
   agent:check/audit, project:check, catalog integrity, git diff --check,
   full `npx playwright test --project=nightwatch --workers=1` clean, isolated
-  full-history checkout. Status: NOT_STARTED.
+  full-history checkout. Status: COMPLETE (2026-08-16; dirty-tree full
+  regression 1026/1/2 with the only 2 failures being the documented
+  dirty-gate; isolated clean checkout 1017/4/0).
 - M5 — Substantive implementation checkpoint + push + exact green CI
-  (incl. Phase 9B harness matrix). Status: NOT_STARTED.
+  (incl. Phase 9B harness matrix). Status: COMPLETE (cdfdf31, exact CI
+  31934803846 29/29 green).
 - M6 — Pre-DEV final rechecks (freshness, auth, resolver RESOLVED) + ONE
   canonical-DEV journey pair (first + replay) via the gated launcher.
-  Status: NOT_STARTED.
+  Status: COMPLETE (executed once; stopped fail-closed at the pre-browser
+  auth gate — PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED; zero DEV contact).
 - M7 — Post-run privacy audit + safety vector + sibling integrity check.
-  Status: NOT_STARTED.
+  Status: COMPLETE (vacuous for the run: no browser context/artifacts were
+  created; safety vector zero; sibling checkouts untouched).
 - M8 — Docs/continuity closure (D-56) + final CI + 85-item report + STOP.
-  Status: NOT_STARTED.
+  Status: COMPLETE (this closure; final CI pending at close time).
 
 ## Validation Strategy
 

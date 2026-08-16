@@ -2062,3 +2062,111 @@ bound to their exact current source snapshots — synthetic expectations are
 test fixtures only); project-state protocol stays `nightwatch.project-state.
 v1` (no new machine fields); AGENTS.md gains the Phase 9A.1 permanent rule;
 D-54 remains the Phase 9 implementation record, not rewritten.
+
+## D-56 — Phase 9B contained DEV semantic acceptance: harness proven, DEV acceptance BLOCKED at the pre-browser auth gate (NOT_PROVEN)
+
+**Decision.** The owner-authorized Phase 9B task
+(`phase-9b-contained-dev-semantic-acceptance`, authorization class
+`PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`, 2026-08-16, starting SHA
+`62ec80426035e979b563135d858bdc1438d84fb4`, substantive implementation
+`cdfdf314839fd782a962e4096b68b32641a93db2`, exact implementation CI
+31934803846, 29/29 steps green incl. the dedicated "Phase 9B contained DEV
+semantic acceptance harness matrix" step) built and validated the complete
+contained DEV semantic acceptance harness, then executed the ONE authorized
+acceptance pair through the gated launcher. The run stopped fail-closed at
+the pre-browser metadata-only readiness gate:
+
+```
+PHASE_9B: BLOCKED
+PHASE_9B_DEV_RESULT: NOT_PROVEN
+PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
+```
+
+**What was built.** The smallest typed wiring the Phase 9A.1 machinery
+needed: `NightwatchContextOptions.semanticOracle?` now passes the admitted
+real-source resolver into `createNetworkObserver` (no global default, no
+environment-variable-created semantic authority). A pure Phase 9B core
+(`src/core/phase9b/`): the source-freshness classifier (A-F verdicts:
+USE_REVIEWED_SNAPSHOT / REDERIVE_FRESH_SNAPSHOT / BLOCK with the exact
+`PHASE_9B_BLOCKED_*` tokens), the metadata-only pre-dev readiness gate
+(13 checks; ANY failure -> NO DEV CONTACT), and normalized safe pass
+summaries with a one-pass acceptance gate (decisive = invariantPassCount >
+0 or ANOMALY; NOT_APPLICABLE-only, NO_EXPECTATION, zero receipts are never
+proven) plus a normalized first/replay comparison (never raw values, never
+receiptId equality). A dedicated gated launcher (`bin/phase9b-real.mjs` +
+pure arg parser: only `--env=dev` and `--storage-state`; no journey
+selector, no URL override; one-shot `NIGHTWATCH_PHASE_9B_REAL=1`) driving
+`tests/manual/phase9b-contained-dev-semantic.ts` — the fixed
+`ripple-common-exchange-read` journey pair (FIRST + ONE fresh-context
+replay) through the existing Phase 2B machinery with the semantic oracle
+wired. Unit matrices: source-freshness A-F (12) + 21-item harness matrix
+(22) = 34 passed; hardening guards + a CI matrix step that is
+LOCAL/SYNTHETIC ONLY (CI never contacts DEV; truthful workflow comment).
+
+**Source freshness (read-only, no sibling mutation).** Remote branch heads
+via `gh api`: ripple-api `master` `169df39d3cdf56c88f98d45d06eae6e48c3d8f6d`
+(advanced from reviewed `27bb007ad0c798800b6bd3b29760c966422966e7`) and
+ripple-ui `dev` `818ce2da19a25b31d715221c8cde30aae837fd77` (advanced from
+reviewed `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`). F2 branch: disposable
+mirrors at the exact remote SHAs under /tmp (gh api tarballs + synthetic
+pinned git ref; canonical sibling checkouts untouched, still pinned at the
+reviewed SHAs with their recorded pre-existing dirt). Exact-range
+inspection: `ExchangeRate.php` + `Routing.yaml` byte-identical;
+`GlobalExchangeRate/index.vue` + `exchangeRateGlobal.js` byte-identical;
+router.js `/global-exchange-rate-v2` route block identical (only
+settings-MFE/commitment routes moved). The expectation was therefore bound
+to the FRESH exact snapshot `169df39d` (never the stale reviewed SHA),
+with a fresh mechanical derivation: 4 derived / 0 failures; selected
+`ripple.common-exchange.read` evidence digest
+`ev:sha256:608265368c9a086f43c94e5c`; the resolver restricted to that one
+target returned RESOLVED.
+
+**Measured results.** typecheck/hardening PASS; Phase 9 matrix 102;
+Phase 9A.1 + 9B matrices 131; journey/observer/auth/proxy/containment 75;
+campaign synthetic 27; owner-provenance 91; agent:check/audit PASS;
+project:check + catalog integrity dirty-only PASS; full regression 1026
+passed / 1 skipped / 2 failed where the only 2 failures were the documented
+dirty-tree fail-closed gates (`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`); at the
+isolated full-history checkout (cdfdf31, clean tree) 1017 passed / 4
+environment-conditional skips / 0 failed. Exact implementation CI
+31934803846: completed, success, exact head SHA, 29/29 steps green.
+
+**Execution outcome.** The gated launcher ran exactly once
+(`NIGHTWATCH_PHASE_9B_CI_RUN_ID=31934803846 --env=dev
+--storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`). The
+pre-dev readiness gate PASSED: nightwatch HEAD clean (cdfdf31), exact-head
+implementation CI green, source freshness REDERIVE_FRESH_SNAPSHOT @
+169df39d, derived expectation 1, resolver RESOLVED 1, target DEV-reachable
++ KNOWN_READ, mutation steps 0, proxy healthy, canonical DEV target exact,
+traces/screenshots off. The auth structural gate FAILED: the external DEV
+storage state's `mo_access_token` cookie is EXPIRED (boolean-only
+diagnostics: validateStorageStateFile PASS; token present/non-empty,
+api_type dev, app_type alphaus, domain/path applicable — all true;
+`expired: true`). The test raised `Phase9bPreflightError` BEFORE any
+browser context; zero DEV contact; zero artifacts; the acceptance is NOT
+proven.
+
+**Rationale.** The fail-closed design worked exactly as intended: with an
+expired session the runner refuses to touch the product before opening a
+browser. The authorization contains exactly one acceptance pair; the
+launcher exited; automatic retry is forbidden; auth refresh
+(`npm run auth:capture`) is a HUMAN-led flow the agent must not perform
+interactively. Terminal tokens: `PHASE_9B: BLOCKED`,
+`PHASE_9B_DEV_RESULT: NOT_PROVEN`,
+`PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED`; `PHASE_9_STATUS` stays
+`COMPLETE_LOCAL_SYNTHETIC`; NEXT ACTION STOP.
+
+**Alternatives.** Weakening or bypassing the auth gate (rejected: the gate
+is the contract); letting the agent recapture auth interactively (rejected:
+auth:capture is human-led); treating "no browser contact" as a successful
+acceptance (rejected: zero receipts never proves PASS); re-running the
+launcher under the same authorization (rejected: one pair per
+authorization, no automatic retry).
+
+**Consequences.** The Phase 9B harness is implemented, validated and
+CI-proven; the DEV semantic acceptance remains unproven pending a fresh
+human-authenticated DEV session and a fresh owner authorization for one
+more pair. Catalog byte-identical `sha256:bd35b934...` (count 1);
+`PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY:
+NONE`. Zero product contact, zero mutations, zero DB/infra, zero AI, zero
+Alphaus writes, zero publication.

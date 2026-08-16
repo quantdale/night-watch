@@ -1,7 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Phase 9A.1 real-source expectation admission close.
+> the Nightwatch Phase 9B contained DEV semantic acceptance close (harness
+> implemented + validated; DEV acceptance BLOCKED at the pre-browser auth
+> gate — PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1516,6 +1518,56 @@ NOT_AUTHORIZED):
   EXPLICIT + ZERO PRIVACY/SAFETY FAILURE (zero anomalies is valid healthy
   evidence; zero expectations/receipts, stale source, or internal errors
   mean NOT PROVEN).
+
+## Phase 9B — Contained DEV Semantic Acceptance (harness implemented + validated; DEV acceptance BLOCKED at the pre-browser auth gate)
+
+`PHASE_9B_STATUS: BLOCKED` / `PHASE_9B_DEV_RESULT: NOT_PROVEN` /
+`PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED` (2026-08-16).
+The owner-authorized Phase 9B task
+(`phase-9b-contained-dev-semantic-acceptance`,
+`PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`, starting SHA
+`62ec80426035e979b563135d858bdc1438d84fb4`) built and validated the complete
+contained DEV semantic acceptance harness and executed the ONE authorized
+acceptance pair through the gated launcher; the run stopped fail-closed at
+the pre-browser readiness gate (D-56; records in
+`docs/design/PHASE_9_ROADMAP.md` §19, `docs/ARCHITECTURE.md`,
+`docs/SAFETY_MODEL.md`, and `docs/DECISIONS.md`):
+
+- **Wiring**: `NightwatchContextOptions.semanticOracle?` passes the admitted
+  real-source resolver into `createNetworkObserver` (no global default, no
+  env-created authority).
+- **Pure Phase 9B core** (`src/core/phase9b/`): source-freshness classifier
+  (A-F; F2 REDERIVE_FRESH_SNAPSHOT binds to the fresh exact remote snapshot,
+  never the stale reviewed SHA), metadata-only pre-dev readiness gate
+  (13 checks; ANY failure -> NO DEV CONTACT), normalized safe pass summaries
+  + one-pass acceptance gate (decisive = invariantPassCount > 0 or ANOMALY)
+  + replay comparison (never raw values).
+- **Gated launcher + runner**: `bin/phase9b-real.mjs` (`--env=dev` +
+  `--storage-state` only; one-shot `NIGHTWATCH_PHASE_9B_REAL=1`) driving
+  `tests/manual/phase9b-contained-dev-semantic.ts` — the fixed
+  `ripple-common-exchange-read` pair (FIRST + one fresh-context replay)
+  through the existing Phase 2B machinery; expectation
+  `ripple.common-exchange.read.real-source-shape` exposed ONLY; unit
+  matrices (34), hardening guards, CI matrix step (local/synthetic only).
+- **Source freshness (read-only)**: ripple-api master `169df39d` and
+  ripple-ui dev `818ce2da` advanced beyond the reviewed SHAs; relevant
+  contract + journey source mechanically unchanged (byte-identical files,
+  identical route block) -> F2; fresh derivation at `169df39d`:
+  4 derived / 0 failures; selected digest
+  `ev:sha256:608265368c9a086f43c94e5c`; restricted resolver RESOLVED.
+  Disposable /tmp mirrors only; canonical sibling checkouts untouched.
+- **Validation**: substantive checkpoint `cdfdf314839fd782a962e4096b68b32641a93db2`
+  with exact implementation CI 31934803846 (completed/success/exact SHA,
+  29/29 steps incl. the Phase 9B harness matrix step); full regression
+  1026/1/2 dirty-tree (the only 2 failures = documented dirty-gate);
+  isolated clean checkout 1017/4/0.
+- **Execution**: the one launcher run passed source freshness, derivation,
+  resolver RESOLVED, exact-head CI, proxy, and target checks, then FAILED
+  the auth structural gate — the external DEV storage-state
+  `mo_access_token` cookie is EXPIRED (boolean-only diagnostics). No
+  browser context was created; zero DEV contact; zero artifacts; DEV
+  semantic acceptance NOT proven; retry requires a human-led
+  `npm run auth:capture` refresh plus a fresh owner authorization.
 
 ## Environment (machine facts)
 

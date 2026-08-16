@@ -3,19 +3,20 @@
 Task ID: phase-9b-contained-dev-semantic-acceptance
 Phase: 9B-CONTAINED-DEV-SEMANTIC-ACCEPTANCE
 Title: Nightwatch Phase 9B — Contained DEV Semantic Acceptance
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-9b-contained-dev-semantic-acceptance
 Starting SHA: 62ec80426035e979b563135d858bdc1438d84fb4
-Last validated implementation SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
-Current milestone: M0 — task records + ACTIVE_TASK (IN_PROGRESS)
-Last checkpoint: 2026-08-16 — bootstrap CASE D (HEAD == origin/main ==
-62ec804, worktree clean); no prior Phase 9B records; durable reads complete;
-strict-v2 task records created; next: ACTIVE_TASK routing (this file) then
-the read-only remote source-freshness gate, then M1 wiring.
-Next action: Run the read-only remote source-freshness gate
-(mobingilabs/ripple-api + mobingilabs/ripple-ui via gh api / git ls-remote),
-record remote SHAs, classify F1/F2/BLOCK; then M1 (context wiring + Phase 9B
-core modules + launcher + config + runner).
+Last validated implementation SHA: cdfdf314839fd782a962e4096b68b32641a93db2
+Current milestone: STOP — PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
+Last checkpoint: 2026-08-16 — Phase 9B harness built, validated locally +
+exact CI (cdfdf31, run 31934803846 29/29 green), and the ONE authorized DEV
+execution ran and stopped fail-closed at the pre-browser auth gate: the
+external DEV storage-state cookie is EXPIRED. Zero browser context, zero
+DEV contact, zero artifacts. Terminal: PHASE_9B BLOCKED / NOT_PROVEN.
+Next action: STOP — unblock condition: human-led
+`npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"`
+refresh, then a FRESH owner authorization for one more Phase 9B acceptance
+pair. No automatic retry.
 Authorization class: PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -24,33 +25,33 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 ONE bounded canonical-DEV semantic acceptance (ONE approved journey
 ripple-common-exchange-read x FIRST + ONE fresh-context replay) of the
 admitted real-source expectation ripple.common-exchange.read.
-real-source-shape against https://appdev.alphaus.cloud/ripple/ only:
-minimum source wiring (NightwatchContextOptions.semanticOracle? ->
-createNetworkObserver), local/synthetic tests for that wiring, gated
-launcher bin/phase9b-real.mjs + playwright.phase9b.config.ts +
-tests/manual/phase9b-contained-dev-semantic.ts, pre-dev metadata-only
-readiness gate + read-only source-freshness gate (F1/F2/BLOCK), one
-source-bearing Nightwatch implementation checkpoint, exact green CI BEFORE
-any product contact, safe semantic evaluation receipts, private/local
-sanitized evidence, docs/continuity closure (D-56), normal Nightwatch
-commits/pushes. FORBIDDEN: second journey, fallback, third attempt,
-exploratory clicking, arbitrary navigation, new endpoint authority, NEXT,
-production, mutation, POST/PUT/PATCH/DELETE, DB/infra (Phase 6 freeze),
-deployment binding, screenshots, authenticated traces, DOM snapshots, raw
-persistence, raw customer-value persistence, AI models/oracle authority,
-Alphaus writes, selfDev/promotion/catalog, variant-B adoption, publication.
+real-source-shape against https://appdev.alphaus.cloud/ripple/ only.
+FULFILLED up to the auth gate: minimum source wiring (semanticOracle
+option), local/synthetic tests, gated launcher + config + runner, pre-dev
+readiness gate + read-only source-freshness gate (F2 REDERIVE_FRESH_SNAPSHOT
+@ 169df39d), substantive checkpoint cdfdf31 with exact green CI 31934803846
+BEFORE any product contact, ONE launcher execution (stopped fail-closed at
+the auth gate; NOT_PROVEN). FORBIDDEN surface untouched: no second journey,
+no fallback, no third attempt, no exploratory clicking, no arbitrary
+navigation, no new endpoint authority, no NEXT/production, no mutation, no
+POST/PUT/PATCH/DELETE, no DB/infra, no deployment binding, no screenshots,
+no authenticated traces, no DOM snapshots, no raw persistence, no raw
+customer-value persistence, no AI, no Alphaus writes, no selfDev/
+promotion/catalog, no variant-B adoption, no publication.
 
 ## Continuity
 
 STARTING_SHA: 62ec80426035e979b563135d858bdc1438d84fb4
-LAST_VALIDATED_IMPLEMENTATION_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
+LAST_VALIDATED_IMPLEMENTATION_SHA: cdfdf314839fd782a962e4096b68b32641a93db2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cdfdf314839fd782a962e4096b68b32641a93db2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_9B_STATUS: IN_PROGRESS
+PHASE_9B_STATUS: BLOCKED
+PHASE_9B_DEV_RESULT: NOT_PROVEN
+PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
 PHASE_9A_1_STATUS (unchanged): COMPLETE
 PHASE_9_STATUS (narrative, unchanged): COMPLETE_LOCAL_SYNTHETIC
 PHASE_8_STATUS (unchanged): COMPLETE
@@ -60,8 +61,9 @@ NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
 ## STOP
 
-STOP conditions: any pre-dev gate failure (freshness / exact CI / resolver
-RESOLVED / auth / proxy / exact target) -> PHASE_9B_BLOCKED_* before any DEV
-contact; any privacy or hard-safety violation -> immediate STOP; semantic
-nondeterminism -> PHASE_9B_BLOCKED_SEMANTIC_NONDETERMINISM; after the ONE
-launcher run -> STOP (a retry requires a fresh owner authorization).
+Task BLOCKED. Do not resume and do not re-run the Phase 9B launcher without
+(1) a human-refreshed DEV auth state and (2) a fresh owner authorization.
+The one authorized acceptance execution already ran and stopped fail-closed
+at the pre-browser auth gate (expired external DEV storage-state cookie);
+DEV semantic acceptance is NOT proven; a retry requires a fresh owner
+authorization.
