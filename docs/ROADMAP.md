@@ -1243,6 +1243,58 @@ remains frozen; AI remains non-authoritative.
 
 ---
 
+## Phase 9A.1 — Real-Source Expectation Admission & Semantic Evaluation Observability (complete, local/source-only/synthetic)
+
+**Status:** `PHASE_9A_1_STATUS: COMPLETE` (2026-08-16). The owner-authorized
+readiness task (`phase-9a-1-real-source-expectation-admission`,
+authorization `PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY`) closed the
+three Phase 9B readiness gaps and decided
+`PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION`. See
+`docs/design/PHASE_9_ROADMAP.md` §18 (implementation record), D-55, and the
+Phase 9B future-task spec `docs/design/PHASE_9B_TASK_SPEC.md` (design only,
+NOT_AUTHORIZED).
+
+**What was built (local/source-only/synthetic):**
+
+- **Real-source expectation admission bridge**
+  (`src/oracles/expectations/recipes/**`, `.../extract/**`,
+  `.../admission.ts`): versioned data-only recipes
+  (`nightwatch.real-source-expectation-recipe.v1`) + a fixed bounded
+  syntax-aware PHP extractor vocabulary (PUSH/ASSIGN row-literal keys,
+  builder-list returns, Routing.yaml route bindings — tokenized, never
+  executed, no regex-as-authority) + deterministic source-evidence digests
+  (`ev:sha256:<24>` over the normalized source structure used to derive) +
+  strict recipe validation and a fixed registry gated to approved read-only
+  targets. 4 expectations admitted from the live `mobingilabs/ripple-api @
+  27bb007a` checkout (common-exchange, payer-exchange, account-inventory,
+  billing-group-exchange; 3 DEV-reachable); no Alphaus annotations required;
+  billing-groups-legacy rejected (AMBIGUOUS), gRPC billing-groups deferred.
+- **Atomic resolution + fail-closed currentness** (`.../resolver.ts`):
+  expectation + its exact source snapshot resolve together; freshness
+  matrix A-F (exact SHA current; different SHA stale; repo/path missing
+  unavailable; evidence structure changed stale; unrelated change current);
+  per-expectation snapshot binding with multi-repo swap rejection; the
+  synthetic-rebinding shortcut (synthetic expectation + real SHA) is
+  REJECTED (`REAL_SOURCE_EXPECTATION_PROOF_MISSING` semantics).
+- **Safe semantic evaluation receipts**
+  (`src/oracles/semantic/receipts.ts`, `nightwatch.semantic-evaluation-
+  receipt.v1`): nine-outcome vocabulary; NO_EXPECTATION/STALE/UNAVAILABLE/
+  N-A/INTERNAL_ERROR are never PASS; hook returns receipt + findings;
+  bounded observer ledger `semanticEvaluations()` (cap 512, explicit
+  overflow); no-silent-failure (INTERNAL_ERROR receipts); privacy-contract
+  violations escalate via the existing safety architecture; Phase 5
+  composed stage exposes receipts (additive; protocol oracle untouched).
+- **Proof**: focused Phase 9 + 9A.1 matrix 212 passed; full regression 994
+  passed / 1 skipped / 0 failed; isolated full-history checkout green;
+  live canary 4 derived / 4 current / 0 stale; conforming synthetic bodies
+  -> PASS x4; mutated synthetic bodies -> ANOMALY x4; sentinel leaks 0.
+
+**Phase 9B:** `DESIGNED_NOT_STARTED_NOT_AUTHORIZED`; acceptance contract —
+EXPECTATION RESOLVED + SEMANTIC EVALUATION RECEIPT EXISTS + OUTCOME IS
+EXPLICIT + ZERO PRIVACY/SAFETY FAILURE; zero anomalies is valid healthy
+evidence; zero expectations/receipts, stale source, or internal errors mean
+NOT PROVEN.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

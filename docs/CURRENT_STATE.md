@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Phase 9 local/synthetic implementation close.
+> the Nightwatch Phase 9A.1 real-source expectation admission close.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1466,6 +1466,56 @@ implementation record in `docs/design/PHASE_9_ROADMAP.md` §17):
   AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`.
 - **Phase 9B**: `PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION`
   (not executed; no DEV contact).
+
+## Phase 9A.1 — Real-Source Expectation Admission & Semantic Evaluation Observability (complete, local/source-only/synthetic)
+
+`PHASE_9A_1_STATUS: COMPLETE` (2026-08-16). The owner-authorized readiness
+task (`phase-9a-1-real-source-expectation-admission`,
+`PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY`) closed the three Phase 9B
+readiness gaps and set `PHASE_9B_DEV_READINESS:
+READY_FOR_SEPARATE_AUTHORIZATION` (D-55; records in
+`docs/design/PHASE_9_ROADMAP.md` §18, `docs/ARCHITECTURE.md`, and the
+Phase 9B future-task spec `docs/design/PHASE_9B_TASK_SPEC.md` — design only,
+NOT_AUTHORIZED):
+
+- **Real-source admission bridge** (`src/oracles/expectations/recipes/**`,
+  `extract/**`, `admission.ts`): data-only recipes
+  (`nightwatch.real-source-expectation-recipe.v1`) + fixed bounded
+  syntax-aware PHP extractors (PUSH/ASSIGN row literals, builder-list
+  returns, Routing.yaml bindings; never executed, no regex-as-authority) +
+  source-evidence digests (`ev:sha256:<24>` over the normalized source
+  structure) + strict validation/registry (approved read-only targets
+  only). 4 expectations admitted from live `mobingilabs/ripple-api @
+  27bb007a` (common-exchange, payer-exchange, account-inventory,
+  billing-group-exchange; 3 DEV-reachable); no Alphaus annotations;
+  billing-groups-legacy rejected (AMBIGUOUS); gRPC billing-groups deferred.
+- **Atomic resolver + currentness** (`resolver.ts`): expectation + exact
+  source snapshot together; freshness matrix A-F; multi-repo swap
+  rejection; synthetic-rebinding rejection
+  (`REAL_SOURCE_EXPECTATION_PROOF_MISSING` semantics).
+- **Safe evaluation receipts** (`src/oracles/semantic/receipts.ts`,
+  `nightwatch.semantic-evaluation-receipt.v1`): nine outcomes;
+  NO_EXPECTATION/STALE/UNAVAILABLE/N-A/INTERNAL_ERROR never PASS; hook
+  returns receipt + findings; observer `semanticEvaluations()` ledger
+  (cap 512, explicit overflow); no-silent-failure; privacy violations
+  escalate via the safety architecture; Phase 5 composed stage exposes
+  receipts (additive).
+- **Validation**: typecheck/hardening PASS; focused Phase 9 + 9A.1 matrix
+  212 passed; full regression 994 passed / 1 skipped / 0 failed; isolated
+  full-history checkout at the implementation SHA green (983 / 4
+  environment-conditional skips / 0); exact implementation CI 31932079316
+  success at `cfc2aaa65227b2caf26d2d51533bf32ecc489028` (29/29 steps incl.
+  the new Phase 9A.1 matrix step); live canary 4 derived / 4 current /
+  0 stale; conforming synthetic bodies PASS x4; mutated synthetic bodies
+  ANOMALY x4; sentinel leaks 0; catalog byte-identical `sha256:bd35b934...`;
+  `PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED;
+  `NEXT_PROMOTION_AUTHORITY: NONE`.
+- **Phase 9B**: `PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED`; the
+  future-task spec is design only; acceptance requires
+  EXPECTATION RESOLVED + SEMANTIC EVALUATION RECEIPT EXISTS + OUTCOME IS
+  EXPLICIT + ZERO PRIVACY/SAFETY FAILURE (zero anomalies is valid healthy
+  evidence; zero expectations/receipts, stale source, or internal errors
+  mean NOT PROVEN).
 
 ## Environment (machine facts)
 

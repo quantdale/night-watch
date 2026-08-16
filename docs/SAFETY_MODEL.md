@@ -1100,10 +1100,46 @@ accidental symlink configuration, and symlink-target mutation before
 detection — NOT against a malicious machine owner who can rewrite the
 filesystem and source/verifier concurrently.
 
+
+## 20. Phase 9/9A.1 semantic oracle and real-source admission safety
+
+Phase 9 (D-54) and Phase 9A.1 (D-55) add deterministic semantic evaluation
+to the read-only observation plane. Safety properties:
+
+- Raw customer scalars never cross the projection boundary (opaque tokens/
+  refs in an ephemeral in-memory context only; never persisted). Semantic
+  findings, fingerprints, evaluation receipts, the observer ledger, and
+  dossier evidence carry safe metadata only (sentinel matrix: zero leaks
+  incl. derived forms and absolute private paths).
+- Real-source expectations are admitted ONLY through the mechanical bridge:
+  data-only recipe + fixed bounded syntax-aware extraction + deterministic
+  source-evidence digest + approved read-only target + exact current source
+  snapshot. Alphaus repositories are never annotated, executed, or
+  modified; the extractor never runs application code, child processes, or
+  network access. A provenance label alone grants no semantic authority;
+  expectations are never silently re-bound to a new SHA.
+- Every semantic evaluation yields a safe receipt
+  (`nightwatch.semantic-evaluation-receipt.v1`); NO_EXPECTATION, SOURCE_
+  STALE, SOURCE_UNAVAILABLE, NOT_APPLICABLE and INTERNAL_ERROR are never
+  PASS; zero findings never proves PASS.
+- Semantic-hook failures are never silent: safe INTERNAL_ERROR receipts are
+  recorded; a privacy-contract violation escalates as a hard failure
+  (reason `semantic-privacy-contract-violation`) through the existing
+  monitor/safety architecture and can never become findings:[] / PASS /
+  NOT_APPLICABLE.
+- The Phase 9A.1 cores are statically guarded (hardening): no
+  eval/child-process/fs/network/DB/AI/selfDev/persistence authority; the
+  only sibling-source access is the read-only path-confined
+  `src/core/source/siblingSource.ts`.
+- Contained DEV semantic acceptance (Phase 9B) requires a separate owner
+  authorization; none is standing.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
 Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
 and Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 self-development evaluation,
 controlled source adoption sandbox, and owner-gated canonical promotion;
-changes require a DECISIONS entry and a test update.*
+Phase 9 deterministic semantic oracle depth; and Phase 9A.1 real-source
+expectation admission & semantic evaluation observability; changes require a
+DECISIONS entry and a test update.*

@@ -1941,3 +1941,124 @@ narrow Phase 9B authorization and is NOT executed here. Project-state
 protocol stays `nightwatch.project-state.v1` (no new machine fields);
 roadmap/design records updated; D-53 remains the historical selection
 record, not rewritten.
+
+## D-55 — Phase 9A.1 real-source expectation admission & semantic evaluation observability (local/source-only/synthetic)
+
+**Decision.** The owner-authorized Phase 9A.1 readiness task
+(`phase-9a-1-real-source-expectation-admission`, authorization class
+`PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY`, 2026-08-16, starting SHA
+`91a64e597bc0b28653fe53bf46e291126963baa5`, substantive implementation
+`cfc2aaa65227b2caf26d2d51533bf32ecc489028`, exact implementation CI
+31932079316, 29/29 steps green incl. the dedicated "Phase 9A.1 real-source
+expectation admission matrix" step) closed the Phase 9B readiness gaps
+locally and decided `PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION`.
+The three pre-fix gaps were reproduced first: Gap A (real Alphaus source
+yields zero derived expectations — the annotation-only source adapter
+recorded `REAL_SOURCE_EXPECTATION_CANARY: NOT_ADMITTED` with blockCount 0 /
+expectations 0 against the live checkout); Gap B (NO_EXPECTATION was
+indistinguishable from PASS — both returned the identical `{findings: []}`
+with no receipt); Gap C (a throwing semantic hook inside the network
+observer was silent — the observer continued and no semantic-evaluation
+evidence existed anywhere).
+
+**What was built (local/source-only/synthetic).** A Nightwatch-owned
+real-source expectation admission bridge that requires NO Alphaus
+annotations: versioned data-only recipes
+(`nightwatch.real-source-expectation-recipe.v1`) describing how to
+mechanically derive one expectation from a read-only source snapshot; a
+fixed bounded syntax-aware PHP extractor vocabulary
+(`PHP_FUNCTION_LIST_ROW_KEYS` PUSH/ASSIGN, `PHP_FUNCTION_RETURNS_LIST_OF_
+BUILDER`, `PHP_ROUTE_GET_BINDING`) that tokenizes source text but never
+executes application code and never uses unbounded regex as semantic
+authority; a deterministic source-evidence digest (`ev:sha256:<24>` over the
+NORMALIZED source structure used to derive — never the whole repository);
+strict recipe validation/registry gates (approved read-only targets only,
+one recipe per target, mutation/unknown targets rejected); and an atomic
+expectation + source-snapshot resolver with fail-closed currentness (exact
+SHA + re-extracted evidence digest; stale/unavailable/evidence-changed are
+never PASS and never silently re-bound). Four expectations were mechanically
+derived and admitted from the live `mobingilabs/ripple-api` checkout
+(`27bb007ad0c798800b6bd3b29760c966422966e7` == Phase 5 catalog SHA):
+`ripple.common-exchange.read` (item keys month + exchange_rate), `ripple.
+payer-exchange.read` (id + vendor + name + exchange_rate), `ripple.account-
+inventory.read` (15 literal keys), `ripple.billing-group-exchange.read`
+(4 literal keys) — each asserting the source-established top-level JSON
+array (catching the HTTP-200-error-envelope class) plus per-item literal
+field presence; 3 of the 4 are DEV-reachable through reviewed journey
+ruleIds (payer-exchange, common-exchange, account-inventory).
+`ripple.billing-groups-legacy.read` was REJECTED (AMBIGUOUS: conditional
+keys + blob-typed fields); the gRPC `ripple.billing-groups.read` is
+statically feasible via proto but not observable by the current JSON
+observer (deferred).
+
+**Semantic evaluation observability.** New safe receipts
+(`nightwatch.semantic-evaluation-receipt.v1`) with the nine-outcome
+vocabulary (PASS / ANOMALY / NOT_APPLICABLE / NO_EXPECTATION /
+EXPECTATION_SOURCE_STALE / EXPECTATION_SOURCE_UNAVAILABLE / INVALID_INPUT /
+PROJECTION_LIMIT_EXCEEDED / INTERNAL_ERROR); NO_EXPECTATION, SOURCE_STALE,
+SOURCE_UNAVAILABLE, NOT_APPLICABLE and INTERNAL_ERROR are NEVER PASS; the
+semantic hook now returns receipt + findings; the network observer keeps a
+bounded sanitized evaluation ledger (`semanticEvaluations()`, cap 512,
+overflow explicit via `semanticEvaluationLedgerOverflow()`); semantic-hook
+failures are never silent (safe INTERNAL_ERROR receipts); a privacy-contract
+violation escalates through the existing safety architecture
+(`monitor.recordHardFailure`, reason `semantic-privacy-contract-violation`)
+and can never become findings:[] / PASS / NOT_APPLICABLE. The Phase 5
+composed stage exposes receipt outcomes (additive; the protocol oracle is
+untouched). The forbidden shortcut "synthetic expectation + real SHA
+relabeling" is rejected by the resolver
+(`REAL_SOURCE_EXPECTATION_PROOF_MISSING` semantics: no registered recipe,
+no evidence digest, or digest mismatch -> SOURCE_STALE, never RESOLVED).
+
+**Measured results.** Focused Phase 9 + 9A.1 matrix 212 passed; full
+regression 994 passed / 1 skipped (pre-existing environment-conditional) /
+0 failed; isolated full-history checkout at the implementation SHA green
+(typecheck, hardening, 199 focused matrix tests, campaign synthetic 27,
+agent:check/audit, project:check, catalog integrity, full Playwright, git
+diff --check); owner-local live canary: 4 derived / 4 current / 0 stale /
+3 DEV-reachable; conforming synthetic body per admitted real expectation ->
+PASS receipt x4; mutated synthetic body (2xx error-envelope object) ->
+ANOMALY receipt x4 (proving the bridge changes semantic behavior, not just
+provenance metadata); sentinel leakage 0 across receipts, findings, ledger,
+recorder events, and failure paths. Catalog byte-identical
+`sha256:bd35b934...` (count 1); `PHASE_8_STATUS: COMPLETE`; B
+AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`.
+
+**Rationale.** Phase 9 proved Nightwatch can detect semantic defects safely;
+Phase 9A.1 proves Nightwatch knows WHAT real-product semantic contract it is
+entitled to evaluate, and can prove that authority from current source. The
+boundary is now explicit: SYNTHETIC EXPECTATION is valid for synthetic tests
+only; REAL SOURCE SHA is provenance only; neither alone grants real semantic
+truth. Only real source + deterministic source evidence + mechanically
+verified derivation + approved read-only target + current source snapshot =
+admitted real-product expectation. A later Phase 9B DEV acceptance is valid
+only when EXPECTATION RESOLVED + SEMANTIC EVALUATION RECEIPT EXISTS + OUTCOME
+IS EXPLICIT + ZERO PRIVACY/SAFETY FAILURE — zero findings by itself proves
+nothing.
+
+**Alternatives.** Requiring Alphaus annotations (rejected: Alphaus repos
+remain read-only; `@nightwatch-contract` stays a synthetic-fixture
+mechanism); generic parsers/AI extractors (rejected: fixed vocabulary only,
+no unbounded regex-as-authority, no AI oracle authority); silently
+re-binding expectations to new SHAs (rejected: fresh derivation/re-admission
+required); skipping the receipts and inferring PASS from zero findings
+(rejected: NO_EXPECTATION/STALE/N-A/INTERNAL_ERROR are explicit outcomes).
+
+**Owner authority boundary.** Phase 8 COMPLETE grants no promotion
+authority; `NEXT_PROMOTION_AUTHORITY: NONE` machine-enforced; catalog
+byte-identical; variant B AVAILABLE_NOT_ADOPTED. Phase 9A.1 performed zero
+DEV/NEXT/production contact, zero authenticated journeys, zero real API
+traffic, zero product mutations, zero DB/infra queries, zero AI/model
+calls, zero Alphaus writes, zero publication. `PHASE_9B_STATUS:
+DESIGNED_NOT_STARTED_NOT_AUTHORIZED` — the Phase 9B future-task spec
+(`docs/design/PHASE_9B_TASK_SPEC.md`, authorization class
+`PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`) is design only and NOT
+executed here.
+
+**Consequences.** `PHASE_9A_1_STATUS: COMPLETE`;
+`PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION`; the Phase 9B
+roadmap wording is corrected (real-source-derived AND admitted expectations
+bound to their exact current source snapshots — synthetic expectations are
+test fixtures only); project-state protocol stays `nightwatch.project-state.
+v1` (no new machine fields); AGENTS.md gains the Phase 9A.1 permanent rule;
+D-54 remains the Phase 9 implementation record, not rewritten.

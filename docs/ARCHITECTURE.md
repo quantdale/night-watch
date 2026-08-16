@@ -1034,3 +1034,55 @@ imports and process/network/persistence capability.
 executed). Phase 6 remains `FROZEN_BY_OWNER`; AI remains non-authoritative;
 catalog byte-identical `sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
 `NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`.
+
+## Phase 9A.1 real-source expectation admission & evaluation observability (record)
+
+> Task `phase-9a-1-real-source-expectation-admission` (Phase
+> 9A.1-REAL-SOURCE-EXPECTATION), authorization
+> `PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY`, 2026-08-16, starting SHA
+> `91a64e597bc0b28653fe53bf46e291126963baa5`, substantive implementation
+> `cfc2aaa65227b2caf26d2d51533bf32ecc489028` (exact implementation CI
+> 31932079316, 29/29 steps green incl. the Phase 9A.1 matrix step). Decision
+> D-55; design record `docs/design/PHASE_9_ROADMAP.md` §18; Phase 9B
+> future-task spec `docs/design/PHASE_9B_TASK_SPEC.md` (design only).
+
+### Real-source admission chain (implemented)
+
+```
+REAL READ-ONLY SOURCE (repo @ 40-hex SHA, read-only sibling checkout)
+  -> DATA-ONLY RECIPE            src/oracles/expectations/recipes/**
+       (nightwatch.real-source-expectation-recipe.v1: targetId, repoId,
+        sourcePaths, fixed extractor sequence, expectedContract, blueprint)
+  -> BOUNDED SYNTAX-AWARE        src/oracles/expectations/extract/**
+     EXTRACTION                  (PHP lexer: PUSH/ASSIGN row-literal keys,
+                                  builder-list returns, Routing.yaml route
+                                  bindings; never executes application code)
+  -> SOURCE-EVIDENCE DIGEST      ev:sha256:<24> over the canonical
+                                  normalized extraction (never the whole
+                                  repository)
+  -> ADMISSION                    src/oracles/expectations/admission.ts
+       (contract drift / missing source / missing repo -> fail-closed)
+  -> ADMITTED EXPECTATION        (SemanticExpectation + provenance incl.
+                                  evidenceDigest)
+  -> ATOMIC RESOLUTION           src/oracles/expectations/resolver.ts
+       (expectation + its EXACT current source snapshot; sha + re-extracted
+        evidence must match; stale/unavailable never PASS)
+  -> SAFE EVALUATION RECEIPT     src/oracles/semantic/receipts.ts
+       (nightwatch.semantic-evaluation-receipt.v1, nine outcomes)
+```
+
+The only sibling-source access lives in `src/core/source/siblingSource.ts`
+(read-only, path-confined, no child processes, no network), injected through
+interfaces — the expectation/receipt cores are statically guarded
+(hardening) against fs/process/network/AI/selfDev/Phase6/persistence
+capability. Synthetic expectations can never be relabeled as real: the
+resolver rejects expectations without a registered recipe, without an
+evidence digest, or whose digest does not match the real source
+re-extraction (`REAL_SOURCE_EXPECTATION_PROOF_MISSING` semantics).
+
+`PHASE_9A_1_STATUS: COMPLETE`. `PHASE_9B_DEV_READINESS:
+READY_FOR_SEPARATE_AUTHORIZATION`. `PHASE_9B_STATUS:
+DESIGNED_NOT_STARTED_NOT_AUTHORIZED`. Phase 6 remains `FROZEN_BY_OWNER`; AI
+remains non-authoritative; catalog byte-identical `sha256:bd35b934...`; B
+AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`;
+`PHASE_8_STATUS: COMPLETE`.

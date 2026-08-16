@@ -6,17 +6,28 @@ Task ID: phase-9a-1-real-source-expectation-admission
 Phase: 9A.1-REAL-SOURCE-EXPECTATION
 Title: Nightwatch Phase 9A.1 — Real-Source Expectation Admission & Semantic Evaluation Observability
 Authorization class: PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 91a64e597bc0b28653fe53bf46e291126963baa5
-Last validated implementation SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
+Last validated implementation SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 91a64e597bc0b28653fe53bf46e291126963baa5
-LAST_VALIDATED_IMPLEMENTATION_SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
+LAST_VALIDATED_IMPLEMENTATION_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
+
+## Status
+
+PHASE_9A_1_STATUS: COMPLETE
+PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION
+PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+PHASE_9_STATUS (narrative, unchanged): COMPLETE_LOCAL_SYNTHETIC
+PHASE_8_STATUS (unchanged): COMPLETE
+CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (digest bd35b934...)
+NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
+NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
 ## Objective
 
@@ -33,17 +44,16 @@ synthetic evaluations, full regression + isolated checkout + exact CI,
 Phase 9B readiness verdict, docs/decision closure (D-55), STOP. LOCAL /
 SOURCE-ONLY / SYNTHETIC ONLY; NO DEV.
 
-## Status
-
-PHASE_9A_1_STATUS: IN_PROGRESS
-PHASE_9B_DEV_READINESS: (decided at the end of this task)
-
 ## Current Milestone
 
-M0/M1 boundary: bootstrap complete (CASE D; durable reads; pre-fix gap
-reproduction green); candidate audit in flight (paths A and C agents
-pending; path B complete). Next: finish the audit, record the candidate
-table, design the recipe schema (M2).
+COMPLETE / STOP. (All milestones M0-M13 closed; substantive checkpoint
+cfc2aaa pushed fast-forward with exact green CI 31932079316 (29/29 steps
+incl. the Phase 9A.1 matrix step); isolated full-history checkout green;
+docs closure (D-55, ROADMAP/CURRENT_STATE/ARCHITECTURE/SAFETY_MODEL/
+PHASE_9_ROADMAP §18, AGENTS.md permanent rule, Phase 9B future-task spec)
+committed and pushed with exact final CI green; task closed under
+continuity v2 with terminal fields; readiness verdict
+READY_FOR_SEPARATE_AUTHORIZATION; Phase 9B DESIGNED_NOT_AUTHORIZED.)
 
 ## Completed Milestones
 
@@ -73,21 +83,63 @@ table, design the recipe schema (M2).
   PHP_FUNCTION_LIST_ROW_KEYS + PHP_ROUTE_GET_BINDING (bounded lexical),
   evidence digest ev:sha256 over canonical extraction, atomic resolver,
   receipts v1.
+- M2-M5 — implementation (2026-08-16): recipe schema/validator/registry;
+  PHP lexical extractors (PUSH/ASSIGN/builder-list/route-binding); admission
+  bridge + evidence digest; atomic resolver; receipts v1; hook rewrite;
+  observer evaluation ledger + no-silent-failure + privacy escalation;
+  Phase 5 composed stage receipts; path extensions (root + bounded array
+  index, empty-array N/A); source reader module.
+- M6 — test matrices: extraction 21, recipe validation 21, admission 6,
+  currentness 10, receipts 16, sentinel 5, conforming/mutation 4, observer
+  ledger 2, gap closure 3, canary+consistency 7 (+ semanticIntegration
+  rewritten 12; semanticSentinel/oracleProjection/etc. unregressed);
+  focused Phase 9 + 9A.1 matrix 212 passed.
+- M7-M8 — hardening + CI: Phase 9A.1 core purity + source-reader boundary +
+  integration-seam guards (hardening:check PASS); workflow "Phase 9A.1
+  real-source expectation admission matrix" step (fixture-backed,
+  fail-closed without siblings).
+- M9 — local validation: typecheck PASS; campaign synthetic 27; owner
+  provenance 91; agent:check PASS (2 expected warnings); agent:audit
+  strict_errors 0; project:check (dirty-only pre-commit); catalog integrity
+  (dirty-only pre-commit); git diff --check clean; full Playwright 994
+  passed / 1 skipped / 0 failed.
+- M10 — isolated full-history checkout /tmp/nw-phase9a1-ws/nightwatch at
+  cfc2aaa: typecheck/hardening PASS; focused matrix 199 passed; campaign 27;
+  agent:check/audit PASS; project:check PASS (checkoutClean true); catalog
+  integrity PASS (digest bd35b934..., count 1); full Playwright 983 passed /
+  4 environment-conditional skips / 0 failed; git diff --check clean.
+- M11 — substantive checkpoint cfc2aaa pushed fast-forward
+  (91a64e5..cfc2aaa); HEAD == origin/main == cfc2aaa; exact implementation
+  CI 31932079316: completed, success, exact head SHA, 29/29 steps green
+  incl. "Phase 9A.1 real-source expectation admission matrix",
+  Project-memory truth check, Agent-state check, continuity audit, catalog
+  integrity, Synthetic campaign, whitespace.
+- M12 — docs closure: D-55; ROADMAP Phase 9A.1 section; CURRENT_STATE intro
+  + Phase 9A.1 record (machine block unchanged); ARCHITECTURE Phase 9A.1
+  record; SAFETY_MODEL §20 + normative footer; PHASE_9_ROADMAP §18 +
+  §17 Phase 9B wording correction (real-source-derived AND admitted
+  expectations; synthetic expectations are test fixtures only);
+  docs/design/PHASE_9B_TASK_SPEC.md (future-task spec, design only,
+  NOT_AUTHORIZED); AGENTS.md Phase 9A.1 permanent rule; STATE/ACTIVE_TASK/
+  REPORT terminalized under continuity v2; final docs commit pushed
+  fast-forward; exact final CI green.
+- M13 — STOP: terminal tokens (PHASE_9A_1 COMPLETE; PHASE_9B_DEV_READINESS
+  READY_FOR_SEPARATE_AUTHORIZATION; PHASE_9B_STATUS
+  DESIGNED_NOT_STARTED_NOT_AUTHORIZED; PHASE_8_STATUS COMPLETE; catalog
+  count 1; B AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE); safety
+  vector all zero except Nightwatch Git checkpoints; final 84-item report
+  delivered.
 
 ## Work In Progress
 
-Implementation M2-M5: recipe validator + PHP lexical extractor + admission
-bridge + atomic resolver + receipts + observer ledger + no-silent-failure all
-implemented; M6 test matrices in flight (all green so far); hardening guards
-+ CI step landed. Next: finish remaining test matrices, full local validation
-suite, full Playwright regression.
+NONE.
 
 ## Exact Next Action
 
-Finish the Phase 9A.1 test matrices, then run the full local validation
-suite (typecheck, hardening, campaign synthetic, owner provenance,
-agent:check/audit, project:check, catalog integrity, git diff --check) and
-the full Playwright regression (M8/M9).
+STOP — Phase 9A.1 complete; Phase 9B (contained DEV semantic acceptance)
+requires a separate owner authorization
+(PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY); the Phase 9B future-task
+spec is design only.
 
 ## Files Changed
 
@@ -205,6 +257,18 @@ the full Playwright regression (M8/M9).
   via interfaces into the expectations core; separate narrow hardening guard
   for the reader (read-only fs only, path-confined, no child processes, no
   network).
+- D7 (2026-08-16, close): PHASE_9B_DEV_READINESS =
+  READY_FOR_SEPARATE_AUTHORIZATION — all 14 gates of the readiness contract
+  verified (>=1 real-source expectation mechanically derived/admitted: 4;
+  no Alphaus annotation/write required; stronger than protocol parse/status;
+  maps to existing approved read-only DEV observations: 3 via reviewed
+  journey ruleIds; exact source snapshot bound; stale fail-closed;
+  conforming synthetic body -> PASS x4; mutated synthetic body -> ANOMALY
+  x4; NO_EXPECTATION distinguishable from PASS; internal hook failure
+  distinguishable from PASS; no silent semantic errors; receipts
+  privacy-safe; sentinel leaks 0; full regression + exact CI green).
+  PHASE_9B_STATUS = DESIGNED_NOT_STARTED_NOT_AUTHORIZED; Phase 9B future-task
+  spec produced (design only).
 
 ## Discoveries
 
@@ -251,19 +315,40 @@ publication 0, runtime Git writes 0.
 
 ## Resume Recipe
 
-Read .agent/ACTIVE_TASK.md, then this STATE.md, then PLAN.md; continue the
-Exact Next Action (finish test matrices -> full validation -> full
-regression).
+Task complete. Do not resume.
 
 ## Completion Snapshot
 
-- Status: IN_PROGRESS (task not closed). PHASE_9A_1_STATUS: IN_PROGRESS.
-- Current milestone: M6 test matrices (all green so far) with M8/M9
-  validation pending; the completion snapshot is filled truthfully at close.
-- Substantive implementation: not yet committed (working tree holds the
-  Phase 9A.1 implementation; LAST_VALIDATED_IMPLEMENTATION_SHA still names
-  the Phase 9 baseline e74185bf7b83783c2b7421e675ea2d3bb9053482 until the
-  Phase 9A.1 substantive checkpoint is pushed).
-- Project truth: PHASE_8_STATUS COMPLETE; catalog count 1; digest
-  sha256:bd35b934...; B AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE
-  (unchanged).
+- Status: COMPLETE; PHASE_9A_1_STATUS: COMPLETE (ACTIVE_TASK, STATE, and
+  REPORT agree); readiness verdict READY_FOR_SEPARATE_AUTHORIZATION;
+  Phase 9B DESIGNED_NOT_AUTHORIZED.
+- Current milestone: COMPLETE / STOP; Work In Progress: NONE; Exact Next
+  Action: STOP — Phase 9B requires separate owner authorization.
+- Substantive implementation: cfc2aaa65227b2caf26d2d51533bf32ecc489028
+  (LAST_VALIDATED_IMPLEMENTATION_SHA = LAST_SUBSTANTIVE_CHECKPOINT_SHA);
+  exact implementation CI 31932079316 success at the exact head SHA, 29/29
+  steps green incl. the "Phase 9A.1 real-source expectation admission
+  matrix" step; live canary 4 derived / 4 current / 0 stale / 3
+  DEV-reachable; conforming synthetic bodies PASS x4; mutated synthetic
+  bodies ANOMALY x4; full regression 994 passed / 1 skipped / 0 failed;
+  isolated full-history checkout 983 / 4 environment-conditional skips / 0.
+- Project truth: PHASE_8_STATUS COMPLETE; catalog count 1; raw digest
+  sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+  (byte-identical through the task); NEXT_PORTFOLIO_MEMBER
+  AVAILABLE_NOT_ADOPTED (variant B); NEXT_PROMOTION_AUTHORITY NONE;
+  project-state protocol nightwatch.project-state.v1.
+- Phase 9A.1: PHASE_9A_1_STATUS COMPLETE; authorization class
+  PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY (executed once, local/
+  source-only/synthetic); REAL_SOURCE_EXPECTATION_COUNT 4; D-55;
+  implementation record in docs/design/PHASE_9_ROADMAP.md §18;
+  ROADMAP/CURRENT_STATE/ARCHITECTURE/SAFETY_MODEL Phase 9A.1 sections;
+  AGENTS.md permanent rule; Phase 9B future-task spec
+  docs/design/PHASE_9B_TASK_SPEC.md (design only, NOT_AUTHORIZED).
+- Safety vector: catalog writes 0, promotion intents 0, approvals 0,
+  APPLY 0, B adoption 0, DEV/NEXT/production 0, product mutations 0,
+  DB/infra 0, AI/model 0, Alphaus writes 0, publication 0, runtime Git
+  writes 0; Nightwatch Git commits expected only (cfc2aaa substantive +
+  final docs closure).
+- Continuity: agent:check and agent:audit zero strict errors at the
+  implementation SHA; final docs closure commit pushed; exact final CI
+  green (FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD).

@@ -512,7 +512,66 @@ PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION
 Evidence gap a contained DEV run would close: real response shape variety,
 real source-freshness drift, and end-to-end browser-observed semantic
 findings on the real product surface — none of which the local/synthetic
-stage can observe. Proposed narrow Phase 9B task: one bounded contained DEV
-run on approved read-only journeys with the semantic hook enabled, synthetic
-expectations bound to the current real source snapshots, asserting the same
-privacy/sentinel contract. Not executed here; no DEV contact occurred.
+stage can observe. The Phase 9B wording is CORRECTED by Phase 9A.1 (D-55):
+a future Phase 9B run must use REAL-SOURCE-DERIVED AND ADMITTED expectations
+bound to their exact current source snapshots (the Phase 9A.1 admission
+bridge); synthetic expectations remain test fixtures only. Not executed
+here; no DEV contact occurred.
+
+## 18. Phase 9A.1 implementation record (2026-08-16, owner-authorized)
+
+```
+PHASE_9A_1_AUTHORITY: GRANTED (once) — PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY
+PHASE_9A_1_STATUS: COMPLETE
+PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION
+PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+```
+
+Executed by task `phase-9a-1-real-source-expectation-admission` (starting
+SHA `91a64e597bc0b28653fe53bf46e291126963baa5`; substantive implementation
+`cfc2aaa65227b2caf26d2d51533bf32ecc489028`; exact implementation CI
+31932079316, 29/29 steps green incl. the new "Phase 9A.1 real-source
+expectation admission matrix" step). Decision D-55; architecture record in
+`docs/ARCHITECTURE.md`; Phase 9B future-task spec in
+`docs/design/PHASE_9B_TASK_SPEC.md` (design only, NOT_AUTHORIZED).
+
+Closed the three Phase 9B readiness gaps (reproduced pre-fix, then closed):
+
+- **Gap A — real expectation count zero.** The annotation-only source
+  adapter yielded zero derived expectations from real Alphaus source. The
+  new Nightwatch-owned admission bridge derives real expectations
+  mechanically: data-only recipe + fixed bounded syntax-aware PHP extractor
+  + deterministic source-evidence digest + approved read-only target +
+  exact current source snapshot. 4 expectations admitted from the live
+  `mobingilabs/ripple-api @ 27bb007ad0c798800b6bd3b29760c966422966e7`
+  checkout (3 DEV-reachable); `ripple.billing-groups-legacy.read` rejected
+  (AMBIGUOUS); gRPC billing-groups deferred (not observable by the JSON
+  observer). No Alphaus annotations required or added.
+- **Gap B — NO_EXPECTATION indistinguishable from PASS.** Safe evaluation
+  receipts (`nightwatch.semantic-evaluation-receipt.v1`) with the
+  nine-outcome vocabulary; NO_EXPECTATION/STALE/UNAVAILABLE/N-A/
+  INTERNAL_ERROR are never PASS; a later DEV run must never infer PASS from
+  findings.length === 0.
+- **Gap C — silent semantic hook failure.** The observer records safe
+  INTERNAL_ERROR receipts; bounded sanitized `semanticEvaluations()` ledger
+  (cap 512, explicit overflow); privacy-contract violations escalate via
+  the existing safety architecture, never looking benign.
+
+Also: atomic expectation + source-snapshot resolution (per-expectation
+binding, multi-repo swap test, freshness matrix A-F, synthetic-rebinding
+rejection); Phase 5 composed stage receipt exposure (additive); hardening
+guards (core purity, read-only sibling-source boundary, integration seams);
+dedicated CI matrix step (fixture-backed, fail-closed without siblings).
+Validation: focused matrix 212 passed; full regression 994 passed / 1
+skipped / 0 failed; isolated full-history checkout green; live canary 4
+derived / 4 current / 0 stale; conforming synthetic bodies PASS x4; mutated
+synthetic bodies ANOMALY x4; sentinel leaks 0. Catalog byte-identical
+`sha256:bd35b934...`; `PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`.
+
+Phase 9B (contained DEV semantic acceptance) is DESIGNED, NOT STARTED, NOT
+AUTHORIZED. Its acceptance contract: EXPECTATION RESOLVED + SEMANTIC
+EVALUATION RECEIPT EXISTS + OUTCOME IS EXPLICIT + ZERO PRIVACY/SAFETY
+FAILURE; zero anomalies is valid healthy evidence; zero resolved
+expectations / zero receipts / stale source / internal errors mean NOT
+PROVEN.
