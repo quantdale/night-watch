@@ -453,3 +453,66 @@ product execution.
 Phase 9 builds the missing data-relevant layers (RELATIONAL, DOMAIN,
 value-level TEMPORAL/CROSS-SURFACE-ready projections) without any Phase 6
 surface.
+
+## 17. Implementation record (2026-08-16, owner-authorized)
+
+```
+PHASE_9_IMPLEMENTATION_AUTHORITY: GRANTED (once) — PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY
+PHASE_9_STATUS: COMPLETE_LOCAL_SYNTHETIC
+PHASE_9_ORACLE_DEPTH_STATUS: COMPLETE
+```
+
+Executed by task `phase-9-deterministic-semantic-oracle-depth` (starting SHA
+`09a940340aaa537706d07140995de9bd26d0fdfd`; substantive implementation
+`e74185bf7b83783c2b7421e675ea2d3bb9053482`; exact implementation CI
+31929017844, 29/29 steps green incl. the "Phase 9 deterministic semantic
+oracle depth matrix" step). Decision D-54; architecture record in
+`docs/ARCHITECTURE.md` (Phase 9 implementation record).
+
+Delivered (all local/synthetic; measured on the fixed corpus):
+
+- Semantic projection layer (`nightwatch.semantic-projection.v1`) with
+  opaque identity tokens, numeric relation refs, canonical byte-identical
+  serialization + digests, hard bounds, hostile-input fail-closed; raw
+  customer scalars never cross the projection boundary.
+- Source-backed declarative expectations (`nightwatch.semantic-expectation.v1`):
+  strict validation, provenance (repo @ SHA), fail-closed staleness; one
+  static source adapter for the synthetic fixture + real read-only
+  checkouts. `REAL_SOURCE_EXPECTATION_CANARY: NOT_ADMITTED` (annotation
+  pattern absent in real source; live checkout SHA `27bb007a...` matches
+  the Phase 5 catalog).
+- Deterministic semantic expectation + cross-step invariant oracles over
+  the fixed vocabulary; safe findings (`nightwatch.semantic-oracle-finding.v1`)
+  with categorical fingerprints.
+- Seeded corpus: 5/5 required classes detected; 0 false positives on 10
+  benign cases (precision 1, recall 1); baseline protocol-only detection
+  0/5 (proven at M1) vs Phase 9 semantic 5/5.
+- Sentinel matrix: zero leaks across projections, findings, fingerprints,
+  recorder events, campaign checkpoints, dossiers, briefs, artifacts, and
+  failure-path errors (incl. derived forms and absolute private paths).
+- Pipeline integration: Phase 5 composed protocol/semantic stage; network-
+  observer semantic hook; findings through the EXISTING campaign
+  orchestrator -> admission -> triage -> dossier (5 sanitized semantic
+  dossiers from the seeded campaign pair; paired baseline admits none);
+  dossier additive `semanticEvidence` (backward compatible).
+- Hardening purity + integration-seam guards; dedicated CI matrix step.
+- Full regression 896 passed / 1 skipped / 0 failed (local), 893 / 4 / 0
+  (isolated full-history checkout); catalog byte-identical
+  `sha256:bd35b934...`; `PHASE_8_STATUS: COMPLETE`; B
+  AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`.
+
+State machine: `P9_SPEC_DESIGNED -> P9_IMPLEMENTATION_IN_PROGRESS ->
+P9_VALIDATED_SYNTHETIC` (reached). Optional bounded contained-DEV
+acceptance remains a SEPARATE later authorization (Phase 9B):
+
+```
+PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION
+```
+
+Evidence gap a contained DEV run would close: real response shape variety,
+real source-freshness drift, and end-to-end browser-observed semantic
+findings on the real product surface — none of which the local/synthetic
+stage can observe. Proposed narrow Phase 9B task: one bounded contained DEV
+run on approved read-only journeys with the semantic hook enabled, synthetic
+expectations bound to the current real source snapshots, asserting the same
+privacy/sentinel contract. Not executed here; no DEV contact occurred.

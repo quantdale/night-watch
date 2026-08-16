@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-15** at
-> the Nightwatch Phase 8 final closure & Phase 9 roadmap selection.
+> Durable memory for the next agent/session. Last updated: **2026-08-16** at
+> the Nightwatch Phase 9 local/synthetic implementation close.
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -63,9 +63,19 @@
 > and `docs/ARCHITECTURE.md` (Phase 8 next-architecture design review
 > section); decisions D-52 + D-53). The selected next investment is
 > **Phase 9 — Deterministic Semantic Oracle Depth** (`PHASE_9_DIRECTION:
-> DETERMINISTIC_ORACLE_DEPTH`, design in `docs/design/PHASE_9_ROADMAP.md`),
-> DESIGNED / NOT_STARTED / NOT_AUTHORIZED
-> (`PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`).
+> DETERMINISTIC_ORACLE_DEPTH`, design in `docs/design/PHASE_9_ROADMAP.md`).
+> Phase 9 is now `COMPLETE_LOCAL_SYNTHETIC` (2026-08-16): the owner-
+> authorized implementation task
+> (`phase-9-deterministic-semantic-oracle-depth`,
+> `PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`) implemented sanitized in-memory
+> semantic projections, source-backed declarative expectations, deterministic
+> semantic expectation + cross-step invariant oracles, five seeded semantic
+> bug classes with zero benign false positives, adversarial sentinel-leakage
+> proof, and integration of semantic findings through the existing
+> campaign/triage/dossier pipeline (additive sanitized dossier evidence),
+> closed under continuity v2 (D-54; record below; `PHASE_9_DEV_ACCEPTANCE:
+> RECOMMENDED_SEPARATE_AUTHORIZATION` for any contained DEV run — Phase 9B,
+> not executed).
 
 
 ---
@@ -1413,6 +1423,49 @@ The first documentation checkpoint passed the private read-only workflow
 documentation-only descendant is intentionally not self-referenced in this
 file; its exact local/remote equality and workflow result are recorded in the
 I.1 task handoff and completion response after verification.
+
+## Phase 9 — Deterministic Semantic Oracle Depth (complete, local/synthetic)
+
+`PHASE_9_ORACLE_DEPTH_STATUS: COMPLETE` (2026-08-16). The owner-authorized
+implementation task (`phase-9-deterministic-semantic-oracle-depth`,
+`PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`) delivered the full local/
+synthetic stage and closed under `nightwatch.agent-continuity.v2` (D-54;
+implementation record in `docs/design/PHASE_9_ROADMAP.md` §17):
+
+- **Projection layer** (`src/oracles/projections/**`,
+  `nightwatch.semantic-projection.v1`): ephemeral raw observations ->
+  safe DTOs (paths, types, presence, shape, bounded counts, opaque
+  encounter identity tokens, numeric relation refs); canonical byte-
+  identical serialization + digests; hard caps; hostile-input fail-closed;
+  `ProjectionContext` in-memory only, never serialized; fixed-point numeric
+  relations emit facts only (no raw amounts).
+- **Expectations** (`src/oracles/expectations/**`,
+  `nightwatch.semantic-expectation.v1`): declarative contracts, strict
+  validation, provenance bound to repo @ SHA with fail-closed staleness;
+  one static source adapter for the synthetic fixture corpus and real
+  read-only checkouts; real-source canary NOT_ADMITTED (no invented real
+  product semantics).
+- **Oracles** (`src/oracles/invariants/**`, `src/oracles/semantic/**`):
+  fixed invariant vocabulary; safe finding DTO + categorical fingerprints;
+  fail-closed classification order.
+- **Corpus + FP control** (`corpus/phase9/**`): 5/5 required seeded
+  semantic classes detected; 0 false positives on 10 benign cases;
+  baseline protocol detection 0/5 (proven at M1); sentinel matrix zero
+  leaks incl. failure paths and derived shapes.
+- **Pipeline integration**: Phase 5 composed protocol/semantic stage;
+  network-observer semantic hook; findings through the existing campaign
+  orchestrator -> admission -> triage -> dossier (5 sanitized semantic
+  dossiers from the seeded campaign pair; baseline admits none); dossier
+  additive `semanticEvidence` (backward compatible).
+- **Validation**: typecheck/hardening PASS; Phase 9 focused matrix 101
+  passed; full regression 896 passed / 1 skipped / 0 failed; isolated
+  full-history checkout 893 / 4 / 0; exact implementation CI
+  31929017844 success at `e74185bf7b83783c2b7421e675ea2d3bb9053482`
+  (29/29 steps incl. the Phase 9 matrix step); catalog byte-identical
+  `sha256:bd35b934...`; `PHASE_8_STATUS: COMPLETE`; B
+  AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`.
+- **Phase 9B**: `PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION`
+  (not executed; no DEV contact).
 
 ## Environment (machine facts)
 

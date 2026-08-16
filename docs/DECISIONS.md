@@ -1864,3 +1864,80 @@ checkpoint). Project-state protocol stays `nightwatch.project-state.v1`;
 catalog count 1 and digest `sha256:bd35b934...` unchanged; variant B
 AVAILABLE_NOT_ADOPTED; promotion authority NONE. No Phase-8C status was
 invented. D-52 remains the historical design-review record, not rewritten.
+
+## D-54 — Phase 9 deterministic semantic oracle depth implemented (local/synthetic)
+
+**Decision.** The owner-authorized Phase 9 implementation task
+(`phase-9-deterministic-semantic-oracle-depth`, authorization class
+`PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`, 2026-08-16) implemented the
+selected direction `PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH` —
+**Phase 9 — Deterministic Semantic Oracle Depth** — for the LOCAL/SYNTHETIC
+stage and closed under `nightwatch.agent-continuity.v2`. The architecture:
+ephemeral raw observation -> bounded in-memory sanitized semantic projection
+(shape/count/type/opaque identity tokens/numeric relation refs; raw customer
+scalars never cross the boundary) -> declarative source-backed expectation +
+cross-step invariant oracles over a fixed vocabulary -> safe semantic
+findings (`nightwatch.semantic-oracle-finding.v1`) -> the EXISTING
+campaign/admission/triage/dossier pipeline, with additive sanitized
+`semanticEvidence` in dossiers. Measured results on the fixed synthetic
+corpus: 5/5 required seeded semantic bug classes detected (HTTP-200 error
+envelope, list/detail identity mismatch, stale state after transition,
+aggregate total relation mismatch, cardinality relation mismatch); 0 false
+positives on 10 benign cases; 0 sentinel leaks across projections, findings,
+fingerprints, recorder events, campaign checkpoints, dossiers, briefs,
+artifacts, and failure-path errors (including derived forms and absolute
+private paths); projection serialization byte-identical across repeated
+runs; baseline protocol-only detection 0/5 vs Phase 9 semantic 5/5; five
+seeded classes admitted through the real synthetic campaign orchestrator
+into 5 sanitized semantic dossiers; paired baseline campaign admits none.
+Full regression green (896 passed / 1 skipped / 0 failed locally; 893 / 4 /
+0 in the isolated full-history checkout); exact implementation CI
+31929017844 success at exact head `e74185bf7b83783c2b7421e675ea2d3bb9053482`
+including the dedicated "Phase 9 deterministic semantic oracle depth matrix"
+step; catalog byte-identical `sha256:bd35b934...` (count 1);
+`PHASE_8_STATUS: COMPLETE`; `NEXT_PROMOTION_AUTHORITY: NONE`.
+
+**Rationale.** The semantic projection privacy boundary is load-bearing:
+string values project as type + presence + empty/nonempty class + opaque
+encounter token; numbers as opaque refs into an ephemeral context that is
+never serialized; numeric relations emit facts only (MATCH/MISMATCH/
+NOT_APPLICABLE/INVALID_INPUT + bounded operandCount), never raw amounts.
+Expectations are declarative data contracts validated strictly, bound to
+source provenance (repo @ SHA) with fail-closed staleness; the source
+adapter is one static-text interface shared by the synthetic fixture and
+real read-only checkouts (never executes application code). The real-source
+canary proved provenance binding against the live `mobingilabs/ripple-api`
+checkout (`27bb007a...` == Phase 5 catalog SHA) with
+`REAL_SOURCE_EXPECTATION_CANARY: NOT_ADMITTED` — real domain expectations
+are not invented. Integration is additive: the Phase 5 protocol oracle and
+its DTO are untouched (composed protocol/semantic evaluation, protocol
+failure short-circuits); the network observer gains a narrowly typed hook
+(transient raw text -> safe findings only); campaign budget/admission/
+promotion authority and triage authority are unchanged; dossier schema is
+extended additively (protocol-only dossiers unchanged).
+
+**Alternatives.** P9-A (budget intelligence) VIABLE_LATER; P9-C (triage
+confidence / minimization replay) and P9-D (value-level differential)
+NEXT_AFTER_PHASE_9; P9-E (source-change selection) NEXT_AFTER_PHASE_9;
+P9-F (multi-product) REJECT (premature); P9-G (second canonical adoption)
+DEFER per D-52/D-53.
+
+**Owner authority boundary.** Unchanged and load-bearing: Phase 8 COMPLETE
+grants no promotion authority; `NEXT_PROMOTION_AUTHORITY: NONE`
+machine-enforced; catalog byte-identical; variant B AVAILABLE_NOT_ADOPTED.
+Phase 9 core remains deterministic; AI stays downstream-only and
+non-authoritative (hardening-guarded). Phase 6 remains
+`FROZEN_BY_OWNER` / `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE` — no Phase
+6 surface was used or revived. No DEV/NEXT/production execution occurred;
+no product mutation; no Alphaus writes; no publication.
+
+**Consequences.** Phase 9 = `COMPLETE_LOCAL_SYNTHETIC`
+(`PHASE_9_ORACLE_DEPTH_STATUS: COMPLETE`). `PHASE_9_DEV_ACCEPTANCE:
+RECOMMENDED_SEPARATE_AUTHORIZATION` — a contained DEV acceptance run would
+provide material evidence the local/synthetic stage cannot: real response
+shape variety, real source-freshness drift, and end-to-end browser-observed
+semantic findings on the real product surface; it requires a separate
+narrow Phase 9B authorization and is NOT executed here. Project-state
+protocol stays `nightwatch.project-state.v1` (no new machine fields);
+roadmap/design records updated; D-53 remains the historical selection
+record, not rewritten.

@@ -1162,6 +1162,87 @@ No Phase-8C status was invented; no catalog byte changed.
 
 ---
 
+## Phase 9 — Deterministic Semantic Oracle Depth (local/synthetic implementation complete)
+
+**Status:** `COMPLETE_LOCAL_SYNTHETIC` (2026-08-16). The owner-authorized
+implementation task (`phase-9-deterministic-semantic-oracle-depth`,
+authorization `PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`) implemented the
+deterministic semantic oracle depth architecture and closed under
+continuity v2. See `docs/design/PHASE_9_ROADMAP.md` §17 (implementation
+record) and D-54.
+
+**What was built (local/synthetic only):**
+
+- **Semantic projection layer** (`src/oracles/projections/**`,
+  `nightwatch.semantic-projection.v1`): ephemeral raw observations project
+  to safe DTOs — field paths, types, presence, nullability, shape, bounded
+  counts, opaque encounter identity tokens (`entity#0001`) and numeric refs
+  (`numeric#0001`) via an in-memory `ProjectionContext` (never serialized),
+  canonical byte-identical serialization + `proj:sha256:` digests, hard
+  bounds (depth/fields/array items/nodes/identities/numerics/bytes), and
+  hostile-input fail-closed (cycles, throwing getters, prototype keys,
+  non-JSON scalars, NaN/Infinity). Fixed-point numeric relations emit
+  relation facts only — raw amounts never persist.
+- **Source-backed expectations** (`src/oracles/expectations/**`,
+  `nightwatch.semantic-expectation.v1`): declarative contracts only (no
+  callbacks/expressions), strict validation (unknown fields, duplicate IDs,
+  path traversal, prototype segments, unbounded relations, malformed
+  provenance), provenance bound to repo @ SHA with fail-closed staleness
+  (`EXPECTATION_SOURCE_STALE` / `_UNAVAILABLE`), and ONE static source
+  adapter shared by the synthetic fixture corpus
+  (`corpus/phase9/source-fixture`) and real read-only Alphaus checkouts
+  (never executes application code). Real-source canary: provenance binding
+  proven against the live `mobingilabs/ripple-api` checkout
+  (`27bb007ad0c798800b6bd3b29760c966422966e7` == Phase 5 catalog SHA);
+  `REAL_SOURCE_EXPECTATION_CANARY: NOT_ADMITTED` (the annotation pattern is
+  absent in real source — no invented real product semantics).
+- **Deterministic oracles** (`src/oracles/invariants/**`,
+  `src/oracles/semantic/**`): fixed invariant vocabulary (FIELD_PRESENT/
+  ABSENT, TYPE_MATCH, CARDINALITY_MATCH, ENVELOPE_CLASS, IDENTITY_EQUAL,
+  IDENTITY_PRESENT_IN_COLLECTION, NUMERIC_SUM_RELATION, COUNT_RELATION,
+  SHAPE_CHANGED); safe finding DTO (`nightwatch.semantic-oracle-finding.v1`)
+  with categorical fingerprints from safe metadata only; fail-closed
+  classification order (source unavailable/stale, projection limit,
+  invalid input, N/A, PASS, ANOMALY).
+- **Seeded corpus + false-positive control** (`corpus/phase9/**`): five
+  required semantic bug classes (HTTP-200 error envelope, list/detail
+  identity mismatch, stale state after transition, aggregate total
+  relation mismatch, cardinality relation mismatch) + benign counterparts.
+  Fixed fixture evaluation report: 5/5 seeded detected, 0 false positives
+  on 10 benign cases, precision 1, recall 1. Baseline comparison:
+  protocol-only detection 0/5 (proven at M1); Phase 9 semantic 5/5.
+- **Privacy proof**: sentinel matrix (15 tests) plants all five sentinel
+  classes in every raw-value location and sweeps projections, findings,
+  fingerprints, recorder events, campaign checkpoints, dossiers, briefs,
+  artifacts, and failure-path error messages — zero leaks, including
+  derived forms (lower/upper/URL-encoded/escaped/prefix/last-four/raw
+  amount) and absolute private paths.
+- **Pipeline integration**: Phase 5 composed protocol/semantic stage
+  (protocol failure short-circuits; `ORACLE_PASS` is not semantic PASS);
+  network-observer semantic hook (transient raw text -> safe findings
+  only); semantic findings flow through the EXISTING campaign orchestrator
+  -> admission -> reproduction -> minimization -> triage -> dossier chain
+  (no test-only bypass); dossiers carry additive sanitized
+  `semanticEvidence` (`nightwatch.semantic-dossier-evidence.v1`,
+  backward compatible; protocol-only dossiers unchanged). Campaign proof:
+  five seeded classes admitted and reaching dossiers across two synthetic
+  runs (5 semantic dossiers); paired baseline (semantic channel absent)
+  admits none.
+- **Hardening + CI**: `bin/hardening-check.mjs` Phase 9 semantic-core
+  purity (no AI/selfDev/Phase6/infra/transport/persistence/campaign
+  imports; no process/network/persistence capability) + integration-seam
+  guards; dedicated CI matrix step "Phase 9 deterministic semantic oracle
+  depth matrix" (exact implementation CI run 31929017844, 29/29 steps
+  green).
+
+**Phase 9B (DEV acceptance):** not executed; disposition recorded in
+`docs/design/PHASE_9_ROADMAP.md` §17 and D-54. Phase 8 remains COMPLETE;
+variant B AVAILABLE_NOT_ADOPTED; promotion authority NONE; catalog count 1
+(digest `sha256:bd35b934...`) — byte-identical through the task. Phase 6
+remains frozen; AI remains non-authoritative.
+
+---
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

@@ -91,6 +91,19 @@ DEV campaign and requires the external owner-only storage state. The real
 launcher is serial, fail-closed, and never runs in production, publishes
 findings, or performs infrastructure/data operations.
 
+## Phase 9 semantic oracles (permanent rule)
+
+Phase 9 is `COMPLETE_LOCAL_SYNTHETIC` (D-54). Semantic oracles
+(`src/oracles/projections/**`, `src/oracles/expectations/**`,
+`src/oracles/invariants/**`, `src/oracles/semantic/**`) are ADDITIVE to the
+protocol oracles and deterministic only: raw customer values never cross the
+projection boundary, never persist, and never enter findings, fingerprints,
+dossiers, or error messages; expectations are declarative, provenance-bound
+(repo @ SHA), and fail closed when source is stale or unavailable; the
+semantic core has no AI/selfDev/Phase6/infra/network/persistence authority
+(hardening-guarded). Contained DEV acceptance of the semantic layer requires
+a separate owner authorization (provisionally Phase 9B); none is standing.
+
 ## Task and checkpoint discipline
 
 Any multi-milestone, long-running, architecture-changing, safety-sensitive,

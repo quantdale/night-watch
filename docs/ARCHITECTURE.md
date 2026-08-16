@@ -985,3 +985,52 @@ recommendation above (D-53):
   `PHASE_9_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`. The architecture of the
   retained machinery does not imply B adoption and grants no Phase 9
   authority.
+
+## Phase 9 implementation (record)
+
+> Task `phase-9-deterministic-semantic-oracle-depth` (Phase 9-ORACLE-DEPTH),
+> authorization `PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`, 2026-08-16,
+> starting SHA `09a940340aaa537706d07140995de9bd26d0fdfd`, substantive
+> implementation `e74185bf7b83783c2b7421e675ea2d3bb9053482` (exact
+> implementation CI 31929017844, 29/29 steps green incl. the Phase 9
+> matrix step). Decision D-54; design record `docs/design/PHASE_9_ROADMAP.md`
+> §17.
+
+### Semantic oracle depth architecture (implemented)
+
+```
+EPHEMERAL RAW OBSERVATION (bounded, in-memory only)
+  -> SANITIZED SEMANTIC PROJECTION        src/oracles/projections/**
+       (nightwatch.semantic-projection.v1: paths, types, presence, shape,
+        bounded counts, opaque identity tokens, numeric relation refs)
+  -> SOURCE EXPECTATION + CROSS-STEP      src/oracles/expectations/**
+     INVARIANT ORACLES                     src/oracles/invariants/**
+       (nightwatch.semantic-expectation.v1, fixed invariant vocabulary)
+  -> SEMANTIC FINDING                     src/oracles/semantic/**
+       (nightwatch.semantic-oracle-finding.v1, categorical fingerprints)
+  -> EXISTING ANOMALY/ADMISSION/TRIAGE    src/core/campaign/**,
+     -> DOSSIER (additive sanitized        src/core/triage/**
+        semanticEvidence,
+        nightwatch.semantic-dossier-evidence.v1)
+```
+
+Raw customer scalars never cross the projection boundary. `ProjectionContext`
+maps raw identities/numbers to opaque encounter tokens/refs in memory only
+(never serialized). Numeric relations emit facts only. Expectations are
+declarative contracts validated strictly, provenance-bound (repo @ SHA) with
+fail-closed staleness, derived by ONE static source adapter shared by the
+synthetic fixture and real read-only checkouts (never executes application
+code). The network observer gains a narrowly typed semantic hook (transient
+raw text -> safe findings only); the Phase 5 protocol oracle and its DTO are
+unchanged, composed with a semantic channel (protocol failure
+short-circuits). Campaign budget/admission/promotion authority and triage
+authority are unchanged; the dossier schema is extended additively
+(protocol-only dossiers unchanged). The semantic core is statically guarded
+(hardening) against AI/selfDev/Phase6/infra/transport/persistence/campaign
+imports and process/network/persistence capability.
+
+`PHASE_9_ORACLE_DEPTH_STATUS: COMPLETE` (local/synthetic).
+`PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION` (Phase 9B, not
+executed). Phase 6 remains `FROZEN_BY_OWNER`; AI remains non-authoritative;
+catalog byte-identical `sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`.

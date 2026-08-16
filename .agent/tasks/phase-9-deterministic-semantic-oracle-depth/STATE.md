@@ -4,23 +4,31 @@
 
 Task ID: phase-9-deterministic-semantic-oracle-depth
 Phase: 9-ORACLE-DEPTH
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 09a940340aaa537706d07140995de9bd26d0fdfd
-Last validated implementation SHA: 09a940340aaa537706d07140995de9bd26d0fdfd
-Last substantive checkpoint SHA: 09a940340aaa537706d07140995de9bd26d0fdfd
+Last validated implementation SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
+Last substantive checkpoint SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-16 — M1..M15 complete: oracle-ceiling proof (6/6);
-projection layer (22/22); expectation layer + real-source canary (17/17);
-oracle/invariant matrix (25/25); fixed fixture report 5/5 detected FP=0
-(2/2); sentinel matrix incl. failure paths (15/15); Phase 5 composed stage +
-observer hook (10/10); campaign integration incl. paired baseline + sentinel
-sweep (4/4); hardening guards + CI matrix step; agent:check/audit PASS with
-expected IN_PROGRESS warnings; M16 in progress (full Playwright running).
+Last checkpoint: 2026-08-16 — task complete: Phase 9 local/synthetic
+implementation delivered (projection layer, source-backed expectations,
+semantic expectation + cross-step invariant oracles, five seeded semantic
+bug classes with zero benign false positives, adversarial sentinel proof,
+campaign/triage/dossier integration with sanitized dossier evidence,
+hardening + CI matrix), substantive checkpoint e74185b pushed fast-forward
+with exact green CI 31929017844 (29/29 steps incl. the Phase 9 matrix
+step), fresh clean-checkout acceptance green (5/5 classes detected, 5
+semantic dossiers, FP 0), docs closure (D-54, ROADMAP/CURRENT_STATE/
+ARCHITECTURE/PHASE_9_ROADMAP §17, AGENTS.md permanent rule) committed and
+pushed with exact final CI green, task closed under continuity v2 with
+terminal fields; PHASE_9_ORACLE_DEPTH_STATUS COMPLETE; Phase 9B DEV
+acceptance RECOMMENDED_SEPARATE_AUTHORIZATION (not executed).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 09a940340aaa537706d07140995de9bd26d0fdfd
+LAST_VALIDATED_IMPLEMENTATION_SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e74185bf7b83783c2b7421e675ea2d3bb9053482
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -37,7 +45,10 @@ NO DEV, NO Phase 6, NO AI authority, NO selfDev/promotion activity.
 
 ## Current Milestone
 
-M16 — focused regression (full Playwright running in background).
+COMPLETE / STOP. (All milestones M0-M22 closed; substantive checkpoint
+e74185b pushed fast-forward with exact green CI 31929017844; fresh clean-
+checkout acceptance green; final docs closure pushed with exact final CI
+green; PHASE_9_ORACLE_DEPTH_STATUS COMPLETE; next action STOP.)
 
 ## Completed Milestones
 
@@ -130,17 +141,53 @@ M16 — focused regression (full Playwright running in background).
   checkPhase9IntegrationSeams (observer hook, composed stage, dossier
   evidence wired); .github/workflows/hardening.yml Phase 9 matrix step.
   hardening:check PASS.
+- M16 — focused + full regression: typecheck PASS; Phase 9 focused matrix
+  101 passed; existing oracle/journey/triage/evidence suites 70 passed;
+  campaign synthetic 27 passed; owner provenance 91 passed; agent:check/
+  audit PASS (3 expected warnings: LEGACY_CONTINUITY, STALE baseline while
+  uncommitted, LEGACY v1 tasks); project:check machine truth fields intact
+  (checkout-dirty only pre-commit); git diff --check clean; full Playwright
+  at the working tree 896 passed / 1 skipped / 0 failed.
+- M17 — isolated full-history checkout /tmp/nw-phase9-ws/nightwatch at the
+  committed e74185b with sibling mirrors: npm ci --ignore-scripts,
+  typecheck PASS, hardening PASS, Phase 9 focused matrix 101 passed,
+  campaign synthetic 27 passed, agent:check/audit PASS, project:check PASS
+  (checkoutClean true), catalog integrity PASS, full Playwright 893 passed
+  / 4 skipped / 0 failed, git diff --check clean.
+- M18 — substantive implementation commit e74185b pushed fast-forward
+  (09a9403..e74185b); HEAD == origin/main == e74185b; exact implementation
+  CI 31929017844: completed, success, exact head SHA, 29/29 steps green
+  incl. "Phase 9 deterministic semantic oracle depth matrix",
+  Project-memory truth check, Agent-state check, Synthetic campaign,
+  catalog integrity, whitespace.
+- M19 — fresh clean-checkout synthetic acceptance at the exact
+  implementation SHA: required seeded classes 5; seeded cases 5; detected 5;
+  missed 0; benign cases 10; false positives 0; sentinel leaks 0; projection
+  determinism 3 repeats / 0 mismatches; baseline protocol detections 0;
+  Phase 9 semantic detections 5; campaign-admitted semantic categories all
+  5; semantic dossiers 5; total dossiers 5.
+- M20-M21 — docs closure + final CI: D-54; ROADMAP Phase 9 section
+  (COMPLETE_LOCAL_SYNTHETIC); CURRENT_STATE intro + Phase 9 record (machine
+  block unchanged); ARCHITECTURE Phase 9 implementation record; PHASE_9_
+  ROADMAP §17 implementation record + Phase 9B disposition
+  (RECOMMENDED_SEPARATE_AUTHORIZATION); AGENTS.md permanent Phase 9 rule;
+  STATE/ACTIVE_TASK/REPORT terminalized under continuity v2; final docs
+  commit pushed fast-forward; exact final CI green; project:check PASS,
+  agent:check/audit zero strict errors, catalog integrity PASS at final
+  HEAD; final HEAD == origin/main; worktree clean.
+- M22 — STOP: final 115-item report delivered; terminal tokens
+  (PHASE_9_ORACLE_DEPTH COMPLETE; PHASE_8_STATUS COMPLETE; catalog count 1;
+  B AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE); safety vector
+  all zero except Nightwatch Git checkpoints.
 
 ## Work In Progress
 
-M16: full Playwright regression at the working tree; then the isolated
-full-history checkout (M17).
+NONE.
 
 ## Exact Next Action
 
-Await full Playwright result (0 failed required); then build the isolated
-full-history checkout in /tmp and run the full matrix there; then M18
-(implementation commit + push + exact CI).
+STOP — Phase 9 local/synthetic implementation complete; any contained DEV
+acceptance requires separate owner authorization (Phase 9B).
 
 ## Files Changed
 
@@ -201,9 +248,20 @@ full-history checkout in /tmp and run the full matrix there; then M18
   otherwise intact).
 - M16 full regression at the working tree: 896 passed / 1 skipped (pre-
   existing environment-conditional) / 0 failed; git diff --check clean.
-- M18 local: substantive implementation commit created (all Phase 9
-  source/tests/corpus/hardening/workflow + task records), ready for the
-  isolated full-history checkout at the committed SHA, then push + exact CI.
+- M17 isolated full-history checkout /tmp/nw-phase9-ws/nightwatch at
+  e74185b: typecheck/hardening PASS; Phase 9 focused matrix 101 passed;
+  campaign synthetic 27 passed; agent:check/audit PASS; project:check PASS
+  (checkoutClean true); catalog integrity PASS; full Playwright 893 passed
+  / 4 skipped (pre-existing environment-conditional) / 0 failed.
+- M18 exact implementation CI 31929017844 at
+  e74185bf7b83783c2b7421e675ea2d3bb9053482: completed, success, exact head
+  SHA, 29/29 steps green (incl. Phase 9 matrix step, Project-memory truth
+  check, Agent-state check, Synthetic campaign, catalog integrity,
+  whitespace).
+- M19 fresh clean-checkout acceptance (isolated checkout, exact SHA):
+  seeded 5/5 detected; benign 10 FP 0; sentinel leaks 0; projection
+  determinism 3 repeats 0 mismatches; baseline protocol 0/5; semantic 5/5;
+  campaign semantic categories all 5; semantic dossiers 5; total dossiers 5.
 
 ## Decisions Made During This Task
 
@@ -221,6 +279,23 @@ full-history checkout in /tmp and run the full matrix there; then M18
   carry the semantic oracle identity; dossier gains one additive optional
   sanitized `semanticEvidence` field (backward compatible, same
   DOSSIER_VERSION).
+- D3 (2026-08-16): state-transition equality (semanticStateEquals) includes
+  opaque identity tokens/numeric refs through the shared context — value
+  changes are observable as transitions while canonical shape equality
+  stays value-free.
+- D4 (2026-08-16): empty/truncated collections in identity-membership and
+  numeric-sum invariants are NOT_APPLICABLE (never false anomalies); an
+  empty collection sum compares 0 against the scalar.
+- D5 (2026-08-16): real-source canary = adapter provenance binding against
+  the live checkout SHA with zero derived expectations (the annotation
+  pattern is absent in real source; never guess) —
+  REAL_SOURCE_EXPECTATION_CANARY: NOT_ADMITTED.
+- D6 (2026-08-16): PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION
+  — a contained DEV run would close a material evidence gap (real response
+  shape variety, real source-freshness drift, browser-observed semantic
+  findings) that local/synthetic fixtures cannot; proposed narrow Phase 9B
+  task recorded in PHASE_9_ROADMAP §17; not executed; Phase 9 closed
+  LOCAL_SYNTHETIC under continuity v2.
 
 ## Discoveries
 
@@ -239,28 +314,65 @@ NONE.
 
 ## Safety Events
 
-None. Safety vector: catalog writes 0, promotion intents 0, approvals 0,
-APPLY 0, B adoption 0, DEV/NEXT/production contacts 0, product mutations 0,
-DB/infra queries 0, AI/model calls 0, Alphaus writes 0, publication 0,
-runtime Git writes 0; Nightwatch development Git commits: none yet.
+None. Safety vector: catalog writes 0 (digest bd35b934... before and
+after), promotion intents 0, approvals 0, APPLY 0, B adoption 0,
+DEV/NEXT/production contacts 0, product mutations 0, DB/infra queries 0,
+AI/model calls 0, Alphaus writes 0, publication 0, runtime Git writes 0;
+Nightwatch development Git commits: expected only (e74185b substantive +
+final docs closure commit).
 
 ## Deferred / Follow-Up
 
 - P9-C triage confidence / real minimization replay — NEXT_AFTER_PHASE_9
   (not touched by this task; `invalidReducedReplay` stub stays).
 - P9-D value-level differential — NEXT_AFTER_PHASE_9.
-- Phase 9B contained DEV acceptance — separate later authorization;
-  disposition decided at M20.
+- P9-E source-change selection narrowing — NEXT_AFTER_PHASE_9.
+- P9-A campaign yield/budget intelligence — VIABLE_LATER.
+- Phase 9B contained DEV acceptance —
+  `PHASE_9_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION` — one
+  bounded contained DEV run on approved read-only journeys with the
+  semantic hook enabled and synthetic expectations bound to current real
+  source snapshots; closes the evidence gap (real response shape variety,
+  real source-freshness drift, browser-observed semantic findings); NOT
+  executed here; requires separate owner authorization.
 
 ## Resume Recipe
 
-Read SPEC.md, PLAN.md, STATE.md in order; continue from `Exact Next Action`
-(M1 oracle-ceiling reproduction). If context was compacted: verify git HEAD
-still == origin/main (09a94034... expected before any commit), then continue.
+Task complete. Do not resume.
 
 ## Completion Snapshot
 
-(filled at M20/M21 closure: status COMPLETE, PHASE_9_ORACLE_DEPTH_STATUS
-COMPLETE, terminal milestone/WIP/next action/resume recipe, substantive
-checkpoint SHA, exact implementation CI, final docs closure SHA, exact final
-CI, project truth, safety vector, continuity results.)
+- Status: COMPLETE; PHASE_9_ORACLE_DEPTH_STATUS: COMPLETE (ACTIVE_TASK,
+  STATE, and REPORT agree); PHASE_9_STATUS (narrative):
+  COMPLETE_LOCAL_SYNTHETIC.
+- Current milestone: COMPLETE / STOP; Work In Progress: NONE; Exact Next
+  Action: STOP — Phase 9 local/synthetic implementation complete; any
+  contained DEV acceptance requires separate owner authorization (Phase 9B).
+- Substantive implementation: e74185bf7b83783c2b7421e675ea2d3bb9053482
+  (LAST_VALIDATED_IMPLEMENTATION_SHA = LAST_SUBSTANTIVE_CHECKPOINT_SHA);
+  exact implementation CI 31929017844 success at the exact head SHA,
+  29/29 steps green incl. the "Phase 9 deterministic semantic oracle depth
+  matrix" step; fresh clean-checkout synthetic acceptance green (5/5
+  classes, 5 semantic dossiers, FP 0); final docs closure commit pushed
+  fast-forward; exact final CI success (FINAL_CI_AUTHORITY:
+  GITHUB_ACTIONS_FOR_LIVE_HEAD); live HEAD and origin/main are discovered
+  from Git.
+- Project truth: PHASE_8_STATUS COMPLETE; catalog count 1; raw digest
+  sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+  (byte-identical through the task); NEXT_PORTFOLIO_MEMBER
+  AVAILABLE_NOT_ADOPTED (variant B); NEXT_PROMOTION_AUTHORITY NONE;
+  project-state protocol nightwatch.project-state.v1. project:check PASS
+  at the implementation checkpoint and at final HEAD.
+- Phase 9: PHASE_9_ORACLE_DEPTH_STATUS COMPLETE; authorization class
+  PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY (executed once, local/
+  synthetic); PHASE_9_DEV_ACCEPTANCE RECOMMENDED_SEPARATE_AUTHORIZATION
+  (Phase 9B designed, not authorized, not executed); D-54; implementation
+  record in docs/design/PHASE_9_ROADMAP.md §17; ROADMAP/CURRENT_STATE/
+  ARCHITECTURE Phase 9 sections; AGENTS.md permanent Phase 9 rule.
+- Safety vector: catalog writes 0, promotion intents 0, approvals 0,
+  APPLY 0, B adoption 0, DEV/NEXT/production 0, product mutations 0,
+  DB/infra 0, AI/model 0, Alphaus writes 0, publication 0, runtime Git
+  writes 0; Nightwatch Git commits expected only (e74185b + final docs
+  closure).
+- Continuity: agent:check and agent:audit zero strict errors at final
+  HEAD; final docs closure commit pushed; final exact CI green.
