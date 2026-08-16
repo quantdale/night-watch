@@ -1385,6 +1385,45 @@ acceptance/`.
 - **Next step**: a fresh roadmap/design review for the next bug-hunting
   bottleneck (Phase 9 complete; no next phase implementation in R1).
 
+## Post-Phase-9 design review — next bug-hunting architecture (design complete; implementation NOT authorized)
+
+The post-Phase-9 design review (`post-phase-9-next-architecture-design-review`,
+Phase `POST-9-DESIGN`, authorization
+`POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`, 2026-08-16, starting
+SHA `aba46a9a`) recomputed the bug-yield bottleneck from current source
+(NOT the old Phase 9 runner-up ranking) and selected:
+
+```
+PHASE_9_STATUS: COMPLETE (terminal; 9B-R1 VERIFIED/PASS, D-57)
+CURRENT_PRIMARY_POST_PHASE9_BOTTLENECK:
+  INSUFFICIENT_REAL_SEMANTIC_DEPTH
+POST_PHASE_9_NEXT_ARCHITECTURE:
+  DEEPER_REAL_SOURCE_SEMANTICS
+NEXT_PHASE: PHASE_10 — Deeper Real-Source Semantic Contracts
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+```
+
+Evidence basis: all 4 admitted real-source expectations are shape-only
+(root TYPE_MATCH ARRAY + FIELD_PRESENT per item key; `admission.ts:135-145`);
+real-DEV-accepted count 1; L3+ invariant count 0/4; coverage rows capped at
+~4-5 operations by the approved read-only surface while depth has provable
+headroom in the pinned ripple-api source ((object) cast,
+`CURRENCY_RANGE_VALIDATE`, vendor permission lists); P(detection) is the
+term with the most headroom in `surfaces × P(defect) × P(detection) ×
+P(actionable)`. NEXT_AFTER: HIGH_CONFIDENCE_SEMANTIC_TRIAGE (incl.
+follow-up finding #1 — real minimization false-1-MINIMAL certification
+risk, `orchestrator.ts:799-802` + `phase7-real-campaign.ts:360-366`) and
+REAL_SEMANTIC_COVERAGE_EXPANSION; VIABLE_LATER: BROWSER_API_SEMANTIC_
+DIFFERENTIAL and CAMPAIGN_SEMANTIC_YIELD_INTELLIGENCE; DEFER:
+SOURCE_CHANGE_GUIDED_SEMANTIC_SELECTION, MULTI_PRODUCT_EXPANSION,
+SELF_DEVELOPMENT_2ND_ADOPTION. Decision D-58; full analysis in
+`docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md`. Phase 10 is NOT started
+and NOT authorized; no implementation authority granted; variant B remains
+AVAILABLE_NOT_ADOPTED; promotion authority NONE; catalog count 1 (digest
+`sha256:bd35b934...`); Phase 6 remains FROZEN_BY_OWNER; AI remains
+non-authoritative.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

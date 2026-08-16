@@ -2260,3 +2260,69 @@ byte-identical `sha256:bd35b934...` (count 1); `PHASE_8_STATUS: COMPLETE`;
 B AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`. Next project
 step: a fresh roadmap/design review for the next bug-hunting bottleneck.
 D-56 remains the original Phase 9B record, not rewritten.
+
+## D-58 — Post-Phase-9 next bug-hunting architecture: DEEPER_REAL_SOURCE_SEMANTICS (Phase 10, designed, NOT authorized)
+
+**Decision.** After the terminal Phase 9 (`COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` / PASS, D-57), the post-Phase-9 design review (`post-phase-9-next-architecture-design-review`, Phase `POST-9-DESIGN`, authorization `POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`, starting SHA `aba46a9af1a1021ae58a1253f93fda297391576e`, 2026-08-16) recomputed the bug-yield bottleneck from current source and selected:
+
+```
+PHASE_9_STATUS: COMPLETE (terminal)
+CURRENT_PRIMARY_POST_PHASE9_BOTTLENECK:
+  INSUFFICIENT_REAL_SEMANTIC_DEPTH
+POST_PHASE_9_NEXT_ARCHITECTURE:
+  DEEPER_REAL_SOURCE_SEMANTICS
+NEXT_PHASE: PHASE_10
+NEXT_PHASE_TITLE: Phase 10 — Deeper Real-Source Semantic Contracts
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+NEXT_AFTER: HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_EXPANSION
+VIABLE_LATER: BROWSER_API_SEMANTIC_DIFFERENTIAL, CAMPAIGN_SEMANTIC_YIELD_INTELLIGENCE
+DEFER: SOURCE_CHANGE_GUIDED_SEMANTIC_SELECTION, MULTI_PRODUCT_EXPANSION, SELF_DEVELOPMENT_2ND_ADOPTION
+```
+
+**Rationale.** Phase 9 proved the semantic mechanism end-to-end (safe
+projection, source-backed admission, receipts, contained DEV acceptance)
+but the real contracts it is applied to are shape-only: all 4 admitted
+real-source expectations derive exactly root `TYPE_MATCH ARRAY` +
+`FIELD_PRESENT` per item key (`src/oracles/expectations/admission.ts:135-145`);
+real-DEV-accepted count is 1; L3+ invariant count is 0/4. The yield model
+`surfaces × P(defect) × P(detection) × P(actionable)` shows P(detection)
+was the zero term and remains the term with the most headroom: rows
+(coverage) are capped at ~4-5 operations by the approved read-only
+surface, while columns (depth) have provable headroom — the ripple-api
+source at the pinned SHA mechanically establishes item-level types
+(`(object)` cast at `ExchangeRate.php:92-94`), a finite currency enum
+(`CURRENCY_RANGE_VALIDATE` at `ExchangeRate.php:29-37`), and permission
+lists (`['aws','azure','gcp']` at `ExchangeRate.php:40`), none of which
+the current 3-kind extractor vocabulary can express. Deeper invariants
+raise P(detection) per unit of contained execution on the already-accepted
+surface and close the dependency map's named `COST_FINANCIAL_SEMANTICS`
+gap. The old Phase 9 runner-up (triage confidence) was NOT retained as
+primary: triage improves P(actionable) and creates no detections, and zero
+real anomalies have ever been observed; it remains NEXT_AFTER, together
+with a recorded follow-up finding (real minimization can certify a false
+1-MINIMAL via the stub-replay wrapper, `orchestrator.ts:799-802` +
+`phase7-real-campaign.ts:360-366` — documented in
+`docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md` Appendix F; NOT fixed by
+this review).
+
+**Alternatives.** Coverage expansion (A) adds at most ~1-2 rows with the
+same shallow columns; differential (C) creates a genuinely new L5 class but
+needs browser-side projection + adapter pairing with no natural evidence;
+selection (D) and yield intelligence (E) cannot create detections on a
+3-operation surface; multi-product (G) is premature with zero real
+findings; selfDev (H) has no bug-hunting value (variant B remains a
+structural canary). All rejected for primary selection by evidence, not by
+ranking.
+
+**Consequences.** Phase 10 is DESIGNED, NOT STARTED, NOT AUTHORIZED.
+Implementation requires a fresh owner authorization
+(`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, Phase 10A local/synthetic;
+optional later `PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` for one
+contained DEV acceptance of the enriched common-exchange expectation).
+Phase 9 remains terminal COMPLETE; Phase 6 remains FROZEN_BY_OWNER; AI
+remains non-authoritative; catalog byte-identical `sha256:bd35b934...`
+(count 1); `PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`. Design record:
+`docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md`; roadmap/current-state
+updated by the same task.

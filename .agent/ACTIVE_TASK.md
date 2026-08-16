@@ -1,70 +1,65 @@
 # Active Task
 
-Task ID: phase-9b-r1-auth-refreshed-dev-semantic-acceptance
-Phase: 9B-R1-CONTAINED-DEV-SEMANTIC-ACCEPTANCE
-Title: Nightwatch Phase 9B-R1 — Auth-Refreshed Contained DEV Semantic Acceptance Retry
-Status: COMPLETE
-Task directory: .agent/tasks/phase-9b-r1-auth-refreshed-dev-semantic-acceptance
-Starting SHA: 05def7abf92818c7de48fba658579397b236def7
-Last validated implementation SHA: cdfdf314839fd782a962e4096b68b32641a93db2
-Current milestone: COMPLETE / STOP — Phase 9 complete; next architecture requires a separate design review
-Last checkpoint: 2026-08-16 — R1 COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED:
-ONE launcher invocation (exit 0) with FIRST and REPLAY both decisive PASS
-(resolved 1, receipts 1, PASS 1, decisive 1, invariants passed 3, anomalies
-0) under expectation ripple.common-exchange.read.real-source-shape @
-ripple-api 169df39d (digest ev:sha256:608265368c9a086f43c94e5c); replay
-deterministic; zero hard semantic outcomes; zero safety violations; privacy
-audit PASS; auth refreshed + valid throughout; D-57 closure.
-Next action: STOP — Phase 9 complete; the next architecture requires a
-separate design review. No further DEV acceptance.
-Authorization class: PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY
+Task ID: post-phase-9-next-architecture-design-review
+Phase: POST-9-DESIGN
+Title: Nightwatch Post-Phase-9 — Next Bug-Hunting Architecture Design Review
+Status: IN_PROGRESS
+Task directory: .agent/tasks/post-phase-9-next-architecture-design-review
+Starting SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+Last validated implementation SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+Current milestone: M3 — task records + design document (analysis M0-M2 complete; docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md written; D-58 + ROADMAP + CURRENT_STATE updated; validation + docs CI pending)
+Last checkpoint: 2026-08-16 — post-Phase-9 analysis complete: primary
+bottleneck INSUFFICIENT_REAL_SEMANTIC_DEPTH (all 4 admitted real-source
+expectations are shape-only L1/L2; real-DEV-accepted 1; coverage rows
+capped ~4-5 while depth has provable headroom in pinned ripple-api source
+— (object) cast, CURRENCY_RANGE_VALIDATE, vendor permission lists);
+selected DEEPER_REAL_SOURCE_SEMANTICS as Phase 10 (10A local/synthetic +
+optional 10B DEV acceptance); old Phase 9 runner-up (triage confidence)
+NOT retained as primary; follow-up finding #1 recorded (real minimization
+false-1-MINIMAL certification risk, orchestrator.ts:799-802 +
+phase7-real-campaign.ts:360-366).
+Next action: run validation gates (hardening:check, agent:check/audit,
+project:check, catalog-integrity), commit/push docs-only, verify exact CI
+green, deliver terminal tokens, STOP.
+Authorization class: POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-ONE fixed journey ripple-common-exchange-read x FIRST + ONE fresh-context
-REPLAY against https://appdev.alphaus.cloud/ripple/ using the already-
-validated Phase 9B harness (cdfdf31; ZERO source changes). FULFILLED:
-fresh remote source truth (remotes unchanged; runner re-derived at
-169df39d; resolver RESOLVED pre-browser), structural/boolean auth
-validation of the human-refreshed DEV state (PASS; expired=false; NO
-auth:capture), exact-head CI gate (f88b6f1 / 31938800275), ONE launcher
-invocation, safe semantic receipts (FIRST + REPLAY decisive PASS,
-deterministic, zero hard outcomes), post-run privacy audit PASS, zero
-safety violations, D-57 docs closure, 96-item report, STOP. FORBIDDEN
-surface untouched: no reuse of the original Phase 9B authorization; no
-second journey/fallback; no new endpoint authority; no NEXT/production; no
-mutation; no DB/infra; no deployment binding; no screenshots/traces/DOM;
-no raw persistence; no AI; no Alphaus writes; no selfDev/promotion/catalog;
-no variant-B adoption; no publication; no harness patching.
+Design-review only: recompute the post-Phase-9 bug-yield bottleneck from
+current source; evaluate options A-H; select exactly ONE primary
+architecture (DEEPER_REAL_SOURCE_SEMANTICS, Phase 10); assign phase
+number/name; produce implementation-ready future-task spec; record D-58 +
+ROADMAP + CURRENT_STATE + design doc; validate docs/continuity; push exact
+CI; STOP. NO implementation; no src/bin/tests/package.json/.github
+changes; no DEV/NEXT/production contact; no Phase 6; no AI/model; no
+selfDev/promotion/catalog/B adoption; no Alphaus writes; no publication;
+no future implementation authority granted.
 
 ## Continuity
 
-STARTING_SHA: 05def7abf92818c7de48fba658579397b236def7
-LAST_VALIDATED_IMPLEMENTATION_SHA: cdfdf314839fd782a962e4096b68b32641a93db2
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cdfdf314839fd782a962e4096b68b32641a93db2
+STARTING_SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+LAST_VALIDATED_IMPLEMENTATION_SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aba46a9af1a1021ae58a1253f93fda297391576e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_9B_R1_STATUS: COMPLETE
-PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
-PHASE_9B_R1_DEV_RESULT: PASS
-PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED
-PHASE_9_STATUS: COMPLETE
-PHASE_9B_STATUS (historical, unchanged): BLOCKED
-PHASE_9B_DEV_RESULT (historical, unchanged): NOT_PROVEN
+POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: IN_PROGRESS
+PHASE_9_STATUS (unchanged): COMPLETE
+PHASE_9B_R1 (unchanged): COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
+PHASE_9B_R1_DEV_RESULT (unchanged): PASS
 PHASE_9A_1_STATUS (unchanged): COMPLETE
 PHASE_8_STATUS (unchanged): COMPLETE
 CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (digest bd35b934...)
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
-## STOP
+## Selection (analysis complete, D-58)
 
-Task complete. Do not resume. Phase 9 is complete
-(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); the next architecture
-requires a separate design review. Any further DEV semantic acceptance
-would require a fresh owner authorization; the original Phase 9B
-authorization remains spent (BLOCKED historical, D-56).
+CURRENT_PRIMARY_POST_PHASE9_BOTTLENECK: INSUFFICIENT_REAL_SEMANTIC_DEPTH
+POST_PHASE_9_NEXT_ARCHITECTURE: DEEPER_REAL_SOURCE_SEMANTICS
+NEXT_PHASE: PHASE_10 — Deeper Real-Source Semantic Contracts
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED

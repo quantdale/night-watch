@@ -1,8 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Phase 9B-R1 contained DEV semantic acceptance close
-> (COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS; Phase 9 COMPLETE).
+> the Nightwatch Post-Phase-9 next-architecture design review close
+> (POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE; Phase 9 COMPLETE;
+> next architecture selected and DESIGNED_NOT_STARTED_NOT_AUTHORIZED).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1583,6 +1584,57 @@ the pre-browser readiness gate (D-56; records in
   launcherInvocations 1 / browserContextsCreated 2 / devObservationPasses
   2 / completedJourneyPairs 1 (D-57). The original Phase 9B authorization
   remains spent and its task stays BLOCKED historical (D-56).
+
+## Post-Phase-9 next-architecture design review (complete; Phase 10 designed, NOT authorized)
+
+`POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE` (2026-08-16). The
+owner-authorized design review (`post-phase-9-next-architecture-design-review`,
+Phase `POST-9-DESIGN`, authorization
+`POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`, starting SHA
+`aba46a9a`) recomputed the bug-yield bottleneck from current source and
+selected the next bug-hunting investment (D-58; full analysis in
+`docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md`):
+
+```
+PHASE_9_STATUS: COMPLETE (terminal; 9B-R1 VERIFIED/PASS, D-57)
+CURRENT_PRIMARY_POST_PHASE9_BOTTLENECK:
+  INSUFFICIENT_REAL_SEMANTIC_DEPTH
+POST_PHASE_9_NEXT_ARCHITECTURE:
+  DEEPER_REAL_SOURCE_SEMANTICS
+NEXT_PHASE: PHASE_10 — Deeper Real-Source Semantic Contracts
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+```
+
+Evidence basis (source-verified, not roadmap lore): all 4 admitted
+real-source expectations are shape-only (root TYPE_MATCH ARRAY +
+FIELD_PRESENT per item key; `src/oracles/expectations/admission.ts:135-145`);
+real-DEV-accepted 1; L3+ invariant count 0/4; coverage rows capped at
+~4-5 operations by the approved read-only surface while depth has provable
+headroom in the pinned ripple-api source ((object) cast at
+`ExchangeRate.php:92-94`, `CURRENCY_RANGE_VALIDATE` at `:29-37`, vendor
+permission lists at `:40`); P(detection) is the dominant term with the
+most headroom in `surfaces × P(defect) × P(detection) × P(actionable)`.
+The old Phase 9 runner-up (triage confidence) was NOT retained as primary
+(triage cannot create detections; zero real anomalies ever observed) and
+is NEXT_AFTER, together with a recorded follow-up finding (real
+minimization false-1-MINIMAL certification risk,
+`orchestrator.ts:799-802` + `phase7-real-campaign.ts:360-366` — documented
+in the design doc Appendix F; NOT fixed by this review). NEXT_AFTER:
+HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_EXPANSION;
+VIABLE_LATER: BROWSER_API_SEMANTIC_DIFFERENTIAL,
+CAMPAIGN_SEMANTIC_YIELD_INTELLIGENCE; DEFER: SOURCE_CHANGE_GUIDED_SEMANTIC_
+SELECTION, MULTI_PRODUCT_EXPANSION, SELF_DEVELOPMENT_2ND_ADOPTION.
+
+Phase 10 is DESIGNED, NOT STARTED, NOT AUTHORIZED. Implementation requires
+a fresh owner authorization (`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`
+for the local/synthetic Phase 10A; optional later
+`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` for one contained DEV
+acceptance of the enriched common-exchange expectation). Machine-checked
+truth block unchanged: catalog count 1 (digest `sha256:bd35b934...`),
+variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE,
+`PHASE_8_STATUS: COMPLETE`. Phase 6 remains FROZEN_BY_OWNER; AI remains
+non-authoritative.
 
 ## Environment (machine facts)
 
