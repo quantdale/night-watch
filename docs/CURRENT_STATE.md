@@ -1568,6 +1568,15 @@ the pre-browser readiness gate (D-56; records in
   browser context was created; zero DEV contact; zero artifacts; DEV
   semantic acceptance NOT proven; retry requires a human-led
   `npm run auth:capture` refresh plus a fresh owner authorization.
+- **Phase 9B-R1 (2026-08-16)**: the owner granted
+  `PHASE_9B_R1_AUTH_REFRESHED_DEV_SEMANTIC_ACCEPTANCE_ONLY` after a
+  human-led auth refresh and the owner states the external DEV auth state
+  was refreshed before the R1 session. R1 is authorized but NOT yet
+  executed: task `phase-9b-r1-auth-refreshed-dev-semantic-acceptance`
+  (IN_PROGRESS) will run the already-validated harness (cdfdf31 / exact CI
+  31934803846, no reimplementation) for ONE fixed common-exchange FIRST +
+  one fresh-context REPLAY after fresh source truth + exact-head CI gates.
+  The original Phase 9B authorization remains spent; D-56 unchanged.
 
 ## Environment (machine facts)
 
