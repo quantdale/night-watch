@@ -25,6 +25,8 @@ export const MAX_PATH_SEGMENT_LENGTH = 128;
 export const MAX_EXPECTATION_ID_LENGTH = 200;
 export const MAX_INVARIANTS_PER_EXPECTATION = 32;
 export const MAX_NUMERIC_OPERANDS = 16;
+/** Phase 10A: bounded TYPE_IN_SET vocabulary size. */
+export const MAX_TYPE_SET_SIZE = 6;
 
 // ---------------------------------------------------------------------------
 // Source provenance (SPEC §52, §53).
@@ -62,6 +64,7 @@ export type InvariantKind =
   | 'FIELD_PRESENT'
   | 'FIELD_ABSENT'
   | 'TYPE_MATCH'
+  | 'TYPE_IN_SET'
   | 'CARDINALITY_MATCH'
   | 'ENVELOPE_CLASS'
   | 'IDENTITY_EQUAL'
@@ -94,6 +97,17 @@ export interface TypeMatchInvariant {
   readonly kind: 'TYPE_MATCH';
   readonly path: SafePath;
   readonly expectedType: 'NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY';
+}
+
+/** Phase 10A: the observed JSON type must belong to a source-established
+ *  allowed set (e.g. OBJECT-or-ARRAY polymorphic contracts). Fixed, bounded
+ *  vocabulary: 1..MAX_TYPE_SET_SIZE known ProjectionNodeType values, no
+ *  duplicates, canonical sorted order. A missing path or an ambiguity caused
+ *  by an empty/uninspected parent array is NOT_APPLICABLE. */
+export interface TypeInSetInvariant {
+  readonly kind: 'TYPE_IN_SET';
+  readonly path: SafePath;
+  readonly allowedTypes: readonly ('NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY')[];
 }
 
 export interface CardinalityMatchInvariant {
@@ -165,6 +179,7 @@ export type InvariantDefinition =
   | FieldPresenceInvariant
   | FieldAbsentInvariant
   | TypeMatchInvariant
+  | TypeInSetInvariant
   | CardinalityMatchInvariant
   | EnvelopeClassInvariant
   | IdentityEqualInvariant

@@ -10,13 +10,17 @@
 // ---------------------------------------------------------------------------
 
 import {
+  MAX_ITEM_FIELD_TYPE_CONTRACTS,
   MAX_RECIPE_EXTRACTORS,
   REAL_SOURCE_EXPECTATION_RECIPE_VERSION,
+  REAL_SOURCE_EXPECTATION_RECIPE_VERSION_V2,
   type ExtractorParams,
   type RealSourceContract,
   type RealSourceExpectationBlueprint,
   type RealSourceExpectationRecipe,
+  type RealSourceItemFieldTypeContract,
 } from './types';
+import { MAX_TYPE_SET_SIZE } from '../types';
 
 export const MAX_RECIPE_SOURCE_PATHS = 8;
 export const MAX_RECIPE_ITEM_KEYS = 64;
@@ -28,6 +32,16 @@ export const MAX_RECIPE_PATH_SEGMENT_LENGTH = 200;
 const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/;
 const SYMBOL_RE = /^[A-Za-z_][A-Za-z0-9_]{0,199}$/;
 const CLASS_RE = /^[A-Za-z_\\][A-Za-z0-9_\\]{0,399}$/;
+const PROJECTION_NODE_TYPES = new Set(['NULL', 'BOOLEAN', 'NUMBER', 'STRING', 'OBJECT', 'ARRAY']);
+/** Fixed pattern -> proven JSON type set mapping (mirrors the extractor
+ *  decision table; the validator enforces the recipe declares exactly the
+ *  mechanically derivable set). */
+const PATTERN_TO_ALLOWED_TYPES: Readonly<Record<'EMPTY_CAST_OBJECT' | 'EMPTY_ARRAY_OR_STRING_KEYS', readonly string[]>> = {
+  // Canonical sorted order — the same normalization the contract validator
+  // applies to declared allowedTypes.
+  EMPTY_CAST_OBJECT: ['OBJECT'],
+  EMPTY_ARRAY_OR_STRING_KEYS: ['ARRAY', 'OBJECT'],
+};
 
 function expectRecord(value: unknown, label: string): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -115,6 +129,45 @@ function validatePhpRouteGetBinding(value: unknown): ExtractorParams {
   return { kind: 'PHP_ROUTE_GET_BINDING', routePath, client, method };
 }
 
+function validatePhpItemFieldTypeFlow(value: unknown): ExtractorParams {
+  const record = expectRecord(value, 'extractor');
+  const symbol = expectBoundedString(record['symbol'], 'extractor.symbol', MAX_SYMBOL_LENGTH, SYMBOL_RE);
+  const fieldVariable = expectBoundedString(record['fieldVariable'], 'extractor.fieldVariable', 64, /^[A-Za-z_][A-Za-z0-9_]{0,63}$/);
+  const pattern = expectString(record['pattern'], 'extractor.pattern');
+  if (pattern !== 'EMPTY_CAST_OBJECT' && pattern !== 'EMPTY_ARRAY_OR_STRING_KEYS') {
+    throw new Error('REAL_SOURCE_RECIPE_INVALID:extractor.pattern-unsupported');
+  }
+  assertNoUnknownFields(record, new Set(['kind', 'symbol', 'fieldVariable', 'pattern']), 'extractor');
+  return { kind: 'PHP_ITEM_FIELD_TYPE_FLOW', symbol, fieldVariable, pattern };
+}
+
+function validateItemFieldTypeContract(value: unknown, index: number): RealSourceItemFieldTypeContract {
+  const record = expectRecord(value, `itemFieldTypeContracts[${index}]`);
+  const field = expectBoundedString(record['field'], `itemFieldTypeContracts[${index}].field`, MAX_RECIPE_PATH_SEGMENT_LENGTH);
+  const itemIndex = record['itemIndex'];
+  if (typeof itemIndex !== 'number' || !Number.isInteger(itemIndex) || itemIndex < 0 || itemIndex > 999) {
+    throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts[${index}].itemIndex-out-of-range`);
+  }
+  const allowedTypes = record['allowedTypes'];
+  if (!Array.isArray(allowedTypes) || allowedTypes.length === 0 || allowedTypes.length > MAX_TYPE_SET_SIZE) {
+    throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts[${index}].allowedTypes-unbounded`);
+  }
+  const seen = new Set<string>();
+  for (let i = 0; i < allowedTypes.length; i++) {
+    const type = expectBoundedString(allowedTypes[i], `itemFieldTypeContracts[${index}].allowedTypes[${i}]`, 32);
+    if (!PROJECTION_NODE_TYPES.has(type)) {
+      throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts[${index}].allowedTypes-unsupported:${type}`);
+    }
+    if (seen.has(type)) {
+      throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts[${index}].allowedTypes-duplicate:${type}`);
+    }
+    seen.add(type);
+  }
+  const canonical = [...seen].sort() as ('NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY')[];
+  assertNoUnknownFields(record, new Set(['field', 'itemIndex', 'allowedTypes']), `itemFieldTypeContracts[${index}]`);
+  return { field, itemIndex, allowedTypes: canonical };
+}
+
 function validateContract(value: unknown): RealSourceContract {
   const record = expectRecord(value, 'expectedContract');
   const topLevel = expectString(record['topLevel'], 'expectedContract.topLevel');
@@ -166,9 +219,10 @@ function validateBlueprint(value: unknown): RealSourceExpectationBlueprint {
 export function validateRealSourceRecipe(value: unknown): RealSourceExpectationRecipe {
   const record = expectRecord(value, 'recipe');
   const schemaVersion = expectString(record['schemaVersion'], 'schemaVersion');
-  if (schemaVersion !== REAL_SOURCE_EXPECTATION_RECIPE_VERSION) {
+  if (schemaVersion !== REAL_SOURCE_EXPECTATION_RECIPE_VERSION && schemaVersion !== REAL_SOURCE_EXPECTATION_RECIPE_VERSION_V2) {
     throw new Error(`REAL_SOURCE_RECIPE_INVALID:schemaVersion-unsupported:${schemaVersion}`);
   }
+  const isV2 = schemaVersion === REAL_SOURCE_EXPECTATION_RECIPE_VERSION_V2;
   const recipeId = expectId(record['recipeId'], 'recipeId');
   const targetId = expectId(record['targetId'], 'targetId');
   const repoId = expectBoundedString(record['repoId'], 'repoId', MAX_ID_LENGTH, ID_RE);
@@ -200,6 +254,9 @@ export function validateRealSourceRecipe(value: unknown): RealSourceExpectationR
       case 'PHP_ROUTE_GET_BINDING':
         extractor = validatePhpRouteGetBinding(extractorValue);
         break;
+      case 'PHP_ITEM_FIELD_TYPE_FLOW':
+        extractor = validatePhpItemFieldTypeFlow(extractorValue);
+        break;
       default:
         throw new Error(`REAL_SOURCE_RECIPE_INVALID:extractors[${i}].kind-unsupported:${extractorKind}`);
     }
@@ -207,11 +264,27 @@ export function validateRealSourceRecipe(value: unknown): RealSourceExpectationR
   }
   const expectedContract = validateContract(record['expectedContract']);
   const blueprint = validateBlueprint(record['blueprint']);
-  assertNoUnknownFields(
-    record,
-    new Set(['schemaVersion', 'recipeId', 'targetId', 'repoId', 'sourcePaths', 'extractors', 'expectedContract', 'blueprint']),
-    'recipe',
-  );
+  const allowedRecipeFields = new Set([
+    'schemaVersion', 'recipeId', 'targetId', 'repoId', 'sourcePaths', 'extractors',
+    'expectedContract', 'blueprint',
+  ]);
+  let itemFieldTypeContracts: RealSourceItemFieldTypeContract[] = [];
+  if (isV2) {
+    const contractValues = record['itemFieldTypeContracts'];
+    if (!Array.isArray(contractValues) || contractValues.length === 0 || contractValues.length > MAX_ITEM_FIELD_TYPE_CONTRACTS) {
+      throw new Error('REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-unbounded');
+    }
+    itemFieldTypeContracts = contractValues.map((c, i) => validateItemFieldTypeContract(c, i));
+    const contractFields = new Set<string>();
+    for (const contract of itemFieldTypeContracts) {
+      if (contractFields.has(contract.field)) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-duplicate-field:${contract.field}`);
+      }
+      contractFields.add(contract.field);
+    }
+    allowedRecipeFields.add('itemFieldTypeContracts');
+  }
+  assertNoUnknownFields(record, allowedRecipeFields, 'recipe');
 
   // Unsupported language/extractor pairing: the route binding extractor
   // requires a Routing.yaml source path; the row-keys / builder-list
@@ -222,7 +295,12 @@ export function validateRealSourceRecipe(value: unknown): RealSourceExpectationR
     if (extractor.kind === 'PHP_ROUTE_GET_BINDING' && !hasRoutingYaml) {
       throw new Error('REAL_SOURCE_RECIPE_INVALID:route-binding-without-routing-yaml');
     }
-    if ((extractor.kind === 'PHP_FUNCTION_LIST_ROW_KEYS' || extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER') && !hasPhpHandler) {
+    if (
+      (extractor.kind === 'PHP_FUNCTION_LIST_ROW_KEYS' ||
+        extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER' ||
+        extractor.kind === 'PHP_ITEM_FIELD_TYPE_FLOW') &&
+      !hasPhpHandler
+    ) {
       throw new Error('REAL_SOURCE_RECIPE_INVALID:row-keys-without-php-handler');
     }
   }
@@ -250,16 +328,46 @@ export function validateRealSourceRecipe(value: unknown): RealSourceExpectationR
     throw new Error('REAL_SOURCE_RECIPE_INVALID:top-level-array-unproven');
   }
 
-  return {
-    schemaVersion,
-    recipeId,
-    targetId,
-    repoId,
-    sourcePaths,
-    extractors,
-    expectedContract,
-    blueprint,
-  };
+  // Phase 10A deep-contract consistency (v2 only):
+  // 1. every type-contract field must be a member of the source-established
+  //    row key set AND of the blueprint item field paths (the expectation
+  //    never asserts a field the source contract does not carry);
+  // 2. every type contract must have EXACTLY ONE matching type-flow
+  //    extractor (fieldVariable == field) whose fixed pattern proves exactly
+  //    the declared allowedTypes (no weaker/stronger claim).
+  if (isV2) {
+    for (const contract of itemFieldTypeContracts) {
+      if (!keySet.has(contract.field)) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-field-not-in-contract:${contract.field}`);
+      }
+      if (!blueprint.itemFieldPaths.includes(contract.field)) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-field-not-in-blueprint:${contract.field}`);
+      }
+      const matching = extractors.filter(
+        (extractor): extractor is Extract<ExtractorParams, { kind: 'PHP_ITEM_FIELD_TYPE_FLOW' }> =>
+          extractor.kind === 'PHP_ITEM_FIELD_TYPE_FLOW' && extractor.fieldVariable === contract.field,
+      );
+      if (matching.length !== 1) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-missing-type-flow-extractor:${contract.field}`);
+      }
+      const proven = PATTERN_TO_ALLOWED_TYPES[matching[0]!.pattern];
+      const declared = [...contract.allowedTypes].sort();
+      if (proven.length !== declared.length || proven.some((type, i) => type !== declared[i])) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:itemFieldTypeContracts-type-set-mismatch:${contract.field}`);
+      }
+    }
+    // Every type-flow extractor must back a declared contract (no orphan
+    // evidence).
+    for (const extractor of extractors) {
+      if (extractor.kind === 'PHP_ITEM_FIELD_TYPE_FLOW' && !itemFieldTypeContracts.some((c) => c.field === extractor.fieldVariable)) {
+        throw new Error(`REAL_SOURCE_RECIPE_INVALID:type-flow-extractor-without-contract:${extractor.fieldVariable}`);
+      }
+    }
+  }
+
+  return isV2
+    ? { schemaVersion, recipeId, targetId, repoId, sourcePaths, extractors, expectedContract, blueprint, itemFieldTypeContracts }
+    : { schemaVersion, recipeId, targetId, repoId, sourcePaths, extractors, expectedContract, blueprint };
 }
 
 /** Batch validation: rejects duplicate recipe IDs. */

@@ -23,13 +23,17 @@ import { evidenceDigestFor } from './extract/evidence';
 import {
   extractPhpFunctionListRowKeys,
   extractPhpFunctionReturnsListOfBuilder,
+  extractPhpItemFieldTypeFlow,
   extractPhpRouteGetBinding,
   phpFailureToDerivationFailure,
 } from './extract/php';
 import type { RealSourceExpectationRecipe, RealSourceReader, SourceExtraction } from './recipes/types';
-import type { SemanticExpectation, SourceProvenance } from './types';
+import type { InvariantDefinition, SemanticExpectation, SourceProvenance } from './types';
 
 export const REAL_SOURCE_DERIVATION_VERSION = 'nightwatch.real-source-expectation-derivation.v1' as const;
+/** Phase 10A: derivation version for v2 recipes (item-level field type
+ *  contracts + type-flow evidence participate in the evidence digest). */
+export const REAL_SOURCE_DERIVATION_VERSION_V2 = 'nightwatch.real-source-expectation-derivation.v2' as const;
 
 export interface RecipeDerivationOutcome {
   readonly ok: boolean;
@@ -45,7 +49,8 @@ export interface DerivedRealSourceExpectation {
 }
 
 /** Run one recipe's extractors against a reader; returns the extractions in
- *  recipe order or the first failure. */
+ *  recipe order or the first failure. Unknown extractor kinds fail closed
+ *  (EXTRACTION_UNSUPPORTED) — a recipe can never silently skip evidence. */
 function runExtractions(
   recipe: RealSourceExpectationRecipe,
   reader: RealSourceReader,
@@ -60,8 +65,7 @@ function runExtractions(
       const result = extractPhpFunctionListRowKeys(text, extractor.symbol, extractor.accumulator, extractor.pattern);
       if (!result.ok) return { ok: false, failure: phpFailureToDerivationFailure(result.failure), detail: result.detail };
       extractions.push(result.extraction);
-    }
-    if (extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER') {
+    } else if (extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER') {
       const path = recipe.sourcePaths.find((p) => p.endsWith('.php')) ?? recipe.sourcePaths[0] ?? null;
       if (path === null) return { ok: false, failure: 'SOURCE_PATH_MISSING' };
       const text = reader.readFile(recipe.repoId, path);
@@ -69,8 +73,7 @@ function runExtractions(
       const result = extractPhpFunctionReturnsListOfBuilder(text, extractor.symbol, extractor.accumulator, extractor.builderSymbol);
       if (!result.ok) return { ok: false, failure: phpFailureToDerivationFailure(result.failure), detail: result.detail };
       extractions.push(result.extraction);
-    }
-    if (extractor.kind === 'PHP_ROUTE_GET_BINDING') {
+    } else if (extractor.kind === 'PHP_ROUTE_GET_BINDING') {
       const path = recipe.sourcePaths.find((p) => p.endsWith('Routing.yaml')) ?? null;
       if (path === null) return { ok: false, failure: 'SOURCE_PATH_MISSING' };
       const text = reader.readFile(recipe.repoId, path);
@@ -78,6 +81,18 @@ function runExtractions(
       const result = extractPhpRouteGetBinding(text, extractor.routePath, extractor.client, extractor.method);
       if (!result.ok) return { ok: false, failure: phpFailureToDerivationFailure(result.failure), detail: result.detail };
       extractions.push(result.extraction);
+    } else if (extractor.kind === 'PHP_ITEM_FIELD_TYPE_FLOW') {
+      const path = recipe.sourcePaths.find((p) => p.endsWith('.php')) ?? recipe.sourcePaths[0] ?? null;
+      if (path === null) return { ok: false, failure: 'SOURCE_PATH_MISSING' };
+      const text = reader.readFile(recipe.repoId, path);
+      if (text === null) return { ok: false, failure: 'SOURCE_UNAVAILABLE', detail: path };
+      const result = extractPhpItemFieldTypeFlow(text, extractor.symbol, extractor.fieldVariable, extractor.pattern);
+      if (!result.ok) return { ok: false, failure: phpFailureToDerivationFailure(result.failure), detail: result.detail };
+      extractions.push(result.extraction);
+    } else {
+      // Defensive: the extractor union is exhaustive at compile time; a
+      // future kind must never be silently skipped.
+      return { ok: false, failure: 'EXTRACTION_UNSUPPORTED', detail: String((extractor as { kind: string }).kind) };
     }
   }
   return { ok: true, extractions };
@@ -88,6 +103,11 @@ function runExtractions(
  * snapshot (repo @ sha). Fails closed (no expectation) when the source is
  * unavailable, the extraction fails, or the extracted structure no longer
  * matches the recipe's expected contract. NEVER mutates anything.
+ *
+ * v2 recipes additionally require the PHP_ITEM_FIELD_TYPE_FLOW extraction to
+ * reproduce the declared item-level type contracts (TYPE_FLOW_AMBIGUOUS /
+ * TYPE_FLOW_CONTRACT_MISMATCH fail closed) and build the deeper
+ * TYPE_MATCH / TYPE_IN_SET invariants.
  */
 export function deriveRealSourceExpectation(
   recipe: RealSourceExpectationRecipe,
@@ -128,11 +148,13 @@ export function deriveRealSourceExpectation(
     symbol: rowKeysExtractor !== undefined && rowKeysExtractor.kind === 'PHP_FUNCTION_LIST_ROW_KEYS'
       ? rowKeysExtractor.symbol
       : undefined,
-    derivationVersion: REAL_SOURCE_DERIVATION_VERSION,
+    derivationVersion: recipe.schemaVersion === 'nightwatch.real-source-expectation-recipe.v2'
+      ? REAL_SOURCE_DERIVATION_VERSION_V2
+      : REAL_SOURCE_DERIVATION_VERSION,
     evidenceDigest: digest,
   };
 
-  const invariants: import('./types').InvariantDefinition[] = [
+  const invariants: InvariantDefinition[] = [
     // The source-established success class: a top-level JSON array. Stronger
     // than "parses as JSON": a 2xx error-envelope object or a wrapper object
     // violates it (the roadmap's HTTP-200-error-envelope bug class).
@@ -143,6 +165,38 @@ export function deriveRealSourceExpectation(
       expected: true,
     })),
   ];
+
+  if (recipe.schemaVersion === 'nightwatch.real-source-expectation-recipe.v2') {
+    // Phase 10A deeper contracts: reproduce every declared item-level type
+    // contract from the type-flow extraction. The extraction's allowed type
+    // set must EQUAL the recipe-declared set (fail-closed contract
+    // reproduction) — the recipe validator already ties the declared set to
+    // the fixed extractor pattern.
+    for (const contract of recipe.itemFieldTypeContracts) {
+      const flow = extractionRun.extractions.find(
+        (e): e is Extract<SourceExtraction, { kind: 'PHP_ITEM_FIELD_TYPE_FLOW' }> =>
+          e.kind === 'PHP_ITEM_FIELD_TYPE_FLOW' && e.fieldVariable === contract.field,
+      );
+      if (flow === undefined) {
+        return { ok: false, failure: 'TYPE_FLOW_AMBIGUOUS', detail: `missing-type-flow:${contract.field}` };
+      }
+      const extracted = [...flow.allowedJsonTypes].sort();
+      const declared = [...contract.allowedTypes].sort();
+      if (extracted.length !== declared.length || extracted.some((type, index) => type !== declared[index])) {
+        return {
+          ok: false,
+          failure: 'TYPE_FLOW_CONTRACT_MISMATCH',
+          detail: `field:${contract.field} extracted:${extracted.join(',')} declared:${declared.join(',')}`,
+        };
+      }
+      const path = [String(contract.itemIndex), contract.field];
+      if (extracted.length === 1) {
+        invariants.push({ kind: 'TYPE_MATCH', path, expectedType: extracted[0]! });
+      } else {
+        invariants.push({ kind: 'TYPE_IN_SET', path, allowedTypes: extracted });
+      }
+    }
+  }
 
   const expectation: SemanticExpectation = {
     schemaVersion: 'nightwatch.semantic-expectation.v1',

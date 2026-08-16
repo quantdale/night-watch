@@ -27,6 +27,7 @@ import { evidenceDigestFor } from './extract/evidence';
 import {
   extractPhpFunctionListRowKeys,
   extractPhpFunctionReturnsListOfBuilder,
+  extractPhpItemFieldTypeFlow,
   extractPhpRouteGetBinding,
 } from './extract/php';
 import type { RealSourceCurrentness, RealSourceReader, RealSourceExpectationRecipe } from './recipes/types';
@@ -70,8 +71,7 @@ function reExtractEvidence(
       const result = extractPhpFunctionListRowKeys(text, extractor.symbol, extractor.accumulator, extractor.pattern);
       if (!result.ok) return { ok: false, reason: 'SOURCE_STALE' };
       extractions.push(result.extraction);
-    }
-    if (extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER') {
+    } else if (extractor.kind === 'PHP_FUNCTION_RETURNS_LIST_OF_BUILDER') {
       const path = recipe.sourcePaths.find((p) => p.endsWith('.php')) ?? recipe.sourcePaths[0] ?? null;
       if (path === null) return { ok: false, reason: 'SOURCE_STALE' };
       const text = reader.readFile(recipe.repoId, path);
@@ -79,8 +79,7 @@ function reExtractEvidence(
       const result = extractPhpFunctionReturnsListOfBuilder(text, extractor.symbol, extractor.accumulator, extractor.builderSymbol);
       if (!result.ok) return { ok: false, reason: 'SOURCE_STALE' };
       extractions.push(result.extraction);
-    }
-    if (extractor.kind === 'PHP_ROUTE_GET_BINDING') {
+    } else if (extractor.kind === 'PHP_ROUTE_GET_BINDING') {
       const path = recipe.sourcePaths.find((p) => p.endsWith('Routing.yaml')) ?? null;
       if (path === null) return { ok: false, reason: 'SOURCE_STALE' };
       const text = reader.readFile(recipe.repoId, path);
@@ -88,6 +87,18 @@ function reExtractEvidence(
       const result = extractPhpRouteGetBinding(text, extractor.routePath, extractor.client, extractor.method);
       if (!result.ok) return { ok: false, reason: 'SOURCE_STALE' };
       extractions.push(result.extraction);
+    } else if (extractor.kind === 'PHP_ITEM_FIELD_TYPE_FLOW') {
+      const path = recipe.sourcePaths.find((p) => p.endsWith('.php')) ?? recipe.sourcePaths[0] ?? null;
+      if (path === null) return { ok: false, reason: 'SOURCE_STALE' };
+      const text = reader.readFile(recipe.repoId, path);
+      if (text === null) return { ok: false, reason: 'SOURCE_UNAVAILABLE' };
+      const result = extractPhpItemFieldTypeFlow(text, extractor.symbol, extractor.fieldVariable, extractor.pattern);
+      if (!result.ok) return { ok: false, reason: 'SOURCE_STALE' };
+      extractions.push(result.extraction);
+    } else {
+      // Unknown extractor kinds must never be silently skipped (that would
+      // drop evidence from the digest and defeat stale detection).
+      return { ok: false, reason: 'SOURCE_STALE' };
     }
   }
   const digest = evidenceDigestFor(extractions);

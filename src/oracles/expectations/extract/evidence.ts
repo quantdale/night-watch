@@ -41,13 +41,33 @@ export function canonicalExtraction(extraction: SourceExtraction): string {
       returnsAccumulatorList: extraction.returnsAccumulatorList,
     });
   }
-  return JSON.stringify({
-    kind: extraction.kind,
-    routePath: extraction.routePath,
-    client: extraction.client,
-    method: extraction.method,
-    found: extraction.found,
-  });
+  if (extraction.kind === 'PHP_ITEM_FIELD_TYPE_FLOW') {
+    return JSON.stringify({
+      kind: extraction.kind,
+      symbol: extraction.symbol,
+      fieldVariable: extraction.fieldVariable,
+      pattern: extraction.pattern,
+      arrayInitSites: extraction.arrayInitSites,
+      emptyGuardedCastSites: extraction.emptyGuardedCastSites,
+      subscriptAssignments: extraction.subscriptAssignments,
+      otherAssignments: extraction.otherAssignments,
+      rowFieldBinding: extraction.rowFieldBinding,
+      allowedJsonTypes: [...extraction.allowedJsonTypes].sort(),
+    });
+  }
+  if (extraction.kind === 'PHP_ROUTE_GET_BINDING') {
+    return JSON.stringify({
+      kind: extraction.kind,
+      routePath: extraction.routePath,
+      client: extraction.client,
+      method: extraction.method,
+      found: extraction.found,
+    });
+  }
+  // Unknown extraction kinds must never silently fold into the route-binding
+  // canonical form (that would drop the load-bearing evidence from the
+  // digest and defeat stale detection). Fail closed instead.
+  throw new Error(`EVIDENCE_DIGEST:unsupported-extraction-kind:${(extraction as { kind: string }).kind}`);
 }
 
 /** Evidence digest over one or more extractions in recipe order. */

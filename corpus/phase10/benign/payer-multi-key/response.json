@@ -1,0 +1,11 @@
+[
+  {
+    "id": "SENTINEL_PAYER_ID_22CC",
+    "vendor": "gcp",
+    "name": "SENTINEL_PAYER_NAME_22CC",
+    "exchange_rate": {
+      "jpy": 1.2345,
+      "sgd": 1.4567
+    }
+  }
+]

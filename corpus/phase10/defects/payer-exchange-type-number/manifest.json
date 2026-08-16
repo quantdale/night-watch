@@ -1,0 +1,20 @@
+{
+  "scenarioId": "phase10.defect.payer-exchange-type-number",
+  "semanticDefectClass": "ITEM_FIELD_TYPE_REGRESSION",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.payer-exchange.read",
+    "expectedEnvelope": "SUCCESS_ENVELOPE",
+    "defect": "exchange_rate serialized as a JSON NUMBER where the source establishes OBJECT-or-ARRAY ([] when empty, keyed object otherwise)"
+  },
+  "steps": [
+    {
+      "stepId": "phase10.defect.payer-exchange-type-number.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

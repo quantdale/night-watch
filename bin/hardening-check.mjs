@@ -1094,6 +1094,80 @@ function checkPhase9bIntegrationSeams() {
   }
 }
 
+/**
+ * Phase 10A deeper-contract core purity: the v2 recipe / type-flow extractor
+ * / admission / resolver / invariant surfaces must not execute code (PHP,
+ * eval, Function), spawn child processes, touch the filesystem/network, or
+ * import AI/selfDev/Phase6/infra/campaign/persistence modules. Read-only
+ * source text is injected through the existing RealSourceReader interface.
+ */
+function checkPhase10DeeperContractPurity() {
+  const files = [
+    'src/oracles/expectations/recipes/types.ts',
+    'src/oracles/expectations/recipes/validator.ts',
+    'src/oracles/expectations/recipes/registry.ts',
+    'src/oracles/expectations/extract/php.ts',
+    'src/oracles/expectations/extract/evidence.ts',
+    'src/oracles/expectations/admission.ts',
+    'src/oracles/expectations/resolver.ts',
+    'src/oracles/expectations/types.ts',
+    'src/oracles/expectations/validator.ts',
+    'src/oracles/invariants/evaluate.ts',
+    'src/oracles/semantic/oracle.ts',
+  ];
+  for (const file of files) {
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops|runRecorder|storage|dossier|artifacts|triage)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\(|child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|writeImmutableJson|PrivateArtifactStore|renameSync|unlinkSync|mkdirSync|rmSync|fetch\s*\()/i.test(source)) {
+      fail(`${file} exposes a code-execution, process, network, or persistence capability`);
+    }
+  }
+}
+
+/**
+ * Phase 10A integration seams: the v2 recipe schema (2 v2 + 2 v1 registry
+ * mix), the type-flow extractor, the TYPE_IN_SET invariant vocabulary, the
+ * fail-closed extraction dispatch (admission + resolver), and the evidence
+ * digest binding are all wired.
+ */
+function checkPhase10IntegrationSeams() {
+  const registry = read('src/oracles/expectations/recipes/registry.ts');
+  if (!/nightwatch\.real-source-expectation-recipe\.v2/.test(registry)) {
+    fail('recipe registry is missing the v2 schema constant');
+  }
+  const extractor = read('src/oracles/expectations/extract/php.ts');
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(extractor) || !/extractPhpItemFieldTypeFlow/.test(extractor)) {
+    fail('type-flow extractor is missing from the PHP extractor module');
+  }
+  if (!/EMPTY_CAST_OBJECT/.test(extractor) || !/EMPTY_ARRAY_OR_STRING_KEYS/.test(extractor)) {
+    fail('type-flow extractor lost a fixed pattern');
+  }
+  const expectationTypes = read('src/oracles/expectations/types.ts');
+  if (!/TYPE_IN_SET/.test(expectationTypes)) fail('TYPE_IN_SET is missing from the invariant vocabulary');
+  const invariantEval = read('src/oracles/invariants/evaluate.ts');
+  if (!/case 'TYPE_IN_SET'/.test(invariantEval)) fail('TYPE_IN_SET evaluation case is missing');
+  const oracle = read('src/oracles/semantic/oracle.ts');
+  if (!/case 'TYPE_IN_SET':\n\s+case 'TYPE_MATCH':/.test(oracle) && !/TYPE_IN_SET[\s\S]{0,200}TYPE_CONTRADICTED/.test(oracle)) {
+    fail('semantic oracle lost the TYPE_IN_SET -> TYPE_CONTRADICTED class mapping');
+  }
+  const evidence = read('src/oracles/expectations/extract/evidence.ts');
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(evidence) || !/unsupported-extraction-kind/.test(evidence)) {
+    fail('evidence digest must bind the type-flow extraction and fail closed on unknown kinds');
+  }
+  const admission = read('src/oracles/expectations/admission.ts');
+  if (!/TYPE_FLOW_AMBIGUOUS/.test(admission) || !/TYPE_FLOW_CONTRACT_MISMATCH/.test(admission)) {
+    fail('admission lost the type-flow fail-closed vocabulary');
+  }
+  const resolver = read('src/oracles/expectations/resolver.ts');
+  if (!/PHP_ITEM_FIELD_TYPE_FLOW/.test(resolver)) fail('resolver must re-extract the type-flow evidence');
+  const corpus = read('corpus/phase10/source-fixture/phase10Fixtures.ts');
+  if (!/real-source-expectation-recipe\.v2/.test(corpus)) fail('Phase 10 fixture corpus is missing v2 fixture recipes');
+  const historical = read('corpus/phase10/historical/archivedV1Recipes.ts');
+  if (!/real-source-shape/.test(historical)) fail('archived v1 recipes are missing the historical shape identities');
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -1117,6 +1191,8 @@ checkPhase9A1SourceReaderBoundary();
 checkPhase9A1IntegrationSeams();
 checkPhase9bCorePurity();
 checkPhase9bIntegrationSeams();
+checkPhase10DeeperContractPurity();
+checkPhase10IntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {

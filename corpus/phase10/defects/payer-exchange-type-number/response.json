@@ -1,0 +1,8 @@
+[
+  {
+    "id": "SENTINEL_PAYER_ID_77CC",
+    "vendor": "aws",
+    "name": "SENTINEL_PAYER_NAME_77CC",
+    "exchange_rate": 12345.678
+  }
+]

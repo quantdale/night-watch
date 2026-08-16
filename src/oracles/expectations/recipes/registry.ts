@@ -1,17 +1,26 @@
 // ---------------------------------------------------------------------------
-// Nightwatch Phase 9A.1 — fixed real-source expectation recipe registry
-// (SPEC §11, §17, §28, §32, §33).
+// Nightwatch Phase 9A.1 + Phase 10A — fixed real-source expectation recipe
+// registry (SPEC §11, §17, §28, §32, §33; Phase 10A §6).
 //
 // DATA ONLY. These recipes were admitted by the Phase 9A.1 candidate audit
 // (2026-08-16) against mobingilabs/ripple-api @
-// 27bb007ad0c798800b6bd3b29760c966422966e7 (evidence: candidate table in
-// .agent/tasks/phase-9a-1-real-source-expectation-admission/STATE.md).
+// 27bb007ad0c798800b6bd3b29760c966422966e7 and re-verified for Phase 10A
+// against the current remote master @
+// 169df39d3cdf56c88f98d45d06eae6e48c3d8f6d (ExchangeRate.php +
+// Routing.yaml byte-identical across the two SHAs; evidence: Phase 10A
+// task records).
 //
 //   targetId                     route                              handler
-//   ripple.common-exchange.read  /exchange_rate/global/{vendor}     ExchangeRate::getCommonExchangeRate
-//   ripple.payer-exchange.read   /v2/payer/exchange_rate/{month}    ExchangeRate::getAccountExchangeForMonth
-//   ripple.account-inventory.read /accts                           Account::getAccountVendor (rows: insertAccount)
-//   ripple.billing-group-exchange.read /exchange_rate/billing_group/{month} BillingGroup::getExchangeRateForBillingGroup
+//   ripple.common-exchange.read  /exchange_rate/global/{vendor}     ExchangeRate::getCommonExchangeRate   (v2, L3)
+//   ripple.payer-exchange.read   /v2/payer/exchange_rate/{month}    ExchangeRate::getAccountExchangeForMonth (v2, L3)
+//   ripple.account-inventory.read /accts                           Account::getAccountVendor (rows: insertAccount) (v1, L2)
+//   ripple.billing-group-exchange.read /exchange_rate/billing_group/{month} BillingGroup::getExchangeRateForBillingGroup (v1, L2)
+//
+// v2 recipes ADDITIVELY carry item-level field type contracts (proven JSON
+// type sets via PHP_ITEM_FIELD_TYPE_FLOW); v1 recipes keep the Phase 9A.1
+// shape-only contract byte-meaning-stable. The retired v1 recipes for
+// common/payer are archived data-only under corpus/phase10/historical/ (the
+// historical `...real-source-shape` expectation identities stay historical).
 //
 // Every recipe: source paths, extractor sequence (fixed vocabulary), the
 // expected source contract, and the expectation blueprint. The derivation
@@ -56,7 +65,7 @@ export const DEV_REACHABLE_RECIPE_TARGET_IDS: readonly string[] = Object.freeze(
 
 const recipeData: readonly unknown[] = [
   {
-    schemaVersion: 'nightwatch.real-source-expectation-recipe.v1',
+    schemaVersion: 'nightwatch.real-source-expectation-recipe.v2',
     recipeId: 'recipe.ripple.common-exchange.read',
     targetId: 'ripple.common-exchange.read',
     repoId: 'mobingilabs/ripple-api',
@@ -64,18 +73,22 @@ const recipeData: readonly unknown[] = [
     extractors: [
       { kind: 'PHP_FUNCTION_LIST_ROW_KEYS', symbol: 'getCommonExchangeRate', accumulator: 'res', pattern: 'PUSH' },
       { kind: 'PHP_ROUTE_GET_BINDING', routePath: '/exchange_rate/global/{vendor}', client: 'App\\Handler\\ExchangeRate', method: 'getCommonExchangeRate' },
+      { kind: 'PHP_ITEM_FIELD_TYPE_FLOW', symbol: 'getCommonExchangeRate', fieldVariable: 'exchange_rate', pattern: 'EMPTY_CAST_OBJECT' },
     ],
     expectedContract: { topLevel: 'ARRAY', requiredItemKeys: ['exchange_rate', 'month'] },
     blueprint: {
-      expectationId: 'ripple.common-exchange.read.real-source-shape',
+      expectationId: 'ripple.common-exchange.read.real-source-deep',
       projectionContractLimits: {},
       rootType: 'ARRAY',
       itemIndex: 0,
       itemFieldPaths: ['month', 'exchange_rate'],
     },
+    itemFieldTypeContracts: [
+      { field: 'exchange_rate', itemIndex: 0, allowedTypes: ['OBJECT'] },
+    ],
   },
   {
-    schemaVersion: 'nightwatch.real-source-expectation-recipe.v1',
+    schemaVersion: 'nightwatch.real-source-expectation-recipe.v2',
     recipeId: 'recipe.ripple.payer-exchange.read',
     targetId: 'ripple.payer-exchange.read',
     repoId: 'mobingilabs/ripple-api',
@@ -83,15 +96,19 @@ const recipeData: readonly unknown[] = [
     extractors: [
       { kind: 'PHP_FUNCTION_LIST_ROW_KEYS', symbol: 'getAccountExchangeForMonth', accumulator: 'res', pattern: 'PUSH' },
       { kind: 'PHP_ROUTE_GET_BINDING', routePath: '/v2/payer/exchange_rate/{month}', client: 'App\\Handler\\ExchangeRate', method: 'getAccountExchangeForMonth' },
+      { kind: 'PHP_ITEM_FIELD_TYPE_FLOW', symbol: 'getAccountExchangeForMonth', fieldVariable: 'exchange_rate', pattern: 'EMPTY_ARRAY_OR_STRING_KEYS' },
     ],
     expectedContract: { topLevel: 'ARRAY', requiredItemKeys: ['exchange_rate', 'id', 'name', 'vendor'] },
     blueprint: {
-      expectationId: 'ripple.payer-exchange.read.real-source-shape',
+      expectationId: 'ripple.payer-exchange.read.real-source-deep',
       projectionContractLimits: {},
       rootType: 'ARRAY',
       itemIndex: 0,
       itemFieldPaths: ['id', 'vendor', 'name', 'exchange_rate'],
     },
+    itemFieldTypeContracts: [
+      { field: 'exchange_rate', itemIndex: 0, allowedTypes: ['ARRAY', 'OBJECT'] },
+    ],
   },
   {
     schemaVersion: 'nightwatch.real-source-expectation-recipe.v1',

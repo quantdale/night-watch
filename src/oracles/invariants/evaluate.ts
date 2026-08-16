@@ -101,6 +101,18 @@ export function evaluateInvariant(
       if (node === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
       return { invariantKind: invariant.kind, verdict: node.type === invariant.expectedType ? 'PASS' : 'VIOLATED' };
     }
+    case 'TYPE_IN_SET': {
+      // Phase 10A: source-established polymorphic JSON type contract.
+      // A missing path — or an ambiguity caused by an empty/uninspected
+      // parent array — is NOT_APPLICABLE, never an anomaly.
+      const root = projections[0]?.root;
+      if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      const resolved = resolvePathWithAmbiguity(root, invariant.path);
+      if (resolved.na) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      const node = resolved.node;
+      if (node === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };
+      return { invariantKind: invariant.kind, verdict: invariant.allowedTypes.includes(node.type) ? 'PASS' : 'VIOLATED' };
+    }
     case 'CARDINALITY_MATCH': {
       const root = projections[0]?.root;
       if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE' };

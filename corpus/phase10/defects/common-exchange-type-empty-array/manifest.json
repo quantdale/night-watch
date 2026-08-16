@@ -1,0 +1,20 @@
+{
+  "scenarioId": "phase10.defect.common-exchange-type-empty-array",
+  "semanticDefectClass": "ITEM_FIELD_TYPE_REGRESSION",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.common-exchange.read",
+    "expectedEnvelope": "SUCCESS_ENVELOPE",
+    "defect": "exchange_rate serialized as an uncast empty JSON ARRAY where the source empty case is (object)-cast to {} (the D-58-era 'ARRAY when empty' regression)"
+  },
+  "steps": [
+    {
+      "stepId": "phase10.defect.common-exchange-type-empty-array.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

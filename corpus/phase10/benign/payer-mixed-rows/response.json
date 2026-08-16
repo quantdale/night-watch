@@ -1,0 +1,16 @@
+[
+  {
+    "id": "SENTINEL_PAYER_ID_22DD",
+    "vendor": "aws",
+    "name": "SENTINEL_PAYER_NAME_22DD",
+    "exchange_rate": []
+  },
+  {
+    "id": "SENTINEL_PAYER_ID_22EE",
+    "vendor": "azure",
+    "name": "SENTINEL_PAYER_NAME_22EE",
+    "exchange_rate": {
+      "jpy": 1.2345
+    }
+  }
+]

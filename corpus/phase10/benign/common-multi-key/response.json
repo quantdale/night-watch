@@ -1,0 +1,12 @@
+[
+  {
+    "month": "SENTINEL_MONTH_11CC",
+    "exchange_rate": {
+      "jpy": 1.2345,
+      "sgd": 1.4567,
+      "myr": 1.7891,
+      "idr": 15234.5,
+      "inr": 92.34
+    }
+  }
+]

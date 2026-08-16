@@ -87,6 +87,7 @@ function observedClassFor(invariant: InvariantEvaluation, expectation: SemanticE
     case 'FIELD_ABSENT':
       return 'FIELD_PRESENCE_CONTRADICTED';
     case 'TYPE_MATCH':
+    case 'TYPE_IN_SET':
       return 'TYPE_CONTRADICTED';
     default:
       return expectation.expectationId;
@@ -111,6 +112,8 @@ function expectedClassFor(invariant: InvariantEvaluation): string {
       return 'FIELD_ABSENT';
     case 'TYPE_MATCH':
       return 'TYPE_MATCH';
+    case 'TYPE_IN_SET':
+      return 'TYPE_IN_SET';
     default:
       return invariant.invariantKind;
   }

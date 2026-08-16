@@ -1,0 +1,20 @@
+{
+  "scenarioId": "phase10.defect.common-exchange-type-string",
+  "semanticDefectClass": "ITEM_FIELD_TYPE_REGRESSION",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.common-exchange.read",
+    "expectedEnvelope": "SUCCESS_ENVELOPE",
+    "defect": "exchange_rate serialized as a JSON STRING where the source establishes OBJECT (empty case casts to {}; non-empty is a keyed object)"
+  },
+  "steps": [
+    {
+      "stepId": "phase10.defect.common-exchange-type-string.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

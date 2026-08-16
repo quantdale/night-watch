@@ -21,9 +21,14 @@
 // equals an admitted real-product expectation.
 // ---------------------------------------------------------------------------
 
-import type { ProjectionLimits } from '../../projections/types';
+import type { ProjectionLimits, ProjectionNodeType } from '../../projections/types';
 
 export const REAL_SOURCE_EXPECTATION_RECIPE_VERSION = 'nightwatch.real-source-expectation-recipe.v1' as const;
+/** Phase 10A: richer recipe contract — v1 semantics are byte-meaning-stable;
+ *  v2 ADDITIVELY carries item-level field type contracts derived from fixed
+ *  bounded type-flow extraction (SPEC Phase 10A §6). A v1 recipe never
+ *  carries the deep contract; a v2 recipe always does. */
+export const REAL_SOURCE_EXPECTATION_RECIPE_VERSION_V2 = 'nightwatch.real-source-expectation-recipe.v2' as const;
 
 // ---------------------------------------------------------------------------
 // Fixed extractor vocabulary (SPEC §12) — only the kinds required by the
@@ -74,14 +79,56 @@ export type PhpRouteGetBindingParams = {
   readonly method: string;
 };
 
+/** Phase 10A: item field JSON type-flow proof (SPEC Phase 10A §7). The
+ *  extractor scans ONE function body for the fixed assignment pattern of a
+ *  named field variable (`$fieldVariable`) and proves the JSON type set the
+ *  variable can serialize to. Fixed patterns only; anything outside the
+ *  pattern is TYPE_FLOW_AMBIGUOUS (fail-closed). Never executes PHP. */
+export type PhpItemFieldTypeFlowParams = {
+  readonly kind: 'PHP_ITEM_FIELD_TYPE_FLOW';
+  /** Exact PHP function name (e.g. `getCommonExchangeRate`). */
+  readonly symbol: string;
+  /** Field variable name WITHOUT the `$` (e.g. `exchange_rate`). */
+  readonly fieldVariable: string;
+  /** EMPTY_CAST_OBJECT: `[]` inits + `if (empty($var)) { $var = (object)$var; }`
+   *  + no other assignment => JSON type OBJECT (empty case serializes `{}`).
+   *  EMPTY_ARRAY_OR_STRING_KEYS: `[]` inits + NO cast + `$var[...] =` string-
+   *  key subscripts + no other assignment => JSON type OBJECT-or-ARRAY. */
+  readonly pattern: 'EMPTY_CAST_OBJECT' | 'EMPTY_ARRAY_OR_STRING_KEYS';
+};
+
 export type ExtractorParams =
   | PhpFunctionListRowKeysParams
   | PhpFunctionReturnsListOfBuilderParams
-  | PhpRouteGetBindingParams;
+  | PhpRouteGetBindingParams
+  | PhpItemFieldTypeFlowParams;
 
 export type ExtractorKind = ExtractorParams['kind'];
 
 export const MAX_RECIPE_EXTRACTORS = 4;
+
+// ---------------------------------------------------------------------------
+// Phase 10A — item-level field type contracts (recipe v2; SPEC §16).
+//
+// Represents ONLY mechanically proven facts: the JSON type set a row field
+// can serialize to, established by the PHP_ITEM_FIELD_TYPE_FLOW extractor
+// from fixed source patterns. No business-language prose, no runtime values,
+// no raw key text, no arbitrary predicates.
+// ---------------------------------------------------------------------------
+
+export const MAX_ITEM_FIELD_TYPE_CONTRACTS = 8;
+
+export interface RealSourceItemFieldTypeContract {
+  /** Row field name (must be a member of the source-established row key set). */
+  readonly field: string;
+  /** Inspected item index (0 = first inspected item; matches the blueprint
+   *  item index convention). */
+  readonly itemIndex: number;
+  /** Exact JSON type set the source establishes for the field. Canonical
+   *  sorted order; 1..MAX_TYPE_SET_SIZE entries; known ProjectionNodeType
+   *  values only; no duplicates. */
+  readonly allowedTypes: readonly ProjectionNodeType[];
+}
 
 // ---------------------------------------------------------------------------
 // Expected source contract (SPEC §9, §31 — never stronger than the source
@@ -117,11 +164,10 @@ export interface RealSourceExpectationBlueprint {
 }
 
 // ---------------------------------------------------------------------------
-// Recipe DTO (SPEC §11).
+// Recipe DTO (SPEC §11; Phase 10A §6).
 // ---------------------------------------------------------------------------
 
-export interface RealSourceExpectationRecipe {
-  readonly schemaVersion: typeof REAL_SOURCE_EXPECTATION_RECIPE_VERSION;
+interface RealSourceExpectationRecipeBase {
   readonly recipeId: string;
   /** Approved read-only target identity: Phase 5 operationId (which equals
    *  the reviewed journey ruleId for the DEV-reachable operations). */
@@ -135,6 +181,22 @@ export interface RealSourceExpectationRecipe {
   readonly expectedContract: RealSourceContract;
   readonly blueprint: RealSourceExpectationBlueprint;
 }
+
+export interface RealSourceExpectationRecipeV1 extends RealSourceExpectationRecipeBase {
+  readonly schemaVersion: typeof REAL_SOURCE_EXPECTATION_RECIPE_VERSION;
+}
+
+/** v2 = v1 semantics (row shape + route binding + blueprint) PLUS the
+ *  mechanically proven item-level field type contracts. A v2 recipe MUST
+ *  carry at least one itemFieldTypeContract and MUST include a matching
+ *  PHP_ITEM_FIELD_TYPE_FLOW extractor per contract (enforced by the strict
+ *  validator). */
+export interface RealSourceExpectationRecipeV2 extends RealSourceExpectationRecipeBase {
+  readonly schemaVersion: typeof REAL_SOURCE_EXPECTATION_RECIPE_VERSION_V2;
+  readonly itemFieldTypeContracts: readonly RealSourceItemFieldTypeContract[];
+}
+
+export type RealSourceExpectationRecipe = RealSourceExpectationRecipeV1 | RealSourceExpectationRecipeV2;
 
 // ---------------------------------------------------------------------------
 // Derivation outputs (SPEC §14, §15).
@@ -162,6 +224,24 @@ export type SourceExtraction =
       readonly client: string;
       readonly method: string;
       readonly found: boolean;
+    }
+  | {
+      readonly kind: 'PHP_ITEM_FIELD_TYPE_FLOW';
+      readonly symbol: string;
+      readonly fieldVariable: string;
+      readonly pattern: 'EMPTY_CAST_OBJECT' | 'EMPTY_ARRAY_OR_STRING_KEYS';
+      /** `$var = []` initialization sites. */
+      readonly arrayInitSites: number;
+      /** `if (empty($var)) { $var = (object)$var; }` sites. */
+      readonly emptyGuardedCastSites: number;
+      /** `$var[...] =` subscript assignment sites. */
+      readonly subscriptAssignments: number;
+      /** `$var = <other>` sites (RHS neither `[]` nor `(object)$var`). */
+      readonly otherAssignments: number;
+      /** `'<field>' => $<var>` row-literal binding found. */
+      readonly rowFieldBinding: boolean;
+      /** JSON type set proven by the fixed pattern decision table. */
+      readonly allowedJsonTypes: readonly ProjectionNodeType[];
     };
 
 /** Deterministic evidence digest over the NORMALIZED source structure used
@@ -183,6 +263,8 @@ export type RealSourceDerivationFailure =
   | 'ROUTE_BINDING_MISMATCH'
   | 'BUILDER_PUSH_NOT_FOUND'
   | 'EXTRACTION_UNSUPPORTED'
+  | 'TYPE_FLOW_AMBIGUOUS'
+  | 'TYPE_FLOW_CONTRACT_MISMATCH'
   | 'CONTRACT_MISMATCH';
 
 export type RealSourceDerivationResult =

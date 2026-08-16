@@ -13,6 +13,7 @@ import {
   MAX_EXPECTATION_ID_LENGTH,
   MAX_INVARIANTS_PER_EXPECTATION,
   MAX_NUMERIC_OPERANDS,
+  MAX_TYPE_SET_SIZE,
   SEMANTIC_EXPECTATION_VERSION,
   type EnvelopeClass,
   type InvariantDefinition,
@@ -32,6 +33,7 @@ const INVARIANT_KINDS: ReadonlySet<string> = new Set([
   'FIELD_PRESENT',
   'FIELD_ABSENT',
   'TYPE_MATCH',
+  'TYPE_IN_SET',
   'CARDINALITY_MATCH',
   'ENVELOPE_CLASS',
   'IDENTITY_EQUAL',
@@ -135,6 +137,29 @@ function validateInvariant(value: unknown, index: number): InvariantDefinition {
       if (!EXPECTED_TYPES.has(expectedType)) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].expectedType-unsupported`);
       assertNoUnknownFields(record, new Set(['kind', 'path', 'expectedType']), `invariant[${index}]`);
       return { kind, path, expectedType: expectedType as TypeMatchInvariant['expectedType'] };
+    }
+    case 'TYPE_IN_SET': {
+      const path = validateSafePath(record['path'], `invariant[${index}].path`);
+      const allowedTypes = record['allowedTypes'];
+      if (!Array.isArray(allowedTypes) || allowedTypes.length === 0 || allowedTypes.length > MAX_TYPE_SET_SIZE) {
+        throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].allowedTypes-unbounded`);
+      }
+      const seen = new Set<string>();
+      for (let i = 0; i < allowedTypes.length; i++) {
+        const type = expectString(allowedTypes[i], `invariant[${index}].allowedTypes[${i}]`);
+        if (!EXPECTED_TYPES.has(type)) {
+          throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].allowedTypes-unsupported:${type}`);
+        }
+        if (seen.has(type)) {
+          throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].allowedTypes-duplicate:${type}`);
+        }
+        seen.add(type);
+      }
+      // Canonical sorted order (deterministic DTOs; receipts/fingerprints
+      // stay stable across equivalent spellings).
+      const canonical = [...seen].sort() as ('NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY')[];
+      assertNoUnknownFields(record, new Set(['kind', 'path', 'allowedTypes']), `invariant[${index}]`);
+      return { kind, path, allowedTypes: canonical };
     }
     case 'CARDINALITY_MATCH': {
       const path = validateSafePath(record['path'], `invariant[${index}].path`);

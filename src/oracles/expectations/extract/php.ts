@@ -18,6 +18,7 @@ import type {
   RealSourceDerivationFailure,
   SourceExtraction,
 } from '../recipes/types';
+import type { ProjectionNodeType } from '../../projections/types';
 
 export type PhpLexFailure =
   | 'SOURCE_TOO_LARGE'
@@ -28,7 +29,8 @@ export type PhpLexFailure =
   | 'ITEM_KEYS_MISMATCH'
   | 'ROUTE_NOT_FOUND'
   | 'ROUTE_BINDING_MISMATCH'
-  | 'BUILDER_PUSH_NOT_FOUND';
+  | 'BUILDER_PUSH_NOT_FOUND'
+  | 'TYPE_FLOW_AMBIGUOUS';
 
 export type PhpExtractionResult =
   | { readonly ok: true; readonly extraction: SourceExtraction }
@@ -493,6 +495,200 @@ export function extractPhpRouteGetBinding(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Extractor 4 — PHP_ITEM_FIELD_TYPE_FLOW (Phase 10A)
+//
+// Proves the JSON type set a row field variable can serialize to, from a
+// FIXED assignment-pattern vocabulary inside ONE function body:
+//
+//   EMPTY_CAST_OBJECT          `$var = []` inits + at least one
+//                              `if (empty($var)) { $var = (object)$var; }`
+//                              + no other assignment + row-literal binding
+//                              => allowedJsonTypes ['OBJECT']
+//   EMPTY_ARRAY_OR_STRING_KEYS `$var = []` inits + ZERO casts + at least one
+//                              `$var[...] =` subscript + no other assignment
+//                              + row-literal binding
+//                              => allowedJsonTypes ['OBJECT','ARRAY']
+//
+// The decision table is fixed and exhaustive: any other assignment pattern
+// (reassignment to a scalar, a cast of a different variable, an unguarded
+// cast, a missing row binding, ...) is TYPE_FLOW_AMBIGUOUS — admission is
+// NEVER weakened to fit the source. Type is never inferred from variable
+// names; only these literal token patterns count.
+//
+// `$var = (object)$var` is the ONLY recognized cast assignment; `$var = []`
+// is the ONLY recognized non-subscript value assignment. A `$var[...] =`
+// subscript is counted as subscriptAssignments regardless of the key
+// expression (runtime keys keep the JSON class OBJECT as long as the keys
+// are strings; numeric-string key collapse is a product config defect, not
+// a legitimate representation — documented residual, SPEC Phase 10A §5).
+// ---------------------------------------------------------------------------
+
+export function extractPhpItemFieldTypeFlow(
+  sourceText: string,
+  symbol: string,
+  fieldVariable: string,
+  pattern: 'EMPTY_CAST_OBJECT' | 'EMPTY_ARRAY_OR_STRING_KEYS',
+): PhpExtractionResult {
+  if (sourceText.length > MAX_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
+  let tokens: PhpToken[];
+  try {
+    tokens = tokenizePhp(sourceText);
+  } catch {
+    return { ok: false, failure: 'SOURCE_TOO_LARGE', detail: 'token-limit' };
+  }
+  const body = findFunctionBody(tokens, symbol);
+  if (body === null) return { ok: false, failure: 'FUNCTION_NOT_FOUND', detail: symbol };
+  if (body.end - body.start > MAX_FUNCTION_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE', detail: 'function-body' };
+
+  let arrayInitSites = 0;
+  let emptyGuardedCastSites = 0;
+  let subscriptAssignments = 0;
+  let otherAssignments = 0;
+  let rowFieldBinding = false;
+
+  for (let i = body.start + 1; i < body.end; i++) {
+    const token = tokens[i]!;
+    // `'<field>' => $<fieldVariable>` row-literal binding (anywhere in the
+    // function body; the field name is unique per row literal).
+    if (
+      token.t === 'STRING' && token.v === fieldVariable &&
+      tokens[i + 1]?.t === 'OP' && tokens[i + 1]?.v === '=>' &&
+      tokens[i + 2]?.t === 'VARIABLE' && tokens[i + 2]?.v === fieldVariable
+    ) {
+      rowFieldBinding = true;
+      continue;
+    }
+    if (token.t !== 'VARIABLE' || token.v !== fieldVariable) continue;
+    const at = tokens[i + 1];
+    if (at === undefined) continue;
+    // `$var[` — subscript assignment `$var[...] =`.
+    if (at.t === 'PUNCT' && at.v === '[') {
+      const close = findMatchingBracket(tokens, i + 1);
+      if (close < tokens.length && tokens[close + 1]?.t === 'PUNCT' && tokens[close + 1]?.v === '=') {
+        subscriptAssignments += 1;
+      }
+      continue;
+    }
+    if (at.t === 'PUNCT' && at.v === '=') {
+      const rhs = tokens[i + 2];
+      // `$var = []` (empty or non-empty array literal initialization).
+      if (rhs?.t === 'PUNCT' && rhs.v === '[') {
+        arrayInitSites += 1;
+        continue;
+      }
+      // `$var = (object)$var` — the recognized cast assignment.
+      if (
+        rhs?.t === 'PUNCT' && rhs.v === '(' &&
+        tokens[i + 3]?.t === 'WORD' && tokens[i + 3]?.v === 'object' &&
+        tokens[i + 4]?.t === 'PUNCT' && tokens[i + 4]?.v === ')' &&
+        tokens[i + 5]?.t === 'VARIABLE' && tokens[i + 5]?.v === fieldVariable
+      ) {
+        // Only an empty-guarded cast counts: the cast statement must sit
+        // inside a body whose nearest preceding `if (...)` condition tests
+        // `empty($fieldVariable)`.
+        if (isEmptyGuardedCast(tokens, body.start, i, fieldVariable)) {
+          emptyGuardedCastSites += 1;
+        } else {
+          otherAssignments += 1;
+        }
+        continue;
+      }
+      // Any other `$var =` RHS is an unproven assignment pattern.
+      otherAssignments += 1;
+    }
+  }
+
+  let allowedJsonTypes: readonly ProjectionNodeType[];
+  if (pattern === 'EMPTY_CAST_OBJECT') {
+    if (arrayInitSites >= 1 && emptyGuardedCastSites >= 1 && otherAssignments === 0 && rowFieldBinding) {
+      allowedJsonTypes = ['OBJECT'];
+    } else {
+      return {
+        ok: false,
+        failure: 'TYPE_FLOW_AMBIGUOUS',
+        detail: `pattern:${pattern} init:${arrayInitSites} cast:${emptyGuardedCastSites} other:${otherAssignments} binding:${rowFieldBinding}`,
+      };
+    }
+  } else {
+    if (arrayInitSites >= 1 && emptyGuardedCastSites === 0 && subscriptAssignments >= 1 && otherAssignments === 0 && rowFieldBinding) {
+      allowedJsonTypes = ['OBJECT', 'ARRAY'];
+    } else {
+      return {
+        ok: false,
+        failure: 'TYPE_FLOW_AMBIGUOUS',
+        detail: `pattern:${pattern} init:${arrayInitSites} cast:${emptyGuardedCastSites} subscript:${subscriptAssignments} other:${otherAssignments} binding:${rowFieldBinding}`,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    extraction: {
+      kind: 'PHP_ITEM_FIELD_TYPE_FLOW',
+      symbol,
+      fieldVariable,
+      pattern,
+      arrayInitSites,
+      emptyGuardedCastSites,
+      subscriptAssignments,
+      otherAssignments,
+      rowFieldBinding,
+      allowedJsonTypes,
+    },
+  };
+}
+
+/** Whether the assignment at `assignIndex` (`$var = (object)$var`) is guarded
+ *  by a preceding `if (empty($var)) {` at the same nesting level. Scans the
+ *  function body backwards for the nearest `if` whose condition contains
+ *  `empty($fieldVariable)` and whose body `{` immediately precedes the
+ *  assignment. Bounded lexical check; no control-flow interpretation. */
+function isEmptyGuardedCast(tokens: PhpToken[], bodyStart: number, assignIndex: number, fieldVariable: string): boolean {
+  let depth = 0;
+  for (let i = assignIndex - 1; i > bodyStart; i--) {
+    const token = tokens[i]!;
+    if (token.t === 'PUNCT' && token.v === '}') {
+      depth += 1;
+      continue;
+    }
+    if (token.t === 'PUNCT' && token.v === '{') {
+      if (depth === 0) {
+        // The block that contains the cast assignment — find its opening
+        // `if (` and check the condition for `empty($fieldVariable)`.
+        if (tokens[i - 1]?.t === 'PUNCT' && tokens[i - 1]?.v === ')') {
+          let j = i - 2;
+          let condDepth = 1;
+          while (j > bodyStart && condDepth > 0) {
+            const c = tokens[j]!;
+            if (c.t === 'PUNCT' && c.v === ')') condDepth += 1;
+            if (c.t === 'PUNCT' && c.v === '(') condDepth -= 1;
+            j -= 1;
+          }
+          // The token before the condition parens must be WORD 'if'.
+          if (tokens[j]?.t !== 'WORD' || tokens[j]?.v !== 'if') return false;
+          // Condition must contain empty($fieldVariable).
+          for (let m = j + 1; m < i - 1; m++) {
+            const c = tokens[m]!;
+            if (
+              c.t === 'WORD' && c.v === 'empty' &&
+              tokens[m + 1]?.t === 'PUNCT' && tokens[m + 1]?.v === '(' &&
+              tokens[m + 2]?.t === 'VARIABLE' && tokens[m + 2]?.v === fieldVariable
+            ) {
+              return true;
+            }
+          }
+          return false;
+        }
+        return false;
+      }
+      depth -= 1;
+      continue;
+    }
+  }
+  return false;
+}
+
 /** Map a lexical failure to the recipe-level derivation failure vocabulary. */
 export function phpFailureToDerivationFailure(failure: PhpLexFailure): RealSourceDerivationFailure {
   switch (failure) {
@@ -514,5 +710,7 @@ export function phpFailureToDerivationFailure(failure: PhpLexFailure): RealSourc
       return 'ROUTE_BINDING_MISMATCH';
     case 'BUILDER_PUSH_NOT_FOUND':
       return 'BUILDER_PUSH_NOT_FOUND';
+    case 'TYPE_FLOW_AMBIGUOUS':
+      return 'TYPE_FLOW_AMBIGUOUS';
   }
 }
