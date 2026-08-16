@@ -57,6 +57,8 @@ jobs:
         run: npx playwright test tests/unit/oracleCeilingReproduction.test.ts tests/unit/oracleProjection.test.ts tests/unit/oracleExpectation.test.ts tests/unit/oracleExpectationRealSource.test.ts tests/unit/oracleInvariant.test.ts tests/unit/oraclePrecision.test.ts tests/unit/semanticSentinel.test.ts tests/unit/semanticIntegration.test.ts tests/unit/semanticCampaign.test.ts --project=nightwatch --workers=1
       - name: Phase 9A.1 real-source expectation admission matrix
         run: npx playwright test tests/unit/phase9a1GapReproduction.test.ts tests/unit/realSourceExtraction.test.ts tests/unit/realSourceRecipeValidation.test.ts tests/unit/realSourceAdmission.test.ts tests/unit/realSourceCurrentness.test.ts tests/unit/semanticReceipt.test.ts tests/unit/semanticReceiptSentinel.test.ts tests/unit/realSourceConformingMutation.test.ts tests/unit/observerSemanticLedger.test.ts tests/unit/realSourceCanary.test.ts --project=nightwatch --workers=1
+      - name: Phase 9B contained DEV semantic acceptance harness matrix
+        run: npx playwright test tests/unit/phase9bFreshness.test.ts tests/unit/phase9bHarness.test.ts --project=nightwatch --workers=1
       - name: Project-memory truth check
         run: |
           test -z "$(git status --porcelain)"
@@ -84,3 +86,6 @@ jobs:
 # auth:capture, product journeys, DEV/NEXT targets, databases, infrastructure,
 # external publication, or artifact upload. It proves source/fixture invariants
 # independently on GitHub; it does not prove target-environment behavior.
+# The Phase 9B matrix step is LOCAL/SYNTHETIC ONLY (synthetic remote/local SHA
+# fixtures; no GitHub dependency): authenticated product runs are never
+# executed in CI.

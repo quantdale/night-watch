@@ -1038,6 +1038,62 @@ function checkPhase9A1IntegrationSeams() {
   }
 }
 
+/**
+ * Phase 9B core purity: the freshness classifier, preflight evaluator, and
+ * pass-summary modules are PURE — no network, no fs, no child processes, no
+ * persistence, no eval, no AI/selfDev/Phase6 imports. The runner collects the
+ * facts (remote SHAs, diffs, derivation, proxy/auth booleans) and injects
+ * them; the core never performs I/O.
+ */
+function checkPhase9bCorePurity() {
+  const files = [
+    'src/core/phase9b/freshness.ts',
+    'src/core/phase9b/preflight.ts',
+    'src/core/phase9b/summary.ts',
+  ];
+  for (const file of files) {
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage|dossier|artifacts)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\(|child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|fetch\s*\(|node:fs)\b/i.test(source)) {
+      fail(`${file} exposes a code-execution, process, network, or persistence capability`);
+    }
+  }
+}
+
+/**
+ * Phase 9B integration seams: the context exposes the optional semantic
+ * oracle and passes it to the network observer; the Phase 9B runner is
+ * gated by the one-shot launcher flag and fixes the common-exchange journey.
+ */
+function checkPhase9bIntegrationSeams() {
+  const context = read('src/browser/context.ts');
+  if (!/semanticOracle\?: SemanticResponseOracle/.test(context)) {
+    fail('context is missing the optional Phase 9B semanticOracle option');
+  }
+  if (!/semanticOracle: opts\.semanticOracle/.test(context)) {
+    fail('context does not pass the semantic oracle to the network observer');
+  }
+  const runner = read('tests/manual/phase9b-contained-dev-semantic.ts');
+  if (!/NIGHTWATCH_PHASE_9B_REAL/.test(runner)) {
+    fail('Phase 9B runner is missing the one-shot real-run gate');
+  }
+  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runner)) {
+    fail('Phase 9B runner lost its fixed common-exchange journey');
+  }
+  if (/NIGHTWATCH_PHASE_2B_JOURNEY_ID/.test(runner)) {
+    fail('Phase 9B runner must not accept journey selection');
+  }
+  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
+    fail('Phase 9B runner must reject any UI URL override');
+  }
+  const launcher = read('bin/phase9b-launcher-args.mjs');
+  if (!/no journey selector/.test(launcher) || !/--ui-url/.test(launcher)) {
+    fail('Phase 9B launcher must reject journey/URL selectors');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -1059,6 +1115,8 @@ checkPhase9IntegrationSeams();
 checkPhase9A1RealSourceCorePurity();
 checkPhase9A1SourceReaderBoundary();
 checkPhase9A1IntegrationSeams();
+checkPhase9bCorePurity();
+checkPhase9bIntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {

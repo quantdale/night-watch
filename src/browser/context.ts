@@ -40,6 +40,7 @@ import { RunMonitor } from '../state/run';
 import {
   createNetworkObserver,
   type NetworkObserver,
+  type SemanticResponseOracle,
 } from './observers/networkObserver';
 import { createConsoleObserver } from './observers/consoleObserver';
 import {
@@ -81,6 +82,10 @@ export interface NightwatchContextOptions {
   endpointRegistry?: readonly EndpointSemanticRule[];
   /** Metadata-only identity for anomaly fingerprints; never page data. */
   journeyId?: string;
+  /** Phase 9B explicit semantic-oracle option: the caller provides an
+   *  admitted real-source resolver; there is no global default and no
+   *  environment-variable-created semantic authority. */
+  semanticOracle?: SemanticResponseOracle;
 }
 
 export interface NightwatchContext {
@@ -314,6 +319,7 @@ export async function createNightwatchContext(
     browserBackgroundBlockedHosts,
     targetOrigin: new URL(validated).origin,
     journeyId: opts.journeyId,
+    ...(opts.semanticOracle === undefined ? {} : { semanticOracle: opts.semanticOracle }),
   });
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;

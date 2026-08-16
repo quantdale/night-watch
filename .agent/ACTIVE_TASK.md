@@ -1,55 +1,48 @@
 # Active Task
 
-Task ID: phase-9a-1-real-source-expectation-admission
-Phase: 9A.1-REAL-SOURCE-EXPECTATION
-Title: Nightwatch Phase 9A.1 — Real-Source Expectation Admission & Semantic Evaluation Observability
-Status: COMPLETE
-Task directory: .agent/tasks/phase-9a-1-real-source-expectation-admission
-Starting SHA: 91a64e597bc0b28653fe53bf46e291126963baa5
+Task ID: phase-9b-contained-dev-semantic-acceptance
+Phase: 9B-CONTAINED-DEV-SEMANTIC-ACCEPTANCE
+Title: Nightwatch Phase 9B — Contained DEV Semantic Acceptance
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-9b-contained-dev-semantic-acceptance
+Starting SHA: 62ec80426035e979b563135d858bdc1438d84fb4
 Last validated implementation SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
-Current milestone: COMPLETE / STOP
-Last checkpoint: 2026-08-16 — Phase 9A.1 complete: three readiness gaps
-reproduced pre-fix (real expectation count 0; NO_EXPECTATION
-indistinguishable from PASS; silent semantic hook failure) and closed by
-the real-source expectation admission bridge (data-only recipes + fixed
-bounded syntax-aware extractors + source-evidence digests + atomic
-resolver) and safe semantic evaluation receipts (nine-outcome vocabulary,
-observer ledger, no-silent-failure, privacy escalation); 4 expectations
-admitted from live ripple-api @ 27bb007a (3 DEV-reachable); substantive
-checkpoint cfc2aaa pushed fast-forward with exact green CI 31932079316
-(29/29 steps incl. the Phase 9A.1 matrix step); isolated full-history
-checkout green; docs closure (D-55, ROADMAP/CURRENT_STATE/ARCHITECTURE/
-SAFETY_MODEL/PHASE_9_ROADMAP §18 + §17 correction, AGENTS.md permanent
-rule, Phase 9B future-task spec) committed and pushed with exact final CI
-green; closed under continuity v2 with terminal fields;
-PHASE_9B_DEV_READINESS READY_FOR_SEPARATE_AUTHORIZATION; Phase 9B
-DESIGNED_NOT_STARTED_NOT_AUTHORIZED.
-Next action: STOP — Phase 9B requires separate owner authorization.
-Authorization class: PHASE_9_REAL_SOURCE_EXPECTATION_ADMISSION_ONLY
+Current milestone: M0 — task records + ACTIVE_TASK (IN_PROGRESS)
+Last checkpoint: 2026-08-16 — bootstrap CASE D (HEAD == origin/main ==
+62ec804, worktree clean); no prior Phase 9B records; durable reads complete;
+strict-v2 task records created; next: ACTIVE_TASK routing (this file) then
+the read-only remote source-freshness gate, then M1 wiring.
+Next action: Run the read-only remote source-freshness gate
+(mobingilabs/ripple-api + mobingilabs/ripple-ui via gh api / git ls-remote),
+record remote SHAs, classify F1/F2/BLOCK; then M1 (context wiring + Phase 9B
+core modules + launcher + config + runner).
+Authorization class: PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Close the Phase 9B readiness gaps locally: real-source expectation admission
-(Nightwatch-owned recipe/extractor bridge; no Alphaus annotations), safe
-semantic evaluation receipts (PASS/ANOMALY/NOT_APPLICABLE/NO_EXPECTATION/
-SOURCE_STALE/SOURCE_UNAVAILABLE/INVALID_INPUT/PROJECTION_LIMIT_EXCEEDED/
-INTERNAL_ERROR), NO_EXPECTATION != PASS, no silent semantic hook failure,
-observer semantic evaluation ledger, atomic expectation+snapshot resolution,
-source-evidence binding + fail-closed currentness, synthetic-rebinding
-rejection, conforming/mutated synthetic evaluations, hardening + CI,
-full validation + isolated checkout, exact checkpoints + exact CI, Phase 9B
-readiness verdict, docs/decision closure (D-55), terminal STOP.
-LOCAL / SOURCE-ONLY / SYNTHETIC ONLY. NO DEV/NEXT/production contact, NO
-Phase 5 real traffic, NO authenticated journeys, NO product mutations, NO
-Alphaus writes, NO DB/infra (Phase 6 freeze), NO AI models, NO selfDev/
-catalog/promotion activity, NO variant-B adoption, NO publication.
-FULFILLED: all deliverables produced, validated (full regression +
-isolated checkout + exact CI), closed.
+ONE bounded canonical-DEV semantic acceptance (ONE approved journey
+ripple-common-exchange-read x FIRST + ONE fresh-context replay) of the
+admitted real-source expectation ripple.common-exchange.read.
+real-source-shape against https://appdev.alphaus.cloud/ripple/ only:
+minimum source wiring (NightwatchContextOptions.semanticOracle? ->
+createNetworkObserver), local/synthetic tests for that wiring, gated
+launcher bin/phase9b-real.mjs + playwright.phase9b.config.ts +
+tests/manual/phase9b-contained-dev-semantic.ts, pre-dev metadata-only
+readiness gate + read-only source-freshness gate (F1/F2/BLOCK), one
+source-bearing Nightwatch implementation checkpoint, exact green CI BEFORE
+any product contact, safe semantic evaluation receipts, private/local
+sanitized evidence, docs/continuity closure (D-56), normal Nightwatch
+commits/pushes. FORBIDDEN: second journey, fallback, third attempt,
+exploratory clicking, arbitrary navigation, new endpoint authority, NEXT,
+production, mutation, POST/PUT/PATCH/DELETE, DB/infra (Phase 6 freeze),
+deployment binding, screenshots, authenticated traces, DOM snapshots, raw
+persistence, raw customer-value persistence, AI models/oracle authority,
+Alphaus writes, selfDev/promotion/catalog, variant-B adoption, publication.
 
 ## Continuity
 
-STARTING_SHA: 91a64e597bc0b28653fe53bf46e291126963baa5
+STARTING_SHA: 62ec80426035e979b563135d858bdc1438d84fb4
 LAST_VALIDATED_IMPLEMENTATION_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: cfc2aaa65227b2caf26d2d51533bf32ecc489028
 LIVE_HEAD_AUTHORITY: GIT
@@ -57,9 +50,8 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_9A_1_STATUS: COMPLETE
-PHASE_9B_DEV_READINESS: READY_FOR_SEPARATE_AUTHORIZATION
-PHASE_9B_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+PHASE_9B_STATUS: IN_PROGRESS
+PHASE_9A_1_STATUS (unchanged): COMPLETE
 PHASE_9_STATUS (narrative, unchanged): COMPLETE_LOCAL_SYNTHETIC
 PHASE_8_STATUS (unchanged): COMPLETE
 CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (digest bd35b934...)
@@ -68,10 +60,8 @@ NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
 ## STOP
 
-Task complete. Do not resume. Phase 9A.1 real-source expectation admission
-& semantic evaluation observability is COMPLETE; the readiness verdict is
-READY_FOR_SEPARATE_AUTHORIZATION; Phase 9B (contained DEV semantic
-acceptance) requires a separate owner authorization
-(PHASE_9B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY) and its future-task spec
-is design only. No variant-B adoption. No promotion prepare/approve/apply.
-No catalog mutation. No product/data/infra/AI activity.
+STOP conditions: any pre-dev gate failure (freshness / exact CI / resolver
+RESOLVED / auth / proxy / exact target) -> PHASE_9B_BLOCKED_* before any DEV
+contact; any privacy or hard-safety violation -> immediate STOP; semantic
+nondeterminism -> PHASE_9B_BLOCKED_SEMANTIC_NONDETERMINISM; after the ONE
+launcher run -> STOP (a retry requires a fresh owner authorization).
