@@ -18,6 +18,7 @@ import {
   type TechnicalSeverity,
   type TriagePriority,
 } from './types';
+import { validateSemanticDossierEvidence, type SemanticDossierEvidence } from '../../oracles/semantic/dossier';
 
 const SAFE_ID_RE = /^[A-Za-z0-9_.:/-]{1,200}$/;
 const SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|https?:\/\/[^\s]+[?&](?:token|account|customer|cost)=)/i;
@@ -120,6 +121,7 @@ export interface BugDossierInput {
   readonly knownNightwatchDefect: string | null;
   readonly alternativesRuledOut: readonly string[];
   readonly missingEvidence: readonly string[];
+  readonly semanticEvidence?: SemanticDossierEvidence | null;
 }
 
 export interface IncompleteBugDossier {
@@ -193,6 +195,7 @@ export function createBugDossier(input: BugDossierInput): BugDossier {
     knownNightwatchDefect: input.knownNightwatchDefect,
     alternativesRuledOut: [...input.alternativesRuledOut],
     missingEvidence: [...input.missingEvidence],
+    semanticEvidence: input.semanticEvidence ?? null,
     humanReproductionRecipe: humanRecipe,
     aiReady: ai,
     safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, productMutations: 0, actionCausedUnknown: 0, databaseQueries: 0 },
@@ -207,5 +210,8 @@ export function validateBugDossier(dossier: BugDossier): void {
   if (dossier.evidenceLevel === 'L4' || dossier.l4Datastore !== 'OUT_OF_SCOPE_BY_OWNER') throw new Error('DOSSIER_DATASTORE_SCOPE_INVALID');
   if (dossier.safety.productionAttempts !== 0 || dossier.safety.proxyViolations !== 0 || dossier.safety.unknownDestinations !== 0 || dossier.safety.unknownApprovals !== 0 || dossier.safety.productMutations !== 0 || dossier.safety.actionCausedUnknown !== 0 || dossier.safety.databaseQueries !== 0) throw new Error('DOSSIER_SAFETY_NOT_CLEAN');
   if (dossier.privacy.result !== 'PASS' || dossier.privacy.rawBodiesPersisted || dossier.privacy.customerValuesPersisted || dossier.privacy.credentialsPersisted || dossier.privacy.screenshotsPersisted || dossier.privacy.authenticatedTracesPersisted) throw new Error('DOSSIER_PRIVACY_INVALID');
+  if (dossier.semanticEvidence !== null && dossier.semanticEvidence !== undefined) {
+    validateSemanticDossierEvidence(dossier.semanticEvidence);
+  }
   assertNoSentinels(dossier);
 }

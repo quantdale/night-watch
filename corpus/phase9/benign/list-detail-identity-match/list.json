@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "synthetic-entity-a",
+      "name": "synthetic-benign-a"
+    },
+    {
+      "id": "synthetic-entity-c",
+      "name": "synthetic-benign-c"
+    }
+  ]
+}

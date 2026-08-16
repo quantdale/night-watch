@@ -1,0 +1,29 @@
+{
+  "scenarioId": "phase9.defect.stale-state-after-transition",
+  "semanticDefectClass": "STALE_STATE_AFTER_TRANSITION",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.synthetic.stage.read",
+    "transitionContract": {
+      "expectedTransition": "CHANGE",
+      "stateField": "stage"
+    }
+  },
+  "steps": [
+    {
+      "stepId": "phase9.defect.stale-state-after-transition.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "step1.json"
+    },
+    {
+      "stepId": "phase9.defect.stale-state-after-transition.step2",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "step2.json"
+    }
+  ]
+}

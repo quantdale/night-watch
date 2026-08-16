@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "synthetic-entity-a" },
+    { "id": "synthetic-entity-b" }
+  ],
+  "meta": {
+    "expectedCount": 3
+  }
+}

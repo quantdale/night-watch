@@ -891,6 +891,66 @@ function checkProjectStateIntegrity() {
   }
 }
 
+/**
+ * Phase 9 semantic-core purity (SPEC §76-79): the projections, expectations,
+ * invariants, and semantic oracle modules must be deterministic local
+ * computation only — no AI, no selfDev/promotion, no DB/infra, no network
+ * transport, no child process, no persistence, no campaign/authority
+ * imports, no application-code execution.
+ */
+function checkPhase9SemanticCorePurity() {
+  const phase9Directories = [
+    'src/oracles/projections/',
+    'src/oracles/expectations/',
+    'src/oracles/invariants/',
+    'src/oracles/semantic/',
+  ];
+  // Walk the Phase 9 source directories directly (works on the uncommitted
+  // working tree too; the directories are shallow and bounded).
+  const files = [];
+  for (const directory of phase9Directories) {
+    const absolute = path.join(root, directory);
+    if (!fs.existsSync(absolute)) continue;
+    for (const entry of fs.readdirSync(absolute)) {
+      if (entry.endsWith('.ts')) files.push(`${directory}${entry}`);
+    }
+  }
+  if (files.length < 8) fail('Phase 9 semantic core source files are missing');
+  for (const file of files) {
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
+    }
+    if (/\b(?:child_process|fetch\s*\(|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|writeImmutableJson|PrivateArtifactStore|renameSync|unlinkSync|mkdirSync)\b/i.test(source)) {
+      fail(`${file} exposes a process, network, or persistence capability`);
+    }
+  }
+}
+
+/**
+ * Phase 9 integration seams (SPEC §44, §45, §48): the safe finding path must
+ * be wired through the observer hook, the Phase 5 composed stage, and the
+ * campaign dossier evidence, without weakening the protocol oracles.
+ */
+function checkPhase9IntegrationSeams() {
+  const observer = read('src/browser/observers/networkObserver.ts');
+  if (!/semanticOracle\?:/.test(observer) || !/evaluateSemanticHook/.test(observer) || !/semanticFindings\(\)/.test(observer)) {
+    fail('network observer is missing the Phase 9 semantic hook or findings ledger');
+  }
+  if (!/checkUnexpectedStatus/.test(observer)) fail('network observer lost the protocol oracle wiring');
+  const phase5Semantic = read('src/api/phase5/semantic.ts');
+  if (!/evaluateApiResponseSemantic/.test(phase5Semantic) || !/evaluateApiResponse\(/.test(phase5Semantic)) {
+    fail('Phase 5 semantic stage must compose the existing protocol oracle');
+  }
+  if (!/ORACLE_PASS/.test(phase5Semantic)) fail('Phase 5 semantic stage must gate on protocol ORACLE_PASS');
+  const orchestrator = read('src/core/campaign/orchestrator.ts');
+  if (!/toSemanticDossierEvidence/.test(orchestrator)) fail('campaign orchestrator must attach semantic dossier evidence');
+  const dossier = read('src/core/triage/dossier.ts');
+  if (!/semanticEvidence/.test(dossier) || !/validateSemanticDossierEvidence/.test(dossier)) {
+    fail('dossier must carry strictly validated sanitized semantic evidence');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -907,6 +967,8 @@ checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
 checkProjectStateIntegrity();
+checkPhase9SemanticCorePurity();
+checkPhase9IntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {

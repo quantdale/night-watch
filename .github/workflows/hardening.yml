@@ -53,6 +53,8 @@ jobs:
           node bin/selfdev-catalog-integrity.mjs
       - name: Phase 8B.1-R1.1 project-state truth matrix
         run: npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1
+      - name: Phase 9 deterministic semantic oracle depth matrix
+        run: npx playwright test tests/unit/oracleCeilingReproduction.test.ts tests/unit/oracleProjection.test.ts tests/unit/oracleExpectation.test.ts tests/unit/oracleExpectationRealSource.test.ts tests/unit/oracleInvariant.test.ts tests/unit/oraclePrecision.test.ts tests/unit/semanticSentinel.test.ts tests/unit/semanticIntegration.test.ts tests/unit/semanticCampaign.test.ts --project=nightwatch --workers=1
       - name: Project-memory truth check
         run: |
           test -z "$(git status --porcelain)"

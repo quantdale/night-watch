@@ -48,6 +48,8 @@ import {
   type ResourceRole,
 } from '../../oracles/protocol/resourceChecks';
 import { fingerprintAnomaly } from '../../core/journeys/fingerprint';
+import { semanticFindingFingerprint } from '../../oracles/semantic';
+import { evaluateSemanticHook, type SemanticHookOracle } from '../../oracles/semantic/hook';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
@@ -114,6 +116,8 @@ export interface NetworkObserver {
   journeySemanticRequests(): readonly SemanticRequestObservation[];
   /** Metadata-only resource lifecycle observations. */
   resourceObservations(): readonly ResourceObservation[];
+  /** Phase 9 sanitized semantic findings (safe DTOs only). */
+  semanticFindings(): readonly import('../../oracles/semantic').SemanticOracleFinding[];
   requestCount(): number;
 }
 
@@ -141,6 +145,18 @@ export interface SemanticRequestObservation {
   actionType: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 9 semantic projection hook (SPEC §44).
+//
+// Narrowly typed: the observer resolves a source-backed expectation for an
+// observed response, computes the safe projection in memory from the
+// TRANSIENT raw body text, and emits ONLY safe projection/finding data. The
+// raw body is discarded; no generic response-body subscription API is
+// exposed. The ledger below is sanitized metadata only.
+// ---------------------------------------------------------------------------
+
+export interface SemanticResponseOracle extends SemanticHookOracle {}
+
 export function createNetworkObserver(opts: {
   policy: OutboundPolicy;
   recorder: RunRecorder;
@@ -151,6 +167,9 @@ export function createNetworkObserver(opts: {
   browserBackgroundBlockedHosts?: Map<string, BrowserBackgroundClassification>;
   targetOrigin?: string;
   journeyId?: string;
+  /** Optional Phase 9 semantic projection hook (additive; never weakens the
+   *  protocol oracles). */
+  semanticOracle?: SemanticResponseOracle;
 }): NetworkObserver {
   const { policy, recorder, monitor } = opts;
 
@@ -160,6 +179,7 @@ export function createNetworkObserver(opts: {
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
   const telemetryBlockedHosts = new Set<string>();
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
+  const semanticFindingLedger: import('../../oracles/semantic').SemanticOracleFinding[] = [];
   const optionalResourceFailureUrls = new Set<string>();
   const semanticLedger: SemanticRequestObservation[] = [];
   const resourceLedger: ResourceObservation[] = [];
@@ -661,6 +681,7 @@ export function createNetworkObserver(opts: {
       // in-memory only to feed the passive protocol oracles (e.g. malformed-json)
       // that the SPEC requires as a passive-observation deliverable.
       let body: string | undefined;
+      let rawText: string | undefined; // transient, in-memory only (Phase 9 hook)
       let bodyCapture: 'complete' | 'incomplete' | 'unavailable' = 'unavailable';
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
         try {
@@ -668,6 +689,7 @@ export function createNetworkObserver(opts: {
           bodyCapture = bodyCaptureStatus(buf, responseHeaders);
           const text = buf.toString('utf8');
           if (text.length > MAX_BODY_CHARS) bodyCapture = 'incomplete';
+          rawText = text;
           body = recorder.redaction.redactText(
             text.length > MAX_BODY_CHARS ? text.slice(0, MAX_BODY_CHARS) : text
           );
@@ -760,6 +782,50 @@ export function createNetworkObserver(opts: {
           contentType,
           data: { expectedContentType: contentIssue.expected, observedContentType: contentIssue.observed },
         });
+      }
+
+      // Phase 9 semantic projection hook (SPEC §44): transient raw text ->
+      // safe projection -> finding. Only complete 2xx JSON bodies with an
+      // admitted source-backed expectation are evaluated; raw text never
+      // enters the event/ledger/recorder — only the safe finding DTO does.
+      if (opts.semanticOracle !== undefined && rawText !== undefined && bodyCapture === 'complete') {
+        try {
+          const { findings } = evaluateSemanticHook({
+            oracle: opts.semanticOracle,
+            rawText,
+            status,
+            contentType,
+            url: rawUrl,
+            method,
+            journeyId: opts.journeyId ?? 'unbound',
+            stepId: journeyIntent?.stepId ?? undefined,
+          });
+          for (const finding of findings) {
+            semanticFindingLedger.push(finding);
+            const semanticFingerprint = semanticFindingFingerprint(finding);
+            const ev = recorder.event({
+              type: 'oracle',
+              severity: 'warn',
+              message: `semantic-oracle: ${finding.category}: ${redactedUrl}`,
+              data: {
+                url: redactedUrl,
+                reason: 'semantic-oracle',
+                oracleId: finding.oracleId,
+                oracleCategory: finding.category,
+                oracleSeverity: 'anomaly',
+                anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY',
+                causalToPrimaryFailure: 'UNRESOLVED',
+                fingerprint: semanticFingerprint,
+                semanticFinding: finding,
+                ...(contentLength !== undefined ? { contentLength } : {}),
+                endpointClassification: endpointClassification ?? OBSERVED_ENDPOINT_CLASSIFICATION,
+              },
+            });
+            monitor.recordIssue(ev);
+          }
+        } catch {
+          // The semantic hook must never crash the run (observer contract).
+        }
       }
     } catch {
       // An observer must never crash the run.
@@ -947,6 +1013,7 @@ export function createNetworkObserver(opts: {
     },
     journeySemanticRequests: (): readonly SemanticRequestObservation[] => semanticLedger.slice(journeyObservationStart).map((item) => ({ ...item })),
     resourceObservations: (): readonly ResourceObservation[] => resourceLedger.map((item) => ({ ...item })),
+    semanticFindings: (): readonly import('../../oracles/semantic').SemanticOracleFinding[] => semanticFindingLedger.map((item) => ({ ...item })),
     requestCount: (): number => requestCount,
   };
 }

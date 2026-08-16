@@ -1,0 +1,24 @@
+{
+  "scenarioId": "phase9.defect.cardinality-relation-mismatch",
+  "semanticDefectClass": "CARDINALITY_RELATION_MISMATCH",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.synthetic.collection.read",
+    "cardinalityRelation": {
+      "relationId": "rows-equal-declared-count",
+      "operation": "COUNT_EQUALS",
+      "collectionPath": ["items"],
+      "scalarPath": ["meta", "expectedCount"]
+    }
+  },
+  "steps": [
+    {
+      "stepId": "phase9.defect.cardinality-relation-mismatch.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

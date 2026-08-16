@@ -10,6 +10,7 @@ import { PrivateArtifactStore } from '../policy/privateArtifacts';
 import { clusterAnomalies, suppressDuplicateClusters } from '../triage/clustering';
 import { createIncompleteDossier, validateBugDossier } from '../triage/dossier';
 import { triageAnomaly } from '../triage/pipeline';
+import { toSemanticDossierEvidence } from '../../oracles/semantic/dossier';
 import { REAL_DEV_MINIMIZATION_BUDGET } from '../triage/types';
 import type {
   AnomalyCluster,
@@ -838,6 +839,7 @@ export class CampaignOrchestrator {
           knownNightwatchDefect: reproCandidate.knownNightwatchDefect,
           missingEvidence: reproCandidate.missingEvidence,
           alternativesRuledOut: reproCandidate.alternativesRuledOut,
+          semanticEvidence: toSemanticDossierEvidence(reproCandidate.semanticFindings ?? []),
           store: this.checkpointStore.store,
         });
         this.budget.consumeBundle({

@@ -1,0 +1,21 @@
+{
+  "scenarioId": "phase9.defect.http200-error-envelope",
+  "semanticDefectClass": "HTTP_200_ERROR_ENVELOPE",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.synthetic.entity.read",
+    "expectedEnvelope": "SUCCESS_ENVELOPE",
+    "successContract": { "requiredField": "data" },
+    "errorContract": { "requiredField": "error" }
+  },
+  "steps": [
+    {
+      "stepId": "phase9.defect.http200-error-envelope.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

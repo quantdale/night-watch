@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import type { SafeAction, SafetyVector } from '../exploration/types';
+import type { SemanticDossierEvidence } from '../../oracles/semantic/dossier';
 
 export const FAILURE_MINIMIZATION_VERSION = 'nightwatch.failure-minimization.private.v1' as const;
 export const ANOMALY_CLUSTER_VERSION = 'nightwatch.anomaly-cluster.private.v1' as const;
@@ -361,6 +362,8 @@ export interface BugDossier {
   readonly knownNightwatchDefect: string | null;
   readonly alternativesRuledOut: readonly string[];
   readonly missingEvidence: readonly string[];
+  /** Phase 9 sanitized semantic evidence (null for protocol-only dossiers). */
+  readonly semanticEvidence: SemanticDossierEvidence | null;
   readonly humanReproductionRecipe: HumanReproductionRecipe;
   readonly aiReady: AiReadyEvidencePackage;
   readonly safety: {

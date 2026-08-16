@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "synthetic-entity-a",
+      "name": "SENTINEL_CUSTOMER_NAME_X7Q"
+    },
+    {
+      "id": "synthetic-entity-c",
+      "name": "synthetic-other"
+    }
+  ]
+}

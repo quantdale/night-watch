@@ -1,0 +1,25 @@
+{
+  "scenarioId": "phase9.defect.aggregate-total-relation-mismatch",
+  "semanticDefectClass": "AGGREGATE_TOTAL_RELATION_MISMATCH",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.synthetic.aggregate.read",
+    "numericRelation": {
+      "relationId": "line-items-equal-total",
+      "operation": "SUM_EQUALS",
+      "collectionPath": ["lineItems"],
+      "numericFieldPath": ["amount"],
+      "scalarPath": ["total"]
+    }
+  },
+  "steps": [
+    {
+      "stepId": "phase9.defect.aggregate-total-relation-mismatch.step1",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "response.json"
+    }
+  ]
+}

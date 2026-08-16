@@ -1,0 +1,8 @@
+{
+  "lineItems": [
+    { "amount": 1 },
+    { "amount": 2 },
+    { "amount": 3 }
+  ],
+  "total": 7
+}

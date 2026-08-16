@@ -37,6 +37,7 @@ import type {
   TriagePriority,
 } from '../triage/types';
 import type { SourceCorrelationInput } from '../triage/correlation';
+import type { SemanticOracleFinding } from '../../oracles/semantic/types';
 
 export const CAMPAIGN_SCHEMA_VERSION = 'nightwatch.campaign.private.v1' as const;
 export const CAMPAIGN_ORCHESTRATOR_VERSION = 'nightwatch.orchestrator.private.v1' as const;
@@ -357,6 +358,9 @@ export interface CampaignAnomalyCandidate {
   readonly alternativesRuledOut: readonly string[];
   readonly missingEvidence: readonly string[];
   readonly knownNightwatchDefect: boolean;
+  /** Phase 9 safe semantic findings attached to this candidate (optional;
+   *  flows into the dossier as sanitized evidence only). */
+  readonly semanticFindings?: readonly SemanticOracleFinding[];
   readonly replay?: (sequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => CandidateReplayOutcome | Promise<CandidateReplayOutcome>;
 }
 

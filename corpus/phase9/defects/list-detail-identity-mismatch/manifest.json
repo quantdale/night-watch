@@ -1,0 +1,27 @@
+{
+  "scenarioId": "phase9.defect.list-detail-identity-mismatch",
+  "semanticDefectClass": "LIST_DETAIL_IDENTITY_MISMATCH",
+  "protocolValid": true,
+  "syntheticOnly": true,
+  "operation": {
+    "operationId": "ripple.synthetic.entity.list-read",
+    "collectionIdentityField": "id",
+    "requestedDetailIdentity": "synthetic-entity-a"
+  },
+  "steps": [
+    {
+      "stepId": "phase9.defect.list-detail-identity-mismatch.list",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "list.json"
+    },
+    {
+      "stepId": "phase9.defect.list-detail-identity-mismatch.detail",
+      "kind": "API_RESPONSE",
+      "status": 200,
+      "contentType": "application/json",
+      "bodyFile": "detail.json"
+    }
+  ]
+}

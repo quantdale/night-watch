@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import crypto from 'node:crypto';
+import { validateSemanticFinding } from '../../oracles/semantic/types';
 import {
   CAMPAIGN_MANIFEST_VERSION,
   CAMPAIGN_ORCHESTRATOR_VERSION,
@@ -204,7 +205,13 @@ export function assertPersistedCandidateShape(value: unknown, code: string): voi
     'observation', 'journeyId', 'contractVersion', 'contractDigest', 'contextKind',
     'originalSequence', 'technicalSeverity', 'breadth', 'browser', 'api',
     'sourceCorrelation', 'alternativesRuledOut', 'missingEvidence', 'knownNightwatchDefect',
-  ], code, ['sourceRelevance']);
+  ], code, ['sourceRelevance', 'semanticFindings']);
+  if (candidate.semanticFindings !== undefined) {
+    const findings = requireRuntimeArray(candidate.semanticFindings, `${code}:SEMANTIC_FINDINGS`);
+    for (const finding of findings) {
+      validateSemanticFinding(requireRuntimeRecord(finding, `${code}:SEMANTIC_FINDING`) as unknown as import('../../oracles/semantic/types').SemanticOracleFinding);
+    }
+  }
   assertNullableStringValue(candidate.journeyId, `${code}:JOURNEY_ID`);
   for (const key of ['contractVersion', 'contractDigest']) assertString(candidate[key], `${code}:${key.toUpperCase()}`);
   assertEnum(candidate.contextKind, ['FIRST_OBSERVATION', 'FRESH_CONTEXT_REPLAY', 'BOUNDED_REPETITION'], `${code}:CONTEXT_KIND`);

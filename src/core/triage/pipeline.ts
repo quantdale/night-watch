@@ -11,6 +11,7 @@ import { rankConfidence } from './confidence';
 import { localizeFaultBoundary } from './localization';
 import { minimizeFailure } from './minimizer';
 import { rankTriagePriority } from './summaries';
+import type { SemanticDossierEvidence } from '../../oracles/semantic/dossier';
 import type {
   ApiObservation,
   BrowserObservation,
@@ -38,6 +39,7 @@ export interface PrivateTriageInput extends Omit<MinimizationOptions, 'originalS
   readonly knownNightwatchDefect: boolean;
   readonly missingEvidence: readonly string[];
   readonly alternativesRuledOut: readonly string[];
+  readonly semanticEvidence?: SemanticDossierEvidence | null;
   readonly store?: PrivateArtifactStore;
 }
 
@@ -106,6 +108,7 @@ export async function triageAnomaly(input: PrivateTriageInput): Promise<PrivateT
     knownNightwatchDefect: input.knownNightwatchDefect ? 'NIGHTWATCH_FALSE_POSITIVE_CATALOG_MATCH' : null,
     alternativesRuledOut: input.alternativesRuledOut,
     missingEvidence: input.missingEvidence,
+    semanticEvidence: input.semanticEvidence ?? null,
   });
   validateBugDossier(dossier);
   const artifactPath = input.store === undefined ? null : input.store.writeJson(`${dossier.candidateId.replaceAll(':', '-')}.json`, dossier);
