@@ -134,6 +134,40 @@ approved read-only target + exact current source snapshot, admitted through
   (hardening-guarded); the ONLY sibling-source access is the read-only
   path-confined module `src/core/source/siblingSource.ts`.
 
+## Phase 10 deeper real-source semantic contracts (permanent rule)
+
+Phase 10A (D-59) extended the Phase 9A.1 admission bridge with mechanically
+proven DEEPER contracts, LOCAL/SYNTHETIC only:
+
+- Recipe schema v2 (`nightwatch.real-source-expectation-recipe.v2`) carries
+  item-level field type contracts (`itemFieldTypeContracts`:
+  field/itemIndex/allowedTypes) proven by the fixed bounded
+  `PHP_ITEM_FIELD_TYPE_FLOW` extractor (patterns `EMPTY_CAST_OBJECT` ⇒
+  ['OBJECT'], `EMPTY_ARRAY_OR_STRING_KEYS` ⇒ ['ARRAY','OBJECT']; any other
+  assignment pattern ⇒ `TYPE_FLOW_AMBIGUOUS` — admission is never weakened
+  to fit the source). v1 recipes stay byte-meaning-stable; the retired v1
+  recipes for the enriched targets are archived data-only under
+  `corpus/phase10/historical/` and never re-enter the active registry.
+- Deeper invariants come ONLY from mechanically established CURRENT source
+  flow. A class constant, a cast in one branch, a variable name, or a
+  design document alone never proves a contract: the finite-key/
+  object-key-set class stays NOT admitted while the output-key flow cannot
+  be tied to a source-defined set (`SOURCE_ENUM_FLOW_UNPROVEN`). The new
+  fixed invariant `TYPE_IN_SET` (bounded 1..6 known ProjectionNodeType
+  values; missing path / empty-uninspected parent ⇒ NOT_APPLICABLE;
+  observed ∈ set ⇒ PASS; outside ⇒ VIOLATED) is the ONLY invariant
+  vocabulary addition.
+- Deep expectation IDs (`...real-source-deep`) are distinct identities;
+  historical shape IDs (`...real-source-shape`) stay historical-only and
+  Phase 9B-R1's DEV evidence remains truthful at its old checkpoint. The
+  normalized type-flow extraction participates in the ev:sha256 evidence
+  digest; the digest canonical form and both extraction loops (admission +
+  resolver) fail closed on unknown kinds.
+- Phase 10A proved LOCAL/SYNTHETIC detection depth only: NO DEV validation
+  was performed and none is implied; any Phase 10B contained DEV acceptance
+  requires a separate owner authorization
+  (`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`).
+
 ## Task and checkpoint discipline
 
 Any multi-milestone, long-running, architecture-changing, safety-sensitive,

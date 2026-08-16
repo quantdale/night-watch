@@ -7,6 +7,20 @@
 > 2026-08-16, starting SHA `aba46a9af1a1021ae58a1253f93fda297391576e`).
 > This document SELECTS the next Nightwatch investment; it does NOT
 > implement it. `NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED`.
+>
+> **Implementation status (Phase 10A, 2026-08-16, D-59):** the owner
+> separately authorized and Phase 10A implemented the selected architecture
+> LOCAL/SYNTHETIC (`PHASE_10_DEEPER_SEMANTIC: COMPLETE`; substantive
+> implementation `6cef0c45`, exact CI 31946005458, 32/32; full record in
+> `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`). One historical
+> source claim in §7 was corrected by re-verification: `exchange_rate` is
+> ALWAYS a JSON OBJECT for common-exchange (the `(object)` cast fires on the
+> EMPTY case, serializing `{}` — the "OBJECT when populated / ARRAY when
+> empty" reading was wrong for both the pinned and the current SHA); and the
+> finite-enum contract was NOT admitted (`SOURCE_ENUM_FLOW_UNPROVEN` — the
+> constant is write-path validation only, not load-bearing for read-path
+> output keys). Phase 10B contained DEV acceptance remains separately
+> authorized and NOT executed.
 
 ---
 

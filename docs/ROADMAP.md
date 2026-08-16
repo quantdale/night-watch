@@ -1424,6 +1424,64 @@ AVAILABLE_NOT_ADOPTED; promotion authority NONE; catalog count 1 (digest
 `sha256:bd35b934...`); Phase 6 remains FROZEN_BY_OWNER; AI remains
 non-authoritative.
 
+## Phase 10 — Deeper Real-Source Semantic Contracts (Phase 10A complete, local/synthetic)
+
+**Status:** `PHASE_10_DEEPER_SEMANTIC: COMPLETE` /
+`PHASE_10A_STATUS: COMPLETE` / `PHASE_9_STATUS: COMPLETE` (unchanged) /
+`DEV validation: NOT_RUN` / `PHASE_10B_DEV_ACCEPTANCE:
+RECOMMENDED_SEPARATE_AUTHORIZATION` (2026-08-16). The owner pasted the
+Phase 10A prompt as the separate owner authorization
+(`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, starting SHA
+`c3393ce5`). Implementation record: `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`,
+D-59, and `.agent/tasks/phase-10-deeper-real-source-semantic-contracts/`.
+
+- **Current-source re-verification**: read-only remote metadata →
+  mobingilabs/ripple-api master `169df39d…` (canonical checkout untouched
+  at the Phase 5 pin `27bb007a`; disposable /tmp snapshot used).
+  `ExchangeRate.php` byte-identical across the SHAs. Common-exchange
+  `exchange_rate` is ALWAYS a JSON OBJECT (the empty case is `(object)`-cast
+  to `{}` — D-58's "ARRAY when empty" claim refuted by the actual cast
+  direction); payer-exchange `exchange_rate` is OBJECT-or-ARRAY (`[]` when
+  no rates). Finite output-key sets are NOT mechanically provable
+  (`SOURCE_ENUM_FLOW_UNPROVEN` — `CURRENCY_RANGE_VALIDATE` is write-path
+  validation only) ⇒ no finite-key invariant, no class-constant extractor.
+- **Machinery**: recipe schema v2
+  (`nightwatch.real-source-expectation-recipe.v2`) for common-exchange +
+  payer-exchange with item-level field type contracts proven by the fixed
+  bounded `PHP_ITEM_FIELD_TYPE_FLOW` extractor (EMPTY_CAST_OBJECT ⇒ OBJECT;
+  EMPTY_ARRAY_OR_STRING_KEYS ⇒ OBJECT|ARRAY; else TYPE_FLOW_AMBIGUOUS); new
+  fixed invariant `TYPE_IN_SET`; common uses the existing `TYPE_MATCH
+  OBJECT`; deep expectation IDs `...real-source-deep` (the historical
+  `...real-source-shape` IDs stay historical-only via archived v1 recipes
+  under `corpus/phase10/historical/`); semantic expectation DTO stays v1
+  (vocabulary additive); evidence digest binds the type-flow evidence and
+  fails closed on unknown extraction kinds; admission + resolver fail
+  closed on unknown extractor kinds.
+- **Proof (synthetic)**: 4 seeded deep defects — baseline shape-only
+  detects 0/4, enriched detects 4/4; benign 10 cases / 0 false positives
+  (incl. the payer valid empty-ARRAY union representation); sentinel sweep
+  + unknown-key probe 0 leaks; derivation determinism 3 repeats / 0
+  mismatches; source currentness matrix A–E + §44 mutation canaries fail
+  closed; synthetic campaign/dossier integration with baseline zero
+  semantic evidence; owner-local canary at the current snapshot 169df39d:
+  4/4 derived, depths [2,2,3,3] (L3+ = 2/4).
+- **Validation**: typecheck/hardening PASS; focused Phase 9+9A.1+9B+10
+  matrix 342 passed; full Playwright 1137 passed / 1 skipped (pre-existing
+  environment-conditional) / 0 failed; exact implementation CI
+  31946005458 green 32/32 at `6cef0c45`; fresh clean-checkout acceptance
+  green; catalog byte-identical `bd35b934...` (count 1); agent:check/audit
+  strict 0; project:check PASS at clean tree.
+- **Boundaries**: NO DEV/NEXT/production; no new endpoints/journeys; no
+  campaign/triage core change; no finite-key contracts; no projection
+  schema change; no Phase 6/AI/selfDev/promotion/catalog; the real
+  minimization false-1-MINIMAL follow-up finding (#1) stays with
+  HIGH_CONFIDENCE_SEMANTIC_TRIAGE (NEXT_AFTER).
+- **Next**: STOP. Any Phase 10B contained DEV acceptance (ONE existing
+  common-exchange journey pair with the enriched expectation; repoint
+  `tests/manual/phase9b-contained-dev-semantic.ts` to the deep ID) requires
+  a separate owner authorization
+  (`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`).
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

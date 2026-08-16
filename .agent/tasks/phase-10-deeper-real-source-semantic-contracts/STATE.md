@@ -6,20 +6,23 @@ Task ID: phase-10-deeper-real-source-semantic-contracts
 Phase: 10A-DEEPER-REAL-SOURCE-SEMANTICS
 Title: Nightwatch Phase 10A — Deeper Real-Source Semantic Contracts
 Authorization class: PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: c3393ce54ef53d10451da2465d0327a0796bcf4f
+Last validated implementation SHA: 6cef0c45b0733c3a7179789b360eeaba40ab931b
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: c3393ce54ef53d10451da2465d0327a0796bcf4f
-LAST_VALIDATED_IMPLEMENTATION_SHA: c3393ce54ef53d10451da2465d0327a0796bcf4f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3393ce54ef53d10451da2465d0327a0796bcf4f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6cef0c45b0733c3a7179789b360eeaba40ab931b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6cef0c45b0733c3a7179789b360eeaba40ab931b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_10A_STATUS: IN_PROGRESS
+PHASE_10A_STATUS: COMPLETE
+PHASE_10_DEEPER_SEMANTIC: COMPLETE
+PHASE_10B_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION
 PHASE_9_STATUS (unchanged): COMPLETE
 PHASE_9B_R1 (unchanged): COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
 PHASE_9A_1_STATUS (unchanged): COMPLETE
@@ -45,14 +48,17 @@ AI, NO selfDev/promotion/catalog.
 
 ## Current Milestone
 
-M9 — substantive implementation checkpoint: M8 DONE (typecheck PASS;
-hardening:check PASS; campaign:synthetic 27 passed; owner-provenance 91
-passed; agent:check PASS with 2 expected pre-commit warnings
-(STALE_IMPLEMENTATION_BASELINE + LEGACY v1); agent:audit strict_errors 0;
-project:check + catalog integrity CHECKOUT_DIRTY-only pre-commit; git diff
---check clean; full Playwright 1137 passed / 1 skipped (pre-existing
-environment-conditional) / 0 failed). Committing the substantive
-implementation now.
+COMPLETE / STOP. (All milestones M0-M12 closed; substantive checkpoint
+6cef0c45 pushed fast-forward with exact green CI 31946005458 (32/32 steps
+incl. the Phase 10 matrix step); fresh clean-checkout acceptance green
+(focused 342/342, full 1126 passed / 4 pre-existing environment-conditional
+skips / 0 failed, owner-local current-source canary 2/2); docs closure
+(D-59, ROADMAP/CURRENT_STATE/ARCHITECTURE/SAFETY_MODEL/
+POST_PHASE_9_NEXT_ARCHITECTURE.md, PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md,
+AGENTS.md permanent rule) committed and pushed with exact final CI green;
+task closed under continuity v2 with terminal fields;
+PHASE_10_DEEPER_SEMANTIC COMPLETE; PHASE_10A_STATUS COMPLETE;
+PHASE_10B_DEV_ACCEPTANCE RECOMMENDED_SEPARATE_AUTHORIZATION.)
 
 ## Completed Milestones
 
@@ -126,23 +132,64 @@ implementation now.
   CHECKOUT_DIRTY-only pre-commit; git diff --check clean; full Playwright
   1137 passed / 1 skipped (pre-existing environment-conditional) / 0 failed
   (2.4 min).
+- M9 — substantive checkpoint (2026-08-16): one implementation commit
+  `6cef0c45b0733c3a7179789b360eeaba40ab931b` pushed fast-forward
+  (c3393ce5..6cef0c45); HEAD == origin/main == 6cef0c45; worktree clean;
+  exact implementation CI 31946005458: completed, success, exact head SHA,
+  32/32 steps green incl. "Phase 10 deeper real-source semantic contracts
+  matrix", Project-memory truth check, Agent-state check, Completed-task
+  continuity audit, catalog integrity, Synthetic campaign, whitespace.
+- M10 — fresh clean-checkout acceptance at the implementation SHA
+  (/tmp/nw-phase10-acceptance/nightwatch @ 6cef0c45): typecheck PASS;
+  hardening PASS; focused Phase 9+9A.1+9B+10 matrix 342 passed / 0 failed;
+  campaign synthetic 27; owner-provenance 91; agent:check/audit PASS;
+  project:check PASS (checkoutClean true); catalog integrity PASS (digest
+  bd35b934..., count 1); git diff --check clean; full Playwright 1126
+  passed / 4 skipped (pre-existing workspace-conditional backtest class) /
+  0 failed; owner-local current-source canary
+  (NIGHTWATCH_SIBLING_ROOT=/tmp/nw-phase10-siblings, ripple-api @
+  169df39d): 2/2 passed; current ripple-api source SHA re-confirmed
+  169df39d (read-only remote metadata, no advance).
+- M11 — docs closure: D-59; ROADMAP Phase 10 section; CURRENT_STATE intro +
+  Phase 10A record (machine block unchanged); ARCHITECTURE Phase 10A
+  record; SAFETY_MODEL §23 + normative footer; POST_PHASE_9_NEXT_
+  ARCHITECTURE.md implementation-status header + corrected source claims;
+  docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md (implementation and
+  acceptance record); AGENTS.md Phase 10 permanent rule; STATE/ACTIVE_TASK/
+  REPORT terminalized under continuity v2.
+- M12 — final docs checkpoint: docs closure commit pushed fast-forward;
+  exact final CI green (FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD);
+  final HEAD == origin/main; worktree clean; STOP.
 
 ## Work In Progress
 
-M9 — substantive implementation checkpoint (commit + push + exact CI).
+NONE.
 
 ## Exact Next Action
 
-Commit the substantive implementation (one commit), push fast-forward, verify
-HEAD == origin/main, wait for exact CI (all steps incl. the Phase 10 matrix)
-green, then M10 clean-checkout acceptance.
+STOP — Phase 10A complete (PHASE_10_DEEPER_SEMANTIC: COMPLETE; PHASE_10A_STATUS:
+COMPLETE). Any Phase 10B contained DEV validation requires a separate owner
+authorization (PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY; ONE
+existing common-exchange journey pair with the enriched expectation;
+repoint tests/manual/phase9b-contained-dev-semantic.ts to the deep ID).
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
 | `.agent/tasks/phase-10-deeper-real-source-semantic-contracts/{SPEC,PLAN,STATE,REPORT}.md` | strict-v2 task records | docs (created) |
-| `.agent/ACTIVE_TASK.md` | point to this task IN_PROGRESS | docs (edit pending) |
+| `.agent/ACTIVE_TASK.md` | point to this task IN_PROGRESS -> COMPLETE | docs (edit) |
+| `src/oracles/expectations/recipes/{types,validator,registry}.ts` | recipe v2 schema/validation/registry mix | source (edit) |
+| `src/oracles/expectations/extract/{php,evidence}.ts` | PHP_ITEM_FIELD_TYPE_FLOW + digest binding | source (edit) |
+| `src/oracles/expectations/{admission,resolver}.ts` | v2 derivation + fail-closed dispatch | source (edit) |
+| `src/oracles/expectations/{types,validator}.ts` | TYPE_IN_SET vocabulary + validation | source (edit) |
+| `src/oracles/invariants/evaluate.ts` | TYPE_IN_SET evaluation | source (edit) |
+| `src/oracles/semantic/oracle.ts` | TYPE_IN_SET class mapping | source (edit) |
+| `corpus/phase10/**` | source-fixture, archived v1, defects, benign, README | corpus (new) |
+| `tests/unit/phase10*.test.ts` (10 files) | Phase 10 test matrices | tests (new) |
+| `bin/hardening-check.mjs` | Phase 10 purity + seam guards | source (edit) |
+| `.github/workflows/hardening.yml` | Phase 10 matrix step | workflow (edit) |
+| `docs/{DECISIONS,ROADMAP,CURRENT_STATE,ARCHITECTURE,SAFETY_MODEL}.md`, `docs/design/{POST_PHASE_9_NEXT_ARCHITECTURE,PHASE_10_DEEPER_SEMANTIC_CONTRACTS}.md`, `AGENTS.md` | D-59 + Phase 10A records + permanent rule | docs (edit/new) |
 
 ## Validation Ledger
 
@@ -153,6 +200,31 @@ green, then M10 clean-checkout acceptance.
   169df39d; git diff 27bb007a..169df39d -- src/App/Handler/ExchangeRate.php
   == 0 lines; route blocks verified at Routing.yaml:3537/3557; withJson
   response path verified (src/App/Route/Config.php:200-207).
+- M2-M6 implementation + matrices (all green): typecheck PASS; Phase 10
+  matrices 112 tests (extraction 14, recipe validation 16, admission 16,
+  TYPE_IN_SET 18, corpus precision 9, privacy 8, currentness 12, identity 7,
+  campaign 3, canary 9); focused Phase 9 + 9A.1 + 9B + 10 matrix 342 passed;
+  owner-local current-source canary (disposable snapshot at 169df39d): 4/4
+  derived / 0 failures / depths [2,2,3,3] (L1 0, L2 2, L3+ 2).
+- M7-M8: hardening:check PASS (incl. checkPhase10DeeperContractPurity +
+  checkPhase10IntegrationSeams); campaign:synthetic 27; owner-provenance
+  91; agent:check PASS with 2 expected pre-commit warnings; agent:audit
+  strict_errors=0; project:check + catalog integrity CHECKOUT_DIRTY-only
+  pre-commit; git diff --check clean; full Playwright 1137 passed / 1
+  skipped (pre-existing environment-conditional) / 0 failed.
+- M9: exact implementation CI 31946005458 at
+  6cef0c45b0733c3a7179789b360eeaba40ab931b: completed, success, exact head
+  SHA, 32/32 steps green (incl. Phase 10 matrix step, Project-memory truth
+  check, Agent-state check, Completed-task continuity audit, catalog
+  integrity, Synthetic campaign, whitespace).
+- M10: fresh clean-checkout acceptance (/tmp/nw-phase10-acceptance/nightwatch
+  @ 6cef0c45): typecheck PASS; hardening PASS; focused matrix 342 passed;
+  campaign 27; owner-provenance 91; agent:check/audit PASS; project:check
+  PASS (checkoutClean true); catalog integrity PASS; git diff --check
+  clean; full Playwright 1126 passed / 4 skipped (pre-existing
+  workspace-conditional backtest class) / 0 failed; owner-local
+  current-source canary 2/2; current remote ripple-api master re-confirmed
+  169df39d (no advance).
 
 ## Decisions Made During This Task
 
@@ -229,30 +301,47 @@ publication 0, runtime Git writes 0 (canonical sibling untouched; disposable
 
 ## Resume Recipe
 
-Read .agent/ACTIVE_TASK.md, then SPEC.md (frozen intent), PLAN.md (living),
-this STATE.md; verify git state (HEAD == origin/main, clean); continue the
-Exact Next Action.
+Task complete. Do not resume. Phase 10A is terminal COMPLETE; any Phase 10B
+contained DEV validation requires a separate owner authorization.
 
 ## Completion Snapshot
 
-- Status: IN_PROGRESS (not terminal — anchors are the carried-forward
-  STARTING_SHA c3393ce5 baseline until the substantive checkpoint; live
-  HEAD discovered from Git).
-- Current milestone: M8 — full local validation + full Playwright
-  regression (M0–M7 DONE; see Completed Milestones).
-- Work In Progress: M8 local validation sweep; then substantive checkpoint
-  (M9), clean-checkout acceptance (M10), docs closure (M11), final
-  checkpoint (M12).
-- Substantive implementation: pending (LAST_VALIDATED_IMPLEMENTATION_SHA ==
-  LAST_SUBSTANTIVE_CHECKPOINT_SHA == c3393ce5 carried-forward baseline).
+- Status: COMPLETE; PHASE_10A_STATUS: COMPLETE; PHASE_10_DEEPER_SEMANTIC:
+  COMPLETE (ACTIVE_TASK, STATE, and REPORT agree); PHASE_10B_DEV_ACCEPTANCE:
+  RECOMMENDED_SEPARATE_AUTHORIZATION (separately authorized only);
+  DEV validation: NOT_RUN.
+- Current milestone: COMPLETE / STOP; Work In Progress: NONE; Exact Next
+  Action: STOP — any Phase 10B contained DEV validation requires a separate
+  owner authorization.
+- Substantive implementation: 6cef0c45b0733c3a7179789b360eeaba40ab931b
+  (LAST_VALIDATED_IMPLEMENTATION_SHA = LAST_SUBSTANTIVE_CHECKPOINT_SHA);
+  exact implementation CI 31946005458 success at the exact head SHA, 32/32
+  steps green incl. the Phase 10 matrix step; fresh clean-checkout
+  acceptance green (focused 342/342; full 1126 passed / 4 pre-existing
+  environment-conditional skips / 0 failed; owner-local current-source
+  canary 2/2 at 169df39d: 4/4 derived / 0 failures / depths [2,2,3,3]).
 - Project truth: PHASE_8_STATUS COMPLETE; catalog count 1; raw digest
   sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
   (byte-identical through the task); NEXT_PORTFOLIO_MEMBER
-  AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE.
-- Phase 10A: PHASE_10A_STATUS IN_PROGRESS; authorization class
+  AVAILABLE_NOT_ADOPTED (variant B); NEXT_PROMOTION_AUTHORITY NONE;
+  project-state protocol nightwatch.project-state.v1; project:check PASS
+  at the implementation checkpoint and at final HEAD.
+- Phase 10A: PHASE_10A_STATUS COMPLETE; authorization class
   PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY (executed once, local/
-  source-only/synthetic); Phase 9 / 9A.1 / 9B statuses unchanged.
+  source-only/synthetic); D-59; implementation record
+  docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md; ROADMAP/CURRENT_STATE/
+  ARCHITECTURE/SAFETY_MODEL Phase 10A sections; AGENTS.md permanent rule.
+- Metrics: seeded deep defects 4; baseline detections 0; Phase 10
+  detections 4; benign 10; false positives 0; derivation repeats 3;
+  mismatches 0; privacy leaks 0; L3+ 2/4; campaign findings admitted 4
+  (two-run pattern); semantic dossiers produced (≥1, all 4 deep
+  expectation IDs represented).
 - Safety vector: catalog writes 0, promotion intents 0, approvals 0,
   APPLY 0, B adoption 0, DEV/NEXT/production 0, product mutations 0,
   DB/infra 0, AI/model 0, Alphaus writes 0, publication 0, runtime Git
-  writes 0; Nightwatch development commits expected only.
+  writes 0; Nightwatch Git commits expected only (6cef0c45 substantive +
+  final docs closure).
+- Continuity: agent:check and agent:audit zero strict errors at the
+  implementation SHA and at final HEAD; final docs closure commit pushed;
+  exact final CI green (FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD);
+  live HEAD and origin/main discovered from Git.

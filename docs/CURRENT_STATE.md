@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Post-Phase-9 next-architecture design review close
-> (POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE; Phase 9 COMPLETE;
-> next architecture selected and DESIGNED_NOT_STARTED_NOT_AUTHORIZED).
+> the Nightwatch Phase 10A close (PHASE_10_DEEPER_SEMANTIC: COMPLETE;
+> PHASE_10A_STATUS: COMPLETE; Phase 9 COMPLETE; Phase 10B
+> RECOMMENDED_SEPARATE_AUTHORIZATION — NOT authorized, NOT executed).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1635,6 +1635,70 @@ truth block unchanged: catalog count 1 (digest `sha256:bd35b934...`),
 variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE,
 `PHASE_8_STATUS: COMPLETE`. Phase 6 remains FROZEN_BY_OWNER; AI remains
 non-authoritative.
+
+## Phase 10A — Deeper Real-Source Semantic Contracts (complete, local/synthetic)
+
+`PHASE_10_DEEPER_SEMANTIC: COMPLETE` / `PHASE_10A_STATUS: COMPLETE` /
+`DEV validation: NOT_RUN` / `PHASE_10B_DEV_ACCEPTANCE:
+RECOMMENDED_SEPARATE_AUTHORIZATION` (2026-08-16, D-59; implementation and
+acceptance record in `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`).
+The owner pasted the Phase 10A prompt as the separate owner authorization
+(`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, starting SHA `c3393ce5`).
+
+- **Current-source truth (re-verified, NOT D-58's historical reading)**:
+  read-only remote metadata → mobingilabs/ripple-api master
+  `169df39d3cdf56c88f98d45d06eae6e48c3d8f6d`; canonical sibling checkout
+  untouched at the Phase 5 pin `27bb007a`; derivation used a disposable
+  /tmp snapshot at 169df39d. `ExchangeRate.php` is byte-identical across
+  the two SHAs. Common-exchange `exchange_rate` is ALWAYS a JSON OBJECT —
+  the empty case is `(object)`-cast to `{}` (the D-58 "ARRAY when empty"
+  claim is refuted by the actual cast direction). Payer-exchange
+  `exchange_rate` is OBJECT-or-ARRAY (`[]` when no rates; no cast).
+  Finite output-key sets: `SOURCE_ENUM_FLOW_UNPROVEN` for both targets
+  (output keys are runtime-driven; `CURRENCY_RANGE_VALIDATE` is write-path
+  validation only) ⇒ no finite-key invariant, no class-constant extractor,
+  no `OBJECT_KEYS_SUBSET_OF` — nothing beyond mechanically proven source
+  flow.
+- **Versioning/identity**: recipe schema v2
+  (`nightwatch.real-source-expectation-recipe.v2`) for common-exchange +
+  payer-exchange (item-level `itemFieldTypeContracts` proven by the fixed
+  bounded `PHP_ITEM_FIELD_TYPE_FLOW` extractor; v1 byte-meaning-stable for
+  account-inventory + billing-group-exchange; retired v1 recipes archived
+  under `corpus/phase10/historical/`); new fixed invariant `TYPE_IN_SET`
+  (payer OBJECT|ARRAY; common uses the existing `TYPE_MATCH OBJECT`);
+  semantic expectation DTO stays `nightwatch.semantic-expectation.v1`;
+  deep expectation IDs `...real-source-deep` (historical
+  `...real-source-shape` IDs stay historical-only); derivation v2; the
+  type-flow evidence participates in the ev:sha256 digest (canonical
+  branch; unknown extraction kinds fail closed).
+- **Proof (synthetic)**: 4 seeded deep defects — shape-only baseline 0/4,
+  enriched 4/4; benign 10 / FP 0 (incl. the payer valid empty-ARRAY union
+  representation — PASS); sentinel sweep + unknown-key probe 0 leaks;
+  derivation determinism 3 repeats / 0 mismatches; currentness matrix A–E
+  + §44 mutation canaries fail closed; synthetic campaign: enriched
+  expectations → TYPE_CONTRADICTED findings → existing orchestrator →
+  triage → dossiers with `semanticEvidence` (paired baseline zero
+  semantic evidence); owner-local canary at 169df39d: 4/4 derived / 0
+  failures / depths [2,2,3,3] (L3+ = 2/4).
+- **Validation**: typecheck/hardening PASS; focused Phase 9+9A.1+9B+10
+  matrix 342 passed; full Playwright 1137 passed / 1 skipped
+  (environment-conditional) / 0 failed; exact implementation CI
+  31946005458 success at `6cef0c45b0733c3a7179789b360eeaba40ab931b`
+  (32/32 steps incl. the Phase 10 matrix step); fresh clean-checkout
+  acceptance green; catalog byte-identical `sha256:bd35b934...`;
+  `PHASE_8_STATUS: COMPLETE`; B AVAILABLE_NOT_ADOPTED;
+  `NEXT_PROMOTION_AUTHORITY: NONE`; agent:check/audit strict 0;
+  project:check PASS at clean tree.
+- **Boundaries**: NO DEV/NEXT/production; no new endpoints/journeys; no
+  campaign/triage core change; no projection schema change; no Phase 6/AI/
+  selfDev/promotion/catalog; the real-minimization false-1-MINIMAL
+  follow-up finding (#1) stays with HIGH_CONFIDENCE_SEMANTIC_TRIAGE
+  (NEXT_AFTER).
+- **Next**: STOP. Phase 10B contained DEV acceptance (ONE existing
+  common-exchange journey pair with the enriched expectation; repoint
+  `tests/manual/phase9b-contained-dev-semantic.ts` to the deep ID) requires
+  a separate owner authorization
+  (`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`).
 
 ## Environment (machine facts)
 

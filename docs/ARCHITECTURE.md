@@ -1087,6 +1087,78 @@ remains non-authoritative; catalog byte-identical `sha256:bd35b934...`; B
 AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`;
 `PHASE_8_STATUS: COMPLETE`.
 
+## Phase 10A deeper real-source semantic contracts (record)
+
+> Task `phase-10-deeper-real-source-semantic-contracts` (Phase
+> 10A-DEEPER-REAL-SOURCE-SEMANTICS), authorization
+> `PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, 2026-08-16, starting SHA
+> `c3393ce54ef53d10451da2465d0327a0796bcf4f`, substantive implementation
+> `6cef0c45b0733c3a7179789b360eeaba40ab931b` (exact implementation CI
+> 31946005458, 32/32 steps green incl. the Phase 10 matrix step). Decision
+> D-59; implementation/acceptance record
+> `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`.
+
+### Deeper real-source contract chain (implemented, additive to 9A.1)
+
+```
+CURRENT READ-ONLY SOURCE (repo @ 40-hex SHA; 169df39d verified read-only)
+  -> RECIPE v2                  src/oracles/expectations/recipes/**
+       (nightwatch.real-source-expectation-recipe.v2 = v1 semantics +
+        itemFieldTypeContracts: field, itemIndex, allowedTypes)
+  -> TYPE-FLOW EXTRACTION       src/oracles/expectations/extract/php.ts
+       (PHP_ITEM_FIELD_TYPE_FLOW: fixed patterns EMPTY_CAST_OBJECT ->
+        ['OBJECT'], EMPTY_ARRAY_OR_STRING_KEYS -> ['ARRAY','OBJECT'];
+        any other assignment pattern -> TYPE_FLOW_AMBIGUOUS; no execution)
+  -> SOURCE-EVIDENCE DIGEST     ev:sha256:<24> over ALL canonical
+                                 extractions incl. the type-flow record
+                                 (canonicalExtraction fails closed on
+                                 unknown kinds; admission + resolver fail
+                                 closed on unknown extractor kinds)
+  -> ADMISSION                  src/oracles/expectations/admission.ts
+       (v2 branch: per-contract extraction == declared allowedTypes or
+        TYPE_FLOW_CONTRACT_MISMATCH; derivation v2)
+  -> DEEPER INVARIANT           single allowed type -> TYPE_MATCH
+                                 (existing vocabulary); multi type ->
+                                 TYPE_IN_SET (new fixed invariant:
+                                 missing path / empty-uninspected parent ->
+                                 NOT_APPLICABLE; observed in set -> PASS;
+                                 outside -> VIOLATED)
+  -> SAFE FINDING/RECEIPT       unchanged (categorical metadata only;
+                                 TYPE_IN_SET violations map to
+                                 TYPE_CONTRADICTED / TYPE_IN_SET classes)
+```
+
+Current-source evidence (re-verified 2026-08-16, read-only remote
+metadata): mobingilabs/ripple-api master `169df39d…`; `ExchangeRate.php`
+byte-identical to the Phase 5 pin. Common-exchange `exchange_rate` is
+ALWAYS a JSON OBJECT (empty case `(object)`-cast to `{}` — the D-58 "ARRAY
+when empty" claim is refuted by the actual cast direction); payer-exchange
+is OBJECT-or-ARRAY (`[]` when no rates). Finite output-key sets are
+NOT mechanically provable (`SOURCE_ENUM_FLOW_UNPROVEN` —
+`CURRENCY_RANGE_VALIDATE` is write-path validation only), so no
+finite-key invariant, no class-constant extractor, and no
+`OBJECT_KEYS_SUBSET_OF` were added — only mechanically proven source flow
+becomes oracle truth. Deep expectation IDs `...real-source-deep`;
+historical `...real-source-shape` IDs stay historical-only (archived v1
+recipes under `corpus/phase10/historical/`; Phase 9B-R1 evidence remains
+truthful at its old checkpoint). Semantic expectation DTO stays
+`nightwatch.semantic-expectation.v1` (envelope unchanged; vocabulary
+additive). Corpus `corpus/phase10/**`: 4 seeded deep defects (baseline
+shape-only 0/4 vs enriched 4/4), 10 benign (0 FP), sentinel/unknown-key
+sweeps (0 leaks), determinism 3/0, currentness A–E fail-closed, synthetic
+campaign/dossier integration with baseline zero semantic evidence;
+owner-local canary at 169df39d: 4/4 derived, depths [2,2,3,3] (L3+ = 2/4).
+
+`PHASE_10_DEEPER_SEMANTIC: COMPLETE`; `PHASE_10A_STATUS: COMPLETE`; DEV
+validation NOT_RUN; `PHASE_10B_DEV_ACCEPTANCE:
+RECOMMENDED_SEPARATE_AUTHORIZATION` (separate owner authorization
+required; `tests/manual/phase9b-contained-dev-semantic.ts` must be
+repointed to the deep expectation ID in that future task). Phase 9 remains
+terminal COMPLETE; Phase 6 remains `FROZEN_BY_OWNER`; AI remains
+non-authoritative; catalog byte-identical `sha256:bd35b934...`; B
+AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`;
+`PHASE_8_STATUS: COMPLETE`.
+
 ## Phase 9B contained DEV semantic acceptance (record)
 
 > Task `phase-9b-contained-dev-semantic-acceptance` (Phase

@@ -1214,6 +1214,53 @@ acceptance branch. Safety properties proven by the execution:
   live in the observer's in-memory ledger, reduced to the safe acceptance
   summary) — consistent with the design, not a silent failure.
 
+## 23. Phase 10A deeper real-source semantic contracts safety
+
+The Phase 10A implementation (D-59) is LOCAL / SOURCE-ONLY / SYNTHETIC
+ONLY; it adds TRUTH to the existing authority, not new authority. Safety
+properties:
+
+- **Zero new authority**: no DEV/NEXT/production contact, no new
+  endpoints/journeys, no recipe re-targeting, no campaign/triage core
+  change, no projection schema change, no Phase 6/AI/selfDev/promotion/
+  catalog activity. The approved read-only target list and DEV-reachable
+  list are byte-identical to Phase 9A.1 (asserted by the canary matrix).
+- **Current-source discipline**: source truth is re-established read-only
+  (git ls-remote; disposable /tmp snapshot at the current master
+  `169df39d…`); the canonical sibling checkout is never fetched/checked-
+  out/reset/cleaned. `ExchangeRate.php` byte-identical across the pins.
+- **No stronger-than-source claims**: the D-58 "ARRAY when empty" reading
+  is refuted by the actual cast direction (empty case casts to `{}` ⇒
+  common-exchange `exchange_rate` OBJECT); payer-exchange OBJECT|ARRAY is
+  proven; finite output-key sets are NOT mechanically provable
+  (`SOURCE_ENUM_FLOW_UNPROVEN`) so NO finite-key invariant, NO
+  class-constant extractor, NO `OBJECT_KEYS_SUBSET_OF` were admitted —
+  a weaker proven invariant beats a stronger guessed one.
+- **Extractor purity**: the new `PHP_ITEM_FIELD_TYPE_FLOW` extractor is
+  fixed and bounded (token patterns only; `EMPTY_CAST_OBJECT` /
+  `EMPTY_ARRAY_OR_STRING_KEYS`; anything else `TYPE_FLOW_AMBIGUOUS`); it
+  never executes PHP/application code, never spawns processes, never
+  touches the network or filesystem; the evidence digest canonical form
+  and both extraction loops fail closed on unknown kinds (hardening
+  guards `checkPhase10DeeperContractPurity` + `checkPhase10IntegrationSeams`).
+- **Invariant purity**: `TYPE_IN_SET` consumes safe projections and
+  declarative contracts only; missing paths and empty/uninspected parent
+  arrays are NOT_APPLICABLE (ambiguity is never an anomaly); the valid
+  empty-ARRAY representation of the payer OBJECT|ARRAY union PASSes —
+  the Phase 10 design never introduces that false positive.
+- **Privacy**: raw runtime values never enter contracts (only
+  source-defined type vocabulary); the sentinel sweep + unknown-key probe
+  assert zero leaks across projection serialization, digests, findings,
+  fingerprints, receipts, campaign checkpoints, and dossier evidence;
+  unexpected key text is never echoed downstream.
+- **Identity truthfulness**: deep expectation IDs (`...real-source-deep`)
+  are new; the historical `...real-source-shape` IDs remain historical-only
+  (archived v1 recipes); Phase 9B-R1's PASS remains truthful at its old
+  checkpoint; no expectation is silently re-bound.
+- **Currentness fail-closed**: SHA change, deep-evidence change, unsupported
+  new pattern, or unavailable source each fail closed (SOURCE_STALE /
+  SOURCE_UNAVAILABLE / derivation failure); no auto-rebinding.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
@@ -1223,6 +1270,8 @@ controlled source adoption sandbox, and owner-gated canonical promotion;
 Phase 9 deterministic semantic oracle depth; Phase 9A.1 real-source
 expectation admission & semantic evaluation observability; Phase 9B
 contained DEV semantic acceptance harness (implemented; acceptance BLOCKED
-at the pre-browser auth gate); and Phase 9B-R1 auth-refreshed retry
-(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); changes require a
+at the pre-browser auth gate); Phase 9B-R1 auth-refreshed retry
+(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); and Phase 10A deeper
+real-source semantic contracts (COMPLETE_LOCAL_SYNTHETIC; Phase 10B
+separately authorized); changes require a
 DECISIONS entry and a test update.*
