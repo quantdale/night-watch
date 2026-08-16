@@ -1424,16 +1424,18 @@ AVAILABLE_NOT_ADOPTED; promotion authority NONE; catalog count 1 (digest
 `sha256:bd35b934...`); Phase 6 remains FROZEN_BY_OWNER; AI remains
 non-authoritative.
 
-## Phase 10 — Deeper Real-Source Semantic Contracts (Phase 10A complete, local/synthetic)
+## Phase 10 — Deeper Real-Source Semantic Contracts (Phase 10A complete, local/synthetic; Phase 10B DEV acceptance complete)
 
 **Status:** `PHASE_10_DEEPER_SEMANTIC: COMPLETE` /
-`PHASE_10A_STATUS: COMPLETE` / `PHASE_9_STATUS: COMPLETE` (unchanged) /
-`DEV validation: NOT_RUN` / `PHASE_10B_DEV_ACCEPTANCE:
-RECOMMENDED_SEPARATE_AUTHORIZATION` (2026-08-16). The owner pasted the
-Phase 10A prompt as the separate owner authorization
-(`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, starting SHA
-`c3393ce5`). Implementation record: `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`,
-D-59, and `.agent/tasks/phase-10-deeper-real-source-semantic-contracts/`.
+`PHASE_10A_STATUS: COMPLETE` / `PHASE_10B_STATUS: COMPLETE` /
+`PHASE_10B: COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED` /
+`PHASE_10B_DEV_RESULT: PASS` / `DEEP_INVARIANT_DEV_VALIDATION: VERIFIED` /
+`PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED` / `PHASE_10_STATUS: COMPLETE`
+(2026-08-17, D-60). Phase 10A implementation record:
+`docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`, D-59, and
+`.agent/tasks/phase-10-deeper-real-source-semantic-contracts/`; Phase 10B
+acceptance record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`, D-60, and
+`.agent/tasks/phase-10b-contained-dev-deep-semantic-acceptance/`.
 
 - **Current-source re-verification**: read-only remote metadata →
   mobingilabs/ripple-api master `169df39d…` (canonical checkout untouched
@@ -1476,11 +1478,14 @@ D-59, and `.agent/tasks/phase-10-deeper-real-source-semantic-contracts/`.
   schema change; no Phase 6/AI/selfDev/promotion/catalog; the real
   minimization false-1-MINIMAL follow-up finding (#1) stays with
   HIGH_CONFIDENCE_SEMANTIC_TRIAGE (NEXT_AFTER).
-- **Next**: STOP. Any Phase 10B contained DEV acceptance (ONE existing
-  common-exchange journey pair with the enriched expectation; repoint
-  `tests/manual/phase9b-contained-dev-semantic.ts` to the deep ID) requires
-  a separate owner authorization
-  (`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`).
+- **Next**: STOP. Phase 10B contained DEV acceptance was EXECUTED
+  (2026-08-17, D-60): ONE common-exchange journey pair, the enriched deep
+  expectation `ripple.common-exchange.read.real-source-deep` re-derived at
+  the fresh snapshot (digest `ev:sha256:1447fe1342d804528a062b73`),
+  FIRST + fresh-context REPLAY both clean deep PASS (4/4/0/0/0,
+  deterministic), zero safety events; see
+  `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`. NEXT ACTION remains STOP —
+  next architecture requires a separate post-Phase-10 design review.
 
 ## Never in scope (any phase)
 

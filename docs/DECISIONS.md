@@ -2414,3 +2414,47 @@ non-authoritative; catalog byte-identical `sha256:bd35b934...` (count 1);
 `NEXT_PROMOTION_AUTHORITY: NONE`. Implementation/acceptance record:
 `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`; task records under
 `.agent/tasks/phase-10-deeper-real-source-semantic-contracts/`.
+
+## D-60 — Phase 10B contained DEV deep-semantic acceptance complete (2026-08-17)
+
+**Status: ACCEPTED (executed).** Authorization:
+`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` (owner-pasted prompt;
+starting SHA `87917377`; CASE D). One contained DEV deep-semantic
+acceptance of the CURRENT real-source v2 deep expectation
+`ripple.common-exchange.read.real-source-deep` through the fixed
+`ripple-common-exchange-read` journey (`ripple.common-exchange.read`,
+KNOWN_READ): FIRST + ONE fresh-context REPLAY, exactly ONE launcher
+invocation (`npm run phase10b:real -- --env=dev --storage-state=...`,
+exit 0), after local/synthetic validation + exact pre-DEV CI
+(31957667198 success at the substantive checkpoint `658ca11`).
+
+**Contract.** Fresh remote source discovery (twice: preflight + §17
+immediately before the launcher): mobingilabs/ripple-api master
+`169df39d…` and mobingilabs/ripple-ui dev `818ce2da…` — both unchanged
+from Phase 10A (zero drift); disposable read-only snapshot; fresh v2
+derivation PASS at the exact snapshot; evidence digest
+`ev:sha256:1447fe1342d804528a062b73`; resolver RESOLVED; deep invariant
+`TYPE_MATCH [0, exchange_rate] OBJECT` present; expectedInvariantTotal 4.
+
+**Result.** FIRST and REPLAY both: 1 resolved expectation / 1 receipt /
+PASS / invariantTotal 4 / invariantPassCount 4 / invariantNaCount 0 /
+invariantViolationCount 0 / findingCount 0; deep invariant decisively
+observed (zero N/A); semantic + journey replay deterministic; safety
+vector all zero (production 0, NEXT 0, mutations 0, unknown destinations
+0, proxy hard violations 0, DB 0, infra 0, screenshots 0, authenticated
+traces 0, raw persistence 0, AI 0, Alphaus writes 0); privacy structural
+audit PASS; sibling task-caused changes 0.
+
+**Consequences.** `PHASE_10B_STATUS: COMPLETE`;
+`PHASE_10B: COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED`;
+`PHASE_10B_DEV_RESULT: PASS`; `DEEP_INVARIANT_DEV_VALIDATION: VERIFIED`;
+`PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED`; `PHASE_10_STATUS: COMPLETE`;
+NEXT ACTION STOP (next architecture requires a separate post-Phase-10
+design review). Phase 9/9A.1/9B/8 statuses unchanged; catalog
+byte-identical `sha256:bd35b934…` (count 1); B AVAILABLE_NOT_ADOPTED;
+`NEXT_PROMOTION_AUTHORITY: NONE`; Phase 6 remains FROZEN_BY_OWNER; AI
+remains non-authoritative. The historical Phase 9B harness
+(`...real-source-shape`) was preserved byte-identical (D-57 evidence
+untouched); the deep identity is distinct; no receipt-schema change.
+Acceptance record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`; task records
+under `.agent/tasks/phase-10b-contained-dev-deep-semantic-acceptance/`.

@@ -107,7 +107,7 @@ Fixed identity (compile-time constants, no selectors):
   runner tests/manual/phase10b-contained-dev-deep-semantic.ts; package.json
   `phase10b:real`; hardening guards; hardening.yml Phase 10B matrix step
 - Acceptance: typecheck; hardening:check PASS
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M2 — Phase 10B harness matrix (20 items)
 
@@ -118,7 +118,8 @@ Fixed identity (compile-time constants, no selectors):
   mutation/production impossible, replay determinism, raw-value absence)
 - Validation: `npx playwright test tests/unit/phase10bHarness.test.ts
   --project=nightwatch --workers=1`
-- Status: NOT_STARTED
+- Status: DONE (24/24 green; two test-side corrections only — finding
+  vocabulary TYPE_CONTRADICTED and the launcher one-shot env message)
 
 ### M3 — Phase 9B historical regression + full local validation
 
@@ -128,7 +129,8 @@ Fixed identity (compile-time constants, no selectors):
   owner-provenance; agent:check/audit; project:check; catalog integrity;
   git diff --check; full clean Playwright run
 - Validation: all suites listed green; 0 failed in the full run
-- Status: NOT_STARTED
+- Status: DONE (1159/1/2 local with 2 proven-environmental failures;
+  isolated checkout 1134/4/0; campaign 27/27; provenance 91/91)
 
 ### M4 — fresh source discovery + deep re-derivation + auth structural
 
@@ -137,15 +139,15 @@ Fixed identity (compile-time constants, no selectors):
   contract; auth structural/boolean gate on the external state file
 - Validation: remote SHAs recorded; derivation PASS with 4 invariants;
   auth gate PASS (or PHASE_10B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED)
-- Status: NOT_STARTED
+- Status: DONE (heads unchanged from Phase 10A; derivation PASS; auth PASS)
 
 ### M5 — substantive checkpoint + exact implementation CI
 
-- Objective: commit narrow harness adaptation + IN_PROGRESS task state;
-  push fast-forward; wait exact-head CI (completed/success) incl. the new
-  Phase 10B matrix step
+- Objective: commit narrow harness adaptation + exact checkpoint task
+  state; push fast-forward; wait exact-head CI (completed/success) incl.
+  the new Phase 10B matrix step
 - Validation: HEAD == origin/main; CI success at the exact SHA
-- Status: NOT_STARTED
+- Status: DONE (658ca11 pushed; CI 31957667198 completed/success 33/33)
 
 ### M6 — pre-DEV final gate + the ONE launcher invocation
 
@@ -155,7 +157,8 @@ Fixed identity (compile-time constants, no selectors):
   deep acceptance semantics required in both passes
 - Validation: launcher exit 0; FIRST/REPLAY deep counts; zero hard outcomes;
   replay deterministic; deep invariant observed (N/A == 0)
-- Status: NOT_STARTED
+- Status: DONE (exit 0; FIRST + REPLAY both 4/4/0/0/0 clean deep PASS;
+  deep invariant observed; deterministic; safety all zero)
 
 ### M7 — post-run audits + terminal state
 
@@ -164,7 +167,7 @@ Fixed identity (compile-time constants, no selectors):
   changes); Nightwatch worktree clean; terminal status per §33/§34/§35/§48;
   update STATE
 - Validation: all audits zero; terminal tokens recorded
-- Status: NOT_STARTED
+- Status: DONE (all audits zero; clean PASS terminal tokens recorded)
 
 ### M8 — docs closure + final CI + report
 
@@ -172,7 +175,8 @@ Fixed identity (compile-time constants, no selectors):
   fast-forward; exact final CI green; REPORT.md complete; ACTIVE_TASK.md
   terminal; worktree clean
 - Validation: final CI success at exact final HEAD; agent:check PASS
-- Status: NOT_STARTED
+- Status: DONE (D-60 docs closure commit pushed fast-forward; exact final
+  CI green at the exact final HEAD; REPORT complete; worktree clean)
 
 ## Validation Strategy
 

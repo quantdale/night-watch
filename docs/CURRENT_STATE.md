@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-16** at
-> the Nightwatch Phase 10A close (PHASE_10_DEEPER_SEMANTIC: COMPLETE;
-> PHASE_10A_STATUS: COMPLETE; Phase 9 COMPLETE; Phase 10B
-> RECOMMENDED_SEPARATE_AUTHORIZATION — NOT authorized, NOT executed).
+> Durable memory for the next agent/session. Last updated: **2026-08-17** at
+> the Nightwatch Phase 10B close (PHASE_10B_STATUS: COMPLETE; PHASE_10B:
+> COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED; PHASE_10B_DEV_RESULT: PASS;
+> PHASE_10_STATUS: COMPLETE; Phase 9 COMPLETE; Phase 10A COMPLETE — D-60).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
 > Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
@@ -1639,9 +1639,13 @@ non-authoritative.
 ## Phase 10A — Deeper Real-Source Semantic Contracts (complete, local/synthetic)
 
 `PHASE_10_DEEPER_SEMANTIC: COMPLETE` / `PHASE_10A_STATUS: COMPLETE` /
-`DEV validation: NOT_RUN` / `PHASE_10B_DEV_ACCEPTANCE:
-RECOMMENDED_SEPARATE_AUTHORIZATION` (2026-08-16, D-59; implementation and
-acceptance record in `docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`).
+`PHASE_10B_STATUS: COMPLETE` (Phase 10B DEV acceptance executed 2026-08-17,
+D-60: `PHASE_10B: COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED` /
+`PHASE_10B_DEV_RESULT: PASS` / `DEEP_INVARIANT_DEV_VALIDATION: VERIFIED` /
+`PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED` / `PHASE_10_STATUS: COMPLETE`;
+record in `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`; Phase 10A itself
+(2026-08-16, D-59) implementation and acceptance record in
+`docs/design/PHASE_10_DEEPER_SEMANTIC_CONTRACTS.md`).
 The owner pasted the Phase 10A prompt as the separate owner authorization
 (`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY`, starting SHA `c3393ce5`).
 
@@ -1694,11 +1698,14 @@ The owner pasted the Phase 10A prompt as the separate owner authorization
   selfDev/promotion/catalog; the real-minimization false-1-MINIMAL
   follow-up finding (#1) stays with HIGH_CONFIDENCE_SEMANTIC_TRIAGE
   (NEXT_AFTER).
-- **Next**: STOP. Phase 10B contained DEV acceptance (ONE existing
-  common-exchange journey pair with the enriched expectation; repoint
-  `tests/manual/phase9b-contained-dev-semantic.ts` to the deep ID) requires
-  a separate owner authorization
-  (`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`).
+- **Next**: STOP. Phase 10B contained DEV acceptance was EXECUTED
+  (2026-08-17, D-60): ONE common-exchange journey pair, the enriched deep
+  expectation `ripple.common-exchange.read.real-source-deep` re-derived at
+  the fresh snapshot (digest `ev:sha256:1447fe1342d804528a062b73`),
+  FIRST + fresh-context REPLAY both clean deep PASS (4/4/0/0/0,
+  deterministic), zero safety events; acceptance record in
+  `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`. NEXT ACTION remains STOP —
+  next architecture requires a separate post-Phase-10 design review.
 
 ## Environment (machine facts)
 

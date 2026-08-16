@@ -224,16 +224,20 @@ fails (`TYPE_FLOW_CONTRACT_MISMATCH`).
 
 ## 11. Phase 10B disposition
 
-`PHASE_10B_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION` — one
-contained DEV run against the enriched common-exchange expectation would
-exercise a DIFFERENT invariant class (L3 typed contract) and privacy
-boundary than Phase 9B-R1, providing new architectural evidence. It is NOT
-executed here; it requires a separate owner authorization
-(`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`), ONE existing
-common-exchange journey pair, fresh source truth + re-derivation + resolver
-RESOLVED + auth gate + exact CI + replay determinism + privacy audit, and a
-repoint of `tests/manual/phase9b-contained-dev-semantic.ts` to the deep
-expectation ID. No second/third canary automatically.
+`PHASE_10B_DEV_ACCEPTANCE: COMPLETE` (D-60, 2026-08-17) — the authorized
+contained DEV run against the enriched common-exchange expectation was
+executed and exercised the DIFFERENT invariant class (L3 typed contract)
+and privacy boundary than Phase 9B-R1, as new architectural evidence. Full
+record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`. Result:
+COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED / PASS / VERIFIED /
+NONE_OBSERVED; PHASE_10_STATUS COMPLETE; NEXT ACTION STOP. Harness seam
+decision (differs from the Phase 10A report's "repoint" suggestion, which
+the Phase 10B authorization explicitly left open): the historical Phase 9B
+harness stays byte-identical, and a narrow self-contained Phase 10B runner
+(`tests/manual/phase10b-contained-dev-deep-semantic.ts`,
+`playwright.phase10b.config.ts`, `bin/phase10b-real.mjs`,
+`src/core/phase10b/deepAcceptance.ts`) carries the fixed deep identity. No
+second/third canary.
 
 ## 12. Residual limitations (honest)
 
@@ -247,5 +251,8 @@ expectation ID. No second/third canary automatically.
   principle); non-empty ARRAY would pass TYPE_IN_SET.
 - Item checks inspect item 0 (the blueprint convention); defects isolated
   to rows > 0 are not flagged.
-- Synthetic corpus precision is not production precision; no DEV
-  validation was performed (Phase 10B).
+- Synthetic corpus precision is not production precision. Phase 10B
+  contained DEV acceptance (D-60) verified the ONE current deep
+  common-exchange contract (incl. the L3 item type invariant) against the
+  DEV product with zero anomalies; it does not prove all exchange-rate
+  semantics and retains no payload values.

@@ -1271,7 +1271,10 @@ Phase 9 deterministic semantic oracle depth; Phase 9A.1 real-source
 expectation admission & semantic evaluation observability; Phase 9B
 contained DEV semantic acceptance harness (implemented; acceptance BLOCKED
 at the pre-browser auth gate); Phase 9B-R1 auth-refreshed retry
-(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); and Phase 10A deeper
-real-source semantic contracts (COMPLETE_LOCAL_SYNTHETIC; Phase 10B
-separately authorized); changes require a
+(COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED / PASS); Phase 10A deeper
+real-source semantic contracts (COMPLETE_LOCAL_SYNTHETIC); and Phase 10B
+contained DEV deep-semantic acceptance (COMPLETE, D-60 —
+COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED / PASS / VERIFIED /
+NONE_OBSERVED; exactly ONE common-exchange FIRST + fresh-context REPLAY
+pair with zero safety events); changes require a
 DECISIONS entry and a test update.*
