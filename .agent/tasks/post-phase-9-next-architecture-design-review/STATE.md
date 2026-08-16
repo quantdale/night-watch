@@ -6,8 +6,10 @@ Task ID: post-phase-9-next-architecture-design-review
 Phase: POST-9-DESIGN
 Title: Nightwatch Post-Phase-9 — Next Bug-Hunting Architecture Design Review
 Authorization class: POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+Last validated implementation SHA: aba46a9af1a1021ae58a1253f93fda297391576e
+Last substantive checkpoint SHA: aba46a9af1a1021ae58a1253f93fda297391576e
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -27,7 +29,7 @@ PHASE_8_STATUS (unchanged): COMPLETE
 CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (digest bd35b934...)
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
-POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: IN_PROGRESS
+POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE
 
 ## Objective
 
@@ -41,11 +43,12 @@ NO AI, NO selfDev/promotion/catalog, NO future authorization granted.
 
 ## Current Milestone
 
-M3 — task records + design document (IN_PROGRESS). M0-M2 complete:
-bootstrap (CASE D), full source audit, evidence tables, option matrix,
-bottleneck selection. Next: write
-docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md, then M4 (D-58 + ROADMAP +
-CURRENT_STATE + ACTIVE_TASK), M5 (validation), M6 (docs CI), M7 (STOP).
+COMPLETE / STOP — the design review is closed: bottleneck recomputed,
+exactly one primary architecture selected (DEEPER_REAL_SOURCE_SEMANTICS,
+Phase 10), design document + D-58 + ROADMAP + CURRENT_STATE updated,
+docs-only checkpoint c3d7fd1 pushed fast-forward with exact green CI
+31942942455 (30/30 steps), task terminalized under continuity v2. Next
+implementation requires a separate owner authorization.
 
 ## Completed Milestones
 
@@ -79,15 +82,15 @@ CURRENT_STATE + ACTIVE_TASK), M5 (validation), M6 (docs CI), M7 (STOP).
 
 ## Work In Progress
 
-M3 — writing docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md (all sections
-drafted from the M1/M2 evidence below).
+NONE.
 
 ## Exact Next Action
 
-Write docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md; then update
-docs/DECISIONS.md (D-58), docs/ROADMAP.md, docs/CURRENT_STATE.md,
-.agent/ACTIVE_TASK.md; run validation gates; commit/push docs-only;
-verify exact CI; deliver terminal tokens; STOP.
+STOP — the post-Phase-9 design review is complete
+(POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE); the selected next
+implementation (Phase 10 — Deeper Real-Source Semantic Contracts) requires
+a separate owner authorization. No further design work; no implementation
+authority granted.
 
 ## Evidence Summary (context-compaction safe)
 
@@ -233,10 +236,22 @@ No Nightwatch source/test/config/workflow changes in this task.
 
 ## Validation Ledger
 
-Pending (M5): `npm run hardening:check`; `npm run agent:check`;
-`npm run agent:audit`; `npm run project:check` (clean tree);
-`npm run selfdev:catalog-integrity` (clean tree); `git diff --check`;
-targeted existing tests where an architectural claim needs proof.
+- M0 bootstrap: git fetch origin clean; HEAD == origin/main ==
+  aba46a9; branch main; remote https://github.com/quantdale/night-watch.git;
+  worktree clean.
+- M5 validation: `npm run hardening:check` PASS; `npm run agent:check`
+  PASS (2 expected warnings: CHECKPOINT_ADVANCE approved-paths-only,
+  LEGACY v1 tasks); `npm run agent:audit` strict_errors 0 (24 legacy v1
+  warnings); `npm run project:check` PASS at the clean tree (checkoutClean
+  true; machine truth block intact); `node bin/selfdev-catalog-integrity.mjs`
+  PASS at the clean tree (checkoutClean true, maxEntries 64); `git diff
+  --check` clean; worktree clean after push.
+- M6 docs checkpoint c3d7fd1 pushed fast-forward (aba46a9..c3d7fd1);
+  HEAD == origin/main == c3d7fd1; exact CI 31942942455: completed,
+  success, exact head SHA, 30/30 steps green (incl. Offline hardening
+  check, Phase 9 matrix, Phase 9A.1 matrix, Phase 9B harness matrix,
+  Project-memory truth check, Agent-state check, Completed-task continuity
+  audit, Synthetic campaign, catalog integrity, whitespace).
 
 ## Decisions Made During This Task
 
@@ -311,22 +326,43 @@ runtime Git writes 0; Nightwatch development docs commits expected only.
 
 ## Completion Snapshot
 
-- Status: IN_PROGRESS (not yet complete). POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: IN_PROGRESS.
-- Current milestone: M3 — task records + design document (analysis M0-M2
-  complete; design doc, D-58, ROADMAP, CURRENT_STATE, ACTIVE_TASK updated).
-- Work In Progress: M3/M4 records + M5 validation + M6 docs CI + M7 STOP.
-- Exact Next Action: run validation gates, commit/push docs-only, verify
-  exact CI green, deliver terminal tokens, STOP.
-- Completion snapshot (final): selection per the Evidence Summary —
-  bottleneck INSUFFICIENT_REAL_SEMANTIC_DEPTH; architecture
-  DEEPER_REAL_SOURCE_SEMANTICS; phase PHASE_10 (Deeper Real-Source
-  Semantic Contracts); status DESIGNED_NOT_STARTED_NOT_AUTHORIZED;
-  implementation authority NOT_GRANTED; D-58. Final snapshot filled at
-  closure under continuity v2 with the exact CI run for the live HEAD.
+- Status: COMPLETE; POST_PHASE_9_ARCHITECTURE_DESIGN_STATUS: COMPLETE
+  (ACTIVE_TASK, STATE, and REPORT agree); PHASE_9_STATUS COMPLETE
+  (unchanged); PHASE_8_STATUS COMPLETE (unchanged).
+- Current milestone: COMPLETE / STOP; Work In Progress: NONE; Exact Next
+  Action: STOP — the selected next implementation (Phase 10) requires a
+  separate owner authorization; no implementation authority granted.
+- Substantive docs checkpoint: c3d7fd1adbb9402ed83ae141eba46bdeb62ffaa5
+  (aba46a9a..c3d7fd1 fast-forward; exact CI 31942942455 success at the
+  exact head SHA, 30/30 steps green); live HEAD and origin/main discovered
+  from Git (LIVE_HEAD_AUTHORITY: GIT; final CI authority: GitHub Actions
+  for the live HEAD).
+- Selection (final): bottleneck INSUFFICIENT_REAL_SEMANTIC_DEPTH;
+  architecture DEEPER_REAL_SOURCE_SEMANTICS; phase PHASE_10 (Deeper
+  Real-Source Semantic Contracts); status DESIGNED_NOT_STARTED_NOT_
+  AUTHORIZED; implementation authority NOT_GRANTED; D-58; design record
+  docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md; ROADMAP + CURRENT_STATE
+  updated.
+- Project truth (unchanged): catalog count 1, raw digest
+  sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+  (byte-identical through the task); NEXT_PORTFOLIO_MEMBER
+  AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE; project-state
+  protocol nightwatch.project-state.v1; project:check PASS.
+- Safety vector: DEV/NEXT/production 0, mutations 0, DB 0, infra 0,
+  AI/model 0, Alphaus writes 0, publication 0, selfDev 0, promotion 0,
+  catalog 0, B adoption 0, runtime Git writes 0; Nightwatch docs commits
+  expected only (c3d7fd1 substantive + final docs closure).
+- Continuity: agent:check and agent:audit zero strict errors at the
+  substantive checkpoint; final docs closure commit pushed fast-forward;
+  final exact CI green (verified after push).
 
 ## Resume Recipe
 
-Continue M3: write docs/design/POST_PHASE_9_NEXT_ARCHITECTURE.md with the
-M1/M2 evidence above; then M4-M7 per PLAN. If context is lost, re-read this
-STATE.md + SPEC.md + PLAN.md; the evidence summary above is the complete
-analysis.
+Task complete. Do not resume. The selected next implementation (Phase 10
+— Deeper Real-Source Semantic Contracts) requires a separate owner
+authorization (`PHASE_10_DEEPER_SEMANTIC_IMPLEMENTATION_ONLY` for the
+local/synthetic Phase 10A; optional later
+`PHASE_10B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY`); this design review
+granted none. Follow-up finding #1 (real minimization false-1-MINIMAL
+certification risk) is owned by the HIGH_CONFIDENCE_SEMANTIC_TRIAGE
+NEXT_AFTER option.
