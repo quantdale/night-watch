@@ -1168,6 +1168,72 @@ function checkPhase10IntegrationSeams() {
   if (!/real-source-shape/.test(historical)) fail('archived v1 recipes are missing the historical shape identities');
 }
 
+/**
+ * Phase 10B deep-acceptance core purity: the deep-acceptance mechanics module
+ * is PURE — no network, no fs, no child processes, no persistence, no eval,
+ * no AI/selfDev/Phase6/infra/campaign/authority imports. It reuses the pure
+ * Phase 9B summary mechanics and only adds deterministic acceptance logic.
+ */
+function checkPhase10bCorePurity() {
+  const files = ['src/core/phase10b/deepAcceptance.ts'];
+  for (const file of files) {
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage|dossier|artifacts|campaign)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\(|child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|fetch\s*\(|node:fs)\b/i.test(source)) {
+      fail(`${file} exposes a code-execution, process, network, or persistence capability`);
+    }
+  }
+}
+
+/**
+ * Phase 10B integration seams: the runner is gated by the one-shot launcher
+ * flag, fixes the common-exchange journey / target / DEEP expectation (no
+ * selectors, no URL override), and the launcher rejects every selector. The
+ * historical Phase 9B runner must STILL fix the historical SHAPE expectation
+ * (Phase 10B never rewrites Phase 9B semantics).
+ */
+function checkPhase10bIntegrationSeams() {
+  const runner = read('tests/manual/phase10b-contained-dev-deep-semantic.ts');
+  if (!/NIGHTWATCH_PHASE_10B_REAL/.test(runner)) {
+    fail('Phase 10B runner is missing the one-shot real-run gate');
+  }
+  if (!/const SELECTED_JOURNEY_ID = 'ripple-common-exchange-read'/.test(runner)) {
+    fail('Phase 10B runner lost its fixed common-exchange journey');
+  }
+  if (!/const SELECTED_TARGET_ID = 'ripple\.common-exchange\.read'/.test(runner)) {
+    fail('Phase 10B runner lost its fixed target');
+  }
+  if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-deep'/.test(runner)) {
+    fail('Phase 10B runner lost its fixed deep expectation identity');
+  }
+  if (/NIGHTWATCH_PHASE_2B_JOURNEY_ID/.test(runner)) {
+    fail('Phase 10B runner must not accept journey selection');
+  }
+  if (!/NIGHTWATCH_UI_URL is not accepted/.test(runner)) {
+    fail('Phase 10B runner must reject any UI URL override');
+  }
+  const launcher = read('bin/phase10b-launcher-args.mjs');
+  if (!/no journey selector/.test(launcher) || !/no expectation selector/.test(launcher) || !/no target selector/.test(launcher) || !/--ui-url/.test(launcher)) {
+    fail('Phase 10B launcher must reject journey/expectation/target/URL selectors');
+  }
+  const core = read('src/core/phase10b/deepAcceptance.ts');
+  if (!/PHASE_10B_BLOCKED_DEEP_INVARIANT_NOT_OBSERVED/.test(core)) {
+    fail('Phase 10B deep acceptance must fail closed when the deep invariant is N/A (root-only PASS is not deep validation)');
+  }
+  if (!/PHASE_10B_BLOCKED_DEEP_EXPECTATION_DRIFT/.test(core)) {
+    fail('Phase 10B deep acceptance must fail closed when the resolved expectation lacks the deep type contract');
+  }
+  if (!/expectedInvariantTotalFor/.test(core)) {
+    fail('Phase 10B must derive the expected invariant total from the resolved expectation');
+  }
+  const phase9bRunner = read('tests/manual/phase9b-contained-dev-semantic.ts');
+  if (!/const SELECTED_EXPECTATION_ID = 'ripple\.common-exchange\.read\.real-source-shape'/.test(phase9bRunner)) {
+    fail('historical Phase 9B runner must still fix the historical shape expectation');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -1193,6 +1259,8 @@ checkPhase9bCorePurity();
 checkPhase9bIntegrationSeams();
 checkPhase10DeeperContractPurity();
 checkPhase10IntegrationSeams();
+checkPhase10bCorePurity();
+checkPhase10bIntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {
