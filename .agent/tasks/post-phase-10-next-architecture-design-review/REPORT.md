@@ -13,7 +13,7 @@ The post-Phase-10 review recomputed the useful-bug-yield bottleneck from
 CURRENT source and selected exactly ONE next bug-hunting architecture:
 
 ```
-PHASE_10_STATUS: COMPLETE (terminal; 10B VERIFIED/PASS, D-60)
+PHASE_10_STATUS: COMPLETE (terminal; 10B VERIFIED/PASS/NONE_OBSERVED, D-60)
 CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK:
   COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
 POST_PHASE_10_NEXT_ARCHITECTURE:
@@ -54,18 +54,9 @@ unfixed and owned by the HIGH_CONFIDENCE_REAL_SEMANTIC_TRIAGE NEXT_AFTER.
 
 ## Validation
 
-- `npm run hardening:check` PASS; `npm run agent:check` PASS; `npm run
-  agent:audit` strict_errors 0; `npm run project:check` PASS at the clean
-  tree; `node bin/selfdev-catalog-integrity.mjs` PASS; `git diff --check`
-  clean.
-- Docs-only checkpoint(s) pushed fast-forward; exact CI completed /
-  success at the exact final SHA (recorded after verification in the
-  completion response and final STATE).
+- `npm run hardening:check` PASS; `npm run agent:check` PASS (2 expected warnings: CHECKPOINT_ADVANCE, LEGACY v1); `npm run agent:audit` strict_errors 0 (24 legacy v1 warnings); `npm run project:check` PASS; `node bin/selfdev-catalog-integrity.mjs` PASS; `git diff --check` clean.
+- Docs-only substantive checkpoint ab6d67bb pushed fast-forward (1d7dd6c..ab6d67b); HEAD == origin/main == ab6d67bb; exact CI 31982298205: completed, success, exact head SHA.
 
 ## Safety Vector
 
-DEV/NEXT/production contacts 0; product mutations 0; DB/infra queries 0;
-AI/model calls 0; Alphaus writes 0; publication 0; selfDev intents 0;
-promotion 0; catalog 0; B adoption 0; runtime Git writes 0; Nightwatch
-development docs commits expected only. No implementation authority
-granted to the selected Phase 11 architecture.
+DEV/NEXT/production contacts 0; product mutations 0; DB/infra queries 0; AI/model calls 0; Alphaus writes 0; publication 0; selfDev intents 0; promotion 0; catalog 0; B adoption 0; runtime Git writes 0; Nightwatch development docs commits expected only. No implementation authority granted to the selected Phase 11 architecture.

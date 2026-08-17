@@ -6,16 +6,16 @@ Task ID: post-phase-10-next-architecture-design-review
 Phase: POST-10-DESIGN
 Title: Nightwatch Post-Phase-10 — Next Bug-Hunting Architecture Design Review
 Authorization class: POST_PHASE_10_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
 Last validated implementation SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
-Last substantive checkpoint SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
+Last substantive checkpoint SHA: ab6d67bbe8f88d22b67109902c3c21077b14d6e0
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
 LAST_VALIDATED_IMPLEMENTATION_SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ab6d67bbe8f88d22b67109902c3c21077b14d6e0
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -30,7 +30,7 @@ PHASE_8_STATUS (unchanged): COMPLETE
 CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1 (digest bd35b934...)
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
-POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS: IN_PROGRESS
+POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS: COMPLETE
 
 ## Objective
 
@@ -46,11 +46,13 @@ selfDev/promotion/catalog, NO future authorization granted.
 
 ## Current Milestone
 
-M4 — deliverables in progress (task records written; design document,
-D-61, ROADMAP, CURRENT_STATE pending). Analysis (M3) is DECIDED:
-primary bottleneck COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP; primary
-architecture BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION; NEXT_PHASE
-PHASE_11 (see Evidence Summary below — context-compaction safe).
+COMPLETE / STOP — design review closed: bottleneck recomputed
+(COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP), exactly one primary architecture
+selected (BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION, Phase 11),
+design document + D-61 + ROADMAP + CURRENT_STATE updated, validations
+pass, docs-only substantive checkpoint ab6d67b pushed with exact CI
+31982298205 success. Phase 11 implementation requires a separate owner
+authorization.
 
 ## Completed Milestones
 
@@ -104,15 +106,15 @@ PHASE_11 (see Evidence Summary below — context-compaction safe).
 
 ## Work In Progress
 
-Writing deliverables: state this file, design doc (19 sections), D-61,
-ROADMAP, CURRENT_STATE. Then validation + push + CI + closure.
+NONE.
 
 ## Exact Next Action
 
-Complete M4 deliverables (docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md,
-D-61, ROADMAP, CURRENT_STATE + finalize ACTIVE_TASK/STATE/REPORT to
-COMPLETE), run M5 validation, push the docs-only checkpoints fast-forward,
-verify exact CI green at the exact final SHA, then STOP.
+STOP — the post-Phase-10 design review is complete
+(POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS: COMPLETE); the selected next
+implementation (Phase 11 — Bounded Collection-Wide Semantic Evaluation)
+requires a separate owner authorization. No further design work; no
+implementation authority granted.
 
 ## Evidence Summary (context-compaction safe)
 
@@ -285,11 +287,15 @@ No Nightwatch source/test/config/workflow changes in this task.
   https://github.com/quantdale/night-watch.git; worktree clean.
 - M2 proof: one throwaway Playwright test run (owns A–J cases) then deleted;
   worktree clean again.
-- M5 (pending): `npm run hardening:check`; `npm run agent:check`;
-  `npm run agent:audit`; `npm run project:check`; `node
-  bin/selfdev-catalog-integrity.mjs`; `git diff --check`.
-- M6 (pending): docs-only push fast-forward; exact CI green at the exact
-  final SHA.
+- M5 validation: `npm run hardening:check` PASS; `npm run agent:check`
+  PASS (2 expected warnings: CHECKPOINT_ADVANCE, LEGACY v1);
+  `npm run agent:audit` strict_errors 0 (24 legacy v1 warnings);
+  `npm run project:check` PASS at the clean tree; `node
+  bin/selfdev-catalog-integrity.mjs` PASS; `git diff --check` clean;
+  worktree clean after push.
+- M6 docs checkpoint ab6d67bb pushed fast-forward (1d7dd6c..ab6d67b);
+  HEAD == origin/main == ab6d67bb; exact CI 31982298205: completed,
+  success, exact head SHA.
 
 ## Decisions Made During This Task
 
@@ -375,3 +381,24 @@ NEXT_AFTER option.
 - Design document: `docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md`
   (19 sections) created; D-61 appended to `docs/DECISIONS.md`; ROADMAP
   and CURRENT_STATE updated with post-Phase-10 design review record.
+- Substantive docs checkpoint: ab6d67bbe8f88d22b67109902c3c21077b14d6e0
+  (1d7dd6c..ab6d67b fast-forward; exact CI 31982298205 success at the
+  exact head SHA); live HEAD and origin/main discovered from Git
+  (LIVE_HEAD_AUTHORITY: GIT; final CI authority: GitHub Actions for
+  the live HEAD).
+- Selection (final): bottleneck COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP;
+  architecture BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION; phase PHASE_11
+  (Bounded Collection-Wide Semantic Evaluation); status
+  DESIGNED_NOT_STARTED_NOT_AUTHORIZED; implementation authority
+  NOT_GRANTED; D-61; design record
+  docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md; ROADMAP + CURRENT_STATE
+  updated.
+- Project truth (unchanged): catalog count 1, raw digest
+  sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+  (byte-identical through the task); NEXT_PORTFOLIO_MEMBER
+  AVAILABLE_NOT_ADOPTED; NEXT_PROMOTION_AUTHORITY NONE; project-state
+  protocol nightwatch.project-state.v1; project:check PASS.
+- Safety vector: DEV/NEXT/production 0, mutations 0, DB 0, infra 0,
+  AI/model 0, Alphaus writes 0, publication 0, selfDev 0, promotion 0,
+  catalog 0, B adoption 0, runtime Git writes 0; Nightwatch docs commits
+  expected only (ab6d67b substantive).
