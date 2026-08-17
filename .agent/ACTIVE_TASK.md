@@ -6,8 +6,8 @@ Title: Nightwatch Phase 11 — Bounded Collection-Wide Semantic Evaluation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-11-bounded-collection-wide-semantic-evaluation
 Starting SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
-Last validated implementation SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
-Last substantive checkpoint SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
+Last validated implementation SHA: 6158ef436a306d48b4399978df454f27a3d021a0
+Last substantive checkpoint SHA: 6158ef436a306d48b4399978df454f27a3d021a0
 Current milestone: M0 — owner-authorized spec package is published on origin/main;
 implementation executor must fresh-fetch the canonical remote, recover this task, and
 begin with the permanent pre-fix item-0 coverage baseline before source changes.
@@ -37,8 +37,8 @@ DEV acceptance requires separate owner authorization.
 ## Continuity
 
 STARTING_SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1d7dd6cb6525195e59602e106f50306859a7998d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6158ef436a306d48b4399978df454f27a3d021a0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6158ef436a306d48b4399978df454f27a3d021a0
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 

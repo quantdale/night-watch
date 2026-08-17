@@ -21,9 +21,13 @@
 // ---------------------------------------------------------------------------
 
 import type { SourceProvenance } from '../expectations/types';
+import type { CoverageState } from '../invariants/types';
 import crypto from 'node:crypto';
 
-export const SEMANTIC_EVALUATION_RECEIPT_VERSION = 'nightwatch.semantic-evaluation-receipt.v1' as const;
+export const SEMANTIC_EVALUATION_RECEIPT_VERSION = 'nightwatch.semantic-evaluation-receipt.v2' as const;
+/** Phase 11: v1 receipts remain structurally valid — only the version string
+ *  differs; v2 adds optional coverage metadata fields. */
+export const SEMANTIC_EVALUATION_RECEIPT_VERSION_V1 = 'nightwatch.semantic-evaluation-receipt.v1' as const;
 
 export type SemanticReceiptOutcome =
   | 'PASS'
@@ -82,6 +86,11 @@ export interface SemanticEvaluationReceipt {
   readonly journeyId?: string;
   readonly stepId?: string;
   readonly operationId?: string;
+  // Phase 11: optional collection-wide coverage metadata (only present when
+  // COLLECTION_ITEM_CONTRACT invariants were evaluated).
+  readonly coverageState?: CoverageState;
+  readonly inspectedItemCount?: number;
+  readonly violatingItemCount?: number;
 }
 
 export const SEMANTIC_RECEIPT_SAFE_FIELDS: ReadonlySet<string> = new Set([
@@ -101,12 +110,15 @@ export const SEMANTIC_RECEIPT_SAFE_FIELDS: ReadonlySet<string> = new Set([
   'journeyId',
   'stepId',
   'operationId',
+  'coverageState',
+  'inspectedItemCount',
+  'violatingItemCount',
 ]);
 
 /** Strict structural validation. Throws
  *  `SEMANTIC_RECEIPT_INVALID:<detail>`. */
 export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationReceipt): void {
-  if (receipt.schemaVersion !== SEMANTIC_EVALUATION_RECEIPT_VERSION) {
+  if (receipt.schemaVersion !== SEMANTIC_EVALUATION_RECEIPT_VERSION && receipt.schemaVersion !== SEMANTIC_EVALUATION_RECEIPT_VERSION_V1) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:schemaVersion');
   }
   for (const key of Object.keys(receipt)) {
@@ -148,6 +160,22 @@ export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationRec
   if (receipt.invariantPassCount + receipt.invariantNaCount + receipt.invariantViolationCount !== receipt.invariantTotal) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:count-sum');
   }
+  // Phase 11: validate optional coverage metadata fields.
+  if (receipt.coverageState !== undefined) {
+    const validCoverageStates: readonly CoverageState[] = [
+      'FULLY_EVALUATED_PASS', 'VIOLATION', 'EMPTY_NOT_APPLICABLE',
+      'PARTIAL_COVERAGE_NO_VIOLATION', 'PROJECTION_LIMIT_EXCEEDED',
+    ];
+    if (!validCoverageStates.includes(receipt.coverageState)) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:coverageState');
+    }
+  }
+  if (receipt.inspectedItemCount !== undefined && (typeof receipt.inspectedItemCount !== 'number' || !Number.isInteger(receipt.inspectedItemCount) || receipt.inspectedItemCount < 0)) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:inspectedItemCount');
+  }
+  if (receipt.violatingItemCount !== undefined && (typeof receipt.violatingItemCount !== 'number' || !Number.isInteger(receipt.violatingItemCount) || receipt.violatingItemCount < 0)) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:violatingItemCount');
+  }
   if (receipt.outcome !== 'ANOMALY' && receipt.invariantViolationCount !== 0) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:violations-without-anomaly');
   }
@@ -177,6 +205,10 @@ export interface SemanticReceiptInput {
   readonly journeyId?: string;
   readonly stepId?: string;
   readonly operationId?: string;
+  // Phase 11: optional collection-wide coverage metadata.
+  readonly coverageState?: CoverageState;
+  readonly inspectedItemCount?: number;
+  readonly violatingItemCount?: number;
 }
 
 const SEMANTIC_RECEIPT_INPUT_FIELDS: ReadonlySet<string> = new Set([
@@ -194,6 +226,9 @@ const SEMANTIC_RECEIPT_INPUT_FIELDS: ReadonlySet<string> = new Set([
   'journeyId',
   'stepId',
   'operationId',
+  'coverageState',
+  'inspectedItemCount',
+  'violatingItemCount',
 ]);
 
 /** Build + validate a receipt with a deterministic id. The id is derived
@@ -221,6 +256,9 @@ export function buildSemanticEvaluationReceipt(input: SemanticReceiptInput): Sem
     ...(input.journeyId === undefined ? {} : { journeyId: input.journeyId }),
     ...(input.stepId === undefined ? {} : { stepId: input.stepId }),
     ...(input.operationId === undefined ? {} : { operationId: input.operationId }),
+    ...(input.coverageState === undefined ? {} : { coverageState: input.coverageState }),
+    ...(input.inspectedItemCount === undefined ? {} : { inspectedItemCount: input.inspectedItemCount }),
+    ...(input.violatingItemCount === undefined ? {} : { violatingItemCount: input.violatingItemCount }),
   };
   const canonical = JSON.stringify(draft, Object.keys(draft).sort());
   const digest = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24);

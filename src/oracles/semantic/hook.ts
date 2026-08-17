@@ -18,6 +18,7 @@
 
 import type { SemanticExpectation, SourceSnapshot } from '../expectations/types';
 import type { RealSourceResolution } from '../expectations/resolver';
+import type { CoverageState } from '../invariants/types';
 import { evaluateSemanticResponse } from './runner';
 import {
   buildSemanticEvaluationReceipt,
@@ -74,6 +75,12 @@ export function semanticOutcomeToReceiptOutcome(outcome: string): SemanticReceip
       return 'INVALID_INPUT';
     case 'PROJECTION_LIMIT_EXCEEDED':
       return 'PROJECTION_LIMIT_EXCEEDED';
+    case 'PARTIAL_COVERAGE':
+      // Phase 11: partial coverage maps to PASS in receipts. The coverage
+      // metadata (inspectedItemCount, coverageState) travels with the
+      // invariant evaluations and optional receipt fields — the receipt
+      // outcome itself is PASS because there are no violations.
+      return 'PASS';
     case 'EXPECTATION_INVALID':
       // An expectation that fails its own schema is a Nightwatch defect.
       return 'INTERNAL_ERROR';
@@ -208,6 +215,21 @@ export function evaluateSemanticResolution(input: SemanticResolutionEvaluationIn
   }
 
   const counts = countsFor(evaluation);
+
+  // Phase 11: extract coverage metadata from COLLECTION_ITEM_CONTRACT
+  // evaluations for the receipt.
+  let coverageState: CoverageState | undefined;
+  let inspectedItemCount: number | undefined;
+  let violatingItemCount: number | undefined;
+  for (const ev of evaluation.invariantEvaluations) {
+    if (ev.coverageState !== undefined) {
+      coverageState = ev.coverageState;
+      inspectedItemCount = ev.inspectedItemCount;
+      violatingItemCount = ev.violatingItemCount;
+      break;
+    }
+  }
+
   const receipt = buildSemanticEvaluationReceipt({
     ...base,
     outcome: semanticOutcomeToReceiptOutcome(evaluation.outcome),
@@ -221,6 +243,9 @@ export function evaluateSemanticResolution(input: SemanticResolutionEvaluationIn
     invariantNaCount: counts.na,
     invariantViolationCount: counts.violation,
     findingCount: evaluation.findings.length,
+    ...(coverageState === undefined ? {} : { coverageState }),
+    ...(inspectedItemCount === undefined ? {} : { inspectedItemCount }),
+    ...(violatingItemCount === undefined ? {} : { violatingItemCount }),
   });
   return { receipt, findings: evaluation.outcome === 'ANOMALY' ? evaluation.findings : [] };
 }

@@ -71,7 +71,8 @@ export type InvariantKind =
   | 'IDENTITY_PRESENT_IN_COLLECTION'
   | 'NUMERIC_SUM_RELATION'
   | 'COUNT_RELATION'
-  | 'SHAPE_CHANGED';
+  | 'SHAPE_CHANGED'
+  | 'COLLECTION_ITEM_CONTRACT';
 
 export type EnvelopeClass = 'SUCCESS_ENVELOPE' | 'ERROR_ENVELOPE' | 'UNKNOWN_ENVELOPE';
 export type TransitionExpectation = 'CHANGE' | 'REMAIN_STABLE' | 'UNKNOWN';
@@ -175,6 +176,54 @@ export interface ShapeChangedInvariant {
   readonly statePath?: SafePath;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 11: collection-wide item contracts (bounded collection evaluation).
+//
+// A COLLECTION_ITEM_CONTRACT applies an item-level invariant to every item in
+// a bounded collection. Coverage metadata (FULLY_EVALUATED_PASS, VIOLATION,
+// EMPTY_NOT_APPLICABLE, PARTIAL_COVERAGE_NO_VIOLATION,
+// PROJECTION_LIMIT_EXCEEDED) is surfaced through InvariantEvaluation.
+// ---------------------------------------------------------------------------
+
+export type CollectionItemInvariantKind = 'FIELD_PRESENT' | 'FIELD_ABSENT' | 'TYPE_MATCH' | 'TYPE_IN_SET';
+
+export interface CollectionItemFieldPresentContract {
+  readonly kind: 'COLLECTION_ITEM_CONTRACT';
+  readonly collectionPath: SafePath;
+  readonly itemInvariantKind: 'FIELD_PRESENT';
+  readonly itemRelativePath: SafePath;
+  readonly itemExpected: boolean;
+}
+
+export interface CollectionItemFieldAbsentContract {
+  readonly kind: 'COLLECTION_ITEM_CONTRACT';
+  readonly collectionPath: SafePath;
+  readonly itemInvariantKind: 'FIELD_ABSENT';
+  readonly itemRelativePath: SafePath;
+}
+
+export interface CollectionItemTypeMatchContract {
+  readonly kind: 'COLLECTION_ITEM_CONTRACT';
+  readonly collectionPath: SafePath;
+  readonly itemInvariantKind: 'TYPE_MATCH';
+  readonly itemRelativePath: SafePath;
+  readonly itemExpectedType: 'NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY';
+}
+
+export interface CollectionItemTypeInSetContract {
+  readonly kind: 'COLLECTION_ITEM_CONTRACT';
+  readonly collectionPath: SafePath;
+  readonly itemInvariantKind: 'TYPE_IN_SET';
+  readonly itemRelativePath: SafePath;
+  readonly itemAllowedTypes: readonly ('NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY')[];
+}
+
+export type CollectionItemContract =
+  | CollectionItemFieldPresentContract
+  | CollectionItemFieldAbsentContract
+  | CollectionItemTypeMatchContract
+  | CollectionItemTypeInSetContract;
+
 export type InvariantDefinition =
   | FieldPresenceInvariant
   | FieldAbsentInvariant
@@ -186,7 +235,8 @@ export type InvariantDefinition =
   | IdentityInCollectionInvariant
   | NumericSumRelationInvariant
   | CountRelationInvariant
-  | ShapeChangedInvariant;
+  | ShapeChangedInvariant
+  | CollectionItemContract;
 
 // ---------------------------------------------------------------------------
 // Expectation DTO (SPEC §16).

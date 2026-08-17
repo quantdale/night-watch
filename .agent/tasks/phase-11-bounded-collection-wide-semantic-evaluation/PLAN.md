@@ -12,7 +12,7 @@ Implement the authorized local/synthetic Phase 11 architecture defined by
 spot while preserving historical positional semantics, bounded projection, privacy,
 source provenance, and all Phase 8/9/10 boundaries.
 
-## Starting state
+## Starting State
 
 - Owner-authorized implementation base before this spec package:
   `b4a34e53ae7342def056dd135eb0f0abb6b43902`.
@@ -190,7 +190,33 @@ then STOP.
 - No campaign/triage authority expansion.
 - No Phase 6, AI, selfDev, promotion, or catalog changes.
 
-## Validation strategy
+## Non-Goals
+
+No new Alphaus product authority, no DEV/NEXT/production execution, no product mutation,
+no DB/data-layer operations, no infrastructure archaeology, no AI/model authority, no
+Phase 6 changes, no selfDev/promotion/catalog changes, no public publication.
+
+## Safety Constraints
+
+- No generic numeric-path reinterpretation.
+- No second raw-body traversal.
+- No increased array inspection bound.
+- No one-finding-per-row model.
+- No hidden partial coverage beneath semantic PASS.
+- No new product/source semantic assertion.
+- No campaign/triage authority expansion.
+- No Phase 6, AI, selfDev, promotion, or catalog changes.
+- Real findings remain in owner-only local store.
+
+## Architecture / Approach
+
+Remove the item-0-only blind spot using explicit bounded collection scope over the
+existing safe projection (up to 128 items). Preserve historical positional semantics.
+Make partial coverage load-bearing at the invariant level. Aggregate findings without
+per-row explosion. Support FULLY_EVALUATED_PASS, VIOLATION, EMPTY_NOT_APPLICABLE,
+PARTIAL_COVERAGE_NO_VIOLATION, and PROJECTION_LIMIT_EXCEEDED coverage states.
+
+## Validation Strategy
 
 The Phase 11 matrix is necessary but not sufficient. Historical Phase 9/10 suites and
 complete Playwright must remain green. Privacy and deterministic baseline comparison are
@@ -202,7 +228,24 @@ Normal development may create local commits as needed, but only validated durabl
 checkpoints are pushed. Do not force push. If remote advances unexpectedly, stop and
 reconcile rather than overwrite.
 
-## Completion criteria
+## Decision Log
+
+- D-61: selected `BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION` as Phase 11 architecture.
+- Owner authorized Phase 11A implementation on 2026-08-17.
+
+## Discoveries
+
+- `CONFIRMED_ARRAY_TRUNCATION_COMMENT_DRIFT` — projector comment overstates current
+  truncation handling; correct behavior first, then comment.
+- Real minimization reduced-candidate replay gap remains CURRENT but NEXT_AFTER.
+
+## Deferred Work
+
+- Real minimization gap repair (NEXT_AFTER, not Phase 11 scope).
+- Phase 11B DEV acceptance (requires separate owner authorization).
+- High-confidence real semantic triage (NEXT_AFTER unless new evidence).
+
+## Completion Criteria
 
 All SPEC acceptance gates are satisfied; substantive + final exact CI green; continuity
 strict-v2 clean; safe catalog unchanged; no DEV/product/data/infra/AI activity; terminal

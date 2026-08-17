@@ -69,6 +69,9 @@ function categoryForInvariant(
   }
   if (invariantKind === 'NUMERIC_SUM_RELATION' && relationId !== undefined) return 'AGGREGATE_RELATION_MISMATCH';
   if (invariantKind === 'COUNT_RELATION' && relationId !== undefined) return 'CARDINALITY_RELATION_MISMATCH';
+  // Phase 11: COLLECTION_ITEM_CONTRACT violations are item-level contract
+  // mismatches surfaced as a single finding per invariant.
+  if (invariantKind === 'COLLECTION_ITEM_CONTRACT') return 'SOURCE_EXPECTATION_MISMATCH';
   return 'SOURCE_EXPECTATION_MISMATCH';
 }
 
@@ -89,6 +92,8 @@ function observedClassFor(invariant: InvariantEvaluation, expectation: SemanticE
     case 'TYPE_MATCH':
     case 'TYPE_IN_SET':
       return 'TYPE_CONTRADICTED';
+    case 'COLLECTION_ITEM_CONTRACT':
+      return 'COLLECTION_ITEM_CONTRACT_VIOLATED';
     default:
       return expectation.expectationId;
   }
@@ -114,6 +119,8 @@ function expectedClassFor(invariant: InvariantEvaluation): string {
       return 'TYPE_MATCH';
     case 'TYPE_IN_SET':
       return 'TYPE_IN_SET';
+    case 'COLLECTION_ITEM_CONTRACT':
+      return 'COLLECTION_ITEM_CONTRACT';
     default:
       return invariant.invariantKind;
   }
@@ -136,6 +143,15 @@ export function evaluateSemanticExpectation(input: SemanticEvaluationInput): Sem
 
   if (invalid) return { outcome: 'INVALID_INPUT', findings: [], invariantEvaluations: evaluations };
   if (violations.length === 0) {
+    // Phase 11: check for partial coverage (all PASS but truncated collection)
+    const partialCoverage = evaluations.some(e => e.coverageState === 'PARTIAL_COVERAGE_NO_VIOLATION');
+    if (partialCoverage) {
+      return {
+        outcome: 'PARTIAL_COVERAGE',
+        findings: [],
+        invariantEvaluations: evaluations,
+      };
+    }
     return {
       outcome: anyPass ? 'PASS' : 'NOT_APPLICABLE',
       findings: [],

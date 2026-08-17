@@ -205,6 +205,17 @@ Do not execute Phase 11B under this task.
 
 ## Current execution state
 
-No Phase 11 implementation result is claimed by this REPORT yet. Source implementation,
-focused/full tests, checkpoint SHAs, CI results, and terminal metrics must be populated by
-the execution session from actual evidence.
+Phase 11A spec package has been published to the canonical remote. The task is
+IN_PROGRESS at M0/M1 — permanent pre-fix baseline reproduction and item-0 gap
+proof. No Phase 11 source implementation has been committed yet. The following
+evidence exists:
+
+- Spec package published: SPEC.md, PLAN.md, STATE.md, REPORT.md, ACTIVE_TASK.md.
+- Design document published: `docs/design/PHASE_11_COLLECTION_WIDE_SEMANTICS.md`.
+- Continuity v2 structural headings have been fixed in PLAN.md and STATE.md.
+- CI workflow step for Phase 11 has been added to `.github/workflows/hardening.yml`.
+- `LAST_VALIDATED_IMPLEMENTATION_SHA` and `LAST_SUBSTANTIVE_CHECKPOINT_SHA` aligned
+  to `6158ef436a306d48b4399978df454f27a3d021a0` in STATE.md and ACTIVE_TASK.md.
+
+All sections A–L above must be populated from actual command/test/CI evidence before
+closure. No terminal token has been recorded.

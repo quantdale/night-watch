@@ -1,0 +1,15 @@
+[
+  {
+    "month": "2026-01",
+    "exchange_rate": {
+      "usd": 1,
+      "jpy": 150
+    }
+  },
+  {
+    "month": 12345,
+    "exchange_rate": {
+      "usd": 1
+    }
+  }
+]

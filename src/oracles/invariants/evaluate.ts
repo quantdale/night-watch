@@ -24,6 +24,7 @@ import type { ProjectionNode, SemanticProjection } from '../projections/types';
 import { evaluateNumericRelation } from '../projections/numeric';
 import { semanticStateEquals } from '../projections/shape';
 import type {
+  CollectionItemContract,
   InvariantDefinition,
   SafePath,
 } from '../expectations/types';
@@ -245,5 +246,89 @@ export function evaluateInvariant(
       }
       return { invariantKind: invariant.kind, verdict: equal ? 'PASS' : 'VIOLATED' };
     }
+    case 'COLLECTION_ITEM_CONTRACT': {
+      const root = projections[0]?.root;
+      if (root === undefined) {
+        return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', coverageState: 'EMPTY_NOT_APPLICABLE' };
+      }
+
+      const collectionNode = resolvePath(root, invariant.collectionPath);
+      if (collectionNode === undefined || collectionNode.type !== 'ARRAY') {
+        return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', coverageState: 'EMPTY_NOT_APPLICABLE' };
+      }
+
+      // Empty collection: not applicable
+      if (collectionNode.itemCount === 0 || collectionNode.items === undefined || collectionNode.items.length === 0) {
+        return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', coverageState: 'EMPTY_NOT_APPLICABLE' };
+      }
+
+      const items = collectionNode.items;
+      const inspectedCount = items.length;
+      const isTruncated = collectionNode.arrayTruncated === true;
+
+      let violatingCount = 0;
+      let firstViolationOrdinal: number | undefined;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]!;
+        // Evaluate the item invariant with the item as root
+        const itemProjection: SemanticProjection = { schemaVersion: 'nightwatch.semantic-projection.v1', root: item };
+        const itemInvariantDef = buildItemInvariant(invariant, invariant.itemRelativePath);
+        const itemResult = evaluateInvariant(itemInvariantDef, [itemProjection], ctx);
+
+        if (itemResult.verdict === 'VIOLATED') {
+          violatingCount++;
+          if (firstViolationOrdinal === undefined) firstViolationOrdinal = i;
+        }
+      }
+
+      if (violatingCount > 0) {
+        return {
+          invariantKind: invariant.kind,
+          verdict: 'VIOLATED',
+          coverageState: 'VIOLATION',
+          inspectedItemCount: inspectedCount,
+          violatingItemCount: violatingCount,
+          firstViolationOrdinal,
+        };
+      }
+
+      if (isTruncated) {
+        return {
+          invariantKind: invariant.kind,
+          verdict: 'PASS',
+          coverageState: 'PARTIAL_COVERAGE_NO_VIOLATION',
+          inspectedItemCount: inspectedCount,
+          violatingItemCount: 0,
+        };
+      }
+
+      return {
+        invariantKind: invariant.kind,
+        verdict: 'PASS',
+        coverageState: 'FULLY_EVALUATED_PASS',
+        inspectedItemCount: inspectedCount,
+        violatingItemCount: 0,
+      };
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 11: item invariant builder for COLLECTION_ITEM_CONTRACT.
+// Converts a collection-level contract into a single-item InvariantDefinition
+// that can be recursively evaluated against each projected item.
+// ---------------------------------------------------------------------------
+
+function buildItemInvariant(contract: CollectionItemContract, relativePath: SafePath): InvariantDefinition {
+  switch (contract.itemInvariantKind) {
+    case 'FIELD_PRESENT':
+      return { kind: 'FIELD_PRESENT', path: relativePath, expected: contract.itemExpected };
+    case 'FIELD_ABSENT':
+      return { kind: 'FIELD_ABSENT', path: relativePath };
+    case 'TYPE_MATCH':
+      return { kind: 'TYPE_MATCH', path: relativePath, expectedType: contract.itemExpectedType };
+    case 'TYPE_IN_SET':
+      return { kind: 'TYPE_IN_SET', path: relativePath, allowedTypes: contract.itemAllowedTypes };
   }
 }
