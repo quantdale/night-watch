@@ -1,39 +1,27 @@
 # Active Task
 
-Task ID: phase-11-bounded-collection-wide-semantic-evaluation
-Phase: 11A-COLLECTION-WIDE-SEMANTIC
-Title: Nightwatch Phase 11 — Bounded Collection-Wide Semantic Evaluation
-Status: COMPLETE
-Task directory: .agent/tasks/phase-11-bounded-collection-wide-semantic-evaluation
-Starting SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
+Task ID: phase-11a-1-partial-coverage-receipt-correctness-closeout
+Phase: 11A.1-PARTIAL-COVERAGE-RECEIPT-CLOSEOUT
+Title: Nightwatch Phase 11A.1 — Partial-Coverage Receipt Correctness Closeout
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-11a-1-partial-coverage-receipt-correctness-closeout
+Starting SHA: 2c47812335379f2efa56df504098f8618d0b07ea
 Last validated implementation SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
 Last substantive checkpoint SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
-Current milestone: COMPLETE — all milestones M0–M8 complete, implementation committed at
-5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef, all local validations pass, CI blocked by
-external GitHub billing/spending-limit condition.
-Next action: STOP. After CI unblock: re-run CI, record result, finalize M10–M12.
+Current milestone: M0 — corrective remote spec package published; executor must fresh-fetch, reproduce semantic PARTIAL_COVERAGE -> receipt PASS, then execute the narrow correctness closeout.
+Next action: Execute the canonical remote Phase 11A.1 SPEC. No DEV. If GitHub Actions remains externally blocked by billing/spending-limit after local validation and corrective push, terminalize BLOCKED_EXTERNAL_CI instead of claiming exact CI success.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Last checkpoint: 2026-08-17 — implementation complete at local validation level. CI
-blocked by external billing condition (not code). FINAL_CI_AUTHORITY:
-GITHUB_ACTIONS_FOR_LIVE_HEAD.
 
 ## Scope
 
-Implement bounded collection-wide semantic evaluation locally/synthetically: explicit
-collection scope, historical positional compatibility, honest full/partial/empty/
-violation coverage states, aggregate privacy-safe findings, later-row defect corpus,
-baseline comparison, hardening, CI, complete regression, exact validated checkpoints,
-and continuity/docs closure.
+Correct only the Phase 11 receipt-layer false-PASS gap and directly affected success consumers. Preserve the existing collection evaluator, 128-item projection bound, historical Phase 9/10 semantics, privacy contract, and all product authority boundaries.
 
-NO DEV/NEXT/production, product mutation, DB/data layer, infra/Phase 6, new product
-surface, Alphaus writes, real campaign/minimization repair, browser/API differential,
-AI/model authority, selfDev/promotion/catalog/B adoption, or publication. Any Phase 11B
-DEV acceptance requires separate owner authorization.
+NO DEV/NEXT/production, Phase 11B, product mutation, DB/data plane, infrastructure/Phase 6, new source/product semantics, Alphaus writes, campaign/minimization redesign, differential, AI/model authority, selfDev/promotion/catalog/B adoption, or publication.
 
 ## Continuity
 
-STARTING_SHA: b4a34e53ae7342def056dd135eb0f0abb6b43902
+STARTING_SHA: 2c47812335379f2efa56df504098f8618d0b07ea
 LAST_VALIDATED_IMPLEMENTATION_SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
 LIVE_HEAD_AUTHORITY: GIT
@@ -41,23 +29,22 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_11A_STATUS: COMPLETE
-PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE
-PHASE_11B_DEV_ACCEPTANCE: RECOMMENDED_SEPARATE_AUTHORIZATION
+PHASE_11A_1_STATUS: IN_PROGRESS
+PHASE_11A_STATUS: CORRECTNESS_CLOSEOUT_REQUIRED
+PHASE_11_COLLECTION_WIDE_SEMANTIC: CORRECTNESS_CLOSEOUT_REQUIRED
+PHASE_11B_DEV_ACCEPTANCE: NOT_AUTHORIZED
 PHASE_10_STATUS (unchanged): COMPLETE
-PHASE_10B (unchanged): COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED
-PHASE_10B_DEV_RESULT (unchanged): PASS
 PHASE_9_STATUS (unchanged): COMPLETE
 PHASE_8_STATUS (unchanged): COMPLETE
 CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1
 CANONICAL_CATALOG_SHA256 (unchanged): sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
-CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK: COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
-POST_PHASE_10_NEXT_ARCHITECTURE: BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION
+
+## Confirmed finding
+
+`CONFIRMED_PARTIAL_COVERAGE_RECEIPT_FALSE_PASS`: current semantic `PARTIAL_COVERAGE` is mapped by the hook to receipt `PASS`, while the parent Phase 11 design requires partial coverage to remain distinguishable downstream from full PASS.
 
 ## Recovery
 
-The prompt that starts the CLI is intentionally short. It is not the implementation
-specification. Recover all authority and detailed requirements from the canonical remote
-files above. Git/source state wins over conversation text.
+The CLI prompt is intentionally short. Fetch the canonical remote and recover all detailed authority from this task's PROPOSAL/SPEC/PLAN/STATE/REPORT plus `docs/design/PHASE_11A_1_PARTIAL_COVERAGE_RECEIPT_CLOSEOUT.md`. Git/source state wins over conversation text.
