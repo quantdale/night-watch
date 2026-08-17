@@ -2,53 +2,94 @@
 
 Task ID: phase-11a-2-partial-coverage-acceptance-gate-closeout
 Phase: 11A.2-PARTIAL-COVERAGE-ACCEPTANCE-CLOSEOUT
-Status: IN_PROGRESS
+Status: BLOCKED_EXTERNAL_CI
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Verified starting facts
 
-Independent review established:
-
-- live predecessor source fix exists at `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3`;
-- semantic `PARTIAL_COVERAGE` maps to receipt `PARTIAL_COVERAGE`;
-- `PARTIAL_COVERAGE` is in the receipt non-pass set;
-- receipt-v2 coherence validation rejects PASS with partial-coverage metadata;
-- current `src/core/phase9b/summary.ts` still drops partial coverage from the public summary and acceptance checks;
-- Phase 11A.1 durable STATE/REPORT metadata is stale relative to the corrective implementation;
-- GitHub Actions runs `32001807202` and `32001874321` were blocked before job execution by the billing/spending-limit condition.
+- live predecessor source fix exists at `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3` (receipt-layer PARTIAL_COVERAGE -> receipt PARTIAL_COVERAGE, non-pass; receipt-v2 coherence rejects PASS with partial-coverage metadata).
+- current `src/core/phase9b/summary.ts` still dropped partial coverage from the public summary, counted a partial receipt as decisive when some inspected invariants passed, and did not reject partial coverage in `evaluatePhase9bAcceptance()`.
+- GitHub Actions runs `32001807202` (`51b886a4…`) and `32001874321` (`a6eb3f2…`) were blocked before job execution by the billing/spending-limit condition.
 
 Classification:
 
-`CONFIRMED_PARTIAL_COVERAGE_ACCEPTANCE_GATE_FALSE_PASS`.
+`CONFIRMED_PARTIAL_COVERAGE_ACCEPTANCE_GATE_FALSE_PASS`
 
-## Required final evidence
+## Pre-fix reproduction
 
-Populate from actual execution:
+Permanent reproduction confirmed the defect against the unmodified shared gate:
+- `evaluatePhase9bAcceptance()` returned `pass: true` for a `PARTIAL_COVERAGE` summary carrying `invariantPassCount > 0` (decisive solely via invariant passes; no partial-coverage rejection).
+- `evaluatePhase10bDeepAcceptance()` (which composes the Phase 9B gate) also returned `pass: true` for the same partial summary.
 
-- fresh bootstrap and starting/final SHA;
-- pre-fix acceptance-gate reproduction;
-- `partialCoverageCount` implementation;
-- decisive-evaluation behavior;
-- Phase 9B acceptance partial rejection;
-- replay comparison partial-count behavior;
-- Phase 10B composed-gate partial rejection;
-- historical Phase 9B/10B compatibility;
-- Phase 11A.1/11 regression;
-- privacy/determinism;
-- continuity correction of predecessor STATE/REPORT;
-- catalog integrity;
-- substantive corrective checkpoint;
-- exact GitHub Actions result or exact external blocker annotation;
-- final continuity state;
-- Phase 11B authority status.
+The temporary reproduction was removed once the permanent regression suite encoded the corrected behavior.
 
-## Final-state rule
+## Corrective implementation
 
-Do not declare Phase 11 fully COMPLETE while either:
+Committed at `f763f3c42447c0c566f536ce6bdb38f2673ededc`:
 
-1. a PARTIAL_COVERAGE receipt can pass a shared acceptance gate, or
-2. exact CI has not actually completed successfully.
+- `Phase9bSemanticSummary` gains an explicit, categorical `partialCoverageCount`.
+- `summarizePhase9bPass()` populates it from the internal `outcomeCounts()` tally (`PARTIAL_COVERAGE`).
+- `comparePhase9bReplaySummaries()` compares `partialCoverageCount` (FIRST/REPLAY cannot hide a coverage-state mismatch).
+- `evaluatePhase9bAcceptance()` fails when `partialCoverageCount !== 0`.
+- Decisive evaluation redefined as `(outcome === 'PASS' && invariantPassCount > 0) || outcome === 'ANOMALY'`: a PARTIAL_COVERAGE receipt is never decisive merely because inspected invariants passed.
+- `evaluatePhase10bDeepAcceptance()` needs no separate edit — it composes `evaluatePhase9bAcceptance()` and inherits the rejection.
 
-If source/local correctness is complete but Actions remains externally unavailable, terminalize `BLOCKED_EXTERNAL_CI` and keep Phase 11 local-validated/not-CI-verified.
+## Permanent regression (SPEC §6)
+
+`tests/unit/phase11a2PartialCoverageAcceptanceCloseout.test.ts` (13 tests) locks down:
+1. PARTIAL_COVERAGE receipt appears as `partialCoverageCount = 1`;
+2. PARTIAL_COVERAGE receipt is not counted as decisive;
+3. `evaluatePhase9bAcceptance()` rejects partial coverage even with `invariantPassCount > 0`;
+4. clean PASS still passes Phase 9B acceptance;
+5. ANOMALY remains eligible evaluation evidence;
+6. replay comparison detects FIRST/REPLAY partial-count mismatch;
+7. replay comparison accepts identical partial summaries;
+8. Phase 10B deep acceptance rejects a partial summary;
+9. existing Phase 9B harness matrix remains green;
+10. existing Phase 10B harness matrix remains green;
+11. Phase 11A.1 receipt-closeout matrix remains green;
+12. Phase 11 collection matrix remains green;
+13. no raw-value/privacy fields are introduced.
+
+## Historical compatibility
+
+Phase 9B/10B harness matrices and the historical Phase 9/9A.1/10 focused matrices remain green. The Phase 10B historical successful DEV run is unaffected: its fixed item-0 deep expectation did not produce collection partial coverage. No journey, target, expectation, source-freshness, or product-authority semantics changed.
+
+## Predecessor continuity correction (M5)
+
+Phase 11A.1 durable records corrected to the real corrective source checkpoint:
+- `LAST_VALIDATED_IMPLEMENTATION_SHA` = `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3`;
+- `LAST_SUBSTANTIVE_CHECKPOINT_SHA` = `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3`;
+- STATE no longer says the implementation is unperformed; REPORT no longer says "No corrective implementation is claimed yet";
+- confirmed-finding text now distinguishes historical pre-fix behavior from the fixed source;
+- CI blocker remains explicit and external until exact CI actually runs.
+
+## Validation results
+
+- typecheck: PASS
+- hardening:check: PASS
+- phase11a2PartialCoverageAcceptanceCloseout: 13/13 PASS
+- phase9bHarness / phase10bHarness / phase11a1ReceiptCloseout / phase11CollectionWide / phase9a1GapReproduction: PASS
+- historical Phase 9/9A.1/10 focused matrices: PASS
+- full Playwright unit suite: 1220 passed, 1 skipped
+- campaign:synthetic: 27/27 PASS
+- owner-provenance: 91/91 PASS
+- agent:check / agent:audit / project:check: continuity consistent (catalog digest unchanged)
+- git diff --check: clean
+
+## GitHub Actions / final state
+
+GitHub Actions is BLOCKED before job start by the account billing/spending-limit
+condition. The corrective heads `f763f3c4…` (this task) and `51b886a4…` (Phase
+11A.1) have NOT executed in Actions. A billing/spending-limit refusal before job
+start is not code failure and is not green CI.
+
+Per the terminal-state rule, Phase 11 is NOT declared fully COMPLETE while exact
+CI has not actually completed successfully. Terminalized as:
+
+- `PHASE_11A_2_STATUS: BLOCKED_EXTERNAL_CI`
+- `PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11B_STATUS: NOT_AUTHORIZED`
 
 Phase 11B remains NOT_AUTHORIZED in all branches.

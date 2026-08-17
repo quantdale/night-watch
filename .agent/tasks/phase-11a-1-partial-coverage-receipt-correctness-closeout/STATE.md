@@ -8,13 +8,13 @@ Title: Nightwatch Phase 11A.1 — Partial-Coverage Receipt Correctness Closeout
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 Status: BLOCKED
 Starting SHA: 2c47812335379f2efa56df504098f8618d0b07ea
-Last validated implementation SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
+Last validated implementation SHA: 51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 2c47812335379f2efa56df504098f8618d0b07ea
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
+LAST_VALIDATED_IMPLEMENTATION_SHA: 51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -42,7 +42,7 @@ M0 — spec package published; executor must fresh-fetch and reproduce the defec
 
 ## Work In Progress
 
-Corrective implementation has not yet been performed.
+Corrective implementation is PERFORMED at `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3`: the receipt-layer PARTIAL_COVERAGE false-PASS is fixed (semantic PARTIAL_COVERAGE now maps to receipt PARTIAL_COVERAGE, non-pass; receipt-v2 coherence rejects PASS with partial-coverage metadata). The downstream acceptance-gate gap it surfaced (Phase 11A.2) is handled by the successor task.
 
 ## Exact Next Action
 
@@ -56,7 +56,7 @@ STOP. Local validation complete. CI blocked by external GitHub billing condition
 - M3 — Downstream PASS consumer audit COMPLETE (no issues).
 - M4 — Permanent tests created (24 tests).
 - M5 — Full local regression COMPLETE (1206+ tests pass).
-- M6 — Substantive corrective checkpoint pending (blocked by CI).
+- M6 — Substantive corrective checkpoint COMPLETE at `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3` (blocked from CI by external billing; succeeded locally).
 
 ## Scope Boundaries
 
@@ -64,13 +64,15 @@ No DEV/NEXT/production, no Phase 11B, no product mutation, no DB/data layer, no 
 
 ## Confirmed Finding
 
-`CONFIRMED_PARTIAL_COVERAGE_RECEIPT_FALSE_PASS`
+`CONFIRMED_PARTIAL_COVERAGE_RECEIPT_FALSE_PASS` (historical pre-fix defect).
 
 Evidence at the Phase 11A closure source:
 - `SemanticOutcome` includes `PARTIAL_COVERAGE`;
 - hook mapping returns receipt `PASS` for that outcome;
 - receipt outcome vocabulary has no `PARTIAL_COVERAGE` member;
 - frozen design says partial coverage must never be indistinguishable downstream from full semantic PASS.
+
+Resolution: FIXED at source commit `51b886a4aeaee24aebfd3ecbc0cfe45f29aff6f3`. The historical pre-fix behavior (semantic PARTIAL_COVERAGE -> receipt PASS) no longer occurs; the successor Phase 11A.2 closes the separate downstream acceptance-gate gap.
 
 ## External CI Condition
 
