@@ -69,7 +69,7 @@ test.describe('Phase 9A.1 — receipt schema validation', () => {
     expect(() => buildSemanticEvaluationReceipt({ ...baseInput(), outcome: 'NO_EXPECTATION', expectationId: undefined, sourceProvenance: undefined })).not.toThrow();
   });
 
-  test('the full outcome vocabulary is exactly the nine required outcomes', () => {
+  test('the full outcome vocabulary is exactly the ten required outcomes', () => {
     expect([...SEMANTIC_RECEIPT_OUTCOMES].sort()).toEqual([
       'ANOMALY',
       'EXPECTATION_SOURCE_STALE',
@@ -78,6 +78,7 @@ test.describe('Phase 9A.1 — receipt schema validation', () => {
       'INVALID_INPUT',
       'NOT_APPLICABLE',
       'NO_EXPECTATION',
+      'PARTIAL_COVERAGE',
       'PASS',
       'PROJECTION_LIMIT_EXCEEDED',
     ]);

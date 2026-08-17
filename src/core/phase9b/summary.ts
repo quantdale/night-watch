@@ -85,6 +85,7 @@ function outcomeCounts(receipts: readonly SemanticEvaluationReceipt[]): Record<S
     INVALID_INPUT: 0,
     PROJECTION_LIMIT_EXCEEDED: 0,
     INTERNAL_ERROR: 0,
+    PARTIAL_COVERAGE: 0,
   };
   for (const receipt of receipts) counts[receipt.outcome] += 1;
   return counts;

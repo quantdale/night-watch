@@ -38,7 +38,8 @@ export type SemanticReceiptOutcome =
   | 'EXPECTATION_SOURCE_UNAVAILABLE'
   | 'INVALID_INPUT'
   | 'PROJECTION_LIMIT_EXCEEDED'
-  | 'INTERNAL_ERROR';
+  | 'INTERNAL_ERROR'
+  | 'PARTIAL_COVERAGE';
 
 export const SEMANTIC_RECEIPT_OUTCOMES: readonly SemanticReceiptOutcome[] = [
   'PASS',
@@ -50,6 +51,7 @@ export const SEMANTIC_RECEIPT_OUTCOMES: readonly SemanticReceiptOutcome[] = [
   'INVALID_INPUT',
   'PROJECTION_LIMIT_EXCEEDED',
   'INTERNAL_ERROR',
+  'PARTIAL_COVERAGE',
 ];
 
 /** Outcomes that must NEVER be mistaken for a passing evaluation. */
@@ -61,6 +63,7 @@ export const SEMANTIC_RECEIPT_NON_PASS_OUTCOMES: ReadonlySet<SemanticReceiptOutc
   'INTERNAL_ERROR',
   'INVALID_INPUT',
   'PROJECTION_LIMIT_EXCEEDED',
+  'PARTIAL_COVERAGE',
 ]);
 
 export interface SemanticEvaluationReceipt {
@@ -187,6 +190,47 @@ export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationRec
   }
   if (receipt.sourceProvenance !== undefined && receipt.expectationId === undefined) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:provenance-without-expectation');
+  }
+  // Phase 11A.1: coverage coherence validation.
+  if (receipt.outcome === 'PARTIAL_COVERAGE') {
+    if (receipt.coverageState !== 'PARTIAL_COVERAGE_NO_VIOLATION') {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:partial-coverage-requires-coverage-state');
+    }
+    if (receipt.invariantViolationCount !== 0) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:partial-coverage-violations');
+    }
+    if (receipt.findingCount !== 0) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:partial-coverage-findings');
+    }
+  }
+  if (receipt.outcome === 'PASS' && receipt.coverageState === 'PARTIAL_COVERAGE_NO_VIOLATION') {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:pass-with-partial-coverage');
+  }
+  if (receipt.violatingItemCount !== undefined && receipt.inspectedItemCount !== undefined) {
+    if (receipt.violatingItemCount > receipt.inspectedItemCount) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:violating-exceeds-inspected');
+    }
+  }
+  if (receipt.coverageState === 'VIOLATION' && (receipt.violatingItemCount === undefined || receipt.violatingItemCount < 1)) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:violation-requires-violating-count');
+  }
+  if (receipt.coverageState === 'FULLY_EVALUATED_PASS' && receipt.violatingItemCount !== undefined && receipt.violatingItemCount !== 0) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:full-pass-violations');
+  }
+  if (receipt.coverageState === 'EMPTY_NOT_APPLICABLE' && receipt.inspectedItemCount !== undefined && receipt.inspectedItemCount !== 0) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:empty-requires-zero-inspected');
+  }
+  if (receipt.coverageState === 'PARTIAL_COVERAGE_NO_VIOLATION' && receipt.violatingItemCount !== undefined && receipt.violatingItemCount !== 0) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:partial-coverage-violations');
+  }
+  // Phase 11A.1: v1 receipts must not carry v2 coverage fields.
+  if ((receipt.schemaVersion as string) === SEMANTIC_EVALUATION_RECEIPT_VERSION_V1) {
+    if (receipt.coverageState !== undefined || receipt.inspectedItemCount !== undefined || receipt.violatingItemCount !== undefined) {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:v1-coverage-fields');
+    }
+    if (receipt.outcome === 'PARTIAL_COVERAGE') {
+      throw new Error('SEMANTIC_RECEIPT_INVALID:v1-partial-coverage');
+    }
   }
 }
 

@@ -3,13 +3,14 @@
 Task ID: phase-11a-1-partial-coverage-receipt-correctness-closeout
 Phase: 11A.1-PARTIAL-COVERAGE-RECEIPT-CLOSEOUT
 Title: Nightwatch Phase 11A.1 — Partial-Coverage Receipt Correctness Closeout
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-11a-1-partial-coverage-receipt-correctness-closeout
 Starting SHA: 2c47812335379f2efa56df504098f8618d0b07ea
 Last validated implementation SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
 Last substantive checkpoint SHA: 5f1889fd2c80fa8fe47cd9b04c2d04f8d2c55eef
-Current milestone: M0 — corrective remote spec package published; executor must fresh-fetch, reproduce semantic PARTIAL_COVERAGE -> receipt PASS, then execute the narrow correctness closeout.
-Next action: Execute the canonical remote Phase 11A.1 SPEC. No DEV. If GitHub Actions remains externally blocked by billing/spending-limit after local validation and corrective push, terminalize BLOCKED_EXTERNAL_CI instead of claiming exact CI success.
+Current milestone: Local validation complete; CI blocked by external GitHub billing condition.
+Next action: Wait for GitHub Actions billing unblock, then re-run CI.
+Last checkpoint: 2026-08-17 — Phase 11A.1 corrective implementation local-validated. GitHub Actions blocked before execution by billing/spending-limit condition.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -29,9 +30,9 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_11A_1_STATUS: IN_PROGRESS
-PHASE_11A_STATUS: CORRECTNESS_CLOSEOUT_REQUIRED
-PHASE_11_COLLECTION_WIDE_SEMANTIC: CORRECTNESS_CLOSEOUT_REQUIRED
+PHASE_11A_1_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
+PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
 PHASE_11B_DEV_ACCEPTANCE: NOT_AUTHORIZED
 PHASE_10_STATUS (unchanged): COMPLETE
 PHASE_9_STATUS (unchanged): COMPLETE

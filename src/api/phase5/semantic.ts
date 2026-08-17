@@ -31,7 +31,8 @@ export type SemanticChannelStatus =
   | 'INVALID_INPUT'
   | 'PROJECTION_LIMIT_EXCEEDED'
   | 'INTERNAL_ERROR'
-  | 'NOT_EVALUATED';
+  | 'NOT_EVALUATED'
+  | 'PARTIAL_COVERAGE';
 
 export interface SemanticChannelResult {
   readonly status: SemanticChannelStatus;

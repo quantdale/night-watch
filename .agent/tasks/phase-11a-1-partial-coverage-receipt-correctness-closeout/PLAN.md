@@ -17,6 +17,25 @@ Correct the Phase 11 receipt-layer false-PASS defect discovered by independent v
 - GitHub Actions remains externally blocked by billing/spending-limit before jobs start.
 - Confirmed defect: semantic PARTIAL_COVERAGE is converted to receipt PASS.
 
+## Scope
+
+Receipt-layer correctness fix only. Narrow changes to receipts.ts, hook.ts, and directly affected type consumers.
+
+## Non-Goals
+
+No DEV/NEXT/production. No Phase 11B. No new invariant kind. No collection scan behavior change. No projection schema change. No recipe/source semantics change. No campaign/triage redesign. No Phase 6. No AI/model execution. No selfDev/promotion/catalog/B adoption. No Alphaus writes.
+
+## Safety Constraints
+
+- Historical v1 receipts must remain readable/valid.
+- v2 coherence validation must reject contradictory combinations.
+- PARTIAL_COVERAGE must never be treated as PASS by any consumer.
+- No new product/network authority path.
+
+## Architecture / Approach
+
+Add PARTIAL_COVERAGE to receipt outcome vocabulary as a distinct non-pass outcome. Add bidirectional coherence validation. Fix hook mapping. Audit downstream consumers. Add permanent tests.
+
 ## Milestones
 
 - M0 — fresh Git bootstrap; recover this remote spec package; verify live source contains the confirmed mapping defect.
@@ -39,7 +58,7 @@ Correct the Phase 11 receipt-layer false-PASS defect discovered by independent v
 - Do not make receipt coverage metadata optional for PARTIAL_COVERAGE in a way that recreates ambiguity.
 - Do not weaken historical v1 receipt validation.
 
-## Validation strategy
+## Validation Strategy
 
 The load-bearing proof is end-to-end:
 
@@ -50,6 +69,22 @@ semantic `PARTIAL_COVERAGE`
 → no full semantic PASS.
 
 Also prove full non-truncated collections still produce PASS and observed violations still produce ANOMALY.
+
+## Decision Log
+
+- D-62: added PARTIAL_COVERAGE as explicit non-pass receipt outcome.
+- Coverage coherence validation is bidirectional (PASS cannot carry partial-coverage metadata).
+
+## Discoveries
+
+- Phase 9B acceptance gate does not explicitly reject PARTIAL_COVERAGE (by design).
+- Phase 10B deep acceptance gate same gap (mitigated by current target expectations).
+- Phase9bSemanticSummary lacks partialCoverageCount field.
+
+## Deferred Work
+
+- CI finalization after GitHub billing unblock.
+- Phase 11B remains NOT_AUTHORIZED.
 
 ## Completion Criteria
 

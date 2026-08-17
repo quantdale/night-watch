@@ -76,11 +76,10 @@ export function semanticOutcomeToReceiptOutcome(outcome: string): SemanticReceip
     case 'PROJECTION_LIMIT_EXCEEDED':
       return 'PROJECTION_LIMIT_EXCEEDED';
     case 'PARTIAL_COVERAGE':
-      // Phase 11: partial coverage maps to PASS in receipts. The coverage
-      // metadata (inspectedItemCount, coverageState) travels with the
-      // invariant evaluations and optional receipt fields — the receipt
-      // outcome itself is PASS because there are no violations.
-      return 'PASS';
+      // Phase 11A.1: partial coverage is a distinct non-pass receipt outcome.
+      // It is not an anomaly but it is not full semantic PASS — downstream
+      // consumers must treat it as incomplete coverage.
+      return 'PARTIAL_COVERAGE';
     case 'EXPECTATION_INVALID':
       // An expectation that fails its own schema is a Nightwatch defect.
       return 'INTERNAL_ERROR';
