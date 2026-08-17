@@ -2458,3 +2458,93 @@ remains non-authoritative. The historical Phase 9B harness
 untouched); the deep identity is distinct; no receipt-schema change.
 Acceptance record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`; task records
 under `.agent/tasks/phase-10b-contained-dev-deep-semantic-acceptance/`.
+
+## D-61 — Post-Phase-10 next bug-hunting architecture: BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION (Phase 11, designed, NOT authorized)
+
+**Status: ACCEPTED (design only).** Authorization:
+`POST_PHASE_10_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY` (owner-pasted prompt;
+starting SHA `1d7dd6cb6525195e59602e106f50306859a7998d`; CASE D). The
+post-Phase-10 design review recomputed the useful-bug-yield bottleneck
+from CURRENT source after the terminal Phase 10 (10A local/synthetic
+COMPLETE, D-59; 10B contained DEV deep-semantic acceptance
+VERIFIED/PASS/NONE_OBSERVED, D-60).
+
+**Phase 10 terminal proof.** 4 admitted real-source recipes (2 v2 + 2 v1),
+depth distribution [2,2,3,3] (L1 0, L2 2, L3+ 2); baseline shape-only
+detects 0/4 seeded deep defects, enriched v2 detects 4/4; 10B common-exchange
+deep acceptance PASS (4/4/0/0/0, deterministic); real semantic anomalies
+observed: 0 (NONE_OBSERVED). Phase 10 increased SEMANTIC DEPTH on existing
+real targets but left collection BREADTH at item-0-only for every admitted
+contract (residual limitation documented: Phase 10A record section 12).
+
+**Item-0 coverage audit (source-verified, synthetically proven).** End-to-end
+trace: recipe blueprint `itemIndex: 0` (registry.ts, all 4 recipes) ->
+admission builds single-index paths `[String(itemIndex), field]` ->
+invariant path `resolvePathWithAmbiguity` resolves exactly ONE numeric
+segment -> evaluator single-node verdict. The projector retains up to 128
+items with full safe metadata (`maxArrayItemsInspected: 128`,
+`DEFAULT_PROJECTION_LIMITS`); the limitation is architectural at the
+invariant evaluation layer (single-node evaluation + single-index path
+semantics), NOT projection. A synthetic proof (throwaway test, deleted
+after run) confirmed: row-1 invalid => PASS (FIELD_PRESENT/TYPE_MATCH/
+TYPE_IN_SET all item-0-only); row-57 invalid => PASS (within 128 bound);
+row-200 invalid => PASS (beyond bound, uninspected tail); row-57 missing
+field => PASS; payer row-1 TYPE_IN_SET violation => PASS; row-0 invalid =>
+ANOMALY (positive control). Classification:
+`CONFIRMED_COLLECTION_ITEM_COVERAGE_GAP`. Real exchange-rate responses are
+multi-row arrays; a defect in a later month's row would be missed.
+
+**Real minimization gap.** `invalidReducedReplay()` (phase7-real-campaign.ts:
+360-366) returns INVALID for every reduced sequence; orchestrator wrapper
+(orchestrator.ts:799-802) forces FRESH_EXACT_REPLAY -> REPRODUCES while
+every REDUCED_CANDIDATE -> INVALID; minimizeFailure terminates with
+`1-MINIMAL` guarantee having replayed ZERO genuine reduced candidates.
+Classification: `CURRENT` (matches D-58 finding #1, unfixed).
+`CONFIRMED_REAL_MINIMIZATION_REPLAY_GAP`.
+
+**Differential.** 0 viable paired observations today (journey opFamily !=
+API opFamily; journey candidates api:null; no browser-side semantic
+projection).
+
+**Yield model.** `surfaces x P(defect) x P(detection) x P(actionable)`.
+P(detection) is the most suppressive multiplier — Phase 10 raised depth but
+collection breadth stayed at item-0-only for all 4 contracts. P(actionable)
+is latent (zero real anomalies). Triage (D-58 NEXT_AFTER) NOT auto-selected:
+creates zero detections, latent until a natural anomaly.
+
+**Selected.**
+```
+CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK: COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
+POST_PHASE_10_NEXT_ARCHITECTURE: BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION
+NEXT_PHASE: PHASE_11 — Bounded Collection-Wide Semantic Evaluation
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+```
+
+10 scored options (20 criteria, 1-5, 5 favorable): A (collection-wide) 90;
+B (triage) 74; D (coverage expansion) 71; F (source-selection) 70; E
+(relational) 68; G (campaign yield) 66; H (payer canary) 65; C
+(differential) 61; J (selfDev) 52; I (multi-product) 46. Load-bearing: A
+scores 5 on criteria 2 (every inspected row), 3 (P(detection) directly),
+5 (yield), 20 (closes Phase 10's documented residual limitation). B scores
+5 on 4 (P(actionable)) but latent; C scores 4 on 1 (new L5 class) but
+0 viable pairs; D capped rows.
+
+NEXT_AFTER: HIGH_CONFIDENCE_REAL_SEMANTIC_TRIAGE (B), followed by
+REAL_SEMANTIC_SURFACE_EXPANSION (D). VIABLE_LATER: BROWSER_API_SEMANTIC_
+DIFFERENTIAL (C), SEMANTIC_CAMPAIGN_YIELD_INTELLIGENCE (G). DEFER:
+SOURCE_CHANGE_GUIDED_SEMANTIC_SELECTION (F), DEEPER_RELATIONAL_SEMANTICS
+(E), MULTI_PRODUCT_EXPANSION (I), SELF_DEVELOPMENT_2ND_ADOPTION (J),
+SECOND_DEEP_DEV_CANARY (H, fold into optional Phase 11B).
+
+**Consequences.** Phase 11 designed, NOT started, NOT authorized.
+Implementation requires a fresh owner authorization
+(`PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY` for the
+local/synthetic Phase 11A; optional later
+`PHASE_11B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` for one contained DEV
+acceptance of the collection-wide coverage). Phase 10/9/8 statuses
+unchanged; catalog byte-identical `sha256:bd35b934...` (count 1);
+B AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`; Phase 6
+FROZEN_BY_OWNER; AI non-authoritative. Design record:
+`docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md`; task records under
+`.agent/tasks/post-phase-10-next-architecture-design-review/`.

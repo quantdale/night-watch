@@ -1487,6 +1487,60 @@ acceptance record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`, D-60, and
   `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`. NEXT ACTION remains STOP —
   next architecture requires a separate post-Phase-10 design review.
 
+## Post-Phase-10 design review — next bug-hunting architecture (design complete; implementation NOT authorized)
+
+`POST_PHASE_10_ARCHITECTURE_DESIGN_STATUS: COMPLETE` (2026-08-16). The
+owner-authorized design review (`post-phase-10-next-architecture-design-review`,
+Phase `POST-10-DESIGN`, authorization
+`POST_PHASE_10_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`, starting SHA
+`1d7dd6cb6525195e59602e106f50306859a7998d`) recomputed the useful-bug-yield
+bottleneck from current source after the terminal Phase 10 and selected the
+next bug-hunting investment (D-61; full analysis in
+`docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md`):
+
+```
+PHASE_10_STATUS: COMPLETE (terminal; 10B VERIFIED/PASS/NONE_OBSERVED, D-60)
+CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK:
+  COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
+POST_PHASE_10_NEXT_ARCHITECTURE:
+  BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION
+NEXT_PHASE: PHASE_11 — Bounded Collection-Wide Semantic Evaluation
+NEXT_PHASE_STATUS: DESIGNED_NOT_STARTED_NOT_AUTHORIZED
+NEXT_PHASE_IMPLEMENTATION_AUTHORITY: NOT_GRANTED
+```
+
+Evidence basis (source-verified, not lore): all 4 admitted real-source
+contracts are collection-style (top-level ARRAY of row objects). Item-level
+invariants evaluate only item 0 (blueprint itemIndex:0 in all 4 registry
+recipes; admission builds single-index paths; invariant evaluator resolves
+exactly one numeric node; projection retains up to 128 items but nothing
+consumes more than one). A synthetic proof (throwaway test, deleted after
+the run) confirmed: a defect at row 1, 57, or 200 of a multi-row response
+is invisible (PASS) for FIELD_PRESENT, TYPE_MATCH, and TYPE_IN_SET, while
+row-0 violations are detected (ANOMALY). The real minimization gap
+(invalidReducedReplay stub) remains CURRENT (D-58 finding #1, unfixed).
+Differential has 0 viable pairs. Coverage expansion is capped at ~4-5
+shallow targets. P(detection) is the dominant term with the most headroom;
+collection-wide evaluation directly raises it on the existing real L3+
+contracts. Triage (D-58 NEXT_AFTER) NOT auto-selected: creates zero
+detections, latent until a natural anomaly exists.
+
+NEXT_AFTER: HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_
+EXPANSION; VIABLE_LATER: BROWSER_API_SEMANTIC_DIFFERENTIAL,
+SEMANTIC_CAMPAIGN_YIELD_INTELLIGENCE; DEFER: SOURCE_CHANGE_GUIDED_
+SEMANTIC_SELECTION, DEEPER_RELATIONAL_SEMANTICS, MULTI_PRODUCT_EXPANSION,
+SELF_DEVELOPMENT_2ND_ADOPTION, SECOND_DEEP_DEV_CANARY.
+
+Phase 11 is DESIGNED, NOT STARTED, NOT AUTHORIZED. Implementation requires
+a fresh owner authorization (`PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_
+ONLY` for the local/synthetic Phase 11A; optional later
+`PHASE_11B_CONTAINED_DEV_SEMANTIC_ACCEPTANCE_ONLY` for one contained DEV
+acceptance of the collection-wide coverage). Machine-checked truth block
+unchanged: catalog count 1 (digest `sha256:bd35b934...`),
+variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE,
+`PHASE_8_STATUS: COMPLETE`. Phase 6 remains FROZEN_BY_OWNER; AI remains
+non-authoritative.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).
