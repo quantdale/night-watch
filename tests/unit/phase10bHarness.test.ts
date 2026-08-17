@@ -151,6 +151,7 @@ function passSummary(overrides: Partial<Phase9bSemanticSummary>): Phase9bSemanti
     invalidInputCount: 0,
     projectionLimitExceededCount: 0,
     internalErrorCount: 0,
+    partialCoverageCount: 0,
     findingCount: 0,
     findingFingerprints: [],
     findingCategories: [],

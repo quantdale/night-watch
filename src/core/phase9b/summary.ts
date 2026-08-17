@@ -8,9 +8,12 @@
 // replay comparison compares only normalized safe fields (never receiptId
 // equality, never raw values).
 //
-// DECISIVE (§25): a receipt is decisive when invariantPassCount > 0 or the
-// outcome is ANOMALY. NOT_APPLICABLE-only, NO_EXPECTATION, and zero receipts
-// are never decisive.
+// DECISIVE (§25): a receipt is decisive when (outcome is PASS and
+// invariantPassCount > 0) or the outcome is ANOMALY. A PARTIAL_COVERAGE
+// receipt is INCOMPLETE coverage and must never be counted as decisive solely
+// because some inspected invariants passed — partial coverage != full semantic
+// acceptance. NOT_APPLICABLE-only, NO_EXPECTATION, PARTIAL_COVERAGE, and zero
+// receipts are never decisive.
 //
 // This module is PURE: no network, no fs, no persistence (hardening-guarded).
 // ---------------------------------------------------------------------------
@@ -46,6 +49,10 @@ export interface Phase9bSemanticSummary {
   readonly invalidInputCount: number;
   readonly projectionLimitExceededCount: number;
   readonly internalErrorCount: number;
+  /** Selected-target partial-coverage receipts (collection-wide incomplete
+   *  coverage). Never silent inside a generic failure count — explicit and
+   *  categorical. PARTIAL_COVERAGE must never certify full acceptance. */
+  readonly partialCoverageCount: number;
   /** Selected-target semantic findings. */
   readonly findingCount: number;
   /** Deterministic safe fingerprints of the selected-target findings. */
@@ -116,7 +123,9 @@ export function summarizePhase9bPass(input: Phase9bSummaryInput): Phase9bSemanti
     invariantViolationCount += receipt.invariantViolationCount;
   }
   const decisiveEvaluationCount = selected.filter(
-    (receipt) => receipt.invariantPassCount > 0 || receipt.outcome === 'ANOMALY'
+    (receipt) =>
+      (receipt.outcome === 'PASS' && receipt.invariantPassCount > 0) ||
+      receipt.outcome === 'ANOMALY'
   ).length;
   return {
     schemaVersion: PHASE_9B_SUMMARY_VERSION,
@@ -137,6 +146,7 @@ export function summarizePhase9bPass(input: Phase9bSummaryInput): Phase9bSemanti
     invalidInputCount: counts.INVALID_INPUT,
     projectionLimitExceededCount: counts.PROJECTION_LIMIT_EXCEEDED,
     internalErrorCount: counts.INTERNAL_ERROR,
+    partialCoverageCount: counts.PARTIAL_COVERAGE,
     findingCount: selectedFindings.length,
     findingFingerprints: fingerprints,
     findingCategories: categories,
@@ -174,6 +184,7 @@ export function comparePhase9bReplaySummaries(
   compare('outcome PASS count', first.passCount, replay.passCount);
   compare('outcome ANOMALY count', first.anomalyCount, replay.anomalyCount);
   compare('outcome NOT_APPLICABLE count', first.notApplicableCount, replay.notApplicableCount);
+  compare('outcome PARTIAL_COVERAGE count', first.partialCoverageCount, replay.partialCoverageCount);
   compare('invariantTotal', first.invariantTotal, replay.invariantTotal);
   compare('invariantPassCount', first.invariantPassCount, replay.invariantPassCount);
   compare('invariantNaCount', first.invariantNaCount, replay.invariantNaCount);
@@ -189,7 +200,9 @@ export interface Phase9bAcceptanceChecks {
 
 /** One-pass acceptance gate (SPEC §25, §49, §50): a pass is proven only with
  *  resolved expectation + receipt + decisive evaluation, zero hard outcomes
- *  on the selected target, and the exact expectation/source binding. */
+ *  on the selected target, zero partial-coverage (incomplete) receipts, and
+ *  the exact expectation/source binding. PARTIAL_COVERAGE never certifies full
+ *  acceptance — partial coverage != full semantic acceptance. */
 export function evaluatePhase9bAcceptance(
   summary: Phase9bSemanticSummary,
   expected: { expectationId: string; approvedSha: string }
@@ -204,6 +217,7 @@ export function evaluatePhase9bAcceptance(
   if (summary.invalidInputCount !== 0) failures.push(`INVALID_INPUT count ${summary.invalidInputCount} != 0`);
   if (summary.projectionLimitExceededCount !== 0) failures.push(`PROJECTION_LIMIT_EXCEEDED count ${summary.projectionLimitExceededCount} != 0`);
   if (summary.internalErrorCount !== 0) failures.push(`INTERNAL_ERROR count ${summary.internalErrorCount} != 0`);
+  if (summary.partialCoverageCount !== 0) failures.push(`PARTIAL_COVERAGE count ${summary.partialCoverageCount} != 0`);
   if (summary.expectationId !== expected.expectationId) failures.push(`expectationId ${summary.expectationId} != ${expected.expectationId}`);
   if (summary.sourceSha !== expected.approvedSha) failures.push(`source SHA ${summary.sourceSha} != ${expected.approvedSha}`);
   if (summary.evidenceDigest === null || !/^ev:sha256:[0-9a-f]{24}$/.test(summary.evidenceDigest)) {
