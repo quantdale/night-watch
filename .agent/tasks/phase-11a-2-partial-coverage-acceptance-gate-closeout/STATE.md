@@ -73,7 +73,7 @@ No DEV/NEXT/production, no Phase 11B, no product mutation, no DB/data layer, no 
 
 ## External CI Condition
 
-GitHub Actions is known to be externally blocked before job start by the account billing/spending-limit condition. Runs `32001807202` (Phase 11A.1 fix `51b886a4…`) and `32001874321` (Phase 11A.1 docs head `a6eb3f2…`) were refused before execution — not code/test failures. This task's corrective head `f763f3c4…` has likewise not executed in Actions. Exact CI success is NOT claimed.
+GitHub Actions is known to be externally blocked before job start by the account billing/spending-limit condition. Runs `32001807202` (Phase 11A.1 fix `51b886a4…`) and `32001874321` (Phase 11A.1 docs head `a6eb3f2…`) were refused before execution. After this task's push (head `daaeecae449d4602e8c081a422180640b61469ce`), run `32008273984` ("Nightwatch hardening") was created but the job was NOT started: annotation — "The job was not started because recent account payments have failed or your spending limit needs to be increased." This is the external billing block, not a code/test failure. Exact CI success is NOT claimed; Phase 11 remains local-validated / not-CI-verified.
 
 ## Files Changed
 

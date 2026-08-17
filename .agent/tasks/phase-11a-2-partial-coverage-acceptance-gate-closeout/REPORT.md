@@ -80,9 +80,15 @@ Phase 11A.1 durable records corrected to the real corrective source checkpoint:
 ## GitHub Actions / final state
 
 GitHub Actions is BLOCKED before job start by the account billing/spending-limit
-condition. The corrective heads `f763f3c4…` (this task) and `51b886a4…` (Phase
-11A.1) have NOT executed in Actions. A billing/spending-limit refusal before job
-start is not code failure and is not green CI.
+condition. After this task's push (head `daaeecae449d4602e8c081a422180640b61469ce`),
+run `32008273984` ("Nightwatch hardening") was created but its job was NOT
+started, with the exact annotation: "The job was not started because recent
+account payments have failed or your spending limit needs to be increased." This
+is the external billing block — not a code or test failure, and not green CI.
+The corrective heads `f763f3c4…` (this task, in the pushed ancestry) and
+`51b886a4…` (Phase 11A.1) have NOT executed successfully in Actions. A
+billing/spending-limit refusal before job start is not code failure and is not
+green CI.
 
 Per the terminal-state rule, Phase 11 is NOT declared fully COMPLETE while exact
 CI has not actually completed successfully. Terminalized as:
