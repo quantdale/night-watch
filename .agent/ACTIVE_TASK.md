@@ -3,7 +3,7 @@
 Task ID: phase-11a-3-real-source-collection-admission-wiring
 Phase: 11A.3-REAL-SOURCE-COLLECTION-ADMISSION
 Title: Nightwatch Phase 11A.3 — Real-Source Collection Admission Wiring
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-11a-3-real-source-collection-admission-wiring
 Starting SHA: 5669146332d357b09a49b29404a603e3fa1e828e
 Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108

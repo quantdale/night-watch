@@ -6,15 +6,15 @@ Task ID: phase-11a-3-real-source-collection-admission-wiring
 Phase: 11A.3-REAL-SOURCE-COLLECTION-ADMISSION
 Title: Nightwatch Phase 11A.3 — Real-Source Collection Admission Wiring
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 5669146332d357b09a49b29404a603e3fa1e828e
-Last validated implementation SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
+Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 5669146332d357b09a49b29404a603e3fa1e828e
-LAST_VALIDATED_IMPLEMENTATION_SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -95,7 +95,7 @@ None. The new module is a pure derivation transform; no network, filesystem, chi
 
 ## Resume Recipe
 
-Task is IN_PROGRESS. Recover from remote Git state and the committed `src/oracles/expectations/collectionAdmission.ts` module + the `tests/unit/phase11a3CollectionAdmission.test.ts` permanent matrix + the `tests/helpers/phase11a3Fixtures.ts` synthetic source helper. Re-run the validation ledger; re-check GitHub Actions; terminalize at the truthful state.
+Task is BLOCKED_EXTERNAL_CI. Implementation is committed at `578a9917344c70ba96fe9bd8d06a604ca8964108`; full local regression is green; GitHub Actions refuses to start the job at the implementation SHA because of the documented billing/spending-limit condition. Do not resume work unless the external CI condition is resolved or a new owner authorization is granted.
 
 ## Completion Snapshot
 
