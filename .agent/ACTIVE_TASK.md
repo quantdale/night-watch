@@ -1,28 +1,28 @@
 # Active Task
 
-Task ID: phase-11a-3-real-source-collection-admission-wiring
-Phase: 11A.3-REAL-SOURCE-COLLECTION-ADMISSION
-Title: Nightwatch Phase 11A.3 — Real-Source Collection Admission Wiring
-Status: BLOCKED
-Task directory: .agent/tasks/phase-11a-3-real-source-collection-admission-wiring
-Starting SHA: 5669146332d357b09a49b29404a603e3fa1e828e
+Task ID: phase-11a-4-source-freshness-full-regression-closeout
+Phase: 11A.4-SOURCE-FRESHNESS-FULL-REGRESSION-CLOSEOUT
+Title: Nightwatch Phase 11A.4 — Source-Freshness & Full-Regression Closeout
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-11a-4-source-freshness-full-regression-closeout
+Starting SHA: 813fabd898f4989c319affcbbe99551e4620903f
 Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 Last substantive checkpoint SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
-Last checkpoint: 578a9917344c70ba96fe9bd8d06a604ca8964108
-Current milestone: M13 — terminal state recorded. Phase 11A.3 implementation is complete and locally validated; GitHub Actions remains externally blocked before job start by the documented account billing/spending-limit condition (verified at the implementation SHA via `gh run view`).
-Next action: STOP at the truthful terminal state. Phase 11B DEV run requires a separate owner authorization and an exact-CI green run.
+Last checkpoint: 813fabd898f4989c319affcbbe99551e4620903f
+Current milestone: M0 — verification-closeout spec package published. Executor must first resolve the current mobingilabs/ripple-api remote SHA fresh; the canonical sibling pin is not remote-current evidence.
+Next action: Execute the canonical Phase 11A.4 SPEC. No DEV. Prove fresh-source derivation plus canonical and isolated complete Playwright regressions. If GitHub Actions remains billing-blocked, terminalize BLOCKED_EXTERNAL_CI and keep Phase 11B NOT_READY/NOT_AUTHORIZED.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Close only the missing real-source collection expectation admission wiring. Preserve historical positional expectation IDs/semantics, existing recipe source authority, resolver currentness behavior, 128-item bounded collection evaluation, receipt/acceptance truth, and all product authority boundaries.
+Close only the Phase 11A.3 source-freshness and complete-regression proof gaps. Existing Phase 11A.3 implementation remains the substantive baseline unless these checks expose a concrete Nightwatch defect within existing Phase 11A authority.
 
-NO DEV/NEXT/production, Phase 11B execution, product mutation, DB/data plane, infrastructure/Phase 6, new Alphaus source semantics, Alphaus writes, campaign/minimization redesign, differential, AI/model authority, selfDev/promotion/catalog/B adoption, or publication.
+NO DEV/NEXT/production, no Phase 11B execution, product mutation, DB/data plane, infrastructure/Phase 6, Alphaus writes, new product/source semantics, campaign/minimization redesign, differential, AI/model authority, selfDev/promotion/catalog/B adoption, or publication.
 
 ## Continuity
 
-STARTING_SHA: 5669146332d357b09a49b29404a603e3fa1e828e
+STARTING_SHA: 813fabd898f4989c319affcbbe99551e4620903f
 LAST_VALIDATED_IMPLEMENTATION_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 LIVE_HEAD_AUTHORITY: GIT
@@ -30,12 +30,14 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI
-PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
-PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
-PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI
+PHASE_11A_4_STATUS: IN_PROGRESS
+PHASE_11A_4_SOURCE_FRESHNESS: NOT_VERIFIED
+PHASE_11A_4_FULL_REGRESSION: NOT_VERIFIED
+PHASE_11A_STATUS: VERIFICATION_CLOSEOUT_REQUIRED
+PHASE_11_COLLECTION_WIDE_SEMANTIC: VERIFICATION_CLOSEOUT_REQUIRED
+PHASE_11B_DEV_READINESS: NOT_READY_VERIFICATION_AND_EXTERNAL_CI
 PHASE_11B_STATUS: NOT_AUTHORIZED
+PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_IMPLEMENTATION_VERIFIED_WITH_PROOF_GAPS
 PHASE_11A_2_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
 PHASE_11A_1_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
 PHASE_10_STATUS (unchanged): COMPLETE
@@ -46,10 +48,12 @@ CANONICAL_CATALOG_SHA256 (unchanged): sha256:bd35b934b852f192c2ba0f10c242dde3eba
 NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
 NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
-## Confirmed finding
+## Confirmed findings
 
-`CONFIRMED_REAL_SOURCE_COLLECTION_EXPECTATION_ADMISSION_GAP`: the Phase 11 collection evaluator is implemented, but current `deriveRealSourceExpectation()` / recipe registry still produce the historical positional item-0 expectations. The permanent Phase 11 collection matrix constructs `...real-source-collection` expectations from synthetic fixture helpers instead of the production real-source admission bridge. A future Phase 11B run would therefore not yet have a mechanically source-derived collection expectation to resolve.
+`CONFIRMED_PHASE_11A_3_SOURCE_FRESHNESS_PROOF_GAP`: predecessor SPEC required fresh remote SHA discovery + disposable exact current snapshot, but terminal evidence used the canonical sibling at historical pin `27bb007ad0c798800b6bd3b29760c966422966e7` as “current-source”.
+
+`CONFIRMED_PHASE_11A_3_FULL_REGRESSION_PROOF_GAP`: predecessor SPEC required complete Playwright + isolated/source-equivalent complete regression, but terminal evidence recorded `npm run test:unit` as full Playwright and only a focused isolated matrix.
 
 ## Recovery
 
-The CLI prompt is intentionally short. Fetch canonical `origin/main` and recover all detailed authority from this task's PROPOSAL/SPEC/PLAN/STATE/REPORT plus `docs/design/PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION.md`. Git/source state wins over conversation text.
+The CLI prompt is intentionally short. Fetch canonical `origin/main`, then read this task's PROPOSAL/SPEC/PLAN/STATE/REPORT and `docs/design/PHASE_11A_4_SOURCE_FRESHNESS_FULL_REGRESSION_CLOSEOUT.md`. Git/source evidence wins over conversation text.
