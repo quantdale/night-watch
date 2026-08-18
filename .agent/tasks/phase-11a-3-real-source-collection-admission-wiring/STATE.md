@@ -18,86 +18,85 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-## Status
-
-PHASE_11A_3_STATUS: IN_PROGRESS
-PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: NOT_VERIFIED
-PHASE_11A_STATUS: CORRECTNESS_CLOSEOUT_REQUIRED
-PHASE_11_COLLECTION_WIDE_SEMANTIC: CORRECTNESS_CLOSEOUT_REQUIRED
-PHASE_11B_DEV_READINESS: NOT_READY_REAL_SOURCE_COLLECTION_ADMISSION
-PHASE_11B_STATUS: NOT_AUTHORIZED
-PHASE_10_STATUS (unchanged): COMPLETE
-PHASE_9_STATUS (unchanged): COMPLETE
-PHASE_8_STATUS (unchanged): COMPLETE
-CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1
-CANONICAL_CATALOG_SHA256 (unchanged): sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
-NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
-NEXT_PROMOTION_AUTHORITY (unchanged): NONE
-
 ## Objective
 
-Close `CONFIRMED_REAL_SOURCE_COLLECTION_EXPECTATION_ADMISSION_GAP`: current real-source derivation still emits historical positional item-0 expectations, while the Phase 11 collection evaluator is only exercised by synthetic helper-created collection expectations. Add an explicit deterministic collection-admission bridge, prove it through existing real-source derivation and resolver machinery, validate locally, and establish truthful CI/readiness state. No DEV.
+Close `CONFIRMED_REAL_SOURCE_COLLECTION_EXPECTATION_ADMISSION_GAP`: the Phase 11 collection evaluator is implemented and locally proven, but the production real-source derivation path still emits only the historical positional item-0 expectations, and the Phase 11 permanent matrix constructs `...real-source-collection` expectations from synthetic fixture helpers. Add an additive, deterministic, fail-closed Nightwatch-owned collection-admission bridge that converts an already mechanically derived positional real-source expectation into a distinct collection-wide expectation for the same approved target — without changing historical derivation semantics, evidence digest, source SHA, or recipe authority. Validate locally; terminalize at the truthful external-CI state.
 
 ## Current Milestone
 
-M0 — remote corrective spec package is being published. The fresh executor must fetch the final package head, verify clean current Git state, and reproduce the real-source admission gap before source changes.
+M11 — clean post-checkpoint acceptance: full unit + owner-provenance + campaign + agent + project + hardening + sibling-dev canary are green; ready to terminalize as `BLOCKED_EXTERNAL_CI` and `PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI` once the final docs/continuity closure is recorded and the substantive checkpoint is pushed.
+
+## Completed Milestones
+
+- M0 — bootstrap and permanently reproduce the gap (positional item-0 only, no real-source collection expectation; Phase 11 tests use the fixture helper).
+- M1 — defined the fixed target → collection expectation ID table; introduced `REAL_SOURCE_COLLECTION_DERIVATION_VERSION`.
+- M2 — implemented the additive collection-admission transform (`src/oracles/expectations/collectionAdmission.ts`); supported item transforms (FIELD_PRESENT, FIELD_ABSENT, TYPE_MATCH, TYPE_IN_SET); strict expectation validation enforced.
+- M3 — implemented batch collection derivation `deriveCollectionWideRealSourceExpectations`; preserves historical derivation output.
+- M4 — resolver/currentness proof: historical and collection sets both reuse the same recipe currentness + evidence re-extraction; no hidden priority.
+- M5 — real-source fixture semantic proof: later-row `exchange_rate` violation in common-exchange detected only by the real-source-derived collection expectation; payer `TYPE_IN_SET` violation detected; `>128` rows produce `PARTIAL_COVERAGE` rejected by the shared Phase 9B acceptance gate; replay comparison detects partial-vs-full mismatch.
+- M6 — four-recipe structural matrix: all four real recipes admit a distinct collection expectation with the correct identity, preserved evidence digest, and the matching set of source-derived collection contracts.
+- M7 — privacy sentinel sweep zero leaks across result + findings + invariantEvaluations; determinism proven via repeated derivation; approved + DEV-reachable target sets unchanged.
+- M8 — owner-local current-source canary: a disposable read-only sibling checkout of `mobingilabs/ripple-api` was used to mechanically derive the four historical expectations and the four distinct collection expectations at the current remote SHA; report is local-only and structural.
+- M9 — full local validation: 1247 unit tests pass, owner-provenance 91 pass, campaign:synthetic 27 pass, hardening:check PASS, project:check passes once the working tree is committed.
 
 ## Work In Progress
 
-Spec-driven Phase 11A.3 bootstrap only. No Phase 11A.3 implementation source change is claimed by this STATE.
+M11/M12 — final continuity and docs closure. GitHub Actions re-check is queued for the post-push re-verification; if the documented billing/spending-limit condition is unchanged, terminal state is `BLOCKED_EXTERNAL_CI` and Phase 11B readiness is `NOT_READY_EXTERNAL_CI`.
 
 ## Exact Next Action
 
-Fresh CLI executor:
+Commit and push the substantive implementation, run the focused Phase 11A.3 + the load-bearing real-source fixture matrix again from a clean checkout, re-check GitHub Actions, update REPORT.md and STATE.md from actual evidence, and terminalize at the truthful external-CI state.
 
-1. fetch origin in the canonical Nightwatch repository;
-2. require clean `main` and `HEAD == origin/main`; Git wins;
-3. read `AGENTS.md`, `.agent/ACTIVE_TASK.md`, this task's PROPOSAL/SPEC/PLAN/STATE/REPORT, and `docs/design/PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION.md`;
-4. permanently reproduce that `deriveRealSourceExpectation(s)` returns positional item-0 expectations while Phase 11 collection expectations are only fixture-helper-created;
-5. execute SPEC M1 onward without DEV.
+## Files Changed
 
-## Confirmed Finding
+- `src/oracles/expectations/collectionAdmission.ts` (new) — collection-admission bridge, fail-closed transform, fixed target→ID table, distinct derivation version.
+- `src/oracles/expectations/validator.ts` (modified) — strict validator now admits the `COLLECTION_ITEM_CONTRACT` invariant class produced by the new bridge.
+- `src/oracles/expectations/index.ts` (modified) — re-exports the new module.
+- `tests/helpers/phase11a3Fixtures.ts` (new) — repository-owned synthetic source text satisfying every extractor of the four real recipes; bounded in-memory reader.
+- `tests/unit/phase11a3CollectionAdmission.test.ts` (new) — 27-test permanent matrix covering M0-M7 (gap reproduction, transform, fail-closed, resolver, later-row + partial, four-recipe structural, privacy, determinism, authority stability).
 
-`CONFIRMED_REAL_SOURCE_COLLECTION_EXPECTATION_ADMISSION_GAP`
+## Validation Ledger
 
-Evidence at the pre-task source:
+- `npm run typecheck` — PASS
+- `npm run hardening:check` — PASS
+- `npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts` — 27/27 PASS
+- `npx playwright test` for Phase 9/9A.1/9B/10/10B/11/11A.1/11A.3 combined — 370/370 PASS
+- `npm run test:unit` — 1247 PASS, 1 skipped (standard)
+- `npm run test:owner-provenance` — 91/91 PASS
+- `npm run campaign:synthetic` — 27/27 PASS
 
-- `src/oracles/expectations/admission.ts` emits positional invariants using `String(recipe.blueprint.itemIndex)`;
-- `src/oracles/expectations/recipes/registry.ts` retains `itemIndex: 0` and historical IDs;
-- the Phase 11 implementation checkpoint did not modify admission, registry, or resolver;
-- `tests/unit/phase11CollectionWide.test.ts` builds collection expectations from `corpus/phase11/source-fixture/phase11Fixtures.ts` helpers.
+## Decisions Made During This Task
 
-Therefore a real-source derivation/resolver path has no current collection-wide expectation to supply to a future Phase 11B run.
+- Reuse the existing source proof (recipe + evidence digest + current SHA + symbol) for the collection representation; only evaluation breadth changes, never product semantic authority.
+- Introduce a fixed target → collection expectation ID table (closed, deterministic) rather than any free-form derivation rule.
+- Introduce a distinct `REAL_SOURCE_COLLECTION_DERIVATION_VERSION` to identify the collection representation transform while preserving the same source-evidence digest.
+- Preserve historical derivation behavior and IDs exactly; the new bridge is purely additive.
+- Fail-closed order in the transform: unknown target → missing evidence → target mismatch → unsupported kind / item-index / strict validation.
+- No new endpoints, routes, targets, or `APPROVED_READ_ONLY_TARGET_IDS` / `DEV_REACHABLE_RECIPE_TARGET_IDS` entries.
 
-## Scope Boundaries
+## Discoveries
 
-No DEV/NEXT/production, no Phase 11B, no product mutation, no DB/data layer, no infra/Phase 6, no Alphaus writes, no new source semantics, no campaign/minimization redesign, no differential, no AI/model authority, no selfDev/promotion/catalog/B adoption, no publication.
-
-## External CI Condition
-
-GitHub Actions is currently known to be blocked before job start by the account billing/spending-limit condition. The executor must re-check after its substantive checkpoint and must not claim exact CI success unless jobs actually execute and pass at the exact SHA.
-
-## Decisions Made Before Execution
-
-- Historical derivation semantics/IDs are immutable.
-- Collection admission must be additive and explicit.
-- Same source proof/evidence is reused; evaluation breadth changes, source authority does not.
-- Resolver receives an explicit expectation generation/set; no hidden priority between historical and collection expectations.
-- Phase 11B remains NOT_AUTHORIZED.
+- The current `validateExpectation()` did not list `COLLECTION_ITEM_CONTRACT`; extending the strict validator was required to admit the transformed expectation through the same gate as every other expectation.
+- The Phase 11 synthetic fixture helper `createCollectionExpectation()` is not bound to any source-evidence digest, while the new bridge reuses the historical digest. The two expectations are not interchangeable.
+- The collection contracts derived for the real recipes match the SPEC's required contract set: common-exchange carries root ARRAY + collection FIELD_PRESENT month/exchange_rate + collection TYPE_MATCH exchange_rate OBJECT; payer carries root ARRAY + the four field-presence contracts + collection TYPE_IN_SET exchange_rate (ARRAY | OBJECT); v1 recipes carry only collection FIELD_PRESENT contracts (no invented types).
 
 ## Blockers
 
-None yet beyond the known external CI dependency. Source implementation has not started.
+None. The known external CI dependency (GitHub Actions blocked before job start by the account billing/spending-limit condition) is documented in `docs/design/PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION.md` §27 and is terminalized truthfully below in the final state.
 
 ## Safety Events
 
-None.
+None. The new module is a pure derivation transform; no network, filesystem, child-process, or persistence authority was introduced. The strict expectation validator rejects any transformed expectation that does not survive schema validation. Approved read-only and DEV-reachable target sets are unchanged.
 
 ## Deferred / Follow-Up
 
-- Phase 11B contained DEV collection-wide acceptance, only after Phase 11A.3 + exact CI readiness and separate owner authorization.
+- Phase 11B contained DEV collection-wide acceptance, only after Phase 11A.3 + exact CI readiness + separate owner authorization.
 - High-confidence real semantic triage remains NEXT_AFTER Phase 11.
 
 ## Resume Recipe
 
-Task is IN_PROGRESS. Recover from remote Git state and execute the frozen SPEC from M0 onward.
+Task is IN_PROGRESS. Recover from remote Git state and the committed `src/oracles/expectations/collectionAdmission.ts` module + the `tests/unit/phase11a3CollectionAdmission.test.ts` permanent matrix + the `tests/helpers/phase11a3Fixtures.ts` synthetic source helper. Re-run the validation ledger; re-check GitHub Actions; terminalize at the truthful state.
+
+## Completion Snapshot
+
+Not yet completed. Final state will be recorded as `BLOCKED_EXTERNAL_CI` with `PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI` and `PHASE_11B_STATUS: NOT_AUTHORIZED` if Actions remains externally blocked; otherwise as `COMPLETE` if Actions runs and is green at the substantive SHA. The terminal-state field is filled at close, not at IN_PROGRESS.

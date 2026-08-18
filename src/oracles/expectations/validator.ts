@@ -41,6 +41,9 @@ const INVARIANT_KINDS: ReadonlySet<string> = new Set([
   'NUMERIC_SUM_RELATION',
   'COUNT_RELATION',
   'SHAPE_CHANGED',
+  // Phase 11: collection-wide item contract (admitted through the real-source
+  // collection admission bridge; never hand-authored outside that transform).
+  'COLLECTION_ITEM_CONTRACT',
 ]);
 
 function expectRecord(value: unknown, label: string): Record<string, unknown> {
@@ -238,6 +241,57 @@ function validateInvariant(value: unknown, index: number): InvariantDefinition {
       const statePath = record['statePath'] === undefined ? undefined : validateSafePath(record['statePath'], `invariant[${index}].statePath`);
       assertNoUnknownFields(record, new Set(['kind', 'expectedTransition', 'statePath']), `invariant[${index}]`);
       return { kind, expectedTransition: expectedTransition as TransitionExpectation, ...(statePath === undefined ? {} : { statePath }) };
+    }
+    case 'COLLECTION_ITEM_CONTRACT': {
+      const collectionPath = validateSafePath(record['collectionPath'], `invariant[${index}].collectionPath`);
+      const itemInvariantKind = expectString(record['itemInvariantKind'], `invariant[${index}].itemInvariantKind`);
+      if (!['FIELD_PRESENT', 'FIELD_ABSENT', 'TYPE_MATCH', 'TYPE_IN_SET'].includes(itemInvariantKind)) {
+        throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemInvariantKind-unsupported:${itemInvariantKind}`);
+      }
+      const itemRelativePath = validateSafePath(record['itemRelativePath'], `invariant[${index}].itemRelativePath`);
+      if (itemRelativePath.length === 0) {
+        throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemRelativePath-empty`);
+      }
+      switch (itemInvariantKind) {
+        case 'FIELD_PRESENT': {
+          const itemExpected = record['itemExpected'];
+          if (typeof itemExpected !== 'boolean') throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemExpected-not-boolean`);
+          assertNoUnknownFields(record, new Set(['kind', 'collectionPath', 'itemInvariantKind', 'itemRelativePath', 'itemExpected']), `invariant[${index}]`);
+          return { kind, collectionPath, itemInvariantKind, itemRelativePath, itemExpected };
+        }
+        case 'FIELD_ABSENT': {
+          assertNoUnknownFields(record, new Set(['kind', 'collectionPath', 'itemInvariantKind', 'itemRelativePath']), `invariant[${index}]`);
+          return { kind, collectionPath, itemInvariantKind, itemRelativePath };
+        }
+        case 'TYPE_MATCH': {
+          const itemExpectedType = expectString(record['itemExpectedType'], `invariant[${index}].itemExpectedType`);
+          if (!EXPECTED_TYPES.has(itemExpectedType)) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemExpectedType-unsupported`);
+          assertNoUnknownFields(record, new Set(['kind', 'collectionPath', 'itemInvariantKind', 'itemRelativePath', 'itemExpectedType']), `invariant[${index}]`);
+          return { kind, collectionPath, itemInvariantKind, itemRelativePath, itemExpectedType: itemExpectedType as TypeMatchInvariant['expectedType'] };
+        }
+        case 'TYPE_IN_SET': {
+          const allowedTypes = record['itemAllowedTypes'];
+          if (!Array.isArray(allowedTypes) || allowedTypes.length === 0 || allowedTypes.length > MAX_TYPE_SET_SIZE) {
+            throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemAllowedTypes-unbounded`);
+          }
+          const seen = new Set<string>();
+          for (let i = 0; i < allowedTypes.length; i++) {
+            const type = expectString(allowedTypes[i], `invariant[${index}].itemAllowedTypes[${i}]`);
+            if (!EXPECTED_TYPES.has(type)) {
+              throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemAllowedTypes-unsupported:${type}`);
+            }
+            if (seen.has(type)) {
+              throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemAllowedTypes-duplicate:${type}`);
+            }
+            seen.add(type);
+          }
+          const canonical = [...seen].sort() as ('NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY')[];
+          assertNoUnknownFields(record, new Set(['kind', 'collectionPath', 'itemInvariantKind', 'itemRelativePath', 'itemAllowedTypes']), `invariant[${index}]`);
+          return { kind, collectionPath, itemInvariantKind, itemRelativePath, itemAllowedTypes: canonical };
+        }
+        default:
+          throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemInvariantKind-unsupported:${itemInvariantKind}`);
+      }
     }
     default:
       throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].kind-unsupported:${kind}`);

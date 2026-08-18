@@ -14,3 +14,4 @@ export { canonicalExtraction, evidenceDigestFor, evidenceDigestEquals } from './
 export * from './extract/php';
 export * from './admission';
 export * from './resolver';
+export * from './collectionAdmission';

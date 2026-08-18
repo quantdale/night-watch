@@ -8,6 +8,7 @@ Task directory: .agent/tasks/phase-11a-3-real-source-collection-admission-wiring
 Starting SHA: 5669146332d357b09a49b29404a603e3fa1e828e
 Last validated implementation SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
 Last substantive checkpoint SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
+Last checkpoint: f763f3c42447c0c566f536ce6bdb38f2673ededc
 Current milestone: M0 — corrective remote spec package published; executor must fresh-fetch and permanently reproduce that the production real-source admission path still emits historical positional item-0 expectations and no current collection-wide expectation.
 Next action: Execute the canonical remote Phase 11A.3 SPEC. No DEV. If GitHub Actions remains externally blocked after local/source correctness is complete, terminalize BLOCKED_EXTERNAL_CI and keep Phase 11B readiness NOT_READY_EXTERNAL_CI.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
