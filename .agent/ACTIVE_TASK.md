@@ -6,11 +6,11 @@ Title: Nightwatch Phase 11A.3 — Real-Source Collection Admission Wiring
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-11a-3-real-source-collection-admission-wiring
 Starting SHA: 5669146332d357b09a49b29404a603e3fa1e828e
-Last validated implementation SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
-Last substantive checkpoint SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
-Last checkpoint: f763f3c42447c0c566f536ce6bdb38f2673ededc
-Current milestone: M0 — corrective remote spec package published; executor must fresh-fetch and permanently reproduce that the production real-source admission path still emits historical positional item-0 expectations and no current collection-wide expectation.
-Next action: Execute the canonical remote Phase 11A.3 SPEC. No DEV. If GitHub Actions remains externally blocked after local/source correctness is complete, terminalize BLOCKED_EXTERNAL_CI and keep Phase 11B readiness NOT_READY_EXTERNAL_CI.
+Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
+Last substantive checkpoint SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
+Last checkpoint: 578a9917344c70ba96fe9bd8d06a604ca8964108
+Current milestone: M13 — terminal state recorded. Phase 11A.3 implementation is complete and locally validated; GitHub Actions remains externally blocked before job start by the documented account billing/spending-limit condition (verified at the implementation SHA via `gh run view`).
+Next action: STOP at the truthful terminal state. Phase 11B DEV run requires a separate owner authorization and an exact-CI green run.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -23,18 +23,18 @@ NO DEV/NEXT/production, Phase 11B execution, product mutation, DB/data plane, in
 ## Continuity
 
 STARTING_SHA: 5669146332d357b09a49b29404a603e3fa1e828e
-LAST_VALIDATED_IMPLEMENTATION_SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f763f3c42447c0c566f536ce6bdb38f2673ededc
+LAST_VALIDATED_IMPLEMENTATION_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_11A_3_STATUS: IN_PROGRESS
-PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: NOT_VERIFIED
-PHASE_11A_STATUS: CORRECTNESS_CLOSEOUT_REQUIRED
-PHASE_11_COLLECTION_WIDE_SEMANTIC: CORRECTNESS_CLOSEOUT_REQUIRED
-PHASE_11B_DEV_READINESS: NOT_READY_REAL_SOURCE_COLLECTION_ADMISSION
+PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
+PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
+PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_11A_2_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
 PHASE_11A_1_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED

@@ -2,8 +2,21 @@
 
 Task ID: phase-11a-3-real-source-collection-admission-wiring
 Phase: 11A.3-REAL-SOURCE-COLLECTION-ADMISSION
-Status: IN_PROGRESS
+Status: BLOCKED_EXTERNAL_CI
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+## Terminal state
+
+- `PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI`
+- `PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: VERIFIED_LOCAL_NOT_CI_VERIFIED`
+- `PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI`
+- `PHASE_11B_STATUS: NOT_AUTHORIZED`
+
+Implementation SHA: `578a9917344c70ba96fe9bd8d06a604ca8964108` (== `origin/main` after push; tree clean).
+
+Exact CI run at the implementation SHA: workflow `Nightwatch hardening` triggered by the push; the job was not started because of the documented billing/spending-limit condition (`The job was not started because recent account payments have failed or your spending limit needs to be increased`). No CI claim. Phase 11B remains NOT_AUTHORIZED.
 
 ## Confirmed pre-fix issue
 
@@ -82,13 +95,13 @@ Classification: `CONFIRMED_REAL_SOURCE_COLLECTION_EXPECTATION_ADMISSION_GAP`.
 67. project:check: `PROJECT_STATE_CHECKOUT_DIRTY` pre-push; clears after the substantive commit.
 68. catalog integrity: covered by `selfDevCanonicalPromotion.test.ts` and the selfdev catalog-integrity check; unchanged.
 69. git diff --check: PASS.
-70. Substantive implementation SHA: (filled at push in STATE.md Completion Snapshot).
-71. Exact implementation CI run / status / reason: GitHub Actions is still externally blocked before job start by the documented billing/spending-limit condition (per AGENTS.md and the active task STATE); not run, no CI claim.
-72. Clean post-checkpoint acceptance: re-run `npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts --project=nightwatch --workers=1` after push; 28/28 PASS.
+70. Substantive implementation SHA: `578a9917344c70ba96fe9bd8d06a604ca8964108` (== `origin/main`).
+71. Exact implementation CI run / status / reason: workflow `Nightwatch hardening` triggered by the push; the job was not started because of the documented billing/spending-limit condition (`The job was not started because recent account payments have failed or your spending limit needs to be increased`); not run, no CI claim.
+72. Clean post-checkpoint acceptance: re-ran `npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts --project=nightwatch --workers=1` after push; 28/28 PASS.
 73. Decision number: D-64 — additive collection-admission bridge, fixed target→ID table, distinct derivation version, fail-closed transform over mechanically derived positional expectations. No DEV.
-74. Docs closure SHA: (filled at close in STATE.md).
+74. Docs closure SHA: same as implementation SHA (the docs closure is the next commit; see STATE.md for the docs-closure SHA).
 75. Final CI run / status / reason: same as 71.
-76. Final HEAD / origin/main / worktree: HEAD == origin/main after push; worktree clean.
+76. Final HEAD / origin/main / worktree: HEAD == `578a9917344c70ba96fe9bd8d06a604ca8964108` == `origin/main`; worktree clean.
 77. Safety vector: zero privacy leaks, zero network/FS/child-process additions, zero endpoint authority expansion, zero recipe / historical semantic change, strict expectation validation enforced on the transformed expectation.
 78. Phase 11A.3 terminal state: `BLOCKED_EXTERNAL_CI` (local-correctness complete; Actions remains externally blocked before job execution; no CI claim).
 79. Phase 11B readiness state: `NOT_READY_EXTERNAL_CI`.

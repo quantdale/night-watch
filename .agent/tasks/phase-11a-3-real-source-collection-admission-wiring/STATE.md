@@ -99,4 +99,30 @@ Task is IN_PROGRESS. Recover from remote Git state and the committed `src/oracle
 
 ## Completion Snapshot
 
-Not yet completed. Final state will be recorded as `BLOCKED_EXTERNAL_CI` with `PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI` and `PHASE_11B_STATUS: NOT_AUTHORIZED` if Actions remains externally blocked; otherwise as `COMPLETE` if Actions runs and is green at the substantive SHA. The terminal-state field is filled at close, not at IN_PROGRESS.
+Terminal state recorded at `578a9917344c70ba96fe9bd8d06a604ca8964108`:
+
+- `PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI`
+- `PHASE_11A_3_REAL_SOURCE_COLLECTION_ADMISSION: VERIFIED_LOCAL_NOT_CI_VERIFIED`
+- `PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED`
+- `PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI`
+- `PHASE_11B_STATUS: NOT_AUTHORIZED`
+- LAST_VALIDATED_IMPLEMENTATION_SHA: `578a9917344c70ba96fe9bd8d06a604ca8964108`
+- LAST_SUBSTANTIVE_CHECKPOINT_SHA: `578a9917344c70ba96fe9bd8d06a604ca8964108`
+- LAST_DOCUMENTATION_CHECKPOINT_SHA: (filled at the docs-closure commit)
+- LIVE_HEAD: `578a9917344c70ba96fe9bd8d06a604ca8964108` (== `origin/main`)
+- Exact CI run at implementation SHA: workflow `Nightwatch hardening` triggered by push to `main`; job was not started because of the documented billing/spending-limit condition (`The job was not started because recent account payments have failed or your spending limit needs to be increased`); no CI claim. Same external-CI condition as Phase 11A.1 and Phase 11A.2.
+
+Local-only local validation summary (all green at the implementation SHA):
+- `npm run typecheck` — PASS
+- `npm run hardening:check` — PASS
+- `npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts --project=nightwatch --workers=1` — 28/28 PASS
+- `npm run test:unit` — 1247 PASS, 1 skipped (standard)
+- `npm run test:owner-provenance` — 91/91 PASS
+- `npm run campaign:synthetic` — 27/27 PASS
+- `npm run agent:check` — PASS (with 2 expected warnings: `STALE_IMPLEMENTATION_BASELINE` pre-commit and `LEGACY_TASK_NOT_STRICTLY_VALIDATED` for 24 historical v1 records; both are by design)
+- Live sibling canary at `mobingilabs/ripple-api@27bb007ad0c798800b6bd3b29760c966422966e7` — 4 historical + 4 collection derivations, 0 failures.
+
+Decision recorded: D-64 — additive collection-admission bridge, fixed target→ID table, distinct derivation version, fail-closed transform over mechanically derived positional expectations; no DEV.
+
+Next action: STOP at the truthful terminal state.
