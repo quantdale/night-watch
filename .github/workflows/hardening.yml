@@ -67,6 +67,8 @@ jobs:
         run: npx playwright test tests/unit/phase11CollectionWide.test.ts --workers=1
       - name: Phase 11A.3 real-source collection admission matrix
         run: npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts --project=nightwatch --workers=1
+      - name: Phase 12 semantic yield and high-confidence triage matrix
+        run: npx playwright test --project=nightwatch --workers=1 -g "Phase 12"
       - name: Project-memory truth check
         run: |
           test -z "$(git status --porcelain)"

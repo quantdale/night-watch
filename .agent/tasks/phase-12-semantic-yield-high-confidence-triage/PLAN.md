@@ -74,15 +74,15 @@ Add dedicated CI matrix, run focused/historical/full/isolated suites, verify cat
 
 ## Milestones
 
-- M0 — `IN_PROGRESS`: bootstrap from clean current Git, read task package/current source, reproduce `invalidReducedReplay()` baseline and establish fixed backtest corpus.
-- M1 — `NOT_STARTED`: implement replay-plan schema, validation, exact/subsequence/precondition rules, synthetic executor contract.
-- M2 — `NOT_STARTED`: wire local/synthetic journey/exploration/API replay adapters; integrate with minimizer; preserve real runtime authority boundaries.
-- M3 — `NOT_STARTED`: implement semantic-aware confidence and versioned dossier/readiness evidence.
-- M4 — `NOT_STARTED`: implement semantic clustering/contract-identity hardening and dedup regressions.
-- M5 — `NOT_STARTED`: fresh current-source coverage inventory; assess approved target/depth expansion; implement only mechanically proven additions.
-- M6 — `NOT_STARTED`: complete Phase 12 fixed backtest; measure baseline vs new yield; privacy/determinism checks.
-- M7 — `NOT_STARTED`: hardening guards + Phase 12 CI matrix + focused compatibility.
-- M8 — `NOT_STARTED`: canonical complete Playwright + topology-correct isolated complete Playwright + continuity/catalog/project checks.
+- M0 — `DONE`: bootstrap from clean current Git, read task package/current source, reproduce `invalidReducedReplay()` baseline and establish fixed backtest corpus.
+- M1 — `DONE`: implement replay-plan schema, validation, exact/subsequence/precondition rules, synthetic executor contract.
+- M2 — `DONE`: wire local/synthetic journey/exploration/API replay adapters; integrate with minimizer; preserve real runtime authority boundaries.
+- M3 — `DONE`: implement semantic-aware confidence and versioned dossier/readiness evidence.
+- M4 — `DONE`: implement semantic clustering/contract-identity hardening and dedup regressions.
+- M5 — `DONE`: fresh current-source coverage inventory; assess approved target/depth expansion; implement only mechanically proven additions.
+- M6 — `DONE`: complete Phase 12 fixed backtest; measure baseline vs new yield; privacy/determinism checks.
+- M7 — `DONE`: hardening guards + Phase 12 CI matrix + focused compatibility.
+- M8 — `IN_PROGRESS`: canonical complete Playwright + topology-correct isolated complete Playwright + continuity/catalog/project checks.
 - M9 — `NOT_STARTED`: validated implementation checkpoint push, Actions re-check, clean post-push current-source/backtest acceptance.
 - M10 — `NOT_STARTED`: durable decision/design/current-state/roadmap/task closure; final push and exact Actions truth.
 

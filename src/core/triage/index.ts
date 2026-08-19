@@ -10,3 +10,6 @@ export * from './dossier';
 export * from './summaries';
 export * from './compatibility';
 export * from './pipeline';
+export * from './semanticTriageEvidence';
+export * from './semanticConfidence';
+export * from './dossierV2';
