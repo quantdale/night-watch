@@ -64,16 +64,16 @@ Then verify repository-wide compatibility through the true complete Playwright c
 
 ## Milestones
 
-- M0 — IN_PROGRESS — bootstrap from fresh `origin/main`, read active task/spec, classify current Git/CI state.
-- M1 — NOT_STARTED — resolve exact current `mobingilabs/ripple-api` remote branch SHA; stop if unresolved.
-- M2 — NOT_STARTED — create disposable exact source snapshot; prove canonical sibling integrity.
-- M3 — NOT_STARTED — run fresh-source historical + collection derivation/currentness canary and semantic later-row/partial proof.
-- M4 — NOT_STARTED — run complete canonical Playwright regression and record exact counts.
-- M5 — NOT_STARTED — run isolated/source-equivalent complete regression and record exact counts.
-- M6 — NOT_STARTED — run focused historical matrices, hardening, privacy/authority, continuity/project/catalog checks.
-- M7 — NOT_STARTED — reconcile predecessor Phase 11A.3 source-freshness/full-regression wording to actual evidence; record next decision if needed.
-- M8 — NOT_STARTED — push validated verification/docs checkpoint and re-check exact GitHub Actions state.
-- M9 — NOT_STARTED — terminalize truthful Phase 11A.4 / Phase 11B readiness state and STOP.
+- [x] M0 — COMPLETE — bootstrap from fresh `origin/main` (HEAD ba9fc1dc88ebae1837246d1fbc5647d89c79c7c3 == origin/main, branch main, tree clean), read active task/spec, classified Git/CI.
+- [x] M1 — COMPLETE — resolved exact current `mobingilabs/ripple-api` remote branch SHA `e026c85522d201724033f024456da3efa17fe07a` (master, via `gh api repos/mobingilabs/ripple-api/git/refs/heads/master`).
+- [x] M2 — COMPLETE — created disposable snapshot `/tmp/nightwatch-phase11a4-source` at exact SHA; canonical sibling `27bb007ad0c798800b6bd3b29760c966422966e7` untouched (status `?? AGENTS.md` unchanged, task-caused writes 0).
+- [x] M3 — COMPLETE — fresh-source historical 4/0 + collection 4/0 derivation, resolver RESOLVED at fresh SHA, semantic canary PASS (historical PASS, collection ANOMALY/VIOLATION, PARTIAL_COVERAGE, Phase9B fails closed, privacy 0).
+- [x] M4 — COMPLETE — canonical `npx playwright test --project=nightwatch --workers=1` → 1279 passed / 4 skipped / 0 failed (log `/tmp/nightwatch-m4-canonical-full.log`).
+- [x] M5 — COMPLETE — isolated sibling `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch-isolated-11a4` (detached ba9fc1dc88ebae1837246d1fbc5647d89c79c7c3) `npm ci`, typecheck/hardening PASS, `npx playwright test --project=nightwatch --workers=1` → 1279 passed / 4 skipped / 0 failed (log `/tmp/nightwatch-isolated-full.log`); clean before/after.
+- [x] M6 — COMPLETE — focused matrices Phase 9/9A.1/9B/10/10B/11/11A.1-11A.3 (121+34+109+24+55 pass), campaign:synthetic 27/27, owner-provenance 91/91, agent:check/audit PASS (2 warnings: STALE_IMPLEMENTATION_BASELINE + LEGACY), project:check PASS, hardening/typecheck PASS, git diff --check clean.
+- [x] M7 — COMPLETE — reconciled predecessor wording: 27bb007 as historical pin (not current), `npm run test:unit` as unit suite (not full Playwright), focused matrix as supplemental (not isolated full regression). D-64 unchanged; no new D required for this verification closeout.
+- [x] M8 — COMPLETE — re-checked GitHub Actions at HEAD ba9fc1dc88ebae1837246d1fbc5647d89c79c7c3: run 32101017498 completed/failure, 0 steps, billing/spending-limit annotation → BLOCKED_EXTERNAL_CI.
+- [x] M9 — COMPLETE — terminalized truthful state: PHASE_11A_4_STATUS BLOCKED_EXTERNAL_CI, PHASE_11A COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED, PHASE_11B NOT_AUTHORIZED/NOT_READY_EXTERNAL_CI, STOP.
 
 ## Validation Strategy
 

@@ -3,14 +3,14 @@
 Task ID: phase-11a-4-source-freshness-full-regression-closeout
 Phase: 11A.4-SOURCE-FRESHNESS-FULL-REGRESSION-CLOSEOUT
 Title: Nightwatch Phase 11A.4 — Source-Freshness & Full-Regression Closeout
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-11a-4-source-freshness-full-regression-closeout
 Starting SHA: 813fabd898f4989c319affcbbe99551e4620903f
 Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
 Last substantive checkpoint SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
-Last checkpoint: 813fabd898f4989c319affcbbe99551e4620903f
-Current milestone: M0 — verification-closeout spec package published. Executor must first resolve the current mobingilabs/ripple-api remote SHA fresh; the canonical sibling pin is not remote-current evidence.
-Next action: Execute the canonical Phase 11A.4 SPEC. No DEV. Prove fresh-source derivation plus canonical and isolated complete Playwright regressions. If GitHub Actions remains billing-blocked, terminalize BLOCKED_EXTERNAL_CI and keep Phase 11B NOT_READY/NOT_AUTHORIZED.
+Last checkpoint: ba9fc1dc88ebae1837246d1fbc5647d89c79c7c3
+Current milestone: M9 — STOP at truthful BLOCKED_EXTERNAL_CI terminal. Fresh source, canonical and isolated complete regressions verified; GitHub Actions externally blocked (billing/spending-limit).
+Next action: STOP — GitHub Actions remains BLOCKED_EXTERNAL_CI (run 32101017498 at ba9fc1dc88ebae1837246d1fbc5647d89c79c73, 0 steps, billing/spending-limit). Phase 11B remains NOT_AUTHORIZED / NOT_READY_EXTERNAL_CI until exact CI green.
 Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -30,12 +30,12 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_11A_4_STATUS: IN_PROGRESS
-PHASE_11A_4_SOURCE_FRESHNESS: NOT_VERIFIED
-PHASE_11A_4_FULL_REGRESSION: NOT_VERIFIED
-PHASE_11A_STATUS: VERIFICATION_CLOSEOUT_REQUIRED
-PHASE_11_COLLECTION_WIDE_SEMANTIC: VERIFICATION_CLOSEOUT_REQUIRED
-PHASE_11B_DEV_READINESS: NOT_READY_VERIFICATION_AND_EXTERNAL_CI
+PHASE_11A_4_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_11A_4_SOURCE_FRESHNESS: VERIFIED
+PHASE_11A_4_FULL_REGRESSION: VERIFIED
+PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
+PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
+PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_IMPLEMENTATION_VERIFIED_WITH_PROOF_GAPS
 PHASE_11A_2_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
@@ -56,4 +56,4 @@ NEXT_PROMOTION_AUTHORITY (unchanged): NONE
 
 ## Recovery
 
-The CLI prompt is intentionally short. Fetch canonical `origin/main`, then read this task's PROPOSAL/SPEC/PLAN/STATE/REPORT and `docs/design/PHASE_11A_4_SOURCE_FRESHNESS_FULL_REGRESSION_CLOSEOUT.md`. Git/source evidence wins over conversation text.
+Task terminalized BLOCKED_EXTERNAL_CI. Fresh remote SHA e026c85522d201724033f024456da3efa17fe07a verified via disposable snapshot; canonical 1279/4/0 and isolated sibling 1279/4/0 complete regressions verified; GitHub Actions remains billing-blocked (run 32101017498, 0 steps). Do not claim CI success.
