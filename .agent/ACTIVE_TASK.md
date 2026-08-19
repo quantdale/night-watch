@@ -6,11 +6,11 @@ Title: Nightwatch Phase 13A — Real Campaign Semantic Runtime Integration & Con
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-13-real-campaign-semantic-runtime-integration
 Starting SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-Last validated implementation SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-Last substantive checkpoint SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-Last checkpoint: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-Current milestone: M1 — overnight three-change implementation batch (IN_PROGRESS); C1 contract & identity correctness committed; C2/C3 pending.
-Next action: implement Change 2 (real-campaign semantic runtime plumbing: source bundle + observer seam), run typecheck + git diff --check, push FF checkpoint.
+Last validated implementation SHA: 967ef7afee02f3877b20193ecac83432ce778055
+Last substantive checkpoint SHA: 967ef7afee02f3877b20193ecac83432ce778055
+Last checkpoint: 967ef7afee02f3877b20193ecac83432ce778055
+Current milestone: M1 — overnight three-change implementation batch (DONE); C1+C2+C3 checkpointed; hardening REQUIRED_NEXT.
+Next action: push final continuity/docs fast-forward to origin/main and STOP.
 Authorization class: PHASE_13_OVERNIGHT_THREE_CHANGE_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -27,8 +27,8 @@ NO DEV/NEXT/production, product mutation, DB/data plane, infrastructure/Phase 6,
 ## Continuity
 
 STARTING_SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-LAST_VALIDATED_IMPLEMENTATION_SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0fc467bbee5dc63af68d4ff3664427a497aabc02
+LAST_VALIDATED_IMPLEMENTATION_SHA: 967ef7afee02f3877b20193ecac83432ce778055
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 967ef7afee02f3877b20193ecac83432ce778055
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -36,11 +36,11 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 PHASE_13_OVERNIGHT_C1: IMPLEMENTED_AWAITING_HARDENING
 PHASE_13_OVERNIGHT_C2: IMPLEMENTED_AWAITING_HARDENING
-PHASE_13_OVERNIGHT_C3: IN_PROGRESS
-PHASE_13A_STATUS: IN_PROGRESS
+PHASE_13_OVERNIGHT_C3: IMPLEMENTED_AWAITING_HARDENING
+PHASE_13A_STATUS: IMPLEMENTED_AWAITING_HARDENING
 PHASE_13_HARDENING_CAMPAIGN: REQUIRED_NEXT
 PHASE_13B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: IMPLEMENT_C3
+NEXT ACTION: STOP
 
 ## Blockers
 
