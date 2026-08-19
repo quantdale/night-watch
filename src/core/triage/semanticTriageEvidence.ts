@@ -181,12 +181,43 @@ export function validateSemanticTriageEvidence(evidence: SemanticTriageEvidence)
     if (sorted[i] !== evidence.missingEvidence[i]) throw new Error('TRIAGE_EVIDENCE_MISSING_EVIDENCE_NOT_SORTED');
   }
   assertNoSentinels(evidence);
-  // Coherence checks
+  // Cross-field coherence matrix. Impossible combinations are rejected rather
+  // than treated as independent enums. Valid historical states are preserved.
+  // PARTIAL_COVERAGE semantic outcome must pair with PARTIAL_COVERAGE_NO_VIOLATION.
   if (evidence.semanticOutcome === 'PARTIAL_COVERAGE' && evidence.coverageState !== 'PARTIAL_COVERAGE_NO_VIOLATION') {
-    // Allow missing coverageState? Must be consistent if present. Not strict fail? But enforce if coverageState present.
+    throw new Error('TRIAGE_EVIDENCE_PARTIAL_COVERAGE_STATE_MISMATCH');
   }
+  // receipt PARTIAL_COVERAGE requires semantic PARTIAL_COVERAGE (reverse direction).
   if (evidence.receiptOutcome === 'PARTIAL_COVERAGE' && evidence.semanticOutcome !== 'PARTIAL_COVERAGE') {
     throw new Error('TRIAGE_EVIDENCE_PARTIAL_MISMATCH');
+  }
+  // PASS with collection coverage may only represent FULLY_EVALUATED_PASS (or non-collection absence).
+  if (evidence.semanticOutcome === 'PASS' && evidence.coverageState !== undefined && evidence.coverageState !== 'FULLY_EVALUATED_PASS' && evidence.coverageState !== 'EMPTY_NOT_APPLICABLE') {
+    throw new Error('TRIAGE_EVIDENCE_PASS_COVERAGE_MISMATCH');
+  }
+  // ANOMALY with a collection coverage state must carry an observed VIOLATION.
+  if (evidence.semanticOutcome === 'ANOMALY' && evidence.coverageState !== undefined && evidence.coverageState !== 'VIOLATION') {
+    throw new Error('TRIAGE_EVIDENCE_ANOMALY_COVERAGE_MISMATCH');
+  }
+  // CURRENT source currentness cannot coexist with a stale/unavailable receipt outcome.
+  if (evidence.sourceCurrentness === 'CURRENT' && (evidence.receiptOutcome === 'EXPECTATION_SOURCE_STALE' || evidence.receiptOutcome === 'EXPECTATION_SOURCE_UNAVAILABLE')) {
+    throw new Error('TRIAGE_EVIDENCE_CURRENTNESS_RECEIPT_MISMATCH');
+  }
+  // STALE/UNAVAILABLE source currentness cannot be paired with a contradictory fully-current receipt.
+  if ((evidence.sourceCurrentness === 'STALE' || evidence.sourceCurrentness === 'UNAVAILABLE') && (evidence.receiptOutcome === 'PASS' || evidence.receiptOutcome === 'ANOMALY' || evidence.receiptOutcome === 'NOT_APPLICABLE')) {
+    throw new Error('TRIAGE_EVIDENCE_CURRENTNESS_RECEIPT_CONTRADICTION');
+  }
+  // exactFingerprintMatch true requires exactReplayStatus REPRODUCED.
+  if (evidence.exactFingerprintMatch === true && evidence.exactReplayStatus !== 'REPRODUCED') {
+    throw new Error('TRIAGE_EVIDENCE_FINGERPRINT_REPLAY_MISMATCH');
+  }
+  // Non-reproduced replay status cannot claim an exact fingerprint match.
+  if (evidence.exactReplayStatus !== 'REPRODUCED' && evidence.exactFingerprintMatch === true) {
+    throw new Error('TRIAGE_EVIDENCE_REPLAY_FINGERPRINT_CONTRADICTION');
+  }
+  // Minimality other than NONE requires reproduced minimal-sequence evidence.
+  if (evidence.minimalityGuarantee !== 'NONE' && evidence.minimalSequenceReproductions === 0) {
+    throw new Error('TRIAGE_EVIDENCE_MINIMALITY_REPRODUCTION_MISMATCH');
   }
 }
 

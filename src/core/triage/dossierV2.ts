@@ -88,8 +88,15 @@ function aiReady(input: {
   readonly likelyFaultBoundary: FaultBoundaryResult;
   readonly sourceChangeCandidates: SourceCorrelationResult['candidates'];
   readonly semanticTriageEvidence?: SemanticTriageEvidence | null;
+  readonly semanticConfidence?: { readonly level: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRESOLVED'; readonly reasons: readonly string[]; readonly blockers: readonly string[] };
 }): AiReadyEvidencePackage {
   // Only sanitized deterministic facts; no raw values.
+  const legacyLevel = (input.confidence as ConfidenceResult).level ?? String((input.confidence as Record<string, unknown>).level);
+  // AI-ready confidence must never exceed the deterministic semantic confidence
+  // when semantic evidence exists: expose the semantic level (<= legacy) rather
+  // than the stronger legacy generic confidence. This closes
+  // CONFIRMED_AI_READY_SEMANTIC_CONFIDENCE_OVERCLAIM.
+  const confidence = input.semanticConfidence ? input.semanticConfidence.level : legacyLevel;
   return {
     schemaVersion: AI_READY_PACKAGE_VERSION,
     deterministic: true,
@@ -100,7 +107,8 @@ function aiReady(input: {
       apiOperationFamily: input.apiOperationFamily,
       oracleFingerprint: input.oracleFingerprint,
       minimalSequence: input.minimalSequence,
-      confidence: (input.confidence as ConfidenceResult).level ?? String((input.confidence as Record<string, unknown>).level),
+      confidence,
+      ...(input.semanticConfidence === undefined ? {} : { semanticConfidence: input.semanticConfidence.level }),
       faultBoundary: input.likelyFaultBoundary.primaryBoundary,
       sourceCandidateCount: input.sourceChangeCandidates.length,
       ...(input.semanticTriageEvidence === undefined || input.semanticTriageEvidence === null ? {} : {
@@ -276,6 +284,7 @@ export function createBugDossierV2(input: BugDossierV2Input): BugDossierV2 {
     likelyFaultBoundary: input.likelyFaultBoundary,
     sourceChangeCandidates: input.sourceCorrelation.candidates,
     semanticTriageEvidence: input.semanticTriageEvidence ?? null,
+    semanticConfidence,
   });
   const dossier: BugDossierV2 = {
     schemaVersion: DOSSIER_VERSION_V2,
