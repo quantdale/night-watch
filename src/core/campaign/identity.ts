@@ -152,7 +152,7 @@ function validateSourceShape(value: unknown): void {
 
 function validateVersionShape(value: unknown): void {
   const versions = requireRuntimeRecord(value, 'MANIFEST_VERSIONS');
-  const keys = ['campaignSchemaVersion', 'orchestratorVersion', 'nightwatchSourceSha', 'selectorVersion', 'dependencyMapVersion', 'journeyContractVersion', 'journeyOracleVersion', 'explorationCatalogVersion', 'explorationModelVersion', 'explorationPlannerVersion', 'apiCatalogVersion', 'apiGeneratorVersion', 'apiOracleVersion', 'triageClusterVersion', 'triageMinimizerVersion', 'dossierVersion', 'ownerScopePolicyVersion', 'privateArtifactPolicyVersion', 'seedCorpusVersion', 'budgetPolicyVersion'];
+  const keys = ['campaignSchemaVersion', 'orchestratorVersion', 'nightwatchSourceSha', 'selectorVersion', 'dependencyMapVersion', 'journeyContractVersion', 'journeyOracleVersion', 'explorationCatalogVersion', 'explorationModelVersion', 'explorationPlannerVersion', 'apiCatalogVersion', 'apiGeneratorVersion', 'apiOracleVersion', 'triageClusterVersion', 'triageMinimizerVersion', 'dossierVersion', 'ownerScopePolicyVersion', 'privateArtifactPolicyVersion', 'seedCorpusVersion', 'budgetPolicyVersion', 'triageReplayPlanVersion', 'triageReplayPlanV2Version', 'semanticTriageEvidenceVersion', 'dossierV2Version', 'semanticClusterVersion', 'semanticBundleVersion', 'semanticReceiptVersion', 'semanticExpectationDerivationVersion'];
   assertExactKeys(versions, keys, 'MANIFEST_VERSIONS');
   for (const key of keys) assertString(versions[key], `MANIFEST_VERSION:${key}`);
   if (versions.campaignSchemaVersion !== CAMPAIGN_SCHEMA_VERSION || versions.orchestratorVersion !== CAMPAIGN_ORCHESTRATOR_VERSION) manifestIntegrity('VERSION_IDENTITY_MISMATCH');

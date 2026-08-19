@@ -143,6 +143,15 @@ export interface CampaignVersionFingerprint {
   readonly privateArtifactPolicyVersion: string;
   readonly seedCorpusVersion: string;
   readonly budgetPolicyVersion: typeof CAMPAIGN_BUDGET_POLICY_VERSION;
+  // Phase 13A load-bearing semantic/replay contracts — any change forces manifest drift.
+  readonly triageReplayPlanVersion: string;
+  readonly triageReplayPlanV2Version: string;
+  readonly semanticTriageEvidenceVersion: string;
+  readonly dossierV2Version: string;
+  readonly semanticClusterVersion: string;
+  readonly semanticBundleVersion: string;
+  readonly semanticReceiptVersion: string;
+  readonly semanticExpectationDerivationVersion: string;
 }
 
 export interface CampaignBudgetPolicy {

@@ -56,6 +56,13 @@ import {
   type MinimizationAction,
   type SourceFreshness,
 } from '../../src/core/triage/types';
+import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../../src/core/triage/replayPlan';
+import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
+import { DOSSIER_VERSION_V2 } from '../../src/core/triage/dossierV2';
+import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
+import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION } from '../../src/core/source/semanticCampaignBundle';
+import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/receipts';
+import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
 import {
   CAMPAIGN_ORCHESTRATOR_VERSION,
   CAMPAIGN_SCHEMA_VERSION,
@@ -250,6 +257,14 @@ function versionFingerprint(root: string): CampaignVersionFingerprint {
     privateArtifactPolicyVersion: PRIVATE_ARTIFACT_POLICY_VERSION,
     seedCorpusVersion: 'nightwatch.phase7.real-dev-seeds.v1',
     budgetPolicyVersion: INITIAL_REAL_CAMPAIGN_BUDGET.policyVersion,
+    triageReplayPlanVersion: TRIAGE_REPLAY_PLAN_VERSION,
+    triageReplayPlanV2Version: TRIAGE_REPLAY_PLAN_V2_VERSION,
+    semanticTriageEvidenceVersion: SEMANTIC_TRIAGE_EVIDENCE_VERSION,
+    dossierV2Version: DOSSIER_VERSION_V2,
+    semanticClusterVersion: SEMANTIC_CLUSTER_VERSION,
+    semanticBundleVersion: SEMANTIC_CAMPAIGN_BUNDLE_VERSION,
+    semanticReceiptVersion: SEMANTIC_EVALUATION_RECEIPT_VERSION,
+    semanticExpectationDerivationVersion: REAL_SOURCE_DERIVATION_VERSION_V2,
   };
 }
 
@@ -373,6 +388,70 @@ function invalidReducedReplay(): CampaignAnomalyCandidate['replay'] {
   });
 }
 
+function journeyReducedUnsupported(): CampaignAnomalyCandidate['replay'] {
+  return (_sequence, phase) => ({
+    status: 'INVALID',
+    invalidReason: phase === 'REDUCED_CANDIDATE' ? 'PRECONDITION_DIVERGENCE' : 'ACTION_NOT_APPROVED',
+    safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 },
+  });
+}
+
+function explorationReplayFromPlan(input: {
+  readonly observationFingerprint: string;
+  readonly originalSequence: readonly MinimizationAction[];
+  readonly planRouteClass: string;
+  readonly planCatalogVersion: string;
+  readonly planTargetId: string;
+}): CampaignAnomalyCandidate['replay'] {
+  return (sequence, phase) => {
+    const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
+    const ids = sequence.map((a) => a.actionId);
+    if (phase === 'FRESH_EXACT_REPLAY') {
+      const originalIds = input.originalSequence.map((a) => a.actionId);
+      const isExact = ids.length === originalIds.length && ids.every((v, i) => v === originalIds[i]);
+      if (!isExact) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+      return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+    }
+    // REDUCED_CANDIDATE — validate occurrence-preserving subsequence + catalog safety.
+    if (ids.length === 0) return { status: 'INVALID', invalidReason: 'PRECONDITION_DIVERGENCE', safety: { ...ZERO } };
+    // Must be order-preserving subsequence of original.
+    let oi = 0;
+    let ri = 0;
+    const originalIds = input.originalSequence.map((a) => a.actionId);
+    while (oi < originalIds.length && ri < ids.length) {
+      if (originalIds[oi] === ids[ri]) ri += 1;
+      oi += 1;
+    }
+    if (ri !== ids.length) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    for (const action of sequence) {
+      const safe = RIPPLE_PHASE4_ACTIONS.find((c) => c.actionId === action.actionId);
+      if (safe === undefined || safe.status !== 'APPROVED' || (safe.semanticClass !== 'KNOWN_READ' && safe.semanticClass !== 'LOCAL_ONLY') || safe.persistedPreferenceEffect === 'SERVER_STATE') {
+        return { status: 'INVALID', invalidReason: 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
+      }
+      if (safe.routeEffect !== 'UNCHANGED' && safe.routeEffect !== 'APPROVED_ROUTE') return { status: 'INVALID', invalidReason: 'ROUTE_ENVELOPE_FAILED', safety: { ...ZERO } };
+    }
+    return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+  };
+}
+
+function apiReplayFromPlan(input: {
+  readonly observationFingerprint: string;
+  readonly originalSequence: readonly MinimizationAction[];
+  readonly planRouteClass: string;
+  readonly operationId: string;
+}): CampaignAnomalyCandidate['replay'] {
+  return (sequence, phase) => {
+    const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
+    if (phase === 'FRESH_EXACT_REPLAY') {
+      if (sequence.length !== 1 || sequence[0]!.actionId !== input.operationId) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+      return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+    }
+    // REDUCED: single fixed operation only; any empty/multi/foreign is INVALID.
+    if (sequence.length !== 1 || sequence[0]!.actionId !== input.operationId) return { status: 'INVALID', invalidReason: phase === 'REDUCED_CANDIDATE' && sequence.length === 0 ? 'PRECONDITION_DIVERGENCE' : 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
+    return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+  };
+}
+
 function journeyCandidate(input: {
   readonly manifest: CampaignManifest;
   readonly workItem: CampaignWorkItem;
@@ -398,7 +477,21 @@ function journeyCandidate(input: {
     api: null,
     contractVersion: input.evidence.contractVersion ?? JOURNEY_CONTRACT_VERSION,
     contractDigest: input.evidence.contractDigest ?? `contract:${definition.sourceSha}`,
-    replay: invalidReducedReplay(),
+    // C3: journey exact replay is valid (preserves all original occurrences);
+    // reduced replay is unsupported for frozen 2-step definitions without
+    // inventing subset semantics — fail closed with PRECONDITION_DIVERGENCE.
+    replay: ((sequence, phase) => {
+      const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
+      const fullOriginal = input.evidence.stepResults.map((s) => s.stepId);
+      const ids = sequence.map((a) => a.actionId);
+      if (phase === 'FRESH_EXACT_REPLAY') {
+        const isExact = ids.length === fullOriginal.length && ids.every((v, i) => v === fullOriginal[i]);
+        if (!isExact) return { status: 'INVALID' as const, invalidReason: 'ACTION_NOT_IN_ORIGINAL' as const, safety: { ...ZERO } };
+        return { status: 'FAILURE' as const, anomalyFingerprint: observation.fingerprint, safety: { ...ZERO }, routeClass: input.evidence.finalRouteClass };
+      }
+      const repl = journeyReducedUnsupported();
+      return repl!(sequence, phase);
+    }) as CampaignAnomalyCandidate['replay'],
   }));
 }
 
@@ -424,7 +517,7 @@ function explorationCandidate(input: {
     api: null,
     contractVersion: JOURNEY_CONTRACT_VERSION,
     contractDigest: `exploration:${input.manifest.versions.explorationModelVersion}`,
-    replay: invalidReducedReplay(),
+    replay: explorationReplayFromPlan({ observationFingerprint: observation.fingerprint, originalSequence: sequence, planRouteClass: input.evidence.states.at(-1)?.routeClass ?? routeForJourney(input.workItem.journeyId!), planCatalogVersion: JOURNEY_CONTRACT_VERSION, planTargetId: input.workItem.journeyId! }),
   }));
 }
 
@@ -502,7 +595,7 @@ function apiCandidate(input: {
     },
     contractVersion: API_CATALOG_VERSION,
     contractDigest: `api:${operation.sourceSHA}`,
-    replay: invalidReducedReplay(),
+    replay: apiReplayFromPlan({ observationFingerprint: fingerprint, originalSequence: [action], planRouteClass: '/api-only', operationId: input.operationId }),
   });
 }
 

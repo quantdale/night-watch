@@ -34,7 +34,14 @@ import { DEPENDENCY_MAP_VERSION, RIPPLE_REPOSITORIES, SELECTOR_VERSION, changese
 import { RIPPLE_PHASE4_ACTIONS, RIPPLE_PHASE4_ENVELOPES } from '../../src/products/ripple/explorationCatalog';
 import { EXPLORATION_MODEL_VERSION, PLANNER_VERSION, SAFE_ACTION_CATALOG_VERSION, type SafetyVector } from '../../src/core/exploration/types';
 import { JOURNEY_CONTRACT_VERSION, ORACLE_VERSION } from '../../src/core/journeys/contract';
-import { ANOMALY_CLUSTER_VERSION, FAILURE_MINIMIZATION_VERSION, DOSSIER_VERSION, type MinimizationAction, type SourceFreshness } from '../../src/core/triage/types';
+import { ANOMALY_CLUSTER_VERSION, DOSSIER_VERSION, FAILURE_MINIMIZATION_VERSION, type MinimizationAction, type SourceFreshness } from '../../src/core/triage/types';
+import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../../src/core/triage/replayPlan';
+import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
+import { DOSSIER_VERSION_V2 } from '../../src/core/triage/dossierV2';
+import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
+import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION } from '../../src/core/source/semanticCampaignBundle';
+import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/receipts';
+import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
 import { clusterAnomalies } from '../../src/core/triage/clustering';
 import { PRIVATE_ARTIFACT_POLICY_VERSION, OWNER_SCOPE_POLICY_VERSION, PrivateArtifactStore, assertOwnerPolicyAllows } from '../../src/core/policy';
 
@@ -100,6 +107,14 @@ const VERSIONS: CampaignVersionFingerprint = {
   privateArtifactPolicyVersion: PRIVATE_ARTIFACT_POLICY_VERSION,
   seedCorpusVersion: 'nightwatch.phase7.synthetic-seeds.v1',
   budgetPolicyVersion: 'nightwatch.campaign-budget.private.v1',
+  triageReplayPlanVersion: TRIAGE_REPLAY_PLAN_VERSION,
+  triageReplayPlanV2Version: TRIAGE_REPLAY_PLAN_V2_VERSION,
+  semanticTriageEvidenceVersion: SEMANTIC_TRIAGE_EVIDENCE_VERSION,
+  dossierV2Version: DOSSIER_VERSION_V2,
+  semanticClusterVersion: SEMANTIC_CLUSTER_VERSION,
+  semanticBundleVersion: SEMANTIC_CAMPAIGN_BUNDLE_VERSION,
+  semanticReceiptVersion: SEMANTIC_EVALUATION_RECEIPT_VERSION,
+  semanticExpectationDerivationVersion: REAL_SOURCE_DERIVATION_VERSION_V2,
 };
 
 function snapshots(): readonly CampaignSourceSnapshot[] {
