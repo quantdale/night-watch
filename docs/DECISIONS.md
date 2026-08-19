@@ -2548,3 +2548,90 @@ B AVAILABLE_NOT_ADOPTED; `NEXT_PROMOTION_AUTHORITY: NONE`; Phase 6
 FROZEN_BY_OWNER; AI non-authoritative. Design record:
 `docs/design/POST_PHASE_10_NEXT_ARCHITECTURE.md`; task records under
 `.agent/tasks/post-phase-10-next-architecture-design-review/`.
+
+## D-62 — Phase 12A: combine the two NEXT_AFTER investments into one LOCAL/SOURCE-ONLY productivity pack
+
+**Selected** (2026-08-19, Phase 12A, authorization
+`PHASE_12_SEMANTIC_TRIAGE_AND_COVERAGE_LOCAL_ONLY`, starting SHA
+`cc0ea71a64d06b84b73d396f1c01311513aefe2c`, implementation SHA
+`4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4`).
+
+**Context.** The post-Phase-10 architecture (D-61) and the roadmap named two
+NEXT_AFTER investments that are both LOCAL/SOURCE-ONLY feasible after
+Phase 11: HIGH_CONFIDENCE_SEMANTIC_TRIAGE and REAL_SEMANTIC_COVERAGE_
+EXPANSION. Both share the same sanitized semantic-evidence pipeline and
+neither requires DEV/NEXT/production. The real Phase 7 campaign adapter
+still supplies `invalidReducedReplay()` to journey/exploration/API
+candidates (D-58 finding #1), so real reduced replay currently cannot
+succeed even though the deterministic minimizer exists.
+
+**Decision.** Combine the two NEXT_AFTER investments into one cohesive
+Phase 12A productivity task (Workstreams A–F). Do not wait for GitHub
+Actions billing restoration to perform authorized local/source work. Keep
+Phase 11B separate and NOT_AUTHORIZED. Do not expand any endpoint/target/transport
+or AI/model authority.
+
+**Architecture chosen.**
+
+- **A. Replay/minimization** — strict data-only replay-plan DTO
+  `nightwatch.triage-replay-plan.private.v1` (order-preserving subsequence,
+  unknown-field rejection, deterministic `rp:sha256` identity). Synthetic
+  journey/exploration/API replay adapters wrap the existing bounded
+  `minimizer.ts` via validated plans. The real runner's always-invalid
+  `invalidReducedReplay()` baseline is permanently reproduced before any
+  improvement. No new endpoint/transport authority.
+- **B. Confidence/dossier** — versioned semantic triage-evidence DTO
+  (`nightwatch.semantic-triage-evidence.private.v1`, safe fields only,
+  missing-evidence vocabulary) and categorical confidence: HIGH is blocked
+  by PARTIAL_COVERAGE / stale / unavailable / non-reproduced / nonzero
+  safety / nonzero privacy / known false positive. Dossier v2
+  (`bug-dossier.private.v2`) adds a READY predicate derived from evidence
+  (never writer-optimistic); v1 remains readable.
+- **C. Clustering** — semantic cluster identity is bound to the evidence
+  digest + derivation version, NOT the source SHA; row ordinal and
+  violating-count are excluded so unrelated SHA movement with identical
+  normalized evidence does not fragment the class, and changed
+  evidence/derivation semantics do not silently merge. Protocol-only
+  clustering is untouched.
+- **D. Coverage inventory** — fresh ripple-api master re-resolved via
+  `git ls-remote` to `e026c85522d201724033f024456da3efa17fe07a`, used as a
+  disposable snapshot outside the canonical siblings. 6 approved read-only
+  targets inventoried; 4 historical+collection expectations rederived; 0
+  mechanically provable depth uplifts, each with a precise independent
+  blocker: TYPE_FLOW_AMBIGUOUS (account-inventory /
+  billing-group-exchange), AMBIGUOUS_CONDITIONAL_BLOB, and
+  GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT. A zero-addition result is
+  accepted as correct.
+- **E. Backtest** — one fixed permanent `corpus/phase12` (27 fixtures) and a
+  pure deterministic harness. On the replay-gap corpus,
+  `phase12Minimized > baselineMinimized` (baseline minimization is 0 under
+  `invalidReducedReplay`); false-positive / partial-coverage / stale-source /
+  different-fingerprint / privacy-leak / determinism-mismatch floors are all
+  zero; 3× determinism repeat yields 0 mismatches (full raw counts in the
+  task REPORT).
+- **F. Hardening/regression** — pure-core import-boundary + authority-set
+  guards (`bin/hardening-check.mjs`), a Phase 12 local/synthetic CI matrix
+  row, `tsconfig.json` corpus include, triage/semantic re-exports, and the
+  full canonical + topology-correct isolated Playwright regression.
+
+**Result.** Phase 12A implementation is complete and locally validated on a
+clean 4730c4e tree: typecheck PASS; hardening PASS; canonical complete
+Playwright 1365 passed / 4 skipped / 0 failed; topology-correct isolated
+clone (fresh `git clone --local` + `npm ci --ignore-scripts`) 1365 / 4 / 0;
+Phase 12 focused matrices 127 passed; Phase 9/10/11 compatibility 487
+passed; campaign:synthetic 27 passed; agent:check PASS. GitHub Actions
+remains externally billing/spending-limit blocked before job execution
+(run 32269149776 — "The job was not started because recent account payments
+have failed or your spending limit needs to be increased."), so the task
+terminates as local-validated / BLOCKED_EXTERNAL_CI, NOT CI-verified
+COMPLETE. No CI-success claim is made.
+
+**Consequences.** The two ROADMAP NEXT_AFTER investments are now
+implemented-local (marked in ROADMAP/CURRENT_STATE as
+VERIFIED_LOCAL_NOT_CI_VERIFIED). No authority expansion occurred: catalog
+count 1 (digest `sha256:bd35b934...`), B AVAILABLE_NOT_ADOPTED, promotion
+authority NONE, Phase 6 FROZEN_BY_OWNER, AI non-authoritative. Phase 11B
+remains NOT_AUTHORIZED. Any real Phase 12 replay/triage runtime validation
+requires future separate owner authorization. Design record:
+`docs/design/PHASE_12_SEMANTIC_YIELD_AND_TRIAGE.md`; task records under
+`.agent/tasks/phase-12-semantic-yield-high-confidence-triage/`.

@@ -1541,6 +1541,54 @@ variant B AVAILABLE_NOT_ADOPTED, promotion authority NONE,
 `PHASE_8_STATUS: COMPLETE`. Phase 6 remains FROZEN_BY_OWNER; AI remains
 non-authoritative.
 
+## Phase 12 — Semantic Yield & High-Confidence Triage (Phase 12A complete-local, CI-blocked)
+
+**Status:** `PHASE_12A_STATUS: BLOCKED_EXTERNAL_CI` /
+`PHASE_12_REAL_REPLAY: VERIFIED_LOCAL_NOT_CI_VERIFIED` /
+`PHASE_12_HIGH_CONFIDENCE_TRIAGE: VERIFIED_LOCAL_NOT_CI_VERIFIED` /
+`PHASE_12_REAL_SOURCE_COVERAGE: VERIFIED_LOCAL_NOT_CI_VERIFIED` /
+`PHASE_12_YIELD_BACKTEST: VERIFIED_LOCAL_NOT_CI_VERIFIED` (2026-08-19, D-62,
+implementation SHA `4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4`). The two
+ROADMAP NEXT_AFTER investments — HIGH_CONFIDENCE_SEMANTIC_TRIAGE and
+REAL_SEMANTIC_COVERAGE_EXPANSION — are now implemented-local. Task record:
+`docs/design/PHASE_12_SEMANTIC_YIELD_AND_TRIAGE.md`, D-62, and
+`.agent/tasks/phase-12-semantic-yield-high-confidence-triage/`.
+
+- **Workstreams A–F** implemented and locally verified on a clean `4730c4e`
+  tree: replay-plan strict DTO + synthetic journey/exploration/API adapters
+  around the existing bounded minimizer; semantic triage-evidence DTO +
+  categorical HIGH-confidence blocking + dossier v2 READY predicate; semantic
+  cluster identity bound to evidence digest + derivation (not source SHA);
+  fresh-current-source coverage inventory (ripple-api master
+  `e026c85522d201724033f024456da3efa17fe07a`, disposable snapshot) over 6
+  approved read-only targets with 0 mechanically provable uplifts and precise
+  independent blockers; fixed `corpus/phase12` 27-fixture backtest proving
+  `phase12Minimized(16) > baselineMinimized(0)` with all quality floors 0 and
+  3× determinism 0 mismatches; hardened pure-core boundaries + Phase 12
+  local/synthetic CI matrix row.
+- **Reproduced gap**: the real Phase 7 adapter's `invalidReducedReplay()`
+  baseline is permanently reproduced (`baselineInvalidReplay=23` / 27,
+  `baselineMinimized=0`); Phase 12 closes the replay-plan/minimization wiring
+  for synthetic/local use without new endpoint/transport authority.
+- **Validation (clean 4730c4e)**: typecheck PASS; hardening:check PASS;
+  canonical complete Playwright 1365 passed / 4 skipped / 0 failed;
+  topology-correct isolated clone (fresh `git clone --local` + `npm ci`) 1365 /
+  4 / 0; Phase 12 focused 127 passed; Phase 9/10/11 compatibility 257 passed;
+  campaign:synthetic 27 passed; agent:check PASS.
+- **Boundaries**: NO DEV/NEXT/production; no new endpoints/journeys/targets;
+  no campaign/triage core change beyond Workstreams A–F; no Phase 6/AI/
+  selfDev/promotion/catalog mutation; catalog count 1 (digest
+  `sha256:bd35b934…`); Phase 6 remains FROZEN_BY_OWNER; AI remains
+  non-authoritative.
+- **External CI**: GitHub Actions remains externally billing/spending-limit
+  blocked before job execution (run 32269149776 — "The job was not started
+  because recent account payments have failed or your spending limit needs to
+  be increased."). The task terminates as BLOCKED_EXTERNAL_CI, NOT
+  CI-verified COMPLETE. No CI-success claim is made.
+- **Next**: STOP. Phase 11B DEV acceptance remains separately NOT_AUTHORIZED.
+  Any real Phase 12 replay/triage runtime validation requires future separate
+  owner authorization.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

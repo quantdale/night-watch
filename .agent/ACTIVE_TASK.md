@@ -3,14 +3,14 @@
 Task ID: phase-12-semantic-yield-high-confidence-triage
 Phase: 12A-SEMANTIC-YIELD-TRIAGE-LOCAL
 Title: Nightwatch Phase 12A — Semantic Yield & High-Confidence Triage Productivity Pack
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-12-semantic-yield-high-confidence-triage
 Starting SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-Last validated implementation SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-Last substantive checkpoint SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-Last checkpoint: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-Current milestone: M0 — Phase 12 remote spec package published. Reproduce the real-candidate invalidReducedReplay baseline, freeze the fixed Phase 12 backtest corpus, then execute every workstream A–F.
-Next action: Fetch/fast-forward clean origin/main, read the complete Phase 12 task package and design, reproduce current invalidReducedReplay behavior, then continue through all PLAN milestones. No DEV. Do not stop after one workstream.
+Last validated implementation SHA: 4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4
+Last substantive checkpoint SHA: 4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4
+Last checkpoint: 4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4
+Current milestone: M10 — durable docs/continuity closure complete; terminal BLOCKED_EXTERNAL_CI. All Workstreams A–F implemented and locally verified on clean 4730c4e.
+Next action: STOP. Local implementation complete and verified on clean 4730c4e; GitHub Actions remains externally billing-blocked before job execution, so the task ends as BLOCKED_EXTERNAL_CI, not CI-verified COMPLETE. No DEV, no new authority.
 Authorization class: PHASE_12_SEMANTIC_TRIAGE_AND_COVERAGE_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -23,18 +23,18 @@ NO DEV/NEXT/production, Phase 11B execution, real campaign, product mutation, ne
 ## Continuity
 
 STARTING_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-LAST_VALIDATED_IMPLEMENTATION_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_12A_STATUS: IN_PROGRESS
-PHASE_12_REAL_REPLAY: NOT_VERIFIED
-PHASE_12_HIGH_CONFIDENCE_TRIAGE: NOT_VERIFIED
-PHASE_12_REAL_SOURCE_COVERAGE: NOT_VERIFIED
-PHASE_12_YIELD_BACKTEST: NOT_VERIFIED
+PHASE_12A_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_12_REAL_REPLAY: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_12_HIGH_CONFIDENCE_TRIAGE: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_12_REAL_SOURCE_COVERAGE: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_12_YIELD_BACKTEST: VERIFIED_LOCAL_NOT_CI_VERIFIED
 PHASE_11A_4_STATUS: BLOCKED_EXTERNAL_CI
 PHASE_11A_4_SOURCE_FRESHNESS: VERIFIED
 PHASE_11A_4_FULL_REGRESSION: VERIFIED
@@ -51,7 +51,11 @@ NEXT_PROMOTION_AUTHORITY: NONE
 
 ## Confirmed starting finding
 
-`CONFIRMED_REAL_REDUCED_REPLAY_GAP`: the real Phase 7 campaign adapter supplies `invalidReducedReplay()` to journey, exploration, and API anomaly candidates, so real reduced replay/minimization evidence cannot currently succeed even though the pure deterministic minimizer exists.
+`CONFIRMED_REAL_REDUCED_REPLAY_GAP`: the real Phase 7 campaign adapter supplies `invalidReducedReplay()` to journey, exploration, and API anomaly candidates, so real reduced replay/minimization evidence cannot currently succeed even though the pure deterministic minimizer exists. Phase 12A reproduces this baseline permanently and closes the replay-plan/minimization wiring for synthetic/local use without new authority.
+
+## Blockers
+
+GitHub Actions is externally blocked before job execution by the known billing/spending-limit condition (run 32269149776: "The job was not started because recent account payments have failed or your spending limit needs to be increased."). This does not block local implementation (complete and verified), but it prevents exact CI verification until resolved.
 
 ## Recovery
 

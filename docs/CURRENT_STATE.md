@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-16** at
+> Durable memory for the next agent/session. Last updated: **2026-08-19** at
 > the Nightwatch post-Phase-10 architecture design review (PHASE_10_STATUS:
 > COMPLETE; Phase 10B COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED; D-61).
 > Phase 0–5 are
@@ -115,6 +115,11 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.1-R1 OWNER-GATED CANONICAL PROMOTION RETRY` — executed exactly one fresh prepare/approve/apply/verify/commit chain; no further promotion authority |
 | `PHASE_8B_1_R1_1_AUTHORIZATION` | `PROJECT-MEMORY & CANONICAL-SOURCE TRUTH HARDENING` — source/docs/tooling integrity only; NO promotion authority, NO variant-B adoption |
 | `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case |
+| `PHASE_12A_STATUS` | `BLOCKED_EXTERNAL_CI` — Workstreams A–F implemented and locally verified on clean `4730c4e` (D-62); GitHub Actions externally billing-blocked before job execution; the two ROADMAP NEXT_AFTER investments (HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_EXPANSION) are now implemented-local. Phase 11B remains NOT_AUTHORIZED |
+| `PHASE_12_REAL_REPLAY` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — replay-plan strict DTO + synthetic journey/exploration/API adapters around existing bounded minimizer; `invalidReducedReplay()` baseline permanently reproduced (baselineInvalidReplay=23/27) |
+| `PHASE_12_HIGH_CONFIDENCE_TRIAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — semantic triage-evidence DTO + categorical HIGH-confidence blocking + dossier v2 READY predicate; v1 compatible |
+| `PHASE_12_REAL_SOURCE_COVERAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fresh ripple-api master `e026c855…` disposable snapshot; 6 approved targets; 4 rederived; 0 mechanical uplifts (precise blockers) |
+| `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,

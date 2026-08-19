@@ -231,3 +231,54 @@ NEXT ACTION: STOP
 ```
 
 Exact CI-green completion may later upgrade the Phase 12A task state without implying any DEV authority.
+
+## 17. Implementation evidence (Phase 12A closure, 2026-08-19, D-62)
+
+Phase 12A was executed as specified: Workstreams A–F implemented and locally
+verified on a clean implementation SHA `4730c4e3c0f2d5c27864b5966bdf9c8c86bba6c4`.
+GitHub Actions remained externally billing/spending-limit blocked before job
+execution (run 32269149776 — "The job was not started because recent account
+payments have failed or your spending limit needs to be increased."), so the
+task terminates as local-validated / `BLOCKED_EXTERNAL_CI`, NOT CI-verified
+COMPLETE. No CI-success claim is made.
+
+Verified local evidence (all on clean `4730c4e`):
+
+- **A. Replay/minimization** — `nightwatch.triage-replay-plan.private.v1`
+  (order-preserving subsequence, unknown-field rejection, deterministic
+  `rp:sha256` identity); synthetic journey/exploration/API adapters wrap the
+  existing bounded `minimizer.ts`; the real `invalidReducedReplay()` baseline
+  is permanently reproduced (`baselineInvalidReplay=23` / 27,
+  `baselineMinimized=0`).
+- **B. Confidence/dossier** — `nightwatch.semantic-triage-evidence.private.v1`
+  (safe fields only, missing-evidence vocabulary); categorical HIGH blocked by
+  PARTIAL_COVERAGE / stale / unavailable / non-reproduced / nonzero safety /
+  nonzero privacy / known false positive; `bug-dossier.private.v2` with derived
+  READY predicate; v1 readable. `phase12ReadyDossiers=14` (< seededActionable
+  Defects=16), vs baseline over-claim `baselineReadyDossiers=15`.
+- **C. Clustering** — identity bound to evidence digest + derivation version
+  (not source SHA); row-ordinal/count excluded; protocol-only clustering
+  untouched. `uniqueSemanticClusters=2`, `duplicateObservationsSuppressed=13`.
+- **D. Coverage inventory** — fresh ripple-api master
+  `e026c85522d201724033f024456da3efa17fe07a` via `git ls-remote` + disposable
+  snapshot (canonical siblings untouched); 6 approved targets inventoried; 4
+  historical+collection rederived; **0** mechanical uplifts, each with a
+  precise independent blocker (TYPE_FLOW_AMBIGUOUS / AMBIGUOUS_CONDITIONAL_BLOB
+  / GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT).
+- **E. Backtest** — fixed `corpus/phase12` 27 fixtures; `phase12Minimized=16` >
+  `baselineMinimized=0`; `phase12InvalidReplay=2` (reduced from 23); floors
+  all 0 (falsePositive / partialCoverage / staleSource / differentFingerprint /
+  privacy / determinism); 3× determinism 0 mismatches.
+- **F. Hardening/regression** — pure-core import-boundary + authority-set
+  guards (`bin/hardening-check.mjs`); Phase 12 local/synthetic CI matrix row;
+  `tsconfig.json` corpus include; triage/semantic re-exports.
+
+Regression: canonical complete Playwright **1365 passed / 4 skipped / 0
+failed**; topology-correct isolated clone (fresh `git clone --local` + `npm ci`)
+**1365 / 4 / 0**; typecheck PASS; hardening:check PASS; agent:check PASS;
+Phase 12 focused 127 passed; Phase 9/10/11 compatibility 257 passed;
+campaign:synthetic 27 passed.
+
+No authority expansion: catalog count 1 (digest `sha256:bd35b934…`),
+promotion authority NONE, Phase 6 FROZEN_BY_OWNER, AI non-authoritative.
+Phase 11B remains NOT_AUTHORIZED.

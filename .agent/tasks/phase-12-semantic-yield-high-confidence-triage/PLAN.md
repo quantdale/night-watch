@@ -82,9 +82,9 @@ Add dedicated CI matrix, run focused/historical/full/isolated suites, verify cat
 - M5 — `DONE`: fresh current-source coverage inventory; assess approved target/depth expansion; implement only mechanically proven additions.
 - M6 — `DONE`: complete Phase 12 fixed backtest; measure baseline vs new yield; privacy/determinism checks.
 - M7 — `DONE`: hardening guards + Phase 12 CI matrix + focused compatibility.
-- M8 — `IN_PROGRESS`: canonical complete Playwright + topology-correct isolated complete Playwright + continuity/catalog/project checks.
-- M9 — `NOT_STARTED`: validated implementation checkpoint push, Actions re-check, clean post-push current-source/backtest acceptance.
-- M10 — `NOT_STARTED`: durable decision/design/current-state/roadmap/task closure; final push and exact Actions truth.
+- M8 — `DONE`: canonical complete Playwright (1365 passed / 4 skipped / 0 failed) + topology-correct isolated complete Playwright (1365 / 4 / 0) + typecheck/hardening/agent:check clean.
+- M9 — `DONE`: validated implementation checkpoint `4730c4e` pushed fast-forward to origin/main (HEAD == origin/main); Actions re-checked (run 32269149776 billing-blocked, no CI-success claim); clean post-push acceptance green.
+- M10 — `DONE`: durable decision (D-62)/design/current-state/roadmap/task closure; final push and exact Actions truth. Terminal state BLOCKED_EXTERNAL_CI.
 
 ## Validation Strategy
 
