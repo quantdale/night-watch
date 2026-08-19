@@ -1,59 +1,58 @@
 # Active Task
 
-Task ID: phase-11a-4-source-freshness-full-regression-closeout
-Phase: 11A.4-SOURCE-FRESHNESS-FULL-REGRESSION-CLOSEOUT
-Title: Nightwatch Phase 11A.4 — Source-Freshness & Full-Regression Closeout
-Status: BLOCKED
-Task directory: .agent/tasks/phase-11a-4-source-freshness-full-regression-closeout
-Starting SHA: 813fabd898f4989c319affcbbe99551e4620903f
-Last validated implementation SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
-Last substantive checkpoint SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
-Last checkpoint: ba9fc1dc88ebae1837246d1fbc5647d89c79c7c3
-Current milestone: M9 — STOP at truthful BLOCKED_EXTERNAL_CI terminal. Fresh source, canonical and isolated complete regressions verified; GitHub Actions externally blocked (billing/spending-limit).
-Next action: STOP — GitHub Actions remains BLOCKED_EXTERNAL_CI (run 32101017498 at ba9fc1dc88ebae1837246d1fbc5647d89c79c73, 0 steps, billing/spending-limit). Phase 11B remains NOT_AUTHORIZED / NOT_READY_EXTERNAL_CI until exact CI green.
-Authorization class: PHASE_11_COLLECTION_WIDE_SEMANTIC_IMPLEMENTATION_ONLY
+Task ID: phase-12-semantic-yield-high-confidence-triage
+Phase: 12A-SEMANTIC-YIELD-TRIAGE-LOCAL
+Title: Nightwatch Phase 12A — Semantic Yield & High-Confidence Triage Productivity Pack
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-12-semantic-yield-high-confidence-triage
+Starting SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+Last validated implementation SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+Last substantive checkpoint SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+Last checkpoint: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+Current milestone: M0 — Phase 12 remote spec package published. Reproduce the real-candidate invalidReducedReplay baseline, freeze the fixed Phase 12 backtest corpus, then execute every workstream A–F.
+Next action: Fetch/fast-forward clean origin/main, read the complete Phase 12 task package and design, reproduce current invalidReducedReplay behavior, then continue through all PLAN milestones. No DEV. Do not stop after one workstream.
+Authorization class: PHASE_12_SEMANTIC_TRIAGE_AND_COVERAGE_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Close only the Phase 11A.3 source-freshness and complete-regression proof gaps. Existing Phase 11A.3 implementation remains the substantive baseline unless these checks expose a concrete Nightwatch defect within existing Phase 11A authority.
+Implement the two ROADMAP NEXT_AFTER investments that are locally/source-only feasible after Phase 11: HIGH_CONFIDENCE_SEMANTIC_TRIAGE and REAL_SEMANTIC_COVERAGE_EXPANSION. Required workstreams: replay/minimization, semantic confidence/dossiers, clustering/contract identity, current-source coverage inventory/expansion, deterministic yield backtest, hardening/full regression/continuity.
 
-NO DEV/NEXT/production, no Phase 11B execution, product mutation, DB/data plane, infrastructure/Phase 6, Alphaus writes, new product/source semantics, campaign/minimization redesign, differential, AI/model authority, selfDev/promotion/catalog/B adoption, or publication.
+NO DEV/NEXT/production, Phase 11B execution, real campaign, product mutation, new endpoint/target authority, DB/data plane, infrastructure/Phase 6, Alphaus writes, AI/model authority, selfDev/promotion/catalog/B adoption, publication, or team workflow.
 
 ## Continuity
 
-STARTING_SHA: 813fabd898f4989c319affcbbe99551e4620903f
-LAST_VALIDATED_IMPLEMENTATION_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 578a9917344c70ba96fe9bd8d06a604ca8964108
+STARTING_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+LAST_VALIDATED_IMPLEMENTATION_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cc0ea71a64d06b84b73d396f1c01311513aefe2c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
+PHASE_12A_STATUS: IN_PROGRESS
+PHASE_12_REAL_REPLAY: NOT_VERIFIED
+PHASE_12_HIGH_CONFIDENCE_TRIAGE: NOT_VERIFIED
+PHASE_12_REAL_SOURCE_COVERAGE: NOT_VERIFIED
+PHASE_12_YIELD_BACKTEST: NOT_VERIFIED
 PHASE_11A_4_STATUS: BLOCKED_EXTERNAL_CI
 PHASE_11A_4_SOURCE_FRESHNESS: VERIFIED
 PHASE_11A_4_FULL_REGRESSION: VERIFIED
-PHASE_11A_STATUS: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
 PHASE_11_COLLECTION_WIDE_SEMANTIC: COMPLETE_LOCAL_VALIDATED_NOT_CI_VERIFIED
 PHASE_11B_DEV_READINESS: NOT_READY_EXTERNAL_CI
 PHASE_11B_STATUS: NOT_AUTHORIZED
-PHASE_11A_3_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_IMPLEMENTATION_VERIFIED_WITH_PROOF_GAPS
-PHASE_11A_2_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
-PHASE_11A_1_STATUS: BLOCKED_EXTERNAL_CI_LOCAL_FIX_VERIFIED
-PHASE_10_STATUS (unchanged): COMPLETE
-PHASE_9_STATUS (unchanged): COMPLETE
-PHASE_8_STATUS (unchanged): COMPLETE
-CANONICAL_CATALOG_ENTRY_COUNT (unchanged): 1
-CANONICAL_CATALOG_SHA256 (unchanged): sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
-NEXT_PORTFOLIO_MEMBER (unchanged): AVAILABLE_NOT_ADOPTED
-NEXT_PROMOTION_AUTHORITY (unchanged): NONE
+PHASE_10_STATUS: COMPLETE
+PHASE_9_STATUS: COMPLETE
+PHASE_8_STATUS: COMPLETE
+CANONICAL_CATALOG_ENTRY_COUNT: 1
+CANONICAL_CATALOG_SHA256: sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED
+NEXT_PROMOTION_AUTHORITY: NONE
 
-## Confirmed findings
+## Confirmed starting finding
 
-`CONFIRMED_PHASE_11A_3_SOURCE_FRESHNESS_PROOF_GAP`: predecessor SPEC required fresh remote SHA discovery + disposable exact current snapshot, but terminal evidence used the canonical sibling at historical pin `27bb007ad0c798800b6bd3b29760c966422966e7` as “current-source”.
-
-`CONFIRMED_PHASE_11A_3_FULL_REGRESSION_PROOF_GAP`: predecessor SPEC required complete Playwright + isolated/source-equivalent complete regression, but terminal evidence recorded `npm run test:unit` as full Playwright and only a focused isolated matrix.
+`CONFIRMED_REAL_REDUCED_REPLAY_GAP`: the real Phase 7 campaign adapter supplies `invalidReducedReplay()` to journey, exploration, and API anomaly candidates, so real reduced replay/minimization evidence cannot currently succeed even though the pure deterministic minimizer exists.
 
 ## Recovery
 
-Task terminalized BLOCKED_EXTERNAL_CI. Fresh remote SHA e026c85522d201724033f024456da3efa17fe07a verified via disposable snapshot; canonical 1279/4/0 and isolated sibling 1279/4/0 complete regressions verified; GitHub Actions remains billing-blocked (run 32101017498, 0 steps). Do not claim CI success.
+The CLI prompt is intentionally short. Fetch canonical origin/main and recover all detailed authority from this task's PROPOSAL/SPEC/PLAN/STATE/REPORT, its WORKSTREAM and ACCEPTANCE_MATRIX files, and `docs/design/PHASE_12_SEMANTIC_YIELD_AND_TRIAGE.md`. Git/source/test evidence wins over conversation text.
