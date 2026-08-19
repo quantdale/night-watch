@@ -1188,6 +1188,140 @@ function checkPhase10bCorePurity() {
 }
 
 /**
+ * Phase 12 pure-core boundaries (SPEC §27, WORKSTREAM_F §F2): replay plan,
+ * semantic confidence, semantic cluster, coverage inventory, and backtest
+ * scoring cores must be deterministic, privacy-safe, and network/browser/
+ * filesystem/child-process/DB/AI/selfDev isolated. Any future Phase 12 pure
+ * core file that violates the import/capability boundary is a hardening
+ * failure.
+ *
+ * This check is intentionally future-proof: it enumerates the bounded set of
+ * Phase 12 pure-core locations and enforces the boundary only when those
+ * files exist, so parallel workstreams can land their pure cores without
+ * hardening drift.
+ */
+function checkPhase12PureCoreBoundaries() {
+  const candidates = [];
+  const globs = [
+    'src/core/triage/replay',
+    'src/core/triage/confidence',
+    'src/core/triage/cluster',
+    'src/core/triage/coverage',
+    'src/core/triage/inventory',
+    'src/core/triage/backtest',
+    'src/core/triage/minimizer',
+    'src/core/coverage',
+    'src/core/backtest',
+    'src/oracles/semantic/confidence',
+    'src/oracles/semantic/cluster',
+    'src/oracles/semantic/inventory',
+    'corpus/phase12',
+  ];
+  for (const tracked of gitFiles()) {
+    if (!tracked.endsWith('.ts') && !tracked.endsWith('.mjs')) continue;
+    // Exact file or directory prefix match against the bounded allowlist.
+    const inPureCore = globs.some((prefix) => tracked === `${prefix}.ts` || tracked === `${prefix}.mjs` || tracked.startsWith(`${prefix}/`));
+    if (inPureCore) candidates.push(tracked);
+  }
+  // Also walk uncommitted working-tree candidates (so local parallel-stream
+  // files are still guarded even before commit).
+  for (const prefix of globs) {
+    const absolute = path.join(root, prefix);
+    if (fs.existsSync(absolute) && fs.statSync(absolute).isDirectory()) {
+      for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
+        if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.mjs'))) {
+          const rel = path.join(prefix, entry.name);
+          if (!candidates.includes(rel)) candidates.push(rel);
+        }
+      }
+    } else if (fs.existsSync(`${absolute}.ts`)) {
+      const rel = `${prefix}.ts`;
+      if (!candidates.includes(rel)) candidates.push(rel);
+    }
+  }
+  // Minimizer is already covered by its own invariants but is part of the
+  // Phase 12 pure-core set per SPEC §27 — guard it here too.
+  if (!candidates.includes('src/core/triage/minimizer.ts') && fs.existsSync(path.join(root, 'src/core/triage/minimizer.ts'))) {
+    candidates.push('src/core/triage/minimizer.ts');
+  }
+  if (candidates.length === 0) return;
+  for (const file of candidates.sort()) {
+    const source = read(file);
+    if (!source) continue;
+    if (/from\s+['"]node:(?:fs|child_process|net|http|https|dns|tls|worker_threads)['"]/i.test(source)) {
+      fail(`${file} imports a prohibited fs/process/network runtime capability (Phase 12 pure-core boundary)`);
+    }
+    if (/from\s+['"][^'"]*(?:playwright|puppeteer|browser|page|chromium)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a browser/page capability (Phase 12 pure-core boundary)`);
+    }
+    if (/\bchild_process\b|\bspawn\s*\(|\bexec(?:File)?\s*\(|\bfork\s*\(|\bshell\s*:\s*true\b/i.test(source)) {
+      fail(`${file} exposes a child_process/shell capability (Phase 12 pure-core boundary)`);
+    }
+    if (/\bfetch\s*\(|\bWebSocket\s*\(|\bhttp\.request\b|\bhttps\.request\b|\bnet\.connect\b/i.test(source)) {
+      fail(`${file} exposes a network transport capability (Phase 12 pure-core boundary)`);
+    }
+    if (/from\s+['"][^'"]*(?:database|dynamo|bigquery|spanner|gcloud|kubectl|aws|cloud|infrastructure)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a DB/infra capability (Phase 12 pure-core boundary)`);
+    }
+    if (/from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox)[^'"]*['"]/i.test(source) || /\b(?:AiReview|SelfDev|SELFDEV_|SELF_DEVELOPMENT)\b/.test(source)) {
+      fail(`${file} imports or references AI/selfDev/promotion authority (Phase 12 pure-core boundary)`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\()/i.test(source)) {
+      fail(`${file} exposes code execution (eval/Function) (Phase 12 pure-core boundary)`);
+    }
+  }
+}
+
+/**
+ * Phase 12 authority-set freeze (WORKSTREAM_F §F4): approved read-only
+ * target IDs, DEV-reachable target IDs, safe-action catalog authority, and
+ * Phase 5 operation IDs must remain byte-identical to the current baseline
+ * unless an explicit Phase 12 decision justifies a change. Any drift is a
+ * blocker.
+ */
+function checkPhase12AuthoritySetsUnchanged() {
+  const approved = read('src/oracles/expectations/recipes/registry.ts');
+  const catalog = read('src/api/phase5/catalog.ts');
+  const ownerScope = read('src/core/policy/ownerScope.ts');
+  const selfDevCatalog = read('src/core/selfDev/adoptedCaseCatalog.generated.ts');
+  // Approved read-only target IDs — 6 entries, byte-stable order.
+  const approvedIds = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read', 'ripple.billing-groups.read', 'ripple.billing-groups-legacy.read', 'ripple.billing-group-exchange.read'];
+  for (const id of approvedIds) {
+    if (!approved.includes(`'${id}'`)) fail(`Phase 12 approved read-only target missing: ${id}`);
+  }
+  if ((approved.match(/'ripple\.[^']+\.read'/g) ?? []).length !== approvedIds.length) {
+    // Count only the APPROVED_READ_ONLY_TARGET_IDS block (first occurrences).
+    const block = approved.slice(approved.indexOf('APPROVED_READ_ONLY_TARGET_IDS'), approved.indexOf('DEV_REACHABLE_RECIPE_TARGET_IDS'));
+    const count = (block.match(/'ripple\.[^']+\.read'/g) ?? []).length;
+    if (count !== approvedIds.length) fail(`Phase 12 approved read-only target count drift: expected ${approvedIds.length}, found ${count}`);
+  }
+  const devReachable = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read'];
+  for (const id of devReachable) {
+    if (!approved.includes(`'${id}'`)) fail(`Phase 12 DEV-reachable target missing: ${id}`);
+  }
+  const devBlock = approved.slice(approved.indexOf('DEV_REACHABLE_RECIPE_TARGET_IDS'));
+  const devCount = (devBlock.match(/'ripple\.[^']+\.read'/g) ?? []).length;
+  if (devCount !== devReachable.length) fail(`Phase 12 DEV-reachable target count drift: expected ${devReachable.length}, found ${devCount}`);
+  // Safe-action catalog version must remain the single Phase 4 authority.
+  if (!/SAFE_ACTION_CATALOG_VERSION\s*=\s*'nightwatch\.safe-actions\.phase4\.v1'/.test(read('src/core/exploration/types.ts'))) {
+    fail('Phase 12 safe-action catalog version drift');
+  }
+  // Phase 5 operation IDs — known-read set must remain 6.
+  const knownReads = (catalog.match(/operationId:\s*'ripple\.[^']+'/g) ?? []).length;
+  // The catalog contains 11 operations total (6 KNOWN_READ + 4 KNOWN_MUTATION + 1 UNKNOWN); we verify the read set specifically.
+  const readOps = ['ripple.payer-exchange.read', 'ripple.common-exchange.read', 'ripple.account-inventory.read', 'ripple.billing-groups.read', 'ripple.billing-groups-legacy.read', 'ripple.billing-group-exchange.read'];
+  for (const op of readOps) if (!catalog.includes(`operationId: '${op}'`)) fail(`Phase 12 Phase-5 operation missing: ${op}`);
+  // Owner scope must remain frozen.
+  if (!/FROZEN_BY_OWNER/.test(ownerScope) || !/INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE/.test(ownerScope)) {
+    fail('Phase 12 owner-scope freeze marker missing');
+  }
+  // Canonical selfdev catalog digest/count must remain 1 unless a new
+  // promotion is explicitly authorized (not part of Phase 12).
+  const catalogCount = (selfDevCatalog.match(/"adoptedCaseId"/g) ?? []).length;
+  if (catalogCount !== 1) fail(`Phase 12 canonical catalog count drift: expected 1, found ${catalogCount}`);
+}
+
+/**
  * Phase 10B integration seams: the runner is gated by the one-shot launcher
  * flag, fixes the common-exchange journey / target / DEEP expectation (no
  * selectors, no URL override), and the launcher rejects every selector. The
@@ -1234,6 +1368,54 @@ function checkPhase10bIntegrationSeams() {
   }
 }
 
+/**
+ * Phase 12A WORKSTREAM_B+D triage/coverage core purity: semanticTriageEvidence, semanticConfidence, dossierV2, coverageInventory, cluster are PURE (no fs/network/child-process/browser/AI/DB/selfDev).
+ */
+function checkPhase12TriageCorePurity() {
+  const files = [
+    'src/core/triage/semanticTriageEvidence.ts',
+    'src/core/triage/semanticConfidence.ts',
+    'src/core/triage/dossierV2.ts',
+    'src/oracles/expectations/coverageInventory.ts',
+    'src/oracles/semantic/cluster.ts',
+  ];
+  for (const file of files) {
+    if (!fs.existsSync(path.join(root, file))) continue;
+    const source = read(file);
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|playwright|runRecorder|storage)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden fs/network/process/AI/selfDev/Phase6/persistence/authority module`);
+    }
+    if (/\b(?:eval\s*\(|new\s+Function\s*\(|child_process|spawn\s*\(|(?<!\.)exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|fetch\s*\(|node:fs)\b/i.test(source)) {
+      fail(`${file} exposes a code-execution, process, network, or persistence capability`);
+    }
+  }
+}
+
+function checkPhase12TriageIntegrationSeams() {
+  const evidence = read('src/core/triage/semanticTriageEvidence.ts');
+  if (!/nightwatch\.semantic-triage-evidence\.v1/.test(evidence)) fail('semantic triage evidence missing version');
+  if (!/MISSING_EVIDENCE_VOCABULARY/.test(evidence)) fail('semantic triage evidence missing vocabulary');
+  const confidence = read('src/core/triage/semanticConfidence.ts');
+  if (!/rankSemanticConfidence/.test(confidence)) fail('semantic confidence missing rank function');
+  if (!/SAFETY_NONZERO/.test(confidence) || !/PRIVACY_FAILURE/.test(confidence) || !/KNOWN_FALSE_POSITIVE/.test(confidence)) fail('semantic confidence missing mandatory blockers');
+  const v2 = read('src/core/triage/dossierV2.ts');
+  if (!/nightwatch\.bug-dossier\.private\.v2/.test(v2)) fail('dossier v2 missing version');
+  if (!/isReadySemanticDossier/.test(v2)) fail('dossier v2 missing READY predicate');
+  if (!/humanReproductionRecipe/.test(v2)) fail('dossier v2 missing human recipe');
+  // v1 must remain readable: dossier.ts still exports createBugDossier/validateBugDossier
+  const dossier = read('src/core/triage/dossier.ts');
+  if (!/DOSSIER_VERSION/.test(dossier) || !/validateBugDossier/.test(dossier)) fail('dossier v1 compatibility lost');
+  const coverage = read('src/oracles/expectations/coverageInventory.ts');
+  if (!/buildCoverageInventory/.test(coverage)) fail('coverage inventory missing builder');
+  if (!/APPROVED_AND_ADMITTED_COLLECTION/.test(coverage) || !/APPROVED_NOT_ADMITTED_AMBIGUOUS/.test(coverage) || !/APPROVED_NOT_OBSERVABLE/.test(coverage)) fail('coverage inventory missing disposition vocabulary');
+  if (!/TYPE_FLOW_AMBIGUOUS/.test(coverage)) fail('coverage inventory missing depth-uplift blocker');
+  if (!/snapshotMatchesRemote/.test(coverage)) fail('coverage inventory missing remote/snapshot match flag');
+  const cluster = read('src/oracles/semantic/cluster.ts');
+  if (fs.existsSync(path.join(root, 'src/oracles/semantic/cluster.ts'))) {
+    if (!/semanticCluster/.test(cluster)) fail('semantic cluster missing identity');
+  }
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -1261,6 +1443,10 @@ checkPhase10DeeperContractPurity();
 checkPhase10IntegrationSeams();
 checkPhase10bCorePurity();
 checkPhase10bIntegrationSeams();
+checkPhase12PureCoreBoundaries();
+checkPhase12AuthoritySetsUnchanged();
+checkPhase12TriageCorePurity();
+checkPhase12TriageIntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {
