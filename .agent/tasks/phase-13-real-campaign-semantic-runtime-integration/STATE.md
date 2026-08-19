@@ -102,14 +102,14 @@ Task has not started. Do not resume implementation without the exact owner autho
 
 ## Completion Snapshot
 
-Overnight implementation batch in progress. C1 committed and awaiting hardening. C2/C3 being implemented. Not VERIFIED/COMPLETE; hardening campaign is required next.
+Overnight implementation batch in progress. C1 and C2 committed and awaiting hardening. C3 being implemented. Not VERIFIED/COMPLETE; hardening campaign is required next.
 
 ```text
 PHASE_13_OVERNIGHT_C1: IMPLEMENTED_AWAITING_HARDENING
-PHASE_13_OVERNIGHT_C2: IN_PROGRESS
-PHASE_13_OVERNIGHT_C3: PENDING
+PHASE_13_OVERNIGHT_C2: IMPLEMENTED_AWAITING_HARDENING
+PHASE_13_OVERNIGHT_C3: IN_PROGRESS
 PHASE_13A_STATUS: IN_PROGRESS
 PHASE_13_HARDENING_CAMPAIGN: REQUIRED_NEXT
 PHASE_13B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: IMPLEMENT_C2
+NEXT ACTION: IMPLEMENT_C3
 ```

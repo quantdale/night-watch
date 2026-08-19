@@ -21,6 +21,9 @@ import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { readProxyEvents } from '../../src/proxy/events';
 import { runDeclarativeJourney } from '../../src/core/journeys/engine';
 import { freezeJourneyContract, JOURNEY_CONTRACT_VERSION, ORACLE_VERSION } from '../../src/core/journeys/contract';
+import type { SemanticResponseOracle } from '../../src/browser/observers/networkObserver';
+import type { RealSourceResolution } from '../../src/oracles/expectations/resolver';
+import { buildCampaignSemanticOracle, campaignSemanticObservationFor } from '../../src/core/campaign/realCampaignSemanticWiring';
 import { RIPPLE_JOURNEY_DEFINITIONS, buildRippleJourneyEndpointRegistry } from '../../src/products/ripple/journeyContracts';
 import { createRippleExplorationRuntime } from '../../src/products/ripple/explorationRuntime';
 import { RIPPLE_PHASE4_ACTIONS, RIPPLE_PHASE4_ENVELOPES, RIPPLE_PHASE4_BUDGET, envelopeById } from '../../src/products/ripple/explorationCatalog';
@@ -100,6 +103,11 @@ interface RealCampaignContext {
   readonly sourceSnapshots: readonly CampaignSourceSnapshot[];
   readonly changeset: ChangeSet;
   readonly nightwatchDirtyPaths: readonly string[];
+  // Optional read-only source resolver supplied by an external discoverer. When
+  // present and the work item maps to an approved target, the semantic observer
+  // seam is wired into the campaign context; when absent the run stays
+  // protocol-only (fail closed). Never invented authority.
+  readonly semanticResolver?: (targetId: string) => RealSourceResolution;
 }
 
 function rootDirectory(): string {
@@ -537,6 +545,17 @@ function preflightGate(context: RealCampaignContext): Promise<RealRunGateResult>
   });
 }
 
+// Phase 13A — build the semantic observer seam oracle for an approved target
+// only. Returns undefined when no resolver is supplied or the target is not an
+// approved fixed mapping, so the campaign stays protocol-only. Do not invent
+// semantic authority for unsupported surfaces.
+function phase13SemanticOracleFor(context: RealCampaignContext, journeyOrOperationId: string): SemanticResponseOracle | undefined {
+  if (context.semanticResolver === undefined) return undefined;
+  const obs = campaignSemanticObservationFor(null, journeyOrOperationId);
+  if (!obs.approved) return undefined;
+  return buildCampaignSemanticOracle(context.semanticResolver);
+}
+
 async function runJourney(context: RealCampaignContext, browser: Browser, manifest: CampaignManifest, workItem: CampaignWorkItem, attempt: number): Promise<CampaignExecutionOutcome> {
   await ensureAuth(browser, context);
   const journeyId = workItem.journeyId;
@@ -546,7 +565,8 @@ async function runJourney(context: RealCampaignContext, browser: Browser, manife
   const contract = freezeJourneyContract(definition);
   const recorder = new RunRecorder({ runId: safeRunId(workItem, attempt), environment: 'dev', product: 'ripple', browser: 'chromium', scenario: `phase7-${journeyId}`, nightwatchSha: gitResolve(context.root, 'HEAD'), authenticated: true, artifactsRoot: path.join(context.privateStore.root, 'runs') });
   await recorder.writeRepositories([...context.repoSnapshots]);
-  const nightwatch = await createNightwatchContext(browser, { env: context.environment, recorder, uiBaseUrl: context.target, storageStatePath: context.statePath, trace: 'off', bootstrapDiagnostics: true, endpointRegistry: buildRippleJourneyEndpointRegistry(context.environment), journeyId });
+  const semanticOracle = phase13SemanticOracleFor(context, journeyId);
+  const nightwatch = await createNightwatchContext(browser, { env: context.environment, recorder, uiBaseUrl: context.target, storageStatePath: context.statePath, trace: 'off', bootstrapDiagnostics: true, endpointRegistry: buildRippleJourneyEndpointRegistry(context.environment), journeyId, ...(semanticOracle === undefined ? {} : { semanticOracle }) });
   let finalized = false;
   try {
     await nightwatch.page.goto(context.target, { waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -579,7 +599,8 @@ async function runExploration(context: RealCampaignContext, browser: Browser, ma
   const contract = freezeJourneyContract(definition);
   const recorder = new RunRecorder({ runId: safeRunId(workItem, attempt), environment: 'dev', product: 'ripple', browser: 'chromium', scenario: `phase7-exploration-${envelopeId}`, seed: workItem.seed ?? undefined, nightwatchSha: gitResolve(context.root, 'HEAD'), authenticated: true, artifactsRoot: path.join(context.privateStore.root, 'runs') });
   await recorder.writeRepositories([...context.repoSnapshots]);
-  const nightwatch = await createNightwatchContext(browser, { env: context.environment, recorder, uiBaseUrl: context.target, storageStatePath: context.statePath, trace: 'off', bootstrapDiagnostics: true, endpointRegistry: buildRippleJourneyEndpointRegistry(context.environment), journeyId });
+  const semanticOracle = phase13SemanticOracleFor(context, journeyId);
+  const nightwatch = await createNightwatchContext(browser, { env: context.environment, recorder, uiBaseUrl: context.target, storageStatePath: context.statePath, trace: 'off', bootstrapDiagnostics: true, endpointRegistry: buildRippleJourneyEndpointRegistry(context.environment), journeyId, ...(semanticOracle === undefined ? {} : { semanticOracle }) });
   let finalized = false;
   try {
     await nightwatch.page.goto(context.target, { waitUntil: 'domcontentloaded', timeout: 30_000 });
