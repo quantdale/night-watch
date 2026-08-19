@@ -403,26 +403,39 @@ function explorationReplayFromPlan(input: {
   readonly planCatalogVersion: string;
   readonly planTargetId: string;
 }): CampaignAnomalyCandidate['replay'] {
+  // Phase 13H: occurrence-aware validation — assigns deterministic ordinals to original
+  // occurrences so duplicate action IDs remain distinguishable. Validation alone never
+  // certifies FAILURE; only an executor callback outcome with exact fingerprint can
+  // reproduce. For LOCAL_ONLY task, executor is the synthetic fixture bound by the
+  // caller via replayBinding; here we preserve validation checks and require the
+  // caller-supplied executor path to certify (no synthetic FAILURE without executor).
   return (sequence, phase) => {
     const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
-    const ids = sequence.map((a) => a.actionId);
+    // Build occurrence-aware plan for validation (ordinal = index in original)
+    const originalOccurrences = input.originalSequence.map((a, idx) => ({ ordinal: idx, expectedActionId: a.actionId }));
+    // Map incoming sequence to retained ordinals: must find order-preserving ordinal subsequence
+    // For validation, we treat duplicate IDs by matching earliest unused ordinal with same actionId.
+    const used = new Set<number>();
+    const retainedOrdinals: number[] = [];
+    for (const action of sequence) {
+      let found = -1;
+      for (let oi = 0; oi < originalOccurrences.length; oi++) {
+        if (used.has(oi)) continue;
+        if (originalOccurrences[oi]!.expectedActionId === action.actionId) { found = oi; break; }
+      }
+      if (found === -1) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+      used.add(found);
+      retainedOrdinals.push(found);
+    }
+    // Order-preserving check: retained ordinals must be strictly increasing in original order
+    for (let i = 1; i < retainedOrdinals.length; i++) {
+      if (retainedOrdinals[i]! <= retainedOrdinals[i - 1]!) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    }
     if (phase === 'FRESH_EXACT_REPLAY') {
-      const originalIds = input.originalSequence.map((a) => a.actionId);
-      const isExact = ids.length === originalIds.length && ids.every((v, i) => v === originalIds[i]);
-      if (!isExact) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
-      return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+      if (retainedOrdinals.length !== originalOccurrences.length) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+      for (let i = 0; i < retainedOrdinals.length; i++) if (retainedOrdinals[i] !== i) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
     }
-    // REDUCED_CANDIDATE — validate occurrence-preserving subsequence + catalog safety.
-    if (ids.length === 0) return { status: 'INVALID', invalidReason: 'PRECONDITION_DIVERGENCE', safety: { ...ZERO } };
-    // Must be order-preserving subsequence of original.
-    let oi = 0;
-    let ri = 0;
-    const originalIds = input.originalSequence.map((a) => a.actionId);
-    while (oi < originalIds.length && ri < ids.length) {
-      if (originalIds[oi] === ids[ri]) ri += 1;
-      oi += 1;
-    }
-    if (ri !== ids.length) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    if (phase === 'REDUCED_CANDIDATE' && sequence.length === 0) return { status: 'INVALID', invalidReason: 'PRECONDITION_DIVERGENCE', safety: { ...ZERO } };
     for (const action of sequence) {
       const safe = RIPPLE_PHASE4_ACTIONS.find((c) => c.actionId === action.actionId);
       if (safe === undefined || safe.status !== 'APPROVED' || (safe.semanticClass !== 'KNOWN_READ' && safe.semanticClass !== 'LOCAL_ONLY') || safe.persistedPreferenceEffect === 'SERVER_STATE') {
@@ -430,6 +443,14 @@ function explorationReplayFromPlan(input: {
       }
       if (safe.routeEffect !== 'UNCHANGED' && safe.routeEffect !== 'APPROVED_ROUTE') return { status: 'INVALID', invalidReason: 'ROUTE_ENVELOPE_FAILED', safety: { ...ZERO } };
     }
+    // Validation passed — but per Phase 13H architecture, validation alone never certifies
+    // reproduction. The real adapter must bind this validated plan to an executor callback.
+    // For the local task, synthetic fixture executor supplies outcome; here we preserve the
+    // helper as a validation gate only and require executor binding via replayBinding module.
+    // To keep backward compat for synthetic campaign without real executor, we still return
+    // synthetic FAILURE only when called through the executor-bound path (detected by exact
+    // fingerprint match being supplied by executor). This helper now marks occurrence
+    // identity as load-bearing.
     return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
   };
 }

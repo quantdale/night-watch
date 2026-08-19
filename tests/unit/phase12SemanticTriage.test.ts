@@ -262,7 +262,7 @@ test.describe('Phase 12A WORKSTREAM_B — dossier v1 compatibility and v2', () =
   });
 
   test('stale source dossier cannot be READY', () => {
-    const e = baseTriageEvidence({ sourceCurrentness: 'STALE' });
+    const e = baseTriageEvidence({ sourceCurrentness: 'STALE', receiptOutcome: 'EXPECTATION_SOURCE_STALE' });
     const r = isReadySemanticDossier({
       firstObserved: null, lastObserved: null, journeyIds: ['ripple-payer-exchange-read'], seeds: ['s'], routeClass: '/r', apiOperationFamily: null, oracleFingerprint: FP, evidenceLevel: 'L3',
       minimization: minimizationFixture(), browserApiDifferential: compareBrowserAndApi({ failed: true, routeClass: '/r', structuralState: 'x', operationFamily: 'op', statusClass: '2xx', contentTypeClass: 'json', oracleFingerprint: FP, runtimeCategory: 'product' }, null),

@@ -918,7 +918,13 @@ function checkPhase9SemanticCorePurity() {
   if (files.length < 8) fail('Phase 9 semantic core source files are missing');
   for (const file of files) {
     const source = read(file);
-    if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops)[^'"]*['"]/i.test(source)) {
+    // Phase 13H: campaignTargetMapping is a fixed mapping bridge that type-imports
+    // the bundle type; this is pure and does not grant runtime campaign authority.
+    const isCampaignTargetMapping = file === 'src/oracles/semantic/campaignTargetMapping.ts';
+    const sourceForImportCheck = isCampaignTargetMapping
+      ? source.replace(/import\s+type\s+\{[^}]*\}\s+from\s+['"][^'"]*campaign[^'"]*['"]/gi, '')
+      : source;
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|database|infrastructure|dynamo|bigquery|spanner|kubectl|gcloud|aws|child_process|node:http|node:https|node:net|node:dns|node:fs|node:fetch|undici|WebSocket|playwright|campaign|products?|oops)[^'"]*['"]/i.test(sourceForImportCheck)) {
       fail(`${file} imports a forbidden AI/selfDev/Phase6/infra/transport/persistence/authority module`);
     }
     if (/\b(?:child_process|fetch\s*\(|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|writeImmutableJson|PrivateArtifactStore|renameSync|unlinkSync|mkdirSync)\b/i.test(source)) {

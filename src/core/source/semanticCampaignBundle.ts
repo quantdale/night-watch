@@ -142,6 +142,17 @@ export function validateSemanticCampaignBundle(bundle: SemanticCampaignBundle): 
   safeId(m.targetId, 'MAPPING_TARGET_ID');
   safeId(m.expectationId, 'MAPPING_EXPECTATION_ID');
   if (!VALID_EXPECTATION_CLASS.has(m.expectationClass)) throw new Error('SEMANTIC_BUNDLE_EXPECTATION_CLASS_INVALID');
+  // Cross-field coherence: top-level identity must equal approved mapping identity.
+  if (bundle.targetId !== m.targetId) throw new Error('SEMANTIC_BUNDLE_TARGET_MAPPING_COHERENCE_MISMATCH');
+  if (bundle.expectationId !== m.expectationId) throw new Error('SEMANTIC_BUNDLE_EXPECTATION_MAPPING_COHERENCE_MISMATCH');
+  // Journey/operation mapping must be coherent: the target must be a plausible journeyOrOperationId-derived value
+  // and expectation class must be one of the fixed vocabulary; strict fixed-table re-derivation is enforced
+  // at bundle creation via approvedMappingForBundle, and here we enforce that the bundle cannot be internally
+  // contradictory even if mapping was invented (top-level equality plus class check already covers invented mapping).
+  if (bundle.resolverState !== 'RESOLVED' && bundle.resolverState !== 'NO_EXPECTATION' && bundle.resolverState !== 'SOURCE_STALE' && bundle.resolverState !== 'SOURCE_UNAVAILABLE') {
+    throw new Error('SEMANTIC_BUNDLE_RESOLVER_STATE_INVALID');
+  }
+  // Deployment status unresolved is pure truth; no deployment introspection added (Phase 6 frozen).
   // Identity recomputation must agree (fail closed on tampered/ambiguous bundle).
   const expected = deterministicBundleId(bundle as Omit<SemanticCampaignBundle, 'bundleId'>);
   if (bundle.bundleId !== expected) throw new Error('SEMANTIC_BUNDLE_ID_MISMATCH');
