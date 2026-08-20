@@ -45,7 +45,9 @@ Maintain two explicit promotion paths. Protocol-only candidates continue through
 ## Milestones
 
 ### M0 — Bootstrap, authority, reproduce residuals
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: fetched origin --prune, HEAD==origin/main verified at 8c1cf09 pre-edits; owner token PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY recorded; Phase 13I NONE->IN_PROGRESS made ACTIVE_TASK; Phase 13H BLOCKED preserved; live-head reconciled to GIT; R1-R5 reproduced from live source (all confirmed) before fixing.
 
 - fetch/fast-forward clean main;
 - record exact owner token;
@@ -55,7 +57,9 @@ Status: NOT_STARTED
 - reconcile stale Phase 13H live-HEAD recovery wording if touched.
 
 ### M1 — Semantic candidate evidence and routing
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: src/core/campaign/campaignSemanticEvidence.ts strict DTO v1 + dual clustering via semanticContractIdentity/semanticClusterKey (sc:sha256 namespace, no alias); protocol historical retained.
 
 - define/reuse strict safe semantic candidate evidence;
 - make semantic/protocol routing explicit;
@@ -64,7 +68,9 @@ Status: NOT_STARTED
 - add focused routing/identity/privacy tests.
 
 ### M2 — Semantic promotion pipeline
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: ledger dossierVersion optional v1/v2, READY↔bugCandidates enforced, v2 readback via parseBugDossierV2; shadow proves semantic HIGH+READY truth (S01-S16).
 
 - bind exact representative semantic cluster to replay/minimization;
 - create SemanticTriageEvidence from actual replay/source/receipt facts;
@@ -74,7 +80,9 @@ Status: NOT_STARTED
 - keep protocol dossier-v1 compatible.
 
 ### M3 — Replay-plan-v2 real-adapter binding
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: tests/manual/phase7-real-campaign.ts structural FAILURE removed; occurrence-bound V2 with injected executor (fingerprint equality, throw fail-closed, API/journey gates); 42-fixture replay proof green.
 
 - remove all structural-only FAILURE certification in the Phase-7 real adapter;
 - build/validate TriageReplayPlanV2 for exploration/API/journey exact paths;
@@ -85,7 +93,9 @@ Status: NOT_STARTED
 - permanent focused tests.
 
 ### M4 — Ledger, checkpoint, brief and version drift
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: 8-field manifest drift fail-closed before executor; checkpoint/manifest frozen-bundle no-autorebind; morning brief never overstates unresolved semantic (READY-filtered).
 
 - evolve strict checkpoint/dossier ledger only if needed for semantic-v2 evidence;
 - v1 historical readback compatibility explicit;
@@ -95,7 +105,9 @@ Status: NOT_STARTED
 - morning brief never overstates unresolved semantic evidence.
 
 ### M5 — Permanent Phase-13 corpus and shadow campaign
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: corpus/phase13 (42 synthetic-only) + src/core/phase13/shadow.ts v1 + tests/unit/phase13Shadow.test.ts 26 tests; 3× determinism 0 mismatches; all floors 0; privacy 0 leaks.
 
 - create `corpus/phase13/**` synthetic fixtures;
 - integrated shadow harness uses actual routing/replay/promotion modules and synthetic executors;
@@ -104,7 +116,9 @@ Status: NOT_STARTED
 - quality-floor counters all zero.
 
 ### M6 — Hardening and compatibility
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: typecheck PASS, hardening PASS, focused matrices PASS, campaign:synthetic 27, owner-provenance 91, Phase 12 compat 76.
 
 - extend/run hardening guards;
 - Phase 13I focused + applicable Phase 13/H matrices;
@@ -113,7 +127,9 @@ Status: NOT_STARTED
 - zero regressions.
 
 ### M7 — Fresh current-source canary
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: realSourceCanary 40 PASS, phase12CoverageInventory G01 remote e026c855… fresh, G02 disposable matches, G03 canonical sibling byte-identical 0 writes.
 
 - fresh resolve current ripple-api remote SHA;
 - disposable exact snapshot;
@@ -123,14 +139,18 @@ Status: NOT_STARTED
 - no product contact.
 
 ### M8 — Full canonical and isolated regressions
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: canonical 1391/4/0 workers=1; topology-correct isolated (symlink REPOSITORIES layout, npm ci) 1391/4/0; --local 7-fail in changeIntelligenceBacktest is topology-expected without siblings, not a regression.
 
 - canonical full Playwright workers=1, 0 failed;
 - topology-correct isolated clean clone + npm ci + full Playwright, 0 failed;
 - no hidden/new skips.
 
 ### M9 — Continuity / project integrity
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: agent:check PASS (no strict errors, warnings only STALE pre-push + legacy v1 24), agent:audit strict 0, project:check dirty pre-push only, catalog count 1, diff --check PASS.
 
 - agent:check PASS;
 - agent:audit strict errors 0;
@@ -140,7 +160,9 @@ Status: NOT_STARTED
 - live-head fields use Git authority, not predicted/stale SHA text.
 
 ### M10 — Validated source checkpoint
-Status: NOT_STARTED
+Status: COMPLETE
+
+- COMPLETE: commit 186122f96741c57f5d5fdf4cca3ec1e9328a9f30 pushed fast-forward; HEAD==origin/main verified clean; decisive post-push re-run green (phase13Shadow + campaign 53, typecheck/hardening PASS); exact implementation Actions run 32325943234 @ 186122f — completed/failure with job not started (billing/spending-limit externally blocked, not a code failure).
 
 - commit only after all local source proof green;
 - push fast-forward and verify HEAD==origin/main clean;
@@ -148,7 +170,9 @@ Status: NOT_STARTED
 - rerun decisive post-push local checks.
 
 ### M11 — Durable closure
-Status: NOT_STARTED
+Status: IN_PROGRESS
+
+- IN PROGRESS: this REPORT.md replaced with actual evidence; DECISIONS D-63 appended; CURRENT_STATE (2026-08-20) + ROADMAP closed with Phase 13I `BLOCKED_EXTERNAL_CI / VERIFIED_LOCAL_NOT_CI_VERIFIED×3`; final docs push + exact final Actions truth pending.
 
 - append next live decision number discovered from ledger;
 - update design/current state/roadmap/task state/report;

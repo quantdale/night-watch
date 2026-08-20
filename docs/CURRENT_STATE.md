@@ -1,7 +1,11 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-19** at
-> the Nightwatch post-Phase-10 architecture design review (PHASE_10_STATUS:
+> Durable memory for the next agent/session. Last updated: **2026-08-20** at
+> Phase 13I residual runtime completion (PHASE_13I_STATUS:
+> BLOCKED_EXTERNAL_CI on clean 186122f; PHASE_13_SEMANTIC_PROMOTION,
+> PHASE_13_REPLAY_V2_BINDING, PHASE_13_SHADOW_CAMPAIGN
+> VERIFIED_LOCAL_NOT_CI_VERIFIED; D-63), building on
+> Phase 10B COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED (PHASE_10_STATUS:
 > COMPLETE; Phase 10B COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED; D-61).
 > Phase 0–5 are
 > complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
@@ -116,6 +120,10 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8B_1_R1_1_AUTHORIZATION` | `PROJECT-MEMORY & CANONICAL-SOURCE TRUTH HARDENING` — source/docs/tooling integrity only; NO promotion authority, NO variant-B adoption |
 | `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case |
 | `PHASE_12A_STATUS` | `BLOCKED_EXTERNAL_CI` — Workstreams A–F implemented and locally verified on clean `4730c4e` (D-62); GitHub Actions externally billing-blocked before job execution; the two ROADMAP NEXT_AFTER investments (HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_EXPANSION) are now implemented-local. Phase 11B remains NOT_AUTHORIZED |
+| `PHASE_13I_STATUS` | `BLOCKED_EXTERNAL_CI` — semantic routing (CampaignSemanticEvidence + dual clustering), replay-plan-V2 executor binding, ledger/drift, and `corpus/phase13` integrated shadow proof (42 fixtures, 3× determinism, all floors 0) implemented and locally verified on clean `186122f` (D-63); GitHub Actions externally billing-blocked before job execution; Phase 11B/13B remain NOT_AUTHORIZED — no DEV |
+| `PHASE_13_SEMANTIC_PROMOTION` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — CampaignSemanticEvidence-gated dual routing, semanticContractIdentity cluster, explicit protocol fallback; v2 ledger readback routes through dossier-v2 |
+| `PHASE_13_REPLAY_V2_BINDING` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — occurrence-bound TriageReplayPlanV2 with injected executor (exact fingerprint equality, throw→INVALID, API single, journey reduced PRECONDITION_DIVERGENCE) |
+| `PHASE_13_SHADOW_CAMPAIGN` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — permanent `corpus/phase13` synthetic shadow campaign (nested sources, 42 fixtures, synthetic executors only, deterministic, privacy-safe) |
 | `PHASE_12_REAL_REPLAY` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — replay-plan strict DTO + synthetic journey/exploration/API adapters around existing bounded minimizer; `invalidReducedReplay()` baseline permanently reproduced (baselineInvalidReplay=23/27) |
 | `PHASE_12_HIGH_CONFIDENCE_TRIAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — semantic triage-evidence DTO + categorical HIGH-confidence blocking + dossier v2 READY predicate; v1 compatible |
 | `PHASE_12_REAL_SOURCE_COVERAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fresh ripple-api master `e026c855…` disposable snapshot; 6 approved targets; 4 rederived; 0 mechanical uplifts (precise blockers) |

@@ -3,14 +3,14 @@
 Task ID: phase-13i-residual-runtime-completion-shadow-proof
 Phase: 13I-RESIDUAL-RUNTIME-COMPLETION-SHADOW-PROOF
 Title: Nightwatch Phase 13I — Residual Runtime Completion & Integrated Shadow Proof
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-13i-residual-runtime-completion-shadow-proof
 Starting SHA: 8c1cf09f5d33d10a2e7540b6bb9589814a95735c
-Last validated implementation SHA: d672b626f7e131bb1fc6cd97e33d92fe69fcd637
-Last substantive checkpoint SHA: d672b626f7e131bb1fc6cd97e33d92fe69fcd637
-Last checkpoint: d672b626f7e131bb1fc6cd97e33d92fe69fcd637
-Current milestone: M0 — Bootstrap, authority, reproduce residuals
-Next action: Reproduce R1-R5 from live source, then execute M1-M11 per PLAN
+Last validated implementation SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
+Last substantive checkpoint SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
+Last checkpoint: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
+Current milestone: M11 — Durable closure (docs)
+Next action: STOP — see Blockers for unblock condition
 Authorization class: PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -21,27 +21,28 @@ Close every residual local/source Phase-13 runtime gap: semantic promotion routi
 ## Continuity
 
 STARTING_SHA: 8c1cf09f5d33d10a2e7540b6bb9589814a95735c
-LAST_VALIDATED_IMPLEMENTATION_SHA: d672b626f7e131bb1fc6cd97e33d92fe69fcd637
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d672b626f7e131bb1fc6cd97e33d92fe69fcd637
+LAST_VALIDATED_IMPLEMENTATION_SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_13I_STATUS: IN_PROGRESS
-PHASE_13_RUNTIME_COMPLETION: IN_PROGRESS
-PHASE_13_SEMANTIC_PROMOTION: IN_PROGRESS
-PHASE_13_REPLAY_V2_BINDING: IN_PROGRESS
-PHASE_13_SHADOW_CAMPAIGN: IN_PROGRESS
+PHASE_13I_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_13_RUNTIME_COMPLETION: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_13_SEMANTIC_PROMOTION: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_13_REPLAY_V2_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_13_SHADOW_CAMPAIGN: VERIFIED_LOCAL_NOT_CI_VERIFIED
+PHASE_13H_STATUS: BLOCKED (historical)
 PHASE_13I_IMPLEMENTATION_AUTHORITY: PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY
-PHASE_13H_STATUS: BLOCKED (historical, preserved)
 PHASE_13B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: REPRODUCE_R1_R5_THEN_M1
+NEXT ACTION: STOP
 
 ## Blockers
 
-NONE — implementation authorized. External GitHub Actions billing/spending-limit may remain externally blocked but does not prevent local/source work.
+- EXTERNAL_CI_BILLING_BLOCKED: GitHub Actions job `Local hardening checks` not started — `The job was not started because recent account payments have failed or your spending limit needs to be increased` (run 32325943234, head 186122f). No CI verification possible. Unblock: billing/spending-limit restored and a new push re-runs Actions to green. Every local acceptance row is green (typecheck, hardening, phase13Shadow 26, campaign 27, owner-provenance 91, Phase12 compat, fresh-source 40, canonical 1391/4/0, isolated topology-correct 1391/4/0). No code failure.
+- No DEV/production/Phase 6 work required to unblock local hardening; above gap is external-only.
 
 ## Recovery
 
-Fetch origin/main and verify HEAD==origin/main (discover from GIT, currently 8c1cf09). Read SPEC/PLAN/WORKSTREAMS/ACCEPTANCE_MATRIX/STATE plus docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md and AGENTS.md. Git/source evidence wins. Resume from STATE.md Exact Next Action.
+Fetch origin/main and verify HEAD==origin/main (discover from GIT; validated implementation 186122f). Read SPEC/PLAN/STATE plus DECISIONS.md D-63, CURRENT_STATE.md (Phase 13I rows), ROADMAP.md Phase 13I section, and docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md. Git/source evidence wins. Resume only after a new Docs closure descendant if needed; otherwise STOP per SPEC §6-7 terminal truth.

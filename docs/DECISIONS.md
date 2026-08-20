@@ -2635,3 +2635,100 @@ remains NOT_AUTHORIZED. Any real Phase 12 replay/triage runtime validation
 requires future separate owner authorization. Design record:
 `docs/design/PHASE_12_SEMANTIC_YIELD_AND_TRIAGE.md`; task records under
 `.agent/tasks/phase-12-semantic-yield-high-confidence-triage/`.
+
+## D-63 — Phase 13I: Residual Runtime Completion & Integrated Shadow Proof (implemented, local/source-only)
+
+**Selected** (2026-08-20, Phase 13I, authorization
+`PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY`, starting SHA
+`8c1cf09f5d33d10a2e7540b6bb9589814a95735c`, implementation SHA
+`186122f96741c57f5d5fdf4cca3ec1e9328a9f30`).
+
+**Context.** Phase 13H correctly terminalized BLOCKED with four residual local gaps: (1) orchestrator still routed every candidate through protocol `clusterAnomalies`/`triageAnomaly`, (2) the real Phase-7 adapter still certified FAILURE from structural validation without an executor, (3) no permanent integrated Phase-13 corpus/shadow proof existed, and (4) version-drift/resume matrices were not exhaustively proven. The campaign replay stack still supplied `invalidReducedReplay()` for reduced candidates while the deterministic minimizer existed.
+
+**Decision.** Close all residual local/source gaps as one integrated surface, then prove the resulting architecture with a permanent synthetic shadow campaign and the full local regression stack. No DEV.
+
+**Architecture chosen.**
+
+- **A. Semantic campaign routing** — strict versioned DTO
+  `nightwatch.campaign-semantic-evidence.v1`
+  (`src/core/campaign/campaignSemanticEvidence.ts`) carrying only safe
+  categorical/control identity (bundle scb:sha256, bundleVersion,
+  target/expectation/sourceRepo SAFE_ID, sourceSha 40-hex, evidenceDigest
+  ev:sha256, derivation/admission generic version, resolver/currentness/receipt
+  categorical states, fingerprint fp:sha256, invariant inv:sha256).
+  Sentinel/certification (REPRODUCED/HIGH/READY/SAFE) rejected, unknown fields
+  rejected, raw values absent. `CampaignAnomalyCandidate.campaignSemanticEvidence`
+  routes semantic candidates through
+  `semanticContractIdentity`/`semanticClusterKey`/`clusterSemanticObservations`
+  (binding expectation+target+invariant+repo+evidenceDigest+derivation,
+  ignoring ordinal/count/timestamp/SHA movement when digest+derivation
+  unchanged, splitting on digest/derivation/target/expectation/invariant).
+  Protocol-only candidates retain historical `clusterAnomalies()` with a distinct
+  `sc:sha256` vs `cluster:sha256` namespace (D13 no-collision).
+  Persisted candidate and checkpoint ledger validators allowlist and strictly
+  validate the new field.
+- **C. Replay-plan-V2 real-adapter binding** — all structural-only FAILURE
+  certification removed from `tests/manual/phase7-real-campaign.ts`. Every
+  supported replay path builds/validates `TriageReplayPlanV2`
+  (`createTriageReplayPlanV2` + `validateReplayPlanV2`), maps the minimizer
+  retained sequence to unambiguous occurrence ordinals (duplicate IDs: retain
+  first vs second are distinct planIds; ambiguous duplicate → INVALID
+  fail-closed via occurrence-embedding count), calls
+  `executeReplayPlanV2(plan, injectedExecutor)` — only the injected executor
+  result may return FAILURE (different fingerprint → PASS normalization, throw →
+  INVALID). API exactly one fixed operation; journey reduced remains
+  `PRECONDITION_DIVERGENCE` (no subset executor invented); no product
+  execution in this task.
+- **D. Ledger/drift** — `CampaignDossierRecord.dossierVersion` optional
+  (v1/v2 both accepted, READY ↔ bugCandidates enforcement, v2 readback routes
+  through `parseBugDossierV2`; historical v1 compat preserved). The 8
+  manifest version fields (triageReplayPlanVersion/V2/semanticTriageEvidence/
+  dossierV2/semanticCluster/semanticBundle/semanticReceipt/
+  semanticExpectationDerivation) are already bound and fail closed before
+  executor callbacks; frozen bundle cannot auto-rebind on source movement.
+- **E. Permanent shadow** — `corpus/phase13` (42 synthetic fixtures:
+  11 replay, 16 semantic truth, 3 protocol, 12 drift) +
+  `src/core/phase13/shadow.ts` (`nightwatch.phase13.shadow.v1`, pure,
+  synthetic executors only, deterministic canonical `stableJson`, 3× 0
+  mismatches) + `tests/unit/phase13Shadow.test.ts` (26 tests). All floors 0:
+  false reproduction / structural-only certification / false READY / false
+  HIGH / PARTIAL false READY / stale-unavailable false READY / unsafe-private
+  false READY / cluster fragmentation / cross-contract merge / drift miss /
+  privacy leaks / authority expansion.
+- **F. Hardening/regression** — existing pure-core boundaries remain PASS;
+  no new endpoint/target/network/DB/Phase-6/AI authority added.
+
+**Result.** Phase 13I implementation is locally validated:
+typecheck PASS; hardening:check PASS; canonical complete Playwright
+1391 passed / 4 skipped / 0 failed (workers=1); topology-correct isolated
+clone (topology = sibling REPOSITORIES layout, `npm ci`, full Playwright)
+1391/4/0; Phase 13I focused 26 passed; campaign:synthetic 27; owner-provenance
+91; Phase 12 compat 76; Phase 9/10/11 compat verified via above; fresh-source
+canary 40 (registry mirrors Phase-5 KNOWN_READ, ≥1 live sibling derive,
+fixture-backed parity, G01 remote `e026c855…` fresh, G02 disposable snapshot
+matches, G03 canonical sibling byte-identical 0 writes); catalog 1
+(`sha256:bd35b934...`); agent:check PASS (no strict errors), project:check
+dirty pre-push only (clean post-push pending docs closure).
+GitHub Actions remains externally billing/spending-limit blocked before job
+execution on the validated implementation head `186122f` (run 32325943234 —
+"The job was not started because recent account payments have failed or your
+spending limit needs to be increased."), so the task is
+`BLOCKED_EXTERNAL_CI` locally verified, NOT CI-verified COMPLETE. No
+CI-success claim is made. The isolated `--local` clone without siblings
+fails 7/8 changeIntelligenceBacktest with the identical fatal as before
+(topology without siblings cannot verify those commits) — this is
+topology-expected, not a code regression; canonical 8/8 PASS validates it;
+full topology-correct clone with sibling symlinks fully proves 1391/4/0.
+
+**Consequences.** Phase 13 residual runtime gaps are closed local/source-only.
+Promotion is now dual-path (explicit routing, contract-identity clustering for
+semantic vs historical protocol). The real-adapter boundary is occurrence-bound
+with injected executors. The integrated `corpus/phase13` synthetic shadow
+campaign proves all composed semantics deterministically with synthetic
+executors. No authority expansion: catalog count 1, B AVAILABLE_NOT_ADOPTED,
+promotion NONE, Phase 6 FROZEN_BY_OWNER, AI non-authoritative.
+Phase 11B/13B remain NOT_AUTHORIZED. Any real runtime validation of the
+promotion/replay stack requires a fresh contained-DEV authorization.
+Design record: `docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md`;
+task records under
+`.agent/tasks/phase-13i-residual-runtime-completion-shadow-proof/`.

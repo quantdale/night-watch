@@ -1589,6 +1589,65 @@ REAL_SEMANTIC_COVERAGE_EXPANSION — are now implemented-local. Task record:
   Any real Phase 12 replay/triage runtime validation requires future separate
   owner authorization.
 
+## Phase 13I — Residual Runtime Completion & Integrated Shadow Proof (implemented-local, CI-blocked)
+
+**Status:** `PHASE_13I_STATUS: BLOCKED_EXTERNAL_CI` /
+`PHASE_13_SEMANTIC_PROMOTION: VERIFIED_LOCAL_NOT_CI_VERIFIED` /
+`PHASE_13_REPLAY_V2_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED` /
+`PHASE_13_SHADOW_CAMPAIGN: VERIFIED_LOCAL_NOT_CI_VERIFIED` (2026-08-20, D-63,
+implementation SHA `186122f96741c57f5d5fdf4cca3ec1e9328a9f30`). Phase 13H's four
+residual local gaps (semantic routing, structural FAILURE certification at the
+real adapter, shadow corpus, version-drift proof) are now closed local/
+source-only. Task record:
+`docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md`, D-63, and
+`.agent/tasks/phase-13i-residual-runtime-completion-shadow-proof/`.
+
+- **Dual routing** — CandidateSemanticEvidence-gated orchestrator:
+  `CampaignSemanticEvidence` (`nightwatch.campaign-semantic-evidence.v1`,
+  safe categorical-only, unknown/sentinel/certification rejected) routes
+  semantic candidates through `semanticClusterKey`/`semanticContractIdentity`
+  (expectation+target+invariant+repo+evidenceDigest+derivation binding,
+  ignoring ordinal/count/timestamp/SHA movement, splitting on
+  digest/derivation/target/expectation/invariant) with distinct
+  `sc:sha256` namespace (D13 no-collision); protocol-only retains
+  historical `clusterAnomalies()`. Persisted candidate + checkpoint ledger
+  validators allowlist the new field; v1 historical compat preserved,
+  v2 readback routes through `parseBugDossierV2`.
+- **Replay V2** — Real-adapter Phase-7 campaign is occurrence-bound: every
+  replay builds/validates `TriageReplayPlanV2`, maps retained actions to
+  unambiguous occurrence ordinals (duplicate action IDs: retain first vs second
+  distinct planIds; reordered/invented → rejected; ambiguous duplicate →
+  INVALID fail-closed), calls `executeReplayPlanV2(plan, injectedExecutor)` —
+  only the injected executor may return FAILURE (different fingerprint → PASS,
+  throw → INVALID). API exactly one fixed operation; journey reduced remains
+  `PRECONDITION_DIVERGENCE`; no product execution.
+- **Shadow** — `corpus/phase13` (42 synthetic fixtures: 11 replay, 16 semantic
+  truth, 3 protocol, 12 drift; synthetic-only, privacy sentinels excluded from
+  durable evidence) + `src/core/phase13/shadow.ts`
+  (`nightwatch.phase13.shadow.v1`, pure, synthetic executors only,
+  `stableJson` deterministic key, 3× 0 mismatches) + `tests/unit/phase13Shadow.test.ts`
+  (26 tests). All floors 0: false reproduction / structural-only certification /
+  false READY / false HIGH / PARTIAL false READY / stale-unavailable false READY /
+  unsafe-private false READY / cluster fragmentation / cross-contract merge /
+  drift miss / privacy leaks / authority expansion.
+- **Ledger/drift** — `CampaignDossierRecord.dossierVersion` optional (v1/v2
+  both accepted, READY ↔ bugCandidates enforced); 8-field manifest drift
+  already bound and fail-closed before executor; frozen bundle cannot auto-rebind;
+  morning brief never overstates unresolved semantic evidence.
+- **Validation (clean 186122f)**: typecheck PASS; hardening PASS; canonical
+  complete Playwright 1391/4/0 (workers=1); topology-correct isolated clone
+  (sibling-symlink layout, `npm ci`, full Playwright) 1391/4/0; Phase 13I focused
+  26; campaign:synthetic 27; owner-provenance 91; Phase 12 compat 76; fresh-source
+  40 (G01 remote `e026c855…` fresh, G02 disposable matches, G03 canonical 0 writes);
+  catalog 1 (`sha256:bd35b934...`); agent:check PASS; project:check dirty
+  pre-push only.
+- **External CI**: GitHub Actions externally billing/spending-limit blocked
+  before job execution on `186122f` (run 32325943234 — job not started —
+  billing/spending-limit). NOT CI-verified COMPLETE; local-validated
+  `BLOCKED_EXTERNAL_CI`.
+- **Next**: STOP. Phase 11B/13B remain separately NOT_AUTHORIZED. Any real
+  promotion/replay runtime validation requires a future contained-DEV authorization.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).
