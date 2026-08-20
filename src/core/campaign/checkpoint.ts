@@ -195,7 +195,7 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
   assertUniqueStrings(bugCandidates, 'CHECKPOINT_BUG_CANDIDATES');
   for (const value of requireRuntimeArray(checkpoint.dossierLedger, 'CHECKPOINT_DOSSIER_LEDGER')) {
     const dossier = requireRuntimeRecord(value, 'CHECKPOINT_DOSSIER');
-    assertExactKeys(dossier, ['clusterId', 'candidateId', 'state', 'artifactPath', 'evidenceLevel', 'triagePriority'], 'CHECKPOINT_DOSSIER');
+    assertExactKeys(dossier, ['clusterId', 'candidateId', 'state', 'artifactPath', 'evidenceLevel', 'triagePriority'], 'CHECKPOINT_DOSSIER', ['dossierVersion']);
     assertString(dossier.clusterId, 'CHECKPOINT_DOSSIER_CLUSTER');
     if (!clusterIds.has(dossier.clusterId)) checkpointIntegrity(`UNKNOWN_DOSSIER_CLUSTER:${dossier.clusterId}`);
     if (dossierClusters.has(dossier.clusterId)) checkpointIntegrity(`DUPLICATE_DOSSIER_CLUSTER:${dossier.clusterId}`);
@@ -205,7 +205,12 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
     if (dossier.artifactPath !== null) assertString(dossier.artifactPath, 'CHECKPOINT_DOSSIER_PATH');
     assertEnum(dossier.evidenceLevel, ['L0', 'L1', 'L2', 'L3', 'L4'], 'CHECKPOINT_DOSSIER_EVIDENCE');
     assertString(dossier.triagePriority, 'CHECKPOINT_DOSSIER_PRIORITY');
+    if (dossier.dossierVersion !== undefined) {
+      assertString(dossier.dossierVersion, 'CHECKPOINT_DOSSIER_VERSION');
+      if (dossier.dossierVersion !== 'nightwatch.bug-dossier.private.v1' && dossier.dossierVersion !== 'nightwatch.bug-dossier.private.v2') checkpointIntegrity('DOSSIER_VERSION_INVALID');
+    }
     if (dossier.state === 'READY' && !bugCandidates.includes(dossier.candidateId)) checkpointIntegrity(`READY_DOSSIER_NOT_IN_BUG_CANDIDATES:${dossier.candidateId}`);
+    if (dossier.state !== 'READY' && bugCandidates.includes(dossier.candidateId)) checkpointIntegrity(`UNRESOLVED_DOSSIER_IN_BUG_CANDIDATES:${dossier.candidateId}`);
   }
 }
 

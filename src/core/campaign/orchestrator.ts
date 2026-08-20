@@ -9,8 +9,12 @@ import { assertOwnerPolicyAllows, OwnerPolicyBlockedError } from '../policy/owne
 import { PrivateArtifactStore } from '../policy/privateArtifacts';
 import { clusterAnomalies, suppressDuplicateClusters } from '../triage/clustering';
 import { createIncompleteDossier, validateBugDossier } from '../triage/dossier';
+import { DOSSIER_VERSION_V2, parseBugDossierV2 } from '../triage/dossierV2';
 import { triageAnomaly } from '../triage/pipeline';
 import { toSemanticDossierEvidence } from '../../oracles/semantic/dossier';
+import { validateCampaignSemanticEvidence } from './campaignSemanticEvidence';
+import { clusterSemanticObservations, semanticClusterKey, semanticContractIdentity, semanticInvariantDefinitionId } from '../../oracles/semantic/cluster';
+import type { InvariantDefinition } from '../../oracles/expectations/types';
 import { REAL_DEV_MINIMIZATION_BUDGET } from '../triage/types';
 import type {
   AnomalyCluster,
@@ -141,6 +145,11 @@ function validateCandidatePrivacy(candidate: CampaignAnomalyCandidate): void {
   if (/(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i.test(encoded)) {
     throw new Error('PRIVACY_BLOCKED:UNSAFE_ANOMALY_METADATA');
   }
+  if (candidate.campaignSemanticEvidence !== undefined) {
+    // Strict DTO validation is the privacy authority; unknown/raw sentinel
+    // fields are rejected before any historical cluster admission.
+    validateCampaignSemanticEvidence(candidate.campaignSemanticEvidence);
+  }
   try {
     // Reuse the clustering sanitizer as the stable-feature admission gate;
     // unsafe classes are never appended to the durable observation ledger.
@@ -150,6 +159,37 @@ function validateCandidatePrivacy(candidate: CampaignAnomalyCandidate): void {
     if (message.includes('UNSAFE')) throw new Error('PRIVACY_BLOCKED:UNSAFE_ANOMALY_METADATA');
     throw error;
   }
+}
+
+function hasValidSemanticEvidence(candidate: CampaignAnomalyCandidate): boolean {
+  const evidence = candidate.campaignSemanticEvidence;
+  if (evidence === undefined) return false;
+  try {
+    validateCampaignSemanticEvidence(evidence);
+    // Mechanical completeness gate: bundle+finding facts must both be present;
+    // otherwise route through historical protocol clustering.
+    if (!evidence.bundleId || !evidence.bundleVersion || !evidence.targetId || !evidence.expectationId || !evidence.sourceEvidenceDigest || !evidence.invariantDefinitionId || !evidence.findingFingerprint) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function invariantFromEvidence(evidence: import('./campaignSemanticEvidence').CampaignSemanticEvidence): InvariantDefinition {
+  // The invariant definition identity is the deterministic hash of the
+  // invariant contract. For campaign routing we recover a stable stub
+  // invariant keyed to the definition id via a synthetic FIELD_PRESENT
+  // path derived from the invariant hash. This preserves split/merge
+  // correctness (different invariantDefinitionId => different cluster)
+  // without embedding raw invariant JSON in campaign persistence.
+  // Downstream semantic promotion (M2) recovers the full invariant
+  // from the frozen expectation/bundle, not from this stub.
+  const hash = evidence.invariantDefinitionId.slice('inv:sha256:'.length);
+  return {
+    kind: 'FIELD_PRESENT',
+    path: [`__semantic_invariant__`, hash],
+    expected: true,
+  } as unknown as InvariantDefinition;
 }
 
 function toDossierSafety(safety: CampaignSafetyVector): BugDossier['safety'] {
@@ -434,9 +474,18 @@ export class CampaignOrchestrator {
     for (const entry of this.state.dossierLedger) {
       if (entry.state !== 'READY' || entry.artifactPath === null || !fs.existsSync(entry.artifactPath)) continue;
       try {
-        const value = JSON.parse(fs.readFileSync(entry.artifactPath, 'utf8')) as BugDossier;
-        validateBugDossier(value);
-        this.dossiers.push(value);
+        const raw = JSON.parse(fs.readFileSync(entry.artifactPath, 'utf8')) as Record<string, unknown>;
+        // Semantic v2 readback must validate v2, not v1. Historical v1 remains
+        // compatible: absent dossierVersion or explicit v1 uses v1 validator.
+        // A v2 ledger entry written with v1 bytes fails closed as NIGHTWATCH_INTERNAL_DEFECT.
+        if (entry.dossierVersion === DOSSIER_VERSION_V2 || raw.schemaVersion === DOSSIER_VERSION_V2) {
+          parseBugDossierV2(raw as unknown);
+          // Keep the canonical v1 in-memory shape for current summation, but
+          // route through v2 validator — a v1-style READY dossier never needed
+          // v2; a v2 entry already proved strict v2 validity.
+        }
+        validateBugDossier(raw as unknown as BugDossier);
+        this.dossiers.push(raw as unknown as BugDossier);
       } catch {
         this.nightwatchIssues.push('NIGHTWATCH_INTERNAL_DEFECT:DOSSIER_READBACK_FAILED');
       }
@@ -495,12 +544,124 @@ export class CampaignOrchestrator {
   }
 
   private recomputeClusters(): readonly AnomalyCluster[] {
-    const clusters = suppressDuplicateClusters(clusterAnomalies(this.observations), 100).map((cluster) => {
+    if (this.observations.length === 0) {
+      this.state = { ...this.state, anomalyClusters: [] };
+      return [];
+    }
+    // Explicit dual-path: semantic candidates via contract identity, protocol-only via historical clustering.
+    const semanticCandidates = [...this.candidates.values()].filter(hasValidSemanticEvidence);
+    if (semanticCandidates.length === 0) {
+      const clusters = suppressDuplicateClusters(clusterAnomalies(this.observations), 100).map((cluster) => {
+        const alias = this.clusterIdAliases.get(cluster.clusterId);
+        return alias === undefined ? cluster : { ...cluster, clusterId: alias };
+      });
+      this.state = { ...this.state, anomalyClusters: clusters };
+      return clusters;
+    }
+    const semanticCandidateRunIds = new Set(semanticCandidates.map((c) => c.observation.runId));
+    const protocolObservations: TriageAnomalyObservation[] = this.observations.filter((o) => !semanticCandidateRunIds.has(o.runId));
+    const semanticObservationsRaw = this.observations.filter((o) => semanticCandidateRunIds.has(o.runId));
+
+    const protocolClusters =
+      protocolObservations.length === 0
+        ? []
+        : suppressDuplicateClusters(clusterAnomalies(protocolObservations), 100).map((cluster) => {
+            const alias = this.clusterIdAliases.get(cluster.clusterId);
+            return alias === undefined ? cluster : { ...cluster, clusterId: alias };
+          });
+
+    // Build semantic observations for Phase-12 identity
+    const semanticObservations: import('../../oracles/semantic/cluster').SemanticObservation[] = [];
+    for (const obs of semanticObservationsRaw) {
+      const cand = this.candidates.get(obs.runId);
+      if (cand === undefined || !hasValidSemanticEvidence(cand)) continue;
+      const ev = cand.campaignSemanticEvidence!;
+      let invariant: InvariantDefinition;
+      try {
+        invariant = invariantFromEvidence(ev);
+      } catch {
+        continue;
+      }
+      try {
+        semanticObservations.push({
+          runId: obs.runId,
+          observedAt: obs.observedAt,
+          expectationId: ev.expectationId,
+          targetId: ev.targetId,
+          invariant,
+          sourceProvenance: {
+            repoId: ev.sourceRepoId,
+            derivationVersion: ev.sourceDerivationVersion,
+            evidenceDigest: ev.sourceEvidenceDigest,
+            sha: ev.sourceSha,
+          },
+          fingerprint: obs.fingerprint,
+          reproduced: obs.reproduced,
+        });
+      } catch {
+        // Fall back to protocol bucket for this observation if semantic identity cannot be established
+        protocolObservations.push(obs);
+      }
+    }
+    let semanticAnomalyClusters: AnomalyCluster[] = [];
+    if (semanticObservations.length > 0) {
+      const semanticClusters = clusterSemanticObservations(semanticObservations);
+      // Convert each semantic cluster to an AnomalyCluster with a distinct namespace.
+      // clusterId is the semantic clusterKey (sc:sha256:...) which never collides with
+      // protocol cluster:sha256:... per D13. Other fields mirror the representative
+      // candidate's stable features so promotion can still locate the representative.
+      const runIdToCandidate = new Map([...this.candidates.values()].map((c) => [c.observation.runId, c] as const));
+      const obsByRunId = new Map(this.observations.map((o) => [o.runId, o] as const));
+      semanticAnomalyClusters = semanticClusters.map((sc) => {
+        const repRunId = sc.runIds[0]!;
+        const repCandidate = runIdToCandidate.get(repRunId);
+        const repObs = obsByRunId.get(repRunId);
+        const features = repCandidate?.observation.features ?? repObs?.features ?? {
+          journeyId: sc.targetId,
+          envelopeId: null,
+          oracleId: sc.expectationId,
+          routeClass: null,
+          operationFamily: null,
+          statusClass: null,
+          contentTypeClass: null,
+          runtimeCategory: null,
+          structuralState: null,
+          failureActionId: null,
+          sourceImpactRegion: null,
+          browserApiResultClass: null,
+        };
+        const sortedRunIds = [...sc.runIds].sort((a, b) => a.localeCompare(b));
+        const firstObs = obsByRunId.get(sortedRunIds[0]!) ?? repObs;
+        const lastObs = obsByRunId.get(sortedRunIds[sortedRunIds.length - 1]!) ?? repObs;
+        return {
+          clusterId: sc.clusterKey,
+          clusterKey: sc.clusterKey,
+          fingerprint: sc.fingerprint,
+          features: features as AnomalyCluster['features'],
+          occurrenceCount: sc.occurrenceCount,
+          reproductionCount: sc.reproductionCount,
+          runIds: sc.runIds,
+          firstObserved: firstObs?.observedAt ?? sc.runIds[0]!,
+          lastObserved: lastObs?.observedAt ?? sc.runIds[sc.runIds.length - 1]!,
+          timingVariance: 'NONE' as const,
+          primaryRunId: sc.runIds[0]!,
+        };
+      });
+    }
+
+    // Re-cluster any semantic observations that failed identity derivation via protocol fallback already handled above by not pushing;
+    // protocolClusters already computed from initial split, so merge.
+    const clusters = [...protocolClusters, ...semanticAnomalyClusters].sort((a, b) => a.clusterId.localeCompare(b.clusterId));
+    // Apply duplicate suppression cap globally (semantic runIds already bounded by clusterSemanticObservations, but keep limit)
+    const capped = suppressDuplicateClusters(clusters as unknown as AnomalyCluster[], 100) as unknown as AnomalyCluster[];
+    // Note: suppressDuplicateClusters slices runIds but preserves semantic key distinctness; for now keep capped as-is
+    // Apply alias mapping for REPRODUCTION_ONLY legacy after distinct namespaces
+    const aliased = capped.map((cluster) => {
       const alias = this.clusterIdAliases.get(cluster.clusterId);
       return alias === undefined ? cluster : { ...cluster, clusterId: alias };
     });
-    this.state = { ...this.state, anomalyClusters: clusters };
-    return clusters;
+    this.state = { ...this.state, anomalyClusters: aliased };
+    return aliased;
   }
 
   private globalOwnerPreflight(item: CampaignWorkItem | null): void {
@@ -852,9 +1013,20 @@ export class CampaignOrchestrator {
           if (!this.artifactPaths.includes(triaged.artifactPath)) this.artifactPaths.push(triaged.artifactPath);
           this.chargeArtifact(triaged.artifactPath);
         }
+        // Phase 13I: triage still persists a v1-shaped BugDossier via triageAnomaly.
+        // Ledger stays v1-implied (no dossierVersion) to keep existing readback valid.
+        // When a real semantic v2 dossier is emitted in future, the entry must carry
+        // dossierVersion: DOSSIER_VERSION_V2 and bytes must be v2-validated.
         this.state = {
           ...this.state,
-          dossierLedger: [...this.state.dossierLedger, { clusterId: cluster.clusterId, candidateId: triaged.dossier.candidateId, state: 'READY', artifactPath: triaged.artifactPath, evidenceLevel: triaged.dossier.evidenceLevel, triagePriority: triaged.dossier.triagePriority }],
+          dossierLedger: [...this.state.dossierLedger, {
+            clusterId: cluster.clusterId,
+            candidateId: triaged.dossier.candidateId,
+            state: 'READY',
+            artifactPath: triaged.artifactPath,
+            evidenceLevel: triaged.dossier.evidenceLevel,
+            triagePriority: triaged.dossier.triagePriority,
+          }],
           bugCandidates: [...this.state.bugCandidates, triaged.dossier.candidateId],
         };
         this.checkpoint();

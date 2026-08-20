@@ -4,6 +4,7 @@
 
 import crypto from 'node:crypto';
 import { validateSemanticFinding } from '../../oracles/semantic/types';
+import { validateCampaignSemanticEvidence } from './campaignSemanticEvidence';
 import {
   CAMPAIGN_MANIFEST_VERSION,
   CAMPAIGN_ORCHESTRATOR_VERSION,
@@ -205,12 +206,16 @@ export function assertPersistedCandidateShape(value: unknown, code: string): voi
     'observation', 'journeyId', 'contractVersion', 'contractDigest', 'contextKind',
     'originalSequence', 'technicalSeverity', 'breadth', 'browser', 'api',
     'sourceCorrelation', 'alternativesRuledOut', 'missingEvidence', 'knownNightwatchDefect',
-  ], code, ['sourceRelevance', 'semanticFindings']);
+  ], code, ['sourceRelevance', 'semanticFindings', 'campaignSemanticEvidence']);
   if (candidate.semanticFindings !== undefined) {
     const findings = requireRuntimeArray(candidate.semanticFindings, `${code}:SEMANTIC_FINDINGS`);
     for (const finding of findings) {
       validateSemanticFinding(requireRuntimeRecord(finding, `${code}:SEMANTIC_FINDING`) as unknown as import('../../oracles/semantic/types').SemanticOracleFinding);
     }
+  }
+  if (candidate.campaignSemanticEvidence !== undefined) {
+    const raw = requireRuntimeRecord(candidate.campaignSemanticEvidence, `${code}:CAMPAIGN_SEMANTIC_EVIDENCE`);
+    validateCampaignSemanticEvidence(raw as unknown as import('./campaignSemanticEvidence').CampaignSemanticEvidence);
   }
   assertNullableStringValue(candidate.journeyId, `${code}:JOURNEY_ID`);
   for (const key of ['contractVersion', 'contractDigest']) assertString(candidate[key], `${code}:${key.toUpperCase()}`);

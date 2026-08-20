@@ -38,6 +38,7 @@ import type {
 } from '../triage/types';
 import type { SourceCorrelationInput } from '../triage/correlation';
 import type { SemanticOracleFinding } from '../../oracles/semantic/types';
+import type { CampaignSemanticEvidence } from './campaignSemanticEvidence';
 
 export const CAMPAIGN_SCHEMA_VERSION = 'nightwatch.campaign.private.v1' as const;
 export const CAMPAIGN_ORCHESTRATOR_VERSION = 'nightwatch.orchestrator.private.v1' as const;
@@ -370,6 +371,10 @@ export interface CampaignAnomalyCandidate {
   /** Phase 9 safe semantic findings attached to this candidate (optional;
    *  flows into the dossier as sanitized evidence only). */
   readonly semanticFindings?: readonly SemanticOracleFinding[];
+  /** Phase 13I strict versioned semantic control evidence (optional;
+   *  when present and valid, candidate routes through semantic cluster
+   *  identity instead of historical protocol clustering). */
+  readonly campaignSemanticEvidence?: import('./campaignSemanticEvidence').CampaignSemanticEvidence;
   readonly replay?: (sequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => CandidateReplayOutcome | Promise<CandidateReplayOutcome>;
 }
 
@@ -453,6 +458,8 @@ export interface CampaignDossierRecord {
   readonly artifactPath: string | null;
   readonly evidenceLevel: EvidenceLevel;
   readonly triagePriority: TriagePriority;
+  /** Optional dossier schema version; absent implies v1 for historical compatibility. v2 must be validated with v2 validator. */
+  readonly dossierVersion?: string;
 }
 
 export interface CampaignBriefCampaignMetadata {

@@ -56,7 +56,10 @@ import {
   type MinimizationAction,
   type SourceFreshness,
 } from '../../src/core/triage/types';
-import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../../src/core/triage/replayPlan';
+import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION, createTriageReplayPlanV2 } from '../../src/core/triage/replayPlan';
+import type { ReplayOccurrence, TriageReplayPlanV2 } from '../../src/core/triage/replayPlan';
+import { executeReplayPlanV2, validateReplayPlanV2 } from '../../src/core/triage/replayBinding';
+import type { V2Executor } from '../../src/core/triage/replayBinding';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
 import { DOSSIER_VERSION_V2 } from '../../src/core/triage/dossierV2';
 import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
@@ -396,6 +399,52 @@ function journeyReducedUnsupported(): CampaignAnomalyCandidate['replay'] {
   });
 }
 
+// Phase 13I: V2 occurrence-bound replay with injected executor. Validation alone never
+// certifies FAILURE; only injected executor via executeReplayPlanV2 may return FAILURE.
+// Duplicate action IDs make occurrence identity load-bearing; ambiguous retained
+// sequence mapping fails closed.
+function mapRetainedActionsToOrdinals(
+  originalOccurrences: readonly ReplayOccurrence[],
+  retainedActions: readonly MinimizationAction[],
+  phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE',
+): readonly number[] | null {
+  if (phase === 'FRESH_EXACT_REPLAY') {
+    if (retainedActions.length !== originalOccurrences.length) return null;
+    for (let i = 0; i < retainedActions.length; i++) {
+      if (retainedActions[i]!.actionId !== originalOccurrences[i]!.expectedActionId) return null;
+    }
+    return originalOccurrences.map((o) => o.ordinal);
+  }
+  // REDUCED: count distinct order-preserving occurrence mappings; ambiguous => null
+  const n = originalOccurrences.length;
+  const m = retainedActions.length;
+  if (m === 0) return null;
+  if (m > n) return null;
+  // Brute-force count up to 2 valid mappings
+  let count = 0;
+  let firstMapping: number[] | null = null;
+  function dfs(retIdx: number, origPos: number, path: number[]): void {
+    if (count > 1) return;
+    if (retIdx === m) {
+      count += 1;
+      if (firstMapping === null) firstMapping = [...path];
+      return;
+    }
+    const neededId = retainedActions[retIdx]!.actionId;
+    for (let oi = origPos; oi < n; oi++) {
+      if (originalOccurrences[oi]!.expectedActionId === neededId) {
+        path.push(originalOccurrences[oi]!.ordinal);
+        dfs(retIdx + 1, oi + 1, path);
+        path.pop();
+        if (count > 1) return;
+      }
+    }
+  }
+  dfs(0, 0, []);
+  if (count !== 1 || firstMapping === null) return null;
+  return firstMapping;
+}
+
 function explorationReplayFromPlan(input: {
   readonly observationFingerprint: string;
   readonly originalSequence: readonly MinimizationAction[];
@@ -403,55 +452,42 @@ function explorationReplayFromPlan(input: {
   readonly planCatalogVersion: string;
   readonly planTargetId: string;
 }): CampaignAnomalyCandidate['replay'] {
-  // Phase 13H: occurrence-aware validation — assigns deterministic ordinals to original
-  // occurrences so duplicate action IDs remain distinguishable. Validation alone never
-  // certifies FAILURE; only an executor callback outcome with exact fingerprint can
-  // reproduce. For LOCAL_ONLY task, executor is the synthetic fixture bound by the
-  // caller via replayBinding; here we preserve validation checks and require the
-  // caller-supplied executor path to certify (no synthetic FAILURE without executor).
   return (sequence, phase) => {
     const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
-    // Build occurrence-aware plan for validation (ordinal = index in original)
-    const originalOccurrences = input.originalSequence.map((a, idx) => ({ ordinal: idx, expectedActionId: a.actionId }));
-    // Map incoming sequence to retained ordinals: must find order-preserving ordinal subsequence
-    // For validation, we treat duplicate IDs by matching earliest unused ordinal with same actionId.
-    const used = new Set<number>();
-    const retainedOrdinals: number[] = [];
-    for (const action of sequence) {
-      let found = -1;
-      for (let oi = 0; oi < originalOccurrences.length; oi++) {
-        if (used.has(oi)) continue;
-        if (originalOccurrences[oi]!.expectedActionId === action.actionId) { found = oi; break; }
-      }
-      if (found === -1) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
-      used.add(found);
-      retainedOrdinals.push(found);
+    const originalOccurrences: readonly ReplayOccurrence[] = input.originalSequence.map((a, idx) => ({ ordinal: idx, expectedActionId: a.actionId }));
+    const retainedOrdinals = mapRetainedActionsToOrdinals(originalOccurrences, sequence as readonly MinimizationAction[], phase);
+    if (retainedOrdinals === null) {
+      const reason = sequence.length === 0 && phase === 'REDUCED_CANDIDATE' ? 'PRECONDITION_DIVERGENCE' as const : 'ACTION_NOT_IN_ORIGINAL' as const;
+      return { status: 'INVALID', invalidReason: reason, safety: { ...ZERO } };
     }
-    // Order-preserving check: retained ordinals must be strictly increasing in original order
-    for (let i = 1; i < retainedOrdinals.length; i++) {
-      if (retainedOrdinals[i]! <= retainedOrdinals[i - 1]!) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    let plan: TriageReplayPlanV2;
+    try {
+      plan = createTriageReplayPlanV2({
+        candidateKind: 'EXPLORATION',
+        anomalyFingerprint: input.observationFingerprint,
+        originalOccurrences: [...originalOccurrences],
+        retainedOccurrenceOrdinals: [...retainedOrdinals],
+        phase,
+        targetId: input.planTargetId,
+        contractVersion: JOURNEY_CONTRACT_VERSION,
+        contractDigest: `exploration:${input.planCatalogVersion}`,
+        catalogVersion: input.planCatalogVersion,
+        sourceVersion: 'campaign-source',
+        routeClass: input.planRouteClass,
+      });
+    } catch {
+      return { status: 'INVALID', invalidReason: 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
     }
-    if (phase === 'FRESH_EXACT_REPLAY') {
-      if (retainedOrdinals.length !== originalOccurrences.length) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
-      for (let i = 0; i < retainedOrdinals.length; i++) if (retainedOrdinals[i] !== i) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    const validation = validateReplayPlanV2(plan);
+    if (!validation.valid) {
+      return { status: 'INVALID', invalidReason: (validation.reason ?? 'PRECONDITION_DIVERGENCE') as never, safety: { ...ZERO } };
     }
-    if (phase === 'REDUCED_CANDIDATE' && sequence.length === 0) return { status: 'INVALID', invalidReason: 'PRECONDITION_DIVERGENCE', safety: { ...ZERO } };
-    for (const action of sequence) {
-      const safe = RIPPLE_PHASE4_ACTIONS.find((c) => c.actionId === action.actionId);
-      if (safe === undefined || safe.status !== 'APPROVED' || (safe.semanticClass !== 'KNOWN_READ' && safe.semanticClass !== 'LOCAL_ONLY') || safe.persistedPreferenceEffect === 'SERVER_STATE') {
-        return { status: 'INVALID', invalidReason: 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
-      }
-      if (safe.routeEffect !== 'UNCHANGED' && safe.routeEffect !== 'APPROVED_ROUTE') return { status: 'INVALID', invalidReason: 'ROUTE_ENVELOPE_FAILED', safety: { ...ZERO } };
+    const executor: V2Executor = (p) => ({ status: 'FAILURE', anomalyFingerprint: p.anomalyFingerprint, safety: { ...ZERO }, routeClass: p.routeClass });
+    const outcome = executeReplayPlanV2(plan, executor);
+    if (outcome instanceof Promise) {
+      return outcome.catch(() => ({ status: 'INVALID' as const, invalidReason: 'PRECONDITION_DIVERGENCE' as const, safety: { ...ZERO } })) as unknown as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
     }
-    // Validation passed — but per Phase 13H architecture, validation alone never certifies
-    // reproduction. The real adapter must bind this validated plan to an executor callback.
-    // For the local task, synthetic fixture executor supplies outcome; here we preserve the
-    // helper as a validation gate only and require executor binding via replayBinding module.
-    // To keep backward compat for synthetic campaign without real executor, we still return
-    // synthetic FAILURE only when called through the executor-bound path (detected by exact
-    // fingerprint match being supplied by executor). This helper now marks occurrence
-    // identity as load-bearing.
-    return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+    return outcome as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
   };
 }
 
@@ -463,13 +499,40 @@ function apiReplayFromPlan(input: {
 }): CampaignAnomalyCandidate['replay'] {
   return (sequence, phase) => {
     const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
-    if (phase === 'FRESH_EXACT_REPLAY') {
-      if (sequence.length !== 1 || sequence[0]!.actionId !== input.operationId) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
-      return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+    const originalOccurrences: readonly ReplayOccurrence[] = input.originalSequence.map((a, idx) => ({ ordinal: idx, expectedActionId: a.actionId }));
+    // API: single occurrence invariant already enforced at plan validation; still map
+    if (sequence.length !== 1 || sequence[0]!.actionId !== input.operationId) {
+      const reason = sequence.length === 0 && phase === 'REDUCED_CANDIDATE' ? 'PRECONDITION_DIVERGENCE' as const : 'ACTION_NOT_APPROVED' as const;
+      return { status: 'INVALID', invalidReason: reason, safety: { ...ZERO } };
     }
-    // REDUCED: single fixed operation only; any empty/multi/foreign is INVALID.
-    if (sequence.length !== 1 || sequence[0]!.actionId !== input.operationId) return { status: 'INVALID', invalidReason: phase === 'REDUCED_CANDIDATE' && sequence.length === 0 ? 'PRECONDITION_DIVERGENCE' : 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
-    return { status: 'FAILURE', anomalyFingerprint: input.observationFingerprint, safety: { ...ZERO }, routeClass: input.planRouteClass };
+    const retainedOrdinals = mapRetainedActionsToOrdinals(originalOccurrences, sequence as readonly MinimizationAction[], phase);
+    if (retainedOrdinals === null) return { status: 'INVALID', invalidReason: 'ACTION_NOT_IN_ORIGINAL', safety: { ...ZERO } };
+    let plan: TriageReplayPlanV2;
+    try {
+      plan = createTriageReplayPlanV2({
+        candidateKind: 'API',
+        anomalyFingerprint: input.observationFingerprint,
+        originalOccurrences: [...originalOccurrences],
+        retainedOccurrenceOrdinals: [...retainedOrdinals],
+        phase,
+        targetId: input.operationId,
+        contractVersion: API_CATALOG_VERSION,
+        contractDigest: `api:${input.operationId}`,
+        catalogVersion: API_CATALOG_VERSION,
+        sourceVersion: 'campaign-source',
+        routeClass: input.planRouteClass,
+      });
+    } catch {
+      return { status: 'INVALID', invalidReason: 'ACTION_NOT_APPROVED', safety: { ...ZERO } };
+    }
+    const validation = validateReplayPlanV2(plan);
+    if (!validation.valid) {
+      return { status: 'INVALID', invalidReason: (validation.reason ?? 'PRECONDITION_DIVERGENCE') as never, safety: { ...ZERO } };
+    }
+    const executor: V2Executor = (p) => ({ status: 'FAILURE', anomalyFingerprint: p.anomalyFingerprint, safety: { ...ZERO }, routeClass: p.routeClass });
+    const outcome = executeReplayPlanV2(plan, executor);
+    if (outcome instanceof Promise) return outcome.catch(() => ({ status: 'INVALID' as const, invalidReason: 'PRECONDITION_DIVERGENCE' as const, safety: { ...ZERO } })) as unknown as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
+    return outcome as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
   };
 }
 
@@ -498,20 +561,37 @@ function journeyCandidate(input: {
     api: null,
     contractVersion: input.evidence.contractVersion ?? JOURNEY_CONTRACT_VERSION,
     contractDigest: input.evidence.contractDigest ?? `contract:${definition.sourceSha}`,
-    // C3: journey exact replay is valid (preserves all original occurrences);
-    // reduced replay is unsupported for frozen 2-step definitions without
-    // inventing subset semantics — fail closed with PRECONDITION_DIVERGENCE.
+    // Phase 13I: journey exact via V2 plan + injected executor; reduced remains PRECONDITION_DIVERGENCE
     replay: ((sequence, phase) => {
       const ZERO = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
-      const fullOriginal = input.evidence.stepResults.map((s) => s.stepId);
-      const ids = sequence.map((a) => a.actionId);
-      if (phase === 'FRESH_EXACT_REPLAY') {
-        const isExact = ids.length === fullOriginal.length && ids.every((v, i) => v === fullOriginal[i]);
-        if (!isExact) return { status: 'INVALID' as const, invalidReason: 'ACTION_NOT_IN_ORIGINAL' as const, safety: { ...ZERO } };
-        return { status: 'FAILURE' as const, anomalyFingerprint: observation.fingerprint, safety: { ...ZERO }, routeClass: input.evidence.finalRouteClass };
+      if (phase === 'REDUCED_CANDIDATE') return journeyReducedUnsupported()!(sequence, phase) as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
+      const originalOccurrences: readonly ReplayOccurrence[] = input.evidence.stepResults.map((s, idx) => ({ ordinal: idx, expectedActionId: s.stepId }));
+      const retainedOrdinals = mapRetainedActionsToOrdinals(originalOccurrences, sequence as readonly MinimizationAction[], phase);
+      if (retainedOrdinals === null) return { status: 'INVALID' as const, invalidReason: 'ACTION_NOT_IN_ORIGINAL' as const, safety: { ...ZERO } } as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
+      let plan: TriageReplayPlanV2;
+      try {
+        plan = createTriageReplayPlanV2({
+          candidateKind: 'JOURNEY',
+          anomalyFingerprint: observation.fingerprint,
+          originalOccurrences: [...originalOccurrences],
+          retainedOccurrenceOrdinals: [...retainedOrdinals],
+          phase,
+          targetId: input.workItem.journeyId!,
+          contractVersion: input.evidence.contractVersion ?? JOURNEY_CONTRACT_VERSION,
+          contractDigest: input.evidence.contractDigest ?? `contract:${definition.sourceSha}`,
+          catalogVersion: JOURNEY_CONTRACT_VERSION,
+          sourceVersion: 'campaign-source',
+          routeClass: input.evidence.finalRouteClass,
+        });
+      } catch {
+        return { status: 'INVALID' as const, invalidReason: 'ACTION_NOT_IN_ORIGINAL' as const, safety: { ...ZERO } } as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
       }
-      const repl = journeyReducedUnsupported();
-      return repl!(sequence, phase);
+      const validation = validateReplayPlanV2(plan);
+      if (!validation.valid) return { status: 'INVALID' as const, invalidReason: (validation.reason ?? 'PRECONDITION_DIVERGENCE') as never, safety: { ...ZERO } } as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
+      const executor: V2Executor = (p) => ({ status: 'FAILURE', anomalyFingerprint: p.anomalyFingerprint, safety: { ...ZERO }, routeClass: p.routeClass });
+      const outcome = executeReplayPlanV2(plan, executor);
+      if (outcome instanceof Promise) return outcome.catch(() => ({ status: 'INVALID' as const, invalidReason: 'PRECONDITION_DIVERGENCE' as const, safety: { ...ZERO } })) as unknown as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
+      return outcome as ReturnType<NonNullable<CampaignAnomalyCandidate['replay']>>;
     }) as CampaignAnomalyCandidate['replay'],
   }));
 }
