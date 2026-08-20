@@ -372,23 +372,23 @@ class Remote
 // --- GENERATED / INTERFACE (positive / negative) --------------------------
 
 export const genInterfaceFinite = JSON.stringify({
-  type: 'interface',
-  fields: [
-    { name: 'id', type: 'string' },
-    { name: 'amt', type: 'number' },
-  ],
+    type: "interface",
+    fields: [
+        { name: "id", type: "string" },
+        { name: "amt", type: "number" },
+    ],
 });
 
-export const genInterfaceMissingFields = JSON.stringify({ type: 'interface' });
+export const genInterfaceMissingFields = JSON.stringify({ type: "interface" });
 
-export const genInterfaceNotJson = 'this is not json at all';
+export const genInterfaceNotJson = "this is not json at all";
 
 export const genInterfaceDynamicType = JSON.stringify({
-  fields: [{ name: 'x', type: 'dynamic' }],
+    fields: [{ name: "x", type: "dynamic" }],
 });
 
 export const genInterfaceUnrecognized = JSON.stringify({
-  fields: [{ name: 'x' }],
+    fields: [{ name: "x" }],
 });
 
 // --- ALIAS cycle (negative) ------------------------------------------------
@@ -410,29 +410,42 @@ class Copier
 // --- GENERATED / INTERFACE nested + repeated + required/optional (positive / negative) ---
 
 export const genInterfaceNested = JSON.stringify({
-  type: 'interface',
-  fields: [
-    { name: 'id', type: 'string' },
-    { name: 'addr', type: 'object', fields: [{ name: 'street', type: 'string' }, { name: 'zip', type: 'number' }] },
-  ],
+    type: "interface",
+    fields: [
+        { name: "id", type: "string" },
+        {
+            name: "addr",
+            type: "object",
+            fields: [
+                { name: "street", type: "string" },
+                { name: "zip", type: "number" },
+            ],
+        },
+    ],
 });
 
 export const genInterfaceRepeated = JSON.stringify({
-  type: 'interface',
-  fields: [{ name: 'tags', type: 'repeated string' }],
+    type: "interface",
+    fields: [{ name: "tags", type: "repeated string" }],
 });
 
 export const genInterfaceRequiredOptional = JSON.stringify({
-  type: 'interface',
-  fields: [
-    { name: 'id', type: 'string', required: true },
-    { name: 'note', type: 'string', required: false },
-  ],
+    type: "interface",
+    fields: [
+        { name: "id", type: "string", required: true },
+        { name: "note", type: "string", required: false },
+    ],
 });
 
 export const genInterfaceAmbiguousNested = JSON.stringify({
-  type: 'interface',
-  fields: [{ name: 'inner', type: 'object', fields: [{ name: 'x', type: 'dynamic' }] }],
+    type: "interface",
+    fields: [
+        {
+            name: "inner",
+            type: "object",
+            fields: [{ name: "x", type: "dynamic" }],
+        },
+    ],
 });
 
 // --- DRIFT (same evidence vs changed evidence) ----------------------------
@@ -500,42 +513,130 @@ class Other
 }
 `;
 
+// --- PROTO finite field shape (positive) ---------------------------------
+
+export const protoMessageFinite = `syntax = "proto3";
+
+package ripple;
+
+message BillingGroup {
+  string id = 1;
+  int64 created_at = 2;
+  bool active = 3;
+  repeated string tags = 4;
+  Address address = 5;
+}
+
+message Address {
+  string street = 1;
+  int32 zip = 2;
+}
+`;
+
+// --- PROTO present but NO cardinality / transport guarantee --------------
+
+export const protoPresentNoCardinality = `syntax = "proto3";
+
+message BillingGroupsStream {
+  string cursor = 1;
+  repeated GroupItem items = 2;
+}
+
+message GroupItem {
+  string id = 1;
+}
+`;
+
+// --- PROTO unsupported constructs (negative) -----------------------------
+
+export const protoMapUnsupported = `syntax = "proto3";
+
+message M {
+  map<string, int32> counts = 1;
+}
+`;
+
+export const protoOneofUnsupported = `syntax = "proto3";
+
+message M {
+  oneof value {
+    string s = 1;
+    int32 n = 2;
+  }
+}
+`;
+
+export const protoUnknownType = `syntax = "proto3";
+
+message M {
+  CustomType weird = 1;
+}
+`;
+
+export const protoNoMessage = `syntax = "proto3";
+
+// no message defined here
+`;
+
+// --- Deceptive static-schema contracts (negative) -------------------------
+
+export const protoCommentOnly = `// This proto defines chunked streaming billing groups with pageSize=50
+message Empty {}
+`;
+
+export const stringLiteralFakeContract =
+    "id: string, name: string, amount: number";
+
+export const genInterfaceCommentOnly = JSON.stringify({
+    type: "interface",
+    note: "the contract is described in this comment only",
+});
+
 /** Flat index of every fixture (name -> source text). Used by the focused
  *  matrix test for deterministic enumeration. */
 export const phase14Fixtures: Readonly<Record<string, string>> = Object.freeze({
-  litRowKeys,
-  litRowKeysPush,
-  scalarCastObject,
-  scalarCastArrayOrKeys,
-  branchUnionFinite,
-  branchUnionNoElse,
-  branchUnionUnenumerable,
-  emptyNonEmptyPositive,
-  emptyNonEmptyNoElse,
-  aliasCopyPositive,
-  aliasCopyDynamic,
-  returnEnvelopePositive,
-  returnEnvelopeNonAccumulator,
-  runtimeDbValue,
-  dynamicKeyReject,
-  commentOnlyChunk,
-  structuralChunkPositive,
-  legacyConditionalBlob,
-  grpcChunkNoMarker,
-  crossServiceAssumption,
-  genInterfaceFinite,
-  genInterfaceMissingFields,
-  genInterfaceNotJson,
-  genInterfaceDynamicType,
-  genInterfaceUnrecognized,
-  aliasCopyCycle,
-  genInterfaceNested,
-  genInterfaceRepeated,
-  genInterfaceRequiredOptional,
-  genInterfaceAmbiguousNested,
-  litRowKeysDriftSame,
-  litRowKeysDriftChanged,
-  privacySentinelComment,
-  privacySentinelStringLiteral,
-  symbolNotFound,
+    litRowKeys,
+    litRowKeysPush,
+    scalarCastObject,
+    scalarCastArrayOrKeys,
+    branchUnionFinite,
+    branchUnionNoElse,
+    branchUnionUnenumerable,
+    emptyNonEmptyPositive,
+    emptyNonEmptyNoElse,
+    aliasCopyPositive,
+    aliasCopyDynamic,
+    returnEnvelopePositive,
+    returnEnvelopeNonAccumulator,
+    runtimeDbValue,
+    dynamicKeyReject,
+    commentOnlyChunk,
+    structuralChunkPositive,
+    legacyConditionalBlob,
+    grpcChunkNoMarker,
+    crossServiceAssumption,
+    genInterfaceFinite,
+    genInterfaceMissingFields,
+    genInterfaceNotJson,
+    genInterfaceDynamicType,
+    genInterfaceUnrecognized,
+    aliasCopyCycle,
+    genInterfaceNested,
+    genInterfaceRepeated,
+    genInterfaceRequiredOptional,
+    genInterfaceAmbiguousNested,
+    litRowKeysDriftSame,
+    litRowKeysDriftChanged,
+    privacySentinelComment,
+    privacySentinelStringLiteral,
+    symbolNotFound,
+    protoMessageFinite,
+    protoPresentNoCardinality,
+    protoMapUnsupported,
+    protoOneofUnsupported,
+    protoUnknownType,
+    protoNoMessage,
+    protoCommentOnly,
+    stringLiteralFakeContract,
+    genInterfaceCommentOnly,
 });
