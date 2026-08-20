@@ -11,18 +11,22 @@
 // on every unclassified combination.
 // ---------------------------------------------------------------------------
 
-import { analyzerEvidenceDigest, MECHANICAL_ANALYZER_VERSION, type ContractAnalysis } from './analyzer';
+import {
+  analyzerEvidenceDigest,
+  MECHANICAL_ANALYZER_VERSION,
+  type ContractAnalysis,
+} from "./analyzer";
 
 export type ContractDriftClass =
-  | 'EVIDENCE_UNCHANGED_SHA_MOVED'
-  | 'EVIDENCE_CHANGED_COMPATIBLE'
-  | 'EVIDENCE_CHANGED_BREAKING'
-  | 'DERIVATION_VERSION_CHANGED'
-  | 'SOURCE_STALE'
-  | 'SOURCE_UNAVAILABLE'
-  | 'CONTRACT_BECAME_AMBIGUOUS'
-  | 'CONTRACT_BECAME_PROVABLE'
-  | 'NO_APPROVED_TARGET';
+  | "EVIDENCE_UNCHANGED_SHA_MOVED"
+  | "EVIDENCE_CHANGED_COMPATIBLE"
+  | "EVIDENCE_CHANGED_BREAKING"
+  | "DERIVATION_VERSION_CHANGED"
+  | "SOURCE_STALE"
+  | "SOURCE_UNAVAILABLE"
+  | "CONTRACT_BECAME_AMBIGUOUS"
+  | "CONTRACT_BECAME_PROVABLE"
+  | "NO_APPROVED_TARGET";
 
 export interface ContractDriftClassification {
   readonly targetId: string;
@@ -44,12 +48,15 @@ export interface ContractDriftCoreInput {
   readonly currVersion: string | null;
   readonly sourceAvailable: boolean;
   readonly sourceStale: boolean;
+  /** Optional full analyses enabling BREAKING vs COMPATIBLE refinement. */
+  readonly prevAnalysis?: ContractAnalysis | null;
+  readonly currAnalysis?: ContractAnalysis | null;
 }
 
 function factSignature(a: ContractAnalysis): Map<string, Set<string>> {
   const m = new Map<string, Set<string>>();
   for (const f of a.facts) {
-    const key = `${f.proofClass}|${(f.itemKeys ?? []).slice().sort().join('|')}`;
+    const key = `${f.proofClass}|${(f.itemKeys ?? []).slice().sort().join("|")}`;
     const types = new Set((f.allowedTypes ?? []).slice().sort());
     m.set(key, types);
   }
@@ -57,7 +64,10 @@ function factSignature(a: ContractAnalysis): Map<string, Set<string>> {
 }
 
 /** True when every prev fact key exists in curr with a superset of allowed types. */
-function isCompatibleSuperset(prev: ContractAnalysis, curr: ContractAnalysis): boolean {
+function isCompatibleSuperset(
+  prev: ContractAnalysis,
+  curr: ContractAnalysis,
+): boolean {
   const prevSig = factSignature(prev);
   const currSig = factSignature(curr);
   for (const [key, prevTypes] of prevSig) {
@@ -70,47 +80,154 @@ function isCompatibleSuperset(prev: ContractAnalysis, curr: ContractAnalysis): b
   return true;
 }
 
-export function classifyContractDrift(input: ContractDriftCoreInput): ContractDriftClassification {
-  const { targetId, prevDigest, currDigest, prevStatus, currStatus, prevVersion, currVersion, sourceAvailable, sourceStale } = input;
+export function classifyContractDrift(
+  input: ContractDriftCoreInput,
+): ContractDriftClassification {
+  const {
+    targetId,
+    prevDigest,
+    currDigest,
+    prevStatus,
+    currStatus,
+    prevVersion,
+    currVersion,
+    sourceAvailable,
+    sourceStale,
+    prevAnalysis,
+    currAnalysis,
+  } = input;
 
   if (!sourceAvailable) {
-    return { targetId, driftClass: 'SOURCE_UNAVAILABLE', prevDigest, currDigest, prevStatus, currStatus, detail: 'source not available' };
+    return {
+      targetId,
+      driftClass: "SOURCE_UNAVAILABLE",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "source not available",
+    };
   }
   if (sourceStale) {
-    return { targetId, driftClass: 'SOURCE_STALE', prevDigest, currDigest, prevStatus, currStatus, detail: 'source SHA does not match current snapshot' };
+    return {
+      targetId,
+      driftClass: "SOURCE_STALE",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "source SHA does not match current snapshot",
+    };
   }
   if (prevDigest === null && currDigest === null) {
-    return { targetId, driftClass: 'NO_APPROVED_TARGET', prevDigest, currDigest, prevStatus, currStatus, detail: 'no approved target evaluated' };
+    return {
+      targetId,
+      driftClass: "NO_APPROVED_TARGET",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "no approved target evaluated",
+    };
   }
 
   // Derivation/version movement is reported distinctly from evidence movement.
-  if (prevVersion !== null && currVersion !== null && prevVersion !== currVersion) {
-    return { targetId, driftClass: 'DERIVATION_VERSION_CHANGED', prevDigest, currDigest, prevStatus, currStatus, detail: `analyzer ${prevVersion} -> ${currVersion}` };
+  if (
+    prevVersion !== null &&
+    currVersion !== null &&
+    prevVersion !== currVersion
+  ) {
+    return {
+      targetId,
+      driftClass: "DERIVATION_VERSION_CHANGED",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: `analyzer ${prevVersion} -> ${currVersion}`,
+    };
   }
 
-  const prevProven = prevStatus === 'PROVEN';
-  const currProven = currStatus === 'PROVEN';
+  const prevProven = prevStatus === "PROVEN";
+  const currProven = currStatus === "PROVEN";
 
   if (prevDigest !== null && currDigest !== null && prevDigest === currDigest) {
     // Normalized evidence identical; only the incident source SHA moved.
-    return { targetId, driftClass: 'EVIDENCE_UNCHANGED_SHA_MOVED', prevDigest, currDigest, prevStatus, currStatus, detail: 'normalized evidence identical; source SHA moved' };
+    return {
+      targetId,
+      driftClass: "EVIDENCE_UNCHANGED_SHA_MOVED",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "normalized evidence identical; source SHA moved",
+    };
   }
 
   // Digests differ (or one side is null) -> classify the nature of the change.
   if (prevProven && !currProven) {
-    return { targetId, driftClass: 'CONTRACT_BECAME_AMBIGUOUS', prevDigest, currDigest, prevStatus, currStatus, detail: 'previously PROVEN contract is no longer provable' };
+    return {
+      targetId,
+      driftClass: "CONTRACT_BECAME_AMBIGUOUS",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "previously PROVEN contract is no longer provable",
+    };
   }
   if (!prevProven && currProven) {
-    return { targetId, driftClass: 'CONTRACT_BECAME_PROVABLE', prevDigest, currDigest, prevStatus, currStatus, detail: 'previously ambiguous contract is now provable' };
+    return {
+      targetId,
+      driftClass: "CONTRACT_BECAME_PROVABLE",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "previously ambiguous contract is now provable",
+    };
   }
   if (prevProven && currProven) {
-    // Both provable but evidence changed: refine compatible vs breaking using the
-    // reconstructed analyses when available.
-    return { targetId, driftClass: 'EVIDENCE_CHANGED_COMPATIBLE', prevDigest, currDigest, prevStatus, currStatus, detail: 'both provable; evidence moved' };
+    // Both provable but evidence changed: refine compatible vs breaking using
+    // the reconstructed analyses when available. A previously proven fact whose
+    // allowed-type set shrank, or a fact key that vanished, is a BREAKING
+    // change; a strict superset / identical fact set is merely COMPATIBLE.
+    if (
+      prevAnalysis != null &&
+      currAnalysis != null &&
+      !isCompatibleSuperset(prevAnalysis, currAnalysis)
+    ) {
+      return {
+        targetId,
+        driftClass: "EVIDENCE_CHANGED_BREAKING",
+        prevDigest,
+        currDigest,
+        prevStatus,
+        currStatus,
+        detail: "both provable; a previously proven fact/type was removed",
+      };
+    }
+    return {
+      targetId,
+      driftClass: "EVIDENCE_CHANGED_COMPATIBLE",
+      prevDigest,
+      currDigest,
+      prevStatus,
+      currStatus,
+      detail: "both provable; evidence moved",
+    };
   }
   // Both non-proven (or one side null and non-proven): harmless movement, no
   // provable contract was gained or lost.
-  return { targetId, driftClass: 'EVIDENCE_CHANGED_COMPATIBLE', prevDigest, currDigest, prevStatus, currStatus, detail: 'evidence moved; no provable contract change' };
+  return {
+    targetId,
+    driftClass: "EVIDENCE_CHANGED_COMPATIBLE",
+    prevDigest,
+    currDigest,
+    prevStatus,
+    currStatus,
+    detail: "evidence moved; no provable contract change",
+  };
 }
 
 /** Build a drift classification from two full analyzer results. */
@@ -123,20 +240,28 @@ export function driftFromAnalyses(params: {
   prevVersion?: string | null;
   currVersion?: string | null;
 }): ContractDriftClassification {
-  const prevDigest = params.prev !== null ? analyzerEvidenceDigest(params.prev) : null;
-  const currDigest = params.curr !== null ? analyzerEvidenceDigest(params.curr) : null;
-  const prevStatus = params.prev !== null ? params.prev.status : null;
-  const currStatus = params.curr !== null ? params.curr.status : null;
+  const prevDigest =
+    params.prev === null ? null : analyzerEvidenceDigest(params.prev);
+  const currDigest =
+    params.curr === null ? null : analyzerEvidenceDigest(params.curr);
+  const prevStatus = params.prev === null ? null : params.prev.status;
+  const currStatus = params.curr === null ? null : params.curr.status;
   return classifyContractDrift({
     targetId: params.targetId,
     prevDigest,
     currDigest,
     prevStatus,
     currStatus,
-    prevVersion: params.prevVersion ?? (params.prev !== null ? params.prev.analyzerVersion : null),
-    currVersion: params.currVersion ?? (params.curr !== null ? params.curr.analyzerVersion : null),
+    prevVersion:
+      params.prevVersion ??
+      (params.prev === null ? null : params.prev.analyzerVersion),
+    currVersion:
+      params.currVersion ??
+      (params.curr === null ? null : params.curr.analyzerVersion),
     sourceAvailable: params.sourceAvailable,
     sourceStale: params.sourceStale,
+    prevAnalysis: params.prev,
+    currAnalysis: params.curr,
   });
 }
 
@@ -150,10 +275,12 @@ export function driftFromProbes(params: {
   prevVersion?: string | null;
   currVersion?: string | null;
 }): ContractDriftClassification {
-  const prevDigest = params.prevProbe !== null ? params.prevProbe.evidenceDigest || null : null;
-  const currDigest = params.currProbe !== null ? params.currProbe.evidenceDigest || null : null;
-  const prevStatus = params.prevProbe !== null ? params.prevProbe.status : null;
-  const currStatus = params.currProbe !== null ? params.currProbe.status : null;
+  const prevDigest =
+    params.prevProbe === null ? null : params.prevProbe.evidenceDigest || null;
+  const currDigest =
+    params.currProbe === null ? null : params.currProbe.evidenceDigest || null;
+  const prevStatus = params.prevProbe === null ? null : params.prevProbe.status;
+  const currStatus = params.currProbe === null ? null : params.currProbe.status;
   return classifyContractDrift({
     targetId: params.targetId,
     prevDigest,
@@ -169,17 +296,45 @@ export function driftFromProbes(params: {
 
 /** Convenience: classify drift for every target between a baseline and current inventory. */
 export function classifyInventoryDrift(
-  baseline: { entries: readonly { targetId: string; analyzerProbe: readonly { status: string; evidenceDigest: string }[] | null }[] },
-  current: { entries: readonly { targetId: string; analyzerProbe: readonly { status: string; evidenceDigest: string }[] | null }[] },
+  baseline: {
+    entries: readonly {
+      targetId: string;
+      analyzerProbe:
+        | readonly { status: string; evidenceDigest: string }[]
+        | null;
+    }[];
+  },
+  current: {
+    entries: readonly {
+      targetId: string;
+      analyzerProbe:
+        | readonly { status: string; evidenceDigest: string }[]
+        | null;
+    }[];
+  },
   opts: { sourceAvailable: boolean; sourceStale: boolean },
 ): readonly ContractDriftClassification[] {
   const baseById = new Map(baseline.entries.map((e) => [e.targetId, e]));
   const out: ContractDriftClassification[] = [];
   for (const cur of current.entries) {
     const prev = baseById.get(cur.targetId) ?? null;
-    const prevProbe = prev?.analyzerProbe && prev.analyzerProbe.length > 0 ? prev.analyzerProbe[0]! : null;
-    const currProbe = cur.analyzerProbe && cur.analyzerProbe.length > 0 ? cur.analyzerProbe[0]! : null;
-    out.push(driftFromProbes({ targetId: cur.targetId, prevProbe, currProbe, sourceAvailable: opts.sourceAvailable, sourceStale: opts.sourceStale }));
+    const prevProbe =
+      prev?.analyzerProbe && prev.analyzerProbe.length > 0
+        ? prev.analyzerProbe[0]!
+        : null;
+    const currProbe =
+      cur.analyzerProbe && cur.analyzerProbe.length > 0
+        ? cur.analyzerProbe[0]!
+        : null;
+    out.push(
+      driftFromProbes({
+        targetId: cur.targetId,
+        prevProbe,
+        currProbe,
+        sourceAvailable: opts.sourceAvailable,
+        sourceStale: opts.sourceStale,
+      }),
+    );
   }
   return out;
 }
