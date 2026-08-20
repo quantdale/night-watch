@@ -219,10 +219,11 @@ test.describe('Phase 14A H — corpus / backtest metrics', () => {
       const d3 = analyzerEvidenceDigest(a3);
       expect(d1).toBe(d2);
       expect(d2).toBe(d3);
-      if (a1.status === 'PROVEN') positiveCount += 1;
-      else {
+      if (a1.status === 'PROVEN') {
+        positiveCount += 1;
+        if (c.expect.status !== 'PROVEN') falseAdmission += 1;
+      } else {
         rejectionCount += 1;
-        if (a1.status === 'PROVEN') falseAdmission += 1;
       }
       // No rejected case may be silently admitted.
       if (c.expect.status !== 'PROVEN') expect(a1.status).not.toBe('PROVEN');
