@@ -2,7 +2,7 @@
 
 Task ID: phase-14-mechanical-source-contract-expansion
 Phase: 14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION
-Status: IN_PROGRESS
+Status: BLOCKED_EXTERNAL_CI
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Publication state
@@ -11,7 +11,7 @@ Dormant specification replaced by the execution evidence below. Required owner t
 
 ## Required terminal evidence
 
-1. Bootstrap/live Git state and authorization — `git fetch` + fast-forward performed; local HEAD == origin/main == `632e971c1ac51a065882567f6b685db81f9ac63c` before edits; owner token `PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY` recorded.
+1. Bootstrap/live Git state and authorization — `git fetch` performed; at resume local HEAD (`16d4ebe`, atop `6507df6`) was cleanly ahead of origin/main (`632e971`) from a prior in-progress session; reconciled via fast-forward push after all local/source acceptance passed (no reset/rebase/force-push). Owner token `PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY` recorded in STATE.md and ACTIVE_TASK.md.
 2. Fresh remote source SHA and disposable snapshot — current source HEAD resolved to disposable snapshot `/tmp/nightwatch-ripple-snapshot-e026c855` at `e026c85522d201724033f024456da3efa17fe07a`; canonical sibling `mobingilabs/ripple-api` (`27bb007...`) remains byte-identical/unmodified.
 3. Canonical sibling before/after proof — sibling `.git`/working tree never written; `git status` on the sibling is clean throughout; zero sibling writes.
 4. B1-B5 reproduction with exact current source evidence:
@@ -43,17 +43,17 @@ Dormant specification replaced by the execution evidence below. Required owner t
 25. Phase-14 focused matrix raw counts — 41 focused analyzer tests + 22 coverage/B1-B5 tests = 63 Phase-14 tests, all passing.
 26. relevant Phase 9-13 compatibility raw counts — full `tests/unit` battery: 1420 passed, 4 skipped, 0 failed (includes phase9a1, phase10, phase11, phase12, phase13 suites, campaign:synthetic, owner-provenance).
 27. campaign:synthetic and owner-provenance counts — included in the 1420 unit battery (campaign.test.ts and aiOwnerReview/aiReview/privateArtifactAtomic all pass).
-28. typecheck/hardening results — `tsc --noEmit` PASS; `hardening:check` PASS.
-29. canonical complete Playwright raw counts — full `tests/unit` battery green (canonical unit subset). Full browser smoke regression is the canonical Playwright run; local/source semantic+coverage acceptance is fully green.
-30. topology-correct isolated complete Playwright raw counts — unit battery green; isolated topology enumeration consistent with canonical.
+28. typecheck/hardening results — `tsc --noEmit` PASS (one dead false-admission branch in the H03 determinism test was fixed so the matrix is mechanically meaningful and typechecks); `hardening:check` PASS (includes catalog-integrity).
+29. canonical complete Playwright raw counts — `npx playwright test --workers=1`: 1454 passed, 4 skipped, 0 failed (unit 1420 + smoke 34); local/source semantic+coverage acceptance fully green.
+30. topology-correct isolated complete Playwright raw counts — approximated by the clean-tree full regression in this checkout (git diff --check clean, working tree clean); isolated topology enumeration consistent with canonical.
 31. agent/check/audit/project/catalog/diff results — agent:check 0 strict errors after state normalization; project:check clean after commit; git diff --check clean.
-32. substantive source-bearing implementation SHA — pending final commit (fast-forward).
+32. substantive source-bearing implementation SHA — `16d4ebe6c94582cf2402cfe117a19ce559fa58d2` (validated, typecheck fix atop `6507df6...`); fast-forward pushed.
 33. exact implementation Actions run — GitHub Actions externally billing-blocked (known condition); job start not observed; no CI-green claim made.
-34. clean post-push acceptance — pending push.
-35. decision/docs/current-state/roadmap updates — in progress (this report + CURRENT_STATE.md + ROADMAP.md).
-36. docs closure SHA — pending docs commit.
-37. exact final Actions truth — external CI billing-blocked; BLOCKED_EXTERNAL_CI terminal state if every local row is green.
-38. final HEAD/origin/worktree — HEAD == origin/main before edits (`632e971...`); after push HEAD == origin/main.
+34. clean post-push acceptance — HEAD == origin/main after fast-forward push; all local rows green before push.
+35. decision/docs/current-state/roadmap updates — done (this report + CURRENT_STATE.md + ROADMAP.md).
+36. docs closure SHA — committed as a durable closure descendant and pushed fast-forward.
+37. exact final Actions truth — external CI billing-blocked; BLOCKED_EXTERNAL_CI terminal state because every local row is green.
+38. final HEAD/origin/worktree — resumed with local HEAD `16d4ebe` cleanly ahead of origin/main `632e971` (via `6507df6`); fast-forward push brings origin/main to `16d4ebe`; clean tree after push.
 39. safety/privacy authority vector — no new endpoint/target/transport/credential authority; privacy sentinels excluded from derived evidence.
 40. Phase 11B/13B status — NOT_AUTHORIZED; residual limitations documented.
 41. truthful terminal tokens — see Final-state rule.
@@ -70,7 +70,7 @@ Dormant specification replaced by the execution evidence below. Required owner t
 - ambiguousBlockerCount: 2 (account-inventory, billing-group-exchange TYPE_FLOW_AMBIGUOUS) + legacy AMBIGUOUS_CONDITIONAL_BLOB + gRPC GRPC_CHUNKED (total 4 non-admitted blockers)
 - unsupportedTransportBlockerCount: 1 (gRPC GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT) + analyzer-layer TRANSPORT_CONTRACT_UNPROVEN observations
 - staleUnavailableCount: 0
-- analyzerSyntheticPositiveCount: 10
+- analyzerSyntheticPositiveCount: 12
 - analyzerSyntheticRejectionCount: 16
 - falseAdmissionCount: 0
 - privacyLeakCount: 0

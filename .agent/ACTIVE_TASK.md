@@ -3,14 +3,14 @@
 Task ID: phase-14-mechanical-source-contract-expansion
 Phase: 14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION
 Title: Nightwatch Phase 14A — Mechanical Real-Source Contract Expansion
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-14-mechanical-source-contract-expansion
 Starting SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-Last validated implementation SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-Last substantive checkpoint SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-Last checkpoint: 632e971c1ac51a065882567f6b685db81f9ac63c
-Current milestone: M10 — Validated implementation checkpoint (local acceptance green)
-Next action: commit validated implementation fast-forward, update docs/continuity, inspect exact Actions truth
+Last validated implementation SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
+Last substantive checkpoint SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
+Last checkpoint: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
+Current milestone: M11 — Durable closure (terminal; local/source acceptance green, CI externally blocked)
+Next action: STOP — all local/source acceptance green; unblock = restore GitHub Actions billing/spending-limit so a push re-runs CI to green
 Authorization class: PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -21,22 +21,22 @@ Strengthen Nightwatch's deterministic source-contract analyzer and re-evaluate t
 ## Continuity
 
 STARTING_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_14A_STATUS: IN_PROGRESS
-PHASE_14_MECHANICAL_SOURCE_EXPANSION: VERIFIED_LOCAL_PENDING_CI
+PHASE_14A_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_14_MECHANICAL_SOURCE_EXPANSION: VERIFIED_LOCAL_NOT_CI_VERIFIED
 PHASE_14_REAL_SOURCE_UPLIFT_COUNT: 0
 PHASE_14_ANALYZER_VERSION: nightwatch.mechanical-contract-analyzer.v1
-PHASE_14_ANALYZER_SYNTHETIC_POSITIVE_COUNT: 10
+PHASE_14_ANALYZER_SYNTHETIC_POSITIVE_COUNT: 12
 PHASE_14_ANALYZER_SYNTHETIC_REJECTION_COUNT: 16
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: finalize local acceptance + closure
+NEXT ACTION: STOP at the truthful terminal state (BLOCKED_EXTERNAL_CI; every local row green)
 
 ## Blockers
 

@@ -27,7 +27,7 @@ No DEV/real campaign, new target/endpoint/transport authority, production, mutat
 ## Milestones
 
 ### M0 — Bootstrap and baseline freeze
-Status: NOT_STARTED
+Status: COMPLETE
 - fetch/fast-forward clean main;
 - record authorization;
 - transition task to IN_PROGRESS and make active;
@@ -35,73 +35,73 @@ Status: NOT_STARTED
 - reproduce B1-B5 from SPEC §4.
 
 ### M1 — Analyzer contract design and synthetic grammar
-Status: NOT_STARTED
+Status: COMPLETE
 - inspect current extractor implementation;
 - define versioned result/evidence vocabulary;
 - implement bounded structural/token-aware analysis architecture;
 - add synthetic positive/rejection fixtures before product uplift.
 
 ### M2 — PHP finite-flow expansion
-Status: NOT_STARTED
+Status: COMPLETE
 - support mechanically decidable finite row/type/branch/alias proof classes;
 - preserve current Phase-10 extractor semantics;
 - fail closed on runtime/DB/dynamic cases.
 
 ### M3 — Conditional/interface/transport contract adapters
-Status: NOT_STARTED
+Status: COMPLETE
 - bounded conditional branch proofs;
 - inspect actual static source contract for the gRPC/chunked approved target;
 - add a generated/proto/interface adapter only if source justifies it;
 - precise blocker if not.
 
 ### M4 — Fresh-source target re-evaluation
-Status: NOT_STARTED
+Status: COMPLETE
 - re-run all approved targets;
 - produce before/after disposition/depth table;
 - distinguish analyzer capability from actual product-contract uplift.
 
 ### M5 — Additive admission/versioning
-Status: NOT_STARTED
+Status: COMPLETE
 - if uplift is proven, add explicit recipe/expectation identities/versions;
 - preserve historical IDs and semantics;
 - resolver/currentness/collection/campaign-bundle compatibility;
 - if no uplift, keep registry unchanged.
 
 ### M6 — Phase-14 corpus and deterministic backtest
-Status: NOT_STARTED
+Status: COMPLETE
 - >=30 synthetic source fixtures;
 - positive/rejection/drift/privacy matrix;
 - >=3 repeats, zero mismatches;
 - all false-admission/privacy/stale-current floors zero.
 
 ### M7 — Compatibility and hardening
-Status: NOT_STARTED
+Status: COMPLETE
 - focused Phase-14 matrix;
 - relevant Phase 9-13 suites;
 - typecheck/hardening/campaign/provenance.
 
 ### M8 — Fresh-source acceptance
-Status: NOT_STARTED
+Status: COMPLETE
 - re-resolve remote SHA;
 - disposable exact snapshot;
 - prove canonical sibling writes 0;
 - current/wrong-SHA currentness matrix.
 
 ### M9 — Full regressions
-Status: NOT_STARTED
+Status: COMPLETE
 - canonical complete Playwright workers=1;
 - topology-correct isolated complete Playwright workers=1;
 - 0 failed in both; explain only legitimate topology enumeration differences.
 
 ### M10 — Validated implementation checkpoint
-Status: NOT_STARTED
+Status: COMPLETE
 - clean local acceptance;
 - source-bearing commit/push fast-forward;
 - exact Actions run/job-start inspection;
 - decisive post-push recheck.
 
 ### M11 — Durable closure
-Status: NOT_STARTED
+Status: COMPLETE
 - append decision if architecture changed materially;
 - update design/current state/roadmap/task state/report;
 - docs/continuity push;

@@ -1648,6 +1648,35 @@ source-only. Task record:
 - **Next**: STOP. Phase 11B/13B remain separately NOT_AUTHORIZED. Any real
   promotion/replay runtime validation requires a future contained-DEV authorization.
 
+## Phase 14A — Mechanical Real-Source Contract Expansion (implemented-local, CI-blocked)
+
+**Status:** `PHASE_14A_STATUS: BLOCKED_EXTERNAL_CI` /
+`PHASE_14_MECHANICAL_SOURCE_EXPANSION: VERIFIED_LOCAL_NOT_CI_VERIFIED` (2026-08-20,
+implementation SHA `16d4ebe6c94582cf2402cfe117a19ce559fa58d2`, atop `6507df6…`).
+A versioned, deterministic, bounded mechanical-contract analyzer
+(`nightwatch.mechanical-contract-analyzer.v1`,
+`src/oracles/expectations/extract/analyzer.ts`) was added with an additive
+non-mutating `analyzerProbe` layer in `coverageInventory.ts`. The six existing
+approved read-only targets were re-evaluated against the fresh disposable
+ripple-api snapshot `e026c855…`; the historical Phase-12 blockers
+(`TYPE_FLOW_AMBIGUOUS` ×2, `AMBIGUOUS_CONDITIONAL_BLOB_RUNTIME_COMPUTED`,
+`GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT`) were reproduced and preserved, and **0
+real-source uplifts** were admitted (ambiguous source remains ambiguous). The
+synthetic corpus (`corpus/phase14`, 30 fixtures) proves 12 positive / 16
+rejection classes with all floors 0 (false-admission, privacy-leak,
+stale-false-current, unsupported-false-proof, determinism-mismatch). Full
+local/source acceptance is green: typecheck PASS, `hardening:check` PASS,
+canonical Playwright `1454 passed / 4 skipped / 0 failed`, `agent:check` /
+`agent:audit` 0 strict errors, `project:check` clean, `git diff --check` clean.
+Task record: `docs/design/PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION.md` and
+`.agent/tasks/phase-14-mechanical-source-contract-expansion/`.
+
+- **External CI**: GitHub Actions remains externally billing/spending-limit
+  blocked before job execution (known condition). NOT CI-verified; local-validated
+  `BLOCKED_EXTERNAL_CI`.
+- **Next**: STOP. Phase 11B/13B remain separately NOT_AUTHORIZED. Any real
+  campaign / promotion runtime validation requires a future contained authorization.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

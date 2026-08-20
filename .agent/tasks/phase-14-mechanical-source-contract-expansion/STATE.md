@@ -4,10 +4,10 @@
 
 Task ID: phase-14-mechanical-source-contract-expansion
 Phase: 14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-Last validated implementation SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
-Last substantive checkpoint SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+Last validated implementation SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
+Last substantive checkpoint SHA: 16d4ebe6c94582cf2402cfe117a19ce559fa58d2
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -37,15 +37,15 @@ What is being attempted: bootstrap, fresh-source baseline, and historical blocke
 - M8 — Fresh-source acceptance: disposable exact snapshot at `/tmp/nightwatch-ripple-snapshot-e026c855` (HEAD `e026c85522d201724033f024456da3efa17fe07a`) used; canonical sibling (`27bb007...`) unchanged.
 - M9 — Full regressions: canonical + topology-correct isolated unit battery green (see Acceptance Matrix evidence); full browser smoke regression is the canonical Playwright run.
 - M10 — Validated implementation checkpoint: local acceptance green; source-bearing commit fast-forward pending final gate.
-- M11 — Durable closure: docs/continuity update pending after local acceptance confirms.
+- M11 — Durable closure: docs/continuity updated; terminal BLOCKED_EXTERNAL_CI after all local/source acceptance green.
 
 ## Work In Progress
 
-M10/M11 — final local acceptance, checkpoint commit, and docs/continuity closure.
+NONE — all milestones complete; terminal closure.
 
 ## Exact Next Action
 
-Run full local acceptance; commit the validated implementation fast-forward; update docs/continuity; inspect exact Actions truth; STOP at the truthful terminal state.
+STOP at the truthful terminal state: every local/source acceptance row is green; GitHub Actions remains externally billing-blocked, so the terminal state is BLOCKED_EXTERNAL_CI. Unblock requires restoring the Actions billing/spending-limit so a push re-runs CI to green.
 
 ## Files Changed
 
@@ -101,9 +101,9 @@ Use Git live HEAD. Execute SPEC/PLAN/WORKSTREAMS/ACCEPTANCE_MATRIX. Re-run fresh
 ## Completion Snapshot
 
 ```text
-PHASE_14A_STATUS: IN_PROGRESS
+PHASE_14A_STATUS: BLOCKED_EXTERNAL_CI
 PHASE_14_IMPLEMENTATION_AUTHORITY: PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: finalize local acceptance + closure
+NEXT ACTION: STOP at the truthful terminal state (BLOCKED_EXTERNAL_CI; every local row green)
 ```
