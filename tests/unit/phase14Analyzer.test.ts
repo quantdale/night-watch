@@ -21,6 +21,7 @@ import {
 } from '../../src/oracles/expectations/extract/analyzer';
 import {
   aliasCopyDynamic,
+  aliasCopyCycle,
   aliasCopyPositive,
   branchUnionFinite,
   branchUnionNoElse,
@@ -35,6 +36,10 @@ import {
   genInterfaceMissingFields,
   genInterfaceNotJson,
   genInterfaceUnrecognized,
+  genInterfaceNested,
+  genInterfaceRepeated,
+  genInterfaceRequiredOptional,
+  genInterfaceAmbiguousNested,
   grpcChunkNoMarker,
   legacyConditionalBlob,
   litRowKeys,
@@ -79,6 +84,7 @@ const CASES: readonly Case[] = [
   { name: 'emptyNonEmptyNoElse', query: { language: 'php', sourceText: emptyNonEmptyNoElse, symbol: 'f', proofClass: 'EMPTY_NONEMPTY_BIFURCATION', fieldVariable: 'f' }, expect: { status: 'AMBIGUOUS', blockerCode: 'RUNTIME_VALUE_TYPE_UNPROVEN' } },
   { name: 'aliasCopyPositive', query: { language: 'php', sourceText: aliasCopyPositive, symbol: 'f', proofClass: 'ALIAS_COPY_FLOW', sourceVar: 'source', aliasVar: 'alias' }, expect: { status: 'PROVEN', blockerCode: null } },
   { name: 'aliasCopyDynamic', query: { language: 'php', sourceText: aliasCopyDynamic, symbol: 'f', proofClass: 'ALIAS_COPY_FLOW', sourceVar: 'source', aliasVar: 'alias' }, expect: { status: 'AMBIGUOUS', blockerCode: 'RUNTIME_VALUE_TYPE_UNPROVEN' } },
+  { name: 'aliasCopyCycle', query: { language: 'php', sourceText: aliasCopyCycle, symbol: 'f', proofClass: 'ALIAS_COPY_FLOW', sourceVar: 'source', aliasVar: 'alias' }, expect: { status: 'AMBIGUOUS', blockerCode: 'ALIAS_CYCLE_DETECTED' } },
   { name: 'returnEnvelopePositive', query: { language: 'php', sourceText: returnEnvelopePositive, symbol: 'getAccountVendor', proofClass: 'RETURN_ENVELOPE_FIELD_PRESENCE', accumulator: 'res', requiredFields: ['account_id', 'vendor'] }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['account_id', 'vendor'] } },
   { name: 'returnEnvelopeNonAccumulator', query: { language: 'php', sourceText: returnEnvelopeNonAccumulator, symbol: 'g', proofClass: 'RETURN_ENVELOPE_FIELD_PRESENCE', accumulator: 'res', requiredFields: ['account_id'] }, expect: { status: 'AMBIGUOUS', blockerCode: 'BRANCH_SET_INCOMPLETE' } },
   { name: 'runtimeDbValue', query: { language: 'php', sourceText: runtimeDbValue, symbol: 'getExchangeRate', proofClass: 'SCALAR_TYPE_FROM_CAST', fieldVariable: 'exchange_rate', pattern: 'EMPTY_ARRAY_OR_STRING_KEYS' }, expect: { status: 'AMBIGUOUS', blockerCode: 'RUNTIME_VALUE_TYPE_UNPROVEN' } },
@@ -93,6 +99,10 @@ const CASES: readonly Case[] = [
   { name: 'genInterfaceNotJson', query: { language: 'generated-interface', sourceText: genInterfaceNotJson, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'AMBIGUOUS', blockerCode: 'GENERATED_SCHEMA_UNAVAILABLE' } },
   { name: 'genInterfaceDynamicType', query: { language: 'generated-interface', sourceText: genInterfaceDynamicType, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'AMBIGUOUS', blockerCode: 'RUNTIME_VALUE_TYPE_UNPROVEN' } },
   { name: 'genInterfaceUnrecognized', query: { language: 'generated-interface', sourceText: genInterfaceUnrecognized, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'AMBIGUOUS', blockerCode: 'GENERATED_SCHEMA_UNAVAILABLE' } },
+  { name: 'genInterfaceNested', query: { language: 'generated-interface', sourceText: genInterfaceNested, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['addr.street', 'addr.zip', 'id'], allowedTypes: ['NUMBER', 'STRING'] } },
+  { name: 'genInterfaceRepeated', query: { language: 'generated-interface', sourceText: genInterfaceRepeated, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['tags'], allowedTypes: ['STRING'] } },
+  { name: 'genInterfaceRequiredOptional', query: { language: 'generated-interface', sourceText: genInterfaceRequiredOptional, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['id', 'note'], allowedTypes: ['STRING'] } },
+  { name: 'genInterfaceAmbiguousNested', query: { language: 'generated-interface', sourceText: genInterfaceAmbiguousNested, symbol: null, proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE' }, expect: { status: 'AMBIGUOUS', blockerCode: 'RUNTIME_VALUE_TYPE_UNPROVEN' } },
   { name: 'symbolNotFound', query: { language: 'php', sourceText: symbolNotFound, symbol: 'buildRows', proofClass: 'LITERAL_ROW_FIELD_SET', accumulator: 'res', pattern: 'ASSIGN' }, expect: { status: 'UNAVAILABLE', blockerCode: 'SYMBOL_UNAVAILABLE' } },
   { name: 'privacySentinelComment', query: { language: 'php', sourceText: privacySentinelComment, symbol: 'f', proofClass: 'LITERAL_ROW_FIELD_SET', accumulator: 'res', pattern: 'ASSIGN' }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['id'] } },
   { name: 'privacySentinelStringLiteral', query: { language: 'php', sourceText: privacySentinelStringLiteral, symbol: 'f', proofClass: 'LITERAL_ROW_FIELD_SET', accumulator: 'res', pattern: 'ASSIGN' }, expect: { status: 'PROVEN', blockerCode: null, itemKeys: ['id'] } },
@@ -158,7 +168,7 @@ test.describe('Phase 14A C — analyzer contract integrity', () => {
 });
 
 test.describe('Phase 14A D — positive synthetic proof classes', () => {
-  for (const positive of ['litRowKeys', 'litRowKeysPush', 'scalarCastObject', 'scalarCastArrayOrKeys', 'branchUnionFinite', 'emptyNonEmptyPositive', 'aliasCopyPositive', 'returnEnvelopePositive', 'structuralChunkPositive', 'genInterfaceFinite']) {
+  for (const positive of ['litRowKeys', 'litRowKeysPush', 'scalarCastObject', 'scalarCastArrayOrKeys', 'branchUnionFinite', 'emptyNonEmptyPositive', 'aliasCopyPositive', 'returnEnvelopePositive', 'structuralChunkPositive', 'genInterfaceFinite', 'genInterfaceNested', 'genInterfaceRepeated', 'genInterfaceRequiredOptional']) {
     test(`${positive} proven`, () => {
       const c = CASES.find((x) => x.name === positive)!;
       const a = analyzeContract(c.query);
@@ -180,8 +190,47 @@ test.describe('Phase 14A D — positive synthetic proof classes', () => {
   }
 });
 
+test.describe('Phase 14A C2 — static schema adapters: nested/repeated/required detail', () => {
+  test('nested object/message field shape yields dotted leaf paths', () => {
+    const a = analyzeContract(CASES.find((x) => x.name === 'genInterfaceNested')!.query);
+    expect(a.status).toBe('PROVEN');
+    const leaf = a.facts.find((f) => f.itemKeys !== undefined && f.itemKeys.length === 1 && f.itemKeys[0] === 'addr.street')!;
+    expect(leaf).toBeDefined();
+    expect([...leaf.allowedTypes!]).toEqual(['STRING']);
+  });
+
+  test('repeated/list item type metadata is exposed without inventing a transport contract', () => {
+    const a = analyzeContract(CASES.find((x) => x.name === 'genInterfaceRepeated')!.query);
+    expect(a.status).toBe('PROVEN');
+    const leaf = a.facts.find((f) => f.itemKeys !== undefined && f.itemKeys.length === 1 && f.itemKeys[0] === 'tags')!;
+    expect(leaf.repeated).toBe(true);
+    expect([...leaf.itemTypes!]).toEqual(['STRING']);
+  });
+
+  test('required/optional distinction is mechanically represented', () => {
+    const a = analyzeContract(CASES.find((x) => x.name === 'genInterfaceRequiredOptional')!.query);
+    expect(a.status).toBe('PROVEN');
+    const idLeaf = a.facts.find((f) => f.itemKeys !== undefined && f.itemKeys.length === 1 && f.itemKeys[0] === 'id')!;
+    const noteLeaf = a.facts.find((f) => f.itemKeys !== undefined && f.itemKeys.length === 1 && f.itemKeys[0] === 'note')!;
+    expect(idLeaf.required).toBe(true);
+    expect(noteLeaf.required).toBe(false);
+  });
+
+  test('nested dynamic inner type fails closed (RUNTIME_VALUE_TYPE_UNPROVEN)', () => {
+    const a = analyzeContract(CASES.find((x) => x.name === 'genInterfaceAmbiguousNested')!.query);
+    expect(a.status).not.toBe('PROVEN');
+    expect(a.blockerCode).toBe('RUNTIME_VALUE_TYPE_UNPROVEN');
+  });
+
+  test('alias cycle is detected and rejected (ALIAS_CYCLE_DETECTED)', () => {
+    const a = analyzeContract(CASES.find((x) => x.name === 'aliasCopyCycle')!.query);
+    expect(a.status).not.toBe('PROVEN');
+    expect(a.blockerCode).toBe('ALIAS_CYCLE_DETECTED');
+  });
+});
+
 test.describe('Phase 14A E — negative synthetic proof classes', () => {
-  for (const negative of ['branchUnionNoElse', 'branchUnionUnenumerable', 'emptyNonEmptyNoElse', 'aliasCopyDynamic', 'returnEnvelopeNonAccumulator', 'runtimeDbValue', 'dynamicKeyReject', 'commentOnlyChunk', 'legacyConditionalBlob', 'grpcChunkNoMarker', 'crossServiceAssumption', 'genInterfaceMissingFields', 'genInterfaceNotJson', 'genInterfaceDynamicType', 'genInterfaceUnrecognized', 'symbolNotFound']) {
+  for (const negative of ['branchUnionNoElse', 'branchUnionUnenumerable', 'emptyNonEmptyNoElse', 'aliasCopyDynamic', 'aliasCopyCycle', 'returnEnvelopeNonAccumulator', 'runtimeDbValue', 'dynamicKeyReject', 'commentOnlyChunk', 'legacyConditionalBlob', 'grpcChunkNoMarker', 'crossServiceAssumption', 'genInterfaceMissingFields', 'genInterfaceNotJson', 'genInterfaceDynamicType', 'genInterfaceUnrecognized', 'genInterfaceAmbiguousNested', 'symbolNotFound']) {
     test(`${negative} rejected (fail-closed)`, () => {
       const c = CASES.find((x) => x.name === negative)!;
       const a = analyzeContract(c.query);

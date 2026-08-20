@@ -391,6 +391,50 @@ export const genInterfaceUnrecognized = JSON.stringify({
   fields: [{ name: 'x' }],
 });
 
+// --- ALIAS cycle (negative) ------------------------------------------------
+
+export const aliasCopyCycle = `<?php
+namespace App\\Handler;
+
+class Copier
+{
+    public function f($source, $mid)
+    {
+        $alias = $mid;
+        $mid = $alias;
+        return $alias;
+    }
+}
+`;
+
+// --- GENERATED / INTERFACE nested + repeated + required/optional (positive / negative) ---
+
+export const genInterfaceNested = JSON.stringify({
+  type: 'interface',
+  fields: [
+    { name: 'id', type: 'string' },
+    { name: 'addr', type: 'object', fields: [{ name: 'street', type: 'string' }, { name: 'zip', type: 'number' }] },
+  ],
+});
+
+export const genInterfaceRepeated = JSON.stringify({
+  type: 'interface',
+  fields: [{ name: 'tags', type: 'repeated string' }],
+});
+
+export const genInterfaceRequiredOptional = JSON.stringify({
+  type: 'interface',
+  fields: [
+    { name: 'id', type: 'string', required: true },
+    { name: 'note', type: 'string', required: false },
+  ],
+});
+
+export const genInterfaceAmbiguousNested = JSON.stringify({
+  type: 'interface',
+  fields: [{ name: 'inner', type: 'object', fields: [{ name: 'x', type: 'dynamic' }] }],
+});
+
 // --- DRIFT (same evidence vs changed evidence) ----------------------------
 
 export const litRowKeysDriftSame = litRowKeys;
@@ -484,6 +528,11 @@ export const phase14Fixtures: Readonly<Record<string, string>> = Object.freeze({
   genInterfaceNotJson,
   genInterfaceDynamicType,
   genInterfaceUnrecognized,
+  aliasCopyCycle,
+  genInterfaceNested,
+  genInterfaceRepeated,
+  genInterfaceRequiredOptional,
+  genInterfaceAmbiguousNested,
   litRowKeysDriftSame,
   litRowKeysDriftChanged,
   privacySentinelComment,

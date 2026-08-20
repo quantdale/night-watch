@@ -68,7 +68,8 @@ export type AnalyzerBlockerCode =
   | 'CONDITIONAL_BLOB_AMBIGUOUS'
   | 'GENERATED_SCHEMA_UNAVAILABLE'
   | 'TRANSPORT_CONTRACT_UNPROVEN'
-  | 'PARTIAL_PROOF_ONLY';
+  | 'PARTIAL_PROOF_ONLY'
+  | 'ALIAS_CYCLE_DETECTED';
 
 export type AnalyzerStatus = 'PROVEN' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'UNAVAILABLE';
 
@@ -77,6 +78,9 @@ export interface AnalyzerFact {
   readonly fieldName?: string;
   readonly itemKeys?: readonly string[];
   readonly allowedTypes?: readonly string[];
+  readonly itemTypes?: readonly string[];
+  readonly repeated?: boolean;
+  readonly required?: boolean;
   readonly cardinality?: number;
   readonly edge?: readonly [string, string];
   readonly branchCount?: number;
@@ -239,6 +243,16 @@ function collectFieldRhsLeafTypes(
     }
   }
   return results;
+}
+
+/** A bounded leaf RHS token is a literal or bounded cast/array construction —
+ *  anything a finite copy flow can resolve without runtime/DB/function help. */
+function isBoundedLeafToken(token: PhpToken | undefined): boolean {
+  if (token === undefined) return false;
+  if (token.t === 'NUMBER' || token.t === 'STRING') return true;
+  if (token.t === 'WORD' && (token.v === 'true' || token.v === 'false' || token.v === 'null')) return true;
+  if (token.t === 'PUNCT' && (token.v === '(' || token.v === '[')) return true;
+  return false;
 }
 
 function allReturnsAreAccumulator(
@@ -474,24 +488,47 @@ function aliasCopyFlow(text: string, symbol: string, sourceVar: string, aliasVar
   const body = findFunctionBody(tokens, symbol);
   if (body === null) return blocker('SYMBOL_UNAVAILABLE', 'php', symbol, 'ALIAS_COPY_FLOW');
 
+  // Bounded assignment map: var -> first RHS token at function-relative depth 0.
+  const assignments = new Map<string, PhpToken>();
   let aliasAssigned = false;
   for (let i = body.start + 1; i < body.end; i++) {
     const t = tokens[i]!;
-    if (t.t !== 'VARIABLE' || t.v !== aliasVar) continue;
+    if (t.t !== 'VARIABLE') continue;
     const at = tokens[i + 1];
     if (at?.t !== 'PUNCT' || at.v !== '=') continue;
-    aliasAssigned = true;
     const rhs = tokens[i + 2];
-    // Bounded copy flow: RHS must be exactly `$source` or a recognized literal.
-    const isPureCopy = rhs?.t === 'VARIABLE' && rhs.v === sourceVar;
-    const isLiteral = rhs !== undefined && (staticLeafTypeOfRhs(tokens, i + 2) !== null || (rhs.t === 'WORD' && (rhs.v === 'true' || rhs.v === 'false' || rhs.v === 'null')));
-    if (!isPureCopy && !isLiteral) {
-      // Alias flows from an unbounded source (function call, subscript read,
-      // dynamic copy) => the copy is not mechanically bounded.
-      return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'php', symbol, 'ALIAS_COPY_FLOW', 'unbounded-copy');
-    }
+    if (rhs === undefined) continue;
+    if (t.v === aliasVar) aliasAssigned = true;
+    assignments.set(t.v, rhs);
   }
   if (!aliasAssigned) return blocker('SYMBOL_UNAVAILABLE', 'php', symbol, 'ALIAS_COPY_FLOW', 'alias-never-assigned');
+
+  // Finite alias resolution with explicit cycle detection: follow the copy
+  // chain from aliasVar, revisiting no variable, until it reaches the source
+  // variable (pure copy), a bounded literal, or an unbounded expression.
+  const visited = new Set<string>();
+  let cur = aliasVar;
+  for (let step = 0; step <= MAX_BRANCHES; step++) {
+    if (visited.has(cur)) return blocker('ALIAS_CYCLE_DETECTED', 'php', symbol, 'ALIAS_COPY_FLOW', 'cycle');
+    visited.add(cur);
+    const rhs = assignments.get(cur);
+    if (rhs === undefined) {
+      // Variable has no in-body assignment; only the source parameter is bound.
+      if (cur === sourceVar) break;
+      return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'php', symbol, 'ALIAS_COPY_FLOW', 'unbounded-copy');
+    }
+    if (rhs.t === 'VARIABLE') {
+      if (rhs.v === sourceVar) break; // pure copy to the source variable
+      cur = rhs.v; // follow the chain one hop
+      continue;
+    }
+    if (isBoundedLeafToken(rhs)) break; // copy of a literal/cast/array is bounded
+    // Function call / subscript / unknown expression => copy is unbounded.
+    return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'php', symbol, 'ALIAS_COPY_FLOW', 'unbounded-copy');
+  }
+  if (!visited.has(aliasVar)) {
+    return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'php', symbol, 'ALIAS_COPY_FLOW', 'unbounded-copy');
+  }
   return proven('php', symbol, 'ALIAS_COPY_FLOW', {
     facts: [{ proofClass: 'ALIAS_COPY_FLOW', edge: [sourceVar, aliasVar] }],
   });
@@ -535,6 +572,69 @@ function returnEnvelopeFieldPresence(
   });
 }
 
+interface GenSchemaField {
+  readonly name: string;
+  readonly type: string;
+  readonly required?: boolean;
+  readonly fields?: readonly GenSchemaField[];
+}
+
+function parseGenSchemaField(raw: unknown): GenSchemaField | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const f = raw as Record<string, unknown>;
+  if (typeof f['name'] !== 'string') return null;
+  if (typeof f['type'] !== 'string') return null;
+  let sub: readonly GenSchemaField[] | undefined;
+  if (f['fields'] !== undefined) {
+    if (!Array.isArray(f['fields'])) return null;
+    const subs: GenSchemaField[] = [];
+    for (const s of f['fields']) {
+      const ps = parseGenSchemaField(s);
+      if (ps === null) return null;
+      subs.push(ps);
+    }
+    sub = subs;
+  }
+  const required = typeof f['required'] === 'boolean' ? f['required'] : undefined;
+  return { name: f['name'], type: f['type'], required, fields: sub };
+}
+
+interface GenLeaf {
+  readonly path: string;
+  readonly type: JsonLeafType;
+  readonly repeated: boolean;
+}
+
+/** Recursively collect finite leaf field shapes (nested object/message +
+ *  repeated/list item metadata + required/optional). Returns false on any
+ *  unsupported construct so the caller can fail closed. */
+function collectGenLeaves(fields: readonly GenSchemaField[], prefix: string, out: { leaves: GenLeaf[]; required: { path: string; required: boolean }[] }): boolean {
+  for (const f of fields) {
+    const typeRaw = f.type;
+    const repeatedMatch = /^(?:repeated|list|array)\s+([A-Za-z0-9_]+)$/.exec(typeRaw) ?? /^array<([A-Za-z0-9_]+)>$/.exec(typeRaw);
+    const isObject = typeRaw === 'object' || typeRaw === 'message';
+    const path = prefix ? `${prefix}.${f.name}` : f.name;
+    if (isObject && f.fields) {
+      // Nested message/object field shape — recurse; the container is not a leaf.
+      if (!collectGenLeaves(f.fields, path, out)) return false;
+      if (f.required !== undefined) out.required.push({ path, required: f.required });
+      continue;
+    }
+    if (repeatedMatch) {
+      const itemType = repeatedMatch[1]!.toUpperCase() as JsonLeafType;
+      if (!isRecognizedJsonType(itemType)) return false;
+      out.leaves.push({ path, type: itemType, repeated: true });
+      if (f.required !== undefined) out.required.push({ path, required: f.required });
+      continue;
+    }
+    const norm = typeRaw.toUpperCase() as JsonLeafType;
+    if (!isRecognizedJsonType(norm)) return false; // unrecognized scalar type => unsupported
+    out.leaves.push({ path, type: norm, repeated: false });
+    if (f.required !== undefined) out.required.push({ path, required: f.required });
+  }
+  return true;
+}
+
 function generatedInterfaceFieldShape(jsonText: string): ContractAnalysis {
   if (jsonText.length > MAX_SOURCE_CHARS) return unavailable('SOURCE_UNAVAILABLE', 'generated-interface', null);
   let parsed: unknown;
@@ -551,23 +651,35 @@ function generatedInterfaceFieldShape(jsonText: string): ContractAnalysis {
   if (!Array.isArray(fields)) {
     return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'no-fields-array');
   }
-  const names: string[] = [];
-  const types: JsonLeafType[] = [];
+  const parsedFields: GenSchemaField[] = [];
   for (const raw of fields) {
-    if (raw === null || typeof raw !== 'object') return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'malformed-field');
-    const f = raw as Record<string, unknown>;
-    if (typeof f['name'] !== 'string') return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'field-no-name');
-    if (typeof f['type'] !== 'string') return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'field-no-type');
-    const normType = f['type'].toUpperCase() as JsonLeafType;
-    if (!isRecognizedJsonType(normType)) {
-      return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'unrecognized-field-type');
-    }
-    names.push(f['name']);
-    types.push(normType);
+    const pf = parseGenSchemaField(raw);
+    if (pf === null) return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'malformed-field');
+    parsedFields.push(pf);
   }
-  if (names.length === 0) return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'empty-fields');
+  const out = { leaves: [] as GenLeaf[], required: [] as { path: string; required: boolean }[] };
+  if (!collectGenLeaves(parsedFields, '', out)) {
+    return blocker('RUNTIME_VALUE_TYPE_UNPROVEN', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'unrecognized-field-type');
+  }
+  if (out.leaves.length === 0) return blocker('GENERATED_SCHEMA_UNAVAILABLE', 'generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', 'empty-fields');
+  const aggregate: AnalyzerFact = {
+    proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE',
+    itemKeys: [...new Set(out.leaves.map((l) => l.path))].sort(),
+    allowedTypes: [...new Set(out.leaves.map((l) => l.type))].sort(),
+  };
+  const leafFacts: AnalyzerFact[] = out.leaves.map((l) => {
+    const req = out.required.find((r) => r.path === l.path);
+    return {
+      proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE',
+      itemKeys: [l.path],
+      allowedTypes: [l.type],
+      repeated: l.repeated || undefined,
+      itemTypes: l.repeated ? [l.type] : undefined,
+      required: req?.required,
+    };
+  });
   return proven('generated-interface', null, 'GENERATED_INTERFACE_FIELD_SHAPE', {
-    facts: [{ proofClass: 'GENERATED_INTERFACE_FIELD_SHAPE', itemKeys: [...names].sort(), allowedTypes: [...new Set(types)].sort() }],
+    facts: [aggregate, ...leafFacts],
   });
 }
 
