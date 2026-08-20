@@ -135,3 +135,34 @@ Evidence order:
 ## Completion Criteria
 
 All SPEC requirements and acceptance-matrix rows are evidence-backed. No local gate may be replaced with a self-authored claim. CI success requires a GitHub Actions job that actually starts and passes.
+
+## Safety Constraints
+
+- LOCAL_ONLY: no DEV/NEXT/production contact, no real campaign, no mutation, no database/data-plane, no infrastructure/Phase 6, no Alphaus sibling writes, no AI/model authority, no selfDev/promotion/catalog mutation, no new endpoint/target/transport authority, no Phase 11B/13B.
+- Git/source state wins: fetch origin and fast-forward clean main; require HEAD == origin/main. No reset/rebase/force-push.
+- Fail-closed by construction: unknown syntax/flow/branch/transport semantics always yield a precise blocker, never a guessed contract.
+- Privacy: source comments/string literals (including sentinels) never reach derived safe evidence.
+
+## Architecture / Approach
+
+- A versioned, deterministic mechanical-contract analyzer (`src/oracles/expectations/extract/analyzer.ts`) is the new capability layer; it reuses the bounded Phase-10 PHP extractor primitives and adds bounded token/symbol analysis for the SPEC §6 proof classes.
+- The coverage inventory gains an additive, non-mutating `analyzerProbe` per target; historical dispositions, blocker codes, and expectation IDs are preserved exactly.
+- Synthetic corpus (`corpus/phase14`) drives the focused matrix; the real-target re-evaluation runs against a disposable exact source snapshot.
+
+## Decision Log
+
+- Attack analyzer capability, not target authority (remaining gaps are proof/extraction gaps).
+- Zero real-source uplift is a valid final result when current source remains honestly ambiguous.
+- Preserve all historical expectation IDs and semantics; never silently strengthen a durable ID.
+
+## Discoveries
+
+- Fresh disposable snapshot `e026c85522d201724033f024456da3efa17fe07a` reproduces the Phase-12 blocker classes; canonical sibling `27bb007...` is unchanged.
+- The versioned analyzer proves synthetic capability across all 8 positive proof classes and fails closed across the rejection classes; the real targets yield zero uplift.
+
+## Deferred Work
+
+- Phase 11B: NOT_AUTHORIZED.
+- Phase 13B: NOT_AUTHORIZED.
+- Real campaigns: NOT_AUTHORIZED.
+- Phase 6/data/infra: frozen/out of scope.

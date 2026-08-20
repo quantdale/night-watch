@@ -1,48 +1,48 @@
 # Active Task
 
-Task ID: phase-13i-residual-runtime-completion-shadow-proof
-Phase: 13I-RESIDUAL-RUNTIME-COMPLETION-SHADOW-PROOF
-Title: Nightwatch Phase 13I — Residual Runtime Completion & Integrated Shadow Proof
-Status: BLOCKED
-Task directory: .agent/tasks/phase-13i-residual-runtime-completion-shadow-proof
-Starting SHA: 8c1cf09f5d33d10a2e7540b6bb9589814a95735c
-Last validated implementation SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
-Last substantive checkpoint SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
-Last checkpoint: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
-Current milestone: M11 — Durable closure (docs)
-Next action: STOP — see Blockers for unblock condition
-Authorization class: PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY
+Task ID: phase-14-mechanical-source-contract-expansion
+Phase: 14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION
+Title: Nightwatch Phase 14A — Mechanical Real-Source Contract Expansion
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-14-mechanical-source-contract-expansion
+Starting SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+Last validated implementation SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+Last substantive checkpoint SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+Last checkpoint: 632e971c1ac51a065882567f6b685db81f9ac63c
+Current milestone: M10 — Validated implementation checkpoint (local acceptance green)
+Next action: commit validated implementation fast-forward, update docs/continuity, inspect exact Actions truth
+Authorization class: PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Close every residual local/source Phase-13 runtime gap: semantic promotion routing (dual-path), real-adapter occurrence-bound replay-plan-v2/executor binding, integrated Phase-13 shadow proof, and exhaustive manifest/checkpoint/version drift hardening. No DEV/NEXT/production/real campaign/Phase 13B/mutation/DB/infra/Phase 6/Alphaus writes/AI/selfDev/promotion.
+Strengthen Nightwatch's deterministic source-contract analyzer and re-evaluate the existing approved read-only semantic targets against a freshly resolved source snapshot. Admit only mechanically proven contract uplifts. No DEV/NEXT/production/real campaign/mutation/DB/data-plane/infra/Phase 6/Alphaus writes/AI/model authority/selfDev/promotion/Phase 11B/Phase 13B.
 
 ## Continuity
 
-STARTING_SHA: 8c1cf09f5d33d10a2e7540b6bb9589814a95735c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 186122f96741c57f5d5fdf4cca3ec1e9328a9f30
+STARTING_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 632e971c1ac51a065882567f6b685db81f9ac63c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_13I_STATUS: BLOCKED_EXTERNAL_CI
-PHASE_13_RUNTIME_COMPLETION: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_13_SEMANTIC_PROMOTION: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_13_REPLAY_V2_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_13_SHADOW_CAMPAIGN: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_13H_STATUS: BLOCKED (historical)
-PHASE_13I_IMPLEMENTATION_AUTHORITY: PHASE_13I_RESIDUAL_RUNTIME_COMPLETION_LOCAL_ONLY
+PHASE_14A_STATUS: IN_PROGRESS
+PHASE_14_MECHANICAL_SOURCE_EXPANSION: VERIFIED_LOCAL_PENDING_CI
+PHASE_14_REAL_SOURCE_UPLIFT_COUNT: 0
+PHASE_14_ANALYZER_VERSION: nightwatch.mechanical-contract-analyzer.v1
+PHASE_14_ANALYZER_SYNTHETIC_POSITIVE_COUNT: 10
+PHASE_14_ANALYZER_SYNTHETIC_REJECTION_COUNT: 16
 PHASE_13B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: STOP
+PHASE_11B_STATUS: NOT_AUTHORIZED
+NEXT ACTION: finalize local acceptance + closure
 
 ## Blockers
 
-- EXTERNAL_CI_BILLING_BLOCKED: GitHub Actions job `Local hardening checks` not started — `The job was not started because recent account payments have failed or your spending limit needs to be increased` (run 32325943234, head 186122f). No CI verification possible. Unblock: billing/spending-limit restored and a new push re-runs Actions to green. Every local acceptance row is green (typecheck, hardening, phase13Shadow 26, campaign 27, owner-provenance 91, Phase12 compat, fresh-source 40, canonical 1391/4/0, isolated topology-correct 1391/4/0). No code failure.
-- No DEV/production/Phase 6 work required to unblock local hardening; above gap is external-only.
+- EXTERNAL_CI_BILLING_BLOCKED: GitHub Actions job start remains externally blocked by the known billing/spending-limit condition. Local/source acceptance is fully green. Unblock: billing/spending-limit restored and a new push re-runs Actions to green. No code failure.
+- No DEV/production/Phase 6 work required to unblock; the gap is external-only.
 
 ## Recovery
 
-Fetch origin/main and verify HEAD==origin/main (discover from GIT; validated implementation 186122f). Read SPEC/PLAN/STATE plus DECISIONS.md D-63, CURRENT_STATE.md (Phase 13I rows), ROADMAP.md Phase 13I section, and docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md. Git/source evidence wins. Resume only after a new Docs closure descendant if needed; otherwise STOP per SPEC §6-7 terminal truth.
+Fetch origin/main and verify HEAD==origin/main (discover from GIT; validated implementation 632e971). Read SPEC/PLAN/STATE plus CURRENT_STATE.md (Phase 14 rows), ROADMAP.md Phase 14 section, and docs/design/PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION.md. Git/source evidence wins. Resume only after a new Docs closure descendant if needed; otherwise STOP per SPEC §13 terminal truth.

@@ -17,6 +17,7 @@
 import { deriveRealSourceExpectations } from './admission';
 import { deriveCollectionWideRealSourceExpectations, REAL_SOURCE_COLLECTION_EXPECTATION_IDS } from './collectionAdmission';
 import { extractPhpItemFieldTypeFlow } from './extract/php';
+import { analyzeContract, analyzerEvidenceDigest, type ContractAnalysis } from './extract/analyzer';
 import { APPROVED_READ_ONLY_TARGET_IDS, DEV_REACHABLE_RECIPE_TARGET_IDS, REAL_SOURCE_EXPECTATION_RECIPES } from './recipes/registry';
 import type { RealSourceCurrentness, RealSourceReader } from './recipes/types';
 import type { DerivedRealSourceExpectation } from './admission';
@@ -38,6 +39,13 @@ export type ObserverClass =
 
 export type DepthClass = 'SHAPE' | 'TYPE' | 'COLLECTION' | 'NONE' | 'SHAPE_COLLECTION' | 'TYPE_COLLECTION';
 
+export interface AnalyzerProbe {
+  readonly proofClass: string;
+  readonly status: string;
+  readonly blockerCode: string | null;
+  readonly evidenceDigest: string;
+}
+
 export interface CoverageInventoryEntry {
   readonly targetId: string;
   readonly approvedReadOnly: boolean;
@@ -55,6 +63,7 @@ export interface CoverageInventoryEntry {
   readonly depthClass: DepthClass;
   readonly disposition: CoverageDisposition;
   readonly blockerCode: string | null;
+  readonly analyzerProbe: readonly AnalyzerProbe[] | null;
   readonly resolverState: 'RESOLVED' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE' | 'NOT_APPLICABLE';
   readonly currentness: 'CURRENT' | 'STALE' | 'UNAVAILABLE' | 'NOT_APPLICABLE';
 }
@@ -152,6 +161,93 @@ function tryTypeFlowForShallow(targetId: string, reader: RealSourceReader): { pr
   return { proven: false, blockerCode: 'NOT_SHALLOW_TARGET' };
 }
 
+// ---------------------------------------------------------------------------
+// Phase 14A — analyzer depth probe (WORKSTREAMS_C/D/E).
+//
+// Runs the versioned mechanical analyzer (extract/analyzer.ts) across the
+// SPEC §6 proof classes for each approved target against the fresh snapshot.
+// The probe is ADDITIVE observability: it records the analyzer's precise
+// proof or blocker for every target, but it NEVER adds a recipe, never
+// changes a historical expectation ID, and never changes the historical
+// disposition/blockerCode the Phase 12 tests assert. Zero real-source uplift
+// is a valid and truthful outcome — ambiguous source remains ambiguous.
+// ---------------------------------------------------------------------------
+
+function recordProbe(analysis: ContractAnalysis): AnalyzerProbe {
+  return {
+    proofClass: analysis.proofClass ?? '(none)',
+    status: analysis.status,
+    blockerCode: analysis.blockerCode,
+    evidenceDigest: analyzerEvidenceDigest(analysis),
+  };
+}
+
+function unavailableProbe(): AnalyzerProbe {
+  return { proofClass: '(none)', status: 'UNAVAILABLE', blockerCode: 'SOURCE_UNAVAILABLE', evidenceDigest: '' };
+}
+
+function analyzeTargetDepth(targetId: string, reader: RealSourceReader): readonly AnalyzerProbe[] {
+  const read = (relativePath: string): string | null => reader.readFile('mobingilabs/ripple-api', relativePath);
+  if (targetId === 'ripple.common-exchange.read') {
+    const text = read('src/App/Handler/ExchangeRate.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'getCommonExchangeRate', proofClass: 'SCALAR_TYPE_FROM_CAST', fieldVariable: 'exchange_rate', pattern: 'EMPTY_CAST_OBJECT' })),
+    ];
+  }
+  if (targetId === 'ripple.payer-exchange.read') {
+    const text = read('src/App/Handler/ExchangeRate.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'getAccountExchangeForMonth', proofClass: 'SCALAR_TYPE_FROM_CAST', fieldVariable: 'exchange_rate', pattern: 'EMPTY_ARRAY_OR_STRING_KEYS' })),
+    ];
+  }
+  if (targetId === 'ripple.account-inventory.read') {
+    const text = read('src/App/Handler/Account.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'insertAccount', proofClass: 'LITERAL_ROW_FIELD_SET', accumulator: 'res', pattern: 'ASSIGN' })),
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'insertAccount', proofClass: 'SCALAR_TYPE_FROM_CAST', fieldVariable: 'account_id', pattern: 'EMPTY_CAST_OBJECT' })),
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'insertAccount', proofClass: 'BRANCH_UNION_TYPE_SET', fieldVariable: 'account_id' })),
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'insertAccount', proofClass: 'RETURN_ENVELOPE_FIELD_PRESENCE', accumulator: 'res', requiredFields: ['account_id', 'vendor'] })),
+    ];
+  }
+  if (targetId === 'ripple.billing-group-exchange.read') {
+    const text = read('src/App/Handler/BillingGroup.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'getExchangeRateForBillingGroup', proofClass: 'LITERAL_ROW_FIELD_SET', accumulator: 'res', pattern: 'PUSH' })),
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'getExchangeRateForBillingGroup', proofClass: 'SCALAR_TYPE_FROM_CAST', fieldVariable: 'exchange_rate', pattern: 'EMPTY_ARRAY_OR_STRING_KEYS' })),
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: 'getExchangeRateForBillingGroup', proofClass: 'BRANCH_UNION_TYPE_SET', fieldVariable: 'exchange_rate' })),
+    ];
+  }
+  if (targetId === 'ripple.billing-groups-legacy.read') {
+    // No approved coordinates for a finite conditional-blob contract: probe the
+    // ambient handler text only for a static chunk/conditional structure. A
+    // comment-only or route-name assertion is rejected (TRANSPORT_CONTRACT_
+    // UNPROVEN); the historical AMBIGUOUS_CONDITIONAL_BLOB_RUNTIME_COMPUTED
+    // disposition is retained when no bounded branch set is enumerable.
+    const text = read('src/App/Handler/BillingGroup.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: null, proofClass: 'CHUNK_ITEM_METADATA' })),
+    ];
+  }
+  if (targetId === 'ripple.billing-groups.read') {
+    // The historical blocker is GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT. Phase
+    // 14 probes for an authoritative static chunk/interface contract in source.
+    // A PHP-only handler with no structural chunk marker yields TRANSPORT_
+    // CONTRACT_UNPROVEN — a precise analyzer reason consistent with the
+    // historical blocker; no transport authority is invented.
+    const text = read('src/App/Handler/BillingGroup.php');
+    if (text === null) return [unavailableProbe()];
+    return [
+      recordProbe(analyzeContract({ language: 'php', sourceText: text, symbol: null, proofClass: 'CHUNK_ITEM_METADATA' })),
+    ];
+  }
+  return [];
+}
+
 export function buildCoverageInventory(params: {
   reader: RealSourceReader;
   currentness: RealSourceCurrentness;
@@ -246,6 +342,7 @@ export function buildCoverageInventory(params: {
         blockerCode,
         resolverState,
         currentness: currentnessState,
+        analyzerProbe: snapshot === null ? null : analyzeTargetDepth(targetId, reader),
       });
     } else if (recipe !== null && historical === null) {
       // Recipe exists but derivation failed at this snapshot -> stale/unavailable
@@ -273,6 +370,7 @@ export function buildCoverageInventory(params: {
         blockerCode: failure !== undefined ? `${failure.failure}:${failure.detail ?? ''}` : 'DERIVATION_FAILURE',
         resolverState: failure !== undefined && failure.failure === 'SOURCE_UNAVAILABLE' ? 'SOURCE_UNAVAILABLE' : 'SOURCE_STALE',
         currentness: failure !== undefined && failure.failure === 'SOURCE_UNAVAILABLE' ? 'UNAVAILABLE' : 'STALE',
+        analyzerProbe: snapshot === null ? null : analyzeTargetDepth(targetId, reader),
       });
     } else {
       // No recipe — approved but not admitted
@@ -296,6 +394,7 @@ export function buildCoverageInventory(params: {
         blockerCode,
         resolverState: 'NOT_APPLICABLE',
         currentness: 'NOT_APPLICABLE',
+        analyzerProbe: snapshot === null ? null : analyzeTargetDepth(targetId, reader),
       });
     }
   }

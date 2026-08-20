@@ -47,7 +47,7 @@ const MAX_ROUTE_BLOCK_LINES = 60;
 // Tokenizer (deterministic, bounded).
 // ---------------------------------------------------------------------------
 
-type PhpToken =
+export type PhpToken =
   | { readonly t: 'WORD'; readonly v: string }
   | { readonly t: 'VARIABLE'; readonly v: string }
   | { readonly t: 'STRING'; readonly v: string }
@@ -55,7 +55,7 @@ type PhpToken =
   | { readonly t: 'PUNCT'; readonly v: string }
   | { readonly t: 'OP'; readonly v: string };
 
-function tokenizePhp(sourceText: string): PhpToken[] {
+export function tokenizePhp(sourceText: string): PhpToken[] {
   const tokens: PhpToken[] = [];
   const n = sourceText.length;
   let i = 0;
@@ -186,7 +186,7 @@ function tokenizePhp(sourceText: string): PhpToken[] {
 // Structural helpers
 // ---------------------------------------------------------------------------
 
-function findFunctionBody(tokens: PhpToken[], symbol: string): { start: number; end: number } | null {
+export function findFunctionBody(tokens: PhpToken[], symbol: string): { start: number; end: number } | null {
   for (let i = 0; i + 1 < tokens.length; i++) {
     const current = tokens[i]!;
     if (current.t !== 'WORD' || current.v !== 'function') continue;
@@ -216,7 +216,7 @@ function findFunctionBody(tokens: PhpToken[], symbol: string): { start: number; 
   return null;
 }
 
-function findMatchingBrace(tokens: PhpToken[], openIndex: number): number {
+export function findMatchingBrace(tokens: PhpToken[], openIndex: number): number {
   let depth = 0;
   for (let i = openIndex; i < tokens.length; i++) {
     const token = tokens[i]!;
@@ -230,7 +230,7 @@ function findMatchingBrace(tokens: PhpToken[], openIndex: number): number {
 }
 
 /** Find the matching `]` for a `[` at openIndex (bracket depth tracking). */
-function findMatchingBracket(tokens: PhpToken[], openIndex: number): number {
+export function findMatchingBracket(tokens: PhpToken[], openIndex: number): number {
   let depth = 0;
   for (let i = openIndex; i < tokens.length; i++) {
     const token = tokens[i]!;
@@ -245,7 +245,7 @@ function findMatchingBracket(tokens: PhpToken[], openIndex: number): number {
 
 /** Extract top-level `'key' =>` string-key entries of an array literal whose
  *  opening `[` is at openIndex. Returns keys in source order. */
-function extractLiteralKeys(tokens: PhpToken[], openIndex: number): string[] {
+export function extractLiteralKeys(tokens: PhpToken[], openIndex: number): string[] {
   const close = findMatchingBracket(tokens, openIndex);
   const keys: string[] = [];
   let depth = 0;
