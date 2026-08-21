@@ -161,11 +161,17 @@ export interface CandidateEvaluation {
 /**
  * Phase 15 truthful-minimality evidence class. Complements status and
  * minimalityGuarantee by recording HOW minimality evidence was obtained:
- * - MINIMALITY_PROVEN: at least one genuine reduced-candidate replay observed
- *   DOES_NOT_REPRODUCE and the bounded audit completed without budget
- *   exhaustion.
- * - MINIMALITY_NOT_PROVEN: reduction ran with genuine replays but ended on
- *   budget exhaustion, so minimality remains unproven.
+ * - MINIMALITY_PROVEN: the bounded one-deletion audit completed without
+ *   budget exhaustion and every single-action deletion of the final survivor
+ *   was genuinely exercised through the bound replay path and observed
+ *   DOES_NOT_REPRODUCE, backed by at least one exercised reduced-candidate
+ *   replay (a vacuous single-action survivor qualifies with zero deletions).
+ *   Deletions rejected before a replay never count as proof.
+ * - MINIMALITY_NOT_PROVEN: reduction ran with genuine replays but minimality
+ *   stayed unproven — budget exhaustion ended the search early, or the final
+ *   audit retained survivor deletions that were never genuinely replayed
+ *   (precondition divergence / guard / safety rejections), so part of the
+ *   survivor's minimality is unknown.
  * - NO_REDUCIBLE_CANDIDATE: no reduction was possible — the original did not
  *   reproduce fresh, or nothing was left to remove.
  * - REDUCTION_PRECONDITION_UNAVAILABLE: reduction was attempted but every
