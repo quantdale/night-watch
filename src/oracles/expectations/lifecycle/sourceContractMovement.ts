@@ -16,6 +16,14 @@
 //                                  identical SHA and identical evidence
 //                                  (Phase 14 DERIVATION_VERSION_CHANGED)
 //
+// ONE normalized observation constructor (normalizeSourceContractObservation)
+// is the single provenance path every observation passes through — SHA
+// validation, evidence-digest identity, derivation-version identity and
+// currentness vocabulary live there once, not as scattered per-entry guards.
+// observeFamilyMovement is the downstream-facing composed API: ids +
+// classification + bounded fixed-vocabulary reasons only, consumable by
+// readiness/campaign systems without duplicating any logic here.
+//
 // Fail-closed everywhere:
 //   - a STALE or UNAVAILABLE observation on EITHER side caps the whole pair
 //     at SOURCE_STALE / SOURCE_UNAVAILABLE — a pair spanning a stale or
@@ -175,28 +183,44 @@ function screenText(field: string, value: string): string {
   return value;
 }
 
-/** Structural validation of one observation (fail fast, fail closed). */
-function validateObservation(side: 'previous' | 'current', observation: SourceContractObservation): SourceContractObservation {
-  if (typeof observation.targetId !== 'string' || observation.targetId.length === 0) {
+/**
+ * THE single normalized observation constructor. Every observation entering
+ * any movement surface — direct pair classification, family-record bridging,
+ * observeFamilyMovement — is validated through this one deterministic path:
+ *   - source-SHA provenance (40-hex or null),
+ *   - evidence-digest identity (ev:sha256:<24> or null),
+ *   - derivation-version identity (string, privacy-screened),
+ *   - currentness vocabulary membership.
+ * Malformed input fails closed with a stable side-labeled code BEFORE any
+ * evaluation; nothing is coerced or silently repaired.
+ */
+export function normalizeSourceContractObservation(
+  side: string,
+  candidate: SourceContractObservation,
+): SourceContractObservation {
+  if (typeof candidate.targetId !== 'string' || candidate.targetId.length === 0) {
     throw new Error(`MOVEMENT_INVALID_TARGET_ID:${side}`);
   }
-  if (observation.sourceSha !== null && !isSourceSha(observation.sourceSha)) {
+  if (candidate.sourceSha !== null && !isSourceSha(candidate.sourceSha)) {
     throw new Error(`MOVEMENT_INVALID_SOURCE_SHA:${side}`);
   }
-  if (observation.evidenceDigest !== null && !isEvidenceDigest(observation.evidenceDigest)) {
+  if (candidate.evidenceDigest !== null && !isEvidenceDigest(candidate.evidenceDigest)) {
     throw new Error(`MOVEMENT_INVALID_EVIDENCE_DIGEST:${side}`);
   }
-  if (!CURRENTNESS_MEMBERS.includes(observation.currentness)) {
+  if (!CURRENTNESS_MEMBERS.includes(candidate.currentness)) {
     // Rejected value is echoed only through the bounded categorical
     // projection; sentinel-bearing payloads never enter error text.
-    throw new Error(`MOVEMENT_UNKNOWN_CURRENTNESS:${safeErrorDetail(observation.currentness)}`);
+    throw new Error(`MOVEMENT_UNKNOWN_CURRENTNESS:${safeErrorDetail(candidate.currentness)}`);
   }
-  if (observation.derivationVersion !== null) {
+  if (candidate.derivationVersion !== null) {
+    if (typeof candidate.derivationVersion !== 'string') {
+      throw new Error(`MOVEMENT_INVALID_DERIVATION_VERSION:${side}`);
+    }
     // Versions travel into emitted detail surfaces downstream; screen them
     // like every other caller-supplied free text.
-    screenText(`${side}.derivationVersion`, observation.derivationVersion);
+    screenText(`${side}.derivationVersion`, candidate.derivationVersion);
   }
-  return observation;
+  return candidate;
 }
 
 /** Drift status contributed by one observation. An attached analysis speaks
@@ -232,8 +256,8 @@ export function classifySourceContractMovement(params: {
   previous: SourceContractObservation;
   current: SourceContractObservation;
 }): SourceContractMovementClassification {
-  const previous = validateObservation('previous', params.previous);
-  const current = validateObservation('current', params.current);
+  const previous = normalizeSourceContractObservation('previous', params.previous);
+  const current = normalizeSourceContractObservation('current', params.current);
   if (previous.targetId !== current.targetId) {
     throw new Error('MOVEMENT_TARGET_MISMATCH');
   }
@@ -368,18 +392,133 @@ export function observationFromFamilyRecord(params: {
   sourceSha: string | null;
 }): SourceContractObservation {
   const { record, sourceSha } = params;
-  if (sourceSha !== null && !isSourceSha(sourceSha)) {
-    throw new Error('MOVEMENT_INVALID_SOURCE_SHA:record');
-  }
-  if (record.evidenceDigest !== null && !isEvidenceDigest(record.evidenceDigest)) {
-    throw new Error('MOVEMENT_INVALID_EVIDENCE_DIGEST:record');
-  }
-  screenText('record.derivationVersion', record.derivationVersion);
-  return {
+  // Routed through the ONE normalized constructor: identical SHA / digest /
+  // version / currentness guards under the stable ':record' error labels.
+  return normalizeSourceContractObservation('record', {
     targetId: record.familyId,
     sourceSha,
     evidenceDigest: record.evidenceDigest,
     derivationVersion: record.derivationVersion,
     currentness: record.currentnessClass,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Downstream-facing composed API (readiness / campaign consumption).
+// ---------------------------------------------------------------------------
+
+/** Bounded fixed-vocabulary reasons explaining WHY a pair was classified the
+ *  way it was. Derived ONLY from validated categorical fields — never from
+ *  raw values, analyses, or free text. */
+export type FamilyMovementReason =
+  | 'CURRENTNESS_CEILING_STALE'
+  | 'CURRENTNESS_CEILING_UNAVAILABLE'
+  | 'NO_EVALUABLE_CONTRACT'
+  | 'SOURCE_SHA_MOVED'
+  | 'EVIDENCE_DIGEST_IDENTICAL'
+  | 'EVIDENCE_DIGEST_CHANGED'
+  | 'EVIDENCE_DIGEST_LOST'
+  | 'EVIDENCE_DIGEST_GAINED'
+  | 'DERIVATION_VERSION_CHANGED';
+
+/** Privacy-safe movement record: ids + classification + bounded reasons.
+ *  No raw source/customer values, no analyses, no free-text detail. */
+export interface FamilyMovementRecord {
+  readonly movementVersion: typeof SOURCE_CONTRACT_MOVEMENT_VERSION;
+  readonly targetId: string;
+  readonly familyId: string;
+  readonly movementClass: SourceContractMovementClass;
+  /** Underlying Phase-14 drift class (categorical traceability). */
+  readonly driftClass: ContractDriftClass;
+  /** The absolute stale/unavailable ceiling that governed the pair. */
+  readonly currentnessCeiling: ObservationCurrentness;
+  /** Unified-vocabulary category for the movement class. */
+  readonly overallCategory: UnifiedContractResultCategory;
+  /** Bounded deterministic reasons (fixed order, fixed vocabulary). */
+  readonly reasons: readonly FamilyMovementReason[];
+}
+
+/** Deterministic bounded-reason derivation (total over valid inputs). */
+function familyMovementReasons(
+  previous: SourceContractObservation,
+  current: SourceContractObservation,
+  movementClass: SourceContractMovementClass,
+  ceiling: ObservationCurrentness,
+): FamilyMovementReason[] {
+  const reasons: FamilyMovementReason[] = [];
+  if (ceiling === 'STALE') reasons.push('CURRENTNESS_CEILING_STALE');
+  if (ceiling === 'UNAVAILABLE') reasons.push('CURRENTNESS_CEILING_UNAVAILABLE');
+  if (movementClass === 'NO_EVALUABLE_CONTRACT') reasons.push('NO_EVALUABLE_CONTRACT');
+  if (
+    previous.sourceSha !== null &&
+    current.sourceSha !== null &&
+    previous.sourceSha !== current.sourceSha
+  ) {
+    reasons.push('SOURCE_SHA_MOVED');
+  }
+  if (previous.evidenceDigest !== null && current.evidenceDigest !== null) {
+    reasons.push(
+      previous.evidenceDigest === current.evidenceDigest
+        ? 'EVIDENCE_DIGEST_IDENTICAL'
+        : 'EVIDENCE_DIGEST_CHANGED',
+    );
+  } else if (previous.evidenceDigest !== null) {
+    reasons.push('EVIDENCE_DIGEST_LOST');
+  } else if (current.evidenceDigest !== null) {
+    reasons.push('EVIDENCE_DIGEST_GAINED');
+  }
+  if (
+    previous.derivationVersion !== null &&
+    current.derivationVersion !== null &&
+    previous.derivationVersion !== current.derivationVersion
+  ) {
+    reasons.push('DERIVATION_VERSION_CHANGED');
+  }
+  return reasons;
+}
+
+/**
+ * THE downstream-facing composed entry: classify one (previous, current)
+ * family observation pair and emit the privacy-safe movement record other
+ * systems consume WITHOUT duplicating any logic — ids + classification +
+ * bounded reasons only. Stale/unavailable ceilings stay absolute (a capped
+ * pair is never certified stable or current); malformed input fails closed
+ * through the same normalized-constructor path as every other surface.
+ */
+export function observeFamilyMovement(
+  targetId: string,
+  familyId: string,
+  previous: SourceContractObservation,
+  current: SourceContractObservation,
+): FamilyMovementRecord {
+  if (typeof targetId !== 'string' || targetId.length === 0) {
+    throw new Error('MOVEMENT_INVALID_TARGET_ID:family');
+  }
+  if (typeof familyId !== 'string' || familyId.length === 0) {
+    throw new Error('MOVEMENT_INVALID_FAMILY_ID');
+  }
+  // Caller-supplied id text travels into the emitted record; screen it like
+  // every other free-text surface.
+  screenText('familyId', familyId);
+
+  const classification = classifySourceContractMovement({ previous, current });
+  if (classification.targetId !== targetId) {
+    throw new Error('MOVEMENT_TARGET_MISMATCH');
+  }
+
+  return {
+    movementVersion: SOURCE_CONTRACT_MOVEMENT_VERSION,
+    targetId,
+    familyId,
+    movementClass: classification.movementClass,
+    driftClass: classification.drift.driftClass,
+    currentnessCeiling: classification.currentnessCeiling,
+    overallCategory: unifiedFromMovementClass(classification.movementClass, { targetId }).category,
+    reasons: familyMovementReasons(
+      classification.previous,
+      classification.current,
+      classification.movementClass,
+      classification.currentnessCeiling,
+    ),
   };
 }
