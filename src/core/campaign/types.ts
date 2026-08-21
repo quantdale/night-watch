@@ -525,7 +525,7 @@ export interface CampaignMorningBrief {
 export interface CandidateLifecycleRecordShape {
   readonly lifecycleVersion: 'nightwatch.candidate-lifecycle.private.v1';
   readonly variant: 'PROTOCOL_ONLY' | 'SEMANTIC';
-  readonly state: 'OBSERVED' | 'ADMITTED' | 'REPRODUCED' | 'MINIMIZED' | 'UNCHANGED' | 'TRIAGED' | 'DOSSIER_READY' | 'REJECTED' | 'UNRESOLVED';
+  readonly state: 'OBSERVED' | 'ADMITTED' | 'REPRODUCED' | 'MINIMIZED' | 'CLUSTERED' | 'UNCHANGED' | 'TRIAGED' | 'DOSSIER_READY' | 'REJECTED' | 'UNRESOLVED';
   readonly transitionCount: number;
   readonly lastReasonCode: string | null;
 }

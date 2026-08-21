@@ -644,7 +644,9 @@ export class CampaignOrchestrator {
   //   minimization unchanged (status UNCHANGED)     => KEEP_UNCHANGED       REPRODUCED -> UNCHANGED
   //   minimization NO_REPRODUCTION / INVALID_ORIGINAL / BOUNDED_BUDGET_EXHAUSTED
   //                                                 => FAIL_REPRODUCTION    REPRODUCED -> UNRESOLVED
-  //   triage pipeline completed                     => COMPLETE_TRIAGE      MINIMIZED|UNCHANGED -> TRIAGED
+  //   triage cluster formed (Phase 15P A05 r2)      => CLUSTERED 'TRIAGE_CLUSTER_FORMED'
+  //                                                                         MINIMIZED -> CLUSTERED
+  //   triage pipeline completed                     => COMPLETE_TRIAGE      MINIMIZED|CLUSTERED|UNCHANGED -> TRIAGED
   //   dossier READY (v1 or v2)                      => MARK_DOSSIER_READY   TRIAGED -> DOSSIER_READY
   //   dossier v2 UNRESOLVED                         => CLASSIFY_UNRESOLVED 'DOSSIER_UNRESOLVED'
   //   error after admission, before minimization    => FAIL_REPRODUCTION 'REPRODUCTION_FAILED'
@@ -1262,6 +1264,10 @@ export class CampaignOrchestrator {
         const reachedTriage = triaged.minimization.status === 'MINIMIZED' || triaged.minimization.status === 'UNCHANGED';
         if (triaged.minimization.status === 'MINIMIZED') {
           this.transitionClusterLifecycle(cluster.clusterId, 'APPLY_MINIMIZATION');
+          // Phase 15P A05 r2: canonical path forms the triage cluster explicitly
+          // before triage completes; the direct MINIMIZED -> COMPLETE_TRIAGE edge
+          // stays legal for in-flight/persisted records.
+          this.transitionClusterLifecycle(cluster.clusterId, 'CLUSTERED', 'TRIAGE_CLUSTER_FORMED');
           this.transitionClusterLifecycle(cluster.clusterId, 'COMPLETE_TRIAGE');
         } else if (triaged.minimization.status === 'UNCHANGED') {
           this.transitionClusterLifecycle(cluster.clusterId, 'KEEP_UNCHANGED');
@@ -1376,9 +1382,9 @@ export class CampaignOrchestrator {
         this.failReproductionIfLegal(cluster.clusterId, 'REPRODUCTION_FAILED');
         // Phase 15P (A05): the queue loop always ends in a stop below, so any
         // record failReproductionIfLegal could not touch (MINIMIZED /
-        // UNCHANGED / TRIAGED) is closed at a terminal state carrying the
-        // safe error code — never left ambiguous. Resumable interruptions
-        // returned above and keep their truthful mid-pipeline state.
+        // CLUSTERED / UNCHANGED / TRIAGED) is closed at a terminal state
+        // carrying the safe error code — never left ambiguous. Resumable
+        // interruptions returned above and keep their truthful mid-pipeline state.
         this.closeOnGateFailure(cluster.clusterId, code);
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...new Set([...this.state.unresolved, code])] };
         this.checkpoint();
