@@ -68,7 +68,8 @@ import { validateCampaignCandidateRecordArtifact } from './candidateRecordValida
 import { validateReplayRecordArtifact } from './replayRecordValidation';
 import { validateMinimizationResultArtifact } from './minimizationValidation';
 import { validateProjectHealthReportArtifact } from './projectHealthValidation';
-import { validateReservedArtifactKind } from './replayEnvelopeRegistration';
+import { validateReplayResultEnvelope } from '../triage/replayEnvelope';
+import { registerReplayResultEnvelopeValidator, validateReservedArtifactKind } from './replayEnvelopeRegistration';
 
 export type {
   ArtifactKind,
@@ -197,6 +198,17 @@ const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.fr
   'project-health-report': (value) => {
     validateProjectHealthReportArtifact(value);
   },
+});
+
+// The reserved `replay-result-envelope` artifact kind validates through the
+// owning module's strict parser (triage/replayEnvelope), registered here once
+// at module load. The registration slot's throw-based contract is bridged from
+// the parser's result object exactly like the static 'replay-plan' kind
+// bridges its validator; unregistered, the slot fails closed with
+// ARTIFACT_KIND_RESERVED (see replayEnvelopeRegistration).
+registerReplayResultEnvelopeValidator((value: unknown): void => {
+  const result = validateReplayResultEnvelope(value);
+  if (!result.valid) throw new Error(`ARTIFACT_REPLAY_ENVELOPE_INVALID:${result.reason}`);
 });
 
 /**

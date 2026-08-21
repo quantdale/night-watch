@@ -28,6 +28,7 @@ import {
   type SemanticTriageEvidence,
 } from './semanticTriageEvidence';
 import { rankSemanticConfidence } from './semanticConfidence';
+import { DOSSIER_READINESS_CRITICAL_REASON_CODES } from '../../oracles/expectations/lifecycle/triageResultVocabulary';
 
 export const DOSSIER_VERSION_V2 = 'nightwatch.bug-dossier.private.v2' as const;
 
@@ -234,18 +235,10 @@ export function isReadySemanticDossier(input: BugDossierV2Input): { ready: boole
     // of derived enums (defense in depth). Permanent scope facts
     // (DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER)
     // are not readiness gaps and never block here.
-    const READINESS_CRITICAL_CODES: ReadonlySet<string> = new Set([
-      'EXACT_REPLAY_REQUIRED',
-      'SOURCE_CURRENTNESS_UNRESOLVED',
-      'SEMANTIC_EXPECTATION_UNRESOLVED',
-      'PARTIAL_COLLECTION_COVERAGE',
-      'SAFETY_PRIVACY_NONZERO',
-      'KNOWN_FALSE_POSITIVE_PRESENT',
-      'ORACLE_RELIABILITY_UNRESOLVED',
-      'SEMANTIC_IDENTITY_MISSING',
-      'REPLAY_FINGERPRINT_MISMATCH',
-      'COVERAGE_STATE_UNRESOLVED',
-    ]);
+    // Phase 15P A16 convergence: the previously re-inlined private set is
+    // re-pointed to the canonical roster owned by triageResultVocabulary.ts
+    // (membership was verified equal at the convergence round).
+    const READINESS_CRITICAL_CODES: ReadonlySet<string> = new Set<string>(DOSSIER_READINESS_CRITICAL_REASON_CODES);
     const declaredGap = [...(input.missingEvidence ?? [])].filter((code) => READINESS_CRITICAL_CODES.has(code)).sort()[0];
     if (declaredGap !== undefined) return { ready: false, reason: declaredGap };
   } else {
