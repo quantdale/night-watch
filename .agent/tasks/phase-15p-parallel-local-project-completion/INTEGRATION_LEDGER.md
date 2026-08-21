@@ -16,6 +16,10 @@ committed, and pushed. Never pre-filled.
 | 6 | A06 | a0bf5f1d6b7b1227437696e68c74d9ec60bdb190 (swarm/a06-replay-binding) | 9cafd18 | none | wave 2 green |
 | 7 | A07 | 52870ba (swarm/a07-minimality-truth) | 714dee9 | none | wave 2 green |
 | 8 | A09 | aadfe9b596f0356e1a277cf51f3fa0588f9f1bc9 (swarm/a09-checkpoint-resume) | dbd2397d52b12d51c8fdf478c1d299cca5f9be2f | orchestrator.ts: one hunk — kept A05 closeOnGateFailure AND A09 set-idempotent unresolved append (semantically complementary) | wave 2 green |
+| 9 | A08 | dfdfd24d0f8e9b60c1a5f7ec2f3f9c1e21a44ba2 (swarm/a08-triage-dossier) | 2b5f79d4a31e59369cdae6497e9e249d0a0f8d5c | none | wave 3 green |
+| 10 | A10 | 08785dc8065013e2042a22e36461d285911c82a2 (swarm/a10-local-readiness) | 763226d5b7ac289bc8ed7b3e597ff46c5049657f | none | wave 3 green |
+| 11 | A11 | 37d7a85f083e1779b9a722a0718be52055c28fd4 (swarm/a11-artifact-validation) | fe8025f6da9a3dae6fb018b581818bc7571c297d | none (node:crypto createHash reviewed — same established pattern as src/core/identity/canonicalDigest.ts, deterministic hashing only) | wave 3 green |
+| 12 | A12 | e519881fb28aed8f0ef46f8ac5a3ef28a0725045 (swarm/a12-project-snapshot) | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 | none | wave 3 green |
 
 ## Rejected patches
 
@@ -29,5 +33,5 @@ committed, and pushed. Never pre-filled.
 |---|---|---|---|---|---|
 | 1 | A01 A02 A03 A04 | 417d187cb13de98db611c4f2412f94fe62a9daab (+ docs commit after) | typecheck PASS; git diff --check PASS; focused foundation suites (4 new + 5 compat) 190 passed / 0 failed; privacy/authority diff sweep clean | yes | yes |
 | 2 | A05 A06 A07 A09 | dbd2397d52b12d51c8fdf478c1d299cca5f9be2f (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 212 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; one semantic conflict (A05×A09 orchestrator.ts) resolved keeping both behaviors | yes | yes |
-| 3 | A08 A10 A11 A12 | not yet integrated | — | no | — |
+| 3 | A08 A10 A11 A12 | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 221 passed / 0 failed; conflict-free; privacy/authority sweep clean (one node:crypto use verified against canonicalDigest precedent) | yes | yes |
 | 4 | A13 A14 A15 A16 | not yet started | — | no | — |

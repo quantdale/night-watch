@@ -6,8 +6,8 @@ Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
 Status: IN_PROGRESS
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: dbd2397d52b12d51c8fdf478c1d299cca5f9be2f
-Last substantive checkpoint SHA: dbd2397d52b12d51c8fdf478c1d299cca5f9be2f
+Last validated implementation SHA: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
+Last substantive checkpoint SHA: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -35,10 +35,11 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-M3 WAVE 3 — integrate the delivered triage/operational patches A08 (cluster/
-confidence/dossier pipeline), A10 (local readiness API), A11 (artifact
-validation facade), A12 (project snapshot + diff) in dependency order, run
-wave validation, record evidence, push.
+M4 WAVE 4 — launch the convergence sub-agents A13 (privacy/authority by
+construction), A14 (synthetic corpus/adversarial matrix), A15 (compatibility/
+dead-code/version convergence) over the integrated waves 1–3 tree, integrate
+their patches, then A16 (release-candidate rehearsal) last; run wave
+validation, record evidence, push.
 
 ## Completed Milestones
 
@@ -63,18 +64,23 @@ wave validation, record evidence, push.
   resolved keeping both A05 gate-closure and A09 ledger idempotence);
   typecheck PASS; git diff --check PASS; focused suites 212 passed /
   0 failed; campaign:synthetic 27 passed / 0 failed.
+- M3 WAVE 3: COMPLETE at `7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797` —
+  A08+A10+A11+A12 cherry-picked conflict-free; typecheck PASS;
+  git diff --check PASS; focused suites (4 new + 8 compat) 221 passed /
+  0 failed; node:crypto use in A11 verified against canonicalDigest precedent.
 
 ## Work In Progress
 
-M3 WAVE 3: delivered patches A08/A10/A11/A12 reviewed via handoffs; ledger
-rows updated; cherry-pick + wave validation next.
+M4 WAVE 4: A13/A14/A15 sub-agent prompts being issued over the integrated
+waves 1–3 tree; A16 rehearsal follows their integration.
 
 ## Exact Next Action
 
-Cherry-pick A08 (`dfdfd24`), A10 (`08785dc`), A11 (`37d7a85`), A12
-(`e519881`) onto main in that order, resolve any conflicts semantically, run
-Wave-3 validation (typecheck, focused triage/dossier/tooling/schema suites,
-git diff --check), update ledgers, commit docs, push fast-forward.
+Create worktrees for A13/A14/A15 off current main, launch them, integrate
+their patches with Wave-4 validation (typecheck, hardening:check, focused
+privacy/authority/adversarial/integration tests, campaign:synthetic,
+git diff --check), then brief A16 for the read-only cross-examination and the
+synthetic release-candidate rehearsal.
 
 ## Files Changed
 
@@ -115,6 +121,10 @@ Wave checkpoints append here and in INTEGRATION_LEDGER.md as they land.
   Gates + phase15pReplayBinding + phase15pMinimalityTruth +
   phase15pCheckpointDrift + 8 compat suites = 212 passed, 0 failed;
   npm run campaign:synthetic = 27 passed, 0 failed.
+- WAVE 3 at `7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797`: npm run typecheck
+  PASS; git diff --check PASS; focused suites — phase15pTriageDossierPipeline
+  + phase15pLocalReadiness + phase15pArtifactValidation +
+  phase15pProjectSnapshot + 8 compat suites = 221 passed, 0 failed.
 - Sub-agent isolated-worktree raw counts (pre-integration): A01 14+92;
   A02 24+163; A03 30+77; A04 30+155; A05 23+122; A06 41+143; A07 17+51;
   A08 20+167; A09 17+44; A10 21+32; A11 23+35; A12 28+41 — all passed / 0 failed.
