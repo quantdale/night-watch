@@ -35,20 +35,23 @@ export type ResourceLifecycleState =
 
 export type ResourceImpact = 'BOOTSTRAP' | 'KNOWN_READ' | 'ASSET' | 'OPTIONAL' | 'BACKGROUND' | 'OTHER';
 
-export interface ResourceRoleInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ResourceRoleInput {
   url: string;
   resourceType: string;
   endpointClassification?: EndpointSemanticClassification | null;
   targetOrigin?: string;
 }
 
-export interface ResourceStatusOracleInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ResourceStatusOracleInput {
   status: number;
   role: ResourceRole;
   url: string;
 }
 
-export interface ResourceStatusOracleResult {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ResourceStatusOracleResult {
   type: 'unexpected-status';
   severity: 'error' | 'warn';
   oracleSeverity: 'anomaly';
@@ -59,7 +62,8 @@ export interface ResourceStatusOracleResult {
   message: string;
 }
 
-export interface ContentTypeOracleResult {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ContentTypeOracleResult {
   type: 'wrong-content-type';
   severity: 'error' | 'warn';
   oracleSeverity: 'anomaly';

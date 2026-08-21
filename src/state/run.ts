@@ -10,7 +10,8 @@
 import type { RunEvent } from '../core/evidence/types';
 
 /** Sanitized reasons that can make the direct auth runner stop HUMAN_WAIT. */
-export const SAFETY_MONITOR_REASONS = [
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+const SAFETY_MONITOR_REASONS = [
   'PROXY_LIVENESS_FAILED',
   'PROXY_PROCESS_EXITED',
   'BROWSER_DISCONNECTED',
@@ -42,10 +43,12 @@ export interface SafetyMonitorDiagnostic {
   issueCategory?: string;
 }
 
-export type MonitorOracleCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type MonitorOracleCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
 
 /** Sanitized oracle trigger metadata; no URL, body, DOM, or exception text. */
-export interface MonitorOracleObservation {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface MonitorOracleObservation {
   oracleId: string;
   severity: 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
   anomalyClass: string;

@@ -18,9 +18,11 @@ import {
   type SemanticClassification,
 } from '../safety/types';
 
-export type DestinationCategory = 'EXPECTED' | 'NEW_BUT_VERIFIED' | 'BLOCKED' | 'UNRESOLVED';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type DestinationCategory = 'EXPECTED' | 'NEW_BUT_VERIFIED' | 'BLOCKED' | 'UNRESOLVED';
 
-export interface DestinationManifestEntry {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface DestinationManifestEntry {
   hostname: string;
   protocol: string;
   environmentClassification: string;

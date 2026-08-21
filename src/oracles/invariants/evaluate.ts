@@ -21,6 +21,7 @@
 
 import type { ProjectionContext } from '../projections/identity';
 import type { ProjectionNode, SemanticProjection } from '../projections/types';
+import { SEMANTIC_PROJECTION_VERSION } from '../projections/types'; // Phase 15P A15: single owner
 import { evaluateNumericRelation } from '../projections/numeric';
 import { semanticStateEquals } from '../projections/shape';
 import type {
@@ -41,7 +42,8 @@ function arrayNode(node: ProjectionNode | undefined): ProjectionNode | undefined
 
 /** Envelope classification from a projection root using the contract's
  *  success/error field vocabulary (SPEC §36). */
-export function classifyEnvelope(
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function classifyEnvelope(
   root: ProjectionNode,
   successField: SafePath,
   errorField: SafePath,
@@ -272,7 +274,7 @@ export function evaluateInvariant(
       for (let i = 0; i < items.length; i++) {
         const item = items[i]!;
         // Evaluate the item invariant with the item as root
-        const itemProjection: SemanticProjection = { schemaVersion: 'nightwatch.semantic-projection.v1', root: item };
+        const itemProjection: SemanticProjection = { schemaVersion: SEMANTIC_PROJECTION_VERSION, root: item };
         const itemInvariantDef = buildItemInvariant(invariant, invariant.itemRelativePath);
         const itemResult = evaluateInvariant(itemInvariantDef, [itemProjection], ctx);
 

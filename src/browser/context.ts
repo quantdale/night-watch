@@ -60,7 +60,9 @@ import {
   type EndpointSemanticRule,
 } from '../core/safety/endpointSemantics';
 
-export interface NightwatchContextOptions {
+// Phase 15P A15 convergence: options shape is module-private; callers use
+// createNightwatchContext with object literals (no external type refs remain).
+interface NightwatchContextOptions {
   env: EnvironmentConfig;
   recorder: RunRecorder;
   uiBaseUrl: string;

@@ -4,7 +4,8 @@ import {
   type RepoDefinition,
 } from './types';
 
-export const RIPPLE_JOURNEY_CONTRACT_VERSION = 'phase2c.v1';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+const RIPPLE_JOURNEY_CONTRACT_VERSION = 'phase2c.v1';
 
 export const RIPPLE_REPOSITORIES: readonly RepoDefinition[] = [
   {

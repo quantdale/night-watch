@@ -32,7 +32,9 @@ import { isBrowserBackgroundClassification, type BrowserBackgroundClassification
 import type { RunRecorder } from '../../core/evidence/runRecorder';
 import type { RunMonitor } from '../../state/run';
 
-export interface FetchGuardOptions {
+// Phase 15P A15 convergence: guard options are module-private (callers use
+// installFetchGuard with object literals; no external type references remain).
+interface FetchGuardOptions {
   policy: OutboundPolicy;
   recorder: RunRecorder;
   monitor: RunMonitor;

@@ -74,7 +74,8 @@ function state(routeClass: string, view: string, availableActionIds: readonly st
   };
 }
 
-export interface SyntheticFixtureOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface SyntheticFixtureOptions {
   readonly mode?: 'safe' | 'mutation' | 'unknown' | 'new-host' | 'runtime-failure' | 'route-escape';
   readonly unavailable?: boolean;
 }

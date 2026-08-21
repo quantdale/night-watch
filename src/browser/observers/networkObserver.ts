@@ -134,7 +134,8 @@ export interface NetworkObserver {
   requestCount(): number;
 }
 
-export interface ResourceObservation {
+// Phase 15P A15 convergence: ledger shape is module-private.
+interface ResourceObservation {
   role: ResourceRole;
   state: ResourceLifecycleState;
   method: string;

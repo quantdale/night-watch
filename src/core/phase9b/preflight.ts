@@ -15,9 +15,8 @@
 
 import type { Phase9bFreshnessVerdict } from './freshness';
 
-export const PHASE_9B_PREFLIGHT_VERSION = 'nightwatch.phase9b-preflight.v1' as const;
-
-export interface Phase9bPreflightFacts {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase9bPreflightFacts {
   /** Nightwatch worktree clean (git status --porcelain empty). */
   readonly nightwatchHeadClean: boolean;
   /** Exact-head implementation CI completed successfully. */
@@ -48,13 +47,15 @@ export interface Phase9bPreflightFacts {
   readonly screenshotsEnabled: boolean;
 }
 
-export interface Phase9bPreflightCheck {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase9bPreflightCheck {
   readonly name: string;
   readonly status: 'PASS' | 'FAIL';
   readonly detail: string;
 }
 
-export interface Phase9bPreflightResult {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase9bPreflightResult {
   readonly pass: boolean;
   readonly checks: readonly Phase9bPreflightCheck[];
 }
@@ -106,7 +107,8 @@ export function evaluatePhase9bPreflight(facts: Phase9bPreflightFacts): Phase9bP
 }
 
 /** Throw a safe, precise error naming only the failing check names/details. */
-export class Phase9bPreflightError extends Error {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+class Phase9bPreflightError extends Error {
   constructor(result: Phase9bPreflightResult) {
     const failures = result.checks
       .filter((item) => item.status === 'FAIL')

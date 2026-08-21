@@ -24,9 +24,10 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 
-export type FixtureVariant = 'good' | 'negative' | 'safety' | 'auth';
+// Phase 15P A15 convergence: fixture shapes are module-private.
+type FixtureVariant = 'good' | 'negative' | 'safety' | 'auth';
 
-export interface FixtureRequest {
+interface FixtureRequest {
   method: string;
   url: string;
 }

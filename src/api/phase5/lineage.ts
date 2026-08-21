@@ -1,10 +1,12 @@
-import { RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from '../../core/changeIntelligence/map';
+import { DEPENDENCY_MAP_VERSION, RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from '../../core/changeIntelligence/map';
 import type { ChangedFile, RepoDefinition } from '../../core/changeIntelligence/types';
 import type { ApiOperation, JourneyLink } from './types';
 
-export type ApiStaleness = 'FRESH' | 'SOURCE_STALE' | 'REVIEW_REQUIRED';
+// Phase 15P A15 convergence: staleness/lineage shapes are module-private; no
+// external callers remain (grep-proven across src/tests/bin/corpus/config).
+type ApiStaleness = 'FRESH' | 'SOURCE_STALE' | 'REVIEW_REQUIRED';
 
-export interface ApiLineage {
+interface ApiLineage {
   operationId: string;
   journeyLinks: readonly JourneyLink[];
   sourceRepos: readonly string[];
@@ -52,7 +54,7 @@ export function evaluateApiLineage(operation: ApiOperation, repos: readonly Repo
     operationId: operation.operationId,
     journeyLinks: operation.journeyLinks,
     sourceRepos,
-    dependencyMapVersion: 'nightwatch.ripple-dependency-map.v1',
+    dependencyMapVersion: DEPENDENCY_MAP_VERSION,
     staleness: sourceStale ? 'SOURCE_STALE' : edgeStale ? 'REVIEW_REQUIRED' : 'FRESH',
     reasons,
   };

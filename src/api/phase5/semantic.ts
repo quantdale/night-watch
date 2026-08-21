@@ -21,7 +21,8 @@ import { evaluateSemanticResolution } from '../../oracles/semantic/hook';
 import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
 import type { RealSourceResolution } from '../../oracles/expectations/resolver';
 
-export type SemanticChannelStatus =
+// Phase 15P A15 convergence: semantic channel shapes are module-private.
+type SemanticChannelStatus =
   | 'PASS'
   | 'ANOMALY'
   | 'NOT_APPLICABLE'
@@ -34,7 +35,7 @@ export type SemanticChannelStatus =
   | 'NOT_EVALUATED'
   | 'PARTIAL_COVERAGE';
 
-export interface SemanticChannelResult {
+interface SemanticChannelResult {
   readonly status: SemanticChannelStatus;
   readonly findings: readonly import('../../oracles/semantic').SemanticOracleFinding[];
   /** Phase 9A.1: the safe evaluation receipt (null only when the semantic
@@ -43,12 +44,12 @@ export interface SemanticChannelResult {
   readonly notEvaluatedReason?: 'PROTOCOL_NOT_PASS';
 }
 
-export interface ComposedApiEvaluation {
+interface ComposedApiEvaluation {
   readonly protocol: ApiOracleObservation;
   readonly semantic: SemanticChannelResult;
 }
 
-export interface SemanticApiEvaluationInput {
+interface SemanticApiEvaluationInput {
   readonly operation: ApiOperation;
   readonly status: number;
   readonly headers: Readonly<Record<string, string | undefined>>;

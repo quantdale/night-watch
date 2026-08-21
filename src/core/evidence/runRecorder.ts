@@ -25,7 +25,8 @@ import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummar
 import { readProxyEvents, summarizeProxyEvents } from '../../proxy/events';
 import type { ProxyEvent, ProxyRuntimeState, ProxySummary } from '../../proxy/types';
 
-export interface RunRecorderOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface RunRecorderOptions {
   runId: string;
   environment: string;
   product: string;
@@ -43,7 +44,8 @@ export interface RunRecorderOptions {
   authenticated?: boolean;
 }
 
-export interface RecorderProxyOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface RecorderProxyOptions {
   state: ProxyRuntimeState;
   browserGuardsEnabled: boolean;
   onViolation?: (event: ProxyEvent, failureEvent: RunEvent) => void;

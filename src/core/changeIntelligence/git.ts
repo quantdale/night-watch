@@ -1,5 +1,4 @@
 import { spawnSync } from 'node:child_process';
-import crypto from 'node:crypto';
 import type {
   ChangeSet,
   ChangedFile,
@@ -110,7 +109,8 @@ function parseCommits(output: string): CommitMetadata[] {
   return commits.sort((a, b) => a.sha.localeCompare(b.sha));
 }
 
-export interface CollectOptions {
+// Phase 15P A15 convergence: collection option shapes are module-private.
+interface CollectOptions {
   repoPath: string;
   repoId: string;
   baseSha: string;
@@ -150,10 +150,6 @@ export function collectChangeset(options: CollectOptions): ChangeSet {
     deploymentStatus: 'DEPLOYMENT_STATUS_UNRESOLVED',
   };
   return { ...partial, changesetId: changesetId({ ...partial, selectorVersion: SELECTOR_VERSION }) };
-}
-
-export interface MultiRepoCollectionInput extends CollectOptions {
-  repoId: string;
 }
 
 export function combineChangesets(changesets: readonly ChangeSet[], generatedAt = new Date()): ChangeSet {
@@ -207,6 +203,3 @@ export function addDirtyDevelopmentShadow(changeset: ChangeSet, dirtyFiles: read
   return { ...partial, changesetId: changesetId(partial) };
 }
 
-export function committedChangesetIdentity(changeset: ChangeSet): string {
-  return crypto.createHash('sha256').update(JSON.stringify({ schemaVersion: changeset.schemaVersion, selectorVersion: changeset.selectorVersion, repoBaselines: changeset.repoBaselines, changedFiles: changeset.changedFiles })).digest('hex');
-}

@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import type { ApiFingerprintInput, ApiOperation, ApiOracleObservation, OracleResult } from './types';
 
-export const MAX_API_RESPONSE_BYTES = 2 * 1024 * 1024;
+// Phase 15P A15 convergence: byte limit is module-private (no external callers).
+const MAX_API_RESPONSE_BYTES = 2 * 1024 * 1024;
 
 export function statusClass(status: number): string {
   if (!Number.isInteger(status) || status < 0) return 'invalid';

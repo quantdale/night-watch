@@ -7,10 +7,11 @@
 // and only relation facts are emitted (SPEC §12, §22).
 // ---------------------------------------------------------------------------
 
-import type { InvariantKind, SemanticExpectation } from '../expectations/types';
+import type { InvariantKind } from '../expectations/types';
 import type { SemanticProjection } from '../projections/types';
 
-export type InvariantVerdict = 'PASS' | 'VIOLATED' | 'NOT_APPLICABLE' | 'INVALID_INPUT';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type InvariantVerdict = 'PASS' | 'VIOLATED' | 'NOT_APPLICABLE' | 'INVALID_INPUT';
 
 // ---------------------------------------------------------------------------
 // Phase 11: collection-wide coverage state (only present for
@@ -49,10 +50,6 @@ export type SemanticOutcome =
   | 'PROJECTION_LIMIT_EXCEEDED'
   | 'PARTIAL_COVERAGE';
 
-export interface SemanticExpectationEvaluation {
-  readonly expectation: SemanticExpectation;
-  readonly outcome: SemanticOutcome;
-  readonly invariantEvaluations: readonly InvariantEvaluation[];
-}
+// Phase 15P A15 convergence: retired unused SemanticExpectationEvaluation shape (zero references).
 
 export type { SemanticProjection };
