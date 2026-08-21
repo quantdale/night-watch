@@ -2,7 +2,9 @@
 // Nightwatch Phase 12A — semantic-aware categorical confidence.
 // Deterministic, no percentages, no learned scoring, no arbitrary weights.
 // HIGH is blocked by partial/stale/unavailable/non-reproduced/safety/privacy/
-// false-positive/missing-identity. Browser/API alone never HIGH.
+// false-positive/missing-identity, AND by any readiness-critical gap the
+// evidence itself declares in missingEvidence (structural ceiling, not
+// convention). Browser/API alone never HIGH.
 // Pure: no browser/network/fs/child-process/DB/AI/selfDev.
 // ---------------------------------------------------------------------------
 
@@ -77,6 +79,28 @@ export function rankSemanticConfidence(input: SemanticConfidenceInput): Semantic
   if (evidence.semanticOutcome !== 'ANOMALY' || evidence.receiptOutcome !== 'ANOMALY') {
     // Only push if not already blocked by more specific reason? Always block HIGH if not ANOMALY.
     blockers.push(blocker('NON_ANOMALY_OUTCOME'));
+  }
+  // Declared missing-evidence codes are structural ceilings, not conventions:
+  // an evidence record that itself declares a readiness-critical gap can never
+  // reach HIGH even when every enum field looks clean. Permanent scope facts
+  // (DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER,
+  // BROWSER_API_DIFFERENTIAL_UNAVAILABLE) deliberately do not block.
+  const DECLARED_MISSING_BLOCKERS: ReadonlyMap<string, string> = new Map([
+    ['EXACT_REPLAY_REQUIRED', 'EXACT_REPLAY_NOT_REPRODUCED'],
+    ['SOURCE_CURRENTNESS_UNRESOLVED', 'SOURCE_CURRENTNESS_UNRESOLVED'],
+    ['SEMANTIC_EXPECTATION_UNRESOLVED', 'NO_EXPECTATION'],
+    ['PARTIAL_COLLECTION_COVERAGE', 'PARTIAL_COVERAGE'],
+    ['MINIMIZATION_BUDGET_EXHAUSTED', 'MINIMIZATION_BUDGET_EXHAUSTED'],
+    ['SAFETY_PRIVACY_NONZERO', 'SAFETY_NONZERO'],
+    ['KNOWN_FALSE_POSITIVE_PRESENT', 'KNOWN_FALSE_POSITIVE'],
+    ['ORACLE_RELIABILITY_UNRESOLVED', 'ORACLE_RELIABILITY_UNRESOLVED'],
+    ['SEMANTIC_IDENTITY_MISSING', 'SEMANTIC_IDENTITY_MISSING'],
+    ['REPLAY_FINGERPRINT_MISMATCH', 'REPLAY_FINGERPRINT_MISMATCH'],
+    ['COVERAGE_STATE_UNRESOLVED', 'COVERAGE_STATE_UNRESOLVED'],
+  ]);
+  for (const code of evidence.missingEvidence) {
+    const mapped = DECLARED_MISSING_BLOCKERS.get(code);
+    if (mapped !== undefined) blockers.push(blocker(mapped));
   }
 
   // Deduplicate blockers deterministically

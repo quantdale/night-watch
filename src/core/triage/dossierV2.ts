@@ -184,7 +184,17 @@ export interface BugDossierV2Input {
   readonly oracleReliable?: boolean;
 }
 
-/** READY predicate for semantic dossiers — deterministic, categorical. */
+/**
+ * READY predicate for semantic dossiers — deterministic, categorical.
+ * READY requires the complete evidence set: exact replay reproduced with
+ * matching fingerprint, proven minimality with at least one minimal-sequence
+ * reproduction, current source, full-coverage ANOMALY outcome, clean
+ * safety/privacy, reliable oracle, no known false positive, and no
+ * readiness-critical gap declared at dossier or evidence level.
+ * (The semantic finding fingerprint and the protocol anomaly fingerprint are
+ * independent projections; byte equality between them is NOT required.)
+ * Strengthen-only: no rule here weakens an existing gate.
+ */
 export function isReadySemanticDossier(input: BugDossierV2Input): { ready: boolean; reason?: string } {
   const e = input.semanticTriageEvidence;
   const safetyClean = input.safetyClean ?? true;
@@ -215,10 +225,29 @@ export function isReadySemanticDossier(input: BugDossierV2Input): { ready: boole
     if (input.knownNightwatchDefect !== null) return { ready: false, reason: 'KNOWN_FALSE_POSITIVE_PRESENT' };
     if (!safetyClean || !privacyClean) return { ready: false, reason: 'SAFETY_PRIVACY_NONZERO' };
     if (!oracleReliable) return { ready: false, reason: 'ORACLE_RELIABILITY_UNRESOLVED' };
-    // Deterministic evidence contradiction: e.g. ANOMALY but minimality NONE with zero reproductions?
-    if (e.minimalityGuarantee === 'NONE' && e.minimalSequenceReproductions === 0) {
+    // Complete minimality evidence: a NONE guarantee or zero minimal-sequence
+    // reproductions can never back a READY semantic dossier.
+    if (e.minimalityGuarantee === 'NONE' || e.minimalSequenceReproductions < 1) {
       return { ready: false, reason: 'REPRODUCTION_EVIDENCE_MISSING' };
     }
+    // Declared readiness-critical gaps at dossier level block READY regardless
+    // of derived enums (defense in depth). Permanent scope facts
+    // (DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER)
+    // are not readiness gaps and never block here.
+    const READINESS_CRITICAL_CODES: ReadonlySet<string> = new Set([
+      'EXACT_REPLAY_REQUIRED',
+      'SOURCE_CURRENTNESS_UNRESOLVED',
+      'SEMANTIC_EXPECTATION_UNRESOLVED',
+      'PARTIAL_COLLECTION_COVERAGE',
+      'SAFETY_PRIVACY_NONZERO',
+      'KNOWN_FALSE_POSITIVE_PRESENT',
+      'ORACLE_RELIABILITY_UNRESOLVED',
+      'SEMANTIC_IDENTITY_MISSING',
+      'REPLAY_FINGERPRINT_MISMATCH',
+      'COVERAGE_STATE_UNRESOLVED',
+    ]);
+    const declaredGap = [...(input.missingEvidence ?? [])].filter((code) => READINESS_CRITICAL_CODES.has(code)).sort()[0];
+    if (declaredGap !== undefined) return { ready: false, reason: declaredGap };
   } else {
     // No semantic evidence: protocol-only dossier may still be READY if minimization reproduced and safety clean
     if (input.minimization.freshExactReplay !== 'REPRODUCED') return { ready: false, reason: 'EXACT_REPLAY_REQUIRED' };
