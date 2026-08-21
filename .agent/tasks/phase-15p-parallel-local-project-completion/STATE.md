@@ -6,8 +6,8 @@ Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
 Status: IN_PROGRESS
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: 417d187cb13de98db611c4f2412f94fe62a9daab
-Last substantive checkpoint SHA: 417d187cb13de98db611c4f2412f94fe62a9daab
+Last validated implementation SHA: dbd2397d52b12d51c8fdf478c1d299cca5f9be2f
+Last substantive checkpoint SHA: dbd2397d52b12d51c8fdf478c1d299cca5f9be2f
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -35,11 +35,10 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-M2 WAVE 2 — integrate the delivered campaign-runtime patches A05 (candidate
-lifecycle gates), A06 (replay binding seam), A07 (minimality truth), A09
-(checkpoint drift) in dependency order, run wave validation (typecheck,
-focused replay/minimization/campaign/checkpoint tests, campaign:synthetic,
-git diff --check), record evidence, push.
+M3 WAVE 3 — integrate the delivered triage/operational patches A08 (cluster/
+confidence/dossier pipeline), A10 (local readiness API), A11 (artifact
+validation facade), A12 (project snapshot + diff) in dependency order, run
+wave validation, record evidence, push.
 
 ## Completed Milestones
 
@@ -59,19 +58,23 @@ git diff --check), record evidence, push.
   A01+A02+A03+A04 cherry-picked conflict-free after full diff review and
   privacy/authority sweep; typecheck PASS; git diff --check PASS; focused
   foundation suites (4 new phase15p + 5 compat) 190 passed / 0 failed.
+- M2 WAVE 2: COMPLETE at `dbd2397d52b12d51c8fdf478c1d299cca5f9be2f` —
+  A05+A06+A07+A09 cherry-picked (one semantic conflict in orchestrator.ts
+  resolved keeping both A05 gate-closure and A09 ledger idempotence);
+  typecheck PASS; git diff --check PASS; focused suites 212 passed /
+  0 failed; campaign:synthetic 27 passed / 0 failed.
 
 ## Work In Progress
 
-M2 WAVE 2: delivered patches A05/A06/A07/A09 reviewed via handoffs; ledger
+M3 WAVE 3: delivered patches A08/A10/A11/A12 reviewed via handoffs; ledger
 rows updated; cherry-pick + wave validation next.
 
 ## Exact Next Action
 
-Cherry-pick A05 (`e4b4f5d`), A06 (`a0bf5f1`), A07 (`52870ba`), A09
-(`aadfe9b`) onto main in that order, resolve any conflicts semantically, run
-Wave-2 validation (typecheck, focused replay/minimization/campaign/checkpoint
-suites, campaign:synthetic, git diff --check), update ledgers, commit docs,
-push fast-forward.
+Cherry-pick A08 (`dfdfd24`), A10 (`08785dc`), A11 (`37d7a85`), A12
+(`e519881`) onto main in that order, resolve any conflicts semantically, run
+Wave-3 validation (typecheck, focused triage/dossier/tooling/schema suites,
+git diff --check), update ledgers, commit docs, push fast-forward.
 
 ## Files Changed
 
@@ -107,6 +110,11 @@ Wave checkpoints append here and in INTEGRATION_LEDGER.md as they land.
   PASS; git diff --check PASS; focused foundation suites — phase15pContract-
   Lifecycle + phase15pSemanticVocabulary + phase15pCurrentnessDrift +
   phase15pSchemaCoherence + 5 compat lifecycle suites = 190 passed, 0 failed.
+- WAVE 2 at `dbd2397d52b12d51c8fdf478c1d299cca5f9be2f`: npm run typecheck
+  PASS; git diff --check PASS; focused suites — phase15pCandidateLifecycle-
+  Gates + phase15pReplayBinding + phase15pMinimalityTruth +
+  phase15pCheckpointDrift + 8 compat suites = 212 passed, 0 failed;
+  npm run campaign:synthetic = 27 passed, 0 failed.
 - Sub-agent isolated-worktree raw counts (pre-integration): A01 14+92;
   A02 24+163; A03 30+77; A04 30+155; A05 23+122; A06 41+143; A07 17+51;
   A08 20+167; A09 17+44; A10 21+32; A11 23+35; A12 28+41 — all passed / 0 failed.
