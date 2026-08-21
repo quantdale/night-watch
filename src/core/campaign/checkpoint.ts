@@ -18,6 +18,7 @@ import {
   assertNonNegativeInteger,
   assertString,
   assertUniqueStrings,
+  isRuntimeRecord,
   requireRuntimeArray,
   requireRuntimeRecord,
   type RuntimeRecord,
@@ -31,6 +32,7 @@ import {
   type CampaignManifest,
   type CampaignPrivacyStatus,
   type CampaignSafetyVector,
+  type CampaignVersionFingerprint,
   type CampaignWorkKind,
   type CandidateLifecycleRecordShape,
 } from './types';
@@ -294,6 +296,96 @@ export function classifyCheckpointRuntimeContracts(checkpoint: CampaignCheckpoin
   const slots = ['candidateLifecycle', 'replayBinding', 'promotionResult'] as const;
   if (slots.some((slot) => versions[slot] !== CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED[slot])) return 'INCOMPATIBLE_FUTURE';
   return 'CURRENT_S2_CONTRACTS';
+}
+
+// ---------------------------------------------------------------------------
+// Phase 15P A09 — resume compatibility classification (additive, pure,
+// deterministic; no I/O, no persistence, no execution authority).
+//
+// validateCampaignCheckpoint / assertManifestCompatible remain the ONLY
+// enforcement authorities on the resume path; these helpers exist so callers
+// and tests can name WHICH version component drifted instead of seeing only
+// the first integrity error. Precedence below deliberately mirrors the
+// evaluation order of validateCampaignCheckpoint (schemaVersion, then
+// campaign identity, then Session-2 runtime contracts, then per-record
+// lifecycle versions), so the reported kind names the failure the strict
+// validator would surface first for the same input.
+// ---------------------------------------------------------------------------
+
+/**
+ * Slot-level drift between two runtime version fingerprints. Returns the
+ * sorted union-key slot names whose values differ; an empty result means the
+ * fingerprints are exactly equal. Total over extra/missing keys: a slot
+ * present on only one side is drifted.
+ */
+export function classifyVersionFingerprintDrift(current: CampaignVersionFingerprint, expected: CampaignVersionFingerprint): readonly string[] {
+  const left = current as unknown as RuntimeRecord;
+  const right = expected as unknown as RuntimeRecord;
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])]
+    .filter((slot) => left[slot] !== right[slot])
+    .sort((a, b) => a.localeCompare(b));
+}
+
+export type CheckpointResumeDriftKind =
+  | 'NONE'
+  | 'CHECKPOINT_SCHEMA_VERSION_DRIFT'
+  | 'CAMPAIGN_IDENTITY_DRIFT'
+  | 'CHECKPOINT_RUNTIME_CONTRACT_VERSION_DRIFT'
+  | 'CANDIDATE_LIFECYCLE_VERSION_DRIFT';
+
+export interface CheckpointResumeDriftReport {
+  readonly compatible: boolean;
+  readonly kind: CheckpointResumeDriftKind;
+  /** Sorted deterministic field/slot names that caused the classification. */
+  readonly driftedFields: readonly string[];
+}
+
+const RESUME_CONTRACT_SLOTS = ['candidateLifecycle', 'replayBinding', 'promotionResult'] as const;
+
+function incompatibleReport(kind: CheckpointResumeDriftKind, driftedFields: readonly string[]): CheckpointResumeDriftReport {
+  return { compatible: false, kind, driftedFields: [...driftedFields].sort((a, b) => a.localeCompare(b)) };
+}
+
+/**
+ * Total, deterministic classification of every persisted version component
+ * that participates in the resume decision:
+ * - checkpoint schema version (`schemaVersion`);
+ * - campaign identity (`campaignId` + `manifestFingerprint`), which
+ *   transitively binds the whole manifest version fingerprint (campaign
+ *   fingerprint, replay-plan, semantic bundle, dossier v1/v2, and semantic
+ *   expectation derivation versions all digest into it);
+ * - Session-2 runtime contract versions (candidateLifecycle, replayBinding,
+ *   promotionResult);
+ * - per-record candidate lifecycle versions.
+ *
+ * Absent Session-2 fields stay LEGACY-compatible here exactly as in
+ * validateCampaignCheckpoint. Malformed version-bearing shapes are classified
+ * as drift of their container field, never as compatible.
+ */
+export function classifyCheckpointResumeDrift(checkpoint: unknown, manifest: Pick<CampaignManifest, 'campaignId' | 'manifestFingerprint'>): CheckpointResumeDriftReport {
+  if (!isRuntimeRecord(checkpoint) || checkpoint.schemaVersion !== CAMPAIGN_CHECKPOINT_VERSION) {
+    return incompatibleReport('CHECKPOINT_SCHEMA_VERSION_DRIFT', ['schemaVersion']);
+  }
+  const identity: string[] = [];
+  if (checkpoint.campaignId !== manifest.campaignId) identity.push('campaignId');
+  if (checkpoint.manifestFingerprint !== manifest.manifestFingerprint) identity.push('manifestFingerprint');
+  if (identity.length > 0) return incompatibleReport('CAMPAIGN_IDENTITY_DRIFT', identity);
+  const versions = checkpoint.runtimeContractVersions;
+  if (versions !== undefined) {
+    if (!isRuntimeRecord(versions)) return incompatibleReport('CHECKPOINT_RUNTIME_CONTRACT_VERSION_DRIFT', ['runtimeContractVersions']);
+    const driftedSlots = RESUME_CONTRACT_SLOTS.filter((slot) => versions[slot] !== CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED[slot]);
+    if (driftedSlots.length > 0) return incompatibleReport('CHECKPOINT_RUNTIME_CONTRACT_VERSION_DRIFT', driftedSlots);
+  }
+  const lifecycles = checkpoint.candidateLifecycles;
+  if (lifecycles !== undefined) {
+    if (!isRuntimeRecord(lifecycles)) return incompatibleReport('CANDIDATE_LIFECYCLE_VERSION_DRIFT', ['candidateLifecycles']);
+    const expectedLifecycleVersion = CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED.candidateLifecycle;
+    const driftedRecords = Object.entries(lifecycles)
+      .filter(([, record]) => !isRuntimeRecord(record) || record.lifecycleVersion !== expectedLifecycleVersion)
+      .map(([clusterId]) => clusterId);
+    if (driftedRecords.length > 0) return incompatibleReport('CANDIDATE_LIFECYCLE_VERSION_DRIFT', driftedRecords);
+  }
+  return { compatible: true, kind: 'NONE', driftedFields: [] };
 }
 
 export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, manifest: CampaignManifest): asserts value is CampaignCheckpoint {

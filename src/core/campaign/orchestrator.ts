@@ -894,7 +894,10 @@ export class CampaignOrchestrator {
     const ledger = this.state.executionLedger.map((record) => record.state === 'PENDING' || record.state === 'RUNNING'
       ? { ...record, state: 'SKIPPED' as const, reasonCode }
       : record);
-    this.state = { ...this.state, executionLedger: ledger, unresolved: [...this.state.unresolved, reasonCode] };
+    // unresolved is a set-valued field: repeated stops across resumes (e.g. a
+    // second interrupted resume, or the same preflight code after restart)
+    // must stay idempotent or the checkpoint validator rejects the write.
+    this.state = { ...this.state, executionLedger: ledger, unresolved: [...new Set([...this.state.unresolved, reasonCode])] };
   }
 
   private async executeWorkItem(item: CampaignWorkItem): Promise<{ readonly stopped: { resultClass: CampaignResultClass; stopReason: CampaignCheckpoint['stopReason'] } | null }> {
@@ -978,7 +981,7 @@ export class CampaignOrchestrator {
       const code = safeErrorCode(error);
       if (error instanceof CampaignProcessInterruptionError) {
         this.updateRecord(item.workItemId, { state: 'REPLAY_REQUIRED', reasonCode: code, executionGuarantee: 'REPLAY_REQUIRED' });
-        this.state = { ...this.state, campaignStatus: 'INCOMPLETE_PROCESS_INTERRUPTION', stopReason: 'PROCESS_INTERRUPTION', nextExactAction: `replay ${item.workItemId}`, unresolved: [...this.state.unresolved, 'PROCESS_INTERRUPTION'] };
+        this.state = { ...this.state, campaignStatus: 'INCOMPLETE_PROCESS_INTERRUPTION', stopReason: 'PROCESS_INTERRUPTION', nextExactAction: `replay ${item.workItemId}`, unresolved: [...new Set([...this.state.unresolved, 'PROCESS_INTERRUPTION'])] };
         this.checkpoint();
         return { stopped: { resultClass: 'INCOMPLETE_PROCESS_INTERRUPTION', stopReason: 'PROCESS_INTERRUPTION' } };
       }
@@ -1041,7 +1044,7 @@ export class CampaignOrchestrator {
           ...this.state,
           reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === queueItem.clusterId ? { ...item, state: 'BLOCKED', reasonCode: 'REPRODUCTION_ADAPTER_UNAVAILABLE' } : item),
           minimizationQueue: this.state.minimizationQueue.filter((id) => id !== queueItem.clusterId),
-          unresolved: [...this.state.unresolved, `${queueItem.clusterId}:REPRODUCTION_ADAPTER_UNAVAILABLE`],
+          unresolved: [...new Set([...this.state.unresolved, `${queueItem.clusterId}:REPRODUCTION_ADAPTER_UNAVAILABLE`])],
         };
         this.promotionStop = { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' };
         this.checkpoint();
@@ -1113,7 +1116,7 @@ export class CampaignOrchestrator {
             ...this.state,
             reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: 'MINIMIZATION_BUDGET_UNAVAILABLE' } : item),
             minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId),
-            unresolved: [...this.state.unresolved, reason],
+            unresolved: [...new Set([...this.state.unresolved, reason])],
           };
           this.promotionStop = { resultClass: 'PARTIAL_BUDGET_EXHAUSTED', stopReason: 'BUDGET_EXHAUSTED' };
           this.checkpoint();
@@ -1293,7 +1296,7 @@ export class CampaignOrchestrator {
             campaignStatus: 'INCOMPLETE_PROCESS_INTERRUPTION',
             stopReason: 'PROCESS_INTERRUPTION',
             nextExactAction: `resume reproduction ${cluster.clusterId}`,
-            unresolved: [...this.state.unresolved, 'PROCESS_INTERRUPTION'],
+            unresolved: [...new Set([...this.state.unresolved, 'PROCESS_INTERRUPTION'])],
           };
           this.interruptionRequested = true;
           this.checkpoint();
@@ -1302,7 +1305,7 @@ export class CampaignOrchestrator {
         // T1: a failure before minimization classifies the candidate
         // UNRESOLVED; later failures keep the truthful mid-pipeline state.
         this.failReproductionIfLegal(cluster.clusterId, 'REPRODUCTION_FAILED');
-        this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...this.state.unresolved, code] };
+        this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...new Set([...this.state.unresolved, code])] };
         this.checkpoint();
         if (code === 'AUTH_BLOCKED') {
           this.markPendingSkipped(code);
@@ -1654,7 +1657,7 @@ export class CampaignOrchestrator {
       } catch (error) {
         const code = safeErrorCode(error);
         this.updateRecord(item.workItemId, { state: error instanceof CampaignProcessInterruptionError ? 'REPLAY_REQUIRED' : 'BLOCKED', reasonCode: code, executionGuarantee: 'REPLAY_REQUIRED' });
-        this.state = { ...this.state, nextExactAction: `replay ${item.workItemId}`, unresolved: [...this.state.unresolved, code] };
+        this.state = { ...this.state, nextExactAction: `replay ${item.workItemId}`, unresolved: [...new Set([...this.state.unresolved, code])] };
         this.checkpoint();
         if (code === 'OWNER_POLICY_BLOCKED') return await this.finalize('ABORTED_OWNER_POLICY', 'OWNER_POLICY_BLOCKED');
         if (code === 'AUTH_BLOCKED') return await this.finalize('PARTIAL_AUTH_BLOCKED', 'AUTH_BLOCKED');
@@ -1688,7 +1691,7 @@ export class CampaignOrchestrator {
     const globalPreflight = await this.preflight(null);
     if (!globalPreflight.passed) {
       const stop = this.stopForPreflight(globalPreflight);
-      this.state = { ...this.state, unresolved: [...this.state.unresolved, ...globalPreflight.failedChecks] };
+      this.state = { ...this.state, unresolved: [...new Set([...this.state.unresolved, ...globalPreflight.failedChecks])] };
       return await this.finalize(stop.resultClass, stop.stopReason);
     }
     this.checkpoint();
@@ -1703,7 +1706,7 @@ export class CampaignOrchestrator {
           campaignStatus: 'INCOMPLETE_PROCESS_INTERRUPTION',
           stopReason: 'PROCESS_INTERRUPTION',
           nextExactAction: `execute ${this.state.remainingWorkItemIds[0] ?? 'finalize morning brief'}`,
-          unresolved: [...this.state.unresolved, 'PROCESS_INTERRUPTION_SIMULATED'],
+          unresolved: [...new Set([...this.state.unresolved, 'PROCESS_INTERRUPTION_SIMULATED'])],
         };
         return await this.finalize('INCOMPLETE_PROCESS_INTERRUPTION', 'PROCESS_INTERRUPTION');
       }
