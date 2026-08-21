@@ -19,7 +19,8 @@ export const SEMANTIC_PROJECTION_VERSION = 'nightwatch.semantic-projection.v1' a
 /** What the projector accepts as input. Never persisted, never logged,
  *  never serialized; the raw `value` exists only for the duration of
  *  projection evaluation. */
-export interface RawSemanticObservation {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface RawSemanticObservation {
   readonly kind: 'API_RESPONSE' | 'JOURNEY_STEP_STATE';
   readonly operationId?: string;
   readonly journeyId?: string;
@@ -67,7 +68,8 @@ export const DEFAULT_PROJECTION_LIMITS: ProjectionLimits = Object.freeze({
 
 export type ProjectionNodeType = 'NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJECT' | 'ARRAY';
 
-export type StringContentClass = 'EMPTY' | 'NONEMPTY';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type StringContentClass = 'EMPTY' | 'NONEMPTY';
 
 export interface ProjectionField {
   readonly name: string;

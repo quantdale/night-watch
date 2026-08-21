@@ -4,9 +4,11 @@ import { RNG_ALGORITHM, RNG_VERSION } from './types';
 const MASK_64 = 0xffff_ffff_ffff_ffffn;
 const INCREMENT = 0x9e3779b97f4a7c15n;
 
-export type CanonicalSeed = `0x${string}`;
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type CanonicalSeed = `0x${string}`;
 
-export function parseCanonicalSeed(value: string): bigint {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function parseCanonicalSeed(value: string): bigint {
   if (!/^0x[0-9a-f]{16}$/.test(value)) {
     throw new Error('seed must be canonical lowercase 0x-prefixed 16-hex uint64');
   }

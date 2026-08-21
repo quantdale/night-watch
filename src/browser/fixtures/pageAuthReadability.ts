@@ -11,7 +11,8 @@ import {
 } from '../../products/ripple/bootstrapContract';
 import { RIPPLE_SOURCE_SEMANTIC_CONTRACT } from '../../products/ripple/readiness';
 
-export type RipplePageBootstrapSemantics = 'VALID' | 'INVALID' | 'UNRESOLVED';
+// Phase 15P A15 convergence: module-private (no external callers).
+type RipplePageBootstrapSemantics = 'VALID' | 'INVALID' | 'UNRESOLVED';
 
 export interface RipplePageAuthReadability {
   evaluationSucceeded: boolean;

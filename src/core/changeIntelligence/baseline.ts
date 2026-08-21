@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { BaselineRecord, BaselineState, ChangeSet, ExecutionDisposition } from './types';
 
-export const BASELINE_SCHEMA_VERSION = 'nightwatch.baseline.phase3.v1' as const;
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+const BASELINE_SCHEMA_VERSION = 'nightwatch.baseline.phase3.v1' as const;
 
 export function bootstrapBaseline(repoId: string, sha: string, provenance: string): BaselineRecord {
   return { repoId, baselineSha: sha, status: 'BOOTSTRAP_BASELINE', provenance, lastChangesetId: null, lastAcceptedExecutionStatus: null };

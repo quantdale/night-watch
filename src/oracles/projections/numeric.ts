@@ -20,13 +20,15 @@ export type NumericRelationOperation =
   | 'EQUAL'
   | 'NOT_EQUAL';
 
-export type NumericRelationResult =
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type NumericRelationResult =
   | 'MATCH'
   | 'MISMATCH'
   | 'NOT_APPLICABLE'
   | 'INVALID_INPUT';
 
-export interface NumericRelationFact {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface NumericRelationFact {
   readonly relationId: string;
   readonly operation: NumericRelationOperation;
   readonly result: NumericRelationResult;
@@ -36,9 +38,11 @@ export interface NumericRelationFact {
 /** Fixed-point scaling bound: 10^9 keeps scaled integers well inside
  *  Number.MAX_SAFE_INTEGER for the bounded operand values Nightwatch
  *  observes. Values with more decimal places are INVALID_INPUT. */
-export const MAX_SCALE_DECIMALS = 9;
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+const MAX_SCALE_DECIMALS = 9;
 
-export function decimalPlaces(value: number): number {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function decimalPlaces(value: number): number {
   if (!Number.isFinite(value)) return 0;
   if (Number.isInteger(value)) return 0;
   const text = String(value);
@@ -60,7 +64,8 @@ function scaledInteger(value: number, scale: number): number | null {
   return Number.isSafeInteger(scaled) ? scaled : null;
 }
 
-export interface NumericRelationInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface NumericRelationInput {
   readonly relationId: string;
   readonly operation: NumericRelationOperation;
   /** Ephemeral operand values, in contract order. */

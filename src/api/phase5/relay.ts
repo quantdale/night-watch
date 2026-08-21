@@ -3,16 +3,17 @@ import type { IncomingMessage, Server as HttpServer, ServerResponse } from 'node
 import type { AddressInfo } from 'node:net';
 import { OutboundPolicy } from '../../core/safety/outboundPolicy';
 import type { EnvironmentConfig } from '../../core/environment/types';
-import { getPhase5Operation } from './catalog';
 import { evaluateApiResponse } from './oracle';
 import type { ApiOperation, ApiOracleObservation, ApiCatalog } from './types';
 
-export interface Phase5RuntimeHydration {
+// Phase 15P A15 convergence: relay option/context shapes are module-private;
+// no external callers remain (grep-proven across src/tests/bin/corpus/config).
+interface Phase5RuntimeHydration {
   period: string;
   vendor: 'aws' | 'azure';
 }
 
-export interface RelayRequestContext {
+interface RelayRequestContext {
   operation: ApiOperation;
   target: URL;
   headers: Readonly<Record<string, string>>;
@@ -25,7 +26,7 @@ export interface RelayFetchResponse {
   complete?: boolean;
 }
 
-export type RelayFetcher = (context: RelayRequestContext) => Promise<RelayFetchResponse>;
+type RelayFetcher = (context: RelayRequestContext) => Promise<RelayFetchResponse>;
 
 export interface RelayObservation {
   operationId: string;
@@ -50,7 +51,7 @@ export interface Phase5Relay {
   close(): Promise<void>;
 }
 
-export interface StartRelayOptions {
+interface StartRelayOptions {
   catalog: ApiCatalog;
   mode: 'local' | 'dev';
   environment?: EnvironmentConfig;
@@ -321,11 +322,7 @@ export async function startPhase5Relay(options: StartRelayOptions): Promise<Phas
   };
 }
 
-export function resolvePhase5OperationTarget(operation: ApiOperation, environment: EnvironmentConfig, hydration?: Partial<Phase5RuntimeHydration>): URL {
-  return defaultTargetResolver(operation, environment, defaultHydration(hydration));
-}
-
-export interface NativePhase5RequestOptions {
+interface NativePhase5RequestOptions {
   operation: ApiOperation;
   mode: 'local' | 'dev';
   environment?: EnvironmentConfig;
@@ -375,15 +372,5 @@ export async function executeNativePhase5Operation(options: NativePhase5RequestO
       redirect: 'NONE',
       bodyForwardedToOops: false,
     };
-  }
-}
-
-export function phase5OperationByRelayPath(path: string, catalog = { operations: [] } as unknown as ApiCatalog): ApiOperation | undefined {
-  const operationId = OPERATION_PATH_RE.exec(path)?.[1];
-  if (operationId === undefined) return undefined;
-  try {
-    return getPhase5Operation(operationId);
-  } catch {
-    return catalog.operations.find((operation) => operation.operationId === operationId);
   }
 }

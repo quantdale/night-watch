@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import type { JourneyEvidence } from '../journeys/types';
+import { EVIDENCE_SCHEMA_VERSION } from '../journeys/contract'; // Phase 15P A15: single owner of the phase2c evidence schema tag
 
 const JOURNEY_ID = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -72,5 +73,5 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
 }
 
 export function evidenceSchemaOf(evidence: JourneyEvidence): 'LEGACY_PHASE2' | 'PHASE2C_V1' {
-  return evidence.evidenceSchemaVersion === 'nightwatch.evidence.phase2c.v1' ? 'PHASE2C_V1' : 'LEGACY_PHASE2';
+  return evidence.evidenceSchemaVersion === EVIDENCE_SCHEMA_VERSION ? 'PHASE2C_V1' : 'LEGACY_PHASE2';
 }

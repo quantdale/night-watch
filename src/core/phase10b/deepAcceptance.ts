@@ -25,13 +25,13 @@ import {
 } from '../phase9b/summary';
 import type { Phase9bFreshnessBlockReason } from '../phase9b/freshness';
 
-export const PHASE_10B_DEEP_ACCEPTANCE_VERSION = 'nightwatch.phase10b-deep-acceptance.v1' as const;
 
 /** The fixed Phase 10B deep item-level type contract that must be proven
  *  present in the RESOLVED expectation before any acceptance comparison
  *  (authorization §7/§8: do not hard-code counts independently of the
  *  resolved expectation). */
-export interface DeepTypeContract {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface DeepTypeContract {
   /** Item-relative safe path, e.g. ['0', 'exchange_rate']. */
   readonly path: readonly string[];
   readonly kind: 'TYPE_MATCH';
@@ -77,7 +77,8 @@ export function assertDeepTypeContract(
   }
 }
 
-export interface Phase10bDeepAcceptanceChecks {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase10bDeepAcceptanceChecks {
   readonly pass: boolean;
   readonly failures: readonly string[];
 }

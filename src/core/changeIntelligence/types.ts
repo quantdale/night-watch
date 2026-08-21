@@ -10,13 +10,16 @@ export const RIPPLE_JOURNEY_IDS = [
 
 export type JourneyId = (typeof RIPPLE_JOURNEY_IDS)[number];
 
-export type RepoScope = 'IN_SCOPE' | 'REVIEWED_EXCLUDED' | 'UNKNOWN';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type RepoScope = 'IN_SCOPE' | 'REVIEWED_EXCLUDED' | 'UNKNOWN';
 export type ChangeSource =
   | 'COMMITTED_UPSTREAM_CHANGE'
   | 'LOCAL_COMMITTED_CHANGE'
   | 'DIRTY_WORKTREE_CHANGE';
-export type ChangeStatus = 'add' | 'modify' | 'delete' | 'rename';
-export type RangeSemantics = 'BASE_SHA_TO_HEAD_SHA' | 'EXPLICIT_COMMIT_RANGE';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type ChangeStatus = 'add' | 'modify' | 'delete' | 'rename';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type RangeSemantics = 'BASE_SHA_TO_HEAD_SHA' | 'EXPLICIT_COMMIT_RANGE';
 
 export interface RepoDefinition {
   repoId: string;
@@ -111,7 +114,8 @@ export type RiskClass =
   | 'RESOURCE_LOADING'
   | 'TEST_DOC_ONLY';
 
-export type ReasonCode =
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type ReasonCode =
   | 'DIRECT_COMPONENT'
   | 'DIRECT_ROUTE'
   | 'DIRECT_API_CALL'
@@ -129,7 +133,8 @@ export type ReasonCode =
   | 'STALE_EDGE';
 
 export type PriorityTier = 'P0' | 'P1' | 'P2' | 'P3';
-export type EdgeMatch = 'EXACT' | 'PREFIX';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type EdgeMatch = 'EXACT' | 'PREFIX';
 
 export interface DependencyEdge {
   edgeId: string;
@@ -214,7 +219,8 @@ export interface ExecutionDisposition {
   acceptedJourneyIds: readonly JourneyId[];
 }
 
-export type BaselineStatus = 'BOOTSTRAP_BASELINE' | 'VERIFIED_BASELINE' | 'PENDING_CHANGESET';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type BaselineStatus = 'BOOTSTRAP_BASELINE' | 'VERIFIED_BASELINE' | 'PENDING_CHANGESET';
 
 export interface BaselineRecord {
   repoId: string;

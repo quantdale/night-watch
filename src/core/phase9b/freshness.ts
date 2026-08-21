@@ -25,8 +25,6 @@
 // where the resolver must return RESOLVED before any browser launch).
 // ---------------------------------------------------------------------------
 
-export const PHASE_9B_FRESHNESS_VERSION = 'nightwatch.phase9b-source-freshness.v1' as const;
-
 export type Phase9bFreshnessBlockReason =
   | 'SOURCE_FRESHNESS_UNRESOLVED'
   | 'REAL_SOURCE_CONTRACT_DRIFT'

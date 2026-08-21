@@ -28,8 +28,11 @@ export const REQUIRED_BROWSER_LAUNCH_ARGS: readonly string[] = [
  * Shared Chrome hardening used by both Playwright projects and the direct
  * parent-CLI capture runner. Keeping this list here prevents the direct
  * runner from silently becoming a weaker browser path.
+ *
+ * Phase 15P A15 convergence: module-private since only
+ * nightwatchChromiumLaunchOptions consumes it here (no external callers).
  */
-export const CHROMIUM_HARDENING_ARGS: readonly string[] = [
+const CHROMIUM_HARDENING_ARGS: readonly string[] = [
   '--disable-background-networking',
   '--disable-sync',
   '--disable-default-apps',

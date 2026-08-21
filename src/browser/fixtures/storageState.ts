@@ -27,21 +27,23 @@ import path from 'node:path';
 
 export const NIGHTWATCH_STORAGE_STATE_VAR = 'NIGHTWATCH_STORAGE_STATE';
 
-export const MAX_STORAGE_STATE_BYTES = 5 * 1024 * 1024;
+// Phase 15P A15 convergence: storage-state shapes/constants below are
+// module-private; no external type callers remain (grep-proven).
+const MAX_STORAGE_STATE_BYTES = 5 * 1024 * 1024;
 
-export interface StorageStateOptions {
+interface StorageStateOptions {
   /** Nightwatch repo root (default: derived from this file). */
   nightwatchRoot?: string;
   /** Alphaus workspace root (default: parent of nightwatchRoot). */
   workspaceRoot?: string;
 }
 
-export interface StorageStateOutputOptions extends StorageStateOptions {
+interface StorageStateOutputOptions extends StorageStateOptions {
   /** Only the approved direct auth-capture workflow may replace an existing external file. */
   allowExisting?: boolean;
 }
 
-export interface AtomicStorageStateOptions extends StorageStateOptions {
+interface AtomicStorageStateOptions extends StorageStateOptions {
   /** The destination may already exist only for an approved auth refresh. */
   allowExisting?: boolean;
 }
@@ -143,7 +145,7 @@ export function validateStorageStateFile(p: string, opts?: StorageStateOptions):
   return abs;
 }
 
-export interface StorageStateKeyPresence {
+interface StorageStateKeyPresence {
   cookieNames: Readonly<Record<string, boolean>>;
   localStorageNames: Readonly<Record<string, boolean>>;
   originCount: number;
@@ -157,7 +159,7 @@ export interface StorageStateKeyPresence {
  * registered as secrets, hashed, or written to evidence. Callers must pass the
  * fixed source-defined key names and expected constants.
  */
-export interface StorageStateKeySemantics {
+interface StorageStateKeySemantics {
   authTokenPresent: boolean;
   authTokenStructurallyNonEmpty: boolean;
   apiTypePresent: boolean;
@@ -261,7 +263,7 @@ export function inspectStorageStateKeyPresence(
  * origin would expose this non-httpOnly, unexpired, applicable cookie". The
  * page-readability result must still be classified conservatively.
  */
-export interface CookiePageReadability {
+interface CookiePageReadability {
   /** The named cookie exists in the capture file. */
   present: boolean;
   /** Cookie domain equals the app host or covers it as a parent domain. */

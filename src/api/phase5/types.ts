@@ -13,7 +13,7 @@ export const OOPS_ADAPTER_VERSION = 'nightwatch.oops-adapter.phase5.v1' as const
 export const SCENARIO_GENERATOR_VERSION = 'nightwatch.scenario-generator.phase5.v1' as const;
 
 export type SemanticClass = 'KNOWN_READ' | 'KNOWN_MUTATION' | 'UNKNOWN';
-export type GenerationStatus =
+type GenerationStatus =
   | 'GENERATION_ELIGIBLE'
   | 'GENERATION_BLOCKED'
   | 'SEMANTIC_REVIEW_REQUIRED'
@@ -21,12 +21,12 @@ export type GenerationStatus =
   | 'AUTH_BLOCKED'
   | 'SAFETY_BLOCKED';
 export type JourneyLink = 'ripple-payer-exchange-read' | 'ripple-common-exchange-read' | 'ripple-account-inventory';
-export type StreamingType = 'SINGLE_JSON' | 'JSON_CHUNKED' | 'NDJSON' | 'EMPTY_OR_204' | 'UNKNOWN';
-export type AuthClass = 'RELAY_EPHEMERAL_DEV_SESSION' | 'NONE_LOCAL_FIXTURE' | 'UNAVAILABLE';
+type StreamingType = 'SINGLE_JSON' | 'JSON_CHUNKED' | 'NDJSON' | 'EMPTY_OR_204' | 'UNKNOWN';
+type AuthClass = 'RELAY_EPHEMERAL_DEV_SESSION' | 'NONE_LOCAL_FIXTURE' | 'UNAVAILABLE';
 export type HostClass = 'DEV_API' | 'LOCAL_LOOPBACK' | 'PRODUCTION_DENIED' | 'UNKNOWN_HOST';
-export type ReplayPolicy = 'FIRST_PLUS_FRESH_REPLAY' | 'LOCAL_ONLY' | 'NEVER';
+type ReplayPolicy = 'FIRST_PLUS_FRESH_REPLAY' | 'LOCAL_ONLY' | 'NEVER';
 
-export interface RequestSchema {
+interface RequestSchema {
   method: 'GET';
   pathTemplate: string;
   queryTemplate?: Readonly<Record<string, string>>;
@@ -35,7 +35,7 @@ export interface RequestSchema {
   runtimePlaceholders: readonly string[];
 }
 
-export interface ResponseShapePolicy {
+interface ResponseShapePolicy {
   oracleId: string;
   expectedContentType: 'application/json' | 'application/x-ndjson' | 'empty';
   shape: 'JSON_OBJECT_OR_ARRAY' | 'JSON_CHUNKS' | 'NDJSON_LINES' | 'EMPTY';

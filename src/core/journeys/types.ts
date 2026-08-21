@@ -89,7 +89,8 @@ export interface JourneyContext {
   network: NetworkObserver;
 }
 
-export type JourneyStepStatus = 'PASS' | 'FAIL' | 'STOPPED';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type JourneyStepStatus = 'PASS' | 'FAIL' | 'STOPPED';
 
 export interface JourneyStepResult {
   stepId: string;
@@ -154,7 +155,8 @@ export type SemanticRequestDisposition =
   | 'PASSIVE_UNKNOWN_OBSERVED'
   | 'ACTION_CAUSED_UNKNOWN';
 
-export interface JourneySafetyCounts {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface JourneySafetyCounts {
   productionAttempts: number;
   proxyViolations: number;
   unknownDestinations: number;
@@ -164,7 +166,8 @@ export interface JourneySafetyCounts {
   actionCausedUnknown: number;
 }
 
-export interface JourneyResourceObservation {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface JourneyResourceObservation {
   role: string;
   state: string;
   method: string;
@@ -173,14 +176,16 @@ export interface JourneyResourceObservation {
   contentTypeClass: string | null;
 }
 
-export interface JourneyContainmentCounts {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface JourneyContainmentCounts {
   optionalSupportBlocked: number;
   telemetryBlocked: number;
   browserBackgroundBlocked: number;
   containmentEvents: readonly string[];
 }
 
-export interface JourneyVarianceEvidence {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface JourneyVarianceEvidence {
   routeStabilityDeltaMs?: number;
   passiveUnknownDelta?: number;
   requestCount?: number;
@@ -193,8 +198,10 @@ export interface JourneyVarianceEvidence {
   networkConcurrencyDelta?: number;
 }
 
-export type JourneyOracleSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
-export type JourneyAnomalyClass =
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type JourneyOracleSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'FATAL';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type JourneyAnomalyClass =
   | 'NIGHTWATCH_DEFECT'
   | 'PRODUCT_BEHAVIOR_ANOMALY'
   | 'DEV_INFRA_TRANSIENT'
@@ -205,7 +212,8 @@ export type JourneyAnomalyClass =
   | 'KNOWN_TRANSIENT'
   | 'UNKNOWN';
 
-export type JourneyCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type JourneyCausality = 'PROVEN' | 'LIKELY' | 'UNRESOLVED' | 'NOT_CAUSAL';
 
 export interface JourneyOracleObservation {
   oracleId: string;

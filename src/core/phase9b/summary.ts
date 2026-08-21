@@ -18,12 +18,17 @@
 // This module is PURE: no network, no fs, no persistence (hardening-guarded).
 // ---------------------------------------------------------------------------
 
+// Phase 15P A15 convergence: evidence-digest validation reuses the canonical helper
+// (byte-equivalent to the retired inline regex incl. null/non-string handling).
+import { isEvidenceDigest } from '../../core/identity/canonicalDigest';
 import type { SemanticEvaluationReceipt, SemanticReceiptOutcome } from '../../oracles/semantic/receipts';
 import { semanticFindingFingerprint, type SemanticOracleFinding } from '../../oracles/semantic';
 
-export const PHASE_9B_SUMMARY_VERSION = 'nightwatch.phase9b-pass-summary.v1' as const;
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+const PHASE_9B_SUMMARY_VERSION = 'nightwatch.phase9b-pass-summary.v1' as const;
 
-export type Phase9bPassId = 'first' | 'replay';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type Phase9bPassId = 'first' | 'replay';
 
 export interface Phase9bSemanticSummary {
   readonly schemaVersion: typeof PHASE_9B_SUMMARY_VERSION;
@@ -71,7 +76,8 @@ export interface Phase9bSemanticSummary {
   readonly ledgerOverflow: boolean;
 }
 
-export interface Phase9bSummaryInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase9bSummaryInput {
   readonly passId: Phase9bPassId;
   readonly receipts: readonly SemanticEvaluationReceipt[];
   /** All receipts recorded context-wide (may exceed the selected-target set). */
@@ -160,7 +166,8 @@ export function summarizePhase9bPass(input: Phase9bSummaryInput): Phase9bSemanti
   };
 }
 
-export interface Phase9bReplayComparison {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase9bReplayComparison {
   readonly pass: boolean;
   readonly mismatches: readonly string[];
 }
@@ -220,7 +227,7 @@ export function evaluatePhase9bAcceptance(
   if (summary.partialCoverageCount !== 0) failures.push(`PARTIAL_COVERAGE count ${summary.partialCoverageCount} != 0`);
   if (summary.expectationId !== expected.expectationId) failures.push(`expectationId ${summary.expectationId} != ${expected.expectationId}`);
   if (summary.sourceSha !== expected.approvedSha) failures.push(`source SHA ${summary.sourceSha} != ${expected.approvedSha}`);
-  if (summary.evidenceDigest === null || !/^ev:sha256:[0-9a-f]{24}$/.test(summary.evidenceDigest)) {
+  if (!isEvidenceDigest(summary.evidenceDigest)) {
     failures.push('source evidence digest missing or malformed');
   }
   return { pass: failures.length === 0, failures };

@@ -23,7 +23,8 @@ function visitKey(stateId: string, actionId: string): string {
   return `${stateId}|${actionId}`;
 }
 
-export interface PlannerSelection {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface PlannerSelection {
   readonly decision: PlannerDecision;
   readonly action: SafeAction | null;
 }

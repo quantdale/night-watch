@@ -155,7 +155,8 @@ function createCoverage(args: {
   } as const;
 }
 
-export interface ExplorationRunOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ExplorationRunOptions {
   readonly runId: string;
   readonly seed: string;
   readonly derivedSeed?: string;

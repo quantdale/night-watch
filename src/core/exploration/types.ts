@@ -69,7 +69,8 @@ export type LocatorSpec =
       readonly routeClass: string;
     };
 
-export interface ActionPreconditions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ActionPreconditions {
   readonly routeClasses: readonly string[];
   readonly requiredStructuralFlags?: Readonly<Record<string, boolean>>;
   readonly requiredSafeViewState?: SafeScalarMap;
@@ -238,7 +239,8 @@ export interface ExplorationTransition {
   readonly verification: 'SOURCE_ALLOWED' | 'RUNTIME_OBSERVED' | 'BLOCKED' | 'INVALIDATED';
 }
 
-export interface CoverageSummary {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface CoverageSummary {
   readonly approvedActions: number;
   readonly actionsEncountered: number;
   readonly actionsExecuted: number;
@@ -255,7 +257,8 @@ export interface CoverageSummary {
   readonly newTransitions: number;
 }
 
-export interface ExplorationFingerprints {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ExplorationFingerprints {
   readonly catalogFingerprint: string;
   readonly modelFingerprint: string;
   readonly stateSchemaVersion: typeof EXPLORATION_STATE_SCHEMA_VERSION;

@@ -13,7 +13,8 @@
 
 import { checkResourceStatus, type ResourceImpact, type ResourceRole } from './resourceChecks';
 
-export interface UnexpectedStatusIssue {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface UnexpectedStatusIssue {
   type: 'unexpected-status';
   severity: 'error' | 'warn';
   oracleSeverity: 'anomaly';
@@ -24,7 +25,8 @@ export interface UnexpectedStatusIssue {
   message: string;
 }
 
-export interface MalformedJsonIssue {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface MalformedJsonIssue {
   type: 'malformed-json';
   severity: 'error';
   oracleSeverity: 'anomaly';
@@ -33,7 +35,8 @@ export interface MalformedJsonIssue {
   message: string;
 }
 
-export interface MalformedNdjsonIssue {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface MalformedNdjsonIssue {
   type: 'malformed-ndjson';
   severity: 'error';
   oracleSeverity: 'anomaly';

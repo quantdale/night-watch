@@ -6,8 +6,10 @@
 // statuses or different resources never count as reproduction.
 // ---------------------------------------------------------------------------
 
-export type AdmissionLevel = 'L0' | 'L1' | 'L2';
-export type AdmissionStatus =
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type AdmissionLevel = 'L0' | 'L1' | 'L2';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type AdmissionStatus =
   | 'L0_OBSERVED'
   | 'L1_REPRODUCED'
   | 'L2_REPEATED'

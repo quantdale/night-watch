@@ -7,8 +7,10 @@ import type {
   SafeScalar,
 } from './types';
 import {
+  EXPLORATION_MODEL_VERSION,
   EXPLORATION_STATE_SCHEMA_VERSION,
   EXPLORATION_TRANSITION_SCHEMA_VERSION,
+  SAFE_ACTION_CATALOG_VERSION,
   type ExplorationTransition,
   type ExplorationBudget,
   type SafeScalarMap,
@@ -62,7 +64,8 @@ function assertSafeMap(map: Readonly<Record<string, SafeScalar>>, path: string):
   }
 }
 
-export function assertPrivacySafeStateInput(input: ExplorationStateInput): void {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function assertPrivacySafeStateInput(input: ExplorationStateInput): void {
   if (input.product !== 'ripple') throw new Error('Phase 4 state product must be Ripple');
   if (!/^\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$/.test(input.routeClass)) {
     throw new Error('state routeClass must be a sanitized approved route class');
@@ -84,7 +87,8 @@ export function assertPrivacySafeStateInput(input: ExplorationStateInput): void 
   }
 }
 
-export function stateIdentityInput(input: ExplorationStateInput): ExplorationStateInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function stateIdentityInput(input: ExplorationStateInput): ExplorationStateInput {
   assertPrivacySafeStateInput(input);
   return {
     product: input.product,
@@ -127,12 +131,12 @@ export function createTransition(input: Omit<ExplorationTransition, 'schemaVersi
 
 export function catalogFingerprint(actions: readonly SafeAction[]): string {
   const canonicalActions = [...actions].sort((a, b) => a.actionId.localeCompare(b.actionId));
-  return `catalog_${sha256(canonicalJson({ version: 'nightwatch.safe-actions.phase4.v1', actions: canonicalActions }))}`;
+  return `catalog_${sha256(canonicalJson({ version: SAFE_ACTION_CATALOG_VERSION, actions: canonicalActions }))}`;
 }
 
 export function modelFingerprint(envelope: ExplorationEnvelope, budget: ExplorationBudget): string {
   return `model_${sha256(canonicalJson({
-    modelVersion: 'nightwatch.exploration-model.phase4.v1',
+    modelVersion: EXPLORATION_MODEL_VERSION,
     envelope,
     budget,
   }))}`;
