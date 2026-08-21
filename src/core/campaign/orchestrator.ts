@@ -30,7 +30,9 @@ import { createTriageReplayPlanV2 } from '../triage/replayPlan';
 import { executeReplayPlanV2 } from '../triage/replayBinding';
 import type { BugDossierV2, BugDossierV2Input } from '../triage/dossierV2';
 import {
+  gateBlockCandidateLifecycle,
   initialLifecycleRecord,
+  isTerminalCandidateLifecycleState,
   transitionCandidateLifecycle,
   type CandidateLifecycleEvent,
   type CandidateLifecycleRecord,
@@ -646,6 +648,16 @@ export class CampaignOrchestrator {
   //   dossier READY (v1 or v2)                      => MARK_DOSSIER_READY   TRIAGED -> DOSSIER_READY
   //   dossier v2 UNRESOLVED                         => CLASSIFY_UNRESOLVED 'DOSSIER_UNRESOLVED'
   //   error after admission, before minimization    => FAIL_REPRODUCTION 'REPRODUCTION_FAILED'
+  // Phase 15P (A05) gate routing — safety/privacy/currentness/budget gate
+  // failures are load-bearing and always land in an explicit terminal state:
+  //   safety event during reproduction              => GATE_BLOCK 'SAFETY_EVENT_DURING_REPRODUCTION'
+  //   unclean reproduction privacy                  => GATE_BLOCK 'PRIVACY_BLOCKED'
+  //   later pipeline errors (post-minimization)     => GATE_BLOCK <safe error code>
+  //   finalized non-resumable run leftovers         => GATE_BLOCK <stopReason|PROMOTION_CAP_UNPROCESSED>
+  // GATE_BLOCK is legal from every pre-triage open state and requires its
+  // reason code; TRIAGED exits only through CLASSIFY_* (a gate failure there
+  // routes via CLASSIFY_UNRESOLVED). Resumable process interruptions keep
+  // their truthful mid-pipeline records.
   // Reason codes are safe uppercase tokens only; raw product values never enter
   // this ledger.
   // ---------------------------------------------------------------------------
@@ -687,6 +699,25 @@ export class CampaignOrchestrator {
     if (state === 'OBSERVED' || state === 'ADMITTED' || state === 'REPRODUCED') {
       this.transitionClusterLifecycle(clusterId, 'FAIL_REPRODUCTION', reasonCode);
     }
+  }
+
+  /**
+   * Phase 15P (A05) — load-bearing gate close. A safety/privacy/currentness/
+   * budget gate failure must land the record in an explicit terminal state
+   * with the gate's reason code; it is never left in an ambiguous mid-state.
+   * TRIAGED has no GATE_BLOCK edge by design (classification edges are its
+   * only exits), so a gate failure there routes through CLASSIFY_UNRESOLVED;
+   * already-terminal records are left untouched (idempotent). A missing
+   * record means the gate fired before admission — nothing to close.
+   */
+  private closeOnGateFailure(clusterId: string, reasonCode: string): void {
+    const record = this.candidateLifecycles.get(clusterId);
+    if (record === undefined || isTerminalCandidateLifecycleState(record.state)) return;
+    if (record.state === 'TRIAGED') {
+      this.transitionClusterLifecycle(clusterId, 'CLASSIFY_UNRESOLVED', reasonCode);
+      return;
+    }
+    this.candidateLifecycles.set(clusterId, gateBlockCandidateLifecycle(record, reasonCode));
   }
 
   private recomputeClusters(): readonly AnomalyCluster[] {
@@ -867,12 +898,31 @@ export class CampaignOrchestrator {
     return brief;
   }
 
+  /**
+   * Phase 15P (A05) — terminal-state completeness sweep. A finalized run that
+   * will never be resumed must not leave any candidate lifecycle record in an
+   * ambiguous mid-state: every still-open record is routed to a terminal
+   * state carrying the run's stop reason as the safe reason code (leftovers
+   * of a clean run are promotion-cap/queue remainders). Resumable process
+   * interruptions are excluded — their mid-pipeline records are the truthful
+   * resume point and are pinned by the Session-2 resume tests.
+   */
+  private sweepOpenLifecyclesToTerminal(stopReason: CampaignCheckpoint['stopReason']): void {
+    if (stopReason === 'PROCESS_INTERRUPTION') return;
+    const reasonCode = stopReason === 'NONE' ? 'PROMOTION_CAP_UNPROCESSED' : stopReason;
+    for (const [clusterId, record] of this.candidateLifecycles) {
+      if (isTerminalCandidateLifecycleState(record.state)) continue;
+      this.closeOnGateFailure(clusterId, reasonCode);
+    }
+  }
+
   private async finalize(resultClass: CampaignResultClass, stopReason: CampaignCheckpoint['stopReason']): Promise<CampaignRunResult> {
     const safety = this.state.safety;
     const privacy = this.state.privacy;
     const unresolved = resultClass === 'COMPLETE_CLEAN'
       ? this.state.unresolved.filter((item) => item !== 'PROCESS_INTERRUPTION' && item !== 'PROCESS_INTERRUPTION_SIMULATED')
       : this.state.unresolved;
+    this.sweepOpenLifecyclesToTerminal(stopReason);
     this.state = { ...this.state, campaignStatus: resultClass, stopReason, unresolved, morningBriefStatus: 'IN_PROGRESS' };
     this.checkpoint();
     const brief = this.buildBrief(resultClass, safety, privacy);
@@ -1021,6 +1071,11 @@ export class CampaignOrchestrator {
     for (const item of ranked.filter((candidate) => !eligible.includes(candidate))) {
       // T1: transient / false-positive candidates are rejected before any
       // reproduction or dossier work; the lifecycle record closes as REJECTED.
+      // Phase 15P (A05): resume re-enters promoteFindings over restored
+      // records — an already-terminal record is never re-rejected (the frozen
+      // table has no REJECT edge from REJECTED and must never be bent).
+      const rejectState = this.lifecycleStateFor(item.cluster.clusterId);
+      if (rejectState === null || isTerminalCandidateLifecycleState(rejectState)) continue;
       this.transitionClusterLifecycle(item.cluster.clusterId, 'REJECT', item.representative.knownNightwatchDefect ? 'FALSE_POSITIVE' : 'TRANSIENT');
       this.transients.push(`${item.cluster.clusterId}:${item.representative.knownNightwatchDefect ? 'KNOWN_NIGHTWATCH_FALSE_POSITIVE' : 'L0_TRANSIENT_NOT_REPRODUCED'}`);
       this.state = { ...this.state, rejectedHypotheses: [...this.state.rejectedHypotheses, item.cluster.clusterId] };
@@ -1061,10 +1116,24 @@ export class CampaignOrchestrator {
         const reproductionPrivacy = addPrivacy(this.state.privacy, reproduction.privacy);
         this.state = { ...this.state, safety: addSafety(this.state.safety, reproduction.safety), privacy: reproductionPrivacy, privacyStatus: reproductionPrivacy.result };
         if (!safetyIsZero(reproduction.safety)) {
+          // Phase 15P (A05): the safety gate is load-bearing — the candidate's
+          // lifecycle closes at a terminal state carrying the gate identity
+          // instead of stalling mid-pipeline.
+          this.closeOnGateFailure(cluster.clusterId, 'SAFETY_EVENT_DURING_REPRODUCTION');
           this.state = { ...this.state, safetyEvents: [...this.state.safetyEvents, 'SAFETY_EVENT_DURING_REPRODUCTION'] };
           this.markPendingSkipped('SAFETY_EVENT_DURING_REPRODUCTION');
           this.checkpoint();
           this.currentStorm = { kind: 'FAILURE_STORM', reasonCode: 'SHARED_ROOT_SYMPTOM', rootKey: 'safety-event', fingerprint: cluster.fingerprint, oracleId: cluster.features.oracleId, runtimeCategory: 'SAFETY', affectedRunIds: cluster.runIds, affectedSurfaces: [candidateSurface(representative)], occurrenceCount: cluster.occurrenceCount };
+          break;
+        }
+        if (!privacyIsClean(reproduction.privacy)) {
+          // Phase 15P (A05): the privacy gate was previously merged but never
+          // enforced on the promotion path; it now routes the candidate to an
+          // explicit blocked terminal exactly like the execution path does.
+          this.closeOnGateFailure(cluster.clusterId, 'PRIVACY_BLOCKED');
+          this.markPendingSkipped('PRIVACY_BLOCKED');
+          this.checkpoint();
+          this.promotionStop = { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'PRIVACY_BLOCKED' };
           break;
         }
         const reproCandidate = reproduction.candidate ?? representative;
@@ -1302,6 +1371,12 @@ export class CampaignOrchestrator {
         // T1: a failure before minimization classifies the candidate
         // UNRESOLVED; later failures keep the truthful mid-pipeline state.
         this.failReproductionIfLegal(cluster.clusterId, 'REPRODUCTION_FAILED');
+        // Phase 15P (A05): the queue loop always ends in a stop below, so any
+        // record failReproductionIfLegal could not touch (MINIMIZED /
+        // UNCHANGED / TRIAGED) is closed at a terminal state carrying the
+        // safe error code — never left ambiguous. Resumable interruptions
+        // returned above and keep their truthful mid-pipeline state.
+        this.closeOnGateFailure(cluster.clusterId, code);
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...this.state.unresolved, code] };
         this.checkpoint();
         if (code === 'AUTH_BLOCKED') {
@@ -1638,11 +1713,17 @@ export class CampaignOrchestrator {
           privacy: reproduction.privacy,
         });
         if (!safetyIsZero(reproduction.safety)) {
+          // Phase 15P (A05): the safety gate closes the target's lifecycle at
+          // a terminal state carrying the gate identity.
+          this.closeOnGateFailure(cluster.clusterId, 'SAFETY_EVENT_DURING_REPRODUCTION');
           this.state = { ...this.state, safetyEvents: [...this.state.safetyEvents, 'SAFETY_EVENT_DURING_REPRODUCTION'] };
           this.markPendingSkipped('SAFETY_EVENT_DURING_REPRODUCTION');
           return await this.finalize('PARTIAL_SAFETY_BLOCKED', 'SAFETY_EVENT');
         }
         if (!privacyIsClean(reproduction.privacy)) {
+          // Phase 15P (A05): privacy gate enforced on the reproduction-only
+          // path too — explicit blocked terminal, never a silent bypass.
+          this.closeOnGateFailure(cluster.clusterId, 'PRIVACY_BLOCKED');
           this.markPendingSkipped('PRIVACY_BLOCKED');
           return await this.finalize('PARTIAL_SAFETY_BLOCKED', 'PRIVACY_BLOCKED');
         }
