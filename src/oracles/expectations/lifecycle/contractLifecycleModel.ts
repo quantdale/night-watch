@@ -22,6 +22,11 @@
 //                                   evaluateComposedCurrentness (converged,
 //                                   not duplicated)
 //   admission state              -> admissionAuthority
+//   resolver integration         -> lifecycleViewForSourceContractResolution /
+//                                   resolveSourceContractLifecycleView join a
+//                                   ComposedSourceContractResolution with the
+//                                   identity/compatibility/currentness/admission
+//                                   dimensions above in ONE downstream call
 //
 // CONVERGENCE, NOT REPLACEMENT: this module composes contractLifecycleRegistry
 // (the authoritative family descriptors), sourceContractResolution (the
@@ -54,6 +59,7 @@ import {
   getContractLifecycleRegistry,
   MECHANICAL_ANALYZER_EVIDENCE_VERSION,
   SOURCE_EVIDENCE_DIGEST_VERSION,
+  terminalContractFamilyForTarget,
 } from './contractLifecycleRegistry';
 import type {
   CampaignEligibility,
@@ -62,8 +68,18 @@ import type {
   ContractFamilyScope,
   CurrentnessRequirement,
 } from './contractLifecycleRegistry';
-import { evaluateComposedCurrentness } from './sourceContractResolution';
-import type { FamilyCurrentnessClass } from './sourceContractResolution';
+import {
+  evaluateComposedCurrentness,
+  resolveSourceContract,
+  SOURCE_CONTRACT_RESOLUTION_VERSION,
+} from './sourceContractResolution';
+import type {
+  ComposedResolutionKind,
+  ComposedSourceContractResolution,
+  FamilyCurrentnessClass,
+} from './sourceContractResolution';
+import type { UnifiedContractResult } from './contractResultVocabulary';
+import type { ContractDriftClassification } from '../extract/contractDrift';
 
 /** Load-bearing unified lifecycle-model version. */
 export const CONTRACT_LIFECYCLE_MODEL_VERSION = 'nightwatch.contract-lifecycle-model.v1' as const;
@@ -457,6 +473,165 @@ export function composeLifecycleCurrentnessState(
     return composed.reason === 'MIXED_CURRENTNESS' ? 'MIXED_CURRENTNESS_BLOCKED' : 'NOT_EVALUATED';
   }
   return composed.agreed;
+}
+
+// ---------------------------------------------------------------------------
+// Resolver integration bridge (lifecycle view over composed resolution).
+// ---------------------------------------------------------------------------
+
+/** Load-bearing lifecycle-resolution-view version. */
+export const CONTRACT_LIFECYCLE_RESOLUTION_VIEW_VERSION = 'nightwatch.contract-lifecycle-resolution-view.v1' as const;
+
+/**
+ * ONE downstream-facing view over a single ComposedSourceContractResolution
+ * family record: the record's dynamic resolution outcome joined with its
+ * composed lifecycle state, so consumers get identity, compatibility,
+ * currentness and admission dimensions from one call instead of re-deriving
+ * them from the registry and the resolution separately.
+ */
+export interface FamilyLifecycleResolutionView {
+  readonly identity: ContractLifecycleIdentity;
+  readonly kind: ContractFamilyKind;
+  readonly collectionScope: ContractFamilyScope;
+  readonly compatibilityState: CompatibilityState;
+  readonly historicalIdCompatibility: HistoricalIdCompatibility;
+  readonly supersededByFamilyId: string | null;
+  readonly terminalFamilyId: string | null;
+  readonly admissionAuthority: AdmissionAuthority;
+  readonly campaignEligible: CampaignEligibility;
+  /** The record's dynamic class composed through composeLifecycleCurrentnessState. */
+  readonly currentness: LifecycleCurrentnessState;
+  /** Categorical unified result, verbatim from the resolution record. */
+  readonly unified: UnifiedContractResult;
+  /** ev:sha256:<24> of the finally-used derived expectation, or null. */
+  readonly evidenceDigest: string | null;
+  readonly derivationVersion: string;
+}
+
+/**
+ * Target-level lifecycle view over a ComposedSourceContractResolution.
+ * Purely additive to the resolution itself: every resolution-emitted field is
+ * carried verbatim; only the joined lifecycle dimensions are new.
+ */
+export interface ContractLifecycleResolutionView {
+  readonly viewVersion: typeof CONTRACT_LIFECYCLE_RESOLUTION_VIEW_VERSION;
+  readonly resolutionVersion: typeof SOURCE_CONTRACT_RESOLUTION_VERSION;
+  readonly modelVersion: typeof CONTRACT_LIFECYCLE_MODEL_VERSION;
+  readonly targetId: string;
+  readonly resolutionKind: ComposedResolutionKind;
+  /** Composed over the evaluated family records; NOT_EVALUATED when none. */
+  readonly currentness: LifecycleCurrentnessState;
+  /** Terminal-family dimensions for the target; null when no terminal selection
+   *  exists (unknown target / ambiguous selection / no active family). */
+  readonly terminalFamilyId: string | null;
+  readonly admissionAuthority: AdmissionAuthority | null;
+  /** Drift classification, verbatim from the resolution (null when absent). */
+  readonly drift: ContractDriftClassification | null;
+  /** Categorical overall result, verbatim from the resolution. */
+  readonly overall: UnifiedContractResult;
+  /** Per-family views in the resolution's own deterministic record order. */
+  readonly families: readonly FamilyLifecycleResolutionView[];
+}
+
+/**
+ * Project the composed lifecycle view over a ComposedSourceContractResolution.
+ *
+ * Fail-closed coherence gates (no silent joining):
+ *   - LIFECYCLE_VIEW_RESOLUTION_VERSION_MISMATCH — not a v1 composed resolution;
+ *   - LIFECYCLE_VIEW_UNKNOWN_FAMILY_ID — a resolved family has no lifecycle state;
+ *   - LIFECYCLE_VIEW_TARGET_MISMATCH / _KIND_MISMATCH / _DERIVATION_VERSION_MISMATCH
+ *     — state and resolution disagree about the family's identity dimensions.
+ *
+ * Terminal selection stays authoritative in contractLifecycleRegistry (it owns
+ * the probe-vs-chain rule); this module only joins the admission dimension and
+ * terminal identity onto it. `states` defaults to the cached registry model;
+ * a caller-supplied set must still contain every referenced familyId.
+ * PURE: deterministic output order (resolution record order).
+ */
+export function lifecycleViewForSourceContractResolution(params: {
+  resolution: ComposedSourceContractResolution;
+  states?: readonly ContractLifecycleState[];
+}): ContractLifecycleResolutionView {
+  const resolution = params.resolution;
+  if (resolution.resolutionVersion !== SOURCE_CONTRACT_RESOLUTION_VERSION) {
+    throw new Error(`LIFECYCLE_VIEW_RESOLUTION_VERSION_MISMATCH:${String(resolution.resolutionVersion)}`);
+  }
+  const states = params.states ?? getContractLifecycleStates();
+  const stateByFamilyId = new Map<string, ContractLifecycleState>();
+  for (const state of states) {
+    if (stateByFamilyId.has(state.identity.familyId)) {
+      throw new Error(`LIFECYCLE_MODEL_DUPLICATE_FAMILY_ID:${state.identity.familyId}`);
+    }
+    stateByFamilyId.set(state.identity.familyId, state);
+  }
+
+  const families = resolution.families.map((record): FamilyLifecycleResolutionView => {
+    const state = stateByFamilyId.get(record.familyId);
+    if (state === undefined) {
+      throw new Error(`LIFECYCLE_VIEW_UNKNOWN_FAMILY_ID:${record.familyId}`);
+    }
+    if (state.identity.targetId !== resolution.targetId) {
+      throw new Error(`LIFECYCLE_VIEW_TARGET_MISMATCH:${record.familyId}:${state.identity.targetId}`);
+    }
+    if (state.kind !== record.kind) {
+      throw new Error(`LIFECYCLE_VIEW_KIND_MISMATCH:${record.familyId}`);
+    }
+    if (state.derivationVersion !== record.derivationVersion) {
+      throw new Error(`LIFECYCLE_VIEW_DERIVATION_VERSION_MISMATCH:${record.familyId}`);
+    }
+    return Object.freeze({
+      identity: state.identity,
+      kind: state.kind,
+      collectionScope: state.collectionScope,
+      compatibilityState: state.compatibilityState,
+      historicalIdCompatibility: state.historicalIdCompatibility,
+      supersededByFamilyId: state.supersededByFamilyId,
+      terminalFamilyId: state.terminalFamilyId,
+      admissionAuthority: state.admissionAuthority,
+      campaignEligible: state.campaignEligible,
+      currentness: composeLifecycleCurrentnessState([record.currentnessClass]),
+      unified: record.unified,
+      evidenceDigest: record.evidenceDigest,
+      derivationVersion: record.derivationVersion,
+    });
+  });
+
+  const terminalOutcome = terminalContractFamilyForTarget(resolution.targetId);
+  let terminalFamilyId: string | null = null;
+  let admissionAuthority: AdmissionAuthority | null = null;
+  if (terminalOutcome.ok) {
+    const terminalState = stateByFamilyId.get(terminalOutcome.family.familyId);
+    if (terminalState === undefined) {
+      throw new Error(`LIFECYCLE_VIEW_UNKNOWN_FAMILY_ID:${terminalOutcome.family.familyId}`);
+    }
+    terminalFamilyId = terminalState.identity.familyId;
+    admissionAuthority = terminalState.admissionAuthority;
+  }
+
+  return Object.freeze({
+    viewVersion: CONTRACT_LIFECYCLE_RESOLUTION_VIEW_VERSION,
+    resolutionVersion: resolution.resolutionVersion,
+    modelVersion: CONTRACT_LIFECYCLE_MODEL_VERSION,
+    targetId: resolution.targetId,
+    resolutionKind: resolution.kind,
+    currentness: composeLifecycleCurrentnessState(resolution.families.map((record) => record.currentnessClass)),
+    terminalFamilyId,
+    admissionAuthority,
+    drift: resolution.drift,
+    overall: resolution.overall,
+    families: Object.freeze(families),
+  });
+}
+
+/**
+ * ONE call for downstream consumers: resolve the source contract through the
+ * authoritative resolveSourceContract, then project the composed lifecycle
+ * view over its output (identity/compatibility/currentness/admission joined).
+ */
+export function resolveSourceContractLifecycleView(
+  params: Parameters<typeof resolveSourceContract>[0],
+): ContractLifecycleResolutionView {
+  return lifecycleViewForSourceContractResolution({ resolution: resolveSourceContract(params) });
 }
 
 // ---------------------------------------------------------------------------
