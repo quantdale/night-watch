@@ -6,15 +6,24 @@
 // Both renderers (`renderLocalReadinessJson`, `renderLocalReadinessText`)
 // derive from the ONE summary model — never duplicated logic.
 //
-// Category resolution is deterministic and fail-closed, most severe first:
+// Category resolution is deterministic, fail-closed, and TABLE-DRIVEN (most
+// severe first; see CATEGORY_DERIVATION_TABLE):
 //   NOT_APPLICABLE            caller marked the surface not applicable
 //   BLOCKED_AUTHORITY         AUTHORITY blocker or owner-scope marker drift
 //   BLOCKED_SOURCE            SOURCE blocker, structural contract gap,
 //                             stale/unavailable currentness
 //   BLOCKED_VERSION           VERSION blocker, version drift, or an
 //                             INCOMPATIBLE checkpoint
-//   BLOCKED_EXTERNAL_CI       EXTERNAL_CI blocker or FAIL/BLOCKED category
+//   BLOCKED_ANALYZER          ANALYZER blocker, analyzer UNAVAILABLE, or
+//                             observed analyzer-version drift
+//   BLOCKED_EXTERNAL_CI       EXTERNAL_CI blocker or a table-classified
+//                             EXECUTED_FAIL / EXTERNALLY_BLOCKED CI state
 //   READY_LOCAL_SYNTHETIC     none of the above
+//
+// Additive sections default to honest unknowns so callers that do not supply
+// them see unchanged categories: absent analyzer input is NOT_EVALUATED /
+// unmeasured, absent verification dimensions are NOT_MEASURED. Deferred
+// verification never blocks and NEVER fabricates PASS/FAIL.
 //
 // Hardening: no fs, no network, no child processes, no environment access, no
 // persistence, no timestamps. Blocker details are privacy-screened and fail
@@ -22,30 +31,44 @@
 // ---------------------------------------------------------------------------
 
 import {
+  MECHANICAL_ANALYZER_VERSION,
+} from '../../oracles/expectations/extract/analyzer';
+import {
   OWNER_SCOPE_REASON,
   OWNER_SCOPE_STATUS,
   FROZEN_OWNER_OPERATIONS,
 } from '../policy/ownerScope';
 import {
+  LOCAL_READINESS_ANALYZER_AVAILABILITY_VALUES,
   LOCAL_READINESS_BLOCKER_KINDS,
   LOCAL_READINESS_CHECKPOINT_COMPATIBILITY_VALUES,
   LOCAL_READINESS_CURRENTNESS_VALUES,
+  LOCAL_READINESS_DEFERRED_VERIFICATION_VALUES,
+  LOCAL_READINESS_EXTERNAL_CI_CLASSIFICATION_TABLE,
   LOCAL_READINESS_EXTERNAL_CI_VALUES,
   LOCAL_READINESS_MODEL_VERSION,
+  LOCAL_READINESS_VERIFICATION_DIMENSIONS,
 } from './types';
 import { containsForbiddenErrorDetail, safeErrorDetail } from '../campaign/runtimeValidation';
 import type {
+  LocalReadinessAnalyzerAvailability,
+  LocalReadinessAnalyzerInput,
+  LocalReadinessAnalyzerSection,
   LocalReadinessBlocker,
   LocalReadinessCampaignSummary,
   LocalReadinessCategory,
   LocalReadinessCheckpointCompatibility,
   LocalReadinessContractHealth,
   LocalReadinessCurrentness,
+  LocalReadinessDeferredVerification,
   LocalReadinessExternalCi,
+  LocalReadinessExternalCiClassification,
   LocalReadinessInput,
   LocalReadinessSummary,
   LocalReadinessTargetCoverage,
   LocalReadinessTargetCoverageEntry,
+  LocalReadinessVerificationDimension,
+  LocalReadinessVerificationSection,
 } from './types';
 
 /** Canonical owner-scope markers the summary compares against (fail-closed). */
@@ -274,10 +297,120 @@ function ownerScopeMatchesMarkers(input: LocalReadinessInput): boolean {
   );
 }
 
+/**
+ * Table-derived external-CI classification. Unknown values fail closed with
+ * READINESS_INVALID_EXTERNAL_CI (same code as direct vocabulary validation —
+ * the table is exhaustive over that vocabulary).
+ */
+export function classifyExternalCi(externalCi: LocalReadinessExternalCi): {
+  classification: LocalReadinessExternalCiClassification;
+  blocksCategory: boolean;
+} {
+  const row = LOCAL_READINESS_EXTERNAL_CI_CLASSIFICATION_TABLE.find((rule) => rule.ci === externalCi);
+  if (row === undefined) failClosed(`READINESS_INVALID_EXTERNAL_CI:${safeErrorDetail(externalCi)}`);
+  return { classification: row.classification, blocksCategory: row.blocksCategory };
+}
+
+function summarizeAnalyzer(input: LocalReadinessInput): {
+  section: LocalReadinessAnalyzerSection;
+  analyzerBlocked: boolean;
+} {
+  // Absent input = honest NOT_EVALUATED unknowns; never a fabricated match.
+  const raw: LocalReadinessAnalyzerInput = input.analyzer ?? { observedVersion: null };
+  if (
+    raw.availability !== undefined &&
+    !LOCAL_READINESS_ANALYZER_AVAILABILITY_VALUES.includes(raw.availability)
+  ) {
+    failClosed(`READINESS_INVALID_ANALYZER:availability:${safeErrorDetail(raw.availability)}`);
+  }
+  const availability: LocalReadinessAnalyzerAvailability = raw.availability ?? 'NOT_EVALUATED';
+  let versionConsistent: boolean | null = null;
+  if (raw.observedVersion !== null) {
+    if (typeof raw.observedVersion !== 'string' || raw.observedVersion === '') {
+      failClosed('READINESS_INVALID_ANALYZER:observed-version');
+    }
+    assertSafeIdentityField(raw.observedVersion, 'READINESS_PRIVACY_BLOCKED:analyzer-version');
+    versionConsistent = raw.observedVersion === MECHANICAL_ANALYZER_VERSION;
+  }
+  const blocked = availability === 'UNAVAILABLE' || versionConsistent === false;
+  return {
+    section: {
+      pinnedVersion: MECHANICAL_ANALYZER_VERSION,
+      observedVersion: raw.observedVersion,
+      availability,
+      versionConsistent,
+      blocked,
+    },
+    analyzerBlocked: blocked,
+  };
+}
+
+function verificationStateFor(
+  states: Partial<Record<LocalReadinessVerificationDimension, LocalReadinessDeferredVerification>>,
+  dimension: LocalReadinessVerificationDimension,
+): LocalReadinessDeferredVerification {
+  return states[dimension] ?? 'NOT_MEASURED';
+}
+
+function summarizeVerification(input: LocalReadinessInput): LocalReadinessVerificationSection {
+  const rawStates: Partial<Record<LocalReadinessVerificationDimension, LocalReadinessDeferredVerification>> =
+    input.verification?.statesByDimension ?? {};
+  for (const [dimension, state] of Object.entries(rawStates)) {
+    if (!LOCAL_READINESS_VERIFICATION_DIMENSIONS.includes(dimension as LocalReadinessVerificationDimension)) {
+      failClosed(`READINESS_INVALID_VERIFICATION:dimension:${safeErrorDetail(dimension)}`);
+    }
+    if (state !== undefined && !LOCAL_READINESS_DEFERRED_VERIFICATION_VALUES.includes(state)) {
+      failClosed(`READINESS_INVALID_VERIFICATION:state:${safeErrorDetail(dimension)}`);
+    }
+  }
+  const statesByDimension: Record<LocalReadinessVerificationDimension, LocalReadinessDeferredVerification> = {
+    TESTING: verificationStateFor(rawStates, 'TESTING'),
+    TYPECHECK: verificationStateFor(rawStates, 'TYPECHECK'),
+    HARDENING: verificationStateFor(rawStates, 'HARDENING'),
+  };
+  const deferredDimensions = LOCAL_READINESS_VERIFICATION_DIMENSIONS.filter(
+    (dimension) => statesByDimension[dimension] === 'DEFERRED_TO_HARDENING',
+  );
+  const notMeasuredDimensions = LOCAL_READINESS_VERIFICATION_DIMENSIONS.filter(
+    (dimension) => statesByDimension[dimension] === 'NOT_MEASURED',
+  );
+  return {
+    statesByDimension,
+    deferredDimensions,
+    notMeasuredDimensions,
+    allDeferredToHardening: deferredDimensions.length === LOCAL_READINESS_VERIFICATION_DIMENSIONS.length,
+  };
+}
+
 function coverageForTarget(activeCount: number, hasCampaignEligibleExpectation: boolean): LocalReadinessTargetCoverage {
   if (activeCount === 0) return 'MISSING';
   return hasCampaignEligibleExpectation ? 'COVERED' : 'PARTIAL';
 }
+
+/**
+ * Ordered category derivation table (most severe first). Each blocking signal
+ * owns exactly one row; the FIRST row whose signal fires wins. Blocker kinds
+ * map onto categories through LOCAL_READINESS_BLOCKER_KIND_CATEGORIES, keeping
+ * kind->category semantics table-driven and documented in one place.
+ */
+interface CategoryDerivationContext {
+  readonly authorityBlocked: boolean;
+  readonly sourceBlocked: boolean;
+  readonly versionBlocked: boolean;
+  readonly analyzerBlocked: boolean;
+  readonly externalCiBlocked: boolean;
+}
+
+const CATEGORY_DERIVATION_TABLE: ReadonlyArray<{
+  readonly category: Exclude<LocalReadinessCategory, 'READY_LOCAL_SYNTHETIC' | 'NOT_APPLICABLE'>;
+  readonly fires: (context: CategoryDerivationContext) => boolean;
+}> = Object.freeze([
+  { category: 'BLOCKED_AUTHORITY', fires: (context) => context.authorityBlocked },
+  { category: 'BLOCKED_SOURCE', fires: (context) => context.sourceBlocked },
+  { category: 'BLOCKED_VERSION', fires: (context) => context.versionBlocked },
+  { category: 'BLOCKED_ANALYZER', fires: (context) => context.analyzerBlocked },
+  { category: 'BLOCKED_EXTERNAL_CI', fires: (context) => context.externalCiBlocked },
+]);
 
 /**
  * Pure summarizer over explicit inputs. Throws Error('CODE:...') on invalid
@@ -296,6 +429,9 @@ export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadin
   const { health, sourceBlocked } = summarizeSourceContracts(input);
   const { campaign, versionBlocked } = summarizeCampaign(input);
   const matchesFrozenMarkers = ownerScopeMatchesMarkers(input);
+  const { section: analyzerSection, analyzerBlocked } = summarizeAnalyzer(input);
+  const verification = summarizeVerification(input);
+  const externalCiClassification = classifyExternalCi(input.externalCi);
 
   // Approved-target coverage entries (structural only), sorted by targetId.
   const activeCountByTarget = new Map<string, number>();
@@ -314,28 +450,44 @@ export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadin
     }))
     .sort((a, b) => compareStrings(a.targetId, b.targetId));
 
-  const authorityBlocked =
-    !matchesFrozenMarkers ||
-    normalizedBlockers.some((blocker) => blocker.kind === 'AUTHORITY');
-  const externalCiBlocked =
-    input.externalCi === 'FAIL' ||
-    input.externalCi === 'BLOCKED_EXTERNAL_CI' ||
-    normalizedBlockers.some((blocker) => blocker.kind === 'EXTERNAL_CI');
-  const checkpointBlocked = input.checkpointCompatibility === 'INCOMPATIBLE';
+  // Table-driven derivation context. CI blocking comes from the
+  // classification table (EXECUTED_FAIL / EXTERNALLY_BLOCKED block;
+  // UNMEASURED_UNKNOWN never does).
+  const context: CategoryDerivationContext = {
+    authorityBlocked:
+      !matchesFrozenMarkers ||
+      normalizedBlockers.some(
+        (blocker) => LOCAL_READINESS_BLOCKER_KIND_CATEGORIES[blocker.kind] === 'BLOCKED_AUTHORITY',
+      ),
+    sourceBlocked:
+      sourceBlocked ||
+      normalizedBlockers.some(
+        (blocker) => LOCAL_READINESS_BLOCKER_KIND_CATEGORIES[blocker.kind] === 'BLOCKED_SOURCE',
+      ),
+    versionBlocked:
+      versionBlocked ||
+      input.checkpointCompatibility === 'INCOMPATIBLE' ||
+      normalizedBlockers.some(
+        (blocker) => LOCAL_READINESS_BLOCKER_KIND_CATEGORIES[blocker.kind] === 'BLOCKED_VERSION',
+      ),
+    analyzerBlocked:
+      analyzerBlocked ||
+      normalizedBlockers.some(
+        (blocker) => LOCAL_READINESS_BLOCKER_KIND_CATEGORIES[blocker.kind] === 'BLOCKED_ANALYZER',
+      ),
+    externalCiBlocked:
+      externalCiClassification.blocksCategory ||
+      normalizedBlockers.some(
+        (blocker) => LOCAL_READINESS_BLOCKER_KIND_CATEGORIES[blocker.kind] === 'BLOCKED_EXTERNAL_CI',
+      ),
+  };
 
   let category: LocalReadinessCategory;
   if (!input.applies) {
     category = 'NOT_APPLICABLE';
-  } else if (authorityBlocked) {
-    category = 'BLOCKED_AUTHORITY';
-  } else if (sourceBlocked || normalizedBlockers.some((blocker) => blocker.kind === 'SOURCE')) {
-    category = 'BLOCKED_SOURCE';
-  } else if (versionBlocked || checkpointBlocked || normalizedBlockers.some((blocker) => blocker.kind === 'VERSION')) {
-    category = 'BLOCKED_VERSION';
-  } else if (externalCiBlocked) {
-    category = 'BLOCKED_EXTERNAL_CI';
   } else {
-    category = 'READY_LOCAL_SYNTHETIC';
+    const fired = CATEGORY_DERIVATION_TABLE.find((row) => row.fires(context));
+    category = fired ? fired.category : 'READY_LOCAL_SYNTHETIC';
   }
 
   return Object.freeze({
@@ -348,8 +500,11 @@ export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadin
     approvedTargetCoverage: Object.freeze(approvedTargetCoverage),
     campaign: Object.freeze(campaign),
     checkpointCompatibility: input.checkpointCompatibility,
+    analyzer: Object.freeze(analyzerSection),
+    verification: Object.freeze(verification),
     unresolvedBlockers: Object.freeze(normalizedBlockers.map((blocker) => Object.freeze({ ...blocker }))),
     externalCi: input.externalCi,
+    externalCiClassification: externalCiClassification.classification,
     ownerScope: Object.freeze({
       status: input.ownerScope.status,
       reason: input.ownerScope.reason,
@@ -379,7 +534,11 @@ export function renderLocalReadinessText(summary: LocalReadinessSummary): string
     `coverage: ${renderCoverageCounts(summary)}`,
     `campaign: ${summary.campaign.category} compared=${summary.campaign.comparedKeys.length} drift=${summary.campaign.driftKeys.length} unmeasured=${summary.campaign.unmeasured}`,
     `checkpoint: ${summary.checkpointCompatibility}`,
-    `external-ci: ${summary.externalCi}`,
+    `analyzer: pinned=${summary.analyzer.pinnedVersion} observed=${summary.analyzer.observedVersion ?? 'null'}` +
+      ` availability=${summary.analyzer.availability} consistent=${renderVersionConsistency(summary.analyzer.versionConsistent)}`,
+    `verification: ${renderVerificationStates(summary)} deferred=${summary.verification.deferredDimensions.length}` +
+      ` not-measured=${summary.verification.notMeasuredDimensions.length}`,
+    `external-ci: ${summary.externalCi} (classification=${summary.externalCiClassification})`,
     `owner-scope: ${summary.ownerScope.status} / ${summary.ownerScope.reason} (frozen=${summary.ownerScope.frozenOperationCount} markers-match=${summary.ownerScope.matchesFrozenMarkers})`,
     `blockers: ${summary.unresolvedBlockers.length}`,
   ];
@@ -399,4 +558,17 @@ function renderCoverageCounts(summary: LocalReadinessSummary): string {
   const counts: Record<LocalReadinessTargetCoverage, number> = { COVERED: 0, PARTIAL: 0, MISSING: 0 };
   for (const entry of summary.approvedTargetCoverage) counts[entry.coverage] += 1;
   return `covered=${counts.COVERED} partial=${counts.PARTIAL} missing=${counts.MISSING}`;
+}
+
+/** null stays explicitly "unmeasured" — never rendered as a pass/fail verdict. */
+function renderVersionConsistency(consistent: boolean | null): string {
+  if (consistent === null) return 'unmeasured';
+  return consistent ? 'true' : 'false';
+}
+
+function renderVerificationStates(summary: LocalReadinessSummary): string {
+  return LOCAL_READINESS_VERIFICATION_DIMENSIONS.map((dimension) => {
+    const state = summary.verification.statesByDimension[dimension] ?? 'NOT_MEASURED';
+    return `${dimension}=${state}`;
+  }).join(' ');
 }

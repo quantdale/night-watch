@@ -12,6 +12,11 @@
 //     measured offline), pinned versions come from source constants only;
 //   - checkpoint compatibility: UNKNOWN (no persisted checkpoint is inspected
 //     — reading private local state is out of scope for a status surface);
+//   - analyzer status: availability NOT_EVALUATED and observed version null
+//     (the pinned MECHANICAL_ANALYZER_VERSION constant is carried as pinned
+//     truth, but nothing is executed or observed offline);
+//   - deferred verification: testing/typecheck/hardening are explicitly
+//     DEFERRED_TO_HARDENING per owner direction (categorical, never PASS/FAIL);
 //   - external CI: UNKNOWN (never a live network call);
 //   - blockers: none assumed; structural source problems surface through the
 //     summarizer instead of pre-seeded blocker entries.
@@ -75,6 +80,23 @@ export function collectLocalReadinessInputFromRepo(): LocalReadinessInput {
     },
     // No persisted checkpoint is inspected by a status surface.
     checkpointCompatibility: 'UNKNOWN',
+    // Analyzer status: the pinned constant is authoritative source truth; this
+    // offline adapter cannot execute the analyzer or observe a stamped
+    // version, so availability stays NOT_EVALUATED and observed stays null.
+    analyzer: {
+      availability: 'NOT_EVALUATED',
+      observedVersion: null,
+    },
+    // Owner direction (PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY): testing,
+    // typecheck and hardening validation are explicitly DEFERRED_TO_HARDENING.
+    // Categorical deferment state only — never a fabricated PASS/FAIL.
+    verification: {
+      statesByDimension: {
+        TESTING: 'DEFERRED_TO_HARDENING',
+        TYPECHECK: 'DEFERRED_TO_HARDENING',
+        HARDENING: 'DEFERRED_TO_HARDENING',
+      },
+    },
     unresolvedBlockers: [],
     // Never a live network call; callers with recorded CI truth may override.
     externalCi: 'UNKNOWN',

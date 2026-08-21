@@ -447,6 +447,7 @@ test.describe('Phase 15P A13 — pure-core import authority (static)', () => {
     'src/core/readiness/repoState.ts',
     'src/core/readiness/types.ts',
     'src/core/readiness/index.ts',
+    'src/core/readiness/service.ts',
     'src/core/projectSnapshot/build.ts',
     'src/core/projectSnapshot/compare.ts',
     'src/core/projectSnapshot/types.ts',

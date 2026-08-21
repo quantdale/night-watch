@@ -299,6 +299,8 @@ test.describe('phase15p local readiness renderers', () => {
       'coverage',
       'campaign',
       'checkpoint',
+      'analyzer',
+      'verification',
       'external-ci',
       'owner-scope',
       'blockers',
