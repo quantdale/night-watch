@@ -176,6 +176,12 @@ function validateInvariant(value: unknown, index: number): InvariantDefinition {
       if (min !== undefined && max !== undefined && min > max) {
         throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}]-min-gt-max`);
       }
+      // Phase 15P A04 cross-field coherence: an exact bound outside its own
+      // optional min/max range is individually well-typed but jointly
+      // unsatisfiable, so it fails closed.
+      if (exact !== undefined && ((min !== undefined && exact < min) || (max !== undefined && exact > max))) {
+        throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}]-exact-outside-min-max`);
+      }
       assertNoUnknownFields(record, allowed, `invariant[${index}]`);
       return { kind, path, ...(min === undefined ? {} : { min }), ...(max === undefined ? {} : { max }), ...(exact === undefined ? {} : { exact }) };
     }

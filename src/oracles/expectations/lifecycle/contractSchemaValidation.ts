@@ -21,8 +21,10 @@
 //   - cross-field coherence (derivation/evidence/currentness pairing per
 //     family kind, probe-vs-expectationId exclusivity, historicalImmutable
 //     iff archived, composed kind vs overall-category allowlist, composed
-//     kind vs family currentness classes) fails with
-//     CONTRACT_SCHEMA_INCOHERENT:<detail>;
+//     kind vs family currentness classes, record kind vs derivation-version
+//     pairing, CURRENT/STALE records require an evidence digest, composed
+//     families carry active expectation kinds only, lineage ids never
+//     self-reference) fails with CONTRACT_SCHEMA_INCOHERENT:<detail>;
 //   - free-text surfaces are privacy-screened with containsAnySentinel; a
 //     trip fails with CONTRACT_SCHEMA_PRIVACY_SENTINEL_REJECTED:<field>.
 //
@@ -351,9 +353,9 @@ function validateRecordAt(value: unknown, path: string): FamilyResolutionRecord 
   if (!familyId.startsWith('lifecycle:')) {
     reject(`CONTRACT_SCHEMA_INCOHERENT:${path}.familyId-must-start-with-lifecycle-colon:${familyId}`);
   }
-  enumAt(path, box, 'kind', CONTRACT_FAMILY_KINDS);
+  const kind = enumAt(path, box, 'kind', CONTRACT_FAMILY_KINDS);
   validateUnifiedAt(box['unified'], `${path}.unified`);
-  enumAt(path, box, 'currentnessClass', FAMILY_CURRENTNESS_CLASSES);
+  const currentnessClass = enumAt(path, box, 'currentnessClass', FAMILY_CURRENTNESS_CLASSES);
   const digest = box['evidenceDigest'];
   if (digest !== null && !isEvidenceDigest(digest)) {
     reject(`CONTRACT_SCHEMA_INCOHERENT:${path}.evidenceDigest-must-be-null-or-ev-sha256-24:${String(digest)}`);
@@ -361,6 +363,17 @@ function validateRecordAt(value: unknown, path: string): FamilyResolutionRecord 
   const derivationVersion = stringAt(path, box, 'derivationVersion');
   if (!KNOWN_LIFECYCLE_DERIVATION_VERSIONS.includes(derivationVersion)) {
     reject(`CONTRACT_SCHEMA_ENUM_VIOLATION:${path}.derivationVersion:${derivationVersion}`);
+  }
+  // Cross-field coherence (Phase 15P A04): records inherit the registry's
+  // kind/derivation-version pairing, and a CURRENT/STALE record always
+  // resolved against an admitted expectation, so it carries its evidence.
+  if (derivationVersion !== DERIVATION_VERSION_BY_KIND[kind]) {
+    reject(
+      `CONTRACT_SCHEMA_INCOHERENT:record-derivation-version-kind-mismatch:${kind}:${derivationVersion}`,
+    );
+  }
+  if ((currentnessClass === 'CURRENT' || currentnessClass === 'STALE') && digest === null) {
+    reject(`CONTRACT_SCHEMA_INCOHERENT:${currentnessClass}-record-requires-evidence-digest:${familyId}`);
   }
   return box as unknown as FamilyResolutionRecord;
 }
@@ -395,6 +408,15 @@ function validateComposedAt(value: unknown, path: string): ComposedSourceContrac
   const records: FamilyResolutionRecord[] = familiesRaw.map((entry: unknown, index: number) =>
     validateRecordAt(entry, `${path}.families[${index}]`),
   );
+  // Cross-field coherence (Phase 15P A04): composed resolutions evaluate
+  // ACTIVE expectation families only — mechanical probes and archived
+  // historical shapes are never evaluated (sourceContractResolution skips
+  // them), so a record of either kind inside families[] is contradictory.
+  for (const record of records) {
+    if (record.kind === 'MECHANICAL_PROBE' || record.kind === 'ARCHIVED_HISTORICAL_SHAPE') {
+      reject(`CONTRACT_SCHEMA_INCOHERENT:families-must-not-carry-${record.kind}-records:${record.familyId}`);
+    }
+  }
   const driftRaw = box['drift'];
   if (driftRaw !== null) validateDriftAt(driftRaw, `${path}.drift`);
   const overall = validateUnifiedAt(box['overall'], `${path}.overall`);
@@ -481,6 +503,11 @@ function validateDescriptorAt(value: unknown, path: string): ContractFamilyDescr
     const linkedId = box[field];
     if (linkedId !== null && (typeof linkedId !== 'string' || !linkedId.startsWith('lifecycle:'))) {
       reject(`CONTRACT_SCHEMA_INCOHERENT:${path}.${field}-must-be-null-or-lifecycle-prefixed:${String(linkedId)}`);
+    }
+    // Cross-field coherence (Phase 15P A04): a family is never its own
+    // predecessor or successor.
+    if (linkedId === familyId) {
+      reject(`CONTRACT_SCHEMA_INCOHERENT:${path}.${field}-cannot-self-reference:${familyId}`);
     }
   }
 

@@ -182,6 +182,13 @@ export function validateSemanticEvaluationReceipt(receipt: SemanticEvaluationRec
   if (receipt.outcome !== 'ANOMALY' && receipt.invariantViolationCount !== 0) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:violations-without-anomaly');
   }
+  // Phase 15P A04 cross-field coherence: findings are only ever produced by
+  // an ANOMALY evaluation (the semantic core returns findings: [] on every
+  // other outcome), so a non-ANOMALY receipt carrying findings contradicts
+  // its own outcome and fails closed.
+  if (receipt.outcome !== 'ANOMALY' && receipt.findingCount !== 0) {
+    throw new Error('SEMANTIC_RECEIPT_INVALID:findings-without-anomaly');
+  }
   if (receipt.outcome === 'ANOMALY' && receipt.findingCount === 0) {
     throw new Error('SEMANTIC_RECEIPT_INVALID:anomaly-without-finding');
   }
