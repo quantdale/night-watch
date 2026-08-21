@@ -5,12 +5,15 @@
 // subsequence of the admitted original action sequence. It cannot introduce
 // an action, selector, route, request, or value. The implementation uses a
 // deterministic ddmin-style reduction followed by a bounded one-deletion
-// audit. Therefore it reports 1-MINIMAL only when that audit completes AND
-// at least one genuine reduced-candidate replay observed DOES_NOT_REPRODUCE
-// (or nothing is left to remove); an INVALID deletion was never genuinely
-// replayed and never counts as proof. Otherwise it reports BOUNDED_MINIMAL
-// and never claims a global minimum. reductionEvidenceClass records which
-// evidence was actually obtained.
+// audit. It reports 1-MINIMAL only when that audit completed AND every
+// single-action deletion of the final survivor was genuinely exercised
+// through the bound replay path and observed DOES_NOT_REPRODUCE (or nothing
+// is left to remove). A deletion rejected before a replay — guard failure,
+// precondition divergence, nonzero safety — was never exercised and never
+// counts as proof; neither does a reduction that was never sent to the
+// replay callback. Otherwise it reports BOUNDED_MINIMAL and never claims a
+// global minimum. reductionEvidenceClass records which evidence was actually
+// obtained.
 // ---------------------------------------------------------------------------
 
 import type { SafeAction, SafetyVector } from '../exploration/types';
@@ -179,10 +182,15 @@ function resultBase(options: MinimizationOptions, budget: MinimizationBudget, or
 }
 
 /**
- * Truthful reduction-evidence classification (Phase 15). Rule order is
- * load-bearing: budget exhaustion always blocks a proven claim, and a
- * vacuously irreducible survivor (single action) is reported even when no
- * reduced replay ever ran.
+ * Truthful reduction-evidence classification (Phase 15; hardened in Phase
+ * 15P). Rule order is load-bearing: budget exhaustion always blocks a proven
+ * claim, a vacuously irreducible survivor (single action) is reported even
+ * when no reduced replay ever ran, and MINIMALITY_PROVEN additionally
+ * requires (a) every single-action deletion of the final survivor to have
+ * been genuinely exercised through the bound replay path and observed
+ * DOES_NOT_REPRODUCE, and (b) the invocation ledger to confirm at least one
+ * reduced-phase executor call actually happened — an unexercised reduction
+ * can never back a proven-minimal claim.
  */
 function classifyReductionEvidence(input: {
   readonly freshReproduced: boolean;
@@ -191,11 +199,24 @@ function classifyReductionEvidence(input: {
   readonly budgetExhausted: boolean;
   readonly genuineReducedNonRepro: boolean;
   readonly invalidReducedCandidate: boolean;
+  readonly survivorDeletionsFullyExercised: boolean;
+  readonly exercisedReducedReplayCount: number;
 }): MinimizationResult['reductionEvidenceClass'] {
   if (!input.freshReproduced) return 'NO_REDUCIBLE_CANDIDATE';
   if (input.budgetExhausted) return 'MINIMALITY_NOT_PROVEN';
   if (input.originalLength === 1 || input.finalLength === 1) return 'NO_REDUCIBLE_CANDIDATE';
-  if (input.genuineReducedNonRepro) return 'MINIMALITY_PROVEN';
+  if (input.genuineReducedNonRepro) {
+    // The audit finished, but some survivor deletions were rejected before a
+    // genuine replay (precondition divergence / guard / safety): their
+    // non-reproduction is unknown, so minimality of the survivor is not fully
+    // proven even though genuine non-reproduction evidence exists elsewhere.
+    if (!input.survivorDeletionsFullyExercised) return 'MINIMALITY_NOT_PROVEN';
+    // Mechanical cross-check against the replay invocation ledger: a
+    // DOES_NOT_REPRODUCE disposition without an exercised reduced-phase
+    // replay would be internal contradiction — fail closed, never proven.
+    if (input.exercisedReducedReplayCount < 1) return 'MINIMALITY_NOT_PROVEN';
+    return 'MINIMALITY_PROVEN';
+  }
   if (input.invalidReducedCandidate) return 'REDUCTION_PRECONDITION_UNAVAILABLE';
   // Fail closed: without genuine reduced-replay evidence, minimality is
   // never claimed as proven.
@@ -232,6 +253,10 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   let invalidCandidateCount = 0;
   let safetyRejectionCount = 0;
   let reproductionCount = 0;
+  // Invocation ledger: reduced-phase executor calls that actually completed.
+  // This is the mechanical anchor for "the reduction was exercised through
+  // the bound replay path" — dispositions alone are not trusted as proof.
+  let reducedReplayInvocations = 0;
   const evaluations: CandidateEvaluation[] = [];
   const cache = new Map<string, EvaluatedCandidate>();
 
@@ -265,6 +290,7 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     }
     replayCount += 1;
     const raw = await options.replay(candidate.map((item) => item.action), phase);
+    if (phase === 'REDUCED_CANDIDATE') reducedReplayInvocations += 1;
     // Centralized exact-vs-reduced rule: a mismatched-fingerprint FAILURE is
     // downgraded to PASS before classification (executorNormalization).
     const outcome = normalizeExecutorOutcome(raw, options.anomalyFingerprint);
@@ -315,15 +341,23 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   }
 
   // A final deterministic one-deletion audit is the proof boundary for
-  // 1-MINIMAL. Two honest failure modes exist: budget exhaustion ends the
-  // audit early, and an INVALID deletion was never genuinely replayed so it
-  // can never count as proof (Phase 15 conflation fix).
+  // 1-MINIMAL. Three honest failure modes exist: budget exhaustion ends the
+  // audit early; an INVALID deletion was never genuinely replayed so it can
+  // never count as proof (Phase 15 conflation fix); and a survivor whose
+  // deletion set mixes genuine non-reproductions with never-replayed INVALID
+  // deletions leaves part of its minimality unknown (Phase 15P fix — the old
+  // rule let one genuine deletion back a 1-MINIMAL claim over unexercised
+  // siblings). The last complete pass's per-deletion dispositions are
+  // retained so the proof is decided by what was actually exercised.
   let changedInAudit = true;
+  let finalPassDispositions: CandidateEvaluation['disposition'][] = [];
   while (changedInAudit && !budgetExhausted && current.length > 1) {
     changedInAudit = false;
+    finalPassDispositions = [];
     for (let index = 0; index < current.length; index += 1) {
       const candidate = current.filter((_, candidateIndex) => candidateIndex !== index);
       const evaluated = await evaluate(candidate, 'REDUCED_CANDIDATE');
+      finalPassDispositions.push(evaluated.evaluation.disposition);
       if (evaluated.evaluation.disposition === 'NOT_EVALUATED_BUDGET') {
         budgetExhausted = true;
         break;
@@ -343,7 +377,16 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   const reducedEvaluations = evaluations.slice(1);
   const genuineReducedNonRepro = reducedEvaluations.some((item) => item.disposition === 'DOES_NOT_REPRODUCE');
   const invalidReducedCandidate = reducedEvaluations.some((item) => item.disposition === 'INVALID');
-  const oneDeletionProof = !budgetExhausted && (current.length === 1 || genuineReducedNonRepro);
+  // The audit's last complete pass covers exactly the final survivor's
+  // single-action deletions. 1-MINIMAL requires every one of them to have
+  // been genuinely replayed to DOES_NOT_REPRODUCE; a single-action survivor
+  // is vacuously minimal (no non-empty proper subsequence exists). A partial
+  // pass only coexists with budget exhaustion or a vacuous survivor, both of
+  // which are decided before this check matters.
+  const survivorDeletionsFullyExercised = current.length === 1 ||
+    (finalPassDispositions.length === current.length &&
+      finalPassDispositions.every((disposition) => disposition === 'DOES_NOT_REPRODUCE'));
+  const oneDeletionProof = !budgetExhausted && survivorDeletionsFullyExercised;
   const guarantee: MinimizationResult['minimalityGuarantee'] = oneDeletionProof ? '1-MINIMAL' : 'BOUNDED_MINIMAL';
   const status: MinimizationResult['status'] = budgetExhausted ? 'BOUNDED_BUDGET_EXHAUSTED' : reduced ? 'MINIMIZED' : 'UNCHANGED';
   // REDUCTION_PRECONDITION_UNAVAILABLE keeps BOUNDED_MINIMAL (never
@@ -358,6 +401,8 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     budgetExhausted,
     genuineReducedNonRepro,
     invalidReducedCandidate,
+    survivorDeletionsFullyExercised,
+    exercisedReducedReplayCount: reducedReplayInvocations,
   });
   return resultBase(options, budget, original, current, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, 'REPRODUCED', reproductionCount, guarantee, budgetExhausted, status, evidenceClass);
 }
