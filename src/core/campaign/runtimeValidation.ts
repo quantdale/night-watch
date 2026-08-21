@@ -46,6 +46,12 @@ export function assertNonNegativeInteger(value: unknown, code: string): asserts 
   }
 }
 
+/** Non-negative integer bounded above (inclusive); Phase 15P A09 ordinal/attempt bounds. */
+export function assertIntegerAtMost(value: unknown, maxValue: number, code: string): asserts value is number {
+  assertNonNegativeInteger(value, code);
+  if (value > maxValue) throw new Error(`${code}:EXCEEDS_BOUND:${maxValue}`);
+}
+
 export function assertFiniteNonNegative(value: unknown, code: string): asserts value is number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
     throw new Error(`${code}:FINITE_NON_NEGATIVE_REQUIRED`);

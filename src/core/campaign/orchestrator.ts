@@ -52,7 +52,7 @@ import type {
 } from '../triage/types';
 import { buildCampaignMorningBrief, renderCampaignMorningBrief, validateCampaignMorningBrief } from './brief';
 import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage } from './budget';
-import { CampaignCheckpointStore, validateCampaignCheckpoint } from './checkpoint';
+import { CampaignCheckpointStore, evaluateResumeCompatibility, grantWorkItemAttempt, validateCampaignCheckpoint, type CheckpointResumeRefusal } from './checkpoint';
 import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
 import { detectFailureStorm, type FailureStorm } from './storm';
 import {
@@ -65,6 +65,7 @@ import {
   type CampaignExecutionOutcome,
   type CampaignExecutionRecord,
   type CampaignExecutor,
+  type CampaignInterruptedWorkRecord,
   type CampaignManifest,
   type CampaignMorningBrief,
   type CampaignPreflightResult,
@@ -77,6 +78,7 @@ import {
   type CampaignRunResult,
   type CampaignSafetyVector,
   type CampaignWorkItem,
+  type CampaignWorkItemRetryRecord,
   type CampaignWorkKind,
   type CampaignWorkState,
   type ExecutionGuarantee,
@@ -485,6 +487,15 @@ export class CampaignOrchestrator {
   private readonly candidateLifecycles = new Map<string, CandidateLifecycleRecord>();
   // Phase 15 Session 2 (T5): one converged promotion verdict per promoted cluster.
   private readonly promotionResultLedger: SemanticAwarePromotionResult[] = [];
+  // Phase 15P A09: bounded per-work-item retry reservations with explicit
+  // reserved-attempt ids. Authoritative in-memory; persisted into every new
+  // checkpoint as `workItemRetries` and restored from it on resume so the
+  // attempt ceiling survives process restarts.
+  private readonly workItemRetries = new Map<string, CampaignWorkItemRetryRecord>();
+  // Phase 15P A09: structured last version-compatibility refusal (null while
+  // compatible). Built from evaluateResumeCompatibility at the same sites that
+  // record CAMPAIGN_VERSION_DRIFT; never replaces the thrown/stop behavior.
+  private lastResumeRefusal: CheckpointResumeRefusal | null = null;
   private artifactPaths: string[] = [];
   private nightwatchIssues: string[] = [];
   private transients: string[] = [];
@@ -510,6 +521,7 @@ export class CampaignOrchestrator {
     try {
       this.assertCurrentVersions();
     } catch {
+      this.lastResumeRefusal = this.versionDriftRefusal();
       this.state = {
         ...this.state,
         versionDrift: [...new Set([...this.state.versionDrift, 'CAMPAIGN_VERSION_DRIFT'])],
@@ -526,6 +538,11 @@ export class CampaignOrchestrator {
     for (const [clusterId, record] of Object.entries(this.state.candidateLifecycles ?? {})) {
       this.candidateLifecycles.set(clusterId, record);
     }
+    // Phase 15P A09: retry reservations survive resume the same way; the
+    // checkpoint validator has already proven their shape and ledger mirror.
+    for (const [workItemId, record] of Object.entries(this.state.workItemRetries ?? {})) {
+      this.workItemRetries.set(workItemId, record);
+    }
     if (manifest.mode === 'REPRODUCTION_ONLY' && manifest.reproductionTarget !== undefined) {
       const calculated = clusterAnomalies([manifest.reproductionTarget.candidate.observation])[0];
       if (calculated !== undefined && calculated.clusterId !== manifest.reproductionTarget.clusterId) {
@@ -540,6 +557,38 @@ export class CampaignOrchestrator {
     if (this.currentVersions === undefined) return;
     const current = typeof this.currentVersions === 'function' ? this.currentVersions() : this.currentVersions;
     if (stableCampaignJson(current) !== stableCampaignJson(this.manifest.versions)) throw new Error('CAMPAIGN_VERSION_DRIFT');
+  }
+
+  /**
+   * Phase 15P A09: structured drift envelope for the current version state.
+   * Pure evaluation — it never reaches an executor callback and never
+   * replaces the existing thrown/stop behavior; it only names the drifted
+   * components for structured consumers.
+   */
+  private versionDriftRefusal(): CheckpointResumeRefusal {
+    const current = typeof this.currentVersions === 'function' ? this.currentVersions() : this.currentVersions;
+    return evaluateResumeCompatibility({
+      checkpoint: this.state,
+      manifest: this.manifest,
+      ...(current === undefined ? {} : { currentVersions: current }),
+    });
+  }
+
+  /** Phase 15P A09: last incompatible-drift envelope, or null while compatible. */
+  get resumeRefusal(): CheckpointResumeRefusal | null {
+    return this.lastResumeRefusal;
+  }
+
+  /**
+   * Phase 15P A09: reserve the next attempt of a work item against the frozen
+   * retry ceiling. Exhaustion or any counter inconsistency refuses fail-closed
+   * before the executor callback is reachable.
+   */
+  private reserveAttempt(workItemId: string, nextAttempt: number): { readonly granted: true; readonly attemptId: string } | { readonly granted: false; readonly code: 'WORK_ITEM_RETRY_BUDGET_EXHAUSTED' } {
+    const grant = grantWorkItemAttempt(workItemId, this.workItemRetries.get(workItemId), nextAttempt);
+    if (!grant.granted) return grant;
+    this.workItemRetries.set(workItemId, grant.record);
+    return { granted: true, attemptId: grant.attemptId };
   }
 
   private loadDossiers(): void {
@@ -578,6 +627,22 @@ export class CampaignOrchestrator {
     for (const [clusterId, record] of this.candidateLifecycles) {
       if (knownClusterIds.has(clusterId)) persistedLifecycles[clusterId] = record;
     }
+    // Phase 15P A09: durable interrupted-work bookkeeping — every mid-flight
+    // execution-ledger / reproduction-queue state is recorded with the phase
+    // reached, the ordinal, and its reservation state so resume reconstructs
+    // exact continuation points without re-deriving them from queue states.
+    const nextOrdinal = this.state.checkpointOrdinal + 1;
+    const interruptedWork: CampaignInterruptedWorkRecord[] = [];
+    for (const record of this.state.executionLedger) {
+      if (record.state !== 'RUNNING' && record.state !== 'REPLAY_REQUIRED') continue;
+      interruptedWork.push({ workItemId: record.workItemId, clusterId: null, phaseReached: record.state, ordinal: nextOrdinal, reservationState: record.state === 'RUNNING' ? 'RESERVED' : 'CONSUMED' });
+    }
+    for (const item of this.state.reproductionQueue) {
+      if (item.state !== 'RUNNING' && item.state !== 'REPLAY_REQUIRED') continue;
+      interruptedWork.push({ workItemId: null, clusterId: item.clusterId, phaseReached: item.state, ordinal: nextOrdinal, reservationState: item.state === 'RUNNING' ? 'RESERVED' : 'CONSUMED' });
+    }
+    const persistedRetries: Record<string, CampaignWorkItemRetryRecord> = {};
+    for (const [workItemId, record] of this.workItemRetries) persistedRetries[workItemId] = record;
     const checkpoint: CampaignCheckpoint = {
       ...this.state,
       checkpointOrdinal: this.state.checkpointOrdinal + 1,
@@ -589,6 +654,8 @@ export class CampaignOrchestrator {
       remainingWorkItemIds: remainingWorkItems(this.manifest, this.state.executionLedger),
       candidateLifecycles: persistedLifecycles,
       runtimeContractVersions: { ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED },
+      ...(interruptedWork.length > 0 ? { interruptedWork } : {}),
+      ...(Object.keys(persistedRetries).length > 0 ? { workItemRetries: persistedRetries } : {}),
     };
     validateCampaignCheckpoint(checkpoint, this.manifest);
     this.state = checkpoint;
@@ -967,6 +1034,17 @@ export class CampaignOrchestrator {
         return { stopped: stop };
       }
       const previousAttempts = existing?.attemptCount ?? 0;
+      // Phase 15P A09: explicit attempt reservation before the durable RUNNING
+      // marker. Exhaustion of the frozen retry ceiling refuses fail-closed
+      // here — the executor callback below is never reached for a refused
+      // attempt, and ledger/retry counters stay mirrored.
+      const reservation = this.reserveAttempt(item.workItemId, previousAttempts + 1);
+      if (!reservation.granted) {
+        this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: reservation.code });
+        this.markPendingSkipped(reservation.code);
+        this.checkpoint();
+        return { stopped: { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' } };
+      }
       this.updateRecord(item.workItemId, { state: 'RUNNING', attemptCount: previousAttempts + 1, executionGuarantee: executionGuarantee(item.kind, previousAttempts > 0) });
       const replay = previousAttempts > 0;
       if (replay) this.budget.reserveWork(item.kind, true);
@@ -1697,6 +1775,15 @@ export class CampaignOrchestrator {
     const existing = this.state.executionLedger.find((record) => record.workItemId === item.workItemId);
     if (existing?.state !== 'COMPLETED') {
       try {
+        // Phase 15P A09: explicit attempt reservation before the durable
+        // RUNNING marker; exhaustion refuses fail-closed before any
+        // reproduction adapter callback.
+        const reservation = this.reserveAttempt(item.workItemId, (existing?.attemptCount ?? 0) + 1);
+        if (!reservation.granted) {
+          this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: reservation.code });
+          this.state = { ...this.state, unresolved: [...new Set([...this.state.unresolved, reservation.code])] };
+          return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'PREFLIGHT_FAILED');
+        }
         this.updateRecord(item.workItemId, { state: 'RUNNING', attemptCount: (existing?.attemptCount ?? 0) + 1, executionGuarantee: 'REPLAY_REQUIRED' });
         this.reserveReproductionBudget(cluster, representative);
         // Keep the reservation and RUNNING marker in the same persisted
@@ -1768,6 +1855,7 @@ export class CampaignOrchestrator {
     try {
       this.assertCurrentVersions();
     } catch {
+      this.lastResumeRefusal = this.versionDriftRefusal();
       this.state = {
         ...this.state,
         versionDrift: [...new Set([...this.state.versionDrift, 'CAMPAIGN_VERSION_DRIFT'])],
