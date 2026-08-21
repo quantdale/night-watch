@@ -421,3 +421,76 @@ export function parseTriageReplayPlanV2(raw: unknown): TriageReplayPlanV2 {
   if (!result.valid) throw new Error(`REPLAY_PLAN_V2_INVALID:${result.reason}`);
   return result.plan;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 15P A06 — occurrence-identity and duplicate-action helpers.
+//
+// Pure, data-only companions to the v2 plan grammar. They make duplicate
+// action identities EXPLICIT: two structurally identical actions at different
+// occurrences are distinguishable through their ordinals and canonical
+// identity tokens, never silently deduplicated and never silently re-executed
+// when identity matters. No browser/network/fs/child-process/DB/AI authority.
+// ---------------------------------------------------------------------------
+
+/** Deterministic ordinal→actionId resolution over a plan's original occurrences. */
+export function ordinalToActionMap(originalOccurrences: readonly ReplayOccurrence[]): ReadonlyMap<number, string> {
+  const map = new Map<number, string>();
+  for (const occ of originalOccurrences) map.set(occ.ordinal, occ.expectedActionId);
+  return map;
+}
+
+/**
+ * Explicit duplicate-action detection: every expectedActionId that occurs at
+ * more than one ordinal, mapped to its ascending ordinals. An empty result
+ * means the plan is unambiguous; a non-empty result means the plan's grammar
+ * MUST (and in v2 does) address each duplicate through its occurrence ordinal.
+ */
+export function duplicateActionOccurrences(originalOccurrences: readonly ReplayOccurrence[]): ReadonlyMap<string, readonly number[]> {
+  const byId = new Map<string, number[]>();
+  for (const occ of originalOccurrences) {
+    const list = byId.get(occ.expectedActionId);
+    if (list === undefined) byId.set(occ.expectedActionId, [occ.ordinal]);
+    else list.push(occ.ordinal);
+  }
+  const duplicates = new Map<string, readonly number[]>();
+  for (const [id, ordinals] of byId) {
+    if (ordinals.length > 1) duplicates.set(id, [...ordinals].sort((a, b) => a - b));
+  }
+  return duplicates;
+}
+
+export function hasDuplicateActionIds(originalOccurrences: readonly ReplayOccurrence[]): boolean {
+  return duplicateActionOccurrences(originalOccurrences).size > 0;
+}
+
+export type DuplicateActionHandling =
+  | 'UNAMBIGUOUS_SINGLE_OCCURRENCE'
+  | 'OCCURRENCE_DISTINGUISHED';
+
+/**
+ * Explicit classification of how a plan expresses action identity:
+ * - UNAMBIGUOUS_SINGLE_OCCURRENCE: no actionId repeats, so action-ID strings
+ *   alone are unambiguous.
+ * - OCCURRENCE_DISTINGUISHED: at least one actionId repeats; only the
+ *   occurrence-ordinal grammar distinguishes the duplicates.
+ */
+export function duplicateActionHandling(originalOccurrences: readonly ReplayOccurrence[]): DuplicateActionHandling {
+  return hasDuplicateActionIds(originalOccurrences) ? 'OCCURRENCE_DISTINGUISHED' : 'UNAMBIGUOUS_SINGLE_OCCURRENCE';
+}
+
+/**
+ * Canonical occurrence-aware identity token for one occurrence of an action.
+ * Two structurally identical actions at different occurrences produce distinct
+ * tokens. Derived solely from validated structural fields (action-ID charset,
+ * bounded non-negative integer ordinal), so the token can never carry raw
+ * product values. Fails closed on malformed input.
+ */
+export function occurrenceIdentityToken(expectedActionId: string, ordinal: number): string {
+  if (typeof expectedActionId !== 'string' || !ACTION_ID_RE.test(expectedActionId) || SENTINEL_RE.test(expectedActionId)) {
+    throw new Error('OCCURRENCE_IDENTITY_TOKEN_ACTION_ID_INVALID');
+  }
+  if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 0 || ordinal > 999_999) {
+    throw new Error('OCCURRENCE_IDENTITY_TOKEN_ORDINAL_INVALID');
+  }
+  return `${expectedActionId}#occ:${ordinal}`;
+}
