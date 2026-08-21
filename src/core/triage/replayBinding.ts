@@ -6,6 +6,15 @@
 // with exact fingerprint equality can reproduce.
 //
 // Journey reduced replay remains unsupported: no invented subset executor.
+//
+// Phase 15P A06 — validation/execution separation and executor authority:
+// a VALIDATED plan is a distinct value (ValidatedReplayPlanV2) produced only
+// by validateReplayPlanV2; only executeValidatedReplayPlanV2 may invoke an
+// executor, and it accepts only that validated value. executeReplayPlanV2
+// stays as the validate-then-execute wrapper: every plan-validation failure
+// returns INVALID before any executor callback (no-false-certification).
+// Duplicate action identities are handled explicitly through occurrence
+// ordinals — retained occurrences are never silently deduplicated.
 // ---------------------------------------------------------------------------
 
 import type { CandidateGuardResult, CandidateReplayOutcome, MinimizationAction } from './types';
@@ -13,6 +22,8 @@ import { normalizeExecutorOutcome } from './executorNormalization';
 import {
   validateTriageReplayPlanV2,
   isOrderPreservingOrdinalSubsequence,
+  ordinalToActionMap,
+  occurrenceIdentityToken,
   type TriageReplayPlanV2,
   type ReplayOccurrence,
 } from './replayPlan';
@@ -28,8 +39,7 @@ function journeyPreconditionCheck(journeyId: string, retainedOrdinals: readonly 
   if (def === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
   const allowed = def.allowedSteps.map((s) => s.stepId);
   // Resolve retained occurrence actionIds
-  const ordinalToAction = new Map<number, string>();
-  for (const occ of originalOccurrences) ordinalToAction.set(occ.ordinal, occ.expectedActionId);
+  const ordinalToAction = ordinalToActionMap(originalOccurrences);
   const retainedIds = retainedOrdinals.map((o) => ordinalToAction.get(o) ?? '');
   if (retainedIds.length === 1 && allowed.length > 1) {
     const nav = allowed[0]!;
@@ -52,8 +62,7 @@ function safeActionFor(id: string): SafeAction | undefined {
 }
 
 function explorationGuardV2(retainedOrdinals: readonly number[], originalOccurrences: readonly ReplayOccurrence[]): CandidateGuardResult {
-  const ordinalToAction = new Map<number, string>();
-  for (const occ of originalOccurrences) ordinalToAction.set(occ.ordinal, occ.expectedActionId);
+  const ordinalToAction = ordinalToActionMap(originalOccurrences);
   for (const ord of retainedOrdinals) {
     const id = ordinalToAction.get(ord);
     if (id === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
@@ -72,11 +81,30 @@ export type V2Executor = (
   retained: readonly MinimizationAction[],
 ) => CandidateReplayOutcome | Promise<CandidateReplayOutcome>;
 
+// ---------------------------------------------------------------------------
+// Validated-plan value (Phase 15P A06). The brand makes an unvalidated plan
+// unrepresentable at the executor boundary: only validateReplayPlanV2 can
+// produce a ValidatedReplayPlanV2, and only that value is accepted for
+// execution. The brand is type-level only — no runtime property is added, so
+// plan identity and determinism are untouched.
+// ---------------------------------------------------------------------------
+
+const validatedReplayPlanBrand = Symbol('nightwatch.validated-replay-plan-v2');
+
+export interface ValidatedReplayPlanV2 extends TriageReplayPlanV2 {
+  readonly [validatedReplayPlanBrand]: true;
+}
+
+export type ReplayPlanValidationResult =
+  | { readonly valid: true; readonly plan: ValidatedReplayPlanV2 }
+  | { readonly valid: false; readonly reason: string };
+
 /**
  * Pure plan validation. Never returns anomaly reproduction.
  * Only checks structure, occurrence identity, and catalog guards.
+ * On success it yields the distinct validated plan value required for execution.
  */
-export function validateReplayPlanV2(plan: TriageReplayPlanV2): { valid: true } | { valid: false; reason: string } {
+export function validateReplayPlanV2(plan: TriageReplayPlanV2): ReplayPlanValidationResult {
   const v = validateTriageReplayPlanV2(plan);
   if (!v.valid) return { valid: false, reason: v.reason };
   // Occurrence-ordered subsequence already checked. Now per-kind guards.
@@ -98,7 +126,31 @@ export function validateReplayPlanV2(plan: TriageReplayPlanV2): { valid: true } 
     const op = PHASE5_API_CATALOG.operations.find((o) => o.operationId === occ.expectedActionId);
     if (op === undefined || op.semanticClass !== 'KNOWN_READ') return { valid: false, reason: 'ACTION_NOT_APPROVED' };
   }
-  return { valid: true };
+  return { valid: true, plan: plan as ValidatedReplayPlanV2 };
+}
+
+/**
+ * Executor authority seam (Phase 15P A06): the ONLY function in this module
+ * that may invoke an executor callback, and only for a value that validation
+ * already admitted. Duplicate action identities stay explicit — every retained
+ * occurrence maps 1:1 onto a MinimizationAction, never deduplicated.
+ */
+export function executeValidatedReplayPlanV2(
+  validated: ValidatedReplayPlanV2,
+  executor: V2Executor,
+): Promise<CandidateReplayOutcome> | CandidateReplayOutcome {
+  const plan: TriageReplayPlanV2 = validated;
+  const retainedActions = buildRetainedActionsV2(plan);
+  try {
+    const result = executor(plan, retainedActions);
+    if (result instanceof Promise) {
+      return result.then((r) => normalizeExecutorResult(r, plan))
+        .catch(() => ({ status: 'INVALID' as const, safety: { ...ZERO_SAFETY }, invalidReason: 'PRECONDITION_DIVERGENCE' as const }));
+    }
+    return normalizeExecutorResult(result, plan);
+  } catch {
+    return { status: 'INVALID', safety: { ...ZERO_SAFETY }, invalidReason: 'PRECONDITION_DIVERGENCE' };
+  }
 }
 
 /**
@@ -114,39 +166,21 @@ export function executeReplayPlanV2(
   if (!validation.valid) {
     return { status: 'INVALID', safety: { ...ZERO_SAFETY }, invalidReason: (validation.reason as CandidateGuardResult['reason']) ?? 'PRECONDITION_DIVERGENCE' };
   }
-  // Build retained MinimizationActions from occurrence ordinals
-  const ordinalToAction = new Map<number, string>();
-  for (const occ of plan.originalOccurrences) ordinalToAction.set(occ.ordinal, occ.expectedActionId);
-  const retainedActions: MinimizationAction[] = [...plan.retainedOccurrenceOrdinals].map((ord) => {
-    const id = ordinalToAction.get(ord)!;
-    const safe = plan.candidateKind === 'EXPLORATION' ? safeActionFor(id) : undefined;
-    return {
-      actionId: id,
-      semanticClass: (safe?.semanticClass ?? 'KNOWN_READ') as MinimizationAction['semanticClass'],
-      routeClass: plan.routeClass,
-      sourceApproved: true as const,
-      catalogVersion: plan.catalogVersion,
-    };
-  });
-  try {
-    const result = executor(plan, retainedActions);
-    if (result instanceof Promise) {
-      return result.then((r) => normalizeExecutorResult(r, plan))
-        .catch(() => ({ status: 'INVALID' as const, safety: { ...ZERO_SAFETY }, invalidReason: 'PRECONDITION_DIVERGENCE' as const }));
-    }
-    return normalizeExecutorResult(result, plan);
-  } catch {
-    return { status: 'INVALID', safety: { ...ZERO_SAFETY }, invalidReason: 'PRECONDITION_DIVERGENCE' };
-  }
+  return executeValidatedReplayPlanV2(validation.plan, executor);
 }
 
 function normalizeExecutorResult(result: CandidateReplayOutcome, plan: TriageReplayPlanV2): CandidateReplayOutcome {
   return normalizeExecutorOutcome(result, plan.anomalyFingerprint);
 }
 
+/**
+ * Build retained MinimizationActions from occurrence ordinals. Each retained
+ * occurrence maps 1:1 onto one action — duplicate action identities are
+ * preserved as distinct entries (occurrence identity is load-bearing), never
+ * silently deduplicated.
+ */
 export function buildRetainedActionsV2(plan: TriageReplayPlanV2): readonly MinimizationAction[] {
-  const ordinalToAction = new Map<number, string>();
-  for (const occ of plan.originalOccurrences) ordinalToAction.set(occ.ordinal, occ.expectedActionId);
+  const ordinalToAction = ordinalToActionMap(plan.originalOccurrences);
   return [...plan.retainedOccurrenceOrdinals].map((ord) => {
     const id = ordinalToAction.get(ord)!;
     const safe = plan.candidateKind === 'EXPLORATION' ? safeActionFor(id) : undefined;
@@ -157,6 +191,28 @@ export function buildRetainedActionsV2(plan: TriageReplayPlanV2): readonly Minim
       sourceApproved: true as const,
       catalogVersion: plan.catalogVersion,
     };
+  });
+}
+
+/**
+ * Resolve every retained occurrence to its explicit occurrence-aware identity
+ * (ordinal, actionId, canonical token). For validated plans this never throws;
+ * the fail-closed error documents that an unresolved retained ordinal can never
+ * reach evidence. Two structurally identical actions at different occurrences
+ * yield distinct tokens.
+ */
+export interface RetainedOccurrenceIdentity {
+  readonly ordinal: number;
+  readonly actionId: string;
+  readonly identityToken: string;
+}
+
+export function resolveRetainedOccurrenceIdentities(plan: TriageReplayPlanV2): readonly RetainedOccurrenceIdentity[] {
+  const ordinalToAction = ordinalToActionMap(plan.originalOccurrences);
+  return [...plan.retainedOccurrenceOrdinals].sort((a, b) => a - b).map((ord) => {
+    const id = ordinalToAction.get(ord);
+    if (id === undefined) throw new Error(`RETAINED_OCCURRENCE_UNRESOLVED:${String(ord)}`);
+    return { ordinal: ord, actionId: id, identityToken: occurrenceIdentityToken(id, ord) };
   });
 }
 
