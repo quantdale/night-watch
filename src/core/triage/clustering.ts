@@ -72,10 +72,12 @@ export function clusterAnomalies(observations: readonly AnomalyObservation[]): r
     buckets.set(observation.clusterKey, bucket);
   }
   return [...buckets.entries()].map(([key, items]) => {
-    const ordered = [...items].sort((a, b) => a.runId.localeCompare(b.runId) || a.observedAt.localeCompare(b.observedAt));
-    const first = [...items].sort((a, b) => a.observedAt.localeCompare(b.observedAt) || a.runId.localeCompare(b.runId))[0]!;
-    const last = [...items].sort((a, b) => b.observedAt.localeCompare(a.observedAt) || b.runId.localeCompare(a.runId))[0]!;
-    const primary = [...items].sort((a, b) => Number(b.reproduced) - Number(a.reproduced) || Number(b.minimized) - Number(a.minimized) || a.runId.localeCompare(b.runId))[0]!;
+    // Every selection below carries a total fingerprint tiebreaker so input
+    // permutation can never change firstObserved/lastObserved/primary metadata.
+    const ordered = [...items].sort((a, b) => a.runId.localeCompare(b.runId) || a.observedAt.localeCompare(b.observedAt) || a.fingerprint.localeCompare(b.fingerprint));
+    const first = [...items].sort((a, b) => a.observedAt.localeCompare(b.observedAt) || a.runId.localeCompare(b.runId) || a.fingerprint.localeCompare(b.fingerprint))[0]!;
+    const last = [...items].sort((a, b) => b.observedAt.localeCompare(a.observedAt) || b.runId.localeCompare(a.runId) || b.fingerprint.localeCompare(a.fingerprint))[0]!;
+    const primary = [...items].sort((a, b) => Number(b.reproduced) - Number(a.reproduced) || Number(b.minimized) - Number(a.minimized) || a.runId.localeCompare(b.runId) || a.fingerprint.localeCompare(b.fingerprint))[0]!;
     const timing: AnomalyCluster['timingVariance'] = items.some((item) => item.timingClass === 'TRANSIENT')
       ? 'TRANSIENT'
       : items.some((item) => item.timingClass === 'BOUNDED') ? 'BOUNDED' : 'NONE';

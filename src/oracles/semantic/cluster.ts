@@ -251,9 +251,10 @@ export function clusterSemanticObservations(observations: readonly SemanticObser
   const clusters: SemanticCluster[] = [];
   for (const [key, items] of buckets.entries()) {
     const m = meta.get(key)!;
-    // Deterministic primary: first by runId then observedAt (stable across input order)
-    const ordered = [...items].sort((a, b) => a.runId.localeCompare(b.runId) || a.observedAt.localeCompare(b.observedAt));
-    const primaryFingerprint = [...items].sort((a, b) => a.runId.localeCompare(b.runId))[0]!.fingerprint;
+    // Deterministic primary: runId, then observedAt, then fingerprint — every
+    // tiebreaker total, so input permutation can never change the output.
+    const ordered = [...items].sort((a, b) => a.runId.localeCompare(b.runId) || a.observedAt.localeCompare(b.observedAt) || a.fingerprint.localeCompare(b.fingerprint));
+    const primaryFingerprint = ordered[0]!.fingerprint;
     clusters.push({
       clusterKey: key,
       contractIdentity: m.contractIdentity,
