@@ -24,6 +24,23 @@
 //     existed; they compose over the owning modules' types, runtime guards,
 //     digest helpers, and producers)
 //
+// Round-2 kinds (same facade, same contract):
+// - candidate-record    -> artifactValidation/candidateRecordValidation
+//     composes campaign/candidateLifecycle.validateCandidateLifecycleRecord
+//     verbatim (the strict authority behind the checkpoint's Session-2
+//     `candidateLifecycles` ledger) plus checkpoint-style referential checks
+// - replay-record       -> artifactValidation/replayRecordValidation deepens
+//     the EXISTING replay-plan v1/v2 shapes by composition (sentinel screen +
+//     occurrence-multiplicity/identity depth); the Phase 15P A06
+//     ReplayResultEnvelope is NOT imported — it registers through
+//     replayEnvelopeRegistration.ts and fails closed until then
+// - minimization-record -> artifactValidation/minimizationValidation over
+//     triage/types.MinimizationResult (no digest builder exists in the
+//     minimizer, so there is no identity to recompose)
+// - project-health-report -> artifactValidation/projectHealthValidation over
+//     readiness/localReadiness.LocalReadinessSummary (vocabulary arrays and
+//     frozen owner-scope markers imported from the owning module)
+//
 // Pure facade: no fs/network/child-process/DB/AI authority. Importing the
 // checkpoint module pulls the private-artifact store into the module graph,
 // but no storage API is reachable through this facade.
@@ -47,6 +64,11 @@ import { validateAnomalyClusterArtifact, validateAnomalyObservationArtifact } fr
 import { validateReproductionRecordArtifact } from './reproductionValidation';
 import { validateCoverageReportArtifact } from './coverageReportValidation';
 import { validateDossierArtifact } from './dossierKindValidation';
+import { validateCampaignCandidateRecordArtifact } from './candidateRecordValidation';
+import { validateReplayRecordArtifact } from './replayRecordValidation';
+import { validateMinimizationResultArtifact } from './minimizationValidation';
+import { validateProjectHealthReportArtifact } from './projectHealthValidation';
+import { validateReservedArtifactKind } from './replayEnvelopeRegistration';
 
 export type {
   ArtifactKind,
@@ -70,6 +92,18 @@ export {
 } from './reproductionValidation';
 export { validateCoverageReportArtifact } from './coverageReportValidation';
 export { validateDossierArtifact } from './dossierKindValidation';
+export {
+  CAMPAIGN_CANDIDATE_RECORD_VERSION,
+  validateCampaignCandidateRecordArtifact,
+} from './candidateRecordValidation';
+export { validateReplayRecordArtifact } from './replayRecordValidation';
+export { validateMinimizationResultArtifact } from './minimizationValidation';
+export { validateProjectHealthReportArtifact } from './projectHealthValidation';
+export {
+  REPLAY_RESULT_ENVELOPE_RESERVED_KIND,
+  isReplayResultEnvelopeKindRegistered,
+  registerReplayResultEnvelopeValidator,
+} from './replayEnvelopeRegistration';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -148,6 +182,21 @@ const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.fr
   'coverage-report': (value) => {
     validateCoverageReportArtifact(value);
   },
+  'candidate-record': (value, context) => {
+    validateCampaignCandidateRecordArtifact(value, {
+      knownClusterIds: context.knownClusterIds,
+      knownBugCandidateIds: context.knownBugCandidateIds,
+    });
+  },
+  'replay-record': (value) => {
+    validateReplayRecordArtifact(value);
+  },
+  'minimization-record': (value) => {
+    validateMinimizationResultArtifact(value);
+  },
+  'project-health-report': (value) => {
+    validateProjectHealthReportArtifact(value);
+  },
 });
 
 /**
@@ -165,6 +214,12 @@ export function validateArtifact(
   context: ArtifactValidationContext = {},
 ): ArtifactValidationResult {
   if (typeof kind !== 'string' || !(KNOWN_ARTIFACT_KINDS as readonly string[]).includes(kind)) {
+    // Single reserved extension slot: the Phase 15P A06 ReplayResultEnvelope
+    // kind dispatches here once its module registers a validator, and fails
+    // closed (ARTIFACT_KIND_RESERVED) until then. Everything else unknown
+    // fails closed with ARTIFACT_KIND_UNKNOWN.
+    const reservedResult = typeof kind === 'string' ? validateReservedArtifactKind(kind, value, context) : null;
+    if (reservedResult !== null) return reservedResult;
     // The rejected kind is caller-controlled: the durable result carries only
     // its bounded categorical projection, never the raw payload.
     const safeKind = safeErrorDetail(kind);
