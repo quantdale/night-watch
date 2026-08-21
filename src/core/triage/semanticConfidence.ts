@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import type { BrowserApiDifferential } from './types';
-import type { SemanticTriageEvidence } from './semanticTriageEvidence';
+import { MISSING_EVIDENCE_SET, type SemanticTriageEvidence } from './semanticTriageEvidence';
 
 export type SemanticConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRESOLVED';
 
@@ -30,6 +30,29 @@ export interface SemanticConfidenceResult {
 }
 
 function blocker(reason: string): string { return reason; }
+
+/**
+ * Declared missing-evidence codes that block HIGH, mapped onto this module's
+ * blocker vocabulary. Permanent-scope facts
+ * (BROWSER_API_DIFFERENTIAL_UNAVAILABLE, SOURCE_CHANGE_RELEVANCE_UNRESOLVED,
+ * DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER)
+ * deliberately do not block. Hoisted to module scope (Phase 15P A15) so
+ * verifyDeclaredMissingBlockersBoundToVocabulary can prove every key stays a
+ * member of the canonical MISSING_EVIDENCE_VOCABULARY.
+ */
+const DECLARED_MISSING_BLOCKERS: ReadonlyMap<string, string> = new Map([
+  ['EXACT_REPLAY_REQUIRED', 'EXACT_REPLAY_NOT_REPRODUCED'],
+  ['SOURCE_CURRENTNESS_UNRESOLVED', 'SOURCE_CURRENTNESS_UNRESOLVED'],
+  ['SEMANTIC_EXPECTATION_UNRESOLVED', 'NO_EXPECTATION'],
+  ['PARTIAL_COLLECTION_COVERAGE', 'PARTIAL_COVERAGE'],
+  ['MINIMIZATION_BUDGET_EXHAUSTED', 'MINIMIZATION_BUDGET_EXHAUSTED'],
+  ['SAFETY_PRIVACY_NONZERO', 'SAFETY_NONZERO'],
+  ['KNOWN_FALSE_POSITIVE_PRESENT', 'KNOWN_FALSE_POSITIVE'],
+  ['ORACLE_RELIABILITY_UNRESOLVED', 'ORACLE_RELIABILITY_UNRESOLVED'],
+  ['SEMANTIC_IDENTITY_MISSING', 'SEMANTIC_IDENTITY_MISSING'],
+  ['REPLAY_FINGERPRINT_MISMATCH', 'REPLAY_FINGERPRINT_MISMATCH'],
+  ['COVERAGE_STATE_UNRESOLVED', 'COVERAGE_STATE_UNRESOLVED'],
+]);
 
 export function rankSemanticConfidence(input: SemanticConfidenceInput): SemanticConfidenceResult {
   const { evidence, oracleReliable, knownFalsePositive, safetyClean, privacyClean, semanticIdentityPresent, browserApiDifferential } = input;
@@ -85,19 +108,6 @@ export function rankSemanticConfidence(input: SemanticConfidenceInput): Semantic
   // reach HIGH even when every enum field looks clean. Permanent scope facts
   // (DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER,
   // BROWSER_API_DIFFERENTIAL_UNAVAILABLE) deliberately do not block.
-  const DECLARED_MISSING_BLOCKERS: ReadonlyMap<string, string> = new Map([
-    ['EXACT_REPLAY_REQUIRED', 'EXACT_REPLAY_NOT_REPRODUCED'],
-    ['SOURCE_CURRENTNESS_UNRESOLVED', 'SOURCE_CURRENTNESS_UNRESOLVED'],
-    ['SEMANTIC_EXPECTATION_UNRESOLVED', 'NO_EXPECTATION'],
-    ['PARTIAL_COLLECTION_COVERAGE', 'PARTIAL_COVERAGE'],
-    ['MINIMIZATION_BUDGET_EXHAUSTED', 'MINIMIZATION_BUDGET_EXHAUSTED'],
-    ['SAFETY_PRIVACY_NONZERO', 'SAFETY_NONZERO'],
-    ['KNOWN_FALSE_POSITIVE_PRESENT', 'KNOWN_FALSE_POSITIVE'],
-    ['ORACLE_RELIABILITY_UNRESOLVED', 'ORACLE_RELIABILITY_UNRESOLVED'],
-    ['SEMANTIC_IDENTITY_MISSING', 'SEMANTIC_IDENTITY_MISSING'],
-    ['REPLAY_FINGERPRINT_MISMATCH', 'REPLAY_FINGERPRINT_MISMATCH'],
-    ['COVERAGE_STATE_UNRESOLVED', 'COVERAGE_STATE_UNRESOLVED'],
-  ]);
   for (const code of evidence.missingEvidence) {
     const mapped = DECLARED_MISSING_BLOCKERS.get(code);
     if (mapped !== undefined) blockers.push(blocker(mapped));
@@ -153,4 +163,19 @@ export function rankSemanticConfidence(input: SemanticConfidenceInput): Semantic
   }
   // Without sufficient reproduction, downgrade to MEDIUM
   return { level: 'MEDIUM', reasons: [...new Set(reasons)].sort(), blockers: [] };
+}
+
+/**
+ * Fail-closed binding proof (Phase 15P A15 convergence): every key of the
+ * declared-missing-evidence blocker map must be a member of the ONE canonical
+ * MISSING_EVIDENCE_VOCABULARY owned by semanticTriageEvidence.ts. The map
+ * references the canonical table through this check instead of drifting into
+ * a private re-inlined vocabulary.
+ */
+export function verifyDeclaredMissingBlockersBoundToVocabulary(): void {
+  for (const code of DECLARED_MISSING_BLOCKERS.keys()) {
+    if (!MISSING_EVIDENCE_SET.has(code)) {
+      throw new Error(`SEMANTIC_CONFIDENCE_BLOCKER_KEY_UNKNOWN:${code}`);
+    }
+  }
 }

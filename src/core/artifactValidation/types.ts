@@ -45,7 +45,13 @@
 //     re-derive over the normalized report body).
 // ---------------------------------------------------------------------------
 
-import type { CampaignManifest } from '../campaign/types';
+import { CAMPAIGN_CHECKPOINT_VERSION, CAMPAIGN_MORNING_BRIEF_VERSION, type CampaignManifest } from '../campaign/types';
+import { ANOMALY_CLUSTER_VERSION, DOSSIER_VERSION } from '../triage/types';
+import { DOSSIER_VERSION_V2 } from '../triage/dossierV2';
+import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../triage/replayPlan';
+import { SEMANTIC_EVALUATION_RECEIPT_VERSION, SEMANTIC_EVALUATION_RECEIPT_VERSION_V1 } from '../../oracles/semantic/receipts';
+import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION } from '../source/semanticCampaignBundle';
+import { REPORT_VERSION } from '../../oracles/expectations/extract/contractCoverageReport';
 
 export const ARTIFACT_VALIDATION_FACADE_VERSION = 'nightwatch.artifact-validation.private.v1' as const;
 
@@ -79,18 +85,22 @@ export const KNOWN_ARTIFACT_KINDS: readonly ArtifactKind[] = [
  * Documented, per-kind historical version acceptance. Values marked
  * `shape:` are unversioned structural formats whose identity is the owning
  * module's current type; they carry no schemaVersion field of their own.
+ *
+ * Phase 15P A15 convergence: every version entry REFERENCES the owning
+ * module's constant instead of re-inlining the literal, so a version change
+ * in its owner updates acceptance here automatically (or fails to compile).
  */
 export const ARTIFACT_KIND_VERSION_ACCEPTANCE: Readonly<Record<ArtifactKind, readonly string[]>> = Object.freeze({
-  'campaign-checkpoint': ['nightwatch.campaign-checkpoint.private.v1'],
+  'campaign-checkpoint': [CAMPAIGN_CHECKPOINT_VERSION],
   'observation': ['shape:triage.anomaly-observation.v1', 'shape:triage.sanitized-anomaly-observation.v1'],
-  'semantic-receipt': ['nightwatch.semantic-evaluation-receipt.v1', 'nightwatch.semantic-evaluation-receipt.v2'],
-  'replay-plan': ['nightwatch.triage-replay-plan.private.v1', 'nightwatch.triage-replay-plan.private.v2'],
-  'cluster': ['nightwatch.anomaly-cluster.private.v1'],
+  'semantic-receipt': [SEMANTIC_EVALUATION_RECEIPT_VERSION_V1, SEMANTIC_EVALUATION_RECEIPT_VERSION],
+  'replay-plan': [TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION],
+  'cluster': [ANOMALY_CLUSTER_VERSION],
   'reproduction-record': ['shape:campaign.reproduction-record.v1'],
-  'dossier': ['nightwatch.bug-dossier.private.v1', 'nightwatch.bug-dossier.private.v2'],
-  'morning-brief': ['nightwatch.campaign-morning-brief.private.v1'],
-  'source-bundle': ['nightwatch.semantic-campaign-bundle.private.v1'],
-  'coverage-report': ['nightwatch.contract-coverage-report.v1'],
+  'dossier': [DOSSIER_VERSION, DOSSIER_VERSION_V2],
+  'morning-brief': [CAMPAIGN_MORNING_BRIEF_VERSION],
+  'source-bundle': [SEMANTIC_CAMPAIGN_BUNDLE_VERSION],
+  'coverage-report': [REPORT_VERSION],
 });
 
 /** Optional referential context. Only `manifest` is required (and only for

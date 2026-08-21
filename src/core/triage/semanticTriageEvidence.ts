@@ -249,9 +249,3 @@ export function createSemanticTriageEvidence(input: SemanticTriageEvidenceInput)
   validateSemanticTriageEvidence(evidence);
   return evidence;
 }
-
-export function parseSemanticTriageEvidence(raw: unknown): SemanticTriageEvidence {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('TRIAGE_EVIDENCE_NOT_OBJECT');
-  validateSemanticTriageEvidence(raw as SemanticTriageEvidence);
-  return raw as SemanticTriageEvidence;
-}

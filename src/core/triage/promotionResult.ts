@@ -13,6 +13,7 @@
 import type { SemanticTriageSourceCurrentness } from './semanticTriageEvidence';
 import type { CampaignSemanticCurrentness } from '../campaign/campaignSemanticEvidence';
 import type { SourceFreshness } from './types';
+import { stableCampaignJson } from '../campaign/identity';
 
 export const PROMOTION_RESULT_VERSION = 'nightwatch.promotion-result.private.v1' as const;
 
@@ -304,16 +305,15 @@ export function validateSemanticAwarePromotionResult(value: unknown): void {
 
 // --- Deterministic canonical JSON -------------------------------------------
 
+/**
+ * Compatibility alias (Phase 15P A15 convergence): byte-identical delegation
+ * to the ONE canonical key-sorted serializer `stableCampaignJson` in
+ * ../campaign/identity, which owns this idiom. New code must call
+ * `stableCampaignJson` directly; this name is retained only for existing
+ * callers and tests.
+ *
+ * @deprecated Compatibility-only alias of src/core/campaign/identity.ts#stableCampaignJson.
+ */
 export function stablePromotionResultJson(value: unknown): string {
-  if (value === null) return 'null';
-  if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
-  if (typeof value === 'number') return Number.isFinite(value) ? JSON.stringify(value) : 'null';
-  if (typeof value === 'undefined') return 'null';
-  if (Array.isArray(value)) return `[${value.map(stablePromotionResultJson).join(',')}]`;
-  if (typeof value !== 'object') return JSON.stringify(String(value));
-  return `{${Object.entries(value as Record<string, unknown>)
-    .filter(([, child]) => child !== undefined)
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, child]) => `${JSON.stringify(key)}:${stablePromotionResultJson(child)}`)
-    .join(',')}}`;
+  return stableCampaignJson(value);
 }
