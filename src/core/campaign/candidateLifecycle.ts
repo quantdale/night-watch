@@ -5,8 +5,9 @@
 // Explicit, fail-closed replacement for ad hoc string-state mutations: a
 // frozen transition table, strict record validation with sentinel rejection,
 // and a canonical serializer. Pure module — no Date.now/Math.random/fs/
-// network/child_process/DB/AI authority. Deliberately not wired into the
-// orchestrator yet; a later wave adopts it at the call sites.
+// network/child_process/DB/AI authority. Wired into CampaignOrchestrator at
+// the admission, reproduction, minimization, triage, and dossier call sites
+// (see the lifecycle event mapping in orchestrator.ts).
 // ---------------------------------------------------------------------------
 
 import {

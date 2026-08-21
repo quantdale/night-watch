@@ -80,7 +80,86 @@ Fresh CLI session; fetch origin and fast-forward clean main (require HEAD == ori
 
 ## Session 2
 
-NOT_RUN
+Executed under `PHASE_15_S2_CAMPAIGN_TRIAGE_CONVERGENCE_LOCAL_ONLY` (adoption of
+concurrently authored W1/W2 checkpoints per the owner's combined-run directive);
+pending terminal closure completed by the Phase-15P session under
+`PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY`. Terminal state:
+PHASE_15_S2_CAMPAIGN_TRIAGE: IMPLEMENTED_FOCUSED_GREEN.
+
+### Program starting SHA
+
+`6324915b56df1d19faefd53e7d8156dd169a4cfd` (same program anchor as Session 1).
+
+### Source-bearing implementation SHAs (all ancestors of live main)
+
+- W1 (`e37799246ebe3a2a3b4b59754829ac8c80f09e02`): candidate lifecycle state
+  machine (`src/core/campaign/candidateLifecycle.ts`, NEW), truthful
+  minimization evidence outcomes (`src/core/triage/minimizer.ts`,
+  `src/core/triage/types.ts`), promotion-result DTO
+  (`src/core/triage/promotionResult.ts`, NEW), executor normalization
+  (`src/core/triage/executorNormalization.ts`, NEW), checkpoint
+  runtime-contract version compat + lifecycle persistence
+  (`src/core/campaign/checkpoint.ts`, `src/core/campaign/types.ts`), dead v1
+  replay-shim removal (`src/core/triage/replayAdapters.ts` DELETED;
+  `src/core/triage/replayPlan.ts` v1 surface reduced to parse-only).
+- W2 (`aecc3402cf5b83dcfd680c8c49dc323b6f8537d6`): orchestrator lifecycle/
+  runtime-contract wiring (`src/core/campaign/orchestrator.ts`),
+  V2-only certified replay path (`src/core/triage/replayBinding.ts`), semantic
+  authority load-bearing at promotion with bundle coherence gate + v2 dossiers
+  (`src/core/campaign/realCampaignSemanticWiring.ts`, `src/core/campaign/brief.ts`),
+  fixture compatibility (`src/core/phase12/backtest.ts`,
+  `src/core/phase13/shadow.ts`).
+- Closure adoption (Phase-15P session): NEW permanent integrated proof suite
+  `tests/unit/phase15CampaignIntegratedProof.test.ts` (Workstream G) with one
+  stale draft leg-tag assertion repaired; comment-truth fix in
+  `src/core/campaign/candidateLifecycle.ts` (wired-into-orchestrator wording).
+
+### Changed dependency cone
+
+As listed in STATE.md ## Files Changed plus the closure-adoption files above.
+Historical compatibility preserved: v1 dossier ledger entries remain valid;
+protocol-only historical path unchanged; no historical ID or version constant
+changed.
+
+### Focused/moderate tests actually run (raw counts)
+
+- Focused/adoption suites (9 suites, workers=1: candidateLifecycle,
+  promotionResult, phase15CheckpointCompat, phase15MinimizationEvidence,
+  phase15PromotionAuthority, campaign (= campaign:synthetic),
+  phase12SemanticTriage, phase13Shadow, privateTriage): 181 passed, 0 failed —
+  reproduced identically at the Phase-15P closure adoption.
+- Integrated synthetic campaign proof (Workstream G): 4 passed, 0 failed.
+- npm run typecheck PASS; npm run hardening:check PASS; git diff --check PASS
+  at every gate including the Phase-15P closure adoption.
+
+### Tests deliberately NOT_RUN
+
+Complete canonical Playwright workers=1; topology-correct isolated complete
+Playwright; exhaustive Phase 1–14 compatibility sweep; repository-wide
+adversarial fuzz; complete historical migration matrix; final CI-equivalent
+reproduction — all DEFERRED_TO_INTEGRATED_HARDENING.
+
+### Known residual risks for the hardening campaign
+
+- The W1/W2 code was authored by an unrelated concurrent local session and
+  adopted rather than line-by-line re-derived; hardening must treat the whole
+  campaign/triage cone (`src/core/campaign/**`, `src/core/triage/**`) as
+  requiring full fresh review.
+- Campaign cluster budget policy caps three promoted clusters per campaign
+  (CAMPAIGN_CLUSTER_POLICY_EXCEEDED); multi-cluster scenarios must compose
+  multiple campaigns (as the integrated proof does).
+- V2 plan grammar admits exactly one original occurrence for API-kind
+  candidates; multi-occurrence API originals can never be certified (fail
+  closed UNRESOLVED) — pinned by tests, keep mandatory.
+- CI truth below remains externally billing-blocked; local green is the only
+  acceptance evidence until Actions runs for live HEAD.
+
+### GitHub Actions truth (Session 2 window)
+
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD. No new push occurred during
+the Session-2 adoption window beyond those already recorded in Session 1
+(identical zero-step billing-block failures). Re-check once after billing
+restoration; do not loop retries.
 
 ## Session 3
 

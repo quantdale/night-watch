@@ -331,9 +331,12 @@ function gitHead(root, errors) {
 const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
-  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
+  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER)\.md$/,
   // Durable program artifacts mandated by AGENTS.md and the multi-session
-  // program plans: each session must update its handoff/spec/state files AFTER
+  // program plans (HARDENING_HANDOFF/MASTER_PLAN; SESSION_* specs), plus the
+  // Phase-15P parallel-execution artifacts (PROPOSAL, SUBAGENT_LEDGER,
+  // INTEGRATION_LEDGER) mandated by PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_
+  // LOCAL_ONLY: each session must update its handoff/spec/state files AFTER
   // its implementation baseline without invalidating that baseline. Enumerated
   // explicitly (no wildcards) so arbitrary task-dir files stay unapproved.
   /^\.agent\/tasks\/[^/]+\/(?:HARDENING_HANDOFF|MASTER_PLAN)\.md$/,

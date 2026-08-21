@@ -1,58 +1,53 @@
 # Active Task
 
-Task ID: phase-15-four-session-local-project-completion
-Phase: 15-S1-CORE-CONVERGENCE
-Title: Nightwatch Phase 15 — Four-Session Local Project Completion (Session 1: Core Contract & Semantic Platform Convergence)
-Status: COMPLETE
-Task directory: .agent/tasks/phase-15-four-session-local-project-completion
-Starting SHA: 6324915b56df1d19faefd53e7d8156dd169a4cfd
-Last validated implementation SHA: 07e551f52865eb91838824c6f547a3b18ff25913
-Last substantive checkpoint SHA: 07e551f52865eb91838824c6f547a3b18ff25913
-Last checkpoint: 07e551f52865eb91838824c6f547a3b18ff25913
-Current milestone: COMPLETE — S1-CLOSE terminal closure (IMPLEMENTED_FOCUSED_GREEN)
-Next action: STOP at the truthful terminal state; Session 2 requires the separate fresh owner token PHASE_15_S2_CAMPAIGN_TRIAGE_CONVERGENCE_LOCAL_ONLY in its own fresh session
-Authorization class: PHASE_15_S1_CORE_CONTRACT_CONVERGENCE_LOCAL_ONLY
+Task ID: phase-15p-parallel-local-project-completion
+Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
+Title: Nightwatch Phase 15P — Parallel Local Project Completion (parent integrator + up to 16 specialized sub-agents)
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-15p-parallel-local-project-completion
+Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+Last validated implementation SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+Last checkpoint: e07630238d314f48718b1ca9fce2dc9ee31317eb
+Current milestone: M0 Baseline — adopt prior Session-2 closure artifacts, create 15P task infrastructure, verify continuity checks, commit and push the baseline
+Next action: finish M0 (agent:check + project:check, path-scoped baseline commit, fast-forward push), then establish ownership boundaries and launch Wave-1 foundation sub-agents A01–A04 in isolated worktrees
+Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
 
-Session 1 of the Phase-15 four-session local project-completion program:
-contract lifecycle registry, unified semantic/source-contract result vocabulary,
-identity/currentness convergence, composed resolution/admission API, strict
-schema/coherence validation, historical compatibility/migration map — each with
-permanent focused tests, one moderate semantic-platform integration pack,
-fast-forward pushes, and exact HARDENING_HANDOFF evidence.
-No DEV/NEXT/production/real campaign/mutation/DB/data-plane/infra/Phase 6/
-Alphaus writes/AI/model authority/selfDev/promotion/Phase 11B/Phase 13B.
+One parallel implementation campaign replacing the four-session execution
+shape: sub-agents A01–A16 implement in isolated local worktrees; only the
+parent integrates into canonical main (dependency waves with per-wave
+validation); pre-hardening integration pack plus synthetic release-candidate
+rehearsal at the end; full HARDENING_HANDOFF.md. The four-session package
+remains historical design input. No DEV/NEXT/production/real campaign/
+mutation/data-plane/infra/Phase 6/Alphaus writes/AI/model authority/selfDev/
+promotion/Phase 11B/Phase 13B.
 
 ## Continuity
 
-STARTING_SHA: 6324915b56df1d19faefd53e7d8156dd169a4cfd
-LAST_VALIDATED_IMPLEMENTATION_SHA: 07e551f52865eb91838824c6f547a3b18ff25913
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 07e551f52865eb91838824c6f547a3b18ff25913
+STARTING_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+LAST_VALIDATED_IMPLEMENTATION_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_15_S1_CORE_CONVERGENCE_STATUS: COMPLETE (IMPLEMENTED_FOCUSED_GREEN)
-SESSION_1_STATUS: COMPLETE_FOCUSED_GREEN
-PHASE_15_PROGRAM_STATE: SESSION_1_COMPLETE_SESSION_2_REQUIRED
+PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: IN_PROGRESS
+PHASE_15_PARALLEL_IMPLEMENTATION: IN_PROGRESS
 PHASE_15_INTEGRATED_HARDENING: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: STOP at the truthful terminal state (IMPLEMENTED_FOCUSED_GREEN)
+NEXT ACTION: finish M0 baseline, then launch Wave-1 sub-agents
 
 ## Blockers
 
-None for Session 1. Future program steps are owner-gated by design: Session 2
-requires PHASE_15_S2_CAMPAIGN_TRIAGE_CONVERGENCE_LOCAL_ONLY; Sessions 3–4 and
-the integrated hardening campaign require their own later tokens.
+None.
 
 ## Recovery
 
 Fetch origin/main and verify live state from Git (LIVE_HEAD_AUTHORITY: GIT).
-Read SPEC.md, PLAN.md, STATE.md, REPORT.md, MASTER_PLAN.md, and the Session-1
-section of HARDENING_HANDOFF.md. Git/source evidence wins. This task is
-historically complete; a new program step begins only as its own fresh session
-under its own owner token.
+Read SPEC.md, PLAN.md, STATE.md, SUBAGENT_LEDGER.md, INTEGRATION_LEDGER.md,
+and HARDENING_HANDOFF.md. Git/source/test evidence wins over conversation
+memory. Resume from STATE.md Exact Next Action.

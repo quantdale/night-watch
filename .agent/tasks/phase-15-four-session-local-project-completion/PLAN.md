@@ -1,16 +1,16 @@
 # PLAN — Nightwatch Phase 15 — Four-Session Local Project Completion
 
 Task ID: `phase-15-four-session-local-project-completion`
-Phase: `15-S1-CORE-CONVERGENCE`
+Phase: `15-S2-CAMPAIGN-TRIAGE`
 Continuity: `nightwatch.agent-continuity.v2`
 
 ## Purpose
 
 Sequence the remaining LOCAL/SOURCE implementation architecture after Phase 14 into
 four substantial fresh-session executions, then hand the combined result to one
-separately authorized integrated hardening campaign. This plan currently covers
-Session 1 in executed detail; Sessions 2–4 milestones stay planned placeholders
-until their owner tokens arrive.
+separately authorized integrated hardening campaign. This plan now covers
+Session 1 (executed and closed) and Session 2 in executed detail; Sessions 3–4
+milestones stay planned placeholders until their owner tokens arrive.
 
 ## Starting State
 
@@ -25,9 +25,18 @@ until their owner tokens arrive.
 
 ## Scope
 
-Session 1 workstreams A–F exactly as frozen in SPEC.md §3, plus the moderate
-semantic-platform integration pack, continuity/handoff population, and fast-forward
-pushes. Nothing else.
+Session 1 (closed): workstreams A–F exactly as frozen in SPEC.md §3, plus the
+moderate semantic-platform integration pack, continuity/handoff population, and
+fast-forward pushes.
+
+Session 2 (current): workstreams A–G of SESSION_2_CAMPAIGN_TRIAGE_CONVERGENCE.md —
+candidate lifecycle state machine, replay/minimization binding completion,
+semantic authority load-bearing at promotion, truthful minimization evidence,
+cluster/confidence/dossier convergence DTO, checkpoint/resume versioning, and the
+integrated synthetic campaign proof. The substantive implementation landed via
+concurrently authored checkpoints `e377992` (W1) and `aecc340` (W2); this
+session adopts, validates, and closes that implementation under the owner's
+combined-run directive.
 
 ## Non-Goals
 
@@ -64,11 +73,15 @@ gateway.
 - [x] M6 — Workstream E contract schema validation hardening: COMPLETE at `154f045c1c0dfe4f408e88267eb86a60ba6525cb` (20 focused + 60 lifecycle-compat tests).
 - [x] M7 — Moderate semantic-platform integration pack (23 suites): COMPLETE — 432 passed, 0 failed.
 - [x] M8 — Continuity/handoff closure (SPEC/PLAN/STATE/REPORT, ACTIVE_TASK transition, HARDENING_HANDOFF evidence, docs truth rows): COMPLETE at the Session-1 continuity checkpoint (documentation descendant of `154f045c1c0dfe4f408e88267eb86a60ba6525cb`, discoverable from Git).
+- [x] M-S2-1 — Adopted W1 (lifecycle state machine, truthful minimization evidence, promotion-result DTO, checkpoint runtime-contract compat, dead v1 shim removal): COMPLETE at `e37799246ebe3a2a3b4b59754829ac8c80f09e02`.
+- [x] M-S2-2 — Adopted W2 (orchestrator wiring, V2-only certification path, semantic authority at promotion, v2 dossiers, promotion-result production): COMPLETE at `aecc3402cf5b83dcfd680c8c49dc323b6f8537d6`.
+- [x] M-S2-3 — Focused-suite audit vs workstreams A–G: COMPLETE — all enumerated scenario classes proven green (181 passed across 9 suites).
+- [x] M-S2-CLOSE — Fresh full validation cadence, exact counts recorded, HARDENING_HANDOFF Session 2 populated, terminal continuity closure: COMPLETE (executed by the Phase-15P session adopting this task's unfinished closure state; integrated campaign proof test adopted, one stale draft assertion repaired, 4/4 green).
 
-Milestones beyond M8 are out of THIS task's executed scope (Phase token
-15-S1-CORE-CONVERGENCE covers Session 1 only); they are recorded as program-level
-future work under Deferred Work and in MASTER_PLAN.md, each behind its own owner
-token.
+Sessions 3–4 milestones are superseded into the parallel execution task
+`phase-15p-parallel-local-project-completion`
+(PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY); they are no longer
+planned placeholders of this task.
 
 ## Validation Strategy
 
@@ -92,6 +105,12 @@ recorded in STATE.md Validation Ledger and HARDENING_HANDOFF.md.
 - D-S1-4: Path-scoped Git staging/commits used throughout because a concurrent
   unrelated local session committed to the same branch mid-execution; its commit
   `e37799246ebe3a2a3b4b59754829ac8c80f09e02` is preserved untouched as ancestry.
+- D-S2-1: Adopt-and-validate the concurrently authored W1/W2 checkpoints instead
+  of re-authoring Session 2 (owner combined-run directive; reverting pushed
+  legitimate work rejected as destructive).
+- D-S2-2: Anchor continuity at `aecc3402cf5b83dcfd680c8c49dc323b6f8537d6` so the
+  former STALE_IMPLEMENTATION_BASELINE contamination resolves truthfully.
+- D-S2-3: Closure adds no new source unless the fresh cadence exposes a defect.
 
 ## Discoveries
 
@@ -106,11 +125,8 @@ recorded in STATE.md Validation Ledger and HARDENING_HANDOFF.md.
 
 ## Deferred Work
 
-- Session 2 (campaign/replay/minimization/triage convergence) — owner token
-  `PHASE_15_S2_CAMPAIGN_TRIAGE_CONVERGENCE_LOCAL_ONLY`; blocked until Session-1
-  terminal continuity is pushed.
 - Session 3 (local operations tooling) — owner token
-  `PHASE_15_S3_LOCAL_OPERATIONS_COMPLETION_LOCAL_ONLY`.
+  `PHASE_15_S3_LOCAL_OPERATIONS_COMPLETION_LOCAL_ONLY`; next program step.
 - Session 4 (codebase convergence/release candidate) — owner token
   `PHASE_15_S4_IMPLEMENTATION_CLOSURE_LOCAL_ONLY`.
 - Integrated hardening campaign — owner token
