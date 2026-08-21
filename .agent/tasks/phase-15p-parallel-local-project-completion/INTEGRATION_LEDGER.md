@@ -40,3 +40,30 @@ committed, and pushed. Never pre-filled.
 | 3 | A08 A10 A11 A12 | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 221 passed / 0 failed; conflict-free; privacy/authority sweep clean (one node:crypto use verified against canonicalDigest precedent) | yes | yes |
 | 4 | A13 A14 A15 | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a | typecheck PASS; hardening:check PASS; git diff --check PASS; all 15 phase15p suites 337 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; conflict-free | yes | yes |
 | final | A16 | 42c5a7e1ab3f438a9c82688f2eee645d3c548d64 | full M6 pack green (see STATE.md Validation Ledger); rehearsal 3x standalone 4/4 each; 16 phase15p suites 341/0; Phase 9-14 sweep 385/0 | yes | yes |
+
+## Mass implementation round (PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY)
+
+Base: `abc9bf9c8cdc6d1ed594638be19c605d51cfd336` (strategy shift). All
+checkpoints UNVALIDATED by owner direction.
+
+| Order | Lane | Upstream SHA (swarm2 branch) | Cherry-pick on main | Conflicts | Notes |
+|---|---|---|---|---|---|
+| M1 | A01 | f7eb4b345d2bff0e365b13e74bfc5535d9bc578e | e390539 | none | lifecycle resolution-view bridge |
+| M2 | A02 | 337d121d3f09f6166c84c99d55a7c41a1c37e38e | 4989f11 | none | replay/dossier-readiness/promotion-rejection vocabulary axes |
+| M3 | A03 | e291aab792aa17e80fe59191a9d7e2b0cc6ce746 | 46238ef | none | unified observation constructor + observeFamilyMovement |
+| M4 | A04 | cea1d118a5deff619e0652822327c328b7fb7df1 | 38fbb38 | none | dtoFramework versioned dispatch |
+| M5 | A06 | 22f84d3de55f04558125c6ac10f53deb5a6a415a | 3791a90 | none | replay envelope + kind capability table |
+| M6 | A05 | 69254349832af848668378f7f9b962e351bba5d0 | 78c23cb | none | CLUSTERED state |
+| M7 | A09 | 5d28956 (full in Git) | e325fad | checkpoint.ts one hunk — kept A05 CLUSTERED list AND A09 interrupted-work constants | resume platform |
+| M8 | A08 | b4fb9f7b1f64a0f5c915d6f9aaaf02b5a0a1b41e | 98a23ac | none | shared clustering identity helpers |
+| M9 | A10 | a665c0eea0e90e8b27748e35cc8b305b6fc5a8c8 | f508e67 | none | analyzer/verification/CI-classification + service |
+| M10 | A11 | a501a2b20e49d4d1d477cbec6e09ae560823ec40 | 2331f44 | none | 4 new artifact kinds + envelope registration seam |
+| M11 | A12 | b051a58 (full in Git) | 5c0ba91 | none | snapshot slots + delta rules |
+| M12 | A07 | 11234a5 (parent-implemented after repeated provider failures; committed on swarm2/a07-minimality-evidence) | 27080db | none | minimality evidence DTO + additive builder |
+| M13 | A13 | 95ee8b3b75e61c1d8f34f61781f590c674faa8f8 | 81d6c71 | none | shared private-payload screen + DTO narrowings |
+| M14 | A14 | d0fe8c7d0da529dccf3b95731157320e21a8ce18 | c8bddad | none | corpus architecture: 66 definitions across all families incl. P6 FROZEN_BY_OWNER + 11B/13B NOT_AUTHORIZED markers; 7 pure builders |
+| M15 | A15 | pending (background) | — | — | legacy convergence |
+| M16 | A16 | pending (background) | — | — | seam assembler |
+
+Canonical group push: waves 1–3 + A07/A13 pushed fast-forward at `5c0ba91`;
+A07+A13 descendants pushed with them (verify live HEAD from Git).
