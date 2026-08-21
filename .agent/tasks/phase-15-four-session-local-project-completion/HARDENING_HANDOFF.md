@@ -72,7 +72,7 @@ Complete canonical Playwright workers=1; topology-correct isolated complete Play
 
 ### GitHub Actions truth (Session 1)
 
-FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD. Pre-existing recorded condition (Phase 14 handoff, re-verified once per push there): GitHub Actions jobs fail immediately with zero steps executed due to the known external billing/spending-limit block; no checkout/build/test step runs, so no code regression is exposed or claimable. Session 1 inherits that classification; one post-push inspection belongs to the push containing this file and cannot be recorded inside it (inherent limit). Do not retry repeatedly; re-check only after billing restoration.
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD. Exact post-push inspection (gh CLI, once per push, no retries): run `32439041731` for Session-1 final HEAD `93be7c6` — conclusion FAILURE, 4s duration, ZERO steps executed; identical signature on `32438789158` (`a5dd1a5`) and on the concurrent session's `32434417951`. This matches the pre-existing external billing/spending-limit block recorded throughout Phase 14 (2-7s zero-step failures): no checkout/build/test step ever runs, so no code regression is exposed or claimable; BLOCKED_EXTERNAL_CI truth stands. Local/source acceptance is fully green and is the only acceptance evidence until billing restoration. Do not retry repeatedly; re-check only after billing restoration.
 
 ### Next session bootstrap requirements (Session 2)
 
