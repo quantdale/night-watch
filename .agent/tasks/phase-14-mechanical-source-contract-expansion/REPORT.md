@@ -143,4 +143,4 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 NEXT ACTION: STOP
 ```
 
-GitHub Actions remains externally billing-blocked (known condition; re-verified once after each push). The deliberate absence of the future full-hardening campaign is not a code failure.
+GitHub Actions exact truth (checked once after the final push): run `32431272739` for `5b172a2` — job "Local hardening checks" failed in ~4s with ZERO steps executed; the pre-batch run `32382010371` for `5e107f6` shows the identical zero-step signature. The known external billing/spending-limit condition now manifests as an immediate zero-step job failure. No code regression is exposed (no step ever ran). The deliberate absence of the future full-hardening campaign is not a code failure.

@@ -92,7 +92,7 @@ Reason: extension supersedes the original PLAN M7-M11 cadence for this execution
 
 ## Blockers
 
-- EXTERNAL_CI_BILLING_BLOCKED: GitHub Actions job start has remained externally blocked by the known billing/spending-limit condition through the last push inspection. Unblock: restore billing/spending-limit so a push re-runs Actions to green. No code failure. (Re-verified once after each push; see REPORT.md extension section for the exact latest truth.)
+- EXTERNAL_CI_BILLING_BLOCKED: GitHub Actions remains externally blocked by the known billing/spending-limit condition. Exact latest truth: run `32431272739` for `5b172a2` — job "Local hardening checks" failed in ~4s with ZERO steps executed; pre-batch run `32382010371` for `5e107f6` shows the identical zero-step signature (the gate now manifests as an immediate zero-step failure rather than a non-start). No code regression is exposed because no step ever ran. Unblock: restore Actions billing/spending-limit so a push re-runs CI to green. No code failure.
 - FULL_HARDENING_CAMPAIGN_NOT_AUTHORIZED_HERE: the repository-wide hardening campaign is deliberately out of scope for this batch and requires separate owner authorization. This is a planned stop, not a defect.
 
 ## Safety Events

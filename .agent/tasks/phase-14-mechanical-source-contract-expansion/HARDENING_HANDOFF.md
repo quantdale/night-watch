@@ -135,7 +135,11 @@ All recorded as NOT_RUN / DEFERRED_TO_FULL_HARDENING_CAMPAIGN (not PASS):
 
 ## GitHub Actions truth
 
-Recorded per push in REPORT.md (extension section). Through the last inspection, GitHub Actions job start remained externally blocked by the known billing/spending-limit condition (BLOCKED_EXTERNAL_CI truth; jobs never start). No CI-green claim is made anywhere in this handoff.
+Exact truth from post-push inspections (gh CLI, once per push):
+
+- Push `5e107f6..5b172a2` (final five-change checkpoint): run `32431272739` for `5b172a2`, job "Local hardening checks", started 2026-08-21T00:05:03Z, completed 00:05:07Z, conclusion FAILURE with ZERO steps executed (log not found / never produced).
+- Pre-batch control: run `32382010371` for `5e107f6` shows the IDENTICAL signature (2-second job, zero steps, failure).
+- Classification: the known external billing/spending-limit condition now manifests as an immediate zero-step job failure instead of a non-start. No checkout/build/test step ever ran, so no code regression is exposed or claimable; BLOCKED_EXTERNAL_CI truth stands. Do not retry repeatedly; re-check only after billing restoration.
 
 ## Authority boundary
 
