@@ -15,6 +15,17 @@
 // returns INVALID before any executor callback (no-false-certification).
 // Duplicate action identities are handled explicitly through occurrence
 // ordinals — retained occurrences are never silently deduplicated.
+//
+// Phase 15P M A06 (mass round) — the frozen REPLAY_KIND_CAPABILITIES table
+// in replayPlan.ts now drives per-kind phase admission, catalog-guard
+// dispatch, and semantic-class sourcing instead of scattered conditionals,
+// with byte-identical behavior. New execute*AsEnvelope paths return the
+// unified ReplayResultEnvelope (replayEnvelope.ts) so every replay path
+// yields ONE coherent value: plan identity, validation outcome, execution
+// outcome or not-executed reason, occurrence identities, duplicate-action
+// accounting, executor call count, bounded classification, closed reason
+// codes. Plan-vs-execution separation stays absolute: envelopes arise only
+// from a ValidatedReplayPlanV2 path or a fail-closed validation result.
 // ---------------------------------------------------------------------------
 
 import type { CandidateGuardResult, CandidateReplayOutcome, MinimizationAction } from './types';
@@ -24,9 +35,15 @@ import {
   isOrderPreservingOrdinalSubsequence,
   ordinalToActionMap,
   occurrenceIdentityToken,
+  REPLAY_KIND_CAPABILITIES,
   type TriageReplayPlanV2,
-  type ReplayOccurrence,
+  type ReplayKindGuardId,
 } from './replayPlan';
+import {
+  executedReplayResultEnvelope,
+  validationFailureReplayResultEnvelope,
+  type ReplayResultEnvelope,
+} from './replayEnvelope';
 import type { SafeAction } from '../exploration/types';
 import { RIPPLE_PHASE4_ACTIONS } from '../../products/ripple/explorationCatalog';
 import { RIPPLE_JOURNEY_DEFINITIONS } from '../../products/ripple/journeyContracts';
@@ -34,13 +51,17 @@ import { PHASE5_API_CATALOG } from '../../api/phase5/catalog';
 
 const ZERO_SAFETY = { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 } as const;
 
-function journeyPreconditionCheck(journeyId: string, retainedOrdinals: readonly number[], originalOccurrences: readonly ReplayOccurrence[]): CandidateGuardResult {
-  const def = RIPPLE_JOURNEY_DEFINITIONS.find((j) => j.journeyId === journeyId);
+// Per-kind retained-occurrence guards (Phase 15P M A06): uniform plan-shaped
+// signatures so the frozen capability table can dispatch by guard id.
+type RetainedOccurrenceGuard = (plan: TriageReplayPlanV2) => CandidateGuardResult;
+
+function journeyPreconditionCheck(plan: TriageReplayPlanV2): CandidateGuardResult {
+  const def = RIPPLE_JOURNEY_DEFINITIONS.find((j) => j.journeyId === plan.targetId);
   if (def === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
   const allowed = def.allowedSteps.map((s) => s.stepId);
   // Resolve retained occurrence actionIds
-  const ordinalToAction = ordinalToActionMap(originalOccurrences);
-  const retainedIds = retainedOrdinals.map((o) => ordinalToAction.get(o) ?? '');
+  const ordinalToAction = ordinalToActionMap(plan.originalOccurrences);
+  const retainedIds = [...plan.retainedOccurrenceOrdinals].map((o) => ordinalToAction.get(o) ?? '');
   if (retainedIds.length === 1 && allowed.length > 1) {
     const nav = allowed[0]!;
     if (retainedIds[0] !== nav) return { valid: false, reason: 'PRECONDITION_DIVERGENCE' };
@@ -61,9 +82,9 @@ function safeActionFor(id: string): SafeAction | undefined {
   return RIPPLE_PHASE4_ACTIONS.find((a) => a.actionId === id);
 }
 
-function explorationGuardV2(retainedOrdinals: readonly number[], originalOccurrences: readonly ReplayOccurrence[]): CandidateGuardResult {
-  const ordinalToAction = ordinalToActionMap(originalOccurrences);
-  for (const ord of retainedOrdinals) {
+function explorationGuardV2(plan: TriageReplayPlanV2): CandidateGuardResult {
+  const ordinalToAction = ordinalToActionMap(plan.originalOccurrences);
+  for (const ord of plan.retainedOccurrenceOrdinals) {
     const id = ordinalToAction.get(ord);
     if (id === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
     const safe = safeActionFor(id);
@@ -75,6 +96,23 @@ function explorationGuardV2(retainedOrdinals: readonly number[], originalOccurre
   }
   return { valid: true };
 }
+
+function apiCatalogGuardV2(plan: TriageReplayPlanV2): CandidateGuardResult {
+  const ordinals = plan.retainedOccurrenceOrdinals;
+  if (ordinals.length !== 1) return { valid: false, reason: 'PRECONDITION_DIVERGENCE' };
+  const occ = plan.originalOccurrences.find((o) => o.ordinal === ordinals[0]);
+  if (occ === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
+  const op = PHASE5_API_CATALOG.operations.find((o) => o.operationId === occ.expectedActionId);
+  if (op === undefined || op.semanticClass !== 'KNOWN_READ') return { valid: false, reason: 'ACTION_NOT_APPROVED' };
+  return { valid: true };
+}
+
+/** Guard registry keyed by the capability table's ReplayKindGuardId. */
+const KIND_GUARDS: Readonly<Record<ReplayKindGuardId, RetainedOccurrenceGuard>> = Object.freeze({
+  RIPPLE_JOURNEY_PRECONDITION: journeyPreconditionCheck,
+  EXPLORATION_SAFE_ACTION_CATALOG: explorationGuardV2,
+  PHASE5_API_KNOWN_READ: apiCatalogGuardV2,
+});
 
 export type V2Executor = (
   plan: TriageReplayPlanV2,
@@ -107,25 +145,13 @@ export type ReplayPlanValidationResult =
 export function validateReplayPlanV2(plan: TriageReplayPlanV2): ReplayPlanValidationResult {
   const v = validateTriageReplayPlanV2(plan);
   if (!v.valid) return { valid: false, reason: v.reason };
-  // Occurrence-ordered subsequence already checked. Now per-kind guards.
-  const ordinals = plan.retainedOccurrenceOrdinals;
-  if (plan.candidateKind === 'JOURNEY') {
-    // Reduced journey replay is always unsupported (no subset executor).
-    if (plan.phase === 'REDUCED_CANDIDATE') return { valid: false, reason: 'PRECONDITION_DIVERGENCE' };
-    const g = journeyPreconditionCheck(plan.targetId, [...ordinals], plan.originalOccurrences);
-    if (!g.valid) return { valid: false, reason: g.reason ?? 'PRECONDITION_DIVERGENCE' };
-  }
-  if (plan.candidateKind === 'EXPLORATION') {
-    const g2 = explorationGuardV2([...ordinals], plan.originalOccurrences);
-    if (!g2.valid) return { valid: false, reason: g2.reason ?? 'ACTION_NOT_APPROVED' };
-  }
-  if (plan.candidateKind === 'API') {
-    if (ordinals.length !== 1) return { valid: false, reason: 'PRECONDITION_DIVERGENCE' };
-    const occ = plan.originalOccurrences.find((o) => o.ordinal === ordinals[0]);
-    if (occ === undefined) return { valid: false, reason: 'ACTION_NOT_APPROVED' };
-    const op = PHASE5_API_CATALOG.operations.find((o) => o.operationId === occ.expectedActionId);
-    if (op === undefined || op.semanticClass !== 'KNOWN_READ') return { valid: false, reason: 'ACTION_NOT_APPROVED' };
-  }
+  // Occurrence-ordered subsequence already checked. The frozen per-kind
+  // semantics table (Phase 15P M A06) drives phase admission and the
+  // catalog-guard dispatch instead of scattered kind conditionals.
+  const semantics = REPLAY_KIND_CAPABILITIES[plan.candidateKind].semantics;
+  if (!semantics.admittedPhases.includes(plan.phase)) return { valid: false, reason: semantics.phaseRejectionReason };
+  const g = KIND_GUARDS[semantics.guard](plan);
+  if (!g.valid) return { valid: false, reason: g.reason ?? semantics.invalidFallbackReason };
   return { valid: true, plan: plan as ValidatedReplayPlanV2 };
 }
 
@@ -180,10 +206,11 @@ function normalizeExecutorResult(result: CandidateReplayOutcome, plan: TriageRep
  * silently deduplicated.
  */
 export function buildRetainedActionsV2(plan: TriageReplayPlanV2): readonly MinimizationAction[] {
+  const semantics = REPLAY_KIND_CAPABILITIES[plan.candidateKind].semantics;
   const ordinalToAction = ordinalToActionMap(plan.originalOccurrences);
   return [...plan.retainedOccurrenceOrdinals].map((ord) => {
     const id = ordinalToAction.get(ord)!;
-    const safe = plan.candidateKind === 'EXPLORATION' ? safeActionFor(id) : undefined;
+    const safe = semantics.semanticClassSource === 'EXPLORATION_SAFE_ACTION_CATALOG' ? safeActionFor(id) : undefined;
     return {
       actionId: id,
       semanticClass: (safe?.semanticClass ?? 'KNOWN_READ') as MinimizationAction['semanticClass'],
@@ -217,3 +244,44 @@ export function resolveRetainedOccurrenceIdentities(plan: TriageReplayPlanV2): r
 }
 
 export { isOrderPreservingOrdinalSubsequence };
+
+// ---------------------------------------------------------------------------
+// Phase 15P M A06 — envelope-producing execution paths.
+//
+// Every replay path returns ONE coherent ReplayResultEnvelope instead of
+// ad-hoc tuples. Executor-call accounting invariant: executeValidatedReplayPlanV2
+// attempts EXACTLY ONE executor invocation on every path (synchronous throw
+// and promise rejection included, each collapsed to the same INVALID /
+// PRECONDITION_DIVERGENCE outcome as before), so a delegated executed
+// envelope always records executorCallCount = 1. The validation-failure path
+// never reaches the executor and records 0. Plan-vs-execution separation is
+// unchanged: envelopes arise only from a ValidatedReplayPlanV2 path or a
+// fail-closed validation result; no real product replay anywhere.
+// ---------------------------------------------------------------------------
+
+/**
+ * Execute an already-validated plan through the single executor seam and wrap
+ * the normalized outcome in a unified envelope.
+ */
+export function executeValidatedReplayPlanV2AsEnvelope(
+  validated: ValidatedReplayPlanV2,
+  executor: V2Executor,
+): Promise<ReplayResultEnvelope> | ReplayResultEnvelope {
+  const result = executeValidatedReplayPlanV2(validated, executor);
+  if (result instanceof Promise) return result.then((r) => executedReplayResultEnvelope(validated, r, 1));
+  return executedReplayResultEnvelope(validated, result, 1);
+}
+
+/**
+ * Validate-then-execute envelope path: a plan-validation failure returns the
+ * fail-closed validation-failure envelope before any executor callback
+ * (no-false-certification); a validated plan delegates to the executed path.
+ */
+export function executeReplayPlanV2AsEnvelope(
+  plan: TriageReplayPlanV2,
+  executor: V2Executor,
+): Promise<ReplayResultEnvelope> | ReplayResultEnvelope {
+  const validation = validateReplayPlanV2(plan);
+  if (!validation.valid) return validationFailureReplayResultEnvelope(plan, validation);
+  return executeValidatedReplayPlanV2AsEnvelope(validation.plan, executor);
+}

@@ -162,15 +162,15 @@ export function validateTriageReplayPlan(input: unknown): { valid: true; plan: T
   if (phase === 'FRESH_EXACT_REPLAY' && (retained.length !== original.length || retained.some((v, i) => v !== (original as string[])[i]))) {
     return { valid: false, reason: 'FRESH_EXACT_MUST_MATCH_ORIGINAL' };
   }
-  // API single-action invariant (strict): original occurrence count exactly 1,
-  // retained occurrence count exactly 1, and retained occurrence is the original
-  // operation. Any multi-original, empty, or mismatched plan is rejected before
-  // executor exposure. This closes CONFIRMED_API_REPLAY_PLAN_ORIGINAL_CARDINALITY_GAP.
-  if (kind === 'API') {
-    if (original.length !== 1) return { valid: false, reason: 'API_ORIGINAL_MUST_BE_SINGLE' };
-    if (retained.length !== 1) return { valid: false, reason: 'API_RETAINED_MUST_BE_SINGLE' };
-    if (retained[0] !== original[0]) return { valid: false, reason: 'API_RETAINED_MUST_EQUAL_ORIGINAL' };
-  }
+  // Kind grammar admission from the frozen capability table (Phase 15P M A06).
+  // Positioned exactly where the previous inline API block ran so rejection
+  // precedence — and therefore every observable reason string — is unchanged.
+  // For kinds whose bounds equal the generic checks above, these checks can
+  // never fire.
+  const grammarV1 = REPLAY_KIND_CAPABILITIES[kind].grammarV1;
+  if (original.length < grammarV1.originalMin || original.length > grammarV1.originalMax) return { valid: false, reason: grammarV1.originalCardinalityReason };
+  if (retained.length < grammarV1.retainedMin || retained.length > grammarV1.retainedMax) return { valid: false, reason: grammarV1.retainedCardinalityReason };
+  if (grammarV1.retainedMustEqualOriginal && (retained as string[]).some((v, i) => v !== (original as string[])[i])) return { valid: false, reason: grammarV1.retainedEqualityReason };
   // Reject raw product values / unsafe semantic is handled at adapter layer, but ensure no semanticExpectationId raw leak:
   if (obj.semanticExpectationId !== undefined) {
     const e = validateStringField('semanticExpectationId', obj.semanticExpectationId, ACTION_ID_RE, 120);
@@ -371,11 +371,13 @@ export function validateTriageReplayPlanV2(input: unknown): { valid: true; plan:
       return { valid: false, reason: 'FRESH_EXACT_MUST_MATCH_ORIGINAL_OCCURRENCES' };
     }
   }
-  // API single fixed operation: exactly one original, one retained.
-  if (kind === 'API') {
-    if (original.length !== 1) return { valid: false, reason: 'API_V2_ORIGINAL_MUST_BE_SINGLE' };
-    if (retained.length !== 1) return { valid: false, reason: 'API_V2_RETAINED_MUST_BE_SINGLE' };
-  }
+  // Kind grammar admission from the frozen capability table (Phase 15P M A06);
+  // see the v1 note on rejection-precedence preservation. v2 expresses the
+  // API retained==original rule structurally through cardinality plus the
+  // strict ordinal-subsequence check, so no separate equality step exists here.
+  const grammarV2 = REPLAY_KIND_CAPABILITIES[kind].grammarV2;
+  if (original.length < grammarV2.originalMin || original.length > grammarV2.originalMax) return { valid: false, reason: grammarV2.originalCardinalityReason };
+  if (retained.length < grammarV2.retainedMin || retained.length > grammarV2.retainedMax) return { valid: false, reason: grammarV2.retainedCardinalityReason };
   if (obj.semanticExpectationId !== undefined) {
     const e = validateStringField('semanticExpectationId', obj.semanticExpectationId, ACTION_ID_RE, 120);
     if (e) return { valid: false, reason: e };
@@ -494,3 +496,162 @@ export function occurrenceIdentityToken(expectedActionId: string, ordinal: numbe
   }
   return `${expectedActionId}#occ:${ordinal}`;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 15P M A06 — frozen journey/API/exploration replay capability table.
+//
+// ONE explicit frozen table describes, per candidate kind: the plan grammar
+// that create/validate admit (per plan version), and the replay semantics
+// that binding validation enforces (admitted phases, reduction support,
+// catalog guard, fallback reasons). The v1/v2 validators above and the
+// binding's kind dispatch consume this table instead of scattered per-kind
+// conditionals. Historical rejection reason strings are preserved verbatim
+// and the grammar checks sit exactly where the previous inline API blocks
+// ran, so behavior — including rejection precedence — is byte-identical.
+// For kinds whose bounds equal the generic checks, the grammar checks can
+// never fire. No browser/network/fs/child-process/DB/AI authority.
+// ---------------------------------------------------------------------------
+
+/** Which catalog guard validates retained occurrences for a candidate kind. */
+export type ReplayKindGuardId =
+  | 'RIPPLE_JOURNEY_PRECONDITION'
+  | 'EXPLORATION_SAFE_ACTION_CATALOG'
+  | 'PHASE5_API_KNOWN_READ';
+
+/** Plan grammar (v1 string-action plans) admitted per candidate kind. */
+export interface ReplayPlanGrammarV1 {
+  readonly originalMin: number;
+  readonly originalMax: number;
+  readonly retainedMin: number;
+  readonly retainedMax: number;
+  readonly retainedMustEqualOriginal: boolean;
+  readonly originalCardinalityReason: string;
+  readonly retainedCardinalityReason: string;
+  readonly retainedEqualityReason: string;
+}
+
+/** Plan grammar (v2 occurrence-ordinal plans) admitted per candidate kind. */
+export interface ReplayPlanGrammarV2 {
+  readonly originalMin: number;
+  readonly originalMax: number;
+  readonly retainedMin: number;
+  readonly retainedMax: number;
+  readonly originalCardinalityReason: string;
+  readonly retainedCardinalityReason: string;
+}
+
+/** Replay semantics enforced by binding validation per candidate kind. */
+export interface ReplayKindSemantics {
+  /** Phases admitted past binding validation. */
+  readonly admittedPhases: readonly ReplayPhase[];
+  /** Whether reduced-candidate (occurrence-subsequence) replay is supported. */
+  readonly supportsReducedReplay: boolean;
+  /** Which catalog guard validates retained occurrences. */
+  readonly guard: ReplayKindGuardId;
+  /** Reason when the declared phase is not admitted. */
+  readonly phaseRejectionReason: string;
+  /** Fallback reason when a guard fails without a specific reason. */
+  readonly invalidFallbackReason: string;
+  /** Where MinimizationAction.semanticClass comes from for retained actions. */
+  readonly semanticClassSource: 'EXPLORATION_SAFE_ACTION_CATALOG' | 'DEFAULT_KNOWN_READ';
+}
+
+export interface ReplayKindCapability {
+  readonly candidateKind: ReplayCandidateKind;
+  readonly grammarV1: ReplayPlanGrammarV1;
+  readonly grammarV2: ReplayPlanGrammarV2;
+  readonly semantics: ReplayKindSemantics;
+}
+
+export const REPLAY_KIND_CAPABILITIES: Readonly<Record<ReplayCandidateKind, ReplayKindCapability>> = Object.freeze({
+  JOURNEY: Object.freeze({
+    candidateKind: 'JOURNEY',
+    // Reduced journey replay is always unsupported (no subset executor).
+    grammarV1: Object.freeze({
+      originalMin: 1,
+      originalMax: 64,
+      retainedMin: 1,
+      retainedMax: 64,
+      retainedMustEqualOriginal: false,
+      originalCardinalityReason: 'originalActionIds_INVALID',
+      retainedCardinalityReason: 'retainedActionIds_INVALID',
+      retainedEqualityReason: 'FRESH_EXACT_MUST_MATCH_ORIGINAL',
+    }),
+    grammarV2: Object.freeze({
+      originalMin: 1,
+      originalMax: 64,
+      retainedMin: 0,
+      retainedMax: 64,
+      originalCardinalityReason: 'originalOccurrences_INVALID',
+      retainedCardinalityReason: 'retainedOccurrenceOrdinals_INVALID',
+    }),
+    semantics: Object.freeze({
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY']),
+      supportsReducedReplay: false,
+      guard: 'RIPPLE_JOURNEY_PRECONDITION',
+      phaseRejectionReason: 'PRECONDITION_DIVERGENCE',
+      invalidFallbackReason: 'PRECONDITION_DIVERGENCE',
+      semanticClassSource: 'DEFAULT_KNOWN_READ',
+    }),
+  }),
+  EXPLORATION: Object.freeze({
+    candidateKind: 'EXPLORATION',
+    grammarV1: Object.freeze({
+      originalMin: 1,
+      originalMax: 64,
+      retainedMin: 1,
+      retainedMax: 64,
+      retainedMustEqualOriginal: false,
+      originalCardinalityReason: 'originalActionIds_INVALID',
+      retainedCardinalityReason: 'retainedActionIds_INVALID',
+      retainedEqualityReason: 'FRESH_EXACT_MUST_MATCH_ORIGINAL',
+    }),
+    grammarV2: Object.freeze({
+      originalMin: 1,
+      originalMax: 64,
+      retainedMin: 0,
+      retainedMax: 64,
+      originalCardinalityReason: 'originalOccurrences_INVALID',
+      retainedCardinalityReason: 'retainedOccurrenceOrdinals_INVALID',
+    }),
+    semantics: Object.freeze({
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE']),
+      supportsReducedReplay: true,
+      guard: 'EXPLORATION_SAFE_ACTION_CATALOG',
+      phaseRejectionReason: 'PRECONDITION_DIVERGENCE',
+      invalidFallbackReason: 'ACTION_NOT_APPROVED',
+      semanticClassSource: 'EXPLORATION_SAFE_ACTION_CATALOG',
+    }),
+  }),
+  API: Object.freeze({
+    candidateKind: 'API',
+    // Single fixed operation: exactly one original occurrence and the same
+    // single retained occurrence. Closes CONFIRMED_API_REPLAY_PLAN_ORIGINAL_CARDINALITY_GAP.
+    grammarV1: Object.freeze({
+      originalMin: 1,
+      originalMax: 1,
+      retainedMin: 1,
+      retainedMax: 1,
+      retainedMustEqualOriginal: true,
+      originalCardinalityReason: 'API_ORIGINAL_MUST_BE_SINGLE',
+      retainedCardinalityReason: 'API_RETAINED_MUST_BE_SINGLE',
+      retainedEqualityReason: 'API_RETAINED_MUST_EQUAL_ORIGINAL',
+    }),
+    grammarV2: Object.freeze({
+      originalMin: 1,
+      originalMax: 1,
+      retainedMin: 1,
+      retainedMax: 1,
+      originalCardinalityReason: 'API_V2_ORIGINAL_MUST_BE_SINGLE',
+      retainedCardinalityReason: 'API_V2_RETAINED_MUST_BE_SINGLE',
+    }),
+    semantics: Object.freeze({
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE']),
+      supportsReducedReplay: false,
+      guard: 'PHASE5_API_KNOWN_READ',
+      phaseRejectionReason: 'PRECONDITION_DIVERGENCE',
+      invalidFallbackReason: 'ACTION_NOT_APPROVED',
+      semanticClassSource: 'DEFAULT_KNOWN_READ',
+    }),
+  }),
+});
