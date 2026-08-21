@@ -19,7 +19,8 @@ Executed under `PHASE_15_S1_CORE_CONTRACT_CONVERGENCE_LOCAL_ONLY`. Terminal stat
 - W-A contract lifecycle registry (`nightwatch.contract-lifecycle-registry.v1`): `878d1ff24bcbf22ba515c1e31f8138735b988208`
 - W-F contract migration compatibility map (`nightwatch.contract-migration-map.v1`): `1c903202d1cade44ea53714a828ba3e4331d6703`
 - W-D composed source-contract resolution API (`nightwatch.source-contract-resolution.v1`): `5a77327d21155012fed07ad2242d916eb2bbc50b`
-- W-E contract schema validation hardening (`nightwatch.contract-schema-validation.v1`): `154f045c1c0dfe4f408e88267eb86a60ba6525cb` (= LAST_VALIDATED_IMPLEMENTATION_SHA / LAST_SUBSTANTIVE_CHECKPOINT_SHA)
+- W-E contract schema validation hardening (`nightwatch.contract-schema-validation.v1`): `154f045c1c0dfe4f408e88267eb86a60ba6525cb`
+- S1 continuity-checker allowlist repair (mandated program artifacts approved as checkpoint paths): `07e551f52865eb91838824c6f547a3b18ff25913` (= LAST_VALIDATED_IMPLEMENTATION_SHA / LAST_SUBSTANTIVE_CHECKPOINT_SHA)
 - Final session SHA: the continuity/handoff documentation checkpoint descending from `154f045…` (discoverable from Git; LIVE_HEAD_AUTHORITY: GIT).
 - Interleaved foreign commit preserved untouched as ancestry: `e37799246ebe3a2a3b4b59754829ac8c80f09e02` ("Phase 15 S2 W1 …") authored by an unrelated concurrent local session mid-execution; never validated or claimed by Session 1; all Session-1 commits were staged path-scoped so it carries none of this session's files and vice versa.
 
@@ -27,10 +28,11 @@ Executed under `PHASE_15_S1_CORE_CONTRACT_CONVERGENCE_LOCAL_ONLY`. Terminal stat
 
 1. NEW convergence layer: `src/oracles/expectations/lifecycle/{contractLifecycleRegistry,contractResultVocabulary,sourceContractResolution,contractSchemaValidation,contractMigrationMap}.ts`.
 2. NEW canonical identity core: `src/core/identity/canonicalDigest.ts`.
-3. Convergence refactors (byte-identical outputs, private Class-A digest copies replaced by delegation): `src/core/aiReview/util.ts`, `src/core/triage/dossier.ts`, `src/core/triage/dossierV2.ts`, `src/core/triage/clustering.ts`, `src/oracles/semantic/cluster.ts`, `src/core/journeys/fingerprint.ts`.
-4. NEW permanent suites: `tests/unit/phase15{ContractResultVocabulary,CanonicalDigestIdentity,ContractLifecycleRegistry,ContractMigrationMap,SourceContractResolution,ContractSchemaValidation}.test.ts`.
-5. Continuity/docs: `.agent/ACTIVE_TASK.md`, `.agent/tasks/phase-15-four-session-local-project-completion/{SPEC,PLAN,STATE,REPORT,HARDENING_HANDOFF}.md`, `docs/CURRENT_STATE.md` truth rows.
-6. UNTOUCHED by design: all Phase 9–14 low-level modules (admission, collectionAdmission, resolver, provenance, recipes/*, extract/*, coverageInventory, semantic bundle/routing), registry data, corpus, workflows, package.json, tsconfig.
+3. Checker allowlist: `bin/agent-state.mjs` (APPROVED_CHECKPOINT_PATHS extended with the enumerated mandated program artifacts).
+4. Convergence refactors (byte-identical outputs, private Class-A digest copies replaced by delegation): `src/core/aiReview/util.ts`, `src/core/triage/dossier.ts`, `src/core/triage/dossierV2.ts`, `src/core/triage/clustering.ts`, `src/oracles/semantic/cluster.ts`, `src/core/journeys/fingerprint.ts`.
+5. NEW permanent suites: `tests/unit/phase15{ContractResultVocabulary,CanonicalDigestIdentity,ContractLifecycleRegistry,ContractMigrationMap,SourceContractResolution,ContractSchemaValidation}.test.ts`.
+6. Continuity/docs: `.agent/ACTIVE_TASK.md`, `.agent/tasks/phase-15-four-session-local-project-completion/{SPEC,PLAN,STATE,REPORT,HARDENING_HANDOFF}.md`, `docs/CURRENT_STATE.md` truth rows.
+7. UNTOUCHED by design: all Phase 9–14 low-level modules (admission, collectionAdmission, resolver, provenance, recipes/*, extract/*, coverageInventory, semantic bundle/routing), registry data, corpus, workflows, package.json, tsconfig.
 
 ### Versions/contracts introduced
 

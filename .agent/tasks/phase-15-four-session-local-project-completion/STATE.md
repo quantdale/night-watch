@@ -6,8 +6,8 @@ Task ID: phase-15-four-session-local-project-completion
 Phase: 15-S1-CORE-CONVERGENCE
 Status: COMPLETE
 Starting SHA: 6324915b56df1d19faefd53e7d8156dd169a4cfd
-Last validated implementation SHA: 154f045c1c0dfe4f408e88267eb86a60ba6525cb
-Last substantive checkpoint SHA: 154f045c1c0dfe4f408e88267eb86a60ba6525cb
+Last validated implementation SHA: 07e551f52865eb91838824c6f547a3b18ff25913
+Last substantive checkpoint SHA: 07e551f52865eb91838824c6f547a3b18ff25913
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -50,6 +50,7 @@ checkpoints pushed fast-forward.
 - M5 Workstream D composed source-contract resolution API (`nightwatch.source-contract-resolution.v1`): COMPLETE at `5a77327d21155012fed07ad2242d916eb2bbc50b`.
 - M6 Workstream E contract schema validation hardening (`nightwatch.contract-schema-validation.v1`): COMPLETE at `154f045c1c0dfe4f408e88267eb86a60ba6525cb`.
 - M7 Moderate semantic-platform integration pack (23 suites, Phases 9A.1/10/11/12/13/14 + phase15): COMPLETE — 432 passed, 0 failed.
+- M6b Continuity-checker allowlist repair (mandated program artifacts HARDENING_HANDOFF/MASTER_PLAN/SESSION_* approved as checkpoint paths): COMPLETE at `07e551f52865eb91838824c6f547a3b18ff25913`.
 - M8 Continuity/handoff closure (SPEC/PLAN/STATE/REPORT, ACTIVE_TASK transition, HARDENING_HANDOFF evidence, docs truth rows): COMPLETE at the Session-1 continuity documentation checkpoint descending from `154f045c1c0dfe4f408e88267eb86a60ba6525cb` (discoverable from Git).
 
 ## Work In Progress
@@ -73,6 +74,7 @@ own fresh session after this terminal continuity is pushed.
 - src/oracles/expectations/lifecycle/contractSchemaValidation.ts (NEW, E)
 - src/core/identity/canonicalDigest.ts (NEW, C)
 - src/core/aiReview/util.ts, src/core/triage/dossier.ts, src/core/triage/dossierV2.ts, src/core/triage/clustering.ts, src/oracles/semantic/cluster.ts, src/core/journeys/fingerprint.ts (C convergence refactors, byte-identical outputs)
+- bin/agent-state.mjs (checkpoint-path allowlist extended for mandated program artifacts)
 - tests/unit/phase15ContractResultVocabulary.test.ts, phase15CanonicalDigestIdentity.test.ts, phase15ContractLifecycleRegistry.test.ts, phase15ContractMigrationMap.test.ts, phase15SourceContractResolution.test.ts, phase15ContractSchemaValidation.test.ts (NEW permanent suites)
 
 ## Validation Ledger

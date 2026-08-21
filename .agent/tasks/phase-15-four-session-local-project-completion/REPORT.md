@@ -14,7 +14,7 @@ exercised.
 ## Terminal anchors
 
 - Starting SHA: `6324915b56df1d19faefd53e7d8156dd169a4cfd` (origin/main fast-forward, clean tree)
-- Last validated implementation SHA / last substantive checkpoint: `154f045c1c0dfe4f408e88267eb86a60ba6525cb` (workstream E)
+- Last validated implementation SHA / last substantive checkpoint: `07e551f52865eb91838824c6f547a3b18ff25913` (workstream E plus the Session-1 continuity-checker allowlist repair)
 - Final implementation-batch anchor equals the E checkpoint; continuity/handoff
   documentation descendants after it are discoverable from Git
   (LIVE_HEAD_AUTHORITY: GIT; no document predicts its own containing commit).
