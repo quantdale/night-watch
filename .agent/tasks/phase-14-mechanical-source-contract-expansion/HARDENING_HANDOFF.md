@@ -138,8 +138,9 @@ All recorded as NOT_RUN / DEFERRED_TO_FULL_HARDENING_CAMPAIGN (not PASS):
 Exact truth from post-push inspections (gh CLI, once per push):
 
 - Push `5e107f6..5b172a2` (final five-change checkpoint): run `32431272739` for `5b172a2`, job "Local hardening checks", started 2026-08-21T00:05:03Z, completed 00:05:07Z, conclusion FAILURE with ZERO steps executed (log not found / never produced).
+- Push `5b172a2..ec27364` (Actions-truth docs update): run for `ec27364` — conclusion FAILURE, same external-gate signature.
 - Pre-batch control: run `32382010371` for `5e107f6` shows the IDENTICAL signature (2-second job, zero steps, failure).
-- Classification: the known external billing/spending-limit condition now manifests as an immediate zero-step job failure instead of a non-start. No checkout/build/test step ever ran, so no code regression is exposed or claimable; BLOCKED_EXTERNAL_CI truth stands. Do not retry repeatedly; re-check only after billing restoration.
+- Classification: the known external billing/spending-limit condition now manifests as an immediate zero-step job failure instead of a non-start. No checkout/build/test step ever ran, so no code regression is exposed or claimable; BLOCKED_EXTERNAL_CI truth stands. Do not retry repeatedly; re-check only after billing restoration. Inherent limit: the run triggered by the commit containing this table cannot be recorded inside that same commit; it is covered by the stated classification.
 
 ## Authority boundary
 
