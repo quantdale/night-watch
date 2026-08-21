@@ -9,10 +9,34 @@ import { assertOwnerPolicyAllows, OwnerPolicyBlockedError } from '../policy/owne
 import { PrivateArtifactStore } from '../policy/privateArtifacts';
 import { clusterAnomalies, suppressDuplicateClusters } from '../triage/clustering';
 import { createIncompleteDossier, validateBugDossier } from '../triage/dossier';
-import { DOSSIER_VERSION_V2, parseBugDossierV2 } from '../triage/dossierV2';
+import { createBugDossierV2, DOSSIER_VERSION_V2, isReadySemanticDossier, parseBugDossierV2 } from '../triage/dossierV2';
 import { triageAnomaly } from '../triage/pipeline';
 import { toSemanticDossierEvidence } from '../../oracles/semantic/dossier';
-import { validateCampaignSemanticEvidence } from './campaignSemanticEvidence';
+import { createSemanticTriageEvidence, type SemanticTriageEvidence } from '../triage/semanticTriageEvidence';
+import {
+  buildSemanticAwarePromotionResult,
+  currentnessFromCampaignSemantic,
+  currentnessFromSourceFreshness,
+  dossierTargetForClusterKind,
+  semanticPromotionEligible,
+  type SemanticAwarePromotionResult,
+  type PromotionMinimizationClass,
+  type PromotionSourceCurrentness,
+} from '../triage/promotionResult';
+import { approvedMappingForBundle } from '../../oracles/semantic/campaignTargetMapping';
+import { bundleSupportsTarget, campaignSemanticBundleById } from './realCampaignSemanticWiring';
+import { validateCampaignSemanticEvidence, type CampaignSemanticEvidence } from './campaignSemanticEvidence';
+import { createTriageReplayPlanV2 } from '../triage/replayPlan';
+import { executeReplayPlanV2 } from '../triage/replayBinding';
+import type { BugDossierV2, BugDossierV2Input } from '../triage/dossierV2';
+import {
+  initialLifecycleRecord,
+  transitionCandidateLifecycle,
+  type CandidateLifecycleEvent,
+  type CandidateLifecycleRecord,
+  type CandidateLifecycleState,
+  type CandidateLifecycleVariant,
+} from './candidateLifecycle';
 import { clusterSemanticObservations, semanticClusterKey, semanticContractIdentity, semanticInvariantDefinitionId } from '../../oracles/semantic/cluster';
 import type { InvariantDefinition } from '../../oracles/expectations/types';
 import { REAL_DEV_MINIMIZATION_BUDGET } from '../triage/types';
@@ -32,6 +56,7 @@ import { detectFailureStorm, type FailureStorm } from './storm';
 import {
   CAMPAIGN_CHECKPOINT_VERSION,
   CAMPAIGN_ORCHESTRATOR_VERSION,
+  CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED,
   type CampaignAnomalyCandidate,
   type CampaignCheckpoint,
   type CampaignExecutionContext,
@@ -407,6 +432,40 @@ function makeReproductionRecord(cluster: AnomalyCluster, level: EvidenceLevel): 
   };
 }
 
+/**
+ * Maps the campaign receipt outcome onto the semantic-triage outcome
+ * vocabulary. The vocabularies overlap except for EXPECTATION_SOURCE_
+ * UNAVAILABLE, whose triage-side counterpart is EXPECTATION_UNAVAILABLE;
+ * HIGH-confidence blocking keys off receiptOutcome/sourceCurrentness either
+ * way, so this mapping never weakens a blocker.
+ */
+function semanticOutcomeFromReceipt(receiptOutcome: CampaignSemanticEvidence['receiptOutcome']): SemanticTriageEvidence['semanticOutcome'] {
+  switch (receiptOutcome) {
+    case 'PASS': return 'PASS';
+    case 'ANOMALY': return 'ANOMALY';
+    case 'NOT_APPLICABLE': return 'NOT_APPLICABLE';
+    case 'NO_EXPECTATION': return 'NO_EXPECTATION';
+    case 'EXPECTATION_SOURCE_STALE': return 'EXPECTATION_SOURCE_STALE';
+    case 'EXPECTATION_SOURCE_UNAVAILABLE': return 'EXPECTATION_UNAVAILABLE';
+    case 'INVALID_INPUT': return 'INVALID_INPUT';
+    case 'PROJECTION_LIMIT_EXCEEDED': return 'PROJECTION_LIMIT_EXCEEDED';
+    case 'INTERNAL_ERROR': return 'INTERNAL_ERROR';
+    case 'PARTIAL_COVERAGE': return 'PARTIAL_COVERAGE';
+  }
+}
+
+/**
+ * Bridges the minimization fresh-exact classification onto the raw replay
+ * outcome pair consumed by promotionReplayEvidenceFromOutcome. The promotion
+ * DTO reads the pair as the replay-run verdict: PASS certifies the fresh
+ * exact replay reproduced the target anomaly (the minimizer's REPRODUCED),
+ * FAILURE records a non-reproducing run, INVALID an uncertified run.
+ */
+function freshExactReplayStatus(freshExactReplay: 'REPRODUCED' | 'NOT_REPRODUCED' | 'INVALID'): 'FAILURE' | 'PASS' | 'INVALID' {
+  if (freshExactReplay === 'REPRODUCED') return 'PASS';
+  return freshExactReplay === 'INVALID' ? 'INVALID' : 'FAILURE';
+}
+
 export class CampaignOrchestrator {
   readonly manifest: CampaignManifest;
   readonly executor: CampaignExecutor;
@@ -418,6 +477,12 @@ export class CampaignOrchestrator {
   private observations: TriageAnomalyObservation[];
   private candidates = new Map<string, CampaignAnomalyCandidate>();
   private dossiers: BugDossier[] = [];
+  // Phase 15 Session 2 (T1): per-cluster candidate lifecycle records keyed by
+  // clusterId. Authoritative in-memory; persisted into every new checkpoint as
+  // `candidateLifecycles` and restored from it on resume.
+  private readonly candidateLifecycles = new Map<string, CandidateLifecycleRecord>();
+  // Phase 15 Session 2 (T5): one converged promotion verdict per promoted cluster.
+  private readonly promotionResultLedger: SemanticAwarePromotionResult[] = [];
   private artifactPaths: string[] = [];
   private nightwatchIssues: string[] = [];
   private transients: string[] = [];
@@ -454,6 +519,11 @@ export class CampaignOrchestrator {
     this.time = new CampaignTimeBudget(manifest.runtimeCeilingMs, () => this.now().getTime(), startedAt);
     this.observations = [...this.state.anomalyObservations];
     for (const candidate of this.state.anomalyCandidates) this.candidates.set(candidate.observation.runId, candidate);
+    // Session-2 lifecycle records survive resume; the checkpoint validator has
+    // already proven their shape and cluster-ledger referential integrity.
+    for (const [clusterId, record] of Object.entries(this.state.candidateLifecycles ?? {})) {
+      this.candidateLifecycles.set(clusterId, record);
+    }
     if (manifest.mode === 'REPRODUCTION_ONLY' && manifest.reproductionTarget !== undefined) {
       const calculated = clusterAnomalies([manifest.reproductionTarget.candidate.observation])[0];
       if (calculated !== undefined && calculated.clusterId !== manifest.reproductionTarget.clusterId) {
@@ -475,14 +545,18 @@ export class CampaignOrchestrator {
       if (entry.state !== 'READY' || entry.artifactPath === null || !fs.existsSync(entry.artifactPath)) continue;
       try {
         const raw = JSON.parse(fs.readFileSync(entry.artifactPath, 'utf8')) as Record<string, unknown>;
-        // Semantic v2 readback must validate v2, not v1. Historical v1 remains
+        // Session-2 v2 artifacts are persisted enveloped ({ dossier }) because
+        // the artifact store spreads its own wrapper `status` over the top
+        // level; unwrap before strict validation. Historical v1 remains
         // compatible: absent dossierVersion or explicit v1 uses v1 validator.
-        // A v2 ledger entry written with v1 bytes fails closed as NIGHTWATCH_INTERNAL_DEFECT.
-        if (entry.dossierVersion === DOSSIER_VERSION_V2 || raw.schemaVersion === DOSSIER_VERSION_V2) {
-          parseBugDossierV2(raw as unknown);
-          // Keep the canonical v1 in-memory shape for current summation, but
-          // route through v2 validator — a v1-style READY dossier never needed
-          // v2; a v2 entry already proved strict v2 validity.
+        const candidate = (raw.dossier ?? raw) as Record<string, unknown>;
+        if (entry.dossierVersion === DOSSIER_VERSION_V2 || candidate.schemaVersion === DOSSIER_VERSION_V2) {
+          parseBugDossierV2(candidate as unknown);
+          // Session-2 (T4e): v2 dossiers are proven valid here but stay OUT of
+          // the v1-only in-memory consumer list (brief/retention/summaries and
+          // CampaignRunResult.dossiers). Re-promotion exclusion works through
+          // the dossierLedger READY entry, not through this list.
+          continue;
         }
         validateBugDossier(raw as unknown as BugDossier);
         this.dossiers.push(raw as unknown as BugDossier);
@@ -493,6 +567,15 @@ export class CampaignOrchestrator {
   }
 
   checkpoint(): CampaignCheckpoint {
+    // Session-2 additions are stamped on every newly built checkpoint. Records
+    // whose cluster left the anomalyClusters ledger (duplicate-suppression cap)
+    // are pruned from the persisted snapshot so the ledger cross-check stays
+    // truthful; the live map keeps them in case the cluster reappears.
+    const knownClusterIds = new Set(this.state.anomalyClusters.map((cluster) => cluster.clusterId));
+    const persistedLifecycles: Record<string, CandidateLifecycleRecord> = {};
+    for (const [clusterId, record] of this.candidateLifecycles) {
+      if (knownClusterIds.has(clusterId)) persistedLifecycles[clusterId] = record;
+    }
     const checkpoint: CampaignCheckpoint = {
       ...this.state,
       checkpointOrdinal: this.state.checkpointOrdinal + 1,
@@ -502,6 +585,8 @@ export class CampaignOrchestrator {
       updatedAt: nowIso(this.now),
       completedWorkItemIds: completedWorkItems(this.state.executionLedger),
       remainingWorkItemIds: remainingWorkItems(this.manifest, this.state.executionLedger),
+      candidateLifecycles: persistedLifecycles,
+      runtimeContractVersions: { ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED },
     };
     validateCampaignCheckpoint(checkpoint, this.manifest);
     this.state = checkpoint;
@@ -543,6 +628,67 @@ export class CampaignOrchestrator {
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // Phase 15 Session 2 (T1) — candidate lifecycle wiring.
+  //
+  // Mapping (each transition goes through transitionCandidateLifecycle; illegal
+  // sequences throw CANDIDATE_LIFECYCLE_ILLEGAL_TRANSITION and are never bent):
+  //   cluster created during recomputeClusters      => ADMIT                OBSERVED -> ADMITTED
+  //   transient rejection in promoteFindings        => REJECT 'TRANSIENT'   ADMITTED -> REJECTED
+  //   false-positive rejection                      => REJECT 'FALSE_POSITIVE'
+  //   reproduction COMPLETED                        => CONFIRM_REPRODUCTION ADMITTED -> REPRODUCED
+  //   reproduction BLOCKED/SKIPPED/failed           => FAIL_REPRODUCTION    ADMITTED -> UNRESOLVED
+  //   minimization applied (status MINIMIZED)       => APPLY_MINIMIZATION   REPRODUCED -> MINIMIZED
+  //   minimization unchanged (status UNCHANGED)     => KEEP_UNCHANGED       REPRODUCED -> UNCHANGED
+  //   minimization NO_REPRODUCTION / INVALID_ORIGINAL / BOUNDED_BUDGET_EXHAUSTED
+  //                                                 => FAIL_REPRODUCTION    REPRODUCED -> UNRESOLVED
+  //   triage pipeline completed                     => COMPLETE_TRIAGE      MINIMIZED|UNCHANGED -> TRIAGED
+  //   dossier READY (v1 or v2)                      => MARK_DOSSIER_READY   TRIAGED -> DOSSIER_READY
+  //   dossier v2 UNRESOLVED                         => CLASSIFY_UNRESOLVED 'DOSSIER_UNRESOLVED'
+  //   error after admission, before minimization    => FAIL_REPRODUCTION 'REPRODUCTION_FAILED'
+  // Reason codes are safe uppercase tokens only; raw product values never enter
+  // this ledger.
+  // ---------------------------------------------------------------------------
+
+  private lifecycleVariant(cluster: AnomalyCluster): CandidateLifecycleVariant {
+    const representative = this.candidates.get(cluster.primaryRunId);
+    return representative !== undefined && hasValidSemanticEvidence(representative) ? 'SEMANTIC' : 'PROTOCOL_ONLY';
+  }
+
+  /** Promotion DTO cluster kind derived from the same semantic-path evidence. */
+  private promotionClusterKind(cluster: AnomalyCluster): 'PROTOCOL' | 'SEMANTIC' {
+    return this.lifecycleVariant(cluster) === 'SEMANTIC' ? 'SEMANTIC' : 'PROTOCOL';
+  }
+
+  /** Admit a newly observed cluster exactly once; recompute is idempotent. */
+  private admitClusterLifecycle(cluster: AnomalyCluster): void {
+    if (this.candidateLifecycles.has(cluster.clusterId)) return;
+    this.candidateLifecycles.set(cluster.clusterId, transitionCandidateLifecycle(initialLifecycleRecord(this.lifecycleVariant(cluster)), 'ADMIT'));
+  }
+
+  private lifecycleStateFor(clusterId: string): CandidateLifecycleState | null {
+    return this.candidateLifecycles.get(clusterId)?.state ?? null;
+  }
+
+  private transitionClusterLifecycle(clusterId: string, event: CandidateLifecycleEvent, reasonCode?: string): void {
+    const record = this.candidateLifecycles.get(clusterId);
+    if (record === undefined) throw new Error('NIGHTWATCH_INTERNAL_DEFECT:LIFECYCLE_RECORD_MISSING');
+    this.candidateLifecycles.set(clusterId, transitionCandidateLifecycle(record, event, reasonCode));
+  }
+
+  /**
+   * Error-path classification: FAIL_REPRODUCTION is only legal before
+   * minimization has been applied. Later failures leave the record at the
+   * state the pipeline actually reached — truthful mid-pipeline progress —
+   * instead of bending the machine through an illegal edge.
+   */
+  private failReproductionIfLegal(clusterId: string, reasonCode: string): void {
+    const state = this.lifecycleStateFor(clusterId);
+    if (state === 'OBSERVED' || state === 'ADMITTED' || state === 'REPRODUCED') {
+      this.transitionClusterLifecycle(clusterId, 'FAIL_REPRODUCTION', reasonCode);
+    }
+  }
+
   private recomputeClusters(): readonly AnomalyCluster[] {
     if (this.observations.length === 0) {
       this.state = { ...this.state, anomalyClusters: [] };
@@ -555,6 +701,7 @@ export class CampaignOrchestrator {
         const alias = this.clusterIdAliases.get(cluster.clusterId);
         return alias === undefined ? cluster : { ...cluster, clusterId: alias };
       });
+      for (const cluster of clusters) this.admitClusterLifecycle(cluster);
       this.state = { ...this.state, anomalyClusters: clusters };
       return clusters;
     }
@@ -660,6 +807,7 @@ export class CampaignOrchestrator {
       const alias = this.clusterIdAliases.get(cluster.clusterId);
       return alias === undefined ? cluster : { ...cluster, clusterId: alias };
     });
+    for (const cluster of aliased) this.admitClusterLifecycle(cluster);
     this.state = { ...this.state, anomalyClusters: aliased };
     return aliased;
   }
@@ -705,6 +853,12 @@ export class CampaignOrchestrator {
       nightwatchInternalIssues: this.nightwatchIssues,
       transientsAndNonFindings: this.transients,
       maxTopFindings: this.maxTopFindings,
+      // Session-2 (T4e): additive v2 counts only — the brief's top findings
+      // stay v1-only; v2-ready dossiers surface as safe count lines.
+      semanticDossierCounts: {
+        ready: this.state.dossierLedger.filter((entry) => entry.dossierVersion === DOSSIER_VERSION_V2 && entry.state === 'READY').length,
+        unresolved: this.state.dossierLedger.filter((entry) => entry.dossierVersion === DOSSIER_VERSION_V2 && entry.state !== 'READY').length,
+      },
     });
     validateCampaignMorningBrief(brief);
     const briefPath = this.checkpointStore.store.writeJson(`${this.manifest.campaignId.replaceAll(':', '-')}.morning-brief.json`, { brief, text: renderCampaignMorningBrief(brief) });
@@ -865,6 +1019,9 @@ export class CampaignOrchestrator {
     const queue: CampaignReproductionRecord[] = [];
     const eligible = ranked.filter((item) => !(item.cluster.timingVariance === 'TRANSIENT' && item.cluster.occurrenceCount === 1) && !item.representative.knownNightwatchDefect);
     for (const item of ranked.filter((candidate) => !eligible.includes(candidate))) {
+      // T1: transient / false-positive candidates are rejected before any
+      // reproduction or dossier work; the lifecycle record closes as REJECTED.
+      this.transitionClusterLifecycle(item.cluster.clusterId, 'REJECT', item.representative.knownNightwatchDefect ? 'FALSE_POSITIVE' : 'TRANSIENT');
       this.transients.push(`${item.cluster.clusterId}:${item.representative.knownNightwatchDefect ? 'KNOWN_NIGHTWATCH_FALSE_POSITIVE' : 'L0_TRANSIENT_NOT_REPRODUCED'}`);
       this.state = { ...this.state, rejectedHypotheses: [...this.state.rejectedHypotheses, item.cluster.clusterId] };
     }
@@ -879,6 +1036,7 @@ export class CampaignOrchestrator {
       if (this.currentStorm !== null) break;
       const cluster = this.state.anomalyClusters.find((candidate) => candidate.clusterId === queueItem.clusterId);
       if (cluster === undefined || this.executor.reproduce === undefined) {
+        this.transitionClusterLifecycle(queueItem.clusterId, 'FAIL_REPRODUCTION', 'REPRODUCTION_BLOCKED');
         this.state = {
           ...this.state,
           reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === queueItem.clusterId ? { ...item, state: 'BLOCKED', reasonCode: 'REPRODUCTION_ADAPTER_UNAVAILABLE' } : item),
@@ -928,20 +1086,29 @@ export class CampaignOrchestrator {
         // ledger records its L1/L2 occurrence and reproduction count.
         this.recomputeClusters();
         if (reproduction.result !== 'REPRODUCED' || reproduction.candidate?.replay === undefined && representative.replay === undefined) {
+          // T1: the reproduction phase did not confirm this candidate.
+          this.transitionClusterLifecycle(cluster.clusterId, 'FAIL_REPRODUCTION', reproduction.result);
           this.transients.push(`${cluster.clusterId}:${reproduction.result}`);
           this.checkpoint();
           continue;
         }
+        this.transitionClusterLifecycle(cluster.clusterId, 'CONFIRM_REPRODUCTION');
         const replay = reproduction.candidate?.replay ?? representative.replay!;
-        const exactOutcome: CandidateReplayOutcome = {
-          status: 'FAILURE',
-          anomalyFingerprint: reproduction.fingerprint ?? cluster.fingerprint,
-          safety: toTriageSafety(reproduction.safety),
-        };
         const minimizationCandidatesRemaining = this.budget.remaining().minimizationCandidates;
         const minimizationReplaysRemaining = this.budget.remaining().replays;
         if (minimizationCandidatesRemaining === 0 || minimizationReplaysRemaining === 0) {
           const reason = `${cluster.clusterId}:MINIMIZATION_BUDGET_UNAVAILABLE`;
+          this.transitionClusterLifecycle(cluster.clusterId, 'FAIL_REPRODUCTION', 'MINIMIZATION_BUDGET_UNAVAILABLE');
+          this.recordPromotionResult({
+            clusterId: cluster.clusterId,
+            clusterKind: this.promotionClusterKind(cluster),
+            candidateId: null,
+            minimizationClass: 'MINIMIZATION_SKIPPED',
+            confidence: 'UNRESOLVED',
+            readiness: 'UNRESOLVED',
+            readinessReasonCodes: ['MINIMIZATION_BUDGET_UNAVAILABLE'],
+            sourceCurrentness: this.currentnessForCluster(representative),
+          });
           this.state = {
             ...this.state,
             reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: 'MINIMIZATION_BUDGET_UNAVAILABLE' } : item),
@@ -952,21 +1119,33 @@ export class CampaignOrchestrator {
           this.checkpoint();
           break;
         }
+        // T3: every replay phase for a promoted candidate is now certified
+        // through the V2 replay contract (see certifiedReplayClosure). The
+        // former canned FRESH_EXACT_REPLAY bypass is gone: fresh-exact
+        // outcomes come from the candidate's own replay closure through a
+        // validated plan and flow through normalizeExecutorOutcome inside
+        // executeReplayPlanV2.
+        const certifiedReplay = this.certifiedReplayClosure({
+          candidate: reproCandidate,
+          anomalyFingerprint: cluster.fingerprint,
+          catalogVersion: reproCandidate.originalSequence[0]?.catalogVersion ?? this.manifest.versions.explorationCatalogVersion,
+          replay,
+        });
         const family = candidateSurface(reproCandidate);
         const incomplete = createIncompleteDossier({ anomalyFingerprint: cluster.fingerprint, journeyOrApiFamily: family, missingSections: ['minimization', 'source-correlation', 'fault-boundary', 'private-finalization'] });
         const incompletePath = this.checkpointStore.store.writeIncomplete(`${incomplete.candidateId.replaceAll(':', '-')}.json`, incomplete);
         if (!this.artifactPaths.includes(incompletePath)) this.artifactPaths.push(incompletePath);
         this.chargeArtifact(incompletePath);
-        const wrappedReplay = async (sequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE'): Promise<CandidateReplayOutcome> => {
-          if (phase === 'FRESH_EXACT_REPLAY') return exactOutcome;
-          return await replay(sequence, phase);
-        };
         const sourceCorrelation = reproCandidate.sourceCorrelation;
         const minimizationBudget = {
           ...REAL_DEV_MINIMIZATION_BUDGET,
           maxCandidateEvaluations: Math.min(REAL_DEV_MINIMIZATION_BUDGET.maxCandidateEvaluations, minimizationCandidatesRemaining),
           maxTotalReplays: Math.min(REAL_DEV_MINIMIZATION_BUDGET.maxTotalReplays, minimizationReplaysRemaining + 1),
         };
+        // T4: semantic clusters emit a v2 dossier, so the intermediate v1
+        // artifact is not written for them (store omitted); protocol-only
+        // clusters keep the historical v1 artifact + ledger behavior.
+        const semanticEvidence = hasValidSemanticEvidence(reproCandidate) ? reproCandidate.campaignSemanticEvidence! : null;
         const triaged = await triageAnomaly({
           originalSequence: reproCandidate.originalSequence,
           anomalyFingerprint: cluster.fingerprint,
@@ -985,7 +1164,7 @@ export class CampaignOrchestrator {
             privacySatisfied: true,
           },
           budget: minimizationBudget,
-          replay: wrappedReplay,
+          replay: certifiedReplay,
           observedAt: reproCandidate.observation.observedAt,
           journeyIds: reproCandidate.journeyId === null ? [] : [reproCandidate.journeyId],
           seeds: reproCandidate.observation.features.envelopeId === null ? [] : [reproCandidate.observation.features.envelopeId],
@@ -1001,35 +1180,110 @@ export class CampaignOrchestrator {
           missingEvidence: reproCandidate.missingEvidence,
           alternativesRuledOut: reproCandidate.alternativesRuledOut,
           semanticEvidence: toSemanticDossierEvidence(reproCandidate.semanticFindings ?? []),
-          store: this.checkpointStore.store,
+          store: semanticEvidence === null ? this.checkpointStore.store : undefined,
         });
         this.budget.consumeBundle({
           minimizationCandidates: triaged.minimization.candidateEvaluationCount,
           replays: Math.max(0, triaged.minimization.replayCount - 1),
         });
-        validateBugDossier(triaged.dossier);
-        this.dossiers.push(triaged.dossier);
-        if (triaged.artifactPath !== null) {
-          if (!this.artifactPaths.includes(triaged.artifactPath)) this.artifactPaths.push(triaged.artifactPath);
-          this.chargeArtifact(triaged.artifactPath);
+        // T1: minimization outcome event derived from MinimizationResult.status.
+        const reachedTriage = triaged.minimization.status === 'MINIMIZED' || triaged.minimization.status === 'UNCHANGED';
+        if (triaged.minimization.status === 'MINIMIZED') {
+          this.transitionClusterLifecycle(cluster.clusterId, 'APPLY_MINIMIZATION');
+          this.transitionClusterLifecycle(cluster.clusterId, 'COMPLETE_TRIAGE');
+        } else if (triaged.minimization.status === 'UNCHANGED') {
+          this.transitionClusterLifecycle(cluster.clusterId, 'KEEP_UNCHANGED');
+          this.transitionClusterLifecycle(cluster.clusterId, 'COMPLETE_TRIAGE');
+        } else {
+          // NO_REPRODUCTION / INVALID_ORIGINAL / BOUNDED_BUDGET_EXHAUSTED:
+          // reproduction evidence did not hold through triage; the record ends
+          // UNRESOLVED truthfully even though the historical v1 ledger entry
+          // below is still written for protocol compatibility.
+          this.transitionClusterLifecycle(cluster.clusterId, 'FAIL_REPRODUCTION',
+            triaged.minimization.status === 'NO_REPRODUCTION' ? 'NOT_REPRODUCED'
+              : triaged.minimization.status === 'INVALID_ORIGINAL' ? 'INVALID'
+                : 'MINIMIZATION_BUDGET_EXHAUSTED');
         }
-        // Phase 13I: triage still persists a v1-shaped BugDossier via triageAnomaly.
-        // Ledger stays v1-implied (no dossierVersion) to keep existing readback valid.
-        // When a real semantic v2 dossier is emitted in future, the entry must carry
-        // dossierVersion: DOSSIER_VERSION_V2 and bytes must be v2-validated.
-        this.state = {
-          ...this.state,
-          dossierLedger: [...this.state.dossierLedger, {
+        if (semanticEvidence === null) {
+          // T4d: protocol-only clusters keep the historical v1 path — v1
+          // dossier bytes, v1-implied ledger entry (no dossierVersion).
+          validateBugDossier(triaged.dossier);
+          this.dossiers.push(triaged.dossier);
+          if (triaged.artifactPath !== null) {
+            if (!this.artifactPaths.includes(triaged.artifactPath)) this.artifactPaths.push(triaged.artifactPath);
+            this.chargeArtifact(triaged.artifactPath);
+          }
+          if (reachedTriage) this.transitionClusterLifecycle(cluster.clusterId, 'MARK_DOSSIER_READY', 'DOSSIER_READY');
+          this.state = {
+            ...this.state,
+            dossierLedger: [...this.state.dossierLedger, {
+              clusterId: cluster.clusterId,
+              candidateId: triaged.dossier.candidateId,
+              state: 'READY',
+              artifactPath: triaged.artifactPath,
+              evidenceLevel: triaged.dossier.evidenceLevel,
+              triagePriority: triaged.dossier.triagePriority,
+            }],
+            bugCandidates: [...this.state.bugCandidates, triaged.dossier.candidateId],
+          };
+          this.recordPromotionResult({
             clusterId: cluster.clusterId,
+            clusterKind: 'PROTOCOL',
             candidateId: triaged.dossier.candidateId,
-            state: 'READY',
-            artifactPath: triaged.artifactPath,
-            evidenceLevel: triaged.dossier.evidenceLevel,
-            triagePriority: triaged.dossier.triagePriority,
-          }],
-          bugCandidates: [...this.state.bugCandidates, triaged.dossier.candidateId],
-        };
-        this.checkpoint();
+            replayStatus: freshExactReplayStatus(triaged.minimization.freshExactReplay),
+            replayPhase: 'FRESH_EXACT_REPLAY',
+            minimizationClass: triaged.minimization.reductionEvidenceClass,
+            confidence: triaged.dossier.confidence.level,
+            readiness: 'READY',
+            sourceCurrentness: currentnessFromSourceFreshness(reproCandidate.observation.sourceFreshness),
+          });
+          this.checkpoint();
+        } else {
+          // T4a-c: semantic authority is load-bearing at promotion. Bundle
+          // coherence, real runtime replay/minimization facts, and the
+          // deterministic semantic predicates decide READY vs UNRESOLVED.
+          const semanticDossier = this.buildSemanticDossierV2({ cluster, candidate: reproCandidate, evidence: semanticEvidence, triaged });
+          const ready = semanticDossier.dossier.status === 'READY';
+          // A lifecycle record that already ended UNRESOLVED at the minimization
+          // event has no further classification edge; only a TRIAGED record is
+          // classified here.
+          if (reachedTriage && ready) this.transitionClusterLifecycle(cluster.clusterId, 'MARK_DOSSIER_READY', 'DOSSIER_READY');
+          else if (reachedTriage) this.transitionClusterLifecycle(cluster.clusterId, 'CLASSIFY_UNRESOLVED', 'DOSSIER_UNRESOLVED');
+          // Envelope convention (mirrors manifest/checkpoint artifacts): the
+          // store spreads a wrapper `status` over the top level, so the dossier
+          // itself is nested under `dossier` to keep its truthful READY vs
+          // UNRESOLVED verdict intact in the persisted bytes.
+          const artifactPath = this.checkpointStore.store.writeJson(`${semanticDossier.dossier.candidateId.replaceAll(':', '-')}.json`, { dossier: semanticDossier.dossier });
+          if (!this.artifactPaths.includes(artifactPath)) this.artifactPaths.push(artifactPath);
+          this.chargeArtifact(artifactPath);
+          this.state = {
+            ...this.state,
+            dossierLedger: [...this.state.dossierLedger, {
+              clusterId: cluster.clusterId,
+              candidateId: semanticDossier.dossier.candidateId,
+              state: ready ? 'READY' : 'INCOMPLETE',
+              artifactPath,
+              evidenceLevel: triaged.dossier.evidenceLevel,
+              triagePriority: semanticDossier.dossier.triagePriority,
+              dossierVersion: DOSSIER_VERSION_V2,
+            }],
+            bugCandidates: ready ? [...this.state.bugCandidates, semanticDossier.dossier.candidateId] : this.state.bugCandidates,
+          };
+          this.recordPromotionResult({
+            clusterId: cluster.clusterId,
+            clusterKind: 'SEMANTIC',
+            candidateId: semanticDossier.dossier.candidateId,
+            replayStatus: freshExactReplayStatus(triaged.minimization.freshExactReplay),
+            replayPhase: 'FRESH_EXACT_REPLAY',
+            minimizationClass: triaged.minimization.reductionEvidenceClass,
+            confidence: semanticDossier.dossier.semanticConfidence?.level ?? 'UNRESOLVED',
+            confidenceBlockers: semanticDossier.dossier.semanticConfidence?.blockers ?? [],
+            readiness: ready ? 'READY' : 'UNRESOLVED',
+            readinessReasonCodes: semanticDossier.readinessReasonCodes,
+            sourceCurrentness: currentnessFromCampaignSemantic(semanticEvidence.sourceCurrentness),
+          });
+          this.checkpoint();
+        }
       } catch (error) {
         const code = safeErrorCode(error);
         if (error instanceof CampaignProcessInterruptionError) {
@@ -1045,6 +1299,9 @@ export class CampaignOrchestrator {
           this.checkpoint();
           break;
         }
+        // T1: a failure before minimization classifies the candidate
+        // UNRESOLVED; later failures keep the truthful mid-pipeline state.
+        this.failReproductionIfLegal(cluster.clusterId, 'REPRODUCTION_FAILED');
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'BLOCKED', reasonCode: code } : item), minimizationQueue: this.state.minimizationQueue.filter((id) => id !== cluster.clusterId), unresolved: [...this.state.unresolved, code] };
         this.checkpoint();
         if (code === 'AUTH_BLOCKED') {
@@ -1093,6 +1350,236 @@ export class CampaignOrchestrator {
       if (amount > 0) requirements[dimension] = amount;
     }
     this.budget.consumeBundle(requirements);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 15 Session 2 (T3) — V2-certified replay for promoted candidates.
+  //
+  // The plan is built from the candidate's original sequence as occurrence
+  // identity plus the requested retained subsequence mapped onto occurrence
+  // ordinals. validateReplayPlanV2 runs inside executeReplayPlanV2; any
+  // construction or validation failure returns fail-closed INVALID — a replay
+  // is never certified without a validated plan. The injected executor
+  // delegates to the candidate's existing replay closure, so scripted
+  // synthetic closures keep working. JOURNEY reduced candidates classify
+  // exactly PRECONDITION_DIVERGENCE (binding-enforced, executor never called).
+  // Budget accounting is unchanged: counts derive from the minimization result.
+  // ---------------------------------------------------------------------------
+
+  private certifiedReplayClosure(input: {
+    readonly candidate: CampaignAnomalyCandidate;
+    readonly anomalyFingerprint: string;
+    readonly catalogVersion: string;
+    readonly replay: NonNullable<CampaignAnomalyCandidate['replay']>;
+  }): (sequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => Promise<CandidateReplayOutcome> {
+    const candidateKind = input.candidate.journeyId !== null ? 'JOURNEY' as const : input.candidate.api !== null ? 'API' as const : 'EXPLORATION' as const;
+    const targetId = candidateKind === 'JOURNEY'
+      ? input.candidate.journeyId!
+      : candidateKind === 'API'
+        ? input.candidate.api!.operationFamily
+        : input.candidate.observation.features.operationFamily ?? 'campaign-exploration';
+    return async (sequence, phase) => {
+      try {
+        const originalOccurrences = input.candidate.originalSequence.map((action, ordinal) => ({ ordinal, expectedActionId: action.actionId }));
+        const requestedIds = sequence.map((action) => action.actionId);
+        const retainedOccurrenceOrdinals: number[] = [];
+        let cursor = 0;
+        for (const occurrence of originalOccurrences) {
+          if (cursor < requestedIds.length && occurrence.expectedActionId === requestedIds[cursor]) {
+            retainedOccurrenceOrdinals.push(occurrence.ordinal);
+            cursor += 1;
+          }
+        }
+        if (cursor !== requestedIds.length || retainedOccurrenceOrdinals.length === 0) {
+          // Requested sequence is not an order-preserving subsequence of the
+          // admitted original occurrence identity: fail closed.
+          return { status: 'INVALID', safety: toTriageSafety(ZERO_CAMPAIGN_SAFETY), invalidReason: 'ACTION_NOT_IN_ORIGINAL' };
+        }
+        const plan = createTriageReplayPlanV2({
+          candidateKind,
+          anomalyFingerprint: input.anomalyFingerprint,
+          originalOccurrences,
+          retainedOccurrenceOrdinals,
+          phase,
+          targetId,
+          contractVersion: input.candidate.contractVersion,
+          contractDigest: input.candidate.contractDigest,
+          catalogVersion: input.catalogVersion,
+          sourceVersion: input.candidate.sourceCorrelation.sourceVersion ?? 'campaign-source',
+          routeClass: input.candidate.browser.routeClass,
+        });
+        return await executeReplayPlanV2(plan, (_validatedPlan, retainedActions) => input.replay(retainedActions, phase));
+      } catch {
+        // Plan construction impossible (e.g. malformed fingerprint/identity):
+        // never certify without a validated plan.
+        return { status: 'INVALID', safety: toTriageSafety(ZERO_CAMPAIGN_SAFETY), invalidReason: 'PRECONDITION_DIVERGENCE' };
+      }
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 15 Session 2 (T4) — semantic authority is load-bearing at promotion.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Bundle coherence gate: the evidence's target/digest/sha identity must be
+   * supported by the frozen bundle registered for this process. Incoherent
+   * evidence is classified SOURCE_CURRENTNESS_UNRESOLVED: never HIGH, never
+   * READY (closes the S06/S07 shadow gap "promotion must check bundle").
+   */
+  private bundleCoherenceFor(evidence: CampaignSemanticEvidence): boolean {
+    const bundle = campaignSemanticBundleById(evidence.bundleId);
+    if (bundle === undefined) return false;
+    const mapping = approvedMappingForBundle(bundle.approvedMapping.journeyOrOperationId);
+    return bundleSupportsTarget(bundle, evidence.targetId)
+      && bundle.expectationId === evidence.expectationId
+      && bundle.sourceEvidenceDigest === evidence.sourceEvidenceDigest
+      && bundle.freshnessApprovedSourceSha === evidence.sourceSha
+      && mapping !== null && mapping.targetId === evidence.targetId;
+  }
+
+  private currentnessForCluster(representative: CampaignAnomalyCandidate): PromotionSourceCurrentness {
+    if (hasValidSemanticEvidence(representative)) {
+      return currentnessFromCampaignSemantic(representative.campaignSemanticEvidence!.sourceCurrentness);
+    }
+    return currentnessFromSourceFreshness(representative.observation.sourceFreshness);
+  }
+
+  /**
+   * Build the semantic v2 dossier from real runtime facts: certified replay
+   * outcome (via the minimization result), minimality evidence, and the
+   * campaign semantic evidence's source/receipt identity. Bundle-incoherent
+   * evidence is downgraded to UNRESOLVED / non-HIGH after construction and
+   * re-validated strictly.
+   */
+  private buildSemanticDossierV2(input: {
+    readonly cluster: AnomalyCluster;
+    readonly candidate: CampaignAnomalyCandidate;
+    readonly evidence: CampaignSemanticEvidence;
+    readonly triaged: Awaited<ReturnType<typeof triageAnomaly>>;
+  }): { readonly dossier: BugDossierV2; readonly readinessReasonCodes: readonly string[] } {
+    const evidence = input.evidence;
+    const bundleCoherent = this.bundleCoherenceFor(evidence);
+    const exactReplayStatus = input.triaged.minimization.freshExactReplay;
+    const missingEvidenceCodes = new Set<string>();
+    if (!bundleCoherent || evidence.sourceCurrentness === 'STALE' || evidence.sourceCurrentness === 'UNAVAILABLE' || evidence.sourceCurrentness === 'UNKNOWN') missingEvidenceCodes.add('SOURCE_CURRENTNESS_UNRESOLVED');
+    if (evidence.receiptOutcome === 'PARTIAL_COVERAGE') missingEvidenceCodes.add('PARTIAL_COLLECTION_COVERAGE');
+    if (exactReplayStatus !== 'REPRODUCED') missingEvidenceCodes.add('EXACT_REPLAY_REQUIRED');
+    if (input.triaged.minimization.minimalityGuarantee === 'NONE' && input.triaged.minimization.reproductionCount === 0) missingEvidenceCodes.add('REPRODUCTION_EVIDENCE_MISSING');
+    const semanticTriageEvidence: SemanticTriageEvidence = createSemanticTriageEvidence({
+      expectationId: evidence.expectationId,
+      targetId: evidence.targetId,
+      semanticFindingFingerprint: evidence.findingFingerprint,
+      invariantDefinitionId: evidence.invariantDefinitionId,
+      // Shared safe vocabulary: the receipt outcome is the observed semantic
+      // outcome at promotion time, mapped onto the triage-side vocabulary.
+      semanticOutcome: semanticOutcomeFromReceipt(evidence.receiptOutcome),
+      receiptOutcome: evidence.receiptOutcome,
+      ...(evidence.coverageState === undefined ? {} : { coverageState: evidence.coverageState }),
+      receiptVersion: evidence.receiptVersion,
+      sourceRepoId: evidence.sourceRepoId,
+      sourceSha: evidence.sourceSha,
+      sourceEvidenceDigest: evidence.sourceEvidenceDigest,
+      sourceDerivationVersion: evidence.sourceDerivationVersion,
+      sourceCurrentness: evidence.sourceCurrentness,
+      exactReplayStatus,
+      exactFingerprintMatch: exactReplayStatus === 'REPRODUCED',
+      minimalityGuarantee: input.triaged.minimization.minimalityGuarantee,
+      freshContextReproductions: Math.max(1, input.cluster.reproductionCount),
+      minimalSequenceReproductions: input.triaged.minimization.reproductionCount,
+      missingEvidence: [...missingEvidenceCodes].sort() as SemanticTriageEvidence['missingEvidence'],
+    });
+    const v2Input: BugDossierV2Input = {
+      firstObserved: input.candidate.observation.observedAt,
+      lastObserved: input.candidate.observation.observedAt,
+      journeyIds: input.candidate.journeyId === null ? [] : [input.candidate.journeyId],
+      seeds: input.candidate.observation.features.envelopeId === null ? [] : [input.candidate.observation.features.envelopeId],
+      routeClass: input.candidate.browser.routeClass,
+      apiOperationFamily: input.candidate.api?.operationFamily ?? null,
+      oracleFingerprint: input.cluster.fingerprint,
+      evidenceLevel: input.triaged.dossier.evidenceLevel as Exclude<EvidenceLevel, 'L4'>,
+      minimization: input.triaged.minimization,
+      browserApiDifferential: input.triaged.browserApiDifferential,
+      sourceCorrelation: input.triaged.sourceCorrelation,
+      likelyFaultBoundary: input.triaged.faultBoundary,
+      confidence: input.triaged.dossier.confidence,
+      technicalSeverity: input.candidate.technicalSeverity,
+      triagePriority: input.triaged.dossier.triagePriority,
+      knownNightwatchDefect: input.candidate.knownNightwatchDefect ? 'NIGHTWATCH_FALSE_POSITIVE_CATALOG_MATCH' : null,
+      alternativesRuledOut: input.candidate.alternativesRuledOut,
+      missingEvidence: input.candidate.missingEvidence,
+      semanticEvidence: toSemanticDossierEvidence(input.candidate.semanticFindings ?? []),
+      semanticTriageEvidence,
+    };
+    const readiness = isReadySemanticDossier(v2Input);
+    let dossier = createBugDossierV2(v2Input);
+    let readinessReasonCodes: readonly string[] = readiness.ready ? [] : [readiness.reason ?? 'SOURCE_CURRENTNESS_UNRESOLVED'];
+    if (!bundleCoherent) {
+      // Incoherent bundle: demote to SOURCE_CURRENTNESS_UNRESOLVED-classified
+      // regardless of what the evidence alone claimed, then re-validate.
+      readinessReasonCodes = [...new Set([...readinessReasonCodes, 'SOURCE_CURRENTNESS_UNRESOLVED', 'BUNDLE_COHERENCE_FAILURE'])].sort();
+      const baseLevel = dossier.semanticConfidence?.level ?? 'UNRESOLVED';
+      dossier = parseBugDossierV2({
+        ...dossier,
+        status: 'UNRESOLVED',
+        semanticConfidence: {
+          level: baseLevel === 'HIGH' ? 'MEDIUM' : baseLevel,
+          reasons: dossier.semanticConfidence?.reasons ?? [],
+          blockers: [...new Set([...(dossier.semanticConfidence?.blockers ?? []), 'BUNDLE_COHERENCE_FAILURE'])].sort(),
+        },
+      });
+    }
+    return { dossier, readinessReasonCodes };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 15 Session 2 (T5) — converged promotion result per promoted cluster.
+  // ---------------------------------------------------------------------------
+
+  private recordPromotionResult(input: {
+    readonly clusterId: string;
+    readonly clusterKind: 'PROTOCOL' | 'SEMANTIC';
+    readonly candidateId: string | null;
+    readonly replayStatus?: 'FAILURE' | 'PASS' | 'INVALID';
+    readonly replayPhase?: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE';
+    readonly minimizationClass: PromotionMinimizationClass;
+    readonly confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRESOLVED';
+    readonly confidenceBlockers?: readonly string[];
+    readonly readiness: 'READY' | 'UNRESOLVED' | 'NOT_ELIGIBLE';
+    readonly readinessReasonCodes?: readonly string[];
+    readonly sourceCurrentness: PromotionSourceCurrentness;
+  }): void {
+    const result = buildSemanticAwarePromotionResult({
+      clusterId: input.clusterId,
+      clusterKind: input.clusterKind,
+      candidateId: input.candidateId,
+      ...(input.replayStatus !== undefined && input.replayPhase !== undefined ? { replayStatus: input.replayStatus, replayPhase: input.replayPhase } : {}),
+      minimization: input.minimizationClass,
+      confidence: input.confidence,
+      confidenceBlockers: input.confidenceBlockers,
+      readiness: input.readiness,
+      readinessReasonCodes: input.readinessReasonCodes,
+      sourceCurrentness: input.sourceCurrentness,
+      dossierVersionTarget: dossierTargetForClusterKind(input.clusterKind),
+    });
+    // Authority invariant, fail closed: an ineligible result can never
+    // accompany a READY dossier or HIGH confidence. It binds the semantic
+    // path where currentness/readiness are derived; protocol clusters keep
+    // their historical unconditional-v1-READY semantics.
+    if (input.clusterKind === 'SEMANTIC' && !semanticPromotionEligible(result) && (input.readiness === 'READY' || input.confidence === 'HIGH')) {
+      throw new Error('PROMOTION_AUTHORITY_COHERENCE_FAILURE');
+    }
+    this.promotionResultLedger.push(result);
+  }
+
+  /** Session-2 (T5): converged promotion verdicts in promotion order. */
+  get promotionResults(): readonly SemanticAwarePromotionResult[] {
+    return [...this.promotionResultLedger];
+  }
+
+  /** READY findings across both dossier generations (v1 list + v2 ledger). */
+  private hasAdmittedFindings(): boolean {
+    return this.dossiers.length > 0 || this.state.dossierLedger.some((entry) => entry.state === 'READY');
   }
 
   /**
@@ -1181,7 +1668,7 @@ export class CampaignOrchestrator {
     if (this.interruptionRequested) return await this.finalize('INCOMPLETE_PROCESS_INTERRUPTION', 'PROCESS_INTERRUPTION');
     if (this.promotionStop !== null) return await this.finalize(this.promotionStop.resultClass, this.promotionStop.stopReason);
     if (this.currentStorm !== null) return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'FAILURE_STORM_SHARED_ROOT_SYMPTOM');
-    return await this.finalize(this.dossiers.length > 0 ? 'COMPLETE_WITH_FINDINGS' : 'COMPLETE_CLEAN', 'NONE');
+    return await this.finalize(this.hasAdmittedFindings() ? 'COMPLETE_WITH_FINDINGS' : 'COMPLETE_CLEAN', 'NONE');
   }
 
   async run(options: CampaignRunOptions = {}): Promise<CampaignRunResult> {
@@ -1229,8 +1716,7 @@ export class CampaignOrchestrator {
       else if (this.currentStorm !== null) stop = { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: this.currentStorm.reasonCode === 'SHARED_ROOT_SYMPTOM' ? 'FAILURE_STORM_SHARED_ROOT_SYMPTOM' : 'SAFETY_EVENT' };
     }
     if (stop !== null) return await this.finalize(stop.resultClass, stop.stopReason);
-    const hasDossiers = this.dossiers.length > 0;
-    return await this.finalize(hasDossiers ? 'COMPLETE_WITH_FINDINGS' : 'COMPLETE_CLEAN', 'NONE');
+    return await this.finalize(this.hasAdmittedFindings() ? 'COMPLETE_WITH_FINDINGS' : 'COMPLETE_CLEAN', 'NONE');
   }
 }
 

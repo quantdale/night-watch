@@ -15,8 +15,38 @@
 
 import type { SemanticResponseOracle } from '../../browser/observers/networkObserver';
 import type { RealSourceResolution } from '../../oracles/expectations/resolver';
-import type { SemanticCampaignBundle } from '../source/semanticCampaignBundle';
+import { validateSemanticCampaignBundle, type SemanticCampaignBundle } from '../source/semanticCampaignBundle';
 import { resolveApprovedCampaignSemanticTarget } from '../../oracles/semantic/campaignTargetMapping';
+
+// ---------------------------------------------------------------------------
+// Phase 15 Session 2 (Workstream C) — frozen-bundle registry for promotion.
+//
+// CampaignSemanticEvidence carries only the bundle ID, so the promotion path
+// needs a lookup from bundleId back to the frozen bundle to prove coherence.
+// Bundles are supplied by the external read-only freshness producer, validated
+// strictly at registration, and never mutated afterwards. The registry is a
+// process-local data map: no fs/network authority, deterministic reads.
+// ---------------------------------------------------------------------------
+
+const campaignSemanticBundles = new Map<string, SemanticCampaignBundle>();
+
+/** Register frozen bundles for the current process; invalid bundles fail closed. */
+export function registerCampaignSemanticBundles(bundles: readonly SemanticCampaignBundle[]): void {
+  for (const bundle of bundles) {
+    validateSemanticCampaignBundle(bundle);
+    campaignSemanticBundles.set(bundle.bundleId, bundle);
+  }
+}
+
+/** Frozen-bundle lookup by the identity carried in CampaignSemanticEvidence. */
+export function campaignSemanticBundleById(bundleId: string): SemanticCampaignBundle | undefined {
+  return campaignSemanticBundles.get(bundleId);
+}
+
+/** Test/process isolation hook; real adapters never need to clear. */
+export function clearCampaignSemanticBundles(): void {
+  campaignSemanticBundles.clear();
+}
 
 export interface SanitizedSemanticControlMetadata {
   readonly expectationId: string;

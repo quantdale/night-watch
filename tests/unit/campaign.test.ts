@@ -395,7 +395,7 @@ test.describe('Phase 7 campaign identity, selection, and policy', () => {
   test('reproduction-only mode executes the admitted target and bounded triage without fresh coverage', async () => {
     const { root, store } = tempStore();
     try {
-      const target = candidate({ runId: 'run-reproduction-execution', fingerprint: 'fp:sha256:999999999999999999999999', journeyId: 'ripple-payer-exchange-read', sequence: ['phase7.target', 'phase7.reduce'], predicate: (ids) => ids.includes('phase7.target') });
+      const target = candidate({ runId: 'run-reproduction-execution', fingerprint: 'fp:sha256:999999999999999999999999', journeyId: 'ripple-payer-exchange-read', sequence: ['payer-navigate', 'payer-structural-checkpoint'], predicate: (ids) => ids.includes('payer-navigate') });
       const cluster = clusterAnomalies([target.observation])[0];
       expect(cluster).toBeDefined();
       const input = { ...inputFor('LOCAL_SYNTHETIC'), mode: 'REPRODUCTION_ONLY' as const, reproductionTarget: { clusterId: cluster!.clusterId, candidate: target } };
@@ -480,9 +480,12 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     const { root, store } = tempStore();
     try {
       const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
-      const uiBug = candidate({ runId: 'run-ui-bug', fingerprint: 'fp:sha256:111111111111111111111111', journeyId: 'ripple-payer-exchange-read', sequence: ['phase7.open', 'phase7.trigger', 'phase7.close'], predicate: (ids) => ids.includes('phase7.open') && ids.includes('phase7.trigger'), sourceRelevance: 'NO_CURRENT_CHANGE_RELEVANCE' });
-      const apiBug = candidate({ runId: 'run-api-bug', fingerprint: 'fp:sha256:222222222222222222222222', journeyId: 'ripple-common-exchange-read', operationFamily: 'ripple.common-exchange.read', apiFailed: true, sourceRelevance: 'SHARED_CHANGE_RELEVANCE' });
-      const irreducible = candidate({ runId: 'run-irreducible', fingerprint: 'fp:sha256:333333333333333333333333', journeyId: 'ripple-account-inventory', sequence: ['phase7.first', 'phase7.second', 'phase7.third'], predicate: (ids) => ids.join('|') === 'phase7.first|phase7.second|phase7.third' });
+      // Phase 15 Session 2: promoted replays are certified through the V2
+      // replay contract, so synthetic sequences use real journey contract
+      // steps (the guard rejects invented action ids before any replay).
+      const uiBug = candidate({ runId: 'run-ui-bug', fingerprint: 'fp:sha256:111111111111111111111111', journeyId: 'ripple-payer-exchange-read', sequence: ['payer-navigate', 'payer-structural-checkpoint'], predicate: (ids) => ids.includes('payer-navigate') && ids.includes('payer-structural-checkpoint'), sourceRelevance: 'NO_CURRENT_CHANGE_RELEVANCE' });
+      const apiBug = candidate({ runId: 'run-api-bug', fingerprint: 'fp:sha256:222222222222222222222222', journeyId: 'ripple-common-exchange-read', operationFamily: 'ripple.common-exchange.read', apiFailed: true, sequence: ['common-navigate', 'common-structural-checkpoint'], sourceRelevance: 'SHARED_CHANGE_RELEVANCE' });
+      const irreducible = candidate({ runId: 'run-irreducible', fingerprint: 'fp:sha256:333333333333333333333333', journeyId: 'ripple-account-inventory', sequence: ['account-navigate', 'account-structural-checkpoint'], predicate: (ids) => ids.join('|') === 'account-navigate|account-structural-checkpoint' });
       const transient = candidate({ runId: 'run-transient', fingerprint: 'fp:sha256:444444444444444444444444', journeyId: 'ripple-account-inventory', timingClass: 'TRANSIENT' });
       const falsePositive = candidate({ runId: 'run-false-positive', fingerprint: 'fp:sha256:555555555555555555555555', journeyId: 'ripple-account-inventory', knownNightwatchDefect: true });
       const script = new Map<string, readonly CampaignAnomalyCandidate[]>([

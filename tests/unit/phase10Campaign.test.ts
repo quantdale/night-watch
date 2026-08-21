@@ -230,7 +230,11 @@ function candidate(defect: SeededDefect, enriched: boolean): CampaignAnomalyCand
     ? semanticFindingFingerprint(findings[0]!)
     : `fp:sha256:${require('node:crypto').createHash('sha256').update(`protocol-only:${defect.name}`).digest('hex').slice(0, 24)}`;
   const routeClass = defect.journeyId === 'ripple-payer-exchange-read' ? '/payer-exchange-rate-v2' : '/global-exchange-rate-v2';
-  const sequence = [action(`phase10.${defect.name}.read`, routeClass)];
+  // Phase 15 Session 2: promoted replays are certified through the V2 replay
+  // contract, whose journey precondition guard only approves real journey
+  // contract steps — synthetic fixtures therefore replay the approved
+  // navigate step of their journey.
+  const sequence = [action(defect.journeyId === 'ripple-payer-exchange-read' ? 'payer-navigate' : 'common-navigate', routeClass)];
   const replay = (sequenceToReplay: readonly MinimizationAction[]) => ({
     status: sequenceToReplay.length > 0 ? 'FAILURE' as const : 'PASS' as const,
     anomalyFingerprint: fingerprint,

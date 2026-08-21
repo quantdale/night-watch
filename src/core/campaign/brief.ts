@@ -50,6 +50,8 @@ export function buildCampaignMorningBrief(input: {
   readonly nightwatchInternalIssues: readonly string[];
   readonly transientsAndNonFindings: readonly string[];
   readonly maxTopFindings?: number;
+  /** Session-2 additive v2 dossier counts; top findings remain v1-only. */
+  readonly semanticDossierCounts?: { readonly ready: number; readonly unresolved: number };
 }): CampaignMorningBrief {
   const limit = Math.max(1, Math.min(3, input.maxTopFindings ?? 3));
   const summary = buildOvernightSummary({
@@ -94,6 +96,11 @@ export function buildCampaignMorningBrief(input: {
     `apiScenarios=${input.manifest.selectedApiScenarios.length}`,
     `seeds=${input.manifest.seedSet.length}`,
     `result=${input.resultClass}`,
+    // Session-2 additive safe counts: only present when v2 dossiers exist so
+    // historical briefs stay byte-compatible.
+    ...(input.semanticDossierCounts !== undefined && input.semanticDossierCounts.ready + input.semanticDossierCounts.unresolved > 0
+      ? [`semanticDossiersV2Ready=${input.semanticDossierCounts.ready}`, `semanticDossiersV2Unresolved=${input.semanticDossierCounts.unresolved}`]
+      : []),
   ];
   const strongest = topDossiers
     .filter((dossier) => dossier.reproduction.result === 'REPRODUCED' || dossier.reproduction.result === 'BOUNDED')
