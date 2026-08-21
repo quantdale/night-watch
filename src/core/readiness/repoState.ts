@@ -7,7 +7,9 @@
 // the honest local view:
 //
 //   - currentness: NOT measured here (no snapshot freshness evidence is read),
-//     so every approved target is NOT_EVALUATED;
+//     so every approved target is NOT_EVALUATED — UNLESS the caller supplies
+//     sourceContractMovement classifications (Phase 15P A16 seam), which then
+//     populate currentness categories for known approved targets only;
 //   - campaign observed versions: null (a runtime fingerprint cannot be
 //     measured offline), pinned versions come from source constants only;
 //   - checkpoint compatibility: UNKNOWN (no persisted checkpoint is inspected
@@ -35,7 +37,8 @@ import {
   CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED,
   CAMPAIGN_SCHEMA_VERSION,
 } from '../campaign/types';
-import type { LocalReadinessInput } from './types';
+import type { LocalReadinessCurrentness, LocalReadinessInput } from './types';
+import type { SourceContractMovementClassification } from '../../oracles/expectations/lifecycle/sourceContractMovement';
 
 /**
  * Version fingerprint keys with an authoritative pinned constant in source.
@@ -51,9 +54,59 @@ export const REPO_PINNED_CAMPAIGN_VERSIONS: Readonly<Record<string, string>> = O
   replayBinding: CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED.replayBinding,
 });
 
+/**
+ * Phase 15P A16 seam: fixed movement-API -> readiness-currentness projection.
+ * The movement classification's fail-closed currentness CEILING (the worse of
+ * its two captured observations) maps onto the readiness vocabulary:
+ * CURRENT -> CURRENT, STALE -> STALE, UNAVAILABLE -> SOURCE_UNAVAILABLE, and
+ * NOT_APPLICABLE (nothing evaluated) stays honestly NOT_EVALUATED.
+ */
+export function currentnessFromFamilyMovement(movement: SourceContractMovementClassification): LocalReadinessCurrentness {
+  switch (movement.currentnessCeiling) {
+    case 'CURRENT':
+      return 'CURRENT';
+    case 'STALE':
+      return 'STALE';
+    case 'UNAVAILABLE':
+      return 'SOURCE_UNAVAILABLE';
+    case 'NOT_APPLICABLE':
+      return 'NOT_EVALUATED';
+  }
+}
+
+const CURRENTNESS_SEVERITY: Readonly<Record<LocalReadinessCurrentness, number>> = Object.freeze({
+  CURRENT: 0,
+  NOT_EVALUATED: 1,
+  STALE: 2,
+  SOURCE_UNAVAILABLE: 3,
+});
+
+/**
+ * Optional caller-supplied movement evidence (Phase 15P A16 seam). When
+ * supplied, per-family movement classifications from
+ * oracles/expectations/lifecycle/sourceContractMovement populate the
+ * currentness categories of KNOWN approved targets; when absent, the adapter
+ * keeps its honest all-NOT_EVALUATED default unchanged.
+ */
+export interface RepoStateMovementInput {
+  readonly familyMovements?: readonly SourceContractMovementClassification[];
+}
+
 /** Build the readiness input describing the current repository state. */
-export function collectLocalReadinessInputFromRepo(): LocalReadinessInput {
+export function collectLocalReadinessInputFromRepo(movement: RepoStateMovementInput = {}): LocalReadinessInput {
   const registry = getContractLifecycleRegistry();
+  const knownTargets: ReadonlySet<string> = new Set(APPROVED_READ_ONLY_TARGET_IDS);
+  // Fail-closed merge: an unknown targetId is never fabricated into state;
+  // conflicting records for one target collapse to the WORSE category.
+  const currentnessByTargetId: Record<string, LocalReadinessCurrentness> = {};
+  for (const record of movement.familyMovements ?? []) {
+    if (!knownTargets.has(record.targetId)) continue;
+    const projected = currentnessFromFamilyMovement(record);
+    const existing = currentnessByTargetId[record.targetId];
+    if (existing === undefined || CURRENTNESS_SEVERITY[projected] > CURRENTNESS_SEVERITY[existing]) {
+      currentnessByTargetId[record.targetId] = projected;
+    }
+  }
   return {
     applies: true,
     sourceContracts: {
@@ -66,8 +119,10 @@ export function collectLocalReadinessInputFromRepo(): LocalReadinessInput {
         campaignEligible: family.campaignEligible === 'CAMPAIGN_ELIGIBLE',
         historicalImmutable: family.historicalImmutable,
       })),
-      // Honest default: this adapter reads no freshness evidence.
-      currentnessByTargetId: {},
+      // Honest default: this adapter reads no freshness evidence itself;
+      // currentness categories appear ONLY through the caller-supplied
+      // movement records above (absent input leaves the map empty).
+      currentnessByTargetId,
     },
     campaign: {
       pinnedVersions: REPO_PINNED_CAMPAIGN_VERSIONS,

@@ -23,6 +23,9 @@
 //     strict validators in this directory (no prior standalone validator
 //     existed; they compose over the owning modules' types, runtime guards,
 //     digest helpers, and producers)
+// - 'replay-result-envelope' -> triage/replayEnvelope.validateReplayResultEnvelope,
+//     registered into the single reserved slot (replayEnvelopeRegistration)
+//     at module load; fails closed while unregistered
 //
 // Pure facade: no fs/network/child-process/DB/AI authority. Importing the
 // checkpoint module pulls the private-artifact store into the module graph,
@@ -47,6 +50,8 @@ import { validateAnomalyClusterArtifact, validateAnomalyObservationArtifact } fr
 import { validateReproductionRecordArtifact } from './reproductionValidation';
 import { validateCoverageReportArtifact } from './coverageReportValidation';
 import { validateDossierArtifact } from './dossierKindValidation';
+import { validateReplayResultEnvelope } from '../triage/replayEnvelope';
+import { registerReplayResultEnvelopeValidator, validateReservedArtifactKind } from './replayEnvelopeRegistration';
 
 export type {
   ArtifactKind,
@@ -70,6 +75,11 @@ export {
 } from './reproductionValidation';
 export { validateCoverageReportArtifact } from './coverageReportValidation';
 export { validateDossierArtifact } from './dossierKindValidation';
+export {
+  REPLAY_RESULT_ENVELOPE_RESERVED_KIND,
+  isReplayResultEnvelopeKindRegistered,
+  registerReplayResultEnvelopeValidator,
+} from './replayEnvelopeRegistration';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -150,6 +160,19 @@ const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.fr
   },
 });
 
+// --- Phase 15P A16 seam: A06 envelope validator <-> A11 reserved slot --------
+//
+// The reserved `replay-result-envelope` artifact kind validates through the
+// owning module's strict parser (triage/replayEnvelope), registered here once
+// at module load. The registration slot's throw-based contract is bridged from
+// the parser's result object exactly like the static 'replay-plan' kind
+// bridges its validator; unregistered, the slot fails closed with
+// ARTIFACT_KIND_RESERVED (see replayEnvelopeRegistration).
+registerReplayResultEnvelopeValidator((value: unknown): void => {
+  const result = validateReplayResultEnvelope(value);
+  if (!result.valid) throw new Error(`ARTIFACT_REPLAY_ENVELOPE_INVALID:${result.reason}`);
+});
+
 /**
  * Strict, read-only validation of one durable private artifact.
  *
@@ -165,6 +188,12 @@ export function validateArtifact(
   context: ArtifactValidationContext = {},
 ): ArtifactValidationResult {
   if (typeof kind !== 'string' || !(KNOWN_ARTIFACT_KINDS as readonly string[]).includes(kind)) {
+    // Single reserved extension slot: the Phase 15P A06 ReplayResultEnvelope
+    // kind validates here through its registered module validator; without a
+    // registration it fails closed with ARTIFACT_KIND_RESERVED. Every other
+    // unknown kind fails closed with ARTIFACT_KIND_UNKNOWN.
+    const reservedResult = typeof kind === 'string' ? validateReservedArtifactKind(kind, value, context) : null;
+    if (reservedResult !== null) return reservedResult;
     // The rejected kind is caller-controlled: the durable result carries only
     // its bounded categorical projection, never the raw payload.
     const safeKind = safeErrorDetail(kind);
