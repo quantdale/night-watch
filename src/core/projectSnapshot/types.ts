@@ -11,6 +11,9 @@
 //   - analyzer version (MECHANICAL_ANALYZER_VERSION),
 //   - replay plan versions (TRIAGE_REPLAY_PLAN_VERSION / _V2_VERSION),
 //   - semantic evaluation receipt version,
+//   - real-source collection-admission derivation version,
+//   - real-source coverage-inventory representation version,
+//   - campaign checkpoint schema version (first-class classified slot),
 //   - campaign fingerprint fields (CampaignVersionFingerprint shape),
 //   - dossier versions (v1/v2),
 //   - owner-scope policy marker (frozen marker constants only),
@@ -53,6 +56,24 @@ export const PROJECT_SNAPSHOT_VERSION = 'nightwatch.project-snapshot.v1' as cons
  *   INCOMPATIBLE_CHANGE — removals and incompatible version downgrades
  *                         (`.vN` -> lower `.vM` on the same slot prefix), plus
  *                         snapshot schema-version mismatch.
+ *
+ * ENFORCED DELTA RULES (implemented by compare.ts):
+ *   - Additive vs removal: additions to any set-valued section, lifecycle
+ *     family registry, or adopted-case catalog classify COMPATIBLE_CHANGE;
+ *     the corresponding removals classify INCOMPATIBLE_CHANGE. Single version
+ *     slots have no additive case: replacement within the same `*.vN` slot
+ *     family is SEMANTIC_CHANGE and a lower `.vN` on the same family is an
+ *     INCOMPATIBLE_CHANGE downgrade.
+ *   - Directionality of the first-class campaignCheckpointVersion slot:
+ *     checkpoint-schema evolution (`...private.vN` -> higher `.vM`, or a
+ *     different slot family) is SEMANTIC_CHANGE; a checkpoint-schema
+ *     downgrade (`.vN` -> lower `.vM` on the same family) is
+ *     INCOMPATIBLE_CHANGE because older persisted checkpoints can no longer
+ *     be interpreted.
+ *   - AUTHORITY_CHANGE has the highest precedence everywhere: owner-scope
+ *     marker fields, the approved read-only target registry (expansion AND
+ *     revocation), and the ownerScopePolicyVersion campaign-fingerprint key
+ *     always classify AUTHORITY_CHANGE regardless of direction.
  */
 export type ProjectSnapshotDiffClassification =
   | 'UNCHANGED'
@@ -106,13 +127,39 @@ export interface ProjectSnapshotInput {
   readonly replayPlanVersions: readonly string[];
   /** Current semantic evaluation receipt version. */
   readonly semanticReceiptVersion: string;
+  /**
+   * Real-source collection-admission derivation version. Optional; defaults
+   * to the authoritative REAL_SOURCE_COLLECTION_DERIVATION_VERSION constant
+   * imported from src/oracles/expectations/collectionAdmission.ts.
+   */
+  readonly collectionAdmissionVersion?: string;
+  /**
+   * Real-source coverage-inventory representation version. Optional; defaults
+   * to PROJECT_SNAPSHOT_DEFAULT_COVERAGE_INVENTORY_VERSION. The Phase 12A
+   * coverageInventory module declares no version constant of its own, so the
+   * snapshot layer pins the identity for its report shape; callers override
+   * explicitly if the owning module later declares one.
+   */
+  readonly coverageInventoryVersion?: string;
+  /**
+   * Campaign checkpoint schema version as a first-class compared slot.
+   * Optional; defaults to the authoritative CAMPAIGN_CHECKPOINT_VERSION
+   * constant imported from src/core/campaign/types.ts.
+   */
+  readonly campaignCheckpointVersion?: string;
   /** Campaign fingerprint fields (CampaignVersionFingerprint shape). */
   readonly campaignVersions: CampaignVersionFingerprint;
   /** Supported dossier versions (v1 + v2). */
   readonly dossierVersions: readonly string[];
   /** Frozen owner-scope marker constants. */
   readonly ownerScope: ProjectSnapshotOwnerScopeMarker;
-  /** Adopted-case catalog entries (integrity digest inputs). */
+  /**
+   * Adopted-case catalog entries (integrity digest inputs). Feed the
+   * generated pure-data array SELFDEV_ADOPTED_CASES from
+   * src/core/selfDev/adoptedCaseCatalog.generated.ts verbatim; each entry is
+   * digested individually (`projectSnapshotAdoptedCaseEntryDigest`) and the
+   * sorted digest set forms the catalog integrity state.
+   */
   readonly adoptedCaseCatalogEntries: readonly Record<string, unknown>[];
 }
 
@@ -132,13 +179,28 @@ export interface ProjectSnapshotManifest {
   /** Sorted, unique. */
   readonly replayPlanVersions: readonly string[];
   readonly semanticReceiptVersion: string;
+  /** Real-source collection-admission derivation version (normalized slot). */
+  readonly collectionAdmissionVersion: string;
+  /** Real-source coverage-inventory representation version (normalized slot). */
+  readonly coverageInventoryVersion: string;
+  /**
+   * Campaign checkpoint schema version, compared as a first-class classified
+   * slot: schema evolution = SEMANTIC_CHANGE, same-family downgrade =
+   * INCOMPATIBLE_CHANGE (see the ENFORCED DELTA RULES above).
+   */
+  readonly campaignCheckpointVersion: string;
   readonly campaignVersions: CampaignVersionFingerprint;
   /** Sorted, unique. */
   readonly dossierVersions: readonly string[];
   readonly ownerScope: ProjectSnapshotOwnerScopeMarker;
   readonly adoptedCaseCatalog: {
     readonly entryCount: number;
-    /** Sorted per-entry digests (`pscase:sha256:<24>`). */
+    /**
+     * Sorted per-entry digests (`pscase:sha256:<24>`), one per caller-supplied
+     * catalog entry (e.g. each SELFDEV_ADOPTED_CASES element). Per-entry
+     * digests keep catalog STATE explicit: a single mutated entry changes
+     * exactly one digest.
+     */
     readonly entryDigests: readonly string[];
     /** Combined integrity digest over the sorted entry digests. */
     readonly catalogDigest: string;
