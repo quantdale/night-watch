@@ -33,6 +33,7 @@ export const CANDIDATE_LIFECYCLE_STATES = [
   'ADMITTED',
   'REPRODUCED',
   'MINIMIZED',
+  'CLUSTERED',
   'UNCHANGED',
   'TRIAGED',
   'DOSSIER_READY',
@@ -49,6 +50,7 @@ export const CANDIDATE_LIFECYCLE_EVENTS = [
   'FAIL_REPRODUCTION',
   'APPLY_MINIMIZATION',
   'KEEP_UNCHANGED',
+  'CLUSTERED',
   'COMPLETE_TRIAGE',
   'CLASSIFY_REJECTED',
   'CLASSIFY_UNRESOLVED',
@@ -94,12 +96,20 @@ const RECORD_KEYS = ['lifecycleVersion', 'variant', 'state', 'transitionCount', 
  * stage routes the record to the UNRESOLVED terminal with a mandatory reason
  * code — it is never swallowed into an ambiguous mid-state. TRIAGED keeps the
  * CLASSIFY_* edges as its only exits; terminal states stay edge-free.
+ *
+ * Phase 15P (A05, round 2) additive CLUSTERED state between MINIMIZED and
+ * TRIAGED: MINIMIZED -> CLUSTERED -> TRIAGED is the canonical path, while the
+ * direct MINIMIZED -> COMPLETE_TRIAGE edge stays legal so in-flight and
+ * persisted records never become invalid. CLUSTERED is a non-terminal open
+ * state: its edge map is frozen exactly like every other non-terminal row and
+ * it carries the same GATE_BLOCK exit.
  */
 const LIFECYCLE_TRANSITIONS: Readonly<Record<CandidateLifecycleState, Readonly<Partial<Record<CandidateLifecycleEvent, CandidateLifecycleState>>>>> = Object.freeze({
   OBSERVED: Object.freeze({ ADMIT: 'ADMITTED', REJECT: 'REJECTED', GATE_BLOCK: 'UNRESOLVED' }),
   ADMITTED: Object.freeze({ CONFIRM_REPRODUCTION: 'REPRODUCED', FAIL_REPRODUCTION: 'UNRESOLVED', REJECT: 'REJECTED', GATE_BLOCK: 'UNRESOLVED' }),
   REPRODUCED: Object.freeze({ APPLY_MINIMIZATION: 'MINIMIZED', KEEP_UNCHANGED: 'UNCHANGED', FAIL_REPRODUCTION: 'UNRESOLVED', GATE_BLOCK: 'UNRESOLVED' }),
-  MINIMIZED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
+  MINIMIZED: Object.freeze({ CLUSTERED: 'CLUSTERED', COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
+  CLUSTERED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
   UNCHANGED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
   TRIAGED: Object.freeze({ MARK_DOSSIER_READY: 'DOSSIER_READY', CLASSIFY_REJECTED: 'REJECTED', CLASSIFY_UNRESOLVED: 'UNRESOLVED' }),
   DOSSIER_READY: Object.freeze({}),
