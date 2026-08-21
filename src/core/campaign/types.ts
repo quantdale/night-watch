@@ -530,6 +530,36 @@ export interface CandidateLifecycleRecordShape {
   readonly lastReasonCode: string | null;
 }
 
+/**
+ * Phase 15P A09 — durable interrupted-work bookkeeping record. Persisted in
+ * the checkpoint (optional field) so resume reconstructs exact continuation
+ * points without re-deriving them from queue states alone. Exactly one of
+ * workItemId / clusterId is non-null: manifest work-item interruptions and
+ * promotion-pipeline (reproduction/minimization) interruptions are distinct
+ * identities.
+ */
+export interface CampaignInterruptedWorkRecord {
+  readonly workItemId: string | null;
+  readonly clusterId: string | null;
+  readonly phaseReached: 'RUNNING' | 'REPLAY_REQUIRED';
+  /** Checkpoint ordinal at which the interruption was recorded. */
+  readonly ordinal: number;
+  readonly reservationState: 'RESERVED' | 'CONSUMED';
+}
+
+/**
+ * Phase 15P A09 — bounded per-work-item retry counter with explicit
+ * reservation semantics. reservedAttemptIds holds one deterministic id per
+ * granted attempt (`<workItemId>:attempt:<n>`); ids may be shorter than
+ * attemptCount for records seeded from checkpoints persisted before this
+ * field existed. Exhaustion (attemptCount === maxAttempts) fails closed.
+ */
+export interface CampaignWorkItemRetryRecord {
+  readonly attemptCount: number;
+  readonly maxAttempts: number;
+  readonly reservedAttemptIds: readonly string[];
+}
+
 export interface CampaignCheckpoint {
   readonly schemaVersion: typeof CAMPAIGN_CHECKPOINT_VERSION;
   readonly campaignId: string;
@@ -579,6 +609,11 @@ export interface CampaignCheckpoint {
     replayBinding: string;
     promotionResult: string;
   }>;
+  // Optional Phase 15P A09 additions (shape-optional, schema version
+  // unchanged): durable interrupted-work bookkeeping and bounded per-item
+  // retry reservations; strictly validated when present.
+  readonly interruptedWork?: readonly CampaignInterruptedWorkRecord[];
+  readonly workItemRetries?: Readonly<Record<string, CampaignWorkItemRetryRecord>>;
 }
 
 export interface CampaignRunResult {

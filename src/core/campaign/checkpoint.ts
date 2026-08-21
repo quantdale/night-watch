@@ -14,6 +14,7 @@ import {
   assertEnum,
   assertExactKeys,
   assertFiniteNonNegative,
+  assertIntegerAtMost,
   assertIsoTimestamp,
   assertNonNegativeInteger,
   assertString,
@@ -29,10 +30,12 @@ import {
   CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED,
   type CampaignCheckpoint,
   type CampaignExecutionRecord,
+  type CampaignInterruptedWorkRecord,
   type CampaignManifest,
   type CampaignPrivacyStatus,
   type CampaignSafetyVector,
   type CampaignVersionFingerprint,
+  type CampaignWorkItemRetryRecord,
   type CampaignWorkKind,
   type CandidateLifecycleRecordShape,
 } from './types';
@@ -52,7 +55,7 @@ const CHECKPOINT_KEYS = [
 ] as const;
 // Phase 15 Session 2 additions: optional so historical pre-S2 checkpoints
 // remain valid; when present they are strictly validated below.
-const CHECKPOINT_OPTIONAL_KEYS = ['candidateLifecycles', 'runtimeContractVersions'] as const;
+const CHECKPOINT_OPTIONAL_KEYS = ['candidateLifecycles', 'runtimeContractVersions', 'interruptedWork', 'workItemRetries'] as const;
 const WORK_KINDS: readonly CampaignWorkKind[] = ['JOURNEY', 'API', 'EXPLORATION', 'REPRODUCTION', 'MINIMIZATION'];
 const CAMPAIGN_STATUSES = ['IN_PROGRESS', 'COMPLETE_CLEAN', 'COMPLETE_WITH_FINDINGS', 'PARTIAL_BUDGET_EXHAUSTED', 'PARTIAL_AUTH_BLOCKED', 'PARTIAL_SAFETY_BLOCKED', 'PARTIAL_RUNTIME_INFRA_FAILURE', 'ABORTED_OWNER_POLICY', 'INCOMPLETE_PROCESS_INTERRUPTION'] as const;
 const STOP_REASONS = ['NONE', 'OWNER_POLICY_BLOCKED', 'AUTH_BLOCKED', 'SAFETY_EVENT', 'PRIVACY_BLOCKED', 'BUDGET_EXHAUSTED', 'RUNTIME_TIMEOUT', 'FAILURE_STORM_SHARED_ROOT_SYMPTOM', 'CAMPAIGN_VERSION_DRIFT', 'PROCESS_INTERRUPTION', 'PREFLIGHT_FAILED'] as const;
@@ -60,6 +63,10 @@ const WORK_STATES = ['PENDING', 'RUNNING', 'COMPLETED', 'SKIPPED', 'REPLAY_REQUI
 const EXECUTION_RESULTS = ['PASS', 'ANOMALY', 'TRANSIENT', 'NIGHTWATCH_DEFECT', 'AUTH_BLOCKED', 'SAFETY_BLOCKED', 'RUNTIME_FAILURE', 'INCOMPLETE'] as const;
 const CANDIDATE_LIFECYCLE_VARIANTS = ['PROTOCOL_ONLY', 'SEMANTIC'] as const;
 const CANDIDATE_LIFECYCLE_STATES = ['OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'UNCHANGED', 'TRIAGED', 'DOSSIER_READY', 'REJECTED', 'UNRESOLVED'] as const;
+// Phase 15P A09: only mid-flight states are bookkept as interrupted work —
+// PENDING/terminal states remain derivable from the execution ledger alone.
+const INTERRUPTED_PHASES = ['RUNNING', 'REPLAY_REQUIRED'] as const;
+const INTERRUPTED_RESERVATION_STATES = ['RESERVED', 'CONSUMED'] as const;
 // Matches the established uppercase snake reason-code idiom (e.g.
 // BUDGET_EXHAUSTED). Bounded and sentinel-screened exactly like
 // candidateLifecycle's REASON_CODE_RE so the two validators of this persisted
@@ -287,6 +294,107 @@ function validateSession2RuntimeContracts(checkpoint: RuntimeRecord): void {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Phase 15P A09 — durable interrupted-work bookkeeping and bounded retry
+// reservations (optional checkpoint fields, strictly validated when present;
+// absent means a historical checkpoint and stays valid).
+// ---------------------------------------------------------------------------
+
+/**
+ * Interrupted-work records follow the established referential-integrity idiom
+ * (no dedicated id regex): a work-item record must reference a known
+ * execution-ledger record in exactly the recorded phase, and a cluster record
+ * must reference a known cluster whose reproduction-queue entry sits in
+ * exactly the recorded phase. Completeness is enforced in both directions so
+ * resume can reconstruct continuation points from this structure alone.
+ */
+function validateInterruptedWorkBookkeeping(checkpoint: RuntimeRecord, ledger: readonly CampaignExecutionRecord[]): void {
+  const raw = checkpoint.interruptedWork;
+  if (raw === undefined) return;
+  const records = requireRuntimeArray(raw, 'CHECKPOINT_INTERRUPTED_WORK');
+  const ledgerById = new Map(ledger.map((record) => [record.workItemId, record]));
+  const queueStateByCluster = new Map<string, string>();
+  for (const value of requireRuntimeArray(checkpoint.reproductionQueue, 'CHECKPOINT_REPRODUCTION_QUEUE')) {
+    const reproduction = requireRuntimeRecord(value, 'CHECKPOINT_REPRODUCTION');
+    assertString(reproduction.clusterId, 'CHECKPOINT_REPRODUCTION_CLUSTER');
+    assertEnum(reproduction.state, ['PENDING', 'RUNNING', 'COMPLETED', 'SKIPPED', 'BLOCKED', 'REPLAY_REQUIRED'], 'CHECKPOINT_REPRODUCTION_STATE');
+    queueStateByCluster.set(reproduction.clusterId, reproduction.state);
+  }
+  const knownClusterIds = new Set<string>();
+  for (const value of requireRuntimeArray(checkpoint.anomalyClusters, 'CHECKPOINT_CLUSTERS')) {
+    knownClusters.add(requireRuntimeRecord(value, 'CHECKPOINT_CLUSTER').clusterId as string);
+  }
+  const actualKeys = new Set<string>();
+  for (const value of records) {
+    const record = requireRuntimeRecord(value, 'CHECKPOINT_INTERRUPTED_WORK_RECORD');
+    assertExactKeys(record, ['workItemId', 'clusterId', 'phaseReached', 'ordinal', 'reservationState'], 'CHECKPOINT_INTERRUPTED_WORK_RECORD');
+    if ((record.workItemId !== null) === (record.clusterId !== null)) checkpointIntegrity('INTERRUPTED_WORK_IDENTITY_AMBIGUOUS');
+    assertEnum(record.phaseReached, INTERRUPTED_PHASES, 'CHECKPOINT_INTERRUPTED_WORK_PHASE');
+    assertEnum(record.reservationState, INTERRUPTED_RESERVATION_STATES, 'CHECKPOINT_INTERRUPTED_WORK_RESERVATION');
+    // RESERVED pairs with RUNNING and CONSUMED with REPLAY_REQUIRED: the
+    // reservation state never contradicts the recorded phase.
+    if ((record.phaseReached === 'RUNNING') !== (record.reservationState === 'RESERVED')) checkpointIntegrity('INTERRUPTED_WORK_RESERVATION_MISMATCH');
+    assertIntegerAtMost(record.ordinal, checkpoint.checkpointOrdinal as number, 'CHECKPOINT_INTERRUPTED_WORK_ORDINAL');
+    if (record.workItemId !== null) {
+      assertString(record.workItemId, 'CHECKPOINT_INTERRUPTED_WORK_ITEM');
+      const ledgerRecord = ledgerById.get(record.workItemId);
+      if (ledgerRecord === undefined) checkpointIntegrity(`UNKNOWN_INTERRUPTED_WORK_ITEM:${record.workItemId}`);
+      if (ledgerRecord.state !== record.phaseReached) checkpointIntegrity(`INTERRUPTED_WORK_PHASE_MISMATCH:${record.workItemId}`);
+      actualKeys.add(`workItem:${record.workItemId}`);
+    } else {
+      assertString(record.clusterId, 'CHECKPOINT_INTERRUPTED_WORK_CLUSTER');
+      if (!knownClusterIds.has(record.clusterId)) checkpointIntegrity(`UNKNOWN_INTERRUPTED_WORK_CLUSTER:${record.clusterId}`);
+      if (queueStateByCluster.get(record.clusterId) !== record.phaseReached) checkpointIntegrity(`INTERRUPTED_WORK_PHASE_MISMATCH:${record.clusterId}`);
+      actualKeys.add(`cluster:${record.clusterId}`);
+    }
+  }
+  const expectedKeys = new Set<string>();
+  for (const record of ledger) {
+    if (record.state === 'RUNNING' || record.state === 'REPLAY_REQUIRED') expectedKeys.add(`workItem:${record.workItemId}`);
+  }
+  for (const [clusterId, state] of queueStateByCluster) {
+    if (state === 'RUNNING' || state === 'REPLAY_REQUIRED') expectedKeys.add(`cluster:${clusterId}`);
+  }
+  let incomplete = actualKeys.size !== records.length;
+  for (const key of expectedKeys) if (!actualKeys.has(key)) incomplete = true;
+  if (incomplete) checkpointIntegrity('INTERRUPTED_WORK_BOOKKEEPING_INCOMPLETE');
+}
+
+/**
+ * Bounded per-work-item retry reservations. maxAttempts is pinned to the
+ * frozen constant so a persisted record can never grant itself a larger
+ * bound; attemptCount mirrors the authoritative execution-ledger counter and
+ * reservedAttemptIds are deterministic `<workItemId>:attempt:<n>` ids with
+ * n <= attemptCount (ids may be fewer than attemptCount only for records
+ * seeded from checkpoints persisted before this field existed).
+ */
+function validateWorkItemRetryRecords(checkpoint: RuntimeRecord, ledger: readonly CampaignExecutionRecord[]): void {
+  const raw = checkpoint.workItemRetries;
+  if (raw === undefined) return;
+  const records = requireRuntimeRecord(raw, 'CHECKPOINT_WORK_ITEM_RETRIES');
+  const ledgerById = new Map(ledger.map((record) => [record.workItemId, record]));
+  for (const [workItemId, value] of Object.entries(records)) {
+    if (workItemId.length === 0) checkpointIntegrity('WORK_ITEM_RETRY_ID_EMPTY');
+    const ledgerRecord = ledgerById.get(workItemId);
+    if (ledgerRecord === undefined) checkpointIntegrity(`UNKNOWN_WORK_ITEM_RETRY:${workItemId}`);
+    const record = requireRuntimeRecord(value, `CHECKPOINT_WORK_ITEM_RETRY:${workItemId}`);
+    assertExactKeys(record, ['attemptCount', 'maxAttempts', 'reservedAttemptIds'], `CHECKPOINT_WORK_ITEM_RETRY:${workItemId}`);
+    if (record.maxAttempts !== CAMPAIGN_WORK_ITEM_MAX_ATTEMPTS) checkpointIntegrity(`WORK_ITEM_RETRY_BOUND_INVALID:${workItemId}`);
+    assertIntegerAtMost(record.attemptCount, CAMPAIGN_WORK_ITEM_MAX_ATTEMPTS, `CHECKPOINT_WORK_ITEM_RETRY_ATTEMPT_COUNT:${workItemId}`);
+    if (record.attemptCount < 1) checkpointIntegrity(`WORK_ITEM_RETRY_ATTEMPT_COUNT_INVALID:${workItemId}`);
+    if (record.attemptCount !== ledgerRecord.attemptCount) checkpointIntegrity(`WORK_ITEM_RETRY_LEDGER_MISMATCH:${workItemId}`);
+    const attemptIds = requireRuntimeArray(record.reservedAttemptIds, `CHECKPOINT_WORK_ITEM_RETRY_IDS:${workItemId}`);
+    assertUniqueStrings(attemptIds, `CHECKPOINT_WORK_ITEM_RETRY_IDS:${workItemId}`);
+    if (attemptIds.length > record.attemptCount) checkpointIntegrity(`WORK_ITEM_RETRY_IDS_OVERCOUNT:${workItemId}`);
+    const prefix = `${workItemId}:attempt:`;
+    for (const attemptId of attemptIds as readonly string[]) {
+      if (!attemptId.startsWith(prefix)) checkpointIntegrity(`WORK_ITEM_RETRY_ATTEMPT_ID_MALFORMED:${workItemId}`);
+      const ordinal = Number(attemptId.slice(prefix.length));
+      if (!Number.isInteger(ordinal) || ordinal < 1 || ordinal > record.attemptCount) checkpointIntegrity(`WORK_ITEM_RETRY_ATTEMPT_ID_OUT_OF_RANGE:${workItemId}`);
+    }
+  }
+}
+
 export type CheckpointRuntimeContractClassification = 'CURRENT_S2_CONTRACTS' | typeof CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION | 'INCOMPATIBLE_FUTURE';
 
 /**
@@ -393,6 +501,98 @@ export function classifyCheckpointResumeDrift(checkpoint: unknown, manifest: Pic
   return { compatible: true, kind: 'NONE', driftedFields: [] };
 }
 
+// ---------------------------------------------------------------------------
+// Phase 15P A09 — bounded retry reservations with explicit reserved-attempt
+// ids. Pure and deterministic; the orchestrator persists the returned record
+// at the next checkpoint so the counter survives resumes.
+// ---------------------------------------------------------------------------
+
+/**
+ * Frozen per-work-item attempt ceiling. Chosen above every frozen budget
+ * dimension's own refusal bound so the explicit retry cap never preempts a
+ * budget-driven refusal — it is the backstop for policies whose budgets would
+ * otherwise allow unbounded resume loops.
+ */
+export const CAMPAIGN_WORK_ITEM_MAX_ATTEMPTS = 4 as const;
+
+export type WorkItemAttemptGrant =
+  | { readonly granted: true; readonly attemptId: string; readonly record: CampaignWorkItemRetryRecord }
+  | { readonly granted: false; readonly code: 'WORK_ITEM_RETRY_BUDGET_EXHAUSTED' };
+
+/**
+ * Fail-closed attempt reservation. A grant requires the next attempt to stay
+ * within the frozen ceiling, to continue the persisted counter exactly, and
+ * to carry an attempt id that was never reserved before. Any inconsistency
+ * (including a foreign maxAttempts value) refuses — it never widens.
+ */
+export function grantWorkItemAttempt(workItemId: string, current: CampaignWorkItemRetryRecord | undefined, nextAttempt: number, maxAttempts: number = CAMPAIGN_WORK_ITEM_MAX_ATTEMPTS): WorkItemAttemptGrant {
+  if (!Number.isInteger(nextAttempt) || nextAttempt < 1 || nextAttempt > maxAttempts) {
+    return { granted: false, code: 'WORK_ITEM_RETRY_BUDGET_EXHAUSTED' };
+  }
+  if (current !== undefined && (current.attemptCount >= maxAttempts || current.maxAttempts !== maxAttempts || current.attemptCount + 1 !== nextAttempt)) {
+    return { granted: false, code: 'WORK_ITEM_RETRY_BUDGET_EXHAUSTED' };
+  }
+  const attemptId = `${workItemId}:attempt:${nextAttempt}`;
+  const priorIds = current?.reservedAttemptIds ?? [];
+  if (priorIds.includes(attemptId)) return { granted: false, code: 'WORK_ITEM_RETRY_BUDGET_EXHAUSTED' };
+  return {
+    granted: true,
+    attemptId,
+    record: { attemptCount: nextAttempt, maxAttempts, reservedAttemptIds: [...priorIds, attemptId] },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 15P A09 — incompatible-drift result envelope. A structured result
+// value (not only thrown codes) naming exactly which version components
+// drifted. Pure and total: evaluating it performs no I/O and can never reach
+// an executor callback, so `compatible: false` certifies by construction that
+// execution was refused before any executor callback.
+// ---------------------------------------------------------------------------
+
+export type CheckpointResumeRefusalKind = 'NONE' | 'CHECKPOINT_INCOMPATIBLE' | 'RUNTIME_FINGERPRINT_DRIFT';
+
+export interface CheckpointResumeRefusal {
+  readonly compatible: boolean;
+  readonly kind: CheckpointResumeRefusalKind;
+  /** Established thrown-code identity, mirrored for structured consumers. */
+  readonly code: 'CAMPAIGN_VERSION_DRIFT' | null;
+  /** Present when the persisted checkpoint itself is incompatible. */
+  readonly checkpointDrift: CheckpointResumeDriftReport | null;
+  /** Sorted drifted fingerprint slots; null when no current fingerprint was supplied for comparison. */
+  readonly driftedFingerprintSlots: readonly string[] | null;
+  /** True on every refusal: evaluation is pure and precedes any executor callback. */
+  readonly refusedBeforeExecutorCallback: boolean;
+}
+
+/**
+ * Total compatibility evaluation across both version-compat surfaces:
+ * the persisted checkpoint (classifyCheckpointResumeDrift) and, when
+ * supplied, the runtime fingerprint against the manifest's expected versions
+ * (classifyVersionFingerprintDrift). Both sides are always evaluated so the
+ * envelope names every drifted component, not just the first.
+ */
+export function evaluateResumeCompatibility(input: {
+  readonly checkpoint: unknown;
+  readonly manifest: Pick<CampaignManifest, 'campaignId' | 'manifestFingerprint' | 'versions'>;
+  readonly currentVersions?: CampaignVersionFingerprint;
+}): CheckpointResumeRefusal {
+  const checkpointDrift = classifyCheckpointResumeDrift(input.checkpoint, input.manifest);
+  const driftedFingerprintSlots = input.currentVersions === undefined ? null : classifyVersionFingerprintDrift(input.currentVersions, input.manifest.versions);
+  const fingerprintDrifted = driftedFingerprintSlots !== null && driftedFingerprintSlots.length > 0;
+  if (checkpointDrift.compatible && !fingerprintDrifted) {
+    return { compatible: true, kind: 'NONE', code: null, checkpointDrift: null, driftedFingerprintSlots, refusedBeforeExecutorCallback: false };
+  }
+  return {
+    compatible: false,
+    kind: checkpointDrift.compatible ? 'RUNTIME_FINGERPRINT_DRIFT' : 'CHECKPOINT_INCOMPATIBLE',
+    code: 'CAMPAIGN_VERSION_DRIFT',
+    checkpointDrift: checkpointDrift.compatible ? null : checkpointDrift,
+    driftedFingerprintSlots,
+    refusedBeforeExecutorCallback: true,
+  };
+}
+
 export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, manifest: CampaignManifest): asserts value is CampaignCheckpoint {
   validateCampaignManifest(manifest);
   const checkpoint = requireRuntimeRecord(value, 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID');
@@ -430,6 +630,8 @@ export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, 
     if (ledgerIds.size !== knownIds.size || [...knownIds].some((id) => !ledgerIds.has(id))) checkpointIntegrity('EXECUTION_LEDGER_DOES_NOT_COVER_MANIFEST');
     validateReferenceLedgers(checkpoint, manifest, ledger);
     validateSession2RuntimeContracts(checkpoint);
+    validateInterruptedWorkBookkeeping(checkpoint, ledger);
+    validateWorkItemRetryRecords(checkpoint, ledger);
     assertEnum(checkpoint.morningBriefStatus, ['NOT_STARTED', 'IN_PROGRESS', 'READY'], 'CHECKPOINT_BRIEF_STATUS');
     for (const key of ['bugCandidates', 'rejectedHypotheses', 'unresolved', 'safetyEvents', 'versionDrift', 'resumeRecipe']) {
       const values = requireRuntimeArray(checkpoint[key], `CHECKPOINT:${key}`);
