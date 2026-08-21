@@ -42,6 +42,7 @@ import {
   type ArtifactValidationContext,
   type ArtifactValidationResult,
 } from './types';
+import { safeErrorDetail } from '../campaign/runtimeValidation';
 import { validateAnomalyClusterArtifact, validateAnomalyObservationArtifact } from './observationClusterValidation';
 import { validateReproductionRecordArtifact } from './reproductionValidation';
 import { validateCoverageReportArtifact } from './coverageReportValidation';
@@ -105,7 +106,7 @@ const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.fr
     if (!isRecord(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:OBJECT_REQUIRED');
     const version = value.schemaVersion;
     if (version !== SEMANTIC_EVALUATION_RECEIPT_VERSION && version !== SEMANTIC_EVALUATION_RECEIPT_VERSION_V1) {
-      throw new Error(`ARTIFACT_RECEIPT_INVALID:SCHEMA_VERSION_UNSUPPORTED:${String(version)}`);
+      throw new Error(`ARTIFACT_RECEIPT_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
     }
     validateSemanticEvaluationReceipt(value as never);
     if (!receiptIdMatches(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:RECEIPT_ID_MISMATCH');
@@ -123,7 +124,7 @@ const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.fr
       if (!result.valid) throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:${result.reason}`);
       return;
     }
-    throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:SCHEMA_VERSION_UNSUPPORTED:${String(version)}`);
+    throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
   },
   'cluster': (value) => {
     validateAnomalyClusterArtifact(value);
@@ -164,7 +165,10 @@ export function validateArtifact(
   context: ArtifactValidationContext = {},
 ): ArtifactValidationResult {
   if (typeof kind !== 'string' || !(KNOWN_ARTIFACT_KINDS as readonly string[]).includes(kind)) {
-    return { valid: false, kind: String(kind), reason: `ARTIFACT_KIND_UNKNOWN:${String(kind)}` };
+    // The rejected kind is caller-controlled: the durable result carries only
+    // its bounded categorical projection, never the raw payload.
+    const safeKind = safeErrorDetail(kind);
+    return { valid: false, kind: safeKind, reason: `ARTIFACT_KIND_UNKNOWN:${safeKind}` };
   }
   const artifactKind = kind as ArtifactKind;
   try {

@@ -18,6 +18,7 @@
 // ---------------------------------------------------------------------------
 
 import { prefixedDigest24, stableJsonSorted } from '../identity/canonicalDigest';
+import { safeErrorDetail } from '../campaign/runtimeValidation';
 import {
   PROJECT_SNAPSHOT_VERSION,
   type ProjectSnapshotContractFamily,
@@ -35,9 +36,17 @@ function byLocale(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
+/** Upper bound for every identifier/version string carried in a manifest. */
+const MAX_IDENTIFIER_LENGTH = 200;
+
 function requireNonEmptyString(field: string, value: unknown): string {
   if (typeof value !== 'string' || value.length === 0 || value.trim() !== value) {
     throw new Error(`PROJECT_SNAPSHOT_INVALID_INPUT:${field}`);
+  }
+  // Architecture identifiers are bounded categorical values; an unbounded
+  // free-text field would let raw payloads enter the durable manifest.
+  if (value.length > MAX_IDENTIFIER_LENGTH) {
+    throw new Error(`PROJECT_SNAPSHOT_IDENTIFIER_TOO_LONG:${field}`);
   }
   return value;
 }
@@ -48,7 +57,7 @@ function normalizedStringSet(field: string, values: readonly string[]): readonly
   const seen = new Set<string>();
   for (const value of values) {
     const v = requireNonEmptyString(field, value);
-    if (seen.has(v)) throw new Error(`PROJECT_SNAPSHOT_DUPLICATE_SET_ENTRY:${field}:${v}`);
+    if (seen.has(v)) throw new Error(`PROJECT_SNAPSHOT_DUPLICATE_SET_ENTRY:${field}:${safeErrorDetail(v)}`);
     seen.add(v);
   }
   return Object.freeze([...seen].sort(byLocale));
@@ -184,7 +193,7 @@ export function buildProjectSnapshot(input: ProjectSnapshotInput): ProjectSnapsh
   const families = input.contractFamilies.map(normalizeFamily);
   for (const family of families) {
     if (seenFamilyIds.has(family.familyId)) {
-      throw new Error(`PROJECT_SNAPSHOT_DUPLICATE_FAMILY_ID:${family.familyId}`);
+      throw new Error(`PROJECT_SNAPSHOT_DUPLICATE_FAMILY_ID:${safeErrorDetail(family.familyId)}`);
     }
     seenFamilyIds.add(family.familyId);
   }

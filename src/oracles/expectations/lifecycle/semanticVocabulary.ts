@@ -44,6 +44,7 @@
 // ---------------------------------------------------------------------------
 
 import { containsAnySentinel } from '../extract/analyzer';
+import { containsForbiddenErrorDetail, safeErrorDetail } from '../../../core/campaign/runtimeValidation';
 import type { AnalyzerStatus } from '../extract/analyzer';
 import type { RealSourceResolution } from '../resolver';
 import type { ExpectationAdmissionResult, ExpectationFreshness } from '../types';
@@ -97,7 +98,9 @@ function categoryFor(
 ): UnifiedContractResultCategory {
   const mapped = table.get(value);
   if (mapped === undefined) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNSUPPORTED_VALUE:${vocabulary}:${value}`);
+    // The rejected value is echoed only through the bounded categorical
+    // projection: sentinel-bearing payloads never enter error text.
+    throw new Error(`SEMANTIC_VOCABULARY_UNSUPPORTED_VALUE:${vocabulary}:${safeErrorDetail(value)}`);
   }
   return mapped;
 }
@@ -447,7 +450,7 @@ function convergedFor(
 ): ConvergedSourceCurrentness {
   const mapped = table.get(value);
   if (mapped === undefined) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNSUPPORTED_VALUE:${vocabulary}:${value}`);
+    throw new Error(`SEMANTIC_VOCABULARY_UNSUPPORTED_VALUE:${vocabulary}:${safeErrorDetail(value)}`);
   }
   return mapped;
 }
@@ -480,21 +483,21 @@ export function convergedCurrentnessFromExpectationFreshness(freshness: Expectat
 
 export function parseSemanticReceiptOutcome(value: string): SemanticReceiptOutcome {
   if (!SEMANTIC_RECEIPT_OUTCOME_TABLE.has(value)) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_RECEIPT_OUTCOME_VOCABULARY}:${value}`);
+    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_RECEIPT_OUTCOME_VOCABULARY}:${safeErrorDetail(value)}`);
   }
   return value as SemanticReceiptOutcome;
 }
 
 export function parseSemanticTriageOutcome(value: string): SemanticTriageOutcome {
   if (!SEMANTIC_TRIAGE_OUTCOME_TABLE.has(value)) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_TRIAGE_OUTCOME_VOCABULARY}:${value}`);
+    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_TRIAGE_OUTCOME_VOCABULARY}:${safeErrorDetail(value)}`);
   }
   return value as SemanticTriageOutcome;
 }
 
 export function parseConvergedSourceCurrentness(value: string): ConvergedSourceCurrentness {
   if (!(CONVERGED_SOURCE_CURRENTNESS_VALUES as readonly string[]).includes(value)) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:converged-source-currentness:${value}`);
+    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:converged-source-currentness:${safeErrorDetail(value)}`);
   }
   return value as ConvergedSourceCurrentness;
 }
@@ -562,7 +565,7 @@ export function canonicalReceiptOutcomeFromTriageOutcome(outcome: SemanticTriage
 export function strictSemanticOutcomeToReceiptOutcome(outcome: string): SemanticReceiptOutcome {
   const mapped = SEMANTIC_OUTCOME_TO_RECEIPT_BRIDGE.get(outcome);
   if (mapped === undefined) {
-    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_RUNNER_OUTCOME_VOCABULARY}:${outcome}`);
+    throw new Error(`SEMANTIC_VOCABULARY_UNKNOWN_VALUE:${SEMANTIC_RUNNER_OUTCOME_VOCABULARY}:${safeErrorDetail(outcome)}`);
   }
   return mapped;
 }
@@ -694,7 +697,7 @@ function rederivedCategoryFor(vocabulary: string, sourceValue: string, detail: s
     case UNIFIED_AGGREGATE_VOCABULARY:
       return categoryFor(tableOf(Object.fromEntries(UNIFIED_CONTRACT_RESULT_CATEGORIES.map((c) => [c, c]))), vocabulary, sourceValue);
     default:
-      throw new Error(`SEMANTIC_VOCABULARY_DTO_INVALID:unknown-vocabulary:${vocabulary}`);
+      throw new Error(`SEMANTIC_VOCABULARY_DTO_INVALID:unknown-vocabulary:${safeErrorDetail(vocabulary)}`);
   }
 }
 
@@ -717,7 +720,7 @@ export function validateUnifiedContractResultDto(value: unknown): void {
   }
   const dto = value as Record<string, unknown>;
   for (const key of Object.keys(dto)) {
-    if (!ALLOWED_DTO_KEYS.has(key)) throw new Error(`SEMANTIC_VOCABULARY_DTO_INVALID:unknown-field:${key}`);
+    if (!ALLOWED_DTO_KEYS.has(key)) throw new Error(`SEMANTIC_VOCABULARY_DTO_INVALID:unknown-field:${safeErrorDetail(key)}`);
   }
   if (dto.resultVersion !== CONTRACT_RESULT_VOCABULARY_VERSION) {
     throw new Error('SEMANTIC_VOCABULARY_DTO_INVALID:resultVersion');
@@ -730,7 +733,19 @@ export function validateUnifiedContractResultDto(value: unknown): void {
   }
   assertCategoricalString(dto.sourceVocabulary, 'sourceVocabulary');
   assertCategoricalString(dto.sourceValue, 'sourceValue');
-  if (dto.targetId !== undefined) assertCategoricalString(dto.targetId, 'targetId');
+  // Privacy dominates: categorical fields are screened for sentinel-shaped
+  // content before any membership re-derivation can echo them (fail-closed).
+  if (containsForbiddenErrorDetail(dto.sourceVocabulary) || containsForbiddenErrorDetail(dto.sourceValue)) {
+    throw new Error(
+      `SEMANTIC_VOCABULARY_DTO_INVALID:field-sentinel:${safeErrorDetail(dto.sourceVocabulary)}:${safeErrorDetail(dto.sourceValue)}`,
+    );
+  }
+  if (dto.targetId !== undefined) {
+    assertCategoricalString(dto.targetId, 'targetId');
+    if (containsForbiddenErrorDetail(dto.targetId)) {
+      throw new Error('SEMANTIC_VOCABULARY_DTO_INVALID:target-id-sentinel');
+    }
+  }
   if (dto.detail !== undefined) {
     if (typeof dto.detail !== 'string' || dto.detail.length > MAX_CODE_LENGTH) {
       throw new Error('SEMANTIC_VOCABULARY_DTO_INVALID:detail');

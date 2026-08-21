@@ -8,6 +8,8 @@
 // fail closed.
 // ---------------------------------------------------------------------------
 
+import { safeErrorDetail } from '../campaign/runtimeValidation';
+
 export const OWNER_SCOPE_POLICY_VERSION = 'nightwatch.owner-scope-policy.v2' as const;
 export const OWNER_SCOPE_STATUS = 'FROZEN_BY_OWNER' as const;
 export const OWNER_SCOPE_REASON = 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE' as const;
@@ -129,7 +131,9 @@ export class OwnerPolicyBlockedError extends Error {
 
   constructor(operation: string) {
     const decision = decideOwnerScope(operation);
-    super(`${OWNER_POLICY_BLOCKED}: ${decision.operation}`);
+    // The durable error message carries only the bounded categorical
+    // projection of the canonicalized operation, never raw caller text.
+    super(`${OWNER_POLICY_BLOCKED}: ${safeErrorDetail(decision.operation)}`);
     this.name = 'OwnerPolicyBlockedError';
     this.operation = decision.operation;
   }

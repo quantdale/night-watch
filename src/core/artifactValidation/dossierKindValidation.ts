@@ -25,6 +25,7 @@ import {
   isRuntimeRecord,
   requireRuntimeArray,
   requireRuntimeRecord,
+  safeErrorDetail,
 } from '../campaign/runtimeValidation';
 
 const BUG_DOSSIER_V1_KEYS = [
@@ -91,5 +92,5 @@ export function validateDossierArtifact(value: unknown): void {
     parseBugDossierV2(value);
     return;
   }
-  invalid(`SCHEMA_VERSION_UNSUPPORTED:${String(schemaVersion)}`);
+  invalid(`SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(schemaVersion)}`);
 }

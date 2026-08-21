@@ -46,6 +46,7 @@ import type { UnifiedContractResult, UnifiedContractResultCategory } from './con
 import { evaluateComposedCurrentness } from './sourceContractResolution';
 import type { FamilyCurrentnessClass, FamilyResolutionRecord } from './sourceContractResolution';
 import { isEvidenceDigest, isSourceSha } from '../../../core/identity/canonicalDigest';
+import { safeErrorDetail } from '../../../core/campaign/runtimeValidation';
 
 /** Load-bearing composed-movement version. */
 export const SOURCE_CONTRACT_MOVEMENT_VERSION = 'nightwatch.source-contract-movement.v1' as const;
@@ -186,7 +187,9 @@ function validateObservation(side: 'previous' | 'current', observation: SourceCo
     throw new Error(`MOVEMENT_INVALID_EVIDENCE_DIGEST:${side}`);
   }
   if (!CURRENTNESS_MEMBERS.includes(observation.currentness)) {
-    throw new Error(`MOVEMENT_UNKNOWN_CURRENTNESS:${String(observation.currentness)}`);
+    // Rejected value is echoed only through the bounded categorical
+    // projection; sentinel-bearing payloads never enter error text.
+    throw new Error(`MOVEMENT_UNKNOWN_CURRENTNESS:${safeErrorDetail(observation.currentness)}`);
   }
   if (observation.derivationVersion !== null) {
     // Versions travel into emitted detail surfaces downstream; screen them

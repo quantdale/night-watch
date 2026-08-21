@@ -33,6 +33,7 @@ import {
   LOCAL_READINESS_EXTERNAL_CI_VALUES,
   LOCAL_READINESS_MODEL_VERSION,
 } from './types';
+import { containsForbiddenErrorDetail, safeErrorDetail } from '../campaign/runtimeValidation';
 import type {
   LocalReadinessBlocker,
   LocalReadinessCampaignSummary,
@@ -55,6 +56,12 @@ export const EXPECTED_FROZEN_OPERATION_COUNT: number = FROZEN_OWNER_OPERATIONS.l
 const BLOCKER_CODE_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 /** Bounded categorical detail charset; anything richer fails closed. */
 const BLOCKER_DETAIL_PATTERN = /^[A-Za-z0-9 ._:/()-]{0,160}$/;
+/**
+ * Bounded categorical charset for identity fields (target/family/kind) that
+ * are carried verbatim into the summary; sentinel-bearing or free-text values
+ * fail closed instead of entering the durable readiness surface.
+ */
+const IDENTITY_FIELD_PATTERN = /^[A-Za-z0-9_.:-]{1,200}$/;
 /** Substrings that must never appear in any carried detail (case-insensitive). */
 const BLOCKER_DETAIL_DENYLIST = [
   'bearer',
@@ -73,6 +80,14 @@ function failClosed(code: string): never {
   throw new Error(code);
 }
 
+/** Identity fields are carried verbatim into summaries: bounded categorical
+ *  values only, never sentinel-bearing or free-text payloads (fail-closed). */
+function assertSafeIdentityField(value: string, code: string): void {
+  if (!IDENTITY_FIELD_PATTERN.test(value) || containsForbiddenErrorDetail(value)) {
+    failClosed(code);
+  }
+}
+
 function sortedUnique(values: readonly string[]): string[] {
   return [...new Set(values)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
@@ -83,7 +98,7 @@ function compareStrings(a: string, b: string): number {
 
 function validateBlocker(blocker: LocalReadinessBlocker, index: number): void {
   if (!LOCAL_READINESS_BLOCKER_KINDS.includes(blocker.kind)) {
-    failClosed(`READINESS_INVALID_BLOCKER:kind:${index}:${String(blocker.kind)}`);
+    failClosed(`READINESS_INVALID_BLOCKER:kind:${index}:${safeErrorDetail(blocker.kind)}`);
   }
   if (typeof blocker.code !== 'string' || !BLOCKER_CODE_PATTERN.test(blocker.code)) {
     failClosed(`READINESS_INVALID_BLOCKER:code:${index}`);
@@ -126,7 +141,8 @@ function summarizeSourceContracts(input: LocalReadinessInput): {
   const seenTargets = new Set<string>();
   for (const targetId of approvedTargetIds) {
     if (targetId === '') failClosed('READINESS_INVALID_TARGETS:empty-id');
-    if (seenTargets.has(targetId)) failClosed(`READINESS_INVALID_TARGETS:duplicate-target:${targetId}`);
+    assertSafeIdentityField(targetId, 'READINESS_PRIVACY_BLOCKED:target-id');
+    if (seenTargets.has(targetId)) failClosed(`READINESS_INVALID_TARGETS:duplicate-target:${safeErrorDetail(targetId)}`);
     seenTargets.add(targetId);
   }
 
@@ -135,15 +151,19 @@ function summarizeSourceContracts(input: LocalReadinessInput): {
     if (family.familyId === '' || family.targetId === '') {
       failClosed(`READINESS_INVALID_FAMILIES:empty-identity:${index}`);
     }
+    assertSafeIdentityField(family.familyId, `READINESS_PRIVACY_BLOCKED:family-identity:${index}`);
+    assertSafeIdentityField(family.targetId, `READINESS_PRIVACY_BLOCKED:family-identity:${index}`);
+    assertSafeIdentityField(family.kind, `READINESS_PRIVACY_BLOCKED:family-kind:${index}`);
     if (seenFamilyIds.has(family.familyId)) {
-      failClosed(`READINESS_INVALID_FAMILIES:duplicate-family-id:${family.familyId}`);
+      failClosed(`READINESS_INVALID_FAMILIES:duplicate-family-id:${safeErrorDetail(family.familyId)}`);
     }
     seenFamilyIds.add(family.familyId);
   }
 
   for (const [targetId, currentness] of Object.entries(currentnessByTargetId)) {
+    assertSafeIdentityField(targetId, 'READINESS_PRIVACY_BLOCKED:currentness-target');
     if (!LOCAL_READINESS_CURRENTNESS_VALUES.includes(currentness)) {
-      failClosed(`READINESS_INVALID_CURRENTNESS:${targetId}`);
+      failClosed(`READINESS_INVALID_CURRENTNESS:${safeErrorDetail(targetId)}`);
     }
   }
 
@@ -220,7 +240,7 @@ function summarizeCampaign(input: LocalReadinessInput): {
   const { pinnedVersions, observedVersions } = input.campaign;
   for (const [key, value] of Object.entries(pinnedVersions)) {
     if (key === '' || typeof value !== 'string' || value === '') {
-      failClosed(`READINESS_INVALID_VERSIONS:${key === '' ? '<empty-key>' : key}`);
+      failClosed(`READINESS_INVALID_VERSIONS:${key === '' ? '<empty-key>' : safeErrorDetail(key)}`);
     }
   }
 
@@ -266,10 +286,10 @@ function coverageForTarget(activeCount: number, hasCampaignEligibleExpectation: 
  */
 export function summarizeLocalReadiness(input: LocalReadinessInput): LocalReadinessSummary {
   if (!LOCAL_READINESS_CHECKPOINT_COMPATIBILITY_VALUES.includes(input.checkpointCompatibility)) {
-    failClosed(`READINESS_INVALID_CHECKPOINT:${String(input.checkpointCompatibility)}`);
+    failClosed(`READINESS_INVALID_CHECKPOINT:${safeErrorDetail(input.checkpointCompatibility)}`);
   }
   if (!LOCAL_READINESS_EXTERNAL_CI_VALUES.includes(input.externalCi)) {
-    failClosed(`READINESS_INVALID_EXTERNAL_CI:${String(input.externalCi)}`);
+    failClosed(`READINESS_INVALID_EXTERNAL_CI:${safeErrorDetail(input.externalCi)}`);
   }
   const normalizedBlockers = normalizeBlockers(input.unresolvedBlockers);
 
