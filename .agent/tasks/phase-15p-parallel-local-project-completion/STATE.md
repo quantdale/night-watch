@@ -6,8 +6,8 @@ Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
 Status: IN_PROGRESS
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
-Last substantive checkpoint SHA: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
+Last validated implementation SHA: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
+Last substantive checkpoint SHA: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -35,11 +35,13 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-M4 WAVE 4 — launch the convergence sub-agents A13 (privacy/authority by
-construction), A14 (synthetic corpus/adversarial matrix), A15 (compatibility/
-dead-code/version convergence) over the integrated waves 1–3 tree, integrate
-their patches, then A16 (release-candidate rehearsal) last; run wave
-validation, record evidence, push.
+M5 FINAL — A16 release-candidate integration rehearsal: read-only cross-
+examination of the fully integrated tree plus assigned final-seam fixes, then
+the synthetic local release-candidate rehearsal spanning source contract
+resolution → currentness/drift → readiness snapshot → campaign planning →
+synthetic observation → semantic/protocol evaluation → candidate lifecycle →
+replay → minimization → clustering → confidence → dossier → checkpoint/resume
+→ private-safe status/brief, run >= 3 times green.
 
 ## Completed Milestones
 
@@ -71,16 +73,15 @@ validation, record evidence, push.
 
 ## Work In Progress
 
-M4 WAVE 4: A13/A14/A15 sub-agent prompts being issued over the integrated
-waves 1–3 tree; A16 rehearsal follows their integration.
+M5 FINAL: wave-4 continuity being committed/pushed; A16 rehearsal agent being
+briefed next.
 
 ## Exact Next Action
 
-Create worktrees for A13/A14/A15 off current main, launch them, integrate
-their patches with Wave-4 validation (typecheck, hardening:check, focused
-privacy/authority/adversarial/integration tests, campaign:synthetic,
-git diff --check), then brief A16 for the read-only cross-examination and the
-synthetic release-candidate rehearsal.
+Push the wave-4 continuity checkpoint, create the A16 worktree off current
+main, brief A16 (reviewer role) with the full assignment list and rehearsal
+requirements, integrate its final-seam fixes, run the M6 final integration
+pack, then close out HARDENING_HANDOFF.md and terminal statuses.
 
 ## Files Changed
 
@@ -125,6 +126,12 @@ Wave checkpoints append here and in INTEGRATION_LEDGER.md as they land.
   PASS; git diff --check PASS; focused suites — phase15pTriageDossierPipeline
   + phase15pLocalReadiness + phase15pArtifactValidation +
   phase15pProjectSnapshot + 8 compat suites = 221 passed, 0 failed.
+- WAVE 4 at `68f14b268a6834aa1881b1d50ae7a5fc56b2943a`: npm run typecheck
+  PASS; npm run hardening:check PASS; git diff --check PASS; all 15 phase15p
+  suites = 337 passed, 0 failed; npm run campaign:synthetic = 27 passed,
+  0 failed. A14 note: predecessor agent timed out mid-delivery; its fixture
+  layer was kept and the suite completed by a fresh delegated agent; two
+  fixture data-value repairs documented in the A14 handoff.
 - Sub-agent isolated-worktree raw counts (pre-integration): A01 14+92;
   A02 24+163; A03 30+77; A04 30+155; A05 23+122; A06 41+143; A07 17+51;
   A08 20+167; A09 17+44; A10 21+32; A11 23+35; A12 28+41 — all passed / 0 failed.

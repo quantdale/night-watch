@@ -20,6 +20,9 @@ committed, and pushed. Never pre-filled.
 | 10 | A10 | 08785dc8065013e2042a22e36461d285911c82a2 (swarm/a10-local-readiness) | 763226d5b7ac289bc8ed7b3e597ff46c5049657f | none | wave 3 green |
 | 11 | A11 | 37d7a85f083e1779b9a722a0718be52055c28fd4 (swarm/a11-artifact-validation) | fe8025f6da9a3dae6fb018b581818bc7571c297d | none (node:crypto createHash reviewed — same established pattern as src/core/identity/canonicalDigest.ts, deterministic hashing only) | wave 3 green |
 | 12 | A12 | e519881fb28aed8f0ef46f8ac5a3ef28a0725045 (swarm/a12-project-snapshot) | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 | none | wave 3 green |
+| 13 | A13 | 5c498e0cf259638f641397215c8a7f77510c14ac (swarm/a13-privacy-authority) | 6d5599235d5ad655505b9306886f1aa1a9eecb76 | none | wave 4 green |
+| 14 | A14 | 3213a642c6c73f94f5f92f0725c134262b3f5faf (swarm/a14-adversarial-corpus) | 9afe7e93f05f2606ae0c1f9de3dd7a07cd1ac604 | none (predecessor agent timed out; suite completed by a fresh delegated agent against the delivered fixtures; two fixture data-value repairs documented in handoff) | wave 4 green |
+| 15 | A15 | 0a8f22a02e4f38252a92d1c2a3b710bc1873d3f0 (swarm/a15-compat-cleanup) | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a | none | wave 4 green |
 
 ## Rejected patches
 
@@ -34,4 +37,4 @@ committed, and pushed. Never pre-filled.
 | 1 | A01 A02 A03 A04 | 417d187cb13de98db611c4f2412f94fe62a9daab (+ docs commit after) | typecheck PASS; git diff --check PASS; focused foundation suites (4 new + 5 compat) 190 passed / 0 failed; privacy/authority diff sweep clean | yes | yes |
 | 2 | A05 A06 A07 A09 | dbd2397d52b12d51c8fdf478c1d299cca5f9be2f (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 212 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; one semantic conflict (A05×A09 orchestrator.ts) resolved keeping both behaviors | yes | yes |
 | 3 | A08 A10 A11 A12 | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 221 passed / 0 failed; conflict-free; privacy/authority sweep clean (one node:crypto use verified against canonicalDigest precedent) | yes | yes |
-| 4 | A13 A14 A15 A16 | not yet started | — | no | — |
+| 4 | A13 A14 A15 (A16 pending) | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a (+ docs commit after) | typecheck PASS; hardening:check PASS; git diff --check PASS; all 15 phase15p suites 337 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; conflict-free | yes | yes |

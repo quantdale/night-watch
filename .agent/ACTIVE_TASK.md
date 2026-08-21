@@ -6,10 +6,10 @@ Title: Nightwatch Phase 15P — Parallel Local Project Completion (parent integr
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-15p-parallel-local-project-completion
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
-Last checkpoint: 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797
-Current milestone: M4 WAVE 4 — launch A13/A14/A15 convergence sub-agents over the integrated tree, integrate, then A16 rehearsal
-Next action: create worktrees for A13/A14/A15 off current main, launch them, integrate with Wave-4 validation, then brief A16 for the release-candidate rehearsal
+Last validated implementation SHA: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
+Last checkpoint: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
+Current milestone: M5 FINAL — A16 release-candidate rehearsal over the fully integrated tree, then M6 final pack and handoff closure
+Next action: push wave-4 continuity, brief A16 (reviewer), integrate its final-seam fixes, run the M6 final integration pack, close HARDENING_HANDOFF.md and terminal statuses
 Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -39,7 +39,7 @@ PHASE_15_PARALLEL_IMPLEMENTATION: IN_PROGRESS
 PHASE_15_INTEGRATED_HARDENING: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: launch and integrate Wave 4 (A13/A14/A15), then A16 rehearsal
+NEXT ACTION: brief and integrate A16 rehearsal, then final pack + handoff closure
 
 ## Blockers
 
