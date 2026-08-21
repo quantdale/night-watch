@@ -16,13 +16,22 @@ const FINGERPRINT_RE = /^fp:sha256:[a-f0-9]{12,64}$/i;
 const RUN_ID_RE = /^[A-Za-z0-9_.-]{1,160}$/;
 const FORBIDDEN_VALUE_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
 
-function digest(value: unknown): string {
+// Shared identity normalization for protocol and semantic clustering
+// identities (Phase 15P A08 convergence): canonical JSON -> sha256 -> first
+// 24 hex chars, plus the common sentinel screen. Single source of truth so
+// both identity spaces cannot drift; outputs are byte-identical by
+// construction.
+export function boundedIdentityDigest(value: unknown): string {
   return sha256Hex(stableJsonSorted(value)).slice(0, 24);
+}
+
+export function identityValueForbidden(value: string): boolean {
+  return FORBIDDEN_VALUE_RE.test(value);
 }
 
 function safeClass(value: string | null, field: string): string | null {
   if (value === null) return null;
-  if (!SAFE_CLASS_RE.test(value) || FORBIDDEN_VALUE_RE.test(value)) throw new Error(`CLUSTER_FEATURE_UNSAFE:${field}`);
+  if (!SAFE_CLASS_RE.test(value) || identityValueForbidden(value)) throw new Error(`CLUSTER_FEATURE_UNSAFE:${field}`);
   return value;
 }
 
@@ -48,7 +57,7 @@ function clusterKey(fingerprint: string, features: StableAnomalyFeatures, timing
   // Bounded timing is deliberately excluded. A genuinely transient class is
   // retained so a short-lived resource symptom does not merge with a stable
   // product anomaly merely because the other dimensions happen to match.
-  return `cluster-key:sha256:${digest({ schemaVersion: ANOMALY_CLUSTER_VERSION, fingerprint, features, transient: timingClass === 'TRANSIENT' })}`;
+  return `cluster-key:sha256:${boundedIdentityDigest({ schemaVersion: ANOMALY_CLUSTER_VERSION, fingerprint, features, transient: timingClass === 'TRANSIENT' })}`;
 }
 
 export function sanitizeAnomalyObservation(input: AnomalyObservation): SanitizedAnomalyObservation {
@@ -83,7 +92,7 @@ export function clusterAnomalies(observations: readonly AnomalyObservation[]): r
       : items.some((item) => item.timingClass === 'BOUNDED') ? 'BOUNDED' : 'NONE';
     const known = [...new Set(items.map((item) => item.knownFalsePositiveId).filter((value): value is string => value !== undefined))].sort()[0];
     return {
-      clusterId: `cluster:sha256:${digest({ schemaVersion: ANOMALY_CLUSTER_VERSION, key })}`,
+      clusterId: `cluster:sha256:${boundedIdentityDigest({ schemaVersion: ANOMALY_CLUSTER_VERSION, key })}`,
       clusterKey: key,
       fingerprint: primary.fingerprint,
       features: primary.features,
