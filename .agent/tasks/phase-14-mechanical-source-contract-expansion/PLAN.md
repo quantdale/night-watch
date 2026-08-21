@@ -4,6 +4,7 @@ Task ID: `phase-14-mechanical-source-contract-expansion`
 Phase: `14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION`
 Authority at publication: NOT_GRANTED.
 Owner executor prompt grants: `PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY`.
+Extension execution grants: `PHASE_14_FIVE_CHANGE_IMPLEMENTATION_BATCH_LOCAL_ONLY` (FIVE_CHANGE_IMPLEMENTATION_EXTENSION.md supersedes the original M7-M11 validation cadence for the five-change batch only; original SPEC architecture/safety/source-proof rules remain normative).
 
 ## Purpose
 
@@ -108,6 +109,39 @@ Status: COMPLETE
 - exact final Actions truth;
 - Phase 11B/13B still NOT_AUTHORIZED;
 - STOP.
+
+## Extension Milestones (five-change implementation batch)
+
+Cadence per change: implement coherent source surface -> permanent focused tests -> `npm run typecheck` + `git diff --check` -> smallest focused matrix -> one narrow compatibility matrix when a Phase 9-13 public contract is touched -> durable fast-forward checkpoint. Full hardening explicitly deferred.
+
+### E1 — C1 mechanical analyzer IR + bounded control flow
+Status: COMPLETE (`aab7859`)
+- versioned IR, bounded traversal with deterministic stop codes, alias-cycle detection, finite branch unions, all-branch field presence, partial-vs-full proof distinction; analyzer version load-bearing in digests; legacy Phase-10 extractor behavior preserved.
+
+### E2 — C2 static schema / generated / proto / chunk adapters
+Status: COMPLETE (`487d823`; nested/repeated/required adapters also in `aab7859`)
+- generated-interface and proto finite-shape proofs; map<>/oneof/unknown-type/comment-only/string-literal fail-closed; GENERATED_SCHEMA_UNAVAILABLE / TRANSPORT_CONTRACT_UNPROVEN preserved; no transport authority invented; corpus proto fixtures added.
+
+### E3 — C4 source-contract drift/currentness intelligence
+Status: COMPLETE (`030c82b`; initial module `5e107f6`)
+- deterministic classification DTO (EVIDENCE_UNCHANGED_SHA_MOVED, EVIDENCE_CHANGED_COMPATIBLE/BREAKING, DERIVATION_VERSION_CHANGED, SOURCE_STALE, SOURCE_UNAVAILABLE, CONTRACT_BECAME_AMBIGUOUS/PROVABLE, NO_APPROVED_TARGET); compatible-vs-breaking refinement; inventory-level comparison; privacy-safe serialization tests.
+
+### E4 — C5 contract coverage observability + developer tooling
+Status: COMPLETE (`10136c8`)
+- sanitized deterministic report module + report digest/version; read-only CLI `bin/phase14-contract-health.mjs` (snapshot or inventory input, baseline comparison mode, text renderer); strict unknown-field and privacy-sentinel rejection; corpus index generation/validation; no network/runtime authority.
+
+### E5 — C3 fresh real-source re-evaluation + additive admission guard
+Status: COMPLETE (`f554da3`)
+- fresh remote SHA resolved live (`85e400a8...`, master of `mobingilabs/ripple-api`); disposable exact snapshot verified HEAD == remote SHA; canonical sibling untouched;
+- six-target before/after inventory at fresh source: B1-B4 reproduce, zero uplift, no silent strengthening;
+- live drift vs recorded `e026c855` evidence identities: all six targets EVIDENCE_UNCHANGED_SHA_MOVED (cluster stability across SHA-only movement proven on real data);
+- B5 wrong-SHA resolver SOURCE_STALE; missing-source inventory fails closed (never CURRENT).
+
+### E6 — Moderate integrated validation pack + terminal continuity
+Status: COMPLETE
+- typecheck, hardening:check, all six Phase-14 suites (133), affected Phase 9-13 suites (225), campaign:synthetic (27), agent:check, project:check, git diff --check — all green;
+- canonical sibling writes = 0; deterministic repeat mismatches = 0; quality floors all zero;
+- STATE/REPORT/HARDENING_HANDOFF populated from actual evidence; terminal IMPLEMENTED_AWAITING_HARDENING.
 
 ## Validation Strategy
 

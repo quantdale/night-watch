@@ -2,7 +2,7 @@
 
 Task ID: phase-14-mechanical-source-contract-expansion
 Phase: 14A-MECHANICAL-SOURCE-CONTRACT-EXPANSION
-Status: BLOCKED_EXTERNAL_CI
+Status: BLOCKED (terminal IMPLEMENTED_AWAITING_HARDENING; see Extension section)
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Publication state
@@ -85,3 +85,62 @@ false-admission = 0; privacy leak = 0; stale-source false-current = 0; unsupport
 ## Final-state rule
 
 No real-source semantic uplift is claimed: every admitted fact is mechanically proven from current source; the analyzer's capability gain (10 synthetic positives) is reported separately from actual product-contract uplift (0). A zero-uplift result is successful because the analyzer is stronger and current source remains honestly ambiguous. Terminal state will be `PHASE_14A_STATUS: COMPLETE` if CI can be verified, else `PHASE_14A_STATUS: BLOCKED_EXTERNAL_CI` with `PHASE_14_MECHANICAL_SOURCE_EXPANSION: VERIFIED_LOCAL_NOT_CI_VERIFIED`. Phase 13B and Phase 11B remain NOT_AUTHORIZED in every terminal state.
+
+---
+
+# Extension REPORT — Five-Change Implementation Batch
+
+Authority: `PHASE_14_FIVE_CHANGE_IMPLEMENTATION_BATCH_LOCAL_ONLY` (with the original `PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION_LOCAL_ONLY`). The section above records the ORIGINAL Phase-14A execution and is preserved as history; its M7-M11 exhaustive-hardening cadence was superseded for this batch only by FIVE_CHANGE_IMPLEMENTATION_EXTENSION.md.
+
+## Implementation checkpoints (exact SHAs)
+
+- C1 analyzer IR + bounded control flow: `aab7859` (IR/alias-cycle/nested-repeated-required atop the versioned analyzer from `6507df6`)
+- C2 static schema / proto / chunk adapters: `487d823`
+- C3 fresh real-source re-evaluation + additive admission guard: `f554da32849481902c86150f657d9696be46e04f`
+- C4 contract drift intelligence: `030c82b` (initial module `5e107f6`)
+- C5 coverage observability + tooling: `10136c8`
+- Final implementation-batch anchor: `f554da32849481902c86150f657d9696be46e04f` (LAST_VALIDATED_IMPLEMENTATION_SHA; docs closure descendants discoverable from Git)
+
+## Fresh-source truth (this batch)
+
+- Remote resolved live: `mobingilabs/ripple-api` master = `85e400a8b32fc23c05464033a2a6d5fff2a2890c`.
+- Disposable exact snapshot: `/tmp/nightwatch-ripple-snapshot-85e400a8`, HEAD verified == remote SHA, clean.
+- Canonical sibling before/after: `27bb007ad0c798800b6bd3b29760c966422966e7`, clean except pre-existing untracked `AGENTS.md`; zero writes.
+- Six-target before/after (prior `e026c855` -> fresh `85e400a8`): dispositions, depth classes, blockers, historical/collection IDs, observer classes, source paths/symbols, entry digests, and probe[0] digests are ALL byte-identical; only `sourceSha` moved. All six classify `EVIDENCE_UNCHANGED_SHA_MOVED`.
+- B1 account-inventory TYPE_FLOW_AMBIGUOUS: reproduced. B2 billing-group-exchange TYPE_FLOW_AMBIGUOUS: reproduced. B3 legacy AMBIGUOUS_CONDITIONAL_BLOB_RUNTIME_COMPUTED: reproduced. B4 gRPC GRPC_CHUNKED_NO_PHP_MECHANICAL_CONTRACT: reproduced. B5 wrong-SHA: resolver SOURCE_STALE; missing-source inventory never certifies CURRENT.
+- Newly proven contracts/uplifts: NONE (zero-uplift result recorded plainly; no additive admission; registry unchanged).
+
+## Focused validation completed in this batch
+
+Per-change gates ran at each change's own commit (typecheck + git diff --check + focused matrix; commit messages carry the per-change record). Re-verified at the final tree:
+
+- typecheck PASS; hardening:check PASS; git diff --check PASS.
+- Phase-14 focused suites (raw): phase14Analyzer 51; phase14StaticSchemaAdapters 16; phase14CoverageInventory 22; phase14ContractDrift 13; phase14ContractReport 17; phase14FreshSourceAdmission 14 — total 133 passed, 0 failed.
+- Narrow compatibility at C3: phase11a3CollectionAdmission 28 passed; phase12CoverageInventory 25 passed.
+- Moderate integration pack: affected Phase 9-13 suites (phase9a1GapReproduction, phase9bFreshness, phase9bHarness, phase10Admission, phase10Currentness, phase10Identity, phase10Campaign, phase11CollectionWide, phase11a3CollectionAdmission, phase12CoverageInventory, phase12SemanticCluster, campaign) = 225 passed, 0 failed.
+- campaign:synthetic: 27 passed, 0 failed.
+- agent:check PASS (strict v2); project:check PASS.
+- Deterministic repeats >=3 on focused corpus/inventory: mismatch count 0.
+- Quality floors: falseAdmissionCount 0; privacyLeakCount 0; staleSourceFalseCurrentCount 0; unsupportedFalseProofCount 0.
+- Fresh-source disposable-snapshot acceptance: PASS (live-gated C3 tests executed against the real snapshot).
+
+## Deliberately NOT_RUN in this batch (deferred to full hardening campaign)
+
+Complete canonical Playwright workers=1; topology-correct isolated complete Playwright; broad Phase 9-13 compatibility sweep (only directly affected suites run); exhaustive Phase-14 acceptance matrix replay; whole-repository adversarial privacy sweep; whole-repository authority/dependency boundary sweep; codebase-wide dead-code/version audit; full CI-equivalent matrix reproduction. These rows are NOT_RUN / DEFERRED_TO_FULL_HARDENING_CAMPAIGN — not PASS.
+
+## Terminal tokens
+
+```text
+PHASE_14_C1_ANALYZER_IR: IMPLEMENTED_FOCUSED_GREEN
+PHASE_14_C2_STATIC_SCHEMA_ADAPTERS: IMPLEMENTED_FOCUSED_GREEN
+PHASE_14_C3_REAL_SOURCE_ADMISSION: IMPLEMENTED_FOCUSED_GREEN
+PHASE_14_C4_CONTRACT_DRIFT_INTELLIGENCE: IMPLEMENTED_FOCUSED_GREEN
+PHASE_14_C5_CONTRACT_OBSERVABILITY: IMPLEMENTED_FOCUSED_GREEN
+PHASE_14A_STATUS: IMPLEMENTED_AWAITING_HARDENING
+PHASE_14_FULL_HARDENING_CAMPAIGN: REQUIRED_NEXT
+PHASE_13B_STATUS: NOT_AUTHORIZED
+PHASE_11B_STATUS: NOT_AUTHORIZED
+NEXT ACTION: STOP
+```
+
+GitHub Actions remains externally billing-blocked (known condition; re-verified once after each push). The deliberate absence of the future full-hardening campaign is not a code failure.
