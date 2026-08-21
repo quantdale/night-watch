@@ -6,10 +6,10 @@ Title: Nightwatch Phase 15P — Parallel Local Project Completion (parent integr
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-15p-parallel-local-project-completion
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last checkpoint: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Current milestone: M0 Baseline — adopt prior Session-2 closure artifacts, create 15P task infrastructure, verify continuity checks, commit and push the baseline
-Next action: finish M0 (agent:check + project:check, path-scoped baseline commit, fast-forward push), then establish ownership boundaries and launch Wave-1 foundation sub-agents A01–A04 in isolated worktrees
+Last validated implementation SHA: 417d187cb13de98db611c4f2412f94fe62a9daab
+Last checkpoint: 417d187cb13de98db611c4f2412f94fe62a9daab
+Current milestone: M2 WAVE 2 — integrate delivered campaign-runtime patches A05/A06/A07/A09 with wave validation, then waves 3-4
+Next action: cherry-pick A05 (e4b4f5d), A06 (a0bf5f1), A07 (52870ba), A09 (aadfe9b) in order; run Wave-2 validation (typecheck, focused suites, campaign:synthetic, git diff --check); update ledgers; push fast-forward
 Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -39,7 +39,7 @@ PHASE_15_PARALLEL_IMPLEMENTATION: IN_PROGRESS
 PHASE_15_INTEGRATED_HARDENING: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: finish M0 baseline, then launch Wave-1 sub-agents
+NEXT ACTION: integrate Wave 2 (A05/A06/A07/A09), then waves 3-4
 
 ## Blockers
 

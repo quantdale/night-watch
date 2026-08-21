@@ -6,8 +6,8 @@ Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
 Status: IN_PROGRESS
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last substantive checkpoint SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+Last validated implementation SHA: 417d187cb13de98db611c4f2412f94fe62a9daab
+Last substantive checkpoint SHA: 417d187cb13de98db611c4f2412f94fe62a9daab
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -35,10 +35,11 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-M0 Baseline — adopt the prior Session-2 closure artifacts (integrated proof
-test repair + continuity updates), extend the continuity-checker allowlist
-for the mandated 15P artifacts, create the 15P task files, verify
-agent:check + project:check, commit and push the baseline checkpoint.
+M2 WAVE 2 — integrate the delivered campaign-runtime patches A05 (candidate
+lifecycle gates), A06 (replay binding seam), A07 (minimality truth), A09
+(checkpoint drift) in dependency order, run wave validation (typecheck,
+focused replay/minimization/campaign/checkpoint tests, campaign:synthetic,
+git diff --check), record evidence, push.
 
 ## Completed Milestones
 
@@ -50,19 +51,27 @@ agent:check + project:check, commit and push the baseline checkpoint.
   hardening:check PASS; Session-2 focused adoption suites 181 passed /
   0 failed; integrated campaign proof test repaired (stale draft leg-tag
   assertion `'B'` → `'API_DIVERGENCE'`) and green 4 passed / 0 failed.
+- M0 Baseline: COMPLETE at `08890e64560d6c5870484fa72714f09e974ab1dd`
+  (Session-2 closure adoption + 15P task infrastructure + checker allowlist
+  extension; agent:check PASS; pushed fast-forward; CI run `32443865543`
+  = known zero-step billing block).
+- M1 WAVE 1: COMPLETE at `417d187cb13de98db611c4f2412f94fe62a9daab` —
+  A01+A02+A03+A04 cherry-picked conflict-free after full diff review and
+  privacy/authority sweep; typecheck PASS; git diff --check PASS; focused
+  foundation suites (4 new phase15p + 5 compat) 190 passed / 0 failed.
 
 ## Work In Progress
 
-M0 Baseline: 15P task files created; checker allowlist extended for PROPOSAL,
-SUBAGENT_LEDGER, INTEGRATION_LEDGER; agent:check / project:check verification
-and the baseline commit/push are being executed.
+M2 WAVE 2: delivered patches A05/A06/A07/A09 reviewed via handoffs; ledger
+rows updated; cherry-pick + wave validation next.
 
 ## Exact Next Action
 
-Finish M0: run agent:check + project:check, commit the baseline (Session-2
-closure adoption + 15P task bootstrap) path-scoped, push fast-forward, verify
-HEAD == origin/main, then establish sub-agent ownership boundaries and launch
-the Wave-1 foundation sub-agents (A01–A04) in isolated worktrees.
+Cherry-pick A05 (`e4b4f5d`), A06 (`a0bf5f1`), A07 (`52870ba`), A09
+(`aadfe9b`) onto main in that order, resolve any conflicts semantically, run
+Wave-2 validation (typecheck, focused replay/minimization/campaign/checkpoint
+suites, campaign:synthetic, git diff --check), update ledgers, commit docs,
+push fast-forward.
 
 ## Files Changed
 
@@ -90,6 +99,17 @@ Wave checkpoints append here and in INTEGRATION_LEDGER.md as they land.
 - tests/unit/phase15CampaignIntegratedProof.test.ts: 4 passed, 0 failed
   (after stale-assertion repair).
 - git diff --check: PASS (pre-baseline).
+- Baseline checkpoint `08890e64560d6c5870484fa72714f09e974ab1dd`: agent:check
+  PASS; pushed fast-forward; GitHub Actions run `32443865543` FAILURE in 2s,
+  zero steps executed (known external billing/spending-limit block; recorded
+  once, not retried).
+- WAVE 1 at `417d187cb13de98db611c4f2412f94fe62a9daab`: npm run typecheck
+  PASS; git diff --check PASS; focused foundation suites — phase15pContract-
+  Lifecycle + phase15pSemanticVocabulary + phase15pCurrentnessDrift +
+  phase15pSchemaCoherence + 5 compat lifecycle suites = 190 passed, 0 failed.
+- Sub-agent isolated-worktree raw counts (pre-integration): A01 14+92;
+  A02 24+163; A03 30+77; A04 30+155; A05 23+122; A06 41+143; A07 17+51;
+  A08 20+167; A09 17+44; A10 21+32; A11 23+35; A12 28+41 — all passed / 0 failed.
 - Wave/final rows are appended as they execute.
 
 ## Decisions Made During This Task
