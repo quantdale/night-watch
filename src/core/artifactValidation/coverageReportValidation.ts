@@ -21,6 +21,7 @@ import {
   isRuntimeRecord,
   requireRuntimeArray,
   requireRuntimeRecord,
+  safeErrorDetail,
   type RuntimeRecord,
 } from '../campaign/runtimeValidation';
 
@@ -44,7 +45,7 @@ function invalid(reason: string): never {
 function assertCountRecord(value: unknown, code: string): void {
   const record = requireRuntimeRecord(value, code);
   for (const [key, count] of Object.entries(record)) {
-    if (!Number.isInteger(count) || (count as number) < 0) invalid(`${code}_ENTRY:${key}`);
+    if (!Number.isInteger(count) || (count as number) < 0) invalid(`${code}_ENTRY:${safeErrorDetail(key)}`);
   }
 }
 
@@ -68,9 +69,11 @@ export function validateCoverageReportArtifact(value: unknown): void {
 
   const proofClasses = requireRuntimeRecord(report.proofClasses, 'ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASSES_OBJECT_REQUIRED');
   for (const [proofClass, bucketValue] of Object.entries(proofClasses)) {
-    const bucket = requireRuntimeRecord(bucketValue, `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${proofClass}`);
-    assertExactKeys(bucket, PROOF_CLASS_KEYS, `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${proofClass}`);
-    for (const key of PROOF_CLASS_KEYS) assertNonNegativeInteger(bucket[key], `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${proofClass}:${key}`);
+    // Caller-supplied map keys are echoed only through the bounded projection.
+    const safeProofClass = safeErrorDetail(proofClass);
+    const bucket = requireRuntimeRecord(bucketValue, `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${safeProofClass}`);
+    assertExactKeys(bucket, PROOF_CLASS_KEYS, `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${safeProofClass}`);
+    for (const key of PROOF_CLASS_KEYS) assertNonNegativeInteger(bucket[key], `ARTIFACT_COVERAGE_REPORT_INVALID:PROOF_CLASS:${safeProofClass}:${key}`);
   }
 
   const identities = requireRuntimeArray(report.normalizedEvidenceIdentities, 'ARTIFACT_COVERAGE_REPORT_INVALID:EVIDENCE_IDENTITIES');

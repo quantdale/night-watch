@@ -21,6 +21,7 @@ import {
   assertString,
   isRuntimeRecord,
   requireRuntimeRecord,
+  safeErrorDetail,
   type RuntimeRecord,
 } from '../campaign/runtimeValidation';
 
@@ -88,14 +89,16 @@ export function validateReproductionRecordArtifact(
   if (record.state === 'COMPLETED' && record.result === null) invalid('COMPLETED_WITHOUT_RESULT');
 
   if (context.knownClusterIds !== undefined && !context.knownClusterIds.includes(record.clusterId)) {
-    invalid(`UNKNOWN_CLUSTER:${record.clusterId}`);
+    // Referential failures echo only a bounded categorical projection of the
+    // rejected id — the raw value is caller-supplied and never trusted.
+    invalid(`UNKNOWN_CLUSTER:${safeErrorDetail(record.clusterId)}`);
   }
   if (context.knownObservationRunIds !== undefined) {
     if (!context.knownObservationRunIds.includes(record.representativeRunId)) {
-      invalid(`UNKNOWN_REPRESENTATIVE_OBSERVATION:${record.representativeRunId}`);
+      invalid(`UNKNOWN_REPRESENTATIVE_OBSERVATION:${safeErrorDetail(record.representativeRunId)}`);
     }
     if (record.runId !== null && !context.knownObservationRunIds.includes(record.runId)) {
-      invalid(`UNKNOWN_RUN:${record.runId}`);
+      invalid(`UNKNOWN_RUN:${safeErrorDetail(record.runId)}`);
     }
   }
 }
