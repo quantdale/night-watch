@@ -43,15 +43,46 @@
 // - source-bundle       : nightwatch.semantic-campaign-bundle.private.v1.
 // - coverage-report     : nightwatch.contract-coverage-report.v1 (digest must
 //     re-derive over the normalized report body).
+//
+// Phase 15P round-2 kinds (same facade, same contract):
+// - candidate-record     : nightwatch.campaign-candidate-record.private.v1 —
+//     one campaign bug-candidate id bound to its lifecycle record; the
+//     embedded lifecycle is validated VERBATIM by
+//     campaign/candidateLifecycle.validateCandidateLifecycleRecord, the same
+//     strict authority behind the checkpoint's Session-2 `candidateLifecycles`
+//     ledger (reason-code pattern + sentinel screen included there).
+// - replay-record        : nightwatch.triage-replay-plan.private.v1 AND .v2 —
+//     the SAME historical plan versions as `replay-plan`, validated MORE
+//     DEEPLY via composition: sentinel screening across every string field
+//     (the v1 module validator carries no sentinel screen) and occurrence-
+//     identity depth through triage/replayPlan's exported helpers. This kind
+//     is also the reserved integration surface for the Phase 15P A06
+//     ReplayResultEnvelope: until that module registers its validator through
+//     replayEnvelopeRegistration.ts the envelope kind fails closed.
+// - minimization-record  : nightwatch.failure-minimization.private.v1
+//     (triage/types.MinimizationResult). The minimizer exposes NO digest/id
+//     builder for results, so there is no identity to recompose; validation
+//     is exact-shape plus mechanically derivable coherence rules only.
+// - project-health-report: nightwatch.local-readiness.v1
+//     (readiness/localReadiness.LocalReadinessSummary). Vocabulary value
+//     arrays and the frozen owner-scope marker constants are imported from
+//     the owning module and reused verbatim.
+//
+// morning-brief note (round-2 verification): campaign/types.ts declares
+// exactly ONE brief version constant (CAMPAIGN_MORNING_BRIEF_VERSION) and
+// acceptance already references it by constant — there is no second brief
+// version to admit, so this entry needed no extension.
 // ---------------------------------------------------------------------------
 
 import { CAMPAIGN_CHECKPOINT_VERSION, CAMPAIGN_MORNING_BRIEF_VERSION, type CampaignManifest } from '../campaign/types';
-import { ANOMALY_CLUSTER_VERSION, DOSSIER_VERSION } from '../triage/types';
+import { ANOMALY_CLUSTER_VERSION, DOSSIER_VERSION, FAILURE_MINIMIZATION_VERSION } from '../triage/types';
+import { LOCAL_READINESS_MODEL_VERSION } from '../readiness/types';
 import { DOSSIER_VERSION_V2 } from '../triage/dossierV2';
 import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../triage/replayPlan';
 import { SEMANTIC_EVALUATION_RECEIPT_VERSION, SEMANTIC_EVALUATION_RECEIPT_VERSION_V1 } from '../../oracles/semantic/receipts';
 import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION } from '../source/semanticCampaignBundle';
 import { REPORT_VERSION } from '../../oracles/expectations/extract/contractCoverageReport';
+import { CAMPAIGN_CANDIDATE_RECORD_VERSION } from './candidateRecordValidation';
 
 export const ARTIFACT_VALIDATION_FACADE_VERSION = 'nightwatch.artifact-validation.private.v1' as const;
 
@@ -66,7 +97,11 @@ export type ArtifactKind =
   | 'dossier'
   | 'morning-brief'
   | 'source-bundle'
-  | 'coverage-report';
+  | 'coverage-report'
+  | 'candidate-record'
+  | 'replay-record'
+  | 'minimization-record'
+  | 'project-health-report';
 
 export const KNOWN_ARTIFACT_KINDS: readonly ArtifactKind[] = [
   'campaign-checkpoint',
@@ -79,6 +114,10 @@ export const KNOWN_ARTIFACT_KINDS: readonly ArtifactKind[] = [
   'morning-brief',
   'source-bundle',
   'coverage-report',
+  'candidate-record',
+  'replay-record',
+  'minimization-record',
+  'project-health-report',
 ];
 
 /**
@@ -101,6 +140,10 @@ export const ARTIFACT_KIND_VERSION_ACCEPTANCE: Readonly<Record<ArtifactKind, rea
   'morning-brief': [CAMPAIGN_MORNING_BRIEF_VERSION],
   'source-bundle': [SEMANTIC_CAMPAIGN_BUNDLE_VERSION],
   'coverage-report': [REPORT_VERSION],
+  'candidate-record': [CAMPAIGN_CANDIDATE_RECORD_VERSION],
+  'replay-record': [TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION],
+  'minimization-record': [FAILURE_MINIMIZATION_VERSION],
+  'project-health-report': [LOCAL_READINESS_MODEL_VERSION],
 });
 
 /** Optional referential context. Only `manifest` is required (and only for
@@ -113,6 +156,8 @@ export interface ArtifactValidationContext {
   readonly knownClusterIds?: readonly string[];
   /** When provided, reproduction records must reference these observations. */
   readonly knownObservationRunIds?: readonly string[];
+  /** When provided, candidate records must reference these bug-candidate ids. */
+  readonly knownBugCandidateIds?: readonly string[];
 }
 
 export type ArtifactValidationResult =
