@@ -13,11 +13,13 @@ import {
 // remain ordinary fail-closed oracle failures.
 // ---------------------------------------------------------------------------
 
-export const OPTIONAL_SUPPORT_HOST_CLASS = 'optional-third-party-support' as const;
-export const OPTIONAL_SUPPORT_HOST = 'widget.usepylon.com' as const;
+// Phase 15P A15 convergence: classification constants are module-private
+// (only this module consumes them; grep-proven).
+const OPTIONAL_SUPPORT_HOST_CLASS = 'optional-third-party-support' as const;
+const OPTIONAL_SUPPORT_HOST = 'widget.usepylon.com' as const;
 export const OPTIONAL_SUPPORT_CLASSIFICATION = 'OPTIONAL_THIRD_PARTY_SUPPORT' as const;
-export const TELEMETRY_HOST_CLASS = 'telemetry' as const;
-export const TELEMETRY_CLASSIFICATION = 'TELEMETRY' as const;
+const TELEMETRY_HOST_CLASS = 'telemetry' as const;
+const TELEMETRY_CLASSIFICATION = 'TELEMETRY' as const;
 export const EXPECTED_CONTAINMENT_EFFECT = 'EXPECTED_CONTAINMENT_EFFECT' as const;
 
 function mentionsExactHost(value: string, host: string): boolean {

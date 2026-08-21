@@ -8,7 +8,8 @@
 
 import { prefixedDigest24 } from '../identity/canonicalDigest';
 
-export interface AnomalyFingerprintInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface AnomalyFingerprintInput {
   journeyId: string;
   stepId?: string | null;
   oracleId: string;
@@ -22,7 +23,8 @@ export interface AnomalyFingerprintInput {
   runtimeCategory?: string | null;
 }
 
-export interface SanitizedAnomalyFingerprintInput {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface SanitizedAnomalyFingerprintInput {
   journeyId: string;
   stepId: string | null;
   oracleId: string;

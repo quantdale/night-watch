@@ -18,8 +18,10 @@ import { createHash } from 'node:crypto';
 
 export const SEMANTIC_CAMPAIGN_BUNDLE_VERSION = 'nightwatch.semantic-campaign-bundle.private.v1' as const;
 
-export type SemanticBundleResolverState = 'RESOLVED' | 'NO_EXPECTATION' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
-export type SemanticBundleDevReachability = 'DEV_REACHABLE' | 'LOCAL_ONLY' | 'UNKNOWN';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type SemanticBundleResolverState = 'RESOLVED' | 'NO_EXPECTATION' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type SemanticBundleDevReachability = 'DEV_REACHABLE' | 'LOCAL_ONLY' | 'UNKNOWN';
 export type SemanticBundleExpectationClass = 'HISTORICAL' | 'COLLECTION';
 
 export interface SemanticCampaignBundleApprovedMapping {
@@ -48,7 +50,8 @@ export interface SemanticCampaignBundle {
   readonly deploymentStatusUnresolved: true;
 }
 
-export type SemanticCampaignBundleInput = Omit<SemanticCampaignBundle, 'bundleId' | 'schemaVersion' | 'deploymentStatusUnresolved'> & {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type SemanticCampaignBundleInput = Omit<SemanticCampaignBundle, 'bundleId' | 'schemaVersion' | 'deploymentStatusUnresolved'> & {
   readonly bundleId?: string;
 };
 
@@ -186,8 +189,4 @@ export function createSemanticCampaignBundle(input: SemanticCampaignBundleInput)
   const finalized: SemanticCampaignBundle = { ...bundle, bundleId };
   validateSemanticCampaignBundle(finalized);
   return finalized;
-}
-
-export function semanticCampaignBundleIdentity(bundle: SemanticCampaignBundle): string {
-  return deterministicBundleId(bundle as Omit<SemanticCampaignBundle, 'bundleId'>);
 }

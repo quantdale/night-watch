@@ -12,14 +12,15 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { selfDevContractDigest } from '../../core/selfDev/contract';
 import { sha256LengthPrefixedEntries } from '../../core/selfDev/canonical';
-import { SELFDEV_AUTHORITATIVE_PATHS, SELFDEV_SOURCE_BUNDLE_ALGORITHM, SELFDEV_SOURCE_BUNDLE_MANIFEST_VERSION } from '../../core/selfDev/provenanceManifest';
+import { SELFDEV_AUTHORITATIVE_PATHS } from '../../core/selfDev/provenanceManifest';
 import {
   SELFDEV_PROVENANCE_SCHEMA_VERSION,
   SELFDEV_REPLAY_ALGORITHM_VERSION,
   type SelfDevProvenance,
 } from '../../core/selfDev/types';
 
-export type LocalProvenanceErrorCode =
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type LocalProvenanceErrorCode =
   | 'PROVENANCE_UNAVAILABLE'
   | 'NON_GIT_ROOT'
   | 'GIT_COMMAND_FAILED'
@@ -31,14 +32,16 @@ export type LocalProvenanceErrorCode =
   | 'BASELINE_NOT_FOUND'
   | 'REPOSITORY_NOT_FULLY_CLEAN';
 
-export class LocalProvenanceError extends Error {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+class LocalProvenanceError extends Error {
   constructor(readonly code: LocalProvenanceErrorCode, message: string = code) {
     super(`SELFDEV_${code}:${message}`);
     this.name = 'LocalProvenanceError';
   }
 }
 
-export interface LocalProvenanceOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface LocalProvenanceOptions {
   readonly repositoryRoot?: string;
   readonly nodeVersion?: string;
 }
@@ -191,7 +194,8 @@ export function readLocalNightwatchProvenance(options: LocalProvenanceOptions = 
   };
 }
 
-export interface WorkingTreeStatus {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface WorkingTreeStatus {
   readonly unstagedFiles: readonly string[];
   readonly stagedFiles: readonly string[];
   readonly untrackedFiles: readonly string[];
@@ -250,10 +254,3 @@ export function changedFilesBetweenCommits(repositoryRoot: string, fromSha: stri
   return parseNameOnly(result.stdout);
 }
 
-export function provenanceManifestSummary(): { readonly manifestVersion: string; readonly algorithm: string; readonly pathCount: number } {
-  return {
-    manifestVersion: SELFDEV_SOURCE_BUNDLE_MANIFEST_VERSION,
-    algorithm: SELFDEV_SOURCE_BUNDLE_ALGORITHM,
-    pathCount: SELFDEV_AUTHORITATIVE_PATHS.length,
-  };
-}

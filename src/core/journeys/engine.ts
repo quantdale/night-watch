@@ -32,7 +32,8 @@ import type {
 const ROUTE_POLL_MS = 50;
 const ACTION_SETTLE_MS = 75;
 
-export interface JourneyRunOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface JourneyRunOptions {
   uiBaseUrl: string;
   /** The caller's boolean-only auth gate result; never a token or state value. */
   authValid?: boolean;
@@ -41,7 +42,8 @@ export interface JourneyRunOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
-export class JourneyContractError extends Error {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+class JourneyContractError extends Error {
   constructor(message: string) {
     super(`journey contract rejected: ${message}`);
     this.name = 'JourneyContractError';

@@ -60,7 +60,4 @@ export function resolvePathWithAmbiguity(
   return { node, na: false };
 }
 
-/** Resolve a path relative to an array ITEM node. */
-export function resolveRelativePath(item: ProjectionNode, path: SafePath): ProjectionNode | undefined {
-  return resolvePath(item, path);
-}
+// Phase 15P A15 convergence: retired dead resolveRelativePath shim (zero callers; resolvePath is the single owner).

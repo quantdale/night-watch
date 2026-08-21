@@ -43,28 +43,8 @@ export interface RunEvent {
   data?: Record<string, unknown>;
 }
 
-/** Data attached to 'request' events (already redacted by the caller). */
-export interface RequestEventData {
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  resourceType?: string;
-  /** True when the policy blocked or denied this request. */
-  blockedByPolicy?: boolean;
-  verdict?: string;
-  reason?: string;
-}
-
-/** Data attached to 'response' events. */
-export interface ResponseEventData {
-  url: string;
-  status: number;
-  contentType?: string;
-  /** Redacted body, only for JSON-ish content types, capped in size. */
-  body?: string;
-  bodyRedacted?: boolean;
-}
-
+// Phase 15P A15 convergence: retired unused RequestEventData/ResponseEventData
+// event-payload shapes (zero references; recorder payloads are inline objects).
 export interface RunSummary {
   runId: string;
   environment: string;

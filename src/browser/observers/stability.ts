@@ -52,14 +52,15 @@ export async function waitForStability(opts: {
   }
 }
 
-export interface RippleStabilitySample extends RippleStructuralState {
+// Phase 15P A15 convergence: stability sampling shapes are module-private.
+interface RippleStabilitySample extends RippleStructuralState {
   /** The current browser URL, held in memory and never persisted by this wait. */
   route: string;
   /** Fatal browser/page/containment state already classified by the monitor. */
   fatal: boolean;
 }
 
-export interface RippleStabilityProgress {
+interface RippleStabilityProgress {
   /** The route was unchanged from the previous sample. */
   routeStable: boolean;
   /** Continuous structurally-ready time for the current route. */

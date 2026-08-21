@@ -15,7 +15,8 @@ import {
   validateStorageStateFile,
 } from '../../browser/fixtures/storageState';
 
-export interface EphemeralApiAuthMetadata {
+// Phase 15P A15 convergence: metadata shape is module-private (no external callers).
+interface EphemeralApiAuthMetadata {
   provider: 'phase4-external-storage-state';
   environment: 'dev';
   tokenPresent: boolean;
@@ -25,7 +26,7 @@ export interface EphemeralApiAuthMetadata {
   passedToOops: false;
 }
 
-export interface EphemeralApiAuthProvider {
+interface EphemeralApiAuthProvider {
   readonly metadata: EphemeralApiAuthMetadata;
   headers(): Readonly<Record<string, string>>;
 }

@@ -15,6 +15,7 @@ import { createBugDossier } from '../triage/dossier';
 import type { MinimizationAction, MinimizationResult, AnomalyObservation, CandidateReplayOutcome } from '../triage/types';
 import type { SemanticExpectation } from '../../oracles/expectations/types';
 import { evaluateSemanticResponse } from '../../oracles/semantic';
+import { SAFE_ACTION_CATALOG_VERSION } from '../exploration/types';
 import {
   PHASE12_EXPECTATIONS,
   PHASE12_FIXTURE_SHA,
@@ -41,8 +42,8 @@ const ORACLE_ID = 'oracle.phase12.backtest';
 const JOURNEY_ID = 'phase12.synthetic.journey';
 const STEP_ID = 'phase12.synthetic.step';
 const ROUTE_CLASS = '/phase12/route';
-const CATALOG_VERSION = 'nightwatch.safe-actions.phase4.v1';
-const CONTRACT_VERSION = 'nightwatch.journey-contract.v1';
+// Phase 15P A15 convergence: catalog/journey-contract versions re-pointed to their
+// single owners (exploration/types.ts SAFE_ACTION_CATALOG_VERSION; journeys/contract.ts).
 
 function fp(seed: string): string {
   // deterministic 24-hex fingerprint for synthetic test plumbing
@@ -57,7 +58,7 @@ function actions(count: number, offset = 0): MinimizationAction[] {
     semanticClass: 'KNOWN_READ' as const,
     routeClass: ROUTE_CLASS,
     sourceApproved: true as const,
-    catalogVersion: CATALOG_VERSION,
+    catalogVersion: SAFE_ACTION_CATALOG_VERSION,
   }));
 }
 
@@ -105,7 +106,8 @@ export interface BacktestCase {
   readonly candidateKind: 'JOURNEY' | 'EXPLORATION' | 'API';
 }
 
-export interface BacktestMetrics {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface BacktestMetrics {
   readonly seededCases: number;
   readonly seededActionableDefects: number;
   readonly benignCases: number;
@@ -280,7 +282,7 @@ export async function runBacktestOnce(opts: { baseline: boolean }): Promise<{ me
         originalSequence: [...c.originalActions],
         anomalyFingerprint: target,
         sourceVersion: c.sourceSha ?? 'unavailable',
-        catalogVersion: CATALOG_VERSION,
+        catalogVersion: SAFE_ACTION_CATALOG_VERSION,
         safety: { devOnly: true, authValid: true, outboundPolicySatisfied: true, safeActionCatalogSatisfied: true, semanticReadOnly: true, mutationTripwireZero: true, unknownTripwireZero: true, routeEnvelopeSatisfied: true, privacySatisfied: true },
         budget: c.kind === 'BUDGET_EXHAUSTED' ? { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 1, maxTotalReplays: 2 } : undefined,
         preconditionCheck: c.preconditionCheck,
@@ -433,7 +435,7 @@ export async function runBacktestOnce(opts: { baseline: boolean }): Promise<{ me
         reproductionCount: 2,
         anomalyFingerprint: fp('dossier'),
         modelVersion: 'nightwatch.failure-minimization.private.v1',
-        catalogVersion: CATALOG_VERSION,
+        catalogVersion: SAFE_ACTION_CATALOG_VERSION,
         sourceVersion: PHASE12_FIXTURE_SHA,
         confidence: 'HIGH',
         minimalityGuarantee: '1-MINIMAL',

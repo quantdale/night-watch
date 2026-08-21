@@ -20,7 +20,8 @@ const REPO_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/;
 /** Repository-relative path: no leading slash, no backslash, no traversal. */
 const RELATIVE_PATH_RE = /^[^/\\][^\\]*$/;
 
-export interface SiblingSourceAccess {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface SiblingSourceAccess {
   readonly reader: RealSourceReader;
   readonly currentness: RealSourceCurrentness;
   readonly root: string;

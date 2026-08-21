@@ -5,8 +5,6 @@
 // authority and it never receives credential-bearing tool arguments.
 // ---------------------------------------------------------------------------
 
-export const CHROME_DEVTOOLS_MCP_SERVER = 'mcp__chrome_devtools' as const;
-
 export const CHROME_DEVTOOLS_MCP_TOOLS = [
   'click',
   'close_page',
@@ -54,7 +52,9 @@ export const MCP_PROHIBITED_AUTHENTICATED_REAL_TOOLS = [
   'get_network_request',
 ] as const;
 
-export interface McpAttachmentFacts {
+// Phase 15P A15 convergence: attachment shapes are module-private (no
+// external callers remain; grep-proven across src/tests/bin/corpus/config).
+interface McpAttachmentFacts {
   dedicatedNightwatchProfile: boolean;
   loopbackOnly: boolean;
   nightwatchOwnsBrowserLifecycle: boolean;
@@ -66,7 +66,7 @@ export interface McpAttachmentFacts {
   primaryExecutorRemainsNightwatch: boolean;
 }
 
-export interface McpAttachmentDecision {
+interface McpAttachmentDecision {
   attached: false;
   containmentProven: boolean;
   status: typeof MCP_OBSERVATION_STATUS;

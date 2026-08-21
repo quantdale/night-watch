@@ -132,7 +132,8 @@ function makeNonSelection(journeyId: JourneyId, reasons: readonly ImpactReason[]
   };
 }
 
-export interface SelectionOptions {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface SelectionOptions {
   repos?: readonly RepoDefinition[];
   edges?: readonly DependencyEdge[];
   now?: () => Date;

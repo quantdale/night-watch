@@ -13,9 +13,11 @@ import {
   type RippleRootRenderBranch,
 } from '../../products/ripple/readiness';
 
-export const BOOTSTRAP_DIAGNOSTIC_BINDING = '__nightwatchBootstrapDiagnostic';
+// Phase 15P A15 convergence: diagnostic hook vocabulary is module-private
+// (grep-proven); the init script stays self-contained for addInitScript.
+const BOOTSTRAP_DIAGNOSTIC_BINDING = '__nightwatchBootstrapDiagnostic';
 
-export const BOOTSTRAP_DIAGNOSTIC_CATEGORIES = [
+const BOOTSTRAP_DIAGNOSTIC_CATEGORIES = [
   'unhandled-rejection',
   'csp-violation',
   'resource-error-event',
@@ -28,9 +30,9 @@ export const BOOTSTRAP_DIAGNOSTIC_CATEGORIES = [
   'source-reload-signal',
 ] as const;
 
-export type BootstrapDiagnosticCategory = (typeof BOOTSTRAP_DIAGNOSTIC_CATEGORIES)[number];
+type BootstrapDiagnosticCategory = (typeof BOOTSTRAP_DIAGNOSTIC_CATEGORIES)[number];
 
-export type BootstrapDiagnosticPhase =
+type BootstrapDiagnosticPhase =
   | 'domcontentloaded'
   | 'complete'
   | 'seen'
@@ -45,7 +47,7 @@ export type BootstrapDiagnosticPhase =
   | 'reload-trigger'
   | 'marker-present';
 
-export type BootstrapReplacementNodeType = 'element' | 'comment' | 'text' | 'none' | 'unknown';
+type BootstrapReplacementNodeType = 'element' | 'comment' | 'text' | 'none' | 'unknown';
 
 const SAFE_REPLACEMENT_TAGS = [
   'DIV',
@@ -63,7 +65,7 @@ const SAFE_REPLACEMENT_TAGS = [
 
 type SafeReplacementTag = (typeof SAFE_REPLACEMENT_TAGS)[number];
 
-export interface BootstrapDiagnosticPayload {
+interface BootstrapDiagnosticPayload {
   category: BootstrapDiagnosticCategory;
   phase?: BootstrapDiagnosticPhase;
   /** Bounded monotonic timing from the current document. */
@@ -194,7 +196,7 @@ function sanitizeBootstrapDiagnostic(value: unknown): BootstrapDiagnosticPayload
  * values and arguments; they report that a route transition was attempted,
  * never the destination path.
  */
-export function bootstrapDiagnosticInitScript(): void {
+function bootstrapDiagnosticInitScript(): void {
   const bindingName = '__nightwatchBootstrapDiagnostic';
   const safeReplacementTags = [
     'DIV',

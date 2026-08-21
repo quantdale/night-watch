@@ -50,7 +50,8 @@ export function assertProjectionInputBytes(rawBytes: number, limits: ProjectionL
   }
 }
 
-export interface ProjectObservationResult {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface ProjectObservationResult {
   readonly projection: SemanticProjection;
   readonly nodeCount: number;
 }

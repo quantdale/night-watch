@@ -12,6 +12,10 @@ import type { JourneyDefinition } from './types';
 export const JOURNEY_CONTRACT_VERSION = 'nightwatch.journey.phase2c.v1';
 export const ORACLE_VERSION = 'nightwatch.oracle.phase2c.v1';
 export const EVIDENCE_SCHEMA_VERSION = 'nightwatch.evidence.phase2c.v1';
+/** Synthetic-fixture journey-contract schema tag consumed by Phase 12/13
+ *  fingerprint plumbing; a distinct schema identity from JOURNEY_CONTRACT_VERSION.
+ *  Phase 15P A15 convergence: single owner of this version string. */
+export const SYNTHETIC_JOURNEY_CONTRACT_VERSION = 'nightwatch.journey-contract.v1';
 
 function canonical(value: unknown, seen: WeakSet<object>): string {
   if (value === null) return 'null';
@@ -36,7 +40,8 @@ function canonical(value: unknown, seen: WeakSet<object>): string {
 }
 
 /** Stable, key-ordered serialization used for contract identity only. */
-export function canonicalJourneyContract(definition: JourneyDefinition): string {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function canonicalJourneyContract(definition: JourneyDefinition): string {
   return canonical(definition, new WeakSet<object>());
 }
 
@@ -54,7 +59,8 @@ function deepFreeze<T>(value: T, seen: WeakSet<object>): T {
 }
 
 /** Freeze the supplied source-backed definition in place and return it. */
-export function freezeJourneyDefinition<T extends JourneyDefinition>(definition: T): Readonly<T> {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+function freezeJourneyDefinition<T extends JourneyDefinition>(definition: T): Readonly<T> {
   return deepFreeze(definition, new WeakSet<object>()) as Readonly<T>;
 }
 

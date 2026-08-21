@@ -105,6 +105,4 @@ function semanticStateKey(node: ProjectionNode): string {
   return node.type;
 }
 
-export function shapeKeyOf(node: ProjectionNode): string {
-  return shapeKey(node);
-}
+// Phase 15P A15 convergence: retired dead shapeKeyOf shim (zero callers; shapeKey is the single owner).

@@ -83,6 +83,11 @@ import {
   PHASE13_PROVENANCE_ALT_DERIVATION,
 } from '../../../corpus/phase13/source-fixture/phase13Fixtures';
 import { SENTINEL_PHASE13 } from '../../../corpus/phase13/response-fixtures';
+// Phase 15P A15 convergence: version strings re-pointed to their single owners.
+import { SAFE_ACTION_CATALOG_VERSION } from '../../exploration/types';
+import { SELECTOR_VERSION } from '../changeIntelligence/types';
+import { API_CATALOG_VERSION } from '../../api/phase5/types';
+import { SYNTHETIC_JOURNEY_CONTRACT_VERSION } from '../journeys/contract';
 
 // ---------------------------------------------------------------------------
 // Helpers: deterministic IDs, canonical JSON, privacy sweep
@@ -123,8 +128,6 @@ function baseOccurrences(actionIds: readonly string[]): readonly ReplayOccurrenc
 }
 
 const ROUTE_CLASS = '/phase13/route';
-const CATALOG_VERSION = 'nightwatch.safe-actions.phase4.v1';
-const CONTRACT_VERSION = 'nightwatch.journey-contract.v1';
 const CONTRACT_DIGEST = 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const SOURCE_VERSION = 'synthetic.phase13.v1';
 
@@ -158,9 +161,11 @@ function syntheticApiExecutor(targetFp: string): V2Executor {
 // deterministic expected outcome. The harness enumerates >=41 classes.
 // ---------------------------------------------------------------------------
 
-export type Phase13FixtureKind = 'REPLAY' | 'SEMANTIC_TRUTH' | 'PROTOCOL' | 'DRIFT' | 'PRIVACY';
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+type Phase13FixtureKind = 'REPLAY' | 'SEMANTIC_TRUTH' | 'PROTOCOL' | 'DRIFT' | 'PRIVACY';
 
-export interface Phase13Fixture {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase13Fixture {
   readonly id: string;
   readonly kind: Phase13FixtureKind;
   readonly purpose: string;
@@ -227,7 +232,8 @@ export function buildPhase13Corpus(): readonly Phase13Fixture[] {
 // executors. All outputs are safe (no raw values). Deterministic.
 // ---------------------------------------------------------------------------
 
-export interface Phase13ShadowMetrics {
+// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
+interface Phase13ShadowMetrics {
   readonly seededCases: number;
   readonly replayCases: number;
   readonly semanticTruthCases: number;
@@ -255,14 +261,14 @@ function baseVersions(): CampaignVersionFingerprint {
     campaignSchemaVersion: CAMPAIGN_SCHEMA_VERSION,
     orchestratorVersion: CAMPAIGN_ORCHESTRATOR_VERSION,
     nightwatchSourceSha: PHASE13_FIXTURE_SHA,
-    selectorVersion: 'nightwatch.selector.phase3.v1',
+    selectorVersion: SELECTOR_VERSION,
     dependencyMapVersion: 'nightwatch.dependency-map.v1',
-    journeyContractVersion: CONTRACT_VERSION,
+    journeyContractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
     journeyOracleVersion: 'nightwatch.journey-oracle.v1',
-    explorationCatalogVersion: CATALOG_VERSION,
+    explorationCatalogVersion: SAFE_ACTION_CATALOG_VERSION,
     explorationModelVersion: 'nightwatch.exploration-model.v1',
     explorationPlannerVersion: 'nightwatch.planner.v1',
-    apiCatalogVersion: 'nightwatch.api-catalog.phase5.v1',
+    apiCatalogVersion: API_CATALOG_VERSION,
     apiGeneratorVersion: 'nightwatch.api-generator.phase5.v1',
     apiOracleVersion: 'nightwatch.api-oracle.phase5.v1',
     triageClusterVersion: ANOMALY_CLUSTER_VERSION,
@@ -300,9 +306,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -325,9 +331,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [2],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -350,9 +356,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [2, 0],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         };
@@ -371,9 +377,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [99],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         };
@@ -395,9 +401,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -419,9 +425,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'phase13.payer-exchange.type-in-set',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         };
@@ -437,9 +443,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0],
           phase: 'FRESH_EXACT_REPLAY',
           targetId: 'phase13.payer-exchange.type-in-set',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -458,9 +464,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0, 1],
           phase: 'FRESH_EXACT_REPLAY',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -479,9 +485,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0, 1],
           phase: 'FRESH_EXACT_REPLAY',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -501,9 +507,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0, 1],
           phase: 'FRESH_EXACT_REPLAY',
           targetId: 'phase13.common-exchange.field-present',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -522,9 +528,9 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           retainedOccurrenceOrdinals: [0],
           phase: 'REDUCED_CANDIDATE',
           targetId: 'ripple.common-exchange.read',
-          contractVersion: CONTRACT_VERSION,
+          contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION,
           contractDigest: CONTRACT_DIGEST,
-          catalogVersion: CATALOG_VERSION,
+          catalogVersion: SAFE_ACTION_CATALOG_VERSION,
           sourceVersion: SOURCE_VERSION,
           routeClass: ROUTE_CLASS,
         });
@@ -583,7 +589,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
             reproductionCount: 3,
             anomalyFingerprint: fp1,
             modelVersion: FAILURE_MINIMIZATION_VERSION,
-            catalogVersion: CATALOG_VERSION,
+            catalogVersion: SAFE_ACTION_CATALOG_VERSION,
             sourceVersion: PHASE13_FIXTURE_SHA,
             confidence: 'HIGH',
             minimalityGuarantee: '1-MINIMAL',
@@ -644,7 +650,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'NO_REPRODUCTION', originalSequence: ['phase13.action_a'], minimalReproducingSequence: [], removedActions: [], reproductionCount: 0, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'UNRESOLVED', minimalityGuarantee: 'NONE', reductionEvidenceClass: 'NO_REDUCIBLE_CANDIDATE',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'NO_REPRODUCTION', originalSequence: ['phase13.action_a'], minimalReproducingSequence: [], removedActions: [], reproductionCount: 0, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'UNRESOLVED', minimalityGuarantee: 'NONE', reductionEvidenceClass: 'NO_REDUCIBLE_CANDIDATE',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'NOT_REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -759,7 +765,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 2, candidateEvaluationCount: 1, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -852,7 +858,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a', 'phase13.action_b'], minimalReproducingSequence: ['phase13.action_a'], removedActions: ['phase13.action_b'], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a', 'phase13.action_b'], minimalReproducingSequence: ['phase13.action_a'], removedActions: ['phase13.action_b'], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 2, candidateEvaluationCount: 1, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -868,7 +874,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -890,7 +896,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp2, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp2, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp2, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -910,7 +916,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           schemaVersion: 'nightwatch.triage-replay-plan.private.v9' as unknown as typeof TRIAGE_REPLAY_PLAN_VERSION,
           planId: 'rp:sha256:' + '0'.repeat(24),
           candidateKind: 'EXPLORATION' as const, anomalyFingerprint: fp('d01'), originalActionIds: ['phase13.action_a'], retainedActionIds: ['phase13.action_a'], phase: 'FRESH_EXACT_REPLAY' as const,
-          targetId: 'phase13.common-exchange.field-present', contractVersion: CONTRACT_VERSION, contractDigest: CONTRACT_DIGEST, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, routeClass: ROUTE_CLASS,
+          targetId: 'phase13.common-exchange.field-present', contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION, contractDigest: CONTRACT_DIGEST, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: SOURCE_VERSION, routeClass: ROUTE_CLASS,
         };
         const v = validateTriageReplayPlan(raw);
         return { ok: !v.valid && (v as { reason: string }).reason.includes('VERSION'), safeOutput: { driftDetected: !v.valid, reason: v.valid ? 'UNEXPECTED_PASS' : (v as { reason: string }).reason } };
@@ -920,7 +926,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           schemaVersion: 'nightwatch.triage-replay-plan.private.v9' as unknown as typeof TRIAGE_REPLAY_PLAN_V2_VERSION,
           planId: 'rp2:sha256:' + '0'.repeat(24),
           candidateKind: 'EXPLORATION' as const, anomalyFingerprint: fp('d02'), originalOccurrences: baseOccurrences(['phase13.action_a']), retainedOccurrenceOrdinals: [0], phase: 'FRESH_EXACT_REPLAY' as const,
-          targetId: 'phase13.common-exchange.field-present', contractVersion: CONTRACT_VERSION, contractDigest: CONTRACT_DIGEST, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, routeClass: ROUTE_CLASS,
+          targetId: 'phase13.common-exchange.field-present', contractVersion: SYNTHETIC_JOURNEY_CONTRACT_VERSION, contractDigest: CONTRACT_DIGEST, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: SOURCE_VERSION, routeClass: ROUTE_CLASS,
         };
         const v = validateTriageReplayPlanV2(raw);
         return { ok: !v.valid && (v as { reason: string }).reason.includes('VERSION'), safeOutput: { driftDetected: !v.valid, reason: v.valid ? 'UNEXPECTED_PASS' : (v as { reason: string }).reason } };
@@ -949,7 +955,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: SAFE_ACTION_CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -1167,16 +1173,4 @@ export async function runPhase13DeterminismTriple(): Promise<{ keys: string[]; m
     return { keys: [a.deterministicKey, b.deterministicKey, c.deterministicKey], mismatch, metrics: [mutated, b.metrics, c.metrics] };
   }
   return { keys: [a.deterministicKey, b.deterministicKey, c.deterministicKey], mismatch, metrics: [a.metrics, b.metrics, c.metrics] };
-}
-
-// ---------------------------------------------------------------------------
-// Pure helpers for external callers (no side effects)
-// ---------------------------------------------------------------------------
-
-export function phase13ShadowVersion(): string {
-  return 'nightwatch.phase13.shadow.v1';
-}
-
-export function phase13FixtureIds(): readonly string[] {
-  return buildPhase13Corpus().map((f) => f.id);
 }
