@@ -1,5 +1,6 @@
 export * from './types';
 export * from './minimizer';
+export * from './minimalityEvidence';
 export * from './clustering';
 export * from './correlation';
 export * from './differential';
