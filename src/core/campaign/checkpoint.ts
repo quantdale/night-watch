@@ -60,8 +60,13 @@ const WORK_STATES = ['PENDING', 'RUNNING', 'COMPLETED', 'SKIPPED', 'REPLAY_REQUI
 const EXECUTION_RESULTS = ['PASS', 'ANOMALY', 'TRANSIENT', 'NIGHTWATCH_DEFECT', 'AUTH_BLOCKED', 'SAFETY_BLOCKED', 'RUNTIME_FAILURE', 'INCOMPLETE'] as const;
 const CANDIDATE_LIFECYCLE_VARIANTS = ['PROTOCOL_ONLY', 'SEMANTIC'] as const;
 const CANDIDATE_LIFECYCLE_STATES = ['OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'UNCHANGED', 'TRIAGED', 'DOSSIER_READY', 'REJECTED', 'UNRESOLVED'] as const;
-// Matches the established uppercase snake reason-code idiom (e.g. BUDGET_EXHAUSTED).
-const LIFECYCLE_REASON_CODE_RE = /^[A-Z][A-Z0-9_]*$/;
+// Matches the established uppercase snake reason-code idiom (e.g.
+// BUDGET_EXHAUSTED). Bounded and sentinel-screened exactly like
+// candidateLifecycle's REASON_CODE_RE so the two validators of this persisted
+// shape agree: a record that passes resume validation is never rejected later
+// by the strict lifecycle validator at transition time.
+const LIFECYCLE_REASON_CODE_RE = /^[A-Z][A-Z0-9_]{0,127}$/;
+const LIFECYCLE_REASON_SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
 
 function checkpointIntegrity(reason: string): never {
   throw new Error(`CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:${reason}`);
@@ -242,7 +247,7 @@ function validateCandidateLifecycleRecord(value: unknown, code: string): void {
   assertNonNegativeInteger(record.transitionCount, `${code}:TRANSITION_COUNT`);
   if (record.lastReasonCode !== null) {
     assertString(record.lastReasonCode, `${code}:LAST_REASON_CODE`);
-    if (!LIFECYCLE_REASON_CODE_RE.test(record.lastReasonCode)) checkpointIntegrity(`${code}:LAST_REASON_CODE_UNSAFE`);
+    if (!LIFECYCLE_REASON_CODE_RE.test(record.lastReasonCode) || LIFECYCLE_REASON_SENTINEL_RE.test(record.lastReasonCode)) checkpointIntegrity(`${code}:LAST_REASON_CODE_UNSAFE`);
   }
 }
 
