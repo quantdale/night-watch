@@ -15,7 +15,7 @@
 // - Pure: no browser/network/fs/child-process/DB/AI/selfDev.
 // ---------------------------------------------------------------------------
 
-import { sha256Hex, stableJsonSorted } from '../../core/identity/canonicalDigest';
+import { boundedIdentityDigest, identityValueForbidden } from '../../core/triage/clustering';
 import type { InvariantDefinition } from '../expectations/types';
 import type { SourceProvenance } from '../expectations/types';
 import type { SemanticOracleFinding } from './types';
@@ -26,14 +26,9 @@ export const SEMANTIC_CLUSTER_VERSION = 'nightwatch.semantic-cluster.v1' as cons
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{1,200}$/;
 const EVIDENCE_DIGEST_RE = /^ev:sha256:[0-9a-f]{24}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
-const FORBIDDEN_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
-
-function digest(value: unknown): string {
-  return sha256Hex(stableJsonSorted(value)).slice(0, 24);
-}
 
 function assertSafe(value: string, field: string): void {
-  if (FORBIDDEN_RE.test(value)) throw new Error(`SEMANTIC_CLUSTER_PRIVACY_BLOCKED:${field}`);
+  if (identityValueForbidden(value)) throw new Error(`SEMANTIC_CLUSTER_PRIVACY_BLOCKED:${field}`);
 }
 
 function assertSafeId(value: string, field: string): void {
@@ -94,7 +89,7 @@ export function semanticInvariantDefinitionId(invariant: InvariantDefinition): s
     assertSafeId((invariant as { relationId: string }).relationId, 'relationId');
   }
   const canonical = canonicalInvariant(invariant);
-  return `inv:sha256:${digest({ version: SEMANTIC_CONTRACT_IDENTITY_VERSION, invariant: canonical })}`;
+  return `inv:sha256:${boundedIdentityDigest({ version: SEMANTIC_CONTRACT_IDENTITY_VERSION, invariant: canonical })}`;
 }
 
 function invariantPathSegments(invariant: InvariantDefinition): string[] {
@@ -140,7 +135,7 @@ export function semanticContractIdentity(input: SemanticContractIdentityInput): 
     evidenceDigest: input.sourceProvenance.evidenceDigest ?? null,
     repoId: input.sourceProvenance.repoId,
   };
-  return `sci:sha256:${digest(payload)}`;
+  return `sci:sha256:${boundedIdentityDigest(payload)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +144,7 @@ export function semanticContractIdentity(input: SemanticContractIdentityInput): 
 
 export function semanticClusterKey(input: SemanticContractIdentityInput): string {
   const sci = semanticContractIdentity(input);
-  return `sc:sha256:${digest({ version: SEMANTIC_CLUSTER_VERSION, sci })}`;
+  return `sc:sha256:${boundedIdentityDigest({ version: SEMANTIC_CLUSTER_VERSION, sci })}`;
 }
 
 // ---------------------------------------------------------------------------
