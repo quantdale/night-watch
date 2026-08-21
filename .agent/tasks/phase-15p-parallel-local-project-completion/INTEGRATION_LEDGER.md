@@ -23,6 +23,7 @@ committed, and pushed. Never pre-filled.
 | 13 | A13 | 5c498e0cf259638f641397215c8a7f77510c14ac (swarm/a13-privacy-authority) | 6d5599235d5ad655505b9306886f1aa1a9eecb76 | none | wave 4 green |
 | 14 | A14 | 3213a642c6c73f94f5f92f0725c134262b3f5faf (swarm/a14-adversarial-corpus) | 9afe7e93f05f2606ae0c1f9de3dd7a07cd1ac604 | none (predecessor agent timed out; suite completed by a fresh delegated agent against the delivered fixtures; two fixture data-value repairs documented in handoff) | wave 4 green |
 | 15 | A15 | 0a8f22a02e4f38252a92d1c2a3b710bc1873d3f0 (swarm/a15-compat-cleanup) | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a | none | wave 4 green |
+| 16 | A16 | 219118ba5e501597216640ab3c1a93be97c11b2f (swarm/a16-release-rehearsal) | 42c5a7e1ab3f438a9c82688f2eee645d3c548d64 | none | final pack green; rehearsal 3x standalone 4/4 each |
 
 ## Rejected patches
 
@@ -37,4 +38,5 @@ committed, and pushed. Never pre-filled.
 | 1 | A01 A02 A03 A04 | 417d187cb13de98db611c4f2412f94fe62a9daab (+ docs commit after) | typecheck PASS; git diff --check PASS; focused foundation suites (4 new + 5 compat) 190 passed / 0 failed; privacy/authority diff sweep clean | yes | yes |
 | 2 | A05 A06 A07 A09 | dbd2397d52b12d51c8fdf478c1d299cca5f9be2f (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 212 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; one semantic conflict (A05×A09 orchestrator.ts) resolved keeping both behaviors | yes | yes |
 | 3 | A08 A10 A11 A12 | 7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797 (+ docs commit after) | typecheck PASS; git diff --check PASS; focused suites (4 new + 8 compat) 221 passed / 0 failed; conflict-free; privacy/authority sweep clean (one node:crypto use verified against canonicalDigest precedent) | yes | yes |
-| 4 | A13 A14 A15 (A16 pending) | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a (+ docs commit after) | typecheck PASS; hardening:check PASS; git diff --check PASS; all 15 phase15p suites 337 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; conflict-free | yes | yes |
+| 4 | A13 A14 A15 | 68f14b268a6834aa1881b1d50ae7a5fc56b2943a | typecheck PASS; hardening:check PASS; git diff --check PASS; all 15 phase15p suites 337 passed / 0 failed; campaign:synthetic 27 passed / 0 failed; conflict-free | yes | yes |
+| final | A16 | 42c5a7e1ab3f438a9c82688f2eee645d3c548d64 | full M6 pack green (see STATE.md Validation Ledger); rehearsal 3x standalone 4/4 each; 16 phase15p suites 341/0; Phase 9-14 sweep 385/0 | yes | yes |

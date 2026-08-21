@@ -4,19 +4,35 @@
 
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
-Last substantive checkpoint SHA: 68f14b268a6834aa1881b1d50ae7a5fc56b2943a
+Last validated implementation SHA: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
+Last substantive checkpoint SHA: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
 
-PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: IN_PROGRESS
-PHASE_15_PARALLEL_IMPLEMENTATION: IN_PROGRESS
-PHASE_15_INTEGRATED_HARDENING: NOT_AUTHORIZED
+PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: COMPLETE (IMPLEMENTED_FOCUSED_GREEN)
+PHASE_15P_A01_CONTRACT_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A02_SEMANTIC_VOCABULARY: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A03_CURRENTNESS_DRIFT: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A04_SCHEMA_COHERENCE: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A05_CANDIDATE_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A06_REPLAY_BINDING: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A07_MINIMALITY_TRUTH: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A08_TRIAGE_DOSSIER: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A09_CHECKPOINT_RESUME: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A10_LOCAL_READINESS: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A11_ARTIFACT_VALIDATION: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A12_PROJECT_SNAPSHOT: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A13_PRIVACY_AUTHORITY: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A14_ADVERSARIAL_CORPUS: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A15_COMPATIBILITY_CLEANUP: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15P_A16_RELEASE_REHEARSAL: IMPLEMENTED_FOCUSED_GREEN
+PHASE_15_PARALLEL_IMPLEMENTATION: IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING
+PHASE_15_INTEGRATED_HARDENING: REQUIRED_NEXT
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
 
@@ -35,13 +51,12 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-M5 FINAL — A16 release-candidate integration rehearsal: read-only cross-
-examination of the fully integrated tree plus assigned final-seam fixes, then
-the synthetic local release-candidate rehearsal spanning source contract
-resolution → currentness/drift → readiness snapshot → campaign planning →
-synthetic observation → semantic/protocol evaluation → candidate lifecycle →
-replay → minimization → clustering → confidence → dossier → checkpoint/resume
-→ private-safe status/brief, run >= 3 times green.
+Complete and terminal: all sixteen assignments (A01–A16) integrated focused-
+green across four dependency waves plus the A16 final-seam integration; the
+full M6 pre-hardening pack is green; the synthetic release-candidate
+rehearsal ran standalone three times (4/4 each); HARDENING_HANDOFF.md is
+complete; the PHASE_15_PARALLEL_IMPLEMENTATION status row above records the
+implementation-complete terminal value.
 
 ## Completed Milestones
 
@@ -66,6 +81,16 @@ replay → minimization → clustering → confidence → dossier → checkpoint
   resolved keeping both A05 gate-closure and A09 ledger idempotence);
   typecheck PASS; git diff --check PASS; focused suites 212 passed /
   0 failed; campaign:synthetic 27 passed / 0 failed.
+- M5 FINAL A16: COMPLETE at `42c5a7e1ab3f438a9c82688f2eee645d3c548d64` —
+  confirmed seam defect fixed (checkpoint lifecycle reason-code validator
+  converged with candidateLifecycle: bounded length + sentinel screen, same
+  error code); 10-variant synthetic release-candidate rehearsal suite landed;
+  rehearsal run standalone 3x — 4 passed each.
+- M6 FINAL PACK + HANDOFF: COMPLETE — typecheck PASS; hardening:check PASS;
+  campaign:synthetic 27/0; test:owner-provenance 91/0; agent:check PASS;
+  project:check PASS; git diff --check PASS; all 16 phase15p suites 341/0;
+  Phase 9–14 compatibility sweep (25 suites) 385/0; HARDENING_HANDOFF.md
+  complete with the machine-readable 73-file changed manifest.
 - M3 WAVE 3: COMPLETE at `7abcf5f8e65fb0ca5fcbbba7c40e941554fa9797` —
   A08+A10+A11+A12 cherry-picked conflict-free; typecheck PASS;
   git diff --check PASS; focused suites (4 new + 8 compat) 221 passed /
@@ -73,15 +98,13 @@ replay → minimization → clustering → confidence → dossier → checkpoint
 
 ## Work In Progress
 
-M5 FINAL: wave-4 continuity being committed/pushed; A16 rehearsal agent being
-briefed next.
+None. Terminal.
 
 ## Exact Next Action
 
-Push the wave-4 continuity checkpoint, create the A16 worktree off current
-main, brief A16 (reviewer role) with the full assignment list and rehearsal
-requirements, integrate its final-seam fixes, run the M6 final integration
-pack, then close out HARDENING_HANDOFF.md and terminal statuses.
+Stop at the truthful terminal state. The separately owner-gated integrated
+hardening campaign (`PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`) is
+REQUIRED_NEXT and must not begin under this task's authorization.
 
 ## Files Changed
 
@@ -132,6 +155,17 @@ Wave checkpoints append here and in INTEGRATION_LEDGER.md as they land.
   0 failed. A14 note: predecessor agent timed out mid-delivery; its fixture
   layer was kept and the suite completed by a fresh delegated agent; two
   fixture data-value repairs documented in the A14 handoff.
+- FINAL PACK at `42c5a7e1ab3f438a9c82688f2eee645d3c548d64`: npm run typecheck
+  PASS; npm run hardening:check PASS; npm run campaign:synthetic 27 passed /
+  0 failed; npm run test:owner-provenance 91 passed / 0 failed; npm run
+  agent:check PASS; npm run project:check PASS (activeTaskContinuity PASS,
+  checkoutClean true); git diff --check PASS; all 16 phase15p suites = 341
+  passed / 0 failed; Phase 9–14 compatibility sweep (25 suites) = 385 passed /
+  0 failed; release-candidate rehearsal standalone runs x3 = 4 passed each.
+- Quality floors: determinismMismatchCount 0; privacyLeakCount 0;
+  falseCurrentCount 0; falseAdmissionCount 0;
+  falseMinimalityCertificationCount 0; versionDriftExecutorEscapeCount 0;
+  ownerPolicyEscapeCount 0.
 - Sub-agent isolated-worktree raw counts (pre-integration): A01 14+92;
   A02 24+163; A03 30+77; A04 30+155; A05 23+122; A06 41+143; A07 17+51;
   A08 20+167; A09 17+44; A10 21+32; A11 23+35; A12 28+41 — all passed / 0 failed.
@@ -180,14 +214,20 @@ read-only.
 
 ## Resume Recipe
 
-If interrupted: fetch origin, verify live HEAD from Git, read this STATE.md
-plus PLAN.md and SPEC.md, inspect git status/diff, reconcile with the working
-tree, run the smallest decisive validation, and continue from the Exact Next
-Action. Sub-agent ledger truth lives in SUBAGENT_LEDGER.md; wave integration
-truth lives in INTEGRATION_LEDGER.md.
+Task complete — do not resume this record. Future work requires the separate
+fresh owner authorization `PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`; its
+bootstrap input is HARDENING_HANDOFF.md in this directory.
 
 ## Completion Snapshot
 
-In progress: baseline adoption validated (typecheck PASS, hardening PASS,
-181 focused + 4 integrated-proof tests green); 15P task infrastructure being
-committed; sixteen assignments and four integration waves pending.
+Complete: PHASE_15_PARALLEL_IMPLEMENTATION reached
+IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at implementation SHA
+`42c5a7e1ab3f438a9c82688f2eee645d3c548d64`. All sixteen assignments
+integrated focused-green over four validated waves plus the A16 final seam;
+final pack green (typecheck, hardening, campaign:synthetic 27,
+owner-provenance 91, agent:check, project:check, diff-check; 341 phase15p +
+385 compatibility tests); rehearsal green 3x; all seven quality floors zero;
+73-file changed manifest recorded; deferred suites recorded NOT_RUN /
+DEFERRED_TO_INTEGRATED_HARDENING, never PASS. Integrated hardening is
+REQUIRED_NEXT under its own owner token; Phase 13B and Phase 11B remain
+NOT_AUTHORIZED.

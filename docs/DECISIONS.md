@@ -2732,3 +2732,53 @@ promotion/replay stack requires a fresh contained-DEV authorization.
 Design record: `docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md`;
 task records under
 `.agent/tasks/phase-13i-residual-runtime-completion-shadow-proof/`.
+## D-64 — Phase 15P: Parallel 16-Agent Implementation Campaign (implemented, local/source-only)
+
+**Selected** (2026-08-21, authorization
+`PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY`, starting SHA
+`e07630238d314f48718b1ca9fce2dc9ee31317eb`, final implementation SHA
+`42c5a7e1ab3f438a9c82688f2eee645d3c548d64`).
+
+**Decision.** Replace the four-session Phase-15 execution shape with one
+parallel campaign: a single parent integrator owning canonical main plus up
+to sixteen specialized sub-agents working in isolated local Git worktrees
+(`/tmp/nightwatch-swarm-*`, branches `swarm/aNN-*`, never pushed). Each
+sub-agent owned a disjoint dependency cone, delivered the structured handoff
+contract, and the parent reviewed every diff before cherry-picking in
+dependency waves (foundation → campaign runtime → triage/operational →
+convergence → rehearsal), validating after each wave and pushing durable
+checkpoints fast-forward.
+
+**Material architecture outcomes.** (1) One composed contract lifecycle model
+with mechanically enforced historical-ID stability; (2) converged semantic
+result/reason vocabulary with total adapters and strict unknown-value
+rejection; (3) source-contract movement classification with fail-closed
+currentness ceilings; (4) cross-field schema coherence + historical reader
+ownership table; (5) load-bearing candidate-lifecycle gates (GATE_BLOCK) with
+terminal-closure sweeps; (6) branded validated-plan replay executor seam;
+(7) truthful minimality evidence (unexercised deletions can no longer back
+MINIMALITY_PROVEN); (8) deterministic clustering tiebreakers, declared-gap
+confidence ceilings, strengthened dossier-v2 READY; (9) resume-drift
+classifiers with set-idempotent unresolved ledger; (10) shared readiness API
++ `status:local`; (11) artifact-validation facade over ten durable kinds;
+(12) project snapshot manifest with five-way classified diff; (13)
+privacy/authority bounding of durable error surfaces; (14) 78-class
+adversarial corpus with determinism ×3; (15) version-convergence guard suite;
+(16) 10-variant release-candidate rehearsal that exposed and fixed one real
+seam defect (checkpoint vs candidateLifecycle reason-code validator
+divergence).
+
+**Rejected alternatives.** Executing the four sessions sequentially
+(rejected: owner directive supersedes execution shape only); allowing
+sub-agents to commit to canonical main directly (rejected: integration
+authority must stay singular); resolving the single wave-2 conflict by
+newer-wins (rejected: resolved semantically keeping both A05 gate-closure and
+A09 ledger-idempotence behaviors).
+
+**Consequences.** Terminal state IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING;
+the integrated hardening campaign is REQUIRED_NEXT under its own owner token
+(`PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`) with HARDENING_HANDOFF.md as its
+bootstrap input. No DEV/real-campaign/production/data-plane/infra/AI/selfDev/
+promotion authority was exercised; Phase 11B and Phase 13B remain
+NOT_AUTHORIZED. CI remained externally billing-blocked throughout (zero-step
+failures); local/source evidence is the only acceptance until Actions executes.

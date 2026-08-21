@@ -2,13 +2,18 @@
 
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-## Interim note
+## Terminal note
 
-This report is finalized only at terminal closure. Interim truth lives in
-STATE.md, SUBAGENT_LEDGER.md, and INTEGRATION_LEDGER.md.
+This is the finalized terminal report.
+PHASE_15_PARALLEL_IMPLEMENTATION:
+IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at implementation SHA
+`42c5a7e1ab3f438a9c82688f2eee645d3c548d64`. This is NOT CI verified, NOT DEV
+accepted, NOT production ready, NOT fully hardened; Phase 11B and Phase 13B
+remain NOT_AUTHORIZED; the integrated hardening campaign is REQUIRED_NEXT
+under `PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`.
 
 ## Authorization
 
@@ -26,22 +31,40 @@ closure of that historical task under its own recorded directive.
 - Live anchors are discovered from Git (LIVE_HEAD_AUTHORITY: GIT); no document
   predicts its own containing commit or CI run.
 
-## What was delivered so far
+## What was delivered
 
 - Bootstrap verification and prior-session work adoption (integrated campaign
   proof test repaired and validated; Session-2 terminal closure recorded).
-- Phase-15P durable task infrastructure (this task directory) and the
-  continuity-checker allowlist extension for the mandated parallel-execution
-  artifacts.
-- Sub-agent campaign, wave integration, final pack, rehearsal, and handoff:
-  being executed; see STATE.md and the ledgers for live truth.
+- Phase-15P durable task infrastructure and the continuity-checker allowlist
+  extension for the mandated parallel-execution artifacts.
+- Sixteen sub-agent assignments (A01–A16) implemented in isolated local
+  worktrees and integrated by the parent in four dependency waves plus the
+  A16 final seam — every patch reviewed, cherry-picked, and wave-validated;
+  exactly one semantic conflict (A05×A09 orchestrator.ts) resolved
+  semantically keeping both behaviors; no rejected patches.
+- New architecture: contract lifecycle model, converged semantic vocabulary,
+  source-contract movement classifier, schema-coherence hardening + historical
+  reader table, load-bearing candidate lifecycle gates, branded validated-plan
+  replay seam, truthful minimality evidence, noise-immune clustering +
+  confidence ceilings + strengthened READY, resume-drift classifiers +
+  idempotent unresolved ledger, local readiness API + CLI, artifact validation
+  facade, project snapshot + classified diff, privacy/authority bounding,
+  78-class adversarial corpus, compatibility convergence guards, and the
+  10-variant release-candidate rehearsal with a confirmed checkpoint-boundary
+  seam fix.
+- HARDENING_HANDOFF.md fully populated including the machine-readable
+  73-file changed manifest from the starting SHA to the final implementation SHA.
 
-## Validation evidence so far (raw counts)
+## Validation evidence (raw counts)
 
-- npm run typecheck PASS; npm run hardening:check PASS.
-- Session-2 focused adoption suites (9 suites): 181 passed, 0 failed.
-- tests/unit/phase15CampaignIntegratedProof.test.ts: 4 passed, 0 failed.
-- git diff --check PASS.
+- Per-wave canonical runs: wave 1 = 190 passed; wave 2 = 212 + campaign:synthetic 27;
+  wave 3 = 221; wave 4 = 337 phase15p + hardening PASS + campaign:synthetic 27.
+- Final pack at the implementation SHA: typecheck PASS; hardening:check PASS;
+  campaign:synthetic 27 passed / 0 failed; test:owner-provenance 91 passed /
+  0 failed; agent:check PASS; project:check PASS; git diff --check PASS;
+  all 16 phase15p suites 341 passed / 0 failed; Phase 9–14 compatibility sweep
+  (25 suites) 385 passed / 0 failed; release-candidate rehearsal standalone x3 =
+  4 passed each run. All seven quality floors zero (see STATE.md).
 
 ## NOT_RUN / deferred
 

@@ -71,13 +71,13 @@ SUBAGENT_LEDGER.md and INTEGRATION_LEDGER.md.
 
 ## Milestones
 
-- [ ] M0 Baseline: adopt prior Session-2 closure artifacts (integrated proof test + continuity), extend checker allowlist for mandated 15P artifacts, create 15P task files, verify agent:check + project:check, commit + push baseline.
-- [ ] M1 WAVE 1 integrated: A01+A02+A03+A04 patches accepted, cherry-picked in dependency order, typecheck + focused foundation tests + git diff --check green, canonical checkpoint pushed.
-- [ ] M2 WAVE 2 integrated: A05+A06+A07+A09 patches integrated, typecheck + focused replay/minimization/campaign/checkpoint tests + campaign:synthetic + git diff --check green, canonical checkpoint pushed.
-- [ ] M3 WAVE 3 integrated: A08+A10+A11+A12 patches integrated, typecheck + focused triage/dossier/tooling/schema tests + git diff --check green, canonical checkpoint pushed.
-- [ ] M4 WAVE 4 integrated: A13+A14+A15+A16 patches integrated, typecheck + hardening:check + focused privacy/authority/adversarial/integration tests + campaign:synthetic + git diff --check green, canonical checkpoint pushed.
-- [ ] M5 Final integration pack: typecheck, hardening:check, campaign:synthetic, test:owner-provenance (if cone touched), agent:check, project:check, git diff --check; all NEW tests from A01–A16 plus directly affected Phase 9–14 compatibility suites; synthetic release-candidate rehearsal >= 3 green repeats; all hard floors zero.
-- [ ] M6 Handoff closure: HARDENING_HANDOFF.md fully populated incl. machine-readable changed-file list from starting SHA to final implementation SHA; docs updated (CURRENT_STATE, ROADMAP, DECISIONS as material); terminal statuses set; final canonical checkpoint pushed fast-forward; HEAD == origin/main; clean tree.
+- [x] M0 Baseline: adopt prior Session-2 closure artifacts (integrated proof test + continuity), extend checker allowlist for mandated 15P artifacts, create 15P task files, verify agent:check + project:check, commit + push baseline.
+- [x] M1 WAVE 1 integrated: A01+A02+A03+A04 patches accepted, cherry-picked in dependency order, typecheck + focused foundation tests + git diff --check green, canonical checkpoint pushed.
+- [x] M2 WAVE 2 integrated: A05+A06+A07+A09 patches integrated, typecheck + focused replay/minimization/campaign/checkpoint tests + campaign:synthetic + git diff --check green, canonical checkpoint pushed.
+- [x] M3 WAVE 3 integrated: A08+A10+A11+A12 patches integrated, typecheck + focused triage/dossier/tooling/schema tests + git diff --check green, canonical checkpoint pushed.
+- [x] M4 WAVE 4 integrated: A13+A14+A15+A16 patches integrated, typecheck + hardening:check + focused privacy/authority/adversarial/integration tests + campaign:synthetic + git diff --check green, canonical checkpoint pushed.
+- [x] M5 Final integration pack: typecheck, hardening:check, campaign:synthetic, test:owner-provenance (if cone touched), agent:check, project:check, git diff --check; all NEW tests from A01–A16 plus directly affected Phase 9–14 compatibility suites; synthetic release-candidate rehearsal >= 3 green repeats; all hard floors zero.
+- [x] M6 Handoff closure: COMPLETE — HARDENING_HANDOFF.md fully populated incl. machine-readable changed-file list (73 files) from starting SHA to final implementation SHA `42c5a7e1ab3f438a9c82688f2eee645d3c548d64`; docs updated (CURRENT_STATE, ROADMAP, DECISIONS); terminal statuses set; final canonical checkpoint pushed fast-forward; HEAD == origin/main; clean tree.
 
 ## Validation Strategy
 

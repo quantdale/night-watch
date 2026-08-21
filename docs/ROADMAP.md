@@ -1677,6 +1677,31 @@ Task record: `docs/design/PHASE_14_MECHANICAL_SOURCE_CONTRACT_EXPANSION.md` and
 - **Next**: STOP. Phase 11B/13B remain separately NOT_AUTHORIZED. Any real
   campaign / promotion runtime validation requires a future contained authorization.
 
+## Phase 15P — Parallel Local Project Completion (implemented-local, CI-blocked)
+
+Executed 2026-08-21 under `PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY`
+(D-64): one parent integrator plus sixteen specialized sub-agents (A01–A16) in
+isolated local worktrees replaced the four-session execution shape. Sessions
+1–2 of the four-session program were already complete on main; the remaining
+Sessions 3–4 architectural backlog was absorbed into assignments A10–A16.
+All sixteen assignments integrated focused-green across four dependency waves
+plus the A16 final seam (final implementation SHA `42c5a7e1ab3f438a9c82688f2eee645d3c548d64`;
+73-file changed manifest in the Phase-15P HARDENING_HANDOFF). New local/source
+architecture: contract lifecycle model, converged semantic vocabulary,
+source-contract movement classifier, schema-coherence hardening + historical
+reader table, load-bearing candidate lifecycle gates (GATE_BLOCK), branded
+validated-plan replay seam, truthful minimality evidence, noise-immune
+clustering + confidence ceilings + strengthened dossier-v2 READY,
+resume-drift classifiers + idempotent unresolved ledger, local readiness API
+(`nightwatch.local-readiness.v1` + `status:local` CLI), artifact validation
+facade, project snapshot + classified diff, privacy/authority bounding,
+78-class adversarial corpus, compatibility convergence guards, and a
+10-variant synthetic release-candidate rehearsal (deterministic ×3).
+Terminal state: IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING;
+`PHASE_15_INTEGRATED_HARDENING` REQUIRED_NEXT under its own owner token.
+NOT CI verified (external billing block persists), NOT DEV accepted, NOT
+production ready; Phase 11B and Phase 13B remain NOT_AUTHORIZED.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).
