@@ -61,7 +61,8 @@ exercised.
 - Focused suites: B 19; C 13 (+18 loopback pair); A 20; F 12; D 21 (+43 narrow compat); E 20 (+60 lifecycle compat).
 - Narrow historical compatibility: phase10Identity+phase12SemanticCluster 23; triage/phase13/campaign set 96; aiReview set 83; phase9a1GapReproduction+phase11a3CollectionAdmission+phase10Currentness 43.
 - Moderate semantic-platform integration pack (23 suites covering Phases 9A.1, 10, 11/11A.3, 12 coverage/cluster, 13 bundle/routing/shadow, 14 analyzer/adapters/drift/inventory/report/fresh-source, plus all six phase15 suites): 432 passed, 0 failed.
-- npm run typecheck PASS at closure; git diff --check PASS at every gate; npm run hardening:check PASS at every gate; npm run agent:check and npm run project:check PASS at closure.
+- npm run typecheck PASS at closure; git diff --check PASS at every gate; npm run hardening:check PASS at every gate (incl. after the checker allowlist repair).
+- npm run agent:check: all Session-1 v2 task validations pass; one residual error (STALE_IMPLEMENTATION_BASELINE) traces exclusively to concurrently-authored committed source (`aecc340`, unrelated parallel session) below the Session-1 anchor — outside Session-1 authority to revert or validate. npm run project:check inherits the same subprocess failure. Exact truth recorded in STATE.md Validation Ledger and HARDENING_HANDOFF.md.
 
 ## NOT_RUN / deferred
 
@@ -72,9 +73,7 @@ Session-1 specification and MASTER_PLAN.
 
 ## Concurrent-writer note
 
-An unrelated parallel local session edited and committed
-`e37799246ebe3a2a3b4b59754829ac8c80f09e02` ("Phase 15 S2 W1 ...") into this
-repository during execution. All Session-1 commits were staged path-scoped; that
+An unrelated parallel local session edited and committed TWO checkpoints into this repository during execution: `e37799246ebe3a2a3b4b59754829ac8c80f09e02` ("Phase 15 S2 W1 ...") and `aecc340` ("Phase 15 S2 W2 ..."), and advanced origin/main by pushing (its push also published the Session-1 commits below its own). All Session-1 commits were staged path-scoped; that
 commit is preserved untouched as ancestry and was never validated or claimed by
 this session.
 

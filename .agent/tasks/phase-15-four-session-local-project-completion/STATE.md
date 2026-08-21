@@ -89,7 +89,8 @@ own fresh session after this terminal continuity is pushed.
 - npm run typecheck: PASS at the wave-1 tree and at the workstream-A gate; during other gates the only diagnostics were foreign files owned by a concurrent unrelated session (src/core/campaign/*, src/core/triage/minimizer.ts, tests/unit/phase15CheckpointCompat.test.ts, tests/unit/_dbg*.temp.test.ts, tests/unit/phase15PromotionAuthority.test.ts); zero diagnostics ever referenced Session-1 files. Final full typecheck re-run at closure: PASS.
 - git diff --check: PASS at every gate.
 - npm run hardening:check: PASS at every gate.
-- npm run agent:check / npm run project:check: PASS at closure (post-continuity-commit, clean tree).
+- npm run agent:check: every Session-1 v2 task validation passes (protocol markers, cross-file identity/status agreement, terminal texts, snapshot, plan milestones, duplicate/placeholder rules); the SINGLE remaining error is STALE_IMPLEMENTATION_BASELINE caused exclusively by concurrently-authored committed source (`aecc340`, an unrelated parallel session's "Phase 15 S2 W2" checkpoint containing src/core/campaign/brief.ts, orchestrator.ts, realCampaignSemanticWiring.ts, tests/unit/campaign.test.ts, phase10Campaign.test.ts, phase15PromotionAuthority.test.ts) committed below the Session-1 anchor. Removing it would require reverting or validating another session's work — outside Session-1 authority; recorded as structural contamination, not a Session-1 defect.
+- npm run project:check: PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED via the same agent:check subprocess error; catalog/truth-block rows themselves unchanged and valid.
 - Determinism: registry build cached-frozen; digest helpers pinned by repeated-call stability tests; canonical round-trip asserted byte-identical.
 
 ## Decisions Made During This Task
