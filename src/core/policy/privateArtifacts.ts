@@ -12,6 +12,7 @@ import { randomBytes } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { assertOwnerPolicyAllows, type OwnerScopedOperation } from './ownerScope';
+import { containsPrivatePayloadShape } from './privateScreening';
 
 export const PRIVATE_ARTIFACT_POLICY_VERSION = 'nightwatch.private-artifact-policy.v1' as const;
 export const PRIVATE_ARTIFACT_ROOT_ENV = 'NIGHTWATCH_PRIVATE_STATE_DIR' as const;
@@ -43,9 +44,6 @@ export interface PrivateArtifactPolicyRecord {
 }
 
 const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,160}\.json$/;
-const SECRET_SHAPE_RE = /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
-const PRIVATE_SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL)/i;
-const PRIVATE_VALUE_RE = /(?:customer|account|billing[_-]?group|payer|cost|amount|email|cookie|token|password|secret|authorization)\s*[:=]\s*["']?[A-Za-z0-9@._:+/=-]{6,}/i;
 
 const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..');
 const WORKSPACE_ROOT = path.resolve(REPOSITORY_ROOT, '..');
@@ -112,8 +110,9 @@ function safeFileName(fileName: string): string {
 }
 
 function assertPrivatePayload(value: unknown): void {
-  const encoded = JSON.stringify(value);
-  if (SECRET_SHAPE_RE.test(encoded) || PRIVATE_SENTINEL_RE.test(encoded) || PRIVATE_VALUE_RE.test(encoded)) {
+  // Shared sentinel/secret screen (src/core/policy/privateScreening.ts) — the
+  // single canonical pattern set for durable construction points.
+  if (containsPrivatePayloadShape(JSON.stringify(value))) {
     throw new Error('PRIVATE_ARTIFACT_PRIVACY_BLOCKED');
   }
 }

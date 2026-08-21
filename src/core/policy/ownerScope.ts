@@ -56,13 +56,18 @@ export type OwnerBlockedOperation =
 
 export type OwnerScopedOperation = OwnerAllowedOperation | OwnerBlockedOperation | (string & {});
 
+/** Categorical reason vocabulary carried on every decision (never free text). */
+export type OwnerPolicyDecisionReason =
+  | typeof OWNER_SCOPE_REASON
+  | 'owner-approved local/application scope';
+
 export interface OwnerPolicyDecision {
   readonly allowed: boolean;
   readonly code: typeof OWNER_POLICY_BLOCKED | 'OWNER_POLICY_ALLOWED';
   readonly operation: string;
   readonly policyVersion: typeof OWNER_SCOPE_POLICY_VERSION;
   readonly status: typeof OWNER_SCOPE_STATUS;
-  readonly reason: string;
+  readonly reason: OwnerPolicyDecisionReason;
 }
 
 const ALLOWED_OPERATIONS = new Set<string>([

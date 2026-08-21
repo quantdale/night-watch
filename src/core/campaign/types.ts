@@ -14,7 +14,9 @@ import type {
   ChangeSet,
   DependencyEdge,
   JourneyId,
+  ReasonCode,
   RepoDefinition,
+  RiskClass,
   SelectionResult,
 } from '../changeIntelligence/types';
 import type {
@@ -24,7 +26,7 @@ import type {
   BrowserApiDifferential,
   BrowserObservation,
   BugDossier,
-  CandidateReplayOutcome,
+  CandidateReplay,
   ConfidenceResult,
   EvidenceLevel,
   MinimizationAction,
@@ -209,8 +211,10 @@ export interface CampaignSelectionExplanation {
   readonly selected: boolean;
   readonly reason: string;
   readonly sourceImpact: string;
-  readonly confidence: string;
-  readonly riskClass: string;
+  /** Bounded categorical confidence vocabulary (Phase 15P A13 narrowing). */
+  readonly confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN' | 'UNRESOLVED';
+  /** Bounded categorical risk class (Phase 15P A13 narrowing). */
+  readonly riskClass: RiskClass | 'TRUSTED_CANARY' | 'NONE' | 'TRIAGE';
   readonly linkedJourneyId: JourneyId | null;
   readonly linkedEnvelopeId: string | null;
   readonly linkedApiOperationId: string | null;
@@ -230,7 +234,8 @@ export interface CampaignSelectionResult {
   readonly nonSelectedJourneys: readonly {
     readonly journeyId: JourneyId;
     readonly reason: string;
-    readonly reasonCode: string;
+    /** Bounded categorical non-selection reason (Phase 15P A13 narrowing). */
+    readonly reasonCode: ReasonCode | 'MODE_NOT_SELECTED';
   }[];
   readonly fallbackTriggered: boolean;
   readonly zeroSelectionJustified: boolean;
@@ -393,7 +398,9 @@ export interface CampaignAnomalyCandidate {
    *  when present and valid, candidate routes through semantic cluster
    *  identity instead of historical protocol clustering). */
   readonly campaignSemanticEvidence?: import('./campaignSemanticEvidence').CampaignSemanticEvidence;
-  readonly replay?: (sequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => CandidateReplayOutcome | Promise<CandidateReplayOutcome>;
+  /** Capability-neutral replay binding supplied by adapters; never persisted
+   *  (manifests and checkpoints strip it via Omit). */
+  readonly replay?: CandidateReplay;
 }
 
 export interface CampaignExecutionOutcome {
