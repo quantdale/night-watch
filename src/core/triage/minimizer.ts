@@ -19,6 +19,12 @@
 import type { SafeAction, SafetyVector } from '../exploration/types';
 import { normalizeExecutorOutcome } from './executorNormalization';
 import {
+  buildMinimalityEvidenceDto,
+  probeOutcomeFromDisposition,
+  type MinimalityDeletionDisposition,
+  type MinimalityEvidence,
+} from './minimalityEvidence';
+import {
   FAILURE_MINIMIZATION_VERSION,
   PASSIVE_MINIMIZATION_SAFETY,
   REAL_DEV_MINIMIZATION_BUDGET,
@@ -405,4 +411,53 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     exercisedReducedReplayCount: reducedReplayInvocations,
   });
   return resultBase(options, budget, original, current, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, 'REPRODUCED', reproductionCount, guarantee, budgetExhausted, status, evidenceClass);
+}
+
+/**
+ * Companion builder (Phase 15P mass-implementation lane A07): derive the
+ * explicit portable MinimalityEvidence DTO from an existing result WITHOUT
+ * changing any classification. Purely additive — consumes only the public
+ * result surface:
+ *   - reductionAttempted / exercised count derive from the replay ledger
+ *     (every non-INVALID_ORIGINAL run spends exactly one fresh exact replay,
+ *     so reduced invocations = replayCount - 1; cached candidates never
+ *     counted);
+ *   - survivor-deletion dispositions are reconstructed from recorded
+ *     candidate evaluations whose sequence equals the survivor minus one
+ *     occurrence; unexercised deletions are omitted (evidence records only
+ *     what genuinely ran — never fabricated NOT_REDUCED markers);
+ *   - the evidence class is carried verbatim, so the structural guarantees
+ *     in minimalityEvidence.ts hold (proven markers ⇔ MINIMALITY_PROVEN).
+ */
+export function buildMinimalityEvidence(result: MinimizationResult): MinimalityEvidence {
+  const freshRan = result.status !== 'INVALID_ORIGINAL';
+  const exercisedReducedReplayCount = freshRan ? Math.max(0, result.replayCount - 1) : 0;
+  const survivorIds = result.minimalReproducingSequence;
+  const survivorDeletions: MinimalityDeletionDisposition[] = [];
+  if (survivorIds.length > 1) {
+    for (let index = 0; index < survivorIds.length; index += 1) {
+      const deletedSequence = survivorIds.filter((_, position) => position !== index);
+      const match = result.candidateEvaluations.find((evaluation) =>
+        evaluation.sequence.length === deletedSequence.length &&
+        evaluation.sequence.every((actionId, position) => actionId === deletedSequence[position]));
+      if (match !== undefined) {
+        survivorDeletions.push({
+          actionId: survivorIds[index]!,
+          probeOutcome: probeOutcomeFromDisposition(match.disposition, match.reason),
+          replayPath: 'REDUCED',
+        });
+      }
+    }
+  }
+  return buildMinimalityEvidenceDto({
+    evidenceClass: result.reductionEvidenceClass,
+    reductionAttempted: result.candidateEvaluations.slice(1).some((evaluation) => evaluation.disposition !== 'NOT_EVALUATED_BUDGET'),
+    exercisedReducedReplayCount,
+    survivorDeletions,
+    budget: [
+      { dimension: 'maxCandidateEvaluations', offered: result.budget.maxCandidateEvaluations, consumed: result.candidateEvaluationCount },
+      { dimension: 'maxTotalReplays', offered: result.budget.maxTotalReplays, consumed: result.replayCount },
+    ],
+    survivorActionIds: survivorIds,
+  });
 }
