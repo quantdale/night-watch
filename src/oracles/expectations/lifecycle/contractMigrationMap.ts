@@ -26,6 +26,15 @@
 // imports nothing and grants no authority — and the runtime value is the
 // exact historical path, pinned by
 // tests/unit/phase15ContractMigrationMap.test.ts.
+//
+// Phase 15P A04 addition: the HISTORICAL_SHAPE_READERS table below extends
+// this module's compatibility guidance with explicit reader ownership for
+// every durable serialized shape (schema-version-discriminated) and every
+// pre-versioning legacy evidence shape (shape-tag-discriminated). Like the
+// migration map it is pure declarative data plus fail-closed validation,
+// imports nothing, and carries only short static sanitized strings. The
+// version strings are literals here; the authoritative constants are
+// mechanically bound to them by tests/unit/phase15pSchemaCoherence.test.ts.
 // ---------------------------------------------------------------------------
 
 export const CONTRACT_MIGRATION_MAP_VERSION = 'nightwatch.contract-migration-map.v1' as const;
@@ -347,5 +356,205 @@ export function validateMigrationMap(entries: readonly LegacyApiEntry[]): void {
       throw new Error(`MIGRATION_MAP_DUPLICATE_API_PATH:${entry.apiPath}`);
     }
     seen.add(entry.apiPath);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 15P A04 — historical serialized-shape reader ownership.
+//
+// Explicit compatibility paths: every durable DTO version that still parses
+// names the ONE reader that owns it, and every pre-versioning legacy
+// evidence shape names its declared adapter. HISTORICAL rows are retained
+// read-only shapes (old serialized versions keep parsing; they are never
+// rewritten or upgraded in place); CURRENT rows are the live serialized
+// form. Data only: no imports, no authority, sanitized static strings.
+// ---------------------------------------------------------------------------
+
+export const HISTORICAL_READER_TABLE_VERSION = 'nightwatch.historical-reader-table.v1' as const;
+
+export type HistoricalReaderStatus = 'CURRENT' | 'HISTORICAL';
+
+export type HistoricalReaderDiscriminator =
+  | { readonly kind: 'SCHEMA_VERSION'; readonly schemaVersion: string }
+  | { readonly kind: 'SHAPE'; readonly shapeTag: string };
+
+export interface HistoricalReaderEntry {
+  /** How a persisted document is recognized as this shape. */
+  readonly discriminator: HistoricalReaderDiscriminator;
+  /** 'src/path/file.ts#exportedSymbol' of the owning reader. */
+  readonly readerApiPath: string;
+  /** CURRENT = live serialized form; HISTORICAL = retained read-only shape. */
+  readonly status: HistoricalReaderStatus;
+  /** Short sanitized rationale. Static string; never carries raw values. */
+  readonly note: string;
+}
+
+const SCHEMA_VERSION_PATTERN = /^nightwatch\.[a-z0-9.-]+\.v[0-9]+$/;
+const SHAPE_TAG_PATTERN = /^phase[0-9][a-z0-9-]*$/;
+
+/**
+ * Frozen cached reader-ownership table. One row per durable shape:
+ * semantic expectations, semantic receipts (v1+v2), replay plans (v1+v2),
+ * dossiers (v1+v2), real-source recipes (v1 archived + v2 active), the
+ * campaign checkpoint (absent Session-2 fields remain valid historical
+ * pre-S2 checkpoints through the same reader), and the three pre-versioning
+ * triage evidence adapters (Phase 2C journeys, Phase 4 exploration,
+ * Phase 5 API oracle observations).
+ */
+const HISTORICAL_SHAPE_READERS: readonly HistoricalReaderEntry[] = Object.freeze([
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.semantic-expectation.v1' } as const,
+    readerApiPath: 'src/oracles/expectations/validator.ts#validateExpectation',
+    status: 'CURRENT',
+    note: 'Only semantic-expectation schema version; strict unknown-field validator owns the shape.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.semantic-evaluation-receipt.v1' } as const,
+    readerApiPath: 'src/oracles/semantic/receipts.ts#validateSemanticEvaluationReceipt',
+    status: 'HISTORICAL',
+    note: 'Pre-Phase-11 receipt version; same dual-version reader as v2, coverage fields forbidden.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.semantic-evaluation-receipt.v2' } as const,
+    readerApiPath: 'src/oracles/semantic/receipts.ts#validateSemanticEvaluationReceipt',
+    status: 'CURRENT',
+    note: 'Live receipt version; adds optional collection coverage metadata.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.triage-replay-plan.private.v1' } as const,
+    readerApiPath: 'src/core/triage/replayPlan.ts#parseTriageReplayPlan',
+    status: 'HISTORICAL',
+    note: 'Action-id replay plan retained for historical/local evidence parsing; v2 supersedes for new plans.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.triage-replay-plan.private.v2' } as const,
+    readerApiPath: 'src/core/triage/replayPlan.ts#parseTriageReplayPlanV2',
+    status: 'CURRENT',
+    note: 'Occurrence-identity replay plan; deterministic rp2 plan ids.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.bug-dossier.private.v1' } as const,
+    readerApiPath: 'src/core/triage/dossier.ts#validateBugDossier',
+    status: 'HISTORICAL',
+    note: 'Protocol-only dossier v1 stays readable and validatable; never rewritten in place.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.bug-dossier.private.v2' } as const,
+    readerApiPath: 'src/core/triage/dossierV2.ts#parseBugDossierV2',
+    status: 'CURRENT',
+    note: 'Semantic dossier v2 with strict triage evidence and READY predicate.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.real-source-expectation-recipe.v1' } as const,
+    readerApiPath: 'src/oracles/expectations/recipes/validator.ts#validateRealSourceRecipe',
+    status: 'HISTORICAL',
+    note: 'Retired v1 recipe contract stays byte-meaning-stable for the archived corpus; never re-admitted.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.real-source-expectation-recipe.v2' } as const,
+    readerApiPath: 'src/oracles/expectations/recipes/validator.ts#validateRealSourceRecipe',
+    status: 'CURRENT',
+    note: 'Active deep-contract recipe version with item field type flow proof.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SCHEMA_VERSION', schemaVersion: 'nightwatch.campaign-checkpoint.private.v1' } as const,
+    readerApiPath: 'src/core/campaign/checkpoint.ts#validateCampaignCheckpoint',
+    status: 'CURRENT',
+    note: 'Single checkpoint reader; absent Session-2 fields classify as LEGACY_PRE_S2_RUNTIME_CONTRACTS via classifyCheckpointRuntimeContracts.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SHAPE', shapeTag: 'phase2c-journey-evidence' } as const,
+    readerApiPath: 'src/core/triage/compatibility.ts#adaptJourneyEvidence',
+    status: 'HISTORICAL',
+    note: 'Pre-versioning journey evidence is read only through this declared adapter.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SHAPE', shapeTag: 'phase4-exploration-evidence' } as const,
+    readerApiPath: 'src/core/triage/compatibility.ts#adaptExplorationEvidence',
+    status: 'HISTORICAL',
+    note: 'Pre-versioning exploration evidence is read only through this declared adapter.',
+  }),
+  Object.freeze({
+    discriminator: { kind: 'SHAPE', shapeTag: 'phase5-api-oracle-observation' } as const,
+    readerApiPath: 'src/core/triage/compatibility.ts#adaptApiOracleObservation',
+    status: 'HISTORICAL',
+    note: 'Phase 5 API oracle observations are read only through this declared adapter.',
+  }),
+]);
+
+const READER_BY_SCHEMA_VERSION: ReadonlyMap<string, HistoricalReaderEntry> = new Map<string, HistoricalReaderEntry>(
+  HISTORICAL_SHAPE_READERS
+    .filter((entry): entry is HistoricalReaderEntry & { discriminator: { kind: 'SCHEMA_VERSION'; schemaVersion: string } } =>
+      entry.discriminator.kind === 'SCHEMA_VERSION')
+    .map((entry) => [entry.discriminator.schemaVersion, entry]),
+);
+
+/** Returns the frozen cached reader-ownership table. */
+export function historicalShapeReaders(): readonly HistoricalReaderEntry[] {
+  return HISTORICAL_SHAPE_READERS;
+}
+
+/** Exact-match lookup of the owning reader for a serialized schemaVersion; null when unowned. */
+export function historicalReaderForSchemaVersion(schemaVersion: string): HistoricalReaderEntry | null {
+  return READER_BY_SCHEMA_VERSION.get(schemaVersion) ?? null;
+}
+
+function discriminatorKey(discriminator: HistoricalReaderDiscriminator): string {
+  return discriminator.kind === 'SCHEMA_VERSION' ? discriminator.schemaVersion : discriminator.shapeTag;
+}
+
+/**
+ * Fail-closed structural validation of historical-reader entries. Throws
+ * Error('HISTORICAL_READER_<CODE>:<detail>') with, checked per entry in order:
+ *
+ * - HISTORICAL_READER_DISCRIMINATOR_FORMAT:<key> — SCHEMA_VERSION must match
+ *   ^nightwatch\.[a-z0-9.-]+\.v[0-9]+$ ; SHAPE tags must match
+ *   ^phase[0-9][a-z0-9-]*$
+ * - HISTORICAL_READER_API_PATH_FORMAT:<readerApiPath> — reader must match the
+ *   migration-map apiPath grammar over src/ or corpus/
+ * - HISTORICAL_READER_INVALID_STATUS:<status> — unknown status value
+ * - HISTORICAL_READER_NOTE_REQUIRED:<key> — empty/whitespace note
+ * - HISTORICAL_READER_DUPLICATE_DISCRIMINATOR:<key> — repeated discriminator
+ */
+export function validateHistoricalReaders(entries: readonly HistoricalReaderEntry[]): void {
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const discriminator = entry.discriminator;
+    if (
+      discriminator === null ||
+      typeof discriminator !== 'object' ||
+      (discriminator.kind !== 'SCHEMA_VERSION' && discriminator.kind !== 'SHAPE')
+    ) {
+      throw new Error('HISTORICAL_READER_DISCRIMINATOR_FORMAT:unknown-kind');
+    }
+    const key = discriminatorKey(discriminator);
+    if (
+      discriminator.kind === 'SCHEMA_VERSION' &&
+      (typeof discriminator.schemaVersion !== 'string' || !SCHEMA_VERSION_PATTERN.test(discriminator.schemaVersion))
+    ) {
+      throw new Error(`HISTORICAL_READER_DISCRIMINATOR_FORMAT:${key}`);
+    }
+    if (
+      discriminator.kind === 'SHAPE' &&
+      (typeof discriminator.shapeTag !== 'string' || !SHAPE_TAG_PATTERN.test(discriminator.shapeTag))
+    ) {
+      throw new Error(`HISTORICAL_READER_DISCRIMINATOR_FORMAT:${key}`);
+    }
+    if (
+      typeof entry.readerApiPath !== 'string' ||
+      !MIGRATION_API_PATH_PATTERN.test(entry.readerApiPath)
+    ) {
+      throw new Error(`HISTORICAL_READER_API_PATH_FORMAT:${String(entry.readerApiPath)}`);
+    }
+    if (entry.status !== 'CURRENT' && entry.status !== 'HISTORICAL') {
+      throw new Error(`HISTORICAL_READER_INVALID_STATUS:${String(entry.status)}`);
+    }
+    if (typeof entry.note !== 'string' || entry.note.trim().length === 0) {
+      throw new Error(`HISTORICAL_READER_NOTE_REQUIRED:${key}`);
+    }
+    if (seen.has(key)) {
+      throw new Error(`HISTORICAL_READER_DUPLICATE_DISCRIMINATOR:${key}`);
+    }
+    seen.add(key);
   }
 }
