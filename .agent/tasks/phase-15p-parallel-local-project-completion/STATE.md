@@ -4,7 +4,7 @@
 
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Status: COMPLETE
+Status: IN_PROGRESS
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
 Last validated implementation SHA: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
 Last substantive checkpoint SHA: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
@@ -12,9 +12,14 @@ Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
+Authorization class: PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY
 
-PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: COMPLETE (IMPLEMENTED_FOCUSED_GREEN)
+PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: IN_PROGRESS
+PHASE_15P_MASS_IMPLEMENTATION: IN_PROGRESS
+PHASE_15P_TESTING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
+PHASE_15P_TYPECHECK_STATUS: NOT_RUN_BY_OWNER_DIRECTION
+PHASE_15P_HARDENING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
+PHASE_15P_FULL_REGRESSION: NOT_RUN_BY_OWNER_DIRECTION
 PHASE_15P_A01_CONTRACT_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A02_SEMANTIC_VOCABULARY: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A03_CURRENTNESS_DRIFT: IMPLEMENTED_FOCUSED_GREEN
@@ -31,7 +36,7 @@ PHASE_15P_A13_PRIVACY_AUTHORITY: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A14_ADVERSARIAL_CORPUS: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A15_COMPATIBILITY_CLEANUP: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A16_RELEASE_REHEARSAL: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15_PARALLEL_IMPLEMENTATION: IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING
+PHASE_15_PARALLEL_IMPLEMENTATION: SUPERSEDED_FOR_NEW_SCOPE_BY_MASS_BULK_IMPLEMENTATION
 PHASE_15_INTEGRATED_HARDENING: REQUIRED_NEXT
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
@@ -51,12 +56,12 @@ PARTIAL_IMPLEMENTATION_BLOCKED with enumerated blockers).
 
 ## Current Milestone
 
-Complete and terminal: all sixteen assignments (A01–A16) integrated focused-
-green across four dependency waves plus the A16 final-seam integration; the
-full M6 pre-hardening pack is green; the synthetic release-candidate
-rehearsal ran standalone three times (4/4 each); HARDENING_HANDOFF.md is
-complete; the PHASE_15_PARALLEL_IMPLEMENTATION status row above records the
-implementation-complete terminal value.
+M-MASS-1 — mass bulk implementation campaign under
+PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY: sixteen implementation-only lanes
+(A01–A16) extending the integrated architecture; testing/typecheck/hardening
+are NOT_RUN_BY_OWNER_DIRECTION for this scope; wave checkpoints are labeled
+UNVALIDATED truthfully. The prior focused-green closure (42c5a7e) remains
+historically true for its completed scope.
 
 ## Completed Milestones
 
@@ -98,13 +103,19 @@ implementation-complete terminal value.
 
 ## Work In Progress
 
-None. Terminal.
+M-MASS-1: strategy-shift checkpoint being committed; lanes A01–A14 launching
+on fresh swarm2 branches off `d16683341ae9c65ac8684bb8e43fde2e49297db7`;
+A15/A16 follow wave 3 integration.
 
 ## Exact Next Action
 
-Stop at the truthful terminal state. The separately owner-gated integrated
-hardening campaign (`PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`) is
-REQUIRED_NEXT and must not begin under this task's authorization.
+Commit + push the strategy shift, repoint the sixteen existing worktrees to
+fresh swarm2 branches off current main, launch lanes A01–A14 with
+implementation-only prompts (no test execution), integrate waves 1–3 with
+lightweight inspection only, then launch A15/A16, integrate wave 4, and
+terminalize as IMPLEMENTED_UNVALIDATED_AWAITING_HARDENING.
+
+
 
 ## Files Changed
 
@@ -214,20 +225,15 @@ read-only.
 
 ## Resume Recipe
 
-Task complete — do not resume this record. Future work requires the separate
-fresh owner authorization `PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`; its
-bootstrap input is HARDENING_HANDOFF.md in this directory.
+If interrupted: fetch origin, verify live HEAD from Git, read this STATE.md
+plus MASS_IMPLEMENTATION_HANDOFF.md, SUBAGENT_LEDGER.md, and
+INTEGRATION_LEDGER.md, inspect git status/diff, reconcile with the working
+tree, and continue from the Exact Next Action. The prior focused-green record
+for the earlier scope stays valid in Git history.
 
 ## Completion Snapshot
 
-Complete: PHASE_15_PARALLEL_IMPLEMENTATION reached
-IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at implementation SHA
-`42c5a7e1ab3f438a9c82688f2eee645d3c548d64`. All sixteen assignments
-integrated focused-green over four validated waves plus the A16 final seam;
-final pack green (typecheck, hardening, campaign:synthetic 27,
-owner-provenance 91, agent:check, project:check, diff-check; 341 phase15p +
-385 compatibility tests); rehearsal green 3x; all seven quality floors zero;
-73-file changed manifest recorded; deferred suites recorded NOT_RUN /
-DEFERRED_TO_INTEGRATED_HARDENING, never PASS. Integrated hardening is
-REQUIRED_NEXT under its own owner token; Phase 13B and Phase 11B remain
-NOT_AUTHORIZED.
+In progress: prior focused-green scope closed at `42c5a7e` (historically
+true); mass bulk implementation scope reopened under
+PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY with testing/typecheck/hardening
+NOT_RUN_BY_OWNER_DIRECTION; lanes launching.

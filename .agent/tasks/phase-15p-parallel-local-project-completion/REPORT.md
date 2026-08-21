@@ -2,18 +2,19 @@
 
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Status: COMPLETE
+Status: IN_PROGRESS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-## Terminal note
+## Status note
 
-This is the finalized terminal report.
-PHASE_15_PARALLEL_IMPLEMENTATION:
-IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at implementation SHA
-`42c5a7e1ab3f438a9c82688f2eee645d3c548d64`. This is NOT CI verified, NOT DEV
-accepted, NOT production ready, NOT fully hardened; Phase 11B and Phase 13B
-remain NOT_AUTHORIZED; the integrated hardening campaign is REQUIRED_NEXT
-under `PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY`.
+The prior focused-green terminal report for the
+PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY scope (implementation
+SHA `42c5a7e`) is preserved in Git history. Under the owner's
+PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY directive this task reopened for
+additional implementation-only lanes; their output is UNVALIDATED by
+direction (testing/typecheck/hardening NOT_RUN_BY_OWNER_DIRECTION). The
+finalized mass-implementation report lands with
+MASS_IMPLEMENTATION_HANDOFF.md at terminal closure.
 
 ## Authorization
 

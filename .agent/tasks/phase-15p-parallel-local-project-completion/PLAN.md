@@ -90,6 +90,11 @@ NOT_RUN / DEFERRED_TO_INTEGRATED_HARDENING, never PASS.
 
 ## Decision Log
 
+- D-15P-6 (owner directive): PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY reopens
+  the task for implementation-only lanes A01–A16; all validation cadence
+  (tests, typecheck, hardening, audits) is deferred to a dedicated future
+  hardening campaign; wave checkpoints are labeled UNVALIDATED truthfully;
+  permanent boundaries unchanged.
 - D-15P-1: One parallel campaign supersedes the four-session EXECUTION SHAPE;
   architectural/safety requirements are preserved verbatim from the session
   specs (owner directive in PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY).

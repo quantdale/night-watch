@@ -3,14 +3,14 @@
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
 Title: Nightwatch Phase 15P — Parallel Local Project Completion (parent integrator + up to 16 specialized sub-agents)
-Status: COMPLETE
+Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-15p-parallel-local-project-completion
 Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
 Last validated implementation SHA: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
 Last checkpoint: 42c5a7e1ab3f438a9c82688f2eee645d3c548d64
-Current milestone: Complete and terminal: all sixteen assignments integrated focused-green through four waves plus the A16 final seam; final pack green; handoff complete
-Next action: Stop. Integrated hardening is REQUIRED_NEXT under its own owner token (PHASE_15_INTEGRATED_HARDENING_LOCAL_ONLY); bootstrap from HARDENING_HANDOFF.md
-Authorization class: PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY
+Current milestone: M-MASS-1 — mass bulk implementation campaign (lanes A01-A14 launched; A15/A16 follow wave 3); implementation-only, no test execution by owner direction
+Next action: launch lanes A01-A14 on fresh swarm2 branches off d166833, integrate waves 1-3 without test execution, then A15/A16, wave 4, terminalize IMPLEMENTED_UNVALIDATED_AWAITING_HARDENING
+Authorization class: PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Scope
@@ -34,7 +34,11 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: COMPLETE (IMPLEMENTED_FOCUSED_GREEN)
+PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: IN_PROGRESS
+PHASE_15P_MASS_IMPLEMENTATION: IN_PROGRESS
+PHASE_15P_TESTING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
+PHASE_15P_TYPECHECK_STATUS: NOT_RUN_BY_OWNER_DIRECTION
+PHASE_15P_HARDENING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
 PHASE_15P_A01_CONTRACT_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A02_SEMANTIC_VOCABULARY: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A03_CURRENTNESS_DRIFT: IMPLEMENTED_FOCUSED_GREEN
@@ -51,15 +55,18 @@ PHASE_15P_A13_PRIVACY_AUTHORITY: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A14_ADVERSARIAL_CORPUS: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A15_COMPATIBILITY_CLEANUP: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15P_A16_RELEASE_REHEARSAL: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15_PARALLEL_IMPLEMENTATION: IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING
+PHASE_15_PARALLEL_IMPLEMENTATION: SUPERSEDED_FOR_NEW_SCOPE_BY_MASS_BULK_IMPLEMENTATION
 PHASE_15_INTEGRATED_HARDENING: REQUIRED_NEXT
 PHASE_13B_STATUS: NOT_AUTHORIZED
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: STOP
+NEXT ACTION: run the mass implementation lanes and integrate without test execution
 
 ## Blockers
 
-None. All sixteen assignments integrated; no blockers remain.
+None. The prior focused-green closure remains historically true for its scope;
+the owner's PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY directive reopens this
+task for additional implementation-only lanes whose output is UNVALIDATED by
+direction.
 
 ## Recovery
 
