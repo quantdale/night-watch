@@ -18,6 +18,20 @@
 //                       lower `.vM` on the same slot prefix), and snapshot
 //                       schema-version mismatch.
 //
+// ENFORCED DELTA RULES (mirrors types.ts):
+//   - Additive vs removal is total: additions to set sections, lifecycle
+//     families, and adopted-case catalog entries classify COMPATIBLE_CHANGE;
+//     removals classify INCOMPATIBLE_CHANGE. Single version slots classify
+//     by direction only (see below).
+//   - campaignCheckpointVersion is a first-class classified slot: checkpoint
+//     schema evolution (higher `.vN` on the same family, or a different
+//     family) = SEMANTIC_CHANGE; a same-family `.vN` downgrade =
+//     INCOMPATIBLE_CHANGE (older persisted checkpoints become unreadable).
+//   - AUTHORITY_CHANGE precedence stays highest: owner-scope marker fields,
+//     approvedTargets (expansion and revocation alike), and the
+//     ownerScopePolicyVersion campaign-fingerprint key always classify as
+//     authority events regardless of delta kind or direction.
+//
 // Version slots (single current-generation strings) use downgrade detection:
 // same `*.v<N>` prefix family with a lower number => INCOMPATIBLE_CHANGE;
 // any other change => SEMANTIC_CHANGE. Version sets (supported generations)
@@ -208,17 +222,37 @@ function pushCampaignFindings(
   previousVersions: CampaignVersionFingerprint,
   currentVersions: CampaignVersionFingerprint,
 ): void {
-  const keys = Object.keys(previousVersions) as readonly (keyof CampaignVersionFingerprint)[];
+  // Union of both key sets, sorted: a fingerprint key present only on one
+  // side is a real delta (added = COMPATIBLE_CHANGE, removed =
+  // INCOMPATIBLE_CHANGE), never silently invisible.
+  const keys = [
+    ...new Set([...Object.keys(previousVersions), ...Object.keys(currentVersions)]),
+  ] as readonly (keyof CampaignVersionFingerprint)[];
   for (const key of [...keys].sort((a, b) => a.localeCompare(b))) {
     const before = previousVersions[key];
     const after = currentVersions[key];
     if (before === after) continue;
+    // The owner-scope policy version inside the campaign fingerprint is
+    // authority state in every delta kind; every other fingerprint field is
+    // campaign semantics governed by the additive/removal rule.
+    const isAuthorityKey = key === 'ownerScopePolicyVersion';
+    if (before === undefined || after === undefined) {
+      findings.push({
+        section: `campaignVersions.${key}`,
+        kind: before === undefined ? 'ADDED' : 'REMOVED',
+        classification: isAuthorityKey
+          ? 'AUTHORITY_CHANGE'
+          : before === undefined
+            ? 'COMPATIBLE_CHANGE'
+            : 'INCOMPATIBLE_CHANGE',
+        detail: `${String(before)} -> ${String(after)}`,
+      });
+      continue;
+    }
     findings.push({
       section: `campaignVersions.${key}`,
       kind: 'CHANGED',
-      // The owner-scope policy marker inside the campaign fingerprint is
-      // authority state; every other fingerprint field is campaign semantics.
-      classification: key === 'ownerScopePolicyVersion' ? 'AUTHORITY_CHANGE' : 'SEMANTIC_CHANGE',
+      classification: isAuthorityKey ? 'AUTHORITY_CHANGE' : 'SEMANTIC_CHANGE',
       detail: `${before} -> ${after}`,
     });
   }
@@ -274,6 +308,14 @@ export function compareProjectSnapshots(
   pushSlotFindings(findings, 'analyzerVersion', previous.analyzerVersion, current.analyzerVersion);
   pushSetFindings(findings, 'replayPlanVersions', setDelta(previous.replayPlanVersions, current.replayPlanVersions));
   pushSlotFindings(findings, 'semanticReceiptVersion', previous.semanticReceiptVersion, current.semanticReceiptVersion);
+  // First-class classified slot (see ENFORCED DELTA RULES): evolution =
+  // SEMANTIC_CHANGE, same-family downgrade = INCOMPATIBLE_CHANGE.
+  pushSlotFindings(
+    findings,
+    'campaignCheckpointVersion',
+    previous.campaignCheckpointVersion,
+    current.campaignCheckpointVersion,
+  );
   pushSetFindings(findings, 'dossierVersions', setDelta(previous.dossierVersions, current.dossierVersions));
   pushCampaignFindings(findings, previous.campaignVersions, current.campaignVersions);
   pushSetFindings(
