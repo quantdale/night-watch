@@ -2,19 +2,23 @@
 
 Task ID: phase-15p-parallel-local-project-completion
 Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Status note
 
-The prior focused-green terminal report for the
-PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY scope (implementation
-SHA `42c5a7e`) is preserved in Git history. Under the owner's
-PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY directive this task reopened for
-additional implementation-only lanes; their output is UNVALIDATED by
-direction (testing/typecheck/hardening NOT_RUN_BY_OWNER_DIRECTION). The
-finalized mass-implementation report lands with
-MASS_IMPLEMENTATION_HANDOFF.md at terminal closure.
+Terminal report for PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY:
+PHASE_15P_MASS_IMPLEMENTATION reached
+WHOLE_SYSTEM_IMPLEMENTED_UNVALIDATED_AWAITING_HARDENING at final
+implementation SHA `c2640cb08e7057eccab740942c3dc9991109ad1e` (105 files,
++5488/−441 over strategy-shift base `abc9bf9`). All sixteen lanes delivered
+and integrated (A07 completed by the parent after repeated provider failures;
+A15/A16 resumed once each); one semantic conflict repaired post-pick (A16 vs
+integrated round-2 artifact facade). Every validation surface — tests,
+typecheck, hardening, audits, regression, CI — is NOT_RUN_BY_OWNER_DIRECTION
+and never claimed PASS. Phase 6 FROZEN_BY_OWNER; Phase 11B and Phase 13B
+NOT_AUTHORIZED. The next session is the single all-phase integrated hardening
+campaign; its bootstrap input is MASS_IMPLEMENTATION_HANDOFF.md.
 
 ## Authorization
 

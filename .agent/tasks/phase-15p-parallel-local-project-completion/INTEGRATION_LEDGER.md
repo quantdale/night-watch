@@ -62,6 +62,11 @@ checkpoints UNVALIDATED by owner direction.
 | M12 | A07 | 11234a5 (parent-implemented after repeated provider failures; committed on swarm2/a07-minimality-evidence) | 27080db | none | minimality evidence DTO + additive builder |
 | M13 | A13 | 95ee8b3b75e61c1d8f34f61781f590c674faa8f8 | 81d6c71 | none | shared private-payload screen + DTO narrowings |
 | M14 | A14 | d0fe8c7d0da529dccf3b95731157320e21a8ce18 | c8bddad | none | corpus architecture: 66 definitions across all families incl. P6 FROZEN_BY_OWNER + 11B/13B NOT_AUTHORIZED markers; 7 pure builders |
+| M15 | A16 | 6c12a85 (resumed once) | 543c828 → amended 1a4d343 | artifactValidation/index.ts add/add + dropped round-2 content restored post-pick (kept integrated KIND_VALIDATORS, added registration seam) | seam assembler |
+| M16 | A15 | c9489e5 (resumed once after mid-batch context end) | c2640cb | none | legacy convergence: 137 de-exports + 17 deletions + version-constant/digest convergence |
+
+Final mass-round implementation SHA: `c2640cb08e7057eccab740942c3dc9991109ad1e`
+(HEAD == origin/main at terminal closure; LIVE_HEAD_AUTHORITY: GIT).
 | M15 | A15 | pending (background) | — | — | legacy convergence |
 | M16 | A16 | pending (background) | — | — | seam assembler |
 
