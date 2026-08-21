@@ -1465,7 +1465,6 @@ export class CampaignOrchestrator {
     if (!bundleCoherent || evidence.sourceCurrentness === 'STALE' || evidence.sourceCurrentness === 'UNAVAILABLE' || evidence.sourceCurrentness === 'UNKNOWN') missingEvidenceCodes.add('SOURCE_CURRENTNESS_UNRESOLVED');
     if (evidence.receiptOutcome === 'PARTIAL_COVERAGE') missingEvidenceCodes.add('PARTIAL_COLLECTION_COVERAGE');
     if (exactReplayStatus !== 'REPRODUCED') missingEvidenceCodes.add('EXACT_REPLAY_REQUIRED');
-    if (input.triaged.minimization.minimalityGuarantee === 'NONE' && input.triaged.minimization.reproductionCount === 0) missingEvidenceCodes.add('REPRODUCTION_EVIDENCE_MISSING');
     const semanticTriageEvidence: SemanticTriageEvidence = createSemanticTriageEvidence({
       expectationId: evidence.expectationId,
       targetId: evidence.targetId,
