@@ -406,7 +406,3 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   });
   return resultBase(options, budget, original, current, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, 'REPRODUCED', reproductionCount, guarantee, budgetExhausted, status, evidenceClass);
 }
-
-export function safetyVectorIsZero(safety: SafetyVector): boolean {
-  return allZeroSafety(safety);
-}

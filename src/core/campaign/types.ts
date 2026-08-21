@@ -49,6 +49,14 @@ export const CAMPAIGN_MORNING_BRIEF_VERSION = 'nightwatch.campaign-morning-brief
 // Phase 15 Session 2 runtime-contract versions pinned at the checkpoint
 // boundary. A persisted checkpoint carrying any other value in
 // `runtimeContractVersions` fails closed at resume before an executor runs.
+//
+// Ownership note (Phase 15P A15): these three strings are deliberately NOT
+// value-imported from their owning modules (candidateLifecycle.ts,
+// triage/replayPlan.ts, triage/promotionResult.ts) because this module is the
+// base of the campaign type graph and a value edge would close an import
+// cycle through ./identity. Single ownership is enforced mechanically by
+// tests/unit/phase15pCompatConvergence.test.ts, which fails if any entry ever
+// drifts from the owning constant.
 export const CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED = {
   candidateLifecycle: 'nightwatch.candidate-lifecycle.private.v1',
   replayBinding: 'nightwatch.triage-replay-plan.private.v2',

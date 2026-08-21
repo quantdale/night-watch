@@ -12,6 +12,14 @@ import type { SemanticDossierEvidence } from '../../oracles/semantic/dossier';
 export const FAILURE_MINIMIZATION_VERSION = 'nightwatch.failure-minimization.private.v1' as const;
 export const ANOMALY_CLUSTER_VERSION = 'nightwatch.anomaly-cluster.private.v1' as const;
 export const DOSSIER_VERSION = 'nightwatch.bug-dossier.private.v1' as const;
+// Compatibility/intermediate surface (Phase 15P A15): OVERNIGHT_SUMMARY_VERSION
+// and MORNING_BRIEF_VERSION stamp INTERMEDIATE-ONLY in-memory shapes built by
+// src/core/triage/summaries.ts and consumed by src/core/campaign/brief.ts.
+// They are never persisted or validated standalone; the durable morning-brief
+// artifact is `nightwatch.campaign-morning-brief.private.v1`
+// (CAMPAIGN_MORNING_BRIEF_VERSION, owned by campaign/types.ts, read back by
+// validateCampaignMorningBrief and the artifactValidation facade). New code
+// must not treat these v1 strings as persisted schema versions.
 export const OVERNIGHT_SUMMARY_VERSION = 'nightwatch.overnight-summary.private.v1' as const;
 export const MORNING_BRIEF_VERSION = 'nightwatch.morning-brief.private.v1' as const;
 export const AI_READY_PACKAGE_VERSION = 'nightwatch.ai-ready-evidence.private.v1' as const;
@@ -424,6 +432,11 @@ export interface OvernightRunRecord {
   readonly safety: BugDossier['safety'];
 }
 
+/**
+ * Intermediate-only aggregation shape (Phase 15P A15 mark): built by
+ * triage/summaries.buildOvernightSummary, consumed by campaign/brief.ts;
+ * never persisted or validated standalone.
+ */
 export interface OvernightSummary {
   readonly schemaVersion: typeof OVERNIGHT_SUMMARY_VERSION;
   readonly runsExecuted: number;
@@ -442,6 +455,13 @@ export interface OvernightSummary {
   readonly datastoreStatus: 'OUT_OF_SCOPE_BY_OWNER';
 }
 
+/**
+ * Intermediate-only brief shape (Phase 15P A15 mark): built by
+ * triage/summaries.buildMorningBrief as an input to the DURABLE campaign
+ * morning brief (`nightwatch.campaign-morning-brief.private.v1`, owned by
+ * campaign/types.ts + campaign/brief.ts). Never persisted or validated
+ * standalone; new code must not read or write this shape as an artifact.
+ */
 export interface MorningBrief {
   readonly schemaVersion: typeof MORNING_BRIEF_VERSION;
   readonly headline: string;
