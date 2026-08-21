@@ -8,6 +8,12 @@
 // network/child_process/DB/AI authority. Wired into CampaignOrchestrator at
 // the admission, reproduction, minimization, triage, and dossier call sites
 // (see the lifecycle event mapping in orchestrator.ts).
+//
+// Phase 15P (A05): safety/privacy/currentness gates are load-bearing in the
+// machine itself. The additive GATE_BLOCK event routes a gate failure from
+// any pre-triage open state to the UNRESOLVED terminal with a mandatory
+// reason code; the frozen table stays the single authority and every illegal
+// jump still fails closed.
 // ---------------------------------------------------------------------------
 
 import {
@@ -46,6 +52,7 @@ export const CANDIDATE_LIFECYCLE_EVENTS = [
   'CLASSIFY_REJECTED',
   'CLASSIFY_UNRESOLVED',
   'MARK_DOSSIER_READY',
+  'GATE_BLOCK',
 ] as const;
 
 export type CandidateLifecycleEvent = typeof CANDIDATE_LIFECYCLE_EVENTS[number];
@@ -80,13 +87,19 @@ const RECORD_KEYS = ['lifecycleVersion', 'variant', 'state', 'transitionCount', 
  * The single authority for candidate progression. Terminal states carry an
  * empty edge map, so terminality is derived from this table and cannot drift
  * from it.
+ *
+ * Phase 15P (A05) additive extension: `GATE_BLOCK` is the explicit safety/
+ * privacy/currentness gate-failure edge. A gate failure at any pre-triage
+ * stage routes the record to the UNRESOLVED terminal with a mandatory reason
+ * code — it is never swallowed into an ambiguous mid-state. TRIAGED keeps the
+ * CLASSIFY_* edges as its only exits; terminal states stay edge-free.
  */
 const LIFECYCLE_TRANSITIONS: Readonly<Record<CandidateLifecycleState, Readonly<Partial<Record<CandidateLifecycleEvent, CandidateLifecycleState>>>>> = Object.freeze({
-  OBSERVED: Object.freeze({ ADMIT: 'ADMITTED', REJECT: 'REJECTED' }),
-  ADMITTED: Object.freeze({ CONFIRM_REPRODUCTION: 'REPRODUCED', FAIL_REPRODUCTION: 'UNRESOLVED', REJECT: 'REJECTED' }),
-  REPRODUCED: Object.freeze({ APPLY_MINIMIZATION: 'MINIMIZED', KEEP_UNCHANGED: 'UNCHANGED', FAIL_REPRODUCTION: 'UNRESOLVED' }),
-  MINIMIZED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED' }),
-  UNCHANGED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED' }),
+  OBSERVED: Object.freeze({ ADMIT: 'ADMITTED', REJECT: 'REJECTED', GATE_BLOCK: 'UNRESOLVED' }),
+  ADMITTED: Object.freeze({ CONFIRM_REPRODUCTION: 'REPRODUCED', FAIL_REPRODUCTION: 'UNRESOLVED', REJECT: 'REJECTED', GATE_BLOCK: 'UNRESOLVED' }),
+  REPRODUCED: Object.freeze({ APPLY_MINIMIZATION: 'MINIMIZED', KEEP_UNCHANGED: 'UNCHANGED', FAIL_REPRODUCTION: 'UNRESOLVED', GATE_BLOCK: 'UNRESOLVED' }),
+  MINIMIZED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
+  UNCHANGED: Object.freeze({ COMPLETE_TRIAGE: 'TRIAGED', GATE_BLOCK: 'UNRESOLVED' }),
   TRIAGED: Object.freeze({ MARK_DOSSIER_READY: 'DOSSIER_READY', CLASSIFY_REJECTED: 'REJECTED', CLASSIFY_UNRESOLVED: 'UNRESOLVED' }),
   DOSSIER_READY: Object.freeze({}),
   REJECTED: Object.freeze({}),
@@ -150,9 +163,10 @@ function normalizeReasonCode(reasonCode: string | undefined): string | null {
 
 /**
  * Apply one lifecycle event to a validated record and return the next frozen
- * record. Fails closed on corrupt records, unknown events, and edges absent
- * from the frozen table; error messages carry only safe tokens (an
- * unvalidated event payload is never echoed).
+ * record. Fails closed on corrupt records, unknown events, edges absent from
+ * the frozen table, and GATE_BLOCK without a reason code (a gate failure
+ * without its gate identity is never accepted); error messages carry only
+ * safe tokens (an unvalidated event payload is never echoed).
  */
 export function transitionCandidateLifecycle(
   record: CandidateLifecycleRecord,
@@ -168,6 +182,12 @@ export function transitionCandidateLifecycle(
   if (target === undefined) {
     throw new Error(`CANDIDATE_LIFECYCLE_ILLEGAL_TRANSITION:FROM:${record.state}:EVENT:${event}:TO:NONE`);
   }
+  // Structural legality first, then payload validity: a GATE_BLOCK edge that
+  // exists must carry its gate identity; a GATE_BLOCK from a state without
+  // the edge is reported as the illegal transition it is.
+  if (event === 'GATE_BLOCK' && nextReasonCode === null) {
+    throw new Error('CANDIDATE_LIFECYCLE_GATE_REASON_REQUIRED');
+  }
   return Object.freeze({
     lifecycleVersion: record.lifecycleVersion,
     variant: record.variant,
@@ -181,6 +201,26 @@ export function transitionCandidateLifecycle(
 export function isTerminalCandidateLifecycleState(state: CandidateLifecycleState): boolean {
   if (typeof state !== 'string' || !STATE_SET.has(state)) throw new Error('CANDIDATE_LIFECYCLE_STATE_UNKNOWN');
   return Object.keys(LIFECYCLE_TRANSITIONS[state]).length === 0;
+}
+
+/**
+ * Route a gate failure to an explicit terminal state. The reason code is
+ * mandatory — a gate failure without its identity is rejected, never
+ * normalized away. Records already in a terminal state are returned
+ * unchanged (closing a closed record is an idempotent no-op, not a bypass:
+ * the record already carries an explicit terminal verdict). TRIAGED has no
+ * GATE_BLOCK edge by design — post-triage exits stay with the CLASSIFY_*
+ * edges — so a gate failure at TRIAGED throws; callers that need a total
+ * close use `closeCandidateLifecycleOnGateFailure` semantics at their call
+ * site (the orchestrator routes TRIAGED through CLASSIFY_UNRESOLVED).
+ */
+export function gateBlockCandidateLifecycle(
+  record: CandidateLifecycleRecord,
+  reasonCode: string,
+): CandidateLifecycleRecord {
+  validateCandidateLifecycleRecord(record);
+  if (isTerminalCandidateLifecycleState(record.state)) return record;
+  return transitionCandidateLifecycle(record, 'GATE_BLOCK', reasonCode);
 }
 
 /**
