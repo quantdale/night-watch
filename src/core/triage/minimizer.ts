@@ -5,11 +5,16 @@
 // subsequence of the admitted original action sequence. It cannot introduce
 // an action, selector, route, request, or value. The implementation uses a
 // deterministic ddmin-style reduction followed by a bounded one-deletion
-// audit. Therefore it reports 1-MINIMAL only when that audit completes;
-// otherwise it reports BOUNDED_MINIMAL and never claims a global minimum.
+// audit. Therefore it reports 1-MINIMAL only when that audit completes AND
+// at least one genuine reduced-candidate replay observed DOES_NOT_REPRODUCE
+// (or nothing is left to remove); an INVALID deletion was never genuinely
+// replayed and never counts as proof. Otherwise it reports BOUNDED_MINIMAL
+// and never claims a global minimum. reductionEvidenceClass records which
+// evidence was actually obtained.
 // ---------------------------------------------------------------------------
 
 import type { SafeAction, SafetyVector } from '../exploration/types';
+import { normalizeExecutorOutcome } from './executorNormalization';
 import {
   FAILURE_MINIMIZATION_VERSION,
   PASSIVE_MINIMIZATION_SAFETY,
@@ -145,7 +150,7 @@ function outcomeReason(outcome: CandidateReplayOutcome, targetFingerprint: strin
     : { disposition: 'DOES_NOT_REPRODUCE', reason: outcome.status === 'FAILURE' ? 'DIFFERENT_OR_NO_FINGERPRINT' : 'FAILURE_NOT_OBSERVED', match: false };
 }
 
-function resultBase(options: MinimizationOptions, budget: MinimizationBudget, original: readonly ActionOccurrence[], minimal: readonly ActionOccurrence[], evaluations: readonly CandidateEvaluation[], replayCount: number, invalidCount: number, safetyRejectionCount: number, fresh: MinimizationResult['freshExactReplay'], reproductionCount: number, guarantee: MinimizationResult['minimalityGuarantee'], budgetExhausted: boolean, status: MinimizationResult['status']): MinimizationResult {
+function resultBase(options: MinimizationOptions, budget: MinimizationBudget, original: readonly ActionOccurrence[], minimal: readonly ActionOccurrence[], evaluations: readonly CandidateEvaluation[], replayCount: number, invalidCount: number, safetyRejectionCount: number, fresh: MinimizationResult['freshExactReplay'], reproductionCount: number, guarantee: MinimizationResult['minimalityGuarantee'], budgetExhausted: boolean, status: MinimizationResult['status'], evidenceClass: MinimizationResult['reductionEvidenceClass']): MinimizationResult {
   const confidence = confidenceFor({ fresh: fresh === 'REPRODUCED', reproductionCount, guarantee, budgetExhausted });
   return {
     schemaVersion: FAILURE_MINIMIZATION_VERSION,
@@ -169,7 +174,32 @@ function resultBase(options: MinimizationOptions, budget: MinimizationBudget, or
     invalidCandidateCount: invalidCount,
     safetyRejectionCount,
     freshExactReplay: fresh,
+    reductionEvidenceClass: evidenceClass,
   };
+}
+
+/**
+ * Truthful reduction-evidence classification (Phase 15). Rule order is
+ * load-bearing: budget exhaustion always blocks a proven claim, and a
+ * vacuously irreducible survivor (single action) is reported even when no
+ * reduced replay ever ran.
+ */
+function classifyReductionEvidence(input: {
+  readonly freshReproduced: boolean;
+  readonly originalLength: number;
+  readonly finalLength: number;
+  readonly budgetExhausted: boolean;
+  readonly genuineReducedNonRepro: boolean;
+  readonly invalidReducedCandidate: boolean;
+}): MinimizationResult['reductionEvidenceClass'] {
+  if (!input.freshReproduced) return 'NO_REDUCIBLE_CANDIDATE';
+  if (input.budgetExhausted) return 'MINIMALITY_NOT_PROVEN';
+  if (input.originalLength === 1 || input.finalLength === 1) return 'NO_REDUCIBLE_CANDIDATE';
+  if (input.genuineReducedNonRepro) return 'MINIMALITY_PROVEN';
+  if (input.invalidReducedCandidate) return 'REDUCTION_PRECONDITION_UNAVAILABLE';
+  // Fail closed: without genuine reduced-replay evidence, minimality is
+  // never claimed as proven.
+  return 'MINIMALITY_NOT_PROVEN';
 }
 
 /**
@@ -192,7 +222,9 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   const safety = options.safety ?? PASSIVE_MINIMIZATION_SAFETY;
   const originalGuard = guardSequence(original, originalIds, approvedIds, safeActions, safety, options.preconditionCheck);
   if (!originalGuard.valid) {
-    return resultBase(options, budget, original, original, [], 0, 1, 0, 'INVALID', 0, 'NONE', false, 'INVALID_ORIGINAL');
+    // The original failed its own gates, so the preconditions needed to
+    // attempt any reduction were unavailable.
+    return resultBase(options, budget, original, original, [], 0, 1, 0, 'INVALID', 0, 'NONE', false, 'INVALID_ORIGINAL', 'REDUCTION_PRECONDITION_UNAVAILABLE');
   }
 
   let replayCount = 0;
@@ -232,7 +264,10 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
       return skipped;
     }
     replayCount += 1;
-    const outcome = await options.replay(candidate.map((item) => item.action), phase);
+    const raw = await options.replay(candidate.map((item) => item.action), phase);
+    // Centralized exact-vs-reduced rule: a mismatched-fingerprint FAILURE is
+    // downgraded to PASS before classification (executorNormalization).
+    const outcome = normalizeExecutorOutcome(raw, options.anomalyFingerprint);
     const classified = outcomeReason(outcome, options.anomalyFingerprint);
     if (outcome.status !== 'INVALID' && !allZeroSafety(outcome.safety)) safetyRejectionCount += 1;
     if (classified.disposition === 'INVALID') invalidCandidateCount += phase === 'REDUCED_CANDIDATE' ? 1 : 0;
@@ -247,7 +282,8 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   const fresh = await evaluate(original, 'FRESH_EXACT_REPLAY');
   if (fresh.evaluation.disposition !== 'REPRODUCES') {
     const freshStatus: MinimizationResult['freshExactReplay'] = fresh.evaluation.disposition === 'INVALID' ? 'INVALID' : 'NOT_REPRODUCED';
-    return resultBase(options, budget, original, original, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, freshStatus, reproductionCount, 'NONE', false, 'NO_REPRODUCTION');
+    // No reduction is possible without a fresh reproduction.
+    return resultBase(options, budget, original, original, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, freshStatus, reproductionCount, 'NONE', false, 'NO_REPRODUCTION', 'NO_REDUCIBLE_CANDIDATE');
   }
 
   let current = original;
@@ -279,8 +315,9 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
   }
 
   // A final deterministic one-deletion audit is the proof boundary for
-  // 1-MINIMAL. If budget ends, the honest result is BOUNDED_MINIMAL.
-  let oneDeletionProof = !budgetExhausted;
+  // 1-MINIMAL. Two honest failure modes exist: budget exhaustion ends the
+  // audit early, and an INVALID deletion was never genuinely replayed so it
+  // can never count as proof (Phase 15 conflation fix).
   let changedInAudit = true;
   while (changedInAudit && !budgetExhausted && current.length > 1) {
     changedInAudit = false;
@@ -289,7 +326,6 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
       const evaluated = await evaluate(candidate, 'REDUCED_CANDIDATE');
       if (evaluated.evaluation.disposition === 'NOT_EVALUATED_BUDGET') {
         budgetExhausted = true;
-        oneDeletionProof = false;
         break;
       }
       if (evaluated.evaluation.disposition === 'REPRODUCES') {
@@ -300,10 +336,30 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
       }
     }
   }
-  if (budgetExhausted) oneDeletionProof = false;
+  // Derived after every evaluation so the audit's own observations count.
+  // The first record is the fresh exact replay; everything after it is a
+  // reduced candidate. A single-action survivor is vacuously minimal — no
+  // non-empty proper subsequence exists.
+  const reducedEvaluations = evaluations.slice(1);
+  const genuineReducedNonRepro = reducedEvaluations.some((item) => item.disposition === 'DOES_NOT_REPRODUCE');
+  const invalidReducedCandidate = reducedEvaluations.some((item) => item.disposition === 'INVALID');
+  const oneDeletionProof = !budgetExhausted && (current.length === 1 || genuineReducedNonRepro);
   const guarantee: MinimizationResult['minimalityGuarantee'] = oneDeletionProof ? '1-MINIMAL' : 'BOUNDED_MINIMAL';
   const status: MinimizationResult['status'] = budgetExhausted ? 'BOUNDED_BUDGET_EXHAUSTED' : reduced ? 'MINIMIZED' : 'UNCHANGED';
-  return resultBase(options, budget, original, current, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, 'REPRODUCED', reproductionCount, guarantee, budgetExhausted, status);
+  // REDUCTION_PRECONDITION_UNAVAILABLE keeps BOUNDED_MINIMAL (never
+  // 1-MINIMAL): fresh reproduction held and a bounded search over legal
+  // candidates ran, but no genuine reduced replay was possible, so nothing
+  // about minimality was proven. NONE stays reserved for results whose fresh
+  // replay did not reproduce.
+  const evidenceClass = classifyReductionEvidence({
+    freshReproduced: true,
+    originalLength: original.length,
+    finalLength: current.length,
+    budgetExhausted,
+    genuineReducedNonRepro,
+    invalidReducedCandidate,
+  });
+  return resultBase(options, budget, original, current, evaluations, replayCount, invalidCandidateCount, safetyRejectionCount, 'REPRODUCED', reproductionCount, guarantee, budgetExhausted, status, evidenceClass);
 }
 
 export function safetyVectorIsZero(safety: SafetyVector): boolean {

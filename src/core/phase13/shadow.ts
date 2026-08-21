@@ -587,6 +587,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
             sourceVersion: PHASE13_FIXTURE_SHA,
             confidence: 'HIGH',
             minimalityGuarantee: '1-MINIMAL',
+            reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 },
             replayCount: 3,
             candidateEvaluationCount: 2,
@@ -643,7 +644,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'NO_REPRODUCTION', originalSequence: ['phase13.action_a'], minimalReproducingSequence: [], removedActions: [], reproductionCount: 0, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'UNRESOLVED', minimalityGuarantee: 'NONE',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'NO_REPRODUCTION', originalSequence: ['phase13.action_a'], minimalReproducingSequence: [], removedActions: [], reproductionCount: 0, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'UNRESOLVED', minimalityGuarantee: 'NONE', reductionEvidenceClass: 'NO_REDUCIBLE_CANDIDATE',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'NOT_REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -758,7 +759,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 2, candidateEvaluationCount: 1, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -851,7 +852,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a', 'phase13.action_b'], minimalReproducingSequence: ['phase13.action_a'], removedActions: ['phase13.action_b'], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a', 'phase13.action_b'], minimalReproducingSequence: ['phase13.action_a'], removedActions: ['phase13.action_b'], reproductionCount: 2, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 2, candidateEvaluationCount: 1, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -867,7 +868,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: SOURCE_VERSION, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -889,7 +890,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp2, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp2, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp2, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },
@@ -948,7 +949,7 @@ async function runOneFixture(fixtureId: string): Promise<{ ok: boolean; safeOutp
           firstObserved: '2026-08-20T00:00:00.000Z', lastObserved: '2026-08-20T00:00:00.000Z', journeyIds: ['ripple-common-exchange-read'], seeds: ['0x0000000000000001'],
           routeClass: ROUTE_CLASS, apiOperationFamily: null, oracleFingerprint: fp1, evidenceLevel: 'L1',
           minimization: {
-            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL',
+            schemaVersion: FAILURE_MINIMIZATION_VERSION, status: 'MINIMIZED', originalSequence: ['phase13.action_a'], minimalReproducingSequence: ['phase13.action_a'], removedActions: [], reproductionCount: 1, anomalyFingerprint: fp1, modelVersion: FAILURE_MINIMIZATION_VERSION, catalogVersion: CATALOG_VERSION, sourceVersion: PHASE13_FIXTURE_SHA, confidence: 'HIGH', minimalityGuarantee: '1-MINIMAL', reductionEvidenceClass: 'MINIMALITY_PROVEN',
             budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 }, replayCount: 1, candidateEvaluationCount: 0, candidateEvaluations: [], invalidCandidateCount: 0, safetyRejectionCount: 0, freshExactReplay: 'REPRODUCED',
           },
           browserApiDifferential: { status: 'BROWSER_API_FAILURE_AGREE', appLayerDiscriminator: 'INCONCLUSIVE', browserOperationFamily: 'ripple-common-exchange-read', apiOperationFamily: null, statusClassSame: null, contentTypeClassSame: null, routeClassSame: null, structuralStateSame: null, parseabilitySame: null, rootCauseClaim: 'NONE' },

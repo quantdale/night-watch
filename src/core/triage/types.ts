@@ -158,6 +158,27 @@ export interface CandidateEvaluation {
   readonly fingerprintMatch: boolean;
 }
 
+/**
+ * Phase 15 truthful-minimality evidence class. Complements status and
+ * minimalityGuarantee by recording HOW minimality evidence was obtained:
+ * - MINIMALITY_PROVEN: at least one genuine reduced-candidate replay observed
+ *   DOES_NOT_REPRODUCE and the bounded audit completed without budget
+ *   exhaustion.
+ * - MINIMALITY_NOT_PROVEN: reduction ran with genuine replays but ended on
+ *   budget exhaustion, so minimality remains unproven.
+ * - NO_REDUCIBLE_CANDIDATE: no reduction was possible — the original did not
+ *   reproduce fresh, or nothing was left to remove.
+ * - REDUCTION_PRECONDITION_UNAVAILABLE: reduction was attempted but every
+ *   candidate deletion was rejected before a genuine replay (precondition
+ *   divergence, guard failure, or nonzero safety), so no reduced-replay
+ *   evidence exists either way.
+ */
+export type ReductionEvidenceClass =
+  | 'MINIMALITY_PROVEN'
+  | 'MINIMALITY_NOT_PROVEN'
+  | 'NO_REDUCIBLE_CANDIDATE'
+  | 'REDUCTION_PRECONDITION_UNAVAILABLE';
+
 export interface MinimizationResult {
   readonly schemaVersion: typeof FAILURE_MINIMIZATION_VERSION;
   readonly status: 'MINIMIZED' | 'UNCHANGED' | 'NO_REPRODUCTION' | 'BOUNDED_BUDGET_EXHAUSTED' | 'INVALID_ORIGINAL';
@@ -171,6 +192,7 @@ export interface MinimizationResult {
   readonly sourceVersion: string;
   readonly confidence: TriageConfidence;
   readonly minimalityGuarantee: '1-MINIMAL' | 'BOUNDED_MINIMAL' | 'NONE';
+  readonly reductionEvidenceClass: ReductionEvidenceClass;
   readonly budget: MinimizationBudget;
   readonly replayCount: number;
   readonly candidateEvaluationCount: number;

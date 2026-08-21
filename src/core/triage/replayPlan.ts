@@ -421,39 +421,3 @@ export function parseTriageReplayPlanV2(raw: unknown): TriageReplayPlanV2 {
   if (!result.valid) throw new Error(`REPLAY_PLAN_V2_INVALID:${result.reason}`);
   return result.plan;
 }
-
-// Fail-closed v1 -> v2 conversion. A v1 plan that repeats an action ID cannot
-// disambiguate which occurrence is retained, so it must not be mechanically
-// upgraded to an unambiguous v2 execution (CONFIRMED_REPLAY_PLAN_OCCURRENCE_IDENTITY_GAP).
-export function convertTriageReplayPlanV1ToV2(plan: TriageReplayPlan): TriageReplayPlanV2 {
-  const seen = new Set<string>();
-  const hasDuplicate = plan.originalActionIds.some((id) => {
-    if (seen.has(id)) return true;
-    seen.add(id);
-    return false;
-  });
-  if (hasDuplicate) throw new Error('REPLAY_PLAN_V1_AMBIGUOUS_OCCURRENCE');
-  const ordinalByAction = new Map<string, number>();
-  plan.originalActionIds.forEach((id, index) => ordinalByAction.set(id, index));
-  const originalOccurrences: ReplayOccurrence[] = plan.originalActionIds.map((id, index) => ({ ordinal: index, expectedActionId: id }));
-  const retainedOccurrenceOrdinals = plan.retainedActionIds.map((id) => {
-    const idx = ordinalByAction.get(id);
-    if (idx === undefined) throw new Error('REPLAY_PLAN_V1_RETAINED_NOT_ORIGINAL');
-    return idx;
-  });
-  return createTriageReplayPlanV2({
-    candidateKind: plan.candidateKind,
-    anomalyFingerprint: plan.anomalyFingerprint,
-    originalOccurrences,
-    retainedOccurrenceOrdinals,
-    phase: plan.phase,
-    targetId: plan.targetId,
-    contractVersion: plan.contractVersion,
-    contractDigest: plan.contractDigest,
-    catalogVersion: plan.catalogVersion,
-    sourceVersion: plan.sourceVersion,
-    routeClass: plan.routeClass,
-    ...(plan.semanticExpectationId === undefined ? {} : { semanticExpectationId: plan.semanticExpectationId }),
-    ...(plan.sourceEvidenceDigest === undefined ? {} : { sourceEvidenceDigest: plan.sourceEvidenceDigest }),
-  });
-}

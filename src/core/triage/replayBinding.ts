@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import type { CandidateGuardResult, CandidateReplayOutcome, MinimizationAction } from './types';
+import { normalizeExecutorOutcome } from './executorNormalization';
 import {
   validateTriageReplayPlanV2,
   isOrderPreservingOrdinalSubsequence,
@@ -140,12 +141,7 @@ export function executeReplayPlanV2(
 }
 
 function normalizeExecutorResult(result: CandidateReplayOutcome, plan: TriageReplayPlanV2): CandidateReplayOutcome {
-  // Exact fingerprint equality is load-bearing: different fingerprint => not reproduced
-  if (result.status === 'FAILURE' && result.anomalyFingerprint !== undefined && result.anomalyFingerprint !== plan.anomalyFingerprint) {
-    // Treat as not reproduced — but per spec this is INVALID/not-reproduced at triage level, not FAILURE
-    return { status: 'PASS', safety: result.safety, routeClass: result.routeClass };
-  }
-  return result;
+  return normalizeExecutorOutcome(result, plan.anomalyFingerprint);
 }
 
 export function buildRetainedActionsV2(plan: TriageReplayPlanV2): readonly MinimizationAction[] {

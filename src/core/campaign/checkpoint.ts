@@ -24,12 +24,15 @@ import {
 } from './runtimeValidation';
 import {
   CAMPAIGN_CHECKPOINT_VERSION,
+  CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION,
+  CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED,
   type CampaignCheckpoint,
   type CampaignExecutionRecord,
   type CampaignManifest,
   type CampaignPrivacyStatus,
   type CampaignSafetyVector,
   type CampaignWorkKind,
+  type CandidateLifecycleRecordShape,
 } from './types';
 
 const CHECKPOINT_KEYS = [
@@ -45,11 +48,18 @@ const CHECKPOINT_KEYS = [
   'resumeRecipe', 'executionGuarantees', 'runtimeElapsedMs', 'createdAt',
   'updatedAt',
 ] as const;
+// Phase 15 Session 2 additions: optional so historical pre-S2 checkpoints
+// remain valid; when present they are strictly validated below.
+const CHECKPOINT_OPTIONAL_KEYS = ['candidateLifecycles', 'runtimeContractVersions'] as const;
 const WORK_KINDS: readonly CampaignWorkKind[] = ['JOURNEY', 'API', 'EXPLORATION', 'REPRODUCTION', 'MINIMIZATION'];
 const CAMPAIGN_STATUSES = ['IN_PROGRESS', 'COMPLETE_CLEAN', 'COMPLETE_WITH_FINDINGS', 'PARTIAL_BUDGET_EXHAUSTED', 'PARTIAL_AUTH_BLOCKED', 'PARTIAL_SAFETY_BLOCKED', 'PARTIAL_RUNTIME_INFRA_FAILURE', 'ABORTED_OWNER_POLICY', 'INCOMPLETE_PROCESS_INTERRUPTION'] as const;
 const STOP_REASONS = ['NONE', 'OWNER_POLICY_BLOCKED', 'AUTH_BLOCKED', 'SAFETY_EVENT', 'PRIVACY_BLOCKED', 'BUDGET_EXHAUSTED', 'RUNTIME_TIMEOUT', 'FAILURE_STORM_SHARED_ROOT_SYMPTOM', 'CAMPAIGN_VERSION_DRIFT', 'PROCESS_INTERRUPTION', 'PREFLIGHT_FAILED'] as const;
 const WORK_STATES = ['PENDING', 'RUNNING', 'COMPLETED', 'SKIPPED', 'REPLAY_REQUIRED', 'BLOCKED'] as const;
 const EXECUTION_RESULTS = ['PASS', 'ANOMALY', 'TRANSIENT', 'NIGHTWATCH_DEFECT', 'AUTH_BLOCKED', 'SAFETY_BLOCKED', 'RUNTIME_FAILURE', 'INCOMPLETE'] as const;
+const CANDIDATE_LIFECYCLE_VARIANTS = ['PROTOCOL_ONLY', 'SEMANTIC'] as const;
+const CANDIDATE_LIFECYCLE_STATES = ['OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'UNCHANGED', 'TRIAGED', 'DOSSIER_READY', 'REJECTED', 'UNRESOLVED'] as const;
+// Matches the established uppercase snake reason-code idiom (e.g. BUDGET_EXHAUSTED).
+const LIFECYCLE_REASON_CODE_RE = /^[A-Z][A-Z0-9_]*$/;
 
 function checkpointIntegrity(reason: string): never {
   throw new Error(`CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:${reason}`);
@@ -214,11 +224,83 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
   }
 }
 
+// ---------------------------------------------------------------------------
+// Phase 15 Session 2 runtime-contract fields (optional, strictly validated
+// when present; absent means a historical pre-S2 checkpoint and is valid).
+// ---------------------------------------------------------------------------
+
+function validateCandidateLifecycleRecord(value: unknown, code: string): void {
+  const record = requireRuntimeRecord(value, code);
+  assertExactKeys(record, ['lifecycleVersion', 'variant', 'state', 'transitionCount', 'lastReasonCode'], code);
+  if (record.lifecycleVersion !== CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED.candidateLifecycle) {
+    checkpointIntegrity('CAMPAIGN_CHECKPOINT_LIFECYCLE_VERSION_UNSUPPORTED');
+  }
+  assertEnum(record.variant, CANDIDATE_LIFECYCLE_VARIANTS, `${code}:VARIANT`);
+  assertEnum(record.state, CANDIDATE_LIFECYCLE_STATES, `${code}:STATE`);
+  assertNonNegativeInteger(record.transitionCount, `${code}:TRANSITION_COUNT`);
+  if (record.lastReasonCode !== null) {
+    assertString(record.lastReasonCode, `${code}:LAST_REASON_CODE`);
+    if (!LIFECYCLE_REASON_CODE_RE.test(record.lastReasonCode)) checkpointIntegrity(`${code}:LAST_REASON_CODE_UNSAFE`);
+  }
+}
+
+/**
+ * There is no dedicated cluster-id regex anywhere in this module or
+ * identity.ts: the established idiom is referential integrity against the
+ * anomalyClusters ledger (UNKNOWN_REPRODUCTION_CLUSTER,
+ * UNKNOWN_MINIMIZATION_CLUSTER, UNKNOWN_DOSSIER_CLUSTER). Lifecycle keys
+ * follow the same idiom: non-empty string plus ledger membership.
+ */
+function validateSession2RuntimeContracts(checkpoint: RuntimeRecord): void {
+  const versions = checkpoint.runtimeContractVersions;
+  const lifecycles = checkpoint.candidateLifecycles;
+  if (versions === undefined && lifecycles === undefined) return;
+  if (versions !== undefined) {
+    const contractVersions = requireRuntimeRecord(versions, 'CHECKPOINT_RUNTIME_CONTRACT_VERSIONS');
+    assertExactKeys(contractVersions, ['candidateLifecycle', 'replayBinding', 'promotionResult'], 'CHECKPOINT_RUNTIME_CONTRACT_VERSIONS');
+    for (const slot of ['candidateLifecycle', 'replayBinding', 'promotionResult'] as const) {
+      // Resume fail-closed gate: an incompatible future version never reaches
+      // an executor callback.
+      if (contractVersions[slot] !== CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED[slot]) {
+        checkpointIntegrity('CAMPAIGN_CHECKPOINT_RUNTIME_CONTRACT_VERSION_UNSUPPORTED');
+      }
+    }
+  }
+  if (lifecycles !== undefined) {
+    const records = requireRuntimeRecord(lifecycles, 'CHECKPOINT_CANDIDATE_LIFECYCLES');
+    const knownClusters = new Set<string>();
+    for (const value of requireRuntimeArray(checkpoint.anomalyClusters, 'CHECKPOINT_CLUSTERS')) {
+      knownClusters.add(requireRuntimeRecord(value, 'CHECKPOINT_CLUSTER').clusterId as string);
+    }
+    for (const [clusterId, record] of Object.entries(records)) {
+      if (clusterId.length === 0) checkpointIntegrity('LIFECYCLE_CLUSTER_ID_EMPTY');
+      validateCandidateLifecycleRecord(record, `CHECKPOINT_CANDIDATE_LIFECYCLE:${clusterId}`);
+      if (!knownClusters.has(clusterId)) checkpointIntegrity(`UNKNOWN_LIFECYCLE_CLUSTER:${clusterId}`);
+    }
+  }
+}
+
+export type CheckpointRuntimeContractClassification = 'CURRENT_S2_CONTRACTS' | typeof CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION | 'INCOMPATIBLE_FUTURE';
+
+/**
+ * Pure, deterministic, total classification of a checkpoint's runtime
+ * contract versions. INCOMPATIBLE_FUTURE only when present-and-mismatched
+ * (validateCampaignCheckpoint already rejects those; this helper stays total
+ * so it can be used on unvalidated values too).
+ */
+export function classifyCheckpointRuntimeContracts(checkpoint: CampaignCheckpoint): CheckpointRuntimeContractClassification {
+  const versions = checkpoint.runtimeContractVersions;
+  if (versions === undefined) return CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION;
+  const slots = ['candidateLifecycle', 'replayBinding', 'promotionResult'] as const;
+  if (slots.some((slot) => versions[slot] !== CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED[slot])) return 'INCOMPATIBLE_FUTURE';
+  return 'CURRENT_S2_CONTRACTS';
+}
+
 export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, manifest: CampaignManifest): asserts value is CampaignCheckpoint {
   validateCampaignManifest(manifest);
   const checkpoint = requireRuntimeRecord(value, 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID');
   try {
-    assertExactKeys(checkpoint, CHECKPOINT_KEYS, 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID');
+    assertExactKeys(checkpoint, CHECKPOINT_KEYS, 'CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID', CHECKPOINT_OPTIONAL_KEYS);
     if (checkpoint.schemaVersion !== CAMPAIGN_CHECKPOINT_VERSION) checkpointIntegrity('SCHEMA_INVALID');
     if (checkpoint.campaignId !== manifest.campaignId) checkpointIntegrity('CAMPAIGN_ID_MISMATCH');
     if (checkpoint.manifestFingerprint !== manifest.manifestFingerprint) checkpointIntegrity('MANIFEST_FINGERPRINT_MISMATCH');
@@ -250,6 +332,7 @@ export function validateCampaignCheckpoint(value: CampaignCheckpoint | unknown, 
     }
     if (ledgerIds.size !== knownIds.size || [...knownIds].some((id) => !ledgerIds.has(id))) checkpointIntegrity('EXECUTION_LEDGER_DOES_NOT_COVER_MANIFEST');
     validateReferenceLedgers(checkpoint, manifest, ledger);
+    validateSession2RuntimeContracts(checkpoint);
     assertEnum(checkpoint.morningBriefStatus, ['NOT_STARTED', 'IN_PROGRESS', 'READY'], 'CHECKPOINT_BRIEF_STATUS');
     for (const key of ['bugCandidates', 'rejectedHypotheses', 'unresolved', 'safetyEvents', 'versionDrift', 'resumeRecipe']) {
       const values = requireRuntimeArray(checkpoint[key], `CHECKPOINT:${key}`);

@@ -46,6 +46,16 @@ export const CAMPAIGN_BUDGET_POLICY_VERSION = 'nightwatch.campaign-budget.privat
 export const CAMPAIGN_MANIFEST_VERSION = 'nightwatch.campaign-manifest.private.v1' as const;
 export const CAMPAIGN_CHECKPOINT_VERSION = 'nightwatch.campaign-checkpoint.private.v1' as const;
 export const CAMPAIGN_MORNING_BRIEF_VERSION = 'nightwatch.campaign-morning-brief.private.v1' as const;
+// Phase 15 Session 2 runtime-contract versions pinned at the checkpoint
+// boundary. A persisted checkpoint carrying any other value in
+// `runtimeContractVersions` fails closed at resume before an executor runs.
+export const CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED = {
+  candidateLifecycle: 'nightwatch.candidate-lifecycle.private.v1',
+  replayBinding: 'nightwatch.triage-replay-plan.private.v2',
+  promotionResult: 'nightwatch.promotion-result.private.v1',
+} as const;
+/** Classification label for checkpoints persisted before Session 2 contracts existed. */
+export const CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION = 'LEGACY_PRE_S2_RUNTIME_CONTRACTS' as const;
 
 export type CampaignMode =
   | 'CHANGE_DIRECTED'
@@ -499,6 +509,19 @@ export interface CampaignMorningBrief {
   readonly externalPublication: 'PROHIBITED';
 }
 
+/**
+ * Structural mirror of the Session-2 candidate lifecycle record owned by
+ * `src/core/campaign/candidateLifecycle.ts`. Declared locally (same exact
+ * shape) so checkpoint validation never compile-couples to that module.
+ */
+export interface CandidateLifecycleRecordShape {
+  readonly lifecycleVersion: 'nightwatch.candidate-lifecycle.private.v1';
+  readonly variant: 'PROTOCOL_ONLY' | 'SEMANTIC';
+  readonly state: 'OBSERVED' | 'ADMITTED' | 'REPRODUCED' | 'MINIMIZED' | 'UNCHANGED' | 'TRIAGED' | 'DOSSIER_READY' | 'REJECTED' | 'UNRESOLVED';
+  readonly transitionCount: number;
+  readonly lastReasonCode: string | null;
+}
+
 export interface CampaignCheckpoint {
   readonly schemaVersion: typeof CAMPAIGN_CHECKPOINT_VERSION;
   readonly campaignId: string;
@@ -539,6 +562,15 @@ export interface CampaignCheckpoint {
   readonly runtimeElapsedMs: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  // Optional Session-2 additions: absent means a historical pre-S2 checkpoint
+  // and stays valid; present, they are strictly validated at the checkpoint
+  // boundary (see validateCampaignCheckpoint).
+  readonly candidateLifecycles?: Readonly<Record<string, CandidateLifecycleRecordShape>>;
+  readonly runtimeContractVersions?: Readonly<{
+    candidateLifecycle: string;
+    replayBinding: string;
+    promotionResult: string;
+  }>;
 }
 
 export interface CampaignRunResult {

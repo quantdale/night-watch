@@ -437,6 +437,7 @@ export async function runBacktestOnce(opts: { baseline: boolean }): Promise<{ me
         sourceVersion: PHASE12_FIXTURE_SHA,
         confidence: 'HIGH',
         minimalityGuarantee: '1-MINIMAL',
+        reductionEvidenceClass: 'MINIMALITY_PROVEN',
         budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 4, maxTotalReplays: 5 },
         replayCount: 3,
         candidateEvaluationCount: 2,

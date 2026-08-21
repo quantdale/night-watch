@@ -53,6 +53,7 @@ function minimizationFixture(): MinimizationResult {
     sourceVersion: 'synthetic.source.v1',
     confidence: 'HIGH',
     minimalityGuarantee: '1-MINIMAL',
+    reductionEvidenceClass: 'MINIMALITY_PROVEN',
     budget: { policyVersion: 'nightwatch.minimization-budget.private.v1', maxCandidateEvaluations: 64, maxTotalReplays: 65 },
     replayCount: 3,
     candidateEvaluationCount: 3,
