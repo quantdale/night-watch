@@ -332,6 +332,12 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW)\.md$/,
+  // Durable program artifacts mandated by AGENTS.md and the multi-session
+  // program plans: each session must update its handoff/spec/state files AFTER
+  // its implementation baseline without invalidating that baseline. Enumerated
+  // explicitly (no wildcards) so arbitrary task-dir files stay unapproved.
+  /^\.agent\/tasks\/[^/]+\/(?:HARDENING_HANDOFF|MASTER_PLAN)\.md$/,
+  /^\.agent\/tasks\/[^/]+\/SESSION_[1-4]_[A-Z0-9_]+\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
   // Repository-native design documents: exactly one level under docs/design,
