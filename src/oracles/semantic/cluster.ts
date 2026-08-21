@@ -15,7 +15,7 @@
 // - Pure: no browser/network/fs/child-process/DB/AI/selfDev.
 // ---------------------------------------------------------------------------
 
-import crypto from 'node:crypto';
+import { sha256Hex, stableJsonSorted } from '../../core/identity/canonicalDigest';
 import type { InvariantDefinition } from '../expectations/types';
 import type { SourceProvenance } from '../expectations/types';
 import type { SemanticOracleFinding } from './types';
@@ -28,14 +28,8 @@ const EVIDENCE_DIGEST_RE = /^ev:sha256:[0-9a-f]{24}$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const FORBIDDEN_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
 
-function stableJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
-  return `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${stableJson(v)}`).join(',')}}`;
-}
-
 function digest(value: unknown): string {
-  return crypto.createHash('sha256').update(stableJson(value), 'utf8').digest('hex').slice(0, 24);
+  return sha256Hex(stableJsonSorted(value)).slice(0, 24);
 }
 
 function assertSafe(value: string, field: string): void {

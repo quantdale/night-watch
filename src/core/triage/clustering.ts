@@ -2,7 +2,7 @@
 // Nightwatch sanitized anomaly clustering and duplicate suppression.
 // ---------------------------------------------------------------------------
 
-import crypto from 'node:crypto';
+import { sha256Hex, stableJsonSorted } from '../identity/canonicalDigest';
 import {
   ANOMALY_CLUSTER_VERSION,
   type AnomalyCluster,
@@ -16,14 +16,8 @@ const FINGERPRINT_RE = /^fp:sha256:[a-f0-9]{12,64}$/i;
 const RUN_ID_RE = /^[A-Za-z0-9_.-]{1,160}$/;
 const FORBIDDEN_VALUE_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/i;
 
-function stableJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
-  return `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`;
-}
-
 function digest(value: unknown): string {
-  return crypto.createHash('sha256').update(stableJson(value), 'utf8').digest('hex').slice(0, 24);
+  return sha256Hex(stableJsonSorted(value)).slice(0, 24);
 }
 
 function safeClass(value: string | null, field: string): string | null {

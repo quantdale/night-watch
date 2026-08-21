@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import { sha256Hex, stableJsonSorted } from '../identity/canonicalDigest';
 
 export type UnknownRecord = Record<string, unknown>;
 
@@ -16,13 +16,11 @@ export function exactKeys(value: UnknownRecord, expected: readonly string[], cod
 }
 
 export function stableJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
-  return `{${Object.entries(value as UnknownRecord).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`;
+  return stableJsonSorted(value);
 }
 
 export function digest(value: unknown): string {
-  return `sha256:${crypto.createHash('sha256').update(stableJson(value), 'utf8').digest('hex')}`;
+  return `sha256:${sha256Hex(stableJsonSorted(value))}`;
 }
 
 export function assertBoundedString(value: unknown, field: string, max: number, code = 'AI_OUTPUT_SCHEMA_INVALID'): asserts value is string {

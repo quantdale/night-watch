@@ -6,7 +6,7 @@
 // identifiers, costs, cookies, or tokens.
 // ---------------------------------------------------------------------------
 
-import { createHash } from 'node:crypto';
+import { prefixedDigest24 } from '../identity/canonicalDigest';
 
 export interface AnomalyFingerprintInput {
   journeyId: string;
@@ -106,13 +106,7 @@ export function sanitizeAnomalyFingerprintInput(input: AnomalyFingerprintInput):
   };
 }
 
-function stableJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
-  return `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`;
-}
-
 export function fingerprintAnomaly(input: AnomalyFingerprintInput): string {
   const sanitized = sanitizeAnomalyFingerprintInput(input);
-  return `fp:sha256:${createHash('sha256').update(stableJson(sanitized), 'utf8').digest('hex').slice(0, 24)}`;
+  return prefixedDigest24('fp', sanitized);
 }
