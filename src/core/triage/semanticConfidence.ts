@@ -9,7 +9,8 @@
 // ---------------------------------------------------------------------------
 
 import type { BrowserApiDifferential } from './types';
-import { MISSING_EVIDENCE_SET, type SemanticTriageEvidence } from './semanticTriageEvidence';
+import { MISSING_EVIDENCE_SET, type MissingEvidenceCode, type SemanticTriageEvidence } from './semanticTriageEvidence';
+import { PROMOTION_REJECTION_REASON_CODES, type PromotionRejectionReasonCode } from '../../oracles/expectations/lifecycle/triageResultVocabulary';
 
 export type SemanticConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRESOLVED';
 
@@ -29,18 +30,25 @@ export interface SemanticConfidenceResult {
   readonly blockers: readonly string[];
 }
 
-function blocker(reason: string): string { return reason; }
+/**
+ * Phase 15P A16 convergence: the blocker channel is typed against the ONE
+ * canonical promotion-rejection/blocker roster owned by
+ * triageResultVocabulary.ts, so every pushed literal is mechanically bound to
+ * that roster instead of drifting as a private string.
+ */
+function blocker(reason: PromotionRejectionReasonCode): string { return reason; }
 
 /**
- * Declared missing-evidence codes that block HIGH, mapped onto this module's
- * blocker vocabulary. Permanent-scope facts
+ * Declared missing-evidence codes that block HIGH, mapped onto the canonical
+ * promotion-rejection/blocker vocabulary. Permanent-scope facts
  * (BROWSER_API_DIFFERENTIAL_UNAVAILABLE, SOURCE_CHANGE_RELEVANCE_UNRESOLVED,
  * DEPLOYMENT_STATUS_UNRESOLVED, DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER)
  * deliberately do not block. Hoisted to module scope (Phase 15P A15) so
  * verifyDeclaredMissingBlockersBoundToVocabulary can prove every key stays a
- * member of the canonical MISSING_EVIDENCE_VOCABULARY.
+ * member of the canonical MISSING_EVIDENCE_VOCABULARY; values are canon-bound
+ * via the PromotionRejectionReasonCode type (Phase 15P A16).
  */
-const DECLARED_MISSING_BLOCKERS: ReadonlyMap<string, string> = new Map([
+const DECLARED_MISSING_BLOCKERS: ReadonlyMap<MissingEvidenceCode, PromotionRejectionReasonCode> = new Map([
   ['EXACT_REPLAY_REQUIRED', 'EXACT_REPLAY_NOT_REPRODUCED'],
   ['SOURCE_CURRENTNESS_UNRESOLVED', 'SOURCE_CURRENTNESS_UNRESOLVED'],
   ['SEMANTIC_EXPECTATION_UNRESOLVED', 'NO_EXPECTATION'],
@@ -176,6 +184,15 @@ export function verifyDeclaredMissingBlockersBoundToVocabulary(): void {
   for (const code of DECLARED_MISSING_BLOCKERS.keys()) {
     if (!MISSING_EVIDENCE_SET.has(code)) {
       throw new Error(`SEMANTIC_CONFIDENCE_BLOCKER_KEY_UNKNOWN:${code}`);
+    }
+  }
+  // Phase 15P A16 seam: every mapped blocker VALUE must stay a member of the
+  // ONE canonical promotion-rejection/blocker roster owned by
+  // triageResultVocabulary.ts (runtime twin of the type-level binding above).
+  const canonicalBlockers = new Set<string>(PROMOTION_REJECTION_REASON_CODES);
+  for (const mapped of DECLARED_MISSING_BLOCKERS.values()) {
+    if (!canonicalBlockers.has(mapped)) {
+      throw new Error(`SEMANTIC_CONFIDENCE_BLOCKER_VALUE_UNKNOWN:${mapped}`);
     }
   }
 }

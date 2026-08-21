@@ -23,6 +23,9 @@
 //     strict validators in this directory (no prior standalone validator
 //     existed; they compose over the owning modules' types, runtime guards,
 //     digest helpers, and producers)
+// - 'replay-result-envelope' -> triage/replayEnvelope.validateReplayResultEnvelope,
+//     registered into the single reserved slot (replayEnvelopeRegistration)
+//     at module load; fails closed while unregistered
 //
 // Round-2 kinds (same facade, same contract):
 // - candidate-record    -> artifactValidation/candidateRecordValidation
@@ -68,7 +71,8 @@ import { validateCampaignCandidateRecordArtifact } from './candidateRecordValida
 import { validateReplayRecordArtifact } from './replayRecordValidation';
 import { validateMinimizationResultArtifact } from './minimizationValidation';
 import { validateProjectHealthReportArtifact } from './projectHealthValidation';
-import { validateReservedArtifactKind } from './replayEnvelopeRegistration';
+import { validateReplayResultEnvelope } from '../triage/replayEnvelope';
+import { registerReplayResultEnvelopeValidator, validateReservedArtifactKind } from './replayEnvelopeRegistration';
 
 export type {
   ArtifactKind,
@@ -100,124 +104,6 @@ export { validateReplayRecordArtifact } from './replayRecordValidation';
 export { validateMinimizationResultArtifact } from './minimizationValidation';
 export { validateProjectHealthReportArtifact } from './projectHealthValidation';
 export {
-  REPLAY_RESULT_ENVELOPE_RESERVED_KIND,
-  isReplayResultEnvelopeKindRegistered,
-  registerReplayResultEnvelopeValidator,
-} from './replayEnvelopeRegistration';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-/**
- * Deterministic receipt-id recomposition over the exact safe-field body —
- * mirrors buildSemanticEvaluationReceipt's canonicalization (top-level key
- * replacer array, sha256, 24-hex slice) so a tampered id fails closed.
- */
-function receiptIdMatches(receipt: Record<string, unknown>): boolean {
-  const { receiptId, ...body } = receipt;
-  if (typeof receiptId !== 'string') return false;
-  const canonical = JSON.stringify(body, Object.keys(body).sort());
-  const digest = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24);
-  return receiptId === `receipt:sha256:${digest}`;
-}
-
-type KindValidator = (value: unknown, context: ArtifactValidationContext) => void;
-
-const KIND_VALIDATORS: Readonly<Record<ArtifactKind, KindValidator>> = Object.freeze({
-  'campaign-checkpoint': (value, context) => {
-    // The module validator is manifest-bound by design; a missing manifest is
-    // a caller error and must fail closed rather than skip validation.
-    if (context.manifest === undefined) throw new Error('ARTIFACT_CONTEXT_MISSING:campaign-checkpoint:manifest');
-    validateCampaignCheckpoint(value, context.manifest);
-  },
-  'observation': (value) => {
-    validateAnomalyObservationArtifact(value);
-  },
-  'semantic-receipt': (value) => {
-    // Pre-guard so null/primitive inputs produce a stable reason instead of a
-    // TypeError inside the typed module validator.
-    if (!isRecord(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:OBJECT_REQUIRED');
-    const version = value.schemaVersion;
-    if (version !== SEMANTIC_EVALUATION_RECEIPT_VERSION && version !== SEMANTIC_EVALUATION_RECEIPT_VERSION_V1) {
-      throw new Error(`ARTIFACT_RECEIPT_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
-    }
-    validateSemanticEvaluationReceipt(value as never);
-    if (!receiptIdMatches(value)) throw new Error('ARTIFACT_RECEIPT_INVALID:RECEIPT_ID_MISMATCH');
-  },
-  'replay-plan': (value) => {
-    if (!isRecord(value)) throw new Error('ARTIFACT_REPLAY_PLAN_INVALID:OBJECT_REQUIRED');
-    const version = value.schemaVersion;
-    if (version === TRIAGE_REPLAY_PLAN_VERSION) {
-      const result = validateTriageReplayPlan(value);
-      if (!result.valid) throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:${result.reason}`);
-      return;
-    }
-    if (version === TRIAGE_REPLAY_PLAN_V2_VERSION) {
-      const result = validateTriageReplayPlanV2(value);
-      if (!result.valid) throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:${result.reason}`);
-      return;
-    }
-    throw new Error(`ARTIFACT_REPLAY_PLAN_INVALID:SCHEMA_VERSION_UNSUPPORTED:${safeErrorDetail(version)}`);
-  },
-  'cluster': (value) => {
-    validateAnomalyClusterArtifact(value);
-  },
-  'reproduction-record': (value, context) => {
-    validateReproductionRecordArtifact(value, {
-      knownClusterIds: context.knownClusterIds,
-      knownObservationRunIds: context.knownObservationRunIds,
-    });
-  },
-  'dossier': (value) => {
-    validateDossierArtifact(value);
-  },
-  'morning-brief': (value) => {
-    validateCampaignMorningBrief(value);
-  },
-  'source-bundle': (value) => {
-    if (!isRecord(value)) throw new Error('ARTIFACT_SOURCE_BUNDLE_INVALID:OBJECT_REQUIRED');
-    validateSemanticCampaignBundle(value as never);
-  },
-  'coverage-report': (value) => {
-    validateCoverageReportArtifact(value);
-  },
-  'candidate-record': (value, context) => {
-    validateCampaignCandidateRecordArtifact(value, {
-      knownClusterIds: context.knownClusterIds,
-      knownBugCandidateIds: context.knownBugCandidateIds,
-    });
-  },
-  'replay-record': (value) => {
-    validateReplayRecordArtifact(value);
-  },
-  'minimization-record': (value) => {
-    validateMinimizationResultArtifact(value);
-  },
-  'project-health-report': (value) => {
-    validateProjectHealthReportArtifact(value);
-  },
-});
-
-/**
- * Strict, read-only validation of one durable private artifact.
- *
- * Returns `{ valid: true, kind, acceptedSchemaVersions }` when the value is a
- * well-formed, coherence-valid instance of an accepted historical version of
- * `kind`; otherwise `{ valid: false, kind, reason }` with a stable reason
- * code. Unknown kinds (and non-string kinds) fail closed with
- * `ARTIFACT_KIND_UNKNOWN`.
- */
-export function validateArtifact(
-  kind: string,
-  value: unknown,
-  context: ArtifactValidationContext = {},
-): ArtifactValidationResult {
-  if (typeof kind !== 'string' || !(KNOWN_ARTIFACT_KINDS as readonly string[]).includes(kind)) {
-    // Single reserved extension slot: the Phase 15P A06 ReplayResultEnvelope
-    // kind dispatches here once its module registers a validator, and fails
-    // closed (ARTIFACT_KIND_RESERVED) until then. Everything else unknown
-    // fails closed with ARTIFACT_KIND_UNKNOWN.
     const reservedResult = typeof kind === 'string' ? validateReservedArtifactKind(kind, value, context) : null;
     if (reservedResult !== null) return reservedResult;
     // The rejected kind is caller-controlled: the durable result carries only
