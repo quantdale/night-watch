@@ -6,7 +6,9 @@
 // (versions/registries as data — never live filesystem scans), normalizes it
 // into a canonical form (sorted sets, sorted families, digests over the
 // canonical serialization from src/core/identity/canonicalDigest.ts) and
-// fails closed on invalid input.
+// fails closed on invalid input. Three version slots (collectionAdmission,
+// coverageInventory, campaignCheckpoint) are optional inputs that default to
+// the authoritative owning-module constants exported above.
 //
 // Digest chain:
 //   entry digest     = prefixedDigest24('pscase', catalogEntry)
@@ -19,6 +21,8 @@
 
 import { prefixedDigest24, stableJsonSorted } from '../identity/canonicalDigest';
 import { safeErrorDetail } from '../campaign/runtimeValidation';
+import { CAMPAIGN_CHECKPOINT_VERSION } from '../campaign/types';
+import { REAL_SOURCE_COLLECTION_DERIVATION_VERSION } from '../../oracles/expectations/collectionAdmission';
 import {
   PROJECT_SNAPSHOT_VERSION,
   type ProjectSnapshotContractFamily,
@@ -30,6 +34,29 @@ import {
 export const PROJECT_SNAPSHOT_MANIFEST_DIGEST_PREFIX = 'psnap' as const;
 export const PROJECT_SNAPSHOT_CATALOG_DIGEST_PREFIX = 'pscat' as const;
 export const PROJECT_SNAPSHOT_ENTRY_DIGEST_PREFIX = 'pscase' as const;
+
+/**
+ * Authoritative default for the collectionAdmissionVersion slot: the owning
+ * oracle constant (src/oracles/expectations/collectionAdmission.ts), imported
+ * so the slot can never silently drift from admission behavior.
+ */
+export const PROJECT_SNAPSHOT_DEFAULT_COLLECTION_ADMISSION_VERSION = REAL_SOURCE_COLLECTION_DERIVATION_VERSION;
+
+/**
+ * Default for the coverageInventoryVersion slot. The Phase 12A
+ * coverageInventory module declares no version constant of its own, so the
+ * snapshot layer pins this identity for its report shape; callers override
+ * explicitly when the owning module declares one.
+ */
+export const PROJECT_SNAPSHOT_DEFAULT_COVERAGE_INVENTORY_VERSION = 'nightwatch.real-source-coverage-inventory.v1';
+
+/**
+ * Authoritative default for the first-class campaignCheckpointVersion slot:
+ * the owning campaign constant (src/core/campaign/types.ts). Compared as a
+ * classified slot by compare.ts (evolution = SEMANTIC_CHANGE, same-family
+ * downgrade = INCOMPATIBLE_CHANGE).
+ */
+export const PROJECT_SNAPSHOT_DEFAULT_CAMPAIGN_CHECKPOINT_VERSION = CAMPAIGN_CHECKPOINT_VERSION;
 
 /** Same comparator family as stableJsonSorted (localeCompare key order). */
 function byLocale(a: string, b: string): number {
@@ -151,6 +178,19 @@ function normalizeCatalogEntries(entries: ProjectSnapshotInput['adoptedCaseCatal
 }
 
 /**
+ * Public per-entry catalog digest: the exact function
+ * `buildProjectSnapshot` applies to each element of
+ * `adoptedCaseCatalogEntries` (e.g. each SELFDEV_ADOPTED_CASES element from
+ * src/core/selfDev/adoptedCaseCatalog.generated.ts, a pure declarative-data
+ * module whose stable inputs make per-entry digests practical). Callers can
+ * precompute or externally verify single-entry integrity without importing
+ * digest internals.
+ */
+export function projectSnapshotAdoptedCaseEntryDigest(entry: Record<string, unknown>): string {
+  return prefixedDigest24(PROJECT_SNAPSHOT_ENTRY_DIGEST_PREFIX, entry);
+}
+
+/**
  * Canonical digest payload of a manifest: the manifest WITHOUT its own
  * manifestDigest field. Exported so callers can re-verify the digest:
  * `prefixedDigest24('psnap', projectSnapshotDigestInput(manifest))`.
@@ -168,6 +208,9 @@ export function projectSnapshotDigestInput(
     analyzerVersion: manifest.analyzerVersion,
     replayPlanVersions: manifest.replayPlanVersions,
     semanticReceiptVersion: manifest.semanticReceiptVersion,
+    collectionAdmissionVersion: manifest.collectionAdmissionVersion,
+    coverageInventoryVersion: manifest.coverageInventoryVersion,
+    campaignCheckpointVersion: manifest.campaignCheckpointVersion,
     campaignVersions: manifest.campaignVersions,
     dossierVersions: manifest.dossierVersions,
     ownerScope: manifest.ownerScope,
@@ -209,6 +252,18 @@ export function buildProjectSnapshot(input: ProjectSnapshotInput): ProjectSnapsh
     analyzerVersion: requireNonEmptyString('analyzerVersion', input.analyzerVersion),
     replayPlanVersions: normalizedStringSet('replayPlanVersions', input.replayPlanVersions),
     semanticReceiptVersion: requireNonEmptyString('semanticReceiptVersion', input.semanticReceiptVersion),
+    collectionAdmissionVersion: requireNonEmptyString(
+      'collectionAdmissionVersion',
+      input.collectionAdmissionVersion ?? PROJECT_SNAPSHOT_DEFAULT_COLLECTION_ADMISSION_VERSION,
+    ),
+    coverageInventoryVersion: requireNonEmptyString(
+      'coverageInventoryVersion',
+      input.coverageInventoryVersion ?? PROJECT_SNAPSHOT_DEFAULT_COVERAGE_INVENTORY_VERSION,
+    ),
+    campaignCheckpointVersion: requireNonEmptyString(
+      'campaignCheckpointVersion',
+      input.campaignCheckpointVersion ?? PROJECT_SNAPSHOT_DEFAULT_CAMPAIGN_CHECKPOINT_VERSION,
+    ),
     campaignVersions: normalizeCampaignVersions(input.campaignVersions),
     dossierVersions: normalizedStringSet('dossierVersions', input.dossierVersions),
     ownerScope: normalizeOwnerScope(input.ownerScope),
