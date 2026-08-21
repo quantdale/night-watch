@@ -35,6 +35,13 @@
 //     through parseUnifiedContractResultDto, which rejects unrecognized
 //     categories/versions and re-verifies category membership against the
 //     authoritative adapter tables for every known source vocabulary.
+//   - ROUND 2 (Phase 15P A02): the three remaining result axes — replay
+//     results (executeReplayPlanV2 status + guard reasons + triage exact-
+//     replay status), dossier readiness (status/verdict + missingEvidence/
+//     readiness reason codes), and triage rejection reasons (promotion-result
+//     blocker tokens) — converge in triageResultVocabulary.ts and are merged
+//     into THIS module's registry (names, owned tables, provenance) below, so
+//     provenance coverage and strict DTO parsing extend to them identically.
 //
 // PURE: no fs, no network, no child process, no env, no crypto, no
 // persistence, no AI/selfDev/campaign authority (hardening-guarded).
@@ -74,6 +81,10 @@ import {
   unifiedFromRealSourceResolution,
 } from './contractResultVocabulary';
 import type { UnifiedContractResult, UnifiedContractResultCategory } from './contractResultVocabulary';
+import {
+  TRIAGE_RESULT_OWNED_TABLES,
+  TRIAGE_RESULT_VOCABULARY_NAMES,
+} from './triageResultVocabulary';
 
 /** Load-bearing vocabulary version for the converged semantic-result view. */
 export const SEMANTIC_RESULT_VOCABULARY_VERSION = 'nightwatch.semantic-result-vocabulary.v1' as const;
@@ -241,7 +252,8 @@ const EXPECTATION_FRESHNESS_CATEGORY: Record<ExpectationFreshness, UnifiedContra
 
 const EXPECTATION_FRESHNESS_TABLE = tableOf(EXPECTATION_FRESHNESS_CATEGORY);
 
-/** Vocabulary names owned/documented by this module, in table order. */
+/** Vocabulary names owned/documented by this module, in table order (the
+ *  Session 1 tables followed by the Phase 15P A02 round-2 triage-side axes). */
 export const SEMANTIC_VOCABULARY_NAMES: readonly string[] = Object.freeze([
   SEMANTIC_RECEIPT_OUTCOME_VOCABULARY,
   SEMANTIC_RUNNER_OUTCOME_VOCABULARY,
@@ -251,6 +263,7 @@ export const SEMANTIC_VOCABULARY_NAMES: readonly string[] = Object.freeze([
   PROMOTION_CURRENTNESS_VOCABULARY,
   SOURCE_FRESHNESS_VOCABULARY,
   EXPECTATION_FRESHNESS_VOCABULARY,
+  ...TRIAGE_RESULT_VOCABULARY_NAMES,
 ]);
 
 const OWNED_TABLES: readonly (readonly [string, ReadonlyMap<string, UnifiedContractResultCategory>])[] = [
@@ -262,6 +275,10 @@ const OWNED_TABLES: readonly (readonly [string, ReadonlyMap<string, UnifiedContr
   [PROMOTION_CURRENTNESS_VOCABULARY, PROMOTION_CURRENTNESS_TABLE],
   [SOURCE_FRESHNESS_VOCABULARY, SOURCE_FRESHNESS_TABLE],
   [EXPECTATION_FRESHNESS_VOCABULARY, EXPECTATION_FRESHNESS_TABLE],
+  // Phase 15P A02 round-2 triage-side axes (replay results, dossier
+  // readiness, triage rejection reasons) — same registry, same provenance
+  // coverage, same strict DTO re-derivation.
+  ...TRIAGE_RESULT_OWNED_TABLES,
 ];
 
 // ---------------------------------------------------------------------------
@@ -666,7 +683,8 @@ const HISTORICAL_VOCABULARY_NAMES: ReadonlySet<string> = new Set([
 const UNIFIED_AGGREGATE_VOCABULARY = 'unified-aggregate';
 
 /** True when `name` is a vocabulary whose membership this module can
- *  mechanically re-verify (the eight owned tables, the seven historical
+ *  mechanically re-verify (the owned tables — the eight Session 1 tables plus
+ *  the seven Phase 15P A02 round-2 triage-side tables, the seven historical
  *  adapter vocabularies, or the aggregate discriminator). */
 export function isKnownContractResultVocabularyName(name: string): boolean {
   return OWNED_TABLES.some(([vocabulary]) => vocabulary === name) ||
