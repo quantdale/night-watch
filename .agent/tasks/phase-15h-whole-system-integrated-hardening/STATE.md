@@ -8,6 +8,7 @@ Status: BLOCKED
 Starting SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
 Last validated implementation SHA: 06ea7ca62b1d5c8770d42622d4655e942ec68336
 Last substantive checkpoint SHA: 06ea7ca62b1d5c8770d42622d4655e942ec68336
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 06ea7ca62b1d5c8770d42622d4655e942ec68336
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
