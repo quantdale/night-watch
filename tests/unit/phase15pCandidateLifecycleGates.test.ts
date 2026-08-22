@@ -90,21 +90,22 @@ import { PRIVATE_ARTIFACT_POLICY_VERSION, OWNER_SCOPE_POLICY_VERSION, PrivateArt
 // ---------------------------------------------------------------------------
 
 const ALL_STATES: readonly CandidateLifecycleState[] = [
-  'OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'UNCHANGED',
+  'OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'CLUSTERED', 'UNCHANGED',
   'TRIAGED', 'DOSSIER_READY', 'REJECTED', 'UNRESOLVED',
 ];
 const ALL_EVENTS: readonly CandidateLifecycleEvent[] = [
   'ADMIT', 'REJECT', 'CONFIRM_REPRODUCTION', 'FAIL_REPRODUCTION',
-  'APPLY_MINIMIZATION', 'KEEP_UNCHANGED', 'COMPLETE_TRIAGE',
+  'APPLY_MINIMIZATION', 'KEEP_UNCHANGED', 'CLUSTERED', 'COMPLETE_TRIAGE',
   'CLASSIFY_REJECTED', 'CLASSIFY_UNRESOLVED', 'MARK_DOSSIER_READY',
   'GATE_BLOCK',
 ];
 const TERMINAL_STATES: readonly CandidateLifecycleState[] = ['DOSSIER_READY', 'REJECTED', 'UNRESOLVED'];
-const GATE_OPEN_STATES: readonly CandidateLifecycleState[] = ['OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'UNCHANGED'];
+const GATE_OPEN_STATES: readonly CandidateLifecycleState[] = ['OBSERVED', 'ADMITTED', 'REPRODUCED', 'MINIMIZED', 'CLUSTERED', 'UNCHANGED'];
 const VARIANTS: readonly CandidateLifecycleVariant[] = ['PROTOCOL_ONLY', 'SEMANTIC'];
 
-// Independent oracle of all 18 legal edges (from, event, to): the historical
-// 13 plus the five Phase 15P GATE_BLOCK edges.
+// Independent oracle of all 21 legal edges (from, event, to): the historical
+// 13, the five Phase 15P GATE_BLOCK edges, and the three A05-round-2
+// CLUSTERED edges.
 const LEGAL_EDGES: readonly (readonly [CandidateLifecycleState, CandidateLifecycleEvent, CandidateLifecycleState])[] = [
   ['OBSERVED', 'ADMIT', 'ADMITTED'],
   ['OBSERVED', 'REJECT', 'REJECTED'],
@@ -117,8 +118,11 @@ const LEGAL_EDGES: readonly (readonly [CandidateLifecycleState, CandidateLifecyc
   ['REPRODUCED', 'KEEP_UNCHANGED', 'UNCHANGED'],
   ['REPRODUCED', 'FAIL_REPRODUCTION', 'UNRESOLVED'],
   ['REPRODUCED', 'GATE_BLOCK', 'UNRESOLVED'],
+  ['MINIMIZED', 'CLUSTERED', 'CLUSTERED'],
   ['MINIMIZED', 'COMPLETE_TRIAGE', 'TRIAGED'],
   ['MINIMIZED', 'GATE_BLOCK', 'UNRESOLVED'],
+  ['CLUSTERED', 'COMPLETE_TRIAGE', 'TRIAGED'],
+  ['CLUSTERED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['UNCHANGED', 'COMPLETE_TRIAGE', 'TRIAGED'],
   ['UNCHANGED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['TRIAGED', 'MARK_DOSSIER_READY', 'DOSSIER_READY'],
@@ -131,6 +135,7 @@ const PATH_TO_STATE: Record<CandidateLifecycleState, readonly CandidateLifecycle
   ADMITTED: ['ADMIT'],
   REPRODUCED: ['ADMIT', 'CONFIRM_REPRODUCTION'],
   MINIMIZED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION'],
+  CLUSTERED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'CLUSTERED'],
   UNCHANGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'KEEP_UNCHANGED'],
   TRIAGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE'],
   DOSSIER_READY: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE', 'MARK_DOSSIER_READY'],
@@ -188,7 +193,7 @@ function reachableFromObserved(state: CandidateLifecycleState): boolean {
 }
 
 test.describe('Phase 15P A05 — lifecycle gate matrix (G1)', () => {
-  test('exhaustive matrix per variant: all 9 states x all 11 events — legal lands, illegal throws', () => {
+  test('exhaustive matrix per variant: every lifecycle state x every event — legal lands, illegal throws', () => {
     for (const variant of VARIANTS) {
       for (const state of ALL_STATES) {
         for (const event of ALL_EVENTS) {

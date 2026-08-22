@@ -168,11 +168,11 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
   }
   if (currentnessTotal !== (health.approvedTargets as number)) invalid('CURRENTNESS_SUM_MISMATCH');
 
-  assertSortedUnique(health.targetsMissingActiveFamily, 'TARGETS_MISSING_ACTIVE_FAMILY');
-  assertSortedUnique(health.unknownFamilyTargets, 'UNKNOWN_FAMILY_TARGETS');
-  assertSortedUnique(health.currentnessUnevaluatedTargets, 'CURRENTNESS_UNEVALUATED_TARGETS');
-  assertSortedUnique(health.staleTargets, 'STALE_TARGETS');
-  assertSortedUnique(health.unavailableTargets, 'UNAVAILABLE_TARGETS');
+  assertSortedUnique(requireRuntimeArray(health.targetsMissingActiveFamily, 'ARTIFACT_PROJECT_HEALTH_INVALID:TARGETS_MISSING_ACTIVE_FAMILY'), 'TARGETS_MISSING_ACTIVE_FAMILY');
+  assertSortedUnique(requireRuntimeArray(health.unknownFamilyTargets, 'ARTIFACT_PROJECT_HEALTH_INVALID:UNKNOWN_FAMILY_TARGETS'), 'UNKNOWN_FAMILY_TARGETS');
+  assertSortedUnique(requireRuntimeArray(health.currentnessUnevaluatedTargets, 'ARTIFACT_PROJECT_HEALTH_INVALID:CURRENTNESS_UNEVALUATED_TARGETS'), 'CURRENTNESS_UNEVALUATED_TARGETS');
+  assertSortedUnique(requireRuntimeArray(health.staleTargets, 'ARTIFACT_PROJECT_HEALTH_INVALID:STALE_TARGETS'), 'STALE_TARGETS');
+  assertSortedUnique(requireRuntimeArray(health.unavailableTargets, 'ARTIFACT_PROJECT_HEALTH_INVALID:UNAVAILABLE_TARGETS'), 'UNAVAILABLE_TARGETS');
   if ((health.staleTargets as string[]).length !== (currentnessCounts.STALE as number)) invalid('STALE_COUNT_MISMATCH');
   if ((health.unavailableTargets as string[]).length !== (currentnessCounts.SOURCE_UNAVAILABLE as number)) invalid('UNAVAILABLE_COUNT_MISMATCH');
   if ((health.currentnessUnevaluatedTargets as string[]).length !== (currentnessCounts.NOT_EVALUATED as number)) invalid('UNEVALUATED_COUNT_MISMATCH');
@@ -209,8 +209,8 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
   if (!(CAMPAIGN_CATEGORIES as readonly string[]).includes(campaign.category as string)) invalid('CAMPAIGN_CATEGORY');
   assertBoolean(campaign.unmeasured, 'ARTIFACT_PROJECT_HEALTH_INVALID:CAMPAIGN_UNMEASURED');
   if ((campaign.category === 'UNMEASURED') !== (campaign.unmeasured === true)) invalid('CAMPAIGN_UNMEASURED_MISMATCH');
-  assertSortedUnique(campaign.comparedKeys, 'CAMPAIGN_COMPARED_KEYS');
-  assertSortedUnique(campaign.driftKeys, 'CAMPAIGN_DRIFT_KEYS');
+  assertSortedUnique(requireRuntimeArray(campaign.comparedKeys, 'ARTIFACT_PROJECT_HEALTH_INVALID:CAMPAIGN_COMPARED_KEYS'), 'CAMPAIGN_COMPARED_KEYS');
+  assertSortedUnique(requireRuntimeArray(campaign.driftKeys, 'ARTIFACT_PROJECT_HEALTH_INVALID:CAMPAIGN_DRIFT_KEYS'), 'CAMPAIGN_DRIFT_KEYS');
   if (campaign.unmeasured === true && ((campaign.comparedKeys as string[]).length > 0 || (campaign.driftKeys as string[]).length > 0)) {
     invalid('UNMEASURED_WITH_COMPARED_KEYS');
   }

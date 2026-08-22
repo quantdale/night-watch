@@ -643,6 +643,12 @@ export class CampaignOrchestrator {
     }
     const persistedRetries: Record<string, CampaignWorkItemRetryRecord> = {};
     for (const [workItemId, record] of this.workItemRetries) persistedRetries[workItemId] = record;
+    // Phase 15H hardening: the interrupted-work/retry fields are RECOMPUTED
+    // from current runtime state on every checkpoint. An explicit undefined
+    // must override any value carried by the spread of the previous
+    // checkpoint — omitting the key left stale mid-flight entries from an
+    // earlier ordinal inside later checkpoints, and the integrity validator
+    // correctly rejected them as ledger/bookkeeping divergence.
     const checkpoint: CampaignCheckpoint = {
       ...this.state,
       checkpointOrdinal: this.state.checkpointOrdinal + 1,
@@ -654,8 +660,8 @@ export class CampaignOrchestrator {
       remainingWorkItemIds: remainingWorkItems(this.manifest, this.state.executionLedger),
       candidateLifecycles: persistedLifecycles,
       runtimeContractVersions: { ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED },
-      ...(interruptedWork.length > 0 ? { interruptedWork } : {}),
-      ...(Object.keys(persistedRetries).length > 0 ? { workItemRetries: persistedRetries } : {}),
+      ...(interruptedWork.length > 0 ? { interruptedWork } : { interruptedWork: undefined }),
+      ...(Object.keys(persistedRetries).length > 0 ? { workItemRetries: persistedRetries } : { workItemRetries: undefined }),
     };
     validateCampaignCheckpoint(checkpoint, this.manifest);
     this.state = checkpoint;

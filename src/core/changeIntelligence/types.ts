@@ -114,8 +114,11 @@ export type RiskClass =
   | 'RESOURCE_LOADING'
   | 'TEST_DOC_ONLY';
 
-// Phase 15P A15 convergence: de-exported (module-private, zero external callers).
-type ReasonCode =
+// Phase 15H hardening: A15 de-exported this union citing zero external
+// callers, but campaign/types.ts imports it (missed-caller defect DEF-01,
+// reproduced by tsc). The export is restored for that caller; EdgeMatch
+// (verified zero external callers) stays module-private.
+export type ReasonCode =
   | 'DIRECT_COMPONENT'
   | 'DIRECT_ROUTE'
   | 'DIRECT_API_CALL'

@@ -18,10 +18,12 @@
 //   every static kind and its rejections surface as ordinary invalid results.
 // ---------------------------------------------------------------------------
 
-import type { ArtifactValidationContext, ArtifactValidationResult } from './types';
+import type { ArtifactValidationContext, ArtifactValidationResult, ReservedArtifactKind } from './types';
 
-/** The kind name reserved for the A06 ReplayResultEnvelope artifact. */
-export const REPLAY_RESULT_ENVELOPE_RESERVED_KIND = 'replay-result-envelope' as const;
+/** The kind name reserved for the A06 ReplayResultEnvelope artifact.
+ *  `satisfies` pins this value to the ReservedArtifactKind declaration in
+ *  types.ts — editing either side alone is a compile error. */
+export const REPLAY_RESULT_ENVELOPE_RESERVED_KIND = 'replay-result-envelope' as const satisfies ReservedArtifactKind;
 
 /** Same signature as the facade's internal per-kind validators. */
 export type ReservedKindValidator = (value: unknown, context: ArtifactValidationContext) => void;

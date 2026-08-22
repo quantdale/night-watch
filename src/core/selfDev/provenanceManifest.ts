@@ -18,8 +18,14 @@ export const SELFDEV_AUTHORITATIVE_PATHS = Object.freeze([
   'bin/selfdev-verify.mjs',
   'package-lock.json',
   'package.json',
+  // Phase 15H hardening (DEF-12): A13 added these imports to ownerScope.ts /
+  // privateArtifacts.ts but never extended the trust root, so every fixture
+  // mirror failed to resolve them. The list must stay transitively closed
+  // over the authoritative set's imports.
+  'src/core/campaign/runtimeValidation.ts',
   'src/core/policy/ownerScope.ts',
   'src/core/policy/privateArtifacts.ts',
+  'src/core/policy/privateScreening.ts',
   'src/core/provenance/index.ts',
   'src/core/provenance/localGit.ts',
   'src/core/selfDev/adoptedCaseCatalog.generated.ts',

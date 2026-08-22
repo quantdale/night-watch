@@ -1,4 +1,8 @@
-import { DEPENDENCY_MAP_VERSION, RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from '../../core/changeIntelligence/map';
+// Phase 15H hardening: DEPENDENCY_MAP_VERSION's canonical owner is
+// changeIntelligence/types.ts (A15 version-owner convergence); map.ts only
+// re-wraps it behind dependencyMapVersion().
+import { DEPENDENCY_MAP_VERSION } from '../../core/changeIntelligence/types';
+import { RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from '../../core/changeIntelligence/map';
 import type { ChangedFile, RepoDefinition } from '../../core/changeIntelligence/types';
 import type { ApiOperation, JourneyLink } from './types';
 

@@ -322,7 +322,7 @@ function validateInterruptedWorkBookkeeping(checkpoint: RuntimeRecord, ledger: r
   }
   const knownClusterIds = new Set<string>();
   for (const value of requireRuntimeArray(checkpoint.anomalyClusters, 'CHECKPOINT_CLUSTERS')) {
-    knownClusters.add(requireRuntimeRecord(value, 'CHECKPOINT_CLUSTER').clusterId as string);
+    knownClusterIds.add(requireRuntimeRecord(value, 'CHECKPOINT_CLUSTER').clusterId as string);
   }
   const actualKeys = new Set<string>();
   for (const value of records) {

@@ -86,7 +86,13 @@ export function validateCampaignCandidateRecordArtifact(
     invalid(`LIFECYCLE:${error instanceof Error ? error.message : 'REJECTED'}`);
   }
 
-  if (context.knownClusterIds !== undefined && record.clusterId !== null && !context.knownClusterIds.includes(record.clusterId)) {
+  if (
+    context.knownClusterIds !== undefined &&
+    // assertBoundedId above already rejected any non-string non-null clusterId;
+    // the typeof guard narrows the RuntimeRecord value for includes().
+    typeof record.clusterId === 'string' &&
+    !context.knownClusterIds.includes(record.clusterId)
+  ) {
     // Referential failures echo only a bounded categorical projection of the
     // rejected id — the raw value is caller-supplied and never trusted.
     invalid(`UNKNOWN_CLUSTER:${safeErrorDetail(record.clusterId)}`);
@@ -95,5 +101,3 @@ export function validateCampaignCandidateRecordArtifact(
     invalid(`UNKNOWN_BUG_CANDIDATE:${safeErrorDetail(record.candidateId)}`);
   }
 }
-
-export type { CampaignCandidateRecord };

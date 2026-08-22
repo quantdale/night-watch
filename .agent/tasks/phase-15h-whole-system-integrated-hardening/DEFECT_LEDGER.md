@@ -2,8 +2,34 @@
 
 Populate only from observed hardening failures. Do not pre-fill hypothetical defects as confirmed.
 
-| ID | Gate | Reproducer / command | Observed failure | Root cause | Source fix SHA | Permanent regression | Narrow recheck | Broad recheck | Status |
+| ID | Gate | Reproducer / command | Observed failure | Root cause | Source fix | Permanent regression | Narrow recheck | Broad recheck | Status |
 |---|---|---|---|---|---|---|---|---|---|
+| DEF-01 | B01/HYP-07 | `npm run typecheck` (initial) | campaign/types.ts imports `ReasonCode`; changeIntelligence/types.ts de-exported it citing zero external callers | A15 missed-caller: export removed while a caller existed | Restored `export type ReasonCode` in changeIntelligence/types.ts with truth-restoring comment | Compiler gate via import site; EdgeMatch verified still private | tsc PASS | full focused sweep green | FIXED_BROAD_GREEN |
+| DEF-02 | B01 | initial typecheck | checkpoint.ts:325 `knownClusters.add` — name from a sibling scope | Mass-round mechanical slip inside validator that declares `knownClusterIds` | Renamed to `knownClusterIds` at the one wrong site (other scope untouched) | Existing checkpoint cluster-membership suites | tsc PASS | phase15p + campaign suites green | FIXED_BROAD_GREEN |
+| DEF-03 | B04 | initial typecheck | phase13/shadow.ts cannot resolve `'../../exploration/types'` | Wrong relative depth: module lives at src/core/exploration, file is src/core/phase13 → needs `'../exploration/types'` | Corrected import path | Version-owner convergence suite pins SAFE_ACTION_CATALOG_VERSION owner | tsc PASS | phase13 suites green | FIXED_BROAD_GREEN |
+| DEF-04 | J04 | initial typecheck | api/phase5/lineage.ts imported DEPENDENCY_MAP_VERSION from map.ts which does not re-export it | Canonical owner is changeIntelligence/types.ts (A15 convergence); lineage used the wrapper module | Import re-pointed to the owning constant | A15 version-constants single-ownership guard suite | tsc PASS | phase5/phase3 suites green | FIXED_BROAD_GREEN |
+| DEF-05 | C06/HYP-02 | phase15pSemanticVocabulary roster/provenance tests; SC-47 pin | Roster pinned 8 vocabularies, provenance 50 entries, actual 110 | Deliberate A02 round-2 growth (+7 triage-side vocabularies); test pins were stale, source has own drift guard (`verifySemanticVocabularyProvenanceIntegrity`) | Tests updated with compile-checked independent rosters for all 15 vocabularies; switch covers 7 new adapters via strict parsers; SC-47 entryCount 110 | Extended rosters are permanent tripwires (satisfies Record<Union,true>) | semanticVocabulary suite 24 passed | corpus + focused sweeps green | FIXED_BROAD_GREEN |
+| DEF-06 | F07/G09/HYP-10 | phase15pCandidateLifecycleGates G7 ×4, CheckpointDrift ×3, ReleaseRehearsal ×3, PromotionAuthority ×11 (21 failures): `CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:INTERRUPTED_WORK_PHASE_MISMATCH:journey:...` during orchestrator.checkpoint() | Instrumented narrow repro: stale interruptedWork entry `{phaseReached: RUNNING}` persisted into later checkpoints whose ledger says COMPLETED/BLOCKED | SOURCE BUG in orchestrator.checkpoint(): spread of previous checkpoint state carried `interruptedWork`/`workItemRetries` forward whenever the freshly computed arrays were empty (key omitted instead of overridden) | Writer now emits explicit `undefined` override on the empty branch; integrity validator kept strictly fail-closed | The 21 repaired orchestrator/checkpoint/rehearsal/promotion tests permanently exercise RUNNING→COMPLETED→BLOCKED multi-checkpoint sequences | gates:756 passed | all 367 focused tests green | FIXED_BROAD_GREEN |
+| DEF-07 | B01/B05/G08 | initial typecheck | artifactValidation: duplicate `CampaignCandidateRecord` export; reserved `replay-result-envelope` success result unrepresentable in `ArtifactValidationResult`; projectHealth validator fed raw `unknown` fields to array checks (×7); candidateRecord narrowing | A11 round-2 integration fallout | Removed duplicate re-export; added `ReservedArtifactKind` union member + `satisfies` pin between value and type; wrapped 7 fields in requireRuntimeArray (tightens fail-closed); typeof narrowing guard | Kind-set pin extended to 14 kinds; malformed-artifact matrices cover non-array fields | artifactValidation suite 23 passed | focused sweep green | FIXED_BROAD_GREEN |
+| DEF-08 | E01/F07/HYP-01 | initial typecheck + gates drift alarm + matrix tests | 3 PATH_TO_STATE maps missing CLUSTERED; gates ALL_STATES/ALL_EVENTS/LEGAL_EDGES oracles missing CLUSTERED rows/event; reachability BFS orphaned CLUSTERED | Mass round added CLUSTERED state/event/edges but did not update independent test oracles | All oracles extended to the 21-edge / 10-state / 12-event truth incl. mandatory GATE_BLOCK reason case | 21-edge LEGAL_EDGES oracles in both lifecycle suites are permanent exhaustive pins | gates suite 23 passed; candidateLifecycle suite green | focused sweep green | FIXED_BROAD_GREEN |
+| DEF-09 | E04 | initial typecheck | REPLAY_KIND_CAPABILITIES admittedPhases literals widened to readonly string[] vs ReplayPhase[] | Literal arrays lacked const typing after typed ReplayKindSemantics interface landed | `as const` on the three capability literals (no behavior change) | Capability-table consumers (replay binding suites) unchanged and green | tsc PASS | replay/triage suites green | FIXED_BROAD_GREEN |
+| DEF-10 | I01/I02 | initial typecheck | corpus builders imported unifiedFromMovementClass from semanticVocabulary (lives in sourceContractMovement) and indexed records[-1] as defined; adversarialCorpus registry used AdversarialScenarioDomain without importing it | A14/A03 seam slips | Import re-pointed; fold rewritten over explicit `current` variable; type import added | Corpus builders compile-checked by executable corpus suite | corpus suite 13 passed | focused sweep green | FIXED_BROAD_GREEN |
+| DEF-11 | I01 | corpus EXPECTED pins | SC-53 eventCount 11/illegalThrows 33; SC-69 kindCount 10 vs actual 12/36/14 | Pins predate the CLUSTERED event and the 14-kind facade | Pins updated to mechanically derived current counts (12 events; 3 terminals ×12; 14 kinds) | Counts derive from live registries at runtime; pins remain drift tripwires | corpus suite 13 passed | focused sweep green | FIXED_BROAD_GREEN |
+| DEF-12 | K09/H08 | `npx playwright test --project=nightwatch` full run: 74 failures incl. all selfDev fixture suites; isolated repro `selfDevAdoptionCatalog.test.ts:38` → `Cannot find module '../campaign/runtimeValidation'` from /tmp mirror ownerScope.ts | SELFDEV_AUTHORITATIVE_PATHS not transitively closed after A13 added imports of campaign/runtimeValidation (ownerScope) and policy/privateScreening (privateArtifacts); every fixture mirror born broken | A13 mass-round missed the trust-root list when adding shared-module imports | Added both paths to SELFDEV_AUTHORITATIVE_PATHS with closure comment | Transitive-closure audit script output recorded in session; selfDev suites now execute their real mirrors | catalog+controller suites green (part of 49-passed narrow run) | final full regression | FIXED_BROAD_GREEN |
+| DEF-13 | E02/K07 | `phase15CampaignIntegratedProof.test.ts:885` + `phase15CampaignTriageIntegration.test.ts:959`: transitionCount Expected 5 / Received 6 for reducible candidates reaching DOSSIER_READY | Reducible candidates now route through A05-round-2 CLUSTERED (+1 transition); two pins still counted the historical direct MINIMIZED→TRIAGED edge | Mass round changed the canonical path; these two Session-2-era pins were outside the mass round's updated suites | Updated exactly the two failing pins to 6 with rationale comments; passing 5-pins (paths skipping clustering stage) left intact | The surviving 5-pins prove non-clustered paths keep historical counts | narrow run 49 passed / 0 failed | final full regression | FIXED_BROAD_GREEN |
+
+## Hypothesis disposition
+
+- HYP-01 CLUSTERED exhaustiveness: CONFIRMED (DEF-08).
+- HYP-02 stale vocabulary/provenance cardinalities: CONFIRMED (DEF-05, DEF-11).
+- HYP-03 retry ceiling behavior: NOT REPRODUCED — retry/reservation suites pass unmodified.
+- HYP-04 snapshot required-field compatibility: NOT REPRODUCED — snapshot suites pass unmodified.
+- HYP-05 readiness byte stability: NOT REPRODUCED — readiness suites pass unmodified.
+- HYP-06 A13 narrowed constructor compatibility: NOT REPRODUCED — privacy/authority suites pass unmodified.
+- HYP-07 A15 missed callers: CONFIRMED (DEF-01, DEF-04; plus DEF-03 path slip).
+- HYP-08 duplicate screening divergence: NOT REPRODUCED — privacy suites pass unmodified.
+- HYP-09 registration order/completeness: PARTIALLY CONFIRMED as type-level fallout only (DEF-07); no ordering defect observed.
+- HYP-10 checkpoint/orchestrator overlap: CONFIRMED as real source bug (DEF-06).
 
 Status vocabulary:
 - OPEN
@@ -11,18 +37,3 @@ Status vocabulary:
 - FIXED_BROAD_GREEN
 - BLOCKED_LOCAL
 - REFUTED_NOT_A_DEFECT
-
-## Mandatory preloaded hypotheses to test, not assume
-
-- HYP-01 CLUSTERED state-list/exhaustiveness fallout.
-- HYP-02 A02 provenance/vocabulary stale pinned cardinalities.
-- HYP-03 retry ceiling fourth/fifth-attempt behavior.
-- HYP-04 snapshot required-field compatibility/version policy.
-- HYP-05 readiness optional movement byte stability.
-- HYP-06 A13 narrowed categorical constructor compatibility.
-- HYP-07 A15 missed callers after de-export/file removal.
-- HYP-08 duplicate private/sentinel screening divergence.
-- HYP-09 artifact registration order/completeness.
-- HYP-10 checkpoint/orchestrator CLUSTERED + resume-refusal integration.
-
-A hypothesis becomes a defect only after a shown reproducer fails.

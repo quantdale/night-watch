@@ -84,7 +84,7 @@ import {
 } from '../../../corpus/phase13/source-fixture/phase13Fixtures';
 import { SENTINEL_PHASE13 } from '../../../corpus/phase13/response-fixtures';
 // Phase 15P A15 convergence: version strings re-pointed to their single owners.
-import { SAFE_ACTION_CATALOG_VERSION } from '../../exploration/types';
+import { SAFE_ACTION_CATALOG_VERSION } from '../exploration/types';
 import { SELECTOR_VERSION } from '../changeIntelligence/types';
 import { API_CATALOG_VERSION } from '../../api/phase5/types';
 import { SYNTHETIC_JOURNEY_CONTRACT_VERSION } from '../journeys/contract';

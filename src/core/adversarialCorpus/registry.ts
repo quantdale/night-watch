@@ -18,6 +18,7 @@
 import type {
   AdversarialPhaseFamily,
   AdversarialScenarioDefinition,
+  AdversarialScenarioDomain,
 } from './types';
 import { ADVERSARIAL_PHASE_FAMILIES, ADVERSARIAL_SCENARIO_DOMAINS } from './types';
 

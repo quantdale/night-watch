@@ -586,7 +586,7 @@ export const REPLAY_KIND_CAPABILITIES: Readonly<Record<ReplayCandidateKind, Repl
       retainedCardinalityReason: 'retainedOccurrenceOrdinals_INVALID',
     }),
     semantics: Object.freeze({
-      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY']),
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY'] as const),
       supportsReducedReplay: false,
       guard: 'RIPPLE_JOURNEY_PRECONDITION',
       phaseRejectionReason: 'PRECONDITION_DIVERGENCE',
@@ -615,7 +615,7 @@ export const REPLAY_KIND_CAPABILITIES: Readonly<Record<ReplayCandidateKind, Repl
       retainedCardinalityReason: 'retainedOccurrenceOrdinals_INVALID',
     }),
     semantics: Object.freeze({
-      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE']),
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE'] as const),
       supportsReducedReplay: true,
       guard: 'EXPLORATION_SAFE_ACTION_CATALOG',
       phaseRejectionReason: 'PRECONDITION_DIVERGENCE',
@@ -646,7 +646,7 @@ export const REPLAY_KIND_CAPABILITIES: Readonly<Record<ReplayCandidateKind, Repl
       retainedCardinalityReason: 'API_V2_RETAINED_MUST_BE_SINGLE',
     }),
     semantics: Object.freeze({
-      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE']),
+      admittedPhases: Object.freeze(['FRESH_EXACT_REPLAY', 'REDUCED_CANDIDATE'] as const),
       supportsReducedReplay: false,
       guard: 'PHASE5_API_KNOWN_READ',
       phaseRejectionReason: 'PRECONDITION_DIVERGENCE',

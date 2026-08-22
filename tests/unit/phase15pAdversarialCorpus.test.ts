@@ -695,6 +695,7 @@ const PATH_TO_STATE: Record<CandidateLifecycleState, readonly CandidateLifecycle
   ADMITTED: ['ADMIT'],
   REPRODUCED: ['ADMIT', 'CONFIRM_REPRODUCTION'],
   MINIMIZED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION'],
+  CLUSTERED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'CLUSTERED'],
   UNCHANGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'KEEP_UNCHANGED'],
   TRIAGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE'],
   DOSSIER_READY: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE', 'MARK_DOSSIER_READY'],
@@ -2312,7 +2313,9 @@ const EXPECTED: Readonly<Record<string, ProbeOutcome>> = {
 
   'SC-47': {
     verified: true,
-    entryCount: 50,
+    // Phase 15H hardening: registry grew 50 -> 110 with the A02 round-2
+    // triage-side vocabularies (mechanical provenance, integrity-verified).
+    entryCount: 110,
   },
 
   'SC-48': {
@@ -2356,8 +2359,10 @@ const EXPECTED: Readonly<Record<string, ProbeOutcome>> = {
   },
 
   'SC-53': {
-    illegalThrows: 33,
-    eventCount: 11,
+    // Phase 15H hardening: the A05 round-2 CLUSTERED event makes 12 events;
+    // terminal illegality count = 3 terminals x 12 events = 36.
+    illegalThrows: 36,
+    eventCount: 12,
     sample: 'CANDIDATE_LIFECYCLE_ILLEGAL_TRANSITION:FROM:DOSSIER_READY:EVENT:ADMIT:TO:NONE',
   },
 
@@ -2477,7 +2482,7 @@ const EXPECTED: Readonly<Record<string, ProbeOutcome>> = {
   },
 
   'SC-69': {
-    kindCount: 10,
+    kindCount: 14,
     truncatedPerKind: 6,
     allRejected: true,
   },

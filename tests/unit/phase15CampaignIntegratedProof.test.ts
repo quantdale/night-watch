@@ -910,7 +910,9 @@ test.describe('Phase 15 Session 2 Workstream G — integrated synthetic campaign
       expect(expPromotion!.dossierVersionTarget).toBe(DOSSIER_VERSION);
       const expLifecycle = scenario.lifecycleFor('MINIMIZATION', expCluster.clusterId);
       expect(expLifecycle.state).toBe('DOSSIER_READY');
-      expect(expLifecycle.transitionCount).toBe(5);
+      // Phase 15H hardening (DEF-13): reducible candidates route through the
+      // A05-round-2 CLUSTERED state (+1 transition vs the historical count).
+      expect(expLifecycle.transitionCount).toBe(6);
 
       // Non-reducible single-operation API cluster: the certified V2 API plan
       // grammar admits exactly one occurrence, so no reduced candidate ever

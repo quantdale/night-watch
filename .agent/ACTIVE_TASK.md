@@ -1,77 +1,63 @@
 # Active Task
 
-Task ID: phase-15p-parallel-local-project-completion
-Phase: 15P-PARALLEL-LOCAL-PROJECT-COMPLETION
-Title: Nightwatch Phase 15P — Parallel Local Project Completion (parent integrator + up to 16 specialized sub-agents)
-Status: COMPLETE
-Task directory: .agent/tasks/phase-15p-parallel-local-project-completion
-Starting SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-Last validated implementation SHA: c2640cb08e7057eccab740942c3dc9991109ad1e
-Last checkpoint: c2640cb08e7057eccab740942c3dc9991109ad1e
-Current milestone: Complete and terminal — whole-system mass implementation integrated at c2640cb08e7057eccab740942c3dc9991109ad1e, unvalidated by owner direction
-Next action: Stop. The single all-phase integrated hardening campaign is the next session under its own owner authorization; bootstrap from MASS_IMPLEMENTATION_HANDOFF.md
-Authorization class: PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY
+Task ID: phase-15h-whole-system-integrated-hardening
+Phase: 15H-WHOLE-SYSTEM-INTEGRATED-HARDENING
+Title: Nightwatch Phase 15H — Whole-System Integrated Hardening (single all-phase campaign over the Phase-15P mass implementation)
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-15h-whole-system-integrated-hardening
+Starting SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
+Last validated implementation SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
+Last checkpoint: 7695b87c61890cabfe110e3d147a076c1b1ecea1
+Current milestone: M6 campaign/provenance packs — M0–M5 complete (typecheck/hardening/focused/all-phase unit sweep green; DEF-01..DEF-11 repaired)
+Next action: npm run campaign:synthetic + npm run test:owner-provenance, then full canonical and isolated Playwright regressions, then continuity closure and validated checkpoint push
+Authorization class: PHASE_15H_WHOLE_SYSTEM_INTEGRATED_HARDENING_LOCAL_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+ANCHOR_SCOPE_NOTE: anchors are the carried-forward bootstrap values
+(validated == STARTING_SHA by design). The Phase-15P mass anchor c2640cb08...
+remains UNVALIDATED for its round until this task's own hardening checkpoint
+is committed at M10.
 
 ## Scope
 
-One parallel implementation campaign replacing the four-session execution
-shape: sub-agents A01–A16 implement in isolated local worktrees; only the
-parent integrates into canonical main (dependency waves with per-wave
-validation); pre-hardening integration pack plus synthetic release-candidate
-rehearsal at the end; full HARDENING_HANDOFF.md. The four-session package
-remains historical design input. No DEV/NEXT/production/real campaign/
-mutation/data-plane/infra/Phase 6/Alphaus writes/AI/model authority/selfDev/
-promotion/Phase 11B/Phase 13B.
+Validate and harden the complete Phase-15P 105-file mass implementation
+(anchor c2640cb08e7057eccab740942c3dc9991109ad1e) plus historical all-phase
+compatibility (families 1–15). Typecheck first; every failure became hardening
+evidence with narrow reproducer -> root cause -> source fix -> permanent
+regression. Adversarial corpus executable with >=3 repeats and all quality
+floors zero. Complete canonical + topology-correct isolated Playwright
+workers=1. No DEV/NEXT/production/real campaign/mutation/data-plane/infra/
+Phase 6 expansion/Alphaus writes/AI authority/selfDev promotion/catalog
+mutation/new endpoint authority. Phase 11B and 13B remain NOT_AUTHORIZED.
 
 ## Continuity
 
-STARTING_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-LAST_VALIDATED_IMPLEMENTATION_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e07630238d314f48718b1ca9fce2dc9ee31317eb
+STARTING_SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7695b87c61890cabfe110e3d147a076c1b1ecea1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Status
 
-PHASE_15P_PARALLEL_LOCAL_PROJECT_COMPLETION_STATUS: COMPLETE (IMPLEMENTED_UNVALIDATED_AWAITING_HARDENING)
-PHASE_15P_MASS_IMPLEMENTATION: IN_PROGRESS
-PHASE_15P_TESTING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
-PHASE_15P_TYPECHECK_STATUS: NOT_RUN_BY_OWNER_DIRECTION
-PHASE_15P_HARDENING_STATUS: NOT_RUN_BY_OWNER_DIRECTION
-PHASE_15P_A01_CONTRACT_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A02_SEMANTIC_VOCABULARY: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A03_CURRENTNESS_DRIFT: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A04_SCHEMA_COHERENCE: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A05_CANDIDATE_LIFECYCLE: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A06_REPLAY_BINDING: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A07_MINIMALITY_TRUTH: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A08_TRIAGE_DOSSIER: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A09_CHECKPOINT_RESUME: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A10_LOCAL_READINESS: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A11_ARTIFACT_VALIDATION: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A12_PROJECT_SNAPSHOT: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A13_PRIVACY_AUTHORITY: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A14_ADVERSARIAL_CORPUS: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A15_COMPATIBILITY_CLEANUP: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15P_A16_RELEASE_REHEARSAL: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15_PARALLEL_IMPLEMENTATION: SUPERSEDED_FOR_NEW_SCOPE_BY_MASS_BULK_IMPLEMENTATION
-PHASE_15_INTEGRATED_HARDENING: REQUIRED_NEXT
-PHASE_13B_STATUS: NOT_AUTHORIZED
+PHASE_15H_STATUS: IN_PROGRESS
+PHASE_15H_IMPLEMENTATION_AUTHORITY: GRANTED_LOCAL_ONLY
+PHASE_15P_MASS_IMPLEMENTATION: HARDENING_IN_PROGRESS_LOCAL_SUITES_GREEN
+PHASE_15P_LANE_LABELS_A01_A16: HISTORICAL_FOCUSED_GREEN_PREMASS_SCOPE_ONLY_NOT_PROOF_OF_MASS_ROUND
 PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: STOP
+PHASE_13B_STATUS: NOT_AUTHORIZED
+NEXT ACTION: CAMPAIGN_SYNTHETIC_AND_OWNER_PROVENANCE_THEN_FULL_REGRESSIONS
 
 ## Blockers
 
-None. The prior focused-green closure remains historically true for its scope;
-the owner's PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY directive reopens this
-task for additional implementation-only lanes whose output is UNVALIDATED by
-direction.
+None.
 
 ## Recovery
 
 Fetch origin/main and verify live state from Git (LIVE_HEAD_AUTHORITY: GIT).
-Read SPEC.md, PLAN.md, STATE.md, SUBAGENT_LEDGER.md, INTEGRATION_LEDGER.md,
-and HARDENING_HANDOFF.md. Git/source/test evidence wins over conversation
-memory. Resume from STATE.md Exact Next Action.
+Read the task's SPEC.md, PLAN.md, STATE.md, WORKSTREAMS.md,
+ACCEPTANCE_MATRIX.md, DEFECT_LEDGER.md, plus the Phase-15P
+MASS_IMPLEMENTATION_HANDOFF.md / HARDENING_HANDOFF.md / ledgers. Git/source/
+test evidence wins over conversation memory. Resume from STATE.md Exact Next
+Action.

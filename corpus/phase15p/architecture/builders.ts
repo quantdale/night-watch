@@ -44,13 +44,15 @@ import type {
 import type { CampaignVersionFingerprint } from '../../../src/core/campaign/types';
 import { sanitizeAnomalyObservation, clusterAnomalies } from '../../../src/core/triage/clustering';
 import type { AnomalyCluster, AnomalyObservation, StableAnomalyFeatures } from '../../../src/core/triage/types';
-import { classifySourceContractMovement } from '../../../src/oracles/expectations/lifecycle/sourceContractMovement';
+import {
+  classifySourceContractMovement,
+  unifiedFromMovementClass,
+} from '../../../src/oracles/expectations/lifecycle/sourceContractMovement';
 import type {
   SourceContractMovementClass,
   SourceContractObservation,
 } from '../../../src/oracles/expectations/lifecycle/sourceContractMovement';
 import {
-  unifiedFromMovementClass,
   unifiedFromSemanticReceiptOutcome,
 } from '../../../src/oracles/expectations/lifecycle/semanticVocabulary';
 import type { UnifiedContractResult } from '../../../src/oracles/expectations/lifecycle/contractResultVocabulary';
@@ -65,9 +67,11 @@ export const ARCHITECTURE_STATIC_NOW = '2026-01-01T00:00:00.000Z';
 // ---------------------------------------------------------------------------
 // Candidate lifecycle transitions (families P7 / P12).
 //
-// Note: at this checkpoint CANDIDATE_LIFECYCLE_STATES has no CLUSTERED
-// state; the clustering stage of the pipeline is covered separately by
-// clusteredObservationPayload() below via the real clustering seam.
+// Phase 15H note: CANDIDATE_LIFECYCLE_STATES now includes the Phase-15P A05
+// CLUSTERED state between MINIMIZED and TRIAGED. The happy-path event
+// sequence below uses the still-legal direct MINIMIZED -> COMPLETE_TRIAGE
+// edge; clustering-stage coverage lives in clusteredObservationPayload()
+// via the real clustering seam.
 // ---------------------------------------------------------------------------
 
 const LIFECYCLE_HAPPY_PATH_EVENTS: readonly CandidateLifecycleEvent[] = Object.freeze([
@@ -94,9 +98,12 @@ export function lifecycleTransitionSequence(
   events: readonly CandidateLifecycleEvent[] = LIFECYCLE_HAPPY_PATH_EVENTS,
   variant: CandidateLifecycleVariant = 'PROTOCOL_ONLY',
 ): LifecycleTransitionCase {
-  const records: CandidateLifecycleRecord[] = [initialLifecycleRecord(variant)];
+  const initial = initialLifecycleRecord(variant);
+  const records: CandidateLifecycleRecord[] = [initial];
+  let current: CandidateLifecycleRecord = initial;
   for (const event of events) {
-    records.push(transitionCandidateLifecycle(records[records.length - 1], event));
+    current = transitionCandidateLifecycle(current, event);
+    records.push(current);
   }
   return Object.freeze({ variant, events: Object.freeze([...events]), records: Object.freeze(records) });
 }

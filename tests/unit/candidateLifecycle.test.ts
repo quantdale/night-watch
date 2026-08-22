@@ -27,18 +27,27 @@ const TERMINAL_STATES: readonly CandidateLifecycleState[] = ['DOSSIER_READY', 'R
 const VARIANTS: readonly CandidateLifecycleVariant[] = ['PROTOCOL_ONLY', 'SEMANTIC'];
 const RECORD_KEYS: readonly string[] = ['lifecycleVersion', 'variant', 'state', 'transitionCount', 'lastReasonCode'];
 
-// Independent oracle of the 13 legal edges (from, event, to).
+// Independent oracle of all 21 legal edges (from, event, to), including the
+// Phase-15P A05 GATE_BLOCK exits and the A05-round-2 CLUSTERED state.
 const LEGAL_EDGES: readonly (readonly [CandidateLifecycleState, CandidateLifecycleEvent, CandidateLifecycleState])[] = [
   ['OBSERVED', 'ADMIT', 'ADMITTED'],
   ['OBSERVED', 'REJECT', 'REJECTED'],
+  ['OBSERVED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['ADMITTED', 'CONFIRM_REPRODUCTION', 'REPRODUCED'],
   ['ADMITTED', 'FAIL_REPRODUCTION', 'UNRESOLVED'],
   ['ADMITTED', 'REJECT', 'REJECTED'],
+  ['ADMITTED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['REPRODUCED', 'APPLY_MINIMIZATION', 'MINIMIZED'],
   ['REPRODUCED', 'KEEP_UNCHANGED', 'UNCHANGED'],
   ['REPRODUCED', 'FAIL_REPRODUCTION', 'UNRESOLVED'],
+  ['REPRODUCED', 'GATE_BLOCK', 'UNRESOLVED'],
+  ['MINIMIZED', 'CLUSTERED', 'CLUSTERED'],
   ['MINIMIZED', 'COMPLETE_TRIAGE', 'TRIAGED'],
+  ['MINIMIZED', 'GATE_BLOCK', 'UNRESOLVED'],
+  ['CLUSTERED', 'COMPLETE_TRIAGE', 'TRIAGED'],
+  ['CLUSTERED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['UNCHANGED', 'COMPLETE_TRIAGE', 'TRIAGED'],
+  ['UNCHANGED', 'GATE_BLOCK', 'UNRESOLVED'],
   ['TRIAGED', 'MARK_DOSSIER_READY', 'DOSSIER_READY'],
   ['TRIAGED', 'CLASSIFY_REJECTED', 'REJECTED'],
   ['TRIAGED', 'CLASSIFY_UNRESOLVED', 'UNRESOLVED'],
@@ -49,6 +58,7 @@ const PATH_TO_STATE: Record<CandidateLifecycleState, readonly CandidateLifecycle
   ADMITTED: ['ADMIT'],
   REPRODUCED: ['ADMIT', 'CONFIRM_REPRODUCTION'],
   MINIMIZED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION'],
+  CLUSTERED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'CLUSTERED'],
   UNCHANGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'KEEP_UNCHANGED'],
   TRIAGED: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE'],
   DOSSIER_READY: ['ADMIT', 'CONFIRM_REPRODUCTION', 'APPLY_MINIMIZATION', 'COMPLETE_TRIAGE', 'MARK_DOSSIER_READY'],
@@ -103,6 +113,13 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
       expect(withReason.lifecycleVersion).toBe(CANDIDATE_LIFECYCLE_VERSION);
       expect(withReason.variant).toBe('PROTOCOL_ONLY');
       expect(Object.isFrozen(withReason)).toBe(true);
+      if (event === 'GATE_BLOCK') {
+        // Gate failures carry a mandatory reason code; omitting one is its
+        // own rejection, never a silent normalization.
+        expect(() => transitionCandidateLifecycle(record, event))
+          .toThrow('CANDIDATE_LIFECYCLE_GATE_REASON_REQUIRED');
+        continue;
+      }
       const withoutReason = transitionCandidateLifecycle(record, event);
       expect(withoutReason.state).toBe(to);
       expect(withoutReason.lastReasonCode).toBeNull();
@@ -110,7 +127,7 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
     }
   });
 
-  test('exhaustive matrix over all 9 states x all 10 events: legal lands, illegal throws', () => {
+  test('exhaustive matrix over every lifecycle state x every event: legal lands, illegal throws', () => {
     for (const state of ALL_STATES) {
       for (const event of ALL_EVENTS) {
         const record = driveTo('PROTOCOL_ONLY', state);

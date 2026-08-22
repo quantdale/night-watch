@@ -419,9 +419,14 @@ function cleanup(root: string): void {
 
 test.describe('Phase 15P A11 artifact validation facade surface', () => {
   test('exposes exactly the converged kind set with documented version acceptance', () => {
+    // Phase 15H hardening: the A11 round-2 mass implementation converged four
+    // additional durable kinds onto the facade; this pin reflects the full
+    // 14-kind registry (each kind has a static dispatch entry plus a
+    // documented version acceptance in ARTIFACT_KIND_VERSION_ACCEPTANCE).
     expect(KNOWN_ARTIFACT_KINDS).toEqual([
       'campaign-checkpoint', 'observation', 'semantic-receipt', 'replay-plan', 'cluster',
       'reproduction-record', 'dossier', 'morning-brief', 'source-bundle', 'coverage-report',
+      'candidate-record', 'replay-record', 'minimization-record', 'project-health-report',
     ]);
     for (const kind of KNOWN_ARTIFACT_KINDS) {
       expect(ARTIFACT_KIND_VERSION_ACCEPTANCE[kind]!.length, kind).toBeGreaterThan(0);

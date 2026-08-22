@@ -81,7 +81,30 @@ import type {
 import type { PromotionSourceCurrentness } from '../../src/core/triage/promotionResult';
 import { currentnessFromSourceFreshness } from '../../src/core/triage/promotionResult';
 import type { SourceFreshness } from '../../src/core/triage/types';
+import type { CandidateReplayOutcome } from '../../src/core/triage/types';
 import type { ExpectationFreshness } from '../../src/oracles/expectations/types';
+import type { BugDossierV2 } from '../../src/core/triage/dossierV2';
+import type { PromotionReadinessVerdict } from '../../src/core/triage/promotionResult';
+import type { TriageExactReplayStatus } from '../../src/core/triage/semanticTriageEvidence';
+import {
+  unifiedFromReplayStatus,
+  unifiedFromReplayGuardReason,
+  unifiedFromTriageExactReplayStatus,
+  unifiedFromDossierStatus,
+  unifiedFromReadinessVerdict,
+  unifiedFromDossierReadinessReason,
+  unifiedFromPromotionRejectionReason,
+  parseReplayStatus,
+  parseReplayGuardReason,
+  parseTriageExactReplayStatus,
+  parseDossierStatus,
+  parseReadinessVerdict,
+  parseDossierReadinessReason,
+  parsePromotionRejectionReason,
+  type ReplayGuardReason,
+  type DossierReadinessReasonCode,
+  type PromotionRejectionReasonCode,
+} from '../../src/oracles/expectations/lifecycle/triageResultVocabulary';
 
 // ---------------------------------------------------------------------------
 // Member rosters. Each roster is checked with `satisfies Record<Union, true>`,
@@ -163,6 +186,90 @@ const EXPECTATION_FRESHNESS_MEMBERS = Object.keys({
   EXPECTATION_SOURCE_UNAVAILABLE: true,
 } satisfies Record<ExpectationFreshness, true>) as ExpectationFreshness[];
 
+// Phase 15P A02 round-2 triage-side axes (independent rosters, same
+// satisfies-Record pattern; a missing or misspelled member breaks compilation).
+
+const REPLAY_STATUS_MEMBERS = Object.keys({
+  PASS: true,
+  FAILURE: true,
+  INVALID: true,
+} satisfies Record<CandidateReplayOutcome['status'], true>) as CandidateReplayOutcome['status'][];
+
+const REPLAY_GUARD_REASON_MEMBERS = Object.keys({
+  ACTION_NOT_IN_ORIGINAL: true,
+  ACTION_NOT_APPROVED: true,
+  PRECONDITION_DIVERGENCE: true,
+  DEV_GATE_FAILED: true,
+  AUTH_GATE_FAILED: true,
+  OUTBOUND_POLICY_FAILED: true,
+  SEMANTIC_POLICY_FAILED: true,
+  MUTATION_TRIPWIRE: true,
+  UNKNOWN_TRIPWIRE: true,
+  ROUTE_ENVELOPE_FAILED: true,
+  PRIVACY_POLICY_FAILED: true,
+  SAFETY_VECTOR_NONZERO: true,
+} satisfies Record<ReplayGuardReason, true>) as ReplayGuardReason[];
+
+const TRIAGE_EXACT_REPLAY_STATUS_MEMBERS = Object.keys({
+  REPRODUCED: true,
+  NOT_REPRODUCED: true,
+  INVALID: true,
+  NOT_EVALUATED: true,
+} satisfies Record<TriageExactReplayStatus, true>) as TriageExactReplayStatus[];
+
+const DOSSIER_STATUS_MEMBERS = Object.keys({
+  READY: true,
+  UNRESOLVED: true,
+} satisfies Record<BugDossierV2['status'], true>) as BugDossierV2['status'][];
+
+const READINESS_VERDICT_MEMBERS = Object.keys({
+  READY: true,
+  UNRESOLVED: true,
+  NOT_ELIGIBLE: true,
+} satisfies Record<PromotionReadinessVerdict, true>) as PromotionReadinessVerdict[];
+
+const DOSSIER_READINESS_REASON_MEMBERS = Object.keys({
+  EXACT_REPLAY_REQUIRED: true,
+  PARTIAL_COLLECTION_COVERAGE: true,
+  MINIMIZATION_BUDGET_EXHAUSTED: true,
+  REPRODUCTION_EVIDENCE_MISSING: true,
+  SOURCE_CURRENTNESS_UNRESOLVED: true,
+  SEMANTIC_EXPECTATION_UNRESOLVED: true,
+  SOURCE_CHANGE_RELEVANCE_UNRESOLVED: true,
+  ORACLE_RELIABILITY_UNRESOLVED: true,
+  REPLAY_FINGERPRINT_MISMATCH: true,
+  COVERAGE_STATE_UNRESOLVED: true,
+  SAFETY_PRIVACY_NONZERO: true,
+  KNOWN_FALSE_POSITIVE_PRESENT: true,
+  SEMANTIC_IDENTITY_MISSING: true,
+  BROWSER_API_DIFFERENTIAL_UNAVAILABLE: true,
+  DEPLOYMENT_STATUS_UNRESOLVED: true,
+  DATASTORE_EVIDENCE_OUT_OF_SCOPE_BY_OWNER: true,
+  NON_ANOMALY_OUTCOME: true,
+} satisfies Record<DossierReadinessReasonCode, true>) as DossierReadinessReasonCode[];
+
+const PROMOTION_REJECTION_REASON_MEMBERS = Object.keys({
+  NO_EXPECTATION: true,
+  EXPECTATION_SOURCE_STALE: true,
+  EXPECTATION_SOURCE_UNAVAILABLE: true,
+  INVALID_INPUT: true,
+  PROJECTION_LIMIT_EXCEEDED: true,
+  INTERNAL_ERROR: true,
+  PARTIAL_COVERAGE: true,
+  EXACT_REPLAY_NOT_REPRODUCED: true,
+  NON_ANOMALY_OUTCOME: true,
+  REPLAY_FINGERPRINT_MISMATCH: true,
+  MINIMIZATION_BUDGET_EXHAUSTED: true,
+  SOURCE_CURRENTNESS_UNRESOLVED: true,
+  COVERAGE_STATE_UNRESOLVED: true,
+  ORACLE_RELIABILITY_UNRESOLVED: true,
+  BUNDLE_COHERENCE_FAILURE: true,
+  SAFETY_NONZERO: true,
+  PRIVACY_FAILURE: true,
+  KNOWN_FALSE_POSITIVE: true,
+  SEMANTIC_IDENTITY_MISSING: true,
+} satisfies Record<PromotionRejectionReasonCode, true>) as PromotionRejectionReasonCode[];
+
 /** Receipt outcomes that must NEVER be mistaken for a passing evaluation
  *  (mirrors receipts.ts SEMANTIC_RECEIPT_NON_PASS_OUTCOMES). */
 const NON_PASS_RECEIPT_OUTCOMES: readonly SemanticReceiptOutcome[] =
@@ -240,6 +347,9 @@ const EXPECTED_EXPECTATION_FRESHNESS: Record<ExpectationFreshness, UnifiedContra
 
 test('phase15p semantic vocabulary: version constant and vocabulary roster are exact', () => {
   expect(SEMANTIC_RESULT_VOCABULARY_VERSION).toBe('nightwatch.semantic-result-vocabulary.v1');
+  // Phase 15H hardening (DEF-05): the mass round added the A02 round-2
+  // triage-side axes to the same registry; the roster pin now reflects that
+  // deliberate 8 -> 15 growth instead of the pre-mass count.
   expect([...SEMANTIC_VOCABULARY_NAMES]).toEqual([
     'semantic-receipt-outcome',
     'semantic-runner-outcome',
@@ -249,6 +359,13 @@ test('phase15p semantic vocabulary: version constant and vocabulary roster are e
     'promotion-source-currentness',
     'source-freshness',
     'expectation-freshness',
+    'replay-status',
+    'replay-guard-reason',
+    'triage-exact-replay-status',
+    'dossier-status',
+    'readiness-verdict',
+    'dossier-readiness-reason',
+    'promotion-rejection-reason',
   ]);
 });
 
@@ -493,7 +610,14 @@ test('phase15p semantic vocabulary: provenance registry mechanically covers ever
     INVENTORY_CURRENTNESS_MEMBERS.length +
     PROMOTION_CURRENTNESS_MEMBERS.length +
     SOURCE_FRESHNESS_MEMBERS.length +
-    EXPECTATION_FRESHNESS_MEMBERS.length;
+    EXPECTATION_FRESHNESS_MEMBERS.length +
+    REPLAY_STATUS_MEMBERS.length +
+    REPLAY_GUARD_REASON_MEMBERS.length +
+    TRIAGE_EXACT_REPLAY_STATUS_MEMBERS.length +
+    DOSSIER_STATUS_MEMBERS.length +
+    READINESS_VERDICT_MEMBERS.length +
+    DOSSIER_READINESS_REASON_MEMBERS.length +
+    PROMOTION_REJECTION_REASON_MEMBERS.length;
   expect(SEMANTIC_VOCABULARY_PROVENANCE).toHaveLength(expectedTotal);
   const seen = new Set<string>();
   for (const entry of SEMANTIC_VOCABULARY_PROVENANCE) {
@@ -542,6 +666,27 @@ test('phase15p semantic vocabulary: provenance entries agree with the actual ada
         break;
       case 'expectation-freshness':
         category = unifiedFromExpectationFreshness(entry.historicalMember as ExpectationFreshness).category;
+        break;
+      case 'replay-status':
+        category = unifiedFromReplayStatus(parseReplayStatus(entry.historicalMember)).category;
+        break;
+      case 'replay-guard-reason':
+        category = unifiedFromReplayGuardReason(parseReplayGuardReason(entry.historicalMember)).category;
+        break;
+      case 'triage-exact-replay-status':
+        category = unifiedFromTriageExactReplayStatus(parseTriageExactReplayStatus(entry.historicalMember)).category;
+        break;
+      case 'dossier-status':
+        category = unifiedFromDossierStatus(parseDossierStatus(entry.historicalMember)).category;
+        break;
+      case 'readiness-verdict':
+        category = unifiedFromReadinessVerdict(parseReadinessVerdict(entry.historicalMember)).category;
+        break;
+      case 'dossier-readiness-reason':
+        category = unifiedFromDossierReadinessReason(parseDossierReadinessReason(entry.historicalMember)).category;
+        break;
+      case 'promotion-rejection-reason':
+        category = unifiedFromPromotionRejectionReason(parsePromotionRejectionReason(entry.historicalMember)).category;
         break;
       default:
         throw new Error(`unexpected provenance vocabulary: ${entry.historicalVocabulary}`);

@@ -160,6 +160,15 @@ export interface ArtifactValidationContext {
   readonly knownBugCandidateIds?: readonly string[];
 }
 
+/**
+ * Reserved (non-static) artifact kind: deliberately NOT a member of
+ * ArtifactKind, so it has no static dispatch entry and fails closed with
+ * ARTIFACT_KIND_RESERVED until its owning module registers a validator
+ * (replayEnvelopeRegistration.ts). The literal here and the
+ * REPLAY_RESULT_ENVELOPE_RESERVED_KIND value are pinned together there.
+ */
+export type ReservedArtifactKind = 'replay-result-envelope';
+
 export type ArtifactValidationResult =
-  | { readonly valid: true; readonly kind: ArtifactKind; readonly acceptedSchemaVersions: readonly string[] }
+  | { readonly valid: true; readonly kind: ArtifactKind | ReservedArtifactKind; readonly acceptedSchemaVersions: readonly string[] }
   | { readonly valid: false; readonly kind: string; readonly reason: string };

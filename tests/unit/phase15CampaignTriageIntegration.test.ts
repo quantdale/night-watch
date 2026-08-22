@@ -989,7 +989,10 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
         const lifecycle = lifecycleFor(result.checkpoint, result.checkpoint.anomalyClusters[0]!.clusterId);
         expect(lifecycle.variant).toBe('PROTOCOL_ONLY');
         expect(lifecycle.state).toBe('DOSSIER_READY');
-        expect(lifecycle.transitionCount).toBe(5);
+        // Phase 15H hardening (DEF-13): reducible candidates route through
+        // the A05-round-2 CLUSTERED state (+1 transition vs the historical
+        // direct MINIMIZED -> TRIAGED edge).
+        expect(lifecycle.transitionCount).toBe(6);
         // Truthful minimality evidence class on the converged promotion DTO.
         const promotions = orchestrator.promotionResults;
         expect(promotions).toHaveLength(1);
