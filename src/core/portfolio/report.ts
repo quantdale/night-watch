@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import type { CampaignPlanManifest, CampaignPlanMember } from "./manifest";
+import { parseCampaignPlanManifestDocument } from "./manifest";
 import { PORTFOLIO_PRIORITY_SCORE_VERSION } from "./scoring";
 import {
   SIMULATION_INTERPRETATION,
@@ -171,23 +172,31 @@ export interface PlanComparisonFinding {
   readonly detail: string;
 }
 
-/** Deterministic previous-vs-current plan comparison (no mutation). */
+/**
+ * Deterministic previous-vs-current plan comparison (no mutation).
+ *
+ * Phase 16H DEF-03: both inputs are strictly parsed first — foreign,
+ * malformed, version-drifted, or digest-tampered documents fail closed
+ * instead of producing fabricated diffs.
+ */
 export function comparePlanManifests(
-  previous: CampaignPlanManifest,
-  current: CampaignPlanManifest,
+  previous: CampaignPlanManifest | unknown,
+  current: CampaignPlanManifest | unknown,
 ): {
   readonly identical: boolean;
   readonly findings: readonly PlanComparisonFinding[];
 } {
+  const validatedPrevious = parseCampaignPlanManifestDocument(previous);
+  const validatedCurrent = parseCampaignPlanManifestDocument(current);
   const findings: PlanComparisonFinding[] = [];
   const previousById = new Map(
-    previous.selectedMembers.map((entry) => [entry.memberId, entry]),
+    validatedPrevious.selectedMembers.map((entry) => [entry.memberId, entry]),
   );
   const currentById = new Map(
-    current.selectedMembers.map((entry) => [entry.memberId, entry]),
+    validatedCurrent.selectedMembers.map((entry) => [entry.memberId, entry]),
   );
 
-  for (const entry of current.selectedMembers) {
+  for (const entry of validatedCurrent.selectedMembers) {
     const prior = previousById.get(entry.memberId);
     if (!prior) {
       findings.push({
@@ -217,7 +226,7 @@ export function comparePlanManifests(
       });
     }
   }
-  for (const entry of previous.selectedMembers) {
+  for (const entry of validatedPrevious.selectedMembers) {
     if (!currentById.has(entry.memberId)) {
       findings.push({
         kind: "REMOVED",
@@ -238,7 +247,7 @@ export function comparePlanManifests(
   return {
     identical:
       material.length === 0 &&
-      previous.manifestDigest === current.manifestDigest,
+      validatedPrevious.manifestDigest === validatedCurrent.manifestDigest,
     findings: material,
   };
 }

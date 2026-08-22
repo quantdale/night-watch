@@ -27,10 +27,25 @@ import {
   portfolioDigestOf,
 } from "./types";
 import {
+  PORTFOLIO_MEMBER_KINDS,
+  PORTFOLIO_DEPTH_CLASSES,
+  isPortfolioMemberId,
+  portfolioTextSafe,
+} from "./types";
+import {
   PORTFOLIO_ALLOCATION_VERSION,
   type PortfolioAllocation,
 } from "./allocation";
-import { PORTFOLIO_PRIORITY_SCORE_VERSION } from "./scoring";
+import {
+  PORTFOLIO_BLOCK_REASONS,
+  PORTFOLIO_PRIORITY_SCORE_VERSION,
+} from "./scoring";
+import {
+  assertExactKeys,
+  assertNonNegativeInteger,
+  requireRuntimeArray,
+  requireRuntimeRecord,
+} from "../campaign/runtimeValidation";
 
 /** Plan manifest identity version. */
 export const CAMPAIGN_PLAN_MANIFEST_VERSION =
@@ -243,4 +258,354 @@ export function buildCampaignPlanManifest(input: {
     planId,
     manifestDigest: `plan:sha256:${portfolioDigestOf({ ...core, planId }).slice("sha256:".length)}`,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Strict document parsing (Phase 16H DEF-03): a rendered plan document is
+// DATA, never authority. Parsing enforces exact keys, pinned versions, fixed
+// owner/checkpoint obligations, canonical ordering, and recomputes BOTH
+// identity digests so any tampered byte fails closed.
+// ---------------------------------------------------------------------------
+
+export const ERR_PLAN_MANIFEST_INVALID = "PLAN_MANIFEST_INVALID";
+export const ERR_PLAN_MANIFEST_UNKNOWN_FIELD = "PLAN_MANIFEST_UNKNOWN_FIELD";
+
+const MANIFEST_DOCUMENT_KEYS = [
+  "manifestVersion",
+  "planId",
+  "createdAtBasis",
+  "portfolioDigest",
+  "allocationDigest",
+  "scoreVersion",
+  "allocationVersion",
+  "selectedMembers",
+  "unselectedMembers",
+  "totalAllocatedUnits",
+  "unallocatedUnits",
+  "checkpointPolicy",
+  "ownerScopeRequirements",
+  "manifestDigest",
+] as const;
+
+const PLAN_MEMBER_KEYS = [
+  "memberId",
+  "targetId",
+  "kind",
+  "order",
+  "allocatedUnits",
+  "maxRetries",
+  "reasons",
+  "expectedSemanticDepth",
+  "expectedCoverageClass",
+  "replayPolicy",
+  "minimizationPolicy",
+] as const;
+
+const UNSELECTED_MEMBER_KEYS = ["memberId", "targetId", "reasonCode"] as const;
+
+const CHECKPOINT_POLICY_KEYS = [
+  "checkpointAfterEveryWorkItem",
+  "resumeRequiresFingerprintMatch",
+  "interruptedWorkBookkeepingRequired",
+] as const;
+
+const OWNER_SCOPE_KEYS = [
+  "status",
+  "reason",
+  "runtimeAuthorizationRequired",
+  "planningPhaseExecutionAuthority",
+] as const;
+
+const EXPECTED_COVERAGE_CLASSES: readonly string[] = [
+  "COVERAGE_GAP_PRESENT",
+  "SEMANTIC_CONTRACT_COVERED",
+];
+
+const REASON_TOKEN_RE = /^[-A-Z0-9_:]{1,96}$/;
+const PLAN_ID_RE = /^plan:sha256:[0-9a-f]{24}$/;
+const TARGET_ID_RE = /^[A-Za-z0-9_.:/-]{1,200}$/;
+
+function manifestFieldError(field: string): string {
+  return `${ERR_PLAN_MANIFEST_INVALID}:${field}`;
+}
+
+/**
+ * Strictly parse a rendered campaign-plan manifest document. Fails closed on
+ * unknown fields, version drift, weakened owner/checkpoint policy, non-
+ * canonical ordering, budget incoherence, and any identity-digest mismatch.
+ */
+export function parseCampaignPlanManifestDocument(
+  value: unknown,
+): CampaignPlanManifest {
+  const record = requireRuntimeRecord(
+    value,
+    ERR_PLAN_MANIFEST_INVALID,
+  );
+  assertExactKeys(record, MANIFEST_DOCUMENT_KEYS, ERR_PLAN_MANIFEST_UNKNOWN_FIELD);
+
+  if (record.manifestVersion !== CAMPAIGN_PLAN_MANIFEST_VERSION)
+    throw new Error(manifestFieldError("manifestVersion"));
+  if (record.createdAtBasis !== "DETERMINISTIC_INPUTS_ONLY")
+    throw new Error(manifestFieldError("createdAtBasis"));
+  if (record.scoreVersion !== PORTFOLIO_PRIORITY_SCORE_VERSION)
+    throw new Error(manifestFieldError("scoreVersion"));
+  if (record.allocationVersion !== PORTFOLIO_ALLOCATION_VERSION)
+    throw new Error(manifestFieldError("allocationVersion"));
+
+  for (const field of ["planId", "manifestDigest"] as const) {
+    if (typeof record[field] !== "string" || !PLAN_ID_RE.test(record[field]))
+      throw new Error(manifestFieldError(field));
+  }
+  for (const [field, prefix] of [
+    ["portfolioDigest", "pf:"],
+    ["allocationDigest", "palloc:"],
+  ] as const) {
+    const digest = record[field];
+    if (
+      typeof digest !== "string" ||
+      !digest.startsWith(prefix) ||
+      !PLAN_ID_RE.test(`plan:${digest.slice(prefix.length)}`)
+    ) {
+      throw new Error(manifestFieldError(field));
+    }
+  }
+
+  assertNonNegativeInteger(
+    record.totalAllocatedUnits,
+    manifestFieldError("totalAllocatedUnits"),
+  );
+  assertNonNegativeInteger(
+    record.unallocatedUnits,
+    manifestFieldError("unallocatedUnits"),
+  );
+
+  const checkpointPolicy = requireRuntimeRecord(
+    record.checkpointPolicy,
+    `${ERR_PLAN_MANIFEST_INVALID}:checkpointPolicy`,
+  );
+  assertExactKeys(
+    checkpointPolicy,
+    CHECKPOINT_POLICY_KEYS,
+    ERR_PLAN_MANIFEST_UNKNOWN_FIELD,
+  );
+  for (const key of CHECKPOINT_POLICY_KEYS) {
+    if (checkpointPolicy[key] !== true)
+      throw new Error(manifestFieldError(`checkpointPolicy.${key}`));
+  }
+
+  const ownerScopeRequirements = requireRuntimeRecord(
+    record.ownerScopeRequirements,
+    `${ERR_PLAN_MANIFEST_INVALID}:ownerScopeRequirements`,
+  );
+  assertExactKeys(
+    ownerScopeRequirements,
+    OWNER_SCOPE_KEYS,
+    ERR_PLAN_MANIFEST_UNKNOWN_FIELD,
+  );
+  if (
+    ownerScopeRequirements.status !== "FROZEN_BY_OWNER" ||
+    ownerScopeRequirements.reason !==
+      "INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE" ||
+    ownerScopeRequirements.runtimeAuthorizationRequired !==
+      "SEPARATE_OWNER_TOKEN_REQUIRED" ||
+    ownerScopeRequirements.planningPhaseExecutionAuthority !== "NONE"
+  ) {
+    throw new Error(manifestFieldError("ownerScopeRequirements"));
+  }
+
+  const rawSelected = requireRuntimeArray(
+    record.selectedMembers,
+    `${ERR_PLAN_MANIFEST_INVALID}:selectedMembers`,
+  );
+  const seenIds = new Set<string>();
+  let runningOrder = 0;
+  let sumAllocated = 0;
+  const selectedMembers = rawSelected.map((raw) => {
+    const member = requireRuntimeRecord(
+      raw,
+      `${ERR_PLAN_MANIFEST_INVALID}:selectedMember`,
+    );
+    assertExactKeys(member, PLAN_MEMBER_KEYS, ERR_PLAN_MANIFEST_UNKNOWN_FIELD);
+    if (
+      typeof member.memberId !== "string" ||
+      !isPortfolioMemberId(member.memberId) ||
+      seenIds.has(member.memberId)
+    ) {
+      throw new Error(manifestFieldError("selectedMember.memberId"));
+    }
+    seenIds.add(member.memberId);
+    if (
+      typeof member.targetId !== "string" ||
+      !TARGET_ID_RE.test(member.targetId) ||
+      !portfolioTextSafe(member.targetId)
+    ) {
+      throw new Error(manifestFieldError("selectedMember.targetId"));
+    }
+    if (
+      typeof member.kind !== "string" ||
+      !(PORTFOLIO_MEMBER_KINDS as readonly string[]).includes(member.kind)
+    ) {
+      throw new Error(manifestFieldError("selectedMember.kind"));
+    }
+    assertNonNegativeInteger(
+      member.order,
+      manifestFieldError("selectedMember.order"),
+    );
+    if (member.order !== runningOrder)
+      throw new Error(manifestFieldError("selectedMember.orderNotCanonical"));
+    runningOrder += 1;
+    assertNonNegativeInteger(
+      member.allocatedUnits,
+      manifestFieldError("selectedMember.allocatedUnits"),
+    );
+    if (member.allocatedUnits <= 0)
+      throw new Error(manifestFieldError("selectedMember.allocatedUnitsPositive"));
+    sumAllocated += member.allocatedUnits;
+    assertNonNegativeInteger(
+      member.maxRetries,
+      manifestFieldError("selectedMember.maxRetries"),
+    );
+    const rawReasons = requireRuntimeArray(
+      member.reasons,
+      `${ERR_PLAN_MANIFEST_INVALID}:selectedMember.reasons`,
+    );
+    const reasonTokens: string[] = [];
+    for (const reason of rawReasons) {
+      if (typeof reason !== "string" || !REASON_TOKEN_RE.test(reason))
+        throw new Error(manifestFieldError("selectedMember.reasonToken"));
+      reasonTokens.push(reason);
+    }
+    if (
+      typeof member.expectedSemanticDepth !== "string" ||
+      !(PORTFOLIO_DEPTH_CLASSES as readonly string[]).includes(
+        member.expectedSemanticDepth,
+      )
+    ) {
+      throw new Error(manifestFieldError("selectedMember.expectedSemanticDepth"));
+    }
+    if (
+      typeof member.expectedCoverageClass !== "string" ||
+      !EXPECTED_COVERAGE_CLASSES.includes(member.expectedCoverageClass)
+    ) {
+      throw new Error(manifestFieldError("selectedMember.expectedCoverageClass"));
+    }
+    if (
+      typeof member.replayPolicy !== "string" ||
+      !PLAN_REPLAY_POLICIES.includes(
+        member.replayPolicy as PlanReplayPolicy,
+      )
+    ) {
+      throw new Error(manifestFieldError("selectedMember.replayPolicy"));
+    }
+    if (
+      typeof member.minimizationPolicy !== "string" ||
+      !PLAN_MINIMIZATION_POLICIES.includes(
+        member.minimizationPolicy as PlanMinimizationPolicy,
+      )
+    ) {
+      throw new Error(manifestFieldError("selectedMember.minimizationPolicy"));
+    }
+    return {
+      memberId: member.memberId,
+      targetId: member.targetId,
+      kind: member.kind as PortfolioMemberKind,
+      order: member.order,
+      allocatedUnits: member.allocatedUnits,
+      maxRetries: member.maxRetries,
+      reasons: reasonTokens,
+      expectedSemanticDepth: member.expectedSemanticDepth,
+      expectedCoverageClass: member.expectedCoverageClass,
+      replayPolicy: member.replayPolicy as PlanReplayPolicy,
+      minimizationPolicy: member.minimizationPolicy as PlanMinimizationPolicy,
+    };
+  });
+  if (sumAllocated !== record.totalAllocatedUnits)
+    throw new Error(manifestFieldError("totalAllocatedUnitsMismatch"));
+
+  const rawUnselected = requireRuntimeArray(
+    record.unselectedMembers,
+    `${ERR_PLAN_MANIFEST_INVALID}:unselectedMembers`,
+  );
+  const unselectedMembers: CampaignPlanUnselectedMember[] = [];
+  let previousUnselectedId: string | null = null;
+  for (const raw of rawUnselected) {
+    const entry = requireRuntimeRecord(
+      raw,
+      `${ERR_PLAN_MANIFEST_INVALID}:unselectedMember`,
+    );
+    assertExactKeys(entry, UNSELECTED_MEMBER_KEYS, ERR_PLAN_MANIFEST_UNKNOWN_FIELD);
+    if (
+      typeof entry.memberId !== "string" ||
+      !isPortfolioMemberId(entry.memberId) ||
+      seenIds.has(entry.memberId)
+    ) {
+      throw new Error(manifestFieldError("unselectedMember.memberId"));
+    }
+    seenIds.add(entry.memberId);
+    if (
+      previousUnselectedId !== null &&
+      previousUnselectedId.localeCompare(entry.memberId) >= 0
+    ) {
+      throw new Error(manifestFieldError("unselectedMembers.notCanonicallySorted"));
+    }
+    previousUnselectedId = entry.memberId;
+    if (
+      typeof entry.targetId !== "string" ||
+      !TARGET_ID_RE.test(entry.targetId) ||
+      !portfolioTextSafe(entry.targetId)
+    ) {
+      throw new Error(manifestFieldError("unselectedMember.targetId"));
+    }
+    if (typeof entry.reasonCode !== "string") {
+      throw new Error(manifestFieldError("unselectedMember.reasonCode"));
+    }
+    const zeroBudgetReason = entry.reasonCode.startsWith("ZERO_BUDGET_")
+      ? entry.reasonCode.slice("ZERO_BUDGET_".length)
+      : null;
+    const reasonValid =
+      entry.reasonCode === "BUDGET_EXHAUSTED_OR_RESERVE_CONSTRAINT" ||
+      (zeroBudgetReason !== null &&
+        (PORTFOLIO_BLOCK_REASONS as readonly string[]).includes(zeroBudgetReason));
+    if (!reasonValid) throw new Error(manifestFieldError("unselectedMember.reasonCode"));
+    unselectedMembers.push({
+      memberId: entry.memberId,
+      targetId: entry.targetId,
+      reasonCode: entry.reasonCode,
+    });
+  }
+
+  // Identity recomputation must match EXACTLY how buildCampaignPlanManifest
+  // derived both digests; any drift anywhere above fails closed here.
+  const core = {
+    manifestVersion: CAMPAIGN_PLAN_MANIFEST_VERSION,
+    createdAtBasis: "DETERMINISTIC_INPUTS_ONLY" as const,
+    portfolioDigest: record.portfolioDigest as string,
+    allocationDigest: record.allocationDigest as string,
+    scoreVersion: PORTFOLIO_PRIORITY_SCORE_VERSION,
+    allocationVersion: PORTFOLIO_ALLOCATION_VERSION,
+    selectedMembers,
+    unselectedMembers,
+    totalAllocatedUnits: record.totalAllocatedUnits,
+    unallocatedUnits: record.unallocatedUnits,
+    checkpointPolicy: {
+      checkpointAfterEveryWorkItem: true,
+      resumeRequiresFingerprintMatch: true,
+      interruptedWorkBookkeepingRequired: true,
+    },
+    ownerScopeRequirements: {
+      status: "FROZEN_BY_OWNER",
+      reason: "INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE",
+      runtimeAuthorizationRequired: "SEPARATE_OWNER_TOKEN_REQUIRED",
+      planningPhaseExecutionAuthority: "NONE",
+    },
+  } satisfies Omit<CampaignPlanManifest, "planId" | "manifestDigest">;
+
+  const planId = `plan:sha256:${portfolioDigestOf(core).slice("sha256:".length)}`;
+  if (planId !== record.planId)
+    throw new Error(manifestFieldError("planIdRecomputationMismatch"));
+  const manifestDigest = `plan:sha256:${portfolioDigestOf({ ...core, planId }).slice("sha256:".length)}`;
+  if (manifestDigest !== record.manifestDigest)
+    throw new Error(manifestFieldError("manifestDigestRecomputationMismatch"));
+
+  return { ...core, planId, manifestDigest };
 }

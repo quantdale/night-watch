@@ -103,6 +103,35 @@ function requireModel(
   return model;
 }
 
+/**
+ * Strict model-shape validation (Phase 16H DEF-05). Malformed models must
+ * fail closed BEFORE any metric is computed; garbage inputs previously
+ * produced fabricated negative useful-candidate counts.
+ */
+export function validateMemberYieldModel(model: MemberYieldModel): void {
+  const integerFields: readonly (readonly [string, unknown])[] = [
+    ["saturationCap", model.saturationCap],
+    ["halfSaturationUnits", model.halfSaturationUnits],
+    ["duplicateWastePermille", model.duplicateWastePermille],
+  ];
+  for (const [field, value] of integerFields) {
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      !Number.isInteger(value) ||
+      value < 0
+    ) {
+      throw new Error(`PORTFOLIO_SIM_MODEL_INVALID:${field}`);
+    }
+  }
+  if (model.duplicateWastePermille > 1000) {
+    throw new Error("PORTFOLIO_SIM_MODEL_INVALID:duplicateWastePermille");
+  }
+  if (typeof model.yieldsNothing !== "boolean") {
+    throw new Error("PORTFOLIO_SIM_MODEL_INVALID:yieldsNothing");
+  }
+}
+
 /** Useful-candidate curve: bounded concave with duplicate waste. */
 function simulateUsefulCandidates(
   model: MemberYieldModel,
@@ -156,6 +185,7 @@ function simulateBaselineSide(input: {
   readonly portfolio: CampaignPortfolio;
   readonly yieldModels: Readonly<Record<string, MemberYieldModel>>;
   readonly totalUnits: number;
+  readonly starvationThresholdBuckets: number;
 }): SimulationSideMetrics {
   const candidates = input.portfolio.members
     .filter((member) => !member.input.phaseFrozen)
@@ -190,13 +220,16 @@ function simulateBaselineSide(input: {
   }
 
   // Baseline starvation failures: eligible starved members left unfunded.
+  // Phase 16H DEF-01: the predicate MUST match the optimized side's policy
+  // threshold (the previous `>= 0` vacuously counted every unfunded eligible
+  // member, making the cross-side metric incoherent).
   const starvedEligibleMembers = input.portfolio.members.filter(
     (member) =>
       !fundedIds.has(member.memberId) &&
       member.input.currentness === "CURRENT" &&
       !member.input.phaseFrozen &&
       member.input.ownerBlockedOperations.length === 0 &&
-      member.input.starvationAgeBuckets >= 0,
+      member.input.starvationAgeBuckets >= input.starvationThresholdBuckets,
   ).length;
 
   return {
@@ -252,16 +285,18 @@ export function runShadowSimulation(input: {
 }): ShadowSimulationResult {
   const { portfolio, optimizedAllocation } = input;
 
-  // Fail closed: every member needs a model.
+  // Fail closed: every member needs a present AND well-shaped model.
   for (const member of portfolio.members) {
     if (!input.yieldModels[member.memberId])
       throw new Error("PORTFOLIO_SIM_MODEL_MISSING");
+    validateMemberYieldModel(input.yieldModels[member.memberId]!);
   }
 
   const baselineMetrics = simulateBaselineSide({
     portfolio,
     yieldModels: input.yieldModels,
     totalUnits: optimizedAllocation.policy.totalUnits,
+    starvationThresholdBuckets: input.starvationThresholdBuckets,
   });
   const optimizedMetrics = simulateOptimizedSide({
     portfolio,

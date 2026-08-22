@@ -162,19 +162,24 @@ export function classifyPlanReplan(input: {
   }
 
   // 3. Unselected-member evidence changes still poison the plan's ranking
-  // inputs: they require reprioritization but never invalidate valid selections.
+  // inputs: they require reprioritization but never invalidate valid
+  // selections. Phase 16H DEF-02: this now applies to EVERY material movement
+  // class — contract/derivation changes on unselected members previously fell
+  // through to PLAN_REUSABLE despite carrying the strongest movement
+  // relevance, silently reusing stale ranking semantics. Unselected members
+  // also never enter affectedSelectedMemberIds (that field documents selected
+  // members only).
   if (!invalidated && !reprioritized) {
     for (const [memberId, movement] of Object.entries(input.memberMovements)) {
       const rule = movementRule(movement);
-      if (!rule || rule.invalidate) continue;
+      if (!rule) continue;
       if (
         previousManifest.selectedMembers.some(
           (entry) => entry.memberId === memberId,
         )
       )
         continue;
-      applyRule(rule);
-      affected.add(memberId);
+      applyRule({ reason: rule.reason, invalidate: false });
     }
   }
 

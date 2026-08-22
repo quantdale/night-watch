@@ -40,6 +40,22 @@ function fail(message) {
   process.exit(1);
 }
 
+// Phase 16H DEF-04: error echoes are bounded categorical detail only.
+// Forbidden shapes are redacted from the RAW text first, then the remainder
+// is length-bounded, so file-content fragments or secret-shaped substrings
+// can never reach stderr.
+const FORBIDDEN_DETAIL_RE =
+  /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization)/i;
+const DETAIL_MAX_LENGTH = 160;
+
+function sanitizeDetail(message) {
+  const text = String(message ?? "");
+  if (FORBIDDEN_DETAIL_RE.test(text)) return "<redacted-detail>";
+  return text.length > DETAIL_MAX_LENGTH
+    ? `${text.slice(0, DETAIL_MAX_LENGTH)}[truncated]`
+    : text;
+}
+
 function compileCore() {
   fs.rmSync(compileRoot, { recursive: true, force: true });
   fs.mkdirSync(compileRoot, { recursive: true });
@@ -110,16 +126,23 @@ function demoPortfolio(core, fixtures) {
 function inputPortfolio(core, args) {
   const inputPath = args.get("--input");
   if (!inputPath) return null;
+  let rawText;
+  try {
+    rawText = fs.readFileSync(path.resolve(inputPath), "utf8");
+  } catch {
+    // Read failures stay fully categorical: no filesystem detail is echoed.
+    fail("cannot read --input");
+  }
   let raw;
   try {
-    raw = JSON.parse(fs.readFileSync(path.resolve(inputPath), "utf8"));
+    raw = JSON.parse(rawText);
   } catch (error) {
-    fail(`cannot read/parse --input ${inputPath}: ${error.message}`);
+    fail(`malformed portfolio JSON: ${sanitizeDetail(error.message)}`);
   }
   try {
     return core.parsePortfolioDocument(raw);
   } catch (error) {
-    fail(`invalid portfolio document: ${error.message}`);
+    fail(`invalid portfolio document: ${sanitizeDetail(error.message)}`);
   }
   return null;
 }
@@ -211,15 +234,37 @@ async function main() {
         "compare-plan requires --previous <plan.json> --current <plan.json>",
       );
     const readJson = (value) => {
+      let rawText;
       try {
-        return JSON.parse(fs.readFileSync(path.resolve(value), "utf8"));
+        rawText = fs.readFileSync(path.resolve(value), "utf8");
+      } catch {
+        return fail("cannot read plan document");
+      }
+      try {
+        return JSON.parse(rawText);
       } catch (error) {
-        return fail(`cannot read ${value}: ${error.message}`);
+        return fail(
+          `malformed plan document JSON: ${sanitizeDetail(error.message)}`,
+        );
       }
     };
+    // Phase 16H DEF-03: plan documents are strictly parsed (exact keys,
+    // pinned versions, recomputed identities) before any comparison.
+    let previousManifest;
+    let currentManifest;
+    try {
+      previousManifest = core.parseCampaignPlanManifestDocument(
+        readJson(previousPath),
+      );
+      currentManifest = core.parseCampaignPlanManifestDocument(
+        readJson(currentPath),
+      );
+    } catch (error) {
+      return fail(`invalid plan document: ${sanitizeDetail(error.message)}`);
+    }
     const comparison = core.comparePlanManifests(
-      readJson(previousPath),
-      readJson(currentPath),
+      previousManifest,
+      currentManifest,
     );
     process.stdout.write(JSON.stringify(comparison, null, 2) + "\n");
     return;
@@ -258,5 +303,5 @@ async function main() {
 try {
   await main();
 } catch (error) {
-  fail(error instanceof Error ? error.message : String(error));
+  fail(sanitizeDetail(error instanceof Error ? error.message : String(error)));
 }

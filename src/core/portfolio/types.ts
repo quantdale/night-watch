@@ -317,7 +317,8 @@ const CURRENTNESS_VALUES: readonly LocalReadinessCurrentness[] = [
   "SOURCE_UNAVAILABLE",
   "NOT_EVALUATED",
 ];
-const DEPTH_VALUES: readonly DepthClass[] = [
+/** Public for the strict plan-manifest parser (single depth vocabulary). */
+export const PORTFOLIO_DEPTH_CLASSES: readonly DepthClass[] = [
   "SHAPE",
   "TYPE",
   "COLLECTION",
@@ -354,7 +355,7 @@ export function validatePortfolioMemberInput(
   }
   assertOptionalSafeStringOrNull(record.derivationVersion, "derivationVersion");
   assertOptionalSafeStringOrNull(record.contractVersion, "contractVersion");
-  assertEnumValue(record.depthClass, DEPTH_VALUES, "depthClass");
+  assertEnumValue(record.depthClass, PORTFOLIO_DEPTH_CLASSES, "depthClass");
   if (typeof record.replayable !== "boolean")
     throw new Error(portfolioFieldError("replayable"));
   assertEnumValue(
