@@ -91,7 +91,6 @@
 > RECOMMENDED_SEPARATE_AUTHORIZATION` for any contained DEV run — Phase 9B,
 > not executed).
 
-
 ---
 
 ## What exists now
@@ -105,7 +104,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 ## Current Git topology
 
 | Field | Current value |
-|---|---|
+| --- | --- |
 | `REMOTE_STATUS` | `PRIVATE_REMOTE_CONFIRMED` |
 | `REMOTE` | `origin` |
 | `REMOTE_REPOSITORY` | `quantdale/night-watch` |
@@ -219,7 +218,7 @@ phase.
 ### Phase 1.1 additions (this update)
 
 | Area | What |
-|---|---|
+| --- | --- |
 | Containment stack | L0 raw-CDP Fetch guard (`src/browser/network/fetchGuard.ts`) — pauses EVERY request incl. redirect follow-ups, fails denied/local-block URLs before network I/O; L1 `context.route('**/*')`; L2 `context.routeWebSocket('**/*')` (awaited — was unawaited, a real gap); L3 `serviceWorkers:'block'` + SW API stub + SharedWorker stub + `serviceworker` hard-failure alarm; L4 unrouted-request detection + download record/cancel |
 | Policy | `ws:`/`wss:` are network schemes (`NETWORK_PROTOCOLS`) — WebSocket policy identical to HTTP; `isNetworkUrl()` helper |
 | Storage state | Hardened secret handling: absolute path, external to repo+workspace, shape `{cookies, origins}`, ≤5MB, fail closed; explicit `storageStatePath` now validated too (was bypassed); `.gitignore` auth patterns |
@@ -234,7 +233,7 @@ phase.
 ## What works (verified)
 
 | Capability | Evidence |
-|---|---|
+| --- | --- |
 | Previous self-test suite | Phase 1.2 handoff at `ea2d327f54269c101123c2660a456e69dd319735` with `npx tsc --noEmit` PASS and `npx playwright test` **93 passed**; Phase 1.3 full validation is recorded below |
 | Typecheck | `npx tsc --noEmit` → 0 errors |
 | Service workers | `serviceWorkers:'block'` + stub: `register()` rejects, console marker recorded, SW script never fetched (`server.requests()` clean), no `serviceworker` event |
@@ -272,7 +271,7 @@ Retained local Nightwatch artifacts were inspected before Phase 1.2. They do
 not contain a matching production event, so the evidence-supported fields are:
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Attempted URL | **UNKNOWN** (host recorded as `api.alphaus.cloud`; exact path unavailable) |
 | Method | **UNKNOWN** |
 | Credentials attached | **UNKNOWN** |
@@ -1566,8 +1565,8 @@ the pre-browser readiness gate (D-56; records in
   (A-F; F2 REDERIVE_FRESH_SNAPSHOT binds to the fresh exact remote snapshot,
   never the stale reviewed SHA), metadata-only pre-dev readiness gate
   (13 checks; ANY failure -> NO DEV CONTACT), normalized safe pass summaries
-  + one-pass acceptance gate (decisive = invariantPassCount > 0 or ANOMALY)
-  + replay comparison (never raw values).
+  - one-pass acceptance gate (decisive = invariantPassCount > 0 or ANOMALY)
+  - replay comparison (never raw values).
 - **Gated launcher + runner**: `bin/phase9b-real.mjs` (`--env=dev` +
   `--storage-state` only; one-shot `NIGHTWATCH_PHASE_9B_REAL=1`) driving
   `tests/manual/phase9b-contained-dev-semantic.ts` — the fixed
@@ -1705,7 +1704,7 @@ The owner pasted the Phase 10A prompt as the separate owner authorization
   enriched 4/4; benign 10 / FP 0 (incl. the payer valid empty-ARRAY union
   representation — PASS); sentinel sweep + unknown-key probe 0 leaks;
   derivation determinism 3 repeats / 0 mismatches; currentness matrix A–E
-  + §44 mutation canaries fail closed; synthetic campaign: enriched
+  - §44 mutation canaries fail closed; synthetic campaign: enriched
   expectations → TYPE_CONTRADICTED findings → existing orchestrator →
   triage → dossiers with `semanticEvidence` (paired baseline zero
   semantic evidence); owner-local canary at 169df39d: 4/4 derived / 0

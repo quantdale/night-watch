@@ -79,7 +79,7 @@ sessions** in this phase.
   download record/cancel (L4).
 - WebSocket policy with semantics identical to HTTP (`ws:`/`wss:` in
   `NETWORK_PROTOCOLS`); telemetry WS closed, not failed; denied WS closed
-  + hard failure before communication.
+  - hard failure before communication.
 - Storage-state secret rules — fail-closed validation
   (`src/browser/fixtures/storageState.ts`: absolute path, external
   location, readable regular file, ≤ 5 MB, `{cookies, origins}` shape) —
@@ -982,6 +982,7 @@ full-history checkout (159 passed), and an exhausted A+B isolated checkout
 retry readiness: `READY_FOR_FRESH_OWNER_AUTHORIZATION` (a separate owner
 authorization is required; no promotion was retried). The canonical adopted
 case catalog remains EMPTY.
+
 ### Phase 8B.1.0.2 — Completed-task continuity protocol & historical ledger hardening (complete)
 
 Phase 8B.1.0.2 (COMPLETE) made completed-task contradictions mechanically
@@ -1462,7 +1463,7 @@ acceptance record: `docs/design/PHASE_10B_DEV_ACCEPTANCE.md`, D-60, and
 - **Proof (synthetic)**: 4 seeded deep defects — baseline shape-only
   detects 0/4, enriched detects 4/4; benign 10 cases / 0 false positives
   (incl. the payer valid empty-ARRAY union representation); sentinel sweep
-  + unknown-key probe 0 leaks; derivation determinism 3 repeats / 0
+  - unknown-key probe 0 leaks; derivation determinism 3 repeats / 0
   mismatches; source currentness matrix A–E + §44 mutation canaries fail
   closed; synthetic campaign/dossier integration with baseline zero
   semantic evidence; owner-local canary at the current snapshot 169df39d:

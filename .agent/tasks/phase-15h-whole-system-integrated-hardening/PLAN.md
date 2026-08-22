@@ -30,51 +30,75 @@ Repair-and-proof campaign following SPEC §3 discipline per failure: narrow repr
 ## Milestones
 
 ### M0 — Bootstrap and truth reconciliation
+
 Status: COMPLETE
+
 - fetch/fast-forward clean main; record authorization; transition IN_PROGRESS/active; read Phase-15P handoff/state/ledgers; reconcile stale `IMPLEMENTED_FOCUSED_GREEN` labels; freeze starting head + changed-file manifest.
 
 ### M1 — Compiler recovery
+
 Status: COMPLETE
+
 - typecheck first (26 errors recorded); classify by lane/family; fix without weakening architecture; add regression coverage for semantic fixes.
 
 ### M2 — Static safety and authority hardening
+
 Status: COMPLETE
+
 - hardening:check PASS; owner-policy/pre-executor ordering, private-screening convergence, DTO/raw-value review, pure-core boundaries, frozen Phase-6 quarantine via existing suites.
 
 ### M3 — Phase-15P focused contract hardening
+
 Status: COMPLETE
+
 - A01–A16 focused suites green (367 passed / 0 failed after repairing 30 initial failures); handoff risks closed where reproduced (DEF ledger).
 
 ### M4 — Executable adversarial corpus
+
 Status: COMPLETE
+
 - all scenario classes bound to deterministic builders/executors or blocker assertions; >=3 repeats via matrix determinism x3 + rehearsal x3; all floors zero.
 
 ### M5 — All-phase compatibility
+
 Status: COMPLETE
+
 - complete unit sweep workers=1: 1955 passed / 0 failed / 4 skipped across phase families 1–15.
 
 ### M6 — Campaign/provenance packs
+
 Status: COMPLETE
+
 - campaign:synthetic 27 passed / 0 failed (17.9s); test:owner-provenance 91 passed / 0 failed (10.7s); both re-run green at closure. No new defects; replay/minimality/checkpoint/resume matrices already covered by the green unit sweep.
 
 ### M7 — Complete canonical regression
+
 Status: COMPLETE
+
 - fresh complete Playwright workers=1 AFTER DEF-12/DEF-13 fixes: 2063 passed / 0 failed / 4 skipped, exit 0, 4.8m; all 4 skips inventoried as pre-existing environment guards; no new skip.
 
 ### M8 — Topology-correct isolated regression
+
 Status: COMPLETE
+
 - fresh no-hardlinks clone of 06ea7ca + npm ci + NIGHTWATCH_PROXY_PORT=19123; first attempt without sibling topology produced 2055/8/4 with all 8 failures proven topology-caused; after read-only sibling symlinks reproduced the REPOSITORIES topology: 2063 passed / 0 failed / 4 skipped, exit 0 — exact match with canonical.
 
 ### M9 — Whole-system closure gates
+
 Status: COMPLETE
+
 - typecheck PASS; hardening:check PASS; packs re-green (27/0, 91/0); agent:check PASS (0 strict errors); agent:audit strict_errors=0; project:check PASS with catalog count/digest unchanged and nextPromotionAuthority NONE; git diff --check PASS; adversarial floor batch 121 passed / 0 failed, all floors zero.
 
 ### M10 — Validated checkpoint and CI truth
+
 Status: COMPLETE
+
 - A15 deletion/de-export sweep verified (0 Git-level deletions; 147 de-exports / 55 files with 0 surviving external references; trust roots 46/46 transitively closed; restorations: 1 deliberate DEF-01 export only); privacy/authority review clean; earned hardening SHA recorded as validated anchor (06ea7ca62b1d5c8770d42622d4655e942ec68336 — every gate ran against exactly that tree); exact Actions inspection ONCE: run 32554139535 / job 96985562679 = failure with ZERO steps executed (external billing/spending block, log blob absent) -> BLOCKED_EXTERNAL_CI, no retry-loop.
 
 ### M11 — Durable closure
+
 Status: COMPLETE
+
 - evidence-backed REPORT.md written (all required sections); STATE/ACTIVE_TASK/docs updated truthfully; docs-closure fast-forward pushed; terminal tokens BLOCKED_EXTERNAL_CI / VERIFIED_LOCAL_NOT_CI_VERIFIED.
 
 ## Validation Strategy
@@ -104,6 +128,7 @@ Every PASS maps to a command executed in this session against the mass anchor or
 
 Terminal states per SPEC §8 — RESOLVED as the second (external-CI-blocked)
 terminal state:
+
 - `BLOCKED_EXTERNAL_CI` + `VERIFIED_LOCAL_NOT_CI_VERIFIED`: every
   local/source gate green on earned hardening SHA 06ea7ca62b1d5c8770d42622d4655e942ec68336;
   Actions run 32554139535 for that exact SHA never executed a step (external
