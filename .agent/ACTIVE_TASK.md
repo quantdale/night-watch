@@ -32,7 +32,7 @@ before job execution; never retry-loop it.
 
 ## Terminal Tokens
 
-```
+```text
 PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI
 PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED
 PHASE_6_STATUS: FROZEN_BY_OWNER

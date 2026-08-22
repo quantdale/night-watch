@@ -1802,8 +1802,7 @@ expansion, and any promotion remain separate-authorization-only.
 (`phase-8-final-closure-phase-9-roadmap-selection`, Phase 8-CLOSURE,
 authorization `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`, 2026-08-15),
 executing the D-52 recommendation `CLOSE_PHASE_8`:
-`PHASE_8_STATUS: COMPLETE` (project-state pin + machine-checked truth block
-- regression matrix + hardening), the canonical-promotion research boundary
+`PHASE_8_STATUS: COMPLETE` (project-state pin + machine-checked truth block - regression matrix + hardening), the canonical-promotion research boundary
 is closed, and the next bug-hunting investment is selected:
 `PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH` — **Phase 9 —
 Deterministic Semantic Oracle Depth** — with an implementation-ready
@@ -2076,7 +2075,7 @@ contained DEV semantic acceptance harness, then executed the ONE authorized
 acceptance pair through the gated launcher. The run stopped fail-closed at
 the pre-browser metadata-only readiness gate:
 
-```
+```text
 PHASE_9B: BLOCKED
 PHASE_9B_DEV_RESULT: NOT_PROVEN
 PHASE_9B_BLOCKER: PHASE_9B_BLOCKED_HUMAN_AUTH_ACTION_REQUIRED
@@ -2136,8 +2135,7 @@ environment-conditional skips / 0 failed. Exact implementation CI
 --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`). The
 pre-dev readiness gate PASSED: nightwatch HEAD clean (cdfdf31), exact-head
 implementation CI green, source freshness REDERIVE_FRESH_SNAPSHOT @
-169df39d, derived expectation 1, resolver RESOLVED 1, target DEV-reachable
-- KNOWN_READ, mutation steps 0, proxy healthy, canonical DEV target exact,
+169df39d, derived expectation 1, resolver RESOLVED 1, target DEV-reachable - KNOWN_READ, mutation steps 0, proxy healthy, canonical DEV target exact,
 traces/screenshots off. The auth structural gate FAILED: the external DEV
 storage state's `mo_access_token` cookie is EXPIRED (boolean-only
 diagnostics: validateStorageStateFile PASS; token present/non-empty,
@@ -2182,7 +2180,7 @@ Phase 9B harness (`cdfdf314839fd782a962e4096b68b32641a93db2`, exact
 implementation CI 31934803846) with ZERO source changes, invoked the gated
 launcher exactly ONCE, and achieved the clean acceptance branch:
 
-```
+```text
 PHASE_9B_R1: COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED
 PHASE_9B_R1_DEV_RESULT: PASS
 PRODUCT_SEMANTIC_MISMATCH: NONE_OBSERVED
@@ -2265,7 +2263,7 @@ D-56 remains the original Phase 9B record, not rewritten.
 
 **Decision.** After the terminal Phase 9 (`COMPLETE_DEV_SEMANTIC_ACCEPTANCE_VERIFIED` / PASS, D-57), the post-Phase-9 design review (`post-phase-9-next-architecture-design-review`, Phase `POST-9-DESIGN`, authorization `POST_PHASE_9_NEXT_ARCHITECTURE_DESIGN_REVIEW_ONLY`, starting SHA `aba46a9af1a1021ae58a1253f93fda297391576e`, 2026-08-16) recomputed the bug-yield bottleneck from current source and selected:
 
-```
+```text
 PHASE_9_STATUS: COMPLETE (terminal)
 CURRENT_PRIMARY_POST_PHASE9_BOTTLENECK:
   INSUFFICIENT_REAL_SEMANTIC_DEPTH
@@ -2335,7 +2333,7 @@ starting SHA `c3393ce54ef53d10451da2465d0327a0796bcf4f`). Phase 10A
 implemented deeper real-source semantic contracts on the existing approved
 read-only targets, LOCAL / SOURCE-ONLY / SYNTHETIC ONLY:
 
-```
+```text
 PHASE_10_DEEPER_SEMANTIC: COMPLETE
 PHASE_10A_STATUS: COMPLETE
 PHASE_9_STATUS: COMPLETE (unchanged)
@@ -2514,7 +2512,7 @@ creates zero detections, latent until a natural anomaly.
 
 **Selected.**
 
-```
+```text
 CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK: COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
 POST_PHASE_10_NEXT_ARCHITECTURE: BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION
 NEXT_PHASE: PHASE_11 — Bounded Collection-Wide Semantic Evaluation
@@ -2762,6 +2760,7 @@ terminal-closure sweeps; (6) branded validated-plan replay executor seam;
 MINIMALITY_PROVEN); (8) deterministic clustering tiebreakers, declared-gap
 confidence ceilings, strengthened dossier-v2 READY; (9) resume-drift
 classifiers with set-idempotent unresolved ledger; (10) shared readiness API
+
 - `status:local`; (11) artifact-validation facade over ten durable kinds;
 (12) project snapshot manifest with five-way classified diff; (13)
 privacy/authority bounding of durable error surfaces; (14) 78-class
