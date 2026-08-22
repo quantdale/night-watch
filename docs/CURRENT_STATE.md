@@ -1,7 +1,17 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-22** at
-> Phase 15H whole-system integrated hardening terminal closure
+> the Phase 16H campaign-yield/portfolio hardening terminal closure
+> (`PHASE_16H_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
+> 1d6d875; `PHASE_16A_PORTFOLIO: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEF-01..DEF-06
+> repaired with permanent regressions; 89-fixture adversarial corpus x3
+> deterministic repeats with all ten quality floors zero; canonical AND
+> topology-correct isolated complete regressions both 2161 passed / 0 failed /
+> 4 skipped with exact parity; Actions run 32596866942 executed zero steps
+> under the standing external billing/spending block), building on the
+> Phase 16A portfolio implementation
+> (`PHASE_16A_STATUS: COMPLETE
+> (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` at 1737e30), the Phase 15H whole-system integrated hardening terminal closure
 > (`PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI` on earned hardening SHA 06ea7ca;
 > `PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED`; canonical
 > full 2063/0/4 == isolated full 2063/0/4; DEF-01..DEF-13 repaired, zero new
@@ -138,6 +148,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_14A_STATUS` | `BLOCKED_EXTERNAL_CI` — versioned mechanical-contract analyzer (`nightwatch.mechanical-contract-analyzer.v1`) implemented; 6 approved targets re-evaluated at fresh ripple-api snapshot `e026c855…`; 0 real-source uplifts (precise blockers preserved); synthetic proof gains 12 positive / 16 rejection, all floors 0; full local/source acceptance green (typecheck, hardening, 1454 Playwright passed / 4 skipped, agent:check/audit 0 strict errors); GitHub Actions externally billing-blocked; Phase 11B/13B NOT_AUTHORIZED |
 | `PHASE_15P_MASS_IMPLEMENTATION` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — the 105-file mass-bulk round (base `abc9bf9…` -> `c2640cb08…`, 17 commits) was hardened by Phase 15H: initial typecheck 26 errors / 13 files repaired via DEF-01..DEF-13 (incl. real orchestrator stale-bookkeeping carryover source bug DEF-06 and selfDev trust-root transitive-closure gap DEF-12); focused sweep 367/0; adversarial corpus executable with all quality floors zero; unit sweep 1955/0/4; canonical complete Playwright workers=1 2063 passed / 0 failed / 4 skipped == topology-correct isolated run 2063/0/4 (npm ci + NIGHTWATCH_PROXY_PORT + read-only sibling symlinks); A15 de-export surface verified caller-free (147 removed exports / 55 files, 0 surviving external references, zero Git-level file deletions in the whole mass round); catalog count/digest unchanged; promotion authority NONE. Earned hardening SHA 06ea7ca62b1d5c8770d42622d4655e942ec68336; Actions run 32554139535 executed ZERO steps under the external billing/spending block (D-65) |
 | `PHASE_15H_STATUS` | `BLOCKED_EXTERNAL_CI` — whole-system integrated hardening campaign terminal on earned SHA `06ea7ca62b1d5c8770d42622d4655e942ec68336`: every local/source gate green (typecheck, hardening:check, campaign:synthetic 27/0, owner-provenance 91/0, agent:check/audit 0 strict errors, project:check PASS, floor batch 121/0, canonical+isolated full regressions exact-matched); CI remains externally billing-blocked before job execution (single inspection, no retry-loop); Phase 6 FROZEN_BY_OWNER; Phase 11B/13B NOT_AUTHORIZED (D-65) |
+| `PHASE_16A_STATUS` | `COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` — deterministic campaign portfolio layer (W1–W8) implemented and focused-green at earned implementation checkpoint `1737e30afb64a1aed722f61182d87a4f2f6e3bb4` (six phase16a suites 59/0; affected Phase 12–15 compatibility 115/0; campaign:synthetic 27/0; owner-provenance 91/0; byte-deterministic plan/simulate/handoff outputs); complete canonical/isolated regressions deliberately deferred to the next dedicated hardening task (D-66-era record in `.agent/tasks/phase-16a-campaign-yield-portfolio-optimization/`) |
+| `PHASE_16H_STATUS` | `BLOCKED_EXTERNAL_CI` — campaign-yield/portfolio hardening terminal on earned SHA `1d6d8759bbba0145962fa0e65810d6f32fa41445`: DEF-01..DEF-06 reproduced then repaired with permanent regressions (simulator starvation-threshold coherence + model validation; replan unselected-movement fail-closed + affected-set purity; strict plan-manifest parser with double digest recomputation wired into comparePlanManifests and CLI; CLI sanitized error surfaces); adversarial corpus extended to 89 scenario fixtures plus ~80 negative/matrix cases, x3 deterministic repeats, all ten quality floors zero; Phase 12–16 compatibility 836/0; canonical AND topology-correct isolated complete regressions both 2161 passed / 0 failed / 4 skipped with exact parity incl. skip inventory; catalog count/digest unchanged, promotion authority NONE; Actions run 32596866942 executed ZERO steps under the external billing/spending block (single inspection, no retry-loop); `PHASE_16A_PORTFOLIO: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEV handoff never executed (`PHASE_16A_DEV_CAMPAIGN: NOT_AUTHORIZED`) |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
