@@ -1,10 +1,16 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-21** at
+> Durable memory for the next agent/session. Last updated: **2026-08-22** at
+> Phase 15H whole-system integrated hardening terminal closure
+> (`PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI` on earned hardening SHA 06ea7ca;
+> `PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED`; canonical
+> full 2063/0/4 == isolated full 2063/0/4; DEF-01..DEF-13 repaired, zero new
+> defects; D-65), building on the
 > Phase 15P parallel implementation completion (PHASE_15_PARALLEL_IMPLEMENTATION:
 > IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at 42c5a7e; sixteen
-> assignments A01–A16 integrated over four validated waves; D-64), building on
-> Phase 13I residual runtime completion (PHASE_13I_STATUS:
+> assignments A01–A16 integrated over four validated waves; D-64) and the
+> 105-file mass-bulk round (strategy shift abc9bf9 -> c2640cb, unvalidated by
+> owner direction until hardened). Earlier milestones: Phase 13I residual runtime completion (PHASE_13I_STATUS:
 > BLOCKED_EXTERNAL_CI on clean 186122f; PHASE_13_SEMANTIC_PROMOTION,
 > PHASE_13_REPLAY_V2_BINDING, PHASE_13_SHADOW_CAMPAIGN
 > VERIFIED_LOCAL_NOT_CI_VERIFIED; D-63) and
@@ -131,6 +137,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_12_HIGH_CONFIDENCE_TRIAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — semantic triage-evidence DTO + categorical HIGH-confidence blocking + dossier v2 READY predicate; v1 compatible |
 | `PHASE_12_REAL_SOURCE_COVERAGE` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fresh ripple-api master `e026c855…` disposable snapshot; 6 approved targets; 4 rederived; 0 mechanical uplifts (precise blockers) |
 | `PHASE_14A_STATUS` | `BLOCKED_EXTERNAL_CI` — versioned mechanical-contract analyzer (`nightwatch.mechanical-contract-analyzer.v1`) implemented; 6 approved targets re-evaluated at fresh ripple-api snapshot `e026c855…`; 0 real-source uplifts (precise blockers preserved); synthetic proof gains 12 positive / 16 rejection, all floors 0; full local/source acceptance green (typecheck, hardening, 1454 Playwright passed / 4 skipped, agent:check/audit 0 strict errors); GitHub Actions externally billing-blocked; Phase 11B/13B NOT_AUTHORIZED |
+| `PHASE_15P_MASS_IMPLEMENTATION` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — the 105-file mass-bulk round (base `abc9bf9…` -> `c2640cb08…`, 17 commits) was hardened by Phase 15H: initial typecheck 26 errors / 13 files repaired via DEF-01..DEF-13 (incl. real orchestrator stale-bookkeeping carryover source bug DEF-06 and selfDev trust-root transitive-closure gap DEF-12); focused sweep 367/0; adversarial corpus executable with all quality floors zero; unit sweep 1955/0/4; canonical complete Playwright workers=1 2063 passed / 0 failed / 4 skipped == topology-correct isolated run 2063/0/4 (npm ci + NIGHTWATCH_PROXY_PORT + read-only sibling symlinks); A15 de-export surface verified caller-free (147 removed exports / 55 files, 0 surviving external references, zero Git-level file deletions in the whole mass round); catalog count/digest unchanged; promotion authority NONE. Earned hardening SHA 06ea7ca62b1d5c8770d42622d4655e942ec68336; Actions run 32554139535 executed ZERO steps under the external billing/spending block (D-65) |
+| `PHASE_15H_STATUS` | `BLOCKED_EXTERNAL_CI` — whole-system integrated hardening campaign terminal on earned SHA `06ea7ca62b1d5c8770d42622d4655e942ec68336`: every local/source gate green (typecheck, hardening:check, campaign:synthetic 27/0, owner-provenance 91/0, agent:check/audit 0 strict errors, project:check PASS, floor batch 121/0, canonical+isolated full regressions exact-matched); CI remains externally billing-blocked before job execution (single inspection, no retry-loop); Phase 6 FROZEN_BY_OWNER; Phase 11B/13B NOT_AUTHORIZED (D-65) |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 

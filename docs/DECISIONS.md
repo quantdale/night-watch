@@ -858,7 +858,7 @@ arguments; Nightwatch/Playwright remains the sole executor.
 **Threat-model mitigations.**
 
 | threat | mitigation |
-|---|---|
+| --- | --- |
 | `SECRET_IN_SOURCE`, `SECRET_IN_GIT`, task/docs/fixtures | only fake synthetic values appear in tests; the real record is external and never serialized into Nightwatch |
 | `SECRET_IN_SHELL_HISTORY`, `SECRET_IN_PROCESS_ARGS` | hidden TTY prompts; configuration accepts no credential flags, and the provider does not read credential environment variables |
 | `SECRET_IN_MCP_TRANSCRIPT` | `MCP_SECRET_INPUT_ALLOWED=false`; login is in-process Playwright and no MCP fill/type/evaluate call receives the secret |
@@ -1803,7 +1803,7 @@ expansion, and any promotion remain separate-authorization-only.
 authorization `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY`, 2026-08-15),
 executing the D-52 recommendation `CLOSE_PHASE_8`:
 `PHASE_8_STATUS: COMPLETE` (project-state pin + machine-checked truth block
-+ regression matrix + hardening), the canonical-promotion research boundary
+- regression matrix + hardening), the canonical-promotion research boundary
 is closed, and the next bug-hunting investment is selected:
 `PHASE_9_DIRECTION: DETERMINISTIC_ORACLE_DEPTH` — **Phase 9 —
 Deterministic Semantic Oracle Depth** — with an implementation-ready
@@ -2137,7 +2137,7 @@ environment-conditional skips / 0 failed. Exact implementation CI
 pre-dev readiness gate PASSED: nightwatch HEAD clean (cdfdf31), exact-head
 implementation CI green, source freshness REDERIVE_FRESH_SNAPSHOT @
 169df39d, derived expectation 1, resolver RESOLVED 1, target DEV-reachable
-+ KNOWN_READ, mutation steps 0, proxy healthy, canonical DEV target exact,
+- KNOWN_READ, mutation steps 0, proxy healthy, canonical DEV target exact,
 traces/screenshots off. The auth structural gate FAILED: the external DEV
 storage state's `mo_access_token` cookie is EXPIRED (boolean-only
 diagnostics: validateStorageStateFile PASS; token present/non-empty,
@@ -2513,6 +2513,7 @@ is latent (zero real anomalies). Triage (D-58 NEXT_AFTER) NOT auto-selected:
 creates zero detections, latent until a natural anomaly.
 
 **Selected.**
+
 ```
 CURRENT_PRIMARY_POST_PHASE10_BOTTLENECK: COLLECTION_ITEM_SEMANTIC_COVERAGE_GAP
 POST_PHASE_10_NEXT_ARCHITECTURE: BOUNDED_COLLECTION_WIDE_SEMANTIC_EVALUATION
@@ -2732,6 +2733,7 @@ promotion/replay stack requires a fresh contained-DEV authorization.
 Design record: `docs/design/PHASE_13I_RESIDUAL_RUNTIME_COMPLETION.md`;
 task records under
 `.agent/tasks/phase-13i-residual-runtime-completion-shadow-proof/`.
+
 ## D-64 — Phase 15P: Parallel 16-Agent Implementation Campaign (implemented, local/source-only)
 
 **Selected** (2026-08-21, authorization
@@ -2760,7 +2762,7 @@ terminal-closure sweeps; (6) branded validated-plan replay executor seam;
 MINIMALITY_PROVEN); (8) deterministic clustering tiebreakers, declared-gap
 confidence ceilings, strengthened dossier-v2 READY; (9) resume-drift
 classifiers with set-idempotent unresolved ledger; (10) shared readiness API
-+ `status:local`; (11) artifact-validation facade over ten durable kinds;
+- `status:local`; (11) artifact-validation facade over ten durable kinds;
 (12) project snapshot manifest with five-way classified diff; (13)
 privacy/authority bounding of durable error surfaces; (14) 78-class
 adversarial corpus with determinism ×3; (15) version-convergence guard suite;
@@ -2782,3 +2784,58 @@ bootstrap input. No DEV/real-campaign/production/data-plane/infra/AI/selfDev/
 promotion authority was exercised; Phase 11B and Phase 13B remain
 NOT_AUTHORIZED. CI remained externally billing-blocked throughout (zero-step
 failures); local/source evidence is the only acceptance until Actions executes.
+
+## D-65 — Phase 15H: Whole-System Integrated Hardening Terminal Classification (BLOCKED_EXTERNAL_CI; mass implementation VERIFIED_LOCAL_NOT_CI_VERIFIED)
+
+**Context.** The Phase-15P 105-file mass-bulk round (D-64 continuation,
+base `abc9bf9…` -> `c2640cb08…`) was intentionally unvalidated by owner
+direction. Phase 15H ran under
+`PHASE_15H_WHOLE_SYSTEM_INTEGRATED_HARDENING_LOCAL_ONLY` (2026-08-22) as a
+repair-and-proof campaign: compile first, every failure became hardening
+evidence (narrow reproducer -> root cause -> source fix -> permanent
+regression -> narrow recheck -> broader gate), never weakening assertions.
+
+**Decision.**
+
+1. The earned validated hardening anchor is `06ea7ca62b1d5c8770d42622d4655e942ec68336`
+   — every local gate was executed against exactly that tree while HEAD ==
+   origin/main and the worktree was clean. It supersedes the carried-forward
+   bootstrap anchor `7695b87c61890cabfe110e3d147a076c1b1ecea1`.
+2. Hardening repaired real source defects, not just tests: DEF-01..DEF-13,
+   including DEF-06 (a genuine orchestrator bug: checkpoint state spread
+   carried stale interrupted-work/retry entries into later checkpoints;
+   fixed writer-side with the fail-closed integrity validator kept strictly
+   intact) and DEF-12 (SELFDEV_AUTHORITATIVE_PATHS not transitively closed
+   after A13 shared-module imports; every selfDev fixture mirror born
+   broken). Stale pins moved only onto mechanically proven current truth.
+3. Local acceptance is fully earned: canonical complete Playwright workers=1
+   2063 passed / 0 failed / 4 skipped exactly matched the topology-correct
+   isolated run (2063/0/4) after an evidenced 8-failure missing-sibling-
+   topology attempt was reproduced and repaired with read-only symlinks;
+   adversarial quality floors all zero across >=3 deterministic repeats.
+   Git-level ground truth: the mass round deleted ZERO files; its de-export
+   surface (147 removed exports / 55 files) has zero surviving external
+   references.
+4. Terminal classification is `PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI` with
+   `PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED`: Actions
+   run 32554139535 for the exact validated SHA completed in ~1 second with
+   ZERO steps executed under the account billing/spending-limit condition
+   (inspected once via authenticated API; log blob absent; no retry-loop).
+   CI green is NOT claimed anywhere.
+
+**Rejected alternatives.** Labeling `06ea7ca` validated before the full
+gates ran (rejected: anchors are earned by evidence, not by commit
+existence); retrying or re-triggering the blocked workflow (rejected:
+known external condition, single inspection policy); explaining away the
+isolated-run count delta as benign topology variance (rejected: reproduced
+the topology and proved exact equality instead); restoring dead code from
+A15 (rejected: only DEF-01's one live caller justified restoration).
+
+**Consequences.** Nightwatch's whole-system state is locally verified end to
+end; upgrading to CI-verified requires only that the owner resolve the
+billing condition and a separately scoped verification task inspect a real
+Actions execution for this lineage. No DEV/real-campaign/production/
+data-plane/infra/AI/selfDev-promotion authority was exercised; catalog
+count/digest unchanged; promotion authority NONE; Phase 6 remains
+FROZEN_BY_OWNER; Phase 11B and Phase 13B remain NOT_AUTHORIZED.
+NEXT ACTION: STOP.

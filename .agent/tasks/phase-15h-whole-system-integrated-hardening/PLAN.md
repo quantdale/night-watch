@@ -54,28 +54,28 @@ Status: COMPLETE
 - complete unit sweep workers=1: 1955 passed / 0 failed / 4 skipped across phase families 1–15.
 
 ### M6 — Campaign/provenance packs
-Status: IN_PROGRESS
-- campaign:synthetic; test:owner-provenance; replay/minimality/checkpoint/resume matrices already covered by green unit sweep.
+Status: COMPLETE
+- campaign:synthetic 27 passed / 0 failed (17.9s); test:owner-provenance 91 passed / 0 failed (10.7s); both re-run green at closure. No new defects; replay/minimality/checkpoint/resume matrices already covered by the green unit sweep.
 
 ### M7 — Complete canonical regression
-Status: NOT_STARTED
-- complete Playwright workers=1 on canonical topology; zero failed required; raw counts recorded.
+Status: COMPLETE
+- fresh complete Playwright workers=1 AFTER DEF-12/DEF-13 fixes: 2063 passed / 0 failed / 4 skipped, exit 0, 4.8m; all 4 skips inventoried as pre-existing environment guards; no new skip.
 
 ### M8 — Topology-correct isolated regression
-Status: NOT_STARTED
-- isolated clone (`nightwatch-isolated-15h`) fast-forwarded to the hardened checkpoint; deterministic install; same complete command with distinct proxy port; zero failed required.
+Status: COMPLETE
+- fresh no-hardlinks clone of 06ea7ca + npm ci + NIGHTWATCH_PROXY_PORT=19123; first attempt without sibling topology produced 2055/8/4 with all 8 failures proven topology-caused; after read-only sibling symlinks reproduced the REPOSITORIES topology: 2063 passed / 0 failed / 4 skipped, exit 0 — exact match with canonical.
 
-### M9 — Continuity/project/catalog closure
-Status: IN_PROGRESS
-- agent:check strict conformance repairs underway; agent:audit; project:check; catalog integrity; git diff --check; cleanliness.
+### M9 — Whole-system closure gates
+Status: COMPLETE
+- typecheck PASS; hardening:check PASS; packs re-green (27/0, 91/0); agent:check PASS (0 strict errors); agent:audit strict_errors=0; project:check PASS with catalog count/digest unchanged and nextPromotionAuthority NONE; git diff --check PASS; adversarial floor batch 121 passed / 0 failed, all floors zero.
 
 ### M10 — Validated checkpoint and CI truth
-Status: NOT_STARTED
-- commit source-bearing hardening checkpoint; post-commit decisive local recheck; push fast-forward once ALL local gates green; inspect exact Actions run/job/steps once; terminalize BLOCKED_EXTERNAL_CI if the external billing block persists.
+Status: COMPLETE
+- A15 deletion/de-export sweep verified (0 Git-level deletions; 147 de-exports / 55 files with 0 surviving external references; trust roots 46/46 transitively closed; restorations: 1 deliberate DEF-01 export only); privacy/authority review clean; earned hardening SHA recorded as validated anchor (06ea7ca62b1d5c8770d42622d4655e942ec68336 — every gate ran against exactly that tree); exact Actions inspection ONCE: run 32554139535 / job 96985562679 = failure with ZERO steps executed (external billing/spending block, log blob absent) -> BLOCKED_EXTERNAL_CI, no retry-loop.
 
 ### M11 — Durable closure
-Status: NOT_STARTED
-- final REPORT with all-phase matrix, defect ledger, counts, SHAs, CI truth; docs updates from earned evidence only; docs closure push; STOP.
+Status: COMPLETE
+- evidence-backed REPORT.md written (all required sections); STATE/ACTIVE_TASK/docs updated truthfully; docs-closure fast-forward pushed; terminal tokens BLOCKED_EXTERNAL_CI / VERIFIED_LOCAL_NOT_CI_VERIFIED.
 
 ## Validation Strategy
 
@@ -86,12 +86,14 @@ Every PASS maps to a command executed in this session against the mass anchor or
 - D-15H-1: DEF-06 fixed in the writer; validator kept strict.
 - D-15H-2: stale pins updated only with proven deliberate mechanical growth.
 - D-15H-3: lifecycle oracles extended to full 21-edge truth incl. GATE_BLOCK reason requirement.
+- D-15H-4: terminal BLOCKED_EXTERNAL_CI adopted after single exact Actions inspection (run 32554139535 executed zero steps under the external billing/spending block); no retry-loop, no CI-green claim.
 
 ## Discoveries
 
 - A09 interrupted-work bookkeeping was broken for every multi-checkpoint run (stale carryover via state spread); single-checkpoint pre-integration runs masked it.
 - A15 de-export sweep had one false negative (ReasonCode); EdgeMatch verified caller-free.
 - NIGHTWATCH_PROXY_PORT overridable for isolated topology runs.
+- Git-level ground truth: the whole mass round deleted ZERO files (lane and integrated both pure A/M); mechanical extraction measured 147 removed exports across 55 files with zero surviving external references; historical backtests/smoke require sibling Alphaus repos under the parent REPOSITORIES directory (isolated checkouts must reproduce that topology).
 
 ## Deferred Work
 
@@ -100,8 +102,12 @@ Every PASS maps to a command executed in this session against the mass anchor or
 
 ## Completion Criteria
 
-Terminal states per SPEC §8:
-- COMPLETE + VERIFIED_LOCAL_AND_CI only if an actual Actions run executes steps successfully;
-- BLOCKED_EXTERNAL_CI + VERIFIED_LOCAL_NOT_CI_VERIFIED when every local/source gate is green but Actions still cannot execute (external billing/spending condition), recorded once without retry loops;
-- BLOCKED + HARDENING_INCOMPLETE with the exact remaining defect if any local gate stays unresolved.
-At terminal: REPORT complete, durable docs updated from earned evidence, HEAD == origin/main, working tree clean.
+Terminal states per SPEC §8 — RESOLVED as the second (external-CI-blocked)
+terminal state:
+- `BLOCKED_EXTERNAL_CI` + `VERIFIED_LOCAL_NOT_CI_VERIFIED`: every
+  local/source gate green on earned hardening SHA 06ea7ca62b1d5c8770d42622d4655e942ec68336;
+  Actions run 32554139535 for that exact SHA never executed a step (external
+  billing condition), recorded once without retry loops. Phase 6 remains
+  FROZEN_BY_OWNER; Phase 11B/13B remain NOT_AUTHORIZED.
+At terminal: REPORT complete, durable docs updated from earned evidence,
+HEAD == origin/main, working tree clean.

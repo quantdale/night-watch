@@ -1702,6 +1702,48 @@ Terminal state: IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING;
 NOT CI verified (external billing block persists), NOT DEV accepted, NOT
 production ready; Phase 11B and Phase 13B remain NOT_AUTHORIZED.
 
+## Phase 15H — Whole-System Integrated Hardening (terminal: BLOCKED_EXTERNAL_CI)
+
+Executed 2026-08-22 under `PHASE_15H_WHOLE_SYSTEM_INTEGRATED_HARDENING_LOCAL_ONLY`
+(D-65) over the 105-file Phase-15P mass-bulk round (base `abc9bf9…` ->
+`c2640cb08…`, 17 commits, intentionally unvalidated by owner direction until
+hardened). Repair-and-proof discipline throughout: compiler first — initial
+`npm run typecheck` recorded 26 errors / 13 files, all repaired in source as
+DEF-01..DEF-13 (notably DEF-06, a real orchestrator stale-bookkeeping
+carryover bug fixed writer-side with the integrity validator kept strictly
+fail-closed; and DEF-12, the SELFDEV_AUTHORITATIVE_PATHS transitive-closure
+gap that left every selfDev fixture mirror unresolvable). Assertions were
+never weakened to recover green; stale pins moved only onto mechanically
+proven current truth.
+
+Local acceptance evidence (all on earned hardening SHA
+`06ea7ca62b1d5c8770d42622d4655e942ec68336`): typecheck PASS;
+hardening:check PASS; focused contract sweep 367 passed / 0 failed;
+adversarial corpus executable (66 definitions, deterministic builders/
+executors, >=3 repeats) with every quality floor zero (floor batch at
+closure: 121 passed / 0 failed); campaign:synthetic 27/0 and
+owner-provenance 91/0 twice; complete unit sweep 1955/0/4 across phase
+families 1–15; canonical complete Playwright workers=1 **2063 passed /
+0 failed / 4 skipped** (exit 0) with all four skips inventoried as
+pre-existing environment guards; topology-correct isolated run (fresh clone,
+`npm ci`, `NIGHTWATCH_PROXY_PORT=19123`, read-only sibling symlinks
+reproducing the required REPOSITORIES layout after an evidenced 8-failure
+topology-missing attempt) **exact-matched canonical at 2063/0/4**. A15
+deletion/de-export sweep: zero Git-level file deletions in the whole mass
+round; 147 removed exports / 55 files with zero surviving external
+references; 2996/2996 relative specifiers resolve; trust roots 46/46
+transitively closed; one deliberate restoration (DEF-01). Privacy/authority
+review clean; catalog count/digest unchanged; promotion authority NONE.
+
+CI truth: Actions run 32554139535 for the exact validated SHA completed in
+~1 second with ZERO steps executed (job 96985562679; log blob absent;
+annotation = account billing/spending-limit block), inspected once without
+retry-looping. Terminal state:
+`PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI`,
+`PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED`. NOT DEV
+accepted, NOT production ready; Phase 11B and Phase 13B remain
+NOT_AUTHORIZED. NEXT ACTION: STOP.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).
