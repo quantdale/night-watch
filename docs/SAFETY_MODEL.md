@@ -1294,6 +1294,33 @@ so the safety evidence is local and not CI-green. No DEV/NEXT/production
 contact, sibling write, credential handling, or product/data operation
 occurred.
 
+## Phase 19 integrated campaign-intelligence safety boundary
+
+The Phase 19 campaign-intelligence layer is additive and LOCAL / SOURCE /
+SYNTHETIC. Its planner, impact, coverage, yield, replay, minimization,
+stability, clustering, confidence, dossier, diagnostics, and cache cores accept
+sanitized metadata only. They have no browser, executor, process, filesystem,
+network, database, AI, self-development, or persistence authority.
+
+Priority is never authority: owner policy, source currentness, semantic
+provenance, unsupported-surface handling, privacy validation, and fail-closed
+gates run before any candidate can be selected. Stale or missing evidence
+reduces coverage/confidence or excludes work; it cannot be converted into a
+positive result. Replay ambiguity and nondeterminism are explicit negative or
+degraded outcomes, not clean passes hidden by retries.
+
+The local operator routes are preview/read-only commands. They do not accept
+an environment selector, load authenticated state, contact DEV/NEXT, or
+publish findings. Structured outputs reject secret-, URL-, identity-, and
+raw-observation-shaped values. Caches are bounded and source-keyed; no raw
+customer/application values, cookies, headers, credentials, or authenticated
+evidence enter source, fixtures, artifacts, findings, or dossiers.
+
+Phase 19 local safety evidence includes hardening PASS, focused and canonical/
+isolated regression parity at 2,293 passed / 4 skipped / 0 failed, and zero
+benign-control/privacy quality-floor regressions. This remains local evidence;
+external CI is inspected and reported separately and never inferred green.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

@@ -64,11 +64,11 @@ selection. Keep legacy readers and Phase 18 behavior compatible.
   COMPLETED.
 - [x] M6 — integrate safe local operator commands and consolidate compatible
   phase-specific wrappers/dead paths. COMPLETED.
-- [ ] M7 — run focused, canonical, isolated, parity, hardening, continuity,
-  and project-state validation; repair all regressions.
+- [x] M7 — run focused, canonical, isolated, parity, hardening, continuity,
+  and project-state validation; repair all regressions. COMPLETED.
 - [ ] M8 — close durable docs, complete REPORT/HANDOFF/STATE, commit and push
   validated checkpoints, inspect external CI once, and leave synchronized
-  clean `main`.
+  clean `main`. IN_PROGRESS.
 
 ## Workstream mapping
 

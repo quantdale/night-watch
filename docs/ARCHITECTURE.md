@@ -1,8 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 17 terminal local/source/synthetic checkpoint
-`482ed51814ce8e8f7d67de7edc9a98786240430c` (focused, affected, canonical and
-topology-correct isolated cones green; external CI blocked), building on the Phase 16CH
+Status: Phase 19 integrated local/source/synthetic implementation checkpoint
+`ddd0e49c22d5650807d9cababcdc159bc4a657ae` (focused, affected, canonical and
+topology-correct isolated full regressions green with exact parity; external CI
+is inspected separately after push), with Phase 18 terminal historical context,
+building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
 blocked), plus Phase 1.2
 containment, private local evidence triage, Phase 7 deterministic
@@ -1348,3 +1350,33 @@ canonical/isolated 2259 passed / 4 skipped / 0 failed exact-parity proof.
 Actions run 32628613509 / job 97167784939 executed zero steps under the known
 external billing/spending block, so this architecture evidence is local green,
 not CI green.
+
+## Phase 19 integrated campaign-intelligence architecture
+
+Phase 19 composes the existing selection, semantic, replay, minimization, and
+triage authorities through a pure bounded planning/evidence layer:
+
+source/change intelligence
+  -> behavior-level impact report
+  -> staged semantic coverage matrix
+  -> explainable campaign plan and priority
+  -> scenario/oracle outcomes and sanitized yield
+  -> replay fidelity V4 and minimization V2
+  -> bounded stability and confidence
+  -> semantic/protocol finding clusters
+  -> deterministic owner dossier and coverage learning
+
+The campaign-intelligence DTOs are versioned and additive. They contain safe
+identities, categorical reasons, bounded scores, source-currentness status,
+coverage stages, replay divergence, proof strength, stability class,
+confidence degradation, and remediation hints. They do not invoke an executor,
+browser, process, filesystem, network, database, AI, self-development, or
+persistence path. The bounded cache keys complete sanitized inputs and
+source-currentness, so changed source cannot reuse an old impact/coverage
+report.
+
+The product boundary is a generic read-only adapter contract. Ripple is the
+only real registered adapter; the second adapter is synthetic-only and exists
+to test generic planning and semantic binding. The local operator commands
+expose status, plan, coverage, campaign preview, findings, and explain output
+without accepting an environment selector or contacting DEV/NEXT.

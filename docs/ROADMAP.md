@@ -1831,3 +1831,34 @@ Phase 18 remains
 strictly LOCAL / SOURCE / SYNTHETIC; real-product acceptance, DEV/NEXT/
 production contact, data or infrastructure work, sibling writes, publication,
 AI authority, promotion, and raw evidence persistence remain out of scope.
+
+## Phase 19 — autonomous bug-yield expansion and integrated campaign intelligence
+
+Phase 19 is the current local/source/synthetic implementation wave. It turns
+the established Phase 9–18 mechanisms into one explicit deterministic loop:
+
+source/change impact → affected behavior/contracts → prioritized campaign plan
+→ semantic/protocol execution → replay → minimization → stability/confidence
+→ clustering → owner dossier → yield and coverage learning.
+
+The additive campaign-intelligence package provides versioned plan, impact,
+coverage, yield, replay V4, minimization V2, nondeterminism, cluster V2,
+confidence V2, and dossier V3 DTOs. Priority is an explainable bounded model
+with reason codes and hard safety/currentness/authority exclusions. Coverage
+is staged rather than Boolean, and yield attribution identifies productive
+scenarios and oracle families. The source impact report expresses affected
+contracts, expectations, scenarios, stale/re-derivation needs, and coverage
+gaps, so planning is behavior-aware rather than filename-only.
+
+Replay divergence, minimality proof strength, instability, duplicate identity,
+confidence degradation, diagnostic remediation, and owner next actions are
+explicit and privacy-safe. A generic product adapter boundary is proven by a
+synthetic-only second-product fixture; the real registry remains Ripple-only.
+The data-driven Phase 19 corpus has 31 adversarial cases.
+
+Local evidence at the implementation checkpoint is focused 12/0, affected
+cone 414/0, synthetic campaign 27/0, owner provenance 91/0, and canonical
+full 2,293 passed / 4 skipped / 0 failed out of 2,297. The established
+topology-correct isolated clone has exactly the same enumeration and skip
+inventory. No Phase 19 capability grants DEV/NEXT/production, cloud/data/
+infrastructure, sibling-write, publication, AI, or self-development authority.

@@ -1,8 +1,12 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-23** at
-> the Phase 17 terminal change-aware campaign/evidence checkpoint
-> `482ed51814ce8e8f7d67de7edc9a98786240430c`, building on the Phase 16CH
+> the Phase 19 integrated campaign-intelligence implementation checkpoint
+> `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; canonical and topology-correct
+> isolated full regressions both pass 2,293 / 4 skipped / 0 failed out of 2,297
+> with exact skip parity. Phase 18 is terminal historical context; external CI
+> is a separately inspected post-push fact. This snapshot is LOCAL / SOURCE /
+> SYNTHETIC only, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
 > 794b32d; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEF-01
@@ -1912,6 +1916,37 @@ persistence occurred. Actions run 32628613509 / job 97167784939 completed as
 failure with zero steps under the external billing/spending block; local green
 is not CI green. Phase 16D remains separately unauthorized; Phase 6 is
 `FROZEN_BY_OWNER`; Phase 11B/13B remain unauthorized.
+
+## Phase 19 — autonomous bug-yield expansion and integrated campaign intelligence
+
+Phase 19 is the current local implementation wave. It composes existing
+Phase 9–18 authorities into an explicit deterministic loop:
+
+source/change impact → affected behavior/contracts → campaign plan
+→ semantic coverage and oracle execution → replay → minimization
+→ stability/confidence → clustering → owner dossier → yield/coverage learning
+
+The additive versioned cores are campaign plan, impact report, coverage
+matrix, yield report, replay fidelity V4, minimization V2, nondeterminism,
+finding clusters V2, confidence V2, and owner dossier V3. Planning uses
+bounded explainable components and reason codes; source currentness, semantic
+authority, safety, and owner policy remain hard gates. Product integration is
+generic at the adapter boundary, while the real registry remains Ripple-only;
+a second product exists only as a synthetic fixture.
+
+The Phase 19 corpus contains 31 data-driven adversarial cases. Focused Phase
+19 tests passed 12/0; the affected compatibility cone passed 414/0;
+campaign:synthetic passed 27/0; owner provenance passed 91/0 on rerun. The
+canonical full suite enumerated 2,297 with 2,293 passed, 4 skipped, and 0
+failed. The topology-correct isolated clone produced the exact same result
+and skip inventory. The four skips remain the three unavailable source-built
+OOPS cases at phase5Api.test.ts:197, :246, :280 and the base-uid case at
+selfDevSandboxConfinement.test.ts:147.
+
+Phase 19 remains LOCAL / SOURCE / SYNTHETIC only. It adds no DEV/NEXT/
+production, data, infrastructure, sibling-write, publication, AI, or
+self-development authority. The owner freeze remains
+FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE.
 
 ## Environment (machine facts)
 

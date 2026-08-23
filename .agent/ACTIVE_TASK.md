@@ -6,12 +6,12 @@ Title: Nightwatch Phase 19 — Autonomous Bug-Yield Expansion and Integrated Cam
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-19-autonomous-bug-yield
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last validated implementation SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last substantive checkpoint SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last documentation checkpoint SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last checkpoint: M6 — integrated intelligence, product adapter, corpus, cache, and local operator surface validated
-Current milestone: M7 — affected regression cone, canonical/isolated validation, and exact parity
-Next action: Run the affected regression cone and integration gates; repair regressions, then record exact canonical/isolated counts before terminal closure
+Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last documentation checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last checkpoint: M7 — canonical and topology-correct isolated full regressions exact-matched locally
+Current milestone: M8 — durable closure records, validated push, and truthful external-CI inspection
+Next action: Reconcile durable docs, run project/continuity gates, push validated checkpoints, inspect Actions once, then close the task
 Authorization class: PHASE_19_AUTONOMOUS_BUG_YIELD_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -62,31 +62,29 @@ infer environment authorization from campaign selection or operator commands.
 
 ## Validation Ledger
 
-Phase 19 validation is pending. The following Phase 18 results are retained
-only as the regression baseline until this task records new results.
+Phase 19 implementation and local validation are complete at the substantive
+checkpoint `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; the documentation
+checkpoint and external-CI fact remain part of M8 closure.
 
 - Bootstrap and Gate Zero were completed from the live starting SHA; no
   external systems were contacted.
-- Current focused results: `npm run typecheck` PASS; Phase 18 semantic-depth
-  22 passed; affected semantic/triage cone 143 passed; owner-provenance 91
-  passed; `npm run hardening:check` PASS; and `npm run campaign:synthetic` 27
-  passed. The focused continuity repair matrix passed 106.
-- Canonical regression: 2,285 enumerated; 2,281 passed; 4 skipped; 0 failed.
-  Skips are the three unavailable source-built OOPS tests at
-  `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, plus
-  `tests/unit/selfDevSandboxConfinement.test.ts:147` (base uid condition).
-  The local Playwright marker is `status=passed`, `failedTests=[]`.
-- `npm run agent:check` passed with three expected checkpoint/legacy warnings;
-  `npm run agent:audit` reported `tasks=61 strict_v2=37 legacy_v1=24
-  strict_errors=0 legacy_warnings=33`; `npm run project:check` passed after
-  the post-repair documentation waypoint.
-- Post-repair canonical and topology-correct isolated regressions both passed
-  2,281 / skipped 4 / failed 0 with exact enumeration and skip parity; both
-  trees are clean.
-- GitHub Actions run `32637996369` / job `97190524900` for pushed head
-  `0a184adc18a5185cfdf00e1b91699ec617983d1b` completed as failure with
-  `steps=[]` under the standing billing/spending restriction; it was inspected
-  once, not retried, and is not claimed green.
+- Focused Phase 19 integration: 12 passed; `npm run typecheck` PASS;
+  `npm run hardening:check` PASS; and `npm run campaign:synthetic` 27 passed.
+- The affected Phase 9–18 compatibility and Phase 19 cone passed 414 / 0.
+- Canonical regression enumerated 2,297 tests: 2,293 passed, 4 skipped,
+  0 failed. The topology-correct isolated clone produced the exact same
+  2,297 / 2,293 / 4 / 0 result and the same four skip identities:
+  `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+  `tests/unit/selfDevSandboxConfinement.test.ts:147`.
+- `npm run test:owner-provenance` passed 91 tests on rerun after a transient
+  `EADDRINUSE` on its first attempt. `npm run agent:check` passed with
+  strict_errors=0 and the expected legacy v1 warnings; project check is
+  recorded after the durable documentation checkpoint.
+- The first isolated attempt used an invalid aggregate `/tmp` topology and
+  was stopped; the corrected clean clone under the canonical sibling root
+  passed with `npm ci`, `NIGHTWATCH_SIBLING_ROOT`, and port `19125`.
+- External CI has not yet been inspected for Phase 19; it will be checked
+  once after the validated push and reported without retries.
 
 ## Decisions
 
@@ -103,10 +101,10 @@ only as the regression baseline until this task records new results.
 
 1. Read `SPEC.md`, `PLAN.md`, and `STATE.md` in this task directory.
 2. Inspect live Git status and the current diff.
-3. Run the smallest validation named by `Exact Next Action`.
-4. Continue the current milestone without reopening Phase 18.
+3. Run the project/continuity gates after the durable documentation edits.
+4. Push only the validated checkpoint, inspect Actions once, and close M8.
 
 ## Completion Snapshot
 
-Not complete. Phase 19 is in progress; no completion claim or external-CI
-claim is made.
+Not complete. Phase 19 local implementation and regression evidence are
+complete, but durable closure and post-push CI inspection remain.

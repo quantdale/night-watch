@@ -2999,3 +2999,28 @@ billing/spending restriction; it is a separate blocked fact and is never
 inferred from local green results. This phase adds no DEV,
 NEXT, production, authenticated, data-plane, cloud/infra, sibling-write,
 publication, AI, or promotion authority.
+
+## D-72 — Phase 19 integrated campaign intelligence and bug-yield expansion
+
+Phase 19 composes the existing Phase 9–18 authorities into an explicit local
+bug-yield loop instead of adding another disconnected campaign framework:
+source/change impact feeds behavior-level contracts and a deterministic plan;
+staged coverage feeds explainable bounded priority; sanitized outcomes feed
+yield accounting; replay V4, minimization V2, stability, clustering,
+confidence V2, and dossier V3 preserve evidence truth and reduce owner noise.
+
+The versioned DTOs are metadata-only and fail closed on stale, unsupported,
+missing, ambiguous, or privacy-unsafe evidence. Priority can explain why a
+candidate was selected or excluded, but cannot bypass owner policy, semantic
+authority, source currentness, or execution safety. The bounded cache is keyed
+by complete sanitized inputs and currentness so source changes cannot reuse
+stale impact/coverage results.
+
+The product boundary is a generic read-only adapter; Ripple remains the only
+real registered product, and a second adapter is synthetic-only. The corpus
+adds 31 data-driven adversarial cases. Local canonical and topology-correct
+isolated regressions both enumerated 2,297 with 2,293 passed, 4 skipped, and
+0 failed, with exact skip parity. This decision adds no DEV/NEXT/production,
+cloud/data/infrastructure, sibling-write, publication, AI, or
+self-development authority and preserves
+FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE.

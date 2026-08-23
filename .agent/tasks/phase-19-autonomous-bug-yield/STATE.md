@@ -6,14 +6,14 @@ Task ID: phase-19-autonomous-bug-yield
 Phase: 19-AUTONOMOUS-BUG-YIELD
 Status: IN_PROGRESS
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last validated implementation SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last substantive checkpoint SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last documentation checkpoint SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
+Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last documentation checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M6 — integrated intelligence, product adapter, corpus, cache, and local operator surface validated
+Last checkpoint: M7 — canonical and topology-correct isolated full regressions exact-matched locally
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 PHASE_19_STATUS: IN_PROGRESS
@@ -24,9 +24,9 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 
 STARTING_SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-LAST_VALIDATED_IMPLEMENTATION_SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-LAST_DOCUMENTATION_CHECKPOINT_SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
+LAST_VALIDATED_IMPLEMENTATION_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+LAST_DOCUMENTATION_CHECKPOINT_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 
 ## Objective
 
@@ -37,11 +37,11 @@ without weakening Nightwatch’s safety model.
 
 ## Current Milestone
 
-Milestone ID: M7
+Milestone ID: M8
 Milestone status: IN_PROGRESS
-What is being attempted: Run the affected regression cone, then canonical and
-topology-correct isolated validation with exact enumeration/skip parity;
-repair any regression before durable docs and terminal closure.
+What is being attempted: Reconcile durable docs, run project/continuity gates,
+push validated checkpoints, inspect external CI once, and complete the
+terminal Phase 19 snapshot.
 
 ## Completed Milestones
 
@@ -66,16 +66,17 @@ repair any regression before durable docs and terminal closure.
 
 ## Work In Progress
 
-The implementation slice is complete locally but not yet terminally
-validated. The focused Phase 19 suite is green; full regression and isolated
-parity remain open. Existing Phase 18 machinery remains the compatibility
-baseline and was composed rather than replaced.
+The implementation slice and all local regression/parity validation are
+complete at `ddd0e49c22d5650807d9cababcdc159bc4a657ae`. Durable documentation,
+project-state confirmation, the validated push, and one external-CI inspection
+remain in M8. Existing Phase 18 machinery remains the compatibility baseline
+and was composed rather than replaced.
 
 ## Exact Next Action
 
-Run the affected regression cone and all integration gates; if they pass,
-record exact counts and begin canonical/isolated parity validation. If any
-test fails, repair the implementation before advancing the milestone.
+Reconcile the durable docs and acceptance ledger, run the continuity/project
+gates on the clean documentation checkpoint, push without force, inspect the
+corresponding Actions run once, and then complete the Phase 19 snapshot.
 
 ## Files Changed
 
@@ -91,11 +92,14 @@ test fails, repair the implementation before advancing the milestone.
 
 ## Validation Ledger
 
-Command: `git status --short --branch && git rev-parse HEAD && git rev-parse origin/main`
-Result: PASS — clean `main`; both refs were `a9dfba332a979b8358763cd737e26d4b4a435c9c` before task-control-plane edits.
+Command: bootstrap Git inspection
+Result: PASS — the task started from clean synchronized `main` at
+`a9dfba332a979b8358763cd737e26d4b4a435c9c`; Phase 18 was terminal and no
+external system was contacted.
 
 Command: `npm run typecheck`
-Result: PASS — Phase 19 implementation and corpus compile cleanly.
+Result: PASS — Phase 19 implementation, operator routes, and corpus compile
+cleanly.
 
 Command: `npx playwright test tests/unit/phase19CampaignIntelligence.test.ts tests/unit/phase19ProductOperator.test.ts --project=nightwatch --workers=1`
 Result: PASS — 12 tests (8 campaign-intelligence + 4 product/operator/corpus/cache).
@@ -103,11 +107,33 @@ Result: PASS — 12 tests (8 campaign-intelligence + 4 product/operator/corpus/c
 Command: `npm run hardening:check`
 Result: PASS — offline structural safety invariants hold.
 
+Command: `npm run campaign:synthetic`
+Result: PASS — 27 tests.
+
+Command: `npm run test:owner-provenance`
+Result: PASS on rerun — 91 tests; the first attempt encountered a transient
+`EADDRINUSE` on the test port and was not treated as a code failure.
+Command: affected Phase 9–18 compatibility and Phase 19 regression cone
+Result: PASS — 414 tests, 0 failures.
+
+Command: canonical full regression
+Result: PASS — 2,297 enumerated; 2,293 passed; 4 skipped; 0 failed.
+The exact skip identities were `tests/unit/phase5Api.test.ts:197`, `:246`,
+`:280`, and `tests/unit/selfDevSandboxConfinement.test.ts:147`.
+
+Command: topology-correct isolated full regression
+Result: PASS — clean clone created under the canonical sibling root with
+`npm ci`, read-only sibling visibility, `NIGHTWATCH_SIBLING_ROOT`, and
+`NIGHTWATCH_PROXY_PORT=19125`; 2,297 enumerated; 2,293 passed; 4 skipped;
+0 failed. Enumeration and skip identities exactly matched canonical.
+
 Command: `npm run agent:check`
-Result: PASS with the expected checkpoint/legacy warnings; strict_errors=0.
+Result: PASS with `strict_errors=0`; the expected legacy v1 task warnings
+remain and were not mass-migrated.
 
 Command: `npm run project:check`
-Result: PENDING — CURRENT_STATE still contains the pre-Phase-19 snapshot and will be reconciled after implementation evidence exists.
+Result: PENDING until the durable Phase 19 documentation checkpoint is
+committed cleanly.
 
 ## Decisions Made During This Task
 
@@ -131,6 +157,14 @@ integration rather than disconnected abstractions.
 - The existing change selector emits a bare SHA-256 selection digest; the
   Phase 19 impact validator accepts that existing form as well as prefixed
   safe digests without weakening privacy validation.
+- The first full canonical run while the implementation tree was dirty
+  failed two self-development adoption checks with
+  `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`; a clean implementation checkpoint
+  rerun passed and no assertion was weakened.
+- The first isolated attempt used a temporary aggregate topology that did not
+  satisfy the repository’s sibling-root assumptions and was stopped. A fresh
+  clone under the canonical sibling root with the Phase 18 procedure passed
+  and exactly matched canonical enumeration and skip identities.
 
 ## Blockers
 
@@ -150,11 +184,12 @@ NONE — local repository inspection and task-record edits only.
 
 1. Read `SPEC.md`, `PLAN.md`, and this `STATE.md`.
 2. Inspect live Git status and the current diff.
-3. Run the affected regression cone and integration gates.
-4. Continue M7 from the exact counts; do not claim terminal completion until
-   canonical/isolated parity and project truth are recorded.
+3. Run `npm run agent:check` and `npm run project:check` after the durable
+   documentation checkpoint is committed cleanly.
+4. Push without force, inspect the matching Actions run once, record the
+   truthful result, then complete M8.
 
 ## Completion Snapshot
 
-Not complete. Phase 19 is in progress; no final SHA, completion status, or
-external-CI success is claimed.
+Not complete. Local implementation and exact canonical/isolated evidence are
+recorded; durable closure and the post-push external-CI inspection remain.
