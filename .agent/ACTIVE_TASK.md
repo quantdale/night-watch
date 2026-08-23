@@ -6,12 +6,12 @@ Title: Nightwatch Phase 18 — Semantic Contract Depth, Replay Fidelity and Conf
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-18-semantic-replay-confidence
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last validated implementation SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last substantive checkpoint SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last documentation checkpoint SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last checkpoint: M6 — dossier, corpus, parser/privacy, static safety, and canonical validation (working tree)
+Last validated implementation SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
+Last substantive checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
+Last documentation checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
+Last checkpoint: M6 — dossier, corpus, parser/privacy, static safety, and canonical validation (e58ea162e601aba2c341f5b5ee18f40a635251af)
 Current milestone: M7 — isolated parity, checkpoint publication, and terminal handoff
-Next action: inspect the validated diff/privacy surface, create the first coherent implementation checkpoint, then run clean-tree continuity/project checks and isolated parity before pushing
+Next action: run the topology-correct isolated regression from the validated e58ea162e601aba2c341f5b5ee18f40a635251af checkpoint, then reconcile parity and push only after clean validation
 Authorization class: PHASE_18_SEMANTIC_REPLAY_TRIAGE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -72,7 +72,7 @@ credentials, or real-finding persistence.
   The local Playwright marker is `status=passed`, `failedTests=[]`.
 - `npm run agent:check` passed with three expected warnings; `npm run agent:audit`
   reported `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0
-  legacy_warnings=33`. `npm run project:check` awaits a clean checkpoint tree.
+  legacy_warnings=33`. `npm run project:check` passes on the clean e58ea162e601aba2c341f5b5ee18f40a635251af tree.
 - Isolated parity, clean-tree closure, checkpoint push, CI truth, and terminal
   documentation remain pending.
 
@@ -97,6 +97,6 @@ tree; discover live authority from Git.
 
 ## Completion Snapshot
 
-Not complete. Local gates and canonical regression are green in the working
-tree; checkpoint publication, isolated parity, CI truth, and terminal
-documentation remain.
+Not complete. The validated implementation checkpoint is
+e58ea162e601aba2c341f5b5ee18f40a635251af; isolated parity, push, CI truth,
+and terminal documentation remain.

@@ -6,9 +6,9 @@ Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 Status: IN_PROGRESS
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last validated implementation SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last substantive checkpoint SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last documentation checkpoint SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
+Last validated implementation SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
+Last substantive checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
+Last documentation checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_18_STATUS: IN_PROGRESS_LOCAL_SOURCE_SYNTHETIC
@@ -20,7 +20,7 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: M6 — dossier, corpus, parser/privacy, static safety, and canonical validation (working tree)
+Last checkpoint: M6 — dossier, corpus, parser/privacy, static safety, and canonical validation (e58ea162e601aba2c341f5b5ee18f40a635251af)
 
 ## Objective
 
@@ -58,17 +58,18 @@ the first durable checkpoint is not yet committed.
 
 ## Work In Progress
 
-M6 validation is complete: dossier completeness, hostile-document handling,
+M6 validation is complete at e58ea162e601aba2c341f5b5ee18f40a635251af:
+dossier completeness, hostile-document handling,
 privacy boundaries, static pure-core seams, the permanent corpus, the affected
 compatibility cone, and the canonical regression are green. M7 is the
 topology-correct isolated regression and checkpoint closure.
 
 ## Exact Next Action
 
-Inspect the validated diff and privacy surface, then create the first coherent
-Phase 18 implementation checkpoint. After that checkpoint, run the clean-tree
-continuity/project gates and the established topology-correct isolated
-regression before pushing.
+Run the established topology-correct isolated regression from the validated
+e58ea162e601aba2c341f5b5ee18f40a635251af checkpoint, compare its exact
+enumeration and skip inventory with canonical, and push only after parity and
+the clean-tree gates hold.
 
 ## Files Changed
 
@@ -101,10 +102,10 @@ regression before pushing.
 - Phase 15 F2/F11/F12 compatibility expectations were repaired to record
   unresolved semantic minimization when the journey executor cannot provide a
   verified reduced replay; no confidence or test gate was weakened.
-- `npm run agent:check` passed with the expected dirty-baseline/legacy warnings;
-  `npm run agent:audit` reported `tasks=61 strict_v2=37 legacy_v1=24
-  strict_errors=0 legacy_warnings=33`. `npm run project:check` was correctly
-  deferred by the dirty-tree guard and must be rerun after checkpointing.
+- `npm run agent:check` passed with the expected legacy warnings before this
+  documentation checkpoint; `npm run agent:audit` reported
+  `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0 legacy_warnings=33`.
+  `npm run project:check` passed on the clean e58ea162e601aba2c341f5b5ee18f40a635251af tree.
 - Isolated parity, final clean-tree checks, checkpoint push, and CI truth remain
   pending.
 

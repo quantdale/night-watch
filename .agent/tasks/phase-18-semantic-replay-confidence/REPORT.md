@@ -6,17 +6,17 @@ Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 Starting SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
-Last validated implementation SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c` (working tree; checkpoint pending)
-Last substantive checkpoint SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
-Last documentation checkpoint SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
+Last validated implementation SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
+Last substantive checkpoint SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
+Last documentation checkpoint SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
 Live HEAD authority: `DISCOVER_FROM_GIT`
 
 ## Current position
 
-Gate Zero and the implementation waves are complete in the working tree.
-Local gates and the canonical regression are green; the implementation
-checkpoint, isolated parity, push, CI truth, and terminal closure remain. No
-external system has been contacted.
+Gate Zero and the implementation waves are complete in the validated
+`e58ea162e601aba2c341f5b5ee18f40a635251af` implementation checkpoint. Local
+gates and the canonical regression are green; isolated parity, push, CI truth,
+and terminal closure remain. No external system has been contacted.
 
 ## Workstreams completed
 
@@ -30,8 +30,8 @@ external system has been contacted.
   bounded rejection reasons.
 - M5: confidence gates/degradation, semantic identity hardening, and
   change-impact × semantic coverage accounting.
-- M6 validation is complete; M7 checkpoint, isolated parity, and closure are
-  pending.
+- M6 validation and the first implementation checkpoint are complete; M7
+  isolated parity and closure are pending.
 
 ## Defects
 
@@ -64,8 +64,7 @@ bounded, provenance/currentness-aware, and does not persist raw fixture values.
 - `npm run agent:check`: PASS with three expected dirty-baseline/legacy
   warnings; `npm run agent:audit`: `tasks=61 strict_v2=37 legacy_v1=24
   strict_errors=0 legacy_warnings=33`.
-- `npm run project:check`: deferred by the expected dirty-tree guard; rerun
-  after the implementation checkpoint.
+- `npm run project:check`: PASS on the clean implementation checkpoint.
 
 ## Safety
 
