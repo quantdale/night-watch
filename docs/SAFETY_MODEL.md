@@ -1281,6 +1281,19 @@ the historical public action-ID representation cannot distinguish repeated
 occurrences. These are synthetic/local contracts; no real credentials,
 authenticated evidence, customer values, or external findings enter them.
 
+The Phase 17 implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c`
+passed the focused 27/0 and affected 142/0 cones, then canonical and
+topology-correct isolated full regressions at 2259 passed / 4 skipped / 0
+failed with exact parity. The isolated run used `npm ci`, read-only aggregate
+sibling symlinks, and `NIGHTWATCH_PROXY_PORT=19123`. An integrated privacy
+regression involving the legitimate `ripple-account-inventory.read` target
+was repaired by requiring an identifier-shaped value after an identity label;
+the repair has a permanent positive-control test. Actions run 32628613509 /
+job 97167784939 executed zero steps under the external billing/spending block,
+so the safety evidence is local and not CI-green. No DEV/NEXT/production
+contact, sibling write, credential handling, or product/data operation
+occurred.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

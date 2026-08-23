@@ -1,15 +1,17 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-23** at
-> the Phase 17 change-aware campaign/evidence implementation checkpoint
-> `17486ff13de9b8588a9ab5273c8eff882bda9036`, building on the Phase 16CH
+> the Phase 17 terminal change-aware campaign/evidence checkpoint
+> `482ed51814ce8e8f7d67de7edc9a98786240430c`, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
 > 794b32d; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEF-01
 > and DEF-02 repaired with permanent regressions; 171-scenario corpus x3
 > deterministic repeats with all thirteen quality floors zero; canonical AND
 > topology-correct isolated complete regressions both 2232 passed / 0 failed /
-> 4 skipped with exact parity; Actions run 32624917568 executed zero steps
+> 4 skipped with exact parity; Phase 17 canonical and isolated complete
+> regressions both 2259 passed / 0 failed / 4 skipped with exact parity;
+> Actions run 32628613509 / job 97167784939 executed zero steps
 > under the standing external billing/spending block), building on the
 > Phase 16A portfolio implementation
 > (`PHASE_16A_STATUS: COMPLETE
@@ -155,7 +157,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_16B_STATUS` | `BLOCKED_RUNTIME_BINDING_MISSING` — contained DEV portfolio campaign acceptance terminated at the runtime-binding gate with ZERO DEV contact: both owner tokens recorded before any contact, candidate plan/handoff proven byte-deterministic and parser-valid but never frozen for execution because current source provides no safe path from the inert handoff into the existing bounded campaign runtime (no consumer of dev-handoff/plan-manifest outside src/core/portfolio/** + bin/portfolio.mjs + unit tests; bin/phase7-real.mjs accepts no plan input; the literal gate token is consumed by nothing; three of five default plan targets are synthetic-fixture-only). No bypass implemented, no source change, no manufactured checkpoint; post-run gates green (typecheck/hardening PASS; focused Phase 16A+16H suites 98/0; campaign:synthetic 27/0; owner-provenance 91/0); a future separately authorized task must design a SAFE consumption seam plus a real-approved-universe portfolio builder before any retry |
 | `PHASE_16C_STATUS` | `COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` — portfolio runtime binding + real approved universe implemented local/source/synthetic under `PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY` (2026-08-23): canonical runtime-profile linkage module; deterministic real-universe builder over canonical registries (synthetic fixture identities excluded; exploration members explicitly runtime-restricted); strict admission of inert handoff+plan+universe+authorization with bounded categorical reasons (handoff stays executable:false; authorization non-mutating); versioned monotone-restrictive budget mapping v1 (elementwise min vs the approved bounded profile); schema-OPTIONAL manifest `portfolioBinding` in campaignId+fingerprint via conditional spread (legacy manifests byte-stable); prepare freezes ordinal-zero checkpoint with zero executor callbacks and resume re-verifies frozen fingerprints + fresh authorization before executor construction; single opt-in launcher input pair (`--portfolio-plan=`/`--portfolio-authorization=`) with legacy surfaces unchanged. New suites 33/0; Phase-16A+16H portfolio suites incl. campaign.test 125/0; affected Phase 12–15 compatibility 145/0; campaign:synthetic 27/0; owner-provenance 91/0; all ten quality floors zero; seam x3 + CLI runtime-plan x3 byte-deterministic. Canonical/isolated whole-repo regressions deferred to Phase-16CH hardening (`PHASE_16CH_HARDENING: REQUIRED_NEXT`); `PHASE_16D_DEV_RETRY: REQUIRES_SEPARATE_OWNER_AUTHORIZATION`; DEV WAS NOT EXECUTED |
 | `PHASE_16CH_STATUS` | `BLOCKED_EXTERNAL_CI` — Phase 16CH terminal local/source/synthetic hardening on earned SHA `794b32df443ae8c9a520182ef97b7a2c9985ba82`: DEF-01 reserve feasibility and DEF-02 sanitized unknown-field diagnostics repaired with permanent regressions; 171-scenario adversarial corpus x3 byte-identical with all thirteen floors zero; affected compatibility 172/0; campaign:synthetic 27/0; owner-provenance 91/0; canonical complete Playwright 2232 passed / 0 failed / 4 skipped == topology-correct isolated run 2232/0/4 with exact skip parity; catalog count/digest unchanged; promotion authority NONE; Actions run 32624917568 / job 97158631282 completed failure before any step under the external billing/spending block; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; Phase 16D remains `NOT_AUTHORIZED` |
-| `PHASE_17_STATUS` | `IN_PROGRESS` — implementation checkpoint `17486ff13de9b8588a9ab5273c8eff882bda9036` connects source selection to bounded portfolio allocation, hardens baseline/privacy/replay evidence boundaries, and adds a 9-case synthetic source-change corpus; focused 26/0 and affected 142/0 are green; canonical/isolated full regression remains pending |
+| `PHASE_17_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — terminal implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c` connects source selection to bounded portfolio allocation, hardens baseline/privacy/replay evidence boundaries, and adds a 9-case synthetic source-change corpus; DEF-17-01..06 are repaired; focused 27/0, readiness/rehearsal repair matrix 52/0, affected 142/0, and canonical/isolated full regression 2259/0/4 are green with exact parity; Actions run 32628613509 / job 97167784939 executed zero steps under the external billing/spending block; Phase 16D remains `NOT_AUTHORIZED` |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -1870,10 +1872,10 @@ Actions run 32624917568 / job 97158631282 completed as failure before any
 step under the standing external billing/spending condition; local green is
 not represented as CI green. Phase 16D remains separately unauthorized.
 
-## Phase 17 — change-aware campaign and evidence hardening (implementation checkpoint)
+## Phase 17 — change-aware campaign and evidence hardening (terminal local; CI externally blocked)
 
-`PHASE_17_STATUS: IN_PROGRESS` on implementation checkpoint
-`17486ff13de9b8588a9ab5273c8eff882bda9036`. The pure
+`PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` on implementation
+checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c`. The pure
 `src/core/portfolio/changeImpact.ts` overlay consumes an already-produced
 Phase 3 `SelectionResult` and an approved portfolio, carries only bounded
 categorical impact facts, and reuses the canonical allocator. Direct, shared,
@@ -1889,18 +1891,27 @@ contradictory references, and projects hostile duplicate/identity/URL-shaped
 diagnostics to a fixed redaction marker. Repeated-action minimization remains
 historical-schema compatible but refuses to construct occurrence-specific
 proven minimality evidence when the public action-ID surface is ambiguous.
-`corpus/phase17/changeImpactFixtures.ts` and the focused 26-test matrix cover
+`corpus/phase17/changeImpactFixtures.ts` and the focused 27-test matrix cover
 direct/shared/transitive/irrelevant/ambiguous/deleted/renamed/stale/
 simultaneous source changes, malformed baselines, privacy sentinels,
 repeated-action replay, and three-run byte stability. The affected
-change-intelligence/portfolio/replay cone is 142 passed / 0 failed.
+change-intelligence/portfolio/replay cone is 142 passed / 0 failed. The first
+integrated run exposed seven Phase 15P readiness failures because broad
+identity redaction misclassified `ripple-account-inventory.read`; DEF-17-06
+narrowed the detector to identifier-shaped values and the repair matrix passed
+52/0.
 
+The final canonical full regression passed 2259 / 0 / 4 out of 2263, and a
+fresh topology-correct isolated clone with `npm ci`, read-only aggregate
+sibling symlinks, `NIGHTWATCH_SIBLING_ROOT`, and
+`NIGHTWATCH_PROXY_PORT=19123` passed the exact same result and skip inventory.
 This is LOCAL / SOURCE / SYNTHETIC evidence only. No DEV/NEXT/production
 contact, authenticated session, product/data mutation, datastore/cloud/infra
 operation, sibling write, publication, credential handling, or real finding
-persistence occurred. Phase 16D remains separately unauthorized; Phase 6 is
-`FROZEN_BY_OWNER`; Phase 11B/13B remain unauthorized. Full canonical and
-topology-correct isolated Phase 17 regressions are the next validation gate.
+persistence occurred. Actions run 32628613509 / job 97167784939 completed as
+failure with zero steps under the external billing/spending block; local green
+is not CI green. Phase 16D remains separately unauthorized; Phase 6 is
+`FROZEN_BY_OWNER`; Phase 11B/13B remain unauthorized.
 
 ## Environment (machine facts)
 

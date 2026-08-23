@@ -4,24 +4,26 @@
 
 Task ID: phase-17-change-aware-campaign-evidence-hardening
 Phase: 17-CHANGE-AWARE-CAMPAIGN-EVIDENCE-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-Last validated implementation SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
-Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
+Last validated implementation SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+Last substantive checkpoint SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+Last documentation checkpoint SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M6 repair — DEF-17-06 privacy-boundary repair is focused-green after the canonical regression exposed seven readiness failures.
-Current milestone: M6 — affected compatibility, integrated validation, checkpoint/push, and truthful CI inspection.
-Next action: Run the affected compatibility cone and Level 3 ladder, then rerun canonical and isolated full regression.
+Last checkpoint: M7 — terminal continuity closure after exact canonical/isolated parity and truthful external-CI inspection.
+Current milestone: COMPLETE — terminal local/source/synthetic closure; external CI blocked.
+Next action: STOP — future engineering requires a new local/source/synthetic task and fresh scope.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
+LAST_VALIDATED_IMPLEMENTATION_SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_17_STATUS: IN_PROGRESS
+PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16D_STATUS: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
@@ -36,8 +38,8 @@ source/docs and no new authority.
 
 ## Current Milestone
 
-M6 — repair DEF-17-06, rerun the affected compatibility cone and integrated
-validation, then finish checkpoint/push and topology parity.
+COMPLETE — M0–M7 closed; local/source/synthetic evidence is complete and the
+inspected external CI job executed zero steps.
 
 ## Completed Milestones
 
@@ -64,12 +66,17 @@ validation, then finish checkpoint/push and topology parity.
   caused by broad identity redaction misclassifying `ripple-account-inventory`;
   the detector now requires an identifier-shaped value after an identity label,
   and the focused readiness/rehearsal/Phase 17 matrix is 52 passed / 0 failed.
+- M6 validation — the affected compatibility cone passed 142/0; the clean
+  canonical full regression passed 2259/0/4 and the fresh topology-correct
+  isolated regression passed the exact same 2259/0/4 with the same skip set.
+- M7 — Actions run `32628613509` / job `97167784939` was inspected once and
+  completed as failure with `steps=[]` under the known billing/spending block;
+  continuity, project, and safety truth were closed without claiming CI green.
 
 ## Exact Next Action
 
-Run the affected compatibility cone, then `npm run typecheck`,
-`npm run hardening:check`, and the remaining Level 3 gates; record exact output
-before rerunning the canonical and topology-correct isolated full regressions.
+STOP. The task is terminal. Future engineering must use a new
+LOCAL / SOURCE / SYNTHETIC task; Phase 16D remains separately unauthorized.
 
 ## Files Changed
 
@@ -95,19 +102,22 @@ before rerunning the canonical and topology-correct isolated full regressions.
 
 ## Work In Progress
 
-Implementation and DEF-17-06 repair are complete locally; affected
-compatibility, integrated validation, and durable closure remain in progress.
+None. Implementation, integrated validation, exact topology parity, durable
+documentation, and continuity closure are complete locally.
 
 ## Blockers
 
-None.
+None for local closure. External CI is classified as blocked because the
+inspected job executed zero steps; this is not an unresolved local blocker.
 
 ## Validation Ledger
 
 - Phase 16CH closure baseline before this task: typecheck, hardening,
   synthetic campaign, owner provenance, continuity, project check, canonical
   2232 passed / 4 skipped / 0 failed, and isolated exact parity were green.
-- Phase 17 focused matrix: 26 passed / 0 failed.
+- Phase 17 focused matrix after DEF-17-06 regression coverage: 27 passed / 0
+  failed.
+- Readiness/rehearsal plus Phase 17 repair matrix: 52 passed / 0 failed.
 - Change-intelligence + Phase 16 portfolio/replay compatibility cone:
   142 passed / 0 failed.
 - `npm run typecheck`: PASS.
@@ -117,7 +127,15 @@ None.
   `READINESS_PRIVACY_BLOCKED:target-id` and were traced to DEF-17-06.
 - DEF-17-06 focused repair: typecheck PASS; readiness/rehearsal/Phase 17
   matrix 52 passed / 0 failed.
-- Canonical rerun and isolated full Phase 17 completion runs: pending.
+- Final canonical full regression: 2259 passed / 4 skipped / 0 failed out of
+  2263 tests.
+- Fresh isolated clone with `npm ci`, read-only aggregate sibling symlinks,
+  `NIGHTWATCH_SIBLING_ROOT`, and `NIGHTWATCH_PROXY_PORT=19123`: 2259 passed /
+  4 skipped / 0 failed out of 2263; exact parity and clean isolated tree.
+- Skip inventory in both runs: `tests/unit/phase5Api.test.ts:195`, `:244`,
+  `:278`, and `tests/unit/selfDevSandboxConfinement.test.ts:143`.
+- Actions run `32628613509` / job `97167784939`: completed failure with zero
+  steps; external billing/spending block; inspected once and not retried.
 
 ## Safety Events
 
@@ -139,6 +157,9 @@ publication, credential handling, or real finding persistence.
   principal Phase 17 architecture target.
 - Broad identity-shaped diagnostic redaction must distinguish product target
   vocabulary (`ripple-account-inventory`) from identifier-shaped values.
+- The first integrated run exposed that distinction as a real compatibility
+  defect; DEF-17-06 is repaired and covered by a product-target positive
+  control plus the full canonical/isolated parity proof.
 
 ## Deferred / Follow-Up
 
@@ -151,13 +172,17 @@ publication, credential handling, or real finding persistence.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, then this task's SPEC.md, PLAN.md, and STATE.md. Inspect
-Git status/diff, run the smallest current focused validation, and continue the
-exact next action above. Keep updates here after each milestone or material
-decision.
+This task is terminal. For historical verification, read ACTIVE_TASK.md, this
+task's SPEC.md, PLAN.md, STATE.md, REPORT.md, and HANDOFF.md, then discover
+live Git state. Do not resume this task; future work requires a new
+LOCAL / SOURCE / SYNTHETIC task.
 
 ## Completion Snapshot
 
-Not complete. Phase 17 implementation and DEF-17-06 repair are locally
-validated; affected compatibility, full regression parity, CI inspection, and
-terminal continuity closure remain in progress.
+COMPLETE. Implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c`
+passed the focused and affected cones, Level 3 gates, canonical full
+regression `2259/4/0`, and exact topology-correct isolated full regression
+`2259/4/0`. The tree and `origin/main` are clean/equal at the final
+documentation descendant; Actions run `32628613509` / job `97167784939`
+executed zero steps under the external billing/spending block, so the
+terminal classification is local complete / external CI blocked, not CI green.

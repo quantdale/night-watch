@@ -2,7 +2,7 @@
 
 Task ID: phase-17-change-aware-campaign-evidence-hardening
 Phase: 17-CHANGE-AWARE-CAMPAIGN-EVIDENCE-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE (terminal local/source/synthetic; external CI blocked)
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Starting State
@@ -10,7 +10,7 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 - Live starting SHA: `e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2` (discover from
   Git; this is the Phase 16CH documentation closure descendant).
 - Last substantive implementation checkpoint:
-  `794b32df443ae8c9a520182ef97b7a2c9985ba82`.
+  `482ed51814ce8e8f7d67de7edc9a98786240430c`.
 - Phase 16CH: terminal local evidence, `BLOCKED_EXTERNAL_CI` because its
   inspected Actions run executed zero steps; do not reopen it.
 - Phase 6: `FROZEN_BY_OWNER`; Phase 16D: not authorized.
@@ -61,8 +61,8 @@ ambiguous minimality evidence rather than guessing occurrence identity.
 - M5 — expand adversarial change/privacy/determinism corpus and operator
   reporting. DONE.
 - M6 — integrated validation, canonical and isolated regression parity,
-  docs alignment, checkpoint/push, and truthful CI inspection. IN_PROGRESS.
-- M7 — terminal continuity closure and handoff. PENDING.
+  docs alignment, checkpoint/push, and truthful CI inspection. DONE.
+- M7 — terminal continuity closure and handoff. DONE.
 
 ## Validation ladder
 
@@ -113,4 +113,6 @@ supplied local `SelectionResult` evidence remain deferred and unauthorized.
 All acceptance rows are evidence-backed; focused and affected tests, typecheck,
 hardening, synthetic campaign, continuity/project checks, canonical full
 regression, and isolated parity are green; docs/task state are terminal and
-truthful; final Git HEAD equals origin/main and the tree is clean.
+truthful; final Git HEAD equals origin/main and the tree is clean. GitHub
+Actions remains a truthful external-CI block because the inspected job ran
+zero steps.

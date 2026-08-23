@@ -1768,11 +1768,11 @@ Phase 16D remains a separately owner-gated, unauthorized contained-DEV
 decision. The next development program must remain LOCAL / SOURCE / SYNTHETIC
 and must be routed through a new task after a fresh repository audit.
 
-## Phase 17 — change-aware campaign and evidence hardening (implementation checkpoint)
+## Phase 17 — change-aware campaign and evidence hardening (terminal local; CI externally blocked)
 
-Phase 17 is the current local/source/synthetic development program under
+Phase 17 was the local/source/synthetic development program under
 `PHASE_17_LOCAL_SOURCE_SYNTHETIC_CAMPAIGN_INTELLIGENCE_AND_EVIDENCE_HARDENING`.
-Implementation checkpoint `17486ff13de9b8588a9ab5273c8eff882bda9036` adds:
+Implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c` adds:
 
 - a pure source-impact overlay from Phase 3 `SelectionResult` into the
   approved Phase 16 portfolio allocator, with explicit direct/shared/
@@ -1786,11 +1786,19 @@ Implementation checkpoint `17486ff13de9b8588a9ab5273c8eff882bda9036` adds:
 - privacy-safe duplicate diagnostics and occurrence-honest replay evidence
   that refuses to promote repeated-action ambiguity to proven minimality;
 - a reusable nine-case source-change corpus and repeated-run byte-stability
-  proofs.
+  proofs;
+- a narrowed privacy identity detector after the integrated regression found
+  that broad account vocabulary rejected the legitimate
+  `ripple-account-inventory.read` target.
 
-The checkpoint is locally typechecked and hardening-checked; the Phase 17
-focused matrix is 26/0 and the affected compatibility cone is 142/0. Full
-canonical and topology-correct isolated regressions remain the next gate.
+The terminal local evidence is typecheck PASS, hardening PASS, Phase 17
+focused 27/0, readiness/rehearsal repair matrix 52/0, affected compatibility
+142/0, synthetic campaign 27/0, owner provenance 91/0, canonical full
+2259/0/4, and topology-correct isolated full 2259/0/4 with exact parity. The
+isolated clone used `npm ci`, read-only aggregate sibling symlinks, and
+`NIGHTWATCH_PROXY_PORT=19123`; its Nightwatch tree was clean. Actions run
+32628613509 / job 97167784939 executed zero steps under the standing
+external billing/spending block, so this is not a CI-green claim.
 This phase grants no DEV/NEXT/production, data/infra, sibling-write,
 publication, AI/selfDev/promotion, or Phase 16D authority. Phase 6 remains
 `FROZEN_BY_OWNER` and Phase 11B/13B remain unauthorized.

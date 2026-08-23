@@ -2948,3 +2948,27 @@ sibling write, publication, credential handling, or real finding persistence
 occurred. Full canonical and isolated regressions remain required before
 terminal closure. Phase 16D remains separately unauthorized; Phase 6 remains
 `FROZEN_BY_OWNER`; Phase 11B/13B remain unauthorized.
+
+## D-70 — Phase 17 integrated closure and privacy false-positive repair
+
+**Context.** The first full Phase 17 canonical regression found seven shared
+Phase 15P readiness failures after the new identity-shaped diagnostic detector
+classified the legitimate product target `ripple-account-inventory.read` as
+an account identifier. This was a compatibility defect in the new privacy
+boundary, not an environment mismatch.
+
+**Decision.** Preserve fail-closed identity redaction for account/customer-like
+identifier values, but require an identifier-shaped value after the identity
+label. Product route vocabulary remains valid. Add a permanent positive control
+for the legitimate target and retain the hostile numeric/uppercase identity
+controls; do not weaken the existing sentinel, secret, URL, or email guards.
+
+**Evidence and consequences.** The repair is included in implementation
+checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c`. The readiness/rehearsal
+plus Phase 17 repair matrix passed 52/0; affected compatibility passed 142/0;
+canonical and topology-correct isolated full regressions both passed 2259 /
+skipped 4 / failed 0 with exact parity. Actions run `32628613509` / job
+`97167784939` completed with zero steps under the external billing/spending
+block, so the result is local complete / external-CI-blocked, not CI green.
+No authority, source scope, product environment, sibling write, or data-plane
+operation was added.

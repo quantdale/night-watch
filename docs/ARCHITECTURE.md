@@ -1,8 +1,8 @@
 # Nightwatch Architecture
 
-Status: Phase 17 local/source/synthetic implementation checkpoint
-`17486ff13de9b8588a9ab5273c8eff882bda9036` (focused and affected cones green;
-canonical/isolated full regression pending), building on the Phase 16CH
+Status: Phase 17 terminal local/source/synthetic checkpoint
+`482ed51814ce8e8f7d67de7edc9a98786240430c` (focused, affected, canonical and
+topology-correct isolated cones green; external CI blocked), building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
 blocked), plus Phase 1.2
 containment, private local evidence triage, Phase 7 deterministic
@@ -1302,7 +1302,7 @@ full regressions are exactly 2,232 passed / 4 skipped / 0 failed. This is
 LOCAL/SOURCE/SYNTHETIC evidence only; CI was externally blocked before steps,
 and Phase 16D remains separately owner-gated and unauthorized.
 
-## Phase 17 change-aware campaign and evidence hardening (local architecture)
+## Phase 17 change-aware campaign and evidence hardening (terminal local architecture)
 
 Phase 17 adds a pure bridge from the established Phase 3 source selector into
 the Phase 16 approved portfolio without changing runtime authority:
@@ -1336,9 +1336,15 @@ historical result schema, but `buildMinimalityEvidence` refuses to reconstruct
 occurrence-specific proven minimality from repeated action IDs.
 
 The implementation is local/source/synthetic only. The nine-case
-`corpus/phase17/changeImpactFixtures.ts` matrix and 26-test Phase 17 suite
+`corpus/phase17/changeImpactFixtures.ts` matrix and 27-test Phase 17 suite
 cover direct, shared, transitive, irrelevant, ambiguous, deleted, renamed,
 stale, and simultaneous changes, malformed documents, hostile diagnostics,
 repeated-action replay, and three-run byte stability. Phase 16D remains
 separately unauthorized; Phase 6 is frozen and no sibling repository is
-modified.
+modified. The first integrated run caught a legitimate `ripple-account-
+inventory.read` target being rejected by broad identity redaction; the
+identifier-shaped repair is covered by a positive control and the final
+canonical/isolated 2259 passed / 4 skipped / 0 failed exact-parity proof.
+Actions run 32628613509 / job 97167784939 executed zero steps under the known
+external billing/spending block, so this architecture evidence is local green,
+not CI green.

@@ -3,21 +3,22 @@
 Task ID: phase-17-change-aware-campaign-evidence-hardening
 Phase: 17-CHANGE-AWARE-CAMPAIGN-EVIDENCE-HARDENING
 Title: Nightwatch Phase 17 — Change-Aware Campaign and Evidence Hardening
-Status: IN_PROGRESS
+Status: NONE
 Task directory: .agent/tasks/phase-17-change-aware-campaign-evidence-hardening
 Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-Last validated implementation SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
-Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
-Last checkpoint: M6 repair — DEF-17-06 privacy-boundary repair is focused-green after the canonical regression exposed seven readiness failures
-Current milestone: M6 — affected compatibility, integrated validation, checkpoint/push, and truthful CI inspection
-Next action: Run the affected compatibility cone and Level 3 ladder, then rerun canonical and isolated full regression
+Last validated implementation SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+Last substantive checkpoint SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+Last documentation checkpoint SHA: 482ed51814ce8e8f7d67de7edc9a98786240430c
+Last checkpoint: M7 — terminal continuity closure after exact canonical/isolated parity and truthful external-CI inspection
+Current milestone: COMPLETE — terminal local/source/synthetic closure; external CI blocked
+Next action: STOP — future engineering requires a new local/source/synthetic task and fresh scope
 Authorization class: PHASE_17_LOCAL_SOURCE_SYNTHETIC_CAMPAIGN_INTELLIGENCE_AND_EVIDENCE_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_17_STATUS: IN_PROGRESS
+PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16D_STATUS: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
