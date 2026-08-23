@@ -11,9 +11,9 @@ Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M5 — source-impact, parser/privacy, replay, corpus, and byte-determinism implementation wave validated by focused and affected tests.
-Current milestone: M6 — integrated validation, docs alignment, checkpoint/push, and truthful CI inspection.
-Next action: Run the Level 3 validation ladder, update durable project/task truth from the resulting evidence, then execute canonical and isolated full regression.
+Last checkpoint: M6 repair — DEF-17-06 privacy-boundary repair is focused-green after the canonical regression exposed seven readiness failures.
+Current milestone: M6 — affected compatibility, integrated validation, checkpoint/push, and truthful CI inspection.
+Next action: Run the affected compatibility cone and Level 3 ladder, then rerun canonical and isolated full regression.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
@@ -36,8 +36,8 @@ source/docs and no new authority.
 
 ## Current Milestone
 
-M6 — implementation waves are locally green; integrated validation, docs
-alignment, checkpoint/push, and final topology parity remain.
+M6 — repair DEF-17-06, rerun the affected compatibility cone and integrated
+validation, then finish checkpoint/push and topology parity.
 
 ## Completed Milestones
 
@@ -60,12 +60,16 @@ alignment, checkpoint/push, and final topology parity remain.
 - M5 — reusable Phase 17 source-change corpus covers direct, shared,
   transitive, irrelevant, ambiguous, deleted, renamed, stale, and simultaneous
   changes; repeated source-aware allocation output is byte-identical.
+- M6 repair — canonical regression found seven Phase 15P readiness failures
+  caused by broad identity redaction misclassifying `ripple-account-inventory`;
+  the detector now requires an identifier-shaped value after an identity label,
+  and the focused readiness/rehearsal/Phase 17 matrix is 52 passed / 0 failed.
 
 ## Exact Next Action
 
-Run `npm run typecheck`, `npm run hardening:check`, the Phase 17 and affected
-compatibility suites, then the remaining Level 3 gates; record exact output
-before the canonical and topology-correct isolated full regressions.
+Run the affected compatibility cone, then `npm run typecheck`,
+`npm run hardening:check`, and the remaining Level 3 gates; record exact output
+before rerunning the canonical and topology-correct isolated full regressions.
 
 ## Files Changed
 
@@ -78,7 +82,7 @@ before the canonical and topology-correct isolated full regressions.
 - `src/core/portfolio/changeImpact.ts` (pure source-to-portfolio overlay)
 - `src/core/changeIntelligence/{selection.ts,baseline.ts}`
 - `src/core/triage/{correlation.ts,minimizer.ts}`
-- `src/core/campaign/runtimeValidation.ts`
+- `src/core/campaign/runtimeValidation.ts` (DEF-17-06 privacy-boundary repair)
 - `src/core/portfolio/{allocation.ts,manifest.ts,index.ts}`
 
 ## Decisions Made During This Task
@@ -91,8 +95,8 @@ before the canonical and topology-correct isolated full regressions.
 
 ## Work In Progress
 
-Implementation wave is complete locally; integrated validation and durable
-closure remain in progress.
+Implementation and DEF-17-06 repair are complete locally; affected
+compatibility, integrated validation, and durable closure remain in progress.
 
 ## Blockers
 
@@ -108,7 +112,12 @@ None.
   142 passed / 0 failed.
 - `npm run typecheck`: PASS.
 - `npm run hardening:check`: PASS.
-- Canonical and isolated full Phase 17 completion runs: pending.
+- First canonical full regression after the implementation wave: 2251 passed /
+  4 skipped / 7 failed; all seven failures shared
+  `READINESS_PRIVACY_BLOCKED:target-id` and were traced to DEF-17-06.
+- DEF-17-06 focused repair: typecheck PASS; readiness/rehearsal/Phase 17
+  matrix 52 passed / 0 failed.
+- Canonical rerun and isolated full Phase 17 completion runs: pending.
 
 ## Safety Events
 
@@ -128,6 +137,8 @@ publication, credential handling, or real finding persistence.
   candidates are occurrence-aware internally.
 - Phase 16 portfolio allocation has no source-impact overlay; this is the
   principal Phase 17 architecture target.
+- Broad identity-shaped diagnostic redaction must distinguish product target
+  vocabulary (`ripple-account-inventory`) from identifier-shaped values.
 
 ## Deferred / Follow-Up
 
@@ -147,5 +158,6 @@ decision.
 
 ## Completion Snapshot
 
-Not complete. The current snapshot is the M1 reproduction waypoint above;
-Phase 17 implementation and completion validation remain in progress.
+Not complete. Phase 17 implementation and DEF-17-06 repair are locally
+validated; affected compatibility, full regression parity, CI inspection, and
+terminal continuity closure remain in progress.

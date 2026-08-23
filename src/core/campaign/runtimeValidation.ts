@@ -117,11 +117,21 @@ const ERROR_DETAIL_MAX_LENGTH = 160;
 const ERROR_DETAIL_SAFE_RE = /^[A-Za-z0-9_.:/@()+, -]*$/;
 /** Secret/sentinel shapes that must never be echoed even when charset-clean. */
 const ERROR_DETAIL_FORBIDDEN_RE =
-  /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization|https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:customer|account|tenant|user|email)[-_ :/][A-Z0-9][A-Z0-9._:-]{2,})/i;
+  /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization|https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i;
+
+/**
+ * Identity labels are not sufficient evidence on their own: legitimate
+ * product target IDs such as `ripple-account-inventory.read` use the same
+ * vocabulary. Require an identifier-shaped value after the label so those
+ * bounded route names remain valid while account/customer-like sentinels do
+ * not cross a durable diagnostic boundary.
+ */
+const ERROR_DETAIL_IDENTITY_RE =
+  /(?:[Cc]ustomer|[Aa]ccount|[Tt]enant|[Uu]ser|[Ee]mail)[-_ :/](?:[0-9][A-Za-z0-9._:-]{2,}|[A-Z][A-Za-z0-9._:-]{2,}|[a-f0-9]{16,})/;
 
 /** True when `text` bears sentinel/secret-shaped content (fail-closed signal). */
 export function containsForbiddenErrorDetail(text: string): boolean {
-  return ERROR_DETAIL_FORBIDDEN_RE.test(text);
+  return ERROR_DETAIL_FORBIDDEN_RE.test(text) || ERROR_DETAIL_IDENTITY_RE.test(text);
 }
 
 /** Bounded categorical projection of a rejected input value for error text. */

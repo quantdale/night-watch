@@ -162,10 +162,16 @@ test.describe('Phase 17 M1 defect reproductions', () => {
     for (const hostile of [
       'synthetic.owner@example.test',
       'customer-SYNTHETIC_12345',
+      'account-123456789',
       'https://synthetic.example.test/download?token=SYNTHETIC_TOKEN',
     ]) {
       expect(safeErrorDetail(hostile)).toBe('<redacted-detail>');
     }
+  });
+
+  test('product target vocabulary is not mistaken for an identity value', () => {
+    expect(safeErrorDetail('ripple-account-inventory.read')).toBe('ripple-account-inventory.read');
+    expect(safeErrorDetail('ripple-user-settings.read')).toBe('ripple-user-settings.read');
   });
 
   test('ambiguous repeated-action deletion evidence cannot claim proven minimality', () => {

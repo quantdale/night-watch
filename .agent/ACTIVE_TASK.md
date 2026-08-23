@@ -8,9 +8,9 @@ Task directory: .agent/tasks/phase-17-change-aware-campaign-evidence-hardening
 Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
 Last validated implementation SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
 Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
-Last checkpoint: M5 — source-impact, parser/privacy, replay, corpus, and byte-determinism implementation wave validated by focused and affected tests
-Current milestone: M6 — integrated validation, docs alignment, checkpoint/push, and truthful CI inspection
-Next action: Run the Level 3 validation ladder, update durable project/task truth from the resulting evidence, then execute canonical and isolated full regression
+Last checkpoint: M6 repair — DEF-17-06 privacy-boundary repair is focused-green after the canonical regression exposed seven readiness failures
+Current milestone: M6 — affected compatibility, integrated validation, checkpoint/push, and truthful CI inspection
+Next action: Run the affected compatibility cone and Level 3 ladder, then rerun canonical and isolated full regression
 Authorization class: PHASE_17_LOCAL_SOURCE_SYNTHETIC_CAMPAIGN_INTELLIGENCE_AND_EVIDENCE_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
