@@ -138,15 +138,16 @@ seam terminates in the existing adapter/orchestrator).
 
 ## 17. Source/checkpoint SHAs and changed dependency cone
 
-Starting SHA `18d030d…`; earned implementation checkpoint discoverable from
-Git (this document does not predict its containing commit). Full dependency
-cone listed in RUNTIME_BINDING_HANDOFF ("Changed dependency cone").
+Starting SHA `18d030d…`; earned implementation checkpoint
+`8e8684dcf93bb01b3fe52e56355b2aa59f13567e` (single source-bearing Phase-16C
+commit, pushed fast-forward). Full dependency cone listed in
+RUNTIME_BINDING_HANDOFF ("Changed dependency cone").
 
 ## 18. Exact GitHub Actions truth
 
-Inspected ONCE after the pushed source checkpoint if a run materialized under
-the standing external billing/spending block; observed truth recorded in task
-STATE closure addendum; never retried in a loop. Local green is never upgraded
+Inspected ONCE after the push: Actions run `32618008361` for head `8e8684d…`
+completed/failure in ~3 seconds with ZERO steps executed under the standing
+external billing/spending block; never retried. Local green is never upgraded
 to CI-green.
 
 ## 19. Deferred exhaustive hardening and DEV retry authority

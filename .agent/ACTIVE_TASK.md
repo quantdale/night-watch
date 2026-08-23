@@ -6,7 +6,7 @@ Title: Nightwatch Phase 16C — Portfolio Runtime Binding & Real Approved Univer
 Status: NONE
 Task directory: .agent/tasks/phase-16c-portfolio-runtime-binding-real-universe
 Starting SHA: 18d030d2e9003b778d28ac8a94350f66c7c572ac
-Last validated implementation SHA: 1d6d8759bbba0145962fa0e65810d6f32fa41445
+Last validated implementation SHA: 8e8684dcf93bb01b3fe52e56355b2aa59f13567e
 Last checkpoint: DISCOVER_FROM_GIT
 Current milestone: NONE — Phase 16C is terminal; W1–W8 implemented and validated locally
 Next action: STOP — Phase-16CH hardening is REQUIRED_NEXT under its own owner authorization
@@ -41,6 +41,10 @@ campaign:synthetic 27/0; owner-provenance 91/0; all ten floors zero).
 Successor ordering: Phase-16CH exhaustive hardening is REQUIRED_NEXT under its
 own owner authorization; a Phase-16D contained DEV acceptance requires a
 separate fresh token AFTER that hardening.
+Phase 16C earned implementation checkpoint:
+`8e8684dcf93bb01b3fe52e56355b2aa59f13567e` (pushed fast-forward;
+HEAD == origin/main verified; Actions run 32618008361 zero steps under the
+standing external billing block, inspected once).
 Predecessor anchors: Phase 16A implementation `1737e30afb64a1aed722f61182d87a4f2f6e3bb4`;
 Phase 16H earned `1d6d8759bbba0145962fa0e65810d6f32fa41445`; Phase 16B terminal
 BLOCKED_RUNTIME_BINDING_MISSING with zero DEV contact.

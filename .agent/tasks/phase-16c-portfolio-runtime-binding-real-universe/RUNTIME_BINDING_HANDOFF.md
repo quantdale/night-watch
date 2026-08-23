@@ -11,9 +11,10 @@ Phase-16C execution evidence. DEV WAS NOT EXECUTED.
 - Starting SHA: `18d030d2e9003b778d28ac8a94350f66c7c572ac`
   (== origin/main at activation; publication package fast-forwarded from
   `8e99ce72cbabf451df26d7260811630b3d50ba76`).
-- Validated implementation checkpoint: discoverable from Git — the single
-  Phase-16C source checkpoint commit produced by this task (live HEAD authority;
-  this document never predicts its own containing SHA).
+- Validated implementation checkpoint:
+  `8e8684dcf93bb01b3fe52e56355b2aa59f13567e` (single Phase-16C source
+  checkpoint; pushed fast-forward; HEAD == origin/main verified post-push).
+  Live HEAD remains Git-discovered authority.
 - Authorization class: `PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY`
   (LOCAL/SOURCE/SYNTHETIC only).
 

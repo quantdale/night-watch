@@ -6,8 +6,8 @@ Task ID: phase-16c-portfolio-runtime-binding-real-universe
 Phase: 16C-PORTFOLIO-RUNTIME-BINDING-REAL-UNIVERSE
 Status: COMPLETE
 Starting SHA: 18d030d2e9003b778d28ac8a94350f66c7c572ac
-Last validated implementation SHA: 1d6d8759bbba0145962fa0e65810d6f32fa41445
-Last substantive checkpoint SHA: 1d6d8759bbba0145962fa0e65810d6f32fa41445
+Last validated implementation SHA: 8e8684dcf93bb01b3fe52e56355b2aa59f13567e
+Last substantive checkpoint SHA: 8e8684dcf93bb01b3fe52e56355b2aa59f13567e
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -21,10 +21,9 @@ PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 
-Note: the two SHA anchors above are CARRIED-FORWARD predecessor anchors
-(Phase 16H earned implementation checkpoint) per the continuity validator's
-requirement that anchors name real ancestor commits; this task's OWN earned
-checkpoint replaces them at M8 after the validated source commit lands.
+Note: the two SHA anchors name THIS task's earned implementation checkpoint
+(single Phase-16C source checkpoint; pushed fast-forward with
+HEAD == origin/main verified).
 
 ## Authorization record
 
@@ -142,7 +141,12 @@ Node v22.22.1, working tree = implementation under validation:
 - npm run test:owner-provenance: 91 passed / 0 failed.
 - Determinism: bin/portfolio.mjs runtime-plan x3 byte-identical
   (sha256 43a4d64b683b6df6…); in-suite admission->manifest x3 identical.
-- git diff --check + agent/project checks: executed at closure (see REPORT).
+- git diff --check: CLEAN.
+- GitHub Actions (single inspection): run 32618008361 for `8e8684d…`
+  completed/failure in ~3s under the standing external billing/spending block
+  (zero steps executed); never retried. Local green is not upgraded to CI-green.
+- agent:check PASS (expected warnings); project:check PASS post-commit on the
+  clean tree (see REPORT).
 
 ## Decisions Made During This Task
 
@@ -229,9 +233,8 @@ that hardening. Live HEAD is always discovered from Git.
 
 Task complete: Phase 16C closed locally as
 IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING. The validated implementation is
-the single Phase-16C source checkpoint commit (discoverable from live Git;
-this record carries the predecessor anchor `1d6d8759…` until superseded by a
-documentation descendant). Moderate pack green: typecheck PASS,
+the single Phase-16C source checkpoint commit `8e8684dcf93bb01b3fe52e56355b2aa59f13567e`
+(pushed fast-forward; HEAD == origin/main verified post-push). Moderate pack green: typecheck PASS,
 hardening:check PASS, new suites 33/0, portfolio+campaign 125/0,
 compatibility 145/0, campaign:synthetic 27/0, owner-provenance 91/0; all ten
 quality floors zero; determinism x3 identical on seam and CLI surfaces.
