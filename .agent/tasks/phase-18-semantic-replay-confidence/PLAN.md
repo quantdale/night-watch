@@ -66,7 +66,8 @@ deterministic failure state.
   dead-surface audit. COMPLETED.
 - M7 — integrated validation, canonical/isolated parity, docs truth, checkpoint
   pushes, and terminal handoff. IN_PROGRESS; implementation checkpoint
-  `e58ea162e601aba2c341f5b5ee18f40a635251af` is validated.
+  `937f887413e5231b385940bd310b7708bc4a0a0e` is validated after the
+  continuity allowlist repair.
 
 ## Gate Zero Reconstruction
 
@@ -119,7 +120,8 @@ boundaries. New defects are recorded in DEFECT_LEDGER.md.
 Any semantic class lacking source/fixture provenance, any cross-surface path
 requiring unauthorized runtime access, real-environment acceptance, and any
 unbounded or unsafe abstraction remain deferred. Isolated parity, checkpoint
-push, closure, and final CI truth are the remaining M7 work.
+post-repair canonical/isolated parity, push, closure, and final CI truth are
+the remaining M7 work.
 
 ## Completion Criteria
 

@@ -6,12 +6,12 @@ Title: Nightwatch Phase 18 — Semantic Contract Depth, Replay Fidelity and Conf
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-18-semantic-replay-confidence
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
-Last validated implementation SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
-Last substantive checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
-Last documentation checkpoint SHA: e58ea162e601aba2c341f5b5ee18f40a635251af
-Last checkpoint: M6 — dossier, corpus, parser/privacy, static safety, and canonical validation (e58ea162e601aba2c341f5b5ee18f40a635251af)
+Last validated implementation SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
+Last substantive checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
+Last documentation checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
+Last checkpoint: M7 — task-control allowlist repair and focused validation (937f887413e5231b385940bd310b7708bc4a0a0e)
 Current milestone: M7 — isolated parity, checkpoint publication, and terminal handoff
-Next action: run the topology-correct isolated regression from the validated e58ea162e601aba2c341f5b5ee18f40a635251af checkpoint, then reconcile parity and push only after clean validation
+Next action: rerun canonical and topology-correct isolated full regressions from the validated 937f887413e5231b385940bd310b7708bc4a0a0e checkpoint, then reconcile parity and push only after clean validation
 Authorization class: PHASE_18_SEMANTIC_REPLAY_TRIAGE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -64,7 +64,7 @@ credentials, or real-finding persistence.
 - Current focused results: `npm run typecheck` PASS; Phase 18 semantic-depth
   22 passed; affected semantic/triage cone 143 passed; owner-provenance 91
   passed; `npm run hardening:check` PASS; and `npm run campaign:synthetic` 27
-  passed.
+  passed. The focused continuity repair matrix passed 106.
 - Canonical regression: 2,285 enumerated; 2,281 passed; 4 skipped; 0 failed.
   Skips are the three unavailable source-built OOPS tests at
   `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, plus
@@ -72,9 +72,10 @@ credentials, or real-finding persistence.
   The local Playwright marker is `status=passed`, `failedTests=[]`.
 - `npm run agent:check` passed with three expected warnings; `npm run agent:audit`
   reported `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0
-  legacy_warnings=33`. `npm run project:check` passes on the clean e58ea162e601aba2c341f5b5ee18f40a635251af tree.
-- Isolated parity, clean-tree closure, checkpoint push, CI truth, and terminal
-  documentation remain pending.
+  legacy_warnings=33`; `npm run project:check` will be rerun after the clean
+  documentation checkpoint for 937f887413e5231b385940bd310b7708bc4a0a0e.
+- Post-repair canonical/isolated parity, clean-tree closure, checkpoint push,
+  CI truth, and terminal documentation remain pending.
 
 ## Decisions
 
@@ -98,5 +99,5 @@ tree; discover live authority from Git.
 ## Completion Snapshot
 
 Not complete. The validated implementation checkpoint is
-e58ea162e601aba2c341f5b5ee18f40a635251af; isolated parity, push, CI truth,
-and terminal documentation remain.
+937f887413e5231b385940bd310b7708bc4a0a0e; post-repair full regressions,
+push, CI truth, and terminal documentation remain.

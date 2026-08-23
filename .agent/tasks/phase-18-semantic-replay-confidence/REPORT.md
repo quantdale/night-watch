@@ -6,17 +6,18 @@ Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 Starting SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
-Last validated implementation SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
-Last substantive checkpoint SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
-Last documentation checkpoint SHA: `e58ea162e601aba2c341f5b5ee18f40a635251af`
+Last validated implementation SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
+Last substantive checkpoint SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
+Last documentation checkpoint SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
 Live HEAD authority: `DISCOVER_FROM_GIT`
 
 ## Current position
 
-Gate Zero and the implementation waves are complete in the validated
-`e58ea162e601aba2c341f5b5ee18f40a635251af` implementation checkpoint. Local
-gates and the canonical regression are green; isolated parity, push, CI truth,
-and terminal closure remain. No external system has been contacted.
+Gate Zero and the implementation waves are complete in validated checkpoint
+`937f887413e5231b385940bd310b7708bc4a0a0e`.
+The continuity allowlist repair is focused-green; post-repair full canonical
+and isolated parity, push, CI truth, and terminal closure remain. No external
+system has been contacted.
 
 ## Workstreams completed
 
@@ -40,6 +41,12 @@ and terminal closure remain. No external system has been contacted.
   replay receipts, occurrence binding, actual reduced-evaluation checks, and
   strict unresolved behavior when journey reduction is unsupported. Permanent
   focused regressions are green; FULL_GREEN awaits canonical/isolated runs.
+- `DEF-18-02`: required Phase 18 control-plane document updates were falsely
+  classified as stale implementation changes because the continuity checker
+  omitted `HANDOFF.md`, `WORKSTREAMS.md`, `ACCEPTANCE_MATRIX.md`, and
+  `DEFECT_LEDGER.md` from its approved checkpoint paths. The exact allowlist
+  and focused regression are repaired; FULL_GREEN awaits post-repair full
+  canonical/isolated runs.
 
 ## Semantic capabilities added
 
@@ -52,6 +59,7 @@ bounded, provenance/currentness-aware, and does not persist raw fixture values.
 ## Validation to date
 
 - `npm run typecheck`: PASS.
+- Continuity allowlist repair matrix: 106 passed.
 - Phase 18 semantic-depth test: 22 passed.
 - Affected semantic/triage compatibility cone: 143 passed.
 - Owner-provenance tests: 91 passed.
@@ -64,7 +72,8 @@ bounded, provenance/currentness-aware, and does not persist raw fixture values.
 - `npm run agent:check`: PASS with three expected dirty-baseline/legacy
   warnings; `npm run agent:audit`: `tasks=61 strict_v2=37 legacy_v1=24
   strict_errors=0 legacy_warnings=33`.
-- `npm run project:check`: PASS on the clean implementation checkpoint.
+- `npm run project:check`: the clean e58 implementation checkpoint passed;
+  rerun after the current 937f887 documentation checkpoint.
 
 ## Safety
 
