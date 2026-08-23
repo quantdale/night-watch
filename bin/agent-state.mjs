@@ -331,7 +331,7 @@ function gitHead(root, errors) {
 const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
-  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER|MASS_IMPLEMENTATION_HANDOFF)\.md$/,
+  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|HANDOFF|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER|MASS_IMPLEMENTATION_HANDOFF)\.md$/,
   // Durable program artifacts mandated by AGENTS.md and the multi-session
   // program plans (HARDENING_HANDOFF/MASTER_PLAN; SESSION_* specs), plus the
   // Phase-15P parallel-execution artifacts (PROPOSAL, SUBAGENT_LEDGER,

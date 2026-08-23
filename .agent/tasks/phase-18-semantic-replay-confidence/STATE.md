@@ -126,6 +126,9 @@ the clean-tree gates hold.
   Minimal replay occurrence ordinals are carried alongside legacy action IDs.
 - Source currentness is re-evaluated explicitly; stale/ambiguous/missing
   evidence cannot be current HIGH.
+- The required task `HANDOFF.md` is an approved continuity/documentation
+  descendant; its omission from the checker allowlist was repaired as
+  `DEF-18-02`, without widening approval to arbitrary task files.
 
 ## Discoveries
 

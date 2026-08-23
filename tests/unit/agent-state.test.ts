@@ -661,6 +661,7 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
       '.agent/README.md',
       '.agent/tasks/phase-test/STATE.md',
       '.agent/tasks/phase-test/REPORT.md',
+      '.agent/tasks/phase-test/HANDOFF.md',
       'corpus/phase6/README.md',
       'corpus/phase6/runtime-binding-audit.json',
       'docs/ARCHITECTURE.md',
