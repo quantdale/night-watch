@@ -7,13 +7,13 @@ Phase: 21-SEMANTIC-GAP-CLOSURE
 Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, and Differential Replay Saturation
 Status: IN_PROGRESS
 Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-Last validated implementation SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-Last substantive checkpoint SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M7 — graph, quality, dossier, operator, corpus, and privacy integration
+Last checkpoint: M8 — compatibility, full regression, parity, and closure repair
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 PHASE_21_STATUS: IN_PROGRESS
@@ -25,8 +25,8 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 
 STARTING_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+LAST_VALIDATED_IMPLEMENTATION_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 
 ## Objective
 
@@ -37,7 +37,7 @@ source-proof boundaries.
 
 ## Current Milestone
 
-M8 — compatibility, full regression, parity, and closure repair.
+M9 — durable closure, push, one CI inspection, and terminal handoff.
 
 ## Completed Milestones
 
@@ -98,30 +98,40 @@ M8 — compatibility, full regression, parity, and closure repair.
 - M7 completed graph normalization, quality levels, V5 dossier, operator
   views, adversarial/privacy corpus, and operation telemetry. The final graph
   is 239 nodes / 233 edges / 3 residual gaps. The baseline ledger preserves all
-  86 identities: 83 closed, 0 actionable, and 3 irreducible (one unsupported
-  source syntax and two duplicate-equivalence proofs not mechanically
-  established). The full corpus is 151 cases across 25 families; the Phase 21
-  addition is 63 cases across 10 families. The integrated campaign is 67
-  generated / 67 applicable / 67 detected / 0 surviving, 54 benign / 0 false
-  positives, 67 replayed / 67 minimized / 67 high-confidence.
+  86 identities: 83 obsolete after graph rebuild, 0 actionable, and 3
+  irreducible source-proof records (one unsupported source syntax and two
+  duplicate-equivalence proofs not mechanically established). The full corpus
+  is 151 cases across 23 families; the Phase 21 addition is 63 cases across 10
+  families. The integrated campaign is 67 generated / 67 applicable / 67
+  detected / 0 surviving, 54 benign / 0 false positives, 67 replayed / 67
+  minimized / 67 high-confidence.
 - M8 began with a 1,295-test Phase 9–21 cone. Three legacy operator tests
   failed because the additive CLI changed the historical plan/contracts shape
   and explicit process exit truncated the larger gap JSON. The wrapper now
   drains stdout, legacy fields remain at their original locations, and Phase
   21 output is additive. The repaired Phase 19–21 focused cone passes 48/48.
+- M8 terminal validation passed the complete Phase 9–21 cone at 1,295/1,295,
+  `npm run test:owner-provenance` at 91/91, canonical full Playwright at
+  2,333 enumerated / 2,329 passed / 4 skipped / 0 failed, and a fresh
+  topology-correct isolated full suite at the exact same 2,333 / 2,329 / 4 / 0
+  result. The four skip identities are `tests/unit/phase5Api.test.ts` lines
+  197, 246, and 280, plus `tests/unit/selfDevSandboxConfinement.test.ts` line
+  147. The first isolated attempt had a wrongly nested sibling-root fixture;
+  the corrected attempt used read-only aggregate links at the resolver's
+  expected parent and established exact parity.
 
 ## Work In Progress
 
-Run the repaired complete Phase 9–21 cone. If green, run owner provenance,
-canonical full Playwright, and the topology-correct isolated full suite; then
-record exact enumeration/skip parity before terminal documentation and Git
-closure.
+Prepare the terminal task records and documentation checkpoint. External CI
+must be inspected exactly once after the validated push; local validation and
+external CI truth remain separate.
 
 ## Exact Next Action
 
-Run the repaired complete Phase 9–21 cone, then the owner-provenance and full
-canonical/isolated parity gates. Repair any regression before advancing to
-terminal documentation.
+Update the terminal report/handoff, acceptance matrix, plan, ACTIVE_TASK, and
+project snapshot with the exact M8 evidence; run the scoped checks on a clean
+checkpoint, push without force, inspect Actions once, then record the result
+and perform terminal continuity/project validation.
 
 ## Files Changed
 
@@ -145,6 +155,31 @@ Result: PASS — exact baseline recorded above; no external systems contacted.
 Command: `kimi-worker doctor`
 Result: PASS — optional read-only bridge healthy; worker output is advisory
 only and no worker mutation was permitted.
+
+Command: Phase 9–21 compatibility cone
+Result: PASS — 1,295/1,295 tests; 0 failures; 0 unexpected skips. The initial
+run exposed three additive-CLI compatibility defects; the repaired rerun is
+green and the historical assertions were not weakened.
+
+Command: `npm run test:owner-provenance`
+Result: PASS — 91/91 tests; 0 failures.
+
+Command: canonical full Playwright regression
+Result: PASS — 2,333 enumerated; 2,329 passed; 4 skipped; 0 failed. The exact
+skip identities are `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+`tests/unit/selfDevSandboxConfinement.test.ts:147`.
+
+Command: topology-correct isolated full Playwright regression
+Result: PASS — fresh clone at implementation checkpoint
+`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a` with `npm ci` and read-only sibling
+links at the resolver's expected parent; 2,333 enumerated; 2,329 passed; 4
+skipped; 0 failed.
+
+Command: canonical/isolated parity
+Result: PASS — exact enumeration 2,333, exact result tuple 2,329/4/0, and
+exact four skip identities. A prior isolated setup attempt placed the sibling
+links one directory too deep and was discarded as a topology setup defect;
+the corrected topology is the passing result above.
 
 ## Decisions Made During This Task
 
@@ -186,6 +221,7 @@ Next Action without broad rediscovery.
 
 ## Completion Snapshot
 
-IN_PROGRESS. Terminal measurements and final Git/CI truth are not yet
-available. Live HEAD remains discovered from Git; this task must resume from
-the Exact Next Action above.
+IN_PROGRESS pending the durable documentation checkpoint, push, and one
+post-push Actions inspection. The validated implementation is
+`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`; live HEAD remains discovered from
+Git.

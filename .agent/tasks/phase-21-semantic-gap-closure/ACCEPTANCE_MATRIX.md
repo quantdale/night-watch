@@ -12,6 +12,6 @@
 | A08 | Metamorphic exercise | Remaining relations exercised only where mechanically justified, with benign controls | PASS_LOCAL — 4/7 exercised; 3 proof-limited exclusions explicit |
 | A09 | Quality/graph/planner | Quality levels, duplicate normalization, gap-driven deterministic closure cycle and cache counters | PASS_LOCAL — graph 239/233/3; deterministic plan and telemetry |
 | A10 | Dossier/operator | Dossier V5 and local gap/replay/minimization/mutation views with safe evidence | PASS_LOCAL — V5 and operator commands green; legacy CLI cone repaired |
-| A11 | Corpus/privacy/performance | Data-driven expanded adversarial/privacy/cache corpus; zero floors/regressions | PASS_LOCAL — 151 cases / 25 families; privacy and benign floors zero |
-| A12 | Compatibility/safety | Phase 9–21 cone, typecheck, hardening, owner provenance, campaign, continuity, project, full canonical/isolated parity | IN_PROGRESS |
+| A11 | Corpus/privacy/performance | Data-driven expanded adversarial/privacy/cache corpus; zero floors/regressions | PASS_LOCAL — 151 cases / 23 families; privacy and benign floors zero |
+| A12 | Compatibility/safety | Phase 9–21 cone, typecheck, hardening, owner provenance, campaign, continuity, project, full canonical/isolated parity | PASS_LOCAL — 1,295/1,295 cone; typecheck/hardening/campaign/owner provenance PASS; canonical and isolated 2,333/2,329/4/0 with exact parity |
 | A13 | Terminal truth | Clean synchronized main, final implementation checkpoint, one truthful Actions inspection, complete handoff | IN_PROGRESS |

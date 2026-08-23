@@ -71,9 +71,12 @@ return only bounded categories/digests.
 - [x] M7 — graph normalization, coverage quality, dossier V5, operator views,
   corpus/privacy/performance/cache integration, and consolidation. Evidence:
   final graph 239/233/3; ledger 83 closed, 0 actionable, 3 irreducible;
-  full-lifecycle quality for 21 contracts; 151 adversarial cases / 25
+  full-lifecycle quality for 21 contracts; 151 adversarial cases / 23
   families; V5 and local operator views green.
-- [ ] M8 — focused/compatibility/full/parity validation and regression repair.
+- [x] M8 — focused/compatibility/full/parity validation and regression repair.
+  Evidence: Phase 9–21 cone 1,295/1,295; owner provenance 91/91; canonical
+  and topology-correct isolated full suites 2,333/2,329/4/0 with exact skip
+  identity parity.
 - [ ] M9 — terminal documentation, validated commit/push, one CI inspection,
   synchronized clean main, and final handoff.
 

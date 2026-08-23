@@ -1415,3 +1415,34 @@ mutants are additive inputs to the existing Phase 19 coverage/planner
 authority; priority cannot authorize execution. Source-keyed caches are
 bounded and include source identity/digest in their key, while unknown syntax,
 stale evidence, unsupported projections, and unsafe paths fail closed.
+
+## Phase 21 semantic gap closure architecture
+
+Phase 21 closes lifecycle gaps through the existing Phase 19/20 seams. It does
+not create a new execution authority:
+
+```text
+Phase 20 graph + exact gap census
+  -> versioned closure ledger and deterministic closure plan
+  -> ephemeral source-bound membership comparison
+  -> explicit surface evidence and fixed semantic alignment
+  -> synthetic mutation and differential campaign
+  -> contract-bound replay equivalence
+  -> dependency-aware semantic minimization
+  -> coverage quality, graph normalization, dossier V5, operator views
+```
+
+Membership is categorical and bounded. Opaque allowed/observed values are
+compared only inside the ephemeral projection context; result objects contain
+categories, bounded cardinalities, and safe digests, never raw members or
+identity tokens. Differential pairing requires explicit source-bound
+equivalence evidence; scalar/list, absent/default, and set alignment rules are
+versioned and unknown transformations fail closed. Replay reproduction is
+bound to the semantic contract and occurrence identity, while minimization
+retains explicit prerequisite edges and the original violation identity.
+
+The terminal synthetic graph is 239 nodes / 233 edges / 3 residual gaps,
+with 21 admitted cross-surface pairs and 21 full-lifecycle contracts. The
+remaining residuals are one unsupported source proof and two duplicate-
+equivalence joins that lack mechanical proof. Coverage and operator output are
+local, additive, deterministic, and authority-inert.

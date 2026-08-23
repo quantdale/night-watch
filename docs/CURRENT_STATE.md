@@ -1997,3 +1997,62 @@ four skips are `tests/unit/phase5Api.test.ts:195`, `:244`, `:278`, and
 The one post-push Actions inspection for the synchronized checkpoint timed out
 at the GitHub API before returning a run; no run/job/steps data was available,
 so external CI is not called green and was not retried.
+
+## Phase 21 — semantic gap closure, privacy-safe membership, and differential replay saturation
+
+Phase 21 is the local/source/synthetic successor to terminal Phase 20. It
+starts from `7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae`; the validated
+implementation checkpoint is `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`.
+Phase 19 and Phase 20 remain terminal and unchanged. The owner freeze remains
+`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+
+The immutable Phase 20 baseline is 157 graph nodes / 151 edges / 86 gaps,
+with 20 differential-projection, 16 mechanically-provable-uncovered, 18
+replay, 15 minimization, 2 duplicate-semantic-coverage, and 1 analyzer-
+unsupported campaign-facing reason. It has 34 generated / 32 applicable / 32
+detected / 0 surviving mutants, 31 benign controls / 0 benign false positives,
+and 32 replayed / minimized / high-confidence detections.
+
+Phase 21 adds the versioned closure ledger, bounded source-bound membership
+categories, explicit scalar/list/default/set alignment, deterministic pair
+discovery, contract-bound replay equivalence, dependency-aware minimization,
+scenario-binding suggestions, coverage-quality levels, graph normalization,
+dossier V5, local gap-burn-down views, operation telemetry, and a data-driven
+privacy corpus. The final graph is 239 nodes / 233 edges / 3 residual gaps.
+All 86 baseline identities are preserved: 83 are obsolete after graph rebuild,
+0 remain actionable, and 3 are irreducible source-proof records (one
+unsupported source syntax and two duplicate-equivalence proofs without a
+mechanical join). Differential discovery is 22 candidate rows / 21 admitted
+pairs, up from one explicit Phase 20 pair. Replay gaps fall from 18 to 0 and
+minimization gaps from 15 to 0; the integrated campaign has 67 replay attempts
+and 67 dependency-proven semantic fixed-point reductions. Twenty-one admitted
+contracts reach `FULL_LIFECYCLE` quality.
+
+Privacy-safe membership emits only bounded categories such as `ALL_ALLOWED`,
+`SOME_DISALLOWED`, `EXACT_ALLOWED_SET`, `STRICT_SUBSET`,
+`SUPERSET_OR_UNKNOWN_MEMBER`, `MISSING`, `AMBIGUOUS`, and `TRUNCATED`.
+Allowed and observed values are compared only in an ephemeral projection
+context; raw values, identity tokens, source enum literals, and reconstructible
+members do not cross the projection boundary or enter dossiers, findings,
+fingerprints, or errors. The Phase 21 membership slice measures 46 generated /
+46 applicable / 46 detected / 0 surviving, with 33 benign controls and 0
+benign false positives. The integrated mutation campaign measures 67 generated
+/ 67 applicable / 67 detected / 0 surviving, 54 benign controls / 0 benign
+false positives, and 67 replayed / minimized / high-confidence detections.
+
+Four of seven metamorphic kinds are exercised. Duplicate-input normalization,
+deterministic grouping, and presentation identity remain explicit
+`NOT_JUSTIFIED` source-proof boundaries. The expanded adversarial corpus is
+151 cases across 23 families, including 63 Phase 21 additions. Local terminal
+validation is Phase 9–21 compatibility 1,295/1,295, owner provenance 91/91,
+`campaign:synthetic` 27/27, typecheck PASS, hardening PASS, and canonical plus
+topology-correct isolated full suites 2,333 enumerated / 2,329 passed / 4
+skipped / 0 failed with exact skip identity parity. The current skip identities
+are `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+`tests/unit/selfDevSandboxConfinement.test.ts:147`.
+
+Phase 21 remains strictly local/source/synthetic: no DEV/NEXT/production,
+authenticated browser state, datastore/database, cloud/infra, sibling write,
+publication, AI authority, self-development promotion, or raw real evidence
+was used. External CI is a separate post-push observation and is never inferred
+from these local measurements.

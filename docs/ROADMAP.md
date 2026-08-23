@@ -1901,3 +1901,36 @@ execution authority. The validated implementation checkpoint is
 `6e4fdebe74bd34e81d9d3f320154488973b46d12` is on `origin/main`. The one
 post-push Actions inspection timed out before returning run data, so external
 CI remains blocked/unobservable and is not called green.
+
+## Phase 21 — semantic gap closure, privacy-safe membership, and differential replay saturation
+
+Phase 21 is the terminal local/source/synthetic closure wave for the measured
+Phase 20 graph. It preserves the 86-gap baseline and adds a versioned closure
+ledger, bounded privacy-safe finite-set membership, explicit differential
+pair/alignment evidence, contract-bound replay equivalence, dependency-aware
+minimization, scenario binding synthesis, quality levels, graph normalization,
+dossier V5, operator gap views, and a deterministic gap-driven campaign loop.
+
+The final synthetic graph is 239 nodes / 233 edges / 3 residual gaps. The
+ledger preserves all 86 baseline identities: 83 are obsolete after graph
+rebuild, 0 are actionable, and 3 remain irreducible for explicit source-proof
+reasons. Differential discovery grows from one explicit pair to 22 candidate
+rows / 21 admitted pairs; replay gaps fall 18 -> 0 and minimization gaps
+15 -> 0. Membership measurement is 46 generated / 46 applicable / 46 detected
+/ 0 surviving with 33 benign controls / 0 benign false positives. The
+integrated campaign is 67 generated / 67 applicable / 67 detected / 0
+surviving with 54 benign controls / 0 benign false positives and 67 replayed,
+minimized, high-confidence detections. Four of seven metamorphic kinds are
+exercised; three remain source-proof `NOT_JUSTIFIED` boundaries. The expanded
+corpus is 151 cases across 23 families.
+
+Local validation is Phase 9–21 compatibility 1,295/1,295, owner provenance
+91/91, `campaign:synthetic` 27/27, typecheck/hardening PASS, and exact
+canonical/topology-correct isolated parity at 2,333 enumerated / 2,329 passed
+/ 4 skipped / 0 failed. The four skip identities are
+`tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+`tests/unit/selfDevSandboxConfinement.test.ts:147`. The implementation
+checkpoint is `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`; external CI remains a
+separate post-push observation. No DEV/NEXT/production, data/infra,
+sibling-write, publication, AI, self-development, or execution authority is
+added.

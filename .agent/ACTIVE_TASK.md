@@ -6,16 +6,16 @@ Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, an
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-21-semantic-gap-closure
 Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-Last validated implementation SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-Last substantive checkpoint SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-Last checkpoint: M7 — graph, quality, dossier, operator, corpus, and privacy integration
-Current milestone: M8 — compatibility, full regression, parity, and closure repair
-Next action: run the repaired Phase 9–21 compatibility cone, then run the canonical and topology-correct isolated full suites and record exact parity
+Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+Last checkpoint: M8 — compatibility, full regression, parity, and closure repair
+Current milestone: M9 — durable closure, push, one CI inspection, and terminal handoff
+Next action: record the validated implementation checkpoint, run the required scoped checks, push without force, inspect Actions once, then complete the terminal records
 Authorization class: PHASE_21_SEMANTIC_GAP_CLOSURE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+LAST_VALIDATED_IMPLEMENTATION_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 
 ## Terminal Boundary Tokens
 
@@ -99,9 +99,22 @@ compatibility defects (plan shape, contracts shape, and truncated large JSON),
 all repaired without weakening the tests. `npm run hardening:check`,
 `npm run campaign:synthetic` (27/27), and `npm run typecheck` are PASS.
 
+Phase 9–21 compatibility cone: PASS — 1,295/1,295 tests; 0 failures and 0
+unexpected skips after the additive CLI compatibility repairs.
+
+Owner provenance: PASS — `npm run test:owner-provenance` 91/91.
+
+Canonical full Playwright regression: PASS — 2,333 enumerated; 2,329 passed;
+4 skipped; 0 failed. Topology-correct isolated full regression: PASS — the
+same 2,333 / 2,329 / 4 / 0 result from a fresh clone at the implementation
+checkpoint. Skip identity parity is exact: `tests/unit/phase5Api.test.ts`
+lines 197, 246, and 280, plus `tests/unit/selfDevSandboxConfinement.test.ts`
+line 147. The first isolated attempt used an incorrectly nested sibling-root
+fixture and was discarded as a validation setup defect; the corrected run
+used read-only aggregate links at the resolver's expected parent.
+
 ## Resume Recipe
 
 Read this file, then `.agent/tasks/phase-21-semantic-gap-closure/SPEC.md`,
-`PLAN.md`, and `STATE.md`; inspect Git status and continue the exact next
-action recorded in STATE. Preserve Phase 19/20 terminal records and the local,
-source, synthetic safety boundary.
+`PLAN.md`, and `STATE.md`; inspect Git status and continue M9. Preserve Phase
+19/20 terminal records and the local, source, synthetic safety boundary.
