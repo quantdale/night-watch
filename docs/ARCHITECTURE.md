@@ -1,6 +1,8 @@
 # Nightwatch Architecture
 
-Status: Phase 1.2 plus private local evidence triage, Phase 7 deterministic
+Status: Phase 16CH local/source/synthetic hardening terminal (canonical and
+isolated full regression 2232/4/0; CI externally blocked), plus Phase 1.2
+containment, private local evidence triage, Phase 7 deterministic
 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
 review assistance, the Phase 8A evaluated self-development sandbox foundation,
 the Phase 8A.1/8A.1.1 trusted evaluation provenance/replay/eligibility
@@ -74,6 +76,9 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/policy/ownerScope.ts` | Central owner-scope gate. Allows local/source/contained DEV/replay/evidence operations and rejects frozen infrastructure, datastore, deployment, and external-publication classes with `OWNER_POLICY_BLOCKED`. | implemented |
 | `src/core/policy/privateArtifacts.ts` | Owner-only local JSON store for private dossiers and summaries; immutable AI publication uses complete fsynced same-directory temporaries plus no-replace `linkSync`, while non-immutable workflows retain staged replacement semantics. Default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
+| `src/core/campaign/runtimeProfile.ts` | Single source-backed linkage for approved runtime journeys, envelopes, operations and deterministic seeds; consumed by portfolio selection and the real adapter. | implemented; read-only |
+| `src/core/portfolio/` | Deterministic portfolio model, scoring/allocation, replan, manifest, runtime-profile universe, inert handoff admission, monotone budget mapping, exact-one work-item binding and prepare/resume identity. | implemented; local/source/synthetic only |
+| `src/core/campaign/runtimeValidation.ts` | Strict handoff, plan, authorization and manifest document boundary with bounded categorical errors; unsafe external field names are sanitized. | implemented; fail-closed |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
 | `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`, produced only by the deterministic renderer; currently ONE adopted entry, 0..64 cardinality a supported state) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; canonical promotion via the separate owner-gated Phase 8B.1 executor |
@@ -1257,3 +1262,39 @@ intact. Original Phase 9B stays BLOCKED historical (D-56); Phase 6 remains
 `sha256:bd35b934...`; B AVAILABLE_NOT_ADOPTED;
 `NEXT_PROMOTION_AUTHORITY: NONE`; `PHASE_8_STATUS: COMPLETE`;
 `PHASE_9_STATUS: COMPLETE`.
+
+## Phase 16CH portfolio runtime-binding hardening (terminal local architecture)
+
+The Phase-16C portfolio seam is now hardened locally at
+`794b32df443ae8c9a520182ef97b7a2c9985ba82`. The production-shaped path is
+strictly layered:
+
+```text
+canonical runtime profile
+  -> derived real approved universe
+  -> inert portfolio plan + handoff
+  -> strict admission + consumption-only authorization
+  -> monotone-restrictive budget mapping
+  -> exact-one existing work-item binding
+  -> optional manifest binding identity
+  -> prepare (zero executor callbacks)
+  -> frozen checkpoint / resume revalidation
+  -> owner policy
+  -> existing single executor
+```
+
+The universe builder derives linkage from canonical registries and excludes
+synthetic fixture identities. Binding identity includes the load-bearing
+portfolio fields while the optional manifest field preserves historical
+no-binding bytes. Resume rejects plan, universe, mapping, binding, version or
+checkpoint drift before executor construction and asks for fresh
+authorization. The runtime plan remains inert (`executable:false`), and the
+launcher has one strict plan/authorization pair.
+
+Phase 16CH repaired two observed defects without expanding authority: reserve
+double-counting in feasibility arithmetic and unsafe external unknown-field
+diagnostics. The adversarial corpus has 171 scenarios with three byte-identical
+runs and thirteen zero quality floors. Canonical and topology-correct isolated
+full regressions are exactly 2,232 passed / 4 skipped / 0 failed. This is
+LOCAL/SOURCE/SYNTHETIC evidence only; CI was externally blocked before steps,
+and Phase 16D remains separately owner-gated and unauthorized.

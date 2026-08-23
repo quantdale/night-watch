@@ -4,10 +4,10 @@
 
 Task ID: phase-16ch-portfolio-runtime-binding-hardening
 Phase: 16CH-PORTFOLIO-RUNTIME-BINDING-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 70443a3b5d599b011c2a40d612dd701652e566a4
-Last validated implementation SHA: 8e8684dcf93bb01b3fe52e56355b2aa59f13567e
-Last substantive checkpoint SHA: 8e8684dcf93bb01b3fe52e56355b2aa59f13567e
+Last validated implementation SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
+Last substantive checkpoint SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -15,175 +15,173 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_VALIDATED_IMPLEMENTATION_SHA
 Authorization class: PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY
 Required execution token: PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY
 
-PHASE_16CH_STATUS: IN_PROGRESS_LOCAL_HARDENING
-PHASE_16C_RUNTIME_BINDING: IMPLEMENTED_NOT_DEV_EXECUTED
+PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI
+PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED
 PHASE_16D_DEV_RETRY: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 
-Anchor note: `Last validated implementation SHA` / `Last substantive
-checkpoint SHA` are the CARRIED-FORWARD Phase-16C earned implementation
-checkpoint (predecessor truth) until this task earns its own validated
-hardening implementation tree. `Starting SHA` is live HEAD == origin/main at
-task activation: the Phase-16CH publication package commit `70443a3…`, a
-documentation descendant of the Phase-16C closure descendant `122ff7dc…`.
-
 ## Authorization record
 
 The owner session prompt granted exactly
-`PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY`
-(LOCAL / SOURCE / SYNTHETIC hardening only; NO DEV execution) and it was
-recorded here BEFORE any Nightwatch source mutation, on 2026-08-23.
-Bootstrap: clean local main fast-forwarded `122ff7dc7ea21b88d9af80fee473222a3ef9cfc6`
--> `70443a3b5d599b011c2a40d612dd701652e566a4`; verified HEAD == origin/main
-from live Git before activation. Read before any edit: AGENTS.md,
-docs/CURRENT_STATE.md, docs/SAFETY_MODEL.md, docs/DECISIONS.md,
-docs/ROADMAP.md, .agent/ACTIVE_TASK.md, the complete Phase-16C terminal
-evidence (STATE/REPORT/RUNTIME_BINDING_HANDOFF/SPEC/ACCEPTANCE_MATRIX),
-the complete Phase-16CH package (PROPOSAL/SPEC/PLAN/STATE/WORKSTREAMS/
-ACCEPTANCE_MATRIX/DEFECT_LEDGER/REPORT/HARDENING_HANDOFF), and
-docs/design/PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING.md.
+`PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY` on 2026-08-23.
+The authorization was recorded before source mutation. Scope stayed
+LOCAL / SOURCE / SYNTHETIC: no DEV, NEXT, production, authenticated product
+execution, data-plane or infrastructure operation, sibling-repository write,
+publication, or self-development promotion.
+
+Bootstrap verified clean `main` with live `HEAD == origin/main` at
+`70443a3b5d599b011c2a40d612dd701652e566a4`. The Phase-16C implementation
+anchor `8e8684dcf93bb01b3fe52e56355b2aa59f13567e` and closure descendant
+`122ff7dc7ea21b88d9af80fee473222a3ef9cfc6` were reproduced as ancestors of
+the task starting point. The validated Phase-16CH implementation checkpoint
+is `794b32df443ae8c9a520182ef97b7a2c9985ba82`.
 
 ## Objective
 
-Prove the Phase-16C runtime binding is fail-closed, deterministic,
-authority-safe, privacy-safe, backwards-compatible, resume-safe,
-topology-safe and regression-safe across the complete local Nightwatch
-codebase, under exactly `PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY`.
-Repair any reproduced defect in source with permanent regressions. Never
-weaken assertions or authority to obtain green. DEV IS NEVER EXECUTED here.
-
-## Predecessor truth (Gate Zero requirement)
-
-Predecessor claims to mechanically reproduce from Git/current source before
-and during hardening (never accepted from reports alone):
-implementation SHA `8e8684dcf93bb01b3fe52e56355b2aa59f13567e`;
-closure descendant `122ff7dc7ea21b88d9af80fee473222a3ef9cfc6`;
-changed dependency cone per RUNTIME_BINDING_HANDOFF.md; single real campaign
-execution architecture ending in the existing executor; handoff stays
-executable:false; authorization consumption-only; budget mapping v1
-monotone-restrictive (three-API plans fail closed); legacy manifests
-byte-stable without binding.
-
-## Current Milestone
-
-M10 — Validated checkpoint / CI truth (IN_PROGRESS): all focused/adversarial/
-compatibility gates green; committing the validated substantive hardening tree,
-pushing fast-forward, then running the CLEAN-TREE canonical complete regression
-(failed=0 required) followed by the topology-correct isolated regression.
+Prove the Phase-16C portfolio runtime binding seam fail-closed,
+deterministic, authority-safe, privacy-safe, backwards-compatible,
+resume-safe, topology-safe and regression-safe before any separately
+authorized contained DEV retry.
 
 ## Completed Milestones
 
-- M0 Bootstrap/continuity/predecessor reproduction: COMPLETE — fetch fast-forward `122ff7dc…` -> `70443a3b…` (HEAD == origin/main verified); authorization recorded BEFORE any source mutation; Gate Zero reproduced from Git: implementation SHA `8e8684dcf93bb01b3fe52e56355b2aa59f13567e` and closure descendant `122ff7dc…` are ancestors of HEAD; `git diff 8e8684dc..HEAD -- src bin tests` is EMPTY (current source IS the Phase-16C implementation tree), and the claimed architecture chain was verified against current source directly (runtimeProfile/realUniverse/runtimeBinding/identity conditional spread/launcher flags/manual adapter seam).
-- M1 Compiler/static/universe baseline: COMPLETE — typecheck PASS (first executable gate, 0 errors); W1 suite `tests/unit/phase16chUniverseHardening.test.ts` 6/0 (canonical linkage mirrors, wrong-API/wrong-envelope/wrong-seed impossibility by construction, budget-derived exploration restriction, determinism x3, synthetic exclusion).
-- M2 Admission/authorization/parser hardening: COMPLETE — corpus ADMISSION_REASON (24) + PARSER_HANDOFF (24) + PARSER_PLAN (24) + DOC_BOUNDARY (12) scenarios all deterministic-green; authorization proven consumption-only.
-- M3 Budget/work-item binding hardening: COMPLETE — DEF-01 reproduced then repaired (`assertPortfolioBudgetFeasible` reserve double-count); permanent regressions in `tests/unit/phase16chBudgetBindingHardening.test.ts`; three-API fail-closed semantic PRESERVED; BUDGET_GRID (25) + exact-one binding suites green; wide three-API binding additionally proven to refuse manifest creation pre-guard (`CAMPAIGN_PORTFOLIO_BUDGET_CAPS_MISMATCH`).
-- M4 Identity/fingerprint hardening: COMPLETE — FINGERPRINT_FIELD (31) mutations: every load-bearing field REFUSES or changes identity; zero UNCHANGED; legacy no-binding identity LEGACY_STABLE.
-- M5 Launcher/file-boundary/single-executor hardening: COMPLETE — DEF-02 reproduced then repaired (unsafe unknown-field key echo masked at the external boundary); launcher matrix + hostile-key privacy regressions green; static single-executor suite 3/0 (pure binding cone, ONE production consumer chain, no second runner).
-- M6 Adversarial corpus + determinism: COMPLETE — `corpus/phase16ch/**` = 171 deterministic scenarios; x3 byte-identical runs; all thirteen floors ZERO (`tests/unit/phase16chCorpusRunner.test.ts` 4/0).
-- M7 Historical compatibility: COMPLETE — affected Phase 7/12/13/15/16 cone 172 passed / 0 failed; campaign:synthetic 27/0; owner-provenance 91/0.
-- M8 Canonical complete regression (pre-commit pass): executed on the working tree — 2230 passed / 2 failed / 4 skipped; BOTH failures are the selfDev dirty-tree precondition (`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`, uncommitted hardening work), not product regressions. CLEAN-TREE canonical + isolated runs owed below (post-commit).
+- M0 Bootstrap and predecessor reproduction: COMPLETE — live Git and the
+  Phase-16C changed cone were reproduced before hardening.
+- M1 Compiler/static/universe baseline: COMPLETE — typecheck passed and the
+  canonical universe/linkage and synthetic-exclusion cone passed.
+- M2 Admission/authorization/parser hardening: COMPLETE — handoff, plan,
+  authorization, document-boundary and categorical-reason matrices passed.
+- M3 Budget/work-item binding: COMPLETE — DEF-01 was reproduced and repaired;
+  the documented one/two-API feasibility boundary and three-API rejection
+  remained intact; exact-one binding passed.
+- M4 Identity/fingerprint/resume: COMPLETE — 31 load-bearing mutations were
+  refused or changed identity; legacy no-binding identity stayed stable.
+- M5 Launcher/file-boundary/single-executor: COMPLETE — DEF-02 was reproduced
+  and repaired; launcher privacy and one-executor proofs passed.
+- M6 Adversarial corpus/determinism: COMPLETE — 171 scenarios, three complete
+  byte-identical runs, and all thirteen quality floors at zero.
+- M7 Historical compatibility: COMPLETE — affected compatibility 172/0,
+  campaign:synthetic 27/0, and owner-provenance 91/0.
+- M8 Canonical full regression: COMPLETE — 2,232 passed / 4 skipped / 0
+  failed from 2,236 tests, workers=1.
+- M9 Topology-correct isolated regression: COMPLETE — fresh clone, `npm ci`,
+  read-only sibling symlinks and `NIGHTWATCH_PROXY_PORT=19123` produced the
+  exact same 2,232 / 4 / 0 result and skip inventory.
+- M10 Closure gates/checkpoint/CI truth: COMPLETE — closure gates passed;
+  checkpoint `794b32df443ae8c9a520182ef97b7a2c9985ba82` is pushed; Actions
+  was inspected once and executed zero steps under the external billing block.
+- M11 Durable closure: COMPLETE — this state, the plan, report, handoff,
+  defect ledger, active-task routing and project snapshot are being aligned
+  to the evidence. The task is terminal locally.
 
-## Work In Progress
+## Current Milestone
 
-Commit + push of the validated substantive hardening tree (source fixes DEF-01/DEF-02, corpus, suites, continuity records), followed by the clean-tree canonical complete regression and the topology-correct isolated complete regression.
+Complete. All M0–M11 milestones are closed. Terminal disposition is
+`BLOCKED_EXTERNAL_CI`: local/source/synthetic evidence is green, but the
+exact GitHub Actions run did not execute a job step.
 
 ## Exact Next Action
 
-After push: verify HEAD == origin/main; rerun `npx playwright test --project=nightwatch --workers=1` on the CLEAN tree requiring failed=0 with skip inventory; then build the topology-correct isolated checkout (npm ci, read-only sibling symlinks, distinct NIGHTWATCH_PROXY_PORT) and require exact parity; then final closure batch + durable closure docs.
+STOP. Any future Phase-16D or other product-environment execution requires a
+fresh owner authorization. Any further Nightwatch engineering proceeds only
+through a new LOCAL / SOURCE / SYNTHETIC task.
 
-## Files Changed
+## Work In Progress
 
-Source repairs (observed defects only):
-- src/core/portfolio/runtimeBinding.ts (DEF-01: feasibility guard reserve/clamping repair)
-- src/core/campaign/runtimeValidation.ts (DEF-02: bounded sanitized field-name diagnostics)
-
-New adversarial corpus:
-- corpus/phase16ch/core.ts, seamComposition.ts, scenariosAdmission.ts,
-  scenariosParsers.ts, scenariosBudgetUniverse.ts, scenariosFingerprint.ts, index.ts
-
-New permanent suites:
-- tests/unit/phase16chDef01Probe.test.ts (narrow DEF-01 reproducer/regression)
-- tests/unit/phase16chUniverseHardening.test.ts (W1)
-- tests/unit/phase16chBudgetBindingHardening.test.ts (W3+W4)
-- tests/unit/phase16chFingerprintResumeHardening.test.ts (W5+W6)
-- tests/unit/phase16chLauncherBoundary.test.ts (W7)
-- tests/unit/phase16chStaticSingleExecutor.test.ts (W8)
-- tests/unit/phase16chCorpusRunner.test.ts (corpus x3 + floors)
-
-Continuity records:
-- .agent/ACTIVE_TASK.md; this task's STATE.md / PLAN.md / DEFECT_LEDGER.md.
-
-## Validation Ledger
-
-Raw counts (all inside WSL Ubuntu, nvm node v22.22.1):
-
-- npm run typecheck: PASS (0 errors; rerun after each source fix).
-- Phase-16CH suites (7 files): 38 passed / 0 failed.
-- Corpus runner: 171 scenarios x3 byte-identical; floors all ZERO.
-- Phase-16C predecessor suites: 33 passed / 0 failed (post-DEF-01 narrow recheck).
-- Affected compatibility cone (candidateLifecycle, phase12YieldBacktest,
-  phase13Shadow, phase15pCompatConvergence, phase15pPrivacyAuthority,
-  phase15CheckpointCompat, phase15pCheckpointDrift,
-  phase15CampaignIntegratedProof, phase15CampaignTriageIntegration,
-  phase15CanonicalDigestIdentity, campaign.test): 172 passed / 0 failed.
-- npm run campaign:synthetic: 27 passed / 0 failed.
-- npm run test:owner-provenance: 91 passed / 0 failed.
-- Canonical complete Playwright workers=1 (PRE-COMMIT working tree): 2230
-  passed / 2 failed / 4 skipped — both failures are the selfDev
-  dirty-tree precondition (`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`); clean-tree
-  canonical + isolated runs owed post-commit.
-- git diff --check: CLEAN (after LF normalization; Windows-side autocrlf
-  smudge repaired via WSL-side `git config core.autocrlf false` +
-  checkout/sed normalization).
-- agent:check at activation: PASS with expected warnings (stale-baseline
-  warning resolved by this checkpoint).
-
-## Decisions Made During This Task
-
-- D-16CH-1: DEF-01 repair keeps mapping v1 and its documented feasibility boundary EXACTLY (two linked APIs feasible, three fail closed); the guard now mirrors `analyzeCampaignBudgetFeasibility` arithmetic instead of redefining policy.
-- D-16CH-2: DEF-02 repair sanitizes only the diagnostic echo at the external document boundary (safe-token key names unchanged) so no internal validator contract drifts.
-- D-16CH-3: The wide three-API binding additionally refuses manifest creation (`CAMPAIGN_PORTFOLIO_BUDGET_CAPS_MISMATCH`) BEFORE the seam guard — recorded as intentional defense-in-depth ordering (admission -> caps coherence -> manifest), not a defect.
-- D-16CH-4: Executor infra-failure semantics documented from evidence: a throwing executor produces a structured PARTIAL_RUNTIME_INFRA_FAILURE stop and the failed campaign attempt is closed fail-closed (later resumes execute nothing further). Encoded as the interrupted-work regression contract.
-
-## Discoveries
-
-- Windows-side git (autocrlf=true) smudged the whole worktree to CRLF during bootstrap checkout, which both faked "modified" states on untouched package docs and tripped `git diff --check`; repaired by operating git exclusively from WSL (`core.autocrlf false`, repo-local) + LF renormalization. All repo commands run inside WSL Ubuntu (node v22 via nvm).
-- selection.ts enforces mapped budgetPolicy == binding.budgetCaps elementwise AND <= initial profile at the input boundary — budgetCaps are load-bearing beyond identity (FP-026/FP-030 refusals prove it).
-- The universe digest is a membership-authority surface; semantic depth movement propagates through the PORTFOLIO digest into plan/binding identities (UNI-003).
-- Executor throws surface as structured orchestrator stops, never raw escapes (PARTIAL_RUNTIME_INFRA_FAILURE), and close the attempt fail-closed.
+None. This task is terminal.
 
 ## Blockers
 
-None.
+None for local closure. The external CI billing/spending condition is recorded
+as the terminal classification rather than an unresolved local work blocker.
+
+## Validation Ledger
+
+- `npm run typecheck`: PASS.
+- `npm run hardening:check`: PASS.
+- Phase-16C and Phase-16CH focused cone: 71 passed / 0 failed.
+- Phase-16CH corpus: 171 scenarios, three byte-identical runs, thirteen
+  quality floors all zero.
+- Affected compatibility cone: 172 passed / 0 failed.
+- `npm run campaign:synthetic`: 27 passed / 0 failed.
+- `npm run test:owner-provenance`: 91 passed / 0 failed. One concurrent
+  attempt hit the fixed local proxy port (`EADDRINUSE`); the required serial
+  rerun passed and no source defect was implicated.
+- `npm run agent:check`: PASS with the expected stale-baseline/legacy-history
+  warnings before closure; strict errors 0 after continuity reconciliation.
+- `npm run agent:audit`: strict v2 errors 0; historical v1 warnings retained.
+- `npm run project:check`: PASS; catalog count/digest unchanged and
+  `NEXT_PROMOTION_AUTHORITY: NONE`.
+- `git diff --check`: PASS.
+- Canonical `npx playwright test --project=nightwatch --workers=1`: 2,232
+  passed / 4 skipped / 0 failed.
+- Isolated equivalent: 2,232 passed / 4 skipped / 0 failed, exact parity.
+  The skip inventory in both runs is `tests/unit/phase5Api.test.ts:195`,
+  `:244`, `:278` (current-source OOPS subprocess cases), and
+  `tests/unit/selfDevSandboxConfinement.test.ts:143` (foreign-UID platform
+  case).
+- Isolated checkout was a fresh local clone with `npm ci`, sibling aggregate
+  symlinks, and a distinct proxy port; its Git tree was clean after the run.
+- Actions run `32624917568`, job `97158631282`, for checkpoint
+  `794b32df443ae8c9a520182ef97b7a2c9985ba82`: completed/failure with zero
+  steps, the standing external billing/spending-limit condition. It was
+  inspected once and not retried.
+
+## Defect Disposition
+
+DEF-01 and DEF-02 are `FIXED_BROAD_GREEN`; their narrow permanent regressions,
+affected compatibility, canonical suite and isolated suite are green. HYP-07
+and HYP-08 are discharged by the clean canonical and exact-parity isolated
+runs. No safety, privacy, authority, identity, resume or single-executor
+floor escaped.
+
+## Discoveries
+
+- `assertPortfolioBudgetFeasible` had double-counted the embedded reserve and
+  rejected documented-feasible API-bearing bindings. The repair strips the
+  embedded reserve, clamps to the approved profile, then applies the reserve
+  once; it preserves the three-API fail-closed boundary.
+- External runtime-plan diagnostics echoed unsafe unknown-field key names.
+  The repair masks unsafe names while retaining bounded safe-token diagnostics;
+  values remain non-echoed.
+- Fixed-port Playwright jobs must be serialized. The one concurrent
+  owner-provenance attempt was a harness collision, not a product failure.
+- The aggregate `alphauslabs` and `mobingilabs` directories are source trees,
+  not Git repositories; the underlying tree had 22 pre-existing dirty nested
+  repositories when checked after isolated validation. Nightwatch used the
+  aggregate roots only as read-only symlinks and made no intentional sibling
+  writes. That pre-existing state is preserved and is not attributed to this
+  task.
 
 ## Safety Events
 
-None. Local/synthetic/read-only execution only; NO DEV/NEXT/production contact, no browser/network/auth activity beyond the harness's own local fixture/proxy machinery in pre-existing suites, no Alphaus sibling writes, no credentials/customer values in source, artifacts, or .agent files.
+None. DEV/NEXT/production contacts, authenticated product sessions, product
+mutations, database/datastore/cloud/infrastructure operations, Alphaus sibling
+writes, publication, credential handling and real findings all remained zero.
 
 ## Deferred / Follow-Up
 
-- Contained DEV acceptance retry (Phase 16D): NOT_AUTHORIZED here; eligible
-  only for a separate fresh owner authorization AFTER this task closes
-  local-green (HARDENING_HANDOFF.md states eligibility; never grants it).
-- docs/CURRENT_STATE.md top-level Last-updated narrative drift (anchored at
-  Phase 16H despite completed 16B/16C): repair truthfully during continuity
-  closure from earned evidence.
-- GitHub Actions inspection once per relevant pushed SOURCE checkpoint; the
-  standing external billing/spending block is never retried in a loop.
+- Phase 16D contained DEV acceptance: NOT_AUTHORIZED and not implied by this
+  closure; it needs a separate fresh owner authorization.
+- Phase 6 remains frozen. Phase 11B and 13B remain unauthorized.
+- CI remains externally blocked before job steps; do not retry-loop it.
+- The next useful work must be a new local/source/synthetic development
+  program chosen from a fresh repository audit, not a reopening of this task.
 
 ## Resume Recipe
 
-Read AGENTS.md, docs/CURRENT_STATE.md, .agent/ACTIVE_TASK.md, then this
-task's STATE.md -> resume from `Current Milestone`. Live HEAD is discovered
-from Git (`LIVE_HEAD_AUTHORITY: GIT`). Working tree and tests outrank
-remembered conversation. If context was lost: run the smallest decisive
-validation recorded in the Validation Ledger, update STATE.md, continue the
-Exact Next Action.
+Do not resume this terminal record. For historical verification, read
+`AGENTS.md`, this STATE, REPORT and HARDENING_HANDOFF, then discover live Git
+state. Future implementation must use a new task directory and active-task
+route.
 
 ## Completion Snapshot
 
-Not complete. Task is IN_PROGRESS under
-`PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY`; no hardening
-gate has been executed yet beyond bootstrap.
+Implementation checkpoint: `794b32df443ae8c9a520182ef97b7a2c9985ba82`.
+Canonical and topology-correct isolated full regressions: exact `2232/4/0`.
+Focused, synthetic, provenance, continuity, project, privacy, authority and
+determinism gates: green with the historical warnings and external zero-step
+CI condition explicitly recorded. Phase 16CH is locally complete and
+terminally `BLOCKED_EXTERNAL_CI`; no DEV authority was granted or exercised.

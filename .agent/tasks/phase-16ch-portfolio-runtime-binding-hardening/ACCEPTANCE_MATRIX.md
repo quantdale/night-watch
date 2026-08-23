@@ -4,7 +4,7 @@ Every PASS must map to current hardening evidence after Phase 16C or after the r
 
 | ID | Surface | Required proof |
 |---|---|---|
-| A01 | Bootstrap | clean live Git; Phase-16C SHAs/cone reproduced; hardening token recorded before mutation |
+| A01 | Bootstrap | PASS — clean live Git; Phase-16C SHAs/cone reproduced; hardening token recorded before mutation |
 | A02 | Universe provenance | every real member mechanically derives from canonical current registry/linkage and resolves uniquely |
 | A03 | Synthetic exclusion | fixture/demo-only IDs never enter real-universe admission |
 | A04 | Universe determinism | permutation/repeat yields byte/digest-identical normalized universe |
@@ -39,6 +39,6 @@ Every PASS must map to current hardening evidence after Phase 16C or after the r
 | K02 | Git | validated source checkpoint ff-pushed; final closure clean HEAD==origin/main |
 | K03 | CI truth | exact run/job/steps inspected once; zero-step billing block never called code failure/pass |
 | L01 | No DEV | zero DEV/NEXT/production/browser/auth/product execution during Phase 16CH |
-| L02 | Successor gate | Phase 16D remains NOT_AUTHORIZED until terminal hardening closure |
+| L02 | Successor gate | PASS — Phase 16D remains NOT_AUTHORIZED; terminal hardening closure recorded |
 
 Quality floors: unauthorizedAdmissionCount, syntheticTargetAdmittedCount, unmappedSelectedMemberCount, ambiguousBindingAcceptedCount, budgetExpansionCount, executorBeforeAdmissionCount, executorBeforeOwnerPolicyCount, resumeFingerprintEscapeCount, legacyCampaignRegressionCount, launcherRawLeakCount, privacyLeakCount, determinismMismatchCount, singleExecutorViolationCount — all zero.

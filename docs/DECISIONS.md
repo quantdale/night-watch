@@ -2879,3 +2879,36 @@ All ten Phase-16C quality floors measured zero; focused/moderate packs green;
 canonical/isolated whole-repo regressions remain owned by Phase-16CH. Phase 6
 FROZEN_BY_OWNER; Phases 11B/13B NOT_AUTHORIZED; promotion authority NONE.
 DEV WAS NOT EXECUTED.
+
+## D-68 — Phase 16CH: Portfolio Runtime-Binding Hardening Terminal Classification
+
+**Context.** Phase 16C supplied the first local/source/synthetic path from an
+inert portfolio handoff into the existing prepare/resume runtime. Phase 16CH
+was explicitly authorized to harden that seam before any contained DEV retry.
+
+**Decision.** Keep the Phase-16C authority and serialization boundaries fixed,
+repair only reproduced defects, and close the hardening task as local-green
+with an external-CI-blocked terminal classification. DEF-01 was a real
+reserve double-counting bug in the feasibility guard; the narrow repair strips
+the embedded reserve, clamps to the approved profile, and applies the reserve
+once. DEF-02 was a real privacy defect in external unknown-field diagnostics;
+the narrow repair masks unsafe field names while preserving bounded safe-token
+diagnostics and never echoing values.
+
+**Evidence.** The Phase-16CH corpus contains 171 deterministic scenarios with
+three byte-identical runs and all thirteen quality floors zero. Affected
+compatibility passed 172/0, campaign synthetic 27/0, and owner provenance
+91/0. Canonical and topology-correct isolated full Playwright both passed
+2,232 / skipped 4 / failed 0 with exact skip parity. The validated checkpoint
+is `794b32df443ae8c9a520182ef97b7a2c9985ba82`; catalog identity and promotion
+authority were unchanged.
+
+**CI and consequences.** Actions run `32624917568` / job `97158631282` for
+the validated checkpoint completed as failure with zero steps under the
+standing billing/spending condition. CI green is not claimed and the run was
+not retried. The truthful tokens are
+`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` and
+`PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`. Phase 16D,
+Phase 11B, Phase 13B and Phase 6 expansion remain unauthorized/frozen as
+specified by the permanent owner scope. Future engineering requires a new
+local/source/synthetic task.

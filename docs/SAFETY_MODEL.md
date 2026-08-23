@@ -1276,5 +1276,8 @@ real-source semantic contracts (COMPLETE_LOCAL_SYNTHETIC); and Phase 10B
 contained DEV deep-semantic acceptance (COMPLETE, D-60 —
 COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED / PASS / VERIFIED /
 NONE_OBSERVED; exactly ONE common-exchange FIRST + fresh-context REPLAY
-pair with zero safety events); changes require a
+pair with zero safety events); Phase 16CH portfolio runtime-binding hardening
+(COMPLETE_LOCAL_SOURCE_SYNTHETIC / BLOCKED_EXTERNAL_CI: canonical and
+topology-correct isolated 2232/4/0 exact parity, thirteen quality floors zero,
+no new authority); changes require a
 DECISIONS entry and a test update.*

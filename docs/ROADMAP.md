@@ -1745,6 +1745,29 @@ retry-looping. Terminal state:
 accepted, NOT production ready; Phase 11B and Phase 13B remain
 NOT_AUTHORIZED. NEXT ACTION: STOP.
 
+## Phase 16CH — portfolio runtime-binding hardening (terminal: BLOCKED_EXTERNAL_CI)
+
+Phase 16CH closed the remaining local hardening obligation for the Phase-16C
+portfolio runtime-binding seam under
+`PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY`. DEF-01 repaired
+reserve-feasibility arithmetic without relaxing the documented three-API
+rejection boundary; DEF-02 sanitized unsafe external field-name diagnostics.
+The permanent regressions, 171-case adversarial corpus, x3 determinism proof,
+affected compatibility cone, campaign synthetic run and owner-provenance run
+are recorded in the task report.
+
+Canonical complete Playwright and a topology-correct isolated clone both
+passed 2,232 tests, skipped the same four environment-conditional tests, and
+failed zero tests. The isolated clone used `npm ci`, read-only aggregate
+sibling symlinks and a distinct `NIGHTWATCH_PROXY_PORT=19123`. Catalog identity
+and promotion authority were unchanged. Actions run 32624917568 / job
+97158631282 executed zero steps under the standing billing/spending block, so
+the terminal state is local-green / `BLOCKED_EXTERNAL_CI`, not CI-green.
+
+Phase 16D remains a separately owner-gated, unauthorized contained-DEV
+decision. The next development program must remain LOCAL / SOURCE / SYNTHETIC
+and must be routed through a new task after a fresh repository audit.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

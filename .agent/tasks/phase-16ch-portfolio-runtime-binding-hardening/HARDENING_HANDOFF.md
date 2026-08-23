@@ -1,30 +1,38 @@
 # HARDENING HANDOFF — Phase 16CH
 
-Status: NOT_RUN
+Status: COMPLETE (LOCAL/SOURCE/SYNTHETIC; BLOCKED_EXTERNAL_CI)
 
-Populate only at Phase-16CH closure for the separately authorized Phase-16D DEV acceptance retry.
+This is a data-only handoff for a future separately authorized Phase-16D
+decision. It grants no DEV authority.
 
-Required fields:
-- hardening starting SHA;
-- validated hardening implementation SHA;
-- closure documentation SHA;
-- complete changed dependency cone;
-- every observed defect and repair;
-- real-universe version/digest/provenance proof;
-- admission/runtime-plan/handoff versions;
-- authorization consumption points;
-- budget-mapping version and edge proof;
-- binding schema/version and exact work-item mapping semantics;
-- frozen fingerprint fields and cross-version behavior;
-- launcher input contract and sanitized failure behavior;
-- single-executor proof;
-- corpus count, deterministic repeats and all floor values;
-- affected compatibility raw counts;
-- canonical complete raw counts + skips;
-- isolated complete raw counts + parity;
-- closure-gate results;
-- exact Actions truth;
-- residual risks;
-- exact Phase-16D bootstrap constraints.
+## Earned evidence
 
-Explicitly state whether Phase 16D is eligible for a fresh owner authorization. Never grant that authorization from this document. DEV must remain unexecuted during Phase 16CH.
+- Hardening start: `70443a3b5d599b011c2a40d612dd701652e566a4`.
+- Validated implementation: `794b32df443ae8c9a520182ef97b7a2c9985ba82`.
+- Canonical complete: 2,232 passed / 4 skipped / 0 failed.
+- Isolated topology-correct complete: 2,232 passed / 4 skipped / 0 failed,
+  exact parity; `npm ci`, read-only sibling symlinks and proxy port 19123.
+- Focused Phase-16C/16CH: 71/0; affected compatibility: 172/0;
+  synthetic campaign: 27/0; owner provenance: 91/0.
+- Corpus: 171 scenarios, x3 byte-identical, thirteen floors zero.
+- DEF-01 and DEF-02: fixed with permanent regressions and broad green.
+- Catalog count/digest unchanged; promotion authority NONE.
+- Actions run `32624917568` / job `97158631282`: zero steps, external billing
+  block, inspected once; not CI green.
+
+## Preserved runtime boundaries
+
+The handoff remains `executable:false`, source/currentness-bound, environment
+restricted, authorization-consumption-only, and routed through the existing
+single executor. Any future acceptance must revalidate the exact source,
+plan, universe, binding, budget, checkpoint and owner policy before execution.
+No raw customer values, credentials, authenticated artifacts or external
+publication data belong in this handoff.
+
+## Phase-16D bootstrap constraints
+
+Phase 16D is NOT_AUTHORIZED by this task. A future owner authorization must be
+fresh, explicit and separate; it must preserve the permanent Phase 6 freeze,
+the Phase 9/10 privacy and provenance rules, the no-sibling-write boundary,
+the no-production/NEXT boundary, and the fail-closed launcher/runtime plan.
+The current CI block must not be described as a product or acceptance result.
