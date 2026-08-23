@@ -90,18 +90,110 @@ import {
 } from '../../src/core/campaign';
 import { OWNER_SCOPE_POLICY_VERSION } from '../../src/core/policy/ownerScope';
 import { EXPLORATION_MODEL_VERSION, PLANNER_VERSION, SAFE_ACTION_CATALOG_VERSION } from '../../src/core/exploration/types';
+import {
+  REAL_RUNTIME_LINKAGE,
+  REAL_RUNTIME_SEEDS,
+  runtimeLinkageForTarget,
+} from '../../src/core/campaign/runtimeProfile';
+import {
+  DEV_HANDOFF_REQUIRED_AUTHORIZATION,
+  admitPortfolioRuntimePlan,
+  assertPortfolioBudgetFeasible,
+  mapPortfolioBudget,
+  parsePortfolioRuntimePlanDocument,
+} from '../../src/core/portfolio/runtimeBinding';
+import { buildCurrentRealApprovedUniverse } from '../../src/core/portfolio/realUniverse';
+import type { CampaignPortfolioRuntimeBinding } from '../../src/core/campaign/types';
 
-const REAL_OPERATION_IDS = [
-  'ripple.payer-exchange.read',
-  'ripple.common-exchange.read',
-  'ripple.account-inventory.read',
-] as const;
+// Phase 16C: these constants are canonical runtime-profile data now; local
+// aliases preserve the historical adapter names.
+const REAL_OPERATION_IDS = REAL_RUNTIME_LINKAGE.map((entry) => entry.apiOperationId);
 
-const REAL_SEEDS = {
-  'E1-J1-payer-exchange': '0x0000000000000101',
-  'E2-J2-common-exchange': '0x0000000000000201',
-  'E3-J3-account-inventory': '0x0000000000000301',
-} as const;
+const REAL_SEEDS = Object.fromEntries(
+  REAL_RUNTIME_LINKAGE.map((entry) => [entry.envelopeId, entry.seed]),
+) as Readonly<Record<string, string>>;
+
+// ---------------------------------------------------------------------------
+// Phase 16C — portfolio runtime binding seam (opt-in).
+//
+// The launcher supplies --portfolio-plan=<file> plus a separately supplied
+// authorization value through NIGHTWATCH_PHASE_7_PORTFOLIO_AUTHORIZATION.
+// Admission runs BEFORE any executor-capable state exists on prepare and is
+// re-verified against the frozen manifest binding BEFORE resume constructs an
+// executor. The handoff stays executable:false; authorization only permits
+// the EXISTING prepare/resume path to consume it.
+// ---------------------------------------------------------------------------
+
+interface LoadedPortfolioPlan {
+  readonly handoffDigest: string;
+  readonly planId: string;
+  readonly binding: CampaignPortfolioRuntimeBinding;
+}
+
+function categoricalPortfolioError(error: unknown): never {
+  // Bounded categorical surface only: never echo file contents, paths, or
+  // arbitrary error detail.
+  const message = error instanceof Error ? error.message : '';
+  if (/^PORTFOLIO_ADMISSION_REJECTED:[A-Z_]+:/.test(message)) throw new Error(message.split(':')[0] + ':' + message.split(':')[1]);
+  if (/^(DEV_HANDOFF_INVALID|PORTFOLIO_RUNTIME_PLAN_INVALID|PLAN_MANIFEST_INVALID)/.test(message)) throw new Error('PHASE7_PORTFOLIO_PLAN_INVALID');
+  if (error instanceof SyntaxError) throw new Error('PHASE7_PORTFOLIO_PLAN_MALFORMED_JSON');
+  throw new Error('PHASE7_PORTFOLIO_PLAN_UNREADABLE');
+}
+
+function loadPortfolioInput(): { readonly rawPath: string; readonly token: string | null } {
+  const rawPath = (process.env.NIGHTWATCH_PHASE_7_PORTFOLIO_PLAN ?? '').trim();
+  return { rawPath, token: process.env.NIGHTWATCH_PHASE_7_PORTFOLIO_AUTHORIZATION ?? null };
+}
+
+function admitPortfolioForPrepare(rawPath: string, token: string | null): LoadedPortfolioPlan {
+  if (!path.isAbsolute(rawPath)) throw new Error('PHASE7_PORTFOLIO_PLAN_PATH_REQUIRED');
+  let text: string;
+  try {
+    text = fs.readFileSync(rawPath, 'utf8');
+  } catch {
+    throw new Error('PHASE7_PORTFOLIO_PLAN_UNREADABLE');
+  }
+  let document: unknown;
+  try {
+    document = JSON.parse(text) as unknown;
+  } catch {
+    throw new Error('PHASE7_PORTFOLIO_PLAN_MALFORMED_JSON');
+  }
+  try {
+    const parsed = parsePortfolioRuntimePlanDocument(document);
+    const universe = buildCurrentRealApprovedUniverse();
+    const binding = admitPortfolioRuntimePlan({ handoff: parsed.handoff, plan: parsed.plan, universe, authorizationToken: token });
+    assertPortfolioBudgetFeasible({ caps: binding.budgetCaps, initial: INITIAL_REAL_CAMPAIGN_BUDGET });
+    return { handoffDigest: parsed.handoff.digest, planId: parsed.plan.planId, binding };
+  } catch (error) {
+    return categoricalPortfolioError(error);
+  }
+}
+
+/**
+ * Resume-side re-verification: the frozen manifest binding must match the
+ * exact same plan/handoff/universe identity that admission would produce NOW,
+ * and the runtime authorization must be supplied again. Runs strictly before
+ * any executor object exists.
+ */
+function verifyFrozenPortfolioOnResume(manifest: { readonly portfolioBinding?: CampaignPortfolioRuntimeBinding }, rawPath: string, token: string | null): void {
+  const frozen = manifest.portfolioBinding;
+  if (frozen === undefined) throw new Error('PHASE7_PORTFOLIO_INPUT_ON_NON_PORTFOLIO_RESUME');
+  const fresh = admitPortfolioForPrepare(rawPath, token);
+  if (
+    fresh.binding.planId !== frozen.planId ||
+    fresh.binding.planManifestDigest !== frozen.planManifestDigest ||
+    fresh.binding.portfolioDigest !== frozen.portfolioDigest ||
+    fresh.handoffDigest !== frozen.handoffDigest ||
+    fresh.binding.realUniverseDigest !== frozen.realUniverseDigest ||
+    fresh.binding.budgetMappingVersion !== frozen.budgetMappingVersion ||
+    fresh.binding.schemaVersion !== frozen.schemaVersion ||
+    JSON.stringify(fresh.binding.members) !== JSON.stringify(frozen.members) ||
+    JSON.stringify(fresh.binding.budgetCaps) !== JSON.stringify(frozen.budgetCaps)
+  ) {
+    throw new Error('PHASE7_PORTFOLIO_FROZEN_BINDING_MISMATCH');
+  }
+}
 
 interface RealCampaignContext {
   readonly root: string;
@@ -805,7 +897,7 @@ async function runExploration(context: RealCampaignContext, browser: Browser, ma
     const anchor = await runDeclarativeJourney(nightwatch.page, { recorder, monitor: nightwatch.monitor, network: nightwatch.network }, contract.definition, { uiBaseUrl: context.target, authValid });
     if (!anchor.passed) return { result: 'RUNTIME_FAILURE', safety: safetyFromJourney(nightwatch, recorder, anchor), privacy: privacyPass(), actionsExecuted: anchor.stepResults.length, apiExecutions: 0, browserContextCreated: true, replay: false, observations: [], reasonCode: 'EXPLORATION_ANCHOR_FAILED' };
     const runtime = createRippleExplorationRuntime({ page: nightwatch.page, uiBaseUrl: context.target, anchorJourney: journeyId, network: nightwatch.network, monitor: nightwatch.monitor, authValid: true });
-    const evidence = await runExplorationEngine({ runId: safeRunId(workItem, attempt), seed: workItem.seed ?? REAL_SEEDS[envelopeId as keyof typeof REAL_SEEDS], derivedSeed: deriveSeed(workItem.seed ?? REAL_SEEDS[envelopeId as keyof typeof REAL_SEEDS], manifest.versions.explorationModelVersion, envelopeId, 0), catalog: RIPPLE_PHASE4_ACTIONS, envelope, budget: RIPPLE_PHASE4_BUDGET, runtime });
+    const evidence = await runExplorationEngine({ runId: safeRunId(workItem, attempt), seed: workItem.seed ?? REAL_SEEDS[envelopeId]!, derivedSeed: deriveSeed(workItem.seed ?? REAL_SEEDS[envelopeId]!, manifest.versions.explorationModelVersion, envelopeId, 0), catalog: RIPPLE_PHASE4_ACTIONS, envelope, budget: RIPPLE_PHASE4_BUDGET, runtime });
     const safety = safetyFromJourney(nightwatch, recorder, { safetyCounts: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, mutations: evidence.safety.knownMutations, actionCausedUnknown: evidence.safety.actionCausedUnknown, dbQueries: evidence.safety.dbQueries } });
     const candidates = evidence.anomalyFingerprints.length > 0 ? explorationCandidate({ manifest, workItem, runId: safeRunId(workItem, attempt), evidence }) : [];
     await recorder.finalize({ passed: candidates.length === 0 && Object.values(safety).every((value) => value === 0) && evidence.terminationReason !== 'RUN_INCOMPLETE', notes: [`Phase 7 campaign exploration ${envelopeId}`, `termination=${evidence.terminationReason}`, `safety=${JSON.stringify(safety)}`] });
@@ -875,7 +967,7 @@ function reproductionWorkItem(cluster: { readonly clusterId: string }, represent
     journeyId: representative.journeyId,
     envelopeId,
     apiOperationId,
-    seed: envelopeId === null ? null : REAL_SEEDS[envelopeId as keyof typeof REAL_SEEDS] ?? null,
+    seed: envelopeId === null ? null : REAL_SEEDS[envelopeId] ?? null,
     linkedWorkItemIds: [],
     replayPolicy: 'ON_ADMISSION',
     selection: {
@@ -939,7 +1031,7 @@ async function reproduceReal(context: RealCampaignContext, browser: Browser, man
   return { result: 'REPRODUCED', runId, fingerprint: cluster.fingerprint, safety: outcome.safety, privacy: outcome.privacy, candidate };
 }
 
-function buildInput(context: RealCampaignContext, mode: CampaignInput['mode']): CampaignInput {
+function buildInput(context: RealCampaignContext, mode: CampaignInput['mode'], portfolio?: { readonly binding: CampaignPortfolioRuntimeBinding }): CampaignInput {
   const sourceWindow = {
     changesetId: context.changeset.changesetId,
     baselines: context.changeset.repoBaselines.map((baseline) => ({ repoId: baseline.repoId, baseSha: baseline.baseSha, headSha: baseline.headSha, dirtyExcluded: true as const })),
@@ -949,6 +1041,11 @@ function buildInput(context: RealCampaignContext, mode: CampaignInput['mode']): 
     deploymentStatus: 'DEPLOYMENT_STATUS_UNRESOLVED' as const,
   };
   const phase3Selection = mode === 'CHANGE_DIRECTED' ? selectJourneys(context.changeset) : null;
+  // Phase 16C: portfolio mode maps the admitted plan onto the EXISTING budget
+  // policy (monotone-restrictive; never expanding the bounded real profile).
+  const mappedBudget = portfolio === undefined
+    ? INITIAL_REAL_CAMPAIGN_BUDGET
+    : mapPortfolioBudget({ binding: portfolio.binding, initial: INITIAL_REAL_CAMPAIGN_BUDGET }).policy;
   return {
     mode,
     createdAt: new Date().toISOString(),
@@ -962,8 +1059,9 @@ function buildInput(context: RealCampaignContext, mode: CampaignInput['mode']): 
     explorationEnvelopes: RIPPLE_PHASE4_ENVELOPES,
     apiOperations: PHASE5_API_CATALOG.operations,
     versions: versionFingerprint(context.root),
-    budgetPolicy: INITIAL_REAL_CAMPAIGN_BUDGET,
+    budgetPolicy: mappedBudget,
     privacyPolicy: { storageClass: 'OWNER_ONLY_LOCAL', remotePrivacy: 'NO_REMOTE', externalPublication: 'PROHIBITED', rawBodiesPersisted: false, customerValuesPersisted: false, credentialsPersisted: false, cookiesPersisted: false, tokensPersisted: false, domPersisted: false, screenshotsPersisted: false, authenticatedTracesPersisted: false },
+    ...(portfolio === undefined ? {} : { portfolioBinding: portfolio.binding }),
   };
 }
 
@@ -1007,9 +1105,29 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
   const prepareOnly = process.env.NIGHTWATCH_PHASE_7_PREPARE_ONLY === '1';
   if (prepareOnly && resumeId !== '') throw new Error('PHASE7_PREPARE_RESUME_CONFLICT');
   if (!prepareOnly && resumeId === '') throw new Error('PHASE7_FROZEN_MANIFEST_REQUIRED');
-  const manifest = resumeId === ''
-    ? createCampaignManifest(buildInput(context, context.changeset.changedFiles.length > 0 ? 'CHANGE_DIRECTED' : 'BASELINE_HEALTH'))
-    : new CampaignCheckpointStore(privateStore).readManifest(resumeId);
+  // Phase 16C: portfolio admission runs BEFORE any executor-capable state
+  // exists (pure local data flow only — no browser/network/product work).
+  const portfolio = loadPortfolioInput();
+  const portfolioActive = portfolio.rawPath !== '';
+  let manifest;
+  if (resumeId === '') {
+    const admitted = portfolioActive ? admitPortfolioForPrepare(portfolio.rawPath, portfolio.token) : undefined;
+    manifest = createCampaignManifest(buildInput(
+      context,
+      admitted === undefined ? (context.changeset.changedFiles.length > 0 ? 'CHANGE_DIRECTED' : 'BASELINE_HEALTH') : 'BASELINE_HEALTH',
+      ...(admitted === undefined ? [] : [{ binding: admitted.binding }] as const),
+    ));
+  } else {
+    manifest = new CampaignCheckpointStore(privateStore).readManifest(resumeId);
+    if (portfolioActive) {
+      if (manifest.portfolioBinding === undefined) throw new Error('PHASE7_PORTFOLIO_INPUT_ON_NON_PORTFOLIO_RESUME');
+      // Re-verify frozen plan/handoff/universe fingerprints AND require the
+      // runtime authorization again BEFORE constructing an executor.
+      verifyFrozenPortfolioOnResume(manifest, portfolio.rawPath, portfolio.token);
+    } else if (manifest.portfolioBinding !== undefined) {
+      throw new Error('PHASE7_PORTFOLIO_RESUME_AUTHORIZATION_REQUIRED');
+    }
+  }
   assertFrozenSourceSnapshots(context, manifest);
 
   if (prepareOnly) {
@@ -1034,6 +1152,17 @@ test('Phase 7 bounded private real DEV campaign', async ({ browser }) => {
       workItemCount: manifest.workItems.length,
       seedCount: manifest.seedSet.length,
       budgetPolicyVersion: manifest.versions.budgetPolicyVersion,
+      ...(manifest.portfolioBinding === undefined ? {} : {
+        portfolioRuntimeBinding: {
+          schemaVersion: manifest.portfolioBinding.schemaVersion,
+          planId: manifest.portfolioBinding.planId,
+          planManifestDigest: manifest.portfolioBinding.planManifestDigest,
+          handoffDigest: manifest.portfolioBinding.handoffDigest,
+          realUniverseDigest: manifest.portfolioBinding.realUniverseDigest,
+          budgetMappingVersion: manifest.portfolioBinding.budgetMappingVersion,
+          boundWorkItemIds: manifest.portfolioBinding.members.map((member) => member.workItemId),
+        },
+      }),
       checkpointOrdinal: checkpoint.checkpointOrdinal,
       nextExactAction: checkpoint.nextExactAction,
       productExecution: 'NOT_STARTED',

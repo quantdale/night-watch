@@ -8,11 +8,14 @@ import { validateCampaignSemanticEvidence } from './campaignSemanticEvidence';
 import {
   CAMPAIGN_MANIFEST_VERSION,
   CAMPAIGN_ORCHESTRATOR_VERSION,
+  CAMPAIGN_PORTFOLIO_RUNTIME_BINDING_VERSION,
   CAMPAIGN_SCHEMA_VERSION,
   type CampaignInput,
   type CampaignAnomalyCandidate,
   type CampaignManifest,
   type CampaignMode,
+  type CampaignPortfolioBoundMember,
+  type CampaignPortfolioRuntimeBinding,
   type CampaignPrivacyPolicy,
   type CampaignSelectionResult,
   type CampaignSourceWindow,
@@ -384,7 +387,7 @@ function persistedCandidate(candidate: CampaignAnomalyCandidate): Omit<CampaignA
   return metadata;
 }
 
-export function campaignIdFromManifestInput(input: Pick<CampaignInput, 'mode' | 'sourceSnapshots' | 'sourceWindow' | 'phase3Selection' | 'seedCorpusVersion' | 'seedSet' | 'versions' | 'budgetPolicy' | 'privacyPolicy' | 'reproductionTarget'>): string {
+export function campaignIdFromManifestInput(input: Pick<CampaignInput, 'mode' | 'sourceSnapshots' | 'sourceWindow' | 'phase3Selection' | 'seedCorpusVersion' | 'seedSet' | 'versions' | 'budgetPolicy' | 'privacyPolicy' | 'reproductionTarget' | 'portfolioBinding'>): string {
   const identity = {
     schemaVersion: CAMPAIGN_SCHEMA_VERSION,
     orchestratorVersion: input.versions.orchestratorVersion,
@@ -401,6 +404,10 @@ export function campaignIdFromManifestInput(input: Pick<CampaignInput, 'mode' | 
       clusterId: input.reproductionTarget.clusterId,
       candidate: persistedCandidate(input.reproductionTarget.candidate),
     },
+    // Phase 16C: conditional spread keeps legacy identity bytes EXACTLY
+    // unchanged (a present-then-null key would alter the canonical JSON and
+    // retroactively invalidate every historical campaign id).
+    ...(input.portfolioBinding === undefined ? {} : { portfolioBinding: input.portfolioBinding }),
   };
   return `campaign:sha256:${campaignDigest(identity).slice(0, 24)}`;
 }
@@ -417,6 +424,7 @@ export function manifestFingerprint(input: {
   readonly versions: CampaignInput['versions'];
   readonly privacyPolicy: CampaignPrivacyPolicy;
   readonly reproductionTarget?: CampaignInput['reproductionTarget'];
+  readonly portfolioBinding?: CampaignInput['portfolioBinding'];
 }): string {
   return `manifest:sha256:${campaignDigest({
     schemaVersion: CAMPAIGN_MANIFEST_VERSION,
@@ -434,6 +442,8 @@ export function manifestFingerprint(input: {
       clusterId: input.reproductionTarget.clusterId,
       candidate: persistedCandidate(input.reproductionTarget.candidate),
     },
+    // Conditional spread: legacy manifests recompute byte-identically.
+    ...(input.portfolioBinding === undefined ? {} : { portfolioBinding: input.portfolioBinding }),
   }).slice(0, 24)}`;
 }
 
@@ -444,6 +454,82 @@ function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
   seen.add(objectValue);
   for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child, seen);
   return Object.freeze(value);
+}
+
+function validatePortfolioBindingShape(value: unknown): asserts value is CampaignPortfolioRuntimeBinding {
+  const binding = requireRuntimeRecord(value, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING');
+  assertExactKeys(binding, [
+    'schemaVersion', 'planId', 'planManifestVersion', 'planManifestDigest',
+    'portfolioDigest', 'handoffVersion', 'handoffDigest',
+    'realUniverseVersion', 'realUniverseDigest', 'budgetMappingVersion',
+    'requiredAuthorizationClass', 'environmentRestriction', 'executableAtRest',
+    'members', 'budgetCaps',
+  ], 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING');
+  if (binding.schemaVersion !== CAMPAIGN_PORTFOLIO_RUNTIME_BINDING_VERSION) manifestIntegrity('PORTFOLIO_BINDING_SCHEMA_INVALID');
+  const typed = binding as unknown as CampaignPortfolioRuntimeBinding;
+  for (const key of ['planId', 'planManifestVersion', 'planManifestDigest', 'portfolioDigest', 'handoffVersion', 'handoffDigest', 'realUniverseVersion', 'realUniverseDigest', 'budgetMappingVersion', 'requiredAuthorizationClass'] as const) {
+    assertString(typed[key], `CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING:${key}`);
+  }
+  if (!/^plan:sha256:[a-f0-9]{24}$/i.test(typed.planId) || !/^plan:sha256:[a-f0-9]{24}$/i.test(typed.planManifestDigest)) manifestIntegrity('PORTFOLIO_BINDING_PLAN_IDENTITY_INVALID');
+  if (!/^pf:sha256:[a-f0-9]{24}$/i.test(typed.portfolioDigest)) manifestIntegrity('PORTFOLIO_BINDING_PORTFOLIO_DIGEST_INVALID');
+  if (!/^handoff:sha256:[a-f0-9]{24}$/i.test(typed.handoffDigest)) manifestIntegrity('PORTFOLIO_BINDING_HANDOFF_DIGEST_INVALID');
+  if (typed.environmentRestriction !== 'DEV_ONLY_NEVER_PRODUCTION' || typed.executableAtRest !== false) manifestIntegrity('PORTFOLIO_BINDING_SAFETY_WEAKENED');
+  const members = requireRuntimeArray(binding.members, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBERS');
+  if (members.length === 0) manifestIntegrity('PORTFOLIO_BINDING_EMPTY');
+  const seenMemberIds = new Set<string>();
+  const seenWorkItemIds = new Set<string>();
+  let previousPlanOrder = -1;
+  for (const raw of members) {
+    const member = requireRuntimeRecord(raw, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER');
+    assertExactKeys(member, ['memberId', 'targetId', 'kind', 'planOrder', 'allocatedUnits', 'maxRetries', 'journeyId', 'envelopeId', 'apiOperationId', 'seed', 'workItemId'], 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER');
+    for (const key of ['memberId', 'targetId', 'kind', 'workItemId'] as const) assertString(member[key], `CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER:${key}`);
+    const bound = member as unknown as CampaignPortfolioBoundMember;
+    if (!/^pm:sha256:[a-f0-9]{24}$/.test(bound.memberId) || seenMemberIds.has(bound.memberId)) manifestIntegrity(`PORTFOLIO_BINDING_MEMBER_ID_INVALID:${bound.memberId}`);
+    seenMemberIds.add(bound.memberId);
+    assertNonNegativeInteger(bound.planOrder, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER_PLAN_ORDER');
+    if (bound.planOrder !== previousPlanOrder + 1) manifestIntegrity('PORTFOLIO_BINDING_MEMBER_ORDER_NOT_CANONICAL');
+    previousPlanOrder = bound.planOrder;
+    assertNonNegativeInteger(bound.allocatedUnits, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER_UNITS');
+    if (bound.allocatedUnits <= 0) manifestIntegrity(`PORTFOLIO_BINDING_MEMBER_ZERO_UNITS:${bound.memberId}`);
+    assertNonNegativeInteger(bound.maxRetries, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER_RETRIES');
+    if (!(['JOURNEY', 'API', 'EXPLORATION'] as readonly string[]).includes(bound.kind)) manifestIntegrity(`PORTFOLIO_BINDING_MEMBER_KIND_INVALID:${bound.kind}`);
+    for (const key of ['journeyId', 'envelopeId', 'apiOperationId', 'seed'] as const) {
+      const value = bound[key];
+      if (value !== null) assertString(value, `CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_MEMBER:${key}`);
+    }
+    if (bound.kind === 'JOURNEY' && (bound.envelopeId !== null || bound.apiOperationId !== null || bound.seed !== null || bound.journeyId === null || bound.workItemId !== `journey:${bound.journeyId}`)) manifestIntegrity(`PORTFOLIO_BINDING_JOURNEY_LINEAGE_INVALID:${bound.memberId}`);
+    if (bound.kind === 'API' && (bound.journeyId === null || bound.apiOperationId === null || bound.envelopeId !== null || bound.seed !== null || bound.workItemId !== `api:${bound.apiOperationId}`)) manifestIntegrity(`PORTFOLIO_BINDING_API_LINEAGE_INVALID:${bound.memberId}`);
+    if (bound.kind === 'EXPLORATION' && (bound.journeyId === null || bound.envelopeId === null || bound.seed === null || bound.apiOperationId !== null || bound.workItemId !== `explore:${bound.envelopeId}:${bound.seed}`)) manifestIntegrity(`PORTFOLIO_BINDING_EXPLORATION_LINEAGE_INVALID:${bound.memberId}`);
+    if (seenWorkItemIds.has(bound.workItemId)) manifestIntegrity(`PORTFOLIO_BINDING_DUPLICATE_WORK_ITEM:${bound.workItemId}`);
+    seenWorkItemIds.add(bound.workItemId);
+  }
+  const caps = requireRuntimeRecord(binding.budgetCaps, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_CAPS');
+  assertExactKeys(caps, ['maxTotalBrowserContexts', 'maxJourneyContexts', 'maxExplorationContexts', 'maxApiExecutions', 'maxTotalActions'], 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_CAPS');
+  for (const key of ['maxTotalBrowserContexts', 'maxJourneyContexts', 'maxExplorationContexts', 'maxApiExecutions', 'maxTotalActions'] as const) {
+    assertNonNegativeInteger(caps[key], `CAMPAIGN_MANIFEST_INTEGRITY_INVALID:PORTFOLIO_BINDING_CAPS:${key}`);
+  }
+}
+
+function validateManifestWorkLineageWithBinding(manifest: CampaignManifest): void {
+  validateManifestWorkLineage(manifest);
+  if (manifest.portfolioBinding === undefined) return;
+  const workIds = new Set(manifest.workItems.map((item) => item.workItemId));
+  const journeys = manifest.workItems.filter((item) => item.kind === 'JOURNEY');
+  const apis = manifest.workItems.filter((item) => item.kind === 'API');
+  const explorations = manifest.workItems.filter((item) => item.kind === 'EXPLORATION');
+  const members = manifest.portfolioBinding.members;
+  if (members.length !== manifest.workItems.length) manifestIntegrity('PORTFOLIO_BINDING_MEMBER_COUNT_MISMATCH');
+  if (members.filter((m) => m.kind === 'JOURNEY').length !== journeys.length) manifestIntegrity('PORTFOLIO_BINDING_JOURNEY_COUNT_MISMATCH');
+  if (members.filter((m) => m.kind === 'API').length !== apis.length) manifestIntegrity('PORTFOLIO_BINDING_API_COUNT_MISMATCH');
+  if (members.filter((m) => m.kind === 'EXPLORATION').length !== explorations.length) manifestIntegrity('PORTFOLIO_BINDING_EXPLORATION_COUNT_MISMATCH');
+  for (const member of members) {
+    if (!workIds.has(member.workItemId)) manifestIntegrity(`PORTFOLIO_BINDING_WORK_ITEM_MISSING:${member.workItemId}`);
+    const item = manifest.workItems.find((candidate) => candidate.workItemId === member.workItemId);
+    if (item === undefined || item.kind !== member.kind) manifestIntegrity(`PORTFOLIO_BINDING_KIND_MISMATCH:${member.workItemId}`);
+    if (item.journeyId !== member.journeyId || item.envelopeId !== member.envelopeId || item.apiOperationId !== member.apiOperationId || item.seed !== member.seed) {
+      manifestIntegrity(`PORTFOLIO_BINDING_LINEAGE_MISMATCH:${member.workItemId}`);
+    }
+  }
 }
 
 function validateManifestIdentity(manifest: CampaignManifest): void {
@@ -476,7 +562,7 @@ function validateManifestIdentity(manifest: CampaignManifest): void {
 function validateManifestRuntimeShape(value: unknown): asserts value is CampaignManifest {
   const manifest = requireRuntimeRecord(value, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID');
   try {
-    assertExactKeys(manifest, MANIFEST_KEYS, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID', ['reproductionTarget']);
+    assertExactKeys(manifest, MANIFEST_KEYS, 'CAMPAIGN_MANIFEST_INTEGRITY_INVALID', ['reproductionTarget', 'portfolioBinding']);
     assertString(manifest.schemaVersion, 'CAMPAIGN_MANIFEST_SCHEMA_INVALID');
     assertString(manifest.campaignSchemaVersion, 'CAMPAIGN_MANIFEST_SCHEMA_INVALID');
     assertString(manifest.campaignId, 'CAMPAIGN_ID_INVALID');
@@ -534,6 +620,10 @@ function validateManifestRuntimeShape(value: unknown): asserts value is Campaign
       if ('replay' in candidate) manifestIntegrity('REPRODUCTION_TARGET_CONTAINS_EXECUTABLE');
       assertPersistedCandidateShape(candidate, 'MANIFEST_REPRODUCTION_CANDIDATE');
     }
+    if (manifest.portfolioBinding !== undefined) {
+      if (manifest.reproductionTarget !== undefined) manifestIntegrity('PORTFOLIO_BINDING_REPRODUCTION_TARGET_CONFLICT');
+      validatePortfolioBindingShape(manifest.portfolioBinding);
+    }
   } catch (error) {
     if (error instanceof Error && (error.message.startsWith('CAMPAIGN_MANIFEST_INTEGRITY_INVALID:') || error.message.startsWith('CAMPAIGN_MANIFEST_SCHEMA_INVALID:') || error.message.startsWith('CAMPAIGN_ID_INVALID:') || error.message.startsWith('CAMPAIGN_MANIFEST_FINGERPRINT_INVALID:'))) throw error;
     manifestIntegrity(error instanceof Error ? error.message : 'SHAPE_INVALID');
@@ -569,6 +659,7 @@ export function createCampaignManifest(input: CampaignInput): CampaignManifest {
     versions: input.versions,
     privacyPolicy: input.privacyPolicy,
     reproductionTarget: input.reproductionTarget,
+    ...(input.portfolioBinding === undefined ? {} : { portfolioBinding: input.portfolioBinding }),
   });
   const manifest: CampaignManifest = {
     schemaVersion: CAMPAIGN_MANIFEST_VERSION,
@@ -605,6 +696,7 @@ export function createCampaignManifest(input: CampaignInput): CampaignManifest {
         candidate: persistedCandidate(input.reproductionTarget.candidate),
       },
     }),
+    ...(input.portfolioBinding === undefined ? {} : { portfolioBinding: input.portfolioBinding }),
     ownerScopePolicy: {
       status: 'FROZEN_BY_OWNER',
       reason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
@@ -639,6 +731,7 @@ export function validateCampaignManifest(manifest: CampaignManifest | unknown): 
       clusterId: manifest.reproductionTarget.clusterId,
       candidate: manifest.reproductionTarget.candidate,
     },
+    ...(manifest.portfolioBinding === undefined ? {} : { portfolioBinding: manifest.portfolioBinding }),
   });
   if (expectedId !== manifest.campaignId) throw new Error('CAMPAIGN_ID_RECOMPUTATION_MISMATCH');
   const expectedFingerprint = manifestFingerprint({
@@ -656,6 +749,7 @@ export function validateCampaignManifest(manifest: CampaignManifest | unknown): 
       clusterId: manifest.reproductionTarget.clusterId,
       candidate: manifest.reproductionTarget.candidate,
     },
+    ...(manifest.portfolioBinding === undefined ? {} : { portfolioBinding: manifest.portfolioBinding }),
   });
   if (expectedFingerprint !== manifest.manifestFingerprint) throw new Error('CAMPAIGN_MANIFEST_INTEGRITY_INVALID:MANIFEST_FINGERPRINT_MISMATCH');
   if (!arraysExactlyEqual(manifest.selectedJourneys, manifest.selection.selectedJourneys)
@@ -664,7 +758,7 @@ export function validateCampaignManifest(manifest: CampaignManifest | unknown): 
     || !arraysExactlyEqual(manifest.seedSet, manifest.selection.selectedSeeds)) {
     throw new Error('CAMPAIGN_MANIFEST_INTEGRITY_INVALID:SELECTION_CROSS_FIELD_MISMATCH');
   }
-  validateManifestWorkLineage(manifest);
+  validateManifestWorkLineageWithBinding(manifest);
   if (manifest.mode !== 'LOCAL_SYNTHETIC' && manifest.budgetPolicy.maxRuntimeMs > INITIAL_REAL_CAMPAIGN_BUDGET.maxRuntimeMs) {
     throw new Error('CAMPAIGN_BUDGET_PROFILE_NOT_AUTHORIZED');
   }

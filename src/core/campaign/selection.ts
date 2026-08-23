@@ -18,27 +18,16 @@ import type {
   CampaignSelectionResult,
   CampaignWorkItem,
 } from './types';
-import { isInitialRealCampaignBudget } from './budget';
+import { isInitialRealCampaignBudget, INITIAL_REAL_CAMPAIGN_BUDGET } from './budget';
+import { API_BY_JOURNEY, ENVELOPE_BY_JOURNEY, REAL_RUNTIME_SEEDS } from './runtimeProfile';
 
 const JOURNEY_ORDER: readonly JourneyId[] = [...RIPPLE_JOURNEY_IDS];
 
-const ENVELOPE_BY_JOURNEY: Readonly<Record<JourneyId, string>> = {
-  'ripple-payer-exchange-read': 'E1-J1-payer-exchange',
-  'ripple-common-exchange-read': 'E2-J2-common-exchange',
-  'ripple-account-inventory': 'E3-J3-account-inventory',
-};
-
-const API_BY_JOURNEY: Readonly<Record<JourneyId, readonly string[]>> = {
-  'ripple-payer-exchange-read': ['ripple.payer-exchange.read'],
-  'ripple-common-exchange-read': ['ripple.common-exchange.read'],
-  'ripple-account-inventory': ['ripple.account-inventory.read'],
-};
-
-const DEFAULT_SEEDS: readonly string[] = [
-  '0x0000000000000101',
-  '0x0000000000000201',
-  '0x0000000000000301',
-];
+// Phase 16C: the journey->envelope and journey->operation linkage tables are
+// canonical runtime-profile data (single source of truth, shared with the
+// real approved universe builder); they are re-derived here under their
+// historical local names.
+const DEFAULT_SEEDS: readonly string[] = REAL_RUNTIME_SEEDS;
 
 function journeyRank(journeyId: JourneyId): number {
   return JOURNEY_ORDER.indexOf(journeyId);
@@ -91,6 +80,19 @@ function explanationFor(input: {
 }
 
 function selectedJourneyEntries(input: CampaignInput): readonly SelectedJourney[] {
+  // Phase 16C: portfolio binding selects EXACTLY the admitted plan members in
+  // admitted plan order. No implicit expansion, no fallback to fixture ids.
+  if (input.portfolioBinding !== undefined) {
+    return input.portfolioBinding.members
+      .filter((member) => member.kind === 'JOURNEY')
+      .map((member) => ({
+        journeyId: member.journeyId as JourneyId,
+        priorityTier: 'P1',
+        confidence: 'HIGH',
+        riskClasses: ['DATA_FETCH'],
+        reasons: [],
+      }));
+  }
   if (input.mode === 'BASELINE_HEALTH' || input.mode === 'COVERAGE_EXPANSION' || input.mode === 'LOCAL_SYNTHETIC') {
     return JOURNEY_ORDER.map((journeyId) => ({
       journeyId,
@@ -109,9 +111,32 @@ function selectedJourneyEntries(input: CampaignInput): readonly SelectedJourney[
 }
 
 function selectedSeeds(input: CampaignInput, selectedJourneys: readonly JourneyId[]): string[] {
+  // Phase 16C: with a portfolio binding, seeds are exactly the bound
+  // exploration members' frozen seeds in plan order.
+  if (input.portfolioBinding !== undefined) {
+    return input.portfolioBinding.members
+      .filter((member) => member.kind === 'EXPLORATION')
+      .map((member) => member.seed)
+      .filter((seed): seed is string => seed !== null);
+  }
   if (input.mode === 'REPRODUCTION_ONLY') return [];
   const source = input.seedSet.length > 0 ? [...input.seedSet] : [...DEFAULT_SEEDS];
   return selectedJourneys.map((_, index) => source[index % source.length]!).filter((seed, index, all) => all.indexOf(seed) === index);
+}
+
+/** Bound API operations for one journey under an explicit portfolio binding. */
+function boundApiOperations(binding: NonNullable<CampaignInput['portfolioBinding']>, journeyId: JourneyId): readonly string[] {
+  return binding.members
+    .filter((member) => member.kind === 'API' && member.journeyId === journeyId)
+    .map((member) => member.apiOperationId)
+    .filter((operationId): operationId is string => operationId !== null);
+}
+
+/** Bound exploration member for one journey under an explicit portfolio binding. */
+function boundExplorationMember(binding: NonNullable<CampaignInput['portfolioBinding']>, journeyId: JourneyId): { readonly envelopeId: string; readonly seed: string } | null {
+  const member = binding.members.find((candidate) => candidate.kind === 'EXPLORATION' && candidate.journeyId === journeyId);
+  if (member === undefined || member.envelopeId === null || member.seed === null) return null;
+  return { envelopeId: member.envelopeId, seed: member.seed };
 }
 
 function findApiOperation(operations: readonly ApiOperation[], operationId: string): ApiOperation {
@@ -152,7 +177,13 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
     const apiReplayReserve = boundedRealProfile && input.budgetPolicy.maxPromotedClusters > 0 ? 1 : 0;
     let apiCost = 0;
     for (const selectedJourney of selectedEntries) {
-      for (const operationId of API_BY_JOURNEY[selectedJourney.journeyId] ?? []) {
+      // Phase 16C: with a portfolio binding, exactly the bound API operations
+      // participate (subset of the linked canonical operations); legacy paths
+      // scan the full canonical linkage table as before.
+      const linkedApiIds = input.portfolioBinding !== undefined
+        ? boundApiOperations(input.portfolioBinding, selectedJourney.journeyId)
+        : API_BY_JOURNEY[selectedJourney.journeyId] ?? [];
+      for (const operationId of linkedApiIds) {
         const operation = findApiOperation(input.apiOperations, operationId);
         const cost = operation.replayPolicy === 'FIRST_PLUS_FRESH_REPLAY' ? 2 : 1;
         if (!boundedRealProfile || apiCost + cost <= input.budgetPolicy.maxApiExecutions - apiReplayReserve) {
@@ -192,7 +223,9 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
       });
       explanations.push({ workItemKey: journeyWorkItemId, explanation });
 
-      const linkedApiIds = API_BY_JOURNEY[journeyId] ?? [];
+      const linkedApiIds = input.portfolioBinding !== undefined
+        ? boundApiOperations(input.portfolioBinding, journeyId)
+        : API_BY_JOURNEY[journeyId] ?? [];
       for (const operationId of linkedApiIds) {
         const operation = findApiOperation(input.apiOperations, operationId);
         if (!selectedApiOperationIds.has(operationId)) {
@@ -220,20 +253,28 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
       }
 
       if (input.mode === 'BASELINE_HEALTH' || input.mode === 'COVERAGE_EXPANSION' || input.mode === 'LOCAL_SYNTHETIC' || input.mode === 'CHANGE_DIRECTED') {
-        const seed = seeds[journeyRank(journeyId)] ?? DEFAULT_SEEDS[journeyRank(journeyId)]!;
-        if (boundedRealProfile && input.budgetPolicy.maxExplorationContexts === 0) {
+        // Phase 16C: with a portfolio binding, exploration participates only
+        // when the plan explicitly bound an exploration member for this
+        // journey, using its frozen envelope + seed. Legacy behavior unchanged.
+        const boundExploration = input.portfolioBinding !== undefined ? boundExplorationMember(input.portfolioBinding, journeyId) : null;
+        if (input.portfolioBinding !== undefined && boundExploration === null) {
+          continue;
+        }
+        const seed = boundExploration !== null ? boundExploration.seed : seeds[journeyRank(journeyId)] ?? DEFAULT_SEEDS[journeyRank(journeyId)]!;
+        const envelopeIdForWork = boundExploration !== null ? boundExploration.envelopeId : ENVELOPE_BY_JOURNEY[journeyId];
+        if (boundedRealProfile && input.portfolioBinding === undefined && input.budgetPolicy.maxExplorationContexts === 0) {
           explanations.push({
-            workItemKey: `explore:${ENVELOPE_BY_JOURNEY[journeyId]}:${seed}`,
-            explanation: explanationFor({ selected: false, mode: input.mode, journeyId, selectedJourney, envelopeId: ENVELOPE_BY_JOURNEY[journeyId], reason: 'Omitted before freeze to reserve browser capacity for qualifying reproduction.' }),
+            workItemKey: `explore:${envelopeIdForWork}:${seed}`,
+            explanation: explanationFor({ selected: false, mode: input.mode, journeyId, selectedJourney, envelopeId: envelopeIdForWork, reason: 'Omitted before freeze to reserve browser capacity for qualifying reproduction.' }),
           });
           continue;
         }
-        const envelope = input.explorationEnvelopes.find((candidate) => candidate.envelopeId === envelopeId);
-        if (envelope === undefined) throw new Error(`CAMPAIGN_ENVELOPE_MISSING:${envelopeId}`);
-        const envelopeActions = actionIdsForEnvelope(input.safeActions, envelopeId, envelope.allowedActionIds);
-        if (envelopeActions.length === 0) throw new Error(`CAMPAIGN_ENVELOPE_ACTIONS_MISSING:${envelopeId}`);
-        const explorationExplanation = explanationFor({ selected: true, mode: input.mode, journeyId, selectedJourney, envelopeId, reason: input.mode === 'COVERAGE_EXPANSION' ? 'Selected from the existing safe envelope for under-exercised coverage.' : 'Explicit Phase 4 lineage from the selected trusted journey.' });
-        const explorationWorkItemId = `explore:${envelopeId}:${seed}`;
+        const envelope = input.explorationEnvelopes.find((candidate) => candidate.envelopeId === envelopeIdForWork);
+        if (envelope === undefined) throw new Error(`CAMPAIGN_ENVELOPE_MISSING:${envelopeIdForWork}`);
+        const envelopeActions = actionIdsForEnvelope(input.safeActions, envelopeIdForWork, envelope.allowedActionIds);
+        if (envelopeActions.length === 0) throw new Error(`CAMPAIGN_ENVELOPE_ACTIONS_MISSING:${envelopeIdForWork}`);
+        const explorationExplanation = explanationFor({ selected: true, mode: input.mode, journeyId, selectedJourney, envelopeId: envelopeIdForWork, reason: input.portfolioBinding !== undefined ? 'Selected by the admitted portfolio plan member.' : input.mode === 'COVERAGE_EXPANSION' ? 'Selected from the existing safe envelope for under-exercised coverage.' : 'Explicit Phase 4 lineage from the selected trusted journey.' });
+        const explorationWorkItemId = `explore:${envelopeIdForWork}:${seed}`;
         explorationWork.push({
           workItemId: explorationWorkItemId,
           kind: 'EXPLORATION',
@@ -278,11 +319,16 @@ export function buildCampaignSelection(input: CampaignInput): CampaignSelectionB
     explanations.push({ workItemKey: `reproduction:${target.clusterId}`, explanation: reproductionExplanation });
   }
 
+  // Phase 16C: with a portfolio binding the admitted plan order is load-bearing —
+  // journeys keep plan order within the existing kind grouping; no canonical re-rank.
   const ordered = [...journeyWork, ...apiWork, ...explorationWork, ...reproductionWork]
     .sort((a, b) => {
       const kindRank: Record<CampaignWorkItem['kind'], number> = { JOURNEY: 0, API: 1, EXPLORATION: 2, REPRODUCTION: 3, MINIMIZATION: 4 };
-      const aJourneyRank = a.journeyId === null ? 99 : journeyRank(a.journeyId);
-      const bJourneyRank = b.journeyId === null ? 99 : journeyRank(b.journeyId);
+      const planJourneyOrder = input.portfolioBinding !== undefined
+        ? new Map(input.portfolioBinding.members.filter((member) => member.kind === 'JOURNEY').map((member) => [member.journeyId ?? '', member.planOrder]))
+        : null;
+      const aJourneyRank = a.journeyId === null ? 99 : planJourneyOrder !== null ? planJourneyOrder.get(a.journeyId) ?? 98 : journeyRank(a.journeyId);
+      const bJourneyRank = b.journeyId === null ? 99 : planJourneyOrder !== null ? planJourneyOrder.get(b.journeyId) ?? 98 : journeyRank(b.journeyId);
       return kindRank[a.kind] - kindRank[b.kind] || aJourneyRank - bJourneyRank || a.workItemId.localeCompare(b.workItemId);
     })
     .map((item, order) => ({ ...item, order }));
@@ -345,6 +391,30 @@ export function validateCampaignInputs(input: CampaignInput): void {
   if (numeric.some((value) => !Number.isInteger(value) || value < 0)) throw new Error('CAMPAIGN_BUDGET_INVALID');
   if (budget.maxJourneyContexts + budget.maxExplorationContexts > budget.maxTotalBrowserContexts) throw new Error('CAMPAIGN_BROWSER_BUDGET_INVALID');
   if (budget.maxRuntimeMs === 0 || budget.maxPerTestTimeoutMs === 0 || budget.maxPromotedClusters === 0) throw new Error('CAMPAIGN_BUDGET_ZERO_INVALID');
+  if (input.portfolioBinding !== undefined) {
+    if (input.mode === 'REPRODUCTION_ONLY') throw new Error('CAMPAIGN_PORTFOLIO_BINDING_MODE_INVALID');
+    if (input.reproductionTarget !== undefined) throw new Error('CAMPAIGN_PORTFOLIO_BINDING_REPRODUCTION_CONFLICT');
+    // Monotone-restrictive proof at the input boundary: the mapped policy must
+    // equal the frozen binding caps AND never exceed the current approved
+    // bounded real profile on any mapped dimension. A portfolio plan can
+    // restrict the existing runtime budget; it can never expand it.
+    const caps = input.portfolioBinding.budgetCaps;
+    const initial = INITIAL_REAL_CAMPAIGN_BUDGET;
+    const mappedDimensions: readonly (readonly [number, number, number])[] = [
+      [budget.maxTotalBrowserContexts, caps.maxTotalBrowserContexts, initial.maxTotalBrowserContexts],
+      [budget.maxJourneyContexts, caps.maxJourneyContexts, initial.maxJourneyContexts],
+      [budget.maxExplorationContexts, caps.maxExplorationContexts, initial.maxExplorationContexts],
+      [budget.maxApiExecutions, caps.maxApiExecutions, initial.maxApiExecutions],
+      [budget.maxTotalActions, caps.maxTotalActions, initial.maxTotalActions],
+    ];
+    for (const [policyValue, cap, initialValue] of mappedDimensions) {
+      if (policyValue !== cap) throw new Error('CAMPAIGN_PORTFOLIO_BUDGET_CAPS_MISMATCH');
+      if (policyValue > initialValue) throw new Error('CAMPAIGN_PORTFOLIO_BUDGET_EXPANSION_FORBIDDEN');
+    }
+    if (input.budgetPolicy.maxReplays > initial.maxReplays || input.budgetPolicy.maxMinimizationCandidates > initial.maxMinimizationCandidates || input.budgetPolicy.maxRuntimeMs > initial.maxRuntimeMs || input.budgetPolicy.maxPrivateEvidenceBytes > initial.maxPrivateEvidenceBytes || input.budgetPolicy.maxPromotedClusters > initial.maxPromotedClusters) {
+      throw new Error('CAMPAIGN_PORTFOLIO_BUDGET_EXPANSION_FORBIDDEN');
+    }
+  }
 }
 
 export function phase3SelectionForBaseline(): null {

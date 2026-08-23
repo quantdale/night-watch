@@ -2838,3 +2838,44 @@ data-plane/infra/AI/selfDev-promotion authority was exercised; catalog
 count/digest unchanged; promotion authority NONE; Phase 6 remains
 FROZEN_BY_OWNER; Phase 11B and Phase 13B remain NOT_AUTHORIZED.
 NEXT ACTION: STOP.
+
+## D-67 — Phase 16C: Portfolio Runtime Binding & Real Approved Universe (single-executor seam; implemented local/source/synthetic)
+
+**Context.** Phase 16B proved `BLOCKED_RUNTIME_BINDING_MISSING`: the hardened
+Phase-16A portfolio plan and inert DEV handoff had no consumer in the existing
+Phase-7 real-campaign runtime, no authorization gate, no launcher input, no
+real-universe builder, and no unit-to-budget mapping. Phase 16C executed under
+`PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY` (LOCAL/SOURCE/SYNTHETIC only;
+zero DEV contact).
+
+**Decision.**
+
+1. ONE canonical runtime-profile module (`src/core/campaign/runtimeProfile.ts`)
+   now owns the previously duplicated linkage knowledge
+   (journey<->envelope<->operation<->seed); selection.ts and the real adapter
+   derive from it, eliminating the shadow registries.
+2. The real approved universe is DERIVED from canonical registries with a pure
+   builder; synthetic fixture identities cannot enter it; exploration members
+   are represented explicitly as runtime-restricted while the bounded profile
+   keeps maxExplorationContexts=0.
+3. Portfolio binding is a schema-OPTIONAL manifest field included in
+   campaignId + manifestFingerprint via conditional spread: load-bearing drift
+   invalidates resume before executor use, while every historical manifest
+   recomputes byte-identically. CampaignVersionFingerprint shape is untouched.
+4. Budget mapping v1 is monotone-restrictive (elementwise min against the
+   approved bounded profile); units are scheduling data, never authority; a
+   three-API plan is honestly infeasible under reserve arithmetic and fails
+   closed rather than silently dropping the reproduction reserve.
+5. Authorization is consumed at admission and again before resume/executor
+   construction; it permits consumption only and never rewrites plan identity,
+   members, budgets, order, or safety policy. The handoff remains
+   executable:false everywhere.
+6. One opt-in launcher input pair feeds prepare AND re-verifies resume; legacy
+   invocation surfaces are unchanged; no second executor exists.
+
+**Consequences.** A separately authorized Phase 16D contained DEV acceptance
+may consume this seam ONLY after the dedicated Phase-16CH exhaustive hardening.
+All ten Phase-16C quality floors measured zero; focused/moderate packs green;
+canonical/isolated whole-repo regressions remain owned by Phase-16CH. Phase 6
+FROZEN_BY_OWNER; Phases 11B/13B NOT_AUTHORIZED; promotion authority NONE.
+DEV WAS NOT EXECUTED.

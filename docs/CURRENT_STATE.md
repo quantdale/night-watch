@@ -151,6 +151,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_16A_STATUS` | `COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` — deterministic campaign portfolio layer (W1–W8) implemented and focused-green at earned implementation checkpoint `1737e30afb64a1aed722f61182d87a4f2f6e3bb4` (six phase16a suites 59/0; affected Phase 12–15 compatibility 115/0; campaign:synthetic 27/0; owner-provenance 91/0; byte-deterministic plan/simulate/handoff outputs); complete canonical/isolated regressions deliberately deferred to the next dedicated hardening task (D-66-era record in `.agent/tasks/phase-16a-campaign-yield-portfolio-optimization/`) |
 | `PHASE_16H_STATUS` | `BLOCKED_EXTERNAL_CI` — campaign-yield/portfolio hardening terminal on earned SHA `1d6d8759bbba0145962fa0e65810d6f32fa41445`: DEF-01..DEF-06 reproduced then repaired with permanent regressions (simulator starvation-threshold coherence + model validation; replan unselected-movement fail-closed + affected-set purity; strict plan-manifest parser with double digest recomputation wired into comparePlanManifests and CLI; CLI sanitized error surfaces); adversarial corpus extended to 89 scenario fixtures plus ~80 negative/matrix cases, x3 deterministic repeats, all ten quality floors zero; Phase 12–16 compatibility 836/0; canonical AND topology-correct isolated complete regressions both 2161 passed / 0 failed / 4 skipped with exact parity incl. skip inventory; catalog count/digest unchanged, promotion authority NONE; Actions run 32596866942 executed ZERO steps under the external billing/spending block (single inspection, no retry-loop); `PHASE_16A_PORTFOLIO: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEV handoff never executed (`PHASE_16A_DEV_CAMPAIGN: NOT_AUTHORIZED`) |
 | `PHASE_16B_STATUS` | `BLOCKED_RUNTIME_BINDING_MISSING` — contained DEV portfolio campaign acceptance terminated at the runtime-binding gate with ZERO DEV contact: both owner tokens recorded before any contact, candidate plan/handoff proven byte-deterministic and parser-valid but never frozen for execution because current source provides no safe path from the inert handoff into the existing bounded campaign runtime (no consumer of dev-handoff/plan-manifest outside src/core/portfolio/** + bin/portfolio.mjs + unit tests; bin/phase7-real.mjs accepts no plan input; the literal gate token is consumed by nothing; three of five default plan targets are synthetic-fixture-only). No bypass implemented, no source change, no manufactured checkpoint; post-run gates green (typecheck/hardening PASS; focused Phase 16A+16H suites 98/0; campaign:synthetic 27/0; owner-provenance 91/0); a future separately authorized task must design a SAFE consumption seam plus a real-approved-universe portfolio builder before any retry |
+| `PHASE_16C_STATUS` | `COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` — portfolio runtime binding + real approved universe implemented local/source/synthetic under `PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY` (2026-08-23): canonical runtime-profile linkage module; deterministic real-universe builder over canonical registries (synthetic fixture identities excluded; exploration members explicitly runtime-restricted); strict admission of inert handoff+plan+universe+authorization with bounded categorical reasons (handoff stays executable:false; authorization non-mutating); versioned monotone-restrictive budget mapping v1 (elementwise min vs the approved bounded profile); schema-OPTIONAL manifest `portfolioBinding` in campaignId+fingerprint via conditional spread (legacy manifests byte-stable); prepare freezes ordinal-zero checkpoint with zero executor callbacks and resume re-verifies frozen fingerprints + fresh authorization before executor construction; single opt-in launcher input pair (`--portfolio-plan=`/`--portfolio-authorization=`) with legacy surfaces unchanged. New suites 33/0; Phase-16A+16H portfolio suites incl. campaign.test 125/0; affected Phase 12–15 compatibility 145/0; campaign:synthetic 27/0; owner-provenance 91/0; all ten quality floors zero; seam x3 + CLI runtime-plan x3 byte-deterministic. Canonical/isolated whole-repo regressions deferred to Phase-16CH hardening (`PHASE_16CH_HARDENING: REQUIRED_NEXT`); `PHASE_16D_DEV_RETRY: REQUIRES_SEPARATE_OWNER_AUTHORIZATION`; DEV WAS NOT EXECUTED |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -1820,6 +1821,26 @@ never frozen for execution. Post-run gates: typecheck/hardening PASS; focused
 Phase 16A+16H suites 98/0; campaign:synthetic 27/0; owner-provenance 91/0;
 agent/project checks PASS. Full evidence:
 `.agent/tasks/phase-16b-contained-dev-portfolio-campaign-acceptance/REPORT.md`.
+
+## Phase 16C — portfolio runtime binding & real approved universe (complete, local/source/synthetic)
+
+`PHASE_16C_STATUS: COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)`
+(2026-08-23, D-67). Under `PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY`
+the Phase-16B blocker was removed inside the ONE existing prepare/resume
+architecture: canonical runtime-profile linkage; deterministic real approved
+universe (payer/common/inventory x journey/API/exploration, synthetic fixtures
+excluded by construction, exploration explicitly runtime-restricted); strict
+admission of inert handoff+plan+universe+separately-supplied authorization
+(23 bounded categorical reasons; authorization non-mutating; handoff stays
+executable:false); versioned monotone-restrictive budget mapping v1;
+schema-OPTIONAL `portfolioBinding` frozen into campaignId+fingerprint via
+conditional spread so drift fails resume before executor while legacy
+manifests stay byte-stable; single opt-in launcher input pair with strict path
+validation and unchanged legacy surfaces. Full evidence:
+`.agent/tasks/phase-16c-portfolio-runtime-binding-real-universe/REPORT.md` +
+`RUNTIME_BINDING_HANDOFF.md`. `PHASE_16CH_HARDENING: REQUIRED_NEXT`;
+`PHASE_16D_DEV_RETRY: REQUIRES_SEPARATE_OWNER_AUTHORIZATION`. DEV WAS NOT
+EXECUTED.
 
 ## Environment (machine facts)
 

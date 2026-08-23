@@ -166,6 +166,7 @@ const SUBCOMMANDS = new Set([
   "compare-plan",
   "shadow-simulate",
   "dev-handoff",
+  "runtime-plan",
 ]);
 
 async function main() {
@@ -175,8 +176,7 @@ async function main() {
     fail(
       `usage: node bin/portfolio.mjs <${[...SUBCOMMANDS].join("|")}> [--input portfolio.json] [--previous plan.json] [--current plan.json]`,
     );
-  }
-  const args = new Map();
+  }  const args = new Map();
   for (let index = 1; index < argv.length - 1; index += 2) {
     if (argv[index]?.startsWith("--")) args.set(argv[index], argv[index + 1]);
   }
@@ -223,6 +223,30 @@ async function main() {
       portfolio.portfolioDigest,
     );
     process.stdout.write(core.renderDocumentJson(handoff) + "\n");
+    return;
+  }
+
+  // Phase 16C: single combined runtime-plan document for the opt-in launcher
+  // input path (handoff stays inert; the launcher's separate authorization
+  // check is what permits consumption by the existing campaign runtime).
+  if (subcommand === "runtime-plan") {
+    const portfolio =
+      inputPortfolio(core, args) ?? demoPortfolio(core, await loadFixtures());
+    const allocation = core.allocatePortfolioBudget({
+      portfolio,
+      policy: defaultPolicy(),
+    });
+    const planManifest = core.buildCampaignPlanManifest({ portfolio, allocation });
+    const handoff = core.buildDevHandoffPackage(
+      planManifest,
+      portfolio.portfolioDigest,
+    );
+    const document = {
+      documentVersion: "nightwatch.portfolio-runtime-plan-document.v1",
+      handoff,
+      planManifest,
+    };
+    process.stdout.write(core.renderDocumentJson(document) + "\n");
     return;
   }
 

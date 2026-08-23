@@ -67,6 +67,81 @@ export const CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED = {
 /** Classification label for checkpoints persisted before Session 2 contracts existed. */
 export const CAMPAIGN_LEGACY_RUNTIME_CONTRACT_CLASSIFICATION = 'LEGACY_PRE_S2_RUNTIME_CONTRACTS' as const;
 
+// ---------------------------------------------------------------------------
+// Phase 16C — portfolio runtime binding (schema-OPTIONAL manifest addition).
+//
+// Absent on every historical/legacy manifest (byte-identical identity
+// recomputation); present only on portfolio-prepared campaigns, where it is
+// strictly validated and participates in campaignId + manifestFingerprint so
+// ANY material drift invalidates resume before an executor can run.
+// The binding records provenance digests and frozen identities only — it never
+// grants authority and the source handoff remains executable:false.
+// ---------------------------------------------------------------------------
+
+export const CAMPAIGN_PORTFOLIO_RUNTIME_BINDING_VERSION =
+  'nightwatch.campaign-portfolio-runtime-binding.v1' as const;
+
+/** One admitted plan member frozen onto its existing campaign work item. */
+export interface CampaignPortfolioBoundMember {
+  /** Plan member id (`pm:sha256:<24>`). */
+  readonly memberId: string;
+  /** Canonical real target id (approved read-only operation id). */
+  readonly targetId: string;
+  readonly kind: 'JOURNEY' | 'API' | 'EXPLORATION';
+  /** Execution order inside the admitted plan manifest. */
+  readonly planOrder: number;
+  readonly allocatedUnits: number;
+  readonly maxRetries: number;
+  /** Linked approved journey (null never occurs for real members). */
+  readonly journeyId: string | null;
+  /** Linked approved Phase-4 envelope (EXPLORATION members only). */
+  readonly envelopeId: string | null;
+  /** Linked approved Phase-5 operation (API members only). */
+  readonly apiOperationId: string | null;
+  /** Fixed deterministic exploration seed (EXPLORATION members only). */
+  readonly seed: string | null;
+  /** Existing campaign work-item identity (`journey:`/`api:`/`explore:`). */
+  readonly workItemId: string;
+}
+
+/** Restrictive budget caps derived by the versioned portfolio mapping. */
+export interface CampaignPortfolioBudgetCaps {
+  readonly maxTotalBrowserContexts: number;
+  readonly maxJourneyContexts: number;
+  readonly maxExplorationContexts: number;
+  readonly maxApiExecutions: number;
+  readonly maxTotalActions: number;
+}
+
+/**
+ * Frozen portfolio runtime binding persisted inside a prepared campaign
+ * manifest. Every field is load-bearing: changing any of them changes the
+ * manifest fingerprint, which fails resume before executor use.
+ */
+export interface CampaignPortfolioRuntimeBinding {
+  readonly schemaVersion: typeof CAMPAIGN_PORTFOLIO_RUNTIME_BINDING_VERSION;
+  /** Admitted plan identity (`plan:sha256:<24>`). */
+  readonly planId: string;
+  readonly planManifestVersion: string;
+  readonly planManifestDigest: string;
+  /** Source portfolio digest (`pf:sha256:<24>`). */
+  readonly portfolioDigest: string;
+  /** Inert source handoff identity (stays executable:false at rest). */
+  readonly handoffVersion: string;
+  readonly handoffDigest: string;
+  readonly realUniverseVersion: string;
+  readonly realUniverseDigest: string;
+  readonly budgetMappingVersion: string;
+  /** Authorization CLASS marker recorded at admission (never a secret value). */
+  readonly requiredAuthorizationClass: string;
+  readonly environmentRestriction: 'DEV_ONLY_NEVER_PRODUCTION';
+  /** The handoff remains inert data; authority came only from the runtime check. */
+  readonly executableAtRest: false;
+  /** Bound selected members in admitted plan order. */
+  readonly members: readonly CampaignPortfolioBoundMember[];
+  readonly budgetCaps: CampaignPortfolioBudgetCaps;
+}
+
 export type CampaignMode =
   | 'CHANGE_DIRECTED'
   | 'BASELINE_HEALTH'
@@ -295,6 +370,8 @@ export interface CampaignManifest {
     readonly clusterId: string;
     readonly candidate: Omit<CampaignAnomalyCandidate, 'replay'>;
   };
+  /** Phase 16C: present only on portfolio-prepared campaigns (schema-optional). */
+  readonly portfolioBinding?: CampaignPortfolioRuntimeBinding;
   readonly ownerScopePolicy: {
     readonly status: 'FROZEN_BY_OWNER';
     readonly reason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE';
@@ -653,6 +730,8 @@ export interface CampaignInput {
     readonly clusterId: string;
     readonly candidate: CampaignAnomalyCandidate;
   };
+  /** Phase 16C: portfolio admission output driving exact selection + restricted budget. */
+  readonly portfolioBinding?: CampaignPortfolioRuntimeBinding;
 }
 
 export interface CampaignRunOptions {
