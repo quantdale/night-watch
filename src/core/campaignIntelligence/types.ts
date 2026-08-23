@@ -86,7 +86,19 @@ export type CampaignReasonCode =
   | "PHASE_FROZEN"
   | "CURRENTNESS_STALE"
   | "EVIDENCE_NOT_EVALUATED"
-  | "EVIDENCE_MISSING";
+  | "EVIDENCE_MISSING"
+  | "MECHANICALLY_PROVABLE_UNCOVERED"
+  | "RELATIONAL_ORACLE_GAP"
+  | "DIFFERENTIAL_PROJECTION_GAP"
+  | "METAMORPHIC_GAP"
+  | "SYNTHETIC_DETECTION_GAP"
+  | "REPLAY_GAP"
+  | "MINIMIZATION_GAP"
+  | "STALE_CONTRACT_REDERIVATION"
+  | "SURVIVING_MUTANT"
+  | "ANALYZER_UNSUPPORTED"
+  | "DUPLICATE_SEMANTIC_COVERAGE"
+  | "CAMPAIGN_AUTO_COMPOSED";
 
 export type CoverageStage =
   | "SOURCE_SURFACE_EXISTS"
@@ -126,6 +138,8 @@ export interface CampaignCandidateMetadata {
   readonly applicable: boolean;
   readonly supported: boolean;
   readonly provenance: readonly string[];
+  /** Phase 20 additive gap signals; these are planner inputs, never authority. */
+  readonly semanticGapReasons?: readonly CampaignReasonCode[];
 }
 
 export interface CampaignImpactBinding {

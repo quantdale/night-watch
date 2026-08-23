@@ -19,7 +19,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
 
 const args = process.argv.slice(2);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'findings', 'explain']);
+const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'findings', 'explain']);
 if (operatorCommands.has(args[0])) {
   const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
     cwd: root,

@@ -22,6 +22,8 @@
     "nightwatch:status": "node bin/nightwatch-intelligence.mjs status",
     "campaign:plan": "node bin/nightwatch-intelligence.mjs plan",
     "campaign:coverage": "node bin/nightwatch-intelligence.mjs coverage",
+    "campaign:contracts": "node bin/nightwatch-intelligence.mjs contracts",
+    "campaign:gaps": "node bin/nightwatch-intelligence.mjs gaps",
     "campaign:operator": "node bin/nightwatch-intelligence.mjs campaign",
     "campaign:findings": "node bin/nightwatch-intelligence.mjs findings",
     "observe:preflight": "node bin/observe-preflight.mjs",

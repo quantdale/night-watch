@@ -1,23 +1,26 @@
 # Active Task
 
-Task ID: phase-19-autonomous-bug-yield
-Phase: 19-AUTONOMOUS-BUG-YIELD
-Title: Nightwatch Phase 19 — Autonomous Bug-Yield Expansion and Integrated Campaign Intelligence
-Status: COMPLETE
-Task directory: .agent/tasks/phase-19-autonomous-bug-yield
-Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
-Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last documentation checkpoint SHA: d36196cefe368c1685e98eff8180e1f3c4edabe4
-Last checkpoint: M8 — terminal local closure, synchronized push, and truthful external-CI inspection
-Current milestone: COMPLETE — terminal local/source/synthetic closure; external CI blocked
-Next action: STOP — Phase 19 is terminal; future engineering requires a fresh authorized task
-Authorization class: PHASE_19_AUTONOMOUS_BUG_YIELD_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: phase-20-semantic-coverage-saturation
+Phase: 20-SEMANTIC-COVERAGE-SATURATION
+Title: Nightwatch Phase 20 — Semantic Coverage Saturation and Cross-Surface Differential Detection
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-20-semantic-coverage-saturation
+Starting SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+Last validated implementation SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+Last substantive checkpoint SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+Last checkpoint: M4 — Phase 19-integrated semantic gap planning, mutation measurement, operator workflow, and dossier/cache implementation
+Current milestone: M5 focused, compatibility-cone, and terminal repository validation
+Next action: Run the Phase 9–20 compatibility cone and terminal validation commands, repair any failure, then record exact canonical/isolated parity
+Authorization class: PHASE_20_SEMANTIC_COVERAGE_SATURATION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+STARTING_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
 
 ## Terminal Boundary Tokens
 
 ```text
+PHASE_20_STATUS: IN_PROGRESS
 PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -30,85 +33,49 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 18 remains a terminal historical record at
-`.agent/tasks/phase-18-semantic-replay-confidence/`; do not reopen or mutate
-it. Phase 19 execution memory is the task directory above.
-Live HEAD is always discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
+Phase 19 remains terminal at `.agent/tasks/phase-19-autonomous-bug-yield/`;
+do not reopen or mutate it. Phase 20 execution memory is the task directory
+above. Live HEAD is always discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
 
 ## Scope boundary
 
-This task is LOCAL / SOURCE / SYNTHETIC only. It authorizes Nightwatch source,
-read-only source inspection, synthetic fixtures, deterministic campaign
-planning/execution, replay and minimization, local tests, static analysis, and
-sanitized generated evidence. It authorizes zero DEV/NEXT/production contacts,
-authenticated sessions, storage-state loading, product/data mutation,
-database/datastore/cloud/infra operations, Phase 6, Phase 11B, Phase 13B,
-Phase 16D, sibling-repository writes, publication, messaging, AI authority,
-self-development promotion, credentials, or real-finding persistence.
+This task is LOCAL / SOURCE / SYNTHETIC only. It authorizes additive
+Nightwatch source, bounded read-only source inspection, synthetic fixtures,
+deterministic semantic evaluation, campaign planning, replay/minimization,
+local tests, static analysis, and sanitized generated evidence. It authorizes
+zero DEV/NEXT/production contacts, authenticated sessions, storage-state
+loading, product/data mutation, databases/datastores/cloud/infra operations,
+Phase 6/11B/13B/16D, sibling-repository writes, publication, messaging, AI
+authority, self-development promotion, credentials, or raw finding storage.
 
-Phase 19 must preserve the owner freeze
-`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE` and may not
-infer environment authorization from campaign selection or operator commands.
+Phase 20 preserves `FROZEN_BY_OWNER /
+INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; semantic priority and operator
+commands cannot infer or grant execution authority.
 
 ## Files Changed
 
-- `.agent/ACTIVE_TASK.md` and the Phase 19 task control-plane records
-- integrated deterministic campaign intelligence, impact, coverage, yield,
-  replay, minimization, nondeterminism, clustering, confidence, dossier,
-  diagnostics, product-adapter, and operator-interface changes
-- Phase 19 data-driven synthetic/adversarial fixtures and focused regressions
-- only the durable project architecture/current-state/safety decisions that
-  describe implemented behavior; historical task records remain unchanged
+- `.agent/ACTIVE_TASK.md`
+- `.agent/tasks/phase-20-semantic-coverage-saturation/**`
+- additive Phase 20 discovery, contract graph, relational/differential,
+  metamorphic, generation/measurement, campaign integration, corpus, and
+  focused-test modules as implementation proceeds
 
 ## Validation Ledger
 
-Phase 19 implementation, local validation, durable closure, synchronized push,
-and one truthful external-CI inspection are complete. The substantive
-checkpoint is `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; the last known
-documentation checkpoint before this terminal record is
-`d36196cefe368c1685e98eff8180e1f3c4edabe4`.
+Bootstrap Git inspection: PASS — `HEAD == origin/main ==
+9ee25002d9d3ed1309356467e12778a49f93389e`; clean worktree; no external
+systems contacted.
 
-- Bootstrap and Gate Zero were completed from the live starting SHA; no
-  external systems were contacted.
-- Focused Phase 19 integration: 12 passed; `npm run typecheck` PASS;
-  `npm run hardening:check` PASS; and `npm run campaign:synthetic` 27 passed.
-- The affected Phase 9–18 compatibility and Phase 19 cone passed 414 / 0.
-- Canonical regression enumerated 2,297 tests: 2,293 passed, 4 skipped,
-  0 failed. The topology-correct isolated clone produced the exact same
-  2,297 / 2,293 / 4 / 0 result and the same four skip identities:
-  `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
-  `tests/unit/selfDevSandboxConfinement.test.ts:147`.
-- `npm run test:owner-provenance` passed 91 tests on rerun after a transient
-  `EADDRINUSE` on its first attempt. `npm run agent:check` passed with
-  strict_errors=0 and the expected legacy v1 warnings; project check is
-  recorded after the durable documentation checkpoint.
-- The first isolated attempt used an invalid aggregate `/tmp` topology and
-  was stopped; the corrected clean clone under the canonical sibling root
-  passed with `npm ci`, `NIGHTWATCH_SIBLING_ROOT`, and port `19125`.
-- GitHub Actions run `32643603911` / job `97204345223` for pushed head
-  `d36196cefe368c1685e98eff8180e1f3c4edabe4` completed as failure with
-  `steps=[]`; this is the standing external billing/spending restriction
-  state, was inspected once, is not CI green, and was not retried.
-
-## Decisions
-
-- Phase 19 composes existing Phase 9–18 portfolio, change-intelligence,
-  semantic, replay, and triage contracts behind additive versioned DTOs; it
-  does not replace proven readers.
-- Planning, coverage, yield, nondeterminism, clustering, confidence, and
-  dossier outputs contain bounded explainable components and stable safe
-  identities; no opaque score or raw evidence is authoritative.
-- Safety, authority, and source-currentness gates run before selection and
-  execution; a high-priority item can never bypass them.
+Worker doctor: PASS — optional read-only bridge is healthy; worker output is
+not an authority and no worker mutation was permitted.
 
 ## Resume Recipe
 
-1. STOP — Phase 19 is terminal.
-2. Future engineering requires a new LOCAL / SOURCE / SYNTHETIC task and
-   fresh owner scope; do not reopen Phase 18 or this task.
+Read this file, then the Phase 20 SPEC.md, PLAN.md, and STATE.md in that order;
+inspect live Git status/diff; execute STATE.md's exact next action. Do not
+reopen Phase 19.
 
 ## Completion Snapshot
 
-Complete. Phase 19 local/source/synthetic implementation, exact canonical and
-isolated parity, continuity/project truth, validated push, and truthful
-external-CI inspection are closed. FINAL_LIVE_HEAD: DISCOVER_FROM_GIT.
+IN_PROGRESS. Phase 20 has only completed bootstrap/task setup. Final live HEAD
+is discovered from Git.

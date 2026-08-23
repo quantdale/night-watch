@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const command = args[0] ?? "status";
 const asJson = args.includes("--json");
 
-const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "findings", "explain"]);
+const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "findings", "explain"]);
 if (!COMMANDS.has(command)) {
   console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
   process.exit(2);
@@ -94,15 +94,84 @@ function status() {
   return { command: "status", scope: "LOCAL_SYNTHETIC_ONLY", safety: "FROZEN_BY_OWNER", readiness: summary };
 }
 
+function phase20Preview() {
+  const [corpus, semantic, portfolioTypes, impactModule] = loadTypeScriptModules([
+    "corpus/phase20/contracts.ts",
+    "src/core/semanticCoverage/index.ts",
+    "src/core/portfolio/types.ts",
+    "src/core/campaignIntelligence/impact.ts",
+  ]);
+  const inventory = corpus.phase20Inventory();
+  const relationalContracts = corpus.phase20RelationalContracts();
+  const differentialContracts = corpus.phase20DifferentialContracts();
+  const metamorphicRelations = corpus.phase20MetamorphicRelations();
+  const capabilityBindings = corpus.phase20CapabilityBindings();
+  const admitted = inventory.candidates.filter((candidate) => candidate.coverage.semanticContractAdmitted);
+  const byCandidate = (candidateId) => capabilityBindings.filter((binding) => binding.sourceCandidateId === candidateId);
+  const graph = semantic.buildContractGraph({
+    inventory,
+    expectations: admitted.map((candidate) => ({ contractId: candidate.candidateId, expectationId: `expectation.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, supported: true })),
+    projections: admitted.map((candidate) => ({ contractId: candidate.candidateId, projectionId: `projection.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, surfaces: candidate.observationSurfaces, supported: candidate.observationSurfaces.length > 0 })),
+    scenarios: admitted.filter((candidate) => byCandidate(candidate.candidateId).length > 0).map((candidate) => ({ contractId: candidate.candidateId, scenarioId: `scenario.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, replaySupported: byCandidate(candidate.candidateId).some((binding) => binding.replaySupported) })),
+    oracles: admitted.filter((candidate) => byCandidate(candidate.candidateId).length > 0).map((candidate) => ({ contractId: candidate.candidateId, oracleId: byCandidate(candidate.candidateId)[0].capabilityId, relational: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "RELATIONAL"), differential: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "DIFFERENTIAL") })),
+    replays: admitted.filter((candidate) => byCandidate(candidate.candidateId).some((binding) => binding.replaySupported)).map((candidate) => ({ contractId: candidate.candidateId, replayAdapterId: `replay.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, reproduces: byCandidate(candidate.candidateId).some((binding) => binding.replayReproduces) })),
+    minimizers: admitted.filter((candidate) => byCandidate(candidate.candidateId).some((binding) => binding.minimizationSupported)).map((candidate) => ({ contractId: candidate.candidateId, minimizerId: `minimizer.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, supported: true })),
+    dossiers: admitted.map((candidate) => ({ contractId: candidate.candidateId, dossierId: `dossier.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, explainable: true })),
+    differentials: admitted.flatMap((candidate) => byCandidate(candidate.candidateId).filter((binding) => binding.capabilityKind === "DIFFERENTIAL").map((binding) => ({ contractId: candidate.candidateId, pairId: binding.capabilityId, eligible: true }))),
+  });
+  const fixtures = semantic.generateSyntheticFixtures({ candidates: inventory.candidates, relationalContracts, differentialContracts, metamorphicRelations });
+  const measurement = semantic.measureSyntheticMutationDetection({ fixtures, candidates: inventory.candidates, relationalContracts, differentialContracts, metamorphicRelations });
+  const gapReport = semantic.buildSemanticCoverageGapInputs({ inventory, graph, capabilityBindings, mutationMeasurement: measurement });
+  const primaryCandidate = relationalContracts[0]?.sourceCandidateId ?? admitted[0]?.candidateId;
+  let planPreview = null;
+  let coverage = null;
+  if (primaryCandidate !== undefined) {
+    const candidate = inventory.candidates.find((entry) => entry.candidateId === primaryCandidate);
+    if (candidate !== undefined) {
+      const targetId = "phase20.synthetic.coverage-member";
+      const memberInput = {
+        targetId,
+        journeyId: null,
+        kind: "API",
+        semanticScope: candidate.candidateId,
+        currentness: "CURRENT",
+        sourceSha: candidate.source.sha,
+        evidenceDigest: candidate.source.evidenceDigest,
+        derivationVersion: candidate.source.derivationVersion,
+        contractVersion: "nightwatch.phase20.synthetic.contract.v1",
+        depthClass: "TYPE",
+        replayable: true,
+        executionCostClass: "LOW",
+        starvationAgeBuckets: 0,
+        historicalYield: { admittedCount: 0, reproducedCount: 0, minimizedCount: 0, distinctClusterCount: 0, dossierReadyCount: 0, duplicateMerges: 0, invalidOrTransient: 0, executionsTotal: 0 },
+        ownerBlockedOperations: [],
+        phaseFrozen: false,
+      };
+      const portfolio = portfolioTypes.buildPortfolio({ approvedTargets: [targetId], memberInputs: [memberInput] });
+      const memberId = portfolio.members[0].memberId;
+      const capability = capabilityBindings.filter((binding) => binding.sourceCandidateId === candidate.candidateId);
+      const memberBinding = [{ candidateId: candidate.candidateId, memberId, product: "synthetic-phase20-product", surface: "summary-api", expectationId: `expectation.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, scenarioBound: true, replaySupported: capability.some((binding) => binding.replaySupported), replayReproduces: capability.some((binding) => binding.replayReproduces), minimizationSupported: capability.some((binding) => binding.minimizationSupported), triageClassifiable: true, dossierExplainable: true, supported: true }];
+      coverage = semantic.buildPhase20CoverageReport({ inventory, gapReport, memberBindings: memberBinding, mutationMeasurement: measurement });
+      const impact = impactModule.buildCampaignImpactReport({ sourceCurrentness: "SYNTHETIC_ONLY", changedFiles: [], bindings: [{ memberId, product: "synthetic-phase20-product", surface: "summary-api", journeyClass: "phase20.semantic.coverage", semanticContractId: candidate.candidateId, expectationIds: memberBinding.map((binding) => binding.expectationId).filter((value) => value !== null), scenarioIds: ["scenario.phase20.semantic"], affectedPathPrefixes: ["synthetic/phase20"], sourceSha: candidate.source.sha, evidenceDigest: candidate.source.evidenceDigest, sourceCurrentness: "SYNTHETIC_ONLY", supported: true, impactClasses: ["COVERAGE_ONLY"] }] });
+      planPreview = semantic.composeSemanticCampaignPlan({ portfolio, sourceCurrentness: "SYNTHETIC_ONLY", impact, coverage, candidates: [{ memberId, product: "synthetic-phase20-product", surface: "summary-api", journeyClass: "phase20.semantic.coverage", apiClass: "summary.read", semanticContractId: candidate.candidateId, oracleFamilies: capability.map((binding) => binding.capabilityKind), applicable: true, supported: true, provenance: ["PHASE20_SYNTHETIC_CONTRACT_GRAPH"] }], gapReport, candidateBindings: [{ candidateId: candidate.candidateId, memberId }], maxSelectedItems: 1 });
+    }
+  }
+  return { inventory, graph, gapReport, measurement, coverage, plan: planPreview, capabilityBindings, syntheticProduct: corpus.PHASE20_SYNTHETIC_PRODUCT_MODEL };
+}
+
 try {
   let output;
   if (command === "status") output = status();
-  else if (command === "plan" || command === "coverage") {
+  else if (command === "contracts" || command === "gaps" || command === "plan" || command === "coverage" || command === "campaign") {
+    const phase20 = phase20Preview();
+    if (command === "contracts") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", schemaVersion: phase20.inventory.schemaVersion, inventory: { sourceArtifactCount: phase20.inventory.sourceArtifactCount, candidateCount: phase20.inventory.candidates.length, mechanicallyProvableCount: phase20.inventory.mechanicallyProvableCount, admittedCount: phase20.inventory.admittedCount, rejectedCount: phase20.inventory.rejectedCandidateIds.length, rejectionCounts: phase20.inventory.rejectionCounts, deterministicDigest: phase20.inventory.deterministicDigest }, graph: { contractCount: phase20.graph.contractCount, nodeCount: phase20.graph.nodeCount, edgeCount: phase20.graph.edgeCount, gapCount: phase20.graph.gaps.length, deterministicDigest: phase20.graph.deterministicDigest }, syntheticProduct: phase20.syntheticProduct };
+    else if (command === "gaps") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", gaps: phase20.gapReport, mutationMeasurement: { mutantsGenerated: phase20.measurement.mutantsGenerated, mutantsDetected: phase20.measurement.mutantsDetected, mutantsSurviving: phase20.measurement.mutantsSurviving, scorePermille: phase20.measurement.scorePermille }, graphGaps: phase20.graph.gaps };
+    else if (command === "coverage") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", coverage: phase20.coverage };
+    else if (command === "campaign") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport, mutationMeasurement: { mutantsGenerated: phase20.measurement.mutantsGenerated, mutantsDetected: phase20.measurement.mutantsDetected, mutantsSurviving: phase20.measurement.mutantsSurviving, scorePermille: phase20.measurement.scorePermille }, note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
+    else {
     const result = preview();
-    output = command === "plan" ? { command, scope: "LOCAL_SYNTHETIC_ONLY", plan: result.plan } : { command, scope: "LOCAL_SYNTHETIC_ONLY", coverage: result.coverage };
-  } else if (command === "campaign") {
-    const result = preview();
-    output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", yield: result.yieldReport, note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
+    output = { command, scope: "LOCAL_SYNTHETIC_ONLY", plan: result.plan, semanticPlan: phase20.plan?.plan ?? null, semanticGaps: phase20.gapReport };
+    }
   } else if (command === "findings") {
     output = { command, scope: "OWNER_ONLY_LOCAL", actionableFindings: 0, note: "Runtime findings are not loaded or published by the default operator preview." };
   } else {

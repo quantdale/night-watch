@@ -9,5 +9,6 @@ export * from "./stability";
 export * from "./clusterV2";
 export * from "./confidenceV2";
 export * from "./dossierV3";
+export * from "./dossierV4";
 export * from "./diagnostics";
 export * from "./cache";

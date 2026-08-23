@@ -52,6 +52,10 @@ function validateCandidateMetadata(metadata: CampaignCandidateMetadata): void {
   if (typeof metadata.applicable !== "boolean" || typeof metadata.supported !== "boolean") invalid("CANDIDATE_BOOLEAN");
   if (!Array.isArray(metadata.provenance) || metadata.provenance.length > 64) invalid("PROVENANCE");
   for (const provenance of metadata.provenance) safeMetadata(provenance, "PROVENANCE");
+  if (metadata.semanticGapReasons !== undefined) {
+    if (!Array.isArray(metadata.semanticGapReasons) || metadata.semanticGapReasons.length > 64) invalid("SEMANTIC_GAP_REASONS");
+    for (const reason of metadata.semanticGapReasons) safeMetadata(reason, "SEMANTIC_GAP_REASON");
+  }
 }
 
 function boundedScore(value: number, field: string): number {
@@ -78,8 +82,10 @@ function impactReasonsFor(
 
 function coverageReasonsFor(
   coverage: CampaignCoverageReport["rows"][number] | undefined,
+  metadata: CampaignCandidateMetadata,
 ): CampaignReasonCode[] {
-  return coverage === undefined ? ["SEMANTIC_COVERAGE_DEFICIT"] : [...coverage.gapReasons];
+  const defaults: readonly CampaignReasonCode[] = coverage === undefined ? ["SEMANTIC_COVERAGE_DEFICIT"] : coverage.gapReasons;
+  return sortedReasons([...defaults, ...(metadata.semanticGapReasons ?? [])]);
 }
 
 function hasReason(values: readonly CampaignReasonCode[], ...reasons: readonly CampaignReasonCode[]): boolean {
@@ -173,6 +179,7 @@ function reasonsFor(input: {
   if (stageState(input.coverage, "MINIMIZATION_SUPPORTED") === "PROVEN") values.push("MINIMIZATION_SUPPORTED");
   if (input.member.duplicatePressure > 0) values.push("REDUNDANT_COVERAGE");
   if (input.member.input.executionCostClass === "HIGH" && input.member.input.historicalYield.distinctClusterCount === 0) values.push("EXPENSIVE_LOW_YIELD");
+  if ((input.metadata.semanticGapReasons ?? []).length > 0) values.push("CAMPAIGN_AUTO_COMPOSED");
   if (!input.metadata.supported) values.push("UNSUPPORTED_SURFACE");
   return sortedReasons(values);
 }
@@ -215,7 +222,7 @@ export function buildCampaignPlan(input: {
     const metadata = candidateMetadata(member, metadataByMember.get(member.memberId));
     const impactReasons = impactReasonsFor(member, impactByMember.get(member.memberId));
     const coverage = coverageByMember.get(member.memberId);
-    const coverageReasons = coverageReasonsFor(coverage);
+    const coverageReasons = coverageReasonsFor(coverage, metadata);
     const baseScore = scorePortfolioMember(member, input.previousProvenance?.[member.memberId] ?? null);
     const priority = priorityFor({ member, metadata, impactReasons, coverageReasons, coverage, basePortfolioScore: baseScore.total });
     const reasons = reasonsFor({ member, metadata, impactReasons, coverageReasons, coverage });
