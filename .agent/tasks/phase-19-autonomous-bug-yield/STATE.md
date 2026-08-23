@@ -4,19 +4,19 @@
 
 Task ID: phase-19-autonomous-bug-yield
 Phase: 19-AUTONOMOUS-BUG-YIELD
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
 Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last documentation checkpoint SHA: 2f6b3a1ce23a9adbb2ab12f5e87b3705790d819e
+Last documentation checkpoint SHA: d36196cefe368c1685e98eff8180e1f3c4edabe4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M8 — durable docs and local continuity/project gates validated
+Last checkpoint: M8 — terminal local closure, synchronized push, and truthful external-CI inspection
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-PHASE_19_STATUS: IN_PROGRESS
+PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_6_STATUS: FROZEN_BY_OWNER
@@ -26,7 +26,7 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 STARTING_SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
 LAST_VALIDATED_IMPLEMENTATION_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-LAST_DOCUMENTATION_CHECKPOINT_SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d36196cefe368c1685e98eff8180e1f3c4edabe4
 
 ## Objective
 
@@ -37,11 +37,9 @@ without weakening Nightwatch’s safety model.
 
 ## Current Milestone
 
-Milestone ID: M8
-Milestone status: IN_PROGRESS
-What is being attempted: Reconcile durable docs, run project/continuity gates,
-push validated checkpoints, inspect external CI once, and complete the
-terminal Phase 19 snapshot.
+COMPLETE — terminal local/source/synthetic closure; external CI blocked. Durable
+docs, exact local validation, continuity/project gates, synchronized push, one
+Actions inspection, and terminal handoff are complete.
 
 ## Completed Milestones
 
@@ -66,17 +64,15 @@ terminal Phase 19 snapshot.
 
 ## Work In Progress
 
-The implementation slice and all local regression/parity validation are
-complete at `ddd0e49c22d5650807d9cababcdc159bc4a657ae`. Durable documentation,
-project-state confirmation, the validated push, and one external-CI inspection
-remain in M8. Existing Phase 18 machinery remains the compatibility baseline
-and was composed rather than replaced.
+None. The implementation slice, exact local regression/parity validation,
+durable documentation, project-state confirmation, synchronized push, and one
+truthful external-CI inspection are complete. Existing Phase 18 machinery
+remains the compatibility baseline and was composed rather than replaced.
 
 ## Exact Next Action
 
-Reconcile the durable docs and acceptance ledger, run the continuity/project
-gates on the clean documentation checkpoint, push without force, inspect the
-corresponding Actions run once, and then complete the Phase 19 snapshot.
+STOP — the task is terminal. Future engineering requires a new
+LOCAL / SOURCE / SYNTHETIC task and fresh authority.
 
 ## Files Changed
 
@@ -87,8 +83,8 @@ corresponding Actions run once, and then complete the Phase 19 snapshot.
 | `.agent/tasks/phase-19-autonomous-bug-yield/PLAN.md` | Living milestones and validation gates | complete |
 | `.agent/tasks/phase-19-autonomous-bug-yield/STATE.md` | Continuity v2 execution memory | complete |
 | `.agent/tasks/phase-19-autonomous-bug-yield/ACCEPTANCE_MATRIX.md` | Acceptance evidence ledger | complete |
-| `.agent/tasks/phase-19-autonomous-bug-yield/REPORT.md` | Final handoff scaffold | active |
-| `.agent/tasks/phase-19-autonomous-bug-yield/HANDOFF.md` | Resume/closure handoff scaffold | active |
+| `.agent/tasks/phase-19-autonomous-bug-yield/REPORT.md` | Final handoff report | complete |
+| `.agent/tasks/phase-19-autonomous-bug-yield/HANDOFF.md` | Terminal handoff | complete |
 
 ## Validation Ledger
 
@@ -135,6 +131,12 @@ Command: `npm run project:check`
 Result: PASS — project-state protocol, catalog round-trip, Phase 8 authority,
 active-task continuity, and clean checkout all validated.
 
+Command: GitHub Actions inspection for pushed checkpoint
+Result: Run `32643603911`, job `97204345223` (Local hardening checks), for
+head `d36196cefe368c1685e98eff8180e1f3c4edabe4` completed as failure with
+`steps=[]`. It was inspected once and not retried; external CI is blocked
+under the standing billing/spending restriction and is not claimed green.
+
 ## Decisions Made During This Task
 
 Decision: Compose existing Phase 9–18 portfolio, semantic, replay, and triage
@@ -177,19 +179,18 @@ NONE — local repository inspection and task-record edits only.
 ## Deferred / Follow-Up
 
 - External CI billing/spending restriction remains outside local engineering
-  control; inspect once after a validated push and report truthfully.
+  control; the single Phase 19 inspection is recorded above as blocked.
 - Any DEV/NEXT semantic acceptance remains separately owner-authorized work.
 
 ## Resume Recipe
 
-1. Read `SPEC.md`, `PLAN.md`, and this `STATE.md`.
-2. Inspect live Git status and the current diff.
-3. Run `npm run agent:check` and `npm run project:check` after the durable
-   documentation checkpoint is committed cleanly.
-4. Push without force, inspect the matching Actions run once, record the
-   truthful result, then complete M8.
+This task is terminal. For historical verification, read ACTIVE_TASK.md,
+SPEC.md, PLAN.md, STATE.md, REPORT.md, and HANDOFF.md, then discover live Git
+state. Do not resume it; future engineering requires a new local/source/
+synthetic task.
 
 ## Completion Snapshot
 
-Not complete. Local implementation and exact canonical/isolated evidence are
-recorded; durable closure and the post-push external-CI inspection remain.
+Complete. Local implementation, exact canonical/isolated evidence, durable
+docs, continuity/project gates, synchronized push, and truthful external-CI
+inspection are recorded. FINAL_LIVE_HEAD: DISCOVER_FROM_GIT.

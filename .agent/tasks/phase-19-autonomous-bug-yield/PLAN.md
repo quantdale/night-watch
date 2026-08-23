@@ -2,7 +2,7 @@
 
 Task ID: phase-19-autonomous-bug-yield
 Phase: 19-AUTONOMOUS-BUG-YIELD
-Status: IN_PROGRESS
+Status: COMPLETE (terminal local/source/synthetic; external CI blocked)
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Starting State
@@ -66,9 +66,10 @@ selection. Keep legacy readers and Phase 18 behavior compatible.
   phase-specific wrappers/dead paths. COMPLETED.
 - [x] M7 — run focused, canonical, isolated, parity, hardening, continuity,
   and project-state validation; repair all regressions. COMPLETED.
-- [ ] M8 — close durable docs, complete REPORT/HANDOFF/STATE, commit and push
+- [x] M8 — close durable docs, complete REPORT/HANDOFF/STATE, commit and push
   validated checkpoints, inspect external CI once, and leave synchronized
-  clean `main`. IN_PROGRESS.
+  clean `main`. COMPLETED; run 32643603911 / job 97204345223 was inspected
+  once and is externally blocked with steps=[].
 
 ## Workstream mapping
 
@@ -130,4 +131,6 @@ admitted evidence remain deferred.
 All acceptance rows are evidence-backed; local quality floors remain zero;
 focused and full local validation is green with exact canonical/isolated parity;
 continuity and project truth are valid; the tree is clean and synchronized;
-external CI is reported truthfully after one post-push inspection.
+external CI is reported truthfully after one post-push inspection. Phase 19
+closure evidence is canonical/isolated 2,293 passed / 4 skipped / 0 failed
+out of 2,297 with exact parity; external CI remains blocked, not green.

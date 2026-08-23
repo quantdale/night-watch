@@ -3,22 +3,22 @@
 Task ID: phase-19-autonomous-bug-yield
 Phase: 19-AUTONOMOUS-BUG-YIELD
 Title: Nightwatch Phase 19 — Autonomous Bug-Yield Expansion and Integrated Campaign Intelligence
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-19-autonomous-bug-yield
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
 Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last documentation checkpoint SHA: 2f6b3a1ce23a9adbb2ab12f5e87b3705790d819e
-Last checkpoint: M8 — durable docs and local continuity/project gates validated
-Current milestone: M8 — durable closure records, validated push, and truthful external-CI inspection
-Next action: Reconcile durable docs, run project/continuity gates, push validated checkpoints, inspect Actions once, then close the task
+Last documentation checkpoint SHA: d36196cefe368c1685e98eff8180e1f3c4edabe4
+Last checkpoint: M8 — terminal local closure, synchronized push, and truthful external-CI inspection
+Current milestone: COMPLETE — terminal local/source/synthetic closure; external CI blocked
+Next action: STOP — Phase 19 is terminal; future engineering requires a fresh authorized task
 Authorization class: PHASE_19_AUTONOMOUS_BUG_YIELD_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_19_STATUS: IN_PROGRESS
+PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -62,9 +62,11 @@ infer environment authorization from campaign selection or operator commands.
 
 ## Validation Ledger
 
-Phase 19 implementation and local validation are complete at the substantive
-checkpoint `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; the documentation
-checkpoint and external-CI fact remain part of M8 closure.
+Phase 19 implementation, local validation, durable closure, synchronized push,
+and one truthful external-CI inspection are complete. The substantive
+checkpoint is `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; the last known
+documentation checkpoint before this terminal record is
+`d36196cefe368c1685e98eff8180e1f3c4edabe4`.
 
 - Bootstrap and Gate Zero were completed from the live starting SHA; no
   external systems were contacted.
@@ -83,8 +85,10 @@ checkpoint and external-CI fact remain part of M8 closure.
 - The first isolated attempt used an invalid aggregate `/tmp` topology and
   was stopped; the corrected clean clone under the canonical sibling root
   passed with `npm ci`, `NIGHTWATCH_SIBLING_ROOT`, and port `19125`.
-- External CI has not yet been inspected for Phase 19; it will be checked
-  once after the validated push and reported without retries.
+- GitHub Actions run `32643603911` / job `97204345223` for pushed head
+  `d36196cefe368c1685e98eff8180e1f3c4edabe4` completed as failure with
+  `steps=[]`; this is the standing external billing/spending restriction
+  state, was inspected once, is not CI green, and was not retried.
 
 ## Decisions
 
@@ -99,12 +103,12 @@ checkpoint and external-CI fact remain part of M8 closure.
 
 ## Resume Recipe
 
-1. Read `SPEC.md`, `PLAN.md`, and `STATE.md` in this task directory.
-2. Inspect live Git status and the current diff.
-3. Run the project/continuity gates after the durable documentation edits.
-4. Push only the validated checkpoint, inspect Actions once, and close M8.
+1. STOP — Phase 19 is terminal.
+2. Future engineering requires a new LOCAL / SOURCE / SYNTHETIC task and
+   fresh owner scope; do not reopen Phase 18 or this task.
 
 ## Completion Snapshot
 
-Not complete. Phase 19 local implementation and regression evidence are
-complete, but durable closure and post-push CI inspection remain.
+Complete. Phase 19 local/source/synthetic implementation, exact canonical and
+isolated parity, continuity/project truth, validated push, and truthful
+external-CI inspection are closed. FINAL_LIVE_HEAD: DISCOVER_FROM_GIT.

@@ -22,4 +22,4 @@
 | A18 | Canonical regression | Full canonical suite exact counts and no unexpected skips | PASS — 2,297 enumerated; 2,293 passed; 4 skipped; 0 failed |
 | A19 | Isolated parity | Topology-correct isolated suite exact enumeration and skip parity | PASS — exact canonical enumeration and four skip identities |
 | A20 | Static/continuity truth | typecheck, hardening, agent, project checks green | PASS — typecheck, hardening, agent, project-state |
-| A21 | External CI truth | One post-push inspection, blocked/green reported without retries | IN_PROGRESS — inspect once after validated push |
+| A21 | External CI truth | One post-push inspection, blocked/green reported without retries | PASS — run 32643603911 / job 97204345223, steps=[]; inspected once, blocked |
