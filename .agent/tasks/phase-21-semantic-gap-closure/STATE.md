@@ -224,9 +224,9 @@ outside this task.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, this task’s SPEC.md, PLAN.md, and STATE.md; inspect Git
-status/diff; run the smallest decisive ledger test; then continue the Exact
-Next Action without broad rediscovery.
+This task is terminal. Read ACTIVE_TASK.md and this task's records only for
+historical context; do not resume implementation or reopen Phase 19/20. Any
+future semantic work requires a separately authorized successor task.
 
 ## Completion Snapshot
 
