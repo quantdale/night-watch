@@ -1862,3 +1862,38 @@ full 2,293 passed / 4 skipped / 0 failed out of 2,297. The established
 topology-correct isolated clone has exactly the same enumeration and skip
 inventory. No Phase 19 capability grants DEV/NEXT/production, cloud/data/
 infrastructure, sibling-write, publication, AI, or self-development authority.
+
+## Phase 20 — semantic coverage saturation and cross-surface differential detection
+
+Phase 20 is the next local/source/synthetic implementation wave. It composes
+Phase 19 campaign intelligence with a deterministic source-derived contract
+inventory, explicit admission/currentness states, a source-evidence graph,
+relational and cross-surface semantic oracles, metamorphic relations, bounded
+synthetic mutants, and owner-safe explanation depth.
+
+The synthetic corpus discovers 22 candidates from 6 bounded source artifacts;
+21 are mechanically provable/admitted and 1 is rejected with
+`UNSUPPORTED_SYNTAX`. The graph has 157 nodes, 151 edges, and 86 lifecycle
+gaps. It contains 13 relational kinds represented by 12 records, one declared
+browser/API equivalence pair, and three metamorphic fixture relations. The
+mutation measurement generated 34 mutants, 32 applicable and detected, 0
+surviving, 31 benign controls, and 0 benign false positives. The adversarial
+matrix has 88 cases in 15 families, including 6 benign controls.
+
+The Phase 19 planner now consumes semantic gap reasons and composes bounded
+preview campaigns without gaining execution authority. Local operator views
+cover contracts, gaps, coverage, campaign preview, findings, and explain.
+Source-keyed caches are bounded to 16 entries and invalidate on source identity
+changes. The repaired synthetic auth-monitor seam now synchronizes injected
+health failure and reviewed browser-background classification, preserving the
+existing safety policy.
+
+Local closure evidence at implementation checkpoint
+`c58684046d66b2a68234a06c62dea889829d4110` is typecheck PASS, hardening PASS,
+focused Phase 20/auth 27/27, Phase 9–20 compatibility 1,275/1,275,
+`campaign:synthetic` 27/27, owner provenance 91/91, and canonical plus
+topology-correct isolated full suites 2,309 passed / 4 skipped / 0 failed out
+of 2,313 with exact enumeration and skip identity parity. Phase 20 remains
+LOCAL / SOURCE / SYNTHETIC and does not add DEV/NEXT/production, data,
+infrastructure, sibling-write, publication, AI, self-development, or
+execution authority.

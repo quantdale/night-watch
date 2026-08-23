@@ -3024,3 +3024,45 @@ isolated regressions both enumerated 2,297 with 2,293 passed, 4 skipped, and
 cloud/data/infrastructure, sibling-write, publication, AI, or
 self-development authority and preserves
 FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE.
+
+## D-73 — Phase 20 semantic coverage saturation and cross-surface differential detection
+
+**Context.** Phase 19 already provided deterministic change impact, staged
+coverage, campaign planning, replay, minimization, clustering, confidence,
+and dossier authorities, but its mechanically justified behavior universe was
+still narrow and equivalent browser/API or representation contradictions were
+not first-class capabilities.
+
+**Decision.** Add the bounded `src/core/semanticCoverage/**` composition layer:
+multi-language source contract discovery with explicit rejection, provenance-
+bound admission/currentness/drift, a source-to-dossier contract graph,
+relational contracts, declared surface equivalence, metamorphic relations,
+safe semantic observation features, contract-derived synthetic fixtures and
+mutants, mutation-style detection measurement, Phase 19 gap ranking and
+campaign composition, source-keyed caches, dossier v4 evidence, and local
+operator views. Keep the graph and gap report additive to the existing Phase
+19 coverage/planner authority. Wrong enum remains unapplicable when the safe
+projection cannot prove membership; no raw value is introduced to inflate a
+detection score.
+
+**Evidence and consequences.** The local/source/synthetic implementation is
+checkpointed at `c58684046d66b2a68234a06c62dea889829d4110`. Six synthetic source
+artifacts produce 22 candidates (21 mechanically provable/admitted, 1
+unsupported-syntax rejection); the graph has 157 nodes, 151 edges, and 86
+gaps; 13 relational kinds are represented by 12 records; one browser/API
+equivalence pair and three metamorphic relations are exercised. Measurement
+generates 34 mutants, 32 applicable/detected, 0 surviving, 31 benign controls,
+and 0 benign false positives. The corpus has 88 adversarial cases across 15
+families with six benign controls. Focused Phase 20/auth tests pass 27/27;
+Phase 9–20 compatibility passes 1,275/1,275; campaign synthetic 27/27;
+owner provenance 91/91; typecheck and hardening pass; canonical and
+topology-correct isolated full regressions both pass 2,309 / skip 4 / fail 0
+out of 2,313 with exact skip identity parity.
+
+**Safety.** The phase is LOCAL / SOURCE / SYNTHETIC only and adds no
+DEV/NEXT/production, cloud/data/infrastructure, sibling-write, publication,
+AI, self-development, or execution authority. A full-run timing defect in
+the synthetic auth-monitor test was repaired by explicit reviewed background
+classification and synchronization of the injected health failure; no
+production policy was broadened. External CI remains a separate post-push
+fact and is not inferred from local evidence.

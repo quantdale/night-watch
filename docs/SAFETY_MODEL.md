@@ -1321,6 +1321,31 @@ isolated regression parity at 2,293 passed / 4 skipped / 0 failed, and zero
 benign-control/privacy quality-floor regressions. This remains local evidence;
 external CI is inspected and reported separately and never inferred green.
 
+## Phase 20 semantic coverage safety boundary
+
+Phase 20 remains strictly LOCAL / SOURCE / SYNTHETIC. Its source analyzers
+receive bounded text only through the existing read-only sibling-source
+boundary; they do not execute source or use network, database, cloud, process,
+AI, self-development, or persistence authority. Unknown syntax, stale source,
+ambiguous relationships, unsafe projection paths, and unsupported observation
+surfaces reject or degrade rather than becoming semantic authority.
+
+Relational, differential, and metamorphic cores consume declarative contracts
+and sanitized projections. Raw customer/application values, source text,
+cookies, headers, credentials, and authenticated evidence never enter
+projections, findings, fingerprints, mutation metrics, dossiers, or operator
+output. The Phase 20 synthetic product is explicitly fixture-only; its browser,
+API, replay, pagination, grouping, filtering, totals, drift, divergent, and
+flaky representations do not establish real-product support.
+
+Semantic gap priority is subordinate to Phase 19 owner-scope, currentness,
+authority, and executor gates. The operator commands are local preview/read
+views and cannot select an environment or contact DEV/NEXT. The final local
+evidence is canonical/isolated exact parity at 2,309 passed / 4 skipped / 0
+failed out of 2,313, with zero benign false positives and zero privacy
+regressions. External CI status is separate and is never inferred from local
+green results.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

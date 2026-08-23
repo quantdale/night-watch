@@ -1380,3 +1380,37 @@ only real registered adapter; the second adapter is synthetic-only and exists
 to test generic planning and semantic binding. The local operator commands
 expose status, plan, coverage, campaign preview, findings, and explain output
 without accepting an environment selector or contacting DEV/NEXT.
+
+## Phase 20 semantic coverage saturation architecture
+
+Phase 20 extends the established path rather than introducing another oracle
+or prioritizer:
+
+```text
+bounded sibling-source text
+  -> fixed syntax-aware contract analyzers
+  -> provenance-bound discovery/admission/currentness
+  -> deterministic contract graph and lifecycle gaps
+  -> semantic expectations and safe observation features
+  -> relational / differential / metamorphic evaluation
+  -> contract-derived synthetic fixtures and mutants
+  -> Phase 19 coverage facts, gap reasons, planner, replay, minimization
+  -> dossier v4 derivation chain and local operator views
+```
+
+The inventory currently covers 22 candidates from 6 synthetic source artifacts
+(21 mechanically provable/admitted, 1 explicit unsupported-syntax rejection).
+The graph contains 157 nodes, 151 edges, and 86 gaps. Relational semantics
+provide 13 bounded kinds, the synthetic corpus binds 12 relation records, and
+cross-surface comparison uses one explicitly declared browser/API pair with
+nine permanent outcomes. Three metamorphic relations exercise a seven-kind
+vocabulary. Projection depth remains category-only: type, presence,
+cardinality, ordering, set cardinality, relation truth, bounded aggregate
+relations, and safe digests; raw values never cross the boundary.
+
+Synthetic measurement generated 34 mutants, 32 applicable and detected, 0
+surviving, 31 benign controls, and 0 false positives. Graph gaps and surviving
+mutants are additive inputs to the existing Phase 19 coverage/planner
+authority; priority cannot authorize execution. Source-keyed caches are
+bounded and include source identity/digest in their key, while unknown syntax,
+stale evidence, unsupported projections, and unsafe paths fail closed.

@@ -6,16 +6,16 @@ Title: Nightwatch Phase 20 — Semantic Coverage Saturation and Cross-Surface Di
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-20-semantic-coverage-saturation
 Starting SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-Last validated implementation SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-Last substantive checkpoint SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-Last checkpoint: M4 — Phase 19-integrated semantic gap planning, mutation measurement, operator workflow, and dossier/cache implementation
-Current milestone: M5 focused, compatibility-cone, and terminal repository validation
-Next action: Run the Phase 9–20 compatibility cone and terminal validation commands, repair any failure, then record exact canonical/isolated parity
+Last validated implementation SHA: c58684046d66b2a68234a06c62dea889829d4110
+Last substantive checkpoint SHA: c58684046d66b2a68234a06c62dea889829d4110
+Last checkpoint: M6 — canonical/isolated full regression exact parity
+Current milestone: M6 terminal validation and durable closure
+Next action: Rerun terminal validation after final task/project documentation, close all v2 records, then commit and push the validated checkpoints
 Authorization class: PHASE_20_SEMANTIC_COVERAGE_SATURATION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
+LAST_VALIDATED_IMPLEMENTATION_SHA: c58684046d66b2a68234a06c62dea889829d4110
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c58684046d66b2a68234a06c62dea889829d4110
 
 ## Terminal Boundary Tokens
 

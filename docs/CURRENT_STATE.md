@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-23** at
-> the Phase 19 integrated campaign-intelligence implementation checkpoint
-> `ddd0e49c22d5650807d9cababcdc159bc4a657ae`; canonical and topology-correct
-> isolated full regressions both pass 2,293 / 4 skipped / 0 failed out of 2,297
+> Durable memory for the next agent/session. Last updated: **2026-08-24** at
+> the Phase 20 semantic-coverage implementation checkpoint
+> `c58684046d66b2a68234a06c62dea889829d4110`; canonical and topology-correct
+> isolated full regressions both pass 2,309 / 4 skipped / 0 failed out of 2,313
 > with exact skip parity. Phase 18 is terminal historical context; external CI
 > is a separately inspected post-push fact. This snapshot is LOCAL / SOURCE /
 > SYNTHETIC only, building on the Phase 16CH
@@ -1952,3 +1952,44 @@ FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE.
 
 - Node v22.22.1, npm 10.9.4, Playwright Test 1.62.1, TypeScript 5.x, git 2.43.0
 - System Google Chrome at `/opt/google/chrome/chrome` via `channel: 'chrome'` (fallback: `npx playwright install chromium` + remove `channel` from `playwright.config.ts`)
+
+## Phase 20 — semantic coverage saturation and cross-surface differential detection
+
+Phase 20 is the local/source/synthetic implementation wave that expands the
+Phase 19 bug-yield loop with mechanically justified behavior inventory,
+relational contracts, explicit cross-surface equivalence, metamorphic checks,
+contract-derived mutation measurement, and graph-driven gap planning. The
+implementation checkpoint is `c58684046d66b2a68234a06c62dea889829d4110`.
+
+The deterministic synthetic inventory covers 6 source artifacts and 22
+candidates: 21 mechanically provable/admitted candidates and 1 explicitly
+rejected unsupported-syntax candidate. The contract graph contains 22 contract
+records, 157 nodes, 151 edges, and 86 lifecycle gaps. The evaluator admits 13
+relational kinds represented by 12 synthetic relation records, 1 explicitly
+declared browser/API differential pair, and 3 synthetic metamorphic relations
+from a 7-kind bounded vocabulary. Observation projections expose only safe
+type/presence/cardinality/order/set/relation categories.
+
+The bounded mutation score generated 34 mutants, had 32 applicable, detected
+all 32, and left 0 surviving; it also exercised 31 benign controls with 0
+false positives, and 32 detections were replayed, minimized, and high
+confidence within the synthetic measurement. The adversarial matrix contains
+88 cases across 15 families with 6 benign controls and zero privacy/benign
+quality-floor regressions. Gap ranking is integrated into the Phase 19 planner;
+the largest deterministic reason counts are differential projection 20,
+mechanically provable uncovered 16, replay 18, minimization 15, duplicate
+coverage 2, and analyzer unsupported 1.
+
+Phase 20 adds local `contracts`, `gaps`, `coverage`, `campaign`, `findings`,
+and `explain` operator views, a synthetic multi-surface product adapter, safe
+dossier v4 derivation evidence, and bounded source-keyed caches. It grants no
+DEV/NEXT/production, data, infrastructure, sibling-write, publication, AI,
+self-development, or execution authority. External CI is a separate
+post-push fact and is never inferred from these local results.
+
+Local validation is exact: Phase 20 plus the repaired auth compatibility cone
+27/27; Phase 9–20 compatibility 1,275/1,275; `campaign:synthetic` 27/27;
+owner provenance 91/91; typecheck and hardening PASS; canonical and isolated
+full suites both 2,313 enumerated / 2,309 passed / 4 skipped / 0 failed. The
+four skips are `tests/unit/phase5Api.test.ts:195`, `:244`, `:278`, and
+`tests/unit/selfDevSandboxConfinement.test.ts:143`, with exact identity parity.

@@ -59,9 +59,13 @@ coverage/planner/dossier surfaces. Preserve Phase 9–19 readers and schemas.
 - [x] M4 — Phase 19 coverage-gap/ranking integration, campaign composition,
   replay/minimization bindings, dossier v4 derivation depth, operator workflow,
   and source-keyed bounded caches.
-- [ ] M5 — focused and compatibility-cone validation; repair all failures.
+- [x] M5 — focused and compatibility-cone validation; repair all failures.
+  Phase 9–20 compatibility passed 1,275/1,275; canonical full passed
+  2,309/4/0 after repairing one timing-sensitive synthetic auth-monitor seam.
 - [ ] M6 — canonical/isolated parity, durable documentation, synchronized
-  checkpoint(s), and truthful external-CI inspection.
+  checkpoint(s), and truthful external-CI inspection. Final isolated full
+  passed 2,309/4/0 with exact enumeration and skip identity parity; terminal
+  continuity/project gates and documentation checkpoint remain.
 
 ## Architecture
 
