@@ -49,6 +49,25 @@ function renderJson(value) {
   return JSON.stringify(value, null, 2);
 }
 
+function mutationMeasurementSummary(measurement) {
+  return {
+    schemaVersion: measurement.schemaVersion,
+    mutantsGenerated: measurement.mutantsGenerated,
+    mutantsApplicable: measurement.mutantsApplicable,
+    mutantsDetected: measurement.mutantsDetected,
+    mutantsSurviving: measurement.mutantsSurviving,
+    benignControls: measurement.benignControls,
+    benignFalsePositives: measurement.benignFalsePositives,
+    replayedDetections: measurement.replayedDetections,
+    minimizedDetections: measurement.minimizedDetections,
+    highConfidenceDetections: measurement.highConfidenceDetections,
+    scorePermille: measurement.scorePermille,
+    survivingMutantIds: measurement.survivingMutantIds,
+    survivingContractIds: measurement.survivingContractIds,
+    deterministicDigest: measurement.deterministicDigest,
+  };
+}
+
 function preview() {
   const [portfolioTypes, impactModule, coverageModule, plannerModule, yieldModule] = loadTypeScriptModules([
     "src/core/portfolio/types.ts",
@@ -165,9 +184,9 @@ try {
   else if (command === "contracts" || command === "gaps" || command === "plan" || command === "coverage" || command === "campaign") {
     const phase20 = phase20Preview();
     if (command === "contracts") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", schemaVersion: phase20.inventory.schemaVersion, inventory: { sourceArtifactCount: phase20.inventory.sourceArtifactCount, candidateCount: phase20.inventory.candidates.length, mechanicallyProvableCount: phase20.inventory.mechanicallyProvableCount, admittedCount: phase20.inventory.admittedCount, rejectedCount: phase20.inventory.rejectedCandidateIds.length, rejectionCounts: phase20.inventory.rejectionCounts, deterministicDigest: phase20.inventory.deterministicDigest }, graph: { contractCount: phase20.graph.contractCount, nodeCount: phase20.graph.nodeCount, edgeCount: phase20.graph.edgeCount, gapCount: phase20.graph.gaps.length, deterministicDigest: phase20.graph.deterministicDigest }, syntheticProduct: phase20.syntheticProduct };
-    else if (command === "gaps") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", gaps: phase20.gapReport, mutationMeasurement: { mutantsGenerated: phase20.measurement.mutantsGenerated, mutantsDetected: phase20.measurement.mutantsDetected, mutantsSurviving: phase20.measurement.mutantsSurviving, scorePermille: phase20.measurement.scorePermille }, graphGaps: phase20.graph.gaps };
+    else if (command === "gaps") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", gaps: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement), graphGaps: phase20.graph.gaps };
     else if (command === "coverage") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", coverage: phase20.coverage };
-    else if (command === "campaign") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport, mutationMeasurement: { mutantsGenerated: phase20.measurement.mutantsGenerated, mutantsDetected: phase20.measurement.mutantsDetected, mutantsSurviving: phase20.measurement.mutantsSurviving, scorePermille: phase20.measurement.scorePermille }, note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
+    else if (command === "campaign") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement), note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
     else {
     const result = preview();
     output = { command, scope: "LOCAL_SYNTHETIC_ONLY", plan: result.plan, semanticPlan: phase20.plan?.plan ?? null, semanticGaps: phase20.gapReport };
