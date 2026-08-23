@@ -98,6 +98,8 @@ export interface PortfolioAllocationEntry {
   readonly maxRetries: number;
   readonly starvationFloorApplied: boolean;
   readonly priorityScore: number;
+  /** Optional bounded source-impact reasons supplied by a change-aware planner. */
+  readonly selectionReasons?: readonly string[];
 }
 
 /** One explicitly unfunded member (hard gate / failed evidence). */
@@ -126,8 +128,16 @@ export interface PortfolioAllocation {
   readonly unallocatedUnits: number;
   /** Portion of the exploration reserve left unconsumed. */
   readonly reservedExplorationUnused: number;
+  /** Present only when an explicit source-impact ranking overlay was used. */
+  readonly selectionContextDigest?: string;
   /** `palloc:sha256:<24>` over the canonical serialization above. */
   readonly digest: string;
+}
+
+/** Safe score/reason override produced by a pure planning overlay. */
+export interface PortfolioScoreOverride {
+  readonly score: number;
+  readonly selectionReasons: readonly string[];
 }
 
 interface RankedCandidate {
@@ -136,6 +146,36 @@ interface RankedCandidate {
   readonly kind: PortfolioMemberKind;
   readonly score: number;
   readonly starvationEligible: boolean;
+  readonly selectionReasons?: readonly string[];
+}
+
+function validateScoreOverrides(
+  portfolio: CampaignPortfolio,
+  overrides: Readonly<Record<string, PortfolioScoreOverride>> | undefined,
+  selectionContextDigest: string | undefined,
+): void {
+  if (selectionContextDigest !== undefined && overrides === undefined) {
+    throw new Error('PORTFOLIO_ALLOCATION_SELECTION_CONTEXT_WITHOUT_OVERRIDE');
+  }
+  if (selectionContextDigest !== undefined && !/^pci:sha256:[0-9a-f]{24}$/.test(selectionContextDigest)) {
+    throw new Error('PORTFOLIO_ALLOCATION_SELECTION_CONTEXT_INVALID');
+  }
+  if (overrides === undefined) return;
+  const memberIds = new Set(portfolio.members.map((member) => member.memberId));
+  for (const [memberId, override] of Object.entries(overrides)) {
+    if (!memberIds.has(memberId)) throw new Error('PORTFOLIO_ALLOCATION_SCORE_OVERRIDE_UNKNOWN_MEMBER');
+    if (!Number.isInteger(override.score) || !Number.isFinite(override.score)) {
+      throw new Error('PORTFOLIO_ALLOCATION_SCORE_OVERRIDE_INVALID');
+    }
+    if (!Array.isArray(override.selectionReasons) || override.selectionReasons.length > 16) {
+      throw new Error('PORTFOLIO_ALLOCATION_SELECTION_REASONS_INVALID');
+    }
+    for (const reason of override.selectionReasons) {
+      if (typeof reason !== 'string' || !/^[A-Z][A-Z0-9_:-]{0,79}$/.test(reason)) {
+        throw new Error('PORTFOLIO_ALLOCATION_SELECTION_REASON_INVALID');
+      }
+    }
+  }
 }
 
 /**
@@ -151,8 +191,12 @@ export function allocatePortfolioBudget(input: {
   readonly previousProvenance?: Readonly<
     Record<string, PortfolioPreviousProvenance>
   >;
+  /** Optional effective score/reason overlay from a pure planner. */
+  readonly scoreOverrides?: Readonly<Record<string, PortfolioScoreOverride>>;
+  readonly selectionContextDigest?: string;
 }): PortfolioAllocation {
   validatePortfolioBudgetPolicy(input.policy);
+  validateScoreOverrides(input.portfolio, input.scoreOverrides, input.selectionContextDigest);
 
   const previousByMember = input.previousProvenance ?? {};
   const ranked: RankedCandidate[] = [];
@@ -172,11 +216,13 @@ export function allocatePortfolioBudget(input: {
       member,
       previousByMember[member.memberId] ?? null,
     );
+    const override = input.scoreOverrides?.[member.memberId];
     ranked.push({
       memberId: member.memberId,
       targetId: member.input.targetId,
       kind: member.input.kind,
-      score: score.total,
+      score: override?.score ?? score.total,
+      ...(override === undefined ? {} : { selectionReasons: [...override.selectionReasons] }),
       starvationEligible:
         member.input.starvationAgeBuckets >=
         input.policy.starvationThresholdBuckets,
@@ -256,6 +302,7 @@ export function allocatePortfolioBudget(input: {
       maxRetries: input.policy.retryCeilingPerMember,
       starvationFloorApplied: floorApplied.has(candidate.memberId),
       priorityScore: candidate.score,
+      ...(candidate.selectionReasons === undefined ? {} : { selectionReasons: [...candidate.selectionReasons] }),
     }));
 
   const unfundedEligible = ranked
@@ -277,6 +324,7 @@ export function allocatePortfolioBudget(input: {
     unallocatedUnits: input.policy.totalUnits - totalAllocated,
     reservedExplorationUnused:
       input.policy.reservedExplorationUnits - reserveUsed,
+    ...(input.selectionContextDigest === undefined ? {} : { selectionContextDigest: input.selectionContextDigest }),
   };
 
   const verified = verifyAllocationInvariants(allocation, input.portfolio);

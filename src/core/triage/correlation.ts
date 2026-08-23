@@ -5,11 +5,11 @@
 // deployed cause, read deployment state, or use datastore evidence.
 // ---------------------------------------------------------------------------
 
-import crypto from 'node:crypto';
 import { snapshotRepositories, type SnapshotOptions } from '../repositories/snapshotter';
 import { RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from '../changeIntelligence/map';
 import type { ChangedFile, DependencyEdge, JourneyId, RepoDefinition } from '../changeIntelligence/types';
 import type { SourceChangeCandidate, SourceCorrelationResult, SourceFreshness, TriageConfidence } from './types';
+import { sha256Hex, stableJsonSorted } from '../identity/canonicalDigest';
 
 function canonicalPath(value: string): string {
   return value.replaceAll('\\', '/').replace(/^\.\//, '');
@@ -25,7 +25,13 @@ function matches(edge: DependencyEdge, file: ChangedFile): boolean {
 }
 
 function digest(value: unknown): string {
-  return crypto.createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex').slice(0, 24);
+  return sha256Hex(stableJsonSorted(value)).slice(0, 24);
+}
+
+function canonicalChangedFile(file: ChangedFile): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(file).filter(([, value]) => value !== undefined),
+  );
 }
 
 function relevanceFor(edge: DependencyEdge): SourceChangeCandidate['relevance'] {
@@ -81,7 +87,10 @@ export function correlateSourceChanges(input: SourceCorrelationInput): SourceCor
         ? 'TRANSITIVE_CHANGE_RELEVANCE'
         : unique.some((item) => item.relevance === 'UNKNOWN') ? 'UNKNOWN' : 'NO_CURRENT_CHANGE_RELEVANCE';
   return {
-    sourceVersion: input.sourceVersion ?? `source-correlation:sha256:${digest({ journeyIds: [...input.journeyIds].sort(), changedFiles: input.changedFiles })}`,
+    sourceVersion: input.sourceVersion ?? `source-correlation:sha256:${digest({
+      journeyIds: [...input.journeyIds].sort(),
+      changedFiles: input.changedFiles.map(canonicalChangedFile),
+    })}`,
     deploymentStatus: 'DEPLOYMENT_STATUS_UNRESOLVED',
     candidates: unique,
     overallRelevance,
@@ -119,4 +128,3 @@ export async function captureRelevantRepoBeforeState(options: SnapshotOptions & 
     })),
   };
 }
-

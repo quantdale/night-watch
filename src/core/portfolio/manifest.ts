@@ -185,6 +185,7 @@ export function buildCampaignPlanManifest(input: {
         allocatedUnits: entry.allocatedUnits,
         maxRetries: entry.maxRetries,
         reasons: [
+          ...(entry.selectionReasons ?? []),
           ...(member.input.ownerBlockedOperations.length > 0
             ? []
             : ["ELIGIBLE"]),

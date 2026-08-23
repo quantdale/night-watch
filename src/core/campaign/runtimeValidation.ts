@@ -42,7 +42,12 @@ export function assertExactKeys(value: RuntimeRecord, allowed: readonly string[]
     if (!accepted.has(key)) throw new Error(`${code}:UNKNOWN_FIELD:${safeFieldNameForDiagnostic(key)}`);
   }
   for (const key of allowed) {
-    if (!(key in value)) throw new Error(`${code}:MISSING_FIELD:${safeFieldNameForDiagnostic(key)}`);
+    // Required authority must be present on the document itself. Using `in`
+    // would allow a hostile prototype to satisfy a required field without
+    // serializing that field into the document being validated.
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      throw new Error(`${code}:MISSING_FIELD:${safeFieldNameForDiagnostic(key)}`);
+    }
   }
 }
 
@@ -76,7 +81,7 @@ export function assertUniqueStrings(values: readonly unknown[], code: string): v
   const seen = new Set<string>();
   for (const value of values) {
     assertString(value, code);
-    if (seen.has(value)) throw new Error(`${code}:DUPLICATE:${value}`);
+    if (seen.has(value)) throw new Error(`${code}:DUPLICATE:${safeErrorDetail(value)}`);
     seen.add(value);
   }
 }
@@ -112,7 +117,7 @@ const ERROR_DETAIL_MAX_LENGTH = 160;
 const ERROR_DETAIL_SAFE_RE = /^[A-Za-z0-9_.:/@()+, -]*$/;
 /** Secret/sentinel shapes that must never be echoed even when charset-clean. */
 const ERROR_DETAIL_FORBIDDEN_RE =
-  /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization)/i;
+  /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization|https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:customer|account|tenant|user|email)[-_ :/][A-Z0-9][A-Z0-9._:-]{2,})/i;
 
 /** True when `text` bears sentinel/secret-shaped content (fail-closed signal). */
 export function containsForbiddenErrorDetail(text: string): boolean {
@@ -128,4 +133,3 @@ export function safeErrorDetail(value: unknown): string {
     ? text
     : REDACTED_ERROR_DETAIL;
 }
-

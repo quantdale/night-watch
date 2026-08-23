@@ -24,3 +24,4 @@ export * from "./replan";
 export * from "./simulator";
 export * from "./report";
 export * from "./runtimeBinding";
+export * from "./changeImpact";

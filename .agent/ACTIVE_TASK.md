@@ -1,49 +1,41 @@
 # Active Task
 
-Task ID: phase-16ch-portfolio-runtime-binding-hardening
-Phase: 16CH-PORTFOLIO-RUNTIME-BINDING-HARDENING
-Title: Nightwatch Phase 16CH — Portfolio Runtime Binding Hardening (terminal local-green / external-CI-blocked record)
-Status: NONE
-Task directory: .agent/tasks/phase-16ch-portfolio-runtime-binding-hardening
-Starting SHA: 70443a3b5d599b011c2a40d612dd701652e566a4
+Task ID: phase-17-change-aware-campaign-evidence-hardening
+Phase: 17-CHANGE-AWARE-CAMPAIGN-EVIDENCE-HARDENING
+Title: Nightwatch Phase 17 — Change-Aware Campaign and Evidence Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-17-change-aware-campaign-evidence-hardening
+Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
 Last validated implementation SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
-Last checkpoint: DISCOVER_FROM_GIT
-Current milestone: NONE — Phase 16CH is terminal; all M0–M11 are complete
-Next action: STOP — any future work requires a new task and fresh local/source/synthetic scope
-Authorization class: PHASE_16CH_PORTFOLIO_RUNTIME_BINDING_HARDENING_LOCAL_ONLY (spent; LOCAL/SOURCE/SYNTHETIC only)
+Last substantive checkpoint SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
+Last checkpoint: M5 — source-impact, parser/privacy, replay, corpus, and byte-determinism implementation wave validated by focused and affected tests
+Current milestone: M6 — integrated validation, docs alignment, checkpoint/push, and truthful CI inspection
+Next action: Run the Level 3 validation ladder, update durable project/task truth from the resulting evidence, then execute canonical and isolated full regression
+Authorization class: PHASE_17_LOCAL_SOURCE_SYNTHETIC_CAMPAIGN_INTELLIGENCE_AND_EVIDENCE_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-## Terminal Tokens
+## Terminal Boundary Tokens
 
 ```text
-PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI
-PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED
-PHASE_16D_DEV_RETRY: NOT_AUTHORIZED
+PHASE_17_STATUS: IN_PROGRESS
+PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
+PHASE_16D_STATUS: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
-NEXT ACTION: STOP
 ```
 
 ## Routing
 
-The terminal Phase-16CH record is
-`.agent/tasks/phase-16ch-portfolio-runtime-binding-hardening/`. Its validated
-implementation checkpoint is
-`794b32df443ae8c9a520182ef97b7a2c9985ba82`; canonical and topology-correct
-isolated complete regressions both passed 2,232 / skipped 4 / failed 0. The
-exact Actions run `32624917568` executed zero steps under the standing
-external billing/spending condition, so the local result is not CI-green.
-
-Bootstrap for any future session: read `AGENTS.md`, `docs/CURRENT_STATE.md`,
-this file, then the terminal task's `STATE.md`, `REPORT.md` and
-`HARDENING_HANDOFF.md`. Live HEAD is always discovered from Git
-(`LIVE_HEAD_AUTHORITY: GIT`). Do not resume Phase 16CH or infer Phase 16D
-authority from its handoff.
+Phase 16CH remains a terminal historical record at
+`.agent/tasks/phase-16ch-portfolio-runtime-binding-hardening/`; do not reopen
+it. The Phase 17 execution memory is the task directory above. Live HEAD is
+always discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
 
 ## Scope boundary
 
-Phase 6 remains `FROZEN_BY_OWNER`; Phase 11B and Phase 13B remain
-`NOT_AUTHORIZED`; Phase 16D remains separately owner-gated. Real findings stay
-owner-local and no credentials, customer values, sibling writes, product
-mutations, data-plane operations or external publication belong in this repo.
+This task is LOCAL / SOURCE / SYNTHETIC only. Phase 6 remains frozen; Phase
+11B/13B and Phase 16D remain unauthorized. No DEV/NEXT/production contacts,
+authenticated sessions, product/data mutations, datastore/cloud/infra work,
+Alphaus sibling writes, external publication, credentials, or real findings
+belong in this task.

@@ -434,12 +434,24 @@ export function buildMinimalityEvidence(result: MinimizationResult): MinimalityE
   const exercisedReducedReplayCount = freshRan ? Math.max(0, result.replayCount - 1) : 0;
   const survivorIds = result.minimalReproducingSequence;
   const survivorDeletions: MinimalityDeletionDisposition[] = [];
+  const repeatedActionIds = new Set(survivorIds.filter((actionId, index) => survivorIds.indexOf(actionId) !== index));
+  // The historical MinimizationResult stores action IDs, while the reducer's
+  // internal ledger distinguishes occurrences by original index. A repeated
+  // ID cannot be assigned back to one deletion occurrence from the public
+  // result alone. Never let that lossy reconstruction support a proven claim.
+  if (repeatedActionIds.size > 0 && result.reductionEvidenceClass === 'MINIMALITY_PROVEN') {
+    throw new Error('MINIMALITY_EVIDENCE_INVALID:AMBIGUOUS_SURVIVOR_OCCURRENCE');
+  }
   if (survivorIds.length > 1) {
     for (let index = 0; index < survivorIds.length; index += 1) {
       const deletedSequence = survivorIds.filter((_, position) => position !== index);
-      const match = result.candidateEvaluations.find((evaluation) =>
+      const matches = result.candidateEvaluations.filter((evaluation) =>
         evaluation.sequence.length === deletedSequence.length &&
         evaluation.sequence.every((actionId, position) => actionId === deletedSequence[position]));
+      const match = matches.length === 1 ? matches[0] : undefined;
+      if (matches.length > 1 && result.reductionEvidenceClass === 'MINIMALITY_PROVEN') {
+        throw new Error('MINIMALITY_EVIDENCE_INVALID:AMBIGUOUS_SURVIVOR_DELETION');
+      }
       if (match !== undefined) {
         survivorDeletions.push({
           actionId: survivorIds[index]!,

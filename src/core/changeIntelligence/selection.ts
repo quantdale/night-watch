@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import {
   CHANGE_INTELLIGENCE_SCHEMA_VERSION,
   DEPENDENCY_MAP_VERSION,
@@ -18,6 +17,7 @@ import {
   type UnresolvedImpact,
 } from './types';
 import { RIPPLE_DEPENDENCY_EDGES, RIPPLE_REPOSITORIES } from './map';
+import { sha256Hex, stableJsonSorted } from '../identity/canonicalDigest';
 
 const DOC_RE = /(^|\/)(docs?|documentation)(\/|$)|\.(md|mdx|txt|adoc)$/i;
 const TEST_RE = /(^|\/)(__tests__|tests?|test-fixtures?|fixtures)(\/|$)|\.(test|spec)\.[^.]+$/i;
@@ -41,7 +41,16 @@ const RISK_RANK: Record<RiskClass, number> = {
 };
 
 function digest(value: unknown): string {
-  return crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  // Change identities cross a document boundary. Canonicalize object keys so
+  // equivalent JSON documents cannot receive different campaign identities
+  // merely because a producer inserted fields in another order.
+  return sha256Hex(stableJsonSorted(value));
+}
+
+function canonicalChangedFile(file: ChangedFile): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(file).filter(([, value]) => value !== undefined),
+  );
 }
 
 function canonicalPath(path: string): string {
@@ -140,7 +149,11 @@ interface SelectionOptions {
 }
 
 export function changesetId(input: Pick<ChangeSet, 'repoBaselines' | 'changedFiles' | 'selectorVersion'>): string {
-  return `cs-${digest({ selectorVersion: input.selectorVersion, repoBaselines: input.repoBaselines, changedFiles: input.changedFiles }).slice(0, 24)}`;
+  return `cs-${digest({
+    selectorVersion: input.selectorVersion,
+    repoBaselines: input.repoBaselines,
+    changedFiles: input.changedFiles.map(canonicalChangedFile),
+  }).slice(0, 24)}`;
 }
 
 export function selectJourneys(changeset: ChangeSet, options: SelectionOptions = {}): SelectionResult {
