@@ -1,13 +1,15 @@
 # Phase 21 Handoff
 
-Status: IN_PROGRESS — LOCAL / SOURCE / SYNTHETIC
+Status: COMPLETE — LOCAL / SOURCE / SYNTHETIC
 Task ID: phase-21-semantic-gap-closure
 Phase: 21-SEMANTIC-GAP-CLOSURE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 Starting SHA: `7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae`.
 Validated implementation checkpoint:
-`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`.
+`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`. The first pushed documentation
+checkpoint is `04ad56c8baa904b8fc8537a41e4fa2e90602770b`; final live SHA is
+discovered from Git after the terminal documentation push.
 
 Phase 19 and Phase 20 are terminal and unchanged. The exact Phase 20 baseline
 is 157 nodes / 151 edges / 86 gaps, with campaign-facing reason counts 20
@@ -30,20 +32,18 @@ owner provenance 91/91, campaign synthetic 27/27, typecheck, hardening,
 canonical full Playwright 2,333/2,329/4/0, and topology-correct isolated full
 Playwright at the exact same result and skip identity inventory.
 
-The next closure actions are:
+The terminal records are complete. The one Actions inspection observed run
+`32672981417` / job `97276539731`; both concluded `failure` and the job had
+`steps=[]`, recorded as the external billing restriction. No retry was made.
+Local validation is not represented as CI green.
 
-1. Inspect the staged diff and privacy surface; run the required scoped
-   continuity/project checks on a clean checkpoint.
-2. Commit and push without force to `origin main`; stop if the remote advances
-   or rejects the push.
-3. Perform exactly one Actions inspection for the final pushed checkpoint.
-4. Record the observable CI result, update the terminal report/state/project
-   snapshot, commit the documentation-only closure, and push it without force.
-5. Verify clean worktree and `HEAD == origin/main`, then set ACTIVE_TASK and
-   this task to terminal COMPLETE with live SHA discovered from Git.
+Final required invariant: the terminal documentation closure must leave a
+clean worktree with `main` and `origin/main` synchronized; live SHA is always
+discovered from Git and must not be predicted in a tracked document.
 
 The only acceptable remaining gap reasons are unsupported source proof and
 unavailable mechanically proven duplicate equivalence. DEV/NEXT/production,
 authenticated state, database/datastore, cloud/infra, sibling writes,
 publication, AI authority, self-development promotion, and raw real evidence
-remain outside scope.
+remain outside scope. STOP; any future semantic work requires a separately
+authorized successor task.

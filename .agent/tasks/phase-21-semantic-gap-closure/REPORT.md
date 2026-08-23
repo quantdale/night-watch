@@ -1,6 +1,6 @@
 # Phase 21 Report
 
-Status: IN_PROGRESS — LOCAL / SOURCE / SYNTHETIC
+Status: COMPLETE — LOCAL / SOURCE / SYNTHETIC
 Task ID: phase-21-semantic-gap-closure
 Phase: 21-SEMANTIC-GAP-CLOSURE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -11,9 +11,9 @@ Starting SHA: `7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae`.
 
 Validated implementation checkpoint: `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`
 (`feat: implement phase 21 semantic gap closure`). The durable documentation
-checkpoint and final live SHA will be discovered from Git after the remaining
-terminal documentation, push, and one Actions inspection. No Phase 19 or
-Phase 20 task history was modified.
+checkpoint is `04ad56c8baa904b8fc8537a41e4fa2e90602770b`; the final live SHA is
+always discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`). No Phase 19 or Phase
+20 task history was modified.
 
 ## Exact baseline
 
@@ -160,10 +160,22 @@ parent established the passing isolated result.
 - Exact skip identity parity: `tests/unit/phase5Api.test.ts:197`, `:246`,
   `:280`, and `tests/unit/selfDevSandboxConfinement.test.ts:147`.
 
-`npm run agent:check` and `npm run project:check` are still required after the
-terminal documentation checkpoint is committed. External Actions truth is
-still pending the single post-push inspection; it will be recorded separately
-and will not be inferred from local green results.
+`npm run agent:check` and `npm run project:check` pass on the clean documentation
+checkpoint with strict errors 0 and project-state PASS. External Actions is not
+claimed green: the one permitted inspection observed run `32672981417` for the
+pushed documentation checkpoint, job `97276539731` (`Local hardening checks`),
+both `failure`, with `steps=[]`. This is the external billing/spending
+restriction pattern; no retry was made and local results remain separate.
+
+## Terminal Git record
+
+- Implementation commit: `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`.
+- Documentation commit: `04ad56c8baa904b8fc8537a41e4fa2e90602770b`.
+- Final live SHA: `DISCOVER_FROM_GIT` at the time this report is committed;
+  final response must report the exact value discovered after the closure
+  documentation push.
+- Branch: `main`; pushes were non-forced; the final worktree must remain clean
+  and `HEAD == origin/main`.
 
 ## Safety
 

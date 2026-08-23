@@ -1934,3 +1934,7 @@ checkpoint is `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`; external CI remains a
 separate post-push observation. No DEV/NEXT/production, data/infra,
 sibling-write, publication, AI, self-development, or execution authority is
 added.
+The one permitted Actions inspection observed run `32672981417` / job
+`97276539731` for the pushed checkpoint; both concluded `failure` and the job
+returned `steps=[]`, recorded as the external billing/spending restriction.
+No retry was made and local validation is not called CI green.

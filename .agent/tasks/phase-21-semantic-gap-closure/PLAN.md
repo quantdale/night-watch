@@ -2,7 +2,7 @@
 
 Task ID: phase-21-semantic-gap-closure
 Phase: 21-SEMANTIC-GAP-CLOSURE
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Starting State
@@ -77,8 +77,12 @@ return only bounded categories/digests.
   Evidence: Phase 9–21 cone 1,295/1,295; owner provenance 91/91; canonical
   and topology-correct isolated full suites 2,333/2,329/4/0 with exact skip
   identity parity.
-- [ ] M9 — terminal documentation, validated commit/push, one CI inspection,
-  synchronized clean main, and final handoff.
+- [x] M9 — terminal documentation, validated commit/push, one CI inspection,
+  synchronized clean main, and final handoff. Implementation checkpoint
+  `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a` and documentation checkpoint
+  `04ad56c8baa904b8fc8537a41e4fa2e90602770b` were pushed without force; the
+  one Actions inspection observed run `32672981417` / job `97276539731` with
+  `failure` and `steps=[]`, recorded as the billing restriction.
 
 ## Workstream mapping
 
@@ -164,3 +168,10 @@ post-push inspection.
 
 DEV/NEXT/production acceptance, infrastructure/data-layer work, external
 publication, and contracts without current mechanical proof remain deferred.
+
+## Terminal status
+
+COMPLETE. All authorized local milestones and acceptance criteria are closed.
+The final live head is discovered from Git; external Actions is not claimed
+green because the observed job returned `steps=[]` under the billing
+restriction.

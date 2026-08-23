@@ -5,7 +5,7 @@
 Task ID: phase-21-semantic-gap-closure
 Phase: 21-SEMANTIC-GAP-CLOSURE
 Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, and Differential Replay Saturation
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
 Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
@@ -13,10 +13,10 @@ LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M8 — compatibility, full regression, parity, and closure repair
+Last checkpoint: M9 — durable closure, push, one CI inspection, and terminal handoff
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-PHASE_21_STATUS: IN_PROGRESS
+PHASE_21_STATUS: COMPLETE
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -37,7 +37,7 @@ source-proof boundaries.
 
 ## Current Milestone
 
-M9 — durable closure, push, one CI inspection, and terminal handoff.
+COMPLETE — M9 terminal closure.
 
 ## Completed Milestones
 
@@ -119,19 +119,22 @@ M9 — durable closure, push, one CI inspection, and terminal handoff.
   147. The first isolated attempt had a wrongly nested sibling-root fixture;
   the corrected attempt used read-only aggregate links at the resolver's
   expected parent and established exact parity.
+- M9 pushed implementation checkpoint `69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`
+  with documentation checkpoint `04ad56c8baa904b8fc8537a41e4fa2e90602770b`.
+  One Actions inspection observed run `32672981417` and job `97276539731`
+  both concluding `failure` with `steps=[]`, recorded as the external billing
+  restriction. No retry was made; local validation is not called CI green.
 
 ## Work In Progress
 
-Prepare the terminal task records and documentation checkpoint. External CI
-must be inspected exactly once after the validated push; local validation and
-external CI truth remain separate.
+None — terminal task records and documentation are complete. External CI was
+inspected exactly once and remains separately recorded as blocked by the
+billing restriction.
 
 ## Exact Next Action
 
-Update the terminal report/handoff, acceptance matrix, plan, ACTIVE_TASK, and
-project snapshot with the exact M8 evidence; run the scoped checks on a clean
-checkpoint, push without force, inspect Actions once, then record the result
-and perform terminal continuity/project validation.
+STOP. Phase 21 is terminal. Any future semantic work requires a separately
+authorized successor task; do not reopen Phase 19 or Phase 20 history.
 
 ## Files Changed
 
@@ -181,6 +184,12 @@ exact four skip identities. A prior isolated setup attempt placed the sibling
 links one directory too deep and was discarded as a topology setup defect;
 the corrected topology is the passing result above.
 
+Command: one post-push GitHub Actions inspection
+Result: BLOCKED / BILLING_RESTRICTION — run `32672981417` for head
+`04ad56c8baa904b8fc8537a41e4fa2e90602770b` concluded `failure`; job
+`97276539731` (`Local hardening checks`) concluded `failure` with `steps=[]`.
+No run steps executed, no local conclusion was changed, and no retry was made.
+
 ## Decisions Made During This Task
 
 - Phase 21 is a fresh successor task. Phase 19 and Phase 20 are terminal and
@@ -221,7 +230,11 @@ Next Action without broad rediscovery.
 
 ## Completion Snapshot
 
-IN_PROGRESS pending the durable documentation checkpoint, push, and one
-post-push Actions inspection. The validated implementation is
-`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`; live HEAD remains discovered from
-Git.
+COMPLETE. The validated implementation checkpoint is
+`69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a`; the documentation checkpoint was
+`04ad56c8baa904b8fc8537a41e4fa2e90602770b`. The final live SHA is always
+discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`). The graph is 239/233/3;
+83 of 86 baseline gap identities are obsolete after rebuild, 0 are actionable,
+and 3 are explicit source-proof irreducible records. All required local gates
+and exact canonical/isolated parity are green; external Actions is recorded as
+failure with zero steps under the billing restriction.

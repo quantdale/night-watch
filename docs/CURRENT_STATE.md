@@ -2056,3 +2056,8 @@ authenticated browser state, datastore/database, cloud/infra, sibling write,
 publication, AI authority, self-development promotion, or raw real evidence
 was used. External CI is a separate post-push observation and is never inferred
 from these local measurements.
+The one permitted Actions inspection observed run `32672981417` for pushed
+head `04ad56c8baa904b8fc8537a41e4fa2e90602770b`, with job `97276539731`
+(`Local hardening checks`) concluding `failure` and `steps=[]`. This is recorded
+as the external billing/spending restriction; no retry was made and CI is not
+called green.

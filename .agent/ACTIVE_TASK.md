@@ -3,14 +3,14 @@
 Task ID: phase-21-semantic-gap-closure
 Phase: 21-SEMANTIC-GAP-CLOSURE
 Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, and Differential Replay Saturation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-21-semantic-gap-closure
 Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
 Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-Last checkpoint: M8 — compatibility, full regression, parity, and closure repair
-Current milestone: M9 — durable closure, push, one CI inspection, and terminal handoff
-Next action: record the validated implementation checkpoint, run the required scoped checks, push without force, inspect Actions once, then complete the terminal records
+Last checkpoint: M9 — durable closure, push, one CI inspection, and terminal handoff
+Current milestone: COMPLETE — M9 terminal closure
+Next action: STOP. Phase 21 is terminal; future semantic work requires a separately authorized successor task.
 Authorization class: PHASE_21_SEMANTIC_GAP_CLOSURE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
@@ -20,7 +20,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_21_STATUS: IN_PROGRESS
+PHASE_21_STATUS: COMPLETE
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -113,8 +113,15 @@ line 147. The first isolated attempt used an incorrectly nested sibling-root
 fixture and was discarded as a validation setup defect; the corrected run
 used read-only aggregate links at the resolver's expected parent.
 
+External Actions inspection: BLOCKED / BILLING_RESTRICTION — run
+`32672981417` for head `04ad56c8baa904b8fc8537a41e4fa2e90602770b` concluded
+`failure`; job `97276539731` (`Local hardening checks`) also concluded
+`failure` with `steps=[]`. This is not a local validation failure and was not
+retried. External CI is not claimed green.
+
 ## Resume Recipe
 
 Read this file, then `.agent/tasks/phase-21-semantic-gap-closure/SPEC.md`,
-`PLAN.md`, and `STATE.md`; inspect Git status and continue M9. Preserve Phase
-19/20 terminal records and the local, source, synthetic safety boundary.
+`PLAN.md`, and `STATE.md` only for historical context. STOP: Phase 21 is
+terminal, Phase 19/20 remain terminal, and any future semantic work requires a
+newly authorized task.
