@@ -19,6 +19,12 @@ export interface ReductionAction {
   readonly dependencyKey: string | null;
 }
 
+/** A retained dependent action is valid only when its prerequisite remains. */
+export interface ReductionDependencyEdge {
+  readonly prerequisiteOrdinal: number;
+  readonly dependentOrdinal: number;
+}
+
 export type ReductionProbeOutcome =
   | "REPRODUCES"
   | "DOES_NOT_REPRODUCE"
@@ -54,6 +60,7 @@ export interface MinimizationV2Result {
   readonly cacheHits: number;
   readonly budgetExhausted: boolean;
   readonly fixedPointPasses: number;
+  readonly dependencyEdges: readonly ReductionDependencyEdge[];
   readonly evaluations: readonly MinimizationV2Evaluation[];
   readonly reasons: readonly string[];
   readonly deterministicDigest: string;
@@ -69,6 +76,12 @@ function validateAction(action: ReductionAction): void {
   if (!SAFE_ID_RE.test(action.actionId)) invalid("ACTION_ID");
   if (action.dependencyKey !== null && !SAFE_ID_RE.test(action.dependencyKey)) invalid("DEPENDENCY_KEY");
   if (!Number.isInteger(action.ordinal) || action.ordinal < 0 || action.ordinal > 999_999) invalid("ORDINAL");
+}
+
+function validateDependency(edge: ReductionDependencyEdge, ordinals: ReadonlySet<number>): void {
+  if (!Number.isInteger(edge.prerequisiteOrdinal) || edge.prerequisiteOrdinal < 0 || !ordinals.has(edge.prerequisiteOrdinal)) invalid("DEPENDENCY_PREREQUISITE");
+  if (!Number.isInteger(edge.dependentOrdinal) || edge.dependentOrdinal < 0 || !ordinals.has(edge.dependentOrdinal)) invalid("DEPENDENCY_DEPENDENT");
+  if (edge.prerequisiteOrdinal === edge.dependentOrdinal) invalid("DEPENDENCY_SELF");
 }
 
 function sequenceKey(sequence: readonly ReductionAction[]): string {
@@ -100,18 +113,27 @@ export function minimizeSequenceV2(input: {
   readonly original: readonly ReductionAction[];
   readonly maxProbes: number;
   readonly semanticIdentityBound: boolean;
+  readonly dependencies?: readonly ReductionDependencyEdge[];
   readonly probe: (sequence: readonly ReductionAction[]) => ReductionProbeResult;
 }): MinimizationV2Result {
   if (!Array.isArray(input.original) || input.original.length === 0 || input.original.length > 128) invalid("ORIGINAL_SEQUENCE");
   if (!Number.isInteger(input.maxProbes) || input.maxProbes < 1 || input.maxProbes > 4096) invalid("MAX_PROBES");
   const original = input.original.map((action) => ({ ...action }));
   original.forEach(validateAction);
-  if (new Set(original.map((action) => action.ordinal)).size !== original.length) invalid("DUPLICATE_ORDINAL");
+  const originalOrdinalsSet = new Set(original.map((action) => action.ordinal));
+  if (originalOrdinalsSet.size !== original.length) invalid("DUPLICATE_ORDINAL");
+  const dependencyEdges = [...(input.dependencies ?? [])].sort((left, right) => left.prerequisiteOrdinal - right.prerequisiteOrdinal || left.dependentOrdinal - right.dependentOrdinal);
+  dependencyEdges.forEach((edge) => validateDependency(edge, originalOrdinalsSet));
+  if (new Set(dependencyEdges.map((edge) => `${edge.prerequisiteOrdinal}|${edge.dependentOrdinal}`)).size !== dependencyEdges.length) invalid("DUPLICATE_DEPENDENCY");
   const evaluations: MinimizationV2Evaluation[] = [];
   const cache = new Map<string, ReductionProbeResult>();
   let probesAttempted = 0;
   let cacheHits = 0;
   let budgetExhausted = false;
+  const dependencySatisfied = (sequence: readonly ReductionAction[]): boolean => {
+    const retained = new Set(sequence.map((action) => action.ordinal));
+    return dependencyEdges.every((edge) => !retained.has(edge.dependentOrdinal) || retained.has(edge.prerequisiteOrdinal));
+  };
   const evaluate = (sequence: readonly ReductionAction[]): ReductionProbeResult => {
     const key = sequenceKey(sequence);
     const cached = cache.get(key);
@@ -121,6 +143,12 @@ export function minimizeSequenceV2(input: {
       const exhausted: ReductionProbeResult = { valid: false, preservesFinding: false, outcome: "INVALID", reason: "BUDGET_EXHAUSTED" };
       evaluations.push({ retainedOrdinals: sequence.map((action) => action.ordinal), retainedActionIds: sequence.map((action) => action.actionId), ...exhausted });
       return exhausted;
+    }
+    if (!dependencySatisfied(sequence)) {
+      const dependencyFailure: ReductionProbeResult = { valid: true, preservesFinding: false, outcome: "PRECONDITION_DIVERGENCE", reason: "DEPENDENCY_PRECONDITION_REQUIRED" };
+      cache.set(key, dependencyFailure);
+      evaluations.push({ retainedOrdinals: sequence.map((action) => action.ordinal), retainedActionIds: sequence.map((action) => action.actionId), ...dependencyFailure });
+      return dependencyFailure;
     }
     probesAttempted += 1;
     let result: ReductionProbeResult;
@@ -153,6 +181,7 @@ export function minimizeSequenceV2(input: {
       cacheHits,
       budgetExhausted,
       fixedPointPasses,
+      dependencyEdges,
       evaluations,
       reasons: [fresh.reason],
     };
@@ -223,6 +252,7 @@ export function minimizeSequenceV2(input: {
     cacheHits,
     budgetExhausted,
     fixedPointPasses,
+    dependencyEdges,
     evaluations,
     reasons: proof === "NOT_PROVEN_MINIMAL" ? [budgetExhausted ? "BUDGET_EXHAUSTED" : "UNEXERCISED_OR_INVALID_REDUCTION"] : ["ALL_TESTED_REDUCTIONS_DID_NOT_PRESERVE_FINDING"],
   };

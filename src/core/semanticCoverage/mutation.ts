@@ -11,6 +11,7 @@ import { sourceEvidenceDigest, SYNTHETIC_MUTATION_VERSION } from "./types";
 import { compareSurfaceSemantics, type DifferentialEvaluation, type SurfaceEquivalenceContract, type SurfaceObservation } from "./differential";
 import { evaluateMetamorphicRelation, type MetamorphicEvaluation, type MetamorphicRelation } from "./metamorphic";
 import { evaluateRelationalContract, type RelationalContract, type RelationalEvaluation } from "./relational";
+import { evaluateSourceBoundMembership, type MembershipEvaluation, type SourceBoundMembershipContract } from "./membership";
 import type { ContractCandidate, DiscoveredContractShape, JsonTypeCategory } from "./types";
 
 export type SyntheticMutationClass =
@@ -18,6 +19,11 @@ export type SyntheticMutationClass =
   | "MISSING_REQUIRED_FIELD"
   | "WRONG_TYPE"
   | "WRONG_ENUM"
+  | "MISSING_ENUM_MEMBER"
+  | "UNEXPECTED_SET_MEMBER"
+  | "EXACT_SET_MISMATCH"
+  | "SUBSET_VIOLATION"
+  | "SUPERSET_VIOLATION"
   | "LOWER_BOUND_VIOLATION"
   | "UPPER_BOUND_VIOLATION"
   | "RELATIONSHIP_VIOLATION"
@@ -29,11 +35,17 @@ export type SyntheticMutationClass =
 
 export const SYNTHETIC_MUTATION_CLASSES: readonly SyntheticMutationClass[] = [
   "BASELINE_VALID", "MISSING_REQUIRED_FIELD", "WRONG_TYPE", "WRONG_ENUM", "LOWER_BOUND_VIOLATION",
+  "MISSING_ENUM_MEMBER", "UNEXPECTED_SET_MEMBER", "EXACT_SET_MISMATCH", "SUBSET_VIOLATION", "SUPERSET_VIOLATION",
   "UPPER_BOUND_VIOLATION", "RELATIONSHIP_VIOLATION", "ORDERING_VIOLATION", "AGGREGATE_MISMATCH",
   "DIFFERENTIAL_MISMATCH", "METAMORPHIC_VIOLATION", "BENIGN_ALTERNATIVE",
 ];
 
-export type SyntheticCapabilityKind = "SOURCE_CONTRACT" | "RELATIONAL" | "DIFFERENTIAL" | "METAMORPHIC";
+export type SyntheticCapabilityKind = "SOURCE_CONTRACT" | "RELATIONAL" | "DIFFERENTIAL" | "METAMORPHIC" | "MEMBERSHIP";
+
+export interface SyntheticMembershipBinding {
+  readonly contract: SourceBoundMembershipContract;
+  readonly path: readonly string[];
+}
 
 export interface SyntheticFixture {
   readonly schemaVersion: typeof SYNTHETIC_MUTATION_VERSION;
@@ -60,6 +72,21 @@ export interface SyntheticMutationMeasurementRow {
   readonly highConfidence: boolean;
   readonly benignControl: boolean;
   readonly falsePositive: boolean;
+  readonly replayOutcome: string | null;
+  readonly minimizationProof: string | null;
+}
+
+/** Truth supplied by a bounded replay/minimization adapter. When omitted the
+ * Phase 20 compatibility behavior remains detection-derived. Phase 21 passes
+ * this evidence explicitly so lifecycle counts cannot be inferred from a
+ * detector result alone. */
+export interface SyntheticLifecycleEvidenceRow {
+  readonly fixtureId: string;
+  readonly replayed: boolean;
+  readonly minimized: boolean;
+  readonly highConfidence: boolean;
+  readonly replayOutcome: string;
+  readonly minimizationProof: string;
 }
 
 export interface SyntheticMutationMeasurement {
@@ -85,6 +112,7 @@ interface MaterializedCase {
   readonly projections: readonly SemanticProjection[];
   readonly ctx: ProjectionContext;
   readonly differentialObservations?: readonly [SurfaceObservation, SurfaceObservation];
+  readonly membershipEvaluation?: MembershipEvaluation;
 }
 
 function invalid(reason: string): never {
@@ -124,7 +152,7 @@ function fieldObject(shape: Extract<DiscoveredContractShape, { kind: "FIELD_SET"
   return result;
 }
 
-function materializeSourceContract(candidate: ContractCandidate, mutationClass: SyntheticMutationClass): MaterializedCase | null {
+function materializeSourceContract(candidate: ContractCandidate, mutationClass: SyntheticMutationClass, membershipContracts?: ReadonlyMap<string, SourceBoundMembershipContract>): MaterializedCase | null {
   if (candidate.proofStatus === "REJECTED" || candidate.currentness !== "CURRENT" || candidate.shape === null) return null;
   const shape = candidate.shape;
   const ctx = new ProjectionContext();
@@ -145,11 +173,19 @@ function materializeSourceContract(candidate: ContractCandidate, mutationClass: 
       return { projections: projectMany([{ [shape.field]: safeSyntheticValue(actual) }], ctx), ctx };
     }
     case "FINITE_ENUM": {
-      // The safe projection deliberately does not expose raw enum members.
-      // Keep the wrong-enum case in the generated corpus, but mark it
-      // inapplicable until a bounded membership projection is available.
-      if (mutationClass === "WRONG_ENUM") return null;
-      return { projections: projectMany([{ [shape.field]: "synthetic" }], ctx), ctx };
+      const membership = membershipContracts?.get(candidate.candidateId);
+      if (membership === undefined) {
+        // Preserve the Phase 20 baseline when no source-bound membership
+        // contract is supplied. Wrong-enum remains honestly unapplicable.
+        if (mutationClass === "WRONG_ENUM") return null;
+        return { projections: projectMany([{ [shape.field]: "synthetic" }], ctx), ctx };
+      }
+      if (["MISSING_ENUM_MEMBER", "UNEXPECTED_SET_MEMBER", "EXACT_SET_MISMATCH", "SUBSET_VIOLATION", "SUPERSET_VIOLATION"].includes(mutationClass)) return null;
+      const rawValue = mutationClass === "WRONG_ENUM" ? "synthetic-unknown-member" : membership.allowedValues[0];
+      if (rawValue === undefined) return null;
+      const projection = projectValue({ [shape.field]: rawValue }, ctx).projection;
+      const membershipEvaluation = evaluateSourceBoundMembership({ projection, ctx, path: [shape.field], contract: membership });
+      return { projections: [projection], ctx, membershipEvaluation };
     }
     case "RANGE": {
       const lower = shape.lowerBound;
@@ -187,6 +223,7 @@ function sourceContractDefectDetected(candidate: ContractCandidate, materialized
       return false;
     }
     case "FINITE_ENUM":
+      if (materialized.membershipEvaluation !== undefined) return ["NONE_ALLOWED", "SOME_DISALLOWED", "SUPERSET_OR_UNKNOWN_MEMBER"].includes(materialized.membershipEvaluation.result) && mutationClass === "WRONG_ENUM";
       return mutationClass === "WRONG_ENUM";
     case "DEFAULT": {
       const node = field(candidate.shape.field);
@@ -204,6 +241,39 @@ function objectForPaths(paths: readonly (readonly string[])[], values: readonly 
     if (values[index] !== undefined) result[path[0]!] = values[index];
   });
   return result;
+}
+
+function materializeMembership(binding: SyntheticMembershipBinding, mutationClass: SyntheticMutationClass): MaterializedCase | null {
+  const values = binding.contract.allowedValues;
+  if (values.length === 0) return null;
+  if (binding.path.length !== 1) return null;
+  let observed: readonly string[];
+  switch (mutationClass) {
+    case "BASELINE_VALID":
+    case "BENIGN_ALTERNATIVE":
+      observed = [...values].reverse();
+      break;
+    case "WRONG_ENUM":
+      observed = ["synthetic-unknown-member"];
+      break;
+    case "MISSING_ENUM_MEMBER":
+    case "EXACT_SET_MISMATCH":
+      observed = values.slice(0, Math.max(0, values.length - 1));
+      break;
+    case "UNEXPECTED_SET_MEMBER":
+    case "SUPERSET_VIOLATION":
+      observed = [...values, "synthetic-unknown-member"];
+      break;
+    case "SUBSET_VIOLATION":
+      observed = ["synthetic-unknown-member"];
+      break;
+    default:
+      return null;
+  }
+  const ctx = new ProjectionContext();
+  const projection = projectValue({ [binding.path[0]!]: observed }, ctx).projection;
+  const membershipEvaluation = evaluateSourceBoundMembership({ projection, ctx, path: binding.path, contract: binding.contract });
+  return { projections: [projection], ctx, membershipEvaluation };
 }
 
 function materializeRelational(contract: RelationalContract, mutationClass: SyntheticMutationClass): MaterializedCase | null {
@@ -266,17 +336,70 @@ function materializeRelational(contract: RelationalContract, mutationClass: Synt
   }
 }
 
+function differentialLeaf(path: readonly string[], mismatch: boolean, alignmentKind: string | undefined, side: "LEFT" | "RIGHT"): unknown {
+  const key = path[path.length - 1] ?? "summary";
+  if (alignmentKind === "SCALAR_TO_SINGLETON_LIST") return side === "LEFT" ? (mismatch ? "synthetic-unknown-member" : "synthetic-category") : (mismatch ? ["synthetic-unknown-member"] : ["synthetic-category"]);
+  if (alignmentKind === "ABSENT_TO_NULL") return mismatch ? "synthetic-category" : null;
+  if (alignmentKind === "ORDERED_LIST_TO_SET") return mismatch ? [{ id: "synthetic-a" }, { id: "synthetic-c" }] : [{ id: "synthetic-b" }, { id: "synthetic-a" }];
+  if (key === "summary") return { count: mismatch ? 3 : 2 };
+  if (key === "items") return mismatch ? [{ id: "synthetic-a" }, { id: "synthetic-c" }] : [{ id: "synthetic-a" }, { id: "synthetic-b" }];
+  if (["count", "amount", "rank", "value", "total", "page"].includes(key)) return mismatch ? 3 : 2;
+  return mismatch ? "synthetic-unknown-member" : "synthetic-category";
+}
+
+function valueAtPath(path: readonly string[], value: unknown): Record<string, unknown> {
+  if (path.length === 0) return { summary: value };
+  let current: Record<string, unknown> = { [path[path.length - 1]!]: value };
+  for (let index = path.length - 2; index >= 0; index -= 1) current = { [path[index]!]: current };
+  return current;
+}
+
 function materializeDifferential(contract: SurfaceEquivalenceContract, mutationClass: SyntheticMutationClass): MaterializedCase {
   const ctx = new ProjectionContext();
-  const leftProjection = projectValue({ summary: { count: 2 } }, ctx).projection;
-  const rightProjection = projectValue({ summary: { count: mutationClass === "DIFFERENTIAL_MISMATCH" ? 3 : 2 } }, ctx).projection;
+  const mismatch = mutationClass === "DIFFERENTIAL_MISMATCH";
+  const alignmentKind = contract.alignmentRule?.kind;
+  const leftValue = differentialLeaf(contract.leftPath, mismatch && contract.expected === "DIFFERENT", alignmentKind, "LEFT");
+  const rightValue = differentialLeaf(contract.rightPath, mismatch, alignmentKind, "RIGHT");
+  const leftPayload = alignmentKind === "ABSENT_TO_NULL" && !mismatch ? {} : valueAtPath(contract.leftPath, leftValue);
+  const rightPayload = valueAtPath(contract.rightPath, rightValue);
+  const leftProjection = projectValue(leftPayload, ctx).projection;
+  const rightProjection = projectValue(rightPayload, ctx).projection;
   const left: SurfaceObservation = { surfaceId: contract.leftSurfaceId, observationId: "synthetic.browser", sourceCurrentness: "CURRENT", applicable: true, projection: leftProjection };
   const right: SurfaceObservation = { surfaceId: contract.rightSurfaceId, observationId: "synthetic.api", sourceCurrentness: "CURRENT", applicable: true, projection: rightProjection };
   return { projections: [leftProjection, rightProjection], ctx, differentialObservations: [left, right] };
 }
 
+function membershipDefectDetected(materialized: MaterializedCase, mutationClass: SyntheticMutationClass): boolean {
+  const result = materialized.membershipEvaluation?.result;
+  if (result === undefined) return false;
+  switch (mutationClass) {
+    case "WRONG_ENUM": return result === "NONE_ALLOWED" || result === "SOME_DISALLOWED";
+    case "MISSING_ENUM_MEMBER":
+    case "EXACT_SET_MISMATCH": return result === "STRICT_SUBSET" || result === "NONE_ALLOWED";
+    case "UNEXPECTED_SET_MEMBER":
+    case "SUPERSET_VIOLATION": return result === "SUPERSET_OR_UNKNOWN_MEMBER";
+    case "SUBSET_VIOLATION": return result === "SOME_DISALLOWED" || result === "NONE_ALLOWED";
+    default: return false;
+  }
+}
+
 function materializeMetamorphic(relation: MetamorphicRelation, mutationClass: SyntheticMutationClass): MaterializedCase {
   const ctx = new ProjectionContext();
+  if (relation.definition.kind === "IDEMPOTENT_NORMALIZATION") {
+    const baseline = { value: "synthetic-category" };
+    const transformed = { value: mutationClass === "METAMORPHIC_VIOLATION" ? "synthetic-other" : "synthetic-category" };
+    return { projections: projectMany([baseline, transformed], ctx), ctx };
+  }
+  if (relation.definition.kind === "DUPLICATE_INPUT_NORMALIZATION") {
+    const baseline = { items: ["synthetic-category"] };
+    const transformed = { items: mutationClass === "METAMORPHIC_VIOLATION" ? ["synthetic-other"] : ["synthetic-category"] };
+    return { projections: projectMany([baseline, transformed], ctx), ctx };
+  }
+  if (relation.definition.kind === "DETERMINISTIC_GROUPING" || relation.definition.kind === "PRESENTATION_IDENTITY") {
+    const baseline = { summary: { state: true } };
+    const transformed = { summary: { state: mutationClass === "METAMORPHIC_VIOLATION" ? false : true } };
+    return { projections: projectMany([baseline, transformed], ctx), ctx };
+  }
   const baseline = relation.definition.kind === "PAGINATION_MONOTONIC" ? { count: 1 } : { summary: { state: true }, items: [{ rank: 1 }, { rank: 2 }] };
   const transformed = relation.definition.kind === "PAGINATION_MONOTONIC"
     ? { count: mutationClass === "METAMORPHIC_VIOLATION" ? 0 : 2 }
@@ -301,8 +424,11 @@ export function generateSyntheticFixtures(input: {
   readonly relationalContracts?: readonly RelationalContract[];
   readonly differentialContracts?: readonly SurfaceEquivalenceContract[];
   readonly metamorphicRelations?: readonly MetamorphicRelation[];
+  readonly membershipContracts?: readonly SourceBoundMembershipContract[];
+  readonly membershipBindings?: readonly SyntheticMembershipBinding[];
 }): readonly SyntheticFixture[] {
   const fixtures: SyntheticFixture[] = [];
+  const membershipContracts = new Map((input.membershipContracts ?? []).map((contract) => [contract.contractId, contract]));
   for (const candidate of [...(input.candidates ?? [])].sort((left, right) => left.candidateId.localeCompare(right.candidateId))) {
     if (candidate.proofStatus === "REJECTED" || candidate.currentness !== "CURRENT") continue;
     const mutationClasses: readonly SyntheticMutationClass[] = candidate.shape?.kind === "FIELD_SET"
@@ -316,7 +442,7 @@ export function generateSyntheticFixtures(input: {
           : candidate.shape?.kind === "RANGE"
             ? ["BASELINE_VALID", "LOWER_BOUND_VIOLATION", "UPPER_BOUND_VIOLATION", "BENIGN_ALTERNATIVE"]
             : [];
-    for (const mutationClass of mutationClasses) fixtures.push(fixtureFrom({ contractId: candidate.candidateId, capabilityKind: "SOURCE_CONTRACT", mutationClass, materialized: materializeSourceContract(candidate, mutationClass) }));
+    for (const mutationClass of mutationClasses) fixtures.push(fixtureFrom({ contractId: candidate.candidateId, capabilityKind: "SOURCE_CONTRACT", mutationClass, materialized: materializeSourceContract(candidate, mutationClass, membershipContracts) }));
   }
   const relationalDefectFor = (contract: RelationalContract): SyntheticMutationClass => contract.definition.kind === "TOTAL_EQUALS_SUM" || contract.definition.kind === "GROUP_AGGREGATE" ? "AGGREGATE_MISMATCH" : contract.definition.kind === "ORDERING" ? "ORDERING_VIOLATION" : "RELATIONSHIP_VIOLATION";
   for (const contract of input.relationalContracts ?? []) {
@@ -331,15 +457,21 @@ export function generateSyntheticFixtures(input: {
     if (relation.proofStatus !== "ADMITTED") continue;
     for (const mutationClass of ["BASELINE_VALID", "METAMORPHIC_VIOLATION", "BENIGN_ALTERNATIVE"] as const) fixtures.push(fixtureFrom({ contractId: relation.relationId, capabilityKind: "METAMORPHIC", mutationClass, materialized: materializeMetamorphic(relation, mutationClass) }));
   }
+  for (const binding of [...(input.membershipBindings ?? [])].sort((left, right) => left.contract.contractId.localeCompare(right.contract.contractId))) {
+    if (binding.contract.mode !== "SET_RELATION") continue;
+    for (const mutationClass of ["BASELINE_VALID", "WRONG_ENUM", "MISSING_ENUM_MEMBER", "UNEXPECTED_SET_MEMBER", "EXACT_SET_MISMATCH", "SUBSET_VIOLATION", "SUPERSET_VIOLATION", "BENIGN_ALTERNATIVE"] as const) {
+      fixtures.push(fixtureFrom({ contractId: binding.contract.contractId, capabilityKind: "MEMBERSHIP", mutationClass, materialized: materializeMembership(binding, mutationClass) }));
+    }
+  }
   return Object.freeze(fixtures.sort((left, right) => left.fixtureId.localeCompare(right.fixtureId)));
 }
 
-function evaluateFixture(input: { readonly fixture: SyntheticFixture; readonly candidates: ReadonlyMap<string, ContractCandidate>; readonly relationalContracts: ReadonlyMap<string, RelationalContract>; readonly differentialContracts: ReadonlyMap<string, SurfaceEquivalenceContract>; readonly metamorphicRelations: ReadonlyMap<string, MetamorphicRelation> }): { readonly detected: boolean; readonly materialized: MaterializedCase | null } {
+function evaluateFixture(input: { readonly fixture: SyntheticFixture; readonly candidates: ReadonlyMap<string, ContractCandidate>; readonly relationalContracts: ReadonlyMap<string, RelationalContract>; readonly differentialContracts: ReadonlyMap<string, SurfaceEquivalenceContract>; readonly metamorphicRelations: ReadonlyMap<string, MetamorphicRelation>; readonly membershipContracts: ReadonlyMap<string, SourceBoundMembershipContract>; readonly membershipBindings: ReadonlyMap<string, SyntheticMembershipBinding> }): { readonly detected: boolean; readonly materialized: MaterializedCase | null } {
   if (!input.fixture.applicable) return { detected: false, materialized: null };
   if (input.fixture.capabilityKind === "SOURCE_CONTRACT") {
     const candidate = input.candidates.get(input.fixture.contractId);
     if (candidate === undefined) return { detected: false, materialized: null };
-    const materialized = materializeSourceContract(candidate, input.fixture.mutationClass);
+    const materialized = materializeSourceContract(candidate, input.fixture.mutationClass, input.membershipContracts);
     if (materialized === null) return { detected: false, materialized: null };
     return { detected: sourceContractDefectDetected(candidate, materialized, input.fixture.mutationClass), materialized };
   }
@@ -359,6 +491,13 @@ function evaluateFixture(input: { readonly fixture: SyntheticFixture; readonly c
     const result: DifferentialEvaluation = compareSurfaceSemantics({ contract, left: pair[0], right: pair[1] });
     return { detected: result.outcome === "CONTRACT_VIOLATION", materialized };
   }
+  if (input.fixture.capabilityKind === "MEMBERSHIP") {
+    const binding = input.membershipBindings.get(input.fixture.contractId);
+    if (binding === undefined) return { detected: false, materialized: null };
+    const materialized = materializeMembership(binding, input.fixture.mutationClass);
+    if (materialized === null) return { detected: false, materialized: null };
+    return { detected: membershipDefectDetected(materialized, input.fixture.mutationClass), materialized };
+  }
   const relation = input.metamorphicRelations.get(input.fixture.contractId);
   if (relation === undefined) return { detected: false, materialized: null };
   const materialized = materializeMetamorphic(relation, input.fixture.mutationClass);
@@ -373,18 +512,29 @@ export function measureSyntheticMutationDetection(input: {
   readonly relationalContracts?: readonly RelationalContract[];
   readonly differentialContracts?: readonly SurfaceEquivalenceContract[];
   readonly metamorphicRelations?: readonly MetamorphicRelation[];
+  readonly membershipContracts?: readonly SourceBoundMembershipContract[];
+  readonly membershipBindings?: readonly SyntheticMembershipBinding[];
+  readonly lifecycleEvidence?: readonly SyntheticLifecycleEvidenceRow[];
 }): SyntheticMutationMeasurement {
   const candidates = new Map((input.candidates ?? []).map((candidate) => [candidate.candidateId, candidate]));
   const relationalContracts = new Map((input.relationalContracts ?? []).map((contract) => [contract.contractId, contract]));
   const differentialContracts = new Map((input.differentialContracts ?? []).map((contract) => [contract.equivalenceId, contract]));
   const metamorphicRelations = new Map((input.metamorphicRelations ?? []).map((relation) => [relation.relationId, relation]));
+  const membershipContracts = new Map((input.membershipContracts ?? []).map((contract) => [contract.contractId, contract]));
+  const membershipBindings = new Map((input.membershipBindings ?? []).map((binding) => [binding.contract.contractId, binding]));
+  const lifecycleEvidence = new Map((input.lifecycleEvidence ?? []).map((row) => [row.fixtureId, row]));
+  const lifecycleEvidenceSupplied = input.lifecycleEvidence !== undefined;
   const rows: SyntheticMutationMeasurementRow[] = [];
   for (const fixture of [...input.fixtures].sort((left, right) => left.fixtureId.localeCompare(right.fixtureId))) {
-    const result = evaluateFixture({ fixture, candidates, relationalContracts, differentialContracts, metamorphicRelations });
+    const result = evaluateFixture({ fixture, candidates, relationalContracts, differentialContracts, metamorphicRelations, membershipContracts, membershipBindings });
     const detected = result.detected;
     const defect = fixture.expectedViolation && fixture.applicable;
     const benignControl = fixture.benignControl && fixture.applicable;
-    rows.push({ fixtureId: fixture.fixtureId, contractId: fixture.contractId, mutationClass: fixture.mutationClass, applicable: fixture.applicable, expectedViolation: fixture.expectedViolation, detected, replayed: defect && detected, minimized: defect && detected, highConfidence: defect && detected, benignControl, falsePositive: benignControl && detected });
+    const lifecycle = lifecycleEvidence.get(fixture.fixtureId);
+    const replayed = defect && detected && (lifecycleEvidenceSupplied ? lifecycle?.replayed === true : true);
+    const minimized = defect && detected && (lifecycleEvidenceSupplied ? lifecycle?.minimized === true : true);
+    const highConfidence = defect && detected && (lifecycleEvidenceSupplied ? lifecycle?.highConfidence === true : true);
+    rows.push({ fixtureId: fixture.fixtureId, contractId: fixture.contractId, mutationClass: fixture.mutationClass, applicable: fixture.applicable, expectedViolation: fixture.expectedViolation, detected, replayed, minimized, highConfidence, benignControl, falsePositive: benignControl && detected, replayOutcome: lifecycle?.replayOutcome ?? null, minimizationProof: lifecycle?.minimizationProof ?? null });
   }
   const defectRows = rows.filter((row) => row.expectedViolation);
   const applicableDefects = defectRows.filter((row) => row.applicable);

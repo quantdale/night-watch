@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const command = args[0] ?? "status";
 const asJson = args.includes("--json");
 
-const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "findings", "explain"]);
+const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain"]);
 if (!COMMANDS.has(command)) {
   console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
   process.exit(2);
@@ -178,19 +178,75 @@ function phase20Preview() {
   return { inventory, graph, gapReport, measurement, coverage, plan: planPreview, capabilityBindings, syntheticProduct: corpus.PHASE20_SYNTHETIC_PRODUCT_MODEL };
 }
 
+function phase21Preview() {
+  const [corpus, semantic, adversarial, phase20] = loadTypeScriptModules([
+    "corpus/phase21/contracts.ts",
+    "src/core/semanticCoverage/index.ts",
+    "corpus/phase21/adversarialMatrix.ts",
+    "corpus/phase20/contracts.ts",
+  ]);
+  const inventory = phase20.phase20Inventory();
+  const differentialContracts = corpus.phase21DifferentialContracts();
+  const metamorphicRelations = [...phase20.phase20MetamorphicRelations(), ...corpus.phase21MetamorphicRelations()];
+  const membershipContracts = corpus.phase21MembershipContracts();
+  const membershipBindings = corpus.phase21MembershipBindings();
+  const relationalContracts = phase20.phase20RelationalContracts();
+  const fixtures = semantic.generateSyntheticFixtures({ candidates: inventory.candidates, relationalContracts, differentialContracts, metamorphicRelations, membershipContracts, membershipBindings });
+  const firstMeasurement = semantic.measureSyntheticMutationDetection({ fixtures, candidates: inventory.candidates, relationalContracts, differentialContracts, metamorphicRelations, membershipContracts, membershipBindings });
+  const lifecycle = semantic.buildSemanticLifecycleReport({ fixtures, measurement: firstMeasurement, differentialContracts });
+  const measurement = semantic.measureSyntheticMutationDetection({ fixtures, candidates: inventory.candidates, relationalContracts, differentialContracts, metamorphicRelations, membershipContracts, membershipBindings, lifecycleEvidence: semantic.lifecycleEvidenceRows(lifecycle) });
+  const baselineGraph = corpus.phase21BaselineGraph();
+  const graph = corpus.phase21CompleteGraph();
+  const baselineLedger = semantic.buildSemanticGapClosureLedger({ inventory, graph: baselineGraph });
+  const ledger = semantic.rebuildSemanticGapClosureLedger({ baseline: baselineLedger, inventory, graph });
+  const differential = semantic.discoverDifferentialPairs({ inventory, evidence: corpus.phase21DifferentialEvidence() });
+  const quality = semantic.buildCoverageQualityReport({ inventory, graph, mutationMeasurement: measurement, lifecycle, differential });
+  const plan = semantic.planSemanticGapClosure({ inventory, graph: baselineGraph, ledger: baselineLedger, quality });
+  const operations = semantic.countSemanticOperations({ fixtures, lifecycle, differential, graph });
+  return { inventory, baselineGraph, graph, baselineLedger, ledger, differential, quality, plan, fixtures, measurement, lifecycle, operations, metamorphicAudit: corpus.phase21MetamorphicAudit(), corpusSize: adversarial.PHASE21_FULL_ADVERSARIAL_CASES.length, corpusFamilies: new Set(adversarial.PHASE21_FULL_ADVERSARIAL_CASES.map((entry) => entry.family)).size };
+}
+
+function phase21Summary(phase21) {
+  return {
+    baselineGraph: { nodes: phase21.baselineGraph.nodeCount, edges: phase21.baselineGraph.edgeCount, gaps: phase21.baselineGraph.gaps.length, digest: phase21.baselineGraph.deterministicDigest },
+    finalGraph: { nodes: phase21.graph.nodeCount, edges: phase21.graph.edgeCount, gaps: phase21.graph.gaps.length, digest: phase21.graph.deterministicDigest },
+    closure: { totalBaselineRecords: phase21.ledger.totalGapCount, gapsClosed: phase21.ledger.closedGapCount, actionable: phase21.ledger.actionableGapCount, irreducible: phase21.ledger.irreducibleGapCount, remainingGraphGaps: phase21.ledger.remainingGapCount, statusCounts: phase21.ledger.statusCounts, reasonCounts: phase21.ledger.reasonCounts },
+    differential: { candidates: phase21.differential.candidateCount, pairs: phase21.differential.admittedPairCount, outcomes: phase21.differential.outcomeCounts },
+    replay: { attempted: phase21.lifecycle.replayAttempted, exact: phase21.lifecycle.replayReproducedExact, semanticEquivalent: phase21.lifecycle.replayReproducedSemanticEquivalent, representationChangedContractPreserved: phase21.lifecycle.replayRepresentationChangedContractPreserved, gaps: phase21.lifecycle.replayGapCount },
+    minimization: { attempted: phase21.lifecycle.minimizationAttempted, supported: phase21.lifecycle.minimizationSupported, proofs: phase21.lifecycle.minimizationProofCounts },
+    quality: { counts: phase21.quality.counts, fullLifecycle: phase21.quality.fullLifecycleContractCount },
+    mutation: mutationMeasurementSummary(phase21.measurement),
+    metamorphic: phase21.metamorphicAudit,
+    adversarialCorpus: { cases: phase21.corpusSize, families: phase21.corpusFamilies },
+    operations: phase21.operations,
+  };
+}
+
 try {
   let output;
   if (command === "status") output = status();
-  else if (command === "contracts" || command === "gaps" || command === "plan" || command === "coverage" || command === "campaign") {
+  else if (["differential", "replay-coverage", "minimization-coverage", "mutation-score"].includes(command)) {
+    const phase21 = phase21Preview();
+    const summary = phase21Summary(phase21);
+    output = command === "differential" ? { command, scope: "LOCAL_SYNTHETIC_ONLY", differential: summary.differential } : command === "replay-coverage" ? { command, scope: "LOCAL_SYNTHETIC_ONLY", replay: summary.replay } : command === "minimization-coverage" ? { command, scope: "LOCAL_SYNTHETIC_ONLY", minimization: summary.minimization } : { command, scope: "LOCAL_SYNTHETIC_ONLY", mutation: summary.mutation };
+  } else if (command === "gaps" && (args.includes("--actionable") || args.includes("--irreducible"))) {
+    const phase21 = phase21Preview();
+    const records = phase21.ledger.records.filter((record) => args.includes("--actionable") ? record.closureStatus === "OPEN_ACTIONABLE" : record.closureStatus.startsWith("IRREDUCIBLE_"));
+    output = { command, scope: "LOCAL_SYNTHETIC_ONLY", filter: args.includes("--actionable") ? "ACTIONABLE" : "IRREDUCIBLE", records, summary: phase21Summary(phase21) };
+  } else if (command === "plan") {
+    const phase21 = phase21Preview();
+    const legacy = preview();
+    output = { command, scope: "LOCAL_SYNTHETIC_ONLY", ...legacy, phase21: phase21Summary(phase21) };
+  } else if (command === "gaps" || command === "contracts" || command === "coverage" || command === "campaign") {
     const phase20 = phase20Preview();
-    if (command === "contracts") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", schemaVersion: phase20.inventory.schemaVersion, inventory: { sourceArtifactCount: phase20.inventory.sourceArtifactCount, candidateCount: phase20.inventory.candidates.length, mechanicallyProvableCount: phase20.inventory.mechanicallyProvableCount, admittedCount: phase20.inventory.admittedCount, rejectedCount: phase20.inventory.rejectedCandidateIds.length, rejectionCounts: phase20.inventory.rejectionCounts, deterministicDigest: phase20.inventory.deterministicDigest }, graph: { contractCount: phase20.graph.contractCount, nodeCount: phase20.graph.nodeCount, edgeCount: phase20.graph.edgeCount, gapCount: phase20.graph.gaps.length, deterministicDigest: phase20.graph.deterministicDigest }, syntheticProduct: phase20.syntheticProduct };
-    else if (command === "gaps") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", gaps: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement), graphGaps: phase20.graph.gaps };
-    else if (command === "coverage") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", coverage: phase20.coverage };
-    else if (command === "campaign") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement), note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
-    else {
-    const result = preview();
-    output = { command, scope: "LOCAL_SYNTHETIC_ONLY", plan: result.plan, semanticPlan: phase20.plan?.plan ?? null, semanticGaps: phase20.gapReport };
-    }
+    const phase21 = phase21Preview();
+    const summary = phase21Summary(phase21);
+    const legacyInventory = { sourceArtifactCount: phase20.inventory.sourceArtifactCount, candidateCount: phase20.inventory.candidates.length, mechanicallyProvableCount: phase20.inventory.mechanicallyProvableCount, admittedCount: phase20.inventory.admittedCount, rejectedCount: phase20.inventory.rejectedCandidateIds.length, rejectionCounts: phase20.inventory.rejectionCounts, deterministicDigest: phase20.inventory.deterministicDigest };
+    const legacyGraph = { contractCount: phase20.graph.contractCount, nodeCount: phase20.graph.nodeCount, edgeCount: phase20.graph.edgeCount, gapCount: phase20.graph.gaps.length, deterministicDigest: phase20.graph.deterministicDigest };
+    if (command === "contracts") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", inventory: legacyInventory, graph: legacyGraph, phase20: { inventory: legacyInventory, graph: legacyGraph }, phase21: summary };
+    else if (command === "gaps") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", gaps: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement), graphGaps: phase20.graph.gaps, phase20Baseline: { graphGaps: phase20.graph.gaps, gapReport: phase20.gapReport, mutationMeasurement: mutationMeasurementSummary(phase20.measurement) }, phase21: summary, phase21GapRecords: phase21.ledger.records };
+    else if (command === "coverage") output = { command, scope: "LOCAL_SYNTHETIC_ONLY", phase20: phase20.coverage, phase21: summary.quality };
+    else output = { command, scope: "LOCAL_SYNTHETIC_ONLY", execution: "PREVIEW_ONLY_NO_EXECUTOR", plan: phase20.plan?.plan ?? null, phase20: { plan: phase20.plan?.plan ?? null, gapReport: phase20.gapReport }, phase21: summary, note: "No browser, API, DEV, NEXT, or production contact is performed by this command." };
   } else if (command === "findings") {
     output = { command, scope: "OWNER_ONLY_LOCAL", actionableFindings: 0, note: "Runtime findings are not loaded or published by the default operator preview." };
   } else {

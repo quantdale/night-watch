@@ -34,7 +34,7 @@ export type SemanticGapKind =
 export interface SemanticCapabilityBinding {
   readonly capabilityId: string;
   readonly sourceCandidateId: string;
-  readonly capabilityKind: "RELATIONAL" | "DIFFERENTIAL" | "METAMORPHIC";
+  readonly capabilityKind: "SOURCE_CONTRACT" | "RELATIONAL" | "DIFFERENTIAL" | "METAMORPHIC" | "MEMBERSHIP";
   readonly scenarioBound: boolean;
   readonly replaySupported: boolean;
   readonly replayReproduces: boolean;

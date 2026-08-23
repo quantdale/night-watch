@@ -1,25 +1,26 @@
 # Active Task
 
-Task ID: phase-20-semantic-coverage-saturation
-Phase: 20-SEMANTIC-COVERAGE-SATURATION
-Title: Nightwatch Phase 20 — Semantic Coverage Saturation and Cross-Surface Differential Detection
-Status: COMPLETE
-Task directory: .agent/tasks/phase-20-semantic-coverage-saturation
-Starting SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-Last validated implementation SHA: c58684046d66b2a68234a06c62dea889829d4110
-Last substantive checkpoint SHA: c58684046d66b2a68234a06c62dea889829d4110
-Last checkpoint: M6 — terminal validation, synchronized checkpoint, and continuity closure
-Current milestone: COMPLETE — M6 terminal closure
-Next action: STOP
-Authorization class: PHASE_20_SEMANTIC_COVERAGE_SATURATION_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: phase-21-semantic-gap-closure
+Phase: 21-SEMANTIC-GAP-CLOSURE
+Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, and Differential Replay Saturation
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-21-semantic-gap-closure
+Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+Last validated implementation SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+Last substantive checkpoint SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+Last checkpoint: M7 — graph, quality, dossier, operator, corpus, and privacy integration
+Current milestone: M8 — compatibility, full regression, parity, and closure repair
+Next action: run the repaired Phase 9–21 compatibility cone, then run the canonical and topology-correct isolated full suites and record exact parity
+Authorization class: PHASE_21_SEMANTIC_GAP_CLOSURE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
-LAST_VALIDATED_IMPLEMENTATION_SHA: c58684046d66b2a68234a06c62dea889829d4110
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c58684046d66b2a68234a06c62dea889829d4110
+STARTING_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
 
 ## Terminal Boundary Tokens
 
 ```text
+PHASE_21_STATUS: IN_PROGRESS
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -33,9 +34,9 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 19 remains terminal at `.agent/tasks/phase-19-autonomous-bug-yield/`;
-do not reopen or mutate it. Phase 20 execution memory is the task directory
-above. Live HEAD is always discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
+Phase 19 and Phase 20 remain terminal at their existing task directories;
+do not reopen or mutate either history. Live HEAD is always discovered from
+Git (`LIVE_HEAD_AUTHORITY: GIT`).
 
 ## Scope boundary
 
@@ -48,40 +49,59 @@ loading, product/data mutation, databases/datastores/cloud/infra operations,
 Phase 6/11B/13B/16D, sibling-repository writes, publication, messaging, AI
 authority, self-development promotion, credentials, or raw finding storage.
 
-Phase 20 preserves `FROZEN_BY_OWNER /
-INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; semantic priority and operator
-commands cannot infer or grant execution authority.
+The permanent decision remains `FROZEN_BY_OWNER /
+INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; coverage priority and operator
+views cannot infer or grant execution authority. Privacy-safe membership may
+compare opaque values only in memory against source-bound metadata and may
+emit bounded categories, never raw members or reconstructible tokens.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
-- `.agent/tasks/phase-20-semantic-coverage-saturation/**`
-- additive Phase 20 discovery, contract graph, relational/differential,
-  metamorphic, generation/measurement, campaign integration, corpus, and
-  focused-test modules as implementation proceeds
+- `.agent/tasks/phase-21-semantic-gap-closure/**`
+- additive Phase 21 semantic membership, closure-ledger, differential,
+  replay/minimization, graph-quality, operator, dossier, corpus, and focused
+  test modules as implementation proceeds
 
 ## Validation Ledger
 
-Bootstrap Git inspection: PASS — `HEAD == origin/main ==
-9ee25002d9d3ed1309356467e12778a49f93389e`; clean worktree; no external
+Bootstrap Git inspection: PASS — clean `main` at
+`HEAD == origin/main == 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae`; no external
 systems contacted.
 
-Worker doctor: PASS — optional read-only bridge is healthy; worker output is
-not an authority and no worker mutation was permitted.
+Phase 20 baseline census: PASS — 6 source artifacts, 22 discovered
+candidates, 21 admitted, 1 unsupported-syntax rejection; graph 157 nodes /
+151 edges; 86 total gaps with reason counts DIFFERENTIAL_PROJECTION_GAP=20,
+MECHANICALLY_PROVABLE_UNCOVERED=16, REPLAY_GAP=18, MINIMIZATION_GAP=15,
+DUPLICATE_SEMANTIC_COVERAGE=2, ANALYZER_UNSUPPORTED=1; 34 generated / 32
+applicable / 32 detected / 0 surviving mutants; 31 benign controls / 0 benign
+false positives; 32 replayed / 32 minimized / 32 high-confidence.
+
+Worker doctor: PASS — read-only bridge healthy; worker findings are advisory
+only and no worker mutation or external contact is authorized.
+
+Phase 21 implementation milestones: PASS — M1 privacy-safe membership;
+M2 source-bound enum/set mutation applicability 46 generated / 46 applicable /
+46 detected / 0 surviving, 33 benign / 0 false positives; M3 deterministic
+differential discovery 22 candidate rows / 21 admitted pairs; M4 contract-bound
+replay lifecycle 67 attempted / 67 reproduced / 0 replay gaps; M5 dependency-
+aware minimization 67 attempted / 67 supported with semantic fixed-point
+proofs; M6 21 synthetic bindings admitted and 4 of 7 metamorphic kinds
+exercised, with 3 source-proof exclusions; M7 graph 239 nodes / 233 edges /
+3 residual gaps, 83 of 86 baseline records closed and 3 explicitly
+irreducible. The complete Phase 21 campaign measures 67 generated / 67
+applicable / 67 detected / 0 surviving, 54 benign / 0 false positives, 67
+replayed / 67 minimized / 67 high-confidence.
+
+Phase 21 focused cone: PASS — 48 Phase 19–21 compatibility tests after the
+operator repair; the initial 1,295-test Phase 9–21 run exposed three legacy CLI
+compatibility defects (plan shape, contracts shape, and truncated large JSON),
+all repaired without weakening the tests. `npm run hardening:check`,
+`npm run campaign:synthetic` (27/27), and `npm run typecheck` are PASS.
 
 ## Resume Recipe
 
-This task is terminal. If historical context is needed, read this file and the
-Phase 20 task records, verify live Git state, and do not resume implementation
-or reopen Phase 19. Any future work requires a separately authorized task.
-
-## Completion Snapshot
-
-COMPLETE. Phase 20 local/source/synthetic implementation and terminal validation
-are complete. The validated implementation checkpoint is
-`c58684046d66b2a68234a06c62dea889829d4110`; the synchronized pushed checkpoint
-is `6e4fdebe74bd34e81d9d3f320154488973b46d12`. Canonical and topology-correct
-isolated suites have exact parity at 2,313 enumerated / 2,309 passed / 4
-skipped / 0 failed. The single post-push Actions inspection was blocked before
-returning run data by a GitHub API timeout; no green CI claim is made. Final
-live HEAD is discovered from Git.
+Read this file, then `.agent/tasks/phase-21-semantic-gap-closure/SPEC.md`,
+`PLAN.md`, and `STATE.md`; inspect Git status and continue the exact next
+action recorded in STATE. Preserve Phase 19/20 terminal records and the local,
+source, synthetic safety boundary.

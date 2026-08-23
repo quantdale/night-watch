@@ -19,7 +19,7 @@ import { buildChildEnvironment } from './child-environment.mjs';
 
 const args = process.argv.slice(2);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'findings', 'explain']);
+const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'differential', 'replay-coverage', 'minimization-coverage', 'mutation-score', 'findings', 'explain']);
 if (operatorCommands.has(args[0])) {
   const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
     cwd: root,
@@ -30,8 +30,11 @@ if (operatorCommands.has(args[0])) {
   });
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
-  process.exit(result.status ?? 1);
-}
+  // Do not call process.exit here: stdout may still be draining when the
+  // operator payload is larger than the pipe buffer. Explicit exit truncated
+  // the Phase 21 gap ledger and made legacy JSON consumers see invalid JSON.
+  process.exitCode = result.status ?? 1;
+} else {
 const envVars = {};
 let scenario = null;
 const rest = [];
@@ -70,3 +73,4 @@ const res = spawnSync(cmd, ['test', scenarioPath, '--project=nightwatch', ...res
   maxBuffer: 2 * 1024 * 1024,
 });
 process.exit(res.status ?? 1);
+}

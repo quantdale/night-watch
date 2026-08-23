@@ -53,6 +53,23 @@ export interface MetamorphicEvaluation {
   readonly deterministicDigest: string;
 }
 
+export type MetamorphicExerciseStatus = "EXERCISED" | "NOT_JUSTIFIED" | "NOT_EXERCISED";
+
+export interface MetamorphicVocabularyRow {
+  readonly kind: MetamorphicKind;
+  readonly status: MetamorphicExerciseStatus;
+  readonly relationIds: readonly string[];
+  readonly reasonCode: string;
+}
+
+export interface MetamorphicVocabularyAudit {
+  readonly schemaVersion: typeof METAMORPHIC_RELATION_VERSION;
+  readonly rows: readonly MetamorphicVocabularyRow[];
+  readonly exercisedKindCount: number;
+  readonly notJustifiedKindCount: number;
+  readonly deterministicDigest: string;
+}
+
 function invalid(reason: string): never {
   throw new Error(`METAMORPHIC_RELATION_INVALID:${reason}`);
 }
@@ -161,5 +178,20 @@ export function evaluateMetamorphicRelation(input: {
 
 export function metamorphicCoverage(evaluations: readonly MetamorphicEvaluation[]): { readonly relationCount: number; readonly admittedEvaluated: number; readonly holds: number; readonly violations: number; readonly notApplicable: number; readonly deterministicDigest: string } {
   const core = { relationCount: evaluations.length, admittedEvaluated: evaluations.filter((entry) => entry.outcome === "HOLDS" || entry.outcome === "VIOLATED").length, holds: evaluations.filter((entry) => entry.outcome === "HOLDS").length, violations: evaluations.filter((entry) => entry.outcome === "VIOLATED").length, notApplicable: evaluations.filter((entry) => entry.outcome === "NOT_APPLICABLE").length };
+  return { ...core, deterministicDigest: sourceEvidenceDigest(core) };
+}
+
+/** Audit all seven vocabulary kinds without manufacturing unsupported proofs. */
+export function auditMetamorphicVocabulary(input: {
+  readonly relations: readonly MetamorphicRelation[];
+  readonly notJustifiedReasons?: Readonly<Partial<Record<MetamorphicKind, string>>>;
+}): MetamorphicVocabularyAudit {
+  const rows = METAMORPHIC_KINDS.map((kind) => {
+    const relationIds = input.relations.filter((relation) => relation.definition.kind === kind && relation.proofStatus === "ADMITTED").map((relation) => relation.relationId).sort();
+    const reasonCode = input.notJustifiedReasons?.[kind] ?? (relationIds.length > 0 ? "ADMITTED_RELATION_EXERCISED" : "MECHANICAL_EXERCISE_NOT_BOUND");
+    const status: MetamorphicExerciseStatus = relationIds.length > 0 ? "EXERCISED" : input.notJustifiedReasons?.[kind] !== undefined ? "NOT_JUSTIFIED" : "NOT_EXERCISED";
+    return { kind, status, relationIds, reasonCode };
+  });
+  const core = { schemaVersion: METAMORPHIC_RELATION_VERSION, rows, exercisedKindCount: rows.filter((row) => row.status === "EXERCISED").length, notJustifiedKindCount: rows.filter((row) => row.status === "NOT_JUSTIFIED").length };
   return { ...core, deterministicDigest: sourceEvidenceDigest(core) };
 }

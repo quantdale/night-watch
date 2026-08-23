@@ -217,3 +217,44 @@ export function graphGapCounts(graph: ContractGraph): Readonly<Record<ContractGr
   for (const gap of graph.gaps) counts[gap.gap] += 1;
   return counts;
 }
+
+export interface GraphDuplicateEquivalenceProof {
+  readonly primaryContractId: string;
+  readonly duplicateContractId: string;
+  readonly sourceEvidenceDigest: string;
+  readonly mechanicallyProven: boolean;
+}
+
+export interface ContractGraphNormalization {
+  readonly graph: ContractGraph;
+  readonly mergedDuplicateContractIds: readonly string[];
+  readonly unresolvedDuplicateContractIds: readonly string[];
+  readonly deterministicDigest: string;
+}
+
+/** Normalize only duplicates backed by an explicit source-bound join. */
+export function normalizeContractGraph(input: {
+  readonly graph: ContractGraph;
+  readonly inventory: ContractDiscoveryInventory;
+  readonly equivalences?: readonly GraphDuplicateEquivalenceProof[];
+}): ContractGraphNormalization {
+  if (input.graph.schemaVersion !== CONTRACT_GRAPH_VERSION || input.inventory.schemaVersion !== "nightwatch.contract-discovery.v1") invalid("VERSION");
+  const candidates = new Map(input.inventory.candidates.map((candidate) => [candidate.candidateId, candidate]));
+  const duplicateIds = new Set(input.graph.gaps.filter((gap) => gap.gap === "DUPLICATE_COVERAGE").map((gap) => gap.contractId));
+  const merged = new Set<string>();
+  for (const proof of input.equivalences ?? []) {
+    safeId(proof.primaryContractId, "PRIMARY");
+    safeId(proof.duplicateContractId, "DUPLICATE");
+    if (!duplicateIds.has(proof.duplicateContractId) || proof.primaryContractId === proof.duplicateContractId || !proof.mechanicallyProven) invalid("DUPLICATE_PROOF");
+    if (!/^(?:ev|contract-candidate):sha256:[0-9a-f]{24}$/.test(proof.sourceEvidenceDigest)) invalid("DUPLICATE_EVIDENCE");
+    const primary = candidates.get(proof.primaryContractId);
+    const duplicate = candidates.get(proof.duplicateContractId);
+    if (primary === undefined || duplicate === undefined || JSON.stringify(primary.shape) !== JSON.stringify(duplicate.shape) || (proof.sourceEvidenceDigest !== primary.source.evidenceDigest && proof.sourceEvidenceDigest !== duplicate.source.evidenceDigest)) invalid("DUPLICATE_SHAPE_MISMATCH");
+    merged.add(proof.duplicateContractId);
+  }
+  const gaps = input.graph.gaps.filter((gap) => !(gap.gap === "DUPLICATE_COVERAGE" && merged.has(gap.contractId)));
+  const core = { schemaVersion: input.graph.schemaVersion, nodes: input.graph.nodes, edges: input.graph.edges, gaps, contractCount: input.graph.contractCount, nodeCount: input.graph.nodeCount, edgeCount: input.graph.edgeCount };
+  const graph = { ...core, deterministicDigest: graphIdentity(core) };
+  const resultCore = { graph, mergedDuplicateContractIds: [...merged].sort(), unresolvedDuplicateContractIds: [...duplicateIds].filter((id) => !merged.has(id)).sort() };
+  return { ...resultCore, deterministicDigest: safeSemanticDigest(resultCore, "graph-normalization") };
+}
