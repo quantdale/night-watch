@@ -22,13 +22,27 @@ export function requireRuntimeArray(value: unknown, code: string): readonly unkn
   return value;
 }
 
+/**
+ * Phase-16CH DEF-02 repair: unknown-field diagnostics previously echoed the
+ * attacker-controlled key VERBATIM, so a hostile document could smuggle
+ * secret-shaped material (e.g. "Authorization: Bearer …" as a JSON key) into
+ * error output. Echo a key only when it is provably a safe bounded token;
+ * anything else is replaced by an opaque marker. Field VALUES were never
+ * echoed and still are not.
+ */
+const SAFE_FIELD_NAME_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
+
+function safeFieldNameForDiagnostic(key: string): string {
+  return SAFE_FIELD_NAME_RE.test(key) ? key : '[UNSAFE_FIELD_NAME]';
+}
+
 export function assertExactKeys(value: RuntimeRecord, allowed: readonly string[], code: string, optional: readonly string[] = []): void {
   const accepted = new Set([...allowed, ...optional]);
   for (const key of Object.keys(value)) {
-    if (!accepted.has(key)) throw new Error(`${code}:UNKNOWN_FIELD:${key}`);
+    if (!accepted.has(key)) throw new Error(`${code}:UNKNOWN_FIELD:${safeFieldNameForDiagnostic(key)}`);
   }
   for (const key of allowed) {
-    if (!(key in value)) throw new Error(`${code}:MISSING_FIELD:${key}`);
+    if (!(key in value)) throw new Error(`${code}:MISSING_FIELD:${safeFieldNameForDiagnostic(key)}`);
   }
 }
 

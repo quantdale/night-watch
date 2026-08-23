@@ -626,6 +626,12 @@ function assertValidUnitValue(value: number, label: string): void {
 }
 
 /**
+ * Structural constant of mapping v1: every derived cap embeds the
+ * promoted-cluster reproduction reserve exactly once.
+ */
+const PROMOTED_RESERVE_V1 = 1;
+
+/**
  * ONE deterministic mapping policy from portfolio allocations onto runtime
  * budget caps. mapped(D) = min(initial(D), derived(D)) for every mapped
  * dimension — provably never expanding the currently approved profile.
@@ -680,11 +686,6 @@ function derivePortfolioBudgetCaps(input: DeriveCapsInput): DerivedCaps {
     assertValidUnitValue(member.maxRetries, "maxRetries");
   }
   assertValidUnitValue(input.totalAllocatedUnits, "totalAllocatedUnits");
-  // Promoted-cluster reproduction reserve is preserved by the mapping (it is
-  // what keeps triage feasible); the caller supplies the concrete initial
-  // profile through mapPortfolioBudget, so caps here carry the reserve as a
-  // fixed structural constant of mapping v1.
-  const PROMOTED_RESERVE_V1 = 1;
   const derivedActionsFloor = journeys + explorations + PROMOTED_RESERVE_V1;
   const totalActions = Math.max(input.totalAllocatedUnits, derivedActionsFloor);
   return {
@@ -704,24 +705,55 @@ function derivePortfolioBudgetCaps(input: DeriveCapsInput): DerivedCaps {
  * promoted reserve must fit the mapped caps, otherwise the plan is honestly
  * oversubscribed under the restrictive rule and admission fails closed.
  */
+/**
+ * Feasibility guard over the derived caps using the same arithmetic as
+ * analyzeCampaignBudgetFeasibility (kept local to stay pure): mandatory work +
+ * promoted reserve must fit the MAPPED caps (elementwise min against the
+ * initial approved profile), otherwise the plan is honestly oversubscribed
+ * under the restrictive rule and the prepare seam fails closed.
+ *
+ * Phase-16CH DEF-01 repair: the v1 derived caps embed PROMOTED_RESERVE_V1
+ * exactly once per dimension, so the needed amounts are computed by stripping
+ * that embedded reserve first and re-applying the reservation once — the
+ * previous form compared reserve-inclusive caps against themselves plus the
+ * reserve again, which rejected every API-bearing shape (and could never fire
+ * for browser/actions) regardless of the documented mapping-v1 feasibility
+ * boundary (at most TWO linked APIs under the bounded profile).
+ */
 export function assertPortfolioBudgetFeasible(input: {
   readonly caps: CampaignPortfolioBudgetCaps;
   readonly initial: Pick<
     InitialBudgetProfile,
-    "maxPromotedClusters"
+    | "maxPromotedClusters"
+    | "maxTotalBrowserContexts"
+    | "maxApiExecutions"
+    | "maxTotalActions"
   >;
 }): void {
   const journeys = input.caps.maxJourneyContexts;
   const explorations = input.caps.maxExplorationContexts;
-  const apiExecutionsNeeded = input.caps.maxApiExecutions;
+  const browserNeeded = journeys + explorations;
+  const apiNeeded = Math.max(0, input.caps.maxApiExecutions - PROMOTED_RESERVE_V1);
   const reserve = input.initial.maxPromotedClusters;
-  if (journeys + explorations + reserve > input.caps.maxTotalBrowserContexts) {
+  const mappedTotalBrowserContexts = Math.min(
+    input.caps.maxTotalBrowserContexts,
+    input.initial.maxTotalBrowserContexts,
+  );
+  const mappedApiExecutions = Math.min(
+    input.caps.maxApiExecutions,
+    input.initial.maxApiExecutions,
+  );
+  const mappedTotalActions = Math.min(
+    input.caps.maxTotalActions,
+    input.initial.maxTotalActions,
+  );
+  if (browserNeeded + reserve > mappedTotalBrowserContexts) {
     admissionError("BUDGET_OVERSUBSCRIBED");
   }
-  if (apiExecutionsNeeded + reserve > input.caps.maxApiExecutions && apiExecutionsNeeded > 0) {
+  if (apiNeeded > 0 && apiNeeded + reserve > mappedApiExecutions) {
     admissionError("BUDGET_OVERSUBSCRIBED");
   }
-  if (journeys + explorations + reserve > input.caps.maxTotalActions) {
+  if (browserNeeded + reserve > mappedTotalActions) {
     admissionError("BUDGET_OVERSUBSCRIBED");
   }
 }
