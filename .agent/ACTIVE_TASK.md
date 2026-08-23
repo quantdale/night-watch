@@ -8,8 +8,8 @@ Task directory: .agent/tasks/phase-19-autonomous-bug-yield
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
 Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last documentation checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last checkpoint: M7 — canonical and topology-correct isolated full regressions exact-matched locally
+Last documentation checkpoint SHA: 2f6b3a1ce23a9adbb2ab12f5e87b3705790d819e
+Last checkpoint: M8 — durable docs and local continuity/project gates validated
 Current milestone: M8 — durable closure records, validated push, and truthful external-CI inspection
 Next action: Reconcile durable docs, run project/continuity gates, push validated checkpoints, inspect Actions once, then close the task
 Authorization class: PHASE_19_AUTONOMOUS_BUG_YIELD_LOCAL_SOURCE_SYNTHETIC_ONLY

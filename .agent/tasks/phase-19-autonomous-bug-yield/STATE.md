@@ -8,12 +8,12 @@ Status: IN_PROGRESS
 Starting SHA: a9dfba332a979b8358763cd737e26d4b4a435c9c
 Last validated implementation SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
 Last substantive checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
-Last documentation checkpoint SHA: ddd0e49c22d5650807d9cababcdc159bc4a657ae
+Last documentation checkpoint SHA: 2f6b3a1ce23a9adbb2ab12f5e87b3705790d819e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M7 — canonical and topology-correct isolated full regressions exact-matched locally
+Last checkpoint: M8 — durable docs and local continuity/project gates validated
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 PHASE_19_STATUS: IN_PROGRESS
@@ -132,8 +132,8 @@ Result: PASS with `strict_errors=0`; the expected legacy v1 task warnings
 remain and were not mass-migrated.
 
 Command: `npm run project:check`
-Result: PENDING until the durable Phase 19 documentation checkpoint is
-committed cleanly.
+Result: PASS — project-state protocol, catalog round-trip, Phase 8 authority,
+active-task continuity, and clean checkout all validated.
 
 ## Decisions Made During This Task
 
