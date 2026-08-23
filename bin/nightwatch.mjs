@@ -18,6 +18,20 @@ import path from 'node:path';
 import { buildChildEnvironment } from './child-environment.mjs';
 
 const args = process.argv.slice(2);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'findings', 'explain']);
+if (operatorCommands.has(args[0])) {
+  const result = spawnSync(process.execPath, [path.join(root, 'bin', 'nightwatch-intelligence.mjs'), ...args], {
+    cwd: root,
+    env: buildChildEnvironment(process.env, { NIGHTWATCH_OPERATOR_SCOPE: 'LOCAL_SYNTHETIC_ONLY' }),
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 120_000,
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  process.exit(result.status ?? 1);
+}
 const envVars = {};
 let scenario = null;
 const rest = [];
@@ -44,7 +58,6 @@ if (!SUPPORTED.has(envVars.NIGHTWATCH_ENV)) {
   process.exit(2);
 }
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const scenarioPath = scenario ?? path.join('scenarios', 'ripple', 'local.smoke.ts');
 const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
 const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;
