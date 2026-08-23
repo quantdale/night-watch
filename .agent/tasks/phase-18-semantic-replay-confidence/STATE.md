@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
 Last validated implementation SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
 Last substantive checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
-Last documentation checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
+Last documentation checkpoint SHA: fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_18_STATUS: IN_PROGRESS_LOCAL_SOURCE_SYNTHETIC
@@ -20,7 +20,7 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: M7 — task-control allowlist repair and focused validation (937f887413e5231b385940bd310b7708bc4a0a0e)
+Last checkpoint: M7 — post-repair canonical/isolated exact parity (fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1)
 
 ## Objective
 
@@ -32,9 +32,10 @@ read-only, privacy, provenance, and authority boundaries.
 
 ## Current Milestone
 
-M7 — isolated parity, checkpoint publication, and terminal handoff. The
-task-control allowlist repair is committed and focused-green; post-repair full
-canonical/isolated parity is the remaining validation gate.
+M7 — publication and external-CI truth inspection. The task-control allowlist
+repair, post-repair canonical regression, and topology-correct isolated
+regression are green with exact parity. Publication and external-CI truth are
+the only remaining closure actions.
 
 ## Completed Milestones
 
@@ -59,18 +60,17 @@ canonical/isolated parity is the remaining validation gate.
 ## Work In Progress
 
 M6 validation is complete at e58ea162e601aba2c341f5b5ee18f40a635251af, and
-the continuity repair is validated at 937f887413e5231b385940bd310b7708bc4a0a0e:
-dossier completeness, hostile-document handling,
-privacy boundaries, static pure-core seams, the permanent corpus, the affected
-compatibility cone, and the canonical regression are green. M7 is the
-topology-correct isolated regression and checkpoint closure.
+the continuity repair is validated at 937f887413e5231b385940bd310b7708bc4a0a0e.
+The post-repair canonical and topology-correct isolated regressions are both
+green at 2,281 passed / 4 skipped / 0 failed with exact parity and clean
+trees. M7 now consists only of checkpoint publication and truthful external-CI
+inspection.
 
 ## Exact Next Action
 
-Rerun the canonical and established topology-correct isolated full
-regressions from the validated 937f887413e5231b385940bd310b7708bc4a0a0e
-checkpoint, compare exact enumeration and skip inventory, and push only after
-post-repair parity and the clean-tree gates hold.
+Validate the closure documentation and privacy surface, commit and push the
+checkpoint, inspect GitHub Actions once for the live pushed head, then record
+the truthful external-CI result and close the task.
 
 ## Files Changed
 
@@ -100,6 +100,10 @@ post-repair parity and the clean-tree gates hold.
   OOPS binary unavailable) and `tests/unit/selfDevSandboxConfinement.test.ts:147`
   (base owned by another uid). `test-results/.last-run.json` recorded
   `status=passed`, `failedTests=[]`.
+- Post-repair isolated regression: fresh clone, `npm ci`, read-only aggregate
+  sibling links, `NIGHTWATCH_SIBLING_ROOT`, and distinct
+  `NIGHTWATCH_PROXY_PORT=19125`; 2,281 passed / 4 skipped / 0 failed out of
+  2,285, with the exact same skip inventory and a clean isolated tree.
 - Phase 15 F2/F11/F12 compatibility expectations were repaired to record
   unresolved semantic minimization when the journey executor cannot provide a
   verified reduced replay; no confidence or test gate was weakened.
@@ -107,9 +111,10 @@ post-repair parity and the clean-tree gates hold.
   documentation checkpoint; `npm run agent:audit` reported
   `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0 legacy_warnings=33`.
 - The focused continuity repair matrix passed 106; `npm run project:check`
-  remains to be rerun after this checkpoint update.
-- Isolated parity, final clean-tree checks, checkpoint push, and CI truth remain
-  pending.
+  passed after the post-repair documentation waypoint, with catalog count /
+  digest and promotion authority `NONE` unchanged.
+- Canonical and isolated parity plus clean-tree checks are complete; checkpoint
+  push and CI truth remain pending.
 
 ## Decisions Made During This Task
 
@@ -225,11 +230,12 @@ publication, and any raw-value persistence remain deferred and out of scope.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's `SPEC.md`, `PLAN.md`, and
-`STATE.md`; inspect `git status`/diff; continue the exact M7 checkpoint and
-isolated-validation action.
+`STATE.md`; inspect `git status`/diff; validate and publish the closure
+documentation, inspect external CI once, and then close the task.
 
 ## Completion Snapshot
 
-Not complete. Local gates and canonical regression are green in the working
-tree; the implementation checkpoint, isolated parity, push, CI truth, and
-terminal documentation closure remain.
+Local/source/synthetic gates and exact canonical/isolated parity are complete.
+The validated implementation checkpoint is
+937f887413e5231b385940bd310b7708bc4a0a0e; publication, external-CI
+inspection, and terminal status are the remaining closure actions.

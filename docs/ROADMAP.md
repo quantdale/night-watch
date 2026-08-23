@@ -1811,3 +1811,20 @@ publication, AI/selfDev/promotion, or Phase 16D authority. Phase 6 remains
   considered).
 - Any mechanism that bypasses request-level inspection (D-2).
 - Credentials in the repository or artifacts (D-13).
+
+## Phase 18 — semantic contract depth, replay fidelity, and confidence-aware triage
+
+Phase 18 extends the existing semantic path rather than creating a parallel
+oracle. It adds eight bounded business-behavior anomaly classes with benign
+controls, explicit source currentness, sanitized observation contracts,
+occurrence-bound replay V3, deterministic synthetic semantic minimization,
+replay outcome taxonomy, confidence degradation, semantic clustering, source
+impact × semantic coverage reasons, and richer sanitized owner dossiers.
+
+The permanent local corpus repeats semantic, replay, minimization, confidence,
+privacy, parser, and authority cases deterministically. Required quality
+floors are zero, and canonical and topology-correct isolated full regressions
+have exact parity at 2,281 passed / 4 skipped / 0 failed. Phase 18 remains
+strictly LOCAL / SOURCE / SYNTHETIC; real-product acceptance, DEV/NEXT/
+production contact, data or infrastructure work, sibling writes, publication,
+AI authority, promotion, and raw evidence persistence remain out of scope.

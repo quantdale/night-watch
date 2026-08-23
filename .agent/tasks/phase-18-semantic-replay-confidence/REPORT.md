@@ -1,102 +1,232 @@
 # Phase 18 Report
 
-Status: IN_PROGRESS (LOCAL / SOURCE / SYNTHETIC)
+Status: IN_PROGRESS (LOCAL / SOURCE / SYNTHETIC; local validation complete)
 Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-Starting SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
+START SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
+FINAL SHA: `DISCOVER_FROM_GIT`
 Last validated implementation SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
 Last substantive checkpoint SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
-Last documentation checkpoint SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
+Last documentation checkpoint SHA: `fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1`
 Live HEAD authority: `DISCOVER_FROM_GIT`
 
-## Current position
+## PHASE 18 STATUS
 
-Gate Zero and the implementation waves are complete in validated checkpoint
-`937f887413e5231b385940bd310b7708bc4a0a0e`.
-The continuity allowlist repair is focused-green; post-repair full canonical
-and isolated parity, push, CI truth, and terminal closure remain. No external
-system has been contacted.
+Local/source/synthetic implementation and validation are complete. The
+post-repair canonical and topology-correct isolated regressions are exact
+matches. Checkpoint publication and one truthful external-CI inspection remain
+before terminal documentation closure. No external system has been contacted
+other than the repository's Git remote for the required checkpoint workflow.
 
-## Workstreams completed
+## WORKSTREAMS COMPLETED
 
-- M0: authorization, control plane, and semantic pipeline reconstruction.
-- M1: additive semantic contract/currentness model, strict validators, and
-  sanitized projection boundaries.
-- M2: eight deterministic semantic business-behavior fixture classes with
-  positive and benign controls.
-- M3: occurrence-bound replay fidelity V3 and explicit replay outcome classes.
-- M4: actual synthetic semantic minimization with identity preservation and
-  bounded rejection reasons.
-- M5: confidence gates/degradation, semantic identity hardening, and
-  change-impact × semantic coverage accounting.
-- M6 validation and the first implementation checkpoint are complete; M7
-  isolated parity and closure are pending.
+- M0: authorization, control plane, and Gate Zero reconstruction.
+- M1: additive semantic contracts, strict parsing, projections, and
+  source-currentness.
+- M2: eight deterministic business-semantic anomaly classes with positive and
+  benign controls.
+- M3: occurrence-bound replay V3 and explicit replay outcome taxonomy.
+- M4: actual synthetic semantic replay/minimization with identity preservation.
+- M5: confidence gates/degradation, semantic identity, clustering, and
+  change-impact × semantic coverage.
+- M6: dossier fidelity, adversarial corpus, parser/privacy/static hardening,
+  and dead-surface review.
+- M7 local validation: exact canonical/isolated parity and clean trees.
 
-## Defects
+## DEFECTS
 
-- `DEF-18-01`: Phase 15 semantic confidence/minimality could be inflated by
-  aggregate replay/cluster counts. Repaired with finding-identity-bound
-  replay receipts, occurrence binding, actual reduced-evaluation checks, and
-  strict unresolved behavior when journey reduction is unsupported. Permanent
-  focused regressions are green; FULL_GREEN awaits canonical/isolated runs.
-- `DEF-18-02`: required Phase 18 control-plane document updates were falsely
-  classified as stale implementation changes because the continuity checker
-  omitted `HANDOFF.md`, `WORKSTREAMS.md`, `ACCEPTANCE_MATRIX.md`, and
-  `DEFECT_LEDGER.md` from its approved checkpoint paths. The exact allowlist
-  and focused regression are repaired; FULL_GREEN awaits post-repair full
-  canonical/isolated runs.
+- `DEF-18-01` — Reproduced: Phase 15 semantic confidence/minimality could be
+  inflated by aggregate replay/cluster counts. Root cause: semantic finding
+  identity and occurrence context were not load-bearing in confidence and
+  minimality. Repair: strict finding-identity-bound V3 replay evidence,
+  occurrence binding, actual reduced evaluation, and unresolved fallback when
+  journey reduction is unsupported. Permanent regression: Phase 15 F2/F11/F12
+  compatibility plus Phase 18 replay/minimizer/confidence tests. Status:
+  `REPRODUCED → ROOT_CAUSED → SOURCE_FIXED → PERMANENT_REGRESSION →
+  FOCUSED_GREEN → AFFECTED_GREEN → FULL_GREEN`.
+- `DEF-18-02` — Reproduced: required Phase 18 control-plane updates were
+  falsely reported as a stale implementation baseline. Root cause: the
+  continuity checker omitted four required task-document names from its
+  approved checkpoint-path allowlist. Repair: exact allowlist entries plus a
+  focused approved-path regression. Permanent regression: 106 continuity
+  tests and both full regression cones. Status:
+  `REPRODUCED → ROOT_CAUSED → SOURCE_FIXED → PERMANENT_REGRESSION →
+  FOCUSED_GREEN → AFFECTED_GREEN → FULL_GREEN`.
 
-## Semantic capabilities added
+## SEMANTIC CAPABILITIES ADDED
 
-Aggregate/detail consistency, cross-step state relations, pagination-window
-uniqueness, empty-state consistency, lifecycle/state relations, sanitized
-cross-surface equivalence, and source-backed HTTP-200 error-envelope
-categories are covered by deterministic synthetic fixtures. New evidence is
-bounded, provenance/currentness-aware, and does not persist raw fixture values.
+The bounded semantic model now evaluates aggregate/detail consistency,
+cross-step state relations, pagination-window identity uniqueness,
+empty-state coherence, lifecycle/state transitions, sanitized cross-surface
+equivalence, and source/fixture-backed HTTP-200 application-error envelope
+semantics. Projections retain only categorical type, presence, cardinality,
+opaque identity relations, ordering, abstract quantities, and lifecycle facts.
 
-## Validation to date
+## NEW ANOMALY CLASSES
 
-- `npm run typecheck`: PASS.
-- Continuity allowlist repair matrix: 106 passed.
-- Phase 18 semantic-depth test: 22 passed.
-- Affected semantic/triage compatibility cone: 143 passed.
-- Owner-provenance tests: 91 passed.
-- `npm run hardening:check`: PASS.
-- `npm run campaign:synthetic`: 27 passed.
-- Canonical regression: 2,285 enumerated, 2,281 passed, 4 skipped, 0 failed.
-  Skips were the three unavailable source-built OOPS tests at
-  `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+| Class | Positive fixture | Benign control | Detection |
+| --- | --- | --- | --- |
+| Aggregate/detail consistency | `aggregate-count` | matching count/detail rows | detected; control PASS |
+| Identity uniqueness | `detail-identity` | unique opaque identities | detected; control PASS |
+| Cross-step state | `cross-step-state` | permitted stable state | detected; control PASS |
+| Pagination/window | `pagination-window` | disjoint windows and coherent metadata | detected; control PASS |
+| Empty-state | `empty-state` | zero count/rows/empty marker agree | detected; control PASS |
+| Lifecycle transition | `lifecycle-transition` | permitted transition sequence | detected; control PASS |
+| Cross-surface equivalence | `cross-surface` | equivalent sanitized browser/API projection | detected; control PASS |
+| HTTP-200 error envelope | `http-200-error-envelope` | source-backed success envelope | detected; control PASS |
+
+## PROVENANCE/CURRENTNESS IMPROVEMENTS
+
+Expectations now classify `CURRENT`, `STALE`, `AMBIGUOUS`, `MISSING`,
+`UNSUPPORTED`, and `SYNTHETIC_ONLY`. Digest changes, removed/renamed source,
+multiple definitions, missing provenance, and unverified evidence fail closed;
+formatting/property-order-only normalization remains current. Stale evidence
+is retained as historical context but cannot support current HIGH confidence.
+
+## REPLAY
+
+- Occurrence binding: V3 carries action kind, step ordinal, semantic
+  expectation identity, predecessor-context digest, observation fingerprint,
+  and sanitized occurrence ordinals. Repeated action IDs without ordinals are
+  explicitly ambiguous.
+- Result taxonomy: `REPRODUCED_EXACT`, `REPRODUCED_EQUIVALENT_SEMANTIC`,
+  `PRECONDITION_DIVERGENCE`, `SEMANTIC_DIVERGENCE`, `NOT_REPRODUCED`,
+  `AMBIGUOUS_OCCURRENCE`, `SOURCE_STALE`, `INVALID_REPLAY`, and
+  `INFRA_FAILURE`; infrastructure failure is never product non-reproduction.
+- Deterministic reproduction evidence: the same semantic finding and contract
+  identity, current source, uniquely bound occurrence, clean safety vector,
+  and deterministic executor are required for exact claims.
+
+## MINIMIZATION
+
+- Candidate count: bounded at 64 reduced-candidate evaluations and 65 total
+  replay slots per synthetic minimization (the fresh replay is separate).
+  Cross-scenario aggregate counts are intentionally not persisted.
+- Successful reductions: semantic-trigger-to-single-step, first/middle/last
+  noise removal, and repeated-occurrence reduction while retaining occurrence
+  ordinals.
+- Rejected reductions: joint/order/expectation/predecessor requirements,
+  precondition divergence, executor throw, executor nondeterminism, and
+  different-fingerprint candidates; each records a bounded reason.
+- Wrong-anomaly acceptance count: `0`.
+
+## TRIAGE
+
+HIGH requires a deterministic semantic oracle, current provenance, exact
+finding/contract identity on replay, unique occurrence binding, verified
+minimality evidence where claimed, and clean privacy, safety, source,
+precondition, determinism, and infrastructure gates. Adversarial false-HIGH
+count: `0`. Stale source, semantic divergence, ambiguous occurrence,
+precondition divergence, missing expectation, and infrastructure failure all
+degrade or block HIGH.
+
+## CONFIDENCE DEGRADATION
+
+The synthetic degradation matrix changes a current exact replay receipt to
+precondition-divergent and then stale-source evidence; neither remains HIGH.
+Historical observation evidence is preserved while current confidence is
+recomputed from explicit receipt/currentness fields.
+
+## CLUSTERING
+
+Semantic identity is deterministic and excludes timestamps, run IDs,
+filesystem paths, and raw values. It separates invariant kind, surface,
+provenance identity, stale/current state, and protocol-vs-semantic outcomes;
+harmless property ordering and run changes do not split the same contract.
+
+## CHANGE-IMPACT × SEMANTIC COVERAGE
+
+The Phase 17 approved portfolio bridge now emits bounded reasons for source
+change with semantic coverage, source change without semantic coverage,
+baseline health with semantic coverage, and unresolved source evidence.
+Fallback, stale, ambiguous, irrelevant, and unlinked evidence receives no
+semantic-impact authority.
+
+## DOSSIER CHANGES
+
+Sanitized dossier evidence now carries the failed invariant category,
+provenance/currentness, semantic and contract identities, occurrence-bound
+replay outcome, minimization/rejection evidence, confidence blockers, and
+safety/privacy gates. Strict v2 root/prototype/schema validation rejects
+malformed or cross-identity documents; legacy readers remain compatible.
+
+## CORPUS
+
+- Fixture/scenario count: 8 semantic business-behavior classes, each with a
+  positive and benign control, plus hostile parser/privacy/replay/triage
+  scenarios.
+- Deterministic repetitions: 3 runs with property and fixture-order variants;
+  generated outputs remained byte-stable.
+- Quality floors: `privacyLeaks=0`, `safetyEscapes=0`,
+  `unauthorizedOperations=0`, `falseHighConfidence=0`,
+  `semanticIdentityEscapes=0`, `replayOccurrenceAmbiguitiesAccepted=0`,
+  `staleExpectationHighPromotions=0`, `nondeterministicArtifacts=0`,
+  `wrongAnomalyMinimizationsAccepted=0`.
+
+## PRIVACY
+
+Hostile synthetic sentinels produced `0` leaks through findings, triage,
+replay plans, clusters, dossiers, CLI diagnostics, or continuity files.
+
+## VALIDATION
+
+- typecheck: PASS.
+- focused Phase 18 semantic depth: 22 passed.
+- focused continuity repair matrix: 106 passed.
+- affected semantic/triage compatibility: 143 passed.
+- hardening: PASS.
+- campaign synthetic: 27 passed.
+- owner provenance: 91 passed.
+- agent check: PASS with 3 expected checkpoint/legacy warnings.
+- agent audit: `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0
+  legacy_warnings=33`.
+- project check: PASS; catalog count/digest unchanged and promotion authority
+  `NONE`.
+- canonical regression: 2,285 enumerated; 2,281 passed; 4 skipped; 0 failed.
+- isolated regression: fresh clone, `npm ci`, read-only sibling links,
+  `NIGHTWATCH_SIBLING_ROOT`, distinct proxy port; 2,285 enumerated; 2,281
+  passed; 4 skipped; 0 failed.
+- parity: exact enumeration, pass/fail counts, skip inventory, and clean tree.
+- skip inventory in both runs: `tests/unit/phase5Api.test.ts:197`, `:246`,
+  `:280` (source-built OOPS unavailable), and
   `tests/unit/selfDevSandboxConfinement.test.ts:147` (base uid condition).
-- `npm run agent:check`: PASS with three expected dirty-baseline/legacy
-  warnings; `npm run agent:audit`: `tasks=61 strict_v2=37 legacy_v1=24
-  strict_errors=0 legacy_warnings=33`.
-- `npm run project:check`: the clean e58 implementation checkpoint passed;
-  rerun after the current 937f887 documentation checkpoint.
+- `git diff --check`: PASS at each checkpoint.
 
-## Safety
+## CI
 
-DEV contacts: 0; NEXT contacts: 0; production contacts: 0; authenticated
-sessions: 0; product mutations: 0; data-plane operations: 0; DB/datastore
-operations: 0; cloud/infra operations: 0; Alphaus sibling writes: 0;
-external publications: 0; credential leaks: 0; real-finding persistence: 0.
+External CI inspection is the remaining post-push action. Local validation is
+not being represented as CI green.
 
-## Deferred / follow-up
+## SAFETY
 
-Isolated parity, checkpoint push, external CI truth inspection, and terminal
-handoff remain. Real-environment
-acceptance, unauthorized runtime surfaces, unsupported product semantics,
-infrastructure/data operations, AI authority, promotion, publication, and raw
-evidence persistence remain out of scope.
+DEV contacts: 0
+NEXT contacts: 0
+production contacts: 0
+authenticated sessions: 0
+product mutations: 0
+data-plane operations: 0
+DB/datastore operations: 0
+cloud/infra operations: 0
+Alphaus sibling writes: 0
+external publications: 0
+credential leaks: 0
 
-## Exact next action
+## DEFERRED WORK
 
-Inspect the validated diff/privacy surface, create the first coherent
-implementation checkpoint, then run clean-tree continuity/project checks and
-the established isolated regression.
+Real-product acceptance, DEV/NEXT/production contact, Phase 16D, Phase 6,
+Phase 11B/13B, infrastructure/data operations, AI authority, canonical
+promotion, sibling writes, publication, and raw evidence persistence remain
+outside this authorization.
 
-## Completion snapshot
+## NEXT BEST DEVELOPMENT TARGET
 
-Not complete; focused implementation is green in the working tree, while
-integrated, canonical, isolated, Git, and final documentation closure remain.
+A separately authorized local/source/synthetic wave for deeper source-proven
+multi-window aggregate/state contracts and broader semantic coverage, with
+fresh benign controls and the same occurrence/currentness/privacy gates.
+
+## CURRENT CLOSURE
+
+Local implementation and exact canonical/isolated parity are complete. Push,
+one external-CI inspection, and terminal documentation closure remain.

@@ -2,9 +2,9 @@
 
 | ID | Requirement | Evidence |
 | --- | --- | --- |
-| A01 | Scope remains local/source/synthetic; forbidden contacts and authority remain zero | source review, safety ledger, hardening |
+| A01 | Scope remains local/source/synthetic; forbidden contacts and authority remain zero | source review, safety ledger, hardening; all safety counters zero |
 | A02 | Gate Zero maps all current semantic/replay/triage/dossier boundaries | cited reconstruction in STATE/REPORT |
-| A03 | New semantic business-behavior classes have positive and benign controls | deterministic Phase 18 fixture matrix |
+| A03 | New semantic business-behavior classes have positive and benign controls | eight-class deterministic Phase 18 fixture matrix; 22 focused tests |
 | A04 | Contract representation is versioned, strict, bounded, provenance-bound, and unknown-kind fail-closed | parser/evaluator tests |
 | A05 | Source currentness states block stale current HIGH conclusions | provenance/currentness matrix |
 | A06 | Observation and every downstream evidence surface rejects hostile raw sentinels | privacy sweep |
@@ -19,5 +19,5 @@
 | A15 | Dossier V3 is sanitized, provenance/replay/minimization/confidence complete, and legacy-compatible | dossier parser/render tests |
 | A16 | Adversarial corpus repetitions have all required quality floors at zero | campaign report |
 | A17 | Static guards preserve pure core boundaries | hardening check |
-| A18 | Canonical and topology-correct isolated regressions have exact parity | run ledgers |
-| A19 | Continuity, project-state, docs, Git, and CI reporting are truthful | agent/project checks and final handoff |
+| A18 | Canonical and topology-correct isolated regressions have exact parity | canonical 2,281/4/0 and isolated 2,281/4/0; exact enumeration and skip parity |
+| A19 | Continuity, project-state, docs, Git, and CI reporting are truthful | agent/project checks, final handoff, and post-push CI inspection |

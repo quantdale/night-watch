@@ -8,10 +8,10 @@ Task directory: .agent/tasks/phase-18-semantic-replay-confidence
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
 Last validated implementation SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
 Last substantive checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
-Last documentation checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
-Last checkpoint: M7 — task-control allowlist repair and focused validation (937f887413e5231b385940bd310b7708bc4a0a0e)
-Current milestone: M7 — isolated parity, checkpoint publication, and terminal handoff
-Next action: rerun canonical and topology-correct isolated full regressions from the validated 937f887413e5231b385940bd310b7708bc4a0a0e checkpoint, then reconcile parity and push only after clean validation
+Last documentation checkpoint SHA: fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1
+Last checkpoint: M7 — post-repair canonical/isolated exact parity (fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1)
+Current milestone: M7 — publication and external-CI truth inspection
+Next action: validate the closure documentation, commit and push the checkpoint, inspect GitHub Actions once, then terminalize the task with truthful CI status
 Authorization class: PHASE_18_SEMANTIC_REPLAY_TRIAGE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -70,12 +70,13 @@ credentials, or real-finding persistence.
   `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, plus
   `tests/unit/selfDevSandboxConfinement.test.ts:147` (base uid condition).
   The local Playwright marker is `status=passed`, `failedTests=[]`.
-- `npm run agent:check` passed with three expected warnings; `npm run agent:audit`
-  reported `tasks=61 strict_v2=37 legacy_v1=24 strict_errors=0
-  legacy_warnings=33`; `npm run project:check` will be rerun after the clean
-  documentation checkpoint for 937f887413e5231b385940bd310b7708bc4a0a0e.
-- Post-repair canonical/isolated parity, clean-tree closure, checkpoint push,
-  CI truth, and terminal documentation remain pending.
+- `npm run agent:check` passed with three expected checkpoint/legacy warnings;
+  `npm run agent:audit` reported `tasks=61 strict_v2=37 legacy_v1=24
+  strict_errors=0 legacy_warnings=33`; `npm run project:check` passed after
+  the post-repair documentation waypoint.
+- Post-repair canonical and topology-correct isolated regressions both passed
+  2,281 / skipped 4 / failed 0 with exact enumeration and skip parity; both
+  trees are clean. Checkpoint publication and external-CI inspection remain.
 
 ## Decisions
 
@@ -92,12 +93,13 @@ credentials, or real-finding persistence.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then the Phase 18 `SPEC.md`, `PLAN.md`, and
-`STATE.md`; inspect `git status`/diff; continue the current M7 checkpoint and
-isolated-validation action. Do not infer a checkpoint SHA from the working
-tree; discover live authority from Git.
+`STATE.md`; inspect `git status`/diff; validate and publish the closure
+documentation, inspect external CI once, and then close the task. Do not
+infer a checkpoint SHA from task prose; discover live authority from Git.
 
 ## Completion Snapshot
 
-Not complete. The validated implementation checkpoint is
-937f887413e5231b385940bd310b7708bc4a0a0e; post-repair full regressions,
-push, CI truth, and terminal documentation remain.
+Local/source/synthetic implementation and exact canonical/isolated parity are
+complete at validated implementation checkpoint
+937f887413e5231b385940bd310b7708bc4a0a0e. Only checkpoint publication,
+external-CI inspection, and terminal documentation closure remain.

@@ -2972,3 +2972,28 @@ skipped 4 / failed 0 with exact parity. Actions run `32628613509` / job
 block, so the result is local complete / external-CI-blocked, not CI green.
 No authority, source scope, product environment, sibling write, or data-plane
 operation was added.
+
+## D-71 — Phase 18 semantic contract depth, replay fidelity, and confidence
+
+Phase 18 is a LOCAL / SOURCE / SYNTHETIC-only development wave. The semantic
+pipeline now admits bounded source/fixture-backed business-behavior contracts
+for aggregate/detail, cross-step state, pagination/window, empty-state,
+lifecycle, sanitized cross-surface, and HTTP-200 application-error behavior.
+Each class has deterministic positive and benign controls. Semantic evidence
+remains abstract and privacy-safe; raw values never enter findings, replay,
+clusters, dossiers, diagnostics, or continuity records.
+
+The same semantic finding identity is load-bearing through occurrence-bound
+replay and actual synthetic minimization. Repeated action IDs without
+occurrence context are ambiguous; infrastructure failure, precondition
+divergence, semantic divergence, stale source, and invalid replay are distinct
+outcomes. Currentness, safety, privacy, determinism, and provenance gates can
+degrade confidence, so aggregate replay or cluster counts cannot create HIGH
+confidence or prove minimality. Phase 17 source-impact evidence contributes
+bounded semantic-coverage reasons only and grants no execution authority.
+
+Local closure evidence is canonical/isolated exact parity at 2,281 passed,
+4 skipped, 0 failed out of 2,285 in each run. External CI remains a separate
+fact and is never inferred from local green results. This phase adds no DEV,
+NEXT, production, authenticated, data-plane, cloud/infra, sibling-write,
+publication, AI, or promotion authority.
