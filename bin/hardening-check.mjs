@@ -1216,6 +1216,9 @@ function checkPhase12PureCoreBoundaries() {
     'src/core/triage/inventory',
     'src/core/triage/backtest',
     'src/core/triage/minimizer',
+    'src/core/triage/semanticReplay.ts',
+    'src/core/portfolio/semanticCoverage.ts',
+    'src/oracles/expectations/currentness.ts',
     'src/core/coverage',
     'src/core/backtest',
     'src/oracles/semantic/confidence',
@@ -1275,6 +1278,42 @@ function checkPhase12PureCoreBoundaries() {
     if (/\b(?:eval\s*\(|new\s+Function\s*\()/i.test(source)) {
       fail(`${file} exposes code execution (eval/Function) (Phase 12 pure-core boundary)`);
     }
+  }
+}
+
+/**
+ * Phase 18 semantic/replay/coverage cores remain pure bounded decision
+ * layers. Their richer evidence vocabulary must not become a side door to
+ * browser, network, persistence, AI, source-write, or owner-promotion
+ * authority.
+ */
+function checkPhase18PureCoreSeams() {
+  const files = [
+    'src/core/triage/semanticReplay.ts',
+    'src/core/portfolio/semanticCoverage.ts',
+    'src/oracles/expectations/currentness.ts',
+  ];
+  for (const file of files) {
+    const source = read(file);
+    if (!source) continue;
+    if (/from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dns|node:fetch|undici|WebSocket|child_process|playwright|browser|database|dynamo|bigquery|spanner|gcloud|kubectl|aws|cloud|infrastructure|aiReview|selfDev|selfDevPromotion|selfDevSandbox|phase6|storage|campaign\/orchestrator|products?)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden Phase 18 authority or transport`);
+    }
+    if (/\b(?:child_process|fetch\s*\(|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|eval\s*\(|new\s+Function\s*\()\b/i.test(source)) {
+      fail(`${file} exposes a Phase 18 process, network, persistence, or code-execution capability`);
+    }
+  }
+  const replay = read('src/core/triage/semanticReplay.ts');
+  if (replay && (!/SEMANTIC_REPLAY_FIDELITY_VERSION/.test(replay) || !/AMBIGUOUS_OCCURRENCE/.test(replay) || !/validateSemanticReplayFidelityReceipt/.test(replay))) {
+    fail('Phase 18 replay core is missing versioned ambiguity/fidelity validation');
+  }
+  const coverage = read('src/core/portfolio/semanticCoverage.ts');
+  if (coverage && (!/SEMANTIC_COVERAGE_VERSION/.test(coverage) || !/SOURCE_EVIDENCE_UNRESOLVED/.test(coverage) || !/deterministicDigest/.test(coverage))) {
+    fail('Phase 18 coverage core is missing bounded currentness/explanation accounting');
+  }
+  const currentness = read('src/oracles/expectations/currentness.ts');
+  if (currentness && (!/SourceCurrentnessState/.test(currentness) || !/SYNTHETIC_ONLY/.test(currentness) || !/STALE/.test(currentness))) {
+    fail('Phase 18 currentness core is missing explicit fail-closed states');
   }
 }
 
@@ -1450,6 +1489,7 @@ checkPhase10IntegrationSeams();
 checkPhase10bCorePurity();
 checkPhase10bIntegrationSeams();
 checkPhase12PureCoreBoundaries();
+checkPhase18PureCoreSeams();
 checkPhase12AuthoritySetsUnchanged();
 checkPhase12TriageCorePurity();
 checkPhase12TriageIntegrationSeams();

@@ -68,6 +68,10 @@ function actionIds(sequence: readonly ActionOccurrence[]): string[] {
   return sequence.map((item) => item.action.actionId);
 }
 
+function occurrenceOrdinals(sequence: readonly ActionOccurrence[]): number[] {
+  return sequence.map((item) => item.index);
+}
+
 function allZeroSafety(safety: SafetyVector): boolean {
   return safety.productionAttempts === 0 && safety.proxyViolations === 0 && safety.unknownDestinations === 0 &&
     safety.unknownApprovals === 0 && safety.knownMutations === 0 && safety.actionCausedUnknown === 0 && safety.dbQueries === 0;
@@ -151,6 +155,7 @@ function removedActionIds(original: readonly ActionOccurrence[], minimal: readon
 }
 
 function outcomeReason(outcome: CandidateReplayOutcome, targetFingerprint: string): { disposition: CandidateEvaluation['disposition']; reason: string; match: boolean } {
+  if (outcome.executorFailure !== undefined) return { disposition: 'INVALID', reason: outcome.executorFailure, match: false };
   if (outcome.status === 'INVALID') return { disposition: 'INVALID', reason: outcome.invalidReason ?? 'PRECONDITION_DIVERGENCE', match: false };
   if (!allZeroSafety(outcome.safety)) return { disposition: 'INVALID', reason: 'SAFETY_VECTOR_NONZERO', match: false };
   const match = outcome.status === 'FAILURE' && outcome.anomalyFingerprint === targetFingerprint;
@@ -166,6 +171,7 @@ function resultBase(options: MinimizationOptions, budget: MinimizationBudget, or
     status,
     originalSequence: actionIds(original),
     minimalReproducingSequence: fresh === 'REPRODUCED' ? actionIds(minimal) : [],
+    ...(fresh === 'REPRODUCED' ? { minimalReproducingOccurrenceOrdinals: occurrenceOrdinals(minimal) } : {}),
     removedActions: fresh === 'REPRODUCED' ? removedActionIds(original, minimal) : [],
     reproductionCount,
     anomalyFingerprint: options.anomalyFingerprint,
@@ -271,7 +277,7 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     if (phase === 'REDUCED_CANDIDATE' && candidateEvaluations >= budget.maxCandidateEvaluations) {
-      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), disposition: 'NOT_EVALUATED_BUDGET', reason: 'BUDGET_EXHAUSTED', fingerprintMatch: false };
+      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), occurrenceOrdinals: occurrenceOrdinals(candidate), disposition: 'NOT_EVALUATED_BUDGET', reason: 'BUDGET_EXHAUSTED', fingerprintMatch: false };
       const skipped: EvaluatedCandidate = { occurrenceSequence: candidate, outcome: { status: 'INVALID', safety: ZERO_SAFETY, invalidReason: 'PRECONDITION_DIVERGENCE' }, evaluation };
       evaluations.push(evaluation);
       return skipped;
@@ -281,7 +287,7 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
       candidateEvaluations += phase === 'REDUCED_CANDIDATE' ? 1 : 0;
       invalidCandidateCount += phase === 'REDUCED_CANDIDATE' ? 1 : 0;
       const outcome: CandidateReplayOutcome = { status: 'INVALID', safety: ZERO_SAFETY, invalidReason: guard.reason };
-      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), disposition: 'INVALID', reason: guard.reason ?? 'CANDIDATE_GUARD_FAILED', fingerprintMatch: false };
+      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), occurrenceOrdinals: occurrenceOrdinals(candidate), disposition: 'INVALID', reason: guard.reason ?? 'CANDIDATE_GUARD_FAILED', fingerprintMatch: false };
       const evaluated = { occurrenceSequence: candidate, outcome, evaluation };
       cache.set(key, evaluated);
       evaluations.push(evaluation);
@@ -289,13 +295,18 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     }
     if (phase === 'REDUCED_CANDIDATE') candidateEvaluations += 1;
     if (replayCount >= budget.maxTotalReplays) {
-      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), disposition: 'NOT_EVALUATED_BUDGET', reason: 'TOTAL_REPLAY_BUDGET_EXHAUSTED', fingerprintMatch: false };
+      const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), occurrenceOrdinals: occurrenceOrdinals(candidate), disposition: 'NOT_EVALUATED_BUDGET', reason: 'TOTAL_REPLAY_BUDGET_EXHAUSTED', fingerprintMatch: false };
       const skipped: EvaluatedCandidate = { occurrenceSequence: candidate, outcome: { status: 'INVALID', safety: ZERO_SAFETY, invalidReason: 'PRECONDITION_DIVERGENCE' }, evaluation };
       evaluations.push(evaluation);
       return skipped;
     }
     replayCount += 1;
-    const raw = await options.replay(candidate.map((item) => item.action), phase);
+    let raw: CandidateReplayOutcome;
+    try {
+      raw = await options.replay(candidate.map((item) => item.action), phase);
+    } catch {
+      raw = { status: 'INVALID', safety: ZERO_SAFETY, executorFailure: 'EXECUTOR_THROW' };
+    }
     if (phase === 'REDUCED_CANDIDATE') reducedReplayInvocations += 1;
     // Centralized exact-vs-reduced rule: a mismatched-fingerprint FAILURE is
     // downgraded to PASS before classification (executorNormalization).
@@ -304,7 +315,15 @@ export async function minimizeFailure(options: MinimizationOptions): Promise<Min
     if (outcome.status !== 'INVALID' && !allZeroSafety(outcome.safety)) safetyRejectionCount += 1;
     if (classified.disposition === 'INVALID') invalidCandidateCount += phase === 'REDUCED_CANDIDATE' ? 1 : 0;
     if (classified.disposition === 'REPRODUCES') reproductionCount += 1;
-    const evaluation: CandidateEvaluation = { sequence: actionIds(candidate), disposition: classified.disposition, reason: classified.reason, fingerprintMatch: classified.match };
+    const evaluation: CandidateEvaluation = {
+      sequence: actionIds(candidate),
+      occurrenceOrdinals: occurrenceOrdinals(candidate),
+      ...(outcome.semanticFindingFingerprint === undefined ? {} : { semanticFindingFingerprint: outcome.semanticFindingFingerprint }),
+      ...(outcome.semanticContractIdentity === undefined ? {} : { semanticContractIdentity: outcome.semanticContractIdentity }),
+      disposition: classified.disposition,
+      reason: classified.reason,
+      fingerprintMatch: classified.match,
+    };
     const evaluated = { occurrenceSequence: candidate, outcome, evaluation };
     cache.set(key, evaluated);
     evaluations.push(evaluation);

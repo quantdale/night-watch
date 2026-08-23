@@ -111,6 +111,21 @@ export function rankSemanticConfidence(input: SemanticConfidenceInput): Semantic
     // Only push if not already blocked by more specific reason? Always block HIGH if not ANOMALY.
     blockers.push(blocker('NON_ANOMALY_OUTCOME'));
   }
+  // Phase 18 receipts are stronger than the historical triage enums. When
+  // present, they are load-bearing proof: a legacy REPRODUCED flag cannot
+  // overrule an ambiguous occurrence, stale source, semantic divergence,
+  // infrastructure failure, or a non-deterministic executor.
+  const fidelity = evidence.replayFidelity;
+  if (fidelity !== undefined) {
+    if (fidelity.outcomeClass !== 'REPRODUCED_EXACT') blockers.push(blocker('EXACT_REPLAY_NOT_REPRODUCED'));
+    if (fidelity.occurrenceBinding !== 'BOUND') blockers.push(blocker('EXACT_REPLAY_NOT_REPRODUCED'));
+    if (fidelity.sourceCurrentness !== 'CURRENT') blockers.push(blocker('SOURCE_CURRENTNESS_UNRESOLVED'));
+    if (!fidelity.safetyClean) blockers.push(blocker('SAFETY_NONZERO'));
+    if (!fidelity.deterministic) blockers.push(blocker('INTERNAL_ERROR'));
+    if (fidelity.observedSemanticFindingFingerprint !== undefined && fidelity.observedSemanticFindingFingerprint !== fidelity.expectedSemanticFindingFingerprint) {
+      blockers.push(blocker('REPLAY_FINGERPRINT_MISMATCH'));
+    }
+  }
   // Declared missing-evidence codes are structural ceilings, not conventions:
   // an evidence record that itself declares a readiness-critical gap can never
   // reach HIGH even when every enum field looks clean. Permanent scope facts

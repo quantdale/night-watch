@@ -196,7 +196,15 @@ export function executeReplayPlanV2(
 }
 
 function normalizeExecutorResult(result: CandidateReplayOutcome, plan: TriageReplayPlanV2): CandidateReplayOutcome {
-  return normalizeExecutorOutcome(result, plan.anomalyFingerprint);
+  const normalized = normalizeExecutorOutcome(result, plan.anomalyFingerprint);
+  const fingerprintValid = normalized.semanticFindingFingerprint === undefined
+    || /^fp:sha256:[0-9a-f]{24}$/.test(normalized.semanticFindingFingerprint);
+  const contractValid = normalized.semanticContractIdentity === undefined
+    || /^sci:sha256:[0-9a-f]{24}$/.test(normalized.semanticContractIdentity);
+  if (!fingerprintValid || !contractValid) {
+    return { status: 'INVALID', safety: { ...ZERO_SAFETY }, invalidReason: 'SEMANTIC_POLICY_FAILED' };
+  }
+  return normalized;
 }
 
 /**

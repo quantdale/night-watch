@@ -53,8 +53,9 @@ export function semanticStateEquals(left: ProjectionNode, right: ProjectionNode)
   if (left.type !== right.type) return false;
   switch (left.type) {
     case 'NULL':
-    case 'BOOLEAN':
       return true;
+    case 'BOOLEAN':
+      return left.booleanClass === right.booleanClass;
     case 'NUMBER':
       return left.numericRef === right.numericRef;
     case 'STRING':
@@ -102,6 +103,7 @@ function semanticStateKey(node: ProjectionNode): string {
   }
   if (node.type === 'STRING') return `STRING:${node.identityToken ?? '?'}`;
   if (node.type === 'NUMBER') return `NUMBER:${node.numericRef ?? '?'}`;
+  if (node.type === 'BOOLEAN') return `BOOLEAN:${node.booleanClass ?? '?'}`;
   return node.type;
 }
 

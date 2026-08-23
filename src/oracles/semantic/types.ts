@@ -19,6 +19,11 @@ export type SemanticFindingCategory =
   | 'STALE_STATE_AFTER_TRANSITION'
   | 'AGGREGATE_RELATION_MISMATCH'
   | 'CARDINALITY_RELATION_MISMATCH'
+  | 'IDENTITY_UNIQUENESS_VIOLATION'
+  | 'PAGINATION_WINDOW_MISMATCH'
+  | 'EMPTY_STATE_CONTRADICTION'
+  | 'STATE_RELATION_MISMATCH'
+  | 'CROSS_SURFACE_MISMATCH'
   | 'SOURCE_EXPECTATION_MISMATCH';
 
 export type SemanticFindingSeverity = 'ANOMALY';
@@ -65,12 +70,20 @@ export const SEMANTIC_FINDING_CATEGORIES: readonly SemanticFindingCategory[] = [
   'STALE_STATE_AFTER_TRANSITION',
   'AGGREGATE_RELATION_MISMATCH',
   'CARDINALITY_RELATION_MISMATCH',
+  'IDENTITY_UNIQUENESS_VIOLATION',
+  'PAGINATION_WINDOW_MISMATCH',
+  'EMPTY_STATE_CONTRADICTION',
+  'STATE_RELATION_MISMATCH',
+  'CROSS_SURFACE_MISMATCH',
   'SOURCE_EXPECTATION_MISMATCH',
 ];
 
 /** Strict structural validation of a finding DTO (unknown fields rejected;
  *  SPEC §40). Throws `SEMANTIC_FINDING_INVALID:<detail>`. */
 export function validateSemanticFinding(finding: SemanticOracleFinding): void {
+  if (finding === null || typeof finding !== 'object' || Array.isArray(finding)) throw new Error('SEMANTIC_FINDING_INVALID:object');
+  const prototype = Object.getPrototypeOf(finding);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error('SEMANTIC_FINDING_INVALID:prototype');
   if (finding.schemaVersion !== SEMANTIC_ORACLE_FINDING_VERSION) {
     throw new Error(`SEMANTIC_FINDING_INVALID:schemaVersion`);
   }
@@ -81,6 +94,10 @@ export function validateSemanticFinding(finding: SemanticOracleFinding): void {
     throw new Error(`SEMANTIC_FINDING_INVALID:category`);
   }
   if (finding.severity !== 'ANOMALY') throw new Error(`SEMANTIC_FINDING_INVALID:severity`);
+  if (finding.sourceProvenance === null || typeof finding.sourceProvenance !== 'object' || Array.isArray(finding.sourceProvenance)) throw new Error('SEMANTIC_FINDING_INVALID:provenance-object');
+  const provenancePrototype = Object.getPrototypeOf(finding.sourceProvenance);
+  if (provenancePrototype !== Object.prototype && provenancePrototype !== null) throw new Error('SEMANTIC_FINDING_INVALID:provenance-prototype');
+  if (!Array.isArray(finding.projectionDigests)) throw new Error('SEMANTIC_FINDING_INVALID:projection-digests');
   if (!/^[0-9a-f]{40}$/.test(finding.sourceProvenance.sha)) throw new Error(`SEMANTIC_FINDING_INVALID:provenance-sha`);
   if (finding.sourceProvenance.relativePath.startsWith('/') || finding.sourceProvenance.relativePath.includes('..')) {
     throw new Error(`SEMANTIC_FINDING_INVALID:provenance-path`);

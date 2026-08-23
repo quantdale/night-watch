@@ -42,6 +42,7 @@ import {
   type CampaignPortfolio,
   type PortfolioMember,
 } from './types';
+import { semanticCoverageSelectionReason, type SemanticCoverageSelectionReason, type SemanticCoverageSourceState } from './semanticCoverage';
 
 export const PORTFOLIO_CHANGE_IMPACT_VERSION =
   'nightwatch.portfolio-change-impact.v1' as const;
@@ -160,6 +161,30 @@ export interface ChangeAwarePortfolioOverlay {
 export interface ChangeAwareAllocation {
   readonly overlay: ChangeAwarePortfolioOverlay;
   readonly allocation: PortfolioAllocation;
+}
+
+/** Bounded bridge from the Phase 17 impact overlay to Phase 18 semantic
+ * coverage accounting. Fallback/stale/ambiguous evidence never becomes a
+ * positive semantic-impact claim. */
+export function semanticCoverageReasonForImpact(input: {
+  readonly impact: Pick<PortfolioChangeImpact, 'disposition'>;
+  readonly selected: boolean;
+  readonly sourceState: SemanticCoverageSourceState;
+  readonly hasSemanticCoverage: boolean;
+}): SemanticCoverageSelectionReason {
+  const sourceImpact: 'DIRECT' | 'SHARED' | 'TRANSITIVE' | 'FALLBACK' | 'NONE' | 'UNKNOWN' =
+    input.impact.disposition === 'DIRECT' ? 'DIRECT'
+      : input.impact.disposition === 'SHARED' ? 'SHARED'
+        : input.impact.disposition === 'TRANSITIVE' ? 'TRANSITIVE'
+          : input.impact.disposition === 'FALLBACK' ? 'FALLBACK'
+            : input.impact.disposition === 'SOURCE_UNRESOLVED' ? 'UNKNOWN'
+              : 'NONE';
+  return semanticCoverageSelectionReason({
+    selected: input.selected,
+    sourceImpact,
+    sourceState: input.sourceState,
+    hasSemanticCoverage: input.hasSemanticCoverage,
+  });
 }
 
 function invalid(reason: string): never {

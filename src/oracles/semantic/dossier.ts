@@ -62,6 +62,9 @@ export function toSemanticDossierEvidence(
 /** Strict validation of the dossier evidence block (rejects unknown fields,
  *  malformed provenance, unbounded classes). */
 export function validateSemanticDossierEvidence(evidence: SemanticDossierEvidence): void {
+  if (evidence === null || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('DOSSIER_SEMANTIC_EVIDENCE_NOT_OBJECT');
+  const prototype = Object.getPrototypeOf(evidence);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error('DOSSIER_SEMANTIC_EVIDENCE_PROTOTYPE_INVALID');
   if (evidence.schemaVersion !== SEMANTIC_DOSSIER_EVIDENCE_VERSION) {
     throw new Error('DOSSIER_SEMANTIC_EVIDENCE_VERSION_INVALID');
   }
@@ -70,16 +73,19 @@ export function validateSemanticDossierEvidence(evidence: SemanticDossierEvidenc
       throw new Error('DOSSIER_SEMANTIC_EVIDENCE_UNKNOWN_FIELD');
     }
   }
-  if (evidence.findingCount !== evidence.findings.length || evidence.findings.length > MAX_FINDINGS_IN_DOSSIER) {
+  if (!Array.isArray(evidence.categories) || !Array.isArray(evidence.findings) || evidence.findingCount !== evidence.findings.length || evidence.findings.length > MAX_FINDINGS_IN_DOSSIER) {
     throw new Error('DOSSIER_SEMANTIC_EVIDENCE_COUNT_INVALID');
   }
   for (const summary of evidence.findings) {
+    if (summary === null || typeof summary !== 'object' || Array.isArray(summary)) throw new Error('DOSSIER_SEMANTIC_EVIDENCE_FINDING_INVALID');
+    const summaryPrototype = Object.getPrototypeOf(summary);
+    if (summaryPrototype !== Object.prototype && summaryPrototype !== null) throw new Error('DOSSIER_SEMANTIC_EVIDENCE_FINDING_PROTOTYPE_INVALID');
     for (const key of Object.keys(summary)) {
       if (!['category', 'expectationId', 'sourceRepoId', 'sourceSHA', 'sourceRelativePath', 'expectedClass', 'observedClass', 'relationId'].includes(key)) {
         throw new Error('DOSSIER_SEMANTIC_EVIDENCE_UNKNOWN_FIELD');
       }
     }
-    if (!['APPLICATION_ERROR_ENVELOPE', 'LIST_DETAIL_IDENTITY_MISMATCH', 'STALE_STATE_AFTER_TRANSITION', 'AGGREGATE_RELATION_MISMATCH', 'CARDINALITY_RELATION_MISMATCH', 'SOURCE_EXPECTATION_MISMATCH'].includes(summary.category)) {
+    if (!['APPLICATION_ERROR_ENVELOPE', 'LIST_DETAIL_IDENTITY_MISMATCH', 'STALE_STATE_AFTER_TRANSITION', 'AGGREGATE_RELATION_MISMATCH', 'CARDINALITY_RELATION_MISMATCH', 'IDENTITY_UNIQUENESS_VIOLATION', 'PAGINATION_WINDOW_MISMATCH', 'EMPTY_STATE_CONTRADICTION', 'STATE_RELATION_MISMATCH', 'CROSS_SURFACE_MISMATCH', 'SOURCE_EXPECTATION_MISMATCH'].includes(summary.category)) {
       throw new Error('DOSSIER_SEMANTIC_EVIDENCE_CATEGORY_INVALID');
     }
     if (!SHA_RE.test(summary.sourceSHA)) throw new Error('DOSSIER_SEMANTIC_EVIDENCE_SHA_INVALID');

@@ -70,6 +70,7 @@ export type ProjectionNodeType = 'NULL' | 'BOOLEAN' | 'NUMBER' | 'STRING' | 'OBJ
 
 // Phase 15P A15 convergence: de-exported (module-private, zero external callers).
 type StringContentClass = 'EMPTY' | 'NONEMPTY';
+export type BooleanContentClass = 'TRUE' | 'FALSE';
 
 export interface ProjectionField {
   readonly name: string;
@@ -78,6 +79,8 @@ export interface ProjectionField {
 
 export interface ProjectionNode {
   readonly type: ProjectionNodeType;
+  /** BOOLEAN only: categorical truth value; never a customer value. */
+  readonly booleanClass?: BooleanContentClass;
   /** STRING only: opaque within-observation identity label (e.g.
    *  `entity#0001`). Assigned by ProjectionContext; contains neither the raw
    *  value nor a hash of it. */
@@ -144,6 +147,7 @@ export class SemanticProjectionError extends Error {
  *  compile time). */
 export const PROJECTION_NODE_SAFE_FIELDS: ReadonlySet<string> = new Set([
   'type',
+  'booleanClass',
   'identityToken',
   'stringClass',
   'numericRef',

@@ -136,6 +136,7 @@ export interface ReplayResultEnvelope {
 
 const PLAN_ID_RE = /^rp2:sha256:[0-9a-f]{24}$/;
 const FINGERPRINT_RE = /^fp:sha256:[0-9a-f]{24}$/;
+const CONTRACT_IDENTITY_RE = /^sci:sha256:[0-9a-f]{24}$/;
 const ACTION_ID_RE = /^[A-Za-z0-9_.-]{1,120}$/;
 const ROUTE_CLASS_RE = /^\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$/;
 const VALIDATION_REASON_RE = /^[A-Za-z0-9_:./-]{1,160}$/;
@@ -287,6 +288,12 @@ function sanitizedExecutorOutcome(outcome: CandidateReplayOutcome): CandidateRep
   if (outcome.anomalyFingerprint !== undefined && (typeof outcome.anomalyFingerprint !== 'string' || !FINGERPRINT_RE.test(outcome.anomalyFingerprint))) {
     throw new Error('REPLAY_ENVELOPE_ANOMALY_FINGERPRINT_INVALID');
   }
+  if (outcome.semanticFindingFingerprint !== undefined && (typeof outcome.semanticFindingFingerprint !== 'string' || !FINGERPRINT_RE.test(outcome.semanticFindingFingerprint))) {
+    throw new Error('REPLAY_ENVELOPE_SEMANTIC_FINGERPRINT_INVALID');
+  }
+  if (outcome.semanticContractIdentity !== undefined && (typeof outcome.semanticContractIdentity !== 'string' || !CONTRACT_IDENTITY_RE.test(outcome.semanticContractIdentity))) {
+    throw new Error('REPLAY_ENVELOPE_CONTRACT_IDENTITY_INVALID');
+  }
   if (outcome.invalidReason !== undefined && !GUARD_REASON_CODES.has(outcome.invalidReason)) throw new Error('REPLAY_ENVELOPE_INVALID_REASON_UNKNOWN');
   if (outcome.routeClass !== undefined && (typeof outcome.routeClass !== 'string' || !ROUTE_CLASS_RE.test(outcome.routeClass))) {
     throw new Error('REPLAY_ENVELOPE_ROUTE_CLASS_INVALID');
@@ -295,6 +302,8 @@ function sanitizedExecutorOutcome(outcome: CandidateReplayOutcome): CandidateRep
     status: outcome.status,
     safety: outcome.safety,
     ...(outcome.anomalyFingerprint !== undefined ? { anomalyFingerprint: outcome.anomalyFingerprint } : {}),
+    ...(outcome.semanticFindingFingerprint !== undefined ? { semanticFindingFingerprint: outcome.semanticFindingFingerprint } : {}),
+    ...(outcome.semanticContractIdentity !== undefined ? { semanticContractIdentity: outcome.semanticContractIdentity } : {}),
     ...(outcome.invalidReason !== undefined ? { invalidReason: outcome.invalidReason } : {}),
     ...(outcome.routeClass !== undefined ? { routeClass: outcome.routeClass } : {}),
   };
@@ -420,7 +429,7 @@ const PLAN_ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'anomalyFingerprint',
 ]);
 
-const OUTCOME_ALLOWED_KEYS: ReadonlySet<string> = new Set(['status', 'anomalyFingerprint', 'safety', 'invalidReason', 'routeClass']);
+const OUTCOME_ALLOWED_KEYS: ReadonlySet<string> = new Set(['status', 'anomalyFingerprint', 'semanticFindingFingerprint', 'semanticContractIdentity', 'safety', 'invalidReason', 'routeClass']);
 
 function firstUnknownKey(obj: Record<string, unknown>, allowed: ReadonlySet<string>): string | null {
   for (const key of Object.keys(obj)) {
@@ -482,6 +491,8 @@ export function validateReplayResultEnvelope(input: unknown): { valid: true; env
     if (typeof outcomeObj.status !== 'string' || !OUTCOME_STATUSES.has(outcomeObj.status)) return fail('REPLAY_ENVELOPE_OUTCOME_STATUS_INVALID');
     if (!validateSafetyVectorShape(outcomeObj.safety)) return fail('REPLAY_ENVELOPE_OUTCOME_SAFETY_INVALID');
     if (outcomeObj.anomalyFingerprint !== undefined && !(typeof outcomeObj.anomalyFingerprint === 'string' && FINGERPRINT_RE.test(outcomeObj.anomalyFingerprint))) return fail('REPLAY_ENVELOPE_OUTCOME_FINGERPRINT_INVALID');
+    if (outcomeObj.semanticFindingFingerprint !== undefined && !(typeof outcomeObj.semanticFindingFingerprint === 'string' && FINGERPRINT_RE.test(outcomeObj.semanticFindingFingerprint))) return fail('REPLAY_ENVELOPE_OUTCOME_SEMANTIC_FINGERPRINT_INVALID');
+    if (outcomeObj.semanticContractIdentity !== undefined && !(typeof outcomeObj.semanticContractIdentity === 'string' && CONTRACT_IDENTITY_RE.test(outcomeObj.semanticContractIdentity))) return fail('REPLAY_ENVELOPE_OUTCOME_CONTRACT_IDENTITY_INVALID');
     if (outcomeObj.invalidReason !== undefined && !(typeof outcomeObj.invalidReason === 'string' && GUARD_REASON_CODES.has(outcomeObj.invalidReason))) return fail('REPLAY_ENVELOPE_OUTCOME_INVALID_REASON_UNKNOWN');
     if (outcomeObj.routeClass !== undefined && !(typeof outcomeObj.routeClass === 'string' && ROUTE_CLASS_RE.test(outcomeObj.routeClass))) return fail('REPLAY_ENVELOPE_OUTCOME_ROUTE_INVALID');
     executed = true;

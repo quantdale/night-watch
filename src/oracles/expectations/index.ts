@@ -6,6 +6,7 @@ export * from './types';
 export * from './paths';
 export * from './validator';
 export * from './provenance';
+export * from './currentness';
 export * from './sourceAdapter';
 export * from './recipes/types';
 export * from './recipes/validator';

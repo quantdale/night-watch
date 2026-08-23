@@ -69,6 +69,11 @@ function categoryForInvariant(
   }
   if (invariantKind === 'NUMERIC_SUM_RELATION' && relationId !== undefined) return 'AGGREGATE_RELATION_MISMATCH';
   if (invariantKind === 'COUNT_RELATION' && relationId !== undefined) return 'CARDINALITY_RELATION_MISMATCH';
+  if (invariantKind === 'IDENTITY_UNIQUENESS' && relationId !== undefined) return 'IDENTITY_UNIQUENESS_VIOLATION';
+  if (invariantKind === 'PAGINATION_WINDOW' && relationId !== undefined) return 'PAGINATION_WINDOW_MISMATCH';
+  if (invariantKind === 'EMPTY_STATE_CONSISTENCY' && relationId !== undefined) return 'EMPTY_STATE_CONTRADICTION';
+  if (invariantKind === 'STATE_RELATION' && relationId !== undefined) return 'STATE_RELATION_MISMATCH';
+  if (invariantKind === 'SURFACE_EQUIVALENCE' && relationId !== undefined) return 'CROSS_SURFACE_MISMATCH';
   // Phase 11: COLLECTION_ITEM_CONTRACT violations are item-level contract
   // mismatches surfaced as a single finding per invariant.
   if (invariantKind === 'COLLECTION_ITEM_CONTRACT') return 'SOURCE_EXPECTATION_MISMATCH';
@@ -86,6 +91,16 @@ function observedClassFor(invariant: InvariantEvaluation, expectation: SemanticE
     case 'NUMERIC_SUM_RELATION':
     case 'COUNT_RELATION':
       return 'RELATION_MISMATCH';
+    case 'IDENTITY_UNIQUENESS':
+      return 'DUPLICATE_IDENTITY';
+    case 'PAGINATION_WINDOW':
+      return 'WINDOW_IDENTITY_OVERLAP';
+    case 'EMPTY_STATE_CONSISTENCY':
+      return 'EMPTY_STATE_CONTRADICTED';
+    case 'STATE_RELATION':
+      return 'STATE_RELATION_CONTRADICTED';
+    case 'SURFACE_EQUIVALENCE':
+      return 'SURFACE_NOT_EQUIVALENT';
     case 'FIELD_PRESENT':
     case 'FIELD_ABSENT':
       return 'FIELD_PRESENCE_CONTRADICTED';
@@ -111,6 +126,16 @@ function expectedClassFor(invariant: InvariantEvaluation): string {
       return 'SUM_EQUALS';
     case 'COUNT_RELATION':
       return 'COUNT_EQUALS';
+    case 'IDENTITY_UNIQUENESS':
+      return 'IDENTITY_UNIQUE';
+    case 'PAGINATION_WINDOW':
+      return 'WINDOW_IDENTITIES_DISJOINT';
+    case 'EMPTY_STATE_CONSISTENCY':
+      return 'EMPTY_STATE_CONSISTENT';
+    case 'STATE_RELATION':
+      return 'STATE_RELATION_ALLOWED';
+    case 'SURFACE_EQUIVALENCE':
+      return 'SURFACES_EQUIVALENT';
     case 'FIELD_PRESENT':
       return 'FIELD_PRESENT';
     case 'FIELD_ABSENT':

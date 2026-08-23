@@ -101,7 +101,7 @@ import { DOSSIER_VERSION_V2, parseBugDossierV2 } from '../../src/core/triage/dos
 import type { BugDossierV2 } from '../../src/core/triage/dossierV2';
 import { semanticPromotionEligible, type SemanticAwarePromotionResult } from '../../src/core/triage/promotionResult';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
-import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
+import { SEMANTIC_CLUSTER_VERSION, semanticContractIdentityFromInvariantId } from '../../src/oracles/semantic/cluster';
 import {
   SEMANTIC_CAMPAIGN_BUNDLE_VERSION,
   createSemanticCampaignBundle,
@@ -379,6 +379,8 @@ interface CandidateOptions {
     readonly currentness: CampaignSemanticCurrentness;
     readonly receiptOutcome: CampaignSemanticReceiptOutcome;
     readonly coverageState?: CampaignSemanticCoverageState;
+    /** Overrides the invariant definition identity for cluster separation. */
+    readonly invariantId?: string;
   };
 }
 
@@ -389,13 +391,22 @@ function candidate(options: CandidateOptions): CampaignAnomalyCandidate {
   const sequence = (options.sequence ?? [...PAYER_STEPS]).map((id) => action(id, routeClass));
   const fingerprint = options.fingerprint;
   const predicate = options.predicate ?? ((ids: readonly string[]) => ids.length > 0);
+  const semanticContractIdentity = options.semantic === undefined ? undefined : semanticContractIdentityFromInvariantId({
+    expectationId: TARGET,
+    targetId: TARGET,
+    invariantDefinitionId: options.semantic.invariantId ?? SYNTHETIC_INVARIANT,
+    sourceProvenance: { repoId: 'corpus/phase15p/rehearsal-source-fixture', derivationVersion: DERIVATION_VERSION, evidenceDigest: SYNTHETIC_DIGEST },
+  });
   if (options.calls !== undefined && options.calls[options.runId] === undefined) options.calls[options.runId] = [];
   const replay = (reducedSequence: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => {
     options.calls?.[options.runId]?.push({ phase, actionIds: reducedSequence.map((item) => item.actionId) });
     const reproduces = predicate(reducedSequence.map((item) => item.actionId));
     return {
       status: reproduces ? 'FAILURE' as const : 'PASS' as const,
-      ...(reproduces ? { anomalyFingerprint: fingerprint } : {}),
+      ...(reproduces ? {
+        anomalyFingerprint: options.semantic === undefined ? fingerprint : SYNTHETIC_FINDING_FP,
+        ...(options.semantic === undefined ? {} : { semanticFindingFingerprint: SYNTHETIC_FINDING_FP, semanticContractIdentity }),
+      } : {}),
       safety: SAFE_TRIAGE,
     };
   };
@@ -1189,28 +1200,34 @@ test.describe('Phase 15P A16 — synthetic release-candidate rehearsal', () => {
       expect(rehearsal.happy.result.stopReason).toBe('NONE');
       const semCluster = clusterByFingerprint(rehearsal.happy, FP_SEMANTIC);
       const semEntry = rehearsal.happy.result.checkpoint.dossierLedger.find((item) => item.clusterId === semCluster.clusterId)!;
-      expect(semEntry.state).toBe('READY');
+      // The journey adapter can reproduce the original semantic anomaly, but
+      // its reduced candidates are binding-rejected. Phase 18 therefore keeps
+      // the semantic dossier unresolved until minimized evidence exists.
+      expect(semEntry.state).toBe('INCOMPLETE');
       expect(semEntry.dossierVersion).toBe(DOSSIER_VERSION_V2);
       const semDossier = readV2Dossier(rehearsal.happy, FP_SEMANTIC);
-      expect(semDossier.status).toBe('READY');
-      expect(semDossier.semanticConfidence?.level).toBe('HIGH');
-      expect(semDossier.aiReady.evidence.confidence).toBe('HIGH');
+      expect(semDossier.status).toBe('UNRESOLVED');
+      expect(semDossier.semanticConfidence?.level).not.toBe('HIGH');
+      expect(semDossier.aiReady.evidence.confidence).not.toBe('HIGH');
       expect(semDossier.semanticTriageEvidence?.sourceCurrentness).toBe('CURRENT');
       expect(semDossier.semanticTriageEvidence?.receiptOutcome).toBe('ANOMALY');
       expect(semDossier.semanticTriageEvidence?.exactReplayStatus).toBe('REPRODUCED');
+      expect(semDossier.semanticTriageEvidence?.replayFidelity?.outcomeClass).toBe('REPRODUCED_EXACT');
+      expect(semDossier.semanticTriageEvidence?.minimalityGuarantee).toBe('NONE');
+      expect(semDossier.semanticTriageEvidence?.minimalSequenceReproductions).toBe(0);
       const semPromo = promotionFor(rehearsal.happy, semCluster.clusterId);
       expect(semPromo.clusterKind).toBe('SEMANTIC');
-      expect(semPromo.readiness).toBe('READY');
-      expect(semPromo.confidence).toBe('HIGH');
+      expect(semPromo.readiness).toBe('UNRESOLVED');
+      expect(semPromo.confidence).not.toBe('HIGH');
       expect(semPromo.sourceCurrentness).toBe('CURRENT');
       expect(semPromo.replayEvidence).toBe('EXACT_REPLAY_REPRODUCED');
       expect(semPromo.minimization).toBe('REDUCTION_PRECONDITION_UNAVAILABLE');
       expect(semPromo.dossierVersionTarget).toBe(DOSSIER_VERSION_V2);
-      expect(semanticPromotionEligible(semPromo)).toBe(true);
+      expect(semanticPromotionEligible(semPromo)).toBe(false);
       const semLifecycle = lifecycleOf(rehearsal.happy, semCluster.clusterId);
       expect(semLifecycle.lifecycleVersion).toBe(CANDIDATE_LIFECYCLE_VERSION);
       expect(semLifecycle.variant).toBe('SEMANTIC');
-      expect(semLifecycle.state).toBe('DOSSIER_READY');
+      expect(semLifecycle.state).toBe('UNRESOLVED');
       expect(isTerminalCandidateLifecycleState(semLifecycle.state)).toBe(true);
       // Protocol side: reducible exploration proves genuine minimality.
       const expCluster = clusterByFingerprint(rehearsal.happy, FP_EXPLORATION);
@@ -1490,8 +1507,10 @@ test.describe('Phase 15P A16 — synthetic release-candidate rehearsal', () => {
     expect(runs[0]!.variants['drift']!.executeCalls).toBe(0);
     expect(runs[0]!.variants['authority']!.executeCalls).toBe(0);
 
-    // Happy-path admission coherence holds across repeats.
-    expect(promotionsFor('happy').some((promo) => promo.clusterKind === 'SEMANTIC' && promo.readiness === 'READY' && promo.confidence === 'HIGH')).toBe(true);
+    // Protocol promotion remains ready; semantic promotion is deliberately
+    // unresolved until the journey adapter supplies a reduced replay.
+    expect(promotionsFor('happy').some((promo) => promo.clusterKind === 'PROTOCOL' && promo.readiness === 'READY')).toBe(true);
+    expect(promotionsFor('happy').some((promo) => promo.clusterKind === 'SEMANTIC' && promo.readiness === 'UNRESOLVED' && promo.confidence !== 'HIGH')).toBe(true);
   });
 });
 

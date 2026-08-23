@@ -64,6 +64,16 @@ function canonicalInvariant(invariant: InvariantDefinition): Record<string, unkn
       return { kind: invariant.kind, relationId: invariant.relationId, operation: invariant.operation, collectionPath: [...invariant.collectionPath], scalarPath: invariant.scalarPath ? [...invariant.scalarPath] : null, expectedCount: invariant.expectedCount ?? null };
     case 'SHAPE_CHANGED':
       return { kind: invariant.kind, expectedTransition: invariant.expectedTransition, statePath: invariant.statePath ? [...invariant.statePath] : null };
+    case 'IDENTITY_UNIQUENESS':
+      return { kind: invariant.kind, relationId: invariant.relationId, collectionPath: [...invariant.collectionPath], itemIdentityPath: [...invariant.itemIdentityPath] };
+    case 'PAGINATION_WINDOW':
+      return { kind: invariant.kind, relationId: invariant.relationId, leftCollectionPath: [...invariant.leftCollectionPath], rightCollectionPath: [...invariant.rightCollectionPath], itemIdentityPath: [...invariant.itemIdentityPath] };
+    case 'EMPTY_STATE_CONSISTENCY':
+      return { kind: invariant.kind, relationId: invariant.relationId, collectionPath: [...invariant.collectionPath], countPath: [...invariant.countPath], emptyMarkerPath: [...invariant.emptyMarkerPath] };
+    case 'STATE_RELATION':
+      return { kind: invariant.kind, relationId: invariant.relationId, beforePath: [...invariant.beforePath], afterPath: [...invariant.afterPath], expected: invariant.expected };
+    case 'SURFACE_EQUIVALENCE':
+      return { kind: invariant.kind, relationId: invariant.relationId, leftPath: [...invariant.leftPath], rightPath: [...invariant.rightPath], expected: invariant.expected };
     case 'COLLECTION_ITEM_CONTRACT': {
       const base: Record<string, unknown> = {
         kind: invariant.kind,
@@ -138,6 +148,36 @@ export function semanticContractIdentity(input: SemanticContractIdentityInput): 
   return `sci:sha256:${boundedIdentityDigest(payload)}`;
 }
 
+/** Campaign evidence already carries the mechanically derived invariant ID.
+ * This companion avoids rebuilding a lossy FIELD_PRESENT stub merely to
+ * recover the same contract identity at the campaign boundary. */
+export function semanticContractIdentityFromInvariantId(input: {
+  readonly expectationId: string;
+  readonly targetId: string;
+  readonly invariantDefinitionId: string;
+  readonly sourceProvenance: Pick<SourceProvenance, 'repoId' | 'derivationVersion' | 'evidenceDigest'>;
+}): string {
+  assertSafeId(input.expectationId, 'expectationId');
+  assertSafeId(input.targetId, 'targetId');
+  assertSafeId(input.sourceProvenance.repoId, 'repoId');
+  assertSafeId(input.sourceProvenance.derivationVersion, 'derivationVersion');
+  if (!/^inv:sha256:[0-9a-f]{24}$/.test(input.invariantDefinitionId)) throw new Error('SEMANTIC_CLUSTER_INVARIANT_ID_INVALID');
+  assertSafe(input.invariantDefinitionId, 'invariantDefinitionId');
+  if (input.sourceProvenance.evidenceDigest !== undefined) {
+    if (!EVIDENCE_DIGEST_RE.test(input.sourceProvenance.evidenceDigest)) throw new Error('SEMANTIC_CLUSTER_EVIDENCE_DIGEST_INVALID');
+    assertSafe(input.sourceProvenance.evidenceDigest, 'evidenceDigest');
+  }
+  return `sci:sha256:${boundedIdentityDigest({
+    version: SEMANTIC_CONTRACT_IDENTITY_VERSION,
+    expectationId: input.expectationId,
+    targetId: input.targetId,
+    invariantId: input.invariantDefinitionId,
+    derivationVersion: input.sourceProvenance.derivationVersion,
+    evidenceDigest: input.sourceProvenance.evidenceDigest ?? null,
+    repoId: input.sourceProvenance.repoId,
+  })}`;
+}
+
 // ---------------------------------------------------------------------------
 // Cluster key — stable across SHA movement, sensitive to digest/version change
 // ---------------------------------------------------------------------------
@@ -178,6 +218,7 @@ export interface SemanticObservation {
   readonly expectationId: string;
   readonly targetId: string;
   readonly invariant: InvariantDefinition;
+  readonly invariantDefinitionId?: string;
   readonly sourceProvenance: Pick<SourceProvenance, 'repoId' | 'derivationVersion' | 'evidenceDigest' | 'sha'>;
   readonly fingerprint: string;
   readonly reproduced?: boolean;
@@ -216,27 +257,30 @@ export function clusterSemanticObservations(observations: readonly SemanticObser
     if (obs.sourceProvenance.sha !== undefined && !SHA_RE.test(obs.sourceProvenance.sha)) throw new Error('SEMANTIC_CLUSTER_SHA_INVALID');
     assertSafe(obs.fingerprint, 'fingerprint');
     assertSafe(obs.runId, 'runId');
-    const key = semanticClusterKey({
-      expectationId: obs.expectationId,
-      targetId: obs.targetId,
-      invariant: obs.invariant,
-      sourceProvenance: {
-        repoId: obs.sourceProvenance.repoId,
-        derivationVersion: obs.sourceProvenance.derivationVersion,
-        evidenceDigest: obs.sourceProvenance.evidenceDigest,
-      },
-    });
-    const contractIdentity = semanticContractIdentity({
-      expectationId: obs.expectationId,
-      targetId: obs.targetId,
-      invariant: obs.invariant,
-      sourceProvenance: {
-        repoId: obs.sourceProvenance.repoId,
-        derivationVersion: obs.sourceProvenance.derivationVersion,
-        evidenceDigest: obs.sourceProvenance.evidenceDigest,
-      },
-    });
-    const invId = semanticInvariantDefinitionId(obs.invariant);
+    if (obs.invariantDefinitionId === undefined && obs.invariant === undefined) throw new Error('SEMANTIC_CLUSTER_INVARIANT_MISSING');
+    const contractIdentity = obs.invariantDefinitionId === undefined
+      ? semanticContractIdentity({
+          expectationId: obs.expectationId,
+          targetId: obs.targetId,
+          invariant: obs.invariant!,
+          sourceProvenance: {
+            repoId: obs.sourceProvenance.repoId,
+            derivationVersion: obs.sourceProvenance.derivationVersion,
+            evidenceDigest: obs.sourceProvenance.evidenceDigest,
+          },
+        })
+      : semanticContractIdentityFromInvariantId({
+          expectationId: obs.expectationId,
+          targetId: obs.targetId,
+          invariantDefinitionId: obs.invariantDefinitionId,
+          sourceProvenance: {
+            repoId: obs.sourceProvenance.repoId,
+            derivationVersion: obs.sourceProvenance.derivationVersion,
+            evidenceDigest: obs.sourceProvenance.evidenceDigest,
+          },
+        });
+    const key = `sc:sha256:${boundedIdentityDigest({ version: SEMANTIC_CLUSTER_VERSION, sci: contractIdentity })}`;
+    const invId = obs.invariantDefinitionId ?? semanticInvariantDefinitionId(obs.invariant!);
     const bucket = buckets.get(key) ?? [];
     bucket.push(obs);
     buckets.set(key, bucket);

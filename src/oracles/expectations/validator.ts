@@ -29,6 +29,7 @@ const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/;
 const EXPECTED_TYPES = new Set(['NULL', 'BOOLEAN', 'NUMBER', 'STRING', 'OBJECT', 'ARRAY']);
 const ENVELOPE_CLASSES: ReadonlySet<EnvelopeClass> = new Set(['SUCCESS_ENVELOPE', 'ERROR_ENVELOPE', 'UNKNOWN_ENVELOPE']);
 const TRANSITIONS: ReadonlySet<TransitionExpectation> = new Set(['CHANGE', 'REMAIN_STABLE', 'UNKNOWN']);
+const EQUALITY_EXPECTATIONS: ReadonlySet<string> = new Set(['EQUAL', 'NOT_EQUAL']);
 const INVARIANT_KINDS: ReadonlySet<string> = new Set([
   'FIELD_PRESENT',
   'FIELD_ABSENT',
@@ -44,12 +45,19 @@ const INVARIANT_KINDS: ReadonlySet<string> = new Set([
   // Phase 11: collection-wide item contract (admitted through the real-source
   // collection admission bridge; never hand-authored outside that transform).
   'COLLECTION_ITEM_CONTRACT',
+  'IDENTITY_UNIQUENESS',
+  'PAGINATION_WINDOW',
+  'EMPTY_STATE_CONSISTENCY',
+  'STATE_RELATION',
+  'SURFACE_EQUIVALENCE',
 ]);
 
 function expectRecord(value: unknown, label: string): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error(`SEMANTIC_EXPECTATION_INVALID:${label}-not-an-object`);
   }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error(`SEMANTIC_EXPECTATION_INVALID:${label}-prototype`);
   return value as Record<string, unknown>;
 }
 
@@ -247,6 +255,49 @@ function validateInvariant(value: unknown, index: number): InvariantDefinition {
       const statePath = record['statePath'] === undefined ? undefined : validateSafePath(record['statePath'], `invariant[${index}].statePath`);
       assertNoUnknownFields(record, new Set(['kind', 'expectedTransition', 'statePath']), `invariant[${index}]`);
       return { kind, expectedTransition: expectedTransition as TransitionExpectation, ...(statePath === undefined ? {} : { statePath }) };
+    }
+    case 'IDENTITY_UNIQUENESS': {
+      const relationId = expectId(record['relationId'], `invariant[${index}].relationId`);
+      const collectionPath = validateSafePath(record['collectionPath'], `invariant[${index}].collectionPath`);
+      const itemIdentityPath = validateSafePath(record['itemIdentityPath'], `invariant[${index}].itemIdentityPath`);
+      if (itemIdentityPath.length === 0) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemIdentityPath-empty`);
+      assertNoUnknownFields(record, new Set(['kind', 'relationId', 'collectionPath', 'itemIdentityPath']), `invariant[${index}]`);
+      return { kind, relationId, collectionPath, itemIdentityPath };
+    }
+    case 'PAGINATION_WINDOW': {
+      const relationId = expectId(record['relationId'], `invariant[${index}].relationId`);
+      const leftCollectionPath = validateSafePath(record['leftCollectionPath'], `invariant[${index}].leftCollectionPath`);
+      const rightCollectionPath = validateSafePath(record['rightCollectionPath'], `invariant[${index}].rightCollectionPath`);
+      const itemIdentityPath = validateSafePath(record['itemIdentityPath'], `invariant[${index}].itemIdentityPath`);
+      if (itemIdentityPath.length === 0) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].itemIdentityPath-empty`);
+      assertNoUnknownFields(record, new Set(['kind', 'relationId', 'leftCollectionPath', 'rightCollectionPath', 'itemIdentityPath']), `invariant[${index}]`);
+      return { kind, relationId, leftCollectionPath, rightCollectionPath, itemIdentityPath };
+    }
+    case 'EMPTY_STATE_CONSISTENCY': {
+      const relationId = expectId(record['relationId'], `invariant[${index}].relationId`);
+      const collectionPath = validateSafePath(record['collectionPath'], `invariant[${index}].collectionPath`);
+      const countPath = validateSafePath(record['countPath'], `invariant[${index}].countPath`);
+      const emptyMarkerPath = validateSafePath(record['emptyMarkerPath'], `invariant[${index}].emptyMarkerPath`);
+      assertNoUnknownFields(record, new Set(['kind', 'relationId', 'collectionPath', 'countPath', 'emptyMarkerPath']), `invariant[${index}]`);
+      return { kind, relationId, collectionPath, countPath, emptyMarkerPath };
+    }
+    case 'STATE_RELATION': {
+      const relationId = expectId(record['relationId'], `invariant[${index}].relationId`);
+      const beforePath = validateSafePath(record['beforePath'], `invariant[${index}].beforePath`);
+      const afterPath = validateSafePath(record['afterPath'], `invariant[${index}].afterPath`);
+      const expected = expectString(record['expected'], `invariant[${index}].expected`);
+      if (!EQUALITY_EXPECTATIONS.has(expected)) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].expected-unsupported`);
+      assertNoUnknownFields(record, new Set(['kind', 'relationId', 'beforePath', 'afterPath', 'expected']), `invariant[${index}]`);
+      return { kind, relationId, beforePath, afterPath, expected: expected as 'EQUAL' | 'NOT_EQUAL' };
+    }
+    case 'SURFACE_EQUIVALENCE': {
+      const relationId = expectId(record['relationId'], `invariant[${index}].relationId`);
+      const leftPath = validateSafePath(record['leftPath'], `invariant[${index}].leftPath`);
+      const rightPath = validateSafePath(record['rightPath'], `invariant[${index}].rightPath`);
+      const expected = expectString(record['expected'], `invariant[${index}].expected`);
+      if (!EQUALITY_EXPECTATIONS.has(expected)) throw new Error(`SEMANTIC_EXPECTATION_INVALID:invariant[${index}].expected-unsupported`);
+      assertNoUnknownFields(record, new Set(['kind', 'relationId', 'leftPath', 'rightPath', 'expected']), `invariant[${index}]`);
+      return { kind, relationId, leftPath, rightPath, expected: expected as 'EQUAL' | 'NOT_EQUAL' };
     }
     case 'COLLECTION_ITEM_CONTRACT': {
       const collectionPath = validateSafePath(record['collectionPath'], `invariant[${index}].collectionPath`);

@@ -4,6 +4,9 @@
 // Deterministic, no network/browser/fs/child-process/DB/AI authority.
 // ---------------------------------------------------------------------------
 
+import { validateSemanticReplayFidelityReceipt, type SemanticReplayFidelityReceipt } from './semanticReplay';
+import { SEMANTIC_FINDING_CATEGORIES, type SemanticFindingCategory } from '../../oracles/semantic/types';
+
 export const SEMANTIC_TRIAGE_EVIDENCE_VERSION = 'nightwatch.semantic-triage-evidence.v1' as const;
 
 export type SemanticTriageSourceCurrentness =
@@ -79,11 +82,17 @@ export interface SemanticTriageEvidence {
   readonly sourceEvidenceDigest: string;
   readonly sourceDerivationVersion: string;
   readonly sourceCurrentness: SemanticTriageSourceCurrentness;
+  /** Safe anomaly vocabulary for owner review; omitted by historical v1
+   * evidence that predates the Phase 18 semantic-depth bridge. */
+  readonly findingCategory?: SemanticFindingCategory;
   readonly exactReplayStatus: TriageExactReplayStatus;
   readonly exactFingerprintMatch: boolean;
   readonly minimalityGuarantee: TriageMinimalityGuarantee;
   readonly freshContextReproductions: number;
   readonly minimalSequenceReproductions: number;
+  /** Optional Phase 18 occurrence/semantic identity proof. Omitted on
+   * historical v1 evidence so legacy fixtures remain byte-meaning stable. */
+  readonly replayFidelity?: SemanticReplayFidelityReceipt;
   readonly missingEvidence: readonly MissingEvidenceCode[];
 }
 
@@ -110,11 +119,13 @@ const ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'sourceEvidenceDigest',
   'sourceDerivationVersion',
   'sourceCurrentness',
+  'findingCategory',
   'exactReplayStatus',
   'exactFingerprintMatch',
   'minimalityGuarantee',
   'freshContextReproductions',
   'minimalSequenceReproductions',
+  'replayFidelity',
   'missingEvidence',
 ]);
 
@@ -144,6 +155,9 @@ function assertNoSentinels(value: unknown, path = 'triageEvidence'): void {
 }
 
 export function validateSemanticTriageEvidence(evidence: SemanticTriageEvidence): void {
+  if (evidence === null || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('TRIAGE_EVIDENCE_NOT_OBJECT');
+  const prototype = Object.getPrototypeOf(evidence);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error('TRIAGE_EVIDENCE_PROTOTYPE_INVALID');
   if (evidence.schemaVersion !== SEMANTIC_TRIAGE_EVIDENCE_VERSION) throw new Error('TRIAGE_EVIDENCE_VERSION_INVALID');
   for (const key of Object.keys(evidence)) {
     if (!ALLOWED_KEYS.has(key)) throw new Error(`TRIAGE_EVIDENCE_UNKNOWN_FIELD:${key}`);
@@ -161,6 +175,7 @@ export function validateSemanticTriageEvidence(evidence: SemanticTriageEvidence)
   if (!EVIDENCE_DIGEST_RE.test(evidence.sourceEvidenceDigest)) throw new Error('TRIAGE_EVIDENCE_EVIDENCE_DIGEST_INVALID');
   if (!GENERIC_VERSION_RE.test(evidence.sourceDerivationVersion)) throw new Error('TRIAGE_EVIDENCE_DERIVATION_VERSION_INVALID');
   if (!VALID_CURRENTNESS.has(evidence.sourceCurrentness)) throw new Error('TRIAGE_EVIDENCE_CURRENTNESS_INVALID');
+  if (evidence.findingCategory !== undefined && !SEMANTIC_FINDING_CATEGORIES.includes(evidence.findingCategory)) throw new Error('TRIAGE_EVIDENCE_FINDING_CATEGORY_INVALID');
   if (!VALID_REPLAY.has(evidence.exactReplayStatus)) throw new Error('TRIAGE_EVIDENCE_REPLAY_STATUS_INVALID');
   if (typeof evidence.exactFingerprintMatch !== 'boolean') throw new Error('TRIAGE_EVIDENCE_FINGERPRINT_MATCH_INVALID');
   if (!VALID_MINIMALITY.has(evidence.minimalityGuarantee)) throw new Error('TRIAGE_EVIDENCE_MINIMALITY_INVALID');
@@ -168,6 +183,7 @@ export function validateSemanticTriageEvidence(evidence: SemanticTriageEvidence)
     const v = (evidence as unknown as Record<string, unknown>)[field];
     if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 100) throw new Error(`TRIAGE_EVIDENCE_COUNT_INVALID:${field}`);
   }
+  if (evidence.replayFidelity !== undefined) validateSemanticReplayFidelityReceipt(evidence.replayFidelity);
   if (!Array.isArray(evidence.missingEvidence)) throw new Error('TRIAGE_EVIDENCE_MISSING_EVIDENCE_NOT_ARRAY');
   const seen = new Set<string>();
   for (const code of evidence.missingEvidence) {
@@ -239,11 +255,13 @@ export function createSemanticTriageEvidence(input: SemanticTriageEvidenceInput)
     sourceEvidenceDigest: input.sourceEvidenceDigest,
     sourceDerivationVersion: input.sourceDerivationVersion,
     sourceCurrentness: input.sourceCurrentness,
+    ...(input.findingCategory === undefined ? {} : { findingCategory: input.findingCategory }),
     exactReplayStatus: input.exactReplayStatus,
     exactFingerprintMatch: input.exactFingerprintMatch,
     minimalityGuarantee: input.minimalityGuarantee,
     freshContextReproductions: input.freshContextReproductions,
     minimalSequenceReproductions: input.minimalSequenceReproductions,
+    ...(input.replayFidelity === undefined ? {} : { replayFidelity: input.replayFidelity }),
     missingEvidence: [...(input.missingEvidence ?? [])].sort() as readonly MissingEvidenceCode[],
   };
   validateSemanticTriageEvidence(evidence);

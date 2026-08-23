@@ -86,7 +86,7 @@ class Projector {
     if (value === null) return { type: 'NULL' };
     switch (typeof value) {
       case 'boolean':
-        return { type: 'BOOLEAN' };
+        return { type: 'BOOLEAN', booleanClass: value ? 'TRUE' : 'FALSE' };
       case 'number':
         if (!Number.isFinite(value)) {
           throw new SemanticProjectionError(

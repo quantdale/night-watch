@@ -16,7 +16,13 @@ export function normalizeExecutorOutcome(result: CandidateReplayOutcome, targetF
   // Exact fingerprint equality is load-bearing: a different fingerprint is
   // not reproduced, and must not be observable as a target FAILURE.
   if (result.status === 'FAILURE' && result.anomalyFingerprint !== undefined && result.anomalyFingerprint !== targetFingerprint) {
-    return { status: 'PASS', safety: result.safety, routeClass: result.routeClass };
+    return {
+      status: 'PASS',
+      safety: result.safety,
+      routeClass: result.routeClass,
+      ...(result.semanticFindingFingerprint === undefined ? {} : { semanticFindingFingerprint: result.semanticFindingFingerprint }),
+      ...(result.semanticContractIdentity === undefined ? {} : { semanticContractIdentity: result.semanticContractIdentity }),
+    };
   }
   return result;
 }

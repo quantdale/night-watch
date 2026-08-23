@@ -136,8 +136,18 @@ export interface CandidateGuardResult {
 export interface CandidateReplayOutcome {
   readonly status: 'FAILURE' | 'PASS' | 'INVALID';
   readonly anomalyFingerprint?: string;
+  /** Optional semantic identity emitted by a semantic-aware replay adapter.
+   * It is deliberately separate from the protocol/target fingerprint so a
+   * replay cannot prove semantic equivalence by echoing only transport-level
+   * failure identity. */
+  readonly semanticFindingFingerprint?: string;
+  readonly semanticContractIdentity?: string;
   readonly safety: SafetyVector;
   readonly invalidReason?: CandidateGuardResult['reason'];
+  /** Ephemeral bounded executor health signal; never persisted in replay
+   * envelopes. It keeps minimization taxonomy distinct from product
+   * non-reproduction. */
+  readonly executorFailure?: 'EXECUTOR_THROW' | 'EXECUTOR_NONDETERMINISTIC';
   readonly routeClass?: string;
 }
 
@@ -161,6 +171,13 @@ export interface MinimizationOptions {
 
 export interface CandidateEvaluation {
   readonly sequence: readonly string[];
+  /** Phase 18 occurrence identity captured before action IDs are projected
+   * into the legacy public sequence. Omitted by historical v1 fixtures. */
+  readonly occurrenceOrdinals?: readonly number[];
+  /** Bounded semantic identity observed by the replay adapter. These fields
+   * are optional for historical protocol-only evaluations. */
+  readonly semanticFindingFingerprint?: string;
+  readonly semanticContractIdentity?: string;
   readonly disposition: 'REPRODUCES' | 'DOES_NOT_REPRODUCE' | 'INVALID' | 'NOT_EVALUATED_BUDGET';
   readonly reason: string;
   readonly fingerprintMatch: boolean;
@@ -198,6 +215,9 @@ export interface MinimizationResult {
   readonly status: 'MINIMIZED' | 'UNCHANGED' | 'NO_REPRODUCTION' | 'BOUNDED_BUDGET_EXHAUSTED' | 'INVALID_ORIGINAL';
   readonly originalSequence: readonly string[];
   readonly minimalReproducingSequence: readonly string[];
+  /** Occurrence binding for the minimal sequence. Optional for historical
+   * minimization records whose public sequence had IDs only. */
+  readonly minimalReproducingOccurrenceOrdinals?: readonly number[];
   readonly removedActions: readonly string[];
   readonly reproductionCount: number;
   readonly anomalyFingerprint: string;

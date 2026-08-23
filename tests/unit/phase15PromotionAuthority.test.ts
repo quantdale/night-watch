@@ -60,7 +60,8 @@ import { TRIAGE_REPLAY_PLAN_VERSION, TRIAGE_REPLAY_PLAN_V2_VERSION } from '../..
 import { DOSSIER_VERSION_V2, parseBugDossierV2 } from '../../src/core/triage/dossierV2';
 import type { BugDossierV2 } from '../../src/core/triage/dossierV2';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
-import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
+import { semanticPromotionEligible } from '../../src/core/triage/promotionResult';
+import { SEMANTIC_CLUSTER_VERSION, semanticContractIdentityFromInvariantId } from '../../src/oracles/semantic/cluster';
 import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION, createSemanticCampaignBundle, type SemanticCampaignBundle } from '../../src/core/source/semanticCampaignBundle';
 import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/receipts';
 import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
@@ -261,12 +262,21 @@ function candidate(options: CandidateOptions): CampaignAnomalyCandidate {
   const sequence = (options.sequence ?? [...JOURNEY_STEPS]).map((id) => action(id, routeClass));
   const fingerprint = options.fingerprint;
   const predicate = options.predicate ?? ((ids: readonly string[]) => ids.length > 0);
+  const semanticContractIdentity = options.semantic === undefined ? undefined : semanticContractIdentityFromInvariantId({
+    expectationId: TARGET,
+    targetId: TARGET,
+    invariantDefinitionId: SYNTHETIC_INVARIANT,
+    sourceProvenance: { repoId: 'corpus/phase15/source-fixture', derivationVersion: DERIVATION_VERSION, evidenceDigest: SYNTHETIC_DIGEST },
+  });
   const replay = (sequenceToReplay: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => {
     options.calls?.push({ phase, actionIds: sequenceToReplay.map((item) => item.actionId) });
     const reproduces = predicate(sequenceToReplay.map((item) => item.actionId));
     return {
       status: reproduces ? 'FAILURE' as const : 'PASS' as const,
-      ...(reproduces ? { anomalyFingerprint: fingerprint } : {}),
+      ...(reproduces ? {
+        anomalyFingerprint: options.semantic === undefined ? fingerprint : SYNTHETIC_FINDING_FP,
+        ...(options.semantic === undefined ? {} : { semanticFindingFingerprint: SYNTHETIC_FINDING_FP, semanticContractIdentity }),
+      } : {}),
       safety: SAFE_TRIAGE,
     };
   };
@@ -468,7 +478,7 @@ test.describe('Phase 15 Session 2 Wave 2 — promotion authority through the rea
     }
   });
 
-  test('current coherent semantic candidate with fresh + minimal reproduction evidence is READY/HIGH/DOSSIER_READY and eligible', async () => {
+  test('current coherent semantic candidate with exact but non-minimized journey replay stays UNRESOLVED', async () => {
     clearCampaignSemanticBundles();
     const bundle = coherentBundle();
     registerCampaignSemanticBundles([bundle]);
@@ -483,31 +493,34 @@ test.describe('Phase 15 Session 2 Wave 2 — promotion authority through the rea
       const orchestrator = new CampaignOrchestrator(manifest, scriptedExecutor(new Map([['journey:ripple-payer-exchange-read', [observation]]])), { store, now: () => new Date(STATIC_NOW) });
       const result = await orchestrator.run();
       const entry = result.checkpoint.dossierLedger[0]!;
-      expect(entry.state).toBe('READY');
+      expect(entry.state).toBe('INCOMPLETE');
       expect(entry.dossierVersion).toBe(DOSSIER_VERSION_V2);
-      expect(result.checkpoint.bugCandidates).toContain(entry.candidateId);
+      expect(result.checkpoint.bugCandidates).not.toContain(entry.candidateId);
       const dossier = readV2Dossier(root, entry.artifactPath);
-      expect(dossier.status).toBe('READY');
-      expect(dossier.semanticConfidence?.level).toBe('HIGH');
-      expect(dossier.semanticConfidence?.blockers).toEqual([]);
+      expect(dossier.status).toBe('UNRESOLVED');
+      expect(dossier.semanticConfidence?.level).not.toBe('HIGH');
+      expect(dossier.semanticConfidence?.blockers).toBeDefined();
       expect(dossier.semanticTriageEvidence?.exactReplayStatus).toBe('REPRODUCED');
-      expect(dossier.semanticTriageEvidence?.minimalityGuarantee).not.toBe('NONE');
+      expect(dossier.semanticTriageEvidence?.replayFidelity?.outcomeClass).toBe('REPRODUCED_EXACT');
+      expect(dossier.semanticTriageEvidence?.minimalityGuarantee).toBe('NONE');
+      expect(dossier.semanticTriageEvidence?.minimalSequenceReproductions).toBe(0);
       const lifecycle = lifecycleFor(result.checkpoint, entry.clusterId);
       expect(lifecycle.variant).toBe('SEMANTIC');
-      expect(lifecycle.state).toBe('DOSSIER_READY');
-      expect(lifecycle.lastReasonCode).toBe('DOSSIER_READY');
-      // Converged promotion verdict is eligible; v2 stays out of v1 findings.
+      expect(lifecycle.state).toBe('UNRESOLVED');
+      expect(lifecycle.lastReasonCode).toBe('DOSSIER_UNRESOLVED');
+      // Converged promotion verdict remains ineligible; v2 stays out of v1 findings.
       const promotions = orchestrator.promotionResults;
       expect(promotions).toHaveLength(1);
       expect(promotions[0]!.clusterKind).toBe('SEMANTIC');
-      expect(promotions[0]!.readiness).toBe('READY');
-      expect(promotions[0]!.confidence).toBe('HIGH');
+      expect(promotions[0]!.readiness).toBe('UNRESOLVED');
+      expect(promotions[0]!.confidence).not.toBe('HIGH');
       expect(promotions[0]!.replayEvidence).toBe('EXACT_REPLAY_REPRODUCED');
       expect(promotions[0]!.sourceCurrentness).toBe('CURRENT');
       expect(promotions[0]!.dossierVersionTarget).toBe(DOSSIER_VERSION_V2);
-      expect(result.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+      expect(semanticPromotionEligible(promotions[0]!)).toBe(false);
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
       expect(result.morningBrief.topFindings).toEqual([]);
-      expect(result.morningBrief.whatRan).toContain('semanticDossiersV2Ready=1');
+      expect(result.morningBrief.whatRan).toContain('semanticDossiersV2Unresolved=1');
     } finally {
       clearCampaignSemanticBundles();
       cleanup(root);
@@ -737,9 +750,19 @@ test.describe('Phase 15 Session 2 Wave 2 — promotion authority through the rea
         // replay capability itself, so this fixture does the same.
         reproduce: async ({ representative }) => {
           const fingerprint = representative.observation.fingerprint;
+          const semanticEvidence = representative.campaignSemanticEvidence;
+          const semanticContractIdentity = semanticEvidence === undefined ? undefined : semanticContractIdentityFromInvariantId({
+            expectationId: semanticEvidence.expectationId,
+            targetId: semanticEvidence.targetId,
+            invariantDefinitionId: semanticEvidence.invariantDefinitionId,
+            sourceProvenance: { repoId: semanticEvidence.sourceRepoId, derivationVersion: semanticEvidence.sourceDerivationVersion, evidenceDigest: semanticEvidence.sourceEvidenceDigest },
+          });
           const replay = (seq: readonly MinimizationAction[]) => ({
             status: seq.length > 0 ? 'FAILURE' as const : 'PASS' as const,
-            ...(seq.length > 0 ? { anomalyFingerprint: fingerprint } : {}),
+            ...(seq.length > 0 ? {
+              anomalyFingerprint: semanticEvidence?.findingFingerprint ?? fingerprint,
+              ...(semanticEvidence === undefined ? {} : { semanticFindingFingerprint: semanticEvidence.findingFingerprint, semanticContractIdentity }),
+            } : {}),
             safety: SAFE_TRIAGE,
           });
           return {
@@ -764,19 +787,20 @@ test.describe('Phase 15 Session 2 Wave 2 — promotion authority through the rea
       expect(firstItemExecutions).toBe(1);
 
       // Resume completes promotion from the persisted checkpoint without
-      // re-running the completed work item, and the lifecycle reaches
-      // DOSSIER_READY across the resume boundary.
+      // re-running the completed work item, and preserves the unresolved
+      // semantic lifecycle because the journey still has no reduced proof.
       const resumed = await resumeCampaign(manifest, countingExecutor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
       expect(firstItemExecutions).toBe(1);
-      expect(resumed.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+      expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
       expect(resumed.checkpoint.runtimeContractVersions).toEqual({ ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED });
       expect(() => validateCampaignCheckpoint(resumed.checkpoint, manifest)).not.toThrow();
       const resumedEntry = resumed.checkpoint.dossierLedger[0]!;
       expect(resumedEntry.dossierVersion).toBe(DOSSIER_VERSION_V2);
-      expect(resumedEntry.state).toBe('READY');
+      expect(resumedEntry.state).toBe('INCOMPLETE');
       const lifecycle = lifecycleFor(resumed.checkpoint, resumedEntry.clusterId);
       expect(lifecycle.variant).toBe('SEMANTIC');
-      expect(lifecycle.state).toBe('DOSSIER_READY');
+      expect(lifecycle.state).toBe('UNRESOLVED');
+      expect(lifecycle.lastReasonCode).toBe('DOSSIER_UNRESOLVED');
     } finally {
       clearCampaignSemanticBundles();
       cleanup(root);

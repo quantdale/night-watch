@@ -13,4 +13,5 @@ export * from './compatibility';
 export * from './pipeline';
 export * from './semanticTriageEvidence';
 export * from './semanticConfidence';
+export * from './semanticReplay';
 export * from './dossierV2';

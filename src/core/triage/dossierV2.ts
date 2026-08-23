@@ -113,6 +113,11 @@ function aiReady(input: {
         semanticFindingFingerprint: input.semanticTriageEvidence.semanticFindingFingerprint,
         sourceCurrentness: input.semanticTriageEvidence.sourceCurrentness,
         exactReplayStatus: input.semanticTriageEvidence.exactReplayStatus,
+        ...(input.semanticTriageEvidence.replayFidelity === undefined ? {} : {
+          replayOutcomeClass: input.semanticTriageEvidence.replayFidelity.outcomeClass,
+          occurrenceBinding: input.semanticTriageEvidence.replayFidelity.occurrenceBinding,
+          replayDeterministic: input.semanticTriageEvidence.replayFidelity.deterministic,
+        }),
       }),
     },
     allowedUses: ['SUMMARIZE', 'RANK', 'HYPOTHESIZE', 'SUGGEST_SOURCE_LOCATIONS'],
@@ -222,6 +227,15 @@ export function isReadySemanticDossier(input: BugDossierV2Input): { ready: boole
     }
     if (e.exactReplayStatus !== 'REPRODUCED' || !e.exactFingerprintMatch) {
       return { ready: false, reason: 'EXACT_REPLAY_REQUIRED' };
+    }
+    if (e.replayFidelity !== undefined) {
+      if (e.replayFidelity.sourceCurrentness !== 'CURRENT') return { ready: false, reason: 'SOURCE_CURRENTNESS_UNRESOLVED' };
+      if (e.replayFidelity.outcomeClass !== 'REPRODUCED_EXACT' || e.replayFidelity.occurrenceBinding !== 'BOUND') {
+        return { ready: false, reason: 'EXACT_REPLAY_REQUIRED' };
+      }
+      if (!e.replayFidelity.safetyClean || !e.replayFidelity.deterministic) {
+        return { ready: false, reason: 'SAFETY_PRIVACY_NONZERO' };
+      }
     }
     if (input.knownNightwatchDefect !== null) return { ready: false, reason: 'KNOWN_FALSE_POSITIVE_PRESENT' };
     if (!safetyClean || !privacyClean) return { ready: false, reason: 'SAFETY_PRIVACY_NONZERO' };
@@ -345,8 +359,22 @@ const ALLOWED_V2_KEYS = new Set([
   'schemaVersion','status','candidateId','title','firstObserved','lastObserved','journeys','seeds','minimalSequence','routeClass','apiOperationFamily','oracleFingerprint','evidenceLevel','l4Datastore','reproduction','browserApiDifferential','sourceChangeCandidates','likelyFaultBoundary','confidence','semanticConfidence','technicalSeverity','triagePriority','knownNightwatchDefect','alternativesRuledOut','missingEvidence','semanticEvidence','semanticTriageEvidence','humanReproductionRecipe','aiReady','safety','privacy',
 ]);
 
-export function validateBugDossierV2(dossier: BugDossierV2): void {
-  if (dossier.schemaVersion !== DOSSIER_VERSION_V2) throw new Error('DOSSIER_V2_VERSION_INVALID');
+export function validateBugDossierV2(dossier: BugDossierV2): void;
+export function validateBugDossierV2(dossier: unknown): asserts dossier is BugDossierV2;
+export function validateBugDossierV2(value: unknown): void {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('DOSSIER_V2_NOT_OBJECT');
+  const rootPrototype = Object.getPrototypeOf(value);
+  if (rootPrototype !== Object.prototype && rootPrototype !== null) throw new Error('DOSSIER_V2_PROTOTYPE_INVALID');
+  const record = value as Record<string, unknown>;
+  if (record.schemaVersion !== DOSSIER_VERSION_V2) throw new Error('DOSSIER_V2_VERSION_INVALID');
+  const requiredKeys = ['schemaVersion', 'status', 'candidateId', 'title', 'firstObserved', 'lastObserved', 'journeys', 'seeds', 'minimalSequence', 'routeClass', 'apiOperationFamily', 'oracleFingerprint', 'evidenceLevel', 'l4Datastore', 'reproduction', 'browserApiDifferential', 'sourceChangeCandidates', 'likelyFaultBoundary', 'confidence', 'technicalSeverity', 'triagePriority', 'knownNightwatchDefect', 'alternativesRuledOut', 'missingEvidence', 'semanticEvidence', 'semanticTriageEvidence', 'humanReproductionRecipe', 'aiReady', 'safety', 'privacy'];
+  for (const key of requiredKeys) if (!Object.prototype.hasOwnProperty.call(record, key)) throw new Error(`DOSSIER_V2_REQUIRED_FIELD:${key}`);
+  for (const [field, value] of [['safety', record.safety], ['privacy', record.privacy], ['reproduction', record.reproduction], ['humanReproductionRecipe', record.humanReproductionRecipe], ['aiReady', record.aiReady]] as const) {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error(`DOSSIER_V2_${field.toUpperCase()}_INVALID`);
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) throw new Error(`DOSSIER_V2_${field.toUpperCase()}_PROTOTYPE_INVALID`);
+  }
+  const dossier = value as BugDossierV2;
   for (const key of Object.keys(dossier)) {
     if (!ALLOWED_V2_KEYS.has(key)) throw new Error(`DOSSIER_V2_UNKNOWN_FIELD:${key}`);
   }
@@ -373,8 +401,10 @@ export function validateBugDossierV2(dossier: BugDossierV2): void {
 /** Parse and validate a v2 dossier (unknown fields rejected). */
 export function parseBugDossierV2(raw: unknown): BugDossierV2 {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('DOSSIER_V2_NOT_OBJECT');
-  validateBugDossierV2(raw as BugDossierV2);
-  return raw as BugDossierV2;
+  const prototype = Object.getPrototypeOf(raw);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error('DOSSIER_V2_PROTOTYPE_INVALID');
+  validateBugDossierV2(raw);
+  return raw;
 }
 
 /** Backward compat: validate a v1 dossier remains readable via existing validateBugDossier. */

@@ -71,6 +71,21 @@ function numberValue(node: ProjectionNode | undefined, ctx: ProjectionContext): 
   return ctx.numericValue(node.numericRef);
 }
 
+function collectionIdentityTokens(node: ProjectionNode | undefined, identityPath: readonly string[]): readonly string[] | undefined {
+  if (node === undefined || node.type !== 'ARRAY' || node.items === undefined || node.items.length === 0) return undefined;
+  const tokens: string[] = [];
+  for (const item of node.items) {
+    const token = itemShapeTokens(item, identityPath);
+    if (token === undefined) return undefined;
+    tokens.push(token);
+  }
+  return tokens;
+}
+
+function equalityVerdict(equal: boolean, expected: 'EQUAL' | 'NOT_EQUAL'): 'PASS' | 'VIOLATED' {
+  return (expected === 'EQUAL' ? equal : !equal) ? 'PASS' : 'VIOLATED';
+}
+
 export function evaluateInvariant(
   invariant: InvariantDefinition,
   projections: readonly SemanticProjection[],
@@ -247,6 +262,62 @@ export function evaluateInvariant(
         return { invariantKind: invariant.kind, verdict: equal ? 'VIOLATED' : 'PASS' };
       }
       return { invariantKind: invariant.kind, verdict: equal ? 'PASS' : 'VIOLATED' };
+    }
+    case 'IDENTITY_UNIQUENESS': {
+      const root = projections[0]?.root;
+      if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const tokens = collectionIdentityTokens(resolvePath(root, invariant.collectionPath), invariant.itemIdentityPath);
+      if (tokens === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      return {
+        invariantKind: invariant.kind,
+        relationId: invariant.relationId,
+        verdict: new Set(tokens).size === tokens.length ? 'PASS' : 'VIOLATED',
+      };
+    }
+    case 'PAGINATION_WINDOW': {
+      const leftRoot = projections[0]?.root;
+      const rightRoot = projections[1]?.root;
+      if (leftRoot === undefined || rightRoot === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const leftTokens = collectionIdentityTokens(resolvePath(leftRoot, invariant.leftCollectionPath), invariant.itemIdentityPath);
+      const rightTokens = collectionIdentityTokens(resolvePath(rightRoot, invariant.rightCollectionPath), invariant.itemIdentityPath);
+      if (leftTokens === undefined || rightTokens === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const left = new Set(leftTokens);
+      const duplicate = rightTokens.some((token) => left.has(token));
+      return { invariantKind: invariant.kind, relationId: invariant.relationId, verdict: duplicate ? 'VIOLATED' : 'PASS' };
+    }
+    case 'EMPTY_STATE_CONSISTENCY': {
+      const root = projections[0]?.root;
+      if (root === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const collection = resolvePath(root, invariant.collectionPath);
+      const count = numberValue(resolvePath(root, invariant.countPath), ctx);
+      const marker = resolvePath(root, invariant.emptyMarkerPath);
+      if (collection === undefined || collection.type !== 'ARRAY' || collection.itemCount === undefined || count === undefined || marker === undefined || marker.type !== 'BOOLEAN' || marker.booleanClass === undefined) {
+        return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      }
+      if (!Number.isInteger(count) || count < 0) return { invariantKind: invariant.kind, verdict: 'INVALID_INPUT', relationId: invariant.relationId };
+      const expectedEmpty = count === 0;
+      const observedEmpty = marker.booleanClass === 'TRUE';
+      const collectionEmpty = collection.itemCount === 0;
+      const consistent = count === collection.itemCount && expectedEmpty === observedEmpty && expectedEmpty === collectionEmpty;
+      return { invariantKind: invariant.kind, relationId: invariant.relationId, verdict: consistent ? 'PASS' : 'VIOLATED' };
+    }
+    case 'STATE_RELATION': {
+      const before = projections[0]?.root;
+      const after = projections[1]?.root;
+      if (before === undefined || after === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const left = resolvePath(before, invariant.beforePath);
+      const right = resolvePath(after, invariant.afterPath);
+      if (left === undefined || right === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      return { invariantKind: invariant.kind, relationId: invariant.relationId, verdict: equalityVerdict(semanticStateEquals(left, right), invariant.expected) };
+    }
+    case 'SURFACE_EQUIVALENCE': {
+      const leftRoot = projections[0]?.root;
+      const rightRoot = projections[1]?.root;
+      if (leftRoot === undefined || rightRoot === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      const left = resolvePath(leftRoot, invariant.leftPath);
+      const right = resolvePath(rightRoot, invariant.rightPath);
+      if (left === undefined || right === undefined) return { invariantKind: invariant.kind, verdict: 'NOT_APPLICABLE', relationId: invariant.relationId };
+      return { invariantKind: invariant.kind, relationId: invariant.relationId, verdict: equalityVerdict(semanticStateEquals(left, right), invariant.expected) };
     }
     case 'COLLECTION_ITEM_CONTRACT': {
       const root = projections[0]?.root;

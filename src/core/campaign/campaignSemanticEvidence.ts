@@ -35,6 +35,11 @@ export type CampaignSemanticFindingCategory =
   | 'STALE_STATE_AFTER_TRANSITION'
   | 'AGGREGATE_RELATION_MISMATCH'
   | 'CARDINALITY_RELATION_MISMATCH'
+  | 'IDENTITY_UNIQUENESS_VIOLATION'
+  | 'PAGINATION_WINDOW_MISMATCH'
+  | 'EMPTY_STATE_CONTRADICTION'
+  | 'STATE_RELATION_MISMATCH'
+  | 'CROSS_SURFACE_MISMATCH'
   | 'SOURCE_EXPECTATION_MISMATCH';
 
 export interface CampaignSemanticEvidence {
@@ -102,6 +107,11 @@ const VALID_CATEGORY: ReadonlySet<string> = new Set([
   'STALE_STATE_AFTER_TRANSITION',
   'AGGREGATE_RELATION_MISMATCH',
   'CARDINALITY_RELATION_MISMATCH',
+  'IDENTITY_UNIQUENESS_VIOLATION',
+  'PAGINATION_WINDOW_MISMATCH',
+  'EMPTY_STATE_CONTRADICTION',
+  'STATE_RELATION_MISMATCH',
+  'CROSS_SURFACE_MISMATCH',
   'SOURCE_EXPECTATION_MISMATCH',
 ]);
 
@@ -123,33 +133,37 @@ function assertNoSentinel(value: unknown, path = 'campaignSemanticEvidence'): vo
   }
 }
 
-export function validateCampaignSemanticEvidence(evidence: CampaignSemanticEvidence): void {
-  if (evidence.schemaVersion !== CAMPAIGN_SEMANTIC_EVIDENCE_VERSION) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_VERSION_INVALID');
+export function validateCampaignSemanticEvidence(evidence: unknown): asserts evidence is CampaignSemanticEvidence {
+  if (evidence === null || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_NOT_OBJECT');
+  const prototype = Object.getPrototypeOf(evidence);
+  if (prototype !== Object.prototype && prototype !== null) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_PROTOTYPE_INVALID');
+  const typedEvidence = evidence as CampaignSemanticEvidence;
+  if (typedEvidence.schemaVersion !== CAMPAIGN_SEMANTIC_EVIDENCE_VERSION) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_VERSION_INVALID');
   for (const key of Object.keys(evidence)) {
     if (!ALLOWED_KEYS.has(key)) throw new Error(`CAMPAIGN_SEMANTIC_EVIDENCE_UNKNOWN_FIELD:${key}`);
   }
-  assertNoSentinel(evidence);
-  if (!BUNDLE_ID_RE.test(evidence.bundleId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_BUNDLE_ID_INVALID');
-  if (!SEMANTIC_BUNDLE_VERSION_RE.test(evidence.bundleVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_BUNDLE_VERSION_INVALID');
-  if (!SAFE_ID_RE.test(evidence.targetId) || SENTINEL_RE.test(evidence.targetId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_TARGET_ID_INVALID');
-  if (!SAFE_ID_RE.test(evidence.expectationId) || SENTINEL_RE.test(evidence.expectationId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_EXPECTATION_ID_INVALID');
-  if (!SAFE_ID_RE.test(evidence.sourceRepoId) || SENTINEL_RE.test(evidence.sourceRepoId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_SOURCE_REPO_INVALID');
-  if (!SHA_RE.test(evidence.sourceSha)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_SOURCE_SHA_INVALID');
-  if (!EVIDENCE_DIGEST_RE.test(evidence.sourceEvidenceDigest)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_DIGEST_INVALID');
-  if (!GENERIC_VERSION_RE.test(evidence.sourceDerivationVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_DERIVATION_INVALID');
-  if (!GENERIC_VERSION_RE.test(evidence.sourceAdmissionVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_ADMISSION_INVALID');
-  if (!VALID_RESOLVER.has(evidence.resolverState)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RESOLVER_STATE_INVALID');
-  if (!VALID_CURRENTNESS.has(evidence.sourceCurrentness)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_CURRENTNESS_INVALID');
-  if (!VALID_RECEIPT.has(evidence.receiptOutcome)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RECEIPT_OUTCOME_INVALID');
-  if (!RECEIPT_VERSION_RE.test(evidence.receiptVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RECEIPT_VERSION_INVALID');
-  if (evidence.coverageState !== undefined && !VALID_COVERAGE.has(evidence.coverageState)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_COVERAGE_INVALID');
-  if (!FINGERPRINT_RE.test(evidence.findingFingerprint)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_FINGERPRINT_INVALID');
-  if (!VALID_CATEGORY.has(evidence.findingCategory)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_CATEGORY_INVALID');
-  if (!INVARIANT_ID_RE.test(evidence.invariantDefinitionId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_INVARIANT_ID_INVALID');
+  assertNoSentinel(typedEvidence);
+  if (!BUNDLE_ID_RE.test(typedEvidence.bundleId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_BUNDLE_ID_INVALID');
+  if (!SEMANTIC_BUNDLE_VERSION_RE.test(typedEvidence.bundleVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_BUNDLE_VERSION_INVALID');
+  if (!SAFE_ID_RE.test(typedEvidence.targetId) || SENTINEL_RE.test(typedEvidence.targetId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_TARGET_ID_INVALID');
+  if (!SAFE_ID_RE.test(typedEvidence.expectationId) || SENTINEL_RE.test(typedEvidence.expectationId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_EXPECTATION_ID_INVALID');
+  if (!SAFE_ID_RE.test(typedEvidence.sourceRepoId) || SENTINEL_RE.test(typedEvidence.sourceRepoId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_SOURCE_REPO_INVALID');
+  if (!SHA_RE.test(typedEvidence.sourceSha)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_SOURCE_SHA_INVALID');
+  if (!EVIDENCE_DIGEST_RE.test(typedEvidence.sourceEvidenceDigest)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_DIGEST_INVALID');
+  if (!GENERIC_VERSION_RE.test(typedEvidence.sourceDerivationVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_DERIVATION_INVALID');
+  if (!GENERIC_VERSION_RE.test(typedEvidence.sourceAdmissionVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_ADMISSION_INVALID');
+  if (!VALID_RESOLVER.has(typedEvidence.resolverState)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RESOLVER_STATE_INVALID');
+  if (!VALID_CURRENTNESS.has(typedEvidence.sourceCurrentness)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_CURRENTNESS_INVALID');
+  if (!VALID_RECEIPT.has(typedEvidence.receiptOutcome)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RECEIPT_OUTCOME_INVALID');
+  if (!RECEIPT_VERSION_RE.test(typedEvidence.receiptVersion)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_RECEIPT_VERSION_INVALID');
+  if (typedEvidence.coverageState !== undefined && !VALID_COVERAGE.has(typedEvidence.coverageState)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_COVERAGE_INVALID');
+  if (!FINGERPRINT_RE.test(typedEvidence.findingFingerprint)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_FINGERPRINT_INVALID');
+  if (!VALID_CATEGORY.has(typedEvidence.findingCategory)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_CATEGORY_INVALID');
+  if (!INVARIANT_ID_RE.test(typedEvidence.invariantDefinitionId)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_INVARIANT_ID_INVALID');
   // Cross-field certification guard: no field of this DTO may carry a caller
   // certification token (REPRODUCED/HIGH/READY/CURRENT/SAFE) as raw value —
   // those signals are derived downstream from replay/confidence/dossier.
-  for (const value of Object.values(evidence)) {
+  for (const value of Object.values(typedEvidence)) {
     if (typeof value === 'string' && CERTIFICATION_RE.test(value) && !VALID_CURRENTNESS.has(value) && !VALID_RESOLVER.has(value)) {
       // Allow CURRENT only via the dedicated sourceCurrentness enum (already
       // validated above), and REPRODUCED/HIGH/READY/SAFE are never allowed.
@@ -159,22 +173,21 @@ export function validateCampaignSemanticEvidence(evidence: CampaignSemanticEvide
     }
   }
   // Coherence: a stale/unavailable currentness must not pair with PASS/ANOMALY receipt
-  if ((evidence.sourceCurrentness === 'STALE' || evidence.sourceCurrentness === 'UNAVAILABLE') &&
-      (evidence.receiptOutcome === 'PASS' || evidence.receiptOutcome === 'ANOMALY' || evidence.receiptOutcome === 'NOT_APPLICABLE')) {
+  if ((typedEvidence.sourceCurrentness === 'STALE' || typedEvidence.sourceCurrentness === 'UNAVAILABLE') &&
+      (typedEvidence.receiptOutcome === 'PASS' || typedEvidence.receiptOutcome === 'ANOMALY' || typedEvidence.receiptOutcome === 'NOT_APPLICABLE')) {
     throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_CURRENTNESS_RECEIPT_CONTRADICTION');
   }
 }
 
 export function parseCampaignSemanticEvidence(raw: unknown): CampaignSemanticEvidence {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('CAMPAIGN_SEMANTIC_EVIDENCE_NOT_OBJECT');
-  validateCampaignSemanticEvidence(raw as CampaignSemanticEvidence);
-  return raw as CampaignSemanticEvidence;
+  validateCampaignSemanticEvidence(raw);
+  return raw;
 }
 
 export function isCampaignSemanticCandidate(evidence: unknown): boolean {
   if (typeof evidence !== 'object' || evidence === null) return false;
   try {
-    validateCampaignSemanticEvidence(evidence as CampaignSemanticEvidence);
+    validateCampaignSemanticEvidence(evidence);
     return true;
   } catch {
     return false;

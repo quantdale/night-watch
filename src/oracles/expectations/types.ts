@@ -72,10 +72,16 @@ export type InvariantKind =
   | 'NUMERIC_SUM_RELATION'
   | 'COUNT_RELATION'
   | 'SHAPE_CHANGED'
-  | 'COLLECTION_ITEM_CONTRACT';
+  | 'COLLECTION_ITEM_CONTRACT'
+  | 'IDENTITY_UNIQUENESS'
+  | 'PAGINATION_WINDOW'
+  | 'EMPTY_STATE_CONSISTENCY'
+  | 'STATE_RELATION'
+  | 'SURFACE_EQUIVALENCE';
 
 export type EnvelopeClass = 'SUCCESS_ENVELOPE' | 'ERROR_ENVELOPE' | 'UNKNOWN_ENVELOPE';
 export type TransitionExpectation = 'CHANGE' | 'REMAIN_STABLE' | 'UNKNOWN';
+export type EqualityExpectation = 'EQUAL' | 'NOT_EQUAL';
 export type NumericRelationOperation =
   | 'SUM_EQUALS'
   | 'COUNT_EQUALS'
@@ -176,6 +182,56 @@ export interface ShapeChangedInvariant {
   readonly statePath?: SafePath;
 }
 
+/** Proves that every inspected entity identity in a collection is unique.
+ * A duplicate in an inspected window is conclusive even when the projection
+ * has additional uninspected items; absence of an identity is ambiguous. */
+export interface IdentityUniquenessInvariant {
+  readonly kind: 'IDENTITY_UNIQUENESS';
+  readonly relationId: string;
+  readonly collectionPath: SafePath;
+  readonly itemIdentityPath: SafePath;
+}
+
+/** Compares two bounded pagination windows. Duplicate identities across the
+ * windows are a business anomaly; missing/empty windows are not applicable. */
+export interface PaginationWindowInvariant {
+  readonly kind: 'PAGINATION_WINDOW';
+  readonly relationId: string;
+  readonly leftCollectionPath: SafePath;
+  readonly rightCollectionPath: SafePath;
+  readonly itemIdentityPath: SafePath;
+}
+
+/** Relates a semantic empty marker, reported count, and observed collection
+ * cardinality without exposing the marker's raw product value. */
+export interface EmptyStateConsistencyInvariant {
+  readonly kind: 'EMPTY_STATE_CONSISTENCY';
+  readonly relationId: string;
+  readonly collectionPath: SafePath;
+  readonly countPath: SafePath;
+  readonly emptyMarkerPath: SafePath;
+}
+
+/** Compares a bounded state field across two observations. This is distinct
+ * from SHAPE_CHANGED: it compares only the source-declared state relation. */
+export interface StateRelationInvariant {
+  readonly kind: 'STATE_RELATION';
+  readonly relationId: string;
+  readonly beforePath: SafePath;
+  readonly afterPath: SafePath;
+  readonly expected: EqualityExpectation;
+}
+
+/** Compares two sanitized surfaces (for example browser and API projections)
+ * using only structural/opaque semantic equality. */
+export interface SurfaceEquivalenceInvariant {
+  readonly kind: 'SURFACE_EQUIVALENCE';
+  readonly relationId: string;
+  readonly leftPath: SafePath;
+  readonly rightPath: SafePath;
+  readonly expected: EqualityExpectation;
+}
+
 // ---------------------------------------------------------------------------
 // Phase 11: collection-wide item contracts (bounded collection evaluation).
 //
@@ -236,7 +292,12 @@ export type InvariantDefinition =
   | NumericSumRelationInvariant
   | CountRelationInvariant
   | ShapeChangedInvariant
-  | CollectionItemContract;
+  | CollectionItemContract
+  | IdentityUniquenessInvariant
+  | PaginationWindowInvariant
+  | EmptyStateConsistencyInvariant
+  | StateRelationInvariant
+  | SurfaceEquivalenceInvariant;
 
 // ---------------------------------------------------------------------------
 // Expectation DTO (SPEC §16).

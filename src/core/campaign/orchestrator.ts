@@ -39,8 +39,7 @@ import {
   type CandidateLifecycleState,
   type CandidateLifecycleVariant,
 } from './candidateLifecycle';
-import { clusterSemanticObservations, semanticClusterKey, semanticContractIdentity, semanticInvariantDefinitionId } from '../../oracles/semantic/cluster';
-import type { InvariantDefinition } from '../../oracles/expectations/types';
+import { clusterSemanticObservations, semanticContractIdentityFromInvariantId } from '../../oracles/semantic/cluster';
 import { REAL_DEV_MINIMIZATION_BUDGET } from '../triage/types';
 import type {
   AnomalyCluster,
@@ -86,6 +85,7 @@ import {
   ZERO_CAMPAIGN_SAFETY,
 } from './types';
 import type { EvidenceLevel } from '../triage/types';
+import { createSemanticReplayFidelityReceipt, type SemanticReplayCurrentness, type SemanticReplayFidelityReceipt, type SemanticReplayOutcomeClass } from '../triage/semanticReplay';
 
 const DEFAULT_RESUME_RECIPE = [
   'validate owner policy and private storage',
@@ -202,23 +202,6 @@ function hasValidSemanticEvidence(candidate: CampaignAnomalyCandidate): boolean 
   } catch {
     return false;
   }
-}
-
-function invariantFromEvidence(evidence: import('./campaignSemanticEvidence').CampaignSemanticEvidence): InvariantDefinition {
-  // The invariant definition identity is the deterministic hash of the
-  // invariant contract. For campaign routing we recover a stable stub
-  // invariant keyed to the definition id via a synthetic FIELD_PRESENT
-  // path derived from the invariant hash. This preserves split/merge
-  // correctness (different invariantDefinitionId => different cluster)
-  // without embedding raw invariant JSON in campaign persistence.
-  // Downstream semantic promotion (M2) recovers the full invariant
-  // from the frozen expectation/bundle, not from this stub.
-  const hash = evidence.invariantDefinitionId.slice('inv:sha256:'.length);
-  return {
-    kind: 'FIELD_PRESENT',
-    path: [`__semantic_invariant__`, hash],
-    expected: true,
-  } as unknown as InvariantDefinition;
 }
 
 function toDossierSafety(safety: CampaignSafetyVector): BugDossier['safety'] {
@@ -468,6 +451,104 @@ function semanticOutcomeFromReceipt(receiptOutcome: CampaignSemanticEvidence['re
 function freshExactReplayStatus(freshExactReplay: 'REPRODUCED' | 'NOT_REPRODUCED' | 'INVALID'): 'FAILURE' | 'PASS' | 'INVALID' {
   if (freshExactReplay === 'REPRODUCED') return 'PASS';
   return freshExactReplay === 'INVALID' ? 'INVALID' : 'FAILURE';
+}
+
+function replayCurrentnessFor(value: CampaignSemanticEvidence['sourceCurrentness']): SemanticReplayCurrentness {
+  switch (value) {
+    case 'CURRENT': return 'CURRENT';
+    case 'STALE': return 'STALE';
+    case 'UNAVAILABLE': return 'MISSING';
+    case 'LOCAL_TRACKING_ONLY': return 'AMBIGUOUS';
+    case 'UNKNOWN': return 'AMBIGUOUS';
+  }
+}
+
+/** Build the Phase 18 receipt from the actual minimizer ledger. A historical
+ * fresh replay is insufficient: the retained candidate must have an actual
+ * occurrence-bound REPRODUCES evaluation before the receipt can say
+ * REPRODUCED_EXACT. */
+function semanticReplayFidelityFor(input: {
+  readonly candidate: CampaignAnomalyCandidate;
+  readonly evidence: CampaignSemanticEvidence;
+  readonly minimization: Awaited<ReturnType<typeof triageAnomaly>>['minimization'];
+  readonly safety: BugDossier['safety'];
+  readonly privacy: BugDossier['privacy'];
+}): SemanticReplayFidelityReceipt {
+  const expectedContractIdentity = semanticContractIdentityFromInvariantId({
+    expectationId: input.evidence.expectationId,
+    targetId: input.evidence.targetId,
+    invariantDefinitionId: input.evidence.invariantDefinitionId,
+    sourceProvenance: {
+      repoId: input.evidence.sourceRepoId,
+      derivationVersion: input.evidence.sourceDerivationVersion,
+      evidenceDigest: input.evidence.sourceEvidenceDigest,
+    },
+  });
+  const evaluations = input.minimization.candidateEvaluations;
+  const fresh = evaluations[0];
+  const minimalSequence = input.minimization.minimalReproducingSequence;
+  const minimalOrdinals = input.minimization.minimalReproducingOccurrenceOrdinals;
+  const sameSequence = (evaluation: typeof evaluations[number]): boolean =>
+    evaluation.sequence.length === minimalSequence.length
+    && evaluation.sequence.every((actionId, index) => actionId === minimalSequence[index])
+    && (minimalOrdinals === undefined
+      || (evaluation.occurrenceOrdinals !== undefined
+        && evaluation.occurrenceOrdinals.length === minimalOrdinals.length
+        && evaluation.occurrenceOrdinals.every((ordinal, index) => ordinal === minimalOrdinals[index])));
+  const minimal = minimalSequence.length === 0
+    ? undefined
+    : evaluations.find(sameSequence);
+  const duplicateIds = new Set(input.candidate.originalSequence.map((action) => action.actionId).filter((id, index, all) => all.indexOf(id) !== index));
+  const occurrenceBinding = minimal?.occurrenceOrdinals !== undefined
+    ? 'BOUND' as const
+    : duplicateIds.size > 0 ? 'AMBIGUOUS' as const : 'BOUND' as const;
+  const sourceCurrentness = replayCurrentnessFor(input.evidence.sourceCurrentness);
+  const safetyClean = Object.values(input.safety).every((value) => value === 0)
+    && input.privacy.result === 'PASS'
+    && Object.entries(input.privacy).filter(([key]) => key !== 'result').every(([, value]) => value === false);
+  const deterministic = !evaluations.some((evaluation) => evaluation.reason === 'EXECUTOR_NONDETERMINISTIC');
+  const observedSemanticFindingFingerprint = minimal?.semanticFindingFingerprint ?? fresh?.semanticFindingFingerprint;
+  const observedContractIdentity = minimal?.semanticContractIdentity ?? fresh?.semanticContractIdentity;
+  const minimalExact = minimal?.disposition === 'REPRODUCES'
+    && minimal.fingerprintMatch === true
+    && observedSemanticFindingFingerprint === input.evidence.findingFingerprint;
+  let outcomeClass: SemanticReplayOutcomeClass;
+  if (sourceCurrentness === 'STALE') outcomeClass = 'SOURCE_STALE';
+  else if (sourceCurrentness !== 'CURRENT') outcomeClass = 'INVALID_REPLAY';
+  else if (occurrenceBinding === 'AMBIGUOUS') outcomeClass = 'AMBIGUOUS_OCCURRENCE';
+  else if (!safetyClean || !deterministic) outcomeClass = 'INFRA_FAILURE';
+  else if (fresh?.disposition === 'INVALID') outcomeClass = fresh.reason === 'PRECONDITION_DIVERGENCE' ? 'PRECONDITION_DIVERGENCE' : fresh.reason === 'EXECUTOR_THROW' || fresh.reason === 'EXECUTOR_NONDETERMINISTIC' ? 'INFRA_FAILURE' : 'INVALID_REPLAY';
+  else if (fresh?.disposition !== 'REPRODUCES') outcomeClass = 'NOT_REPRODUCED';
+  else if (minimalExact) outcomeClass = 'REPRODUCED_EXACT';
+  else if (minimal?.disposition === 'REPRODUCES' && observedContractIdentity === expectedContractIdentity) outcomeClass = 'REPRODUCED_EQUIVALENT_SEMANTIC';
+  else if (minimal?.disposition === 'REPRODUCES' && (observedSemanticFindingFingerprint !== undefined || observedContractIdentity !== undefined)) outcomeClass = 'SEMANTIC_DIVERGENCE';
+  else if (minimal?.disposition === 'INVALID' && minimal.reason === 'PRECONDITION_DIVERGENCE') outcomeClass = 'PRECONDITION_DIVERGENCE';
+  else outcomeClass = 'NOT_REPRODUCED';
+  const rejectionReason = outcomeClass === 'AMBIGUOUS_OCCURRENCE'
+    ? 'ACTION_OCCURRENCE_AMBIGUOUS' as const
+    : outcomeClass === 'PRECONDITION_DIVERGENCE'
+      ? 'PREDECESSOR_CONTEXT_MISMATCH' as const
+      : outcomeClass === 'SOURCE_STALE'
+        ? 'SOURCE_CURRENTNESS_UNRESOLVED' as const
+        : outcomeClass === 'INVALID_REPLAY'
+          ? sourceCurrentness === 'CURRENT' ? 'EXECUTOR_NOT_RUN' as const : 'SOURCE_CURRENTNESS_UNRESOLVED' as const
+          : outcomeClass === 'INFRA_FAILURE'
+            ? deterministic ? 'EXECUTOR_NOT_RUN' as const : 'EXECUTOR_NONDETERMINISTIC' as const
+            : undefined;
+  return createSemanticReplayFidelityReceipt({
+    expectedSemanticFindingFingerprint: input.evidence.findingFingerprint,
+    expectedContractIdentity,
+    ...(observedSemanticFindingFingerprint === undefined ? {} : { observedSemanticFindingFingerprint }),
+    ...(observedContractIdentity === undefined ? {} : { observedContractIdentity }),
+    outcomeClass,
+    occurrenceBinding,
+    originalOccurrenceCount: input.candidate.originalSequence.length,
+    retainedOccurrenceCount: minimal?.occurrenceOrdinals?.length ?? (minimalSequence.length > 0 ? minimalSequence.length : 0),
+    sourceCurrentness,
+    safetyClean,
+    deterministic,
+    ...(rejectionReason === undefined ? {} : { rejectionReason }),
+  });
 }
 
 export class CampaignOrchestrator {
@@ -829,19 +910,19 @@ export class CampaignOrchestrator {
       const cand = this.candidates.get(obs.runId);
       if (cand === undefined || !hasValidSemanticEvidence(cand)) continue;
       const ev = cand.campaignSemanticEvidence!;
-      let invariant: InvariantDefinition;
-      try {
-        invariant = invariantFromEvidence(ev);
-      } catch {
-        continue;
-      }
       try {
         semanticObservations.push({
           runId: obs.runId,
           observedAt: obs.observedAt,
           expectationId: ev.expectationId,
           targetId: ev.targetId,
-          invariant,
+          // The campaign evidence already carries the source-derived
+          // invariant identity. Keep the full contract out of persistence and
+          // let the clustering adapter use that identity directly.
+          // Compatibility carrier only: when invariantDefinitionId is
+          // present, this placeholder is never canonicalized or persisted.
+          invariant: { kind: 'FIELD_PRESENT', path: ['__semantic_contract_placeholder__'], expected: true },
+          invariantDefinitionId: ev.invariantDefinitionId,
           sourceProvenance: {
             repoId: ev.sourceRepoId,
             derivationVersion: ev.sourceDerivationVersion,
@@ -1283,9 +1364,15 @@ export class CampaignOrchestrator {
         // outcomes come from the candidate's own replay closure through a
         // validated plan and flow through normalizeExecutorOutcome inside
         // executeReplayPlanV2.
+        const semanticEvidence = hasValidSemanticEvidence(reproCandidate) ? reproCandidate.campaignSemanticEvidence! : null;
+        // Semantic promotion replays against the finding identity carried by
+        // the admitted campaign evidence. The protocol observation fingerprint
+        // remains a separate clustering/display field; it is never allowed to
+        // substitute for the semantic anomaly identity at the replay gate.
+        const replayTargetFingerprint = semanticEvidence?.findingFingerprint ?? cluster.fingerprint;
         const certifiedReplay = this.certifiedReplayClosure({
           candidate: reproCandidate,
-          anomalyFingerprint: cluster.fingerprint,
+          anomalyFingerprint: replayTargetFingerprint,
           catalogVersion: reproCandidate.originalSequence[0]?.catalogVersion ?? this.manifest.versions.explorationCatalogVersion,
           replay,
         });
@@ -1303,10 +1390,9 @@ export class CampaignOrchestrator {
         // T4: semantic clusters emit a v2 dossier, so the intermediate v1
         // artifact is not written for them (store omitted); protocol-only
         // clusters keep the historical v1 artifact + ledger behavior.
-        const semanticEvidence = hasValidSemanticEvidence(reproCandidate) ? reproCandidate.campaignSemanticEvidence! : null;
         const triaged = await triageAnomaly({
           originalSequence: reproCandidate.originalSequence,
-          anomalyFingerprint: cluster.fingerprint,
+          anomalyFingerprint: replayTargetFingerprint,
           sourceVersion: reproCandidate.sourceCorrelation.sourceVersion ?? 'campaign-source',
           catalogVersion: this.manifest.versions.explorationCatalogVersion,
           approvedActionIds: new Set(reproCandidate.originalSequence.map((action) => action.actionId)),
@@ -1549,16 +1635,25 @@ export class CampaignOrchestrator {
     return async (sequence, phase) => {
       try {
         const originalOccurrences = input.candidate.originalSequence.map((action, ordinal) => ({ ordinal, expectedActionId: action.actionId }));
-        const requestedIds = sequence.map((action) => action.actionId);
         const retainedOccurrenceOrdinals: number[] = [];
-        let cursor = 0;
-        for (const occurrence of originalOccurrences) {
-          if (cursor < requestedIds.length && occurrence.expectedActionId === requestedIds[cursor]) {
-            retainedOccurrenceOrdinals.push(occurrence.ordinal);
-            cursor += 1;
+        const used = new Set<number>();
+        for (const action of sequence) {
+          // The minimizer retains the original action object, so reference
+          // identity is the strongest local occurrence proof. If a caller
+          // reconstructs an action object, a repeated ID is deliberately
+          // ambiguous rather than greedily assigned to an occurrence.
+          const byReference = input.candidate.originalSequence
+            .map((original, ordinal) => ({ original, ordinal }))
+            .filter((item) => item.original === action && !used.has(item.ordinal));
+          const byId = originalOccurrences.filter((occurrence) => occurrence.expectedActionId === action.actionId && !used.has(occurrence.ordinal));
+          const matches = byReference.length > 0 ? byReference.map((item) => item.ordinal) : byId.map((item) => item.ordinal);
+          if (matches.length !== 1) {
+            return { status: 'INVALID', safety: toTriageSafety(ZERO_CAMPAIGN_SAFETY), invalidReason: 'PRECONDITION_DIVERGENCE' };
           }
+          retainedOccurrenceOrdinals.push(matches[0]!);
+          used.add(matches[0]!);
         }
-        if (cursor !== requestedIds.length || retainedOccurrenceOrdinals.length === 0) {
+        if (retainedOccurrenceOrdinals.length === 0 || retainedOccurrenceOrdinals.some((ordinal, index) => index > 0 && ordinal <= retainedOccurrenceOrdinals[index - 1]!)) {
           // Requested sequence is not an order-preserving subsequence of the
           // admitted original occurrence identity: fail closed.
           return { status: 'INVALID', safety: toTriageSafety(ZERO_CAMPAIGN_SAFETY), invalidReason: 'ACTION_NOT_IN_ORIGINAL' };
@@ -1629,10 +1724,42 @@ export class CampaignOrchestrator {
     const evidence = input.evidence;
     const bundleCoherent = this.bundleCoherenceFor(evidence);
     const exactReplayStatus = input.triaged.minimization.freshExactReplay;
+    const freshEvaluation = input.triaged.minimization.candidateEvaluations[0];
+    const minimalSequence = input.triaged.minimization.minimalReproducingSequence;
+    const minimalOrdinals = input.triaged.minimization.minimalReproducingOccurrenceOrdinals;
+    const minimalSequenceReproductions = input.triaged.minimization.candidateEvaluations
+      .slice(1)
+      .filter((evaluation) => evaluation.disposition === 'REPRODUCES'
+        && evaluation.sequence.length === minimalSequence.length
+        && evaluation.sequence.every((actionId, index) => actionId === minimalSequence[index])
+        && (minimalOrdinals === undefined
+          || (evaluation.occurrenceOrdinals !== undefined
+            && evaluation.occurrenceOrdinals.length === minimalOrdinals.length
+            && evaluation.occurrenceOrdinals.every((ordinal, index) => ordinal === minimalOrdinals[index])))).length;
+    const exactFingerprintMatch = exactReplayStatus === 'REPRODUCED'
+      && input.triaged.minimization.anomalyFingerprint === evidence.findingFingerprint
+      && freshEvaluation?.disposition === 'REPRODUCES'
+      && freshEvaluation.fingerprintMatch;
+    // A BOUNDED_MINIMAL result with no reduced executor reproduction is not a
+    // verified semantic minimization. Preserve the underlying minimizer fact
+    // in the dossier reproduction block, but never copy its weaker historical
+    // label into semantic confidence evidence.
+    const semanticMinimalityGuarantee = minimalSequenceReproductions > 0
+      ? input.triaged.minimization.minimalityGuarantee
+      : 'NONE';
+    const replayFidelity = semanticReplayFidelityFor({
+      candidate: input.candidate,
+      evidence,
+      minimization: input.triaged.minimization,
+      safety: input.triaged.dossier.safety,
+      privacy: input.triaged.dossier.privacy,
+    });
     const missingEvidenceCodes = new Set<string>();
     if (!bundleCoherent || evidence.sourceCurrentness === 'STALE' || evidence.sourceCurrentness === 'UNAVAILABLE' || evidence.sourceCurrentness === 'UNKNOWN') missingEvidenceCodes.add('SOURCE_CURRENTNESS_UNRESOLVED');
     if (evidence.receiptOutcome === 'PARTIAL_COVERAGE') missingEvidenceCodes.add('PARTIAL_COLLECTION_COVERAGE');
     if (exactReplayStatus !== 'REPRODUCED') missingEvidenceCodes.add('EXACT_REPLAY_REQUIRED');
+    if (!exactFingerprintMatch) missingEvidenceCodes.add('REPLAY_FINGERPRINT_MISMATCH');
+    if (replayFidelity.outcomeClass !== 'REPRODUCED_EXACT' || replayFidelity.occurrenceBinding !== 'BOUND') missingEvidenceCodes.add('EXACT_REPLAY_REQUIRED');
     const semanticTriageEvidence: SemanticTriageEvidence = createSemanticTriageEvidence({
       expectationId: evidence.expectationId,
       targetId: evidence.targetId,
@@ -1649,11 +1776,13 @@ export class CampaignOrchestrator {
       sourceEvidenceDigest: evidence.sourceEvidenceDigest,
       sourceDerivationVersion: evidence.sourceDerivationVersion,
       sourceCurrentness: evidence.sourceCurrentness,
+      findingCategory: evidence.findingCategory,
       exactReplayStatus,
-      exactFingerprintMatch: exactReplayStatus === 'REPRODUCED',
-      minimalityGuarantee: input.triaged.minimization.minimalityGuarantee,
-      freshContextReproductions: Math.max(1, input.cluster.reproductionCount),
-      minimalSequenceReproductions: input.triaged.minimization.reproductionCount,
+      exactFingerprintMatch,
+      minimalityGuarantee: semanticMinimalityGuarantee,
+      freshContextReproductions: freshEvaluation?.disposition === 'REPRODUCES' ? 1 : 0,
+      minimalSequenceReproductions,
+      replayFidelity,
       missingEvidence: [...missingEvidenceCodes].sort() as SemanticTriageEvidence['missingEvidence'],
     });
     const v2Input: BugDossierV2Input = {

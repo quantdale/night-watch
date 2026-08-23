@@ -79,7 +79,7 @@ import type { BugDossierV2 } from '../../src/core/triage/dossierV2';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION, createSemanticTriageEvidence } from '../../src/core/triage/semanticTriageEvidence';
 import { rankSemanticConfidence } from '../../src/core/triage/semanticConfidence';
 import { semanticPromotionEligible, type SemanticAwarePromotionResult } from '../../src/core/triage/promotionResult';
-import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
+import { SEMANTIC_CLUSTER_VERSION, semanticContractIdentityFromInvariantId } from '../../src/oracles/semantic/cluster';
 import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION, createSemanticCampaignBundle, type SemanticCampaignBundle } from '../../src/core/source/semanticCampaignBundle';
 import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/receipts';
 import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
@@ -313,12 +313,21 @@ function candidate(options: CandidateOptions): CampaignAnomalyCandidate {
   const sequence = (options.sequence ?? [...JOURNEY_STEPS]).map((id) => action(id, routeClass));
   const fingerprint = options.fingerprint;
   const predicate = options.predicate ?? ((ids: readonly string[]) => ids.length > 0);
+  const semanticContractIdentity = options.semantic === undefined ? undefined : semanticContractIdentityFromInvariantId({
+    expectationId: TARGET,
+    targetId: TARGET,
+    invariantDefinitionId: options.semantic.invariantId ?? SYNTHETIC_INVARIANT,
+    sourceProvenance: { repoId: 'corpus/phase15/source-fixture', derivationVersion: DERIVATION_VERSION, evidenceDigest: SYNTHETIC_DIGEST },
+  });
   const replay = (sequenceToReplay: readonly MinimizationAction[], phase: 'FRESH_EXACT_REPLAY' | 'REDUCED_CANDIDATE') => {
     options.calls?.push({ phase, actionIds: sequenceToReplay.map((item) => item.actionId) });
     const reproduces = predicate(sequenceToReplay.map((item) => item.actionId));
     return {
       status: reproduces ? 'FAILURE' as const : 'PASS' as const,
-      ...(reproduces ? { anomalyFingerprint: fingerprint } : {}),
+      ...(reproduces ? {
+        anomalyFingerprint: fingerprint,
+        ...(options.semantic === undefined ? {} : { semanticFindingFingerprint: fingerprint, semanticContractIdentity }),
+      } : {}),
       safety: SAFE_TRIAGE,
     };
   };
@@ -684,7 +693,7 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
   });
 
   test.describe('F2 semantic-current coherent', () => {
-    test('v2 READY + HIGH with SEMANTIC lifecycle DOSSIER_READY and an eligible promotion result', async () => {
+    test('v2 stays UNRESOLVED when the current journey cannot prove a reduced semantic replay', async () => {
       clearCampaignSemanticBundles();
       const bundle = coherentBundle();
       registerCampaignSemanticBundles([bundle]);
@@ -699,31 +708,35 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
         const orchestrator = new CampaignOrchestrator(manifest, scriptedExecutor(new Map([['journey:ripple-payer-exchange-read', [observation]]])), { store, now: () => new Date(STATIC_NOW) });
         const result = await orchestrator.run();
         assertSafetyPrivacyFloors(result);
-        expect(result.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+        expect(result.resultClass).toBe('COMPLETE_CLEAN');
         const entry = result.checkpoint.dossierLedger[0]!;
-        expect(entry.state).toBe('READY');
+        expect(entry.state).toBe('INCOMPLETE');
         expect(entry.dossierVersion).toBe(DOSSIER_VERSION_V2);
-        expect(result.checkpoint.bugCandidates).toContain(entry.candidateId);
+        expect(result.checkpoint.bugCandidates).not.toContain(entry.candidateId);
         const dossier = readV2Dossier(root, entry.artifactPath);
-        expect(dossier.status).toBe('READY');
-        expect(dossier.semanticConfidence?.level).toBe('HIGH');
-        expect(dossier.semanticConfidence?.blockers).toEqual([]);
+        expect(dossier.status).toBe('UNRESOLVED');
+        expect(dossier.semanticConfidence?.level).not.toBe('HIGH');
         expect(dossier.semanticTriageEvidence?.exactReplayStatus).toBe('REPRODUCED');
         expect(dossier.semanticTriageEvidence?.exactFingerprintMatch).toBe(true);
+        expect(dossier.semanticTriageEvidence?.findingCategory).toBe('SOURCE_EXPECTATION_MISMATCH');
+        expect(dossier.semanticTriageEvidence?.replayFidelity?.outcomeClass).toBe('REPRODUCED_EXACT');
+        expect(dossier.semanticTriageEvidence?.replayFidelity?.occurrenceBinding).toBe('BOUND');
+        expect(dossier.semanticTriageEvidence?.minimalityGuarantee).toBe('NONE');
+        expect(dossier.semanticTriageEvidence?.minimalSequenceReproductions).toBe(0);
         const lifecycle = lifecycleFor(result.checkpoint, entry.clusterId);
         expect(lifecycle.variant).toBe('SEMANTIC');
-        expect(lifecycle.state).toBe('DOSSIER_READY');
-        expect(lifecycle.lastReasonCode).toBe('DOSSIER_READY');
+        expect(lifecycle.state).toBe('UNRESOLVED');
+        expect(lifecycle.lastReasonCode).toBe('DOSSIER_UNRESOLVED');
         const promotions = orchestrator.promotionResults;
         expect(promotions).toHaveLength(1);
         expect(promotions[0]!.clusterKind).toBe('SEMANTIC');
-        expect(promotions[0]!.readiness).toBe('READY');
-        expect(promotions[0]!.confidence).toBe('HIGH');
+        expect(promotions[0]!.readiness).toBe('UNRESOLVED');
+        expect(promotions[0]!.confidence).not.toBe('HIGH');
         expect(promotions[0]!.sourceCurrentness).toBe('CURRENT');
         expect(promotions[0]!.replayEvidence).toBe('EXACT_REPLAY_REPRODUCED');
         expect(promotions[0]!.dossierVersionTarget).toBe(DOSSIER_VERSION_V2);
-        expect(semanticPromotionEligible(promotions[0]!)).toBe(true);
-        expect(result.morningBrief.whatRan).toContain('semanticDossiersV2Ready=1');
+        expect(semanticPromotionEligible(promotions[0]!)).toBe(false);
+        expect(result.morningBrief.whatRan).toContain('semanticDossiersV2Ready=0');
       } finally {
         clearCampaignSemanticBundles();
         cleanup(root);
@@ -1173,7 +1186,7 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
   });
 
   test.describe('F11 mid-campaign resume with semantic state', () => {
-    test('interruption inside promotion persists ADMITTED semantic lifecycles; resume completes them to DOSSIER_READY without re-running completed items', async () => {
+    test('interruption inside promotion persists ADMITTED semantic lifecycles; resume completes them to UNRESOLVED without re-running completed items', async () => {
       clearCampaignSemanticBundles();
       registerCampaignSemanticBundles([coherentBundle()]);
       const { root, store } = tempStore();
@@ -1230,22 +1243,24 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
 
         const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
         assertSafetyPrivacyFloors(resumed);
-        expect(resumed.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+        expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
         // Completed work items were NOT re-executed across the resume boundary.
         for (const item of manifest.workItems) expect(executions.get(item.workItemId)).toBe(1);
         expect(resumed.checkpoint.completedWorkItemIds).toHaveLength(manifest.workItems.length);
         expect(resumed.checkpoint.runtimeContractVersions).toEqual({ ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED });
         expect(() => validateCampaignCheckpoint(resumed.checkpoint, manifest)).not.toThrow();
-        // The persisted lifecycle continued legally to its terminal state.
+        // The persisted lifecycle continued legally to its terminal unresolved
+        // state because the resumed journey still cannot prove a reduced
+        // semantic replay.
         const resumedLifecycle = lifecycleFor(resumed.checkpoint, clusterId);
         expect(resumedLifecycle.variant).toBe('SEMANTIC');
-        expect(resumedLifecycle.state).toBe('DOSSIER_READY');
-        expect(resumedLifecycle.lastReasonCode).toBe('DOSSIER_READY');
+        expect(resumedLifecycle.state).toBe('UNRESOLVED');
+        expect(resumedLifecycle.lastReasonCode).toBe('DOSSIER_UNRESOLVED');
         expect(resumedLifecycle.transitionCount).toBeGreaterThan(interruptedLifecycle.transitionCount);
         const entry = resumed.checkpoint.dossierLedger[0]!;
         expect(entry.clusterId).toBe(clusterId);
         expect(entry.dossierVersion).toBe(DOSSIER_VERSION_V2);
-        expect(entry.state).toBe('READY');
+        expect(entry.state).toBe('INCOMPLETE');
       } finally {
         clearCampaignSemanticBundles();
         cleanup(root);
@@ -1271,14 +1286,16 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
             expect(protocolFamily!.promotionResults).toHaveLength(3);
             expect(protocolFamily!.dossiers).toHaveLength(3);
             expect(protocolFamily!.checkpoint.dossierLedger.filter((entry) => entry.state === 'READY' && !('dossierVersion' in entry))).toHaveLength(3);
-            // Sub-campaign B: semantic families (F2 current, F3 stale, F4 partial).
-            expect(semanticFamily!.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+            // Sub-campaign B: semantic families (F2 current-but-unresolved,
+            // F3 stale, F4 partial). A semantic anomaly is not a finding for
+            // campaign-result purposes until its strict dossier is READY.
+            expect(semanticFamily!.resultClass).toBe('COMPLETE_CLEAN');
             expect(semanticFamily!.checkpoint.anomalyClusters).toHaveLength(3);
             expect(Object.values(semanticFamily!.checkpoint.candidateLifecycles ?? {}).map((record) => record.state).sort())
-              .toEqual(['DOSSIER_READY', 'UNRESOLVED', 'UNRESOLVED']);
+              .toEqual(['UNRESOLVED', 'UNRESOLVED', 'UNRESOLVED']);
             expect(semanticFamily!.promotionResults).toHaveLength(3);
-            expect(semanticFamily!.checkpoint.dossierLedger.filter((entry) => entry.state === 'READY' && entry.dossierVersion === DOSSIER_VERSION_V2)).toHaveLength(1);
-            expect(semanticFamily!.checkpoint.dossierLedger.filter((entry) => entry.state === 'INCOMPLETE' && entry.dossierVersion === DOSSIER_VERSION_V2)).toHaveLength(2);
+            expect(semanticFamily!.checkpoint.dossierLedger.filter((entry) => entry.state === 'READY' && entry.dossierVersion === DOSSIER_VERSION_V2)).toHaveLength(0);
+            expect(semanticFamily!.checkpoint.dossierLedger.filter((entry) => entry.state === 'INCOMPLETE' && entry.dossierVersion === DOSSIER_VERSION_V2)).toHaveLength(3);
             // Sub-campaign C: rejections (F8 transient + false positive).
             expect(rejections!.resultClass).toBe('COMPLETE_CLEAN');
             expect(rejections!.checkpoint.anomalyClusters).toHaveLength(2);
@@ -1289,11 +1306,11 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
             const allPromotions = [...protocolFamily!.promotionResults, ...semanticFamily!.promotionResults, ...rejections!.promotionResults];
             expect(allPromotions).toHaveLength(6);
             expect(allPromotions.filter((promotion) => promotion.minimization === 'MINIMALITY_PROVEN')).toHaveLength(1);
-            // Eligible verdicts: the coherent CURRENT semantic cluster and the
-            // MINIMALITY_PROVEN protocol cluster. The browser-only journey
-            // clusters stay READY-but-UNRESOLVED-confidence (never eligible),
-            // and stale/partial are UNRESOLVED outright.
-            expect(allPromotions.filter((promotion) => semanticPromotionEligible(promotion))).toHaveLength(2);
+            // Only the MINIMALITY_PROVEN protocol cluster is eligible. The
+            // current semantic journey is deliberately unresolved because its
+            // reduced replay is precondition-divergent; stale/partial remain
+            // unresolved as well.
+            expect(allPromotions.filter((promotion) => semanticPromotionEligible(promotion))).toHaveLength(1);
           }
           for (const result of matrix.results) assertSafetyPrivacyFloors(result);
           // Normalize the per-sub-campaign temp store roots out of artifact

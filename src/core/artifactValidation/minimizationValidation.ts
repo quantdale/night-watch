@@ -55,6 +55,7 @@ const BUDGET_POLICY_VERSION = 'nightwatch.minimization-budget.private.v1' as con
 // Same fingerprint idiom as observationClusterValidation.ts (from
 // triage/clustering.ts); same generic-version bound as triage/replayPlan.ts.
 const FINGERPRINT_RE = /^fp:sha256:[a-f0-9]{12,64}$/i;
+const CONTRACT_IDENTITY_RE = /^sci:sha256:[a-f0-9]{24}$/;
 const VERSION_STRING_MAX = 200;
 // Action ids are length-bounded like the modules' ACTION_ID_RE, but their
 // charset is deliberately NOT enforced here: an INVALID_ORIGINAL result
@@ -79,7 +80,7 @@ function assertActionIdList(value: unknown, code: string): void {
 export function validateMinimizationResultArtifact(value: unknown): void {
   if (!isRuntimeRecord(value)) invalid('OBJECT_REQUIRED');
   const result = requireRuntimeRecord(value, 'ARTIFACT_MINIMIZATION_INVALID');
-  assertExactKeys(result, RESULT_KEYS, 'ARTIFACT_MINIMIZATION_INVALID');
+  assertExactKeys(result, RESULT_KEYS, 'ARTIFACT_MINIMIZATION_INVALID', ['minimalReproducingOccurrenceOrdinals']);
   if (result.schemaVersion !== FAILURE_MINIMIZATION_VERSION || result.modelVersion !== FAILURE_MINIMIZATION_VERSION) {
     invalid('SCHEMA_VERSION_UNSUPPORTED');
   }
@@ -118,13 +119,41 @@ export function validateMinimizationResultArtifact(value: unknown): void {
   }
 
   const evaluations = requireRuntimeArray(result.candidateEvaluations, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATIONS');
+  if (result.minimalReproducingOccurrenceOrdinals !== undefined) {
+    const ordinals = requireRuntimeArray(result.minimalReproducingOccurrenceOrdinals, 'ARTIFACT_MINIMIZATION_INVALID:MINIMAL_OCCURRENCES');
+    if (ordinals.length !== (result.minimalReproducingSequence as readonly unknown[]).length) invalid('MINIMAL_OCCURRENCE_COUNT');
+    const seen = new Set<number>();
+    for (const ordinal of ordinals) {
+      if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 0 || ordinal > 999_999 || seen.has(ordinal)) invalid('MINIMAL_OCCURRENCE_INVALID');
+      seen.add(ordinal);
+    }
+    for (let index = 1; index < ordinals.length; index += 1) if ((ordinals[index - 1] as number) >= (ordinals[index] as number)) invalid('MINIMAL_OCCURRENCE_ORDER');
+  }
   for (const item of evaluations) {
     const evaluation = requireRuntimeRecord(item, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION');
-    assertExactKeys(evaluation, ['sequence', 'disposition', 'reason', 'fingerprintMatch'], 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION');
+    assertExactKeys(evaluation, ['sequence', 'disposition', 'reason', 'fingerprintMatch'], 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION', ['occurrenceOrdinals', 'semanticFindingFingerprint', 'semanticContractIdentity']);
     assertActionIdList(evaluation.sequence, 'EVALUATION_SEQUENCE');
+    if (evaluation.occurrenceOrdinals !== undefined) {
+      const ordinals = requireRuntimeArray(evaluation.occurrenceOrdinals, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION_OCCURRENCES');
+      if (ordinals.length !== (evaluation.sequence as readonly unknown[]).length) invalid('EVALUATION_OCCURRENCE_COUNT');
+      const seen = new Set<number>();
+      for (const ordinal of ordinals) {
+        if (typeof ordinal !== 'number' || !Number.isInteger(ordinal) || ordinal < 0 || ordinal > 999_999 || seen.has(ordinal)) invalid('EVALUATION_OCCURRENCE_INVALID');
+        seen.add(ordinal);
+      }
+      for (let index = 1; index < ordinals.length; index += 1) if ((ordinals[index - 1] as number) >= (ordinals[index] as number)) invalid('EVALUATION_OCCURRENCE_ORDER');
+    }
     if (!(DISPOSITIONS as readonly string[]).includes(evaluation.disposition as string)) invalid('EVALUATION_DISPOSITION');
     assertString(evaluation.reason, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION_REASON');
     assertBoolean(evaluation.fingerprintMatch, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION_MATCH');
+    if (evaluation.semanticFindingFingerprint !== undefined) {
+      assertString(evaluation.semanticFindingFingerprint, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION_SEMANTIC_FINGERPRINT');
+      if (!FINGERPRINT_RE.test(evaluation.semanticFindingFingerprint as string)) invalid('EVALUATION_SEMANTIC_FINGERPRINT_PATTERN');
+    }
+    if (evaluation.semanticContractIdentity !== undefined) {
+      assertString(evaluation.semanticContractIdentity, 'ARTIFACT_MINIMIZATION_INVALID:EVALUATION_CONTRACT_IDENTITY');
+      if (!CONTRACT_IDENTITY_RE.test(evaluation.semanticContractIdentity as string)) invalid('EVALUATION_CONTRACT_IDENTITY_PATTERN');
+    }
   }
 
   // --- mechanically derivable coherence (see header) ------------------------
