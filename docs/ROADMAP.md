@@ -1768,6 +1768,33 @@ Phase 16D remains a separately owner-gated, unauthorized contained-DEV
 decision. The next development program must remain LOCAL / SOURCE / SYNTHETIC
 and must be routed through a new task after a fresh repository audit.
 
+## Phase 17 — change-aware campaign and evidence hardening (implementation checkpoint)
+
+Phase 17 is the current local/source/synthetic development program under
+`PHASE_17_LOCAL_SOURCE_SYNTHETIC_CAMPAIGN_INTELLIGENCE_AND_EVIDENCE_HARDENING`.
+Implementation checkpoint `17486ff13de9b8588a9ab5273c8eff882bda9036` adds:
+
+- a pure source-impact overlay from Phase 3 `SelectionResult` into the
+  approved Phase 16 portfolio allocator, with explicit direct/shared/
+  transitive/fallback/stale/irrelevant/unlinked dispositions and deterministic
+  sanitized reasons;
+- canonical change/correlation identity across property-order permutations
+  and omitted optional fields;
+- strict baseline document admission with bounded identities, safe provenance,
+  own-field checks, canonical order, duplicate rejection, and status/reference
+  consistency;
+- privacy-safe duplicate diagnostics and occurrence-honest replay evidence
+  that refuses to promote repeated-action ambiguity to proven minimality;
+- a reusable nine-case source-change corpus and repeated-run byte-stability
+  proofs.
+
+The checkpoint is locally typechecked and hardening-checked; the Phase 17
+focused matrix is 26/0 and the affected compatibility cone is 142/0. Full
+canonical and topology-correct isolated regressions remain the next gate.
+This phase grants no DEV/NEXT/production, data/infra, sibling-write,
+publication, AI/selfDev/promotion, or Phase 16D authority. Phase 6 remains
+`FROZEN_BY_OWNER` and Phase 11B/13B remain unauthorized.
+
 ## Never in scope (any phase)
 
 - `production` as a runnable environment (D-4).

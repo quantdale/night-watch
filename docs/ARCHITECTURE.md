@@ -1,7 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 16CH local/source/synthetic hardening terminal (canonical and
-isolated full regression 2232/4/0; CI externally blocked), plus Phase 1.2
+Status: Phase 17 local/source/synthetic implementation checkpoint
+`17486ff13de9b8588a9ab5273c8eff882bda9036` (focused and affected cones green;
+canonical/isolated full regression pending), building on the Phase 16CH
+terminal (canonical and isolated full regression 2232/4/0; CI externally
+blocked), plus Phase 1.2
 containment, private local evidence triage, Phase 7 deterministic
 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
 review assistance, the Phase 8A evaluated self-development sandbox foundation,
@@ -1298,3 +1301,44 @@ runs and thirteen zero quality floors. Canonical and topology-correct isolated
 full regressions are exactly 2,232 passed / 4 skipped / 0 failed. This is
 LOCAL/SOURCE/SYNTHETIC evidence only; CI was externally blocked before steps,
 and Phase 16D remains separately owner-gated and unauthorized.
+
+## Phase 17 change-aware campaign and evidence hardening (local architecture)
+
+Phase 17 adds a pure bridge from the established Phase 3 source selector into
+the Phase 16 approved portfolio without changing runtime authority:
+
+```text
+bounded SelectionResult
+  -> categorical impact overlay
+  -> deterministic effective member scores
+  -> canonical portfolio allocator
+  -> sanitized manifest reasons + selection-context digest
+```
+
+`src/core/portfolio/changeImpact.ts` accepts only a validated selection result
+and an already-approved portfolio. It never scans source, reads files,
+contacts a network, constructs a browser, or calls an executor. Explicit
+journey linkage is required; target names are never guessed. Direct/shared/
+transitive evidence receives bounded lifts, while fallback, stale, unknown,
+irrelevant, and unlinked cases receive no positive source lift. A global
+fallback degrades direct-looking sibling reasons to the fallback disposition,
+so partial source knowledge cannot inflate confidence. Only categorical
+impact classes, reason codes, confidence, priority, and bounded counts cross
+the bridge; paths, explanations, and source evidence do not.
+
+The identity boundary now uses canonical stable JSON for change and source
+correlation identities, normalizing omitted optional fields. Baseline files
+are parsed as strict versioned documents with own-field checks, bounded
+records, canonical ordering, SHA/changeset/status consistency, and safe
+provenance. Shared validator diagnostics use a bounded projection that
+redacts secret-, identity-, and URL-shaped values. The minimizer keeps its
+historical result schema, but `buildMinimalityEvidence` refuses to reconstruct
+occurrence-specific proven minimality from repeated action IDs.
+
+The implementation is local/source/synthetic only. The nine-case
+`corpus/phase17/changeImpactFixtures.ts` matrix and 26-test Phase 17 suite
+cover direct, shared, transitive, irrelevant, ambiguous, deleted, renamed,
+stale, and simultaneous changes, malformed documents, hostile diagnostics,
+repeated-action replay, and three-run byte stability. Phase 16D remains
+separately unauthorized; Phase 6 is frozen and no sibling repository is
+modified.

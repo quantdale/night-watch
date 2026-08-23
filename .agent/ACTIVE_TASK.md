@@ -6,8 +6,8 @@ Title: Nightwatch Phase 17 — Change-Aware Campaign and Evidence Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-17-change-aware-campaign-evidence-hardening
 Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-Last validated implementation SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
-Last substantive checkpoint SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
+Last validated implementation SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
+Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
 Last checkpoint: M5 — source-impact, parser/privacy, replay, corpus, and byte-determinism implementation wave validated by focused and affected tests
 Current milestone: M6 — integrated validation, docs alignment, checkpoint/push, and truthful CI inspection
 Next action: Run the Level 3 validation ladder, update durable project/task truth from the resulting evidence, then execute canonical and isolated full regression

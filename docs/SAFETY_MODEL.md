@@ -1261,6 +1261,26 @@ properties:
   new pattern, or unavailable source each fail closed (SOURCE_STALE /
   SOURCE_UNAVAILABLE / derivation failure); no auto-rebinding.
 
+## Phase 17 change-aware planning and evidence boundary
+
+The Phase 17 source-to-portfolio bridge is a planning-only pure core. It
+accepts an existing bounded `SelectionResult` plus an approved portfolio and
+cannot scan sibling source, use network/process/browser/DB/AI/selfDev
+authority, or invoke an executor. Journey linkage is explicit and target-name
+inference is prohibited. Source paths, explanations, headers, URLs, and raw
+values are not copied into the overlay, allocation, manifest reasons, or
+digests. Fallback and stale evidence receive zero positive source lift.
+
+The baseline file boundary is strict and fail-closed: exact versioned keys,
+own required properties, bounded records, lowercase commit/change identities,
+canonical record order, safe categorical provenance, unique repositories, and
+status/reference consistency are required before read or atomic write. Shared
+diagnostic projection rejects secret-, identity-, and URL-shaped values. The
+replay evidence boundary refuses occurrence-specific proven minimality when
+the historical public action-ID representation cannot distinguish repeated
+occurrences. These are synthetic/local contracts; no real credentials,
+authenticated evidence, customer values, or external findings enter them.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

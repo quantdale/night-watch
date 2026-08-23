@@ -6,8 +6,8 @@ Task ID: phase-17-change-aware-campaign-evidence-hardening
 Phase: 17-CHANGE-AWARE-CAMPAIGN-EVIDENCE-HARDENING
 Status: IN_PROGRESS
 Starting SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-Last validated implementation SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
-Last substantive checkpoint SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
+Last validated implementation SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
+Last substantive checkpoint SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
@@ -17,8 +17,8 @@ Next action: Run the Level 3 validation ladder, update durable project/task trut
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: e8af0c46f5f32c5d8bf80ca8041bb535ac64d7d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 794b32df443ae8c9a520182ef97b7a2c9985ba82
+LAST_VALIDATED_IMPLEMENTATION_SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 17486ff13de9b8588a9ab5273c8eff882bda9036
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_17_STATUS: IN_PROGRESS

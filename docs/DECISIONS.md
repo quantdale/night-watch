@@ -2912,3 +2912,39 @@ not retried. The truthful tokens are
 Phase 11B, Phase 13B and Phase 6 expansion remain unauthorized/frozen as
 specified by the permanent owner scope. Future engineering requires a new
 local/source/synthetic task.
+
+## D-69 — Phase 17: source-aware portfolio ranking and occurrence-honest evidence
+
+**Context.** A fresh post-Phase-16CH audit found that the deterministic Phase
+3 change selector and Phase 16 portfolio allocator had no pure connection;
+change and source-correlation identities used ordinary JSON serialization;
+baseline reads trusted a type assertion; duplicate diagnostics could echo a
+hostile value; and the public minimization result could not distinguish
+repeated action occurrences even though the reducer's internal ledger could.
+
+**Decision.** Add a pure `src/core/portfolio/changeImpact.ts` overlay that
+consumes only an existing `SelectionResult` and an approved portfolio, then
+feeds effective scores and bounded reason tokens into the canonical allocator.
+Explicit journey linkage is mandatory. Direct/shared/transitive evidence may
+receive bounded lifts; fallback, stale, unknown, irrelevant, and unlinked
+members receive no positive source lift. A global fallback degrades
+direct-looking partial evidence to the fallback disposition. Paths, source
+explanations, URLs, raw values, and deployment claims never cross the bridge.
+Canonical stable JSON is used for change/correlation identity after optional
+undefined normalization. Baseline documents are strict, bounded,
+own-property-only, canonical-order and status/reference-consistent. Shared
+diagnostics use a bounded privacy projection. Historical minimization result
+serialization stays unchanged, while ambiguous repeated-action minimality
+evidence fails closed rather than guessing an occurrence.
+
+**Evidence and consequences.** The implementation is local/source/synthetic
+only at checkpoint `17486ff13de9b8588a9ab5273c8eff882bda9036`. The reusable
+Phase 17 corpus covers nine direct/shared/transitive/irrelevant/ambiguous/
+deleted/renamed/stale/simultaneous cases; the focused matrix is 26/0 and the
+affected compatibility cone is 142/0. Typecheck, hardening, synthetic
+campaign, owner provenance, continuity, and project checks are locally green
+at the checkpoint. No DEV/NEXT/production contact, data/infra operation,
+sibling write, publication, credential handling, or real finding persistence
+occurred. Full canonical and isolated regressions remain required before
+terminal closure. Phase 16D remains separately unauthorized; Phase 6 remains
+`FROZEN_BY_OWNER`; Phase 11B/13B remain unauthorized.
