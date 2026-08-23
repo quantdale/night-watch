@@ -2,7 +2,7 @@
 
 Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
-Status: IN_PROGRESS (LOCAL / SOURCE / SYNTHETIC; local validation complete)
+Status: COMPLETE (terminal local/source/synthetic; external CI blocked)
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Starting State
@@ -65,9 +65,9 @@ deterministic failure state.
 - M6 — dossier V3, adversarial corpus, parser/privacy/static hardening, and
   dead-surface audit. COMPLETED.
 - M7 — integrated validation, canonical/isolated parity, docs truth, checkpoint
-  pushes, and terminal handoff. IN_PROGRESS for publication and external-CI
-  truth; implementation checkpoint `937f887413e5231b385940bd310b7708bc4a0a0e`
-  and exact local parity are validated after the continuity allowlist repair.
+  pushes, and terminal handoff. COMPLETED; implementation checkpoint
+  `937f887413e5231b385940bd310b7708bc4a0a0e`, exact local parity, authorized
+  push, and truthful external-CI inspection are closed.
 
 ## Gate Zero Reconstruction
 
@@ -119,9 +119,8 @@ boundaries. New defects are recorded in DEFECT_LEDGER.md.
 
 Any semantic class lacking source/fixture provenance, any cross-surface path
 requiring unauthorized runtime access, real-environment acceptance, and any
-unbounded or unsafe abstraction remain deferred. Checkpoint publication,
-external-CI inspection, and final terminal documentation are the remaining M7
-work.
+unbounded or unsafe abstraction remain deferred. This task is terminal; future
+engineering requires a new local/source/synthetic task and fresh authority.
 
 ## Completion Criteria
 
@@ -129,5 +128,5 @@ All acceptance rows are evidence-backed; all required local/source/synthetic
 quality floors are zero; typecheck, focused/affected validation, hardening,
 campaign, provenance, continuity, project, canonical full regression, and
 isolated exact parity are green; docs are truthful; Git is clean and equal to
-`origin/main`; external CI is reported separately and never called green when
-zero steps execute.
+`origin/main`; external CI run `32637996369` / job `97190524900` executed zero
+steps under the billing/spending restriction and is not called green.

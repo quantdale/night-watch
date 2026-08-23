@@ -3,22 +3,22 @@
 Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 Title: Nightwatch Phase 18 — Semantic Contract Depth, Replay Fidelity and Confidence-Aware Triage
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-18-semantic-replay-confidence
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
 Last validated implementation SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
 Last substantive checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
-Last documentation checkpoint SHA: fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1
-Last checkpoint: M7 — post-repair canonical/isolated exact parity (fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1)
-Current milestone: M7 — publication and external-CI truth inspection
-Next action: validate the closure documentation, commit and push the checkpoint, inspect GitHub Actions once, then terminalize the task with truthful CI status
+Last documentation checkpoint SHA: 0a184adc18a5185cfdf00e1b91699ec617983d1b
+Last checkpoint: M7 — terminal closure after exact parity and truthful external-CI inspection (0a184adc18a5185cfdf00e1b91699ec617983d1b)
+Current milestone: COMPLETE — terminal local/source/synthetic closure; external CI blocked
+Next action: STOP — future engineering requires a new local/source/synthetic task and fresh scope
 Authorization class: PHASE_18_SEMANTIC_REPLAY_TRIAGE_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_18_STATUS: IN_PROGRESS_LOCAL_SOURCE_SYNTHETIC
+PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16D_STATUS: NOT_AUTHORIZED
@@ -76,7 +76,11 @@ credentials, or real-finding persistence.
   the post-repair documentation waypoint.
 - Post-repair canonical and topology-correct isolated regressions both passed
   2,281 / skipped 4 / failed 0 with exact enumeration and skip parity; both
-  trees are clean. Checkpoint publication and external-CI inspection remain.
+  trees are clean.
+- GitHub Actions run `32637996369` / job `97190524900` for pushed head
+  `0a184adc18a5185cfdf00e1b91699ec617983d1b` completed as failure with
+  `steps=[]` under the standing billing/spending restriction; it was inspected
+  once, not retried, and is not claimed green.
 
 ## Decisions
 
@@ -92,14 +96,15 @@ credentials, or real-finding persistence.
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, then the Phase 18 `SPEC.md`, `PLAN.md`, and
-`STATE.md`; inspect `git status`/diff; validate and publish the closure
-documentation, inspect external CI once, and then close the task. Do not
-infer a checkpoint SHA from task prose; discover live authority from Git.
+This task is terminal. For historical verification, read
+`.agent/ACTIVE_TASK.md`, the Phase 18 `SPEC.md`, `PLAN.md`, `STATE.md`,
+`REPORT.md`, and `HANDOFF.md`, then discover live Git state. Do not resume
+this task; future engineering requires a new local/source/synthetic task.
 
 ## Completion Snapshot
 
-Local/source/synthetic implementation and exact canonical/isolated parity are
-complete at validated implementation checkpoint
-937f887413e5231b385940bd310b7708bc4a0a0e. Only checkpoint publication,
-external-CI inspection, and terminal documentation closure remain.
+COMPLETE. Local/source/synthetic implementation, exact canonical/isolated
+parity, continuity/project truth, and the authorized checkpoint push are
+complete. External CI run `32637996369` / job `97190524900` executed zero
+steps under the billing/spending restriction, so the truthful terminal state
+is local complete / external-CI blocked, not CI green.

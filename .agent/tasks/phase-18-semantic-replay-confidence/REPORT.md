@@ -1,6 +1,6 @@
 # Phase 18 Report
 
-Status: IN_PROGRESS (LOCAL / SOURCE / SYNTHETIC; local validation complete)
+Status: COMPLETE (LOCAL / SOURCE / SYNTHETIC; EXTERNAL CI BLOCKED)
 Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -9,16 +9,14 @@ START SHA: `80212fcb5dc4e8648b174b209636090a17c89c5c`
 FINAL SHA: `DISCOVER_FROM_GIT`
 Last validated implementation SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
 Last substantive checkpoint SHA: `937f887413e5231b385940bd310b7708bc4a0a0e`
-Last documentation checkpoint SHA: `fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1`
+Last documentation checkpoint SHA: `0a184adc18a5185cfdf00e1b91699ec617983d1b`
 Live HEAD authority: `DISCOVER_FROM_GIT`
 
 ## PHASE 18 STATUS
 
-Local/source/synthetic implementation and validation are complete. The
-post-repair canonical and topology-correct isolated regressions are exact
-matches. Checkpoint publication and one truthful external-CI inspection remain
-before terminal documentation closure. No external system has been contacted
-other than the repository's Git remote for the required checkpoint workflow.
+Local/source/synthetic implementation, validation, exact parity, authorized
+checkpoint push, and terminal documentation are complete. External CI is a
+separate blocked fact, not a local failure and not a CI-green claim.
 
 ## WORKSTREAMS COMPLETED
 
@@ -196,8 +194,10 @@ replay plans, clusters, dossiers, CLI diagnostics, or continuity files.
 
 ## CI
 
-External CI inspection is the remaining post-push action. Local validation is
-not being represented as CI green.
+Actions run `32637996369` / job `97190524900` for pushed head
+`0a184adc18a5185cfdf00e1b91699ec617983d1b` completed as failure with
+`steps=[]` under the standing billing/spending restriction. It was inspected
+once and not retried. Local validation is not represented as CI green.
 
 ## SAFETY
 
@@ -228,5 +228,8 @@ fresh benign controls and the same occurrence/currentness/privacy gates.
 
 ## CURRENT CLOSURE
 
-Local implementation and exact canonical/isolated parity are complete. Push,
-one external-CI inspection, and terminal documentation closure remain.
+`HEAD == origin/main`: true after the authorized push.
+Working tree: clean.
+Final live SHA: `DISCOVER_FROM_GIT` (the final documentation descendant is
+discovered from Git and must remain equal to `origin/main`).
+Phase 18 is terminal local/source/synthetic complete with external CI blocked.

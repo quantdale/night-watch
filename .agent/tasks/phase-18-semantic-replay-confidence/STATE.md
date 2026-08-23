@@ -4,14 +4,14 @@
 
 Task ID: phase-18-semantic-replay-confidence
 Phase: 18-SEMANTIC-REPLAY-CONFIDENCE
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 80212fcb5dc4e8648b174b209636090a17c89c5c
 Last validated implementation SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
 Last substantive checkpoint SHA: 937f887413e5231b385940bd310b7708bc4a0a0e
-Last documentation checkpoint SHA: fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1
+Last documentation checkpoint SHA: 0a184adc18a5185cfdf00e1b91699ec617983d1b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_18_STATUS: IN_PROGRESS_LOCAL_SOURCE_SYNTHETIC
+PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_16D_STATUS: NOT_AUTHORIZED
@@ -20,7 +20,7 @@ PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: M7 — post-repair canonical/isolated exact parity (fd9d77bee4b9cc16960aa3d53b67b21c174d6bd1)
+Last checkpoint: M7 — terminal closure after exact parity and truthful external-CI inspection (0a184adc18a5185cfdf00e1b91699ec617983d1b)
 
 ## Objective
 
@@ -32,10 +32,10 @@ read-only, privacy, provenance, and authority boundaries.
 
 ## Current Milestone
 
-M7 — publication and external-CI truth inspection. The task-control allowlist
-repair, post-repair canonical regression, and topology-correct isolated
-regression are green with exact parity. Publication and external-CI truth are
-the only remaining closure actions.
+COMPLETE — terminal local/source/synthetic closure; external CI blocked. The
+task-control allowlist repair, post-repair canonical regression, topology-
+correct isolated regression, authorized push, and one truthful Actions
+inspection are complete.
 
 ## Completed Milestones
 
@@ -59,18 +59,17 @@ the only remaining closure actions.
 
 ## Work In Progress
 
-M6 validation is complete at e58ea162e601aba2c341f5b5ee18f40a635251af, and
-the continuity repair is validated at 937f887413e5231b385940bd310b7708bc4a0a0e.
-The post-repair canonical and topology-correct isolated regressions are both
-green at 2,281 passed / 4 skipped / 0 failed with exact parity and clean
-trees. M7 now consists only of checkpoint publication and truthful external-CI
-inspection.
+None. M6 validation is complete at e58ea162e601aba2c341f5b5ee18f40a635251af,
+and the continuity repair is validated at
+937f887413e5231b385940bd310b7708bc4a0a0e. The post-repair canonical and
+topology-correct isolated regressions are both green at 2,281 passed / 4
+skipped / 0 failed with exact parity and clean trees. The authorized push and
+Actions inspection are closed as local complete / external-CI blocked.
 
 ## Exact Next Action
 
-Validate the closure documentation and privacy surface, commit and push the
-checkpoint, inspect GitHub Actions once for the live pushed head, then record
-the truthful external-CI result and close the task.
+STOP — the task is terminal. Future engineering requires a new
+LOCAL / SOURCE / SYNTHETIC task and fresh authority.
 
 ## Files Changed
 
@@ -104,6 +103,10 @@ the truthful external-CI result and close the task.
   sibling links, `NIGHTWATCH_SIBLING_ROOT`, and distinct
   `NIGHTWATCH_PROXY_PORT=19125`; 2,281 passed / 4 skipped / 0 failed out of
   2,285, with the exact same skip inventory and a clean isolated tree.
+- GitHub Actions run `32637996369` / job `97190524900` for pushed head
+  `0a184adc18a5185cfdf00e1b91699ec617983d1b`: completed as failure with
+  `steps=[]` under the standing billing/spending restriction; inspected once,
+  not retried, and not represented as CI green.
 - Phase 15 F2/F11/F12 compatibility expectations were repaired to record
   unresolved semantic minimization when the journey executor cannot provide a
   verified reduced replay; no confidence or test gate was weakened.
@@ -113,8 +116,8 @@ the truthful external-CI result and close the task.
 - The focused continuity repair matrix passed 106; `npm run project:check`
   passed after the post-repair documentation waypoint, with catalog count /
   digest and promotion authority `NONE` unchanged.
-- Canonical and isolated parity plus clean-tree checks are complete; checkpoint
-  push and CI truth remain pending.
+- Canonical and isolated parity, clean-tree checks, checkpoint push, and
+  external-CI truth recording are complete; external CI is blocked separately.
 
 ## Decisions Made During This Task
 
@@ -229,13 +232,15 @@ publication, and any raw-value persistence remain deferred and out of scope.
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, then this task's `SPEC.md`, `PLAN.md`, and
-`STATE.md`; inspect `git status`/diff; validate and publish the closure
-documentation, inspect external CI once, and then close the task.
+This task is terminal. For historical verification, read ACTIVE_TASK.md,
+SPEC.md, PLAN.md, STATE.md, REPORT.md, and HANDOFF.md, then discover live Git
+state. Do not resume it; future engineering requires a new local/source/
+synthetic task.
 
 ## Completion Snapshot
 
-Local/source/synthetic gates and exact canonical/isolated parity are complete.
-The validated implementation checkpoint is
-937f887413e5231b385940bd310b7708bc4a0a0e; publication, external-CI
-inspection, and terminal status are the remaining closure actions.
+COMPLETE. Local/source/synthetic gates, exact canonical/isolated parity,
+continuity/project truth, and the authorized push are complete. The inspected
+external Actions run executed zero steps under the billing/spending
+restriction, so the terminal classification is local complete / external-CI
+blocked, not CI green.

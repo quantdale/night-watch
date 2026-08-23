@@ -2993,7 +2993,9 @@ confidence or prove minimality. Phase 17 source-impact evidence contributes
 bounded semantic-coverage reasons only and grants no execution authority.
 
 Local closure evidence is canonical/isolated exact parity at 2,281 passed,
-4 skipped, 0 failed out of 2,285 in each run. External CI remains a separate
-fact and is never inferred from local green results. This phase adds no DEV,
+4 skipped, 0 failed out of 2,285 in each run. Actions run `32637996369` / job
+`97190524900` for the pushed head executed zero steps under the standing
+billing/spending restriction; it is a separate blocked fact and is never
+inferred from local green results. This phase adds no DEV,
 NEXT, production, authenticated, data-plane, cloud/infra, sibling-write,
 publication, AI, or promotion authority.

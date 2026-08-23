@@ -20,4 +20,4 @@
 | A16 | Adversarial corpus repetitions have all required quality floors at zero | campaign report |
 | A17 | Static guards preserve pure core boundaries | hardening check |
 | A18 | Canonical and topology-correct isolated regressions have exact parity | canonical 2,281/4/0 and isolated 2,281/4/0; exact enumeration and skip parity |
-| A19 | Continuity, project-state, docs, Git, and CI reporting are truthful | agent/project checks, final handoff, and post-push CI inspection |
+| A19 | Continuity, project-state, docs, Git, and CI reporting are truthful | agent/project checks, clean pushed Git state, and Actions run 32637996369 / job 97190524900 with steps=[] recorded as external-CI blocked |
