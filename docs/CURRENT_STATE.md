@@ -2,10 +2,11 @@
 
 > Durable memory for the next agent/session. Last updated: **2026-08-24** at
 > the Phase 20 semantic-coverage implementation checkpoint
-> `c58684046d66b2a68234a06c62dea889829d4110`; canonical and topology-correct
+> `c58684046d66b2a68234a06c62dea889829d4110`; the synchronized local/source/
+> synthetic checkpoint is `6e4fdebe74bd34e81d9d3f320154488973b46d12`; canonical and topology-correct
 > isolated full regressions both pass 2,309 / 4 skipped / 0 failed out of 2,313
 > with exact skip parity. Phase 18 is terminal historical context; external CI
-> is a separately inspected post-push fact. This snapshot is LOCAL / SOURCE /
+> is blocked/unobservable after one post-push inspection. This snapshot is LOCAL / SOURCE /
 > SYNTHETIC only, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
@@ -1993,3 +1994,6 @@ owner provenance 91/91; typecheck and hardening PASS; canonical and isolated
 full suites both 2,313 enumerated / 2,309 passed / 4 skipped / 0 failed. The
 four skips are `tests/unit/phase5Api.test.ts:195`, `:244`, `:278`, and
 `tests/unit/selfDevSandboxConfinement.test.ts:143`, with exact identity parity.
+The one post-push Actions inspection for the synchronized checkpoint timed out
+at the GitHub API before returning a run; no run/job/steps data was available,
+so external CI is not called green and was not retried.

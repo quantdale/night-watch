@@ -3065,4 +3065,8 @@ AI, self-development, or execution authority. A full-run timing defect in
 the synthetic auth-monitor test was repaired by explicit reviewed background
 classification and synchronization of the injected health failure; no
 production policy was broadened. External CI remains a separate post-push
-fact and is not inferred from local evidence.
+fact and is not inferred from local evidence. The validated checkpoint was
+pushed as `6e4fdebe74bd34e81d9d3f320154488973b46d12`; the one required Actions
+inspection timed out at the GitHub API before returning run data, so no current
+run/job/steps identifiers are available, CI remains blocked/unobservable, and
+no retry or green claim was made.

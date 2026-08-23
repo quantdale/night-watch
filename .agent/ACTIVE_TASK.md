@@ -3,14 +3,14 @@
 Task ID: phase-20-semantic-coverage-saturation
 Phase: 20-SEMANTIC-COVERAGE-SATURATION
 Title: Nightwatch Phase 20 — Semantic Coverage Saturation and Cross-Surface Differential Detection
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-20-semantic-coverage-saturation
 Starting SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
 Last validated implementation SHA: c58684046d66b2a68234a06c62dea889829d4110
 Last substantive checkpoint SHA: c58684046d66b2a68234a06c62dea889829d4110
-Last checkpoint: M6 — canonical/isolated full regression exact parity
-Current milestone: M6 terminal validation and durable closure
-Next action: Rerun terminal validation after final task/project documentation, close all v2 records, then commit and push the validated checkpoints
+Last checkpoint: M6 — terminal validation, synchronized checkpoint, and continuity closure
+Current milestone: COMPLETE — M6 terminal closure
+Next action: STOP
 Authorization class: PHASE_20_SEMANTIC_COVERAGE_SATURATION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 9ee25002d9d3ed1309356467e12778a49f93389e
@@ -20,7 +20,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: c58684046d66b2a68234a06c62dea889829d4110
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_20_STATUS: IN_PROGRESS
+PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
 PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
@@ -71,11 +71,17 @@ not an authority and no worker mutation was permitted.
 
 ## Resume Recipe
 
-Read this file, then the Phase 20 SPEC.md, PLAN.md, and STATE.md in that order;
-inspect live Git status/diff; execute STATE.md's exact next action. Do not
-reopen Phase 19.
+This task is terminal. If historical context is needed, read this file and the
+Phase 20 task records, verify live Git state, and do not resume implementation
+or reopen Phase 19. Any future work requires a separately authorized task.
 
 ## Completion Snapshot
 
-IN_PROGRESS. Phase 20 has only completed bootstrap/task setup. Final live HEAD
-is discovered from Git.
+COMPLETE. Phase 20 local/source/synthetic implementation and terminal validation
+are complete. The validated implementation checkpoint is
+`c58684046d66b2a68234a06c62dea889829d4110`; the synchronized pushed checkpoint
+is `6e4fdebe74bd34e81d9d3f320154488973b46d12`. Canonical and topology-correct
+isolated suites have exact parity at 2,313 enumerated / 2,309 passed / 4
+skipped / 0 failed. The single post-push Actions inspection was blocked before
+returning run data by a GitHub API timeout; no green CI claim is made. Final
+live HEAD is discovered from Git.

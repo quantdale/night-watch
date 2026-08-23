@@ -1,9 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 19 integrated local/source/synthetic implementation checkpoint
-`ddd0e49c22d5650807d9cababcdc159bc4a657ae` (focused, affected, canonical and
-topology-correct isolated full regressions green with exact parity; external CI
-is inspected separately after push), with Phase 18 terminal historical context,
+Status: Phase 20 terminal local/source/synthetic implementation checkpoint
+`c58684046d66b2a68234a06c62dea889829d4110` (focused, compatibility,
+canonical, and topology-correct isolated full regressions green with exact
+parity; external CI is blocked/unobservable after one post-push inspection),
+with Phase 19 integrated campaign intelligence and Phase 18 terminal historical context,
 building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
 blocked), plus Phase 1.2

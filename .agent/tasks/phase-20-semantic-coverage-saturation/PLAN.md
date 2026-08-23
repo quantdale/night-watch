@@ -2,7 +2,7 @@
 
 Task ID: phase-20-semantic-coverage-saturation
 Phase: 20-SEMANTIC-COVERAGE-SATURATION
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Starting State
@@ -62,10 +62,12 @@ coverage/planner/dossier surfaces. Preserve Phase 9–19 readers and schemas.
 - [x] M5 — focused and compatibility-cone validation; repair all failures.
   Phase 9–20 compatibility passed 1,275/1,275; canonical full passed
   2,309/4/0 after repairing one timing-sensitive synthetic auth-monitor seam.
-- [ ] M6 — canonical/isolated parity, durable documentation, synchronized
-  checkpoint(s), and truthful external-CI inspection. Final isolated full
-  passed 2,309/4/0 with exact enumeration and skip identity parity; terminal
-  continuity/project gates and documentation checkpoint remain.
+- [x] M6 — canonical/isolated parity, durable documentation, synchronized
+  checkpoint, and truthful external-CI inspection. Both full suites passed
+  2,309/4/0 from 2,313 with exact enumeration and skip identity parity;
+  continuity/project gates pass; the single post-push Actions inspection
+  timed out before returning run data, so external CI is blocked/unobservable
+  and not called green.
 
 ## Architecture
 

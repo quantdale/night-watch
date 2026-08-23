@@ -1865,7 +1865,7 @@ infrastructure, sibling-write, publication, AI, or self-development authority.
 
 ## Phase 20 — semantic coverage saturation and cross-surface differential detection
 
-Phase 20 is the next local/source/synthetic implementation wave. It composes
+Phase 20 is the terminal local/source/synthetic implementation wave. It composes
 Phase 19 campaign intelligence with a deterministic source-derived contract
 inventory, explicit admission/currentness states, a source-evidence graph,
 relational and cross-surface semantic oracles, metamorphic relations, bounded
@@ -1896,4 +1896,8 @@ topology-correct isolated full suites 2,309 passed / 4 skipped / 0 failed out
 of 2,313 with exact enumeration and skip identity parity. Phase 20 remains
 LOCAL / SOURCE / SYNTHETIC and does not add DEV/NEXT/production, data,
 infrastructure, sibling-write, publication, AI, self-development, or
-execution authority.
+execution authority. The validated implementation checkpoint is
+`c58684046d66b2a68234a06c62dea889829d4110`; synchronized checkpoint
+`6e4fdebe74bd34e81d9d3f320154488973b46d12` is on `origin/main`. The one
+post-push Actions inspection timed out before returning run data, so external
+CI remains blocked/unobservable and is not called green.

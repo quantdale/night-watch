@@ -1,7 +1,6 @@
 # Phase 20 Report
 
-Status: IN_PROGRESS — local closure evidence complete; synchronized push and
-one truthful external-CI inspection remain in the closure sequence.
+Status: COMPLETE — LOCAL / SOURCE / SYNTHETIC; EXTERNAL CI BLOCKED/UNOBSERVABLE
 Task ID: phase-20-semantic-coverage-saturation
 Phase: 20-SEMANTIC-COVERAGE-SATURATION
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -83,12 +82,22 @@ for the injected second health poll before the synthetic fetch. The focused
 11-test auth suite and the final canonical/isolated full suites are green; no
 production policy or authority was broadened.
 
-## Safety and remaining closure
+## Safety and external CI closure
 
 No DEV/NEXT/production contact, authenticated state, database/datastore,
 cloud/infra operation, sibling write, publication, messaging, raw evidence,
-credential, or AI/self-development authority was used. External CI is a
-separate post-push fact and is not inferred from local results. The remaining
-closure action is to commit/push the validated durable checkpoint, inspect the
-required GitHub Actions run once, record its truthful result, and close the
-continuity records.
+credential, or AI/self-development authority was used. The validated
+implementation checkpoint is
+`c58684046d66b2a68234a06c62dea889829d4110`. The synchronized checkpoint
+`6e4fdebe74bd34e81d9d3f320154488973b46d12` was pushed to `origin/main`, and a
+post-push fetch confirmed local `HEAD == origin/main` at that checkpoint before
+the terminal documentation closure. The required Actions inspection was made
+once for that pushed SHA with `gh run list`; the GitHub API timed out with
+`dial tcp 20.205.243.168:443: i/o timeout` before returning a run. Therefore
+there is no observable current run ID, job ID, or steps array to report; the
+standing billing/spending restriction remains an external blocker, no retry
+was made, and CI is not claimed green. Live final HEAD is always discovered
+from Git rather than predicted in this record.
+
+Phase 20 is complete within its authorized local/source/synthetic boundary.
+Future semantic expansion belongs to a separately authorized Phase 21 task.
