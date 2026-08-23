@@ -23,6 +23,10 @@ function localSyntheticEnvironment() {
       'clients2.google.com',
       'safebrowsingohttpgateway.googleapis.com',
     ],
+    browserBackgroundHosts: [
+      ...(base.browserBackgroundHosts ?? []),
+      { host: 'www.gstatic.com', classification: 'BROWSER_BACKGROUND_GOOGLE' as const },
+    ],
   };
 }
 
@@ -220,6 +224,9 @@ test('proxy liveness failure is reported as a precise HUMAN_WAIT monitor reason'
         completion: {
           kind: 'synthetic-test-only',
           wait: async (page) => {
+            // Let the injected second health poll become the first monitor
+            // failure before Chrome can report unrelated background blocking.
+            await expect.poll(() => healthChecks, { timeout: 2_000 }).toBeGreaterThanOrEqual(2);
             await page.evaluate(async () => { await fetch('/api/synthetic-malformed-json'); });
             await new Promise((resolve) => setTimeout(resolve, 100));
           },
