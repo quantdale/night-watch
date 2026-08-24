@@ -72,6 +72,7 @@ try {
   const skipped = count(/(\d+)\s+skipped/i);
   const failed = count(/(\d+)\s+failed/i);
   const totalFromOutput = count(/Total:\s*(\d+)\s+tests?/i);
+  if (result.status === 0 && failed === null) failed = 0;
   const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed : null);
   const receipt = {
     schemaVersion: manifest.schemaVersion,
