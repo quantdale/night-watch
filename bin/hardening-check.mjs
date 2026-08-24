@@ -1461,6 +1461,53 @@ function checkPhase12TriageIntegrationSeams() {
   }
 }
 
+/** Phase 22 contained-DEV core purity and launcher seams. The DTO/oracle
+ * layer is deterministic and authority-free; the launcher is the only place
+ * permitted to perform source snapshot/process work. */
+function checkPhase22CorePurity() {
+  const pureFiles = [
+    'src/core/phase22/types.ts',
+    'src/core/phase22/digest.ts',
+    'src/core/phase22/eligibility.ts',
+    'src/core/phase22/candidates.ts',
+    'src/core/phase22/manifest.ts',
+    'src/core/phase22/preflight.ts',
+    'src/core/phase22/privacy.ts',
+    'src/core/phase22/replay.ts',
+    'src/core/phase22/calibration.ts',
+    'src/core/phase22/dossierV6.ts',
+    'src/core/phase22/dryRun.ts',
+  ];
+  for (const file of pureFiles) {
+    const source = read(file);
+    if (/from\s+['"][^'"]*(?:node:fs|node:child_process|node:net|node:http|node:https|node:dns|undici|playwright|browser|runRecorder|storageState|database|dynamo|bigquery|spanner|kubernetes|gcloud|aws|selfDev|persistence)[^'"]*['"]/i.test(source)) fail(`${file} imports an authority or external capability`);
+    if (/\b(?:process\.env|fetch\s*\(|WebSocket\s*\(|child_process|spawn\s*\(|exec(?:File)?\s*\(|writeFile|appendFile|createWriteStream|mkdirSync|rmSync|unlinkSync|renameSync|Date\.now\s*\(|Math\.random\s*\(|eval\s*\(|new\s+Function\s*\()\b/i.test(source)) fail(`${file} exposes runtime, process, network, clock, randomness, or persistence authority`);
+  }
+  const firewall = read('src/oracles/semantic/phase22Firewall.ts');
+  if (!/guardPhase22SafeObservation/.test(firewall) || !/createPhase22PrivacyReceipt/.test(firewall) || /rawText|rawBody|responseBody/.test(firewall)) fail('Phase 22 runtime privacy firewall is missing or accepts raw payload fields');
+}
+
+function checkPhase22IntegrationSeams() {
+  const types = read('src/core/phase22/types.ts');
+  if (!/nightwatch\.dev-semantic-acceptance-manifest\.v1/.test(types) || !/maxTargets: 6/.test(types) || !/maxObservationContexts: 12/.test(types)) fail('Phase 22 manifest bounds/version are missing');
+  if (!/PHASE22_REQUIRED_PREFLIGHT_CHECKS/.test(types) || !/l0_cdp_guard_active/.test(types) || !/l5_loopback_proxy_active/.test(types)) fail('Phase 22 preflight V2 check vocabulary is incomplete');
+  const manifest = read('src/core/phase22/manifest.ts');
+  if (!/selectEligible/.test(manifest) || !/TARGET_BOUND_OR_MATERIAL_DIVERSITY/.test(manifest) || !/frozen: true/.test(manifest)) fail('Phase 22 manifest is not deterministic/frozen/bounded');
+  const replay = read('src/core/phase22/replay.ts');
+  if (!/replayObservationCount > budget\.firstObservationCount/.test(replay) || !/retryCount !== 0/.test(replay) || !/REAL_MINIMIZATION_NOT_AUTHORIZED/.test(replay)) fail('Phase 22 replay/minimization bounds are incomplete');
+  const confidence = read('src/core/phase22/calibration.ts');
+  if (!/REAL_SOURCE_NOT_CURRENT/.test(confidence) || !/REAL_EXPECTATION_NOT_RESOLVED/.test(confidence) || !/realGatePassed/.test(confidence)) fail('Phase 22 real confidence gate is incomplete');
+  const network = read('src/browser/observers/networkObserver.ts');
+  if (!/guardPhase22SemanticHookResult/.test(network) || !/phase22PrivacyReceiptLedger/.test(network) || !/phase22PrivacyReceipts/.test(network)) fail('Phase 22 privacy firewall is not attached to the network observer');
+  const launcher = read('bin/phase22-real.mjs');
+  if (/\.\.\.process\.env/.test(launcher) || /stdio:\s*['"]inherit['"]/.test(launcher) || !/NIGHTWATCH_PHASE_22_REAL/.test(launcher) || !/args\.env !== 'dev'/.test(launcher) || !/EXACT_GREEN_CI_RUN_ID_REQUIRED/.test(launcher)) fail('Phase 22 launcher boundary is incomplete');
+  if (!/maxBuffer\s*:/.test(launcher) || !/timeout\s*:/.test(launcher) || !/--config=playwright\.phase22\.config\.ts/.test(launcher)) fail('Phase 22 launcher lacks bounded child execution');
+  const cli = read('bin/phase22-dev.mjs');
+  if (!/DYNAMIC_ALL_FORBIDDEN/.test(cli) || !/simulatePhase22DevAcceptance/.test(cli) || !/EXPLICIT_EXECUTE_REQUIRED/.test(cli)) fail('Phase 22 local operator surface is missing dry-run/explicit-execute guards');
+  const packageJson = read('package.json');
+  for (const script of ['dev-preflight', 'dev-manifest', 'dev-acceptance', 'dev-results', 'dev-explain']) if (!packageJson.includes(`"${script}"`)) fail(`Phase 22 operator script missing: ${script}`);
+}
+
 checkChildProcessBoundaries();
 checkTargetPolicy();
 checkTypecheckCoverage();
@@ -1493,6 +1540,8 @@ checkPhase18PureCoreSeams();
 checkPhase12AuthoritySetsUnchanged();
 checkPhase12TriageCorePurity();
 checkPhase12TriageIntegrationSeams();
+checkPhase22CorePurity();
+checkPhase22IntegrationSeams();
 checkSyntax();
 
 if (errors.length > 0) {

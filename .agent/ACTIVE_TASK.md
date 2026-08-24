@@ -1,25 +1,26 @@
 # Active Task
 
-Task ID: phase-21-semantic-gap-closure
-Phase: 21-SEMANTIC-GAP-CLOSURE
-Title: Nightwatch Phase 21 — Semantic Gap Closure, Privacy-Safe Membership, and Differential Replay Saturation
-Status: COMPLETE
-Task directory: .agent/tasks/phase-21-semantic-gap-closure
-Starting SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+Task ID: phase-22-contained-dev-semantic-calibration
+Phase: 22-CONTAINED-DEV-SEMANTIC-CALIBRATION
+Title: Nightwatch Phase 22 — Contained DEV Semantic Reality Calibration and Bounded Real-Campaign Acceptance
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-22-contained-dev-semantic-calibration
+Starting SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
 Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-Last checkpoint: M9 — durable closure, push, one CI inspection, and terminal handoff
-Current milestone: COMPLETE — M9 terminal closure
-Next action: STOP. Phase 21 is terminal; future semantic work requires a separately authorized successor task.
-Authorization class: PHASE_21_SEMANTIC_GAP_CLOSURE_LOCAL_SOURCE_SYNTHETIC_ONLY
+Last checkpoint: M5 — additive calibration/operator/dry-run implementation and focused validation
+Current milestone: M6 — mandatory local validation, manifest freeze, and final pre-DEV gates
+Next action: Run the mandatory local validation cone, repair failures, refresh source, freeze the manifest, and complete pre-DEV gates; do not contact DEV before M6 is green.
+Authorization class: PHASE_22_CONTAINED_DEV_SEMANTIC_REALITY_CALIBRATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae
+STARTING_SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
 LAST_VALIDATED_IMPLEMENTATION_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
 
 ## Terminal Boundary Tokens
 
 ```text
+PHASE_22_STATUS: IN_PROGRESS
 PHASE_21_STATUS: COMPLETE
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
@@ -34,40 +35,45 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 19 and Phase 20 remain terminal at their existing task directories;
-do not reopen or mutate either history. Live HEAD is always discovered from
-Git (`LIVE_HEAD_AUTHORITY: GIT`).
+Phase 19, Phase 20, and Phase 21 remain terminal at their existing task
+directories; do not reopen or mutate their history. Live HEAD is always
+discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
 
 ## Scope boundary
 
-This task is LOCAL / SOURCE / SYNTHETIC only. It authorizes additive
-Nightwatch source, bounded read-only source inspection, synthetic fixtures,
-deterministic semantic evaluation, campaign planning, replay/minimization,
-local tests, static analysis, and sanitized generated evidence. It authorizes
-zero DEV/NEXT/production contacts, authenticated sessions, storage-state
-loading, product/data mutation, databases/datastores/cloud/infra operations,
-Phase 6/11B/13B/16D, sibling-repository writes, publication, messaging, AI
-authority, self-development promotion, credentials, or raw finding storage.
+This task authorizes additive Nightwatch source, bounded read-only sibling
+source inspection, deterministic re-derivation, synthetic fixtures/tests,
+owner-only external auth-state path validation, the existing guarded DEV
+preflight, and exactly one serial bounded DEV campaign only after all local
+gates and the frozen manifest pass. It authorizes no NEXT/production contact,
+mutation, datastore/database operation, infrastructure discovery, sibling
+write, publication, AI authority, self-development promotion, unbounded
+crawling, arbitrary route discovery, credentials, raw authenticated evidence,
+screenshots, traces, DOM/raw-body persistence, or storage-state copying.
 
 The permanent decision remains `FROZEN_BY_OWNER /
-INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`; coverage priority and operator
-views cannot infer or grant execution authority. Privacy-safe membership may
-compare opaque values only in memory against source-bound metadata and may
-emit bounded categories, never raw members or reconstructible tokens.
+INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`. Unknown operation classes fail
+closed before executor callbacks. Real findings remain owner-only outside Git.
+Semantic projections emit categories and deterministic opaque evidence only;
+raw values, set members, identities, and reconstructible values never cross
+the privacy boundary.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
-- `.agent/tasks/phase-21-semantic-gap-closure/**`
-- additive Phase 21 semantic membership, closure-ledger, differential,
-  replay/minimization, graph-quality, operator, dossier, corpus, and focused
-  test modules as implementation proceeds
+- `.agent/tasks/phase-22-contained-dev-semantic-calibration/**`
+- additive Phase 22 eligibility, source-derivation, manifest, preflight,
+  privacy, calibration, replay, dossier, operator, and focused-test modules
+  plus the bounded real launcher/test path
 
 ## Validation Ledger
 
 Bootstrap Git inspection: PASS — clean `main` at
-`HEAD == origin/main == 7a5f6d2ba5ece3bd3a4b21d5a4a15b9504cbd2ae`; no external
-systems contacted.
+`HEAD == origin/main == c06ecd0183c9f6b25297f8f830d7e00e2fe0578c`; no DEV or
+other product systems contacted.
+
+Historical authority review: PASS — Phase 21 terminal records, Phase 9B/R1,
+Phase 10B, Phase 11A and 11A.x records read; their history is preserved.
 
 Phase 20 baseline census: PASS — 6 source artifacts, 22 discovered
 candidates, 21 admitted, 1 unsupported-syntax rejection; graph 157 nodes /
@@ -121,7 +127,7 @@ retried. External CI is not claimed green.
 
 ## Resume Recipe
 
-Read this file, then `.agent/tasks/phase-21-semantic-gap-closure/SPEC.md`,
-`PLAN.md`, and `STATE.md` only for historical context. STOP: Phase 21 is
-terminal, Phase 19/20 remain terminal, and any future semantic work requires a
-newly authorized task.
+Read this file, then `.agent/tasks/phase-22-contained-dev-semantic-calibration/`
+`SPEC.md`, `PLAN.md`, and `STATE.md` in order. Resume at the exact current
+milestone and next action. Do not contact DEV before M6 and do not reopen
+Phase 19, Phase 20, or Phase 21 history.

@@ -51,6 +51,8 @@ import { fingerprintAnomaly } from '../../core/journeys/fingerprint';
 import { semanticFindingFingerprint } from '../../oracles/semantic';
 import { buildInternalErrorReceipt, evaluateSemanticHook, type SemanticHookOracle } from '../../oracles/semantic/hook';
 import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
+import { guardPhase22SemanticHookResult } from '../../oracles/semantic/phase22Firewall';
+import type { Phase22PrivacyReceipt } from '../../core/phase22';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
@@ -131,6 +133,8 @@ export interface NetworkObserver {
   semanticEvaluations(): readonly SemanticEvaluationReceipt[];
   /** True when the evaluation ledger cap was hit (overflow is explicit). */
   semanticEvaluationLedgerOverflow(): boolean;
+  /** Phase 22 categorical privacy receipts; no raw observation payloads. */
+  phase22PrivacyReceipts(): readonly Phase22PrivacyReceipt[];
   requestCount(): number;
 }
 
@@ -195,6 +199,7 @@ export function createNetworkObserver(opts: {
   const browserBackgroundBlockedHosts = opts.browserBackgroundBlockedHosts ?? new Map<string, BrowserBackgroundClassification>();
   const semanticFindingLedger: import('../../oracles/semantic').SemanticOracleFinding[] = [];
   const semanticEvaluationLedger: SemanticEvaluationReceipt[] = [];
+  const phase22PrivacyReceiptLedger: Phase22PrivacyReceipt[] = [];
   let semanticEvaluationOverflow = false;
   const optionalResourceFailureUrls = new Set<string>();
   const semanticLedger: SemanticRequestObservation[] = [];
@@ -856,6 +861,13 @@ export function createNetworkObserver(opts: {
           });
           hookResult = { receipt, findings: [] };
         }
+        const phase22Firewall = guardPhase22SemanticHookResult(hookResult);
+        if (phase22PrivacyReceiptLedger.length < MAX_SEMANTIC_EVALUATION_LEDGER) {
+          phase22PrivacyReceiptLedger.push(phase22Firewall.privacyReceipt);
+        }
+        if (phase22Firewall.privacyViolation && hookResult.privacyViolation !== true) {
+          hookResult = { ...hookResult, privacyViolation: true };
+        }
         if (hookResult.receipt !== null) {
           recordEvaluation(hookResult.receipt);
         }
@@ -1097,6 +1109,7 @@ export function createNetworkObserver(opts: {
     semanticFindings: (): readonly import('../../oracles/semantic').SemanticOracleFinding[] => semanticFindingLedger.map((item) => ({ ...item })),
     semanticEvaluations: (): readonly SemanticEvaluationReceipt[] => semanticEvaluationLedger.map((item) => ({ ...item })),
     semanticEvaluationLedgerOverflow: (): boolean => semanticEvaluationOverflow,
+    phase22PrivacyReceipts: (): readonly Phase22PrivacyReceipt[] => phase22PrivacyReceiptLedger.map((item) => ({ ...item })),
     requestCount: (): number => requestCount,
   };
 }
