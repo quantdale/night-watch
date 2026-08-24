@@ -31,9 +31,9 @@
 | A27 | hardening | `npm run hardening:check`: PASS | PASS |
 | A28 | synthetic campaign | `npm run campaign:synthetic`: 29 passed, 0 failed | PASS |
 | A29 | owner provenance | `npm run test:owner-provenance`: 91 passed, 0 failed | PASS |
-| A30 | agent continuity | `npm run agent:check`: 0 strict v2 errors | PASS |
-| A31 | project truth | `npm run project:check`: PASS | PASS |
-| A32 | clean Node 20 gate | `npm run gate:clean`: clean receipt PASS, clean before/after, sibling writes 0 | PASS |
+| A30 | agent continuity | `npm run agent:check`: 0 strict v2 errors at synchronized closure | PASS |
+| A31 | project truth | `npm run project:check`: PASS at synchronized closure | PASS |
+| A32 | clean Node 20 gate | `npm run gate:clean`: `clean-receipt:sha256:2d3290a0bb2a62b9c8c469b3`, gate `receipt:sha256:ffe8578b987391306d863d96`, clean before/after, sibling writes 0 | PASS |
 | A33 | canonical full regression | 2,407 enumerated / 2,403 passed / 4 skipped / 0 failed | PASS |
 | A34 | isolated full regression | topology-correct clone: 2,407 / 2,403 / 4 / 0 | PASS |
 | A35 | exact parity | exact four skip identities matched | PASS |

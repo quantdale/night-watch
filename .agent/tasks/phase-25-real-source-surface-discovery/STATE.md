@@ -183,13 +183,14 @@ checkpoint.
 - Agent continuity: PASS — strict v2 errors 0; historical v1 warnings only.
 - Project truth: PASS — project-state v1 reconciled and promotion authority
   remains NONE.
-- Authoritative local gate: PASS — receipt
-  `receipt:sha256:5eaca4cc32395a1fe14506bd`, definition digest
+- Authoritative local gate at `bae4d39577730ce9a031ecedd5112317f8db423b`: PASS — receipt
+  `receipt:sha256:3341294c4e3ba07e02fd68cf`, definition digest
   `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
   semantic 1,847/1,846/1/0, owner 91, synthetic 29; all groups passed.
-- Node20 clean gate: PASS — `clean-receipt:sha256:1ba9cf9c64ee3ac582fd9edf`,
-  gate receipt `receipt:sha256:41e81aaddb346b70f03cc9b3`, clean before/after,
-  no dependency reuse, no auth/findings state, and sibling writes 0.
+- Node20 clean gate at `bae4d39577730ce9a031ecedd5112317f8db423b`: PASS —
+  `clean-receipt:sha256:2d3290a0bb2a62b9c8c469b3`, gate receipt
+  `receipt:sha256:ffe8578b987391306d863d96`, clean before/after, no dependency
+  reuse, no auth/findings state, and sibling writes 0.
 - Fresh canonical full Playwright: PASS — 2,407 enumerated, 2,403 passed,
   4 skipped, 0 failed.
 - Fresh topology-correct isolated full Playwright: PASS — 2,407/2,403/4/0

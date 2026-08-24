@@ -240,12 +240,14 @@ publications/messages 0, raw private persistence 0, AI calls 0.
 - Owner provenance: 91 passed / 0 failed. Synthetic campaign: 29 passed / 0
   failed. Typecheck: PASS. Hardening: PASS. Agent continuity: 0 strict v2
   errors. Project truth: PASS.
-- Local gate: PASS, receipt `receipt:sha256:5eaca4cc32395a1fe14506bd`, gate
-  definition `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
-- Node20 clean checkout: PASS, `npm ci --ignore-scripts`, clean before/after,
-  no node_modules reuse, no auth/findings state, sibling writes 0, clean
-  receipt `clean-receipt:sha256:1ba9cf9c64ee3ac582fd9edf`, gate receipt
-  `receipt:sha256:41e81aaddb346b70f03cc9b3`.
+- Local gate at `bae4d39577730ce9a031ecedd5112317f8db423b`: PASS, receipt
+  `receipt:sha256:3341294c4e3ba07e02fd68cf`, gate definition
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- Node20 clean checkout at `bae4d39577730ce9a031ecedd5112317f8db423b`:
+  PASS, `npm ci --ignore-scripts`, clean before/after, no node_modules reuse,
+  no auth/findings state, sibling writes 0, clean receipt
+  `clean-receipt:sha256:2d3290a0bb2a62b9c8c469b3`, gate receipt
+  `receipt:sha256:ffe8578b987391306d863d96`.
 - Canonical full Playwright: 2,407 enumerated / 2,403 passed / 4 skipped /
   0 failed. Isolated topology-correct full Playwright: 2,407 / 2,403 / 4 /
   0. Skip identities matched exactly: three unavailable OOPS-binary tests
