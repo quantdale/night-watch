@@ -8,16 +8,16 @@ Title: Nightwatch Phase 26 — Mechanical Response & Semantic Contract Coverage 
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-Last validated implementation SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
-Last substantive checkpoint SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
-Last documentation checkpoint SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+Last validated implementation SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+Last substantive checkpoint SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+Last documentation checkpoint SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+LAST_VALIDATED_IMPLEMENTATION_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+LAST_DOCUMENTATION_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -40,19 +40,19 @@ proof, privacy, currentness, determinism, Phase 24 authority, or owner scope.
 
 ## Current Milestone
 
-M5 — adversarial proof-soundness, privacy, cache, and repeatability hardening.
+M10 — compatibility, hardening, gate inventory, clean-checkout, and focused closure.
 
 ## Work In Progress
 
-Add the Phase 26 matrix-driven adversarial corpus to the authoritative
-compatibility inventory, then run typecheck, hardening, gate inventory, and the
-focused Phase 26 cone before the next durable checkpoint.
+Run the complete current local certification set, then execute the disposable
+clean Node20 gate and establish canonical/topology-correct isolated full-suite
+parity before terminal documentation closure.
 
 ## Exact Next Action
 
-Validate and checkpoint the new adversarial matrix directly on `main`; after
-the push, re-run the expanded clean compatibility cone and retain any
-remaining source families as explicit mechanical exclusions.
+Complete the current local and clean-checkout certification without external
+or product contact; record exact receipts and repair only Phase26-caused
+failures before terminal closure.
 
 ## Completed Milestones
 
@@ -76,6 +76,15 @@ remaining source families as explicit mechanical exclusions.
   the current approved operation set contains zero explicit response
   references and the remaining helper-return flows are unresolved without
   additional exact cross-file proof.
+- M5 — strict response-proof adversarial matrix, privacy controls, legacy
+  profile isolation, deterministic evidence checks, and authoritative test
+  inventory registration.
+- M6/M7 — direct Phase24 bridge, runtime/source separation, deterministic
+  review queue, proof-gap/analyzer metrics, and explainable operator output
+  were exercised without broadening Phase24 eligibility or execution
+  authority.
+- M8/M9 — expanded offline proof-soundness corpus and integrated
+  source-to-Phase24 semantic/replay/dossier/no-contact campaign passed.
 
 ## Files Changed
 
@@ -151,6 +160,10 @@ Phase 25 task file is modified.
 - Current gate inventory after adversarial registration: 139 semantic-
   compatibility files, 146 unique authoritative test files, four synthetic-
   campaign files, and zero duplicate executions.
+- Expanded compatibility certification: the first clean attempt recorded one
+  intermittent `observerSemanticLedger.test.ts` failure after 1,872 passes and
+  one skip; its isolated two-test suite passed, and the clean rerun passed
+  1,873 tests, skipped one, and failed zero across 139 files.
 
 ## Decisions Made During This Task
 
@@ -199,5 +212,6 @@ the measured baseline before implementing new analyzer families.
 ## Completion Snapshot
 
 Not complete. Live Git authority is discovered from Git on `main` at
-`483510b8cd8eb9ca8622e314e3c2cef8749bbc8e`; the next adversarial-matrix
-checkpoint is currently uncommitted, and Phase 26 task records remain active.
+`bb3a41b735e5dece4170712075e44ccf4a02f716`; implementation checkpoints are
+clean and synchronized, while terminal certification and documentation
+closure remain active.

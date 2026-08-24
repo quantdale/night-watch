@@ -95,14 +95,14 @@ seam.
 - M5 — graph/lifecycle/drift/invalidation/cache integration. Status:
   COMPLETED.
 - M6 — direct Phase 24 portfolio uplift and runtime/source/review correlation.
-  Status: NOT_STARTED.
+  Status: COMPLETED.
 - M7 — operator gap intelligence and deterministic before/after reporting.
-  Status: NOT_STARTED.
+  Status: COMPLETED.
 - M8 — broad adversarial proof-soundness, privacy, cache, and repeatability
-  corpus. Status: IN_PROGRESS.
-- M9 — source-to-triage synthetic campaign integration. Status: NOT_STARTED.
+  corpus. Status: COMPLETED.
+- M9 — source-to-triage synthetic campaign integration. Status: COMPLETED.
 - M10 — compatibility, hardening, gate inventory, clean Node20, and focused
-  closure. Status: NOT_STARTED.
+  closure. Status: IN_PROGRESS.
 - M11 — fresh canonical and topology-correct isolated full regression with
   exact parity. Status: NOT_STARTED.
 - M12 — one exact-head Actions observation if available, durable docs,
