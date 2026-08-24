@@ -5,8 +5,8 @@ Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 Status: IN_PROGRESS
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: 26aa0630d3367f46c330723453cb1a74767606cd
-Last substantive checkpoint SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last substantive checkpoint SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Current position
@@ -20,8 +20,9 @@ executions. The workflow is a thin Node20/Ubuntu bootstrap plus `gate:ci`.
 The fixed runner, compatibility manifest, receipts, inventory, proxy lease,
 external CI classifier, exact-head authority, Preflight V3 core, fresh v2
 manifest boundary, no-contact dry run, and guarded conditional DEV operator
-are implemented. The substantive checkpoint is
-`26aa0630d3367f46c330723453cb1a74767606cd`.
+are implemented. The reconciled live head is
+`d49d4b18d6c2b27c7186003b105e9cce18cdb8fe`; the validated non-merge
+implementation anchor is `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`.
 
 ## Local qualification evidence
 

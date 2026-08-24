@@ -8,15 +8,15 @@ Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qu
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 Status: IN_PROGRESS
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: 26aa0630d3367f46c330723453cb1a74767606cd
-Last substantive checkpoint SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last substantive checkpoint SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
 Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -78,7 +78,8 @@ M8 — validated checkpoint push and exact current-head Actions observation.
 
 ## Work In Progress
 
-M8 — the reconciled implementation checkpoint is `26aa0630d3367f46c330723453cb1a74767606cd`.
+M8 — the reconciled live head is `d49d4b18d6c2b27c7186003b105e9cce18cdb8fe`,
+with non-merge implementation anchor `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`.
 Local and disposable Node 20 qualification are green; the reconciled
 checkpoint needs one bounded push and exact current-head Actions observation.
 No external CI or DEV authority exists yet.
