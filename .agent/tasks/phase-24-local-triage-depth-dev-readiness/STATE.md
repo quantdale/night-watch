@@ -87,8 +87,9 @@ certification.
 
 ## Exact Next Action
 
-Run the authoritative local gate with timing, inspect its receipt, then qualify
-the clean-checkout gate. Keep Actions and DEV untouched until final freeze.
+Run the authoritative local gate with timing against the new source-analysis
+and interruption-coverage checkpoint, then repeat the clean-checkout gate.
+Keep Actions and DEV untouched until final freeze.
 
 ## Files Changed
 
@@ -123,6 +124,10 @@ the clean-checkout gate. Keep Actions and DEV untouched until final freeze.
 - Owner provenance: PASS — 91/91 tests.
 - Clean expanded compatibility qualification: PASS — Phase 9–24, 128 files,
   1,822 total / 1,821 passed / 1 skipped / 0 failed; wall time 365.11s.
+- Source-analysis and lifecycle follow-up: PASS — typecheck, 18/18 focused
+  Phase 24 tests, and 28/28 synthetic campaign tests; source SHA mismatch is
+  now an explicit non-permanent exclusion, and bounded child SIGTERM/SIGINT
+  orphan reclamation is covered without unrelated process termination.
 - Expanded compatibility probe from the dirty worktree: NON-QUALIFYING —
   1,817 total / 1,814 passed / 1 skipped / 2 failed; both failures were the
   pre-existing self-development source-dirty guards at

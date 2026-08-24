@@ -20,7 +20,7 @@ function fixture(id: string, materialClass: Phase24CandidateInput['materialClass
     source: SOURCE,
     sourceAvailable: true,
     relevantFiles: [`corpus/phase24/${id}.fixture.json`],
-    route: { endpointId: `synthetic.endpoint.${id}`, method: 'GET', routeTemplate: `/synthetic/phase24/${id}`, transport: 'SYNTHETIC' as never },
+    route: { endpointId: `synthetic.endpoint.${id}`, method: 'GET', routeTemplate: `/synthetic/phase24/${id}`, transport: 'SYNTHETIC' },
     routeIdentityProven: true,
     contract: { contractId: `synthetic.contract.${id}`, requestDigest: 'request:sha256:' + 'c'.repeat(24), responseDigest: 'response:sha256:' + 'd'.repeat(24), version: 'v1' },
     contractIdentityProven: true,

@@ -11,6 +11,7 @@ export const PHASE24_CI_VERSION = 'nightwatch.phase24-ci-observability.v1' as co
 export const PHASE24_READINESS_VERSION = 'nightwatch.phase24-readiness-diagnostics.v1' as const;
 export const PHASE24_SYNTHETIC_CAMPAIGN_VERSION = 'nightwatch.phase24-synthetic-campaign.v1' as const;
 export const PHASE24_SELECTION_VERSION = 'nightwatch.phase24-portfolio-selection.v1' as const;
+export const PHASE24_SOURCE_ANALYSIS_VERSION = 'nightwatch.phase24-source-snapshot-analysis.v1' as const;
 
 export type Phase24Confidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNCONFIRMED';
 export type Phase24MaterialClass = 'COLLECTION' | 'MEMBERSHIP' | 'RELATIONAL' | 'DIFFERENTIAL' | 'SHAPE' | 'PROTOCOL';
@@ -62,6 +63,8 @@ export interface Phase24CandidateInput {
   readonly product: string;
   readonly source: Phase24SourceIdentity | null;
   readonly sourceAvailable: boolean;
+  /** Set by the snapshot adapter; false never silently rebinds a surface. */
+  readonly sourceSnapshotMatches?: boolean;
   readonly relevantFiles: readonly string[];
   readonly route: Phase24RouteIdentity | null;
   readonly routeIdentityProven: boolean;
@@ -106,6 +109,7 @@ export type Phase24ReasonCode =
   | 'SOURCE_IDENTITY_MISSING'
   | 'SOURCE_SHA_INVALID'
   | 'SOURCE_EVIDENCE_INVALID'
+  | 'SOURCE_SNAPSHOT_MISMATCH'
   | 'ROUTE_IDENTITY_UNPROVEN'
   | 'CONTRACT_IDENTITY_UNPROVEN'
   | 'BEHAVIOR_OWNER_AMBIGUOUS'
@@ -151,6 +155,17 @@ export interface Phase24CandidatePortfolio {
   readonly consideredCount: number;
   readonly eligibleCount: number;
   readonly excludedCount: number;
+  readonly deterministicDigest: string;
+}
+
+export interface Phase24SourceSnapshotAnalysis {
+  readonly schemaVersion: typeof PHASE24_SOURCE_ANALYSIS_VERSION;
+  readonly snapshot: Phase24SourceIdentity;
+  readonly portfolio: Phase24CandidatePortfolio;
+  readonly discoveredSurfaceKeys: readonly string[];
+  readonly eligibleSurfaceKeys: readonly string[];
+  readonly excludedSurfaceKeys: readonly string[];
+  readonly reasonCodeCoverage: readonly Phase24ReasonCode[];
   readonly deterministicDigest: string;
 }
 

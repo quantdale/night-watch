@@ -4,6 +4,7 @@
 
 export * from './types';
 export * from './portfolio';
+export * from './sourceAnalysis';
 export * from './invalidation';
 export * from './manifest';
 export * from './semantic';

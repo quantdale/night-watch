@@ -109,7 +109,8 @@ function checksFor(input: Phase24CandidateInput): readonly Check[] {
   const routeOk = input.routeIdentityProven && input.route !== null;
   const contractOk = input.contractIdentityProven && input.contract !== null;
   const ownerOk = input.behaviorOwnerProven && input.behaviorOwner !== null && input.behaviorOwner.confidence !== 'AMBIGUOUS' && input.behaviorOwner.confidence !== 'UNCONFIRMED';
-  const sourceOk = input.sourceAvailable && source.valid;
+  const sourceSnapshotOk = input.sourceSnapshotMatches !== false;
+  const sourceOk = input.sourceAvailable && source.valid && sourceSnapshotOk;
   const replayOk = input.replay !== null && (input.replay.strategy === 'DETERMINISTIC_FIXTURE' || input.replay.strategy === 'FIRST_REPLAY') && input.replay.maxContexts === 2;
   const authOk = input.authRequirement === 'NONE' || input.authRequirement === 'OWNER_EXTERNAL_PATH';
   const environmentOk = input.environmentRequirement === 'DEV_ONLY';
@@ -117,11 +118,11 @@ function checksFor(input: Phase24CandidateInput): readonly Check[] {
   const evidenceOk = input.expectedEvidenceValue !== 'NONE';
   const countOk = Number.isInteger(input.anticipatedInvariantCount) && input.anticipatedInvariantCount >= 1 && input.anticipatedInvariantCount <= 32;
   const priorityOk = Number.isInteger(input.selectionPriority) && input.selectionPriority >= 1 && input.selectionPriority <= 1000;
-  const sourceCode = !input.sourceAvailable ? 'SOURCE_UNAVAILABLE' : source.reason ?? 'SOURCE_IDENTITY_MISSING';
+  const sourceCode = !input.sourceAvailable ? 'SOURCE_UNAVAILABLE' : !sourceSnapshotOk ? 'SOURCE_SNAPSHOT_MISMATCH' : source.reason ?? 'SOURCE_IDENTITY_MISSING';
   return [
     { ok: routeOk, code: routeOk ? 'ELIGIBLE_ROUTE_IDENTITY_BOUND' : 'ROUTE_IDENTITY_UNPROVEN', failure: 'ROUTE_IDENTITY', why: 'route or endpoint identity is not mechanically bound', permanent: false, futureSourceCanMakeEligible: true },
     { ok: contractOk, code: contractOk ? 'ELIGIBLE_CONTRACT_IDENTITY_BOUND' : 'CONTRACT_IDENTITY_UNPROVEN', failure: 'REQUEST_RESPONSE_CONTRACT', why: 'request and response contract identity is not proven', permanent: false, futureSourceCanMakeEligible: true },
-    { ok: sourceOk, code: sourceOk ? 'ELIGIBLE_SOURCE_PROVENANCE_EXACT' : sourceCode as Phase24ReasonCode, failure: 'SOURCE_PROVENANCE', why: sourceOk ? 'approved source snapshot and evidence digest are exact' : 'source snapshot is unavailable or its identity is invalid', permanent: false, futureSourceCanMakeEligible: true },
+    { ok: sourceOk, code: sourceOk ? 'ELIGIBLE_SOURCE_PROVENANCE_EXACT' : sourceCode as Phase24ReasonCode, failure: 'SOURCE_PROVENANCE', why: sourceOk ? 'approved source snapshot and evidence digest are exact' : sourceCode === 'SOURCE_SNAPSHOT_MISMATCH' ? 'surface provenance belongs to a different source snapshot' : 'source snapshot is unavailable or its identity is invalid', permanent: false, futureSourceCanMakeEligible: true },
     { ok: ownerOk, code: ownerOk ? 'ELIGIBLE_BEHAVIOR_OWNER_BOUND' : 'BEHAVIOR_OWNER_AMBIGUOUS', failure: 'BEHAVIORAL_OWNER', why: 'repository/package/component ownership is ambiguous or unproven', permanent: false, futureSourceCanMakeEligible: true },
     { ok: input.sourceVersion === 'CURRENT', code: input.sourceVersion === 'CURRENT' ? 'ELIGIBLE_VERSION_CURRENT' : input.sourceVersion === 'DRIFTED' ? 'SOURCE_VERSION_DRIFT' : 'SOURCE_VERSION_UNKNOWN', failure: 'SOURCE_VERSION', why: 'candidate is not bound to the current approved source snapshot', permanent: false, futureSourceCanMakeEligible: true },
     { ok: input.semanticContractProven, code: input.semanticContractProven ? 'ELIGIBLE_SEMANTIC_PRECONDITIONS_BOUND' : 'SEMANTIC_CONTRACT_UNPROVEN', failure: 'SEMANTIC_CONTRACT', why: 'semantic contract is not mechanically established', permanent: false, futureSourceCanMakeEligible: true },
@@ -153,6 +154,7 @@ function normalizeInput(input: Phase24CandidateInput): Phase24CandidateInput {
   if (input.semanticPreconditions.length > 16) invalid('PRECONDITION_BOUND');
   input.semanticPreconditions.forEach((code) => assertSafeBoundedToken(code, 'PRECONDITION'));
   assertBoundedBoolean(input.sourceAvailable, 'SOURCE_AVAILABLE');
+  if (input.sourceSnapshotMatches !== undefined) assertBoundedBoolean(input.sourceSnapshotMatches, 'SOURCE_SNAPSHOT_MATCHES');
   assertBoundedBoolean(input.routeIdentityProven, 'ROUTE_PROVEN');
   assertBoundedBoolean(input.contractIdentityProven, 'CONTRACT_PROVEN');
   assertBoundedBoolean(input.behaviorOwnerProven, 'OWNER_PROVEN');
@@ -173,6 +175,7 @@ function normalizeInput(input: Phase24CandidateInput): Phase24CandidateInput {
     product: input.product,
     source: input.source,
     sourceAvailable: input.sourceAvailable,
+    sourceSnapshotMatches: input.sourceSnapshotMatches ?? true,
     relevantFiles: sortedUnique(input.relevantFiles),
     route: input.route,
     routeIdentityProven: input.routeIdentityProven,

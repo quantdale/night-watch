@@ -3,6 +3,7 @@ import {
   buildPhase24CandidateInvalidationLedger,
   buildPhase24CandidatePortfolio,
   buildPhase24NoContactRehearsal,
+  analyzePhase24SourceSnapshot,
   classifyPhase24Ci,
   classifyPhase24Replay,
   createPhase24CrossCandidateExpectation,
@@ -23,6 +24,7 @@ import {
   validatePhase24Minimization,
   validatePhase24NoContactRehearsal,
   validatePhase24PortfolioSelection,
+  validatePhase24SourceSnapshotAnalysis,
   type Phase24CandidateInput,
   type Phase24CiObservation,
   type Phase24ManifestInput,
@@ -108,6 +110,27 @@ function portfolio() {
 }
 
 test.describe('Phase 24 source-qualified portfolio and invalidation', () => {
+  test('derives a bounded portfolio from one exact source snapshot without rebinding drift', () => {
+    const analysis = analyzePhase24SourceSnapshot({
+      snapshot: SOURCE_A,
+      surfaces: [
+        candidate('snapshot-list'),
+        candidate('snapshot-drift', { source: SOURCE_B }),
+        candidate('snapshot-mutation', { mutationClassification: 'MUTATION' }),
+      ],
+    });
+    validatePhase24SourceSnapshotAnalysis(analysis);
+    expect(analysis.discoveredSurfaceKeys).toHaveLength(3);
+    expect(analysis.eligibleSurfaceKeys).toHaveLength(1);
+    expect(analysis.excludedSurfaceKeys).toHaveLength(2);
+    const drift = analysis.portfolio.candidates.find((item) => item.surfaceKey.endsWith('snapshot-drift.read'));
+    expect(drift?.source).toEqual(SOURCE_B);
+    expect(drift?.reasonCodes).toContain('SOURCE_SNAPSHOT_MISMATCH');
+    expect(drift?.exclusionReasons[0]).toMatchObject({ permanent: false, futureSourceCanMakeEligible: true });
+    expect(analyzePhase24SourceSnapshot({ snapshot: SOURCE_A, surfaces: [candidate('snapshot-list'), candidate('snapshot-drift', { source: SOURCE_B }), candidate('snapshot-mutation', { mutationClassification: 'MUTATION' })] }).deterministicDigest).toBe(analysis.deterministicDigest);
+    expect(analyzePhase24SourceSnapshot({ snapshot: SOURCE_B, surfaces: [candidate('snapshot-list'), candidate('snapshot-drift', { source: SOURCE_B }), candidate('snapshot-mutation', { mutationClassification: 'MUTATION' })] }).deterministicDigest).not.toBe(analysis.deterministicDigest);
+  });
+
   test('classifies a diverse source-derived portfolio with complete positive and exclusion reason codes', () => {
     const result = buildPhase24CandidatePortfolio({ candidates: [
       candidate('eligible'),
@@ -185,6 +208,15 @@ test.describe('Phase 24 manifest and no-contact rehearsal', () => {
     expect(changedPolicy.manifestId).not.toBe(first.manifestId);
     const changedExpectation = createPhase24Manifest({ ...manifestInput(candidates), semanticExpectationDigest: 'semantic-plan:sha256:' + '0'.repeat(24) });
     expect(changedExpectation.manifestId).not.toBe(first.manifestId);
+    const sourceChangedPortfolio = buildPhase24CandidatePortfolio({ candidates: [candidate('common-exchange', { source: SOURCE_B }), candidate('payer-exchange'), candidate('account-inventory')] });
+    const sourceChanged = createPhase24Manifest(manifestInput(sourceChangedPortfolio));
+    expect(sourceChanged.manifestId).not.toBe(first.manifestId);
+    const changedGate = createPhase24Manifest({ ...manifestInput(candidates), qualityGate: { ...gateBinding(), gateDefinitionDigest: 'sha256:' + '9'.repeat(64) } });
+    expect(changedGate.manifestId).not.toBe(first.manifestId);
+    const changedReplayPortfolio = buildPhase24CandidatePortfolio({ candidates: [candidate('common-exchange', { replay: { strategy: 'FIRST_REPLAY', planIdentity: 'replay-plan:sha256:' + '9'.repeat(24), maxContexts: 2, prerequisites: ['SOURCE_CURRENT'] } }), candidate('payer-exchange'), candidate('account-inventory')] });
+    expect(createPhase24Manifest(manifestInput(changedReplayPortfolio)).manifestId).not.toBe(first.manifestId);
+    expect(() => createPhase24Manifest({ ...manifestInput(candidates), selectedCandidateIds: ['candidate:sha256:' + '0'.repeat(24)] })).toThrow(/SELECTED_CANDIDATE_MISSING/);
+    expect(() => createPhase24Manifest({ ...manifestInput(candidates), environment: 'PRODUCTION' as never })).toThrow(/MANIFEST_HEAD_OR_ENVIRONMENT/);
   });
 
   test('rehearses manifest to candidate, action, oracle, replay, dossier, and teardown with zero contact', () => {
@@ -278,5 +310,21 @@ test.describe('Phase 24 replay, minimization, dossier, and operator diagnostics'
     expect(readiness.blockerCodes).toEqual(expect.arrayContaining(['EXTERNAL_CI_NOT_GREEN', 'SOURCE_STALE', 'MANIFEST_STALE', 'AUTH_NOT_READY', 'CONTAINMENT_NOT_READY', 'QUALITY_GATE_MISMATCH', 'SOURCE_IDENTITY_MISMATCH', 'ENVIRONMENT_NOT_AUTHORIZED']));
     const green = classifyPhase24Ci({ ...observation, run: { ...observation.run!, conclusion: 'success' }, requiredJobObservation: { name: 'Executable quality gate', steps: [{ status: 'completed', conclusion: 'success' }], conclusion: 'success' }, gateReceipt: { finalResult: 'PASS', gateDefinitionDigest: 'sha256:' + 'a'.repeat(64), expectedGateDefinitionDigest: 'sha256:' + 'a'.repeat(64) } });
     expect(green.state).toBe('EXACT_HEAD_GREEN');
+    const cases: readonly [string, Phase24CiObservation][] = [
+      ['NO_RUN', { ...observation, run: null }],
+      ['QUEUED', { ...observation, run: { ...observation.run!, status: 'queued' } }],
+      ['RUNNING', { ...observation, run: { ...observation.run!, status: 'in_progress' } }],
+      ['WRONG_WORKFLOW', { ...observation, run: { ...observation.run!, workflow: 'Other workflow' } }],
+      ['WRONG_SHA', { ...observation, run: { ...observation.run!, headSha: 'b'.repeat(40) } }],
+      ['CANCELLED', { ...observation, run: { ...observation.run!, conclusion: 'cancelled' } }],
+      ['WRONG_JOB', { ...observation, requiredJobObservation: { ...observation.requiredJobObservation!, name: 'Other job' } }],
+      ['INCOMPLETE_STEPS', { ...observation, requiredJobObservation: { ...observation.requiredJobObservation!, steps: null } }],
+      ['AMBIGUOUS', { ...observation, requiredJobObservation: { name: 'Executable quality gate', steps: [{ status: 'completed', conclusion: 'success' }], conclusion: 'success' }, gateReceipt: null }],
+      ['EXACT_HEAD_TEST_FAILURE', { ...observation, requiredJobObservation: { name: 'Executable quality gate', steps: [{ status: 'completed', conclusion: 'failure' }], conclusion: 'failure' }, gateReceipt: { finalResult: 'TEST_FAILURE', gateDefinitionDigest: 'sha256:' + 'a'.repeat(64), expectedGateDefinitionDigest: 'sha256:' + 'a'.repeat(64) } }],
+      ['INFRASTRUCTURE_FAILURE', { ...observation, requiredJobObservation: { name: 'Executable quality gate', steps: [{ status: 'completed', conclusion: 'failure' }], conclusion: 'failure' }, gateReceipt: { finalResult: 'INFRA_FAILURE', gateDefinitionDigest: 'sha256:' + 'a'.repeat(64), expectedGateDefinitionDigest: 'sha256:' + 'a'.repeat(64) } }],
+    ];
+    for (const [expected, input] of cases) expect(classifyPhase24Ci(input).state).toBe(expected);
+    const ready = diagnosePhase24Readiness({ externalCi: green, sourceCurrent: true, manifestCurrent: true, authReady: true, containmentReady: true, qualityGateMatches: true, sourceIdentityMatches: true, environmentAuthorized: true });
+    expect(ready.state).toBe('READY');
   });
 });
