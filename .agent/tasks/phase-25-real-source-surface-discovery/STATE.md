@@ -10,7 +10,7 @@ Status: COMPLETE
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
 Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 Last substantive checkpoint SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-Last documentation checkpoint SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
+Last documentation checkpoint SHA: de4822ec8151a7de83c3f89ce325a003257077e6
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -263,7 +263,8 @@ infrastructure/data authority carries forward.
 M0–M14 are complete. Phase 25 is `COMPLETE_LOCAL_SOURCE_EXPANSION` with
 source-expansion checkpoint `042300c7c59fd8218afabc761e31691139d0c657` and
 validated continuity implementation checkpoint
-`f5356f3dc4c136780955d7df3c64c14b438f7bb6`, live
+`f5356f3d94973b5ffc95c60623bf027a2864bfb5`; last known documentation
+checkpoint `de4822ec8151a7de83c3f89ce325a003257077e6`, live
 continuity head discovered from Git, clean local/Node20 gates, exact
 canonical/isolated parity, one truthful zero-step Actions observation, and
 zero prohibited-operation counts.

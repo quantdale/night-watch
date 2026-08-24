@@ -180,9 +180,10 @@ publications/messages 0, raw private persistence 0, AI calls 0.
 - Implementation checkpoints: `ac093ff3`, `5416469`, `683b0b8`, `4c6d50d`,
   `042300c`; validated continuity implementation checkpoint:
   `f5356f3d94973b5ffc95c60623bf027a2864bfb5`; continuity/compatibility
-  checkpoint: `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
-- Branch: `main`; upstream: `origin/main`; final local and remote heads are
-  required to remain identical and the worktree clean.
+  checkpoint: `3e69c857dd5409675b6c2d8d13b59cfc87232576`; last known pushed
+  documentation checkpoint: `de4822ec8151a7de83c3f89ce325a003257077e6`.
+- Branch: `main`; upstream: `origin/main`; the last pushed head was verified
+  synchronized and clean before this final approved documentation descendant.
 - No feature/development branch, merge, force-push, or pull request was used.
 
 ### Source access and extraction

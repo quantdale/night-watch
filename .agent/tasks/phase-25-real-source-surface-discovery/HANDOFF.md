@@ -8,6 +8,9 @@ The durable validated implementation anchor is
 checkpoint remains `042300c7c59fd8218afabc761e31691139d0c657`. The live head is
 always discovered from Git. The task stayed on `main`, used no feature branch or pull request,
 and preserved the Phase 24 portfolio, replay, dossier, and semantic authority.
+The last known pushed documentation checkpoint is
+`de4822ec8151a7de83c3f89ce325a003257077e6`; the terminal record itself remains
+an approved documentation descendant and does not predict its own SHA.
 
 Final local evidence:
 

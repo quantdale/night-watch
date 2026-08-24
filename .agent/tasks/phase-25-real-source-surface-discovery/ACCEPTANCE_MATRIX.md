@@ -39,4 +39,4 @@
 | A35 | exact parity | exact four skip identities matched | PASS |
 | A36 | one exact-head Actions observation | run `32741057138`, job `97475353760`, zero steps, `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` | PASS |
 | A37 | prohibited-operation counts zero | local/source campaign safety ledger; all prohibited counts remain zero | PASS |
-| A38 | clean synchronized main | final main-only closure requires `HEAD == origin/main` and clean tree | PASS |
+| A38 | clean synchronized main | last pushed `main` head `de4822ec8151a7de83c3f89ce325a003257077e6` was verified as `HEAD == origin/main` with a clean tree before the terminal documentation descendant | PASS |

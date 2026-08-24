@@ -2053,7 +2053,8 @@ contact a product, or touch data/infrastructure systems. The implementation
 source-expansion checkpoint is `042300c7c59fd8218afabc761e31691139d0c657`;
 the validated continuity implementation checkpoint is
 `f5356f3d94973b5ffc95c60623bf027a2864bfb5`; the preceding compatibility
-checkpoint is `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
+checkpoint is `3e69c857dd5409675b6c2d8d13b59cfc87232576`; the last known pushed
+documentation checkpoint is `de4822ec8151a7de83c3f89ce325a003257077e6`.
 
 Delivered capability includes:
 
