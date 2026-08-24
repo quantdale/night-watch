@@ -173,8 +173,12 @@ test.describe('Phase 24 source-qualified portfolio and invalidation', () => {
     validatePhase24CandidateInvalidationLedger(ledger);
     expect(ledger.newlyEligibleCandidateIds).toHaveLength(1);
     expect(ledger.staleCandidateIds).toHaveLength(1);
-    expect(ledger.replayInvalidatedCandidateIds).toHaveLength(1);
-    expect(ledger.dossierInvalidatedCandidateIds).toHaveLength(1);
+    // Phase 25 makes source evidence changes invalidate every dependent
+    // replay/dossier assumption, even when the semantic contract shape is
+    // unchanged. The replay-plan and owner changes add their own invalidation
+    // cases to that source-evidence case.
+    expect(ledger.replayInvalidatedCandidateIds).toHaveLength(2);
+    expect(ledger.dossierInvalidatedCandidateIds).toHaveLength(2);
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.stable.read'))?.state).toBe('SOURCE_CHANGED');
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.promoted.read'))?.state).toBe('NEWLY_ELIGIBLE');
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.replay.read'))?.state).toBe('REPLAY_PLAN_INVALIDATED');

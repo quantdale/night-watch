@@ -265,11 +265,18 @@ function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservatio
     const left = Number(match[3]);
     const rightOperator = match[4];
     const right = Number(match[5]);
-    if (!Number.isFinite(left) || !Number.isFinite(right) || left > right || !["<", "<=", ">", ">="].includes(leftOperator ?? "") || !["<", "<=", ">", ">="].includes(rightOperator ?? "")) {
-      out.push(rejected({ analyzerId: "TS_VALIDATION_RANGE", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "UNSUPPORTED_SYNTAX", detail: "range-order", surfaces }));
+    // The throw guard proves the complementary interval only for the fixed
+    // outward form `field < lower || field > upper` (inclusive endpoints) or
+    // `field <= lower || field >= upper` (exclusive endpoints). Reversed
+    // operators such as `field > lower || field < upper` are not a range
+    // proof: with ordered bounds they are effectively always true. Reject
+    // them rather than manufacturing a RANGE_BOUND observation.
+    const validOutwardGuard = (leftOperator === "<" || leftOperator === "<=") && (rightOperator === ">" || rightOperator === ">=");
+    if (!Number.isFinite(left) || !Number.isFinite(right) || left > right || !validOutwardGuard) {
+      out.push(rejected({ analyzerId: "TS_VALIDATION_RANGE", language: artifact.language, symbol: safeSymbol(artifact.symbol), code: "UNSUPPORTED_SYNTAX", detail: validOutwardGuard ? "range-order" : "range-orientation", surfaces }));
       continue;
     }
-    out.push(proven({ analyzerId: "TS_VALIDATION_RANGE", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "RANGE_BOUND", shape: { kind: "RANGE", field, lowerBound: left, upperBound: right, lowerInclusive: leftOperator === "<=", upperInclusive: rightOperator === ">=" }, surfaces }));
+    out.push(proven({ analyzerId: "TS_VALIDATION_RANGE", language: artifact.language, symbol: safeSymbol(artifact.symbol), behaviorClass: "RANGE_BOUND", shape: { kind: "RANGE", field, lowerBound: left, upperBound: right, lowerInclusive: leftOperator === "<", upperInclusive: rightOperator === ">" }, surfaces }));
   }
 
   const normalizationMatches = [...text.matchAll(/([A-Za-z][A-Za-z0-9_.-]{0,96})\.trim\(\)\.(toLowerCase|toUpperCase)\(\)/g)];

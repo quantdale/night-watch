@@ -93,7 +93,22 @@ export type ContractCurrentness =
   | "SEMANTIC_REDERIVATION_REQUIRED"
   | "CONTRACT_REMOVED"
   | "CONTRACT_EXPANDED"
-  | "CONTRACT_NARROWED";
+  | "CONTRACT_NARROWED"
+  | "INCOMPATIBLE_CHANGE"
+  | "REDERIVATION_REQUIRED";
+
+/** Explicit shape-aware drift semantics. JSON serialization size is never a
+ * comparison signal. The legacy ContractCurrentness values remain available
+ * for existing consumers; this field supplies the precise semantic result. */
+export type ContractShapeDrift =
+  | "UNCHANGED"
+  | "EVIDENCE_CHANGED_SEMANTICS_UNCHANGED"
+  | "EXPANDED"
+  | "NARROWED"
+  | "INCOMPATIBLE_CHANGE"
+  | "REDERIVATION_REQUIRED"
+  | "REMOVED"
+  | "SOURCE_UNAVAILABLE";
 
 export type ObservationSurfaceKind = "BROWSER" | "API" | "SYNTHETIC" | "REPLAY";
 
@@ -252,6 +267,7 @@ export interface ContractDiscoveryInventory {
 export interface ContractDriftResult {
   readonly candidateId: string;
   readonly currentness: ContractCurrentness;
+  readonly shapeChange: ContractShapeDrift;
   readonly affected: boolean;
   readonly reasonCode: "SOURCE_SHA_CHANGED" | "EVIDENCE_CHANGED" | "EVIDENCE_UNCHANGED" | "CONTRACT_MISSING" | "SOURCE_UNAVAILABLE";
   readonly priorEvidenceDigest: string | null;
@@ -259,6 +275,16 @@ export interface ContractDriftResult {
 }
 
 export type GraphNodeKind =
+  | "REPOSITORY"
+  | "SOURCE_FILE"
+  | "OPERATION"
+  | "HANDLER"
+  | "REQUEST_CONTRACT"
+  | "RESPONSE_CONTRACT"
+  | "SEMANTIC_CONTRACT"
+  | "PHASE24_CANDIDATE"
+  | "RUNTIME_BINDING"
+  | "REPLAY_PLAN"
   | "SOURCE_ARTIFACT"
   | "SOURCE_EVIDENCE"
   | "CONTRACT_CANDIDATE"
@@ -272,6 +298,17 @@ export type GraphNodeKind =
   | "DOSSIER";
 
 export type GraphEdgeReason =
+  | "CONTAINS_SOURCE_FILE"
+  | "DECLARES_ROUTE"
+  | "BINDS_HANDLER"
+  | "USES_REQUEST_CONTRACT"
+  | "PRODUCES_RESPONSE_CONTRACT"
+  | "PROVES_SEMANTIC_CONTRACT"
+  | "QUALIFIES_CANDIDATE"
+  | "BINDS_RUNTIME"
+  | "BINDS_REPLAY"
+  | "INVALIDATES_REPLAY"
+  | "INVALIDATES_DOSSIER"
   | "EXTRACTED_FROM"
   | "EVIDENCE_PROVES"
   | "ADMITTED_AS"

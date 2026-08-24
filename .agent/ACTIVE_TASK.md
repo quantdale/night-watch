@@ -7,11 +7,13 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
 Last validated implementation SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
-Last checkpoint: M2 — versioned scan configuration and deterministic bounded inventory
-Current milestone: M3 — analyzer integration and proof-soundness regression suite.
-Next action: Repair TS validation-range semantics and replace serialized-length
-contract drift classification with explicit shape-aware comparison, then add
-positive/negative/ambiguous analyzer regressions.
+Last checkpoint: M11 — source-to-portfolio synthetic campaign and bounded
+adversarial/cache hardening
+Current milestone: M12 — compatibility, quality-gate, and clean-checkout
+closure.
+Next action: Commit the validated source-surface implementation directly to
+main, rerun clean semantic compatibility, then execute the unified local and
+clean gates before fresh canonical/isolated regression qualification.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
@@ -59,6 +61,24 @@ grant execution authority or infer deployment/ownership/mutation safety.
 - `src/core/source/scan.ts`
 - `src/core/source/scanTypes.ts`
 - `tests/unit/phase25SourceInventory.test.ts`
+- `src/core/source/surfaceTypes.ts`
+- `src/core/source/surfaces.ts`
+- `src/core/semanticCoverage/sourceAnalyzers.ts`
+- `src/core/semanticCoverage/discovery.ts`
+- `src/core/semanticCoverage/types.ts`
+- `tests/unit/phase25AnalyzerSoundness.test.ts`
+- `tests/unit/phase25SurfaceDiscovery.test.ts`
+- `tests/unit/phase21Integration.test.ts` (intentional proof-digest migration)
+- `src/core/semanticCoverage/graph.ts`
+- `src/core/phase24/invalidation.ts`
+- `src/core/source/approvedScan.ts`
+- `src/core/source/cache.ts`
+- `src/core/source/invalidation.ts`
+- `src/core/source/review.ts`
+- `tests/unit/phase25Adversarial.test.ts`
+- `tests/unit/phase25Invalidation.test.ts`
+- `tests/unit/phase25Operator.test.ts`
+- `tests/unit/phase25SyntheticCampaign.test.ts`
 
 ## Resume Recipe
 

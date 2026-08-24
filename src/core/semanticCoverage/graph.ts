@@ -1,6 +1,7 @@
 // Phase 20 — one deterministic contract lifecycle graph.
 
 import { CONTRACT_GRAPH_VERSION, graphIdentity, safeSemanticDigest, type ContractCandidate, type ContractDiscoveryInventory, type ContractGraph, type ContractGraphEdge, type ContractGraphGap, type ContractGraphNode, type DiscoveryProofStatus, type GraphEdgeReason, type GraphNodeKind } from "./types";
+import type { RealSourceSurfaceDescriptor } from "../source/surfaceTypes";
 
 export interface GraphExpectationBinding {
   readonly contractId: string;
@@ -62,6 +63,19 @@ export interface ContractGraphInput {
   readonly minimizers?: readonly GraphMinimizerBinding[];
   readonly dossiers?: readonly GraphDossierBinding[];
   readonly differentials?: readonly GraphDifferentialBinding[];
+  /** Optional Phase 25 lineage appended to this existing lifecycle graph. */
+  readonly sourceSurfaces?: readonly RealSourceSurfaceDescriptor[];
+  readonly sourceSurfaceBindings?: readonly SourceSurfaceGraphBinding[];
+}
+
+export interface SourceSurfaceGraphBinding {
+  readonly surfaceId: string;
+  readonly phase24CandidateId: string | null;
+  readonly runtimeBindingId: string | null;
+  readonly replayPlanId: string | null;
+  readonly dossierId: string | null;
+  readonly replayInvalidated: boolean;
+  readonly dossierInvalidated: boolean;
 }
 
 function invalid(reason: string): never {
@@ -119,6 +133,105 @@ function addBindingNode(nodes: Map<string, ContractGraphNode>, edges: Map<string
   addEdge(edges, edge(contractNodeId, bindingNode.nodeId, reason));
 }
 
+function sourceSurfaceStatus(surface: RealSourceSurfaceDescriptor): ContractGraphNode["status"] {
+  if (surface.currentness !== "CURRENT") return "STALE";
+  if (surface.exclusionReasons.length > 0) return "REJECTED";
+  if (surface.lifecycle === "MECHANICALLY_PROVEN") return "MECHANICALLY_PROVABLE";
+  if (surface.lifecycle === "DIFFERENTIAL_CAPABLE") return "AVAILABLE";
+  if (surface.lifecycle === "FULL_LIFECYCLE") return "FULLY_COVERED";
+  return surface.lifecycle;
+}
+
+function derivedSourceIdentity(kind: string, value: unknown): string {
+  return `${kind}:${safeSemanticDigest(value, "source-lineage")}`;
+}
+
+function addSourceSurfaceLineage(input: {
+  readonly surfaces: readonly RealSourceSurfaceDescriptor[];
+  readonly bindings: readonly SourceSurfaceGraphBinding[];
+  readonly nodes: Map<string, ContractGraphNode>;
+  readonly edges: Map<string, ContractGraphEdge>;
+}): void {
+  if (input.surfaces.length > 128) invalid("SOURCE_SURFACE_COUNT");
+  const surfaces = [...input.surfaces].sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
+  const surfaceIds = new Set<string>();
+  for (const surface of surfaces) {
+    safeId(surface.surfaceId, "SURFACE");
+    if (surfaceIds.has(surface.surfaceId)) invalid("SOURCE_SURFACE_DUPLICATE");
+    surfaceIds.add(surface.surfaceId);
+  }
+  const bindingBySurface = new Map<string, SourceSurfaceGraphBinding>();
+  for (const binding of input.bindings) {
+    safeId(binding.surfaceId, "SURFACE_BINDING");
+    if (!surfaceIds.has(binding.surfaceId) || bindingBySurface.has(binding.surfaceId)) invalid("SOURCE_SURFACE_BINDING");
+    for (const [label, identity] of [["CANDIDATE", binding.phase24CandidateId], ["RUNTIME", binding.runtimeBindingId], ["REPLAY", binding.replayPlanId], ["DOSSIER", binding.dossierId]] as const) {
+      if (identity !== null) safeId(identity, label);
+    }
+    bindingBySurface.set(binding.surfaceId, binding);
+  }
+
+  for (const surface of surfaces) {
+    const repoNode = relationNode("REPOSITORY", `repo:${surface.source.repoId}`, "AVAILABLE");
+    const fileNode = relationNode("SOURCE_FILE", `file:${surface.source.repoId}:${surface.operation.sourcePath}`, "AVAILABLE");
+    const operationNode = relationNode("OPERATION", `operation:${surface.operation.evidenceDigest}`, sourceSurfaceStatus(surface));
+    addNode(input.nodes, repoNode);
+    addNode(input.nodes, fileNode);
+    addNode(input.nodes, operationNode);
+    addEdge(input.edges, edge(repoNode.nodeId, fileNode.nodeId, "CONTAINS_SOURCE_FILE"));
+    addEdge(input.edges, edge(fileNode.nodeId, operationNode.nodeId, "DECLARES_ROUTE"));
+
+    const handlerJoin = surface.joins.find((join) => join.kind === "ROUTE_HANDLER");
+    if (surface.operation.handlerPath !== null && surface.operation.handlerSymbol !== null && handlerJoin?.state === "PROVEN") {
+      const handlerNode = relationNode("HANDLER", derivedSourceIdentity("handler", { repoId: surface.source.repoId, path: surface.operation.handlerPath, symbol: surface.operation.handlerSymbol }), "AVAILABLE");
+      addNode(input.nodes, handlerNode);
+      addEdge(input.edges, edge(operationNode.nodeId, handlerNode.nodeId, "BINDS_HANDLER"));
+    }
+    if (surface.contract.requestContractId !== null && surface.contract.requestProof === "PROVEN") {
+      const requestNode = relationNode("REQUEST_CONTRACT", `request:${surface.contract.requestContractId}`, "AVAILABLE");
+      addNode(input.nodes, requestNode);
+      addEdge(input.edges, edge(operationNode.nodeId, requestNode.nodeId, "USES_REQUEST_CONTRACT"));
+    }
+    let responseNode: ContractGraphNode | null = null;
+    if (surface.contract.responseContractId !== null && surface.contract.responseProof === "PROVEN") {
+      responseNode = relationNode("RESPONSE_CONTRACT", `response:${surface.contract.responseContractId}`, "AVAILABLE");
+      addNode(input.nodes, responseNode);
+      addEdge(input.edges, edge(operationNode.nodeId, responseNode.nodeId, "PRODUCES_RESPONSE_CONTRACT"));
+    }
+    for (const semanticId of [...surface.contract.semanticContractIds].sort()) {
+      const semanticNode = relationNode("SEMANTIC_CONTRACT", `semantic:${semanticId}`, surface.contract.semanticProof === "PROVEN" ? "AVAILABLE" : "UNSUPPORTED");
+      addNode(input.nodes, semanticNode);
+      addEdge(input.edges, edge((responseNode ?? operationNode).nodeId, semanticNode.nodeId, "PROVES_SEMANTIC_CONTRACT"));
+    }
+
+    const binding = bindingBySurface.get(surface.surfaceId);
+    const candidateIdentity = binding?.phase24CandidateId ?? `candidate:${surface.surfaceId}`;
+    const candidateNode = relationNode("PHASE24_CANDIDATE", candidateIdentity, sourceSurfaceStatus(surface));
+    addNode(input.nodes, candidateNode);
+    if (surface.exclusionReasons.length === 0) addEdge(input.edges, edge(operationNode.nodeId, candidateNode.nodeId, "QUALIFIES_CANDIDATE"));
+
+    if (surface.operation.runtimeBinding !== "SOURCE_ONLY") {
+      const runtimeIdentity = binding?.runtimeBindingId ?? derivedSourceIdentity("runtime", { operationId: surface.operation.operationId, binding: surface.operation.runtimeBinding, targetId: surface.targetId });
+      const runtimeStatus: ContractGraphNode["status"] = surface.operation.runtimeBinding === "RUNTIME_BOUND_EXACT" ? "AVAILABLE" : surface.operation.runtimeBinding === "SOURCE_VERSION_MISMATCH" ? "STALE" : "UNSUPPORTED";
+      const runtimeNode = relationNode("RUNTIME_BINDING", runtimeIdentity, runtimeStatus);
+      addNode(input.nodes, runtimeNode);
+      addEdge(input.edges, edge(operationNode.nodeId, runtimeNode.nodeId, "BINDS_RUNTIME"));
+    }
+
+    const replayInvalidated = binding?.replayInvalidated ?? (surface.currentness !== "CURRENT" || surface.exclusionReasons.includes("SOURCE_EVIDENCE_CHANGED") || surface.exclusionReasons.includes("CONTRACT_CHANGED"));
+    if (surface.replayCapability === "SUPPORTED" || binding?.replayPlanId !== null && binding?.replayPlanId !== undefined || replayInvalidated) {
+      const replayIdentity = binding?.replayPlanId ?? `replay:${surface.surfaceId}`;
+      const replayNode = relationNode("REPLAY_PLAN", replayIdentity, replayInvalidated ? "STALE" : "AVAILABLE");
+      addNode(input.nodes, replayNode);
+      addEdge(input.edges, edge(candidateNode.nodeId, replayNode.nodeId, replayInvalidated ? "INVALIDATES_REPLAY" : "BINDS_REPLAY"));
+    }
+    if (binding?.dossierId !== null && binding?.dossierId !== undefined) {
+      const dossierNode = relationNode("DOSSIER", binding.dossierId, binding.dossierInvalidated ? "STALE" : "AVAILABLE");
+      addNode(input.nodes, dossierNode);
+      if (binding.dossierInvalidated) addEdge(input.edges, edge(candidateNode.nodeId, dossierNode.nodeId, "INVALIDATES_DOSSIER"));
+    }
+  }
+}
+
 /** Build the source-to-dossier graph and classify lifecycle gaps. */
 export function buildContractGraph(input: ContractGraphInput): ContractGraph {
   if (input.inventory.schemaVersion !== "nightwatch.contract-discovery.v1") invalid("INVENTORY_VERSION");
@@ -136,6 +249,10 @@ export function buildContractGraph(input: ContractGraphInput): ContractGraph {
   const edges = new Map<string, ContractGraphEdge>();
   const gaps: ContractGraphGap[] = [];
   const expectationIds = new Set(expectations.map((record) => record.expectationId));
+
+  if (input.sourceSurfaces !== undefined) {
+    addSourceSurfaceLineage({ surfaces: input.sourceSurfaces, bindings: input.sourceSurfaceBindings ?? [], nodes, edges });
+  }
 
   for (const candidate of candidates) {
     const artifactIdentity = `${candidate.source.repoId}:${candidate.source.relativePath}`;

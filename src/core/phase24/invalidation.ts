@@ -46,6 +46,11 @@ function makeRecord(input: {
       state = 'SOURCE_UNAVAILABLE';
       addReason(reasons, 'SOURCE_SNAPSHOT_UNAVAILABLE');
     }
+    // A replay plan or dossier built from a removed/unavailable surface must
+    // never remain authoritative merely because no replacement candidate was
+    // supplied.
+    replayInvalidated = true;
+    dossierAssumptionsInvalidated = true;
   } else if (prior === null) {
     state = current.eligibility === 'ELIGIBLE' ? 'NEWLY_ELIGIBLE' : 'NEW_CANDIDATE';
     addReason(reasons, 'CANDIDATE_ADDED');
@@ -53,6 +58,10 @@ function makeRecord(input: {
     if (!sourceEqual(prior.source, current.source)) {
       if (prior.source?.sha !== current.source?.sha) addReason(reasons, 'SOURCE_SHA_CHANGED');
       if (prior.source?.evidenceDigest !== current.source?.evidenceDigest) addReason(reasons, 'SOURCE_EVIDENCE_CHANGED');
+      if (prior.source?.sha !== current.source?.sha || prior.source?.evidenceDigest !== current.source?.evidenceDigest) {
+        replayInvalidated = true;
+        dossierAssumptionsInvalidated = true;
+      }
     }
     if (canonical(prior.contract) !== canonical(current.contract)) addReason(reasons, 'CONTRACT_IDENTITY_CHANGED');
     if (prior.semanticExpectationId !== current.semanticExpectationId) addReason(reasons, 'SEMANTIC_EXPECTATION_CHANGED');

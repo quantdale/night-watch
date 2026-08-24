@@ -67,27 +67,25 @@ read-only, regular-file-only, and source-text ephemeral.
 - M2 — versioned scan configuration and deterministic bounded inventory.
   Status: COMPLETE.
 - M3 — analyzer integration and proof-soundness regression suite. Status:
-  IN_PROGRESS.
-- M3 — analyzer integration and proof-soundness regression suite. Status:
-  NOT_STARTED.
+  COMPLETE.
 - M4 — route/operation discovery and evidence-backed read-only classification.
-  Status: NOT_STARTED.
+  Status: COMPLETE.
 - M5 — request/response contracts and exact cross-file joins. Status:
-  NOT_STARTED.
+  COMPLETE.
 - M6 — source evidence graph and shape-aware contract drift. Status:
-  NOT_STARTED.
+  COMPLETE.
 - M7 — direct Phase 24 portfolio integration and runtime correlation. Status:
-  NOT_STARTED.
+  COMPLETE.
 - M8 — incremental invalidation, semantic lifecycle projection, and review
-  priority. Status: NOT_STARTED.
+  priority. Status: COMPLETE.
 - M9 — local review queue/operator explain surface and provenance routing.
-  Status: NOT_STARTED.
+  Status: COMPLETE.
 - M10 — adversarial corpus, privacy, determinism, cache, and performance
-  hardening. Status: NOT_STARTED.
+  hardening. Status: COMPLETE.
 - M11 — synthetic source-to-portfolio campaign integration. Status:
-  NOT_STARTED.
+  COMPLETE.
 - M12 — compatibility, quality gate, clean Node 20, and hardening closure.
-  Status: NOT_STARTED.
+  Status: IN_PROGRESS.
 - M13 — fresh canonical and topology-correct isolated full regressions,
   repair, and parity. Status: NOT_STARTED.
 - M14 — one exact-head Actions observation, durable docs, terminal closure,
@@ -119,6 +117,40 @@ hardening/compatibility cone, exact `STATE.md` update, then a validated direct
   executable patterns or shell commands are represented.
 - M2: inventory content identity is a full digest of the exact text read after
   metadata enumeration, so dirty same-SHA edits cannot reuse the prior result.
+- M3: TS validation ranges are admitted only for the two mechanically proven
+  outward guard forms; reversed, ambiguous, and unsupported operators remain
+  rejected. Contract drift now compares supported shapes semantically rather
+  than using serialized-size differences.
+- M4: route discovery is fixed-pattern and source-only; safe structural
+  handler identities are allowed, while source text remains ephemeral. Only
+  exact current runtime bindings plus existing Phase 24 proof fields can
+  qualify a candidate, and deployment equivalence remains unresolved.
+- M5: cross-file joins resolve only exact allowlisted paths and exactly one
+  declared symbol. Missing, multiple, stale, outside-scope, and unsupported
+  references remain visible and non-authoritative; request/response schema
+  files are accepted only through fixed static forms.
+- M6: the existing semantic lifecycle graph now accepts additive source
+  lineage nodes and stable route/handler/contract/runtime/replay/dossier edge
+  reasons. The original Phase20–24 graph is byte-compatible when no Phase25
+  surfaces are supplied.
+- M7: extracted surfaces invoke the existing Phase24 source-snapshot adapter,
+  portfolio builder, and selector directly. No Phase25 portfolio or planner is
+  introduced; runtime correlation remains source/runtime evidence only and
+  deployment equivalence stays unresolved.
+- M8: source change reports compare bounded inventory and stable surface keys,
+  while candidate state remains delegated to the Phase24 invalidation ledger.
+  Any changed source SHA/evidence now invalidates dependent replay and dossier
+  assumptions, including same-SHA inspected-content changes.
+- M9: the review queue carries Phase24 rank/score plus deterministic proof,
+  runtime, semantic-depth, replay, component, and source-change factors. These
+  factors explain priority but cannot override Phase24 eligibility.
+- M10: route duplicate detection is global across the bounded inventory;
+  dynamic/ambiguous routes remain non-authoritative. The extraction cache is
+  bounded and keyed by configured analyzer identity plus exact inspected
+  snapshot digest, never by Git SHA alone.
+- M11: the synthetic campaign proves source snapshot → extraction → Phase24
+  portfolio → semantic evaluation → replay/dossier construction → no-contact
+  rehearsal with zero network, auth, mutation, or raw-source persistence.
 
 ## Discoveries
 

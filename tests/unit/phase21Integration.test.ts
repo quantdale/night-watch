@@ -66,7 +66,10 @@ test.describe("Phase 21 lifecycle saturation", () => {
     expect(finalLedger.statusCounts.OBSOLETE_AFTER_GRAPH_REBUILD).toBe(83);
     expect(finalLedger.statusCounts.IRREDUCIBLE_SOURCE_PROOF).toBe(3);
     expect(finalLedger.records.filter((record) => record.reasonCode === "DUPLICATE_EQUIVALENCE_PROOF_MISSING")).toHaveLength(2);
-    expect(finalLedger.baselineGraphDigest).toBe("contract-graph:sha256:6d9daf8684def8b023f421ae");
+    // Phase 25 corrected the TS range-bound proof orientation. The resulting
+    // source-bound candidate identity intentionally advances this historical
+    // digest; Phase 25's analyzer matrix covers the old false-positive forms.
+    expect(finalLedger.baselineGraphDigest).toBe("contract-graph:sha256:741b136e752a061c002ec47d");
     expect(JSON.stringify(finalLedger)).not.toContain("CUSTOMER_SENTINEL");
   });
 

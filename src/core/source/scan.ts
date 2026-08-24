@@ -54,6 +54,8 @@ const EXTENSION_LANGUAGE: Readonly<Record<SourceScanExtension, SourceScanLanguag
   '.jsx': 'JAVASCRIPT',
   '.go': 'GO',
   '.json': 'OPENAPI',
+  '.yaml': 'YAML',
+  '.yml': 'YAML',
 };
 
 function invalid(reason: string): never {

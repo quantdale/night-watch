@@ -13,9 +13,13 @@ const args = process.argv.slice(2);
 const command = args[0] ?? "status";
 const asJson = args.includes("--json");
 
-const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain"]);
+const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "surfaces", "review-queue", "explain-surface"]);
 if (!COMMANDS.has(command)) {
   console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
+  process.exit(2);
+}
+if (args.some((arg) => arg.startsWith("--env"))) {
+  console.error("NIGHTWATCH_INTELLIGENCE: source/operator commands never accept environment execution");
   process.exit(2);
 }
 
@@ -111,6 +115,31 @@ function status() {
   const [repoState, localReadiness] = loadTypeScriptModules(["src/core/readiness/repoState.ts", "src/core/readiness/localReadiness.ts"]);
   const summary = localReadiness.summarizeLocalReadiness(repoState.collectLocalReadinessInputFromRepo());
   return { command: "status", scope: "LOCAL_SYNTHETIC_ONLY", safety: "FROZEN_BY_OWNER", readiness: summary };
+}
+
+function sourceDiscoveryPreview() {
+  const [sourceBoundary, approvedScan, surfacesModule, reviewModule] = loadTypeScriptModules([
+    "src/core/source/siblingSource.ts",
+    "src/core/source/approvedScan.ts",
+    "src/core/source/surfaces.ts",
+    "src/core/source/review.ts",
+  ]);
+  const requestedRepo = args.find((arg) => arg.startsWith("--repo="))?.slice("--repo=".length);
+  const repositoryIds = requestedRepo === undefined ? undefined : [requestedRepo];
+  const config = approvedScan.createApprovedRealSourceScanConfig({ repositoryIds });
+  const access = sourceBoundary.createSiblingSourceAccess(sourceBoundary.DEFAULT_SIBLING_ROOT);
+  const discovery = surfacesModule.discoverSourceSurfaces({ access, config });
+  const inventory = discovery.inventory;
+  const safeInventory = { schemaVersion: inventory.schemaVersion, configDigest: inventory.configDigest, extractorVersion: inventory.extractorVersion, files: inventory.files, repositories: inventory.repositories, counters: inventory.counters, snapshotDigest: inventory.snapshotDigest };
+  if (command === "source-scan") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", approvedRepositoryIds: config.approvedRepositories.map((repository) => repository.repoId), inventory: safeInventory };
+  if (discovery.phase24Inputs.length === 0) return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: discovery.counters, operations: discovery.operations, surfaces: discovery.surfaces, portfolio: null, queue: null, note: "NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE" };
+  const integration = surfacesModule.analyzeSourceSurfacesIntoPhase24({ access, config, discovery, maxCandidates: 6 });
+  const review = reviewModule.buildSourceReviewQueue({ discovery: integration.discovery, portfolio: integration.portfolio, selection: integration.selection });
+  if (command === "surfaces") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: integration.discovery.counters, operations: integration.discovery.operations, surfaces: integration.discovery.surfaces, portfolio: { considered: integration.portfolio.consideredCount, eligible: integration.portfolio.eligibleCount, excluded: integration.portfolio.excludedCount, reasonCodeCoverage: integration.portfolio.reasonCodeCoverage, deterministicDigest: integration.portfolio.deterministicDigest }, deterministicDigest: integration.discovery.deterministicDigest };
+  if (command === "review-queue") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, queue: review };
+  const requestedSurface = args[1];
+  if (requestedSurface === undefined || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(requestedSurface)) throw new Error("EXPLAIN_SURFACE_ID_UNSAFE");
+  return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", requestedSurface, surface: reviewModule.explainSourceSurface({ discovery: integration.discovery, portfolio: integration.portfolio, selection: integration.selection, surfaceId: requestedSurface }), queueDigest: review.deterministicDigest };
 }
 
 function phase20Preview() {
@@ -224,7 +253,8 @@ function phase21Summary(phase21) {
 
 try {
   let output;
-  if (command === "status") output = status();
+  if (["source-scan", "surfaces", "review-queue", "explain-surface"].includes(command)) output = sourceDiscoveryPreview();
+  else if (command === "status") output = status();
   else if (["differential", "replay-coverage", "minimization-coverage", "mutation-score"].includes(command)) {
     const phase21 = phase21Preview();
     const summary = phase21Summary(phase21);
@@ -257,7 +287,8 @@ try {
     output = { command, scope: "LOCAL_SYNTHETIC_ONLY", requestedId: requested ?? null, item, explanation: item === null ? "PLAN_ITEM_NOT_FOUND" : "PRIORITY_COMPONENTS_AND_GATES" };
   }
   process.stdout.write(asJson ? `${renderJson(output)}\n` : `${command} ${output.scope ?? "LOCAL_SYNTHETIC_ONLY"}\n${renderJson(output)}\n`);
-} catch {
-  console.error("NIGHTWATCH_INTELLIGENCE_FAILED code=CONFIG_INVALID remediation=Use_checked_in_local_configuration_and_rerun");
+} catch (error) {
+  const detail = error instanceof Error && /^[A-Z0-9_:-]{1,120}$/.test(error.message) ? error.message : "CONFIG_INVALID";
+  console.error(`NIGHTWATCH_INTELLIGENCE_FAILED code=${detail} remediation=Use_checked_in_local_configuration_and_rerun`);
   process.exitCode = 2;
 }

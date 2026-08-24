@@ -37,10 +37,10 @@ preserving fail-closed source, privacy, currentness, and no-contact rules.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: repair existing analyzer proof semantics and contract
-drift classification before broader route and contract extraction.
+What is being attempted: close compatibility, authoritative quality-gate,
+clean-checkout, and fresh-regression evidence after source authority expansion.
 
 ## Completed Milestones
 
@@ -55,26 +55,57 @@ drift classification before broader route and contract extraction.
 - M2 — added fixed versioned scan configuration and bounded source inventory;
   inventory is deterministic, content-aware at the same Git SHA, stale-source
   aware, and contains no raw source text.
+- M3 — repaired TS validation-range proof orientation and replaced
+  serialized-length contract drift heuristics with explicit shape-aware
+  comparison; added positive, negative, ambiguous, and deterministic privacy
+  regressions.
+- M4 — added fixed route/operation discovery, safe read-only/mutation
+  classification, existing analyzer-backed request/response/semantic
+  evidence, runtime/source correlation, provenance, and direct Phase 24 input
+  conversion. Synthetic bridge coverage proves one exact runtime-bound
+  read-only candidate and one excluded mutation candidate.
+- M5 — added exact route-to-handler and optional handler-to-request/response
+  schema join records with content-digest evidence; missing and multiply
+  defined symbols are rejected and tested.
+- M6 — extended the existing semantic lifecycle graph with additive source
+  repository/file/operation/handler/request/response/semantic/Phase24/runtime/
+  replay/dossier lineage. Input-order repeatability and privacy-safe graph
+  output are covered.
+- M7 — added one direct source-to-Phase24 adapter/portfolio/selector function;
+  exact runtime-bound/read-only synthetic eligibility is retained and runtime
+  deployment equivalence remains unresolved.
+- M8 — added bounded inventory/surface change comparison and delegated
+  candidate invalidation to the existing Phase24 ledger. Same-SHA relevant
+  content changes now invalidate replay/dossier assumptions; unrelated files
+  leave candidate records current. Lifecycle counts are explicit.
+- M9 — added local source-scan/surfaces/review-queue/explain-surface operator
+  paths, fixed approved repository scan policy, explainable review factors,
+  and operator environment-flag rejection.
+- M10 — added global duplicate route rejection, a source-surface cache keyed by
+  Git plus inspected content/config/extractor/analyzer identity, bounded
+  eviction, privacy/adversarial matrices, and deterministic repeatability.
+- M11 — added the offline source-to-portfolio synthetic campaign through
+  semantic evaluation, replay/dossier DTOs, and Phase24 no-contact rehearsal.
 
 ## Work In Progress
 
-Repair the TS range analyzer and semantic contract-drift classifier with
-explicit proof tables. Add valid, reversed, unsupported, ambiguous, and
-shape-specific regressions before accepting any new extraction authority.
+Build the source-driven Phase 24 adapter/portfolio/selection integration, then
+connect two exact source snapshots to the existing invalidation ledger without
+rebinding stale evidence.
 
 ## Exact Next Action
 
-Implement M3 in the existing Phase 20 analyzer/discovery modules and focused
-Phase 25 regressions; preserve historical DTO compatibility where current
-tests rely on it.
+Implement one deterministic source-to-Phase24 integration function and add
+changed-snapshot portfolio/invalidation/lifecycle regressions.
 
 ## Files Changed
 
-Task records, `src/core/source/siblingSource.ts`,
-`tests/unit/phase25SourceBoundary.test.ts`, and Phase 25 compatibility/gate
-registration are changed in the current working checkpoint. M2 additionally
-changed `src/core/source/scan.ts`, `src/core/source/scanTypes.ts`, and
-`tests/unit/phase25SourceInventory.test.ts`.
+Task records, `src/core/source/siblingSource.ts`, `src/core/source/scan.ts`,
+`src/core/source/scanTypes.ts`, `src/core/source/surfaceTypes.ts`,
+`src/core/source/surfaces.ts`, the existing semantic coverage analyzer and
+drift modules, Phase 25 compatibility/gate registration, and the Phase 25
+boundary/inventory/analyzer/surface tests are changed in the current
+checkpoint.
 
 ## Validation Ledger
 
@@ -104,6 +135,43 @@ changed `src/core/source/scan.ts`, `src/core/source/scanTypes.ts`, and
   25 inventory test registered.
 - M2 hardening check: PASS.
 - M2 typecheck: PASS.
+- M3 focused Phase 20 semantic coverage plus Phase 25 analyzer suite: PASS —
+  19 passed, 0 failed.
+- M3/M4 typecheck: PASS.
+- M3/M4 hardening check: PASS.
+- M4 surface discovery suite: PASS — 2 passed, 0 failed.
+- M4 quality-gate specification: PASS — compatibility range 9–25 and 132
+  registered compatibility files.
+- M4 whitespace check: PASS — `git diff --check`.
+- M5 focused source surface suite: PASS — 3 passed, 0 failed, including exact
+  request/response schema joins and missing/multiple handler rejection.
+- M5/M6 focused Phase20 + Phase25 cone: PASS — 22 passed, 0 failed.
+- M6 graph determinism/privacy assertions: PASS within the 22-test cone.
+- M6 typecheck: PASS.
+- M6 hardening check: PASS.
+- M7 focused source/Phase24/review cone: PASS — 25 passed, 0 failed across
+  Phase20, Phase24, and Phase25 surface/invalidation/operator tests.
+- M7 typecheck and hardening: PASS.
+- M8 invalidation matrix: PASS — unrelated admitted-file change preserved
+  current candidate records; relevant same-SHA handler evidence invalidated
+  replay and dossier assumptions.
+- M9 real approved-source operator smoke: PASS — `source-scan` inspected
+  `mobingilabs/ripple-api` read-only with 96 files, 95 admitted, 1 privacy
+  rejection, 1,742,807 inspected bytes, and no external contact. `surfaces`
+  remained truthful with 128 bounded operations, 95 truncations, 0 eligible
+  real candidates, and explicit exclusion reasons.
+- M10 adversarial/cache matrix: PASS — 4 tests covering route families,
+  global duplicate/unsupported routes, privacy/unsupported files, dirty
+  same-SHA cache misses, config misses, and bounded eviction.
+- M11 synthetic campaign: PASS — 29 tests in `campaign:synthetic`, including
+  the Phase25 source → portfolio → semantic/replay/dossier → no-contact path.
+- Gate inventory: PASS — 141 unique authoritative test files and 0 duplicate
+  executions after Phase25 registration.
+- Full compatibility attempt before a clean implementation checkpoint:
+  1,847 total, 1,844 passed, 1 canonical skip, 2 failures in existing
+  self-development CLI missing-artifact tests because the working tree was
+  intentionally dirty (`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`). No
+  source-surface assertion failed; the clean post-commit rerun is required.
 
 ## Decisions Made During This Task
 
@@ -119,6 +187,22 @@ changed `src/core/source/scan.ts`, `src/core/source/scanTypes.ts`, and
   same-SHA source.
 - M2 source inventory remains subordinate to `siblingSource.ts`; coordinators
   import no filesystem or process authority.
+- M3 range proof rejects reversed or semantically ambiguous guards even when a
+  regex could match them; unsupported is safer than invented evidence.
+- M3 drift classifications preserve historical result vocabulary while adding
+  explicit shape categories for expansion, narrowing, incompatibility,
+  rederivation, removal, and source unavailability.
+- M4 safe structural handler symbols may be retained in descriptors, but raw
+  handler source text and literal values are never persisted; exact runtime
+  binding and existing Phase 24 proof remain separate authority checks.
+- M5 join evidence uses only safe path/symbol/content-digest identities; an
+  exact filename does not by itself prove a response contract unless the
+  bounded static schema or existing analyzer proves it.
+- M6 source lineage is optional on the existing graph API so historical
+  Phase20–24 graph digests remain unchanged when no Phase25 surfaces are fed.
+- Phase24 source-evidence changes now explicitly invalidate replay and dossier
+  assumptions; this intentional safety migration is covered by the updated
+  Phase24 regression.
 
 ## Discoveries
 
@@ -148,6 +232,7 @@ checkpoint discipline.
 
 ## Completion Snapshot
 
-M1 and M2 are complete and locally validated. M3 analyzer proof repair is
-active; all route extraction, portfolio, regression, CI, and terminal checks
-remain pending.
+M1–M11 are implemented and locally focused-validated. M12 remains active for
+the clean post-commit compatibility/gate run, Node20 qualification, fresh
+canonical/isolated regression parity, external exact-head observation, and
+terminal synchronized-main closure.
