@@ -3137,3 +3137,33 @@ the implementation head but had `steps=[]`; the classifier returned
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Pre-DEV V3 is
 `BLOCKED_EXTERNAL_CI`, so DEV observations are zero and no auth state was
 read. Local green never substitutes for external CI authority.
+
+## D-76 — Phase 24 deepens local triage without expanding DEV authority
+
+**Context.** Phase 23 supplied a unified local/clean/CI quality gate but the
+exact-head Actions execution remained blocked before steps. The next useful
+investment was local autonomous triage depth, not external billing diagnosis
+or repeated CI attempts.
+
+**Decision.** Add a deterministic, source-derived Phase 24 layer for bounded
+candidate portfolio analysis, explicit eligibility/exclusion reasons,
+source-change invalidation, stable prioritization, manifest v3 identity,
+no-contact rehearsal, twelve semantic oracle classes, five exact
+cross-candidate relations, replay/minimization v3, sanitized dossier and
+owner/component routing, privacy sentinels, readiness diagnostics, exact-head
+CI classification, and proxy interruption tests. Keep all cores additive and
+authority-inert: no filesystem/network/process/database/AI/self-development or
+persistence authority, no synthetic-to-real relabeling, no people inference,
+and no weakening of the existing Phase 22/23 DEV gate.
+
+**Evidence and consequences.** The implementation checkpoint is
+`cec14ac8e1b189aed96a1b8488381083951411f6`. The local nine-group gate passed
+with receipt `receipt:sha256:c6da9a1edf31f47ac1b14d19`; the Node20 clean gate
+passed with receipt `clean-receipt:sha256:719495ba80a55e351d8f24fb`;
+compatibility is 1,824 total / 1,823 passed / 1 skipped / 0 failed, synthetic
+28/28, and owner provenance 91/91. The final Actions observation was run
+`32723603497` / job `97419996717` at the exact implementation SHA, but the
+required job had zero executed steps and was classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. It is not green CI. No DEV launcher or
+auth-state read occurred, all contact/mutation/publication counts are zero,
+and the owner-frozen infrastructure/data layer remains out of scope.

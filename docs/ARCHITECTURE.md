@@ -1518,3 +1518,56 @@ validated implementation checkpoint is
 `32709452878` / job `97377543621` matched that head but returned `steps=[]`,
 so the external classifier is `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` and the
 pre-DEV state is `BLOCKED_EXTERNAL_CI` with zero DEV observations.
+
+## Phase 24 local autonomous triage architecture
+
+Phase 24 adds a local, authority-inert composition layer around the existing
+source and campaign seams:
+
+```text
+bounded source snapshot descriptors + exact SHA/evidence
+  -> source analyzer and portfolio eligibility/exclusion reasons
+  -> source-change invalidation + deterministic diversity prioritization
+  -> manifest v3 (candidate, semantic, replay, environment, policy, gate IDs)
+  -> no-contact rehearsal (selection -> policy -> containment -> action plan)
+  -> deterministic semantic and cross-candidate oracle evaluation
+  -> replay-v3 divergence classification + invariant-preserving minimization
+  -> sanitized dossier + component/repository provenance + local routing
+  -> teardown receipt
+```
+
+The Phase 24 cores are pure and deterministic. They have no filesystem,
+network, child-process, database, AI, self-development, or persistence
+authority. The source analyzer accepts an exact source identity and bounded
+descriptors; changed source identity is an explicit exclusion, never a silent
+rebind. Manifest identity canonicalizes candidate order but binds every
+semantically relevant source, eligibility, semantic, replay, environment,
+containment, policy, quality-gate, and operator input. Adversarial tests prove
+that source SHA, candidate omission, eligibility, expectations, environment,
+policy, gate, and replay changes invalidate identity while harmless ordering
+does not.
+
+The semantic path contains twelve single-surface oracle classes and five
+cross-candidate relation kinds. Cross relations require exact paired source
+provenance and freshness on both sides; list/detail, filtered/unfiltered,
+summary/members, payer/exchange, and inventory/account relationships cannot be
+invented from names alone. Safe projections carry bounded categories, counts,
+structural summaries, and digests only. Dossier routing resolves to exact
+component, repository-only, ambiguous, or unresolved ownership and never
+infers a person.
+
+Replay v3 binds occurrence identity, source and contract identity, sanitized
+observations, prerequisites, context, and limits. Its seven classifications
+keep deterministic reproduction separate from precondition, source, auth,
+environment, semantic, and invalid-replay divergence. Minimization preserves
+the original invariant and bug class. The no-contact rehearsal stops before
+external contact and verifies every planned resource tears down.
+
+Readiness and CI observability remain separate from product execution. The
+classifier is conservative over no-run, queued/running, exact-head green,
+test failure, cancellation, infrastructure failure, wrong identity,
+incomplete, ambiguous, and zero-step platform states. A zero-step required job
+cannot become CI authority. Proxy lease changes are test-infrastructure-only:
+ownership, stale-child, startup/interruption, parallel, symlink, SIGTERM, and
+SIGINT behavior are bounded and checked for no unrelated process termination
+and no lingering listener.

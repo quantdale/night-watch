@@ -6,21 +6,21 @@ Task ID: phase-24-local-triage-depth-dev-readiness
 Phase: 24-LOCAL-TRIAGE-DEPTH-DEV-READINESS
 Title: Nightwatch Phase 24 — Local Autonomous Triage Depth and DEV-Readiness Acceleration
 Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last validated implementation SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
-Last substantive checkpoint SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+Last validated implementation SHA: cec14ac8e1b189aed96a1b8488381083951411f6
+Last substantive checkpoint SHA: cec14ac8e1b189aed96a1b8488381083951411f6
 Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_VALIDATED_IMPLEMENTATION_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+LAST_VALIDATED_IMPLEMENTATION_SHA: cec14ac8e1b189aed96a1b8488381083951411f6
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cec14ac8e1b189aed96a1b8488381083951411f6
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_24_STATUS: IN_PROGRESS
+PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
 PHASE_21_STATUS: COMPLETE (historical, unchanged)
@@ -40,8 +40,7 @@ DEV authority.
 
 ## Current Milestone
 
-M8 — lifecycle, CI observability, gate integration, and clean-checkout
-hardening.
+COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal closure.
 
 ## Completed Milestones
 
@@ -77,19 +76,27 @@ hardening.
 - Compatibility is expanded to Phase 9–24 and the Phase 24 synthetic campaign
   adds eight distinct fixture candidates, six oracle cases, zero false
   positives, and deterministic repeat.
+- M8: conservative exact-head CI/readiness classification, five proxy
+  lifecycle interruption/ownership tests, and bounded compatibility timing
+  stabilization are complete.
+- M9: source snapshot analysis, source-mismatch exclusion, deterministic
+  portfolio prioritization, and clean-checkout reproducibility are complete.
+- M10: the authoritative local gate and Node20 clean-checkout gate passed;
+  final exact-head Actions was observed once and classified as an external
+  zero-step billing/platform block; durable documentation closure is pending
+  only its known checkpoint SHA.
 
 ## Work In Progress
 
-Run the expanded compatibility and synthetic campaigns, add the requested
-adversarial proxy interruption coverage, measure gate group runtime, and audit
-clean-checkout behavior. Repair failures before advancing to final
-certification.
+None. The implementation, focused repair, authoritative local certification,
+clean-checkout qualification, and final external classification are complete.
 
 ## Exact Next Action
 
-Run the authoritative local gate with timing against the new source-analysis
-and interruption-coverage checkpoint, then repeat the clean-checkout gate.
-Keep Actions and DEV untouched until final freeze.
+STOP — the exact current-head Actions result is classified as
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; do not retry it, read auth, or invoke
+DEV. A future separately authorized phase must establish a new exact-head green
+run before any acceptance contact.
 
 ## Files Changed
 
@@ -143,6 +150,25 @@ Keep Actions and DEV untouched until final freeze.
 - Implementation checkpoint `144c9153a1bb79d67ff4886e05e053e499b42336` was
   committed after `git diff --check`, focused typecheck, hardening, quality
   gate spec, Phase 24 11/11, and Phase 24 campaign 12/12 passed.
+- Final focused Phase 24 validation: PASS — 18/18 local triage and proxy
+  lifecycle tests, including source snapshot drift, all CI/readiness states,
+  rapid/parallel lease ownership, symlink refusal, and SIGTERM/SIGINT orphan
+  reclamation.
+- Final synthetic campaign: PASS — 28/28; owner provenance: PASS — 91/91;
+  typecheck: PASS; hardening: PASS; quality-gate specification: PASS; gate
+  inventory: 133 unique authoritative test files and zero duplicate test-file
+  executions.
+- Authoritative `npm run gate:local`: PASS at implementation SHA
+  `cec14ac8e1b189aed96a1b8488381083951411f6`, receipt
+  `receipt:sha256:c6da9a1edf31f47ac1b14d19`; all nine groups passed, with
+  compatibility 1,824 total / 1,823 passed / 1 skipped / 0 failed.
+- Node20 disposable `npm run gate:clean`: PASS at the same source SHA, receipt
+  `clean-receipt:sha256:719495ba80a55e351d8f24fb`; clean before and after,
+  no reused node_modules, auth state, owner findings, or sibling writes.
+- Final Actions observation: run `32723603497`, job `97419996717`, exact
+  implementation SHA, conclusion `failure`, zero executed steps, no gate
+  receipt, and conservative classification
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. No DEV launcher invocation occurred.
 
 ## Decisions Made During This Task
 
@@ -167,8 +193,8 @@ versioned source/candidate invalidation and portfolio explanation surface.
 ## Blockers
 
 External GitHub Actions remains blocked by zero executed required-job steps on
-the current exact-head run. This prevents external CI authority and any DEV
-contact, but does not block local/source/synthetic implementation.
+the exact implementation-head run `32723603497`. This prevents external CI
+authority and any DEV contact. No local implementation blocker remains.
 
 ## Safety Events
 
@@ -185,13 +211,21 @@ being admitted by heuristic.
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, this task’s `SPEC.md`, `PLAN.md`, and `STATE.md`.
-Inspect the worktree and resume at M1’s exact next action. Run focused local
-tests only; do not poll Actions or invoke a DEV launcher while the current
-external classification is zero-step blocked.
+Task complete. Do not resume this task. A future separately authorized phase
+must establish a new genuinely executed exact-head green run before any
+acceptance contact; no standing DEV, auth, or retry authority carries forward.
 
 ## Completion Snapshot
 
-Open — the Phase 24 local triage slice is implemented and focused-green; gate,
-clean-checkout, lifecycle adversarial, final provenance, and final CI
-classification remain.
+- Status: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI.
+- Implementation checkpoint: `cec14ac8e1b189aed96a1b8488381083951411f6`.
+- Authoritative local gate: PASS, nine groups, compatibility 1,824 / 1,823 /
+  1 / 0, owner provenance 91/91, synthetic 28/28.
+- Clean-checkout gate: PASS on Node20 with clean-before/clean-after and zero
+  sibling writes.
+- Exact-head Actions: run `32723603497`, job `97419996717`, zero steps,
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
+- DEV launcher invocations: 0; all product, DEV, NEXT, production, mutation,
+  auth-read, and publication counts: 0.
+- Remaining action: STOP pending external CI recovery and a separately fresh
+  pre-DEV qualification.

@@ -1373,6 +1373,28 @@ launcher was not invoked, so DEV observations and every restricted safety
 category are zero. This is a truthful pre-DEV block, not a CI-green or product
 correctness claim.
 
+## Phase 24 local triage safety boundary
+
+Phase 24's source analyzer, portfolio, manifest, semantic, replay,
+minimization, dossier, provenance, readiness, and CI-observability cores are
+local/source/synthetic only. They have no network, browser, process,
+filesystem, database, cloud, infrastructure, AI, self-development, sibling
+write, publication, or persistence authority. The no-contact rehearsal stops
+before external contact and proves policy resolution, containment planning,
+oracle/replay/dossier attachment, privacy-safe receipt construction, and
+teardown without opening a product connection.
+
+Only bounded categories, counts, structural summaries, and opaque digests cross
+Phase 24 artifact boundaries. Raw customer values, secrets, credentials,
+cookies, bearer tokens, authenticated bodies/DOM/traces, and reconstructible
+sets are rejected. Cross-candidate relations require exact source provenance
+and freshness on both sides; source drift, ambiguous ownership, unsupported
+contracts, and unsafe mutation classes fail closed. A zero-step or otherwise
+ambiguous Actions result never becomes CI authority. The final Phase 24 run
+`32723603497` / job `97419996717` had zero steps and was classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; DEV launcher invocations and auth-state
+reads remained zero.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
@@ -1391,5 +1413,7 @@ NONE_OBSERVED; exactly ONE common-exchange FIRST + fresh-context REPLAY
 pair with zero safety events); Phase 16CH portfolio runtime-binding hardening
 (COMPLETE_LOCAL_SOURCE_SYNTHETIC / BLOCKED_EXTERNAL_CI: canonical and
 topology-correct isolated 2232/4/0 exact parity, thirteen quality floors zero,
-no new authority); changes require a
-DECISIONS entry and a test update.*
+no new authority); Phase 24 local autonomous triage depth and DEV-readiness
+acceleration (COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI: source/synthetic only,
+zero-contact rehearsal, zero DEV observations, exact-head CI still required);
+changes require a DECISIONS entry and a test update.*

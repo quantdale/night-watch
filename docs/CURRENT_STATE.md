@@ -1,16 +1,14 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-24** at
-> Phase 23 terminal closure. The validated Phase 23 implementation checkpoint
-> is `98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b`; the live documentation/final
-> head is discovered from Git. Canonical and topology-correct isolated full
-> regressions both pass 2,360 / 4 skipped / 0 failed out of 2,364 with exact
-> skip parity. Phase 22 remains `BLOCKED_BEFORE_DEV` because its historical
-> external CI gate failed before steps; no DEV contact occurred. Phase 23 has
-> unified the quality gate and is locally/clean-checkout qualified. Its exact
-> current-head Actions run `32709452878` for that checkpoint had job
-> `97377543621` with `steps=[]`, so the terminal state is
-> `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` and DEV observations are zero. This snapshot is
+> Phase 24 terminal closure. The validated Phase 24 implementation checkpoint
+> is `cec14ac8e1b189aed96a1b8488381083951411f6`; the live documentation/final
+> head is discovered from Git. Phase 24's authoritative local and disposable
+> Node20 clean-checkout gates pass, while its exact-head Actions run
+> `32723603497` / job `97419996717` had `steps=[]`, so the terminal state is
+> `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` and DEV observations remain zero. Phase
+> 23's canonical/isolated parity baseline remains 2,360 / 4 skipped / 0 failed
+> out of 2,364 with exact skip parity. This snapshot is
 > LOCAL / SOURCE / SYNTHETIC only, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
@@ -169,6 +167,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_17_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — terminal implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c` connects source selection to bounded portfolio allocation, hardens baseline/privacy/replay evidence boundaries, and adds a 9-case synthetic source-change corpus; DEF-17-01..06 are repaired; focused 27/0, readiness/rehearsal repair matrix 52/0, affected 142/0, and canonical/isolated full regression 2259/0/4 are green with exact parity; Actions run 32628613509 / job 97167784939 executed zero steps under the external billing/spending block; Phase 16D remains `NOT_AUTHORIZED` |
 | `PHASE_22_STATUS` | `BLOCKED_BEFORE_DEV` — additive real-eligibility, source-currentness, frozen-manifest, Preflight V2, privacy-firewall, replay/calibration, dossier, and dry-run bridge implemented at `64cffaf6554300f59907c947f135753b62376a64`; six candidates considered, three DEV-eligible collection targets frozen, exact local gates green, but Actions run `32681204267` / job `97298112036` failed with `steps=[]` and failed-log retrieval timed out; zero DEV contact |
 | `PHASE_23_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — one versioned `nightwatch.quality-gate.v1` (9 required groups) drives local, Node20 clean-checkout, and GitHub Actions execution through `npm run gate:ci`; Phase 9–23 compatibility is 1,806 total / 1,805 passed / 1 skipped / 0 failed; CI receipt `receipt:sha256:25e36d5165d745db5f5e6ac6`, clean receipt `clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`, canonical/isolated 2,364/2,360/4/0 parity, fresh source SHA `27bb007…`, fresh v2 manifest, and no-contact dry run are green; exact Actions run `32709452878` / job `97377543621` matched the implementation head but had `steps=[]`, so DEV observations are zero |
+| `PHASE_24_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — implementation `cec14ac8e1b189aed96a1b8488381083951411f6` adds source snapshot analysis, eight-candidate deterministic portfolio selection (6 eligible / 2 excluded), manifest v3, no-contact rehearsal, 12 semantic oracle classes, 5 cross-candidate relations, replay/minimization v3, sanitized dossier/owner routing, CI/readiness diagnostics, and proxy interruption coverage; authoritative local gate PASS with receipt `receipt:sha256:c6da9a1edf31f47ac1b14d19`, clean Node20 gate PASS with receipt `clean-receipt:sha256:719495ba80a55e351d8f24fb`, Phase 9–24 compatibility 1,824/1,823/1/0, synthetic 28/28, owner provenance 91/91, 133 unique authoritative files / 0 duplicate executions; exact Actions run `32723603497` / job `97419996717` matched the implementation head but had zero steps and classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; DEV observations are zero |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2142,3 +2141,38 @@ persistence, and privacy/containment PASS. The exact current-head Actions run
 `steps=[]`; it is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Pre-DEV V3
 is `BLOCKED_EXTERNAL_CI`; owner-only auth was not read, and DEV observations
 remain zero.
+
+## Phase 24 — local autonomous triage depth and DEV-readiness acceleration
+
+Phase 24 is terminal at `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`. It adds a pure
+source snapshot analyzer and deterministic candidate portfolio with explicit
+eligible/excluded reason details, source-change invalidation, stable diversity-
+aware prioritization, manifest v3 identity binding, and a no-contact rehearsal
+that validates the future campaign through teardown without external contact.
+The semantic layer now has twelve bounded oracle classes and five exact,
+freshness-bound cross-candidate relations. Replay/minimization v3 preserves
+the original invariant and bug class across seven divergence classifications;
+structured dossiers route only to code/component/repository ownership states,
+with ambiguity retained rather than guessed.
+
+The Phase 24 synthetic portfolio has eight candidates (six eligible and two
+excluded), six semantic cases (three violated and three benign), zero benign
+false positives, and deterministic repeat. The authoritative local gate at
+implementation checkpoint
+`cec14ac8e1b189aed96a1b8488381083951411f6` passed all nine groups with receipt
+`receipt:sha256:c6da9a1edf31f47ac1b14d19`; compatibility is Phase 9–24,
+1,824 total / 1,823 passed / 1 skipped / 0 failed, owner provenance is 91/91,
+and the synthetic campaign is 28/28. The disposable Node20 clean-checkout
+gate passed with clean receipt
+`clean-receipt:sha256:719495ba80a55e351d8f24fb` and zero sibling writes.
+
+The final exact-head Actions observation was run `32723603497` / job
+`97419996717` for the implementation SHA. It concluded `failure` before any
+job step (`steps=[]`) and was classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; it is not green CI and does not indicate
+a Nightwatch test failure. The DEV launcher was invoked zero times, auth state
+was not read, and all product/NEXT/production/mutation/publication/private
+evidence counts remain zero. Phase 23's historical canonical/isolated parity
+baseline remains 2,364 enumerated / 2,360 passed / 4 skipped / 0 failed with
+exact parity; Phase 24's current certification is the shared compatibility and
+clean-checkout cone rather than a duplicate full regression.

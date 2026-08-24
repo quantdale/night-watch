@@ -1995,3 +1995,52 @@ Phase 24 work should expand product surfaces, bypass CI, or revisit the
 owner-frozen infrastructure/data layer. Any future attempt requires fresh
 owner direction, a genuinely executed green exact-head gate, and a newly
 derived manifest.
+
+## Phase 24 — local autonomous triage depth and DEV-readiness acceleration
+
+Phase 24 is terminal at `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`. Its scope was
+local, source-derived, synthetic, deterministic, offline, and no-contact work
+while GitHub Actions remained externally blocked. The implementation checkpoint
+is `cec14ac8e1b189aed96a1b8488381083951411f6`.
+
+Delivered capability includes:
+
+- source snapshot analysis with exact identity/drift handling, explicit
+  eligible/excluded reason details, source-change invalidation, and deterministic
+  diversity-aware portfolio prioritization;
+- manifest v3 binding source, candidates, eligibility, semantic/replay plans,
+  environment, containment, owner policy, quality-gate identity, and operator
+  state, with adversarial identity invalidation coverage;
+- a no-contact rehearsal from manifest through candidate selection, policy,
+  containment, browser/action planning, oracle/replay/dossier attachment, and
+  teardown;
+- twelve deterministic semantic oracle classes and five exact paired
+  cross-candidate relations, all freshness/provenance bound;
+- replay/minimization v3 with seven distinct divergence classifications and
+  invariant-preserving synthetic minimization;
+- structured sanitized dossier vNext, code/component/repository provenance
+  with ambiguity states, privacy sentinels, explicit readiness blockers, and
+  conservative exact-head CI classification;
+- adversarial proxy lease coverage for ownership, stale children, rapid and
+  parallel runs, symlink refusal, startup failure, SIGTERM, and SIGINT;
+- eight distinct synthetic candidates, 28/28 synthetic campaign tests, and a
+  clean Node20 reproducibility gate with no hidden auth/findings state.
+
+Local certification passed: the shared nine-group gate passed with receipt
+`receipt:sha256:c6da9a1edf31f47ac1b14d19`; Phase 9–24 compatibility is 1,824
+total / 1,823 passed / 1 skipped / 0 failed, owner provenance is 91/91, and
+the current inventory has 133 unique authoritative test files with zero
+duplicate test-file executions. The disposable clean receipt is
+`clean-receipt:sha256:719495ba80a55e351d8f24fb`. Phase 23's exact
+canonical/isolated parity baseline remains 2,364 enumerated / 2,360 passed /
+4 skipped / 0 failed; Phase 24 certified the changed compatibility cone and
+clean checkout without duplicating that long regression.
+
+The one final Actions observation was run `32723603497` / job `97419996717`
+for the exact implementation SHA. It failed before executing any job step
+(`steps=[]`) and was classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. This is
+not green CI and does not indicate a Nightwatch code failure. No DEV launcher
+or auth read occurred. Phase 25 should begin only after an actually executed
+exact-head green gate, then repeat fresh source qualification, manifest,
+containment, no-contact rehearsal, and the guarded DEV decision. Infrastructure
+and data-layer work remain permanently frozen.

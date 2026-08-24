@@ -3,7 +3,7 @@
 Task ID: phase-24-local-triage-depth-dev-readiness
 Phase: 24-LOCAL-TRIAGE-DEPTH-DEV-READINESS
 Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -72,12 +72,12 @@ compatibility inventory and keep serial isolation where required.
   minimization, and metamorphic synthetic campaign coverage.
 - [x] M7 — dossier vNext, privacy minimization/sentinels, and owner/component
   provenance diagnostics.
-- [ ] M8 — exact-head CI classifier/readiness observability, proxy adversarial
+- [x] M8 — exact-head CI classifier/readiness observability, proxy adversarial
   lifecycle hardening, and quality-gate runtime measurements/improvements.
-- [ ] M9 — clean-checkout reproducibility, synthetic campaign expansion,
+- [x] M9 — clean-checkout reproducibility, synthetic campaign expansion,
   deterministic portfolio prioritization as the additional major capability,
   and focused stabilization.
-- [ ] M10 — authoritative local certification, final exact-head Actions
+- [x] M10 — authoritative local certification, final exact-head Actions
   observation, truthful external classification, documentation closure, and
   clean synchronized handoff.
 
@@ -87,10 +87,13 @@ Use focused tests after each implementation slice, then affected suites, then
 workstream batches. Run `npm run typecheck`, `npm run hardening:check`,
 `npm run agent:check`, `npm run project:check`, `npm run campaign:synthetic`,
 and `npm run test:owner-provenance` at stabilization checkpoints. Finalize
-with the shared quality gate, clean-checkout qualification, canonical and
-isolated regression/parity, privacy/hardening checks, and exactly one current
-Actions observation. Do not rerun or poll the zero-step external blocker during
-local development.
+with the shared quality gate, clean-checkout qualification, the retained
+Phase 23 canonical/isolated parity baseline, privacy/hardening checks, and one
+current Actions observation. The final Phase 24 gate and clean-checkout gate
+passed; the exact current Actions run had zero executed steps and was classified
+truthfully as `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; DEV remained locked; task
+files and project docs were closed without future-value placeholders; and
+`main` was pushed cleanly to `origin/main`.
 
 ## Decision Log
 
