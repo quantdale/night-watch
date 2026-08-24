@@ -91,15 +91,15 @@ seam.
 - M3 — semantic contract expansion through existing vocabulary and proof
   normalization. Status: COMPLETED.
 - M4 — exact cross-file response/semantic joins and currentness propagation.
-  Status: IN_PROGRESS.
+  Status: COMPLETED.
 - M5 — graph/lifecycle/drift/invalidation/cache integration. Status:
-  NOT_STARTED.
+  COMPLETED.
 - M6 — direct Phase 24 portfolio uplift and runtime/source/review correlation.
   Status: NOT_STARTED.
 - M7 — operator gap intelligence and deterministic before/after reporting.
   Status: NOT_STARTED.
 - M8 — broad adversarial proof-soundness, privacy, cache, and repeatability
-  corpus. Status: NOT_STARTED.
+  corpus. Status: IN_PROGRESS.
 - M9 — source-to-triage synthetic campaign integration. Status: NOT_STARTED.
 - M10 — compatibility, hardening, gate inventory, clean Node20, and focused
   closure. Status: NOT_STARTED.
@@ -138,6 +138,12 @@ auth validation is part of this task.
   are additive safe structural metadata. Phase24 eligibility and ranking stay
   authoritative. Strict alias/branch analyzers remain explicit negative
   controls because the current approved source does not prove their flows.
+- 2026-08-25 M4/M5: the current approved route set contains no explicit
+  response-reference joins, so no speculative cross-file helper resolution was
+  added. Existing exact joins, source-content cache identity, graph lineage,
+  and Phase24 invalidation are exercised by Phase26 integration tests; helper
+  calls remain excluded until an exact approved declaration can prove their
+  response shape.
 
 ## Discoveries
 

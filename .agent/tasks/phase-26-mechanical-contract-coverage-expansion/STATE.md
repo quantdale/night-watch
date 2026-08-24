@@ -8,16 +8,16 @@ Title: Nightwatch Phase 26 — Mechanical Response & Semantic Contract Coverage 
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-Last substantive checkpoint SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-Last documentation checkpoint SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
+Last validated implementation SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+Last substantive checkpoint SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+Last documentation checkpoint SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-LAST_DOCUMENTATION_CHECKPOINT_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -40,21 +40,19 @@ proof, privacy, currentness, determinism, Phase 24 authority, or owner scope.
 
 ## Current Milestone
 
-M4 — proof-gap lifecycle reporting and exact currentness propagation.
+M5 — adversarial proof-soundness, privacy, cache, and repeatability hardening.
 
 ## Work In Progress
 
-Durably checkpoint the integrated response-proof, semantic materialization,
-proof-gap diagnostics, review-queue, and same-SHA invalidation changes, then
-re-run the full compatibility cone from a clean tree before broadening the
-adversarial corpus.
+Add the Phase 26 matrix-driven adversarial corpus to the authoritative
+compatibility inventory, then run typecheck, hardening, gate inventory, and the
+focused Phase 26 cone before the next durable checkpoint.
 
 ## Exact Next Action
 
-Inspect the current diff/privacy surface, commit and push this validated M3
-implementation checkpoint directly to `main`, then re-run
-`npm run test:semantic-compat` from the clean synchronized tree and repair any
-actual regression before starting M5 hardening.
+Validate and checkpoint the new adversarial matrix directly on `main`; after
+the push, re-run the expanded clean compatibility cone and retain any
+remaining source families as explicit mechanical exclusions.
 
 ## Completed Milestones
 
@@ -72,6 +70,12 @@ actual regression before starting M5 hardening.
   integration. Focused validation passed; full compatibility was re-attempted
   while the tree was dirty and therefore stopped at the existing authoritative
   source-dirty guard in two self-development CLI tests.
+- M4 — clean-checkpoint compatibility repair and exact currentness
+  confirmation. The clean run passed 1,857 tests with one expected skip and
+  zero failures; no new response-reference join family was admitted because
+  the current approved operation set contains zero explicit response
+  references and the remaining helper-return flows are unresolved without
+  additional exact cross-file proof.
 
 ## Files Changed
 
@@ -79,9 +83,11 @@ The direct-return proof profile and its compatibility/cache identity touch
 `src/core/semanticCoverage/sourceAnalyzers.ts`,
 `src/core/source/surfaces.ts`, and `src/core/source/cache.ts`; root-type
 synthetic materialization is handled in `src/core/semanticCoverage/mutation.ts`.
-The Phase 26 focused suite is `tests/unit/phase26ResponseCoverage.test.ts`.
-Quality-gate range registration is updated only in current Phase 26 validator
-and manifest files; no historical Phase 25 task file is modified.
+The Phase 26 focused suite is the matrix beginning at
+`tests/unit/phase26Adversarial.test.ts` plus the response, metrics,
+invalidation, and synthetic campaign suites. Quality-gate range registration
+is updated only in current Phase 26 validator and manifest files; no historical
+Phase 25 task file is modified.
 
 ## Validation Ledger
 
@@ -137,6 +143,14 @@ and manifest files; no historical Phase 25 task file is modified.
   before the tests' missing-artifact/plan assertions. It must be re-run from a
   clean checkpoint. Gate inventory currently reports 138 semantic-compatibility
   files, four synthetic-campaign files, and zero duplicate executions.
+- Clean compatibility checkpoint: PASS — `npm run test:semantic-compat` ran
+  1,858 tests across 138 files with 1,857 passed, one skipped, zero failed.
+- Phase 26 adversarial cone: PASS — 28 focused tests passed, including 16
+  data-driven proof-boundary cases, two invalidation cases, eight direct-proof
+  cases, one metrics case, and one integrated campaign case.
+- Current gate inventory after adversarial registration: 139 semantic-
+  compatibility files, 146 unique authoritative test files, four synthetic-
+  campaign files, and zero duplicate executions.
 
 ## Decisions Made During This Task
 
@@ -184,6 +198,6 @@ the measured baseline before implementing new analyzer families.
 
 ## Completion Snapshot
 
-Not complete. Live Git authority is `main` at the starting synchronized SHA;
-Phase 26 task records are active and no implementation checkpoint has yet been
-created.
+Not complete. Live Git authority is discovered from Git on `main` at
+`483510b8cd8eb9ca8622e314e3c2cef8749bbc8e`; the next adversarial-matrix
+checkpoint is currently uncommitted, and Phase 26 task records remain active.

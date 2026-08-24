@@ -6,19 +6,18 @@ Title: Nightwatch Phase 26 — Mechanical Response & Semantic Contract Coverage 
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-26-mechanical-contract-coverage-expansion
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-Last checkpoint: M1 — fresh approved-source proof-gap baseline.
-Current milestone: M4 — proof-gap lifecycle reporting and exact currentness
-propagation.
-Next action: Inspect the current diff/privacy surface, commit and push this
-validated M3 implementation checkpoint directly to `main`, then rerun the
-full compatibility cone from the clean synchronized tree.
+Last validated implementation SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+Last checkpoint: M4 — clean compatibility and currentness confirmation.
+Current milestone: M5 — adversarial proof-soundness, privacy, cache, and
+repeatability hardening.
+Next action: Validate and checkpoint the new adversarial matrix directly on
+`main`; after the push, rerun the expanded clean compatibility cone.
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
-LAST_DOCUMENTATION_CHECKPOINT_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 483510b8cd8eb9ca8622e314e3c2cef8749bbc8e
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 483510b8cd8eb9ca8620b64302e60e66e468ad5c8
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
