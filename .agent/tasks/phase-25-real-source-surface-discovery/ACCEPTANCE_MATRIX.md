@@ -5,8 +5,8 @@
 | A01 | main topology synchronized at start/finish | Git records | IN_PROGRESS |
 | A02 | no traversal/symlink escape | source-boundary matrix: 7 passed | PASS |
 | A03 | exact supported Git HEAD shapes; unsafe forms fail closed | Git-shape matrix: 7 passed | PASS |
-| A04 | bounded scan paths/files/bytes/languages | inventory tests | NOT_STARTED |
-| A05 | deterministic inventory | repeatability tests | NOT_STARTED |
+| A04 | bounded scan paths/files/bytes/languages | inventory suite: 10 passed | PASS |
+| A05 | deterministic inventory | repeated exact scans byte-identical | PASS |
 | A06 | existing analyzers reused | integration/hardening | NOT_STARTED |
 | A07 | proof soundness incl. TS ranges | analyzer matrix | NOT_STARTED |
 | A08 | route/operation descriptors | route corpus | NOT_STARTED |

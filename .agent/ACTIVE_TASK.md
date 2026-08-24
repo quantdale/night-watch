@@ -7,10 +7,11 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
 Last validated implementation SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
-Last checkpoint: M1 — source-boundary and Git-currentness hardening
-Current milestone: M2 — versioned scan configuration and deterministic bounded inventory.
-Next action: Implement the fixed scan contract, content-aware bounded inventory,
-deterministic ordering, and source-budget counters.
+Last checkpoint: M2 — versioned scan configuration and deterministic bounded inventory
+Current milestone: M3 — analyzer integration and proof-soundness regression suite.
+Next action: Repair TS validation-range semantics and replace serialized-length
+contract drift classification with explicit shape-aware comparison, then add
+positive/negative/ambiguous analyzer regressions.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
@@ -55,6 +56,9 @@ grant execution authority or infer deployment/ownership/mutation safety.
 - `src/core/source/siblingSource.ts`
 - `tests/unit/phase25SourceBoundary.test.ts`
 - quality-gate and semantic-compatibility registration for Phase 25
+- `src/core/source/scan.ts`
+- `src/core/source/scanTypes.ts`
+- `tests/unit/phase25SourceInventory.test.ts`
 
 ## Resume Recipe
 

@@ -1095,6 +1095,19 @@ function checkPhase9A1SourceReaderBoundary() {
   // string spelling.
   if (!/isPathInside\(candidate,\s*resolvedRoot\)/.test(reader) || !/isPathInside\(file,\s*repoRoot\)/.test(reader)) fail('sibling source reader must confine paths to the configured root');
   if (!/hasNoSymlinkPath\(file\)/.test(reader) || !/O_NOFOLLOW/.test(reader) || !/lstatSync/.test(reader)) fail('sibling source reader must reject symlink paths before opening files');
+
+  // Phase 25 keeps enumeration and scan coordination subordinate to the same
+  // source authority. No sibling-source filesystem import may appear in a
+  // coordinator, DTO, or analyzer module.
+  for (const file of gitFiles().filter((item) => item.startsWith('src/core/source/') && item.endsWith('.ts') && item !== 'src/core/source/siblingSource.ts')) {
+    const source = read(file);
+    if (/from\s+['"]node:fs['"]|from\s+['"]node:child_process['"]|from\s+['"]node:(?:net|http|https|dns)['"]/.test(source)) fail(`${file} bypasses the confined sibling source authority`);
+    if (/\b(?:writeFile|appendFile|renameSync|unlinkSync|rmSync|mkdirSync|chmodSync|spawn|exec(?:File)?|fetch)\s*\(/.test(source)) fail(`${file} exposes source write/process/network authority`);
+  }
+  const scan = read('src/core/source/scan.ts');
+  const scanTypes = read('src/core/source/scanTypes.ts');
+  if (!/enumerateFiles/.test(reader) || !/scanSource/.test(scan) || !/configDigest/.test(scanTypes)) fail('Phase 25 source inventory is not wired through the confined reader and versioned config');
+  if (/readonly\s+(?:sourceText|rawSource|sourceCode)\s*[:?]/.test(scanTypes)) fail('Phase 25 persisted source DTOs contain raw source text fields');
 }
 
 /**

@@ -12,10 +12,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { RealSourceCurrentness, RealSourceReader } from '../../oracles/expectations/recipes/types';
+import type { SourceScanExcludedDirectory, SourceScanRejectionReason } from './scanTypes';
 
 export const DEFAULT_SIBLING_ROOT = '/home/dalepalaca/go/src/alphaus-main/REPOSITORIES';
 export const MAX_SIBLING_SOURCE_FILE_BYTES = 2_000_000;
 export const MAX_SIBLING_GIT_METADATA_BYTES = 64 * 1024;
+export const MAX_SIBLING_SOURCE_SCAN_FILES = 4096;
+export const MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000;
 
 const REPO_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/;
 const SAFE_SHA_RE = /^[0-9a-f]{40}$/;
@@ -23,12 +26,36 @@ const SAFE_REF_RE = /^refs\/(?:heads|remotes|tags)\/[A-Za-z0-9._-]+(?:\/[A-Za-z0
 /** Repository-relative path: no leading slash, no backslash, no NUL. */
 const RELATIVE_PATH_RE = /^[^/\\][^\\]*$/;
 
-// Phase 15P A15 convergence: the structural return type remains module
-// private. Existing callers consume only the injected reader/currentness API.
-interface SiblingSourceAccess {
+export interface SiblingSourceFileEntry {
+  readonly relativePath: string;
+  readonly kind: 'REGULAR' | 'DIRECTORY' | 'SYMLINK' | 'SPECIAL';
+  readonly byteCount: number | null;
+}
+
+export interface SiblingSourceRejectedPath {
+  readonly relativePath: string;
+  readonly reason: SourceScanRejectionReason;
+}
+
+export interface SiblingSourceEnumeration {
+  readonly entries: readonly SiblingSourceFileEntry[];
+  readonly rejectedPaths: readonly SiblingSourceRejectedPath[];
+  readonly directoriesVisited: number;
+  readonly truncated: boolean;
+  readonly truncationReason: SourceScanRejectionReason | null;
+}
+
+export interface SiblingSourceEnumerationLimits {
+  readonly maxFiles: number;
+  readonly maxTotalBytes: number;
+  readonly excludedDirectories: readonly SourceScanExcludedDirectory[];
+}
+
+export interface SiblingSourceAccess {
   readonly reader: RealSourceReader;
   readonly currentness: RealSourceCurrentness;
   readonly root: string;
+  readonly enumerateFiles: (repoId: string, allowlistedRoots: readonly string[], limits: SiblingSourceEnumerationLimits) => SiblingSourceEnumeration;
 }
 
 function isPathInside(candidate: string, parent: string): boolean {
@@ -77,6 +104,15 @@ function safeRelativeParts(relativePath: string): readonly string[] | null {
   const parts = relativePath.split('/');
   if (parts.length === 0 || parts.some((part) => part.length === 0 || part === '.' || part === '..' || part === '.git')) return null;
   return parts;
+}
+
+function safeScanRootParts(relativePath: string): readonly string[] | null {
+  if (relativePath === '') return [];
+  return safeRelativeParts(relativePath);
+}
+
+function safeExcludedDirectory(value: string): value is SourceScanExcludedDirectory {
+  return value === '.git' || value === 'node_modules' || value === 'vendor' || value === 'build' || value === 'dist';
 }
 
 function safeRepoId(repoId: string): boolean {
@@ -191,6 +227,137 @@ export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
     return resolveGitMetadataDirectory(candidate, resolvedRoot) === null ? null : candidate;
   }
 
+  function enumerateFiles(
+    repoId: string,
+    allowlistedRoots: readonly string[],
+    limits: SiblingSourceEnumerationLimits,
+  ): SiblingSourceEnumeration {
+    const repoRoot = repoRootFor(repoId);
+    if (repoRoot === null) {
+      return {
+        entries: [],
+        rejectedPaths: [{ relativePath: '', reason: 'SOURCE_REPOSITORY_UNAVAILABLE' }],
+        directoriesVisited: 0,
+        truncated: false,
+        truncationReason: null,
+      };
+    }
+    const sourceRoot = repoRoot;
+    if (!Number.isInteger(limits.maxFiles) || limits.maxFiles < 1 || limits.maxFiles > MAX_SIBLING_SOURCE_SCAN_FILES
+      || !Number.isInteger(limits.maxTotalBytes) || limits.maxTotalBytes < 1 || limits.maxTotalBytes > MAX_SIBLING_SOURCE_SCAN_BYTES
+      || limits.excludedDirectories.some((directory) => !safeExcludedDirectory(directory))) {
+      return {
+        entries: [],
+        rejectedPaths: [{ relativePath: '', reason: 'SOURCE_CONFIG_INVALID' }],
+        directoriesVisited: 0,
+        truncated: false,
+        truncationReason: null,
+      };
+    }
+
+    const entries: SiblingSourceFileEntry[] = [];
+    const rejectedPaths: SiblingSourceRejectedPath[] = [];
+    const excluded = new Set<string>(['.git', ...limits.excludedDirectories]);
+    let directoriesVisited = 0;
+    let considered = 0;
+    let inspectedBytes = 0;
+    let truncated = false;
+    let truncationReason: SourceScanRejectionReason | null = null;
+
+    function reject(relativePath: string, reason: SourceScanRejectionReason): void {
+      rejectedPaths.push({ relativePath, reason });
+    }
+
+    function canConsider(relativePath: string): boolean {
+      if (considered >= limits.maxFiles) {
+        truncated = true;
+        truncationReason = 'SOURCE_FILE_COUNT_EXCEEDED';
+        return false;
+      }
+      considered += 1;
+      if (relativePath.length === 0) {
+        reject(relativePath, 'SOURCE_PATH_ESCAPE');
+        return false;
+      }
+      return true;
+    }
+
+    function walk(directory: string, relativeDirectory: string): void {
+      if (truncated) return;
+      directoriesVisited += 1;
+      let children: readonly fs.Dirent[];
+      try {
+        children = fs.readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+      } catch {
+        reject(relativeDirectory, 'SOURCE_READ_FAILED');
+        return;
+      }
+      for (const child of children) {
+        if (truncated) break;
+        const relativePath = relativeDirectory.length === 0 ? child.name : `${relativeDirectory}/${child.name}`;
+        if (child.name === '.git' || excluded.has(child.name)) {
+          if (canConsider(relativePath)) reject(relativePath, 'SOURCE_PATH_EXCLUDED');
+          continue;
+        }
+        if (!canConsider(relativePath)) break;
+        const absolutePath = path.resolve(sourceRoot, ...relativePath.split('/'));
+        if (!isPathInside(absolutePath, sourceRoot) || !hasNoSymlinkPath(absolutePath)) {
+          reject(relativePath, 'SOURCE_SYMLINK_REJECTED');
+          continue;
+        }
+        let stats: fs.Stats;
+        try { stats = fs.lstatSync(absolutePath); } catch {
+          reject(relativePath, 'SOURCE_READ_FAILED');
+          continue;
+        }
+        if (stats.isSymbolicLink()) {
+          reject(relativePath, 'SOURCE_SYMLINK_REJECTED');
+        } else if (stats.isDirectory()) {
+          walk(absolutePath, relativePath);
+        } else if (stats.isFile()) {
+          if (stats.size > limits.maxTotalBytes - inspectedBytes) {
+            reject(relativePath, 'SOURCE_TOTAL_BUDGET_EXCEEDED');
+            truncated = true;
+            truncationReason = 'SOURCE_TOTAL_BUDGET_EXCEEDED';
+            continue;
+          }
+          inspectedBytes += stats.size;
+          entries.push({ relativePath, kind: 'REGULAR', byteCount: stats.size });
+        } else {
+          reject(relativePath, 'SOURCE_FILE_NOT_REGULAR');
+        }
+      }
+    }
+
+    const roots = [...allowlistedRoots].sort((left, right) => left.localeCompare(right));
+    for (const root of roots) {
+      if (truncated) break;
+      const parts = safeScanRootParts(root);
+      if (parts === null) {
+        reject(root, 'SOURCE_ROOT_UNAPPROVED');
+        continue;
+      }
+      const absoluteRoot = path.resolve(sourceRoot, ...parts);
+      if (!isPathInside(absoluteRoot, sourceRoot) || !hasNoSymlinkPath(absoluteRoot)) {
+        reject(root, 'SOURCE_SYMLINK_REJECTED');
+        continue;
+      }
+      let stats: fs.Stats;
+      try { stats = fs.lstatSync(absoluteRoot); } catch {
+        reject(root, 'SOURCE_ROOT_UNAPPROVED');
+        continue;
+      }
+      if (stats.isSymbolicLink()) {
+        reject(root, 'SOURCE_SYMLINK_REJECTED');
+      } else if (!stats.isDirectory()) {
+        reject(root, 'SOURCE_FILE_NOT_REGULAR');
+      } else {
+        walk(absoluteRoot, root);
+      }
+    }
+    return { entries, rejectedPaths, directoriesVisited, truncated, truncationReason };
+  }
+
   const reader: RealSourceReader = {
     readFile(repoId: string, relativePath: string): string | null {
       const repoRoot = repoRootFor(repoId);
@@ -211,5 +378,5 @@ export function createSiblingSourceAccess(root: string): SiblingSourceAccess {
     },
   };
 
-  return { reader, currentness, root: resolvedRoot };
+  return { reader, currentness, root: resolvedRoot, enumerateFiles };
 }

@@ -37,10 +37,10 @@ preserving fail-closed source, privacy, currentness, and no-contact rules.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: add the versioned fixed scan contract and deterministic,
-content-aware bounded source inventory on top of the hardened reader.
+What is being attempted: repair existing analyzer proof semantics and contract
+drift classification before broader route and contract extraction.
 
 ## Completed Milestones
 
@@ -52,24 +52,29 @@ content-aware bounded source inventory on top of the hardened reader.
 - M1 — hardened sibling-source access with no-follow path confinement, regular
   file and byte limits, exact loose/packed/detached Git resolution, safe
   `.git` indirection, and a seven-case symlink/Git/path regression matrix.
+- M2 — added fixed versioned scan configuration and bounded source inventory;
+  inventory is deterministic, content-aware at the same Git SHA, stale-source
+  aware, and contains no raw source text.
 
 ## Work In Progress
 
-Implement the data-only scan configuration and bounded inventory API. Keep
-source text ephemeral, include inspected-content digests in identity, and make
-ordering and rejection reasons deterministic before analyzer integration.
+Repair the TS range analyzer and semantic contract-drift classifier with
+explicit proof tables. Add valid, reversed, unsupported, ambiguous, and
+shape-specific regressions before accepting any new extraction authority.
 
 ## Exact Next Action
 
-Implement M2 in `src/core/source/` and focused inventory tests; do not add
-route or contract authority until the inventory budgets and repeatability
-checks are green.
+Implement M3 in the existing Phase 20 analyzer/discovery modules and focused
+Phase 25 regressions; preserve historical DTO compatibility where current
+tests rely on it.
 
 ## Files Changed
 
 Task records, `src/core/source/siblingSource.ts`,
 `tests/unit/phase25SourceBoundary.test.ts`, and Phase 25 compatibility/gate
-registration are changed in the current working checkpoint.
+registration are changed in the current working checkpoint. M2 additionally
+changed `src/core/source/scan.ts`, `src/core/source/scanTypes.ts`, and
+`tests/unit/phase25SourceInventory.test.ts`.
 
 ## Validation Ledger
 
@@ -94,6 +99,11 @@ registration are changed in the current working checkpoint.
 - Diff whitespace/privacy review: PASS — `git diff --check`; no sentinel,
   token-like, credential-like, customer-like, or raw-source evidence found in
   the changed task/source/test scope.
+- M2 focused source inventory suite: PASS — 10 passed, 0 failed.
+- M2 quality-gate specification: PASS — compatibilityFileCount 130 and Phase
+  25 inventory test registered.
+- M2 hardening check: PASS.
+- M2 typecheck: PASS.
 
 ## Decisions Made During This Task
 
@@ -107,6 +117,8 @@ registration are changed in the current working checkpoint.
 - M2 inventory identity must include actual inspected-content digests and the
   scan/analyzer contract versions; Git SHA alone is insufficient for dirty
   same-SHA source.
+- M2 source inventory remains subordinate to `siblingSource.ts`; coordinators
+  import no filesystem or process authority.
 
 ## Discoveries
 
@@ -136,6 +148,6 @@ checkpoint discipline.
 
 ## Completion Snapshot
 
-M1 is complete and locally validated. M2 inventory implementation is active;
-all final extraction, portfolio, regression, CI, and terminal checks remain
-pending.
+M1 and M2 are complete and locally validated. M3 analyzer proof repair is
+active; all route extraction, portfolio, regression, CI, and terminal checks
+remain pending.

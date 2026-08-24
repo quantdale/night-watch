@@ -30,6 +30,22 @@ quality-gate compatibility tests plus Phase 25 matrix passed 13/13;
 `npm run quality-gate:spec` passed; `git diff --check` passed. Phase 25 was
 registered in the authoritative semantic compatibility range 9–25.
 
+## M2 checkpoint evidence
+
+M2 added the data-only scan contract
+(`nightwatch.real-source-scan-config.v1`) and the deterministic inventory
+(`nightwatch.real-source-snapshot-inventory.v1`). The scanner accepts fixed
+relative roots/extensions/analyzer identifiers, enforces file and total-byte
+budgets, records exact current HEAD identity, rejects stale expected SHAs,
+and hashes the text read after no-follow metadata enumeration. Inventory DTOs
+contain only safe paths, language/size/status metadata, opaque content
+digests, rejection codes, counters, and deterministic snapshot identity.
+
+Validation: the combined M1/M2 boundary and inventory suite passed 10/10;
+typecheck, hardening, quality-gate specification, and diff checks passed.
+The authoritative compatibility inventory now contains 130 files across
+Phase 9–25.
+
 ## Safety
 
 At bootstrap: DEV 0, NEXT 0, production 0, auth-state reads 0, product

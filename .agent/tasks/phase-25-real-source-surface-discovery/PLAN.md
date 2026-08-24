@@ -65,7 +65,9 @@ read-only, regular-file-only, and source-text ephemeral.
   audit. Status: COMPLETE.
 - M1 — source-boundary security and Git-currentness hardening. Status: COMPLETE.
 - M2 — versioned scan configuration and deterministic bounded inventory.
-  Status: IN_PROGRESS.
+  Status: COMPLETE.
+- M3 — analyzer integration and proof-soundness regression suite. Status:
+  IN_PROGRESS.
 - M3 — analyzer integration and proof-soundness regression suite. Status:
   NOT_STARTED.
 - M4 — route/operation discovery and evidence-backed read-only classification.
@@ -112,6 +114,11 @@ hardening/compatibility cone, exact `STATE.md` update, then a validated direct
   unsupported or unsafe shape fails closed.
 - M1: same source SHA never makes a scan current by itself; inspected-content
   digests and config/analyzer versions participate in identity.
+- M2: scan configuration accepts only fixed language extensions, analyzer
+  identifiers, excluded-directory values, and bounded relative roots; no
+  executable patterns or shell commands are represented.
+- M2: inventory content identity is a full digest of the exact text read after
+  metadata enumeration, so dirty same-SHA edits cannot reuse the prior result.
 
 ## Discoveries
 
