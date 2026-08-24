@@ -128,6 +128,13 @@ Keep Actions and DEV untouched until final freeze.
   Phase 24 tests, and 28/28 synthetic campaign tests; source SHA mismatch is
   now an explicit non-permanent exclusion, and bounded child SIGTERM/SIGINT
   orphan reclamation is covered without unrelated process termination.
+- Gate repair: the first full gate at `34adaf87adbdfb5b9f795e6040e93fe1f13d7dcc`
+  observed one existing observer-ledger timing failure at
+  `tests/unit/observerSemanticLedger.test.ts:77` (1,824 total / 1,822 passed /
+  1 skipped / 1 failed). The focused observer suite passed 2/2, and the full
+  compatibility cone then passed 1,824 total / 1,823 passed / 1 skipped /
+  0 failed in 335.01s. The fixed sleeps were replaced with bounded polling;
+  the authoritative gate must be rerun for this repair checkpoint.
 - Expanded compatibility probe from the dirty worktree: NON-QUALIFYING —
   1,817 total / 1,814 passed / 1 skipped / 2 failed; both failures were the
   pre-existing self-development source-dirty guards at

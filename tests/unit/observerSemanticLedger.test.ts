@@ -100,7 +100,7 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
     try {
       await page.goto(`${server.origin}/api/conforming`);
       await page.goto(`${server.origin}/api/mutated`);
-      await page.waitForTimeout(250);
+      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 2_000 }).toBe(2);
 
       const evaluations = observer.semanticEvaluations();
       expect(evaluations.length).toBe(2);
@@ -160,7 +160,7 @@ test.describe('Phase 9A.1 — observer semantic evaluation ledger', () => {
           await fetch(`${target}/api/bulk`);
         }
       }, server.origin);
-      await page.waitForTimeout(500);
+      await expect.poll(() => observer.semanticEvaluations().length, { timeout: 5_000 }).toBe(512);
 
       const evaluations = observer.semanticEvaluations();
       expect(evaluations.length).toBe(512); // exactly the cap

@@ -9,7 +9,7 @@ Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
 Last validated implementation SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
 Last checkpoint: M8 — Phase 24 implementation checkpoint after focused validation
 Current milestone: M8 — lifecycle, CI observability, gate integration, and clean-checkout hardening
-Next action: Capture the authoritative local gate timing and receipt for the source-analysis/lifecycle checkpoint, qualify the clean-checkout gate again, and repair any regression before the next checkpoint.
+Next action: Capture the authoritative local gate timing and receipt for the final local repair checkpoint, qualify the clean-checkout gate again, and repair any regression before the next checkpoint.
 Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
