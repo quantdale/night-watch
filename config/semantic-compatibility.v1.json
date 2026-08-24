@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nightwatch.semantic-compatibility.v1",
-  "requiredPhaseRange": { "first": 9, "last": 24 },
+  "requiredPhaseRange": { "first": 9, "last": 25 },
   "execution": {
     "project": "nightwatch",
     "workers": 1,
@@ -33,7 +33,8 @@
     { "phase": 21, "files": ["tests/unit/phase21Differential.test.ts", "tests/unit/phase21GapClosure.test.ts", "tests/unit/phase21Integration.test.ts", "tests/unit/phase21Membership.test.ts", "tests/unit/phase21Mutation.test.ts"] },
     { "phase": 22, "files": ["tests/unit/phase22Core.test.ts"] },
     { "phase": 23, "files": ["tests/unit/phase23QualityGate.test.ts", "tests/unit/phase23PortLease.test.ts", "tests/unit/phase23CiAuthority.test.ts", "tests/unit/phase23Manifest.test.ts"] },
-    { "phase": 24, "files": ["tests/unit/phase24LocalTriage.test.ts", "tests/unit/phase24ProxyLifecycle.test.ts"] }
+    { "phase": 24, "files": ["tests/unit/phase24LocalTriage.test.ts", "tests/unit/phase24ProxyLifecycle.test.ts"] },
+    { "phase": 25, "files": ["tests/unit/phase25SourceBoundary.test.ts"] }
   ],
   "supportFiles": [
     "tests/unit/agent-state.test.ts",

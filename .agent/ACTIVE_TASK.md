@@ -1,37 +1,33 @@
 # Active Task
 
-Task ID: phase-24-local-triage-depth-dev-readiness
-Phase: 24-LOCAL-TRIAGE-DEPTH-DEV-READINESS
-Title: Nightwatch Phase 24 — Local Autonomous Triage Depth and DEV-Readiness Acceleration
-Status: COMPLETE
-Task directory: .agent/tasks/phase-24-local-triage-depth-dev-readiness
-Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last validated implementation SHA: cec14ac8e1b189aed96a1b8488381083951411f6
-Last checkpoint: M10 — terminal Phase 24 local certification and external classification
-Current milestone: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal closure.
-Next action: STOP — the exact current-head Actions result is classified as
-NO_STEPS_BILLING_OR_PLATFORM_BLOCK; do not retry it, read auth, or invoke DEV.
-A future separately authorized phase must establish a new exact-head green run
-before any acceptance contact.
-Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
+Task ID: phase-25-real-source-surface-discovery
+Phase: 25-REAL-SOURCE-SURFACE-DISCOVERY
+Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening, Contract Graph Extraction, and Review Intelligence
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-25-real-source-surface-discovery
+Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+Last validated implementation SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+Last checkpoint: M1 — source-boundary and Git-currentness hardening
+Current milestone: M2 — versioned scan configuration and deterministic bounded inventory.
+Next action: Implement the fixed scan contract, content-aware bounded inventory,
+deterministic ordering, and source-budget counters.
+Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_VALIDATED_IMPLEMENTATION_SHA: cec14ac8e1b189aed96a1b8488381083951411f6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cec14ac8e1b189aed96a1b8488381083951411f6
+STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+LIVE_HEAD_AUTHORITY: GIT
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
+PHASE_25_STATUS: IN_PROGRESS
+PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
 PHASE_21_STATUS: COMPLETE (historical, unchanged)
 PHASE_20_STATUS: COMPLETE (historical, unchanged)
-PHASE_19_STATUS: COMPLETE (historical, unchanged)
-PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
-PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
-PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
-PHASE_16D_STATUS: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
 PHASE_13B_STATUS: NOT_AUTHORIZED
@@ -39,51 +35,29 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 19 through Phase 23 remain terminal at their existing task
-directories; do not reopen or mutate their history. Live HEAD is always
-discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`). The startup Actions
-observation was run `32710478356`, job `97380595116`, exact head `da534f6...`,
-zero steps, and classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. The final
-implementation observation was run `32723603497`, job `97419996717`, exact
-head `cec14ac...`, zero steps, and received the same classification. No
-further Actions observation is authorized for this task.
+Phase 19 through Phase 24 remain terminal at their existing task directories;
+do not reopen or mutate their history. This task is local/source/synthetic
+only. No DEV launcher, authentication-state read, product request, database,
+cloud/infrastructure operation, Alphaus write, external publication/message,
+or CI retry is authorized. Live HEAD is discovered from Git.
 
 ## Scope boundary
 
-This task authorizes additive local, source-only, synthetic, deterministic,
-offline, and no-contact improvements to candidate qualification and portfolio
-selection, semantic and cross-candidate triage, source-change invalidation,
-manifest identity, rehearsal, replay/minimization, sanitized dossiers,
-owner/component provenance, privacy minimization, readiness diagnostics,
-exact-head CI classification, quality-gate efficiency, proxy lifecycle tests,
-clean-checkout reproducibility, synthetic campaign breadth, and one meaningful
-additional local capability selected from the actual repository gaps. It
-authorizes no DEV contact unless the existing exact-head pre-DEV protocol
-independently passes after a fresh qualification; it authorizes no NEXT,
-production, mutation, database, datastore, cloud, infrastructure, sibling
-write, publication, message, credential, raw authenticated evidence,
-screenshot, trace, DOM/raw-body persistence, or external retry. The permanent
-decision remains `FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+Phase 25 may harden the source boundary, inventory approved bounded source,
+reuse existing analyzers, derive safe route/contract/join evidence, bridge
+descriptors into Phase 24, and expose local review diagnostics. It may not
+grant execution authority or infer deployment/ownership/mutation safety.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
-- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/SPEC.md`
-- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/PLAN.md`
-- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/STATE.md`
-- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/REPORT.md`
-- `config/semantic-compatibility.v1.json`
-- `package.json`
-- `bin/semantic-compat.mjs`
-- `bin/quality-gate-spec.mjs`
-- `bin/hardening-check.mjs`
-- `src/core/qualityGate/definition.ts`
-- `src/core/phase24/**`
-- `tests/unit/phase24LocalTriage.test.ts`
-- `tests/unit/phase24SyntheticCampaign.test.ts`
+- `.agent/tasks/phase-25-real-source-surface-discovery/**`
+- `src/core/source/siblingSource.ts`
+- `tests/unit/phase25SourceBoundary.test.ts`
+- quality-gate and semantic-compatibility registration for Phase 25
 
 ## Resume Recipe
 
-Task complete. Do not resume this task. A future separately authorized phase
-must establish a new genuinely executed exact-head green run before any
-acceptance contact; no standing DEV, auth, or retry authority carries forward.
+Read the Phase 25 `STATE.md`, inspect Git status/diff, run the smallest
+focused validation, and continue its exact next action. Do not restart prior
+milestones or modify historical Phase 19–24 records.
