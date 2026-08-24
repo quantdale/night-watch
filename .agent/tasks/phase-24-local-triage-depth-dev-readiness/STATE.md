@@ -10,7 +10,7 @@ Status: COMPLETE
 Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
 Last validated implementation SHA: cec14ac8e1b189aed96a1b8488381083951411f6
 Last substantive checkpoint SHA: cec14ac8e1b189aed96a1b8488381083951411f6
-Last documentation checkpoint: DISCOVER_FROM_GIT
+Last documentation checkpoint: 5255279676c7e0607554b421590f09dcea534cd5
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -83,8 +83,8 @@ COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal closure.
   portfolio prioritization, and clean-checkout reproducibility are complete.
 - M10: the authoritative local gate and Node20 clean-checkout gate passed;
   final exact-head Actions was observed once and classified as an external
-  zero-step billing/platform block; durable documentation closure is pending
-  only its known checkpoint SHA.
+  zero-step billing/platform block; durable documentation closure is recorded
+  at checkpoint `5255279676c7e0607554b421590f09dcea534cd5`.
 
 ## Work In Progress
 

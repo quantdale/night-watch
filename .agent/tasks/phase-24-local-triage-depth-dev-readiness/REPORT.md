@@ -7,7 +7,7 @@ Repository: `quantdale/night-watch`
 Branch: `main`
 Starting SHA: `da534f6af4d6d230be5f666511fab4481f1a3225`
 Validated implementation checkpoint: `cec14ac8e1b189aed96a1b8488381083951411f6`
-Final documentation checkpoint: `DISCOVER_FROM_GIT`
+Final documentation checkpoint: `5255279676c7e0607554b421590f09dcea534cd5`
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Outcome
