@@ -191,7 +191,16 @@ export function createSandboxMirror(repositoryRoot: string): SelfDevSandboxMirro
   // the parent workspace, or the private findings/artifact root.
   const resolvedRepository = path.resolve(repositoryRoot);
   const resolvedParentWorkspace = path.resolve(repositoryRoot, '..');
-  for (const forbiddenAnchor of [resolvedRepository, resolvedParentWorkspace]) {
+  // A disposable clean checkout is commonly created directly beneath the OS
+  // temporary root. Treating that root as the checkout's workspace would also
+  // reject the independent temporary bases used by this confinement matrix.
+  // Keep the distinct parent-workspace exclusion for normal repository
+  // topologies, while allowing unrelated temporary paths to remain testable.
+  const temporaryRoot = path.resolve(os.tmpdir());
+  const parentIsTemporary = resolvedParentWorkspace === temporaryRoot
+    || resolvedParentWorkspace.startsWith(temporaryRoot + path.sep);
+  const forbiddenAnchors = parentIsTemporary ? [resolvedRepository] : [resolvedRepository, resolvedParentWorkspace];
+  for (const forbiddenAnchor of forbiddenAnchors) {
     if (resolvedRoot === forbiddenAnchor || resolvedRoot.startsWith(forbiddenAnchor + path.sep)) {
       throw new Error('SELFDEV_SANDBOX_ROOT_UNSAFE');
     }
