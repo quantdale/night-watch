@@ -350,6 +350,16 @@ const APPROVED_CHECKPOINT_PATHS = [
   // and NOT non-Markdown files, so arbitrary files under docs/design can
   // never be classified as documentation checkpoints.
   /^docs\/design\/[^/]+\.md$/,
+  // Concurrent planner/executor adapter documents may arrive as a
+  // non-implementation remote descendant. Keep the exact five repository
+  // paths approved so continuity can retain the substantive non-merge
+  // implementation anchor without treating those additive adapters as stale
+  // source changes.
+  /^\.agent\/PLANNER_HANDOFF\.md$/,
+  /^\.agents\/skills\/goal\/SKILL\.md$/,
+  /^\.claude\/commands\/goal\.md$/,
+  /^\.kimi-code\/AGENTS\.md$/,
+  /^\.opencode\/commands\/goal\.md$/,
 ];
 
 export function isApprovedCheckpointPath(file) {

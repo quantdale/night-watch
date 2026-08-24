@@ -673,6 +673,11 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
       'docs/DECISIONS.md',
       'docs/ROADMAP.md',
       'docs/CI_HARDENING.md',
+      '.agent/PLANNER_HANDOFF.md',
+      '.agents/skills/goal/SKILL.md',
+      '.claude/commands/goal.md',
+      '.kimi-code/AGENTS.md',
+      '.opencode/commands/goal.md',
     ]) {
       expect(isApprovedCheckpointPath(approved)).toBe(true);
     }
