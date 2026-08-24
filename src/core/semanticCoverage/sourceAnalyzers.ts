@@ -12,6 +12,12 @@ import {
   type ContractAnalysis,
 } from "../../oracles/expectations/extract/analyzer";
 import {
+  findFunctionBody,
+  findMatchingBracket,
+  tokenizePhp,
+  type PhpToken,
+} from "../../oracles/expectations/extract/php";
+import {
   CONTRACT_BEHAVIOR_CLASSES,
   CONTRACT_DISCOVERY_VERSION,
   sourceEvidenceDigest,
@@ -24,7 +30,15 @@ import {
   type SourceLanguage,
 } from "./types";
 
+/**
+ * The compatibility-cone analyzers retain their Phase 20/21 identity. New
+ * real-source-only proof families use a separate identity so historical
+ * synthetic inventories remain byte-stable while the real-source cache still
+ * invalidates when the expanded analyzer set changes.
+ */
 export const SEMANTIC_SOURCE_ANALYZER_VERSION = "nightwatch.semantic-source-analyzers.v1" as const;
+export const REAL_SOURCE_RESPONSE_ANALYZER_VERSION = "nightwatch.real-source-response-analyzers.v2" as const;
+export type AnalyzerVersion = typeof SEMANTIC_SOURCE_ANALYZER_VERSION | typeof REAL_SOURCE_RESPONSE_ANALYZER_VERSION;
 export const MAX_ANALYZER_SOURCE_CHARS = 2_000_000;
 export const MAX_ANALYZER_OUTPUTS = 256;
 
@@ -37,11 +51,13 @@ export type SourceAnalyzerHint =
 
 export interface SourceAnalyzerArtifact extends SourceArtifactInput {
   readonly hints?: readonly SourceAnalyzerHint[];
+  /** Opt into proof families introduced for approved real-source surfaces. */
+  readonly includeExtendedResponseProof?: boolean;
 }
 
 export interface AnalyzerObservation {
   readonly analyzerId: string;
-  readonly analyzerVersion: typeof SEMANTIC_SOURCE_ANALYZER_VERSION;
+  readonly analyzerVersion: AnalyzerVersion;
   readonly language: SourceLanguage;
   readonly symbol: string | null;
   readonly status: "MECHANICALLY_PROVABLE" | "REJECTED";
@@ -63,6 +79,8 @@ const SAFE_SYMBOL_RE = /^[A-Za-z_][A-Za-z0-9_:$-]{0,159}$/;
 const SAFE_SHA_RE = /^[0-9a-f]{40}$/;
 const SAFE_PATH_SEGMENT_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,96}$/;
 const KNOWN_TYPES: readonly JsonTypeCategory[] = ["NULL", "BOOLEAN", "NUMBER", "STRING", "OBJECT", "ARRAY"];
+const MAX_PHP_RETURN_FIELDS = 64;
+const SAFE_RESPONSE_FIELD_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,96}$/;
 
 function safeName(value: string, label: string): string {
   if (!SAFE_NAME_RE.test(value)) invalid(`${label}_UNSAFE`);
@@ -95,6 +113,7 @@ function normalizeSurfaces(values: readonly ObservationSurfaceKind[]): readonly 
 
 function evidence(input: {
   readonly analyzerId: string;
+  readonly analyzerVersion: AnalyzerVersion;
   readonly language: SourceLanguage;
   readonly symbol: string | null;
   readonly status: AnalyzerObservation["status"];
@@ -105,13 +124,13 @@ function evidence(input: {
 }): string {
   return sourceEvidenceDigest({
     schemaVersion: CONTRACT_DISCOVERY_VERSION,
-    analyzerVersion: SEMANTIC_SOURCE_ANALYZER_VERSION,
     ...input,
   });
 }
 
 function proven(input: {
   readonly analyzerId: string;
+  readonly analyzerVersion?: AnalyzerVersion;
   readonly language: SourceLanguage;
   readonly symbol: string | null;
   readonly behaviorClass: ContractBehaviorClass;
@@ -120,7 +139,7 @@ function proven(input: {
 }): AnalyzerObservation {
   const base = {
     analyzerId: input.analyzerId,
-    analyzerVersion: SEMANTIC_SOURCE_ANALYZER_VERSION,
+    analyzerVersion: input.analyzerVersion ?? SEMANTIC_SOURCE_ANALYZER_VERSION,
     language: input.language,
     symbol: input.symbol,
     status: "MECHANICALLY_PROVABLE" as const,
@@ -134,6 +153,7 @@ function proven(input: {
 
 function rejected(input: {
   readonly analyzerId: string;
+  readonly analyzerVersion?: AnalyzerVersion;
   readonly language: SourceLanguage;
   readonly symbol: string | null;
   readonly code: DiscoveryRejectionCode;
@@ -142,7 +162,7 @@ function rejected(input: {
 }): AnalyzerObservation {
   const base = {
     analyzerId: input.analyzerId,
-    analyzerVersion: SEMANTIC_SOURCE_ANALYZER_VERSION,
+    analyzerVersion: input.analyzerVersion ?? SEMANTIC_SOURCE_ANALYZER_VERSION,
     language: input.language,
     symbol: input.symbol,
     status: "REJECTED" as const,
@@ -211,6 +231,155 @@ function commaSeparatedLiterals(value: string): readonly string[] | null {
   const pieces = value.split(",").map((piece) => piece.trim()).filter((piece) => piece.length > 0);
   if (pieces.length === 0 || pieces.length > 32 || pieces.some((piece) => parseLiteralType(piece) === null)) return null;
   return pieces;
+}
+
+interface PhpReturnArrayEntry {
+  readonly key: string | null;
+  readonly value: readonly PhpToken[];
+}
+
+interface PhpReturnArrayShape {
+  readonly rootType: "OBJECT" | "ARRAY" | null;
+  readonly fields: readonly string[];
+  readonly fieldTypes: Readonly<Record<string, JsonTypeCategory | null>>;
+}
+
+/** Split one bounded PHP array literal into top-level entries. Nested arrays,
+ * calls, and grouped expressions stay inside their entry. This is structural
+ * token handling only; no PHP expression is evaluated. */
+function splitPhpArrayEntries(tokens: readonly PhpToken[], openIndex: number, closeIndex: number): readonly (readonly PhpToken[])[] | null {
+  const entries: PhpToken[][] = [];
+  let current: PhpToken[] = [];
+  let squareDepth = 0;
+  let parenDepth = 0;
+  let braceDepth = 0;
+  for (let index = openIndex + 1; index < closeIndex; index += 1) {
+    const token = tokens[index]!;
+    if (token.t === "PUNCT" && token.v === "[" ) squareDepth += 1;
+    else if (token.t === "PUNCT" && token.v === "]") {
+      squareDepth -= 1;
+      if (squareDepth < 0) return null;
+    } else if (token.t === "PUNCT" && token.v === "(") parenDepth += 1;
+    else if (token.t === "PUNCT" && token.v === ")") {
+      parenDepth -= 1;
+      if (parenDepth < 0) return null;
+    } else if (token.t === "PUNCT" && token.v === "{") braceDepth += 1;
+    else if (token.t === "PUNCT" && token.v === "}") {
+      braceDepth -= 1;
+      if (braceDepth < 0) return null;
+    }
+    if (token.t === "PUNCT" && token.v === "," && squareDepth === 0 && parenDepth === 0 && braceDepth === 0) {
+      if (current.length > 0) entries.push(current);
+      current = [];
+    } else {
+      current.push(token);
+    }
+  }
+  if (squareDepth !== 0 || parenDepth !== 0 || braceDepth !== 0) return null;
+  if (current.length > 0) entries.push(current);
+  return entries;
+}
+
+function staticPhpLiteralType(tokens: readonly PhpToken[]): JsonTypeCategory | null {
+  if (tokens.length === 1) {
+    const token = tokens[0]!;
+    if (token.t === "NUMBER") return "NUMBER";
+    if (token.t === "STRING") return "STRING";
+    if (token.t === "WORD" && token.v === "null") return "NULL";
+    if (token.t === "WORD" && (token.v === "true" || token.v === "false")) return "BOOLEAN";
+  }
+  if (tokens[0]?.t === "PUNCT" && tokens[0].v === "[") {
+    const close = findMatchingBracket([...tokens], 0);
+    if (close !== tokens.length - 1) return null;
+    const entries = splitPhpArrayEntries(tokens, 0, close);
+    if (entries === null) return null;
+    if (entries.length === 0) return "ARRAY";
+    const keyed = entries.map((entry) => entry[0]?.t === "STRING" && entry[1]?.t === "OP" && entry[1]?.v === "=>");
+    if (keyed.every(Boolean)) return "OBJECT";
+    if (keyed.every((value) => !value)) return "ARRAY";
+  }
+  return null;
+}
+
+function parsePhpReturnArray(tokens: readonly PhpToken[], openIndex: number, bodyEnd: number): PhpReturnArrayShape | null {
+  const close = findMatchingBracket([...tokens], openIndex);
+  if (close >= bodyEnd || close >= tokens.length) return null;
+  const entries = splitPhpArrayEntries(tokens, openIndex, close);
+  if (entries === null || entries.length > MAX_PHP_RETURN_FIELDS) return null;
+  const parsed: PhpReturnArrayEntry[] = [];
+  const keys: string[] = [];
+  for (const entry of entries) {
+    if (entry[1]?.t === "OP" && entry[1]?.v === "=>" && entry[0]?.t !== "STRING") return null;
+    const key = entry[0]?.t === "STRING" && entry[1]?.t === "OP" && entry[1]?.v === "=>" ? entry[0].v : null;
+    if (key !== null) {
+      if (!SAFE_RESPONSE_FIELD_RE.test(key) || keys.includes(key)) return null;
+      keys.push(key);
+      parsed.push({ key, value: entry.slice(2) });
+    } else {
+      parsed.push({ key: null, value: entry });
+    }
+  }
+  const allKeyed = parsed.every((entry) => entry.key !== null);
+  const allIndexed = parsed.every((entry) => entry.key === null);
+  if (!allKeyed && !allIndexed) return null;
+  const fieldTypes: Record<string, JsonTypeCategory | null> = {};
+  for (const entry of parsed) {
+    if (entry.key !== null) fieldTypes[entry.key] = staticPhpLiteralType(entry.value);
+  }
+  return {
+    rootType: allKeyed ? "OBJECT" : allIndexed ? "ARRAY" : null,
+    fields: keys.sort(),
+    fieldTypes,
+  };
+}
+
+/** Prove response structure only when every return branch is a direct literal
+ * array with one identical, literal-key shape. A variable/call/mixed branch is
+ * deliberately rejected: response names and framework conventions are not
+ * proof of a response contract. */
+function analyzePhpDirectReturns(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
+  const surfaces = artifact.observationSurfaces;
+  const symbol = safeSymbol(artifact.symbol);
+  if (symbol === null) return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "SOURCE_UNAVAILABLE", detail: "symbol-required", surfaces })];
+  let tokens: PhpToken[];
+  try {
+    tokens = tokenizePhp(artifact.sourceText);
+  } catch {
+    return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "UNSUPPORTED_SYNTAX", detail: "token-limit", surfaces })];
+  }
+  const body = findFunctionBody(tokens, symbol);
+  if (body === null) return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "UNSUPPORTED_SYNTAX", detail: "function-not-found", surfaces })];
+  const returns: PhpReturnArrayShape[] = [];
+  for (let index = body.start + 1; index < body.end; index += 1) {
+    const token = tokens[index]!;
+    if (token.t !== "WORD" || token.v !== "return") continue;
+    if (tokens[index + 1]?.t !== "PUNCT" || tokens[index + 1]?.v !== "[") {
+      return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "BRANCH_SET_INCOMPLETE", detail: "non-literal-return", surfaces })];
+    }
+    const shape = parsePhpReturnArray(tokens, index + 1, body.end);
+    if (shape === null) return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "DYNAMIC_KEY_FLOW", detail: "return-array-shape", surfaces })];
+    returns.push(shape);
+  }
+  if (returns.length === 0) return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "UNSUPPORTED_SYNTAX", detail: "no-return", surfaces })];
+  const rootType = returns[0]!.rootType;
+  if (rootType === null || returns.some((shape) => shape.rootType !== rootType)) {
+    return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "BRANCH_SET_INCOMPLETE", detail: "root-shape-mismatch", surfaces })];
+  }
+  const result: AnalyzerObservation[] = [proven({ analyzerId: "PHP_RETURN_ROOT_TYPE", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field: "root", allowedTypes: [rootType] }, surfaces })];
+  if (rootType !== "OBJECT") return result;
+  const fields = returns[0]!.fields;
+  if (returns.some((shape) => shape.fields.length !== fields.length || shape.fields.some((field, index) => field !== fields[index]))) {
+    return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "BRANCH_SET_INCOMPLETE", detail: "field-set-mismatch", surfaces })];
+  }
+  result.push(proven({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, behaviorClass: "REQUIRED_FIELD", shape: { kind: "FIELD_SET", fields, requiredFields: fields, optionalFields: [] }, surfaces }));
+  for (const field of fields) {
+    const types = returns.map((shape) => shape.fieldTypes[field] ?? null);
+    const type = types[0] ?? null;
+    if (type !== null && types.every((candidate) => candidate === type)) {
+      result.push(proven({ analyzerId: "PHP_RETURN_FIELD_TYPE", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field, allowedTypes: [type] }, surfaces }));
+    }
+  }
+  return result;
 }
 
 function analyzeTypeScript(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
@@ -419,7 +588,7 @@ function analyzePhp(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
         break;
     }
   }
-  return out;
+  return artifact.includeExtendedResponseProof === true ? [...out, ...analyzePhpDirectReturns(artifact)] : out;
 }
 
 /** Analyze one bounded source artifact with fixed syntax-aware patterns. */
@@ -450,6 +619,18 @@ export function analyzeSourceArtifact(artifact: SourceAnalyzerArtifact): readonl
 /** Stable summary used by inventory/cache callers; it never includes source. */
 export function analyzerSetIdentity(): string {
   return sourceEvidenceDigest({ version: SEMANTIC_SOURCE_ANALYZER_VERSION, existing: CONTRACT_DISCOVERY_VERSION, behaviors: CONTRACT_BEHAVIOR_CLASSES });
+}
+
+/** Identity for the approved real-source surface analyzer set. This is kept
+ * separate from the historical semantic-discovery identity above so adding a
+ * real-source proof family cannot rewrite the Phase 20/21 compatibility
+ * baseline, while source-surface cache keys still invalidate correctly. */
+export function sourceSurfaceAnalyzerSetIdentity(): string {
+  return sourceEvidenceDigest({
+    version: REAL_SOURCE_RESPONSE_ANALYZER_VERSION,
+    legacyAnalyzerSet: analyzerSetIdentity(),
+    extendedFamilies: ["PHP_RETURN_ROOT_TYPE", "PHP_RETURN_OBJECT_FIELDS", "PHP_RETURN_FIELD_TYPE"],
+  });
 }
 
 /** Exposed only for tests that prove the existing analyzer is still composed. */

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nightwatch.semantic-compatibility.v1",
-  "requiredPhaseRange": { "first": 9, "last": 25 },
+  "requiredPhaseRange": { "first": 9, "last": 26 },
   "execution": {
     "project": "nightwatch",
     "workers": 1,
@@ -34,7 +34,8 @@
     { "phase": 22, "files": ["tests/unit/phase22Core.test.ts"] },
     { "phase": 23, "files": ["tests/unit/phase23QualityGate.test.ts", "tests/unit/phase23PortLease.test.ts", "tests/unit/phase23CiAuthority.test.ts", "tests/unit/phase23Manifest.test.ts"] },
     { "phase": 24, "files": ["tests/unit/phase24LocalTriage.test.ts", "tests/unit/phase24ProxyLifecycle.test.ts"] },
-    { "phase": 25, "files": ["tests/unit/phase25SourceBoundary.test.ts", "tests/unit/phase25SourceInventory.test.ts", "tests/unit/phase25AnalyzerSoundness.test.ts", "tests/unit/phase25SurfaceDiscovery.test.ts", "tests/unit/phase25Invalidation.test.ts", "tests/unit/phase25Adversarial.test.ts", "tests/unit/phase25Operator.test.ts"] }
+    { "phase": 25, "files": ["tests/unit/phase25SourceBoundary.test.ts", "tests/unit/phase25SourceInventory.test.ts", "tests/unit/phase25AnalyzerSoundness.test.ts", "tests/unit/phase25SurfaceDiscovery.test.ts", "tests/unit/phase25Invalidation.test.ts", "tests/unit/phase25Adversarial.test.ts", "tests/unit/phase25Operator.test.ts"] },
+    { "phase": 26, "files": ["tests/unit/phase26ResponseCoverage.test.ts"] }
   ],
   "supportFiles": [
     "tests/unit/agent-state.test.ts",

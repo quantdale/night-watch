@@ -545,6 +545,7 @@ function observationsFor(input: { readonly access: SiblingSourceAccess; readonly
     symbol: input.operation.handlerSymbol,
     sourceText,
     observationSurfaces: ['API', 'SYNTHETIC'],
+    includeExtendedResponseProof: true,
   };
   return analyzeSourceArtifact(artifact);
 }

@@ -165,7 +165,7 @@ function materializeSourceContract(candidate: ContractCandidate, mutationClass: 
       const expected = shape.allowedTypes[0];
       if (expected === undefined) return null;
       const actual = mutationClass === "WRONG_TYPE" ? firstAlternative(expected) : expected;
-      return { projections: projectMany([{ [shape.field]: safeSyntheticValue(actual) }], ctx), ctx };
+      return { projections: projectMany(shape.field === "root" ? [safeSyntheticValue(actual)] : [{ [shape.field]: safeSyntheticValue(actual) }], ctx), ctx };
     }
     case "DEFAULT": {
       const actual = mutationClass === "WRONG_TYPE" ? firstAlternative(shape.defaultType) : shape.defaultType;
@@ -204,6 +204,9 @@ function materializeSourceContract(candidate: ContractCandidate, mutationClass: 
 function sourceContractDefectDetected(candidate: ContractCandidate, materialized: MaterializedCase, mutationClass: SyntheticMutationClass): boolean {
   if (materialized.projections.length === 0 || candidate.shape === null) return false;
   const root = materialized.projections[0]!.root;
+  if (candidate.shape.kind === "FIELD_TYPE" && candidate.shape.field === "root") {
+    return !candidate.shape.allowedTypes.includes(root.type as JsonTypeCategory);
+  }
   if (root.type !== "OBJECT" || root.fields === undefined) return false;
   const field = (name: string) => root.fields!.find((entry) => entry.name === name)?.node;
   switch (candidate.shape.kind) {

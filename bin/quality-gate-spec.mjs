@@ -74,7 +74,7 @@ function validateDefinition(value) {
 function validateCompatibility(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('SEMANTIC_COMPATIBILITY_INVALID');
   if (value.schemaVersion !== 'nightwatch.semantic-compatibility.v1') fail('SEMANTIC_COMPATIBILITY_SCHEMA_UNSUPPORTED');
-  if (value.requiredPhaseRange?.first !== 9 || value.requiredPhaseRange?.last !== 25) fail('SEMANTIC_COMPATIBILITY_PHASE_RANGE_INVALID');
+  if (value.requiredPhaseRange?.first !== 9 || value.requiredPhaseRange?.last !== 26) fail('SEMANTIC_COMPATIBILITY_PHASE_RANGE_INVALID');
   if (value.execution?.project !== 'nightwatch' || value.execution?.workers !== 1 || value.execution?.serial !== true) fail('SEMANTIC_COMPATIBILITY_EXECUTION_INVALID');
   if (!Array.isArray(value.phaseSuites) || value.phaseSuites.length === 0) fail('SEMANTIC_COMPATIBILITY_SUITES_INVALID');
   const phases = new Set();
@@ -93,7 +93,7 @@ function validateCompatibility(value) {
     if (!fs.existsSync(path.join(root, file))) fail(`SEMANTIC_COMPATIBILITY_FILE_MISSING:${file}`);
     files.add(file);
   }
-  for (let phase = 9; phase <= 25; phase += 1) {
+  for (let phase = 9; phase <= 26; phase += 1) {
     if (![...phases].some((candidate) => Math.floor(candidate) === phase)) fail(`SEMANTIC_COMPATIBILITY_PHASE_OMITTED:${phase}`);
   }
   if (!Array.isArray(value.intentionalDuplicateFileReasons)) fail('SEMANTIC_COMPATIBILITY_DUPLICATE_REASONS_INVALID');

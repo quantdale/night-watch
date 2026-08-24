@@ -6,7 +6,7 @@
 // same-SHA source snapshot cannot reuse an older extraction.
 // ---------------------------------------------------------------------------
 
-import { analyzerSetIdentity } from '../semanticCoverage/sourceAnalyzers';
+import { sourceSurfaceAnalyzerSetIdentity } from '../semanticCoverage/sourceAnalyzers';
 import { safeSemanticDigest } from '../semanticCoverage/types';
 import type { RealSourceScanConfig, RealSourceSnapshotInventory } from './scanTypes';
 import type { SourceSurfaceDiscovery } from './surfaces';
@@ -37,7 +37,7 @@ export function sourceSurfaceCacheKey(input: { readonly config: RealSourceScanCo
     snapshotDigest: input.inventory.snapshotDigest,
     configDigest: input.config.configDigest,
     extractorVersion: input.config.extractorVersion,
-    analyzerSetVersion: analyzerSetIdentity(),
+    analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
     enabledAnalyzers: [...input.config.enabledAnalyzers].sort(),
   }, 'source-surface-cache');
 }

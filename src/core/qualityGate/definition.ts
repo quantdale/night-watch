@@ -135,7 +135,7 @@ export function validateSemanticCompatibilityDefinition(value: unknown): Semanti
   const record = asRecord(value, 'COMPATIBILITY_DEFINITION');
   if (record.schemaVersion !== SEMANTIC_COMPATIBILITY_SCHEMA) throw new Error('SEMANTIC_COMPATIBILITY_SCHEMA_UNSUPPORTED');
   const range = asRecord(record.requiredPhaseRange, 'COMPATIBILITY_PHASE_RANGE');
-  if (typeof range.first !== 'number' || typeof range.last !== 'number' || range.first !== 9 || range.last !== 25) {
+  if (typeof range.first !== 'number' || typeof range.last !== 'number' || range.first !== 9 || range.last !== 26) {
     throw new Error('SEMANTIC_COMPATIBILITY_PHASE_RANGE_INVALID');
   }
   const execution = asRecord(record.execution, 'COMPATIBILITY_EXECUTION');
@@ -161,7 +161,7 @@ export function validateSemanticCompatibilityDefinition(value: unknown): Semanti
     }
     suites.push({ phase: suite.phase, files });
   }
-  for (let phase = 9; phase <= 25; phase += 1) {
+  for (let phase = 9; phase <= 26; phase += 1) {
     if (!suites.some((suite) => Math.floor(suite.phase) === phase)) throw new Error(`SEMANTIC_COMPATIBILITY_PHASE_OMITTED:${phase}`);
   }
   const supportFiles = asStringArray(record.supportFiles, 'COMPATIBILITY_SUPPORT_FILES');
@@ -173,7 +173,7 @@ export function validateSemanticCompatibilityDefinition(value: unknown): Semanti
   const reasons = asStringArray(record.intentionalDuplicateFileReasons, 'COMPATIBILITY_DUPLICATE_REASONS');
   return Object.freeze({
     schemaVersion: SEMANTIC_COMPATIBILITY_SCHEMA,
-    requiredPhaseRange: { first: 9, last: 25 },
+    requiredPhaseRange: { first: 9, last: 26 },
     execution: {
       project: 'nightwatch' as const,
       workers: 1 as const,
