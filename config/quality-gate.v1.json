@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "nightwatch.quality-gate.v1",
+  "definitionName": "Nightwatch executable acceptance gate",
+  "groups": [
+    {
+      "id": "GATE_DEFINITION",
+      "commandKey": "GATE_DEFINITION",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "SHORT",
+      "dependsOn": [],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "unknown schema/group/command rejects the gate"
+    },
+    {
+      "id": "STATIC",
+      "commandKey": "TYPECHECK",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "MEDIUM",
+      "dependsOn": ["GATE_DEFINITION"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "type errors stop required-gate evaluation"
+    },
+    {
+      "id": "HARDENING",
+      "commandKey": "HARDENING_CHECK",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "MEDIUM",
+      "dependsOn": ["STATIC"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "policy drift or forbidden authority fails before tests"
+    },
+    {
+      "id": "PROJECT_TRUTH",
+      "commandKey": "PROJECT_CHECK",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "SHORT",
+      "dependsOn": ["HARDENING"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "project snapshot drift fails closed"
+    },
+    {
+      "id": "AGENT_CONTINUITY",
+      "commandKey": "AGENT_CONTINUITY",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "FULL_GIT_HISTORY"],
+      "timeoutClass": "MEDIUM",
+      "dependsOn": ["PROJECT_TRUTH"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "active/history continuity errors stop the gate"
+    },
+    {
+      "id": "SEMANTIC_COMPATIBILITY",
+      "commandKey": "SEMANTIC_COMPATIBILITY",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SERIAL_PLAYWRIGHT"],
+      "timeoutClass": "LONG",
+      "dependsOn": ["AGENT_CONTINUITY"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "manifest omission, unexpected skip, or test failure is non-green"
+    },
+    {
+      "id": "OWNER_PROVENANCE",
+      "commandKey": "OWNER_PROVENANCE",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SYNTHETIC_ONLY"],
+      "timeoutClass": "LONG",
+      "dependsOn": ["SEMANTIC_COMPATIBILITY"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "owner provenance/privacy tests cannot be skipped"
+    },
+    {
+      "id": "SYNTHETIC_CAMPAIGN",
+      "commandKey": "SYNTHETIC_CAMPAIGN",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "SYNTHETIC_ONLY"],
+      "timeoutClass": "MEDIUM",
+      "dependsOn": ["OWNER_PROVENANCE"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "synthetic campaign failure is non-green"
+    },
+    {
+      "id": "PATCH_INTEGRITY",
+      "commandKey": "PATCH_INTEGRITY",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "CLEAN_GIT"],
+      "timeoutClass": "SHORT",
+      "dependsOn": ["SYNTHETIC_CAMPAIGN"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "whitespace, untracked, or dirty checkout fails closed"
+    }
+  ]
+}

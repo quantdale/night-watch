@@ -209,7 +209,11 @@ test.describe('Phase 7B.3 one-call loopback controller', () => {
       requestCount += 1;
     });
     try {
-      await expect(runSingleLocalCanary({ endpoint: fixture.endpoint, modelIdentifier: 'local.fixture.v1', timeoutMs: 20 })).rejects.toMatchObject({ resultClass: 'FAIL_TIMEOUT', providerCalls: 1, loopbackModelRequests: 1 });
+      // Keep enough scheduling margin for the request to reach the loopback
+      // server under the full serial compatibility cone. The server never
+      // responds, so this remains a bounded timeout while avoiding a race
+      // between the timer and the first event-loop turn.
+      await expect(runSingleLocalCanary({ endpoint: fixture.endpoint, modelIdentifier: 'local.fixture.v1', timeoutMs: 100 })).rejects.toMatchObject({ resultClass: 'FAIL_TIMEOUT', providerCalls: 1, loopbackModelRequests: 1 });
       expect(requestCount).toBe(1);
     } finally {
       await close(fixture.server);

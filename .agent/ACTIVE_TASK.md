@@ -1,32 +1,32 @@
 # Active Task
 
-Task ID: phase-22-contained-dev-semantic-calibration
-Phase: 22-CONTAINED-DEV-SEMANTIC-CALIBRATION
-Title: Nightwatch Phase 22 — Contained DEV Semantic Reality Calibration and Bounded Real-Campaign Acceptance
-Status: BLOCKED
-Task directory: .agent/tasks/phase-22-contained-dev-semantic-calibration
-Starting SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-Last validated implementation SHA: 64cffaf6554300f59907c947f135753b62376a64
-Last substantive checkpoint SHA: 64cffaf6554300f59907c947f135753b62376a64
-Last checkpoint: M10 — durable closure, push, one CI inspection, and terminal handoff
-Current milestone: M10 — terminal BLOCKED_BEFORE_DEV
-Next action: STOP — GitHub Actions run 32681204267 is externally blocked before executable steps; no DEV launcher invocation or DEV contact occurred.
-Authorization class: PHASE_22_CONTAINED_DEV_SEMANTIC_REALITY_CALIBRATION_ONLY
+Task ID: phase-23-executable-ci-dev-acceptance
+Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
+Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qualification, and Conditional Contained DEV Acceptance
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-23-executable-ci-dev-acceptance
+Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
+Last validated implementation SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
+Last checkpoint: M5 — external CI classifier, exact-head authority, and Preflight V3 core
+Current milestone: M3 — clean-checkout/Linux equivalence and port/process lifecycle qualification
+Next action: Create the first implementation checkpoint from the focused-green tree, then run the Phase 9–23 compatibility cone and disposable Node 20 clean-checkout gate from that clean checkpoint.
+Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 64cffaf6554300f59907c947f135753b62376a64
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 64cffaf6554300f59907c947f135753b62376a64
+STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
+LAST_VALIDATED_IMPLEMENTATION_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_22_STATUS: BLOCKED_BEFORE_DEV
-PHASE_21_STATUS: COMPLETE
-PHASE_20_STATUS: COMPLETE
-PHASE_19_STATUS: COMPLETE
-PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
-PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
-PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
+PHASE_23_STATUS: IN_PROGRESS
+PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
+PHASE_21_STATUS: COMPLETE (historical, unchanged)
+PHASE_20_STATUS: COMPLETE (historical, unchanged)
+PHASE_19_STATUS: COMPLETE (historical, unchanged)
+PHASE_18_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
+PHASE_17_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
+PHASE_16CH_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_16D_STATUS: NOT_AUTHORIZED
 PHASE_6_STATUS: FROZEN_BY_OWNER
 PHASE_11B_STATUS: NOT_AUTHORIZED
@@ -35,128 +35,97 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 19, Phase 20, and Phase 21 remain terminal at their existing task
-directories; do not reopen or mutate their history. Live HEAD is always
+Phase 19, Phase 20, Phase 21, and Phase 22 remain terminal at their existing
+task directories; do not reopen or mutate their history. Live HEAD is always
 discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
 
 ## Scope boundary
 
-This task authorizes additive Nightwatch source, bounded read-only sibling
-source inspection, deterministic re-derivation, synthetic fixtures/tests,
-owner-only external auth-state path validation, the existing guarded DEV
-preflight, and exactly one serial bounded DEV campaign only after all local
-gates and the frozen manifest pass. It authorizes no NEXT/production contact,
-mutation, datastore/database operation, infrastructure discovery, sibling
-write, publication, AI authority, self-development promotion, unbounded
-crawling, arbitrary route discovery, credentials, raw authenticated evidence,
-screenshots, traces, DOM/raw-body persistence, or storage-state copying.
-
-The permanent decision remains `FROZEN_BY_OWNER /
-INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`. Unknown operation classes fail
-closed before executor callbacks. Real findings remain owner-only outside Git.
-Semantic projections emit categories and deterministic opaque evidence only;
-raw values, set members, identities, and reconstructible values never cross
-the privacy boundary.
+This task authorizes additive local quality-gate implementation, fixed
+compatibility/inventory tooling, disposable clean-checkout qualification,
+Nightwatch-owned proxy lease hardening, read-only source re-derivation,
+owner-only auth structure checks at the final pre-DEV stage, a fresh bounded
+manifest/dry run, and exactly one serial bounded DEV campaign only after all
+mandatory gates and exact-head external CI pass. It authorizes no NEXT,
+production, mutation, database/datastore, cloud/infra, sibling write,
+publication, AI, self-development, arbitrary commands, credentials, raw
+authenticated evidence, screenshots, traces, DOM/raw-body persistence, or
+storage-state copying. The permanent decision remains
+`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
-- `.agent/tasks/phase-22-contained-dev-semantic-calibration/**`
-- additive Phase 22 eligibility, source-derivation, manifest, preflight,
-  privacy, calibration, replay, dossier, operator, and focused-test modules
-  plus the bounded real launcher/test path
+- `.github/workflows/hardening.yml`
+- `bin/hardening-check.mjs`
+- `bin/phase23-ci.mjs`
+- `bin/phase23-dev.mjs`
+- `bin/phase23-predev.mjs`
+- `bin/quality-gate-clean.mjs`
+- `bin/quality-gate-inventory.mjs`
+- `bin/quality-gate-spec.mjs`
+- `bin/quality-gate.mjs`
+- `bin/semantic-compat.mjs`
+- `config/quality-gate.v1.json`
+- `config/semantic-compatibility.v1.json`
+- `package.json`
+- `src/core/phase23/**`
+- `src/core/qualityGate/**`
+- `src/proxy/portLease.ts`
+- `src/proxy/server.ts`
+- `tests/globalSetup.ts`
+- `tests/unit/aiLocalCanary.test.ts`
+- `tests/unit/phase23*.test.ts`
+- `.agent/tasks/phase-23-executable-ci-dev-acceptance/**`
 
 ## Validation Ledger
 
 Bootstrap Git inspection: PASS — clean `main` at
-`HEAD == origin/main == c06ecd0183c9f6b25297f8f830d7e00e2fe0578c`; no DEV or
+`HEAD == origin/main == ac3df00195eef846a8e9e42615e90b4b912877d2`; no DEV or
 other product systems contacted.
 
-Historical authority review: PASS — Phase 21 terminal records, Phase 9B/R1,
-Phase 10B, Phase 11A and 11A.x records read; their history is preserved.
+Historical authority review: PASS — required project docs, CI hardening, and
+all Phase 22 records were read; Phase 19–22 history remains untouched.
 
-Phase 20 baseline census: PASS — 6 source artifacts, 22 discovered
-candidates, 21 admitted, 1 unsupported-syntax rejection; graph 157 nodes /
-151 edges; 86 total gaps with reason counts DIFFERENTIAL_PROJECTION_GAP=20,
-MECHANICALLY_PROVABLE_UNCOVERED=16, REPLAY_GAP=18, MINIMIZATION_GAP=15,
-DUPLICATE_SEMANTIC_COVERAGE=2, ANALYZER_UNSUPPORTED=1; 34 generated / 32
-applicable / 32 detected / 0 surviving mutants; 31 benign controls / 0 benign
-false positives; 32 replayed / 32 minimized / 32 high-confidence.
+Worker doctor: PASS — optional read-only bridge healthy; worker findings are
+advisory only and no worker mutation or external contact is authorized.
 
-Worker doctor: PASS — read-only bridge healthy; worker findings are advisory
-only and no worker mutation or external contact is authorized.
+M0 workflow inspection: PASS — the existing workflow is a hand-maintained
+historical Phase 8–12 matrix with bootstrap, project, agent, owner-provenance,
+synthetic, and whitespace checks, but no shared current Phase 19–23 gate.
 
-Phase 21 implementation milestones: PASS — M1 privacy-safe membership;
-M2 source-bound enum/set mutation applicability 46 generated / 46 applicable /
-46 detected / 0 surviving, 33 benign / 0 false positives; M3 deterministic
-differential discovery 22 candidate rows / 21 admitted pairs; M4 contract-bound
-replay lifecycle 67 attempted / 67 reproduced / 0 replay gaps; M5 dependency-
-aware minimization 67 attempted / 67 supported with semantic fixed-point
-proofs; M6 21 synthetic bindings admitted and 4 of 7 metamorphic kinds
-exercised, with 3 source-proof exclusions; M7 graph 239 nodes / 233 edges /
-3 residual gaps, 83 of 86 baseline records closed and 3 explicitly
-irreducible. The complete Phase 21 campaign measures 67 generated / 67
-applicable / 67 detected / 0 surviving, 54 benign / 0 false positives, 67
-replayed / 67 minimized / 67 high-confidence.
+M0 drift inventory: PASS — the frozen baseline workflow contains 32 steps, 30
+run commands, 21 historical matrix steps, 55 unique test files, and 5
+duplicate executions across three duplicated files; the modern gate now has 9
+required groups, 130 unique test files, and zero duplicate file executions.
 
-Phase 21 focused cone: PASS — 48 Phase 19–21 compatibility tests after the
-operator repair; the initial 1,295-test Phase 9–21 run exposed three legacy CLI
-compatibility defects (plan shape, contracts shape, and truncated large JSON),
-all repaired without weakening the tests. `npm run hardening:check`,
-`npm run campaign:synthetic` (27/27), and `npm run typecheck` are PASS.
+M1/M2/M4/M5 implementation slice: FOCUSED PASS — the data-only
+`nightwatch.quality-gate.v1` and Phase 9–23 compatibility manifests, fixed
+runner, bounded receipts, inventory, thin Actions workflow, parity hardening,
+external CI classifier, exact-head authority, and Preflight V3 core are in the
+working tree. The full Phase 23 focused slice, including the corrected
+bind-failure regression, is green at 34/34.
 
-Phase 9–21 compatibility cone: PASS — 1,295/1,295 tests; 0 failures and 0
-unexpected skips after the additive CLI compatibility repairs.
+Proxy lifecycle discovery: REPAIRED — Playwright config/global setup/worker
+processes now explicitly hand off one loopback lease token; the prior
+concurrent `ERR_PROXY_CONNECTION_FAILED` caused by divergent ports is covered
+by the focused observer regression. No product networking semantics changed.
 
-Owner provenance: PASS — `npm run test:owner-provenance` 91/91.
+Focused qualification: PASS — Phase 23 quality-gate, external-CI, manifest,
+port/process, and the existing local-canary suites passed 34/34 after adding
+event-loop scheduling margin to the 100 ms synthetic timeout fixture. A dirty
+working-tree compatibility probe was not accepted as qualification: it
+reported 1,802 passed, 1 skipped, and 3 failures, consisting of the prior
+20 ms scheduler race plus two self-development source-dirty guards. The
+source-dirty guards are expected to clear only from the committed clean tree.
 
-Canonical full Playwright regression: PASS — 2,333 enumerated; 2,329 passed;
-4 skipped; 0 failed. Topology-correct isolated full regression: PASS — the
-same 2,333 / 2,329 / 4 / 0 result from a fresh clone at the implementation
-checkpoint. Skip identity parity is exact: `tests/unit/phase5Api.test.ts`
-lines 197, 246, and 280, plus `tests/unit/selfDevSandboxConfinement.test.ts`
-line 147. The first isolated attempt used an incorrectly nested sibling-root
-fixture and was discarded as a validation setup defect; the corrected run
-used read-only aggregate links at the resolver's expected parent.
-
-External Actions inspection: BLOCKED / BILLING_RESTRICTION — run
-`32681204267` for head `64cffaf6554300f59907c947f135753b62376a64` concluded
-`failure`; job `97298112036` (`Local hardening checks`) also concluded
-`failure` with `steps=[]`. Failed-log retrieval timed out. This is not a local
-validation failure and was not retried. External CI is not claimed green.
-
-Phase 22 terminal validation: PASS — implementation checkpoint
-`64cffaf6554300f59907c947f135753b62376a64` was pushed fast-forward and
-`HEAD == origin/main` with a clean tree. Fresh read-only source discovery
-resolved `mobingilabs/ripple-api@85e400a8b32fc23c05464033a2a6d5fff2a2890c`;
-the disposable snapshot re-derived 4 historical and 4 collection
-expectations with zero failures. Six approved candidates were considered:
-three DEV-eligible collection targets, one real-source target without a
-runtime binding, and two synthetic-only targets. The frozen manifest has
-three targets and three explicit exclusions; its safe manifest ID is
-`manifest:sha256:3c0d357a25328212f7011d1d` and digest is
-`manifest:sha256:978c0e63310ea4f80d918cda`.
-
-Phase 22 dry run: PASS — 3 planned FIRST observations, 3 planned replays, 6
-contexts, `externalContact=false`, mutation count 0, raw persistence count 0,
-and privacy receipt rejected-event count 0. Focused Phase 22 tests are 7/7;
-the explicit Phase 9–22 compatibility cone is 1,302/1,302; the clean
-canonical and topology-correct isolated full suites are both 2,336 passed / 4
-skipped / 0 failed out of 2,340 with exact skip identity parity. Post-push
-typecheck, hardening, project-state, synthetic campaign (27/27), and owner
-provenance (91/91) are green. The one concurrent focused-test attempt hit a
-shared local proxy `EADDRINUSE`; the serial rerun is the authoritative 7/7
-result.
-
-Phase 22 real campaign disposition: BLOCKED_BEFORE_DEV — the exact green
-Actions gate required by the executable launcher was unavailable/failed with
-zero steps. No auth state was read, no authenticated context was created, no
-DEV observation occurred, and no launcher invocation was made.
+Static qualification: PASS — `npm run typecheck`, `npm run hardening:check`,
+`npm run quality-gate:spec`, and `npm run gate:inventory`; the external CI
+observer also now emits `API_UNOBSERVABLE`/`WORKFLOW_NOT_FOUND` receipts for
+bounded API failures instead of exposing an opaque transport error.
 
 ## Resume Recipe
 
-Read this file, then this task's `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`,
-and `HANDOFF.md` only for terminal context. STOP. A future DEV attempt requires
-fresh owner authorization, a fresh manifest/source/auth validation, and an
-exact green Actions run for the new live head; do not reopen Phase 19, Phase
-20, or Phase 21 history.
+Read this file, then the Phase 23 `SPEC.md`, `PLAN.md`, and `STATE.md`. Inspect
+Git status/diff, create the first implementation checkpoint, and continue the
+exact next action. Never mutate the terminal Phase 19–22 records.

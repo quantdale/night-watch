@@ -11,16 +11,16 @@ permissions:
 
 jobs:
   local-hardening:
-    name: Local hardening checks
+    name: Executable quality gate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The unified gate is serial and includes npm ci, the Phase 9–23
+    # compatibility cone, owner provenance, and the synthetic campaign. This
+    # is a bounded budget, not a retry or a product-environment allowance.
+    timeout-minutes: 30
     steps:
       - name: Check out source
         uses: actions/checkout@v4
         with:
-          # agent:check verifies the recorded substantive/documentation SHAs
-          # are ancestors of the checked-out checkpoint; a complete local
-          # history is required for that read-only comparison.
           fetch-depth: 0
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -29,73 +29,11 @@ jobs:
           cache: npm
       - name: Install without lifecycle scripts
         run: npm ci --ignore-scripts
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Offline hardening check
-        run: npm run hardening:check
-      - name: Phase 8A synthetic self-development evaluation matrix
-        run: npx playwright test tests/unit/selfDevSchema.test.ts tests/unit/selfDev.test.ts --project=nightwatch --workers=1
-      - name: Phase 8A.1 evaluation provenance and replay integrity matrix
-        run: npx playwright test tests/unit/selfDevProvenance.test.ts tests/unit/selfDevCli.test.ts --project=nightwatch --workers=1
-      - name: Phase 8A.1.1 future-review eligibility gate matrix
-        run: npx playwright test tests/unit/selfDevEligibility.test.ts --project=nightwatch --workers=1
-      - name: Phase 8B controlled source adoption sandbox matrix
-        run: npx playwright test tests/unit/selfDevAdoptionCatalog.test.ts tests/unit/selfDevAdoptionPlan.test.ts tests/unit/selfDevAdoptionSandbox.test.ts tests/unit/selfDevAdoptionCli.test.ts tests/unit/ownerScope.test.ts --project=nightwatch --workers=1
-      - name: Phase 8B.0.1 sandbox promotion-readiness closeout matrix
-        run: npx playwright test tests/unit/selfDevSandboxConfinement.test.ts tests/unit/selfDevAdoptionPlan.test.ts tests/unit/selfDevAdoptionSandbox.test.ts -g "8B\.0\.1" --project=nightwatch --workers=1
-      - name: Phase 8B.1 owner-gated canonical promotion matrix
-        run: npx playwright test tests/unit/selfDevCanonicalPromotion.test.ts tests/unit/selfDevCanonicalPromotionFlow.test.ts tests/unit/selfDevCanonicalPromotionCli.test.ts tests/unit/ownerScope.test.ts --project=nightwatch --workers=1
-      - name: Phase 8B.1.0 catalog-aware proposal compatibility matrix
-        run: npx playwright test tests/unit/selfDevPortfolio.test.ts tests/unit/selfDevAdoptionPlan.test.ts tests/unit/selfDevAdoptionSandbox.test.ts --project=nightwatch --workers=1
-      - name: Phase 8B.1 catalog integrity / checkout cleanliness
-        run: |
-          test -z "$(git status --porcelain)"
-          node bin/selfdev-catalog-integrity.mjs
-      - name: Phase 8B.1-R1.1 project-state truth matrix
-        run: npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1
-      - name: Phase 9 deterministic semantic oracle depth matrix
-        run: npx playwright test tests/unit/oracleCeilingReproduction.test.ts tests/unit/oracleProjection.test.ts tests/unit/oracleExpectation.test.ts tests/unit/oracleExpectationRealSource.test.ts tests/unit/oracleInvariant.test.ts tests/unit/oraclePrecision.test.ts tests/unit/semanticSentinel.test.ts tests/unit/semanticIntegration.test.ts tests/unit/semanticCampaign.test.ts --project=nightwatch --workers=1
-      - name: Phase 9A.1 real-source expectation admission matrix
-        run: npx playwright test tests/unit/phase9a1GapReproduction.test.ts tests/unit/realSourceExtraction.test.ts tests/unit/realSourceRecipeValidation.test.ts tests/unit/realSourceAdmission.test.ts tests/unit/realSourceCurrentness.test.ts tests/unit/semanticReceipt.test.ts tests/unit/semanticReceiptSentinel.test.ts tests/unit/realSourceConformingMutation.test.ts tests/unit/observerSemanticLedger.test.ts tests/unit/realSourceCanary.test.ts --project=nightwatch --workers=1
-      - name: Phase 9B contained DEV semantic acceptance harness matrix
-        run: npx playwright test tests/unit/phase9bFreshness.test.ts tests/unit/phase9bHarness.test.ts --project=nightwatch --workers=1
-      - name: Phase 10 deeper real-source semantic contracts matrix
-        run: npx playwright test tests/unit/phase10TypeFlowExtraction.test.ts tests/unit/phase10RecipeValidation.test.ts tests/unit/phase10Admission.test.ts tests/unit/phase10TypeInSetInvariant.test.ts tests/unit/phase10CorpusPrecision.test.ts tests/unit/phase10Privacy.test.ts tests/unit/phase10Currentness.test.ts tests/unit/phase10Identity.test.ts tests/unit/phase10Campaign.test.ts tests/unit/phase10Canary.test.ts --project=nightwatch --workers=1
-      - name: Phase 10B contained DEV deep-semantic acceptance harness matrix
-        run: npx playwright test tests/unit/phase10bHarness.test.ts --project=nightwatch --workers=1
-      - name: Phase 11 bounded collection-wide semantic evaluation matrix
-        run: npx playwright test tests/unit/phase11CollectionWide.test.ts --workers=1
-      - name: Phase 11A.3 real-source collection admission matrix
-        run: npx playwright test tests/unit/phase11a3CollectionAdmission.test.ts --project=nightwatch --workers=1
-      - name: Phase 12 semantic yield and high-confidence triage matrix
-        run: npx playwright test --project=nightwatch --workers=1 -g "Phase 12"
-      - name: Project-memory truth check
-        run: |
-          test -z "$(git status --porcelain)"
-          npm run project:check
-      - name: Phase 7B/7B.1 synthetic AI review authority and provenance
-        run: npx playwright test tests/unit/aiReview.test.ts tests/unit/aiReviewLoopback.test.ts --workers=1
-      - name: Phase 7B.3 synthetic local-model canary harness
-        run: npx playwright test tests/unit/aiLocalCanary.test.ts --project=nightwatch --workers=1
-      - name: Phase 7B.2 synthetic private owner-review matrix
-        run: npx playwright test tests/unit/aiOwnerReview.test.ts --project=nightwatch --workers=1
-      - name: Phase 7B.2.1 atomic private artifact and owner provenance matrix
-        run: npm run test:owner-provenance
-      - name: Synthetic agent-state continuity matrix
-        run: npx playwright test tests/unit/agent-state.test.ts --project=nightwatch --workers=1
-      - name: Agent-state check
-        run: npm run agent:check
-      - name: Completed-task continuity audit
-        run: npm run agent:audit
-      - name: Synthetic campaign
-        run: npm run campaign:synthetic
-      - name: Check patch whitespace
-        run: git diff --check
+      - name: Execute authoritative quality gate
+        run: npm run gate:ci
 
-# This workflow intentionally does not run authenticated browsers, campaign:real,
-# auth:capture, product journeys, DEV/NEXT targets, databases, infrastructure,
-# external publication, or artifact upload. It proves source/fixture invariants
-# independently on GitHub; it does not prove target-environment behavior.
-# The Phase 9B and Phase 10B matrix steps are LOCAL/SYNTHETIC ONLY (synthetic
-# remote/local SHA fixtures; no GitHub dependency): authenticated product runs
-# are never executed in CI.
+# This workflow is intentionally an environment bootstrap plus the shared
+# repository-owned gate. The gate itself is offline, serial, fail-closed, and
+# emits only safe bounded receipts. It never runs authenticated browsers,
+# campaign:real, auth:capture, DEV/NEXT/production targets, databases,
+# infrastructure, external publication, or private evidence uploads.

@@ -53,6 +53,11 @@ function checkChildProcessBoundaries() {
     'bin/observe-canary.mjs',
     'bin/auth-capture.mjs',
     'bin/nightwatch.mjs',
+    'bin/quality-gate.mjs',
+    'bin/quality-gate-clean.mjs',
+    'bin/semantic-compat.mjs',
+    'bin/phase23-ci.mjs',
+    'bin/phase23-dev.mjs',
   ];
   for (const file of launchers) {
     const source = read(file);
@@ -502,6 +507,75 @@ function checkSyntax() {
   }
 }
 
+function checkPhase23QualityGate() {
+  const workflow = read('.github/workflows/hardening.yml');
+  const packageJson = read('package.json');
+  const runner = read('bin/quality-gate.mjs');
+  const spec = read('bin/quality-gate-spec.mjs');
+  const semantic = read('bin/semantic-compat.mjs');
+  const clean = read('bin/quality-gate-clean.mjs');
+  let gate;
+  let compatibility;
+  try {
+    gate = JSON.parse(read('config/quality-gate.v1.json'));
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+  } catch {
+    fail('Phase 23 quality-gate definitions must be valid JSON');
+    return;
+  }
+  if (gate.schemaVersion !== 'nightwatch.quality-gate.v1' || !Array.isArray(gate.groups)) fail('Phase 23 quality-gate schema/version is invalid');
+  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY'];
+  for (const id of requiredGroups) {
+    const group = gate.groups.find((candidate) => candidate.id === id);
+    if (!group || group.required !== true) fail(`Phase 23 required quality-gate group missing or optional: ${id}`);
+  }
+  if (compatibility.schemaVersion !== 'nightwatch.semantic-compatibility.v1' || compatibility.requiredPhaseRange?.first !== 9 || compatibility.requiredPhaseRange?.last !== 23) {
+    fail('Phase 23 semantic compatibility manifest must bind Phase 9 through Phase 23');
+  }
+  if (!Array.isArray(compatibility.phaseSuites) || !compatibility.phaseSuites.some((suite) => suite.phase === 23)) fail('Phase 23 semantic compatibility suite is missing');
+  if (!/"gate:ci"\s*:\s*"node bin\/quality-gate\.mjs ci"/.test(packageJson)) fail('package.json must expose the fixed gate:ci entry point');
+  if (!/"test:semantic-compat"\s*:\s*"node bin\/semantic-compat\.mjs"/.test(packageJson)) fail('package.json must expose the fixed semantic compatibility entry point');
+  if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runner)) fail('quality-gate runner must use a fixed mode allowlist');
+  if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
+  if (!/NIGHTWATCH_STORAGE_STATE/.test(runner) || !/GITHUB_TOKEN/.test(runner) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runner)) fail('quality-gate runner does not sanitize credentials and host behavior');
+  if (!/filePattern/.test(spec) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(spec) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(spec)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
+  if (!/shell=false|shell=false|spawnSync/.test(semantic) || !/SEMANTIC_COMPATIBILITY_PHASE_OMITTED/.test(semantic)) fail('semantic compatibility runner lacks bounded argv/phase omission checks');
+  if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(clean) || !/status['\"],\s*['\"]--porcelain/.test(clean)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
+
+  for (const [script, pattern] of [
+    ['dev:phase23:manifest', /"dev:phase23:manifest"\s*:\s*"node bin\/phase23-dev\.mjs manifest"/],
+    ['dev:phase23:dry-run', /"dev:phase23:dry-run"\s*:\s*"node bin\/phase23-dev\.mjs dry-run"/],
+    ['dev:phase23:execute', /"dev:phase23:execute"\s*:\s*"node bin\/phase23-dev\.mjs execute"/],
+    ['dev:phase23:predev', /"dev:phase23:predev"\s*:\s*"node bin\/phase23-predev\.mjs evaluate"/],
+    ['ci:phase23:observe', /"ci:phase23:observe"\s*:\s*"node bin\/phase23-ci\.mjs observe"/],
+  ]) if (!pattern.test(packageJson)) fail(`package.json must expose the fixed Phase 23 operator entry point: ${script}`);
+
+  const phase23Operator = read('bin/phase23-dev.mjs');
+  const phase23Manifest = read('src/core/phase23/manifest.ts');
+  const phase23Observer = read('bin/phase23-ci.mjs');
+  const phase23Predev = read('bin/phase23-predev.mjs');
+  if (!/nightwatch\.dev-semantic-acceptance-manifest\.v2/.test(phase23Manifest) || !/DYNAMIC_TARGET_DISCOVERY_FORBIDDEN/.test(phase23Operator) || !/launcherInvocations:\s*1/.test(phase23Operator)) fail('Phase 23 DEV operator lacks the fresh v2 manifest, discovery block, or single-invocation bound');
+  if (!/args\.env !== 'dev'/.test(phase23Operator) || !/phase22-real\.mjs/.test(phase23Operator) || !/maxBuffer:/.test(phase23Operator)) fail('Phase 23 DEV operator does not retain the guarded DEV-only Phase 22 execution path');
+  if (!/requiredStepsUnavailable/.test(phase23Observer) || !/['"]run['"],\s*['"]view/.test(phase23Observer) || !/REQUIRED_JOB_STEPS_EMPTY/.test(read('src/core/qualityGate/externalCi.ts'))) fail('Phase 23 CI observer does not preserve the empty-step external-block rule');
+  if (!/evaluatePreDevAuthority/.test(phase23Predev)) fail('Phase 23 pre-DEV receipt adapter is missing');
+
+  const runCommands = workflow.split(/\r?\n/)
+    .filter((line) => /^\s{8}run:\s*/.test(line))
+    .map((line) => line.replace(/^\s{8}run:\s*/, '').trim());
+  if (/upload-artifact|NIGHTWATCH_STORAGE_STATE|phase22-real|campaign:real|auth:capture/i.test(runCommands.join('\n'))) fail('GitHub workflow contains a private/authenticated execution path');
+  if (!/permissions:\s*\n\s+contents:\s+read/.test(workflow)) fail('GitHub workflow permissions must remain contents: read');
+  if (!/runs-on:\s*ubuntu-latest/.test(workflow)) fail('GitHub workflow must qualify on ubuntu-latest');
+  if (!/node-version:\s*20/.test(workflow)) fail('GitHub workflow must use Node 20');
+  const timeout = /timeout-minutes:\s*(\d+)/.exec(workflow);
+  if (!timeout || Number(timeout[1]) < 15 || Number(timeout[1]) > 45) fail('GitHub workflow timeout must be a justified bounded 15–45 minute budget');
+  if (runCommands.length !== 2 || runCommands[0] !== 'npm ci --ignore-scripts' || runCommands[1] !== 'npm run gate:ci') fail('GitHub workflow must contain only npm ci --ignore-scripts and the authoritative npm run gate:ci commands');
+  if ((workflow.match(/^\s{8}run:\s*npm run gate:ci\s*$/gm) ?? []).length !== 1) fail('GitHub workflow must invoke gate:ci exactly once');
+  if (/npx playwright test|playwright test|campaign:real|auth:capture|phase22-real|phase7-real|upload-artifact|secrets\./i.test(runCommands.join('\n'))) fail('GitHub workflow run commands contain forbidden direct tests, authenticated execution, or private artifact handling');
+  for (const use of workflow.match(/^\s{8}uses:\s*.*$/gm) ?? []) {
+    if (!/actions\/(?:checkout|setup-node)@v4/.test(use)) fail(`GitHub workflow uses an unapproved action: ${use.trim()}`);
+  }
+}
+
 /**
  * Phase 8B.0.1 closeout integrity: sandbox-base pre-validation ordering,
  * single-strategy binding, complete verified-result metamorphic invariants,
@@ -748,8 +822,9 @@ function checkPhase8B10PortfolioIntegrity() {
     fail('bin/selfdev-catalog-integrity.mjs must reuse validateAdoptedCatalog/renderAdoptedCatalogSource');
   }
   const workflow = read('.github/workflows/hardening.yml');
-  if (!/Phase 8B\.1 catalog integrity \/ checkout cleanliness/.test(workflow) || !/selfdev-catalog-integrity\.mjs/.test(workflow)) {
-    fail('.github/workflows/hardening.yml must run the catalog-integrity check');
+  const gateDefinition = read('config/quality-gate.v1.json');
+  if (!(/Phase 8B\.1 catalog integrity \/ checkout cleanliness/.test(workflow) && /selfdev-catalog-integrity\.mjs/.test(workflow)) && !(/npm run gate:ci/.test(workflow) && /PATCH_INTEGRITY/.test(gateDefinition))) {
+    fail('the authoritative quality gate must retain catalog/checkout integrity through PATCH_INTEGRITY');
   }
 }
 
@@ -776,7 +851,7 @@ function checkAgentContinuityIntegrity() {
     fail('package.json agent:audit must invoke the local checker with --audit-history');
   }
   const workflow = read('.github/workflows/hardening.yml');
-  if (!/Completed-task continuity audit/.test(workflow) || !/npm run agent:audit/.test(workflow)) {
+  if (!(/Completed-task continuity audit/.test(workflow) && /npm run agent:audit/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Completed-task continuity audit (npm run agent:audit)');
   }
   // Phase 8 closure — docs/design checkpoint allowlist: exactly the narrow
@@ -832,7 +907,7 @@ function checkProjectStateIntegrity() {
     fail('package.json project:check must invoke the local project-state checker');
   }
   const workflow = read('.github/workflows/hardening.yml');
-  if (!/Project-memory truth check/.test(workflow) || !/npm run project:check/.test(workflow)) {
+  if (!(/Project-memory truth check/.test(workflow) && /npm run project:check/.test(workflow)) && !/npm run gate:ci/.test(workflow)) {
     fail('.github/workflows/hardening.yml must run the Project-memory truth check (npm run project:check)');
   }
   // Generated-source provenance: the live renderer and the generated catalog
@@ -1542,6 +1617,7 @@ checkPhase12TriageCorePurity();
 checkPhase12TriageIntegrationSeams();
 checkPhase22CorePurity();
 checkPhase22IntegrationSeams();
+checkPhase23QualityGate();
 checkSyntax();
 
 if (errors.length > 0) {

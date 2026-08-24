@@ -16,6 +16,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server as HttpServer, IncomingMessage, ServerResponse } from 'node:http';
 import { OutboundPolicy } from '../core/safety/outboundPolicy';
 import { appendProxyEvent, ensureEventLog } from './events';
+import { ensureProxyPortLease, proxyLeaseRuntimeSuffix, PROXY_PORT_LEASE_OWNER_ENV, releaseProxyPortLease } from './portLease';
 import { classifyForwardRequest, classifyProxyConnect, classifyProxyUrl, type ProxyClassification, type ProxyTarget } from './policyAdapter';
 import type { ProxyEvent, ProxyProtocol, ProxyRuntimeState } from './types';
 
@@ -100,6 +101,12 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     throw new Error(`Nightwatch proxy requires an unprivileged TCP port, got ${String(port)}`);
   }
   const eventLogPath = opts.eventLogPath ?? DEFAULT_PROXY_EVENT_LOG;
+  const leaseOwner = Number(process.env[PROXY_PORT_LEASE_OWNER_ENV]);
+  const releaseLeaseOnClose = port !== 0
+    && Number(process.env.NIGHTWATCH_PROXY_PORT) === port
+    && typeof process.env.NIGHTWATCH_PROXY_LEASE_TOKEN === 'string'
+    && (!Number.isInteger(leaseOwner) || leaseOwner === process.pid);
+  if (releaseLeaseOnClose) process.env[PROXY_PORT_LEASE_OWNER_ENV] = String(process.pid);
   ensureEventLog(eventLogPath);
   let eventSeq = 0;
   const requestedRunId = opts.runId ?? process.env.NIGHTWATCH_RUN_ID ?? 'playwright-suite';
@@ -217,22 +224,28 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     closeSocket(socket, 400);
   });
 
-  await new Promise<void>((resolve, reject) => {
-    const onError = (error: Error) => {
-      server.off('listening', onListening);
-      reject(error);
-    };
-    const onListening = () => {
-      server.off('error', onError);
-      resolve();
-    };
-    server.once('error', onError);
-    server.once('listening', onListening);
-    server.listen(port, host);
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const onError = (error: Error) => {
+        server.off('listening', onListening);
+        reject(error);
+      };
+      const onListening = () => {
+        server.off('error', onError);
+        resolve();
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(port, host);
+    });
+  } catch (error) {
+    if (releaseLeaseOnClose) releaseProxyPortLease();
+    throw error;
+  }
   const addressInfo = server.address() as AddressInfo | null;
   if (addressInfo === null || !isLoopback(host)) {
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    if (releaseLeaseOnClose) releaseProxyPortLease();
     throw new Error('Nightwatch proxy did not bind a loopback address');
   }
   const actualPort = addressInfo.port;
@@ -245,29 +258,34 @@ export async function startOutboundProxy(opts: OutboundProxyOptions): Promise<Ou
     close: () =>
       new Promise<void>((resolve) => {
         if (!server.listening) {
+          if (releaseLeaseOnClose) releaseProxyPortLease();
           resolve();
           return;
         }
-        server.close(() => resolve());
+        server.close(() => {
+          if (releaseLeaseOnClose) releaseProxyPortLease();
+          resolve();
+        });
       }),
   };
 }
 
 export function proxyStatePath(root = NIGHTWATCH_REPOSITORY_ROOT): string {
-  return path.join(root, DEFAULT_PROXY_STATE_PATH);
+  return path.join(root, DEFAULT_PROXY_STATE_PATH.replace('.json', `${proxyLeaseRuntimeSuffix()}.json`));
 }
 
 export function proxyEventLogPath(root = NIGHTWATCH_REPOSITORY_ROOT): string {
-  return path.join(root, DEFAULT_PROXY_EVENT_LOG);
+  return path.join(root, DEFAULT_PROXY_EVENT_LOG.replace('.jsonl', `${proxyLeaseRuntimeSuffix()}.jsonl`));
 }
 
-export function proxyServerUrl(_root = NIGHTWATCH_REPOSITORY_ROOT): string {
+export function proxyServerUrl(root = NIGHTWATCH_REPOSITORY_ROOT): string {
   const rawPort = process.env.NIGHTWATCH_PROXY_PORT ?? String(DEFAULT_PROXY_PORT);
-  const port = Number(rawPort);
-  if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+  const preferredPort = Number(rawPort);
+  if (!Number.isInteger(preferredPort) || preferredPort < 1024 || preferredPort > 65535) {
     throw new Error(`invalid NIGHTWATCH_PROXY_PORT ${JSON.stringify(rawPort)}`);
   }
-  return `http://${DEFAULT_PROXY_HOST}:${port}`;
+  const lease = ensureProxyPortLease(root, preferredPort);
+  return `http://${DEFAULT_PROXY_HOST}:${lease.port}`;
 }
 
 export function writeProxyRuntimeState(state: ProxyRuntimeState, file = proxyStatePath()): void {

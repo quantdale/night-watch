@@ -13,6 +13,7 @@ import {
   startOutboundProxy,
   writeProxyRuntimeState,
 } from '../src/proxy/server';
+import { releaseProxyPortLease } from '../src/proxy/portLease';
 import { checkProxyHealth } from '../src/proxy/runtime';
 
 export default async function globalSetup(): Promise<() => Promise<void>> {
@@ -52,11 +53,13 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     );
   } catch (err) {
     await proxy.close();
+    releaseProxyPortLease();
     throw err;
   }
 
   return async () => {
     await proxy.close();
+    releaseProxyPortLease();
     try {
       fs.unlinkSync(stateFile);
     } catch {
