@@ -156,9 +156,12 @@ checkpoints:
 - `042300c7c59fd8218afabc761e31691139d0c657` — hardening-clean parser match
   repair.
 
-Both were pushed to `origin/main`; live local and remote HEAD are
-`042300c7c59fd8218afabc761e31691139d0c657`, branch `main`, and the worktree
-is clean. The clean compatibility receipt is PASS: Phase 9–25, 135 registered
+Both were pushed to `origin/main`. The final continuity implementation repair
+`f5356f3d94973b5ffc95c60623bf027a2864bfb5` was then committed directly to
+`main` to classify the root README as an approved durable checkpoint path;
+subsequent task/documentation closure records the known anchors without
+predicting its own commit SHA. The clean compatibility receipt is PASS:
+Phase 9–25, 135 registered
 files, 1,847 total tests, 1,846 passed, 1 canonical skip, and 0 failures.
 `npm run typecheck`, `npm run hardening:check`, and `npm run project:check`
 also pass at this checkpoint.
@@ -175,8 +178,9 @@ publications/messages 0, raw private persistence 0, AI calls 0.
 
 - Starting SHA: `7beb18689cf2cd50d1d5383b34f51c2789cd0a54`.
 - Implementation checkpoints: `ac093ff3`, `5416469`, `683b0b8`, `4c6d50d`,
-  `042300c`; continuity/compatibility checkpoint:
-  `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
+  `042300c`; validated continuity implementation checkpoint:
+  `f5356f3d94973b5ffc95c60623bf027a2864bfb5`; continuity/compatibility
+  checkpoint: `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
 - Branch: `main`; upstream: `origin/main`; final local and remote heads are
   required to remain identical and the worktree clean.
 - No feature/development branch, merge, force-push, or pull request was used.

@@ -2050,8 +2050,10 @@ and data-layer work remain permanently frozen.
 Phase 25 is terminal at `COMPLETE_LOCAL_SOURCE_EXPANSION`. It remained
 LOCAL / READ-ONLY SOURCE / SYNTHETIC ONLY and did not invoke DEV, read auth,
 contact a product, or touch data/infrastructure systems. The implementation
-checkpoint is `042300c7c59fd8218afabc761e31691139d0c657`; the subsequent
-continuity checkpoint is `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
+source-expansion checkpoint is `042300c7c59fd8218afabc761e31691139d0c657`;
+the validated continuity implementation checkpoint is
+`f5356f3d94973b5ffc95c60623bf027a2864bfb5`; the preceding compatibility
+checkpoint is `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
 
 Delivered capability includes:
 

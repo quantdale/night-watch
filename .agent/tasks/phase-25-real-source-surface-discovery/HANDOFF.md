@@ -3,9 +3,10 @@
 Phase 25 is complete as `COMPLETE_LOCAL_SOURCE_EXPANSION` under
 `PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY`.
 
-The durable implementation anchor is
-`042300c7c59fd8218afabc761e31691139d0c657`; the live head is always discovered
-from Git. The task stayed on `main`, used no feature branch or pull request,
+The durable validated implementation anchor is
+`f5356f3d94973b5ffc95c60623bf027a2864bfb5`; the source-expansion capability
+checkpoint remains `042300c7c59fd8218afabc761e31691139d0c657`. The live head is
+always discovered from Git. The task stayed on `main`, used no feature branch or pull request,
 and preserved the Phase 24 portfolio, replay, dossier, and semantic authority.
 
 Final local evidence:

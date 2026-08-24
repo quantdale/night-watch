@@ -6,7 +6,7 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Status: COMPLETE
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
+Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 Last checkpoint: M14 — terminal local/source closure and exact-head Actions
 classification.
 Current milestone: COMPLETE_LOCAL_SOURCE_EXPANSION — M14 terminal closure.
@@ -16,8 +16,8 @@ Actions, read auth, or invoke DEV from this task.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 042300c7c59fd8218afabc761e31691139d0c657
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 042300c7c59fd8218afabc761e31691139d0c657
+LAST_VALIDATED_IMPLEMENTATION_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 

@@ -8,15 +8,15 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: COMPLETE
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
-Last substantive checkpoint SHA: 042300c7c59fd8218afabc761e31691139d0c657
-Last documentation checkpoint SHA: 3e69c857dd5409675b6c2d8d13b59cfc87232576
+Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
+Last substantive checkpoint SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
+Last documentation checkpoint SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 042300c7c59fd8218afabc761e31691139d0c657
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 042300c7c59fd8218afabc761e31691139d0c657
+LAST_VALIDATED_IMPLEMENTATION_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -260,7 +260,9 @@ infrastructure/data authority carries forward.
 ## Completion Snapshot
 
 M0–M14 are complete. Phase 25 is `COMPLETE_LOCAL_SOURCE_EXPANSION` with
-implementation checkpoint `042300c7c59fd8218afabc761e31691139d0c657`, live
+source-expansion checkpoint `042300c7c59fd8218afabc761e31691139d0c657` and
+validated continuity implementation checkpoint
+`f5356f3dc4c136780955d7df3c64c14b438f7bb6`, live
 continuity head discovered from Git, clean local/Node20 gates, exact
 canonical/isolated parity, one truthful zero-step Actions observation, and
 zero prohibited-operation counts.
