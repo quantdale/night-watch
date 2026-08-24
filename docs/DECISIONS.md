@@ -3123,14 +3123,17 @@ Port leases are owned and bounded within Nightwatch test infrastructure.
 **Evidence and consequences.** The old inventory is 32 steps / 30 run
 commands / 55 unique files / 5 duplicate executions; the current gate has
 nine required groups and 130 unique compatibility files with no accidental
-duplicates. At reconciled checkpoint `26aa0630d3367f46c330723453cb1a74767606cd`,
-Phase 9–23 compatibility is 1,806 total / 1,805 passed / 1 skipped / 0
-failed; the CI-mode receipt is
-`receipt:sha256:12018b67ad286f502b093272`; the Node20 clean receipt is
-`clean-receipt:sha256:e7fa4785f60435836e59a640`; and canonical/isolated full
+duplicates. At validated implementation checkpoint
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b`, Phase 9–23 compatibility is 1,806
+total / 1,805 passed / 1 skipped / 0 failed; the CI-mode receipt is
+`receipt:sha256:25e36d5165d745db5f5e6ac6`; the Node20 clean receipt is
+`clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`; and canonical/isolated full
 execution is 2,364 enumerated / 2,360 passed / 4 skipped / 0 failed with
 exact parity. A fresh source snapshot at `27bb007ad0c798800b6bd3b29760c966422966e7`
-produced a new v2 manifest and no-contact dry run. These facts do not imply
-external CI green or DEV authority: the exact current-head Actions result is
-still mandatory, and an external platform block closes the phase with zero
-DEV observations.
+produced manifest `manifest:sha256:2ae3ab3c7c34f0946f9244a9`, deterministic
+digest `manifest:sha256:b35da8634bf4b64dc56351a4`, and a no-contact dry run.
+The exact current-head Actions run `32709452878` / job `97377543621` matched
+the implementation head but had `steps=[]`; the classifier returned
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Pre-DEV V3 is
+`BLOCKED_EXTERNAL_CI`, so DEV observations are zero and no auth state was
+read. Local green never substitutes for external CI authority.

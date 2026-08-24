@@ -1,10 +1,11 @@
 # Nightwatch Architecture
 
 Status: Phase 23 local/source/synthetic implementation checkpoint
-`26aa0630d3367f46c330723453cb1a74767606cd` (unified quality gate, clean
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` (unified quality gate, clean
 checkout, canonical, and topology-correct isolated regressions green with
-exact parity; contained DEV acceptance remains blocked pending exact external
-CI), with the terminal Phase 22 bridge preserved as historical evidence,
+exact parity; exact-head external CI was observed with zero steps and
+contained DEV acceptance remains blocked), with the terminal Phase 22 bridge
+preserved as historical evidence,
 with Phase 19 integrated campaign intelligence and Phase 18 terminal historical context,
 building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
@@ -1509,4 +1510,11 @@ classifier treats empty required steps as an execution/platform block, and
 the pre-DEV V3 receipt requires exact head, definition digest, executed
 required jobs, fresh source, fresh manifest, auth readiness, and containment.
 The real launcher remains the existing Phase 22 path behind these gates, so
-Phase 23 adds no second semantic framework or standing DEV authority.
+Phase 23 adds no second semantic framework or standing DEV authority. The
+validated implementation checkpoint is
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b`; its local CI receipt is
+`receipt:sha256:25e36d5165d745db5f5e6ac6` and its clean receipt is
+`clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`. The exact Actions run
+`32709452878` / job `97377543621` matched that head but returned `steps=[]`,
+so the external classifier is `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` and the
+pre-DEV state is `BLOCKED_EXTERNAL_CI` with zero DEV observations.

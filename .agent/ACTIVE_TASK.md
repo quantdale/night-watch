@@ -3,23 +3,23 @@
 Task ID: phase-23-executable-ci-dev-acceptance
 Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
 Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qualification, and Conditional Contained DEV Acceptance
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-23-executable-ci-dev-acceptance
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-Last checkpoint: M8 — reconciled live head with validated non-merge implementation anchor
-Current milestone: M8 — validated reconciled push and exact current-head Actions observation
-Next action: Commit the reconciled continuity/documentation state, run the final shared gate on that exact head, push once to origin/main, and inspect exactly one current-head Actions result without retrying external platform failures.
+Last validated implementation SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
+Last checkpoint: M10 — terminal local closure after exact-head external CI classification
+Current milestone: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal handoff
+Next action: STOP — exact current-head Actions run 32709452878 for 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b completed with job 97377543621 and steps=[]; no DEV contact or auth read occurred.
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_23_STATUS: IN_PROGRESS
+PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
 PHASE_21_STATUS: COMPLETE (historical, unchanged)
 PHASE_20_STATUS: COMPLETE (historical, unchanged)
@@ -75,6 +75,8 @@ storage-state copying. The permanent decision remains
 - `src/proxy/server.ts`
 - `tests/globalSetup.ts`
 - `tests/unit/aiLocalCanary.test.ts`
+- `bin/agent-state.mjs`
+- `tests/unit/agent-state.test.ts`
 - `tests/unit/phase23*.test.ts`
 - `.agent/tasks/phase-23-executable-ci-dev-acceptance/**`
 
@@ -124,10 +126,16 @@ Static qualification: PASS — `npm run typecheck`, `npm run hardening:check`,
 observer also now emits `API_UNOBSERVABLE`/`WORKFLOW_NOT_FOUND` receipts for
 bounded API failures instead of exposing an opaque transport error.
 
+Terminal qualification: PASS — implementation checkpoint
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` passed the Node 20 CI-mode gate
+with receipt `receipt:sha256:25e36d5165d745db5f5e6ac6` and the disposable
+clean-checkout gate with receipt
+`clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`; the exact GitHub Actions run
+`32709452878` bound to that SHA had job `97377543621` with zero steps and was
+classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
+
 ## Resume Recipe
 
-Read this file, then the Phase 23 `SPEC.md`, `PLAN.md`, and `STATE.md`. Inspect
-Git status/diff, run the final gate for the documentation descendant, push once,
-and classify the exact current-head Actions result. Never mutate the terminal
-Phase 19–22 records; if Actions is externally blocked, close with zero DEV
-contact.
+Task complete. Do not resume this task. A future separately authorized phase
+may inspect external platform recovery, but this authorization grants no
+standing DEV or credential authority.

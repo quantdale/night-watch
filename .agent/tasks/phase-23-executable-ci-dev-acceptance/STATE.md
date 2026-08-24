@@ -6,21 +6,21 @@ Task ID: phase-23-executable-ci-dev-acceptance
 Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
 Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qualification, and Conditional Contained DEV Acceptance
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-Last substantive checkpoint SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last validated implementation SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
+Last substantive checkpoint SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
 Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_23_STATUS: IN_PROGRESS
+PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
 PHASE_21_STATUS: COMPLETE (historical, unchanged)
 PHASE_20_STATUS: COMPLETE (historical, unchanged)
@@ -39,7 +39,7 @@ all pre-DEV gates pass.
 
 ## Current Milestone
 
-M8 — validated checkpoint push and exact current-head Actions observation.
+COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal closure.
 
 ## Completed Milestones
 
@@ -78,19 +78,14 @@ M8 — validated checkpoint push and exact current-head Actions observation.
 
 ## Work In Progress
 
-M8 — the reconciled live head is `d49d4b18d6c2b27c7186003b105e9cce18cdb8fe`,
-with non-merge implementation anchor `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`.
-Local and disposable Node 20 qualification are green; the reconciled
-checkpoint needs one bounded push and exact current-head Actions observation.
-No external CI or DEV authority exists yet.
+None — Phase 23 is terminal at `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 
 ## Exact Next Action
 
-Commit the reconciled continuity/documentation state, run the final shared
-gate on that exact head, verify the privacy/workflow surface, push once to
-`origin/main`, and inspect only the exact current-head Actions run. If it
-returns `steps=[]` or equivalent platform blocking, stop with zero DEV contact
-and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
+STOP — the exact current-head Actions result is already classified as
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; do not retry it, read auth, or invoke
+DEV. A future separately authorized phase must establish a new exact-head
+green run before any acceptance contact.
 
 ## Files Changed
 
@@ -114,6 +109,8 @@ and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 - `src/proxy/portLease.ts`
 - `src/proxy/server.ts`
 - `tests/globalSetup.ts`
+- `bin/agent-state.mjs`
+- `tests/unit/agent-state.test.ts`
 - `tests/unit/aiLocalCanary.test.ts`
 - `tests/unit/phase23*.test.ts`
 - `.agent/tasks/phase-23-executable-ci-dev-acceptance/{SPEC,PLAN,STATE,ACCEPTANCE_MATRIX,REPORT,HANDOFF}.md`
@@ -174,6 +171,20 @@ and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 - Static Phase 23 checks: PASS — `npm run typecheck`,
   `npm run hardening:check`, `npm run quality-gate:spec`, and
   `npm run gate:inventory`.
+- Terminal exact-head qualification: PASS locally — implementation
+  checkpoint `98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` produced CI receipt
+  `receipt:sha256:25e36d5165d745db5f5e6ac6`; the Node 20 disposable
+  qualification produced clean receipt
+  `clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`.
+- Terminal external observation: PASS classification — Actions run
+  `32709452878`, exact head `98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b`,
+  job `97377543621`, conclusion `failure`, `stepCount=0`, and no executed
+  jobs; classification is `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
+- Terminal pre-DEV receipt: `predev-receipt:sha256:6a533dc692f35f18227c80b8`,
+  state `BLOCKED_EXTERNAL_CI`; fresh manifest
+  `manifest:sha256:2ae3ab3c7c34f0946f9244a9` with deterministic digest
+  `manifest:sha256:b35da8634bf4b64dc56351a4` passed the contact-free dry run
+  `dry-run:sha256:78fa3ce6c5f6eb50ed63d00e`. DEV observations remain zero.
 
 ## Decisions Made During This Task
 
@@ -199,11 +210,11 @@ networking defect.
 
 ## Blockers
 
-The only remaining Phase 23 blocker is the required post-push external CI
-observation. Phase 22 Actions run `32681204267` is historical evidence only;
-the fresh manifest and local/clean green results cannot authorize DEV. A new
-exact current-head run must execute the required job and gate before any auth
-read or DEV contact.
+The exact GitHub Actions run `32709452878` for implementation head
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` completed with required job
+`97377543621` and zero steps. This external billing/platform execution block
+prevents `EXECUTED_GREEN`; local and clean green results cannot substitute for
+it. DEV observations are zero.
 
 ## Safety Events
 
@@ -220,13 +231,16 @@ fresh Phase 23 manifest is external owner-local evidence only.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, then this task's SPEC.md, PLAN.md, and STATE.md. Inspect
-the working tree and run the exact next action. Keep Phase 19–22 task records
-untouched; implement only additive Phase 23 quality-gate infrastructure.
+Task complete. Do not resume this task. A future separately authorized phase
+may inspect external platform recovery, but no standing DEV, auth, or retry
+authority carries forward.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0–M7 are complete and the reconciled M8 checkpoint is locally
-qualified. Local, CI-mode, clean-checkout, source, fresh-manifest, dry-run,
-canonical, and isolated qualification are green. M8 is waiting for the one
-post-push exact current-head Actions observation; DEV observations remain zero.
+COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — implementation head
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` is pushed and synchronized;
+Node20 CI-mode and disposable clean-checkout gates are green, the fresh source
+snapshot and v2 manifest/dry-run are valid, and the exact Actions run
+`32709452878` had job `97377543621` with `steps=[]`. Pre-DEV V3 is blocked at
+external CI; no auth state was read, no DEV launcher ran, and DEV observations
+equal zero.

@@ -1978,19 +1978,20 @@ not product correctness certification.
 
 ## Phase 23 — executable CI gate recovery and bounded DEV decision
 
-Phase 23 is the current implementation wave. It unifies local, disposable
-clean-checkout, and GitHub Actions acceptance behind the versioned
+Phase 23 is terminal at `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`. It unifies local,
+disposable clean-checkout, and GitHub Actions acceptance behind the versioned
 `nightwatch.quality-gate.v1` definition, keeps CI serial and offline, measures
-test duplication, and mechanically rejects workflow drift. The local
-substantive checkpoint is green through the Phase 9–23 compatibility cone,
-owner provenance, synthetic campaign, type/hardening/project/continuity
-checks, a Node20 clean checkout, and exact canonical/isolated full-suite
-parity. It also repairs the Nightwatch-only loopback port lease lifecycle.
+test duplication, and mechanically rejects workflow drift. The validated
+implementation checkpoint is
+`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b`; Node20 CI-mode and clean-checkout
+receipts are green, with exact canonical/isolated parity at 2,364 enumerated /
+2,360 passed / 4 skipped / 0 failed.
 
-The next and only external step is one exact current-head Actions observation.
-`steps=[]` or another platform/API execution block remains a terminal
-`COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` outcome with zero DEV observations. Only
-an executed green run at the exact acceptance head permits fresh auth
-structure checks and the existing one-shot Phase 22 DEV launcher. No Phase 24
-work should expand product surfaces, bypass CI, or revisit the owner-frozen
-infrastructure/data layer.
+The exact current-head Actions run `32709452878` / job `97377543621` matched
+that checkpoint but had `steps=[]`; the classifier returned
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Pre-DEV V3 is
+`BLOCKED_EXTERNAL_CI`, auth was not read, and DEV observations are zero. No
+Phase 24 work should expand product surfaces, bypass CI, or revisit the
+owner-frozen infrastructure/data layer. Any future attempt requires fresh
+owner direction, a genuinely executed green exact-head gate, and a newly
+derived manifest.

@@ -3,7 +3,7 @@
 Task ID: phase-23-executable-ci-dev-acceptance
 Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -65,12 +65,13 @@ serial, category-only, and owner-local.
   no-contact dry run.
 - [x] M7 — canonical and topology-correct isolated qualification with exact
   enumeration/skip parity.
-- [ ] M8 — validated implementation checkpoint, push, and one exact current
-  Actions observation.
-- [ ] M9A — if `EXECUTED_GREEN`, revalidate and run exactly one bounded DEV
-  campaign; otherwise M9B close with zero DEV contact.
-- [ ] M10 — privacy audit when applicable, project-memory reconciliation,
-  terminal task records, and clean handoff.
+- [x] M8 — validated implementation checkpoint, push, and one exact current
+  Actions observation — COMPLETE.
+- [x] M9A — conditional DEV acceptance — CLOSED (NOT APPLICABLE because the
+  exact external gate had zero executed steps).
+- [x] M9B — external CI block closure with zero DEV contact — COMPLETE.
+- [x] M10 — privacy audit applicability decision, project-memory
+  reconciliation, terminal task records, and clean handoff — COMPLETE.
 
 ## Validation Strategy
 
@@ -142,10 +143,8 @@ owner-only local evidence and never trigger route expansion or publication.
 
 ## Completion Criteria
 
-The task closes only after the unified gate, clean-checkout path, parity
-hardening, external classifier, exact-head pre-DEV authority, fresh source and
-manifest path, and all required local validations have truthful receipts. If
-Actions remains externally blocked, close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`
-with zero DEV observations. If Actions executes green, revalidate all fresh
-gates before the single bounded launcher and complete the privacy/project
-memory handoff.
+The task closed as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`: the exact current-head
+Actions run was observable but stopped before any step (`steps=[]`), so the
+external gate was not green. DEV observations are exactly zero; no auth state
+was read, and no privacy audit of DEV output was applicable. A future run would
+require fresh owner direction and a new exact-head qualification.
