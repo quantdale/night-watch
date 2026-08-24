@@ -3,24 +3,24 @@
 Task ID: phase-22-contained-dev-semantic-calibration
 Phase: 22-CONTAINED-DEV-SEMANTIC-CALIBRATION
 Title: Nightwatch Phase 22 — Contained DEV Semantic Reality Calibration and Bounded Real-Campaign Acceptance
-Status: IN_PROGRESS
+Status: BLOCKED
 Task directory: .agent/tasks/phase-22-contained-dev-semantic-calibration
 Starting SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-Last checkpoint: M5 — additive calibration/operator/dry-run implementation and focused validation
-Current milestone: M6 — mandatory local validation, manifest freeze, and final pre-DEV gates
-Next action: Run the mandatory local validation cone, repair failures, refresh source, freeze the manifest, and complete pre-DEV gates; do not contact DEV before M6 is green.
+Last validated implementation SHA: 64cffaf6554300f59907c947f135753b62376a64
+Last substantive checkpoint SHA: 64cffaf6554300f59907c947f135753b62376a64
+Last checkpoint: M10 — durable closure, push, one CI inspection, and terminal handoff
+Current milestone: M10 — terminal BLOCKED_BEFORE_DEV
+Next action: STOP — GitHub Actions run 32681204267 is externally blocked before executable steps; no DEV launcher invocation or DEV contact occurred.
 Authorization class: PHASE_22_CONTAINED_DEV_SEMANTIC_REALITY_CALIBRATION_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 64cffaf6554300f59907c947f135753b62376a64
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 64cffaf6554300f59907c947f135753b62376a64
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_22_STATUS: IN_PROGRESS
+PHASE_22_STATUS: BLOCKED_BEFORE_DEV
 PHASE_21_STATUS: COMPLETE
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
@@ -120,14 +120,43 @@ fixture and was discarded as a validation setup defect; the corrected run
 used read-only aggregate links at the resolver's expected parent.
 
 External Actions inspection: BLOCKED / BILLING_RESTRICTION — run
-`32672981417` for head `04ad56c8baa904b8fc8537a41e4fa2e90602770b` concluded
-`failure`; job `97276539731` (`Local hardening checks`) also concluded
-`failure` with `steps=[]`. This is not a local validation failure and was not
-retried. External CI is not claimed green.
+`32681204267` for head `64cffaf6554300f59907c947f135753b62376a64` concluded
+`failure`; job `97298112036` (`Local hardening checks`) also concluded
+`failure` with `steps=[]`. Failed-log retrieval timed out. This is not a local
+validation failure and was not retried. External CI is not claimed green.
+
+Phase 22 terminal validation: PASS — implementation checkpoint
+`64cffaf6554300f59907c947f135753b62376a64` was pushed fast-forward and
+`HEAD == origin/main` with a clean tree. Fresh read-only source discovery
+resolved `mobingilabs/ripple-api@85e400a8b32fc23c05464033a2a6d5fff2a2890c`;
+the disposable snapshot re-derived 4 historical and 4 collection
+expectations with zero failures. Six approved candidates were considered:
+three DEV-eligible collection targets, one real-source target without a
+runtime binding, and two synthetic-only targets. The frozen manifest has
+three targets and three explicit exclusions; its safe manifest ID is
+`manifest:sha256:3c0d357a25328212f7011d1d` and digest is
+`manifest:sha256:978c0e63310ea4f80d918cda`.
+
+Phase 22 dry run: PASS — 3 planned FIRST observations, 3 planned replays, 6
+contexts, `externalContact=false`, mutation count 0, raw persistence count 0,
+and privacy receipt rejected-event count 0. Focused Phase 22 tests are 7/7;
+the explicit Phase 9–22 compatibility cone is 1,302/1,302; the clean
+canonical and topology-correct isolated full suites are both 2,336 passed / 4
+skipped / 0 failed out of 2,340 with exact skip identity parity. Post-push
+typecheck, hardening, project-state, synthetic campaign (27/27), and owner
+provenance (91/91) are green. The one concurrent focused-test attempt hit a
+shared local proxy `EADDRINUSE`; the serial rerun is the authoritative 7/7
+result.
+
+Phase 22 real campaign disposition: BLOCKED_BEFORE_DEV — the exact green
+Actions gate required by the executable launcher was unavailable/failed with
+zero steps. No auth state was read, no authenticated context was created, no
+DEV observation occurred, and no launcher invocation was made.
 
 ## Resume Recipe
 
-Read this file, then `.agent/tasks/phase-22-contained-dev-semantic-calibration/`
-`SPEC.md`, `PLAN.md`, and `STATE.md` in order. Resume at the exact current
-milestone and next action. Do not contact DEV before M6 and do not reopen
-Phase 19, Phase 20, or Phase 21 history.
+Read this file, then this task's `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`,
+and `HANDOFF.md` only for terminal context. STOP. A future DEV attempt requires
+fresh owner authorization, a fresh manifest/source/auth validation, and an
+exact green Actions run for the new live head; do not reopen Phase 19, Phase
+20, or Phase 21 history.

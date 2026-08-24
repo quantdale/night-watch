@@ -6,20 +6,21 @@ Task ID: phase-22-contained-dev-semantic-calibration
 Phase: 22-CONTAINED-DEV-SEMANTIC-CALIBRATION
 Title: Nightwatch Phase 22 — Contained DEV Semantic Reality Calibration and Bounded Real-Campaign Acceptance
 Authorization class: PHASE_22_CONTAINED_DEV_SEMANTIC_REALITY_CALIBRATION_ONLY
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-Last validated implementation SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-Last substantive checkpoint SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+Last validated implementation SHA: 64cffaf6554300f59907c947f135753b62376a64
+Last substantive checkpoint SHA: 64cffaf6554300f59907c947f135753b62376a64
+Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: c06ecd0183c9f6b25297f8f830d7e00e2fe0578c
-LAST_VALIDATED_IMPLEMENTATION_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69b0343a939f6c6ae8ea7e3c1103bbf3eb8aea0a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 64cffaf6554300f59907c947f135753b62376a64
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 64cffaf6554300f59907c947f135753b62376a64
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_22_STATUS: IN_PROGRESS
+PHASE_22_STATUS: BLOCKED_BEFORE_DEV
 PHASE_21_STATUS: COMPLETE
 PHASE_20_STATUS: COMPLETE
 PHASE_19_STATUS: COMPLETE
@@ -36,20 +37,21 @@ fresh-context replay per target, and calibrated confidence/dossier evidence.
 
 ## Current Milestone
 
-M6 — mandatory local validation, manifest freeze, and final pre-DEV gates.
+M10 — durable closure, push, one CI inspection, and terminal handoff.
 
 ## Work In Progress
 
-M1–M5 implementation is complete and locally focused-validated. The Phase 22
-launcher has not contacted DEV; the next work is the mandatory local gate
-cone, final manifest freeze, and executable pre-DEV decision.
+M1–M6 implementation, validation, source refresh, and manifest freeze are
+complete. The Phase 22 launcher did not contact DEV because the required exact
+green Actions gate was externally blocked before executable steps.
 
 ## Exact Next Action
 
-Commit the validated Phase 22 implementation, rerun the canonical suite from
-that clean checkpoint, then regenerate/freeze the final manifest from a fresh
-exact source snapshot and complete the final pre-DEV gates. Do not contact DEV
-before all M6 gates pass.
+STOP. The task is terminal `BLOCKED_BEFORE_DEV`: Actions run `32681204267`
+for the pushed live head failed with job `97298112036`, `steps=[]`, and failed
+log retrieval timed out. No DEV launcher invocation or DEV contact is
+authorized without a future fresh owner authorization and a new exact green
+Actions gate.
 
 ## Completed Milestones
 
@@ -82,6 +84,29 @@ before all M6 gates pass.
   because this implementation was uncommitted. The suite must be rerun from
   the clean implementation checkpoint; this is not treated as a Phase 22
   implementation failure.
+- Implementation checkpoint: PASS — commit
+  `64cffaf6554300f59907c947f135753b62376a64` was pushed fast-forward and
+  verified as `HEAD == origin/main` with a clean tree.
+- Fresh source and frozen manifest: PASS — read-only remote discovery resolved
+  `mobingilabs/ripple-api@85e400a8b32fc23c05464033a2a6d5fff2a2890c`; the fresh
+  disposable snapshot re-derived 4 historical and 4 collection expectations
+  with zero failures. Six approved candidates were considered; three were
+  eligible collections, one lacked a runtime binding, and two were
+  synthetic-only. The frozen manifest contains three targets and three
+  exclusions, safe ID `manifest:sha256:3c0d357a25328212f7011d1d`, digest
+  `manifest:sha256:978c0e63310ea4f80d918cda`.
+- Dry-run/preflight shape: PASS — 3 FIRST + 3 replay plans, 6 contexts,
+  `externalContact=false`, mutation count 0, raw persistence count 0, and
+  privacy rejected-event count 0.
+- Final compatibility: PASS — Phase 22 focused 7/7; explicit Phase 9–22
+  compatibility cone 1,302/1,302; canonical and topology-correct isolated
+  full suites both 2,336 passed / 4 skipped / 0 failed out of 2,340 with
+  exact skip parity. The four skip identities are
+  `tests/unit/phase5Api.test.ts:197`, `:246`, `:280`, and
+  `tests/unit/selfDevSandboxConfinement.test.ts:147`.
+- Post-push gates: PASS — typecheck, hardening, project-state, synthetic
+  campaign 27/27, owner provenance 91/91, and strict continuity (zero
+  strict errors; expected stale-baseline/legacy-history warnings).
 
 ## Files Changed
 
@@ -131,8 +156,13 @@ storage-state copying is authorized.
 
 ## Blockers
 
-None. The standing exact-green implementation-CI requirement remains an M6
-pre-DEV gate; no DEV contact has occurred.
+`BLOCKED_BEFORE_DEV`: the stronger executable pre-DEV gate requires an exact
+green Actions run for the live head. Run `32681204267` at
+`64cffaf6554300f59907c947f135753b62376a64` concluded `failure`; job
+`97298112036` (`Local hardening checks`) concluded `failure` with `steps=[]`,
+and failed-log retrieval timed out. No DEV contact occurred. Exact next action
+is STOP until a future owner-authorized run has a completed-success result with
+observable nonempty steps.
 
 ## Safety Events
 
@@ -148,12 +178,14 @@ anomaly requiring expansion is deferred to a separately authorized task.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, then this task's SPEC.md, PLAN.md, and STATE.md. Inspect
-Git status/diff and run the smallest decisive validation. Continue with the
-exact next action; no DEV before M6.
+Read ACTIVE_TASK.md, then this task's SPEC.md, PLAN.md, STATE.md, REPORT.md,
+and HANDOFF.md for terminal context. STOP; do not reopen Phase 19–21 or
+contact DEV without fresh authority and a new executable green-CI gate.
 
 ## Completion Snapshot
 
-IN_PROGRESS. M1–M5 implementation is locally validated but not yet committed;
-M6 mandatory validation, final source refresh, manifest freeze, and the
-pre-DEV CI/auth/containment decision remain.
+Terminal `BLOCKED_BEFORE_DEV`. Implementation checkpoint
+`64cffaf6554300f59907c947f135753b62376a64` is pushed and locally validated;
+fresh source/manifest and dry-run are green; canonical/isolated parity is
+2,336/4/0; no real observation or DEV launcher invocation occurred. The final
+live/documentation head is always discovered from Git.

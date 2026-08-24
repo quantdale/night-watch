@@ -1346,6 +1346,33 @@ failed out of 2,313, with zero benign false positives and zero privacy
 regressions. External CI status is separate and is never inferred from local
 green results.
 
+## Phase 22 contained DEV calibration safety boundary
+
+Phase 22 adds no standing execution authority. Its pure eligibility,
+currentness, manifest, calibration, replay, dossier, and dry-run cores remain
+local/source/synthetic and have no browser, process, network, database,
+datastore, cloud, infrastructure, AI, sibling-write, publication, or
+self-development authority. The real launcher is fail-closed on environment,
+owner policy, exact source/expectation identity, current adapter, external
+owner-only auth state, clean Git, all L0–L5 containment layers, privacy
+receipts, and the stronger executable CI gate.
+
+The frozen manifest is capped at six targets and twelve contexts. A real run
+would allow exactly one FIRST and at most one fresh-context replay per target,
+serially, with no dynamic target discovery, retries, mutations, NEXT, or
+production. Only category-level projections and opaque evidence digests may
+cross the second privacy boundary. Raw response/DOM data, customer strings,
+semantic scalars, enum members, credentials, cookies, storage state,
+screenshots, traces, and reconstructible membership sets fail closed.
+Collection truncation remains partial coverage, and missing membership or
+second-surface proof remains non-admitted.
+
+Phase 22 terminalized before DEV because Actions run `32681204267` / job
+`97298112036` failed with `steps=[]` and failed-log retrieval timed out. The
+launcher was not invoked, so DEV observations and every restricted safety
+category are zero. This is a truthful pre-DEV block, not a CI-green or product
+correctness claim.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

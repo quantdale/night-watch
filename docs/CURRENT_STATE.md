@@ -1,13 +1,14 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-24** at
-> the Phase 20 semantic-coverage implementation checkpoint
-> `c58684046d66b2a68234a06c62dea889829d4110`; the synchronized local/source/
-> synthetic checkpoint is `6e4fdebe74bd34e81d9d3f320154488973b46d12`; canonical and topology-correct
-> isolated full regressions both pass 2,309 / 4 skipped / 0 failed out of 2,313
-> with exact skip parity. Phase 18 is terminal historical context; external CI
-> is blocked/unobservable after one post-push inspection. This snapshot is LOCAL / SOURCE /
-> SYNTHETIC only, building on the Phase 16CH
+> the Phase 22 terminal documentation checkpoint. The validated Phase 22
+> implementation checkpoint is
+> `64cffaf6554300f59907c947f135753b62376a64`; the live documentation/final
+> head is discovered from Git. Canonical and topology-correct isolated full
+> regressions both pass 2,336 / 4 skipped / 0 failed out of 2,340 with exact
+> skip parity. Phase 22 is `BLOCKED_BEFORE_DEV` because the stronger external
+> CI gate failed before steps; no DEV contact occurred. This snapshot is
+> LOCAL / SOURCE / SYNTHETIC only, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
 > 794b32d; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEF-01
@@ -163,6 +164,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_16C_STATUS` | `COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` — portfolio runtime binding + real approved universe implemented local/source/synthetic under `PHASE_16C_PORTFOLIO_RUNTIME_BINDING_LOCAL_ONLY` (2026-08-23): canonical runtime-profile linkage module; deterministic real-universe builder over canonical registries (synthetic fixture identities excluded; exploration members explicitly runtime-restricted); strict admission of inert handoff+plan+universe+authorization with bounded categorical reasons (handoff stays executable:false; authorization non-mutating); versioned monotone-restrictive budget mapping v1 (elementwise min vs the approved bounded profile); schema-OPTIONAL manifest `portfolioBinding` in campaignId+fingerprint via conditional spread (legacy manifests byte-stable); prepare freezes ordinal-zero checkpoint with zero executor callbacks and resume re-verifies frozen fingerprints + fresh authorization before executor construction; single opt-in launcher input pair (`--portfolio-plan=`/`--portfolio-authorization=`) with legacy surfaces unchanged. New suites 33/0; Phase-16A+16H portfolio suites incl. campaign.test 125/0; affected Phase 12–15 compatibility 145/0; campaign:synthetic 27/0; owner-provenance 91/0; all ten quality floors zero; seam x3 + CLI runtime-plan x3 byte-deterministic. Canonical/isolated whole-repo regressions deferred to Phase-16CH hardening (`PHASE_16CH_HARDENING: REQUIRED_NEXT`); `PHASE_16D_DEV_RETRY: REQUIRES_SEPARATE_OWNER_AUTHORIZATION`; DEV WAS NOT EXECUTED |
 | `PHASE_16CH_STATUS` | `BLOCKED_EXTERNAL_CI` — Phase 16CH terminal local/source/synthetic hardening on earned SHA `794b32df443ae8c9a520182ef97b7a2c9985ba82`: DEF-01 reserve feasibility and DEF-02 sanitized unknown-field diagnostics repaired with permanent regressions; 171-scenario adversarial corpus x3 byte-identical with all thirteen floors zero; affected compatibility 172/0; campaign:synthetic 27/0; owner-provenance 91/0; canonical complete Playwright 2232 passed / 0 failed / 4 skipped == topology-correct isolated run 2232/0/4 with exact skip parity; catalog count/digest unchanged; promotion authority NONE; Actions run 32624917568 / job 97158631282 completed failure before any step under the external billing/spending block; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; Phase 16D remains `NOT_AUTHORIZED` |
 | `PHASE_17_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — terminal implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c` connects source selection to bounded portfolio allocation, hardens baseline/privacy/replay evidence boundaries, and adds a 9-case synthetic source-change corpus; DEF-17-01..06 are repaired; focused 27/0, readiness/rehearsal repair matrix 52/0, affected 142/0, and canonical/isolated full regression 2259/0/4 are green with exact parity; Actions run 32628613509 / job 97167784939 executed zero steps under the external billing/spending block; Phase 16D remains `NOT_AUTHORIZED` |
+| `PHASE_22_STATUS` | `BLOCKED_BEFORE_DEV` — additive real-eligibility, source-currentness, frozen-manifest, Preflight V2, privacy-firewall, replay/calibration, dossier, and dry-run bridge implemented at `64cffaf6554300f59907c947f135753b62376a64`; six candidates considered, three DEV-eligible collection targets frozen, exact local gates green, but Actions run `32681204267` / job `97298112036` failed with `steps=[]` and failed-log retrieval timed out; zero DEV contact |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2061,3 +2063,40 @@ head `04ad56c8baa904b8fc8537a41e4fa2e90602770b`, with job `97276539731`
 (`Local hardening checks`) concluding `failure` and `steps=[]`. This is recorded
 as the external billing/spending restriction; no retry was made and CI is not
 called green.
+
+## Phase 22 — contained DEV semantic calibration and bounded real-campaign acceptance
+
+Phase 22 adds the local/source/synthetic readiness bridge for the separately
+authorized contained DEV acceptance. It does not reopen the terminal Phase 19,
+Phase 20, or Phase 21 history and does not broaden owner scope. The bridge
+classifies real eligibility and source freshness, re-derives current
+expectations from a disposable read-only Ripple snapshot, freezes an immutable
+`nightwatch.dev-semantic-acceptance-manifest.v1`, strengthens preflight and
+privacy receipts, and supplies bounded collection projection, differential
+eligibility, replay V4, calibration/confidence, Dossier V6, operator views, and
+a no-contact dry-run adapter.
+
+Fresh discovery resolved `mobingilabs/ripple-api@85e400a8b32fc23c05464033a2a6d5fff2a2890c`.
+Six approved candidates were considered: three DEV-eligible collection
+targets (`ripple.common-exchange.read`, `ripple.payer-exchange.read`, and
+`ripple.account-inventory.read`), one real-source target without a runtime
+binding, and two synthetic-only targets. The frozen manifest contains three
+targets with safe ID
+`manifest:sha256:3c0d357a25328212f7011d1d` and digest
+`manifest:sha256:978c0e63310ea4f80d918cda`; its exact dry run planned three FIRST
+and three replay observations across six contexts with zero external contact.
+No real membership contract or mechanically proven second real differential
+surface was available.
+
+Terminal state is `BLOCKED_BEFORE_DEV`: the stronger executable CI gate failed
+before DEV contact (Actions run `32681204267`, job `97298112036`, `steps=[]`;
+failed-log retrieval timed out). No DEV launcher was invoked, no auth state was
+read, and no real observation or finding exists. Local evidence is Phase 22
+focused 7/7, Phase 9–22 compatibility 1,302/1,302, synthetic campaign 27/27,
+owner provenance 91/91, typecheck/hardening/project PASS, and canonical plus
+topology-correct isolated 2,336 passed / 4 skipped / 0 failed out of 2,340
+with exact parity. The terminal safety vector is zero for all restricted
+categories and for DEV observations. Phase 23 should first restore an exact
+green executable CI gate and revalidate owner-only DEV authentication before
+creating a fresh bounded manifest; this is bounded acceptance, not product
+correctness certification.

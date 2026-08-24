@@ -1938,3 +1938,40 @@ The one permitted Actions inspection observed run `32672981417` / job
 `97276539731` for the pushed checkpoint; both concluded `failure` and the job
 returned `steps=[]`, recorded as the external billing/spending restriction.
 No retry was made and local validation is not called CI green.
+
+## Phase 22 — contained DEV semantic calibration and bounded real-campaign acceptance
+
+**Goal.** Establish a truthful, fail-closed bridge from the saturated Phase
+19–21 semantic pipeline to a small read-only DEV acceptance campaign without
+expanding Nightwatch into production, NEXT, mutation, datastore, infrastructure,
+or publication scope.
+
+**Delivered local/source/synthetic work.** Deterministic real-eligibility and
+source-freshness classification, fresh read-only source re-derivation,
+immutable `nightwatch.dev-semantic-acceptance-manifest.v1` planning with a
+six-target maximum, Preflight V2 receipts, a second category-only observation
+privacy firewall, collection projection and real differential classification,
+Replay V4, synthetic-to-real calibration/confidence, Dossier V6, owner-local
+operator commands, hostile privacy tests, and an exact no-contact dry run.
+
+The final source snapshot was Ripple SHA
+`85e400a8b32fc23c05464033a2a6d5fff2a2890c`. Six candidates were considered and
+three collection targets were eligible and frozen:
+`ripple.common-exchange.read`, `ripple.payer-exchange.read`, and
+`ripple.account-inventory.read`. The manifest has safe ID
+`manifest:sha256:3c0d357a25328212f7011d1d`, digest
+`manifest:sha256:978c0e63310ea4f80d918cda`, three FIRST plans, three replay
+plans, and six observation contexts. No eligible membership contract or real
+differential pair was available.
+
+**Terminal disposition.** `BLOCKED_BEFORE_DEV`. The stronger executable
+pre-DEV CI gate failed before any browser/API contact: Actions run
+`32681204267`, job `97298112036`, `steps=[]`; failed-log retrieval timed out.
+No DEV launcher was invoked, no auth state was read, and all restricted safety
+vector counts are zero. Local acceptance evidence is Phase 22 focused 7/7,
+Phase 9–22 compatibility 1,302/1,302, synthetic campaign 27/27, owner
+provenance 91/91, typecheck/hardening/project PASS, and canonical/isolated
+2,336 passed / 4 skipped / 0 failed out of 2,340 with exact parity. A future
+Phase 23 should first restore an exact green CI gate and revalidate owner-only
+DEV authentication before creating a fresh manifest; bounded acceptance is
+not product correctness certification.

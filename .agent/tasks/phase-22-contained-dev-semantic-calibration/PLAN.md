@@ -3,7 +3,7 @@
 Task ID: phase-22-contained-dev-semantic-calibration
 Phase: 22-CONTAINED-DEV-SEMANTIC-CALIBRATION
 Authorization class: PHASE_22_CONTAINED_DEV_SEMANTIC_REALITY_CALIBRATION_ONLY
-Status: IN_PROGRESS
+Status: BLOCKED
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -46,15 +46,20 @@ Phase 19–21 history.
 - [x] M4 — collection/membership/differential real-acceptance adapters and
   safe minimization policy.
 - [x] M5 — confidence calibration, Dossier V6, operator UX, and dry-run.
-- [ ] M6 — IN_PROGRESS — mandatory local validation, frozen manifest, final pre-DEV gates;
-  no DEV contact until every gate is green.
-- [ ] M7 — exactly one serial bounded DEV launcher invocation, or record the
-  exact pre-DEV blocker without contact.
-- [ ] M8 — post-run privacy/safety audit and synthetic-to-real calibration.
-- [ ] M9 — post-DEV local regressions and canonical/isolated parity, when M7
-  executed.
-- [ ] M10 — durable closure, one CI inspection, push synchronization, and
-  terminal handoff.
+- [x] M6 — COMPLETE — mandatory local validation, fresh source re-derivation,
+  frozen manifest, dry-run, and final pre-DEV gates. No DEV contact occurred.
+- [x] M7 — COMPLETE AS BLOCKED_BEFORE_DEV — the required exact green Actions
+  gate failed externally with zero steps, so the single DEV launcher was not
+  invoked.
+- [x] M8 — COMPLETE AS NO-CONTACT TERMINAL AUDIT — synthetic privacy/dry-run
+  receipts and safety vector were audited; no real artifacts or calibration
+  observations exist to interpret.
+- [x] M9 — COMPLETE — post-gate local regressions and canonical/isolated parity
+  are green; post-DEV-specific evaluation was not applicable because M7 did
+  not execute.
+- [x] M10 — COMPLETE — implementation pushed, one Actions inspection recorded,
+  task terminalized, and handoff prepared. Final state is
+  `PHASE_22_STATUS: BLOCKED_BEFORE_DEV`.
 
 ## Workstream map
 
@@ -90,9 +95,10 @@ the one optional launcher invocation.
 
 After every milestone: focused tests, typecheck/hardening as affected, inspect
 diff/privacy surface, update STATE.md with exact evidence, then proceed. Before
-M7 run all mandatory local gates and the exact dry-run. After M7 rerun required
-local gates and parity. Never accumulate unrelated changes after a failed
-required gate.
+M7 run all mandatory local gates and the exact dry-run. If the stronger
+executable CI gate fails, stop before the launcher and terminalize
+`BLOCKED_BEFORE_DEV`; no post-DEV claims may be inferred from synthetic or
+local evidence.
 
 ## Decision Log
 
@@ -104,6 +110,9 @@ required gate.
 - M1–M5: keep source derivation, manifest admission, privacy, replay,
   calibration, dossier, and operator surfaces additive; the Phase 22 launcher
   remains the only real-contact authority.
+- M6–M10: retain the frozen three-target manifest as owner-local external
+  state, record the exact CI blocker, and do not invoke the DEV launcher. The
+  manifest is not a license to run after this task closes.
 
 ## Discoveries
 
@@ -130,6 +139,6 @@ calibration evidence.
 ## Completion Criteria
 
 All local gates, focused tests, dry-run, privacy/safety audits, continuity, and
-project-state checks are green. If DEV executes, it obeys the exact six-target/
-twelve-context/one-launcher bounds. Otherwise the task records the exact
-pre-DEV blocker and zero DEV contact. Historical phases remain unchanged.
+project-state checks are green. DEV execution is conditional on the stronger
+executable gates. This task reached the truthful alternative: exact
+pre-DEV blocker recorded, zero DEV contact, and historical phases unchanged.

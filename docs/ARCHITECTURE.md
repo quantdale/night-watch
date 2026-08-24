@@ -1,9 +1,9 @@
 # Nightwatch Architecture
 
-Status: Phase 20 terminal local/source/synthetic implementation checkpoint
-`c58684046d66b2a68234a06c62dea889829d4110` (focused, compatibility,
+Status: Phase 22 terminal local/source/synthetic implementation checkpoint
+`64cffaf6554300f59907c947f135753b62376a64` (focused, compatibility,
 canonical, and topology-correct isolated full regressions green with exact
-parity; external CI is blocked/unobservable after one post-push inspection),
+parity; contained DEV acceptance is blocked before contact by external CI),
 with Phase 19 integrated campaign intelligence and Phase 18 terminal historical context,
 building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
@@ -1446,3 +1446,39 @@ with 21 admitted cross-surface pairs and 21 full-lifecycle contracts. The
 remaining residuals are one unsupported source proof and two duplicate-
 equivalence joins that lack mechanical proof. Coverage and operator output are
 local, additive, deterministic, and authority-inert.
+
+## Phase 22 contained DEV calibration architecture
+
+Phase 22 adds a readiness and evidence bridge around the terminal Phase 19–21
+semantic pipeline. The pure cores remain authority-inert:
+
+```text
+read-only sibling snapshot + exact SHA
+  -> fixed source re-derivation and eligibility/currentness classifier
+  -> immutable bounded DEV acceptance manifest
+  -> Preflight V2 and owner/safety gate validation
+  -> contained observation privacy firewall
+  -> category-only projection -> semantic evaluation -> Replay V4
+  -> calibration/confidence -> sanitized Dossier V6 or acceptance summary
+```
+
+The manifest planner considers at most six targets and freezes target identity,
+source/evidence identity, projection, differential identity, replay bound, and
+allowed observation class before any real contact. Runtime execution accepts
+only that manifest, runs serially, permits one FIRST and at most one fresh-
+context replay per target, and performs no selector-driven discovery. The
+Phase 22 launcher is the only contact-capable seam; it requires DEV, exact
+current source, owner-only external auth state, clean Git, all containment
+layers, and the stronger executable CI gate. Because the CI gate failed before
+steps (`32681204267` / `97298112036` / `steps=[]`), the launcher was not
+invoked.
+
+Real observation output crosses the second boundary only as bounded categories
+(presence, type/cardinality class, membership outcome class, relation truth,
+differential outcome, ordering category, and opaque digest). Raw response or
+DOM data, customer values, source enum members, credentials, storage state,
+screenshots, traces, and reconstructible sets are rejected from receipts,
+findings, replay artifacts, and dossiers. Collection evaluation preserves
+partial coverage and never promotes truncation to full PASS. Missing real
+membership or equivalent second-surface proof remains an explicit non-admitted
+state rather than a synthetic relabel.

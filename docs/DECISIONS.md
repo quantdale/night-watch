@@ -3070,3 +3070,36 @@ pushed as `6e4fdebe74bd34e81d9d3f320154488973b46d12`; the one required Actions
 inspection timed out at the GitHub API before returning run data, so no current
 run/job/steps identifiers are available, CI remains blocked/unobservable, and
 no retry or green claim was made.
+
+## D-74 — Phase 22 contained DEV semantic calibration remains blocked before contact
+
+**Context.** The terminal Phase 19–21 semantic graph is saturated locally and
+source-derived, but its truth against a real product surface required a fresh,
+strictly bounded DEV authorization. Phase 22 supplied that authorization while
+retaining the permanent owner freeze and all existing safety gates.
+
+**Decision.** Add only an authority-inert readiness and acceptance bridge:
+real-source eligibility/currentness and deterministic re-derivation,
+immutable six-target manifest planning, Preflight V2, a second category-only
+privacy firewall, collection/membership/differential classification,
+Replay V4, calibration/confidence, Dossier V6, owner-local operator commands,
+and an exact synthetic dry run. The sole real launcher remains serial,
+manifest-bound, DEV-only, read-only, and capped at one FIRST plus one replay
+per target. No dynamic discovery, raw evidence, mutation, NEXT/production,
+datastore, infrastructure, sibling write, publication, AI authority, or source
+relabeling is permitted.
+
+**Evidence and consequences.** Six candidates were considered against fresh
+Ripple source `85e400a8b32fc23c05464033a2a6d5fff2a2890c`; three collection
+targets were frozen in manifest ID
+`manifest:sha256:3c0d357a25328212f7011d1d`, with digest
+`manifest:sha256:978c0e63310ea4f80d918cda`. The no-contact dry run passed with
+three FIRST plans, three replay plans, six contexts, and zero external
+contact. The stronger executable CI gate then blocked terminal Phase 22 before
+DEV: Actions run `32681204267`, job `97298112036`, failed with `steps=[]`, and
+failed-log retrieval timed out. No DEV launcher or auth-state read occurred.
+Local compatibility, canonical/isolated parity, hardening, provenance,
+project, and privacy gates remain green as recorded in the task report. A
+future phase requires a fresh authorization, exact green CI, fresh source and
+auth checks, and a fresh manifest; this decision grants no standing DEV
+authority beyond the blocked Phase 22 attempt.
