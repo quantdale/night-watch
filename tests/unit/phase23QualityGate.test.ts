@@ -36,9 +36,9 @@ test.describe('Phase 23 executable quality-gate definition', () => {
     expect(() => validateQualityGateDefinition({ ...base, groups: [{ ...firstGroup, dependsOn: ['MISSING'] }, ...groups.slice(1)] })).toThrow(/UNKNOWN_DEPENDENCY/);
   });
 
-  test('covers every current Phase 9 through Phase 23 and no file twice', () => {
+  test('covers every current Phase 9 through Phase 24 and no file twice', () => {
     const phases = SEMANTIC_COMPATIBILITY_DEFINITION.phaseSuites.map((suite) => Math.floor(suite.phase));
-    expect(new Set(phases)).toEqual(new Set(Array.from({ length: 15 }, (_, index) => index + 9)));
+    expect(new Set(phases)).toEqual(new Set(Array.from({ length: 16 }, (_, index) => index + 9)));
     const files = flattenSemanticCompatibilityFiles();
     expect(new Set(files).size).toBe(files.length);
     for (const file of files) expect(fs.existsSync(path.join(ROOT, file))).toBe(true);

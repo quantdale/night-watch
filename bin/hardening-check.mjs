@@ -529,10 +529,10 @@ function checkPhase23QualityGate() {
     const group = gate.groups.find((candidate) => candidate.id === id);
     if (!group || group.required !== true) fail(`Phase 23 required quality-gate group missing or optional: ${id}`);
   }
-  if (compatibility.schemaVersion !== 'nightwatch.semantic-compatibility.v1' || compatibility.requiredPhaseRange?.first !== 9 || compatibility.requiredPhaseRange?.last !== 23) {
-    fail('Phase 23 semantic compatibility manifest must bind Phase 9 through Phase 23');
+  if (compatibility.schemaVersion !== 'nightwatch.semantic-compatibility.v1' || compatibility.requiredPhaseRange?.first !== 9 || compatibility.requiredPhaseRange?.last !== 24) {
+    fail('Phase 24 semantic compatibility manifest must bind Phase 9 through Phase 24');
   }
-  if (!Array.isArray(compatibility.phaseSuites) || !compatibility.phaseSuites.some((suite) => suite.phase === 23)) fail('Phase 23 semantic compatibility suite is missing');
+  if (!Array.isArray(compatibility.phaseSuites) || !compatibility.phaseSuites.some((suite) => suite.phase === 23) || !compatibility.phaseSuites.some((suite) => suite.phase === 24)) fail('Phase 23/24 semantic compatibility suite is missing');
   if (!/"gate:ci"\s*:\s*"node bin\/quality-gate\.mjs ci"/.test(packageJson)) fail('package.json must expose the fixed gate:ci entry point');
   if (!/"test:semantic-compat"\s*:\s*"node bin\/semantic-compat\.mjs"/.test(packageJson)) fail('package.json must expose the fixed semantic compatibility entry point');
   if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runner)) fail('quality-gate runner must use a fixed mode allowlist');

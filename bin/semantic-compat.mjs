@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// The Phase 9–23 compatibility cone is a versioned file manifest. It is
+// The Phase 9–24 compatibility cone is a versioned file manifest. It is
 // intentionally invoked as argv entries with shell=false; manifest values
 // cannot become commands, flags, paths outside tests, or selectors.
 
@@ -21,7 +21,7 @@ function fail(code) {
 function loadManifest() {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   if (manifest.schemaVersion !== 'nightwatch.semantic-compatibility.v1') fail('SEMANTIC_COMPATIBILITY_SCHEMA_UNSUPPORTED');
-  if (manifest.requiredPhaseRange?.first !== 9 || manifest.requiredPhaseRange?.last !== 23) fail('SEMANTIC_COMPATIBILITY_PHASE_RANGE_INVALID');
+  if (manifest.requiredPhaseRange?.first !== 9 || manifest.requiredPhaseRange?.last !== 24) fail('SEMANTIC_COMPATIBILITY_PHASE_RANGE_INVALID');
   if (manifest.execution?.project !== 'nightwatch' || manifest.execution?.workers !== 1 || manifest.execution?.serial !== true) fail('SEMANTIC_COMPATIBILITY_EXECUTION_INVALID');
   const files = [];
   const seen = new Set();
@@ -42,7 +42,7 @@ function loadManifest() {
     seen.add(file);
     files.push(file);
   }
-  for (let phase = 9; phase <= 23; phase += 1) {
+  for (let phase = 9; phase <= 24; phase += 1) {
     if (![...phases].some((candidate) => Math.floor(candidate) === phase)) fail(`SEMANTIC_COMPATIBILITY_PHASE_OMITTED:${phase}`);
   }
   return { manifest, files };

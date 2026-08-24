@@ -1,25 +1,26 @@
 # Active Task
 
-Task ID: phase-23-executable-ci-dev-acceptance
-Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
-Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qualification, and Conditional Contained DEV Acceptance
-Status: COMPLETE
-Task directory: .agent/tasks/phase-23-executable-ci-dev-acceptance
-Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
-Last checkpoint: M10 — terminal local closure after exact-head external CI classification
-Current milestone: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI — M10 terminal handoff
-Next action: STOP — exact current-head Actions run 32709452878 for 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b completed with job 97377543621 and steps=[]; no DEV contact or auth read occurred.
-Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
+Task ID: phase-24-local-triage-depth-dev-readiness
+Phase: 24-LOCAL-TRIAGE-DEPTH-DEV-READINESS
+Title: Nightwatch Phase 24 — Local Autonomous Triage Depth and DEV-Readiness Acceleration
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-24-local-triage-depth-dev-readiness
+Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+Last validated implementation SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+Last checkpoint: M7 — deterministic triage, replay, privacy, dossier, and provenance slice
+Current milestone: M8 — lifecycle, CI observability, gate integration, and clean-checkout hardening
+Next action: Add adversarial proxy/lifecycle coverage, qualify the expanded Phase 9–24 compatibility cone and synthetic campaign, measure the authoritative gate, and repair any regressions before the next checkpoint.
+Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b
+STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+LAST_VALIDATED_IMPLEMENTATION_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
 
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
+PHASE_24_STATUS: IN_PROGRESS
+PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
 PHASE_21_STATUS: COMPLETE (historical, unchanged)
 PHASE_20_STATUS: COMPLETE (historical, unchanged)
@@ -35,107 +36,50 @@ PHASE_13B_STATUS: NOT_AUTHORIZED
 
 ## Routing
 
-Phase 19, Phase 20, Phase 21, and Phase 22 remain terminal at their existing
-task directories; do not reopen or mutate their history. Live HEAD is always
-discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`).
+Phase 19 through Phase 23 remain terminal at their existing task
+directories; do not reopen or mutate their history. Live HEAD is always
+discovered from Git (`LIVE_HEAD_AUTHORITY: GIT`). The exact startup Actions
+observation for current HEAD was run `32710478356`, job `97380595116`, exact
+head `da534f6...`, zero steps, and classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
 
 ## Scope boundary
 
-This task authorizes additive local quality-gate implementation, fixed
-compatibility/inventory tooling, disposable clean-checkout qualification,
-Nightwatch-owned proxy lease hardening, read-only source re-derivation,
-owner-only auth structure checks at the final pre-DEV stage, a fresh bounded
-manifest/dry run, and exactly one serial bounded DEV campaign only after all
-mandatory gates and exact-head external CI pass. It authorizes no NEXT,
-production, mutation, database/datastore, cloud/infra, sibling write,
-publication, AI, self-development, arbitrary commands, credentials, raw
-authenticated evidence, screenshots, traces, DOM/raw-body persistence, or
-storage-state copying. The permanent decision remains
-`FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
+This task authorizes additive local, source-only, synthetic, deterministic,
+offline, and no-contact improvements to candidate qualification and portfolio
+selection, semantic and cross-candidate triage, source-change invalidation,
+manifest identity, rehearsal, replay/minimization, sanitized dossiers,
+owner/component provenance, privacy minimization, readiness diagnostics,
+exact-head CI classification, quality-gate efficiency, proxy lifecycle tests,
+clean-checkout reproducibility, synthetic campaign breadth, and one meaningful
+additional local capability selected from the actual repository gaps. It
+authorizes no DEV contact unless the existing exact-head pre-DEV protocol
+independently passes after a fresh qualification; it authorizes no NEXT,
+production, mutation, database, datastore, cloud, infrastructure, sibling
+write, publication, message, credential, raw authenticated evidence,
+screenshot, trace, DOM/raw-body persistence, or external retry. The permanent
+decision remains `FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
-- `.github/workflows/hardening.yml`
-- `bin/hardening-check.mjs`
-- `bin/phase23-ci.mjs`
-- `bin/phase23-dev.mjs`
-- `bin/phase23-predev.mjs`
-- `bin/quality-gate-clean.mjs`
-- `bin/quality-gate-inventory.mjs`
-- `bin/quality-gate-spec.mjs`
-- `bin/quality-gate.mjs`
-- `bin/semantic-compat.mjs`
-- `config/quality-gate.v1.json`
+- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/SPEC.md`
+- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/PLAN.md`
+- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/STATE.md`
+- `.agent/tasks/phase-24-local-triage-depth-dev-readiness/REPORT.md`
 - `config/semantic-compatibility.v1.json`
 - `package.json`
-- `src/core/phase23/**`
-- `src/core/qualityGate/**`
-- `src/proxy/portLease.ts`
-- `src/proxy/server.ts`
-- `tests/globalSetup.ts`
-- `tests/unit/aiLocalCanary.test.ts`
-- `bin/agent-state.mjs`
-- `tests/unit/agent-state.test.ts`
-- `tests/unit/phase23*.test.ts`
-- `.agent/tasks/phase-23-executable-ci-dev-acceptance/**`
-
-## Validation Ledger
-
-Bootstrap Git inspection: PASS — clean `main` at
-`HEAD == origin/main == ac3df00195eef846a8e9e42615e90b4b912877d2`; no DEV or
-other product systems contacted.
-
-Historical authority review: PASS — required project docs, CI hardening, and
-all Phase 22 records were read; Phase 19–22 history remains untouched.
-
-Worker doctor: PASS — optional read-only bridge healthy; worker findings are
-advisory only and no worker mutation or external contact is authorized.
-
-M0 workflow inspection: PASS — the existing workflow is a hand-maintained
-historical Phase 8–12 matrix with bootstrap, project, agent, owner-provenance,
-synthetic, and whitespace checks, but no shared current Phase 19–23 gate.
-
-M0 drift inventory: PASS — the frozen baseline workflow contains 32 steps, 30
-run commands, 21 historical matrix steps, 55 unique test files, and 5
-duplicate executions across three duplicated files; the modern gate now has 9
-required groups, 130 unique test files, and zero duplicate file executions.
-
-M1/M2/M4/M5 implementation slice: FOCUSED PASS — the data-only
-`nightwatch.quality-gate.v1` and Phase 9–23 compatibility manifests, fixed
-runner, bounded receipts, inventory, thin Actions workflow, parity hardening,
-external CI classifier, exact-head authority, and Preflight V3 core are in the
-working tree. The full Phase 23 focused slice, including the corrected
-bind-failure regression, is green at 34/34.
-
-Proxy lifecycle discovery: REPAIRED — Playwright config/global setup/worker
-processes now explicitly hand off one loopback lease token; the prior
-concurrent `ERR_PROXY_CONNECTION_FAILED` caused by divergent ports is covered
-by the focused observer regression. No product networking semantics changed.
-
-Focused qualification: PASS — Phase 23 quality-gate, external-CI, manifest,
-port/process, and the existing local-canary suites passed 34/34 after adding
-event-loop scheduling margin to the 100 ms synthetic timeout fixture. A dirty
-working-tree compatibility probe was not accepted as qualification: it
-reported 1,802 passed, 1 skipped, and 3 failures, consisting of the prior
-20 ms scheduler race plus two self-development source-dirty guards. The
-source-dirty guards are expected to clear only from the committed clean tree.
-
-Static qualification: PASS — `npm run typecheck`, `npm run hardening:check`,
-`npm run quality-gate:spec`, and `npm run gate:inventory`; the external CI
-observer also now emits `API_UNOBSERVABLE`/`WORKFLOW_NOT_FOUND` receipts for
-bounded API failures instead of exposing an opaque transport error.
-
-Terminal qualification: PASS — implementation checkpoint
-`98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` passed the Node 20 CI-mode gate
-with receipt `receipt:sha256:25e36d5165d745db5f5e6ac6` and the disposable
-clean-checkout gate with receipt
-`clean-receipt:sha256:d7cbb1f53f164ac1cd58e31d`; the exact GitHub Actions run
-`32709452878` bound to that SHA had job `97377543621` with zero steps and was
-classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
+- `bin/semantic-compat.mjs`
+- `bin/quality-gate-spec.mjs`
+- `bin/hardening-check.mjs`
+- `src/core/qualityGate/definition.ts`
+- `src/core/phase24/**`
+- `tests/unit/phase24LocalTriage.test.ts`
+- `tests/unit/phase24SyntheticCampaign.test.ts`
 
 ## Resume Recipe
 
-Task complete. Do not resume this task. A future separately authorized phase
-may inspect external platform recovery, but this authorization grants no
-standing DEV or credential authority.
+Read this file, then the Phase 24 `SPEC.md`, `PLAN.md`, and `STATE.md` in
+order. Inspect `git status` and the task validation ledger. Resume at the
+exact milestone and next action recorded in `STATE.md`; do not poll Actions or
+invoke DEV while the external classification remains zero-step blocked.
