@@ -86,6 +86,21 @@ function parseCounts(output) {
   return counts;
 }
 
+function parseSafeDetails(output) {
+  for (const line of output.split(/\r?\n/).reverse()) {
+    try {
+      const value = JSON.parse(line);
+      if (value?.schemaVersion === 'nightwatch.semantic-compatibility.v1') {
+        return { failedLocations: Array.isArray(value.failedLocations) ? value.failedLocations.slice(0, 16) : [] };
+      }
+    } catch {
+      // Structured child receipts are optional diagnostics; raw output is
+      // intentionally never copied into the quality-gate receipt.
+    }
+  }
+  return null;
+}
+
 function runFixedCommand(commandKey, mode, timeoutClass) {
   const environment = safeChildEnvironment(mode);
   let command;
@@ -142,7 +157,7 @@ function summarizeChild(result, commandKey) {
   if (result.signal === 'SIGINT' || result.signal === 'SIGTERM') return { status: 'INTERRUPTED', exitCode: null, counts: parseCounts(`${result.stdout ?? ''}\n${result.stderr ?? ''}`), errorClass: result.signal };
   if (result.status === null) return { status: 'UNKNOWN_FAILURE', exitCode: null, counts: parseCounts(`${result.stdout ?? ''}\n${result.stderr ?? ''}`), errorClass: 'NO_EXIT_STATUS' };
   const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-  return { status: result.status === 0 ? 'PASS' : 'TEST_FAILURE', exitCode: result.status, counts: parseCounts(output), errorClass: result.status === 0 ? null : `COMMAND_FAILED_${commandKey}` };
+  return { status: result.status === 0 ? 'PASS' : 'TEST_FAILURE', exitCode: result.status, counts: parseCounts(output), details: parseSafeDetails(output), errorClass: result.status === 0 ? null : `COMMAND_FAILED_${commandKey}` };
 }
 
 function main() {
@@ -175,7 +190,7 @@ function main() {
   let finalResult = 'PASS';
   for (const group of definition.groups) {
     const result = runFixedCommand(group.commandKey, mode, group.timeoutClass);
-    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts });
+    groups.push({ id: group.id, required: group.required, status: result.status, exitCode: result.exitCode, counts: result.counts, ...(result.details === null || result.details === undefined ? {} : { details: result.details }) });
     if (group.required && result.status !== 'PASS') {
       finalResult = ['TIMEOUT', 'ENVIRONMENT_MISMATCH', 'INSTALL_FAILURE', 'INTERRUPTED', 'UNKNOWN_FAILURE', 'CONFIG_INVALID'].includes(result.status)
         ? result.status

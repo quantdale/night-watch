@@ -74,6 +74,9 @@ try {
   const totalFromOutput = count(/Total:\s*(\d+)\s+tests?/i);
   if (result.status === 0 && failed === null) failed = 0;
   const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed : null);
+  const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
+    .slice(0, 16)
+    .map((match) => `${match[1]}:${match[2]}`);
   const receipt = {
     schemaVersion: manifest.schemaVersion,
     phaseRange: manifest.requiredPhaseRange,
@@ -83,6 +86,7 @@ try {
     passed,
     skipped,
     failed,
+    failedLocations,
     result: result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
   };
   console.log(JSON.stringify(receipt));
