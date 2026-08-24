@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { analyzeSourceArtifact } from '../../src/core/semanticCoverage/sourceAnalyzers';
+import { admitContractInventory, analyzeSourceArtifact, discoverContractInventory, generateSyntheticFixtures, measureSyntheticMutationDetection } from '../../src/core/semanticCoverage';
 
 const SHA = '1'.repeat(40);
 
@@ -106,5 +106,76 @@ test.describe('Phase 26 direct PHP response proof', () => {
     const observations = analyzeSourceArtifact(artifact("function readExample() { return ['id' => 'PRIVACY_SENTINEL']; }"));
     expect(observations).toHaveLength(1);
     expect(observations[0]?.rejectionCode).toBe('PRIVACY_UNSAFE_SOURCE');
+  });
+
+  test('materializes and detects root type contracts through the existing mutation engine', () => {
+    const source = artifact(`
+      function readExample() {
+        return [1, 2, 3];
+      }
+    `);
+    const inventory = admitContractInventory(discoverContractInventory({ artifacts: [source], currentSnapshots: { [source.repoId]: source.sha } }));
+    const rootCandidate = inventory.candidates.find((candidate) => candidate.analyzerId === 'PHP_RETURN_ROOT_TYPE');
+    expect(rootCandidate?.shape).toEqual({ kind: 'FIELD_TYPE', field: 'root', allowedTypes: ['ARRAY'] });
+    expect(rootCandidate?.coverage.semanticContractAdmitted).toBe(true);
+    const fixtures = generateSyntheticFixtures({ candidates: inventory.candidates });
+    const measurement = measureSyntheticMutationDetection({ fixtures, candidates: inventory.candidates });
+    const rootRows = measurement.rows.filter((row) => row.contractId === rootCandidate?.candidateId);
+    expect(rootRows).toHaveLength(3);
+    expect(rootRows.find((row) => row.mutationClass === 'BASELINE_VALID')?.detected).toBe(false);
+    expect(rootRows.find((row) => row.mutationClass === 'WRONG_TYPE')?.detected).toBe(true);
+    expect(measurement.benignFalsePositives).toBe(0);
+  });
+
+  test('proves a narrow direct-array alias and rejects control-flow aliasing', () => {
+    const valid = analyzeSourceArtifact(artifact(`
+      function readExample() {
+        $payload = ['id' => 1, 'status' => 'ready'];
+        return $payload;
+      }
+    `));
+    expect(valid.find((observation) => observation.analyzerId === 'PHP_RETURN_ALIAS_OBJECT_FIELDS')?.shape).toEqual({
+      kind: 'FIELD_SET',
+      fields: ['id', 'status'],
+      requiredFields: ['id', 'status'],
+      optionalFields: [],
+    });
+    expect(valid.find((observation) => observation.analyzerId === 'PHP_RETURN_ALIAS_FIELD_TYPE' && observation.status === 'MECHANICALLY_PROVABLE')?.shape).toEqual({ kind: 'FIELD_TYPE', field: 'id', allowedTypes: ['NUMBER'] });
+
+    const invalid = analyzeSourceArtifact(artifact(`
+      function readExample($mode) {
+        $payload = [];
+        if ($mode) $payload[] = 1;
+        return $payload;
+      }
+    `));
+    expect(invalid.some((observation) => observation.analyzerId === 'PHP_RETURN_ALIAS_ROOT_TYPE' && observation.status === 'MECHANICALLY_PROVABLE')).toBe(false);
+    expect(invalid.some((observation) => observation.analyzerId === 'PHP_RETURN_ALIAS' && observation.rejectionCode === 'BRANCH_SET_INCOMPLETE')).toBe(true);
+  });
+
+  test('proves complete direct-versus-alias response branches only with an explicit else', () => {
+    const complete = analyzeSourceArtifact(artifact(`
+      function readExample($mode) {
+        if ($mode) {
+          return ['id' => 1, 'status' => 'ready'];
+        } else {
+          $payload = ['id' => 2, 'status' => 'fallback'];
+          return $payload;
+        }
+      }
+    `));
+    expect(complete.find((observation) => observation.analyzerId === 'PHP_RETURN_BRANCH_OBJECT_FIELDS')?.status).toBe('MECHANICALLY_PROVABLE');
+    expect(complete.find((observation) => observation.analyzerId === 'PHP_RETURN_BRANCH_OBJECT_FIELDS')?.shape).toEqual({ kind: 'FIELD_SET', fields: ['id', 'status'], requiredFields: ['id', 'status'], optionalFields: [] });
+
+    const incomplete = analyzeSourceArtifact(artifact(`
+      function readExample($mode) {
+        if ($mode) {
+          $payload = ['id' => 1];
+          return $payload;
+        }
+        return ['id' => 2, 'status' => 'fallback'];
+      }
+    `));
+    expect(incomplete.some((observation) => observation.analyzerId === 'PHP_RETURN_BRANCH_OBJECT_FIELDS' && observation.status === 'MECHANICALLY_PROVABLE')).toBe(false);
   });
 });

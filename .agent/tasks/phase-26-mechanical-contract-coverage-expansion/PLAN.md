@@ -89,9 +89,9 @@ seam.
 - M2 — response analyzer architecture/versioning and highest-yield positive
   families with sound negative controls. Status: COMPLETED.
 - M3 — semantic contract expansion through existing vocabulary and proof
-  normalization. Status: IN_PROGRESS.
+  normalization. Status: COMPLETED.
 - M4 — exact cross-file response/semantic joins and currentness propagation.
-  Status: NOT_STARTED.
+  Status: IN_PROGRESS.
 - M5 — graph/lifecycle/drift/invalidation/cache integration. Status:
   NOT_STARTED.
 - M6 — direct Phase 24 portfolio uplift and runtime/source/review correlation.
@@ -133,6 +133,11 @@ auth validation is part of this task.
   analyzer identity remain stable for Phase20/21 compatibility; the real
   source cache uses a separate analyzer-set identity that includes the new
   family.
+- 2026-08-25 M3: root response types are materialized through existing
+  `FIELD_TYPE` semantics, while response diagnostics and review explanations
+  are additive safe structural metadata. Phase24 eligibility and ranking stay
+  authoritative. Strict alias/branch analyzers remain explicit negative
+  controls because the current approved source does not prove their flows.
 
 ## Discoveries
 

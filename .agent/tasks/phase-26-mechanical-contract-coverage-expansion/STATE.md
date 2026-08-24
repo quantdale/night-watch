@@ -40,20 +40,21 @@ proof, privacy, currentness, determinism, Phase 24 authority, or owner scope.
 
 ## Current Milestone
 
-M3 — semantic contract expansion through existing vocabulary and proof
-normalization.
+M4 — proof-gap lifecycle reporting and exact currentness propagation.
 
 ## Work In Progress
 
-Integrate the direct-return root/field proof into the existing semantic
-materialization path and expose deterministic response/semantic proof-gap
-metrics without creating a parallel lifecycle or portfolio authority.
+Durably checkpoint the integrated response-proof, semantic materialization,
+proof-gap diagnostics, review-queue, and same-SHA invalidation changes, then
+re-run the full compatibility cone from a clean tree before broadening the
+adversarial corpus.
 
 ## Exact Next Action
 
-Add root-type semantic mutation regressions and deterministic source-surface
-proof-gap/analyzer metrics, then run the focused source/semantic cone before
-selecting another approved-source response family.
+Inspect the current diff/privacy surface, commit and push this validated M3
+implementation checkpoint directly to `main`, then re-run
+`npm run test:semantic-compat` from the clean synchronized tree and repair any
+actual regression before starting M5 hardening.
 
 ## Completed Milestones
 
@@ -64,6 +65,13 @@ selecting another approved-source response family.
 - M2 — response analyzer architecture/versioning and highest-yield positive
   families with sound negative controls; completed in the first implementation
   checkpoint while preserving the Phase9–26 compatibility baseline.
+- M3 — direct-return root/field response proof, existing-vocabulary semantic
+  materialization, real-source v2 analyzer/cache identity, deterministic
+  proof-gap/analyzer diagnostics, review-queue explanations, same-SHA
+  relevant/unrelated invalidation coverage, and source-to-triage synthetic
+  integration. Focused validation passed; full compatibility was re-attempted
+  while the tree was dirty and therefore stopped at the existing authoritative
+  source-dirty guard in two self-development CLI tests.
 
 ## Files Changed
 
@@ -113,15 +121,22 @@ and manifest files; no historical Phase 25 task file is modified.
   cases were variable/call/dynamic flows or unresolved joins. Source text and
   private values were not persisted.
 - Direct-return proof uplift: the approved current scan now reports 62 response
-  contracts and 62 semantic-proven surfaces, up from 25/25; lifecycle counts
-  are 66 DISCOVERED, 59 MECHANICALLY_PROVEN, and three PROJECTABLE. Phase24
-  eligibility remains three, with 125 excluded, because read-only/runtime
-  authority was not broadened.
+  contracts and 138 semantic contract observations, up from 25/25 in the
+  comparable Phase25 scan; lifecycle counts are 66 DISCOVERED, 59
+  MECHANICALLY_PROVEN, and three PROJECTABLE. Phase24 eligibility remains
+  three, with 125 excluded, because read-only/runtime authority was not
+  broadened. The remaining response gaps are deterministically distributed as
+  8 dynamic-key/branch-incomplete, 22 branch-incomplete/unsupported-syntax,
+  26 unsupported-syntax, 9 missing-symbol, and one outside-scope surface.
 - Focused analyzer/compatibility validation: 15 Phase21/26 tests passed;
-  `npm run test:semantic-compat` passed with 1,851 passed, one skipped, zero
-  failed across 136 files; typecheck, hardening, quality-gate spec, and gate
-  inventory passed. Gate inventory reports 142 unique authoritative test files
-  and zero duplicate executions.
+  `npm run campaign:synthetic` passed all 30 tests; typecheck, hardening,
+  quality-gate spec, and gate inventory passed. The compatibility attempt on
+  the dirty implementation tree ran 1,858 tests with 1,855 passed, one
+  skipped, and two failures at `selfDevAdoptionCli.test.ts` because the
+  existing source-dirty guard correctly returned `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`
+  before the tests' missing-artifact/plan assertions. It must be re-run from a
+  clean checkpoint. Gate inventory currently reports 138 semantic-compatibility
+  files, four synthetic-campaign files, and zero duplicate executions.
 
 ## Decisions Made During This Task
 
@@ -142,7 +157,10 @@ surface artifacts: every return branch must be a direct literal array, keyed
 object fields must be safe/unique and branch-identical, and dynamic/variable/
 call/mismatched branches reject. Root type uses the existing FIELD_TYPE
 vocabulary with the reserved structural field identity `root`; synthetic
-materialization handles that root explicitly.
+materialization handles that root explicitly. Narrow alias and complete
+if/elseif/else families are currently negative-control analyzers: the approved
+source has no flow that satisfies their strict proof, so they add no coverage
+and remain fail-closed.
 
 ## Blockers
 

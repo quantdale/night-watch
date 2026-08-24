@@ -8,11 +8,11 @@ Task directory: .agent/tasks/phase-26-mechanical-contract-coverage-expansion
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
 Last validated implementation SHA: f5356f3d94973b5ffc95c60623bf027a2864bfb5
 Last checkpoint: M1 — fresh approved-source proof-gap baseline.
-Current milestone: M3 — semantic contract expansion through existing
-vocabulary and proof normalization.
-Next action: Add root-type semantic mutation regressions and deterministic
-source-surface proof-gap/analyzer metrics, then run the focused source/semantic
-cone before selecting another approved-source response family.
+Current milestone: M4 — proof-gap lifecycle reporting and exact currentness
+propagation.
+Next action: Inspect the current diff/privacy surface, commit and push this
+validated M3 implementation checkpoint directly to `main`, then rerun the
+full compatibility cone from the clean synchronized tree.
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8

@@ -51,7 +51,7 @@
     "change:shadow": "node bin/change-intelligence.mjs",
     "explore:phase4": "node bin/phase4-real.mjs",
     "api:phase5": "node bin/phase5-real.mjs",
-    "campaign:synthetic": "playwright test tests/unit/campaign.test.ts tests/unit/phase24SyntheticCampaign.test.ts tests/unit/phase25SyntheticCampaign.test.ts --workers=1",
+    "campaign:synthetic": "playwright test tests/unit/campaign.test.ts tests/unit/phase24SyntheticCampaign.test.ts tests/unit/phase25SyntheticCampaign.test.ts tests/unit/phase26SyntheticCampaign.test.ts --workers=1",
     "campaign:phase24": "playwright test tests/unit/phase24SyntheticCampaign.test.ts tests/unit/phase24LocalTriage.test.ts --project=nightwatch --workers=1",
     "selfdev:synthetic": "node bin/selfdev-synthetic.mjs",
     "selfdev:verify": "node bin/selfdev-verify.mjs",

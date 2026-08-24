@@ -5,7 +5,7 @@
 import type { SourceScanLanguage } from './scanTypes';
 import type { Phase24CandidateInvalidationLedger } from '../phase24/types';
 
-export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v1' as const;
+export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v2' as const;
 export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v1' as const;
 
 export type SourceOperationMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -18,6 +18,28 @@ export type SourceJoinKind = 'ROUTE_HANDLER' | 'HANDLER_REQUEST_CONTRACT' | 'HAN
 export type SourceSurfaceLifecycle = 'DISCOVERED' | 'MECHANICALLY_PROVEN' | 'PROJECTABLE' | 'SCENARIO_BOUND' | 'REPLAY_SUPPORTED' | 'MINIMIZATION_SUPPORTED' | 'DIFFERENTIAL_CAPABLE' | 'FULL_LIFECYCLE';
 export type SourceSurfaceProjectionCapability = 'PROJECTABLE' | 'NOT_PROJECTABLE' | 'UNPROVEN';
 export type SourceSurfaceReplayCapability = 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
+
+/** Safe analyzer metadata retained for operator gap explanations. It contains
+ * no source text, literal values, or runtime observations. */
+export interface SourceAnalyzerDiagnostic {
+  readonly analyzerId: string;
+  readonly analyzerVersion: string;
+  readonly status: 'MECHANICALLY_PROVABLE' | 'REJECTED';
+  readonly behaviorClass: string | null;
+  readonly rejectionCode: string | null;
+  readonly evidenceDigest: string;
+}
+
+export interface SourceProofGapCount {
+  readonly code: string;
+  readonly count: number;
+}
+
+export interface SourceAnalyzerCount {
+  readonly analyzerId: string;
+  readonly proven: number;
+  readonly rejected: number;
+}
 
 export const SOURCE_SURFACE_REASON_CODES = [
   'SOURCE_ROOT_UNAPPROVED',
@@ -80,6 +102,7 @@ export interface SourceContractEvidence {
   readonly responseProof: SourceJoinState;
   readonly semanticContractIds: readonly string[];
   readonly semanticProof: SourceJoinState;
+  readonly responseAnalyzerDiagnostics: readonly SourceAnalyzerDiagnostic[];
 }
 
 export interface SourceEvidenceJoin {
@@ -132,6 +155,9 @@ export interface SourceSurfaceDiscoveryCounters {
   readonly joinsProven: number;
   readonly joinsRejected: number;
   readonly analyzerInvocations: number;
+  readonly responseProofGapCounts: readonly SourceProofGapCount[];
+  readonly semanticProofGapCounts: readonly SourceProofGapCount[];
+  readonly responseAnalyzerCounts: readonly SourceAnalyzerCount[];
   readonly candidatesProduced: number;
   readonly eligibleCandidates: number;
   readonly excludedCandidates: number;

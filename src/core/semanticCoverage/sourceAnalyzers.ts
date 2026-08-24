@@ -13,6 +13,7 @@ import {
 } from "../../oracles/expectations/extract/analyzer";
 import {
   findFunctionBody,
+  findMatchingBrace,
   findMatchingBracket,
   tokenizePhp,
   type PhpToken,
@@ -81,6 +82,7 @@ const SAFE_PATH_SEGMENT_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,96}$/;
 const KNOWN_TYPES: readonly JsonTypeCategory[] = ["NULL", "BOOLEAN", "NUMBER", "STRING", "OBJECT", "ARRAY"];
 const MAX_PHP_RETURN_FIELDS = 64;
 const SAFE_RESPONSE_FIELD_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,96}$/;
+const SAFE_ACCUMULATOR_RE = /^[A-Za-z_][A-Za-z0-9_]{0,96}$/;
 
 function safeName(value: string, label: string): string {
   if (!SAFE_NAME_RE.test(value)) invalid(`${label}_UNSAFE`);
@@ -181,6 +183,7 @@ function fromExistingAnalysis(input: {
   readonly analyzerId: string;
   readonly surfaces: readonly ObservationSurfaceKind[];
   readonly requested: ContractBehaviorClass;
+  readonly analyzerVersion?: AnalyzerVersion;
 }): AnalyzerObservation {
   const { analysis } = input;
   if (analysis.status !== "PROVEN") {
@@ -193,11 +196,11 @@ function fromExistingAnalysis(input: {
           : analysis.blockerCode === "SOURCE_UNAVAILABLE"
             ? "SOURCE_UNAVAILABLE"
             : "UNSUPPORTED_SYNTAX";
-    return rejected({ analyzerId: input.analyzerId, language: input.language, symbol: input.symbol, code: mapped, detail: analysis.blockerCode ?? undefined, surfaces: input.surfaces });
+    return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: mapped, detail: analysis.blockerCode ?? undefined, surfaces: input.surfaces });
   }
   const facts: readonly AnalyzerFact[] = analysis.facts;
   const first = facts[0];
-  if (first === undefined) return rejected({ analyzerId: input.analyzerId, language: input.language, symbol: input.symbol, code: "UNSUPPORTED_SYNTAX", detail: "empty-proof", surfaces: input.surfaces });
+  if (first === undefined) return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: "UNSUPPORTED_SYNTAX", detail: "empty-proof", surfaces: input.surfaces });
   let shape: DiscoveredContractShape | null = null;
   let behavior = input.requested;
   if (first.itemKeys !== undefined && input.requested === "REQUIRED_FIELD") {
@@ -205,15 +208,15 @@ function fromExistingAnalysis(input: {
     shape = { kind: "FIELD_SET", fields, requiredFields: fields, optionalFields: [] };
   } else if (first.fieldName !== undefined && first.allowedTypes !== undefined) {
     const allowedTypes = [...new Set(first.allowedTypes.map(jsonType).filter((value): value is JsonTypeCategory => value !== null))].sort();
-    if (allowedTypes.length === 0) return rejected({ analyzerId: input.analyzerId, language: input.language, symbol: input.symbol, code: "RUNTIME_VALUE_UNPROVEN", detail: "unknown-json-type", surfaces: input.surfaces });
+    if (allowedTypes.length === 0) return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: "RUNTIME_VALUE_UNPROVEN", detail: "unknown-json-type", surfaces: input.surfaces });
     shape = { kind: "FIELD_TYPE", field: safeName(first.fieldName, "FIELD"), allowedTypes };
     behavior = "FIELD_TYPE";
   } else if (first.cardinality !== undefined) {
     shape = { kind: "PAGINATION", collectionPath: ["items"], pageSize: first.cardinality, orderingPath: null };
     behavior = "PAGINATION";
   }
-  if (shape === null) return rejected({ analyzerId: input.analyzerId, language: input.language, symbol: input.symbol, code: "UNSUPPORTED_SYNTAX", detail: "proof-shape-unmapped", surfaces: input.surfaces });
-  return proven({ analyzerId: input.analyzerId, language: input.language, symbol: input.symbol, behaviorClass: behavior, shape, surfaces: input.surfaces });
+  if (shape === null) return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: "UNSUPPORTED_SYNTAX", detail: "proof-shape-unmapped", surfaces: input.surfaces });
+  return proven({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, behaviorClass: behavior, shape, surfaces: input.surfaces });
 }
 
 function parseLiteralType(value: string): JsonTypeCategory | null {
@@ -377,6 +380,199 @@ function analyzePhpDirectReturns(artifact: SourceAnalyzerArtifact): AnalyzerObse
     const type = types[0] ?? null;
     if (type !== null && types.every((candidate) => candidate === type)) {
       result.push(proven({ analyzerId: "PHP_RETURN_FIELD_TYPE", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, behaviorClass: "FIELD_TYPE", shape: { kind: "FIELD_TYPE", field, allowedTypes: [type] }, surfaces }));
+    }
+  }
+  return result;
+}
+
+const PHP_ALIAS_CONTROL_WORDS = new Set(['if', 'elseif', 'else', 'foreach', 'for', 'while', 'switch', 'case', 'try', 'catch', 'finally', 'throw', 'yield', 'include', 'require']);
+
+/** Prove a deliberately narrow variable-alias response flow:
+ * `$response = <direct array literal>; return $response;`. Control flow,
+ * mutation, calls, multiple return variables, and dynamic aliases are all
+ * rejected. The stricter shape is intentional: an alias is not treated as a
+ * data-flow theorem merely because its variable name resembles a response. */
+function analyzePhpReturnAliases(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
+  const surfaces = artifact.observationSurfaces;
+  const symbol = safeSymbol(artifact.symbol);
+  if (symbol === null) return [];
+  let tokens: PhpToken[];
+  try {
+    tokens = tokenizePhp(artifact.sourceText);
+  } catch {
+    return [];
+  }
+  const body = findFunctionBody(tokens, symbol);
+  if (body === null) return [];
+  const returns: string[] = [];
+  let controlFlow = false;
+  for (let index = body.start + 1; index < body.end; index += 1) {
+    const token = tokens[index]!;
+    if (token.t === 'WORD' && token.v === 'return') {
+      const next = tokens[index + 1];
+      if (next?.t !== 'VARIABLE') return [];
+      returns.push(next.v);
+    }
+    if (token.t === 'WORD' && PHP_ALIAS_CONTROL_WORDS.has(token.v)) controlFlow = true;
+  }
+  if (returns.length === 0 || new Set(returns).size !== 1) return [];
+  const target = returns[0]!;
+  if (!SAFE_ACCUMULATOR_RE.test(target)) return [];
+  const assignments: PhpReturnArrayShape[] = [];
+  let otherTargetUse = false;
+  for (let index = body.start + 1; index < body.end; index += 1) {
+    const token = tokens[index]!;
+    if (token.t !== 'VARIABLE' || token.v !== target) continue;
+    const next = tokens[index + 1];
+    const isReturnUse = tokens[index - 1]?.t === 'WORD' && tokens[index - 1]?.v === 'return';
+    if (isReturnUse) continue;
+    if (next?.t === 'PUNCT' && next.v === '=' && tokens[index + 2]?.t === 'PUNCT' && tokens[index + 2]?.v === '[') {
+      const shape = parsePhpReturnArray(tokens, index + 2, body.end);
+      if (shape === null) return [rejected({ analyzerId: 'PHP_RETURN_ALIAS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'DYNAMIC_KEY_FLOW', detail: 'alias-array-shape', surfaces })];
+      assignments.push(shape);
+      continue;
+    }
+    otherTargetUse = true;
+  }
+  if (assignments.length === 0) return [];
+  if (controlFlow || otherTargetUse || assignments.some((shape) => shape.rootType === null)) {
+    return [rejected({ analyzerId: 'PHP_RETURN_ALIAS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: controlFlow ? 'alias-control-flow' : 'alias-use', surfaces })];
+  }
+  const rootType = assignments[0]!.rootType;
+  if (rootType === null || assignments.some((shape) => shape.rootType !== rootType)) {
+    return [rejected({ analyzerId: 'PHP_RETURN_ALIAS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: 'alias-root-mismatch', surfaces })];
+  }
+  const result: AnalyzerObservation[] = [proven({ analyzerId: 'PHP_RETURN_ALIAS_ROOT_TYPE', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'FIELD_TYPE', shape: { kind: 'FIELD_TYPE', field: 'root', allowedTypes: [rootType] }, surfaces })];
+  if (rootType !== 'OBJECT') return result;
+  const fields = assignments[0]!.fields;
+  if (assignments.some((shape) => shape.fields.length !== fields.length || shape.fields.some((field, index) => field !== fields[index]))) {
+    return [rejected({ analyzerId: 'PHP_RETURN_ALIAS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: 'alias-field-mismatch', surfaces })];
+  }
+  result.push(proven({ analyzerId: 'PHP_RETURN_ALIAS_OBJECT_FIELDS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'REQUIRED_FIELD', shape: { kind: 'FIELD_SET', fields, requiredFields: fields, optionalFields: [] }, surfaces }));
+  for (const field of fields) {
+    const types = assignments.map((shape) => shape.fieldTypes[field] ?? null);
+    const type = types[0] ?? null;
+    if (type !== null && types.every((candidate) => candidate === type)) {
+      result.push(proven({ analyzerId: 'PHP_RETURN_ALIAS_FIELD_TYPE', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'FIELD_TYPE', shape: { kind: 'FIELD_TYPE', field, allowedTypes: [type] }, surfaces }));
+    }
+  }
+  return result;
+}
+
+interface PhpReturnBranchShape {
+  readonly shape: PhpReturnArrayShape;
+  readonly alias: boolean;
+}
+
+function topLevelPhpReturnBranches(tokens: readonly PhpToken[], body: { readonly start: number; readonly end: number }): readonly { readonly start: number; readonly end: number }[] | null {
+  const blocks: { start: number; end: number }[] = [];
+  let cursor = body.start + 1;
+  let sawIf = false;
+  let sawElse = false;
+  while (cursor < body.end) {
+    const keyword = tokens[cursor];
+    if (keyword?.t !== 'WORD' || (keyword.v !== 'if' && keyword.v !== 'elseif' && keyword.v !== 'else')) return null;
+    if (keyword.v === 'else') sawElse = true;
+    else sawIf = true;
+    let open = cursor + 1;
+    if (keyword.v !== 'else') {
+      let depth = 0;
+      while (open < body.end) {
+        const token = tokens[open]!;
+        if (token.t === 'PUNCT' && token.v === '(') depth += 1;
+        else if (token.t === 'PUNCT' && token.v === ')') {
+          depth -= 1;
+          if (depth === 0) {
+            open += 1;
+            break;
+          }
+        }
+        open += 1;
+      }
+    }
+    while (open < body.end && !(tokens[open]?.t === 'PUNCT' && tokens[open]?.v === '{')) open += 1;
+    if (tokens[open]?.t !== 'PUNCT' || tokens[open]?.v !== '{') return null;
+    const close = findMatchingBrace([...tokens], open);
+    if (close >= body.end) return null;
+    blocks.push({ start: open + 1, end: close });
+    cursor = close + 1;
+    if (cursor >= body.end) break;
+  }
+  return sawIf && sawElse && blocks.length >= 2 ? blocks : null;
+}
+
+function branchReturnShape(tokens: readonly PhpToken[], branch: { readonly start: number; readonly end: number }): PhpReturnBranchShape | null {
+  let returnIndex = -1;
+  for (let index = branch.start; index < branch.end; index += 1) {
+    const token = tokens[index]!;
+    if (token.t === 'WORD' && token.v === 'return') {
+      if (returnIndex !== -1) return null;
+      returnIndex = index;
+    }
+    if (token.t === 'WORD' && PHP_ALIAS_CONTROL_WORDS.has(token.v)) return null;
+  }
+  if (returnIndex === -1) return null;
+  const next = tokens[returnIndex + 1];
+  if (next?.t === 'PUNCT' && next.v === '[') {
+    const shape = parsePhpReturnArray(tokens, returnIndex + 1, branch.end);
+    return shape === null ? null : { shape, alias: false };
+  }
+  if (next?.t !== 'VARIABLE' || !SAFE_ACCUMULATOR_RE.test(next.v)) return null;
+  const target = next.v;
+  let assignment: PhpReturnArrayShape | null = null;
+  for (let index = branch.start; index < returnIndex; index += 1) {
+    const token = tokens[index]!;
+    if (token.t !== 'VARIABLE' || token.v !== target) continue;
+    if (tokens[index + 1]?.t === 'PUNCT' && tokens[index + 1]?.v === '=' && tokens[index + 2]?.t === 'PUNCT' && tokens[index + 2]?.v === '[') {
+      if (assignment !== null) return null;
+      assignment = parsePhpReturnArray(tokens, index + 2, branch.end);
+      continue;
+    }
+    return null;
+  }
+  return assignment === null ? null : { shape: assignment, alias: true };
+}
+
+/** Prove complete `if`/`elseif`/`else` response alternatives when each branch
+ * returns either a direct literal array or a directly assigned literal alias.
+ * A missing else, nested control flow, dynamic alias, or shape mismatch is
+ * rejected; no partial branch is promoted to response authority. */
+function analyzePhpReturnBranches(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
+  const surfaces = artifact.observationSurfaces;
+  const symbol = safeSymbol(artifact.symbol);
+  if (symbol === null) return [];
+  let tokens: PhpToken[];
+  try {
+    tokens = tokenizePhp(artifact.sourceText);
+  } catch {
+    return [];
+  }
+  const body = findFunctionBody(tokens, symbol);
+  if (body === null) return [];
+  const branches = topLevelPhpReturnBranches(tokens, body);
+  if (branches === null) return [];
+  const parsed = branches.map((branch) => branchReturnShape(tokens, branch));
+  if (parsed.some((value) => value === null) || parsed.length === 0) {
+    return [rejected({ analyzerId: 'PHP_RETURN_BRANCHES', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: 'branch-shape', surfaces })];
+  }
+  const branchShapes = parsed as PhpReturnBranchShape[];
+  if (!branchShapes.some((branch) => branch.alias)) return [];
+  const rootType = branchShapes[0]!.shape.rootType;
+  if (rootType === null || branchShapes.some((branch) => branch.shape.rootType !== rootType)) {
+    return [rejected({ analyzerId: 'PHP_RETURN_BRANCHES', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: 'branch-root-mismatch', surfaces })];
+  }
+  const result: AnalyzerObservation[] = [proven({ analyzerId: 'PHP_RETURN_BRANCH_ROOT_TYPE', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'FIELD_TYPE', shape: { kind: 'FIELD_TYPE', field: 'root', allowedTypes: [rootType] }, surfaces })];
+  if (rootType !== 'OBJECT') return result;
+  const fields = branchShapes[0]!.shape.fields;
+  if (branchShapes.some((branch) => branch.shape.fields.length !== fields.length || branch.shape.fields.some((field, index) => field !== fields[index]))) {
+    return [rejected({ analyzerId: 'PHP_RETURN_BRANCHES', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, code: 'BRANCH_SET_INCOMPLETE', detail: 'branch-field-mismatch', surfaces })];
+  }
+  result.push(proven({ analyzerId: 'PHP_RETURN_BRANCH_OBJECT_FIELDS', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'REQUIRED_FIELD', shape: { kind: 'FIELD_SET', fields, requiredFields: fields, optionalFields: [] }, surfaces }));
+  for (const field of fields) {
+    const types = branchShapes.map((branch) => branch.shape.fieldTypes[field] ?? null);
+    const type = types[0] ?? null;
+    if (type !== null && types.every((candidate) => candidate === type)) {
+      result.push(proven({ analyzerId: 'PHP_RETURN_BRANCH_FIELD_TYPE', analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: 'PHP', symbol, behaviorClass: 'FIELD_TYPE', shape: { kind: 'FIELD_TYPE', field, allowedTypes: [type] }, surfaces }));
     }
   }
   return result;
@@ -588,7 +784,7 @@ function analyzePhp(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
         break;
     }
   }
-  return artifact.includeExtendedResponseProof === true ? [...out, ...analyzePhpDirectReturns(artifact)] : out;
+  return artifact.includeExtendedResponseProof === true ? [...out, ...analyzePhpReturnBranches(artifact), ...analyzePhpReturnAliases(artifact), ...analyzePhpDirectReturns(artifact)] : out;
 }
 
 /** Analyze one bounded source artifact with fixed syntax-aware patterns. */
@@ -629,7 +825,7 @@ export function sourceSurfaceAnalyzerSetIdentity(): string {
   return sourceEvidenceDigest({
     version: REAL_SOURCE_RESPONSE_ANALYZER_VERSION,
     legacyAnalyzerSet: analyzerSetIdentity(),
-    extendedFamilies: ["PHP_RETURN_ROOT_TYPE", "PHP_RETURN_OBJECT_FIELDS", "PHP_RETURN_FIELD_TYPE"],
+    extendedFamilies: ["PHP_RETURN_ALIAS_ROOT_TYPE", "PHP_RETURN_ALIAS_OBJECT_FIELDS", "PHP_RETURN_ALIAS_FIELD_TYPE", "PHP_RETURN_BRANCH_ROOT_TYPE", "PHP_RETURN_BRANCH_OBJECT_FIELDS", "PHP_RETURN_BRANCH_FIELD_TYPE", "PHP_RETURN_ROOT_TYPE", "PHP_RETURN_OBJECT_FIELDS", "PHP_RETURN_FIELD_TYPE"],
   });
 }
 

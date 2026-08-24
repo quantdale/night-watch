@@ -2,10 +2,11 @@
 
 import { safeSemanticDigest } from '../semanticCoverage/types';
 import type { Phase24CandidatePortfolio, Phase24PortfolioSelection } from '../phase24/types';
+import { sourceProofGapCode } from './surfaces';
 import type { SourceSurfaceDiscovery } from './surfaces';
 import type { SourceSurfaceChangeReport } from './surfaceTypes';
 
-export const REAL_SOURCE_REVIEW_QUEUE_VERSION = 'nightwatch.real-source-review-queue.v1' as const;
+export const REAL_SOURCE_REVIEW_QUEUE_VERSION = 'nightwatch.real-source-review-queue.v2' as const;
 
 export interface SourceReviewQueueRow {
   readonly surfaceId: string;
@@ -18,6 +19,9 @@ export interface SourceReviewQueueRow {
   readonly runtimeBinding: string;
   readonly lifecycle: string;
   readonly reasons: readonly string[];
+  readonly proofGapCodes: readonly string[];
+  readonly analyzerIds: readonly string[];
+  readonly missingProof: readonly string[];
   readonly priorityFactors: readonly string[];
   readonly explanation: readonly string[];
 }
@@ -39,6 +43,8 @@ function explanation(input: { readonly row: SourceReviewQueueRow; readonly surfa
   else values.push(`READ_ONLY_${input.surface.operation.readOnlyClassification}`);
   if (input.surface.contract.semanticProof === 'PROVEN') values.push('SEMANTIC_CONTRACT_PROVEN');
   else values.push('SEMANTIC_CONTRACT_UNPROVEN');
+  values.push(...input.row.proofGapCodes.map((code) => `PROOF_GAP_${code}`));
+  values.push(...input.row.missingProof.map((proof) => `MISSING_${proof}`));
   if (input.surface.replayCapability === 'SUPPORTED') values.push('REPLAY_SUPPORTED');
   if (input.row.componentState === 'EXACT_COMPONENT') values.push('COMPONENT_EXACT');
   if (input.row.selected) values.push(`PHASE24_SELECTED_${input.row.rank ?? 'UNRANKED'}`);
@@ -64,6 +70,17 @@ export function buildSourceReviewQueue(input: { readonly discovery: SourceSurfac
       runtimeBinding: surface.operation.runtimeBinding,
       lifecycle: surface.lifecycle,
       reasons: [...new Set([...surface.exclusionReasons, ...candidate.reasonCodes])].sort(),
+      proofGapCodes: [...new Set([
+        sourceProofGapCode(surface.contract.responseProof, surface.contract.responseAnalyzerDiagnostics, 'RESPONSE'),
+        sourceProofGapCode(surface.contract.semanticProof, surface.contract.responseAnalyzerDiagnostics, 'SEMANTIC'),
+      ].filter((code): code is string => code !== null))].sort(),
+      analyzerIds: [...new Set(surface.contract.responseAnalyzerDiagnostics.map((diagnostic) => diagnostic.analyzerId))].sort(),
+      missingProof: [...new Set([
+        surface.contract.responseProof === 'PROVEN' ? null : 'RESPONSE_CONTRACT',
+        surface.contract.semanticProof === 'PROVEN' ? null : 'SEMANTIC_CONTRACT',
+        surface.operation.readOnlyClassification === 'PROVEN_READ_ONLY' ? null : 'READ_ONLY_PROOF',
+        surface.operation.runtimeBinding === 'RUNTIME_BOUND_EXACT' ? null : 'RUNTIME_BINDING',
+      ].filter((proof): proof is string => proof !== null))].sort(),
       priorityFactors: priorityFactors(surface, input.changeReport),
       explanation: [],
     };

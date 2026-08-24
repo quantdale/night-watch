@@ -37,6 +37,9 @@ import {
   type SourceRuntimeBinding,
   type SourceSurfaceDiscoveryCounters,
   type SourceSurfaceReasonCode,
+  type SourceAnalyzerCount,
+  type SourceAnalyzerDiagnostic,
+  type SourceProofGapCount,
 } from './surfaceTypes';
 
 const SAFE_HANDLER_RE = /^[A-Za-z_][A-Za-z0-9_$\\.-]{0,159}$/;
@@ -46,7 +49,7 @@ const SAFE_OPERATION_RE = /^[A-Za-z][A-Za-z0-9_.:/-]{0,199}$/;
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 const MAX_DISCOVERED_OPERATIONS = 128;
 const ROUTE_FILE_RE = /(?:Routing\.ya?ml|routes?\.(?:json|ya?ml)|openapi\.json|swagger\.json)$/i;
-const SOURCE_VERSION = 'nightwatch.real-source-surface-descriptor.v1';
+const SOURCE_VERSION = 'nightwatch.real-source-surface-descriptor.v2';
 
 export interface SourceSurfaceDiscovery {
   readonly inventory: RealSourceSnapshotInventory;
@@ -381,6 +384,17 @@ function resolveSurfaceJoins(input: { readonly access: SiblingSourceAccess; read
   return { joins, handlerState, requestState, responseState };
 }
 
+function analyzerDiagnostics(observations: readonly AnalyzerObservation[]): readonly SourceAnalyzerDiagnostic[] {
+  return observations.map((observation) => ({
+    analyzerId: observation.analyzerId,
+    analyzerVersion: observation.analyzerVersion,
+    status: observation.status,
+    behaviorClass: observation.behaviorClass,
+    rejectionCode: observation.rejectionCode,
+    evidenceDigest: observation.evidenceDigest,
+  })).sort((left, right) => left.analyzerId.localeCompare(right.analyzerId) || left.evidenceDigest.localeCompare(right.evidenceDigest));
+}
+
 function responseEvidence(input: { readonly operation: SourceOperationDescriptor; readonly observations: readonly AnalyzerObservation[]; readonly handlerState: SourceJoinState; readonly responseReferenceState: SourceJoinState | null }): { readonly responseContractId: string | null; readonly responseEvidenceDigest: string | null; readonly semanticContractIds: readonly string[]; readonly responseProof: SourceJoinState; readonly semanticProof: SourceJoinState } {
   if (input.handlerState !== 'PROVEN' || (input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN')) {
     const state = input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN' ? input.responseReferenceState : input.handlerState;
@@ -402,7 +416,36 @@ function contractEvidence(operation: SourceOperationDescriptor, observations: re
   const requestContractId = safeSemanticDigest(requestCore, 'request-contract');
   const requestProof = operation.requestReference === null ? operation.routeProof === 'PROVEN' ? 'PROVEN' : 'UNSUPPORTED_REFERENCE' : joins.requestState ?? 'UNSUPPORTED_REFERENCE';
   const response = responseEvidence({ operation, observations, handlerState: joins.handlerState, responseReferenceState: joins.responseState });
-  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof };
+  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof, responseAnalyzerDiagnostics: analyzerDiagnostics(observations) };
+}
+
+export function sourceProofGapCode(proof: SourceJoinState, diagnostics: readonly SourceAnalyzerDiagnostic[], kind: 'RESPONSE' | 'SEMANTIC'): string | null {
+  if (proof === 'PROVEN') return null;
+  if (proof !== 'UNSUPPORTED_REFERENCE') return `${kind}_${proof}`;
+  const rejectionCodes = [...new Set(diagnostics.map((diagnostic) => diagnostic.rejectionCode).filter((code): code is string => code !== null))].sort();
+  if (rejectionCodes.length > 0) return `${kind}_ANALYZER_${rejectionCodes.join('+')}`;
+  return `${kind}_ANALYZER_UNPROVEN`;
+}
+
+function gapCounts(values: readonly (string | null)[]): readonly SourceProofGapCount[] {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    if (value !== null) counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(([code, count]) => ({ code, count })).sort((left, right) => left.code.localeCompare(right.code));
+}
+
+function analyzerCounts(surfaces: readonly RealSourceSurfaceDescriptor[]): readonly SourceAnalyzerCount[] {
+  const counts = new Map<string, { proven: number; rejected: number }>();
+  for (const surface of surfaces) {
+    for (const diagnostic of surface.contract.responseAnalyzerDiagnostics) {
+      const current = counts.get(diagnostic.analyzerId) ?? { proven: 0, rejected: 0 };
+      if (diagnostic.status === 'MECHANICALLY_PROVABLE') current.proven += 1;
+      else current.rejected += 1;
+      counts.set(diagnostic.analyzerId, current);
+    }
+  }
+  return [...counts.entries()].map(([analyzerId, countsForAnalyzer]) => ({ analyzerId, ...countsForAnalyzer })).sort((left, right) => left.analyzerId.localeCompare(right.analyzerId));
 }
 
 function componentProvenance(operation: SourceOperationDescriptor): SourceComponentRoute {
@@ -621,6 +664,9 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     joinsProven: surfaces.reduce((count, surface) => count + surface.joins.filter((join) => join.state === 'PROVEN').length, 0),
     joinsRejected: surfaces.reduce((count, surface) => count + surface.joins.filter((join) => join.state !== 'PROVEN').length, 0),
     analyzerInvocations,
+    responseProofGapCounts: gapCounts(surfaces.map((surface) => sourceProofGapCode(surface.contract.responseProof, surface.contract.responseAnalyzerDiagnostics, 'RESPONSE'))),
+    semanticProofGapCounts: gapCounts(surfaces.map((surface) => sourceProofGapCode(surface.contract.semanticProof, surface.contract.responseAnalyzerDiagnostics, 'SEMANTIC'))),
+    responseAnalyzerCounts: analyzerCounts(surfaces),
     candidatesProduced: surfaces.length,
     eligibleCandidates: 0,
     excludedCandidates: surfaces.length,
