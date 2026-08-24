@@ -111,6 +111,8 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
               installResult: 'PASS',
               gateResult,
               gateReceiptDigest: gateReceipt?.receiptDigest ?? null,
+              gateDefinitionDigest: gateReceipt?.gateDefinitionDigest ?? null,
+              gateGroups: Array.isArray(gateReceipt?.groups) ? gateReceipt.groups : [],
               cleanBefore: cleanBefore.stdout.trim() === '',
               cleanAfter: cleanAfter.status === 0 && cleanAfter.stdout.trim() === '',
               nodeModulesReused: false,
