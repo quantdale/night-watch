@@ -151,7 +151,7 @@ function parseYamlRoutes(sourcePath: string, sourceText: string): readonly Parse
   const routes: ParsedRoute[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]!;
-    const key = /^\s*["'](get|post|put|patch|delete):([^"']+)["']:\s*$/i.exec(line);
+    const key = line.match(/^\s*["'](get|post|put|patch|delete):([^"']+)["']:\s*$/i);
     if (key === null) continue;
     const routeMethod = method(key[1] ?? '');
     const routeTemplate = safeRoute(key[2] ?? '');
@@ -166,10 +166,10 @@ function parseYamlRoutes(sourcePath: string, sourceText: string): readonly Parse
       if (trimmed.length === 0 || trimmed.startsWith('#')) continue;
       const childIndent = childLine.length - childLine.trimStart().length;
       if (childIndent <= routeIndent) break;
-      const clientMatch = /^client:\s*(.+)$/.exec(trimmed);
-      const methodMatch = /^method:\s*(.+)$/.exec(trimmed);
-      const requestMatch = /^(?:request|requestSchema|requestDto):\s*["']?([^"']+?)["']?$/.exec(trimmed);
-      const responseMatch = /^(?:response|responseSchema|responseDto|schema):\s*["']?([^"']+?)["']?$/.exec(trimmed);
+      const clientMatch = trimmed.match(/^client:\s*(.+)$/);
+      const methodMatch = trimmed.match(/^method:\s*(.+)$/);
+      const requestMatch = trimmed.match(/^(?:request|requestSchema|requestDto):\s*["']?([^"']+?)["']?$/);
+      const responseMatch = trimmed.match(/^(?:response|responseSchema|responseDto|schema):\s*["']?([^"']+?)["']?$/);
       if (clientMatch !== null && client === null) client = clientMatch[1]!.trim();
       if (methodMatch !== null && handler === null) handler = methodMatch[1]!.trim();
       if (requestMatch !== null && requestReference === null) requestReference = safeReference(requestMatch[1]!.trim());
