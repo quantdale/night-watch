@@ -330,6 +330,9 @@ function gitHead(root, errors) {
 // arbitrary documentation or source descendants must not look synchronized.
 const APPROVED_CHECKPOINT_PATHS = [
   /^AGENTS\.md$/,
+  // The repository README is a durable operator-facing program document;
+  // allow its terminal updates without relabeling them as implementation.
+  /^README\.md$/,
   /^\.agent\/(?:ACTIVE_TASK\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|HANDOFF|WORKSTREAMS|ACCEPTANCE_MATRIX|DEFECT_LEDGER|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER|MASS_IMPLEMENTATION_HANDOFF)\.md$/,
   // Durable program artifacts mandated by AGENTS.md and the multi-session
