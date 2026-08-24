@@ -6,15 +6,15 @@ Title: Nightwatch Phase 24 — Local Autonomous Triage Depth and DEV-Readiness A
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-24-local-triage-depth-dev-readiness
 Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last validated implementation SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last checkpoint: M7 — deterministic triage, replay, privacy, dossier, and provenance slice
+Last validated implementation SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+Last checkpoint: M8 — Phase 24 implementation checkpoint after focused validation
 Current milestone: M8 — lifecycle, CI observability, gate integration, and clean-checkout hardening
 Next action: Add adversarial proxy/lifecycle coverage, qualify the expanded Phase 9–24 compatibility cone and synthetic campaign, measure the authoritative gate, and repair any regressions before the next checkpoint.
 Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_VALIDATED_IMPLEMENTATION_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+LAST_VALIDATED_IMPLEMENTATION_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
 
 ## Terminal Boundary Tokens
 

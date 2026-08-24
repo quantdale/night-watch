@@ -14,6 +14,7 @@ import {
   evaluatePhase24CrossCandidateRelation,
   evaluatePhase24SemanticExpectation,
   minimizePhase24Failure,
+  prioritizePhase24Portfolio,
   routePhase24OwnerProvenance,
   validatePhase24CandidateInvalidationLedger,
   validatePhase24CandidatePortfolio,
@@ -21,6 +22,7 @@ import {
   validatePhase24Manifest,
   validatePhase24Minimization,
   validatePhase24NoContactRehearsal,
+  validatePhase24PortfolioSelection,
   type Phase24CandidateInput,
   type Phase24CiObservation,
   type Phase24ManifestInput,
@@ -153,6 +155,20 @@ test.describe('Phase 24 source-qualified portfolio and invalidation', () => {
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.stable.read'))?.state).toBe('SOURCE_CHANGED');
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.promoted.read'))?.state).toBe('NEWLY_ELIGIBLE');
     expect(ledger.records.find((record) => record.surfaceKey.endsWith('.replay.read'))?.state).toBe('REPLAY_PLAN_INVALIDATED');
+  });
+
+  test('prioritizes eligible surfaces by explainable score while preserving material diversity', () => {
+    const candidates = buildPhase24CandidatePortfolio({ candidates: [
+      candidate('collection', { materialClass: 'COLLECTION', selectionPriority: 50 }),
+      candidate('membership', { materialClass: 'MEMBERSHIP', selectionPriority: 50 }),
+      candidate('protocol', { materialClass: 'PROTOCOL', selectionPriority: 1 }),
+      candidate('excluded', { materialClass: 'RELATIONAL', mutationClassification: 'MUTATION' }),
+    ] });
+    const selection = prioritizePhase24Portfolio({ portfolio: candidates, maxCandidates: 2 });
+    validatePhase24PortfolioSelection(selection, candidates);
+    expect(selection.selectedCandidateIds).toHaveLength(2);
+    expect(selection.rows.filter((row) => row.selected).map((row) => row.reasonCode)).toEqual(expect.arrayContaining(['MATERIAL_DIVERSITY']));
+    expect(selection.rows.find((row) => row.candidateId === candidates.candidates.find((item) => item.targetId.includes('.excluded.'))?.candidateId)?.reasonCode).toBe('SOURCE_QUALIFICATION_EXCLUDED');
   });
 });
 

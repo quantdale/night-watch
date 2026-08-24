@@ -16,6 +16,7 @@ import {
 } from './common';
 import {
   PHASE24_PORTFOLIO_VERSION,
+  PHASE24_SELECTION_VERSION,
   type Phase24BehaviorOwner,
   type Phase24CandidateDecision,
   type Phase24CandidateInput,
@@ -26,6 +27,8 @@ import {
   type Phase24ReplayDescriptor,
   type Phase24RouteIdentity,
   type Phase24SourceIdentity,
+  type Phase24PortfolioSelection,
+  type Phase24PortfolioSelectionRow,
 } from './types';
 
 const POSITIVE_CODES: readonly Phase24ReasonCode[] = [
@@ -286,4 +289,80 @@ export function portfolioCandidateById(portfolio: Phase24CandidatePortfolio, can
 /** Safe explanation helper for operator/dossier layers. */
 export function candidateReasonSummary(candidate: Phase24CandidateDecision): readonly string[] {
   return [...candidate.reasonCodes].sort((left, right) => left.localeCompare(right));
+}
+
+const MATERIAL_BONUS: Readonly<Record<Phase24CandidateDecision['materialClass'], number>> = {
+  COLLECTION: 50,
+  MEMBERSHIP: 45,
+  RELATIONAL: 40,
+  DIFFERENTIAL: 35,
+  SHAPE: 30,
+  PROTOCOL: 25,
+};
+
+function candidateScore(candidate: Phase24CandidateDecision): number {
+  const evidence = candidate.expectedEvidenceValue === 'HIGH' ? 60 : candidate.expectedEvidenceValue === 'MEDIUM' ? 40 : candidate.expectedEvidenceValue === 'LOW' ? 20 : 0;
+  const replay = candidate.replay?.strategy === 'DETERMINISTIC_FIXTURE' ? 20 : candidate.replay?.strategy === 'FIRST_REPLAY' ? 15 : 0;
+  return evidence + replay + MATERIAL_BONUS[candidate.materialClass] + (1000 - candidate.selectionPriority);
+}
+
+/** Deterministically prioritize eligible source surfaces with material diversity. */
+export function prioritizePhase24Portfolio(input: { readonly portfolio: Phase24CandidatePortfolio; readonly maxCandidates: number }): Phase24PortfolioSelection {
+  validatePhase24CandidatePortfolio(input.portfolio);
+  assertBoundedInteger(input.maxCandidates, 'SELECTION_MAX', 1, 6);
+  const eligible = input.portfolio.candidates
+    .filter((candidate) => candidate.eligibility === 'ELIGIBLE')
+    .map((candidate) => ({ candidate, score: candidateScore(candidate) }))
+    .sort((left, right) => right.score - left.score || left.candidate.candidateId.localeCompare(right.candidate.candidateId));
+  const selected: Array<{ readonly candidate: Phase24CandidateDecision; readonly score: number; readonly reasonCode: 'MATERIAL_DIVERSITY' | 'SCORE_PRIORITY' }> = [];
+  const selectedClasses = new Set<Phase24CandidateDecision['materialClass']>();
+  for (const item of eligible) {
+    if (selected.length >= input.maxCandidates) break;
+    if (!selectedClasses.has(item.candidate.materialClass)) {
+      selected.push({ ...item, reasonCode: 'MATERIAL_DIVERSITY' });
+      selectedClasses.add(item.candidate.materialClass);
+    }
+  }
+  for (const item of eligible) {
+    if (selected.length >= input.maxCandidates) break;
+    if (!selected.some((entry) => entry.candidate.candidateId === item.candidate.candidateId)) selected.push({ ...item, reasonCode: 'SCORE_PRIORITY' });
+  }
+  const rankById = new Map(selected.map((entry, index) => [entry.candidate.candidateId, { rank: index + 1, reasonCode: entry.reasonCode }]));
+  const rows: Phase24PortfolioSelectionRow[] = input.portfolio.candidates.map((candidate) => {
+    const rank = rankById.get(candidate.candidateId);
+    return {
+      candidateId: candidate.candidateId,
+      score: candidate.eligibility === 'ELIGIBLE' ? candidateScore(candidate) : 0,
+      rank: rank?.rank ?? null,
+      selected: rank !== undefined,
+      reasonCode: candidate.eligibility !== 'ELIGIBLE' ? 'SOURCE_QUALIFICATION_EXCLUDED' : rank?.reasonCode ?? 'BOUND_EXHAUSTED',
+    };
+  });
+  const core = {
+    schemaVersion: PHASE24_SELECTION_VERSION,
+    portfolioDigest: input.portfolio.deterministicDigest,
+    maxCandidates: input.maxCandidates,
+    selectedCandidateIds: [...rankById.keys()].sort((left, right) => left.localeCompare(right)),
+    rows,
+  };
+  return { ...core, deterministicDigest: digest('selection:', core) };
+}
+
+export function validatePhase24PortfolioSelection(selection: Phase24PortfolioSelection, portfolio: Phase24CandidatePortfolio): void {
+  validatePhase24CandidatePortfolio(portfolio);
+  if (selection.schemaVersion !== PHASE24_SELECTION_VERSION || selection.portfolioDigest !== portfolio.deterministicDigest || selection.maxCandidates < 1 || selection.maxCandidates > 6 || selection.rows.length !== portfolio.candidates.length) invalid('SELECTION_HEADER');
+  if (selection.selectedCandidateIds.length > selection.maxCandidates || new Set(selection.selectedCandidateIds).size !== selection.selectedCandidateIds.length) invalid('SELECTION_BOUND');
+  const candidateIds = portfolio.candidates.map((candidate) => candidate.candidateId);
+  if (JSON.stringify(selection.rows.map((row) => row.candidateId)) !== JSON.stringify(candidateIds)) invalid('SELECTION_ORDER');
+  const rankValues = selection.rows.filter((row) => row.rank !== null).map((row) => row.rank as number);
+  if (JSON.stringify([...rankValues].sort((left, right) => left - right)) !== JSON.stringify(Array.from({ length: rankValues.length }, (_unused, index) => index + 1))) invalid('SELECTION_RANK');
+  if (JSON.stringify(selection.selectedCandidateIds) !== JSON.stringify([...selection.selectedCandidateIds].sort((left, right) => left.localeCompare(right)))) invalid('SELECTION_ID_ORDER');
+  const core = {
+    schemaVersion: selection.schemaVersion,
+    portfolioDigest: selection.portfolioDigest,
+    maxCandidates: selection.maxCandidates,
+    selectedCandidateIds: selection.selectedCandidateIds,
+    rows: selection.rows,
+  };
+  if (selection.deterministicDigest !== digest('selection:', core)) invalid('SELECTION_DIGEST');
 }

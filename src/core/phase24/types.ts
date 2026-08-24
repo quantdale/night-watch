@@ -10,6 +10,7 @@ export const PHASE24_DOSSIER_VERSION = 'nightwatch.phase24-owner-review-dossier.
 export const PHASE24_CI_VERSION = 'nightwatch.phase24-ci-observability.v1' as const;
 export const PHASE24_READINESS_VERSION = 'nightwatch.phase24-readiness-diagnostics.v1' as const;
 export const PHASE24_SYNTHETIC_CAMPAIGN_VERSION = 'nightwatch.phase24-synthetic-campaign.v1' as const;
+export const PHASE24_SELECTION_VERSION = 'nightwatch.phase24-portfolio-selection.v1' as const;
 
 export type Phase24Confidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNCONFIRMED';
 export type Phase24MaterialClass = 'COLLECTION' | 'MEMBERSHIP' | 'RELATIONAL' | 'DIFFERENTIAL' | 'SHAPE' | 'PROTOCOL';
@@ -150,6 +151,23 @@ export interface Phase24CandidatePortfolio {
   readonly consideredCount: number;
   readonly eligibleCount: number;
   readonly excludedCount: number;
+  readonly deterministicDigest: string;
+}
+
+export interface Phase24PortfolioSelectionRow {
+  readonly candidateId: string;
+  readonly score: number;
+  readonly rank: number | null;
+  readonly selected: boolean;
+  readonly reasonCode: 'MATERIAL_DIVERSITY' | 'SCORE_PRIORITY' | 'BOUND_EXHAUSTED' | 'SOURCE_QUALIFICATION_EXCLUDED';
+}
+
+export interface Phase24PortfolioSelection {
+  readonly schemaVersion: typeof PHASE24_SELECTION_VERSION;
+  readonly portfolioDigest: string;
+  readonly maxCandidates: number;
+  readonly selectedCandidateIds: readonly string[];
+  readonly rows: readonly Phase24PortfolioSelectionRow[];
   readonly deterministicDigest: string;
 }
 

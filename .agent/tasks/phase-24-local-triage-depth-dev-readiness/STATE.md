@@ -8,15 +8,15 @@ Title: Nightwatch Phase 24 — Local Autonomous Triage Depth and DEV-Readiness A
 Authorization class: PHASE_24_LOCAL_AUTONOMOUS_TRIAGE_DEPTH_AND_DEV_READINESS_ONLY
 Status: IN_PROGRESS
 Starting SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last validated implementation SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-Last substantive checkpoint SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+Last validated implementation SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+Last substantive checkpoint SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
 Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_VALIDATED_IMPLEMENTATION_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: da534f6af4d6d230be5f666511fab4481f1a3225
+LAST_VALIDATED_IMPLEMENTATION_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 144c9153a1bb79d67ff4886e05e053e499b42336
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -116,6 +116,14 @@ and DEV untouched until final freeze.
 - Focused Phase 24 test: PASS — 11/11 tests.
 - Focused Phase 24 campaign: PASS — 12/12 tests including the synthetic
   matrix; direct typecheck, quality-gate spec, and hardening are PASS.
+- Expanded compatibility probe from the dirty worktree: NON-QUALIFYING —
+  1,817 total / 1,814 passed / 1 skipped / 2 failed; both failures were the
+  pre-existing self-development source-dirty guards at
+  `tests/unit/selfDevAdoptionCli.test.ts:65` and `:122`. No Phase 24 test
+  failed; clean qualification remains required.
+- Implementation checkpoint `144c9153a1bb79d67ff4886e05e053e499b42336` was
+  committed after `git diff --check`, focused typecheck, hardening, quality
+  gate spec, Phase 24 11/11, and Phase 24 campaign 12/12 passed.
 
 ## Decisions Made During This Task
 
