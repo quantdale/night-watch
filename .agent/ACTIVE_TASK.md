@@ -6,7 +6,7 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
+Last validated implementation SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
 Last checkpoint: M2 — versioned scan configuration and deterministic bounded inventory
 Current milestone: M3 — analyzer integration and proof-soundness regression suite.
 Next action: Repair TS validation-range semantics and replace serialized-length
@@ -15,8 +15,8 @@ positive/negative/ambiguous analyzer regressions.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
