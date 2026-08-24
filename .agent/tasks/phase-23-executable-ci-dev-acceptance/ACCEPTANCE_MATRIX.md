@@ -18,7 +18,7 @@
 | A14 | Exact-head authority | Current SHA + gate digest + executed required jobs + green/non-skipped result required | PASS — classifier and pre-DEV core require all bindings |
 | A15 | Preflight V3 | LOCAL, CLEAN, EXTERNAL CI, SOURCE, AUTH, MANIFEST, CONTAINMENT categories all mandatory | PASS — core and external-file adapter implemented; external category remains pre-DEV blocker until Actions observation |
 | A16 | Fresh source | Six Phase 22 candidates re-discovered and classified from current read-only source | PASS — current read-only SHA `27bb007…`; 6 considered / 3 eligible / 3 excluded |
-| A17 | Fresh manifest | New Phase 23 manifest identity, max three targets, exact CI receipt/digest binding | PASS — v2 manifest `bf2a6d78…`/`772606d0…`, exact substantive-head gate binding |
+| A17 | Fresh manifest | New Phase 23 manifest identity, max three targets, exact CI receipt/digest binding | PASS — v2 manifest `03a2beaf…`/`71836e51…`, exact reconciled-head gate binding |
 | A18 | Dry run | Exactly one FIRST and <=1 replay per target, <=6 contexts, zero contact/mutation/raw persistence | PASS — deterministic v2 dry-run core and operator |
 | A19 | Local qualification | Focused, compatibility, synthetic, owner, typecheck, hardening, continuity, project, full canonical/isolated parity | PASS — canonical 2,360/4/0 and isolated 2,360/4/0, exact enumeration/skip parity |
 | A20 | External decision | One exact current-head Actions inspection with run/job/step/head/conclusion evidence | NOT_STARTED |

@@ -8,15 +8,15 @@ Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qu
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 Status: IN_PROGRESS
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-Last substantive checkpoint SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last validated implementation SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+Last substantive checkpoint SHA: 26aa0630d3367f46c330723453cb1a74767606cd
 Last documentation checkpoint: DISCOVER_FROM_GIT
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -78,22 +78,23 @@ M8 — validated checkpoint push and exact current-head Actions observation.
 
 ## Work In Progress
 
-M8 — the substantive implementation checkpoint is `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`.
-Local and disposable Node 20 qualification are green; the final task/docs
-checkpoint still needs one bounded push and exact current-head Actions
-observation. No external CI or DEV authority exists yet.
+M8 — the reconciled implementation checkpoint is `26aa0630d3367f46c330723453cb1a74767606cd`.
+Local and disposable Node 20 qualification are green; the reconciled
+checkpoint needs one bounded push and exact current-head Actions observation.
+No external CI or DEV authority exists yet.
 
 ## Exact Next Action
 
-Run the final documentation-descendant `gate:ci`/`gate:clean`, regenerate the
-fresh manifest at that exact checkpoint, verify the tree and privacy surface,
-push once to `origin/main`, and inspect only the exact current-head Actions
-run. If it returns `steps=[]` or equivalent platform blocking, stop with zero
-DEV contact and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
+Commit the reconciled continuity/documentation state, run the final shared
+gate on that exact head, verify the privacy/workflow surface, push once to
+`origin/main`, and inspect only the exact current-head Actions run. If it
+returns `steps=[]` or equivalent platform blocking, stop with zero DEV contact
+and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 
 ## Files Changed
 
 - `.agent/ACTIVE_TASK.md`
+- `.agent/PLANNER_HANDOFF.md` (concurrent remote addition preserved)
 - `.github/workflows/hardening.yml`
 - `bin/hardening-check.mjs`
 - `bin/phase23-ci.mjs`
@@ -115,11 +116,19 @@ DEV contact and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 - `tests/unit/aiLocalCanary.test.ts`
 - `tests/unit/phase23*.test.ts`
 - `.agent/tasks/phase-23-executable-ci-dev-acceptance/{SPEC,PLAN,STATE,ACCEPTANCE_MATRIX,REPORT,HANDOFF}.md`
+- `.agents/skills/goal/SKILL.md`, `.claude/commands/goal.md`,
+  `.kimi-code/AGENTS.md`, `.opencode/commands/goal.md` (concurrent remote
+  additions preserved)
 
 ## Validation Ledger
 
 - Bootstrap Git inspection: PASS — branch `main`, clean worktree, and
-  `HEAD == origin/main == ac3df00195eef846a8e9e42615e90b4b912877d2`.
+  synchronized starting `HEAD == origin/main == ac3df00195eef846a8e9e42615e90b4b912877d2`.
+- Remote reconciliation: PASS — a concurrent additive remote commit
+  `3ffaea23da57ca2b2332016f0f0a898002353cc7` was fetched after the rejected
+  first push; it added five planner-adapter files from the starting tip. The
+  non-fast-forward merge `26aa0630d3367f46c330723453cb1a74767606cd` preserved
+  those files and all Phase 23 implementation without rewriting history.
 - `kimi-worker doctor`: PASS — optional read-only advisory bridge healthy;
   no worker mutation or external product contact is authorized.
 - Historical read set: PASS — AGENTS, required project docs, CI hardening,
@@ -140,14 +149,14 @@ DEV contact and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
   regression passed 2/2; the agent/project support slice passed 154/154.
   `campaign:synthetic` passed 27/27 and `test:owner-provenance` passed 91/91.
 - Compatibility qualification: PASS — the Phase 9–23 manifest ran 1,806
-  tests with 1,805 passed, 1 skip, and 0 failures at the substantive
+  tests with 1,805 passed, 1 skip, and 0 failures at the reconciled
   checkpoint; the shared CI-mode runner reproduced the same result.
 - Clean-checkout qualification: PASS — disposable local clone, `npm ci
   --ignore-scripts`, Node 20, clean-before/after, no auth/owner state, and no
   sibling writes; all nine gate groups passed. Receipt:
-  `clean-receipt:sha256:bfffe21778570657eb549d9f`.
-- Shared gate qualification: PASS — CI-mode receipt at the substantive
-  checkpoint is `receipt:sha256:ee4a263e49bfa4aaee9f7ca6`; local-mode receipt
+  `clean-receipt:sha256:e7fa4785f60435836e59a640`.
+- Shared gate qualification: PASS — CI-mode receipt at the reconciled
+  checkpoint is `receipt:sha256:12018b67ad286f502b093272`; local-mode receipt
   is `receipt:sha256:df221aec03a4804ab814b769`; definition digest is
   `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
 - Full-suite qualification: PASS — canonical enumeration 2,364 with 2,360
@@ -158,9 +167,9 @@ DEV contact and close as `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI`.
 - Fresh source/manifest qualification: PASS — read-only Ripple snapshot
   `27bb007ad0c798800b6bd3b29760c966422966e7`; six candidates considered,
   three eligible, three excluded by current evidence. Fresh manifest ID is
-  `manifest:sha256:bf2a6d78ad7d154e63a50a30`, digest
-  `manifest:sha256:772606d0521151cb57284f66`; dry-run digest is
-  `dry-run:sha256:80f43a97cbfc3efbf3db577d`.
+  `manifest:sha256:03a2beaf4a753047a4c56df5`, digest
+  `manifest:sha256:71836e51a9bfee3290bd5073`; dry-run digest is
+  `dry-run:sha256:16a65c7b8b73da781c1a9655`.
 - Static Phase 23 checks: PASS — `npm run typecheck`,
   `npm run hardening:check`, `npm run quality-gate:spec`, and
   `npm run gate:inventory`.
@@ -216,7 +225,7 @@ untouched; implement only additive Phase 23 quality-gate infrastructure.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0–M7 are complete at the substantive implementation
-checkpoint. Local, CI-mode, clean-checkout, source, fresh-manifest, dry-run,
+IN_PROGRESS — M0–M7 are complete and the reconciled M8 checkpoint is locally
+qualified. Local, CI-mode, clean-checkout, source, fresh-manifest, dry-run,
 canonical, and isolated qualification are green. M8 is waiting for the one
 post-push exact current-head Actions observation; DEV observations remain zero.

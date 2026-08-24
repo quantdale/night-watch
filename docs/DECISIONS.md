@@ -3123,11 +3123,11 @@ Port leases are owned and bounded within Nightwatch test infrastructure.
 **Evidence and consequences.** The old inventory is 32 steps / 30 run
 commands / 55 unique files / 5 duplicate executions; the current gate has
 nine required groups and 130 unique compatibility files with no accidental
-duplicates. At substantive checkpoint `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`,
+duplicates. At reconciled checkpoint `26aa0630d3367f46c330723453cb1a74767606cd`,
 Phase 9–23 compatibility is 1,806 total / 1,805 passed / 1 skipped / 0
 failed; the CI-mode receipt is
-`receipt:sha256:ee4a263e49bfa4aaee9f7ca6`; the Node20 clean receipt is
-`clean-receipt:sha256:bfffe21778570657eb549d9f`; and canonical/isolated full
+`receipt:sha256:12018b67ad286f502b093272`; the Node20 clean receipt is
+`clean-receipt:sha256:e7fa4785f60435836e59a640`; and canonical/isolated full
 execution is 2,364 enumerated / 2,360 passed / 4 skipped / 0 failed with
 exact parity. A fresh source snapshot at `27bb007ad0c798800b6bd3b29760c966422966e7`
 produced a new v2 manifest and no-contact dry run. These facts do not imply

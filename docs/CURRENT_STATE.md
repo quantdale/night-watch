@@ -3,7 +3,7 @@
 > Durable memory for the next agent/session. Last updated: **2026-08-24** at
 > the Phase 23 local qualification checkpoint. The validated Phase 23
 > implementation checkpoint is
-> `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`; the live documentation/final
+> `26aa0630d3367f46c330723453cb1a74767606cd`; the live documentation/final
 > head is discovered from Git. Canonical and topology-correct isolated full
 > regressions both pass 2,360 / 4 skipped / 0 failed out of 2,364 with exact
 > skip parity. Phase 22 remains `BLOCKED_BEFORE_DEV` because its historical
@@ -2121,10 +2121,10 @@ matrix steps / 55 unique test files / 5 duplicate executions. The current gate
 inventory is 130 unique compatibility files with zero accidental duplicate
 file executions. The definition digest is
 `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
-The substantive implementation checkpoint is
-`a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`. CI-mode gate receipt
-`receipt:sha256:ee4a263e49bfa4aaee9f7ca6` and disposable Node20 clean receipt
-`clean-receipt:sha256:bfffe21778570657eb549d9f` are PASS. Canonical and
+The reconciled implementation checkpoint is
+`26aa0630d3367f46c330723453cb1a74767606cd`. CI-mode gate receipt
+`receipt:sha256:12018b67ad286f502b093272` and disposable Node20 clean receipt
+`clean-receipt:sha256:e7fa4785f60435836e59a640` are PASS. Canonical and
 topology-correct isolated full suites enumerate 2,364 tests and both finish
 2,360 passed / 4 environment-conditional skipped / 0 failed with exact skip
 identity parity.
@@ -2133,8 +2133,8 @@ Fresh read-only source re-derivation uses Ripple SHA
 `27bb007ad0c798800b6bd3b29760c966422966e7`: six candidates were considered,
 three collection targets were admitted, and three were excluded by current
 runtime/contract evidence. The new Phase 23 manifest is
-`manifest:sha256:bf2a6d78ad7d154e63a50a30` with deterministic digest
-`manifest:sha256:772606d0521151cb57284f66`; its no-contact dry run has three
+`manifest:sha256:03a2beaf4a753047a4c56df5` with deterministic digest
+`manifest:sha256:71836e51a9bfee3290bd5073`; its no-contact dry run has three
 FIRST plans, three replay plans, six contexts, zero contact/mutation/raw
 persistence, and privacy/containment PASS. The manifest is not DEV authority:
 the external Actions result must execute the exact current acceptance head and

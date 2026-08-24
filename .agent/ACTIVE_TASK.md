@@ -6,15 +6,15 @@ Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qu
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-23-executable-ci-dev-acceptance
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-Last checkpoint: M7 — local, clean-checkout, canonical, and isolated qualification
-Current milestone: M8 — validated checkpoint push and exact current-head Actions observation
-Next action: Run the final documentation-descendant quality gate, push once to origin/main, and inspect exactly one current-head Actions result without retrying external platform failures.
+Last validated implementation SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+Last checkpoint: M8 — reconciled merged checkpoint and final local qualification
+Current milestone: M8 — validated reconciled push and exact current-head Actions observation
+Next action: Commit the reconciled continuity/documentation state, run the final shared gate on that exact head, push once to origin/main, and inspect exactly one current-head Actions result without retrying external platform failures.
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 26aa0630d3367f46c330723453cb1a74767606cd
 
 ## Terminal Boundary Tokens
 

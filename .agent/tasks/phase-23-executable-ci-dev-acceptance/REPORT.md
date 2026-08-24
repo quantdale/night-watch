@@ -5,8 +5,8 @@ Phase: 23-EXECUTABLE-CI-DEV-ACCEPTANCE
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 Status: IN_PROGRESS
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
-Last substantive checkpoint SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last validated implementation SHA: 26aa0630d3367f46c330723453cb1a74767606cd
+Last substantive checkpoint SHA: 26aa0630d3367f46c330723453cb1a74767606cd
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Current position
@@ -21,26 +21,26 @@ The fixed runner, compatibility manifest, receipts, inventory, proxy lease,
 external CI classifier, exact-head authority, Preflight V3 core, fresh v2
 manifest boundary, no-contact dry run, and guarded conditional DEV operator
 are implemented. The substantive checkpoint is
-`a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`.
+`26aa0630d3367f46c330723453cb1a74767606cd`.
 
 ## Local qualification evidence
 
 - Phase 9–23 compatibility: 1,806 total / 1,805 passed / 1 skipped / 0
   failed.
 - CI-mode shared gate: PASS,
-  `receipt:sha256:ee4a263e49bfa4aaee9f7ca6`.
+  `receipt:sha256:12018b67ad286f502b093272`.
 - Local-mode shared gate: PASS,
   `receipt:sha256:df221aec03a4804ab814b769`.
 - Disposable Node 20 clean checkout: PASS,
-  `clean-receipt:sha256:bfffe21778570657eb549d9f`.
+  `clean-receipt:sha256:e7fa4785f60435836e59a640`.
 - Canonical full suite: 2,364 enumerated / 2,360 passed / 4 skipped / 0
   failed / 0 flaky. Topology-correct isolated execution matched exactly,
   including skip identity.
 - Fresh source: `mobingilabs/ripple-api` read-only snapshot
   `27bb007ad0c798800b6bd3b29760c966422966e7`; 6 candidates considered, 3
   eligible, 3 excluded.
-- Fresh manifest: ID `manifest:sha256:bf2a6d78ad7d154e63a50a30`, digest
-  `manifest:sha256:772606d0521151cb57284f66`; no-contact dry run PASS with
+- Fresh manifest: ID `manifest:sha256:03a2beaf4a753047a4c56df5`, digest
+  `manifest:sha256:71836e51a9bfee3290bd5073`; no-contact dry run PASS with
   3 FIRST plans, 3 replay plans, 6 contexts, and zero external contact.
 
 ## Safety disposition

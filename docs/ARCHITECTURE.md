@@ -1,7 +1,7 @@
 # Nightwatch Architecture
 
 Status: Phase 23 local/source/synthetic implementation checkpoint
-`a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5` (unified quality gate, clean
+`26aa0630d3367f46c330723453cb1a74767606cd` (unified quality gate, clean
 checkout, canonical, and topology-correct isolated regressions green with
 exact parity; contained DEV acceptance remains blocked pending exact external
 CI), with the terminal Phase 22 bridge preserved as historical evidence,
