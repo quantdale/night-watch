@@ -8,14 +8,14 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last substantive checkpoint SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+Last validated implementation SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
+Last substantive checkpoint SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+LAST_VALIDATED_IMPLEMENTATION_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -74,7 +74,7 @@ registration are changed in the current working checkpoint.
 ## Validation Ledger
 
 - Git topology: PASS — branch `main`, upstream `origin/main`, local and remote
-  HEAD equal `7beb18689cf2cd50d1d5383b34f51c2789cd0a54`, clean worktree.
+  HEAD equal `ac093ff`, clean worktree after the M1 push.
 - Required durable docs and Phase 24 task records: READ; historical records
   remain unmodified.
 - Worker bridge doctor: PASS; two read-only worker runs returned a provider

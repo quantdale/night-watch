@@ -6,7 +6,7 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+Last validated implementation SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
 Last checkpoint: M1 — source-boundary and Git-currentness hardening
 Current milestone: M2 — versioned scan configuration and deterministic bounded inventory.
 Next action: Implement the fixed scan contract, content-aware bounded inventory,
@@ -14,8 +14,8 @@ deterministic ordering, and source-budget counters.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
+LAST_VALIDATED_IMPLEMENTATION_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ac093ff3d8a8cdc117ad815c9c72253eaddfe6c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
