@@ -6,15 +6,15 @@ Title: Nightwatch Phase 23 — Executable CI Gate Unification, Clean-Checkout Qu
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-23-executable-ci-dev-acceptance
 Starting SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last validated implementation SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-Last checkpoint: M5 — external CI classifier, exact-head authority, and Preflight V3 core
-Current milestone: M3 — clean-checkout/Linux equivalence and port/process lifecycle qualification
-Next action: Create the first implementation checkpoint from the focused-green tree, then run the Phase 9–23 compatibility cone and disposable Node 20 clean-checkout gate from that clean checkpoint.
+Last validated implementation SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+Last checkpoint: M7 — local, clean-checkout, canonical, and isolated qualification
+Current milestone: M8 — validated checkpoint push and exact current-head Actions observation
+Next action: Run the final documentation-descendant quality gate, push once to origin/main, and inspect exactly one current-head Actions result without retrying external platform failures.
 Authorization class: PHASE_23_CI_GATE_RECOVERY_AND_BOUNDED_DEV_ACCEPTANCE_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_VALIDATED_IMPLEMENTATION_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: ac3df00195eef846a8e9e42615e90b4b912877d2
+LAST_VALIDATED_IMPLEMENTATION_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5
 
 ## Terminal Boundary Tokens
 
@@ -127,5 +127,7 @@ bounded API failures instead of exposing an opaque transport error.
 ## Resume Recipe
 
 Read this file, then the Phase 23 `SPEC.md`, `PLAN.md`, and `STATE.md`. Inspect
-Git status/diff, create the first implementation checkpoint, and continue the
-exact next action. Never mutate the terminal Phase 19–22 records.
+Git status/diff, run the final gate for the documentation descendant, push once,
+and classify the exact current-head Actions result. Never mutate the terminal
+Phase 19–22 records; if Actions is externally blocked, close with zero DEV
+contact.

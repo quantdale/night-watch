@@ -3103,3 +3103,34 @@ project, and privacy gates remain green as recorded in the task report. A
 future phase requires a fresh authorization, exact green CI, fresh source and
 auth checks, and a fresh manifest; this decision grants no standing DEV
 authority beyond the blocked Phase 22 attempt.
+
+## D-75 — Phase 23 uses one executable quality gate and preserves external CI authority
+
+**Context.** Phase 22's local/source/synthetic bridge was complete but could
+not authorize DEV because its Actions run returned `steps=[]`. The older
+workflow also duplicated historical test matrices and omitted the current
+Phase 19–22 acceptance cone.
+
+**Decision.** Make `nightwatch.quality-gate.v1` the sole current acceptance
+definition. A fixed serial command registry drives local, CI, clean-checkout,
+and pre-DEV modes and emits safe versioned receipts. The workflow only
+bootstraps Ubuntu/Node20, installs without lifecycle scripts, and invokes
+`npm run gate:ci`; offline parity hardening rejects bypass, authenticated
+product execution, private uploads, and permission expansion. Test inventory
+is explicit so accidental duplicate execution cannot grow with new phases.
+Port leases are owned and bounded within Nightwatch test infrastructure.
+
+**Evidence and consequences.** The old inventory is 32 steps / 30 run
+commands / 55 unique files / 5 duplicate executions; the current gate has
+nine required groups and 130 unique compatibility files with no accidental
+duplicates. At substantive checkpoint `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`,
+Phase 9–23 compatibility is 1,806 total / 1,805 passed / 1 skipped / 0
+failed; the CI-mode receipt is
+`receipt:sha256:ee4a263e49bfa4aaee9f7ca6`; the Node20 clean receipt is
+`clean-receipt:sha256:bfffe21778570657eb549d9f`; and canonical/isolated full
+execution is 2,364 enumerated / 2,360 passed / 4 skipped / 0 failed with
+exact parity. A fresh source snapshot at `27bb007ad0c798800b6bd3b29760c966422966e7`
+produced a new v2 manifest and no-contact dry run. These facts do not imply
+external CI green or DEV authority: the exact current-head Actions result is
+still mandatory, and an external platform block closes the phase with zero
+DEV observations.

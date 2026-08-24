@@ -1,13 +1,15 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-24** at
-> the Phase 22 terminal documentation checkpoint. The validated Phase 22
+> the Phase 23 local qualification checkpoint. The validated Phase 23
 > implementation checkpoint is
-> `64cffaf6554300f59907c947f135753b62376a64`; the live documentation/final
+> `a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`; the live documentation/final
 > head is discovered from Git. Canonical and topology-correct isolated full
-> regressions both pass 2,336 / 4 skipped / 0 failed out of 2,340 with exact
-> skip parity. Phase 22 is `BLOCKED_BEFORE_DEV` because the stronger external
-> CI gate failed before steps; no DEV contact occurred. This snapshot is
+> regressions both pass 2,360 / 4 skipped / 0 failed out of 2,364 with exact
+> skip parity. Phase 22 remains `BLOCKED_BEFORE_DEV` because its historical
+> external CI gate failed before steps; no DEV contact occurred. Phase 23 has
+> unified the quality gate and is locally/clean-checkout qualified, but its
+> exact current-head Actions observation is still pending. This snapshot is
 > LOCAL / SOURCE / SYNTHETIC only, building on the Phase 16CH
 > portfolio runtime-binding hardening terminal closure
 > (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
@@ -165,6 +167,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_16CH_STATUS` | `BLOCKED_EXTERNAL_CI` — Phase 16CH terminal local/source/synthetic hardening on earned SHA `794b32df443ae8c9a520182ef97b7a2c9985ba82`: DEF-01 reserve feasibility and DEF-02 sanitized unknown-field diagnostics repaired with permanent regressions; 171-scenario adversarial corpus x3 byte-identical with all thirteen floors zero; affected compatibility 172/0; campaign:synthetic 27/0; owner-provenance 91/0; canonical complete Playwright 2232 passed / 0 failed / 4 skipped == topology-correct isolated run 2232/0/4 with exact skip parity; catalog count/digest unchanged; promotion authority NONE; Actions run 32624917568 / job 97158631282 completed failure before any step under the external billing/spending block; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; Phase 16D remains `NOT_AUTHORIZED` |
 | `PHASE_17_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — terminal implementation checkpoint `482ed51814ce8e8f7d67de7edc9a98786240430c` connects source selection to bounded portfolio allocation, hardens baseline/privacy/replay evidence boundaries, and adds a 9-case synthetic source-change corpus; DEF-17-01..06 are repaired; focused 27/0, readiness/rehearsal repair matrix 52/0, affected 142/0, and canonical/isolated full regression 2259/0/4 are green with exact parity; Actions run 32628613509 / job 97167784939 executed zero steps under the external billing/spending block; Phase 16D remains `NOT_AUTHORIZED` |
 | `PHASE_22_STATUS` | `BLOCKED_BEFORE_DEV` — additive real-eligibility, source-currentness, frozen-manifest, Preflight V2, privacy-firewall, replay/calibration, dossier, and dry-run bridge implemented at `64cffaf6554300f59907c947f135753b62376a64`; six candidates considered, three DEV-eligible collection targets frozen, exact local gates green, but Actions run `32681204267` / job `97298112036` failed with `steps=[]` and failed-log retrieval timed out; zero DEV contact |
+| `PHASE_23_STATUS` | `IN_PROGRESS` — one versioned `nightwatch.quality-gate.v1` (9 required groups) now drives local, Node20 clean-checkout, and GitHub Actions execution through `npm run gate:ci`; Phase 9–23 compatibility is 1,806 total / 1,805 passed / 1 skipped / 0 failed; the clean receipt, canonical/isolated 2,364/2,360/4/0 parity, fresh source SHA `27bb007…`, fresh v2 manifest, and no-contact dry run are green; exact current-head Actions observation remains the only pre-DEV authority step |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2100,3 +2103,40 @@ categories and for DEV observations. Phase 23 should first restore an exact
 green executable CI gate and revalidate owner-only DEV authentication before
 creating a fresh bounded manifest; this is bounded acceptance, not product
 correctness certification.
+
+## Phase 23 — executable CI gate unification and conditional DEV authority
+
+Phase 23 replaces the historical hand-maintained CI matrix with the data-only
+`nightwatch.quality-gate.v1` definition and its fixed-command serial runner.
+The nine required groups are gate-definition, static, hardening, project
+truth, agent continuity, Phase 9–23 semantic compatibility, owner provenance,
+the synthetic campaign, and patch integrity. Local, CI, and disposable clean
+checkout modes share the same group mapping; GitHub Actions only bootstraps
+Ubuntu/Node 20 and invokes `npm run gate:ci`. Static parity checks reject a
+future workflow bypass, authenticated product execution, private evidence
+uploads, or permission broadening.
+
+The old workflow inventory remains 32 steps / 30 run commands / 21 historical
+matrix steps / 55 unique test files / 5 duplicate executions. The current gate
+inventory is 130 unique compatibility files with zero accidental duplicate
+file executions. The definition digest is
+`sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+The substantive implementation checkpoint is
+`a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5`. CI-mode gate receipt
+`receipt:sha256:ee4a263e49bfa4aaee9f7ca6` and disposable Node20 clean receipt
+`clean-receipt:sha256:bfffe21778570657eb549d9f` are PASS. Canonical and
+topology-correct isolated full suites enumerate 2,364 tests and both finish
+2,360 passed / 4 environment-conditional skipped / 0 failed with exact skip
+identity parity.
+
+Fresh read-only source re-derivation uses Ripple SHA
+`27bb007ad0c798800b6bd3b29760c966422966e7`: six candidates were considered,
+three collection targets were admitted, and three were excluded by current
+runtime/contract evidence. The new Phase 23 manifest is
+`manifest:sha256:bf2a6d78ad7d154e63a50a30` with deterministic digest
+`manifest:sha256:772606d0521151cb57284f66`; its no-contact dry run has three
+FIRST plans, three replay plans, six contexts, zero contact/mutation/raw
+persistence, and privacy/containment PASS. The manifest is not DEV authority:
+the external Actions result must execute the exact current acceptance head and
+all required groups before owner-only auth is structurally inspected. DEV
+observations remain zero while that result is pending.

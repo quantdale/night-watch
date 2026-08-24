@@ -1,9 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 22 terminal local/source/synthetic implementation checkpoint
-`64cffaf6554300f59907c947f135753b62376a64` (focused, compatibility,
-canonical, and topology-correct isolated full regressions green with exact
-parity; contained DEV acceptance is blocked before contact by external CI),
+Status: Phase 23 local/source/synthetic implementation checkpoint
+`a9e21be07a2d1b3cd62f930eb3b6d7f764cd65d5` (unified quality gate, clean
+checkout, canonical, and topology-correct isolated regressions green with
+exact parity; contained DEV acceptance remains blocked pending exact external
+CI), with the terminal Phase 22 bridge preserved as historical evidence,
 with Phase 19 integrated campaign intelligence and Phase 18 terminal historical context,
 building on the Phase 16CH
 terminal (canonical and isolated full regression 2232/4/0; CI externally
@@ -1482,3 +1483,30 @@ findings, replay artifacts, and dossiers. Collection evaluation preserves
 partial coverage and never promotes truncation to full PASS. Missing real
 membership or equivalent second-surface proof remains an explicit non-admitted
 state rather than a synthetic relabel.
+
+## Phase 23 executable quality-gate architecture
+
+Phase 23 makes acceptance a single data-driven, versioned cone rather than a
+workflow-specific list. `config/quality-gate.v1.json` declares nine required
+groups and fixed code maps in `src/core/qualityGate/definition.ts` reject
+unknown groups, commands, dependencies, or path forms. `bin/quality-gate.mjs`
+executes those mappings serially for local, CI, clean-checkout, and pre-DEV
+modes and emits safe receipt digests. The semantic compatibility manifest is
+also versioned and explicitly covers Phase 9 through Phase 23 with omission
+and duplication checks.
+
+The disposable clean path clones without hardlinks, runs `npm ci
+--ignore-scripts` under Node 20, verifies clean state and sibling immutability,
+and executes the same CI runner. The loopback proxy now uses an owned,
+bounded lease rather than one shared fixed port; stale owners are reclaimable,
+startup failure releases the lease, and teardown is verified. These changes
+are confined to Nightwatch test infrastructure and do not alter product
+networking.
+
+GitHub Actions is only environment bootstrap plus `npm run gate:ci`; offline
+hardening proves this parity and preserves `contents: read`. The external CI
+classifier treats empty required steps as an execution/platform block, and
+the pre-DEV V3 receipt requires exact head, definition digest, executed
+required jobs, fresh source, fresh manifest, auth readiness, and containment.
+The real launcher remains the existing Phase 22 path behind these gates, so
+Phase 23 adds no second semantic framework or standing DEV authority.

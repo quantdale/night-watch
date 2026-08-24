@@ -1975,3 +1975,22 @@ provenance 91/91, typecheck/hardening/project PASS, and canonical/isolated
 Phase 23 should first restore an exact green CI gate and revalidate owner-only
 DEV authentication before creating a fresh manifest; bounded acceptance is
 not product correctness certification.
+
+## Phase 23 — executable CI gate recovery and bounded DEV decision
+
+Phase 23 is the current implementation wave. It unifies local, disposable
+clean-checkout, and GitHub Actions acceptance behind the versioned
+`nightwatch.quality-gate.v1` definition, keeps CI serial and offline, measures
+test duplication, and mechanically rejects workflow drift. The local
+substantive checkpoint is green through the Phase 9–23 compatibility cone,
+owner provenance, synthetic campaign, type/hardening/project/continuity
+checks, a Node20 clean checkout, and exact canonical/isolated full-suite
+parity. It also repairs the Nightwatch-only loopback port lease lifecycle.
+
+The next and only external step is one exact current-head Actions observation.
+`steps=[]` or another platform/API execution block remains a terminal
+`COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` outcome with zero DEV observations. Only
+an executed green run at the exact acceptance head permits fresh auth
+structure checks and the existing one-shot Phase 22 DEV launcher. No Phase 24
+work should expand product surfaces, bypass CI, or revisit the owner-frozen
+infrastructure/data layer.

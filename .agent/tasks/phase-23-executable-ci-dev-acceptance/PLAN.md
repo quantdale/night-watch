@@ -56,14 +56,14 @@ serial, category-only, and owner-local.
   safe receipts.
 - [x] M2 — semantic compatibility entry point, inventory, and duplication
   controls.
-- [ ] M3 — clean-checkout/Linux equivalence and port/process lifecycle
+- [x] M3 — clean-checkout/Linux equivalence and port/process lifecycle
   hardening.
 - [x] M4 — thin Actions workflow and mechanically enforced workflow/gate
   parity.
 - [x] M5 — external CI classifier, exact-head authority, and Preflight V3.
-- [ ] M6 — fresh source currentness, auth readiness, Phase 23 manifest, and
+- [x] M6 — fresh source currentness, auth readiness, Phase 23 manifest, and
   no-contact dry run.
-- [ ] M7 — canonical and topology-correct isolated qualification with exact
+- [x] M7 — canonical and topology-correct isolated qualification with exact
   enumeration/skip parity.
 - [ ] M8 — validated implementation checkpoint, push, and one exact current
   Actions observation.
