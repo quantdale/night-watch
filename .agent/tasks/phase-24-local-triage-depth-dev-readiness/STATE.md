@@ -87,9 +87,8 @@ certification.
 
 ## Exact Next Action
 
-Run `npm run test:semantic-compat`, `npm run campaign:synthetic`, the focused
-Phase 23 proxy suites, and the authoritative gate timing capture. Keep Actions
-and DEV untouched until final freeze.
+Run the authoritative local gate with timing, inspect its receipt, then qualify
+the clean-checkout gate. Keep Actions and DEV untouched until final freeze.
 
 ## Files Changed
 
@@ -116,6 +115,14 @@ and DEV untouched until final freeze.
 - Focused Phase 24 test: PASS — 11/11 tests.
 - Focused Phase 24 campaign: PASS — 12/12 tests including the synthetic
   matrix; direct typecheck, quality-gate spec, and hardening are PASS.
+- Focused post-checkpoint Phase 24 revalidation: PASS — 16/16 local triage and
+  proxy lifecycle tests, including portfolio prioritization and bounded lease
+  ownership cases.
+- Synthetic campaign: PASS — 28/28 tests; eight Phase 24 fixture candidates,
+  six semantic cases, zero false positives, and deterministic repeat.
+- Owner provenance: PASS — 91/91 tests.
+- Clean expanded compatibility qualification: PASS — Phase 9–24, 128 files,
+  1,822 total / 1,821 passed / 1 skipped / 0 failed; wall time 365.11s.
 - Expanded compatibility probe from the dirty worktree: NON-QUALIFYING —
   1,817 total / 1,814 passed / 1 skipped / 2 failed; both failures were the
   pre-existing self-development source-dirty guards at
