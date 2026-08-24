@@ -85,9 +85,9 @@ read-only, regular-file-only, and source-text ephemeral.
 - M11 — synthetic source-to-portfolio campaign integration. Status:
   COMPLETE.
 - M12 — compatibility, quality gate, clean Node 20, and hardening closure.
-  Status: IN_PROGRESS.
+  Status: COMPLETE.
 - M13 — fresh canonical and topology-correct isolated full regressions,
-  repair, and parity. Status: NOT_STARTED.
+  repair, and parity. Status: IN_PROGRESS.
 - M14 — one exact-head Actions observation, durable docs, terminal closure,
   synchronized main. Status: NOT_STARTED.
 

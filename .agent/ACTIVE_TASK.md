@@ -6,19 +6,18 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
-Last checkpoint: M11 — source-to-portfolio synthetic campaign and bounded
-adversarial/cache hardening
-Current milestone: M12 — compatibility, quality-gate, and clean-checkout
-closure.
-Next action: Commit the validated source-surface implementation directly to
-main, rerun clean semantic compatibility, then execute the unified local and
-clean gates before fresh canonical/isolated regression qualification.
+Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
+Last checkpoint: M12 — clean Phase 9–25 compatibility PASS
+Current milestone: M13 — unified gate and fresh canonical/isolated regression
+qualification.
+Next action: Run the authoritative local/clean gates, then run fresh
+canonical and topology-correct isolated full Playwright regressions with exact
+enumeration and skip-parity evidence.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 042300c7c59fd8218afabc761e31691139d0c657
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 042300c7c59fd8218afabc761e31691139d0c657
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 

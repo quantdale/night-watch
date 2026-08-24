@@ -142,8 +142,25 @@ The first full compatibility attempt after these additions reported 1,847
 tests with 1,844 passed, 1 canonical skip, and 2 failures only in existing
 self-development CLI missing-artifact tests. Those tests observed the expected
 `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY` guard because this implementation was
-still uncommitted. A clean post-commit compatibility run is required before
-claiming compatibility PASS.
+still uncommitted. The required clean post-commit rerun is now PASS.
+
+## Clean checkpoint validation
+
+The implementation was committed directly to `main` in two fast-forward
+checkpoints:
+
+- `4c6d50d1f66477384dad85cdb91f88b38a1a7369` — source surfaces, direct
+  Phase24 bridge, graph lineage, invalidation, review, cache, corpus, and
+  synthetic campaign;
+- `042300c7c59fd8218afabc761e31691139d0c657` — hardening-clean parser match
+  repair.
+
+Both were pushed to `origin/main`; live local and remote HEAD are
+`042300c7c59fd8218afabc761e31691139d0c657`, branch `main`, and the worktree
+is clean. The clean compatibility receipt is PASS: Phase 9–25, 135 registered
+files, 1,847 total tests, 1,846 passed, 1 canonical skip, and 0 failures.
+`npm run typecheck`, `npm run hardening:check`, and `npm run project:check`
+also pass at this checkpoint.
 
 ## Safety
 

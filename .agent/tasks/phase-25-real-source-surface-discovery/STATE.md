@@ -8,14 +8,14 @@ Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-Last validated implementation SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
-Last substantive checkpoint SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
+Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
+Last substantive checkpoint SHA: 042300c7c59fd8218afabc761e31691139d0c657
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
-LAST_VALIDATED_IMPLEMENTATION_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 541646974ede051caa50bb44ea3d4f14a5ecec6f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 042300c7c59fd8218afabc761e31691139d0c657
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 042300c7c59fd8218afabc761e31691139d0c657
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -37,10 +37,10 @@ preserving fail-closed source, privacy, currentness, and no-contact rules.
 
 ## Current Milestone
 
-Milestone ID: M12
+Milestone ID: M13
 Milestone status: IN_PROGRESS
-What is being attempted: close compatibility, authoritative quality-gate,
-clean-checkout, and fresh-regression evidence after source authority expansion.
+What is being attempted: execute the authoritative local/clean gates and
+fresh canonical/isolated full Playwright regression parity.
 
 ## Completed Milestones
 
@@ -172,6 +172,10 @@ checkpoint.
   self-development CLI missing-artifact tests because the working tree was
   intentionally dirty (`SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`). No
   source-surface assertion failed; the clean post-commit rerun is required.
+- Clean Phase 9–25 compatibility: PASS — 1,847 total, 1,846 passed, 1
+  canonical skip, 0 failed, 135 registered files.
+- Clean project truth: PASS at implementation checkpoint — live checkout was
+  clean and the project snapshot reconciled.
 
 ## Decisions Made During This Task
 
@@ -232,7 +236,7 @@ checkpoint discipline.
 
 ## Completion Snapshot
 
-M1–M11 are implemented and locally focused-validated. M12 remains active for
-the clean post-commit compatibility/gate run, Node20 qualification, fresh
-canonical/isolated regression parity, external exact-head observation, and
-terminal synchronized-main closure.
+M1–M12 are implemented and validated through clean Phase 9–25 compatibility.
+M13 is active for authoritative gate receipts, clean Node20 qualification,
+fresh canonical/isolated regression parity, external exact-head observation,
+and terminal synchronized-main closure.

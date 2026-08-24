@@ -2,7 +2,7 @@
 
 | ID | Requirement | Evidence | Status |
 |---|---|---|---|
-| A01 | main topology synchronized at start/finish | Git records | IN_PROGRESS |
+| A01 | main topology synchronized at start/finish | start `7beb186`; current local/remote `042300c`; main only | PASS |
 | A02 | no traversal/symlink escape | source-boundary matrix: 7 passed | PASS |
 | A03 | exact supported Git HEAD shapes; unsafe forms fail closed | Git-shape matrix: 7 passed | PASS |
 | A04 | bounded scan paths/files/bytes/languages | inventory suite: 10 passed | PASS |
@@ -25,7 +25,7 @@
 | A21 | broad adversarial corpus | route-family/duplicate/dynamic/privacy/unsupported matrix | PASS |
 | A22 | content-aware cache misses | dirty same-SHA/config/analyzer key and bounded eviction matrix | PASS |
 | A23 | offline source-to-portfolio E2E | Phase25 synthetic campaign 29/29 | PASS |
-| A24 | Phase 9–25 compatibility | first post-change attempt: 1,844 passed, 1 canonical skip, 2 dirty-tree selfdev failures; clean rerun pending | IN_PROGRESS |
+| A24 | Phase 9–25 compatibility | clean receipt: 1,847 total, 1,846 passed, 1 canonical skip, 0 failed, 135 files | PASS |
 | A25 | no duplicate authoritative tests | gate inventory: 141 unique files, 0 duplicate executions | PASS |
 | A26 | typecheck | `npm run typecheck`: PASS | PASS |
 | A27 | hardening | `npm run hardening:check`: PASS | PASS |
@@ -38,5 +38,5 @@
 | A34 | isolated full regression | topology-correct run | NOT_STARTED |
 | A35 | exact parity | enumeration/skip identity | NOT_STARTED |
 | A36 | one exact-head Actions observation | external record | NOT_STARTED |
-| A37 | prohibited-operation counts zero | safety report | IN_PROGRESS |
+| A37 | prohibited-operation counts zero | local/source campaign safety ledger; all prohibited counts remain zero | PASS |
 | A38 | clean synchronized main | Git closure | NOT_STARTED |
