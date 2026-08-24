@@ -47,6 +47,35 @@ Point at a real local Ripple dev server (still fail-closed against prod):
 npm run scenario -- --env=local --ui-url=http://127.0.0.1:8080
 ```
 
+## Authoritative local quality and source intelligence
+
+The unified quality gate is the local authority for Nightwatch checks:
+
+```bash
+npm run gate:local       # serial local gate
+npm run gate:clean       # disposable Node 20 checkout qualification
+npm run campaign:synthetic
+```
+
+Phase 25 source intelligence is local, read-only, bounded, deterministic, and
+raw-source-free. It scans only the fixed approved sibling-source universe and
+feeds mechanically proven surfaces into the existing Phase 24 portfolio:
+
+```bash
+node bin/nightwatch-intelligence.mjs source-scan --repo=mobingilabs/ripple-api --json
+node bin/nightwatch-intelligence.mjs surfaces --repo=mobingilabs/ripple-api --json
+node bin/nightwatch-intelligence.mjs review-queue --repo=mobingilabs/ripple-api --json
+node bin/nightwatch-intelligence.mjs explain-surface --repo=mobingilabs/ripple-api --surface=<safe-id> --json
+```
+
+The source views reject `--env` flags and never start a browser, read auth,
+contact a product environment, or publish findings. Human-readable output is
+available by omitting `--json`; owner review remains local. Real findings, if
+created by an authorized future workflow, stay under owner-only
+`$HOME/.nightwatch/findings/`. Any DEV campaign requires fresh authorization,
+fresh source/currentness checks, and the existing exact-head external quality
+gate; Phase 25 grants none.
+
 ## Layout
 
 ```

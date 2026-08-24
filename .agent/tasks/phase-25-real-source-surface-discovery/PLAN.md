@@ -3,7 +3,7 @@
 Task ID: phase-25-real-source-surface-discovery
 Phase: 25-REAL-SOURCE-SURFACE-DISCOVERY
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -87,9 +87,12 @@ read-only, regular-file-only, and source-text ephemeral.
 - M12 — compatibility, quality gate, clean Node 20, and hardening closure.
   Status: COMPLETE.
 - M13 — fresh canonical and topology-correct isolated full regressions,
-  repair, and parity. Status: IN_PROGRESS.
+  repair, and parity. Status: COMPLETE — both runs enumerated 2,407 with
+  2,403 passed, 4 skipped, 0 failed, and exact skip identity parity.
 - M14 — one exact-head Actions observation, durable docs, terminal closure,
-  synchronized main. Status: NOT_STARTED.
+  synchronized main. Status: COMPLETE — Actions run `32741057138` / job
+  `97475353760` was observed at the exact head and classified
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; local/source closure is complete.
 
 ## Validation Strategy
 
@@ -100,6 +103,8 @@ hardening/compatibility cone, exact `STATE.md` update, then a validated direct
 `npm run campaign:synthetic`, `npm run test:owner-provenance`,
 `npm run gate:local`, `npm run gate:clean`, `npm run agent:check`, and
 `npm run project:check`, followed by the fresh canonical/isolated regressions.
+All planned validation is complete; no DEV or external retry is part of this
+task.
 
 ## Decision Log
 
@@ -151,6 +156,14 @@ hardening/compatibility cone, exact `STATE.md` update, then a validated direct
 - M11: the synthetic campaign proves source snapshot → extraction → Phase24
   portfolio → semantic evaluation → replay/dossier construction → no-contact
   rehearsal with zero network, auth, mutation, or raw-source persistence.
+
+- M12: the unified quality gate remains the sole local/clean/CI acceptance
+  authority; Phase 25 adds tests to that cone without adding a parallel gate.
+- M13: canonical and topology-correct isolated full runs must match by full
+  enumeration and skip identity, not counts alone.
+- M14: a zero-step exact-head Actions result is recorded as external truth and
+  never relabeled green; local/source completion remains valid under this
+  authorization.
 
 ## Discoveries
 

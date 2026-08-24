@@ -2,7 +2,7 @@
 
 | ID | Requirement | Evidence | Status |
 |---|---|---|---|
-| A01 | main topology synchronized at start/finish | start `7beb186`; current local/remote `042300c`; main only | PASS |
+| A01 | main topology synchronized at start/finish | start `7beb186`; current local/remote continuity head `3e69c85`; main only | PASS |
 | A02 | no traversal/symlink escape | source-boundary matrix: 7 passed | PASS |
 | A03 | exact supported Git HEAD shapes; unsafe forms fail closed | Git-shape matrix: 7 passed | PASS |
 | A04 | bounded scan paths/files/bytes/languages | inventory suite: 10 passed | PASS |
@@ -30,13 +30,13 @@
 | A26 | typecheck | `npm run typecheck`: PASS | PASS |
 | A27 | hardening | `npm run hardening:check`: PASS | PASS |
 | A28 | synthetic campaign | `npm run campaign:synthetic`: 29 passed, 0 failed | PASS |
-| A29 | owner provenance | `npm run test:owner-provenance` | NOT_STARTED |
-| A30 | agent continuity | `npm run agent:check` | NOT_STARTED |
-| A31 | project truth | `npm run project:check` | NOT_STARTED |
-| A32 | clean Node 20 gate | `npm run gate:clean` | NOT_STARTED |
-| A33 | canonical full regression | fresh run | NOT_STARTED |
-| A34 | isolated full regression | topology-correct run | NOT_STARTED |
-| A35 | exact parity | enumeration/skip identity | NOT_STARTED |
-| A36 | one exact-head Actions observation | external record | NOT_STARTED |
+| A29 | owner provenance | `npm run test:owner-provenance`: 91 passed, 0 failed | PASS |
+| A30 | agent continuity | `npm run agent:check`: 0 strict v2 errors | PASS |
+| A31 | project truth | `npm run project:check`: PASS | PASS |
+| A32 | clean Node 20 gate | `npm run gate:clean`: clean receipt PASS, clean before/after, sibling writes 0 | PASS |
+| A33 | canonical full regression | 2,407 enumerated / 2,403 passed / 4 skipped / 0 failed | PASS |
+| A34 | isolated full regression | topology-correct clone: 2,407 / 2,403 / 4 / 0 | PASS |
+| A35 | exact parity | exact four skip identities matched | PASS |
+| A36 | one exact-head Actions observation | run `32741057138`, job `97475353760`, zero steps, `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` | PASS |
 | A37 | prohibited-operation counts zero | local/source campaign safety ledger; all prohibited counts remain zero | PASS |
-| A38 | clean synchronized main | Git closure | NOT_STARTED |
+| A38 | clean synchronized main | final main-only closure requires `HEAD == origin/main` and clean tree | PASS |

@@ -2,18 +2,19 @@
 
 Task ID: phase-25-real-source-surface-discovery
 Phase: 25-REAL-SOURCE-SURFACE-DISCOVERY
-Status: IN_PROGRESS
+Status: COMPLETE
 Repository: `quantdale/night-watch`
 Branch: `main`
 Starting SHA: `7beb18689cf2cd50d1d5383b34f51c2789cd0a54`
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-## Interim handoff
+## Terminal handoff
 
-Phase 25 is active. M0 bootstrap and the prerequisite defect audit are
-complete. The next durable unit is M1 source-boundary and Git currentness
-hardening. Final implementation, metrics, tests, CI observation, and safety
-counts will be recorded at terminal closure.
+Phase 25 is complete as `COMPLETE_LOCAL_SOURCE_EXPANSION`. The campaign stayed
+LOCAL / READ-ONLY SOURCE / SYNTHETIC ONLY. Implementation checkpoints were
+committed directly to `main`; no feature branch, pull request, Alphaus write,
+DEV launcher, auth-state read, product request, database/cloud operation,
+publication, or raw private persistence occurred.
 
 ## M1 checkpoint evidence
 
@@ -167,3 +168,101 @@ also pass at this checkpoint.
 At bootstrap: DEV 0, NEXT 0, production 0, auth-state reads 0, product
 mutations 0, database/datastore/cloud/infra operations 0, Alphaus writes 0,
 publications/messages 0, raw private persistence 0, AI calls 0.
+
+## Final measured metrics
+
+### Git and topology
+
+- Starting SHA: `7beb18689cf2cd50d1d5383b34f51c2789cd0a54`.
+- Implementation checkpoints: `ac093ff3`, `5416469`, `683b0b8`, `4c6d50d`,
+  `042300c`; continuity/compatibility checkpoint:
+  `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
+- Branch: `main`; upstream: `origin/main`; final local and remote heads are
+  required to remain identical and the worktree clean.
+- No feature/development branch, merge, force-push, or pull request was used.
+
+### Source access and extraction
+
+- Approved universe: 6 repositories; inspected: 1 real repository plus
+  synthetic fixtures. Real smoke: `mobingilabs/ripple-api`, SHA
+  `27bb007ad0c798800b6bd3b29760c966422966e7`, root `src`.
+- Inventory: 96 files considered/read, 95 admitted, 1 rejected for
+  `SOURCE_PRIVACY_REJECTED`; 1,750,958 bytes read; 15 directories visited;
+  symlink/path/budget rejections 0. Languages: PHP 95, YAML 1.
+- Snapshot digest:
+  `srcsnapshot:sha256:4193221edbe54844e49653cb`; config digest:
+  `srcconfig:sha256:b4580bf77894fc8aaaa59a5b`; extractor:
+  `nightwatch.real-source-scan-extractor.v1`.
+- Analyzer/route metrics: 127 analyzer invocations, 128 bounded operations,
+  127 route proofs, 0 ambiguous routes, 47 mutation-capable operations, 5
+  proven read-only operations, 76 method-only read operations, 127 request
+  contracts, 25 response contracts, and 25 semantic contracts. Dynamic or
+  unproven cases remained excluded.
+- Cross-file joins: 128 attempted, 118 proven, 10 rejected (10 unresolved
+  handlers); cross-repository joins attempted/proven: 0/0. Deployment
+  equivalence remained unresolved by policy.
+- Portfolio bridge: 128 source surfaces considered, 3 Phase24-eligible
+  existing-runtime-bound surfaces, 125 excluded; no fabricated target or new
+  execution authority. Lifecycle distribution: 103 DISCOVERED, 22
+  MECHANICALLY_PROVEN, 3 PROJECTABLE. Runtime binding: 5 exact, 123 source-only
+  across the discovered surfaces. Component routing: 127 exact, 1 repository
+  only, 0 human-owner inference.
+- Source change intelligence: synthetic unrelated-file change preserved the
+  candidate current; relevant same-SHA handler evidence changed and
+  invalidated replay/dossier assumptions. Semantic shape was unchanged in that
+  repair case. Replay invalidations: 1 synthetic relevant case; dossier
+  invalidations: 1; runtime/differential invalidations: 0 in the bounded
+  matrix.
+
+### Review, cache, corpus, and determinism
+
+- Review queue: 128 rows, 3 eligible/selected, 125 excluded; top safe IDs
+  were `surface:sha256:9c1cd2677f4597be05ff62d7`,
+  `surface:sha256:b670b243d8e828d9dd6ffbd1`, and
+  `surface:sha256:166699278d953ecd63f3c6ed`.
+- Cache: exact-content hit/miss, config/analyzer miss, corruption, dirty
+  same-SHA invalidation, and bounded eviction cases passed; no raw source was
+  cached. Performance counters are deterministic and bounded.
+- Adversarial coverage: data-driven Phase25 route/access/privacy/cache and
+  proof-soundness families passed with 0 false positives, 0 privacy
+  regressions, and 0 determinism mismatches. The focused Phase25 source
+  campaign passed 29/29; all quality-gate groups passed.
+
+### Tests and gates
+
+- Phase 9–25 semantic compatibility: 1,847 total / 1,846 passed / 1 canonical
+  skip / 0 failed; 135 registered compatibility files.
+- Gate inventory: 141 unique authoritative files / 0 duplicate executions.
+- Owner provenance: 91 passed / 0 failed. Synthetic campaign: 29 passed / 0
+  failed. Typecheck: PASS. Hardening: PASS. Agent continuity: 0 strict v2
+  errors. Project truth: PASS.
+- Local gate: PASS, receipt `receipt:sha256:5eaca4cc32395a1fe14506bd`, gate
+  definition `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- Node20 clean checkout: PASS, `npm ci --ignore-scripts`, clean before/after,
+  no node_modules reuse, no auth/findings state, sibling writes 0, clean
+  receipt `clean-receipt:sha256:1ba9cf9c64ee3ac582fd9edf`, gate receipt
+  `receipt:sha256:41e81aaddb346b70f03cc9b3`.
+- Canonical full Playwright: 2,407 enumerated / 2,403 passed / 4 skipped /
+  0 failed. Isolated topology-correct full Playwright: 2,407 / 2,403 / 4 /
+  0. Skip identities matched exactly: three unavailable OOPS-binary tests
+  and the foreign-UID sandbox test.
+
+### External truth and safety
+
+- One exact-head observation only: Actions run `32741057138`, job
+  `97475353760`, exact head `3e69c857dd5409675b6c2d8d13b59cfc87232576`, step
+  count 0, conclusion `failure`, classification
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. It is not green CI and was not
+  retried.
+- Safety counts: DEV 0, NEXT 0, production 0, auth-state reads 0, product
+  mutations 0, database/datastore operations 0, cloud/infra operations 0,
+  Alphaus writes 0, sibling writes 0, publications 0, messages 0, raw private
+  persistence 0, AI calls 0.
+
+## Phase 26 recommendation
+
+The highest-value remaining local/source campaign is bounded expansion of
+response and semantic contract proof for the 125 excluded surfaces, starting
+with the 103 response/semantic-proof gaps observed in the approved Ripple API
+snapshot. It should preserve exact joins, fail-closed ambiguity, and the
+existing Phase24 authority; it does not imply DEV authorization.

@@ -2044,3 +2044,53 @@ or auth read occurred. Phase 25 should begin only after an actually executed
 exact-head green gate, then repeat fresh source qualification, manifest,
 containment, no-contact rehearsal, and the guarded DEV decision. Infrastructure
 and data-layer work remain permanently frozen.
+
+## Phase 25 — real-source surface discovery and source-boundary hardening
+
+Phase 25 is terminal at `COMPLETE_LOCAL_SOURCE_EXPANSION`. It remained
+LOCAL / READ-ONLY SOURCE / SYNTHETIC ONLY and did not invoke DEV, read auth,
+contact a product, or touch data/infrastructure systems. The implementation
+checkpoint is `042300c7c59fd8218afabc761e31691139d0c657`; the subsequent
+continuity checkpoint is `3e69c857dd5409675b6c2d8d13b59cfc87232576`.
+
+Delivered capability includes:
+
+- hardened no-follow sibling source access with exact supported Git HEAD
+  resolution, `.git` shape rejection, regular-file and scan-budget bounds;
+- fixed versioned scan configuration and deterministic inventory keyed by
+  actual inspected content as well as source/config/analyzer identity;
+- reuse of existing PHP, TypeScript/JavaScript, Go, OpenAPI, Phase 20, and
+  Phase 24 proof machinery for bounded route, contract, join, graph, and
+  read-only evidence;
+- direct source-descriptor → Phase 24 candidate/portfolio/selector flow,
+  shape-aware contract drift, incremental invalidation, review ranking,
+  component/runtime correlation, bounded cache, and local JSON/human views;
+- synthetic end-to-end proof from source snapshot through semantic evaluation,
+  replay/dossier construction, and no-contact rehearsal.
+
+The approved real-source smoke inspected one repository, `mobingilabs/ripple-api`
+at SHA `27bb007ad0c798800b6bd3b29760c966422966e7`: 96 files considered, 95
+admitted, 1 privacy rejection, 1,750,958 bytes read, 128 bounded operations,
+127 route proofs, 25 response/semantic contracts, 118 proven joins, and 10
+rejected joins. Existing-runtime correlation yielded three eligible
+Phase 24 surfaces (billing-group exchange, payer exchange, and common exchange)
+and no invented target; 125 surfaces remained excluded with explicit reasons.
+The 6-repository approved universe remains the scan boundary.
+
+Local certification passed: Phase 9–25 compatibility was 1,847 total / 1,846
+passed / 1 skipped / 0 failed across 135 registered files; the authoritative
+gate passed with receipt `receipt:sha256:5eaca4cc32395a1fe14506bd`; the Node20
+clean gate passed with receipt `clean-receipt:sha256:1ba9cf9c64ee3ac582fd9edf`;
+owner provenance was 91/91; the synthetic campaign was 29/29; the gate
+inventory had 141 unique files and 0 duplicate executions; and fresh canonical
+and topology-correct isolated full Playwright runs both passed 2,403 / skipped
+4 / failed 0 out of 2,407 with identical skip identities.
+
+The one exact-head Actions observation was run `32741057138` / job
+`97475353760` at the pushed continuity head. The required job had zero steps,
+so the truthful classification is `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not
+green CI. No retry was made. Phase 26's highest-value remaining local/source
+campaign is to expand mechanically proven response and semantic contract
+coverage for the 125 currently excluded surfaces, beginning with the 103
+response/semantic-proof gaps while retaining fail-closed ambiguity handling;
+DEV acceptance remains a separate future authorization.

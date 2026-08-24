@@ -3,16 +3,16 @@
 Task ID: phase-25-real-source-surface-discovery
 Phase: 25-REAL-SOURCE-SURFACE-DISCOVERY
 Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening, Contract Graph Extraction, and Review Intelligence
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-25-real-source-surface-discovery
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
 Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
-Last checkpoint: M12 — clean Phase 9–25 compatibility PASS
-Current milestone: M13 — unified gate and fresh canonical/isolated regression
-qualification.
-Next action: Run the authoritative local/clean gates, then run fresh
-canonical and topology-correct isolated full Playwright regressions with exact
-enumeration and skip-parity evidence.
+Last checkpoint: M14 — terminal local/source closure and exact-head Actions
+classification.
+Current milestone: COMPLETE_LOCAL_SOURCE_EXPANSION — M14 terminal closure.
+Next action: STOP — Phase 25 is complete locally/source/synthetically;
+`PHASE_25_EXTERNAL_CI` is `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Do not retry
+Actions, read auth, or invoke DEV from this task.
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
@@ -24,7 +24,8 @@ FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 ## Terminal Boundary Tokens
 
 ```text
-PHASE_25_STATUS: IN_PROGRESS
+PHASE_25_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION
+PHASE_25_EXTERNAL_CI: NO_STEPS_BILLING_OR_PLATFORM_BLOCK
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
@@ -81,6 +82,6 @@ grant execution authority or infer deployment/ownership/mutation safety.
 
 ## Resume Recipe
 
-Read the Phase 25 `STATE.md`, inspect Git status/diff, run the smallest
-focused validation, and continue its exact next action. Do not restart prior
-milestones or modify historical Phase 19–24 records.
+Task complete. Do not resume this task. Any future source-proof expansion
+requires a new authorized Phase 26 task; no DEV, auth, external retry, or
+infrastructure/data authority carries forward.

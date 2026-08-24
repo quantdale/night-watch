@@ -6,10 +6,11 @@ Task ID: phase-25-real-source-surface-discovery
 Phase: 25-REAL-SOURCE-SURFACE-DISCOVERY
 Title: Nightwatch Phase 25 — Real-Source Surface Discovery, Boundary Hardening, Contract Graph Extraction, and Review Intelligence
 Authorization class: PHASE_25_REAL_SOURCE_SURFACE_DISCOVERY_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7beb18689cf2cd50d1d5383b34f51c2789cd0a54
 Last validated implementation SHA: 042300c7c59fd8218afabc761e31691139d0c657
 Last substantive checkpoint SHA: 042300c7c59fd8218afabc761e31691139d0c657
+Last documentation checkpoint SHA: 3e69c857dd5409675b6c2d8d13b59cfc87232576
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -19,7 +20,8 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 042300c7c59fd8218afabc761e31691139d0c657
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_25_STATUS: IN_PROGRESS
+PHASE_25_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION
+PHASE_25_EXTERNAL_CI: NO_STEPS_BILLING_OR_PLATFORM_BLOCK
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_22_STATUS: BLOCKED_BEFORE_DEV (historical, unchanged)
@@ -37,10 +39,7 @@ preserving fail-closed source, privacy, currentness, and no-contact rules.
 
 ## Current Milestone
 
-Milestone ID: M13
-Milestone status: IN_PROGRESS
-What is being attempted: execute the authoritative local/clean gates and
-fresh canonical/isolated full Playwright regression parity.
+COMPLETE_LOCAL_SOURCE_EXPANSION — M14 terminal closure.
 
 ## Completed Milestones
 
@@ -86,17 +85,21 @@ fresh canonical/isolated full Playwright regression parity.
   eviction, privacy/adversarial matrices, and deterministic repeatability.
 - M11 — added the offline source-to-portfolio synthetic campaign through
   semantic evaluation, replay/dossier DTOs, and Phase24 no-contact rehearsal.
+- M12 — authoritative Phase 9–25 compatibility, quality-gate inventory,
+  typecheck, hardening, and clean Node20 qualification. COMPLETE.
+- M13 — fresh canonical and topology-correct isolated full Playwright
+  regressions. Both enumerated 2,407 with 2,403 passed, 4 skipped, 0 failed;
+  skip identities matched exactly. COMPLETE.
+- M14 — one exact-head Actions observation, durable docs, continuity/project
+  closure, and synchronized main. COMPLETE.
 
 ## Work In Progress
 
-Build the source-driven Phase 24 adapter/portfolio/selection integration, then
-connect two exact source snapshots to the existing invalidation ledger without
-rebinding stale evidence.
+None. Phase 25 implementation and terminal closure are complete.
 
 ## Exact Next Action
 
-Implement one deterministic source-to-Phase24 integration function and add
-changed-snapshot portfolio/invalidation/lifecycle regressions.
+STOP
 
 ## Files Changed
 
@@ -176,6 +179,25 @@ checkpoint.
   canonical skip, 0 failed, 135 registered files.
 - Clean project truth: PASS at implementation checkpoint — live checkout was
   clean and the project snapshot reconciled.
+- Owner provenance: PASS — 91 passed, 0 failed.
+- Agent continuity: PASS — strict v2 errors 0; historical v1 warnings only.
+- Project truth: PASS — project-state v1 reconciled and promotion authority
+  remains NONE.
+- Authoritative local gate: PASS — receipt
+  `receipt:sha256:5eaca4cc32395a1fe14506bd`, definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+  semantic 1,847/1,846/1/0, owner 91, synthetic 29; all groups passed.
+- Node20 clean gate: PASS — `clean-receipt:sha256:1ba9cf9c64ee3ac582fd9edf`,
+  gate receipt `receipt:sha256:41e81aaddb346b70f03cc9b3`, clean before/after,
+  no dependency reuse, no auth/findings state, and sibling writes 0.
+- Fresh canonical full Playwright: PASS — 2,407 enumerated, 2,403 passed,
+  4 skipped, 0 failed.
+- Fresh topology-correct isolated full Playwright: PASS — 2,407/2,403/4/0
+  with exact skip identities; six read-only sibling links and distinct
+  proxy port 20987.
+- Exact-head Actions observation: PASS as an observation, not a gate — run
+  `32741057138`, job `97475353760`, exact head `3e69c857...`, zero steps,
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; no retry.
 
 ## Decisions Made During This Task
 
@@ -214,8 +236,9 @@ See `PLAN.md`; no external/source data was read during bootstrap.
 
 ## Blockers
 
-None for local implementation. External CI and DEV remain outside this
-phase's authority and are not blockers to M1–M13.
+None for authorized local/source work. External Actions was observed once and
+classified as a zero-step billing/platform block; it is not green CI and does
+not reopen this completed local task. DEV remains unauthorized.
 
 ## Safety Events
 
@@ -230,13 +253,14 @@ deferred.
 
 ## Resume Recipe
 
-Read this file, inspect `git status`/diff, run the smallest focused source
-boundary test, and continue the exact next action. Preserve main-only direct
-checkpoint discipline.
+Task complete. Do not resume this task. Any future source-proof expansion
+requires a new authorized Phase 26 task; no DEV, auth, external retry, or
+infrastructure/data authority carries forward.
 
 ## Completion Snapshot
 
-M1–M12 are implemented and validated through clean Phase 9–25 compatibility.
-M13 is active for authoritative gate receipts, clean Node20 qualification,
-fresh canonical/isolated regression parity, external exact-head observation,
-and terminal synchronized-main closure.
+M0–M14 are complete. Phase 25 is `COMPLETE_LOCAL_SOURCE_EXPANSION` with
+implementation checkpoint `042300c7c59fd8218afabc761e31691139d0c657`, live
+continuity head discovered from Git, clean local/Node20 gates, exact
+canonical/isolated parity, one truthful zero-step Actions observation, and
+zero prohibited-operation counts.

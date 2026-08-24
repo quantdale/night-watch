@@ -1571,3 +1571,37 @@ cannot become CI authority. Proxy lease changes are test-infrastructure-only:
 ownership, stale-child, startup/interruption, parallel, symlink, SIGTERM, and
 SIGINT behavior are bounded and checked for no unrelated process termination
 and no lingering listener.
+
+## Phase 25 real-source surface discovery architecture
+
+Phase 25 closes the source-discovery seam without adding a second portfolio,
+replay, dossier, or semantic graph authority:
+
+```text
+approved sibling repository + exact supported Git snapshot
+  -> no-follow siblingSource boundary
+  -> fixed scan config + content-aware bounded inventory
+  -> existing PHP/TS/JS/Go/OpenAPI mechanical analyzers
+  -> route/operation + request/response/semantic evidence
+  -> exact cross-file joins and source lineage in the existing graph
+  -> read-only/ownership/runtime qualification
+  -> safe surface descriptors
+  -> existing Phase 24 candidate adapter/portfolio/selector
+  -> existing invalidation, semantic coverage, replay, dossier, and review seams
+```
+
+`src/core/source/siblingSource.ts` is the sole Alphaus sibling filesystem
+authority. It rejects traversal, symlink components, unsafe `.git` shapes,
+non-regular files, and bounded-budget violations before source text is read.
+Inventory and extraction identity includes the actual inspected-content digest,
+configuration, extractor, and analyzer identities; a dirty same-SHA source
+cannot reuse stale output. Source text is ephemeral and never enters a
+descriptor, graph, receipt, dossier, task record, or operator response.
+
+The initial fixed universe is the six approved Ripple-related repositories.
+Real-source route discovery is deliberately conservative: ambiguous routes,
+unresolved symbols, unproven response/semantic contracts, mutation-capable
+operations, and unresolved deployment equivalence remain visible exclusions.
+Deployment/source equivalence is never inferred. Extracted eligible surfaces
+are passed through the existing Phase 24 authority, so source discovery can
+explain or prioritize a candidate but cannot grant execution authority.
