@@ -2212,8 +2212,8 @@ The remaining variable producers, dynamic dispatch, property/service chains,
 namespace/import, inheritance/trait/interface, factory/resource/DTO, and
 generic data-flow cases remain fail-closed exclusions. Phase 24 remains the
 sole portfolio authority and historical Phase 25–27 records remain unchanged.
-The final local quality cone is green: compatibility 1,874 total / 1,873
-passed / 1 skipped / 0 failed, owner provenance 91/91, synthetic campaign
+The final local quality cone is green: compatibility 1,874 total / 1,861
+passed / 13 skipped / 0 failed, owner provenance 91/91, synthetic campaign
 49/49, canonical and topology-correct isolated complete Playwright both
 2,438 passed / 16 skipped / 0 failed out of 2,454. The exact-head external
 Actions observation remains a separate zero-step billing/platform result and

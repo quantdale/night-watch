@@ -182,17 +182,18 @@ The following required checks passed:
   `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
   22 phases / 139 compatibility files
 - `npm run gate:inventory` — 148 authoritative unique test files, no duplicates
-- `npm run test:semantic-compat` — 1,874 total / 1,873 passed / 1 skipped / 0 failed
+- `npm run test:semantic-compat` — final gate execution 1,874 total / 1,861 passed / 13 skipped / 0 failed
 - `npm run campaign:synthetic` — 49/49
 - `npm run test:owner-provenance` — 91/91
 - `npm run agent:check` — PASS, with only historical-v1/checkpoint warnings
 - `npm run agent:audit` — 71 tasks, 47 strict v2, 24 historical v1, 0 strict errors
 - `npm run project:check` — PASS
-- `npm run gate:local` — PASS, receipt
-  `receipt:sha256:95bd5cf83321cc4e767c33b8`
+- `npm run gate:local` — PASS at terminal head `8aff7ab673c70e240aa8a77be1215e4b7ef87f35`,
+  receipt `receipt:sha256:fd0101624bac91e329479b3a`
 - `npm run gate:clean` — PASS, clean receipt
-  `clean-receipt:sha256:62391304454e379b611ccd70`, gate receipt
-  `receipt:sha256:25162d41cd4cad5a892f2636`
+  `clean-receipt:sha256:aeab15e9ef1a373c0e0fa17a`, gate receipt
+  `receipt:sha256:25321663031ff751513069ec`; Node20, clean before/after,
+  no node_modules reuse, and sibling writes 0
 - Phase 28 focused suite — 10/10
 - Relevant Phase 25/26/27/28 regression suite — 22/22
 - Canonical complete Playwright — 2,454 discovered / 2,438 passed /

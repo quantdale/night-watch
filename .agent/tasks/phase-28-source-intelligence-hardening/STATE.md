@@ -168,6 +168,14 @@ zero.
   Phase 24 metrics above.
 - Producer admission census: PASS — bounded ephemeral structural census,
   zero strict candidates; no raw values retained.
+- Final project truth: PASS — active-task continuity PASS and clean checkout.
+- Final local gate: PASS at terminal head `8aff7ab673c70e240aa8a77be1215e4b7ef87f35`,
+  all nine groups PASS, semantic compatibility 1,874 total / 1,861 passed /
+  13 skipped / 0 failed, receipt `receipt:sha256:fd0101624bac91e329479b3a`.
+- Final Node20 clean gate: PASS, clean before/after, no module reuse,
+  sibling writes 0, semantic compatibility 1,874/1,861/13/0, gate receipt
+  `receipt:sha256:25321663031ff751513069ec`, clean receipt
+  `clean-receipt:sha256:aeab15e9ef1a373c0e0fa17a`.
 - Canonical complete Playwright: PASS — 2,454 discovered; 2,438 passed,
   16 skipped, 0 failed in 12.0 minutes.
 - Isolated complete Playwright: PASS — topology-correct detached checkout at
