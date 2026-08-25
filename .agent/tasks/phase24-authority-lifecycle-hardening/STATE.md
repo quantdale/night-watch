@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; clean semantic compatibility passed.
+Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; full Phase 24–28/response-flow cone passed 102/102.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
@@ -35,8 +35,8 @@ preserving the local/source/synthetic-only owner boundary.
 
 ## Current Milestone
 
-M2 — IN_PROGRESS. Repair and focus-validate the reproduced Phase 24 authority
-and stale-artifact defects.
+M3 — IN_PROGRESS. Audit the whole repository across the required hardening
+classes and repair only reproduced actionable defects.
 
 ## Completed Milestones
 
@@ -73,8 +73,8 @@ and stale-artifact defects.
 
 ## Work In Progress
 
-M2 remains active pending the full dependency-cone closeout. The focused
-repair is now a durable implementation checkpoint: omitted snapshot proof now excludes a direct
+M2 is complete at the local/source/synthetic boundary. The durable repair
+checkpoint makes omitted snapshot proof exclude a direct
 candidate; invalidation is v2 with explicit per-repository availability,
 prior/current IDs, recovery/removal states, transition reasons, and stale
 artifact keys; duplicate surfaces fail closed; replay plans and dossiers carry
@@ -84,11 +84,12 @@ remain outstanding.
 
 ## Exact Next Action
 
-Run the full Phase 24–28 and response-flow dependency cone, then re-read all
-downstream replay, dossier, selection, source-review, cache, and triage
-consumers. Repair any regression before advancing to the whole-repository
-Stage B audit; the committed implementation checkpoint is
-`012daa20ee1cd1fc2a9140d74462f9f74da7ba5b`.
+Perform the Stage B whole-repository audit. Inspect each required class—safety
+and containment; continuity, recovery, and idempotence; determinism and
+provenance; concurrency/process/filesystem/workspace; input and failure
+semantics; tests/gates/negative space; and dead assumptions. Reproduce every
+actionable finding with a bounded synthetic test before repairing it, then
+record the disposition and advance to Stage C.
 
 ## Files Changed
 
@@ -176,6 +177,8 @@ Stage B audit; the committed implementation checkpoint is
 - `npm run agent:check` after commit `012daa2` — PASS with the expected stale
   baseline warning before this documentation anchor update; `npm run
   agent:audit` — PASS, strict errors 0, legacy warnings 33.
+- Full Phase 24–28 and response-flow dependency cone after commit `012daa2` —
+  PASS: 102 passed, 0 failed, 0 skipped across 20 authoritative test files.
 
 ## Decisions Made During This Task
 

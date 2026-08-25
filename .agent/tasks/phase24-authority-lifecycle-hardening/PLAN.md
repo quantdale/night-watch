@@ -64,10 +64,11 @@ plans without relying on broad Git cleanup commands.
 - M1 — COMPLETE: Phase 24 authority/invalidation graph audit and adversarial
   reproduction matrix; five baseline failures reproduced, plus a stale review
   selection crossing case.
-- M2 — IN_PROGRESS: implement and focus-validate reproduced Critical/High
-  authority defects, including artifact/cache currentness binding.
-- M3 — PENDING: whole-repository hardening audit and bounded repairs across all
-  required audit classes.
+- M2 — COMPLETE: implement and validate reproduced Critical/High authority
+  defects, including artifact/cache currentness binding; the full Phase 24–28
+  and response-flow cone passed 102/102.
+- M3 — IN_PROGRESS: whole-repository hardening audit and bounded repairs across
+  all required audit classes.
 - M4 — PENDING: implement and validate durable dry-run-first workspace hygiene;
   classify and safely reconcile only proven-clean reachable targets.
 - M5 — PENDING: full validation ladder, source/provenance/privacy review,

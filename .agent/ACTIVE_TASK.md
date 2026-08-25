@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/phase24-authority-lifecycle-hardening
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
 Last validated implementation SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
-Last checkpoint: M2 implementation — authority lifecycle and stale-artifact repairs committed and clean semantic compatibility passed.
-Current milestone: M2 — Phase 24 authority contract and stale-artifact repairs.
-Next action: Run the full Phase 24–28/response-flow dependency cone and repository-native gates, repair regressions, then checkpoint the validated implementation.
+Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; the full Phase 24–28/response-flow cone passed 102/102.
+Current milestone: M3 — whole-repository hardening audit and bounded repairs.
+Next action: Audit the required safety, continuity, determinism, concurrency, filesystem, failure-semantics, gate, and dead-assumption classes; reproduce any actionable defect before repair.
 Authorization class: PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a

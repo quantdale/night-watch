@@ -10,8 +10,9 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Current handoff
 
-M0 and M1 are complete; M2 implementation is checkpointed and its clean broad
-compatibility gate is green, while M2 closeout remains active. The live canonical checkout began clean
+M0 through M2 are complete at the local/source/synthetic boundary. M2's
+implementation is checkpointed, its clean broad compatibility gate is green,
+and the full Phase 24–28/response-flow cone passed 102/102. The live canonical checkout began clean
 at `755cb2e611355011c9d249142b2c2bf4f112327a`, and the fresh confined source
 census matches the prior baseline. The continuity checker now recognizes the
 planning-only execution prompt as a documentation checkpoint, with a
@@ -23,9 +24,9 @@ selection defects. The focused M2 repair is green across 29 Phase 24–26 tests
 plus the Phase 25 source bridge and typecheck. The invalidation schema is v2
 with granular availability and stale artifact keys; replay and dossier
 schemas are versioned with candidate-decision bindings. The clean semantic
-compatibility gate passed 1,863/1,876 (13 skipped). Full dependency-cone
-closeout, Stage B whole-repository audit, Stage C hygiene implementation, and
-campaign closure remain outstanding. No completion claim is made.
+compatibility gate passed 1,863/1,876 (13 skipped). M3 is now active for the
+whole-repository audit; Stage C hygiene implementation and campaign closure
+remain outstanding. No completion claim is made.
 
 ## Safety
 
