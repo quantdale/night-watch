@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M0 activation from synchronized live main; implementation not yet started.
+Last checkpoint: M0 — synchronized baseline gates passed at 83248c5; M1 is next.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
@@ -30,27 +30,27 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M0
+Milestone ID: M1
 Milestone status: IN_PROGRESS
-What is being attempted: Activate the fresh task from current main, record
-baseline gates and Node compatibility, then begin contract design.
+What is being attempted: Define versioned whitelist DTOs, bounded safe IDs,
+error envelopes, and sanitization tests before server/UI implementation.
 
 ## Completed Milestones
 
-None yet. The prior Phase 24 campaign is terminal and the planning branch was
-read without checkout or merge.
+- M0 — COMPLETE: current `main` was reconciled against the planning baseline;
+  the new branch/task was created without checking out the planning ref;
+  project truth, typecheck, hardening, quality-gate definition, inventory,
+  local gate, and clean Node 20 gate all passed.
 
 ## Work In Progress
 
-The fresh task files and active route are being created on
-`campaign/nightwatch-control-center`; no Control Center implementation files
-exist yet.
+M1 contract design is beginning on `campaign/nightwatch-control-center`.
+No Control Center runtime implementation exists yet.
 
 ## Exact Next Action
 
-Run the current baseline continuity/typecheck/hardening/spec/inventory checks,
-record their exact results, then implement M1 versioned contracts and bounded
-sanitization tests.
+Implement `src/controlCenter/contracts/**` and the focused contract tests,
+then run typecheck and the M1 test command.
 
 ## Files Changed
 
@@ -64,9 +64,27 @@ sanitization tests.
 
 ## Validation Ledger
 
-No new-task baseline command has run after activation. The previous terminal
-task proved current `main` clean and synchronized at `8feea00`; M0 baseline
-commands are the next action.
+- `git fetch --prune origin` — PASS: current `main` and `origin/main` were
+  equal at `8feea00` before the local task activation branch.
+- `npm run agent:check` — PASS with 2 expected warnings: checkpoint advance
+  for approved task docs and 24 historical legacy-v1 warnings.
+- `npm run project:check` — PASS: active-task continuity PASS, catalog
+  round-trip PASS, promotion authority NONE, clean checkout.
+- `npm run typecheck` — PASS.
+- `npm run hardening:check` — PASS: offline structural invariants hold.
+- `npm run quality-gate:spec` — PASS: definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+  22 compatibility phases, 141 files.
+- `npm run gate:inventory` — PASS: 9 authoritative groups, 152 unique test
+  files, 0 duplicate executions.
+- `npm run gate:local` at `83248c5` — PASS: all 9 groups; semantic 1,883
+  total / 1,870 passed / 13 skipped / 0 failed; owner 91 passed; synthetic
+  61 passed; receipt `receipt:sha256:4bd1c4342e1727e40b8e4370`.
+- `npm run gate:clean` at `83248c5` — PASS: Node 20, fresh install, clean
+  before/after, zero sibling writes; receipt
+  `clean-receipt:sha256:b8fac902a7d63d0ab45ce010` and gate receipt
+  `receipt:sha256:e27632bd3cbbc5ac52bbb02c`.
+- `git diff --check` — PASS before the M0 checkpoint.
 
 ## Decisions Made During This Task
 
@@ -99,7 +117,7 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M0 action above. Preserve loopback-only,
+live Git status and continue the exact M1 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot

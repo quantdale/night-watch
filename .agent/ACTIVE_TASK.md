@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
 Last validated implementation SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last checkpoint: M0 activation from synchronized current main.
-Current milestone: M0 — live reconciliation, baseline validation, and task activation.
-Next action: Run baseline checks, record results, then implement M1 contracts.
+Last checkpoint: M0 — synchronized baseline gates passed at 83248c5.
+Current milestone: M1 — versioned Control Center contracts and sanitization boundary.
+Next action: Implement M1 contracts and bounded hostile-input/whitelisting tests.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada

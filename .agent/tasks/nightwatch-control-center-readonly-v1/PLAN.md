@@ -78,7 +78,7 @@ and source graph data also have list/table fallbacks.
 - Validation commands: `npm run agent:check`, `npm run project:check`,
   `npm run typecheck`, `npm run hardening:check`, `npm run quality-gate:spec`,
   `npm run gate:inventory`.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M1 — Define contracts and sanitization boundary
 
@@ -89,7 +89,7 @@ and source graph data also have list/table fallbacks.
   safe ID, categorical error envelope, deterministic ordering, and explicit
   field mapping with hostile-field leakage tests.
 - Validation commands: typecheck and focused contract tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M2 — Build authoritative read-only adapters
 
