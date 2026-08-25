@@ -66,7 +66,7 @@ class Reader {
       expect(sourceProofGapCode(surface.contract.responseProof, surface.contract.responseAnalyzerDiagnostics, 'RESPONSE')).toBe('RESPONSE_FLOW_DYNAMIC_DISPATCH');
       expect(fixture.discovery.gapTaxonomy.dimensions.rejectionCode).toEqual(expect.arrayContaining([{ code: 'RESPONSE_DYNAMIC_DISPATCH', count: 1 }]));
       expect(fixture.discovery.gapTaxonomy.dimensions.rejectionFamily).toEqual(expect.arrayContaining([{ code: 'DYNAMIC_DISPATCH', count: 1 }]));
-      expect(fixture.discovery.gapTaxonomy.dimensions.analyzerVersion).toEqual(expect.arrayContaining([{ code: 'nightwatch.real-source-response-flow.v1', count: 1 }]));
+      expect(fixture.discovery.gapTaxonomy.dimensions.analyzerVersion).toEqual(expect.arrayContaining([{ code: 'nightwatch.real-source-response-flow.v2', count: 1 }]));
       expect(JSON.stringify(fixture.discovery)).not.toContain("'id' => 1");
     } finally {
       fs.rmSync(fixture.root, { recursive: true, force: true });

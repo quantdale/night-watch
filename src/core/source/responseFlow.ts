@@ -13,7 +13,7 @@ import { safeSemanticDigest } from '../semanticCoverage/types';
 import { sourceContentDigest, type RealSourceSnapshotInventory, type SourceSnapshotFileRecord } from './scanTypes';
 import type { SiblingSourceAccess } from './siblingSource';
 
-export const REAL_SOURCE_RESPONSE_FLOW_VERSION = 'nightwatch.real-source-response-flow.v1' as const;
+export const REAL_SOURCE_RESPONSE_FLOW_VERSION = 'nightwatch.real-source-response-flow.v2' as const;
 export const MAX_RESPONSE_FLOW_DEPTH = 2;
 export const MAX_RESPONSE_FLOW_DECLARATIONS = 16;
 export const MAX_RESPONSE_FLOW_INDEX_DECLARATIONS = 4096;
@@ -86,7 +86,11 @@ interface IndexedDeclaration extends ResponseFlowDeclaration {
   readonly tokens: readonly PhpToken[];
   readonly namespacePresent: boolean;
   readonly classUnsupported: boolean;
+  readonly isStatic: boolean;
+  readonly visibility: ResponseFlowVisibility;
 }
+
+type ResponseFlowVisibility = 'PUBLIC' | 'PROTECTED' | 'PRIVATE' | 'UNKNOWN';
 
 interface ClassRange {
   readonly name: string;
@@ -103,7 +107,7 @@ interface FileIndexState {
 export interface ResponseFlowIndex {
   readonly declarations: readonly ResponseFlowDeclaration[];
   readonly metrics: ResponseFlowIndexMetrics;
-  readonly find: (input: { readonly repoId: string; readonly relativePath?: string; readonly symbol: string; readonly className?: string | null; readonly kind?: ResponseFlowDeclarationKind }) => readonly ResponseFlowDeclaration[];
+  readonly find: (input: { readonly repoId: string; readonly relativePath?: string; readonly symbol: string; readonly className?: string | null; readonly kind?: ResponseFlowDeclarationKind; readonly sourceSha?: string }) => readonly ResponseFlowDeclaration[];
   readonly body: (declaration: ResponseFlowDeclaration) => IndexedDeclaration | null;
   readonly fileState: (repoId: string, relativePath: string) => FileIndexState['status'] | 'NOT_INDEXED';
 }
@@ -228,6 +232,25 @@ function containingClass(ranges: readonly ClassRange[], functionIndex: number): 
   return matches[0] ?? null;
 }
 
+const DECLARATION_MODIFIERS = new Set(['abstract', 'final', 'private', 'protected', 'public', 'readonly', 'static']);
+
+function declarationModifiers(tokens: readonly PhpToken[], functionIndex: number): { readonly isStatic: boolean; readonly visibility: ResponseFlowVisibility } {
+  let isStatic = false;
+  let visibility: ResponseFlowVisibility = 'PUBLIC';
+  let sawVisibility = false;
+  for (let index = functionIndex - 1; index >= 0; index -= 1) {
+    const token = tokens[index]!;
+    if (token.t !== 'WORD' || !DECLARATION_MODIFIERS.has(token.v)) break;
+    if (token.v === 'static') isStatic = true;
+    if (token.v === 'public' || token.v === 'protected' || token.v === 'private') {
+      if (sawVisibility && visibility !== token.v.toUpperCase()) visibility = 'UNKNOWN';
+      else visibility = token.v.toUpperCase() as Extract<ResponseFlowVisibility, 'PUBLIC' | 'PROTECTED' | 'PRIVATE'>;
+      sawVisibility = true;
+    }
+  }
+  return { isStatic, visibility };
+}
+
 function declarationRecords(input: { readonly file: SourceSnapshotFileRecord; readonly sourceText: string; readonly tokens: readonly PhpToken[] }): readonly IndexedDeclaration[] {
   const ranges = classRanges(input.tokens);
   const namespacePresent = input.tokens.some((token) => token.t === 'WORD' && token.v === 'namespace');
@@ -241,6 +264,7 @@ function declarationRecords(input: { readonly file: SourceSnapshotFileRecord; re
     if (body === null) continue;
     const range = containingClass(ranges, index);
     const className = range?.name ?? null;
+    const modifiers = declarationModifiers(input.tokens, index);
     const core = {
       repoId: safeValue(input.file.repoId, SAFE_REPO_RE, 'REPOSITORY'),
       sourceSha: input.file.sourceSha ?? invalid('SOURCE_SHA_MISSING'),
@@ -250,7 +274,7 @@ function declarationRecords(input: { readonly file: SourceSnapshotFileRecord; re
       kind: className === null ? 'FUNCTION' as const : 'METHOD' as const,
       className,
     };
-    declarations.push({ ...declarationCore(core), body, tokens: input.tokens, namespacePresent, classUnsupported: range?.unsupported ?? false });
+    declarations.push({ ...declarationCore(core), body, tokens: input.tokens, namespacePresent, classUnsupported: range?.unsupported ?? false, ...modifiers });
   }
   return declarations;
 }
@@ -321,7 +345,8 @@ export function createResponseFlowIndex(input: { readonly access: SiblingSourceA
         && (query.relativePath === undefined || declaration.relativePath === query.relativePath)
         && declaration.symbol === query.symbol
         && (query.className === undefined || declaration.className === query.className)
-        && (query.kind === undefined || declaration.kind === query.kind))
+        && (query.kind === undefined || declaration.kind === query.kind)
+        && (query.sourceSha === undefined || declaration.sourceSha === query.sourceSha))
         .map(({ declarationId: id, repoId, sourceSha, relativePath, contentDigest, symbol, kind, className }) => ({ declarationId: id, repoId, sourceSha, relativePath, contentDigest, symbol, kind, className }));
     },
     body(declaration) {
@@ -445,21 +470,62 @@ function buildProof(input: {
   return { ...core, proofDigest: proofDigest(core) };
 }
 
+function sourceBoundCandidates(input: {
+  readonly index: ResponseFlowIndex;
+  readonly query: { readonly repoId: string; readonly relativePath?: string; readonly symbol: string; readonly className?: string | null; readonly kind?: ResponseFlowDeclarationKind };
+  readonly sourceSha: string;
+}): { readonly candidates: readonly ResponseFlowDeclaration[]; readonly rejectionCode: ResponseFlowRejectionCode | null } {
+  const candidates = input.index.find(input.query);
+  if (candidates.some((candidate) => candidate.sourceSha !== input.sourceSha)) {
+    return { candidates: [], rejectionCode: 'RESPONSE_DECLARATION_STALE' };
+  }
+  return { candidates, rejectionCode: null };
+}
+
 function resolveTarget(input: { readonly index: ResponseFlowIndex; readonly from: IndexedDeclaration; readonly target: CallTarget }): { readonly declaration: ResponseFlowDeclaration | null; readonly rejectionCode: ResponseFlowRejectionCode | null } {
   const target = input.target;
   if (target.kind === 'SAME_CLASS_METHOD' || target.kind === 'SELF_METHOD') {
     if (input.from.classUnsupported) return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAPPROVED' };
-    const candidates = input.index.find({ repoId: input.from.repoId, symbol: target.symbol, className: target.className, kind: 'METHOD' });
-    return candidates.length === 1 ? { declaration: candidates[0]!, rejectionCode: null } : { declaration: null, rejectionCode: candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
+    const result = sourceBoundCandidates({
+      index: input.index,
+      query: { repoId: input.from.repoId, relativePath: input.from.relativePath, symbol: target.symbol, className: target.className, kind: 'METHOD' },
+      sourceSha: input.from.sourceSha,
+    });
+    if (result.rejectionCode !== null) return { declaration: null, rejectionCode: result.rejectionCode };
+    if (result.candidates.length !== 1) return { declaration: null, rejectionCode: result.candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
+    const declaration = result.candidates[0]!;
+    const indexed = input.index.body(declaration);
+    if (indexed === null) return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAVAILABLE' };
+    if (indexed.classUnsupported || (target.kind === 'SAME_CLASS_METHOD' ? indexed.isStatic : !indexed.isStatic)) {
+      return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAPPROVED' };
+    }
+    return { declaration, rejectionCode: null };
   }
   if (target.kind === 'NAMED_STATIC_METHOD') {
     if (input.from.namespacePresent || !SAFE_CLASS_RE.test(target.className ?? '')) return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAPPROVED' };
-    const candidates = input.index.find({ repoId: input.from.repoId, symbol: target.symbol, className: target.className, kind: 'METHOD' });
-    return candidates.length === 1 ? { declaration: candidates[0]!, rejectionCode: null } : { declaration: null, rejectionCode: candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
+    const result = sourceBoundCandidates({
+      index: input.index,
+      query: { repoId: input.from.repoId, symbol: target.symbol, className: target.className, kind: 'METHOD' },
+      sourceSha: input.from.sourceSha,
+    });
+    if (result.rejectionCode !== null) return { declaration: null, rejectionCode: result.rejectionCode };
+    if (result.candidates.length !== 1) return { declaration: null, rejectionCode: result.candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
+    const declaration = result.candidates[0]!;
+    const indexed = input.index.body(declaration);
+    if (indexed === null) return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAVAILABLE' };
+    if (indexed.namespacePresent || indexed.classUnsupported || !indexed.isStatic || indexed.visibility !== 'PUBLIC') {
+      return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAPPROVED' };
+    }
+    return { declaration, rejectionCode: null };
   }
   if (input.from.namespacePresent) return { declaration: null, rejectionCode: 'RESPONSE_DECLARATION_UNAPPROVED' };
-  const candidates = input.index.find({ repoId: input.from.repoId, relativePath: input.from.relativePath, symbol: target.symbol, className: null, kind: 'FUNCTION' });
-  return candidates.length === 1 ? { declaration: candidates[0]!, rejectionCode: null } : { declaration: null, rejectionCode: candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
+  const result = sourceBoundCandidates({
+    index: input.index,
+    query: { repoId: input.from.repoId, relativePath: input.from.relativePath, symbol: target.symbol, className: null, kind: 'FUNCTION' },
+    sourceSha: input.from.sourceSha,
+  });
+  if (result.rejectionCode !== null) return { declaration: null, rejectionCode: result.rejectionCode };
+  return result.candidates.length === 1 ? { declaration: result.candidates[0]!, rejectionCode: null } : { declaration: null, rejectionCode: result.candidates.length === 0 ? 'RESPONSE_SYMBOL_MISSING' : 'RESPONSE_SYMBOL_AMBIGUOUS' };
 }
 
 /** Resolve only exact static helper calls; all other flows return a category. */
@@ -467,7 +533,11 @@ export function resolveResponseFlow(input: { readonly index: ResponseFlowIndex; 
   if (input.operation.handlerPath === null || input.operation.handlerSymbol === null) {
     return buildProof({ status: 'REJECTED', depth: 0, rootDeclaration: null, declarations: [], edges: [], terminalDeclarationIds: [], rejectionCode: 'RESPONSE_SYMBOL_MISSING' });
   }
-  const roots = input.index.find({ repoId: input.operation.repository, relativePath: input.operation.handlerPath, symbol: input.operation.handlerSymbol });
+  const rootCandidates = input.index.find({ repoId: input.operation.repository, relativePath: input.operation.handlerPath, symbol: input.operation.handlerSymbol });
+  if (rootCandidates.some((candidate) => candidate.sourceSha !== input.operation.sourceSha)) {
+    return buildProof({ status: 'REJECTED', depth: 0, rootDeclaration: null, declarations: [], edges: [], terminalDeclarationIds: [], rejectionCode: 'RESPONSE_DECLARATION_STALE' });
+  }
+  const roots = rootCandidates.filter((candidate) => candidate.sourceSha === input.operation.sourceSha);
   if (roots.length === 0) {
     const state = input.index.fileState(input.operation.repository, input.operation.handlerPath);
     const rejectionCode = state === 'SOURCE_STALE' ? 'RESPONSE_DECLARATION_STALE'
