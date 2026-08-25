@@ -110,7 +110,7 @@ and source graph data also have list/table fallbacks.
   size/static-root controls, fixed errors, graceful SSE/shutdown, no action
   endpoint or external socket.
 - Validation commands: server integration and adversarial security tests.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M4 — Add isolated frontend shell and design system
 
@@ -120,7 +120,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: typecheck/test/build pass; bundle has no external
   requests; keyboard shell and safe error boundary work.
 - Validation commands: nested package typecheck/test/build.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M5 — Overview and Safety Center
 

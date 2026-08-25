@@ -6,15 +6,15 @@ Title: Nightwatch Control Center — Read-Only Local V1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: cc4c400e93da989496c13184f55ec3fc0d343734
-Last checkpoint: M2 — authoritative adapters and projection tests passed at cc4c400.
-Current milestone: M3 — hardened loopback HTTP server and notification channel.
-Next action: Implement the injected collector, strict loopback router, bounded JSON responses, static-root confinement, SSE notifications, and server security tests.
+Last validated implementation SHA: b573884b078e822387869ebf20a5db4464804587
+Last checkpoint: M3 — hardened loopback server, launcher, and 22 focused tests passed at b573884.
+Current milestone: M4 — isolated React/Vite frontend shell and design system.
+Next action: Create the isolated UI package, pin a Node 20-compatible toolchain, implement the accessible shell/API client, and validate its build without external requests.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
+LAST_VALIDATED_IMPLEMENTATION_SHA: b573884b078e822387869ebf20a5db4464804587
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b573884b078e822387869ebf20a5db4464804587
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety
