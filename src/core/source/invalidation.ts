@@ -10,6 +10,7 @@
 import { buildPhase24CandidateInvalidationLedger } from '../phase24/invalidation';
 import type { Phase24CandidatePortfolio } from '../phase24/types';
 import { safeSemanticDigest } from '../semanticCoverage/types';
+import { compareSourceGapTaxonomies } from './gapTaxonomy';
 import type { RealSourceSnapshotInventory, SourceSnapshotFileRecord } from './scanTypes';
 import {
   REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION,
@@ -150,6 +151,7 @@ export function compareSourceSurfaces(input: {
   const files = inventoryChangeReport(input.prior?.discovery.inventory ?? null, input.current.discovery.inventory);
   const surfaces = compareSurfaceEvidence(input.prior?.discovery ?? null, input.current.discovery);
   const sourceAvailable = input.current.discovery.inventory.repositories.some((repository) => repository.status === 'CURRENT');
+  const gapTaxonomyChange = compareSourceGapTaxonomies(input.prior?.discovery.gapTaxonomy ?? null, input.current.discovery.gapTaxonomy);
   const invalidationLedger = input.prior?.portfolio !== null || input.current.portfolio !== null
     ? buildPhase24CandidateInvalidationLedger({ prior: input.prior?.portfolio ?? null, current: input.current.portfolio ?? null, sourceAvailable })
     : null;
@@ -170,6 +172,7 @@ export function compareSourceSurfaces(input: {
     newSurfaceIds: surfaces.newSurfaceIds,
     removedSurfaceIds: surfaces.removedSurfaceIds,
     lifecycleCounts: lifecycleCounts(input.current.discovery),
+    gapTaxonomyChange,
     invalidationLedger,
   };
   return { ...core, deterministicDigest: safeSemanticDigest(core, 'source-surface-change-report') };

@@ -15,7 +15,10 @@ import type { SiblingSourceAccess } from './siblingSource';
 
 export const REAL_SOURCE_RESPONSE_FLOW_VERSION = 'nightwatch.real-source-response-flow.v1' as const;
 export const MAX_RESPONSE_FLOW_DEPTH = 2;
-const MAX_RESPONSE_FLOW_DECLARATIONS = 16;
+export const MAX_RESPONSE_FLOW_DECLARATIONS = 16;
+export const MAX_RESPONSE_FLOW_INDEX_DECLARATIONS = 4096;
+export const MAX_RESPONSE_FLOW_SOURCE_BYTES = 400_000;
+export const MAX_RESPONSE_FLOW_RETURN_SITES = 64;
 
 const SAFE_REPO_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/;
 const SAFE_PATH_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$/;
@@ -31,7 +34,11 @@ export const RESPONSE_FLOW_REJECTION_CODES = [
   'RESPONSE_DECLARATION_UNAPPROVED',
   'RESPONSE_DECLARATION_STALE',
   'RESPONSE_DECLARATION_UNAVAILABLE',
+  'RESPONSE_SOURCE_BUDGET_EXCEEDED',
+  'RESPONSE_DECLARATION_INDEX_BUDGET_EXCEEDED',
   'RESPONSE_BRANCH_INCOMPLETE',
+  'RESPONSE_BRANCH_BUDGET_EXCEEDED',
+  'RESPONSE_FLOW_DECLARATIONS_EXCEEDED',
   'RESPONSE_DYNAMIC_DISPATCH',
   'RESPONSE_UNSUPPORTED_HELPER_SYNTAX',
 ] as const;
@@ -77,7 +84,6 @@ export interface ResponseFlowProof {
 interface IndexedDeclaration extends ResponseFlowDeclaration {
   readonly body: { readonly start: number; readonly end: number };
   readonly tokens: readonly PhpToken[];
-  readonly sourceText: string;
   readonly namespacePresent: boolean;
   readonly classUnsupported: boolean;
 }
@@ -90,15 +96,26 @@ interface ClassRange {
 }
 
 interface FileIndexState {
-  readonly status: 'READY' | 'SOURCE_UNAVAILABLE' | 'SOURCE_STALE' | 'LEXICAL_UNSUPPORTED';
+  readonly status: 'READY' | 'SOURCE_UNAVAILABLE' | 'SOURCE_STALE' | 'LEXICAL_UNSUPPORTED' | 'SOURCE_BUDGET_EXCEEDED' | 'DECLARATION_INDEX_BUDGET_EXCEEDED';
   readonly file: SourceSnapshotFileRecord;
 }
 
 export interface ResponseFlowIndex {
   readonly declarations: readonly ResponseFlowDeclaration[];
+  readonly metrics: ResponseFlowIndexMetrics;
   readonly find: (input: { readonly repoId: string; readonly relativePath?: string; readonly symbol: string; readonly className?: string | null; readonly kind?: ResponseFlowDeclarationKind }) => readonly ResponseFlowDeclaration[];
   readonly body: (declaration: ResponseFlowDeclaration) => IndexedDeclaration | null;
   readonly fileState: (repoId: string, relativePath: string) => FileIndexState['status'] | 'NOT_INDEXED';
+}
+
+export interface ResponseFlowIndexMetrics {
+  readonly filesConsidered: number;
+  readonly filesTokenized: number;
+  readonly filesReady: number;
+  readonly declarationsIndexed: number;
+  readonly maxDeclarationsPerFile: number;
+  readonly maxTokens: number;
+  readonly maxSourceBytes: number;
 }
 
 interface ResponseFlowOperation {
@@ -165,7 +182,7 @@ function findFunctionBodyAt(tokens: readonly PhpToken[], functionIndex: number):
         for (let next = index + 1; next < tokens.length; next += 1) {
           const after = tokens[next]!;
           if (after.t === 'PUNCT' && after.v === '{') {
-            const close = findMatchingBrace([...tokens], next);
+            const close = findMatchingBrace(tokens, next);
             return close < tokens.length ? { start: next, end: close } : null;
           }
           if (after.t === 'PUNCT' && after.v === ';') return null;
@@ -193,7 +210,7 @@ function classRanges(tokens: readonly PhpToken[]): readonly ClassRange[] {
       if (token.t === 'PUNCT' && token.v === ';') break;
     }
     if (open < 0) continue;
-    const close = findMatchingBrace([...tokens], open);
+    const close = findMatchingBrace(tokens, open);
     if (close >= tokens.length) continue;
     const header = tokens.slice(index + 2, open);
     const unsupported = header.some((token) => token.t === 'WORD' && (token.v === 'extends' || token.v === 'implements'))
@@ -233,7 +250,7 @@ function declarationRecords(input: { readonly file: SourceSnapshotFileRecord; re
       kind: className === null ? 'FUNCTION' as const : 'METHOD' as const,
       className,
     };
-    declarations.push({ ...declarationCore(core), body, tokens: input.tokens, sourceText: input.sourceText, namespacePresent, classUnsupported: range?.unsupported ?? false });
+    declarations.push({ ...declarationCore(core), body, tokens: input.tokens, namespacePresent, classUnsupported: range?.unsupported ?? false });
   }
   return declarations;
 }
@@ -245,6 +262,11 @@ export function createResponseFlowIndex(input: { readonly access: SiblingSourceA
   const files = [...input.inventory.files]
     .filter((file) => file.status === 'ELIGIBLE' && file.language === 'PHP')
     .sort((left, right) => fileKey(left.repoId, left.relativePath).localeCompare(fileKey(right.repoId, right.relativePath)));
+  let filesTokenized = 0;
+  let filesReady = 0;
+  let maxDeclarationsPerFile = 0;
+  let maxTokens = 0;
+  let maxSourceBytes = 0;
   for (const file of files) {
     const key = fileKey(file.repoId, file.relativePath);
     const sourceText = input.access.reader.readFile(file.repoId, file.relativePath);
@@ -256,6 +278,12 @@ export function createResponseFlowIndex(input: { readonly access: SiblingSourceA
       states.set(key, { status: 'SOURCE_STALE', file });
       continue;
     }
+    const sourceBytes = Buffer.byteLength(sourceText, 'utf8');
+    maxSourceBytes = Math.max(maxSourceBytes, sourceBytes);
+    if (sourceBytes > MAX_RESPONSE_FLOW_SOURCE_BYTES) {
+      states.set(key, { status: 'SOURCE_BUDGET_EXCEEDED', file });
+      continue;
+    }
     let tokens: PhpToken[];
     try {
       tokens = tokenizePhp(sourceText);
@@ -263,13 +291,31 @@ export function createResponseFlowIndex(input: { readonly access: SiblingSourceA
       states.set(key, { status: 'LEXICAL_UNSUPPORTED', file });
       continue;
     }
+    filesTokenized += 1;
+    maxTokens = Math.max(maxTokens, tokens.length);
+    const records = declarationRecords({ file, sourceText, tokens });
+    maxDeclarationsPerFile = Math.max(maxDeclarationsPerFile, records.length);
+    if (indexed.length + records.length > MAX_RESPONSE_FLOW_INDEX_DECLARATIONS) {
+      states.set(key, { status: 'DECLARATION_INDEX_BUDGET_EXCEEDED', file });
+      continue;
+    }
     states.set(key, { status: 'READY', file });
-    indexed.push(...declarationRecords({ file, sourceText, tokens }));
+    filesReady += 1;
+    indexed.push(...records);
   }
   const declarations = [...indexed].sort((left, right) => left.declarationId.localeCompare(right.declarationId));
   const byId = new Map(declarations.map((declaration) => [declaration.declarationId, declaration]));
   return {
     declarations: declarations.map(({ declarationId: id, repoId, sourceSha, relativePath, contentDigest, symbol, kind, className }) => ({ declarationId: id, repoId, sourceSha, relativePath, contentDigest, symbol, kind, className })),
+    metrics: {
+      filesConsidered: files.length,
+      filesTokenized,
+      filesReady,
+      declarationsIndexed: declarations.length,
+      maxDeclarationsPerFile,
+      maxTokens,
+      maxSourceBytes,
+    },
     find(query) {
       return declarations.filter((declaration) => declaration.repoId === query.repoId
         && (query.relativePath === undefined || declaration.relativePath === query.relativePath)
@@ -287,7 +333,13 @@ export function createResponseFlowIndex(input: { readonly access: SiblingSourceA
   };
 }
 
-function returnSites(tokens: readonly PhpToken[], body: { readonly start: number; readonly end: number }): readonly ReturnSite[] | null {
+type ReturnSiteResult = readonly ReturnSite[] | { readonly rejectionCode: 'RESPONSE_BRANCH_BUDGET_EXCEEDED' };
+
+function isReturnSiteBudgetFailure(result: ReturnSiteResult): result is { readonly rejectionCode: 'RESPONSE_BRANCH_BUDGET_EXCEEDED' } {
+  return !Array.isArray(result);
+}
+
+function returnSites(tokens: readonly PhpToken[], body: { readonly start: number; readonly end: number }): ReturnSiteResult | null {
   const sites: ReturnSite[] = [];
   for (let index = body.start + 1; index < body.end; index += 1) {
     const token = tokens[index]!;
@@ -314,6 +366,7 @@ function returnSites(tokens: readonly PhpToken[], body: { readonly start: number
     }
     if (!terminated) return null;
     sites.push({ expression, ordinal: sites.length });
+    if (sites.length > MAX_RESPONSE_FLOW_RETURN_SITES) return { rejectionCode: 'RESPONSE_BRANCH_BUDGET_EXCEEDED' };
   }
   return sites;
 }
@@ -417,7 +470,11 @@ export function resolveResponseFlow(input: { readonly index: ResponseFlowIndex; 
   const roots = input.index.find({ repoId: input.operation.repository, relativePath: input.operation.handlerPath, symbol: input.operation.handlerSymbol });
   if (roots.length === 0) {
     const state = input.index.fileState(input.operation.repository, input.operation.handlerPath);
-    const rejectionCode = state === 'SOURCE_STALE' ? 'RESPONSE_DECLARATION_STALE' : state === 'SOURCE_UNAVAILABLE' || state === 'LEXICAL_UNSUPPORTED' ? 'RESPONSE_DECLARATION_UNAVAILABLE' : 'RESPONSE_SYMBOL_MISSING';
+    const rejectionCode = state === 'SOURCE_STALE' ? 'RESPONSE_DECLARATION_STALE'
+      : state === 'SOURCE_BUDGET_EXCEEDED' ? 'RESPONSE_SOURCE_BUDGET_EXCEEDED'
+        : state === 'DECLARATION_INDEX_BUDGET_EXCEEDED' ? 'RESPONSE_DECLARATION_INDEX_BUDGET_EXCEEDED'
+          : state === 'SOURCE_UNAVAILABLE' || state === 'LEXICAL_UNSUPPORTED' ? 'RESPONSE_DECLARATION_UNAVAILABLE'
+            : 'RESPONSE_SYMBOL_MISSING';
     return buildProof({ status: 'REJECTED', depth: 0, rootDeclaration: null, declarations: [], edges: [], terminalDeclarationIds: [], rejectionCode });
   }
   if (roots.length !== 1) {
@@ -439,8 +496,14 @@ export function resolveResponseFlow(input: { readonly index: ResponseFlowIndex; 
       rejectionCode = 'RESPONSE_DECLARATION_UNAVAILABLE';
       return;
     }
-    const sites = returnSites(indexed.tokens, indexed.body);
-    if (sites === null || sites.length === 0) {
+    const sitesResult = returnSites(indexed.tokens, indexed.body);
+    if (sitesResult === null || (sitesResult !== null && isReturnSiteBudgetFailure(sitesResult))) {
+      if (sitesResult !== null && isReturnSiteBudgetFailure(sitesResult)) rejectionCode = sitesResult.rejectionCode;
+      else rejectionCode = 'RESPONSE_BRANCH_INCOMPLETE';
+      return;
+    }
+    const sites = sitesResult;
+    if (sites.length === 0) {
       rejectionCode = 'RESPONSE_BRANCH_INCOMPLETE';
       return;
     }
@@ -474,11 +537,12 @@ export function resolveResponseFlow(input: { readonly index: ResponseFlowIndex; 
         rejectionCode = 'RESPONSE_FLOW_CYCLE';
         return;
       }
-      if (declarations.size >= MAX_RESPONSE_FLOW_DECLARATIONS) {
-        rejectionCode = 'RESPONSE_FLOW_DEPTH_EXCEEDED';
+      const alreadyKnown = declarations.has(targetResult.declaration.declarationId);
+      if (!alreadyKnown && declarations.size >= MAX_RESPONSE_FLOW_DECLARATIONS) {
+        rejectionCode = 'RESPONSE_FLOW_DECLARATIONS_EXCEEDED';
         return;
       }
-      declarations.set(targetResult.declaration.declarationId, targetResult.declaration);
+      if (!alreadyKnown) declarations.set(targetResult.declaration.declarationId, targetResult.declaration);
       edges.push({
         callsiteId: callsiteId({ fromDeclarationId: declaration.declarationId, ordinal: entry.site.ordinal, target: entry.classification.target }),
         fromDeclarationId: declaration.declarationId,
@@ -486,15 +550,17 @@ export function resolveResponseFlow(input: { readonly index: ResponseFlowIndex; 
         callKind: entry.classification.target.kind,
         ordinal: entry.site.ordinal,
       });
-      visit(targetResult.declaration, depth + 1, [...stack, targetResult.declaration.declarationId]);
+      if (!alreadyKnown) visit(targetResult.declaration, depth + 1, [...stack, targetResult.declaration.declarationId]);
       if (rejectionCode !== null) return;
     }
   };
 
   const rootBody = input.index.body(root);
   if (rootBody === null) return buildProof({ status: 'REJECTED', depth: 0, rootDeclaration: root, declarations: [root], edges: [], terminalDeclarationIds: [], rejectionCode: 'RESPONSE_DECLARATION_UNAVAILABLE' });
-  const rootSites = returnSites(rootBody.tokens, rootBody.body);
-  if (rootSites === null || rootSites.length === 0) return buildProof({ status: 'NOT_APPLICABLE', depth: 0, rootDeclaration: root, declarations: [root], edges: [], terminalDeclarationIds: [], rejectionCode: null });
+  const rootSitesResult = returnSites(rootBody.tokens, rootBody.body);
+  if (rootSitesResult !== null && isReturnSiteBudgetFailure(rootSitesResult)) return buildProof({ status: 'REJECTED', depth: 0, rootDeclaration: root, declarations: [root], edges: [], terminalDeclarationIds: [], rejectionCode: rootSitesResult.rejectionCode });
+  if (rootSitesResult === null || rootSitesResult.length === 0) return buildProof({ status: 'NOT_APPLICABLE', depth: 0, rootDeclaration: root, declarations: [root], edges: [], terminalDeclarationIds: [], rejectionCode: null });
+  const rootSites = rootSitesResult;
   const rootClassifications = rootSites.map((site) => classifyCall({ declaration: rootBody, expression: site.expression }));
   if (!rootClassifications.some((classification) => classification.kind === 'CALL' || classification.kind === 'REJECT')) {
     return buildProof({ status: 'NOT_APPLICABLE', depth: 0, rootDeclaration: root, declarations: [root], edges: [], terminalDeclarationIds: [], rejectionCode: null });

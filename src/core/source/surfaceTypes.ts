@@ -5,9 +5,11 @@
 import type { SourceScanLanguage } from './scanTypes';
 import type { Phase24CandidateInvalidationLedger } from '../phase24/types';
 import type { ResponseFlowProof } from './responseFlow';
+import type { SourceGapTaxonomyChange } from './gapTaxonomy';
 
-export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v2' as const;
-export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v1' as const;
+export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v3' as const;
+export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v2' as const;
+export const REAL_SOURCE_SURFACE_PERFORMANCE_VERSION = 'nightwatch.real-source-surface-performance.v1' as const;
 
 export type SourceOperationMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type SourceRouteProof = 'PROVEN' | 'AMBIGUOUS' | 'UNSUPPORTED';
@@ -20,6 +22,22 @@ export type SourceSurfaceLifecycle = 'DISCOVERED' | 'MECHANICALLY_PROVEN' | 'PRO
 export type SourceSurfaceProjectionCapability = 'PROJECTABLE' | 'NOT_PROJECTABLE' | 'UNPROVEN';
 export type SourceSurfaceReplayCapability = 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
 
+export const SOURCE_DIAGNOSTIC_REJECTION_FAMILIES = [
+  'NONE',
+  'SOURCE_BOUNDARY',
+  'SOURCE_CURRENTNESS',
+  'PRIVACY_BOUNDARY',
+  'LEXICAL_BUDGET',
+  'DECLARATION_LOOKUP',
+  'RETURN_EXPRESSION',
+  'CONTROL_FLOW',
+  'DYNAMIC_DISPATCH',
+  'STATIC_SCHEMA',
+  'UNSUPPORTED_SYNTAX',
+  'INTERNAL_UNCLASSIFIED',
+] as const;
+export type SourceDiagnosticRejectionFamily = (typeof SOURCE_DIAGNOSTIC_REJECTION_FAMILIES)[number];
+
 /** Safe analyzer metadata retained for operator gap explanations. It contains
  * no source text, literal values, or runtime observations. */
 export interface SourceAnalyzerDiagnostic {
@@ -30,6 +48,8 @@ export interface SourceAnalyzerDiagnostic {
   readonly rejectionCode: string | null;
   /** Phase 27 categorical flow reason; never source text. */
   readonly flowRejectionCode: string | null;
+  /** Phase 28 bounded rejection family; never a source-derived detail. */
+  readonly rejectionFamily: SourceDiagnosticRejectionFamily;
   readonly evidenceDigest: string;
 }
 
@@ -169,9 +189,28 @@ export interface SourceSurfaceDiscoveryCounters {
   readonly responseProofGapCounts: readonly SourceProofGapCount[];
   readonly semanticProofGapCounts: readonly SourceProofGapCount[];
   readonly responseAnalyzerCounts: readonly SourceAnalyzerCount[];
+  readonly gapDiagnosticCount: number;
+  readonly gapTaxonomyRows: number;
   readonly candidatesProduced: number;
   readonly eligibleCandidates: number;
   readonly excludedCandidates: number;
+}
+
+/** Advisory bounded cost measurements. Timings are never part of a proof or
+ * deterministic digest; structural maxima are safe memory/CPU proxies. */
+export interface SourceSurfacePerformanceMetrics {
+  readonly schemaVersion: typeof REAL_SOURCE_SURFACE_PERFORMANCE_VERSION;
+  readonly elapsedMs: number;
+  readonly scanElapsedMs: number;
+  readonly responseFlowIndexElapsedMs: number;
+  readonly responseFlowResolveElapsedMs: number;
+  readonly projectionElapsedMs: number;
+  readonly phpFilesConsidered: number;
+  readonly phpFilesTokenized: number;
+  readonly declarationsIndexed: number;
+  readonly maxDeclarationsPerFile: number;
+  readonly maxTokens: number;
+  readonly maxSourceBytes: number;
 }
 
 export interface SourceFileChangeRecord {
@@ -201,6 +240,7 @@ export interface SourceSurfaceChangeReport {
   readonly newSurfaceIds: readonly string[];
   readonly removedSurfaceIds: readonly string[];
   readonly lifecycleCounts: Readonly<Record<SourceSurfaceLifecycle, number>>;
+  readonly gapTaxonomyChange: SourceGapTaxonomyChange;
   readonly invalidationLedger: Phase24CandidateInvalidationLedger | null;
   readonly deterministicDigest: string;
 }

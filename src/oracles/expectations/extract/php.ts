@@ -36,8 +36,8 @@ export type PhpExtractionResult =
   | { readonly ok: true; readonly extraction: SourceExtraction }
   | { readonly ok: false; readonly failure: PhpLexFailure; readonly detail?: string };
 
-const MAX_SOURCE_CHARS = 2_000_000;
-const MAX_TOKENS = 500_000;
+export const MAX_PHP_SOURCE_CHARS = 2_000_000;
+export const MAX_PHP_TOKENS = 500_000;
 const MAX_ROW_LITERAL_KEYS = 64;
 const MAX_KEY_LENGTH = 128;
 const MAX_FUNCTION_CHARS = 400_000;
@@ -56,11 +56,12 @@ export type PhpToken =
   | { readonly t: 'OP'; readonly v: string };
 
 export function tokenizePhp(sourceText: string): PhpToken[] {
+  if (sourceText.length > MAX_PHP_SOURCE_CHARS) throw new Error('PHP_LEX:source-limit');
   const tokens: PhpToken[] = [];
   const n = sourceText.length;
   let i = 0;
   while (i < n) {
-    if (tokens.length > MAX_TOKENS) throw new Error('PHP_LEX:token-limit');
+    if (tokens.length >= MAX_PHP_TOKENS) throw new Error('PHP_LEX:token-limit');
     const ch = sourceText[i]!;
     // Whitespace
     if (ch === ' ' || ch === '\t' || ch === '\r' || ch === '\n' || ch === '\f' || ch === '\v') {
@@ -204,7 +205,7 @@ export function tokenizePhp(sourceText: string): PhpToken[] {
 // Structural helpers
 // ---------------------------------------------------------------------------
 
-export function findFunctionBody(tokens: PhpToken[], symbol: string): { start: number; end: number } | null {
+export function findFunctionBody(tokens: readonly PhpToken[], symbol: string): { start: number; end: number } | null {
   for (let i = 0; i + 1 < tokens.length; i++) {
     const current = tokens[i]!;
     if (current.t !== 'WORD' || current.v !== 'function') continue;
@@ -234,7 +235,7 @@ export function findFunctionBody(tokens: PhpToken[], symbol: string): { start: n
   return null;
 }
 
-export function findMatchingBrace(tokens: PhpToken[], openIndex: number): number {
+export function findMatchingBrace(tokens: readonly PhpToken[], openIndex: number): number {
   let depth = 0;
   for (let i = openIndex; i < tokens.length; i++) {
     const token = tokens[i]!;
@@ -248,7 +249,7 @@ export function findMatchingBrace(tokens: PhpToken[], openIndex: number): number
 }
 
 /** Find the matching `]` for a `[` at openIndex (bracket depth tracking). */
-export function findMatchingBracket(tokens: PhpToken[], openIndex: number): number {
+export function findMatchingBracket(tokens: readonly PhpToken[], openIndex: number): number {
   let depth = 0;
   for (let i = openIndex; i < tokens.length; i++) {
     const token = tokens[i]!;
@@ -324,7 +325,7 @@ export function extractPhpFunctionListRowKeys(
   accumulator: string,
   pattern: 'PUSH' | 'ASSIGN',
 ): PhpExtractionResult {
-  if (sourceText.length > MAX_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
+  if (sourceText.length > MAX_PHP_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
   let tokens: PhpToken[];
   try {
     tokens = tokenizePhp(sourceText);
@@ -407,7 +408,7 @@ export function extractPhpFunctionReturnsListOfBuilder(
   accumulator: string,
   builderSymbol: string,
 ): PhpExtractionResult {
-  if (sourceText.length > MAX_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
+  if (sourceText.length > MAX_PHP_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
   let tokens: PhpToken[];
   try {
     tokens = tokenizePhp(sourceText);
@@ -467,7 +468,7 @@ export function extractPhpRouteGetBinding(
   client: string,
   method: string,
 ): PhpExtractionResult {
-  if (sourceText.length > MAX_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
+  if (sourceText.length > MAX_PHP_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
   const lines = sourceText.split(/\r?\n/);
   if (lines.length > 100_000) return { ok: false, failure: 'SOURCE_TOO_LARGE', detail: 'lines' };
   const routeKey = `"get:${routePath}":`;
@@ -548,7 +549,7 @@ export function extractPhpItemFieldTypeFlow(
   fieldVariable: string,
   pattern: 'EMPTY_CAST_OBJECT' | 'EMPTY_ARRAY_OR_STRING_KEYS',
 ): PhpExtractionResult {
-  if (sourceText.length > MAX_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
+  if (sourceText.length > MAX_PHP_SOURCE_CHARS) return { ok: false, failure: 'SOURCE_TOO_LARGE' };
   let tokens: PhpToken[];
   try {
     tokens = tokenizePhp(sourceText);

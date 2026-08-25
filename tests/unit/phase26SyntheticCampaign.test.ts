@@ -74,10 +74,10 @@ test('Phase 26 source proof reaches the existing Phase24 semantic/replay/dossier
     const scanConfig = config();
     const discovery = discoverSourceSurfaces({ access, config: scanConfig });
     const surface = discovery.surfaces[0];
-    expect(surface?.schemaVersion).toBe('nightwatch.real-source-surface-descriptor.v2');
+    expect(surface?.schemaVersion).toBe('nightwatch.real-source-surface-descriptor.v3');
     expect(surface?.contract.responseProof).toBe('PROVEN');
     expect(surface?.contract.semanticProof).toBe('PROVEN');
-    expect(surface?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.analyzerVersion === 'nightwatch.real-source-response-analyzers.v2')).toBe(true);
+    expect(surface?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.analyzerVersion === 'nightwatch.real-source-response-analyzers.v3')).toBe(true);
     expect(JSON.stringify(discovery)).not.toContain("'safe'");
 
     const integration = analyzeSourceSurfacesIntoPhase24({ access, config: scanConfig, discovery, maxCandidates: 1 });

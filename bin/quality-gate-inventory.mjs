@@ -89,7 +89,7 @@ function newGateGroups() {
       : group.commandKey === 'OWNER_PROVENANCE'
         ? ['tests/unit/privateArtifactAtomic.test.ts', 'tests/unit/aiOwnerReview.test.ts', 'tests/unit/aiReview.test.ts']
         : group.commandKey === 'SYNTHETIC_CAMPAIGN'
-          ? ['tests/unit/campaign.test.ts', 'tests/unit/phase24SyntheticCampaign.test.ts', 'tests/unit/phase25SyntheticCampaign.test.ts', 'tests/unit/phase26SyntheticCampaign.test.ts', 'tests/unit/phase27ResponseFlow.test.ts']
+          ? ['tests/unit/campaign.test.ts', 'tests/unit/phase24SyntheticCampaign.test.ts', 'tests/unit/phase25SyntheticCampaign.test.ts', 'tests/unit/phase26SyntheticCampaign.test.ts', 'tests/unit/phase27ResponseFlow.test.ts', 'tests/unit/phase28SourceIntelligence.test.ts']
           : [];
     return {
       groupId: group.id,

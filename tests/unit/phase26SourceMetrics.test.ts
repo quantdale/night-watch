@@ -63,8 +63,8 @@ test.describe('Phase 26 source proof-gap intelligence', () => {
       const unproven = first.surfaces.find((surface) => surface.operation.routeTemplate === '/unproven');
       expect(unproven?.contract.responseProof).toBe('UNSUPPORTED_REFERENCE');
       expect(unproven?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.rejectionCode !== null)).toBe(true);
-      expect(first.counters.responseProofGapCounts).toEqual(expect.arrayContaining([{ code: 'RESPONSE_ANALYZER_BRANCH_SET_INCOMPLETE+UNSUPPORTED_SYNTAX', count: 1 }]));
-      expect(first.counters.semanticProofGapCounts).toEqual(expect.arrayContaining([{ code: 'SEMANTIC_ANALYZER_BRANCH_SET_INCOMPLETE+UNSUPPORTED_SYNTAX', count: 1 }]));
+      expect(first.counters.responseProofGapCounts).toEqual(expect.arrayContaining([{ code: 'RESPONSE_FLOW_DECLARATION_UNAPPROVED', count: 1 }]));
+      expect(first.counters.semanticProofGapCounts).toEqual(expect.arrayContaining([{ code: 'SEMANTIC_FLOW_DECLARATION_UNAPPROVED', count: 1 }]));
       expect(first.counters.responseAnalyzerCounts).toEqual(expect.arrayContaining([
         { analyzerId: 'PHP_RETURN_FIELD_TYPE', proven: 2, rejected: 0 },
         { analyzerId: 'PHP_RETURN_OBJECT_FIELDS', proven: 1, rejected: 1 },

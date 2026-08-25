@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const command = args[0] ?? "status";
 const asJson = args.includes("--json");
 
-const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "surfaces", "review-queue", "explain-surface"]);
+const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "source-gaps", "surfaces", "review-queue", "explain-surface"]);
 if (!COMMANDS.has(command)) {
   console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
   process.exit(2);
@@ -131,11 +131,13 @@ function sourceDiscoveryPreview() {
   const discovery = surfacesModule.discoverSourceSurfaces({ access, config });
   const inventory = discovery.inventory;
   const safeInventory = { schemaVersion: inventory.schemaVersion, configDigest: inventory.configDigest, extractorVersion: inventory.extractorVersion, files: inventory.files, repositories: inventory.repositories, counters: inventory.counters, snapshotDigest: inventory.snapshotDigest };
+  const safeInventorySummary = { schemaVersion: inventory.schemaVersion, configDigest: inventory.configDigest, extractorVersion: inventory.extractorVersion, repositories: inventory.repositories, counters: inventory.counters, snapshotDigest: inventory.snapshotDigest };
   if (command === "source-scan") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", approvedRepositoryIds: config.approvedRepositories.map((repository) => repository.repoId), inventory: safeInventory };
+  if (command === "source-gaps") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventorySummary, counters: discovery.counters, gapTaxonomy: discovery.gapTaxonomy, performance: discovery.performance, deterministicDigest: discovery.deterministicDigest };
   if (discovery.phase24Inputs.length === 0) return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: discovery.counters, operations: discovery.operations, surfaces: discovery.surfaces, portfolio: null, queue: null, note: "NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE" };
   const integration = surfacesModule.analyzeSourceSurfacesIntoPhase24({ access, config, discovery, maxCandidates: 6 });
   const review = reviewModule.buildSourceReviewQueue({ discovery: integration.discovery, portfolio: integration.portfolio, selection: integration.selection });
-  if (command === "surfaces") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: integration.discovery.counters, operations: integration.discovery.operations, surfaces: integration.discovery.surfaces, portfolio: { considered: integration.portfolio.consideredCount, eligible: integration.portfolio.eligibleCount, excluded: integration.portfolio.excludedCount, reasonCodeCoverage: integration.portfolio.reasonCodeCoverage, deterministicDigest: integration.portfolio.deterministicDigest }, deterministicDigest: integration.discovery.deterministicDigest };
+  if (command === "surfaces") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: integration.discovery.counters, operations: integration.discovery.operations, surfaces: integration.discovery.surfaces, gapTaxonomy: integration.discovery.gapTaxonomy, performance: integration.discovery.performance, portfolio: { considered: integration.portfolio.consideredCount, eligible: integration.portfolio.eligibleCount, excluded: integration.portfolio.excludedCount, reasonCodeCoverage: integration.portfolio.reasonCodeCoverage, deterministicDigest: integration.portfolio.deterministicDigest }, deterministicDigest: integration.discovery.deterministicDigest };
   if (command === "review-queue") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, queue: review };
   const requestedSurface = args[1];
   if (requestedSurface === undefined || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(requestedSurface)) throw new Error("EXPLAIN_SURFACE_ID_UNSAFE");
@@ -253,7 +255,7 @@ function phase21Summary(phase21) {
 
 try {
   let output;
-  if (["source-scan", "surfaces", "review-queue", "explain-surface"].includes(command)) output = sourceDiscoveryPreview();
+  if (["source-scan", "source-gaps", "surfaces", "review-queue", "explain-surface"].includes(command)) output = sourceDiscoveryPreview();
   else if (command === "status") output = status();
   else if (["differential", "replay-coverage", "minimization-coverage", "mutation-score"].includes(command)) {
     const phase21 = phase21Preview();

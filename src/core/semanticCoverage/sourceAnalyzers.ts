@@ -39,7 +39,7 @@ import { REAL_SOURCE_RESPONSE_FLOW_VERSION } from "../source/responseFlow";
  * invalidates when the expanded analyzer set changes.
  */
 export const SEMANTIC_SOURCE_ANALYZER_VERSION = "nightwatch.semantic-source-analyzers.v1" as const;
-export const REAL_SOURCE_RESPONSE_ANALYZER_VERSION = "nightwatch.real-source-response-analyzers.v2" as const;
+export const REAL_SOURCE_RESPONSE_ANALYZER_VERSION = "nightwatch.real-source-response-analyzers.v3" as const;
 export type AnalyzerVersion = typeof SEMANTIC_SOURCE_ANALYZER_VERSION | typeof REAL_SOURCE_RESPONSE_ANALYZER_VERSION;
 export const MAX_ANALYZER_SOURCE_CHARS = 2_000_000;
 export const MAX_ANALYZER_OUTPUTS = 256;
@@ -177,6 +177,13 @@ function rejected(input: {
   return { ...base, evidenceDigest: evidence(base), observationSurfaces: normalizeSurfaces(input.surfaces) };
 }
 
+function safeAnalysisDetail(analysis: ContractAnalysis): string | undefined {
+  // Only retain the one bounded lexical category needed by the source-gap
+  // taxonomy. Other analyzer facts may contain safe structural labels that
+  // are not needed at this boundary and are deliberately discarded.
+  return analysis.facts.some((fact) => fact.detail === 'token-limit') ? 'token-limit' : undefined;
+}
+
 function fromExistingAnalysis(input: {
   readonly analysis: ContractAnalysis;
   readonly language: SourceLanguage;
@@ -197,7 +204,7 @@ function fromExistingAnalysis(input: {
           : analysis.blockerCode === "SOURCE_UNAVAILABLE"
             ? "SOURCE_UNAVAILABLE"
             : "UNSUPPORTED_SYNTAX";
-    return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: mapped, detail: analysis.blockerCode ?? undefined, surfaces: input.surfaces });
+    return rejected({ analyzerId: input.analyzerId, analyzerVersion: input.analyzerVersion, language: input.language, symbol: input.symbol, code: mapped, detail: safeAnalysisDetail(analysis) ?? analysis.blockerCode ?? undefined, surfaces: input.surfaces });
   }
   const facts: readonly AnalyzerFact[] = analysis.facts;
   const first = facts[0];
@@ -293,7 +300,7 @@ function staticPhpLiteralType(tokens: readonly PhpToken[]): JsonTypeCategory | n
     if (token.t === "WORD" && (token.v === "true" || token.v === "false")) return "BOOLEAN";
   }
   if (tokens[0]?.t === "PUNCT" && tokens[0].v === "[") {
-    const close = findMatchingBracket([...tokens], 0);
+    const close = findMatchingBracket(tokens, 0);
     if (close !== tokens.length - 1) return null;
     const entries = splitPhpArrayEntries(tokens, 0, close);
     if (entries === null) return null;
@@ -306,7 +313,7 @@ function staticPhpLiteralType(tokens: readonly PhpToken[]): JsonTypeCategory | n
 }
 
 function parsePhpReturnArray(tokens: readonly PhpToken[], openIndex: number, bodyEnd: number): PhpReturnArrayShape | null {
-  const close = findMatchingBracket([...tokens], openIndex);
+  const close = findMatchingBracket(tokens, openIndex);
   if (close >= bodyEnd || close >= tokens.length) return null;
   const entries = splitPhpArrayEntries(tokens, openIndex, close);
   if (entries === null || entries.length > MAX_PHP_RETURN_FIELDS) return null;
@@ -494,7 +501,7 @@ function topLevelPhpReturnBranches(tokens: readonly PhpToken[], body: { readonly
     }
     while (open < body.end && !(tokens[open]?.t === 'PUNCT' && tokens[open]?.v === '{')) open += 1;
     if (tokens[open]?.t !== 'PUNCT' || tokens[open]?.v !== '{') return null;
-    const close = findMatchingBrace([...tokens], open);
+    const close = findMatchingBrace(tokens, open);
     if (close >= body.end) return null;
     blocks.push({ start: open + 1, end: close });
     cursor = close + 1;

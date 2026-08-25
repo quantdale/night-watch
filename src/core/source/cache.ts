@@ -10,6 +10,7 @@ import { sourceSurfaceAnalyzerSetIdentity } from '../semanticCoverage/sourceAnal
 import { safeSemanticDigest } from '../semanticCoverage/types';
 import type { RealSourceScanConfig, RealSourceSnapshotInventory } from './scanTypes';
 import type { SourceSurfaceDiscovery } from './surfaces';
+import { REAL_SOURCE_GAP_TAXONOMY_VERSION } from './gapTaxonomy';
 
 export const REAL_SOURCE_SURFACE_CACHE_VERSION = 'nightwatch.real-source-surface-cache.v1' as const;
 const DEFAULT_MAX_ENTRIES = 8;
@@ -38,6 +39,7 @@ export function sourceSurfaceCacheKey(input: { readonly config: RealSourceScanCo
     configDigest: input.config.configDigest,
     extractorVersion: input.config.extractorVersion,
     analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
+    gapTaxonomyVersion: REAL_SOURCE_GAP_TAXONOMY_VERSION,
     enabledAnalyzers: [...input.config.enabledAnalyzers].sort(),
   }, 'source-surface-cache');
 }
