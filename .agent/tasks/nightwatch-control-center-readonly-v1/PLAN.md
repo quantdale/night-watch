@@ -141,7 +141,7 @@ and source graph data also have list/table fallbacks.
   malformed fixtures render distinctly; timeline uses `seq`; SSE never acts
   as state authority.
 - Validation commands: adapter/server/frontend/E2E matrix.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M7 — Campaign Intelligence
 
@@ -150,7 +150,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: model-level equivalence with existing domain outputs;
   no new score or selector authority.
 - Validation commands: campaign adapter and UI fixture tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M8 — Bounded Source Intelligence graph
 

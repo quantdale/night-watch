@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
-Last substantive checkpoint SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+Last validated implementation SHA: e6451092bf358988f23808b90b138e9dd195b50f
+Last substantive checkpoint SHA: e6451092bf358988f23808b90b138e9dd195b50f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M5 — Safety Center/source-summary view and rendered local-server smoke passed at 34f8688.
+Last checkpoint: M6 — run/timeline/graph views, seven UI tests, advisory SSE test, and rendered empty-state smoke passed at e645109.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+LAST_VALIDATED_IMPLEMENTATION_SHA: e6451092bf358988f23808b90b138e9dd195b50f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e6451092bf358988f23808b90b138e9dd195b50f
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,10 +30,11 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M6
+Milestone ID: M7
 Milestone status: IN_PROGRESS
-What is being attempted: Add bounded run/timeline/execution-graph views and an
-advisory SSE invalidation hook whose state authority remains GET snapshots.
+What is being attempted: Wire campaign summary and coverage DTOs into a view
+that preserves model-level counts, coverage gaps, owner scope, and unavailable
+states without adding score or selector authority.
 
 ## Completed Milestones
 
@@ -64,18 +65,22 @@ advisory SSE invalidation hook whose state authority remains GET snapshots.
   policy, continuity, source inventory, and frozen owner scope. UNKNOWN and
   unavailable source states remain visible; UI tests and a built local-server
   browser smoke passed.
+- M6 — COMPLETE: run list/detail/timeline and bounded graph views distinguish
+  outcomes, preserve sequence and table fallback, and use advisory SSE only to
+  refresh GET snapshots. Two UI test files passed 7/7, build policy passed,
+  and local-server browser smoke verified empty states.
 
 ## Work In Progress
 
-M6 run-surface implementation is beginning on `campaign/nightwatch-control-center`.
-The shell, overview, safety, and source-summary client are complete; run,
-timeline, graph, and advisory-refresh projections remain.
+M7 campaign implementation is beginning on `campaign/nightwatch-control-center`.
+The shell, overview, safety, source-summary, run, timeline, graph, and advisory
+refresh layers are complete; campaign, source, and findings views remain.
 
 ## Exact Next Action
 
-Wire run, timeline, and execution-graph routes into bounded UI projections,
-add distinct status fixtures and advisory refresh tests, then run the nested
-package typecheck, test, build, and browser checks.
+Wire campaign summary and coverage routes into bounded UI projections, add
+coverage/unavailable fixtures, then run the nested package typecheck, test,
+build, and browser checks.
 
 ## Files Changed
 
@@ -100,6 +105,10 @@ package typecheck, test, build, and browser checks.
 | `ui/control-center/src/App.tsx` | M5 Safety Center and source-summary view | modified |
 | `ui/control-center/src/api.ts` | Source-summary snapshot route | modified |
 | `ui/control-center/src/types.ts` | Source-summary DTO shape | modified |
+| `ui/control-center/src/App.tsx` | M6 run, detail, timeline, and graph views | modified |
+| `ui/control-center/src/api.ts` | M6 run/graph/SSE client methods | modified |
+| `ui/control-center/src/App.test.tsx` | M6 synthetic run and graph fixture | modified |
+| `ui/control-center/src/api.test.ts` | M6 advisory SSE cleanup test | added |
 
 ## Validation Ledger
 
@@ -147,6 +156,12 @@ package typecheck, test, build, and browser checks.
 - `npm run control-center:ui:test` at `34f8688` — PASS: 1 file / 5 tests passed.
 - `npm run control-center:ui:build` at `34f8688` — PASS: 3 built files, no external references or embedded content.
 - Built UI served by `node bin/nightwatch-control-center.mjs --port=7312` — PASS browser smoke: data-backed Overview loaded; Safety Center rendered its heading and `Source inventory unavailable`; no overlay or console errors; browser and server closed afterward.
+- `npm run typecheck` at `e645109` — PASS.
+- `npm run hardening:check` at `e645109` — PASS: offline structural invariants hold.
+- `npm run control-center:ui:typecheck` at `e645109` — PASS.
+- `npm run control-center:ui:test` at `e645109` — PASS: 2 files / 7 tests passed.
+- `npm run control-center:ui:build` at `e645109` — PASS: 3 built files, no external references or embedded content.
+- Built UI served by `node bin/nightwatch-control-center.mjs --port=7312` — PASS M6 browser smoke: Runs showed `No local runs recorded`; Execution Graph showed `Select a run first.`; no overlay or console errors; browser and server closed afterward.
 
 ## Decisions Made During This Task
 
@@ -184,9 +199,10 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M6 action above. Preserve loopback-only,
+live Git status and continue the exact M7 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
 
-Not complete. M0–M5 are recorded; M6 run surfaces and later validation remain.
+Not complete. M0–M6 are recorded; M7 campaign intelligence and later
+validation remain.
