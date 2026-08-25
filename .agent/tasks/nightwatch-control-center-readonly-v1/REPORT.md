@@ -1,12 +1,12 @@
 # Nightwatch Control Center — Read-Only Local V1 Report
 
 - Starting SHA: `8feea0092f361e80bfaf23f29a7d45df05c7fada`
-- Validated implementation anchor: `b573884b078e822387869ebf20a5db4464804587`
+- Validated implementation anchor: `4bd027160b9bd958c5714beea19925ffa58fa67b`
 - Task objective: build a loopback-only, read-only Control Center over
   existing Nightwatch authorities.
 - Planning branch: inspected with `git show`; not checked out, merged, or
   modified.
-- Current status: M3 complete; M4 isolated frontend implementation is active.
+- Current status: M4 complete; M5 Overview and Safety Center data views are active.
 - M0 baseline: project truth, typecheck, hardening, specification,
   inventory, local gate, and Node 20 clean gate all passed. Local receipt is
   `receipt:sha256:4bd1c4342e1727e40b8e4370`; clean receipt is
@@ -25,8 +25,12 @@
   fail-closed local launcher. Typecheck, hardening, and the combined contract/
   adapter/server suite passed (22/22); hostile launcher arguments were rejected
   and bounded loopback startup was verified.
+- M4 implementation checkpoint `4bd0271`: isolated React/Vite shell with seven
+  accessible navigation views, same-origin bounded GET client, safe error and
+  loading states, no-external-reference build policy, five UI tests, Node 20
+  validation, and a local agent-browser smoke check.
 - Safety events: NONE.
-- Remaining work: M4–M12 UI, graphs, security,
+- Remaining work: M5–M12 data views, graphs, security,
   performance, integration, validation, documentation, and push.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

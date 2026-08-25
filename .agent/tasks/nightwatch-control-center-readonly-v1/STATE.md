@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: b573884b078e822387869ebf20a5db4464804587
-Last substantive checkpoint SHA: b573884b078e822387869ebf20a5db4464804587
+Last validated implementation SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
+Last substantive checkpoint SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M3 — hardened loopback server, launcher, and 22 focused tests passed at b573884.
+Last checkpoint: M4 — isolated UI shell, five tests, build policy, and browser check passed at 4bd0271.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: b573884b078e822387869ebf20a5db4464804587
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b573884b078e822387869ebf20a5db4464804587
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,10 +30,10 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M4
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: Create the isolated React/Vite UI shell, bounded API
-client, accessible navigation, and build-time no-external-request checks.
+What is being attempted: Wire the readiness, safety, continuity, and source
+summary DTOs into useful overview and Safety Center view models.
 
 ## Completed Milestones
 
@@ -54,17 +54,23 @@ client, accessible navigation, and build-time no-external-request checks.
   path/query controls, confined static assets, notification-only SSE, and a
   fail-closed local launcher; server and preceding contract/adapter tests pass
   22/22.
+- M4 — COMPLETE: the isolated React/Vite package provides seven keyboard-
+  navigable views, a same-origin GET-only snapshot client, explicit loading and
+  unavailable states, a safe render-error boundary, reduced-motion styling, and
+  a build policy rejecting external references or embedded content. The shell
+  passed five UI tests, build verification, and local browser verification.
 
 ## Work In Progress
 
-M4 frontend implementation is beginning on `campaign/nightwatch-control-center`.
-The contract, adapter, and loopback server layers are complete; the isolated
-frontend runtime is not yet built.
+M5 data-view implementation is beginning on `campaign/nightwatch-control-center`.
+The shell and overview snapshot client are complete; Safety Center and the
+remaining snapshot families still need explicit view projections.
 
 ## Exact Next Action
 
-Create `ui/control-center/**` and the root delegation scripts, then run the
-nested package typecheck, test, build, and no-external-request checks.
+Wire the approved readiness, safety, and source-summary snapshot routes into
+the UI, add explicit UNKNOWN/unavailable tests, then run the nested package
+typecheck, test, build, and browser checks.
 
 ## Files Changed
 
@@ -84,6 +90,8 @@ nested package typecheck, test, build, and no-external-request checks.
 | `bin/nightwatch-control-center.mjs` | Fail-closed local launcher | added |
 | `package.json` | Local Control Center start script | modified |
 | `tests/unit/controlCenterServer.test.ts` | M3 loopback security/integration tests | added |
+| `ui/control-center/**` | Isolated React/Vite shell, API client, tests, and build policy | added |
+| `package.json` | UI delegation scripts | modified |
 
 ## Validation Ledger
 
@@ -120,6 +128,11 @@ nested package typecheck, test, build, and no-external-request checks.
 - `npx playwright test tests/unit/controlCenterContracts.test.ts tests/unit/controlCenterAdapters.test.ts tests/unit/controlCenterServer.test.ts --project=nightwatch --workers=1` at `b573884` — PASS: 22 passed, 0 failed.
 - `node bin/nightwatch-control-center.mjs --env=dev` — PASS fail-closed validation: exit 2, fixed `CONTROL_CENTER_START_FAILED`, empty stdout.
 - `timeout 3s node bin/nightwatch-control-center.mjs --port=0` — PASS startup validation: loopback-ready URL announced, no stderr; timeout stopped the bounded diagnostic process.
+- `npm run control-center:ui:typecheck` at `4bd0271` — PASS under host Node 22.22.1.
+- `npm run control-center:ui:test` at `4bd0271` — PASS: 1 file / 5 tests passed.
+- `npm run control-center:ui:build` at `4bd0271` — PASS: Vite 6.3.5, 3 built files, no external references or embedded content.
+- Resolved Node 20.20.2 `control-center:ui:typecheck`, `control-center:ui:test`, and `control-center:ui:build` — PASS; 5 tests and the same 3-file bundle policy passed.
+- Vite browser verification at `http://127.0.0.1:4173/` — PASS: page content, no error overlay, empty console-error list, seven primary links, and Runs navigation; browser and dev server closed afterward.
 
 ## Decisions Made During This Task
 
@@ -157,10 +170,9 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M4 action above. Preserve loopback-only,
+live Git status and continue the exact M5 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
 
-Not complete. M0–M3 are recorded; M4 frontend implementation and later
-validation remain.
+Not complete. M0–M4 are recorded; M5 data views and later validation remain.

@@ -120,7 +120,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: typecheck/test/build pass; bundle has no external
   requests; keyboard shell and safe error boundary work.
 - Validation commands: nested package typecheck/test/build.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M5 — Overview and Safety Center
 
@@ -130,7 +130,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: explicit READY/BLOCKED/UNKNOWN/unavailable semantics,
   safety-vs-oracle distinction, owner-scope/read-only posture visible.
 - Validation commands: component/contract and browser smoke tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M6 — Runs, timeline, execution graph, and SSE refresh
 
