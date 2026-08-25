@@ -195,6 +195,8 @@ function makeRecord(input: {
     candidateId: candidate.candidateId,
     priorCandidateId: prior?.candidateId ?? null,
     currentCandidateId: current?.candidateId ?? null,
+    priorEligibility: prior?.eligibility ?? null,
+    currentEligibility: current?.eligibility ?? null,
     surfaceKey: candidate.surfaceKey,
     state,
     affected: state !== 'CURRENT',
@@ -261,7 +263,7 @@ export function buildPhase24CandidateInvalidationLedger(input: {
   }));
   const changedCandidateIds = idsFor(records, (record) => record.affected);
   const newlyEligibleCandidateIds = currentIdsFor(records, (record) => record.state === 'NEWLY_ELIGIBLE' || (record.state === 'SOURCE_RECOVERED' && record.currentCandidateId !== null));
-  const newlyUnsafeCandidateIds = currentIdsFor(records, (record) => record.state === 'NEWLY_UNSAFE' || (record.state === 'SOURCE_UNAVAILABLE' && record.currentCandidateId !== null));
+  const newlyUnsafeCandidateIds = currentIdsFor(records, (record) => record.state === 'NEWLY_UNSAFE' || (record.state === 'SOURCE_UNAVAILABLE' && record.currentCandidateId !== null && record.priorEligibility !== 'EXCLUDED'));
   const staleCandidateIds = idsFor(records, isStaleRecord);
   const replayInvalidatedCandidateIds = idsFor(records, (record) => record.replayInvalidated);
   const dossierInvalidatedCandidateIds = idsFor(records, (record) => record.dossierAssumptionsInvalidated);
@@ -287,6 +289,8 @@ function recordCore(record: Phase24CandidateInvalidationRecord): Omit<Phase24Can
     candidateId: record.candidateId,
     priorCandidateId: record.priorCandidateId,
     currentCandidateId: record.currentCandidateId,
+    priorEligibility: record.priorEligibility,
+    currentEligibility: record.currentEligibility,
     surfaceKey: record.surfaceKey,
     state: record.state,
     affected: record.affected,
@@ -307,7 +311,7 @@ function expectedLedgerArrays(records: readonly Phase24CandidateInvalidationReco
   return {
     changedCandidateIds: idsFor(records, (record) => record.affected),
     newlyEligibleCandidateIds: currentIdsFor(records, (record) => record.state === 'NEWLY_ELIGIBLE' || (record.state === 'SOURCE_RECOVERED' && record.currentCandidateId !== null)),
-    newlyUnsafeCandidateIds: currentIdsFor(records, (record) => record.state === 'NEWLY_UNSAFE' || (record.state === 'SOURCE_UNAVAILABLE' && record.currentCandidateId !== null)),
+    newlyUnsafeCandidateIds: currentIdsFor(records, (record) => record.state === 'NEWLY_UNSAFE' || (record.state === 'SOURCE_UNAVAILABLE' && record.currentCandidateId !== null && record.priorEligibility !== 'EXCLUDED')),
     staleCandidateIds: idsFor(records, isStaleRecord),
     replayInvalidatedCandidateIds: idsFor(records, (record) => record.replayInvalidated),
     dossierInvalidatedCandidateIds: idsFor(records, (record) => record.dossierAssumptionsInvalidated),
@@ -335,6 +339,10 @@ export function validatePhase24CandidateInvalidationLedger(ledger: Phase24Candid
     assertCandidateId(record.candidateId, 'INVALIDATION');
     assertCandidateId(record.priorCandidateId, 'INVALIDATION_PRIOR');
     assertCandidateId(record.currentCandidateId, 'INVALIDATION_CURRENT');
+    if (record.priorEligibility !== null && record.priorEligibility !== 'ELIGIBLE' && record.priorEligibility !== 'EXCLUDED') invalid('INVALIDATION_PRIOR_ELIGIBILITY');
+    if (record.currentEligibility !== null && record.currentEligibility !== 'ELIGIBLE' && record.currentEligibility !== 'EXCLUDED') invalid('INVALIDATION_CURRENT_ELIGIBILITY');
+    if ((record.priorCandidateId === null) !== (record.priorEligibility === null)) invalid('INVALIDATION_PRIOR_ELIGIBILITY_BINDING');
+    if ((record.currentCandidateId === null) !== (record.currentEligibility === null)) invalid('INVALIDATION_CURRENT_ELIGIBILITY_BINDING');
     if (record.candidateId !== (record.currentCandidateId ?? record.priorCandidateId)) invalid('INVALIDATION_IDENTITY_ALIAS');
     if (record.affected !== (record.state !== 'CURRENT')) invalid('INVALIDATION_AFFECTED');
     if (record.reasonCodes.length === 0) invalid('INVALIDATION_REASON');

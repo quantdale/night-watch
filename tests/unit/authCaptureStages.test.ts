@@ -14,10 +14,11 @@ import type { AuthCaptureStageEvent } from '../../src/auth/stages';
 
 const root = path.resolve(__dirname, '..', '..');
 
-function localSyntheticEnvironment() {
+function localSyntheticEnvironment(uiBaseUrl?: string) {
   const base = selectEnvironment('local');
   return {
     ...base,
+    uiBaseUrl: uiBaseUrl ?? base.uiBaseUrl,
     telemetryHosts: [
       ...base.telemetryHosts,
       'clients2.google.com',
@@ -56,7 +57,10 @@ async function baseOptions(
 ): Promise<DirectAuthCaptureOptions> {
   fs.mkdirSync(temp, { recursive: true, mode: 0o700 });
   return {
-    environment: localSyntheticEnvironment(),
+    // Each fixture server is the verified synthetic environment for this
+    // invocation. Production/local configured origins remain exact-bound;
+    // the test fixture must express its ephemeral port in that same contract.
+    environment: localSyntheticEnvironment(`${serverOrigin}/`),
     uiUrl: `${serverOrigin}/`,
     outputPath: path.join(temp, 'state.json'),
     completion: { kind: 'synthetic-test-only', wait: async () => undefined },

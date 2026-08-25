@@ -32,6 +32,8 @@
     "agent:audit": "node bin/agent-state.mjs --audit-history",
     "project:check": "node bin/project-state-check.mjs",
     "status:local": "node bin/nightwatch-status.mjs",
+    "hygiene:status": "node bin/nightwatch-hygiene.mjs status",
+    "hygiene:clean": "node bin/nightwatch-hygiene.mjs clean",
     "nightwatch": "node bin/nightwatch.mjs",
     "nightwatch:status": "node bin/nightwatch-intelligence.mjs status",
     "campaign:plan": "node bin/nightwatch-intelligence.mjs plan",

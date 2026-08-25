@@ -99,25 +99,24 @@ export interface NightwatchContext {
 }
 
 /**
- * Fail-closed startup gate for the target UI URL: must be http(s), its host
- * must be allowlisted, and its path must match the selected environment's
- * verified UI base path. An allowlist entry without a port matches any port;
- * an entry with a port requires an exact host:port match. Returns the
- * normalized URL.
+ * Fail-closed startup gate for the target UI URL: must be http(s), must not
+ * carry userinfo/query/fragment material, must match the selected
+ * environment's verified origin exactly, and its path must match the
+ * verified UI base path. The environment host allowlist remains a defense in
+ * depth check. Returns the normalized URL.
  */
 export function validateUiUrl(env: EnvironmentConfig, uiUrl: string): string {
   let u: URL;
   try {
     u = new URL(uiUrl);
-  } catch (err) {
-    throw new EnvironmentSelectionError(
-      `fail-closed: UI URL "${uiUrl}" is not a valid URL: ${(err as Error).message}`
-    );
+  } catch {
+    throw new EnvironmentSelectionError(`fail-closed: UI URL is not a valid URL for environment "${env.name}"`);
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-    throw new EnvironmentSelectionError(
-      `fail-closed: UI URL protocol "${u.protocol}" is not http(s) for environment "${env.name}"`
-    );
+    throw new EnvironmentSelectionError(`fail-closed: UI URL protocol is not http(s) for environment "${env.name}"`);
+  }
+  if (u.username !== '' || u.password !== '' || u.search !== '' || u.hash !== '') {
+    throw new EnvironmentSelectionError(`fail-closed: UI URL must not contain credentials, query, or fragment material`);
   }
   const hostname = u.hostname.toLowerCase();
   const hostPortKey = u.port !== '' ? `${hostname}:${u.port}` : hostname;
@@ -126,22 +125,28 @@ export function validateUiUrl(env: EnvironmentConfig, uiUrl: string): string {
     return e === hostname || e === hostPortKey;
   });
   if (!allowed) {
-    throw new EnvironmentSelectionError(
-      `fail-closed: UI URL host "${hostname}" is not in the allowlist of environment "${env.name}"`
-    );
+    throw new EnvironmentSelectionError(`fail-closed: UI URL host is not in the allowlist of environment "${env.name}"`);
   }
   let configured: URL;
   try {
     configured = new URL(env.uiBaseUrl);
-  } catch (err) {
-    throw new EnvironmentSelectionError(
-      `fail-closed: configured UI URL for environment "${env.name}" is invalid: ${(err as Error).message}`
-    );
+  } catch {
+    throw new EnvironmentSelectionError(`fail-closed: configured UI URL for environment "${env.name}" is invalid`);
+  }
+  if (
+    (configured.protocol !== 'http:' && configured.protocol !== 'https:') ||
+    configured.username !== '' ||
+    configured.password !== '' ||
+    configured.search !== '' ||
+    configured.hash !== ''
+  ) {
+    throw new EnvironmentSelectionError(`fail-closed: configured UI URL for environment "${env.name}" is unsafe`);
+  }
+  if (u.protocol !== configured.protocol || u.hostname.toLowerCase() !== configured.hostname.toLowerCase() || u.port !== configured.port) {
+    throw new EnvironmentSelectionError(`fail-closed: UI URL does not match the verified environment origin`);
   }
   if (u.pathname !== configured.pathname) {
-    throw new EnvironmentSelectionError(
-      `fail-closed: UI URL path "${u.pathname}" does not match the verified environment path "${configured.pathname}"`
-    );
+    throw new EnvironmentSelectionError(`fail-closed: UI URL does not match the verified environment path`);
   }
   return u.toString();
 }
