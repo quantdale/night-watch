@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 867a707d820b8ddc33beebed88fd82991e26827b
-Last substantive checkpoint SHA: 867a707d820b8ddc33beebed88fd82991e26827b
+Last validated implementation SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
+Last substantive checkpoint SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M7 — campaign view, eight UI tests, and rendered unavailable-campaign smoke passed at 867a707.
+Last checkpoint: M8 — source intelligence view, bounded graph fixture, and rendered unavailable-source smoke passed at 8481a0e.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 867a707d820b8ddc33beebed88fd82991e26827b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 867a707d820b8ddc33beebed88fd82991e26827b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,11 +30,11 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M8
+Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: Wire source surfaces and graph DTOs into a bounded
-progressive view with proof/currentness/lifecycle rollups, table fallback, and
-explicit unavailable or stale states.
+What is being attempted: Wire owner-local sanitized finding metadata and dossier
+readiness into a bounded Findings view without raw evidence, paths, secrets,
+source, bodies, traces, or customer values.
 
 ## Completed Milestones
 
@@ -74,18 +74,25 @@ explicit unavailable or stale states.
   scope without adding a score, selector, promotion, or execution authority.
   UI tests passed 8/8 and the built local-server browser smoke showed the
   unavailable campaign state.
+- M8 — COMPLETE: source surfaces and progressive source graphs preserve proof,
+  currentness, lifecycle, and capability categories with explicit stale and
+  unavailable states, a table fallback, safe route descriptors, and fixed
+  250-node/500-edge ceilings. The source graph adapter passed a deterministic
+  1,000-descriptor fixture; UI tests passed 9/9, the build policy passed, and
+  the built local-server browser smoke showed the unavailable source state.
 
 ## Work In Progress
 
-M8 source implementation is beginning on `campaign/nightwatch-control-center`.
-The shell, overview, safety, campaign, run, timeline, graph, and advisory
-refresh layers are complete; bounded source surfaces/graph and findings remain.
+M9 findings implementation is beginning on `campaign/nightwatch-control-center`.
+The shell, overview, safety, campaign, run, timeline, graph, advisory refresh,
+and source intelligence layers are complete; sanitized findings, hardening,
+performance, and integration remain.
 
 ## Exact Next Action
 
-Wire source surfaces and graph routes into bounded UI projections, add
-proof/currentness/stale fixtures and graph-limit tests, then run the nested
-package typecheck, test, build, and browser checks.
+Wire the findings route into a bounded UI projection, add available/empty/
+unsafe dossier fixtures and DOM privacy assertions, then run the focused
+findings, nested UI, and root safety checks.
 
 ## Files Changed
 
@@ -117,6 +124,11 @@ package typecheck, test, build, and browser checks.
 | `ui/control-center/src/App.tsx` | M7 campaign summary and coverage view | modified |
 | `ui/control-center/src/api.ts` | M7 campaign snapshot methods | modified |
 | `ui/control-center/src/types.ts` | M7 campaign DTO shapes | modified |
+| `ui/control-center/src/App.tsx` | M8 source surfaces and progressive graph view | modified |
+| `ui/control-center/src/api.ts` | M8 source surface and graph snapshot methods | modified |
+| `ui/control-center/src/types.ts` | M8 source surface and graph DTO shapes | modified |
+| `ui/control-center/src/App.test.tsx` | M8 unavailable and synthetic source graph fixtures | modified |
+| `tests/unit/controlCenterAdapters.test.ts` | M8 1,000-descriptor graph ceiling fixture | modified |
 
 ## Validation Ledger
 
@@ -176,6 +188,13 @@ package typecheck, test, build, and browser checks.
 - `npm run control-center:ui:test` at `867a707` — PASS: 2 files / 8 tests passed.
 - `npm run control-center:ui:build` at `867a707` — PASS: 3 built files, no external references or embedded content.
 - Built UI served by `node bin/nightwatch-control-center.mjs --port=7312` — PASS M7 browser smoke: Campaign Intelligence rendered the page heading and `No coverage rows reported`; no overlay or console errors; browser and server closed afterward.
+- `npm run typecheck` after M8 source changes — PASS.
+- `npm run hardening:check` after M8 source changes — PASS: offline structural invariants hold.
+- `npx playwright test tests/unit/controlCenterAdapters.test.ts --project=nightwatch --workers=1` after M8 source changes — PASS: 8 passed, 0 failed; includes deterministic 1,000-descriptor input with 250-node/500-edge output ceilings.
+- `npm run control-center:ui:typecheck` after M8 source changes — PASS.
+- `npm run control-center:ui:test` after M8 source changes — PASS: 2 files / 9 tests passed.
+- `npm run control-center:ui:build` after M8 source changes — PASS: 3 built files, no external references or embedded content.
+- Built UI served by `node bin/nightwatch-control-center.mjs --port=7313` — PASS M8 browser smoke: Source Intelligence rendered `Follow proof, currentness, and capability.` and the explicit unavailable/empty inventory wording; no overlay or console errors; browser and server closed afterward.
 
 ## Decisions Made During This Task
 
@@ -213,10 +232,9 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M8 action above. Preserve loopback-only,
+live Git status and continue the exact M9 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
 
-Not complete. M0–M7 are recorded; M8 source intelligence and later validation
-remain.
+Not complete. M0–M8 are recorded; M9 findings and later validation remain.

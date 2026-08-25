@@ -161,7 +161,7 @@ and source graph data also have list/table fallbacks.
   stale/unavailable/ambiguous proof visible, no raw source payload, fallback
   list/table.
 - Validation commands: source graph tests and synthetic 250/1000-node bounds.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M9 — Sanitized Findings view
 
@@ -170,7 +170,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: explicit DTO allowlist; no arbitrary paths, raw
   evidence, secrets, source, bodies, traces, or customer values.
 - Validation commands: findings redaction and browser DOM/console leakage tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M10 — Security, privacy, accessibility, failure hardening
 
