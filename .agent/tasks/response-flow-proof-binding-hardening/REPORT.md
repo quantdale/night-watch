@@ -40,6 +40,25 @@ rejections / 0 resolved calls / maximum depth 0. The census was structurally
 identical to Phase 28, including the absence of a strict single-assignment
 direct-literal producer family.
 
+The source snapshot identity was
+`srcsnapshot:sha256:04ff583971865f335902f5ad` and the scan configuration
+identity was `srcconfig:sha256:e8bdfc8f0e58d7d93a87215`. The exact approved
+repository heads were:
+
+- `alphauslabs/blue-sdk-go` — `8883ee3d3a073352626c8c35e20e9fc5ed765373`
+- `alphauslabs/blueapi` — `691422e5dc81afd263d064986fb50fcb3ea432a9`
+- `alphauslabs/grpc-chunk-parser` — `66802f281698dfcf0903f0a117d4637fce3fd945`
+- `mobingilabs/ouchan` — `565f00a87fb7616cc23c45d4ffeabee38a41c65f`
+- `mobingilabs/ripple-api` — `27bb007ad0c798800b6bd3b29760c966422966e7`
+- `mobingilabs/ripple-ui` — `d80b161b684d9153c7e5acaa65ae1752d93d8ba9`
+
+Per-repository inventory was 4/4 admitted Go files for blue-sdk-go, 1/1
+rejected unsupported-language file for blueapi, 1/1 admitted TypeScript file
+for grpc-chunk-parser, 857 considered / 753 admitted / 104 rejected for
+ouchan, 96 considered / 95 admitted / 1 rejected for ripple-api, and 773
+considered / 225 admitted / 548 rejected for ripple-ui. No symlink or path
+confinement rejection occurred.
+
 ## Exact implementation
 
 Validated implementation checkpoint:
