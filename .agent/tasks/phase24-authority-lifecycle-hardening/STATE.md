@@ -4,21 +4,22 @@
 
 Task ID: phase24-authority-lifecycle-hardening
 Phase: 24-AUTHORITY-LIFECYCLE-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-Last validated implementation SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
-Last substantive checkpoint SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
+Last validated implementation SHA: 49c0d4265cc3be987503a491e259f4121487f602
+Last substantive checkpoint SHA: 49c0d4265cc3be987503a491e259f4121487f602
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; full Phase 24–28/response-flow cone passed 102/102.
+Last checkpoint: M5 — terminal local validation, continuity closure, and synchronized-main handoff.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 49c0d4265cc3be987503a491e259f4121487f602
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 49c0d4265cc3be987503a491e259f4121487f602
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_STATUS: IN_PROGRESS
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
+PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_STATUS: COMPLETE
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_28_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_9_STATUS: COMPLETE_LOCAL_SYNTHETIC (historical, unchanged)
@@ -35,8 +36,8 @@ preserving the local/source/synthetic-only owner boundary.
 
 ## Current Milestone
 
-M3 — IN_PROGRESS. Audit the whole repository across the required hardening
-classes and repair only reproduced actionable defects.
+COMPLETE — M5 terminal validation, continuity closure, and synchronized-main
+handoff.
 
 ## Completed Milestones
 
@@ -71,25 +72,36 @@ classes and repair only reproduced actionable defects.
   portfolio. Manifest/rehearsal and source-cache identity checks were
   inspected as negative evidence.
 
+- M3 whole-repository hardening — PASS: the bounded Stage B review found no
+  Critical or High defect. A UI URL boundary regression was reproduced and
+  repaired with exact configured-origin/path binding, categorical
+  credential/query/fragment rejection, and no raw-target echo. A Phase 24
+  lifecycle accounting edge case for an already-EXCLUDED candidate was
+  reproduced and repaired; the transition remains recorded without falsely
+  labeling it newly unsafe.
+
+- M4 workspace hygiene — PASS: `bin/nightwatch-hygiene.mjs` provides
+  read-only status plus explicit dry-run-first apply behavior. Synthetic Git
+  fixtures cover canonical preservation, dirty/unreachable/missing targets,
+  exact revalidation, and bounded removal. The actual topology classified 17
+  registrations and 34 local branches with zero safe targets; no cleanup,
+  prune, branch deletion, or worktree removal was performed.
+
+- M5 terminal validation and closure — PASS: the canonical full suite,
+  local/clean quality gates, typecheck, hardening, project truth, continuity,
+  provenance, synthetic campaign, inventory, hygiene, privacy review, and
+  final Git reconciliation all completed within the owner scope.
+
 ## Work In Progress
 
-M2 is complete at the local/source/synthetic boundary. The durable repair
-checkpoint makes omitted snapshot proof exclude a direct
-candidate; invalidation is v2 with explicit per-repository availability,
-prior/current IDs, recovery/removal states, transition reasons, and stale
-artifact keys; duplicate surfaces fail closed; replay plans and dossiers carry
-candidate-decision bindings; and source review validates its selection against
-the supplied portfolio. Full dependency-cone and repository-wide validation
-remain outstanding.
+None — M0–M5 are complete. The implementation, full local validation ladder,
+hygiene classification, continuity records, and synchronized-main handoff are
+closed.
 
 ## Exact Next Action
 
-Perform the Stage B whole-repository audit. Inspect each required class—safety
-and containment; continuity, recovery, and idempotence; determinism and
-provenance; concurrency/process/filesystem/workspace; input and failure
-semantics; tests/gates/negative space; and dead assumptions. Reproduce every
-actionable finding with a bounded synthetic test before repairing it, then
-record the disposition and advance to Stage C.
+STOP — Phase 24 authority lifecycle hardening is complete. Do not reopen this
+task; future work requires a fresh authorized task.
 
 ## Files Changed
 
@@ -99,7 +111,7 @@ record the disposition and advance to Stage C.
 | `.agent/tasks/phase24-authority-lifecycle-hardening/SPEC.md` | Freeze campaign intent and safety scope | added |
 | `.agent/tasks/phase24-authority-lifecycle-hardening/PLAN.md` | Living milestones and validation ladder | added |
 | `.agent/tasks/phase24-authority-lifecycle-hardening/STATE.md` | Continuity waypoint and baseline evidence | added |
-| `.agent/tasks/phase24-authority-lifecycle-hardening/REPORT.md` | Campaign handoff placeholder for active work | added |
+| `.agent/tasks/phase24-authority-lifecycle-hardening/REPORT.md` | Final campaign handoff record | complete |
 | `bin/agent-state.mjs` | Treat the planning-only execution prompt as a documentation checkpoint | implemented |
 | `tests/unit/agent-state.test.ts` | Permanent regression for the planning checkpoint classification | implemented |
 | `src/core/phase24/types.ts` | Versioned invalidation/replay/dossier authority contracts | implemented |
@@ -118,6 +130,15 @@ record the disposition and advance to Stage C.
 | `tests/unit/phase26SyntheticCampaign.test.ts` | Replay/dossier authority binding fixture | updated |
 | `package.json` | Register authority matrix in synthetic/Phase 24 commands | updated |
 | `bin/quality-gate-inventory.mjs` | Register authority matrix in authoritative gate inventory | updated |
+| `src/browser/context.ts` | Bind UI startup to the verified environment origin/path and reject unsafe URL material | implemented |
+| `src/core/phase24/types.ts` | Carry prior/current eligibility through invalidation records | updated |
+| `src/core/phase24/invalidation.ts` | Preserve eligibility identity and correct newly-unsafe accounting | updated |
+| `tests/unit/phase24AuthorityLifecycleHardening.test.ts` | Regress the excluded-candidate unavailable transition | updated |
+| `tests/unit/contextUrlHardening.test.ts` | Add URL-boundary privacy and exact-origin regressions | added |
+| `tests/unit/authCaptureStages.test.ts` | Bind ephemeral synthetic auth fixtures to their verified fixture origin | updated |
+| `bin/nightwatch-hygiene.mjs` | Add bounded local hygiene status and explicit dry-run/apply command | added |
+| `tests/unit/nightwatchHygiene.test.ts` | Add synthetic Git hygiene classification and apply matrix | added |
+| `config/semantic-compatibility.v1.json` | Register the new boundary and hygiene tests in compatibility coverage | updated |
 
 ## Validation Ledger
 
@@ -180,6 +201,40 @@ record the disposition and advance to Stage C.
 - Full Phase 24–28 and response-flow dependency cone after commit `012daa2` —
   PASS: 102 passed, 0 failed, 0 skipped across 20 authoritative test files.
 
+- Read-only independent Stage B review — PASS: no Critical or High findings.
+  Two low-severity fail-closed semantics were reviewed: excluded candidates
+  were corrected so source unavailability is not counted as newly unsafe, and
+  stale artifact-key invalidation remains conservatively over-inclusive per
+  affected source. The latter is deferred as precision-only follow-up; it
+  does not broaden authority or create a false PASS.
+- UI URL boundary focused regression — PASS: 13 passed, 0 failed after
+  binding each synthetic fixture to its ephemeral verified origin. The
+  boundary rejects userinfo/query/fragment material, rejects allowlisted but
+  non-configured origins, preserves stage-specific auth failures, and never
+  echoes synthetic target material.
+- Final canonical full Playwright regression at `49c0d42` — PASS: 2,475
+  enumerated; 2,459 passed; 16 skipped; 0 failed; one `nightwatch` project and
+  one worker. The skips are environment-conditional and no unexpected skip
+  or failure occurred.
+- Final `npm run hygiene:status` — PASS/PRESERVED: 17 registrations, 34
+  local branches, 0 safe targets, 0 applied actions; 3 generated outputs
+  observed and 0 ignored entries. Missing, dirty, unlinked, and unvalidated
+  artifacts remained preserved.
+- Final `npm run typecheck` — PASS.
+- Final `npm run hardening:check` — PASS: offline structural invariants hold.
+- Final `npm run quality-gate:spec` — PASS: definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+  22 compatibility phases, 141 compatibility files.
+- Final `npm run gate:inventory` — PASS: 9 authoritative groups, 152 unique
+  test files, 0 duplicate executions.
+- Final `npm run gate:local` at `49c0d42` — PASS: all 9 required groups;
+  semantic compatibility 1,883 total / 1,870 passed / 13 skipped / 0 failed;
+  owner provenance 91 passed; synthetic campaign 61 passed; receipt
+  `receipt:sha256:ac76a7264d36b3dfaa2eb868`.
+- Final `npm run gate:clean` at `49c0d42` — PASS: fresh Node 20 install,
+  clean before/after, no auth or owner-finding state, 0 sibling writes;
+  receipt `clean-receipt:sha256:ea1a267c186970a395c290ce`.
+
 ## Decisions Made During This Task
 
 - The new campaign begins from the live planning checkpoint while retaining
@@ -195,6 +250,19 @@ record the disposition and advance to Stage C.
   prior/current IDs and source incarnations. Replay plans and dossiers now
   carry candidate-decision digests and expose current-authority validators;
   this binds artifacts without creating a second selector.
+- M3 binds startup UI targets to the exact configured environment origin and
+  path. Synthetic fixture servers express their ephemeral origin in a
+  test-only environment object; production/local configuration remains
+  exact-bound.
+- M3 corrects `newlyUnsafeCandidateIds` so a candidate already classified
+  `EXCLUDED` is not newly unsafe merely because its source becomes unavailable;
+  the unavailable transition remains losslessly recorded.
+- M4 makes hygiene status read-only by default and cleanup explicit,
+  dry-run-first, exact-target, revalidated, and limited to clean reachable
+  local swarm worktrees whose tips are ancestors of local `main`.
+- M5 leaves all ambiguous or unsafe workspace artifacts preserved because the
+  actual topology proved zero safe targets; the planning-only Control Center
+  branch remains deferred until a fresh successor task is authorized.
 
 ## Discoveries
 
@@ -219,6 +287,18 @@ record the disposition and advance to Stage C.
   `repositories.some(status === CURRENT)`; and duplicate `surfaceKey` values
   overwrite map entries. The cache key and manifest/rehearsal digest checks
   bind source/currentness correctly in the inspected paths.
+- Stage B found no Critical or High defect. The UI boundary had an ordering
+  compatibility issue in synthetic auth tests, which was repaired by making
+  the fixture's ephemeral origin the verified synthetic configuration rather
+  than weakening the production gate.
+- The independent review identified a conservative stale-artifact-key
+  invalidation over-invalidation: one affected source can conservatively
+  invalidate selection/manifest keys even when only one key is stale. It is a
+  fail-closed precision limitation, not an authority expansion, and remains
+  deferred.
+- The hygiene command observed the canonical root, 16 missing `/tmp` swarm
+  registrations, historical/unlinked swarm branches, and generated outputs;
+  no exact target met the safe-removal predicate.
 
 ## Blockers
 
@@ -237,16 +317,27 @@ database, cloud, infrastructure, or publication operation occurred.
 - Ambiguous, dirty, unmerged, or unreachable workspace artifacts remain for
   later evidence-based classification; no deletion is authorized by this
   baseline milestone.
+- Conservative stale-artifact-key precision remains deferred; its behavior is
+  fail-closed and does not grant selection or execution authority.
+- The planning-only `origin/plan/nightwatch-control-center` branch remains
+  deferred. Any successor implementation must start from a fresh task on the
+  live `main` branch after this terminal checkpoint.
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md`, this task's SPEC, PLAN, and STATE.
-2. Inspect live `git status`, `git worktree list --porcelain`, and Git heads.
-3. Run the exact M0 continuity checks after the checker patch.
-4. Continue with the first incomplete milestone and update STATE after it.
+This task is terminal. Do not resume implementation or reopen Phase 24. If
+historical context is needed, read `.agent/ACTIVE_TASK.md`, this task's SPEC,
+PLAN, STATE, and REPORT, then discover live Git state directly.
 
 ## Completion Snapshot
 
-IN_PROGRESS — no completion snapshot yet. M0 baseline evidence is recorded;
-authority audit, whole-repository hardening, hygiene implementation, full
-validation, and Git closure remain incomplete.
+COMPLETE. M0–M5 are closed. The final implementation checkpoint is
+`49c0d4265cc3be987503a491e259f4121487f602`; the canonical full suite is 2,475
+enumerated / 2,459 passed / 16 skipped / 0 failed; local and clean gates both
+pass all 9 groups; semantic compatibility is 1,883 total / 1,870 passed / 13
+skipped / 0 failed; owner provenance is 91 passed; synthetic campaign is 61
+passed; hygiene observed 17 registrations and 34 branches with 0 safe targets
+and 0 applied actions. No Critical or High finding remains open, no safety or
+privacy event occurred, and all ambiguous workspace artifacts were preserved.
+Live local/remote equality and final Git cleanliness are discovered from Git
+after the closure push; no external CI result is claimed.

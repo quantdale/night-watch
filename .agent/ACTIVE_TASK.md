@@ -3,19 +3,20 @@
 Task ID: phase24-authority-lifecycle-hardening
 Phase: 24-AUTHORITY-LIFECYCLE-HARDENING
 Title: Nightwatch Executor Campaign — Phase 24 Authority Lifecycle + Whole-Repository Hardening
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase24-authority-lifecycle-hardening
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-Last validated implementation SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
-Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; the full Phase 24–28/response-flow cone passed 102/102.
-Current milestone: M3 — whole-repository hardening audit and bounded repairs.
-Next action: Audit the required safety, continuity, determinism, concurrency, filesystem, failure-semantics, gate, and dead-assumption classes; reproduce any actionable defect before repair.
+Last validated implementation SHA: 49c0d4265cc3be987503a491e259f4121487f602
+Last checkpoint: M5 — terminal local validation, continuity closure, and synchronized-main handoff.
+Current milestone: COMPLETE — M5 terminal closure.
+Next action: STOP — this task is complete; future work requires a fresh authorized task.
 Authorization class: PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 49c0d4265cc3be987503a491e259f4121487f602
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 49c0d4265cc3be987503a491e259f4121487f602
 LIVE_HEAD_AUTHORITY: GIT
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Routing and safety
 
@@ -31,6 +32,7 @@ Git.
 
 ## Resume recipe
 
-Read this route, then the task SPEC, PLAN, and STATE. Continue the exact next
-action from STATE, updating the waypoint after each milestone and preserving
-the owner freeze and safe workspace-cleanup rules.
+This task is terminal. Do not resume implementation or reopen Phase 24;
+future work requires a fresh task and authorization. If historical context is
+needed, read this route and the task SPEC, PLAN, STATE, and REPORT, then verify
+live Git state from Git.

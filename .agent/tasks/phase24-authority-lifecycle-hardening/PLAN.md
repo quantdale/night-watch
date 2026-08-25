@@ -2,7 +2,7 @@
 
 Task ID: phase24-authority-lifecycle-hardening
 Phase: 24-AUTHORITY-LIFECYCLE-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -67,12 +67,14 @@ plans without relying on broad Git cleanup commands.
 - M2 — COMPLETE: implement and validate reproduced Critical/High authority
   defects, including artifact/cache currentness binding; the full Phase 24–28
   and response-flow cone passed 102/102.
-- M3 — IN_PROGRESS: whole-repository hardening audit and bounded repairs across
-  all required audit classes.
-- M4 — PENDING: implement and validate durable dry-run-first workspace hygiene;
-  classify and safely reconcile only proven-clean reachable targets.
-- M5 — PENDING: full validation ladder, source/provenance/privacy review,
-  continuity closure, report, commit, push, and live Git equality.
+- M3 — COMPLETE: whole-repository hardening audit and bounded repairs across
+  all required audit classes; no Critical or High finding remained.
+- M4 — COMPLETE: durable dry-run-first workspace hygiene implemented and
+  validated; actual topology had zero safe cleanup targets, so no mutation was
+  applied.
+- M5 — COMPLETE: full validation ladder, source/provenance/privacy review,
+  continuity closure, report, implementation checkpoint, and synchronized-main
+  handoff completed.
 
 ## Validation Strategy
 
@@ -105,6 +107,15 @@ external CI unless it actually executes for the live head.
   second selector.
 - M3 decision — no repair is accepted from an un-reproduced hypothesis; each
   finding must include a bounded synthetic regression and privacy review.
+- M3 decision — exact environment-origin binding remains strict in production;
+  synthetic ephemeral servers must declare their own verified test origin so
+  existing stage-specific tests exercise the intended later safety gates.
+- M4 decision — cleanup is permitted only for an exact clean linked local
+  swarm worktree whose branch is reachable from local `main`, has no upstream,
+  is not current, and passes a second pre-delete revalidation.
+- M5 decision — zero safe hygiene targets means preserve everything and report
+  the classification; no broad prune, force deletion, or branch cleanup is
+  allowed.
 
 ## Discoveries
 
