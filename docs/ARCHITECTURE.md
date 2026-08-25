@@ -1683,3 +1683,46 @@ and the existing invalidation/cache identities. The resolver has no execution,
 network, product, auth, data, infrastructure, publication, or promotion
 authority. Response proof remains independent from mutation/read-only proof,
 runtime/deployment identity, and Phase 24 candidate authority.
+
+## Phase 28 evidence-driven source-intelligence hardening architecture
+
+Phase 28 is a hardening layer over the existing Phase 25–27 authorities. A
+fresh six-repository census is required before any new proof family can be
+admitted. The current census found no strict single-assignment direct-literal
+local producer family, so no producer-flow authority was added:
+
+```text
+approved current-source inventory
+  -> existing route/contract/response/semantic projection
+  -> bounded categorical rejection diagnostics
+  -> sanitized v3 gap taxonomy + deterministic delta
+  -> existing source graph/review/invalidation/cache/Phase24 seams
+  -> safe operator projections (source-gaps / surfaces)
+```
+
+The taxonomy is a bounded aggregate over sanitized inventory and surface DTOs.
+Its dimensions distinguish proof domain, repository/language, route and
+handler family, response/semantic state, analyzer and analyzer version,
+rejection family/code, syntax/control-flow/return-expression family,
+declaration resolution, lexical budget, currentness, and ambiguity. It keeps
+bounded safe samples and a deterministic digest; it never reads or persists
+source fragments, request/response values, credentials, cookies, customer
+data, or exception text. A versioned taxonomy delta is attached to the
+existing invalidation report rather than creating a second change authority.
+
+The response-flow boundary now exposes separate source-byte,
+declaration-index, return-site, and resolved-declaration budgets. The PHP
+tokenizer enforces source and token bounds before deep analysis. Repeated exact
+dependencies are deduplicated for the per-flow declaration budget, while
+cycles, ambiguity, dynamic dispatch, framework/container inference, and all
+other unsupported families remain rejected. Performance timing is advisory
+and non-enumerable on the discovery DTO so cache keys and deterministic
+evidence remain stable; the operator surface explicitly projects timing and
+structural metrics.
+
+The current source result remains 128 operations, 83 response contracts, 175
+semantic observations, 13 flow attempts with 0 proven, 3 Phase 24 eligible
+surfaces, and 125 excluded. Phase 24 remains the sole candidate authority;
+response proof does not establish mutation safety, read-only behavior,
+deployment equivalence, authentication correctness, runtime identity, or DEV
+readiness.

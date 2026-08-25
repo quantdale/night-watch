@@ -65,8 +65,9 @@ remains the only portfolio authority.
   Phase 24 3 eligible / 125 excluded.
 - Response flow: 13 attempts / 0 proven / 13 rejected / 0 resolved calls /
   maximum depth 0. Rejections: 9 dynamic dispatch, 3 unsupported helper
-  syntax, 1 incomplete branch. The current diagnostic projection collapses
-  each of these into generic `UNSUPPORTED_SYNTAX`; this is a Phase 28 defect.
+  syntax, 1 incomplete branch. At M1 the surface projection still collapsed
+  these into generic `UNSUPPORTED_SYNTAX`; M3 now preserves the resolver's
+  exact categorical reason in the source-gap taxonomy.
 - Producer census: zero strict single-assignment direct-literal producer
   candidates; 34 literal producers with control flow, 16 multiple assignments,
   12 no local assignment, and 4 opaque assignments among variable-return
@@ -99,12 +100,15 @@ evidence gate.
   matrix. Status: COMPLETE — relevant Phase 25/26/27/28 regression run 22/22;
   synthetic campaign 49/49.
 - M6 — source graph, review/operator/CLI, Phase 24, and quality-gate
-  integration. Status: IN_PROGRESS — taxonomy/delta/performance are wired into
-  existing discovery, invalidation, CLI, and synthetic gate seams.
+  integration. Status: COMPLETE — taxonomy/delta/performance are wired into
+  existing discovery, invalidation, CLI, and synthetic gate seams; JSON/human
+  operator projections agree semantically.
 - M7 — expanded adversarial/false-positive corpus and synthetic campaign.
-  Status: PENDING.
+  Status: COMPLETE — Phase 28 focused 10/10 and combined synthetic 49/49,
+  with zero false-positive admissions.
 - M8 — profiling/baseline, compatibility review, documentation truth, and
-  checkpoint qualification. Status: PENDING.
+  checkpoint qualification. Status: IN_PROGRESS — current docs are reconciled;
+  clean local qualification remains before final closure.
 - M9 — complete validation cone, disposable clean qualification, canonical/
   isolated parity, exact-head CI observation, final report, and synchronized
   `main`. Status: PENDING.

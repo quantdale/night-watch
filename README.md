@@ -57,19 +57,23 @@ npm run gate:clean       # disposable Node 20 checkout qualification
 npm run campaign:synthetic
 ```
 
-Phase 25/26 source intelligence is local, read-only, bounded, deterministic,
+Phase 25–28 source intelligence is local, read-only, bounded, deterministic,
 and raw-source-free. It scans only the fixed approved sibling-source universe
 and feeds mechanically proven surfaces into the existing Phase 24 portfolio:
 
 ```bash
 node bin/nightwatch-intelligence.mjs source-scan --repo=mobingilabs/ripple-api --json
 node bin/nightwatch-intelligence.mjs surfaces --repo=mobingilabs/ripple-api --json
+node bin/nightwatch-intelligence.mjs source-gaps --json
 node bin/nightwatch-intelligence.mjs review-queue --repo=mobingilabs/ripple-api --json
 node bin/nightwatch-intelligence.mjs explain-surface --repo=mobingilabs/ripple-api --surface=<safe-id> --json
 ```
 
-Phase 26 adds response-proof, semantic-proof, lifecycle, analyzer, and
-exclusion metrics to the same source views. A surface is mechanically trusted
+Phase 26–28 add response-proof, semantic-proof, lifecycle, analyzer,
+currentness, bounded-performance, and rejection-taxonomy metrics to the same
+source views. `source-gaps` exposes only aggregate safe metadata, including
+taxonomy v3 and deterministic before/after-compatible digests; it never emits
+raw source, literal values, or a debug-source escape hatch. A surface is mechanically trusted
 only when bounded source evidence proves it; dynamic values, incomplete
 branches, ambiguous joins, mutation risk, and missing runtime authority remain
 explicit exclusions. The source scan does not create a journey, authorize an

@@ -8,14 +8,14 @@ Title: Nightwatch Phase 28 — Evidence-Driven Source-Intelligence Hardening and
 Authorization class: PHASE_28_EVIDENCE_DRIVEN_SOURCE_INTELLIGENCE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
-Last validated implementation SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
-Last substantive checkpoint SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
+Last validated implementation SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
+Last substantive checkpoint SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
-LAST_VALIDATED_IMPLEMENTATION_SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -38,24 +38,24 @@ local/source/synthetic validation cone.
 
 ## Current Milestone
 
-M6 — source graph, review/operator, Phase 24, and quality-gate integration.
+M8 — profiling, compatibility review, documentation truth, and checkpoint qualification.
 
 ## Work In Progress
 
 The fresh census and producer admission gate are closed for the current
 snapshot: zero strict direct-literal local producer examples were found.
-Taxonomy, precise flow diagnostics, source/token/index/branch budgets,
+Taxonomy v3, precise flow diagnostics, source/token/index/branch budgets,
 cache/currentness invalidation, deterministic taxonomy deltas, and performance
 proxies are focused-green. The operator and quality-gate seams are integrated;
-the next unit is durable documentation and full certification. No raw sibling
-source or runtime value has been persisted.
+the durable architecture, roadmap, decision, README, and current-state
+documentation now record the current census without rewriting historical
+Phase 25–27 records. No raw sibling source or runtime value has been
+persisted.
 
 ## Exact Next Action
 
-Run the `source-gaps` and `surfaces` operator projections, confirm their safe
-summaries and measured structural metrics, then update current
-architecture/project-state documentation without rewriting historical Phase
-25–27 records.
+Commit the reconciled documentation checkpoint, then run the local/clean
+quality gates and complete canonical/isolated full-suite qualification.
 
 ## Completed Milestones
 
@@ -80,6 +80,13 @@ architecture/project-state documentation without rewriting historical Phase
   tests, and added bounded before/after taxonomy deltas. Relevant Phase
   25/26/27/28 regression run: 22/22; synthetic campaign after the complete
   Phase 28 suite: 49/49.
+- M6 — wired taxonomy, taxonomy deltas, and advisory performance metrics into
+  the existing source discovery, invalidation, graph/review, CLI, Phase 24,
+  and quality-gate surfaces. `source-gaps` and `surfaces` JSON/human output
+  agree semantically; only non-authoritative timing varies.
+- M7 — completed the Phase 28 pathological lexical/resolver fixture matrix:
+  10/10 focused and 49/49 combined synthetic tests, with no false-positive
+  admission and no privacy leakage.
 
 ## Files Changed
 
@@ -119,8 +126,15 @@ Producer categories: 34 literal/control-flow, 16 multiple assignment, 12 no
 local assignment, 4 opaque assignment, 0 strict direct-literal candidates.
 Phase 28 focused fixture matrix: 10/10 passed; combined synthetic campaign:
 49/49 passed. Relevant Phase 25/26/27/28 regression run: 22/22 passed.
-Typecheck, hardening check, quality-gate spec, and gate inventory passed after
-the hardening slice; the authoritative full cone remains pending.
+Operator parity: `source-gaps` and `surfaces` JSON/human projections matched
+on all semantic counters, taxonomy digest, and portfolio counts; timing is
+advisory only. Exact-head Actions observation: run `32819574544`, job
+`97714690619`, exact head `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`, zero
+steps, classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Typecheck, hardening
+check, quality-gate spec, gate inventory, semantic compatibility, synthetic,
+owner provenance, and continuity/audit are green; the authoritative local,
+clean, project-truth, and full-suite cone remains pending after the
+documentation checkpoint.
 
 ## Blockers
 
@@ -161,5 +175,5 @@ unless a milestone requires current-source evidence.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0–M5 are closed and focused-green; M6–M9, full validation,
-documentation, and Git closure remain.
+IN_PROGRESS — M0–M7 are closed and focused-green; M8 documentation checkpoint
+qualification and M9 final validation/Git closure remain.

@@ -2180,3 +2180,38 @@ single exact-head Actions observation was run `32800403605` / job
 classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. No retry was made. The
 campaign remains local/source/synthetic only, and the next campaign must be
 chosen from a fresh census rather than pre-decided coverage targets.
+
+## Phase 28 — evidence-driven source-intelligence hardening
+
+Phase 28 is a local/source/synthetic-only hardening campaign. It begins with a
+fresh census of all six approved repositories and admits a new proof family
+only when current source demonstrates an exact, branch-complete,
+dependency-current, bounded, mechanically falsifiable pattern. The preferred
+single-function local producer/alias candidate was investigated first and was
+not admitted: the current source population contains zero strict
+single-assignment direct-literal candidates, alongside 34 literal/control-flow,
+16 multiple-assignment, 12 no-assignment, and 4 opaque variable-return cases.
+
+The campaign adds taxonomy v3 over sanitized source/surface metadata,
+categorical rejection-family and analyzer-version dimensions, bounded
+source/token/declaration/return-site budgets, exact resolver resource reasons,
+same-SHA dependency/currentness regressions, deterministic taxonomy deltas,
+and advisory source-scan performance metrics. The existing graph, cache,
+invalidation, review, operator, synthetic campaign, quality gate, lifecycle,
+and Phase 24 seams remain the authorities; no parallel portfolio or source
+debug surface was created.
+
+The current approved-source census is 1,732 files considered / 1,092 read /
+1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations, 127
+route proofs, 127 request contracts, 83 response contracts, 175 semantic
+observations, 118 proven and 10 rejected joins, lifecycle 45/80/3, and Phase
+24 at 3 eligible / 125 excluded. Response flow attempted 13, proved 0,
+rejected 13, and resolved 0 current calls. The taxonomy reports 45 proof-gap
+surfaces and 325 rejected diagnostics under
+`nightwatch.real-source-gap-taxonomy.v3`; all new and existing negative
+controls remain fail-closed.
+
+Phase 28 has no DEV/NEXT/production, authenticated-browser, data-plane,
+cloud/infra, sibling-write, publication, self-development-promotion, or AI
+runtime authority. Final certification and the successor campaign are chosen
+from the terminal measurements, not preselected here.

@@ -3205,3 +3205,41 @@ implementation anchor but returned `steps=[]`; the external classification is
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not green CI. No DEV, auth, product,
 data, infrastructure, sibling-write, publication, or promotion authority was
 created.
+
+## D-78 — Phase 28 hardens source-gap intelligence without admitting producer flow
+
+**Context.** Phase 27 left a meaningful population of variable returns,
+branch-dependent handlers, dynamic dispatch, and oversized lexical cases. The
+campaign brief identified bounded local producer/alias flow as the preferred
+candidate, but required a fresh current-source census before adding any new
+authority.
+
+**Decision.** Keep Phase 28 hardening-first. The fixed admission gate requires
+current approved-source examples, exact producer/consumer binding,
+branch-complete proof, exact current dependencies, no PHP execution or
+framework/container inference, deterministic invalidation, path confinement,
+adversarial falsification, and raw-source-free persistence. The fresh census
+found zero strict single-assignment direct-literal producer candidates, so
+`LOCAL_PRODUCER_ALIAS_FLOW` is not admitted. Variable producers, property and
+service chains, namespaces/imports, inheritance/traits/interfaces, factories,
+resources/DTOs, dynamic dispatch, and generic PHP data flow remain
+categorical exclusions.
+
+Phase 28 instead adds bounded taxonomy v3 and its deterministic delta to the
+existing source/invalidation surfaces; preserves exact resolver rejection
+reasons; separates source-byte, token, declaration-index, return-site, and
+resolved-declaration exhaustion; and exposes advisory performance metrics only
+through the existing `source-gaps`/`surfaces` operator views. Timing is excluded
+from deterministic discovery identity. The response-flow, source graph, cache,
+review, lifecycle, semantic, and Phase 24 authorities remain unchanged.
+
+**Evidence and consequences.** The current six-repository snapshot is
+`srcsnapshot:sha256:04ff583971865f335902f5ad`: 1,732 considered / 1,092 read /
+1,078 admitted / 654 rejected / 12,449,877 bytes; 128 operations; 83 response
+contracts; 175 semantic observations; 13 flow attempts, 0 proved, 13
+rejected; and Phase 24 3 eligible / 125 excluded. Taxonomy v3 reports 45
+proof-gap surfaces and 325 rejected diagnostics with deterministic digest
+`source-gap-taxonomy:sha256:7adf9ef4eee0788461b34494`. Synthetic and relevant
+regression suites remain zero-false-positive and privacy-safe. This decision
+adds no DEV/NEXT/production, data, cloud, infrastructure, sibling-write,
+publication, AI, or canonical-promotion authority.
