@@ -1605,3 +1605,37 @@ operations, and unresolved deployment equivalence remain visible exclusions.
 Deployment/source equivalence is never inferred. Extracted eligible surfaces
 are passed through the existing Phase 24 authority, so source discovery can
 explain or prioritize a candidate but cannot grant execution authority.
+
+## Phase 26 mechanical response and semantic coverage architecture
+
+Phase 26 extends the Phase 25 source surface profile without introducing a
+parallel portfolio or semantic authority:
+
+```text
+bounded inventory
+  -> exact route/handler evidence
+  -> opt-in direct-response proof families
+  -> existing FIELD_TYPE / FIELD_SET semantic materialization
+  -> safe analyzer diagnostics and proof-gap metrics
+  -> currentness-bound graph and incremental invalidation
+  -> existing Phase 24 candidate bridge and portfolio
+  -> existing lifecycle, review, replay, dossier, and operator views
+```
+
+The highest-yield admitted family is deliberately narrow PHP direct-return
+proof. Every return branch must be a literal, structurally compatible array;
+safe keyed fields must be branch-identical before object-field proof is
+emitted. Literal field types and root collection/object types reuse the
+existing semantic vocabulary. Strict alias and complete-branch analyzers are
+kept as negative controls when current approved source does not establish a
+complete proof. Dynamic keys, variable or call-return flows, incomplete branch
+sets, and unresolved references remain unsupported rather than inferred.
+
+The real-source analyzer profile has its own versioned cache identity while
+the historical Phase 20/21 analyzer profile remains byte-compatible. Safe
+diagnostics contain only analyzer IDs, proof status, bounded behavior/reason
+codes, and evidence digests; source text and literal private values never
+cross the source boundary. Phase 24 remains the sole eligibility and portfolio
+authority: Phase 26 raised response contracts from 25 to 62 and advanced the
+current approved lifecycle from 103 `DISCOVERED` to 66, while retaining the
+three existing `PROJECTABLE` surfaces.

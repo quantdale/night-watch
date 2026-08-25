@@ -3,7 +3,7 @@
 Task ID: phase-26-mechanical-contract-coverage-expansion
 Phase: 26-MECHANICAL-RESPONSE-SEMANTIC-CONTRACT-COVERAGE
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -102,11 +102,11 @@ seam.
   corpus. Status: COMPLETED.
 - M9 — source-to-triage synthetic campaign integration. Status: COMPLETED.
 - M10 — compatibility, hardening, gate inventory, clean Node20, and focused
-  closure. Status: IN_PROGRESS.
+  closure. Status: COMPLETED.
 - M11 — fresh canonical and topology-correct isolated full regression with
-  exact parity. Status: NOT_STARTED.
-- M12 — one exact-head Actions observation if available, durable docs,
-  continuity closure, final push, and synchronized main. Status: NOT_STARTED.
+  exact parity. Status: COMPLETED.
+- M12 — one exact-head Actions observation, durable docs, continuity closure,
+  final push, and synchronized main. Status: COMPLETED.
 
 ## Validation Strategy
 

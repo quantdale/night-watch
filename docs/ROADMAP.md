@@ -2097,3 +2097,48 @@ campaign is to expand mechanically proven response and semantic contract
 coverage for the 125 currently excluded surfaces, beginning with the 103
 response/semantic-proof gaps while retaining fail-closed ambiguity handling;
 DEV acceptance remains a separate future authorization.
+
+## Phase 26 — mechanical response and semantic contract coverage expansion
+
+Phase 26 is terminal at `COMPLETE_LOCAL_SOURCE_EXPANSION`. It remained LOCAL /
+READ-ONLY SOURCE / SYNTHETIC ONLY and preserved the Phase 25 source boundary,
+existing semantic vocabulary, and Phase 24 portfolio authority.
+
+The approved six-repository scan inspected 1,732 bounded files, read 1,092,
+admitted 1,078, rejected 654, and inspected 12,449,877 bytes at exact current
+source identities. It discovered 128 operations, proved 127 routes and 127
+request contracts, and used strict PHP direct-return analyzers to raise
+response contracts from 25 to 62 and semantic contract observations from 25
+to 138. Lifecycle coverage moved from 103 `DISCOVERED` to 66, with 59
+`MECHANICALLY_PROVEN` and the same three `PROJECTABLE` surfaces. Phase 24
+eligibility stayed at 3/128; the 125 exclusions remain explicit rather than
+being relaxed.
+
+The remaining response proof gaps are 8 dynamic-key/incomplete-branch cases,
+22 incomplete-branch/unsupported-syntax cases, 26 unsupported-syntax cases,
+9 missing-symbol cases, and 1 outside-scope case. Strict alias/branch negative
+controls add no unsupported authority. Source evidence, diagnostics, graph
+lineage, currentness, cache identity, invalidation, review explanations, and
+the source-to-Phase24 synthetic campaign are all covered by the Phase 26
+tests. No raw source is persisted.
+
+Validated implementation is `bb3a41b735e5dece4170712075e44ccf4a02f716`; the
+certification/documentation descendant is `b6d61a4ee7534e81af5819e87baef45e78dd81af`.
+Local certification passed: typecheck, hardening, quality-gate spec, gate
+inventory, owner provenance (91), synthetic campaign (30), agent continuity,
+agent audit, project truth, the unified local gate (receipt
+`receipt:sha256:5c6ae5ac430baf126e6b6299`), and the Node20 clean gate (receipt
+`clean-receipt:sha256:3119a0ff4ebcfdf0903f0a`). Compatibility passed 1,873
+with 1 skip and 0 failures across 139 files. Fresh canonical and
+topology-correct isolated full Playwright runs both enumerated 2,435 tests,
+passed 2,431, skipped the same four environment-conditional tests, and failed
+zero. The exact-head Actions run `32783079546` / job `97609144140` matched the
+implementation SHA but executed zero steps and is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; it is not green CI and was not retried.
+
+The highest-value Phase 27 campaign is a new bounded local/source pass for
+exact PHP helper/resource/DTO response-flow joins covering the remaining
+`return $this->...` and unresolved-symbol families. It should begin by proving
+one named declaration and branch-complete flow at a time; fuzzy matching,
+runtime execution, deployment inference, and Phase 24 authority changes remain
+out of scope.

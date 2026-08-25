@@ -57,9 +57,9 @@ npm run gate:clean       # disposable Node 20 checkout qualification
 npm run campaign:synthetic
 ```
 
-Phase 25 source intelligence is local, read-only, bounded, deterministic, and
-raw-source-free. It scans only the fixed approved sibling-source universe and
-feeds mechanically proven surfaces into the existing Phase 24 portfolio:
+Phase 25/26 source intelligence is local, read-only, bounded, deterministic,
+and raw-source-free. It scans only the fixed approved sibling-source universe
+and feeds mechanically proven surfaces into the existing Phase 24 portfolio:
 
 ```bash
 node bin/nightwatch-intelligence.mjs source-scan --repo=mobingilabs/ripple-api --json
@@ -68,13 +68,33 @@ node bin/nightwatch-intelligence.mjs review-queue --repo=mobingilabs/ripple-api 
 node bin/nightwatch-intelligence.mjs explain-surface --repo=mobingilabs/ripple-api --surface=<safe-id> --json
 ```
 
+Phase 26 adds response-proof, semantic-proof, lifecycle, analyzer, and
+exclusion metrics to the same source views. A surface is mechanically trusted
+only when bounded source evidence proves it; dynamic values, incomplete
+branches, ambiguous joins, mutation risk, and missing runtime authority remain
+explicit exclusions. The source scan does not create a journey, authorize an
+execution, or infer deployment equivalence.
+
 The source views reject `--env` flags and never start a browser, read auth,
 contact a product environment, or publish findings. Human-readable output is
 available by omitting `--json`; owner review remains local. Real findings, if
 created by an authorized future workflow, stay under owner-only
 `$HOME/.nightwatch/findings/`. Any DEV campaign requires fresh authorization,
 fresh source/currentness checks, and the existing exact-head external quality
-gate; Phase 25 grants none.
+gate; source discovery grants none.
+
+For the authoritative local certification, use the unified gate and its
+versioned inventory rather than an ad-hoc Phase-specific command:
+
+```bash
+npm run typecheck
+npm run hardening:check
+npm run quality-gate:spec
+npm run gate:inventory
+npm run test:semantic-compat
+npm run gate:local
+npm run gate:clean
+```
 
 ## Layout
 

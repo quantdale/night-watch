@@ -6,22 +6,22 @@ Task ID: phase-26-mechanical-contract-coverage-expansion
 Phase: 26-MECHANICAL-RESPONSE-SEMANTIC-CONTRACT-COVERAGE
 Title: Nightwatch Phase 26 — Mechanical Response & Semantic Contract Coverage Expansion
 Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
 Last validated implementation SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 Last substantive checkpoint SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-Last documentation checkpoint SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+Last documentation checkpoint SHA: b6d61a4ee7534e81af5819e87baef45e78dd81af
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
 LAST_VALIDATED_IMPLEMENTATION_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-LAST_DOCUMENTATION_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
+LAST_DOCUMENTATION_CHECKPOINT_SHA: b6d61a4ee7534e81af5819e87baef45e78dd81af
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_26_STATUS: IN_PROGRESS
+PHASE_26_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION
 PHASE_25_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION (historical, unchanged)
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
 PHASE_23_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
@@ -40,19 +40,17 @@ proof, privacy, currentness, determinism, Phase 24 authority, or owner scope.
 
 ## Current Milestone
 
-M10 — compatibility, hardening, gate inventory, clean-checkout, and focused closure.
+COMPLETE — M12 terminal closure.
 
 ## Work In Progress
 
-Run the complete current local certification set, then execute the disposable
-clean Node20 gate and establish canonical/topology-correct isolated full-suite
-parity before terminal documentation closure.
+None — implementation, validation, exact-head CI observation, documentation,
+and synchronized-main closure are complete.
 
 ## Exact Next Action
 
-Complete the current local and clean-checkout certification without external
-or product contact; record exact receipts and repair only Phase26-caused
-failures before terminal closure.
+STOP. Phase 26 is terminal. Do not reopen this task; create a fresh successor
+task for any future bounded response-flow work.
 
 ## Completed Milestones
 
@@ -164,6 +162,41 @@ Phase 25 task file is modified.
   intermittent `observerSemanticLedger.test.ts` failure after 1,872 passes and
   one skip; its isolated two-test suite passed, and the clean rerun passed
   1,873 tests, skipped one, and failed zero across 139 files.
+- Node20 clean-checkout certification: PASS — source head
+  `b6d61a4ee7534e81af5819e87baef45e78dd81af`, Node 20, `npm ci
+  --ignore-scripts`, compatibility 1,874 total / 1,873 passed / 1 skipped / 0
+  failed, clean before and after, no node_modules reuse, no auth or owner
+  finding state, and sibling writes 0. Clean receipt:
+  `clean-receipt:sha256:3119a0ff4ebcfdf0903f0a`; gate receipt:
+  `receipt:sha256:986b344eef3a455be45a95b7`.
+- Fresh canonical complete Playwright: PASS — 2,435 enumerated, 2,431
+  passed, 4 skipped, 0 failed. Skips were exactly
+  `tests/unit/phase5Api.test.ts:195`, `:244`, `:278`, and
+  `tests/unit/selfDevSandboxConfinement.test.ts:143`.
+- Fresh topology-correct isolated complete Playwright: PASS on the repaired
+  full rerun — detached Nightwatch checkout with six detached approved
+  sibling checkouts under the expected `REPOSITORIES/<org>/<repo>` topology,
+  `npm ci --ignore-scripts`, `NIGHTWATCH_PROXY_PORT=20987`, 2,435 enumerated,
+  2,431 passed, 4 skipped, 0 failed, exact skip identity parity, and clean
+  Nightwatch plus all six sibling trees before and after. The first isolated
+  full attempt had one transient `journeyEngine.test.ts:154` failure; its
+  focused 12-test rerun and the complete rerun passed, so no code relaxation
+  was made.
+- Exact-head Actions observation: PASS as an observation, not as CI gate
+  authority — run `32783079546`, job `97609144140`, exact head
+  `b6d61a4ee7534e81af5819e87baef45e78dd81af`, `steps=[]`, classified
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; no retry and no log read.
+- Final local quality receipt at the certification/documentation descendant:
+  PASS — gate
+  definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+  gate receipt `receipt:sha256:5c6ae5ac430baf126e6b6299`, semantic 1,874 / 1,873
+  / 1 / 0, owner provenance 91, synthetic campaign 30, all nine required
+  groups passed.
+- Final continuity and project truth: `npm run agent:check` strict errors 0,
+  `npm run agent:audit` strict errors 0, `npm run project:check` PASS,
+  `git diff --check` PASS. Gate inventory reported 146 unique authoritative
+  files and 0 duplicate executions.
 
 ## Decisions Made During This Task
 
@@ -191,7 +224,8 @@ and remain fail-closed.
 
 ## Blockers
 
-None for authorized local/source work.
+None. External Actions remains separately classified as a zero-step platform/
+billing block and does not block the authorized local/source completion.
 
 ## Safety Events
 
@@ -206,12 +240,17 @@ DEV acceptance, and owner-frozen infrastructure/data work remain deferred.
 
 ## Resume Recipe
 
-Read this STATE, inspect Git status/diff, run the exact Next Action, and update
-the measured baseline before implementing new analyzer families.
+Do not resume this task. It is terminal. A future task must re-read current
+source and create fresh continuity records before implementing bounded helper,
+resource, or DTO response-flow proof.
 
 ## Completion Snapshot
 
-Not complete. Live Git authority is discovered from Git on `main` at
-`bb3a41b735e5dece4170712075e44ccf4a02f716`; implementation checkpoints are
-clean and synchronized, while terminal certification and documentation
-closure remain active.
+COMPLETE_LOCAL_SOURCE_EXPANSION. The validated implementation checkpoint is
+`bb3a41b735e5dece4170712075e44ccf4a02f716`; the certification and known
+documentation descendant is `b6d61a4ee7534e81af5819e87baef45e78dd81af`; all local/source/synthetic
+acceptance evidence is recorded above, the exact-head external observation is
+truthfully classified, and the final documentation checkpoint is a known
+descendant of that implementation checkpoint. Live branch, HEAD, upstream
+alignment, and worktree cleanliness are discovered from Git rather than
+predicted in this record.
