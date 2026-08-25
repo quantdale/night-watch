@@ -7,7 +7,8 @@ Repository: `quantdale/night-watch`
 Branch: `main`
 Starting SHA: `a7ac26b6b1bb2287620b64302e60e66e468ad5c8`
 Validated implementation checkpoint: `bb3a41b735e5dece4170712075e44ccf4a02f716`
-Certification/documentation descendant: `b6d61a4ee7534e81af5819e87baef45e78dd81af`
+Certification descendant: `b6d61a4ee7534e81af5819e87baef45e78dd81af`
+Documentation closure checkpoint: `e7354e284eeae3dc64801ff8da2a7240e98a7b9a`
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Campaign result
@@ -189,6 +190,7 @@ must remain excluded.
 Implementation checkpoints were committed directly to `main` and pushed:
 `b33ce81`, `483510b8cd8eb9ca8622e314e3c2cef8749bbc8e`,
 `bb3a41b735e5dece4170712075e44ccf4a02f716`, and
-`b6d61a4ee7534e81af5819e87baef45e78dd81af`. Documentation closure is being
-committed as a known descendant; live branch, HEAD, upstream synchronization,
-and worktree state remain Git-derived terminal facts.
+`b6d61a4ee7534e81af5819e87baef45e78dd81af`; documentation closure checkpoint
+`e7354e284eeae3dc64801ff8da2a7240e98a7b9a` was pushed as a known descendant;
+live branch, HEAD, upstream synchronization, and worktree state remain
+Git-derived terminal facts.

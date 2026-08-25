@@ -10,14 +10,14 @@ Status: COMPLETE
 Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
 Last validated implementation SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 Last substantive checkpoint SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-Last documentation checkpoint SHA: b6d61a4ee7534e81af5819e87baef45e78dd81af
+Last documentation checkpoint SHA: e7354e284eeae3dc64801ff8da2a7240e98a7b9a
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
 LAST_VALIDATED_IMPLEMENTATION_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-LAST_DOCUMENTATION_CHECKPOINT_SHA: b6d61a4ee7534e81af5819e87baef45e78dd81af
+LAST_DOCUMENTATION_CHECKPOINT_SHA: e7354e284eeae3dc64801ff8da2a7240e98a7b9a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -247,8 +247,9 @@ resource, or DTO response-flow proof.
 ## Completion Snapshot
 
 COMPLETE_LOCAL_SOURCE_EXPANSION. The validated implementation checkpoint is
-`bb3a41b735e5dece4170712075e44ccf4a02f716`; the certification and known
-documentation descendant is `b6d61a4ee7534e81af5819e87baef45e78dd81af`; all local/source/synthetic
+`bb3a41b735e5dece4170712075e44ccf4a02f716`; the certification descendant is
+`b6d61a4ee7534e81af5819e87baef45e78dd81af` and the known documentation
+closure descendant is `e7354e284eeae3dc64801ff8da2a7240e98a7b9a`; all local/source/synthetic
 acceptance evidence is recorded above, the exact-head external observation is
 truthfully classified, and the final documentation checkpoint is a known
 descendant of that implementation checkpoint. Live branch, HEAD, upstream
