@@ -6,15 +6,15 @@ Title: Nightwatch Control Center — Read-Only Local V1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
-Last checkpoint: M4 — isolated UI shell, five tests, build policy, and browser check passed at 4bd0271.
-Current milestone: M5 — Overview and Safety Center data views.
-Next action: Wire the approved readiness, safety, continuity, and source-summary DTO routes into explicit overview and Safety Center view models, preserving UNKNOWN and unavailable semantics.
+Last validated implementation SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+Last checkpoint: M5 — Safety Center/source-summary view and rendered local-server smoke passed at 34f8688.
+Current milestone: M6 — Runs, timelines, execution graph, and advisory refresh.
+Next action: Add bounded run/timeline/graph API client projections, distinct status fixtures, and an advisory SSE invalidation hook that always refetches authoritative GET snapshots.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

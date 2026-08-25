@@ -130,7 +130,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: explicit READY/BLOCKED/UNKNOWN/unavailable semantics,
   safety-vs-oracle distinction, owner-scope/read-only posture visible.
 - Validation commands: component/contract and browser smoke tests.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M6 — Runs, timeline, execution graph, and SSE refresh
 
@@ -141,7 +141,7 @@ and source graph data also have list/table fallbacks.
   malformed fixtures render distinctly; timeline uses `seq`; SSE never acts
   as state authority.
 - Validation commands: adapter/server/frontend/E2E matrix.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M7 — Campaign Intelligence
 

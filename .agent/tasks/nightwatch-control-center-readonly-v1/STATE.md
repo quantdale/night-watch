@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
-Last substantive checkpoint SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
+Last validated implementation SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+Last substantive checkpoint SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M4 — isolated UI shell, five tests, build policy, and browser check passed at 4bd0271.
+Last checkpoint: M5 — Safety Center/source-summary view and rendered local-server smoke passed at 34f8688.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4bd027160b9bd958c5714beea19925ffa58fa67b
+LAST_VALIDATED_IMPLEMENTATION_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 34f8688278543d1d3ce722bdb106d9b9369b8ea4
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,10 +30,10 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6
 Milestone status: IN_PROGRESS
-What is being attempted: Wire the readiness, safety, continuity, and source
-summary DTOs into useful overview and Safety Center view models.
+What is being attempted: Add bounded run/timeline/execution-graph views and an
+advisory SSE invalidation hook whose state authority remains GET snapshots.
 
 ## Completed Milestones
 
@@ -59,18 +59,23 @@ summary DTOs into useful overview and Safety Center view models.
   unavailable states, a safe render-error boundary, reduced-motion styling, and
   a build policy rejecting external references or embedded content. The shell
   passed five UI tests, build verification, and local browser verification.
+- M5 — COMPLETE: overview loads the source-summary DTO alongside readiness,
+  safety, health, and metadata; Safety Center explicitly renders operation
+  policy, continuity, source inventory, and frozen owner scope. UNKNOWN and
+  unavailable source states remain visible; UI tests and a built local-server
+  browser smoke passed.
 
 ## Work In Progress
 
-M5 data-view implementation is beginning on `campaign/nightwatch-control-center`.
-The shell and overview snapshot client are complete; Safety Center and the
-remaining snapshot families still need explicit view projections.
+M6 run-surface implementation is beginning on `campaign/nightwatch-control-center`.
+The shell, overview, safety, and source-summary client are complete; run,
+timeline, graph, and advisory-refresh projections remain.
 
 ## Exact Next Action
 
-Wire the approved readiness, safety, and source-summary snapshot routes into
-the UI, add explicit UNKNOWN/unavailable tests, then run the nested package
-typecheck, test, build, and browser checks.
+Wire run, timeline, and execution-graph routes into bounded UI projections,
+add distinct status fixtures and advisory refresh tests, then run the nested
+package typecheck, test, build, and browser checks.
 
 ## Files Changed
 
@@ -92,6 +97,9 @@ typecheck, test, build, and browser checks.
 | `tests/unit/controlCenterServer.test.ts` | M3 loopback security/integration tests | added |
 | `ui/control-center/**` | Isolated React/Vite shell, API client, tests, and build policy | added |
 | `package.json` | UI delegation scripts | modified |
+| `ui/control-center/src/App.tsx` | M5 Safety Center and source-summary view | modified |
+| `ui/control-center/src/api.ts` | Source-summary snapshot route | modified |
+| `ui/control-center/src/types.ts` | Source-summary DTO shape | modified |
 
 ## Validation Ledger
 
@@ -133,6 +141,12 @@ typecheck, test, build, and browser checks.
 - `npm run control-center:ui:build` at `4bd0271` — PASS: Vite 6.3.5, 3 built files, no external references or embedded content.
 - Resolved Node 20.20.2 `control-center:ui:typecheck`, `control-center:ui:test`, and `control-center:ui:build` — PASS; 5 tests and the same 3-file bundle policy passed.
 - Vite browser verification at `http://127.0.0.1:4173/` — PASS: page content, no error overlay, empty console-error list, seven primary links, and Runs navigation; browser and dev server closed afterward.
+- `npm run typecheck` at `34f8688` — PASS.
+- `npm run hardening:check` at `34f8688` — PASS: offline structural invariants hold.
+- `npm run control-center:ui:typecheck` at `34f8688` — PASS.
+- `npm run control-center:ui:test` at `34f8688` — PASS: 1 file / 5 tests passed.
+- `npm run control-center:ui:build` at `34f8688` — PASS: 3 built files, no external references or embedded content.
+- Built UI served by `node bin/nightwatch-control-center.mjs --port=7312` — PASS browser smoke: data-backed Overview loaded; Safety Center rendered its heading and `Source inventory unavailable`; no overlay or console errors; browser and server closed afterward.
 
 ## Decisions Made During This Task
 
@@ -170,9 +184,9 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M5 action above. Preserve loopback-only,
+live Git status and continue the exact M6 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
 
-Not complete. M0–M4 are recorded; M5 data views and later validation remain.
+Not complete. M0–M5 are recorded; M6 run surfaces and later validation remain.
