@@ -628,6 +628,24 @@ test('uncommitted Phase 6 binding audit is checkpoint advance', () => {
   expect(result.stderr).not.toContain('STALE STATE');
 });
 
+test('planning execution prompt is a documentation-only checkpoint', () => {
+  const { root, sha } = fixture();
+  const promptPath = path.join(root, '.agent', 'EXECUTION_PROMPT.md');
+  fs.writeFileSync(promptPath, '# Synthetic planning prompt\n');
+  git(root, ['add', '-f', '.agent/EXECUTION_PROMPT.md']);
+  git(root, ['commit', '-m', 'planning prompt checkpoint']);
+  const promptSha = git(root, ['rev-parse', 'HEAD']);
+  fs.appendFileSync(path.join(root, '.git', 'info', 'exclude'), 'AGENTS.md\n.agent/\n');
+  setContinuity(root, { documentation: promptSha });
+  expect(isApprovedCheckpointPath('.agent/EXECUTION_PROMPT.md')).toBe(true);
+  const result = run(root);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('CHECKPOINT_ADVANCE');
+  expect(result.stderr).not.toContain('STALE_IMPLEMENTATION_BASELINE');
+  expect(result.stderr).not.toContain('INVALID_DOCUMENTATION_CHECKPOINT');
+  expect(result.stderr).toContain(sha);
+});
+
 test.describe('docs/design approved checkpoint path extension (Phase 8 closure)', () => {
   test('allowed: single-level Markdown under docs/design', () => {
     expect(isApprovedCheckpointPath('docs/design/PHASE_9_ROADMAP.md')).toBe(true);
