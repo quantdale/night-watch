@@ -207,6 +207,34 @@ export interface CampaignCoverageSnapshot {
   readonly fullyCoveredContractCount: number;
 }
 
+export interface FindingSummarySnapshot {
+  readonly findingId: string;
+  readonly fingerprint: string | null;
+  readonly clusterId: string | null;
+  readonly title: string | null;
+  readonly product: string | null;
+  readonly surface: string | null;
+  readonly severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+  readonly confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRESOLVED';
+  readonly evidenceLevel: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+  readonly reproduction: 'REPRODUCED' | 'NOT_REPRODUCED' | 'BOUNDED' | 'INCOMPLETE' | 'UNKNOWN';
+  readonly reproductionCount: number;
+  readonly minimized: boolean;
+  readonly sourceCurrentness: 'CURRENT' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
+  readonly dossierStatus: 'READY' | 'INCOMPLETE' | 'UNAVAILABLE' | 'UNKNOWN';
+  readonly firstObservedAt: string | null;
+  readonly lastObservedAt: string | null;
+  readonly categoryCode: string;
+  readonly provenanceDigest: string | null;
+}
+
+export interface FindingsSnapshot {
+  readonly schemaVersion: string;
+  readonly state: 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE' | 'UNKNOWN';
+  readonly items: readonly FindingSummarySnapshot[];
+  readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
+}
+
 export interface SourceSurfaceSnapshot {
   readonly surfaceId: string;
   readonly repositoryId: string;

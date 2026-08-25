@@ -7,6 +7,7 @@ import type {
   ExecutionGraphSnapshot,
   CampaignCoverageSnapshot,
   CampaignSummarySnapshot,
+  FindingsSnapshot,
   RunDetailSnapshot,
   RunListSnapshot,
   SafetySnapshot,
@@ -26,6 +27,7 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   campaignCoverage: '/api/v1/campaign/coverage',
   sourceSurfaces: '/api/v1/source/surfaces',
   sourceGraph: '/api/v1/source/graph',
+  findings: '/api/v1/findings',
 });
 
 export class ControlCenterApiError extends Error {
@@ -136,6 +138,11 @@ export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<So
     params.set('surface', safeId);
   }
   return fetchSnapshot<SourceGraphSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceGraph}?${params.toString()}`);
+}
+
+export function loadFindings(limit = 50): Promise<FindingsSnapshot> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
+  return fetchSnapshot<FindingsSnapshot>(`${CONTROL_CENTER_API_PATHS.findings}?limit=${boundedLimit}`);
 }
 
 const CONTROL_CENTER_NOTIFICATION_TYPES = ['readiness.changed', 'safety.changed', 'run.updated', 'run.completed', 'campaign.snapshot.changed', 'source.snapshot.changed', 'findings.snapshot.changed'] as const;

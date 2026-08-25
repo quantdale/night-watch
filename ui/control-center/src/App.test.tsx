@@ -96,6 +96,7 @@ function installFetch(value: OverviewSnapshot = overview): ReturnType<typeof vi.
     [CONTROL_CENTER_API_PATHS.safety]: value.safety,
     [CONTROL_CENTER_API_PATHS.sourceSummary]: value.source,
     '/api/v1/source/surfaces?limit=50': { schemaVersion: 'nightwatch.control-center.source-surfaces.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, repositoryFilter: null },
+    '/api/v1/findings?limit=50': { schemaVersion: 'nightwatch.control-center.findings.v1', state: 'UNAVAILABLE', items: [], page: { limit: 50, nextCursor: null, truncated: false } },
     '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [], page: { limit: 20, nextCursor: null, truncated: false } },
     [CONTROL_CENTER_API_PATHS.campaignSummary]: { schemaVersion: 'nightwatch.control-center.campaign.v1', planState: 'UNAVAILABLE', sourceCurrentness: 'UNAVAILABLE', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE', planDigest: null, coverageDigest: null, counts: { candidates: 0, selected: 0, excluded: 0, coveredContracts: 0, executionOnly: 0, oracleOnly: 0, replayGaps: 0, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 0, findings: 0 }, blockerCodes: ['CAMPAIGN_SOURCE_UNAVAILABLE'], reasonCodes: ['SOURCE_UNAVAILABLE'] },
     '/api/v1/campaign/coverage?limit=50': { schemaVersion: 'nightwatch.control-center.campaign-coverage.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, fullyCoveredContractCount: 0 },
@@ -150,6 +151,9 @@ describe('Control Center UI shell', () => {
     await user.click(primaryNav.getByRole('link', { name: 'Source Intelligence' }));
     expect(await screen.findByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
     expect(screen.getByText('No source surfaces available. This is an unavailable/empty inventory, not proof of no routes.')).toBeInTheDocument();
+    await user.click(primaryNav.getByRole('link', { name: 'Findings' }));
+    expect(await screen.findByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();
+    expect(screen.getByText('Owner-local findings are unavailable. No finding or pass claim is made.')).toBeInTheDocument();
   });
 
   it('contains unavailable service errors without echoing raw error text', async () => {
@@ -315,5 +319,38 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('Request')).toBeInTheDocument();
     expect(screen.getByText('Bounded')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/source/graph?depth=2&surface=surface-01', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('renders sanitized finding metadata without raw dossier fields', async () => {
+    const user = userEvent.setup();
+    const finding = {
+      findingId: 'cc-finding-candidate-01', fingerprint: 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa', clusterId: null,
+      title: 'Read contract drift', product: 'ripple', surface: 'summary', severity: 'HIGH' as const,
+      confidence: 'HIGH' as const, evidenceLevel: 'L2' as const, reproduction: 'REPRODUCED' as const,
+      reproductionCount: 2, minimized: true, sourceCurrentness: 'SOURCE_STALE' as const, dossierStatus: 'READY' as const,
+      firstObservedAt: '2026-08-26T10:20:30.000Z', lastObservedAt: '2026-08-26T10:20:31.000Z',
+      categoryCode: 'PROTOCOL_FINDING', provenanceDigest: 'cc-finding:sha256:bbbbbbbbbbbbbbbbbbbbbbbb',
+      rawEvidence: 'SENTINEL_RAW_EVIDENCE', sourcePath: 'SENTINEL_SOURCE_PATH', requestBody: 'SENTINEL_REQUEST_BODY',
+    };
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      '/api/v1/findings?limit=50': { schemaVersion: 'nightwatch.control-center.findings.v1', state: 'AVAILABLE', items: [finding], page: { limit: 50, nextCursor: null, truncated: false } },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Findings' }));
+    expect(await screen.findByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();
+    expect(screen.getByText('Read contract drift')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getAllByText('Source Stale').length).toBeGreaterThan(0);
+    expect(screen.getByText('Provenance recorded')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('SENTINEL_RAW_EVIDENCE');
+    expect(document.body).not.toHaveTextContent('SENTINEL_SOURCE_PATH');
+    expect(document.body).not.toHaveTextContent('SENTINEL_REQUEST_BODY');
   });
 });
