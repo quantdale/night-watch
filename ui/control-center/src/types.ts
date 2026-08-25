@@ -127,6 +127,68 @@ export interface SourceSummarySnapshot {
   readonly gapReasons: readonly string[];
 }
 
+export type RunEnvironment = 'LOCAL_SYNTHETIC' | 'LOCAL' | 'DEV_RECORDED' | 'NEXT_RECORDED' | 'UNKNOWN';
+export type RunStatus = 'PENDING' | 'RUNNING' | 'PASSED' | 'ORACLE_ONLY' | 'SAFETY_FAILURE' | 'FAILED' | 'BLOCKED' | 'INCOMPLETE' | 'SKIPPED';
+
+export interface RunListItemSnapshot {
+  readonly runId: string;
+  readonly environment: RunEnvironment;
+  readonly product: string | null;
+  readonly browser: string | null;
+  readonly scenario: string | null;
+  readonly startedAt: string | null;
+  readonly endedAt: string | null;
+  readonly durationMs: number | null;
+  readonly status: RunStatus;
+  readonly passed: boolean;
+  readonly eventCount: number;
+  readonly hardFailureCount: number;
+  readonly oracleFindingCount: number;
+  readonly nightwatchSha: string | null;
+}
+
+export interface RunListSnapshot {
+  readonly schemaVersion: string;
+  readonly items: readonly RunListItemSnapshot[];
+  readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
+}
+
+export interface RunDetailSnapshot {
+  readonly schemaVersion: string;
+  readonly run: RunListItemSnapshot;
+  readonly repositories: readonly { readonly repositoryId: string; readonly branch: string | null; readonly headSha: string | null; readonly state: string; readonly dirty: boolean; readonly dirtyFileCount: number }[];
+  readonly countsByEventType: readonly { readonly eventType: string; readonly count: number }[];
+  readonly countsBySeverity: readonly { readonly severity: string; readonly count: number }[];
+  readonly screenshotCount: number;
+  readonly hardFailureCodes: readonly string[];
+  readonly noteCodes: readonly string[];
+}
+
+export interface TimelineSnapshot {
+  readonly schemaVersion: string;
+  readonly runId: string;
+  readonly afterSeq: number;
+  readonly events: readonly { readonly seq: number; readonly timestamp: string | null; readonly eventType: string; readonly severity: string; readonly messageCode: string; readonly dataCodes: readonly string[] }[];
+  readonly nextAfterSeq: number | null;
+  readonly truncated: boolean;
+}
+
+export interface ExecutionGraphSnapshot {
+  readonly schemaVersion: string;
+  readonly runId: string;
+  readonly nodes: readonly { readonly nodeId: string; readonly kind: string; readonly state: string; readonly label: string | null; readonly eventSeq: number | null; readonly reasonCode: string | null }[];
+  readonly edges: readonly { readonly edgeId: string; readonly fromNodeId: string; readonly toNodeId: string; readonly kind: string; readonly proof: string; readonly eventSeq: number | null }[];
+  readonly nodeLimit: number;
+  readonly edgeLimit: number;
+  readonly truncated: boolean;
+}
+
+export type DataLoadState<T> =
+  | { readonly kind: 'idle' }
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'ready'; readonly data: T }
+  | { readonly kind: 'error' };
+
 export interface OverviewSnapshot {
   readonly health: HealthSnapshot;
   readonly meta: MetaSnapshot;

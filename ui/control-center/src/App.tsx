@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
-import { apiErrorLabel, loadOverview } from './api';
-import type { OverviewLoadState, OverviewSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadExecutionGraph, loadOverview, loadRunDetail, loadRuns, loadTimeline, subscribeToControlCenterEvents } from './api';
+import type { DataLoadState, ExecutionGraphSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, TimelineSnapshot, ViewId } from './types';
 import { VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -56,8 +56,8 @@ type StatusTone = 'ready' | 'warning' | 'blocked' | 'neutral';
 
 function statusTone(value: string): StatusTone {
   if (value === 'READY' || value === 'HEALTHY' || value === 'UP' || value === 'CURRENT' || value === 'PASS') return 'ready';
-  if (value === 'WARNING' || value === 'UNKNOWN' || value === 'NOT_REPORTED' || value === 'NOT_APPLICABLE') return 'warning';
-  if (value.startsWith('BLOCKED') || value === 'FAILED' || value === 'FAIL') return 'blocked';
+  if (value === 'WARNING' || value === 'UNKNOWN' || value === 'NOT_REPORTED' || value === 'NOT_APPLICABLE' || value === 'ORACLE_ONLY' || value === 'INCOMPLETE' || value === 'STALE' || value === 'UNAVAILABLE') return 'warning';
+  if (value.startsWith('BLOCKED') || value === 'FAILED' || value === 'FAIL' || value === 'SAFETY_FAILURE') return 'blocked';
   return 'neutral';
 }
 
@@ -168,6 +168,59 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
   );
 }
 
+function formatTimestamp(value: string | null): string {
+  if (value === null) return 'Not recorded';
+  return value.slice(0, 16).replace('T', ' ');
+}
+
+function RunStatusSummary({ items }: { readonly items: readonly { readonly status: string }[] }): ReactNode {
+  const statuses = ['PASSED', 'ORACLE_ONLY', 'SAFETY_FAILURE', 'FAILED', 'BLOCKED', 'INCOMPLETE', 'RUNNING'] as const;
+  return <div className="run-status-summary" aria-label="Run status summary">{statuses.map((status) => { const count = items.filter((item) => item.status === status).length; return <div key={status} className="run-status-item"><StatusPill value={status} /><strong>{count}</strong></div>; })}</div>;
+}
+
+function DataErrorState({ title, onRetry }: { readonly title: string; readonly onRetry: () => void }): ReactNode {
+  return <div className="state-panel state-panel-error" role="alert"><div className="state-icon" aria-hidden="true">!</div><div><strong>{title}</strong><p>No raw service error is displayed. Retry performs another bounded GET snapshot.</p><button className="button button-secondary" type="button" onClick={onRetry}>Try again</button></div></div>;
+}
+
+function TimelinePanel({ state }: { readonly state: DataLoadState<TimelineSnapshot> }): ReactNode {
+  if (state.kind === 'loading') return <div className="mini-state" role="status">Loading timeline…</div>;
+  if (state.kind === 'error') return <div className="mini-state mini-state-warning">Timeline unavailable</div>;
+  if (state.kind !== 'ready' || state.data.events.length === 0) return <div className="mini-state">No timeline events reported. Empty does not imply pass.</div>;
+  return <ol className="timeline-list">{state.data.events.map((event) => <li key={event.seq} className="timeline-item"><span className="timeline-seq">{event.seq}</span><div><div className="timeline-meta"><StatusPill value={event.severity} label={event.severity} /><span>{formatTimestamp(event.timestamp)}</span><span>{formatCategory(event.eventType)}</span></div><strong>{formatCategory(event.messageCode)}</strong><small>{event.dataCodes.length === 0 ? 'No additional data codes' : `${event.dataCodes.length} bounded data code(s)`}</small></div></li>)}</ol>;
+}
+
+function RunDetailPanel({ runId, detailState, timelineState, onRetry }: { readonly runId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onRetry: () => void }): ReactNode {
+  if (runId === null) return <article className="panel run-detail-empty"><p className="eyebrow">RUN DETAIL</p><h2>Select a run to inspect</h2><p className="panel-intro">Run detail, timeline, and graph requests resolve only against a selected safe run identifier.</p></article>;
+  if (detailState.kind === 'loading') return <article className="panel"><LoadingState /></article>;
+  if (detailState.kind === 'error') return <article className="panel"><DataErrorState title="Run detail unavailable" onRetry={onRetry} /></article>;
+  if (detailState.kind !== 'ready') return null;
+  const detail = detailState.data;
+  return <article className="panel run-detail-panel"><div className="panel-heading"><div><p className="eyebrow">RUN DETAIL / {runId}</p><h2>{detail.run.scenario ?? 'Unnamed scenario'}</h2></div><StatusPill value={detail.run.status} /></div><div className="data-grid"><DataRow label="Environment" value={formatCategory(detail.run.environment)} /><DataRow label="Product" value={detail.run.product ?? 'Not reported'} /><DataRow label="Started" value={formatTimestamp(detail.run.startedAt)} /><DataRow label="Duration" value={detail.run.durationMs === null ? 'Not recorded' : `${detail.run.durationMs} ms`} /><DataRow label="Events" value={String(detail.run.eventCount)} /><DataRow label="Findings" value={String(detail.run.oracleFindingCount)} tone={detail.run.oracleFindingCount > 0 ? 'warning' : 'neutral'} /></div><div className="timeline-heading"><p className="eyebrow">ORDERED TIMELINE</p><span>Sequence is authoritative; message bodies are never shown.</span></div><TimelinePanel state={timelineState} /></article>;
+}
+
+function RunsView({ state, selectedRunId, detailState, timelineState, onSelectRun, onRetry }: { readonly state: DataLoadState<RunListSnapshot>; readonly selectedRunId: string | null; readonly detailState: DataLoadState<RunDetailSnapshot>; readonly timelineState: DataLoadState<TimelineSnapshot>; readonly onSelectRun: (runId: string) => void; readonly onRetry: () => void }): ReactNode {
+  if (state.kind === 'loading') return <LoadingState />;
+  if (state.kind === 'error') return <DataErrorState title="Run list unavailable" onRetry={onRetry} />;
+  if (state.kind !== 'ready') return null;
+  const items = state.data.items;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">EVIDENCE / RUNS</p><h1>Inspect what happened, in order.</h1><p>Run records are read-only projections. Statuses distinguish pass, oracle-only, safety failure, blocked, incomplete, and unavailable evidence.</p></div><StatusPill value={items.length === 0 ? 'UNAVAILABLE' : 'READY'} label={items.length === 0 ? 'No runs reported' : `${items.length} run(s)`} /></section><RunStatusSummary items={items} />{items.length === 0 ? <article className="panel empty-table"><div className="empty-mark"><Icon name="runs" /></div><h2>No local runs recorded</h2><p>The local run store returned an empty bounded page. This is not a pass claim.</p></article> : <article className="panel"><div className="panel-heading"><div><p className="eyebrow">RUN INDEX</p><h2>Recent local records</h2></div><span className="table-limit">Limit {state.data.page.limit}</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Status</th><th scope="col">Environment</th><th scope="col">Started</th><th scope="col">Signals</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead><tbody>{items.map((run) => <tr key={run.runId} className={selectedRunId === run.runId ? 'row-selected' : undefined}><td><strong>{run.scenario ?? 'Unnamed scenario'}</strong><small>{run.runId}</small></td><td><StatusPill value={run.status} /></td><td>{formatCategory(run.environment)}</td><td>{formatTimestamp(run.startedAt)}</td><td><span>{run.eventCount} events</span><small>{run.oracleFindingCount} findings</small></td><td><button className="table-action" type="button" onClick={() => onSelectRun(run.runId)}>Inspect <Icon name="arrow" /></button></td></tr>)}</tbody></table></div></article>}<RunDetailPanel runId={selectedRunId} detailState={detailState} timelineState={timelineState} onRetry={onRetry} /></div>;
+}
+
+function GraphCanvas({ graph }: { readonly graph: ExecutionGraphSnapshot }): ReactNode {
+  const nodes = graph.nodes.slice(0, 24);
+  const nodePositions = new Map(nodes.map((node, index) => [node.nodeId, { x: 120 + (index % 3) * 230, y: 58 + Math.floor(index / 3) * 84 }]));
+  const height = Math.max(190, Math.ceil(nodes.length / 3) * 84 + 24);
+  return <div className="graph-frame"><svg className="execution-graph" viewBox={`0 0 820 ${height}`} role="img" aria-label={`Execution graph for run ${graph.runId}`}><defs><marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>{graph.edges.slice(0, 48).map((edge) => { const from = nodePositions.get(edge.fromNodeId); const to = nodePositions.get(edge.toNodeId); if (from === undefined || to === undefined) return null; return <line key={edge.edgeId} x1={from.x + 72} y1={from.y + 18} x2={to.x - 72} y2={to.y + 18} className="graph-edge" markerEnd="url(#graph-arrow)" />; })}{nodes.map((node) => <g key={node.nodeId} transform={`translate(${nodePositions.get(node.nodeId)?.x ?? 0} ${nodePositions.get(node.nodeId)?.y ?? 0})`}><rect className={`graph-node graph-node-${statusTone(node.state)}`} width="144" height="38" rx="7" /><text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text><text x="12" y="30" className="graph-node-state">{formatCategory(node.state)}</text></g>)}</svg><div className="graph-footer"><span>{nodes.length} of {graph.nodes.length} nodes shown</span><span>{graph.edges.length} edges · limit {graph.edgeLimit}</span>{graph.truncated ? <StatusPill value="WARNING" label="Truncated" /> : <StatusPill value="READY" label="Complete" />}</div></div>;
+}
+
+function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly selectedRunId: string | null; readonly state: DataLoadState<ExecutionGraphSnapshot>; readonly onRetry: () => void }): ReactNode {
+  if (selectedRunId === null) return <div className="empty-view"><div className="empty-mark"><Icon name="execution-graph" /></div><p className="eyebrow">TOPOLOGY / EXECUTION GRAPH</p><h1>Select a run first.</h1><p>Open a run from the Runs view to inspect its bounded deterministic execution graph.</p><div className="empty-status"><StatusPill value="NOT_APPLICABLE" label="No run selected" /></div></div>;
+  if (state.kind === 'loading') return <LoadingState />;
+  if (state.kind === 'error') return <DataErrorState title="Execution graph unavailable" onRetry={onRetry} />;
+  if (state.kind !== 'ready') return null;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TOPOLOGY / EXECUTION GRAPH</p><h1>Trace the bounded run shape.</h1><p>Graph edges are projections of ordered evidence. They do not add execution authority or infer missing events.</p></div><StatusPill value="READY" label={`Run ${selectedRunId}`} /></section><GraphCanvas graph={state.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Event sequence</th></tr></thead><tbody>{state.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td>{formatCategory(node.kind)}</td><td><StatusPill value={node.state} /></td><td>{node.eventSeq === null ? 'Not linked' : String(node.eventSeq)}</td></tr>)}</tbody></table></div></article></div>;
+}
+
 function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
   const safety = data.safety;
   const source = data.source;
@@ -238,6 +291,12 @@ function DashboardApp(): ReactNode {
   const [activeView, setActiveView] = useState<ViewId>(() => readViewFromHash());
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadState, setLoadState] = useState<OverviewLoadState>({ kind: 'loading' });
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [runState, setRunState] = useState<DataLoadState<RunListSnapshot>>({ kind: 'idle' });
+  const [detailState, setDetailState] = useState<DataLoadState<RunDetailSnapshot>>({ kind: 'idle' });
+  const [timelineState, setTimelineState] = useState<DataLoadState<TimelineSnapshot>>({ kind: 'idle' });
+  const [graphState, setGraphState] = useState<DataLoadState<ExecutionGraphSnapshot>>({ kind: 'idle' });
+  const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
     const onHashChange = (): void => setActiveView(readViewFromHash());
@@ -261,14 +320,69 @@ function DashboardApp(): ReactNode {
     };
   }, [refreshKey]);
 
+  useEffect(() => subscribeToControlCenterEvents(() => setRefreshKey((value) => value + 1)), []);
+
+  useEffect(() => {
+    if (activeView !== 'runs') return;
+    let cancelled = false;
+    setRunState({ kind: 'loading' });
+    loadRuns().then((data) => {
+      if (!cancelled) setRunState({ kind: 'ready', data });
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setRunState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey]);
+
+  useEffect(() => {
+    if (activeView !== 'runs' || selectedRunId === null) return;
+    let cancelled = false;
+    setDetailState({ kind: 'loading' });
+    setTimelineState({ kind: 'loading' });
+    Promise.all([loadRunDetail(selectedRunId), loadTimeline(selectedRunId)]).then(([detail, timeline]) => {
+      if (!cancelled) {
+        setDetailState({ kind: 'ready', data: detail });
+        setTimelineState({ kind: 'ready', data: timeline });
+      }
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setDetailState({ kind: 'error' });
+        setTimelineState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey, selectedRunId]);
+
+  useEffect(() => {
+    if (activeView !== 'execution-graph' || selectedRunId === null) return;
+    let cancelled = false;
+    setGraphState({ kind: 'loading' });
+    loadExecutionGraph(selectedRunId).then((data) => {
+      if (!cancelled) setGraphState({ kind: 'ready', data });
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setGraphState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey, selectedRunId]);
+
   const navigate = useCallback((view: ViewId): void => {
     window.location.hash = view === 'overview' ? '' : view;
     setActiveView(view);
   }, []);
-  const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
   const currentView = VIEW_DEFINITIONS.find((view) => view.id === activeView) ?? VIEW_DEFINITIONS[0];
+  const retryRunData = useCallback((): void => setRefreshKey((value) => value + 1), []);
+  const selectRun = useCallback((runId: string): void => setSelectedRunId(runId), []);
 
   const renderDataView = (): ReactNode => {
+    if (activeView === 'runs') return <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />;
+    if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
     if (loadState.kind === 'loading') return <LoadingState />;
     if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
     if (activeView === 'overview') return <OverviewView data={loadState.data} onRefresh={refresh} />;
