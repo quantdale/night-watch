@@ -6,17 +6,17 @@ Task ID: phase24-authority-lifecycle-hardening
 Phase: 24-AUTHORITY-LIFECYCLE-HARDENING
 Status: IN_PROGRESS
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-Last validated implementation SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
-Last substantive checkpoint SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
+Last validated implementation SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
+Last substantive checkpoint SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M0 — continuity checkpoint classification repaired and full agent-state validation passed; M2 authority repairs are now focused.
+Last checkpoint: M2 — authority lifecycle and stale-artifact repairs committed; clean semantic compatibility passed.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
+LAST_VALIDATED_IMPLEMENTATION_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 012daa20ee1cd1fc2a9140d74462f9f74da7ba5b
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_STATUS: IN_PROGRESS
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
@@ -73,8 +73,8 @@ and stale-artifact defects.
 
 ## Work In Progress
 
-M2 is active. The focused repair is implemented locally but has not yet been
-closed as a durable milestone: omitted snapshot proof now excludes a direct
+M2 remains active pending the full dependency-cone closeout. The focused
+repair is now a durable implementation checkpoint: omitted snapshot proof now excludes a direct
 candidate; invalidation is v2 with explicit per-repository availability,
 prior/current IDs, recovery/removal states, transition reasons, and stale
 artifact keys; duplicate surfaces fail closed; replay plans and dossiers carry
@@ -84,12 +84,11 @@ remain outstanding.
 
 ## Exact Next Action
 
-Run the full Phase 24–28 and response-flow dependency cone, then the package
-synthetic/owner/type/hardening gates against these repairs. Re-read all
+Run the full Phase 24–28 and response-flow dependency cone, then re-read all
 downstream replay, dossier, selection, source-review, cache, and triage
-consumers, repair regressions before advancing to the whole-repository Stage B
-audit, and record an implementation checkpoint after the focused ladder is
-green.
+consumers. Repair any regression before advancing to the whole-repository
+Stage B audit; the committed implementation checkpoint is
+`012daa20ee1cd1fc2a9140d74462f9f74da7ba5b`.
 
 ## Files Changed
 
@@ -169,6 +168,14 @@ green.
 - `npm run project:check` — BLOCKED_BY_DIRTY_CHECKOUT as designed before the
   durable checkpoint; continuity contents otherwise resolve to this active v2
   task.
+- `npm run test:semantic-compat` after commit `012daa2` — PASS: 1,876 total,
+  1,863 passed, 13 skipped, 0 failed.
+- `npm run project:check` after commit `012daa2` — PASS: checkout clean,
+  active-task continuity PASS, catalog round-trip PASS, promotion authority
+  NONE.
+- `npm run agent:check` after commit `012daa2` — PASS with the expected stale
+  baseline warning before this documentation anchor update; `npm run
+  agent:audit` — PASS, strict errors 0, legacy warnings 33.
 
 ## Decisions Made During This Task
 
