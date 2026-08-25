@@ -100,7 +100,7 @@ and source graph data also have list/table fallbacks.
   is deterministic, bounded, source-currentness preserving, and child-process
   free.
 - Validation commands: focused adapter/graph tests and hardening check.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M3 — Implement hardened loopback HTTP server
 
@@ -110,7 +110,7 @@ and source graph data also have list/table fallbacks.
   size/static-root controls, fixed errors, graceful SSE/shutdown, no action
   endpoint or external socket.
 - Validation commands: server integration and adversarial security tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M4 — Add isolated frontend shell and design system
 

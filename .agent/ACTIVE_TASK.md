@@ -6,15 +6,15 @@ Title: Nightwatch Control Center — Read-Only Local V1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
-Last checkpoint: M1 — versioned contracts and sanitization tests passed at 4424ef9.
-Current milestone: M2 — authoritative read-only adapters and synthetic authority fixtures.
-Next action: Implement readiness, safety, run, campaign, source, graph, and finding adapters over existing domain authorities.
+Last validated implementation SHA: cc4c400e93da989496c13184f55ec3fc0d343734
+Last checkpoint: M2 — authoritative adapters and projection tests passed at cc4c400.
+Current milestone: M3 — hardened loopback HTTP server and notification channel.
+Next action: Implement the injected collector, strict loopback router, bounded JSON responses, static-root confinement, SSE notifications, and server security tests.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
+LAST_VALIDATED_IMPLEMENTATION_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

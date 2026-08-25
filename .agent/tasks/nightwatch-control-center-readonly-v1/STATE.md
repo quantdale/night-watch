@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
-Last substantive checkpoint SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
+Last validated implementation SHA: cc4c400e93da989496c13184f55ec3fc0d343734
+Last substantive checkpoint SHA: cc4c400e93da989496c13184f55ec3fc0d343734
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M1 — versioned contracts and sanitization tests passed at 4424ef9; M2 is next.
+Last checkpoint: M2 — authoritative adapters and projection tests passed at cc4c400; M3 is next.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4424ef90aa06f2dfac983a4142d73bb8d56c5af8
+LAST_VALIDATED_IMPLEMENTATION_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: cc4c400e93da989496c13184f55ec3fc0d343734
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,10 +30,10 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: Project authoritative readiness, safety, run, campaign,
-source, graph, and finding state through pure bounded adapters.
+What is being attempted: Implement the strict loopback HTTP server, static asset
+confinement, bounded JSON routes, and notification-only SSE.
 
 ## Completed Milestones
 
@@ -45,17 +45,20 @@ source, graph, and finding state through pure bounded adapters.
   snapshot families; safe IDs, display labels, route templates, timestamps,
   digests, collection limits, fixed error envelopes, and hostile-input
   sanitizers are implemented and tested.
+- M2 — COMPLETE: pure adapters project existing readiness, safety, evidence,
+  campaign, source, graph, and triage authorities into bounded DTOs; synthetic
+  fixtures prove deterministic ordering, explicit failure states, source
+  proof/currentness, graph limits, and owner-local finding rejection.
 
 ## Work In Progress
 
-M2 adapter implementation is beginning on `campaign/nightwatch-control-center`.
-The contract layer is complete; no HTTP server or frontend runtime exists yet.
+M3 server implementation is beginning on `campaign/nightwatch-control-center`.
+The contract and adapter layers are complete; no frontend runtime exists yet.
 
 ## Exact Next Action
 
-Implement `src/controlCenter/adapters/**` over existing domain authorities and
-add synthetic authority fixtures, then run focused adapter tests and the
-hardening check.
+Implement `src/controlCenter/server/**` and the injected server collector,
+then run focused loopback security/integration tests.
 
 ## Files Changed
 
@@ -68,6 +71,9 @@ hardening check.
 | `.agent/tasks/nightwatch-control-center-readonly-v1/REPORT.md` | Final handoff record | added |
 | `src/controlCenter/contracts/**` | Versioned public DTOs and safe boundary helpers | added |
 | `tests/unit/controlCenterContracts.test.ts` | M1 contract, bounds, and privacy tests | added |
+| `src/controlCenter/adapters/**` | Pure authoritative DTO projections | added |
+| `src/controlCenter/index.ts` | Control Center public module exports | added |
+| `tests/unit/controlCenterAdapters.test.ts` | M2 synthetic authority and privacy tests | added |
 
 ## Validation Ledger
 
@@ -95,6 +101,9 @@ hardening check.
 - `npm run typecheck` at `4424ef9` — PASS.
 - `npm run hardening:check` at `4424ef9` — PASS: offline structural invariants hold.
 - `npx playwright test tests/unit/controlCenterContracts.test.ts --project=nightwatch --workers=1` at `4424ef9` — PASS: 9 passed, 0 failed.
+- `npm run typecheck` at `cc4c400` — PASS.
+- `npm run hardening:check` at `cc4c400` — PASS: offline structural invariants hold.
+- `npx playwright test tests/unit/controlCenterAdapters.test.ts tests/unit/controlCenterContracts.test.ts --project=nightwatch --workers=1` at `cc4c400` — PASS: 16 passed, 0 failed.
 
 ## Decisions Made During This Task
 
@@ -112,6 +121,8 @@ hardening check.
 - The Control Center public boundary uses categorical metadata and safe
   display labels; raw event messages, bodies, paths, credentials, and
   arbitrary internal fields are intentionally not contract fields.
+- Adapters hash only the identity needed to keep a public graph reference
+  stable; source paths, handler symbols, and join identities are not emitted.
 
 ## Blockers
 
@@ -130,7 +141,7 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M2 action above. Preserve loopback-only,
+live Git status and continue the exact M3 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
