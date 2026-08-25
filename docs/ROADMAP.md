@@ -2142,3 +2142,41 @@ exact PHP helper/resource/DTO response-flow joins covering the remaining
 one named declaration and branch-complete flow at a time; fuzzy matching,
 runtime execution, deployment inference, and Phase 24 authority changes remain
 out of scope.
+
+## Phase 27 — exact interprocedural response-flow intelligence
+
+Phase 27 continued the roadmap as a local/source/synthetic-only campaign. Its
+fresh census used the same six approved repositories and exact current SHAs as
+Phase 26. It classified the remaining response gaps and found no current
+route with an exact mechanically observable helper, resource, or DTO boundary.
+The campaign therefore combined bounded oversized-string lexical hardening
+with a conservative future-proof resolver rather than relaxing proof rules.
+
+The resolver identity is
+`nightwatch.real-source-response-flow.v1`. It resolves only exact named
+same-class, same-file `self`, exact unnamespaced static, and same-file named
+function calls at depth <=2. It requires current approved declarations,
+branch-complete terminal returns, common existing response shape, dependency
+lineage, cycle/ambiguity rejection, and deterministic content-bound identity.
+Dynamic dispatch, fuzzy/import/inheritance/trait/interface resolution,
+factories, framework behavior, opaque resource/DTO serializers, and runtime
+execution remain excluded. The graph, cache, invalidation, review, lifecycle,
+semantic materialization, and Phase 24 seams are additive integrations of the
+existing authorities.
+
+The lexical hardening raised current-source response contracts from 62 to 83
+and semantic observations from 138 to 175. Current-source operations/routes,
+joins, mutation/read-only counts, and Phase 24 eligibility remained unchanged
+at 128 / 127 / 118 proven + 10 rejected / 47 + 5 / 3 eligible + 125
+excluded. The flow resolver attempted 13 unresolved current patterns and
+proved none; no helper/resource/DTO join was manufactured. Lifecycle moved to
+45 `DISCOVERED`, 80 `MECHANICALLY_PROVEN`, and 3 `PROJECTABLE`.
+
+All local and clean Node20 gates passed. Canonical and topology-correct
+isolated complete Playwright runs both enumerated 2,444 tests, passed 2,440,
+skipped the same four environment-conditional tests, and failed zero. The
+single exact-head Actions observation was run `32800403605` / job
+`97659975725` at the pushed implementation anchor; it had `steps=[]` and is
+classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. No retry was made. The
+campaign remains local/source/synthetic only, and the next campaign must be
+chosen from a fresh census rather than pre-decided coverage targets.

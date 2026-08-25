@@ -6,7 +6,7 @@ Task ID: phase-27-exact-response-flow-joins
 Phase: 27-EXACT-INTERPROCEDURAL-RESPONSE-FLOW
 Title: Nightwatch Phase 27 — Exact Interprocedural PHP Helper, Resource, and DTO Response-Flow Intelligence
 Authorization class: PHASE_27_EXACT_INTERPROCEDURAL_RESPONSE_FLOW_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
 Last validated implementation SHA: 237e537e154bdb7c0eb7b4bd04021f9c5437db29
 Last substantive checkpoint SHA: 237e537e154bdb7c0eb7b4bd04021f9c5437db29
@@ -19,7 +19,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 237e537e154bdb7c0eb7b4bd04021f9c5437db29
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_27_STATUS: IN_PROGRESS
+PHASE_27_STATUS: COMPLETE
 PHASE_26_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION (historical, unchanged)
 PHASE_25_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION (historical, unchanged)
 PHASE_24_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI (historical, unchanged)
@@ -36,22 +36,21 @@ intelligence stack if the census proves sound joins are unavailable.
 
 ## Current Milestone
 
-M10 — compatibility, hardening, quality-gate inventory, and clean Node20
-qualification.
+COMPLETE — M12 terminal documentation, checkpoint push, and synchronized-main
+verification.
 
 ## Work In Progress
 
-The successor continuity task is active. Phase 26 remains terminal and
-unchanged. M1 census, M2 design, exact resolver integration, semantic/graph/
-operator wiring, adversarial corpus, and synthetic campaign extension are
-complete. Final authoritative gates, documentation closure, checkpoint push,
-and canonical/isolated regression qualification remain.
+No active work remains. Phase 26 remains terminal and unchanged. M1 census, M2
+design, exact resolver integration, semantic/graph/operator wiring,
+adversarial corpus, synthetic campaign extension, all local gates, both
+complete Playwright regressions, the terminal report, and synchronized clean
+`main` verification are complete.
 
 ## Exact Next Action
 
-Run the complete local validation cone, repair any root-cause failures, update
-the final report/project truth, create the validated implementation checkpoint,
-observe exact-head CI once, and synchronize clean main without force-push.
+STOP — Phase 27 is complete; future work requires a fresh task and
+authorization. Do not reopen Phase 26 or retry external Actions.
 
 ## Completed Milestones
 
@@ -105,6 +104,25 @@ observe exact-head CI once, and synchronize clean main without force-push.
   MECHANICALLY_PROVEN / 3 PROJECTABLE; Phase 24 remains 3 eligible / 125
   excluded. The bounded flow layer attempted 13, proved 0, rejected 13,
   resolved 0 calls, and observed maximum depth 0 in current approved source.
+- Complete regression parity: PASS — canonical and topology-correct isolated
+  serial Playwright runs both enumerated 2,444 tests, passed 2,440, skipped
+  the same four environment-conditional tests (`phase5Api.test.ts:195`,
+  `:244`, `:278`, and `selfDevSandboxConfinement.test.ts:143`), and failed
+  zero. The isolated run used detached Nightwatch and six detached approved
+  source checkouts, `npm ci --ignore-scripts`, `NIGHTWATCH_SIBLING_ROOT` bound
+  to the disposable `REPOSITORIES/<org>/<repo>` topology, and
+  `NIGHTWATCH_PROXY_PORT=20987`; all disposable trees were clean before and
+  after.
+- Transient regression accounting: the first canonical run exposed one
+  existing journey-engine cancellation failure after 2,439 passes and four
+  skips. The focused test passed once and five repeated times, then both
+  complete reruns passed. No assertion was weakened and no code repair was
+  required.
+- Exact-head Actions observation: PASS as an observation, not CI authority —
+  run `32800403605`, job `97659975725`, exact implementation head
+  `237e537e154bdb7c0eb7b4bd04021f9c5437db29`, completed with failure and
+  `steps=[]`; classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. No retry or
+  log retrieval was performed.
 
 ## Decisions Made During This Task
 
@@ -143,13 +161,11 @@ in the current approved route set, so none was admitted speculatively.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, then this task's SPEC.md, PLAN.md, and STATE.md; inspect
-Git status/diff; continue the exact next action above; run the smallest
-decisive validation after each repair; and update this state before each
-milestone transition.
+Task complete. Do not resume this task. Future work requires a separate fresh
+task and authorization.
 
 ## Completion Snapshot
 
-IN_PROGRESS — implementation and focused validation are complete, but terminal
-full-gate validation, report closure, implementation checkpoint, exact-head CI
-classification, push synchronization, and clean-tree verification remain.
+COMPLETE — implementation, local/clean validation, exact-head Actions
+observation, terminal continuity records, synchronized `main`, and clean-tree
+verification are complete.

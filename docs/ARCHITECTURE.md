@@ -1639,3 +1639,47 @@ cross the source boundary. Phase 24 remains the sole eligibility and portfolio
 authority: Phase 26 raised response contracts from 25 to 62 and advanced the
 current approved lifecycle from 103 `DISCOVERED` to 66, while retaining the
 three existing `PROJECTABLE` surfaces.
+
+## Phase 27 exact interprocedural response-flow architecture
+
+Phase 27 adds a bounded declaration-flow proof layer only where an exact,
+current, branch-complete call target can be selected. It composes the Phase 26
+response analyzers and does not add a second semantic-contract, source-graph,
+cache, or portfolio authority:
+
+```text
+bounded approved-source inventory
+  -> exact PHP declaration index
+  -> depth-2 named call resolution with cycle/ambiguity rejection
+  -> branch-complete terminal declaration set
+  -> existing Phase 26 response-shape analyzers
+  -> dependency-bound response/semantic identity and invalidation
+  -> existing graph, review, lifecycle, replay/dossier, and Phase 24 seams
+```
+
+The versioned resolver identity is
+`nightwatch.real-source-response-flow.v1`. It supports only same-class
+`$this->method()`, same-file `self::method()`, exact unnamespaced static calls,
+and same-file named functions. Every declaration is bound to an approved
+repository, exact source SHA, confined relative path, declaration identity,
+and content digest. A maximum depth of two, declaration cap, cycle detection,
+branch-complete return discovery, strict terminal-shape merging, and root/
+terminal TOCTOU checks keep the proof bounded. Dynamic methods/functions,
+imports without exact resolution, inheritance, traits, interfaces, magic,
+factories, framework behavior, runtime service lookup, reflection, `eval`,
+dynamic includes, and opaque resource/DTO behavior remain exclusions.
+
+The bounded PHP lexer hardening treats oversized quoted values as opaque scalar
+strings without retaining their contents, while oversized structural keys still
+fail closed. This preserves the existing response/semantic vocabulary and
+recovered 21 response contracts and 37 semantic observations in the current
+approved source. The exact flow layer attempted 13 current patterns and
+proved none because the current route set contains no exact safe helper,
+resource, or DTO boundary; no coverage was manufactured.
+
+Flow lineage is represented by sanitized response-declaration and callsite
+graph nodes, categorical review diagnostics, dependency-aware proof digests,
+and the existing invalidation/cache identities. The resolver has no execution,
+network, product, auth, data, infrastructure, publication, or promotion
+authority. Response proof remains independent from mutation/read-only proof,
+runtime/deployment identity, and Phase 24 candidate authority.

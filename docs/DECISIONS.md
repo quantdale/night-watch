@@ -3167,3 +3167,41 @@ required job had zero executed steps and was classified
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. It is not green CI. No DEV launcher or
 auth-state read occurred, all contact/mutation/publication counts are zero,
 and the owner-frozen infrastructure/data layer remains out of scope.
+
+## D-77 — Phase 27 adds only exact bounded response-flow proof
+
+**Context.** Phase 26 materially expanded direct PHP response coverage but
+left unresolved families involving helper/resource/DTO boundaries. A fresh
+six-repository census found no current route with an exact mechanically
+observable helper/resource/DTO join; the remaining patterns were dominated by
+oversized lexical values, variables, branches, property/service chains, and
+dynamic or unsupported behavior.
+
+**Decision.** Add the versioned
+`nightwatch.real-source-response-flow.v1` resolver as a small source-only
+proof layer. It indexes only approved current PHP declarations and resolves
+same-class `$this` calls, same-file `self` calls, exact unnamespaced static
+calls, and same-file named functions at depth two or less. It requires exact
+declaration identity, current content, branch-complete returns, common
+terminal response shape, dependency lineage, and deterministic proof IDs.
+Cycles, ambiguity, dynamic dispatch, imports without exact resolution,
+inheritance, traits, interfaces, magic, factories, reflection, `eval`,
+framework behavior, and opaque resource/DTO behavior remain categorical
+exclusions. Existing Phase 26 analyzers and vocabulary remain authoritative;
+Phase 24 remains the sole portfolio authority.
+
+**Evidence and consequences.** The fresh inventory remained 1,732 considered /
+1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes across six
+approved repositories. Bounded lexical hardening raised response contracts
+from 62 to 83 and semantic observations from 138 to 175 without changing
+joins, mutation/read-only proof, or Phase 24 eligibility. The new flow layer
+attempted 13 current patterns, proved 0, rejected 13, and observed no exact
+current helper/resource/DTO join. Synthetic controls prove the supported
+family and adversarial controls prove fail-closed ambiguity/currentness,
+privacy, determinism, path, branch, cycle, and depth behavior. Local and
+topology-correct isolated full regressions both pass 2,440 / 4 skipped / 0
+failed. Actions run `32800403605`, job `97659975725`, matched the pushed
+implementation anchor but returned `steps=[]`; the external classification is
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not green CI. No DEV, auth, product,
+data, infrastructure, sibling-write, publication, or promotion authority was
+created.

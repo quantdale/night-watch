@@ -3,7 +3,7 @@
 Task ID: phase-27-exact-response-flow-joins
 Phase: 27-EXACT-INTERPROCEDURAL-RESPONSE-FLOW
 Authorization class: PHASE_27_EXACT_INTERPROCEDURAL_RESPONSE_FLOW_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Purpose
@@ -73,11 +73,14 @@ instead.
   bounds. Status: COMPLETE.
 - M9 — synthetic end-to-end campaign and gap accounting. Status: COMPLETE.
 - M10 — compatibility, hardening, quality-gate inventory, and clean Node20
-  qualification. Status: IN_PROGRESS.
+  qualification. Status: COMPLETE.
 - M11 — canonical and topology-correct isolated full regression parity. Status:
-  PENDING.
+  COMPLETE — both serial runs enumerated 2,444 tests, passed 2,440, skipped
+  four, and failed zero with exact skip parity.
 - M12 — final CI observation, report/docs, commit/push, and synchronized clean
-  main. Status: PENDING.
+  main. Status: COMPLETE — the exact-head Actions observation, terminal report,
+  continuity closure, synchronized push, and clean-tree verification are
+  recorded.
 
 ## Validation Strategy
 
@@ -128,6 +131,17 @@ local gate, clean gate, and canonical/isolated full regressions.
   attempts, resolved edges, dependency declarations, and maximum depth; the
   synthetic matrix covers positive exact calls and negative dynamic,
   ambiguous, stale, unsupported, and privacy cases.
+- M10/M11: the complete local and Node20 clean cones passed; canonical and
+  topology-correct isolated Playwright reruns both passed 2,440/2,444 with
+  the same four documented environment-conditional skips. A single transient
+  journey cancellation failure in the first canonical attempt was reproduced
+  neither by five focused repetitions nor by either complete rerun, so no
+  product assertion or safety boundary was changed.
+- M12: exact-head Actions observation for implementation SHA `237e537…`
+  returned run `32800403605`, job `97659975725`, `steps=[]`, and the bounded
+  external classification `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; no retry or
+  log retrieval was performed. The terminal continuity/docs checkpoint was
+  pushed and local `main == origin/main` plus clean-tree verification passed.
 
 ## Discoveries
 
