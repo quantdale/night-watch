@@ -85,12 +85,12 @@ test('Phase 25 synthetic source-to-portfolio path reaches semantic, replay, doss
     const evaluation = evaluatePhase24SemanticExpectation({ expectation, observation: { schemaVersion: 'nightwatch.phase24-safe-semantic-observation.v1', applicable: true, totals: { declaredCount: 1, observedCount: 1, totalConsistent: true } } });
     expect(evaluation.outcome).toBe('PASS');
 
-    const replayPlan = createPhase24ReplayPlan({ candidateId: candidate.candidateId, occurrenceIdentity: 'occurrence.phase25.first', source: candidate.source, semanticContractId: candidate.contract.contractId, expectationId: expectation.expectationId, sanitizedObservationDigest: 'observation:sha256:' + 'b'.repeat(24), executionPrerequisites: ['SOURCE_CURRENT', 'READ_ONLY_PROVEN'] });
+    const replayPlan = createPhase24ReplayPlan({ candidateId: candidate.candidateId, candidateDecisionDigest: candidate.deterministicDigest, occurrenceIdentity: 'occurrence.phase25.first', source: candidate.source, semanticContractId: candidate.contract.contractId, expectationId: expectation.expectationId, sanitizedObservationDigest: 'observation:sha256:' + 'b'.repeat(24), executionPrerequisites: ['SOURCE_CURRENT', 'READ_ONLY_PROVEN'] });
     validatePhase24ReplayPlan(replayPlan);
     expect(classifyPhase24Replay({ plan: replayPlan, facts: { replayAttempted: true, sourceExact: true, semanticContractStillValid: true, authReady: false, environmentAuthorized: false, prerequisitesStable: true, sameInvariantObserved: true } }).classification).toBe('AUTH_DIVERGENCE');
 
     const owner = routePhase24OwnerProvenance({ owner: candidate.behaviorOwner, ownerProven: candidate.behaviorOwnerProven });
-    const dossier = createPhase24Dossier({ findingKind: 'TOTALS_CONTRADICTORY', invariantId: expectation.invariantId, candidateIds: [candidate.candidateId], sourceContracts: [{ ...candidate.source, contractId: candidate.contract.contractId }], implementationFiles: candidate.relevantFiles, ownership: owner, replayClassification: 'AUTH_DIVERGENCE', minimized: false, changedAssumptionCodes: ['AUTH_NOT_READ'], discardedEvidenceCodes: ['RAW_VALUES_DISCARDED'], additionalConfirmationCode: 'OWNER_REVIEW_REQUIRED', findingCount: 0 });
+    const dossier = createPhase24Dossier({ findingKind: 'TOTALS_CONTRADICTORY', invariantId: expectation.invariantId, candidateIds: [candidate.candidateId], candidateDecisionBindings: [{ candidateId: candidate.candidateId, decisionDigest: candidate.deterministicDigest }], sourceContracts: [{ ...candidate.source, contractId: candidate.contract.contractId }], implementationFiles: candidate.relevantFiles, ownership: owner, replayClassification: 'AUTH_DIVERGENCE', minimized: false, changedAssumptionCodes: ['AUTH_NOT_READ'], discardedEvidenceCodes: ['RAW_VALUES_DISCARDED'], additionalConfirmationCode: 'OWNER_REVIEW_REQUIRED', findingCount: 0 });
     validatePhase24Dossier(dossier);
 
     const manifest = createPhase24Manifest({

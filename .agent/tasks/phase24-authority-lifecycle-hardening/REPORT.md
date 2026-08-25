@@ -10,13 +10,20 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Current handoff
 
-M0 is complete and M1 is active. The live canonical checkout began clean at
-`755cb2e611355011c9d249142b2c2bf4f112327a`, and the fresh confined source
+M0 and M1 are complete; M2 is active. The live canonical checkout began clean
+at `755cb2e611355011c9d249142b2c2bf4f112327a`, and the fresh confined source
 census matches the prior baseline. The continuity checker now recognizes the
 planning-only execution prompt as a documentation checkpoint, with a
-permanent regression; the complete agent-state suite passed 107/107. The next
-action is the Phase 24 authority lifecycle and artifact currentness audit. No
-campaign completion claim is made yet.
+permanent regression; the complete agent-state suite passed 107/107.
+
+The M1 matrix reproduced the omitted snapshot proof, lossy candidate identity,
+global availability, optimistic default, duplicate surface, and stale review
+selection defects. The focused M2 repair is green across 29 Phase 24–26 tests
+plus the Phase 25 source bridge and typecheck. The invalidation schema is v2
+with granular availability and stale artifact keys; replay and dossier
+schemas are versioned with candidate-decision bindings. Full dependency gates,
+Stage B whole-repository audit, Stage C hygiene implementation, and campaign
+closure remain outstanding. No completion claim is made.
 
 ## Safety
 

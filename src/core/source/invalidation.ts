@@ -150,10 +150,15 @@ export function compareSourceSurfaces(input: {
 }): SourceSurfaceChangeReport {
   const files = inventoryChangeReport(input.prior?.discovery.inventory ?? null, input.current.discovery.inventory);
   const surfaces = compareSurfaceEvidence(input.prior?.discovery ?? null, input.current.discovery);
-  const sourceAvailable = input.current.discovery.inventory.repositories.some((repository) => repository.status === 'CURRENT');
+  // Availability is part of the current source authority and must remain
+  // scoped to each approved repository. A healthy repository must not mask a
+  // different repository whose candidate source disappeared.
+  const sourceAvailability = input.current.discovery.inventory.repositories
+    .map((repository) => ({ repoId: repository.repoId, available: repository.status === 'CURRENT' }))
+    .sort((left, right) => left.repoId.localeCompare(right.repoId));
   const gapTaxonomyChange = compareSourceGapTaxonomies(input.prior?.discovery.gapTaxonomy ?? null, input.current.discovery.gapTaxonomy);
   const invalidationLedger = input.prior?.portfolio !== null || input.current.portfolio !== null
-    ? buildPhase24CandidateInvalidationLedger({ prior: input.prior?.portfolio ?? null, current: input.current.portfolio ?? null, sourceAvailable })
+    ? buildPhase24CandidateInvalidationLedger({ prior: input.prior?.portfolio ?? null, current: input.current.portfolio ?? null, sourceAvailability })
     : null;
   const core = {
     schemaVersion: REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION,

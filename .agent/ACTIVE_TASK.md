@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/phase24-authority-lifecycle-hardening
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
 Last validated implementation SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
-Last checkpoint: M0 — continuity checkpoint classification repaired and full agent-state validation passed; M1 is now active.
-Current milestone: M1 — Phase 24 authority/invalidation graph audit and adversarial matrix.
-Next action: Map the Phase 24 authority graph and artifact currentness consumers, then build the bounded synthetic adversarial matrix.
+Last checkpoint: M1 — authority graph audited and adversarial matrix reproduced; M2 repairs are focused and not yet pushed.
+Current milestone: M2 — Phase 24 authority contract and stale-artifact repairs.
+Next action: Run the full Phase 24–28/response-flow dependency cone and repository-native gates, repair regressions, then checkpoint the validated implementation.
 Authorization class: PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a

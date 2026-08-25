@@ -42,6 +42,7 @@ function candidate(id: string, overrides: Partial<Phase24CandidateInput> = {}): 
     product: 'ripple',
     source: SOURCE_A,
     sourceAvailable: true,
+    sourceSnapshotMatches: true,
     relevantFiles: [`src/${id.replaceAll('.', '/')}.php`],
     route: { endpointId: `endpoint.${id}`, method: 'GET', routeTemplate: `/api/${id.replaceAll('.', '/')}`, transport: 'HTTP_API' },
     routeIdentityProven: true,
@@ -169,7 +170,11 @@ test.describe('Phase 24 source-qualified portfolio and invalidation', () => {
       candidate('promoted'),
       candidate('replay', { replay: { strategy: 'FIRST_REPLAY', planIdentity: 'replay-plan:sha256:' + 'b'.repeat(24), maxContexts: 2, prerequisites: [] }, behaviorOwner: { repository: 'approved/ripple-api', packageName: 'billing', component: 'new-owner', confidence: 'HIGH' } }),
     ] });
-    const ledger = buildPhase24CandidateInvalidationLedger({ prior, current });
+    const ledger = buildPhase24CandidateInvalidationLedger({
+      prior,
+      current,
+      sourceAvailability: [{ repoId: SOURCE_A.repoId, available: true }],
+    });
     validatePhase24CandidateInvalidationLedger(ledger);
     expect(ledger.newlyEligibleCandidateIds).toHaveLength(1);
     expect(ledger.staleCandidateIds).toHaveLength(1);
@@ -275,7 +280,7 @@ test.describe('Phase 24 deterministic semantic and cross-candidate oracles', () 
 
 test.describe('Phase 24 replay, minimization, dossier, and operator diagnostics', () => {
   test('keeps replay divergence classes distinct and minimizes only invariant-preserving units', () => {
-    const plan = createPhase24ReplayPlan({ candidateId: 'candidate:replay', occurrenceIdentity: 'occurrence.first', source: SOURCE_A, semanticContractId: 'contract.replay', expectationId: 'expectation.replay', sanitizedObservationDigest: 'observation:sha256:' + 'c'.repeat(24), executionPrerequisites: ['SOURCE_CURRENT'] });
+    const plan = createPhase24ReplayPlan({ candidateId: 'candidate:replay', candidateDecisionDigest: 'candidate-decision:sha256:' + '1'.repeat(24), occurrenceIdentity: 'occurrence.first', source: SOURCE_A, semanticContractId: 'contract.replay', expectationId: 'expectation.replay', sanitizedObservationDigest: 'observation:sha256:' + 'c'.repeat(24), executionPrerequisites: ['SOURCE_CURRENT'] });
     expect(classifyPhase24Replay({ plan, facts: { replayAttempted: true, sourceExact: true, authReady: true, environmentAuthorized: true, prerequisitesStable: true, sameInvariantObserved: true, semanticContractStillValid: true } }).classification).toBe('DETERMINISTIC_REPRODUCTION');
     expect(classifyPhase24Replay({ plan, facts: { replayAttempted: true, sourceExact: true, authReady: false, environmentAuthorized: true, prerequisitesStable: true, sameInvariantObserved: false, semanticContractStillValid: true } }).classification).toBe('AUTH_DIVERGENCE');
     expect(classifyPhase24Replay({ plan, facts: { replayAttempted: true, sourceExact: false, authReady: true, environmentAuthorized: true, prerequisitesStable: true, sameInvariantObserved: false, semanticContractStillValid: true } }).classification).toBe('SOURCE_DRIFT');
@@ -299,7 +304,7 @@ test.describe('Phase 24 replay, minimization, dossier, and operator diagnostics'
     expect(owner.resolution).toBe('EXACT_COMPONENT');
     const ambiguous = routePhase24OwnerProvenance({ owner: { repository: 'approved/ripple-api', packageName: 'billing', component: 'exchange', confidence: 'AMBIGUOUS' }, ownerProven: true });
     expect(ambiguous.resolution).toBe('AMBIGUOUS_COMPONENT');
-    const dossier = createPhase24Dossier({ findingKind: 'TOTALS_CONTRADICTORY', invariantId: 'invariant.totals', candidateIds: ['candidate:totals'], sourceContracts: [{ ...SOURCE_A, contractId: 'contract.totals' }], implementationFiles: ['src/billing/exchange.php'], ownership: owner, replayClassification: 'DETERMINISTIC_REPRODUCTION', minimized: true, changedAssumptionCodes: ['SOURCE_CHANGED'], discardedEvidenceCodes: ['RAW_VALUES_DISCARDED', 'SCREENSHOTS_DISCARDED'], additionalConfirmationCode: 'REPEAT_IN_FRESH_CONTEXT', findingCount: 1 });
+    const dossier = createPhase24Dossier({ findingKind: 'TOTALS_CONTRADICTORY', invariantId: 'invariant.totals', candidateIds: ['candidate:totals'], candidateDecisionBindings: [{ candidateId: 'candidate:totals', decisionDigest: 'candidate-decision:sha256:' + '2'.repeat(24) }], sourceContracts: [{ ...SOURCE_A, contractId: 'contract.totals' }], implementationFiles: ['src/billing/exchange.php'], ownership: owner, replayClassification: 'DETERMINISTIC_REPRODUCTION', minimized: true, changedAssumptionCodes: ['SOURCE_CHANGED'], discardedEvidenceCodes: ['RAW_VALUES_DISCARDED', 'SCREENSHOTS_DISCARDED'], additionalConfirmationCode: 'REPEAT_IN_FRESH_CONTEXT', findingCount: 1 });
     validatePhase24Dossier(dossier);
     expect(JSON.stringify(dossier)).not.toContain('CUSTOMER_SENTINEL');
     expect(dossier.privacy.destinationClass).toBe('OWNER_LOCAL_ONLY');

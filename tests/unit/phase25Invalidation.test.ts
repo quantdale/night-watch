@@ -6,6 +6,7 @@ import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces } from '../../src/core/source/surfaces';
 import { compareSourceSurfaces } from '../../src/core/source/invalidation';
+import { buildPhase24CandidatePortfolio } from '../../src/core/phase24/portfolio';
 
 const SOURCE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
 
@@ -45,6 +46,17 @@ function config() {
   return createRealSourceScanConfig({
     runtimeMappingNamespace: 'ripple',
     approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: SOURCE_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml', '.ts'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+  });
+}
+
+function configWithUnavailableRepository() {
+  const base = config();
+  return createRealSourceScanConfig({
+    runtimeMappingNamespace: 'ripple',
+    approvedRepositories: [
+      ...base.approvedRepositories,
+      { repoId: 'mobingilabs/missing-repo', expectedSourceSha: '8'.repeat(40), allowlistedRoots: ['src'], allowedExtensions: ['.php'], maxFiles: 32, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 },
+    ],
   });
 }
 
@@ -88,6 +100,39 @@ test.describe('Phase 25 incremental source invalidation', () => {
       expect(report.invalidationLedger?.records.some((record) => record.reasonCodes.includes('SOURCE_EVIDENCE_CHANGED'))).toBe(true);
       expect(report.invalidationLedger?.replayInvalidatedCandidateIds.length).toBeGreaterThan(0);
       expect(report.invalidationLedger?.dossierInvalidatedCandidateIds.length).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('keeps a current repository current when another approved repository disappears', () => {
+    const { root } = setup();
+    try {
+      const access = createSiblingSourceAccess(root);
+      const scanConfig = configWithUnavailableRepository();
+      const discovery = discoverSourceSurfaces({ access, config: scanConfig });
+      const current = analyzeSourceSurfacesIntoPhase24({ access, config: scanConfig, discovery, maxCandidates: 2 });
+      const currentCandidate = current.portfolio.candidates[0];
+      expect(currentCandidate).toBeDefined();
+      const unavailableInput = {
+        ...currentCandidate!,
+        surfaceKey: 'missing-repository.surface.read',
+        targetId: 'missing-repository.surface.read',
+        source: { repoId: 'mobingilabs/missing-repo', sha: '8'.repeat(40), evidenceDigest: 'ev:sha256:' + '9'.repeat(24) },
+        sourceAvailable: true,
+        sourceSnapshotMatches: true,
+      };
+      const priorPortfolio = buildPhase24CandidatePortfolio({ candidates: [...current.portfolio.candidates, unavailableInput] });
+      const report = compareSourceSurfaces({
+        prior: { discovery, portfolio: priorPortfolio },
+        current: { discovery, portfolio: current.portfolio },
+      });
+      expect(report.invalidationLedger?.sourceAvailability).toEqual([
+        { repoId: 'mobingilabs/missing-repo', available: false },
+        { repoId: 'mobingilabs/ripple-api', available: true },
+      ]);
+      expect(report.invalidationLedger?.records.find((record) => record.surfaceKey === currentCandidate!.surfaceKey)?.state).toBe('CURRENT');
+      expect(report.invalidationLedger?.records.find((record) => record.surfaceKey === 'missing-repository.surface.read')?.state).toBe('SOURCE_UNAVAILABLE');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

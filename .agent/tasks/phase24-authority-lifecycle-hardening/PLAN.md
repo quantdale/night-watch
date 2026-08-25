@@ -61,9 +61,10 @@ plans without relying on broad Git cleanup commands.
 
 - M0 — COMPLETE: bootstrap continuity-v2 task, fresh source census,
   workspace inventory, and repair the planning-checkpoint classification gap.
-- M1 — IN_PROGRESS: Phase 24 authority/invalidation graph audit and adversarial
-  reproduction matrix.
-- M2 — PENDING: implement and focus-validate reproduced Critical/High
+- M1 — COMPLETE: Phase 24 authority/invalidation graph audit and adversarial
+  reproduction matrix; five baseline failures reproduced, plus a stale review
+  selection crossing case.
+- M2 — IN_PROGRESS: implement and focus-validate reproduced Critical/High
   authority defects, including artifact/cache currentness binding.
 - M3 — PENDING: whole-repository hardening audit and bounded repairs across all
   required audit classes.
@@ -94,6 +95,13 @@ external CI unless it actually executes for the live head.
 - M1 decision — omitted snapshot-match proof is not affirmative evidence; any
   uncertain source/currentness state fails closed and remains granular per
   repository where possible.
+- M2 decision — version the invalidation ledger to v2 and require an explicit,
+  sorted per-repository availability map; the old optional global boolean is
+  not accepted as authority.
+- M2 decision — preserve stable logical candidate IDs while carrying explicit
+  prior/current IDs and source incarnations; candidate-decision digests bind
+  replay plans and dossiers to the current Phase 24 decision without adding a
+  second selector.
 - M3 decision — no repair is accepted from an un-reproduced hypothesis; each
   finding must include a bounded synthetic regression and privacy review.
 

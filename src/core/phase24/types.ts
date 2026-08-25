@@ -1,12 +1,12 @@
 export const PHASE24_PORTFOLIO_VERSION = 'nightwatch.phase24-candidate-portfolio.v1' as const;
-export const PHASE24_INVALIDATION_VERSION = 'nightwatch.candidate-invalidation.v1' as const;
+export const PHASE24_INVALIDATION_VERSION = 'nightwatch.candidate-invalidation.v2' as const;
 export const PHASE24_MANIFEST_VERSION = 'nightwatch.local-triage-manifest.v3' as const;
 export const PHASE24_REHEARSAL_VERSION = 'nightwatch.phase24-no-contact-rehearsal-receipt.v1' as const;
 export const PHASE24_SEMANTIC_VERSION = 'nightwatch.phase24-semantic-evaluation.v1' as const;
 export const PHASE24_CROSS_CANDIDATE_VERSION = 'nightwatch.phase24-cross-candidate-evaluation.v1' as const;
-export const PHASE24_REPLAY_VERSION = 'nightwatch.phase24-replay.v3' as const;
+export const PHASE24_REPLAY_VERSION = 'nightwatch.phase24-replay.v4' as const;
 export const PHASE24_MINIMIZATION_VERSION = 'nightwatch.phase24-minimization.v1' as const;
-export const PHASE24_DOSSIER_VERSION = 'nightwatch.phase24-owner-review-dossier.v1' as const;
+export const PHASE24_DOSSIER_VERSION = 'nightwatch.phase24-owner-review-dossier.v2' as const;
 export const PHASE24_CI_VERSION = 'nightwatch.phase24-ci-observability.v1' as const;
 export const PHASE24_READINESS_VERSION = 'nightwatch.phase24-readiness-diagnostics.v1' as const;
 export const PHASE24_SYNTHETIC_CAMPAIGN_VERSION = 'nightwatch.phase24-synthetic-campaign.v1' as const;
@@ -26,6 +26,12 @@ export interface Phase24SourceIdentity {
   readonly repoId: string;
   readonly sha: string;
   readonly evidenceDigest: string;
+}
+
+/** Current approved-source availability, explicitly scoped to one repository. */
+export interface Phase24SourceAvailability {
+  readonly repoId: string;
+  readonly available: boolean;
 }
 
 export interface Phase24RouteIdentity {
@@ -191,7 +197,10 @@ export type Phase24InvalidationState =
   | 'NEW_CANDIDATE'
   | 'NEWLY_ELIGIBLE'
   | 'NEWLY_UNSAFE'
+  | 'CANDIDATE_DECISION_CHANGED'
+  | 'CANDIDATE_IDENTITY_CHANGED'
   | 'SOURCE_CHANGED'
+  | 'SOURCE_RECOVERED'
   | 'CONTRACT_CHANGED'
   | 'SEMANTIC_EXPECTATION_CHANGED'
   | 'REPLAY_PLAN_INVALIDATED'
@@ -201,6 +210,8 @@ export type Phase24InvalidationState =
 
 export type Phase24InvalidationReasonCode =
   | 'NO_CHANGE'
+  | 'CANDIDATE_DECISION_CHANGED'
+  | 'CANDIDATE_IDENTITY_CHANGED'
   | 'SOURCE_SHA_CHANGED'
   | 'SOURCE_EVIDENCE_CHANGED'
   | 'CONTRACT_IDENTITY_CHANGED'
@@ -210,10 +221,14 @@ export type Phase24InvalidationReasonCode =
   | 'ELIGIBILITY_CHANGED'
   | 'CANDIDATE_ADDED'
   | 'CANDIDATE_REMOVED'
+  | 'SOURCE_RECOVERED'
   | 'SOURCE_SNAPSHOT_UNAVAILABLE';
 
 export interface Phase24CandidateInvalidationRecord {
+  /** Compatibility summary: current identity when present, otherwise prior. */
   readonly candidateId: string;
+  readonly priorCandidateId: string | null;
+  readonly currentCandidateId: string | null;
   readonly surfaceKey: string;
   readonly state: Phase24InvalidationState;
   readonly affected: boolean;
@@ -222,6 +237,8 @@ export interface Phase24CandidateInvalidationRecord {
   readonly currentSource: Phase24SourceIdentity | null;
   readonly replayInvalidated: boolean;
   readonly dossierAssumptionsInvalidated: boolean;
+  /** Safe keys for artifacts made stale by this transition. */
+  readonly staleArtifactKeys: readonly string[];
   readonly deterministicDigest: string;
 }
 
@@ -229,7 +246,7 @@ export interface Phase24CandidateInvalidationLedger {
   readonly schemaVersion: typeof PHASE24_INVALIDATION_VERSION;
   readonly priorPortfolioDigest: string | null;
   readonly currentPortfolioDigest: string | null;
-  readonly sourceAvailable: boolean;
+  readonly sourceAvailability: readonly Phase24SourceAvailability[];
   readonly records: readonly Phase24CandidateInvalidationRecord[];
   readonly changedCandidateIds: readonly string[];
   readonly newlyEligibleCandidateIds: readonly string[];
@@ -237,6 +254,7 @@ export interface Phase24CandidateInvalidationLedger {
   readonly staleCandidateIds: readonly string[];
   readonly replayInvalidatedCandidateIds: readonly string[];
   readonly dossierInvalidatedCandidateIds: readonly string[];
+  readonly staleArtifactKeys: readonly string[];
   readonly deterministicDigest: string;
 }
 
@@ -427,6 +445,7 @@ export interface Phase24ReplayPlan {
   readonly schemaVersion: typeof PHASE24_REPLAY_VERSION;
   readonly planIdentity: string;
   readonly candidateId: string;
+  readonly candidateDecisionDigest: string;
   readonly occurrenceIdentity: string;
   readonly source: Phase24SourceIdentity;
   readonly environment: 'DEV';
@@ -508,6 +527,8 @@ export interface Phase24Dossier {
   readonly findingKind: Phase24SemanticKind | Phase24CrossCandidateRelationKind;
   readonly invariantId: string;
   readonly candidateIds: readonly string[];
+  /** Decision digests bind this owner artifact to current Phase 24 authority. */
+  readonly candidateDecisionBindings: readonly { readonly candidateId: string; readonly decisionDigest: string }[];
   readonly sourceContracts: readonly { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string; readonly contractId: string }[];
   readonly implementationFiles: readonly string[];
   readonly ownership: Phase24OwnerRouting;

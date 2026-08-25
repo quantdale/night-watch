@@ -4,6 +4,7 @@ import {
   assertId,
   assertNoRawArtifactFields,
   assertSourceIdentity,
+  canonical,
   DIGEST_RE,
   digest,
   invalid,
@@ -26,6 +27,7 @@ function validatePlan(plan: Phase24ReplayPlan): void {
   assertNoRawArtifactFields(plan);
   if (plan.schemaVersion !== PHASE24_REPLAY_VERSION || !/^replay-plan:sha256:[0-9a-f]{24}$/.test(plan.planIdentity) || !/^replay-plan-record:sha256:[0-9a-f]{24}$/.test(plan.deterministicDigest)) invalid('REPLAY_PLAN_HEADER');
   assertId(plan.candidateId, 'REPLAY_CANDIDATE');
+  if (!/^candidate-decision:sha256:[0-9a-f]{24}$/.test(plan.candidateDecisionDigest)) invalid('REPLAY_CANDIDATE_DECISION');
   assertId(plan.occurrenceIdentity, 'REPLAY_OCCURRENCE');
   assertSourceIdentity(plan.source, 'REPLAY_SOURCE');
   if (plan.environment !== 'DEV' || plan.maxAttempts !== 1 || plan.maxContexts !== 2) invalid('REPLAY_BOUND');
@@ -35,6 +37,7 @@ function validatePlan(plan: Phase24ReplayPlan): void {
   const core = {
     schemaVersion: plan.schemaVersion,
     candidateId: plan.candidateId,
+    candidateDecisionDigest: plan.candidateDecisionDigest,
     occurrenceIdentity: plan.occurrenceIdentity,
     source: plan.source,
     environment: plan.environment,
@@ -45,12 +48,13 @@ function validatePlan(plan: Phase24ReplayPlan): void {
     maxAttempts: plan.maxAttempts,
     maxContexts: plan.maxContexts,
   };
-  if (plan.planIdentity !== digest('replay-plan:', { candidateId: plan.candidateId, occurrenceIdentity: plan.occurrenceIdentity, source: plan.source, semanticContractId: plan.semanticContractId, expectationId: plan.expectationId })) invalid('REPLAY_PLAN_ID');
+  if (plan.planIdentity !== digest('replay-plan:', { candidateId: plan.candidateId, candidateDecisionDigest: plan.candidateDecisionDigest, occurrenceIdentity: plan.occurrenceIdentity, source: plan.source, semanticContractId: plan.semanticContractId, expectationId: plan.expectationId })) invalid('REPLAY_PLAN_ID');
   if (plan.deterministicDigest !== digest('replay-plan-record:', core)) invalid('REPLAY_PLAN_DIGEST');
 }
 
 export function createPhase24ReplayPlan(input: {
   readonly candidateId: string;
+  readonly candidateDecisionDigest: string;
   readonly occurrenceIdentity: string;
   readonly source: Phase24SourceIdentity;
   readonly semanticContractId: string;
@@ -60,10 +64,11 @@ export function createPhase24ReplayPlan(input: {
 }): Phase24ReplayPlan {
   assertNoRawArtifactFields(input);
   const prerequisites = sortedUnique(input.executionPrerequisites);
-  const planIdentity = digest('replay-plan:', { candidateId: input.candidateId, occurrenceIdentity: input.occurrenceIdentity, source: input.source, semanticContractId: input.semanticContractId, expectationId: input.expectationId });
+  const planIdentity = digest('replay-plan:', { candidateId: input.candidateId, candidateDecisionDigest: input.candidateDecisionDigest, occurrenceIdentity: input.occurrenceIdentity, source: input.source, semanticContractId: input.semanticContractId, expectationId: input.expectationId });
   const core = {
     schemaVersion: PHASE24_REPLAY_VERSION,
     candidateId: input.candidateId,
+    candidateDecisionDigest: input.candidateDecisionDigest,
     occurrenceIdentity: input.occurrenceIdentity,
     source: input.source,
     environment: 'DEV' as const,
@@ -81,6 +86,16 @@ export function createPhase24ReplayPlan(input: {
 
 export function validatePhase24ReplayPlan(plan: Phase24ReplayPlan): void {
   validatePlan(plan);
+}
+
+/** Validate a replay artifact against the current canonical candidate decision. */
+export function validatePhase24ReplayPlanAgainstCandidate(input: {
+  readonly plan: Phase24ReplayPlan;
+  readonly candidate: import('./types').Phase24CandidateDecision;
+}): void {
+  validatePlan(input.plan);
+  const candidate = input.candidate;
+  if (candidate.eligibility !== 'ELIGIBLE' || candidate.candidateId !== input.plan.candidateId || candidate.deterministicDigest !== input.plan.candidateDecisionDigest || candidate.source === null || canonical(candidate.source) !== canonical(input.plan.source) || candidate.contract?.contractId !== input.plan.semanticContractId || candidate.semanticExpectationId !== input.plan.expectationId) invalid('REPLAY_CANDIDATE_STALE');
 }
 
 /** Conservative replay classification; every divergence remains explicit. */

@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M0 — continuity checkpoint classification repaired and full agent-state validation passed; M1 is now active.
+Last checkpoint: M0 — continuity checkpoint classification repaired and full agent-state validation passed; M2 authority repairs are now focused.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
@@ -35,8 +35,8 @@ preserving the local/source/synthetic-only owner boundary.
 
 ## Current Milestone
 
-M1 — IN_PROGRESS. Audit the Phase 24 authority/invalidation graph and build
-the required synthetic adversarial matrix before changing authority contracts.
+M2 — IN_PROGRESS. Repair and focus-validate the reproduced Phase 24 authority
+and stale-artifact defects.
 
 ## Completed Milestones
 
@@ -62,17 +62,34 @@ the required synthetic adversarial matrix before changing authority contracts.
   approved planning checkpoint, while mixed source/document commits remain
   stale implementation changes. The complete agent-state suite passed 107/107
   with 0 failures; the new planning-prompt regression passed.
+- M1 authority audit and reproduction — PASS: the direct matrix initially
+  reproduced five failures: omitted snapshot proof was eligible; the
+  invalidation record omitted prior/current identity; partial repository
+  unavailability was classified as contract removal; availability defaulted
+  optimistically; and duplicate surfaces were accepted. A source-review
+  regression also reproduced stale selection crossing into a changed
+  portfolio. Manifest/rehearsal and source-cache identity checks were
+  inspected as negative evidence.
 
 ## Work In Progress
 
-M1 is active. The Phase 24 authority graph and artifact currentness seams are
-being inspected; no authority contract has been changed yet.
+M2 is active. The focused repair is implemented locally but has not yet been
+closed as a durable milestone: omitted snapshot proof now excludes a direct
+candidate; invalidation is v2 with explicit per-repository availability,
+prior/current IDs, recovery/removal states, transition reasons, and stale
+artifact keys; duplicate surfaces fail closed; replay plans and dossiers carry
+candidate-decision bindings; and source review validates its selection against
+the supplied portfolio. Full dependency-cone and repository-wide validation
+remain outstanding.
 
 ## Exact Next Action
 
-Read the Phase 24 authority lifecycle modules and their direct tests in small
-bounded slices, map every identity/currentness/invalidation/artifact consumer,
-and write the M1 adversarial synthetic matrix before implementation.
+Run the full Phase 24–28 and response-flow dependency cone, then the package
+synthetic/owner/type/hardening gates against these repairs. Re-read all
+downstream replay, dossier, selection, source-review, cache, and triage
+consumers, repair regressions before advancing to the whole-repository Stage B
+audit, and record an implementation checkpoint after the focused ladder is
+green.
 
 ## Files Changed
 
@@ -85,6 +102,22 @@ and write the M1 adversarial synthetic matrix before implementation.
 | `.agent/tasks/phase24-authority-lifecycle-hardening/REPORT.md` | Campaign handoff placeholder for active work | added |
 | `bin/agent-state.mjs` | Treat the planning-only execution prompt as a documentation checkpoint | implemented |
 | `tests/unit/agent-state.test.ts` | Permanent regression for the planning checkpoint classification | implemented |
+| `src/core/phase24/types.ts` | Versioned invalidation/replay/dossier authority contracts | implemented |
+| `src/core/phase24/portfolio.ts` | Fail-closed snapshot proof and duplicate surface validation | implemented |
+| `src/core/phase24/invalidation.ts` | Lossless v2 lifecycle ledger and per-repository availability | implemented |
+| `src/core/source/invalidation.ts` | Per-repository source availability bridge | implemented |
+| `src/core/source/review.ts` | Reject stale selections before review projection | implemented |
+| `src/core/phase24/replay.ts` | Candidate-decision-bound replay validation | implemented |
+| `src/core/phase24/dossier.ts` | Candidate-decision-bound dossier validation | implemented |
+| `src/core/phase24/synthetic.ts` | Explicit synthetic proof and availability fixtures | implemented |
+| `tests/unit/phase24AuthorityLifecycleHardening.test.ts` | Adversarial authority and stale-artifact regression matrix | added |
+| `tests/unit/phase24LocalTriage.test.ts` | Updated explicit proof/availability and artifact fixtures | updated |
+| `tests/unit/phase25Invalidation.test.ts` | Partial repository availability bridge regression | updated |
+| `tests/unit/phase25SurfaceDiscovery.test.ts` | Stale selection/review regression | updated |
+| `tests/unit/phase25SyntheticCampaign.test.ts` | Replay/dossier authority binding fixture | updated |
+| `tests/unit/phase26SyntheticCampaign.test.ts` | Replay/dossier authority binding fixture | updated |
+| `package.json` | Register authority matrix in synthetic/Phase 24 commands | updated |
+| `bin/quality-gate-inventory.mjs` | Register authority matrix in authoritative gate inventory | updated |
 
 ## Validation Ledger
 
@@ -109,6 +142,33 @@ and write the M1 adversarial synthetic matrix before implementation.
   --workers=1` — PASS: 107 passed, 0 failed.
 - Targeted planning-prompt regression — PASS: 1 passed, 0 failed after
   correcting the synthetic ignored-path fixture.
+- Baseline authority matrix before repair — EXPECTED FAILURE: 5 tests failed,
+  reproducing omitted-proof eligibility, prior/current identity loss, global
+  availability misclassification, optimistic availability default, and
+  duplicate-surface acceptance.
+- Focused authority/dependency cone after repair — PASS: 29 passed, 0 failed
+  across Phase 24 local/synthetic, Phase 25 invalidation/surface/synthetic,
+  and Phase 26 invalidation/synthetic tests.
+- `npx tsc --noEmit --pretty false` after authority repairs — PASS.
+- `npm run campaign:synthetic` — PASS: 60 passed, 0 failed, 0 skipped.
+- `npm run test:owner-provenance` — PASS: 91 passed, 0 failed, 0 skipped.
+- `npm run hardening:check` — PASS: offline structural invariants hold.
+- `npm run quality-gate:spec` — PASS: 9 required groups; definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- `npm run gate:inventory` — PASS: 9 authoritative groups, 150 unique test
+  files, 0 duplicate executions; the new authority matrix is registered.
+- `npm run test:semantic-compat` — BLOCKED_BY_DIRTY_CHECKOUT at this
+  pre-commit point: 1,876 total, 1,861 passed, 13 skipped, 2 failed, both
+  `tests/unit/selfDevAdoptionCli.test.ts`, with `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`
+  replacing the expected missing-artifact errors. The focused file passed
+  5/7; the failures are the repository cleanliness precondition and will be
+  rerun after this validated source checkpoint is committed.
+- `npm run agent:check` — PASS with the expected stale-baseline warning while
+  the M2 implementation is still uncommitted; `npm run agent:audit` — PASS,
+  strict errors 0, legacy warnings 33.
+- `npm run project:check` — BLOCKED_BY_DIRTY_CHECKOUT as designed before the
+  durable checkpoint; continuity contents otherwise resolve to this active v2
+  task.
 
 ## Decisions Made During This Task
 
@@ -118,6 +178,13 @@ and write the M1 adversarial synthetic matrix before implementation.
 - The initial hygiene inventory is evidence only. Missing registrations,
   unvalidated branch tips, and any dirty or ambiguous target remain preserved
   until safe removal criteria are proven.
+- M2 versions the invalidation ledger to v2 and requires an explicit sorted
+  per-repository availability map; the old optional global boolean is not
+  accepted as authority.
+- M2 preserves stable logical candidate IDs while carrying explicit
+  prior/current IDs and source incarnations. Replay plans and dossiers now
+  carry candidate-decision digests and expose current-authority validators;
+  this binds artifacts without creating a second selector.
 
 ## Discoveries
 
@@ -126,6 +193,22 @@ and write the M1 adversarial synthetic matrix before implementation.
   path as a documentation checkpoint.
 - The fresh source census is byte-for-byte structurally identical to the
   prior Phase 28 baseline; no new source family is admitted by this evidence.
+- The first repair pass exposed two compatibility regressions in existing
+  lifecycle expectations: stable same-SHA source changes were temporarily
+  labeled as generic decision changes, and stable prior/current IDs were
+  incorrectly rejected as duplicate identities. Both were repaired before
+  advancing; the focused cone is green.
+- Remote inspection found `origin/plan/nightwatch-control-center`, a
+  planning-only successor branch with three documentation commits. Its own
+  handoff says to preserve this IN_PROGRESS task, then re-evaluate and create
+  a fresh task from current `main` before any Control Center implementation;
+  it is deferred until this campaign reaches a truthful terminal checkpoint.
+- The Phase 24 audit confirmed: `portfolio.ts` defaults omitted snapshot proof
+  to true; `phase24/invalidation.ts` loses prior candidate identity and uses
+  optional global availability; `source/invalidation.ts` uses
+  `repositories.some(status === CURRENT)`; and duplicate `surfaceKey` values
+  overwrite map entries. The cache key and manifest/rehearsal digest checks
+  bind source/currentness correctly in the inspected paths.
 
 ## Blockers
 

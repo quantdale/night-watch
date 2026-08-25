@@ -109,7 +109,10 @@ function checksFor(input: Phase24CandidateInput): readonly Check[] {
   const routeOk = input.routeIdentityProven && input.route !== null;
   const contractOk = input.contractIdentityProven && input.contract !== null;
   const ownerOk = input.behaviorOwnerProven && input.behaviorOwner !== null && input.behaviorOwner.confidence !== 'AMBIGUOUS' && input.behaviorOwner.confidence !== 'UNCONFIRMED';
-  const sourceSnapshotOk = input.sourceSnapshotMatches !== false;
+  // Snapshot matching is authority evidence, not a convenience flag. An
+  // omitted value is indistinguishable from an unproven value and must fail
+  // closed at this boundary.
+  const sourceSnapshotOk = input.sourceSnapshotMatches === true;
   const sourceOk = input.sourceAvailable && source.valid && sourceSnapshotOk;
   const replayOk = input.replay !== null && (input.replay.strategy === 'DETERMINISTIC_FIXTURE' || input.replay.strategy === 'FIRST_REPLAY') && input.replay.maxContexts === 2;
   const authOk = input.authRequirement === 'NONE' || input.authRequirement === 'OWNER_EXTERNAL_PATH';
@@ -175,7 +178,7 @@ function normalizeInput(input: Phase24CandidateInput): Phase24CandidateInput {
     product: input.product,
     source: input.source,
     sourceAvailable: input.sourceAvailable,
-    sourceSnapshotMatches: input.sourceSnapshotMatches ?? true,
+    sourceSnapshotMatches: input.sourceSnapshotMatches === true,
     relevantFiles: sortedUnique(input.relevantFiles),
     route: input.route,
     routeIdentityProven: input.routeIdentityProven,
@@ -238,6 +241,7 @@ export function buildPhase24CandidatePortfolio(input: { readonly candidates: rea
   if (!Array.isArray(input.candidates) || input.candidates.length === 0 || input.candidates.length > 128) invalid('CANDIDATE_COUNT');
   const decisions = input.candidates.map(decisionFor).sort((left, right) => left.candidateId.localeCompare(right.candidateId));
   if (new Set(decisions.map((candidate) => candidate.candidateId)).size !== decisions.length) invalid('DUPLICATE_CANDIDATE');
+  if (new Set(decisions.map((candidate) => candidate.surfaceKey)).size !== decisions.length) invalid('DUPLICATE_SURFACE');
   const sourceMap = new Map<string, Phase24SourceIdentity>();
   for (const candidate of decisions) {
     if (candidate.source !== null && sourceShape(candidate.source).valid) sourceMap.set(sourceKey(candidate.source), candidate.source);
@@ -263,6 +267,8 @@ export function validatePhase24CandidatePortfolio(portfolio: Phase24CandidatePor
   if (portfolio.consideredCount > 128 || portfolio.eligibleCount + portfolio.excludedCount !== portfolio.consideredCount) invalid('PORTFOLIO_COUNT');
   const ids = portfolio.candidates.map((candidate) => candidate.candidateId);
   if (new Set(ids).size !== ids.length || JSON.stringify(ids) !== JSON.stringify([...ids].sort((left, right) => left.localeCompare(right)))) invalid('PORTFOLIO_ORDER');
+  const surfaces = portfolio.candidates.map((candidate) => candidate.surfaceKey);
+  if (new Set(surfaces).size !== surfaces.length) invalid('DUPLICATE_SURFACE');
   for (const candidate of portfolio.candidates) {
     if (!/^candidate:sha256:[0-9a-f]{24}$/.test(candidate.candidateId) || !/^candidate-decision:sha256:[0-9a-f]{24}$/.test(candidate.deterministicDigest)) invalid('CANDIDATE_IDENTITY');
     const rebuilt = decisionFor(candidate);

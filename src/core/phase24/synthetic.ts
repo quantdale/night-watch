@@ -19,6 +19,7 @@ function fixture(id: string, materialClass: Phase24CandidateInput['materialClass
     product: 'synthetic',
     source: SOURCE,
     sourceAvailable: true,
+    sourceSnapshotMatches: true,
     relevantFiles: [`corpus/phase24/${id}.fixture.json`],
     route: { endpointId: `synthetic.endpoint.${id}`, method: 'GET', routeTemplate: `/synthetic/phase24/${id}`, transport: 'SYNTHETIC' },
     routeIdentityProven: true,
@@ -70,7 +71,11 @@ const ORACLE_CASES: readonly { readonly kind: Phase24SemanticKind; readonly obse
 export function runPhase24SyntheticCampaign(): Phase24SyntheticCampaignReceipt {
   const portfolio = buildPhase24CandidatePortfolio({ candidates: PHASE24_SYNTHETIC_CANDIDATE_FIXTURES });
   const prior = buildPhase24CandidatePortfolio({ candidates: PHASE24_SYNTHETIC_CANDIDATE_FIXTURES });
-  const invalidation = buildPhase24CandidateInvalidationLedger({ prior, current: portfolio });
+  const invalidation = buildPhase24CandidateInvalidationLedger({
+    prior,
+    current: portfolio,
+    sourceAvailability: [{ repoId: SOURCE.repoId, available: true }],
+  });
   const evaluations = ORACLE_CASES.map((item) => evaluatePhase24SemanticExpectation({
     expectation: createPhase24SemanticExpectation({
       expectationId: `synthetic.expectation.${item.kind}`,

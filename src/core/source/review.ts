@@ -1,6 +1,7 @@
 // Phase 25 — explainable local review queue over the existing Phase24 choice.
 
 import { safeSemanticDigest } from '../semanticCoverage/types';
+import { validatePhase24PortfolioSelection } from '../phase24/portfolio';
 import type { Phase24CandidatePortfolio, Phase24PortfolioSelection } from '../phase24/types';
 import { sourceProofGapCode } from './surfaces';
 import type { SourceSurfaceDiscovery } from './surfaces';
@@ -66,6 +67,9 @@ function explanation(input: { readonly row: SourceReviewQueueRow; readonly surfa
 
 /** Rank/explain without changing the Phase24 planner's authority or score. */
 export function buildSourceReviewQueue(input: { readonly discovery: SourceSurfaceDiscovery; readonly portfolio: Phase24CandidatePortfolio; readonly selection: Phase24PortfolioSelection; readonly changeReport?: SourceSurfaceChangeReport }): SourceReviewQueue {
+  // Review is a downstream projection, never a second selector. Reject a
+  // selection made from an older portfolio before deriving any queue rows.
+  validatePhase24PortfolioSelection(input.selection, input.portfolio);
   const selectionByCandidate = new Map(input.selection.rows.map((row) => [row.candidateId, row]));
   const rows = input.discovery.surfaces.map((surface) => {
     const candidate = input.portfolio.candidates.find((entry) => entry.surfaceKey === surface.surfaceId);

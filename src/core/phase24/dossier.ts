@@ -10,12 +10,14 @@ import {
   invalid,
   sortedUnique,
 } from './common';
+import { portfolioCandidateById, validatePhase24CandidatePortfolio } from './portfolio';
 import {
   PHASE24_DOSSIER_VERSION,
   type Phase24BehaviorOwner,
   type Phase24Confidence,
   type Phase24CrossCandidateRelationKind,
   type Phase24Dossier,
+  type Phase24CandidatePortfolio,
   type Phase24OwnerRouting,
   type Phase24ReplayClassification,
   type Phase24SemanticKind,
@@ -77,6 +79,7 @@ const REPLAY_CLASSES: readonly Phase24ReplayClassification[] = [
   'DETERMINISTIC_REPRODUCTION', 'PRECONDITION_DIVERGENCE', 'SOURCE_DRIFT', 'AUTH_DIVERGENCE',
   'ENVIRONMENT_DIVERGENCE', 'SEMANTIC_NON_REPRODUCTION', 'INVALID_REPLAY',
 ];
+const CANDIDATE_DECISION_DIGEST_RE = /^candidate-decision:sha256:[0-9a-f]{24}$/;
 
 function validateDossier(dossier: Phase24Dossier): void {
   assertNoRawArtifactFields(dossier);
@@ -85,6 +88,11 @@ function validateDossier(dossier: Phase24Dossier): void {
   assertId(dossier.invariantId, 'DOSSIER_INVARIANT');
   if (dossier.candidateIds.length < 1 || dossier.candidateIds.length > 2 || dossier.candidateIds.some((id) => !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/.test(id))) invalid('DOSSIER_CANDIDATES');
   if (JSON.stringify(dossier.candidateIds) !== JSON.stringify([...dossier.candidateIds].sort((left, right) => left.localeCompare(right)))) invalid('DOSSIER_CANDIDATE_ORDER');
+  if (dossier.candidateDecisionBindings.length !== dossier.candidateIds.length || JSON.stringify(dossier.candidateDecisionBindings.map((binding) => binding.candidateId)) !== JSON.stringify(dossier.candidateIds)) invalid('DOSSIER_CANDIDATE_BINDING_ORDER');
+  for (const binding of dossier.candidateDecisionBindings) {
+    assertId(binding.candidateId, 'DOSSIER_CANDIDATE_BINDING');
+    if (!CANDIDATE_DECISION_DIGEST_RE.test(binding.decisionDigest)) invalid('DOSSIER_CANDIDATE_DECISION');
+  }
   if (dossier.sourceContracts.length < 1 || dossier.sourceContracts.length > 2) invalid('DOSSIER_SOURCE_COUNT');
   for (const contract of dossier.sourceContracts) {
     assertSourceIdentity(contract, 'DOSSIER_CONTRACT');
@@ -104,6 +112,7 @@ function validateDossier(dossier: Phase24Dossier): void {
     findingKind: dossier.findingKind,
     invariantId: dossier.invariantId,
     candidateIds: dossier.candidateIds,
+    candidateDecisionBindings: dossier.candidateDecisionBindings,
     sourceContracts: dossier.sourceContracts,
     implementationFiles: dossier.implementationFiles,
     ownership: dossier.ownership,
@@ -123,6 +132,7 @@ export function createPhase24Dossier(input: {
   readonly findingKind: Phase24SemanticKind | Phase24CrossCandidateRelationKind;
   readonly invariantId: string;
   readonly candidateIds: readonly string[];
+  readonly candidateDecisionBindings: readonly { readonly candidateId: string; readonly decisionDigest: string }[];
   readonly sourceContracts: readonly { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string; readonly contractId: string }[];
   readonly implementationFiles: readonly string[];
   readonly ownership: Phase24OwnerRouting;
@@ -139,6 +149,7 @@ export function createPhase24Dossier(input: {
     findingKind: input.findingKind,
     invariantId: input.invariantId,
     candidateIds: sortedUnique(input.candidateIds),
+    candidateDecisionBindings: [...input.candidateDecisionBindings].sort((left, right) => left.candidateId.localeCompare(right.candidateId)),
     sourceContracts: [...input.sourceContracts].sort((left, right) => `${left.repoId}:${left.sha}:${left.contractId}`.localeCompare(`${right.repoId}:${right.sha}:${right.contractId}`)),
     implementationFiles: sortedUnique(input.implementationFiles),
     ownership: input.ownership,
@@ -165,4 +176,14 @@ export function createPhase24Dossier(input: {
 
 export function validatePhase24Dossier(dossier: Phase24Dossier): void {
   validateDossier(dossier);
+}
+
+/** Reject a dossier whose candidate decision has moved since it was created. */
+export function validatePhase24DossierAgainstPortfolio(input: { readonly dossier: Phase24Dossier; readonly portfolio: Phase24CandidatePortfolio }): void {
+  validateDossier(input.dossier);
+  validatePhase24CandidatePortfolio(input.portfolio);
+  for (const binding of input.dossier.candidateDecisionBindings) {
+    const candidate = portfolioCandidateById(input.portfolio, binding.candidateId);
+    if (candidate === null || candidate.eligibility !== 'ELIGIBLE' || candidate.deterministicDigest !== binding.decisionDigest) invalid('DOSSIER_CANDIDATE_STALE');
+  }
 }

@@ -101,6 +101,8 @@ test.describe('Phase 25 source surface discovery and Phase 24 bridge', () => {
       expect(integrated.deterministicDigest).toMatch(/^source-phase24-integration:sha256:[0-9a-f]{24}$/);
       const review = buildSourceReviewQueue({ discovery, portfolio: integrated.portfolio, selection: integrated.selection });
       expect(review.selectedCount).toBe(1);
+      const changedPortfolio = buildPhase24CandidatePortfolio({ candidates: discovery.phase24Inputs.map((input, index) => index === 0 ? { ...input, semanticExpectationId: 'expectation.changed' } : input) });
+      expect(() => buildSourceReviewQueue({ discovery, portfolio: changedPortfolio, selection: integrated.selection })).toThrow(/SELECTION_HEADER/);
       expect(review.rows.find((row) => row.surfaceId === read!.surfaceId)?.priorityFactors).toEqual(expect.arrayContaining(['RUNTIME_BOUND', 'READ_ONLY_CONFIDENCE_HIGH', 'SEMANTIC_DEPTH_PROVEN', 'REPLAY_SUPPORTED']));
       expect(explainSourceSurface({ discovery, portfolio: integrated.portfolio, selection: integrated.selection, surfaceId: read!.surfaceId } )?.surfaceId).toBe(read!.surfaceId);
       // Safe handler identities are allowed; source bodies and literal values are not.
