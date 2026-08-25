@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
-import { apiErrorLabel, loadExecutionGraph, loadOverview, loadRunDetail, loadRuns, loadTimeline, subscribeToControlCenterEvents } from './api';
-import type { DataLoadState, ExecutionGraphSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, TimelineSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadOverview, loadRunDetail, loadRuns, loadTimeline, subscribeToControlCenterEvents } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, TimelineSnapshot, ViewId } from './types';
 import { VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -221,6 +221,16 @@ function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly select
   return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TOPOLOGY / EXECUTION GRAPH</p><h1>Trace the bounded run shape.</h1><p>Graph edges are projections of ordered evidence. They do not add execution authority or infer missing events.</p></div><StatusPill value="READY" label={`Run ${selectedRunId}`} /></section><GraphCanvas graph={state.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Event sequence</th></tr></thead><tbody>{state.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td>{formatCategory(node.kind)}</td><td><StatusPill value={node.state} /></td><td>{node.eventSeq === null ? 'Not linked' : String(node.eventSeq)}</td></tr>)}</tbody></table></div></article></div>;
 }
 
+function CampaignView({ summaryState, coverageState, onRetry }: { readonly summaryState: DataLoadState<CampaignSummarySnapshot>; readonly coverageState: DataLoadState<CampaignCoverageSnapshot>; readonly onRetry: () => void }): ReactNode {
+  if (summaryState.kind === 'loading' || coverageState.kind === 'loading') return <LoadingState />;
+  if (summaryState.kind === 'error' || coverageState.kind === 'error') return <DataErrorState title="Campaign intelligence unavailable" onRetry={onRetry} />;
+  if (summaryState.kind !== 'ready' || coverageState.kind !== 'ready') return null;
+  const summary = summaryState.data;
+  const coverage = coverageState.data;
+  const counts = summary.counts;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">CAMPAIGNS / INTELLIGENCE</p><h1>See the shape of coverage.</h1><p>Campaign values are projections of the existing plan and coverage models. The Control Center adds no selector, score, or promotion authority.</p></div><StatusPill value={summary.planState} /></section><section className="metric-grid campaign-metrics"><MetricCard label="Plan state" value={formatCategory(summary.planState)} detail={formatCategory(summary.sourceCurrentness)} tone={statusTone(summary.planState)} /><MetricCard label="Candidates" value={String(counts.candidates)} detail={`${counts.selected} selected / ${counts.excluded} excluded`} /><MetricCard label="Covered contracts" value={String(counts.coveredContracts)} detail={`${coverage.fullyCoveredContractCount} fully covered rows`} tone={counts.coveredContracts > 0 ? 'ready' : 'warning'} /><MetricCard label="Findings" value={String(counts.findings)} detail={`${counts.oracleOnly} oracle-only`} tone={counts.findings > 0 ? 'warning' : 'neutral'} /></section><section className="content-grid"><article className="panel panel-wide"><div className="panel-heading"><div><p className="eyebrow">COVERAGE MATRIX</p><h2>Contract-stage coverage</h2></div><span className="table-limit">Limit {coverage.page.limit}</span></div>{coverage.items.length === 0 ? <div className="mini-state mini-state-warning">No coverage rows reported. Empty coverage does not prove pass.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Member / contract</th><th scope="col">Source</th><th scope="col">Stages</th><th scope="col">Result</th></tr></thead><tbody>{coverage.items.map((row) => <tr key={row.memberId}><td><strong>{row.product ?? 'Unlabelled product'}</strong><small>{row.surface ?? 'Unlabelled surface'} · {row.contractId}</small></td><td><StatusPill value={row.sourceCurrentness} /></td><td><div className="stage-list">{row.stages.map((stage) => <span key={stage.stageCode} className={`stage-chip stage-${statusTone(stage.state)}`}>{formatCategory(stage.stageCode)} · {formatCategory(stage.state)}</span>)}</div></td><td><StatusPill value={row.fullyCovered ? 'READY' : 'WARNING'} label={row.fullyCovered ? 'Fully covered' : 'Gap present'} /></td></tr>)}</tbody></table></div>}</article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GAPS / BLOCKERS</p><h2>What remains unresolved</h2></div><StatusPill value={summary.blockerCodes.length === 0 ? 'READY' : 'WARNING'} label={`${summary.blockerCodes.length} blocker(s)`} /></div><div className="scope-list"><span>Replay gaps</span><strong className={counts.replayGaps > 0 ? 'text-warning' : undefined}>{counts.replayGaps}</strong><span>Minimization gaps</span><strong className={counts.minimizationGaps > 0 ? 'text-warning' : undefined}>{counts.minimizationGaps}</strong><span>Stale source gaps</span><strong className={counts.staleSourceGaps > 0 ? 'text-warning' : undefined}>{counts.staleSourceGaps}</strong><span>Semantic authority gaps</span><strong className={counts.semanticAuthorityGaps > 0 ? 'text-warning' : undefined}>{counts.semanticAuthorityGaps}</strong></div>{summary.reasonCodes.length > 0 ? <div className="callout callout-warning"><strong>Bounded reason codes reported</strong><span>{summary.reasonCodes.length} reason code(s) remain attached to the plan snapshot.</span></div> : <div className="callout"><strong>No reason codes reported</strong><span>This is not a promotion or product-pass claim.</span></div>}</article><article className="panel"><div className="panel-heading"><div><p className="eyebrow">OWNER AUTHORITY</p><h2>Promotion remains separate</h2></div><span className="scope-lock">FROZEN</span></div><p className="panel-intro">Campaign availability is not promotion authority. This view cannot select, execute, approve, or promote a candidate.</p><div className="scope-list"><span>Plan digest</span><strong>{summary.planDigest === null ? 'Not available' : 'Available'}</strong><span>Coverage digest</span><strong>{summary.coverageDigest === null ? 'Not available' : 'Available'}</strong><span>Owner scope</span><strong>Frozen by owner</strong></div></article></section></div>;
+}
+
 function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
   const safety = data.safety;
   const source = data.source;
@@ -296,6 +306,8 @@ function DashboardApp(): ReactNode {
   const [detailState, setDetailState] = useState<DataLoadState<RunDetailSnapshot>>({ kind: 'idle' });
   const [timelineState, setTimelineState] = useState<DataLoadState<TimelineSnapshot>>({ kind: 'idle' });
   const [graphState, setGraphState] = useState<DataLoadState<ExecutionGraphSnapshot>>({ kind: 'idle' });
+  const [campaignSummaryState, setCampaignSummaryState] = useState<DataLoadState<CampaignSummarySnapshot>>({ kind: 'idle' });
+  const [campaignCoverageState, setCampaignCoverageState] = useState<DataLoadState<CampaignCoverageSnapshot>>({ kind: 'idle' });
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
@@ -358,6 +370,26 @@ function DashboardApp(): ReactNode {
   }, [activeView, refreshKey, selectedRunId]);
 
   useEffect(() => {
+    if (activeView !== 'campaigns') return;
+    let cancelled = false;
+    setCampaignSummaryState({ kind: 'loading' });
+    setCampaignCoverageState({ kind: 'loading' });
+    Promise.all([loadCampaignSummary(), loadCampaignCoverage()]).then(([summary, coverage]) => {
+      if (!cancelled) {
+        setCampaignSummaryState({ kind: 'ready', data: summary });
+        setCampaignCoverageState({ kind: 'ready', data: coverage });
+      }
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setCampaignSummaryState({ kind: 'error' });
+        setCampaignCoverageState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey]);
+
+  useEffect(() => {
     if (activeView !== 'execution-graph' || selectedRunId === null) return;
     let cancelled = false;
     setGraphState({ kind: 'loading' });
@@ -383,6 +415,7 @@ function DashboardApp(): ReactNode {
   const renderDataView = (): ReactNode => {
     if (activeView === 'runs') return <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />;
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
+    if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
     if (loadState.kind === 'loading') return <LoadingState />;
     if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
     if (activeView === 'overview') return <OverviewView data={loadState.data} onRefresh={refresh} />;

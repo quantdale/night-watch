@@ -96,6 +96,8 @@ function installFetch(value: OverviewSnapshot = overview): ReturnType<typeof vi.
     [CONTROL_CENTER_API_PATHS.safety]: value.safety,
     [CONTROL_CENTER_API_PATHS.sourceSummary]: value.source,
     '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [], page: { limit: 20, nextCursor: null, truncated: false } },
+    [CONTROL_CENTER_API_PATHS.campaignSummary]: { schemaVersion: 'nightwatch.control-center.campaign.v1', planState: 'UNAVAILABLE', sourceCurrentness: 'UNAVAILABLE', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE', planDigest: null, coverageDigest: null, counts: { candidates: 0, selected: 0, excluded: 0, coveredContracts: 0, executionOnly: 0, oracleOnly: 0, replayGaps: 0, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 0, findings: 0 }, blockerCodes: ['CAMPAIGN_SOURCE_UNAVAILABLE'], reasonCodes: ['SOURCE_UNAVAILABLE'] },
+    '/api/v1/campaign/coverage?limit=50': { schemaVersion: 'nightwatch.control-center.campaign-coverage.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, fullyCoveredContractCount: 0 },
   };
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     expect(init?.method).toBe('GET');
@@ -141,6 +143,9 @@ describe('Control Center UI shell', () => {
     await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
     expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
+    await user.click(primaryNav.getByRole('link', { name: 'Campaign Intelligence' }));
+    expect(await screen.findByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
+    expect(screen.getByText('No coverage rows reported. Empty coverage does not prove pass.')).toBeInTheDocument();
   });
 
   it('contains unavailable service errors without echoing raw error text', async () => {
@@ -229,5 +234,27 @@ describe('Control Center UI shell', () => {
     expect(await screen.findByRole('heading', { name: 'Trace the bounded run shape.' })).toBeVisible();
     expect(screen.getByRole('img', { name: 'Execution graph for run run-01:synthetic' })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/runs/run-01:synthetic/execution-graph', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('preserves campaign counts and coverage gaps without inventing a score', async () => {
+    const user = userEvent.setup();
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
+      [CONTROL_CENTER_API_PATHS.campaignSummary]: { schemaVersion: 'nightwatch.control-center.campaign.v1', planState: 'AVAILABLE', sourceCurrentness: 'CURRENT', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE', planDigest: 'plan:sha256:aaaaaaaaaaaaaaaaaaaaaaaa', coverageDigest: 'coverage:sha256:bbbbbbbbbbbbbbbbbbbbbbbb', counts: { candidates: 3, selected: 2, excluded: 1, coveredContracts: 1, executionOnly: 1, oracleOnly: 1, replayGaps: 1, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 1, findings: 1 }, blockerCodes: [], reasonCodes: [] },
+      '/api/v1/campaign/coverage?limit=50': { schemaVersion: 'nightwatch.control-center.campaign-coverage.v1', items: [{ memberId: 'member-01', product: 'ripple', surface: 'summary', contractId: 'contract-01', sourceCurrentness: 'CURRENT', stages: [{ stageCode: 'EXECUTION', state: 'PROVEN', reasonCodes: [] }, { stageCode: 'REPLAY', state: 'GAP', reasonCodes: ['REPLAY_UNAVAILABLE'] }], gapReasons: ['REPLAY_UNAVAILABLE'], fullyCovered: false }], page: { limit: 50, nextCursor: null, truncated: false }, fullyCoveredContractCount: 0 },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Campaign Intelligence' }));
+    expect(await screen.findByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
+    expect(screen.getByText('summary · contract-01')).toBeInTheDocument();
+    expect(screen.getByText('Gap present')).toBeInTheDocument();
+    expect(screen.getByText('Replay · Gap')).toBeInTheDocument();
+    expect(screen.queryByText('Score', { exact: true })).not.toBeInTheDocument();
   });
 });

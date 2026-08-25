@@ -183,6 +183,30 @@ export interface ExecutionGraphSnapshot {
   readonly truncated: boolean;
 }
 
+export type CampaignPlanState = 'AVAILABLE' | 'EMPTY' | 'BLOCKED' | 'UNAVAILABLE' | 'UNKNOWN';
+export type CampaignSourceCurrentness = 'CURRENT' | 'STALE' | 'UNAVAILABLE' | 'AMBIGUOUS' | 'MISSING' | 'SYNTHETIC_ONLY';
+export type CampaignCoverageState = 'PROVEN' | 'AVAILABLE' | 'PARTIAL' | 'GAP' | 'STALE' | 'UNSUPPORTED' | 'NOT_APPLICABLE';
+
+export interface CampaignSummarySnapshot {
+  readonly schemaVersion: string;
+  readonly planState: CampaignPlanState;
+  readonly sourceCurrentness: CampaignSourceCurrentness;
+  readonly ownerScopeStatus: 'FROZEN_BY_OWNER';
+  readonly ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE';
+  readonly planDigest: string | null;
+  readonly coverageDigest: string | null;
+  readonly counts: Readonly<Record<'candidates' | 'selected' | 'excluded' | 'coveredContracts' | 'executionOnly' | 'oracleOnly' | 'replayGaps' | 'minimizationGaps' | 'staleSourceGaps' | 'semanticAuthorityGaps' | 'findings', number>>;
+  readonly blockerCodes: readonly string[];
+  readonly reasonCodes: readonly string[];
+}
+
+export interface CampaignCoverageSnapshot {
+  readonly schemaVersion: string;
+  readonly items: readonly { readonly memberId: string; readonly product: string | null; readonly surface: string | null; readonly contractId: string; readonly sourceCurrentness: CampaignSourceCurrentness; readonly stages: readonly { readonly stageCode: string; readonly state: CampaignCoverageState; readonly reasonCodes: readonly string[] }[]; readonly gapReasons: readonly string[]; readonly fullyCovered: boolean }[];
+  readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
+  readonly fullyCoveredContractCount: number;
+}
+
 export type DataLoadState<T> =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }

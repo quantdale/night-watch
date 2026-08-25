@@ -5,6 +5,8 @@ import type {
   OverviewSnapshot,
   ReadinessSnapshot,
   ExecutionGraphSnapshot,
+  CampaignCoverageSnapshot,
+  CampaignSummarySnapshot,
   RunDetailSnapshot,
   RunListSnapshot,
   SafetySnapshot,
@@ -18,6 +20,8 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   readiness: '/api/v1/readiness',
   safety: '/api/v1/safety',
   sourceSummary: '/api/v1/source/summary',
+  campaignSummary: '/api/v1/campaign/summary',
+  campaignCoverage: '/api/v1/campaign/coverage',
 });
 
 export class ControlCenterApiError extends Error {
@@ -103,6 +107,15 @@ export function loadExecutionGraph(runId: string): Promise<ExecutionGraphSnapsho
   const safeId = safePathId(runId);
   if (safeId === null) return Promise.reject(new ControlCenterApiError('INVALID_RESPONSE'));
   return fetchSnapshot<ExecutionGraphSnapshot>(`/api/v1/runs/${safeId}/execution-graph`);
+}
+
+export function loadCampaignSummary(): Promise<CampaignSummarySnapshot> {
+  return fetchSnapshot<CampaignSummarySnapshot>(CONTROL_CENTER_API_PATHS.campaignSummary);
+}
+
+export function loadCampaignCoverage(limit = 50): Promise<CampaignCoverageSnapshot> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
+  return fetchSnapshot<CampaignCoverageSnapshot>(`${CONTROL_CENTER_API_PATHS.campaignCoverage}?limit=${boundedLimit}`);
 }
 
 const CONTROL_CENTER_NOTIFICATION_TYPES = ['readiness.changed', 'safety.changed', 'run.updated', 'run.completed', 'campaign.snapshot.changed', 'source.snapshot.changed', 'findings.snapshot.changed'] as const;
