@@ -89,7 +89,7 @@ and source graph data also have list/table fallbacks.
   safe ID, categorical error envelope, deterministic ordering, and explicit
   field mapping with hostile-field leakage tests.
 - Validation commands: typecheck and focused contract tests.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M2 — Build authoritative read-only adapters
 
@@ -100,7 +100,7 @@ and source graph data also have list/table fallbacks.
   is deterministic, bounded, source-currentness preserving, and child-process
   free.
 - Validation commands: focused adapter/graph tests and hardening check.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M3 — Implement hardened loopback HTTP server
 
