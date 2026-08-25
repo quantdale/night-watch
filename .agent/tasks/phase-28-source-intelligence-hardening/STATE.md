@@ -6,7 +6,7 @@ Task ID: phase-28-source-intelligence-hardening
 Phase: 28-EVIDENCE-DRIVEN-SOURCE-INTELLIGENCE-HARDENING
 Title: Nightwatch Phase 28 — Evidence-Driven Source-Intelligence Hardening and Exact Producer-Flow Expansion
 Authorization class: PHASE_28_EVIDENCE_DRIVEN_SOURCE_INTELLIGENCE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
 Last validated implementation SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
 Last substantive checkpoint SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
@@ -19,7 +19,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
-PHASE_28_STATUS: IN_PROGRESS
+PHASE_28_STATUS: COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI
 PHASE_27_STATUS: COMPLETE_LOCAL_SOURCE_SYNTHETIC (historical, unchanged)
 PHASE_26_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION (historical, unchanged)
 PHASE_25_STATUS: COMPLETE_LOCAL_SOURCE_EXPANSION (historical, unchanged)
@@ -38,24 +38,22 @@ local/source/synthetic validation cone.
 
 ## Current Milestone
 
-M8 — profiling, compatibility review, documentation truth, and checkpoint qualification.
+COMPLETE — M9 terminal validation and synchronized Git closure.
 
 ## Work In Progress
 
-The fresh census and producer admission gate are closed for the current
-snapshot: zero strict direct-literal local producer examples were found.
-Taxonomy v3, precise flow diagnostics, source/token/index/branch budgets,
-cache/currentness invalidation, deterministic taxonomy deltas, and performance
-proxies are focused-green. The operator and quality-gate seams are integrated;
-the durable architecture, roadmap, decision, README, and current-state
-documentation now record the current census without rewriting historical
-Phase 25–27 records. No raw sibling source or runtime value has been
-persisted.
+None — the fresh census and producer admission gate are
+closed for the current snapshot: zero strict direct-literal local producer
+examples were found. Taxonomy v3, precise flow diagnostics,
+source/token/index/branch budgets, cache/currentness invalidation,
+deterministic taxonomy deltas, performance proxies, operator integration,
+full local gates, clean qualification, and canonical/isolated parity are
+complete. No raw sibling source or runtime value has been persisted.
 
 ## Exact Next Action
 
-Commit the reconciled documentation checkpoint, then run the local/clean
-quality gates and complete canonical/isolated full-suite qualification.
+STOP — Phase 28 is complete. A successor must begin with a fresh live
+Git/source census and may not reopen Phase 27 or broaden owner scope.
 
 ## Completed Milestones
 
@@ -87,6 +85,13 @@ quality gates and complete canonical/isolated full-suite qualification.
 - M7 — completed the Phase 28 pathological lexical/resolver fixture matrix:
   10/10 focused and 49/49 combined synthetic tests, with no false-positive
   admission and no privacy leakage.
+- M8 — completed profiling, compatibility review, documentation truth, and
+  canonical qualification. The first full run exposed one transient
+  cancellation-fixture timing failure; the exact test passed in four narrow
+  reruns, and a second canonical run passed 2,438/2,438 with 16 skips.
+- M9 — completed topology-correct isolated qualification, full validation,
+  continuity closure, and final Git synchronization. The isolated rerun passed
+  2,438/2,438 with the same 16 skips and zero failures.
 
 ## Files Changed
 
@@ -130,11 +135,16 @@ Operator parity: `source-gaps` and `surfaces` JSON/human projections matched
 on all semantic counters, taxonomy digest, and portfolio counts; timing is
 advisory only. Exact-head Actions observation: run `32819574544`, job
 `97714690619`, exact head `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`, zero
-steps, classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Typecheck, hardening
-check, quality-gate spec, gate inventory, semantic compatibility, synthetic,
-owner provenance, and continuity/audit are green; the authoritative local,
-clean, project-truth, and full-suite cone remains pending after the
-documentation checkpoint.
+steps, classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`. Canonical full
+Playwright at documentation checkpoint `b58624b7dfb040dca68c402186ae36dae91e4b88`
+passed 2,438 of 2,438 executed tests with 16 skips and zero failures in the
+second run. An earlier run had one timing-sensitive cancellation-fixture
+failure; the exact test passed once standalone and 3/3 under
+`--repeat-each=3`, so no assertion was weakened. The topology-correct
+isolated rerun passed the same 2,438/16/0 totals. Typecheck, hardening check,
+quality-gate spec, gate inventory, semantic compatibility, synthetic, owner
+provenance, continuity/audit, project truth, local gate, and clean gate are
+green at the validated documentation checkpoint.
 
 ## Blockers
 
@@ -158,6 +168,12 @@ zero.
   Phase 24 metrics above.
 - Producer admission census: PASS — bounded ephemeral structural census,
   zero strict candidates; no raw values retained.
+- Canonical complete Playwright: PASS — 2,454 discovered; 2,438 passed,
+  16 skipped, 0 failed in 12.0 minutes.
+- Isolated complete Playwright: PASS — topology-correct detached checkout at
+  `b58624b7dfb040dca68c402186ae36dae91e4b88`; 2,454 discovered, 2,438 passed,
+  16 skipped, 0 failed in 10.4 minutes. Canonical and isolated totals and
+  skip counts matched exactly.
 
 ## Deferred / Follow-Up
 
@@ -168,12 +184,12 @@ PHP data flow remain fail-closed exclusions.
 
 ## Resume Recipe
 
-Read ACTIVE_TASK.md, this task's SPEC.md, PLAN.md, and STATE.md; inspect Git
-status/diff; run the smallest decisive operator projection test; update this
-STATE.md; continue the exact next action. Do not rerun broad source discovery
-unless a milestone requires current-source evidence.
+Phase 28 is complete. STOP. Do not resume this task or rerun broad source
+discovery; a future task must start from a fresh live Git/source census.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0–M7 are closed and focused-green; M8 documentation checkpoint
-qualification and M9 final validation/Git closure remain.
+COMPLETE — M0–M9 are closed; local/source/synthetic validation, clean
+qualification, canonical/isolated parity, continuity-v2 closure, and Git
+synchronization are complete. External CI remains separately classified as a
+zero-step billing/platform block, not green evidence.

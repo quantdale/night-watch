@@ -3,13 +3,13 @@
 Task ID: phase-28-source-intelligence-hardening
 Phase: 28-EVIDENCE-DRIVEN-SOURCE-INTELLIGENCE-HARDENING
 Title: Nightwatch Phase 28 — Evidence-Driven Source-Intelligence Hardening and Exact Producer-Flow Expansion
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/phase-28-source-intelligence-hardening
 Starting SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
 Last validated implementation SHA: 7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c
-Last checkpoint: M6/M7 — source graph, review/operator, Phase 24 seams, taxonomy delta, and adversarial campaign focused-green.
-Current milestone: M8 — profiling, compatibility review, documentation truth, and checkpoint qualification.
-Next action: Commit the reconciled documentation checkpoint, then run the local/clean quality gates and complete canonical/isolated full-suite qualification.
+Last checkpoint: M9 — complete validation, canonical/isolated parity, and terminal continuity closure.
+Current milestone: COMPLETE — M9 terminal validation and synchronized Git closure.
+Next action: STOP — Phase 28 is complete; select any successor only from a fresh live Git/source census.
 Authorization class: PHASE_28_EVIDENCE_DRIVEN_SOURCE_INTELLIGENCE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
@@ -32,7 +32,5 @@ values must not enter task files, diagnostics, caches, findings, or Git.
 
 ## Resume recipe
 
-Read this file, then `.agent/tasks/phase-28-source-intelligence-hardening/`
-`SPEC.md`, `PLAN.md`, and `STATE.md`; inspect Git status/diff and continue the
-exact next action recorded in STATE.md. Do not reopen Phase 27 or broaden the
-owner scope.
+Phase 28 is complete. Do not resume this task, reopen Phase 27, or broaden the
+owner scope; any successor must begin with a fresh live Git/source census.

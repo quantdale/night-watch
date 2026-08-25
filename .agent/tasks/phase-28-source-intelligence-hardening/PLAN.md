@@ -2,7 +2,7 @@
 
 Task ID: phase-28-source-intelligence-hardening
 Phase: 28-EVIDENCE-DRIVEN-SOURCE-INTELLIGENCE-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 09979f6d8f22dc28d9a07bdf99e263578ee0b3e9
 Authorization class: PHASE_28_EVIDENCE_DRIVEN_SOURCE_INTELLIGENCE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -107,11 +107,15 @@ evidence gate.
   Status: COMPLETE — Phase 28 focused 10/10 and combined synthetic 49/49,
   with zero false-positive admissions.
 - M8 — profiling/baseline, compatibility review, documentation truth, and
-  checkpoint qualification. Status: IN_PROGRESS — current docs are reconciled;
-  clean local qualification remains before final closure.
+  checkpoint qualification. Status: COMPLETE — advisory performance baseline,
+  compatibility review, documentation reconciliation, and full-suite
+  qualification are complete.
 - M9 — complete validation cone, disposable clean qualification, canonical/
   isolated parity, exact-head CI observation, final report, and synchronized
-  `main`. Status: PENDING.
+  `main`. Status: COMPLETE — all local/source/synthetic gates pass; canonical
+  and topology-correct isolated Playwright both pass with exact 2,454-test
+  parity; exact-head CI was observed with zero executed steps and classified
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`.
 
 ## Decision Log
 
@@ -158,3 +162,11 @@ All required focused and full validation passes, no false-positive admission,
 privacy surface remains clean, documentation and continuity v2 agree, clean
 canonical and isolated qualification pass, exact-head CI is observed and
 classified truthfully, and local `main` equals `origin/main` with a clean tree.
+
+## Terminal Decision
+
+Phase 28 remains hardening-first. The current source snapshot contains no
+exact producer-flow family that passes the frozen admission gate, and the
+remaining exclusions are intentional fail-closed boundaries. No Phase 29
+campaign is preselected; the successor rule is STOP unless a new live census
+shows a meaningful implementation or concrete hardening defect.

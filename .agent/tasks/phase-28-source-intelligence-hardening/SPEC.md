@@ -3,7 +3,7 @@
 Task ID: `phase-28-source-intelligence-hardening`
 Phase: `28-EVIDENCE-DRIVEN-SOURCE-INTELLIGENCE-HARDENING`
 Title: Nightwatch Phase 28 — Evidence-Driven Source-Intelligence Hardening and Exact Producer-Flow Expansion
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: `PHASE_28_EVIDENCE_DRIVEN_SOURCE_INTELLIGENCE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY`
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
