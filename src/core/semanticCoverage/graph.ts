@@ -197,6 +197,35 @@ function addSourceSurfaceLineage(input: {
       addNode(input.nodes, responseNode);
       addEdge(input.edges, edge(operationNode.nodeId, responseNode.nodeId, "PRODUCES_RESPONSE_CONTRACT"));
     }
+    const responseFlow = surface.contract.responseFlow;
+    if (responseFlow?.status === "PROVEN" && responseFlow.rootDeclaration !== null) {
+      const flowStatus: ContractGraphNode["status"] = surface.currentness === "CURRENT" ? "AVAILABLE" : "STALE";
+      const declarationNodes = new Map<string, ContractGraphNode>();
+      for (const declaration of responseFlow.declarations) {
+        const declarationNode = relationNode("RESPONSE_DECLARATION", `response-declaration:${declaration.declarationId}`, flowStatus);
+        declarationNodes.set(declaration.declarationId, declarationNode);
+        addNode(input.nodes, declarationNode);
+      }
+      const rootNode = declarationNodes.get(responseFlow.rootDeclaration.declarationId);
+      if (rootNode === undefined) invalid("RESPONSE_FLOW_ROOT_MISSING");
+      addEdge(input.edges, edge(operationNode.nodeId, rootNode.nodeId, "RESOLVES_RESPONSE_FLOW"));
+      for (const flowEdge of responseFlow.edges) {
+        const fromNode = declarationNodes.get(flowEdge.fromDeclarationId);
+        const toNode = declarationNodes.get(flowEdge.toDeclarationId);
+        if (fromNode === undefined || toNode === undefined) invalid("RESPONSE_FLOW_EDGE_MISSING");
+        const callsiteNode = relationNode("RESPONSE_FLOW_CALLSITE", `response-callsite:${flowEdge.callsiteId}`, flowStatus);
+        addNode(input.nodes, callsiteNode);
+        addEdge(input.edges, edge(fromNode.nodeId, callsiteNode.nodeId, "RESOLVES_RESPONSE_FLOW"));
+        addEdge(input.edges, edge(callsiteNode.nodeId, toNode.nodeId, "RESOLVES_RESPONSE_FLOW"));
+      }
+      if (responseNode !== null) {
+        for (const terminalId of responseFlow.terminalDeclarationIds) {
+          const terminalNode = declarationNodes.get(terminalId);
+          if (terminalNode === undefined) invalid("RESPONSE_FLOW_TERMINAL_MISSING");
+          addEdge(input.edges, edge(terminalNode.nodeId, responseNode.nodeId, "PRODUCES_RESPONSE_CONTRACT"));
+        }
+      }
+    }
     for (const semanticId of [...surface.contract.semanticContractIds].sort()) {
       const semanticNode = relationNode("SEMANTIC_CONTRACT", `semantic:${semanticId}`, surface.contract.semanticProof === "PROVEN" ? "AVAILABLE" : "UNSUPPORTED");
       addNode(input.nodes, semanticNode);

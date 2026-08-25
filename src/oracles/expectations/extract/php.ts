@@ -50,7 +50,7 @@ const MAX_ROUTE_BLOCK_LINES = 60;
 export type PhpToken =
   | { readonly t: 'WORD'; readonly v: string }
   | { readonly t: 'VARIABLE'; readonly v: string }
-  | { readonly t: 'STRING'; readonly v: string }
+  | { readonly t: 'STRING'; readonly v: string; readonly oversized?: boolean }
   | { readonly t: 'NUMBER'; readonly v: string }
   | { readonly t: 'PUNCT'; readonly v: string }
   | { readonly t: 'OP'; readonly v: string };
@@ -59,9 +59,6 @@ export function tokenizePhp(sourceText: string): PhpToken[] {
   const tokens: PhpToken[] = [];
   const n = sourceText.length;
   let i = 0;
-  const fail = (): never => {
-    throw new Error('PHP_LEX:token-too-long');
-  };
   while (i < n) {
     if (tokens.length > MAX_TOKENS) throw new Error('PHP_LEX:token-limit');
     const ch = sourceText[i]!;
@@ -89,19 +86,32 @@ export function tokenizePhp(sourceText: string): PhpToken[] {
     if (ch === "'") {
       let j = i + 1;
       let out = '';
+      let oversized = false;
+      const append = (value: string): void => {
+        if (oversized) return;
+        if (out.length + value.length > MAX_KEY_LENGTH) {
+          // String contents are never semantic authority here. Preserve only
+          // the fact that this was an oversized opaque literal so callers can
+          // reject it when it appears in a structural-key position while
+          // still allowing unrelated string values to be lexed.
+          out = '';
+          oversized = true;
+          return;
+        }
+        out += value;
+      };
       while (j < n) {
         const c = sourceText[j]!;
         if (c === '\\' && (sourceText[j + 1] === "'" || sourceText[j + 1] === '\\')) {
-          out += sourceText[j + 1];
+          append(sourceText[j + 1]!);
           j += 2;
           continue;
         }
         if (c === "'") break;
-        out += c;
-        if (out.length > MAX_KEY_LENGTH) fail();
+        append(c);
         j += 1;
       }
-      tokens.push({ t: 'STRING', v: out });
+      tokens.push(oversized ? { t: 'STRING', v: '', oversized: true } : { t: 'STRING', v: out });
       i = Math.min(j + 1, n);
       continue;
     }
@@ -110,24 +120,32 @@ export function tokenizePhp(sourceText: string): PhpToken[] {
     if (ch === '"') {
       let j = i + 1;
       let out = '';
+      let oversized = false;
+      const append = (value: string): void => {
+        if (oversized) return;
+        if (out.length + value.length > MAX_KEY_LENGTH) {
+          out = '';
+          oversized = true;
+          return;
+        }
+        out += value;
+      };
       while (j < n) {
         const c = sourceText[j]!;
         if (c === '\\') {
-          out += c;
-          if (out.length > MAX_KEY_LENGTH) fail();
+          append(c);
           j += 1;
           if (j < n) {
-            out += sourceText[j]!;
+            append(sourceText[j]!);
             j += 1;
           }
           continue;
         }
         if (c === '"') break;
-        out += c;
-        if (out.length > MAX_KEY_LENGTH) fail();
+        append(c);
         j += 1;
       }
-      tokens.push({ t: 'STRING', v: out });
+      tokens.push(oversized ? { t: 'STRING', v: '', oversized: true } : { t: 'STRING', v: out });
       i = Math.min(j + 1, n);
       continue;
     }
@@ -260,7 +278,7 @@ export function extractLiteralKeys(tokens: PhpToken[], openIndex: number): strin
       continue;
     }
     if (depth !== 0) continue;
-    if (token.t === 'STRING') {
+    if (token.t === 'STRING' && token.oversized !== true) {
       const next = tokens[i + 1];
       if (next !== undefined && next.t === 'OP' && next.v === '=>') {
         if (keys.length < MAX_ROW_LITERAL_KEYS) keys.push(token.v);

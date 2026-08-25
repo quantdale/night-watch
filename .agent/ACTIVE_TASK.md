@@ -1,37 +1,35 @@
 # Active Task
 
-Task ID: phase-26-mechanical-contract-coverage-expansion
-Phase: 26-MECHANICAL-RESPONSE-SEMANTIC-CONTRACT-COVERAGE
-Title: Nightwatch Phase 26 — Mechanical Response & Semantic Contract Coverage Expansion
-Status: COMPLETE
-Task directory: .agent/tasks/phase-26-mechanical-contract-coverage-expansion
-Starting SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-Last validated implementation SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-Last checkpoint: M12 — terminal certification, exact-head CI classification,
-durable documentation, and synchronized main.
-Current milestone: COMPLETE — M12 terminal closure.
-Next action: STOP. Phase 26 is complete; any successor requires a fresh task
-and fresh authorization.
-Authorization class: PHASE_26_MECHANICAL_RESPONSE_SEMANTIC_CONTRACT_COVERAGE_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: phase-27-exact-response-flow-joins
+Phase: 27-EXACT-INTERPROCEDURAL-RESPONSE-FLOW
+Title: Nightwatch Phase 27 — Exact Interprocedural PHP Helper, Resource, and DTO Response-Flow Intelligence
+Status: IN_PROGRESS
+Task directory: .agent/tasks/phase-27-exact-response-flow-joins
+Starting SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
+Last validated implementation SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
+Last checkpoint: M9 — bounded resolver, graph/currentness/operator integration, adversarial corpus, and synthetic campaign extension.
+Current milestone: M10 — compatibility, hardening, quality-gate inventory, and clean Node20 qualification.
+Next action: Run the complete authoritative local/clean validation cone, repair failures, complete the report/project truth, then checkpoint and push on synchronized main.
+Authorization class: PHASE_27_EXACT_INTERPROCEDURAL_RESPONSE_FLOW_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: a7ac26b6b1bb2287620b64302e60e66e468ad5c8
-LAST_VALIDATED_IMPLEMENTATION_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bb3a41b735e5dece4170712075e44ccf4a02f716
-LAST_DOCUMENTATION_CHECKPOINT_SHA: e7354e284eeae3dc64801ff8da2a7240e98a7b9a
+STARTING_SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
+LAST_VALIDATED_IMPLEMENTATION_SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ff9ca34bfc6f5b08cad641a0c3d61a0bf49d5171
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
 ## Routing and safety
 
-Phase 25 remains immutable completed history. Phase 26 is local/source/
-synthetic only: no DEV launcher, authentication-state read, product request,
-browser observation, database/datastore/cloud/infrastructure operation,
-Alphaus write, external publication/message, or repeated CI retry is
-authorized. Source text remains ephemeral behind the established confined
-read-only source boundary; Phase 24 remains the sole candidate authority.
+Phase 26 remains immutable terminal history. Phase 27 is local/source/
+synthetic only: no DEV/NEXT/production contact, auth-state read, product or
+browser observation, mutation, database/datastore/cloud/infrastructure
+operation, Alphaus write, installation, publication/message/issue creation,
+canonical self-development promotion, or AI-driven runtime execution is
+authorized. Source text remains ephemeral behind the confined read-only
+source boundary; Phase 24 remains the sole candidate authority.
 
 ## Resume recipe
 
-Do not resume this task. It is terminal. A future response-flow expansion
-must use a new continuity-v2 task, fresh source/currentness evidence, and the
-same local/read-only/synthetic safety boundary.
+Read this file, then the Phase 27 SPEC.md, PLAN.md, and STATE.md; inspect Git
+status/diff and continue the exact next action in STATE.md. Do not reopen
+Phase 26.

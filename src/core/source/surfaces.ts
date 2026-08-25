@@ -19,7 +19,8 @@ import { buildPhase24CandidatePortfolio, prioritizePhase24Portfolio } from '../p
 import type { Phase24CandidatePortfolio, Phase24PortfolioSelection, Phase24SourceSnapshotAnalysis } from '../phase24/types';
 import { scanSource } from './scan';
 import { sourceSurfaceCacheKey, type RealSourceSurfaceCache } from './cache';
-import type { RealSourceScanConfig, RealSourceSnapshotInventory, SourceScanLanguage } from './scanTypes';
+import { createResponseFlowIndex, REAL_SOURCE_RESPONSE_FLOW_VERSION, resolveResponseFlow, type ResponseFlowProof } from './responseFlow';
+import { sourceContentDigest, type RealSourceScanConfig, type RealSourceSnapshotInventory, type SourceScanLanguage } from './scanTypes';
 import type { SiblingSourceAccess } from './siblingSource';
 import {
   REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION,
@@ -384,39 +385,57 @@ function resolveSurfaceJoins(input: { readonly access: SiblingSourceAccess; read
   return { joins, handlerState, requestState, responseState };
 }
 
-function analyzerDiagnostics(observations: readonly AnalyzerObservation[]): readonly SourceAnalyzerDiagnostic[] {
-  return observations.map((observation) => ({
+function analyzerDiagnostics(observations: readonly AnalyzerObservation[], responseFlow: ResponseFlowProof | null): readonly SourceAnalyzerDiagnostic[] {
+  const diagnostics: SourceAnalyzerDiagnostic[] = observations.map((observation) => ({
     analyzerId: observation.analyzerId,
     analyzerVersion: observation.analyzerVersion,
     status: observation.status,
     behaviorClass: observation.behaviorClass,
     rejectionCode: observation.rejectionCode,
+    flowRejectionCode: null,
     evidenceDigest: observation.evidenceDigest,
-  })).sort((left, right) => left.analyzerId.localeCompare(right.analyzerId) || left.evidenceDigest.localeCompare(right.evidenceDigest));
+  }));
+  if (responseFlow !== null && responseFlow.status !== 'NOT_APPLICABLE') diagnostics.push({
+    analyzerId: 'PHP_RESPONSE_FLOW',
+    analyzerVersion: REAL_SOURCE_RESPONSE_FLOW_VERSION,
+    status: responseFlow.status === 'PROVEN' ? 'MECHANICALLY_PROVABLE' : 'REJECTED',
+    behaviorClass: null,
+    rejectionCode: responseFlow.status === 'PROVEN' ? null : 'UNSUPPORTED_SYNTAX',
+    flowRejectionCode: responseFlow.rejectionCode,
+    evidenceDigest: responseFlow.proofDigest,
+  });
+  return diagnostics.sort((left, right) => left.analyzerId.localeCompare(right.analyzerId) || left.evidenceDigest.localeCompare(right.evidenceDigest));
 }
 
-function responseEvidence(input: { readonly operation: SourceOperationDescriptor; readonly observations: readonly AnalyzerObservation[]; readonly handlerState: SourceJoinState; readonly responseReferenceState: SourceJoinState | null }): { readonly responseContractId: string | null; readonly responseEvidenceDigest: string | null; readonly semanticContractIds: readonly string[]; readonly responseProof: SourceJoinState; readonly semanticProof: SourceJoinState } {
+function responseEvidence(input: { readonly operation: SourceOperationDescriptor; readonly observations: readonly AnalyzerObservation[]; readonly handlerState: SourceJoinState; readonly responseReferenceState: SourceJoinState | null; readonly responseFlow: ResponseFlowProof | null }): { readonly responseContractId: string | null; readonly responseEvidenceDigest: string | null; readonly semanticContractIds: readonly string[]; readonly responseProof: SourceJoinState; readonly semanticProof: SourceJoinState; readonly responseFlow: ResponseFlowProof | null } {
   if (input.handlerState !== 'PROVEN' || (input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN')) {
     const state = input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN' ? input.responseReferenceState : input.handlerState;
-    return { responseContractId: null, responseEvidenceDigest: null, semanticContractIds: [], responseProof: state, semanticProof: state };
+    return { responseContractId: null, responseEvidenceDigest: null, semanticContractIds: [], responseProof: state, semanticProof: state, responseFlow: input.responseFlow };
   }
   const proven = input.observations.filter((observation) => observation.status === 'MECHANICALLY_PROVABLE' && observation.shape !== null);
-  if (proven.length === 0) return { responseContractId: null, responseEvidenceDigest: null, semanticContractIds: [], responseProof: 'UNSUPPORTED_REFERENCE', semanticProof: 'UNSUPPORTED_REFERENCE' };
+  if (proven.length === 0) return { responseContractId: null, responseEvidenceDigest: null, semanticContractIds: [], responseProof: 'UNSUPPORTED_REFERENCE', semanticProof: 'UNSUPPORTED_REFERENCE', responseFlow: input.responseFlow };
   const shapes = proven.map((observation) => ({ analyzerId: observation.analyzerId, behaviorClass: observation.behaviorClass, shape: observation.shape, evidenceDigest: observation.evidenceDigest })).sort((left, right) => left.evidenceDigest.localeCompare(right.evidenceDigest));
-  const responseEvidenceDigest = sourceEvidenceDigest({ kind: 'response-contract', operationId: input.operation.operationId, shapes });
-  const responseContractId = safeSemanticDigest({ operationId: input.operation.operationId, shapes }, 'response-contract');
-  const semanticContractIds = shapes.map((shape) => safeSemanticDigest({ operationId: input.operation.operationId, shape }, 'semantic-contract')).sort();
-  return { responseContractId, responseEvidenceDigest, semanticContractIds, responseProof: 'PROVEN', semanticProof: 'PROVEN' };
+  const flowIdentity = input.responseFlow?.status === 'PROVEN' ? {
+    version: input.responseFlow.schemaVersion,
+    proofDigest: input.responseFlow.proofDigest,
+    depth: input.responseFlow.depth,
+    declarations: input.responseFlow.declarations.map((declaration) => ({ declarationId: declaration.declarationId, repoId: declaration.repoId, sha: declaration.sourceSha, path: declaration.relativePath, contentDigest: declaration.contentDigest })).sort((left, right) => left.declarationId.localeCompare(right.declarationId)),
+    edges: input.responseFlow.edges,
+  } : null;
+  const responseEvidenceDigest = sourceEvidenceDigest({ kind: 'response-contract', operationId: input.operation.operationId, shapes, flow: flowIdentity });
+  const responseContractId = safeSemanticDigest({ operationId: input.operation.operationId, shapes, flow: flowIdentity }, 'response-contract');
+  const semanticContractIds = shapes.map((shape) => safeSemanticDigest({ operationId: input.operation.operationId, shape, flow: flowIdentity }, 'semantic-contract')).sort();
+  return { responseContractId, responseEvidenceDigest, semanticContractIds, responseProof: 'PROVEN', semanticProof: 'PROVEN', responseFlow: input.responseFlow };
 }
 
-function contractEvidence(operation: SourceOperationDescriptor, observations: readonly AnalyzerObservation[], joins: ResolvedSurfaceJoins): SourceContractEvidence {
+function contractEvidence(operation: SourceOperationDescriptor, analysis: { readonly observations: readonly AnalyzerObservation[]; readonly responseFlow: ResponseFlowProof | null }, joins: ResolvedSurfaceJoins): SourceContractEvidence {
   const fields = routeFields(operation.routeTemplate);
   const requestCore = { kind: 'request-contract', operationId: operation.operationId, method: operation.method, routeTemplate: operation.routeTemplate, fields };
   const requestEvidenceDigest = sourceEvidenceDigest(requestCore);
   const requestContractId = safeSemanticDigest(requestCore, 'request-contract');
   const requestProof = operation.requestReference === null ? operation.routeProof === 'PROVEN' ? 'PROVEN' : 'UNSUPPORTED_REFERENCE' : joins.requestState ?? 'UNSUPPORTED_REFERENCE';
-  const response = responseEvidence({ operation, observations, handlerState: joins.handlerState, responseReferenceState: joins.responseState });
-  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof, responseAnalyzerDiagnostics: analyzerDiagnostics(observations) };
+  const response = responseEvidence({ operation, observations: analysis.observations, handlerState: joins.handlerState, responseReferenceState: joins.responseState, responseFlow: analysis.responseFlow });
+  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof, responseAnalyzerDiagnostics: analyzerDiagnostics(analysis.observations, response.responseFlow), responseFlow: response.responseFlow };
 }
 
 export function sourceProofGapCode(proof: SourceJoinState, diagnostics: readonly SourceAnalyzerDiagnostic[], kind: 'RESPONSE' | 'SEMANTIC'): string | null {
@@ -424,6 +443,8 @@ export function sourceProofGapCode(proof: SourceJoinState, diagnostics: readonly
   if (proof !== 'UNSUPPORTED_REFERENCE') return `${kind}_${proof}`;
   const rejectionCodes = [...new Set(diagnostics.map((diagnostic) => diagnostic.rejectionCode).filter((code): code is string => code !== null))].sort();
   if (rejectionCodes.length > 0) return `${kind}_ANALYZER_${rejectionCodes.join('+')}`;
+  const flowRejectionCodes = [...new Set(diagnostics.map((diagnostic) => diagnostic.flowRejectionCode).filter((code): code is string => code !== null))].sort();
+  if (flowRejectionCodes.length > 0) return `${kind}_FLOW_${flowRejectionCodes.join('+')}`;
   return `${kind}_ANALYZER_UNPROVEN`;
 }
 
@@ -573,12 +594,37 @@ export function toPhase24CandidateInput(surface: RealSourceSurfaceDescriptor): P
   };
 }
 
-function observationsFor(input: { readonly access: SiblingSourceAccess; readonly inventory: RealSourceSnapshotInventory; readonly operation: SourceOperationDescriptor; readonly handlerState: SourceJoinState }): readonly AnalyzerObservation[] {
-  if (input.operation.handlerPath === null || input.handlerState !== 'PROVEN') return [];
+interface SourceResponseAnalysis {
+  readonly observations: readonly AnalyzerObservation[];
+  readonly responseFlow: ResponseFlowProof | null;
+}
+
+function mergeFlowObservations(observationsByDeclaration: readonly (readonly AnalyzerObservation[])[]): readonly AnalyzerObservation[] {
+  const all = observationsByDeclaration.flat();
+  if (observationsByDeclaration.length <= 1) return all;
+  const provenKeys = observationsByDeclaration.map((observations) => new Set(observations
+    .filter((observation) => observation.status === 'MECHANICALLY_PROVABLE' && observation.shape !== null)
+    .map((observation) => `${observation.analyzerId}|${observation.behaviorClass ?? ''}|${JSON.stringify(observation.shape)}`)));
+  const firstKeys = [...(provenKeys[0] ?? new Set())].sort();
+  const compatible = provenKeys.every((set) => set.size === firstKeys.length && firstKeys.every((key) => set.has(key)));
+  const commonSet = new Set(compatible ? firstKeys : []);
+  const merged = all.filter((observation) => observation.status === 'MECHANICALLY_PROVABLE' && observation.shape !== null && commonSet.has(`${observation.analyzerId}|${observation.behaviorClass ?? ''}|${JSON.stringify(observation.shape)}`));
+  const rejected = all.filter((observation) => observation.status === 'REJECTED');
+  const seen = new Set<string>();
+  return [...merged, ...rejected].filter((observation) => {
+    const key = `${observation.analyzerId}|${observation.status}|${observation.evidenceDigest}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((left, right) => left.analyzerId.localeCompare(right.analyzerId) || left.evidenceDigest.localeCompare(right.evidenceDigest));
+}
+
+function observationsFor(input: { readonly access: SiblingSourceAccess; readonly inventory: RealSourceSnapshotInventory; readonly operation: SourceOperationDescriptor; readonly handlerState: SourceJoinState; readonly responseFlowIndex: ReturnType<typeof createResponseFlowIndex> }): SourceResponseAnalysis {
+  if (input.operation.handlerPath === null || input.handlerState !== 'PROVEN') return { observations: [], responseFlow: null };
   const match = input.inventory.files.find((file) => file.repoId === input.operation.repository && file.relativePath === input.operation.handlerPath && file.status === 'ELIGIBLE');
-  if (match === undefined || match.language === null || match.language === 'YAML') return [];
+  if (match === undefined || match.language === null || match.language === 'YAML') return { observations: [], responseFlow: null };
   const sourceText = input.access.reader.readFile(input.operation.repository, match.relativePath);
-  if (sourceText === null) return [];
+  if (sourceText === null) return { observations: [], responseFlow: null };
   const artifact: SourceAnalyzerArtifact = {
     artifactId: `surface-artifact-${input.operation.sourceSha.slice(0, 12)}`,
     language: match.language as Exclude<SourceScanLanguage, 'YAML'>,
@@ -590,7 +636,41 @@ function observationsFor(input: { readonly access: SiblingSourceAccess; readonly
     observationSurfaces: ['API', 'SYNTHETIC'],
     includeExtendedResponseProof: true,
   };
-  return analyzeSourceArtifact(artifact);
+  const flow = resolveResponseFlow({ index: input.responseFlowIndex, operation: input.operation });
+  if (match.contentDigest === null || sourceContentDigest(sourceText) !== match.contentDigest) {
+    if (flow.status === 'NOT_APPLICABLE') return { observations: [], responseFlow: null };
+    const staleFlow = { ...flow, status: 'REJECTED' as const, rejectionCode: 'RESPONSE_DECLARATION_STALE' as const };
+    return { observations: [], responseFlow: { ...staleFlow, proofDigest: safeSemanticDigest(staleFlow, 'response-flow') } };
+  }
+  const direct = analyzeSourceArtifact(artifact);
+  if (flow.status !== 'PROVEN') return { observations: direct, responseFlow: flow.status === 'REJECTED' ? flow : null };
+  const terminalSources = flow.terminalDeclarationIds.map((declarationId) => {
+    const declaration = flow.declarations.find((candidate) => candidate.declarationId === declarationId);
+    const sourceText = declaration === undefined ? null : input.access.reader.readFile(declaration.repoId, declaration.relativePath);
+    return { declaration, sourceText };
+  });
+  const staleTerminal = terminalSources.some(({ declaration, sourceText }) => declaration === undefined || sourceText === null || sourceContentDigest(sourceText) !== declaration.contentDigest);
+  if (staleTerminal) {
+    const staleFlow = { ...flow, status: 'REJECTED' as const, rejectionCode: 'RESPONSE_DECLARATION_STALE' as const };
+    return { observations: direct, responseFlow: { ...staleFlow, proofDigest: safeSemanticDigest(staleFlow, 'response-flow') } };
+  }
+  const terminalObservations = terminalSources.map(({ declaration, sourceText }) => {
+    if (declaration === undefined || sourceText === null) return [] as readonly AnalyzerObservation[];
+    return analyzeSourceArtifact({
+      artifactId: `surface-artifact-${declaration.sourceSha.slice(0, 12)}-flow-${declaration.declarationId.slice(-8)}`,
+      language: 'PHP',
+      repoId: declaration.repoId,
+      sha: declaration.sourceSha,
+      relativePath: declaration.relativePath,
+      symbol: declaration.symbol,
+      sourceText,
+      observationSurfaces: ['API', 'SYNTHETIC'],
+      includeExtendedResponseProof: true,
+    });
+  });
+  const merged = mergeFlowObservations(terminalObservations);
+  const hasProvenShape = merged.some((observation) => observation.status === 'MECHANICALLY_PROVABLE' && observation.shape !== null);
+  return hasProvenShape ? { observations: merged, responseFlow: flow } : { observations: direct, responseFlow: { ...flow, status: 'REJECTED', rejectionCode: 'RESPONSE_BRANCH_INCOMPLETE', proofDigest: safeSemanticDigest({ ...flow, status: 'REJECTED', rejectionCode: 'RESPONSE_BRANCH_INCOMPLETE' }, 'response-flow') } };
 }
 
 /** Discover operations/surfaces from one bounded source inventory. */
@@ -600,6 +680,7 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const cached = cacheKey === null ? undefined : input.cache?.get(cacheKey);
   if (cached !== undefined) return cached;
   const operations: SourceOperationDescriptor[] = [];
+  const responseFlowIndex = createResponseFlowIndex({ access: input.access, inventory });
   let routeFilesConsidered = 0;
   let routeOperationsTruncated = 0;
   let analyzerInvocations = 0;
@@ -637,18 +718,21 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const surfaces: RealSourceSurfaceDescriptor[] = [];
   for (const operation of operations) {
     const joins = resolveSurfaceJoins({ access: input.access, inventory, operation });
-    const observations = observationsFor({ access: input.access, inventory, operation, handlerState: joins.handlerState });
-    const contract = contractEvidence(operation, observations, joins);
+    const analysis = observationsFor({ access: input.access, inventory, operation, handlerState: joins.handlerState, responseFlowIndex });
+    const contract = contractEvidence(operation, analysis, joins);
+    const responseFlowPaths = analysis.responseFlow?.declarations.map((declaration) => declaration.relativePath) ?? [];
     const references = [operation.handlerPath, operation.requestReference, operation.responseReference].filter((value): value is string => value !== null);
-    const relevantFileEvidence = [operation.sourcePath, ...references]
+    const relevantFileEvidence = [operation.sourcePath, ...references, ...responseFlowPaths]
       .map((relativePath) => inventory.files.find((file) => file.repoId === operation.repository && file.relativePath === relativePath))
       .filter((file): file is (typeof inventory.files)[number] => file !== undefined)
       .map((file) => ({ path: file.relativePath, status: file.status, contentDigest: file.contentDigest, byteCount: file.byteCount }))
       .sort((left, right) => left.path.localeCompare(right.path));
     const surfaceEvidenceDigest = sourceEvidenceDigest({ kind: 'source-surface-evidence', operationEvidenceDigest: operation.evidenceDigest, files: relevantFileEvidence, joins: joins.joins.map((join) => ({ kind: join.kind, state: join.state, toIdentity: join.toIdentity, evidenceDigest: join.evidenceDigest })), contract: { requestEvidenceDigest: contract.requestEvidenceDigest, responseEvidenceDigest: contract.responseEvidenceDigest, semanticContractIds: contract.semanticContractIds } });
-    surfaces.push(descriptor(operation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references], joins.joins, contract));
+    const flowJoins = analysis.responseFlow?.status === 'PROVEN' ? analysis.responseFlow.edges.map((edge) => ({ kind: 'RESPONSE_FLOW' as const, fromIdentity: edge.fromDeclarationId, toIdentity: edge.toDeclarationId, state: 'PROVEN' as const, evidenceDigest: edge.callsiteId })) : [];
+    surfaces.push(descriptor(operation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins], contract));
   }
   surfaces.sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
+  const responseFlows = surfaces.map((surface) => surface.contract.responseFlow).filter((flow): flow is NonNullable<typeof flow> => flow !== null);
   const counters: SourceSurfaceDiscoveryCounters = {
     routeFilesConsidered,
     routeOperationsFound: operations.length,
@@ -663,6 +747,13 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     joinsAttempted: surfaces.reduce((count, surface) => count + surface.joins.length, 0),
     joinsProven: surfaces.reduce((count, surface) => count + surface.joins.filter((join) => join.state === 'PROVEN').length, 0),
     joinsRejected: surfaces.reduce((count, surface) => count + surface.joins.filter((join) => join.state !== 'PROVEN').length, 0),
+    responseFlowAttempts: responseFlows.length,
+    responseFlowProven: responseFlows.filter((flow) => flow.status === 'PROVEN').length,
+    responseFlowRejected: responseFlows.filter((flow) => flow.status === 'REJECTED').length,
+    responseFlowResolvedCalls: responseFlows.reduce((count, flow) => count + flow.edges.length, 0),
+    responseFlowDependencyDeclarations: responseFlows.reduce((count, flow) => count + flow.declarations.length, 0),
+    responseFlowDependencyEdges: responseFlows.reduce((count, flow) => count + flow.edges.length, 0),
+    responseFlowMaxDepth: responseFlows.reduce((maximum, flow) => Math.max(maximum, flow.depth), 0),
     analyzerInvocations,
     responseProofGapCounts: gapCounts(surfaces.map((surface) => sourceProofGapCode(surface.contract.responseProof, surface.contract.responseAnalyzerDiagnostics, 'RESPONSE'))),
     semanticProofGapCounts: gapCounts(surfaces.map((surface) => sourceProofGapCode(surface.contract.semanticProof, surface.contract.responseAnalyzerDiagnostics, 'SEMANTIC'))),

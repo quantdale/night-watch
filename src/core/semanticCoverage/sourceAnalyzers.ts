@@ -30,6 +30,7 @@ import {
   type SourceArtifactInput,
   type SourceLanguage,
 } from "./types";
+import { REAL_SOURCE_RESPONSE_FLOW_VERSION } from "../source/responseFlow";
 
 /**
  * The compatibility-cone analyzers retain their Phase 20/21 identity. New
@@ -312,6 +313,7 @@ function parsePhpReturnArray(tokens: readonly PhpToken[], openIndex: number, bod
   const parsed: PhpReturnArrayEntry[] = [];
   const keys: string[] = [];
   for (const entry of entries) {
+    if (entry[0]?.t === "STRING" && entry[0].oversized === true && entry[1]?.t === "OP" && entry[1].v === "=>") return null;
     if (entry[1]?.t === "OP" && entry[1]?.v === "=>" && entry[0]?.t !== "STRING") return null;
     const key = entry[0]?.t === "STRING" && entry[1]?.t === "OP" && entry[1]?.v === "=>" ? entry[0].v : null;
     if (key !== null) {
@@ -824,8 +826,9 @@ export function analyzerSetIdentity(): string {
 export function sourceSurfaceAnalyzerSetIdentity(): string {
   return sourceEvidenceDigest({
     version: REAL_SOURCE_RESPONSE_ANALYZER_VERSION,
+    responseFlowVersion: REAL_SOURCE_RESPONSE_FLOW_VERSION,
     legacyAnalyzerSet: analyzerSetIdentity(),
-    extendedFamilies: ["PHP_RETURN_ALIAS_ROOT_TYPE", "PHP_RETURN_ALIAS_OBJECT_FIELDS", "PHP_RETURN_ALIAS_FIELD_TYPE", "PHP_RETURN_BRANCH_ROOT_TYPE", "PHP_RETURN_BRANCH_OBJECT_FIELDS", "PHP_RETURN_BRANCH_FIELD_TYPE", "PHP_RETURN_ROOT_TYPE", "PHP_RETURN_OBJECT_FIELDS", "PHP_RETURN_FIELD_TYPE"],
+    extendedFamilies: ["PHP_RESPONSE_FLOW", "PHP_RETURN_ALIAS_ROOT_TYPE", "PHP_RETURN_ALIAS_OBJECT_FIELDS", "PHP_RETURN_ALIAS_FIELD_TYPE", "PHP_RETURN_BRANCH_ROOT_TYPE", "PHP_RETURN_BRANCH_OBJECT_FIELDS", "PHP_RETURN_BRANCH_FIELD_TYPE", "PHP_RETURN_ROOT_TYPE", "PHP_RETURN_OBJECT_FIELDS", "PHP_RETURN_FIELD_TYPE"],
   });
 }
 

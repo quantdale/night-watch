@@ -6,7 +6,7 @@ import { sourceProofGapCode } from './surfaces';
 import type { SourceSurfaceDiscovery } from './surfaces';
 import type { SourceSurfaceChangeReport } from './surfaceTypes';
 
-export const REAL_SOURCE_REVIEW_QUEUE_VERSION = 'nightwatch.real-source-review-queue.v2' as const;
+export const REAL_SOURCE_REVIEW_QUEUE_VERSION = 'nightwatch.real-source-review-queue.v3' as const;
 
 export interface SourceReviewQueueRow {
   readonly surfaceId: string;
@@ -21,6 +21,11 @@ export interface SourceReviewQueueRow {
   readonly reasons: readonly string[];
   readonly proofGapCodes: readonly string[];
   readonly analyzerIds: readonly string[];
+  readonly responseFlowStatus: 'NOT_PRESENT' | 'PROVEN' | 'REJECTED';
+  readonly responseFlowDepth: number | null;
+  readonly responseFlowDeclarationCount: number;
+  readonly responseFlowRejectionCode: string | null;
+  readonly responseFlowProofDigest: string | null;
   readonly missingProof: readonly string[];
   readonly priorityFactors: readonly string[];
   readonly explanation: readonly string[];
@@ -43,6 +48,13 @@ function explanation(input: { readonly row: SourceReviewQueueRow; readonly surfa
   else values.push(`READ_ONLY_${input.surface.operation.readOnlyClassification}`);
   if (input.surface.contract.semanticProof === 'PROVEN') values.push('SEMANTIC_CONTRACT_PROVEN');
   else values.push('SEMANTIC_CONTRACT_UNPROVEN');
+  const flow = input.surface.contract.responseFlow;
+  if (flow?.status === 'PROVEN') {
+    values.push('RESPONSE_FLOW_PROVEN', `RESPONSE_FLOW_DEPTH_${flow.depth}`, `RESPONSE_FLOW_DECLARATIONS_${flow.declarations.length}`);
+  } else if (flow?.status === 'REJECTED') {
+    values.push('RESPONSE_FLOW_REJECTED');
+    if (flow.rejectionCode !== null) values.push(`RESPONSE_FLOW_REJECTED_${flow.rejectionCode}`);
+  }
   values.push(...input.row.proofGapCodes.map((code) => `PROOF_GAP_${code}`));
   values.push(...input.row.missingProof.map((proof) => `MISSING_${proof}`));
   if (input.surface.replayCapability === 'SUPPORTED') values.push('REPLAY_SUPPORTED');
@@ -75,6 +87,11 @@ export function buildSourceReviewQueue(input: { readonly discovery: SourceSurfac
         sourceProofGapCode(surface.contract.semanticProof, surface.contract.responseAnalyzerDiagnostics, 'SEMANTIC'),
       ].filter((code): code is string => code !== null))].sort(),
       analyzerIds: [...new Set(surface.contract.responseAnalyzerDiagnostics.map((diagnostic) => diagnostic.analyzerId))].sort(),
+      responseFlowStatus: surface.contract.responseFlow?.status === 'PROVEN' ? 'PROVEN' : surface.contract.responseFlow?.status === 'REJECTED' ? 'REJECTED' : 'NOT_PRESENT',
+      responseFlowDepth: surface.contract.responseFlow?.depth ?? null,
+      responseFlowDeclarationCount: surface.contract.responseFlow?.declarations.length ?? 0,
+      responseFlowRejectionCode: surface.contract.responseFlow?.rejectionCode ?? null,
+      responseFlowProofDigest: surface.contract.responseFlow?.proofDigest ?? null,
       missingProof: [...new Set([
         surface.contract.responseProof === 'PROVEN' ? null : 'RESPONSE_CONTRACT',
         surface.contract.semanticProof === 'PROVEN' ? null : 'SEMANTIC_CONTRACT',

@@ -4,6 +4,7 @@
 
 import type { SourceScanLanguage } from './scanTypes';
 import type { Phase24CandidateInvalidationLedger } from '../phase24/types';
+import type { ResponseFlowProof } from './responseFlow';
 
 export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v2' as const;
 export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v1' as const;
@@ -14,7 +15,7 @@ export type SourceReadOnlyClassification = 'PROVEN_READ_ONLY' | 'READ_ONLY_METHO
 export type SourceRuntimeBinding = 'RUNTIME_BOUND_EXACT' | 'RUNTIME_BOUND_PARTIAL' | 'SOURCE_ONLY' | 'RUNTIME_ONLY' | 'AMBIGUOUS' | 'STALE_BINDING' | 'SOURCE_VERSION_MISMATCH';
 export type SourceComponentProvenance = 'EXACT_COMPONENT' | 'REPOSITORY_ONLY' | 'AMBIGUOUS_COMPONENT' | 'UNRESOLVED';
 export type SourceJoinState = 'PROVEN' | 'AMBIGUOUS' | 'MISSING_SYMBOL' | 'MULTIPLE_SYMBOLS' | 'OUTSIDE_SCOPE' | 'UNSUPPORTED_REFERENCE' | 'SOURCE_STALE';
-export type SourceJoinKind = 'ROUTE_HANDLER' | 'HANDLER_REQUEST_CONTRACT' | 'HANDLER_RESPONSE_CONTRACT' | 'OPERATION_SCHEMA';
+export type SourceJoinKind = 'ROUTE_HANDLER' | 'HANDLER_REQUEST_CONTRACT' | 'HANDLER_RESPONSE_CONTRACT' | 'OPERATION_SCHEMA' | 'RESPONSE_FLOW';
 export type SourceSurfaceLifecycle = 'DISCOVERED' | 'MECHANICALLY_PROVEN' | 'PROJECTABLE' | 'SCENARIO_BOUND' | 'REPLAY_SUPPORTED' | 'MINIMIZATION_SUPPORTED' | 'DIFFERENTIAL_CAPABLE' | 'FULL_LIFECYCLE';
 export type SourceSurfaceProjectionCapability = 'PROJECTABLE' | 'NOT_PROJECTABLE' | 'UNPROVEN';
 export type SourceSurfaceReplayCapability = 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
@@ -27,6 +28,8 @@ export interface SourceAnalyzerDiagnostic {
   readonly status: 'MECHANICALLY_PROVABLE' | 'REJECTED';
   readonly behaviorClass: string | null;
   readonly rejectionCode: string | null;
+  /** Phase 27 categorical flow reason; never source text. */
+  readonly flowRejectionCode: string | null;
   readonly evidenceDigest: string;
 }
 
@@ -103,6 +106,7 @@ export interface SourceContractEvidence {
   readonly semanticContractIds: readonly string[];
   readonly semanticProof: SourceJoinState;
   readonly responseAnalyzerDiagnostics: readonly SourceAnalyzerDiagnostic[];
+  readonly responseFlow: ResponseFlowProof | null;
 }
 
 export interface SourceEvidenceJoin {
@@ -154,6 +158,13 @@ export interface SourceSurfaceDiscoveryCounters {
   readonly joinsAttempted: number;
   readonly joinsProven: number;
   readonly joinsRejected: number;
+  readonly responseFlowAttempts: number;
+  readonly responseFlowProven: number;
+  readonly responseFlowRejected: number;
+  readonly responseFlowResolvedCalls: number;
+  readonly responseFlowDependencyDeclarations: number;
+  readonly responseFlowDependencyEdges: number;
+  readonly responseFlowMaxDepth: number;
   readonly analyzerInvocations: number;
   readonly responseProofGapCounts: readonly SourceProofGapCount[];
   readonly semanticProofGapCounts: readonly SourceProofGapCount[];

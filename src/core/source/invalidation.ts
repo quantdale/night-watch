@@ -63,8 +63,17 @@ function joinFingerprint(surface: RealSourceSurfaceDescriptor, kind: 'ROUTE_HAND
 function contractFingerprint(surface: RealSourceSurfaceDescriptor, kind: 'REQUEST' | 'RESPONSE' | 'SEMANTIC'): string {
   const contract = surface.contract;
   if (kind === 'REQUEST') return JSON.stringify({ id: contract.requestContractId, evidence: contract.requestEvidenceDigest, proof: contract.requestProof });
-  if (kind === 'RESPONSE') return JSON.stringify({ id: contract.responseContractId, evidence: contract.responseEvidenceDigest, proof: contract.responseProof });
-  return JSON.stringify({ ids: contract.semanticContractIds, proof: contract.semanticProof });
+  const flow = contract.responseFlow === null ? null : {
+    schemaVersion: contract.responseFlow.schemaVersion,
+    status: contract.responseFlow.status,
+    depth: contract.responseFlow.depth,
+    rejectionCode: contract.responseFlow.rejectionCode,
+    proofDigest: contract.responseFlow.proofDigest,
+    declarations: contract.responseFlow.declarations.map((declaration) => ({ declarationId: declaration.declarationId, repoId: declaration.repoId, sourceSha: declaration.sourceSha, relativePath: declaration.relativePath, contentDigest: declaration.contentDigest })).sort((left, right) => left.declarationId.localeCompare(right.declarationId)),
+    edges: contract.responseFlow.edges,
+  };
+  if (kind === 'RESPONSE') return JSON.stringify({ id: contract.responseContractId, evidence: contract.responseEvidenceDigest, proof: contract.responseProof, flow });
+  return JSON.stringify({ ids: contract.semanticContractIds, proof: contract.semanticProof, flow });
 }
 
 function inventoryChangeReport(prior: RealSourceSnapshotInventory | null, current: RealSourceSnapshotInventory): { readonly addedFiles: readonly SourceFileChangeRecord[]; readonly removedFiles: readonly SourceFileChangeRecord[]; readonly changedFiles: readonly SourceFileChangeRecord[]; readonly unchangedFileCount: number } {
