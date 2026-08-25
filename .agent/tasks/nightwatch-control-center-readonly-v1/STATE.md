@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Status: IN_PROGRESS
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
-Last substantive checkpoint SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
+Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+Last substantive checkpoint SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M8 — source intelligence view, bounded graph fixture, and rendered unavailable-source smoke passed at 8481a0e.
+Last checkpoint: M11 — deterministic route measurement and bundle-size guard passed at e5ac2ff.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
+LAST_VALIDATED_IMPLEMENTATION_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
 
@@ -30,11 +30,11 @@ authority.
 
 ## Current Milestone
 
-Milestone ID: M9
+Milestone ID: M12
 Milestone status: IN_PROGRESS
-What is being attempted: Wire owner-local sanitized finding metadata and dossier
-readiness into a bounded Findings view without raw evidence, paths, secrets,
-source, bodies, traces, or customer values.
+What is being attempted: Run complete repository and Control Center validation,
+close continuity truthfully, and fast-forward/push the durable checkpoint to
+origin main without force.
 
 ## Completed Milestones
 
@@ -80,19 +80,36 @@ source, bodies, traces, or customer values.
   250-node/500-edge ceilings. The source graph adapter passed a deterministic
   1,000-descriptor fixture; UI tests passed 9/9, the build policy passed, and
   the built local-server browser smoke showed the unavailable source state.
+- M9 — COMPLETE: the Findings view projects only owner-local sanitized finding
+  metadata and dossier readiness, distinguishes unavailable/empty states, and
+  keeps evidence bodies, source paths, credentials, traces, and customer
+  values outside the DOM. UI tests passed 10/10, the build policy passed, and
+  the built local-server browser smoke showed the unavailable findings state.
+- M10 — COMPLETE: server adversarial coverage now includes findings/source
+  query rejection, oversized static assets, port collision, and safe lifecycle;
+  UI coverage checks local keyboard targets and no embedded elements; CSS
+  contrast and invalid ARIA were corrected. The focused Control Center suite
+  passed 24/24, UI tests passed 11/11, and built mobile/reduced-motion axe
+  checks reported zero violations with no browser errors.
+- M11 — COMPLETE: the build verifier now enforces a 512 KiB total bundle cap
+  and reports artifact sizes; repeated seven-route snapshots are byte-identical
+  in a synthetic server fixture, with route timing recorded without sensitive
+  output. The build measured 257,198 bytes total (235,758 JS / 20,896 CSS),
+  and the performance server test passed.
 
 ## Work In Progress
 
-M9 findings implementation is beginning on `campaign/nightwatch-control-center`.
-The shell, overview, safety, campaign, run, timeline, graph, advisory refresh,
-and source intelligence layers are complete; sanitized findings, hardening,
-performance, and integration remain.
+M12 integration is beginning on `campaign/nightwatch-control-center`. The
+Control Center implementation, source/finding privacy boundary, adversarial
+hardening, and deterministic measurement are complete; full repository gates,
+clean qualification, continuity closure, and push remain.
 
 ## Exact Next Action
 
-Wire the findings route into a bounded UI projection, add available/empty/
-unsafe dossier fixtures and DOM privacy assertions, then run the focused
-findings, nested UI, and root safety checks.
+Run the full quality/clean/agent/project suites plus the Control Center focused
+and built-browser checks. Inspect the final privacy surface and diff, complete
+terminal task records, fast-forward `main`, push `origin main`, and verify
+`HEAD == origin/main` with a clean tree.
 
 ## Files Changed
 
@@ -129,6 +146,16 @@ findings, nested UI, and root safety checks.
 | `ui/control-center/src/types.ts` | M8 source surface and graph DTO shapes | modified |
 | `ui/control-center/src/App.test.tsx` | M8 unavailable and synthetic source graph fixtures | modified |
 | `tests/unit/controlCenterAdapters.test.ts` | M8 1,000-descriptor graph ceiling fixture | modified |
+| `ui/control-center/src/App.tsx` | M9 sanitized findings index and privacy boundary | modified |
+| `ui/control-center/src/api.ts` | M9 findings snapshot method | modified |
+| `ui/control-center/src/types.ts` | M9 findings DTO shape | modified |
+| `ui/control-center/src/App.test.tsx` | M9 unavailable and raw-field containment fixtures | modified |
+| `tests/unit/controlCenterServer.test.ts` | M10 route/static/port hardening fixtures | modified |
+| `ui/control-center/src/App.test.tsx` | M10 keyboard/control and embedded-element invariants | modified |
+| `ui/control-center/src/App.tsx` | M10 invalid-ARIA hardening | modified |
+| `ui/control-center/src/styles.css` | M10 accessible contrast tokens | modified |
+| `ui/control-center/scripts/verify-build.mjs` | M11 bundle-size measurement and cap | modified |
+| `tests/unit/controlCenterServer.test.ts` | M11 deterministic route timing fixture | modified |
 
 ## Validation Ledger
 
@@ -195,6 +222,25 @@ findings, nested UI, and root safety checks.
 - `npm run control-center:ui:test` after M8 source changes — PASS: 2 files / 9 tests passed.
 - `npm run control-center:ui:build` after M8 source changes — PASS: 3 built files, no external references or embedded content.
 - Built UI served by `node bin/nightwatch-control-center.mjs --port=7313` — PASS M8 browser smoke: Source Intelligence rendered `Follow proof, currentness, and capability.` and the explicit unavailable/empty inventory wording; no overlay or console errors; browser and server closed afterward.
+- `npm run control-center:ui:typecheck` after M9 findings changes — PASS.
+- `npm run control-center:ui:test` after M9 findings changes — PASS: 2 files / 10 tests passed, including raw-field DOM containment assertions.
+- `npm run control-center:ui:build` after M9 findings changes — PASS: 3 built files, no external references or embedded content.
+- `npm run typecheck` after M9 findings changes — PASS.
+- `npm run hardening:check` after M9 findings changes — PASS: offline structural invariants hold.
+- Built UI served by `node bin/nightwatch-control-center.mjs --port=7314` — PASS M9 browser smoke: Findings rendered `Keep the signal, lose the raw evidence.` and the explicit unavailable state; no overlay or console errors; browser and server closed afterward.
+- `npm run typecheck` after M10 hardening — PASS.
+- `npm run hardening:check` after M10 hardening — PASS: offline structural invariants hold.
+- `npx playwright test tests/unit/controlCenterContracts.test.ts tests/unit/controlCenterAdapters.test.ts tests/unit/controlCenterServer.test.ts --project=nightwatch --workers=1` after M10 hardening — PASS: 24 passed, 0 failed.
+- `npm run control-center:ui:typecheck` after M10 hardening — PASS.
+- `npm run control-center:ui:test` after M10 hardening — PASS: 2 files / 11 tests passed.
+- `npm run control-center:ui:build` after M10 hardening — PASS: 3 built files, no external references or embedded content.
+- Built UI served by `node bin/nightwatch-control-center.mjs --port=7316` — PASS M10 browser hardening: mobile 390×844 with dark/reduced-motion emulation; axe reported 0 violations on Overview and Safety, Findings remained keyboard-visible, and page errors/console errors were empty. Browser and server closed afterward.
+- `npm run control-center:ui:build` after M11 measurement changes — PASS: 3 built files, 257,198 bytes total (235,758 JS / 20,896 CSS), below the 512 KiB cap; no external references or embedded content.
+- `npx playwright test tests/unit/controlCenterServer.test.ts --project=nightwatch --workers=1` after M11 measurement changes — PASS: 8 passed, 0 failed; deterministic seven-route repeat output and local performance measurement reported `coldStartMs=0 routeBatchMs=7 routes=7 repeatDeterministic=true`.
+- `npm run typecheck` after M11 measurement changes — PASS.
+- `npm run hardening:check` after M11 measurement changes — PASS: offline structural invariants hold.
+- `npm run control-center:ui:typecheck` after M11 measurement changes — PASS.
+- `npm run control-center:ui:test` after M11 measurement changes — PASS: 2 files / 11 tests passed.
 
 ## Decisions Made During This Task
 
@@ -232,9 +278,9 @@ infrastructure, sibling-repository, or external publication operation.
 ## Resume Recipe
 
 Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M9 action above. Preserve loopback-only,
+live Git status and continue the exact M12 action above. Preserve loopback-only,
 read-only, whitelist, source-authority, and owner-scope constraints.
 
 ## Completion Snapshot
 
-Not complete. M0–M8 are recorded; M9 findings and later validation remain.
+Not complete. M0–M11 are recorded; M12 integration and continuity closure remain.

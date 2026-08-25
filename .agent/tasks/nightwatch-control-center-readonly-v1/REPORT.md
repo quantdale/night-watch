@@ -1,12 +1,12 @@
 # Nightwatch Control Center — Read-Only Local V1 Report
 
 - Starting SHA: `8feea0092f361e80bfaf23f29a7d45df05c7fada`
-- Validated implementation anchor: `8481a0e83681fa787fa965e5fea784b08dab09b0`
+- Validated implementation anchor: `e5ac2fff0f8840c80bb48a57ca0df56cba39c90d`
 - Task objective: build a loopback-only, read-only Control Center over
   existing Nightwatch authorities.
 - Planning branch: inspected with `git show`; not checked out, merged, or
   modified.
-- Current status: M8 complete; M9 Sanitized Findings work is active.
+- Current status: M11 complete; M12 Whole-repo integration, continuity, and push is active.
 - M0 baseline: project truth, typecheck, hardening, specification,
   inventory, local gate, and Node 20 clean gate all passed. Local receipt is
   `receipt:sha256:4bd1c4342e1727e40b8e4370`; clean receipt is
@@ -46,8 +46,22 @@
   unavailable/stale states with a table fallback. The adapter passed a
   deterministic 1,000-descriptor fixture under 250-node/500-edge ceilings; UI
   tests passed 9/9; build policy and built local-server browser smoke passed.
+- M9 implementation checkpoint `26e0c6d`: sanitized owner-local finding index
+  with explicit unavailable/empty states and metadata-only privacy boundary.
+  UI tests passed 10/10, build policy passed, root typecheck/hardening passed,
+  and built local-server browser smoke verified the unavailable findings state.
+- M10 implementation checkpoint `b96257b`: adversarial route/query/static/port
+  coverage, keyboard/control invariants, and accessible contrast/ARIA hardening.
+  The focused Control Center suite passed 24/24; UI tests passed 11/11; built
+  mobile/reduced-motion axe checks reported zero violations and no browser
+  errors.
+- M11 implementation checkpoint `e5ac2ff`: bundle verifier enforces a 512 KiB
+  cap and reports artifact sizes; deterministic repeated route measurement
+  records bounded timing without sensitive output. The built bundle measured
+  257,198 bytes total (235,758 JS / 20,896 CSS), and the performance server
+  test passed.
 - Safety events: NONE.
-- Remaining work: M9–M12 findings, security,
+- Remaining work: M12 integration, validation, continuity closure, and push.
   performance, integration, validation, documentation, and push.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

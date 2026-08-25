@@ -6,15 +6,15 @@ Title: Nightwatch Control Center — Read-Only Local V1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
-Last checkpoint: M8 — source intelligence view, bounded graph fixture, and rendered unavailable-source smoke passed at 8481a0e.
-Current milestone: M9 — Sanitized Findings view.
-Next action: Wire owner-local sanitized finding metadata and dossier readiness into a bounded Findings view without raw evidence, paths, secrets, source, bodies, traces, or customer values.
+Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+Last checkpoint: M11 — deterministic route measurement and bundle-size guard passed at e5ac2ff.
+Current milestone: M12 — Whole-repo integration, docs, continuity, and push.
+Next action: Run the complete existing gates plus Control Center checks, update the final continuity snapshot, fast-forward main, push without force, and verify local HEAD equals origin/main with a clean tree.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 8481a0e83681fa787fa965e5fea784b08dab09b0
+LAST_VALIDATED_IMPLEMENTATION_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

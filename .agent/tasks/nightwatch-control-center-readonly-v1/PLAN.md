@@ -170,7 +170,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: explicit DTO allowlist; no arbitrary paths, raw
   evidence, secrets, source, bodies, traces, or customer values.
 - Validation commands: findings redaction and browser DOM/console leakage tests.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M10 — Security, privacy, accessibility, failure hardening
 
@@ -181,7 +181,7 @@ and source graph data also have list/table fallbacks.
   keyboard/ARIA/reduced-motion cases pass; no Critical/High remains.
 - Validation commands: complete Control Center focused suite plus browser
   accessibility and safety checks.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M11 — Performance and determinism qualification
 
@@ -191,7 +191,7 @@ and source graph data also have list/table fallbacks.
   memory/SSE measurements, deterministic repeat output, explicit limits, no
   unbounded polling or sensitive global cache.
 - Validation commands: bounded performance/determinism tests and build.
-- Status: NOT_STARTED
+- Status: COMPLETE
 
 ### M12 — Whole-repo integration, docs, continuity, and push
 
@@ -203,7 +203,7 @@ and source graph data also have list/table fallbacks.
   non-forced push, and `HEAD == origin/main`.
 - Validation commands: current full quality/clean/agent/project suites plus
   canonical full Playwright and Control Center E2E.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ## Validation Strategy
 
