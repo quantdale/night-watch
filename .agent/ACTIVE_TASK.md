@@ -6,15 +6,15 @@ Title: Nightwatch Executor Campaign — Phase 24 Authority Lifecycle + Whole-Rep
 Status: IN_PROGRESS
 Task directory: .agent/tasks/phase24-authority-lifecycle-hardening
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-Last validated implementation SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
+Last validated implementation SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
 Last checkpoint: M0 — continuity checkpoint classification repaired and full agent-state validation passed; M1 is now active.
 Current milestone: M1 — Phase 24 authority/invalidation graph audit and adversarial matrix.
 Next action: Map the Phase 24 authority graph and artifact currentness consumers, then build the bounded synthetic adversarial matrix.
 Authorization class: PHASE_24_AUTHORITY_LIFECYCLE_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
+LAST_VALIDATED_IMPLEMENTATION_SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

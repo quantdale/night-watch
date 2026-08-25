@@ -4,8 +4,8 @@ Task ID: phase24-authority-lifecycle-hardening
 Phase: 24-AUTHORITY-LIFECYCLE-HARDENING
 Status: IN_PROGRESS
 Starting SHA: 755cb2e611355011c9d249142b2c2bf4f112327a
-Last validated implementation SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
-Last substantive checkpoint SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
+Last validated implementation SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
+Last substantive checkpoint SHA: 401b5b6c0bc621200ad0db505e60b093a6c77135
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## Current handoff
