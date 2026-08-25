@@ -9,6 +9,7 @@ const generatedNamespaceReferences = [
   /https:\/\/react\.dev\/errors\//g,
   /http:\/\/www\.w3\.org\/(?:2000\/svg|1998\/Math\/MathML|XML\/1998\/namespace|1999\/xlink)/g,
 ];
+const MAX_BUNDLE_BYTES = 512 * 1024;
 
 function hasForbiddenExternalReference(content) {
   let normalized = content;
@@ -39,4 +40,9 @@ for (const file of files) {
   if (/<(?:img|iframe|object|embed)\b/i.test(content)) throw new Error('CONTROL_CENTER_UI_UNAPPROVED_EMBED');
 }
 
-process.stdout.write(`[control-center-ui] PASS: ${files.length} built files, no external references or embedded content\n`);
+const fileStats = await Promise.all(files.map((file) => stat(file)));
+const bundleBytes = fileStats.reduce((total, fileStat) => total + fileStat.size, 0);
+if (bundleBytes > MAX_BUNDLE_BYTES) throw new Error('CONTROL_CENTER_UI_BUNDLE_TOO_LARGE');
+const javascriptBytes = files.reduce((total, file, index) => total + (file.endsWith('.js') ? fileStats[index].size : 0), 0);
+const stylesheetBytes = files.reduce((total, file, index) => total + (file.endsWith('.css') ? fileStats[index].size : 0), 0);
+process.stdout.write(`[control-center-ui] PASS: ${files.length} built files, ${bundleBytes} bytes total (${javascriptBytes} js / ${stylesheetBytes} css), no external references or embedded content\n`);

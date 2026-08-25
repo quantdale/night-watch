@@ -227,6 +227,27 @@ test.describe('Control Center loopback server', () => {
     }
   });
 
+  test('keeps bounded snapshot output deterministic and records local route timing', async () => {
+    const coldStartStarted = performance.now();
+    const { handle, port } = await startServer();
+    try {
+      const coldStartMs = Math.round(performance.now() - coldStartStarted);
+      const paths = ['/healthz', '/api/v1/meta', '/api/v1/readiness', '/api/v1/safety', '/api/v1/source/summary', '/api/v1/source/surfaces?limit=50', '/api/v1/findings?limit=50'];
+      const routeStarted = performance.now();
+      const first = await Promise.all(paths.map((pathname) => request(port, pathname)));
+      const routeBatchMs = Math.round(performance.now() - routeStarted);
+      const second = await Promise.all(paths.map((pathname) => request(port, pathname)));
+      expect(first.map((result) => result.status)).toEqual(paths.map(() => 200));
+      expect(second.map((result) => result.body)).toEqual(first.map((result) => result.body));
+      expect(first.reduce((total, result) => total + Buffer.byteLength(result.body), 0)).toBeGreaterThan(0);
+      expect(coldStartMs).toBeLessThan(1_000);
+      expect(routeBatchMs).toBeLessThan(1_000);
+      console.log(`[control-center-perf] coldStartMs=${coldStartMs} routeBatchMs=${routeBatchMs} routes=${paths.length} repeatDeterministic=true`);
+    } finally {
+      await handle.close();
+    }
+  });
+
   test('SSE is notification-only, bounded, and reconnect-safe through authoritative GETs', async () => {
     const { handle, port } = await startServer();
     const event: ControlCenterEventDto = {
