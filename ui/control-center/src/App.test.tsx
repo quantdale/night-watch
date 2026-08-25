@@ -70,6 +70,18 @@ const overview: OverviewSnapshot = {
     checks: [],
     blockedOperationClasses: [],
   },
+  source: {
+    schemaVersion: 'nightwatch.control-center.source-summary.v1',
+    state: 'UNAVAILABLE',
+    inventoryDigest: null,
+    repositoryCount: 0,
+    surfaceCount: 0,
+    currentness: [],
+    lifecycle: [],
+    proof: [],
+    capabilities: [],
+    gapReasons: ['SOURCE_REPOSITORY_UNAVAILABLE'],
+  },
 };
 
 function responseFor(value: unknown): Response {
@@ -82,6 +94,7 @@ function installFetch(value: OverviewSnapshot = overview): ReturnType<typeof vi.
     [CONTROL_CENTER_API_PATHS.meta]: value.meta,
     [CONTROL_CENTER_API_PATHS.readiness]: value.readiness,
     [CONTROL_CENTER_API_PATHS.safety]: value.safety,
+    [CONTROL_CENTER_API_PATHS.sourceSummary]: value.source,
   };
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     expect(init?.method).toBe('GET');
@@ -108,7 +121,7 @@ describe('Control Center UI shell', () => {
     render(<App />);
     expect(screen.getByRole('status')).toHaveTextContent('Loading local snapshots');
     expect(await screen.findByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(screen.getByText('No checks reported')).toBeInTheDocument();
     expect(screen.getByText('Absence of blockers is not a proof of product pass.')).toBeInTheDocument();
   });
@@ -124,6 +137,9 @@ describe('Control Center UI shell', () => {
     expect(await screen.findByRole('heading', { name: 'Runs' })).toBeVisible();
     expect(screen.getByText('Snapshot not connected')).toBeInTheDocument();
     expect(primaryNav.getAllByRole('link')).toHaveLength(7);
+    await user.click(primaryNav.getByRole('link', { name: 'Safety Center' }));
+    expect(await screen.findByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
+    expect(screen.getByText('Source inventory unavailable')).toBeInTheDocument();
   });
 
   it('contains unavailable service errors without echoing raw error text', async () => {
@@ -157,6 +173,7 @@ describe('Control Center UI shell', () => {
           [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
           [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
           [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+          [CONTROL_CENTER_API_PATHS.sourceSummary]: overview.source,
         };
         return Promise.resolve(responseFor(snapshots[path]));
       });
@@ -165,6 +182,6 @@ describe('Control Center UI shell', () => {
     await screen.findByRole('alert');
     await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible());
-    expect(fetchMock).toHaveBeenCalledTimes(8);
+    expect(fetchMock).toHaveBeenCalledTimes(10);
   });
 });

@@ -5,6 +5,7 @@ import type {
   OverviewSnapshot,
   ReadinessSnapshot,
   SafetySnapshot,
+  SourceSummarySnapshot,
 } from './types';
 
 export const CONTROL_CENTER_API_PATHS = Object.freeze({
@@ -12,6 +13,7 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   meta: '/api/v1/meta',
   readiness: '/api/v1/readiness',
   safety: '/api/v1/safety',
+  sourceSummary: '/api/v1/source/summary',
 });
 
 export class ControlCenterApiError extends Error {
@@ -61,11 +63,13 @@ export function loadOverview(): Promise<OverviewSnapshot> {
   const meta = fetchSnapshot<MetaSnapshot>(CONTROL_CENTER_API_PATHS.meta);
   const readiness = fetchSnapshot<ReadinessSnapshot>(CONTROL_CENTER_API_PATHS.readiness);
   const safety = fetchSnapshot<SafetySnapshot>(CONTROL_CENTER_API_PATHS.safety);
-  return Promise.all([health, meta, readiness, safety]).then(([healthSnapshot, metaSnapshot, readinessSnapshot, safetySnapshot]) => ({
+  const source = fetchSnapshot<SourceSummarySnapshot>(CONTROL_CENTER_API_PATHS.sourceSummary);
+  return Promise.all([health, meta, readiness, safety, source]).then(([healthSnapshot, metaSnapshot, readinessSnapshot, safetySnapshot, sourceSnapshot]) => ({
     health: healthSnapshot,
     meta: metaSnapshot,
     readiness: readinessSnapshot,
     safety: safetySnapshot,
+    source: sourceSnapshot,
   }));
 }
 

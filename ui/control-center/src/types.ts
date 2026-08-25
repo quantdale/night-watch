@@ -114,11 +114,25 @@ export interface SafetySnapshot {
   readonly blockedOperationClasses: readonly string[];
 }
 
+export interface SourceSummarySnapshot {
+  readonly schemaVersion: string;
+  readonly state: 'AVAILABLE' | 'EMPTY' | 'STALE' | 'UNAVAILABLE' | 'UNKNOWN';
+  readonly inventoryDigest: string | null;
+  readonly repositoryCount: number;
+  readonly surfaceCount: number;
+  readonly currentness: readonly { readonly key: string; readonly count: number }[];
+  readonly lifecycle: readonly { readonly key: string; readonly count: number }[];
+  readonly proof: readonly { readonly key: string; readonly count: number }[];
+  readonly capabilities: readonly { readonly key: string; readonly count: number }[];
+  readonly gapReasons: readonly string[];
+}
+
 export interface OverviewSnapshot {
   readonly health: HealthSnapshot;
   readonly meta: MetaSnapshot;
   readonly readiness: ReadinessSnapshot;
   readonly safety: SafetySnapshot;
+  readonly source: SourceSummarySnapshot;
 }
 
 export type OverviewLoadState =

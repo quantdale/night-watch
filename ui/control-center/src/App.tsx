@@ -141,6 +141,7 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
             <DataRow label="Analyzer" value={formatCategory(data.readiness.analyzer.availability)} />
             <DataRow label="External CI" value={formatCategory(data.readiness.externalCi)} tone={statusTone(data.readiness.externalCi)} />
             <DataRow label="Campaign" value={formatCategory(data.readiness.campaign.category)} tone={data.readiness.campaign.unmeasured ? 'warning' : 'neutral'} />
+            <DataRow label="Source inventory" value={formatCategory(data.source.state)} tone={statusTone(data.source.state)} />
           </div>
           {data.readiness.unresolvedBlockers.length > 0 ? <div className="callout callout-warning"><strong>{data.readiness.unresolvedBlockers.length} unresolved blocker(s)</strong><span>Inspect the readiness contract before treating any view as ready.</span></div> : <div className="callout"><strong>No unresolved blockers reported</strong><span>Absence of blockers is not a proof of product pass.</span></div>}
         </article>
@@ -161,6 +162,55 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
           <div className="panel-heading"><div><p className="eyebrow">OWNER SCOPE</p><h2>Frozen boundaries</h2></div><span className="scope-lock" aria-label="Owner scope locked">LOCKED</span></div>
           <p className="panel-intro">Infrastructure and data-layer operations remain outside this campaign’s authority.</p>
           <div className="scope-list"><span>Product contact</span><strong>Disabled</strong><span>Database / infrastructure</span><strong>Out of scope</strong><span>Findings storage</span><strong>Owner local only</strong></div>
+        </article>
+      </section>
+    </div>
+  );
+}
+
+function SafetyView({ data }: { readonly data: OverviewSnapshot }): ReactNode {
+  const safety = data.safety;
+  const source = data.source;
+  const continuityValue = safety.continuity.state === 'CURRENT' ? 'Current' : formatCategory(safety.continuity.state);
+  return (
+    <div className="view-stack">
+      <section className="hero-card safety-hero" aria-labelledby="safety-title">
+        <div className="hero-copy">
+          <p className="eyebrow">GUARDRAILS / SAFETY CENTER</p>
+          <h1 id="safety-title">Safety is a posture, not a green badge.</h1>
+          <p className="hero-description">Control Center safety is evaluated independently from readiness and oracle results. Unknown checks stay visible as unknown.</p>
+          <div className="hero-actions"><StatusPill value={safety.state} /><StatusPill value={safety.scope} label="Loopback only" /><StatusPill value={safety.readOnly ? 'READY' : 'BLOCKED'} label="Read only" /></div>
+        </div>
+        <div className="safety-seal" aria-hidden="true"><span>SAFE</span><small>POSTURE</small></div>
+      </section>
+
+      <section className="content-grid safety-grid">
+        <article className="panel panel-wide">
+          <div className="panel-heading"><div><p className="eyebrow">OPERATION POLICY</p><h2>What this surface can do</h2></div><StatusPill value="READY" label="Constrained" /></div>
+          <p className="panel-intro">The policy is fixed by the local owner scope. No control in this view can execute, mutate, contact a product, or publish a finding.</p>
+          <div className="data-grid">
+            <DataRow label="Control Center" value={formatCategory(safety.operationPolicy.controlCenter)} tone="ready" />
+            <DataRow label="Execution authority" value={formatCategory(safety.operationPolicy.execution)} tone="ready" />
+            <DataRow label="Mutation authority" value={formatCategory(safety.operationPolicy.mutation)} tone="ready" />
+            <DataRow label="Product contact" value={formatCategory(safety.operationPolicy.productContact)} tone="ready" />
+            <DataRow label="Database" value={formatCategory(safety.operationPolicy.database)} tone="warning" />
+            <DataRow label="Infrastructure" value={formatCategory(safety.operationPolicy.infrastructure)} tone="warning" />
+            <DataRow label="Publication" value={formatCategory(safety.operationPolicy.publication)} tone="ready" />
+            <DataRow label="Raw evidence" value={formatCategory(safety.rawEvidenceExposure)} tone="ready" />
+          </div>
+          <div className="callout callout-warning"><strong>Owner scope is frozen</strong><span>{formatCategory(safety.ownerScope.reason)}. Unknown safety checks never become PASS by absence.</span></div>
+        </article>
+
+        <article className="panel">
+          <div className="panel-heading"><div><p className="eyebrow">CONTINUITY</p><h2>Checkpoint posture</h2></div><StatusPill value={safety.continuity.state} /></div>
+          <div className="scope-list"><span>State</span><strong className={`text-${statusTone(safety.continuity.state)}`}>{continuityValue}</strong><span>Branch</span><strong>{safety.continuity.branch ?? 'Not reported'}</strong><span>Head anchor</span><strong>{safety.continuity.headSha === null ? 'Not reported' : `${safety.continuity.headSha.slice(0, 7)}…`}</strong><span>Checkpoint receipt</span><strong>{safety.continuity.checkpointDigest === null ? 'Not reported' : 'Available'}</strong></div>
+          <p className="small-note">Continuity is evidence about local state, not permission to expand campaign scope.</p>
+        </article>
+
+        <article className="panel">
+          <div className="panel-heading"><div><p className="eyebrow">SOURCE SUMMARY</p><h2>Inventory currentness</h2></div><StatusPill value={source.state} /></div>
+          <div className="metric-inline"><div><strong>{source.repositoryCount}</strong><span>repositories</span></div><div><strong>{source.surfaceCount}</strong><span>surfaces</span></div></div>
+          {source.gapReasons.length > 0 ? <div className="callout callout-warning"><strong>Source inventory unavailable</strong><span>{source.gapReasons.length} bounded gap reason(s) are reported. No source proof is inferred.</span></div> : <div className="callout"><strong>Inventory has no reported gaps</strong><span>Check currentness and proof rollups before relying on a source view.</span></div>}
         </article>
       </section>
     </div>
@@ -218,6 +268,14 @@ function DashboardApp(): ReactNode {
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
   const currentView = VIEW_DEFINITIONS.find((view) => view.id === activeView) ?? VIEW_DEFINITIONS[0];
 
+  const renderDataView = (): ReactNode => {
+    if (loadState.kind === 'loading') return <LoadingState />;
+    if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
+    if (activeView === 'overview') return <OverviewView data={loadState.data} onRefresh={refresh} />;
+    if (activeView === 'safety') return <SafetyView data={loadState.data} />;
+    return <PlaceholderView view={currentView} />;
+  };
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
@@ -233,7 +291,7 @@ function DashboardApp(): ReactNode {
       <main id="main-content" className="main-content">
         <header className="topbar"><div><p className="topbar-kicker">{currentView.eyebrow}</p><p className="topbar-context">Nightwatch / <strong>{currentView.label}</strong></p></div><div className="topbar-actions"><span className="read-only-tag"><span aria-hidden="true">◉</span> Read-only session</span><button className="icon-button" type="button" onClick={refresh} aria-label="Refresh local snapshots" title="Refresh local snapshots"><Icon name="refresh" /></button></div></header>
         <div className="content-wrap">
-          {activeView === 'overview' ? (loadState.kind === 'loading' ? <LoadingState /> : loadState.kind === 'error' ? <ErrorState onRetry={refresh} /> : <OverviewView data={loadState.data} onRefresh={refresh} />) : <PlaceholderView view={currentView} />}
+          {renderDataView()}
         </div>
         <footer className="page-footer"><span>Nightwatch local Control Center</span><span>Read-only · Loopback · No external network</span></footer>
       </main>
