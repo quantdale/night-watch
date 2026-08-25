@@ -59,6 +59,7 @@ function untypedLedger(input: Record<string, unknown>) {
     readonly records: readonly Record<string, unknown>[];
     readonly changedCandidateIds: readonly string[];
     readonly newlyEligibleCandidateIds: readonly string[];
+    readonly newlyUnsafeCandidateIds: readonly string[];
     readonly staleCandidateIds: readonly string[];
     readonly replayInvalidatedCandidateIds: readonly string[];
     readonly dossierInvalidatedCandidateIds: readonly string[];
@@ -160,6 +161,19 @@ test.describe('Phase 24 authority lifecycle adversarial matrix', () => {
     expect(() => buildPhase24CandidateInvalidationLedger({ prior, current } as never)).toThrow(/INVALIDATION_SOURCE_AVAILABILITY/);
     const duplicate = candidate('duplicate');
     expect(() => portfolio(candidate('first'), { ...duplicate, surfaceKey: 'authority.first.read' })).toThrow(/DUPLICATE_SURFACE/);
+  });
+
+  test('does not label an already-excluded candidate newly unsafe when source availability is lost', () => {
+    const prior = portfolio(candidate('already-excluded', { mutationClassification: 'MUTATION' }));
+    const current = portfolio(candidate('already-excluded', { mutationClassification: 'MUTATION' }));
+    const ledger = untypedLedger({
+      prior,
+      current,
+      sourceAvailability: [{ repoId: SOURCE_A.repoId, available: false }],
+    });
+    const record = ledger.records[0]!;
+    expect(record).toMatchObject({ priorEligibility: 'EXCLUDED', currentEligibility: 'EXCLUDED', state: 'SOURCE_UNAVAILABLE' });
+    expect(ledger.newlyUnsafeCandidateIds).toEqual([]);
   });
 
   test('rejects old replay, dossier, and selection artifacts against a changed current portfolio', () => {

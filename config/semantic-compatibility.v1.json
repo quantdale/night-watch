@@ -56,7 +56,9 @@
     "tests/unit/selfDevPortfolio.test.ts",
     "tests/unit/selfDevProvenance.test.ts",
     "tests/unit/selfDevSandboxConfinement.test.ts",
-    "tests/unit/selfDevSchema.test.ts"
+    "tests/unit/selfDevSchema.test.ts",
+    "tests/unit/contextUrlHardening.test.ts",
+    "tests/unit/nightwatchHygiene.test.ts"
   ],
   "intentionalDuplicateFileReasons": []
 }

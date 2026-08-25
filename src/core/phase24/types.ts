@@ -229,6 +229,8 @@ export interface Phase24CandidateInvalidationRecord {
   readonly candidateId: string;
   readonly priorCandidateId: string | null;
   readonly currentCandidateId: string | null;
+  readonly priorEligibility: Phase24Eligibility | null;
+  readonly currentEligibility: Phase24Eligibility | null;
   readonly surfaceKey: string;
   readonly state: Phase24InvalidationState;
   readonly affected: boolean;
