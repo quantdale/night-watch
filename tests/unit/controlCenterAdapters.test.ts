@@ -343,6 +343,23 @@ test.describe('Control Center authoritative adapters', () => {
     expect(projectSourceGraph([descriptor], 'surface-1', 2, 3, 2)).toEqual(graph);
   });
 
+  test('source graph remains deterministic under a 1000-descriptor fixture and fixed ceilings', () => {
+    const descriptors = Array.from({ length: 1_000 }, (_, index) => ({
+      ...sourceSurface(),
+      surfaceId: `surface-${String(index).padStart(4, '0')}`,
+      operation: {
+        ...sourceSurface().operation,
+        operationId: `operation-${String(index).padStart(4, '0')}`,
+      },
+    }));
+    const first = projectSourceGraph(descriptors, null, 4, 250, 500);
+    const second = projectSourceGraph(descriptors, null, 4, 250, 500);
+    expect(second).toEqual(first);
+    expect(first.nodes.length).toBeLessThanOrEqual(250);
+    expect(first.edges.length).toBeLessThanOrEqual(500);
+    expect(first.truncated).toBe(true);
+  });
+
   test('findings adapter is owner-local and removes unsafe dossiers explicitly', () => {
     const safe = projectFindings({ dossiers: [dossier()] });
     const unsafe = dossier();

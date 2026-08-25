@@ -11,6 +11,8 @@ import type {
   RunListSnapshot,
   SafetySnapshot,
   SourceSummarySnapshot,
+  SourceGraphSnapshot,
+  SourceSurfacesSnapshot,
   TimelineSnapshot,
 } from './types';
 
@@ -22,6 +24,8 @@ export const CONTROL_CENTER_API_PATHS = Object.freeze({
   sourceSummary: '/api/v1/source/summary',
   campaignSummary: '/api/v1/campaign/summary',
   campaignCoverage: '/api/v1/campaign/coverage',
+  sourceSurfaces: '/api/v1/source/surfaces',
+  sourceGraph: '/api/v1/source/graph',
 });
 
 export class ControlCenterApiError extends Error {
@@ -116,6 +120,22 @@ export function loadCampaignSummary(): Promise<CampaignSummarySnapshot> {
 export function loadCampaignCoverage(limit = 50): Promise<CampaignCoverageSnapshot> {
   const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
   return fetchSnapshot<CampaignCoverageSnapshot>(`${CONTROL_CENTER_API_PATHS.campaignCoverage}?limit=${boundedLimit}`);
+}
+
+export function loadSourceSurfaces(limit = 50): Promise<SourceSurfacesSnapshot> {
+  const boundedLimit = Number.isInteger(limit) && limit > 0 && limit <= 50 ? limit : 50;
+  return fetchSnapshot<SourceSurfacesSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceSurfaces}?limit=${boundedLimit}`);
+}
+
+export function loadSourceGraph(surfaceId: string | null, depth = 2): Promise<SourceGraphSnapshot> {
+  const boundedDepth = Number.isInteger(depth) && depth >= 0 && depth <= 4 ? depth : 2;
+  const params = new URLSearchParams({ depth: String(boundedDepth) });
+  if (surfaceId !== null) {
+    const safeId = safePathId(surfaceId);
+    if (safeId === null) return Promise.reject(new ControlCenterApiError('INVALID_RESPONSE'));
+    params.set('surface', safeId);
+  }
+  return fetchSnapshot<SourceGraphSnapshot>(`${CONTROL_CENTER_API_PATHS.sourceGraph}?${params.toString()}`);
 }
 
 const CONTROL_CENTER_NOTIFICATION_TYPES = ['readiness.changed', 'safety.changed', 'run.updated', 'run.completed', 'campaign.snapshot.changed', 'source.snapshot.changed', 'findings.snapshot.changed'] as const;

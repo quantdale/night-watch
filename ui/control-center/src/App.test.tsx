@@ -95,6 +95,7 @@ function installFetch(value: OverviewSnapshot = overview): ReturnType<typeof vi.
     [CONTROL_CENTER_API_PATHS.readiness]: value.readiness,
     [CONTROL_CENTER_API_PATHS.safety]: value.safety,
     [CONTROL_CENTER_API_PATHS.sourceSummary]: value.source,
+    '/api/v1/source/surfaces?limit=50': { schemaVersion: 'nightwatch.control-center.source-surfaces.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, repositoryFilter: null },
     '/api/v1/runs?limit=20': { schemaVersion: 'nightwatch.control-center.run-list.v1', items: [], page: { limit: 20, nextCursor: null, truncated: false } },
     [CONTROL_CENTER_API_PATHS.campaignSummary]: { schemaVersion: 'nightwatch.control-center.campaign.v1', planState: 'UNAVAILABLE', sourceCurrentness: 'UNAVAILABLE', ownerScopeStatus: 'FROZEN_BY_OWNER', ownerScopeReason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE', planDigest: null, coverageDigest: null, counts: { candidates: 0, selected: 0, excluded: 0, coveredContracts: 0, executionOnly: 0, oracleOnly: 0, replayGaps: 0, minimizationGaps: 0, staleSourceGaps: 0, semanticAuthorityGaps: 0, findings: 0 }, blockerCodes: ['CAMPAIGN_SOURCE_UNAVAILABLE'], reasonCodes: ['SOURCE_UNAVAILABLE'] },
     '/api/v1/campaign/coverage?limit=50': { schemaVersion: 'nightwatch.control-center.campaign-coverage.v1', items: [], page: { limit: 50, nextCursor: null, truncated: false }, fullyCoveredContractCount: 0 },
@@ -146,6 +147,9 @@ describe('Control Center UI shell', () => {
     await user.click(primaryNav.getByRole('link', { name: 'Campaign Intelligence' }));
     expect(await screen.findByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
     expect(screen.getByText('No coverage rows reported. Empty coverage does not prove pass.')).toBeInTheDocument();
+    await user.click(primaryNav.getByRole('link', { name: 'Source Intelligence' }));
+    expect(await screen.findByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
+    expect(screen.getByText('No source surfaces available. This is an unavailable/empty inventory, not proof of no routes.')).toBeInTheDocument();
   });
 
   it('contains unavailable service errors without echoing raw error text', async () => {
@@ -256,5 +260,60 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('Gap present')).toBeInTheDocument();
     expect(screen.getByText('Replay · Gap')).toBeInTheDocument();
     expect(screen.queryByText('Score', { exact: true })).not.toBeInTheDocument();
+  });
+
+  it('renders source proof descriptors and a bounded source graph', async () => {
+    const user = userEvent.setup();
+    const sourceSummary = {
+      ...overview.source,
+      state: 'AVAILABLE' as const,
+      repositoryCount: 1,
+      surfaceCount: 1,
+      currentness: [{ key: 'SOURCE_STALE', count: 1 }],
+    };
+    const sourceSurfaces = {
+      schemaVersion: 'nightwatch.control-center.source-surfaces.v1',
+      items: [{
+        surfaceId: 'surface-01', repositoryId: 'repo-01', sourceSha: null, evidenceDigest: null,
+        language: 'PHP', method: 'GET' as const, routeTemplate: '/safe/summary', handlerState: 'EXACT' as const,
+        routeProof: 'PROVEN' as const, readOnlyClassification: 'PROVEN_READ_ONLY' as const,
+        runtimeBinding: 'RUNTIME_BOUND_EXACT' as const, currentness: 'SOURCE_STALE' as const,
+        lifecycle: 'MECHANICALLY_PROVEN', projectionCapability: 'SUPPORTED' as const,
+        replayCapability: 'UNPROVEN' as const, differentialCapability: 'UNSUPPORTED' as const, exclusionReasons: [],
+      }],
+      page: { limit: 50, nextCursor: null, truncated: false }, repositoryFilter: null,
+    };
+    const sourceGraph = {
+      schemaVersion: 'nightwatch.control-center.source-graph.v1', surfaceId: 'surface-01', depth: 2,
+      nodes: [
+        { nodeId: 'surface-01', kind: 'SURFACE', label: '/safe/summary', proof: 'PROVEN', currentness: 'SOURCE_STALE', lifecycle: 'MECHANICALLY_PROVEN', capability: 'SUPPORTED' },
+        { nodeId: 'request-01', kind: 'REQUEST_CONTRACT', label: 'Request', proof: 'OBSERVED', currentness: 'SOURCE_STALE', lifecycle: null, capability: 'UNPROVEN' },
+      ],
+      edges: [{ edgeId: 'edge-01', fromNodeId: 'surface-01', toNodeId: 'request-01', kind: 'JOINS_REQUEST', proof: 'OBSERVED' }],
+      nodeLimit: 250, edgeLimit: 500, truncated: false,
+    };
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: sourceSummary,
+      '/api/v1/source/surfaces?limit=50': sourceSurfaces,
+      '/api/v1/source/graph?depth=2&surface=surface-01': sourceGraph,
+    };
+    const fetchMock = vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)])));
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Source Intelligence' }));
+    expect(await screen.findByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
+    expect(screen.getByText('/safe/summary')).toBeInTheDocument();
+    expect(screen.getAllByText('Source Stale').length).toBeGreaterThan(0);
+    expect(screen.getByText('Proven Read Only')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Graph' }));
+    expect(await screen.findByRole('img', { name: 'Bounded source intelligence graph' })).toBeInTheDocument();
+    expect(screen.getByText('Request')).toBeInTheDocument();
+    expect(screen.getByText('Bounded')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/source/graph?depth=2&surface=surface-01', expect.objectContaining({ method: 'GET' }));
   });
 });

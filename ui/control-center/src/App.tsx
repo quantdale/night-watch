@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
-import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadOverview, loadRunDetail, loadRuns, loadTimeline, subscribeToControlCenterEvents } from './api';
-import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, TimelineSnapshot, ViewId } from './types';
+import { apiErrorLabel, loadCampaignCoverage, loadCampaignSummary, loadExecutionGraph, loadOverview, loadRunDetail, loadRuns, loadSourceGraph, loadSourceSurfaces, loadTimeline, subscribeToControlCenterEvents } from './api';
+import type { CampaignCoverageSnapshot, CampaignSummarySnapshot, DataLoadState, ExecutionGraphSnapshot, OverviewLoadState, OverviewSnapshot, RunDetailSnapshot, RunListSnapshot, SourceGraphSnapshot, SourceSurfaceSnapshot, SourceSurfacesSnapshot, TimelineSnapshot, ViewId } from './types';
 import { VIEW_DEFINITIONS } from './types';
 
 interface ErrorBoundaryProps {
@@ -221,6 +221,21 @@ function ExecutionGraphView({ selectedRunId, state, onRetry }: { readonly select
   return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">TOPOLOGY / EXECUTION GRAPH</p><h1>Trace the bounded run shape.</h1><p>Graph edges are projections of ordered evidence. They do not add execution authority or infer missing events.</p></div><StatusPill value="READY" label={`Run ${selectedRunId}`} /></section><GraphCanvas graph={state.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Event sequence</th></tr></thead><tbody>{state.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td>{formatCategory(node.kind)}</td><td><StatusPill value={node.state} /></td><td>{node.eventSeq === null ? 'Not linked' : String(node.eventSeq)}</td></tr>)}</tbody></table></div></article></div>;
 }
 
+function SourceGraphCanvas({ graph }: { readonly graph: SourceGraphSnapshot }): ReactNode {
+  const nodes = graph.nodes.slice(0, 24);
+  const nodePositions = new Map(nodes.map((node, index) => [node.nodeId, { x: 120 + (index % 3) * 230, y: 58 + Math.floor(index / 3) * 84 }]));
+  const height = Math.max(190, Math.ceil(nodes.length / 3) * 84 + 24);
+  return <div className="graph-frame"><svg className="execution-graph" viewBox={`0 0 820 ${height}`} role="img" aria-label="Bounded source intelligence graph"><defs><marker id="source-graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6Z" fill="currentColor" /></marker></defs>{graph.edges.slice(0, 48).map((edge) => { const from = nodePositions.get(edge.fromNodeId); const to = nodePositions.get(edge.toNodeId); if (from === undefined || to === undefined) return null; return <line key={edge.edgeId} x1={from.x + 72} y1={from.y + 18} x2={to.x - 72} y2={to.y + 18} className="graph-edge" markerEnd="url(#source-graph-arrow)" />; })}{nodes.map((node) => <g key={node.nodeId} transform={`translate(${nodePositions.get(node.nodeId)?.x ?? 0} ${nodePositions.get(node.nodeId)?.y ?? 0})`}><rect className={`graph-node graph-node-${statusTone(node.currentness)}`} width="144" height="38" rx="7" /><text x="12" y="16" className="graph-node-kind">{formatCategory(node.kind)}</text><text x="12" y="30" className="graph-node-state">{formatCategory(node.currentness)}</text></g>)}</svg><div className="graph-footer"><span>{nodes.length} of {graph.nodes.length} nodes shown</span><span>{graph.edges.length} edges · depth {graph.depth}</span>{graph.truncated ? <StatusPill value="WARNING" label="Truncated" /> : <StatusPill value="READY" label="Bounded" />}</div></div>;
+}
+
+function SourceView({ summary, surfaceState, graphState, selectedSurfaceId, onSelectSurface, onRetry }: { readonly summary: OverviewSnapshot['source']; readonly surfaceState: DataLoadState<SourceSurfacesSnapshot>; readonly graphState: DataLoadState<SourceGraphSnapshot>; readonly selectedSurfaceId: string | null; readonly onSelectSurface: (surfaceId: string) => void; readonly onRetry: () => void }): ReactNode {
+  if (surfaceState.kind === 'loading') return <LoadingState />;
+  if (surfaceState.kind === 'error') return <DataErrorState title="Source surface inventory unavailable" onRetry={onRetry} />;
+  if (surfaceState.kind !== 'ready') return null;
+  const surfaces = surfaceState.data.items;
+  return <div className="view-stack"><section className="page-intro"><div><p className="eyebrow">PROVENANCE / SOURCE INTELLIGENCE</p><h1>Follow proof, currentness, and capability.</h1><p>Source intelligence exposes bounded descriptors and graph neighborhoods. Raw source, paths, handler symbols, and evidence bodies remain outside the boundary.</p></div><StatusPill value={summary.state} /></section><section className="metric-grid"><MetricCard label="Inventory" value={formatCategory(summary.state)} detail={`${summary.repositoryCount} repositories`} tone={statusTone(summary.state)} /><MetricCard label="Surfaces" value={String(summary.surfaceCount)} detail={`${surfaces.length} rows loaded`} /><MetricCard label="Currentness" value={summary.currentness.length === 0 ? 'Not reported' : formatCategory(summary.currentness[0]?.key ?? 'UNKNOWN')} detail="Rollup from source authority" tone={summary.currentness.length === 0 ? 'warning' : statusTone(summary.currentness[0]?.key ?? 'UNKNOWN')} /><MetricCard label="Graph limits" value="250 / 500" detail="nodes / edges maximum" tone="ready" /></section><article className="panel"><div className="panel-heading"><div><p className="eyebrow">SOURCE SURFACES</p><h2>Approved bounded descriptors</h2></div><span className="table-limit">Limit {surfaceState.data.page.limit}</span></div>{surfaces.length === 0 ? <div className="mini-state mini-state-warning">No source surfaces available. This is an unavailable/empty inventory, not proof of no routes.</div> : <div className="table-scroll"><table><thead><tr><th scope="col">Surface</th><th scope="col">Currentness</th><th scope="col">Proof</th><th scope="col">Read-only</th><th scope="col">Lifecycle</th><th scope="col"><span className="sr-only">Graph</span></th></tr></thead><tbody>{surfaces.map((surface) => <tr key={surface.surfaceId} className={selectedSurfaceId === surface.surfaceId ? 'row-selected' : undefined}><td><strong>{surface.routeTemplate ?? 'Route template withheld'}</strong><small>{surface.method} · {surface.language} · {surface.surfaceId}</small></td><td><StatusPill value={surface.currentness} /></td><td><StatusPill value={surface.routeProof} /></td><td><StatusPill value={surface.readOnlyClassification} /></td><td>{formatCategory(surface.lifecycle)}</td><td><button className="table-action" type="button" onClick={() => onSelectSurface(surface.surfaceId)}>Graph <Icon name="arrow" /></button></td></tr>)}</tbody></table></div>}</article>{selectedSurfaceId === null ? <article className="panel run-detail-empty"><p className="eyebrow">PROGRESSIVE GRAPH</p><h2>Select a surface to inspect its neighborhood</h2><p className="panel-intro">Depth and node/edge limits are enforced by the source graph contract.</p></article> : graphState.kind === 'loading' ? <LoadingState /> : graphState.kind === 'error' ? <DataErrorState title="Source graph unavailable" onRetry={onRetry} /> : graphState.kind === 'ready' ? <><SourceGraphCanvas graph={graphState.data} /><article className="panel"><div className="panel-heading"><div><p className="eyebrow">GRAPH TABLE FALLBACK</p><h2>Node inventory</h2></div><span className="table-limit">Bounded list</span></div><div className="table-scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Proof</th><th scope="col">Currentness</th><th scope="col">Capability</th></tr></thead><tbody>{graphState.data.nodes.map((node) => <tr key={node.nodeId}><td>{node.label ?? node.nodeId}</td><td>{formatCategory(node.proof)}</td><td><StatusPill value={node.currentness} /></td><td>{formatCategory(node.capability)}</td></tr>)}</tbody></table></div></article></> : null}</div>;
+}
+
 function CampaignView({ summaryState, coverageState, onRetry }: { readonly summaryState: DataLoadState<CampaignSummarySnapshot>; readonly coverageState: DataLoadState<CampaignCoverageSnapshot>; readonly onRetry: () => void }): ReactNode {
   if (summaryState.kind === 'loading' || coverageState.kind === 'loading') return <LoadingState />;
   if (summaryState.kind === 'error' || coverageState.kind === 'error') return <DataErrorState title="Campaign intelligence unavailable" onRetry={onRetry} />;
@@ -308,6 +323,9 @@ function DashboardApp(): ReactNode {
   const [graphState, setGraphState] = useState<DataLoadState<ExecutionGraphSnapshot>>({ kind: 'idle' });
   const [campaignSummaryState, setCampaignSummaryState] = useState<DataLoadState<CampaignSummarySnapshot>>({ kind: 'idle' });
   const [campaignCoverageState, setCampaignCoverageState] = useState<DataLoadState<CampaignCoverageSnapshot>>({ kind: 'idle' });
+  const [selectedSurfaceId, setSelectedSurfaceId] = useState<string | null>(null);
+  const [sourceSurfaceState, setSourceSurfaceState] = useState<DataLoadState<SourceSurfacesSnapshot>>({ kind: 'idle' });
+  const [sourceGraphState, setSourceGraphState] = useState<DataLoadState<SourceGraphSnapshot>>({ kind: 'idle' });
   const refresh = useCallback((): void => setRefreshKey((value) => value + 1), []);
 
   useEffect(() => {
@@ -348,6 +366,36 @@ function DashboardApp(): ReactNode {
     });
     return () => { cancelled = true; };
   }, [activeView, refreshKey]);
+
+  useEffect(() => {
+    if (activeView !== 'source-intelligence') return;
+    let cancelled = false;
+    setSourceSurfaceState({ kind: 'loading' });
+    loadSourceSurfaces().then((data) => {
+      if (!cancelled) setSourceSurfaceState({ kind: 'ready', data });
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setSourceSurfaceState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey]);
+
+  useEffect(() => {
+    if (activeView !== 'source-intelligence' || selectedSurfaceId === null) return;
+    let cancelled = false;
+    setSourceGraphState({ kind: 'loading' });
+    loadSourceGraph(selectedSurfaceId).then((data) => {
+      if (!cancelled) setSourceGraphState({ kind: 'ready', data });
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        void apiErrorLabel(error);
+        setSourceGraphState({ kind: 'error' });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeView, refreshKey, selectedSurfaceId]);
 
   useEffect(() => {
     if (activeView !== 'runs' || selectedRunId === null) return;
@@ -411,11 +459,17 @@ function DashboardApp(): ReactNode {
   const currentView = VIEW_DEFINITIONS.find((view) => view.id === activeView) ?? VIEW_DEFINITIONS[0];
   const retryRunData = useCallback((): void => setRefreshKey((value) => value + 1), []);
   const selectRun = useCallback((runId: string): void => setSelectedRunId(runId), []);
+  const selectSurface = useCallback((surfaceId: string): void => setSelectedSurfaceId(surfaceId), []);
 
   const renderDataView = (): ReactNode => {
     if (activeView === 'runs') return <RunsView state={runState} selectedRunId={selectedRunId} detailState={detailState} timelineState={timelineState} onSelectRun={selectRun} onRetry={retryRunData} />;
     if (activeView === 'execution-graph') return <ExecutionGraphView selectedRunId={selectedRunId} state={graphState} onRetry={retryRunData} />;
     if (activeView === 'campaigns') return <CampaignView summaryState={campaignSummaryState} coverageState={campaignCoverageState} onRetry={retryRunData} />;
+    if (activeView === 'source-intelligence') {
+      if (loadState.kind === 'loading') return <LoadingState />;
+      if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
+      return <SourceView summary={loadState.data.source} surfaceState={sourceSurfaceState} graphState={sourceGraphState} selectedSurfaceId={selectedSurfaceId} onSelectSurface={selectSurface} onRetry={retryRunData} />;
+    }
     if (loadState.kind === 'loading') return <LoadingState />;
     if (loadState.kind === 'error') return <ErrorState onRetry={refresh} />;
     if (activeView === 'overview') return <OverviewView data={loadState.data} onRefresh={refresh} />;

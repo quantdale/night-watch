@@ -207,6 +207,44 @@ export interface CampaignCoverageSnapshot {
   readonly fullyCoveredContractCount: number;
 }
 
+export interface SourceSurfaceSnapshot {
+  readonly surfaceId: string;
+  readonly repositoryId: string;
+  readonly sourceSha: string | null;
+  readonly evidenceDigest: string | null;
+  readonly language: string;
+  readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  readonly routeTemplate: string | null;
+  readonly handlerState: 'EXACT' | 'PARTIAL' | 'AMBIGUOUS' | 'UNRESOLVED';
+  readonly routeProof: 'PROVEN' | 'AMBIGUOUS' | 'UNSUPPORTED';
+  readonly readOnlyClassification: 'PROVEN_READ_ONLY' | 'READ_ONLY_METHOD_ONLY' | 'CONDITIONAL_MUTATION' | 'PROVEN_MUTATION_CAPABLE' | 'AMBIGUOUS' | 'UNSUPPORTED';
+  readonly runtimeBinding: 'RUNTIME_BOUND_EXACT' | 'RUNTIME_BOUND_PARTIAL' | 'SOURCE_ONLY' | 'RUNTIME_ONLY' | 'AMBIGUOUS' | 'STALE_BINDING' | 'SOURCE_VERSION_MISMATCH';
+  readonly currentness: 'CURRENT' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
+  readonly lifecycle: string;
+  readonly projectionCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
+  readonly replayCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
+  readonly differentialCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
+  readonly exclusionReasons: readonly string[];
+}
+
+export interface SourceSurfacesSnapshot {
+  readonly schemaVersion: string;
+  readonly items: readonly SourceSurfaceSnapshot[];
+  readonly page: { readonly limit: number; readonly nextCursor: string | null; readonly truncated: boolean };
+  readonly repositoryFilter: string | null;
+}
+
+export interface SourceGraphSnapshot {
+  readonly schemaVersion: string;
+  readonly surfaceId: string | null;
+  readonly depth: number;
+  readonly nodes: readonly { readonly nodeId: string; readonly kind: string; readonly label: string | null; readonly proof: string; readonly currentness: string; readonly lifecycle: string | null; readonly capability: string }[];
+  readonly edges: readonly { readonly edgeId: string; readonly fromNodeId: string; readonly toNodeId: string; readonly kind: string; readonly proof: string }[];
+  readonly nodeLimit: number;
+  readonly edgeLimit: number;
+  readonly truncated: boolean;
+}
+
 export type DataLoadState<T> =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
