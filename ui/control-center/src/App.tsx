@@ -159,7 +159,7 @@ function OverviewView({ data, onRefresh }: { readonly data: OverviewSnapshot; re
         </article>
 
         <article className="panel">
-          <div className="panel-heading"><div><p className="eyebrow">OWNER SCOPE</p><h2>Frozen boundaries</h2></div><span className="scope-lock" aria-label="Owner scope locked">LOCKED</span></div>
+          <div className="panel-heading"><div><p className="eyebrow">OWNER SCOPE</p><h2>Frozen boundaries</h2></div><span className="scope-lock">LOCKED</span></div>
           <p className="panel-intro">Infrastructure and data-layer operations remain outside this campaign’s authority.</p>
           <div className="scope-list"><span>Product contact</span><strong>Disabled</strong><span>Database / infrastructure</span><strong>Out of scope</strong><span>Findings storage</span><strong>Owner local only</strong></div>
         </article>

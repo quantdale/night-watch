@@ -156,6 +156,17 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('Owner-local findings are unavailable. No finding or pass claim is made.')).toBeInTheDocument();
   });
 
+  it('keeps navigation and controls local, typed, and keyboard reachable', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
+    for (const link of within(screen.getByRole('navigation', { name: 'Primary' })).getAllByRole('link')) {
+      expect(link.getAttribute('href')).toMatch(/^#(?:|safety|runs|execution-graph|campaigns|source-intelligence|findings)$/);
+    }
+    for (const button of screen.getAllByRole('button')) expect(button).toHaveAttribute('type', 'button');
+    expect(document.querySelectorAll('img, iframe, object, embed')).toHaveLength(0);
+  });
+
   it('contains unavailable service errors without echoing raw error text', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('SENTINEL_RAW_SERVICE_ERROR'))));
     render(<App />);

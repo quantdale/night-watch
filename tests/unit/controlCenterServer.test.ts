@@ -137,6 +137,12 @@ test.describe('Control Center loopback server', () => {
       expect(badQuery.status).toBe(400);
       const duplicateQuery = await request(port, '/api/v1/runs?limit=1&limit=2');
       expect(duplicateQuery.status).toBe(400);
+      const findings = await request(port, '/api/v1/findings?limit=50');
+      expect(findings.status).toBe(200);
+      expect(JSON.parse(findings.body)).toMatchObject({ state: 'EMPTY', items: [] });
+      expect((await request(port, '/api/v1/findings?limit=50&raw=true')).status).toBe(400);
+      expect((await request(port, '/api/v1/source/graph?depth=99')).status).toBe(400);
+      expect((await request(port, '/api/v1/source/surfaces?repo=../secret')).status).toBe(400);
       const invalidId = await request(port, '/api/v1/runs/%2e%2e%2fsecret');
       expect(invalidId.status).toBe(400);
       const error = JSON.parse(invalidId.body) as Record<string, unknown>;
@@ -183,6 +189,7 @@ test.describe('Control Center loopback server', () => {
     fs.writeFileSync(path.join(root, 'index.html'), '<!doctype html><title>Control Center</title>');
     fs.mkdirSync(path.join(root, 'assets'));
     fs.writeFileSync(path.join(root, 'assets', 'app.js'), 'console.log("local");');
+    fs.writeFileSync(path.join(root, 'assets', 'oversized.js'), Buffer.alloc(5 * 1024 * 1024 + 1));
     fs.writeFileSync(outside, 'SENTINEL_OUTSIDE');
     fs.symlinkSync(outside, path.join(root, 'assets', 'escape.js'));
     const { handle, port } = await startServer(root);
@@ -191,6 +198,7 @@ test.describe('Control Center loopback server', () => {
       expect(index.status).toBe(200);
       expect(index.body).toContain('Control Center');
       expect((await request(port, '/assets/app.js')).status).toBe(200);
+      expect((await request(port, '/assets/oversized.js')).status).toBe(400);
       expect((await request(port, '/assets/%2e%2e/index.html')).status).toBe(400);
       const symlink = await request(port, '/assets/escape.js');
       expect(symlink.status).toBe(400);
@@ -205,6 +213,17 @@ test.describe('Control Center loopback server', () => {
       expect((await request(unavailable.port, '/')).status).toBe(503);
     } finally {
       await unavailable.handle.close();
+    }
+  });
+
+  test('keeps port ownership exclusive and closes an unstarted handle safely', async () => {
+    const first = await startServer();
+    const second = createControlCenterServer({ collector: emptyCollector(), port: first.port });
+    try {
+      await expect(second.start()).rejects.toThrow('CONTROL_CENTER_BAD_REQUEST');
+    } finally {
+      await second.close();
+      await first.handle.close();
     }
   });
 
