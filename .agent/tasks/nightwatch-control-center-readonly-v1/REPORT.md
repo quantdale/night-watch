@@ -6,7 +6,7 @@
   existing Nightwatch authorities.
 - Planning branch: inspected with `git show`; not checked out, merged, or
   modified.
-- Current status: M11 complete; M12 Whole-repo integration, continuity, and push is active.
+- Current status: COMPLETE; M12 whole-repo integration and continuity closure passed.
 - M0 baseline: project truth, typecheck, hardening, specification,
   inventory, local gate, and Node 20 clean gate all passed. Local receipt is
   `receipt:sha256:4bd1c4342e1727e40b8e4370`; clean receipt is
@@ -60,9 +60,22 @@
   records bounded timing without sensitive output. The built bundle measured
   257,198 bytes total (235,758 JS / 20,896 CSS), and the performance server
   test passed.
+- M12 closure: `npm run gate:local` passed all nine groups at source head
+  `8709dd0` with receipt `receipt:sha256:951a5a8b8edbc1cc02d5bc61`;
+  `npm run gate:clean` passed on Node 20 with a fresh install and clean
+  before/after state, with clean receipt
+  `clean-receipt:sha256:5c2304508410ef96e08085e7` and gate receipt
+  `receipt:sha256:e8c306e1fa2600b18cb1ba50`.
+- M12 regression: the canonical Playwright suite passed 2,484 of 2,500
+  tests with 16 skips and no failures; the focused Control Center suite passed
+  25/25; nested UI typecheck/test/build passed; and the built bundle remained
+  257,198 bytes with no external references or embedded content.
+- M12 browser/privacy qualification: the built loopback server rendered
+  Overview, Source Intelligence, and Findings with no browser errors or
+  console output; axe reported zero violations with one manual contrast review
+  item; `git diff --check` and the scoped privacy review passed.
 - Safety events: NONE.
-- Remaining work: M12 integration, validation, continuity closure, and push.
-  performance, integration, validation, documentation, and push.
+- Remaining work: None within this authorized task scope.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-Status: IN_PROGRESS
+Status: COMPLETE

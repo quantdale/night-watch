@@ -4,21 +4,21 @@
 
 Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
 Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 Last substantive checkpoint SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: campaign/nightwatch-control-center
-Last checkpoint: M11 — deterministic route measurement and bundle-size guard passed at e5ac2ff.
+Last checkpoint: M12 — full validation passed at the pre-closure source checkpoint 8709dd0; live Git remains the authority.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
 LAST_VALIDATED_IMPLEMENTATION_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_CONTROL_CENTER_READONLY_V1_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_READONLY_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,11 +30,12 @@ authority.
 
 ## Current Milestone
 
+COMPLETE — M12 whole-repo integration, validation, and continuity closure.
 Milestone ID: M12
-Milestone status: IN_PROGRESS
-What is being attempted: Run complete repository and Control Center validation,
-close continuity truthfully, and fast-forward/push the durable checkpoint to
-origin main without force.
+Milestone status: COMPLETE
+What was completed: Complete repository and Control Center validation passed;
+continuity is closed truthfully with no new execution, mutation, product,
+external-network, or data-layer authority.
 
 ## Completed Milestones
 
@@ -96,20 +97,19 @@ origin main without force.
   in a synthetic server fixture, with route timing recorded without sensitive
   output. The build measured 257,198 bytes total (235,758 JS / 20,896 CSS),
   and the performance server test passed.
+- M12 — COMPLETE: the full local gate, Node 20 clean gate, canonical 2,500-test
+  regression, focused 25-test Control Center suite, nested UI checks, built
+  loopback browser verification, privacy/diff review, and terminal continuity
+  checks all passed. The implementation remains anchored at e5ac2ff; the
+  closure records are documentation-only descendants.
 
 ## Work In Progress
 
-M12 integration is beginning on `campaign/nightwatch-control-center`. The
-Control Center implementation, source/finding privacy boundary, adversarial
-hardening, and deterministic measurement are complete; full repository gates,
-clean qualification, continuity closure, and push remain.
+None. The scoped Control Center task is complete.
 
 ## Exact Next Action
 
-Run the full quality/clean/agent/project suites plus the Control Center focused
-and built-browser checks. Inspect the final privacy surface and diff, complete
-terminal task records, fast-forward `main`, push `origin main`, and verify
-`HEAD == origin/main` with a clean tree.
+Task complete.
 
 ## Files Changed
 
@@ -241,6 +241,36 @@ terminal task records, fast-forward `main`, push `origin main`, and verify
 - `npm run hardening:check` after M11 measurement changes — PASS: offline structural invariants hold.
 - `npm run control-center:ui:typecheck` after M11 measurement changes — PASS.
 - `npm run control-center:ui:test` after M11 measurement changes — PASS: 2 files / 11 tests passed.
+- `npm run gate:local` at `8709dd0` — PASS: all nine required groups;
+  semantic 1,883 total / 1,870 passed / 13 skipped / 0 failed; owner 91
+  passed; synthetic 61 passed; Node 22 local receipt
+  `receipt:sha256:951a5a8b8edbc1cc02d5bc61`; gate definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- `npm run control-center:ui:typecheck` at `8709dd0` — PASS.
+- `npm run control-center:ui:test` at `8709dd0` — PASS: 2 files / 11 tests
+  passed.
+- `npm run control-center:ui:build` at `8709dd0` — PASS: 3 built files,
+  257,198 bytes total (235,758 JS / 20,896 CSS), below the 512 KiB cap; no
+  external references or embedded content.
+- `npm test -- --project=nightwatch --workers=1` at `8709dd0` — PASS: 2,500
+  tests, 2,484 passed, 16 skipped, 0 failed, 6.6 minutes.
+- Focused Control Center contracts/adapters/server Playwright suite at
+  `8709dd0` — PASS: 25 tests, 0 failed; performance output recorded
+  `coldStartMs=0 routeBatchMs=7 routes=7 repeatDeterministic=true`.
+- Built loopback browser verification at `http://127.0.0.1:7317/` — PASS:
+  Overview, Source Intelligence, and Findings rendered their bounded local
+  states with no page errors or console output; axe reported 0 violations and
+  one manual-review color-contrast item. Browser and server were closed.
+- Privacy/diff review at `8709dd0` — PASS: `git diff --check`; the scoped
+  privacy scan found only intentional boundary vocabulary and synthetic test
+  sentinels, with no real credentials, auth state, customer data, or raw
+  evidence added.
+- `npm run gate:clean` from source head `8709dd0` — PASS: Node 20, fresh
+  install, clean before/after, zero sibling writes, no auth or owner finding
+  state; semantic 1,883 total / 1,870 passed / 13 skipped / 0 failed; owner
+  91 passed; synthetic 61 passed; clean receipt
+  `clean-receipt:sha256:5c2304508410ef96e08085e7`; gate receipt
+  `receipt:sha256:e8c306e1fa2600b18cb1ba50`.
 
 ## Decisions Made During This Task
 
@@ -277,10 +307,17 @@ infrastructure, sibling-repository, or external publication operation.
 
 ## Resume Recipe
 
-Read `.agent/ACTIVE_TASK.md`, then this task's SPEC, PLAN, and STATE. Inspect
-live Git status and continue the exact M12 action above. Preserve loopback-only,
-read-only, whitelist, source-authority, and owner-scope constraints.
+Task complete; do not resume this task. A future task requires new
+authorization before changing its loopback-only, read-only, whitelist,
+source-authority, or owner-scope boundaries.
 
 ## Completion Snapshot
 
-Not complete. M0–M11 are recorded; M12 integration and continuity closure remain.
+Complete. M0–M12 are terminal; the Control Center is implemented as a local,
+loopback-only, read-only UI and server over versioned whitelist DTOs and
+authoritative adapters. Full local and clean gates, the canonical regression,
+focused Control Center suite, UI package checks, built-browser checks, privacy
+review, and continuity validation passed. No DEV/NEXT/production, external
+network, database/datastore, cloud/infrastructure, sibling-repository write,
+authentication, publication, execution, mutation, or raw-evidence operation
+was performed or authorized.

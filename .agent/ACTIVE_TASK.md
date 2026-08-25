@@ -3,13 +3,13 @@
 Task ID: nightwatch-control-center-readonly-v1
 Phase: CONTROL-CENTER-READONLY-V1
 Title: Nightwatch Control Center — Read-Only Local V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
 Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
-Last checkpoint: M11 — deterministic route measurement and bundle-size guard passed at e5ac2ff.
-Current milestone: M12 — Whole-repo integration, docs, continuity, and push.
-Next action: Run the complete existing gates plus Control Center checks, update the final continuity snapshot, fast-forward main, push without force, and verify local HEAD equals origin/main with a clean tree.
+Last checkpoint: M12 — whole-repo integration, clean qualification, and Control Center validation passed at 8709dd0.
+Current milestone: COMPLETE — M12 whole-repo integration, validation, and continuity closure.
+Next action: Task complete.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
