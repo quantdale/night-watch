@@ -1,5 +1,6 @@
 export * from './common';
 export * from './meta';
+export * from './health';
 export * from './readiness';
 export * from './safety';
 export * from './runs';

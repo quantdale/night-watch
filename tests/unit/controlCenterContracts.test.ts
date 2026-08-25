@@ -25,6 +25,7 @@ import {
 import { CONTROL_CENTER_EVENT_SCHEMA_VERSION } from '../../src/controlCenter/contracts/events';
 import { CONTROL_CENTER_EXECUTION_GRAPH_SCHEMA_VERSION } from '../../src/controlCenter/contracts/executionGraph';
 import { CONTROL_CENTER_FINDINGS_SCHEMA_VERSION } from '../../src/controlCenter/contracts/findings';
+import { CONTROL_CENTER_HEALTH_SCHEMA_VERSION } from '../../src/controlCenter/contracts/health';
 import { CONTROL_CENTER_META_SCHEMA_VERSION } from '../../src/controlCenter/contracts/meta';
 import { CONTROL_CENTER_READINESS_SCHEMA_VERSION } from '../../src/controlCenter/contracts/readiness';
 import { CONTROL_CENTER_RUN_DETAIL_SCHEMA_VERSION, CONTROL_CENTER_RUN_LIST_SCHEMA_VERSION, CONTROL_CENTER_TIMELINE_SCHEMA_VERSION } from '../../src/controlCenter/contracts/runs';
@@ -38,6 +39,7 @@ import {
 test.describe('Control Center versioned contracts', () => {
   test('defines one distinct v1 schema for every planned public snapshot family', () => {
     const versions = [
+      CONTROL_CENTER_HEALTH_SCHEMA_VERSION,
       CONTROL_CENTER_META_SCHEMA_VERSION,
       CONTROL_CENTER_READINESS_SCHEMA_VERSION,
       CONTROL_CENTER_SAFETY_SCHEMA_VERSION,

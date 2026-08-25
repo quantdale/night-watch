@@ -43,6 +43,7 @@
     "campaign:source-gaps": "node bin/nightwatch-intelligence.mjs source-gaps",
     "campaign:operator": "node bin/nightwatch-intelligence.mjs campaign",
     "campaign:findings": "node bin/nightwatch-intelligence.mjs findings",
+    "control-center:start": "node bin/nightwatch-control-center.mjs",
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
     "observe:canary": "node bin/observe-canary.mjs",
