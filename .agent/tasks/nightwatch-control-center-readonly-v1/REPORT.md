@@ -1,12 +1,12 @@
 # Nightwatch Control Center — Read-Only Local V1 Report
 
 - Starting SHA: `8feea0092f361e80bfaf23f29a7d45df05c7fada`
-- Validated implementation anchor: `e6451092bf358988f23808b90b138e9dd195b50f`
+- Validated implementation anchor: `867a707d820b8ddc33beebed88fd82991e26827b`
 - Task objective: build a loopback-only, read-only Control Center over
   existing Nightwatch authorities.
 - Planning branch: inspected with `git show`; not checked out, merged, or
   modified.
-- Current status: M6 complete; M7 Campaign Intelligence work is active.
+- Current status: M7 complete; M8 Bounded Source Intelligence work is active.
 - M0 baseline: project truth, typecheck, hardening, specification,
   inventory, local gate, and Node 20 clean gate all passed. Local receipt is
   `receipt:sha256:4bd1c4342e1727e40b8e4370`; clean receipt is
@@ -37,8 +37,12 @@
   graph views distinguish outcomes, preserve sequence and table fallback, and
   use advisory SSE only to refresh GET snapshots. Two UI test files passed 7/7,
   build policy passed, and local-server browser smoke verified empty states.
+- M7 implementation checkpoint `867a707`: campaign summary and coverage views
+  preserve plan state, currentness, counts, stage gaps, reason codes, and owner
+  scope without derived score or promotion authority. UI tests passed 8/8 and
+  local-server browser smoke verified unavailable coverage.
 - Safety events: NONE.
-- Remaining work: M7–M12 campaign/source/finding views, security,
+- Remaining work: M8–M12 source/finding views, security,
   performance, integration, validation, documentation, and push.
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

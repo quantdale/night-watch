@@ -150,7 +150,7 @@ and source graph data also have list/table fallbacks.
 - Acceptance criteria: model-level equivalence with existing domain outputs;
   no new score or selector authority.
 - Validation commands: campaign adapter and UI fixture tests.
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
 ### M8 — Bounded Source Intelligence graph
 
@@ -161,7 +161,7 @@ and source graph data also have list/table fallbacks.
   stale/unavailable/ambiguous proof visible, no raw source payload, fallback
   list/table.
 - Validation commands: source graph tests and synthetic 250/1000-node bounds.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M9 — Sanitized Findings view
 

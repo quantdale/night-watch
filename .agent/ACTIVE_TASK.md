@@ -6,15 +6,15 @@ Title: Nightwatch Control Center — Read-Only Local V1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-readonly-v1
 Starting SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-Last validated implementation SHA: e6451092bf358988f23808b90b138e9dd195b50f
-Last checkpoint: M6 — run/timeline/graph views, seven UI tests, advisory SSE test, and rendered empty-state smoke passed at e645109.
-Current milestone: M7 — Campaign Intelligence view.
-Next action: Wire campaign summary and coverage DTOs into a view that preserves model-level counts, coverage gaps, owner scope, and unavailable/source-currentness states without inventing scores.
+Last validated implementation SHA: 867a707d820b8ddc33beebed88fd82991e26827b
+Last checkpoint: M7 — campaign view, eight UI tests, and rendered unavailable-campaign smoke passed at 867a707.
+Current milestone: M8 — Bounded Source Intelligence graph.
+Next action: Wire source surfaces and graph DTOs into a bounded progressive view with proof/currentness/lifecycle rollups, table fallback, and explicit unavailable or stale states.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_UI_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 8feea0092f361e80bfaf23f29a7d45df05c7fada
-LAST_VALIDATED_IMPLEMENTATION_SHA: e6451092bf358988f23808b90b138e9dd195b50f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e6451092bf358988f23808b90b138e9dd195b50f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 867a707d820b8ddc33beebed88fd82991e26827b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 867a707d820b8ddc33beebed88fd82991e26827b
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety
