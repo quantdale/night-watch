@@ -3,18 +3,18 @@
 Task ID: response-flow-proof-binding-hardening
 Phase: RESPONSE-FLOW-PROOF-BINDING-HARDENING
 Title: Nightwatch — Exact Response-Flow Declaration Binding Hardening
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/response-flow-proof-binding-hardening
 Starting SHA: 27fe332644d5065942223fc11576e8ee97777258
-Last validated implementation SHA: 27fe332644d5065942223fc11576e8ee97777258
-Last checkpoint: M1 — exact binding design, regression matrix, and focused implementation validation.
-Current milestone: M2 — resolver hardening and downstream dependency-cone validation.
-Next action: Run the cache, invalidation, graph, review, Phase 24, taxonomy, privacy, and determinism regressions; repair any failure before the full gates.
+Last validated implementation SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
+Last checkpoint: M5 — final qualification, continuity closure, and Git synchronization.
+Current milestone: COMPLETE — all campaign milestones are closed.
+Next action: STOP — task complete; no preselected successor campaign exists.
 Authorization class: RESPONSE_FLOW_PROOF_BINDING_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 27fe332644d5065942223fc11576e8ee97777258
-LAST_VALIDATED_IMPLEMENTATION_SHA: 27fe332644d5065942223fc11576e8ee97777258
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 27fe332644d5065942223fc11576e8ee97777258
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1570547db9069c2a19d4c42c3e27e496ff1b5f01
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 
@@ -33,6 +33,6 @@ Git.
 
 ## Resume recipe
 
-Read `.agent/tasks/response-flow-proof-binding-hardening/STATE.md`, then
-`SPEC.md` and `PLAN.md`; inspect live Git status/diff; execute the Exact next
-action. Do not reopen Phase 27 or Phase 28 and do not broaden owner scope.
+Task complete. Do not resume. A future campaign must begin with a fresh live
+Git/source census and fresh authorization. Do not reopen Phase 27 or Phase 28
+and do not broaden owner scope.

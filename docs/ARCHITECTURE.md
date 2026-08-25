@@ -1726,3 +1726,35 @@ surfaces, and 125 excluded. Phase 24 remains the sole candidate authority;
 response proof does not establish mutation safety, read-only behavior,
 deployment equivalence, authentication correctness, runtime identity, or DEV
 readiness.
+
+## Response-flow proof-binding hardening closure
+
+The post-Phase-28 integrated audit selected a narrow correctness hardening
+because the current six-repository census produced no new admissible
+source-intelligence family but did reproduce two false-positive declaration
+bindings. The response-flow resolver now treats declaration identity as a
+source-bound tuple:
+
+```text
+approved repository + exact source SHA + confined relative path
+  + exact class/method identity + namespace/class-shape facts
+  + visibility/staticness metadata
+```
+
+`$this` and `self` calls stay in the originating file and exact class. A named
+static call requires a unique public static method with a supported,
+non-namespaced declaration and the expected source binding. Root and dependency
+declarations with stale, ambiguous, or incomplete identity reject before proof
+admission. The public sanitized declaration DTO remains stable; modifier
+metadata is internal resolver evidence only.
+
+The response-flow identity is now
+`nightwatch.real-source-response-flow.v2`. It participates in the existing
+analyzer-set/source-surface cache identity, so pre-hardening flow results are
+not reusable. Graph lineage, invalidation, review diagnostics, lifecycle
+transitions, semantic boundaries, and Phase 24 portfolio authority remain the
+existing authorities. No PHP execution, framework/container inference,
+runtime-value inference, or new runtime/DEV/data/infrastructure authority was
+introduced. The hardening is validated at
+`1570547db9069c2a19d4c42c3e27e496ff1b5f01`; current-source coverage remains
+unchanged and the two reproduced false positives are permanently rejected.

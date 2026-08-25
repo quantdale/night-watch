@@ -2,7 +2,7 @@
 
 Task ID: response-flow-proof-binding-hardening
 Phase: RESPONSE-FLOW-PROOF-BINDING-HARDENING
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 27fe332644d5065942223fc11576e8ee97777258
 Authorization class: `RESPONSE_FLOW_PROOF_BINDING_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY`
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -75,14 +75,14 @@ identity so existing source-surface caches cannot reuse pre-hardening results.
   census, integrated audit, and two false-positive probes completed.
 - M1 — COMPLETE. Freeze binding contract, select versioning strategy, and add
   adversarial cases before implementation.
-- M2 — IN_PROGRESS. Implement resolver binding and validate the focused
-  dependency cone.
-- M3 — PENDING. Validate downstream identity/cache/graph/review/Phase 24 and
-  operator seams.
-- M4 — PENDING. Re-run current census and full adversarial/privacy/
-  determinism matrix.
-- M5 — PENDING. Complete all gates, docs, continuity, commit, push, and
-  synchronized clean closure.
+- M2 — COMPLETE. Implemented resolver binding and validated the focused
+  dependency cone (72/72).
+- M3 — COMPLETE. Validated downstream identity/cache/graph/review/Phase 24 and
+  operator seams; no authority or metric drift occurred.
+- M4 — COMPLETE. Re-ran the current census and full adversarial/privacy/
+  determinism matrix; canonical and topology-correct isolated suites matched.
+- M5 — COMPLETE. Completed all local gates, durable docs, continuity closure,
+  implementation checkpoint, and the synchronized Git handoff.
 
 ## Decision Log
 
@@ -129,3 +129,14 @@ cover the rejected bindings and preserve existing positives; affected metrics,
 cache identity, privacy, safety, and continuity records are truthful; the
 canonical remote is pushed without force and local `HEAD == origin/main` with
 a clean worktree.
+
+## Final result
+
+The campaign closed at validated implementation checkpoint
+`1570547db9069c2a19d4c42c3e27e496ff1b5f01`. It repaired two reproduced
+false-positive response-flow admissions without adding a new proof family or
+changing source coverage, Phase 24 authority, or owner scope. Canonical and
+topology-correct isolated full suites both passed 2,443 tests with 16
+understood environment-conditional skips and zero failures. External CI was
+not run and is not claimed green. A future campaign must start with fresh
+evidence rather than a preselected phase.

@@ -3243,3 +3243,46 @@ proof-gap surfaces and 325 rejected diagnostics with deterministic digest
 regression suites remain zero-false-positive and privacy-safe. This decision
 adds no DEV/NEXT/production, data, cloud, infrastructure, sibling-write,
 publication, AI, or canonical-promotion authority.
+
+## D-79 — Repair exact response-flow declaration binding before expanding coverage
+
+**Context.** After Phase 28, a fresh census through the confined read-only
+source boundary reproduced the six approved repositories, their current SHAs,
+the exact Phase 28 inventory, and the same 13 rejected response-flow attempts.
+No newly admissible producer, alias, dispatch, helper, resource, DTO, or other
+source-intelligence family was present. The integrated audit nevertheless
+reproduced two concrete false-positive admissions in the existing resolver:
+same-class `$this` binding crossed file boundaries, and a named static call
+accepted a non-static target.
+
+**Decision.** Harden the existing exact resolver narrowly before considering
+new proof families. Same-class `$this` and `self` calls must bind to the
+originating confined file, exact class, and expected source SHA. Named static
+calls must bind to a unique public, static, non-namespaced, supported target
+with the same source binding. Root and dependency declarations with incomplete,
+ambiguous, or stale identity fail closed. Bump the response-flow analyzer
+identity from v1 to v2 so source-surface caches invalidate pre-hardening
+results. Keep the public sanitized declaration shape, graph/review/lifecycle
+semantics, Phase 24 authority, owner scope, and all source-only boundaries
+unchanged.
+
+**Evidence and consequences.** The repair was validated at
+`1570547db9069c2a19d4c42c3e27e496ff1b5f01`. Source coverage and proof counts
+remain unchanged: 128 operations, 83 response contracts, 175 semantic
+observations, 118 proven joins, 10 rejected joins, 13 flow attempts with zero
+proofs, and Phase 24 at 3 eligible / 125 excluded. The two reproduced false
+positives now reject deterministically; a supported same-file positive remains
+proven. The taxonomy digest changed only for the analyzer-version change.
+
+**Validation and safety.** Focused hardening 5/5, dependency cone 72/72,
+synthetic 54/54, owner provenance 91/91, all local/clean quality gates, and
+canonical/topology-correct isolated full suites (2,443 passed / 16 skipped / 0
+failed out of 2,459, exact skip parity) are green. External CI was not run and
+is not claimed green. No PHP execution, raw source persistence, credentials,
+customer data, product contact, DEV/NEXT/production activity, datastore/cloud/
+infrastructure operation, publication, or authority expansion occurred.
+
+**Rejected alternatives.** A new producer/alias or dispatch family was not
+justified by current source evidence. Broad TOCTOU or cache-schema redesign
+was not the smallest reproduced defect and remains deferred pending fresh
+evidence. No Phase 29 is preselected.

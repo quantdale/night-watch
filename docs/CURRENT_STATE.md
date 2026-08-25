@@ -1,8 +1,9 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-25** at
-> Phase 28 terminal closure. Phase 28's validated implementation
-> checkpoint is `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`; live HEAD and the
+> the evidence-backed response-flow proof-binding hardening closure. Phase 28
+> remains historical; the successor's validated implementation checkpoint is
+> `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; live HEAD and the
 > final documentation head are discovered from Git. Phase 24's authoritative local and disposable
 > Node20 clean-checkout gates pass, while its exact-head Actions run
 > `32723603497` / job `97419996717` had `steps=[]`, so the terminal state is
@@ -172,6 +173,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_26_STATUS` | `COMPLETE_LOCAL_SOURCE_EXPANSION` — direct-return response proof and safe analyzer diagnostics extended the existing Phase 25 surface profile without changing Phase 24 authority; validated implementation `bb3a41b735e5dece4170712075e44ccf4a02f716` and certification/documentation descendant `b6d61a4ee7534e81af5819e87baef45e78dd81af`; six approved repositories at current SHAs yielded 1,732 files considered / 1,092 read / 1,078 admitted / 654 rejected and 12,449,877 inspected bytes; 128 operations / 127 route proofs / 127 request contracts / 62 response contracts / 138 semantic contract observations / 118 proven joins / 10 rejected joins; lifecycle advanced to 66 `DISCOVERED`, 59 `MECHANICALLY_PROVEN`, and 3 `PROJECTABLE`; Phase 24 remained 3 eligible / 125 excluded; response gap reasons are 8 dynamic-key/incomplete-branch, 22 incomplete-branch/unsupported-syntax, 26 unsupported-syntax, 9 missing-symbol, and 1 outside-scope; local gate at certification descendant `b6d61a4ee7534e81af5819e87baef45e78dd81af` passed with receipt `receipt:sha256:5c6ae5ac430baf126e6b6299`, Node20 clean receipt `clean-receipt:sha256:3119a0ff4ebcfdf0903f0a`, compatibility 1,874/1,873/1/0 across 139 files, synthetic 30, owner provenance 91, and gate inventory 146 unique / 0 duplicates; canonical and topology-correct isolated full regressions both 2,435/2,431/4/0 with exact skip identity; exact Actions run `32783079546` / job `97609144140` matched the certification head but had zero steps and classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; all prohibited safety counts remain zero |
 | `PHASE_27_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — exact interprocedural response-flow v1 and bounded oversized-string lexical hardening are implemented at validated anchor `237e537e154bdb7c0eb7b4bd04021f9c5437db29`; fresh six-repository census reproduced 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes and classified the remaining helper/resource/DTO patterns without fuzzy or runtime inference; current-source result is 128 operations / 127 routes / 127 request contracts / 83 response contracts / 175 semantic observations / 118 proven joins / 10 rejected joins, lifecycle 45 `DISCOVERED` / 80 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE`, and Phase 24 remains 3 eligible / 125 excluded; flow layer attempted 13 / proved 0 / rejected 13 and current source supplied no exact helper/resource/DTO join; local and Node20 clean gates, compatibility 1,874/1,873/1/0, synthetic 39/39, owner provenance 91/91, and canonical/topology-correct isolated Playwright 2,440/4/0 parity are green; exact Actions run `32800403605` / job `97659975725` had `steps=[]` and classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; terminal continuity/docs closure and synchronized clean-main verification are complete |
 | `PHASE_28_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — validated implementation checkpoint `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`; fresh six-repository census remains 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes; taxonomy v3 records 45 proof-gap surfaces and 325 rejected diagnostics; no strict local producer-flow family was admitted; local and Node20 clean gates pass; canonical and topology-correct isolated Playwright both pass 2,438 / 16 skipped / 0 failed out of 2,454 with exact parity; exact-head Actions run `32819574544` / job `97714690619` had zero steps and is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; all prohibited safety counts remain zero |
+| `PHASE_RESPONSE_FLOW_PROOF_BINDING_HARDENING_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — exact response-flow declaration binding hardening validated at `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; the fresh six-repository census remained structurally identical to Phase 28; two reproduced false-positive admissions were repaired; local/clean gates and canonical/topology-correct isolated Playwright both pass 2,443 / 16 skipped / 0 failed out of 2,459 with exact skip parity; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -188,6 +190,38 @@ a SNAPSHOT of current project truth, never its own Git/checkpoint authority:
 
 - LIVE repository HEAD ← Git (discovered at check time; no persisted
   current-head SHA anywhere).
+
+## Evidence-backed response-flow proof-binding hardening closure
+
+After Phase 28, a fresh census of all six approved repositories reproduced the
+same current source snapshot and structural metrics: 1,732 files considered /
+1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes; 128 operations,
+127 route proofs, 127 request contracts, 83 response contracts, 175 semantic
+observations, 118 proven joins, 10 rejected joins, 47 mutation-capable
+operations, and 5 independently proven read-only operations. Lifecycle stayed
+45 `DISCOVERED` / 80 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE`; Phase 24 stayed
+128 considered / 3 eligible / 125 excluded; response flow stayed 13 attempts /
+0 proven / 13 rejected / 0 resolved / maximum depth 0. No new producer-flow or
+other source-intelligence family was admissible.
+
+The integrated audit reproduced two concrete false-positive admissions in the
+bounded response-flow resolver: same-class `$this` binding across files and a
+named static call binding to a non-static method. The selected narrow campaign
+closed both defects at validated implementation checkpoint
+`1570547db9069c2a19d4c42c3e27e496ff1b5f01`. It binds declarations to exact
+repository/source SHA/path/class/modifier identity, bumps the flow analyzer
+identity to v2 for cache invalidation, and preserves the sanitized DTO,
+source-only boundary, graph/review/lifecycle semantics, and Phase 24
+authority. The taxonomy digest correspondingly moved to
+`source-gap-taxonomy:sha256:02a38e1514a46da5ab21f90c`.
+
+Focused, dependency-cone, synthetic, owner-provenance, type, hardening,
+quality-gate, semantic, continuity, project-state, local, and Node20 clean
+validation passed. Canonical and topology-correct isolated full Playwright
+both passed 2,443 / 16 skipped / 0 failed out of 2,459, with exact skip
+identity parity. External CI was not run and is not claimed green. The next
+campaign is intentionally unselected; it requires a new live census and fresh
+authorization.
 - CURRENT implementation checkpoint ← `.agent/ACTIVE_TASK.md` + task
   `STATE.md` under `nightwatch.agent-continuity.v2` (strict cross-file task
   state machine).

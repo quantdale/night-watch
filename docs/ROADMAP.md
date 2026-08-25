@@ -2215,3 +2215,35 @@ Phase 28 has no DEV/NEXT/production, authenticated-browser, data-plane,
 cloud/infra, sibling-write, publication, self-development-promotion, or AI
 runtime authority. Final certification and the successor campaign are chosen
 from the terminal measurements, not preselected here.
+
+## Evidence-backed successor — exact response-flow declaration binding hardening
+
+**Status:** `COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated implementation
+checkpoint `1570547db9069c2a19d4c42c3e27e496ff1b5f01` (2026-08-25). This is a
+correctness hardening campaign selected after a fresh integrated audit, not a
+preselected Phase 29.
+
+The fresh census of all six approved repositories exactly reproduced the Phase
+28 source snapshot and structural metrics: 1,732 files considered / 1,092
+read / 1,078 admitted / 654 rejected / 12,449,877 bytes; 128 operations / 127
+route proofs / 127 request contracts / 83 response contracts / 175 semantic
+observations / 118 proven joins / 10 rejected joins; lifecycle 45/80/3; Phase
+24 3 eligible / 125 excluded; and response flow 13 attempts / 0 proven / 13
+rejected / 0 resolved. No new producer-flow family or other excluded family
+cleared the mechanical admission threshold.
+
+The audit did reproduce two existing false-positive proof admissions: a
+same-class `$this` call could cross file boundaries, and a named static call
+could bind to a non-static method. The repair requires exact originating path,
+repository/source SHA, class, visibility, staticness, supported class shape,
+and namespace facts; ambiguous or stale declarations fail closed. The
+response-flow identity is v2 so existing caches cannot reuse pre-hardening
+results. Public sanitized DTOs and all Phase 24, graph, review, lifecycle,
+privacy, and owner-scope authorities remain unchanged.
+
+Focused and dependency-cone regressions, synthetic campaign, owner provenance,
+all local/clean gates, and canonical/topology-correct isolated full suites
+passed. Both full suites enumerated 2,459 tests, passed 2,443, skipped the
+same 16 understood environment-conditional tests, and failed zero. External
+CI was not run and is not claimed green. No successor is selected here; any
+future campaign must begin with a new evidence census and authorization.
