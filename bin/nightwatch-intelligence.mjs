@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const command = args[0] ?? "status";
 const asJson = args.includes("--json");
 
-const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "source-gaps", "eligibility-census", "surfaces", "review-queue", "explain-surface"]);
+const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "source-gaps", "eligibility-census", "readonly-census", "surfaces", "review-queue", "explain-surface"]);
 if (!COMMANDS.has(command)) {
   console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
   process.exit(2);
@@ -118,11 +118,12 @@ function status() {
 }
 
 function sourceDiscoveryPreview() {
-  const [sourceBoundary, approvedScan, surfacesModule, reviewModule] = loadTypeScriptModules([
+  const [sourceBoundary, approvedScan, surfacesModule, reviewModule, readonlyModule] = loadTypeScriptModules([
     "src/core/source/siblingSource.ts",
     "src/core/source/approvedScan.ts",
     "src/core/source/surfaces.ts",
     "src/core/source/review.ts",
+    "src/core/source/readonlyCandidateCensus.ts",
   ]);
   const requestedRepo = args.find((arg) => arg.startsWith("--repo="))?.slice("--repo=".length);
   const repositoryIds = requestedRepo === undefined ? undefined : [requestedRepo];
@@ -134,6 +135,7 @@ function sourceDiscoveryPreview() {
   const safeInventorySummary = { schemaVersion: inventory.schemaVersion, configDigest: inventory.configDigest, extractorVersion: inventory.extractorVersion, repositories: inventory.repositories, counters: inventory.counters, snapshotDigest: inventory.snapshotDigest };
   if (command === "source-scan") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", approvedRepositoryIds: config.approvedRepositories.map((repository) => repository.repoId), inventory: safeInventory };
   if (command === "source-gaps") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventorySummary, counters: discovery.counters, gapTaxonomy: discovery.gapTaxonomy, performance: discovery.performance, deterministicDigest: discovery.deterministicDigest };
+  if (command === "readonly-census") return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventorySummary, candidateCensus: readonlyModule.buildReadOnlyCandidateCensus({ access, discovery }) };
   if (discovery.phase24Inputs.length === 0) return { command, scope: "LOCAL_SOURCE_ONLY", safety: "NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT", inventory: safeInventory, counters: discovery.counters, operations: discovery.operations, surfaces: discovery.surfaces, portfolio: null, queue: null, note: "NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE" };
   const integration = surfacesModule.analyzeSourceSurfacesIntoPhase24({ access, config, discovery, maxCandidates: 6 });
   const review = reviewModule.buildSourceReviewQueue({ discovery: integration.discovery, portfolio: integration.portfolio, selection: integration.selection });
@@ -256,7 +258,7 @@ function phase21Summary(phase21) {
 
 try {
   let output;
-  if (["source-scan", "source-gaps", "eligibility-census", "surfaces", "review-queue", "explain-surface"].includes(command)) output = sourceDiscoveryPreview();
+  if (["source-scan", "source-gaps", "eligibility-census", "readonly-census", "surfaces", "review-queue", "explain-surface"].includes(command)) output = sourceDiscoveryPreview();
   else if (command === "status") output = status();
   else if (["differential", "replay-coverage", "minimization-coverage", "mutation-score"].includes(command)) {
     const phase21 = phase21Preview();

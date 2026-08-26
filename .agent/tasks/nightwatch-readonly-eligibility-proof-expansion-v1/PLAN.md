@@ -57,13 +57,13 @@ public output.
   authority reads, and continuity activation.
 - [x] M1 — deterministic exclusion-chain census and end-to-end mutability/
   read-only authority audit.
-- [ ] M2 — current-source candidate proof-family census, falsification matrix,
+- [x] M2 — current-source candidate proof-family census, falsification matrix,
   and frozen admission decision.
-- [ ] M3 — versioned proof core, write-capability vocabulary, exact bounded
-  declaration/dependency resolution, currentness, cache, and invalidation (only
-  if M2 admits a family; otherwise hardening-only).
-- [ ] M4 — existing source → semantic → Phase 24 integration and compatibility
-  matrix; no selector/ranking/owner-policy changes.
+- [x] M3 — proof-core admission decision: no new versioned proof core is
+  justified; existing read-only authority is retained and no write vocabulary
+  or cache authority is added.
+- [x] M4 — existing source → semantic → Phase 24 compatibility verified; no
+  selector/ranking/owner-policy changes.
 - [ ] M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
   budgets, and whole-repository Critical/High hardening.
 - [ ] M6 — local authoritative gate, clean Node20 gate, canonical and
@@ -137,12 +137,21 @@ dynamic PHP authority, and any proof family rejected by M2 remain deferred.
   zero of those surfaces are blocked by that reason alone; all 76 also carry
   another source or Phase-24 blocker. This confirms the campaign direction is
   worth falsifying, but any future unlock must be measured downstream.
+- M2: no new proof family clears the admission bar on current source. Direct
+  pure-return handlers have population 0; exact bounded declaration cones have
+  13 attempts, 0 complete, and 13 rejected; the five-entry known-read registry
+  is the existing baseline; and GET-only remains a negative control.
+- M3: the zero-admission result is authoritative for this campaign. Adding a
+  speculative write vocabulary, query-builder heuristic, or incomplete call
+  cone would weaken rather than expand mechanically justified coverage.
 
 ## Discoveries
 
-M1 discoveries are recorded in STATE.md. The census identity is
+M1 and M2 discoveries are recorded in STATE.md. The census identity is
 `source-eligibility-census:sha256:267a67ef25503b85397a7b46` for the current
-source snapshot; it must be recomputed after any source or authority change.
+source snapshot, and the candidate census identity is
+`source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`; both must
+be recomputed after any source or authority change.
 
 ## Deferred Work
 

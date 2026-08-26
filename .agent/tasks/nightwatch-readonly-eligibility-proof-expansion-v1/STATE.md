@@ -28,8 +28,8 @@ source and Phase 24 authorities without widening safety scope.
 
 ## Current Milestone
 
-M2 — current-source candidate proof-family census, falsification matrix, and
-frozen admission decision.
+M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
+budgets, and whole-repository hardening.
 
 ## Completed Milestones
 
@@ -42,6 +42,10 @@ frozen admission decision.
 - Fresh local source census passed through the existing confined reader.
 - M1 exclusion-chain census is implemented as an additive projection and
   passed its synthetic source/Phase-24 integration assertions.
+- M2 candidate-family census and the zero-new-proof admission decision are
+  complete; M3 proof-core work is not applicable under the fail-closed gate.
+- M4 source-to-Phase-24 compatibility remains unchanged: the existing
+  portfolio/selector still reports 3 eligible and 125 excluded.
 
 ## Fresh baseline snapshot
 
@@ -64,14 +68,15 @@ frozen admission decision.
   taxonomy rows; digest `source-gap-taxonomy:sha256:02a38e1514a46da5ab21f90c`.
 - Source surface digest: `source-surface-discovery:sha256:92ff5f61acfc63aa9b8ad7a5`.
 - Eligibility census digest: `source-eligibility-census:sha256:267a67ef25503b85397a7b46`.
+- Read-only candidate census digest:
+  `source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`.
 
 ## Work In Progress
 
-Measure bounded candidate read-only proof families against the current
-approved source using only existing confined reads and sanitized counts. Test
-direct pure handlers, exact safe-call cones, and declaration/metadata-backed
-families separately; record positive populations, unsupported/ambiguous
-patterns, and projected Phase-24 impact before admitting any proof authority.
+Saturate the synthetic adversarial and privacy corpus around the rejected
+candidate families, repeat the live candidate census for byte-identical
+determinism, measure bounded analysis cost, and audit the dependency cone for
+reproducible Critical/High defects. Preserve the zero-admission decision.
 
 ## Files Changed
 
@@ -80,6 +85,9 @@ Continuity activation changed `.agent/ACTIVE_TASK.md`,
 M1 adds `src/core/source/eligibilityCensus.ts`, the additive bridge field in
 `src/core/source/surfaces.ts`, the local `eligibility-census` operator command,
 and focused assertions in `tests/unit/phase25SurfaceDiscovery.test.ts`.
+M2 adds `src/core/source/readonlyCandidateCensus.ts`, the local
+`readonly-census` operator command, package scripts, and the synthetic
+`tests/unit/readonlyCandidateCensus.test.ts` corpus.
 
 ## Decisions Made During This Task
 
@@ -119,13 +127,30 @@ and focused assertions in `tests/unit/phase25SurfaceDiscovery.test.ts`.
 - The census is category-only and deterministic. It contains safe IDs,
   source identities, statuses, reason codes, counts, and digests; it does not
   retain source text, literals, request/response values, or proof authority.
+- Candidate census family results are: direct pure-return handler population
+  0 (127 handlers rejected: 117 non-return-body syntax, 9 unavailable, 1
+  non-literal expression); exact bounded declaration cone 13 attempts, 0
+  complete, 13 rejected (9 dynamic dispatch, 3 unsupported helper syntax, 1
+  branch-incomplete), 13 root declarations, depth 0, ambiguity 0; known-read
+  registry 5 complete baseline entries with 5 positive read facts and 3
+  current eligible surfaces; GET-only negative control 81 routes, 76
+  method-only, 0 positive read evidence.
+- Candidate-family false-positive assessment is explicit: direct literal
+  syntax has low side-effect risk but no read evidence; exact cones remain high
+  risk without an effect registry and have no complete current examples; the
+  Phase-5 registry is exact but not new; GET-only is never authority. The
+  candidate census reports 0 likely new Phase-24 unlocks.
+- No independently trustworthy current source annotation, query-builder
+  declaration, generated safe-method contract, or complete transitive
+  read-effect registry was found beyond the existing five-entry Phase-5
+  baseline. Naming, GET, comments, and absence-of-obvious-write remain
+  rejected as proof.
 
 ## Exact Next Action
 
-Run the bounded live-source candidate proof census. Measure direct pure
-handlers, exact safe-call cones, and existing metadata-backed candidates as
-separate families; use the results to decide whether a new proof authority is
-mechanically justified before implementing one.
+Run the adversarial/privacy/performance hardening matrix, then perform the
+whole-repository dependency-cone audit and repair any reproduced Critical or
+High defect before the integrated validation ladder.
 
 ## Blockers
 
@@ -163,6 +188,14 @@ publication, or runtime AI operation occurred.
 - `node bin/nightwatch-intelligence.mjs eligibility-census --json`: PASS;
   census digest `source-eligibility-census:sha256:267a67ef25503b85397a7b46`,
   safety marker `NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT`.
+- `npm run typecheck`: PASS after M2 candidate census implementation.
+- `npm run campaign:synthetic`: PASS, 62/62, including the candidate census
+  corpus.
+- `npx playwright test tests/unit/readonlyCandidateCensus.test.ts
+  tests/unit/phase25SurfaceDiscovery.test.ts --workers=1`: PASS, 4/4.
+- `node bin/nightwatch-intelligence.mjs readonly-census --json`: PASS;
+  candidate census digest `source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`,
+  safety marker `NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT`.
 
 ## Deferred / Follow-Up
 
@@ -176,5 +209,5 @@ recorded milestone requires it.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 and M1 are complete; M2 is active. No new implementation proof
-family has been admitted or rejected yet.
+IN_PROGRESS — M0 through M4 are complete. M2 rejected all new proof families;
+M5 hardening and final validation remain.
