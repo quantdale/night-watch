@@ -5,8 +5,8 @@ Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
 Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last validated implementation SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last substantive checkpoint SHA: 545f6b8d700be131e55c424d055331887ed04189
+Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+Last substantive checkpoint SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
 
 ## Current disposition
 
@@ -34,8 +34,14 @@ stage/blocker rollups, and family diagnostics; it does not add policy or
 selection authority.
 
 Focused proof-chain, source-intelligence, semantic, authority-lifecycle, and
-Control Center suites are green. Full acceptance and topology-correct isolated
-validation remain in progress.
+Control Center suites are green. The semantic compatibility cone is 1,884
+total / 1,871 passed / 13 skipped / 0 failed; the synthetic campaign is 66/66;
+owner provenance is 91/91; and the built Control Center UI/browser checks are
+green. The first canonical complete regression attempt enumerated 2,524,
+passed 2,507, skipped 16, and had one existing journey cancellation-fixture
+failure. That exact test passed 5/5 in immediate focused serial reruns, so no
+source change was justified; the canonical suite will be rerun on the clean
+checkpoint before terminal closure.
 
 ## Safety disposition
 

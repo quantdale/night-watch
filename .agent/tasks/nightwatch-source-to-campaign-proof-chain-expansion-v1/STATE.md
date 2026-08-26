@@ -8,8 +8,8 @@ Title: Source-to-Campaign Proof Chain Expansion
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last validated implementation SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last substantive checkpoint SHA: 545f6b8d700be131e55c424d055331887ed04189
+Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+Last substantive checkpoint SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -91,9 +91,9 @@ closure, performance confirmation, and the repository acceptance gates.
 
 ## Exact Next Action
 
-Run the remaining adversarial dependency-cone and privacy/currentness/
-determinism checks, repair every reproduced Critical/High defect, then execute
-the full local/clean/isolated acceptance matrix before documentation closure.
+Checkpoint the current continuity/docs state, rerun the canonical full suite
+after the reproduced transient, then execute the clean Node20 gate and the
+topology-correct isolated full suite before documentation closure.
 
 ## Files Changed
 
@@ -133,6 +133,29 @@ Phase-24 selector or sibling source was changed.
 - `npm run hardening:check`: PASS after proof-chain and Control Center changes.
 - `npm run typecheck`: PASS after proof-chain and Control Center changes.
 - `git diff --check`: PASS after proof-chain and Control Center changes.
+- `npm run test:semantic-compat`: PASS; 1,884 total / 1,871 passed / 13
+  skipped / 0 failed across 141 files.
+- `npm run campaign:synthetic`: PASS; 66/66.
+- `npm run test:owner-provenance`: PASS; 91/91.
+- Control Center UI typecheck: PASS; nested UI tests: PASS, 11/11; built UI
+  verification: PASS, 3 files / 259,566 bytes with no external references;
+  built synthetic browser qualification: PASS, 1/1. The agent-browser
+  preview check also found meaningful content, no error overlay, and no
+  console errors; its empty snapshot was the expected no-API static-preview
+  state, not an authority result.
+- `npm run agent:check`: PASS with 3 expected warnings (historical v1 tasks,
+  continuity-anchor inference, and the approved active-task checkpoint).
+- `npm run agent:audit`: PASS; 77 task records, 53 strict v2, 24 legacy v1,
+  0 strict errors.
+- `npm run project:check`: correctly stopped with
+  `PROJECT_STATE_CHECKOUT_DIRTY` while continuity documentation was
+  uncommitted; a clean rerun remains required.
+- Canonical full Playwright attempt (`npx playwright test
+  --project=nightwatch --workers=1`): 2,524 enumerated / 2,507 passed / 16
+  skipped / 1 failed. The only failure was the existing
+  `journeyEngine.test.ts:163` cancellation fixture; the exact test passed
+  5/5 in immediate serial focused reruns. No assertion or product code was
+  changed; the full suite must be rerun on the clean checkpoint.
 
 ## Decisions Made During This Task
 
