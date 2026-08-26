@@ -58,7 +58,7 @@ or external publication may enter this task or Git.
 - [x] M4 — instrument and implement call-scoped exact-snapshot source-read
   reuse; prove identity separation, privacy, bounds, fail-closed behavior and
   parity across source/join/eligibility paths.
-- [ ] M5 — measure residual parser/token cost; admit shared parse work only if
+- [x] M5 — measure residual parser/token cost; admit shared parse work only if
   exact symbol-specific parity is provable, otherwise record rejection while
   retaining M3/M4 wins.
 - [ ] M6 — adversarial hardening for collisions, symbols, mtimes/content,
@@ -117,6 +117,9 @@ if exact symbol-specific evidence identity cannot be proven.
   interruption surface.
 - M4-01: Positive source text is cached only after an exact post-scan digest
   check; all uncertain identities use the existing reader path.
+- M5-01: A measured but cross-authority parser optimization is not admitted
+  without an exact evidence-identity proof; independent loader/read wins stay
+  in scope and the parser candidate is recorded as rejected.
 
 ## Discoveries
 
@@ -162,6 +165,13 @@ if exact symbol-specific evidence identity cannot be proven.
   file identities. The focused read-reuse suite passes 4/4, including
   cross-repository/snapshot separation and stale/rejected/unavailable fallback;
   the affected source cone retained parity and hardening/typecheck passed.
+- M5 completed: repeated same-method `--json` source-census measurements kept
+  the snapshot and normalized safe projections identical; tokenizer metrics
+  remained 94 files/766 declarations/32,027 max tokens/242,093 max bytes. A
+  V8 profile measured `tokenizePhp` at 284 of 4,409 ticks (6.4%). Shared parse
+  state was rejected because safe reuse would bridge independent Phase 14,
+  Phase 20 and Phase 26 analyzer contracts with per-symbol/hint inputs; no
+  same-input identity proof was available at this checkpoint.
 
 ## Deferred Work
 

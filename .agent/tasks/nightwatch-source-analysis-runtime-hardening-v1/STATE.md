@@ -66,19 +66,26 @@ What is being attempted: measure residual parser/token work after loader and exa
   response-flow, Phase24, eligibility and parity tests pass; the instrumented
   synthetic discovery reduced repeated shared-handler reads to scan plus one
   verified downstream read and retained safe-output equality.
+- M5 — parser/token investigation complete: repeated post-optimization runs
+  kept the source snapshot and tokenizer metrics stable. A V8 profile recorded
+  `tokenizePhp` at 284/4,409 ticks (6.4%); the remaining parse work is spread
+  across the independent Phase 14 extractor and Phase 20/26 source analyzers,
+  including per-symbol/hint inputs. No shared parse cache was admitted because
+  its required cross-authority API change could not yet prove exact identity
+  parity; M3/M4 wins remain checkpointed.
 
 ## Work In Progress
 
-M5 parser/token investigation. The loader and read-view wins are independently
-checkpointed. The next bounded work unit is to repeat the source-census timing/
-RSS methodology, inspect residual tokenizer metrics and determine whether
-lower-level parse sharing can preserve per-symbol analyzer identity.
+M6 adversarial hardening. M5 rejected shared parse/token state on the current
+identity evidence. The next bounded work unit is to expand collision, symbol,
+stale/mtime, privacy/budget, exception and proof-nonmanufacture controls around
+the admitted loader and source-read mechanisms.
 
 ## Exact Next Action
 
-Repeat the baseline source-census measurements after `dc368eb`, compare parser/
-token metrics and memory, then make the explicit M5 parse-sharing admit/reject
-decision before editing analyzers.
+Add and run the M6 adversarial controls for loader/source-read identity,
+fallback, bounds and Phase24 non-escalation; do not reopen the rejected parser
+candidate unless new evidence changes the parity decision.
 
 ## Files Changed
 
@@ -176,6 +183,24 @@ manifest/hash files remain outside Git under `/tmp` only.
   PASS. The fixture contains two repositories with the same relative path,
   same-mtime content mutation, rejected/unsupported and unavailable controls,
   and separate snapshot views without aliasing.
+- M5 measurement: with the same `--json` source-census commands, current
+  output remained safe and the snapshot digest remained
+  `srcsnapshot:sha256:04ff583971865f335902f5ad`; normalized safe projections
+  matched the prior optimized baseline for source-scan, source-gaps,
+  eligibility-census, readonly-census and surfaces. One measured run was:
+  source-scan 3.35s/266,444 KB; source-gaps 3.67s/318,044 KB;
+  eligibility-census 4.18s/265,640 KB; readonly-census 4.19s/387,436 KB;
+  surfaces 6.40s/271,444 KB (wall/RSS). Repeated runs showed the normal
+  environment variance: source-gaps 4.20–6.37s/264,516–266,472 KB,
+  eligibility 3.77–3.80s/266,908–270,448 KB, readonly 3.56–3.67s/
+  266,040–271,232 KB, and surfaces 4.27s/270,204 KB. Performance metrics
+  stayed at 94 PHP files tokenized, 766 declarations, max 32,027 tokens and
+  max 242,093 source bytes.
+- M5 parser decision: a V8 profile of `surfaces --json` recorded 4,409 ticks,
+  with `tokenizePhp` at 284 ticks (6.4%). Shared parse/token work is rejected
+  for this checkpoint because it would need to bridge the Phase 14 extractor,
+  Phase 20 analyzer and Phase 26 extended analyzer while preserving distinct
+  symbol/hint/observation inputs. No source or proof authority was changed.
 
 ## Decisions Made During This Task
 
@@ -197,6 +222,9 @@ manifest/hash files remain outside Git under `/tmp` only.
   inventory digest. A mismatch is returned to the authoritative caller for
   its existing stale classification and is never retained; rejected or
   ambiguous records never become cache authority.
+- M5-01: Do not admit shared parser state on a single-profile CPU signal when
+  the safe implementation would cross independent analyzer contracts; retain
+  independent loader/read optimizations and document the rejected candidate.
 
 ## Discoveries
 
@@ -222,6 +250,10 @@ manifest/hash files remain outside Git under `/tmp` only.
   during one discovery (scan plus first verified analyzer/index read); later
   joins and observations hit the call-scoped value. This is an instrumented
   synthetic measurement, not a claim about an external product snapshot.
+- The representative post-optimization census stayed within the original
+  source inventory identity and normalized safe-output digests. The raw CLI
+  byte hashes for timing-bearing outputs varied only with advisory
+  performance fields, as expected from the existing contract.
 
 ## Blockers
 
@@ -236,10 +268,11 @@ accessed.
 
 ## Deferred / Follow-Up
 
-No parse/token optimization has been admitted yet. The M5 timing and residual
-cost measurement is pending; if per-symbol identity parity is not provable or
-the remaining cost is not material, the candidate will be explicitly rejected
-and the independent loader/read wins retained.
+Shared parse/token optimization was explicitly rejected at M5 because the
+measured 6.4% tokenizer share did not justify crossing independent analyzer
+authorities without a complete identity proof. It may be reconsidered only by
+a future bounded task with a new parity design; no follow-up authority is
+created here.
 
 ## Resume Recipe
 
@@ -251,5 +284,5 @@ boundary.
 
 ## Completion Snapshot
 
-Not complete. M5 parser/token measurement and M6–M9 hardening, acceptance,
+Not complete. M6–M9 hardening, acceptance,
 reconciliation, exact-head CI observation and final closure remain.

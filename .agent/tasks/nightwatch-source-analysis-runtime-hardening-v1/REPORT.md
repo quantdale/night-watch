@@ -69,6 +69,29 @@ eligibility tests) retained the safe-output/evidence identity contract. The
 read view is scoped to one call and is not serialized or exposed in discovery
 DTOs.
 
+## M5 parser/token decision
+
+The same five `--json` source-census commands were repeated after `dc368eb`.
+The inventory remained six CURRENT repositories with the original snapshot
+digest `srcsnapshot:sha256:04ff583971865f335902f5ad`; normalized safe
+projections matched the prior optimized baseline for source-scan, source-gaps,
+eligibility-census, readonly-census and surfaces. A representative wall/RSS
+run was source-scan 3.35s/266,444 KB, source-gaps 3.67s/318,044 KB,
+eligibility-census 4.18s/265,640 KB, readonly-census 4.19s/387,436 KB, and
+surfaces 6.40s/271,444 KB. Repeated runs showed environment variance, with
+source-gaps 4.20–6.37s, eligibility 3.77–3.80s, readonly 3.56–3.67s and
+surfaces 4.27s; the reported tokenizer/declaration metrics stayed at 94 PHP
+files, 766 declarations, 32,027 max tokens and 242,093 max source bytes.
+
+A V8 profile of `surfaces --json` recorded 4,409 ticks and 284 ticks in
+`tokenizePhp` (6.4%). Shared parse/token work is rejected for this checkpoint:
+the current tokenization is composed across the independent Phase 14 extractor,
+Phase 20 analyzer and Phase 26 extended analyzer, with symbol/hint-specific
+inputs and separate evidence construction. A safe cache would require a
+cross-authority API change whose complete identity parity was not proven by
+the current evidence. No parser authority or contract version was changed;
+the independently validated loader and source-read wins remain.
+
 ## M2 differential parity evidence
 
 `tests/helpers/sourceParity.ts` provides a deterministic safe projection over

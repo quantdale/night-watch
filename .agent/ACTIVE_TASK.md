@@ -9,11 +9,10 @@ Starting SHA: bebe357313b7210161c5524e90c442137a605aab
 Last validated implementation SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
 Last checkpoint: M4 — call-scoped exact source-read reuse at validated
 implementation checkpoint dc368eb.
-Current milestone: M5 — residual parser/token measurement and admit/reject
-decision.
-Next action: Repeat the baseline source-census timings/RSS after dc368eb,
-inspect residual tokenizer metrics, and decide whether bounded parse sharing
-can preserve exact symbol-specific evidence identity.
+Current milestone: M6 — adversarial cache/source-read hardening.
+Next action: Add collision, symbol, stale/mtime, privacy/budget,
+exception/concurrency and proof-nonmanufacture controls around the admitted
+loader and source-read mechanisms; retain the M5 parser-sharing rejection.
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
