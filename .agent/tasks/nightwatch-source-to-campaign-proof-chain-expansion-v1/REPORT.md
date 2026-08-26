@@ -1,17 +1,21 @@
 # Source-to-Campaign Proof Chain Expansion — Execution Report
 
-Status: IN_PROGRESS
+Status: COMPLETE
 Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
 Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
+Last documentation checkpoint SHA: b8d77684b01a52d5bc6205b3b42d447daa96a26f
+
+Campaign result: COMPLETE_LOCAL_NOT_CI_VERIFIED
 
 ## Current disposition
 
-The campaign is active at M5 after the fresh census, family audit, proof-chain
-hardening, and Control Center integration. The current approved-source census
+The campaign is terminal at M7 after the fresh census, family
+audit, proof-chain hardening, Control Center integration, and full acceptance.
+The current approved-source census
 is deterministic at
 `source-eligibility-census:sha256:1a71425620210ac5fa6af6c4` and reports 128
 surfaces, 127 routes, 127 request contracts, 83 response contracts, 83
@@ -43,9 +47,26 @@ fixture server responds after 100 ms. The focused cancellation test passed
 5/5, and the canonical complete regression now enumerates 2,524, passes 2,508,
 skips 16, and has 0 failures.
 
+The authoritative local gate passed with receipt
+`receipt:sha256:a51f68b3a708136f5a402680`; the Node20 clean gate passed with
+gate receipt `receipt:sha256:1044940bd09202357399dfe1` and clean receipt
+`clean-receipt:sha256:4c8e12298d01c50b70b712f0`. A fresh topology-correct
+isolated checkout with six detached approved-source clones passed the same
+2,524 / 2,508 / 16 / 0 result with exact enumeration and skip parity. External
+CI is not claimed green; final remote/Actions state is discovered after Git
+synchronization.
+
 ## Safety disposition
 
 LOCAL / approved read-only source / synthetic only. Bootstrap used local Git,
 Nightwatch validation, and the confined approved-source reader only. Restricted
 product, authentication, data, infrastructure, publication, sibling-write,
 runtime-AI, and promotion counters are zero.
+
+## Terminal disposition
+
+Outcome B is established. The campaign improved reusable, deterministic,
+source-bound proof-chain census and Control Center diagnostics without
+unlocking a surface. Existing source, mutability, semantic, replay, dossier,
+owner-policy, and Phase-24 authorities remain unchanged. A future direction
+requires a fresh live Git/source census and separate authorization.

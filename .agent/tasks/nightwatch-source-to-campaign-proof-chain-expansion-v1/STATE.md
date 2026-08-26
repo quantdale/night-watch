@@ -6,15 +6,16 @@ Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
 Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
 Title: Source-to-Campaign Proof Chain Expansion
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
+Last documentation checkpoint SHA: b8d77684b01a52d5bc6205b3b42d447daa96a26f
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS: IN_PROGRESS
+PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -24,12 +25,10 @@ result is valid; no heuristic eligibility is acceptable.
 
 ## Current Milestone
 
-Milestone ID: M5
-Milestone status: IN_PROGRESS
-What is being attempted: Complete the BUILD → TEST → AUDIT → FIX → HARDEN →
-OPTIMIZE → VALIDATE pass across the proof-chain dependency cone, privacy and
-currentness boundaries, deterministic outputs, performance budgets, and full
-repository gates.
+COMPLETE — M7 terminal validation, documentation reconciliation, and Git
+closure. The final pushed head and external Actions state are discovered from
+Git and the remote; no CI-green claim is made for an unavailable or zero-step
+workflow.
 
 ## Completed Milestones
 
@@ -87,27 +86,34 @@ repository gates.
   before aborting a request whose server response is intentionally delayed by
   100 ms; focused cancellation coverage remains 5/5 and the full suite now
   passes without changing any product assertion or safety classification.
+- M5 — The dependency-cone audit, adversarial corpus, privacy sentinels,
+  currentness/invalidation checks, deterministic three-process census repeats,
+  and bounded performance measurements passed; no Critical or High defect
+  remains and no new proof family was admitted.
+- M6 — Local quality gate passed with receipt
+  `receipt:sha256:a51f68b3a708136f5a402680`; Node20 clean gate passed with gate
+  receipt `receipt:sha256:1044940bd09202357399dfe1` and clean receipt
+  `clean-receipt:sha256:4c8e12298d01c50b70b712f0`. Canonical and fresh
+  topology-correct isolated Playwright both passed 2,508 / 16 skipped / 0
+  failed out of 2,524 with exact enumeration and skip parity.
 
 ## Work In Progress
 
-Systemic hardening is active after BUILD → TEST → AUDIT → FIX. The canonical
-full suite is now stable; the remaining work is the dependency-cone audit,
-negative/currentness/privacy/determinism closure, performance confirmation,
-topology-correct isolated validation, and the repository acceptance gates.
+None — M0 through M7 are closed under local/source/synthetic scope. No new
+proof family or Phase-24 surface was admitted.
 
 ## Exact Next Action
 
-Checkpoint the fixture hardening and continuity state, then execute the clean
-Node20 gate and topology-correct isolated full suite before documentation
-closure.
+STOP — the campaign is complete. A successor must begin with a fresh live
+Git/source census and separate authorization.
 
 ## Files Changed
 
-Task activation and M1–M4 currently change `.agent/ACTIVE_TASK.md`, this task's
-four records, the v2 census projection, its operator output, focused regression
-coverage, and the existing Control Center source-summary projection/UI. No
-Phase-24 selector or sibling source was changed. The M5 hardening change is
-limited to the synthetic journey fixture timing.
+Task activation and M1–M4 changed `.agent/ACTIVE_TASK.md`, this task's four
+records, the v2 census projection, its operator output, focused regression
+coverage, and the existing Control Center source-summary projection/UI. M5
+changed only synthetic journey-fixture timing; terminal docs reconcile the
+earned evidence. No Phase-24 selector or sibling source was changed.
 
 ## Validation Ledger
 
@@ -166,6 +172,22 @@ limited to the synthetic journey fixture timing.
 - Focused cancellation test after the fixture hardening: PASS, 5/5.
 - Canonical full Playwright rerun after the fixture hardening: PASS, 2,524
   enumerated / 2,508 passed / 16 skipped / 0 failed.
+- `npm run gate:local`: PASS on clean checkpoint `b8d77684b01a52d5bc6205b3b42d447daa96a26f`; all nine groups passed, semantic compatibility 1,884 total / 1,871 passed / 13 skipped / 0 failed, owner provenance 91/91, synthetic campaign 66/66, receipt `receipt:sha256:a51f68b3a708136f5a402680`.
+- `npm run gate:clean`: PASS on fresh Node20 install at clean checkpoint
+  `b8d77684b01a52d5bc6205b3b42d447daa96a26f`; no module reuse, no auth or
+  owner-finding state, zero sibling writes; gate receipt
+  `receipt:sha256:1044940bd09202357399dfe1`, clean receipt
+  `clean-receipt:sha256:4c8e12298d01c50b70b712f0`.
+- `npm run quality-gate:spec`, `npm run gate:inventory`, `npm run agent:audit`,
+  `npm run project:check`, and `git diff --check`: PASS; definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+  inventory 152 unique / 0 duplicates, strict continuity errors 0, and
+  project checkout clean.
+- Fresh topology-correct isolated full Playwright: PASS; detached Nightwatch
+  plus six detached no-hardlink approved-source clones, fresh install,
+  `NIGHTWATCH_SIBLING_ROOT`, and proxy port 19123; 2,524 enumerated / 2,508
+  passed / 16 skipped / 0 failed. All seven detached trees were clean after
+  execution and the temporary topology was removed.
 
 ## Decisions Made During This Task
 
@@ -175,6 +197,10 @@ limited to the synthetic journey fixture timing.
   implementation, state, or report from it is being resumed.
 - The census must project existing authorities and cannot create a second
   selector, mutability registry, or eligibility engine.
+- The only M5 product-adjacent change is synthetic-fixture scheduling: a
+  request is given 25 ms to dispatch before the fixture aborts it, while the
+  server responds after 100 ms. This preserves the original cancellation
+  outcome and is not a policy or proof change.
 
 ## Discoveries
 
@@ -203,9 +229,9 @@ limited to the synthetic journey fixture timing.
 
 ## Blockers
 
-None. The campaign is active; external product, data, infrastructure, and
-publication operations are outside scope rather than blockers. No proof family
-has yet been admitted for coverage expansion.
+None. External product, data, infrastructure, publication, and CI operations
+outside the local/source/synthetic boundary were not required to establish the
+truthful Outcome B result. No proof family was admitted.
 
 ## Safety Events
 
@@ -222,13 +248,14 @@ self-development promotion remain prohibited.
 
 ## Resume Recipe
 
-Read this STATE, inspect the working tree, and continue M5 Exact Next Action.
-Use the existing source descriptor and Phase-24 adapter as authorities; do not
-resume the predecessor task or broaden source/product scope.
+STOP. This task is complete. Do not resume it or the terminal predecessor; a
+future campaign must begin with a fresh live Git/source census and separate
+authorization.
 
 ## Completion Snapshot
 
-Task is IN_PROGRESS at M5; the fresh source baseline, no-admission family
-decision, reusable census hardening, and Control Center diagnostics are
-recorded. No coverage unlock has been claimed; Phase-24 remains 3 eligible /
-125 excluded.
+COMPLETE — M0 through M7 are closed. The fresh source baseline, no-admission
+family decision, reusable census hardening, Control Center diagnostics,
+canonical/isolated parity, local/clean gate receipts, and documentation
+reconciliation are recorded. No coverage unlock has been claimed; Phase-24
+remains 3 eligible / 125 excluded. External CI is not claimed green.

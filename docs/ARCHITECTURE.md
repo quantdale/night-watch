@@ -1758,3 +1758,36 @@ runtime-value inference, or new runtime/DEV/data/infrastructure authority was
 introduced. The hardening is validated at
 `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; current-source coverage remains
 unchanged and the two reproduced false positives are permanently rejected.
+
+## Source-to-campaign proof-chain census and diagnostics
+
+The source-to-campaign expansion adds one deterministic census projection over
+the existing source and campaign authorities. Its twelve stages are ordered
+from discovery through Phase-24 eligibility, with the first blocker derived
+from stage precedence and all secondary blockers retained as sanitized
+categories. The census is bound to the approved source snapshot, existing
+surface/portfolio identities, currentness, and content digests. It reports
+counts, distributions, unsupported families, bounded structural costs, and
+advisory proof-family diagnostics; it never admits a surface.
+
+The Control Center source-summary v2 projects only those bounded digests,
+counts, stage rollups, runtime/replay/dossier statuses, and reason families.
+Existing source discovery, mutability classification, semantic contracts,
+replay/dossier requirements, and the Phase-24 selector remain the sole
+authorities. No duplicate selector, runtime-binding registry, persistence
+store, or execution route was introduced. Unknown, stale, dynamic,
+unsupported, ambiguous, truncated, and over-budget analysis remains
+`NOT_PROVEN`.
+
+The current snapshot measures 128 operations, 83 response-contract surfaces,
+83 semantic-contract surfaces / 175 observations, 5 exact runtime bindings,
+5 replay-proven surfaces, 128 dossier-compatible candidates, and 3 Phase-24
+eligible / 125 excluded. The response, semantic, runtime, join, and bridge
+families did not clear the admission bar, so the architecture outcome is
+reusable observability with zero coverage unlock.
+
+The only hardening outside the census was a synthetic browser-fixture timing
+repair: the cancellation request receives 25 ms to dispatch before the
+fixture aborts it, while the loopback server responds after 100 ms. This is
+test-only scheduling stabilization and does not alter browser containment,
+mutability, semantic, replay, dossier, or eligibility authority.

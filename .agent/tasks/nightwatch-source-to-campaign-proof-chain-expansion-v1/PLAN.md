@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
 Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -96,15 +96,15 @@ counts, digests, and bounded diagnostics; synthetic tests use fake sentinels.
   semantic, runtime-binding, replay, dossier, campaign, and Control Center
   projections; verify Phase-24 remains the sole selector and measure the full
   before/after chain delta.
-- [ ] M5 — adversarial hardening: run negative/privacy/currentness/
+- [x] M5 — adversarial hardening: run negative/privacy/currentness/
   invalidation/budget/cycle/ambiguity suites, three deterministic repeats,
   fresh-process checks, performance bounds, and dependency-cone audit; repair
   every reproduced Critical/High and bounded Medium/Low defect.
-- [ ] M6 — acceptance: run typecheck, hardening, quality-gate spec/inventory,
+- [x] M6 — acceptance: run typecheck, hardening, quality-gate spec/inventory,
   semantic compatibility, owner provenance, synthetic campaign, local gate,
   clean Node20 gate, continuity/audit/project checks, whitespace, canonical
   full Playwright, and topology-correct isolated parity.
-- [ ] M7 — closure: reconcile only earned claims in state/report/current
+- [x] M7 — closure: reconcile only earned claims in state/report/current
   state/roadmap/decisions/architecture/safety docs, inspect privacy surface
   and complete diff, commit and push validated checkpoints without force,
   verify clean `HEAD == origin/main`, inspect external CI once if available,
@@ -148,6 +148,25 @@ the required read-only approved-source topology, and exact skip parity.
   authority as bounded aggregate diagnostics under source-summary v2. No
   selector, mutability registry, replay authority, dossier authority, or
   second bridge was introduced.
+- M5: a canonical full-suite-only synthetic cancellation timing defect was
+  reproduced and repaired by a 25 ms fixture delay before an intentionally
+  aborted request; the product assertion and safety classification were not
+  weakened. The adversarial dependency cone and privacy/currentness corpus
+  remained green.
+- M6: local and Node20 clean gates, canonical full Playwright, and a fresh
+  detached six-source topology all passed with exact 2,524-test enumeration
+  and 16-skip parity. External CI remains a separate, unclaimed state.
+- M7: task/project state, report, CURRENT_STATE, ROADMAP, DECISIONS,
+  ARCHITECTURE, and SAFETY_MODEL were reconciled to earned local/source/
+  synthetic claims. Git synchronization and any external Actions result remain
+  discovered from live Git/remote state; zero-step or unavailable CI is never
+  called green.
+
+## Terminal Decision
+
+`COMPLETE_LOCAL_NOT_CI_VERIFIED`. Outcome B is established: deterministic
+proof-chain census and Control Center diagnostics improved, while current
+approved source did not justify a new proof family or Phase-24 unlock.
 
 ## Discoveries
 

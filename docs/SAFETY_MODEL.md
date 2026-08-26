@@ -1395,6 +1395,24 @@ ambiguous Actions result never becomes CI authority. The final Phase 24 run
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; DEV launcher invocations and auth-state
 reads remained zero.
 
+## Source-to-campaign proof-chain expansion safety boundary
+
+The source-to-campaign census is an additive, local, approved-read-only-source
+projection. It persists only bounded counts, categories, structural costs,
+authority digests, and currentness/status summaries; raw sibling source,
+application values, credentials, cookies, request/response bodies, and private
+paths do not cross the source boundary or enter diagnostics. Its proof-family
+ranking is advisory only. Existing mutability, semantic, replay, dossier,
+owner-policy, and Phase-24 authorities remain unchanged, and any stale,
+dynamic, unsupported, ambiguous, truncated, or over-budget input is not proven.
+
+The campaign's only reproduced runtime-adjacent defect was in a synthetic
+loopback journey fixture. A bounded dispatch delay repaired cancellation-test
+timing after long browser preludes; it did not weaken a safety assertion or
+permit any product contact. The terminal campaign performed no DEV/NEXT/
+production, authentication-state, data, infrastructure, sibling-write,
+publication, or runtime-AI operation.
+
 ---
 
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,

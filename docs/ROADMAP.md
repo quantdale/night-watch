@@ -2327,3 +2327,48 @@ canonical promotion occurred.
 No successor is selected here. Any future campaign must begin with a fresh
 live Git and approved-source census and a separately authorized evidence-backed
 direction.
+
+## Evidence-backed successor — source-to-campaign proof-chain expansion
+
+This local/source/synthetic campaign is terminal as
+`COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated implementation checkpoint
+`74f28356fd615eb51b4842f40a49ed6fc269c68f`. It was selected from a fresh live
+Git and approved-source census, not from sequential phase numbering.
+
+The additive v2 census is
+`source-eligibility-census:sha256:1a71425620210ac5fa6af6c4`, bound to source
+snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`. It measures all twelve
+ordered proof-chain stages, first and secondary blockers, source currentness,
+repository/language distribution, unsupported constructs, runtime/replay/
+dossier compatibility, and bounded structural cost. The result is 128
+operations; 127 route proofs; 127 request contracts; 83 response contracts;
+83 semantic-contract surfaces / 175 observations; 47 mutation-capable; 5
+proven read-only; 118 proven / 10 rejected joins; 5 exact runtime bindings /
+123 source-only; 5 replay-proven / 123 unproven; 128 dossier-compatible; and
+Phase 24 at 3 eligible / 125 excluded. First blockers are 44 response,
+37 mutability, 43 read-only, 1 route, and 3 complete.
+
+The family audit rejected response-contract, semantic-contract,
+runtime-binding, join-graph, and bridge expansion as insufficiently proven by
+the current source. Semantic gaps are not independent of response gaps;
+runtime source-only identities cannot authorize execution; joins and the
+Phase-24 bridge reconcile with existing authorities. No new selector,
+mutability registry, runtime adapter, persistence authority, or heuristic was
+introduced. Control Center source-summary v2 exposes only bounded diagnostics.
+
+Outcome B is therefore earned: proof-chain census infrastructure and operator
+observability improved without a coverage unlock. The only reproduced defect
+was a full-suite-only synthetic cancellation timing race; a 25 ms dispatch
+delay before the fixture's intentional abort, against a 100 ms fixture
+response, repaired it without weakening assertions or safety classification.
+
+Final local evidence: quality definition digest
+`sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`;
+local gate `receipt:sha256:a51f68b3a708136f5a402680`; Node20 clean gate
+`clean-receipt:sha256:4c8e12298d01c50b70b712f0` with gate receipt
+`receipt:sha256:1044940bd09202357399dfe1`; semantic compatibility
+1,884/1,871/13/0; owner provenance 91/91; synthetic campaign 66/66; and
+canonical/topology-correct isolated Playwright 2,524 enumerated / 2,508
+passed / 16 skipped / 0 failed with exact parity. External CI is not claimed
+green. No successor is selected; any future work requires a fresh census and
+separate authorization.

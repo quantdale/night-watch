@@ -3333,3 +3333,37 @@ weakened. External CI was not run. DEV/NEXT/production contact, auth reads,
 product mutations, data/infrastructure work, sibling writes, publication,
 runtime AI, and canonical promotion counts remain zero. No successor is
 selected; any future direction requires a fresh census and authorization.
+
+## D-81 — source-to-campaign proof-chain census remains additive with zero unlock
+
+**Context.** The successor campaign began from live `main` and a fresh
+approved-source snapshot. The v2 census measures twelve ordered stages across
+128 operations and records source currentness, first and secondary blockers,
+runtime/replay/dossier compatibility, unsupported constructs, and bounded
+costs. Its digest is
+`source-eligibility-census:sha256:1a71425620210ac5fa6af6c4`.
+
+**Decision.** Keep the census as one additive projection over the existing
+source descriptor, mutability/read-only authority, semantic/replay/dossier
+contracts, campaign projections, and Phase-24 selector. Do not admit a new
+response, semantic, runtime-binding, join, or bridge authority unless a future
+fresh source snapshot mechanically proves the complete identity and currentness
+chain. Names, comments, GET, partial ASTs, successful synthetic execution,
+runtime guesses, and model interpretation remain non-authoritative. The
+Control Center may expose bounded proof-chain diagnostics but remains a view,
+not a policy engine.
+
+**Evidence and consequences.** The current result is 83 response-contract
+surfaces, 83 semantic-contract surfaces / 175 observations, 5 exact runtime
+bindings, 5 replay-proven surfaces, 128 dossier-compatible candidates, and
+Phase 24 at 3 eligible / 125 excluded. First blockers are 44 response, 37
+mutability, 43 read-only, 1 route, and 3 complete. No surface was newly
+eligible. Outcome B is the truthful result.
+
+**Validation and safety.** Local and Node20 clean gates passed; canonical and
+topology-correct isolated Playwright both passed 2,508 / 16 skipped / 0 failed
+out of 2,524 with exact parity. A bounded synthetic cancellation-fixture
+timing repair was required by full-suite hardening; no product assertion or
+safety rule changed. External CI is not claimed green. No DEV/NEXT/production,
+auth, data, infrastructure, sibling-write, publication, runtime-AI, or
+promotion operation occurred.

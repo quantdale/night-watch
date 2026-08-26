@@ -1,7 +1,7 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-26** at
-> the terminal read-only eligibility proof expansion closure after the
+> the terminal source-to-campaign proof-chain expansion closure after the
 > Control Center authority-integration and whole-repository hardening
 > closure. Phase 28 and the evidence-backed response-flow successor remain
 > historical; the Control Center successor's validated implementation
@@ -178,6 +178,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_RESPONSE_FLOW_PROOF_BINDING_HARDENING_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — exact response-flow declaration binding hardening validated at `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; the fresh six-repository census remained structurally identical to Phase 28; two reproduced false-positive admissions were repaired; local/clean gates and canonical/topology-correct isolated Playwright both pass 2,443 / 16 skipped / 0 failed out of 2,459 with exact skip parity; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
 | `PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS` | `COMPLETE_LOCAL_READ_ONLY_SYNTHETIC` — bounded run, source, Phase 24/campaign, and owner-local findings authorities are integrated through the existing loopback Control Center; seven-view built-server qualification and full local/clean validation passed at implementation checkpoint `76f5de9b09cdba930d89c7b74247c6579232a436`; external CI was not run and is not claimed green |
 | `PHASE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `1525951a0d65ed1a59b8678c03a886f433600d09`; fresh six-repository source census remains 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations, 127 routes, 127 request contracts, 83 response contracts, 175 semantic observations, 118 proven joins / 10 rejected joins, 47 mutation-capable, 5 independently proven read-only, and lifecycle 45 `DISCOVERED` / 80 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE`; 76 surfaces are read-only-method-only but all carry another blocker; no new proof family was admitted, read-only remains 5, and Phase 24 remains 3 eligible / 125 excluded; eligibility digest `source-eligibility-census:sha256:902c5712c885adefa6ded945`, candidate digest `source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`, gap taxonomy 45 surfaces / 325 diagnostics; local gate receipt `receipt:sha256:de8867e0064f7eb9fd1ffe7a`, Node20 clean receipt `clean-receipt:sha256:b5c17633d147ac65a53140cd`, canonical and topology-correct isolated full Playwright both 2,521 enumerated / 2,505 passed / 16 skipped / 0 failed; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
+| `PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `74f28356fd615eb51b4842f40a49ed6fc269c68f`; fresh v2 census digest `source-eligibility-census:sha256:1a71425620210ac5fa6af6c4` at approved snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad` reports 128 operations, 127 routes, 127 request contracts, 83 response contracts, 83 semantic-contract surfaces / 175 observations, 47 mutation-capable, 5 proven read-only, 118 proven / 10 rejected joins, 5 exact runtime bindings / 123 source-only, 5 replay-proven / 123 unproven, 128 dossier-compatible, and Phase 24 remains 3 eligible / 125 excluded; first blockers are 44 response-contract, 37 mutability-classification, 43 read-only-proof, 1 route, and 3 complete; no new proof family or eligible surface was admitted; local receipt `receipt:sha256:a51f68b3a708136f5a402680`, Node20 clean receipt `clean-receipt:sha256:4c8e12298d01c50b70b712f0`, canonical and topology-correct isolated full Playwright both 2,524 enumerated / 2,508 passed / 16 skipped / 0 failed with exact parity; external CI is not claimed green; prohibited safety counts remain zero |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2329,3 +2330,40 @@ No DEV/NEXT/production contact, authentication-state read, product mutation,
 data/infrastructure operation, sibling write, publication, runtime AI call,
 or canonical promotion occurred. External CI was not run. No successor is
 selected; any future campaign begins with a fresh census and authorization.
+
+## Source-to-campaign proof-chain expansion — terminal evidence
+
+The successor campaign is terminal as `COMPLETE_LOCAL_NOT_CI_VERIFIED` at
+validated implementation checkpoint
+`74f28356fd615eb51b4842f40a49ed6fc269c68f`. Its fresh deterministic census
+extends observability across the ordered chain
+`SOURCE_DISCOVERED → ROUTE_PROVEN → REQUEST_CONTRACT → RESPONSE_CONTRACT →
+SEMANTIC_CONTRACT → MUTABILITY_CLASSIFICATION → READ_ONLY_PROOF →
+JOIN_GRAPH_REQUIREMENTS → RUNTIME_BINDING → REPLAY_REQUIREMENTS →
+DOSSIER_REQUIREMENTS → PHASE24_ELIGIBILITY` without introducing a selector or
+new proof authority.
+
+The current approved-source result is 128 operations, 127 route proofs, 127
+request contracts, 83 response contracts, 83 semantic-contract surfaces / 175
+observations, 47 mutation-capable surfaces, 5 proven read-only surfaces, 118
+proven / 10 rejected joins, 5 exact runtime bindings / 123 source-only, 5
+replay-proven / 123 unproven, 128 dossier-compatible candidates, and Phase 24
+at 3 eligible / 125 excluded. First blockers are 44 response-contract, 37
+mutability-classification, 43 read-only-proof, 1 route, and 3 complete. All
+128 surfaces are current; unsupported diagnostics remain explicit and no
+ambiguous or partial proof is promoted.
+
+Response, semantic, runtime-binding, join, and Phase 24 bridge investigations
+found no safe admission. The result is Outcome B: reusable census and
+sanitized Control Center diagnostics, with zero coverage unlock. A reproduced
+full-suite-only synthetic cancellation timing defect was repaired with a
+bounded fixture delay; no product assertion, safety rule, replay requirement,
+or eligibility condition changed.
+
+The local nine-group gate, fresh Node20 clean gate, canonical full Playwright,
+and topology-correct isolated full Playwright all passed. Both full suites
+enumerated 2,524 tests with 2,508 passed, 16 environment-conditional skips,
+and zero failures. The detached isolated run used six fresh approved-source
+clones and exact skip parity. External CI is not claimed green; all prohibited
+contact, authentication, data, infrastructure, sibling-write, publication,
+runtime-AI, and promotion counts remain zero.
