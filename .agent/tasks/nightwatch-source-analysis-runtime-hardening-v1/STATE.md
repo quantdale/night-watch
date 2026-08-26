@@ -8,14 +8,14 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
-Last substantive checkpoint SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+Last validated implementation SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
+Last substantive checkpoint SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+LAST_VALIDATED_IMPLEMENTATION_SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
@@ -30,9 +30,9 @@ publication, AI, or self-development authority.
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M8
 Milestone status: IN_PROGRESS
-What is being attempted: measure residual parser/token work after loader and exact-read reuse, then either admit a bounded lower-level parse cache with parity proof or document the optimization as rejected.
+What is being attempted: repeat performance measurements and execute the full local, semantic, synthetic, clean Node20 and isolated parity acceptance gates.
 
 ## Completed Milestones
 
@@ -73,18 +73,33 @@ What is being attempted: measure residual parser/token work after loader and exa
   including per-symbol/hint inputs. No shared parse cache was admitted because
   its required cross-authority API change could not yet prove exact identity
   parity; M3/M4 wins remain checkpointed.
+- M6 — adversarial hardening complete at `e1f2b54`: the loader and source-read
+  mechanisms now have focused collision, exact-content/mtime, bounds,
+  rejection/fallback, exception, nested-load and proof-nonmanufacture tests.
+  The 45-test affected cone passed, including the 6-test call-scoped read
+  suite and 4-test loader suite; the mutation-during-discovery fixture kept
+  response proof unproven and Phase24 eligibility at zero.
+- M7 — architecture and compatibility sweep complete: the five large/hot
+  targets and fourteen Playwright configurations were reviewed; cohesive
+  safety/authority boundaries and intentionally isolated opt-in configs were
+  retained without line-count refactors. The affected compatibility set
+  passed 71/71 tests, the synthetic campaign passed 66/66, owner-provenance
+  passed 91/91, the UI passed typecheck plus 11/11 Vitest tests and build
+  verification, and the synthetic Control Center browser path passed 1/1.
 
 ## Work In Progress
 
-M6 adversarial hardening. M5 rejected shared parse/token state on the current
-identity evidence. The next bounded work unit is to expand collision, symbol,
-stale/mtime, privacy/budget, exception and proof-nonmanufacture controls around
-the admitted loader and source-read mechanisms.
+M8 full acceptance. M7 retained the rejected parser decision, completed the
+architecture review, and passed the affected operator/Control Center,
+synthetic and provenance paths. The next bounded work unit is to repeat the
+same performance methodology, run every required local gate, and compare safe
+outputs against the optimized baseline.
 
 ## Exact Next Action
 
-Add and run the M6 adversarial controls for loader/source-read identity,
-fallback, bounds and Phase24 non-escalation; do not reopen the rejected parser
+Repeat the baseline source-census timing/RSS methodology, then run the M8
+typecheck, hardening, continuity, semantic, synthetic, provenance, local gate,
+clean Node20 gate and isolated parity checks; do not reopen the rejected parser
 candidate unless new evidence changes the parity decision.
 
 ## Files Changed
@@ -96,8 +111,10 @@ are the frozen planning source and were pulled from `origin/main`.
 
 M1 added no implementation source. M2 added the parity helper and focused unit
 test. M3 added the central loader/declaration, loader tests, and migrated bin
-wrappers. M4 added the call-scoped read view and focused tests. Audit
-manifest/hash files remain outside Git under `/tmp` only.
+wrappers. M4 added the call-scoped read view and focused tests. M6 added the
+adversarial call-scoped read fixtures and OpenSpec completion evidence. M7
+changed no architecture source; UI build output and audit measurement files
+remain outside Git/under `/tmp` only.
 
 ## Validation Ledger
 
@@ -201,6 +218,26 @@ manifest/hash files remain outside Git under `/tmp` only.
   for this checkpoint because it would need to bridge the Phase 14 extractor,
   Phase 20 analyzer and Phase 26 extended analyzer while preserving distinct
   symbol/hint/observation inputs. No source or proof authority was changed.
+- M6 focused cone: 45/45 tests passed in 17.8s, including call-scoped read
+  6/6 and runtime loader 4/4; the standalone parity harness passed 2/2 in
+  11.2s. `npm run hardening:check`, `npm run typecheck`, and `git diff --check`
+  passed. The bounded read view recorded 514 source reads, 512 retained
+  entries and one uncached overflow entry in its synthetic capacity test;
+  throwing reads were not retained.
+- M7 compatibility and repository sweep: the affected unit set passed 71/71
+  in 12.8s; `campaign:synthetic` passed 66/66 in 21.4s; and
+  `test:owner-provenance` passed 91/91 in 20.4s. Control Center UI typecheck
+  passed, Vitest passed 11/11, build verification passed, and the synthetic
+  seven-view browser check passed 1/1 in 10.5s. Local operator previews all
+  returned status 0 with empty stderr: contracts 7,206 bytes, gaps 243,481,
+  source-gaps 29,150, eligibility-census 394,890, readonly-census 18,024,
+  surfaces 1,829,000 and review-queue 983,933 bytes. Their outputs were
+  retained only under `/tmp` for measurement.
+- M7 architecture review: `orchestrator.ts` 2,073 lines, `surfaces.ts` 867,
+  `sourceAnalyzers.ts` 845, `hardening-check.mjs` 1,663 and Control Center
+  `App.tsx` 533 were reviewed as cohesive authority/safety boundaries; the
+  fourteen small Playwright configs were confirmed as intentional opt-in
+  wrappers. No line-count-only split or config merge was justified.
 
 ## Decisions Made During This Task
 
@@ -225,6 +262,15 @@ manifest/hash files remain outside Git under `/tmp` only.
 - M5-01: Do not admit shared parser state on a single-profile CPU signal when
   the safe implementation would cross independent analyzer contracts; retain
   independent loader/read optimizations and document the rejected candidate.
+- M6-01: Keep the loader derivative cache and call-scoped source-read view
+  bounded and fail-closed. Digest mismatches, unsupported/rejected/ambiguous
+  identities, reader exceptions and capacity overflow call through without
+  retaining authority; the mutation fixture must leave proof unproven and
+  Phase24 eligibility excluded.
+- M7-01: Retain the large/hot modules and isolated Playwright configs as
+  deliberate ownership and safety boundaries. The compatibility sweep found
+  no reproduced defect or measurable campaign-scoped reason to split or merge
+  them; any future restructuring requires its own evidence and scope.
 
 ## Discoveries
 
@@ -254,6 +300,17 @@ manifest/hash files remain outside Git under `/tmp` only.
   source inventory identity and normalized safe-output digests. The raw CLI
   byte hashes for timing-bearing outputs varied only with advisory
   performance fields, as expected from the existing contract.
+- M6 adversarial fixtures confirmed that same-path records remain separated by
+  repository and snapshot SHA, content changes invalidate reuse even when
+  mtime is restored, mtime-only changes reuse compiler output, and the bounded
+  read view retains no failed, mismatched or overflow entry. Existing source
+  boundary/response-flow suites supplied malformed, oversized, privacy,
+  ambiguous, unsupported, stale and symbol-specific controls; the mutation
+  integration retained zero Phase24 eligibility.
+- M7 operator and UI execution remained local/synthetic: source previews
+  returned the existing bounded safe DTOs, Control Center browser navigation
+  covered all seven views without external requests, and no generated UI
+  output entered Git.
 
 ## Blockers
 

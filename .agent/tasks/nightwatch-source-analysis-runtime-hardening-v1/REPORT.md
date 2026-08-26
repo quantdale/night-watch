@@ -33,9 +33,10 @@ activation.
 ## Current status
 
 M0 bootstrap and M1 exhaustive audit are complete. M2 differential parity
-harness construction, M3 loader centralization, and M4 call-scoped exact-read
-reuse are complete at validated checkpoint `dc368eb`. M5 parser/token
-measurement is in progress.
+harness construction, M3 loader centralization, M4 call-scoped exact-read
+reuse, M5 parser/token decision and M6 adversarial hardening are complete.
+The validated M6 checkpoint is `e1f2b5406e63c614d9f41abd5583d5b9bf5355d8`;
+M7 repository-wide compatibility review is in progress.
 
 ## M3/M4 implementation evidence
 
@@ -91,6 +92,47 @@ inputs and separate evidence construction. A safe cache would require a
 cross-authority API change whose complete identity parity was not proven by
 the current evidence. No parser authority or contract version was changed;
 the independently validated loader and source-read wins remain.
+
+## M6 adversarial hardening
+
+The focused read-reuse fixtures now cover same-path identity separation across
+repositories and source snapshots, same-mtime content changes, rejected and
+unavailable fallback, a 512-entry bound, a throwing reader and a mutation
+during discovery. The capacity test performed 514 authoritative reads,
+retained exactly 512 entries and left one overflow read uncached; a failed
+read did not create a partial entry. The mutation integration returned the
+changed text to the existing stale/proof path, kept response proof non-PROVEN,
+kept the Phase24 portfolio at zero eligible candidates and exposed no raw
+marker in the discovery DTO.
+
+The 45-test affected source cone passed in 17.8s: call-scoped read 6/6,
+runtime loader 4/4, eligibility, source-boundary, surface, response-flow,
+source-intelligence, readonly and related regression cases. The standalone
+source-analysis parity harness passed 2/2 in 11.2s. Existing response-flow and
+source-boundary cases cover multiple symbols, symbol ambiguity/not-found,
+malformed and oversized inputs, privacy sentinels, stale snapshots and
+unsupported paths. `npm run typecheck`, `npm run hardening:check` and
+`git diff --check` passed.
+
+## M7 architecture and compatibility sweep
+
+The known large/hot modules were reviewed in place: `orchestrator.ts` (2,073
+lines), `surfaces.ts` (867), `sourceAnalyzers.ts` (845), `hardening-check.mjs`
+(1,663) and Control Center `App.tsx` (533). Each keeps a cohesive authority,
+safety, or projection boundary; no campaign-scoped correctness, performance,
+ownership or testability defect justified a line-count-only split. The fourteen
+Playwright configurations are small inherited wrappers with intentionally
+separate opt-in test matches for authenticated, real, synthetic and phase
+specific paths; merging them would weaken accidental-contact isolation.
+
+The affected operator/compatibility unit sweep passed 71/71 in 12.8s. The
+synthetic campaign passed 66/66 in 21.4s, and owner-provenance passed 91/91 in
+20.4s. The Control Center UI passed typecheck, 11/11 Vitest tests, production
+build verification, and its loopback synthetic browser check passed 1/1 in
+10.5s while reporting no external requests or page errors. Source operator
+previews for contracts, gaps, source gaps, eligibility, readonly candidates,
+surfaces and review queue all exited 0 with empty stderr and emitted their
+existing bounded safe DTO shapes.
 
 ## M2 differential parity evidence
 

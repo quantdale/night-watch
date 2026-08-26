@@ -58,11 +58,11 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 
 ## 7. Architecture and repository-wide regression sweep — target H8.5–H10
 
-- [ ] 7.1 Revisit every large/hot file and duplicate config discovered in Task 1; record whether it is intentional, deferred or a reproduced issue.
-- [ ] 7.2 Do not split `campaign/orchestrator`, `surfaces`, `sourceAnalyzers`, `hardening-check`, Control Center `App`, or historical docs solely for line count.
-- [ ] 7.3 Validate all migrated bin entrypoints, source operator commands, Control Center projections and gate manifests.
-- [ ] 7.4 Run focused response-flow/source-gap/readonly/eligibility/source-review/Phase24 compatibility tests.
-- [ ] 7.5 Run synthetic campaign and owner-provenance suites; repair any introduced Critical/High regression before proceeding.
+- [x] 7.1 Revisit every large/hot file and duplicate config discovered in Task 1; record whether it is intentional, deferred or a reproduced issue.
+- [x] 7.2 Do not split `campaign/orchestrator`, `surfaces`, `sourceAnalyzers`, `hardening-check`, Control Center `App`, or historical docs solely for line count.
+- [x] 7.3 Validate all migrated bin entrypoints, source operator commands, Control Center projections and gate manifests.
+- [x] 7.4 Run focused response-flow/source-gap/readonly/eligibility/source-review/Phase24 compatibility tests.
+- [x] 7.5 Run synthetic campaign and owner-provenance suites; repair any introduced Critical/High regression before proceeding.
 
 ## 8. Performance and full acceptance — target H9–H11
 

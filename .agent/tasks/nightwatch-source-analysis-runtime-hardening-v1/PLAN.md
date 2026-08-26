@@ -61,10 +61,10 @@ or external publication may enter this task or Git.
 - [x] M5 — measure residual parser/token cost; admit shared parse work only if
   exact symbol-specific parity is provable, otherwise record rejection while
   retaining M3/M4 wins.
-- [ ] M6 — adversarial hardening for collisions, symbols, mtimes/content,
+- [x] M6 — adversarial hardening for collisions, symbols, mtimes/content,
   malformed/privacy/stale/unavailable input, exceptions, concurrency and proof
   non-manufacture.
-- [ ] M7 — repository-wide architecture/hygiene and affected compatibility
+- [x] M7 — repository-wide architecture/hygiene and affected compatibility
   sweep; validate operator, Control Center, manifests, source gaps, Phase 24,
   synthetic and provenance surfaces.
 - [ ] M8 — repeat timings/RSS and execute all required local acceptance,
