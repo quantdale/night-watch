@@ -48,7 +48,7 @@ or external publication may enter this task or Git.
 
 - [x] M0 — bootstrap: pull/reconcile Git, read authority and OpenSpec records,
   run pre-edit baseline, create/activate this continuity-v2 task.
-- [ ] M1 — exhaustive tracked-file and affected-path audit; baseline source
+- [x] M1 — exhaustive tracked-file and affected-path audit; baseline source
   census, loader census, hygiene review, timings/RSS and safe output captures.
 - [ ] M2 — build the complete differential parity harness before optimization;
   include byte-stable CLI checks, repeated-symbol fixtures, and mutation probes.
@@ -119,6 +119,24 @@ if exact symbol-specific evidence identity cannot be proven.
 - The first pre-activation continuity failure was stale predecessor routing,
   not a source correctness failure. Activation fixes routing without changing
   the predecessor record.
+- The exhaustive tracked manifest contains 1,303 paths and hashes 14,211,727
+  bytes. Classification is 435 agent/tooling/planning, 405 executable source,
+  228 tests, 112 fixture/corpus, 49 bin entrypoints, 30 durable docs, 25
+  config/workflow, 14 UI, 1 scenario, 1 artifact scaffold and 3 other
+  tracked files.
+- The affected TypeScript runtime seam is 20 bin-local `.ts` require hooks;
+  all 20 use ES2022/CommonJS/Node10/esModuleInterop/skipLibCheck and restore
+  the previous hook in `finally`. `bin/portfolio.mjs` has a separate
+  compile-fingerprint mechanism and is not a duplicate require hook.
+- Source discovery has one production operator caller
+  (`bin/nightwatch-intelligence.mjs`), one Control Center authority adapter,
+  and synthetic/unit/browser consumers. Exact source reads occur in the
+  confined sibling reader, scan inventory, response-flow indexing, joins,
+  per-operation observations, readonly census and semantic expectation paths.
+- Hygiene counts are TODO 11, FIXME 2, HACK 3, XXX 1, DEPRECATED 30,
+  dead-path 4 and duplicate 1,401 matches. Manual review classified the
+  duplicate matches as intentional duplicate detection, deduplication,
+  historical records, or fixtures; no unrelated source cleanup is admitted.
 
 ## Deferred Work
 

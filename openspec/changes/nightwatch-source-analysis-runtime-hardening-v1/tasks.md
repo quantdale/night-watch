@@ -4,13 +4,13 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 
 ## 1. Bootstrap and exhaustive repository audit — target H0–H1.5
 
-- [ ] 1.1 Fetch/pull `main`, prove clean tree and local/remote HEAD equality, and reconcile any commits after planned-from `910ff0f65aaf966aae20e4c72fe8b695e66038e4`.
-- [ ] 1.2 Read all repository authority docs and the completed systemic-optimization task; create/activate the fresh native task without rewriting terminal history.
-- [ ] 1.3 Generate the complete tracked-file manifest with `git ls-files`; inspect every tracked file and record a sanitized classification/review ledger for source, bin, tests, corpus, configs/workflows, UI, scenarios, agent/tooling and docs.
-- [ ] 1.4 Enumerate every TypeScript runtime transpile/require-hook implementation and every caller/profile; do not assume there are exactly 20 copies.
-- [ ] 1.5 Trace every `discoverSourceSurfaces`/source-integration caller and every exact-source read/analyzer/evidence-digest seam that can be affected by reuse.
-- [ ] 1.6 Run TODO/FIXME/HACK/dead-path/duplicate-path hygiene searches and reconcile findings manually against actual code.
-- [ ] 1.7 Capture baseline Git state, Node/npm/TypeScript versions, representative CLI stdout/stderr/exit codes, source-census safe output/digests, wall time and peak RSS.
+- [x] 1.1 Fetch/pull `main`, prove clean tree and local/remote HEAD equality, and reconcile any commits after planned-from `910ff0f65aaf966aae20e4c72fe8b695e66038e4`.
+- [x] 1.2 Read all repository authority docs and the completed systemic-optimization task; create/activate the fresh native task without rewriting terminal history.
+- [x] 1.3 Generate the complete tracked-file manifest with `git ls-files`; inspect every tracked file and record a sanitized classification/review ledger for source, bin, tests, corpus, configs/workflows, UI, scenarios, agent/tooling and docs.
+- [x] 1.4 Enumerate every TypeScript runtime transpile/require-hook implementation and every caller/profile; do not assume there are exactly 20 copies.
+- [x] 1.5 Trace every `discoverSourceSurfaces`/source-integration caller and every exact-source read/analyzer/evidence-digest seam that can be affected by reuse.
+- [x] 1.6 Run TODO/FIXME/HACK/dead-path/duplicate-path hygiene searches and reconcile findings manually against actual code.
+- [x] 1.7 Capture baseline Git state, Node/npm/TypeScript versions, representative CLI stdout/stderr/exit codes, source-census safe output/digests, wall time and peak RSS.
 
 ## 2. Build the parity harness before optimization — target H1–H2.5
 

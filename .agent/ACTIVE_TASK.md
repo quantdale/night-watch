@@ -7,9 +7,12 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-analysis-runtime-hardening-v1
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
 Last validated implementation SHA: bebe357313b7210161c5524e90c442137a605aab
-Last checkpoint: M0 — bootstrap and continuity activation at pulled clean head bebe357.
-Current milestone: M1 — exhaustive tracked-file and affected-path audit.
-Next action: Generate the complete tracked-file manifest, inspect every tracked path, enumerate loader/source-analysis seams, and capture baseline evidence.
+Last checkpoint: M1 — exhaustive tracked-file and affected-path audit and
+baseline capture at pulled clean head bebe357.
+Current milestone: M2 — differential parity harness before optimization.
+Next action: Define a focused safe-observable projection and differential
+fixture harness, then add intentional drift probes that prove the harness
+detects identity/order/currentness changes before removing the probes.
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
