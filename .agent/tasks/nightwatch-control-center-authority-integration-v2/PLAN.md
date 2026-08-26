@@ -334,7 +334,7 @@ bearer-key, or private-key patterns; implementation checkpoint is
 
 ### M7 — Whole-repository hardening and workspace hygiene
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Audit the full repository across safety/authority, continuity/recovery,
 determinism/provenance, concurrency/process/filesystem, input/failure
@@ -343,20 +343,36 @@ and repair Critical/High defects and bounded Medium defects only. Inventory
 worktrees/branches/output and add or validate a dry-run-first hygiene
 mechanism without deleting ambiguous or dirty state.
 
-Exact next action: inventory the repository-wide safety, authority,
-continuity, determinism, concurrency/filesystem, input/failure, test/CI, and
-generated-output seams; start with current Control Center impact roots and
-record concrete defects or clean evidence in STATE before making bounded
-repairs.
+Evidence: the Control Center impact-root review found no Critical/High defect;
+the repository hardening/static gates, semantic compatibility, owner
+provenance, synthetic campaign, hygiene regression, and workspace inventory
+all passed. One low-risk reporting defect was reproduced and repaired:
+`ignoredEntryCount` now observes bounded ignored output entries instead of
+always reporting zero. The hygiene mechanism remains read-only by default,
+dry-run-first for worktree cleanup, and preserves all dirty, missing,
+prunable, unlinked, and ambiguous state. No generated-output deletion or
+workspace mutation was performed.
+
+Validation: `npm run typecheck`; `npm run hardening:check`; hygiene suite 6/6;
+`npm run test:semantic-compat` 1870 passed/13 skipped/0 failed across 141
+files; `npm run test:owner-provenance` 91/91; `npm run campaign:synthetic`
+61/61; `npm run quality-gate:spec`; `npm run gate:inventory`; and
+`npm run agent:check` all passed. Implementation checkpoint is
+`76f5de9b09cdba930d89c7b74247c6579232a436`; continuity checkpoint is
+`3c96c38c08a3928d46f0af74879fe3e478ed5f27`.
 
 ### M8 — Integrated validation, docs, continuity closure, and synchronized push
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Run the complete required validation ladder, privacy/diff review, canonical and
 clean-checkout qualification, browser verification, update durable docs and
 REPORT/STATE, close ACTIVE_TASK/PLAN truthfully, commit validated checkpoints,
 push normally, and verify local `HEAD == origin/main` with a clean tree.
+
+Exact next action: run the remaining full local/clean/Playwright/UI/browser
+validation from the M8 ladder on the synchronized `3c96c38` checkpoint, then
+record every result before continuity closure.
 
 ## Validation Strategy
 

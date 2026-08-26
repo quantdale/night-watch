@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-control-center-authority-integration-v2
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
 Last validated implementation SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 Last checkpoint: M7 — bounded hygiene reporting repair at 76f5de9.
-Current milestone: M7 — Whole-repository hardening and workspace hygiene.
-Next action: Inventory the repository-wide safety, authority, continuity, determinism, concurrency/filesystem, input/failure, test/CI, and generated-output seams from the M7 contract; record decisive clean evidence or concrete defects in STATE before bounded repairs.
+Current milestone: M8 — Integrated validation, docs, continuity closure, and synchronized push.
+Next action: Run the remaining full M8 local/clean/full/UI/browser validation ladder on synchronized checkpoint 3c96c38; record exact results, close continuity truthfully, and verify clean HEAD == origin/main.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5

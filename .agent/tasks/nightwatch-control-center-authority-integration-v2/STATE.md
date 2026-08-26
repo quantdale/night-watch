@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M7 — Whole-repository hardening and workspace hygiene.
+M8 — Integrated validation, docs, continuity closure, and synchronized push.
 
 ## Completed Milestones
 
@@ -86,23 +86,26 @@ M7 — Whole-repository hardening and workspace hygiene.
   tests green. The production UI build verifier passed at 257471 bytes;
   `npm run control-center:ui:browser` passed 1/1; implementation checkpoint is
   `c9df8722fb470f1cea151f6d58f8c0d13969b5f2`.
+- M7 — COMPLETE: the whole-repository hardening and workspace lifecycle audit
+  found no Critical/High defect. A reproduced low-risk hygiene reporting
+  defect was repaired at `76f5de9`; the bounded hygiene suite, static gates,
+  semantic compatibility, owner-provenance, synthetic campaign, gate
+  inventory/spec, and continuity checks passed. Dirty, missing, prunable,
+  unlinked, and ambiguous workspace state was preserved; generated-output
+  retention remains owner-controlled and observe-only.
 
 ## Work In Progress
 
-Perform a genuine whole-repository systemic hardening sweep rooted at the
-Control Center changes. Audit safety/authority, continuity/recovery,
-determinism/provenance, concurrency/process/filesystem, input/failure
-semantics, test/gate/CI, and generated-output/workspace lifecycle. Repair only
-reproduced Critical/High and bounded low-risk Medium defects, retaining
-low/speculative observations as deferred work.
+Run the complete M8 local/clean/full/UI/browser validation ladder, perform the
+final privacy/diff review, update durable docs and REPORT, and close the
+continuity records only after every required result is known.
 
 ## Exact Next Action
 
-Inventory the repository-wide subsystem and workspace seams named in the M7
-contract, beginning with current Control Center producer/consumer impacts.
-Record decisive clean evidence or concrete defects in STATE before applying
-bounded repairs; do not broaden into product, data, cloud, infrastructure,
-or external publication operations.
+Run the remaining full M8 acceptance commands on synchronized checkpoint
+`3c96c38`, beginning with the local/clean quality gates and the canonical full
+Playwright regression; keep all validation local and synthetic, then record
+the exact counts and close only after the clean-push equality check.
 
 ## Files Changed
 
@@ -304,5 +307,5 @@ or infrastructure systems.
 
 ## Completion Snapshot
 
-INCOMPLETE — M0 through M6 are complete; M7 whole-repository hardening and
-workspace hygiene are active.
+INCOMPLETE — M0 through M7 are complete; M8 integrated validation and
+continuity closure are active.
