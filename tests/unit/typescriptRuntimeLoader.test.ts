@@ -31,7 +31,7 @@ test.describe('central TypeScript runtime loader', () => {
     const currentHook = nodeRequire.extensions['.ts'];
     const file = fixture('export const answer: number = 42;\n');
     try {
-      expect(typeScriptRuntimeProfileNames()).toEqual(['NIGHTWATCH_NODE_ES2022_COMMONJS']);
+      expect(typeScriptRuntimeProfileNames()).toEqual(['NIGHTWATCH_NODE_ES2022_COMMONJS', 'NIGHTWATCH_NODE_ES2020_COMMONJS']);
       const first = loadTypeScriptModule<{ readonly answer: number }>(file.file);
       forget(file.file);
       const second = loadTypeScriptModule<{ readonly answer: number }>(file.file);
@@ -51,7 +51,9 @@ test.describe('central TypeScript runtime loader', () => {
     try {
       const modules = loadTypeScriptModules<{ readonly value: number }>([first.file, second.file]);
       expect(modules.map((module) => module.value)).toEqual([1, 2]);
+      const originalStat = fs.statSync(first.file);
       fs.writeFileSync(first.file, 'export const value = 3;\n');
+      fs.utimesSync(first.file, originalStat.atime, originalStat.mtime);
       forget(first.file);
       const changed = loadTypeScriptModule<{ readonly value: number }>(first.file);
       expect(changed.value).toBe(3);
@@ -61,6 +63,26 @@ test.describe('central TypeScript runtime loader', () => {
       forget(second.file);
       first.dispose();
       second.dispose();
+    }
+  });
+
+  test('ignores mtime-only changes but separates explicit compiler profiles', () => {
+    const file = fixture('export const value = 11;\n');
+    try {
+      const originalStat = fs.statSync(file.file);
+      const first = loadTypeScriptModule<{ readonly value: number }>(file.file);
+      forget(file.file);
+      fs.utimesSync(file.file, originalStat.atime, new Date(originalStat.mtimeMs + 10_000));
+      const mtimeOnly = loadTypeScriptModule<{ readonly value: number }>(file.file);
+      forget(file.file);
+      const alternateProfile = loadTypeScriptModule<{ readonly value: number }>(file.file, { profile: 'NIGHTWATCH_NODE_ES2020_COMMONJS' });
+      expect(first.value).toBe(11);
+      expect(mtimeOnly.value).toBe(11);
+      expect(alternateProfile.value).toBe(11);
+      expect(typeScriptRuntimeTranspileCacheStats()).toMatchObject({ hits: 1, misses: 2, transpiles: 2, entries: 2 });
+    } finally {
+      forget(file.file);
+      file.dispose();
     }
   });
 

@@ -49,6 +49,13 @@ const TYPESCRIPT_RUNTIME_PROFILES = Object.freeze({
     esModuleInterop: true,
     skipLibCheck: true,
   }),
+  NIGHTWATCH_NODE_ES2020_COMMONJS: Object.freeze({
+    target: typescript.ScriptTarget.ES2020,
+    module: typescript.ModuleKind.CommonJS,
+    moduleResolution: typescript.ModuleResolutionKind.Node10,
+    esModuleInterop: true,
+    skipLibCheck: true,
+  }),
 });
 
 const transpileCache = new Map();
