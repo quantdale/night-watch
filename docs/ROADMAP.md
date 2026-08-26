@@ -2369,6 +2369,7 @@ local gate `receipt:sha256:341bc43e00b9a2219bfb2082`; Node20 clean gate
 `receipt:sha256:f174bce0224dacc42a1b6cf8`; semantic compatibility
 1,884/1,871/13/0; owner provenance 91/91; synthetic campaign 66/66; and
 canonical/topology-correct isolated Playwright 2,524 enumerated / 2,508
-passed / 16 skipped / 0 failed with exact parity. External CI is not claimed
-green. No successor is selected; any future work requires a fresh census and
-separate authorization.
+passed / 16 skipped / 0 failed with exact parity. Exact-head GitHub Actions
+run `32956612882` completed with failure; its sole job `98139552089` completed
+with failure and zero steps, so CI is not validation evidence. No successor is
+selected; any future work requires a fresh census and separate authorization.

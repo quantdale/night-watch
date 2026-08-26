@@ -1411,7 +1411,9 @@ loopback journey fixture. A bounded dispatch delay repaired cancellation-test
 timing after long browser preludes; it did not weaken a safety assertion or
 permit any product contact. The terminal campaign performed no DEV/NEXT/
 production, authentication-state, data, infrastructure, sibling-write,
-publication, or runtime-AI operation.
+publication, or runtime-AI operation. The exact-head GitHub Actions run
+`32956612882` had one zero-step failing job; it was not treated as CI
+validation or as green evidence.
 
 ---
 

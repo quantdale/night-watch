@@ -7,7 +7,7 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
-Last documentation checkpoint SHA: e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add
+Last documentation checkpoint SHA: aad6fa23a3d1463c33fbf683c9dfe3df94727c9f
 
 Campaign result: COMPLETE_LOCAL_NOT_CI_VERIFIED
 
@@ -52,9 +52,11 @@ The authoritative local gate passed with receipt
 gate receipt `receipt:sha256:f174bce0224dacc42a1b6cf8` and clean receipt
 `clean-receipt:sha256:ebe268bb7588be07ce88eb13`. A fresh topology-correct
 isolated checkout with six detached approved-source clones passed the same
-2,524 / 2,508 / 16 / 0 result with exact enumeration and skip parity. External
-CI is not claimed green; final remote/Actions state is discovered after Git
-synchronization.
+2,524 / 2,508 / 16 / 0 result with exact enumeration and skip parity. The
+exact-head GitHub Actions run `32956612882` completed with `failure`; its sole
+job `98139552089` (`Executable quality gate`) also completed with `failure` and
+`steps: []`. This is an external zero-step CI failure, not a green result or
+CI validation evidence.
 
 ## Safety disposition
 

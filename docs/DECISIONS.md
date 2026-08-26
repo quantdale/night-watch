@@ -3364,6 +3364,8 @@ eligible. Outcome B is the truthful result.
 topology-correct isolated Playwright both passed 2,508 / 16 skipped / 0 failed
 out of 2,524 with exact parity. A bounded synthetic cancellation-fixture
 timing repair was required by full-suite hardening; no product assertion or
-safety rule changed. External CI is not claimed green. No DEV/NEXT/production,
-auth, data, infrastructure, sibling-write, publication, runtime-AI, or
-promotion operation occurred.
+safety rule changed. Exact-head GitHub Actions run `32956612882` completed
+with failure; its sole job `98139552089` completed with failure and zero steps,
+so CI is not validation evidence. No DEV/NEXT/production, auth, data,
+infrastructure, sibling-write, publication, runtime-AI, or promotion operation
+occurred.

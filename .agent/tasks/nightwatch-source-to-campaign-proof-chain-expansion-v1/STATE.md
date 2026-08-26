@@ -10,7 +10,7 @@ Status: COMPLETE
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
-Last documentation checkpoint SHA: e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add
+Last documentation checkpoint SHA: aad6fa23a3d1463c33fbf683c9dfe3df94727c9f
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -188,6 +188,10 @@ earned evidence. No Phase-24 selector or sibling source was changed.
   `NIGHTWATCH_SIBLING_ROOT`, and proxy port 19123; 2,524 enumerated / 2,508
   passed / 16 skipped / 0 failed. All seven detached trees were clean after
   execution and the temporary topology was removed.
+- Exact-head GitHub Actions inspection: run `32956612882` completed with
+  `failure`; its sole job `98139552089` (`Executable quality gate`) completed
+  with `failure` and `steps: []`. This is recorded as external zero-step CI,
+  never as green validation.
 
 ## Decisions Made During This Task
 
@@ -256,6 +260,7 @@ authorization.
 
 COMPLETE — M0 through M7 are closed. The fresh source baseline, no-admission
 family decision, reusable census hardening, Control Center diagnostics,
-canonical/isolated parity, local/clean gate receipts, and documentation
-reconciliation are recorded. No coverage unlock has been claimed; Phase-24
-remains 3 eligible / 125 excluded. External CI is not claimed green.
+canonical/isolated parity, local/clean gate receipts, documentation
+reconciliation, and exact-head zero-step Actions observation are recorded. No
+coverage unlock has been claimed; Phase-24 remains 3 eligible / 125 excluded.
+External CI is not green or validation evidence.
