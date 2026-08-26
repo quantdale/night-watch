@@ -22,39 +22,39 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 
 ## 3. Centralize TypeScript runtime loading — target H2.5–H4
 
-- [ ] 3.1 Design one bounded loader utility with explicit compiler profiles and guaranteed hook restoration.
-- [ ] 3.2 Add content-addressed process-local transpile reuse keyed by every load-bearing compiler/source input.
-- [ ] 3.3 Add optional ignored derivative-cache persistence only if baseline evidence justifies it and atomic/full invalidation is proven; otherwise keep process-local only.
-- [ ] 3.4 Migrate bin entrypoints in small dependency groups, running cold/warm stdout/stderr/exit-code differential tests after each group.
-- [ ] 3.5 Preserve explicitly different callers rather than falsely normalizing them.
-- [ ] 3.6 Add hook-leak, nested/error restoration, stale-content, TypeScript-version/options invalidation and poisoned-entry tests.
+- [x] 3.1 Design one bounded loader utility with explicit compiler profiles and guaranteed hook restoration.
+- [x] 3.2 Add content-addressed process-local transpile reuse keyed by every load-bearing compiler/source input.
+- [x] 3.3 Add optional ignored derivative-cache persistence only if baseline evidence justifies it and atomic/full invalidation is proven; otherwise keep process-local only.
+- [x] 3.4 Migrate bin entrypoints in small dependency groups, running cold/warm stdout/stderr/exit-code differential tests after each group.
+- [x] 3.5 Preserve explicitly different callers rather than falsely normalizing them.
+- [x] 3.6 Add hook-leak, nested/error restoration, stale-content, TypeScript-version/options invalidation and poisoned-entry tests.
 
 ## 4. Reuse exact source reads safely — target H4–H5.5
 
-- [ ] 4.1 Instrument the current discovery path and record read counts by safe identity; establish the real duplicate-read baseline.
-- [ ] 4.2 Add a call-scoped exact-snapshot read-through layer around the existing sibling-source authority without adding filesystem persistence.
-- [ ] 4.3 Key reuse to repo/source/path/content/currentness identity; prove different snapshots cannot alias.
-- [ ] 4.4 Preserve unavailable/stale/outside-scope/ambiguous behavior and privacy/source-size guards.
-- [ ] 4.5 Run the full parity harness and focused source/join/eligibility tests; any unexplained digest or ordering change blocks this milestone.
+- [x] 4.1 Instrument the current discovery path and record read counts by safe identity; establish the real duplicate-read baseline.
+- [x] 4.2 Add a call-scoped exact-snapshot read-through layer around the existing sibling-source authority without adding filesystem persistence.
+- [x] 4.3 Key reuse to repo/source/path/content/currentness identity; prove different snapshots cannot alias.
+- [x] 4.4 Preserve unavailable/stale/outside-scope/ambiguous behavior and privacy/source-size guards.
+- [x] 4.5 Run the full parity harness and focused source/join/eligibility tests; any unexplained digest or ordering change blocks this milestone.
 
 ## 5. Investigate shared parse/token work — target H5.5–H7
 
-- [ ] 5.1 Measure residual parse/token cost after read reuse; do not refactor if it is no longer material.
-- [ ] 5.2 If admitted, separate file-shared immutable parse/token state from per-symbol/per-hint/per-surface analysis inputs.
-- [ ] 5.3 Keep analyzer IDs/versions, rejection mapping, observation construction and evidence canonicalization authoritative and unchanged.
-- [ ] 5.4 Bound any in-memory parse cache and key it to exact source/analyzer identity.
-- [ ] 5.5 Differential-test all synthetic source languages/proof families and the fresh approved-source census.
-- [ ] 5.6 If same-input identity parity cannot be proven, revert this subtask and document the rejected optimization; retain independent read/loader wins.
+- [x] 5.1 Measure residual parse/token cost after read reuse; do not refactor if it is no longer material.
+- [x] 5.2 If admitted, separate file-shared immutable parse/token state from per-symbol/per-hint/per-surface analysis inputs.
+- [x] 5.3 Keep analyzer IDs/versions, rejection mapping, observation construction and evidence canonicalization authoritative and unchanged.
+- [x] 5.4 Bound any in-memory parse cache and key it to exact source/analyzer identity.
+- [x] 5.5 Differential-test all synthetic source languages/proof families and the fresh approved-source census.
+- [x] 5.6 If same-input identity parity cannot be proven, revert this subtask and document the rejected optimization; retain independent read/loader wins.
 
 ## 6. Adversarial hardening — target H7–H9
 
-- [ ] 6.1 Add cross-repository/same-path and same-repository/different-SHA collision tests.
-- [ ] 6.2 Add same-file/multiple-symbol isolation and symbol-not-found/multiple-symbol tests.
-- [ ] 6.3 Add content-change-with-same-mtime and mtime-only controls for each content-addressed cache.
-- [ ] 6.4 Add malformed, oversized, privacy-sentinel, stale, unavailable, ambiguous and unsupported-source controls.
-- [ ] 6.5 Add exception/interruption/fallback tests proving no partial cache entry or installed hook survives failure.
-- [ ] 6.6 Exercise nested/concurrent loader or source-discovery use according to the supported contract; serialize or reject explicitly if necessary.
-- [ ] 6.7 Verify cache/reuse cannot turn a rejected/unproven path into a proof and cannot change Phase24 eligibility.
+- [x] 6.1 Add cross-repository/same-path and same-repository/different-SHA collision tests.
+- [x] 6.2 Add same-file/multiple-symbol isolation and symbol-not-found/multiple-symbol tests.
+- [x] 6.3 Add content-change-with-same-mtime and mtime-only controls for each content-addressed cache.
+- [x] 6.4 Add malformed, oversized, privacy-sentinel, stale, unavailable, ambiguous and unsupported-source controls.
+- [x] 6.5 Add exception/interruption/fallback tests proving no partial cache entry or installed hook survives failure.
+- [x] 6.6 Exercise nested/concurrent loader or source-discovery use according to the supported contract; serialize or reject explicitly if necessary.
+- [x] 6.7 Verify cache/reuse cannot turn a rejected/unproven path into a proof and cannot change Phase24 eligibility.
 
 ## 7. Architecture and repository-wide regression sweep — target H8.5–H10
 

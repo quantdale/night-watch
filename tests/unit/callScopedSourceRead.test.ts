@@ -5,7 +5,9 @@ import path from 'node:path';
 import { createCallScopedSourceReadView } from '../../src/core/source/callScopedRead';
 import { createSiblingSourceAccess, type SiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { scanSource, createRealSourceScanConfig } from '../../src/core/source/scan';
+import { sourceContentDigest, type RealSourceSnapshotInventory } from '../../src/core/source/scanTypes';
 import { discoverSourceSurfaces } from '../../src/core/source/surfaces';
+import { analyzeSourceSurfacesIntoPhase24 } from '../../src/core/source/surfaces';
 
 const REPOSITORY = 'synthetic/ripple-api';
 const OTHER_REPOSITORY = 'synthetic/other-api';
@@ -60,6 +62,7 @@ function fixture(): { readonly root: string; readonly file: string; readonly oth
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-call-scoped-read-'));
   makeRepository(root, REPOSITORY, SOURCE_SHA, {
     'src/Routing.yaml': '"get:/read":\n  client: App\\Handler\\Reader\n  method: read\n',
+    'src/App/Handler/Reader.php': '<?php function read() { return ["handler" => true]; }\n',
     'src/shared.php': '<?php function read() { return ["safe" => true]; }\n',
     'src/unsupported.txt': 'synthetic unsupported text\n',
   });
@@ -158,6 +161,83 @@ test.describe('call-scoped source read reuse', () => {
       expect(secondView.access.reader.readFile(REPOSITORY, 'src/shared.php')).toContain('new');
       expect(secondView.stats()).toMatchObject({ sourceReads: 1, cacheHits: 0, cachedEntries: 1 });
       expect(firstView.stats()).toMatchObject({ sourceReads: 1, cacheHits: 0, cachedEntries: 1 });
+    } finally {
+      input.dispose();
+    }
+  });
+
+  test('does not retain a failed reader result or exceed the bounded entry limit', () => {
+    const sourceFor = (relativePath: string) => `<?php function ${relativePath.replace(/[^A-Za-z0-9]/g, '_')}() { return []; }\n`;
+    const records = Array.from({ length: 513 }, (_, index) => {
+      const relativePath = `src/file-${index}.php`;
+      const sourceText = sourceFor(relativePath);
+      return {
+        repoId: REPOSITORY,
+        sourceSha: SOURCE_SHA,
+        relativePath,
+        language: 'PHP' as const,
+        byteCount: Buffer.byteLength(sourceText, 'utf8'),
+        contentDigest: sourceContentDigest(sourceText),
+        status: 'ELIGIBLE' as const,
+        rejectionReason: null,
+      };
+    });
+    const inventory = {
+      schemaVersion: 'nightwatch.real-source-snapshot-inventory.v1',
+      configDigest: 'srcconfig:synthetic',
+      extractorVersion: 'nightwatch.real-source-scan-extractor.v1',
+      files: records,
+      repositories: [],
+      counters: { repositoriesConsidered: 1, repositoriesInspected: 1, directoriesVisited: 1, filesConsidered: records.length, filesRead: records.length, filesAdmitted: records.length, filesRejected: 0, bytesRead: records.reduce((total, file) => total + file.byteCount, 0), symlinkRejections: 0, pathRejections: 0, budgetRejections: 0 },
+      snapshotDigest: 'srcsnapshot:synthetic',
+    } satisfies RealSourceSnapshotInventory;
+    let throwOnce = true;
+    const access: SiblingSourceAccess = {
+      root: '/synthetic',
+      currentness: { currentSnapshot: () => ({ repoId: REPOSITORY, sha: SOURCE_SHA }) },
+      enumerateFiles: () => ({ entries: [], rejectedPaths: [], directoriesVisited: 0, truncated: false, truncationReason: null }),
+      reader: { readFile: (_repoId, relativePath) => {
+        if (relativePath === records[0]!.relativePath && throwOnce) {
+          throwOnce = false;
+          throw new Error('SYNTHETIC_READER_FAILURE');
+        }
+        return sourceFor(relativePath);
+      } },
+    };
+    const view = createCallScopedSourceReadView({ access, inventory });
+    expect(() => view.access.reader.readFile(REPOSITORY, records[0]!.relativePath)).toThrow('SYNTHETIC_READER_FAILURE');
+    expect(view.access.reader.readFile(REPOSITORY, records[0]!.relativePath)).not.toBeNull();
+    for (const record of records.slice(1)) expect(view.access.reader.readFile(REPOSITORY, record.relativePath)).not.toBeNull();
+    expect(view.stats()).toMatchObject({ sourceReads: 514, cacheHits: 0, cachedEntries: 512, uncachedEntries: 1 });
+    expect(view.access.reader.readFile(REPOSITORY, records[1]!.relativePath)).not.toBeNull();
+    expect(view.stats().cacheHits).toBe(1);
+  });
+
+  test('keeps a source mutation during discovery stale and outside Phase24 eligibility', () => {
+    const input = fixture();
+    try {
+      let mutated = false;
+      const base = input.access;
+      const access: SiblingSourceAccess = {
+        ...base,
+        reader: {
+          readFile(repoId, relativePath) {
+            const sourceText = base.reader.readFile(repoId, relativePath);
+            if (repoId === REPOSITORY && relativePath === 'src/App/Handler/Reader.php' && !mutated) {
+              mutated = true;
+              fs.writeFileSync(path.join(input.root, ...REPOSITORY.split('/'), relativePath), '<?php function read() { return ["changed-after-scan" => true]; }\n');
+            }
+            return sourceText;
+          },
+        },
+      };
+      const scanConfig = config([{ repoId: REPOSITORY, expectedSourceSha: SOURCE_SHA }]);
+      const discovery = discoverSourceSurfaces({ access, config: scanConfig });
+      const integration = analyzeSourceSurfacesIntoPhase24({ access, config: scanConfig, discovery });
+      expect(mutated).toBe(true);
+      expect(discovery.surfaces[0]?.contract.responseProof).not.toBe('PROVEN');
+      expect(integration.portfolio.eligibleCount).toBe(0);
+      expect(JSON.stringify(discovery)).not.toContain('changed-after-scan');
     } finally {
       input.dispose();
     }
