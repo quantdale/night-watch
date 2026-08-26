@@ -87,6 +87,31 @@ created by an authorized future workflow, stay under owner-only
 fresh source/currentness checks, and the existing exact-head external quality
 gate; source discovery grants none.
 
+## Local Control Center
+
+Build and start the loopback-only operational view:
+
+```bash
+npm run control-center:ui:build
+npm run control-center:start
+# http://127.0.0.1:7312
+```
+
+The normal launcher reads bounded local authorities when they are present:
+validated run summaries/timelines from repository-owned `artifacts/`, current
+approved source intelligence, Phase 24 campaign/coverage state, and metadata
+from valid owner-local findings under `$HOME/.nightwatch/findings/`. Health,
+readiness, and safety continue to use their existing authorities. Missing,
+stale, unavailable, blocked, malformed, or partial state stays explicitly
+classified; the Control Center never fabricates fresh success or becomes a
+second selector, findings store, or run authority.
+
+The server binds only to `127.0.0.1`, accepts read-only GET/HEAD/SSE access,
+and serves a repository-confined built UI. It does not start browsers or
+commands, contact DEV/NEXT/production or external hosts, read authentication
+state, mutate repositories/data, or publish findings. SSE is advisory only;
+GET snapshots remain authoritative.
+
 For the authoritative local certification, use the unified gate and its
 versioned inventory rather than an ad-hoc Phase-specific command:
 

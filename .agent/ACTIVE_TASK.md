@@ -3,20 +3,20 @@
 Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Title: Control Center Authority Integration + Whole-Repository Hardening
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-control-center-authority-integration-v2
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
 Last validated implementation SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
-Last checkpoint: M7 — bounded hygiene reporting repair at 76f5de9.
-Current milestone: M8 — Integrated validation, docs, continuity closure, and synchronized push.
-Next action: Run the remaining full M8 local/clean/full/UI/browser validation ladder on synchronized checkpoint 3c96c38; record exact results, close continuity truthfully, and verify clean HEAD == origin/main.
+Last checkpoint: M8 — integrated validation and continuity closure recorded.
+Current milestone: COMPLETE — Control Center authority integration and whole-repository hardening closed.
+Next action: STOP — task complete; any follow-up requires a new authorized task.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
 LAST_VALIDATED_IMPLEMENTATION_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: COMPLETE
 
 ## Routing and safety
 
@@ -33,6 +33,4 @@ files, diagnostics, UI DTOs, findings, or Git.
 
 ## Resume recipe
 
-Read this route, then this task's SPEC, PLAN, and STATE. Continue the exact
-next action from STATE, update the waypoint after each milestone, and preserve
-the loopback/read-only/whitelist/source-authority/owner-scope constraints.
+Task complete. Do not resume; any follow-up starts as a new authorized task.

@@ -59,7 +59,7 @@ browser, Git, mutation, or refresh side effect.
 
 Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -363,16 +363,32 @@ files; `npm run test:owner-provenance` 91/91; `npm run campaign:synthetic`
 
 ### M8 — Integrated validation, docs, continuity closure, and synchronized push
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Run the complete required validation ladder, privacy/diff review, canonical and
 clean-checkout qualification, browser verification, update durable docs and
 REPORT/STATE, close ACTIVE_TASK/PLAN truthfully, commit validated checkpoints,
 push normally, and verify local `HEAD == origin/main` with a clean tree.
 
-Exact next action: run the remaining full local/clean/Playwright/UI/browser
-validation from the M8 ladder on the synchronized `3c96c38` checkpoint, then
-record every result before continuity closure.
+Evidence: the complete local, clean-checkout, nested UI, built-server browser,
+and canonical serial Playwright validation ladder passed. The final serial
+regression enumerated 2,518 tests with 2,502 passed, 16 skipped, and 0 failed.
+The repository remained read-only/local/synthetic throughout; the final
+privacy and diff review found no credential, bearer-key, private-key, raw
+customer-value, or owner-finding material in the task/documentation changes.
+Durable docs and continuity records were reconciled, and the final checkpoint
+was pushed without force after equality was verified.
+
+Validation: `npm run typecheck`, `npm run hardening:check`, the affected
+48-test Control Center/hygiene suite, nested UI typecheck/test/build, built
+browser qualification 1/1, agent-browser loopback visual check, agent audit,
+project truth, quality-gate specification, gate inventory, semantic
+compatibility, owner provenance, synthetic campaign, `npm run gate:local`,
+`npm run gate:clean`, and the full Playwright regression all passed. Local and
+clean receipts are recorded in STATE and REPORT.
+
+Exact next action: STOP — task complete; any follow-up requires a new
+authorized task.
 
 ## Validation Strategy
 

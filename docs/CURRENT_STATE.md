@@ -1,9 +1,10 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-25** at
-> the evidence-backed response-flow proof-binding hardening closure. Phase 28
-> remains historical; the successor's validated implementation checkpoint is
-> `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; live HEAD and the
+> Durable memory for the next agent/session. Last updated: **2026-08-26** at
+> the Control Center authority-integration and whole-repository hardening
+> closure. Phase 28 and the evidence-backed response-flow successor remain
+> historical; the Control Center successor's validated implementation
+> checkpoint is `76f5de9b09cdba930d89c7b74247c6579232a436`; live HEAD and the
 > final documentation head are discovered from Git. Phase 24's authoritative local and disposable
 > Node20 clean-checkout gates pass, while its exact-head Actions run
 > `32723603497` / job `97419996717` had `steps=[]`, so the terminal state is
@@ -174,6 +175,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_27_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — exact interprocedural response-flow v1 and bounded oversized-string lexical hardening are implemented at validated anchor `237e537e154bdb7c0eb7b4bd04021f9c5437db29`; fresh six-repository census reproduced 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes and classified the remaining helper/resource/DTO patterns without fuzzy or runtime inference; current-source result is 128 operations / 127 routes / 127 request contracts / 83 response contracts / 175 semantic observations / 118 proven joins / 10 rejected joins, lifecycle 45 `DISCOVERED` / 80 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE`, and Phase 24 remains 3 eligible / 125 excluded; flow layer attempted 13 / proved 0 / rejected 13 and current source supplied no exact helper/resource/DTO join; local and Node20 clean gates, compatibility 1,874/1,873/1/0, synthetic 39/39, owner provenance 91/91, and canonical/topology-correct isolated Playwright 2,440/4/0 parity are green; exact Actions run `32800403605` / job `97659975725` had `steps=[]` and classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; terminal continuity/docs closure and synchronized clean-main verification are complete |
 | `PHASE_28_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — validated implementation checkpoint `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`; fresh six-repository census remains 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes; taxonomy v3 records 45 proof-gap surfaces and 325 rejected diagnostics; no strict local producer-flow family was admitted; local and Node20 clean gates pass; canonical and topology-correct isolated Playwright both pass 2,438 / 16 skipped / 0 failed out of 2,454 with exact parity; exact-head Actions run `32819574544` / job `97714690619` had zero steps and is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; all prohibited safety counts remain zero |
 | `PHASE_RESPONSE_FLOW_PROOF_BINDING_HARDENING_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — exact response-flow declaration binding hardening validated at `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; the fresh six-repository census remained structurally identical to Phase 28; two reproduced false-positive admissions were repaired; local/clean gates and canonical/topology-correct isolated Playwright both pass 2,443 / 16 skipped / 0 failed out of 2,459 with exact skip parity; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
+| `PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS` | `COMPLETE_LOCAL_READ_ONLY_SYNTHETIC` — bounded run, source, Phase 24/campaign, and owner-local findings authorities are integrated through the existing loopback Control Center; seven-view built-server qualification and full local/clean validation passed at implementation checkpoint `76f5de9b09cdba930d89c7b74247c6579232a436`; external CI was not run and is not claimed green |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2252,3 +2254,40 @@ passed / 13 skipped / 0 failed, owner provenance 91/91, synthetic campaign
 2,438 passed / 16 skipped / 0 failed out of 2,454. The exact-head external
 Actions observation remains a separate zero-step billing/platform result and
 is not called green.
+
+## Control Center V2 — authority integration and whole-repository hardening
+
+The Control Center successor is terminal as
+`COMPLETE_LOCAL_READ_ONLY_SYNTHETIC`. The normal loopback launcher composes
+bounded readers over repository-owned run evidence, the approved current
+sibling-source authority, Phase 24/campaign intelligence, and valid owner-local
+finding metadata. Existing domain authorities remain authoritative: the
+Control Center adds no selector, execution route, findings store, or raw-data
+browser. Missing, stale, unavailable, blocked, malformed, and partial state
+remain explicit categories.
+
+The snapshot coordinator binds source, campaign, and findings generations into
+one bounded authority snapshot, coalesces same-key reads, keeps failed refreshes
+explicit, and shuts down terminally. SSE is advisory and allowlisted; GET
+snapshots remain authoritative. The server is loopback-only and read-only, with
+no child process, browser, network, Git mutation, sibling write, or refresh
+side effect reachable from its routes.
+
+The built-server synthetic browser qualification rendered non-empty Overview,
+Safety, Runs, Execution, Campaign, Source, and Findings views, preserved a
+selected run across an advisory SSE notification, and rejected external
+requests/raw sentinels. The whole-repository audit found no Critical or High
+defect. A low-risk hygiene false-zero report was repaired without adding
+cleanup authority; generated-output retention remains owner-controlled and
+observe-only.
+
+Final local evidence: the affected Control Center/hygiene suite passed 48/48;
+the nested UI suite passed 11/11; the production build was 257471 bytes with
+no external references or embedded content; built-browser qualification passed
+1/1; the local quality gate passed with receipt
+`receipt:sha256:0418c067ad0839582ef21427`; the Node20 clean gate passed with
+receipt `clean-receipt:sha256:8cc28a83b3c1a90629fba0ce`; and the canonical
+serial Playwright regression passed 2,502 of 2,518 with 16 skips and zero
+failures. External CI was not run and is not claimed green. No DEV, NEXT,
+production, auth, data, cloud, infrastructure, publication, or sibling-write
+operation occurred.

@@ -2247,3 +2247,37 @@ passed. Both full suites enumerated 2,459 tests, passed 2,443, skipped the
 same 16 understood environment-conditional tests, and failed zero. External
 CI was not run and is not claimed green. No successor is selected here; any
 future campaign must begin with a new evidence census and authorization.
+
+## Control Center V2 — authority integration and whole-repository hardening
+
+The Control Center successor is complete as
+`COMPLETE_LOCAL_READ_ONLY_SYNTHETIC`. It wires the existing local run,
+approved-source, Phase 24/campaign, and owner-local findings authorities into
+the V1 loopback server through bounded in-process readers and existing
+allowlist adapters. It preserves explicit empty, stale, unavailable, blocked,
+unknown, and error states; no second selector or persistence authority was
+introduced.
+
+The snapshot coordinator binds source/campaign/findings generations, coalesces
+same-key reads, keeps failed refreshes explicit, and shuts down terminally.
+SSE remains advisory notification-only. The server accepts only loopback,
+read-only access and has no browser, child-process, network, Git-mutation,
+sibling-write, or refresh side effect authority.
+
+The built-server synthetic browser qualification proves non-empty Overview,
+Safety, Runs, Execution, Campaign, Source, and Findings views, selected-run
+stability across advisory refresh, no external requests, and no raw sentinel
+leakage. The whole-repository audit found no Critical or High defect. A
+low-risk hygiene ignored-output false-zero was repaired in the bounded
+read-only report; generated-output retention remains owner-controlled and
+observe-only.
+
+Local certification passed: the affected Control Center/hygiene suite 48/48,
+nested UI tests 11/11, built UI 257471 bytes with no external references,
+built browser 1/1, semantic compatibility 1,870 passed / 13 skipped / 0 failed,
+owner provenance 91/91, synthetic campaign 61/61, local gate receipt
+`receipt:sha256:0418c067ad0839582ef21427`, Node20 clean receipt
+`clean-receipt:sha256:8cc28a83b3c1a90629fba0ce`, and canonical serial Playwright
+2,502 passed / 16 skipped / 0 failed out of 2,518. External CI was not run
+and is not claimed green. Any future campaign requires a new authorization and
+fresh evidence.

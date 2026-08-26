@@ -4,21 +4,22 @@
 
 Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
 Last validated implementation SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 Last substantive checkpoint SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M7 — bounded hygiene reporting repair at 76f5de9.
+Last documentation checkpoint SHA: 061804f64cefd251fa58388bb519804bff990eed
+Last checkpoint: M8 — integrated validation and continuity closure recorded.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
 LAST_VALIDATED_IMPLEMENTATION_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
+PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,7 +30,8 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M8 — Integrated validation, docs, continuity closure, and synchronized push.
+COMPLETE — Control Center authority integration and whole-repository hardening
+closed after the full local validation ladder.
 
 ## Completed Milestones
 
@@ -93,19 +95,22 @@ M8 — Integrated validation, docs, continuity closure, and synchronized push.
   inventory/spec, and continuity checks passed. Dirty, missing, prunable,
   unlinked, and ambiguous workspace state was preserved; generated-output
   retention remains owner-controlled and observe-only.
+- M8 — COMPLETE: the integrated validation ladder passed after the M7 repair.
+  The affected Control Center/hygiene suite passed 48/48; nested UI checks
+  passed; the built-server browser qualification passed 1/1; local and
+  Node20 clean quality gates passed; and the canonical serial Playwright
+  regression enumerated 2,518 tests with 2,502 passed, 16 skipped, and 0
+  failed. Durable docs, PLAN, STATE, REPORT, and ACTIVE_TASK were reconciled
+  under continuity v2; external CI was not run and is not claimed green.
 
 ## Work In Progress
 
-Run the complete M8 local/clean/full/UI/browser validation ladder, perform the
-final privacy/diff review, update durable docs and REPORT, and close the
-continuity records only after every required result is known.
+None. The M8 validation ladder, privacy/diff review, documentation, and
+continuity closure are complete.
 
 ## Exact Next Action
 
-Run the remaining full M8 acceptance commands on synchronized checkpoint
-`3c96c38`, beginning with the local/clean quality gates and the canonical full
-Playwright regression; keep all validation local and synthetic, then record
-the exact counts and close only after the clean-push equality check.
+STOP — task complete; any follow-up requires a new authorized task.
 
 ## Files Changed
 
@@ -137,6 +142,9 @@ the exact counts and close only after the clean-push equality check.
 | `ui/control-center/index.html` | Local inline favicon prevents implicit browser 404 noise | implemented; build/browser gates pass |
 | `bin/nightwatch-hygiene.mjs` | Observe ignored generated-output entries within the existing bounded Git probe | implemented; hygiene regression passes |
 | `tests/unit/nightwatchHygiene.test.ts` | Synthetic ignored-output observation and no-mutation regression | added; 6/6 pass |
+| `README.md` | Document the local Control Center launcher, authorities, and safety boundary | updated |
+| `docs/CURRENT_STATE.md` | Record the terminal Control Center V2 capability and local evidence | updated |
+| `docs/ROADMAP.md` | Append the evidence-backed Control Center V2 successor record | updated |
 
 ## Validation Ledger
 
@@ -189,6 +197,33 @@ the exact counts and close only after the clean-push equality check.
   1,883 total, 1,870 passed, 13 skipped, 0 failed across 22 phases/141
   files; `npm run test:owner-provenance` passed 91/91; and
   `npm run campaign:synthetic` passed 61/61.
+- M8 integrated validation — PASS: `npm run typecheck`; `npm run
+  hardening:check`; affected Control Center/hygiene suite 48/48;
+  `npm run control-center:ui:typecheck`; `npm run control-center:ui:test`
+  11/11; `npm run control-center:ui:build` 257471 bytes with no external
+  references or embedded content; `npm run control-center:ui:browser` 1/1;
+  agent-browser loopback visual check; `npm run agent:audit`; `npm run
+  project:check`; `npm run quality-gate:spec`; `npm run gate:inventory`;
+  `npm run gate:local`; and `npm run gate:clean` all passed.
+- M8 gate receipts — PASS: local receipt
+  `receipt:sha256:0418c067ad0839582ef21427`, clean receipt
+  `clean-receipt:sha256:8cc28a83b3c1a90629fba0ce`; both contain all nine
+  required groups with semantic compatibility 1,871 passed / 13 skipped / 0
+  failed, owner provenance 91/91, and synthetic campaign 61/61. The clean
+  gate used Node20, `npm ci`, no auth or owner finding state, and zero sibling
+  writes.
+- M8 workspace hygiene — PASS/PRESERVED: after the full regression,
+  `npm run hygiene:status` observed 17 registrations, 35 branches, 0 safe
+  cleanup targets, 0 applied actions, 3 generated-output families, and 10,061
+  ignored entries; no workspace or generated output was removed.
+- M8 canonical regression — PASS: `npm test -- --workers=1` enumerated
+  2,518 tests, with 2,502 passed, 16 skipped, and 0 failed. The run stayed
+  local/serial/synthetic and produced no tracked worktree change.
+- M8 continuity and Git review — PASS: `npm run agent:check` and the final
+  project-state check passed with expected legacy-history/checkpoint warnings
+  only; `git diff --check` passed; the final non-forced push completed; and a
+  clean read-only Git check verified local `HEAD == origin/main`. External CI
+  was not run and is not called green.
 
 ## M7 Audit Waypoint
 
@@ -203,7 +238,7 @@ low/informational test-only or budget-behavior follow-ups.
 
 Repository-wide gate and lifecycle evidence recorded so far:
 
-- `npm run hygiene:status` — PASS/PRESERVED: live `main` at
+- `npm run hygiene:status` — PASS/PRESERVED at the M7 waypoint: live `main` at
   `7d5892c558839ca7ab30e73c6381bf9b7eef8cac`, 17 worktree registrations, 35
   local branches, 0 safe cleanup targets, 0 applied actions, and 3 generated
   output families observed. The 16 stale/prunable `/tmp/nightwatch-swarm2/*`
@@ -227,8 +262,9 @@ automatic deletion. A low-risk hygiene reporting defect was reproduced:
 entries. The probe is now bounded to normal ignored-directory reporting and
 returns `UNAVAILABLE` on the existing output bound rather than a partial
 count; a synthetic test proves ignored output remains present and untouched.
-No cleanup path was added. The bounded workspace lifecycle audit continues
-through the remaining validation ladder before M7 closes.
+No cleanup path was added. The bounded workspace lifecycle audit and the M8
+validation ladder are now closed; generated-output retention remains an
+owner-controlled follow-up.
 
 ## Decisions Made During This Task
 
@@ -287,7 +323,7 @@ None.
 
 ## Safety Events
 
-NONE — local Git/docs/code inspection and synthetic V1 tests only. No product,
+NONE — local Git/docs/code inspection and synthetic tests only. No product,
 auth, data, cloud, infrastructure, sibling-write, publication, or external
 network operation occurred.
 
@@ -299,13 +335,14 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Inventory the M7 subsystem and workspace
-seams from the exact next action, record concrete evidence, then repair only
-bounded in-scope defects. Keep all reads local, in-process, read-only,
-synthetic-testable, and notification-only; never contact product/data/cloud
-or infrastructure systems.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-INCOMPLETE — M0 through M7 are complete; M8 integrated validation and
-continuity closure are active.
+COMPLETE — M0 through M8 are terminal. The validated substantive
+implementation checkpoint is `76f5de9b09cdba930d89c7b74247c6579232a436`;
+the final local and Node20 clean gates passed; the canonical serial regression
+passed 2,502/2,518 with 16 skips; all continuity records are terminal; and
+live HEAD/equality is intentionally discovered from Git. External CI was not
+run and is not claimed green. Generated-output retention remains an
+owner-controlled observe-only follow-up.
