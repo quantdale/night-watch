@@ -125,6 +125,24 @@ export interface SourceSummarySnapshot {
   readonly proof: readonly { readonly key: string; readonly count: number }[];
   readonly capabilities: readonly { readonly key: string; readonly count: number }[];
   readonly gapReasons: readonly string[];
+  readonly proofChain: {
+    readonly schemaVersion: string;
+    readonly sourceSnapshotDigest: string | null;
+    readonly sourceSurfaceDigest: string | null;
+    readonly phase24PortfolioDigest: string | null;
+    readonly censusDigest: string | null;
+    readonly totalOperations: number;
+    readonly phase24Eligible: number;
+    readonly phase24Excluded: number;
+    readonly runtimeBindings: number;
+    readonly runtimeBindingMissing: number;
+    readonly replayRequirementsProven: number;
+    readonly dossierCompatible: number;
+    readonly currentnessFailureCount: number;
+    readonly primaryBlockingStages: readonly { readonly key: string; readonly count: number }[];
+    readonly stageStatusCounts: readonly { readonly stage: string; readonly status: string; readonly count: number }[];
+    readonly proofFamilies: readonly { readonly family: string; readonly assessment: string; readonly rank: number; readonly gapSurfaceCount: number; readonly firstBlockerCount: number; readonly potentiallyUnlockableCount: number; readonly proofCompleteness: string; readonly dependencyFanOut: number; readonly bugHuntingValue: string }[];
+  } | null;
 }
 
 export type RunEnvironment = 'LOCAL_SYNTHETIC' | 'LOCAL' | 'DEV_RECORDED' | 'NEXT_RECORDED' | 'UNKNOWN';

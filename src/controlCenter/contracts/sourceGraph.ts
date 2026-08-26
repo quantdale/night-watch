@@ -9,10 +9,12 @@ import type {
   SafeControlCenterSha,
 } from './common';
 import { CONTROL_CENTER_CONTRACT_NAMESPACE } from './common';
+import { REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION } from '../../core/source/eligibilityCensus';
 
-export const CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-summary.v1` as const;
+export const CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-summary.v2` as const;
 export const CONTROL_CENTER_SOURCE_SURFACES_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-surfaces.v1` as const;
 export const CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-graph.v1` as const;
+export const CONTROL_CENTER_SOURCE_PROOF_CHAIN_SCHEMA_VERSION = REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION;
 
 export type ControlCenterSourceCurrentness = 'CURRENT' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE';
 export type ControlCenterSourceLifecycle =
@@ -47,6 +49,44 @@ export interface ControlCenterSourceRollupDto {
   readonly count: number;
 }
 
+export interface ControlCenterSourceProofChainStageCountDto {
+  readonly stage: SafeControlCenterCode;
+  readonly status: SafeControlCenterCode;
+  readonly count: number;
+}
+
+export interface ControlCenterSourceProofChainFamilyDto {
+  readonly family: SafeControlCenterCode;
+  readonly assessment: SafeControlCenterCode;
+  readonly rank: number;
+  readonly gapSurfaceCount: number;
+  readonly firstBlockerCount: number;
+  readonly potentiallyUnlockableCount: number;
+  readonly proofCompleteness: SafeControlCenterCode;
+  readonly dependencyFanOut: number;
+  readonly bugHuntingValue: SafeControlCenterCode;
+}
+
+/** Sanitized aggregate proof-chain diagnostics; this is never an eligibility selector. */
+export interface ControlCenterSourceProofChainDto {
+  readonly schemaVersion: typeof CONTROL_CENTER_SOURCE_PROOF_CHAIN_SCHEMA_VERSION;
+  readonly sourceSnapshotDigest: SafeControlCenterDigest | null;
+  readonly sourceSurfaceDigest: SafeControlCenterDigest | null;
+  readonly phase24PortfolioDigest: SafeControlCenterDigest | null;
+  readonly censusDigest: SafeControlCenterDigest | null;
+  readonly totalOperations: number;
+  readonly phase24Eligible: number;
+  readonly phase24Excluded: number;
+  readonly runtimeBindings: number;
+  readonly runtimeBindingMissing: number;
+  readonly replayRequirementsProven: number;
+  readonly dossierCompatible: number;
+  readonly currentnessFailureCount: number;
+  readonly primaryBlockingStages: readonly ControlCenterSourceRollupDto[];
+  readonly stageStatusCounts: readonly ControlCenterSourceProofChainStageCountDto[];
+  readonly proofFamilies: readonly ControlCenterSourceProofChainFamilyDto[];
+}
+
 export interface ControlCenterSourceSummaryDto {
   readonly schemaVersion: typeof CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION;
   readonly state: 'AVAILABLE' | 'EMPTY' | 'STALE' | 'UNAVAILABLE' | 'UNKNOWN';
@@ -58,6 +98,7 @@ export interface ControlCenterSourceSummaryDto {
   readonly proof: readonly ControlCenterSourceRollupDto[];
   readonly capabilities: readonly ControlCenterSourceRollupDto[];
   readonly gapReasons: readonly SafeControlCenterCode[];
+  readonly proofChain: ControlCenterSourceProofChainDto | null;
 }
 
 export interface ControlCenterSourceSurfaceDto {

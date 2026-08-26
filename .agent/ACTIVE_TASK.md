@@ -1,24 +1,23 @@
 # Active Task
 
-Task ID: nightwatch-readonly-eligibility-proof-expansion-v1
-Phase: SOURCE-READONLY-ELIGIBILITY-PROOF-EXPANSION-V1
-Title: Read-Only Eligibility Proof Expansion + Campaign Surface Unlock
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-readonly-eligibility-proof-expansion-v1
-Starting SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-Last validated implementation SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
-Last checkpoint: M7 — terminal validation, documentation reconciliation, and Git closure complete; no new proof authority admitted.
-Current milestone: COMPLETE — M0–M7 closed under local/source/synthetic scope.
-Next action: STOP — the final live head and origin equality are discovered from Git.
-Authorization class: NIGHTWATCH_READONLY_ELIGIBILITY_PROOF_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
+Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
+Title: Source-to-Campaign Proof Chain Expansion
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-source-to-campaign-proof-chain-expansion-v1
+Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
+Last validated implementation SHA: 545f6b8d700be131e55c424d055331887ed04189
+Last checkpoint: M4 — proof-chain census hardening, family no-admission audit, and bounded Control Center diagnostics integrated.
+Current milestone: M5 — systemic hardening and dependency-cone validation.
+Next action: Run the remaining adversarial dependency-cone, privacy, currentness, determinism, performance, and full acceptance checks; repair any reproduced Critical/High defect.
+Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 5140617d6f15bd040b30ec09c59ea7e0fa96f558
+STARTING_SHA: 545f6b8d700be131e55c424d055331887ed04189
+LAST_VALIDATED_IMPLEMENTATION_SHA: 545f6b8d700be131e55c424d055331887ed04189
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 545f6b8d700be131e55c424d055331887ed04189
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_SOURCE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS: COMPLETE
+PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
@@ -30,11 +29,11 @@ filesystem expansion, or second authority is authorized. Approved sibling
 source is read only through the existing confined boundary. Raw source,
 literal values, credentials, cookies, customer values, bodies, traces,
 arbitrary private paths, and owner-only findings must not enter task files,
-diagnostics, DTOs, or Git. Existing source and Phase 24 authorities remain
-authoritative; read-only facts never imply eligibility.
+diagnostics, DTOs, or Git. Existing source and Phase-24 authorities remain
+authoritative; proof-chain observations never imply eligibility.
 
 ## Resume recipe
 
-Read the task SPEC, PLAN, and STATE only when auditing this terminal record;
-the task is complete. Do not resume the completed Control Center task or
-historical Phase 13 records.
+Read this task's SPEC.md, PLAN.md, and STATE.md, inspect the working tree, and
+continue the exact M1 action recorded in STATE.md. Do not resume the terminal
+read-only eligibility task or any historical task.

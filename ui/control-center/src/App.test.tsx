@@ -71,7 +71,7 @@ const overview: OverviewSnapshot = {
     blockedOperationClasses: [],
   },
   source: {
-    schemaVersion: 'nightwatch.control-center.source-summary.v1',
+    schemaVersion: 'nightwatch.control-center.source-summary.v2',
     state: 'UNAVAILABLE',
     inventoryDigest: null,
     repositoryCount: 0,
@@ -81,6 +81,7 @@ const overview: OverviewSnapshot = {
     proof: [],
     capabilities: [],
     gapReasons: ['SOURCE_REPOSITORY_UNAVAILABLE'],
+    proofChain: null,
   },
 };
 

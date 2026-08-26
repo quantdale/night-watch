@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import type { Phase24CandidatePortfolio } from '../../src/core/phase24/types';
 import { buildSourceEligibilityCensus } from '../../src/core/source/eligibilityCensus';
 import type { SourceSurfaceDiscovery } from '../../src/core/source/surfaces';
+import type { RealSourceSurfaceDescriptor } from '../../src/core/source/surfaceTypes';
 
 function fixture(): { readonly discovery: SourceSurfaceDiscovery; readonly portfolio: Phase24CandidatePortfolio } {
   const surface = {
@@ -79,14 +82,61 @@ function fixture(): { readonly discovery: SourceSurfaceDiscovery; readonly portf
   return { discovery, portfolio };
 }
 
+function variant(
+  input: ReturnType<typeof fixture>,
+  operation: Partial<RealSourceSurfaceDescriptor['operation']> = {},
+  contract: Partial<RealSourceSurfaceDescriptor['contract']> = {},
+): ReturnType<typeof fixture> {
+  const surface = input.discovery.surfaces[0]!;
+  const nextSurface = {
+    ...surface,
+    operation: { ...surface.operation, ...operation },
+    contract: { ...surface.contract, ...contract },
+  };
+  return {
+    discovery: { ...input.discovery, surfaces: [nextSurface] },
+    portfolio: input.portfolio,
+  };
+}
+
 test.describe('deterministic source eligibility census', () => {
   test('projects a complete categorical chain without source values', () => {
     const input = fixture();
     const first = buildSourceEligibilityCensus(input);
     const second = buildSourceEligibilityCensus(input);
     expect(first).toEqual(second);
+    expect(first.schemaVersion).toBe('nightwatch.real-source-eligibility-census.v2');
     expect(first.summary).toMatchObject({ totalOperations: 1, routeProofs: 1, requestContracts: 1, responseContracts: 0, semanticContractSurfaces: 0, readOnlyProven: 0, mutabilityUnknown: 1, phase24Eligible: 0, phase24Excluded: 1 });
     expect(first.rows[0]?.chain.firstBlockingStage).toBe('RESPONSE_CONTRACT');
+    expect(first.rows[0]?.chain.stages.map((entry) => entry.stage)).toEqual([
+      'SOURCE_DISCOVERED',
+      'ROUTE_PROVEN',
+      'REQUEST_CONTRACT',
+      'RESPONSE_CONTRACT',
+      'SEMANTIC_CONTRACT',
+      'MUTABILITY_CLASSIFICATION',
+      'READ_ONLY_PROOF',
+      'JOIN_GRAPH_REQUIREMENTS',
+      'RUNTIME_BINDING',
+      'REPLAY_REQUIREMENTS',
+      'DOSSIER_REQUIREMENTS',
+      'PHASE24_ELIGIBILITY',
+    ]);
+    expect(first.rows[0]?.chain.secondaryBlockingStages).toEqual([
+      'SEMANTIC_CONTRACT',
+      'MUTABILITY_CLASSIFICATION',
+      'READ_ONLY_PROOF',
+      'JOIN_GRAPH_REQUIREMENTS',
+      'RUNTIME_BINDING',
+      'REPLAY_REQUIREMENTS',
+      'DOSSIER_REQUIREMENTS',
+      'PHASE24_ELIGIBILITY',
+    ]);
+    expect(first.summary).toMatchObject({ runtimeBindings: 0, runtimeBindingMissing: 1, replayRequirementsProven: 0, dossierCompatible: 0, dossierIncompatible: 1, currentnessFailureCount: 0 });
+    expect(first.summary.proofFamilyRanking).toHaveLength(5);
+    expect(first.summary.proofFamilyRanking.map((entry) => entry.family).sort()).toEqual(['JOIN_GRAPH', 'PHASE24_BRIDGE', 'RESPONSE_CONTRACT', 'RUNTIME_BINDING', 'SEMANTIC_CONTRACT'].sort());
+    expect(first.summary.proofFamilyRanking[0]?.family).toBe('RESPONSE_CONTRACT');
+    expect(first.summary.cost).toEqual(expect.objectContaining({ filesInspected: 0, bytesInspected: 0, responseFlowAttempts: 0 }));
     expect(first.summary.reasonFamilyCounts).toEqual(expect.arrayContaining([
       { code: 'MECHANICAL_PROOF_GAP', count: 1 },
       { code: 'SEMANTIC_OR_REPLAY_PREREQUISITE', count: 1 },
@@ -95,11 +145,56 @@ test.describe('deterministic source eligibility census', () => {
     expect(first.deterministicDigest).toMatch(/^source-eligibility-census:sha256:[0-9a-f]{24}$/);
   });
 
+  test('separates mutability classification from read-only proof and detects independent semantic gaps', () => {
+    const base = fixture();
+    const provenResponse = { responseProof: 'PROVEN' as const, semanticProof: 'PROVEN' as const };
+
+    const mutation = buildSourceEligibilityCensus(variant(base, { readOnlyClassification: 'PROVEN_MUTATION_CAPABLE' }, provenResponse));
+    expect(mutation.rows[0]?.chain.firstBlockingStage).toBe('READ_ONLY_PROOF');
+    expect(mutation.rows[0]?.chain.stages).toEqual(expect.arrayContaining([
+      { stage: 'MUTABILITY_CLASSIFICATION', status: 'PROVEN' },
+      { stage: 'READ_ONLY_PROOF', status: 'UNSAFE' },
+    ]));
+
+    const methodOnly = buildSourceEligibilityCensus(variant(base, { readOnlyClassification: 'READ_ONLY_METHOD_ONLY' }, provenResponse));
+    expect(methodOnly.rows[0]?.chain.firstBlockingStage).toBe('MUTABILITY_CLASSIFICATION');
+    expect(methodOnly.rows[0]?.chain.stages).toEqual(expect.arrayContaining([
+      { stage: 'MUTABILITY_CLASSIFICATION', status: 'UNPROVEN' },
+      { stage: 'READ_ONLY_PROOF', status: 'UNPROVEN' },
+    ]));
+
+    const semanticGap = buildSourceEligibilityCensus(variant(base, {}, { responseProof: 'PROVEN', semanticProof: 'MISSING_SYMBOL' }));
+    expect(semanticGap.rows[0]?.chain.firstBlockingStage).toBe('SEMANTIC_CONTRACT');
+    expect(semanticGap.summary.proofFamilyRanking.find((entry) => entry.family === 'SEMANTIC_CONTRACT')?.assessment).toBe('MEASURE_ONLY');
+  });
+
   test('fails closed on portfolio/surface mismatches', () => {
     const input = fixture();
     expect(() => buildSourceEligibilityCensus({ discovery: { ...input.discovery, surfaces: [] }, portfolio: input.portfolio })).toThrow('SOURCE_ELIGIBILITY_CENSUS_SURFACE_COUNT');
     expect(() => buildSourceEligibilityCensus({ discovery: input.discovery, portfolio: { ...input.portfolio, consideredCount: 2 } as unknown as Phase24CandidatePortfolio })).toThrow('SOURCE_ELIGIBILITY_CENSUS_SURFACE_COUNT');
     expect(() => buildSourceEligibilityCensus({ discovery: input.discovery, portfolio: { ...input.portfolio, candidates: [{ surfaceKey: 'surface:sha256:999999999999999999999999', eligibility: 'EXCLUDED', reasonCodes: [] }] } as unknown as Phase24CandidatePortfolio })).toThrow('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_OUTSIDE_SURFACES');
     expect(() => buildSourceEligibilityCensus({ discovery: input.discovery, portfolio: { ...input.portfolio, candidates: [input.portfolio.candidates[0], input.portfolio.candidates[0]] } as unknown as Phase24CandidatePortfolio })).toThrow('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_COUNT');
+    expect(() => buildSourceEligibilityCensus({ discovery: input.discovery, portfolio: { ...input.portfolio, eligibleCount: 1, excludedCount: 0 } as unknown as Phase24CandidatePortfolio })).toThrow('SOURCE_ELIGIBILITY_CENSUS_PHASE24_COUNT');
+  });
+
+  test('operator proof-chain census is byte-stable across three fresh processes', () => {
+    const outputs = Array.from({ length: 3 }, () => spawnSync(process.execPath, [path.join(process.cwd(), 'bin/nightwatch-intelligence.mjs'), 'eligibility-census', '--json'], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      timeout: 60_000,
+    }));
+    for (const output of outputs) {
+      expect(output.status).toBe(0);
+      expect(output.stderr).toBe('');
+    }
+    const censuses = outputs.map((output) => {
+      const parsed = JSON.parse(output.stdout) as { readonly census: { readonly summary: { readonly proofFamilyRanking: readonly { readonly family: string; readonly assessment: string }[] }; readonly deterministicDigest: string } };
+      return parsed.census;
+    });
+    expect(censuses[1]).toEqual(censuses[0]);
+    expect(censuses[2]).toEqual(censuses[0]);
+    expect(censuses[0]?.summary.proofFamilyRanking.find((entry) => entry.family === 'SEMANTIC_CONTRACT')?.assessment).toBe('NO_INDEPENDENT_GAP');
+    expect(censuses[0]?.summary.proofFamilyRanking[0]?.family).toBe('RESPONSE_CONTRACT');
+    expect(JSON.stringify(censuses[0])).not.toContain('CUSTOMER_ELIGIBILITY_SENTINEL');
   });
 });

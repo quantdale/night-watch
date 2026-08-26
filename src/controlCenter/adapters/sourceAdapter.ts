@@ -3,6 +3,7 @@ import type {
   RealSourceSurfaceDescriptor,
   SourceEvidenceJoin,
 } from '../../core/source/surfaceTypes';
+import type { SourceEligibilityCensus } from '../../core/source/eligibilityCensus';
 import {
   asSafeControlCenterCode,
   asSafeControlCenterDigest,
@@ -21,6 +22,9 @@ import type {
   ControlCenterSourceGraphEdgeKind,
   ControlCenterSourceGraphNodeDto,
   ControlCenterSourceGraphNodeKind,
+  ControlCenterSourceProofChainDto,
+  ControlCenterSourceProofChainFamilyDto,
+  ControlCenterSourceProofChainStageCountDto,
   ControlCenterSourceLifecycle,
   ControlCenterSourceSummaryDto,
   ControlCenterSourceSurfaceDto,
@@ -105,6 +109,53 @@ export interface SourceSummaryAuthorityInput {
   /** Repository-level currentness from the source inventory, when present. */
   readonly repositoryCurrentness?: readonly ControlCenterSourceCurrentness[];
   readonly reasonCodes?: readonly string[];
+  readonly proofChain?: SourceEligibilityCensus | null;
+}
+
+function proofChainRollup(values: readonly { readonly code: string; readonly count: number }[]): readonly { readonly key: NonNullable<ReturnType<typeof asSafeControlCenterCode>>; readonly count: number }[] {
+  return values
+    .map(({ code, count }) => ({ key: asSafeControlCenterCode(code) ?? asSafeControlCenterCode('UNKNOWN')!, count: boundedCount(count) }))
+    .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function proofChainDto(census: SourceEligibilityCensus | null | undefined): ControlCenterSourceProofChainDto | null {
+  if (census === null || census === undefined) return null;
+  const stageStatusCounts: readonly ControlCenterSourceProofChainStageCountDto[] = census.summary.stageStatusCounts.map((entry) => ({
+    stage: asSafeControlCenterCode(entry.stage) ?? asSafeControlCenterCode('UNKNOWN')!,
+    status: asSafeControlCenterCode(entry.status) ?? asSafeControlCenterCode('UNKNOWN')!,
+    count: boundedCount(entry.count),
+  }));
+  const proofFamilies: readonly ControlCenterSourceProofChainFamilyDto[] = census.summary.proofFamilyRanking
+    .map((entry) => ({
+      family: asSafeControlCenterCode(entry.family) ?? asSafeControlCenterCode('UNKNOWN')!,
+      assessment: asSafeControlCenterCode(entry.assessment) ?? asSafeControlCenterCode('UNKNOWN')!,
+      rank: boundedCount(entry.rank),
+      gapSurfaceCount: boundedCount(entry.gapSurfaceCount),
+      firstBlockerCount: boundedCount(entry.firstBlockerCount),
+      potentiallyUnlockableCount: boundedCount(entry.potentiallyUnlockableCount),
+      proofCompleteness: asSafeControlCenterCode(entry.proofCompleteness) ?? asSafeControlCenterCode('UNKNOWN')!,
+      dependencyFanOut: boundedCount(entry.dependencyFanOut),
+      bugHuntingValue: asSafeControlCenterCode(entry.bugHuntingValue) ?? asSafeControlCenterCode('UNKNOWN')!,
+    }))
+    .sort((left, right) => left.rank - right.rank || left.family.localeCompare(right.family));
+  return {
+    schemaVersion: census.schemaVersion,
+    sourceSnapshotDigest: asSafeControlCenterDigest(census.sourceSnapshotDigest),
+    sourceSurfaceDigest: asSafeControlCenterDigest(census.sourceSurfaceDigest),
+    phase24PortfolioDigest: asSafeControlCenterDigest(census.phase24PortfolioDigest),
+    censusDigest: asSafeControlCenterDigest(census.deterministicDigest),
+    totalOperations: boundedCount(census.summary.totalOperations),
+    phase24Eligible: boundedCount(census.summary.phase24Eligible),
+    phase24Excluded: boundedCount(census.summary.phase24Excluded),
+    runtimeBindings: boundedCount(census.summary.runtimeBindings),
+    runtimeBindingMissing: boundedCount(census.summary.runtimeBindingMissing),
+    replayRequirementsProven: boundedCount(census.summary.replayRequirementsProven),
+    dossierCompatible: boundedCount(census.summary.dossierCompatible),
+    currentnessFailureCount: boundedCount(census.summary.currentnessFailureCount),
+    primaryBlockingStages: proofChainRollup(census.summary.primaryBlockingStageCounts),
+    stageStatusCounts,
+    proofFamilies,
+  };
 }
 
 /** Project source descriptors without exposing source paths, symbols, or text. */
@@ -162,6 +213,7 @@ export function projectSourceSummary(
     proof: rollup(proofValues),
     capabilities: rollup(capabilityValues),
     gapReasons,
+    proofChain: proofChainDto(authority.proofChain),
   };
 }
 

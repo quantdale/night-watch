@@ -38,7 +38,7 @@ import {
 } from '../../src/controlCenter/contracts/sourceGraph';
 
 test.describe('Control Center versioned contracts', () => {
-  test('defines one distinct v1 schema for every planned public snapshot family', () => {
+  test('defines one distinct versioned schema for every planned public snapshot family', () => {
     const versions = [
       CONTROL_CENTER_HEALTH_SCHEMA_VERSION,
       CONTROL_CENTER_META_SCHEMA_VERSION,
@@ -57,9 +57,10 @@ test.describe('Control Center versioned contracts', () => {
       CONTROL_CENTER_EVENT_SCHEMA_VERSION,
     ];
     expect(new Set(versions).size).toBe(versions.length);
-    for (const version of versions) {
+    for (const version of versions.filter((value) => value !== CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION)) {
       expect(version).toMatch(/^nightwatch\.control-center\.[a-z0-9-]+\.v1$/);
     }
+    expect(CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION).toBe('nightwatch.control-center.source-summary.v2');
   });
 
   test('rejects path-shaped, encoded, absolute, oversized, and sensitive IDs', () => {

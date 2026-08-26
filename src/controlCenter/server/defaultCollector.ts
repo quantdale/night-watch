@@ -340,7 +340,10 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     },
     sourceSummary: async () => {
       const { source } = await readAuthoritySnapshot();
-      return projectSourceSummary(source.discovery?.surfaces ?? [], sourceSummaryAuthority(source));
+      return projectSourceSummary(source.discovery?.surfaces ?? [], {
+        ...sourceSummaryAuthority(source),
+        proofChain: source.phase24?.eligibilityCensus ?? null,
+      });
     },
     sourceSurfaces: async (query) => {
       const { source } = await readAuthoritySnapshot();

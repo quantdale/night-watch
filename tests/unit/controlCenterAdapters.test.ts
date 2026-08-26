@@ -18,6 +18,7 @@ import { EXPECTED_FROZEN_OPERATION_COUNT, summarizeLocalReadiness } from '../../
 import type { LocalReadinessInput } from '../../src/core/readiness/types';
 import type { RunEvent, RunSummary } from '../../src/core/evidence/types';
 import type { CampaignCoverageReport, CampaignPlan } from '../../src/core/campaignIntelligence/types';
+import type { SourceEligibilityCensus } from '../../src/core/source/eligibilityCensus';
 import type { RealSourceSurfaceDescriptor } from '../../src/core/source/surfaceTypes';
 import type { BugDossier } from '../../src/core/triage/types';
 
@@ -341,6 +342,49 @@ test.describe('Control Center authoritative adapters', () => {
     expect(JSON.stringify({ summary, surfaces, graph })).not.toContain('SENTINEL.php');
     expect(JSON.stringify({ summary, surfaces, graph })).not.toContain('SENTINEL_HANDLER_PATH');
     expect(projectSourceGraph([descriptor], 'surface-1', 2, 3, 2)).toEqual(graph);
+  });
+
+  test('source summary projects only bounded proof-chain aggregates', () => {
+    const census = {
+      schemaVersion: 'nightwatch.real-source-eligibility-census.v2',
+      sourceSnapshotDigest: `srcsnapshot:sha256:${'a'.repeat(24)}`,
+      sourceSurfaceDigest: `source-surface-discovery:sha256:${'b'.repeat(24)}`,
+      phase24PortfolioDigest: `portfolio:sha256:${'c'.repeat(24)}`,
+      deterministicDigest: `source-eligibility-census:sha256:${'d'.repeat(24)}`,
+      summary: {
+        totalOperations: 2,
+        phase24Eligible: 1,
+        phase24Excluded: 1,
+        runtimeBindings: 1,
+        runtimeBindingMissing: 1,
+        replayRequirementsProven: 1,
+        dossierCompatible: 2,
+        currentnessFailureCount: 0,
+        primaryBlockingStageCounts: [{ code: 'RUNTIME_BINDING', count: 1 }],
+        stageStatusCounts: [{ stage: 'RUNTIME_BINDING', status: 'UNPROVEN', count: 1 }],
+        proofFamilyRanking: [{
+          family: 'RUNTIME_BINDING',
+          assessment: 'NO_CURRENT_MATCH',
+          rank: 1,
+          gapSurfaceCount: 1,
+          firstBlockerCount: 0,
+          potentiallyUnlockableCount: 0,
+          proofCompleteness: 'NONE',
+          dependencyFanOut: 1,
+          bugHuntingValue: 'HIGH',
+        }],
+      },
+    } as unknown as SourceEligibilityCensus;
+    const summary = projectSourceSummary([sourceSurface()], { proofChain: census });
+    expect(summary.proofChain).toMatchObject({
+      schemaVersion: 'nightwatch.real-source-eligibility-census.v2',
+      totalOperations: 2,
+      phase24Eligible: 1,
+      runtimeBindingMissing: 1,
+      primaryBlockingStages: [{ key: 'RUNTIME_BINDING', count: 1 }],
+    });
+    expect(JSON.stringify(summary)).not.toContain('SENTINEL.php');
+    expect(JSON.stringify(summary)).not.toContain('SENTINEL_HANDLER');
   });
 
   test('source graph remains deterministic under a 1000-descriptor fixture and fixed ceilings', () => {
