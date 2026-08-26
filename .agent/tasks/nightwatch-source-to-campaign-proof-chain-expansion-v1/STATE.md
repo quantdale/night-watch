@@ -8,8 +8,8 @@ Title: Source-to-Campaign Proof Chain Expansion
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
-Last substantive checkpoint SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
+Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT

@@ -6,15 +6,15 @@ Title: Source-to-Campaign Proof Chain Expansion
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-to-campaign-proof-chain-expansion-v1
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last checkpoint: M5 — canonical serial Playwright passed 2,524 enumerated / 2,508 passed / 16 skipped / 0 failed after bounded synthetic journey-fixture timing hardening.
 Current milestone: M5 — systemic hardening and dependency-cone validation.
 Next action: Run the clean Node20 gate and topology-correct isolated full suite, then complete terminal documentation closure.
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 545f6b8d700be131e55c424d055331887ed04189
-LAST_VALIDATED_IMPLEMENTATION_SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS: IN_PROGRESS

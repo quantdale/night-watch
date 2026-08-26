@@ -5,8 +5,8 @@ Task ID: nightwatch-source-to-campaign-proof-chain-expansion-v1
 Phase: SOURCE-TO-CAMPAIGN-PROOF-CHAIN-EXPANSION-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
-Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
-Last substantive checkpoint SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
+Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
+Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 
 ## Current disposition
 
@@ -37,11 +37,11 @@ Focused proof-chain, source-intelligence, semantic, authority-lifecycle, and
 Control Center suites are green. The semantic compatibility cone is 1,884
 total / 1,871 passed / 13 skipped / 0 failed; the synthetic campaign is 66/66;
 owner provenance is 91/91; and the built Control Center UI/browser checks are
-green. The first canonical complete regression attempt enumerated 2,524,
-passed 2,507, skipped 16, and had one existing journey cancellation-fixture
-failure. That exact test passed 5/5 in immediate focused serial reruns, so no
-source change was justified; the canonical suite will be rerun on the clean
-checkpoint before terminal closure.
+green. A full-suite-only cancellation timing defect was fixed within the
+synthetic journey fixture by delaying its intentional abort to 25 ms while the
+fixture server responds after 100 ms. The focused cancellation test passed
+5/5, and the canonical complete regression now enumerates 2,524, passes 2,508,
+skips 16, and has 0 failures.
 
 ## Safety disposition
 
