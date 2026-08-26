@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
-Last substantive checkpoint SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+Last validated implementation SHA: 18c0d954996693592e404111cfdecaa411edfc71
+Last substantive checkpoint SHA: 18c0d954996693592e404111cfdecaa411edfc71
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M4 — owner-local findings reader at 9d0018c.
+Last checkpoint: M5 — snapshot lifecycle and advisory SSE at 18c0d95.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+LAST_VALIDATED_IMPLEMENTATION_SHA: 18c0d954996693592e404111cfdecaa411edfc71
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 18c0d954996693592e404111cfdecaa411edfc71
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M5 — snapshot lifecycle, cache/currentness, and advisory SSE.
+M6 — UI truthfulness and built non-empty browser qualification.
 
 ## Completed Milestones
 
@@ -69,22 +69,30 @@ M5 — snapshot lifecycle, cache/currentness, and advisory SSE.
   explicit. `npm run typecheck`, `npm run hardening:check`, the focused
   13-test findings/adapter/authority suite, and the affected 37-test Control
   Center suite passed.
+- M5 — COMPLETE: the bounded snapshot coordinator owns fixed run-evidence and
+  authority generations, coalesces same-key refreshes, keeps failed refreshes
+  explicit with last-known-good diagnostics, bounds cache/shutdown behavior,
+  and composes source/campaign/findings identities coherently. SSE now emits
+  only sanitized advisory notifications, rejects unsafe/replayed sequences,
+  bounds clients, and closes terminally. `npm run typecheck`,
+  `npm run hardening:check`, and the affected 42-test Control Center suite
+  passed; implementation checkpoint is
+  `18c0d954996693592e404111cfdecaa411edfc71`.
 
 ## Work In Progress
 
-Map the existing collector/server snapshot and advisory SSE lifecycle. Define
-one bounded generation snapshot contract, cache and refresh behavior,
-concurrency/shutdown rules, and notification-only reconnect semantics. Keep
-failed refreshes explicit and prevent stale or mixed authority generations
-from being presented as a current coherent snapshot.
+Qualify the nested Control Center UI against the normal server composition
+using injected synthetic authorities. Keep all seven views non-empty and
+truthful while preserving V1 empty/stale/unavailable/blocked/error states,
+keyboard access, selection stability, and the no-external-request boundary.
 
 ## Exact Next Action
 
-Inspect the current Control Center collector/server snapshot composition,
-SSE subscriber lifecycle, and shutdown/refresh seams. Record the M5 lifecycle
-contract in PLAN, then implement the smallest bounded generation coordinator
-and synthetic refresh/concurrency tests without adding HTTP mutation,
-network, child-process, or second-authority behavior.
+Inspect the nested Control Center UI package and existing browser fixtures.
+Add the smallest deterministic built-server synthetic-authority fixture that
+proves non-empty Overview, Safety, Runs, Execution, Campaign, Source, and
+Findings behavior and preserves selection/state safety without external
+requests.
 
 ## Files Changed
 
@@ -107,6 +115,10 @@ network, child-process, or second-authority behavior.
 | `src/controlCenter/authorities/findingsAuthority.ts` | Fixed owner-local dossier validation, bounded enumeration, and metadata-only snapshot bridge | implemented; synthetic findings tests pass |
 | `src/controlCenter/adapters/findingsAdapter.ts` | Consume v1/v2 metadata projections while preserving existing raw-fixture compatibility | implemented; focused suite passes |
 | `tests/unit/controlCenterFindingsAuthority.test.ts` | Synthetic v1/v2, envelope, corruption, privacy, permission, metadata, and cache fixtures | added; 3/3 pass |
+| `src/controlCenter/server/snapshotCoordinator.ts` | Fixed-key bounded generation cache, coalesced refresh, failed fallback, and terminal shutdown | implemented; affected suite passes |
+| `tests/unit/controlCenterSnapshotCoordinator.test.ts` | Synthetic coalescing, generation identity, failed refresh, bounds, and shutdown fixtures | added; affected suite passes |
+| `src/controlCenter/contracts/events.ts` | Allowlist sanitizer for notification-only SSE DTOs | implemented; contract suite passes |
+| `src/controlCenter/server/sse.ts` | Bounded, replay-safe, terminal SSE lifecycle | implemented; server suite passes |
 
 ## Validation Ledger
 
@@ -137,6 +149,11 @@ network, child-process, or second-authority behavior.
   affected Control Center suite: 37 passed, 0 failed; staged diff privacy
   scan found no credential, bearer-key, or private-key patterns; implementation
   checkpoint is 9d0018c.
+- M5 acceptance ladder — PASS: `npm run typecheck`; `npm run hardening:check`;
+  affected Control Center suite: 42 passed, 0 failed; staged
+  `git diff --cached --check` PASS; staged privacy scan found no credential,
+  bearer-key, or private-key patterns; implementation checkpoint is
+  18c0d954996693592e404111cfdecaa411edfc71.
 
 ## Decisions Made During This Task
 
@@ -144,6 +161,11 @@ network, child-process, or second-authority behavior.
   fresh continuity-v2 task from the pulled live `main`.
 - The planner-only execution prompt is treated as the active campaign
   authorization, while live Git and current tests remain stronger evidence.
+- Snapshot lifecycle state is owned by one bounded in-process coordinator:
+  failed refreshes serve only explicit categorical fallbacks, while
+  last-known-good generation identity remains diagnostic and never blesses the
+  fallback as CURRENT. SSE is advisory only; GET snapshots remain
+  authoritative.
 
 ## Discoveries
 
@@ -175,6 +197,11 @@ network, child-process, or second-authority behavior.
 - A valid dossier does not imply a valid public row: identity, digest, and
   timestamp fields are screened again at the findings projection boundary;
   malformed/partial private state stays UNKNOWN or UNAVAILABLE.
+- The collector's authority generation is a digest over source, campaign, and
+  findings generations, so campaign output is composed in the same read rather
+  than paired with an independently cached source generation.
+- The server and SSE hub are terminal after close; bounded in-flight snapshot
+  reads may finish but cannot repopulate the coordinator after shutdown.
 
 ## Blockers
 
@@ -194,12 +221,12 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Inspect the collector/server snapshot and
-SSE lifecycle named in the next action, record the M5 contract, then implement
-and test the bounded generation coordinator. Keep all reads and refreshes
-local, in-process, read-only, synthetic-testable, and notification-only.
+Read this STATE after SPEC and PLAN. Inspect the nested UI package and existing
+browser fixtures named in the next action, then add and run the bounded
+synthetic built-server browser qualification. Keep all authorities local,
+in-process, read-only, synthetic-testable, and notification-only.
 
 ## Completion Snapshot
 
-INCOMPLETE — M0 through M4 are complete; M5 snapshot lifecycle and advisory
-SSE hardening is active.
+INCOMPLETE — M0 through M5 are complete; M6 built non-empty browser
+qualification is active.

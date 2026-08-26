@@ -252,17 +252,26 @@ implementation checkpoint is `9d0018c`.
 
 ### M5 — Snapshot lifecycle, cache/currentness, and advisory SSE
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Define bounded generation snapshots, cache keys, refresh/concurrency behavior,
 last-known-good handling, shutdown, and notification-only SSE. Prove failed
 refresh cannot bless stale data and identical current generations serialize
 byte-identically.
 
-Exact next action: inspect the current collector/server snapshot composition,
-SSE subscriber lifecycle, and shutdown seams; record the lifecycle contract
-before implementing the bounded generation coordinator and synthetic
-refresh/concurrency tests.
+Evidence: `snapshotCoordinator.ts` owns the two fixed run-evidence and
+authority cache keys, bounded entries/TTL, digest-only generation identities,
+same-key in-flight coalescing, explicit failed-refresh fallbacks, and terminal
+shutdown behavior. The normal collector now composes one authority generation
+from source, campaign, and findings identities and exposes only the validated
+domain snapshots. SSE sanitizes notification DTOs, drops unsafe/replayed
+sequences, bounds subscribers, and closes terminally; GET remains authoritative.
+
+Validation: `npm run typecheck` PASS; `npm run hardening:check` PASS; affected
+Control Center suite PASS, 42 passed and 0 failed; `git diff --cached --check`
+PASS; staged privacy scan found no credential, bearer-key, or private-key
+patterns; implementation checkpoint is
+`18c0d954996693592e404111cfdecaa411edfc71`.
 
 #### M5 lifecycle contract
 
@@ -297,13 +306,18 @@ replay/privacy rejection, and existing server/authority determinism tests.
 
 ### M6 — UI truthfulness and built non-empty browser qualification
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Use injected synthetic authorities with the normal server composition to
 prove all seven views render non-empty data and preserve V1 empty/stale/
 unavailable/blocked/error/accessibility states. Verify no external requests,
 console/page errors, raw-field leakage, bundle-bound violations, or selection
 loss on advisory refresh.
+
+Exact next action: inspect the nested Control Center UI package and existing
+browser fixtures, then add the smallest deterministic built-server synthetic
+authority fixture that qualifies all seven non-empty views and preserves
+selection/state safety without external requests.
 
 ### M7 — Whole-repository hardening and workspace hygiene
 
