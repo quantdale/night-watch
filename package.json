@@ -47,6 +47,7 @@
     "control-center:ui:typecheck": "npm --prefix ui/control-center run typecheck",
     "control-center:ui:test": "npm --prefix ui/control-center run test",
     "control-center:ui:build": "npm --prefix ui/control-center run build",
+    "control-center:ui:browser": "npm run control-center:ui:build && playwright test --config=playwright.control-center.config.ts",
     "control-center:ui:dev": "npm --prefix ui/control-center run dev",
     "observe:preflight": "node bin/observe-preflight.mjs",
     "observe:gate": "node bin/observe-gate.mjs",
