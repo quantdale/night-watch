@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-source-analysis-runtime-hardening-v1
 Phase: SOURCE-ANALYSIS-RUNTIME-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -70,9 +70,9 @@ or external publication may enter this task or Git.
 - [x] M8 — repeat timings/RSS and execute all required local acceptance,
   semantic compatibility, synthetic/provenance, clean Node20, and isolated
   parity gates.
-- [ ] M9 — use remaining productive budget for in-scope regression hunting,
+- [x] M9 — use remaining productive budget for in-scope regression hunting,
   reconcile all records/docs, inspect privacy/diff, commit/push, observe exact
-  Actions truth once, and write final report.
+  Actions truth once, and write final report — COMPLETE.
 
 ## Validation Strategy
 

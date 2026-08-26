@@ -6,19 +6,19 @@ Task ID: nightwatch-source-analysis-runtime-hardening-v1
 Phase: SOURCE-ANALYSIS-RUNTIME-HARDENING-V1
 Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
-Last substantive checkpoint SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+Last validated implementation SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
+Last substantive checkpoint SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
+PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,10 +30,7 @@ publication, AI, or self-development authority.
 
 ## Current Milestone
 
-Milestone ID: M9
-Milestone status: IN_PROGRESS
-What is being attempted: bounded regression hunting, final clean-checkout
-qualification, privacy/diff reconciliation and durable closure.
+COMPLETE — M9 terminal validation and synchronized Git closure.
 
 ## Completed Milestones
 
@@ -106,22 +103,22 @@ qualification, privacy/diff reconciliation and durable closure.
   `clean-receipt:sha256:7413e2f9b981ab6918d65b56`, gate receipt
   `receipt:sha256:5446abd4166fa41f1ab89927`, clean before/after, no module
   reuse, no auth or owner-finding state and zero sibling writes.
+- M9 — regression, final gate and closure complete at `7b95cd4`: the loader
+  suite passed 6/6 with the LRU and module-list-bound guards; the final local
+  gate passed all 9/9 groups with receipt
+  `receipt:sha256:a8b426932b8c141801c0ff40`; the final Node20 clean gate passed
+  with receipt `clean-receipt:sha256:9483e8260a8e7ca718341e26`; all OpenSpec
+  tasks are checked; and the implementation checkpoint was pushed with
+  local/remote equality.
 
 ## Work In Progress
 
-M9 closure. M8 retained the rejected parser decision and completed local plus
-Node20 clean acceptance. The bounded loader regression now covers both the
-256-entry LRU eviction boundary and the 128-module-list input bound. The next
-bounded work unit is to record the final diff/privacy review, close all task
-records, and qualify the final source-bearing checkpoint.
+None — the source/runtime hardening campaign, acceptance gates and native
+continuity closure are complete.
 
 ## Exact Next Action
 
-Run the final focused checks and clean Node20 gate after the bounded loader
-input-bound regression checkpoint; then complete the OpenSpec/native task
-records, commit and push normally, verify `HEAD == origin/main`, and observe
-the final exact-head Actions result once. Do not reopen the rejected parser
-candidate unless new evidence changes the parity decision.
+STOP — campaign complete.
 
 ## Files Changed
 
@@ -289,6 +286,11 @@ remain outside Git/under `/tmp` only.
   implementation head `5b4f8db` was run `32984921837`, job `98229480580`,
   completed failure with zero steps; it is classified
   `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not as code validation.
+- Final M9 local gate: `npm run gate:local` at `7b95cd4` passed all 9/9
+  required groups with receipt `receipt:sha256:a8b426932b8c141801c0ff40`.
+  The disposable Node20 clean gate at the same head passed all 9/9 groups
+  with receipt `clean-receipt:sha256:9483e8260a8e7ca718341e26` and embedded
+  gate receipt `receipt:sha256:1e8ac0b2c03f2f35b3eb762d`.
 
 ## Decisions Made During This Task
 
@@ -393,13 +395,13 @@ created here.
 
 ## Resume Recipe
 
-Read `AGENTS.md`, `.agent/EXECUTION_PROMPT.md`, this task's `SPEC.md`,
-`PLAN.md`, and `STATE.md`; inspect `git status`/diff; continue the Exact Next
-Action from the first incomplete OpenSpec task. Update this state after each
-milestone, design decision, significant validation, and before any context
-boundary.
+Historical task complete. Do not resume this task. A future campaign requires
+a separate authorization, fresh current-source evidence and a new continuity
+task.
 
 ## Completion Snapshot
 
-Not complete. M6–M9 hardening, acceptance,
-reconciliation, exact-head CI observation and final closure remain.
+COMPLETE — M0–M9 are closed; local/source/synthetic validation, disposable
+Node20 qualification, canonical/isolated parity, continuity-v2 closure and
+Git synchronization are complete. External CI is separately classified as a
+zero-step billing/platform block, not green evidence.

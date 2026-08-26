@@ -2,14 +2,15 @@
 
 Task ID: nightwatch-source-analysis-runtime-hardening-v1
 Phase: SOURCE-ANALYSIS-RUNTIME-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-This is the live handoff for the authorized OpenSpec campaign. It is not a
-completion claim. The final report will replace this opening with the required
-audit manifest, bottleneck evidence, implementation decisions, parity/digest
-proof, adversarial results, validation ledger, performance/RSS measurements,
-rejected candidates, Git/Actions truth, safety vector, and residual risks.
+This is the terminal report for the authorized local/source/synthetic OpenSpec
+campaign. The implementation consolidates the duplicated TypeScript runtime
+loader, adds bounded exact-snapshot source-read reuse, preserves all source and
+proof authorities, and closes with full local and Node20 clean qualification.
+External Actions remains separately classified and is not used as green
+evidence.
 
 ## Campaign routing
 
@@ -32,11 +33,10 @@ activation.
 
 ## Current status
 
-M0 bootstrap and M1 exhaustive audit are complete. M2 differential parity
-harness construction, M3 loader centralization, M4 call-scoped exact-read
-reuse, M5 parser/token decision and M6 adversarial hardening are complete.
-The validated M8 checkpoint is `5b4f8dbec70b3912b471bfaa5edaf23781c66651`;
-M9 closure is in progress.
+M0–M9 are complete. The validated implementation checkpoint is
+`7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c`; the final local gate and
+disposable Node20 gate both pass at that head; and all 53 OpenSpec tasks are
+checked.
 
 ## M8 acceptance and regression checkpoint
 
@@ -54,9 +54,9 @@ now includes `bin/lib/typescript-runtime-loader.mjs`; the isolated portfolio
 suite passed 30/30, adoption CLI passed 7/7, and the final full compatibility
 receipt passed without changing any authority or privacy boundary.
 
-The disposable Node20 clean-checkout gate is intentionally carried into M9;
-the current eviction-test and continuity checkpoint must be committed before
-that clean gate can qualify the exact source head.
+The final disposable Node20 clean-checkout gate passed at `7b95cd4` with
+receipt `clean-receipt:sha256:9483e8260a8e7ca718341e26` and embedded gate
+receipt `receipt:sha256:1e8ac0b2c03f2f35b3eb762d`.
 
 Performance reruns retained the approved source snapshot and normalized safe
 digests. Representative current wall-time ranges were source-scan 5.34–7.13s
@@ -251,3 +251,211 @@ sanitized and remain outside Git under `/tmp`.
 No product environment, authentication material, owner-only findings, data
 store, cloud/infrastructure system, Alphaus sibling write, external
 publication, runtime model, or self-development promotion path has been used.
+
+## Executive summary
+
+The campaign completed the authorized mechanics-only optimization. Twenty
+equivalent bin-local TypeScript hooks now delegate to one bounded,
+content-addressed process-local loader. Discovery now reuses verified exact
+source text only inside one call-scoped snapshot view. The full source/Phase24/
+review differential harness retained safe-output, evidence-digest, contract,
+ordering, currentness, eligibility and fail-closed identity. A deeper shared
+parser cache was measured and explicitly rejected because its identity would
+cross independent analyzer authorities.
+
+The final implementation checkpoint is `7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c`.
+The final local gate and the disposable Node20 clean gate pass at that source
+head. The task is closed under continuity protocol v2; no product, data,
+infrastructure, authentication, publication, runtime AI or self-development
+authority was used.
+
+## Exhaustive audit and bottleneck evidence
+
+The M1 audit read and hashed every 1,303 tracked path. The sorted tracked
+manifest digest is
+`e9269825ec1d63d7ca329b3bb674faaba0c7989fa1a483631ead3b4a442e422b`; the
+per-file hash ledger digest is
+`4a54cc1531c86ff5b4cadd450827c65c6522f87016db78476ddb341d7195e032`; total
+tracked content is 14,211,727 bytes and 284,308 lines. Sanitized classes are
+agent/tooling/planning 435, executable source 405, tests 228, fixture/corpus
+112, bin/CLI 49, durable docs 30, config/workflow 25, UI 14, scenario 1,
+artifact scaffold 1 and other 3.
+
+The loader census found 20 `.ts` require hooks under `bin/`, all with the same
+ES2022/CommonJS/Node10, `esModuleInterop` and `skipLibCheck` profile and
+finally-based restoration. `bin/portfolio.mjs` has a distinct compiler
+fingerprint path and was intentionally retained. The source-read audit covered
+scan inventory, response-flow indexing, handler joins, per-operation analysis,
+response declarations, readonly census, semantic expectation paths and the
+confined sibling reader. The production discovery caller is the local source
+preview in `bin/nightwatch-intelligence.mjs`; Control Center and synthetic
+tests are the other integration consumers.
+
+The approved synthetic/source snapshot contains six CURRENT repositories:
+1,732 files considered, 1,092 read, 1,078 admitted, 654 rejected and
+12,449,877 bytes, with 440 directories and two budget rejections. Its safe
+identities are `srcsnapshot:sha256:04ff583971865f335902f5ad` and
+`srcconfig:sha256:e8bdfc8f0e58d7d93a87215`.
+
+## Implementation decisions
+
+`bin/lib/typescript-runtime-loader.mjs` is the sole equivalent runtime loader,
+with a declaration file at `bin/lib/typescript-runtime-loader.d.mts`. Its
+process-local LRU retains compiler output only, is bounded at 256 entries and
+uses a key containing loader version, TypeScript version, profile name,
+compiler options, absolute filename and the exact source-byte digest. It
+supports the audited default profile plus an explicit ES2020 profile for
+identity coverage, restores nested and pre-existing hooks in `finally`, and
+remembers a derivative only after module compilation/execution succeeds. The
+module-list input is bounded at 128 entries; no disk cache was justified.
+
+`src/core/source/callScopedRead.ts` creates an ephemeral view only after the
+source inventory establishes repository, SHA, path, content digest and status.
+The first downstream read is checked against the inventory digest before being
+retained. Rejected, unavailable, ambiguous, oversized, stale or digest-
+mismatched records use the existing reader/fail-closed path and are never
+cache authority. `src/core/source/surfaces.ts` supplies this view to the
+response-flow, route, join and observation consumers without serializing it.
+
+The compatibility sweep found a real hidden coupling: the new shared loader
+was missing from the synthetic self-development authoritative source bundle.
+`src/core/selfDev/provenanceManifest.ts` now includes it. Assertions were kept
+strict; the isolated portfolio suite passed 30/30, adoption CLI passed 7/7,
+and the complete compatibility manifest passed afterward.
+
+## Parity, digest and adversarial proof
+
+The differential harness in `tests/helpers/sourceParity.ts` compares the full
+safe source-discovery, Phase24 and review surface, including inventory and
+ordering, proof states, analyzer statuses/versions/reasons/evidence digests,
+response-flow identities, response and semantic contract IDs, census and gap
+digests, eligibility/reason rows and review projections. Advisory elapsed
+timings are excluded because the existing contract marks them non-authoritative;
+no source text or runtime value is projected. The final parity suite passed
+2/2, repeated discovery was byte-stable, same-file symbols remained isolated,
+and the raw synthetic marker was absent.
+
+The deterministic CLI byte checks ran `contracts`, `differential` and
+`mutation-score` twice each with status 0, empty stderr and identical JSON
+stdout. Normalized safe-output digests matched the optimized baseline:
+
+| projection | normalized digest |
+| --- | --- |
+| source-scan | `c07b2079bf0b22281b01561501c38b0160521eca64b8cfaef1184ac9f7a6b920` |
+| source-gaps | `ffd3c1be9a3f43618ca4f5215cda8e57d4b42fd61c2ceaaa2a3aeb81e461f8ca` |
+| eligibility-census | `604827c2addbe706cea6f7e4189d55bb6e0ed70cbdaeed189bbf24fb8e320219` |
+| readonly-census | `d5b8513095487357ddbb2e92c233d0967030a744532dfb7b4758882d5d6df842` |
+| surfaces | `c00b70c4ec96a49e629a5d94ca6e64a11276d0466d60f1aa69fbe6149c0502b0` |
+
+The affected source cone passed 45/45. The call-scoped source-read suite
+passed 6/6, including same-path cross-repository and cross-SHA separation,
+same-mtime content mutation, rejected/unavailable fallback, a 512-entry read
+bound, throwing-reader non-retention and mutation-during-discovery proof
+nonmanufacture. The loader suite passed 6/6, including exact-content and
+mtime-only controls, profile separation, nested/throwing hook restoration,
+256-entry LRU eviction and the over-limit module-list rejection. Existing
+source-boundary, response-flow, analyzer, readonly and eligibility tests cover
+malformed, oversized, privacy-sentinel, stale, ambiguous, unsupported,
+symbol-not-found, multiple-symbol and Phase24 exclusion behavior.
+
+## Performance evidence
+
+All measurements used the same local `node bin/nightwatch-intelligence.mjs`
+source-census commands, empty application stderr and status 0. Timing is
+reported as an observed fresh-run range rather than a promise about host
+capacity; one eligibility RSS result was an explicit host-variance outlier.
+
+| command | baseline wall / peak RSS | optimized fresh wall range / peak RSS |
+| --- | ---: | ---: |
+| source-scan | 12.89s / 265,104 KB | 5.34–7.13s / 266,748–270,172 KB |
+| source-gaps | 10.97s / 261,424 KB | 4.73–6.10s / 263,776–267,100 KB |
+| eligibility-census | 10.28s / 263,088 KB | 4.93–7.23s / normal ~267 MB; one 316,864 KB outlier |
+| readonly-census | 11.46s / 262,220 KB | 4.95–6.01s / 265,500–267,420 KB |
+| surfaces | 10.88s / 301,564 KB | 4.84–5.70s / 268,796–270,156 KB |
+
+The raw byte-bearing census outputs vary only in advisory performance fields;
+the normalized structural/safe identities above remain equal. Tokenizer
+metrics remained 94 PHP files, 766 declarations, 32,027 maximum tokens and
+242,093 maximum source bytes. The V8 profile recorded 284 of 4,409 ticks in
+`tokenizePhp` (6.4%), insufficient evidence for a cross-authority parser cache.
+
+## Compatibility and validation ledger
+
+- `npm run typecheck`: PASS.
+- `npm run hardening:check`: PASS; offline structural invariants hold.
+- `npm run project:check`: PASS; canonical catalog round trip, phase-8
+  authority and active-task continuity pass.
+- `npm run agent:check`: PASS with zero strict errors; the final complete task
+  state has no unresolved continuity errors. Historical v1 task warnings are
+  retained by policy.
+- `npm run agent:audit`: PASS with zero strict errors; 55 strict v2 tasks and
+  24 historical v1 tasks were inventoried.
+- `npm run test:semantic-compat`: PASS, 1,884 total / 1,871 passed / 13
+  canonical skips / 0 failed, across phases 9–26 and 141 manifest files.
+- `npm run campaign:synthetic`: PASS, 66/66.
+- `npm run test:owner-provenance`: PASS, 91/91.
+- Affected operator/Control Center unit sweep: PASS, 71/71. Control Center UI
+  typecheck PASS, Vitest PASS 11/11, build verification PASS and synthetic
+  seven-view browser path PASS 1/1 with no external requests or page errors.
+- Final `npm run gate:local` at `7b95cd4`: PASS, all 9/9 required groups,
+  receipt `receipt:sha256:a8b426932b8c141801c0ff40`.
+- Final `npm run gate:clean` at `7b95cd4`: PASS under Node 20, install and all
+  9/9 groups PASS, clean before/after, no node_modules reuse, no auth or
+  owner-finding state and sibling writes 0; clean receipt
+  `clean-receipt:sha256:9483e8260a8e7ca718341e26`, embedded gate receipt
+  `receipt:sha256:1e8ac0b2c03f2f35b3eb762d`.
+- `git diff --check`: PASS on every checkpoint; final changed paths contain
+  no raw sibling source, secret, owner-only finding or private runtime
+  artifact.
+
+## Regressions fixed, rejected candidates and residual risks
+
+The only reproduced compatibility regression was the missing shared-loader
+entry in the synthetic self-development source bundle. It was repaired in
+`5b4f8db`, then verified by the isolated portfolio, adoption CLI and complete
+semantic suites. A strict TypeScript test guard was also added after the first
+eviction-test run exposed an unchecked array element; the corrected loader
+suite is 6/6.
+
+Shared parser/token state was rejected at M5: the measured tokenizer share was
+6.4%, but safe reuse would cross independent Phase 14, Phase 20 and Phase 26
+analyzer inputs, symbol/hint semantics and evidence construction without a
+complete identity proof. The distinct `bin/portfolio.mjs` compiler path,
+large cohesive authority modules and intentionally isolated Playwright
+configurations were reviewed and retained. No disk source or derivative cache,
+new proof family, eligibility authority, or feature-phase scope was added.
+
+Remaining risks are limited to ordinary host timing/RSS variance, the
+call-scoped view’s intentional exact-snapshot lifetime, and external Actions
+availability. These do not change safe-output authority or local verdicts.
+
+## Git and external CI truth
+
+The campaign started from pulled head `bebe357313b7210161c5524e90c442137a605aab`.
+Validated implementation checkpoints were `dc368eb` for the loader/read
+implementation, `e1f2b54` for adversarial hardening, `5b4f8db` for the
+self-development bundle repair, `76c06cb` for the LRU-bound clean gate and
+`7b95cd4` for the terminal bounded-input tests and final gates. Normal
+fast-forward pushes were used; after the final implementation push,
+`HEAD == origin/main == 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c` and the
+worktree was clean.
+
+The observed Actions run for prior pushed head `5b4f8db` was run
+`32984921837`, sole job `98229480580`, completed failure with `steps: []`.
+It is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not code failure and
+not green CI evidence. The subsequent exact-head lookups for the newer pushed
+source checkpoints returned no matching workflow row at observation time;
+external CI is therefore not claimed green. Local and Node20 clean receipts
+remain the authoritative validation evidence.
+
+## Safety and closure statement
+
+All execution stayed in this Nightwatch repository, local synthetic fixtures,
+offline operator projections and disposable local checkouts. No DEV, NEXT or
+production environment was contacted; no authentication or customer data was
+used; no database, cloud, Kubernetes, IAM, datastore or infrastructure
+operation was performed; no sibling Alphaus repository was modified; no raw
+source or owner-only finding entered Git; no runtime AI or self-development
+promotion authority was invoked. Native continuity v2, OpenSpec and Git
+records are reconciled, all 53 OpenSpec tasks are checked, and the task is
+terminal: do not resume without a fresh separately authorized campaign.
