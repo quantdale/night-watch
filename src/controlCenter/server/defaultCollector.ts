@@ -1,3 +1,4 @@
+import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { collectLocalReadinessInputFromRepo } from '../../core/readiness/repoState';
 import { summarizeLocalReadiness } from '../../core/readiness/localReadiness';
 import { projectMeta } from '../adapters/metaAdapter';
@@ -12,6 +13,7 @@ import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapsh
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
 import { createCampaignAuthority, type CampaignAuthority, type CampaignAuthoritySnapshot } from '../authorities/campaignAuthority';
 import { createFindingsAuthority, type FindingsAuthority, type FindingsAuthoritySnapshot } from '../authorities/findingsAuthority';
+import { CONTROL_CENTER_SNAPSHOT_KEYS, ControlCenterSnapshotCoordinator } from './snapshotCoordinator';
 import { CONTROL_CENTER_HEALTH_SCHEMA_VERSION } from '../contracts/health';
 import type { ControlCenterCollector, ControlCenterListQuery } from './collector';
 import type { ControlCenterHealthDto } from '../contracts/health';
@@ -160,6 +162,30 @@ function unavailableFindingsSnapshot(): FindingsAuthoritySnapshot {
   };
 }
 
+interface ControlCenterAuthoritySnapshot {
+  readonly source: SourceAuthoritySnapshot;
+  readonly campaign: CampaignAuthoritySnapshot;
+  readonly findings: FindingsAuthoritySnapshot;
+  readonly generation: string | null;
+}
+
+function authorityGeneration(snapshot: Pick<ControlCenterAuthoritySnapshot, 'source' | 'campaign' | 'findings'>): string | null {
+  const identities = {
+    source: snapshot.source.generation,
+    campaign: snapshot.campaign.generation,
+    findings: snapshot.findings.generation,
+  };
+  if (identities.source === null && identities.campaign === null && identities.findings === null) return null;
+  return prefixedDigest24('cc-authority-generation', identities);
+}
+
+function unavailableAuthoritySnapshot(): ControlCenterAuthoritySnapshot {
+  const source = unavailableSourceSnapshot();
+  const campaign = unavailableCampaignSnapshot();
+  const findings = unavailableFindingsSnapshot();
+  return { source, campaign, findings, generation: authorityGeneration({ source, campaign, findings }) };
+}
+
 function validFindingsMetadata(value: unknown): boolean {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   const dossier = value as Record<string, unknown>;
@@ -220,55 +246,59 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     : Number.isFinite(options.runSnapshotTtlMs) && options.runSnapshotTtlMs >= 0 && options.runSnapshotTtlMs <= 10_000
       ? options.runSnapshotTtlMs
       : 250;
-  let cachedRunSnapshot: { readonly capturedAt: number; readonly snapshot: RunEvidenceSnapshot } | null = null;
-  const readRunSnapshot = (): RunEvidenceSnapshot => {
-    const capturedAt = now();
-    if (cachedRunSnapshot !== null && capturedAt - cachedRunSnapshot.capturedAt <= ttlMs) return cachedRunSnapshot.snapshot;
-    let snapshot: RunEvidenceSnapshot;
-    try {
-      const candidate = runReader.snapshot();
-      snapshot = validSnapshot(candidate) ? candidate : unavailableRunSnapshot();
-    } catch {
-      snapshot = unavailableRunSnapshot();
-    }
-    cachedRunSnapshot = { capturedAt, snapshot };
-    return snapshot;
-  };
-
   const sourceTtlMs = options.sourceSnapshotTtlMs === undefined
     ? 250
     : Number.isFinite(options.sourceSnapshotTtlMs) && options.sourceSnapshotTtlMs >= 0 && options.sourceSnapshotTtlMs <= 10_000
       ? options.sourceSnapshotTtlMs
       : 250;
-  let cachedAuthoritySnapshot: { readonly capturedAt: number; readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot; readonly findings: FindingsAuthoritySnapshot } | null = null;
-  const readAuthoritySnapshot = (): { readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot; readonly findings: FindingsAuthoritySnapshot } => {
-    const capturedAt = now();
-    if (cachedAuthoritySnapshot !== null && capturedAt - cachedAuthoritySnapshot.capturedAt <= sourceTtlMs) {
-      return cachedAuthoritySnapshot;
-    }
-    let source: SourceAuthoritySnapshot;
-    try {
-      const candidate = sourceAuthority.snapshot();
-      source = validSourceSnapshot(candidate) ? candidate : unavailableSourceSnapshot();
-    } catch {
-      source = unavailableSourceSnapshot();
-    }
-    let campaign: CampaignAuthoritySnapshot;
-    try {
-      const candidate = campaignAuthority.snapshot(source);
-      campaign = validCampaignSnapshot(candidate) ? candidate : unavailableCampaignSnapshot();
-    } catch {
-      campaign = unavailableCampaignSnapshot();
-    }
-    let findings: FindingsAuthoritySnapshot;
-    try {
-      const candidate = findingsAuthority.snapshot();
-      findings = validFindingsSnapshot(candidate) ? candidate : unavailableFindingsSnapshot();
-    } catch {
-      findings = unavailableFindingsSnapshot();
-    }
-    cachedAuthoritySnapshot = { capturedAt, source, campaign, findings };
-    return cachedAuthoritySnapshot;
+  const snapshots = new ControlCenterSnapshotCoordinator({ maxEntries: 2, now });
+  const readRunSnapshot = async (): Promise<RunEvidenceSnapshot> => {
+    const result = await snapshots.read<RunEvidenceSnapshot>({
+      key: CONTROL_CENTER_SNAPSHOT_KEYS.RUN_EVIDENCE,
+      ttlMs,
+      refresh: () => {
+        const candidate = runReader.snapshot();
+        if (!validSnapshot(candidate)) throw new Error('CONTROL_CENTER_RUN_SNAPSHOT_INVALID');
+        return candidate;
+      },
+      fallback: unavailableRunSnapshot,
+      generation: (snapshot) => snapshot.generation,
+    });
+    return result.value;
+  };
+
+  const readAuthoritySnapshot = async (): Promise<ControlCenterAuthoritySnapshot> => {
+    const result = await snapshots.read<ControlCenterAuthoritySnapshot>({
+      key: CONTROL_CENTER_SNAPSHOT_KEYS.AUTHORITY,
+      ttlMs: sourceTtlMs,
+      refresh: () => {
+        let source: SourceAuthoritySnapshot;
+        try {
+          const candidate = sourceAuthority.snapshot();
+          source = validSourceSnapshot(candidate) ? candidate : unavailableSourceSnapshot();
+        } catch {
+          source = unavailableSourceSnapshot();
+        }
+        let campaign: CampaignAuthoritySnapshot;
+        try {
+          const candidate = campaignAuthority.snapshot(source);
+          campaign = validCampaignSnapshot(candidate) ? candidate : unavailableCampaignSnapshot();
+        } catch {
+          campaign = unavailableCampaignSnapshot();
+        }
+        let findings: FindingsAuthoritySnapshot;
+        try {
+          const candidate = findingsAuthority.snapshot();
+          findings = validFindingsSnapshot(candidate) ? candidate : unavailableFindingsSnapshot();
+        } catch {
+          findings = unavailableFindingsSnapshot();
+        }
+        return { source, campaign, findings, generation: authorityGeneration({ source, campaign, findings }) };
+      },
+      fallback: unavailableAuthoritySnapshot,
+      generation: (snapshot) => snapshot.generation,
+    });
+    return result.value;
   };
 
   return {
@@ -276,52 +306,52 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     meta: () => projectMeta(),
     readiness: () => projectReadiness(summarizeLocalReadiness(collectLocalReadinessInputFromRepo())),
     safety: () => projectSafety(DEFAULT_CONTROL_CENTER_SAFETY_INPUT),
-    runs: (query) => {
-      const snapshot = readRunSnapshot();
+    runs: async (query) => {
+      const snapshot = await readRunSnapshot();
       return projectRunList(snapshot.records, query.limit, { state: snapshot.state, reasonCodes: snapshot.reasonCodes });
     },
-    run: (runId): ControlCenterRunDetailDto | null => {
-      const record = readRunSnapshot().records.find((candidate) => candidate.summary.runId === runId);
+    run: async (runId): Promise<ControlCenterRunDetailDto | null> => {
+      const record = (await readRunSnapshot()).records.find((candidate) => candidate.summary.runId === runId);
       return record === undefined ? null : projectRunDetail(record);
     },
-    timeline: (runId, afterSeq, limit): ControlCenterTimelineDto | null => {
-      const record = readRunSnapshot().records.find((candidate) => candidate.summary.runId === runId);
+    timeline: async (runId, afterSeq, limit): Promise<ControlCenterTimelineDto | null> => {
+      const record = (await readRunSnapshot()).records.find((candidate) => candidate.summary.runId === runId);
       return record === undefined ? null : projectTimeline(record, afterSeq, limit);
     },
-    executionGraph: (runId): ControlCenterExecutionGraphDto | null => {
-      const record = readRunSnapshot().records.find((candidate) => candidate.summary.runId === runId);
+    executionGraph: async (runId): Promise<ControlCenterExecutionGraphDto | null> => {
+      const record = (await readRunSnapshot()).records.find((candidate) => candidate.summary.runId === runId);
       return record === undefined ? null : projectExecutionGraph({
         runId: record.summary.runId,
         status: classifyRunStatus(record.summary),
         events: record.events ?? [],
       });
     },
-    campaignSummary: () => {
-      const { campaign } = readAuthoritySnapshot();
+    campaignSummary: async () => {
+      const { campaign } = await readAuthoritySnapshot();
       return campaign.plan !== null && campaign.coverage !== null && campaign.state === 'AVAILABLE'
         ? projectCampaignSummary({ plan: campaign.plan, coverage: campaign.coverage, findingCount: campaign.findingCount, blockerCodes: campaign.blockerCodes, sourceCurrentnessByMemberId: campaign.sourceCurrentnessByMemberId })
         : campaignFallback(campaign);
     },
-    campaignCoverage: (query) => {
-      const { campaign } = readAuthoritySnapshot();
+    campaignCoverage: async (query) => {
+      const { campaign } = await readAuthoritySnapshot();
       return campaign.plan !== null && campaign.coverage !== null && campaign.state === 'AVAILABLE'
         ? projectCampaignCoverage({ plan: campaign.plan, coverage: campaign.coverage, findingCount: campaign.findingCount, blockerCodes: campaign.blockerCodes, sourceCurrentnessByMemberId: campaign.sourceCurrentnessByMemberId }, query.limit)
         : unavailableCampaignCoverage(query);
     },
-    sourceSummary: () => {
-      const { source } = readAuthoritySnapshot();
+    sourceSummary: async () => {
+      const { source } = await readAuthoritySnapshot();
       return projectSourceSummary(source.discovery?.surfaces ?? [], sourceSummaryAuthority(source));
     },
-    sourceSurfaces: (query) => {
-      const { source } = readAuthoritySnapshot();
+    sourceSurfaces: async (query) => {
+      const { source } = await readAuthoritySnapshot();
       return projectSourceSurfaces(source.discovery?.surfaces ?? [], query.repositoryId === null ? undefined : query.repositoryId, query.limit);
     },
-    sourceGraph: (surfaceId, depth): ControlCenterSourceGraphDto | null => {
-      const { source } = readAuthoritySnapshot();
+    sourceGraph: async (surfaceId, depth): Promise<ControlCenterSourceGraphDto | null> => {
+      const { source } = await readAuthoritySnapshot();
       return projectSourceGraph(source.discovery?.surfaces ?? [], surfaceId, depth);
     },
-    findings: (query) => {
-      const { findings } = readAuthoritySnapshot();
+    findings: async (query) => {
+      const { findings } = await readAuthoritySnapshot();
       return projectFindings({
         dossiers: findings.dossiers,
         state: findings.state,

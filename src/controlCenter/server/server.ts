@@ -314,10 +314,12 @@ export function createControlCenterServer(options: ControlCenterServerOptions): 
   server.keepAliveTimeout = 1_000;
   server.on('clientError', (_error, socket) => socket.destroy());
   let started = false;
+  let closed = false;
   return {
     server,
     events,
     start: () => new Promise<AddressInfo>((resolve, reject) => {
+      if (closed) return reject(new ControlCenterServerConfigurationError());
       if (started) {
         const address = server.address();
         if (typeof address === 'object' && address !== null) return resolve(address);
@@ -339,6 +341,8 @@ export function createControlCenterServer(options: ControlCenterServerOptions): 
       server.listen(port, host);
     }),
     close: () => new Promise<void>((resolve) => {
+      if (closed && !started) return resolve();
+      closed = true;
       events.close();
       if (!started) return resolve();
       server.close(() => {

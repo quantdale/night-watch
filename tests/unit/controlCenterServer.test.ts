@@ -288,4 +288,57 @@ test.describe('Control Center loopback server', () => {
       await handle.close();
     }
   });
+
+  test('SSE drops unsafe/replayed notifications and shutdown is terminal', async () => {
+    const { handle, port } = await startServer();
+    const received = new Promise<string>((resolve, reject) => {
+      const req = http.get({ host: '127.0.0.1', port, path: '/api/v1/events' }, (response) => {
+        let text = '';
+        response.on('data', (chunk: Buffer) => {
+          text += chunk.toString('utf8');
+          if (text.includes('"sequence":2')) {
+            req.destroy();
+            resolve(text);
+          }
+        });
+        response.on('error', reject);
+      });
+      req.on('error', (error) => {
+        if ((error as NodeJS.ErrnoException).code !== 'ECONNRESET') reject(error);
+      });
+    });
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      handle.publish({
+        schemaVersion: 'nightwatch.control-center.event.v1',
+        type: 'run.updated',
+        entityId: '../secret',
+        sequence: 1,
+        snapshotDigest: null,
+        raw: 'SENTINEL_RAW_EVENT',
+      } as unknown as ControlCenterEventDto);
+      handle.publish({
+        schemaVersion: 'nightwatch.control-center.event.v1',
+        type: 'run.updated',
+        entityId: null,
+        sequence: 1,
+        snapshotDigest: null,
+      });
+      handle.publish({
+        schemaVersion: 'nightwatch.control-center.event.v1',
+        type: 'findings.snapshot.changed',
+        entityId: null,
+        sequence: 2,
+        snapshotDigest: `findings:sha256:${'f'.repeat(24)}`,
+      } as unknown as ControlCenterEventDto);
+      const text = await received;
+      expect(text).toContain('"sequence":2');
+      expect(text).not.toContain('SENTINEL_RAW_EVENT');
+      expect(text).not.toContain('../secret');
+      await expect.poll(() => handle.events.clientCount).toBe(0);
+    } finally {
+      await handle.close();
+    }
+    await expect(handle.start()).rejects.toThrow('CONTROL_CENTER_BAD_REQUEST');
+  });
 });

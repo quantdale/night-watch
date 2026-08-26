@@ -264,6 +264,37 @@ SSE subscriber lifecycle, and shutdown seams; record the lifecycle contract
 before implementing the bounded generation coordinator and synthetic
 refresh/concurrency tests.
 
+#### M5 lifecycle contract
+
+`ControlCenterSnapshotCoordinator` owns two fixed cache keys—`run-evidence`
+and `authority`—with a maximum of two entries and a maximum configured TTL of
+10 seconds. It stores only validated run/authority domain snapshots. Each
+entry carries a digest-only cache identity over the fixed key, generation,
+and freshness class; the authority generation composes source, campaign, and
+findings generations, so campaign output cannot be served independently of
+its source generation. Same-key refreshes share one in-flight promise.
+
+Refreshes are bounded on the caller's synchronous/in-process authority
+boundary. A successful refresh replaces the entry and records its generation;
+a thrown refresh stores and serves only the supplied explicit fallback as
+`FAILED`, retaining the last-known-good generation as diagnostic metadata
+without serving the old value as CURRENT. Failed entries remain bounded by
+the same TTL and retry after expiry. Shutdown is terminal, clears cached
+entries, prevents new refreshes, and lets an already-running bounded read
+finish without retaining it.
+
+SSE remains notification-only: the event sanitizer reconstructs a fixed
+allowlist DTO, strips all extra/raw fields, rejects unsafe identities/digests
+and unknown types, and the hub drops replayed or out-of-order sequence
+numbers. Client count is bounded (default 8, hard maximum 64), disconnects
+remove subscribers, close ends every response, and a closed hub accepts no
+new subscribers. GET snapshots remain the only state authority; there is no
+watcher, background poller, network refresh, or event payload authority.
+
+Validation target: coordinator coalescing, failed-refresh fallback and
+last-known-good behavior, cache/shutdown bounds, event sanitization, SSE
+replay/privacy rejection, and existing server/authority determinism tests.
+
 ### M6 — UI truthfulness and built non-empty browser qualification
 
 Status: PENDING.

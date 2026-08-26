@@ -17,6 +17,7 @@ import {
   sanitizeFindingSummary,
   sanitizeRunListItem,
   sanitizeTimelineEvent,
+  sanitizeControlCenterEvent,
 } from '../../src/controlCenter/contracts';
 import {
   CONTROL_CENTER_CAMPAIGN_COVERAGE_SCHEMA_VERSION,
@@ -108,6 +109,28 @@ test.describe('Control Center versioned contracts', () => {
     expect(Object.keys(error).sort()).toEqual(['code', 'retryable', 'schemaVersion']);
     expect(JSON.stringify(error)).not.toContain('stack');
     expect(JSON.stringify(error)).not.toContain('sentinel');
+  });
+
+  test('event sanitizer keeps SSE notification frames categorical and payload-free', () => {
+    const sanitized = sanitizeControlCenterEvent({
+      schemaVersion: 'attacker-version',
+      type: 'findings.snapshot.changed',
+      entityId: 'finding-01',
+      sequence: 4,
+      snapshotDigest: `findings:sha256:${'a'.repeat(24)}`,
+      rawEvidence: 'SENTINEL_RAW_EVENT',
+      sourcePath: '/tmp/SENTINEL_PATH',
+    });
+    expect(sanitized).toEqual({
+      schemaVersion: CONTROL_CENTER_EVENT_SCHEMA_VERSION,
+      type: 'findings.snapshot.changed',
+      entityId: 'finding-01',
+      sequence: 4,
+      snapshotDigest: `findings:sha256:${'a'.repeat(24)}`,
+    });
+    expect(JSON.stringify(sanitized)).not.toContain('SENTINEL');
+    expect(sanitizeControlCenterEvent({ type: 'unknown', sequence: 5 })).toBeNull();
+    expect(sanitizeControlCenterEvent({ type: 'run.updated', sequence: 5, entityId: '../secret' })).toBeNull();
   });
 
   test('run sanitizer maps an explicit allowlist and drops hostile private fields', () => {
