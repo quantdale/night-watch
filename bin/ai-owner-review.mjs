@@ -6,38 +6,15 @@
  * prompts, and safe output only. The loaded TypeScript module is the
  * provider-free owner-review service; it never loads the AI execution path.
  */
-import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function loadTypeScriptModule(file) {
-  const require = createRequire(import.meta.url);
-  const typescript = require('typescript');
-  const previous = require.extensions['.ts'];
-  require.extensions['.ts'] = (module, filename) => {
-    const source = fs.readFileSync(filename, 'utf8');
-    const output = typescript.transpileModule(source, {
-      fileName: filename,
-      compilerOptions: {
-        target: typescript.ScriptTarget.ES2022,
-        module: typescript.ModuleKind.CommonJS,
-        moduleResolution: typescript.ModuleResolutionKind.Node10,
-        esModuleInterop: true,
-        skipLibCheck: true,
-      },
-    }).outputText;
-    module._compile(output, filename);
-  };
-  try {
-    return require(file);
-  } finally {
-    if (previous === undefined) delete require.extensions['.ts'];
-    else require.extensions['.ts'] = previous;
-  }
+  return loadRuntimeTypeScriptModule(file, { root });
 }
 
 function usage() {
