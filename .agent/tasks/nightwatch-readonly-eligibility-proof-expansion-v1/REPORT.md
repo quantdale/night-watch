@@ -19,7 +19,10 @@ execution, second selector, or owner-policy change was introduced.
 - Starting SHA: `061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b`
 - Validated implementation SHA:
   `1525951a0d65ed1a59b8678c03a886f433600d09`
-- Final documentation/continuity checkpoint: `DISCOVER_FROM_GIT`
+- Final documentation checkpoint:
+  `5140617d6f15bd040b30ec09c59ea7e0fa96f558`
+- Final continuity synchronization commit: `DISCOVER_FROM_GIT` under
+  `LIVE_HEAD_AUTHORITY: GIT`
 - Final pushed HEAD: `DISCOVER_FROM_GIT` under `LIVE_HEAD_AUTHORITY: GIT`
 - Final local `HEAD == origin/main`: verified after terminal push
 - External GitHub Actions: `NOT_RUN`; no CI-green claim is made
