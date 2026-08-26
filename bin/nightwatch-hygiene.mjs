@@ -173,7 +173,11 @@ function generatedOutputState(root) {
 }
 
 function ignoredOutputState(root) {
-  const result = runGit(root, ['status', '--porcelain=v1', '--ignored', '--untracked-files=no']);
+  // Include bounded untracked/ignored directory entries so the report does
+  // not claim zero merely because the probe disabled untracked output. The
+  // existing Git maxBuffer remains the hard observation bound; overflow is
+  // reported as UNAVAILABLE rather than becoming a partial count.
+  const result = runGit(root, ['status', '--porcelain=v1', '--ignored=traditional', '--untracked-files=normal']);
   if (!result.ok) return { status: 'UNAVAILABLE', ignoredEntryCount: null };
   const ignoredEntryCount = result.stdout.split(/\r?\n/).filter((line) => line.startsWith('!!')).length;
   return { status: 'OBSERVED_ONLY', ignoredEntryCount };

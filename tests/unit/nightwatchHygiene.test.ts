@@ -87,6 +87,26 @@ test.describe('local workspace hygiene', () => {
     }
   });
 
+  test('status observes ignored generated output entries without mutating them', () => {
+    const root = createRepo();
+    try {
+      fs.writeFileSync(path.join(root, '.gitignore'), 'generated-output/\n');
+      git(root, ['add', '.gitignore']);
+      git(root, ['commit', '-m', 'synthetic ignore policy']);
+      const generated = path.join(root, 'generated-output');
+      fs.mkdirSync(generated);
+      fs.writeFileSync(path.join(generated, 'fixture.txt'), 'ignored synthetic output\n');
+
+      const result = runHygiene(root, ['status']);
+      expect(result.status).toBe(0);
+      expect(result.report.ignoredOutputs).toMatchObject({ status: 'OBSERVED_ONLY' });
+      expect(result.report.ignoredOutputs.ignoredEntryCount).toBeGreaterThan(0);
+      expect(fs.existsSync(path.join(generated, 'fixture.txt'))).toBe(true);
+    } finally {
+      cleanup(root);
+    }
+  });
+
   test('dirty, unreachable, and missing registrations remain preserved', () => {
     const root = createRepo();
     try {
