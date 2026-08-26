@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
-Last substantive checkpoint SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
+Last validated implementation SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+Last substantive checkpoint SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M3 — source and campaign authority integration at a517a3e.
+Last checkpoint: M4 — owner-local findings reader at 9d0018c.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M3 — source and campaign authority integration.
+M5 — snapshot lifecycle, cache/currentness, and advisory SSE.
 
 ## Completed Milestones
 
@@ -60,23 +60,31 @@ M3 — source and campaign authority integration.
   campaign projections remain metadata-only. `npm run typecheck`,
   `npm run hardening:check`, and the focused 34-test Control Center suite
   passed.
+- M4 — COMPLETE: the owner-local findings reader validates bounded private
+  v1/v2 dossier artifacts through the converged artifact facade, enforces
+  owner/mode/path/symlink/size/stable-read/privacy rules, ignores unrelated
+  private artifacts, and emits only metadata-only finding projections. The
+  default collector shares one findings snapshot with the adapter and keeps
+  partial, inaccessible, duplicate, privacy-blocked, and corrupt state
+  explicit. `npm run typecheck`, `npm run hardening:check`, the focused
+  13-test findings/adapter/authority suite, and the affected 37-test Control
+  Center suite passed.
 
 ## Work In Progress
 
-Map and implement the owner-local findings authority facade. Use the fixed
-private artifact root and existing dossier-kind/version validators, then bind
-only safe finding metadata to the Control Center. Preserve inaccessible,
-partial, corrupt, privacy-blocked, empty, and available states; never expose
-owner-only evidence or turn inaccessible storage into a successful EMPTY
-result.
+Map the existing collector/server snapshot and advisory SSE lifecycle. Define
+one bounded generation snapshot contract, cache and refresh behavior,
+concurrency/shutdown rules, and notification-only reconnect semantics. Keep
+failed refreshes explicit and prevent stale or mixed authority generations
+from being presented as a current coherent snapshot.
 
 ## Exact Next Action
 
-Inspect `src/core/policy/privateArtifacts.ts`, the dossier-kind/version
-validators, and the existing private artifact layout needed for one bounded
-findings snapshot. Record the selected findings bridge in PLAN, then
-implement a synthetic-testable `findingsAuthority.ts` without returning raw
-dossier evidence, arbitrary paths, or permission details.
+Inspect the current Control Center collector/server snapshot composition,
+SSE subscriber lifecycle, and shutdown/refresh seams. Record the M5 lifecycle
+contract in PLAN, then implement the smallest bounded generation coordinator
+and synthetic refresh/concurrency tests without adding HTTP mutation,
+network, child-process, or second-authority behavior.
 
 ## Files Changed
 
@@ -96,6 +104,9 @@ dossier evidence, arbitrary paths, or permission details.
 | `src/controlCenter/authorities/campaignAuthority.ts` | Phase 24-selected campaign metadata/coverage/plan bridge | implemented; synthetic integration passes |
 | `src/controlCenter/adapters/sourceAdapter.ts` | Source summary authority currentness/generation projection | implemented; existing adapter suite passes |
 | `tests/unit/controlCenterAuthorityIntegration.test.ts` | Synthetic source/campaign generation and privacy fixtures | added; 2/2 pass |
+| `src/controlCenter/authorities/findingsAuthority.ts` | Fixed owner-local dossier validation, bounded enumeration, and metadata-only snapshot bridge | implemented; synthetic findings tests pass |
+| `src/controlCenter/adapters/findingsAdapter.ts` | Consume v1/v2 metadata projections while preserving existing raw-fixture compatibility | implemented; focused suite passes |
+| `tests/unit/controlCenterFindingsAuthority.test.ts` | Synthetic v1/v2, envelope, corruption, privacy, permission, metadata, and cache fixtures | added; 3/3 pass |
 
 ## Validation Ledger
 
@@ -121,6 +132,11 @@ dossier evidence, arbitrary paths, or permission details.
   focused Control Center contracts/adapters/server/run-reader/source-campaign
   suite: 34 passed, 0 failed; staged diff privacy scan found no credential or
   bearer-key patterns; implementation checkpoint is a517a3e.
+- M4 acceptance ladder — PASS: `npm run typecheck`; `npm run hardening:check`;
+  focused findings/adapter/authority-integration suite: 13 passed, 0 failed;
+  affected Control Center suite: 37 passed, 0 failed; staged diff privacy
+  scan found no credential, bearer-key, or private-key patterns; implementation
+  checkpoint is 9d0018c.
 
 ## Decisions Made During This Task
 
@@ -151,6 +167,14 @@ dossier evidence, arbitrary paths, or permission details.
 - The source bridge retains internal discovery/Phase 24 structures only until
   the adapter boundary; the campaign planner materializes the already-selected
   Phase 24 set and cannot introduce a second selection authority.
+- The findings bridge treats `privateArtifactRoot()` and the dossier artifact
+  validator as the only owner-local authority. It validates raw v1 dossiers
+  and `{ dossier }` v2 envelopes but crosses into Control Center only through
+  a metadata projection; raw source candidates, replay arrays, confidence
+  explanations, and owner-local evidence are discarded before adapter use.
+- A valid dossier does not imply a valid public row: identity, digest, and
+  timestamp fields are screened again at the findings projection boundary;
+  malformed/partial private state stays UNKNOWN or UNAVAILABLE.
 
 ## Blockers
 
@@ -170,12 +194,12 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Trace the private artifact and dossier
-validators named in the next action, record the bridge, then implement and
-test the findings authority. Keep all reads bounded, owner-local, in-process,
-read-only, synthetic-testable, and privacy-projected.
+Read this STATE after SPEC and PLAN. Inspect the collector/server snapshot and
+SSE lifecycle named in the next action, record the M5 contract, then implement
+and test the bounded generation coordinator. Keep all reads and refreshes
+local, in-process, read-only, synthetic-testable, and notification-only.
 
 ## Completion Snapshot
 
-INCOMPLETE — M0 through M3 are complete; M4 owner-local findings authority
-integration is active.
+INCOMPLETE — M0 through M4 are complete; M5 snapshot lifecycle and advisory
+SSE hardening is active.

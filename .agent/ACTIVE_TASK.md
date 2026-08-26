@@ -6,15 +6,15 @@ Title: Control Center Authority Integration + Whole-Repository Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-authority-integration-v2
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
-Last checkpoint: M3 — source and campaign authority integration at a517a3e.
-Current milestone: M4 — owner-local findings reader.
-Next action: Inspect the private-artifact root and dossier validators, record the findings bridge in PLAN, then implement the bounded owner-local findings reader.
+Last validated implementation SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+Last checkpoint: M4 — owner-local findings reader at 9d0018c.
+Current milestone: M5 — snapshot lifecycle, cache/currentness, and advisory SSE.
+Next action: Inspect the current collector/server snapshot composition, SSE subscriber lifecycle, and shutdown/refresh seams; record the M5 lifecycle contract in PLAN, then implement the bounded generation coordinator and synthetic refresh/concurrency tests.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d0018cb94a16f0c806d506cfbab7c4b5344d5f0
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 

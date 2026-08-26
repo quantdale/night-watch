@@ -208,7 +208,7 @@ Control Center suite PASS, 34 passed and 0 failed.
 
 ### M4 — Owner-local findings reader
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Read only the fixed private findings authority through existing dossier/store
 validators. Enforce permissions, schema/version, symlink/path/size/privacy
@@ -233,14 +233,36 @@ metadata (screened labels, identities, timestamps, categorical triage
 fields, and bounded reproduction counts/results); the findings adapter
 preserves AVAILABLE, EMPTY, UNAVAILABLE, and UNKNOWN.
 
+Evidence: `findingsAuthority.ts` resolves the normal owner-local private
+artifact root, enforces owner-only mode and fixed JSON-file bounds, rejects
+symlinks/traversal/oversize/unstable files, ignores unrelated private
+artifacts, composes v1/v2 dossier validation through the artifact facade,
+and maps inaccessible, incomplete, corrupt, privacy-blocked, duplicate, and
+available states categorically. The reader emits only screened labels,
+identities, timestamps, categorical triage values, and bounded reproduction
+summary fields. The default collector shares that findings snapshot with the
+existing findings adapter and preserves UNKNOWN instead of treating partial
+state as EMPTY.
+
+Validation: `npm run typecheck` PASS; `npm run hardening:check` PASS; focused
+findings/adapter/authority-integration suite PASS, 13 passed and 0 failed;
+full affected Control Center suite PASS, 37 passed and 0 failed; staged
+privacy scan found no credential, bearer-key, or private-key patterns;
+implementation checkpoint is `9d0018c`.
+
 ### M5 — Snapshot lifecycle, cache/currentness, and advisory SSE
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Define bounded generation snapshots, cache keys, refresh/concurrency behavior,
 last-known-good handling, shutdown, and notification-only SSE. Prove failed
 refresh cannot bless stale data and identical current generations serialize
 byte-identically.
+
+Exact next action: inspect the current collector/server snapshot composition,
+SSE subscriber lifecycle, and shutdown seams; record the lifecycle contract
+before implementing the bounded generation coordinator and synthetic
+refresh/concurrency tests.
 
 ### M6 — UI truthfulness and built non-empty browser qualification
 
