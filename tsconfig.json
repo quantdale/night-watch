@@ -12,7 +12,9 @@
     "resolveJsonModule": true,
     "outDir": "dist",
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "incremental": true,
+    "tsBuildInfoFile": "node_modules/.cache/nightwatch-typecheck.tsbuildinfo"
   },
   "include": ["src", "tests", "scenarios", "config", "corpus", "playwright*.config.ts"]
 }
