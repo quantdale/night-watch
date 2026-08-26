@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
-Last substantive checkpoint SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
+Last validated implementation SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
+Last substantive checkpoint SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M6 — built non-empty browser qualification at c9df872.
+Last checkpoint: M7 — bounded hygiene reporting repair at 76f5de9.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
+LAST_VALIDATED_IMPLEMENTATION_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
@@ -132,6 +132,8 @@ or external publication operations.
 | `tests/browser/controlCenterBrowser.browser.ts` | Built-server synthetic authority qualification for all seven views, privacy, egress, and advisory selection stability | added; 1/1 pass |
 | `playwright.control-center.config.ts` | Explicit Playwright project for built-server browser qualification | added; browser gate passes |
 | `ui/control-center/index.html` | Local inline favicon prevents implicit browser 404 noise | implemented; build/browser gates pass |
+| `bin/nightwatch-hygiene.mjs` | Observe ignored generated-output entries within the existing bounded Git probe | implemented; hygiene regression passes |
+| `tests/unit/nightwatchHygiene.test.ts` | Synthetic ignored-output observation and no-mutation regression | added; 6/6 pass |
 
 ## Validation Ledger
 
@@ -174,6 +176,56 @@ or external publication operations.
   (1 passed, 0 failed); agent-browser loopback visual check PASS; staged
   privacy scan found no credential, bearer-key, or private-key patterns;
   implementation checkpoint is c9df8722fb470f1cea151f6d58f8c0d13969b5f2.
+- M7 bounded repair — PASS: reproduced the hygiene probe's false zero for
+  ignored outputs, changed only its read-only bounded Git observation mode,
+  and added a synthetic no-mutation regression; hygiene suite 6 passed,
+  `npm run typecheck`, `npm run hardening:check`, and staged diff/privacy
+  review passed; implementation checkpoint is
+  `76f5de9b09cdba930d89c7b74247c6579232a436`.
+- M7 repository gates — PASS: `npm run test:semantic-compat` reported
+  1,883 total, 1,870 passed, 13 skipped, 0 failed across 22 phases/141
+  files; `npm run test:owner-provenance` passed 91/91; and
+  `npm run campaign:synthetic` passed 61/61.
+
+## M7 Audit Waypoint
+
+The first whole-repository hardening pass is clean for reproduced
+Critical/High defects. The current Control Center impact roots remain fixed,
+loopback-only, read-only, allowlist-projected, generation-bound, and free of
+child-process, watcher, network, raw-payload, or mutable-authority paths. The
+bounded independent impact-root review corroborated the run/source/campaign/
+findings reader, snapshot coordinator, server, router, SSE, adapter, and
+synthetic browser privacy/egress boundaries; its only observations were
+low/informational test-only or budget-behavior follow-ups.
+
+Repository-wide gate and lifecycle evidence recorded so far:
+
+- `npm run hygiene:status` — PASS/PRESERVED: live `main` at
+  `7d5892c558839ca7ab30e73c6381bf9b7eef8cac`, 17 worktree registrations, 35
+  local branches, 0 safe cleanup targets, 0 applied actions, and 3 generated
+  output families observed. The 16 stale/prunable `/tmp/nightwatch-swarm2/*`
+  registrations and all unlinked/UNVALIDATED branches remain preserved; no
+  cleanup or branch/worktree mutation was performed.
+- `npm run quality-gate:spec` — PASS: required gate groups and the fixed
+  command registry are present; 22 compatibility phases and 141 files remain
+  covered.
+- `npm run gate:inventory` — PASS: the fixed modern command registry is
+  authoritative; historical workflow command duplication is reported as
+  legacy inventory, not executed authority.
+- Direct workspace inspection — PASS: the canonical worktree is clean and
+  `HEAD` equals `origin/main`; generated outputs are gitignored and observed
+  only. No credentials, auth state, sibling writes, product/data/cloud
+  contact, or external publication occurred.
+
+Generated-output retention remains deliberately deferred: `artifacts/` is
+owner-local evidence and the existing hygiene contract observes it without
+automatic deletion. A low-risk hygiene reporting defect was reproduced:
+`ignoredEntryCount` was always zero because the Git probe disabled untracked
+entries. The probe is now bounded to normal ignored-directory reporting and
+returns `UNAVAILABLE` on the existing output bound rather than a partial
+count; a synthetic test proves ignored output remains present and untouched.
+No cleanup path was added. The bounded workspace lifecycle audit continues
+through the remaining validation ladder before M7 closes.
 
 ## Decisions Made During This Task
 

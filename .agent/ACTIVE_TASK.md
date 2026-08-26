@@ -6,15 +6,15 @@ Title: Control Center Authority Integration + Whole-Repository Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-authority-integration-v2
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
-Last checkpoint: M6 — built non-empty browser qualification at c9df872.
+Last validated implementation SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
+Last checkpoint: M7 — bounded hygiene reporting repair at 76f5de9.
 Current milestone: M7 — Whole-repository hardening and workspace hygiene.
 Next action: Inventory the repository-wide safety, authority, continuity, determinism, concurrency/filesystem, input/failure, test/CI, and generated-output seams from the M7 contract; record decisive clean evidence or concrete defects in STATE before bounded repairs.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
+LAST_VALIDATED_IMPLEMENTATION_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76f5de9b09cdba930d89c7b74247c6579232a436
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
