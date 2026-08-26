@@ -306,7 +306,7 @@ replay/privacy rejection, and existing server/authority determinism tests.
 
 ### M6 — UI truthfulness and built non-empty browser qualification
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Use injected synthetic authorities with the normal server composition to
 prove all seven views render non-empty data and preserve V1 empty/stale/
@@ -314,14 +314,27 @@ unavailable/blocked/error/accessibility states. Verify no external requests,
 console/page errors, raw-field leakage, bundle-bound violations, or selection
 loss on advisory refresh.
 
-Exact next action: inspect the nested Control Center UI package and existing
-browser fixtures, then add the smallest deterministic built-server synthetic
-authority fixture that qualifies all seven non-empty views and preserves
-selection/state safety without external requests.
+Evidence: `tests/browser/controlCenterBrowser.browser.ts` starts the normal
+loopback server with injected synthetic run/source/campaign/findings
+authorities, serves the production UI build, qualifies non-empty Overview,
+Safety, Runs, Execution, Campaign, Source, and Findings views, preserves a
+selected run across an advisory SSE refresh, and rejects raw sentinels and
+external requests. The dedicated Playwright config keeps this built-server
+qualification explicit; the inline local favicon prevents a browser-side
+404 from weakening the console-error gate.
+
+Validation: `npm run typecheck` PASS; `npm run hardening:check` PASS;
+`npm run control-center:ui:typecheck` PASS; `npm run control-center:ui:test`
+PASS, 11 passed and 0 failed; `npm run control-center:ui:build` PASS,
+257471 bytes total with no external references or embedded content;
+`npm run control-center:ui:browser` PASS, 1 passed and 0 failed; agent-browser
+loopback visual check PASS; staged privacy scan found no credential,
+bearer-key, or private-key patterns; implementation checkpoint is
+`c9df8722fb470f1cea151f6d58f8c0d13969b5f2`.
 
 ### M7 — Whole-repository hardening and workspace hygiene
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Audit the full repository across safety/authority, continuity/recovery,
 determinism/provenance, concurrency/process/filesystem, input/failure
@@ -329,6 +342,12 @@ semantics, tests/gates/CI, and workspace/generated-output lifecycle. Reproduce
 and repair Critical/High defects and bounded Medium defects only. Inventory
 worktrees/branches/output and add or validate a dry-run-first hygiene
 mechanism without deleting ambiguous or dirty state.
+
+Exact next action: inventory the repository-wide safety, authority,
+continuity, determinism, concurrency/filesystem, input/failure, test/CI, and
+generated-output seams; start with current Control Center impact roots and
+record concrete defects or clean evidence in STATE before making bounded
+repairs.
 
 ### M8 — Integrated validation, docs, continuity closure, and synchronized push
 

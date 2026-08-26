@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: 18c0d954996693592e404111cfdecaa411edfc71
-Last substantive checkpoint SHA: 18c0d954996693592e404111cfdecaa411edfc71
+Last validated implementation SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
+Last substantive checkpoint SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M5 — snapshot lifecycle and advisory SSE at 18c0d95.
+Last checkpoint: M6 — built non-empty browser qualification at c9df872.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 18c0d954996693592e404111cfdecaa411edfc71
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 18c0d954996693592e404111cfdecaa411edfc71
+LAST_VALIDATED_IMPLEMENTATION_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c9df8722fb470f1cea151f6d58f8c0d13969b5f2
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M6 — UI truthfulness and built non-empty browser qualification.
+M7 — Whole-repository hardening and workspace hygiene.
 
 ## Completed Milestones
 
@@ -78,21 +78,31 @@ M6 — UI truthfulness and built non-empty browser qualification.
   `npm run hardening:check`, and the affected 42-test Control Center suite
   passed; implementation checkpoint is
   `18c0d954996693592e404111cfdecaa411edfc71`.
+- M6 — COMPLETE: the dedicated built-server browser project injects synthetic
+  run/source/campaign/findings authorities into the normal loopback composition
+  and proves non-empty Overview, Safety, Runs, Execution, Campaign, Source,
+  and Findings views. It preserves the selected run across advisory SSE
+  refresh, rejects raw sentinels and external requests, and keeps the V1 UI
+  tests green. The production UI build verifier passed at 257471 bytes;
+  `npm run control-center:ui:browser` passed 1/1; implementation checkpoint is
+  `c9df8722fb470f1cea151f6d58f8c0d13969b5f2`.
 
 ## Work In Progress
 
-Qualify the nested Control Center UI against the normal server composition
-using injected synthetic authorities. Keep all seven views non-empty and
-truthful while preserving V1 empty/stale/unavailable/blocked/error states,
-keyboard access, selection stability, and the no-external-request boundary.
+Perform a genuine whole-repository systemic hardening sweep rooted at the
+Control Center changes. Audit safety/authority, continuity/recovery,
+determinism/provenance, concurrency/process/filesystem, input/failure
+semantics, test/gate/CI, and generated-output/workspace lifecycle. Repair only
+reproduced Critical/High and bounded low-risk Medium defects, retaining
+low/speculative observations as deferred work.
 
 ## Exact Next Action
 
-Inspect the nested Control Center UI package and existing browser fixtures.
-Add the smallest deterministic built-server synthetic-authority fixture that
-proves non-empty Overview, Safety, Runs, Execution, Campaign, Source, and
-Findings behavior and preserves selection/state safety without external
-requests.
+Inventory the repository-wide subsystem and workspace seams named in the M7
+contract, beginning with current Control Center producer/consumer impacts.
+Record decisive clean evidence or concrete defects in STATE before applying
+bounded repairs; do not broaden into product, data, cloud, infrastructure,
+or external publication operations.
 
 ## Files Changed
 
@@ -119,6 +129,9 @@ requests.
 | `tests/unit/controlCenterSnapshotCoordinator.test.ts` | Synthetic coalescing, generation identity, failed refresh, bounds, and shutdown fixtures | added; affected suite passes |
 | `src/controlCenter/contracts/events.ts` | Allowlist sanitizer for notification-only SSE DTOs | implemented; contract suite passes |
 | `src/controlCenter/server/sse.ts` | Bounded, replay-safe, terminal SSE lifecycle | implemented; server suite passes |
+| `tests/browser/controlCenterBrowser.browser.ts` | Built-server synthetic authority qualification for all seven views, privacy, egress, and advisory selection stability | added; 1/1 pass |
+| `playwright.control-center.config.ts` | Explicit Playwright project for built-server browser qualification | added; browser gate passes |
+| `ui/control-center/index.html` | Local inline favicon prevents implicit browser 404 noise | implemented; build/browser gates pass |
 
 ## Validation Ledger
 
@@ -154,6 +167,13 @@ requests.
   `git diff --cached --check` PASS; staged privacy scan found no credential,
   bearer-key, or private-key patterns; implementation checkpoint is
   18c0d954996693592e404111cfdecaa411edfc71.
+- M6 acceptance ladder — PASS: `npm run typecheck`; `npm run hardening:check`;
+  `npm run control-center:ui:typecheck`; `npm run control-center:ui:test`
+  (11 passed, 0 failed); `npm run control-center:ui:build` (257471 bytes,
+  no external references/embedded content); `npm run control-center:ui:browser`
+  (1 passed, 0 failed); agent-browser loopback visual check PASS; staged
+  privacy scan found no credential, bearer-key, or private-key patterns;
+  implementation checkpoint is c9df8722fb470f1cea151f6d58f8c0d13969b5f2.
 
 ## Decisions Made During This Task
 
@@ -202,6 +222,9 @@ requests.
   than paired with an independently cached source generation.
 - The server and SSE hub are terminal after close; bounded in-flight snapshot
   reads may finish but cannot repopulate the coordinator after shutdown.
+- Built-server browser qualification is an explicit post-build project, so
+  generic unit runs do not depend on ignored `ui/control-center/dist` output;
+  the qualification itself fails if the production build is absent.
 
 ## Blockers
 
@@ -221,12 +244,13 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Inspect the nested UI package and existing
-browser fixtures named in the next action, then add and run the bounded
-synthetic built-server browser qualification. Keep all authorities local,
-in-process, read-only, synthetic-testable, and notification-only.
+Read this STATE after SPEC and PLAN. Inventory the M7 subsystem and workspace
+seams from the exact next action, record concrete evidence, then repair only
+bounded in-scope defects. Keep all reads local, in-process, read-only,
+synthetic-testable, and notification-only; never contact product/data/cloud
+or infrastructure systems.
 
 ## Completion Snapshot
 
-INCOMPLETE — M0 through M5 are complete; M6 built non-empty browser
-qualification is active.
+INCOMPLETE — M0 through M6 are complete; M7 whole-repository hardening and
+workspace hygiene are active.
