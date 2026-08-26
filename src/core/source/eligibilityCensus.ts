@@ -162,7 +162,11 @@ function sortedCounts(values: readonly string[]): readonly SourceEligibilityCode
   for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
   return [...counts.entries()]
     .map(([code, count]) => ({ code, count }))
-    .sort((left, right) => left.code.localeCompare(right.code));
+    .sort((left, right) => compareCodeUnits(left.code, right.code));
+}
+
+function compareCodeUnits(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function joinStatus(state: SourceJoinState): SourceEligibilityStageStatus {
@@ -242,6 +246,7 @@ function handlerLanguage(discovery: SourceSurfaceDiscovery, surface: RealSourceS
 
 function reasonFamily(input: { readonly code: string; readonly phase24: boolean; readonly classification: SourceReadOnlyClassification }): SourceEligibilityReasonFamily {
   const code = input.code;
+  if (!/^[A-Za-z0-9_:-]{1,120}$/.test(code)) throw new Error('SOURCE_ELIGIBILITY_REASON_UNSAFE');
   if (['MUTATION_CAPABLE', 'PROVEN_MUTATION_CAPABLE'].includes(code)) return 'HARD_UNSAFE';
   if (code === 'MUTATION_REQUIRED') return input.classification === 'PROVEN_MUTATION_CAPABLE' ? 'HARD_UNSAFE' : 'MECHANICAL_PROOF_GAP';
   if (code.includes('AMBIGUOUS') || code.includes('MULTIPLE') || code === 'BEHAVIOR_OWNER_AMBIGUOUS') return code === 'BEHAVIOR_OWNER_AMBIGUOUS' ? 'OWNER_POLICY' : 'AMBIGUITY';
@@ -275,18 +280,18 @@ function distribution(key: string, rows: readonly SourceEligibilitySurfaceRow[],
 }
 
 function distributions(rows: readonly SourceEligibilitySurfaceRow[], surfaces: readonly RealSourceSurfaceDescriptor[], field: 'repository' | 'routeLanguage' | 'handlerLanguage'): readonly SourceEligibilityDistribution[] {
-  const keys = [...new Set(rows.map((row) => row[field]))].sort();
+  const keys = [...new Set(rows.map((row) => row[field]))].sort(compareCodeUnits);
   return keys.map((key) => distribution(key, rows, surfaces, field));
 }
 
 function rowFor(input: { readonly discovery: SourceSurfaceDiscovery; readonly surface: RealSourceSurfaceDescriptor; readonly candidate: Phase24CandidatePortfolio['candidates'][number] }): SourceEligibilitySurfaceRow {
-  const phase24ReasonCodes = input.candidate.eligibility === 'EXCLUDED' ? input.candidate.reasonCodes : [];
-  const sourceExclusionReasons = [...input.surface.exclusionReasons].sort();
+  const phase24ReasonCodes = (input.candidate.eligibility === 'EXCLUDED' ? input.candidate.reasonCodes : []).slice().sort(compareCodeUnits);
+  const sourceExclusionReasons = [...input.surface.exclusionReasons].sort(compareCodeUnits);
   const classification = input.surface.operation.readOnlyClassification;
   const reasonFamilies = [...new Set([
     ...sourceExclusionReasons.map((code) => reasonFamily({ code, phase24: false, classification })),
     ...phase24ReasonCodes.map((code) => reasonFamily({ code, phase24: true, classification })),
-  ])].sort() as SourceEligibilityReasonFamily[];
+  ])].sort(compareCodeUnits) as SourceEligibilityReasonFamily[];
   if (reasonFamilies.length === 0) reasonFamilies.push('NONE');
   const chain = chainFor(input.surface, input.candidate.eligibility === 'ELIGIBLE');
   return {
@@ -302,20 +307,24 @@ function rowFor(input: { readonly discovery: SourceSurfaceDiscovery; readonly su
     sourceExclusionReasons,
     phase24ReasonCodes,
     reasonFamilies,
-    responseProofGapCodes: input.surface.contract.responseAnalyzerDiagnostics.filter((diagnostic) => diagnostic.status === 'REJECTED').map((diagnostic) => diagnostic.flowRejectionCode ?? diagnostic.rejectionCode ?? 'ANALYZER_UNPROVEN').sort(),
-    semanticProofGapCodes: input.surface.contract.semanticProof === 'PROVEN' ? [] : input.surface.contract.responseAnalyzerDiagnostics.filter((diagnostic) => diagnostic.status === 'REJECTED').map((diagnostic) => diagnostic.flowRejectionCode ?? diagnostic.rejectionCode ?? 'ANALYZER_UNPROVEN').sort(),
+    responseProofGapCodes: input.surface.contract.responseAnalyzerDiagnostics.filter((diagnostic) => diagnostic.status === 'REJECTED').map((diagnostic) => diagnostic.flowRejectionCode ?? diagnostic.rejectionCode ?? 'ANALYZER_UNPROVEN').sort(compareCodeUnits),
+    semanticProofGapCodes: input.surface.contract.semanticProof === 'PROVEN' ? [] : input.surface.contract.responseAnalyzerDiagnostics.filter((diagnostic) => diagnostic.status === 'REJECTED').map((diagnostic) => diagnostic.flowRejectionCode ?? diagnostic.rejectionCode ?? 'ANALYZER_UNPROVEN').sort(compareCodeUnits),
   };
 }
 
 /** Build a complete, deterministic exclusion chain from existing authorities. */
 export function buildSourceEligibilityCensus(input: { readonly discovery: SourceSurfaceDiscovery; readonly portfolio: Phase24CandidatePortfolio }): SourceEligibilityCensus {
   if (input.discovery.surfaces.length !== input.portfolio.consideredCount) throw new Error('SOURCE_ELIGIBILITY_CENSUS_SURFACE_COUNT');
+  if (input.portfolio.candidates.length !== input.portfolio.consideredCount) throw new Error('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_COUNT');
   const candidates = new Map(input.portfolio.candidates.map((candidate) => [candidate.surfaceKey, candidate]));
+  if (candidates.size !== input.portfolio.candidates.length) throw new Error('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_DUPLICATE');
+  const surfaceIds = new Set(input.discovery.surfaces.map((surface) => surface.surfaceId));
+  if (input.portfolio.candidates.some((candidate) => !surfaceIds.has(candidate.surfaceKey))) throw new Error('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_OUTSIDE_SURFACES');
   const rows = input.discovery.surfaces.map((surface) => {
     const candidate = candidates.get(surface.surfaceId);
     if (candidate === undefined) throw new Error('SOURCE_ELIGIBILITY_CENSUS_CANDIDATE_MISSING');
     return rowFor({ discovery: input.discovery, surface, candidate });
-  }).sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
+  }).sort((left, right) => compareCodeUnits(left.surfaceId, right.surfaceId));
   const surfaces = input.discovery.surfaces;
   const phase24ReasonCodes = rows.flatMap((row) => row.phase24ReasonCodes);
   const sourceReasons = rows.flatMap((row) => row.sourceExclusionReasons);

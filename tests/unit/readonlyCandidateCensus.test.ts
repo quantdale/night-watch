@@ -31,12 +31,16 @@ function makeRepo(root: string): void {
     '"get:/writer":',
     '  client: App\\Handler\\Pure',
     '  method: writer',
+    '"get:/malformed":',
+    '  client: App\\Handler\\Pure',
+    '  method: malformed',
     '',
   ].join('\n'));
   fs.writeFileSync(path.join(repo, 'src', 'App', 'Handler', 'Pure.php'), `<?php
 function pure() { return ['READONLY_CANDIDATE_SENTINEL']; }
 function call() { return readFromService(); }
 function writer() { $value = ['WRITE_CANDIDATE_SENTINEL']; return $value; }
+function malformed() { return [1 => 2 => 3]; }
 `);
 }
 
@@ -73,16 +77,46 @@ test('candidate census distinguishes pure literals from calls, writes, and GET-o
       admission: 'NOT_ADMITTED_NO_READ_EVIDENCE',
     });
     expect(direct?.rejectionCounts).toEqual(expect.arrayContaining([
-      { code: 'NON_LITERAL_RETURN_EXPRESSION', count: 1 },
+      { code: 'NON_LITERAL_RETURN_EXPRESSION', count: 2 },
       { code: 'NON_RETURN_BODY_SYNTAX', count: 1 },
     ]));
     const getOnly = first.familyMeasurements.find((measurement) => measurement.family === 'HTTP_GET_ONLY_NEGATIVE_CONTROL');
-    expect(getOnly).toMatchObject({ population: 3, positiveReadEvidencePopulation: 0, admission: 'NEGATIVE_CONTROL_ONLY' });
+    expect(getOnly).toMatchObject({ population: 4, positiveReadEvidencePopulation: 0, admission: 'NEGATIVE_CONTROL_ONLY' });
     expect(JSON.stringify(first)).not.toContain('READONLY_CANDIDATE_SENTINEL');
     expect(JSON.stringify(first)).not.toContain('WRITE_CANDIDATE_SENTINEL');
     expect(first.deterministicDigest).toMatch(/^source-readonly-candidate-census:sha256:[0-9a-f]{24}$/);
+
+    const handler = discovery.inventory.files.find((file) => file.relativePath === 'src/App/Handler/Pure.php');
+    expect(handler).toBeDefined();
+    const ambiguous = buildReadOnlyCandidateCensus({
+      access,
+      discovery: { ...discovery, inventory: { ...discovery.inventory, files: [...discovery.inventory.files, handler!] } },
+    });
+    expect(ambiguous.familyMeasurements.find((measurement) => measurement.family === 'DIRECT_PURE_RETURN_HANDLER')?.rejectionCounts).toEqual(expect.arrayContaining([
+      { code: 'HANDLER_SOURCE_FILE_AMBIGUOUS', count: 4 },
+    ]));
+
+    const mismatched = buildReadOnlyCandidateCensus({
+      access,
+      discovery: {
+        ...discovery,
+        surfaces: discovery.surfaces.map((surface) => ({ ...surface, operation: { ...surface.operation, sourceSha: '4'.repeat(40) } })),
+      },
+    });
+    expect(mismatched.familyMeasurements.find((measurement) => measurement.family === 'DIRECT_PURE_RETURN_HANDLER')?.rejectionCounts).toEqual(expect.arrayContaining([
+      { code: 'HANDLER_SOURCE_IDENTITY_MISMATCH', count: 4 },
+    ]));
+
+    fs.appendFileSync(path.join(root, 'mobingilabs', 'ripple-api', 'src', 'App', 'Handler', 'Pure.php'), '\n// changed after the source snapshot\n');
+    const stale = buildReadOnlyCandidateCensus({ access, discovery });
+    expect(stale.familyMeasurements.find((measurement) => measurement.family === 'DIRECT_PURE_RETURN_HANDLER')?.rejectionCounts).toEqual(expect.arrayContaining([
+      { code: 'HANDLER_SOURCE_STALE', count: 4 },
+    ]));
+
+    const empty = buildReadOnlyCandidateCensus({ access, discovery: { ...discovery, operations: [], surfaces: [], phase24Inputs: [] } });
+    expect(empty.handlerPopulation).toBe(0);
+    expect(empty.familyMeasurements.every((measurement) => measurement.population === 0)).toBe(true);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
-
