@@ -57,7 +57,7 @@ See SPEC permanent boundaries. All validation stays local/offline/synthetic.
   semantics-preserving mechanical wins that evidence supports. — DONE
   (portfolio compile cache + batched hardening syntax check)
 - M5 CLOSURE: full validation matrix, docs updates, STATE/REPORT closure,
-  checkpoint commit. — IN_PROGRESS
+  checkpoint commit. — DONE (gate:local PASS at f9902bf; docs reconciled)
 
 ## Validation Strategy
 
@@ -73,6 +73,12 @@ See SPEC permanent boundaries. All validation stays local/offline/synthetic.
   contracts are load-bearing safety surfaces; mechanics are not.
 - D-OPT-02: tsbuildinfo must live outside the tracked tree so PATCH_INTEGRITY
   clean-checkout semantics are unaffected.
+- D-OPT-03: Portfolio compile cache is content-addressed over the full src/
+  and corpus/ cones plus TS version + options — over-invalidation is
+  acceptable, under-invalidation never is; marker written only after success.
+- D-OPT-04: Census analyzer-core deduplication deferred — analyzer outputs
+  feed ev:sha256 evidence identities; restructuring requires a dedicated
+  byte-equality proof task.
 
 ## Discoveries
 
@@ -81,6 +87,12 @@ See SPEC permanent boundaries. All validation stays local/offline/synthetic.
   loading is exact and cheap.
 - semantic-compat.mjs buffers child output via spawnSync pipes, so progress is
   invisible until completion (observability cost during long gates).
+- git strips leading zeros when echoing full-SHA stdin requests in
+  cat-file --batch; rev-list echoes full SHAs.
+- One test file (phase16hCliHandoffHardening) was 34% of the compatibility
+  suite due to per-invocation tsc compiles in bin/portfolio.mjs.
+- The TS require hook is copy-pasted across 20 bin scripts with identical
+  options; census CLI spends ~35% of runtime in it.
 
 ## Deferred Work
 

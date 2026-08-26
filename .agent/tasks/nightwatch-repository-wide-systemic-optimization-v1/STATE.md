@@ -4,19 +4,19 @@
 
 Task ID: nightwatch-repository-wide-systemic-optimization-v1
 Phase: REPOSITORY-SYSTEMIC-OPTIMIZATION-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-Last validated implementation SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-Last substantive checkpoint SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
+Last validated implementation SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
+Last substantive checkpoint SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-26 — M2/M3/M4 implemented and validated (checker -88%, warm typecheck -84%, phase16h suite -95%, hardening -68%); M5 closure in progress.
+Last checkpoint: 2026-08-26 — full gate:local PASS at implementation checkpoint f9902bf with identical validated counts; campaign closed.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-LAST_VALIDATED_IMPLEMENTATION_SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
+LAST_VALIDATED_IMPLEMENTATION_SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Objective
@@ -27,10 +27,10 @@ with zero reduction in verification strength, safety, or determinism.
 
 ## Current Milestone
 
-Milestone ID: M5-CLOSURE
-Milestone status: IN_PROGRESS
-What is being attempted: full validation matrix on the checkpointed tree,
-documentation reconciliation, continuity closure, clean pushed main.
+COMPLETE — every milestone is closed. The implementation checkpoint
+`f9902bf43081ce737d08437f9f68c3af04ed62b0` passed the full local gate with
+validated counts identical to baseline; the completion snapshot below records
+the terminal evidence, and live HEAD is discovered from Git.
 
 ## Completed Milestones
 
@@ -88,17 +88,23 @@ documentation reconciliation, continuity closure, clean pushed main.
   checkout by design (SELFDEV_AUTHORITATIVE_SOURCE_DIRTY guard) — verified
   passing after stash; not a regression.
 
+- M5 CLOSURE (2026-08-26): checkpoint `f9902bf` committed (perf: cut
+  validation-loop cost without weakening gates); full `npm run gate:local`
+  on the committed clean tree returned finalResult PASS with all nine groups
+  green and identical validated counts (compat 1884/1871/13/0,
+  owner-provenance 91, synthetic 66) in 373.77s wall vs ~808s sum of
+  baseline components; standalone post-fix semantic-compat re-time recorded
+  in the validation ledger; documentation reconciled (CURRENT_STATE row,
+  REPORT handoff).
+
 ## Work In Progress
 
-M5 closure: task-file reconciliation, checkpoint commit, then post-commit
-full validation (semantic-compat + gate:local require a clean checkout for
-the selfDev dirty-tree guards and PATCH_INTEGRITY).
+NONE
 
 ## Exact Next Action
 
-Update PLAN.md milestone statuses, commit the implementation checkpoint with
-anchors updated, then run `npm run test:semantic-compat` and
-`npm run agent:check` / `npm run project:check` on the committed tree.
+STOP — this campaign is complete. Any follow-up starts as a new authorized
+task; see REPORT.md §10 Deferred Opportunities for concrete candidates.
 
 ## Files Changed
 
@@ -152,6 +158,17 @@ When: 2026-08-26
 
 Command: `npx playwright test tests/unit/phase23QualityGate.test.ts tests/unit/projectState.test.ts tests/unit/phase23Manifest.test.ts --workers=1`
 Result: PASS 39/39
+When: 2026-08-26
+
+Command: `npm run gate:local` at committed checkpoint f9902bf
+Result: PASS — finalResult PASS, 9/9 groups PASS, compat counts identical to
+baseline (1884/1871/13/0), wall 373.77s (baseline components sum ~808s)
+When: 2026-08-26
+
+Command: `npm run test:semantic-compat` (standalone, post-fix, clean tree)
+Result: PASS 1884 total / 1871 passed / 13 skipped / 0 failed (identical to
+baseline); wall 468.53s then 427.84s on an idle re-run vs 663.56s baseline
+(-29..-36%)
 When: 2026-08-26
 
 ## Decisions Made During This Task
@@ -208,12 +225,26 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and current SHA.
-4. Run the smallest relevant validation (`npm run agent:check`).
-5. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task
+with a fresh live Git census. Deferred candidates are listed in REPORT.md
+§10 and STATE.md Deferred / Follow-Up.
 
 ## Completion Snapshot
 
-Not complete — snapshot intentionally absent while IN_PROGRESS.
+Final substantive checkpoint: f9902bf43081ce737d08437f9f68c3af04ed62b0
+Final documentation checkpoint: recorded by the docs closure commit that
+contains this snapshot (never predicted in advance)
+Live HEAD: DISCOVER_FROM_GIT
+Tests: gate:local finalResult PASS at f9902bf — GATE_DEFINITION PASS,
+STATIC (typecheck) PASS, HARDENING PASS, PROJECT_TRUTH PASS,
+AGENT_CONTINUITY PASS, SEMANTIC_COMPATIBILITY 1884 total / 1871 passed /
+13 skipped / 0 failed, OWNER_PROVENANCE 91 passed / 0 failed,
+SYNTHETIC_CAMPAIGN 66 passed / 0 failed, PATCH_INTEGRITY PASS;
+focused suites green (agent-state 107/107, phase16h 8/8, phase23QualityGate
++ projectState + phase23Manifest 39/39).
+Artifacts: measurement logs under /tmp/opencode during the session
+(non-persistent); durable evidence in this file's validation ledger and
+REPORT.md.
+Known issues: none open.
+Recommended next task: TS require-hook consolidation + transpile cache
+(REPORT.md §10 item 1), as a separately authorized dedicated task.
