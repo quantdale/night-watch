@@ -54,8 +54,8 @@ public output.
 ## Milestones
 
 - [x] M0 — bootstrap, fetch/prune, fast-forward reconciliation, baseline gates,
-  authority reads, fresh census, and continuity activation.
-- [ ] M1 — deterministic exclusion-chain census and end-to-end mutability/
+  authority reads, and continuity activation.
+- [x] M1 — deterministic exclusion-chain census and end-to-end mutability/
   read-only authority audit.
 - [ ] M2 — current-source candidate proof-family census, falsification matrix,
   and frozen admission decision.
@@ -83,9 +83,11 @@ before/after identities.
 
 ## Architecture / Approach
 
-Start with the current source descriptor and Phase 24 bridge. Add only a small
-versioned source-fact layer if M2 proves a complete family; otherwise retain
-the existing authority and improve only taxonomy, census, and hardening.
+Start with the current source descriptor and Phase 24 bridge. The additive
+eligibility census now projects those authorities without selecting or
+reclassifying surfaces. Add only a small versioned source-fact layer if M2
+proves a complete family; otherwise retain the existing authority and improve
+only taxonomy, census, and hardening.
 
 ## M2 proof admission gate
 
@@ -124,11 +126,23 @@ dynamic PHP authority, and any proof family rejected by M2 remain deferred.
   old implementation history remains immutable.
 - M0: current source and tests outrank historical prompt measurements; the
   fresh operator census is the baseline authority.
+- M1: the existing read-only authority is exact current Phase-5 catalog
+  metadata (`KNOWN_READ`) on a GET route. GET alone remains
+  `READ_ONLY_METHOD_ONLY`; no handler-effect or reachable-call proof is
+  currently admitted.
+- M1: the deterministic exclusion census is a downstream projection of the
+  existing source descriptors and Phase-24 portfolio. It does not add a
+  selector, mutate the source inventory, or infer hypothetical unlocks.
+- M1: read-only proof is a major direct exclusion reason (76 surfaces), but
+  zero of those surfaces are blocked by that reason alone; all 76 also carry
+  another source or Phase-24 blocker. This confirms the campaign direction is
+  worth falsifying, but any future unlock must be measured downstream.
 
 ## Discoveries
 
-M1 discoveries are recorded in STATE.md and copied here when the census and
-authority audit are complete.
+M1 discoveries are recorded in STATE.md. The census identity is
+`source-eligibility-census:sha256:267a67ef25503b85397a7b46` for the current
+source snapshot; it must be recomputed after any source or authority change.
 
 ## Deferred Work
 

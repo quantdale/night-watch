@@ -21,6 +21,7 @@ import { scanSource } from './scan';
 import { sourceSurfaceCacheKey, type RealSourceSurfaceCache } from './cache';
 import { createResponseFlowIndex, REAL_SOURCE_RESPONSE_FLOW_VERSION, resolveResponseFlow, type ResponseFlowProof } from './responseFlow';
 import { buildSourceGapTaxonomy, type SourceGapTaxonomy } from './gapTaxonomy';
+import { buildSourceEligibilityCensus, type SourceEligibilityCensus } from './eligibilityCensus';
 import { sourceContentDigest, type RealSourceScanConfig, type RealSourceSnapshotInventory, type SourceScanLanguage } from './scanTypes';
 import type { SiblingSourceAccess } from './siblingSource';
 import {
@@ -72,6 +73,7 @@ export interface SourcePhase24Integration {
   readonly snapshotAnalyses: readonly Phase24SourceSnapshotAnalysis[];
   readonly portfolio: Phase24CandidatePortfolio;
   readonly selection: Phase24PortfolioSelection;
+  readonly eligibilityCensus: SourceEligibilityCensus;
   readonly deterministicDigest: string;
 }
 
@@ -855,8 +857,9 @@ export function analyzeSourceSurfacesIntoPhase24(input: { readonly access: Sibli
   });
   const portfolio = buildPhase24CandidatePortfolio({ candidates: discovery.phase24Inputs });
   const selection = prioritizePhase24Portfolio({ portfolio, maxCandidates });
-  const core = { discoveryDigest: discovery.deterministicDigest, snapshotAnalyses: snapshotAnalyses.map((analysis) => analysis.deterministicDigest), portfolioDigest: portfolio.deterministicDigest, selectionDigest: selection.deterministicDigest, maxCandidates };
-  return { discovery, snapshotAnalyses, portfolio, selection, deterministicDigest: safeSemanticDigest(core, 'source-phase24-integration') };
+  const eligibilityCensus = buildSourceEligibilityCensus({ discovery, portfolio });
+  const core = { discoveryDigest: discovery.deterministicDigest, snapshotAnalyses: snapshotAnalyses.map((analysis) => analysis.deterministicDigest), portfolioDigest: portfolio.deterministicDigest, selectionDigest: selection.deterministicDigest, eligibilityCensusDigest: eligibilityCensus.deterministicDigest, maxCandidates };
+  return { discovery, snapshotAnalyses, portfolio, selection, eligibilityCensus, deterministicDigest: safeSemanticDigest(core, 'source-phase24-integration') };
 }
 
 export { SOURCE_SURFACE_REASON_CODES };

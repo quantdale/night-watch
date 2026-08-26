@@ -28,8 +28,8 @@ source and Phase 24 authorities without widening safety scope.
 
 ## Current Milestone
 
-M1 — authoritative exclusion-chain census and existing mutability/read-only
-authority audit.
+M2 — current-source candidate proof-family census, falsification matrix, and
+frozen admission decision.
 
 ## Completed Milestones
 
@@ -40,6 +40,8 @@ authority audit.
   `typecheck`, and `hardening:check`.
 - Focused source/Phase24/response-flow cone passed 95/95.
 - Fresh local source census passed through the existing confined reader.
+- M1 exclusion-chain census is implemented as an additive projection and
+  passed its synthetic source/Phase-24 integration assertions.
 
 ## Fresh baseline snapshot
 
@@ -61,19 +63,23 @@ authority audit.
 - Source gap taxonomy: 345 rejected diagnostics; 45 proof-gap surfaces; 10
   taxonomy rows; digest `source-gap-taxonomy:sha256:02a38e1514a46da5ab21f90c`.
 - Source surface digest: `source-surface-discovery:sha256:92ff5f61acfc63aa9b8ad7a5`.
+- Eligibility census digest: `source-eligibility-census:sha256:267a67ef25503b85397a7b46`.
 
 ## Work In Progress
 
-Trace the current `runtimeBinding`/`readOnlyClassification` path, its Phase 5
-semantic registry dependency, route/method handling, handler/source joins,
-Phase 24 conversion, replay capability, and source-gap/operator projections;
-then derive the complete per-surface census and candidate-family measurement.
+Measure bounded candidate read-only proof families against the current
+approved source using only existing confined reads and sanitized counts. Test
+direct pure handlers, exact safe-call cones, and declaration/metadata-backed
+families separately; record positive populations, unsupported/ambiguous
+patterns, and projected Phase-24 impact before admitting any proof authority.
 
 ## Files Changed
 
-Continuity activation currently changes only `.agent/ACTIVE_TASK.md`,
+Continuity activation changed `.agent/ACTIVE_TASK.md`,
 `.agent/EXECUTION_PROMPT.md`, and this task's SPEC/PLAN/STATE/REPORT files.
-Implementation files remain unchanged at M0.
+M1 adds `src/core/source/eligibilityCensus.ts`, the additive bridge field in
+`src/core/source/surfaces.ts`, the local `eligibility-census` operator command,
+and focused assertions in `tests/unit/phase25SurfaceDiscovery.test.ts`.
 
 ## Decisions Made During This Task
 
@@ -92,12 +98,34 @@ Implementation files remain unchanged at M0.
   response-shape proof and all rejected.
 - Existing Phase 24 conversion maps only `PROVEN_READ_ONLY` to READ_ONLY;
   unknown/read-only-method-only remains excluded.
+- The census reproduces the authoritative baseline: 128 operations, 127
+  routes, 127 requests, 83 responses, 175 semantic observations, 128 joins
+  attempted with 118 proven and 10 rejected, 47 mutation-capable, 5
+  read-only-proven, 76 read-only-method-only, and 3 eligible/125 excluded.
+- Census lifecycle counts are 45 `DISCOVERED`, 80 `MECHANICALLY_PROVEN`, and
+  3 `PROJECTABLE`; source currentness is current for all six approved repos and
+  all 128 surfaces.
+- Census source exclusion counts are: handler unresolved 10, mutation
+  capable 47, read-only not proven 76, request contract unproven 1, response
+  contract unproven 45, runtime binding missing 123, and semantic contract
+  unproven 45.
+- Read-only is not an isolated current unlock bottleneck: 76 surfaces carry
+  `READ_ONLY_NOT_PROVEN`, zero carry it as their only source exclusion, and
+  Phase 24 remains authoritative at 3 eligible/125 excluded.
+- Current route-language distribution is 128 YAML surfaces; handler-language
+  distribution is 126 PHP and 2 unknown; all discovered surfaces belong to
+  `mobingilabs/ripple-api` because the bounded route universe is currently
+  YAML-backed there.
+- The census is category-only and deterministic. It contains safe IDs,
+  source identities, statuses, reason codes, counts, and digests; it does not
+  retain source text, literals, request/response values, or proof authority.
 
 ## Exact Next Action
 
-Complete M1 by recording the sanitized exclusion-chain taxonomy and current
-authority map in this STATE/PLAN, then run the bounded live-source candidate
-proof census before designing or admitting any analyzer.
+Run the bounded live-source candidate proof census. Measure direct pure
+handlers, exact safe-call cones, and existing metadata-backed candidates as
+separate families; use the results to decide whether a new proof authority is
+mechanically justified before implementing one.
 
 ## Blockers
 
@@ -128,6 +156,13 @@ publication, or runtime AI operation occurred.
 - `node bin/nightwatch-intelligence.mjs surfaces`: PASS; existing Phase 24
   portfolio 3 eligible / 125 excluded, same portfolio digest.
 - `git diff --check`: PASS before task activation.
+- `npm run typecheck`: PASS after M1 census implementation.
+- `npx playwright test tests/unit/phase25SurfaceDiscovery.test.ts --workers=1`:
+  PASS, 3/3 after one corrected expectation (the write route has a proven
+  empty request contract).
+- `node bin/nightwatch-intelligence.mjs eligibility-census --json`: PASS;
+  census digest `source-eligibility-census:sha256:267a67ef25503b85397a7b46`,
+  safety marker `NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT`.
 
 ## Deferred / Follow-Up
 
@@ -141,5 +176,5 @@ recorded milestone requires it.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 is complete and M1 is active. No implementation proof family
-has been admitted or rejected yet.
+IN_PROGRESS — M0 and M1 are complete; M2 is active. No new implementation proof
+family has been admitted or rejected yet.

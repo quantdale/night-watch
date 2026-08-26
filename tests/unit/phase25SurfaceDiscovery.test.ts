@@ -99,6 +99,25 @@ test.describe('Phase 25 source surface discovery and Phase 24 bridge', () => {
       expect(integrated.portfolio.deterministicDigest).toBe(portfolio.deterministicDigest);
       expect(integrated.selection.selectedCandidateIds).toEqual([integrated.portfolio.candidates.find((candidate) => candidate.eligibility === 'ELIGIBLE')?.candidateId]);
       expect(integrated.deterministicDigest).toMatch(/^source-phase24-integration:sha256:[0-9a-f]{24}$/);
+      expect(integrated.eligibilityCensus.summary).toMatchObject({
+        totalOperations: 2,
+        routeProofs: 2,
+        requestContracts: 2,
+        responseContracts: 1,
+        semanticContractSurfaces: 1,
+        mutationCapable: 1,
+        readOnlyProven: 1,
+        mutabilityUnknown: 0,
+        phase24Eligible: 1,
+        phase24Excluded: 1,
+      });
+      const censusRead = integrated.eligibilityCensus.rows.find((row) => row.surfaceId === read!.surfaceId);
+      const censusWrite = integrated.eligibilityCensus.rows.find((row) => row.surfaceId === write!.surfaceId);
+      expect(censusRead?.chain.firstBlockingStage).toBe(null);
+      expect(censusRead?.chain.stages.at(-1)).toEqual({ stage: 'PHASE24_ELIGIBILITY', status: 'ELIGIBLE' });
+      expect(censusWrite?.chain.firstBlockingStage).toBe('RESPONSE_CONTRACT');
+      expect(censusWrite?.reasonFamilies).toContain('HARD_UNSAFE');
+      expect(integrated.eligibilityCensus.deterministicDigest).toMatch(/^source-eligibility-census:sha256:[0-9a-f]{24}$/);
       const review = buildSourceReviewQueue({ discovery, portfolio: integrated.portfolio, selection: integrated.selection });
       expect(review.selectedCount).toBe(1);
       const changedPortfolio = buildPhase24CandidatePortfolio({ candidates: discovery.phase24Inputs.map((input, index) => index === 0 ? { ...input, semanticExpectationId: 'expectation.changed' } : input) });
@@ -108,6 +127,8 @@ test.describe('Phase 25 source surface discovery and Phase 24 bridge', () => {
       // Safe handler identities are allowed; source bodies and literal values are not.
       expect(JSON.stringify(discovery)).not.toContain('$res[]');
       expect(JSON.stringify(discovery)).not.toContain("'safe'");
+      expect(JSON.stringify(integrated.eligibilityCensus)).not.toContain('$res[]');
+      expect(JSON.stringify(integrated.eligibilityCensus)).not.toContain("'safe'");
       expect(discovery.deterministicDigest).toMatch(/^source-surface-discovery:sha256:[0-9a-f]{24}$/);
 
       const graph = buildContractGraph({
