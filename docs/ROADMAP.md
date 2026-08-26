@@ -2364,9 +2364,9 @@ response, repaired it without weakening assertions or safety classification.
 
 Final local evidence: quality definition digest
 `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`;
-local gate `receipt:sha256:a51f68b3a708136f5a402680`; Node20 clean gate
-`clean-receipt:sha256:4c8e12298d01c50b70b712f0` with gate receipt
-`receipt:sha256:1044940bd09202357399dfe1`; semantic compatibility
+local gate `receipt:sha256:341bc43e00b9a2219bfb2082`; Node20 clean gate
+`clean-receipt:sha256:ebe268bb7588be07ce88eb13` with gate receipt
+`receipt:sha256:f174bce0224dacc42a1b6cf8`; semantic compatibility
 1,884/1,871/13/0; owner provenance 91/91; synthetic campaign 66/66; and
 canonical/topology-correct isolated Playwright 2,524 enumerated / 2,508
 passed / 16 skipped / 0 failed with exact parity. External CI is not claimed

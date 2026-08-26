@@ -10,7 +10,7 @@ Status: COMPLETE
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
-Last documentation checkpoint SHA: b8d77684b01a52d5bc6205b3b42d447daa96a26f
+Last documentation checkpoint SHA: e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 LIVE_HEAD_AUTHORITY: GIT
@@ -91,9 +91,9 @@ workflow.
   and bounded performance measurements passed; no Critical or High defect
   remains and no new proof family was admitted.
 - M6 — Local quality gate passed with receipt
-  `receipt:sha256:a51f68b3a708136f5a402680`; Node20 clean gate passed with gate
-  receipt `receipt:sha256:1044940bd09202357399dfe1` and clean receipt
-  `clean-receipt:sha256:4c8e12298d01c50b70b712f0`. Canonical and fresh
+  `receipt:sha256:341bc43e00b9a2219bfb2082`; Node20 clean gate passed with gate
+  receipt `receipt:sha256:f174bce0224dacc42a1b6cf8` and clean receipt
+  `clean-receipt:sha256:ebe268bb7588be07ce88eb13`. Canonical and fresh
   topology-correct isolated Playwright both passed 2,508 / 16 skipped / 0
   failed out of 2,524 with exact enumeration and skip parity.
 
@@ -172,12 +172,12 @@ earned evidence. No Phase-24 selector or sibling source was changed.
 - Focused cancellation test after the fixture hardening: PASS, 5/5.
 - Canonical full Playwright rerun after the fixture hardening: PASS, 2,524
   enumerated / 2,508 passed / 16 skipped / 0 failed.
-- `npm run gate:local`: PASS on clean checkpoint `b8d77684b01a52d5bc6205b3b42d447daa96a26f`; all nine groups passed, semantic compatibility 1,884 total / 1,871 passed / 13 skipped / 0 failed, owner provenance 91/91, synthetic campaign 66/66, receipt `receipt:sha256:a51f68b3a708136f5a402680`.
+- `npm run gate:local`: PASS on clean checkpoint `e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add`; all nine groups passed, semantic compatibility 1,884 total / 1,871 passed / 13 skipped / 0 failed, owner provenance 91/91, synthetic campaign 66/66, receipt `receipt:sha256:341bc43e00b9a2219bfb2082`.
 - `npm run gate:clean`: PASS on fresh Node20 install at clean checkpoint
-  `b8d77684b01a52d5bc6205b3b42d447daa96a26f`; no module reuse, no auth or
+  `e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add`; no module reuse, no auth or
   owner-finding state, zero sibling writes; gate receipt
-  `receipt:sha256:1044940bd09202357399dfe1`, clean receipt
-  `clean-receipt:sha256:4c8e12298d01c50b70b712f0`.
+  `receipt:sha256:f174bce0224dacc42a1b6cf8`, clean receipt
+  `clean-receipt:sha256:ebe268bb7588be07ce88eb13`.
 - `npm run quality-gate:spec`, `npm run gate:inventory`, `npm run agent:audit`,
   `npm run project:check`, and `git diff --check`: PASS; definition digest
   `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,

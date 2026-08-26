@@ -7,7 +7,7 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
 Last substantive checkpoint SHA: 74f28356fd615eb51b4842f40a49ed6fc269c68f
-Last documentation checkpoint SHA: b8d77684b01a52d5bc6205b3b42d447daa96a26f
+Last documentation checkpoint SHA: e854bbc6ca8ef1550ef2e5d03dba37f3ab0f8add
 
 Campaign result: COMPLETE_LOCAL_NOT_CI_VERIFIED
 
@@ -48,9 +48,9 @@ fixture server responds after 100 ms. The focused cancellation test passed
 skips 16, and has 0 failures.
 
 The authoritative local gate passed with receipt
-`receipt:sha256:a51f68b3a708136f5a402680`; the Node20 clean gate passed with
-gate receipt `receipt:sha256:1044940bd09202357399dfe1` and clean receipt
-`clean-receipt:sha256:4c8e12298d01c50b70b712f0`. A fresh topology-correct
+`receipt:sha256:341bc43e00b9a2219bfb2082`; the Node20 clean gate passed with
+gate receipt `receipt:sha256:f174bce0224dacc42a1b6cf8` and clean receipt
+`clean-receipt:sha256:ebe268bb7588be07ce88eb13`. A fresh topology-correct
 isolated checkout with six detached approved-source clones passed the same
 2,524 / 2,508 / 16 / 0 result with exact enumeration and skip parity. External
 CI is not claimed green; final remote/Actions state is discovered after Git
