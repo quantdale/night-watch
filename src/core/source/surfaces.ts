@@ -22,6 +22,7 @@ import { sourceSurfaceCacheKey, type RealSourceSurfaceCache } from './cache';
 import { createResponseFlowIndex, REAL_SOURCE_RESPONSE_FLOW_VERSION, resolveResponseFlow, type ResponseFlowProof } from './responseFlow';
 import { buildSourceGapTaxonomy, type SourceGapTaxonomy } from './gapTaxonomy';
 import { buildSourceEligibilityCensus, type SourceEligibilityCensus } from './eligibilityCensus';
+import { createCallScopedSourceReadView } from './callScopedRead';
 import { sourceContentDigest, type RealSourceScanConfig, type RealSourceSnapshotInventory, type SourceScanLanguage } from './scanTypes';
 import type { SiblingSourceAccess } from './siblingSource';
 import {
@@ -718,9 +719,10 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const cacheKey = input.cache === undefined ? null : sourceSurfaceCacheKey({ config: input.config, inventory });
   const cached = cacheKey === null ? undefined : input.cache?.get(cacheKey);
   if (cached !== undefined) return cached;
+  const scopedAccess = createCallScopedSourceReadView({ access: input.access, inventory }).access;
   const operations: SourceOperationDescriptor[] = [];
   const responseFlowIndexStartedAt = Date.now();
-  const responseFlowIndex = createResponseFlowIndex({ access: input.access, inventory });
+  const responseFlowIndex = createResponseFlowIndex({ access: scopedAccess, inventory });
   const responseFlowIndexElapsedMs = Math.max(0, Date.now() - responseFlowIndexStartedAt);
   let routeFilesConsidered = 0;
   let routeOperationsTruncated = 0;
@@ -728,7 +730,7 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const parsedRoutes: { readonly file: (typeof inventory.files)[number]; readonly route: ParsedRoute }[] = [];
   for (const file of inventory.files.filter((entry) => entry.status === 'ELIGIBLE' && entry.language !== null && isRouteCandidateFile(entry.language, entry.relativePath)).sort((left, right) => left.repoId.localeCompare(right.repoId) || left.relativePath.localeCompare(right.relativePath))) {
     routeFilesConsidered += 1;
-    const sourceText = input.access.reader.readFile(file.repoId, file.relativePath);
+    const sourceText = scopedAccess.reader.readFile(file.repoId, file.relativePath);
     if (sourceText === null || file.language === null) continue;
     for (const route of parseRoutes(file.relativePath, file.language, sourceText)) parsedRoutes.push({ file, route });
   }
@@ -759,8 +761,8 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const surfaces: RealSourceSurfaceDescriptor[] = [];
   let responseFlowResolveElapsedMs = 0;
   for (const operation of operations) {
-    const joins = resolveSurfaceJoins({ access: input.access, inventory, operation });
-    const analysis = observationsFor({ access: input.access, inventory, operation, handlerState: joins.handlerState, responseFlowIndex });
+    const joins = resolveSurfaceJoins({ access: scopedAccess, inventory, operation });
+    const analysis = observationsFor({ access: scopedAccess, inventory, operation, handlerState: joins.handlerState, responseFlowIndex });
     responseFlowResolveElapsedMs += analysis.responseFlowElapsedMs;
     const contract = contractEvidence(operation, analysis, joins);
     const responseFlowPaths = analysis.responseFlow?.declarations.map((declaration) => declaration.relativePath) ?? [];
