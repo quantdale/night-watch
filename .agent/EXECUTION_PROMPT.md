@@ -1,182 +1,252 @@
-# Nightwatch Executor Campaign — Source-Analysis Runtime Hardening + Proof-Identity Preservation
+# Nightwatch Executor Campaign — Source-Proof Soundness + Static Discovery Hardening
 
-Status: ACTIVE
-Planned-From: `910ff0f65aaf966aae20e4c72fe8b695e66038e4`
-Target-Branch: `main`
-Campaign-Class: `IMPLEMENTATION_AND_SYSTEMIC_HARDENING`
-Campaign-ID: `nightwatch-source-analysis-runtime-hardening-v1`
-Authorization-Class: `NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY`
-Execution-Budget: `12 HOURS`
-OpenSpec-Change: `openspec/changes/nightwatch-source-analysis-runtime-hardening-v1/`
+Status: ACTIVE PLANNING HANDOFF — executor may start a fresh native task; no implementation from this campaign has landed yet.
+Planned-From: main at 266b5fcbb4c80125939f41df3bf9b5608654c753
+Target branch: main
+OpenSpec change: openspec/changes/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/
+Intended execution budget: approximately 12 productive engineering hours
+Scope: LOCAL / approved read-only source / synthetic only
 
 ## Mission
 
-Execute the next evidence-backed Nightwatch campaign as a 12-hour local/source/synthetic hardening run. Do not invent a Phase 29 and do not broaden product authority. The campaign exists to remove duplicated TypeScript runtime-loader work and redundant source-analysis work while proving that Nightwatch's source-derived evidence, digests, contracts, eligibility decisions, safety boundaries, and fail-closed behavior remain exactly equivalent for identical inputs.
+Pull the latest night-watch main branch and execute the OpenSpec change nightwatch-source-proof-soundness-and-static-discovery-hardening-v1 end to end.
 
-The previous repository-wide systemic optimization is terminal and MUST NOT be resumed. Its report explicitly deferred two successor candidates: (1) consolidation of the TypeScript `require.extensions[".ts"]` transpile hook duplicated across ~20 hardened bin entrypoints, and (2) per-file source-analysis/read reuse where 127 handler operations currently map to only ~26 unique handler files. This campaign is the fresh authorization for those candidates, subject to the proof bar below.
+Do not resume the completed nightwatch-source-analysis-runtime-hardening-v1 task. Create a fresh continuity-v2 task and make it the active task before source edits.
 
-## Read these first
+Your primary objective is NOT to increase proof counts. It is to prove that Nightwatch only promotes lexically real, reachable, mechanically complete source facts into response/semantic/campaign authority.
 
-1. `AGENTS.md`
-2. `docs/CURRENT_STATE.md`
-3. `docs/SAFETY_MODEL.md`
-4. `docs/DECISIONS.md`
-5. `docs/ROADMAP.md`
-6. `docs/ARCHITECTURE.md`
-7. `.agent/ACTIVE_TASK.md`
-8. `.agent/tasks/nightwatch-repository-wide-systemic-optimization-v1/{SPEC,PLAN,STATE,REPORT}.md`
-9. This file
-10. `openspec/changes/nightwatch-source-analysis-runtime-hardening-v1/{proposal,design,tasks,audit}.md`
-11. `openspec/changes/nightwatch-source-analysis-runtime-hardening-v1/specs/source-analysis-runtime-hardening/spec.md`
+The planner found two mandatory soundness seams:
 
-Repository rules are authoritative over this prompt. If live Git or tests contradict this plan, preserve the stronger evidence and update the plan rather than forcing the implementation to match stale assumptions.
+1. Extended PHP direct-return proof appears able to prove a literal response from an incomplete control-flow function with implicit fall-through.
+2. Static TS/JS/Go route extraction and PHP declaration counting use raw-source regex matching that can be contaminated by comments/strings.
 
-## Mandatory startup and native continuity
+You must reproduce or falsify those claims through executable public-path tests. Do not accept the planner's static reasoning on faith.
 
-Before implementation:
+## Required bootstrap
 
-- Pull/fetch and prove the working tree is clean and `HEAD == origin/main`. If `origin/main` advanced beyond `Planned-From`, inspect every intervening diff and reconcile this campaign before editing.
-- Confirm the completed optimization task remains terminal; never mutate its final records into an in-progress task.
-- Create and activate a fresh native task at `.agent/tasks/nightwatch-source-analysis-runtime-hardening-v1/` with `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`, using continuity protocol v2 and this OpenSpec change as the frozen planning source. Update `.agent/ACTIVE_TASK.md` only after the new task files are internally coherent.
-- Run baseline continuity/project checks before source edits.
-- Do not contact DEV/NEXT/production, authenticate, inspect owner-only findings, query data stores, perform cloud/infrastructure archaeology, modify sibling Alphaus repositories, publish findings, invoke runtime AI, or exercise self-development promotion authority.
+Read, in this order:
 
-## Twelve-hour execution discipline
+1. AGENTS.md
+2. .agent/PLANNER_HANDOFF.md
+3. this file
+4. docs/CURRENT_STATE.md
+5. docs/SAFETY_MODEL.md
+6. docs/DECISIONS.md
+7. docs/ROADMAP.md
+8. docs/ARCHITECTURE.md where source/campaign authority is relevant
+9. .agent/ACTIVE_TASK.md and the completed prior task's STATE/REPORT
+10. every file in openspec/changes/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/
 
-Treat `12 HOURS` as the intended engineering budget, not as permission to idle. Do not stop after the first green patch. Use remaining productive time for literal repository review, differential proof, adversarial testing, clean-checkout reproduction, performance remeasurement, and documentation. If all acceptance criteria are genuinely complete before the budget is exhausted, use the remaining useful budget to search for regressions and hidden coupling inside this campaign's boundaries; do not manufacture scope or wait artificially.
+Then reconcile live Git against Planned-From. Current tests/runtime/live source outrank this prompt if the repository changed.
 
-Suggested allocation:
+Create:
 
-- H0–H1.5 — bootstrap, literal all-file audit, fresh baselines, exact command/output inventory.
-- H1.5–H4 — centralize and harden the duplicated TypeScript runtime loader; per-entrypoint parity.
-- H4–H7 — bounded source-read/analyzer work reuse; exact digest/output differential harness.
-- H7–H9 — adversarial invalidation, stale/currentness, error/fallback, privacy, ordering, and concurrency tests.
-- H9–H10.5 — performance/RSS remeasurement and focused dependency-cone suites.
-- H10.5–H12 — full local/clean gates, continuity/docs, commit/push, exact-head Actions observation and final report.
+.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/SPEC.md
+.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/PLAN.md
+.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/STATE.md
+.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/REPORT.md
 
-Checkpoint `STATE.md` after each major milestone and before changing subproblems.
+and route .agent/ACTIVE_TASK.md to the new task as ACTIVE. Preserve continuity protocol v2 and repository checkpoint rules.
 
-## Workstream 1 — literal all-tracked-file audit
+## Non-negotiable H0 all-file audit
 
-This is mandatory and is not satisfied by search alone.
+Before implementation, literally scour the local checkout.
 
-- Generate the authoritative tracked-file list with `git ls-files -z` (and a deterministic sorted text view for the session).
-- Inspect every tracked file. Classify every path into executable source, bin/CLI, test, fixture/corpus, config/workflow, UI, scenario, agent/tooling, or durable docs.
-- For generated/historical data, verify role, authority and coupling rather than pretending every line is hand-authored logic.
-- Record a sanitized execution audit summary in the native task REPORT/STATE. Never persist raw sibling source, credentials, customer values, owner-only findings, arbitrary private paths, or machine-specific secrets.
-- Specifically reconcile: all bin entrypoints using TS runtime transpilation; all direct `readFile`/source-analysis paths; all analyzer/evidence-digest constructors; cache/currentness identities; all callers of `discoverSourceSurfaces`; source/eligibility/review/Control Center projections; gate manifests; and regression tests.
-- Search for TODO/FIXME/HACK markers, dead adapters, duplicate compatibility paths, stale comments/docs, unsafe fallbacks, and hidden authority expansion. A zero-result search is evidence only for that search, not proof the repository has no debt.
+Use a NUL-safe git ls-files manifest. Account for EVERY tracked file, not merely src/. The final task report must record tracked count and reviewed count and they must match.
 
-## Workstream 2 — TypeScript runtime-loader consolidation
+For every tracked path, classify at minimum:
 
-Baseline first. Enumerate every bin script that installs a `.ts` require hook or performs equivalent `typescript.transpileModule` work. Measure representative cold/warm CLI costs and capture byte-for-byte stdout/stderr/exit-code behavior.
+- current runtime/source authority
+- safety/auth/network/product boundary
+- campaign/triage/portfolio/Phase-24 authority
+- source parser/analyzer/currentness/cache/invalidation
+- tests/gates/tooling
+- UI/Control Center
+- config/workflow
+- corpus/fixture
+- durable docs/history
+- agent continuity
+- generated/lock/metadata
 
-Implement one repository-owned loader utility only if it can preserve all existing semantics:
+Deep-read current executable/config/gate logic. Historical files still need role/coupling review; do not waste hours pretending every historical report is active business logic.
 
-- same TypeScript version;
-- same compiler target/module/moduleResolution/esModuleInterop/skipLibCheck behavior per caller, unless a differential test proves a caller intentionally differs;
-- same module resolution and exception behavior;
-- same restoration of any pre-existing `.ts` hook;
-- no global hook leakage after the bounded load;
-- no arbitrary filesystem or process authority;
-- no cache of pass/fail verdicts.
+Search broadly for TODO/FIXME/HACK/XXX, skips/only, ts-ignore/expect-error, unsafe eval/shell, hidden network/writes, duplicate analyzers/parsers, stale compatibility bridges, fail-open error paths, source-text/privacy leakage, global mutable state and unbounded collections. Record evidence, not just query strings.
 
-A content-addressed transpile cache is allowed only for pure compiler derivatives and only with complete invalidation over TypeScript version + compiler options + exact source bytes + any other load-bearing input. Prefer process-local memory first. If a disk derivative cache is justified, keep it under an already ignored derivative-cache boundary such as `node_modules/.cache`, write atomically, and prove an interrupted/stale cache cannot change behavior. This permission does NOT authorize a disk-backed source-surface/evidence cache.
+No source edit before this audit and baseline are checkpointed.
 
-Migrate entrypoints incrementally and validate each group. If one entrypoint has genuinely different semantics, preserve it explicitly rather than forcing false uniformity.
+## Mandatory reproduction 1 — PHP implicit fall-through
 
-## Workstream 3 — source-read and analyzer work reuse
+Start with a focused test around analyzeSourceArtifact, then prove the public source-discovery consequence.
 
-Start with the safest redundant work: repeated exact-source reads inside one `discoverSourceSurfaces` / integration invocation. Introduce only call-scoped, exact-snapshot reuse whose identity includes enough authority to prevent stale cross-source reuse (at minimum repository identity, source SHA, relative path and current content identity where available).
+Probe:
 
-Then investigate per-file shared analyzer work. The admission bar is deliberately higher because analyzer observations feed evidence identities:
+~~~php
+function readExample($mode) {
+    if ($mode) {
+        return ['id' => 1];
+    }
+}
+~~~
 
-- Do not cache final eligibility/pass/fail verdicts.
-- Do not change analyzer IDs, analyzer versions, response-flow versions, observation ordering, rejection taxonomy, source-currentness semantics, contract identities, or digest canonicalization merely to gain speed.
-- Keep source text ephemeral; no raw source in returned DTOs, task files, Git artifacts or durable caches.
-- If sharing a parsed/tokenized representation across symbols, key it to exact source bytes/currentness and keep symbol/hint-specific analysis separate.
-- Preserve bounded budgets and fail-closed behavior. Cache miss, cache corruption or inability to establish identity must fall back to the authoritative uncached path or fail closed; it must never create a proof.
+Determine whether current code emits a mechanically-provable PHP_RETURN_ROOT_TYPE or PHP_RETURN_OBJECT_FIELDS observation and whether an otherwise exact discovered handler can therefore obtain responseProof/semanticProof PROVEN.
 
-If the analyzer refactor cannot prove parity, stop at read reuse and document why the deeper optimization was rejected.
+Controls:
 
-## Workstream 4 — differential proof harness
+- one unconditional literal return — should be provable;
+- conditional early literal return + unconditional compatible fallback — should be provable if every path is covered;
+- complete if/else — should be provable if every branch is exact;
+- missing else/fallback — must not be a whole-handler proof;
+- nested/loop/try/yield/dynamic/unknown flow — fail closed unless this campaign explicitly proves the bounded form.
 
-Before changing the analyzer/source path, capture a baseline from the exact same source snapshot. After each candidate implementation, compare the complete safe observable surface, not just test counts.
+If reproduced, this is a correctness defect. Fix it even if current proof/census counts fall.
 
-For identical inputs, require equality of at least:
+Do NOT solve it by making every rejected analyzer observation globally override all proven observations. Fix completeness in the owning PHP response proof family.
 
-- source inventory counters and snapshot identity;
-- operations/surfaces and their deterministic ordering;
-- route/request/response proof states;
-- analyzer IDs/versions/statuses/rejection codes/rejection families;
-- every analyzer `evidenceDigest`;
-- response-flow proof identities;
-- response contract IDs and response evidence digests;
-- semantic contract IDs;
-- source gap taxonomy and eligibility/readonly census digests;
-- Phase 24 inputs, eligible/excluded counts and reasons;
-- review queue/explain projections;
-- CLI JSON output bytes where existing contracts make byte stability authoritative.
+## Mandatory reproduction 2 — code-like route text
 
-ANY unexplained same-input identity drift (`ev:sha256`, response/semantic ID, deterministic digest, census digest, ordering or verdict) is a hard stop. Roll back the optimization unless the drift exposes a reproduced correctness defect; a correctness change then requires explicit documentation, versioning where the contract requires it, focused adversarial proof and separate authorization if it expands authority.
+Through the public synthetic source discovery path, test at least:
 
-## Workstream 5 — adversarial hardening
+~~~ts
+// app.get("/ghost", ghostHandler)
+const documentation = 'router.get("/also-ghost", anotherHandler)';
+app.get("/real", realHandler);
+~~~
 
-Add focused tests for the new mechanics:
+and Go comment/raw-string equivalents.
 
-- same path under different repo/source SHA/content must never alias;
-- content change invalidates reuse even if mtime is unchanged;
-- mtime-only change does not matter where content identity is authoritative;
-- duplicate handler operations sharing one file retain symbol-specific results;
-- malformed/oversized/privacy-sentinel source remains rejected;
-- source unavailable/stale/ambiguous states never become proof through cache reuse;
-- exception paths restore hooks/locks and leave no poisoned cache entry;
-- concurrent or nested loader use either has proven deterministic semantics or is explicitly serialized/fail-closed;
-- cold and warm runs produce identical stdout/stderr/exit status and public DTO/digest surfaces;
-- fallback paths preserve the legacy result, not merely successful execution.
+A comment/string route must not produce a route operation. The real route must preserve existing identity/order.
 
-Do not weaken existing assertions or skip tests to obtain green.
+If reproduced, replace raw-regex-over-unfiltered-source matching with bounded lexical-aware discovery. Do not execute JS/Go or introduce a framework runtime.
 
-## Workstream 6 — architecture/hygiene review without scope inflation
+## Mandatory reproduction 3 — fake handler declarations
 
-The planner census identified several large files (`src/core/campaign/orchestrator.ts`, `src/core/source/surfaces.ts`, `src/core/semanticCoverage/sourceAnalyzers.ts`, `bin/hardening-check.mjs`, `ui/control-center/src/App.tsx`) and many phase-specific Playwright configs. Treat these as review targets, not automatic refactor targets. Split/restructure only if this campaign reproduces a correctness, performance, ownership or testability defect and the change can be proven within the same safety boundary. Historical docs/corpus are intentional evidence; do not compact history for aesthetics.
+Construct PHP source with one real handler function plus comment/docblock/string text containing the same function declaration spelling.
 
-## Workstream 7 — validation and CI truth
+The fake text must not turn one real declaration into MULTIPLE_SYMBOLS. Two lexically real declarations must still fail closed.
 
-Run the narrowest focused tests after each change, then the repository-owned acceptance cone. At minimum, if still current:
+Prefer existing bounded PHP tokenization where ownership/coupling remains clean. If a new lexical helper is necessary, make it small, deterministic, bounded and independently tested.
 
-- `npm run typecheck`
-- `npm run hardening:check`
-- `npm run project:check`
-- `npm run agent:check`
-- `npm run agent:audit`
-- focused loader/source/analyzer/eligibility/response-flow tests
-- `npm run campaign:synthetic`
-- `npm run test:owner-provenance`
-- `npm run test:semantic-compat`
-- `npm run gate:local`
-- the Node20 clean gate used by current repository policy
-- canonical/topology-correct isolated parity when required by the affected source-analysis cone
+## Proof/version rules
 
-Record before/after wall time and peak RSS with the same methodology and report variance honestly. Performance improvement is not accepted if verification strength or output identity weakens.
+Correctness changes may legitimately alter source-surface/analyzer/contract/census digests.
 
-GitHub Actions is currently known to fail before runner steps because of an external billing/spending-limit/platform condition. At final pushed HEAD, observe the exact-head run once. If the job again has zero/null steps, record `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` (or the repository's current equivalent), do not call it green, do not treat it as a code failure, and do not churn workflow code or repeatedly retry. If steps actually execute, require the real result.
+For each delta classify:
 
-## Completion gates
+- INTENTIONAL_CORRECTNESS_DELTA
+- EXPECTED_VERSION_INVALIDATION
+- UNEXPLAINED_DRIFT
 
-The campaign is complete only when all of the following are true:
+Unexplained drift is a blocker.
 
-1. Every tracked file was included in the local all-file audit and the relevant execution paths were deeply reviewed.
-2. The TS-loader duplication is either consolidated with per-entrypoint differential proof or explicitly rejected with measured evidence.
-3. Safe source-read/analyzer reuse is implemented where admitted; any deeper candidate that cannot preserve proof identity is rejected rather than forced.
-4. Same-input safe outputs and cryptographic/deterministic identities are unchanged unless a separately justified correctness defect was proven and handled under the proper version/authority rules.
-5. New cache/hook/fallback mechanics have adversarial regression protection.
-6. Measured runtime/RSS evidence demonstrates the outcome honestly; no benchmark-only hacks.
-7. Required local/clean gates are green and exact test counts/results are recorded.
-8. Native continuity v2 task records are complete, docs are reconciled only where truth changed, and the tree is clean.
-9. Commit/push uses normal fast-forward Git policy; never force-push. Verify local `HEAD == origin/main` after push.
-10. Exact-head Actions truth is recorded without overstating externally blocked CI.
+If extended real-source response semantics change, bump the appropriate version identity and prove that sourceSurfaceAnalyzerSetIdentity, caches, currentness/invalidation and downstream source census observe it.
 
-## Final report requirements
+Never bump an identity solely to make a failing parity test go away.
 
-The task REPORT must contain: executive summary; exhaustive audit scope and file-count manifest; bottlenecks with evidence; implementation decisions; files/subsystems changed; before/after timings and RSS; full parity/digest proof results; adversarial tests; validation ledger; regressions fixed; candidates rejected and why; remaining risks; deferred opportunities; final Git anchors; exact-head CI observation; and an explicit statement that no forbidden product/data/infra/auth/publication authority was used.
+## Fresh census and optional coverage work
+
+After the soundness fixes are green, rerun the entire current source proof census.
+
+Do not aim for the old 83 response contracts / 3 eligible as a minimum. If corrected truth is lower, keep the lower truthful result.
+
+Only if the hardened current census reveals a repeated exact static response family with:
+
+- current positive population;
+- complete bounded syntax;
+- deterministic identity;
+- positive + adversarial near-miss fixtures;
+- currentness binding;
+- no dynamic/runtime/fuzzy inference;
+- explicit false-positive analysis;
+- downstream compatibility through existing adapters;
+
+may you add ONE such proof family.
+
+If no family clears that bar, record NO_SAFE_NEW_FAMILY and spend the remaining useful budget on adversarial tests, mutation cases, bounded helper decomposition, differential tooling, hidden bypass search and clean-checkout proof.
+
+Do not touch GET-only read-only authority, runtime-binding generalization, dynamic dispatch, owner policy, replay authority, selection rules or publication.
+
+## 12-hour work shape
+
+Use the OpenSpec tasks.md schedule as the primary checklist:
+
+- H0–1.5: full tracked-file audit + baseline
+- H1.5–3: reproduce/falsify all soundness probes
+- H3–5.5: PHP reachability/completeness hardening
+- H5–7: route/declaration lexical hardening
+- H7–8.5: downstream proof/census reconciliation
+- H8.5–10: adversarial depth; optional exact-family admission only if earned
+- H10–11: full local + clean-checkout acceptance
+- H11–12: state/report/docs/Git/exact-head CI observation
+
+This is a productive engineering budget, not a timer. Do not idle. Do not stop after the first green fix. If all required acceptance is genuinely complete early, continue useful in-scope adversarial and coupling review; stop only when the campaign is terminal or further work would be manufactured scope.
+
+## Validation
+
+At minimum run and record:
+
+- npm run typecheck
+- npm run hardening:check
+- npm run quality-gate:spec
+- npm run gate:inventory
+- focused Phase 25/26/27/28 analyzer/source/response-flow suites
+- real-source extraction/currentness/admission tests
+- sourceAnalysisParity tests
+- npm run campaign:synthetic
+- npm run campaign:source-gaps
+- npm run campaign:eligibility-census
+- npm run campaign:readonly-census
+- npm run test:semantic-compat
+- npm run test:owner-provenance
+- npm run gate:local
+- npm run gate:clean
+- npm run agent:check
+- npm run agent:audit
+- npm run project:check
+- git diff --check
+
+Run the canonical complete Playwright enumeration and a fresh disposable checkout/topology acceptance consistent with current repository policy.
+
+Capture comparable before/after source-census wall time and peak RSS. Correctness may cost some time; unbounded or severe regressions require investigation.
+
+If Control Center source DTOs/adapters change, run its typecheck/tests/build/browser gate. If they do not change, still verify source projections consumed by it remain schema-compatible.
+
+## Safety
+
+Hard boundaries:
+
+- no production/DEV/NEXT/authenticated product contact;
+- no data/infra/cloud operations;
+- no sibling-source writes;
+- no source execution;
+- no publication;
+- no runtime AI authority;
+- no canonical self-dev promotion;
+- no force push;
+- raw source/customer/credential/cookie/body/trace values never enter committed task artifacts;
+- all uncertain source facts fail closed.
+
+## Git and reporting
+
+Commit only coherent validated checkpoints and push according to repository policy. Never force push.
+
+REPORT.md must include:
+
+- exact starting/final SHAs;
+- exhaustive audit manifest totals;
+- every planner probe and disposition;
+- reproduced defects with root cause;
+- implementation and versioning;
+- safe before/after proof/census counts;
+- intentional identity deltas;
+- adversarial matrix;
+- validation ledger with exact counts/skips;
+- before/after timing + RSS;
+- regressions fixed;
+- candidates rejected and why;
+- remaining risks/deferred work;
+- explicit safety counters/statement;
+- exact-head Actions observation.
+
+A GitHub Actions job with steps: [] is NO_STEPS_BILLING_OR_PLATFORM_BLOCK, not green CI.
+
+Terminal next action after complete validated push: STOP.
