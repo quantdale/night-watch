@@ -6,17 +6,17 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: 137baed5e1075920a138facf3d854a96896b142a
-Last substantive checkpoint SHA: 137baed5e1075920a138facf3d854a96896b142a
+Last validated implementation SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
+Last substantive checkpoint SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: M0 — fresh task activation and baseline preflight at ccbb577.
+Last checkpoint: M3 — source and campaign authority integration at a517a3e.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 137baed5e1075920a138facf3d854a96896b142a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 137baed5e1075920a138facf3d854a96896b142a
+LAST_VALIDATED_IMPLEMENTATION_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a517a3ea77b780f1d7d50de5ac7cdb41995d9bc4
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
@@ -52,23 +52,31 @@ M3 — source and campaign authority integration.
   collector shares one bounded snapshot across list/detail/timeline/graph.
   `npm run typecheck`, `npm run hardening:check`, and the 23-test focused
   Control Center suite passed.
+- M3 — COMPLETE: the fixed approved-source authority composes bounded source
+  discovery, inventory currentness, cache identity, and Phase 24 analysis;
+  source/campaign generations are bound in-process; the campaign bridge uses
+  Phase 24's selected IDs as its sole selection authority and feeds only the
+  existing portfolio, impact, coverage, and plan contracts. Public source and
+  campaign projections remain metadata-only. `npm run typecheck`,
+  `npm run hardening:check`, and the focused 34-test Control Center suite
+  passed.
 
 ## Work In Progress
 
-Map and implement the source/campaign authority facade. Use the approved
-read-only sibling-source boundary and existing Phase 24/source-surface
-analysis, then bind only sanitized campaign-intelligence metadata to the same
-generation. Preserve source currentness and explicit stale/unavailable/empty/
-blocked states; do not invoke the intelligence CLI or introduce a second
-selector.
+Map and implement the owner-local findings authority facade. Use the fixed
+private artifact root and existing dossier-kind/version validators, then bind
+only safe finding metadata to the Control Center. Preserve inaccessible,
+partial, corrupt, privacy-blocked, empty, and available states; never expose
+owner-only evidence or turn inaccessible storage into a successful EMPTY
+result.
 
 ## Exact Next Action
 
-Inspect the exact `src/core/source` discovery output and Phase 24/
-`campaignIntelligence` input contracts needed for one source/campaign
-snapshot. Record the selected source and campaign bridge shapes in PLAN, then
-implement a synthetic-testable `sourceAuthority.ts` without returning source
-text, source paths, or CLI-derived state.
+Inspect `src/core/policy/privateArtifacts.ts`, the dossier-kind/version
+validators, and the existing private artifact layout needed for one bounded
+findings snapshot. Record the selected findings bridge in PLAN, then
+implement a synthetic-testable `findingsAuthority.ts` without returning raw
+dossier evidence, arbitrary paths, or permission details.
 
 ## Files Changed
 
@@ -84,6 +92,10 @@ text, source paths, or CLI-derived state.
 | `src/controlCenter/server/defaultCollector.ts` | Injected bounded run snapshot integration | implemented; focused integration tests pass |
 | `src/controlCenter/adapters/runAdapter.ts` | Additive run collection state/reason projection | implemented; focused suite passes |
 | `src/controlCenter/contracts/runs.ts` | Additive run collection state contract | implemented; historical fixtures remain compatible |
+| `src/controlCenter/authorities/sourceAuthority.ts` | Fixed approved-source discovery/currentness/Phase 24 snapshot bridge | implemented; synthetic integration passes |
+| `src/controlCenter/authorities/campaignAuthority.ts` | Phase 24-selected campaign metadata/coverage/plan bridge | implemented; synthetic integration passes |
+| `src/controlCenter/adapters/sourceAdapter.ts` | Source summary authority currentness/generation projection | implemented; existing adapter suite passes |
+| `tests/unit/controlCenterAuthorityIntegration.test.ts` | Synthetic source/campaign generation and privacy fixtures | added; 2/2 pass |
 
 ## Validation Ledger
 
@@ -105,6 +117,10 @@ text, source paths, or CLI-derived state.
 - M2 acceptance ladder — PASS: `npm run typecheck`,
   `npm run hardening:check`, and focused Control Center suite: 23 passed,
   0 failed.
+- M3 acceptance ladder — PASS: `npm run typecheck`; `npm run hardening:check`;
+  focused Control Center contracts/adapters/server/run-reader/source-campaign
+  suite: 34 passed, 0 failed; staged diff privacy scan found no credential or
+  bearer-key patterns; implementation checkpoint is a517a3e.
 
 ## Decisions Made During This Task
 
@@ -132,6 +148,9 @@ text, source paths, or CLI-derived state.
 - The additive run-list state/reason fields preserve historical v1 fixtures
   while allowing the normal collector to distinguish AVAILABLE, EMPTY,
   UNKNOWN, and UNAVAILABLE without changing run detail/timeline DTOs.
+- The source bridge retains internal discovery/Phase 24 structures only until
+  the adapter boundary; the campaign planner materializes the already-selected
+  Phase 24 set and cannot introduce a second selection authority.
 
 ## Blockers
 
@@ -151,12 +170,12 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Trace the source discovery and campaign
-contracts named in the next action, record the bridge, then implement and
-test the source authority. Keep all reads bounded, in-process, read-only,
-loopback-safe, synthetic-testable, and privacy-projected.
+Read this STATE after SPEC and PLAN. Trace the private artifact and dossier
+validators named in the next action, record the bridge, then implement and
+test the findings authority. Keep all reads bounded, owner-local, in-process,
+read-only, synthetic-testable, and privacy-projected.
 
 ## Completion Snapshot
 
-INCOMPLETE — M1 authority inventory and M2 bounded run-reader integration are
-complete; M3 source/campaign authority integration is active.
+INCOMPLETE — M0 through M3 are complete; M4 owner-local findings authority
+integration is active.

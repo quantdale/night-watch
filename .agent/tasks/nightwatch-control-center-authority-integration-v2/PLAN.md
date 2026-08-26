@@ -162,7 +162,7 @@ gate remains green.
 
 ### M3 — Source and campaign authority integration
 
-Status: PENDING.
+Status: COMPLETE.
 
 Build one coherent in-process source/campaign snapshot over existing approved
 source and Phase 24/campaign authorities. Preserve exact currentness,
@@ -193,9 +193,22 @@ second selector, source text, source paths, execution callback, or external
 state is introduced. Empty, stale, unavailable, blocked, and composition
 errors remain explicit campaign states.
 
+Evidence: `sourceAuthority.ts` uses the fixed approved sibling-source root,
+existing bounded discovery/cache/Phase 24 bridges, repository currentness, and
+categorical generation/reason state. `campaignAuthority.ts` converts only the
+Phase 24-selected set into the existing portfolio, impact, coverage, and plan
+contracts; selector drift fails closed. The default collector binds source and
+campaign to one short-lived in-process snapshot, while adapters remain the
+only public projection boundary. Synthetic fixtures prove available and stale
+states, deterministic campaign composition, cache sharing, and absence of
+source paths/symbols/raw sentinels from public JSON.
+
+Validation: `npm run typecheck` PASS; `npm run hardening:check` PASS; focused
+Control Center suite PASS, 34 passed and 0 failed.
+
 ### M4 — Owner-local findings reader
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Read only the fixed private findings authority through existing dossier/store
 validators. Enforce permissions, schema/version, symlink/path/size/privacy
