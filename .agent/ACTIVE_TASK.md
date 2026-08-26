@@ -6,15 +6,15 @@ Title: Read-Only Eligibility Proof Expansion + Campaign Surface Unlock
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-readonly-eligibility-proof-expansion-v1
 Starting SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-Last validated implementation SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-Last checkpoint: M0 — bootstrap, fresh census, and successor activation.
-Current milestone: M1 — authoritative exclusion-chain census and mutability/read-only audit.
-Next action: Complete the sanitized M1 exclusion-chain map, then run the bounded live-source proof-family census.
+Last validated implementation SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
+Last checkpoint: M2/M3 — candidate census rejected new proof authority; M5 hardening active.
+Current milestone: M5 — adversarial, privacy, performance, and whole-repository hardening.
+Next action: Run the adversarial/privacy/performance matrix and repair any reproduced Critical/High defect before final validation.
 Authorization class: NIGHTWATCH_READONLY_ELIGIBILITY_PROOF_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
+LAST_VALIDATED_IMPLEMENTATION_SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS: IN_PROGRESS
@@ -35,5 +35,5 @@ authoritative; read-only facts never imply eligibility.
 ## Resume recipe
 
 Read the task SPEC, PLAN, and STATE; reconcile live Git/status/diff; continue
-the exact M1 action in STATE. Do not resume the completed Control Center task
+the exact M5 action in STATE. Do not resume the completed Control Center task
 or historical Phase 13 records.
