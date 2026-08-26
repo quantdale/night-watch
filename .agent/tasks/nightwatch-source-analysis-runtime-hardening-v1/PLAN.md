@@ -1,0 +1,133 @@
+# Living Plan — Source-Analysis Runtime Hardening
+
+Task ID: nightwatch-source-analysis-runtime-hardening-v1
+Phase: SOURCE-ANALYSIS-RUNTIME-HARDENING-V1
+Status: IN_PROGRESS
+Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+
+## Purpose
+
+Execute every ordered task in the OpenSpec change while preserving proof
+identity and Nightwatch's local/source/synthetic safety model.
+
+## Starting State
+
+- Starting/live `main`: `bebe357313b7210161c5524e90c442137a605aab` after a
+  fast-forward pull from `origin/main`.
+- Worktree clean and local `HEAD == origin/main` at activation.
+- Planned-from: `910ff0f65aaf966aae20e4c72fe8b695e66038e4`; intervening commits
+  contain the prior optimization closure and this campaign's OpenSpec plan.
+- Baseline pre-activation: `hardening:check` PASS; `agent:check` and
+  `project:check` intentionally reported stale predecessor routing until this
+  fresh task was activated; `agent:audit` had zero strict errors.
+- Toolchain: Node `v22.22.1`, npm `10.9.4`, TypeScript `5.9.3`.
+
+## Scope
+
+Tracked-file audit; duplicated bin TypeScript loader mechanics; exact source
+read reuse in discovery/integration; optional shared immutable parse/token work
+only after proof; differential safe-observable harness; adversarial/privacy/
+determinism hardening; source/eligibility/Phase 24 compatibility; performance;
+local, clean, canonical, isolated, continuity, project, and Git closure.
+
+## Non-Goals
+
+No product or environment execution, new source-proof/selection authority,
+Phase 29, worker parallelism, disk source cache, broad monolith split, sibling
+write, data/infra work, runtime AI, or self-development promotion.
+
+## Safety Constraints
+
+All work stays within the repository and synthetic fixtures, plus approved
+confined read-only source metadata where a task explicitly requires it. No
+credentials, auth state, raw source/value, customer data, owner-only finding,
+or external publication may enter this task or Git.
+
+## Milestones
+
+- [x] M0 — bootstrap: pull/reconcile Git, read authority and OpenSpec records,
+  run pre-edit baseline, create/activate this continuity-v2 task.
+- [ ] M1 — exhaustive tracked-file and affected-path audit; baseline source
+  census, loader census, hygiene review, timings/RSS and safe output captures.
+- [ ] M2 — build the complete differential parity harness before optimization;
+  include byte-stable CLI checks, repeated-symbol fixtures, and mutation probes.
+- [ ] M3 — centralize equivalent TypeScript runtime loading, add only proven
+  process-local compiler-derivative reuse, migrate incrementally, and test
+  restoration/invalidation/fallback behavior.
+- [ ] M4 — instrument and implement call-scoped exact-snapshot source-read
+  reuse; prove identity separation, privacy, bounds, fail-closed behavior and
+  parity across source/join/eligibility paths.
+- [ ] M5 — measure residual parser/token cost; admit shared parse work only if
+  exact symbol-specific parity is provable, otherwise record rejection while
+  retaining M3/M4 wins.
+- [ ] M6 — adversarial hardening for collisions, symbols, mtimes/content,
+  malformed/privacy/stale/unavailable input, exceptions, concurrency and proof
+  non-manufacture.
+- [ ] M7 — repository-wide architecture/hygiene and affected compatibility
+  sweep; validate operator, Control Center, manifests, source gaps, Phase 24,
+  synthetic and provenance surfaces.
+- [ ] M8 — repeat timings/RSS and execute all required local acceptance,
+  semantic compatibility, synthetic/provenance, clean Node20, and isolated
+  parity gates.
+- [ ] M9 — use remaining productive budget for in-scope regression hunting,
+  reconcile all records/docs, inspect privacy/diff, commit/push, observe exact
+  Actions truth once, and write final report.
+
+## Validation Strategy
+
+1. Focused tests after each implementation slice.
+2. Differential identity and CLI-byte harness after each candidate.
+3. `typecheck`, `hardening:check`, `project:check`, `agent:check`,
+   `agent:audit`, focused source/analyzer/eligibility/response tests.
+4. `campaign:synthetic`, `test:owner-provenance`, `test:semantic-compat`,
+   `gate:local`, current Node20 clean gate, and affected canonical/isolated
+   parity.
+5. Final `git diff --check`, privacy surface inspection, normal fast-forward
+   push, exact-head Actions observation, and post-push Git equality.
+
+## Architecture / Approach
+
+Build the differential safe-observable harness first. Keep existing source,
+analyzer, evidence, currentness, eligibility, Phase 24, replay, dossier,
+operator, and Control Center authorities authoritative. Add a single explicit
+loader profile layer and a call-scoped source read view only where the census
+and parity evidence admit them. Treat parser sharing as optional and reject it
+if exact symbol-specific evidence identity cannot be proven.
+
+## Decision rules
+
+- Current tests/runtime evidence outrank assumptions and stale plan text.
+- A same-input identity drift is a hard stop unless it exposes a separately
+  reproduced correctness defect with the required versioning and authority.
+- A cache miss, corrupt entry, uncertain identity, exception, or unsupported
+  state may cost time or fail closed; it may never yield a proof.
+- Large files/configs are review targets, not automatic refactor scope.
+- Document rejected/deferred candidates under `Deferred / Follow-Up` rather
+  than manufacturing work or widening authority.
+
+## Decision Log
+
+- M0-01: The predecessor systemic-optimization task remains terminal history;
+  this fresh OpenSpec campaign gets its own continuity-v2 task and active route.
+- M0-02: The pulled head is the baseline authority after reconciling all
+  commits after the planner's planned-from SHA.
+
+## Discoveries
+
+- The OpenSpec change contains 53 ordered tasks and is ready for application.
+- The first pre-activation continuity failure was stale predecessor routing,
+  not a source correctness failure. Activation fixes routing without changing
+  the predecessor record.
+
+## Deferred Work
+
+Populate only with evidence-backed candidates rejected within this campaign,
+including reasons and any required future authorization.
+
+## Completion Criteria
+
+All 53 OpenSpec tasks are marked complete only with evidence in STATE/REPORT;
+all required local, clean, canonical, isolated, continuity, project, privacy,
+and Git checks pass; exact-head Actions is truthfully classified; the final
+tree is clean and local `HEAD == origin/main`.

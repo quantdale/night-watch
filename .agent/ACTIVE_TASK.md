@@ -1,36 +1,25 @@
 # Active Task
 
-Task ID: nightwatch-repository-wide-systemic-optimization-v1
-Phase: REPOSITORY-SYSTEMIC-OPTIMIZATION-V1
-Title: Repository-Wide Systemic Optimization
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-repository-wide-systemic-optimization-v1
-Starting SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-Last validated implementation SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
-Last checkpoint: M5 — full gate:local PASS at implementation checkpoint f9902bf with identical validated counts (compat 1884/1871/13/0, provenance 91, synthetic 66); validation-loop cost reduced ~54% end-to-end without weakening any gate.
-Current milestone: COMPLETE — all milestones closed; see task REPORT.md.
-Next action: STOP — this campaign is complete; deferred candidates in REPORT.md §10 require separate authorization.
-Authorization class: NIGHTWATCH_REPOSITORY_SYSTEMIC_OPTIMIZATION_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: nightwatch-source-analysis-runtime-hardening-v1
+Phase: SOURCE-ANALYSIS-RUNTIME-HARDENING-V1
+Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-source-analysis-runtime-hardening-v1
+Starting SHA: bebe357313b7210161c5524e90c442137a605aab
+Last validated implementation SHA: bebe357313b7210161c5524e90c442137a605aab
+Last checkpoint: M0 — bootstrap and continuity activation at pulled clean head bebe357.
+Current milestone: M1 — exhaustive tracked-file and affected-path audit.
+Next action: Generate the complete tracked-file manifest, inspect every tracked path, enumerate loader/source-analysis seams, and capture baseline evidence.
+Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 58b81015857e1d352c04a4545d78093071f5fbc6
-LAST_VALIDATED_IMPLEMENTATION_SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: f9902bf43081ce737d08437f9f68c3af04ed62b0
+STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
+LAST_VALIDATED_IMPLEMENTATION_SHA: bebe357313b7210161c5524e90c442137a605aab
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bebe357313b7210161c5524e90c442137a605aab
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety
 
-This task was local/source/synthetic only: it optimized Nightwatch's own
-validation and analysis mechanics (checker process batching, incremental
-typecheck, suite execution mechanics). No DEV/NEXT/production contact,
-auth-state read, product observation or mutation, database/datastore/cloud/
-infrastructure operation, Alphaus sibling write, external publication,
-external coordination, canonical promotion, runtime AI, or second authority
-occurred. Verification strength was never reduced: no test deletion or
-weakening, no pass/fail verdict caching, no gate schema or receipt semantic
-changes. Validated counts are identical before and after.
-
-## Resume recipe
-
-STOP. This task is complete under local/source/synthetic scope. Do not resume
-it; a successor (e.g. the TS require-hook consolidation deferred in
-REPORT.md §10) requires fresh authorization and a fresh live Git census.
+This task is local/source/synthetic only. It must preserve the owner freeze,
+read-only sibling boundary, existing proof/eligibility authorities, privacy
+contract, deterministic outputs, fail-closed behavior, and no-publication
+rule. The terminal systemic-optimization task remains immutable history.
