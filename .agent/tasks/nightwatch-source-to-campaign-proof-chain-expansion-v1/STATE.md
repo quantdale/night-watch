@@ -82,25 +82,32 @@ repository gates.
   authority digests, stage/blocker counts, runtime/replay/dossier counts, and
   advisory family diagnostics only; it does not select, execute, promote, or
   persist source rows.
+- M5 — The canonical serial Playwright run reproduced a full-suite-only
+  cancellation-fixture timing defect. The synthetic fixture now waits 25 ms
+  before aborting a request whose server response is intentionally delayed by
+  100 ms; focused cancellation coverage remains 5/5 and the full suite now
+  passes without changing any product assertion or safety classification.
 
 ## Work In Progress
 
-Systemic hardening is active after BUILD → TEST → AUDIT → FIX. The remaining
-work is the dependency-cone audit, negative/currentness/privacy/determinism
-closure, performance confirmation, and the repository acceptance gates.
+Systemic hardening is active after BUILD → TEST → AUDIT → FIX. The canonical
+full suite is now stable; the remaining work is the dependency-cone audit,
+negative/currentness/privacy/determinism closure, performance confirmation,
+topology-correct isolated validation, and the repository acceptance gates.
 
 ## Exact Next Action
 
-Checkpoint the current continuity/docs state, rerun the canonical full suite
-after the reproduced transient, then execute the clean Node20 gate and the
-topology-correct isolated full suite before documentation closure.
+Checkpoint the fixture hardening and continuity state, then execute the clean
+Node20 gate and topology-correct isolated full suite before documentation
+closure.
 
 ## Files Changed
 
 Task activation and M1–M4 currently change `.agent/ACTIVE_TASK.md`, this task's
 four records, the v2 census projection, its operator output, focused regression
 coverage, and the existing Control Center source-summary projection/UI. No
-Phase-24 selector or sibling source was changed.
+Phase-24 selector or sibling source was changed. The M5 hardening change is
+limited to the synthetic journey fixture timing.
 
 ## Validation Ledger
 
@@ -154,8 +161,11 @@ Phase-24 selector or sibling source was changed.
   --project=nightwatch --workers=1`): 2,524 enumerated / 2,507 passed / 16
   skipped / 1 failed. The only failure was the existing
   `journeyEngine.test.ts:163` cancellation fixture; the exact test passed
-  5/5 in immediate serial focused reruns. No assertion or product code was
-  changed; the full suite must be rerun on the clean checkpoint.
+  5/5 in immediate serial focused reruns. A bounded synthetic-fixture delay
+  was added so the request is dispatched before its intentional abort.
+- Focused cancellation test after the fixture hardening: PASS, 5/5.
+- Canonical full Playwright rerun after the fixture hardening: PASS, 2,524
+  enumerated / 2,508 passed / 16 skipped / 0 failed.
 
 ## Decisions Made During This Task
 

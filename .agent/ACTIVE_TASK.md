@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-to-campaign-proof-chain-expansion-v1
 Starting SHA: 545f6b8d700be131e55c424d055331887ed04189
 Last validated implementation SHA: f8a4f84a3a20aa2aed92f16d7128b6aa497dfc4d
-Last checkpoint: M5 — dependency-cone hardening passed; one existing journey cancellation fixture was reproduced 5/5 in focused reruns after a transient full-suite failure.
+Last checkpoint: M5 — canonical serial Playwright passed 2,524 enumerated / 2,508 passed / 16 skipped / 0 failed after bounded synthetic journey-fixture timing hardening.
 Current milestone: M5 — systemic hardening and dependency-cone validation.
-Next action: Checkpoint continuity/docs, rerun the canonical full suite, then run clean Node20 and topology-correct isolated validation before terminal documentation closure.
+Next action: Run the clean Node20 gate and topology-correct isolated full suite, then complete terminal documentation closure.
 Authorization class: NIGHTWATCH_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 545f6b8d700be131e55c424d055331887ed04189

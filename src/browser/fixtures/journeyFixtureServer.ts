@@ -68,7 +68,10 @@ function pageHtml(pathname: string, variant: JourneyFixtureVariant): string {
       ? "fetch('https://unknown.synthetic.alphaus.cloud/m/ripple/synthetic').catch(() => {});"
       : '';
   const cancel = variant === 'cancellation'
-    ? "const controller = new AbortController(); fetch('/api/cancel', {signal: controller.signal}).catch(() => {}); setTimeout(() => controller.abort(), 1);"
+    // Give Chromium one event-loop turn to dispatch the synthetic request so
+    // the cancellation classification remains stable after a long browser
+    // prelude; the fixture server deliberately responds after 100 ms.
+    ? "const controller = new AbortController(); fetch('/api/cancel', {signal: controller.signal}).catch(() => {}); setTimeout(() => controller.abort(), 25);"
     : '';
   const secret = variant === 'privacy-secret'
     ? "fetch('/m/ripple/privacy-read', {headers: {Authorization: 'Bearer SYNTHETIC_FAKE_SECRET'}}).catch(() => {});"
