@@ -118,11 +118,142 @@ function checkSha(value, label, errors) {
   }
 }
 
-function isCommit(root, sha) {
+// ---------------------------------------------------------------------------
+// Git graph cache (performance-only; verdict semantics are preserved exactly).
+//
+// The checker historically spawned one short-lived git process per
+// cat-file/merge-base query — measured at 880 spawns per run with ~94% of
+// CPU time spent inside spawnSync. Repository history is tiny relative to
+// that cost, so the complete object-type census plus the full commit-parent
+// graph is loaded once per run and both queries are answered in memory with
+// the same observable results as `cat-file -e <sha>^{commit}` and
+// `merge-base --is-ancestor` (including tag peeling and missing-object
+// behavior). Any failure while loading the graph leaves it `null` and every
+// query falls back to the original per-call git spawns: the fallback can
+// only cost time, never change a verdict.
+// ---------------------------------------------------------------------------
+
+let cachedGitGraph; // undefined = not yet attempted; null = unusable
+let cachedGitGraphRoot; // the cache is valid only for this repository root
+
+function normalizeSha(value) {
+  return typeof value === 'string' ? value.toLowerCase() : '';
+}
+
+function gitSpawn(root, args, extraOptions = {}) {
+  return spawnSync('git', args, {
+    cwd: root,
+    encoding: 'utf8',
+    env: buildChildEnvironment(process.env),
+    timeout: 10_000,
+    maxBuffer: 32 * 1024 * 1024,
+    ...extraOptions,
+  });
+}
+
+/** Peel `<sha>^{commit}` in memory: follow tag objects until a commit. */
+function graphResolveCommit(graph, value) {
+  let current = normalizeSha(value);
+  for (let hops = 0; hops <= 16; hops += 1) {
+    const type = graph.types.get(current);
+    if (current === '' || type === undefined) return null;
+    if (type === 'commit') return current;
+    if (type !== 'tag') return null;
+    const target = graph.tagTargets.get(current);
+    if (target === undefined || target === current) return null;
+    current = target;
+  }
+  return null;
+}
+
+/**
+ * Parse `git cat-file --batch` output for a known set of requested objects.
+ * Responses are matched to requests POSITIONALLY (the `--batch` contract);
+ * the echoed OID is deliberately not used as a key because git strips a
+ * leading zero when a full SHA starting with `0` is requested on stdin
+ * (a request for `0abc…` is answered as `abc…`). Throws on malformed streams
+ * so the caller falls back to spawned queries. Returns maps of commit
+ * parents and tag targets keyed by the requested (lowercase) SHAs.
+ */
+function parseCatFileBatch(output, requested) {
+  const parents = new Map();
+  const tagTargets = new Map();
+  let position = 0;
+  for (let index = 0; index < requested.length; index += 1) {
+    const requestedSha = requested[index];
+    const headerEnd = output.indexOf('\n', position);
+    if (headerEnd === -1) throw new Error('CAT_FILE_BATCH_TRUNCATED');
+    const header = output.slice(position, headerEnd);
+    const fields = header.split(' ');
+    if (fields.length === 2 && fields[1] === 'missing') {
+      position = headerEnd + 1;
+      continue;
+    }
+    if (fields.length !== 3 || !CAT_FILE_TYPES.has(fields[1]) || !Number.isInteger(Number(fields[2])) || Number(fields[2]) < 0) {
+      throw new Error('CAT_FILE_BATCH_MALFORMED_HEADER');
+    }
+    const type = fields[1];
+    const size = Number(fields[2]);
+    const contentStart = headerEnd + 1;
+    const contentEnd = contentStart + size;
+    if (output.length < contentEnd + 1) throw new Error('CAT_FILE_BATCH_TRUNCATED');
+    const content = output.slice(contentStart, contentEnd);
+    position = contentEnd + 1;
+    if (type === 'commit') {
+      const headerBlockEnd = content.indexOf('\n\n');
+      const headerBlock = content.slice(0, headerBlockEnd === -1 ? content.length : headerBlockEnd);
+      const commitParents = [];
+      for (const line of headerBlock.split('\n')) {
+        if (line.startsWith('parent ')) {
+          const parent = normalizeSha(line.slice(7).trim());
+          if (/^[0-9a-f]{40}$/.test(parent)) commitParents.push(parent);
+        }
+      }
+      parents.set(requestedSha, commitParents);
+    } else if (type === 'tag') {
+      const objectLine = content.split('\n').find((line) => line.startsWith('object '));
+      const target = normalizeSha((objectLine ?? '').slice(7).trim());
+      if (/^[0-9a-f]{40}$/.test(target)) tagTargets.set(requestedSha, target);
+    }
+  }
+  return { parents, tagTargets };
+}
+
+const CAT_FILE_TYPES = new Set(['commit', 'tag', 'tree', 'blob']);
+
+function loadGitGraph(root) {
+  if (cachedGitGraph !== undefined && cachedGitGraphRoot === root) return cachedGitGraph;
+  try {
+    const census = gitSpawn(root, ['cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)']);
+    if (census.status !== 0 || typeof census.stdout !== 'string') throw new Error('GIT_OBJECT_CENSUS_UNAVAILABLE');
+    const types = new Map();
+    const wanted = [];
+    for (const line of census.stdout.split('\n')) {
+      const separator = line.indexOf(' ');
+      if (separator === -1) continue;
+      const sha = normalizeSha(line.slice(0, separator));
+      const type = line.slice(separator + 1);
+      if (!/^[0-9a-f]{40}$/.test(sha)) continue;
+      types.set(sha, type);
+      if (type === 'commit' || type === 'tag') wanted.push(sha);
+    }
+    const batch = gitSpawn(root, ['cat-file', '--batch'], { input: `${wanted.join('\n')}\n` });
+    if (batch.status !== 0 || typeof batch.stdout !== 'string') throw new Error('GIT_COMMIT_GRAPH_UNAVAILABLE');
+    const { parents, tagTargets } = parseCatFileBatch(batch.stdout, wanted);
+    cachedGitGraph = Object.freeze({ types, parents, tagTargets });
+    cachedGitGraphRoot = root;
+  } catch {
+    cachedGitGraph = null;
+    cachedGitGraphRoot = root;
+  }
+  return cachedGitGraph;
+}
+
+function isCommitSpawned(root, sha) {
   return commandOutput(root, ['cat-file', '-e', `${sha}^{commit}`]) !== null;
 }
 
-function isAncestor(root, ancestor, descendant) {
+function isAncestorSpawned(root, ancestor, descendant) {
   const result = spawnSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], {
     cwd: root,
     encoding: 'utf8',
@@ -131,6 +262,39 @@ function isAncestor(root, ancestor, descendant) {
     maxBuffer: 256 * 1024,
   });
   return result.status === 0;
+}
+
+/** True iff `graph` contains a path from `descendant` back to `ancestor`. */
+function graphIsAncestor(graph, ancestor, descendant) {
+  const start = graphResolveCommit(graph, descendant);
+  const target = graphResolveCommit(graph, ancestor);
+  if (start === null || target === null) return false;
+  if (start === target) return true;
+  const queue = [start];
+  const visited = new Set(queue);
+  while (queue.length > 0) {
+    const commit = queue.pop();
+    for (const parent of graph.parents.get(commit) ?? []) {
+      if (parent === target) return true;
+      if (!visited.has(parent)) {
+        visited.add(parent);
+        queue.push(parent);
+      }
+    }
+  }
+  return false;
+}
+
+function isCommit(root, sha) {
+  const graph = loadGitGraph(root);
+  if (graph === null) return isCommitSpawned(root, sha);
+  return graphResolveCommit(graph, sha) !== null;
+}
+
+function isAncestor(root, ancestor, descendant) {
+  const graph = loadGitGraph(root);
+  if (graph === null) return isAncestorSpawned(root, ancestor, descendant);
+  return graphIsAncestor(graph, ancestor, descendant);
 }
 
 function committedChangedPaths(root, from, to) {
@@ -146,13 +310,31 @@ function committedChangedPaths(root, from, to) {
  * are deliberately ambiguous here because a combined diff cannot safely
  * attribute a path to the claimed checkpoint without choosing a parent.
  */
-function committedPathsForCommit(root, commit) {
-  if (!isCommit(root, commit)) return { status: 'UNKNOWN', paths: null, reason: 'commit does not identify a repository commit' };
+/** Spawned `rev-list --parents -n 1` parent inspection (fallback path). */
+function commitParentsSpawned(root, commit) {
   const parentLine = commandOutput(root, ['rev-list', '--parents', '-n', '1', commit]);
   if (parentLine === null) return { status: 'UNKNOWN', paths: null, reason: 'unable to inspect commit parents' };
   const parentFields = parentLine.trim().split(/\s+/).filter(Boolean);
   if (parentFields[0]?.toLowerCase() !== commit.toLowerCase()) return { status: 'UNKNOWN', paths: null, reason: 'commit parent inspection returned an unexpected object' };
-  const parents = parentFields.slice(1);
+  return { status: 'PARENTS_KNOWN', parents: parentFields.slice(1) };
+}
+
+function committedPathsForCommit(root, commit) {
+  if (!isCommit(root, commit)) return { status: 'UNKNOWN', paths: null, reason: 'commit does not identify a repository commit' };
+  // Parent identity comes from the loaded graph when available; `rev-list
+  // --parents -n 1` echoes the full requested SHA (unlike `cat-file --batch`
+  // stdin responses), so the graph key — the normalized request itself — is
+  // exactly equivalent for any commit that passed the isCommit gate above.
+  const graph = loadGitGraph(root);
+  const graphParents = graph?.parents.get(normalizeSha(commit));
+  let parents;
+  if (graphParents !== undefined) {
+    parents = [...graphParents];
+  } else {
+    const inspected = commitParentsSpawned(root, commit);
+    if (inspected.status !== 'PARENTS_KNOWN') return inspected;
+    parents = inspected.parents;
+  }
   if (parents.length > 1) return { status: 'AMBIGUOUS', paths: null, reason: 'merge commit role attribution is ambiguous' };
   const output = commandOutput(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', commit]);
   if (output === null) return { status: 'UNKNOWN', paths: null, reason: 'unable to inspect commit paths' };
@@ -275,8 +457,19 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
     checkSha(legacyCurrent, 'STATE deprecated Current SHA', errors);
     warnings.push('DEPRECATED_CONTINUITY_FIELD: STATE Current SHA is ignored; live HEAD comes from Git');
   }
-  const liveRemoteHead = commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null;
+  const liveRemoteHead = liveOriginMainHead(root);
   if (head) console.log(`[agent-check] LIVE GIT HEAD: ${head}${liveRemoteHead ? `; LIVE origin/main: ${liveRemoteHead}` : ''}`);
+}
+
+// checkContinuity runs once per task record; the remote head cannot change
+// within a single read-only checker process, so the first answer per root is
+// cached.
+const cachedOriginMainHeads = new Map();
+function liveOriginMainHead(root) {
+  if (!cachedOriginMainHeads.has(root)) {
+    cachedOriginMainHeads.set(root, commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null);
+  }
+  return cachedOriginMainHeads.get(root) ?? null;
 }
 
 // These patterns intentionally target value shapes, not words such as

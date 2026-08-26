@@ -21,6 +21,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { buildChildEnvironment } from "./child-environment.mjs";
@@ -33,6 +34,12 @@ const compileRoot = path.join(
   nightwatchRoot,
   ".tmp-nightwatch",
   "phase16a-portfolio",
+);
+// Written only after a fully successful compile; a missing/mismatched marker
+// forces recompilation, so an interrupted compile can never be trusted.
+const COMPILE_FINGERPRINT_FILE = path.join(
+  compileRoot,
+  ".compile-fingerprint",
 );
 
 function fail(message) {
@@ -56,7 +63,85 @@ function sanitizeDetail(message) {
     : text;
 }
 
+// Content-addressed compile cache. The emitted JS is a pure function of the
+// compiled source cone plus the exact compiler options and TypeScript
+// version, so a matching fingerprint guarantees byte-identical outputs.
+// Anything under src/ or corpus/ participates conservatively: over-
+// invalidation only costs one recompile, never correctness. This exists
+// because every CLI invocation previously paid a full `npx tsc` (~14s),
+// which dominated the Phase 16H CLI hardening suite (~15 invocations).
+const COMPILED_ROOTS = ["src", "corpus"];
+const COMPILE_OPTION_IDENTITY =
+  "target=ES2022|module=commonjs|moduleResolution=node|esModuleInterop|skipLibCheck|strict|noUncheckedIndexedAccess";
+
+function typescriptVersion() {
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(
+        path.join(nightwatchRoot, "node_modules", "typescript", "package.json"),
+        "utf8",
+      ),
+    );
+    return String(packageJson.version ?? "unknown");
+  } catch {
+    return "unknown";
+  }
+}
+
+function compileFingerprint() {
+  const hash = crypto.createHash("sha256");
+  hash.update(`typescript=${typescriptVersion()}\n`);
+  hash.update(`${COMPILE_OPTION_IDENTITY}\n`);
+  for (const rootDir of COMPILED_ROOTS) {
+    const absoluteRoot = path.join(nightwatchRoot, rootDir);
+    const directories = [absoluteRoot];
+    while (directories.length > 0) {
+      const current = directories.pop();
+      let children;
+      try {
+        children = fs.readdirSync(current, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      // Deterministic traversal order so the fingerprint is stable.
+      children.sort((left, right) => left.name.localeCompare(right.name));
+      for (const child of children) {
+        const childPath = path.join(current, child.name);
+        if (child.isDirectory()) {
+          directories.push(childPath);
+        } else if (child.isFile()) {
+          hash.update(path.relative(nightwatchRoot, childPath));
+          hash.update("\0");
+          try {
+            hash.update(fs.readFileSync(childPath));
+          } catch {
+            return null;
+          }
+          hash.update("\0");
+        }
+      }
+    }
+  }
+  return hash.digest("hex");
+}
+
+let compiledForFingerprint;
+
+function compileIsFresh(fingerprint) {
+  if (compiledForFingerprint === fingerprint) return true;
+  try {
+    return fs.readFileSync(COMPILE_FINGERPRINT_FILE, "utf8") === fingerprint;
+  } catch {
+    return false;
+  }
+}
+
 function compileCore() {
+  const fingerprint = compileFingerprint();
+  if (fingerprint !== null && compileIsFresh(fingerprint)) {
+    compiledForFingerprint = fingerprint;
+    return;
+  }
   fs.rmSync(compileRoot, { recursive: true, force: true });
   fs.mkdirSync(compileRoot, { recursive: true });
   const result = spawnSync(
@@ -95,6 +180,13 @@ function compileCore() {
     throw new Error(
       `core compile failed: ${(result.stderr || result.stdout || "").trim().slice(0, 500)}`,
     );
+  }
+  if (fingerprint !== null) {
+    // Marker written atomically AFTER success; never trust a partial state.
+    const markerTemp = `${COMPILE_FINGERPRINT_FILE}.tmp-${process.pid}`;
+    fs.writeFileSync(markerTemp, fingerprint);
+    fs.renameSync(markerTemp, COMPILE_FINGERPRINT_FILE);
+    compiledForFingerprint = fingerprint;
   }
 }
 

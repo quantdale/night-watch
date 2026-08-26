@@ -501,10 +501,24 @@ function checkOwnerReviewCliBoundary() {
 }
 
 function checkSyntax() {
-  for (const file of fs.readdirSync(path.join(root, 'bin')).filter((item) => item.endsWith('.mjs'))) {
-    const result = spawnSync(process.execPath, ['--check', path.join(root, 'bin', file)], { cwd: root, encoding: 'utf8', timeout: 10_000, maxBuffer: 256 * 1024, env: childEnvironment });
-    if (result.status !== 0) fail(`node --check failed for bin/${file}: ${(result.stderr ?? '').trim()}`);
-  }
+  const files = fs.readdirSync(path.join(root, 'bin')).filter((item) => item.endsWith('.mjs')).sort();
+  if (files.length === 0) return;
+  // One batched child performs the same syntax-only parse that per-file
+  // `node --check` performed (ESM goal, never executed), without paying one
+  // Node startup per file. Any parse error still fails the check with the
+  // offending bin file identified.
+  const batchedCheck = [
+    "const { readFileSync } = require('node:fs');",
+    'const vm = require("node:vm");',
+    'let failures = 0;',
+    'for (const file of process.argv.slice(1)) {',
+    '  try { new vm.SourceTextModule(readFileSync(file, "utf8"), { identifier: file }); }',
+    '  catch (error) { failures += 1; console.error(String(error && error.stack ? error.stack : error)); }',
+    '}',
+    'process.exit(failures === 0 ? 0 : 1);',
+  ].join('\n');
+  const result = spawnSync(process.execPath, ['--experimental-vm-modules', '-e', batchedCheck, ...files.map((file) => path.join(root, 'bin', file))], { cwd: root, encoding: 'utf8', timeout: 60_000, maxBuffer: 4 * 1024 * 1024, env: childEnvironment });
+  if (result.status !== 0) fail(`node --check failed for bin/: ${(result.stderr ?? '').trim()}`);
 }
 
 function checkPhase23QualityGate() {
