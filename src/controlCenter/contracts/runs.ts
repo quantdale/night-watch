@@ -51,6 +51,7 @@ export type ControlCenterRunEventType =
   | 'journey-step';
 
 export type ControlCenterRunSeverity = 'info' | 'warn' | 'error' | 'fatal';
+export type ControlCenterRunCollectionState = 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE' | 'UNKNOWN';
 
 export interface ControlCenterRunListItemDto {
   readonly runId: SafeControlCenterId;
@@ -71,6 +72,9 @@ export interface ControlCenterRunListItemDto {
 
 export interface ControlCenterRunListDto extends ControlCenterCollection<ControlCenterRunListItemDto> {
   readonly schemaVersion: typeof CONTROL_CENTER_RUN_LIST_SCHEMA_VERSION;
+  /** Additive authority state; optional for historical v1 fixtures. */
+  readonly state?: ControlCenterRunCollectionState;
+  readonly reasonCodes?: readonly SafeControlCenterCode[];
 }
 
 export interface ControlCenterRepositorySnapshotDto {
@@ -125,4 +129,3 @@ export interface ControlCenterTimelineDto {
   readonly nextAfterSeq: number | null;
   readonly truncated: boolean;
 }
-

@@ -13,6 +13,7 @@ import type {
   ControlCenterRunDetailDto,
   ControlCenterRunEnvironment,
   ControlCenterRunEventType,
+  ControlCenterRunCollectionState,
   ControlCenterRunListDto,
   ControlCenterRunListItemDto,
   ControlCenterRunSeverity,
@@ -181,7 +182,11 @@ function repositorySnapshots(records: readonly RepoSnapshotRecord[]): readonly C
   }));
 }
 
-export function projectRunList(inputs: readonly RunAuthorityInput[], requestedLimit?: unknown): ControlCenterRunListDto {
+export function projectRunList(
+  inputs: readonly RunAuthorityInput[],
+  requestedLimit?: unknown,
+  authority?: { readonly state?: ControlCenterRunCollectionState; readonly reasonCodes?: readonly string[] },
+): ControlCenterRunListDto {
   const rows = inputs
     .map(runItem)
     .sort((left, right) => left.runId.localeCompare(right.runId));
@@ -189,6 +194,8 @@ export function projectRunList(inputs: readonly RunAuthorityInput[], requestedLi
   return {
     schemaVersion: CONTROL_CENTER_RUN_LIST_SCHEMA_VERSION,
     ...collection,
+    state: authority?.state ?? (rows.length === 0 ? 'EMPTY' : 'AVAILABLE'),
+    reasonCodes: sortedUniqueCodes(authority?.reasonCodes ?? []),
   };
 }
 

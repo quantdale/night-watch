@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M2 — bounded run/evidence reader and integration.
+M3 — source and campaign authority integration.
 
 ## Completed Milestones
 
@@ -45,24 +45,30 @@ M2 — bounded run/evidence reader and integration.
   traced and recorded in PLAN. The selected seams are a bounded repository
   artifact reader for runs, an approved sibling-source authority, an
   in-process Phase 24/campaign composition, and an owner-local dossier reader.
+- M2 — COMPLETE: the fixed-root run reader validates summaries, ordered typed
+  events, and repository metadata; strips messages/arbitrary data; rejects
+  unsafe, privacy-blocked, malformed, oversized, unstable, and duplicate
+  evidence; and reports explicit collection state/reason codes. The default
+  collector shares one bounded snapshot across list/detail/timeline/graph.
+  `npm run typecheck`, `npm run hardening:check`, and the 23-test focused
+  Control Center suite passed.
 
 ## Work In Progress
 
-Implement the first bounded run/evidence reader at the selected
-`src/controlCenter/authorities/runEvidenceReader.ts` seam. Preserve the V1
-adapter API while returning only validated, privacy-projected run summaries,
-events, repository metadata, and safe graph inputs. The reader must be
-synthetic-testable through an explicit fixture root without allowing a caller
-or HTTP request to choose a filesystem root.
+Map and implement the source/campaign authority facade. Use the approved
+read-only sibling-source boundary and existing Phase 24/source-surface
+analysis, then bind only sanitized campaign-intelligence metadata to the same
+generation. Preserve source currentness and explicit stale/unavailable/empty/
+blocked states; do not invoke the intelligence CLI or introduce a second
+selector.
 
 ## Exact Next Action
 
-Create `src/controlCenter/authorities/runEvidenceReader.ts` and its focused
-unit tests. Start with fixed-root run discovery and safe summary/event/
-repository parsing, enforce bounded stable reads and privacy rejection, then
-wire the reader through the existing run/timeline/graph adapters without
-changing their public DTO contracts. Validate the reader and V1 suite before
-moving to source/campaign integration.
+Inspect the exact `src/core/source` discovery output and Phase 24/
+`campaignIntelligence` input contracts needed for one source/campaign
+snapshot. Record the selected source and campaign bridge shapes in PLAN, then
+implement a synthetic-testable `sourceAuthority.ts` without returning source
+text, source paths, or CLI-derived state.
 
 ## Files Changed
 
@@ -73,6 +79,11 @@ moving to source/campaign integration.
 | `.agent/tasks/nightwatch-control-center-authority-integration-v2/PLAN.md` | Living milestones and authority map | added |
 | `.agent/tasks/nightwatch-control-center-authority-integration-v2/STATE.md` | Continuity waypoint and preflight evidence | added |
 | `.agent/tasks/nightwatch-control-center-authority-integration-v2/REPORT.md` | Initial handoff scaffold | added |
+| `src/controlCenter/authorities/runEvidenceReader.ts` | Fixed-root bounded run/evidence reader and safe snapshot contract | implemented; focused tests pass |
+| `tests/unit/controlCenterRunEvidenceReader.test.ts` | Synthetic reader and adversarial filesystem/privacy fixtures | added; 5/5 pass |
+| `src/controlCenter/server/defaultCollector.ts` | Injected bounded run snapshot integration | implemented; focused integration tests pass |
+| `src/controlCenter/adapters/runAdapter.ts` | Additive run collection state/reason projection | implemented; focused suite passes |
+| `src/controlCenter/contracts/runs.ts` | Additive run collection state contract | implemented; historical fixtures remain compatible |
 
 ## Validation Ledger
 
@@ -89,6 +100,11 @@ moving to source/campaign integration.
 - Authority map review — PASS: current implementation traces and selected
   reader seams are recorded in PLAN; no CLI, network, Git, or mutable
   authority path is selected.
+- `npm run typecheck` after run-reader implementation — PASS.
+- Focused run-reader suite — PASS: 5 passed, 0 failed.
+- M2 acceptance ladder — PASS: `npm run typecheck`,
+  `npm run hardening:check`, and focused Control Center suite: 23 passed,
+  0 failed.
 
 ## Decisions Made During This Task
 
@@ -109,6 +125,13 @@ moving to source/campaign integration.
   directory written by `RunRecorder`; raw messages, event data, network, and
   console payloads are not Control Center authority data and must not cross the
   reader boundary.
+- The reader uses a separately named test-only root constructor; normal
+  construction is fixed to the repository-owned artifacts root. Invalid or
+  partial records produce UNKNOWN/UNAVAILABLE categories and never become a
+  successful EMPTY result.
+- The additive run-list state/reason fields preserve historical v1 fixtures
+  while allowing the normal collector to distinguish AVAILABLE, EMPTY,
+  UNKNOWN, and UNAVAILABLE without changing run detail/timeline DTOs.
 
 ## Blockers
 
@@ -128,12 +151,12 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Implement and test the bounded run reader
-at the exact seam above, then update this file with the validation result.
-Keep all reads bounded, in-process, read-only, loopback-safe,
-synthetic-testable, and privacy-projected.
+Read this STATE after SPEC and PLAN. Trace the source discovery and campaign
+contracts named in the next action, record the bridge, then implement and
+test the source authority. Keep all reads bounded, in-process, read-only,
+loopback-safe, synthetic-testable, and privacy-projected.
 
 ## Completion Snapshot
 
-INCOMPLETE — M1 authority inventory is complete; M2 run-reader implementation
-is active and has not yet been validated.
+INCOMPLETE — M1 authority inventory and M2 bounded run-reader integration are
+complete; M3 source/campaign authority integration is active.
