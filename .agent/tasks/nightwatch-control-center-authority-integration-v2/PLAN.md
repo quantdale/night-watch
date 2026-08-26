@@ -71,18 +71,44 @@ uncertain, malformed, stale, partial, or changing state fails closed or is
 projected as an explicit non-current category. Update STATE after every
 milestone and before any substantial subproblem change.
 
-## Authority map to complete in M1
+## Authority Map
 
 | Public surface | Canonical authority to verify | New reader boundary | Status |
 |---|---|---|---|
-| Runs / timeline / graph | `src/core/evidence/**`, validated run records, repository snapshots | fixed-root bounded local reader | PENDING |
-| Source summary / surfaces / graph | `src/core/source/**`, approved scan/currentness/cache/invalidation | in-process source snapshot builder | PENDING |
-| Campaign / coverage | `src/core/campaignIntelligence/**`, Phase 24 portfolio/manifest authorities | coherent generation snapshot | PENDING |
-| Findings | private owner-local dossier store and triage validators | fixed private-root metadata reader | PENDING |
+| Runs / timeline / graph | `src/core/evidence/runRecorder.ts` writes `artifacts/<run-id>/manifest.json`, `summary.json`, `events.jsonl`, and optional `repositories.json`; schemas are in `src/core/evidence/types.ts` and V1 projections are in `src/controlCenter/server/runAdapter.ts` / `executionGraphAdapter.ts` | `src/controlCenter/authorities/runEvidenceReader.ts` | SELECTED |
+| Source summary / surfaces / graph | `src/core/source/approvedScan.ts`, `siblingSource.ts`, `scan.ts`, `surfaces.ts`, `cache.ts`, and `invalidation.ts`; `siblingSource.ts` is the sole sibling-checkout filesystem boundary | `src/controlCenter/authorities/sourceAuthority.ts` | SELECTED |
+| Campaign / coverage | Phase 24 source analysis/portfolio is the source-derived authority; Phase 19 `campaignIntelligence/{coverage,planner,cache}.ts` supplies sanitized campaign metadata; `bin/nightwatch-intelligence.mjs` remains CLI-only and is not a server authority | `src/controlCenter/authorities/campaignAuthority.ts` | SELECTED |
+| Findings | `src/core/policy/privateArtifacts.ts`, `src/core/artifactValidation/dossierKindValidation.ts`, and the v1/v2 triage dossier validators | `src/controlCenter/authorities/findingsAuthority.ts` | SELECTED |
 | Health / meta / readiness / safety | existing V1 default collector authorities | existing adapter path | EXISTING |
 
 No reader may shell out to a CLI or accept a caller-controlled filesystem
 root/path. Adapters remain the sole public projection boundary.
+
+### Authority and consumer trace
+
+- Run recorder output → bounded run reader → existing run/timeline/graph
+  adapters → fixed server routes → Control Center API and run views. Raw event
+  messages, event data, network bodies, and console bodies stop at the reader
+  boundary.
+- Approved sibling-source access and source-surface discovery → source
+  authority/cache → source adapters → source routes and source views. The
+  source authority returns safe structural metadata and exact currentness only.
+- Source/Phase 24 analysis plus the existing campaign-intelligence contracts →
+  one generation-bound campaign snapshot → campaign adapters → campaign
+  routes and campaign views. A second selector or CLI invocation is not an
+  authority.
+- Owner-local private artifact store → dossier-kind validators → bounded
+  findings reader → findings adapter → findings route and triage view. Invalid
+  or inaccessible private state never becomes an empty successful result.
+
+### Fixed roots, bounds, and failure categories
+
+| Authority | Fixed boundary and bounds | Fail-closed categories |
+|---|---|---|
+| Runs | Repository-owned `artifacts/` root; safe run IDs; bounded run directories, known files, bytes, events, and one stable-read retry | missing/unavailable, symlink or traversal, oversized, unstable, malformed/unknown schema, duplicate sequence, privacy sentinel |
+| Source | `DEFAULT_SIBLING_ROOT` plus `createApprovedRealSourceScanConfig()` and existing scan/cache limits | source unavailable, source stale, config/scan drift, cache mismatch, privacy rejection, internal reader error |
+| Campaign | In-process source/Phase 24/campaign composition with bounded candidate selection and no external process | source stale/unavailable, composition or selector drift, empty, blocked, unavailable, internal error; never fabricate PASS |
+| Findings | `privateArtifactRoot()` outside the repository/workspace; bounded owner-only JSON dossier enumeration | absent, permission/mode failure, symlink/path violation, oversized, corrupt/unsupported schema, privacy violation, partial corruption |
 
 ## Milestones
 
@@ -98,7 +124,7 @@ routing were created from the live main.
 
 ### M1 — Authority inventory and reader architecture
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Trace each surface from producer through persistence/local authority, reader,
 adapter, DTO, server route, client API, and UI view. Inspect all relevant
@@ -106,12 +132,20 @@ validators, schemas, file layouts, cache/currentness contracts, and test seams.
 Record authoritative-versus-serialized modules, fixed roots, limits, failure
 categories, generation identities, and deliberate non-goals before coding.
 
-Validation: authority map review, `npm run typecheck`, `npm run hardening:check`,
-and focused reader-boundary tests once created.
+Evidence: the authority map above records the current producer, validator or
+source boundary, selected reader seam, consumer path, fixed boundary, bounds,
+and fail-closed categories. Existing V1 contracts/adapters/routes and the
+evidence, source, Phase 24, campaign-intelligence, triage, and private-store
+implementations were inspected before selecting the seams.
+
+Validation: authority map review; baseline `npm run typecheck`,
+`npm run project:check`, and focused V1 Control Center tests passed. The
+hardening and new reader-boundary checks are deferred to their implementation
+milestones.
 
 ### M2 — Bounded run/evidence reader and integration
 
-Status: PENDING.
+Status: IN_PROGRESS.
 
 Implement fixed-root run discovery and validated summary/event/snapshot reads.
 Reject symlinks, traversal, unsafe IDs, unknown schemas, oversized or

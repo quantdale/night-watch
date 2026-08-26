@@ -29,7 +29,7 @@ repository hardening audit; and close with validated local/clean Git state.
 
 ## Current Milestone
 
-M1 — authority inventory and reader architecture.
+M2 — bounded run/evidence reader and integration.
 
 ## Completed Milestones
 
@@ -40,24 +40,29 @@ M1 — authority inventory and reader architecture.
   legacy-history warnings; `npm run project:check` passed; `npm run typecheck`
   passed; and the focused V1 Control Center contracts/adapters/server suite
   passed 25/25.
+- M1 — COMPLETE: current evidence producers, validators, fixed roots, bounds,
+  currentness/generation contracts, adapters, routes, and UI consumers were
+  traced and recorded in PLAN. The selected seams are a bounded repository
+  artifact reader for runs, an approved sibling-source authority, an
+  in-process Phase 24/campaign composition, and an owner-local dossier reader.
 
 ## Work In Progress
 
-Build the producer/consumer authority map for runs, source intelligence,
-campaign intelligence, and owner-local findings. The map must identify the
-canonical writer/validator, fixed root, bounded read contract, generation or
-currentness identity, failure semantics, and every existing adapter/server/UI
-consumer. No implementation change is authorized until this inventory is
-recorded in PLAN and confirmed against current code.
+Implement the first bounded run/evidence reader at the selected
+`src/controlCenter/authorities/runEvidenceReader.ts` seam. Preserve the V1
+adapter API while returning only validated, privacy-projected run summaries,
+events, repository metadata, and safe graph inputs. The reader must be
+synthetic-testable through an explicit fixture root without allowing a caller
+or HTTP request to choose a filesystem root.
 
 ## Exact Next Action
 
-Inspect `src/controlCenter/server/defaultCollector.ts`, its collector
-interface, all V1 adapters/contracts/routes, and the existing evidence,
-source, campaign-intelligence, Phase 24, triage, and private-artifact reader
-authorities. Record the selected readers and required test seams in PLAN, then
-implement the smallest injected authority facade for the first bounded run
-reader.
+Create `src/controlCenter/authorities/runEvidenceReader.ts` and its focused
+unit tests. Start with fixed-root run discovery and safe summary/event/
+repository parsing, enforce bounded stable reads and privacy rejection, then
+wire the reader through the existing run/timeline/graph adapters without
+changing their public DTO contracts. Validate the reader and V1 suite before
+moving to source/campaign integration.
 
 ## Files Changed
 
@@ -81,6 +86,9 @@ reader.
   promotion authority NONE, and clean checkout.
 - `npm run typecheck` — PASS.
 - Focused current V1 Control Center suite — PASS: 25 passed, 0 failed.
+- Authority map review — PASS: current implementation traces and selected
+  reader seams are recorded in PLAN; no CLI, network, Git, or mutable
+  authority path is selected.
 
 ## Decisions Made During This Task
 
@@ -97,6 +105,10 @@ reader.
   safety but placeholder empty/unavailable run, source, campaign, and findings
   snapshots. The V2 campaign must replace those branches through existing
   authorities rather than UI-only changes.
+- The first implementation boundary is the repository-owned `artifacts/`
+  directory written by `RunRecorder`; raw messages, event data, network, and
+  console payloads are not Control Center authority data and must not cross the
+  reader boundary.
 
 ## Blockers
 
@@ -116,12 +128,12 @@ or data operations remain excluded.
 
 ## Resume Recipe
 
-Read this STATE after SPEC and PLAN. Inspect the exact authority consumers named
-in the next action, update the authority map with evidence, then proceed to
-the first reader milestone. Keep all reads bounded, in-process, read-only,
-loopback-safe, synthetic-testable, and privacy-projected.
+Read this STATE after SPEC and PLAN. Implement and test the bounded run reader
+at the exact seam above, then update this file with the validation result.
+Keep all reads bounded, in-process, read-only, loopback-safe,
+synthetic-testable, and privacy-projected.
 
 ## Completion Snapshot
 
-INCOMPLETE — M1 authority inventory is active; no V2 implementation milestone
-has been validated yet.
+INCOMPLETE — M1 authority inventory is complete; M2 run-reader implementation
+is active and has not yet been validated.
