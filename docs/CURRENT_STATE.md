@@ -1,7 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-26** at
-> the Control Center authority-integration and whole-repository hardening
+> the terminal read-only eligibility proof expansion closure after the
+> Control Center authority-integration and whole-repository hardening
 > closure. Phase 28 and the evidence-backed response-flow successor remain
 > historical; the Control Center successor's validated implementation
 > checkpoint is `76f5de9b09cdba930d89c7b74247c6579232a436`; live HEAD and the
@@ -176,6 +177,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_28_STATUS` | `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` — validated implementation checkpoint `7e0b8c1ca584326dd8e7fa9bbf28ba8240fcf37c`; fresh six-repository census remains 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes; taxonomy v3 records 45 proof-gap surfaces and 325 rejected diagnostics; no strict local producer-flow family was admitted; local and Node20 clean gates pass; canonical and topology-correct isolated Playwright both pass 2,438 / 16 skipped / 0 failed out of 2,454 with exact parity; exact-head Actions run `32819574544` / job `97714690619` had zero steps and is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; all prohibited safety counts remain zero |
 | `PHASE_RESPONSE_FLOW_PROOF_BINDING_HARDENING_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — exact response-flow declaration binding hardening validated at `1570547db9069c2a19d4c42c3e27e496ff1b5f01`; the fresh six-repository census remained structurally identical to Phase 28; two reproduced false-positive admissions were repaired; local/clean gates and canonical/topology-correct isolated Playwright both pass 2,443 / 16 skipped / 0 failed out of 2,459 with exact skip parity; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
 | `PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS` | `COMPLETE_LOCAL_READ_ONLY_SYNTHETIC` — bounded run, source, Phase 24/campaign, and owner-local findings authorities are integrated through the existing loopback Control Center; seven-view built-server qualification and full local/clean validation passed at implementation checkpoint `76f5de9b09cdba930d89c7b74247c6579232a436`; external CI was not run and is not claimed green |
+| `PHASE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `1525951a0d65ed1a59b8678c03a886f433600d09`; fresh six-repository source census remains 1,732 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations, 127 routes, 127 request contracts, 83 response contracts, 175 semantic observations, 118 proven joins / 10 rejected joins, 47 mutation-capable, 5 independently proven read-only, and lifecycle 45 `DISCOVERED` / 80 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE`; 76 surfaces are read-only-method-only but all carry another blocker; no new proof family was admitted, read-only remains 5, and Phase 24 remains 3 eligible / 125 excluded; eligibility digest `source-eligibility-census:sha256:902c5712c885adefa6ded945`, candidate digest `source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`, gap taxonomy 45 surfaces / 325 diagnostics; local gate receipt `receipt:sha256:de8867e0064f7eb9fd1ffe7a`, Node20 clean receipt `clean-receipt:sha256:b5c17633d147ac65a53140cd`, canonical and topology-correct isolated full Playwright both 2,521 enumerated / 2,505 passed / 16 skipped / 0 failed; external CI was not run and is not claimed green; all prohibited safety counts remain zero |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
@@ -2291,3 +2293,39 @@ serial Playwright regression passed 2,502 of 2,518 with 16 skips and zero
 failures. External CI was not run and is not claimed green. No DEV, NEXT,
 production, auth, data, cloud, infrastructure, publication, or sibling-write
 operation occurred.
+
+## Read-only eligibility proof expansion — terminal evidence
+
+This campaign is `COMPLETE_LOCAL_NOT_CI_VERIFIED` at implementation
+checkpoint `1525951a0d65ed1a59b8678c03a886f433600d09`. A fresh census and
+bounded candidate-family investigation found no current mechanically complete
+read-only proof beyond the existing five-entry Phase 5 known-read registry.
+Direct pure-return handlers had zero strict candidates; exact bounded cones
+had 13 attempts and zero complete proofs; the five registry entries were the
+existing baseline; and GET-only was retained as a negative control. No
+read-only fact was promoted to a second selector or proof authority.
+
+The additive eligibility census is source-bound to
+`srcsnapshot:sha256:04ff583971865f335902f5ad` and
+`source-surface-discovery:sha256:92ff5f61acfc63aa9b8ad7a5`. It reports 128
+operations, 47 mutation-capable, 5 read-only-proven, 76 method-only, 45
+proof-gap surfaces, and 325 rejected diagnostics. All 76 method-only surfaces
+carry another source or Phase 24 blocker. The existing selector remains at 3
+eligible / 125 excluded, so the campaign produces zero newly projectable and
+zero newly eligible surfaces.
+
+Terminal local evidence includes all nine quality-gate groups, semantic
+compatibility 1,884 total / 1,871 passed / 13 skipped / 0 failed, owner
+provenance 91/91, synthetic campaign 64/64, quality definition digest
+`sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`,
+local receipt `receipt:sha256:de8867e0064f7eb9fd1ffe7a`, and Node20 clean
+receipt `clean-receipt:sha256:b5c17633d147ac65a53140cd`. Canonical and
+topology-correct isolated complete Playwright both enumerated 2,521 tests,
+passed 2,505, skipped 16 environment-conditional tests, and failed zero. A
+single first isolated journey-fixture failure was reproduced 5/5 as passing
+and the complete isolated rerun was green; no assertion was weakened.
+
+No DEV/NEXT/production contact, authentication-state read, product mutation,
+data/infrastructure operation, sibling write, publication, runtime AI call,
+or canonical promotion occurred. External CI was not run. No successor is
+selected; any future campaign begins with a fresh census and authorization.

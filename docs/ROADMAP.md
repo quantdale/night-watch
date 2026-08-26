@@ -2281,3 +2281,49 @@ owner provenance 91/91, synthetic campaign 61/61, local gate receipt
 2,502 passed / 16 skipped / 0 failed out of 2,518. External CI was not run
 and is not claimed green. Any future campaign requires a new authorization and
 fresh evidence.
+
+## Evidence-backed successor — read-only eligibility proof expansion
+
+This local/source/synthetic campaign is terminal as
+`COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated implementation checkpoint
+`1525951a0d65ed1a59b8678c03a886f433600d09`. It was selected from a fresh live
+census rather than from sequential phase numbering. The current source did
+not justify a new mechanically complete read-only proof family, so no new
+proof schema, write-effect vocabulary, interprocedural authority, or Phase 24
+selector was admitted.
+
+The terminal six-repository inventory remains 1,732 files considered / 1,092
+read / 1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations,
+127 routes, 127 request contracts, 83 response contracts, 175 semantic
+observations, 118 proven joins / 10 rejected joins, 47 mutation-capable
+operations, 5 independently proven read-only operations, lifecycle 45/80/3,
+and Phase 24 at 3 eligible / 125 excluded. The additive eligibility census
+digest is `source-eligibility-census:sha256:902c5712c885adefa6ded945`; the
+investigation-only candidate digest is
+`source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`; the gap
+taxonomy reports 45 proof-gap surfaces and 325 rejected diagnostics. All 76
+read-only-method-only surfaces carry another source or downstream blocker, so
+read-only proof is not a sufficient unlock condition in this snapshot.
+
+Candidate-family results are: direct pure-return handlers 0 strict current
+examples; exact bounded cones 13 attempts / 0 complete, rejected for dynamic
+dispatch, unsupported helper syntax, or incomplete branch coverage; the
+five-entry known-read registry is the existing baseline; and GET-only is a
+negative control with 0 read evidence. Naming, comments, route names, HTTP
+GET, and absence of an obvious write remain non-authoritative.
+
+All nine local quality-gate groups passed. Semantic compatibility was
+1,884/1,871/13/0, owner provenance 91/91, synthetic campaign 64/64, local
+receipt `receipt:sha256:de8867e0064f7eb9fd1ffe7a`, and Node20 clean receipt
+`clean-receipt:sha256:b5c17633d147ac65a53140cd`. Canonical and
+topology-correct isolated complete Playwright both enumerated 2,521 tests,
+passed 2,505, skipped 16 environment-conditional tests, and failed zero. A
+single first isolated journey-fixture failure was reproduced 5/5 as passing;
+the complete isolated rerun was green and no assertion was weakened. External
+CI was not run and is not claimed green. No prohibited contact, auth read,
+mutation, data/infra operation, sibling write, publication, AI call, or
+canonical promotion occurred.
+
+No successor is selected here. Any future campaign must begin with a fresh
+live Git and approved-source census and a separately authorized evidence-backed
+direction.

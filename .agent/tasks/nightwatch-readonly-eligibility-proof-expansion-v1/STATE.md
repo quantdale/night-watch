@@ -6,7 +6,7 @@ Task ID: nightwatch-readonly-eligibility-proof-expansion-v1
 Phase: SOURCE-READONLY-ELIGIBILITY-PROOF-EXPANSION-V1
 Title: Read-Only Eligibility Proof Expansion + Campaign Surface Unlock
 Authorization class: NIGHTWATCH_READONLY_ELIGIBILITY_PROOF_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
 Last validated implementation SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
 Last substantive checkpoint SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_SOURCE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS: IN_PROGRESS
+PHASE_SOURCE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,7 +28,8 @@ source and Phase 24 authorities without widening safety scope.
 
 ## Current Milestone
 
-M6 — integrated local, clean-checkout, and isolated regression validation.
+COMPLETE — M7 terminal validation, documentation reconciliation, and Git
+closure.
 
 ## Completed Milestones
 
@@ -49,6 +50,14 @@ M6 — integrated local, clean-checkout, and isolated regression validation.
   bounded, deterministic, privacy-safe, and still investigation-only; no new
   read-only proof authority was admitted and no Critical/High defect was
   reproduced.
+- M6 validation is complete: the authoritative local gate, disposable Node20
+  clean gate, canonical full Playwright, and topology-correct isolated full
+  Playwright all passed their terminal reruns with exact 2,521/2,505/16/0
+  parity. The one transient isolated journey-fixture failure was reproduced
+  5/5 as passing before the isolated rerun.
+- M7 is complete: project truth, continuity, task report, roadmap, and
+  decision records were reconciled; the task is terminal under
+  local/source/synthetic scope and ready for normal Git synchronization.
 
 ## Fresh baseline snapshot
 
@@ -67,7 +76,7 @@ M6 — integrated local, clean-checkout, and isolated regression validation.
 - Lifecycle: 45 `DISCOVERED`, 80 `MECHANICALLY_PROVEN`, 3 `PROJECTABLE`.
 - Existing Phase 24 authority: 128 considered; 3 eligible; 125 excluded;
   portfolio digest `portfolio:sha256:fcb3a83934a04f8c9b6c750a`.
-- Source gap taxonomy: 345 rejected diagnostics; 45 proof-gap surfaces; 10
+- Source gap taxonomy: 325 rejected diagnostics; 45 proof-gap surfaces; 10
   taxonomy rows; digest `source-gap-taxonomy:sha256:02a38e1514a46da5ab21f90c`.
 - Source surface digest: `source-surface-discovery:sha256:92ff5f61acfc63aa9b8ad7a5`.
 - Eligibility census digest: `source-eligibility-census:sha256:902c5712c885adefa6ded945`.
@@ -76,9 +85,8 @@ M6 — integrated local, clean-checkout, and isolated regression validation.
 
 ## Work In Progress
 
-Run the remaining clean-checkout and topology-correct isolated validation,
-reconcile parity and final receipts, then update the durable project snapshot
-and close the task without changing the zero-admission decision.
+None — the local/source/synthetic campaign is terminal. No new proof family or
+Phase 24 surface was admitted.
 
 ## Files Changed
 
@@ -163,12 +171,18 @@ portfolio identity validation.
   in the authorized dependency cone. The only full compatibility failures in
   the dirty checkout were legacy self-development tests correctly stopped by
   `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`.
+- The canonical complete Playwright regression passed 2,505 of 2,521 tests,
+  skipped 16 environment-conditional tests, and failed none. The first
+  topology-correct isolated run had one transient failure in the existing
+  journey fixture `authenticated evidence remains metadata-only for fake
+  secret traffic`; the exact test passed 5/5, and the complete isolated rerun
+  passed 2,505/2,521 with the same 16 skips and zero failures. No assertion or
+  product code was changed for that transient.
 
 ## Exact Next Action
 
-Run the authoritative local gate from the clean implementation checkpoint,
-then qualify the disposable Node 20 and topology-correct isolated full-suite
-regressions. Record exact receipts before documentation closure.
+STOP — terminal validation, documentation, continuity, push, and clean Git
+equality are complete. A successor requires a fresh census and authorization.
 
 ## Blockers
 
@@ -231,8 +245,8 @@ publication, or runtime AI operation occurred.
 - `npm run gate:inventory`: PASS; authoritative inventory reported 9 logical
   groups, 152 unique test files, and no duplicate authoritative executions.
 - `npm run test:owner-provenance`: PASS, 91/91.
-- `npm run agent:check`: PASS with the expected stale-baseline warning before
-  this documentation checkpoint and 24 historical v1 warnings.
+- `npm run agent:check`: PASS after terminal-record repair with the expected
+  approved checkpoint warning and 24 historical v1 warnings.
 - Dirty-checkout `npm run test:semantic-compat`: TEST_FAILURE, 1,877 total,
   1,861 passed, 13 skipped, 3 failed; focused reproduction confirmed the
   self-development failures are the intentional dirty-source guard and not
@@ -240,6 +254,26 @@ publication, or runtime AI operation occurred.
 - Dirty-checkout `npm run gate:local`: TEST_FAILURE at PROJECT_TRUTH because
   the M5 implementation/documentation checkpoint was not yet clean; no
   downstream groups were run. A clean rerun remains required.
+- Clean `npm run gate:local`: PASS; all nine groups passed, semantic
+  compatibility 1,884 total / 1,871 passed / 13 skipped / 0 failed, receipt
+  `receipt:sha256:de8867e0064f7eb9fd1ffe7a`.
+- `npm run gate:clean`: PASS; Node 20, fresh `npm ci --ignore-scripts`, clean
+  before/after, no node_modules reuse, zero sibling writes, gate receipt
+  `receipt:sha256:cccf934c43624da6ad317ca9`, clean receipt
+  `clean-receipt:sha256:b5c17633d147ac65a53140cd`.
+- Canonical complete Playwright (`npx playwright test --project=nightwatch
+  --workers=1`): PASS, 2,521 enumerated / 2,505 passed / 16 skipped / 0
+  failed.
+- Topology-correct isolated full-history Playwright: first attempt 2,521 /
+  2,504 / 16 / 1; the one failure was the existing journey fixture
+  `journeyEngine.test.ts:187`; focused reproduction 5/5; complete rerun
+  2,521 / 2,505 / 16 / 0. Detached Nightwatch and six detached approved
+  source checkouts were clean at the recorded SHAs; canonical and isolated
+  final counts and skip counts matched exactly.
+- `npm run agent:check`, `npm run agent:audit`, `npm run project:check`, and
+  `git diff --check`: PASS at the clean terminal checkpoint; only the known
+  historical-v1 and approved implementation/documentation checkpoint warnings
+  remain where applicable.
 
 ## Deferred / Follow-Up
 
@@ -252,11 +286,14 @@ those measurements.
 
 ## Resume Recipe
 
-Read this STATE and the living PLAN; inspect live Git/status/diff; continue the
-exact M6 validation action. Do not rerun completed source discovery unless
-currentness or a recorded validation requirement requires it.
+Phase SOURCE-READONLY-ELIGIBILITY-PROOF-EXPANSION-V1 is complete. STOP. Do not
+resume this task or rerun broad source discovery; a future task must start
+from a fresh live Git/source census and separate authorization.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 through M5 are complete. M2 rejected all new proof families;
-M6 final validation and M7 documentation/Git closure remain.
+COMPLETE — M0 through M7 are closed. The result is a truthful zero-admission,
+zero-unlock campaign: existing read-only proof remains 5, Phase 24 remains
+3 eligible / 125 excluded, and all local/source/synthetic acceptance gates
+are green. External CI was not run and is not claimed green. Live HEAD,
+origin/main, and final cleanliness are discovered from Git.

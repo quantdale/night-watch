@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-readonly-eligibility-proof-expansion-v1
 Phase: SOURCE-READONLY-ELIGIBILITY-PROOF-EXPANSION-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Authorization class: NIGHTWATCH_READONLY_ELIGIBILITY_PROOF_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
@@ -66,10 +66,14 @@ public output.
   selector/ranking/owner-policy changes.
 - [x] M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
   budgets, and whole-repository Critical/High hardening.
-- [ ] M6 — local authoritative gate, clean Node20 gate, canonical and
-  topology-correct isolated regression, and parity reconciliation.
-- [ ] M7 — documentation truth, final report, continuity closure, normal push,
-  `HEAD == origin/main`, and clean-tree terminal verification.
+- [x] M6 — local authoritative gate, clean Node20 gate, canonical and
+  topology-correct isolated regression, and parity reconciliation. All gates
+  passed; canonical and isolated full Playwright both ended 2,505/16/0 out of
+  2,521 after one transient isolated fixture failure was reproduced 5/5 and a
+  complete rerun passed.
+- [x] M7 — documentation truth, final report, continuity closure, normal push,
+  `HEAD == origin/main`, and clean-tree terminal verification. Complete under
+  local/source/synthetic scope; external CI was not run and is not claimed.
 
 ## M1 census contract
 
@@ -180,3 +184,12 @@ privacy sentinels, local and clean gates, canonical and isolated full
 Playwright, continuity/audit/project checks, and `git diff --check` are required
 where applicable. External GitHub Actions is not claimed unless actually
 executed; this campaign does not authorize retries.
+
+## Terminal decision
+
+`COMPLETE_LOCAL_NOT_CI_VERIFIED`. The fresh census justified no new
+read-only proof family and no Phase 24 unlock. The additive census and
+investigation-only candidate surface are validated, privacy-safe, bounded,
+deterministic, and integrated through existing authorities. The terminal
+implementation anchor is `1525951a0d65ed1a59b8678c03a886f433600d09`; live
+documentation and Git heads remain discovered from Git.

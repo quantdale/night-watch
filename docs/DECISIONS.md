@@ -3286,3 +3286,50 @@ infrastructure operation, publication, or authority expansion occurred.
 justified by current source evidence. Broad TOCTOU or cache-schema redesign
 was not the smallest reproduced defect and remains deferred pending fresh
 evidence. No Phase 29 is preselected.
+
+## D-80 — read-only eligibility proof expansion remains zero-admission
+
+**Context.** The fresh source census required by the read-only eligibility
+campaign reproduced six current approved repositories, 1,732 files
+considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes,
+128 operations, 127 route proofs, 127 request contracts, 83 response
+contracts, 175 semantic observations, 118 proven joins / 10 rejected joins,
+47 mutation-capable operations, 5 independently proven read-only operations,
+and Phase 24 at 3 eligible / 125 excluded. Read-only-method-only was present
+on 76 surfaces, but every one also carried another source or Phase 24 blocker.
+The previous response-flow family remained exhausted at 13 attempts / 0
+proven / 13 rejected.
+
+**Decision.** Admit no new read-only proof family. The bounded candidate census
+keeps direct pure-return syntax, exact declaration-cone attempts, the existing
+known-read registry, and GET-only as a negative control in an additive,
+investigation-only projection. Pure response syntax is not read evidence;
+names, comments, route semantics, HTTP GET, and absence of an obvious write
+are not authority. The existing source inventory, mutability classification,
+semantic graph, replay contracts, Phase 24 selector, campaign ranking,
+Control Center projections, owner policy, and safety gates remain the sole
+authorities.
+
+**Evidence and consequences.** Direct pure-return handlers produced zero
+strict current candidates. Exact bounded declaration cones produced 13
+attempts and zero complete proofs, rejected for 9 dynamic-dispatch cases, 3
+unsupported-helper cases, and 1 incomplete branch. The existing five-entry
+known-read registry remained complete and current; GET-only produced zero read
+evidence. The eligibility digest is
+`source-eligibility-census:sha256:902c5712c885adefa6ded945`; the candidate
+digest is `source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`;
+the taxonomy contains 45 proof-gap surfaces and 325 rejected diagnostics.
+No operation moved from read-only-method-only to proven read-only, projectable,
+or Phase 24 eligible.
+
+**Validation and safety.** The local nine-group gate passed with receipt
+`receipt:sha256:de8867e0064f7eb9fd1ffe7a`; the Node20 disposable clean gate
+passed with receipt `clean-receipt:sha256:b5c17633d147ac65a53140cd`;
+synthetic campaign was 64/64; owner provenance was 91/91; and canonical and
+topology-correct isolated complete Playwright both passed 2,505 / 16 skipped /
+0 failed out of 2,521. One first isolated journey-fixture failure was
+reproduced 5/5 as passing and the complete rerun was green; no assertion was
+weakened. External CI was not run. DEV/NEXT/production contact, auth reads,
+product mutations, data/infrastructure work, sibling writes, publication,
+runtime AI, and canonical promotion counts remain zero. No successor is
+selected; any future direction requires a fresh census and authorization.
