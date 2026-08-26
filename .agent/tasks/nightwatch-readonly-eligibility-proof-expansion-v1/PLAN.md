@@ -64,7 +64,7 @@ public output.
   or cache authority is added.
 - [x] M4 — existing source → semantic → Phase 24 compatibility verified; no
   selector/ranking/owner-policy changes.
-- [ ] M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
+- [x] M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
   budgets, and whole-repository Critical/High hardening.
 - [ ] M6 — local authoritative gate, clean Node20 gate, canonical and
   topology-correct isolated regression, and parity reconciliation.
@@ -114,6 +114,11 @@ budget limits, symlink/path shapes, and source replacement. Repeat the
 integrated synthetic matrix at least three times. Reproduce and repair every
 Critical/High defect in the dependency cone; record bounded Medium repairs.
 
+M5 closed with a bounded handler scan, exact source-SHA/content currentness,
+ambiguous-file rejection, aggregate byte/token/declaration limits, complete
+eligibility/portfolio identity checks, deterministic code-unit ordering, and
+privacy/currentness adversarial fixtures. No new proof authority was admitted.
+
 ## Deferred / follow-up
 
 Any DEV acceptance, infrastructure/data work, external coordination,
@@ -144,13 +149,16 @@ dynamic PHP authority, and any proof family rejected by M2 remain deferred.
 - M3: the zero-admission result is authoritative for this campaign. Adding a
   speculative write vocabulary, query-builder heuristic, or incomplete call
   cone would weaken rather than expand mechanically justified coverage.
+- M5: candidate observations are source-bound and budgeted, but remain
+  non-authoritative. A pure literal response is not read evidence; a complete
+  response-flow shape is not a no-write proof; and a GET route remains only a
+  negative control. Existing Phase 24 authority remains unchanged at 3/125.
 
 ## Discoveries
 
-M1 and M2 discoveries are recorded in STATE.md. The census identity is
-`source-eligibility-census:sha256:267a67ef25503b85397a7b46` for the current
-source snapshot, and the candidate census identity is
-`source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`; both must
+M1 and M2 discoveries are recorded in STATE.md. The current census identities
+are `source-eligibility-census:sha256:902c5712c885adefa6ded945` and
+`source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`; both must
 be recomputed after any source or authority change.
 
 ## Deferred Work

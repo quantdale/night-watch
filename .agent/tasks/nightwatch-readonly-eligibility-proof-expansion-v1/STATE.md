@@ -8,14 +8,14 @@ Title: Read-Only Eligibility Proof Expansion + Campaign Surface Unlock
 Authorization class: NIGHTWATCH_READONLY_ELIGIBILITY_PROOF_EXPANSION_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-Last validated implementation SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
-Last substantive checkpoint SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
+Last validated implementation SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
+Last substantive checkpoint SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 061a0ffdd94bdaa5a7ebf526f4fbb2ea96cb434b
-LAST_VALIDATED_IMPLEMENTATION_SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aceda6699c865694e8bdd5bf600855f41e9eca7c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 1525951a0d65ed1a59b8678c03a886f433600d09
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_READONLY_ELIGIBILITY_PROOF_EXPANSION_V1_STATUS: IN_PROGRESS
@@ -28,8 +28,7 @@ source and Phase 24 authorities without widening safety scope.
 
 ## Current Milestone
 
-M5 — adversarial corpus, privacy sweep, deterministic repeats, performance
-budgets, and whole-repository hardening.
+M6 — integrated local, clean-checkout, and isolated regression validation.
 
 ## Completed Milestones
 
@@ -46,6 +45,10 @@ budgets, and whole-repository hardening.
   complete; M3 proof-core work is not applicable under the fail-closed gate.
 - M4 source-to-Phase-24 compatibility remains unchanged: the existing
   portfolio/selector still reports 3 eligible and 125 excluded.
+- M5 hardening is complete: the candidate census is source-SHA/content-bound,
+  bounded, deterministic, privacy-safe, and still investigation-only; no new
+  read-only proof authority was admitted and no Critical/High defect was
+  reproduced.
 
 ## Fresh baseline snapshot
 
@@ -67,16 +70,15 @@ budgets, and whole-repository hardening.
 - Source gap taxonomy: 345 rejected diagnostics; 45 proof-gap surfaces; 10
   taxonomy rows; digest `source-gap-taxonomy:sha256:02a38e1514a46da5ab21f90c`.
 - Source surface digest: `source-surface-discovery:sha256:92ff5f61acfc63aa9b8ad7a5`.
-- Eligibility census digest: `source-eligibility-census:sha256:267a67ef25503b85397a7b46`.
+- Eligibility census digest: `source-eligibility-census:sha256:902c5712c885adefa6ded945`.
 - Read-only candidate census digest:
-  `source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`.
+  `source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`.
 
 ## Work In Progress
 
-Saturate the synthetic adversarial and privacy corpus around the rejected
-candidate families, repeat the live candidate census for byte-identical
-determinism, measure bounded analysis cost, and audit the dependency cone for
-reproducible Critical/High defects. Preserve the zero-admission decision.
+Run the remaining clean-checkout and topology-correct isolated validation,
+reconcile parity and final receipts, then update the durable project snapshot
+and close the task without changing the zero-admission decision.
 
 ## Files Changed
 
@@ -88,6 +90,10 @@ and focused assertions in `tests/unit/phase25SurfaceDiscovery.test.ts`.
 M2 adds `src/core/source/readonlyCandidateCensus.ts`, the local
 `readonly-census` operator command, package scripts, and the synthetic
 `tests/unit/readonlyCandidateCensus.test.ts` corpus.
+M5 adds the dedicated `tests/unit/eligibilityCensus.test.ts` corpus and
+hardens the candidate scan with exact source identity, stale/ambiguous-file
+rejection, aggregate byte/token/declaration budgets, code-unit ordering, and
+portfolio identity validation.
 
 ## Decisions Made During This Task
 
@@ -145,12 +151,24 @@ M2 adds `src/core/source/readonlyCandidateCensus.ts`, the local
   read-effect registry was found beyond the existing five-entry Phase-5
   baseline. Naming, GET, comments, and absence-of-obvious-write remain
   rejected as proof.
+- The bounded handler scan considered 26 unique current handler files, read and
+  tokenized 24, rejected 2, and observed 946,668 source bytes, 131,923 tokens,
+  and 383 declarations; maxima were 37 declarations/file, 32,027 tokens/file,
+  and 242,093 bytes/file. These are observation metrics, not proof authority.
+- M5 repeated both integrated census commands three times with identical
+  digests. Candidate families remain direct pure-return 0 complete, exact
+  bounded cone 0/13 complete, baseline registry 5/5, and GET-only negative
+  control 81/81 classification-only; all hypothetical unlock counts remain 0.
+- The systemic hardening review found no reproducible Critical or High defect
+  in the authorized dependency cone. The only full compatibility failures in
+  the dirty checkout were legacy self-development tests correctly stopped by
+  `SELFDEV_AUTHORITATIVE_SOURCE_DIRTY`.
 
 ## Exact Next Action
 
-Run the adversarial/privacy/performance hardening matrix, then perform the
-whole-repository dependency-cone audit and repair any reproduced Critical or
-High defect before the integrated validation ladder.
+Run the authoritative local gate from the clean implementation checkpoint,
+then qualify the disposable Node 20 and topology-correct isolated full-suite
+regressions. Record exact receipts before documentation closure.
 
 ## Blockers
 
@@ -186,7 +204,7 @@ publication, or runtime AI operation occurred.
   PASS, 3/3 after one corrected expectation (the write route has a proven
   empty request contract).
 - `node bin/nightwatch-intelligence.mjs eligibility-census --json`: PASS;
-  census digest `source-eligibility-census:sha256:267a67ef25503b85397a7b46`,
+  M1 census digest `source-eligibility-census:sha256:267a67ef25503b85397a7b46`,
   safety marker `NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT`.
 - `npm run typecheck`: PASS after M2 candidate census implementation.
 - `npm run campaign:synthetic`: PASS, 62/62, including the candidate census
@@ -194,20 +212,51 @@ publication, or runtime AI operation occurred.
 - `npx playwright test tests/unit/readonlyCandidateCensus.test.ts
   tests/unit/phase25SurfaceDiscovery.test.ts --workers=1`: PASS, 4/4.
 - `node bin/nightwatch-intelligence.mjs readonly-census --json`: PASS;
-  candidate census digest `source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`,
+  M2 candidate census digest `source-readonly-candidate-census:sha256:5e30121ae6a4eefa6f4da6ac`,
   safety marker `NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT`.
+- `npm run typecheck`: PASS after M5 source-identity and aggregate-budget
+  hardening.
+- `npm run hardening:check`: PASS after M5 hardening.
+- `npx playwright test tests/unit/eligibilityCensus.test.ts
+  tests/unit/readonlyCandidateCensus.test.ts --workers=1`: PASS, 3/3.
+- `npm run campaign:synthetic`: PASS, 64/64 after the final M5 corpus and
+  package-script update.
+- Focused source/Phase24/response-flow suite after M5: PASS, 95/95.
+- Candidate census deterministic repeat: PASS, 3/3 identical at
+  `source-readonly-candidate-census:sha256:88c370e8523e03e06e52a3d9`.
+- Eligibility census deterministic repeat: PASS, 3/3 identical at
+  `source-eligibility-census:sha256:902c5712c885adefa6ded945`.
+- `npm run quality-gate:spec`: PASS; definition digest
+  `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- `npm run gate:inventory`: PASS; authoritative inventory reported 9 logical
+  groups, 152 unique test files, and no duplicate authoritative executions.
+- `npm run test:owner-provenance`: PASS, 91/91.
+- `npm run agent:check`: PASS with the expected stale-baseline warning before
+  this documentation checkpoint and 24 historical v1 warnings.
+- Dirty-checkout `npm run test:semantic-compat`: TEST_FAILURE, 1,877 total,
+  1,861 passed, 13 skipped, 3 failed; focused reproduction confirmed the
+  self-development failures are the intentional dirty-source guard and not
+  M5 code regressions. A clean rerun remains required.
+- Dirty-checkout `npm run gate:local`: TEST_FAILURE at PROJECT_TRUTH because
+  the M5 implementation/documentation checkpoint was not yet clean; no
+  downstream groups were run. A clean rerun remains required.
 
 ## Deferred / Follow-Up
 
-To be populated after M2 census and the final remaining bottleneck is known.
+The next bottleneck is unchanged: 76 source surfaces are
+`READ_ONLY_METHOD_ONLY`, but all 76 carry additional source or Phase-24
+blockers; 45 surfaces remain response/semantic proof gaps, and the existing
+three Phase-24-eligible surfaces remain the only campaign authority. No
+successor proof family is prescribed until a fresh source snapshot changes
+those measurements.
 
 ## Resume Recipe
 
 Read this STATE and the living PLAN; inspect live Git/status/diff; continue the
-exact M1 action. Do not rerun completed broad scans unless currentness or a
-recorded milestone requires it.
+exact M6 validation action. Do not rerun completed source discovery unless
+currentness or a recorded validation requirement requires it.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 through M4 are complete. M2 rejected all new proof families;
-M5 hardening and final validation remain.
+IN_PROGRESS — M0 through M5 are complete. M2 rejected all new proof families;
+M6 final validation and M7 documentation/Git closure remain.
