@@ -7,9 +7,11 @@ import { projectExecutionGraph } from '../adapters/executionGraphAdapter';
 import { classifyRunStatus, projectRunDetail, projectRunList, projectTimeline } from '../adapters/runAdapter';
 import { projectCampaignCoverage, projectCampaignSummary } from '../adapters/campaignAdapter';
 import { projectSourceGraph, projectSourceSummary, projectSourceSurfaces, type SourceSummaryAuthorityInput } from '../adapters/sourceAdapter';
+import { projectFindings } from '../adapters/findingsAdapter';
 import { createRunEvidenceReader, type RunEvidenceReader, type RunEvidenceSnapshot } from '../authorities/runEvidenceReader';
 import { createSourceAuthority, type SourceAuthority, type SourceAuthoritySnapshot } from '../authorities/sourceAuthority';
 import { createCampaignAuthority, type CampaignAuthority, type CampaignAuthoritySnapshot } from '../authorities/campaignAuthority';
+import { createFindingsAuthority, type FindingsAuthority, type FindingsAuthoritySnapshot } from '../authorities/findingsAuthority';
 import { CONTROL_CENTER_HEALTH_SCHEMA_VERSION } from '../contracts/health';
 import type { ControlCenterCollector, ControlCenterListQuery } from './collector';
 import type { ControlCenterHealthDto } from '../contracts/health';
@@ -17,9 +19,7 @@ import type { ControlCenterRunDetailDto, ControlCenterTimelineDto } from '../con
 import type { ControlCenterExecutionGraphDto } from '../contracts/executionGraph';
 import type { ControlCenterCampaignCoverageDto, ControlCenterCampaignSummaryDto } from '../contracts/campaign';
 import type { ControlCenterSourceGraphDto } from '../contracts/sourceGraph';
-import type { ControlCenterFindingsDto } from '../contracts/findings';
 import { CONTROL_CENTER_CAMPAIGN_COVERAGE_SCHEMA_VERSION, CONTROL_CENTER_CAMPAIGN_SUMMARY_SCHEMA_VERSION } from '../contracts/campaign';
-import { CONTROL_CENTER_FINDINGS_SCHEMA_VERSION } from '../contracts/findings';
 import { asSafeControlCenterCode } from '../contracts/common';
 
 function emptyPage(limit: number) {
@@ -60,21 +60,18 @@ function unavailableCampaignCoverage(query: ControlCenterListQuery): ControlCent
   return { schemaVersion: CONTROL_CENTER_CAMPAIGN_COVERAGE_SCHEMA_VERSION, items: [], page: emptyPage(query.limit), fullyCoveredContractCount: 0 };
 }
 
-function unavailableFindings(query: ControlCenterListQuery): ControlCenterFindingsDto {
-  return { schemaVersion: CONTROL_CENTER_FINDINGS_SCHEMA_VERSION, state: 'UNAVAILABLE', items: [], page: emptyPage(query.limit) };
-}
-
 /**
  * Safe local collector. It exposes current in-repository readiness, bounded
- * repository-owned run evidence, and explicit unavailable categories for
- * authority surfaces not yet wired to a local store; it never shells out or
- * contacts a product environment.
+ * repository-owned run evidence, approved-source and campaign metadata, and
+ * owner-local finding metadata; it never shells out or contacts a product
+ * environment.
  */
 export interface DefaultControlCenterCollectorOptions {
   /** Test/in-process seam only; the server never accepts a filesystem root. */
   readonly runReader?: RunEvidenceReader;
   readonly sourceAuthority?: SourceAuthority;
   readonly campaignAuthority?: CampaignAuthority;
+  readonly findingsAuthority?: FindingsAuthority;
   readonly runSnapshotTtlMs?: number;
   readonly sourceSnapshotTtlMs?: number;
   readonly now?: () => number;
@@ -153,6 +150,55 @@ function validCampaignSnapshot(snapshot: CampaignAuthoritySnapshot): boolean {
     && (snapshot.generation === null || typeof snapshot.generation === 'string');
 }
 
+function unavailableFindingsSnapshot(): FindingsAuthoritySnapshot {
+  return {
+    schemaVersion: 'nightwatch.control-center-findings-authority.v1',
+    state: 'UNAVAILABLE',
+    dossiers: [],
+    generation: null,
+    reasonCodes: ['FINDINGS_ROOT_UNAVAILABLE'],
+  };
+}
+
+function validFindingsMetadata(value: unknown): boolean {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const dossier = value as Record<string, unknown>;
+  const reproduction = dossier.reproduction;
+  const confidence = dossier.confidence;
+  return !('privacy' in dossier)
+    && typeof dossier.schemaVersion === 'string'
+    && (dossier.status === 'READY' || dossier.status === 'INCOMPLETE')
+    && typeof dossier.candidateId === 'string'
+    && (dossier.title === null || typeof dossier.title === 'string')
+    && (dossier.firstObserved === null || typeof dossier.firstObserved === 'string')
+    && (dossier.lastObserved === null || typeof dossier.lastObserved === 'string')
+    && (dossier.routeClass === null || typeof dossier.routeClass === 'string')
+    && typeof dossier.oracleFingerprint === 'string'
+    && typeof dossier.evidenceLevel === 'string'
+    && reproduction !== null
+    && typeof reproduction === 'object'
+    && !Array.isArray(reproduction)
+    && typeof (reproduction as Record<string, unknown>).result === 'string'
+    && Number.isSafeInteger((reproduction as Record<string, unknown>).count)
+    && confidence !== null
+    && typeof confidence === 'object'
+    && !Array.isArray(confidence)
+    && typeof (confidence as Record<string, unknown>).level === 'string'
+    && typeof dossier.technicalSeverity === 'string'
+    && typeof dossier.triagePriority === 'string'
+    && typeof dossier.sourceCurrentness === 'string'
+    && typeof dossier.semanticFinding === 'boolean';
+}
+
+function validFindingsSnapshot(snapshot: FindingsAuthoritySnapshot): boolean {
+  return snapshot.schemaVersion === 'nightwatch.control-center-findings-authority.v1'
+    && ['AVAILABLE', 'EMPTY', 'UNAVAILABLE', 'UNKNOWN'].includes(snapshot.state)
+    && Array.isArray(snapshot.dossiers)
+    && snapshot.dossiers.every(validFindingsMetadata)
+    && (snapshot.generation === null || typeof snapshot.generation === 'string')
+    && Array.isArray(snapshot.reasonCodes);
+}
+
 function sourceSummaryAuthority(snapshot: SourceAuthoritySnapshot): SourceSummaryAuthorityInput {
   return {
     state: snapshot.state,
@@ -167,6 +213,7 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
   const runReader = options.runReader ?? createRunEvidenceReader();
   const sourceAuthority = options.sourceAuthority ?? createSourceAuthority();
   const campaignAuthority = options.campaignAuthority ?? createCampaignAuthority({ sourceAuthority });
+  const findingsAuthority = options.findingsAuthority ?? createFindingsAuthority();
   const now = options.now ?? (() => Date.now());
   const ttlMs = options.runSnapshotTtlMs === undefined
     ? 250
@@ -193,8 +240,8 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     : Number.isFinite(options.sourceSnapshotTtlMs) && options.sourceSnapshotTtlMs >= 0 && options.sourceSnapshotTtlMs <= 10_000
       ? options.sourceSnapshotTtlMs
       : 250;
-  let cachedAuthoritySnapshot: { readonly capturedAt: number; readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot } | null = null;
-  const readAuthoritySnapshot = (): { readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot } => {
+  let cachedAuthoritySnapshot: { readonly capturedAt: number; readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot; readonly findings: FindingsAuthoritySnapshot } | null = null;
+  const readAuthoritySnapshot = (): { readonly source: SourceAuthoritySnapshot; readonly campaign: CampaignAuthoritySnapshot; readonly findings: FindingsAuthoritySnapshot } => {
     const capturedAt = now();
     if (cachedAuthoritySnapshot !== null && capturedAt - cachedAuthoritySnapshot.capturedAt <= sourceTtlMs) {
       return cachedAuthoritySnapshot;
@@ -213,7 +260,14 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
     } catch {
       campaign = unavailableCampaignSnapshot();
     }
-    cachedAuthoritySnapshot = { capturedAt, source, campaign };
+    let findings: FindingsAuthoritySnapshot;
+    try {
+      const candidate = findingsAuthority.snapshot();
+      findings = validFindingsSnapshot(candidate) ? candidate : unavailableFindingsSnapshot();
+    } catch {
+      findings = unavailableFindingsSnapshot();
+    }
+    cachedAuthoritySnapshot = { capturedAt, source, campaign, findings };
     return cachedAuthoritySnapshot;
   };
 
@@ -266,6 +320,13 @@ export function createDefaultControlCenterCollector(options: DefaultControlCente
       const { source } = readAuthoritySnapshot();
       return projectSourceGraph(source.discovery?.surfaces ?? [], surfaceId, depth);
     },
-    findings: unavailableFindings,
+    findings: (query) => {
+      const { findings } = readAuthoritySnapshot();
+      return projectFindings({
+        dossiers: findings.dossiers,
+        state: findings.state,
+        available: findings.state !== 'UNAVAILABLE',
+      }, query.limit);
+    },
   };
 }

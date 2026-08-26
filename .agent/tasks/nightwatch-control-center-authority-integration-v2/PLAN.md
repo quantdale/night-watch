@@ -214,6 +214,25 @@ Read only the fixed private findings authority through existing dossier/store
 validators. Enforce permissions, schema/version, symlink/path/size/privacy
 rules and deterministic partial-corruption semantics. Project metadata only.
 
+#### M4 bridge contract
+
+The findings reader uses `privateArtifactRoot()` for the normal owner-local
+root (`$HOME/.nightwatch/findings`, with the existing owner configuration
+policy) and a separately named test-only injected root. It enumerates only a
+bounded set of JSON files, performs owner/mode, regular-file, no-symlink,
+size, and stable-read checks, and never returns a path or validator detail.
+Raw dossiers and the existing `{ dossier }` persistence envelope are
+classified by their dossier schema marker and validated through the single
+`validateArtifact('dossier', ...)` facade, which composes the v1 and v2
+validators. v1 incomplete stubs are not findings; v2 `UNRESOLVED` dossiers
+are projected as incomplete metadata. Unrecognized non-dossier private
+artifacts are ignored, while malformed/unsupported dossier candidates,
+privacy violations, duplicates, and partial reads produce UNKNOWN rather
+than a false EMPTY result. The reader crosses the privacy boundary only as
+metadata (screened labels, identities, timestamps, categorical triage
+fields, and bounded reproduction counts/results); the findings adapter
+preserves AVAILABLE, EMPTY, UNAVAILABLE, and UNKNOWN.
+
 ### M5 — Snapshot lifecycle, cache/currentness, and advisory SSE
 
 Status: PENDING.
