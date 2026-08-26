@@ -291,6 +291,10 @@ remain outside Git/under `/tmp` only.
   The disposable Node20 clean gate at the same head passed all 9/9 groups
   with receipt `clean-receipt:sha256:9483e8260a8e7ca718341e26` and embedded
   gate receipt `receipt:sha256:1e8ac0b2c03f2f35b3eb762d`.
+- Final exact-head Actions observation at closure head `7b9847f` was run
+  `32988040917`, sole job `98238785885`, completed failure with `steps: []`.
+  It is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; it is not code
+  validation and no retry churn was performed.
 
 ## Decisions Made During This Task
 

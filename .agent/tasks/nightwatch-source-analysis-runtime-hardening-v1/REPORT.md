@@ -442,11 +442,11 @@ worktree was clean.
 
 The observed Actions run for prior pushed head `5b4f8db` was run
 `32984921837`, sole job `98229480580`, completed failure with `steps: []`.
-It is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not code failure and
-not green CI evidence. The subsequent exact-head lookups for the newer pushed
-source checkpoints returned no matching workflow row at observation time;
-external CI is therefore not claimed green. Local and Node20 clean receipts
-remain the authoritative validation evidence.
+The final exact-head observation at closure head `7b9847f` was run
+`32988040917`, sole job `98238785885`, also completed failure with `steps: []`.
+Both are classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not code failures
+and not green CI evidence. No retry churn was performed. Local and Node20
+clean receipts remain the authoritative validation evidence.
 
 ## Safety and closure statement
 
