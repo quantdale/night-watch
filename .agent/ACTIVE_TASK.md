@@ -6,18 +6,19 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-analysis-runtime-hardening-v1
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
-Last checkpoint: M2 — differential safe-observable harness at validated test
-checkpoint 9d33c13.
-Current milestone: M2 — differential parity harness before optimization.
-Next action: Define a focused safe-observable projection and differential
-fixture harness, then add intentional drift probes that prove the harness
-detects identity/order/currentness changes before removing the probes.
+Last validated implementation SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+Last checkpoint: M4 — call-scoped exact source-read reuse at validated
+implementation checkpoint dc368eb.
+Current milestone: M5 — residual parser/token measurement and admit/reject
+decision.
+Next action: Repeat the baseline source-census timings/RSS after dc368eb,
+inspect residual tokenizer metrics, and decide whether bounded parse sharing
+can preserve exact symbol-specific evidence identity.
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
+LAST_VALIDATED_IMPLEMENTATION_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

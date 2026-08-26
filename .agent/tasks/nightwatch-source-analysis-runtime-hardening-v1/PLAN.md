@@ -52,10 +52,10 @@ or external publication may enter this task or Git.
   census, loader census, hygiene review, timings/RSS and safe output captures.
 - [x] M2 — build the complete differential parity harness before optimization;
   include byte-stable CLI checks, repeated-symbol fixtures, and mutation probes.
-- [ ] M3 — centralize equivalent TypeScript runtime loading, add only proven
+- [x] M3 — centralize equivalent TypeScript runtime loading, add only proven
   process-local compiler-derivative reuse, migrate incrementally, and test
   restoration/invalidation/fallback behavior.
-- [ ] M4 — instrument and implement call-scoped exact-snapshot source-read
+- [x] M4 — instrument and implement call-scoped exact-snapshot source-read
   reuse; prove identity separation, privacy, bounds, fail-closed behavior and
   parity across source/join/eligibility paths.
 - [ ] M5 — measure residual parser/token cost; admit shared parse work only if
@@ -112,6 +112,11 @@ if exact symbol-specific evidence identity cannot be proven.
   this fresh OpenSpec campaign gets its own continuity-v2 task and active route.
 - M0-02: The pulled head is the baseline authority after reconciling all
   commits after the planner's planned-from SHA.
+- M3-01: No persistent derivative cache was justified by the measured baseline;
+  process-local compiler output is sufficient and has smaller privacy and
+  interruption surface.
+- M4-01: Positive source text is cached only after an exact post-scan digest
+  check; all uncertain identities use the existing reader path.
 
 ## Discoveries
 
@@ -147,6 +152,16 @@ if exact symbol-specific evidence identity cannot be proven.
   proving each caused `SOURCE_PARITY_MISMATCH`; the retained harness run is
   two tests passing, including byte equality for `contracts`, `differential`
   and `mutation-score` CLI JSON, with zero stderr and status 0.
+- M3 completed at `dc368eb`: all 20 equivalent bin-local TypeScript hooks now
+  delegate to one explicit-profile loader; the loader suite passes 4/4,
+  including content/mtime/profile/nested-error controls. The default profile
+  preserves the audited ES2022/CommonJS/Node10 options; process-local output
+  reuse is bounded and no disk cache was admitted.
+- M4 completed at `dc368eb`: the discovery path uses the bounded
+  `createCallScopedSourceReadView` only after `scanSource` establishes exact
+  file identities. The focused read-reuse suite passes 4/4, including
+  cross-repository/snapshot separation and stale/rejected/unavailable fallback;
+  the affected source cone retained parity and hardening/typecheck passed.
 
 ## Deferred Work
 

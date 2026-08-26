@@ -33,7 +33,41 @@ activation.
 ## Current status
 
 M0 bootstrap and M1 exhaustive audit are complete. M2 differential parity
-harness construction is complete. M3 loader centralization is in progress.
+harness construction, M3 loader centralization, and M4 call-scoped exact-read
+reuse are complete at validated checkpoint `dc368eb`. M5 parser/token
+measurement is in progress.
+
+## M3/M4 implementation evidence
+
+The 20 equivalent bin-local TypeScript require hooks were migrated to
+`bin/lib/typescript-runtime-loader.mjs`; the separately fingerprinted
+`bin/portfolio.mjs` path was reviewed and retained. The shared loader has one
+default ES2022/CommonJS/Node10 profile, an explicit alternate ES2020 profile
+for profile-identity coverage, a bounded process-local LRU containing only
+compiler output, exact source-content hashing, filename/profile/compiler/loader/
+TypeScript-version identity, and `finally` restoration for nested and throwing
+loads. No disk cache was added.
+
+The loader suite passes 4/4. It proves exact content invalidation even with
+mtime restored, ignores mtime-only changes, separates explicit profiles, and
+does not retain a derivative when module execution throws. Migrated entrypoint
+syntax and `--help` checks pass; typecheck, hardening, and the source parity
+suite pass.
+
+Discovery now constructs a bounded `createCallScopedSourceReadView` after the
+scan inventory is available. It indexes only unique eligible records with a
+non-null source SHA and content digest, verifies the first downstream read
+against that digest, then retains only positive exact text in the ephemeral
+view. Rejected, unavailable, ambiguous and mismatched reads call through and
+are never cached. The focused source-read suite passes 4/4. Its synthetic
+instrumentation found two underlying reads of the shared handler during one
+discovery (scan plus first downstream read), with later joins/observations
+reusing the value; no raw marker appears in safe inventory/projections.
+
+The affected source cone (source parity, surfaces, response flow, readonly and
+eligibility tests) retained the safe-output/evidence identity contract. The
+read view is scoped to one call and is not serialized or exposed in discovery
+DTOs.
 
 ## M2 differential parity evidence
 

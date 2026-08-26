@@ -8,14 +8,14 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
-Last substantive checkpoint SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
+Last validated implementation SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+Last substantive checkpoint SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
+LAST_VALIDATED_IMPLEMENTATION_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: dc368eb277514c716fb05fdda7d602ae6a850e29
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
@@ -30,9 +30,9 @@ publication, AI, or self-development authority.
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M5
 Milestone status: IN_PROGRESS
-What is being attempted: centralize equivalent TypeScript runtime loading with explicit profiles, bounded process-local reuse, incremental migration, and restoration/invalidation proof.
+What is being attempted: measure residual parser/token work after loader and exact-read reuse, then either admit a bounded lower-level parse cache with parity proof or document the optimization as rejected.
 
 ## Completed Milestones
 
@@ -50,20 +50,35 @@ What is being attempted: centralize equivalent TypeScript runtime loading with e
   review projections, same-file symbol isolation, raw-marker exclusion and
   repeated CLI JSON byte checks pass. Temporary order/identity/currentness
   mutations each failed the equality assertion and were removed afterward.
+- M3 — TypeScript runtime loading complete at `dc368eb`: one explicit shared
+  loader owns the ES2022/CommonJS/Node10 profile, a bounded process-local
+  content-addressed derivative cache, nested/error hook restoration and
+  failed-derivative exclusion. All 20 equivalent bin-local hooks migrated;
+  `bin/portfolio.mjs` remains the reviewed distinct compiler-fingerprint path.
+  Loader tests pass 4/4, migrated CLI help/syntax checks pass, typecheck and
+  hardening pass, and loader checkpoints are pushed with local/remote HEAD
+  equal.
+- M4 — call-scoped exact source-read reuse complete at `dc368eb`: discovery
+  wraps the existing reader only after scan identity is established; positive
+  content is retained only in a bounded ephemeral view keyed by snapshot,
+  repo, SHA, path, digest and status. Rejected, unavailable, ambiguous and
+  digest-mismatched reads fall back without cache entries. Source/read,
+  response-flow, Phase24, eligibility and parity tests pass; the instrumented
+  synthetic discovery reduced repeated shared-handler reads to scan plus one
+  verified downstream read and retained safe-output equality.
 
 ## Work In Progress
 
-M3 loader centralization. The parity helper/test is now the pre-optimization
-identity guard. The next bounded work unit is to add the explicit loader
-utility, exercise hook restoration and content-addressed compiler reuse, then
-migrate one small bin group with cold/warm CLI differential checks.
+M5 parser/token investigation. The loader and read-view wins are independently
+checkpointed. The next bounded work unit is to repeat the source-census timing/
+RSS methodology, inspect residual tokenizer metrics and determine whether
+lower-level parse sharing can preserve per-symbol analyzer identity.
 
 ## Exact Next Action
 
-Inspect the 20 equivalent bin-local TypeScript hooks and implement one
-profile-explicit loader utility with guaranteed nested/error restoration and a
-bounded process-local cache keyed by loader/version/options/source identity.
-Migrate only the first small entrypoint group after focused loader tests pass.
+Repeat the baseline source-census measurements after `dc368eb`, compare parser/
+token metrics and memory, then make the explicit M5 parse-sharing admit/reject
+decision before editing analyzers.
 
 ## Files Changed
 
@@ -72,8 +87,10 @@ This task activation adds only the native continuity files
 and routes `.agent/ACTIVE_TASK.md` to this task. The OpenSpec planning artifacts
 are the frozen planning source and were pulled from `origin/main`.
 
-M1 added no implementation source. M2 added only the parity helper and focused
-unit test; audit manifest/hash files remain outside Git under `/tmp` only.
+M1 added no implementation source. M2 added the parity helper and focused unit
+test. M3 added the central loader/declaration, loader tests, and migrated bin
+wrappers. M4 added the call-scoped read view and focused tests. Audit
+manifest/hash files remain outside Git under `/tmp` only.
 
 ## Validation Ledger
 
@@ -144,6 +161,21 @@ unit test; audit manifest/hash files remain outside Git under `/tmp` only.
   raw synthetic marker is absent from the serialized safe projection.
 - Final CLI byte assertions: `contracts`, `differential`, and `mutation-score`
   each ran twice with status 0, empty stderr and byte-identical JSON stdout.
+- M3 loader validation: `npm run typecheck` PASS; loader suite 4/4 PASS;
+  source parity suite 2/2 PASS; migrated bin `--help` smoke checks 13/13
+  PASS; all migrated files pass `node --check`; `npm run hardening:check`
+  PASS. The only `require.extensions`/`transpileModule` occurrence under
+  `bin/` is the shared loader.
+- M3 loader identity controls: exact content changes (with original mtime
+  restored) miss; mtime-only changes hit; explicit ES2020 and ES2022 profiles
+  occupy separate entries; nested and throwing modules restore the hook and do
+  not retain a failed derivative.
+- M4 source-read validation: `callScopedSourceRead.test.ts` 4/4 PASS;
+  source cone (including source parity, response flow, surfaces, readonly and
+  eligibility coverage) passed all completed tests; hardening and typecheck
+  PASS. The fixture contains two repositories with the same relative path,
+  same-mtime content mutation, rejected/unsupported and unavailable controls,
+  and separate snapshot views without aliasing.
 
 ## Decisions Made During This Task
 
@@ -153,6 +185,18 @@ unit test; audit manifest/hash files remain outside Git under `/tmp` only.
   tasks will be marked only after exact evidence is recorded in this task.
 - Starting and baseline validated implementation anchors use the pulled live
   Git SHA until a source-bearing milestone earns a newer validated checkpoint.
+- M3-01: The loader retains only compiler output in a bounded process-local
+  LRU. No ignored disk derivative cache was justified because the measured
+  path is already process-bounded and persistence would add interruption,
+  invalidation and privacy surface without required evidence.
+- M3-02: The census found no caller with a distinct compiler profile; the
+  default ES2022 profile remains unchanged. A second explicit ES2020 profile
+  exists only to exercise profile identity/invalidation and future-proof the
+  API; no caller was silently normalized across a known difference.
+- M4-01: Source text is cached only after a post-scan reader call matches the
+  inventory digest. A mismatch is returned to the authoritative caller for
+  its existing stale classification and is never retained; rejected or
+  ambiguous records never become cache authority.
 
 ## Discoveries
 
@@ -171,6 +215,13 @@ unit test; audit manifest/hash files remain outside Git under `/tmp` only.
   the current discovery implementation explicitly marks them non-enumerable
   and non-authoritative; structural discovery/performance fields remain in the
   separate benchmark ledger.
+- The loader migration removed all 20 duplicate bin-local hook bodies. The
+  distinct `bin/portfolio.mjs` compiler fingerprint path remains outside the
+  migration by design.
+- The source-read fixture measured two underlying reads of the shared handler
+  during one discovery (scan plus first verified analyzer/index read); later
+  joins and observations hit the call-scoped value. This is an instrumented
+  synthetic measurement, not a claim about an external product snapshot.
 
 ## Blockers
 
@@ -185,7 +236,10 @@ accessed.
 
 ## Deferred / Follow-Up
 
-None at activation. Rejected candidates will be recorded with evidence.
+No parse/token optimization has been admitted yet. The M5 timing and residual
+cost measurement is pending; if per-symbol identity parity is not provable or
+the remaining cost is not material, the candidate will be explicitly rejected
+and the independent loader/read wins retained.
 
 ## Resume Recipe
 
@@ -197,5 +251,5 @@ boundary.
 
 ## Completion Snapshot
 
-Not complete. M1 audit is in progress; no implementation or final Git
-checkpoint has been claimed.
+Not complete. M5 parser/token measurement and M6–M9 hardening, acceptance,
+reconciliation, exact-head CI observation and final closure remain.
