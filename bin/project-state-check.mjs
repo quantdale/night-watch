@@ -25,8 +25,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v1';
 const BLOCK_SECTION_HEADING = '## Project-state v1 (machine-checked truth block)';
@@ -79,29 +79,7 @@ function gitReadOnly(root, args) {
 }
 
 function loadTypeScriptModule(root, file) {
-  const require = createRequire(import.meta.url);
-  const typescript = require('typescript');
-  const previous = require.extensions['.ts'];
-  require.extensions['.ts'] = (module, filename) => {
-    const source = fs.readFileSync(filename, 'utf8');
-    const output = typescript.transpileModule(source, {
-      fileName: filename,
-      compilerOptions: {
-        target: typescript.ScriptTarget.ES2022,
-        module: typescript.ModuleKind.CommonJS,
-        moduleResolution: typescript.ModuleResolutionKind.Node10,
-        esModuleInterop: true,
-        skipLibCheck: true,
-      },
-    }).outputText;
-    module._compile(output, filename);
-  };
-  try {
-    return require(path.join(root, file));
-  } finally {
-    if (previous === undefined) delete require.extensions['.ts'];
-    else require.extensions['.ts'] = previous;
-  }
+  return loadRuntimeTypeScriptModule(path.join(root, file), { root });
 }
 
 function parseKeyValueBlock(text) {

@@ -7,8 +7,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
@@ -32,22 +32,7 @@ function parseArgs(argv) {
 }
 
 function loadTypeScriptModule(file) {
-  const require = createRequire(import.meta.url);
-  const typescript = require('typescript');
-  const previous = require.extensions['.ts'];
-  require.extensions['.ts'] = (module, filename) => {
-    const source = fs.readFileSync(filename, 'utf8');
-    const output = typescript.transpileModule(source, {
-      fileName: filename,
-      compilerOptions: { target: typescript.ScriptTarget.ES2022, module: typescript.ModuleKind.CommonJS, moduleResolution: typescript.ModuleResolutionKind.Node10, esModuleInterop: true, skipLibCheck: true },
-    }).outputText;
-    module._compile(output, filename);
-  };
-  try { return require(path.join(ROOT, file)); }
-  finally {
-    if (previous === undefined) delete require.extensions['.ts'];
-    else require.extensions['.ts'] = previous;
-  }
+  return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
 
 function externalFile(file, label) {

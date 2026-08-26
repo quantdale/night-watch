@@ -17,7 +17,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
+import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from "./lib/typescript-runtime-loader.mjs";
 
 const HELP = `Nightwatch Phase 14A contract coverage health CLI (local/source-only).
 
@@ -75,31 +75,8 @@ function parseArgs(argv) {
   return out;
 }
 
-// Replicate the established local TypeScript loader (read-only, no network).
 function loadTypeScriptModule(root, file) {
-  const require = createRequire(import.meta.url);
-  const typescript = require("typescript");
-  const previous = require.extensions[".ts"];
-  require.extensions[".ts"] = (module, filename) => {
-    const source = fs.readFileSync(filename, "utf8");
-    const output = typescript.transpileModule(source, {
-      fileName: filename,
-      compilerOptions: {
-        target: typescript.ScriptTarget.ES2022,
-        module: typescript.ModuleKind.CommonJS,
-        moduleResolution: typescript.ModuleResolutionKind.Node10,
-        esModuleInterop: true,
-        skipLibCheck: true,
-      },
-    }).outputText;
-    module._compile(output, filename);
-  };
-  try {
-    return require(path.join(root, file));
-  } finally {
-    if (previous === undefined) delete require.extensions[".ts"];
-    else require.extensions[".ts"] = previous;
-  }
+  return loadRuntimeTypeScriptModule(path.join(root, file), { root });
 }
 
 function makeSnapshotReader(snapshotDir) {
