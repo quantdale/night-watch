@@ -67,7 +67,7 @@ or external publication may enter this task or Git.
 - [x] M7 — repository-wide architecture/hygiene and affected compatibility
   sweep; validate operator, Control Center, manifests, source gaps, Phase 24,
   synthetic and provenance surfaces.
-- [ ] M8 — repeat timings/RSS and execute all required local acceptance,
+- [x] M8 — repeat timings/RSS and execute all required local acceptance,
   semantic compatibility, synthetic/provenance, clean Node20, and isolated
   parity gates.
 - [ ] M9 — use remaining productive budget for in-scope regression hunting,

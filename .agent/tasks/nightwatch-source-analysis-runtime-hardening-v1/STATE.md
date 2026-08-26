@@ -8,14 +8,14 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
-Last substantive checkpoint SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
+Last validated implementation SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
+Last substantive checkpoint SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e1f2b5406e63c614d9f41abd5583d5b9bf5355d8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
@@ -30,9 +30,10 @@ publication, AI, or self-development authority.
 
 ## Current Milestone
 
-Milestone ID: M8
+Milestone ID: M9
 Milestone status: IN_PROGRESS
-What is being attempted: repeat performance measurements and execute the full local, semantic, synthetic, clean Node20 and isolated parity acceptance gates.
+What is being attempted: bounded regression hunting, final clean-checkout
+qualification, privacy/diff reconciliation and durable closure.
 
 ## Completed Milestones
 
@@ -87,19 +88,36 @@ What is being attempted: repeat performance measurements and execute the full lo
   passed 91/91, the UI passed typecheck plus 11/11 Vitest tests and build
   verification, and the synthetic Control Center browser path passed 1/1.
 
+- M8 — local acceptance and performance validation complete at `5b4f8db`:
+  typecheck, hardening, project truth, continuity and audit passed with zero
+  strict errors; semantic compatibility passed 1,884 total / 1,871 passed /
+  13 skipped / 0 failed; the serial local gate passed all nine required groups
+  with receipt `receipt:sha256:4e342b026af4e6a306f293ee`; the source parity
+  harness passed 2/2 after the final implementation repair; and the final
+  source-census reruns retained the approved snapshot and normalized safe
+  output identities. The first clean compatibility attempt had four
+  self-development portfolio failures because the synthetic authoritative
+  source bundle omitted the newly shared loader; adding
+  `bin/lib/typescript-runtime-loader.mjs` to `SELFDEV_AUTHORITATIVE_PATHS`
+  fixed the bundle, after which the isolated portfolio suite passed 30/30,
+  adoption CLI passed 7/7 and the full compatibility receipt passed. The
+  disposable Node20 clean-checkout gate remains the first M9 action because
+  it requires a committed checkpoint.
+
 ## Work In Progress
 
-M8 full acceptance. M7 retained the rejected parser decision, completed the
-architecture review, and passed the affected operator/Control Center,
-synthetic and provenance paths. The next bounded work unit is to repeat the
-same performance methodology, run every required local gate, and compare safe
-outputs against the optimized baseline.
+M9 closure. M8 retained the rejected parser decision and completed every
+current local acceptance group. The next bounded work unit is to finish the
+loader capacity regression, run the disposable Node20 gate, inspect the final
+privacy/diff surface, and close the continuity records without adding
+authority.
 
 ## Exact Next Action
 
-Repeat the baseline source-census timing/RSS methodology, then run the M8
-typecheck, hardening, continuity, semantic, synthetic, provenance, local gate,
-clean Node20 gate and isolated parity checks; do not reopen the rejected parser
+Run the clean Node20 gate and final parity/privacy/diff checks after the
+bounded loader regression checkpoint; then complete the OpenSpec/native task
+records, commit and push normally, verify `HEAD == origin/main`, and observe
+the exact-head Actions result once. Do not reopen the rejected parser
 candidate unless new evidence changes the parity decision.
 
 ## Files Changed
@@ -239,6 +257,30 @@ remain outside Git/under `/tmp` only.
   fourteen small Playwright configs were confirmed as intentional opt-in
   wrappers. No line-count-only split or config merge was justified.
 
+- M8 final performance reruns (same commands and safe projection method):
+  current source-scan repeated wall time was 5.34–7.13s versus 12.89s
+  baseline; source-gaps 4.73–6.10s versus 10.97s; eligibility-census
+  4.93–7.23s versus 10.28s (one normal run and one host-variance RSS outlier
+  at 316,864 KB); readonly-census 4.95–6.01s versus 11.46s; and surfaces
+  4.84–5.70s versus 10.88s. Current runs exited 0 with empty application
+  stderr. Peak RSS stayed approximately 266–270 MB for normal runs; baseline
+  values were 265,104 KB, 261,424 KB, 263,088 KB, 262,220 KB and 301,564 KB
+  respectively. Normalized safe-output digests matched the optimized
+  baseline: source-scan `c07b2079bf0b22281b01561501c38b0160521eca64b8cfaef1184ac9f7a6b920`,
+  source-gaps `ffd3c1be9a3f43618ca4f5215cda8e57d4b42fd61c2ceaaa2a3aeb81e461f8ca`,
+  eligibility `604827c2addbe706cea6f7e4189d55bb6e0ed70cbdaeed189bbf24fb8e320219`,
+  readonly `d5b8513095487357ddbb2e92c233d0967030a744532dfb7b4758882d5d6df842`
+  and surfaces `c00b70c4ec96a49e629a5d94ca6e64a11276d0466d60f1aa69fbe6149c0502b0`.
+
+- M8 validation ledger additions: clean `test:semantic-compat` passed
+  1,884/1,871/13/0; `gate:local` passed all 9/9 groups at `5b4f8db` with
+  receipt `receipt:sha256:4e342b026af4e6a306f293ee`; the loader regression
+  suite now passes 5/5 including least-recently-used eviction at 256 entries;
+  and the final source-analysis parity suite passes 2/2. `agent:check`
+  passes with only the expected stale-anchor warning while this checkpoint is
+  being advanced and the known 24 legacy-v1 warnings; `agent:audit` reports
+  zero strict errors.
+
 ## Decisions Made During This Task
 
 - The terminal predecessor is immutable history. Its active-task files are not
@@ -271,6 +313,10 @@ remain outside Git/under `/tmp` only.
   deliberate ownership and safety boundaries. The compatibility sweep found
   no reproduced defect or measurable campaign-scoped reason to split or merge
   them; any future restructuring requires its own evidence and scope.
+- M8-01: Treat the missing shared-loader file in the synthetic self-development
+  source bundle as a real compatibility regression. Add the loader to the
+  authoritative manifest rather than weakening the portfolio assertions;
+  re-run the affected suites and the complete compatibility manifest.
 
 ## Discoveries
 
@@ -311,6 +357,11 @@ remain outside Git/under `/tmp` only.
   returned the existing bounded safe DTOs, Control Center browser navigation
   covered all seven views without external requests, and no generated UI
   output entered Git.
+- M8 caught and repaired a hidden source-bundle coupling: the new shared
+  loader was an authoritative runtime file but was absent from the synthetic
+  self-development portfolio bundle. The repaired manifest preserves the
+  existing source-bundle contract; isolated portfolio, adoption CLI and full
+  semantic compatibility all pass afterward.
 
 ## Blockers
 

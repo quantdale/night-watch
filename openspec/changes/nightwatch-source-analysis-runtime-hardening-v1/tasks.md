@@ -66,12 +66,12 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 
 ## 8. Performance and full acceptance — target H9–H11
 
-- [ ] 8.1 Repeat baseline timings/RSS with the same methodology; report cold/warm variance and exact before/after numbers.
-- [ ] 8.2 Run `npm run typecheck`, `npm run hardening:check`, `npm run project:check`, `npm run agent:check`, and `npm run agent:audit`.
-- [ ] 8.3 Run `npm run test:semantic-compat`, `npm run campaign:synthetic`, and `npm run test:owner-provenance` (or their current authoritative replacements if Git changed).
+- [x] 8.1 Repeat baseline timings/RSS with the same methodology; report cold/warm variance and exact before/after numbers.
+- [x] 8.2 Run `npm run typecheck`, `npm run hardening:check`, `npm run project:check`, `npm run agent:check`, and `npm run agent:audit`.
+- [x] 8.3 Run `npm run test:semantic-compat`, `npm run campaign:synthetic`, and `npm run test:owner-provenance` (or their current authoritative replacements if Git changed).
 - [ ] 8.4 Run `npm run gate:local` and the current Node20 clean-checkout gate.
-- [ ] 8.5 Run canonical/topology-correct isolated parity if required by the affected source-analysis cone; enumerate exact pass/skip/fail counts and skip identities.
-- [ ] 8.6 Confirm safe source/eligibility/portfolio outputs and all compared digests are identical cold vs warm and baseline vs optimized for the same snapshot.
+- [x] 8.5 Run canonical/topology-correct isolated parity if required by the affected source-analysis cone; enumerate exact pass/skip/fail counts and skip identities.
+- [x] 8.6 Confirm safe source/eligibility/portfolio outputs and all compared digests are identical cold vs warm and baseline vs optimized for the same snapshot.
 
 ## 9. Twelve-hour closure and truth reconciliation — target H11–H12
 

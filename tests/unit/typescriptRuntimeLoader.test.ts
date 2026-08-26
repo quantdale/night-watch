@@ -20,6 +20,16 @@ function fixture(source: string): { readonly root: string; readonly file: string
   return { root, file, dispose: () => fs.rmSync(root, { recursive: true, force: true }) };
 }
 
+function boundedFixtures(count: number): { readonly files: readonly string[]; readonly dispose: () => void } {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-ts-loader-bound-'));
+  const files = Array.from({ length: count }, (_, index) => {
+    const file = path.join(root, `module-${index}.ts`);
+    fs.writeFileSync(file, `export const value: number = ${index};\n`);
+    return file;
+  });
+  return { files, dispose: () => fs.rmSync(root, { recursive: true, force: true }) };
+}
+
 function forget(file: string): void {
   delete nodeRequire.cache[nodeRequire.resolve(file)];
 }
@@ -109,6 +119,34 @@ test.describe('central TypeScript runtime loader', () => {
       forget(throwing.file);
       outer.dispose();
       throwing.dispose();
+    }
+  });
+
+  test('bounds the derivative cache and evicts the least-recently-used entry', () => {
+    const modules = boundedFixtures(257);
+    try {
+      for (const [index, file] of modules.files.entries()) {
+        const loaded = loadTypeScriptModule<{ readonly value: number }>(file);
+        expect(loaded.value).toBe(index);
+        forget(file);
+      }
+      expect(typeScriptRuntimeTranspileCacheStats()).toMatchObject({
+        hits: 0,
+        misses: 257,
+        evictions: 1,
+        transpiles: 257,
+        entries: 256,
+        maxEntries: 256,
+      });
+
+      const firstFile = modules.files[0];
+      if (firstFile === undefined) throw new Error('SYNTHETIC_FIXTURE_EMPTY');
+      const evicted = loadTypeScriptModule<{ readonly value: number }>(firstFile);
+      expect(evicted.value).toBe(0);
+      expect(typeScriptRuntimeTranspileCacheStats()).toMatchObject({ hits: 0, misses: 258, evictions: 2, entries: 256 });
+    } finally {
+      for (const file of modules.files) forget(file);
+      modules.dispose();
     }
   });
 });

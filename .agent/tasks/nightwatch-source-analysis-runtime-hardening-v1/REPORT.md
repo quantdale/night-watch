@@ -35,8 +35,37 @@ activation.
 M0 bootstrap and M1 exhaustive audit are complete. M2 differential parity
 harness construction, M3 loader centralization, M4 call-scoped exact-read
 reuse, M5 parser/token decision and M6 adversarial hardening are complete.
-The validated M6 checkpoint is `e1f2b5406e63c614d9f41abd5583d5b9bf5355d8`;
-M7 repository-wide compatibility review is in progress.
+The validated M8 checkpoint is `5b4f8dbec70b3912b471bfaa5edaf23781c66651`;
+M9 closure is in progress.
+
+## M8 acceptance and regression checkpoint
+
+The full serial local gate passed all nine required groups at `5b4f8db` with
+receipt `receipt:sha256:4e342b026af4e6a306f293ee`. The final semantic
+compatibility receipt is 1,884 total / 1,871 passed / 13 skipped / 0 failed.
+Static, hardening, project-truth, continuity and audit checks passed with zero
+strict errors. The isolated source-analysis parity suite passed 2/2, and the
+loader suite now passes 5/5 including a 256-entry LRU eviction boundary.
+
+The first clean semantic run after the manifest repair had four
+`selfDevPortfolio` failures because the synthetic authoritative source bundle
+did not include the new shared loader. `src/core/selfDev/provenanceManifest.ts`
+now includes `bin/lib/typescript-runtime-loader.mjs`; the isolated portfolio
+suite passed 30/30, adoption CLI passed 7/7, and the final full compatibility
+receipt passed without changing any authority or privacy boundary.
+
+The disposable Node20 clean-checkout gate is intentionally carried into M9;
+the current eviction-test and continuity checkpoint must be committed before
+that clean gate can qualify the exact source head.
+
+Performance reruns retained the approved source snapshot and normalized safe
+digests. Representative current wall-time ranges were source-scan 5.34–7.13s
+(12.89s baseline), source-gaps 4.73–6.10s (10.97s), eligibility-census
+4.93–7.23s (10.28s), readonly-census 4.95–6.01s (11.46s), and surfaces
+4.84–5.70s (10.88s). Normal runs used approximately 266–270 MB peak RSS;
+one eligibility run reached 316,864 KB as host variance. All application
+stderr was empty and status was 0. Normalized output digests matched the
+optimized baseline; exact digest values are recorded in STATE.md.
 
 ## M3/M4 implementation evidence
 
