@@ -69,15 +69,15 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 - [x] 8.1 Repeat baseline timings/RSS with the same methodology; report cold/warm variance and exact before/after numbers.
 - [x] 8.2 Run `npm run typecheck`, `npm run hardening:check`, `npm run project:check`, `npm run agent:check`, and `npm run agent:audit`.
 - [x] 8.3 Run `npm run test:semantic-compat`, `npm run campaign:synthetic`, and `npm run test:owner-provenance` (or their current authoritative replacements if Git changed).
-- [ ] 8.4 Run `npm run gate:local` and the current Node20 clean-checkout gate.
+- [x] 8.4 Run `npm run gate:local` and the current Node20 clean-checkout gate.
 - [x] 8.5 Run canonical/topology-correct isolated parity if required by the affected source-analysis cone; enumerate exact pass/skip/fail counts and skip identities.
 - [x] 8.6 Confirm safe source/eligibility/portfolio outputs and all compared digests are identical cold vs warm and baseline vs optimized for the same snapshot.
 
 ## 9. Twelve-hour closure and truth reconciliation — target H11–H12
 
-- [ ] 9.1 Use remaining productive budget for regression hunting and hidden-coupling review inside scope; do not invent new feature authority or idle artificially.
-- [ ] 9.2 Reconcile OpenSpec tasks, native SPEC/PLAN/STATE/REPORT and project docs with actual implementation truth.
-- [ ] 9.3 Inspect the full diff/privacy surface, run `git diff --check`, and ensure no raw sibling source, secret, owner-only finding or machine-private artifact entered Git.
-- [ ] 9.4 Commit validated durable checkpoints with detailed messages; fast-forward push only; verify local `HEAD == origin/main` after push.
-- [ ] 9.5 Observe the exact-head GitHub Actions run once. If the job has zero/null steps, record the external billing/platform block and do not call CI green or retry-churn.
-- [ ] 9.6 Complete the final report with audit coverage, performance, parity/digests, validation, rejected candidates, risks, deferred work, Git anchors and CI truth.
+- [x] 9.1 Use remaining productive budget for regression hunting and hidden-coupling review inside scope; do not invent new feature authority or idle artificially.
+- [x] 9.2 Reconcile OpenSpec tasks, native SPEC/PLAN/STATE/REPORT and project docs with actual implementation truth.
+- [x] 9.3 Inspect the full diff/privacy surface, run `git diff --check`, and ensure no raw sibling source, secret, owner-only finding or machine-private artifact entered Git.
+- [x] 9.4 Commit validated durable checkpoints with detailed messages; fast-forward push only; verify local `HEAD == origin/main` after push.
+- [x] 9.5 Observe the exact-head GitHub Actions run once. If the job has zero/null steps, record the external billing/platform block and do not call CI green or retry-churn.
+- [x] 9.6 Complete the final report with audit coverage, performance, parity/digests, validation, rejected candidates, risks, deferred work, Git anchors and CI truth.

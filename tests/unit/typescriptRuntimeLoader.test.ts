@@ -149,4 +149,17 @@ test.describe('central TypeScript runtime loader', () => {
       modules.dispose();
     }
   });
+
+  test('rejects an over-limit module list before installing a hook or compiling', () => {
+    const moduleFile = fixture('export const value = 1;\n');
+    const currentHook = nodeRequire.extensions['.ts'];
+    try {
+      expect(() => loadTypeScriptModules(Array.from({ length: 129 }, () => moduleFile.file))).toThrow('TYPESCRIPT_RUNTIME_MODULE_LIST_INVALID');
+      expect(nodeRequire.extensions['.ts']).toBe(currentHook);
+      expect(typeScriptRuntimeTranspileCacheStats()).toMatchObject({ hits: 0, misses: 0, transpiles: 0, entries: 0, evictions: 0 });
+    } finally {
+      forget(moduleFile.file);
+      moduleFile.dispose();
+    }
+  });
 });

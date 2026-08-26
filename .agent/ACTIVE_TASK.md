@@ -6,9 +6,9 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-analysis-runtime-hardening-v1
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
-Last checkpoint: M8 — full local acceptance and semantic compatibility
-validation at implementation checkpoint 5b4f8db.
+Last validated implementation SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+Last checkpoint: M8 — local and disposable Node20 acceptance at implementation
+checkpoint 76c06cb.
 Current milestone: M9 — regression hunting and closure reconciliation.
 Next action: Complete the bounded loader regression pass, run the clean
 Node20 gate and final parity/privacy checks, then reconcile, commit, push and
@@ -16,8 +16,8 @@ observe exact-head Actions once.
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
+LAST_VALIDATED_IMPLEMENTATION_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

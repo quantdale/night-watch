@@ -8,14 +8,14 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
-Last substantive checkpoint SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
+Last validated implementation SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+Last substantive checkpoint SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 5b4f8dbec70b3912b471bfaa5edaf23781c66651
+LAST_VALIDATED_IMPLEMENTATION_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 76c06cb1e439a1da80aaefcfbee9f4a97462877c
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
@@ -100,24 +100,27 @@ qualification, privacy/diff reconciliation and durable closure.
   source bundle omitted the newly shared loader; adding
   `bin/lib/typescript-runtime-loader.mjs` to `SELFDEV_AUTHORITATIVE_PATHS`
   fixed the bundle, after which the isolated portfolio suite passed 30/30,
-  adoption CLI passed 7/7 and the full compatibility receipt passed. The
-  disposable Node20 clean-checkout gate remains the first M9 action because
-  it requires a committed checkpoint.
+  adoption CLI passed 7/7 and the full compatibility receipt passed.
+- M8 clean-checkout qualification completed at `76c06cb`: the disposable
+  Node20 installation and all nine clean gate groups passed, with receipt
+  `clean-receipt:sha256:7413e2f9b981ab6918d65b56`, gate receipt
+  `receipt:sha256:5446abd4166fa41f1ab89927`, clean before/after, no module
+  reuse, no auth or owner-finding state and zero sibling writes.
 
 ## Work In Progress
 
-M9 closure. M8 retained the rejected parser decision and completed every
-current local acceptance group. The next bounded work unit is to finish the
-loader capacity regression, run the disposable Node20 gate, inspect the final
-privacy/diff surface, and close the continuity records without adding
-authority.
+M9 closure. M8 retained the rejected parser decision and completed local plus
+Node20 clean acceptance. The bounded loader regression now covers both the
+256-entry LRU eviction boundary and the 128-module-list input bound. The next
+bounded work unit is to record the final diff/privacy review, close all task
+records, and qualify the final source-bearing checkpoint.
 
 ## Exact Next Action
 
-Run the clean Node20 gate and final parity/privacy/diff checks after the
-bounded loader regression checkpoint; then complete the OpenSpec/native task
+Run the final focused checks and clean Node20 gate after the bounded loader
+input-bound regression checkpoint; then complete the OpenSpec/native task
 records, commit and push normally, verify `HEAD == origin/main`, and observe
-the exact-head Actions result once. Do not reopen the rejected parser
+the final exact-head Actions result once. Do not reopen the rejected parser
 candidate unless new evidence changes the parity decision.
 
 ## Files Changed
@@ -280,6 +283,12 @@ remain outside Git/under `/tmp` only.
   passes with only the expected stale-anchor warning while this checkpoint is
   being advanced and the known 24 legacy-v1 warnings; `agent:audit` reports
   zero strict errors.
+- M9 regression and external-CI evidence: the loader suite passed 6/6 after
+  adding the module-list bound test; the clean Node20 gate passed at `76c06cb`
+  as recorded above. The exact-head Actions observation for the prior pushed
+  implementation head `5b4f8db` was run `32984921837`, job `98229480580`,
+  completed failure with zero steps; it is classified
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not as code validation.
 
 ## Decisions Made During This Task
 

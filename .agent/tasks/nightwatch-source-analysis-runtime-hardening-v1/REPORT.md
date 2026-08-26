@@ -67,6 +67,21 @@ one eligibility run reached 316,864 KB as host variance. All application
 stderr was empty and status was 0. Normalized output digests matched the
 optimized baseline; exact digest values are recorded in STATE.md.
 
+The disposable clean-checkout qualification then passed at `76c06cb` under
+Node 20: install PASS, all nine gate groups PASS, clean before/after, no
+node_modules reuse, no auth or owner-finding state and sibling writes 0. Its
+clean receipt is `clean-receipt:sha256:7413e2f9b981ab6918d65b56` and its
+embedded gate receipt is `receipt:sha256:5446abd4166fa41f1ab89927`.
+
+M9 regression hunting added a six-test loader suite boundary: 256 derivative
+entries are retained with least-recently-used eviction, and a 129-entry module
+list is rejected before hook installation or compilation. The exact-head
+Actions observation for the preceding pushed implementation checkpoint
+`5b4f8db` was run `32984921837`, job `98229480580`; the job completed failure
+with `steps: []` and is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not
+as a code failure or green CI result. A final exact-head observation will be
+recorded after the closure checkpoint is pushed.
+
 ## M3/M4 implementation evidence
 
 The 20 equivalent bin-local TypeScript require hooks were migrated to
