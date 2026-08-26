@@ -14,11 +14,11 @@ The executor must mirror this change into a fresh native `.agent/tasks/nightwatc
 
 ## 2. Build the parity harness before optimization — target H1–H2.5
 
-- [ ] 2.1 Add a focused differential helper/test that captures the complete safe source-discovery/Phase24 observable surface for deterministic inputs.
-- [ ] 2.2 Assert equality for operation/surface ordering, proof states, analyzer diagnostics, every evidence digest, response-flow identity, response/semantic contract IDs, taxonomy/census/portfolio/review digests and reason codes.
-- [ ] 2.3 Add byte-equality checks for deterministic CLI JSON/stdout where current contracts guarantee stable bytes.
-- [ ] 2.4 Exercise repeated-symbol/same-file fixtures so the harness would detect accidental cross-symbol reuse.
-- [ ] 2.5 Prove the harness fails on intentionally injected identity/order/currentness changes, then remove probes.
+- [x] 2.1 Add a focused differential helper/test that captures the complete safe source-discovery/Phase24 observable surface for deterministic inputs.
+- [x] 2.2 Assert equality for operation/surface ordering, proof states, analyzer diagnostics, every evidence digest, response-flow identity, response/semantic contract IDs, taxonomy/census/portfolio/review digests and reason codes.
+- [x] 2.3 Add byte-equality checks for deterministic CLI JSON/stdout where current contracts guarantee stable bytes.
+- [x] 2.4 Exercise repeated-symbol/same-file fixtures so the harness would detect accidental cross-symbol reuse.
+- [x] 2.5 Prove the harness fails on intentionally injected identity/order/currentness changes, then remove probes.
 
 ## 3. Centralize TypeScript runtime loading — target H2.5–H4
 

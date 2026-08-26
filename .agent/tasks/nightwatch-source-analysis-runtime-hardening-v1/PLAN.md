@@ -50,7 +50,7 @@ or external publication may enter this task or Git.
   run pre-edit baseline, create/activate this continuity-v2 task.
 - [x] M1 — exhaustive tracked-file and affected-path audit; baseline source
   census, loader census, hygiene review, timings/RSS and safe output captures.
-- [ ] M2 — build the complete differential parity harness before optimization;
+- [x] M2 — build the complete differential parity harness before optimization;
   include byte-stable CLI checks, repeated-symbol fixtures, and mutation probes.
 - [ ] M3 — centralize equivalent TypeScript runtime loading, add only proven
   process-local compiler-derivative reuse, migrate incrementally, and test
@@ -137,6 +137,16 @@ if exact symbol-specific evidence identity cannot be proven.
   dead-path 4 and duplicate 1,401 matches. Manual review classified the
   duplicate matches as intentional duplicate detection, deduplication,
   historical records, or fixtures; no unrelated source cleanup is admitted.
+- The parity harness projects every deterministic discovery and Phase 24
+  field, plus the review queue, while deliberately excluding only advisory
+  elapsed timings. A same-handler-file synthetic fixture proved distinct
+  symbols retain distinct response evidence and semantic identities, and the
+  serialized safe projection excludes its raw marker.
+- The first harness run passed three tests, including temporary order,
+  identity and currentness mutation probes. The probes were removed after
+  proving each caused `SOURCE_PARITY_MISMATCH`; the retained harness run is
+  two tests passing, including byte equality for `contracts`, `differential`
+  and `mutation-score` CLI JSON, with zero stderr and status 0.
 
 ## Deferred Work
 

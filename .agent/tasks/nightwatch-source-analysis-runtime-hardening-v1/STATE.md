@@ -8,14 +8,14 @@ Title: Source-Analysis Runtime Hardening + Proof-Identity Preservation
 Authorization class: NIGHTWATCH_SOURCE_ANALYSIS_RUNTIME_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 Status: IN_PROGRESS
 Starting SHA: bebe357313b7210161c5524e90c442137a605aab
-Last validated implementation SHA: bebe357313b7210161c5524e90c442137a605aab
-Last substantive checkpoint SHA: bebe357313b7210161c5524e90c442137a605aab
+Last validated implementation SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
+Last substantive checkpoint SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_VALIDATED_IMPLEMENTATION_SHA: bebe357313b7210161c5524e90c442137a605aab
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bebe357313b7210161c5524e90c442137a605aab
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9d33c134513791e2ee01484c1fc7b56562097ffd
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_ANALYSIS_RUNTIME_HARDENING_V1_STATUS: IN_PROGRESS
@@ -30,10 +30,9 @@ publication, AI, or self-development authority.
 
 ## Current Milestone
 
-Milestone ID: M2
+Milestone ID: M3
 Milestone status: IN_PROGRESS
-What is being attempted: build the complete differential safe-observable
-harness before any runtime-loader or source-read optimization.
+What is being attempted: centralize equivalent TypeScript runtime loading with explicit profiles, bounded process-local reuse, incremental migration, and restoration/invalidation proof.
 
 ## Completed Milestones
 
@@ -47,22 +46,24 @@ harness before any runtime-loader or source-read optimization.
   manually reconciled; representative source-analysis CLI outputs were
   captured with empty stderr, zero exit status, deterministic digests, wall
   time and peak RSS.
+- M2 — differential parity harness complete: deterministic source/Phase24/
+  review projections, same-file symbol isolation, raw-marker exclusion and
+  repeated CLI JSON byte checks pass. Temporary order/identity/currentness
+  mutations each failed the equality assertion and were removed afterward.
 
 ## Work In Progress
 
-M2 parity harness construction. No implementation source has been changed by
-this fresh task yet. The next bounded work unit is to project the complete safe
-source-discovery/Phase24 observable surface, add deterministic fixtures and
-byte checks, and verify deliberate drift probes fail.
+M3 loader centralization. The parity helper/test is now the pre-optimization
+identity guard. The next bounded work unit is to add the explicit loader
+utility, exercise hook restoration and content-addressed compiler reuse, then
+migrate one small bin group with cold/warm CLI differential checks.
 
 ## Exact Next Action
 
-Add a focused unit helper/test that runs deterministic synthetic discovery twice
-through the same input and compares ordered safe projections, proof/analyzer/
-response-flow/semantic/gap/census/Phase24/review identities and deterministic
-JSON bytes. Add temporary mutation probes for order, identity and currentness,
-assert that each probe fails, then remove the probes and retain the regression
-assertions.
+Inspect the 20 equivalent bin-local TypeScript hooks and implement one
+profile-explicit loader utility with guaranteed nested/error restoration and a
+bounded process-local cache keyed by loader/version/options/source identity.
+Migrate only the first small entrypoint group after focused loader tests pass.
 
 ## Files Changed
 
@@ -71,8 +72,8 @@ This task activation adds only the native continuity files
 and routes `.agent/ACTIVE_TASK.md` to this task. The OpenSpec planning artifacts
 are the frozen planning source and were pulled from `origin/main`.
 
-M1 added no implementation source. Audit evidence is recorded below and the
-temporary manifest/hash files remain outside Git under `/tmp` only.
+M1 added no implementation source. M2 added only the parity helper and focused
+unit test; audit manifest/hash files remain outside Git under `/tmp` only.
 
 ## Validation Ledger
 
@@ -134,6 +135,15 @@ temporary manifest/hash files remain outside Git under `/tmp` only.
   `d34bb0ee5e669e2849e2b121bdaeded87685bb722b84eace7b46bef4d3b9fff8`,
   10.88s, 301,564 KB. All exit 0 and stderr was empty with SHA-256
   `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- `npm run typecheck`: PASS after the harness implementation.
+- `npx playwright test tests/unit/sourceAnalysisParity.test.ts
+  --project=nightwatch --workers=1`: initial 3/3 PASS with temporary mutation
+  probes; after probe removal, final 2/2 PASS.
+- Final parity fixture assertions: 2 operations and 2 surfaces share one
+  handler file while retaining distinct response evidence/semantic IDs; the
+  raw synthetic marker is absent from the serialized safe projection.
+- Final CLI byte assertions: `contracts`, `differential`, and `mutation-score`
+  each ran twice with status 0, empty stderr and byte-identical JSON stdout.
 
 ## Decisions Made During This Task
 
@@ -157,6 +167,10 @@ temporary manifest/hash files remain outside Git under `/tmp` only.
   historical or test records. Duplicate markers in affected code denote
   runtime identity validation, deduplication, or provenance controls rather
   than duplicate source-analysis implementations.
+- M2-01: Advisory elapsed timings are excluded from parity identity because
+  the current discovery implementation explicitly marks them non-enumerable
+  and non-authoritative; structural discovery/performance fields remain in the
+  separate benchmark ledger.
 
 ## Blockers
 

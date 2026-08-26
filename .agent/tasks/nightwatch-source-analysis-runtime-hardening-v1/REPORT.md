@@ -33,8 +33,30 @@ activation.
 ## Current status
 
 M0 bootstrap and M1 exhaustive audit are complete. M2 differential parity
-harness construction is in progress. No source implementation change has yet
-been made by this campaign.
+harness construction is complete. M3 loader centralization is in progress.
+
+## M2 differential parity evidence
+
+`tests/helpers/sourceParity.ts` provides a deterministic safe projection over
+the full source-discovery and Phase 24 integration cone: inventory records and
+content digests, ordered operations, surfaces, joins, analyzer diagnostics and
+evidence digests, response-flow proofs, counters, gap taxonomy, Phase 24
+snapshot analyses, portfolio candidates/reasons, selection rows, eligibility
+census and review queue rows/digests. Advisory elapsed timings are excluded
+from the equality bytes because they are explicitly non-authoritative; no
+source text or runtime value is projected.
+
+The synthetic fixture contains two GET symbols in one handler file with
+different response shapes. The harness proved equal repeated runs, preserved
+different response evidence and semantic identities, and omitted a raw source
+marker from the serialized projection. The first development run was 3/3
+passing, including temporary order, identity and currentness mutations; each
+mutation produced `SOURCE_PARITY_MISMATCH`. Those temporary probes were then
+removed. The final focused run is 2/2 passing.
+
+The CLI byte check runs `contracts`, `differential`, and `mutation-score`
+twice each. Every invocation returned status 0 and empty stderr; each pair
+had byte-identical JSON stdout. `npm run typecheck` also passes.
 
 ## M1 audit and baseline evidence
 
