@@ -6,15 +6,15 @@ Title: Control Center Authority Integration + Whole-Repository Hardening
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-control-center-authority-integration-v2
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
-Last checkpoint: M0 — fresh task activation and baseline preflight at ccbb577.
-Current milestone: M1 — authority inventory and reader architecture.
-Next action: Map the authoritative run, source, campaign, and findings readers before implementation.
+Last validated implementation SHA: 137baed5e1075920a138facf3d854a96896b142a
+Last checkpoint: M2 — bounded Control Center run evidence at 137baed.
+Current milestone: M3 — source and campaign authority integration.
+Next action: Inspect source discovery and campaign bridge contracts, then implement the bounded source authority.
 Authorization class: CONTROL_CENTER_LOCAL_READ_ONLY_AUTHORITY_INTEGRATION_AND_HARDENING
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 137baed5e1075920a138facf3d854a96896b142a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 137baed5e1075920a138facf3d854a96896b142a
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 

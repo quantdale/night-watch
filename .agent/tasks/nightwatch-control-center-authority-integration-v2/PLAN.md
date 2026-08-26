@@ -145,13 +145,20 @@ milestones.
 
 ### M2 — Bounded run/evidence reader and integration
 
-Status: IN_PROGRESS.
+Status: COMPLETE.
 
 Implement fixed-root run discovery and validated summary/event/snapshot reads.
 Reject symlinks, traversal, unsafe IDs, unknown schemas, oversized or
 unstable records, duplicate/conflicting IDs, and raw evidence fields. Add
 deterministic list/detail/timeline/graph integration tests and privacy
 sentinels.
+
+Evidence: `runEvidenceReader.ts` reads only the repository-owned artifacts
+root, performs bounded stable descriptor reads with one retry, projects safe
+typed inputs, and reports explicit state/reason categories. The default
+collector shares one bounded run snapshot across the four run consumers. The
+focused reader/adapter/server suite passes 23/23 and the repository hardening
+gate remains green.
 
 ### M3 — Source and campaign authority integration
 

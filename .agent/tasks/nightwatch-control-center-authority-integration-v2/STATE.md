@@ -6,8 +6,8 @@ Task ID: nightwatch-control-center-authority-integration-v2
 Phase: CONTROL-CENTER-AUTHORITY-INTEGRATION-V2
 Status: IN_PROGRESS
 Starting SHA: ccbb57721d99020667881481411aa961d12229e5
-Last validated implementation SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
-Last substantive checkpoint SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+Last validated implementation SHA: 137baed5e1075920a138facf3d854a96896b142a
+Last substantive checkpoint SHA: 137baed5e1075920a138facf3d854a96896b142a
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
@@ -15,8 +15,8 @@ Last checkpoint: M0 — fresh task activation and baseline preflight at ccbb577.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ccbb57721d99020667881481411aa961d12229e5
-LAST_VALIDATED_IMPLEMENTATION_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e5ac2fff0f8840c80bb48a57ca0df56cba39c90d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 137baed5e1075920a138facf3d854a96896b142a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 137baed5e1075920a138facf3d854a96896b142a
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CONTROL_CENTER_AUTHORITY_INTEGRATION_V2_STATUS: IN_PROGRESS
 
