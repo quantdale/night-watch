@@ -98,6 +98,15 @@ function rollup(values: readonly string[]): readonly { readonly key: NonNullable
     .sort((left, right) => left.key.localeCompare(right.key));
 }
 
+export interface SourceSummaryAuthorityInput {
+  readonly state?: ControlCenterSourceSummaryDto['state'];
+  readonly inventoryDigest?: string | null;
+  readonly repositoryCount?: number;
+  /** Repository-level currentness from the source inventory, when present. */
+  readonly repositoryCurrentness?: readonly ControlCenterSourceCurrentness[];
+  readonly reasonCodes?: readonly string[];
+}
+
 /** Project source descriptors without exposing source paths, symbols, or text. */
 export function projectSourceSurfaces(descriptors: readonly RealSourceSurfaceDescriptor[], repositoryFilter?: unknown, requestedLimit?: unknown): ControlCenterSourceSurfacesDto {
   const filter = typeof repositoryFilter === 'string' ? repositoryFilter : null;
@@ -114,20 +123,26 @@ export function projectSourceSurfaces(descriptors: readonly RealSourceSurfaceDes
   };
 }
 
-export function projectSourceSummary(descriptors: readonly RealSourceSurfaceDescriptor[]): ControlCenterSourceSummaryDto {
+export function projectSourceSummary(
+  descriptors: readonly RealSourceSurfaceDescriptor[],
+  authority: SourceSummaryAuthorityInput = {},
+): ControlCenterSourceSummaryDto {
   const rows = descriptors.map(surfaceDto).filter((surface): surface is ControlCenterSourceSurfaceDto => surface !== null);
-  const currentnessValues = rows.map((row) => row.currentness);
+  const currentnessValues = authority.repositoryCurrentness === undefined
+    ? rows.map((row) => row.currentness)
+    : [...authority.repositoryCurrentness];
   const lifecycleValues = rows.map((row) => row.lifecycle);
   const proofValues = rows.map((row) => row.routeProof);
   const capabilityValues = rows.map((row) => row.projectionCapability);
-  const gapReasons = sortedUniqueCodes(rows.flatMap((row) => row.exclusionReasons));
-  const state = rows.length === 0
+  const gapReasons = sortedUniqueCodes([...rows.flatMap((row) => row.exclusionReasons), ...(authority.reasonCodes ?? [])]);
+  const derivedState: ControlCenterSourceSummaryDto['state'] = rows.length === 0
     ? 'EMPTY'
     : rows.some((row) => row.currentness === 'SOURCE_UNAVAILABLE')
       ? 'UNAVAILABLE'
       : rows.some((row) => row.currentness === 'SOURCE_STALE')
         ? 'STALE'
         : 'AVAILABLE';
+  const state = authority.state ?? derivedState;
   const digest = prefixedDigest24('cc-source-inventory', rows.map((row) => ({
     id: row.surfaceId,
     repo: row.repositoryId,
@@ -139,8 +154,8 @@ export function projectSourceSummary(descriptors: readonly RealSourceSurfaceDesc
   return {
     schemaVersion: CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION,
     state,
-    inventoryDigest: asSafeControlCenterDigest(digest),
-    repositoryCount: new Set(rows.map((row) => row.repositoryId)).size,
+    inventoryDigest: asSafeControlCenterDigest(authority.inventoryDigest) ?? asSafeControlCenterDigest(digest),
+    repositoryCount: authority.repositoryCount === undefined ? new Set(rows.map((row) => row.repositoryId)).size : boundedCount(authority.repositoryCount),
     surfaceCount: rows.length,
     currentness: rollup(currentnessValues),
     lifecycle: rollup(lifecycleValues),

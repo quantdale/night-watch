@@ -169,6 +169,30 @@ source and Phase 24/campaign authorities. Preserve exact currentness,
 per-repository availability, cache identity, stale/unavailable/empty states,
 and deterministic generation binding. No CLI child process or network path.
 
+#### M3 bridge contract
+
+The source bridge is `SourceAuthoritySnapshot`: the fixed approved scan and
+`discoverSourceSurfaces` produce the inventory, safe surface descriptors, and
+the inventory digest; `analyzeSourceSurfacesIntoPhase24` is invoked only over
+that same discovery. The authority records repository-level `CURRENT`,
+`SOURCE_STALE`, or `SOURCE_UNAVAILABLE` status, maps those statuses to
+`AVAILABLE`, `STALE`, `UNAVAILABLE`, or `EMPTY`, and emits a categorical
+reason/generation digest. Its internal discovery and Phase 24 objects never
+cross the adapter boundary; source adapters project only allowlisted IDs,
+digests, route metadata, proof states, and bounded graph nodes.
+
+The campaign bridge consumes the source snapshot's Phase 24 portfolio and
+selection. It converts candidates into the existing `CampaignPortfolio`,
+coverage facts, and impact bindings, then uses the existing campaign coverage,
+impact, and planner implementations for their sanitized report contracts.
+Phase 24's selected candidate IDs are the sole selection authority: only those
+IDs are admitted as applicable campaign members, the planner cap is exactly
+that selected count, and any selector mismatch becomes
+`CAMPAIGN_SELECTOR_DRIFT` rather than being exposed. No intelligence CLI,
+second selector, source text, source paths, execution callback, or external
+state is introduced. Empty, stale, unavailable, blocked, and composition
+errors remain explicit campaign states.
+
 ### M4 — Owner-local findings reader
 
 Status: PENDING.
