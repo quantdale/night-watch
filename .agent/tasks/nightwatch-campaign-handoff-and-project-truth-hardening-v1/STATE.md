@@ -209,6 +209,11 @@ shape repair checkpoint
   `127504 KiB`. The baseline was `1.09s` / `67636 KiB` and `1.89s` /
   `125584 KiB`, respectively; the final runs include the larger 84-task
   history and strict v2 validation surface.
+- Exact-head GitHub Actions was observed once after push: run `33088870668`,
+  job `98575933447`, and head `6d62d23113c51132c217d704c24996f84f7a91be`
+  matched exactly. The required job completed with zero steps and was
+  classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; this is external
+  non-evidence and no retry or log retrieval was performed.
 
 ## Decisions Made During This Task
 
@@ -239,15 +244,17 @@ None.
 
 ## Safety Events
 
-NONE — no external, product, authenticated, database, cloud, infrastructure,
+NONE — no product, authenticated, database, cloud, infrastructure,
 sibling-repository, publication, AI-runtime, or promotion operation occurred.
+The single external GitHub Actions read-only observation used only sanitized
+run/job metadata and remains non-authoritative.
 
 ## Deferred / Follow-Up
 
 - Unrelated audit hygiene findings remain deferred; they are outside this
   continuity/truth-hardening scope.
 - External CI remains an observation boundary and is not local acceptance
-  authority; its exact-head classification is recorded in REPORT.md.
+  authority; its exact-head classification is recorded above and in REPORT.md.
 
 ## Resume Recipe
 
@@ -258,5 +265,7 @@ task and authorization.
 
 COMPLETE — implementation, local/clean acceptance, canonical full-suite
 accounting, terminal continuity records, and safety review are complete.
-Future work requires a separate fresh task and authorization; live Git and
-external CI authority are discovered independently from this record.
+The one exact-head external observation is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not test evidence. Future work requires
+a separate fresh task and authorization; live Git and external CI authority
+are discovered independently from this record.

@@ -125,8 +125,8 @@ Record exact results and safe performance measures in STATE and REPORT.
   repair, not a relaxation of branch validation.
 - 2026-08-27 — Canonical full acceptance passed `2590/2606` with `16` skips;
   local and disposable Node 20 clean gates passed at `d6de61a`. The task is
-  terminal locally; exact-head Actions remains an external observation recorded
-  after the final push.
+  terminal locally; the one exact-head Actions observation after push matched
+  the final head and classified the zero-step job as external non-evidence.
 
 ## Discoveries
 

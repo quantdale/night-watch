@@ -110,6 +110,11 @@ non-authoritative observation.
   `clean-receipt:sha256:73824a0f3232d8f5ca1b95a4`, gate receipt
   `receipt:sha256:8645bd3b379a3e986b449b3e`, wall `449.18s`, and peak RSS
   `1216152 KiB`.
+- Exact-head GitHub Actions was observed once after push: run `33088870668`,
+  job `98575933447`, and head `6d62d23113c51132c217d704c24996f84f7a91be`
+  matched exactly. The required job completed with zero steps and was
+  classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`; this is external
+  non-evidence and no retry or log retrieval was performed.
 
 ## Safety and closure
 
@@ -117,6 +122,7 @@ All work remains repository-local, offline, deterministic, and synthetic-only.
 DEV/NEXT/production contacts, authenticated product traffic, database/cloud/
 infrastructure operations, sibling writes, publication, runtime AI, and
 canonical promotion are all zero. The OpenSpec checklist, task plan/state/
-report, and prompt are terminally coherent. Exact-head Actions classification,
-final push synchronization, and the external non-authoritative status are
-recorded in the terminal closure update.
+report, prompt, and final push synchronization are terminally coherent. The
+single exact-head Actions observation is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, remains external non-evidence, and does
+not weaken local acceptance.
