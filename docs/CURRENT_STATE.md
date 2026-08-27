@@ -192,7 +192,7 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_SOURCE_TO_CAMPAIGN_PROOF_CHAIN_EXPANSION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `74f28356fd615eb51b4842f40a49ed6fc269c68f`; fresh v2 census digest `source-eligibility-census:sha256:1a71425620210ac5fa6af6c4` at approved snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad` reports 128 operations, 127 routes, 127 request contracts, 83 response contracts, 83 semantic-contract surfaces / 175 observations, 47 mutation-capable, 5 proven read-only, 118 proven / 10 rejected joins, 5 exact runtime bindings / 123 source-only, 5 replay-proven / 123 unproven, 128 dossier-compatible, and Phase 24 remains 3 eligible / 125 excluded; first blockers are 44 response-contract, 37 mutability-classification, 43 read-only-proof, 1 route, and 3 complete; no new proof family or eligible surface was admitted; local receipt `receipt:sha256:341bc43e00b9a2219bfb2082`, Node20 clean receipt `clean-receipt:sha256:ebe268bb7588be07ce88eb13`, Node20 gate receipt `receipt:sha256:f174bce0224dacc42a1b6cf8`, canonical and topology-correct isolated full Playwright both 2,524 enumerated / 2,508 passed / 16 skipped / 0 failed with exact parity; exact-head GitHub Actions run `32956612882` completed failure, sole job `98139552089` completed failure with zero steps, so CI is not validation evidence; prohibited safety counts remain zero |
 | `PHASE_REPOSITORY_SYSTEMIC_OPTIMIZATION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `f9902bf43081ce737d08437f9f68c3af04ed62b0`; mechanics-only optimization with identical validated outputs: agent-state one-shot git graph (880→64 spawns/run; check 8.40s→1.03s, audit 5.80s→0.99s; 107/107 focused + differential verdict parity), incremental noEmit typecheck (warm 47.0s→7.36s, cold unchanged, tsbuildinfo outside tracked tree), portfolio CLI content-addressed compile cache (cold/warm stdout byte-identical; phase16h suite 190.5s→9.7s), batched hardening syntax check (2.78s→0.90s); full gate:local PASS at f9902bf in 373.77s vs ~808s baseline component sum with compat 1,884/1,871/13/0 parity, owner-provenance 91/91, synthetic 66/66; external CI was not run and is not claimed green; deferred follow-ups (TS require-hook consolidation across 20 bin scripts, census analyzer deduplication) require separate authorization |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
-| `PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01` and validated implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; strict v1/v2 dossier runtime validation rejects all reproduced malformed nested mutations, the facade audit covers `14/14` registered kinds with `55/55` bounded mutations rejected, and one conservative findings currentness reducer governs raw, authority, projected, and collector paths; local/clean gates passed all `9` groups with semantic `1,903/1,890/13/0`, owner provenance `91`, and synthetic campaign `66`; canonical serial Playwright passed `2,548/2,564` with `16` skips and `0` failures; external CI was not observed and is not claimed green; prohibited safety vectors remain zero |
+| `PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`, validated implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`, and final documentation checkpoint `8f766d2baa186c297d745a5401d861f8e0ad09cd`; strict v1/v2 dossier runtime validation rejects all reproduced malformed nested mutations, the facade audit covers `14/14` registered kinds with `55/55` bounded mutations rejected, and one conservative findings currentness reducer governs raw, authority, projected, and collector paths; final local/clean gates passed all `9` groups with semantic `1,903/1,890/13/0`, owner provenance `91`, synthetic campaign `66`, local receipt `receipt:sha256:034bdea65e67d91d6543184b`, clean gate receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`; final canonical serial Playwright passed `2,548/2,564` with `16` skips and `0` failures; external CI was not observed and is not claimed green; prohibited safety vectors remain zero |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -2437,7 +2437,8 @@ repair is tracked in the active task and terminal closure is complete.
 This local/source/synthetic campaign is terminal as
 `COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated implementation/test checkpoint
 `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` (source implementation anchor
-`01f2ac0608931b83aed0b5c948ed3a4471de7e01`). It closes two reproduced
+`01f2ac0608931b83aed0b5c948ed3a4471de7e01`) with final documentation
+checkpoint `8f766d2baa186c297d745a5401d861f8e0ad09cd`. It closes two reproduced
 authority gaps without changing dossier wire versions or other source,
 semantic, replay, selector, or Phase-24 identities.
 
@@ -2465,12 +2466,15 @@ the seven synthetic views with no non-loopback requests.
 
 Validation is local and clean: all nine quality-gate groups passed with
 semantic compatibility `1,903 total / 1,890 passed / 13 skipped / 0 failed`,
-owner provenance `91`, and synthetic campaign `66`; the clean Node20 checkout
-also passed all nine groups with no reuse, auth state, owner finding state, or
-sibling writes. The canonical serial suite passed `2,548` of `2,564`
-discovered tests, skipped `16`, and failed `0`; a first timing-sensitive
-failure was not reproduced by the required exact rerun. External CI was not
-observed because current policy did not require it, and no CI-green claim is
-made. DEV/NEXT/production, authentication, customer data, infrastructure,
-publication, AI, and sibling-write operations remain zero. No successor is
-selected; future work requires a fresh census and separate authorization.
+owner provenance `91`, and synthetic campaign `66`; the final local receipt is
+`receipt:sha256:034bdea65e67d91d6543184b`. The final clean Node20 checkout also
+passed all nine groups with no reuse, auth state, owner finding state, or
+sibling writes; its gate receipt is `receipt:sha256:186a15aed5e9dbbd9c95ab1d`
+and clean receipt is `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`. The final
+canonical serial suite passed `2,548` of `2,564` discovered tests, skipped
+`16`, and failed `0` in `4.5m`; a first timing-sensitive failure was not
+reproduced by the required exact rerun. External CI was not observed because
+current policy did not require it, and no CI-green claim is made. DEV/NEXT/
+production, authentication, customer data, infrastructure, publication, AI,
+and sibling-write operations remain zero. No successor is selected; future
+work requires a fresh census and separate authorization.

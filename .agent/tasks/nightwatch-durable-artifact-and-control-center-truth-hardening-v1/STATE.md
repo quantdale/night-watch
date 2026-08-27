@@ -11,6 +11,7 @@ Last substantive checkpoint SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 STARTING_SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
 LAST_VALIDATED_IMPLEMENTATION_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 8f766d2baa186c297d745a5401d861f8e0ad09cd
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -18,9 +19,9 @@ LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: 2026-08-27 — M5 full acceptance passed at
-`c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation closure is
-recorded under Git authority.
+Last checkpoint: 2026-08-27 — M5 final local/clean/canonical acceptance passed
+at `8f766d2baa186c297d745a5401d861f8e0ad09cd`; terminal documentation closure
+is recorded under Git authority.
 
 ## Objective
 
@@ -187,6 +188,20 @@ validation, and Control Center integration tests. No external state changed.
   compatibility `1903 / 1890 / 13 / 0`, gate receipt
   `receipt:sha256:60a27b3b75965259bc684a56`, and clean receipt
   `clean-receipt:sha256:8e6a911a40c6383f722c965c`.
+- Final local quality gate at terminal documentation checkpoint
+  `8f766d2baa186c297d745a5401d861f8e0ad09cd`: PASS; all `9` groups passed;
+  semantic compatibility `1903 total / 1890 passed / 13 skipped / 0 failed`,
+  owner provenance `91`, synthetic campaign `66`, receipt
+  `receipt:sha256:034bdea65e67d91d6543184b`.
+- Final clean Node20 gate at the same checkpoint: PASS; fresh isolated
+  checkout, no module reuse, auth state, owner finding state, or sibling
+  writes; all `9` groups passed; gate receipt
+  `receipt:sha256:186a15aed5e9dbbd9c95ab1d`; clean receipt
+  `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`.
+- Final exact native serial regression at
+  `8f766d2baa186c297d745a5401d861f8e0ad09cd` passed `2548 / 2564`, skipped
+  `16`, and failed `0` in `4.5m`; the observer-ledger assertion passed under
+  full serial load. No assertion or safety rule was weakened.
 - First canonical serial regression at
   `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` reported the `2564`-test run as
   `2546 passed / 16 skipped / 1 failed`, with one additional telemetry test
@@ -253,6 +268,9 @@ Final validated implementation/test checkpoint:
 `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` (the source implementation anchor
 is `01f2ac0608931b83aed0b5c948ed3a4471de7e01`; live HEAD is not persisted
 here).
+Final documentation checkpoint: `8f766d2baa186c297d745a5401d861f8e0ad09cd`
+(known before this terminal report descendant; live HEAD remains discovered
+from Git).
 Live HEAD: DISCOVER_FROM_GIT
 Tests: native serial `2564 discovered / 2548 passed / 16 skipped / 0 failed`;
 local and clean quality gates all `9/9` passed.

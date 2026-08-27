@@ -5,6 +5,10 @@ Task ID: `nightwatch-durable-artifact-and-control-center-truth-hardening-v1`
 Phase: DURABLE-ARTIFACT-AND-CONTROL-CENTER-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `42ea9723c10f60cc02c663748c493c6c34f73116`
+Source implementation anchor: `01f2ac0608931b83aed0b5c948ed3a4471de7e01`
+Validated implementation/test checkpoint: `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`
+Final documentation checkpoint: `8f766d2baa186c297d745a5401d861f8e0ad09cd`
+Live final HEAD authority: `DISCOVER_FROM_GIT`
 
 This report is the terminal handoff. The fresh tracked-file audit, pre-fix
 reproductions, implementation, full local/clean acceptance, safety/privacy
@@ -193,6 +197,18 @@ acceptance and terminal closure are recorded below.
   project/continuity checks, gate definition/inventory, privacy, UI/build/
   browser, and `git diff --check`. External CI was not required by current
   policy, was not observed, and is not claimed green.
+- Final local quality gate at documentation checkpoint
+  `8f766d2baa186c297d745a5401d861f8e0ad09cd` passed all `9` groups with
+  semantic compatibility `1903 total / 1890 passed / 13 skipped / 0 failed`,
+  owner provenance `91`, synthetic campaign `66`, and receipt
+  `receipt:sha256:034bdea65e67d91d6543184b`.
+- Final fresh Node20 clean gate at the same checkpoint passed all `9` groups
+  with no module reuse, auth state, owner finding state, or sibling writes;
+  gate receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d` and clean receipt
+  `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`.
+- Final exact native serial regression at that checkpoint passed `2548 / 2564`,
+  skipped `16`, and failed `0` in `4.5m`; the observer-ledger assertion
+  passed under full serial load.
 
 ## Terminal disposition
 

@@ -3439,12 +3439,17 @@ uses it as a versioned cache or currentness contract.
 **Evidence and consequences.** The source implementation anchor is
 `01f2ac0608931b83aed0b5c948ed3a4471de7e01`; the validated
 implementation/test checkpoint is
-`c3d69039d4f2a9969118d877b432c6b4a2f5d09c`. All `40` v1 and `50` v2
+`c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; the final documentation
+checkpoint is `8f766d2baa186c297d745a5401d861f8e0ad09cd`. All `40` v1 and `50` v2
 reproduced dossier mutations are rejected by both owning and facade paths;
 the bounded facade audit rejects `55/55` mutations across `14/14` registered
 kinds. The local and clean Node20 gates pass all nine groups with semantic
 compatibility `1,903/1,890/13/0`, owner provenance `91`, and synthetic
-campaign `66`. Canonical serial Playwright passes `2,548/2,564`, skips `16`,
-and fails `0`. External CI was not observed and is not claimed green. No
-DEV/NEXT/production, auth, data, infrastructure, publication, AI, or sibling
-write operation occurred; no successor is selected.
+campaign `66`; final local receipt is `receipt:sha256:034bdea65e67d91d6543184b`
+and final clean Node20 gate/clean receipts are
+`receipt:sha256:186a15aed5e9dbbd9c95ab1d` /
+`clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`. Canonical serial Playwright
+passes `2,548/2,564` in `4.5m`, skips `16`, and fails `0`. External CI was not
+observed and is not claimed green. No DEV/NEXT/production, auth, data,
+infrastructure, publication, AI, or sibling write operation occurred; no
+successor is selected.
