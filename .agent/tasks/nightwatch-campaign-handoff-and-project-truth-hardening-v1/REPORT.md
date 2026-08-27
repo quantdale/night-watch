@@ -5,7 +5,7 @@ Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Phase: CAMPAIGN-HANDOFF-AND-PROJECT-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
-Validated implementation SHA: dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319
+Validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
 
 ## Outcome to date
 
@@ -13,8 +13,9 @@ The reproduced planner-to-executor route gap is repaired by a versioned,
 read-only handoff parser/checker and a required `HANDOFF_TRUTH` quality-gate
 group. Project-state v2 now has an explicit owned-key schema and faithful
 promotion lifecycle/effective-authority fields. The implementation checkpoint
-is source/test/config validated; terminal documentation, clean gates, and
-external exact-head CI classification remain closure work.
+and clean-gate branch-shape repair are source/test/config validated; terminal
+documentation, final clean-tree acceptance, and external exact-head CI
+classification remain closure work.
 
 ## H0 and reproduced findings
 
@@ -75,6 +76,9 @@ external exact-head CI classification remain closure work.
   0 failed`, wall `395.66s`, peak RSS `1332692 KiB`.
 - `npm run test:owner-provenance` — `91 passed`, wall `13.05s`, peak RSS
   `240332 KiB`.
+- Complete Playwright enumeration exited `0` with `2606 tests in 215 files`.
+  The canonical serial execution passed `2590`, skipped `16`, and failed `0`
+  in `417.33s` with peak RSS `676356 KiB`; the skip set did not change.
 - Pre-closure `npm run gate:local` reached `HANDOFF_TRUTH` exactly once and
   correctly stopped at the dirty-tree `PROJECT_TRUTH` failure; downstream
   groups were `NOT_RUN`.
@@ -82,19 +86,20 @@ external exact-head CI classification remain closure work.
   successfully but exposed a gate-shape defect: its clone was detached while
   handoff truth correctly requires `main`. Direct Node 20 and clean-clone
   handoff checks passed. `bin/quality-gate-clean.mjs` was repaired to retain
-  and verify local `main`; this repair is awaiting its own substantive
-  checkpoint `e4ac7076600f9a347d230445aa312e321f635624`; clean-gate rerun is
-  next.
-- The live `project:check` is intentionally pending a clean documentation
-  checkpoint; its current dirty-tree result is not counted as a code failure.
+  and verify local `main`; the repair is the substantive checkpoint
+  `e4ac7076600f9a347d230445aa312e321f635624`; the clean gate then passed from
+  clean head `0ef83e433a0980807faa1aa8cc3ffbb0aaef809c` under Node `20.20.2`.
+  Its gate receipt is `receipt:sha256:c820d97db22648feb70930be` and clean
+  receipt is `clean-receipt:sha256:6ae5a05c5c4dfd84fe9564f0`.
+- Clean-head `project:check`, `handoff:check`, and `agent:check` passed at
+  `0ef83e433a0980807faa1aa8cc3ffbb0aaef809c`.
 
 ## Safety and remaining closure
 
 All work remains repository-local, offline, deterministic, and synthetic-only.
 DEV/NEXT/production contacts, authenticated product traffic, database/cloud/
 infrastructure operations, sibling writes, publication, runtime AI, and
-canonical promotion are all zero. Remaining closure work is to commit the
-documentation checkpoint, run local/clean gate acceptance and final
-enumeration/performance checks, mark the OpenSpec tasks and continuity files
-terminal, push without force, verify `HEAD == origin/main`, and observe the
-exact-head Actions run once. A zero-step external run remains non-evidence.
+canonical promotion are all zero. Remaining closure work is the terminal
+OpenSpec/task/report records, final push without force, `HEAD == origin/main`
+verification, and one exact-head Actions observation. A zero-step external run
+remains non-evidence.

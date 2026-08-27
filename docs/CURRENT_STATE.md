@@ -3,7 +3,7 @@
 > Durable memory for the next agent/session. Last updated: **2026-08-27** for
 > the campaign handoff and project-truth hardening closure
 > (`nightwatch-campaign-handoff-and-project-truth-hardening-v1`; validated
-> implementation checkpoint `dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319`):
+> implementation checkpoint `e4ac7076600f9a347d230445aa312e321f635624`):
 > hostname allow is now followed by bounded complete-answer-set admission and
 > exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
 > fail-closed event-log handling, and explicit runtime containment identities.

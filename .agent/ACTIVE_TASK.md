@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-campaign-handoff-and-project-truth-harde
 Starting SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
 Last validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
 Last checkpoint: clean-gate branch-shape repair committed; revalidation is next.
-Current milestone: M5 — Gate integration, hardening, and adversarial matrix (IN_PROGRESS)
-Next action: Run the integrated acceptance matrix, establish the substantive checkpoint, and close the terminal documentation/state route.
+Current milestone: M6 — Full acceptance and closure (IN_PROGRESS)
+Next action: Complete canonical full-suite accounting, terminalize the prompt/task records, then run the final push and exact-head CI observation.
 Authorization class: NIGHTWATCH_CAMPAIGN_HANDOFF_AND_PROJECT_TRUTH_HARDENING_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa

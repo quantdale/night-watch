@@ -85,13 +85,13 @@ runtime Git writes.
 - Acceptance: current two-entry/exhausted state passes; unknown, duplicate,
   stale, malformed, mismatch, and SPENT/NONE fixtures fail or project clearly.
 
-### M5 — Gate integration, hardening, and adversarial matrix — IN_PROGRESS
+### M5 — Gate integration, hardening, and adversarial matrix — COMPLETE
 
 - Objective: make handoff truth authoritative exactly once across gate modes.
 - Acceptance: local/CI/clean/pre-DEV gate paths, hardening, inventory, and
   x3 deterministic focused runs cover the complete OpenSpec matrix.
 
-### M6 — Full acceptance and closure — NOT_STARTED
+### M6 — Full acceptance and closure — IN_PROGRESS
 
 - Objective: execute all required local, clean, Node20/topology, campaign,
   provenance, and documentation acceptance, then push the validated result.

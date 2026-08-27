@@ -23,7 +23,7 @@ without changing Nightwatch's local-only safety boundary.
 
 ## Current Milestone
 
-M5 — Gate integration, hardening, and adversarial matrix (IN_PROGRESS)
+M6 — Full acceptance and closure (IN_PROGRESS)
 
 ## Completed Milestones
 
@@ -49,9 +49,9 @@ then close the terminal documentation/state route.
 
 Handoff parser/checker and declaration, project-state v2 checker, quality-gate
 command/configuration, hardening guards, continuity allowlist/tests, focused
-synthetic matrices, and durable protocol documentation. Final anchors remain
-the carried-forward predecessor implementation until the substantive
-checkpoint is committed.
+synthetic matrices, and durable protocol documentation. The final validated
+implementation anchor is the clean-gate branch-shape repair checkpoint
+`e4ac7076600f9a347d230445aa312e321f635624`.
 
 ## Validation Ledger
 
@@ -154,12 +154,13 @@ checkpoint is committed.
   source checkpoint. A pre-closure `npm run gate:local` reached
   `HANDOFF_TRUTH` once and stopped at the expected dirty-tree
   `PROJECT_TRUTH` failure; downstream groups were correctly `NOT_RUN`.
-- Substantive implementation checkpoint: `dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319`
-  contains only the validated handoff/project-truth implementation, gate
-  wiring, continuity-role extension, and synthetic regression surface. After
-  the checkpoint, `npm run handoff:check` passed against the active
-  IN_PROGRESS route; `npm run agent:check` and `npm run agent:audit` exited 0
-  with only the expected documentation checkpoint/legacy-task warnings.
+- Initial implementation checkpoint: `dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319`
+  contains the validated handoff/project-truth implementation, gate wiring,
+  continuity-role extension, and synthetic regression surface. The
+  substantive repair checkpoint is
+  `e4ac7076600f9a347d230445aa312e321f635624`, which preserves local `main` in
+  the disposable clean gate and verifies the exact requested head before the
+  branch-bound handoff check.
 - M5 acceptance inputs: `npm run campaign:synthetic` passed `66/66` in
   `29.80s`; `npm run test:semantic-compat` passed `1907`, skipped `13`,
   failed `0` out of `1920` in `395.66s`; `npm run test:owner-provenance`
@@ -175,6 +176,21 @@ checkpoint is committed.
   on local `main` and verifies the exact requested head before running the
   gate. The repair is the substantive checkpoint
   `e4ac7076600f9a347d230445aa312e321f635624`; the clean gate must be rerun.
+- Repaired `npm run gate:clean` passed under Node `20.20.2` from clean source
+  head `0ef83e433a0980807faa1aa8cc3ffbb0aaef809c`: install PASS, all 10
+  required groups PASS, `HANDOFF_TRUTH` exactly once before `PROJECT_TRUTH`,
+  clean before/after, no module reuse, no auth/finding state, zero sibling
+  writes; gate receipt `receipt:sha256:c820d97db22648feb70930be`, clean
+  receipt `clean-receipt:sha256:6ae5a05c5c4dfd84fe9564f0`.
+- Clean-head `npm run project:check`, `npm run handoff:check`, and
+  `npm run agent:check` passed; `npm run agent:audit` exited 0 with 84 tasks,
+  60 strict v2, 24 legacy v1, 0 strict errors, and 34 legacy warnings.
+- Complete Playwright enumeration exited 0 with `2606 tests in 215 files`.
+  The canonical serial execution passed `2590`, skipped `16`, and failed `0`
+  in `417.33s` with peak RSS `676356 KiB`; no test was added to the skip set.
+  The configured authoritative gate requires no sibling topology
+  (`requiresSiblingTopology: false`), so no sibling-checkout operation is
+  implied.
 
 ## Decisions Made During This Task
 
@@ -217,11 +233,12 @@ sibling-repository, publication, AI-runtime, or promotion operation occurred.
 
 ## Resume Recipe
 
-Resume at M5 closure: revalidate the clean gate after the branch-shape fix,
-then establish the corrected substantive checkpoint before terminal
-documentation closure.
+Resume at M6 closure: run the final clean-tree acceptance, terminalize the
+prompt/task/report records, then perform final Git/CI closure.
 
 ## Completion Snapshot
 
-Not complete. H0 audit and baseline receipts are recorded; implementation,
-adversarial proof, full acceptance, and closure remain in progress.
+M6 canonical full-suite acceptance is complete: `2590` passed, `16` skipped,
+and `0` failed out of `2606` tests in `215` files. Terminal task records,
+final clean-tree gates, push synchronization, and the single exact-head CI
+observation remain in progress.
