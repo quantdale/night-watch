@@ -147,7 +147,7 @@ function main() {
     const declaredCount = parsed !== null && !parsed.malformed ? fieldsGet(parsed, 'CANONICAL_CATALOG_ENTRY_COUNT') : undefined;
     if (declaredCount !== undefined && !/^[0-9]+$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
 
-    if (fields.get('NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+    if (fields.get('NEXT_PROMOTION_AUTHORITY') !== 'NONE' && fields.get('NEXT_PROMOTION_AUTHORITY') !== 'SPENT') fail(errors, 'PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
     if (fields.get('PHASE_8_STATUS') !== 'COMPLETE') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
     if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
 

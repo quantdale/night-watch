@@ -901,7 +901,7 @@ function checkProjectStateIntegrity() {
     fail('bin/project-state-check.mjs must reject competing generic live implementation anchors');
   }
   if (!/PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE/.test(checker)) {
-    fail('bin/project-state-check.mjs must require NEXT_PROMOTION_AUTHORITY NONE');
+    fail('bin/project-state-check.mjs must require NEXT_PROMOTION_AUTHORITY NONE or SPENT');
   }
   // Phase 8 final closure: the checker must now REQUIRE the terminal
   // PHASE_8_STATUS COMPLETE (the pre-closure IN_PROGRESS pin is gone), while

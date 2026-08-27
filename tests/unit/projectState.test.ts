@@ -496,7 +496,18 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     }
   });
 
-  test('12. NEXT_PROMOTION_AUTHORITY=AUTHORIZED fails in the current fixture', () => {
+  test('12. NEXT_PROMOTION_AUTHORITY=AUTHORIZED fails in the current fixture, while NONE and SPENT are valid', () => {
+    // SPENT is valid (post-variant-B-adoption state)
+    for (const valid of ['NONE', 'SPENT']) {
+      const fix = makeFixture({ block: { nextPromotionAuthority: valid } });
+      try {
+        const res = run(fix.root);
+        expect(res.status).toBe(0);
+      } finally {
+        fix.cleanup();
+      }
+    }
+    // AUTHORIZED is invalid
     const fixture = makeFixture({ block: { nextPromotionAuthority: 'AUTHORIZED' } });
     try {
       const result = run(fixture.root);
