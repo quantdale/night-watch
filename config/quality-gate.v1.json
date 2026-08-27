@@ -42,12 +42,25 @@
       "expectedFailClosedBehavior": "policy drift or forbidden authority fails before tests"
     },
     {
+      "id": "HANDOFF_TRUTH",
+      "commandKey": "HANDOFF_CHECK",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE", "FULL_GIT_HISTORY"],
+      "timeoutClass": "SHORT",
+      "dependsOn": ["HARDENING"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "stale or cross-campaign planner handoff fails before project truth"
+    },
+    {
       "id": "PROJECT_TRUTH",
       "commandKey": "PROJECT_CHECK",
       "required": true,
       "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
       "timeoutClass": "SHORT",
-      "dependsOn": ["HARDENING"],
+      "dependsOn": ["HANDOFF_TRUTH"],
       "ciCapable": true,
       "cleanCheckoutCapable": true,
       "requiresSiblingTopology": false,

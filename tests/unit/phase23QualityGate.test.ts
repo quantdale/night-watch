@@ -17,13 +17,23 @@ const ROOT = path.resolve(__dirname, '../..');
 test.describe('Phase 23 executable quality-gate definition', () => {
   test('contains the required serial groups with fixed command keys', () => {
     expect(QUALITY_GATE_DEFINITION.groups.map((group) => group.id)).toEqual([
-      'GATE_DEFINITION', 'STATIC', 'HARDENING', 'PROJECT_TRUTH', 'AGENT_CONTINUITY',
+      'GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY',
       'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY',
     ]);
     for (const group of QUALITY_GATE_DEFINITION.groups) {
       expect(QUALITY_GATE_COMMAND_KEYS).toContain(group.commandKey);
       expect(group.required).toBe(true);
     }
+  });
+
+  test('owns handoff truth exactly once before project truth', () => {
+    const handoff = QUALITY_GATE_DEFINITION.groups.find((group) => group.id === 'HANDOFF_TRUTH');
+    const project = QUALITY_GATE_DEFINITION.groups.find((group) => group.id === 'PROJECT_TRUTH');
+    expect(handoff?.commandKey).toBe('HANDOFF_CHECK');
+    expect(handoff?.required).toBe(true);
+    expect(handoff?.dependsOn).toEqual(['HARDENING']);
+    expect(project?.dependsOn).toEqual(['HANDOFF_TRUTH']);
+    expect(QUALITY_GATE_DEFINITION.groups.filter((group) => group.commandKey === 'HANDOFF_CHECK')).toHaveLength(1);
   });
 
   test('rejects unknown commands, unknown dependencies, and duplicate groups', () => {

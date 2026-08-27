@@ -13,6 +13,7 @@
     "test:smoke": "playwright test tests/smoke",
     "typecheck": "tsc --noEmit",
     "hardening:check": "node bin/hardening-check.mjs",
+    "handoff:check": "node bin/planner-handoff-check.mjs",
     "quality-gate:spec": "node bin/quality-gate-spec.mjs",
     "gate:local": "node bin/quality-gate.mjs local",
     "gate:ci": "node bin/quality-gate.mjs ci",

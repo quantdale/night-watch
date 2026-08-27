@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Phase 8B.1-R1.1 — read-only Nightwatch project-state truth check
- * (`nightwatch.project-state.v1`).
+ * (`nightwatch.project-state.v2`).
  *
  * Answers: "Do CURRENT project-level facts agree with mechanically derivable
  * source and authority?" It is deliberately NARROW: it validates a structured
@@ -13,7 +13,7 @@
  *
  * This is a separate authority boundary from `nightwatch.agent-continuity.v2`
  * (which answers "is THIS TASK internally recoverable and truthful?").
- * Project-state v1 assumes continuity v2 passes for the active task and
+ * Project-state v2 assumes continuity v2 passes for the active task and
  * verifies that itself by running `bin/agent-state.mjs` as a read-only
  * subprocess.
  *
@@ -28,18 +28,35 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
-const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v1';
-const BLOCK_SECTION_HEADING = '## Project-state v1 (machine-checked truth block)';
-const GENERIC_LIVE_IMPLEMENTATION_ANCHORS = [
+const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';
+const BLOCK_SECTION_HEADING = '## Project-state v2 (machine-checked truth block)';
+const OWNED_PROJECT_STATE_FIELDS = new Set([
+  'PROJECT_STATE_PROTOCOL_VERSION',
+  'LIVE_HEAD_AUTHORITY',
+  'CURRENT_TASK_AUTHORITY',
+  'VALIDATED_IMPLEMENTATION_AUTHORITY',
+  'CANONICAL_CATALOG_TARGET',
+  'CANONICAL_CATALOG_ENTRY_COUNT',
+  'CANONICAL_CATALOG_SHA256',
+  'CANONICAL_CATALOG_STRATEGY',
+  'PHASE_8_STATUS',
+  'PHASE_8B_1_STATUS',
+  'NEXT_PORTFOLIO_MEMBER',
+  'PROMOTION_AUTHORIZATION_LIFECYCLE',
+  'EFFECTIVE_NEXT_PROMOTION_AUTHORITY',
+]);
+const FORBIDDEN_IMPLEMENTATION_AUTHORITY_FIELDS = new Set([
   'LAST_VALIDATED_IMPLEMENTATION_SHA',
   'CURRENT_SHA',
   'FINAL_SHA',
   'CURRENT_LOCAL_HEAD',
   'CURRENT_REMOTE_HEAD',
   'LAST_PUSHED_SHA',
-];
-const GENERIC_LIVE_DOCUMENTATION_ANCHORS = ['LAST_DOCUMENTATION_CHECKPOINT_SHA'];
+]);
+const FORBIDDEN_DOCUMENTATION_AUTHORITY_FIELDS = new Set(['LAST_DOCUMENTATION_CHECKPOINT_SHA']);
 const R1_TASK_STATE_PATH = '.agent/tasks/phase-8b-1-r1-owner-gated-canonical-promotion-retry/STATE.md';
+const MAX_CURRENT_STATE_BYTES = 512 * 1024;
+const MAX_BLOCK_LINE_CHARS = 1024;
 
 function parseArgs(argv) {
   const rootIndex = argv.indexOf('--root');
@@ -55,9 +72,11 @@ function fail(errors, code) {
   errors.push(code);
 }
 
-function gitEnv() {
+function gitEnv(root = process.cwd()) {
   return {
     PATH: '/usr/bin:/bin',
+    HOME: root,
+    GIT_CONFIG_GLOBAL: '/dev/null',
     LANG: 'C',
     LC_ALL: 'C',
     GIT_OPTIONAL_LOCKS: '0',
@@ -68,7 +87,7 @@ function gitEnv() {
 function gitReadOnly(root, args) {
   const result = spawnSync('git', args, {
     cwd: root,
-    env: gitEnv(),
+    env: gitEnv(root),
     shell: false,
     encoding: 'utf8',
     timeout: 5_000,
@@ -85,6 +104,9 @@ function loadTypeScriptModule(root, file) {
 function parseKeyValueBlock(text) {
   const fields = new Map();
   const lines = [];
+  const duplicates = [];
+  const unknown = [];
+  if (text.length > MAX_CURRENT_STATE_BYTES) return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
   const start = text.indexOf(BLOCK_SECTION_HEADING);
   if (start === -1) return null;
   const fenceStart = text.indexOf('\n```', start);
@@ -95,14 +117,20 @@ function parseKeyValueBlock(text) {
   const block = text.slice(afterFence + 1, fenceEnd);
   for (const line of block.split(/\r?\n/)) {
     if (line.trim() === '') continue;
+    if (line.length > MAX_BLOCK_LINE_CHARS) return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
     const match = /^(?<key>[^:#][^:]*):\s*(?<value>.*)$/.exec(line);
     if (!match?.groups) return { malformed: true, fields: null, lines };
     const key = match.groups.key.trim();
-    if (fields.has(key)) return { malformed: true, fields: null, lines };
+    if (fields.has(key)) duplicates.push(key);
+    if (!OWNED_PROJECT_STATE_FIELDS.has(key)) unknown.push(key);
+    if (key.length > MAX_BLOCK_LINE_CHARS || match.groups.value.length > MAX_BLOCK_LINE_CHARS) {
+      return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
+    }
+    if (fields.has(key)) continue;
     fields.set(key, match.groups.value.trim());
     lines.push(key);
   }
-  return { malformed: false, fields, lines };
+  return { malformed: false, oversized: false, fields, lines, duplicates, unknown };
 }
 
 function main() {
@@ -126,28 +154,35 @@ function main() {
   if (parsed === null) {
     fail(errors, 'PROJECT_STATE_BLOCK_MISSING');
   } else if (parsed.malformed) {
-    fail(errors, 'PROJECT_STATE_BLOCK_MALFORMED');
+    fail(errors, parsed.oversized ? 'PROJECT_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_BLOCK_MALFORMED');
   } else {
     const fields = parsed.fields;
+    for (const key of parsed.duplicates ?? []) fail(errors, 'PROJECT_STATE_DUPLICATE_FIELD');
+    for (const key of parsed.unknown ?? []) {
+      if (FORBIDDEN_IMPLEMENTATION_AUTHORITY_FIELDS.has(key)) {
+        fail(errors, 'PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY');
+      } else if (FORBIDDEN_DOCUMENTATION_AUTHORITY_FIELDS.has(key)) {
+        fail(errors, 'PROJECT_STATE_DUPLICATE_DOCUMENTATION_AUTHORITY');
+      } else {
+        fail(errors, 'PROJECT_STATE_UNKNOWN_FIELD');
+      }
+    }
+    for (const key of OWNED_PROJECT_STATE_FIELDS) {
+      if (!fields.has(key)) fail(errors, 'PROJECT_STATE_REQUIRED_FIELD_MISSING');
+    }
     if (!fields.has('PROJECT_STATE_PROTOCOL_VERSION')) fail(errors, 'PROJECT_STATE_PROTOCOL_MISSING');
     else if (fields.get('PROJECT_STATE_PROTOCOL_VERSION') !== PROJECT_STATE_PROTOCOL_VERSION) fail(errors, 'PROJECT_STATE_PROTOCOL_UNSUPPORTED');
-
-    // 2a. No competing generic live authority fields (defect-B regression).
-    for (const key of GENERIC_LIVE_IMPLEMENTATION_ANCHORS) {
-      if (fields.has(key)) fail(errors, `PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY: ${key} duplicates live authority owned by Git/ACTIVE_TASK`);
-    }
-    for (const key of GENERIC_LIVE_DOCUMENTATION_ANCHORS) {
-      if (fields.has(key)) fail(errors, `PROJECT_STATE_DUPLICATE_DOCUMENTATION_AUTHORITY: ${key} duplicates documentation authority owned by task continuity`);
-    }
 
     if (fields.get('LIVE_HEAD_AUTHORITY') !== 'GIT') fail(errors, 'PROJECT_STATE_LIVE_HEAD_AUTHORITY_INVALID');
     if (fields.get('CURRENT_TASK_AUTHORITY') !== '.agent/ACTIVE_TASK.md') fail(errors, 'PROJECT_STATE_CURRENT_TASK_AUTHORITY_INVALID');
     if (fields.get('VALIDATED_IMPLEMENTATION_AUTHORITY') !== '.agent/ACTIVE_TASK.md') fail(errors, 'PROJECT_STATE_VALIDATED_IMPLEMENTATION_AUTHORITY_INVALID');
 
     const declaredCount = parsed !== null && !parsed.malformed ? fieldsGet(parsed, 'CANONICAL_CATALOG_ENTRY_COUNT') : undefined;
-    if (declaredCount !== undefined && !/^[0-9]+$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
+    if (declaredCount !== undefined && !/^(?:0|[1-9][0-9]{0,8})$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
+    if (fields.get('CANONICAL_CATALOG_SHA256') !== undefined && !/^sha256:[0-9a-f]{64}$/.test(fields.get('CANONICAL_CATALOG_SHA256'))) fail(errors, 'PROJECT_STATE_CATALOG_DIGEST_MISMATCH');
 
-    if (fields.get('NEXT_PROMOTION_AUTHORITY') !== 'NONE' && fields.get('NEXT_PROMOTION_AUTHORITY') !== 'SPENT') fail(errors, 'PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+    if (fields.get('PROMOTION_AUTHORIZATION_LIFECYCLE') !== 'NONE' && fields.get('PROMOTION_AUTHORIZATION_LIFECYCLE') !== 'SPENT') fail(errors, 'PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID');
+    if (fields.get('EFFECTIVE_NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID');
     if (fields.get('PHASE_8_STATUS') !== 'COMPLETE') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
     if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
 
@@ -165,12 +200,19 @@ function main() {
 
   // 3. Active task authority + continuity v2 (read-only subprocess).
   const activeTaskPath = path.join(root, '.agent/ACTIVE_TASK.md');
-  if (!fs.existsSync(activeTaskPath) || !fs.statSync(activeTaskPath).isFile()) {
+  let activeTaskIsRegular = false;
+  try {
+    const activeTaskStat = fs.lstatSync(activeTaskPath);
+    activeTaskIsRegular = activeTaskStat.isFile() && !activeTaskStat.isSymbolicLink();
+  } catch {
+    activeTaskIsRegular = false;
+  }
+  if (!activeTaskIsRegular) {
     fail(errors, 'PROJECT_STATE_ACTIVE_TASK_MISSING');
   } else {
-    const agentCheck = spawnSync(process.execPath, ['bin/agent-state.mjs'], {
+    const agentCheck = spawnSync(process.execPath, ['bin/agent-state.mjs', '--root', root], {
       cwd: root,
-      env: process.env,
+      env: gitEnv(root),
       shell: false,
       encoding: 'utf8',
       timeout: 30_000,
@@ -272,7 +314,8 @@ function main() {
     phase8Status: 'COMPLETE',
     phase8B1Status: 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1',
     nextPortfolioMember: selection === null ? 'EXHAUSTED' : 'AVAILABLE_NOT_ADOPTED',
-    nextPromotionAuthority: 'NONE',
+    promotionAuthorizationLifecycle: fieldsGet(parsed, 'PROMOTION_AUTHORIZATION_LIFECYCLE'),
+    effectiveNextPromotionAuthority: fieldsGet(parsed, 'EFFECTIVE_NEXT_PROMOTION_AUTHORITY'),
     activeTaskContinuity: 'PASS',
     checkoutClean: true,
   }, null, 2));

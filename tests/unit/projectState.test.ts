@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
-// Phase 8B.1-R1.1 — project-state truth checker matrix.
+// Phase 8B.1-R1.1 / campaign handoff hardening — project-state truth checker matrix.
 //
-// Proves bin/project-state-check.mjs (nightwatch.project-state.v1) enforces
+// Proves bin/project-state-check.mjs (nightwatch.project-state.v2) enforces
 // the project-memory authority model: structured block facts must agree with
 // mechanically derivable source (real validator/renderer/portfolio selector),
 // live authority stays with Git + ACTIVE_TASK continuity v2, no competing
-// generic live anchors, promotion authority NONE, and historical prose can
+// generic live anchors, explicit promotion lifecycle/effective authority, and historical prose can
 // never leak into machine-checked truth (no prose parsing).
 //
 // Fixtures are committed temporary source repositories built through the REAL
@@ -65,6 +65,11 @@ function git(root: string, args: readonly string[]): string {
 
 function digestOf(text: string): string {
   return `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
+}
+
+function replaceFile(root: string, relativePath: string, replacement: (text: string) => string): void {
+  const absolute = path.join(root, relativePath);
+  fs.writeFileSync(absolute, replacement(fs.readFileSync(absolute, 'utf8')), 'utf8');
 }
 
 const ONE_ENTRY = [deriveAdoptedCase(
@@ -232,7 +237,8 @@ interface BlockOptions {
   readonly phase8Status?: string;
   readonly phase8B1Status?: string;
   readonly nextPortfolioMember?: string;
-  readonly nextPromotionAuthority?: string;
+  readonly promotionAuthorizationLifecycle?: string;
+  readonly effectiveNextPromotionAuthority?: string;
   readonly extraFields?: readonly string[];
 }
 
@@ -240,7 +246,7 @@ function renderBlock(catalogState: 'EMPTY' | 'ONE', options: BlockOptions = {}):
   const catalogSource = renderCatalog(catalogState);
   const count = catalogState === 'EMPTY' ? '0' : '1';
   const lines = [
-    `PROJECT_STATE_PROTOCOL_VERSION: ${options.version ?? 'nightwatch.project-state.v1'}`,
+    `PROJECT_STATE_PROTOCOL_VERSION: ${options.version ?? 'nightwatch.project-state.v2'}`,
     `LIVE_HEAD_AUTHORITY: ${options.liveHeadAuthority ?? 'GIT'}`,
     `CURRENT_TASK_AUTHORITY: ${options.currentTaskAuthority ?? '.agent/ACTIVE_TASK.md'}`,
     `VALIDATED_IMPLEMENTATION_AUTHORITY: ${options.validatedImplementationAuthority ?? '.agent/ACTIVE_TASK.md'}`,
@@ -251,12 +257,13 @@ function renderBlock(catalogState: 'EMPTY' | 'ONE', options: BlockOptions = {}):
     `PHASE_8_STATUS: ${options.phase8Status ?? 'COMPLETE'}`,
     `PHASE_8B_1_STATUS: ${options.phase8B1Status ?? 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1'}`,
     `NEXT_PORTFOLIO_MEMBER: ${options.nextPortfolioMember ?? 'AVAILABLE_NOT_ADOPTED'}`,
-    `NEXT_PROMOTION_AUTHORITY: ${options.nextPromotionAuthority ?? 'NONE'}`,
+    `PROMOTION_AUTHORIZATION_LIFECYCLE: ${options.promotionAuthorizationLifecycle ?? 'SPENT'}`,
+    `EFFECTIVE_NEXT_PROMOTION_AUTHORITY: ${options.effectiveNextPromotionAuthority ?? 'NONE'}`,
     ...(options.extraFields ?? []),
   ];
   return `# Nightwatch — CURRENT STATE (synthetic fixture)
 
-## Project-state v1 (machine-checked truth block)
+## Project-state v2 (machine-checked truth block)
 
 \`\`\`
 ${lines.join('\n')}
@@ -266,7 +273,7 @@ ${lines.join('\n')}
 
 Phase 8B's canonical promotion was deferred at that checkpoint; the catalog
 remained empty at Phase 8B.0.1; Phase 8B.1 was not authorized before R1.
-These are historical records and are ignored by project-state v1.
+These are historical records and are ignored by project-state v2.
 `;
 }
 
@@ -364,7 +371,7 @@ function run(root: string) {
   return spawnSync(process.execPath, [CHECKER, '--root', root], { encoding: 'utf8' });
 }
 
-test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-state.v1)', () => {
+test.describe('project-state truth checker (nightwatch.project-state.v2)', () => {
   test('1. valid one-entry current project state passes', () => {
     const fixture = makeFixture();
     try {
@@ -372,12 +379,13 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
       expect(result.status).toBe(0);
       const output = JSON.parse(result.stdout);
       expect(output.status).toBe('PASS');
-      expect(output.projectStateProtocol).toBe('nightwatch.project-state.v1');
+      expect(output.projectStateProtocol).toBe('nightwatch.project-state.v2');
       expect(output.catalogCount).toBe(1);
       expect(output.phase8Status).toBe('COMPLETE');
       expect(output.phase8B1Status).toBe('COMPLETE_VIA_SUCCESSFUL_RETRY_R1');
       expect(output.nextPortfolioMember).toBe('AVAILABLE_NOT_ADOPTED');
-      expect(output.nextPromotionAuthority).toBe('NONE');
+      expect(output.promotionAuthorizationLifecycle).toBe('SPENT');
+      expect(output.effectiveNextPromotionAuthority).toBe('NONE');
       expect(output.activeTaskContinuity).toBe('PASS');
       expect(output.rendererRoundTrip).toBe(true);
     } finally {
@@ -484,22 +492,86 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     }
   });
 
-  test('11. NEXT_PROMOTION_AUTHORITY=NONE passes (covered by test 1)', () => {
-    // Explicit dedicated assertion for the required axis.
-    const fixture = makeFixture();
+  test('10a. unknown and stale machine-block fields fail closed', () => {
+    const fixture = makeFixture({
+      block: { extraFields: ['PHASE_15_PROGRAM_STATE: SESSION_1_COMPLETE_SESSION_2_REQUIRED'] },
+    });
     try {
       const result = run(fixture.root);
-      expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout).nextPromotionAuthority).toBe('NONE');
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_UNKNOWN_FIELD');
     } finally {
       fixture.cleanup();
     }
   });
 
-  test('12. NEXT_PROMOTION_AUTHORITY=AUTHORIZED fails in the current fixture, while NONE and SPENT are valid', () => {
-    // SPENT is valid (post-variant-B-adoption state)
+  test('10b. duplicate and missing owned fields fail closed', () => {
+    const duplicate = makeFixture({ block: { extraFields: ['PHASE_8_STATUS: COMPLETE'] } });
+    try {
+      const result = run(duplicate.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_DUPLICATE_FIELD');
+    } finally {
+      duplicate.cleanup();
+    }
+
+    const missing = makeFixture();
+    try {
+      replaceFile(missing.root, 'docs/CURRENT_STATE.md', (text) => text.replace(/^PROMOTION_AUTHORIZATION_LIFECYCLE:.*\n/m, ''));
+      git(missing.root, ['add', '--all']);
+      git(missing.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'missing owned field']);
+      const result = run(missing.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_REQUIRED_FIELD_MISSING');
+    } finally {
+      missing.cleanup();
+    }
+  });
+
+  test('10c. malformed and oversized machine blocks fail closed', () => {
+    const malformed = makeFixture();
+    try {
+      replaceFile(malformed.root, 'docs/CURRENT_STATE.md', (text) => text.replace(/^PHASE_8_STATUS:.*$/m, 'malformed machine record'));
+      git(malformed.root, ['add', '--all']);
+      git(malformed.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'malformed machine block']);
+      const result = run(malformed.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_BLOCK_MALFORMED');
+    } finally {
+      malformed.cleanup();
+    }
+
+    const oversized = makeFixture();
+    try {
+      replaceFile(oversized.root, 'docs/CURRENT_STATE.md', (text) => text.replace(/^PROMOTION_AUTHORIZATION_LIFECYCLE:.*$/m, `PROMOTION_AUTHORIZATION_LIFECYCLE: ${'x'.repeat(1_100)}`));
+      git(oversized.root, ['add', '--all']);
+      git(oversized.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'oversized machine block']);
+      const result = run(oversized.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_BLOCK_OVERSIZED');
+    } finally {
+      oversized.cleanup();
+    }
+  });
+
+  test('11. lifecycle SPENT is projected faithfully while effective authority remains NONE', () => {
+    // Explicit dedicated assertion for the required axis.
+    const fixture = makeFixture();
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      const output = JSON.parse(result.stdout);
+      expect(output.promotionAuthorizationLifecycle).toBe('SPENT');
+      expect(output.effectiveNextPromotionAuthority).toBe('NONE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('12. lifecycle NONE and SPENT are valid, while an authorization grant is invalid', () => {
+    // Both lifecycle values are explicit; effective authority remains NONE.
     for (const valid of ['NONE', 'SPENT']) {
-      const fix = makeFixture({ block: { nextPromotionAuthority: valid } });
+      const fix = makeFixture({ block: { promotionAuthorizationLifecycle: valid } });
       try {
         const res = run(fix.root);
         expect(res.status).toBe(0);
@@ -508,11 +580,11 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
       }
     }
     // AUTHORIZED is invalid
-    const fixture = makeFixture({ block: { nextPromotionAuthority: 'AUTHORIZED' } });
+    const fixture = makeFixture({ block: { promotionAuthorizationLifecycle: 'AUTHORIZED' } });
     try {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
-      expect(result.stderr).toContain('PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+      expect(result.stderr).toContain('PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID');
     } finally {
       fixture.cleanup();
     }
@@ -522,12 +594,12 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     // Variant B is the available next member while authority stays NONE — the
     // real current project state. This must be healthy (test 1); here we also
     // prove the two axes are independent fields.
-    const fixture = makeFixture({ block: { nextPortfolioMember: 'AVAILABLE_NOT_ADOPTED', nextPromotionAuthority: 'NONE' } });
+    const fixture = makeFixture({ block: { nextPortfolioMember: 'AVAILABLE_NOT_ADOPTED', promotionAuthorizationLifecycle: 'NONE', effectiveNextPromotionAuthority: 'NONE' } });
     try {
       const result = run(fixture.root);
       expect(result.status).toBe(0);
       expect(JSON.parse(result.stdout).nextPortfolioMember).toBe('AVAILABLE_NOT_ADOPTED');
-      expect(JSON.parse(result.stdout).nextPromotionAuthority).toBe('NONE');
+      expect(JSON.parse(result.stdout).effectiveNextPromotionAuthority).toBe('NONE');
     } finally {
       fixture.cleanup();
     }
@@ -605,11 +677,12 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     }
   });
 
-  test('20. historical phase-qualified implementation SHA fields are allowed', () => {
-    const fixture = makeFixture({
-      block: { extraFields: ['PHASE_8A_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac', 'PHASE_8A_1_HISTORICAL_DOCUMENTATION_CHECKPOINT_SHA: 488b4e41dc12840a1e0c029ae76b24f3ce8abee4'] },
-    });
+  test('20. historical phase-qualified implementation SHA fields remain prose-only', () => {
+    const fixture = makeFixture();
     try {
+      replaceFile(fixture.root, 'docs/CURRENT_STATE.md', (text) => `${text}\nPHASE_8A_1_HISTORICAL_VALIDATED_IMPLEMENTATION_SHA: 4602fac417746a30927fc19f8e4ca48ab9143cac\nPHASE_8A_1_HISTORICAL_DOCUMENTATION_CHECKPOINT_SHA: 488b4e41dc12840a1e0c029ae76b24f3ce8abee4\n`);
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'historical prose']);
       const result = run(fixture.root);
       expect(result.status).toBe(0);
     } finally {
@@ -680,20 +753,20 @@ test.describe('Phase 8B.1-R1.1 project-state truth checker (nightwatch.project-s
     // Load-bearing: closing the research phase is NOT standing authorization
     // to use the promotion machinery later. COMPLETE + NONE must stay healthy,
     // and COMPLETE + anything-but-NONE must fail exactly.
-    const healthy = makeFixture({ block: { phase8Status: 'COMPLETE', nextPromotionAuthority: 'NONE' } });
+    const healthy = makeFixture({ block: { phase8Status: 'COMPLETE', promotionAuthorizationLifecycle: 'SPENT', effectiveNextPromotionAuthority: 'NONE' } });
     try {
       const result = run(healthy.root);
       expect(result.status).toBe(0);
       expect(JSON.parse(result.stdout).phase8Status).toBe('COMPLETE');
-      expect(JSON.parse(result.stdout).nextPromotionAuthority).toBe('NONE');
+      expect(JSON.parse(result.stdout).effectiveNextPromotionAuthority).toBe('NONE');
     } finally {
       healthy.cleanup();
     }
-    const granted = makeFixture({ block: { phase8Status: 'COMPLETE', nextPromotionAuthority: 'AUTHORIZED' } });
+    const granted = makeFixture({ block: { phase8Status: 'COMPLETE', effectiveNextPromotionAuthority: 'AUTHORIZED' } });
     try {
       const result = run(granted.root);
       expect(result.status).not.toBe(0);
-      expect(result.stderr).toContain('PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE');
+      expect(result.stderr).toContain('PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID');
     } finally {
       granted.cleanup();
     }

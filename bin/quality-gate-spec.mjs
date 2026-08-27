@@ -13,7 +13,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionPath = path.join(root, 'config', 'quality-gate.v1.json');
 const compatibilityPath = path.join(root, 'config', 'semantic-compatibility.v1.json');
 const commandKeys = new Set([
-  'GATE_DEFINITION', 'TYPECHECK', 'HARDENING_CHECK', 'PROJECT_CHECK',
+  'GATE_DEFINITION', 'TYPECHECK', 'HARDENING_CHECK', 'HANDOFF_CHECK', 'PROJECT_CHECK',
   'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE',
   'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY',
 ]);

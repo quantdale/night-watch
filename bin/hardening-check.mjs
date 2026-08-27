@@ -55,6 +55,7 @@ function checkChildProcessBoundaries() {
     'bin/nightwatch.mjs',
     'bin/quality-gate.mjs',
     'bin/quality-gate-clean.mjs',
+    'bin/planner-handoff-check.mjs',
     'bin/semantic-compat.mjs',
     'bin/phase23-ci.mjs',
     'bin/phase23-dev.mjs',
@@ -538,7 +539,7 @@ function checkPhase23QualityGate() {
     return;
   }
   if (gate.schemaVersion !== 'nightwatch.quality-gate.v1' || !Array.isArray(gate.groups)) fail('Phase 23 quality-gate schema/version is invalid');
-  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY'];
+  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY'];
   for (const id of requiredGroups) {
     const group = gate.groups.find((candidate) => candidate.id === id);
     if (!group || group.required !== true) fail(`Phase 23 required quality-gate group missing or optional: ${id}`);
@@ -548,8 +549,10 @@ function checkPhase23QualityGate() {
   }
   if (!Array.isArray(compatibility.phaseSuites) || !compatibility.phaseSuites.some((suite) => suite.phase === 23) || !compatibility.phaseSuites.some((suite) => suite.phase === 24) || !compatibility.phaseSuites.some((suite) => suite.phase === 25) || !compatibility.phaseSuites.some((suite) => suite.phase === 26)) fail('Phase 23/24/25/26 semantic compatibility suite is missing');
   if (!/"gate:ci"\s*:\s*"node bin\/quality-gate\.mjs ci"/.test(packageJson)) fail('package.json must expose the fixed gate:ci entry point');
+  if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) fail('package.json must expose the fixed handoff checker entry point');
   if (!/"test:semantic-compat"\s*:\s*"node bin\/semantic-compat\.mjs"/.test(packageJson)) fail('package.json must expose the fixed semantic compatibility entry point');
   if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runner)) fail('quality-gate runner must use a fixed mode allowlist');
+  if (!/commandKey === 'HANDOFF_CHECK'/.test(runner) || !/planner-handoff-check\.mjs/.test(runner)) fail('quality-gate runner must own exactly one fixed handoff checker command');
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
   if (!/NIGHTWATCH_STORAGE_STATE/.test(runner) || !/GITHUB_TOKEN/.test(runner) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runner)) fail('quality-gate runner does not sanitize credentials and host behavior');
   if (!/filePattern/.test(spec) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(spec) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(spec)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
@@ -880,7 +883,8 @@ function checkAgentContinuityIntegrity() {
 }
 
 function checkProjectStateIntegrity() {
-  // Phase 8B.1-R1.1 — project-memory truth (nightwatch.project-state.v1).
+  // Phase 8B.1-R1.1 / campaign hardening — project-memory truth
+  // (nightwatch.project-state.v2).
   // The project-state checker must stay a deterministic read-only tool: no
   // filesystem writes, no network, no model, no DB/infrastructure, and the
   // canonical catalog target stays code-defined (no user-supplied path).
@@ -896,17 +900,20 @@ function checkProjectStateIntegrity() {
     fail('bin/project-state-check.mjs must derive the next portfolio member from the real selector');
   }
   if (!/agent-state\.mjs/.test(checker)) fail('bin/project-state-check.mjs must verify active-task continuity v2 through agent-state');
-  if (!/nightwatch\.project-state\.v1/.test(checker)) fail('bin/project-state-check.mjs must define the project-state v1 protocol version');
+  if (!/nightwatch\.project-state\.v2/.test(checker)) fail('bin/project-state-check.mjs must define the project-state v2 protocol version');
+  if (!/OWNED_PROJECT_STATE_FIELDS/.test(checker) || !/PROJECT_STATE_UNKNOWN_FIELD/.test(checker) || !/PROJECT_STATE_REQUIRED_FIELD_MISSING/.test(checker) || !/PROJECT_STATE_DUPLICATE_FIELD/.test(checker)) {
+    fail('bin/project-state-check.mjs must enforce an explicit strict owned-key schema');
+  }
   if (!/PROJECT_STATE_DUPLICATE_IMPLEMENTATION_AUTHORITY/.test(checker)) {
     fail('bin/project-state-check.mjs must reject competing generic live implementation anchors');
   }
-  if (!/PROJECT_STATE_PROMOTION_AUTHORITY_NOT_NONE/.test(checker)) {
-    fail('bin/project-state-check.mjs must require NEXT_PROMOTION_AUTHORITY NONE or SPENT');
+  if (!/PROMOTION_AUTHORIZATION_LIFECYCLE/.test(checker) || !/EFFECTIVE_NEXT_PROMOTION_AUTHORITY/.test(checker) || !/PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID/.test(checker) || !/PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID/.test(checker)) {
+    fail('bin/project-state-check.mjs must separate and validate promotion lifecycle/effective authority');
   }
   // Phase 8 final closure: the checker must now REQUIRE the terminal
   // PHASE_8_STATUS COMPLETE (the pre-closure IN_PROGRESS pin is gone), while
-  // the promotion-authority NONE requirement above stays — closing the
-  // research phase never grants standing promotion authority.
+  // the effective-promotion-authority NONE requirement above stays — closing
+  // the research phase never grants standing promotion authority.
   if (!/PROJECT_STATE_PHASE_8_STATUS_MISMATCH/.test(checker)) {
     fail('bin/project-state-check.mjs must enforce PHASE_8_STATUS exactly');
   }
@@ -977,6 +984,40 @@ function checkProjectStateIntegrity() {
     if (!/candidates never directly write source/.test(flattened)) {
       fail(`${label} must state candidates never directly write source`);
     }
+  }
+}
+
+function checkPlannerHandoffIntegrity() {
+  // The handoff boundary owns only prompt route/currentness. Keep the parser
+  // pure and the Git-aware checker local, read-only, bounded, and categorical.
+  const protocol = read('bin/planner-handoff-protocol.mjs');
+  const checker = read('bin/planner-handoff-check.mjs');
+  const prompt = read('.agent/EXECUTION_PROMPT.md');
+  if (!/nightwatch\.planner-executor-handoff\.v1/.test(protocol) || !/HANDOFF_REQUIRED_FIELDS/.test(protocol) || !/validateHandoffState/.test(protocol)) {
+    fail('planner handoff protocol must define the versioned required-field/state contract');
+  }
+  if (!/nightwatch\.planner-executor-handoff\.v1/.test(prompt)) fail('.agent/EXECUTION_PROMPT.md must carry the versioned handoff header');
+  if (!/HANDOFF_RECEIPT_SCHEMA/.test(checker) || !/HANDOFF_OPENSPEC_FILE_UNTRACKED/.test(checker) || !/HANDOFF_OPENSPEC_NONCANONICAL_FILE/.test(checker)) {
+    fail('planner handoff checker must own bounded OpenSpec route integrity');
+  }
+  if (!/SAFE_RELATIVE_PATH_RE/.test(checker) || !/isSymbolicLink/.test(checker) || !/merge-base/.test(checker)) {
+    fail('planner handoff checker must enforce safe paths, regular files, and Git ancestry');
+  }
+  if (!/shell\s*:\s*false/.test(checker) || !/timeout\s*:\s*10_000/.test(checker) || !/maxBuffer\s*:/.test(checker) || !/GIT_OPTIONAL_LOCKS/.test(checker)) {
+    fail('planner handoff checker child processes must be fixed, shell-disabled, and bounded');
+  }
+  if (/writeFileSync|appendFileSync|createWriteStream|renameSync|unlinkSync|rmSync|mkdirSync/.test(checker)) {
+    fail('planner handoff checker contains a filesystem write path');
+  }
+  if (/\b(?:fetch\s*\(|https?\.request|WebSocket\s*\(|net\.|dns\.)/i.test(checker)) {
+    fail('planner handoff checker contains network capability');
+  }
+  if (/process\.env/.test(checker) || /shell\s*:\s*true/.test(checker) || /stdio\s*:\s*['"]inherit['"]/.test(checker)) {
+    fail('planner handoff checker must not inherit ambient credentials or shell/output authority');
+  }
+  const packageJson = read('package.json');
+  if (!/"handoff:check"\s*:\s*"node bin\/planner-handoff-check\.mjs"/.test(packageJson)) {
+    fail('package.json must expose the planner handoff checker');
   }
 }
 
@@ -1632,6 +1673,7 @@ checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
+checkPlannerHandoffIntegrity();
 checkProjectStateIntegrity();
 checkPhase9SemanticCorePurity();
 checkPhase9IntegrationSeams();

@@ -114,6 +114,9 @@ function runFixedCommand(commandKey, mode, timeoutClass) {
   } else if (commandKey === 'HARDENING_CHECK') {
     command = packageManager;
     args = ['run', 'hardening:check'];
+  } else if (commandKey === 'HANDOFF_CHECK') {
+    command = nodeExecutable;
+    args = [path.join(root, 'bin', 'planner-handoff-check.mjs')];
   } else if (commandKey === 'PROJECT_CHECK') {
     command = packageManager;
     args = ['run', 'project:check'];

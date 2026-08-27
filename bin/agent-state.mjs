@@ -545,6 +545,11 @@ const APPROVED_CHECKPOINT_PATHS = [
   // terminal checkbox updates without relabeling the preceding implementation
   // checkpoint as stale.
   /^openspec\/changes\/[^/]+\/tasks\.md$/,
+  // The remaining OpenSpec planning artifacts are also documentation-only
+  // route inputs. Keep the shape narrow: one change directory, one-level
+  // Markdown files, and one-level capability specs only.
+  /^openspec\/changes\/[^/]+\/(?:audit|proposal|design)\.md$/,
+  /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
   // Repository-native design documents: exactly one level under docs/design,

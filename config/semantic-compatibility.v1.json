@@ -32,7 +32,7 @@
     { "phase": 20, "files": ["tests/unit/phase20Operator.test.ts", "tests/unit/phase20SemanticCoverage.test.ts"] },
     { "phase": 21, "files": ["tests/unit/phase21Differential.test.ts", "tests/unit/phase21GapClosure.test.ts", "tests/unit/phase21Integration.test.ts", "tests/unit/phase21Membership.test.ts", "tests/unit/phase21Mutation.test.ts"] },
     { "phase": 22, "files": ["tests/unit/phase22Core.test.ts"] },
-    { "phase": 23, "files": ["tests/unit/phase23QualityGate.test.ts", "tests/unit/phase23PortLease.test.ts", "tests/unit/phase23CiAuthority.test.ts", "tests/unit/phase23Manifest.test.ts"] },
+    { "phase": 23, "files": ["tests/unit/phase23QualityGate.test.ts", "tests/unit/phase23PortLease.test.ts", "tests/unit/phase23CiAuthority.test.ts", "tests/unit/phase23Manifest.test.ts", "tests/unit/plannerHandoff.test.ts"] },
     { "phase": 24, "files": ["tests/unit/phase24LocalTriage.test.ts", "tests/unit/phase24ProxyLifecycle.test.ts"] },
     { "phase": 25, "files": ["tests/unit/phase25SourceBoundary.test.ts", "tests/unit/phase25SourceInventory.test.ts", "tests/unit/phase25AnalyzerSoundness.test.ts", "tests/unit/phase25SurfaceDiscovery.test.ts", "tests/unit/phase25Invalidation.test.ts", "tests/unit/phase25Adversarial.test.ts", "tests/unit/phase25Operator.test.ts"] },
     { "phase": 26, "files": ["tests/unit/phase26Adversarial.test.ts", "tests/unit/phase26ResponseCoverage.test.ts", "tests/unit/phase26SourceMetrics.test.ts", "tests/unit/phase26Invalidation.test.ts"] }

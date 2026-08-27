@@ -684,6 +684,10 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
       '.agent/tasks/phase-test/ACCEPTANCE_MATRIX.md',
       '.agent/tasks/phase-test/DEFECT_LEDGER.md',
       'openspec/changes/example-change/tasks.md',
+      'openspec/changes/example-change/audit.md',
+      'openspec/changes/example-change/proposal.md',
+      'openspec/changes/example-change/design.md',
+      'openspec/changes/example-change/specs/capability/spec.md',
       'corpus/phase6/README.md',
       'corpus/phase6/runtime-binding-audit.json',
       'docs/ARCHITECTURE.md',
@@ -700,6 +704,13 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
     ]) {
       expect(isApprovedCheckpointPath(approved)).toBe(true);
     }
+  });
+
+  test('OpenSpec planning paths stay narrow and source-like paths remain unapproved', () => {
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/specs/capability/spec.md')).toBe(true);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/specs/nested/capability/spec.md')).toBe(false);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/design.json')).toBe(false);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/src/implementation.ts')).toBe(false);
   });
 
   test('uncommitted docs/design design document is checkpoint advance', () => {
