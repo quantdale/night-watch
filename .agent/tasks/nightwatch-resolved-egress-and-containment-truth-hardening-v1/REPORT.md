@@ -1,6 +1,6 @@
 # Resolved Egress + Containment Truth Hardening — Execution Report
 
-Status: COMPLETE (LOCAL / SOURCE / SYNTHETIC; EXTERNAL CI NOT OBSERVED)
+Status: COMPLETE (LOCAL / SOURCE / SYNTHETIC; EXTERNAL CI OBSERVED NON-EVIDENCE)
 Task ID: `nightwatch-resolved-egress-and-containment-truth-hardening-v1`
 Phase: RESOLVED-EGRESS-AND-CONTAINMENT-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
