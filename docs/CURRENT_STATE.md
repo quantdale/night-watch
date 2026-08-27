@@ -2381,3 +2381,40 @@ completed with failure; its sole job `98139552089` completed with failure and
 zero steps, so CI is not validation evidence. All prohibited contact,
 authentication, data, infrastructure, sibling-write, publication, runtime-AI,
 and promotion counts remain zero.
+
+## Source-proof soundness and static discovery hardening — implementation checkpoint
+
+The current successor campaign is local/source/synthetic only and has repaired
+three reproduced false-proof seams without adding a selector or proof family.
+The bounded PHP direct-return analyzer now requires a mechanically complete
+unconditional, terminal-fallback, or complete top-level branch shape; implicit
+fallthrough, unsupported control flow, and non-literal return paths remain
+unproven. The response analyzer identity advanced from v3 to v4. Static
+TypeScript/JavaScript/Go route discovery now tokenizes executable lexical
+regions only, and PHP handler declaration counts ignore comments and strings.
+Post-scan content-digest mismatches are SOURCE_STALE across joins; runtime
+catalog version drift remains distinct and maps to DRIFTED candidate source
+version.
+
+The implementation checkpoint is `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`.
+The current approved-source snapshot remains
+`srcsnapshot:sha256:04ff583971865f335902f5ad`, with discovery digest
+`source-surface-discovery:sha256:906830010ed198639d3c7b91`. It reports 128
+operations, 127 route proofs, 127 request contracts, 43 response-contract
+surfaces, 53 semantic observations, 118 proven / 10 rejected joins, and
+Phase 24 at 3 eligible / 125 excluded. Eligibility is
+`source-eligibility-census:sha256:2f97b732e0472df347f695a1`; the investigation-
+only read-only census is
+`source-readonly-candidate-census:sha256:c54347c14d4d1e5f95f18660`. No new
+family cleared the bar: `NO_SAFE_NEW_FAMILY` and promotion authority remains
+`NONE`.
+
+The pre-fix probe reproduced the PHP, lexical-route, and fake-declaration
+defects. The final focused cone passed 74/74; semantic compatibility passed
+1,901 total / 1,888 passed / 13 skipped / 0 failed; owner provenance passed
+91; and the synthetic campaign passed 66. Local and fresh Node20 disposable
+quality gates passed all nine groups. Canonical Playwright enumeration is
+2,555 tests in 209 files. The final tracked-file audit reviewed 1,320/1,320
+regular files. No prohibited product, auth, data, cloud, infrastructure,
+publication, sibling-write, or runtime-AI action occurred; exact-head Actions
+is recorded separately after the closure push.

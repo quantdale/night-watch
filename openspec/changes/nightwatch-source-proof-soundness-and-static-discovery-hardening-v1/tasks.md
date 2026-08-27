@@ -91,37 +91,37 @@ Do not execute source code or introduce framework/runtime parsing.
 
 Run/fix all applicable gates, including at minimum:
 
-- [ ] npm run typecheck
-- [ ] npm run hardening:check
-- [ ] npm run quality-gate:spec
-- [ ] npm run gate:inventory
-- [ ] focused Phase 25/26/27/28 source/analyzer/response-flow tests
-- [ ] tests for real-source extraction/currentness/admission and sourceAnalysisParity
-- [ ] npm run campaign:synthetic
-- [ ] npm run campaign:source-gaps
-- [ ] npm run campaign:eligibility-census
-- [ ] npm run campaign:readonly-census
-- [ ] npm run test:semantic-compat
-- [ ] npm run test:owner-provenance
-- [ ] npm run gate:local
-- [ ] npm run gate:clean
-- [ ] npm run agent:check
-- [ ] npm run agent:audit
-- [ ] npm run project:check
-- [ ] git diff --check
+- [x] npm run typecheck
+- [x] npm run hardening:check
+- [x] npm run quality-gate:spec
+- [x] npm run gate:inventory
+- [x] focused Phase 25/26/27/28 source/analyzer/response-flow tests
+- [x] tests for real-source extraction/currentness/admission and sourceAnalysisParity
+- [x] npm run campaign:synthetic
+- [x] npm run campaign:source-gaps
+- [x] npm run campaign:eligibility-census
+- [x] npm run campaign:readonly-census
+- [x] npm run test:semantic-compat
+- [x] npm run test:owner-provenance
+- [x] npm run gate:local
+- [x] npm run gate:clean
+- [x] npm run agent:check
+- [x] npm run agent:audit
+- [x] npm run project:check
+- [x] git diff --check
 
 Also:
 
-- [ ] Run canonical complete Playwright enumeration and preserve/explain exact skip changes.
-- [ ] Reproduce final acceptance in a fresh disposable checkout/topology where prior campaigns require it.
-- [ ] Record wall time and peak RSS for representative source-census commands before/after.
-- [ ] No test deletion, skip addition, assertion weakening or snapshot laundering.
+- [x] Run canonical complete Playwright enumeration and preserve/explain exact skip changes.
+- [x] Reproduce final acceptance in a fresh disposable checkout/topology where prior campaigns require it.
+- [x] Record wall time and peak RSS for representative source-census commands before/after.
+- [x] No test deletion, skip addition, assertion weakening or snapshot laundering.
 
 ## H11–H12 — closure, report, Git, exact-head CI observation
 
-- [ ] Update STATE.md after final validated implementation checkpoint.
-- [ ] Write REPORT.md with executive summary, exhaustive audit manifest/count, defect reproductions, root causes, implementation, intentional proof-identity deltas, fresh census, adversarial matrix, validation ledger, performance/RSS, regressions, rejected candidates, remaining risks and safety statement.
-- [ ] Update durable CURRENT_STATE/ROADMAP/DECISIONS/ARCHITECTURE only where facts changed.
+- [x] Update STATE.md after final validated implementation checkpoint.
+- [x] Write REPORT.md with executive summary, exhaustive audit manifest/count, defect reproductions, root causes, implementation, intentional proof-identity deltas, fresh census, adversarial matrix, validation ledger, performance/RSS, regressions, rejected candidates, remaining risks and safety statement.
+- [x] Update durable CURRENT_STATE/ROADMAP/DECISIONS/ARCHITECTURE only where facts changed.
 - [ ] Mark continuity task COMPLETE only after terminal acceptance.
 - [ ] Commit coherent validated checkpoints; never force-push.
 - [ ] Push final head to main according to repository policy.

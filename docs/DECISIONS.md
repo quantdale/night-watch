@@ -3369,3 +3369,43 @@ with failure; its sole job `98139552089` completed with failure and zero steps,
 so CI is not validation evidence. No DEV/NEXT/production, auth, data,
 infrastructure, sibling-write, publication, runtime-AI, or promotion operation
 occurred.
+
+## D-82 — repair source-proof reachability and lexical authority before any coverage unlock
+
+**Context.** A fresh successor audit reproduced an authority-bearing PHP
+implicit-fallthrough false proof, static route matches from comments and
+strings, and PHP handler multiplicity from fake declaration text. These seams
+could contaminate response/semantic proofs or exact joins even though the
+existing Phase-24 selector remained conservative.
+
+**Decision.** Harden only the owning proof families. Require a bounded,
+mechanically complete PHP direct-return shape and advance the real-source
+response analyzer identity from v3 to v4. Use one bounded static tokenizer for
+TS/JS/Go route matching and exact declaration counting, preserving valid
+receiver/method identity and rejecting malformed or non-code lexical regions.
+Treat post-scan content-digest mismatch as SOURCE_STALE across joins and keep
+runtime source-version drift distinct. Do not admit a new proof family or
+generalize dynamic dispatch, runtime binding, GET-only read evidence, or fuzzy
+symbol inference.
+
+**Evidence and consequences.** The implementation checkpoint is
+`15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`. The fresh snapshot remains
+`srcsnapshot:sha256:04ff583971865f335902f5ad`; discovery is
+`source-surface-discovery:sha256:906830010ed198639d3c7b91`; eligibility is
+`source-eligibility-census:sha256:2f97b732e0472df347f695a1`; and the
+investigation-only candidate census is
+`source-readonly-candidate-census:sha256:c54347c14d4d1e5f95f18660`. The
+result is 128 operations, 127 route proofs, 43 response-contract surfaces,
+53 semantic observations, 118 proven / 10 rejected joins, and Phase 24 at
+3 eligible / 125 excluded. Forty unsound response/semantic transitions were
+removed; operation identity drift is zero; the family disposition is
+`NO_SAFE_NEW_FAMILY`.
+
+**Validation and safety.** Focused source hardening passed 74/74; semantic
+compatibility passed 1,901/1,888/13/0; owner provenance passed 91; synthetic
+campaign passed 66; local and fresh Node20 clean gates passed all nine groups;
+and the final tracked-file audit reviewed 1,320/1,320 regular files. No
+product, auth, data, cloud, infrastructure, sibling-write, publication,
+runtime-AI, or canonical-promotion operation occurred. Exact-head Actions is
+observed once for the final documentation push and is not treated as green if
+it has zero executed steps.

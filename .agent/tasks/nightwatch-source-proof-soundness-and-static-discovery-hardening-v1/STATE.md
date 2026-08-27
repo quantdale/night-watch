@@ -6,17 +6,17 @@ Task ID: nightwatch-source-proof-soundness-and-static-discovery-hardening-v1
 Phase: SOURCE-PROOF-SOUNDNESS-AND-STATIC-DISCOVERY-HARDENING-V1
 Status: IN_PROGRESS
 Starting SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
-Last validated implementation SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
-Last substantive checkpoint SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
+Last validated implementation SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
+Last substantive checkpoint SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-27 — M5 focused acceptance and performance hardening are green; the non-authoritative static-route prefilter restored the bounded source-census profile, and repository-wide acceptance remains.
+Last checkpoint: 2026-08-27 — M5 implementation, local/clean acceptance, and final tracked-file audit are green at implementation checkpoint `15fe2c1`; closure documentation and exact-head Actions observation remain.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
+LAST_VALIDATED_IMPLEMENTATION_SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 PHASE_SOURCE_PROOF_SOUNDNESS_AND_STATIC_DISCOVERY_HARDENING_V1_STATUS: IN_PROGRESS
@@ -71,19 +71,25 @@ reproduced false proofs.
   from the reproduced PHP reachability defect; no new proof appeared. Fresh
   eligibility is 3 eligible / 125 excluded with currentness failures 0, and
   readonly families remain non-authoritative with no safe new family.
+- M5 — implementation checkpoint and local acceptance complete: `15fe2c1` is
+  pushed to `origin/main`; local and Node20 disposable gates both passed all
+  nine required groups, the final tracked-file audit reviewed 1,320/1,320
+  regular files, and the canonical Playwright enumeration is 2,555 tests in
+  209 files. Final closure docs and one exact-head Actions observation remain.
 
 ## Work In Progress
 
 The three required defects are covered by passing regression/adversarial tests.
-M2/M3 implementation and M4 census/parity are complete in the working tree.
-The static-route tokenizer now has a non-authoritative source-anchor prefilter;
-the implementation checkpoint and final acceptance gates remain.
+M2/M3 implementation, M4 census/parity, and the implementation checkpoint are
+complete. The static-route tokenizer now has a non-authoritative source-anchor
+prefilter. Local and disposable clean acceptance are green; only closure
+documentation and exact-head Actions observation remain.
 
 ## Exact Next Action
 
-Run semantic/provenance and repository acceptance gates, then record the
-validated implementation checkpoint, complete the report and continuity files,
-push, and observe exact-head Actions once.
+Complete the closure report/durable-doc checkpoint, validate its continuity,
+push it, and observe GitHub Actions once for that exact pushed head; record the
+external result without treating zero executed steps as green evidence.
 
 ## Files Changed
 
@@ -266,6 +272,86 @@ deltas caused by the reproduced branch-completeness defect. Analyzer v3 to v4
 and dependent discovery/eligibility/readonly digests are expected version
 invalidations. Unexplained drift: 0.
 
+Command: `npm run test:semantic-compat`
+Result: PASS — schema `nightwatch.semantic-compatibility.v1`; phases 9–26,
+22 phases, 141 files, 1,901 total, 1,888 passed, 13 skipped, 0 failed.
+When: 2026-08-27
+Relevant failure/output summary: The final response analyzer version and
+lexical discovery changes preserve all non-target historical compatibility.
+
+Command: `npm run test:owner-provenance`
+Result: PASS — 91 tests passed in 20.1 seconds.
+When: 2026-08-27
+Relevant failure/output summary: Private artifact, owner-review, privacy,
+and provenance boundaries remain green.
+
+Command: `npm run campaign:source-gaps`, `npm run campaign:eligibility-census`, `npm run campaign:readonly-census`
+Result: PASS — all three checked-in operator commands exited zero after the
+final prefilter. Their safe JSON projections match the final digests and
+counts recorded above.
+When: 2026-08-27
+Relevant failure/output summary: No network, auth, product, datastore,
+infrastructure, or sibling-write operation occurred.
+
+Command: `npm run typecheck`, `npm run hardening:check`, `npm run quality-gate:spec`, `npm run gate:inventory`
+Result: PASS — strict TypeScript, offline hardening, quality-gate definition,
+and authoritative gate inventory all passed.
+When: 2026-08-27
+Relevant failure/output summary: Gate definition digest is
+`sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`;
+the authoritative registry has 9 required groups and 152 unique test files.
+
+Command: Final tracked-file audit with `git ls-files -z`, regular-file checks,
+content hashes, byte/line accounting
+Result: PASS — tracked=1,320, reviewed=1,320, nonregular=0, bytes=14,395,035,
+lines=287,839, manifest digest
+`5cad2a5a8eb9336c52c4e8e741e666033c91ebec66cc64ed82bfba9cf5f45942`.
+When: 2026-08-27
+Relevant failure/output summary: The new lexical source file is included in
+the final accounted set; no path was omitted.
+
+Command: `npx playwright test --list --project=nightwatch`
+Result: PASS — complete enumeration is 2,555 tests in 209 files.
+When: 2026-08-27
+Relevant failure/output summary: The increase from the 2,550-test baseline is
+the five added regression tests; no test-only skip or assertion weakening was
+introduced.
+
+Command: `npm run gate:local`
+Result: PASS — implementation checkpoint `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`; all 9 required groups passed; semantic compatibility 1,901/1,888/13/0, owner provenance 91 passed, synthetic campaign 66 passed, patch integrity passed; receipt `receipt:sha256:5a514e065b287bc4e6fb4839`.
+When: 2026-08-27
+Relevant failure/output summary: Local gate ran in sanitized LOCAL mode with
+Node 22 and preserved the known historical legacy-task warnings only.
+
+Command: `npm run gate:clean`
+Result: PASS — source head `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`; fresh
+Node 20 install; all 9 clean groups passed; cleanBefore=true,
+cleanAfter=true, nodeModulesReused=false, authStateProvided=false,
+ownerFindingStateProvided=false, siblingWrites=0; gate receipt
+`receipt:sha256:21240f63fcd5a926e094478c`; clean receipt
+`clean-receipt:sha256:95622c261d62483259844deb`.
+When: 2026-08-27
+Relevant failure/output summary: The disposable clone was removed by the
+clean-gate harness after validation.
+
+Command: `npm run project:check`; `npm run agent:check`; `npm run agent:audit`
+Result: PASS at the pushed implementation checkpoint; project truth reports
+`checkoutClean=true`, catalog round-trip true, Phase 8 complete, and
+`NEXT_PROMOTION_AUTHORITY=NONE`; continuity reports zero strict errors, 56
+strict v2 tasks, and 24 historical legacy tasks.
+When: 2026-08-27
+Relevant failure/output summary: The active task was still IN_PROGRESS while
+the closure documentation was being prepared; final terminal continuity will
+be checked after the closure record is committed.
+
+Command: Git checkpoint push and exact-head verification
+Result: PASS — `15fe2c1` pushed without force; local `HEAD` equals
+`origin/main` at `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`, and the tree is
+clean.
+When: 2026-08-27
+Relevant failure/output summary: This is the validated implementation
+checkpoint; the final documentation descendant is intentionally separate.
+
 ## Decisions Made During This Task
 
 Decision: Use a fresh task ID and preserve the completed predecessor unchanged.
@@ -362,9 +448,8 @@ NONE
   publication, and DEV semantic acceptance work remain owner-frozen or
   separately authorized.
 - Optional family admission remains subject to the strict current-source bar.
-- Full acceptance, implementation checkpoint, final continuity closure, and
-  exact-head Actions observation remain pending; no new proof family has been
-  admitted.
+- Exact-head Actions observation remains to be recorded after the closure
+  documentation push; no new proof family has been admitted.
 
 ## Resume Recipe
 

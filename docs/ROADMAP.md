@@ -2373,3 +2373,29 @@ passed / 16 skipped / 0 failed with exact parity. Exact-head GitHub Actions
 run `32956612882` completed with failure; its sole job `98139552089` completed
 with failure and zero steps, so CI is not validation evidence. No successor is
 selected; any future work requires a fresh census and separate authorization.
+
+## Evidence-backed successor — source-proof soundness and static discovery hardening
+
+This local/source/synthetic successor repairs three reproduced soundness
+defects in the existing source-to-campaign chain: PHP direct-return
+fall-through, raw-text static route discovery, and raw-text PHP declaration
+counting. The bounded direct analyzer now requires reachable-exit completeness;
+the static route boundary uses a non-executing lexical tokenizer; and all
+cross-file proof joins remain content-digest-bound and fail closed when stale.
+The response analyzer identity is v4. No new selector, proof family, or
+promotion authority was added.
+
+At implementation checkpoint
+`15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`, the fresh approved-source result
+is 128 operations, 127 routes, 127 request contracts, 43 response-contract
+surfaces, 53 semantic observations, 118 proven / 10 rejected joins, and
+Phase 24 at 3 eligible / 125 excluded. The eligibility digest is
+`source-eligibility-census:sha256:2f97b732e0472df347f695a1`; the read-only
+candidate census remains investigation-only at
+`source-readonly-candidate-census:sha256:c54347c14d4d1e5f95f18660`. The exact
+family disposition is `NO_SAFE_NEW_FAMILY`.
+
+The focused 74-test cone, semantic compatibility 1,901/1,888/13/0, owner
+provenance 91, synthetic campaign 66, local gate, and fresh Node20 clean gate
+passed. Canonical enumeration is 2,555 tests in 209 files. Exact-head Actions
+is observed separately and remains non-authoritative for local completion.

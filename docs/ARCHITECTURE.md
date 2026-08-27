@@ -1791,3 +1791,35 @@ repair: the cancellation request receives 25 ms to dispatch before the
 fixture aborts it, while the loopback server responds after 100 ms. This is
 test-only scheduling stabilization and does not alter browser containment,
 mutability, semantic, replay, dossier, or eligibility authority.
+
+## Source-proof soundness and static discovery hardening
+
+The successor source hardening campaign remains additive to the existing
+source-to-campaign chain. The PHP direct response family now has a bounded
+reachable-exit completeness gate: only unconditional literal returns,
+conditional literal returns with an unconditional terminal fallback, and
+complete top-level `if`/`elseif`/`else` branches may contribute proof. Implicit
+fallthrough, nested unsupported flow, loops, exception/generator paths,
+unknown terminators, and non-literal returns remain rejected. The real-source
+response analyzer identity is v4 so dependent evidence and caches do not
+reuse the pre-hardening meaning.
+
+Static TypeScript/JavaScript/Go route extraction uses one bounded lexical
+tokenizer for identifiers, punctuation, and opaque strings. Line/block
+comments, quoted/template/raw strings, regex literals, malformed regions, and
+oversized input cannot create route authority. A raw receiver/method/dot
+prefilter is only an allocation guard; token matches remain authoritative.
+PHP handler declaration counts reuse the existing bounded PHP tokenizer and
+therefore ignore fake declarations in comments and strings. Cross-file handler
+and schema joins recheck content digests after reads and become SOURCE_STALE
+on mismatch; runtime catalog version drift remains a distinct candidate
+source-version condition.
+
+The current approved-source result remains 128 operations, 127 route proofs,
+127 request contracts, 43 response-contract surfaces, 53 semantic
+observations, 118 proven / 10 rejected joins, and Phase 24 at 3 eligible /
+125 excluded. The fresh eligibility and read-only candidate projections are
+source-bound and investigation-only; no new proof family or promotion
+authority was added. The owner freeze, raw-source privacy boundary,
+non-executing scanners, deterministic identities, and existing Phase-24
+authority remain unchanged.
