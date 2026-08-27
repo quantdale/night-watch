@@ -1,440 +1,154 @@
-# EXECUTION PROMPT — Campaign Handoff + Project Truth Hardening
+# EXECUTION PROMPT — Final Assurance + Release-Readiness Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
-OpenSpec: openspec/changes/nightwatch-campaign-handoff-and-project-truth-hardening-v1/
-Planned-From: 7165beeda3006ce1f64e61e7ae62fa919441fe96
+Status: READY_FOR_EXECUTION
+Campaign ID: nightwatch-final-assurance-release-readiness-hardening-v1
+OpenSpec: openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/
+Planned-From: 9ecd09c0d33d05d665721080627e5d63b376c16d
 Target Branch: main
-Predecessor Task ID: nightwatch-variant-b-adoption-and-cli-hardening
+Predecessor Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Pull/reconcile current quantdale/night-watch main and execute the OpenSpec change nightwatch-campaign-handoff-and-project-truth-hardening-v1 end-to-end as one autonomous hardening campaign.
+Pull/reconcile current `quantdale/night-watch` main and execute the OpenSpec change `nightwatch-final-assurance-release-readiness-hardening-v1` end-to-end as the repository's final whole-system assurance and release-readiness campaign for the currently authorized product scope.
 
-The purpose is to make Nightwatch's own planner→executor→task→project-truth chain as fail-closed as the product/runtime evidence systems it already hardens.
+This is **not** permission to invent another feature phase. The repository is mature and the preceding campaign completed a literal 1,359-file audit plus full local/clean certification. The new objective is to prove or falsify project completeness across the entire live repository, find residual defects that campaign-scoped testing may have missed, repair evidence-backed P0/P1/P2 issues, and finish with a truthful project-completion certification.
 
-Do not merely rewrite the stale prompt and declare success. The live stale prompt is the reproduction. Build permanent machine checks, state-transition proof, strict project-state ownership, gate integration, and adversarial regressions.
-
-Do not ask for routine confirmation. Resolve implementation details from current repository truth, tests, and this OpenSpec. Stop only for a genuine authorization boundary, an unsafe ambiguity that cannot be conservatively resolved, a remote-divergence conflict that cannot be safely reconciled, or terminal completion.
-
-## Why this campaign exists
-
-At planning baseline 7165beeda3006ce1f64e61e7ae62fa919441fe96:
-
-1. .agent/ACTIVE_TASK.md is COMPLETE for nightwatch-variant-b-adoption-and-cli-hardening.
-2. .agent/EXECUTION_PROMPT.md is COMPLETE for the older resolved-egress campaign.
-3. bin/agent-state.mjs never reads EXECUTION_PROMPT.
-4. bin/hardening-check.mjs has no execution-prompt/planner-handoff integrity check.
-5. tests/unit/agent-state.test.ts explicitly proves arbitrary EXECUTION_PROMPT content is a documentation-only CHECKPOINT_ADVANCE.
-6. docs/CURRENT_STATE.md's "machine-checked" v1 block contains stale/unvalidated Phase-15 fields.
-7. project-state accepts NEXT_PROMOTION_AUTHORITY=SPENT but its PASS JSON currently emits nextPromotionAuthority=NONE.
-8. recent closure commits demonstrate implementation-vs-documentation SHA-role confusion: a docs-only commit was temporarily recorded as the validated implementation and later reconciled.
-
-This is a current autonomous-orchestration truth defect, not a request for feature expansion.
+Work autonomously through the full campaign. Do not stop after the first green test or first repair. Continue through whole-repository audit, authority tracing, validation-gap analysis, dependency/install/build qualification, performance/resource review, documentation truth, full regression and release certification. Stop only for a genuine safety/authorization boundary, an unrecoverable remote-divergence conflict, a concrete external blocker required for completion, or terminal certification.
 
 ## Mandatory takeover
 
-Before any implementation edit:
+Before implementation edits:
 
-1. Confirm repository root and remote.
-2. Read AGENTS.md.
-3. Read .agent/README.md, .agent/PLANS.md, and .agent/PLANNER_HANDOFF.md.
-4. Read this file completely.
-5. Read .agent/ACTIVE_TASK.md and the terminal predecessor task's SPEC/PLAN/STATE/REPORT.
-6. Read docs/CURRENT_STATE.md, docs/SAFETY_MODEL.md, docs/DECISIONS.md, docs/ROADMAP.md, and docs/ARCHITECTURE.md.
-7. Read every file under openspec/changes/nightwatch-campaign-handoff-and-project-truth-hardening-v1/.
-8. Fetch/reconcile origin/main without force. Compare takeover HEAD with Planned-From.
-9. If main advanced, inspect all intervening commits and revalidate every planner finding before implementation. Do not blindly reset/rebase over remote work.
-10. Create a fresh continuity-v2 task:
-   .agent/tasks/nightwatch-campaign-handoff-and-project-truth-hardening-v1/
-   with SPEC.md, PLAN.md, STATE.md, REPORT.md.
-11. Route .agent/ACTIVE_TASK.md to the new task when beginning execution.
-12. Transition this prompt to IN_PROGRESS according to the protocol you are about to harden; if the checker does not exist yet, preserve the fields exactly and add the transition as the first protocol fixture.
+1. Confirm repository root, `origin`, branch and live HEAD.
+2. Read `AGENTS.md` completely.
+3. Read `.agent/README.md`, `.agent/PLANS.md`, `.agent/PLANNER_HANDOFF.md`, this file, and `.agent/ACTIVE_TASK.md`.
+4. Read the predecessor task `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`.
+5. Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and `docs/ARCHITECTURE.md` with current-vs-historical truth in mind.
+6. Read every file under `openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/`.
+7. Fetch/reconcile `origin/main` without force. `Planned-From` is a planning baseline, not an instruction to reset current main.
+8. Inspect every commit after Planned-From and confirm the OpenSpec/prompt planning commits are present and coherent.
+9. Create a fresh continuity-v2 task at `.agent/tasks/nightwatch-final-assurance-release-readiness-hardening-v1/` with `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`.
+10. When execution actually begins, route `.agent/ACTIVE_TASK.md` to the new task and transition this prompt to `IN_PROGRESS` under the existing handoff protocol.
+11. Run `npm run handoff:check`, `npm run agent:check`, and `npm run project:check` before substantive changes.
 
-Do not resume or edit the completed predecessor as though it were active work.
+Do not edit or resume the completed predecessor task as though it were active.
 
 ## H0 — literal every-file audit is mandatory
 
-The planner structurally inventoried all 1,354 tracked blobs at the pre-planning baseline, but the connector cannot honestly claim every byte was loaded.
+A connected planner cannot truthfully byte-read all repository files or execute the local suite. The predecessor executor did perform a literal sweep, but this campaign must independently refresh it at the live execution head.
 
-You must close that gap locally.
+Use `git ls-files -z` or an equivalently NUL-safe manifest. Requirements:
 
-Use a NUL-safe tracked-file inventory from the pulled planning checkout. The planning commit adds new OpenSpec files, so DISCOVER the live count; do not hardcode 1,354.
+- discover the live tracked count; do not hardcode 1,359;
+- account for every tracked path;
+- read/hash every regular tracked file;
+- require reviewed-count == tracked-count;
+- classify every file by subsystem/role;
+- record safe aggregate bytes/lines/digests only;
+- investigate every difference from the predecessor audit;
+- deep-read all current source, gate, configuration, workflow, operator, UI and authority-bearing files;
+- role/coupling review historical/generated/fixture files too.
 
-Requirements:
+Search at minimum for TODO/FIXME/HACK/XXX/DEPRECATED, test skips/only/fixme, compiler/lint suppressions, eval/dynamic execution, shell-capable subprocesses, unbounded reads/collections, unsafe paths/symlinks, secret-like values, stale campaign IDs, duplicate authorities, fallback selectors, current-looking historical state, dead exports, generated-output drift, ambient credential/global-tool assumptions, swallowed errors, timer/listener/process leaks, and repeated expensive scans.
 
-- git ls-files -z or an equivalently safe tracked manifest
-- account for every tracked path
-- read/hash every regular tracked file
-- reviewed-count == tracked-count
-- no unexplained nonregular path
-- classify every path by role
-- deep-read every current source/tooling/config/gate file
-- historical/generated/fixtures still receive role/coupling review
-- record total bytes and, where practical, line count
-- store only safe aggregate audit metadata in task state/report; do not dump source bodies
+A grep with zero matches is not an all-file audit. Record the H0 census and remediation matrix before ordinary implementation.
 
-Search at minimum:
+## Campaign decision and priority
 
-- TODO / FIXME / HACK / XXX / DEPRECATED
-- test.skip / describe.skip / .only / conditional skip
-- ts-ignore / expect-error / eslint-disable
-- eval / new Function / shell:true
-- write/spawn/network capabilities in checkers
-- stale campaign/task IDs
-- duplicate or contradictory machine-state fields
-- current-looking values inside historical docs
-- EXECUTION_PROMPT consumers/bypasses
-- OpenSpec route parsers/assumptions
-- secret/privacy sentinels
-- unsafe path traversal/symlink handling
-- hidden duplicate authority or fallback logic
+The planner's current decision is **Codebase Hardening**, with conditional implementation only when fresh evidence earns it.
 
-A grep with zero matches is not an all-file audit.
+Do not reopen source-proof, portfolio, DEV, self-development, infrastructure, publication, or other product scope simply to fill time. If the whole-system audit finds a P0/P1 implementation defect, fix it immediately and add a regression. If no significant defect exists, continue through final assurance/certification and stop without manufacturing work.
 
-Record baseline:
+Priority order:
 
-- exact Git SHA/branch/origin
-- Node/npm
-- complete Playwright enumeration
-- agent:check
-- agent:audit
-- project:check
-- hardening:check
-- quality-gate:spec
-- gate:inventory
-- representative gate:local state if feasible before edits
-- cold/warm wall time and peak RSS for agent:check/project:check
+1. P0 safety/privacy/destructive/release-blocking failures.
+2. P1 correctness/authority/core-workflow/reproducibility failures.
+3. P2 validation, dependency/toolchain, performance/resource, operator and documentation-truth defects with demonstrated impact.
+4. P3 cleanup only when directly adjacent, low-risk and evidence-backed.
 
-No implementation before H0 is recorded.
+## Required workstreams
 
-## Reproduce before repair
+Execute every OpenSpec milestone M0–M9. In particular:
 
-### Reproduction A — stale unrelated prompt passes current continuity
+### Architecture and authority
 
-Create a temp Git fixture where:
+Trace end-to-end:
 
-- ACTIVE_TASK = COMPLETE task A
-- task A continuity-v2 is valid
-- EXECUTION_PROMPT = COMPLETE campaign B
-- campaign B differs from A
+- environment -> browser -> proxy -> safety -> evidence;
+- source -> proof -> lifecycle -> eligibility -> campaign;
+- observation -> oracle -> candidate -> replay/minimization -> triage -> dossier -> private finding;
+- artifacts/findings/source/campaign -> Control Center adapters -> snapshot coordinator -> server/UI;
+- execution prompt -> handoff -> active task -> continuity -> project-state -> quality gate;
+- package scripts -> gate definition -> inventory -> local/ci/clean runner.
 
-Run current agent-state and the applicable gate path.
+Reject duplicate authority, silent fallback, stale-currentness acceptance and ambiguous machine truth.
 
-Expected pre-fix finding: current continuity does not reject the unrelated prompt.
+### Skipped-test truth
 
-Do not fake this by testing only a parser you have already changed.
+Enumerate every skipped test by exact identity and guard. Give each one exactly one allowed disposition from the OpenSpec. No unexplained skip may remain in a COMPLETE result.
 
-### Reproduction B — valid planned state
+### Dependency/install/build reproducibility
 
-Create the desired positive planning transition:
+Qualify root and nested UI package graphs, lockfiles, Node 20 assumptions, lifecycle scripts, fixture/legacy dependencies, generated outputs, clean UI build/test/typecheck/browser flow and independence from ambient/global state. Upgrade/remove packages only for demonstrated reasons, never version-churn for its own sake.
 
-- predecessor A COMPLETE
-- new campaign B OpenSpec tracked
-- prompt B READY_FOR_EXECUTION
-- Planned-From valid ancestor
-- target main
-- ACTIVE_TASK still predecessor A
+### Performance/resource sanity
 
-This MUST be a valid state. A planner should not need to mutate ACTIVE_TASK prematurely.
+Measure representative command wall time and peak RSS where practical. Hunt material repeated scans/parsing, process-spawn overhead, unbounded collections, lifecycle leaks and Control Center refresh amplification. Fix demonstrated regressions; avoid brittle microbenchmarks.
 
-### Reproduction C — OpenSpec route failures
+### Documentation/operator truth
 
-Cover:
+Cross-check README, AGENTS, CURRENT_STATE, ROADMAP, ARCHITECTURE, SAFETY_MODEL, DECISIONS, OpenSpec, CLI/status outputs and machine state. Preserve history, but ensure current truth cannot be mistaken for obsolete phase state.
 
-- wrong campaign/path
-- missing audit/proposal/design/tasks/spec
-- untracked path
-- traversal
-- duplicate route fields
-- nonregular/symlink where unsafe
-- unsupported protocol version
-- malformed/unknown state
+## Permanent constraints
 
-### Reproduction D — project-state unchecked field
+- No DEV/NEXT/production contact without separate explicit authorization.
+- No auth capture or credential use.
+- No database/cloud/infrastructure/data-layer operations.
+- No writes to sibling Alphaus repositories.
+- No publication, external messaging, issue creation or evidence upload.
+- No runtime AI authority.
+- No self-development canonical promotion.
+- No new proof family, selector or portfolio authority without fresh mechanical evidence and separate authorization.
+- Preserve loopback/egress containment, redaction/privacy, private owner-only findings, source currentness, fail-closed ambiguity and all hardening guards.
+- Never weaken tests/assertions/validators/proof thresholds to make the suite green.
 
-Use current v1 behavior to prove or falsify that a stale/unknown key inside the machine block passes.
+## Required validation and release certification
 
-Include the live stale Phase-15 field shape.
+At minimum, after repairs and before closure:
 
-### Reproduction E — promotion-state projection truth
+- clean dependency install on supported Node 20;
+- `npm run typecheck`;
+- Control Center UI typecheck/test/build/browser qualification;
+- `npm run hardening:check`;
+- `npm run handoff:check`;
+- `npm run project:check`;
+- `npm run quality-gate:spec`;
+- `npm run gate:inventory`;
+- `npm run test:semantic-compat`;
+- `npm run test:owner-provenance`;
+- `npm run campaign:synthetic`;
+- every new focused regression;
+- complete canonical Playwright suite serially;
+- topology-correct isolated complete suite with exact pass/fail and skip-identity parity;
+- `npm run gate:local`;
+- `npm run gate:clean`;
+- `git diff --check`, secret/debug/generated-output hygiene, clean worktree;
+- representative local fixture, CLI and Control Center smoke journeys.
 
-Use a SPENT fixture and inspect successful project-state output.
+GitHub Actions: observe at most one exact-head run if available. CI certification requires real required steps to execute and pass. A zero-step billing/platform result remains external non-evidence; do not churn the workflow or retry-loop it.
 
-If the checker validates SPENT and emits NONE under the same semantic key, record the defect exactly. If current code has advanced and this no longer reproduces, record FALSE_HYPOTHESIS and preserve the regression that proves it.
+## Terminal outcomes
 
-### Reproduction F — SHA role chain
+Choose exactly one and support it with receipts:
 
-Build a synthetic commit chain mirroring:
+- `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`
+- `PROJECT_COMPLETE_AND_CI_CERTIFIED`
+- `PROJECT_NOT_COMPLETE_BLOCKED`
 
-substantive implementation
-→ docs-only closure/update
-→ docs-only anchor update
+A COMPLETE outcome is forbidden while any P0/P1 defect, blocking P2, unexplained skipped test, required local/clean gate failure, safety/privacy regression, or known release-blocking defect remains.
 
-Prove which states current agent-state accepts/rejects and specifically guard against a docs-only commit occupying LAST_VALIDATED_IMPLEMENTATION_SHA.
+When terminal, update task state/plan/report, OpenSpec checklist, current project docs, this prompt and ACTIVE_TASK coherently. Preserve substantive implementation SHA roles across documentation-only closure. Commit validated checkpoints, push without force, and verify local HEAD == `origin/main`.
 
-## Implement one narrow handoff truth protocol
-
-Create a versioned parser/state validator for the owned header in this file.
-
-Required semantics:
-
-READY_FOR_EXECUTION:
-- prompt names one campaign
-- one matching tracked OpenSpec exists
-- Planned-From is a real ancestor
-- Target Branch main
-- ACTIVE_TASK is the named terminal predecessor
-- no implementation authority is implied
-
-IN_PROGRESS:
-- ACTIVE_TASK is the new campaign task
-- status matches
-- continuity-v2 passes
-- OpenSpec and Git route remain valid
-
-BLOCKED:
-- ACTIVE_TASK is the same campaign and BLOCKED under continuity-v2
-- blocker semantics remain owned by continuity-v2
-
-COMPLETE:
-- ACTIVE_TASK is the same campaign and terminal COMPLETE
-- task continuity/report/plan closure pass
-- canonical prompt cannot still route to an unrelated campaign
-
-The prompt checker validates route/state/currentness. It does NOT become milestone, source, product, or promotion authority.
-
-## Implement strict project-state truth ownership
-
-The current project-state v1 block is too permissive for its label.
-
-Create a strict successor, preferably nightwatch.project-state.v2.
-
-Requirements:
-
-- explicit owned key schema
-- unknown machine-block keys fail
-- duplicate keys fail
-- every field inside the machine block is validated or mechanically derived
-- historical/unowned phase fields move outside the block
-- retain real catalog validator/renderer
-- retain real portfolio selector
-- retain continuity dependency
-- no arbitrary prose parsing
-
-Resolve SPENT/NONE semantics explicitly.
-
-Preferred conceptual model:
-
-- authorization lifecycle can be SPENT
-- effective NEXT promotion authority can be NONE
-
-You may use different names, but do not validate SPENT and then silently report NONE under an ambiguous same-name output.
-
-Do not invent a current Phase-15 derivation just to keep stale Phase-15 fields in the machine block.
-
-## Preserve SHA role correctness
-
-Keep existing distinction:
-
-- substantive implementation baseline
-- documentation/checkpoint descendants
-- live Git HEAD
-
-Strengthen it through transition tests, not a broader allowlist.
-
-A planning commit can advance documentation/current HEAD while the prior substantive implementation baseline remains the validated implementation for the terminal predecessor.
-
-When the new task produces actual source/test/tooling changes, record the new substantive baseline.
-
-When closure docs advance later, keep that baseline and advance only the documentation checkpoint.
-
-Reject:
-
-- docs-only SHA as implementation role
-- non-ancestor anchors
-- source/test/config drift hidden as checkpoint advance
-- COMPLETE state over stale substantive work
-
-## Gate integration
-
-The new handoff truth must be authoritative, not optional.
-
-Choose one clean integration:
-
-A. make agent:check invoke/own the handoff check and let existing AGENT_CONTINUITY gate cover it exactly once; or
-B. add a dedicated required HANDOFF_TRUTH group before project/agent truth.
-
-Whichever you choose:
-
-- no duplicate execution
-- quality-gate spec and inventory updated
-- hardening enforces read-only/no-network/no-write boundaries
-- local/ci/clean/predev modes receive correct behavior
-- exact diagnostic surfaces are bounded
-
-Do not add a checker that the main gate never runs.
-
-## Adversarial requirements
-
-At minimum execute the complete matrix in OpenSpec design.md.
-
-Add permanent tests for:
-
-- stale completed A vs completed prompt B
-- READY B over terminal predecessor A
-- IN_PROGRESS/BLOCKED/COMPLETE mismatch
-- wrong/missing/untracked OpenSpec
-- path traversal
-- malformed/duplicate/unknown fields
-- unsupported version/status
-- wrong branch
-- nonexistent/non-ancestor Planned-From
-- docs-only planning checkpoint
-- docs-only implementation-role misuse
-- source drift after validated baseline
-- strict project-state unknown key
-- stale Phase-15 machine key
-- SPENT/NONE truth
-- current two-entry catalog / EXHAUSTED portfolio
-- deterministic x3 output
-- bounded oversized metadata
-- secret/sentinel metadata rejection where the owned protocol admits free text
-
-## Systemic in-scope follow-through
-
-After the primary fixes are green, use the remaining work budget to inspect:
-
-- bin/agent-state.mjs
-- bin/agent-continuity-protocol.mjs
-- bin/project-state-check.mjs
-- bin/hardening-check.mjs
-- bin/quality-gate*.mjs
-- config/quality-gate.v1.json
-- tests/unit/agent-state.test.ts
-- tests/unit/projectState.test.ts
-- all quality-gate tests/inventory
-- .agent templates
-- .agent/README.md
-- .agent/PLANS.md
-- .agent/PLANNER_HANDOFF.md
-- goal adapters under .agents/.claude/.kimi-code/.opencode
-- docs/CURRENT_STATE.md and durable truth docs
-- any current CLI that reads EXECUTION_PROMPT or project-state output
-
-Fix in-scope Critical/High truth/continuity defects you reproduce. Record Medium/Low unrelated cleanup as deferred.
-
-Do NOT drift into source proof, product functionality, UI feature work, proxy L6 changes, or promotion research.
-
-## Validation
-
-Run/fix, at minimum:
-
-- npm run typecheck
-- npm run hardening:check
-- npm run quality-gate:spec
-- npm run gate:inventory
-- focused agent-state/continuity/project-state/handoff/quality-gate tests
-- npm run agent:check
-- npm run agent:audit
-- npm run project:check
-- direct handoff check if exposed
-- npm run campaign:synthetic
-- npm run test:semantic-compat
-- npm run test:owner-provenance
-- npm run gate:local
-- npm run gate:clean
-- git diff --check
-
-Also:
-
-- complete Playwright test enumeration; no unexplained skip changes
-- canonical full acceptance when required by the repository gate
-- disposable Node20/clean-checkout reproduction
-- before/after wall-time/RSS for continuity and project checks
-- x3 deterministic focused protocol runs
-
-Never delete tests, add skips, weaken assertions, or bless a stale snapshot.
-
-## 12-hour productive work shape
-
-H0–H1.5:
-- takeover
-- create/activate continuity task
-- literal every-file audit
-- baseline receipts
-
-H1.5–H3:
-- reproduce all planner findings
-- freeze transition semantics from evidence
-
-H3–H5:
-- handoff protocol/parser/checker
-- OpenSpec/Git route validation
-
-H5–H6.5:
-- SHA-role transition matrix
-- closure/currentness hardening
-
-H6.5–H8:
-- strict project-state v2
-- stale field cleanup
-- SPENT/NONE semantic repair
-
-H8–H9.5:
-- quality-gate/hardening integration
-- test inventory
-
-H9.5–H10.5:
-- adversarial/fuzz/boundedness/systemic review
-
-H10.5–H11.25:
-- full local/clean/Node20 acceptance
-- performance and deterministic repeats
-
-H11.25–H12:
-- durable docs/report
-- terminal prompt/task transition
-- commit/push
-- exact-head CI observation once
-
-This is a productive budget, not an instruction to idle. If all requirements are genuinely complete early, stop. If in-scope Critical/High defects remain, prioritize correctness and leave truthful INCOMPLETE/BLOCKED state rather than faking completion.
-
-## Safety hard boundaries
-
-Throughout the campaign:
-
-- DEV contacts: 0
-- NEXT contacts: 0
-- production contacts: 0
-- authenticated product/browser contacts: 0
-- database/datastore operations: 0
-- GCP/GKE/Kubernetes operations: 0
-- AWS/IAM/STS operations: 0
-- sibling Alphaus writes: 0
-- external publication/messages/issues: 0
-- self-development canonical promotions: 0
-- new promotion authority: 0
-- runtime AI authority: 0
-- raw private evidence persistence: 0
-
-All tests use synthetic temporary repositories/data only.
-
-## Git / continuity / closure
-
-- work on main per repository policy
-- never force-push
-- inspect remote divergence before push
-- keep task STATE updated at milestone boundaries
-- preserve predecessor history
-- commit coherent validated checkpoints
-- do not label docs-only checkpoints as substantive implementation
-- final ACTIVE_TASK and EXECUTION_PROMPT states must agree under the new protocol
-- final project-state machine block must pass the strict successor checker
-- push final validated head
-- fetch/reconcile and verify local HEAD == origin/main
-- observe exact-head Actions once
-- zero-step Actions remains external non-evidence
-- finish with the exact final SHA and STOP
+The objective is not to consume 12 hours artificially. The objective is to remain productive for up to roughly 12 hours if the repository justifies it, automatically progressing from audit -> repairs -> hardening -> regression hunting -> certification -> documentation truth -> final cleanup, and stopping only when further work is speculative, low-value, separately authorized, or externally blocked.
