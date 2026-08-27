@@ -22,29 +22,38 @@ Close the proven Phase 8B.1 promotion loop by adopting variant B (EXPAND_THEN_CO
 
 ### M1 — Fix Control Center CLI loader
 
-- Status: NOT_STARTED
-- Add `Module._resolveFilename` override in `withTypeScriptHook` to try `.ts` extension when a CommonJS `require()` from a compiled `.ts` module can't resolve the target
-- Verify: `node bin/nightwatch-control-center.mjs --port 7317` starts; `curl http://127.0.0.1:7317/api/health` returns 200
+- Status: COMPLETE
+- Added Module._resolveFilename hook for Node 22 .ts resolution
+- Verified: Control Center CLI starts and serves on Node 22
 
 ### M2 — Execute variant B canonical promotion
 
-- Status: NOT_STARTED
-- Chain: fresh selfDev session → sandbox proof → promotion prepare → approve → apply → verify
-- Full local validation → development-session commit → push
-- Verify: catalog count=2, portfolio EXHAUSTED, all gates pass
+- Status: COMPLETE
+- Full chain: session → sandbox → prepare → approve → apply → verify → commit
+- Catalog count 1→2, portfolio EXHAUSTED
 
 ### M3 — Documentation and closure
 
-- Status: NOT_STARTED
-- Update CURRENT_STATE (catalog digest, NEXT_PROMOTION_AUTHORITY=SPENT, variant B ADOPTED)
-- Update ROADMAP / DECISIONS as needed
-- agent:check, project:check pass
-- Push final, verify HEAD==origin/main, clean tree
+- Status: COMPLETE
+- STATE.md, REPORT.md, ACTIVE_TASK.md updated; pushed to origin/main
 
 ## Validation Strategy
 
 At each milestone: `npm run typecheck`, `npm run hardening:check`, `npm run agent:check`, `git diff --check`.
 Final: `npm run gate:local`, `npm run project:check`, catalog-integrity, focused selfDev suite, full Playwright regression.
+
+## Non-Goals
+
+No second adoption beyond variant B; no generic runtime Git write; no product, AI, database, infrastructure, publication, or DEV/NEXT/production contact; no changes to Phase 8B.1-R1 historical records; no architectural changes to the promotion mechanism.
+
+## Safety Constraints
+
+Zero DEV/NEXT/production contact, zero product mutation, zero database/infrastructure queries, zero external AI/model calls, zero publication, zero Alphaus writes. Exactly one canonical source write, one approval consumption, one development Git commit. No runtime Git write authority.
+
+## Architecture / Approach
+
+M1: Add Module._resolveFilename hook in withTypeScriptHook for .ts extension fallback. M2: Use the proven Phase 8B.1-R1 promotion mechanism: fresh selfdev session → sandbox proof → promotion prepare → approve (CANONICAL_ONE_FILE_ONLY) → apply → fresh-process verify → commit.
+
 
 ## Decision Log
 
