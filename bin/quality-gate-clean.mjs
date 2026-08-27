@@ -80,9 +80,14 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
     if (cloneResult.status !== 0) {
       emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'INSTALL_FAILURE', gateResult: 'NOT_RUN', finalResult: 'INSTALL_FAILURE' }, 1);
     } else {
-      const checkout = git(['checkout', '--detach', head], clone);
+      // Keep the disposable checkout on the permitted target branch. The
+      // planner handoff contract binds Target Branch to `main`, so a detached
+      // clean clone would make an otherwise valid exact-head route fail.
+      const checkout = git(['checkout', '--quiet', '-B', 'main', head], clone);
+      const cloneBranch = git(['rev-parse', '--abbrev-ref', 'HEAD'], clone);
+      const cloneHead = git(['rev-parse', 'HEAD'], clone);
       const cleanBefore = git(['status', '--porcelain'], clone);
-      if (checkout.status !== 0 || cleanBefore.status !== 0 || cleanBefore.stdout.trim() !== '' || fs.existsSync(path.join(clone, 'node_modules'))) {
+      if (checkout.status !== 0 || cloneBranch.status !== 0 || cloneBranch.stdout.trim() !== 'main' || cloneHead.status !== 0 || cloneHead.stdout.trim() !== head || cleanBefore.status !== 0 || cleanBefore.stdout.trim() !== '' || fs.existsSync(path.join(clone, 'node_modules'))) {
         emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: Number(process.versions.node.split('.')[0]), installResult: 'ENVIRONMENT_MISMATCH', gateResult: 'NOT_RUN', finalResult: 'ENVIRONMENT_MISMATCH' }, 1);
       } else {
         const toolchain = resolveNode20Toolchain();
