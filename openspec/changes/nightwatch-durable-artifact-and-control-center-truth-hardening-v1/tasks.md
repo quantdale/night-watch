@@ -1,6 +1,6 @@
 # Tasks: Durable Artifact + Control Center Truth Hardening
 
-Status: PLANNED
+Status: IN_PROGRESS
 Change ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Planning baseline: 49034831377f243054261361b4d1a7d783c0fc4f
 Target: main
@@ -8,24 +8,24 @@ Budget: approximately 12 productive engineering hours; do not pad work after acc
 
 ## 0. Takeover, identity, and continuity
 
-- [ ] Read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/PLANS.md, .agent/ACTIVE_TASK.md, this OpenSpec change, and .agent/EXECUTION_PROMPT.md.
-- [ ] Prove repository identity is quantdale/night-watch and branch target is main.
-- [ ] Fetch/reconcile origin/main before edits.
-- [ ] Record starting HEAD, upstream, dirty state, Node/npm versions, OS, and available browser/toolchain.
-- [ ] Create .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/SPEC.md, PLAN.md, STATE.md, REPORT.md using continuity protocol v2.
-- [ ] Route .agent/ACTIVE_TASK.md to the fresh task.
-- [ ] Preserve completed predecessor task/history verbatim.
-- [ ] If main moved since 49034831377f243054261361b4d1a7d783c0fc4f, inspect every intervening diff and rebase/replan affected work before implementation.
+- [x] Read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/PLANS.md, .agent/ACTIVE_TASK.md, this OpenSpec change, and .agent/EXECUTION_PROMPT.md.
+- [x] Prove repository identity is quantdale/night-watch and branch target is main.
+- [x] Fetch/reconcile origin/main before edits.
+- [x] Record starting HEAD, upstream, dirty state, Node/npm versions, OS, and available browser/toolchain.
+- [x] Create .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/SPEC.md, PLAN.md, STATE.md, REPORT.md using continuity protocol v2.
+- [x] Route .agent/ACTIVE_TASK.md to the fresh task.
+- [x] Preserve completed predecessor task/history verbatim.
+- [x] If main moved since 49034831377f243054261361b4d1a7d783c0fc4f, inspect every intervening diff and rebase/replan affected work before implementation.
 
 ## 1. Fresh exhaustive repository audit
 
-- [ ] Generate authoritative git ls-files manifest.
-- [ ] Read/classify every tracked regular file, including docs, fixtures, generated-looking tracked assets, historical .agent records, UI, configs, tests, scripts, and source.
-- [ ] Record tracked count, reviewed count, bytes, lines, and deterministic manifest digest.
-- [ ] Require reviewed count == tracked count.
-- [ ] Produce subsystem census: browser/safety/proxy, auth, campaign, triage, artifactValidation, evidence, source, semanticCoverage, portfolio, AI review, self-dev, readiness, Control Center, UI, CLI/bin, tests/corpus, docs/OpenSpec/agent state.
-- [ ] Re-review every file changed from planning baseline to takeover HEAD.
-- [ ] Confirm no unreviewed executable path can consume durable dossiers or currentness metadata.
+- [x] Generate authoritative git ls-files manifest.
+- [x] Read/classify every tracked regular file, including docs, fixtures, generated-looking tracked assets, historical .agent records, UI, configs, tests, scripts, and source.
+- [x] Record tracked count, reviewed count, bytes, lines, and deterministic manifest digest.
+- [x] Require reviewed count == tracked count.
+- [x] Produce subsystem census: browser/safety/proxy, auth, campaign, triage, artifactValidation, evidence, source, semanticCoverage, portfolio, AI review, self-dev, readiness, Control Center, UI, CLI/bin, tests/corpus, docs/OpenSpec/agent state.
+- [x] Re-review every file changed from planning baseline to takeover HEAD.
+- [x] Confirm no unreviewed executable path can consume durable dossiers or currentness metadata.
 
 ## 2. Mandatory red-team reproductions before fixes
 
@@ -35,64 +35,64 @@ Create focused tests first. Do not change production behavior until the false ac
 
 Starting from a canonical createBugDossier output, independently mutate:
 
-- [ ] candidateId wrong type / malformed ID.
-- [ ] title wrong type.
-- [ ] firstObserved malformed; lastObserved malformed; reversed chronology.
-- [ ] journeys wrong type; malformed member; duplicates if contract requires unique.
-- [ ] seeds wrong type / malformed member.
-- [ ] minimalSequence wrong type / malformed member.
-- [ ] routeClass wrong type.
-- [ ] apiOperationFamily wrong type.
-- [ ] oracleFingerprint malformed.
-- [ ] evidenceLevel invalid.
-- [ ] reproduction missing nested field / invalid enum / negative or fractional count.
-- [ ] browserApiDifferential malformed.
-- [ ] sourceChangeCandidates non-array.
-- [ ] sourceChangeCandidate missing required field.
-- [ ] sourceChangeCandidate invalid relevance/confidence/sourceFreshness.
-- [ ] likelyFaultBoundary malformed.
-- [ ] confidence malformed.
-- [ ] technicalSeverity invalid.
-- [ ] triagePriority invalid.
-- [ ] alternativesRuledOut / missingEvidence malformed.
-- [ ] semanticEvidence malformed when present.
-- [ ] nested unknown field where schema is frozen.
-- [ ] private/sentinel payload.
-- [ ] prototype-bearing object where validation contract rejects non-plain records.
+- [x] candidateId wrong type / malformed ID.
+- [x] title wrong type.
+- [x] firstObserved malformed; lastObserved malformed; reversed chronology.
+- [x] journeys wrong type; malformed member; duplicates if contract requires unique.
+- [x] seeds wrong type / malformed member.
+- [x] minimalSequence wrong type / malformed member.
+- [x] routeClass wrong type.
+- [x] apiOperationFamily wrong type.
+- [x] oracleFingerprint malformed.
+- [x] evidenceLevel invalid.
+- [x] reproduction missing nested field / invalid enum / negative or fractional count.
+- [x] browserApiDifferential malformed.
+- [x] sourceChangeCandidates non-array.
+- [x] sourceChangeCandidate missing required field.
+- [x] sourceChangeCandidate invalid relevance/confidence/sourceFreshness.
+- [x] likelyFaultBoundary malformed.
+- [x] confidence malformed.
+- [x] technicalSeverity invalid.
+- [x] triagePriority invalid.
+- [x] alternativesRuledOut / missingEvidence malformed.
+- [x] semanticEvidence malformed when present.
+- [x] nested unknown field where schema is frozen.
+- [x] private/sentinel payload.
+- [x] prototype-bearing object where validation contract rejects non-plain records.
 
 For each:
-- [ ] Record BEFORE result from owning validator.
-- [ ] Record BEFORE result from validateArtifact('dossier').
-- [ ] Mark FALSE_ACCEPT only when malformed input is currently accepted.
-- [ ] Keep a compact machine-readable mutation table in task evidence.
+- [x] Record BEFORE result from owning validator.
+- [x] Record BEFORE result from validateArtifact('dossier').
+- [x] Mark FALSE_ACCEPT only when malformed input is currently accepted.
+- [x] Keep a compact machine-readable mutation table in task evidence.
 
 ### 2.2 Dossier v2 mutation matrix
 
 Repeat v1 classes plus:
 
-- [ ] status invalid.
-- [ ] semanticConfidence malformed/invalid.
-- [ ] semanticTriageEvidence malformed.
-- [ ] humanReproductionRecipe missing/invalid nested fields.
-- [ ] aiReady missing/invalid nested fields.
-- [ ] required nested object with valid prototype but incomplete content.
-- [ ] unknown nested key.
-- [ ] UNRESOLVED valid historical case retained as positive control.
+- [x] status invalid.
+- [x] semanticConfidence malformed/invalid.
+- [x] semanticTriageEvidence malformed.
+- [x] humanReproductionRecipe missing/invalid nested fields.
+- [x] aiReady missing/invalid nested fields.
+- [x] required nested object with valid prototype but incomplete content.
+- [x] unknown nested key.
+- [x] UNRESOLVED valid historical case retained as positive control.
 
 ### 2.3 Currentness reproduction
 
-- [ ] Build valid current-only list => current.
-- [ ] Build remote-confirmed-only list => current.
-- [ ] Build current + remote-confirmed => current.
-- [ ] Build current + LOCAL_TRACKING_REF_ONLY => reproduce existing optimistic CURRENT.
-- [ ] Build current + UNKNOWN => reproduce existing optimistic CURRENT.
-- [ ] Build stale + UNKNOWN.
-- [ ] Build stale-only.
-- [ ] Build unknown-only.
-- [ ] Build empty list.
-- [ ] Permute each multiset and prove order invariance or record defect.
-- [ ] Exercise both findingsAuthority and findingsAdapter direct/raw path.
-- [ ] Exercise normal collector path.
+- [x] Build valid current-only list => current.
+- [x] Build remote-confirmed-only list => current.
+- [x] Build current + remote-confirmed => current.
+- [x] Build current + LOCAL_TRACKING_REF_ONLY => reproduce existing optimistic CURRENT.
+- [x] Build current + UNKNOWN => reproduce existing optimistic CURRENT.
+- [x] Build stale + UNKNOWN.
+- [x] Build stale-only.
+- [x] Build unknown-only.
+- [x] Build empty list.
+- [x] Permute each multiset and prove order invariance or record defect.
+- [x] Exercise both findingsAuthority and findingsAdapter direct/raw path.
+- [x] Exercise normal collector path.
 
 ## 3. Implement strict dossier runtime validation
 

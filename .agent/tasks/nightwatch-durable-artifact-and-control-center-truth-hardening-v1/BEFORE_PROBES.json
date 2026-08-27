@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "nightwatch.durable-artifact-truth.before-probes.v1",
+  "capturedAt": "2026-08-27",
+  "baselineHead": "d732cc51b96e3cfbb2d836508ca395bc9838b7a3",
+  "productionBehaviorEditedBeforeCapture": false,
+  "dossierMutationCounts": {
+    "v1": { "total": 40, "ownerFalseAccepts": 38, "facadeFalseAccepts": 37 },
+    "v2": { "total": 50, "ownerFalseAccepts": 43, "facadeFalseAccepts": 43 }
+  },
+  "v1OwnerFalseAcceptIds": [
+    "candidateId_type", "candidateId_malformed", "title_type",
+    "firstObserved_malformed", "lastObserved_malformed",
+    "observed_chronology_reversed", "journeys_type", "journeys_member_type",
+    "journeys_duplicate", "seeds_type", "seeds_member_type",
+    "minimalSequence_type", "minimalSequence_member_type", "routeClass_type",
+    "apiOperationFamily_type", "oracleFingerprint_malformed", "evidenceLevel_invalid",
+    "reproduction_missing_result", "reproduction_invalid_result",
+    "reproduction_negative_count", "reproduction_fractional_count",
+    "reproduction_unknown_nested_field", "browserApiDifferential_malformed",
+    "browserApiDifferential_unknown_nested_field", "sourceChangeCandidates_non_array",
+    "sourceCandidate_missing_field", "sourceCandidate_invalid_relevance",
+    "sourceCandidate_invalid_confidence", "sourceCandidate_invalid_freshness",
+    "likelyFaultBoundary_malformed", "confidence_malformed", "technicalSeverity_invalid",
+    "triagePriority_invalid", "alternativesRuledOut_type", "missingEvidence_member_type",
+    "root_unknown_field", "root_custom_prototype", "nested_custom_prototype"
+  ],
+  "v1FacadeFalseAcceptIds": [
+    "candidateId_type", "candidateId_malformed", "title_type",
+    "firstObserved_malformed", "lastObserved_malformed",
+    "observed_chronology_reversed", "journeys_type", "journeys_member_type",
+    "journeys_duplicate", "seeds_type", "seeds_member_type",
+    "minimalSequence_type", "minimalSequence_member_type", "routeClass_type",
+    "apiOperationFamily_type", "oracleFingerprint_malformed", "evidenceLevel_invalid",
+    "reproduction_missing_result", "reproduction_invalid_result",
+    "reproduction_negative_count", "reproduction_fractional_count",
+    "reproduction_unknown_nested_field", "browserApiDifferential_malformed",
+    "browserApiDifferential_unknown_nested_field", "sourceChangeCandidates_non_array",
+    "sourceCandidate_missing_field", "sourceCandidate_invalid_relevance",
+    "sourceCandidate_invalid_confidence", "sourceCandidate_invalid_freshness",
+    "likelyFaultBoundary_malformed", "confidence_malformed", "technicalSeverity_invalid",
+    "triagePriority_invalid", "alternativesRuledOut_type", "missingEvidence_member_type",
+    "root_custom_prototype", "nested_custom_prototype"
+  ],
+  "v2FalseAcceptIds": [
+    "candidateId_type", "candidateId_malformed", "title_type",
+    "firstObserved_malformed", "lastObserved_malformed",
+    "observed_chronology_reversed", "journeys_type", "journeys_member_type",
+    "journeys_duplicate", "seeds_type", "seeds_member_type",
+    "minimalSequence_type", "minimalSequence_member_type", "routeClass_type",
+    "apiOperationFamily_type", "oracleFingerprint_malformed", "evidenceLevel_invalid",
+    "reproduction_missing_result", "reproduction_invalid_result",
+    "reproduction_negative_count", "reproduction_fractional_count",
+    "reproduction_unknown_nested_field", "browserApiDifferential_malformed",
+    "browserApiDifferential_unknown_nested_field", "sourceChangeCandidates_non_array",
+    "sourceCandidate_missing_field", "sourceCandidate_invalid_relevance",
+    "sourceCandidate_invalid_confidence", "sourceCandidate_invalid_freshness",
+    "likelyFaultBoundary_malformed", "confidence_malformed", "technicalSeverity_invalid",
+    "triagePriority_invalid", "alternativesRuledOut_type", "missingEvidence_member_type",
+    "semanticConfidence_invalid_reasons", "humanRecipe_missing_observation",
+    "humanRecipe_invalid_actionIds", "aiReady_missing_allowedUses",
+    "aiReady_invalid_evidence", "required_nested_incomplete", "nested_unknown_field",
+    "semanticConfidence_unknown_field"
+  ],
+  "knownBeforeRejections": [
+    "v1:semanticEvidence_malformed", "v1:root_unknown_field", "v1:sentinel_payload",
+    "v2:semanticEvidence_malformed", "v2:root_unknown_field", "v2:sentinel_payload",
+    "v2:root_custom_prototype", "v2:nested_custom_prototype", "v2:status_invalid",
+    "v2:semanticTriageEvidence_malformed"
+  ],
+  "currentnessRows": [
+    { "id": "current-only-1", "values": ["SOURCE_CURRENT_LOCALLY"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "remote-only-1", "values": ["REMOTE_FRESHNESS_CONFIRMED"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-remote-1", "values": ["SOURCE_CURRENT_LOCALLY", "REMOTE_FRESHNESS_CONFIRMED"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-remote-2", "values": ["REMOTE_FRESHNESS_CONFIRMED", "SOURCE_CURRENT_LOCALLY"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-stale-1", "values": ["SOURCE_CURRENT_LOCALLY", "LOCAL_TRACKING_REF_ONLY"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-stale-2", "values": ["LOCAL_TRACKING_REF_ONLY", "SOURCE_CURRENT_LOCALLY"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-unknown-1", "values": ["SOURCE_CURRENT_LOCALLY", "UNKNOWN"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "current-unknown-2", "values": ["UNKNOWN", "SOURCE_CURRENT_LOCALLY"], "raw": "CURRENT", "authority": "CURRENT", "projected": "CURRENT", "collected": "CURRENT" },
+    { "id": "stale-unknown-1", "values": ["LOCAL_TRACKING_REF_ONLY", "UNKNOWN"], "raw": "SOURCE_STALE", "authority": "SOURCE_STALE", "projected": "SOURCE_STALE", "collected": "SOURCE_STALE" },
+    { "id": "stale-unknown-2", "values": ["UNKNOWN", "LOCAL_TRACKING_REF_ONLY"], "raw": "SOURCE_STALE", "authority": "SOURCE_STALE", "projected": "SOURCE_STALE", "collected": "SOURCE_STALE" },
+    { "id": "stale-only-1", "values": ["LOCAL_TRACKING_REF_ONLY"], "raw": "SOURCE_STALE", "authority": "SOURCE_STALE", "projected": "SOURCE_STALE", "collected": "SOURCE_STALE" },
+    { "id": "unknown-only-1", "values": ["UNKNOWN"], "raw": "SOURCE_UNAVAILABLE", "authority": "SOURCE_UNAVAILABLE", "projected": "SOURCE_UNAVAILABLE", "collected": "SOURCE_UNAVAILABLE" },
+    { "id": "empty-1", "values": [], "raw": "SOURCE_UNAVAILABLE", "authority": "SOURCE_UNAVAILABLE", "projected": "SOURCE_UNAVAILABLE", "collected": "SOURCE_UNAVAILABLE" }
+  ],
+  "confirmedBeforeDefects": [
+    "v1 owning validator and facade accepted 37 malformed one-field mutations",
+    "v1 owning validator accepted an additional root unknown-field mutation",
+    "v1 owning validator and facade accepted custom-prototype mutations",
+    "v2 owning validator and facade accepted 43 malformed one-field mutations",
+    "authority and adapter reported CURRENT for current+stale and current+unknown",
+    "normal collector preserved the same optimistic CURRENT labels"
+  ]
+}

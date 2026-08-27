@@ -87,7 +87,7 @@ pushes; only this development session may create validated Git checkpoints.
 - Validation: `npm run agent:check`, `npm run agent:audit`,
   `npm run project:check`, `npm run hardening:check`,
   `npm run quality-gate:spec`, `npm run gate:inventory`, `git diff --check`.
-- Status: IN_PROGRESS
+- Status: COMPLETED
 
 ### M1 — Pre-fix red-team reproduction
 
@@ -99,7 +99,7 @@ pushes; only this development session may create validated Git checkpoints.
 - Acceptance: exact before results, false accepts only when accepted, valid
   historical controls retained, no source behavior edit precedes the record.
 - Validation: focused artifact/currentness/Control Center suites.
-- Status: NOT_STARTED
+- Status: COMPLETED
 
 ### M2 — Strict dossier runtime validation
 
@@ -111,7 +111,7 @@ pushes; only this development session may create validated Git checkpoints.
 - Acceptance: every reproduced dossier FALSE_ACCEPT is rejected by both
   owning and facade validators; compatibility decisions are explicit.
 - Validation: focused artifact suite, typecheck, hardening, privacy tests.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M3 — Facade-wide mutation audit and currentness convergence
 
