@@ -1,4 +1,5 @@
-// ---------------------------------------------------------------------------
+import Module, { createRequire } from 'node:module';
+
 // Nightwatch — one bounded TypeScript runtime loader for local CLI entrypoints.
 //
 // This is a mechanics-only bridge. It never executes an environment, reads
@@ -10,7 +11,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
 // Prefer the current working directory for the repository-local test/runtime
 // transform, but retain direct absolute-bin invocation semantics by probing the
@@ -131,17 +131,42 @@ function outputFor(filename, sourceText, profileName, compilerOptions) {
 function withTypeScriptHook(profileName, callback) {
   const compilerOptions = profileFor(profileName);
   const previous = require.extensions['.ts'];
+  const originalResolveFilename = Module._resolveFilename;
   require.extensions['.ts'] = (module, filename) => {
     const sourceText = fs.readFileSync(filename, 'utf8');
     const compiled = outputFor(filename, sourceText, profileName, compilerOptions);
-    // Do not remember a newly-created derivative until Node has compiled and
-    // executed the module successfully. A thrown module cannot poison the LRU.
     module._compile(compiled.outputText, filename);
     if (!compiled.cached) remember(compiled.key, compiled.outputText);
+  };
+  // Node 22+ require() for CommonJS-compiled TS modules fails to resolve
+  // bare sibling imports (e.g. require('./collector') when only
+  // ./collector.ts exists). Hook Module._resolveFilename to try the .ts
+  // extension when resolution fails and the parent is a .ts module.
+  Module._resolveFilename = function (request, parent, isMain, options) {
+    try {
+      return originalResolveFilename.call(this, request, parent, isMain, options);
+    } catch (err) {
+      if (
+        err?.code === 'MODULE_NOT_FOUND' &&
+        parent?.filename?.endsWith('.ts') &&
+        !request.endsWith('.ts') &&
+        !request.endsWith('.js') &&
+        !request.startsWith('node:')
+      ) {
+        const tsRequest = `${request}.ts`;
+        try {
+          return originalResolveFilename.call(this, tsRequest, parent, isMain, options);
+        } catch {
+          // fall through to the original error
+        }
+      }
+      throw err;
+    }
   };
   try {
     return callback();
   } finally {
+    Module._resolveFilename = originalResolveFilename;
     if (previous === undefined) delete require.extensions['.ts'];
     else require.extensions['.ts'] = previous;
   }
