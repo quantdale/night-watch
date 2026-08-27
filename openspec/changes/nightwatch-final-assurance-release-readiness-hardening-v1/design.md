@@ -48,6 +48,21 @@ Trace and test representative end-to-end journeys without real product contact:
 
 Add missing failure-path tests only where the audit demonstrates a material gap.
 
+### H2A — L6 process-containment closure and safety-test authority
+
+Treat process/network isolation as an explicit release-critical track, not as an implicit property of L5.
+
+1. Re-derive the exact current process tree and egress surfaces for system Chrome, Playwright helpers, OOPS/local subprocesses, and repository-owned child launchers.
+2. Confirm authenticated/real OOPS execution remains disabled while `relayCompatible=false`; no temporary bypass is allowed.
+3. Reproduce the current Bubblewrap/network-namespace result locally with synthetic loopback only. Do not contact DEV/NEXT/production or public DNS.
+4. Evaluate an unprivileged/rootless L6 design whose browser/subprocess namespace cannot perform direct DNS/TCP/UDP egress and whose only usable application egress route is the Nightwatch-controlled proxy/relay boundary.
+5. If safely implementable, add a versioned L6 runtime identity/capability record, lifecycle/health checks, fail-closed startup integration, cleanup, and adversarial tests. Prove direct escape denial and allowed synthetic proxy flow separately.
+6. If a safe rootless design is not implementable without privileged/system-wide authority, do not fake L6. Bind the unsupported state into readiness so affected non-browser/complete-isolation claims remain blocked and document the exact residual.
+7. Re-run the WebSocket containment suite with retries forced to zero. Current implementation awaits `routeWebSocket`; stale retry rationale must either be removed or replaced by a reproduced current defect and repair.
+8. Make restricted-OOPS subprocess validation deterministic in clean certification. A missing local OOPS binary may not silently remove release-critical provenance/relay/privacy coverage.
+
+Hard constraints: no root, no privileged firewall/network administration, no system-wide proxy/DNS/hosts changes, no TLS interception, no external packet probes, no auth/product contact.
+
 ### H3 — skipped-test and validation-gap census
 
 Enumerate every current skipped test from Playwright and any nested test runner. For each record:
@@ -66,7 +81,7 @@ Allowed dispositions:
 - `CAN_RUN_IN_CERTIFICATION`
 - `BLOCKING_VALIDATION_GAP`
 
-No unexplained skipped test may remain at terminal certification.
+No unexplained skipped test may remain at terminal certification. Safety-critical containment tests must also have an explicit retry disposition; a retry that can convert a real first-attempt safety failure into green is release-blocking unless the underlying cause is fixed and the retry is removed.
 
 ### H4 — dependency, install, build and packaging reproducibility
 
@@ -116,7 +131,7 @@ Requirements:
 Severity:
 
 - P0 Critical: safety escape, secret/private-evidence leak, destructive write, data loss, wrong-environment contact, release-blocking crash in a core local path.
-- P1 High: incorrect authority/selection, core workflow failure, reproducibility failure, serious stale-truth acceptance, severe resource regression, missing required release validation.
+- P1 High: incorrect authority/selection, core workflow failure, reproducibility failure, serious stale-truth acceptance, severe resource regression, missing required release validation, unresolved process-level containment required for a claimed release boundary, or safety-critical validation masked by retry/skip behavior.
 - P2 Medium: justified maintainability/validation/performance/operator defects with real impact.
 - P3 Low: nonessential cleanup; perform only when low-risk and directly adjacent.
 
