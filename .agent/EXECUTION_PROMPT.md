@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Campaign Handoff + Project Truth Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 OpenSpec: openspec/changes/nightwatch-campaign-handoff-and-project-truth-hardening-v1/
 Planned-From: 7165beeda3006ce1f64e61e7ae62fa919441fe96

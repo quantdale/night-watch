@@ -1,21 +1,21 @@
 # Campaign Handoff + Project Truth Hardening — Execution Report
 
-Status: IN_PROGRESS
+Status: COMPLETE
 Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Phase: CAMPAIGN-HANDOFF-AND-PROJECT-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Starting SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
 Validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
 
-## Outcome to date
+## Outcome
 
 The reproduced planner-to-executor route gap is repaired by a versioned,
 read-only handoff parser/checker and a required `HANDOFF_TRUTH` quality-gate
 group. Project-state v2 now has an explicit owned-key schema and faithful
-promotion lifecycle/effective-authority fields. The implementation checkpoint
-and clean-gate branch-shape repair are source/test/config validated; terminal
-documentation, final clean-tree acceptance, and external exact-head CI
-classification remain closure work.
+promotion lifecycle/effective-authority fields. The implementation checkpoint,
+clean-gate branch-shape repair, terminal continuity records, and local/clean
+acceptance are complete. External exact-head CI is recorded as a separate
+non-authoritative observation.
 
 ## H0 and reproduced findings
 
@@ -93,13 +93,30 @@ classification remain closure work.
   receipt is `clean-receipt:sha256:6ae5a05c5c4dfd84fe9564f0`.
 - Clean-head `project:check`, `handoff:check`, and `agent:check` passed at
   `0ef83e433a0980807faa1aa8cc3ffbb0aaef809c`.
+- Final clean-head structural checks passed at
+  `d6de61a90d85fd362b7b52a293ada4bf6ee93c34`: `handoff:check`,
+  `project:check`, `agent:check`, `agent:audit`, `hardening:check`,
+  `quality-gate:spec`, `gate:inventory`, `typecheck`, and `git diff --check`.
+  Agent history was `84` tasks / `60` strict v2 / `24` legacy v1 with `0`
+  strict errors and `34` legacy warnings; the continuity/project checks took
+  `2.80s` / `66176 KiB` and `4.35s` / `127504 KiB`, respectively.
+- Final `npm run gate:local` passed at `d6de61a90d85fd362b7b52a293ada4bf6ee93c34`
+  with all 10 groups passing, `HANDOFF_TRUTH` exactly once before
+  `PROJECT_TRUTH`, receipt `receipt:sha256:3f9a2aa3c9d7c359442bece6`, wall
+  `338.91s`, and peak RSS `1363832 KiB`.
+- Final `npm run gate:clean` passed at the same head under Node `20.20.2` with
+  all 10 groups passing, clean-before/after true, no module/auth/finding-state
+  reuse, zero sibling writes, receipt
+  `clean-receipt:sha256:73824a0f3232d8f5ca1b95a4`, gate receipt
+  `receipt:sha256:8645bd3b379a3e986b449b3e`, wall `449.18s`, and peak RSS
+  `1216152 KiB`.
 
-## Safety and remaining closure
+## Safety and closure
 
 All work remains repository-local, offline, deterministic, and synthetic-only.
 DEV/NEXT/production contacts, authenticated product traffic, database/cloud/
 infrastructure operations, sibling writes, publication, runtime AI, and
-canonical promotion are all zero. Remaining closure work is the terminal
-OpenSpec/task/report records, final push without force, `HEAD == origin/main`
-verification, and one exact-head Actions observation. A zero-step external run
-remains non-evidence.
+canonical promotion are all zero. The OpenSpec checklist, task plan/state/
+report, and prompt are terminally coherent. Exact-head Actions classification,
+final push synchronization, and the external non-authoritative status are
+recorded in the terminal closure update.

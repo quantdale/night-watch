@@ -91,12 +91,12 @@ runtime Git writes.
 - Acceptance: local/CI/clean/pre-DEV gate paths, hardening, inventory, and
   x3 deterministic focused runs cover the complete OpenSpec matrix.
 
-### M6 — Full acceptance and closure — IN_PROGRESS
+### M6 — Full acceptance and closure — COMPLETE
 
 - Objective: execute all required local, clean, Node20/topology, campaign,
   provenance, and documentation acceptance, then push the validated result.
 - Acceptance: clean exact-head `origin/main`, truthful terminal task/prompt,
-  strict project state, final report, and observed CI classification.
+  strict project state, final report, and one exact-head CI classification.
 
 ## Validation Strategy
 
@@ -123,6 +123,10 @@ Record exact results and safe performance measures in STATE and REPORT.
   clone violated the new branch-bound handoff contract. The clean gate now
   checks out and verifies the exact head on local `main`; this is a substantive
   repair, not a relaxation of branch validation.
+- 2026-08-27 — Canonical full acceptance passed `2590/2606` with `16` skips;
+  local and disposable Node 20 clean gates passed at `d6de61a`. The task is
+  terminal locally; exact-head Actions remains an external observation recorded
+  after the final push.
 
 ## Discoveries
 

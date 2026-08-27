@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Phase: CAMPAIGN-HANDOFF-AND-PROJECT-TRUTH-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
 Last validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
 Last substantive checkpoint SHA: e4ac7076600f9a347d230445aa312e321f635624
@@ -14,7 +14,8 @@ STARTING_SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
 LAST_VALIDATED_IMPLEMENTATION_SHA: e4ac7076600f9a347d230445aa312e321f635624
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: e4ac7076600f9a347d230445aa312e321f635624
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_CAMPAIGN_HANDOFF_AND_PROJECT_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
+PHASE_CAMPAIGN_HANDOFF_AND_PROJECT_TRUTH_HARDENING_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -23,7 +24,7 @@ without changing Nightwatch's local-only safety boundary.
 
 ## Current Milestone
 
-M6 — Full acceptance and closure (IN_PROGRESS)
+COMPLETE — M6 full acceptance and closure.
 
 ## Completed Milestones
 
@@ -33,24 +34,25 @@ M6 — Full acceptance and closure (IN_PROGRESS)
 - Planner-finding reproduction/falsification pass — COMPLETE.
 - Handoff protocol and route checker — COMPLETE.
 - SHA-role transition hardening — COMPLETE.
+- Full local/clean acceptance and terminal continuity closure — COMPLETE.
 
 ## Work In Progress
 
-The handoff parser/checker, SHA-role transition matrix, and strict project-
-state v2 core are implemented and focused-tested. Gate/documentation closure
-integration is now the active unit.
+No active work remains. The handoff parser/checker, SHA-role transition matrix,
+strict project-state v2 core, authoritative gate integration, full canonical
+suite, local gate, and disposable Node 20 clean gate are complete.
 
 ## Exact Next Action
 
-Run the integrated acceptance matrix, establish the substantive checkpoint,
-then close the terminal documentation/state route.
+STOP — task complete; future work requires a fresh authorized task.
 
 ## Files Changed
 
 Handoff parser/checker and declaration, project-state v2 checker, quality-gate
 command/configuration, hardening guards, continuity allowlist/tests, focused
-synthetic matrices, and durable protocol documentation. The final validated
-implementation anchor is the clean-gate branch-shape repair checkpoint
+synthetic matrices, durable protocol documentation, and terminal acceptance
+records. The final validated implementation anchor is the clean-gate branch-
+shape repair checkpoint
 `e4ac7076600f9a347d230445aa312e321f635624`.
 
 ## Validation Ledger
@@ -150,8 +152,8 @@ implementation anchor is the clean-gate branch-shape repair checkpoint
   before `PROJECT_TRUTH`; the focused quality-gate/project/handoff run is
   green. Repeated `npm run agent:check`, `npm run agent:audit`, and
   `npm run handoff:check` all exited `0`; continuity reports only the
-  expected stale carried-forward implementation baseline until this task's
-  source checkpoint. A pre-closure `npm run gate:local` reached
+  expected documentation-checkpoint and legacy-task warnings. A pre-closure
+  `npm run gate:local` reached
   `HANDOFF_TRUTH` once and stopped at the expected dirty-tree
   `PROJECT_TRUTH` failure; downstream groups were correctly `NOT_RUN`.
 - Initial implementation checkpoint: `dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319`
@@ -175,7 +177,7 @@ implementation anchor is the clean-gate branch-shape repair checkpoint
   checkout shape. `bin/quality-gate-clean.mjs` now keeps its disposable clone
   on local `main` and verifies the exact requested head before running the
   gate. The repair is the substantive checkpoint
-  `e4ac7076600f9a347d230445aa312e321f635624`; the clean gate must be rerun.
+  `e4ac7076600f9a347d230445aa312e321f635624`.
 - Repaired `npm run gate:clean` passed under Node `20.20.2` from clean source
   head `0ef83e433a0980807faa1aa8cc3ffbb0aaef809c`: install PASS, all 10
   required groups PASS, `HANDOFF_TRUTH` exactly once before `PROJECT_TRUTH`,
@@ -191,6 +193,22 @@ implementation anchor is the clean-gate branch-shape repair checkpoint
   The configured authoritative gate requires no sibling topology
   (`requiresSiblingTopology: false`), so no sibling-checkout operation is
   implied.
+- Final local `npm run gate:local` passed at clean head
+  `d6de61a90d85fd362b7b52a293ada4bf6ee93c34`: all 10 required groups passed,
+  `HANDOFF_TRUTH` ran exactly once before `PROJECT_TRUTH`, and the receipt was
+  `receipt:sha256:3f9a2aa3c9d7c359442bece6`; wall `338.91s`, peak RSS
+  `1363832 KiB`.
+- Final disposable `npm run gate:clean` passed at the same head under Node
+  `20.20.2`: install and gate passed, clean-before/after were true, module and
+  auth/finding state were not reused, sibling writes were `0`, and the receipt
+  was `clean-receipt:sha256:73824a0f3232d8f5ca1b95a4`; gate receipt
+  `receipt:sha256:8645bd3b379a3e986b449b3e`; wall `449.18s`, peak RSS
+  `1216152 KiB`.
+- Final clean-head structural timing: `npm run agent:check` passed in
+  `2.80s` / `66176 KiB`, and `npm run project:check` passed in `4.35s` /
+  `127504 KiB`. The baseline was `1.09s` / `67636 KiB` and `1.89s` /
+  `125584 KiB`, respectively; the final runs include the larger 84-task
+  history and strict v2 validation surface.
 
 ## Decisions Made During This Task
 
@@ -226,19 +244,19 @@ sibling-repository, publication, AI-runtime, or promotion operation occurred.
 
 ## Deferred / Follow-Up
 
-- Unrelated audit hygiene findings remain deferred until continuity-critical
-  review is complete.
-- External zero-step CI status remains non-evidence and will be observed only
-  once at terminal exact head.
+- Unrelated audit hygiene findings remain deferred; they are outside this
+  continuity/truth-hardening scope.
+- External CI remains an observation boundary and is not local acceptance
+  authority; its exact-head classification is recorded in REPORT.md.
 
 ## Resume Recipe
 
-Resume at M6 closure: run the final clean-tree acceptance, terminalize the
-prompt/task/report records, then perform final Git/CI closure.
+Task complete. Do not resume this task. Future work requires a separate fresh
+task and authorization.
 
 ## Completion Snapshot
 
-M6 canonical full-suite acceptance is complete: `2590` passed, `16` skipped,
-and `0` failed out of `2606` tests in `215` files. Terminal task records,
-final clean-tree gates, push synchronization, and the single exact-head CI
-observation remain in progress.
+COMPLETE — implementation, local/clean acceptance, canonical full-suite
+accounting, terminal continuity records, and safety review are complete.
+Future work requires a separate fresh task and authorization; live Git and
+external CI authority are discovered independently from this record.
