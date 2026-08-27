@@ -1,26 +1,26 @@
 # Active Task
 
-Task ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
-Phase: DURABLE-ARTIFACT-AND-CONTROL-CENTER-TRUTH-HARDENING-V1
-Title: Durable Artifact + Control Center Truth Hardening
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1
-Starting SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-Last validated implementation SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
-Last checkpoint: M5 full acceptance passed at `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607` is recorded under Git authority.
-Current milestone: COMPLETE — M5 full acceptance and terminal Git closure.
-Next action: STOP — this task is complete; any follow-up requires a new authorized task.
-Authorization class: NIGHTWATCH_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
+Task ID: nightwatch-resolved-egress-and-containment-truth-hardening-v1
+Phase: RESOLVED-EGRESS-AND-CONTAINMENT-TRUTH-HARDENING-V1
+Title: Resolved Egress + Containment Truth Hardening
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-resolved-egress-and-containment-truth-hardening-v1
+Starting SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
+Last validated implementation SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
+Last checkpoint: M0 H0 manifest and task activation recorded at live starting SHA `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`.
+Current milestone: M0 — takeover, activation, H0 audit, and baseline.
+Next action: Run remaining H0 searches and baseline commands; record results in STATE before source edits.
+Authorization class: NIGHTWATCH_RESOLVED_EGRESS_AND_CONTAINMENT_TRUTH_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-LAST_VALIDATED_IMPLEMENTATION_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+STARTING_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety
 
 This task is local/source/synthetic only. It preserves the owner freeze,
-read-only sibling boundary, existing artifact/source/semantic/campaign/
-eligibility authorities, privacy contract, deterministic outputs,
-fail-closed behavior, and no-publication rule. The completed predecessor task
-remains immutable history.
+read-only sibling boundary, existing hostname policy, browser containment,
+semantic/source-proof/campaign authorities, privacy contract, deterministic
+outputs, fail-closed behavior, and no-publication rule. The completed
+predecessor task remains immutable history.
