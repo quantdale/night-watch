@@ -2414,7 +2414,7 @@ eligible. Terminal continuity for this campaign is complete.
 This campaign is terminal as `COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated
 implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`
 (source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`)
-with final documentation checkpoint `8f766d2baa186c297d745a5401d861f8e0ad09cd`.
+with final documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607`.
 It restores strict runtime acceptance for persisted dossier v1/v2 records and
 converges Control Center findings currentness on one conservative reducer.
 
@@ -2429,9 +2429,10 @@ and collector paths agree across permutations, duplicates, and the 256-member
 bound. Control Center corruption, generation, refresh-failure, server, and
 seven-view built browser behavior remain sanitized and fail closed.
 
-Local and clean Node20 quality gates passed all nine groups with semantic
-compatibility `1,903/1,890/13/0`, owner provenance `91`, and synthetic campaign
-`66`; final local receipt `receipt:sha256:034bdea65e67d91d6543184b`, clean gate
+Current-head local and clean Node20 quality gates passed all nine groups with
+semantic compatibility `1,903/1,890/13/0`, owner provenance `91`, and
+synthetic campaign `66`; final local receipt
+`receipt:sha256:b26864ec34f00438044c1076`, clean gate
 receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt
 `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`. The final canonical serial
 regression passed `2,548/2,564` in `4.5m`, skipped `16`, and failed `0`.

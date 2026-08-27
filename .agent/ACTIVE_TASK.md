@@ -7,7 +7,7 @@ Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Starting SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
 Last validated implementation SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
-Last checkpoint: M5 full acceptance passed at `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation closure is recorded under Git authority.
+Last checkpoint: M5 full acceptance passed at `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607` is recorded under Git authority.
 Current milestone: COMPLETE — M5 full acceptance and terminal Git closure.
 Next action: STOP — this task is complete; any follow-up requires a new authorized task.
 Authorization class: NIGHTWATCH_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY

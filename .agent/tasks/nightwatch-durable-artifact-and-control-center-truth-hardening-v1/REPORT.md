@@ -7,7 +7,7 @@ CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `42ea9723c10f60cc02c663748c493c6c34f73116`
 Source implementation anchor: `01f2ac0608931b83aed0b5c948ed3a4471de7e01`
 Validated implementation/test checkpoint: `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`
-Final documentation checkpoint: `8f766d2baa186c297d745a5401d861f8e0ad09cd`
+Final documentation checkpoint: `d2c606c26f598626f24dd94a11cb7fad18887607`
 Live final HEAD authority: `DISCOVER_FROM_GIT`
 
 This report is the terminal handoff. The fresh tracked-file audit, pre-fix
@@ -209,6 +209,11 @@ acceptance and terminal closure are recorded below.
 - Final exact native serial regression at that checkpoint passed `2548 / 2564`,
   skipped `16`, and failed `0` in `4.5m`; the observer-ledger assertion
   passed under full serial load.
+- Current-head local quality gate at documentation checkpoint
+  `d2c606c26f598626f24dd94a11cb7fad18887607` passed all `9` groups with
+  semantic compatibility `1903 total / 1890 passed / 13 skipped / 0 failed`,
+  owner provenance `91`, synthetic campaign `66`, and receipt
+  `receipt:sha256:b26864ec34f00438044c1076`.
 
 ## Terminal disposition
 

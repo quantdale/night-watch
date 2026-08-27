@@ -11,7 +11,7 @@ Last substantive checkpoint SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 STARTING_SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
 LAST_VALIDATED_IMPLEMENTATION_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 8f766d2baa186c297d745a5401d861f8e0ad09cd
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d2c606c26f598626f24dd94a11cb7fad18887607
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
@@ -19,8 +19,10 @@ LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: 2026-08-27 — M5 final local/clean/canonical acceptance passed
-at `8f766d2baa186c297d745a5401d861f8e0ad09cd`; terminal documentation closure
+Last checkpoint: 2026-08-27 — M5 current-head local acceptance passed at
+documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607`; the
+previously validated clean and canonical acceptance remains applicable because
+the intervening changes are documentation-only. Terminal documentation closure
 is recorded under Git authority.
 
 ## Objective
@@ -202,6 +204,11 @@ validation, and Control Center integration tests. No external state changed.
   `8f766d2baa186c297d745a5401d861f8e0ad09cd` passed `2548 / 2564`, skipped
   `16`, and failed `0` in `4.5m`; the observer-ledger assertion passed under
   full serial load. No assertion or safety rule was weakened.
+- Current-head local quality gate at
+  `d2c606c26f598626f24dd94a11cb7fad18887607`: PASS; all `9` groups passed;
+  semantic compatibility `1903 total / 1890 passed / 13 skipped / 0 failed`,
+  owner provenance `91`, synthetic campaign `66`, receipt
+  `receipt:sha256:b26864ec34f00438044c1076`.
 - First canonical serial regression at
   `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` reported the `2564`-test run as
   `2546 passed / 16 skipped / 1 failed`, with one additional telemetry test
@@ -268,7 +275,7 @@ Final validated implementation/test checkpoint:
 `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` (the source implementation anchor
 is `01f2ac0608931b83aed0b5c948ed3a4471de7e01`; live HEAD is not persisted
 here).
-Final documentation checkpoint: `8f766d2baa186c297d745a5401d861f8e0ad09cd`
+Final documentation checkpoint: `d2c606c26f598626f24dd94a11cb7fad18887607`
 (known before this terminal report descendant; live HEAD remains discovered
 from Git).
 Live HEAD: DISCOVER_FROM_GIT
