@@ -11,6 +11,53 @@
 
 import { spawnSync } from 'node:child_process';
 
+export const OOPS_SANDBOX_STATUS_VERSION = 'nightwatch.oops-sandbox-status.v2' as const;
+export const L6_RUNTIME_CAPABILITY_VERSION = 'nightwatch.l6-runtime-capability.v1' as const;
+
+export type L6CapabilityStatus = 'PROVEN' | 'UNPROVEN';
+export type L6CapabilityReadiness = 'READY' | 'BLOCKED';
+
+/**
+ * Machine-readable process-boundary truth. The current implementation is
+ * deliberately an explicit blocked record: namespace creation alone does
+ * not prove direct-egress denial, relay reachability, or lifecycle cleanup.
+ */
+export interface L6RuntimeCapability {
+  readonly schemaVersion: typeof L6_RUNTIME_CAPABILITY_VERSION;
+  readonly runtimeIdentity: 'L6_UNAVAILABLE_RELAY_NAMESPACE_INCOMPATIBLE' | 'L6_PROVEN';
+  readonly status: L6CapabilityStatus;
+  readonly readiness: L6CapabilityReadiness;
+  readonly processIsolation: 'PROVEN' | 'NOT_PROVEN';
+  readonly directDnsDenial: 'PROVEN' | 'NOT_PROVEN';
+  readonly directTcpDenial: 'PROVEN' | 'NOT_PROVEN';
+  readonly directUdpDenial: 'PROVEN' | 'NOT_PROVEN';
+  readonly syntheticRelayFlow: 'PROVEN' | 'BLOCKED_PARENT_NAMESPACE';
+  readonly startup: 'PROVEN' | 'NOT_PROVEN';
+  readonly liveness: 'PROVEN' | 'NOT_PROVEN';
+  readonly cleanup: 'PROVEN' | 'NOT_PROVEN';
+  readonly completeProcessIsolation: boolean;
+  readonly completeNetworkIsolation: boolean;
+  readonly blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL' | null;
+}
+
+const UNSUPPORTED_L6_RUNTIME_CAPABILITY: L6RuntimeCapability = Object.freeze({
+  schemaVersion: L6_RUNTIME_CAPABILITY_VERSION,
+  runtimeIdentity: 'L6_UNAVAILABLE_RELAY_NAMESPACE_INCOMPATIBLE',
+  status: 'UNPROVEN',
+  readiness: 'BLOCKED',
+  processIsolation: 'NOT_PROVEN',
+  directDnsDenial: 'NOT_PROVEN',
+  directTcpDenial: 'NOT_PROVEN',
+  directUdpDenial: 'NOT_PROVEN',
+  syntheticRelayFlow: 'BLOCKED_PARENT_NAMESPACE',
+  startup: 'NOT_PROVEN',
+  liveness: 'NOT_PROVEN',
+  cleanup: 'NOT_PROVEN',
+  completeProcessIsolation: false,
+  completeNetworkIsolation: false,
+  blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL',
+});
+
 const OOPS_PROBE_ENV: NodeJS.ProcessEnv = {
   PATH: '/usr/local/bin:/usr/bin:/bin',
   HOME: '/nonexistent',
@@ -19,12 +66,26 @@ const OOPS_PROBE_ENV: NodeJS.ProcessEnv = {
 };
 
 export interface OopsSandboxStatus {
+  schemaVersion: typeof OOPS_SANDBOX_STATUS_VERSION;
+  containmentLevel: 'L0_L5';
   tool: 'bubblewrap' | null;
   toolVersion: string | null;
   networkNamespaceProbe: 'PASS' | 'UNAVAILABLE';
   relayCompatible: false;
-  authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE';
+  authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE' | 'ENABLED_L6';
   localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY';
+  l6: L6RuntimeCapability;
+}
+
+function statusBase(): Pick<OopsSandboxStatus, 'schemaVersion' | 'containmentLevel' | 'relayCompatible' | 'authenticatedOopsExecution' | 'localRestrictedExecution' | 'l6'> {
+  return {
+    schemaVersion: OOPS_SANDBOX_STATUS_VERSION,
+    containmentLevel: 'L0_L5',
+    relayCompatible: false,
+    authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE',
+    localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY',
+    l6: UNSUPPORTED_L6_RUNTIME_CAPABILITY,
+  };
 }
 
 function bubblewrapVersion(): string | null {
@@ -43,12 +104,10 @@ export function inspectOopsSandbox(): OopsSandboxStatus {
   const version = bubblewrapVersion();
   if (version === null) {
     return {
+      ...statusBase(),
       tool: null,
       toolVersion: null,
       networkNamespaceProbe: 'UNAVAILABLE',
-      relayCompatible: false,
-      authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE',
-      localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY',
     };
   }
   const probe = spawnSync(
@@ -57,11 +116,43 @@ export function inspectOopsSandbox(): OopsSandboxStatus {
     { encoding: 'utf8', env: OOPS_PROBE_ENV, timeout: 5_000, maxBuffer: 64 * 1024, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   return {
+    ...statusBase(),
     tool: 'bubblewrap',
     toolVersion: version,
     networkNamespaceProbe: probe.status === 0 ? 'PASS' : 'UNAVAILABLE',
-    relayCompatible: false,
-    authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE',
-    localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY',
   };
+}
+
+/**
+ * Authenticated/non-browser OOPS execution requires a proven L6 capability.
+ * The current record is intentionally never promotable: callers fail before
+ * creating a scenario workspace or spawning the child process.
+ */
+export function assertL6RuntimeCapability(capability: L6RuntimeCapability): void {
+  if (
+    capability.schemaVersion !== L6_RUNTIME_CAPABILITY_VERSION ||
+    capability.runtimeIdentity !== 'L6_PROVEN' ||
+    capability.status !== 'PROVEN' ||
+    capability.readiness !== 'READY' ||
+    capability.processIsolation !== 'PROVEN' ||
+    capability.directDnsDenial !== 'PROVEN' ||
+    capability.directTcpDenial !== 'PROVEN' ||
+    capability.directUdpDenial !== 'PROVEN' ||
+    capability.syntheticRelayFlow !== 'PROVEN' ||
+    capability.startup !== 'PROVEN' ||
+    capability.liveness !== 'PROVEN' ||
+    capability.cleanup !== 'PROVEN' ||
+    capability.completeProcessIsolation !== true ||
+    capability.completeNetworkIsolation !== true ||
+    capability.blockerCode !== null
+  ) {
+    throw new Error('L6_RUNTIME_CAPABILITY_REQUIRED:BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL');
+  }
+}
+
+export function assertAuthenticatedOopsCapability(status: OopsSandboxStatus): void {
+  if (status.authenticatedOopsExecution !== 'ENABLED_L6') {
+    throw new Error('AUTHENTICATED_OOPS_DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
+  }
+  assertL6RuntimeCapability(status.l6);
 }

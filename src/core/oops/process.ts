@@ -8,6 +8,7 @@ import { assertGeneratedScenarioSafe } from '../../api/phase5/restrictedProfile'
 import type { ApiOperation, GeneratedScenario } from '../../api/phase5/types';
 import type { Phase5Relay, RelayObservation } from '../../api/phase5/relay';
 import { OOPS_ADAPTER_VERSION } from '../../api/phase5/types';
+import { assertAuthenticatedOopsCapability, inspectOopsSandbox } from './sandbox';
 
 export const OOPS_PROCESS_TIMEOUT_MS = 20_000;
 export const OOPS_OUTPUT_LIMIT_BYTES = 64 * 1024;
@@ -273,6 +274,14 @@ export async function runRestrictedOops(options: RunRestrictedOopsOptions): Prom
   const actualBinarySHA256 = sha256Executable(options.binaryPath);
   if (actualBinarySHA256 !== options.expectedBinarySHA256) throw new Error('OOPS_BINARY_DIGEST_MISMATCH');
   if (options.operation.semanticClass !== 'KNOWN_READ') throw new Error('fail-closed: OOPS adapter only accepts KNOWN_READ');
+  // A DEV/authenticated operation would place a credential-bearing or
+  // product-reaching subprocess behind the process boundary. The current
+  // rootless namespace cannot reach the parent relay, so fail before any
+  // scenario workspace or child process is created. LOCAL_LOOPBACK synthetic
+  // fixtures remain covered by the narrower relay-only path below.
+  if (options.operation.requiredHostClass === 'DEV_API' || options.operation.authClass === 'RELAY_EPHEMERAL_DEV_SESSION') {
+    assertAuthenticatedOopsCapability(inspectOopsSandbox());
+  }
   const logicalYaml = options.scenario.logicalYaml;
   assertGeneratedScenarioSafe(logicalYaml, options.operation.operationId);
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase5-oops-'));

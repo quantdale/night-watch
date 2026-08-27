@@ -10,9 +10,44 @@ import { apiFingerprint, evaluateApiResponse } from '../../src/api/phase5/oracle
 import { API_CATALOG_VERSION, OOPS_ADAPTER_VERSION, OOPS_PROFILE_VERSION, SCENARIO_GENERATOR_VERSION, type ApiCatalog, type ApiOperation } from '../../src/api/phase5/types';
 import { executeNativePhase5Operation, startPhase5Relay } from '../../src/api/phase5/relay';
 import { buildOOPSAllowlistedEnvironment, runRestrictedOops, sha256Executable, validateRestrictedOopsInvocationArgs } from '../../src/core/oops/process';
-import { inspectOopsSandbox } from '../../src/core/oops/sandbox';
+import { assertL6RuntimeCapability, inspectOopsSandbox } from '../../src/core/oops/sandbox';
 import { createEphemeralRippleApiAuthProvider } from '../../src/api/phase5/auth';
 import { loadEnvironmentConfig } from '../../src/core/environment';
+
+const SYNTHETIC_OOPS_FIXTURE = path.join(__dirname, '..', 'fixtures', 'phase5-deterministic-oops.mjs');
+const SOURCE_BUILT_OOPS_SOURCE_SHA = 'c4a129feb0b97dc0ae39f32c39a92abe834567f2';
+
+interface SelectedOopsBinary {
+  readonly path: string;
+  readonly sourceSHA: string;
+  readonly disposition: 'SOURCE_BUILT_BINARY' | 'DETERMINISTIC_SUBSTITUTE';
+  readonly cleanup: () => void;
+}
+
+function selectOopsBinary(): SelectedOopsBinary {
+  const configured = process.env.NIGHTWATCH_OOPS_BINARY;
+  const candidate = configured ?? path.resolve('.tmp-nightwatch/oops-build/oops');
+  if (configured !== undefined || fs.existsSync(candidate)) {
+    return {
+      path: candidate,
+      sourceSHA: SOURCE_BUILT_OOPS_SOURCE_SHA,
+      disposition: 'SOURCE_BUILT_BINARY',
+      cleanup: () => undefined,
+    };
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase5-oops-substitute-'));
+  // Keep the module extension so the fixture's ESM imports remain executable
+  // when Node is launched through its shebang.
+  const binary = path.join(directory, 'oops.mjs');
+  fs.copyFileSync(SYNTHETIC_OOPS_FIXTURE, binary);
+  fs.chmodSync(binary, 0o700);
+  return {
+    path: binary,
+    sourceSHA: 'synthetic-phase5-oops-fixture-v1',
+    disposition: 'DETERMINISTIC_SUBSTITUTE',
+    cleanup: () => fs.rmSync(directory, { recursive: true, force: true }),
+  };
+}
 
 test('Phase 5 catalog preserves the small evidence-backed semantic frontier', () => {
   expect(phase5CatalogCounts()).toMatchObject({ inventoried: 11, KNOWN_READ: 6, KNOWN_MUTATION: 4, UNKNOWN: 1, generationEligible: 6, blocked: 5 });
@@ -152,10 +187,52 @@ test('Phase 5 auth bridge reads a valid external state only into an in-memory re
 
 test('Phase 5 records the available OS namespace probe without enabling an incompatible authenticated OOPS path', () => {
   const status = inspectOopsSandbox();
+  expect(status.schemaVersion).toBe('nightwatch.oops-sandbox-status.v2');
+  expect(status.containmentLevel).toBe('L0_L5');
   expect(['PASS', 'UNAVAILABLE']).toContain(status.networkNamespaceProbe);
   expect(status.relayCompatible).toBe(false);
   expect(status.authenticatedOopsExecution).toBe('DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
   expect(status.localRestrictedExecution).toBe('ALLOWED_LOOPBACK_RELAY');
+  expect(status.l6).toMatchObject({
+    schemaVersion: 'nightwatch.l6-runtime-capability.v1',
+    status: 'UNPROVEN',
+    readiness: 'BLOCKED',
+    processIsolation: 'NOT_PROVEN',
+    directDnsDenial: 'NOT_PROVEN',
+    directTcpDenial: 'NOT_PROVEN',
+    directUdpDenial: 'NOT_PROVEN',
+    syntheticRelayFlow: 'BLOCKED_PARENT_NAMESPACE',
+    completeProcessIsolation: false,
+    completeNetworkIsolation: false,
+    blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL',
+  });
+  expect(() => assertL6RuntimeCapability(status.l6)).toThrow('L6_RUNTIME_CAPABILITY_REQUIRED');
+});
+
+test('DEV or authenticated OOPS fails closed before creating a scenario workspace or child process', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-oops-l6-block-'));
+  const binary = path.join(directory, 'synthetic-oops');
+  fs.writeFileSync(binary, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  fs.chmodSync(binary, 0o700);
+  try {
+    const operation = syntheticOperation({
+      operationId: 'synthetic.dev.read',
+      requiredHostClass: 'DEV_API',
+      authClass: 'RELAY_EPHEMERAL_DEV_SESSION',
+    });
+    const digest = sha256Executable(binary);
+    await expect(runRestrictedOops({
+      binaryPath: binary,
+      binarySourceSHA: 'synthetic-source-sha',
+      expectedSourceSHA: 'synthetic-source-sha',
+      expectedBinarySHA256: digest,
+      scenario: undefined as never,
+      operation,
+      relay: undefined as never,
+    })).rejects.toThrow('AUTHENTICATED_OOPS_DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('restricted OOPS binds the expected digest to an owner-controlled executable and rejects substitution paths', async () => {
@@ -192,9 +269,9 @@ test('Phase 3 lineage marks relevant browser/client changes stale without readin
   expect(evaluateApiLineage(operation, [{ repoId: 'mobingilabs/ripple-api', productRole: 'test', scope: 'IN_SCOPE', branch: 'master', checkedOutSha: '0000000000000000000000000000000000000000', trackingRef: null, trackingSha: null, ahead: 0, behind: 0, dirty: false, sourceMapSha: '0000000000000000000000000000000000000000', readOnlyOnly: true }]).staleness).toBe('SOURCE_STALE');
 });
 
-test('current-source OOPS subprocess runs the restricted local relay path without receiving fixture bodies or parent secrets', async () => {
-  const binaryPath = process.env.NIGHTWATCH_OOPS_BINARY ?? path.resolve('.tmp-nightwatch/oops-build/oops');
-  test.skip(!fs.existsSync(binaryPath), `source-built OOPS binary is unavailable at ${binaryPath}`);
+test('restricted OOPS subprocess runs the local relay path without receiving fixture bodies or parent secrets', async () => {
+  const selected = selectOopsBinary();
+  const binaryPath = selected.path;
   const operation = syntheticOperation({ operationId: 'synthetic.oops.read', requiredHostClass: 'LOCAL_LOOPBACK', authClass: 'NONE_LOCAL_FIXTURE', sourceRepo: 'synthetic', sourceSHA: 'synthetic', sourceProvenance: ['synthetic fixture'] });
   const catalog: ApiCatalog = { schemaVersion: API_CATALOG_VERSION, generatedBy: SCENARIO_GENERATOR_VERSION, operations: [operation] };
   const secret = 'PARENT_SENTINEL_DO_NOT_INHERIT_9f4c';
@@ -216,8 +293,8 @@ test('current-source OOPS subprocess runs the restricted local relay path withou
     });
     const result = await runRestrictedOops({
       binaryPath,
-      binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
-      expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
+      binarySourceSHA: selected.sourceSHA,
+      expectedSourceSHA: selected.sourceSHA,
       expectedBinarySHA256: sha256Executable(binaryPath),
       scenario,
       operation,
@@ -238,12 +315,13 @@ test('current-source OOPS subprocess runs the restricted local relay path withou
     expect(result.workspace.cleaned).toBe(true);
   } finally {
     await relay.close();
+    selected.cleanup();
   }
 });
 
 test('restricted OOPS assertion failure remains a target/oracle result and not a process or privacy failure', async () => {
-  const binaryPath = process.env.NIGHTWATCH_OOPS_BINARY ?? path.resolve('.tmp-nightwatch/oops-build/oops');
-  test.skip(!fs.existsSync(binaryPath), `source-built OOPS binary is unavailable at ${binaryPath}`);
+  const selected = selectOopsBinary();
+  const binaryPath = selected.path;
   const operation = syntheticOperation({ operationId: 'synthetic.oops.failure', requiredHostClass: 'LOCAL_LOOPBACK', authClass: 'NONE_LOCAL_FIXTURE', sourceRepo: 'synthetic', sourceSHA: 'synthetic', sourceProvenance: ['synthetic fixture'] });
   const catalog: ApiCatalog = { schemaVersion: API_CATALOG_VERSION, generatedBy: SCENARIO_GENERATOR_VERSION, operations: [operation] };
   const secret = 'FAILURE_BODY_SENTINEL_NEVER_FORWARDED_5e7a';
@@ -256,8 +334,8 @@ test('restricted OOPS assertion failure remains a target/oracle result and not a
   try {
     const result = await runRestrictedOops({
       binaryPath,
-      binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
-      expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
+      binarySourceSHA: selected.sourceSHA,
+      expectedSourceSHA: selected.sourceSHA,
       expectedBinarySHA256: sha256Executable(binaryPath),
       scenario: generateRestrictedScenario(operation, catalog),
       operation,
@@ -272,41 +350,51 @@ test('restricted OOPS assertion failure remains a target/oracle result and not a
     expect(result.workspace.cleaned).toBe(true);
   } finally {
     await relay.close();
+    selected.cleanup();
   }
 });
 
-test('current-source OOPS validates every Phase 5 generated KNOWN_READ template against a loopback fixture', async () => {
-  const binaryPath = process.env.NIGHTWATCH_OOPS_BINARY ?? path.resolve('.tmp-nightwatch/oops-build/oops');
-  test.skip(!fs.existsSync(binaryPath), `source-built OOPS binary is unavailable at ${binaryPath}`);
+test('restricted OOPS validates every Phase 5 generated KNOWN_READ template against a loopback fixture', async () => {
+  const selected = selectOopsBinary();
+  const binaryPath = selected.path;
   const operations = PHASE5_API_CATALOG.operations.filter((operation) => operation.generationStatus === 'GENERATION_ELIGIBLE');
   expect(operations).toHaveLength(6);
-  for (const operation of operations) {
-    const relay = await startPhase5Relay({
-      catalog: PHASE5_API_CATALOG,
-      mode: 'local',
-      targetResolver: () => new URL('http://127.0.0.1:7312/catalog-fixture'),
-      fetcher: async () => ({
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-        body: Buffer.from(operation.streamingType === 'JSON_CHUNKED' ? '{"chunk":1}\n{"chunk":2}\n' : '{"fixture":true}'),
-      }),
-    });
-    try {
-      const result = await runRestrictedOops({
-        binaryPath,
-        binarySourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
-        expectedSourceSHA: 'c4a129feb0b97dc0ae39f32c39a92abe834567f2',
-        expectedBinarySHA256: sha256Executable(binaryPath),
-        scenario: generateRestrictedScenario(operation, PHASE5_API_CATALOG),
-        operation,
-        relay,
+  try {
+    for (const operation of operations) {
+      const localOperation: ApiOperation = {
+        ...operation,
+        requiredHostClass: 'LOCAL_LOOPBACK',
+        authClass: 'NONE_LOCAL_FIXTURE',
+      };
+      const relay = await startPhase5Relay({
+        catalog: PHASE5_API_CATALOG,
+        mode: 'local',
+        targetResolver: () => new URL('http://127.0.0.1:7312/catalog-fixture'),
+        fetcher: async () => ({
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+          body: Buffer.from(operation.streamingType === 'JSON_CHUNKED' ? '{"chunk":1}\n{"chunk":2}\n' : '{"fixture":true}'),
+        }),
       });
-      expect(result.outcome, operation.operationId).toBe('SCENARIO_SUCCESS');
-      expect(result.relayObservation?.oracle.result, operation.operationId).toBe('ORACLE_PASS');
-      expect(result.output.secretLeakCount, operation.operationId).toBe(0);
-      expect(result.output.rawBodyDetected, operation.operationId).toBe(false);
-    } finally {
-      await relay.close();
+      try {
+        const result = await runRestrictedOops({
+          binaryPath,
+          binarySourceSHA: selected.sourceSHA,
+          expectedSourceSHA: selected.sourceSHA,
+          expectedBinarySHA256: sha256Executable(binaryPath),
+          scenario: generateRestrictedScenario(localOperation, PHASE5_API_CATALOG),
+          operation: localOperation,
+          relay,
+        });
+        expect(result.outcome, operation.operationId).toBe('SCENARIO_SUCCESS');
+        expect(result.relayObservation?.oracle.result, operation.operationId).toBe('ORACLE_PASS');
+        expect(result.output.secretLeakCount, operation.operationId).toBe(0);
+        expect(result.output.rawBodyDetected, operation.operationId).toBe(false);
+      } finally {
+        await relay.close();
+      }
     }
+  } finally {
+    selected.cleanup();
   }
 });

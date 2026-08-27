@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Final Assurance + Release-Readiness Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: READY_FOR_EXECUTION
+Status: IN_PROGRESS
 Campaign ID: nightwatch-final-assurance-release-readiness-hardening-v1
 OpenSpec: openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/
 Planned-From: 9ecd09c0d33d05d665721080627e5d63b376c16d

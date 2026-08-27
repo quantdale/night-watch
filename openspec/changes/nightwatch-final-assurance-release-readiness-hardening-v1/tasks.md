@@ -2,61 +2,62 @@
 
 ## M0 — Takeover and state transition
 
-- [ ] Pull/reconcile current `origin/main` without force; record exact HEAD, branch, origin, Node and npm.
-- [ ] Read `AGENTS.md`, `.agent/PLANNER_HANDOFF.md`, `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, durable project docs and this OpenSpec.
-- [ ] Create `.agent/tasks/nightwatch-final-assurance-release-readiness-hardening-v1/{SPEC,PLAN,STATE,REPORT}.md` using continuity v2.
-- [ ] Transition the execution prompt to `IN_PROGRESS` and route `ACTIVE_TASK` to the new task only when work begins.
-- [ ] Run `npm run handoff:check`, `npm run agent:check`, `npm run project:check` and record baseline truth.
+- [x] Pull/reconcile current `origin/main` without force; record exact HEAD, branch, origin, Node and npm.
+- [x] Read `AGENTS.md`, `.agent/PLANNER_HANDOFF.md`, `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`, durable project docs and this OpenSpec.
+- [x] Create `.agent/tasks/nightwatch-final-assurance-release-readiness-hardening-v1/{SPEC,PLAN,STATE,REPORT}.md` using continuity v2.
+- [x] Transition the execution prompt to `IN_PROGRESS` and route `ACTIVE_TASK` to the new task only when work begins.
+- [x] Run `npm run handoff:check`, `npm run agent:check`, `npm run project:check` and record baseline truth.
 
 Exit: continuity/handoff/project state is coherent and the new task is the sole active route.
 
 ## M1 — Mandatory literal whole-repository audit
 
-- [ ] Use NUL-safe `git ls-files -z` and account for every tracked path.
-- [ ] Read/hash every regular tracked file; require reviewed count == tracked count; classify all files by role/subsystem.
-- [ ] Record safe aggregate count/bytes/lines/digests in task state/report.
-- [ ] Deep-read every live source/tool/config/workflow/gate file; role-review history/generated/fixture files.
-- [ ] Run the required marker/capability/skip/authority/privacy/path scans from `design.md` H0.
-- [ ] Diff the live structural census against the prior 1,359-file audit and explain every meaningful change.
-- [ ] Build a P0–P3 remediation matrix. Do not implement until M1 findings are recorded, except to stop a discovered active safety hazard.
+- [x] Use NUL-safe `git ls-files -z` and account for every tracked path.
+- [x] Read/hash every regular tracked file; require reviewed count == tracked count; classify all files by role/subsystem.
+- [x] Record safe aggregate count/bytes/lines/digests in task state/report.
+- [x] Deep-read every live source/tool/config/workflow/gate file; role-review history/generated/fixture files.
+- [x] Run the required marker/capability/skip/authority/privacy/path scans from `design.md` H0.
+- [x] Diff the live structural census against the prior 1,359-file audit and explain every meaningful change.
+- [x] Build a P0–P3 remediation matrix. Do not implement until M1 findings are recorded, except to stop a discovered active safety hazard.
 
 Exit: 100% tracked-path accounting; no unexplained file; prioritized evidence-backed findings exist.
 
 ## M2 — Architecture and end-to-end authority audit
 
-- [ ] Trace environment/browser/proxy/evidence chain.
-- [ ] Trace source/proof/lifecycle/eligibility/campaign chain.
-- [ ] Trace candidate/replay/minimization/triage/dossier/finding chain.
-- [ ] Trace Control Center authority/adapters/coordinator/server/UI chain.
-- [ ] Trace planner/handoff/task/project-state/gate chain.
-- [ ] Trace package script/gate definition/inventory/runner/clean-runner chain.
-- [ ] Identify duplicate authorities, fallback selectors, stale caches, silent normalization, unchecked state, error swallowing and lifecycle leaks.
-- [ ] Reproduce every material suspected defect before repair where practical.
+- [x] Trace environment/browser/proxy/evidence chain.
+- [x] Trace source/proof/lifecycle/eligibility/campaign chain.
+- [x] Trace candidate/replay/minimization/triage/dossier/finding chain.
+- [x] Trace Control Center authority/adapters/coordinator/server/UI chain.
+- [x] Trace planner/handoff/task/project-state/gate chain.
+- [x] Trace package script/gate definition/inventory/runner/clean-runner chain.
+- [x] Identify duplicate authorities, fallback selectors, stale caches, silent normalization, unchecked state, error swallowing and lifecycle leaks.
+- [x] Reproduce every material suspected defect before repair where practical.
 
 Exit: every core workflow has one documented authority path and all P0/P1 defects have executable reproductions or are marked false hypotheses.
 
 ## M3 — Repair P0/P1 defects
 
-- [ ] Fix all P0 findings immediately, preserving fail-closed boundaries.
-- [ ] Fix all P1 findings before unrelated P2 work.
-- [ ] Add regression tests for every material defect.
-- [ ] Run focused and dependency-cone validation after each repair.
+- [x] Fix all P0 findings immediately, preserving fail-closed boundaries.
+- [ ] Fix all P1 findings before unrelated P2 work (the L6 residual remains
+  deliberately open and fail-closed).
+- [x] Add regression tests for every material defect.
+- [x] Run focused and dependency-cone validation after each repair.
 - [ ] Never weaken assertions/proof thresholds/safety/privacy checks to recover green.
 
 Exit: zero open P0/P1 findings; affected cones green.
 
 ## M3A — L6 process containment + safety-test authority
 
-- [ ] Re-derive the current browser/helper/OOPS child-process and network-egress topology from source.
-- [ ] Reproduce `inspectOopsSandbox()` locally and record Bubblewrap availability, namespace probe result and relay compatibility using synthetic loopback only.
-- [ ] Verify real/authenticated OOPS remains disabled and no alternate launcher bypasses that decision.
-- [ ] Build a minimal adversarial L6 matrix for direct DNS, TCP, UDP, HTTP and permitted synthetic proxy/relay flow.
-- [ ] Design the narrowest unprivileged/rootless L6 envelope; reject any design that needs root, privileged firewall/network administration, system-wide proxy/DNS/hosts changes, TLS MITM, or live external probes.
-- [ ] If safely implementable, add versioned L6 capability/runtime identity, startup/liveness/cleanup checks, process-launch binding and fail-closed readiness integration.
-- [ ] If not safely implementable, encode the unsupported/residual state mechanically and block any route or completion claim that would require complete process isolation.
-- [ ] Run the WebSocket containment smoke matrix with retries disabled; remove the stale retry workaround if the race is no longer reproducible, otherwise repair the underlying registration/lifecycle defect first.
-- [ ] Replace release-critical restricted-OOPS binary-absence skips with deterministic clean qualification where practical; otherwise classify the exact tests as `BLOCKING_VALIDATION_GAP`.
-- [ ] Add permanent regressions for every defect found in this workstream.
+- [x] Re-derive the current browser/helper/OOPS child-process and network-egress topology from source.
+- [x] Reproduce `inspectOopsSandbox()` locally and record Bubblewrap availability, namespace probe result and relay compatibility using synthetic loopback only.
+- [x] Verify real/authenticated OOPS remains disabled and no alternate launcher bypasses that decision.
+- [x] Build a minimal adversarial L6 matrix for direct DNS, TCP, UDP, HTTP and permitted synthetic proxy/relay flow.
+- [x] Design the narrowest unprivileged/rootless L6 envelope; reject any design that needs root, privileged firewall/network administration, system-wide proxy/DNS/hosts changes, TLS MITM, or live external probes.
+- [x] If safely implementable, add versioned L6 capability/runtime identity, startup/liveness/cleanup checks, process-launch binding and fail-closed readiness integration.
+- [x] If not safely implementable, encode the unsupported/residual state mechanically and block any route or completion claim that would require complete process isolation.
+- [x] Run the WebSocket containment smoke matrix with retries disabled; remove the stale retry workaround if the race is no longer reproducible, otherwise repair the underlying registration/lifecycle defect first.
+- [x] Replace release-critical restricted-OOPS binary-absence skips with deterministic clean qualification where practical; otherwise classify the exact tests as `BLOCKING_VALIDATION_GAP`.
+- [x] Add permanent regressions for every defect found in this workstream.
 
 Exit: no silent L6 claim inflation; no unsafe authenticated OOPS route; no safety-critical retry masking; restricted subprocess behavior is deterministically qualified or terminal certification is blocked.
 

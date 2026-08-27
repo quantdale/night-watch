@@ -9,9 +9,9 @@
 //
 // HARNESS BEHAVIOR NOTES (verified empirically 2026-08-09, Playwright 1.62.1 +
 // system Chrome, after Phase 1.1 harness fixes):
-//   * L1 context.route('**/*') and L2 context.routeWebSocket('**/*') are
-//     AWAITED before any navigation (routeWebSocket installs an in-page init
-//     script + binding — unawaited, it leaves a window without the gate).
+//   * L1 context.route('**/*') and L2 context.routeWebSocket('**/*') complete
+//     before any navigation (routeWebSocket installs an in-page init script
+//     and binding).
 //   * L0 raw-CDP Fetch guard (fetchGuard.ts) pauses EVERY request on the page
 //     target — including redirect follow-ups, which Playwright routing does
 //     NOT re-intercept — and fails denied/telemetry URLs with the SAME policy
@@ -208,12 +208,6 @@ async function runProbe(
       passed: !ctx.monitor.failed,
       notes: ctx.monitor.summaryNotes(),
     });
-    // The harness registers context.routeWebSocket without awaiting it; if the
-    // context is closed while that registration is still in flight, its dropped
-    // promise rejects with "Target page, context or browser has been closed"
-    // and the unhandled rejection poisons the NEXT test. The in-page WS gate
-    // only appears once registration completed, so wait for it before closing.
-    await waitForWsGate(ctx, false, server.origin);
     return { monitor: ctx.monitor, recorder, summary, result };
   } finally {
     await ctx.close();
@@ -249,64 +243,14 @@ async function waitForHardFailure(
     .toBe(true);
 }
 
-/**
- * L2 (routeWebSocket) is installed via an in-page init script that the harness
- * registers WITHOUT awaiting; the first document can therefore miss it. Poll a
- * THROWAWAY page until the gate (globalThis.__pwWebSocketDispatch) is present,
- * which proves the registration completed. When `reloadMain` is set (WebSocket
- * tests), the main page is then reloaded once so ITS current document carries
- * the gate too — a document created before the registration landed never gets
- * it. The main page is never touched when `reloadMain` is false (post-finalize
- * close-safety wait in runProbe), so evidence is not disturbed; the reload
- * failure on pages stuck at a denied URL is tolerated.
- *
- * The probe page is re-navigated to the FIXTURE ORIGIN each iteration (a real
- * document): goto('about:blank') from an already-about:blank page is a no-op,
- * so the gate would never be observed on a fresh document.
- */
-async function waitForWsGate(ctx: NightwatchContext, reloadMain: boolean, origin: string): Promise<void> {
-  const probePage = await ctx.context.newPage();
-  try {
-    for (let i = 0; i < 25; i++) {
-      const hasGate = await probePage.evaluate(
-        () => typeof (globalThis as unknown as Record<string, unknown>).__pwWebSocketDispatch === 'function'
-      );
-      if (hasGate) {
-        if (reloadMain) {
-          try {
-            await ctx.page.reload();
-          } catch {
-            try {
-              await ctx.page.goto('about:blank');
-            } catch {
-              // page unreachable — the context is closed right after anyway
-            }
-          }
-        }
-        return;
-      }
-      await probePage.goto(origin + '/');
-      // Registration can take >1s under suite load; let it land instead of
-      // busy-spinning the loop.
-      await new Promise((r) => setTimeout(r, 100));
-    }
-  } finally {
-    await probePage.close();
-  }
-  throw new Error('L2 WebSocket gate never engaged (harness registration race)');
-}
-
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
 
 test.describe('network surface containment', () => {
-  // The harness installs L2 (routeWebSocket) asynchronously; on rare occasions
-  // a context's registration never completes (see suite header + report). A
-  // hung context fails the gate wait fast, and the retry runs the test again
-  // with a fresh context/server — the registration virtually always lands on
-  // the retry. A deterministic harness bug still fails all 3 attempts.
-  test.describe.configure({ retries: 2 });
+  // This safety-critical suite is intentionally retry-free. A containment
+  // registration race must fail visibly instead of being masked by a retry.
+  test.describe.configure({ retries: 0 });
 
   test('HTTP: allowed fixture request passes policy', async ({ browser }) => {
     const server = await startFixtureServer('safety');
@@ -562,7 +506,7 @@ test.describe('network surface containment', () => {
           }
         },
         async (ctx) => {
-          // Give the follow-up + any Chromium retry time to settle.
+          // Give the follow-up request time to settle.
           await ctx.page.waitForTimeout(1500);
         }
       );
@@ -634,8 +578,7 @@ test.describe('network surface containment', () => {
         browser,
         server,
         'safety-ws-ok',
-        async (page, ctx) => {
-          await waitForWsGate(ctx, true, server.origin);
+        async (page) => {
           return page.evaluate(
             (args: { url: string; send: string }): Promise<{
               open: boolean;
@@ -679,8 +622,7 @@ test.describe('network surface containment', () => {
         browser,
         server,
         'safety-ws-prod',
-        async (page, ctx) => {
-          await waitForWsGate(ctx, true, server.origin);
+        async (page) => {
           return page.evaluate(
             (url: string): Promise<{ open: boolean; close: boolean; code: number | null; messages: string[] }> =>
               ((globalThis as unknown as { __nw: NwDriver }).__nw).wsOpen(url),
@@ -722,8 +664,7 @@ test.describe('network surface containment', () => {
         browser,
         server,
         'safety-ws-unknown',
-        async (page, ctx) => {
-          await waitForWsGate(ctx, true, server.origin);
+        async (page) => {
           return page.evaluate(
             (url: string): Promise<{ open: boolean; close: boolean; code: number | null; messages: string[] }> =>
               ((globalThis as unknown as { __nw: NwDriver }).__nw).wsOpen(url),
@@ -755,8 +696,7 @@ test.describe('network surface containment', () => {
         browser,
         server,
         'safety-ws-telemetry',
-        async (page, ctx) => {
-          await waitForWsGate(ctx, true, server.origin);
+        async (page) => {
           return page.evaluate(
             (url: string): Promise<{ open: boolean; close: boolean; code: number | null; messages: string[] }> =>
               ((globalThis as unknown as { __nw: NwDriver }).__nw).wsOpen(url),
