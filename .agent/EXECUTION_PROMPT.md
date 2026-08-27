@@ -57,7 +57,7 @@ A grep with zero matches is not an all-file audit. Record the H0 census and reme
 
 ## Campaign decision and priority
 
-The planner's current decision is **Codebase Hardening**, with conditional implementation only when fresh evidence earns it.
+The planner's current decision is **Combined Implementation + Hardening**, tightly bounded to release-critical evidence. Fresh review has already earned focused work on the documented L6 process/DNS containment residual and safety-critical retry/conditional-skip qualification; this does not authorize broad product expansion.
 
 Do not reopen source-proof, portfolio, DEV, self-development, infrastructure, publication, or other product scope simply to fill time. If the whole-system audit finds a P0/P1 implementation defect, fix it immediately and add a regression. If no significant defect exists, continue through final assurance/certification and stop without manufacturing work.
 
@@ -85,6 +85,12 @@ Trace end-to-end:
 
 Reject duplicate authority, silent fallback, stale-currentness acceptance and ambiguous machine truth.
 
+### L6 process/DNS containment truth
+
+Reproduce the current L6 boundary before claiming release completeness: browser speculative DNS remains outside L5; Bubblewrap currently reports relay incompatibility; authenticated OOPS remains disabled. Prefer an unprivileged/rootless L6 design and prove direct DNS/TCP/UDP escape denial separately from allowed synthetic proxy/relay flow. Never use root, privileged firewall/network administration, system-wide proxy/DNS/hosts mutation, TLS MITM or live external probes. If safe closure is not possible, preserve fail-closed routes and terminate full-completion certification as blocked.
+
+Re-run the WebSocket containment smoke surface with retries disabled. The current network observer awaits `routeWebSocket`; stale retry rationale may not mask safety regressions. Deterministically qualify restricted-OOPS provenance/relay/privacy behavior in clean certification rather than silently skipping it when a local binary is absent.
+
 ### Skipped-test truth
 
 Enumerate every skipped test by exact identity and guard. Give each one exactly one allowed disposition from the OpenSpec. No unexplained skip may remain in a COMPLETE result.
@@ -106,6 +112,7 @@ Cross-check README, AGENTS, CURRENT_STATE, ROADMAP, ARCHITECTURE, SAFETY_MODEL, 
 - No DEV/NEXT/production contact without separate explicit authorization.
 - No auth capture or credential use.
 - No database/cloud/infrastructure/data-layer operations.
+- No root or privileged firewall/network-administration operations; no system-wide proxy/DNS/hosts mutation or TLS MITM.
 - No writes to sibling Alphaus repositories.
 - No publication, external messaging, issue creation or evidence upload.
 - No runtime AI authority.
@@ -147,7 +154,7 @@ Choose exactly one and support it with receipts:
 - `PROJECT_COMPLETE_AND_CI_CERTIFIED`
 - `PROJECT_NOT_COMPLETE_BLOCKED`
 
-A COMPLETE outcome is forbidden while any P0/P1 defect, blocking P2, unexplained skipped test, required local/clean gate failure, safety/privacy regression, or known release-blocking defect remains.
+A COMPLETE outcome is forbidden while any P0/P1 defect, blocking P2, unexplained skipped test, safety-critical retry masking, required local/clean gate failure, safety/privacy regression, false L6/process-isolation claim, or known release-blocking defect remains.
 
 When terminal, update task state/plan/report, OpenSpec checklist, current project docs, this prompt and ACTIVE_TASK coherently. Preserve substantive implementation SHA roles across documentation-only closure. Commit validated checkpoints, push without force, and verify local HEAD == `origin/main`.
 
