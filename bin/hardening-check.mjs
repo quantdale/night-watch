@@ -1469,10 +1469,10 @@ function checkPhase12AuthoritySetsUnchanged() {
   if (!/FROZEN_BY_OWNER/.test(ownerScope) || !/INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE/.test(ownerScope)) {
     fail('Phase 12 owner-scope freeze marker missing');
   }
-  // Canonical selfdev catalog digest/count must remain 1 unless a new
-  // promotion is explicitly authorized (not part of Phase 12).
+  // Canonical selfdev catalog digest/count must be correct for the current
+  // authorized state. Expected 2 after variant B canonical promotion.
   const catalogCount = (selfDevCatalog.match(/"adoptedCaseId"/g) ?? []).length;
-  if (catalogCount !== 1) fail(`Phase 12 canonical catalog count drift: expected 1, found ${catalogCount}`);
+  if (catalogCount !== 2) fail(`Phase 12 canonical catalog count drift: expected 2, found ${catalogCount}`);
 }
 
 /**

@@ -22,6 +22,29 @@
 export const SELFDEV_ADOPTED_CASES = [
   {
     "schemaVersion": "nightwatch.selfdev-adopted-case.v1",
+    "adoptedCaseId": "adopted-case:sha256:6543eb5ddb077aecce73048c3ce6b7dcbefb9103f2295ce87ff15add9f447cb9",
+    "fixtureId": "selfdev.fixture.local-regression.v1",
+    "actionIds": [
+      "selfdev.synthetic.expand-summary",
+      "selfdev.synthetic.collapse-summary"
+    ],
+    "assertionIds": [
+      "selfdev.assert.state.ready",
+      "selfdev.assert.transition.collapse",
+      "selfdev.assert.oracle.structural-stable"
+    ],
+    "equivalentFingerprint": "sha256:917d83b50dab0c72a38b8d54bea5ede6ca3485b5739186979aba48d8ccfff099",
+    "coverageClasses": [
+      "oracle:structural-stable",
+      "state-action:expanded:selfdev.synthetic.collapse-summary",
+      "state-action:ready:selfdev.synthetic.expand-summary",
+      "transition:expanded-read-only-collapse",
+      "transition:ready-read-only-expansion"
+    ],
+    "strategyClass": "DECLARATIVE_REGRESSION_CATALOG_PROMOTION"
+  },
+  {
+    "schemaVersion": "nightwatch.selfdev-adopted-case.v1",
     "adoptedCaseId": "adopted-case:sha256:90248aaeaf06187038973b0a03f2baa27bdf6f270b4fc43338e1bded74b0e234",
     "fixtureId": "selfdev.fixture.local-regression.v1",
     "actionIds": [
