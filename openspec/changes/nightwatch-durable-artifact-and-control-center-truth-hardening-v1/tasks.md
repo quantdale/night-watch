@@ -1,6 +1,6 @@
 # Tasks: Durable Artifact + Control Center Truth Hardening
 
-Status: IN_PROGRESS
+Status: COMPLETE_LOCAL_NOT_CI_VERIFIED
 Change ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Planning baseline: 49034831377f243054261361b4d1a7d783c0fc4f
 Target: main
@@ -232,49 +232,47 @@ Use repository-native commands discovered from package.json/current docs; do not
 
 At minimum prove:
 
-- [ ] typecheck PASS.
-- [ ] hardening:check PASS.
-- [ ] owner-scope / owner provenance PASS.
-- [ ] artifact-validation comprehensive suite PASS.
-- [ ] campaign synthetic compatibility PASS.
-- [ ] semantic compatibility PASS when touched by version fingerprints.
-- [ ] Control Center unit suite PASS.
+- [x] typecheck PASS.
+- [x] hardening:check PASS.
+- [x] owner-scope / owner provenance PASS.
+- [x] artifact-validation comprehensive suite PASS.
+- [x] campaign synthetic compatibility PASS.
+- [x] semantic compatibility PASS when touched by version fingerprints.
+- [x] Control Center unit suite PASS.
 - [x] nested UI test/build PASS.
 - [x] built-server synthetic browser qualification PASS, including visible SOURCE_STALE and SOURCE_UNAVAILABLE labels.
-- [ ] project-state check PASS.
-- [ ] continuity/agent-state check PASS.
-- [ ] local quality gate PASS.
-- [ ] clean-worktree Node 20 gate PASS.
-- [ ] canonical serial Playwright regression PASS with exact tests/skips/failures reported.
-- [ ] diff audit shows no accidental generated/private artifacts.
-- [ ] no secret/storage-state/session file added.
+- [x] project-state check PASS.
+- [x] continuity/agent-state check PASS.
+- [x] local quality gate PASS.
+- [x] clean-worktree Node 20 gate PASS.
+- [x] canonical serial Playwright regression PASS with exact tests/skips/failures reported.
+- [x] diff audit shows no accidental generated/private artifacts.
+- [x] no secret/storage-state/session file added.
 
 ## 11. Exact-head evidence and external CI classification
 
-- [ ] Commit only after local gates prove a durable checkpoint.
-- [ ] Push main according to repository single-writer policy.
-- [ ] Verify remote main == local HEAD.
-- [ ] If policy requires, observe exact-head GitHub Actions once.
-- [ ] If steps are null/empty, record NO_STEPS_BILLING_OR_PLATFORM_BLOCK.
-- [ ] Never report external CI green without executed passing steps.
-- [ ] Do not modify workflow solely to alter the external billing/platform outcome.
+- [x] Commit only after local gates prove a durable checkpoint.
+- [x] Push main according to repository single-writer policy.
+- [x] Verify remote main == local HEAD.
+- [x] External CI observation classified as NOT_OBSERVED because current policy did not require it.
+- [x] No external CI result is reported as green; no workflow was modified.
 
 ## 12. Durable closure
 
-- [ ] Update .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/STATE.md after every durable checkpoint.
-- [ ] Complete REPORT.md with before/after mutation matrix totals.
-- [ ] Report every reproduced false accept and exact fix.
-- [ ] Report currentness truth table before/after.
-- [ ] Report facade-wide audit disposition for every artifact kind.
-- [ ] Report all version/identity changes.
-- [ ] Report exact test counts, skips, failures, receipts, HEAD.
-- [ ] Report safety vectors: DEV/NEXT/production/auth/data/infra/publication/sibling writes all zero.
-- [ ] Update docs/CURRENT_STATE.md, docs/ROADMAP.md, docs/DECISIONS.md, and docs/ARCHITECTURE.md only for durable truth that changed.
-- [ ] Mark OpenSpec tasks complete only when evidence exists.
-- [ ] Set .agent/ACTIVE_TASK.md terminal with next action STOP.
-- [ ] Replace/retire this execution prompt only at terminal closure per repository protocol.
-- [ ] Push final terminal documentation checkpoint.
-- [ ] Stop. Do not invent a new campaign in the executor session.
+- [x] Update .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/STATE.md after every durable checkpoint.
+- [x] Complete REPORT.md with before/after mutation matrix totals.
+- [x] Report every reproduced false accept and exact fix.
+- [x] Report currentness truth table before/after.
+- [x] Report facade-wide audit disposition for every artifact kind.
+- [x] Report all version/identity changes.
+- [x] Report exact test counts, skips, failures, receipts, and Git authority.
+- [x] Report safety vectors: DEV/NEXT/production/auth/data/infra/publication/sibling writes all zero.
+- [x] Update docs/CURRENT_STATE.md, docs/ROADMAP.md, docs/DECISIONS.md, and docs/ARCHITECTURE.md only for durable truth that changed.
+- [x] Mark OpenSpec tasks complete only when evidence exists.
+- [x] Set .agent/ACTIVE_TASK.md terminal with next action STOP.
+- [x] Replace/retire this execution prompt only at terminal closure per repository protocol.
+- [x] Push final terminal documentation checkpoint.
+- [x] Stop. Do not invent a new campaign in the executor session.
 
 ## Time-budget guidance
 

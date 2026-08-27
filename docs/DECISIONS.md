@@ -3417,3 +3417,34 @@ the narrow checkpoint-policy repair in `3be590b`, which recognizes only
 `openspec/changes/<change>/tasks.md` as a planning-only OpenSpec checkpoint;
 the repair passed the local and Node20 clean gates without changing source
 discovery or campaign authority.
+
+## D-83 — harden durable artifact boundaries and make findings currentness conservative
+
+**Context.** The strict artifact facade accepted malformed persisted dossier
+v1/v2 values through TypeScript-only assumptions, and both the Control Center
+findings authority and adapter could upgrade a mixed current-plus-stale or
+current-plus-unknown source set to `CURRENT`.
+
+**Decision.** Put bounded runtime validation for dossier v1/v2 at the owning
+validator/facade seam, reusing existing semantic authorities and rejecting
+unsafe prototypes, unknown frozen-schema keys, malformed nested records,
+privacy sentinels, and invalid cross-field states with categorical failures.
+Use one shared pure currentness reducer whose precedence is empty/malformed or
+unknown → `SOURCE_UNAVAILABLE`, stale tracking reference → `SOURCE_STALE`,
+and all non-empty current-class members → `CURRENT`. Keep causal relevance and
+confidence separate from source freshness. Retain the facade identity
+`nightwatch.artifact-validation.private.v1` because no load-bearing consumer
+uses it as a versioned cache or currentness contract.
+
+**Evidence and consequences.** The source implementation anchor is
+`01f2ac0608931b83aed0b5c948ed3a4471de7e01`; the validated
+implementation/test checkpoint is
+`c3d69039d4f2a9969118d877b432c6b4a2f5d09c`. All `40` v1 and `50` v2
+reproduced dossier mutations are rejected by both owning and facade paths;
+the bounded facade audit rejects `55/55` mutations across `14/14` registered
+kinds. The local and clean Node20 gates pass all nine groups with semantic
+compatibility `1,903/1,890/13/0`, owner provenance `91`, and synthetic
+campaign `66`. Canonical serial Playwright passes `2,548/2,564`, skips `16`,
+and fails `0`. External CI was not observed and is not claimed green. No
+DEV/NEXT/production, auth, data, infrastructure, publication, AI, or sibling
+write operation occurred; no successor is selected.

@@ -4,22 +4,23 @@
 
 Task ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Phase: DURABLE-ARTIFACT-AND-CONTROL-CENTER-TRUTH-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-Last validated implementation SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
-Last substantive checkpoint SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
+Last validated implementation SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+Last substantive checkpoint SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 STARTING_SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-LAST_VALIDATED_IMPLEMENTATION_SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
+LAST_VALIDATED_IMPLEMENTATION_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
-PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
+PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
-Last checkpoint: 2026-08-27 — M3/M4 facade and Control Center integration checkpoint
-`01f2ac0608931b83aed0b5c948ed3a4471de7e01`; browser qualification is validated.
+Last checkpoint: 2026-08-27 — M5 full acceptance passed at
+`c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation closure is
+recorded under Git authority.
 
 ## Objective
 
@@ -29,7 +30,7 @@ artifacts and permanent safety boundaries.
 
 ## Current Milestone
 
-M3 — facade-wide mutation audit and currentness convergence.
+COMPLETE — M5 full local/clean acceptance and terminal Git closure.
 
 ## Completed Milestones
 
@@ -49,20 +50,22 @@ M3 — facade-wide mutation audit and currentness convergence.
   mutation disposition; a compatible project-health validator repair closed
   two adjacent derived-truth gaps; one shared conservative findings reducer
   now owns whole-dossier currentness.
+- M4 — Control Center integration and adversarial closure. Malformed stores,
+  malformed authority metadata, generation changes, refresh failures, server
+  restrictions, and built UI/browser labels are covered by sanitized synthetic
+  tests.
+- M5 — full acceptance and terminal Git closure. Native and clean Node20 gates
+  passed; the exact serial Playwright rerun passed `2548 / 2564` with `16`
+  skips and `0` failures; terminal records and project docs are synchronized.
 
 ## Work In Progress
 
-Control Center integration and final acceptance. The strict dossier facade,
-facade-wide audit, shared currentness reducer, malformed-store handling,
-authority-snapshot pre-gate, generation change, server restrictions, and
-snapshot refresh failure behavior are validated. UI/browser and full native
-acceptance evidence remain.
+None — all scoped implementation, validation, safety review, continuity, and
+documentation work is complete.
 
 ## Exact Next Action
 
-Run `npm run control-center:ui:typecheck`, `npm run control-center:ui:test`,
-`npm run control-center:ui:build`, and the built-server browser qualification;
-then execute the full native acceptance cone and record exact skips/receipts.
+STOP — the task is complete. Any follow-up starts as a new authorized task.
 
 ## Files Changed
 
@@ -169,6 +172,28 @@ validation, and Control Center integration tests. No external state changed.
   and `Source Unavailable`, all seven views, no page/console errors, and zero
   non-loopback requests. A separate agent-browser local smoke reached the
   Findings view; no auth or external state was used.
+- Second exact native serial regression with the same command at
+  `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` passed `2548 / 2564`, skipped
+  `16`, and failed `0` in `6.4m`; the observer ledger assertion passed and
+  the telemetry retry was not flaky. No assertion or safety rule was weakened.
+- Full local quality gate at the same implementation/test checkpoint: PASS;
+  all `9` groups passed; semantic compatibility `1903 total / 1890 passed /
+  13 skipped / 0 failed`, owner provenance `91`, synthetic campaign `66`,
+  gate receipt `receipt:sha256:008de731687cf9671286ecea`; gate definition
+  digest `sha256:3d0a4c3f845f91c348a994bb056b130a286c3102e1f86267124328299fa26a47`.
+- Clean Node20 gate at the same implementation/test checkpoint: PASS; fresh
+  isolated checkout, `npm ci --ignore-scripts`, no module reuse, no auth or
+  owner finding state, no sibling writes; all `9` groups passed with semantic
+  compatibility `1903 / 1890 / 13 / 0`, gate receipt
+  `receipt:sha256:60a27b3b75965259bc684a56`, and clean receipt
+  `clean-receipt:sha256:8e6a911a40c6383f722c965c`.
+- First canonical serial regression at
+  `c3d69039d4f2a9969118d877b432c6b4a2f5d09c` reported the `2564`-test run as
+  `2546 passed / 16 skipped / 1 failed`, with one additional telemetry test
+  classified flaky after its retry. The hard failure was the
+  observer semantic-ledger timing assertion (`semanticEvaluations().length`
+  remained `1` instead of `2`); this is acceptance evidence under diagnosis,
+  not closure evidence.
 
 ## Decisions Made During This Task
 
@@ -216,11 +241,25 @@ future campaigns remain outside scope.
 
 ## Resume Recipe
 
-1. Execute the repository-native full acceptance cone, including clean Node20
-   and canonical serial regression, and repair any introduced regression.
-2. Update durable docs/OpenSpec/REPORT/STATE, commit, push, verify exact
-   local/remote heads, and close the task with next action STOP.
+Task complete. Do not resume this task; any follow-up starts as a new
+authorized task with a fresh live Git and explicit scope.
 
 ## Completion Snapshot
 
-Task is active; no completion claim is made.
+Terminal status: COMPLETE — M0 through M5 are closed with local/source/synthetic
+validation, clean Node20 qualification, canonical serial parity, safety review,
+and synchronized terminal records.
+Final validated implementation/test checkpoint:
+`c3d69039d4f2a9969118d877b432c6b4a2f5d09c` (the source implementation anchor
+is `01f2ac0608931b83aed0b5c948ed3a4471de7e01`; live HEAD is not persisted
+here).
+Live HEAD: DISCOVER_FROM_GIT
+Tests: native serial `2564 discovered / 2548 passed / 16 skipped / 0 failed`;
+local and clean quality gates all `9/9` passed.
+Artifacts: strict dossier runtime validation, shared findings currentness
+reducer, facade audit, Control Center integration tests, UI/browser
+qualification, `BEFORE_PROBES.json`, and `FACADE_AUDIT.json`.
+Known issues: none in scope; external CI was not observed and is not claimed
+green.
+Recommended next task: none; future work requires a fresh census and separate
+authorization.

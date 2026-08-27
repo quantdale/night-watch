@@ -1823,3 +1823,34 @@ source-bound and investigation-only; no new proof family or promotion
 authority was added. The owner freeze, raw-source privacy boundary,
 non-executing scanners, deterministic identities, and existing Phase-24
 authority remain unchanged.
+
+## Durable artifact and Control Center truth hardening
+
+The durable artifact architecture now has an explicit bounded runtime boundary
+between untrusted persisted JSON and dossier authorities. Dossier v1/v2
+owning validators delegate to a shared strict runtime validator that proves
+plain-record prototypes, exact frozen keys, bounded arrays, safe scalar
+vocabularies, nested source/reproduction/differential/fault/confidence/
+recipe/AI-ready shapes, semantic-owner validity, and mechanically justified
+cross-field relationships. It returns categorical privacy-safe failures and
+does not mutate or recursively traverse arbitrary graphs. The artifact facade
+uses this boundary before any durable read consumer can rely on dossier shape.
+
+Findings currentness is a separate pure projection authority at
+`src/controlCenter/authorities/findingsCurrentness.ts`. It reduces the entire
+required freshness set with conservative precedence: malformed or empty input
+and any `UNKNOWN` member produce `SOURCE_UNAVAILABLE`; a stale tracking
+reference produces `SOURCE_STALE` when no unknown exists; `CURRENT` requires a
+non-empty all-current-class set. Findings adapters project authority metadata
+and retain the reducer only at the direct raw-dossier compatibility seam; they
+cannot strengthen a less-current authority result. Collector validation
+rejects malformed authority snapshots before public state projection.
+
+The Control Center remains a read-only loopback view. Malformed stores become
+partial/unknown, only sanitized valid metadata survives, refresh failures
+serve an unavailable response rather than an old current generation, and SSE
+remains advisory. The built synthetic browser contract covers all seven views,
+including visible `Source Stale` and `Source Unavailable` findings labels, with
+no external requests. No new persistence, execution, source, DEV, data,
+infrastructure, authentication, AI, or promotion authority was introduced;
+the artifact facade identity remains `nightwatch.artifact-validation.private.v1`.

@@ -161,7 +161,8 @@ pushes; only this development session may create validated Git checkpoints.
   STOP; remote equals local; tree clean.
 - Validation: full prompt/OpenSpec list, `git diff --check`, final privacy
   audit, and one exact-head Actions observation at most if required.
-- Status: IN_PROGRESS
+- Status: COMPLETE — native, clean Node20, and canonical serial acceptance passed;
+  terminal continuity and documentation closure are recorded below.
 
 ## Validation Strategy
 
@@ -180,6 +181,10 @@ focused result as proof of a full-cone requirement.
 - 2026-08-27 — Kept all work LOCAL / SOURCE / SYNTHETIC under the permanent
   owner freeze; the OpenSpec explicitly forbids external and authority-expanding
   actions.
+- 2026-08-27 — Accepted the second exact native serial run after one
+  non-reproduced timing failure: `2548 passed / 16 skipped / 0 failed` out of
+  `2564`; the first run remains recorded as diagnostic evidence and no test
+  assertion was weakened.
 
 ## Discoveries
 
@@ -199,6 +204,6 @@ All OpenSpec task groups have evidence-backed completion; every registered
 artifact kind has a bounded mutation disposition; reproduced dossier false
 accepts are fixed; conservative currentness is owned once and integrated
 through Control Center; full local and clean acceptance passes; safety vectors
-are zero; task/project/docs truth is coherent; final validated checkpoint is
+are zero; task/project/docs truth is coherent; the terminal checkpoint is
 pushed to `origin/main`, confirmed equal to local `HEAD`, and the terminal
 next action is STOP.

@@ -3,18 +3,18 @@
 Task ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Phase: DURABLE-ARTIFACT-AND-CONTROL-CENTER-TRUTH-HARDENING-V1
 Title: Durable Artifact + Control Center Truth Hardening
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Starting SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-Last validated implementation SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
-Last checkpoint: M3/M4 facade and Control Center integration checkpoint 01f2ac0608931b83aed0b5c948ed3a4471de7e01; browser qualification is now validated.
-Current milestone: M5 — full acceptance and terminal Git closure.
-Next action: Run the complete native acceptance cone, clean Node20 gate, and canonical serial regression; then close and push terminal state.
+Last validated implementation SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+Last checkpoint: M5 full acceptance passed at `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`; terminal documentation closure is recorded under Git authority.
+Current milestone: COMPLETE — M5 full acceptance and terminal Git closure.
+Next action: STOP — this task is complete; any follow-up requires a new authorized task.
 Authorization class: NIGHTWATCH_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 42ea9723c10f60cc02c663748c493c6c34f73116
-LAST_VALIDATED_IMPLEMENTATION_SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 01f2ac0608931b83aed0b5c948ed3a4471de7e01
+LAST_VALIDATED_IMPLEMENTATION_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c3d69039d4f2a9969118d877b432c6b4a2f5d09c
 LIVE_HEAD_AUTHORITY: GIT
 
 ## Routing and safety

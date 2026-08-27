@@ -1,6 +1,7 @@
 # EXECUTION PROMPT — Durable Artifact + Control Center Truth Hardening
 
-Status: ACTIVE PLANNING HANDOFF — IMPLEMENTATION NOT STARTED
+Status: COMPLETED — executed and closed in the terminal task records
+`.agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/`.
 Change ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
 Planned-From: 49034831377f243054261361b4d1a7d783c0fc4f
 Target branch: main
@@ -363,6 +364,12 @@ Suggested sequence:
 - 11-12h exact-head evidence, docs, continuity, final push
 
 If the full acceptance gate is achieved earlier, close honestly and stop. If the budget is exhausted with unresolved correctness, preserve truthful INCOMPLETE/BLOCKED state and the exact next command/action.
+
+## Terminal disposition
+
+This execution prompt was executed under its LOCAL / SOURCE / SYNTHETIC
+authority boundary. The implementation, validation, documentation, and Git
+closure requirements are complete; no external CI result is claimed.
 
 ## Terminal report format
 

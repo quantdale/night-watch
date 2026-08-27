@@ -1,20 +1,20 @@
 # Durable Artifact + Control Center Truth Hardening — Execution Report
 
-Status: IN_PROGRESS
+Status: COMPLETE
 Task ID: `nightwatch-durable-artifact-and-control-center-truth-hardening-v1`
 Phase: DURABLE-ARTIFACT-AND-CONTROL-CENTER-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `42ea9723c10f60cc02c663748c493c6c34f73116`
 
-This report is a live handoff. It will be completed only after the fresh
-tracked-file audit, pre-fix reproductions, implementation, full local/clean
-acceptance, safety/privacy review, and validated Git closure.
+This report is the terminal handoff. The fresh tracked-file audit, pre-fix
+reproductions, implementation, full local/clean acceptance, safety/privacy
+review, and validated Git closure are complete.
 
 ## Current evidence
 
 - Requested fast-forward pull completed at the clean starting SHA above.
-- M0 is complete. The task is active and no executable implementation change
-  has been made.
+- M0 is complete. The fresh task is now terminal; the implementation and
+  closure evidence are recorded below.
 - Safety scope is LOCAL / SOURCE / SYNTHETIC only.
 
 ### M0 baseline and exhaustive audit
@@ -152,8 +152,8 @@ Focused validation after these changes:
 - `npm run typecheck`: PASS; `npm run hardening:check`: PASS; `git diff
   --check`: PASS.
 
-The remaining work is the full native/clean acceptance cone and terminal Git
-closure.
+The focused implementation and integration evidence is complete; the final
+acceptance and terminal closure are recorded below.
 
 ### UI/browser qualification
 
@@ -170,5 +170,35 @@ closure.
   reached the Findings view and was closed without credentials, storage state,
   or external navigation.
 
-M4 is complete. M5 remains active for the full local and clean acceptance
-cones, exact skip/receipt recording, final documentation, and terminal push.
+### M5 full acceptance and terminal closure
+
+- The first exact serial command at `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`
+  exposed one observer semantic-ledger timing failure and one telemetry retry
+  classified flaky. The observer test passed in a `--repeat-each=5` narrow
+  reproduction, so no assertion was weakened.
+- The required rerun of the exact native command
+  `npm test -- --project=nightwatch --workers=1` passed `2548` of `2564`
+  discovered tests, skipped `16`, and failed `0` in `6.4m`. The observer and
+  telemetry tests passed without retries.
+- Full `npm run gate:local` passed all `9` groups at the implementation/test
+  checkpoint. Semantic compatibility was `1903 total / 1890 passed / 13
+  skipped / 0 failed`; owner provenance was `91`; synthetic campaign was
+  `66`; receipt `receipt:sha256:008de731687cf9671286ecea`.
+- `npm run gate:clean` passed in a fresh Node20 checkout with no reuse, auth,
+  owner finding state, or sibling writes. All `9` groups passed; semantic
+  compatibility was `1903 / 1890 / 13 / 0`; gate receipt
+  `receipt:sha256:60a27b3b75965259bc684a56`; clean receipt
+  `clean-receipt:sha256:8e6a911a40c6383f722c965c`.
+- Final focused and project checks remain green: typecheck, hardening,
+  project/continuity checks, gate definition/inventory, privacy, UI/build/
+  browser, and `git diff --check`. External CI was not required by current
+  policy, was not observed, and is not claimed green.
+
+## Terminal disposition
+
+`COMPLETE_LOCAL_NOT_CI_VERIFIED`. The strict durable artifact boundary rejects
+all reproduced v1/v2 malformed dossier mutations, the Control Center uses one
+conservative currentness reducer, and the bounded facade audit covers all
+registered kinds. No new runtime, DEV, data, infrastructure, publication,
+authentication, sibling-write, or AI authority was introduced. The terminal
+next action is STOP; any successor requires a fresh census and authorization.

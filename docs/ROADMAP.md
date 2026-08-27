@@ -2407,5 +2407,29 @@ without force. The one exact-head Actions observation matched that head as run
 with `failure` and `steps=[]`. This is external non-evidence under the
 zero-step billing/platform classification, not a CI-green claim. No operation
 moved from read-only-method-only to proven read-only, projectable, or Phase 24
-eligible. Terminal continuity remains in progress for the narrow checker
-checkpoint-policy repair recorded in the active task.
+eligible. Terminal continuity for this campaign is complete.
+
+## Durable artifact and Control Center truth hardening
+
+This campaign is terminal as `COMPLETE_LOCAL_NOT_CI_VERIFIED` at validated
+implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`
+(source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`). It
+restores strict runtime acceptance for persisted dossier v1/v2 records and
+converges Control Center findings currentness on one conservative reducer.
+
+The bounded artifact audit accepted all `14/14` canonical registered-kind
+fixtures and rejected all `55/55` nested mutations without input mutation.
+The reproduced dossier false accepts were rejected by both owning validators
+and the facade, while valid historical controls remain accepted. The findings
+truth table is: empty/malformed/unknown → `SOURCE_UNAVAILABLE`; stale
+tracking reference without unknown → `SOURCE_STALE`; all non-empty
+current-class members → `CURRENT`. Authority, adapter, projected metadata,
+and collector paths agree across permutations, duplicates, and the 256-member
+bound. Control Center corruption, generation, refresh-failure, server, and
+seven-view built browser behavior remain sanitized and fail closed.
+
+Local and clean Node20 quality gates passed all nine groups with semantic
+compatibility `1,903/1,890/13/0`, owner provenance `91`, and synthetic campaign
+`66`. The canonical serial regression passed `2,548/2,564`, skipped `16`, and
+failed `0`. External CI was not observed because no current policy required an
+exact-head observation; it is not claimed green. No successor is selected.
