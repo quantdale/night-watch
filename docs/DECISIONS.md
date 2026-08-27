@@ -3404,8 +3404,12 @@ removed; operation identity drift is zero; the family disposition is
 **Validation and safety.** Focused source hardening passed 74/74; semantic
 compatibility passed 1,901/1,888/13/0; owner provenance passed 91; synthetic
 campaign passed 66; local and fresh Node20 clean gates passed all nine groups;
-and the final tracked-file audit reviewed 1,320/1,320 regular files. No
-product, auth, data, cloud, infrastructure, sibling-write, publication,
-runtime-AI, or canonical-promotion operation occurred. Exact-head Actions is
-observed once for the final documentation push and is not treated as green if
-it has zero executed steps.
+the closure-document local gate passed all nine groups with receipt
+`receipt:sha256:c92ef378c757194871718953`; and the final tracked-file audit
+reviewed 1,320/1,320 regular files. No product, auth, data, cloud,
+infrastructure, sibling-write, publication, runtime-AI, or
+canonical-promotion operation occurred. The one exact-head Actions observation
+matched pushed head `b4c6b715f90de5814ec8e939b1d255c36f32db5c` as run
+`33031299302` / job `98384195570`; it completed with failure and `steps=[]`,
+so it is external non-evidence under the zero-step billing/platform
+classification and is not a CI-green claim.

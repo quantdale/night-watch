@@ -122,11 +122,11 @@ Also:
 - [x] Update STATE.md after final validated implementation checkpoint.
 - [x] Write REPORT.md with executive summary, exhaustive audit manifest/count, defect reproductions, root causes, implementation, intentional proof-identity deltas, fresh census, adversarial matrix, validation ledger, performance/RSS, regressions, rejected candidates, remaining risks and safety statement.
 - [x] Update durable CURRENT_STATE/ROADMAP/DECISIONS/ARCHITECTURE only where facts changed.
-- [ ] Mark continuity task COMPLETE only after terminal acceptance.
-- [ ] Commit coherent validated checkpoints; never force-push.
-- [ ] Push final head to main according to repository policy.
-- [ ] Observe exact-head GitHub Actions once. steps: [] is external non-evidence and must be recorded truthfully.
-- [ ] End with exact final commit SHA and STOP.
+- [x] Mark continuity task COMPLETE only after terminal acceptance.
+- [x] Commit coherent validated checkpoints; never force-push.
+- [x] Push final head to main according to repository policy.
+- [x] Observe exact-head GitHub Actions once. steps: [] is external non-evidence and must be recorded truthfully.
+- [x] End with exact final commit SHA and STOP.
 
 ## Completion criteria
 

@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1
 Starting SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
 Last validated implementation SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
-Last checkpoint: M5 — implementation, local/clean acceptance, and final tracked-file audit are green at `15fe2c1`; closure docs and exact-head Actions observation remain.
-Current milestone: M5 — adversarial, performance, and full acceptance.
-Next action: Commit/push the closure docs, observe exact-head Actions once, record its external result, and close continuity.
+Last checkpoint: M5 local acceptance and the closure-head Actions observation are recorded; continuity validation found the completed OpenSpec checklist is not yet an approved checkpoint path.
+Current milestone: M5 — continuity checkpoint-policy repair and terminal validation.
+Next action: Add and test the narrow OpenSpec task-checklist checkpoint rule, validate the resulting implementation checkpoint, then finish terminal continuity.
 Authorization class: NIGHTWATCH_SOURCE_PROOF_SOUNDNESS_AND_STATIC_DISCOVERY_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b

@@ -1,8 +1,7 @@
 # Source-Proof Soundness + Static Discovery Hardening — Execution Report
 
-Status: IN_PROGRESS — local acceptance is complete; exact-head Actions will be
-observed once after the closure documentation push, then this report will be
-marked terminal.
+Status: IN_PROGRESS
+Campaign result: LOCAL_ACCEPTANCE_COMPLETE_EXTERNAL_ACTIONS_RECORDED
 
 Task ID: `nightwatch-source-proof-soundness-and-static-discovery-hardening-v1`
 Phase: SOURCE-PROOF-SOUNDNESS-AND-STATIC-DISCOVERY-HARDENING-V1
@@ -10,6 +9,14 @@ CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `54090566dad7ba3f65c9ffb2a398e4fcf1fad52b`
 Last validated implementation SHA: `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`
 Last substantive checkpoint SHA: `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`
+
+Closure documentation checkpoint `b4c6b715f90de5814ec8e939b1d255c36f32db5c`
+was pushed without force. External GitHub Actions run `33031299302` matched
+that head and completed `failure`; its sole job `98384195570` completed
+`failure` with `steps: []`. This is external non-evidence, not a CI-green
+claim. Final continuity synchronization remains in progress while the checker
+is repaired to recognize the completed OpenSpec checklist as a planning-only
+checkpoint.
 
 ## Executive summary
 
@@ -60,6 +67,9 @@ runtime AI call, or canonical promotion occurred.
 - Post-scan content-digest mismatches now make handler/schema joins and the
   descriptor `SOURCE_STALE`; stale runtime catalog bindings remain distinct
   and map to Phase-24 candidate `DRIFTED` source version.
+- The continuity checker now treats the exact OpenSpec change checklist path
+  `openspec/changes/<change>/tasks.md` as a planning-only checkpoint, with a
+  regression assertion; unrelated OpenSpec paths remain unapproved.
 
 ## Reproduction and differential result
 
@@ -117,9 +127,12 @@ observed source was 242,093 bytes and maximum token population 32,027.
   implementation checkpoint `15fe2c1` was pushed without force and verified
   equal to `origin/main` with a clean tree.
 
-The final exact-head GitHub Actions observation is intentionally the remaining
-closure action. Its result will be recorded separately and a zero-step or
-platform/billing result will not be classified as green evidence.
+The one exact-head GitHub Actions observation was run `33031299302` for head
+`b4c6b715f90de5814ec8e939b1d255c36f32db5c`; the sole job was
+`98384195570` (`Executable quality gate`), completed with `failure`, and had
+`steps: []`. It is classified as external non-evidence under the repository's
+zero-step billing/platform rule; local/source/synthetic validation remains the
+terminal acceptance evidence.
 
 ## Safety and follow-up
 
@@ -127,4 +140,6 @@ The owner freeze remains intact. Unsupported dynamic/runtime/framework/data/
 infrastructure/authenticated execution remains excluded. Future proof-family
 work requires a fresh current-source census and separate authorization; this
 campaign must not be used to infer promotion authority from candidate
-availability.
+availability. The task remains in progress only for the narrow
+continuity-checkpoint policy repair described above. Any unrelated future work
+requires a fresh task and authorization.

@@ -2397,5 +2397,15 @@ family disposition is `NO_SAFE_NEW_FAMILY`.
 
 The focused 74-test cone, semantic compatibility 1,901/1,888/13/0, owner
 provenance 91, synthetic campaign 66, local gate, and fresh Node20 clean gate
-passed. Canonical enumeration is 2,555 tests in 209 files. Exact-head Actions
-is observed separately and remains non-authoritative for local completion.
+passed. The closure-document local gate passed all nine groups with receipt
+`receipt:sha256:c92ef378c757194871718953`. Canonical enumeration is 2,555
+tests in 209 files.
+
+Documentation checkpoint `b4c6b715f90de5814ec8e939b1d255c36f32db5c` was pushed
+without force. The one exact-head Actions observation matched that head as run
+`33031299302`; its sole job `98384195570` (`Executable quality gate`) completed
+with `failure` and `steps=[]`. This is external non-evidence under the
+zero-step billing/platform classification, not a CI-green claim. No operation
+moved from read-only-method-only to proven read-only, projectable, or Phase 24
+eligible. Terminal continuity remains in progress for the narrow checker
+checkpoint-policy repair recorded in the active task.

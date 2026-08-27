@@ -2382,10 +2382,13 @@ zero steps, so CI is not validation evidence. All prohibited contact,
 authentication, data, infrastructure, sibling-write, publication, runtime-AI,
 and promotion counts remain zero.
 
-## Source-proof soundness and static discovery hardening — implementation checkpoint
+## Source-proof soundness and static discovery hardening — source implementation evidence
 
-The current successor campaign is local/source/synthetic only and has repaired
-three reproduced false-proof seams without adding a selector or proof family.
+The successor campaign's local/source/synthetic implementation evidence is
+complete, but terminal continuity remains in progress while the checker is
+updated to classify the completed OpenSpec checklist as a planning-only
+checkpoint. It repaired three reproduced false-proof seams without adding a
+selector or proof family.
 The bounded PHP direct-return analyzer now requires a mechanically complete
 unconditional, terminal-fallback, or complete top-level branch shape; implicit
 fallthrough, unsupported control flow, and non-literal return paths remain
@@ -2413,8 +2416,17 @@ The pre-fix probe reproduced the PHP, lexical-route, and fake-declaration
 defects. The final focused cone passed 74/74; semantic compatibility passed
 1,901 total / 1,888 passed / 13 skipped / 0 failed; owner provenance passed
 91; and the synthetic campaign passed 66. Local and fresh Node20 disposable
-quality gates passed all nine groups. Canonical Playwright enumeration is
+quality gates passed all nine groups. The closure-document local gate also
+passed all nine groups with receipt
+`receipt:sha256:c92ef378c757194871718953`. Canonical Playwright enumeration is
 2,555 tests in 209 files. The final tracked-file audit reviewed 1,320/1,320
 regular files. No prohibited product, auth, data, cloud, infrastructure,
-publication, sibling-write, or runtime-AI action occurred; exact-head Actions
-is recorded separately after the closure push.
+publication, sibling-write, or runtime-AI action occurred.
+
+Documentation checkpoint `b4c6b715f90de5814ec8e939b1d255c36f32db5c` was pushed
+without force. The one exact-head Actions observation matched that head as run
+`33031299302`, whose sole job `98384195570` (`Executable quality gate`)
+completed with `failure` and `steps=[]`; it is external non-evidence under the
+zero-step billing/platform classification, not a CI-green claim. Final live
+HEAD and synchronization are discovered from Git. The continuity checker
+repair is tracked in the active task and must pass before terminal closure.

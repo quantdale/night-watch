@@ -172,6 +172,10 @@ results in STATE and REPORT; do not treat a zero-step CI run as green evidence.
 - All owner-frozen infrastructure/data-layer work and any future DEV semantic
   acceptance requiring separate authorization.
 
+The exact-head Actions observation completed with failure before any step; that
+external non-evidence result is recorded in STATE and REPORT. A final
+continuity-policy repair remains before this milestone can close.
+
 ## Completion Criteria
 
 All OpenSpec tasks are complete; soundness probes and downstream parity are
