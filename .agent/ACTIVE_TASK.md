@@ -6,7 +6,7 @@ Title: Variant B Canonical Promotion + Control Center CLI Hardening
 Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-variant-b-adoption-and-cli-hardening
 Starting SHA: 9372ec81caf9a23816c1d5b5a1eca5f20e6208bc
-Last validated implementation SHA: d2c0830215962b5b4f0ddd941c449b61224951fc
+Last validated implementation SHA: 544e90e68f4c850853abafaa04e80c2a0e405504
 Last checkpoint: M3 — post-commit validation complete; catalog 2 entries (A+B), portfolio EXHAUSTED; Control Center CLI works on Node 22.
 Current milestone: COMPLETE — both workstreams finished.
 Next action: STOP — task complete; portfolio EXHAUSTED, no further promotion possible without separate authorization.

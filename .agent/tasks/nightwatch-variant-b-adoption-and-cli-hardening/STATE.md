@@ -6,9 +6,9 @@ Task ID: nightwatch-variant-b-adoption-and-cli-hardening
 Phase: VARIANT-B-ADOPTION-AND-CLI-HARDENING-V1
 Status: COMPLETE
 Starting SHA: 9372ec81caf9a23816c1d5b5a1eca5f20e6208bc
-Last validated implementation SHA: d2c0830215962b5b4f0ddd941c449b61224951fc
-Last substantive checkpoint SHA: d2c0830215962b5b4f0ddd941c449b61224951fc
-Last documentation checkpoint SHA: d2c0830215962b5b4f0ddd941c449b61224951fc
+Last validated implementation SHA: 544e90e68f4c850853abafaa04e80c2a0e405504
+Last substantive checkpoint SHA: 544e90e68f4c850853abafaa04e80c2a0e405504
+Last documentation checkpoint SHA: 544e90e68f4c850853abafaa04e80c2a0e405504
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
