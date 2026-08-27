@@ -3453,3 +3453,57 @@ passes `2,548/2,564` in `4.5m`, skips `16`, and fails `0`. External CI was not
 observed and is not claimed green. No DEV/NEXT/production, auth, data,
 infrastructure, publication, AI, or sibling write operation occurred; no
 successor is selected.
+
+## D-84 — make hostname authorization necessary but insufficient for L5 egress
+
+**Context.** The original Phase 1.2 proxy stopped denied destinations before
+DNS/TCP, but an allowlisted hostname still reached Node's hostname-valued
+upstream primitive without a Nightwatch-owned resolved-address admission
+decision. That left the boundary unable to prove that every answer was
+acceptable, that the connector used the validated destination, or that
+resolution and connection lifecycle evidence described what actually
+happened.
+
+**Decision.** Preserve the hostname policy identity
+`phase-2a-browser-background-policy-v1` and add one pure numeric
+IPv4/IPv6 classifier plus one bounded internal resolver/admission seam. The
+resolver is reachable only after hostname authorization; the complete answer
+set is validated before deterministic selection. Local admits only exact
+`127.0.0.1`/`::1`, while `dev`/`next` external targets require global-unicast
+answers. Mixed, malformed, empty, oversized, unsupported-family, mapped, and
+otherwise unsafe sets fail closed. HTTP, CONNECT, and WebSocket Upgrade share
+the helper, dial the exact numeric address/family, and retain original
+Host/authority semantics without a second uncontrolled lookup. Egress
+identity is explicit in runtime state and the real-run gate, while the
+versioned proxy summary separates policy authorization, resolution,
+connection, coverage, and containment violations. Event-log write failure is
+also fail-closed: the proxy becomes unhealthy, later traffic is blocked, and
+any upstream created before the failed lifecycle write is torn down.
+
+**Evidence and consequences.** The validated implementation checkpoint is
+`3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`. The identities are
+`nightwatch.proxy-containment.v2`,
+`phase-1.2-resolved-address-policy-v1`, and
+`phase-1.2-exact-address-binding-v1`; the durable proxy summary is
+`nightwatch.proxy-summary.v2`. The exact browser residual remains
+`BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`, and no L6 or real-product
+acceptance is implied. The final local gate passed all nine groups with
+receipt `receipt:sha256:b026f83f2ac58f755df3040f`; the clean Node20 gate passed
+with receipt `receipt:sha256:27e9c6f587319e83ea916581` and clean receipt
+`clean-receipt:sha256:5cb6b793a968504bf936f4f9`. Semantic compatibility was
+`1,903/1,890/13/0`, owner provenance `91`, synthetic campaign `66`, and the
+canonical serial regression was `2,573 passed / 16 skipped / 0 failed` out of
+`2,589`. Control Center UI typecheck, tests, build, built-browser checks, and
+local visual verification passed. External CI was not observed as green; a
+zero-step or absent external run remains non-evidence under the standing
+platform/billing policy. No DEV/NEXT/production, auth, data, cloud,
+infrastructure, sibling-write, publication, runtime-AI, or force-push
+operation occurred.
+
+**Rejected alternatives.** Hostname-only socket dialing was rejected because
+it provides no resolved-address authority. Allowing any one safe answer from
+a mixed set was rejected because unsafe alternates could still be selected by
+the OS. Browser-only interception, system DNS/hosts changes, privileged
+firewalls, Docker/network namespaces, TLS MITM, and live Alphaus DNS were
+outside this local/source/synthetic scope. Raw IPs and resolver diagnostics
+were rejected from durable evidence to preserve the privacy boundary.

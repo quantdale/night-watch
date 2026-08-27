@@ -1,16 +1,18 @@
 # Resolved Egress + Containment Truth Hardening — Execution Report
 
-Status: IN_PROGRESS
+Status: COMPLETE (LOCAL / SOURCE / SYNTHETIC; EXTERNAL CI NOT OBSERVED)
 Task ID: `nightwatch-resolved-egress-and-containment-truth-hardening-v1`
 Phase: RESOLVED-EGRESS-AND-CONTAINMENT-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`
 Validated implementation SHA: `3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`
+Last documentation checkpoint SHA: `d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`
 Safety scope: LOCAL / repository source / synthetic loopback only
 
-This report records the completed implementation and validation evidence. The
-terminal status remains IN_PROGRESS until the final documentation checkpoint,
-exact-head verification, and clean-tree continuity transition are committed.
+This report records the completed implementation, validation evidence, durable
+documentation checkpoint, and terminal continuity transition. Live HEAD and
+the final local/remote equality are discovered from Git; this report never
+predicts the SHA of its containing commit.
 
 ## Objective and scope
 
@@ -194,21 +196,21 @@ fixtures. Results:
 - `npm run project:check`: PASS; canonical catalog count 1, catalog digest
   `sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968`,
   Phase 8 complete, promotion authority `NONE`.
-- `npm run gate:local`: PASS on docs checkpoint
-  `6f475224073109dd210dd021018e84f26f8c0c44`; all nine groups; semantic
+- `npm run gate:local`: PASS on documentation checkpoint
+  `d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`; all nine groups; semantic
   `1,903/1,890/13/0`; final local receipt
-  `receipt:sha256:49e2f3b6120820eb316a7253`; package-lock digest
+  `receipt:sha256:b026f83f2ac58f755df3040f`; package-lock digest
   `sha256:e87bf7337541d2ce03bb701deb09fc14853b5711c45688fcf8b647d04ebfe45c`.
 - `npm run gate:clean`: final clean Node20 run passed all nine groups with
-  source head `6f475224073109dd210dd021018e84f26f8c0c44`, clean-before/after
+  source head `d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`, clean-before/after
   true, no reused `node_modules`, no auth/owner state, zero sibling writes,
-  gate receipt `receipt:sha256:0beb7929d83067728eeb340c`; and clean receipt
-  `clean-receipt:sha256:da154ae5aa8c49d50db6f2f6`. A first clean attempt had a
+  gate receipt `receipt:sha256:27e9c6f587319e83ea916581`; and clean receipt
+  `clean-receipt:sha256:5cb6b793a968504bf936f4f9`. A first clean attempt had a
   single transient Phase24 lifecycle failure; five direct Node20 repeats
   passed, then the complete clean gate passed without source weakening.
 - Canonical serial `npm test -- --project=nightwatch --workers=1
   --reporter=line`: `2,573 passed / 16 skipped / 0 failed` out of `2,589`,
-  wall time `7.2m`.
+  wall time `4.8m`.
 - Control Center UI typecheck: PASS. UI tests: `11 passed` in two files. UI
   build: PASS, three files and 259,566 bytes, no external references or
   embedded content. Built UI browser check: `1 passed`, all seven views.
@@ -289,9 +291,11 @@ Validated checkpoints were committed and pushed serially: activation
 `86e804ea6d8b066137ea02cc80ba7e3a112a929b`; validated implementation
 `3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`; continuity documentation
 `a8cc0b42dd722561f67bd7efc3d0d3f905550682`; repaired documentation
-checkpoint `6f475224073109dd210dd021018e84f26f8c0c44`. The final closure
-commit(s) will be verified from Git and recorded after this report and the
-terminal continuity fields are committed. Force-push was never used.
+checkpoint `6f475224073109dd210dd021018e84f26f8c0c44`; documentation and
+terminal continuity are recorded from the known prior checkpoint
+`d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`. The containing commit and live
+remote equality are intentionally discovered from Git. Force-push was never
+used.
 
 External CI was not observed as a green authority. Any absent, zero-step, or
 platform/billing-blocked run remains non-evidence under repository policy; no

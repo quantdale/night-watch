@@ -4,20 +4,20 @@
 
 Task ID: nightwatch-resolved-egress-and-containment-truth-hardening-v1
 Phase: RESOLVED-EGRESS-AND-CONTAINMENT-TRUTH-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 Last validated implementation SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 Last substantive checkpoint SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
-Last documentation checkpoint SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
+Last documentation checkpoint SHA: d2d9b51546195f1cbf8969327e8f3bcadca0e8c4
 STARTING_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 LAST_VALIDATED_IMPLEMENTATION_SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d2d9b51546195f1cbf8969327e8f3bcadca0e8c4
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
-PHASE_RESOLVED_EGRESS_AND_CONTAINMENT_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
+PHASE_RESOLVED_EGRESS_AND_CONTAINMENT_TRUTH_HARDENING_V1_STATUS: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
 
@@ -30,7 +30,7 @@ boundaries.
 
 ## Current Milestone
 
-M6 — full acceptance, documentation, and Git closure.
+COMPLETE — M6 full acceptance, documentation, and Git closure.
 
 ## Completed Milestones
 
@@ -92,17 +92,13 @@ M6 — full acceptance, documentation, and Git closure.
 
 ## Work In Progress
 
-The implementation slice and full acceptance cone are validated in the
-worktree. Durable docs and OpenSpec tasks are now updated; M6 is completing
-the final documentation checkpoint, terminal continuity fields, exact-head
-verification, and clean-tree handoff. All fixtures remain synthetic
-loopback-only.
+None — the implementation slice, full acceptance cone, durable docs, OpenSpec
+tasks, terminal continuity fields, exact-head verification, and clean-tree
+handoff are complete. All fixtures remained synthetic loopback-only.
 
 ## Exact Next Action
 
-Commit the updated docs/report/OpenSpec and terminal continuity fields, run
-the final current-head gates, push without force, and verify exact-head
-equality with a clean tree.
+STOP — campaign complete; future work requires a fresh authorized task.
 
 ## Blockers
 
@@ -234,16 +230,16 @@ None.
   `1,903` total, `1,890` passed, `13` inherited skips, `0` failed.
 - `npm run campaign:synthetic`: PASS; `66 passed / 0 failed / 15.5s`.
 - `npm run test:owner-provenance`: PASS; `91 passed / 0 failed / 9.7s`.
-- Final pre-closure recheck: origin main at `6f475224`; GitHub open issues and
+- Final pre-closure recheck: origin main at `d2d9b515`; GitHub open issues and
   pull requests both `0`; no competing blocker.
-- Full local gate: PASS on `6f475224`, all nine groups, receipt
-  `receipt:sha256:49e2f3b6120820eb316a7253`.
-- Clean Node20 gate: PASS on `6f475224`, all nine groups, clean receipt
-  `clean-receipt:sha256:da154ae5aa8c49d50db6f2f6`; the first clean attempt's
+- Full local gate: PASS on `d2d9b515`, all nine groups, receipt
+  `receipt:sha256:b026f83f2ac58f755df3040f`.
+- Clean Node20 gate: PASS on `d2d9b515`, all nine groups, clean receipt
+  `clean-receipt:sha256:5cb6b793a968504bf936f4f9`; the first clean attempt's
   transient single Phase24 failure was followed by five passing direct
   repeats and a passing complete rerun.
 - Canonical serial regression: `2,573 passed / 16 skipped / 0 failed` out of
-  `2,589` in `7.2m`.
+  `2,589` in `4.8m`.
 - Control Center UI typecheck/tests/build/browser: PASS; UI tests `11 passed`,
   build `259,566` bytes with no external references, built browser `1 passed`.
 - Dev-server visual verification: content present, no overlay, zero console
@@ -314,17 +310,14 @@ expansion remain deferred.
 
 ## Resume Recipe
 
-Read this STATE, inspect `git status` and the diff, run the final current-head
-gates after the documentation checkpoint, update the terminal report/state
-fields, commit, push without force, and verify exact-head equality and a clean
-tree. Then STOP; do not select another campaign.
+STOP — campaign complete. Do not resume this task or select another campaign.
 
 ## Completion Snapshot
 
-Not terminal. M0–M5 are complete with focused, browser, privacy, and
-adversarial evidence. M6 has full local, clean Node20, serial, UI, and visual
-results; final current-head gate rerun, terminal continuity commit, exact-head
-verification, and clean-tree closure remain open.
+COMPLETE. M0–M6 are complete with focused, browser, privacy, full local,
+clean Node20, canonical serial, UI, visual, documentation, OpenSpec, and
+exact-head evidence. The final local/remote equality and clean tree are live
+Git facts, not persisted predictions.
 
 ## Safety Ledger
 

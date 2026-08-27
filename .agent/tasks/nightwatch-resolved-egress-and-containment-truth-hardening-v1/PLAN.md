@@ -122,9 +122,10 @@ modified.
 
 ### M6 — Full acceptance, documentation, and Git closure
 
-- Status: IN_PROGRESS
-- Run native/clean/canonical gates; update durable docs/OpenSpec/report/state;
-  commit validated checkpoints, push `main`, verify exact head and clean tree.
+- Status: COMPLETE
+- Native/clean/canonical/UI gates passed; durable docs, OpenSpec, report, and
+  continuity state are closed; validated checkpoints were pushed to `main`,
+  with exact-head and clean-tree verification recorded from Git.
 
 ## Validation Strategy
 
