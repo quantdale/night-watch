@@ -3511,3 +3511,28 @@ the OS. Browser-only interception, system DNS/hosts changes, privileged
 firewalls, Docker/network namespaces, TLS MITM, and live Alphaus DNS were
 outside this local/source/synthetic scope. Raw IPs and resolver diagnostics
 were rejected from durable evidence to preserve the privacy boundary.
+
+## D-85 — make planner handoff and project snapshot truth explicit
+
+**Context.** The executor prompt and active task could describe different
+completed campaigns without a shared machine check, and the project-state v1
+block accepted stale fields while its PASS payload collapsed promotion
+lifecycle and effective authority into one ambiguous key.
+
+**Decision.** Add the pure, versioned
+`nightwatch.planner-executor-handoff.v1` header parser and a bounded,
+read-only `npm run handoff:check` route checker. READY binds to the named
+terminal predecessor; IN_PROGRESS, BLOCKED, and COMPLETE bind to the active
+continuity-v2 campaign task. Require the exact OpenSpec route, tracked regular
+components, `main`, and an ancestor Planned-From. Make project-state v2 an
+explicit owned-key schema, move stale Phase-15 session fields out of the
+machine block, and expose `PROMOTION_AUTHORIZATION_LIFECYCLE` separately from
+`EFFECTIVE_NEXT_PROMOTION_AUTHORITY`.
+
+**Consequences.** `HANDOFF_TRUTH` is a required quality-gate group executed
+once before project truth. Checkers remain local, deterministic, bounded,
+shell-disabled for fixed child processes, and unable to fetch, mutate Git,
+contact products, access data/infrastructure, or emit task/source bodies.
+Existing SHA-role continuity rules remain authoritative; docs-only planning
+and closure descendants cannot become implementation checkpoints. Historical
+v1 task and decision records remain readable and are not bulk-migrated.

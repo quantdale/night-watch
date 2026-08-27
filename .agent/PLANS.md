@@ -9,6 +9,14 @@ Every substantial task belongs under `.agent/tasks/<task-id>/` and contains:
 `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`. `ACTIVE_TASK.md` routes to
 the one task currently in progress.
 
+Planner-generated execution prompts carry the versioned
+`nightwatch.planner-executor-handoff.v1` header. The read-only
+`npm run handoff:check` validates route/currentness only; task continuity
+remains the execution authority. A READY prompt may name a terminal
+predecessor before activation, while later prompt states must bind to the
+active campaign task. The authoritative quality gate owns one handoff check
+before project truth.
+
 ## Required PLAN sections
 
 Each PLAN contains these sections:

@@ -12,6 +12,19 @@ data plane** unless a phase explicitly whitelists a mutation class against a
 sandbox MSP (RECON_B §8), and every code-derived assumption carries
 provenance (repo @ SHA, D-12).
 
+## Cross-cutting planner/executor truth (current)
+
+The local campaign lifecycle is guarded by the versioned handoff header in
+`.agent/EXECUTION_PROMPT.md`. READY planning state remains distinct from
+active continuity-v2 task state; IN_PROGRESS, BLOCKED, and COMPLETE bind to
+the active campaign task. `npm run handoff:check` validates the exact OpenSpec
+route, tracked regular files, Git baseline/branch, and task binding. The
+strict project-state v2 block admits only owned or mechanically derived
+fields, including separate promotion lifecycle and effective-authority
+values. The required quality gate runs handoff truth once before project and
+agent continuity; this adds no product, data, infrastructure, or external
+execution authority.
+
 ---
 
 ## Phase 0/1 — Scaffold, safety kernel, passive Ripple observer

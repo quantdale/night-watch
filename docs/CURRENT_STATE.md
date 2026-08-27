@@ -1,9 +1,9 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-27** at
-> the resolved-egress and containment-truth hardening closure
-> (`nightwatch-resolved-egress-and-containment-truth-hardening-v1`; validated
-> implementation checkpoint `3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`):
+> Durable memory for the next agent/session. Last updated: **2026-08-27** for
+> the campaign handoff and project-truth hardening closure
+> (`nightwatch-campaign-handoff-and-project-truth-hardening-v1`; validated
+> implementation checkpoint `dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319`):
 > hostname allow is now followed by bounded complete-answer-set admission and
 > exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
 > fail-closed event-log handling, and explicit runtime containment identities.
@@ -92,7 +92,7 @@
 > authority header (sandbox mirror-only + owner-gated canonical promotion —
 > no generic self-modification), removed the stale generic project-level
 > checkpoint anchors (authority de-duplication), introduced
-> `nightwatch.project-state.v1` with read-only `npm run project:check` and
+> `nightwatch.project-state.v2` with read-only `npm run project:check` and
 > a CI "Project-memory truth check" step, and preserved promotion-currentness
 > strictness. The canonical adopted-case catalog contains
 > exactly TWO entries (raw digest `d96c24de...` after variant B adoption); variant B
@@ -250,17 +250,17 @@ authorization.
   promotion (complete evidence/approval chain; development session commits).
   No generic runtime self-modification authority exists.
 - CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B is now
-  `ADOPTED` and portfolio is `EXHAUSTED`, with promotion authority
-  `SPENT`.
+  `ADOPTED` and portfolio is `EXHAUSTED`; the promotion authorization
+  lifecycle is `SPENT` and the effective next promotion authority is `NONE`.
 
 The machine-checked truth block below holds only facts with a deterministic
 source; it is validated read-only by `npm run project:check`
 (`bin/project-state-check.mjs`).
 
-### Project-state v1 (machine-checked truth block)
+### Project-state v2 (machine-checked truth block)
 
 ```
-PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v1
+PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_TASK_AUTHORITY: .agent/ACTIVE_TASK.md
 VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md
@@ -271,10 +271,13 @@ CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION
 PHASE_8_STATUS: COMPLETE
 PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1
 NEXT_PORTFOLIO_MEMBER: EXHAUSTED
-NEXT_PROMOTION_AUTHORITY: SPENT
-PHASE_15_S1_CORE_CONVERGENCE: IMPLEMENTED_FOCUSED_GREEN
-PHASE_15_PROGRAM_STATE: SESSION_1_COMPLETE_SESSION_2_REQUIRED
+PROMOTION_AUTHORIZATION_LIFECYCLE: SPENT
+EFFECTIVE_NEXT_PROMOTION_AUTHORITY: NONE
 ```
+
+Phase-15 session/convergence notes remain historical prose below and are not
+machine-owned current-state fields. The v2 block admits only values validated
+or derived by `bin/project-state-check.mjs`.
 
 ### Phase 1.3 additions — durable agent continuity
 

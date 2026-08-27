@@ -234,11 +234,12 @@ Under v2 the checker enforces a cross-file task-status state machine:
   (warnings only) — do not mass-migrate them; migrate individually only when a
   future task directly depends on them.
 
-## Project-memory truth (project-state v1)
+## Project-memory truth (project-state v2)
 
 `npm run project:check` validates the machine-checked truth block in
-`docs/CURRENT_STATE.md` (`nightwatch.project-state.v1`) against mechanically
-derivable source:
+`docs/CURRENT_STATE.md` (`nightwatch.project-state.v2`) against mechanically
+derivable source. The v2 block has an explicit owned-key schema; unknown,
+duplicate, missing, malformed, or oversized fields fail closed:
 
 - `CURRENT_STATE` is a project SNAPSHOT, never its own Git/checkpoint
   authority. Live HEAD comes from Git; the current implementation checkpoint
@@ -250,8 +251,10 @@ derivable source:
   deterministic renderer; never hand-edit
   `adoptedCaseCatalog.generated.ts`.
 - CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B may remain
-  `AVAILABLE_NOT_ADOPTED` while `NEXT_PROMOTION_AUTHORITY: NONE`; project:check
-  enforces NONE exactly.
+  `AVAILABLE_NOT_ADOPTED` while `EFFECTIVE_NEXT_PROMOTION_AUTHORITY: NONE`;
+  project:check enforces the effective authority exactly. The separate
+  `PROMOTION_AUTHORIZATION_LIFECYCLE` field preserves `NONE` vs `SPENT`
+  faithfully rather than projecting one meaning under another key.
 - PHASE 8 IS COMPLETE (D-53): the canonical-promotion research boundary is
   closed, but the owner-gated machinery is retained — not frozen. Candidate
   availability never grants promotion authority, and any future canonical

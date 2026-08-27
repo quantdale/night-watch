@@ -50,6 +50,22 @@ and before likely context loss. A completed task updates PLAN, STATE,
 `REPORT.md`, project docs as needed, and ACTIVE_TASK, then commits the complete
 handoff within Nightwatch.
 
+## Planner -> executor handoff
+
+`.agent/EXECUTION_PROMPT.md` carries the versioned
+`nightwatch.planner-executor-handoff.v1` header. Its `READY_FOR_EXECUTION`
+state binds a docs-only planning checkpoint to the named terminal predecessor;
+`IN_PROGRESS`, `BLOCKED`, and `COMPLETE` bind the prompt to the current
+continuity-v2 task and matching status. `npm run handoff:check` is the
+read-only route/currentness checker for the prompt, exact OpenSpec route,
+tracked regular files, planned-from ancestry, branch, and task binding. It
+does not replace task continuity or parse OpenSpec prose.
+
+The handoff check is a required `HANDOFF_TRUTH` group in the serial quality
+gate and runs once before `PROJECT_TRUTH`. It is local, bounded, shell-disabled
+for fixed Git/agent child processes, and never fetches, writes, contacts a
+product, or emits task/source bodies.
+
 ## Continuity protocol v2
 
 Every non-NONE active task declares

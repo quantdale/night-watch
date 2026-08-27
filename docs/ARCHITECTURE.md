@@ -24,6 +24,15 @@ container is explicitly marked planned; nothing here starts Phase 2 product
 testing. The safety model is normative and load-bearing — read
 `docs/SAFETY_MODEL.md` alongside this document.
 
+The repository's own planner-to-executor route is also a load-bearing local
+boundary: `.agent/EXECUTION_PROMPT.md` uses the versioned
+`nightwatch.planner-executor-handoff.v1` header, `npm run handoff:check`
+validates its current route, and the required `HANDOFF_TRUTH` quality-gate
+group runs it once before project truth. `docs/CURRENT_STATE.md` uses the
+strict `nightwatch.project-state.v2` block; task continuity v2 remains the
+execution authority, while the handoff and project checkers only validate
+route/currentness and mechanically owned project facts.
+
 Design input: `NIGHTWATCH_RECON_B.md` (the full-stack oracle map,
 `investigations/nightwatch_recon_b/`). Facts cited from it use its IDs
 (E1–E10, L0–L5, §1–§14).
