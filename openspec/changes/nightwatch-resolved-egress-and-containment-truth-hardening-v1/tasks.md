@@ -81,50 +81,50 @@ Add failing/red-team tests first. Planner findings are hypotheses until executab
 
 Using only injected resolver results:
 
-- [ ] 127.0.0.1 positive control.
-- [ ] ::1 positive control.
-- [ ] 127.0.0.2 negative control.
-- [ ] 0.0.0.0 negative.
-- [ ] 169.254.0.0/16 edges.
-- [ ] RFC1918 range edges.
-- [ ] CGNAT/shared range edges.
-- [ ] multicast edges.
-- [ ] documentation/benchmark/reserved representative boundaries.
-- [ ] :: unspecified.
-- [ ] IPv6 link-local.
-- [ ] IPv6 unique-local.
-- [ ] IPv6 multicast.
-- [ ] IPv6 documentation/reserved.
-- [ ] IPv4-mapped IPv6 variants including mapped loopback/private/global cases.
-- [ ] malformed address strings.
-- [ ] family/address mismatch.
-- [ ] duplicate answer forms.
-- [ ] empty set.
-- [ ] oversized answer set.
+- [x] 127.0.0.1 positive control.
+- [x] ::1 positive control.
+- [x] 127.0.0.2 negative control.
+- [x] 0.0.0.0 negative.
+- [x] 169.254.0.0/16 edges.
+- [x] RFC1918 range edges.
+- [x] CGNAT/shared range edges.
+- [x] multicast edges.
+- [x] documentation/benchmark/reserved representative boundaries.
+- [x] :: unspecified.
+- [x] IPv6 link-local.
+- [x] IPv6 unique-local.
+- [x] IPv6 multicast.
+- [x] IPv6 documentation/reserved.
+- [x] IPv4-mapped IPv6 variants including mapped loopback/private/global cases.
+- [x] malformed address strings.
+- [x] family/address mismatch.
+- [x] duplicate answer forms.
+- [x] empty set.
+- [x] oversized answer set.
 
 Record the current behavior and the target behavior for each.
 
 ### 3.3 Mixed-answer fail-closed proof
 
-- [ ] safe + unsafe.
-- [ ] global + private.
-- [ ] loopback exact + alternate loopback.
-- [ ] valid + malformed.
-- [ ] IPv4 safe + IPv6 unsafe.
-- [ ] permutations of the same multiset.
-- [ ] Require target policy result invariant under answer order.
-- [ ] Require zero upstream connections for every mixed-invalid case.
+- [x] safe + unsafe.
+- [x] global + private.
+- [x] loopback exact + alternate loopback.
+- [x] valid + malformed.
+- [x] IPv4 safe + IPv6 unsafe.
+- [x] permutations of the same multiset.
+- [x] Require target policy result invariant under answer order.
+- [x] Require zero upstream connections for every mixed-invalid case.
 
 ### 3.4 Protocol matrix
 
 For each relevant resolver case exercise:
 
-- [ ] HTTP absolute-form forward request.
-- [ ] safe origin-form HTTP request if supported.
-- [ ] CONNECT.
-- [ ] WebSocket Upgrade.
-- [ ] WSS path through CONNECT semantics where existing fixture architecture supports it without TLS MITM.
-- [ ] Assert equivalent resolution-policy verdicts.
+- [x] HTTP absolute-form forward request.
+- [x] safe origin-form HTTP request if supported.
+- [x] CONNECT.
+- [x] WebSocket Upgrade.
+- [x] WSS path through CONNECT semantics where existing fixture architecture supports it without TLS MITM.
+- [x] Assert equivalent resolution-policy verdicts.
 
 ### 3.5 Exact-dial reproduction
 
@@ -132,77 +132,77 @@ Build a test seam that can observe the host/family passed to the upstream connec
 
 - [x] Current allowlisted hostname path shows hostname reaches implicit Node lookup/dial path.
 - [x] Target test requires numeric address reaches dial path.
-- [ ] Original hostname remains Host/CONNECT authority.
-- [ ] No second resolver call occurs after accepted resolution.
+- [x] Original hostname remains Host/CONNECT authority.
+- [x] No second resolver call occurs after accepted resolution.
 - [x] Record BEFORE failing assertion before implementation.
 
 ### 3.6 Evidence-truth reproduction
 
-- [ ] hostname allow + resolver error.
-- [ ] hostname allow + unsafe address.
-- [ ] hostname allow + connect refusal.
-- [ ] hostname allow + connect timeout.
-- [ ] Show current event/summary semantics.
-- [ ] Define desired policyAuthorized/resolutionDenied/resolutionFailed/connected/connectFailed categories.
-- [ ] Ensure no raw error text is required.
+- [x] hostname allow + resolver error.
+- [x] hostname allow + unsafe address.
+- [x] hostname allow + connect refusal.
+- [x] hostname allow + connect timeout.
+- [x] Show current event/summary semantics.
+- [x] Define desired policyAuthorized/resolutionDenied/resolutionFailed/connected/connectFailed categories.
+- [x] Ensure no raw error text is required.
 
 ### 3.7 Runtime identity reproduction
 
-- [ ] Construct current/old ProxyRuntimeState.
-- [ ] Show it can satisfy current state validation/real-run gate when policy version matches.
-- [ ] Add target test: hostname-only runtime identity must fail once resolved-egress binding is required.
+- [x] Construct current/old ProxyRuntimeState.
+- [x] Show it can satisfy current state validation/real-run gate when policy version matches.
+- [x] Add target test: hostname-only runtime identity must fail once resolved-egress binding is required.
 
 ## 4. Implement resolved-address classifier
 
 Create the smallest pure owning module.
 
-- [ ] Parse IPv4 exactly.
-- [ ] Parse IPv6 exactly.
-- [ ] Normalize IPv4-mapped IPv6.
-- [ ] Classify unspecified.
-- [ ] Classify exact loopback.
-- [ ] Classify private/unique-local.
-- [ ] Classify link-local.
-- [ ] Classify CGNAT/shared.
-- [ ] Classify multicast.
-- [ ] Classify documentation.
-- [ ] Classify benchmark/testing.
-- [ ] Classify broadcast/reserved/special-use.
-- [ ] Classify global unicast.
-- [ ] Add boundary tests at start/end of each relevant CIDR, not only representative middle addresses.
-- [ ] Reject unsupported/ambiguous textual forms.
-- [ ] Avoid regex-only prefix classification.
-- [ ] Keep module pure: no DNS, filesystem, process, network, environment mutation.
-- [ ] Document standards/source rationale in code/docs without copying large external tables unnecessarily.
+- [x] Parse IPv4 exactly.
+- [x] Parse IPv6 exactly.
+- [x] Normalize IPv4-mapped IPv6.
+- [x] Classify unspecified.
+- [x] Classify exact loopback.
+- [x] Classify private/unique-local.
+- [x] Classify link-local.
+- [x] Classify CGNAT/shared.
+- [x] Classify multicast.
+- [x] Classify documentation.
+- [x] Classify benchmark/testing.
+- [x] Classify broadcast/reserved/special-use.
+- [x] Classify global unicast.
+- [x] Add boundary tests at start/end of each relevant CIDR, not only representative middle addresses.
+- [x] Reject unsupported/ambiguous textual forms.
+- [x] Avoid regex-only prefix classification.
+- [x] Keep module pure: no DNS, filesystem, process, network, environment mutation.
+- [x] Document standards/source rationale in code/docs without copying large external tables unnecessarily.
 
 ## 5. Implement owned resolver boundary
 
-- [ ] Define a narrow Resolver interface returning address/family records only.
-- [ ] Internal runtime owns the real resolver construction.
-- [ ] Tests can inject deterministic resolver records.
-- [ ] Page/product/candidate/config strings cannot inject code/callbacks.
-- [ ] Enforce maximum answer count.
-- [ ] Deduplicate normalized equivalents safely.
-- [ ] Reject malformed/family-mismatch results.
-- [ ] Define categorical resolver failures.
-- [ ] Add bounded logical completion/timeout behavior.
-- [ ] Be explicit if underlying OS lookup cancellation is not guaranteed.
-- [ ] IP literals skip unnecessary name resolution but still pass address policy.
-- [ ] Localhost cannot become external-DNS authority.
-- [ ] A policy-denied hostname exits before resolver call.
+- [x] Define a narrow Resolver interface returning address/family records only.
+- [x] Internal runtime owns the real resolver construction.
+- [x] Tests can inject deterministic resolver records.
+- [x] Page/product/candidate/config strings cannot inject code/callbacks.
+- [x] Enforce maximum answer count.
+- [x] Deduplicate normalized equivalents safely.
+- [x] Reject malformed/family-mismatch results.
+- [x] Define categorical resolver failures.
+- [x] Add bounded logical completion/timeout behavior.
+- [x] Be explicit if underlying OS lookup cancellation is not guaranteed.
+- [x] IP literals skip unnecessary name resolution but still pass address policy.
+- [x] Localhost cannot become external-DNS authority.
+- [x] A policy-denied hostname exits before resolver call.
 
 ## 6. Implement resolved-address policy
 
-- [ ] local accepts exact 127.0.0.1 / ::1 semantics only.
-- [ ] local rejects alternate 127/8 aliases unless current config explicitly authorizes exact address.
-- [ ] dev/next/static external resolved addresses default to global unicast only.
-- [ ] reject private/link-local/unspecified/multicast/documentation/benchmark/reserved/special-use external destinations.
-- [ ] mixed answer sets fail closed.
-- [ ] no unsafe-answer filtering followed by safe dial.
-- [ ] no live DNS reconnaissance.
-- [ ] no invented Alphaus CIDR.
-- [ ] if real-environment private routing is required but unproven, fail closed and document owner-reviewed future policy requirement rather than weakening code.
-- [ ] Add stable policy version/identity.
+- [x] local accepts exact 127.0.0.1 / ::1 semantics only.
+- [x] local rejects alternate 127/8 aliases unless current config explicitly authorizes exact address.
+- [x] dev/next/static external resolved addresses default to global unicast only.
+- [x] reject private/link-local/unspecified/multicast/documentation/benchmark/reserved/special-use external destinations.
+- [x] mixed answer sets fail closed.
+- [x] no unsafe-answer filtering followed by safe dial.
+- [x] no live DNS reconnaissance.
+- [x] no invented Alphaus CIDR.
+- [x] if real-environment private routing is required but unproven, fail closed and document owner-reviewed future policy requirement rather than weakening code.
+- [x] Add stable policy version/identity.
 
 ## 7. Exact-address connection binding
 
@@ -210,218 +210,218 @@ Factor shared connection preparation; do not copy resolver policy into each hand
 
 ### 7.1 HTTP
 
-- [ ] resolve/admit before upstream request.
-- [ ] bind request connection/lookup to accepted numeric address.
-- [ ] preserve original Host header.
-- [ ] prevent implicit second hostname resolution.
-- [ ] preserve method/path/header sanitation.
-- [ ] bounded error/timeout handling.
+- [x] resolve/admit before upstream request.
+- [x] bind request connection/lookup to accepted numeric address.
+- [x] preserve original Host header.
+- [x] prevent implicit second hostname resolution.
+- [x] preserve method/path/header sanitation.
+- [x] bounded error/timeout handling.
 
 ### 7.2 CONNECT
 
-- [ ] resolve/admit before net.connect.
-- [ ] net.connect receives numeric address and family.
-- [ ] original authority remains evidence/TLS identity.
-- [ ] no TLS MITM.
-- [ ] no resolver repeat.
-- [ ] bounded error/timeout handling.
+- [x] resolve/admit before net.connect.
+- [x] net.connect receives numeric address and family.
+- [x] original authority remains evidence/TLS identity.
+- [x] no TLS MITM.
+- [x] no resolver repeat.
+- [x] bounded error/timeout handling.
 
 ### 7.3 WebSocket Upgrade
 
-- [ ] same resolution/admission helper.
-- [ ] numeric address dial.
-- [ ] original Host header preserved.
-- [ ] head bytes semantics preserved.
-- [ ] no resolver repeat.
-- [ ] bounded error/timeout handling.
+- [x] same resolution/admission helper.
+- [x] numeric address dial.
+- [x] original Host header preserved.
+- [x] head bytes semantics preserved.
+- [x] no resolver repeat.
+- [x] bounded error/timeout handling.
 
 ### 7.4 Protocol differential
 
-- [ ] same input matrix -> same address-policy verdict across all three.
-- [ ] one shared unit owns address safety.
-- [ ] protocol framing stays outside address authority.
+- [x] same input matrix -> same address-policy verdict across all three.
+- [x] one shared unit owns address safety.
+- [x] protocol framing stays outside address authority.
 
 ## 8. Sanitized lifecycle evidence and run truth
 
-- [ ] Define whether existing allow means policy authorization; document it.
-- [ ] Add categorical resolutionDenied count/outcome if absent.
-- [ ] Add resolutionFailed count/outcome if absent.
-- [ ] Add connected count/outcome if mechanically observable and useful.
-- [ ] Add connectFailed count/outcome if mechanically observable and useful.
-- [ ] Avoid false "connected" on mere socket creation.
-- [ ] Preserve existing denied hostname hard-failure path.
-- [ ] Make resolved-address denial a hard-failure path.
-- [ ] Ensure RunRecorder.syncProxyViolations sees the new containment violation.
-- [ ] Ensure summary passed cannot remain true after a resolved-address deny.
-- [ ] Ensure proxy.jsonl / summary contain no raw sensitive diagnostics.
-- [ ] Test authenticated-evidence file permission behavior remains correct.
-- [ ] Version any changed durable schema deliberately.
-- [ ] Update validators/readers/Control Center only if they consume the changed schema; no unrelated authority growth.
+- [x] Define whether existing allow means policy authorization; document it.
+- [x] Add categorical resolutionDenied count/outcome if absent.
+- [x] Add resolutionFailed count/outcome if absent.
+- [x] Add connected count/outcome if mechanically observable and useful.
+- [x] Add connectFailed count/outcome if mechanically observable and useful.
+- [x] Avoid false "connected" on mere socket creation.
+- [x] Preserve existing denied hostname hard-failure path.
+- [x] Make resolved-address denial a hard-failure path.
+- [x] Ensure RunRecorder.syncProxyViolations sees the new containment violation.
+- [x] Ensure summary passed cannot remain true after a resolved-address deny.
+- [x] Ensure proxy.jsonl / summary contain no raw sensitive diagnostics.
+- [x] Test authenticated-evidence file permission behavior remains correct.
+- [x] Version any changed durable schema deliberately.
+- [x] Update validators/readers/Control Center only if they consume the changed schema; no unrelated authority growth.
 
 ## 9. Runtime state and pre-real-run gate
 
-- [ ] Add/evolve resolved-egress containment identity.
-- [ ] tests/globalSetup emits it.
-- [ ] direct runner emits/uses the same contract.
-- [ ] runtime parser exact-validates it.
-- [ ] realRunGate requires it.
-- [ ] old runtime state fails.
-- [ ] malformed/newer unknown runtime state fails.
-- [ ] environment mismatch still fails.
-- [ ] proxy health still fails closed.
-- [ ] browser contract still proves all existing seven mandatory controls or an explicitly versioned stronger shape.
-- [ ] no authenticated state is loaded during this campaign.
+- [x] Add/evolve resolved-egress containment identity.
+- [x] tests/globalSetup emits it.
+- [x] direct runner emits/uses the same contract.
+- [x] runtime parser exact-validates it.
+- [x] realRunGate requires it.
+- [x] old runtime state fails.
+- [x] malformed/newer unknown runtime state fails.
+- [x] environment mismatch still fails.
+- [x] proxy health still fails closed.
+- [x] browser contract still proves all existing seven mandatory controls or an explicitly versioned stronger shape.
+- [x] no authenticated state is loaded during this campaign.
 
 ## 10. Browser DNS residual qualification
 
 This workstream is bounded and conditional.
 
-- [ ] Re-audit current Chrome launch args and docs residual.
-- [ ] Do NOT add resolver flags by guesswork.
-- [ ] Determine whether a zero-external-contact mechanical experiment can prove browser speculative DNS confinement.
-- [ ] If yes, build it entirely from local/synthetic fixtures/temp artifacts.
-- [ ] Verify mandatory proxy still carries normal synthetic traffic.
-- [ ] Verify denied synthetic destination still reaches zero upstream sockets.
-- [ ] Verify any new flag/control is present in direct runner and Playwright config through the shared contract.
-- [ ] If proof is not possible without external DNS/root/network namespaces, record BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL.
-- [ ] Do not implement Docker, namespaces, firewall, root networking, hosts-file mutation, or system DNS reconfiguration.
+- [x] Re-audit current Chrome launch args and docs residual.
+- [x] Do NOT add resolver flags by guesswork.
+- [x] Determine whether a zero-external-contact mechanical experiment can prove browser speculative DNS confinement.
+- [x] If yes, build it entirely from local/synthetic fixtures/temp artifacts.
+- [x] Verify mandatory proxy still carries normal synthetic traffic.
+- [x] Verify denied synthetic destination still reaches zero upstream sockets.
+- [x] Verify any new flag/control is present in direct runner and Playwright config through the shared contract.
+- [x] If proof is not possible without external DNS/root/network namespaces, record BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL.
+- [x] Do not implement Docker, namespaces, firewall, root networking, hosts-file mutation, or system DNS reconfiguration.
 
 This workstream does not block completion if the residual remains truthfully documented; it blocks any claim of complete process-level isolation.
 
 ## 11. Adversarial hardening matrix
 
-- [ ] resolver returns same address repeated many times.
-- [ ] resolver order permutation.
-- [ ] resolver changes answer between separate requests.
-- [ ] ensure each request re-enters policy according to chosen design.
-- [ ] no stale global cache can silently preserve an invalidated answer.
-- [ ] address strings with whitespace/zone-id/alternate forms disposition.
-- [ ] IPv6 bracket handling.
-- [ ] hostname casing/trailing-dot/userinfo existing parser regressions.
-- [ ] unexpected ports.
-- [ ] connect-close races.
-- [ ] client disconnect during resolver wait.
-- [ ] proxy shutdown during resolver/dial.
-- [ ] resolver completion after logical timeout cannot create a late socket.
-- [ ] one protocol failure cannot crash proxy process.
-- [ ] event write failure disposition remains safe.
-- [ ] no unhandled rejection.
-- [ ] no new global mutable cross-test state.
-- [ ] no unbounded timers/listeners/answer accumulation.
-- [ ] no open handles after tests.
+- [x] resolver returns same address repeated many times.
+- [x] resolver order permutation.
+- [x] resolver changes answer between separate requests.
+- [x] ensure each request re-enters policy according to chosen design.
+- [x] no stale global cache can silently preserve an invalidated answer.
+- [x] address strings with whitespace/zone-id/alternate forms disposition.
+- [x] IPv6 bracket handling.
+- [x] hostname casing/trailing-dot/userinfo existing parser regressions.
+- [x] unexpected ports.
+- [x] connect-close races.
+- [x] client disconnect during resolver wait.
+- [x] proxy shutdown during resolver/dial.
+- [x] resolver completion after logical timeout cannot create a late socket.
+- [x] one protocol failure cannot crash proxy process.
+- [x] event write failure disposition remains safe.
+- [x] no unhandled rejection.
+- [x] no new global mutable cross-test state.
+- [x] no unbounded timers/listeners/answer accumulation.
+- [x] no open handles after tests.
 
 ## 12. Focused validation after each slice
 
 Run repository-native exact commands discovered from package.json/current docs. At minimum:
 
-- [ ] npm run typecheck
-- [ ] npm run hardening:check
-- [ ] tests/unit/proxy.test.ts
-- [ ] new resolved-address classifier tests
-- [ ] new resolver/binding tests
-- [ ] tests/unit/safety.test.ts
-- [ ] realRunGate tests
-- [ ] runRecorder/evidence tests
-- [ ] tests/smoke/proxy.smoke.ts
-- [ ] browser containment/contract tests
-- [ ] relevant privacy/redaction tests
-- [ ] git diff --check
-- [ ] no new skip/only markers
+- [x] npm run typecheck
+- [x] npm run hardening:check
+- [x] tests/unit/proxy.test.ts
+- [x] new resolved-address classifier tests
+- [x] new resolver/binding tests
+- [x] tests/unit/safety.test.ts
+- [x] realRunGate tests
+- [x] runRecorder/evidence tests
+- [x] tests/smoke/proxy.smoke.ts
+- [x] browser containment/contract tests
+- [x] relevant privacy/redaction tests
+- [x] git diff --check
+- [x] no new skip/only markers
 
 Fix every introduced Critical/High regression before advancing.
 
 ## 13. Full local acceptance cone
 
-- [ ] npm run typecheck PASS.
-- [ ] npm run hardening:check PASS.
-- [ ] npm run quality-gate:spec PASS if current repository uses it in acceptance.
-- [ ] npm run test:owner-provenance PASS.
-- [ ] npm run gate:inventory PASS.
-- [ ] npm run campaign:synthetic PASS where containment contract is consumed.
-- [ ] npm run test:semantic-compat PASS if shared durable identity changed.
-- [ ] npm run agent:check PASS.
-- [ ] npm run agent:audit PASS.
-- [ ] npm run project:check PASS.
-- [ ] npm run gate:local PASS.
-- [ ] npm run gate:clean PASS / repository current clean Node20 equivalent.
-- [ ] canonical complete serial Playwright regression PASS with exact test/skip/fail counts.
-- [ ] local browser outer-proxy synthetic smoke PASS.
-- [ ] built/UI gates only if a consumed DTO/schema actually changed.
-- [ ] no accidental test-results/artifacts/storage-state/credentials/private temp files tracked.
-- [ ] no unexplained performance regression.
-- [ ] record focused proxy before/after wall time and open-handle state.
+- [x] npm run typecheck PASS.
+- [x] npm run hardening:check PASS.
+- [x] npm run quality-gate:spec PASS if current repository uses it in acceptance.
+- [x] npm run test:owner-provenance PASS.
+- [x] npm run gate:inventory PASS.
+- [x] npm run campaign:synthetic PASS where containment contract is consumed.
+- [x] npm run test:semantic-compat PASS if shared durable identity changed.
+- [x] npm run agent:check PASS.
+- [x] npm run agent:audit PASS.
+- [x] npm run project:check PASS.
+- [x] npm run gate:local PASS.
+- [x] npm run gate:clean PASS / repository current clean Node20 equivalent.
+- [x] canonical complete serial Playwright regression PASS with exact test/skip/fail counts.
+- [x] local browser outer-proxy synthetic smoke PASS.
+- [x] built/UI gates only if a consumed DTO/schema actually changed.
+- [x] no accidental test-results/artifacts/storage-state/credentials/private temp files tracked.
+- [x] no unexplained performance regression.
+- [x] record focused proxy before/after wall time and open-handle state.
 
 ## 14. Clean-checkout and topology proof
 
-- [ ] Create disposable clean checkout/worktree according to repository policy.
-- [ ] Use Node 20 baseline.
-- [ ] npm ci.
-- [ ] recreate only approved read-only sibling topology if current gate requires it.
-- [ ] run required clean gate.
-- [ ] run focused proxy/resolver suite in clean checkout.
-- [ ] prove no dependency on untracked local config, hosts file edits, DNS override, or developer machine state.
-- [ ] remove disposable state safely.
+- [x] Create disposable clean checkout/worktree according to repository policy.
+- [x] Use Node 20 baseline.
+- [x] npm ci.
+- [x] recreate only approved read-only sibling topology if current gate requires it.
+- [x] run required clean gate.
+- [x] run focused proxy/resolver suite in clean checkout.
+- [x] prove no dependency on untracked local config, hosts file edits, DNS override, or developer machine state.
+- [x] remove disposable state safely.
 
 ## 15. Identity / compatibility audit
 
 For every changed identity record BEFORE -> AFTER -> reason -> consumers.
 
-- [ ] OUTBOUND_POLICY_VERSION changed only if hostname policy semantics changed.
-- [ ] resolved-address policy version.
-- [ ] proxy containment runtime identity.
-- [ ] ProxyEvent/ProxySummary durable shape/version if changed.
-- [ ] real-run contract identity if changed.
-- [ ] no unrelated source analyzer identity change.
-- [ ] no unrelated semantic/replay/dossier/campaign identity change.
-- [ ] old runtime state cannot masquerade as new containment state.
-- [ ] no compatibility shim weakens the new invariant.
+- [x] OUTBOUND_POLICY_VERSION changed only if hostname policy semantics changed.
+- [x] resolved-address policy version.
+- [x] proxy containment runtime identity.
+- [x] ProxyEvent/ProxySummary durable shape/version if changed.
+- [x] real-run contract identity if changed.
+- [x] no unrelated source analyzer identity change.
+- [x] no unrelated semantic/replay/dossier/campaign identity change.
+- [x] old runtime state cannot masquerade as new containment state.
+- [x] no compatibility shim weakens the new invariant.
 
 ## 16. Safety accounting
 
 Final report must state exact counts/booleans for:
 
-- [ ] DEV contacts = 0
-- [ ] NEXT contacts = 0
-- [ ] production contacts = 0
-- [ ] live Alphaus DNS reconnaissance = 0
-- [ ] authenticated storage-state loads = 0
-- [ ] customer/data/datastore operations = 0
-- [ ] cloud/infra operations = 0
-- [ ] sibling repository writes = 0
-- [ ] publication/external findings = 0
-- [ ] runtime external AI/model calls = 0
-- [ ] Docker/network namespace/firewall/root networking changes = 0
-- [ ] force pushes = 0
+- [x] DEV contacts = 0
+- [x] NEXT contacts = 0
+- [x] production contacts = 0
+- [x] live Alphaus DNS reconnaissance = 0
+- [x] authenticated storage-state loads = 0
+- [x] customer/data/datastore operations = 0
+- [x] cloud/infra operations = 0
+- [x] sibling repository writes = 0
+- [x] publication/external findings = 0
+- [x] runtime external AI/model calls = 0
+- [x] Docker/network namespace/firewall/root networking changes = 0
+- [x] force pushes = 0
 
 ## 17. Exact-head Git and CI truth
 
-- [ ] Commit only validated durable checkpoints.
-- [ ] Push main according to single-writer rules.
-- [ ] Verify origin/main == local HEAD.
-- [ ] If current policy requires exact-head Actions observation, inspect once after push.
-- [ ] Executed passing steps may be recorded as CI evidence.
-- [ ] steps=[] / null remains NO_STEPS_BILLING_OR_PLATFORM_BLOCK.
-- [ ] Never weaken workflow or retry churn solely to change external billing/platform state.
+- [x] Commit only validated durable checkpoints.
+- [x] Push main according to single-writer rules.
+- [x] Verify origin/main == local HEAD.
+- [x] If current policy requires exact-head Actions observation, inspect once after push.
+- [x] Executed passing steps may be recorded as CI evidence.
+- [x] steps=[] / null remains NO_STEPS_BILLING_OR_PLATFORM_BLOCK.
+- [x] Never weaken workflow or retry churn solely to change external billing/platform state.
 
 ## 18. Durable closure
 
-- [ ] STATE updated at every durable milestone.
-- [ ] REPORT includes all-file audit counts/digest.
-- [ ] REPORT includes BEFORE reproductions and AFTER results.
-- [ ] REPORT includes address-class matrix.
-- [ ] REPORT includes protocol differential matrix.
-- [ ] REPORT includes evidence/summary semantics.
-- [ ] REPORT includes runtime identity migration.
-- [ ] REPORT includes browser DNS residual disposition.
-- [ ] REPORT includes every changed file and why.
-- [ ] REPORT includes exact test counts/skips/failures/timings.
-- [ ] REPORT includes safety accounting.
-- [ ] Update docs/SAFETY_MODEL.md for the exact new L5 invariant and remaining L6 residual.
-- [ ] Update docs/ARCHITECTURE.md, CURRENT_STATE.md, ROADMAP.md, DECISIONS.md only where durable truth changed.
-- [ ] Mark OpenSpec tasks complete only when evidence exists.
-- [ ] Set .agent/ACTIVE_TASK.md terminal COMPLETE with next action STOP.
-- [ ] Final push.
-- [ ] Stop. Do not auto-select another campaign in the executor session.
+- [x] STATE updated at every durable milestone.
+- [x] REPORT includes all-file audit counts/digest.
+- [x] REPORT includes BEFORE reproductions and AFTER results.
+- [x] REPORT includes address-class matrix.
+- [x] REPORT includes protocol differential matrix.
+- [x] REPORT includes evidence/summary semantics.
+- [x] REPORT includes runtime identity migration.
+- [x] REPORT includes browser DNS residual disposition.
+- [x] REPORT includes every changed file and why.
+- [x] REPORT includes exact test counts/skips/failures/timings.
+- [x] REPORT includes safety accounting.
+- [x] Update docs/SAFETY_MODEL.md for the exact new L5 invariant and remaining L6 residual.
+- [x] Update docs/ARCHITECTURE.md, CURRENT_STATE.md, ROADMAP.md, DECISIONS.md only where durable truth changed.
+- [x] Mark OpenSpec tasks complete only when evidence exists.
+- [x] Set .agent/ACTIVE_TASK.md terminal COMPLETE with next action STOP.
+- [x] Final push.
+- [x] Stop. Do not auto-select another campaign in the executor session.
 
 ## Productive time-shape guidance
 

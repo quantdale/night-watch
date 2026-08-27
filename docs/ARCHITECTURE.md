@@ -1,6 +1,10 @@
 # Nightwatch Architecture
 
-Status: Phase 23 local/source/synthetic implementation checkpoint
+Status: Resolved-egress L5 local/source/synthetic implementation checkpoint
+`3db48ed7d35a0a816ef1a801c86a1d14ddf60b27` (hostname authorization now feeds
+bounded complete-answer-set admission and exact numeric HTTP/CONNECT/Upgrade
+binding; the final documentation checkpoint is discovered from Git), building
+on the historical Phase 23 local/source/synthetic implementation checkpoint
 `98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` (unified quality gate, clean
 checkout, canonical, and topology-correct isolated regressions green with
 exact parity; exact-head external CI was observed with zero steps and
@@ -78,7 +82,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/browser/context/` | Playwright browser-context factory: system Chrome via `channel`, storage-state by path, tracing decision (disabled when authenticated state is in use), installs the request-inspection route. | *in flight* |
 | `src/browser/observers/` | Console, page-error, and request-failed observers emitting redacted `RunEvent`s. | *in flight* |
 | `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / local block+abort / deny+abort+hard-failure), redacted request/response recording. | *in flight* |
-| `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, sanitized event log and runtime health state. | implemented |
+| `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, bounded complete-answer-set address classifier/resolver, exact numeric binding, sanitized lifecycle evidence, and fail-closed runtime health state. | implemented |
 | `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | *in flight* |
 | `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | *in flight* |
 | `src/core/policy/ownerScope.ts` | Central owner-scope gate. Allows local/source/contained DEV/replay/evidence operations and rejects frozen infrastructure, datastore, deployment, and external-publication classes with `OWNER_POLICY_BLOCKED`. | implemented |
@@ -146,6 +150,9 @@ A Nightwatch run proceeds through the following stages:
    `NIGHTWATCH_STORAGE_STATE` (path only) loads authenticated state; when it
    is present, tracing is disabled and the run is marked authenticated.
    Otherwise the run is clearly marked UNAUTHENTICATED.
+   The proxy resolves an allowlisted hostname only after policy authorization,
+   validates the whole bounded answer set, and binds the upstream connector to
+   the selected numeric address/family.
 5. **Journey actions (all passive)** (`scenarios/*`, `src/core/safety/actions.ts`).
    The scenario walks the product's candidate routes. Every step passes
    `assertPassiveAction`; anything that cannot be proven passive is skipped
@@ -169,9 +176,14 @@ Browser / browser-internal channels
 Nightwatch L0–L4 browser controls
           │
           ▼
-mandatory loopback L5 proxy  ──► approved target only
+mandatory loopback L5 proxy
           │
-          └── denied / unknown / malformed: local response, no DNS/TCP
+          ├── hostname policy deny/block ──► local response, no resolver/TCP
+          │
+          └── hostname allow ──► owned resolver ──► full-set admission
+                                      │
+                                      ├── unsafe/failed ──► local hard failure
+                                      └── exact numeric address/family ──► approved target
 ```
 
 The post-run evidence topology is:
@@ -499,20 +511,39 @@ and never rewrites state.
 `src/proxy/server.ts` accepts normal forward-proxy HTTP requests, CONNECT
 authorities for HTTPS/WSS, and HTTP Upgrade requests for WebSockets. Each
 target is parsed by `src/proxy/policyAdapter.ts` and delegated to the same
-`OutboundPolicy.decide()` used by the browser consumers.
+`OutboundPolicy.decide()` used by the browser consumers. An allow decision is
+only the first gate: `src/proxy/resolver.ts` resolves through the internal
+bounded seam, `src/proxy/addressPolicy.ts` admits the complete answer set, and
+the protocol handler receives the selected numeric address/family.
 
-- `allow`: only then does the proxy forward HTTP or create the upstream TCP
-  connection. HTTPS/WSS is tunneled; TLS is not intercepted.
+- `allow`: only then does the proxy resolve. A complete acceptable answer set
+  is required before the proxy forwards HTTP or creates the upstream TCP
+  connection; HTTP uses the numeric destination with the original `Host`, and
+  CONNECT/Upgrade preserve the original authority while dialing the exact
+  numeric address/family. HTTPS/WSS is tunneled; TLS is not intercepted.
 - `block-telemetry`: return a local block response and record a sanitized
   telemetry event; no upstream connection is attempted.
 - `deny` or malformed/unknown: return a local block response and record a
-  fatal proxy event; DNS resolution and TCP are never attempted.
+  fatal proxy event; resolution and TCP are never attempted. Resolution or
+  admission failure is a distinct hard containment failure and also creates
+  no upstream connection.
 
 Proxy events contain timestamp, safe run label, protocol, normalized host and
-port, classification, decision, rule ID, and safe reason. They never contain
-headers, cookies, bodies, query strings, or tokens. `RunRecorder` copies only
-the current run's event slice to `proxy.jsonl` and places aggregate counts in
-`summary.json.proxy`.
+port, bounded classification/decision/lifecycle categories, rule ID, safe
+reason, and current containment identities where required. They never contain
+raw resolved addresses, headers, cookies, bodies, query strings, resolver
+diagnostics, or tokens. `RunRecorder` copies only the current run's event
+slice to `proxy.jsonl`; `summary.json.proxy` is schema v2 and separates policy
+authorization, resolution, connection, coverage, and hard containment
+violations. An event-log write failure makes the proxy unhealthy and closes
+any upstream created before the failed write.
+
+All three proxy protocols share the same resolution/admission helper. Denied,
+telemetry, optional-support, and browser-background decisions return before
+the resolver. Resolver errors, bounded timeouts, malformed or unsafe answer
+sets, client disconnects, shutdown, and connection failures are represented by
+categorical lifecycle outcomes; no late resolver completion may create a
+socket after the logical request has ended.
 
 ## 5. Request inspection pipeline
 

@@ -30,7 +30,7 @@ boundaries.
 
 ## Current Milestone
 
-M5 — browser residual and adversarial closure.
+M6 — full acceptance, documentation, and Git closure.
 
 ## Completed Milestones
 
@@ -92,15 +92,17 @@ M5 — browser residual and adversarial closure.
 
 ## Work In Progress
 
-The implementation slice is validated in the worktree and is ready for its
-durable checkpoint. M6 is executing the full local, clean Node 20, serial,
-privacy, UI-schema, and topology acceptance cone. All fixtures remain
-synthetic loopback-only.
+The implementation slice and full acceptance cone are validated in the
+worktree. Durable docs and OpenSpec tasks are now updated; M6 is completing
+the final documentation checkpoint, terminal continuity fields, exact-head
+verification, and clean-tree handoff. All fixtures remain synthetic
+loopback-only.
 
 ## Exact Next Action
 
-Run the full acceptance cone, then update durable docs/OpenSpec/report and
-finish the exact-head Git continuity closure.
+Commit the updated docs/report/OpenSpec and terminal continuity fields, run
+the final current-head gates, push without force, and verify exact-head
+equality with a clean tree.
 
 ## Blockers
 
@@ -232,10 +234,20 @@ None.
   `1,903` total, `1,890` passed, `13` inherited skips, `0` failed.
 - `npm run campaign:synthetic`: PASS; `66 passed / 0 failed / 15.5s`.
 - `npm run test:owner-provenance`: PASS; `91 passed / 0 failed / 9.7s`.
-- Final remote/docs recheck: origin main at `86e804ea`; GitHub open issues and
+- Final pre-closure recheck: origin main at `6f475224`; GitHub open issues and
   pull requests both `0`; no competing blocker.
-- Full local, clean Node 20, canonical serial, UI, and final exact-head gates:
-  PENDING until M6 closure.
+- Full local gate: PASS on `6f475224`, all nine groups, receipt
+  `receipt:sha256:49e2f3b6120820eb316a7253`.
+- Clean Node20 gate: PASS on `6f475224`, all nine groups, clean receipt
+  `clean-receipt:sha256:da154ae5aa8c49d50db6f2f6`; the first clean attempt's
+  transient single Phase24 failure was followed by five passing direct
+  repeats and a passing complete rerun.
+- Canonical serial regression: `2,573 passed / 16 skipped / 0 failed` out of
+  `2,589` in `7.2m`.
+- Control Center UI typecheck/tests/build/browser: PASS; UI tests `11 passed`,
+  build `259,566` bytes with no external references, built browser `1 passed`.
+- Dev-server visual verification: content present, no overlay, zero console
+  errors; browser and server closed cleanly.
 
 ## Files Changed
 
@@ -243,9 +255,9 @@ Implementation/test changes are confined to the proxy resolver, address
 classifier, exact HTTP/CONNECT/Upgrade binding, lifecycle events and summary,
 run evidence/destination manifest, runtime identity/real-run gate, direct and
 browser setup producers, affected manual safety consumers, Control Center
-reader/adapter DTOs, and synthetic unit/regression tests. The completed
-predecessor and all Alphaus sibling repositories remain untouched. Durable
-docs, full acceptance, and OpenSpec task closure are still pending.
+reader/adapter DTOs, synthetic unit/regression tests, durable docs, and the
+OpenSpec task ledger. All 297 OpenSpec task checkboxes are now complete. The
+completed predecessor and all Alphaus sibling repositories remain untouched.
 
 ## Decisions Made During This Task
 
@@ -272,11 +284,11 @@ docs, full acceptance, and OpenSpec task closure are still pending.
 - Event persistence is a containment prerequisite: runtime write failure
   disables health and future allows, while current upstream sockets are
   destroyed rather than surviving an evidence failure.
-- Final takeover recheck: `git ls-remote origin refs/heads/main` points to the
-  pushed red checkpoint `86e804ea`; GitHub reports zero open issues and zero
-  open pull requests for `quantdale/night-watch`; current durable docs still
-  describe the pre-campaign hostname-only L5 behavior and require the planned
-  update. No competing blocker was found.
+- Final pre-closure recheck: `git ls-remote origin refs/heads/main` points to
+  the pushed continuity checkpoint `6f475224`; GitHub reports zero open issues
+  and zero open pull requests for `quantdale/night-watch`; durable docs now
+  describe the resolved-egress invariant and preserve the exact browser DNS
+  residual. No competing blocker was found.
 
 ## Safety Events
 
@@ -302,16 +314,17 @@ expansion remain deferred.
 
 ## Resume Recipe
 
-Read this STATE, inspect `git status` and the diff, run the remaining focused
-browser/privacy/adversarial checks, then execute the full acceptance cone.
-Update the report and durable docs only from recorded results, checkpoint the
-validated implementation, push without force, and verify exact-head equality.
+Read this STATE, inspect `git status` and the diff, run the final current-head
+gates after the documentation checkpoint, update the terminal report/state
+fields, commit, push without force, and verify exact-head equality and a clean
+tree. Then STOP; do not select another campaign.
 
 ## Completion Snapshot
 
-Not terminal. M0–M4 are complete with focused post-fix evidence; M5 is active
-for browser residual/adversarial closure; full/clean/serial acceptance and
-terminal Git continuity remain open.
+Not terminal. M0–M5 are complete with focused, browser, privacy, and
+adversarial evidence. M6 has full local, clean Node20, serial, UI, and visual
+results; final current-head gate rerun, terminal continuity commit, exact-head
+verification, and clean-tree closure remain open.
 
 ## Safety Ledger
 

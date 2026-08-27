@@ -1,18 +1,14 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-26** at
-> the repository-wide systemic optimization closure
-> (`nightwatch-repository-wide-systemic-optimization-v1`; validated
-> implementation checkpoint `f9902bf43081ce737d08437f9f68c3af04ed62b0`):
-> validation-loop mechanics optimized with zero verification-strength change —
-> agent-state git batching (880→64 spawns/run, check 8.40s→1.03s, audit
-> 5.80s→0.99s), incremental noEmit typecheck (warm 47s→7.4s, cold unchanged,
-> tsbuildinfo untracked), portfolio CLI content-addressed compile cache
-> (phase16h suite 190.5s→9.7s of test time), batched hardening syntax check
-> (2.78s→0.90s); full gate:local PASS in 373.8s vs ~808s baseline component
-> sum with byte-identical validated counts. Deferred candidates (TS require-
-> hook consolidation, census analyzer dedup) require separate authorization.
-> Prior closure: the source-to-campaign proof-chain expansion followed the
+> Durable memory for the next agent/session. Last updated: **2026-08-27** at
+> the resolved-egress and containment-truth hardening closure
+> (`nightwatch-resolved-egress-and-containment-truth-hardening-v1`; validated
+> implementation checkpoint `3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`):
+> hostname allow is now followed by bounded complete-answer-set admission and
+> exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
+> fail-closed event-log handling, and explicit runtime containment identities.
+> The campaign is LOCAL / SOURCE / SYNTHETIC only; the final documentation
+> checkpoint is discovered from Git. Prior closure: the source-to-campaign proof-chain expansion followed the
 > Control Center authority-integration and whole-repository hardening
 > closure. Phase 28 and the evidence-backed response-flow successor remain
 > historical; the Control Center successor's validated implementation
@@ -131,7 +127,7 @@
 ## What exists now
 
 Phase 0/1, Phase 1.1 (browser safety hardening), and Phase 1.2 (outer egress
-containment) are complete. Nightwatch lives in
+containment plus resolved-egress truth hardening) are complete. Nightwatch lives in
 `REPOSITORIES/nightwatch/` as its own private Git repository with the
 canonical `origin` remote. It reads the Alphaus repos under
 `REPOSITORIES/alphauslabs` and `REPOSITORIES/mobingilabs` strictly read-only.
@@ -309,7 +305,7 @@ phase.
 | Policy | `ws:`/`wss:` are network schemes (`NETWORK_PROTOCOLS`) — WebSocket policy identical to HTTP; `isNetworkUrl()` helper |
 | Storage state | Hardened secret handling: absolute path, external to repo+workspace, shape `{cookies, origins}`, ≤5MB, fail closed; explicit `storageStatePath` now validated too (was bypassed); `.gitignore` auth patterns |
 | Traces | Authenticated runs ALWAYS disable Playwright traces (even `NIGHTWATCH_TRACE=on`); manifest records `trace.enabled=false` + reason via `addManifestEntry` |
-| Outer containment | Mandatory loopback L5 forward proxy (`src/proxy/server.ts`) is started by Playwright global setup, health-checked, and passed explicitly to Chromium; HTTP and CONNECT/upgrade destinations are classified before DNS/TCP; no TLS MITM; sanitized `proxy.jsonl` plus `summary.json.proxy` aggregates |
+| Outer containment | Mandatory loopback L5 forward proxy (`src/proxy/server.ts`) is started by Playwright global setup, health-checked, and passed explicitly to Chromium; hostname policy runs before the bounded resolver, complete resolved sets are admitted before exact numeric HTTP/CONNECT/Upgrade binding, and denied/unsafe paths stop before resolution/TCP; no TLS MITM; sanitized schema-v2 `proxy.jsonl` plus `summary.json.proxy` lifecycle evidence |
 | Policy consumers | `OutboundPolicy.decide()` is the only semantic policy source; named browser HTTP/WS consumers and `src/proxy/policyAdapter.ts` delegate to it; policy version is recorded in the manifest |
 | Chromium egress configuration | Loopback proxy bypass removed with `--proxy-bypass-list=<-loopback>`; QUIC disabled; non-proxied WebRTC UDP disabled; background/speculative Chrome channels disabled where supported; observed Chrome Google control-plane preconnects are explicit telemetry and blocked locally |
 | Fixtures | `safety` variant with `window.__nw` driver (SW/WS/SSE/popup/redirect/download/worker probes), RFC 6455 WS echo endpoint, SSE, redirect endpoints (prod target = `random.mobingi.com` — production-class AND DNS-unresolvable, zero real contact) |
@@ -334,6 +330,28 @@ phase.
 | Authenticated runs | fake storage-state secrets never enter artifacts; `trace.zip` absent; manifest documents trace reason; missing/misplaced/malformed storage state fails closed at context creation |
 | Auth capture oracle handling | Protocol anomalies are recorded as sanitized `ORACLE_ANOMALY` evidence; safety/containment failures remain separate hard failures, and auth capture continues to post-login verification |
 | No prod/DB/mutation | policy unit tests + canary; all Phase 1.2 browser tests use loopback fixtures and denied local alias `127.0.0.2`; production/unknown CONNECT tests stop at the proxy and never resolve or dial the destination |
+| Resolved-egress matrix | Pure classifier covers IPv4/IPv6 special-use and global-unicast boundaries, exact local loopback, mapped-address rejection, family mismatch, duplicates, malformed/empty/oversized and mixed answer sets; resolver timeout/late completion is bounded and cannot create a socket |
+| Protocol differential | HTTP, CONNECT, and WebSocket Upgrade share resolution/admission and pass only the selected numeric address/family to the connector while preserving original authority semantics; denied/telemetry/background paths invoke no resolver |
+| Latest local/source/synthetic certification | Focused implementation cone `158 passed / 0 failed / 5.2s`; semantic compatibility `1,903 total / 1,890 passed / 13 inherited skips / 0 failed`; owner provenance `91 passed`; synthetic campaign `66 passed`; canonical serial regression `2,573 passed / 16 skipped / 0 failed` out of `2,589`; UI typecheck/tests/build/browser all pass; browser visual verification reports content, no overlay, and zero console errors |
+
+The resolved-egress L5 invariant is now explicit and independently tested:
+hostname authorization is necessary but insufficient. Only an allowlisted
+hostname enters the bounded internal resolver; its complete answer set must be
+acceptable before the proxy selects and dials an exact numeric address/family.
+Local admits only exact `127.0.0.1`/`::1`; `dev`/`next` external answers must
+be global unicast. Mixed, malformed, empty, oversized, unsupported-family,
+mapped, and unsafe answers fail closed. Original Host/CONNECT authority is
+retained, no uncontrolled second DNS lookup is permitted, and raw resolved
+addresses/resolver diagnostics do not enter evidence. Event-log write failure
+also fails closed by making the proxy unhealthy, blocking subsequent traffic,
+and tearing down any upstream created before the failed lifecycle write.
+
+Runtime state and the real-run gate require
+`nightwatch.proxy-containment.v2`,
+`phase-1.2-resolved-address-policy-v1`, and
+`phase-1.2-exact-address-binding-v1`. The browser residual remains exactly
+`BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`; this campaign did not perform L6,
+real-product, live-DNS, or authenticated acceptance.
 
 ## Phase 1.1 harness bugs found & fixed (by the test suite)
 

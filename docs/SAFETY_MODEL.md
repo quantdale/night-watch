@@ -329,7 +329,7 @@ does not see. Build order: `createNightwatchContext()`
 | **L2** | `context.routeWebSocket('**/*')` (`networkObserver.ts` `handleWebSocket`) | WebSocket creation governed with **identical** policy semantics: `allow` → `connectToServer()`; telemetry → `close()` (blocked, not fatal); production/unknown → `close()` + hard failure before any communication | authoritative |
 | **L3** | `serviceWorkers: 'block'` + init script stubbing the Service Worker API and the `SharedWorker` constructor + `serviceworker` hard-failure alarm (`src/browser/context.ts` `containmentInitScript`, alarm handler) | service-worker fetches (never visible to Playwright routing) and shared-worker fetches (empirically verified to bypass routing) cannot exist; any SW that still registers fires a hard failure | native block + evidence |
 | **L4** | unrouted-request detection (150 ms grace, dedupe via `blockedUrls`) + download record/cancel (`networkObserver.ts` `onRequestObserved`; `src/browser/context.ts` `onDownload`) | redirect follow-ups and download-manager traffic that escape routing are detected and recorded as hard failures; downloads are cancelled — the violation cannot escape evidence or the run verdict | detection + evidence |
-| **L5** | mandatory local proxy (`src/proxy/server.ts`) started by `tests/globalSetup.ts`; explicit Chromium `launchOptions.proxy`; parser/policy adapter in `src/proxy/policyAdapter.ts` | governs HTTP forward traffic, HTTPS/WSS CONNECT, and HTTP Upgrade before DNS/TCP; denied/unknown destinations are rejected locally; sanitized events feed `proxy.jsonl` and `summary.json.proxy` | implemented; Docker namespace remains future L6 |
+| **L5** | mandatory local proxy (`src/proxy/server.ts`) started by `tests/globalSetup.ts`; explicit Chromium `launchOptions.proxy`; parser/policy adapter in `src/proxy/policyAdapter.ts`; bounded owned resolver/admission in `src/proxy/resolver.ts` and `src/proxy/addressPolicy.ts` | hostname allow is necessary but not sufficient: after allow, the proxy resolves through its internal bounded seam, validates the complete answer set, and passes only the selected exact numeric address/family to HTTP, CONNECT, and Upgrade sockets; denied/unknown destinations are rejected before resolution; sanitized lifecycle evidence feeds `proxy.jsonl` and `summary.json.proxy` | implemented; Docker namespace remains future L6 |
 
 L0 pattern generation is per environment (`buildCdpBlockPatterns`): every
 known production host and all `*.run.app` are always listed (exact
@@ -367,7 +367,7 @@ Empirical claims were verified on Playwright 1.62.1 with system Chrome
 | WebSockets | L2 (`context.routeWebSocket('**/*')`) | unit: WebSocket policy tests in `tests/unit/safety.test.ts` (`ws:`/`wss:` in `NETWORK_PROTOCOLS`, `isNetworkUrl`); smoke: a closed-without-connect WS surfaces as `onclose(code 0)` in the page | none |
 | EventSource / SSE | L1 | empirical: EventSource requests enter the route handler; smoke: `tests/smoke/safety.smoke.ts` | none |
 | Downloads | L1 (cross-origin) + L4 (record + cancel) | empirical: cross-origin downloads are routed and denied; smoke: `tests/smoke/safety.smoke.ts` | same-origin downloads bypass routing — benign by construction (§11) |
-| Browser background/speculative traffic | L5 proxy; explicit Chrome launch flags; the three exact reviewed hosts are browser-background classes and blocked locally | local Chromium run with system Chrome; proxy/browser evidence records local containment without upstream contact | DNS prefetch itself is not visible to the proxy (**UNRESOLVED**); future container closes the process-level gap |
+| Browser background/speculative traffic | L5 proxy; explicit Chrome launch flags; the three exact reviewed hosts are browser-background classes and blocked locally | local Chromium run with system Chrome; proxy/browser evidence records local containment without upstream contact | DNS prefetch itself is not visible to the proxy (`BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`); future container closes the process-level gap |
 | QUIC / HTTP3 | `--disable-quic` | installed Chrome launch command and local proxy tests | none observed in this configuration |
 | WebRTC/STUN/TURN non-proxied UDP | `--force-webrtc-ip-handling-policy=disable_non_proxied_udp` | installed Chrome launch command; no UDP fixture path is permitted | browser feature is disabled for non-proxied UDP; proxied TURN is not exercised |
 
@@ -377,6 +377,17 @@ Empirical claims were verified on Playwright 1.62.1 with system Chrome
 
 Accepted, documented residuals. None weakens the fail-closed verdict —
 each is either detected and failed, or benign by construction:
+
+The resolved-egress hardening closure makes the L5 invariant explicit:
+hostname policy authorization is necessary but not sufficient. Only an
+allowlisted hostname may enter the resolver; the bounded resolver result is
+then admitted as a complete set. Local runs admit only exact `127.0.0.1` or
+`::1`, while `dev`/`next` external targets require global-unicast answers.
+Mixed, malformed, empty, oversized, unsupported-family, mapped, or otherwise
+unsafe sets fail closed. HTTP, CONNECT, and WebSocket Upgrade all bind the
+socket to the same selected numeric address/family and retain the original
+authority for protocol semantics. No raw resolved address or resolver
+diagnostic is persisted.
 
 1. **Redirect follow-ups: prevented by the Fetch guard (L0) in the
    common case.** Playwright does not re-enter the route handler for a
@@ -392,11 +403,13 @@ each is either detected and failed, or benign by construction:
    construction because same-origin means the host is in the environment
    allowlist.
 3. **DNS prefetch/resolver activity is unresolved at the browser process
-   boundary.** The proxy does not resolve denied/unknown destinations and
-   only calls `net.connect` after an allow decision, but DNS activity that
-   Chromium performs speculatively is not a proxy event. This is why Phase
-   1.2 does not claim complete network isolation and why the future L6
-   container/network namespace remains planned.
+   boundary.** The proxy does not resolve denied/unknown destinations and only
+   calls its internal resolver after hostname authorization; its upstream
+   socket uses the admitted numeric destination. DNS activity that Chromium
+   performs speculatively is not a proxy event. This is why Phase 1.2 does
+   not claim complete network isolation and why the future L6
+   container/network namespace remains planned. The exact disposition is
+   `BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`.
 4. **`serviceWorker.register()` may resolve under `serviceWorkers:
    'block'`.** No worker is created (verified), but the promise
    resolution itself is outside Playwright's control; the init-script
@@ -466,8 +479,12 @@ the egress gate outside the browser:
 - **Local allowlist proxy (implemented).** `server.ts` handles normal
   forward-proxy HTTP, CONNECT tunnelling for HTTPS/WSS, and WebSocket HTTP
   Upgrade. `policyAdapter.ts` rejects malformed authorities and delegates
-  all semantic decisions to `OutboundPolicy`. A denied/unknown destination
-  is answered locally before DNS or TCP. TLS is never intercepted.
+  hostname semantics to `OutboundPolicy`; `resolver.ts` and
+  `addressPolicy.ts` then provide one bounded, complete-answer-set authority
+  for resolved egress. A denied/unknown destination is answered locally
+  before resolution or TCP. An allowed destination is dialed only at its
+  admitted numeric address/family, with no uncontrolled second resolution.
+  TLS is never intercepted.
 - **Mandatory browser integration (implemented).** Playwright global setup
   starts the proxy on loopback, performs a health check, writes runtime state,
   and fails the run if bind/health fails. The context repeats the health gate
@@ -475,11 +492,16 @@ the egress gate outside the browser:
   hard-failure even if no later browser request occurs. Chromium receives an
   explicit proxy launch option; `--proxy-bypass-list=<-loopback>` is required
   because the installed Chrome otherwise treats loopback specially.
-- **Sanitized evidence (implemented).** Proxy events contain only timestamp,
-  run label, protocol, host, port, classification, decision, rule, and safe
-  reason. Authorization, Cookie, Proxy-Authorization, bodies, query strings,
-  and tokens are never persisted. Denied proxy events are fatal; telemetry is
-  blocked without failing; aggregate counts are in `summary.json.proxy`.
+- **Sanitized evidence (implemented).** Proxy events contain only bounded
+  lifecycle categories and safe identity/classification/reason fields; raw
+  addresses, authorization, Cookie, Proxy-Authorization, bodies, query
+  strings, resolver diagnostics, and tokens are never persisted. The v2
+  summary separates hostname authorization from resolution and connection
+  outcomes, records coverage explicitly, and counts containment violations as
+  hard failures. An event-log write failure marks the proxy unhealthy, blocks
+  subsequent traffic, and tears down any upstream created before the failed
+  lifecycle write. Runtime state requires the containment, resolved-address,
+  and exact-binding identities before a real run can proceed.
 - **Future L6 container (planned).** Browser and Nightwatch subprocesses will
   run inside a restricted container/network namespace whose default-deny
   egress permits only the Nightwatch proxy. This later covers Playwright,

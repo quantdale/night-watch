@@ -108,14 +108,25 @@ empirical containment verification on Playwright 1.62.1 + system Chrome
 
 **Goal.** Add an independent local L5 egress boundary so a browser escape
 must defeat both the Playwright safety kernel and the outer proxy before any
-external destination can receive a connection. Phase 2 product testing is not
-part of this phase.
+external destination can receive a connection. The completed resolved-egress
+hardening makes hostname authorization necessary but insufficient: every
+allowlisted hostname must produce a bounded, policy-acceptable complete
+resolved-address set, and every protocol must dial the exact admitted numeric
+destination. Phase 2 product testing is not part of this phase.
 
 **Key deliverables.**
 
 - Fail-closed loopback proxy in `src/proxy/server.ts`: normal HTTP forward
   traffic, HTTPS/WSS CONNECT, and WebSocket HTTP Upgrade; denied/unknown and
-  malformed destinations are rejected before DNS/TCP; no TLS MITM.
+  malformed destinations are rejected before resolution/TCP; no TLS MITM.
+- Pure numeric IPv4/IPv6 address classification and a bounded internal
+  resolver seam (`src/proxy/addressPolicy.ts`, `src/proxy/resolver.ts`): local
+  admits only exact `127.0.0.1`/`::1`; `dev`/`next` external targets require
+  global-unicast answers; the complete set is checked before selection, with
+  malformed, mixed, empty, oversized, mapped, and unsafe answers denied.
+- Shared exact-address binding for HTTP, CONNECT, and WebSocket Upgrade:
+  numeric address/family is passed to the connector, original Host/authority
+  semantics are retained, and no uncontrolled second DNS resolution occurs.
 - `src/proxy/policyAdapter.ts` delegates to the canonical
   `OutboundPolicy.decide()`; browser HTTP/WS consumers use named adapters and
   the policy-consistency matrix fails on drift.
@@ -123,8 +134,12 @@ part of this phase.
   receives an explicit proxy and `--proxy-bypass-list=<-loopback>`; no
   environment-variable-only or continue-without-proxy path exists.
 - Sanitized proxy events, per-run `proxy.jsonl`, manifest
-  `networkContainment`, and `summary.json.proxy` aggregates; denied proxy
-  traffic is a fatal run violation while telemetry is blocked-not-failed.
+  `networkContainment`, and schema-v2 `summary.json.proxy` aggregates;
+  policy authorization, resolution, connection, and coverage are separate;
+  containment violations and event-write failures are hard failures while
+  telemetry is blocked-not-failed.
+- Runtime state and the real-run gate require the containment, resolved-address,
+  and exact-binding identities; old or malformed state cannot authorize a run.
 - Synthetic A/B loopback fixtures prove allowed A works and denied B receives
   zero connections through HTTP, redirect, popup, SharedWorker, Service
   Worker, WebSocket, and CONNECT paths.
