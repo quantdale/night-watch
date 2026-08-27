@@ -20,6 +20,25 @@ For each core workflow, the campaign SHALL identify one authoritative producer/s
 
 The audited chains SHALL include environment/browser/proxy/evidence, source/proof/lifecycle/eligibility/campaign, candidate/replay/minimization/triage/dossier/finding, Control Center authorities/adapters/coordinator/server/UI, planner/handoff/task/project-state, and quality-gate definition/inventory/runners.
 
+## Requirement: process-level containment truth
+
+The release-certification campaign SHALL treat the existing L0-L5 browser/proxy stack and the future L6 process boundary as distinct authorities.
+
+- The system SHALL NOT claim complete process/network isolation while `BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL` is unresolved.
+- Any real/authenticated non-browser subprocess path that requires L6 SHALL fail closed unless a versioned, mechanically verified L6 runtime capability is present.
+- The existing authenticated OOPS disablement caused by relay/network-namespace incompatibility SHALL NOT be bypassed to obtain coverage.
+- Any new L6 implementation SHALL be unprivileged/rootless within this campaign and SHALL NOT require root, privileged firewall/network administration, system-wide proxy/DNS/hosts mutation, TLS MITM, cloud infrastructure, or live external probes.
+- A claimed L6 PASS SHALL separately prove direct DNS/TCP/UDP escape denial and permitted synthetic proxy/relay flow, plus startup/liveness/cleanup behavior.
+- If safe L6 closure cannot be implemented within scope, the terminal result SHALL be `PROJECT_NOT_COMPLETE_BLOCKED` for the full-completion objective rather than falsely declaring process isolation complete.
+
+## Requirement: safety-test retry authority
+
+Safety-critical containment tests SHALL NOT rely on retry behavior to convert a first-attempt containment failure into a release PASS.
+
+The current WebSocket gate retry configuration SHALL be revalidated against the current awaited `routeWebSocket` registration. If the underlying race no longer reproduces, the retry workaround and stale rationale SHALL be removed. If it still reproduces, the implementation/lifecycle defect SHALL be repaired and covered by a deterministic regression before release certification.
+
+Restricted-OOPS executable provenance, relay-only behavior, secret non-inheritance and oracle-parity checks SHALL have deterministic certification coverage. Binary absence MAY be represented as an environment capability fact, but it SHALL NOT silently erase release-critical subprocess validation; missing required coverage is a `BLOCKING_VALIDATION_GAP`.
+
 ## Requirement: skipped-test truth
 
 Every skipped test in the terminal complete suite SHALL have an exact identity and one explicit disposition:
@@ -92,6 +111,6 @@ The campaign SHALL terminate as exactly one of:
 - `PROJECT_COMPLETE_AND_CI_CERTIFIED`
 - `PROJECT_NOT_COMPLETE_BLOCKED`
 
-A COMPLETE outcome is forbidden while any P0/P1, blocking P2, unexplained skipped test, required local/clean gate failure, safety/privacy regression, or known release-blocking defect remains.
+A COMPLETE outcome is forbidden while any P0/P1, blocking P2, unexplained skipped test, safety-critical retry masking, required local/clean gate failure, safety/privacy regression, false L6/process-isolation claim, or known release-blocking defect remains.
 
 The executor SHALL stop rather than manufacture new features when further work is speculative, low-value, outside owner scope or requires separate authorization.
