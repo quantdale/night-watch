@@ -45,6 +45,21 @@ Exit: every core workflow has one documented authority path and all P0/P1 defect
 
 Exit: zero open P0/P1 findings; affected cones green.
 
+## M3A — L6 process containment + safety-test authority
+
+- [ ] Re-derive the current browser/helper/OOPS child-process and network-egress topology from source.
+- [ ] Reproduce `inspectOopsSandbox()` locally and record Bubblewrap availability, namespace probe result and relay compatibility using synthetic loopback only.
+- [ ] Verify real/authenticated OOPS remains disabled and no alternate launcher bypasses that decision.
+- [ ] Build a minimal adversarial L6 matrix for direct DNS, TCP, UDP, HTTP and permitted synthetic proxy/relay flow.
+- [ ] Design the narrowest unprivileged/rootless L6 envelope; reject any design that needs root, privileged firewall/network administration, system-wide proxy/DNS/hosts changes, TLS MITM, or live external probes.
+- [ ] If safely implementable, add versioned L6 capability/runtime identity, startup/liveness/cleanup checks, process-launch binding and fail-closed readiness integration.
+- [ ] If not safely implementable, encode the unsupported/residual state mechanically and block any route or completion claim that would require complete process isolation.
+- [ ] Run the WebSocket containment smoke matrix with retries disabled; remove the stale retry workaround if the race is no longer reproducible, otherwise repair the underlying registration/lifecycle defect first.
+- [ ] Replace release-critical restricted-OOPS binary-absence skips with deterministic clean qualification where practical; otherwise classify the exact tests as `BLOCKING_VALIDATION_GAP`.
+- [ ] Add permanent regressions for every defect found in this workstream.
+
+Exit: no silent L6 claim inflation; no unsafe authenticated OOPS route; no safety-critical retry masking; restricted subprocess behavior is deterministically qualified or terminal certification is blocked.
+
 ## M4 — Skipped-test and validation-gap hardening
 
 - [ ] Enumerate exact identities of all Playwright skips and nested-runner skips.
@@ -110,7 +125,7 @@ Exit: no material current-state contradiction or misleading completion/authority
 - [ ] Execute representative CLI/Control Center/local-fixture smoke journeys.
 - [ ] If Actions is available, observe one exact-head run and require real executed steps + PASS; otherwise record truthful external non-evidence without workflow churn/retry loops.
 
-Exit: all required local/clean checks green, no unexplained skip, no open P0/P1, no blocking P2, no privacy/safety boundary regression.
+Exit: all required local/clean checks green, no unexplained skip or safety-critical retry masking, no open P0/P1, no blocking P2, no privacy/safety boundary regression, and L6/process-isolation truth matches the actual implemented boundary.
 
 ## M9 — Terminal project-completion certification
 
