@@ -25,6 +25,8 @@ import { buildSourceEligibilityCensus, type SourceEligibilityCensus } from './el
 import { createCallScopedSourceReadView } from './callScopedRead';
 import { sourceContentDigest, type RealSourceScanConfig, type RealSourceSnapshotInventory, type SourceScanLanguage } from './scanTypes';
 import type { SiblingSourceAccess } from './siblingSource';
+import { tokenizeStaticSource, type StaticLexicalToken } from './lexical';
+import { tokenizePhp } from '../../oracles/expectations/extract/php';
 import {
   REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION,
   SOURCE_SURFACE_REASON_CODES,
@@ -198,14 +200,54 @@ function parseYamlRoutes(sourcePath: string, sourceText: string): readonly Parse
 }
 
 function parseStaticRoutes(sourcePath: string, sourceText: string, language: 'TYPESCRIPT' | 'JAVASCRIPT' | 'GO'): readonly ParsedRoute[] {
+  // These raw anchors only avoid allocating a bounded token stream for files
+  // that cannot contain the supported route shape. They are not authority:
+  // every file that passes is still tokenized, and only token matches below
+  // can produce a route.
+  const methodAnchor = language === 'GO'
+    ? /(?:^|[^A-Za-z0-9_$])(?:GET|POST|PUT|PATCH|DELETE)(?:[^A-Za-z0-9_$]|$)/
+    : /(?:^|[^A-Za-z0-9_$])(?:get|post|put|patch|delete)(?:[^A-Za-z0-9_$]|$)/i;
+  const receiverAnchor = language === 'GO' ? sourceText.includes('.') : /(?:^|[^A-Za-z0-9_$])(?:router|app|route)(?:[^A-Za-z0-9_$]|$)/i.test(sourceText);
+  if (!receiverAnchor || !sourceText.includes('.') || !methodAnchor.test(sourceText)) return [];
+  const tokens = tokenizeStaticSource(sourceText, language);
+  if (tokens === null) return [];
   const routes: ParsedRoute[] = [];
-  const pattern = language === 'GO'
-    ? /\.(GET|POST|PUT|PATCH|DELETE)\(\s*["'](\/[^"']+)["']\s*,\s*([A-Za-z_][A-Za-z0-9_.]*)/g
-    : /(?:router|app|route)\.(get|post|put|patch|delete)\(\s*["'](\/[^"']+)["']\s*,\s*([A-Za-z_$][A-Za-z0-9_$.]*)/gi;
-  for (const match of sourceText.matchAll(pattern)) {
-    const routeMethod = method(match[1] ?? '');
-    const routeTemplate = safeRoute(match[2] ?? '');
-    const handler = safeHandler(match[3] ?? null);
+  const routeReceivers = new Set(['router', 'app', 'route']);
+  const tokenAt = (index: number): StaticLexicalToken | undefined => tokens[index];
+  const qualifiedIdentifier = (start: number): { readonly value: string; readonly next: number } | null => {
+    const first = tokenAt(start);
+    if (first?.kind !== 'IDENTIFIER') return null;
+    let value = first.value;
+    let next = start + 1;
+    while (tokenAt(next)?.kind === 'PUNCT' && tokenAt(next)?.value === '.' && tokenAt(next + 1)?.kind === 'IDENTIFIER') {
+      value += `.${tokenAt(next + 1)!.value}`;
+      next += 2;
+    }
+    return { value, next };
+  };
+  for (let index = 0; index < tokens.length; index += 1) {
+    let methodIndex = -1;
+    let openIndex = -1;
+    if (language === 'GO') {
+      if (tokenAt(index)?.kind !== 'PUNCT' || tokenAt(index)?.value !== '.' || tokenAt(index + 1)?.kind !== 'IDENTIFIER') continue;
+      methodIndex = index + 1;
+      openIndex = index + 2;
+    } else {
+      if (tokenAt(index)?.kind !== 'IDENTIFIER' || !routeReceivers.has(tokenAt(index)!.value.toLowerCase())) continue;
+      if (tokenAt(index + 1)?.kind !== 'PUNCT' || tokenAt(index + 1)?.value !== '.' || tokenAt(index + 2)?.kind !== 'IDENTIFIER') continue;
+      methodIndex = index + 2;
+      openIndex = index + 3;
+    }
+    const rawMethod = tokenAt(methodIndex)?.value ?? '';
+    const routeMethod = language === 'GO'
+      ? (HTTP_METHODS as readonly string[]).includes(rawMethod) ? rawMethod as SourceOperationMethod : null
+      : method(rawMethod);
+    if (routeMethod === null || tokenAt(openIndex)?.kind !== 'PUNCT' || tokenAt(openIndex)?.value !== '(') continue;
+    const routeToken = tokenAt(openIndex + 1);
+    if (routeToken?.kind !== 'STRING' || (routeToken.quote !== "'" && routeToken.quote !== '"')) continue;
+    if (tokenAt(openIndex + 2)?.kind !== 'PUNCT' || tokenAt(openIndex + 2)?.value !== ',') continue;
+    const handler = safeHandler(qualifiedIdentifier(openIndex + 3)?.value ?? null);
+    const routeTemplate = safeRoute(routeToken.value);
     const routeProof: SourceRouteProof = routeMethod !== null && routeTemplate !== null && handler !== null ? 'PROVEN' : 'UNSUPPORTED';
     routes.push({ method: routeMethod ?? 'GET', routeTemplate: routeTemplate ?? '/', handlerClient: null, handlerSymbol: handler, requestReference: null, responseReference: null, sourcePath, language, routeProof, routeRejectionReason: routeProof === 'PROVEN' ? null : 'SOURCE_SYNTAX_UNSUPPORTED' });
   }
@@ -286,13 +328,51 @@ function joinIdentity(operation: SourceOperationDescriptor, path: string, symbol
 }
 
 function declarationCount(sourceText: string, language: SourceScanLanguage, symbol: string): number {
-  const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = language === 'PHP'
-    ? new RegExp(`\\bfunction\\s+${escaped}\\s*\\(`, 'g')
-    : language === 'GO'
-      ? new RegExp(`\\bfunc\\s+(?:\\([^)]*\\)\\s*)?${escaped}\\s*\\(`, 'g')
-      : new RegExp(`\\b(?:function|class|const|let|var)\\s+${escaped}\\b`, 'g');
-  return [...sourceText.matchAll(pattern)].length;
+  if (language === 'PHP') {
+    try {
+      const tokens = tokenizePhp(sourceText);
+      let count = 0;
+      for (let index = 0; index + 2 < tokens.length; index += 1) {
+        const nameIndex = tokens[index + 1]?.t === 'PUNCT' && tokens[index + 1]?.v === '&' ? index + 2 : index + 1;
+        if (tokens[index]?.t === 'WORD' && tokens[index]?.v === 'function' && tokens[nameIndex]?.t === 'WORD' && tokens[nameIndex]?.v === symbol && tokens[nameIndex + 1]?.t === 'PUNCT' && tokens[nameIndex + 1]?.v === '(') count += 1;
+      }
+      return count;
+    } catch {
+      return 2;
+    }
+  }
+  if (language !== 'TYPESCRIPT' && language !== 'JAVASCRIPT' && language !== 'GO') return 0;
+  const tokens = tokenizeStaticSource(sourceText, language === 'GO' ? 'GO' : language);
+  if (tokens === null) return 2;
+  let count = 0;
+  if (language === 'GO') {
+    for (let index = 0; index < tokens.length; index += 1) {
+      if (tokens[index]?.kind !== 'IDENTIFIER' || tokens[index]?.value !== 'func') continue;
+      let cursor = index + 1;
+      if (tokens[cursor]?.kind === 'PUNCT' && tokens[cursor]?.value === '(') {
+        let depth = 0;
+        for (; cursor < tokens.length; cursor += 1) {
+          if (tokens[cursor]?.kind !== 'PUNCT') continue;
+          if (tokens[cursor]?.value === '(') depth += 1;
+          if (tokens[cursor]?.value === ')') {
+            depth -= 1;
+            if (depth === 0) {
+              cursor += 1;
+              break;
+            }
+          }
+        }
+        if (depth !== 0) return 2;
+      }
+      if (tokens[cursor]?.kind === 'IDENTIFIER' && tokens[cursor]?.value === symbol && tokens[cursor + 1]?.kind === 'PUNCT' && tokens[cursor + 1]?.value === '(') count += 1;
+    }
+    return count;
+  }
+  const declarationKeywords = new Set(['class', 'const', 'function', 'let', 'var']);
+  for (let index = 0; index + 1 < tokens.length; index += 1) {
+    if (tokens[index]?.kind === 'IDENTIFIER' && declarationKeywords.has(tokens[index]!.value) && tokens[index + 1]?.kind === 'IDENTIFIER' && tokens[index + 1]?.value === symbol) count += 1;
+  }
+  return count;
 }
 
 function joinEvidence(input: { readonly operation: SourceOperationDescriptor; readonly kind: SourceJoinKind; readonly toIdentity: string | null; readonly state: SourceJoinState; readonly evidence: unknown | null }): SourceEvidenceJoin {
@@ -354,9 +434,14 @@ function resolveSurfaceJoins(input: { readonly access: SiblingSourceAccess; read
         handlerState = 'MISSING_SYMBOL';
         joins.push(joinEvidence({ operation, kind: 'ROUTE_HANDLER', toIdentity: handlerIdentity, state: handlerState, evidence: null }));
       } else {
-        const declarations = declarationCount(sourceText, match.language, operation.handlerSymbol);
-        handlerState = declarations === 1 ? 'PROVEN' : declarations === 0 ? 'MISSING_SYMBOL' : 'MULTIPLE_SYMBOLS';
-        joins.push(joinEvidence({ operation, kind: 'ROUTE_HANDLER', toIdentity: handlerIdentity, state: handlerState, evidence: { kind: 'handler-symbol', repoId: operation.repository, path: operation.handlerPath, symbol: operation.handlerSymbol, contentDigest: match.contentDigest, declarationCount: declarations } }));
+        if (match.contentDigest === null || sourceContentDigest(sourceText) !== match.contentDigest) {
+          handlerState = 'SOURCE_STALE';
+          joins.push(joinEvidence({ operation, kind: 'ROUTE_HANDLER', toIdentity: handlerIdentity, state: handlerState, evidence: null }));
+        } else {
+          const declarations = declarationCount(sourceText, match.language, operation.handlerSymbol);
+          handlerState = declarations === 1 ? 'PROVEN' : declarations === 0 ? 'MISSING_SYMBOL' : 'MULTIPLE_SYMBOLS';
+          joins.push(joinEvidence({ operation, kind: 'ROUTE_HANDLER', toIdentity: handlerIdentity, state: handlerState, evidence: { kind: 'handler-symbol', repoId: operation.repository, path: operation.handlerPath, symbol: operation.handlerSymbol, contentDigest: match.contentDigest, declarationCount: declarations } }));
+        }
       }
     }
   }
@@ -378,6 +463,10 @@ function resolveSurfaceJoins(input: { readonly access: SiblingSourceAccess; read
     if (sourceText === null) {
       joins.push(joinEvidence({ operation, kind, toIdentity: identity, state: 'MISSING_SYMBOL', evidence: null }));
       return 'MISSING_SYMBOL';
+    }
+    if (match.contentDigest === null || sourceContentDigest(sourceText) !== match.contentDigest) {
+      joins.push(joinEvidence({ operation, kind, toIdentity: identity, state: 'SOURCE_STALE', evidence: null }));
+      return 'SOURCE_STALE';
     }
     // A non-empty source file is not a schema proof.  Only the bounded
     // OpenAPI/static JSON form has a parser-backed contract here; PHP,
@@ -518,6 +607,7 @@ function exclusionReasons(operation: SourceOperationDescriptor, contract: Source
   if (operation.routeProof !== 'PROVEN') reasons.push(operation.routeRejectionReason ?? 'ROUTE_AMBIGUOUS');
   const handlerJoin = joins.find((join) => join.kind === 'ROUTE_HANDLER');
   if (handlerJoin?.state === 'MULTIPLE_SYMBOLS') reasons.push('HANDLER_AMBIGUOUS');
+  else if (handlerJoin?.state === 'SOURCE_STALE') reasons.push('SOURCE_STALE');
   else if (handlerJoin !== undefined && handlerJoin.state !== 'PROVEN') reasons.push('HANDLER_UNRESOLVED');
   if (contract.requestProof !== 'PROVEN') reasons.push('REQUEST_CONTRACT_UNPROVEN');
   if (contract.responseProof !== 'PROVEN') reasons.push('RESPONSE_CONTRACT_UNPROVEN');
@@ -525,7 +615,7 @@ function exclusionReasons(operation: SourceOperationDescriptor, contract: Source
   if (operation.readOnlyClassification === 'PROVEN_MUTATION_CAPABLE' || operation.readOnlyClassification === 'CONDITIONAL_MUTATION') reasons.push('MUTATION_CAPABLE');
   else if (operation.readOnlyClassification !== 'PROVEN_READ_ONLY') reasons.push('READ_ONLY_NOT_PROVEN');
   if (operation.runtimeBinding === 'SOURCE_ONLY') reasons.push('RUNTIME_BINDING_MISSING');
-  if (operation.runtimeBinding === 'SOURCE_VERSION_MISMATCH') reasons.push('SOURCE_STALE');
+  if (operation.runtimeBinding === 'SOURCE_VERSION_MISMATCH' || joins.some((join) => join.state === 'SOURCE_STALE')) reasons.push('SOURCE_STALE');
   if (component.state === 'AMBIGUOUS_COMPONENT' || component.state === 'UNRESOLVED') reasons.push('OWNER_COMPONENT_AMBIGUOUS');
   return [...new Set(reasons)].sort();
 }
@@ -550,7 +640,7 @@ function descriptor(operation: SourceOperationDescriptor, source: { readonly rep
     joins: [...joins].sort((left, right) => `${left.kind}|${left.fromIdentity}|${left.toIdentity ?? ''}`.localeCompare(`${right.kind}|${right.fromIdentity}|${right.toIdentity ?? ''}`)),
     contract,
     componentProvenance: component,
-    currentness: 'CURRENT' as const,
+    currentness: joins.some((join) => join.state === 'SOURCE_STALE') ? 'SOURCE_STALE' as const : 'CURRENT' as const,
     lifecycle: lifecycle(operation, contract),
     projectionCapability: contract.semanticProof === 'PROVEN' ? 'PROJECTABLE' as const : 'UNPROVEN' as const,
     replayCapability: operation.runtimeBinding === 'RUNTIME_BOUND_EXACT' && operation.readOnlyClassification === 'PROVEN_READ_ONLY' ? 'SUPPORTED' as const : 'UNPROVEN' as const,
@@ -610,7 +700,7 @@ export function toPhase24CandidateInput(surface: RealSourceSurfaceDescriptor): P
     contractIdentityProven: contract !== null,
     behaviorOwner: owner,
     behaviorOwnerProven: owner !== null && surface.componentProvenance.state === 'EXACT_COMPONENT',
-    sourceVersion: surface.currentness === 'CURRENT' ? 'CURRENT' : 'DRIFTED',
+    sourceVersion: surface.currentness === 'CURRENT' && surface.operation.runtimeBinding !== 'SOURCE_VERSION_MISMATCH' ? 'CURRENT' : 'DRIFTED',
     semanticExpectationId: safeSemanticDigest({ surfaceId: surface.surfaceId, kind: 'semantic-expectation' }, 'expectation'),
     semanticContractProven: surface.contract.semanticProof === 'PROVEN',
     semanticPreconditions: surface.contract.requestFieldCount > 0 ? ['ROUTE_PARAMETERS_BOUNDED'] : ['EMPTY_REQUEST_CONTRACT'],

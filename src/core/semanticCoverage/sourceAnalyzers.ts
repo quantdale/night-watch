@@ -39,7 +39,7 @@ import { REAL_SOURCE_RESPONSE_FLOW_VERSION } from "../source/responseFlow";
  * invalidates when the expanded analyzer set changes.
  */
 export const SEMANTIC_SOURCE_ANALYZER_VERSION = "nightwatch.semantic-source-analyzers.v1" as const;
-export const REAL_SOURCE_RESPONSE_ANALYZER_VERSION = "nightwatch.real-source-response-analyzers.v3" as const;
+export const REAL_SOURCE_RESPONSE_ANALYZER_VERSION = "nightwatch.real-source-response-analyzers.v4" as const;
 export type AnalyzerVersion = typeof SEMANTIC_SOURCE_ANALYZER_VERSION | typeof REAL_SOURCE_RESPONSE_ANALYZER_VERSION;
 export const MAX_ANALYZER_SOURCE_CHARS = 2_000_000;
 export const MAX_ANALYZER_OUTPUTS = 256;
@@ -345,10 +345,130 @@ function parsePhpReturnArray(tokens: readonly PhpToken[], openIndex: number, bod
   };
 }
 
-/** Prove response structure only when every return branch is a direct literal
- * array with one identical, literal-key shape. A variable/call/mixed branch is
- * deliberately rejected: response names and framework conventions are not
- * proof of a response contract. */
+type PhpDirectReturnCompleteness = 'COMPLETE' | 'INCOMPLETE' | 'UNSUPPORTED';
+
+interface PhpDirectBranchBlock {
+  readonly start: number;
+  readonly end: number;
+}
+
+const PHP_DIRECT_UNSUPPORTED_CONTROL_WORDS = new Set([
+  'break', 'case', 'catch', 'continue', 'default', 'die', 'do', 'exit', 'finally', 'for', 'foreach', 'function', 'goto', 'match', 'switch', 'throw', 'try', 'while', 'yield',
+]);
+
+function findMatchingParenthesis(tokens: readonly PhpToken[], openIndex: number, limit: number): number {
+  let depth = 0;
+  for (let index = openIndex; index < limit; index += 1) {
+    const token = tokens[index]!;
+    if (token.t !== 'PUNCT') continue;
+    if (token.v === '(') depth += 1;
+    if (token.v === ')') {
+      depth -= 1;
+      if (depth === 0) return index;
+      if (depth < 0) return limit;
+    }
+  }
+  return limit;
+}
+
+function parsePhpDirectBranchBlock(tokens: readonly PhpToken[], keywordIndex: number, keyword: 'if' | 'elseif' | 'else', limit: number): PhpDirectBranchBlock | null {
+  let openIndex = keywordIndex + 1;
+  if (keyword !== 'else') {
+    if (tokens[openIndex]?.t !== 'PUNCT' || tokens[openIndex]?.v !== '(') return null;
+    const closeParenthesis = findMatchingParenthesis(tokens, openIndex, limit);
+    if (closeParenthesis >= limit) return null;
+    openIndex = closeParenthesis + 1;
+  }
+  if (tokens[openIndex]?.t !== 'PUNCT' || tokens[openIndex]?.v !== '{') return null;
+  const closeIndex = findMatchingBrace(tokens, openIndex);
+  if (closeIndex >= limit) return null;
+  for (let index = openIndex + 1; index < closeIndex; index += 1) {
+    if (tokens[index]?.t === 'PUNCT' && (tokens[index]?.v === '{' || tokens[index]?.v === '}')) return null;
+  }
+  return { start: openIndex + 1, end: closeIndex };
+}
+
+function branchContainsDirectReturn(tokens: readonly PhpToken[], branch: PhpDirectBranchBlock): boolean {
+  for (let index = branch.start; index < branch.end; index += 1) {
+    if (tokens[index]?.t === 'WORD' && tokens[index]?.v === 'return') return true;
+  }
+  return false;
+}
+
+/**
+ * Prove only the finite control-flow shapes supported by the direct-return
+ * analyzer. Observing one or more literal returns is not enough: an implicit
+ * PHP fallthrough, nested branch, loop, exception path, or generator path can
+ * produce a response outside the observed shapes. Unsupported flow is
+ * rejected before any shape is promoted.
+ */
+function phpDirectReturnCompleteness(tokens: readonly PhpToken[], body: { readonly start: number; readonly end: number }): PhpDirectReturnCompleteness {
+  const topLevelControls: { readonly index: number; readonly value: 'if' | 'elseif' | 'else' }[] = [];
+  const topLevelBraceOpeners: number[] = [];
+  const topLevelReturns: number[] = [];
+  let braceDepth = 0;
+  for (let index = body.start + 1; index < body.end; index += 1) {
+    const token = tokens[index]!;
+    if (token.t === 'PUNCT' && token.v === '{') {
+      if (braceDepth === 0) topLevelBraceOpeners.push(index);
+      braceDepth += 1;
+      continue;
+    }
+    if (token.t === 'PUNCT' && token.v === '}') {
+      braceDepth -= 1;
+      if (braceDepth < 0) return 'UNSUPPORTED';
+      continue;
+    }
+    if (token.t !== 'WORD') continue;
+    if (PHP_DIRECT_UNSUPPORTED_CONTROL_WORDS.has(token.v)) return 'UNSUPPORTED';
+    if (token.v === 'if' || token.v === 'elseif' || token.v === 'else') {
+      if (braceDepth !== 0) return 'UNSUPPORTED';
+      topLevelControls.push({ index, value: token.v });
+      continue;
+    }
+    if (token.v === 'return' && braceDepth === 0) topLevelReturns.push(index);
+  }
+  if (braceDepth !== 0) return 'UNSUPPORTED';
+  if (topLevelControls.length === 0) return topLevelBraceOpeners.length === 0 ? 'COMPLETE' : 'UNSUPPORTED';
+  if (topLevelControls[0]?.value !== 'if') return 'UNSUPPORTED';
+  if (topLevelReturns.some((index) => index < topLevelControls[0]!.index)) return 'UNSUPPORTED';
+
+  const branches: PhpDirectBranchBlock[] = [];
+  const branchKeywords: { readonly index: number; readonly value: 'if' | 'elseif' | 'else' }[] = [];
+  const branchOpeners: number[] = [];
+  let cursor = topLevelControls[0]!.index;
+  let hasElse = false;
+  while (cursor < body.end) {
+    const keywordToken = tokens[cursor];
+    if (keywordToken?.t !== 'WORD' || (keywordToken.v !== 'if' && keywordToken.v !== 'elseif' && keywordToken.v !== 'else')) break;
+    const keyword = keywordToken.v;
+    if (keyword === 'else' && hasElse) return 'UNSUPPORTED';
+    if (keyword === 'if' && branches.length > 0) return 'UNSUPPORTED';
+    if (keyword === 'elseif' && (hasElse || branches.length === 0)) return 'UNSUPPORTED';
+    const branch = parsePhpDirectBranchBlock(tokens, cursor, keyword, body.end);
+    if (branch === null) return 'UNSUPPORTED';
+    branches.push(branch);
+    branchKeywords.push({ index: cursor, value: keyword });
+    const openIndex = branch.start - 1;
+    branchOpeners.push(openIndex);
+    if (keyword === 'else') hasElse = true;
+    cursor = branch.end + 1;
+    const next = tokens[cursor];
+    if (next?.t === 'WORD' && (next.v === 'elseif' || next.v === 'else')) continue;
+    break;
+  }
+
+  if (branchKeywords.length !== topLevelControls.length || branchKeywords.some((branch, index) => branch.index !== topLevelControls[index]?.index || branch.value !== topLevelControls[index]?.value)) return 'UNSUPPORTED';
+  if (topLevelBraceOpeners.length !== branchOpeners.length || topLevelBraceOpeners.some((openIndex, index) => openIndex !== branchOpeners[index])) return 'UNSUPPORTED';
+  const tailReturns = topLevelReturns.filter((index) => index > (branches.at(-1)?.end ?? body.start));
+  if (hasElse) return branches.every((branch) => branchContainsDirectReturn(tokens, branch)) && tailReturns.length === 0 ? 'COMPLETE' : 'INCOMPLETE';
+  return tailReturns.length === 1 ? 'COMPLETE' : 'INCOMPLETE';
+}
+
+/** Prove response structure only when every reachable response path is a
+ * supported direct literal array with one identical, literal-key shape. A
+ * variable/call/mixed branch is deliberately rejected: response names and
+ * framework conventions are not proof of a response contract. */
 function analyzePhpDirectReturns(artifact: SourceAnalyzerArtifact): AnalyzerObservation[] {
   const surfaces = artifact.observationSurfaces;
   const symbol = safeSymbol(artifact.symbol);
@@ -361,6 +481,8 @@ function analyzePhpDirectReturns(artifact: SourceAnalyzerArtifact): AnalyzerObse
   }
   const body = findFunctionBody(tokens, symbol);
   if (body === null) return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "UNSUPPORTED_SYNTAX", detail: "function-not-found", surfaces })];
+  const completeness = phpDirectReturnCompleteness(tokens, body);
+  if (completeness !== 'COMPLETE') return [rejected({ analyzerId: "PHP_RETURN_OBJECT_FIELDS", analyzerVersion: REAL_SOURCE_RESPONSE_ANALYZER_VERSION, language: "PHP", symbol, code: "BRANCH_SET_INCOMPLETE", detail: completeness === 'INCOMPLETE' ? 'implicit-fallthrough' : 'unsupported-control-flow', surfaces })];
   const returns: PhpReturnArrayShape[] = [];
   for (let index = body.start + 1; index < body.end; index += 1) {
     const token = tokens[index]!;

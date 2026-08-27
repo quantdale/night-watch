@@ -68,7 +68,7 @@ tests, and close the task only after the complete local acceptance sequence.
   `npm run project:check`, `npm run hardening:check`,
   `npm run quality-gate:spec`, `npm run gate:inventory`,
   `git diff --check`
-- Status: IN_PROGRESS
+- Status: DONE
 
 ### M1 — Soundness probe reproduction
 
@@ -81,7 +81,7 @@ tests, and close the task only after the complete local acceptance sequence.
 - Acceptance criteria: every required positive, negative, and fail-closed
   control has a deterministic result and no source edit precedes the record.
 - Validation commands: focused Phase25/26/27/28 and source-analysis suites.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M2 — PHP path-completeness hardening
 
@@ -95,7 +95,7 @@ tests, and close the task only after the complete local acceptance sequence.
   no global cancellation or raw-value leakage occurs.
 - Validation commands: focused Phase26/source-analysis/parity tests,
   `npm run typecheck`, `npm run hardening:check`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M3 — Lexical route and declaration hardening
 
@@ -109,7 +109,7 @@ tests, and close the task only after the complete local acceptance sequence.
   declarations still reject; existing valid surfaces retain identities.
 - Validation commands: focused Phase25/27/28 and source extraction/parity
   suites plus hardening/typecheck.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M4 — Downstream parity and fresh census
 
@@ -127,7 +127,7 @@ tests, and close the task only after the complete local acceptance sequence.
 - Validation commands: `npm run campaign:source-gaps`,
   `npm run campaign:eligibility-census`, `npm run campaign:readonly-census`,
   `npm run test:semantic-compat`, `npm run test:owner-provenance`.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M5 — Adversarial, performance, and full acceptance
 
@@ -143,7 +143,7 @@ tests, and close the task only after the complete local acceptance sequence.
   external classification; task records and project truth are coherent; clean
   pushed Git state is verified.
 - Validation commands: the complete OpenSpec H10/H11 acceptance list.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ## Validation Strategy
 
@@ -162,7 +162,9 @@ results in STATE and REPORT; do not treat a zero-step CI run as green evidence.
 
 ## Discoveries
 
-- Initial soundness findings remain to be reproduced against current source.
+- M4 fresh census is reconciled: operation identity and handler joins are
+  unchanged, 40 unsound direct response proofs were removed, and no safe new
+  candidate family cleared the admission bar.
 
 ## Deferred Work
 

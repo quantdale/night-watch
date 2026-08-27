@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1
 Starting SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
 Last validated implementation SHA: 7b95cd459c5c2f578d4a4344e46fe7c9ae7f574c
-Last checkpoint: M0 — activation records created; baseline passed except the expected dirty-checkout project truth refusal.
-Current milestone: M0 — activation, baseline, and exhaustive tracked-file audit.
-Next action: Commit the activation records, rerun project truth on the clean tree, then audit every tracked path before source edits.
+Last checkpoint: M5 — focused acceptance and bounded performance are green; implementation changes remain uncommitted while repository-wide gates and closure are completed.
+Current milestone: M5 — adversarial, performance, and full acceptance.
+Next action: Run the remaining gates, timing/RSS, disposable checkout, and exact-head CI observation; then checkpoint and close continuity.
 Authorization class: NIGHTWATCH_SOURCE_PROOF_SOUNDNESS_AND_STATIC_DISCOVERY_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b

@@ -18,6 +18,7 @@ import {
 } from '../../src/core/phase24';
 import { phase20Inventory } from '../../corpus/phase20/contracts';
 import { buildContractGraph } from '../../src/core/semanticCoverage';
+import { REAL_SOURCE_RESPONSE_ANALYZER_VERSION } from '../../src/core/semanticCoverage/sourceAnalyzers';
 import { buildSourceReviewQueue } from '../../src/core/source/review';
 import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
@@ -77,7 +78,7 @@ test('Phase 26 source proof reaches the existing Phase24 semantic/replay/dossier
     expect(surface?.schemaVersion).toBe('nightwatch.real-source-surface-descriptor.v3');
     expect(surface?.contract.responseProof).toBe('PROVEN');
     expect(surface?.contract.semanticProof).toBe('PROVEN');
-    expect(surface?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.analyzerVersion === 'nightwatch.real-source-response-analyzers.v3')).toBe(true);
+    expect(surface?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.analyzerVersion === REAL_SOURCE_RESPONSE_ANALYZER_VERSION)).toBe(true);
     expect(JSON.stringify(discovery)).not.toContain("'safe'");
 
     const integration = analyzeSourceSurfacesIntoPhase24({ access, config: scanConfig, discovery, maxCandidates: 1 });

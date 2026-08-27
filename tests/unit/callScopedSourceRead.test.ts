@@ -235,6 +235,8 @@ test.describe('call-scoped source read reuse', () => {
       const discovery = discoverSourceSurfaces({ access, config: scanConfig });
       const integration = analyzeSourceSurfacesIntoPhase24({ access, config: scanConfig, discovery });
       expect(mutated).toBe(true);
+      expect(discovery.surfaces[0]?.joins.find((join) => join.kind === 'ROUTE_HANDLER')?.state).toBe('SOURCE_STALE');
+      expect(discovery.surfaces[0]?.currentness).toBe('SOURCE_STALE');
       expect(discovery.surfaces[0]?.contract.responseProof).not.toBe('PROVEN');
       expect(integration.portfolio.eligibleCount).toBe(0);
       expect(JSON.stringify(discovery)).not.toContain('changed-after-scan');

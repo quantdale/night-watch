@@ -7,7 +7,7 @@ import { buildContractGraph } from '../../src/core/semanticCoverage/graph';
 import { phase20Inventory } from '../../corpus/phase20/contracts';
 import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
-import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces } from '../../src/core/source/surfaces';
+import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces, toPhase24CandidateInput } from '../../src/core/source/surfaces';
 import { buildSourceReviewQueue, explainSourceSurface } from '../../src/core/source/review';
 
 const RIPPLE_API_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
@@ -210,6 +210,172 @@ test.describe('Phase 25 source surface discovery and Phase 24 bridge', () => {
       expect(sourceOnly?.exclusionReasons).toContain('READ_ONLY_NOT_PROVEN');
       expect(discovery.operations.some((operation) => operation.routeTemplate.includes('makeDynamicRoute'))).toBe(false);
       expect(discovery.counters.routeOperationsFound).toBeGreaterThanOrEqual(3);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('keeps a current source snapshot distinct from a stale runtime binding', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      const staleRuntimeSha = 'f'.repeat(40);
+      fs.writeFileSync(path.join(repo, '.git', 'refs', 'heads', 'master'), `${staleRuntimeSha}\n`);
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: staleRuntimeSha, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const access = createSiblingSourceAccess(root);
+      const discovery = discoverSourceSurfaces({ access, config });
+      const surface = discovery.surfaces.find((entry) => entry.operation.routeTemplate === '/accts' && entry.operation.method === 'GET');
+      expect(surface?.currentness).toBe('CURRENT');
+      expect(surface?.operation.runtimeBinding).toBe('SOURCE_VERSION_MISMATCH');
+      const candidate = toPhase24CandidateInput(surface!);
+      expect(candidate.sourceVersion).toBe('DRIFTED');
+      const integrated = analyzeSourceSurfacesIntoPhase24({ access, config, discovery });
+      expect(integrated.portfolio.candidates.find((entry) => entry.surfaceKey === surface?.surfaceId)?.exclusionReasons.map((reason) => reason.code)).toContain('SOURCE_VERSION_DRIFT');
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('rejects an implicit PHP return fallthrough through public surface discovery', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      fs.writeFileSync(path.join(repo, 'src', 'App', 'Handler', 'Account.php'), `<?php
+function getAccountVendor($mode) {
+  if ($mode) {
+    return ['id' => 1, 'status' => 'safe'];
+  }
+}
+`);
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: RIPPLE_API_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config });
+      const surface = discovery.surfaces.find((entry) => entry.operation.routeTemplate === '/accts' && entry.operation.method === 'GET');
+      expect(surface?.joins.find((join) => join.kind === 'ROUTE_HANDLER')?.state).toBe('PROVEN');
+      expect(surface?.contract.responseProof).not.toBe('PROVEN');
+      expect(surface?.contract.semanticProof).not.toBe('PROVEN');
+      expect(surface?.exclusionReasons).toContain('RESPONSE_CONTRACT_UNPROVEN');
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('ignores comments and strings while preserving real TypeScript and Go route identity', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      fs.writeFileSync(path.join(repo, 'src', 'static.ts'), [
+        '// app.get("/ghost", ghostHandler)',
+        `const documentation = 'router.get("/also-ghost", anotherHandler)';`,
+        'const routePattern = /app\\.get\\("\\/regex-ghost", regexHandler\\)/;',
+        'app.get("/real", realHandler);',
+        'Router.get("/real-capitalized", capitalizedHandler);',
+      ].join('\n'));
+      fs.writeFileSync(path.join(repo, 'src', 'static.js'), [
+        '/* router.get("/block-ghost", blockGhostHandler) */',
+        'app.get("/real-js", realJsHandler);',
+      ].join('\n'));
+      fs.writeFileSync(path.join(repo, 'src', 'static.go'), [
+        '/* router.GET("/block-ghost-go", blockGhostGoHandler) */',
+        '// router.GET("/ghost-go", ghostGoHandler)',
+        'var documentation = `router.GET("/also-ghost-go", anotherGoHandler)`;',
+        'router.Get("/mixed-case-ghost-go", mixedCaseGoHandler)',
+        'router.GET("/real-go", realGoHandler)',
+      ].join('\n'));
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: RIPPLE_API_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml', '.ts', '.js', '.go'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config });
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.ts').map((operation) => operation.routeTemplate)).toEqual(['/real', '/real-capitalized']);
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.js').map((operation) => operation.routeTemplate)).toEqual(['/real-js']);
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.go').map((operation) => operation.routeTemplate)).toEqual(['/real-go']);
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.ts').map((operation) => operation.handlerSymbol)).toEqual(['realHandler', 'capitalizedHandler']);
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.js').map((operation) => operation.handlerSymbol)).toEqual(['realJsHandler']);
+      expect(discovery.operations.filter((operation) => operation.sourcePath === 'src/static.go').map((operation) => operation.handlerSymbol)).toEqual(['realGoHandler']);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('fails closed for malformed static lexical input instead of retaining a partial route list', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      fs.writeFileSync(path.join(repo, 'src', 'malformed.ts'), 'app.get("/lost", lostHandler);\n/* unterminated comment');
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: RIPPLE_API_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml', '.ts'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config });
+      expect(discovery.operations.some((operation) => operation.sourcePath === 'src/malformed.ts')).toBe(false);
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('counts only lexically real PHP declarations and still rejects two real declarations', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      fs.writeFileSync(path.join(repo, 'src', 'App', 'Handler', 'Account.php'), `<?php
+// function getAccountVendor($source) { return []; }
+/** function getAccountVendor($source) { return []; } */
+$documentation = 'function getAccountVendor($source) { return []; }';
+function getAccountVendor($source) {
+  return ['id' => 1, 'status' => 'safe'];
+}
+`);
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: RIPPLE_API_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const access = createSiblingSourceAccess(root);
+      const single = discoverSourceSurfaces({ access, config });
+      const singleSurface = single.surfaces.find((entry) => entry.operation.routeTemplate === '/accts' && entry.operation.method === 'GET');
+      expect(singleSurface?.joins.find((join) => join.kind === 'ROUTE_HANDLER')?.state).toBe('PROVEN');
+      expect(singleSurface?.contract.responseProof).toBe('PROVEN');
+
+      fs.writeFileSync(path.join(repo, 'src', 'App', 'Handler', 'Account.php'), `<?php
+function getAccountVendor($source) { return ['id' => 1]; }
+function getAccountVendor($source) { return ['id' => 2]; }
+`);
+      const duplicate = discoverSourceSurfaces({ access, config });
+      const duplicateSurface = duplicate.surfaces.find((entry) => entry.operation.routeTemplate === '/accts' && entry.operation.method === 'GET');
+      expect(duplicateSurface?.joins.find((join) => join.kind === 'ROUTE_HANDLER')?.state).toBe('MULTIPLE_SYMBOLS');
+      expect(duplicateSurface?.contract.responseProof).not.toBe('PROVEN');
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('counts a lexically real PHP reference-return declaration', () => {
+    const root = tempRoot();
+    try {
+      const repo = makeRepo(root);
+      fs.appendFileSync(path.join(repo, 'src', 'App', 'Route', 'Config', 'Routing.yaml'), [
+        '"get:/by-ref":',
+        '  client: App\\Handler\\Account',
+        '  method: getAccountByReference',
+        '',
+      ].join('\n'));
+      fs.writeFileSync(path.join(repo, 'src', 'App', 'Handler', 'Account.php'), `<?php
+function &getAccountByReference($source) {
+  return ['id' => 1];
+}
+`);
+      const config = createRealSourceScanConfig({
+        runtimeMappingNamespace: 'ripple',
+        approvedRepositories: [{ repoId: 'mobingilabs/ripple-api', expectedSourceSha: RIPPLE_API_SHA, allowlistedRoots: ['src'], allowedExtensions: ['.php', '.json', '.yaml'], maxFiles: 64, maxFileBytes: 64_000, maxTotalBytes: 1_000_000 }],
+      });
+      const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(root), config });
+      const surface = discovery.surfaces.find((entry) => entry.operation.routeTemplate === '/by-ref');
+      expect(surface?.joins.find((join) => join.kind === 'ROUTE_HANDLER')?.state).toBe('PROVEN');
     } finally {
       cleanup(root);
     }

@@ -45,6 +45,82 @@ test.describe('Phase 26 direct PHP response proof', () => {
     ]);
   });
 
+  test('reproduces the implicit-fallthrough soundness gap at the analyzer boundary', () => {
+    const incomplete = analyzeSourceArtifact(artifact(`
+      function readExample($mode) {
+        if ($mode) {
+          return ['id' => 1];
+        }
+      }
+    `));
+
+    expect(incomplete.some((observation) => observation.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && observation.status === 'MECHANICALLY_PROVABLE')).toBe(false);
+    expect(incomplete.some((observation) => observation.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && observation.rejectionCode === 'BRANCH_SET_INCOMPLETE')).toBe(true);
+  });
+
+  test.describe('bounded PHP path-completeness controls', () => {
+    const cases: readonly { readonly name: string; readonly source: string; readonly proven: boolean }[] = [
+      {
+        name: 'unconditional return',
+        source: `function readExample() { return ['id' => 1]; }`,
+        proven: true,
+      },
+      {
+        name: 'conditional with compatible unconditional fallback',
+        source: `function readExample($mode) { if ($mode) { return ['id' => 1]; } return ['id' => 2]; }`,
+        proven: true,
+      },
+      {
+        name: 'complete if else',
+        source: `function readExample($mode) { if ($mode) { return ['id' => 1]; } else { return ['id' => 2]; } }`,
+        proven: true,
+      },
+      {
+        name: 'complete if elseif else',
+        source: `function readExample($mode, $fallback) { if ($mode) { return ['id' => 1]; } elseif ($fallback) { return ['id' => 2]; } else { return ['id' => 3]; } }`,
+        proven: true,
+      },
+      {
+        name: 'nested conditional',
+        source: `function readExample($mode, $nested) { if ($mode) { if ($nested) { return ['id' => 1]; } return ['id' => 2]; } return ['id' => 3]; }`,
+        proven: false,
+      },
+      {
+        name: 'loop return',
+        source: `function readExample($mode) { while ($mode) { return ['id' => 1]; } return ['id' => 2]; }`,
+        proven: false,
+      },
+      {
+        name: 'try return',
+        source: `function readExample() { try { return ['id' => 1]; } catch (Exception $error) { return ['id' => 2]; } }`,
+        proven: false,
+      },
+      {
+        name: 'yield and return',
+        source: `function readExample() { yield ['id' => 1]; return ['id' => 2]; }`,
+        proven: false,
+      },
+      {
+        name: 'exit-like terminator',
+        source: `function readExample($mode) { if ($mode) { return ['id' => 1]; } exit; }`,
+        proven: false,
+      },
+      {
+        name: 'dynamic fallback',
+        source: `function readExample($mode) { if ($mode) { return ['id' => 1]; } return buildExample(); }`,
+        proven: false,
+      },
+    ];
+
+    for (const entry of cases) {
+      test(entry.name, () => {
+        const observations = analyzeSourceArtifact(artifact(entry.source));
+        expect(observations.some((observation) => observation.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && observation.status === 'MECHANICALLY_PROVABLE')).toBe(entry.proven);
+        expect(JSON.stringify(observations)).not.toContain(entry.source);
+      });
+    }
+  });
+
   test('proves a bounded root array without inventing item fields', () => {
     const observations = analyzeSourceArtifact(artifact(`
       function readExample($items) {

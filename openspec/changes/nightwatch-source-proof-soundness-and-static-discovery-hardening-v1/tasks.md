@@ -6,30 +6,30 @@ The hour ranges are a work budget, not permission to idle. Do not stop after the
 
 ## H0–H1.5 — bootstrap, exhaustive local audit, baseline
 
-- [ ] Pull/reconcile exact main head and read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/EXECUTION_PROMPT.md, current durable docs, current terminal ACTIVE_TASK, and this OpenSpec change.
-- [ ] Create fresh continuity-v2 task .agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/{SPEC,PLAN,STATE,REPORT}.md.
-- [ ] Route .agent/ACTIVE_TASK.md to the fresh task as ACTIVE; never modify the completed prior task files except historical references.
-- [ ] Generate an authoritative NUL-safe git ls-files manifest.
-- [ ] Account for every tracked path. The final all-file audit ledger must have reviewed count == tracked count with no unexplained omissions.
-- [ ] Classify files by runtime/source authority, tests, gates/tooling, UI, config, corpus/fixtures, durable docs/history, generated/lock metadata, and agent continuity.
-- [ ] Deep-read every current code/gate/config file; historical/fixture/generated files still require role/coupling review.
-- [ ] Search TODO/FIXME/HACK/XXX, skipped/only tests, ts-ignore/expect-error, unsafe eval/shelling, duplicate parser/authority paths, stale docs/comments, and secret/privacy hazards. A zero-result search is evidence only for that query.
-- [ ] Record baseline Git SHA, Node/npm versions, test enumeration, source-census digests/counts, eligibility/readonly counts, timings/RSS, and local gate state.
-- [ ] Capture safe baseline projections for later differential comparison.
+- [x] Pull/reconcile exact main head and read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/EXECUTION_PROMPT.md, current durable docs, current terminal ACTIVE_TASK, and this OpenSpec change.
+- [x] Create fresh continuity-v2 task .agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/{SPEC,PLAN,STATE,REPORT}.md.
+- [x] Route .agent/ACTIVE_TASK.md to the fresh task as ACTIVE; never modify the completed prior task files except historical references.
+- [x] Generate an authoritative NUL-safe git ls-files manifest.
+- [x] Account for every tracked path. The final all-file audit ledger must have reviewed count == tracked count with no unexplained omissions.
+- [x] Classify files by runtime/source authority, tests, gates/tooling, UI, config, corpus/fixtures, durable docs/history, generated/lock metadata, and agent continuity.
+- [x] Deep-read every current code/gate/config file; historical/fixture/generated files still require role/coupling review.
+- [x] Search TODO/FIXME/HACK/XXX, skipped/only tests, ts-ignore/expect-error, unsafe eval/shelling, duplicate parser/authority paths, stale docs/comments, and secret/privacy hazards. A zero-result search is evidence only for that query.
+- [x] Record baseline Git SHA, Node/npm versions, test enumeration, source-census digests/counts, eligibility/readonly counts, timings/RSS, and local gate state.
+- [x] Capture safe baseline projections for later differential comparison.
 
 Gate: no implementation before the tracked-file audit and baseline are recorded in STATE.md.
 
 ## H1.5–H3 — reproduce or falsify soundness probes
 
-- [ ] Add focused synthetic reproduction for PHP implicit fall-through:
+- [x] Add focused synthetic reproduction for PHP implicit fall-through:
   - if (...) return literal array; no else and no terminal fallback.
   - verify whether PHP_RETURN_ROOT_TYPE / PHP_RETURN_OBJECT_FIELDS becomes mechanically provable.
   - verify whether public source discovery can convert that observation into responseProof/semanticProof PROVEN when joins are otherwise exact.
-- [ ] Add near-neighbor controls: unconditional return; early return + terminal fallback; complete if/else; incomplete nested branch.
-- [ ] Reproduce TS/JS/Go comment/string route-text cases through the public source-discovery path.
-- [ ] Reproduce PHP comment/string fake declaration effects on route-handler join counts.
-- [ ] Classify each planner finding as REPRODUCED_DEFECT, SAFE_BY_EXISTING_GATE, or FALSE_HYPOTHESIS with executable evidence.
-- [ ] Update task SPEC/PLAN if evidence changes the implementation sequence.
+- [x] Add near-neighbor controls: unconditional return; early return + terminal fallback; complete if/else; incomplete nested branch.
+- [x] Reproduce TS/JS/Go comment/string route-text cases through the public source-discovery path.
+- [x] Reproduce PHP comment/string fake declaration effects on route-handler join counts.
+- [x] Classify each planner finding as REPRODUCED_DEFECT, SAFE_BY_EXISTING_GATE, or FALSE_HYPOTHESIS with executable evidence.
+- [x] Update task SPEC/PLAN if evidence changes the implementation sequence; evidence matched the planned sequence, so no intent change was required.
 
 Gate: no coverage expansion until all P0 soundness probes have an evidence-backed disposition.
 
@@ -37,55 +37,55 @@ Gate: no coverage expansion until all P0 soundness probes have an evidence-backe
 
 If the fall-through defect reproduces:
 
-- [ ] Implement the smallest bounded reachability/completeness mechanism that removes the false proof while preserving established safe forms.
-- [ ] Keep direct, alias, and branch proof-family responsibilities explicit.
-- [ ] Ensure missing else/fallback, unsupported nested flow, loops, try/catch/finally, generator/yield-like behavior and unknown exits fail closed unless mechanically covered.
-- [ ] Preserve early conditional return + unconditional terminal fallback when all paths are exact.
-- [ ] Add adversarial tests from design.md.
-- [ ] Version the real-source response analyzer identity when correctness semantics change.
-- [ ] Prove cache/analyzer-set/currentness invalidation follows the version change.
-- [ ] Compare known-good pre/post observations and downstream IDs; classify every intentional delta.
+- [x] Implement the smallest bounded reachability/completeness mechanism that removes the false proof while preserving established safe forms.
+- [x] Keep direct, alias, and branch proof-family responsibilities explicit.
+- [x] Ensure missing else/fallback, unsupported nested flow, loops, try/catch/finally, generator/yield-like behavior and unknown exits fail closed unless mechanically covered.
+- [x] Preserve early conditional return + unconditional terminal fallback when all paths are exact.
+- [x] Add adversarial tests from design.md.
+- [x] Version the real-source response analyzer identity when correctness semantics change.
+- [x] Prove cache/analyzer-set/currentness invalidation follows the version change.
+- [x] Compare known-good pre/post observations and downstream IDs; classify every intentional delta.
 
 If falsified:
 
-- [ ] Keep the reproduction as a regression test where useful.
-- [ ] Document which existing mechanism establishes completeness.
-- [ ] Spend this workstream on the next reproduced source-proof soundness defect from the exhaustive audit, not speculative feature work.
+- [x] Keep the reproduction as a regression test where useful; the reproduced-defect branch made the falsified branch inapplicable.
+- [x] Document which existing mechanism establishes completeness; the falsified branch was inapplicable because the gap reproduced.
+- [x] Spend this workstream on the next reproduced source-proof soundness defect from the exhaustive audit, not speculative feature work; the falsified branch was inapplicable because the lexical defects were also reproduced.
 
 ## H5–H7 — lexical-safe route and declaration discovery
 
 For each reproduced lexical defect:
 
-- [ ] Introduce or reuse a bounded lexical scanner/tokenizer that excludes comment/string bodies before authority matching.
-- [ ] Harden TypeScript/JavaScript static route extraction.
-- [ ] Harden Go static route extraction.
-- [ ] Harden PHP exact handler declaration counting.
-- [ ] Preserve deterministic route order, duplicate handling, safe path/method/handler normalization, operation caps and fail-closed malformed-source behavior.
-- [ ] Add adversarial comment/string/template/raw-string/escape/malformed fixtures.
-- [ ] Test real + fake adjacent constructs and duplicate-real declarations.
-- [ ] Ensure code-like source text never appears in returned DTOs or task artifacts.
+- [x] Introduce or reuse a bounded lexical scanner/tokenizer that excludes comment/string bodies before authority matching.
+- [x] Harden TypeScript/JavaScript static route extraction.
+- [x] Harden Go static route extraction.
+- [x] Harden PHP exact handler declaration counting.
+- [x] Preserve deterministic route order, duplicate handling, safe path/method/handler normalization, operation caps and fail-closed malformed-source behavior.
+- [x] Add adversarial comment/string/template/raw-string/escape/malformed fixtures.
+- [x] Test real + fake adjacent constructs and duplicate-real declarations.
+- [x] Ensure code-like source text never appears in returned DTOs or task artifacts.
 
 Do not execute source code or introduce framework/runtime parsing.
 
 ## H7–H8.5 — downstream proof-chain reconciliation
 
-- [ ] Rerun source scan, source gaps, eligibility census, readonly census, surfaces/review projections and Phase-24 synthetic integration.
-- [ ] Reconcile operation/surface/join/response/semantic/digest changes.
-- [ ] Confirm any lost proof is tied to a reproduced old false admission.
-- [ ] Confirm no new route/handler/response/semantic proof appears solely because a rejection was hidden.
-- [ ] Validate source currentness, cache keys, invalidation, gap taxonomy and Control Center source projection.
-- [ ] Add migration/version notes if a public/internal versioned DTO identity changes.
-- [ ] Run privacy sentinel sweep over generated safe projections/task artifacts.
+- [x] Rerun source scan, source gaps, eligibility census, readonly census, surfaces/review projections and Phase-24 synthetic integration.
+- [x] Reconcile operation/surface/join/response/semantic/digest changes.
+- [x] Confirm any lost proof is tied to a reproduced old false admission.
+- [x] Confirm no new route/handler/response/semantic proof appears solely because a rejection was hidden.
+- [x] Validate source currentness, cache keys, invalidation, gap taxonomy and Control Center source projection.
+- [x] Add migration/version notes if a public/internal versioned DTO identity changes.
+- [x] Run privacy sentinel sweep over generated safe projections/task artifacts.
 
 ## H8.5–H10 — adversarial depth + conditional exact coverage work
 
-- [ ] Expand mutation/adversarial corpus around all repaired boundaries.
-- [ ] Stress budgets: source bytes, token count, declaration index, route count, return sites, fan-out/depth, analyzer output count.
-- [ ] Add deterministic repeat/cold-warm tests.
-- [ ] Review large source authority modules for hidden parallel parsing logic or bypasses.
-- [ ] If and only if the hardened fresh census exposes one repeated exact static proof family that meets design.md admission criteria, implement that single family through existing authority paths.
-- [ ] If no family clears the bar, explicitly record NO_SAFE_NEW_FAMILY and use remaining time for soundness tests/helper decomposition/differential tooling rather than forcing coverage.
-- [ ] Do not generalize dynamic dispatch, runtime binding, GET read-only semantics, or fuzzy symbol inference.
+- [x] Expand mutation/adversarial corpus around all repaired boundaries.
+- [x] Stress budgets: source bytes, token count, declaration index, route count, return sites, fan-out/depth, analyzer output count.
+- [x] Add deterministic repeat/cold-warm tests.
+- [x] Review large source authority modules for hidden parallel parsing logic or bypasses.
+- [x] If and only if the hardened fresh census exposes one repeated exact static proof family that meets design.md admission criteria, implement that single family through existing authority paths; the census exposed none, so no family was implemented.
+- [x] If no family clears the bar, explicitly record NO_SAFE_NEW_FAMILY and use remaining time for soundness tests/helper decomposition/differential tooling rather than forcing coverage.
+- [x] Do not generalize dynamic dispatch, runtime binding, GET read-only semantics, or fuzzy symbol inference.
 
 ## H10–H11 — full acceptance and clean-checkout proof
 
