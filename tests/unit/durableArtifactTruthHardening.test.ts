@@ -1,10 +1,9 @@
 // ---------------------------------------------------------------------------
-// Durable Artifact + Control Center Truth Hardening — pre-fix probes.
+// Durable Artifact + Control Center Truth Hardening — regression probes.
 //
-// This file intentionally starts as an evidence-producing red-team harness.
-// The first version records the current behavior without changing production
-// validation. Once the before ledger is captured, the assertions become the
-// regression contract for the strict validator and the conservative reducer.
+// The committed BEFORE_PROBES.json records the pre-fix red-team ledger. These
+// bounded producer-built mutations now assert the repaired rejection contract
+// and the conservative currentness projection.
 // Synthetic values only; no credentials, customer data, network, or product
 // environment are involved.
 // ---------------------------------------------------------------------------
@@ -244,7 +243,7 @@ function mutationRows(base: unknown, mutations: readonly Mutation[], owning: (va
 
 function freshnessDossier(base: MutableRecord, values: readonly string[]): MutableRecord {
   const source = arrayAt(base, 'sourceChangeCandidates')[0] as MutableRecord;
-  return {
+  const result = {
     ...cloneJson(base),
     sourceChangeCandidates: values.map((sourceFreshness, index) => ({
       ...cloneJson(source),
@@ -253,6 +252,8 @@ function freshnessDossier(base: MutableRecord, values: readonly string[]): Mutab
       sourceFreshness,
     })),
   };
+  recordAt(recordAt(result, 'aiReady'), 'evidence').sourceCandidateCount = values.length;
+  return result;
 }
 
 function tempRoot(): string {
@@ -277,30 +278,32 @@ function authorityForDossier(dossier: MutableRecord): FindingsAuthoritySnapshot 
   }
 }
 
-test.describe('durable dossier pre-fix mutation probes', () => {
-  test('records v1 owning-validator and facade behavior before fixes', async () => {
+test.describe('durable dossier mutation regression probes', () => {
+  test('owning validators and the facade reject every bounded v1 mutation', async () => {
     const dossier = await v1Dossier();
     expect(validateArtifact('dossier', dossier).valid).toBe(true);
     const rows = mutationRows(dossier, commonMutations(), (value) => { validateBugDossier(value as never); });
-    console.log(`BEFORE_DOSSIER_V1_MUTATION_LEDGER=${JSON.stringify(rows)}`);
+    console.log(`AFTER_DOSSIER_V1_MUTATION_LEDGER=${JSON.stringify(rows)}`);
     expect(rows).toHaveLength(commonMutations().length);
+    expect(rows.filter((row) => row.owner.accepted || row.facade.accepted)).toEqual([]);
   });
 
-  test('records v2 owning-validator and facade behavior before fixes', async () => {
+  test('owning validators and the facade reject every bounded v2 mutation', async () => {
     const dossier = await v2Dossier();
     expect(validateArtifact('dossier', dossier).valid).toBe(true);
     const rows = mutationRows(dossier, [...commonMutations(), ...v2OnlyMutations()], (value) => { validateBugDossierV2(value); });
-    console.log(`BEFORE_DOSSIER_V2_MUTATION_LEDGER=${JSON.stringify(rows)}`);
+    console.log(`AFTER_DOSSIER_V2_MUTATION_LEDGER=${JSON.stringify(rows)}`);
     const unresolved = await v2Dossier('known-synthetic-defect');
     expect(unresolved.status).toBe('UNRESOLVED');
     expect(validateBugDossierV2(unresolved)).toBeUndefined();
     expect(validateArtifact('dossier', unresolved).valid).toBe(true);
     expect(rows).toHaveLength(commonMutations().length + v2OnlyMutations().length);
+    expect(rows.filter((row) => row.owner.accepted || row.facade.accepted)).toEqual([]);
   });
 });
 
-test.describe('Control Center pre-fix currentness probes', () => {
-  test('records raw adapter, authority, and normal collector paths', async () => {
+test.describe('Control Center currentness regression probes', () => {
+  test('keeps raw adapter, authority, and normal collector paths conservative and equivalent', async () => {
     const base = await v1Dossier();
     const multisets: readonly { readonly id: string; readonly values: readonly string[] }[] = [
       { id: 'current-only', values: [CURRENT] },
@@ -326,9 +329,15 @@ test.describe('Control Center pre-fix currentness probes', () => {
       const findingsAuthority = { snapshot: () => authority };
       const collector = createDefaultControlCenterCollector({ sourceAuthority, campaignAuthority, findingsAuthority, sourceSnapshotTtlMs: 10_000 });
       const collected = await collector.findings({ limit: 50, cursor: null });
+      const expected = item.values.length === 0 || item.values.includes(UNKNOWN)
+        ? 'SOURCE_UNAVAILABLE'
+        : item.values.includes(STALE) ? 'SOURCE_STALE' : 'CURRENT';
+      expect(metadata?.sourceCurrentness, item.id).toBe(expected);
+      expect(projected.items[0]?.sourceCurrentness, item.id).toBe(expected);
+      expect(collected.items[0]?.sourceCurrentness, item.id).toBe(expected);
       rows.push({ id: item.id, values: item.values, raw: raw.items[0]?.sourceCurrentness ?? null, authority: metadata?.sourceCurrentness ?? null, projected: projected.items[0]?.sourceCurrentness ?? null, collected: collected.items[0]?.sourceCurrentness ?? null });
     }
-    console.log(`BEFORE_CURRENTNESS_TRUTH_TABLE=${JSON.stringify(rows)}`);
+    console.log(`AFTER_CURRENTNESS_TRUTH_TABLE=${JSON.stringify(rows)}`);
     expect(rows).toHaveLength(cases.length);
   });
 });

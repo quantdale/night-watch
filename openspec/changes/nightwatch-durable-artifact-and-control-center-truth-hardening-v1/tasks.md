@@ -96,24 +96,24 @@ Repeat v1 classes plus:
 
 ## 3. Implement strict dossier runtime validation
 
-- [ ] Inventory all exported dossier/source-candidate vocabularies/constants before adding literals.
-- [ ] Reuse campaign/runtime validation helpers where semantics match.
-- [ ] Add bounded plain-record helper(s) if current helpers are insufficient.
-- [ ] Implement complete v1 runtime validation.
-- [ ] Implement complete v2 runtime validation.
-- [ ] Implement complete SourceChangeCandidate validation.
-- [ ] Implement complete reproduction validation.
-- [ ] Implement complete browser/API differential validation.
-- [ ] Implement likely-fault-boundary validation.
-- [ ] Implement confidence/severity/priority validation.
-- [ ] Implement bounded arrays / safe identifiers / timestamps.
-- [ ] Validate semantic nested objects through their existing owning validators.
-- [ ] Validate v2 recipe/AI-ready shapes.
-- [ ] Enforce only mechanically justified cross-field invariants.
-- [ ] Reject unsafe prototypes / unknown frozen-schema fields.
-- [ ] Ensure rejection reasons are categorical and privacy-safe.
-- [ ] Ensure validators do not mutate input.
-- [ ] Preserve producer-built valid v1/v2/UNRESOLVED cases.
+- [x] Inventory all exported dossier/source-candidate vocabularies/constants before adding literals.
+- [x] Reuse campaign/runtime validation helpers where semantics match.
+- [x] Add bounded plain-record helper(s) if current helpers are insufficient.
+- [x] Implement complete v1 runtime validation.
+- [x] Implement complete v2 runtime validation.
+- [x] Implement complete SourceChangeCandidate validation.
+- [x] Implement complete reproduction validation.
+- [x] Implement complete browser/API differential validation.
+- [x] Implement likely-fault-boundary validation.
+- [x] Implement confidence/severity/priority validation.
+- [x] Implement bounded arrays / safe identifiers / timestamps.
+- [x] Validate semantic nested objects through their existing owning validators.
+- [x] Validate v2 recipe/AI-ready shapes.
+- [x] Enforce only mechanically justified cross-field invariants.
+- [x] Reject unsafe prototypes / unknown frozen-schema fields.
+- [x] Ensure rejection reasons are categorical and privacy-safe.
+- [x] Ensure validators do not mutate input.
+- [x] Preserve producer-built valid v1/v2/UNRESOLVED cases.
 
 ## 4. Artifact facade identity and consumer audit
 

@@ -1,7 +1,8 @@
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
-import type { BugDossier, SourceFreshness } from '../../core/triage/types';
+import type { BugDossier } from '../../core/triage/types';
 import type { BugDossierV2 } from '../../core/triage/dossierV2';
 import type { FindingsDossierMetadata } from '../authorities/findingsAuthority';
+import { reduceFindingsSourceCurrentness } from '../authorities/findingsCurrentness';
 import { asSafeControlCenterDigest } from '../contracts/common';
 import type { ControlCenterFindingsDto, ControlCenterFindingSummaryDto } from '../contracts/findings';
 import { CONTROL_CENTER_FINDINGS_SCHEMA_VERSION } from '../contracts/findings';
@@ -12,13 +13,6 @@ export interface FindingsAuthorityInput {
   readonly dossiers: readonly (BugDossier | BugDossierV2 | FindingsDossierMetadata)[];
   readonly available?: boolean;
   readonly state?: ControlCenterFindingsDto['state'];
-}
-
-function sourceCurrentness(dossier: Pick<BugDossier, 'sourceChangeCandidates'> | Pick<BugDossierV2, 'sourceChangeCandidates'>): 'CURRENT' | 'SOURCE_STALE' | 'SOURCE_UNAVAILABLE' {
-  const freshness: readonly SourceFreshness[] = dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness);
-  if (freshness.some((value) => value === 'SOURCE_CURRENT_LOCALLY' || value === 'REMOTE_FRESHNESS_CONFIRMED')) return 'CURRENT';
-  if (freshness.some((value) => value === 'LOCAL_TRACKING_REF_ONLY')) return 'SOURCE_STALE';
-  return 'SOURCE_UNAVAILABLE';
 }
 
 function isMetadata(dossier: BugDossier | BugDossierV2 | FindingsDossierMetadata): dossier is FindingsDossierMetadata {
@@ -36,7 +30,9 @@ function safeDossier(dossier: BugDossier | BugDossierV2 | FindingsDossierMetadat
   )) {
     return null;
   }
-  const currentness = isMetadata(dossier) ? dossier.sourceCurrentness : sourceCurrentness(dossier);
+  const currentness = isMetadata(dossier)
+    ? dossier.sourceCurrentness
+    : reduceFindingsSourceCurrentness(dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness));
   const dossierStatus: ControlCenterFindingSummaryDto['dossierStatus'] = dossier.status === 'READY' ? 'READY' : 'INCOMPLETE';
   const findingId = safePublicId(dossier.candidateId, 'cc-finding');
   const provenanceDigest = asSafeControlCenterDigest(prefixedDigest24('cc-finding', {

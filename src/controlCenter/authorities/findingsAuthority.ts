@@ -16,6 +16,7 @@ import { validateArtifact } from '../../core/artifactValidation';
 import { containsPrivatePayloadShape, privateArtifactRoot, assertPrivateArtifactPath } from '../../core/policy';
 import { DOSSIER_VERSION, type BugDossier } from '../../core/triage/types';
 import { DOSSIER_VERSION_V2, type BugDossierV2 } from '../../core/triage/dossierV2';
+import { reduceFindingsSourceCurrentness } from './findingsCurrentness';
 import {
   asSafeControlCenterDigest,
   asSafeControlCenterId,
@@ -180,13 +181,6 @@ function validatedDossier(value: unknown): FindingsDossier | null {
   return value as unknown as BugDossier;
 }
 
-function sourceCurrentness(dossier: FindingsDossier): FindingsDossierMetadata['sourceCurrentness'] {
-  const freshness = dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness);
-  if (freshness.some((value) => value === 'SOURCE_CURRENT_LOCALLY' || value === 'REMOTE_FRESHNESS_CONFIRMED')) return 'CURRENT';
-  if (freshness.some((value) => value === 'LOCAL_TRACKING_REF_ONLY')) return 'SOURCE_STALE';
-  return 'SOURCE_UNAVAILABLE';
-}
-
 function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
   const candidateId = asSafeControlCenterId(dossier.candidateId);
   const oracleFingerprint = asSafeControlCenterDigest(dossier.oracleFingerprint);
@@ -209,7 +203,7 @@ function toMetadata(dossier: FindingsDossier): FindingsDossierMetadata | null {
     technicalSeverity: dossier.technicalSeverity,
     triagePriority: dossier.triagePriority,
     confidence: { level: dossier.confidence.level },
-    sourceCurrentness: sourceCurrentness(dossier),
+    sourceCurrentness: reduceFindingsSourceCurrentness(dossier.sourceChangeCandidates.map((candidate) => candidate.sourceFreshness)),
     semanticFinding: dossier.semanticEvidence !== null && dossier.semanticEvidence !== undefined,
   };
 }

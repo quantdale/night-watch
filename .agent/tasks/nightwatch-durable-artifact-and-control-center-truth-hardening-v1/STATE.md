@@ -19,8 +19,8 @@ PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
 Last checkpoint: 2026-08-27 — M1 probe/evidence checkpoint
-`5d45513a70af1f0b54f7384210f34e90b522c217`; no production behavior edit
-preceded capture.
+`5d45513a70af1f0b54f7384210f34e90b522c217`; M2 validation is complete in the
+working tree and is being checkpointed before M3.
 
 ## Objective
 
@@ -30,7 +30,7 @@ artifacts and permanent safety boundaries.
 
 ## Current Milestone
 
-M2 — strict dossier runtime validation.
+M3 — facade-wide mutation audit and currentness convergence.
 
 ## Completed Milestones
 
@@ -41,24 +41,30 @@ M2 — strict dossier runtime validation.
   independently mutated through both owning validators and the facade; raw,
   authority, projected, and normal collector currentness paths were exercised
   across all required freshness multisets and permutations.
+- M2 — strict dossier runtime validation. A shared bounded runtime boundary
+  now validates producer-shaped v1/v2 dossiers, delegates semantic evidence to
+  its owning validators, rejects malformed nested records/prototypes/unknown
+  fields, and preserves valid READY, INCOMPLETE, and UNRESOLVED controls.
 
 ## Work In Progress
 
-Strict bounded dossier-validator implementation based on the captured false
-accepts. The focused probe harness and its evidence ledger remain in the task;
-no production behavior has been changed yet.
+Registry-wide durable-artifact mutation audit and the final facade/currentness
+consumer audit. The strict dossier implementation and conservative shared
+findings reducer are validated; the next checkpoint will carry their source
+changes and the M2 regression evidence.
 
 ## Exact Next Action
 
-Implement the shared bounded runtime checks for v1/v2 dossier fields and
-nested authority-bearing structures, preserving the captured valid historical
-controls and v2 UNRESOLVED case.
+Enumerate every registered durable artifact kind, bind a canonical synthetic
+producer fixture and bounded nested mutations to its facade validator, and
+record accepted/rejected reason classes before the M3 acceptance checks.
 
 ## Files Changed
 
-Task records plus the focused synthetic probe test and machine-readable
-`BEFORE_PROBES.json`. No production source, configuration, or external state
-changed.
+Task records, the focused synthetic probe test and machine-readable
+`BEFORE_PROBES.json`, plus the shared strict dossier runtime validator, v1/v2
+dossier validator delegation, and the shared findings currentness reducer.
+No external state changed.
 
 ## Validation Ledger
 
@@ -100,6 +106,28 @@ changed.
   `CURRENT` by raw adapter, authority, projected adapter, and normal collector.
 - The complete compact before ledger is
   `.agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/BEFORE_PROBES.json`.
+- M2 focused validation after the implementation and compatibility repairs:
+  `npx playwright test tests/unit/durableArtifactTruthHardening.test.ts
+  --project=nightwatch --workers=1`: `3 passed / 0 failed`; the v1 `40/40`
+  and v2 `50/50` mutation rows are rejected by both owning and facade paths,
+  while the v2 `UNRESOLVED` control is accepted.
+- M2 compatibility suites:
+  `npx playwright test tests/unit/phase15pArtifactValidation.test.ts
+  --project=nightwatch --workers=1`: `23 passed / 0 failed`;
+  `npx playwright test tests/unit/phase12SemanticTriage.test.ts
+  tests/unit/phase15pTriageDossierPipeline.test.ts --project=nightwatch
+  --workers=1`: `55 passed / 0 failed`;
+  `npx playwright test tests/unit/controlCenterFindingsAuthority.test.ts
+  tests/unit/controlCenterAdapters.test.ts --project=nightwatch --workers=1`:
+  `12 passed / 0 failed`;
+  `npx playwright test tests/unit/phase15pPrivacyAuthority.test.ts
+  --project=nightwatch --workers=1`: `23 passed / 0 failed`.
+  `npm run typecheck`: PASS; `npm run hardening:check`: PASS.
+- The strict boundary did not change dossier wire versions or any source,
+  semantic, replay, selector, or Phase-24 identity. The facade version was
+  audited and remains `nightwatch.artifact-validation.private.v1`: no
+  load-bearing fingerprint/cache/currentness consumer exists in `src/` or
+  `tests/`, so a version bump would add identity drift without a consumer.
 
 ## Decisions Made During This Task
 
@@ -147,11 +175,11 @@ future campaigns remain outside scope.
 
 ## Resume Recipe
 
-1. Implement bounded shared runtime validation for dossier v1/v2 and run the
-   focused mutation suite.
-2. Repair any focused regressions while keeping valid v1/v2 and UNRESOLVED
-   producer outputs accepted.
-3. Audit the facade identity/callsites before converging currentness.
+1. Checkpoint the validated M2 source and task evidence.
+2. Complete the all-kind facade mutation ledger, including the reserved
+   replay-result-envelope registration path.
+3. Run the Control Center/server/snapshot and full acceptance cones before
+   terminal task closure.
 
 ## Completion Snapshot
 

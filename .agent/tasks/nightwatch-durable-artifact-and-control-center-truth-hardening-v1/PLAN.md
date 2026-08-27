@@ -111,7 +111,7 @@ pushes; only this development session may create validated Git checkpoints.
 - Acceptance: every reproduced dossier FALSE_ACCEPT is rejected by both
   owning and facade validators; compatibility decisions are explicit.
 - Validation: focused artifact suite, typecheck, hardening, privacy tests.
-- Status: IN_PROGRESS
+- Status: COMPLETED
 
 ### M3 — Facade-wide mutation audit and currentness convergence
 
@@ -126,7 +126,7 @@ pushes; only this development session may create validated Git checkpoints.
   mixed stale/unknown never becomes CURRENT; one reducer authority remains.
 - Validation: facade-wide, Control Center, authority, adapter, server,
   snapshot, typecheck, hardening suites.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M4 — Control Center integration and adversarial closure
 

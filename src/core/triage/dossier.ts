@@ -18,7 +18,12 @@ import {
   type TechnicalSeverity,
   type TriagePriority,
 } from './types';
-import { validateSemanticDossierEvidence, type SemanticDossierEvidence } from '../../oracles/semantic/dossier';
+import type { SemanticDossierEvidence } from '../../oracles/semantic/dossier';
+import { validateDossierRuntime } from './dossierRuntimeValidation';
+
+// The shared runtime boundary delegates sanitized semantic evidence to the
+// owning validateSemanticDossierEvidence contract; keep that ownership
+// explicit here for the triage-core hardening seam.
 
 const SAFE_ID_RE = /^[A-Za-z0-9_.:/-]{1,200}$/;
 const SENTINEL_RE = /(?:CUSTOMER_SENTINEL|ACCOUNT_SENTINEL|EMAIL_SENTINEL|COST_SENTINEL|TOKEN_SENTINEL|Bearer\s+|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|https?:\/\/[^\s]+[?&](?:token|account|customer|cost)=)/i;
@@ -199,13 +204,8 @@ export function createBugDossier(input: BugDossierInput): BugDossier {
   return dossier;
 }
 
-export function validateBugDossier(dossier: BugDossier): void {
-  if (dossier.schemaVersion !== DOSSIER_VERSION || dossier.status !== 'READY') throw new Error('DOSSIER_NOT_READY');
-  if (dossier.evidenceLevel === 'L4' || dossier.l4Datastore !== 'OUT_OF_SCOPE_BY_OWNER') throw new Error('DOSSIER_DATASTORE_SCOPE_INVALID');
-  if (dossier.safety.productionAttempts !== 0 || dossier.safety.proxyViolations !== 0 || dossier.safety.unknownDestinations !== 0 || dossier.safety.unknownApprovals !== 0 || dossier.safety.productMutations !== 0 || dossier.safety.actionCausedUnknown !== 0 || dossier.safety.databaseQueries !== 0) throw new Error('DOSSIER_SAFETY_NOT_CLEAN');
-  if (dossier.privacy.result !== 'PASS' || dossier.privacy.rawBodiesPersisted || dossier.privacy.customerValuesPersisted || dossier.privacy.credentialsPersisted || dossier.privacy.screenshotsPersisted || dossier.privacy.authenticatedTracesPersisted) throw new Error('DOSSIER_PRIVACY_INVALID');
-  if (dossier.semanticEvidence !== null && dossier.semanticEvidence !== undefined) {
-    validateSemanticDossierEvidence(dossier.semanticEvidence);
-  }
-  assertNoSentinels(dossier);
+export function validateBugDossier(dossier: BugDossier): void;
+export function validateBugDossier(dossier: unknown): asserts dossier is BugDossier;
+export function validateBugDossier(value: unknown): void {
+  validateDossierRuntime(value, { version: 'v1', schemaVersion: DOSSIER_VERSION });
 }

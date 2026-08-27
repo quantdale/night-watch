@@ -21,7 +21,7 @@ import {
   type TriagePriority,
   DOSSIER_VERSION,
 } from './types';
-import { validateSemanticDossierEvidence, type SemanticDossierEvidence } from '../../oracles/semantic/dossier';
+import type { SemanticDossierEvidence } from '../../oracles/semantic/dossier';
 import {
   SEMANTIC_TRIAGE_EVIDENCE_VERSION,
   validateSemanticTriageEvidence,
@@ -29,6 +29,7 @@ import {
 } from './semanticTriageEvidence';
 import { rankSemanticConfidence } from './semanticConfidence';
 import { DOSSIER_READINESS_CRITICAL_REASON_CODES } from '../../oracles/expectations/lifecycle/triageResultVocabulary';
+import { validateDossierRuntime } from './dossierRuntimeValidation';
 
 export const DOSSIER_VERSION_V2 = 'nightwatch.bug-dossier.private.v2' as const;
 
@@ -355,47 +356,10 @@ export function createBugDossierV2(input: BugDossierV2Input): BugDossierV2 {
   return dossier;
 }
 
-const ALLOWED_V2_KEYS = new Set([
-  'schemaVersion','status','candidateId','title','firstObserved','lastObserved','journeys','seeds','minimalSequence','routeClass','apiOperationFamily','oracleFingerprint','evidenceLevel','l4Datastore','reproduction','browserApiDifferential','sourceChangeCandidates','likelyFaultBoundary','confidence','semanticConfidence','technicalSeverity','triagePriority','knownNightwatchDefect','alternativesRuledOut','missingEvidence','semanticEvidence','semanticTriageEvidence','humanReproductionRecipe','aiReady','safety','privacy',
-]);
-
 export function validateBugDossierV2(dossier: BugDossierV2): void;
 export function validateBugDossierV2(dossier: unknown): asserts dossier is BugDossierV2;
 export function validateBugDossierV2(value: unknown): void {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('DOSSIER_V2_NOT_OBJECT');
-  const rootPrototype = Object.getPrototypeOf(value);
-  if (rootPrototype !== Object.prototype && rootPrototype !== null) throw new Error('DOSSIER_V2_PROTOTYPE_INVALID');
-  const record = value as Record<string, unknown>;
-  if (record.schemaVersion !== DOSSIER_VERSION_V2) throw new Error('DOSSIER_V2_VERSION_INVALID');
-  const requiredKeys = ['schemaVersion', 'status', 'candidateId', 'title', 'firstObserved', 'lastObserved', 'journeys', 'seeds', 'minimalSequence', 'routeClass', 'apiOperationFamily', 'oracleFingerprint', 'evidenceLevel', 'l4Datastore', 'reproduction', 'browserApiDifferential', 'sourceChangeCandidates', 'likelyFaultBoundary', 'confidence', 'technicalSeverity', 'triagePriority', 'knownNightwatchDefect', 'alternativesRuledOut', 'missingEvidence', 'semanticEvidence', 'semanticTriageEvidence', 'humanReproductionRecipe', 'aiReady', 'safety', 'privacy'];
-  for (const key of requiredKeys) if (!Object.prototype.hasOwnProperty.call(record, key)) throw new Error(`DOSSIER_V2_REQUIRED_FIELD:${key}`);
-  for (const [field, value] of [['safety', record.safety], ['privacy', record.privacy], ['reproduction', record.reproduction], ['humanReproductionRecipe', record.humanReproductionRecipe], ['aiReady', record.aiReady]] as const) {
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error(`DOSSIER_V2_${field.toUpperCase()}_INVALID`);
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) throw new Error(`DOSSIER_V2_${field.toUpperCase()}_PROTOTYPE_INVALID`);
-  }
-  const dossier = value as BugDossierV2;
-  for (const key of Object.keys(dossier)) {
-    if (!ALLOWED_V2_KEYS.has(key)) throw new Error(`DOSSIER_V2_UNKNOWN_FIELD:${key}`);
-  }
-  if (dossier.status !== 'READY' && dossier.status !== 'UNRESOLVED') throw new Error('DOSSIER_V2_STATUS_INVALID');
-  if (dossier.evidenceLevel === 'L4' || dossier.l4Datastore !== 'OUT_OF_SCOPE_BY_OWNER') throw new Error('DOSSIER_DATASTORE_SCOPE_INVALID');
-  if (dossier.safety.productionAttempts !== 0 || dossier.safety.proxyViolations !== 0 || dossier.safety.unknownDestinations !== 0 || dossier.safety.unknownApprovals !== 0 || dossier.safety.productMutations !== 0 || dossier.safety.actionCausedUnknown !== 0 || dossier.safety.databaseQueries !== 0) throw new Error('DOSSIER_SAFETY_NOT_CLEAN');
-  if (dossier.privacy.result !== 'PASS' || dossier.privacy.rawBodiesPersisted || dossier.privacy.customerValuesPersisted || dossier.privacy.credentialsPersisted || dossier.privacy.screenshotsPersisted || dossier.privacy.authenticatedTracesPersisted) throw new Error('DOSSIER_PRIVACY_INVALID');
-  if (dossier.semanticEvidence !== null && dossier.semanticEvidence !== undefined) validateSemanticDossierEvidence(dossier.semanticEvidence);
-  if (dossier.semanticTriageEvidence !== null && dossier.semanticTriageEvidence !== undefined) validateSemanticTriageEvidence(dossier.semanticTriageEvidence);
-  if (dossier.semanticConfidence !== undefined) {
-    if (!['HIGH','MEDIUM','LOW','UNRESOLVED'].includes(dossier.semanticConfidence.level)) throw new Error('DOSSIER_SEMANTIC_CONFIDENCE_LEVEL_INVALID');
-  }
-  // READY predicate enforcement: if status READY but would be UNRESOLVED, fail
-  // We cannot re-derive without minimization; so check basic invariants: READY requires semanticEvidence? No, protocol-only may be READY if reproduced. So just validate no sentinels and basic safety.
-  assertNoSentinels(dossier);
-  // Human recipe privacy: must not contain raw values — already sentinel-checked. Additional: actionIds must be safe IDs.
-  for (const id of dossier.humanReproductionRecipe.actionIds) {
-    if (!SAFE_ID_RE.test(id) || SENTINEL_RE.test(id)) throw new Error('DOSSIER_RECIPE_ACTION_ID_UNSAFE');
-  }
-  // AI-ready must not leak raw evidence digest beyond safe metadata
-  assertNoSentinels(dossier.aiReady);
+  validateDossierRuntime(value, { version: 'v2', schemaVersion: DOSSIER_VERSION_V2 });
 }
 
 /** Parse and validate a v2 dossier (unknown fields rejected). */
