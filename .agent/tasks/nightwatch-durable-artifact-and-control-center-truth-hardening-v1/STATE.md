@@ -19,7 +19,7 @@ PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
 Last checkpoint: 2026-08-27 — M3/M4 facade and Control Center integration checkpoint
-`01f2ac0608931b83aed0b5c948ed3a4471de7e01`; UI/full acceptance remains.
+`01f2ac0608931b83aed0b5c948ed3a4471de7e01`; browser qualification is validated.
 
 ## Objective
 
@@ -162,6 +162,13 @@ validation, and Control Center integration tests. No external state changed.
   changing source currentness changes the findings generation. Existing server
   and snapshot tests retain GET/HEAD, loopback, Host/Origin, body, SSE-advisory,
   and failed-refresh fallback proofs.
+- UI/browser qualification: `control-center:ui:typecheck` passed, the nested
+  UI suite passed `11/11`, the production build verifier passed with `3` built
+  files and no external references, and the built-server browser suite passed
+  `1/1`. Its synthetic findings composition visibly rendered `Source Stale`
+  and `Source Unavailable`, all seven views, no page/console errors, and zero
+  non-loopback requests. A separate agent-browser local smoke reached the
+  Findings view; no auth or external state was used.
 
 ## Decisions Made During This Task
 
@@ -209,11 +216,9 @@ future campaigns remain outside scope.
 
 ## Resume Recipe
 
-1. Run the built Control Center UI/browser qualification using synthetic
-   fixtures only.
-2. Execute the repository-native full acceptance cone, including clean Node20
+1. Execute the repository-native full acceptance cone, including clean Node20
    and canonical serial regression, and repair any introduced regression.
-3. Update durable docs/OpenSpec/REPORT/STATE, commit, push, verify exact
+2. Update durable docs/OpenSpec/REPORT/STATE, commit, push, verify exact
    local/remote heads, and close the task with next action STOP.
 
 ## Completion Snapshot

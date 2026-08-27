@@ -189,7 +189,7 @@ If an additional false accept is reproduced:
 - [x] SSE remains advisory only.
 - [x] Server remains GET/HEAD, loopback-only, body-rejecting, Host/Origin checked.
 - [x] No command/browser/network/write path is introduced.
-- [ ] Add built UI/browser qualification for SOURCE_STALE and SOURCE_UNAVAILABLE if existing fixture architecture supports it without external contact.
+- [x] Add built UI/browser qualification for SOURCE_STALE and SOURCE_UNAVAILABLE using the existing synthetic authority fixture; no external contact occurred.
 
 ## 8. Adversarial/currentness matrix
 
@@ -239,8 +239,8 @@ At minimum prove:
 - [ ] campaign synthetic compatibility PASS.
 - [ ] semantic compatibility PASS when touched by version fingerprints.
 - [ ] Control Center unit suite PASS.
-- [ ] nested UI test/build PASS.
-- [ ] built-server synthetic browser qualification PASS.
+- [x] nested UI test/build PASS.
+- [x] built-server synthetic browser qualification PASS, including visible SOURCE_STALE and SOURCE_UNAVAILABLE labels.
 - [ ] project-state check PASS.
 - [ ] continuity/agent-state check PASS.
 - [ ] local quality gate PASS.

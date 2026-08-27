@@ -152,5 +152,23 @@ Focused validation after these changes:
 - `npm run typecheck`: PASS; `npm run hardening:check`: PASS; `git diff
   --check`: PASS.
 
-The remaining work is the built UI/browser qualification where applicable,
-then the full native/clean acceptance cone and terminal Git closure.
+The remaining work is the full native/clean acceptance cone and terminal Git
+closure.
+
+### UI/browser qualification
+
+- `npm run control-center:ui:typecheck`: PASS.
+- `npm run control-center:ui:test`: `2 test files / 11 tests passed`.
+- `npm run control-center:ui:build`: PASS; the verifier accepted `3` built
+  files totaling `259566` bytes with no external references or embedded
+  content.
+- `npm run control-center:ui:browser`: PASS, `1/1` built-server browser test.
+  The synthetic authority composition visibly rendered `Source Stale` and
+  `Source Unavailable` labels while exercising all seven views, with zero
+  page/console errors and zero non-loopback requests.
+- A separate bounded agent-browser smoke against the local loopback launcher
+  reached the Findings view and was closed without credentials, storage state,
+  or external navigation.
+
+M4 is complete. M5 remains active for the full local and clean acceptance
+cones, exact skip/receipt recording, final documentation, and terminal push.

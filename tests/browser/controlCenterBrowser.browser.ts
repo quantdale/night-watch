@@ -192,10 +192,24 @@ function findingsSnapshot(): FindingsAuthoritySnapshot {
     sourceCurrentness: 'CURRENT',
     semanticFinding: true,
   };
+  const staleDossier: FindingsDossierMetadata = {
+    ...dossier,
+    candidateId: 'candidate-synthetic-stale',
+    title: 'Synthetic stale finding',
+    oracleFingerprint: `fp:sha256:${'8'.repeat(24)}`,
+    sourceCurrentness: 'SOURCE_STALE',
+  };
+  const unavailableDossier: FindingsDossierMetadata = {
+    ...dossier,
+    candidateId: 'candidate-synthetic-unavailable',
+    title: 'Synthetic unavailable finding',
+    oracleFingerprint: `fp:sha256:${'9'.repeat(24)}`,
+    sourceCurrentness: 'SOURCE_UNAVAILABLE',
+  };
   return {
     schemaVersion: 'nightwatch.control-center-findings-authority.v1',
     state: 'AVAILABLE',
-    dossiers: [dossier],
+    dossiers: [dossier, staleDossier, unavailableDossier],
     generation: `cc-findings-generation:sha256:${'7'.repeat(24)}`,
     reasonCodes: [],
   };
@@ -265,7 +279,9 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     await page.getByRole('link', { name: 'Findings' }).click();
     await expect(page.getByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();
     await expect(page.getByText('Synthetic contract drift')).toBeVisible();
-    await expect(page.getByText('Provenance recorded')).toBeVisible();
+    await expect(page.getByText('Source Stale', { exact: true })).toBeVisible();
+    await expect(page.getByText('Source Unavailable', { exact: true })).toBeVisible();
+    await expect(page.getByText('Provenance recorded').first()).toBeVisible();
 
     await page.getByRole('link', { name: 'Runs' }).click();
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();

@@ -143,9 +143,9 @@ pushes; only this development session may create validated Git checkpoints.
   prohibited capability.
 - Validation: Control Center tests/build/browser if applicable, campaign and
   privacy regressions.
-- Status: IN_PROGRESS — malformed JSON/value stores, malformed authority
+- Status: COMPLETED — malformed JSON/value stores, malformed authority
   snapshots, generation changes, server restrictions, SSE advisory behavior,
-  and failed-refresh fallback are covered; UI/browser qualification remains.
+  failed-refresh fallback, and built UI/browser qualification are covered.
 
 ### M5 — Full acceptance and terminal Git closure
 
@@ -161,7 +161,7 @@ pushes; only this development session may create validated Git checkpoints.
   STOP; remote equals local; tree clean.
 - Validation: full prompt/OpenSpec list, `git diff --check`, final privacy
   audit, and one exact-head Actions observation at most if required.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ## Validation Strategy
 
