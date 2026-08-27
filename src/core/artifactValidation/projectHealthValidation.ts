@@ -32,9 +32,14 @@ import {
   LOCAL_READINESS_MODEL_VERSION,
   LOCAL_READINESS_CURRENTNESS_VALUES,
   LOCAL_READINESS_EXTERNAL_CI_VALUES,
+  LOCAL_READINESS_EXTERNAL_CI_CLASSIFICATION_TABLE,
   LOCAL_READINESS_CHECKPOINT_COMPATIBILITY_VALUES,
   LOCAL_READINESS_BLOCKER_KINDS,
+  LOCAL_READINESS_ANALYZER_AVAILABILITY_VALUES,
+  LOCAL_READINESS_DEFERRED_VERIFICATION_VALUES,
+  LOCAL_READINESS_VERIFICATION_DIMENSIONS,
 } from '../readiness/types';
+import { MECHANICAL_ANALYZER_VERSION } from '../../oracles/expectations/extract/analyzer';
 import {
   EXPECTED_OWNER_SCOPE_STATUS,
   EXPECTED_OWNER_SCOPE_REASON,
@@ -51,11 +56,12 @@ import {
   requireRuntimeRecord,
 } from '../campaign/runtimeValidation';
 
-const SUMMARY_KEYS = [
+const SUMMARY_BASE_KEYS = [
   'modelVersion', 'scope', 'readyClaim', 'category', 'applies',
   'sourceContracts', 'approvedTargetCoverage', 'campaign',
   'checkpointCompatibility', 'unresolvedBlockers', 'externalCi', 'ownerScope',
 ] as const;
+const SUMMARY_ADDITIVE_KEYS = ['analyzer', 'verification', 'externalCiClassification'] as const;
 
 const HEALTH_KEYS = [
   'totalFamilies', 'activeFamilies', 'archivedFamilies', 'familiesByKind',
@@ -68,6 +74,8 @@ const HEALTH_KEYS = [
 const COVERAGE_ENTRY_KEYS = ['targetId', 'coverage', 'activeFamilies', 'currentness'] as const;
 const CAMPAIGN_KEYS = ['category', 'comparedKeys', 'driftKeys', 'unmeasured'] as const;
 const OWNER_SCOPE_KEYS = ['status', 'reason', 'frozenOperationCount', 'matchesFrozenMarkers'] as const;
+const ANALYZER_KEYS = ['pinnedVersion', 'observedVersion', 'availability', 'versionConsistent', 'blocked'] as const;
+const VERIFICATION_KEYS = ['statesByDimension', 'deferredDimensions', 'notMeasuredDimensions', 'allDeferredToHardening'] as const;
 
 const CATEGORIES = ['READY_LOCAL_SYNTHETIC', 'BLOCKED_SOURCE', 'BLOCKED_VERSION', 'BLOCKED_AUTHORITY', 'BLOCKED_EXTERNAL_CI', 'NOT_APPLICABLE'] as const;
 const COVERAGE_VALUES = ['COVERED', 'PARTIAL', 'MISSING'] as const;
@@ -97,6 +105,46 @@ function assertSortedUnique(values: readonly unknown[], code: string): void {
   }
 }
 
+function assertExactSequence(values: readonly unknown[], expected: readonly string[], code: string): void {
+  requireRuntimeArray(values, `ARTIFACT_PROJECT_HEALTH_INVALID:${code}`);
+  if (values.length !== expected.length || values.some((value, index) => value !== expected[index])) invalid(`${code}_ORDER`);
+}
+
+function validateAdditiveReadinessSections(report: Record<string, unknown>): void {
+  const analyzer = requireRuntimeRecord(report.analyzer, 'ARTIFACT_PROJECT_HEALTH_INVALID:ANALYZER');
+  assertExactKeys(analyzer, ANALYZER_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID:ANALYZER');
+  assertString(analyzer.pinnedVersion, 'ARTIFACT_PROJECT_HEALTH_INVALID:ANALYZER_PINNED_VERSION');
+  if (analyzer.pinnedVersion !== MECHANICAL_ANALYZER_VERSION) invalid('ANALYZER_PINNED_VERSION');
+  if (analyzer.observedVersion !== null) {
+    assertString(analyzer.observedVersion, 'ARTIFACT_PROJECT_HEALTH_INVALID:ANALYZER_OBSERVED_VERSION');
+    if (analyzer.observedVersion.length === 0 || containsForbiddenErrorDetail(analyzer.observedVersion)) invalid('ANALYZER_OBSERVED_VERSION');
+  }
+  if (!(LOCAL_READINESS_ANALYZER_AVAILABILITY_VALUES as readonly string[]).includes(analyzer.availability as string)) invalid('ANALYZER_AVAILABILITY');
+  if (analyzer.versionConsistent !== null && typeof analyzer.versionConsistent !== 'boolean') invalid('ANALYZER_VERSION_CONSISTENT');
+  assertBoolean(analyzer.blocked, 'ARTIFACT_PROJECT_HEALTH_INVALID:ANALYZER_BLOCKED');
+  const expectedVersionConsistency = analyzer.observedVersion === null ? null : analyzer.observedVersion === analyzer.pinnedVersion;
+  if (analyzer.versionConsistent !== expectedVersionConsistency) invalid('ANALYZER_VERSION_COHERENCE');
+  const expectedBlocked = analyzer.availability === 'UNAVAILABLE' || expectedVersionConsistency === false;
+  if (analyzer.blocked !== expectedBlocked) invalid('ANALYZER_BLOCKED_COHERENCE');
+
+  const verification = requireRuntimeRecord(report.verification, 'ARTIFACT_PROJECT_HEALTH_INVALID:VERIFICATION');
+  assertExactKeys(verification, VERIFICATION_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID:VERIFICATION');
+  const states = requireRuntimeRecord(verification.statesByDimension, 'ARTIFACT_PROJECT_HEALTH_INVALID:VERIFICATION_STATES');
+  assertExactKeys(states, LOCAL_READINESS_VERIFICATION_DIMENSIONS, 'ARTIFACT_PROJECT_HEALTH_INVALID:VERIFICATION_STATES');
+  for (const dimension of LOCAL_READINESS_VERIFICATION_DIMENSIONS) {
+    if (!(LOCAL_READINESS_DEFERRED_VERIFICATION_VALUES as readonly string[]).includes(states[dimension] as string)) invalid('VERIFICATION_STATE');
+  }
+  const deferred = verification.deferredDimensions as readonly unknown[];
+  const notMeasured = verification.notMeasuredDimensions as readonly unknown[];
+  assertExactSequence(deferred, LOCAL_READINESS_VERIFICATION_DIMENSIONS.filter((dimension) => states[dimension] === 'DEFERRED_TO_HARDENING'), 'VERIFICATION_DEFERRED_DIMENSIONS');
+  assertExactSequence(notMeasured, LOCAL_READINESS_VERIFICATION_DIMENSIONS.filter((dimension) => states[dimension] === 'NOT_MEASURED'), 'VERIFICATION_NOT_MEASURED_DIMENSIONS');
+  assertBoolean(verification.allDeferredToHardening, 'ARTIFACT_PROJECT_HEALTH_INVALID:VERIFICATION_ALL_DEFERRED');
+  if (verification.allDeferredToHardening !== (deferred.length === LOCAL_READINESS_VERIFICATION_DIMENSIONS.length)) invalid('VERIFICATION_ALL_DEFERRED_COHERENCE');
+
+  const classification = LOCAL_READINESS_EXTERNAL_CI_CLASSIFICATION_TABLE.find((row) => row.ci === report.externalCi);
+  if (classification === undefined || report.externalCiClassification !== classification.classification) invalid('EXTERNAL_CI_CLASSIFICATION');
+}
+
 /**
  * Strict validation of one persisted LocalReadinessSummary. Throws
  * ARTIFACT_PROJECT_HEALTH_INVALID:* on any violation.
@@ -104,7 +152,9 @@ function assertSortedUnique(values: readonly unknown[], code: string): void {
 export function validateProjectHealthReportArtifact(value: unknown): void {
   if (!isRuntimeRecord(value)) invalid('OBJECT_REQUIRED');
   const report = requireRuntimeRecord(value, 'ARTIFACT_PROJECT_HEALTH_INVALID');
-  assertExactKeys(report, SUMMARY_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID');
+  assertExactKeys(report, SUMMARY_BASE_KEYS, 'ARTIFACT_PROJECT_HEALTH_INVALID', SUMMARY_ADDITIVE_KEYS);
+  const additivePresence = SUMMARY_ADDITIVE_KEYS.map((key) => Object.prototype.hasOwnProperty.call(report, key));
+  if (additivePresence.some((present) => present) && additivePresence.some((present) => !present)) invalid('ADDITIVE_SECTIONS_INCOMPLETE');
 
   // Fixed identity/scope markers of the ONE readiness model.
   if (report.modelVersion !== LOCAL_READINESS_MODEL_VERSION) invalid('MODEL_VERSION_UNSUPPORTED');
@@ -117,6 +167,7 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
 
   if (!(LOCAL_READINESS_EXTERNAL_CI_VALUES as readonly string[]).includes(report.externalCi as string)) invalid('EXTERNAL_CI');
   if (!(LOCAL_READINESS_CHECKPOINT_COMPATIBILITY_VALUES as readonly string[]).includes(report.checkpointCompatibility as string)) invalid('CHECKPOINT_COMPATIBILITY');
+  if (additivePresence.every((present) => present)) validateAdditiveReadinessSections(report);
 
   // --- blockers (normalized by normalizeBlockers) ---------------------------
   const blockers = requireRuntimeArray(report.unresolvedBlockers, 'ARTIFACT_PROJECT_HEALTH_INVALID:BLOCKERS');
@@ -181,6 +232,12 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
   const coverage = requireRuntimeArray(report.approvedTargetCoverage, 'ARTIFACT_PROJECT_HEALTH_INVALID:COVERAGE');
   if (coverage.length !== (health.approvedTargets as number)) invalid('COVERAGE_TARGET_COUNT_MISMATCH');
   const missingFromCoverage: string[] = [];
+  const coverageCurrentnessCounts: Record<string, number> = Object.fromEntries(
+    LOCAL_READINESS_CURRENTNESS_VALUES.map((value) => [value, 0]),
+  );
+  const staleFromCoverage: string[] = [];
+  const unavailableFromCoverage: string[] = [];
+  const unevaluatedFromCoverage: string[] = [];
   let targetsWithActiveFamily = 0;
   let previousTargetId: string | undefined;
   for (const item of coverage) {
@@ -190,6 +247,10 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
     if (!(COVERAGE_VALUES as readonly string[]).includes(entry.coverage as string)) invalid('COVERAGE_VALUE');
     assertNonNegativeInteger(entry.activeFamilies, 'ARTIFACT_PROJECT_HEALTH_INVALID:COVERAGE_ACTIVE_FAMILIES');
     if (!(LOCAL_READINESS_CURRENTNESS_VALUES as readonly string[]).includes(entry.currentness as string)) invalid('COVERAGE_CURRENTNESS');
+    coverageCurrentnessCounts[entry.currentness as string] = (coverageCurrentnessCounts[entry.currentness as string] ?? 0) + 1;
+    if (entry.currentness === 'STALE') staleFromCoverage.push(entry.targetId as string);
+    else if (entry.currentness === 'SOURCE_UNAVAILABLE') unavailableFromCoverage.push(entry.targetId as string);
+    else if (entry.currentness === 'NOT_EVALUATED') unevaluatedFromCoverage.push(entry.targetId as string);
     // Mechanical coverageForTarget rule: MISSING ⇔ zero active families.
     if ((entry.coverage === 'MISSING') !== ((entry.activeFamilies as number) === 0)) invalid('COVERAGE_ACTIVE_MISMATCH');
     if ((entry.activeFamilies as number) > 0) targetsWithActiveFamily += 1;
@@ -202,6 +263,12 @@ export function validateProjectHealthReportArtifact(value: unknown): void {
     (health.targetsMissingActiveFamily as string[]).every((id, index) => id === missingFromCoverage[index]))) {
     invalid('MISSING_TARGETS_MISMATCH');
   }
+  for (const currentness of LOCAL_READINESS_CURRENTNESS_VALUES) {
+    if (coverageCurrentnessCounts[currentness] !== currentnessCounts[currentness]) invalid('COVERAGE_CURRENTNESS_COUNT_MISMATCH');
+  }
+  if (JSON.stringify(health.staleTargets) !== JSON.stringify(staleFromCoverage)) invalid('COVERAGE_STALE_TARGETS_MISMATCH');
+  if (JSON.stringify(health.unavailableTargets) !== JSON.stringify(unavailableFromCoverage)) invalid('COVERAGE_UNAVAILABLE_TARGETS_MISMATCH');
+  if (JSON.stringify(health.currentnessUnevaluatedTargets) !== JSON.stringify(unevaluatedFromCoverage)) invalid('COVERAGE_UNEVALUATED_TARGETS_MISMATCH');
 
   // --- campaign version fingerprint summary ----------------------------------
   const campaign = requireRuntimeRecord(report.campaign, 'ARTIFACT_PROJECT_HEALTH_INVALID:CAMPAIGN');

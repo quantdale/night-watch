@@ -68,7 +68,89 @@ themselves rewrite the source checkout freshness category.
 
 ## Open evidence ledger
 
-The mutation ledger, currentness truth table, facade-wide audit, validation
-totals, identity decisions, regressions, performance receipts, and terminal
-Git/Actions evidence will be added as each milestone completes. M2 is now
-focused on implementing the reproduced strict runtime-validation defects.
+### M2 strict dossier validation
+
+- Added one bounded runtime validator for v1/v2 dossier JSON and delegated
+  semantic evidence to its existing owners. It checks complete scalar,
+  collection, nested-record, prototype, exact-key, cross-field, safety,
+  privacy, recipe, AI-ready, and source-candidate contracts without walking an
+  arbitrary attacker-controlled graph or mutating input.
+- The producer-built v1 `40/40` and v2 `50/50` mutation rows are now rejected
+  by both the owning validators and `validateArtifact('dossier')`. The valid
+  v2 `UNRESOLVED` control, v1/v2 producer corpus, and valid incomplete stub
+  remain accepted.
+- The facade semantic identity remains
+  `nightwatch.artifact-validation.private.v1`. No source/test consumer uses it
+  as a load-bearing cache, fingerprint, or currentness contract; dossier wire,
+  source, semantic, replay, selector, and Phase-24 identities were not changed.
+
+### M3 facade and currentness evidence
+
+- [`FACADE_AUDIT.json`](./FACADE_AUDIT.json) records every static registry kind:
+  `14/14` canonical fixtures were accepted, `55/55` bounded nested mutations
+  were rejected, and `55/55` original fixture inputs remained unchanged. The
+  reserved replay-result-envelope registration path rejected its malformed
+  synthetic payload with `ARTIFACT_REPLAY_ENVELOPE_INVALID`.
+- The all-kind audit reproduced one adjacent project-health contract gap: the
+  current readiness producer emits additive `analyzer`, `verification`, and
+  `externalCiClassification` sections that the old validator did not admit,
+  and the old validator did not tie per-target currentness back to aggregate
+  counts/lists. The validator now checks these sections compatibly and the
+  focused audit proves both positive acceptance and negative mutation behavior.
+- The callsite audit covered `validateArtifact('dossier')`,
+  `validateDossierArtifact`, `validateBugDossier`, and `parseBugDossierV2` in
+  the findings reader, AI review, triage pipeline, campaign readback, phase-13
+  shadow compatibility, and facade dispatch. Campaign casts are immediately
+  preceded by a runtime parse/validation; no shallow unknown-to-trusted
+  consumer or facade-version consumer was found.
+- Findings currentness is now owned by
+  `src/controlCenter/authorities/findingsCurrentness.ts`. The adapter uses the
+  same reducer only for its retained direct raw-dossier compatibility seam and
+  otherwise projects authority metadata. The meaning is freshness-only;
+  correlation relevance and confidence remain separate facts.
+
+### Currentness before/after
+
+The pre-fix focused probe recorded `CURRENT` for both current+stale and
+current+unknown on raw, authority, projected, and collector paths. After the
+repair, the expanded matrix covered `18` order/permutation cases, a duplicate
+candidate case, and the `256`-member bound:
+
+| Required freshness facts | Public result |
+| --- | --- |
+| non-empty, all current-class (`SOURCE_CURRENT_LOCALLY` / `REMOTE_FRESHNESS_CONFIRMED`) | `CURRENT` |
+| any `LOCAL_TRACKING_REF_ONLY`, no unknown | `SOURCE_STALE` |
+| any `UNKNOWN`, malformed freshness, or empty | `SOURCE_UNAVAILABLE` |
+
+All raw, authority, projected, and normal collector outputs matched this
+table. Changing the source currentness changed the findings generation digest.
+
+### M4 Control Center integration evidence
+
+- A mixed owner-local directory containing valid v1/v2 dossiers, malformed JSON,
+  and a parseable malformed dossier remains explicit `UNKNOWN`; only valid
+  sanitized rows survive and no file path, source text, raw evidence, or
+  validator detail is projected.
+- The collector now rejects a malformed authority snapshot currentness value
+  to an explicit `UNAVAILABLE` findings response instead of accepting an
+  `AVAILABLE` snapshot. Existing partial-corruption handling remains explicit.
+- Existing snapshot-coordinator tests prove that failed refreshes serve only
+  the caller's unavailable fallback, preserve the previous generation only as
+  diagnostic `lastKnownGoodGeneration`, and never mark that old generation
+  `CURRENT`. Existing server tests retain GET/HEAD, loopback, exact Host/Origin,
+  body rejection, bounded static assets, and notification-only SSE proofs.
+
+Focused validation after these changes:
+
+- `durableArtifactTruthHardening.test.ts`: `7 passed / 0 failed`.
+- `phase15pArtifactValidation.test.ts`: `25 passed / 0 failed`, including the
+  55-row facade audit.
+- Control Center adapters, findings authority, contracts, authority
+  integration, server, and snapshot coordinator: `21 passed / 0 failed`.
+- `phase15pPrivacyAuthority.test.ts`: `23 passed / 0 failed`; prior triage and
+  semantic compatibility slice: `55 passed / 0 failed`.
+- `npm run typecheck`: PASS; `npm run hardening:check`: PASS; `git diff
+  --check`: PASS.
+
+The remaining work is the built UI/browser qualification where applicable,
+then the full native/clean acceptance cone and terminal Git closure.

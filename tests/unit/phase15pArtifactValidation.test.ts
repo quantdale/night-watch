@@ -16,6 +16,7 @@ import { expect, test } from '@playwright/test';
 import {
   ARTIFACT_KIND_VERSION_ACCEPTANCE,
   KNOWN_ARTIFACT_KINDS,
+  isReplayResultEnvelopeKindRegistered,
   validateArtifact,
 } from '../../src/core/artifactValidation';
 import {
@@ -35,6 +36,7 @@ import {
   rankTriagePriority,
   type MinimizationResult,
 } from '../../src/core/triage';
+import { initialLifecycleRecord } from '../../src/core/campaign/candidateLifecycle';
 import { sanitizeAnomalyObservation } from '../../src/core/triage/clustering';
 import { createBugDossierV2 } from '../../src/core/triage/dossierV2';
 import { createTriageReplayPlan, createTriageReplayPlanV2 } from '../../src/core/triage/replayPlan';
@@ -69,6 +71,7 @@ import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
 import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
 import { OWNER_SCOPE_POLICY_VERSION, PRIVATE_ARTIFACT_POLICY_VERSION } from '../../src/core/policy';
+import { EXPECTED_FROZEN_OPERATION_COUNT, summarizeLocalReadiness } from '../../src/core/readiness/localReadiness';
 
 // ---------------------------------------------------------------------------
 // Synthetic fixtures (fake values only).
@@ -866,5 +869,288 @@ test.describe('Phase 15P A11 malformed-input rejection matrices', () => {
     const extraField = cloneJson(report) as Record<string, unknown>;
     extraField.deploymentStatus = 'DEPLOYED';
     expectRejected('coverage-report', extraField, 'UNKNOWN_FIELD:deploymentStatus');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Facade-wide bounded mutation audit (Durable Artifact + Control Center
+// Truth Hardening M3). Every static registry kind gets a producer-shaped
+// positive control and mutations at its first nested authority-bearing
+// boundary. The reserved envelope seam is audited separately because it is
+// intentionally outside KNOWN_ARTIFACT_KINDS.
+// ---------------------------------------------------------------------------
+
+type FacadeAuditContext = Parameters<typeof validateArtifact>[2];
+type FacadeMutation = Readonly<{
+  id: string;
+  mutate: (value: Record<string, unknown>) => void;
+}>;
+
+type FacadeAuditEntry = Readonly<{
+  kind: string;
+  value: unknown;
+  context?: FacadeAuditContext;
+  mutations: readonly FacadeMutation[];
+}>;
+
+function readinessSummaryFixture() {
+  return summarizeLocalReadiness({
+    applies: true,
+    sourceContracts: {
+      approvedTargetIds: ['x.a.read'],
+      families: [{
+        familyId: 'lifecycle:x.a.read.deep',
+        targetId: 'x.a.read',
+        kind: 'DEEP_TYPE',
+        hasExpectationId: true,
+        campaignEligible: true,
+        historicalImmutable: false,
+      }],
+      currentnessByTargetId: { 'x.a.read': 'CURRENT' },
+    },
+    campaign: {
+      pinnedVersions: { schemaV: 'nightwatch.schema.v1' },
+      observedVersions: { schemaV: 'nightwatch.schema.v1' },
+    },
+    checkpointCompatibility: 'CURRENT_SCHEMA',
+    unresolvedBlockers: [],
+    externalCi: 'PASS',
+    ownerScope: {
+      status: 'FROZEN_BY_OWNER',
+      reason: 'INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE',
+      frozenOperationCount: EXPECTED_FROZEN_OPERATION_COUNT,
+    },
+  });
+}
+
+function candidateRecordFixture() {
+  return {
+    schemaVersion: 'nightwatch.campaign-candidate-record.private.v1',
+    candidateId: `candidate:sha256:${'1'.repeat(24)}`,
+    clusterId: null,
+    lifecycle: initialLifecycleRecord('PROTOCOL_ONLY'),
+  };
+}
+
+function reproductionRecordFixture() {
+  return {
+    clusterId: 'cluster:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
+    representativeRunId: 'run-1',
+    state: 'COMPLETED',
+    result: 'REPRODUCED',
+    admissionLevel: 'L2',
+    reasonCode: null,
+    runId: 'run-1',
+    safety: cloneJson(ZERO_CAMPAIGN_SAFETY),
+    privacy: cloneJson(ZERO_CAMPAIGN_PRIVACY),
+  };
+}
+
+function facadeMutation(id: string, mutate: (value: Record<string, unknown>) => void): FacadeMutation {
+  return { id, mutate };
+}
+
+test.describe('Durable Artifact + Control Center Truth Hardening M3 facade audit', () => {
+  test('every registered kind has a canonical fixture and bounded nested mutation disposition', async () => {
+    const { root, manifest, checkpoint } = preparedFixture();
+    try {
+      const dossier = await v1Dossier();
+      const cluster = clusterAnomalies([observation() as never])[0]!;
+      const receipt = semanticReceipt();
+      const replayPlan = createTriageReplayPlan(replayPlanBase());
+      const reproduction = reproductionRecordFixture();
+      const minimization = await runMinimizer(['a1', 'a2', 'a3'], 'a1');
+      const coverage = buildContractCoverageReport({ inventory: coverageInventory() });
+      const health = readinessSummaryFixture();
+      const brief = buildCampaignMorningBrief({
+        manifest,
+        resultClass: 'COMPLETE_WITH_FINDINGS',
+        runs: [{ runId: 'run-1', journeyId: 'ripple-payer-exchange-read', envelopeId: 'E1-J1', seed: '0x0001', result: 'ANOMALY', reproduced: true, safety: dossier.safety }],
+        clusters: [cluster],
+        dossiers: [dossier],
+        coverageGaps: [],
+        reproductionQueue: [],
+        safety: cloneJson(ZERO_CAMPAIGN_SAFETY),
+        privacy: cloneJson(ZERO_CAMPAIGN_PRIVACY),
+        nightwatchInternalIssues: [],
+        transientsAndNonFindings: [],
+      });
+
+      const entries: readonly FacadeAuditEntry[] = [
+        {
+          kind: 'campaign-checkpoint',
+          value: checkpoint,
+          context: { manifest },
+          mutations: [
+            facadeMutation('nested_budget_type', (value) => { (value.budgetUsed as Record<string, unknown>).browserContexts = '1'; }),
+            facadeMutation('nested_source_enum', (value) => { (value.sourceSnapshots as Array<Record<string, unknown>>)[0]!.freshness = 'INVALID'; }),
+            facadeMutation('sentinel_payload', (value) => { value.campaignId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+        {
+          kind: 'observation',
+          value: observation(),
+          mutations: [
+            facadeMutation('nested_feature_type', (value) => { (value.features as Record<string, unknown>).statusClass = 500; }),
+            facadeMutation('nested_freshness_enum', (value) => { value.sourceFreshness = 'INVALID'; }),
+            facadeMutation('sentinel_payload', (value) => { (value.features as Record<string, unknown>).statusClass = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+        {
+          kind: 'semantic-receipt',
+          value: receipt,
+          mutations: [
+            facadeMutation('nested_count_type', (value) => { value.invariantPassCount = '1'; }),
+            facadeMutation('nested_outcome_enum', (value) => { value.outcome = 'INVALID'; }),
+            facadeMutation('sentinel_payload', (value) => { value.oracleId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.rawBody = 'CUSTOMER_SENTINEL'; }),
+          ],
+        },
+        {
+          kind: 'replay-plan',
+          value: replayPlan,
+          mutations: [
+            facadeMutation('nested_action_type', (value) => { value.retainedActionIds = [42]; }),
+            facadeMutation('nested_phase_enum', (value) => { value.phase = 'INVALID'; }),
+            facadeMutation('sentinel_payload', (value) => { value.targetId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+        {
+          kind: 'cluster',
+          value: cluster,
+          mutations: [
+            facadeMutation('nested_feature_type', (value) => { (value.features as Record<string, unknown>).statusClass = 500; }),
+            facadeMutation('nested_identity_mismatch', (value) => { value.clusterKey = `cluster-key:sha256:${'0'.repeat(24)}`; }),
+            facadeMutation('sentinel_payload', (value) => { value.primaryRunId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.rawValues = []; }),
+          ],
+        },
+        {
+          kind: 'reproduction-record',
+          value: reproduction,
+          context: { knownClusterIds: [reproduction.clusterId], knownObservationRunIds: ['run-1'] },
+          mutations: [
+            facadeMutation('nested_safety_type', (value) => { (value.safety as Record<string, unknown>).productionAttempts = '1'; }),
+            facadeMutation('nested_state_enum', (value) => { value.state = 'INVALID'; }),
+            facadeMutation('sentinel_payload', (value) => { value.clusterId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.replayScript = 'CUSTOMER_SENTINEL'; }),
+          ],
+        },
+        {
+          kind: 'dossier',
+          value: dossier,
+          mutations: [
+            facadeMutation('nested_reproduction_count', (value) => { (value.reproduction as Record<string, unknown>).count = -1; }),
+            facadeMutation('nested_recipe_type', (value) => { (value.humanReproductionRecipe as Record<string, unknown>).actionIds = 'a1'; }),
+            facadeMutation('sentinel_payload', (value) => { value.title = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.deploymentClaim = 'prod-fixed'; }),
+          ],
+        },
+        {
+          kind: 'morning-brief',
+          value: brief,
+          mutations: [
+            facadeMutation('nested_privacy_counter', (value) => { (value.privacy as Record<string, unknown>).domPersisted = 1; }),
+            facadeMutation('nested_scope_enum', (value) => { (value.campaign as Record<string, unknown>).datastoreStatus = 'QUERIED'; }),
+            facadeMutation('sentinel_payload', (value) => { (value.campaign as Record<string, unknown>).campaignId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.deploymentStatus = 'DEPLOYED'; }),
+          ],
+        },
+        {
+          kind: 'source-bundle',
+          value: sourceBundle(),
+          mutations: [
+            facadeMutation('nested_mapping_identity', (value) => { (value.approvedMapping as Record<string, unknown>).targetId = 'wrong.target'; }),
+            facadeMutation('nested_resolver_enum', (value) => { value.resolverState = 'RESOLVED_FUTURE'; }),
+            facadeMutation('sentinel_payload', (value) => { value.sourceRepoId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.deployedSha = 'abcdef'; }),
+          ],
+        },
+        {
+          kind: 'coverage-report',
+          value: coverage,
+          mutations: [
+            facadeMutation('nested_identity_type', (value) => { (value.normalizedEvidenceIdentities as Array<Record<string, unknown>>)[0]!.targetId = 7; }),
+            facadeMutation('nested_proof_type', (value) => { value.proofClasses = []; }),
+            facadeMutation('sentinel_payload', (value) => { (value.normalizedEvidenceIdentities as Array<Record<string, unknown>>)[0]!.targetId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.deploymentStatus = 'DEPLOYED'; }),
+          ],
+        },
+        {
+          kind: 'candidate-record',
+          value: candidateRecordFixture(),
+          mutations: [
+            facadeMutation('nested_lifecycle_enum', (value) => { (value.lifecycle as Record<string, unknown>).state = 'INVALID'; }),
+            facadeMutation('nested_lifecycle_unknown_field', (value) => { (value.lifecycle as Record<string, unknown>).futureField = true; }),
+            facadeMutation('nested_lifecycle_sentinel', (value) => { (value.lifecycle as Record<string, unknown>).lastReasonCode = 'CUSTOMER_SENTINEL'; }),
+          ],
+        },
+        {
+          kind: 'replay-record',
+          value: replayPlan,
+          mutations: [
+            facadeMutation('nested_retained_multiplicity', (value) => { value.retainedActionIds = ['a1', 'a1']; }),
+            facadeMutation('nested_target_sentinel', (value) => { value.targetId = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('nested_action_sentinel', (value) => { value.originalActionIds = ['CUSTOMER_SENTINEL']; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+        {
+          kind: 'minimization-record',
+          value: minimization,
+          mutations: [
+            facadeMutation('nested_budget_type', (value) => { (value.budget as Record<string, unknown>).maxTotalReplays = '1'; }),
+            facadeMutation('nested_evaluation_type', (value) => { (value.candidateEvaluations as Array<Record<string, unknown>>)[0]!.reason = 7; }),
+            facadeMutation('sentinel_payload', (value) => { value.anomalyFingerprint = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+        {
+          kind: 'project-health-report',
+          value: health,
+          mutations: [
+            facadeMutation('nested_currentness_count', (value) => { (value.sourceContracts as Record<string, unknown>).currentnessCounts = { CURRENT: 99, STALE: 0, SOURCE_UNAVAILABLE: 0, NOT_EVALUATED: 0 }; }),
+            facadeMutation('nested_coverage_currentness', (value) => { (value.approvedTargetCoverage as Array<Record<string, unknown>>)[0]!.currentness = 'STALE'; }),
+            facadeMutation('sentinel_payload', (value) => { (value.ownerScope as Record<string, unknown>).reason = 'CUSTOMER_SENTINEL'; }),
+            facadeMutation('root_unknown_field', (value) => { value.futureField = true; }),
+          ],
+        },
+      ];
+
+      expect(entries.map((entry) => entry.kind)).toEqual(KNOWN_ARTIFACT_KINDS);
+      const ledger: Array<Record<string, unknown>> = [];
+      for (const entry of entries) {
+        const base = cloneJson(entry.value);
+        const accepted = validateArtifact(entry.kind, base, entry.context);
+        expect(accepted.valid, `${entry.kind}: ${!accepted.valid ? accepted.reason : ''}`).toBe(true);
+        const original = JSON.stringify(entry.value);
+        for (const mutation of entry.mutations) {
+          const mutated = cloneJson(entry.value) as Record<string, unknown>;
+          mutation.mutate(mutated);
+          const result = validateArtifact(entry.kind, mutated, entry.context);
+          ledger.push({ kind: entry.kind, mutation: mutation.id, accepted: result.valid, reason: result.valid ? 'ACCEPTED' : result.reason });
+          expect(result.valid, `${entry.kind}/${mutation.id}: ${result.valid ? 'unexpected accept' : result.reason}`).toBe(false);
+          expect(JSON.stringify(entry.value), `${entry.kind}/${mutation.id} mutated fixture`).toBe(original);
+        }
+      }
+      console.log(`FACADE_WIDE_MUTATION_AUDIT=${JSON.stringify(ledger)}`);
+      expect(ledger).toHaveLength(entries.reduce((total, entry) => total + entry.mutations.length, 0));
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test('reserved replay-result-envelope registration path is present and rejects malformed payloads', () => {
+    expect(isReplayResultEnvelopeKindRegistered()).toBe(true);
+    const malformed = {
+      schemaVersion: 'nightwatch.triage-replay-envelope.private.v1',
+      plan: { schemaVersion: 'nightwatch.triage-replay-plan.private.v2', futureField: true },
+    };
+    const result = validateArtifact('replay-result-envelope', malformed);
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.reason).toContain('ARTIFACT_REPLAY_ENVELOPE_INVALID');
   });
 });

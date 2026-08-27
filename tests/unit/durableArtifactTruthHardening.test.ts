@@ -310,13 +310,18 @@ test.describe('Control Center currentness regression probes', () => {
       { id: 'remote-only', values: [REMOTE] },
       { id: 'current-remote', values: [CURRENT, REMOTE] },
       { id: 'current-stale', values: [CURRENT, STALE] },
+      { id: 'remote-stale', values: [REMOTE, STALE] },
       { id: 'current-unknown', values: [CURRENT, UNKNOWN] },
       { id: 'stale-unknown', values: [STALE, UNKNOWN] },
+      { id: 'unknown-unknown', values: [UNKNOWN, UNKNOWN] },
       { id: 'stale-only', values: [STALE] },
       { id: 'unknown-only', values: [UNKNOWN] },
       { id: 'empty', values: [] },
+      { id: 'maximum-current-members', values: Array.from({ length: 256 }, () => CURRENT) },
     ];
-    const cases = multisets.flatMap((item) => permutations(item.values).map((values, index) => ({ id: `${item.id}-${index + 1}`, values })));
+    const cases = multisets.flatMap((item) => item.id === 'maximum-current-members'
+      ? [{ id: item.id, values: item.values }]
+      : permutations(item.values).map((values, index) => ({ id: `${item.id}-${index + 1}`, values })));
     const rows = [] as Array<Record<string, unknown>>;
     for (const item of cases) {
       const dossier = freshnessDossier(dossierToRecord(base), item.values);
@@ -339,6 +344,68 @@ test.describe('Control Center currentness regression probes', () => {
     }
     console.log(`AFTER_CURRENTNESS_TRUTH_TABLE=${JSON.stringify(rows)}`);
     expect(rows).toHaveLength(cases.length);
+  });
+
+  test('rejects malformed freshness before authority metadata and keeps labels stable through sanitization', async () => {
+    const base = await v1Dossier();
+    const malformed = freshnessDossier(dossierToRecord(base), [CURRENT, 'NOT_A_FRESHNESS']);
+    expect(validateArtifact('dossier', malformed).valid).toBe(false);
+    const authority = authorityForDossier(malformed);
+    expect(authority.state).toBe('UNKNOWN');
+    expect(authority.dossiers).toHaveLength(0);
+    const raw = projectFindings({ dossiers: [malformed as never] });
+    expect(raw.items[0]?.sourceCurrentness).toBe('SOURCE_UNAVAILABLE');
+  });
+
+  test('allows duplicate source candidates without weakening conservative aggregation', async () => {
+    const base = await v1Dossier();
+    const duplicated = freshnessDossier(dossierToRecord(base), [CURRENT, CURRENT]);
+    const candidates = arrayAt(duplicated, 'sourceChangeCandidates');
+    candidates[1] = cloneJson(candidates[0]);
+    expect(validateArtifact('dossier', duplicated).valid).toBe(true);
+    const authority = authorityForDossier(duplicated);
+    expect(authority.dossiers[0]?.sourceCurrentness).toBe('CURRENT');
+  });
+
+  test('changes findings generation when the authoritative source currentness changes', async () => {
+    const base = await v1Dossier();
+    const root = tempRoot();
+    try {
+      const store = new PrivateArtifactStore({ root });
+      const fileName = 'candidate-generation.json';
+      store.writeJson(fileName, freshnessDossier(dossierToRecord(base), [CURRENT]));
+      const current = createFindingsAuthorityForTests(root).snapshot();
+      store.writeJson(fileName, freshnessDossier(dossierToRecord(base), [STALE]));
+      const stale = createFindingsAuthorityForTests(root).snapshot();
+      expect(current.state).toBe('AVAILABLE');
+      expect(stale.state).toBe('AVAILABLE');
+      expect(current.dossiers[0]?.sourceCurrentness).toBe('CURRENT');
+      expect(stale.dossiers[0]?.sourceCurrentness).toBe('SOURCE_STALE');
+      expect(stale.generation).not.toBe(current.generation);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('collector rejects a malformed authority snapshot instead of upgrading it to AVAILABLE', async () => {
+    const base = await v1Dossier();
+    const valid = authorityForDossier(freshnessDossier(dossierToRecord(base), [CURRENT]));
+    const malformed = {
+      ...valid,
+      state: 'AVAILABLE' as const,
+      dossiers: valid.dossiers.map((dossier) => ({ ...dossier, sourceCurrentness: 'CURRENTISH' })),
+    } as unknown as FindingsAuthoritySnapshot;
+    const sourceAuthority = { snapshot: () => ({ schemaVersion: 'nightwatch.control-center-source-authority.v1' as const, state: 'UNKNOWN' as const, inventoryDigest: null, repositoryCount: 0, repositoryStatuses: [], discovery: null, phase24: null, generation: null, reasonCodes: ['SOURCE_DISCOVERY_UNAVAILABLE'] as const }) };
+    const campaignAuthority = { snapshot: () => ({ schemaVersion: 'nightwatch.control-center-campaign-authority.v1' as const, state: 'UNKNOWN' as const, sourceCurrentness: 'AMBIGUOUS' as const, plan: null, coverage: null, findingCount: 0, blockerCodes: ['CAMPAIGN_COMPOSITION_UNAVAILABLE'], sourceCurrentnessByMemberId: {}, sourceGeneration: null, generation: null }) };
+    const collector = createDefaultControlCenterCollector({
+      sourceAuthority,
+      campaignAuthority,
+      findingsAuthority: { snapshot: () => malformed },
+      sourceSnapshotTtlMs: 10_000,
+    });
+    const findings = await collector.findings({ limit: 50, cursor: null });
+    expect(findings.state).toBe('UNAVAILABLE');
+    expect(findings.items).toEqual([]);
   });
 });
 

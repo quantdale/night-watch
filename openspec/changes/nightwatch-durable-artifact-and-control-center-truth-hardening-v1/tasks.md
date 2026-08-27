@@ -117,112 +117,112 @@ Repeat v1 classes plus:
 
 ## 4. Artifact facade identity and consumer audit
 
-- [ ] Enumerate every callsite of validateArtifact('dossier'), validateDossierArtifact, validateBugDossier, parseBugDossierV2.
-- [ ] Identify any consumer that casts unknown values after a shallow check.
-- [ ] Verify every durable read path validates before authority use.
-- [ ] Audit ARTIFACT_VALIDATION_FACADE_VERSION consumers.
-- [ ] Decide whether facade semantic version must bump; document rationale.
-- [ ] If bumped, update exact version fingerprints/hardening/tests and no unrelated identities.
-- [ ] Prove old malformed-but-accepted artifacts do not silently become valid via a compatibility fallback.
+- [x] Enumerate every callsite of validateArtifact('dossier'), validateDossierArtifact, validateBugDossier, parseBugDossierV2.
+- [x] Identify any consumer that casts unknown values after a shallow check.
+- [x] Verify every durable read path validates before authority use.
+- [x] Audit ARTIFACT_VALIDATION_FACADE_VERSION consumers.
+- [x] Decide whether facade semantic version must bump; document rationale: no load-bearing consumer exists, so it remains v1.
+- [x] If bumped, update exact version fingerprints/hardening/tests and no unrelated identities — not applicable because no bump was required.
+- [x] Prove old malformed-but-accepted artifacts do not silently become valid via a compatibility fallback.
 
 ## 5. Facade-wide bounded mutation audit
 
 For every ARTIFACT_KIND_VERSION_ACCEPTANCE entry:
 
-- [ ] identify producer
-- [ ] identify validator
-- [ ] identify nested authority-bearing fields
-- [ ] create/locate positive canonical fixture
-- [ ] perform at least one nested type mutation
-- [ ] perform at least one invalid enum/identity mutation when applicable
-- [ ] verify unknown field rejection where schema is frozen
-- [ ] verify sentinel/privacy rejection where strings exist
-- [ ] verify no input mutation
-- [ ] record accepted/rejected result and reason class
+- [x] identify producer
+- [x] identify validator
+- [x] identify nested authority-bearing fields
+- [x] create/locate positive canonical fixture
+- [x] perform at least one nested type mutation
+- [x] perform at least one invalid enum/identity mutation when applicable
+- [x] verify unknown field rejection where schema is frozen
+- [x] verify sentinel/privacy rejection where strings exist
+- [x] verify no input mutation
+- [x] record accepted/rejected result and reason class in `FACADE_AUDIT.json`
 
 Kinds currently include:
 
-- [ ] campaign-checkpoint
-- [ ] observation
-- [ ] semantic-receipt
-- [ ] replay-plan
-- [ ] cluster
-- [ ] reproduction-record
-- [ ] dossier
-- [ ] morning-brief
-- [ ] source-bundle
-- [ ] coverage-report
-- [ ] candidate-record
-- [ ] replay-record
-- [ ] minimization-record
-- [ ] project-health-report
-- [ ] reserved replay-result-envelope registration path
+- [x] campaign-checkpoint
+- [x] observation
+- [x] semantic-receipt
+- [x] replay-plan
+- [x] cluster
+- [x] reproduction-record
+- [x] dossier
+- [x] morning-brief
+- [x] source-bundle
+- [x] coverage-report
+- [x] candidate-record
+- [x] replay-record
+- [x] minimization-record
+- [x] project-health-report
+- [x] reserved replay-result-envelope registration path
 
 If an additional false accept is reproduced:
-- [ ] fix only if owning schema is unambiguous and local/pure
-- [ ] otherwise fail closed at earliest safe consumer and record follow-up; do not guess a migration
+- [x] fix only if owning schema is unambiguous and local/pure — the project-health additive/derived checks met this bar.
+- [x] otherwise fail closed at earliest safe consumer and record follow-up; do not guess a migration — no unresolved adjacent false accept remains.
 
 ## 6. Converge findings currentness authority
 
-- [ ] Trace every production and test caller of projectFindings.
-- [ ] Trace all creation of FindingsDossierMetadata.
-- [ ] Select one owning reducer or metadata-only architecture.
-- [ ] Remove duplicated optimistic currentness implementation.
-- [ ] Implement conservative aggregation.
-- [ ] Explicitly handle empty.
-- [ ] Explicitly handle UNKNOWN.
-- [ ] Explicitly handle LOCAL_TRACKING_REF_ONLY.
-- [ ] Allow CURRENT only when every required freshness member is current-class.
-- [ ] Resolve/document relevance UNKNOWN + confidence UNRESOLVED semantics without conflating causal relevance with source freshness.
-- [ ] Add permutation/property tests.
-- [ ] Add authority-vs-adapter differential tests.
-- [ ] Ensure provenance generation/digest changes when corrected currentness changes.
+- [x] Trace every production and test caller of projectFindings.
+- [x] Trace all creation of FindingsDossierMetadata.
+- [x] Select one owning reducer or metadata-only architecture: shared pure reducer at the authority/adapter seam.
+- [x] Remove duplicated optimistic currentness implementation.
+- [x] Implement conservative aggregation.
+- [x] Explicitly handle empty.
+- [x] Explicitly handle UNKNOWN.
+- [x] Explicitly handle LOCAL_TRACKING_REF_ONLY.
+- [x] Allow CURRENT only when every required freshness member is current-class.
+- [x] Resolve/document relevance UNKNOWN + confidence UNRESOLVED semantics without conflating causal relevance with source freshness.
+- [x] Add permutation/property tests.
+- [x] Add authority-vs-adapter differential tests.
+- [x] Ensure provenance generation/digest changes when corrected currentness changes.
 
 ## 7. Control Center fail-closed integration
 
-- [ ] Malformed dossier => no valid metadata row.
-- [ ] Mixed valid + malformed directory => collection state UNKNOWN / partial corruption.
-- [ ] Valid rows under partial corruption remain sanitized.
-- [ ] No raw source path/text/private reason leaks through findings.
-- [ ] Collector rejects malformed authority snapshot.
-- [ ] Snapshot coordinator never serves prior generation as CURRENT after refresh failure.
-- [ ] SSE remains advisory only.
-- [ ] Server remains GET/HEAD, loopback-only, body-rejecting, Host/Origin checked.
-- [ ] No command/browser/network/write path is introduced.
+- [x] Malformed dossier => no valid metadata row.
+- [x] Mixed valid + malformed directory => collection state UNKNOWN / partial corruption.
+- [x] Valid rows under partial corruption remain sanitized.
+- [x] No raw source path/text/private reason leaks through findings.
+- [x] Collector rejects malformed authority snapshot.
+- [x] Snapshot coordinator never serves prior generation as CURRENT after refresh failure.
+- [x] SSE remains advisory only.
+- [x] Server remains GET/HEAD, loopback-only, body-rejecting, Host/Origin checked.
+- [x] No command/browser/network/write path is introduced.
 - [ ] Add built UI/browser qualification for SOURCE_STALE and SOURCE_UNAVAILABLE if existing fixture architecture supports it without external contact.
 
 ## 8. Adversarial/currentness matrix
 
-- [ ] current/current
-- [ ] current/remote-confirmed
-- [ ] current/stale
-- [ ] remote-confirmed/stale
-- [ ] current/unknown
-- [ ] stale/unknown
-- [ ] unknown/unknown
-- [ ] empty
-- [ ] 1 member
-- [ ] maximum bounded members
-- [ ] duplicate candidates if allowed
-- [ ] reordered candidates
-- [ ] malformed freshness rejected pre-reducer
-- [ ] malformed candidate rejected pre-reducer
-- [ ] stale/unavailable public labels remain stable through sanitizer
-- [ ] public state never upgrades UNKNOWN collection state to AVAILABLE
+- [x] current/current
+- [x] current/remote-confirmed
+- [x] current/stale
+- [x] remote-confirmed/stale
+- [x] current/unknown
+- [x] stale/unknown
+- [x] unknown/unknown
+- [x] empty
+- [x] 1 member
+- [x] maximum bounded members
+- [x] duplicate candidates if allowed
+- [x] reordered candidates
+- [x] malformed freshness rejected pre-reducer
+- [x] malformed candidate rejected pre-reducer
+- [x] stale/unavailable public labels remain stable through sanitizer
+- [x] public state never upgrades UNKNOWN collection state to AVAILABLE
 
 ## 9. Focused validation after each implementation slice
 
-- [ ] npx tsc --noEmit or repository typecheck script.
-- [ ] dossier/artifact-validation unit tests.
-- [ ] Control Center findings authority tests.
-- [ ] Control Center adapters tests.
-- [ ] Control Center contracts tests.
-- [ ] Control Center authority integration tests.
-- [ ] Control Center server tests.
-- [ ] Control Center snapshot coordinator tests.
-- [ ] privacy/sentinel tests.
-- [ ] relevant hardening checks.
-- [ ] no new skips.
+- [x] npx tsc --noEmit or repository typecheck script.
+- [x] dossier/artifact-validation unit tests.
+- [x] Control Center findings authority tests.
+- [x] Control Center adapters tests.
+- [x] Control Center contracts tests.
+- [x] Control Center authority integration tests.
+- [x] Control Center server tests.
+- [x] Control Center snapshot coordinator tests.
+- [x] privacy/sentinel tests.
+- [x] relevant hardening checks.
+- [x] no new skips.
 
 Fix every introduced Critical/High regression before continuing.
 

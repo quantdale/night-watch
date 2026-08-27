@@ -124,6 +124,10 @@ test.describe('Control Center owner-local findings authority', () => {
       store.writeJson(`candidate-${v1.candidateId.replaceAll(':', '-')}.json`, v1);
       store.writeJson('semantic-envelope.json', { dossier: v2 });
       store.writeJson('unrelated.json', { schemaVersion: 'nightwatch.campaign-checkpoint.private.v1', status: 'READY' });
+      store.writeJson('candidate-malformed-json-value.json', {
+        ...v1,
+        reproduction: { ...v1.reproduction, count: 'not-a-count' },
+      });
       const corrupt = path.join(root, 'candidate-corrupt.json');
       fs.writeFileSync(corrupt, '{"schemaVersion":"nightwatch.bug-dossier.private.v1",', { encoding: 'utf8', mode: 0o600 });
       fs.chmodSync(corrupt, 0o600);
@@ -134,6 +138,7 @@ test.describe('Control Center owner-local findings authority', () => {
       expect(first.state).toBe('UNKNOWN');
       expect(first.dossiers).toHaveLength(2);
       expect(first.reasonCodes).toContain('FINDINGS_PARTIAL_CORRUPTION');
+      expect(first.reasonCodes).toContain('FINDINGS_SCHEMA_INVALID');
       expect(first.generation).toBe(second.generation);
       expect(JSON.stringify(first)).not.toContain('candidate-corrupt.json');
       expect(JSON.stringify(first)).not.toContain('synthetic.catalog');

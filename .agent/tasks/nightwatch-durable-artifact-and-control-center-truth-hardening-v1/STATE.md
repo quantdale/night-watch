@@ -19,7 +19,7 @@ PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
 Last checkpoint: 2026-08-27 — M2 strict runtime-validation checkpoint
-`6817af1b5c810b1bb2c0aee9be5f3f0f64d88b2b`; M3 is active.
+`6817af1d67b5467ca3873a62bb0a36d790940e4e`; M3/M4 evidence is staged for checkpoint.
 
 ## Objective
 
@@ -44,26 +44,33 @@ M3 — facade-wide mutation audit and currentness convergence.
   now validates producer-shaped v1/v2 dossiers, delegates semantic evidence to
   its owning validators, rejects malformed nested records/prototypes/unknown
   fields, and preserves valid READY, INCOMPLETE, and UNRESOLVED controls.
+- M3 — facade-wide bounded mutation audit and currentness convergence. Every
+  registered static kind has a canonical synthetic fixture and bounded nested
+  mutation disposition; a compatible project-health validator repair closed
+  two adjacent derived-truth gaps; one shared conservative findings reducer
+  now owns whole-dossier currentness.
 
 ## Work In Progress
 
-Registry-wide durable-artifact mutation audit and the final facade/currentness
-consumer audit. The strict dossier implementation and conservative shared
-findings reducer are validated; the next checkpoint will carry their source
-changes and the M2 regression evidence.
+Control Center integration and final acceptance. The strict dossier facade,
+facade-wide audit, shared currentness reducer, malformed-store handling,
+authority-snapshot pre-gate, generation change, server restrictions, and
+snapshot refresh failure behavior are validated. UI/browser and full native
+acceptance evidence remain.
 
 ## Exact Next Action
 
-Enumerate every registered durable artifact kind, bind a canonical synthetic
-producer fixture and bounded nested mutations to its facade validator, and
-record accepted/rejected reason classes before the M3 acceptance checks.
+Run `npm run control-center:ui:typecheck`, `npm run control-center:ui:test`,
+`npm run control-center:ui:build`, and the built-server browser qualification;
+then execute the full native acceptance cone and record exact skips/receipts.
 
 ## Files Changed
 
 Task records, the focused synthetic probe test and machine-readable
-`BEFORE_PROBES.json`, plus the shared strict dossier runtime validator, v1/v2
-dossier validator delegation, and the shared findings currentness reducer.
-No external state changed.
+`BEFORE_PROBES.json`/`FACADE_AUDIT.json`, plus the shared strict dossier runtime
+validator, v1/v2 dossier validator delegation, the shared findings currentness
+reducer, compatible project-health derived-truth checks, collector snapshot
+validation, and Control Center integration tests. No external state changed.
 
 ## Validation Ledger
 
@@ -127,6 +134,34 @@ No external state changed.
   audited and remains `nightwatch.artifact-validation.private.v1`: no
   load-bearing fingerprint/cache/currentness consumer exists in `src/` or
   `tests/`, so a version bump would add identity drift without a consumer.
+- M3 facade audit: all `14/14` registered kinds accepted their canonical
+  producer-shaped fixtures; all `55/55` bounded nested mutations were rejected;
+  all `55` original inputs remained byte-for-byte unchanged. The reserved
+  `replay-result-envelope` registration path rejected its malformed synthetic
+  payload with `ARTIFACT_REPLAY_ENVELOPE_INVALID`.
+- The adjacent project-health audit found a current producer shape that emits
+  additive `analyzer`, `verification`, and `externalCiClassification` sections
+  plus per-target currentness facts not checked against aggregate counts/lists.
+  The validator now admits those sections compatibly and checks the derived
+  relationships; the canonical fixture and both mutations pass/reject as
+  expected.
+- Callsite audit found the facade at the owner-local findings read path and
+  direct dossier validation at AI review, triage pipeline, campaign readback,
+  shadow compatibility, and dossier-kind dispatch. The campaign casts are
+  immediately preceded by `parseBugDossierV2`/`validateBugDossier`; no shallow
+  unknown-to-trusted consumer or facade-version consumer was found.
+- After convergence, the representative currentness matrix produced: all
+  current-class non-empty members → `CURRENT`; any stale member without
+  unknown → `SOURCE_STALE`; any `UNKNOWN`, malformed freshness, or empty list →
+  `SOURCE_UNAVAILABLE`. This held across raw, authority, projected, and normal
+  collector paths, all tested permutations, duplicate candidates, and the
+  256-member bound.
+- Control Center integration: malformed JSON and malformed JSON-value dossiers
+  leave valid rows sanitized under explicit `UNKNOWN`; malformed authority
+  metadata is rejected to an explicit `UNAVAILABLE` collector response;
+  changing source currentness changes the findings generation. Existing server
+  and snapshot tests retain GET/HEAD, loopback, Host/Origin, body, SSE-advisory,
+  and failed-refresh fallback proofs.
 
 ## Decisions Made During This Task
 
@@ -174,11 +209,12 @@ future campaigns remain outside scope.
 
 ## Resume Recipe
 
-1. Checkpoint the validated M2 source and task evidence.
-2. Complete the all-kind facade mutation ledger, including the reserved
-   replay-result-envelope registration path.
-3. Run the Control Center/server/snapshot and full acceptance cones before
-   terminal task closure.
+1. Run the built Control Center UI/browser qualification using synthetic
+   fixtures only.
+2. Execute the repository-native full acceptance cone, including clean Node20
+   and canonical serial regression, and repair any introduced regression.
+3. Update durable docs/OpenSpec/REPORT/STATE, commit, push, verify exact
+   local/remote heads, and close the task with next action STOP.
 
 ## Completion Snapshot
 

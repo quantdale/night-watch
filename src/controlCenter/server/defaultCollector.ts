@@ -212,7 +212,7 @@ function validFindingsMetadata(value: unknown): boolean {
     && typeof (confidence as Record<string, unknown>).level === 'string'
     && typeof dossier.technicalSeverity === 'string'
     && typeof dossier.triagePriority === 'string'
-    && typeof dossier.sourceCurrentness === 'string'
+    && (dossier.sourceCurrentness === 'CURRENT' || dossier.sourceCurrentness === 'SOURCE_STALE' || dossier.sourceCurrentness === 'SOURCE_UNAVAILABLE')
     && typeof dossier.semanticFinding === 'boolean';
 }
 

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "nightwatch.durable-artifact-facade-audit.v1",
+  "scope": "LOCAL_SYNTHETIC",
+  "registrySource": "src/core/artifactValidation/types.ts:KNOWN_ARTIFACT_KINDS",
+  "registryKinds": [
+    "campaign-checkpoint",
+    "observation",
+    "semantic-receipt",
+    "replay-plan",
+    "cluster",
+    "reproduction-record",
+    "dossier",
+    "morning-brief",
+    "source-bundle",
+    "coverage-report",
+    "candidate-record",
+    "replay-record",
+    "minimization-record",
+    "project-health-report"
+  ],
+  "reservedRegistration": {
+    "kind": "replay-result-envelope",
+    "registration": "REGISTERED_RESERVED_EXTENSION",
+    "positiveFixture": "NOT_APPLICABLE_RESERVED_SEAM",
+    "malformedFixtureRejected": true,
+    "reasonClass": "ARTIFACT_REPLAY_ENVELOPE_INVALID"
+  },
+  "totals": {
+    "registeredKinds": 14,
+    "canonicalFixturesAccepted": 14,
+    "mutationCases": 55,
+    "rejectedMutationCases": 55,
+    "acceptedMutationCases": 0,
+    "inputMutationCases": 0,
+    "falseAccepts": 0
+  },
+  "entries": [
+    {
+      "kind": "campaign-checkpoint",
+      "producer": "prepareCampaign",
+      "validator": "validateCampaignCheckpoint via validateArtifact",
+      "nestedAuthorityFields": ["budgetUsed", "sourceSnapshots"],
+      "mutations": [
+        {"id": "nested_budget_type", "result": "REJECTED", "reasonClass": "CHECKPOINT_BUDGET_USED"},
+        {"id": "nested_source_enum", "result": "REJECTED", "reasonClass": "SOURCE_SNAPSHOT_MISMATCH"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "CAMPAIGN_ID_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "observation",
+      "producer": "sanitizeAnomalyObservation",
+      "validator": "validateAnomalyObservationArtifact via validateArtifact",
+      "nestedAuthorityFields": ["features", "sourceFreshness"],
+      "mutations": [
+        {"id": "nested_feature_type", "result": "REJECTED", "reasonClass": "FEATURE_UNSAFE"},
+        {"id": "nested_freshness_enum", "result": "REJECTED", "reasonClass": "SOURCE_FRESHNESS"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "CLUSTER_FEATURE_UNSAFE"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "semantic-receipt",
+      "producer": "buildSemanticEvaluationReceipt",
+      "validator": "validateSemanticEvaluationReceipt plus receipt identity via validateArtifact",
+      "nestedAuthorityFields": ["invariantPassCount", "outcome"],
+      "mutations": [
+        {"id": "nested_count_type", "result": "REJECTED", "reasonClass": "SEMANTIC_RECEIPT_INVALID:count"},
+        {"id": "nested_outcome_enum", "result": "REJECTED", "reasonClass": "SEMANTIC_RECEIPT_INVALID:outcome"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "RECEIPT_ID_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "SEMANTIC_RECEIPT_INVALID:unknown-field"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "replay-plan",
+      "producer": "createTriageReplayPlan",
+      "validator": "validateTriageReplayPlan via validateArtifact",
+      "nestedAuthorityFields": ["retainedActionIds", "phase"],
+      "mutations": [
+        {"id": "nested_action_type", "result": "REJECTED", "reasonClass": "retainedActionId_NOT_STRING"},
+        {"id": "nested_phase_enum", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_PHASE_INVALID"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_ID_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "cluster",
+      "producer": "clusterAnomalies",
+      "validator": "validateAnomalyClusterArtifact via validateArtifact",
+      "nestedAuthorityFields": ["features", "clusterKey", "primaryRunId"],
+      "mutations": [
+        {"id": "nested_feature_type", "result": "REJECTED", "reasonClass": "FEATURE_UNSAFE"},
+        {"id": "nested_identity_mismatch", "result": "REJECTED", "reasonClass": "CLUSTER_KEY_MISMATCH"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "PRIMARY_RUN_NOT_IN_CLUSTER"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "reproduction-record",
+      "producer": "synthetic reproduction-record fixture",
+      "validator": "validateReproductionRecordArtifact via validateArtifact",
+      "nestedAuthorityFields": ["safety", "state", "clusterId", "runId"],
+      "mutations": [
+        {"id": "nested_safety_type", "result": "REJECTED", "reasonClass": "SAFETY:productionAttempts"},
+        {"id": "nested_state_enum", "result": "REJECTED", "reasonClass": "STATE:ENUM_INVALID"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "UNKNOWN_CLUSTER"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "dossier",
+      "producer": "createBugDossier",
+      "validator": "validateBugDossier via validateArtifact",
+      "nestedAuthorityFields": ["reproduction", "humanReproductionRecipe", "sourceChangeCandidates", "semanticEvidence"],
+      "mutations": [
+        {"id": "nested_reproduction_count", "result": "REJECTED", "reasonClass": "DOSSIER_REPRODUCTION_COUNT"},
+        {"id": "nested_recipe_type", "result": "REJECTED", "reasonClass": "DOSSIER_RECIPE_ACTION_IDS"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "DOSSIER_TITLE"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "ARTIFACT_DOSSIER_INVALID:UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "morning-brief",
+      "producer": "buildCampaignMorningBrief",
+      "validator": "validateCampaignMorningBrief via validateArtifact",
+      "nestedAuthorityFields": ["privacy", "campaign"],
+      "mutations": [
+        {"id": "nested_privacy_counter", "result": "REJECTED", "reasonClass": "CAMPAIGN_MORNING_BRIEF_PRIVACY_MISMATCH"},
+        {"id": "nested_scope_enum", "result": "REJECTED", "reasonClass": "CAMPAIGN_MORNING_BRIEF_SCOPE_INVALID"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "CAMPAIGN_MORNING_BRIEF_ID_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "CAMPAIGN_MORNING_BRIEF_INTEGRITY_INVALID:UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "source-bundle",
+      "producer": "sourceBundle synthetic fixture",
+      "validator": "validateSemanticCampaignBundle via validateArtifact",
+      "nestedAuthorityFields": ["approvedMapping", "resolverState", "sourceRepoId"],
+      "mutations": [
+        {"id": "nested_mapping_identity", "result": "REJECTED", "reasonClass": "TARGET_MAPPING_COHERENCE_MISMATCH"},
+        {"id": "nested_resolver_enum", "result": "REJECTED", "reasonClass": "RESOLVER_STATE_INVALID"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "SOURCE_REPO_ID_UNSAFE"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "coverage-report",
+      "producer": "buildContractCoverageReport",
+      "validator": "validateCoverageReportArtifact via validateArtifact",
+      "nestedAuthorityFields": ["normalizedEvidenceIdentities", "proofClasses"],
+      "mutations": [
+        {"id": "nested_identity_type", "result": "REJECTED", "reasonClass": "EVIDENCE_IDENTITY_TARGET"},
+        {"id": "nested_proof_type", "result": "REJECTED", "reasonClass": "PROOF_CLASSES_OBJECT_REQUIRED"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "DIGEST_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "candidate-record",
+      "producer": "candidate lifecycle record fixture",
+      "validator": "validateCampaignCandidateRecordArtifact via validateArtifact",
+      "nestedAuthorityFields": ["lifecycle"],
+      "mutations": [
+        {"id": "nested_lifecycle_enum", "result": "REJECTED", "reasonClass": "CANDIDATE_LIFECYCLE_INVALID_RECORD:STATE"},
+        {"id": "nested_lifecycle_unknown_field", "result": "REJECTED", "reasonClass": "CANDIDATE_LIFECYCLE_INVALID_RECORD:UNKNOWN_FIELD"},
+        {"id": "nested_lifecycle_sentinel", "result": "REJECTED", "reasonClass": "PRIVACY_BLOCKED"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "replay-record",
+      "producer": "createTriageReplayPlan replay-record shape",
+      "validator": "validateReplayRecordArtifact via validateArtifact",
+      "nestedAuthorityFields": ["retainedActionIds", "originalActionIds", "targetId"],
+      "mutations": [
+        {"id": "nested_retained_multiplicity", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_NOT_SUBSEQUENCE"},
+        {"id": "nested_target_sentinel", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_ID_MISMATCH"},
+        {"id": "nested_action_sentinel", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_NOT_SUBSEQUENCE"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "REPLAY_PLAN_UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "minimization-record",
+      "producer": "minimizeFailure",
+      "validator": "validateMinimizationResultArtifact via validateArtifact",
+      "nestedAuthorityFields": ["budget", "candidateEvaluations", "anomalyFingerprint"],
+      "mutations": [
+        {"id": "nested_budget_type", "result": "REJECTED", "reasonClass": "BUDGET_MAX_REPLAYS"},
+        {"id": "nested_evaluation_type", "result": "REJECTED", "reasonClass": "EVALUATION_REASON"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "FINGERPRINT_PATTERN"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    },
+    {
+      "kind": "project-health-report",
+      "producer": "summarizeLocalReadiness",
+      "validator": "validateProjectHealthReportArtifact via validateArtifact",
+      "nestedAuthorityFields": ["sourceContracts.currentnessCounts", "approvedTargetCoverage.currentness", "analyzer", "verification", "externalCiClassification"],
+      "mutations": [
+        {"id": "nested_currentness_count", "result": "REJECTED", "reasonClass": "CURRENTNESS_SUM_MISMATCH"},
+        {"id": "nested_coverage_currentness", "result": "REJECTED", "reasonClass": "COVERAGE_CURRENTNESS_COUNT_MISMATCH"},
+        {"id": "sentinel_payload", "result": "REJECTED", "reasonClass": "OWNER_SCOPE_MARKERS_MISMATCH"},
+        {"id": "root_unknown_field", "result": "REJECTED", "reasonClass": "UNKNOWN_FIELD"}
+      ],
+      "disposition": "ALL_REJECTED_INPUT_UNCHANGED"
+    }
+  ],
+  "adjacentFalseAcceptRepairs": [
+    {
+      "kind": "project-health-report",
+      "finding": "The current producer emits additive analyzer, verification, and externalCiClassification sections that the validator did not admit; per-target coverage currentness could also diverge from aggregate counts.",
+      "repair": "Admit and validate the additive readiness sections compatibly, and derive-check coverage currentness counts and target lists.",
+      "disposition": "FIXED_WITH_COMPATIBILITY_TESTS"
+    }
+  ],
+  "auditDisposition": "COMPLETE_NO_UNEXPLAINED_FALSE_ACCEPTS"
+}

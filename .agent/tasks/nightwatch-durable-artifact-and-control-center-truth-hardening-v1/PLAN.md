@@ -126,7 +126,9 @@ pushes; only this development session may create validated Git checkpoints.
   mixed stale/unknown never becomes CURRENT; one reducer authority remains.
 - Validation: facade-wide, Control Center, authority, adapter, server,
   snapshot, typecheck, hardening suites.
-- Status: IN_PROGRESS
+- Status: COMPLETED — `FACADE_AUDIT.json` records 14/14 canonical fixtures and
+  55/55 rejected bounded mutations; the shared reducer and collector pre-gate
+  passed the focused Control Center cone.
 
 ### M4 — Control Center integration and adversarial closure
 
@@ -141,7 +143,9 @@ pushes; only this development session may create validated Git checkpoints.
   prohibited capability.
 - Validation: Control Center tests/build/browser if applicable, campaign and
   privacy regressions.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS — malformed JSON/value stores, malformed authority
+  snapshots, generation changes, server restrictions, SSE advisory behavior,
+  and failed-refresh fallback are covered; UI/browser qualification remains.
 
 ### M5 — Full acceptance and terminal Git closure
 
