@@ -95,10 +95,9 @@
 > `nightwatch.project-state.v1` with read-only `npm run project:check` and
 > a CI "Project-memory truth check" step, and preserved promotion-currentness
 > strictness. The canonical adopted-case catalog contains
-> exactly ONE entry (raw digest `bd35b934...` after the R1.1.1 authority
-> wording regeneration); variant B
-> (EXPAND_THEN_COLLAPSE) remains available-not-adopted with promotion
-> authority NONE. No second approval, no second APPLY, no B adoption. The
+> exactly TWO entries (raw digest `d96c24de...` after variant B adoption); variant B
+> (EXPAND_THEN_COLLAPSE) is now adopted, portfolio EXHAUSTED with promotion
+> authority SPENT. No further promotion possible (portfolio EXHAUSTED). The
 > next-architecture design review (Phase 8-DESIGN, 2026-08-15) selected
 > `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8` — Phase 8's objective (one
 > owner-authorized canonical promotion + continuation) is fulfilled; Phase 8
@@ -153,11 +152,11 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_8A_STATUS` | `COMPLETE` — historical declarative synthetic evaluation foundation with no-adoption boundary |
 | `PHASE_8A_1_STATUS` | `COMPLETE` — v2 content identity, semantic state validation, source/baseline provenance, ordered replay, and read-only trust assessment |
 | `PHASE_8A_1_1_STATUS` | `COMPLETE` — canonical source-currentness-aware future-review eligibility gate distinguishing artifact validity from candidate eligibility |
-| `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption proven; canonical adopted-case catalog lifecycle per Phase 8B.1-R1 (now one entry) |
+| `PHASE_8B_STATUS` | `COMPLETE` — sandbox-confined, metamorphically-verified controlled source adoption proven; canonical adopted-case catalog lifecycle per Phase 8B.1-R1 (now two entries A+B) |
 | `PHASE_8B_0_1_STATUS` | `COMPLETE` — sandbox promotion-readiness closeout (base pre-validation, strategy binding, verified-result probe invariant, truthful write accounting); fresh sandbox-only acceptance re-verified |
 | `PHASE_8_OWNER_AUTHORIZATION` | `PHASE 8B.1-R1 OWNER-GATED CANONICAL PROMOTION RETRY` — executed exactly one fresh prepare/approve/apply/verify/commit chain; no further promotion authority |
 | `PHASE_8B_1_R1_1_AUTHORIZATION` | `PROJECT-MEMORY & CANONICAL-SOURCE TRUTH HARDENING` — source/docs/tooling integrity only; NO promotion authority, NO variant-B adoption |
-| `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case |
+| `PHASE_8B_1_STATUS` | `COMPLETE VIA SUCCESSFUL RETRY R1` — original attempt `BLOCKED`/CLOSED (historical record preserved; old approval spent); retry adopted one canonical case (variant A); variant B subsequently adopted via separate authorization (variant B adoption + CLI hardening campaign, 2026-08-27) — portfolio now EXHAUSTED |
 | `PHASE_12A_STATUS` | `BLOCKED_EXTERNAL_CI` — Workstreams A–F implemented and locally verified on clean `4730c4e` (D-62); GitHub Actions externally billing-blocked before job execution; the two ROADMAP NEXT_AFTER investments (HIGH_CONFIDENCE_SEMANTIC_TRIAGE, REAL_SEMANTIC_COVERAGE_EXPANSION) are now implemented-local. Phase 11B remains NOT_AUTHORIZED |
 | `PHASE_13I_STATUS` | `BLOCKED_EXTERNAL_CI` — semantic routing (CampaignSemanticEvidence + dual clustering), replay-plan-V2 executor binding, ledger/drift, and `corpus/phase13` integrated shadow proof (42 fixtures, 3× determinism, all floors 0) implemented and locally verified on clean `186122f` (D-63); GitHub Actions externally billing-blocked before job execution; Phase 11B/13B remain NOT_AUTHORIZED — no DEV |
 | `PHASE_13_SEMANTIC_PROMOTION` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — CampaignSemanticEvidence-gated dual routing, semanticContractIdentity cluster, explicit protocol fallback; v2 ledger readback routes through dossier-v2 |
@@ -250,8 +249,9 @@ authorization.
   source mirror only) OR Phase 8B.1 separately owner-gated canonical
   promotion (complete evidence/approval chain; development session commits).
   No generic runtime self-modification authority exists.
-- CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B is
-  `AVAILABLE_NOT_ADOPTED` while promotion authority remains `NONE`.
+- CANDIDATE AVAILABILITY ≠ PROMOTION AUTHORITY: variant B is now
+  `ADOPTED` and portfolio is `EXHAUSTED`, with promotion authority
+  `SPENT`.
 
 The machine-checked truth block below holds only facts with a deterministic
 source; it is validated read-only by `npm run project:check`
@@ -265,13 +265,13 @@ LIVE_HEAD_AUTHORITY: GIT
 CURRENT_TASK_AUTHORITY: .agent/ACTIVE_TASK.md
 VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md
 CANONICAL_CATALOG_TARGET: src/core/selfDev/adoptedCaseCatalog.generated.ts
-CANONICAL_CATALOG_ENTRY_COUNT: 1
-CANONICAL_CATALOG_SHA256: sha256:bd35b934b852f192c2ba0f10c242dde3ebab492c66cd6760427f128a7dfba968
+CANONICAL_CATALOG_ENTRY_COUNT: 2
+CANONICAL_CATALOG_SHA256: sha256:d96c24de89d65c22bc46007765cccf42c60be4eb7bf9aeea1982fc6dad82b950
 CANONICAL_CATALOG_STRATEGY: DECLARATIVE_REGRESSION_CATALOG_PROMOTION
 PHASE_8_STATUS: COMPLETE
 PHASE_8B_1_STATUS: COMPLETE_VIA_SUCCESSFUL_RETRY_R1
-NEXT_PORTFOLIO_MEMBER: AVAILABLE_NOT_ADOPTED
-NEXT_PROMOTION_AUTHORITY: NONE
+NEXT_PORTFOLIO_MEMBER: EXHAUSTED
+NEXT_PROMOTION_AUTHORITY: SPENT
 PHASE_15_S1_CORE_CONVERGENCE: IMPLEMENTED_FOCUSED_GREEN
 PHASE_15_PROGRAM_STATE: SESSION_1_COMPLETE_SESSION_2_REQUIRED
 ```
