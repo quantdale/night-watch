@@ -275,6 +275,16 @@ test('approved Chromium background hosts are blocked telemetry, never allowed', 
   }
 });
 
+test('reviewed local Chrome telemetry is blocked and never allowlisted', () => {
+  const env = loadEnvironmentConfig('local');
+  expect(env.allowedHosts).not.toContain('www.gstatic.com');
+  expect(env.browserBackgroundHosts?.some((entry) => entry.host === 'www.gstatic.com')).toBe(false);
+  expect(env.telemetryHosts).toContain('www.gstatic.com');
+  const decision = new OutboundPolicy(env).decide('https://www.gstatic.com/synthetic-background-check');
+  expect(decision.verdict).toBe('block-telemetry');
+  expect(decision.hostClass).toBe('telemetry');
+});
+
 test('port-exact allowlist entries', () => {
   const policy = new OutboundPolicy(inlineEnv('local', ['127.0.0.1:8080']));
 

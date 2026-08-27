@@ -27,7 +27,8 @@ Nightwatch's local-only fail-closed safety boundary.
 
 M2/M3A — architecture and authority audit plus release-critical containment
 repair; H0 is complete, the six authority chains are traced, and the first
-repair cone is green. Full reproducibility and release certification remain.
+repair cone is green. The canonical suite exposed one cross-suite browser
+background classification gap that remains under repair.
 
 ## Completed Milestones
 
@@ -41,16 +42,18 @@ repair cone is green. Full reproducibility and release certification remain.
 
 ## Work In Progress
 
-M4–M8 qualification: finish the exact skip census, clean Node 20 dependency
-and UI qualification, performance/resource checks, current-facing truth
-updates, and the complete canonical/isolated/local/clean release matrix.
-The L6 residual remains a deliberate terminal-completion blocker.
+Repair the canonical-suite browser background gap, then resume M4–M8
+qualification: exact skip census, clean Node 20 dependency and UI
+qualification, performance/resource checks, current-facing truth updates, and
+the complete canonical/isolated/local/clean release matrix. The L6 residual
+remains a deliberate terminal-completion blocker.
 
 ## Exact Next Action
 
-Run the dependency-ordered M4–M8 validation matrix from the clean substantive
-checkpoint, record exact pass/fail/skip receipts, then select the truthful
-terminal outcome. Do not claim complete process isolation.
+Repair and regression-test the observed `www.gstatic.com` browser-background
+classification gap at the local outer-proxy boundary, then rerun the complete
+canonical suite with retries disabled before advancing to M4–M8. Do not claim
+complete process isolation.
 
 ## Files Changed
 
@@ -117,6 +120,24 @@ and Phase 5 provenance/privacy/template regressions.
   `--retries=0` passed `23/23` in `36.6s`; the stale retry and registration
   polling/reload workaround were removed, and the current awaited
   `routeWebSocket` registration is now the only authority.
+- Complete canonical serial regression at `4b892fd599cefac6d624ed0de849744ab7a85d83`:
+  `2607` discovered, `2593` passed, `13` skipped, `1` failed, in `22.3m`.
+  The sole failure was the allowed loopback HTTP safety case: after the
+  expected response, the local outer proxy classified a browser-originated
+  `https-connect://www.gstatic.com:443/` as `external-default-deny`, making
+  `monitor.failed` true. This was an actual hard-failure event, not a retry
+  artifact; the recorded run is `artifacts/safety-http-echo-1787868202283`.
+- The exact allowed-HTTP case rerun in isolation passed `1/1` in `8.7s`, and
+  the complete retry-free safety smoke rerun passed `23/23` in `31.8s`.
+  The discrepancy is therefore a cross-suite Chrome background-traffic seam,
+  not evidence for weakening the safety assertion.
+- Narrow repair: `config/environments/local.json` now classifies the exact
+  observed `www.gstatic.com` host as local telemetry, never as an allowlisted
+  destination; synthetic local smoke environments use the same non-fatal
+  block. The safety policy regression is `28/28`, the full retry-free safety
+  smoke is `23/23`, `npm run typecheck` is PASS, `npm run hardening:check` is
+  PASS, and `git diff --check` is PASS. The canonical suite must be rerun
+  after this repair.
 - Restricted-OOPS deterministic qualification: the full
   `tests/unit/phase5Api.test.ts` passed `14/14`, skipped `0`, failed `0` in
   `10.4s`. The prior three binary-absence skips now use the tracked local
@@ -236,6 +257,13 @@ identity census and canonical/isolated parity are still part of M4/M8.
 - 2026-08-28 — H0 is closed at the pulled execution head before ordinary
   implementation: the live delta from the prior census is 13 tracked
   planning/handoff paths, all regular and accounted for.
+- 2026-08-28 — Repeated canonical-local evidence identified
+  `www.gstatic.com` as a Chrome-generated local background CONNECT that was
+  being denied as unexpected external traffic after an otherwise successful
+  probe. Classify that one exact host as local telemetry only, preserving
+  deny-before-network behavior and leaving every DEV/NEXT/production policy
+  unchanged; require a full canonical rerun before treating the repair as
+  validated.
 
 ## Discoveries
 

@@ -113,7 +113,7 @@ function localEnv(origin: string): EnvironmentConfig {
     uiBaseUrl: origin,
     allowedHosts: ['127.0.0.1'],
     staticAssetHosts: [],
-    telemetryHosts: ['sentry.example.invalid'],
+    telemetryHosts: ['sentry.example.invalid', 'www.gstatic.com'],
     browserBackgroundHosts: [
       { host: 'android.clients.google.com', classification: 'BROWSER_BACKGROUND_GOOGLE' },
       { host: 'update.googleapis.com', classification: 'BROWSER_BACKGROUND_UPDATE' },

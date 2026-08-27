@@ -25,6 +25,7 @@
     "*.intercom.io",
     "accounts.google.com",
     "www.google.com",
+    "www.gstatic.com",
     "clients2.google.com",
     "safebrowsingohttpgateway.googleapis.com"
   ],

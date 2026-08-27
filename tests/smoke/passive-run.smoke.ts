@@ -46,7 +46,7 @@ test('passive fixture run produces complete redacted evidence', async ({ browser
       uiBaseUrl: server.origin,
       allowedHosts: ['127.0.0.1', 'localhost'],
       staticAssetHosts: [],
-      telemetryHosts: ['sentry.example.invalid'],
+      telemetryHosts: ['sentry.example.invalid', 'www.gstatic.com'],
       browserBackgroundHosts: [
         { host: 'android.clients.google.com', classification: 'BROWSER_BACKGROUND_GOOGLE' },
         { host: 'update.googleapis.com', classification: 'BROWSER_BACKGROUND_UPDATE' },
