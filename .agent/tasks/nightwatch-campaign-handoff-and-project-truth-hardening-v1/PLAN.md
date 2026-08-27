@@ -119,6 +119,10 @@ Record exact results and safe performance measures in STATE and REPORT.
 - 2026-08-27 — Added exact OpenSpec planning-file checkpoint patterns because
   the pulled `Planned-From` descendant contains those route inputs; nested,
   source-like, and non-Markdown paths remain outside the allowlist.
+- 2026-08-27 — The first clean-gate run exposed that its detached disposable
+  clone violated the new branch-bound handoff contract. The clean gate now
+  checks out and verifies the exact head on local `main`; this is a substantive
+  repair, not a relaxation of branch validation.
 
 ## Discoveries
 

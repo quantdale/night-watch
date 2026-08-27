@@ -6,13 +6,13 @@ Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Phase: CAMPAIGN-HANDOFF-AND-PROJECT-TRUTH-HARDENING-V1
 Status: IN_PROGRESS
 Starting SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
-Last validated implementation SHA: dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319
-Last substantive checkpoint SHA: dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319
+Last validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
+Last substantive checkpoint SHA: e4ac7076600f9a347d230445aa312e321f635624
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: cf26ef88fdfe2d36c321c4c176674c5c8ee0d8fa
-LAST_VALIDATED_IMPLEMENTATION_SHA: dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: dabb8a8ae1e1dd1e3ca4a75670ce737ee127a319
+LAST_VALIDATED_IMPLEMENTATION_SHA: e4ac7076600f9a347d230445aa312e321f635624
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e4ac7076600f9a347d230445aa312e321f635624
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_CAMPAIGN_HANDOFF_AND_PROJECT_TRUTH_HARDENING_V1_STATUS: IN_PROGRESS
 
@@ -167,6 +167,14 @@ checkpoint is committed.
   matrix passed `158/158`; typecheck, hardening, quality-gate specification,
   and gate inventory remain green (`10` required groups, `153` unique test
   files, zero duplicates).
+- First `npm run gate:clean` attempt installed successfully under Node `20.20.2`
+  but failed at `HANDOFF_TRUTH` because the existing disposable gate detached
+  its clone before invoking the new branch-bound checker. Direct Node 20 and
+  clean-clone handoff checks passed, isolating the defect to the clean-gate
+  checkout shape. `bin/quality-gate-clean.mjs` now keeps its disposable clone
+  on local `main` and verifies the exact requested head before running the
+  gate. The repair is the substantive checkpoint
+  `e4ac7076600f9a347d230445aa312e321f635624`; the clean gate must be rerun.
 
 ## Decisions Made During This Task
 
@@ -209,8 +217,9 @@ sibling-repository, publication, AI-runtime, or promotion operation occurred.
 
 ## Resume Recipe
 
-Resume at M4/M5 closure: verify the clean integrated gate paths and complete
-the substantive checkpoint before terminal documentation closure.
+Resume at M5 closure: revalidate the clean gate after the branch-shape fix,
+then establish the corrected substantive checkpoint before terminal
+documentation closure.
 
 ## Completion Snapshot
 

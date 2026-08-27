@@ -78,6 +78,13 @@ external exact-head CI classification remain closure work.
 - Pre-closure `npm run gate:local` reached `HANDOFF_TRUTH` exactly once and
   correctly stopped at the dirty-tree `PROJECT_TRUTH` failure; downstream
   groups were `NOT_RUN`.
+- The first disposable `npm run gate:clean` installed Node `20.20.2`
+  successfully but exposed a gate-shape defect: its clone was detached while
+  handoff truth correctly requires `main`. Direct Node 20 and clean-clone
+  handoff checks passed. `bin/quality-gate-clean.mjs` was repaired to retain
+  and verify local `main`; this repair is awaiting its own substantive
+  checkpoint `e4ac7076600f9a347d230445aa312e321f635624`; clean-gate rerun is
+  next.
 - The live `project:check` is intentionally pending a clean documentation
   checkpoint; its current dirty-tree result is not counted as a code failure.
 
