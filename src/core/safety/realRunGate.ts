@@ -17,6 +17,8 @@ import type { ProxyRuntimeState } from '../../proxy/types';
 import { validateStorageStateFile } from '../../browser/fixtures/storageState';
 import type { BrowserContainmentContract } from '../../browser/contract';
 import { OutboundPolicy, OUTBOUND_POLICY_VERSION } from './outboundPolicy';
+import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../proxy/addressPolicy';
+import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../proxy/identity';
 import { runCanary } from './canary';
 import { isKnownProductionHost } from './hosts';
 
@@ -151,8 +153,11 @@ function evaluateProxy(input: RealRunGateInput): RealRunGateCheck[] {
       state.address === expectedAddress &&
         state.port > 0 &&
         state.policyVersion === OUTBOUND_POLICY_VERSION &&
+        state.containmentVersion === PROXY_CONTAINMENT_VERSION &&
+        state.resolvedAddressPolicyVersion === RESOLVED_ADDRESS_POLICY_VERSION &&
+        state.addressBindingVersion === EXACT_ADDRESS_BINDING_VERSION &&
         state.environment === input.environment.name,
-      'loopback binding, selected environment, and policy version agree'
+      'loopback binding, selected environment, policy, resolution, and exact-address identities agree'
     )
   );
   return checks;

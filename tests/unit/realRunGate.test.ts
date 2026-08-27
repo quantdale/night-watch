@@ -26,7 +26,10 @@ import {
 } from '../../src/core/safety/realRunGate';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { startOutboundProxy, writeProxyRuntimeState } from '../../src/proxy/server';
+import { readProxyRuntimeState } from '../../src/proxy/runtime';
 import type { ProxyRuntimeState } from '../../src/proxy/types';
+import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
+import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
 
 const ENV = loadEnvironmentConfig('dev');
 const EVIDENCE: AuthenticatedEvidenceContract = {
@@ -57,6 +60,9 @@ function proxyFacts(overrides: Partial<ProxyRuntimeState> = {}) {
     port: 43123,
     environment: 'dev',
     policyVersion: 'phase-2a-browser-background-policy-v1',
+    containmentVersion: PROXY_CONTAINMENT_VERSION,
+    resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+    addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
     eventLogPath: '/tmp/nightwatch-test-events.jsonl',
     ...overrides,
   };
@@ -95,6 +101,44 @@ test('pure gate passes only when every pre-real-run contract is satisfied', () =
 test('browser launch contract retains all transport containment arguments', () => {
   expect(hasRequiredBrowserLaunchArgs(REQUIRED_BROWSER_LAUNCH_ARGS)).toBe(true);
   expect(hasRequiredBrowserLaunchArgs(REQUIRED_BROWSER_LAUNCH_ARGS.filter((arg) => arg !== '--disable-quic'))).toBe(false);
+});
+
+test('hostname-only, malformed, or newer proxy identities fail closed before auth', () => {
+  expect(failedNames(baseInput({
+    proxy: proxyFacts({
+      resolvedAddressPolicyVersion: 'phase-1.2-resolved-address-policy-v0' as typeof RESOLVED_ADDRESS_POLICY_VERSION,
+    }),
+  }))).toContain('proxy-contract');
+
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-identity-'));
+  const oldState = path.join(temp, 'old.json');
+  fs.writeFileSync(oldState, JSON.stringify({
+    address: 'http://127.0.0.1:43123',
+    host: '127.0.0.1',
+    port: 43123,
+    environment: 'dev',
+    policyVersion: 'phase-2a-browser-background-policy-v1',
+    eventLogPath: '/tmp/nightwatch-test-events.jsonl',
+  }));
+  const newerState = path.join(temp, 'newer.json');
+  fs.writeFileSync(newerState, JSON.stringify({
+    address: 'http://127.0.0.1:43123',
+    host: '127.0.0.1',
+    port: 43123,
+    environment: 'dev',
+    policyVersion: 'phase-2a-browser-background-policy-v1',
+    containmentVersion: PROXY_CONTAINMENT_VERSION,
+    resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+    addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+    eventLogPath: '/tmp/nightwatch-test-events.jsonl',
+    unexpectedFutureField: true,
+  }));
+  try {
+    expect(() => readProxyRuntimeState(oldState)).toThrow(/failed validation/);
+    expect(() => readProxyRuntimeState(newerState)).toThrow(/failed validation/);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
 });
 
 test('pre-auth canary mode requires that storage state is explicitly absent', () => {
@@ -225,6 +269,9 @@ test('runtime gate validates synthetic external state and loopback proxy health 
       port: proxy.port,
       environment: 'dev',
       policyVersion: 'phase-2a-browser-background-policy-v1',
+      containmentVersion: PROXY_CONTAINMENT_VERSION,
+      resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
       eventLogPath: eventLog,
     },
     proxyStateFile

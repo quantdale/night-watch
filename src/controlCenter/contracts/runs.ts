@@ -102,12 +102,21 @@ export interface ControlCenterRunDetailDto {
   readonly hardFailureCodes: readonly SafeControlCenterCode[];
   readonly noteCodes: readonly SafeControlCenterCode[];
   readonly proxy: {
+    readonly schemaVersion: 'nightwatch.proxy-summary.v2';
+    readonly policyAuthorized: number;
     readonly allowed: number;
     readonly telemetryBlocked: number;
     readonly optionalSupportBlocked: number;
     readonly browserBackgroundBlocked: number;
     readonly denied: number;
     readonly unknown: number;
+    readonly resolutionAdmitted: number;
+    readonly resolutionDenied: number;
+    readonly resolutionFailed: number;
+    readonly connectAttempted: number;
+    readonly connected: number;
+    readonly connectFailed: number;
+    readonly outcomeCoverage: 'complete' | 'legacy-unknown';
     readonly violations: number;
   } | null;
 }

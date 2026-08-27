@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { projectRunList, projectTimeline } from '../../src/controlCenter/adapters/runAdapter';
+import { projectRunDetail, projectRunList, projectTimeline } from '../../src/controlCenter/adapters/runAdapter';
 import {
   createRunEvidenceReaderForTests,
 } from '../../src/controlCenter/authorities/runEvidenceReader';
@@ -69,6 +69,27 @@ function writeRun(root: string, runId: string, options: { readonly events?: read
     ok: true,
   }]));
   return directory;
+}
+
+function summaryWithProxy(runId: string, proxy: Record<string, unknown>): Record<string, unknown> {
+  return {
+    runId,
+    environment: 'LOCAL_SYNTHETIC',
+    product: 'ripple',
+    browser: 'chromium',
+    scenario: 'control-center-reader',
+    startedAt: TIMESTAMP,
+    endedAt: TIMESTAMP,
+    durationMs: 0,
+    passed: true,
+    eventCount: 2,
+    counts: { start: 1, end: 1 },
+    severityCounts: { info: 2 },
+    hardFailures: [],
+    screenshots: [],
+    nightwatchSha: SHA,
+    proxy,
+  };
 }
 
 test.describe('Control Center bounded run-evidence reader', () => {
@@ -157,6 +178,65 @@ test.describe('Control Center bounded run-evidence reader', () => {
     fs.writeFileSync(eventFile, `${JSON.stringify(event(0))}\n${JSON.stringify(event(1))}\n`);
     const second = reader.snapshot();
     expect(second).toEqual(first);
+  });
+
+  test('reads v2 proxy lifecycle summaries and migrates legacy summaries conservatively', () => {
+    const v2 = writeRun(root, 'proxy-v2-run', {
+      summary: summaryWithProxy('proxy-v2-run', {
+        schemaVersion: 'nightwatch.proxy-summary.v2',
+        policyAuthorized: 2,
+        allowed: 2,
+        telemetryBlocked: 0,
+        optionalSupportBlocked: 0,
+        browserBackgroundBlocked: 0,
+        denied: 0,
+        unknown: 0,
+        resolutionAdmitted: 1,
+        resolutionDenied: 1,
+        resolutionFailed: 0,
+        connectAttempted: 1,
+        connected: 0,
+        connectFailed: 1,
+        outcomeCoverage: 'complete',
+        violations: 1,
+      }),
+    });
+    const legacy = writeRun(root, 'proxy-legacy-run', {
+      summary: summaryWithProxy('proxy-legacy-run', {
+        allowed: 1,
+        telemetryBlocked: 0,
+        optionalSupportBlocked: 0,
+        browserBackgroundBlocked: 0,
+        denied: 0,
+        unknown: 0,
+        violations: 0,
+      }),
+    });
+    const snapshot = createRunEvidenceReaderForTests(root).snapshot();
+    const v2Record = snapshot.records.find((record) => record.summary.runId === 'proxy-v2-run');
+    const legacyRecord = snapshot.records.find((record) => record.summary.runId === 'proxy-legacy-run');
+    expect(v2Record?.summary.proxy).toMatchObject({
+      schemaVersion: 'nightwatch.proxy-summary.v2',
+      policyAuthorized: 2,
+      resolutionDenied: 1,
+      connectFailed: 1,
+      violations: 1,
+      outcomeCoverage: 'complete',
+    });
+    expect(legacyRecord?.summary.proxy).toMatchObject({
+      schemaVersion: 'nightwatch.proxy-summary.v2',
+      policyAuthorized: 1,
+      resolutionAdmitted: 0,
+      connectAttempted: 0,
+      outcomeCoverage: 'legacy-unknown',
+    });
+    expect(projectRunDetail(v2Record!).proxy).toMatchObject({
+      resolutionDenied: 1,
+      connectFailed: 1,
+      outcomeCoverage: 'complete',
+    });
+    expect(v2).toContain('proxy-v2-run');
+    expect(legacy).toContain('proxy-legacy-run');
   });
 
   test('collector shares one bounded run snapshot across list, detail, timeline, and graph', async () => {

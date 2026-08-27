@@ -17,6 +17,7 @@ import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { containsPrivatePayloadShape } from '../../core/policy/privateScreening';
 import type { RepoSnapshotRecord, RunEvent, RunEventType, RunSeverity, RunSummary } from '../../core/evidence/types';
+import { PROXY_SUMMARY_SCHEMA_VERSION } from '../../proxy/types';
 import type { RunAuthorityInput } from '../adapters/runAdapter';
 import { isRecord } from '../contracts/common';
 
@@ -63,6 +64,9 @@ const KNOWN_FAILURE_REASONS = new Set([
   'SAFETY_FAILURE',
   'EXECUTOR_FAILURE',
   'HARD_FAILURE',
+  'RESOLVED_ADDRESS_POLICY_DENIED',
+  'RESOLUTION_FAILED',
+  'EXACT_ADDRESS_BINDING_FAILED',
 ]);
 
 const RUN_COUNT_KEYS = new Set(EVENT_TYPES);
@@ -271,13 +275,41 @@ function parseManifest(value: unknown, runId: string): SafeManifest | null {
 function parseProxy(value: unknown): RunSummary['proxy'] | undefined | null {
   if (value === undefined) return undefined;
   if (!isRecord(value)) return null;
-  const keys = ['allowed', 'telemetryBlocked', 'optionalSupportBlocked', 'browserBackgroundBlocked', 'denied', 'unknown', 'violations'] as const;
-  const result = {} as NonNullable<RunSummary['proxy']>;
-  for (const key of keys) {
+  const legacyKeys = ['allowed', 'telemetryBlocked', 'optionalSupportBlocked', 'browserBackgroundBlocked', 'denied', 'unknown', 'violations'] as const;
+  const legacy = {} as Pick<NonNullable<RunSummary['proxy']>, typeof legacyKeys[number]>;
+  for (const key of legacyKeys) {
     if (!isSafeInteger(value[key], 0, MAX_COUNT)) return null;
-    result[key] = value[key];
+    legacy[key] = value[key];
   }
-  return result;
+  if (value.schemaVersion === undefined) {
+    return {
+      schemaVersion: PROXY_SUMMARY_SCHEMA_VERSION,
+      policyAuthorized: legacy.allowed,
+      ...legacy,
+      resolutionAdmitted: 0,
+      resolutionDenied: 0,
+      resolutionFailed: 0,
+      connectAttempted: 0,
+      connected: 0,
+      connectFailed: 0,
+      outcomeCoverage: 'legacy-unknown',
+    };
+  }
+  if (value.schemaVersion !== PROXY_SUMMARY_SCHEMA_VERSION
+    || value.policyAuthorized !== value.allowed
+    || (value.outcomeCoverage !== 'complete' && value.outcomeCoverage !== 'legacy-unknown')) return null;
+  const extendedKeys = ['policyAuthorized', 'resolutionAdmitted', 'resolutionDenied', 'resolutionFailed', 'connectAttempted', 'connected', 'connectFailed'] as const;
+  const extended = {} as Pick<NonNullable<RunSummary['proxy']>, typeof extendedKeys[number]>;
+  for (const key of extendedKeys) {
+    if (!isSafeInteger(value[key], 0, MAX_COUNT)) return null;
+    extended[key] = value[key];
+  }
+  return {
+    schemaVersion: PROXY_SUMMARY_SCHEMA_VERSION,
+    ...legacy,
+    ...extended,
+    outcomeCoverage: value.outcomeCoverage,
+  };
 }
 
 function parseSummary(value: unknown, manifest: SafeManifest): RunSummary | null {

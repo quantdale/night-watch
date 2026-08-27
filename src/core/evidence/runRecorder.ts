@@ -215,6 +215,9 @@ export class RunRecorder {
       proxyEnabled: true,
       proxyAddress: `loopback:${opts.state.port}`,
       proxyPolicyVersion: opts.state.policyVersion,
+      proxyContainmentVersion: opts.state.containmentVersion,
+      resolvedAddressPolicyVersion: opts.state.resolvedAddressPolicyVersion,
+      addressBindingVersion: opts.state.addressBindingVersion,
       browserGuardsEnabled: opts.browserGuardsEnabled,
     });
   }
@@ -229,7 +232,7 @@ export class RunRecorder {
     const all = readProxyEvents(this.proxy.state.eventLogPath);
     const relevant = all.slice(this.proxy.startIndex);
     for (const event of relevant) {
-      if (event.decision !== 'deny' || this.proxy.consumedViolationSeqs.has(event.seq)) continue;
+      if ((event.decision !== 'deny' && event.containmentViolation === undefined) || this.proxy.consumedViolationSeqs.has(event.seq)) continue;
       this.proxy.consumedViolationSeqs.add(event.seq);
       const failureEvent = this.onProxyViolation(event);
       this.proxy.onViolation?.(event, failureEvent);
@@ -242,15 +245,20 @@ export class RunRecorder {
 
   private onProxyViolation(event: ProxyEvent): RunEvent {
     const safeTarget = `${event.protocol}://${event.host}${event.port === null ? '' : `:${event.port}`}/`;
+    const containment = event.containmentViolation !== undefined;
     return this.event({
       type: 'hard-failure',
       severity: 'fatal',
-      message: `HARD FAILURE: outer proxy denied ${safeTarget}`,
+      message: containment
+        ? `HARD FAILURE: outer proxy containment check failed ${safeTarget}`
+        : `HARD FAILURE: outer proxy denied ${safeTarget}`,
       data: {
         url: safeTarget,
         verdict: event.decision,
         hostClass: event.classification,
-        reason: event.reason,
+        reason: event.containmentViolation ?? event.reason,
+        ...(event.resolutionReason === undefined ? {} : { resolution: event.resolutionReason }),
+        ...(event.connectionFailure === undefined ? {} : { connection: event.connectionFailure }),
         path: 'outer-proxy',
         proxyRuleId: event.ruleId,
       },

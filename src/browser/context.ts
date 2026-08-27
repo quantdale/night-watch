@@ -273,7 +273,7 @@ export async function createNightwatchContext(
         url: safeUrl,
         verdict: proxyEvent.decision,
         hostClass: proxyEvent.classification,
-        reason: proxyEvent.reason,
+        reason: proxyEvent.containmentViolation ?? proxyEvent.reason,
       });
     },
   });

@@ -30,7 +30,7 @@ boundaries.
 
 ## Current Milestone
 
-M1 — mandatory pre-fix reproductions.
+M5 — browser residual and adversarial closure.
 
 ## Completed Milestones
 
@@ -63,18 +63,44 @@ M1 — mandatory pre-fix reproductions.
   config `6`, UI `14`, corpus-fixtures `112`, tooling-bin `51`, workflow `1`,
   docs/OpenSpec `50`, continuity/history `440`, generated/lock/metadata `19`,
   and other-explicit `8`; reviewed equals tracked.
+- M2 address classifier/resolver admission is implemented in the pure
+  `src/proxy/addressPolicy.ts` and bounded `src/proxy/resolver.ts` seams.
+  Local admission is exact `127.0.0.1`/`::1`; external admission is global
+  unicast only; malformed, mixed, oversized, duplicate-pathological, mapped,
+  empty, and family-mismatched answers fail closed. Resolver timeouts are
+  bounded and late results cannot create a socket.
+- M3 exact-address protocol binding is implemented for HTTP, CONNECT, and
+  WebSocket Upgrade through the shared resolver/admission path. HTTP keeps the
+  original Host header; CONNECT/Upgrade keep original authority semantics;
+  upstream connectors receive only the selected numeric address/family and a
+  bounded exact lookup callback.
+- M4 lifecycle evidence and runtime identity are implemented. Proxy summary
+  v2 separates hostname authorization, resolution, and connection outcomes;
+  resolved-address and exact-binding failures become hard containment
+  failures; runtime state, direct runner, global setup, reader, and real-run
+  gate require all three current identities. Legacy Control Center summaries
+  migrate as `legacy-unknown` without claiming outcome coverage.
+- The event-log failure path is fail-closed: an unwritable event log marks the
+  proxy unhealthy, blocks later requests, and tears down any connected
+  upstream after an attempted lifecycle write. The synthetic regression proves
+  the first blocked request creates zero upstream connections.
+- M5 browser/adversarial closure is complete in the worktree. Existing browser
+  launch and context controls remain unchanged; the residual remains
+  `BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`. The resolver/address/protocol,
+  evidence, identity, privacy, and safety matrices are green, including the
+  event-write failure disposition.
 
 ## Work In Progress
 
-The pre-fix red-team harness is being added. Production runtime behavior has
-not been edited; the current proxy's hostname-to-implicit-Node-lookup gap is
-being reproduced with synthetic loopback fixtures.
+The implementation slice is validated in the worktree and is ready for its
+durable checkpoint. M6 is executing the full local, clean Node 20, serial,
+privacy, UI-schema, and topology acceptance cone. All fixtures remain
+synthetic loopback-only.
 
 ## Exact Next Action
 
-Implement the pure numeric address parser/classifier and bounded resolver
-admission seam, keeping the recorded BEFORE test failures as the regression
-target.
+Run the full acceptance cone, then update durable docs/OpenSpec/report and
+finish the exact-head Git continuity closure.
 
 ## Blockers
 
@@ -82,21 +108,23 @@ None.
 
 ## Baseline / H0 Ledger
 
-- Git: clean `main...origin/main`; origin is
+- Git: activation started from clean `main...origin/main`; origin is
   `https://github.com/quantdale/night-watch.git`; starting `HEAD` equals
-  `origin/main` at `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`.
+  `origin/main` at `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`. The current
+  worktree contains only this campaign's implementation/test changes pending
+  checkpoint; live heads remain discovered from Git.
 - Toolchain: Node `v22.22.1`, npm `10.9.4`, Git `2.43.0`, Linux WSL2;
   Chrome `151.0.7922.173`; Playwright `1.62.1`.
 - H0 class counts after task activation: active-runtime `409`, tests `233`,
   config `6`, UI `14`, corpus-fixtures `112`, tooling/bin `51`, workflow `1`,
   docs/OpenSpec `50`, continuity/history `440`, generated/lock/metadata `19`,
   other-explicit `8`.
-- Existing active proxy path: `src/proxy/server.ts` uses hostname-valued
-  `http.request` and `net.connect` after hostname policy allow; `events.ts`
-  counts allow before connection outcome; `runtime.ts` validates only
-  `OUTBOUND_POLICY_VERSION` and health. Existing browser contract retains
-  mandatory loopback proxy, bypass disable, QUIC/WebRTC/background/hints
-  restrictions; process DNS remains unresolved.
+- Baseline active proxy path used hostname-valued `http.request` and
+  `net.connect` after hostname policy allow; the implementation now routes
+  allowed targets through owned resolution, whole-set admission, and exact
+  numeric binding. Existing browser contract retains mandatory loopback proxy,
+  bypass disable, QUIC/WebRTC/background/hints restrictions; process DNS
+  remains unresolved at the browser boundary.
 - TODO/FIXME/HACK/XXX/DEPRECATED active-code hits are limited to existing
   documentation/compatibility notes and intentional hardening/self-scan
   vocabulary; none is an active containment defect. The exact skip inventory
@@ -127,7 +155,8 @@ None.
 - `npm run typecheck`: PASS.
 - `npm run hardening:check`: PASS (`offline structural invariants hold`).
 - `npx playwright test tests/unit/proxy.test.ts --project=nightwatch
-  --workers=1`: `3 passed`, `0 failed`, `9.35s`.
+  --workers=1`: `4 passed`, `0 failed`, `2.2s`, including the unwritable
+  event-log fail-closed regression.
 - `npx playwright test tests/unit/safety.test.ts --project=nightwatch
   --workers=1`: `27 passed`, `0 failed`, `3.90s`.
 - `npx playwright test tests/unit/realRunGate.test.ts --project=nightwatch
@@ -154,14 +183,14 @@ None.
   `1903 total/1890 passed/13 skipped/0 failed`, owner provenance `91 passed`,
   synthetic campaign `66 passed`, receipt
   `receipt:sha256:af4db19337c1ca46035bce61`.
-- Current identities/shapes: `OUTBOUND_POLICY_VERSION` is
-  `phase-2a-browser-background-policy-v1`; `ProxyRuntimeState` contains
-  `address`, `host`, `port`, `environment`, `policyVersion`, and
-  `eventLogPath`; `ProxyEvent` contains sequence/timestamp/run/protocol/
-  host/port/classification/decision/rule/reason with optional semantic and
-  containment labels; `ProxySummary` contains the seven legacy counters
-  `allowed`, `telemetryBlocked`, `optionalSupportBlocked`,
-  `browserBackgroundBlocked`, `denied`, `unknown`, and `violations`.
+- Current identities/shapes: `OUTBOUND_POLICY_VERSION` remains
+  `phase-2a-browser-background-policy-v1`; runtime state additionally requires
+  `nightwatch.proxy-containment.v2`,
+  `phase-1.2-resolved-address-policy-v1`, and
+  `phase-1.2-exact-address-binding-v1`; `ProxyEvent` carries bounded
+  resolution/connection lifecycle categories; `ProxySummary` is
+  `nightwatch.proxy-summary.v2` with explicit policy authorization,
+  resolution, connection, coverage, and violation fields.
 - Browser contract baseline retains `--proxy-bypass-list=<-loopback>`,
   `--disable-quic`, `--force-webrtc-ip-handling-policy=disable_non_proxied_udp`,
   SafeBrowsing/download controls, and the reviewed background-networking,
@@ -180,13 +209,43 @@ None.
   answer; the unsafe-answer desired `502` was `200`.
 - Before reproducers: recorded; no production source was edited before this
   red run.
-- After focused/full/clean/serial gates: PENDING.
+- Post-fix focused implementation cone before the final parser additions:
+  `npm run typecheck` PASS; `npm run hardening:check` PASS; combined address,
+  resolver, proxy, protocol, evidence, destination, real-run-gate, and
+  Control Center reader tests `64 passed / 0 failed / 4.1s`.
+- Browser smoke and safety regression:
+  `tests/smoke/proxy.smoke.ts` `6 passed / 0 failed / 7.3s`; combined
+  `tests/smoke/negative.smoke.ts`, `passive-run.smoke.ts`, and
+  `safety.smoke.ts` `25 passed / 0 failed / 21.7s`.
+- Post-hardening focused cone:
+  `npx playwright test` over address policy, resolver, proxy, exact protocol,
+  resolved-egress, evidence, destination manifest, containment, real-run-gate,
+  Control Center, redaction, storage-state, and safety suites: `157 passed /
+  0 failed / 5.5s`; the final event-log regression rerun is `4 passed / 0
+  failed / 2.2s`.
+- Browser/contract/privacy cone after the event-write hardening:
+  proxy, negative, passive-run, and safety smoke plus context URL and
+  real-run-gate tests: `44 passed / 0 failed / 23.2s`.
+- Final post-hardening focused cone including the event-log regression:
+  `158 passed / 0 failed / 5.2s`.
+- `npm run test:semantic-compat`: PASS; `22` phases, `141` files,
+  `1,903` total, `1,890` passed, `13` inherited skips, `0` failed.
+- `npm run campaign:synthetic`: PASS; `66 passed / 0 failed / 15.5s`.
+- `npm run test:owner-provenance`: PASS; `91 passed / 0 failed / 9.7s`.
+- Final remote/docs recheck: origin main at `86e804ea`; GitHub open issues and
+  pull requests both `0`; no competing blocker.
+- Full local, clean Node 20, canonical serial, UI, and final exact-head gates:
+  PENDING until M6 closure.
 
 ## Files Changed
 
-Only the fresh task records, ACTIVE_TASK routing, and the synthetic red-team
-test fixture have changed before the first production implementation slice;
-runtime source and completed predecessor records remain untouched.
+Implementation/test changes are confined to the proxy resolver, address
+classifier, exact HTTP/CONNECT/Upgrade binding, lifecycle events and summary,
+run evidence/destination manifest, runtime identity/real-run gate, direct and
+browser setup producers, affected manual safety consumers, Control Center
+reader/adapter DTOs, and synthetic unit/regression tests. The completed
+predecessor and all Alphaus sibling repositories remain untouched. Durable
+docs, full acceptance, and OpenSpec task closure are still pending.
 
 ## Decisions Made During This Task
 
@@ -199,6 +258,25 @@ runtime source and completed predecessor records remain untouched.
 - The red run confirms the defect without external DNS: the test-level
   connector spy rewrites only the current hostname-valued call to a local
   loopback fixture; injected resolver objects never receive socket authority.
+- The resolver seam is data-only and internal to the proxy; all answers are
+  admitted as a complete bounded set before deterministic first selection.
+  IPv4-mapped IPv6 answers are classified for evidence but are conservatively
+  unsupported as transport authority in this contract.
+- `ProxySummary.allowed` remains the historical hostname-policy authorization
+  count. `policyAuthorized` is its explicit alias; resolution and connection
+  counts are additive v2 fields, and legacy summaries are exposed with
+  `outcomeCoverage: legacy-unknown`.
+- No browser resolver flag was added: the existing proxy/QUIC/WebRTC/
+  background/hint controls remain unchanged, and speculative browser DNS
+  retains the exact L6 residual until a zero-external-contact proof exists.
+- Event persistence is a containment prerequisite: runtime write failure
+  disables health and future allows, while current upstream sockets are
+  destroyed rather than surviving an evidence failure.
+- Final takeover recheck: `git ls-remote origin refs/heads/main` points to the
+  pushed red checkpoint `86e804ea`; GitHub reports zero open issues and zero
+  open pull requests for `quantdale/night-watch`; current durable docs still
+  describe the pre-campaign hostname-only L5 behavior and require the planned
+  update. No competing blocker was found.
 
 ## Safety Events
 
@@ -208,12 +286,13 @@ networking action occurred.
 
 ## Discoveries
 
-The current hostname-only proxy path is in `src/proxy/server.ts`; the runtime
-state currently identifies only `OUTBOUND_POLICY_VERSION` and proxy health.
-The browser contract and durable docs retain the unresolved process-DNS/L6
-residual. The control-center evidence reader consumes the legacy seven-field
-proxy summary and will require an explicit compatibility decision if the
-durable summary shape changes.
+The current implementation owns the transition from hostname authorization to
+resolved-address admission and exact numeric binding in `src/proxy/`. The
+proxy runtime state now requires hostname-policy, containment, resolved-address
+policy, and exact-binding identities. The browser contract and durable docs
+retain the unresolved process-DNS/L6 residual. Control Center consumes the
+versioned proxy summary and conservatively migrates the legacy seven-field
+shape without inventing connection outcomes.
 
 ## Deferred / Follow-Up
 
@@ -223,13 +302,16 @@ expansion remain deferred.
 
 ## Resume Recipe
 
-Read this STATE, inspect `git status` and the diff, implement the M2 pure
-address classifier/resolver seam, then rerun the M1 regression and M2 matrix.
+Read this STATE, inspect `git status` and the diff, run the remaining focused
+browser/privacy/adversarial checks, then execute the full acceptance cone.
+Update the report and durable docs only from recorded results, checkpoint the
+validated implementation, push without force, and verify exact-head equality.
 
 ## Completion Snapshot
 
-Not terminal. M0 and the M1 BEFORE reproduction milestone are complete; M2 is
-next and no final acceptance claim has been made.
+Not terminal. M0–M4 are complete with focused post-fix evidence; M5 is active
+for browser residual/adversarial closure; full/clean/serial acceptance and
+terminal Git continuity remain open.
 
 ## Safety Ledger
 

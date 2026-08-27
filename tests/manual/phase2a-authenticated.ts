@@ -780,7 +780,7 @@ async function observeOnce(
     blocked: manifest.blocked.length,
     unresolved: manifest.unresolved.length,
   });
-  const unsafeDestination = manifest.unresolved.length > 0 || manifest.blocked.some((entry) => entry.decision === 'deny');
+  const unsafeDestination = manifest.unresolved.length > 0 || manifest.blocked.some((entry) => entry.decision === 'deny' || entry.containmentViolation);
   const passed = !context.monitor.safetyFailed &&
     !unsafeDestination &&
     authPageReadability.evaluationSucceeded &&

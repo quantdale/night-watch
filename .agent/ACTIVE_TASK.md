@@ -7,9 +7,11 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-resolved-egress-and-containment-truth-hardening-v1
 Starting SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 Last validated implementation SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
-Last checkpoint: M0 H0 manifest and task activation recorded at live starting SHA `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`.
-Current milestone: M0 — takeover, activation, H0 audit, and baseline.
-Next action: Run remaining H0 searches and baseline commands; record results in STATE before source edits.
+Last checkpoint: M5 browser residual and adversarial coverage are validated;
+implementation checkpoint is ready to commit.
+Current milestone: M6 — full acceptance, documentation, and Git closure.
+Next action: Run the full local/clean/serial/UI acceptance cone, then update
+durable docs/OpenSpec/report and finish exact-head Git closure.
 Authorization class: NIGHTWATCH_RESOLVED_EGRESS_AND_CONTAINMENT_TRUTH_HARDENING_LOCAL_SOURCE_SYNTHETIC_ONLY
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de

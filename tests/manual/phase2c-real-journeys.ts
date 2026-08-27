@@ -25,7 +25,7 @@ import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import { assertRealRunGate, runRealRunGate } from '../../src/core/safety/realRunGate';
 import { snapshotRepositories } from '../../src/core/repositories/snapshotter';
 import type { RepoSnapshotRecord } from '../../src/core/evidence/types';
-import { readProxyEvents } from '../../src/proxy/events';
+import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import { compareJourneyReplay } from '../../src/core/journeys/replay';
 import { evaluateAnomalyAdmission, type AnomalyObservation, type AdmissionResult } from '../../src/core/journeys/admission';
 import {
@@ -277,8 +277,8 @@ async function observeOnce(opts: {
   const actionCausedUnknown = semantics.filter((item) => item.disposition === 'ACTION_CAUSED_UNKNOWN').length;
   const safety = {
     productionAttempts: proxyEvents.filter((event) => event.classification === 'production').length,
-    proxyViolations: proxyEvents.filter((event) => event.decision === 'deny').length,
-    unknownDestinations: proxyEvents.filter((event) => event.decision === 'deny' && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
+    proxyViolations: proxyEvents.filter(isProxyViolation).length,
+    unknownDestinations: proxyEvents.filter((event) => isProxyViolation(event) && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
     unknownApprovals: 0,
     mutations,
     dbQueries: 0,

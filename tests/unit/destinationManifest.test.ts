@@ -79,6 +79,26 @@ test('verified runtime host is explicit and never learned from an observation', 
   expect(unresolved.unresolved).toMatchObject([{ hostname: 'newdev.alphaus.cloud' }]);
 });
 
+test('resolved-egress containment violations are blocked even when hostname policy allowed', () => {
+  const result = buildDestinationManifest(
+    env,
+    [proxy({
+      containmentViolation: 'RESOLVED_ADDRESS_POLICY_DENIED',
+      resolution: 'denied',
+      connection: 'not-attempted',
+    })],
+    [],
+  );
+  expect(result.expected).toEqual([]);
+  expect(result.unresolved).toEqual([]);
+  expect(result.blocked).toMatchObject([{
+    hostname: 'appdev.alphaus.cloud',
+    decision: 'allow',
+    containmentViolation: true,
+    requestCount: 1,
+  }]);
+});
+
 test('exact optional support blocking is represented as blocked, not unresolved, with a distinct category', () => {
   const result = buildDestinationManifest(
     env,

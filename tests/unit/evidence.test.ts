@@ -5,9 +5,14 @@
 
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { RunRecorder, createRunId } from '../../src/core/evidence/runRecorder';
 import type { RepoSnapshotRecord } from '../../src/core/evidence/types';
+import { appendProxyEvent, ensureEventLog } from '../../src/proxy/events';
+import type { ProxyEvent, ProxyRuntimeState } from '../../src/proxy/types';
+import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
+import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
 
 const TMP_ROOT = path.join(__dirname, '..', '..', '.tmp-test', 'evidence');
 const FIXED = '2026-08-09T02:42:50.000Z';
@@ -375,5 +380,85 @@ test.describe('RunRecorder', () => {
     const id = createRunId(new Date('2026-08-09T02:50:00.000Z'));
     expect(id).toMatch(/^nightwatch-20260809T025000Z-[0-9a-f]{4}$/);
     expect(createRunId()).toMatch(/^nightwatch-\d{8}T\d{6}Z-[0-9a-f]{4}$/);
+  });
+
+  test('records resolved-egress denial as a hard failure and preserves lifecycle categories', async () => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-evidence-proxy-'));
+    const eventLog = path.join(temp, 'proxy-events.jsonl');
+    ensureEventLog(eventLog);
+    const state: ProxyRuntimeState = {
+      address: 'http://127.0.0.1:43123',
+      host: '127.0.0.1',
+      port: 43123,
+      environment: 'local',
+      policyVersion: 'phase-2a-browser-background-policy-v1',
+      containmentVersion: PROXY_CONTAINMENT_VERSION,
+      resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      eventLogPath: eventLog,
+    };
+    const event = (overrides: Partial<ProxyEvent>): ProxyEvent => ({
+      seq: 0,
+      timestamp: FIXED,
+      runId: 'evidence-proxy',
+      protocol: 'http',
+      host: 'allowed.synthetic.test',
+      port: 18080,
+      classification: 'local',
+      semanticClassification: 'EXPECTED',
+      decision: 'allow',
+      ruleId: 'environment-allowlist',
+      reason: 'allowlisted synthetic host',
+      resolution: 'admitted',
+      answerCount: 1,
+      addressFamily: 4,
+      addressClass: 'loopback',
+      connection: 'connected',
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
+      ...overrides,
+    });
+    const recorder = new RunRecorder(baseOpts('proxy-evidence-run'));
+    recorder.configureProxy({ state, browserGuardsEnabled: true });
+    appendProxyEvent(eventLog, event({ seq: 0, connection: 'failed', connectionFailure: 'CONNECTION_REFUSED' }));
+    appendProxyEvent(eventLog, event({
+      seq: 1,
+      resolution: 'denied',
+      answerCount: 1,
+      addressFamily: undefined,
+      addressClass: undefined,
+      connection: 'not-attempted',
+      containmentViolation: 'RESOLVED_ADDRESS_POLICY_DENIED',
+      resolutionReason: 'LOCAL_ADDRESS_NOT_EXACT',
+    }));
+    const proxySummary = recorder.syncProxyViolations();
+    expect(proxySummary).toMatchObject({
+      schemaVersion: 'nightwatch.proxy-summary.v2',
+      policyAuthorized: 2,
+      allowed: 2,
+      resolutionAdmitted: 1,
+      resolutionDenied: 1,
+      resolutionFailed: 0,
+      connectAttempted: 1,
+      connected: 0,
+      connectFailed: 1,
+      violations: 1,
+      outcomeCoverage: 'complete',
+    });
+    const runEvents = readJsonl(path.join(recorder.dir, 'events.jsonl'));
+    expect(runEvents.filter((item) => item.type === 'hard-failure')).toHaveLength(1);
+    expect(runEvents.find((item) => item.type === 'hard-failure')).toMatchObject({
+      data: {
+        reason: 'RESOLVED_ADDRESS_POLICY_DENIED',
+        resolution: 'LOCAL_ADDRESS_NOT_EXACT',
+      },
+    });
+    expect(JSON.stringify(runEvents)).not.toContain('SYNTHETIC_RAW_ERROR');
+    const summary = await recorder.finalize({ passed: true });
+    expect(summary.passed).toBe(false);
+    expect(summary.proxy?.resolutionDenied).toBe(1);
+    expect(summary.proxy?.violations).toBe(1);
+    expect(summary.hardFailures[0]?.reason).toBe('RESOLVED_ADDRESS_POLICY_DENIED');
+    expect(fs.readFileSync(path.join(recorder.dir, 'proxy.jsonl'), 'utf8')).not.toContain('SYNTHETIC_RAW_ERROR');
+    fs.rmSync(temp, { recursive: true, force: true });
   });
 });

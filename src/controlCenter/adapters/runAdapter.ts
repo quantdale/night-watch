@@ -60,6 +60,9 @@ const KNOWN_FAILURE_CODES = new Set([
   'SAFETY_FAILURE',
   'EXECUTOR_FAILURE',
   'HARD_FAILURE',
+  'RESOLVED_ADDRESS_POLICY_DENIED',
+  'RESOLUTION_FAILED',
+  'EXACT_ADDRESS_BINDING_FAILED',
 ]);
 const ALLOWED_DATA_CODES = new Set([
   'ROUTE_CLASS',
@@ -211,12 +214,21 @@ export function projectRunDetail(input: RunAuthorityInput): ControlCenterRunDeta
     hardFailureCodes: failureCodes(summary),
     noteCodes: summary.notes === undefined || summary.notes.length === 0 ? [] : [asSafeControlCenterCode('RUN_NOTE_PRESENT')!],
     proxy: summary.proxy === undefined ? null : {
+      schemaVersion: summary.proxy.schemaVersion,
+      policyAuthorized: boundedCount(summary.proxy.policyAuthorized),
       allowed: boundedCount(summary.proxy.allowed),
       telemetryBlocked: boundedCount(summary.proxy.telemetryBlocked),
       optionalSupportBlocked: boundedCount(summary.proxy.optionalSupportBlocked),
       browserBackgroundBlocked: boundedCount(summary.proxy.browserBackgroundBlocked),
       denied: boundedCount(summary.proxy.denied),
       unknown: boundedCount(summary.proxy.unknown),
+      resolutionAdmitted: boundedCount(summary.proxy.resolutionAdmitted),
+      resolutionDenied: boundedCount(summary.proxy.resolutionDenied),
+      resolutionFailed: boundedCount(summary.proxy.resolutionFailed),
+      connectAttempted: boundedCount(summary.proxy.connectAttempted),
+      connected: boundedCount(summary.proxy.connected),
+      connectFailed: boundedCount(summary.proxy.connectFailed),
+      outcomeCoverage: summary.proxy.outcomeCoverage,
       violations: boundedCount(summary.proxy.violations),
     },
   };

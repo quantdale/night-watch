@@ -80,7 +80,7 @@ modified.
 
 ### M0 — Takeover, activation, H0 audit, and baseline
 
-- Status: COMPLETED
+- Status: COMPLETE
 - Create this task's SPEC/PLAN/STATE/REPORT and route ACTIVE_TASK here.
 - Complete all-file manifest/classification, marker/network/consumer searches,
   changed-since-planner review, and baseline gates before source edits.
@@ -89,40 +89,40 @@ modified.
 
 ### M1 — Mandatory pre-fix reproductions
 
-- Status: COMPLETED
+- Status: COMPLETE
 - Add focused synthetic resolver/address/protocol/evidence/runtime probes.
 - Record BEFORE behavior, including current false acceptance and exact-dial
   failing assertions, before changing production behavior.
 
 ### M2 — Address classifier and owned resolver/admission
 
-- Status: IN_PROGRESS
+- Status: COMPLETE
 - Implement pure parsing/classification and bounded internal resolver seam;
   prove complete answer-set fail-closed semantics and timeout/duplicate/
   malformed/family handling.
 
 ### M3 — Exact-address protocol binding
 
-- Status: PENDING
+- Status: COMPLETE
 - Share resolution/admission/selection across HTTP, CONNECT, and Upgrade;
   dial numeric address/family, retain original authority, prevent re-resolution,
   and close lifecycle races without unbounded retries.
 
 ### M4 — Evidence truth and runtime identity
 
-- Status: PENDING
+- Status: COMPLETE
 - Add categorical outcome evidence and hard failure integration; update runtime
   identity producers/readers/gate; preserve privacy and audit all consumers.
 
 ### M5 — Browser residual and adversarial closure
 
-- Status: PENDING
+- Status: COMPLETE
 - Requalify existing browser controls, preserve the L6 residual if unproven,
   complete adversarial matrices, and run focused regressions.
 
 ### M6 — Full acceptance, documentation, and Git closure
 
-- Status: PENDING
+- Status: IN_PROGRESS
 - Run native/clean/canonical gates; update durable docs/OpenSpec/report/state;
   commit validated checkpoints, push `main`, verify exact head and clean tree.
 

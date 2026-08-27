@@ -45,6 +45,8 @@ export interface RunEvent {
 
 // Phase 15P A15 convergence: retired unused RequestEventData/ResponseEventData
 // event-payload shapes (zero references; recorder payloads are inline objects).
+import type { ProxySummary } from '../../proxy/types';
+
 export interface RunSummary {
   runId: string;
   environment: string;
@@ -64,15 +66,7 @@ export interface RunSummary {
   screenshots: string[];
   nightwatchSha: string | null;
   /** Sanitized aggregate from the independent outer proxy, when configured. */
-  proxy?: {
-    allowed: number;
-    telemetryBlocked: number;
-    optionalSupportBlocked: number;
-    browserBackgroundBlocked: number;
-    denied: number;
-    unknown: number;
-    violations: number;
-  };
+  proxy?: ProxySummary;
   notes?: string[];
 }
 

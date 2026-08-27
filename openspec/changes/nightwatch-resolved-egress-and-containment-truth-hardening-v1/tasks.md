@@ -40,7 +40,7 @@ Do not substitute the planner's remote tree inventory for the local all-file gat
 - [x] Search every browser-containment-contract and real-run-gate consumer.
 - [x] Search every environment allowlist/host classifier consumer.
 - [x] Re-review all files changed since planning baseline before editing.
-- [ ] Check open issues/PRs/current docs again; record whether any new competing blocker exists.
+- [x] Check open issues/PRs/current docs again; record whether any new competing blocker exists.
 - [x] No source edit until H0 and baseline evidence are checkpointed in STATE.
 
 Planner baseline reference only: 1,334 tracked blobs / 14,615,257 bytes at 4981b212....

@@ -155,9 +155,10 @@ test('Phase 2A unauthenticated Ripple connectivity canary', async ({ browser }) 
   recorder.addManifestEntry('destinationManifest', { expected: manifest.expected.length, newButVerified: manifest.newButVerified.length, blocked: manifest.blocked.length, unresolved: manifest.unresolved.length });
 
   if (manifest.unresolved.length > 0) recorder.event({ type: 'hard-failure', severity: 'fatal', message: 'UNCLASSIFIED_REQUIRED_HOST', data: { reason: 'UNCLASSIFIED_REQUIRED_HOST' } });
-  if (manifest.blocked.some((entry) => entry.decision === 'deny')) recorder.event({ type: 'hard-failure', severity: 'fatal', message: 'production destination attempted', data: { reason: 'production-destination-attempted' } });
+  const blockedByContainment = manifest.blocked.some((entry) => entry.decision === 'deny' || entry.containmentViolation);
+  if (blockedByContainment) recorder.event({ type: 'hard-failure', severity: 'fatal', message: 'production destination attempted', data: { reason: 'production-destination-attempted' } });
   const summary = await recorder.finalize({
-    passed: !context.monitor.failed && manifest.unresolved.length === 0 && !manifest.blocked.some((entry) => entry.decision === 'deny'),
+    passed: !context.monitor.failed && manifest.unresolved.length === 0 && !blockedByContainment,
     notes: ['unauthenticated canary; no storage state loaded', `destination manifest: ${manifest.expected.length} expected, ${manifest.newButVerified.length} new-but-verified, ${manifest.blocked.length} blocked, ${manifest.unresolved.length} unresolved`],
   });
   console.log(`NIGHTWATCH canary artifacts: ${recorder.dir} (${summary.eventCount} events)`);

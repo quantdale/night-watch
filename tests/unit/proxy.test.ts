@@ -17,6 +17,8 @@ import { classifyProxyConnect, classifyProxyUrl } from '../../src/proxy/policyAd
 import { checkProxyHealth, requireProxyRuntime } from '../../src/proxy/runtime';
 import { startOutboundProxy, writeProxyRuntimeState } from '../../src/proxy/server';
 import { readProxyEvents } from '../../src/proxy/events';
+import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../../src/proxy/identity';
+import { RESOLVED_ADDRESS_POLICY_VERSION } from '../../src/proxy/addressPolicy';
 
 interface ProbeServer {
   host: '127.0.0.1' | '127.0.0.2';
@@ -69,6 +71,26 @@ function proxyGet(port: number, target: string): Promise<number> {
         response.resume();
         response.once('end', () => resolve(response.statusCode ?? 0));
       }
+    );
+    request.once('error', reject);
+    request.end();
+  });
+}
+
+function proxyOriginGet(port: number, host: string, targetPath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      {
+        host: '127.0.0.1',
+        port,
+        method: 'GET',
+        path: targetPath,
+        headers: { Host: host },
+      },
+      (response) => {
+        response.resume();
+        response.once('end', () => resolve(response.statusCode ?? 0));
+      },
     );
     request.once('error', reject);
     request.end();
@@ -154,6 +176,8 @@ test.describe('outer proxy policy and parsing', () => {
     try {
       expect(await proxyGet(proxy.port, `http://${allowed.host}:${allowed.port}/ok`)).toBe(200);
       expect(allowed.requestCount).toBe(1);
+      expect(await proxyOriginGet(proxy.port, `${allowed.host}:${allowed.port}`, '/origin-form')).toBe(200);
+      expect(allowed.requestCount).toBe(2);
       expect(await proxyGet(proxy.port, `http://${denied.host}:${denied.port}/denied`)).toBe(403);
       expect(await proxyGet(proxy.port, 'http://widget.usepylon.com/widget/synthetic-app-id')).toBe(403);
       for (const host of ['android.clients.google.com', 'update.googleapis.com', 'redirector.gvt1.com']) {
@@ -215,6 +239,9 @@ test.describe('outer proxy policy and parsing', () => {
         port: proxy.port,
         environment: 'local',
         policyVersion: 'phase-2a-browser-background-policy-v1',
+        containmentVersion: PROXY_CONTAINMENT_VERSION,
+        resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+        addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: eventLog,
       })).toBe(false);
 
@@ -225,10 +252,41 @@ test.describe('outer proxy policy and parsing', () => {
         port: proxy.port,
         environment: 'local',
         policyVersion: 'phase-2a-browser-background-policy-v1',
+        containmentVersion: PROXY_CONTAINMENT_VERSION,
+        resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+        addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: eventLog,
       }, stateFile);
       await expect(requireProxyRuntime('local', stateFile)).rejects.toThrow(/startup is aborted/);
     } finally {
+      await proxy.close();
+      fs.rmSync(temp, { recursive: true, force: true });
+    }
+  });
+
+  test('event-log write failure disables the proxy before any upstream connection', async () => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-proxy-'));
+    const eventLog = path.join(temp, 'events.jsonl');
+    const upstream = await startProbe('127.0.0.1');
+    const proxy = await startOutboundProxy({
+      policy: new OutboundPolicy({
+        ...loadEnvironmentConfig('local'),
+        allowedHosts: ['127.0.0.1'],
+      }),
+      environment: 'local',
+      port: 0,
+      eventLogPath: eventLog,
+    });
+    try {
+      fs.rmSync(eventLog);
+      fs.mkdirSync(eventLog);
+      expect(await proxyGet(proxy.port, 'http://example.invalid/blocked-by-evidence')).toBe(403);
+      expect(upstream.connectionCount).toBe(0);
+      expect(proxy.health()).toBe(false);
+      expect(await proxyGet(proxy.port, 'http://example.invalid/blocked-after-failure')).toBe(502);
+      expect(upstream.connectionCount).toBe(0);
+    } finally {
+      await upstream.close();
       await proxy.close();
       fs.rmSync(temp, { recursive: true, force: true });
     }

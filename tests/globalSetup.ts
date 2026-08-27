@@ -15,6 +15,8 @@ import {
 } from '../src/proxy/server';
 import { releaseProxyPortLease } from '../src/proxy/portLease';
 import { checkProxyHealth } from '../src/proxy/runtime';
+import { EXACT_ADDRESS_BINDING_VERSION, PROXY_CONTAINMENT_VERSION } from '../src/proxy/identity';
+import { RESOLVED_ADDRESS_POLICY_VERSION } from '../src/proxy/addressPolicy';
 
 export default async function globalSetup(): Promise<() => Promise<void>> {
   const environment = selectEnvironment(process.env.NIGHTWATCH_ENV ?? 'local');
@@ -36,6 +38,9 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       port: proxy.port,
       environment: environment.name,
       policyVersion: OUTBOUND_POLICY_VERSION,
+      containmentVersion: PROXY_CONTAINMENT_VERSION,
+      resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+      addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
       eventLogPath: eventLog,
     }))) {
       throw new Error('Nightwatch outer proxy failed its startup health check');
@@ -47,6 +52,9 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
         port: proxy.port,
         environment: environment.name,
         policyVersion: OUTBOUND_POLICY_VERSION,
+        containmentVersion: PROXY_CONTAINMENT_VERSION,
+        resolvedAddressPolicyVersion: RESOLVED_ADDRESS_POLICY_VERSION,
+        addressBindingVersion: EXACT_ADDRESS_BINDING_VERSION,
         eventLogPath: path.resolve(eventLog),
       },
       stateFile

@@ -19,7 +19,7 @@ import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemanti
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { assertRealRunGate, runRealRunGate } from '../../src/core/safety/realRunGate';
-import { readProxyEvents } from '../../src/proxy/events';
+import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import type { ProxyEvent } from '../../src/proxy/types';
 import { readProxyRuntimeState } from '../../src/proxy/runtime';
 import { runDeclarativeJourney } from '../../src/core/journeys/engine';
@@ -150,8 +150,8 @@ function proxySafety(): { readonly productionAttempts: number; readonly proxyHar
     const events = readProxyEvents(state.eventLogPath) as readonly ProxyEvent[];
     return {
       productionAttempts: events.filter((event) => event.classification === 'production').length,
-      proxyHardViolations: events.filter((event) => event.decision === 'deny').length,
-      unknownDestinations: events.filter((event) => event.decision === 'deny' && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
+      proxyHardViolations: events.filter(isProxyViolation).length,
+      unknownDestinations: events.filter((event) => isProxyViolation(event) && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
     };
   } catch {
     return { productionAttempts: 0, proxyHardViolations: 1, unknownDestinations: 1 };

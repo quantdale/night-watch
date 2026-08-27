@@ -30,6 +30,7 @@ interface DestinationManifestEntry {
   policyRule: string;
   observedPurpose: string;
   decision: string;
+  containmentViolation: boolean;
   requestCount: number;
 }
 export interface DestinationManifest {
@@ -49,6 +50,7 @@ interface Observation {
   decision: string;
   ruleId: string;
   purpose: string;
+  containmentViolation: boolean;
   source: 'proxy' | 'browser';
 }
 
@@ -108,6 +110,7 @@ function categoryFor(observation: Observation, env: EnvironmentConfig, verified:
     observation.decision === 'block-optional-support' ||
     observation.decision === 'block-browser-background'
   ) return 'BLOCKED';
+  if (observation.containmentViolation) return 'BLOCKED';
   if (observation.decision === 'deny') {
     return observation.classification === 'production' ? 'BLOCKED' : 'UNRESOLVED';
   }
@@ -131,6 +134,7 @@ function fromProxy(event: ProxyEvent, env: EnvironmentConfig): Observation {
     decision: event.decision,
     ruleId: event.ruleId,
     purpose: purposeForHost(event.host.toLowerCase(), env),
+    containmentViolation: event.containmentViolation !== undefined,
     source: 'proxy',
   };
 }
@@ -170,6 +174,7 @@ function fromBrowserEvent(event: RunEvent, env: EnvironmentConfig): Observation 
     decision,
     ruleId: 'browser-policy',
     purpose: purposeForHost(hostname, env),
+    containmentViolation: false,
     source: 'browser',
   };
 }
@@ -223,6 +228,7 @@ export function buildDestinationManifest(
       policyRule: group.observation.ruleId,
       observedPurpose: group.observation.purpose,
       decision: group.observation.decision,
+      containmentViolation: group.observation.containmentViolation,
       requestCount: group.count,
     };
     if (category === 'EXPECTED') manifest.expected.push(entry);

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Nightwatch — pre-fix resolved-egress red-team reproductions.
+// Nightwatch — resolved-egress containment regression coverage.
 //
 // These tests deliberately describe the post-hardening contract. They use
 // loopback-only fixtures and an adapter-level http.request spy; the injected
@@ -24,6 +24,7 @@ interface ProbeServer {
   readonly port: number;
   readonly connectionCount: number;
   readonly requestCount: number;
+  readonly hostHeaders: readonly string[];
   close(): Promise<void>;
 }
 
@@ -39,8 +40,10 @@ interface SyntheticResolver {
 async function startProbe(host: FixtureHost, port = 0): Promise<ProbeServer> {
   let connectionCount = 0;
   let requestCount = 0;
+  const hostHeaders: string[] = [];
   const server = http.createServer((_req, res) => {
     requestCount += 1;
+    if (typeof _req.headers.host === 'string') hostHeaders.push(_req.headers.host);
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end(`fixture-${host}`);
   });
@@ -55,6 +58,7 @@ async function startProbe(host: FixtureHost, port = 0): Promise<ProbeServer> {
     port: address.port,
     get connectionCount() { return connectionCount; },
     get requestCount() { return requestCount; },
+    hostHeaders,
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
 }
@@ -83,10 +87,15 @@ async function withUpstreamRewrite<T>(
 ): Promise<T> {
   const originalRequest = http.request;
   (http as unknown as { request: typeof http.request }).request = ((options: unknown, ...args: unknown[]) => {
-    if (options !== null && typeof options === 'object' && 'hostname' in options
-      && (options as { hostname?: unknown }).hostname === 'allowed.synthetic.test') {
+    if (options !== null && typeof options === 'object' && 'hostname' in options) {
       const originalOptions = options as Record<string, unknown>;
+      if (typeof originalOptions.hostname !== 'string') {
+        return (originalRequest as unknown as (...inner: unknown[]) => unknown).call(http, options, ...args);
+      }
       observed.push({ hostname: originalOptions.hostname, family: originalOptions.family });
+      if (originalOptions.hostname !== 'allowed.synthetic.test') {
+        return (originalRequest as unknown as (...inner: unknown[]) => unknown).call(http, options, ...args);
+      }
       return (originalRequest as unknown as (...inner: unknown[]) => unknown).call(
         http,
         { ...originalOptions, hostname: rewriteHostname },
@@ -118,7 +127,7 @@ function campaignOptions(
   } as Parameters<typeof startOutboundProxy>[0];
 }
 
-test.describe('resolved-egress hardening BEFORE reproductions', () => {
+test.describe('resolved-egress hardening regressions', () => {
   test('allowed hostname reaches the resolver while policy blocks stay resolver-free', async () => {
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-resolved-egress-before-'));
     const resolverCalls: string[] = [];
@@ -174,6 +183,7 @@ test.describe('resolved-egress hardening BEFORE reproductions', () => {
       expect.soft(observed).toEqual([{ hostname: '127.0.0.1', family: 4 }]);
       expect.soft(safe.requestCount).toBe(1);
       expect.soft(unsafe.requestCount).toBe(0);
+      expect.soft(safe.hostHeaders).toEqual([`allowed.synthetic.test:${safe.port}`]);
 
       resolverCalls.length = 0;
       resolver.resolve = async (hostname) => {
@@ -186,7 +196,25 @@ test.describe('resolved-egress hardening BEFORE reproductions', () => {
       expect.soft(resolverCalls).toEqual(['allowed.synthetic.test']);
       expect.soft(unsafe.requestCount).toBe(0);
       const events = readProxyEvents(path.join(temp, 'events.jsonl'));
-      expect(events.some((event) => event.host === 'allowed.synthetic.test' && event.decision === 'allow')).toBe(true);
+      expect(events).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          host: 'allowed.synthetic.test',
+          decision: 'allow',
+          resolution: 'admitted',
+          connection: 'connected',
+          addressFamily: 4,
+          addressClass: 'loopback',
+          addressBindingVersion: 'phase-1.2-exact-address-binding-v1',
+        }),
+        expect.objectContaining({
+          host: 'allowed.synthetic.test',
+          decision: 'allow',
+          resolution: 'denied',
+          connection: 'not-attempted',
+          containmentViolation: 'RESOLVED_ADDRESS_POLICY_DENIED',
+        }),
+      ]));
+      expect(JSON.stringify(events)).not.toContain('SYNTHETIC_RAW');
     } finally {
       await safe.close();
       await unsafe.close();

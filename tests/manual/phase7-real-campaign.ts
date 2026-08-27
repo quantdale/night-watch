@@ -18,7 +18,7 @@ import { validateStorageStateFile } from '../../src/browser/fixtures/storageStat
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
 import { DevAuthFailure, inspectDevAuthState, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
-import { readProxyEvents } from '../../src/proxy/events';
+import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import { runDeclarativeJourney } from '../../src/core/journeys/engine';
 import { freezeJourneyContract, JOURNEY_CONTRACT_VERSION, ORACLE_VERSION } from '../../src/core/journeys/contract';
 import type { SemanticResponseOracle } from '../../src/browser/observers/networkObserver';
@@ -399,8 +399,8 @@ function safetyFromJourney(context: Awaited<ReturnType<typeof createNightwatchCo
   const counts = evidence.safetyCounts;
   return {
     productionAttempts: (counts?.productionAttempts ?? 0) + proxyEvents.filter((event) => event.classification === 'production').length,
-    proxyViolations: (counts?.proxyViolations ?? 0) + proxyEvents.filter((event) => event.decision === 'deny').length,
-    unknownDestinations: (counts?.unknownDestinations ?? 0) + proxyEvents.filter((event) => event.decision === 'deny' && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
+    proxyViolations: (counts?.proxyViolations ?? 0) + proxyEvents.filter(isProxyViolation).length,
+    unknownDestinations: (counts?.unknownDestinations ?? 0) + proxyEvents.filter((event) => isProxyViolation(event) && (event.classification === 'unknown-alphaus' || event.classification === 'external')).length,
     unknownApprovals: counts?.unknownApprovals ?? 0,
     productMutations: (counts?.mutations ?? 0) + context.network.semanticRequests().filter((item) => item.disposition === 'KNOWN_MUTATION').length,
     actionCausedUnknown: (counts?.actionCausedUnknown ?? 0) + context.network.semanticRequests().filter((item) => item.disposition === 'ACTION_CAUSED_UNKNOWN').length,
