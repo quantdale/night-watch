@@ -541,6 +541,10 @@ const APPROVED_CHECKPOINT_PATHS = [
   // arbitrary task-dir files stay unapproved.
   /^\.agent\/tasks\/[^/]+\/(?:HARDENING_HANDOFF|MASTER_PLAN)\.md$/,
   /^\.agent\/tasks\/[^/]+\/SESSION_[1-4]_[A-Z0-9_]+\.md$/,
+  // OpenSpec change checklists are planning-only task records. Allow their
+  // terminal checkbox updates without relabeling the preceding implementation
+  // checkpoint as stale.
+  /^openspec\/changes\/[^/]+\/tasks\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
   // Repository-native design documents: exactly one level under docs/design,

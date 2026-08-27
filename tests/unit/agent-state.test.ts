@@ -683,6 +683,7 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
       '.agent/tasks/phase-test/WORKSTREAMS.md',
       '.agent/tasks/phase-test/ACCEPTANCE_MATRIX.md',
       '.agent/tasks/phase-test/DEFECT_LEDGER.md',
+      'openspec/changes/example-change/tasks.md',
       'corpus/phase6/README.md',
       'corpus/phase6/runtime-binding-audit.json',
       'docs/ARCHITECTURE.md',
