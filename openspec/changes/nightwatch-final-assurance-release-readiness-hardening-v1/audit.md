@@ -84,11 +84,45 @@ Impact: autonomous agents can spend context on obsolete phase claims or choose t
 
 Required disposition: do not mass-delete history. Instead verify current-summary sections, labels, anchors and navigation; ensure historical claims are explicitly historical; add/strengthen compact current-truth entry points only if the fresh audit finds real ambiguity.
 
+
+### P1 — process-level L6 containment remains unimplemented and blocks a complete network-isolation claim
+
+Fresh targeted review of the current safety/runtime path found a concrete implementation seam rather than a speculative feature request:
+
+- `docs/SAFETY_MODEL.md` explicitly retains `BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL`: speculative Chromium DNS/resolver activity is outside the L5 HTTP/CONNECT proxy's observation boundary.
+- `docs/ROADMAP.md` and `docs/ARCHITECTURE.md` still describe a future restricted container/network namespace as the L6 boundary and prerequisite for broader non-browser subprocess containment.
+- `playwright.config.ts` launches Chrome directly on the host with the mandatory Nightwatch proxy and conservative transport flags; it does not launch the browser inside a network namespace.
+- `src/browser/context.ts` requires and health-checks L5 before browser-context creation, but has no L6 runtime identity or process-isolation gate.
+- `src/core/oops/sandbox.ts` already probes Bubblewrap and records that an isolated network namespace is not compatible with the parent-namespace relay (`relayCompatible: false`); authenticated OOPS execution is therefore disabled.
+- `src/core/oops/process.ts` still spawns the restricted OOPS binary directly in the host network namespace for the local loopback-fixture path.
+- `bin/phase5-real.mjs` explicitly sets `NIGHTWATCH_PHASE_5_OOPS_REAL=0` and uses the native Nightwatch relay fallback for real API acceptance, so the current code does **not** expose an authenticated OOPS escape path. That safety fact must be preserved.
+
+Impact: Nightwatch can truthfully claim strong L0-L5 containment, but it cannot claim complete process/network isolation, and broader non-browser subprocess execution is not release-ready. DNS metadata leakage from browser speculation remains a named residual.
+
+Required disposition: treat this as a bounded implementation + hardening workstream. Prefer an unprivileged/rootless containment design. Do **not** use root-required firewall rules, system-wide proxy mutation, privileged network administration, TLS MITM, cloud infrastructure, or live product/DNS probes. The executor must either:
+
+1. implement and mechanically verify a rootless L6 execution envelope that preserves the allowed synthetic proxy/relay path while denying direct DNS/TCP/UDP escape; or
+2. if a safe rootless design cannot be completed within the authorized scope, keep every affected real/subprocess route fail-closed, add machine-readable L6 capability/readiness truth, and terminate full project certification as blocked rather than silently downgrading the residual.
+
+A release-complete result must not relabel the existing L6 residual as solved without process-boundary evidence.
+
+### P1 — safety-critical retry and conditional-skip behavior needs explicit release qualification
+
+The current containment smoke suite still configures retries for the WebSocket gate and carries a rationale saying the harness registers `routeWebSocket` without awaiting it. Current `src/browser/observers/networkObserver.ts` explicitly awaits both `context.route()` and `context.routeWebSocket()` before navigation. The retry rationale is stale relative to current implementation and can mask a regression if retained without revalidation.
+
+Separately, `tests/unit/phase5Api.test.ts` conditionally skips restricted-OOPS execution tests when the source-built OOPS binary is absent. Those tests cover executable provenance, relay-only behavior, secret non-inheritance, and oracle parity—release-relevant properties that should not disappear silently from a clean certification run.
+
+Required disposition:
+
+- reproduce the WebSocket containment tests with retries disabled; if the race is gone, remove the retry workaround and stale comments; if it still exists, fix the underlying registration/lifecycle defect rather than depending on retries;
+- enumerate the exact OOPS skip identities and provide a deterministic clean-checkout qualification path for the restricted subprocess boundary;
+- treat any unresolved safety-critical retry/skip as a blocking validation gap.
+
 ## Campaign decision
 
-**Decision: Codebase Hardening Campaign, with conditional implementation only when the audit earns it.**
+**Decision: Combined Implementation + Hardening Campaign, tightly bounded to release-critical evidence.**
 
-A new broad implementation campaign is not justified: intended core functionality is mature and recent evidence shows multiple candidate feature/proof expansions correctly rejected for lack of mechanical proof. The valuable work is final whole-system assurance, residual defect hunting, release reproducibility, performance/resource sanity, dependency/toolchain hygiene, documentation truth, and independent certification.
+A broad product-feature campaign is not justified: intended core functionality is mature and recent evidence shows multiple candidate feature/proof expansions correctly rejected for lack of mechanical proof. However, fresh review reproduced two implementation/validation seams that final assurance must own: the unresolved L6 process/DNS boundary and safety-critical retry/conditional-skip qualification. The campaign therefore combines narrow implementation where evidence requires it with whole-system hardening, release reproducibility, performance/resource sanity, dependency/toolchain hygiene, documentation truth, and independent certification.
 
 If H0/H1 discovers a P0/P1 implementation defect, repair it immediately and continue the campaign. If no such defect exists, do not manufacture features; complete the assurance/certification work and stop.
 
@@ -106,4 +140,5 @@ Nightwatch may be called project-complete for the present owner-authorized scope
 8. privacy, containment, owner-scope, no-publication and sibling-read-only boundaries remain intact;
 9. docs and machine truth agree on current status;
 10. external CI is either genuinely executed and green or explicitly recorded as unavailable external non-evidence;
-11. no known release-blocking defect, placeholder, disabled critical validation, or materially stale current-state claim remains.
+11. no known release-blocking defect, placeholder, disabled critical validation, materially stale current-state claim, unexplained safety retry, or unresolved L6 claim mismatch remains;
+12. complete process/network isolation is claimed only if L6 is mechanically proven; otherwise full-completion certification terminates blocked.
