@@ -1,6 +1,6 @@
 # Tasks: Resolved Egress + Containment Truth Hardening
 
-Status: PLANNED
+Status: IN_PROGRESS
 Change ID: nightwatch-resolved-egress-and-containment-truth-hardening-v1
 Planning baseline: 4981b212eed46ffde1edac2b175f1bd1b1f826d2
 Target branch: main
@@ -8,40 +8,40 @@ Budget: approximately 12 productive engineering hours. Do not idle to fill time;
 
 ## 0. Takeover, identity, and continuity
 
-- [ ] Read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/PLANS.md, .agent/ACTIVE_TASK.md, .agent/EXECUTION_PROMPT.md, and every file in this OpenSpec change.
-- [ ] Prove repository identity is quantdale/night-watch and target branch is main.
-- [ ] Fetch origin/main and reconcile current HEAD with planning baseline 4981b212eed46ffde1edac2b175f1bd1b1f826d2.
-- [ ] If main moved, inspect every intervening diff before implementation and update the task Decision Log for any scope impact.
-- [ ] Record clean/dirty state, upstream, Node/npm versions, OS, Playwright/Chrome availability, and current proxy port policy.
-- [ ] Create continuity-v2 task files under .agent/tasks/nightwatch-resolved-egress-and-containment-truth-hardening-v1/: SPEC.md, PLAN.md, STATE.md, REPORT.md.
-- [ ] Route .agent/ACTIVE_TASK.md to the new task as ACTIVE.
-- [ ] Preserve completed predecessor tasks/history unchanged.
-- [ ] Record exact starting SHA and safety authority: LOCAL / repository source / synthetic loopback only.
+- [x] Read AGENTS.md, .agent/PLANNER_HANDOFF.md, .agent/PLANS.md, .agent/ACTIVE_TASK.md, .agent/EXECUTION_PROMPT.md, and every file in this OpenSpec change.
+- [x] Prove repository identity is quantdale/night-watch and target branch is main.
+- [x] Fetch origin/main and reconcile current HEAD with planning baseline 4981b212eed46ffde1edac2b175f1bd1b1f826d2.
+- [x] If main moved, inspect every intervening diff before implementation and update the task Decision Log for any scope impact.
+- [x] Record clean/dirty state, upstream, Node/npm versions, OS, Playwright/Chrome availability, and current proxy port policy.
+- [x] Create continuity-v2 task files under .agent/tasks/nightwatch-resolved-egress-and-containment-truth-hardening-v1/: SPEC.md, PLAN.md, STATE.md, REPORT.md.
+- [x] Route .agent/ACTIVE_TASK.md to the new task as ACTIVE.
+- [x] Preserve completed predecessor tasks/history unchanged.
+- [x] Record exact starting SHA and safety authority: LOCAL / repository source / synthetic loopback only.
 
 ## 1. Hard H0 whole-repository audit before source edits
 
 Do not substitute the planner's remote tree inventory for the local all-file gate.
 
-- [ ] Generate a NUL-safe git ls-files manifest.
-- [ ] Read/classify EVERY tracked regular file.
-- [ ] Record tracked file count.
-- [ ] Record reviewed file count.
-- [ ] Require reviewed == tracked.
-- [ ] Record total tracked bytes and total lines.
-- [ ] Record a deterministic manifest/content digest.
-- [ ] Classify every file into active runtime, tests, config, UI, corpus/fixtures, tooling/bin, workflow, docs/OpenSpec, continuity/history, generated/lock/metadata, or other explicit class.
-- [ ] Deep-read every active browser/proxy/safety/evidence/real-run consumer and producer.
-- [ ] Review all historical .agent/docs paths for stale instructions that could override current execution, without treating historical prose as runtime logic.
-- [ ] Search TODO/FIXME/HACK/XXX/DEPRECATED markers and disposition every active-code hit.
-- [ ] Search test.skip/test.only/describe.skip/describe.only and record exact current skip inventory.
-- [ ] Search ts-ignore/expect-error/eslint-disable/unsafe cast/eval/new Function/shell:true/child_process and disposition every active containment-path hit.
-- [ ] Search every network primitive: http/https request, fetch, net.connect/createConnection, dns lookup/resolve, Playwright browser launch/proxy, WebSocket, UDP/dgram, child process.
-- [ ] Search every proxy event/summary/runtime-state reader.
-- [ ] Search every browser-containment-contract and real-run-gate consumer.
-- [ ] Search every environment allowlist/host classifier consumer.
-- [ ] Re-review all files changed since planning baseline before editing.
+- [x] Generate a NUL-safe git ls-files manifest.
+- [x] Read/classify EVERY tracked regular file.
+- [x] Record tracked file count.
+- [x] Record reviewed file count.
+- [x] Require reviewed == tracked.
+- [x] Record total tracked bytes and total lines.
+- [x] Record a deterministic manifest/content digest.
+- [x] Classify every file into active runtime, tests, config, UI, corpus/fixtures, tooling/bin, workflow, docs/OpenSpec, continuity/history, generated/lock/metadata, or other explicit class.
+- [x] Deep-read every active browser/proxy/safety/evidence/real-run consumer and producer.
+- [x] Review all historical .agent/docs paths for stale instructions that could override current execution, without treating historical prose as runtime logic.
+- [x] Search TODO/FIXME/HACK/XXX/DEPRECATED markers and disposition every active-code hit.
+- [x] Search test.skip/test.only/describe.skip/describe.only and record exact current skip inventory.
+- [x] Search ts-ignore/expect-error/eslint-disable/unsafe cast/eval/new Function/shell:true/child_process and disposition every active containment-path hit.
+- [x] Search every network primitive: http/https request, fetch, net.connect/createConnection, dns lookup/resolve, Playwright browser launch/proxy, WebSocket, UDP/dgram, child process.
+- [x] Search every proxy event/summary/runtime-state reader.
+- [x] Search every browser-containment-contract and real-run-gate consumer.
+- [x] Search every environment allowlist/host classifier consumer.
+- [x] Re-review all files changed since planning baseline before editing.
 - [ ] Check open issues/PRs/current docs again; record whether any new competing blocker exists.
-- [ ] No source edit until H0 and baseline evidence are checkpointed in STATE.
+- [x] No source edit until H0 and baseline evidence are checkpointed in STATE.
 
 Planner baseline reference only: 1,334 tracked blobs / 14,615,257 bytes at 4981b212....
 
@@ -49,20 +49,20 @@ Planner baseline reference only: 1,334 tracked blobs / 14,615,257 bytes at 4981b
 
 Before production behavior changes:
 
-- [ ] npm run typecheck
-- [ ] npm run hardening:check
-- [ ] focused tests/unit/proxy.test.ts
-- [ ] focused tests/unit/safety.test.ts
-- [ ] focused realRunGate tests
-- [ ] focused runRecorder/evidence proxy tests
-- [ ] tests/smoke/proxy.smoke.ts using repository-native command/config
-- [ ] capture current OUTBOUND_POLICY_VERSION
-- [ ] capture current ProxyRuntimeState shape
-- [ ] capture current ProxyEvent / ProxySummary shape
-- [ ] capture existing browser launch args from src/browser/contract.ts
-- [ ] capture exact pass/skip/fail counts
-- [ ] capture focused wall time
-- [ ] record any pre-existing failures separately; do not attribute them to this campaign.
+- [x] npm run typecheck
+- [x] npm run hardening:check
+- [x] focused tests/unit/proxy.test.ts
+- [x] focused tests/unit/safety.test.ts
+- [x] focused realRunGate tests
+- [x] focused runRecorder/evidence proxy tests
+- [x] tests/smoke/proxy.smoke.ts using repository-native command/config
+- [x] capture current OUTBOUND_POLICY_VERSION
+- [x] capture current ProxyRuntimeState shape
+- [x] capture current ProxyEvent / ProxySummary shape
+- [x] capture existing browser launch args from src/browser/contract.ts
+- [x] capture exact pass/skip/fail counts
+- [x] capture focused wall time
+- [x] record any pre-existing failures separately; do not attribute them to this campaign.
 
 ## 3. Mandatory reproductions before fixes
 
@@ -70,12 +70,12 @@ Add failing/red-team tests first. Planner findings are hypotheses until executab
 
 ### 3.1 Resolver invocation boundary
 
-- [ ] Inject/spy a synthetic resolver around startOutboundProxy without granting it socket authority.
-- [ ] Prove hostname-policy deny invokes resolver exactly zero times.
-- [ ] Prove telemetry/optional-support/browser-background local blocks invoke resolver zero times.
-- [ ] Prove an allowed hostname reaches the resolver.
-- [ ] Prove current code has no resolved-address admission before the Node upstream primitive.
-- [ ] Record BEFORE results.
+- [x] Inject/spy a synthetic resolver around startOutboundProxy without granting it socket authority.
+- [x] Prove hostname-policy deny invokes resolver exactly zero times.
+- [x] Prove telemetry/optional-support/browser-background local blocks invoke resolver zero times.
+- [x] Prove an allowed hostname reaches the resolver.
+- [x] Prove current code has no resolved-address admission before the Node upstream primitive.
+- [x] Record BEFORE results.
 
 ### 3.2 Local address-class matrix
 
@@ -130,11 +130,11 @@ For each relevant resolver case exercise:
 
 Build a test seam that can observe the host/family passed to the upstream connector without external network.
 
-- [ ] Current allowlisted hostname path shows hostname reaches implicit Node lookup/dial path.
-- [ ] Target test requires numeric address reaches dial path.
+- [x] Current allowlisted hostname path shows hostname reaches implicit Node lookup/dial path.
+- [x] Target test requires numeric address reaches dial path.
 - [ ] Original hostname remains Host/CONNECT authority.
 - [ ] No second resolver call occurs after accepted resolution.
-- [ ] Record BEFORE failing assertion before implementation.
+- [x] Record BEFORE failing assertion before implementation.
 
 ### 3.6 Evidence-truth reproduction
 

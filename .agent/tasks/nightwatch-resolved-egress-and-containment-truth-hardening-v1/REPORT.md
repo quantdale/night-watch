@@ -29,14 +29,36 @@ validated.
 
 ## Baseline
 
-Pending until the activated task records all focused command results, current
-proxy/runtime/event identities, browser launch controls, skip inventory, and
-timings.
+The activation checkpoint baseline is green. `npm run typecheck` and
+`npm run hardening:check` passed. Focused proxy, safety, real-run-gate,
+evidence/manifest/containment, and proxy-smoke runs passed respectively at
+`3/0 in 9.35s`, `27/0 in 3.90s`, `10/0 in 3.45s`, `21/0 in 3.76s`, and
+`6/0 in 8.79s`. The full local gate passed in `283.64s` with all 9 groups
+green, semantic compatibility `1903 total/1890 passed/13 skipped/0 failed`,
+owner provenance `91 passed`, synthetic campaign `66 passed`, and receipt
+`receipt:sha256:af4db19337c1ca46035bce61`.
+
+The current hostname policy identity is
+`phase-2a-browser-background-policy-v1`. The current runtime state has only
+`address`, `host`, `port`, `environment`, `policyVersion`, and
+`eventLogPath`; events have lifecycle-neutral policy fields plus optional
+semantic/containment labels; summaries have the seven legacy counters. The
+existing browser contract includes the loopback proxy, bypass disable,
+QUIC/WebRTC controls, SafeBrowsing controls, and reviewed background/network
+hint restrictions. The exact 16 existing skip/availability guards are listed
+in STATE; no new skip was introduced.
 
 ## Before reproductions
 
-Pending. Required resolver/address/protocol/exact-dial/evidence/runtime-state
-red-team results will be recorded before production behavior edits.
+The pre-fix red-team file was added before production source edits. Its
+two-test run was intentionally red: `0 passed`, `2 failed`, `3.65s`. Policy
+denies and the reviewed telemetry/optional/background blocks made zero
+resolver calls. The allowlisted hostname made zero calls to the injected
+resolver and was observed at the Node upstream boundary as
+`hostname: 'allowed.synthetic.test', family: undefined`; the desired numeric
+address/family assertion failed. The current code also sent the request to a
+local unsafe fixture and returned `200`; the desired unsafe-answer result was
+`502` with zero upstream requests. No external DNS was used.
 
 ## Implementation and after evidence
 

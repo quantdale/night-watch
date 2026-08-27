@@ -80,7 +80,7 @@ modified.
 
 ### M0 — Takeover, activation, H0 audit, and baseline
 
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Create this task's SPEC/PLAN/STATE/REPORT and route ACTIVE_TASK here.
 - Complete all-file manifest/classification, marker/network/consumer searches,
   changed-since-planner review, and baseline gates before source edits.
@@ -89,14 +89,14 @@ modified.
 
 ### M1 — Mandatory pre-fix reproductions
 
-- Status: PENDING
+- Status: COMPLETED
 - Add focused synthetic resolver/address/protocol/evidence/runtime probes.
 - Record BEFORE behavior, including current false acceptance and exact-dial
   failing assertions, before changing production behavior.
 
 ### M2 — Address classifier and owned resolver/admission
 
-- Status: PENDING
+- Status: IN_PROGRESS
 - Implement pure parsing/classification and bounded internal resolver seam;
   prove complete answer-set fail-closed semantics and timeout/duplicate/
   malformed/family handling.
