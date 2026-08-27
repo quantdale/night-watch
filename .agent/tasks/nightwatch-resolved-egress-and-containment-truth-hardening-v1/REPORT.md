@@ -6,7 +6,7 @@ Phase: RESOLVED-EGRESS-AND-CONTAINMENT-TRUTH-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `9a70e7f3e81255d56352b9efb291f0fb4f4f03de`
 Validated implementation SHA: `3db48ed7d35a0a816ef1a801c86a1d14ddf60b27`
-Last documentation checkpoint SHA: `d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`
+Last documentation checkpoint SHA: `41cf3ac986515faaf15a6610bc588ec2d57fb0bd`
 Safety scope: LOCAL / repository source / synthetic loopback only
 
 This report records the completed implementation, validation evidence, durable
@@ -293,13 +293,17 @@ Validated checkpoints were committed and pushed serially: activation
 `a8cc0b42dd722561f67bd7efc3d0d3f905550682`; repaired documentation
 checkpoint `6f475224073109dd210dd021018e84f26f8c0c44`; documentation and
 terminal continuity are recorded from the known prior checkpoint
-`d2d9b51546195f1cbf8969327e8f3bcadca0e8c4`. The containing commit and live
+`41cf3ac986515faaf15a6610bc588ec2d57fb0bd`. The containing commit and live
 remote equality are intentionally discovered from Git. Force-push was never
 used.
 
-External CI was not observed as a green authority. Any absent, zero-step, or
-platform/billing-blocked run remains non-evidence under repository policy; no
-workflow was weakened or retried to alter that external state.
+The exact-head Actions observation was run `33055137454` / job `98459927981`,
+matching live head `41cf3ac986515faaf15a6610bc588ec2d57fb0bd`. It completed
+with `failure` and `steps=[]`, so it is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence, and not CI green.
+Any absent, zero-step, or platform/billing-blocked run remains non-evidence
+under repository policy; no workflow was weakened or retried to alter that
+external state.
 
 ## Deferred / follow-up
 

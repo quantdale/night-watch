@@ -8,12 +8,13 @@ Status: COMPLETE
 Starting SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 Last validated implementation SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 Last substantive checkpoint SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
-Last documentation checkpoint SHA: d2d9b51546195f1cbf8969327e8f3bcadca0e8c4
+Last documentation checkpoint SHA: 41cf3ac986515faaf15a6610bc588ec2d57fb0bd
 STARTING_SHA: 9a70e7f3e81255d56352b9efb291f0fb4f4f03de
 LAST_VALIDATED_IMPLEMENTATION_SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 LAST_DOCUMENTATION_CHECKPOINT_SHA: d2d9b51546195f1cbf8969327e8f3bcadca0e8c4
 LIVE_HEAD_AUTHORITY: GIT
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
@@ -230,7 +231,7 @@ None.
   `1,903` total, `1,890` passed, `13` inherited skips, `0` failed.
 - `npm run campaign:synthetic`: PASS; `66 passed / 0 failed / 15.5s`.
 - `npm run test:owner-provenance`: PASS; `91 passed / 0 failed / 9.7s`.
-- Final pre-closure recheck: origin main at `d2d9b515`; GitHub open issues and
+- Final pre-closure recheck: origin main at `41cf3ac`; GitHub open issues and
   pull requests both `0`; no competing blocker.
 - Full local gate: PASS on `d2d9b515`, all nine groups, receipt
   `receipt:sha256:b026f83f2ac58f755df3040f`.
@@ -244,6 +245,10 @@ None.
   build `259,566` bytes with no external references, built browser `1 passed`.
 - Dev-server visual verification: content present, no overlay, zero console
   errors; browser and server closed cleanly.
+- Exact-head Actions observation: run `33055137454` / job `98459927981`
+  matched live head `41cf3ac986515faaf15a6610bc588ec2d57fb0bd`, completed with
+  `failure`, and had `steps=[]`; classified as
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence, not CI green.
 
 ## Files Changed
 
@@ -281,7 +286,7 @@ completed predecessor and all Alphaus sibling repositories remain untouched.
   disables health and future allows, while current upstream sockets are
   destroyed rather than surviving an evidence failure.
 - Final pre-closure recheck: `git ls-remote origin refs/heads/main` points to
-  the pushed continuity checkpoint `6f475224`; GitHub reports zero open issues
+  the pushed continuity checkpoint `41cf3ac`; GitHub reports zero open issues
   and zero open pull requests for `quantdale/night-watch`; durable docs now
   describe the resolved-egress invariant and preserve the exact browser DNS
   residual. No competing blocker was found.

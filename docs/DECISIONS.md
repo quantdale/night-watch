@@ -3496,7 +3496,11 @@ canonical serial regression was `2,573 passed / 16 skipped / 0 failed` out of
 `2,589`. Control Center UI typecheck, tests, build, built-browser checks, and
 local visual verification passed. External CI was not observed as green; a
 zero-step or absent external run remains non-evidence under the standing
-platform/billing policy. No DEV/NEXT/production, auth, data, cloud,
+platform/billing policy. The exact-head observation was run `33055137454` /
+job `98459927981`, matched head `41cf3ac986515faaf15a6610bc588ec2d57fb0bd`,
+and completed with `failure` and `steps=[]`; it is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence, and not CI green.
+No DEV/NEXT/production, auth, data, cloud,
 infrastructure, sibling-write, publication, runtime-AI, or force-push
 operation occurred.
 
