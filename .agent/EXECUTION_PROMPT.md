@@ -1,252 +1,385 @@
-# Nightwatch Executor Campaign — Source-Proof Soundness + Static Discovery Hardening
+# EXECUTION PROMPT — Durable Artifact + Control Center Truth Hardening
 
-Status: ACTIVE PLANNING HANDOFF — executor may start a fresh native task; no implementation from this campaign has landed yet.
-Planned-From: main at 266b5fcbb4c80125939f41df3bf9b5608654c753
+Status: ACTIVE PLANNING HANDOFF — IMPLEMENTATION NOT STARTED
+Change ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
+Planned-From: 49034831377f243054261361b4d1a7d783c0fc4f
 Target branch: main
-OpenSpec change: openspec/changes/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/
-Intended execution budget: approximately 12 productive engineering hours
-Scope: LOCAL / approved read-only source / synthetic only
+Expected productive budget: approximately 12 hours
+Safety authority: LOCAL / repository source / synthetic fixtures only
 
 ## Mission
 
-Pull the latest night-watch main branch and execute the OpenSpec change nightwatch-source-proof-soundness-and-static-discovery-hardening-v1 end to end.
+Execute the OpenSpec change openspec/changes/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/ end-to-end in one autonomous engineering session.
 
-Do not resume the completed nightwatch-source-analysis-runtime-hardening-v1 task. Create a fresh continuity-v2 task and make it the active task before source edits.
+The primary objective is not feature growth. It is to restore Nightwatch's durable evidence invariant:
 
-Your primary objective is NOT to increase proof counts. It is to prove that Nightwatch only promotes lexically real, reachable, mechanically complete source facts into response/semantic/campaign authority.
+1. malformed dossier JSON cannot be accepted by the strict artifact-validation facade through TypeScript-assumption gaps;
+2. a Control Center finding cannot claim CURRENT when any required source-currentness member is stale or unknown;
+3. the authority and adapter layers do not maintain competing copies of currentness logic;
+4. the rest of the durable artifact facade receives a bounded adversarial mutation audit for the same failure class.
 
-The planner found two mandatory soundness seams:
+Do not ask for routine confirmation. Use repository truth, tests, and the OpenSpec to resolve details. Stop only for an actual authorization boundary, an ambiguous unsafe migration that cannot be resolved locally, or terminal completion.
 
-1. Extended PHP direct-return proof appears able to prove a literal response from an incomplete control-flow function with implicit fall-through.
-2. Static TS/JS/Go route extraction and PHP declaration counting use raw-source regex matching that can be contaminated by comments/strings.
+## Why this campaign exists
 
-You must reproduce or falsify those claims through executable public-path tests. Do not accept the planner's static reasoning on faith.
+The planner audit found two concrete authority seams on current main.
 
-## Required bootstrap
+### P0-A — shallow runtime dossier validation
 
-Read, in this order:
+The artifact facade describes validateArtifact(kind, unknownValue) as a strict durable boundary. For dossier v1/v2, current runtime validators do not recursively prove many nested required fields. They rely on TypeScript types after JSON has already crossed the runtime boundary.
 
-1. AGENTS.md
-2. .agent/PLANNER_HANDOFF.md
-3. this file
-4. docs/CURRENT_STATE.md
-5. docs/SAFETY_MODEL.md
-6. docs/DECISIONS.md
-7. docs/ROADMAP.md
-8. docs/ARCHITECTURE.md where source/campaign authority is relevant
-9. .agent/ACTIVE_TASK.md and the completed prior task's STATE/REPORT
-10. every file in openspec/changes/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/
+Relevant code:
 
-Then reconcile live Git against Planned-From. Current tests/runtime/live source outrank this prompt if the repository changed.
+- src/core/artifactValidation/index.ts
+- src/core/artifactValidation/dossierKindValidation.ts
+- src/core/triage/dossier.ts
+- src/core/triage/dossierV2.ts
+- tests/unit/phase15pArtifactValidation.test.ts
 
-Create:
+You MUST reproduce false accepts with one-field mutations before fixing them. Do not claim every listed probe is a defect until the current code demonstrably accepts it.
 
-.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/SPEC.md
-.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/PLAN.md
-.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/STATE.md
-.agent/tasks/nightwatch-source-proof-soundness-and-static-discovery-hardening-v1/REPORT.md
+### P0-B — optimistic Control Center source currentness
 
-and route .agent/ACTIVE_TASK.md to the new task as ACTIVE. Preserve continuity protocol v2 and repository checkpoint rules.
+Both:
 
-## Non-negotiable H0 all-file audit
+- src/controlCenter/authorities/findingsAuthority.ts
+- src/controlCenter/adapters/findingsAdapter.ts
 
-Before implementation, literally scour the local checkout.
+currently label a whole dossier CURRENT if any source-change candidate is current-class. This can upgrade mixed current+stale and current+unknown evidence.
 
-Use a NUL-safe git ls-files manifest. Account for EVERY tracked file, not merely src/. The final task report must record tracked count and reviewed count and they must match.
+You MUST reproduce both paths and replace them with one conservative authority.
 
-For every tracked path, classify at minimum:
+## Mandatory takeover sequence
 
-- current runtime/source authority
-- safety/auth/network/product boundary
-- campaign/triage/portfolio/Phase-24 authority
-- source parser/analyzer/currentness/cache/invalidation
-- tests/gates/tooling
-- UI/Control Center
-- config/workflow
-- corpus/fixture
-- durable docs/history
-- agent continuity
-- generated/lock/metadata
+1. Read AGENTS.md and all repository-local instructions.
+2. Read .agent/PLANNER_HANDOFF.md and .agent/PLANS.md.
+3. Read .agent/ACTIVE_TASK.md and preserve the completed predecessor as history.
+4. Read every file in openspec/changes/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/.
+5. Fetch/reconcile origin/main.
+6. If main differs from Planned-From, review every intervening diff before source edits.
+7. Create native continuity-v2 task:
+   - .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/SPEC.md
+   - PLAN.md
+   - STATE.md
+   - REPORT.md
+8. Route .agent/ACTIVE_TASK.md to this new task.
+9. Record exact starting SHA, dirty state, toolchain, and authority scope.
+10. Begin the fresh exhaustive audit.
 
-Deep-read current executable/config/gate logic. Historical files still need role/coupling review; do not waste hours pretending every historical report is active business logic.
+## Workstream A — literal whole-repository audit
 
-Search broadly for TODO/FIXME/HACK/XXX, skips/only, ts-ignore/expect-error, unsafe eval/shell, hidden network/writes, duplicate analyzers/parsers, stale compatibility bridges, fail-open error paths, source-text/privacy leakage, global mutable state and unbounded collections. Record evidence, not just query strings.
+Do not rely on the planner's remote inventory alone.
 
-No source edit before this audit and baseline are checkpointed.
+Use local git ls-files as the authoritative tracked manifest. Read every tracked regular file. Include historical .agent records, docs, fixtures, UI, configs, scripts, tests, and generated-looking tracked artifacts.
 
-## Mandatory reproduction 1 — PHP implicit fall-through
+Record:
 
-Start with a focused test around analyzeSourceArtifact, then prove the public source-discovery consequence.
+- tracked files
+- reviewed files
+- bytes
+- lines
+- manifest digest
+- subsystem disposition
+- changed-since-Planned-From disposition
 
-Probe:
+Hard gate: reviewed files == tracked files.
 
-~~~php
-function readExample($mode) {
-    if ($mode) {
-        return ['id' => 1];
-    }
-}
-~~~
+Pay special attention to every consumer/producer of:
 
-Determine whether current code emits a mechanically-provable PHP_RETURN_ROOT_TYPE or PHP_RETURN_OBJECT_FIELDS observation and whether an otherwise exact discovered handler can therefore obtain responseProof/semanticProof PROVEN.
+- BugDossier / BugDossierV2
+- validateArtifact('dossier')
+- validateDossierArtifact
+- validateBugDossier / parseBugDossierV2
+- sourceChangeCandidates / SourceFreshness
+- FindingsDossierMetadata
+- projectFindings
+- artifact validation version fingerprints
+- Control Center generation/provenance digests
 
-Controls:
+## Workstream B — reproduce before repair
 
-- one unconditional literal return — should be provable;
-- conditional early literal return + unconditional compatible fallback — should be provable if every path is covered;
-- complete if/else — should be provable if every branch is exact;
-- missing else/fallback — must not be a whole-handler proof;
-- nested/loop/try/yield/dynamic/unknown flow — fail closed unless this campaign explicitly proves the bounded form.
+Build mutation tests from canonical producer outputs.
 
-If reproduced, this is a correctness defect. Fix it even if current proof/census counts fall.
+For v1 and v2, mutate one nested field at a time. At minimum cover IDs, timestamps, arrays, reproduction, browser/API differential, source candidates, confidence, fault boundary, severity/priority, semantic objects, v2 recipe/AI-ready structures, invalid enum/type/count, unknown nested field, sentinel, and prototype cases.
 
-Do NOT solve it by making every rejected analyzer observation globally override all proven observations. Fix completeness in the owning PHP response proof family.
+For each mutation:
 
-## Mandatory reproduction 2 — code-like route text
+- validate via owning module validator
+- validate via validateArtifact('dossier')
+- record current valid/invalid result
+- mark only accepted malformed inputs FALSE_ACCEPT
 
-Through the public synthetic source discovery path, test at least:
+Create a compact mutation ledger in task STATE/REPORT so the final commit explains exactly what changed.
 
-~~~ts
-// app.get("/ghost", ghostHandler)
-const documentation = 'router.get("/also-ghost", anotherHandler)';
-app.get("/real", realHandler);
-~~~
+Reproduce currentness truth table in both authority and raw adapter path:
 
-and Go comment/raw-string equivalents.
+- current/current
+- current/remote
+- current/stale
+- current/unknown
+- stale/unknown
+- stale only
+- unknown only
+- empty
+- permutations
 
-A comment/string route must not produce a route operation. The real route must preserve existing identity/order.
+Do not implement until these reproductions exist.
 
-If reproduced, replace raw-regex-over-unfiltered-source matching with bounded lexical-aware discovery. Do not execute JS/Go or introduce a framework runtime.
+## Workstream C — make dossier validation genuinely strict
 
-## Mandatory reproduction 3 — fake handler declarations
+Implement full bounded runtime validation for accepted v1/v2 shapes.
 
-Construct PHP source with one real handler function plus comment/docblock/string text containing the same function declaration spelling.
+Rules:
 
-The fake text must not turn one real declaration into MULTIPLE_SYMBOLS. Two lexically real declarations must still fail closed.
+- unknown JSON stays unknown until every required field is checked
+- use owning constants/vocabularies instead of duplicate literals
+- exact-key nested validation where schema is frozen
+- bounded strings, arrays, counts, ids, digests, timestamps
+- safe plain-object/prototype rules
+- complete SourceChangeCandidate validation
+- complete reproduction/differential/fault-boundary/confidence validation
+- existing semantic validators remain authoritative
+- v2 UNRESOLVED historical shape remains supported
+- no arbitrary recursive walk of attacker-controlled graphs
+- no raw error echo
+- no input mutation
 
-Prefer existing bounded PHP tokenization where ownership/coupling remains clean. If a new lexical helper is necessary, make it small, deterministic, bounded and independently tested.
+Preserve valid historical v1/v2 artifacts. Tight validation is not permission to delete backward compatibility.
 
-## Proof/version rules
+If a previously accepted committed artifact fails after the fix, determine whether it is:
+- actually malformed under its own frozen schema; or
+- valid historical data the new validator misunderstood.
 
-Correctness changes may legitimately alter source-surface/analyzer/contract/census digests.
+Do not paper over the distinction.
 
-For each delta classify:
+## Workstream D — validation identity discipline
 
-- INTENTIONAL_CORRECTNESS_DELTA
-- EXPECTED_VERSION_INVALIDATION
-- UNEXPLAINED_DRIFT
+Audit ARTIFACT_VALIDATION_FACADE_VERSION and every version fingerprint/cache/currentness contract that consumes it.
 
-Unexplained drift is a blocker.
+If the tightened semantics require a validation-facade version bump, do it once and update all exact consumers. Do not bump:
 
-If extended real-source response semantics change, bump the appropriate version identity and prove that sourceSurfaceAnalyzerSetIdentity, caches, currentness/invalidation and downstream source census observe it.
+- dossier schema version
+- source analyzer version
+- semantic contract version
+- replay version
+- Phase-24 selector identity
 
-Never bump an identity solely to make a failing parity test go away.
+unless that exact wire/semantic contract genuinely changes.
 
-## Fresh census and optional coverage work
+All identity drift must be categorized and explained.
 
-After the soundness fixes are green, rerun the entire current source proof census.
+## Workstream E — one currentness authority
 
-Do not aim for the old 83 response contracts / 3 eligible as a minimum. If corrected truth is lower, keep the lower truthful result.
+Remove the duplicated ANY-current reducer.
 
-Only if the hardened current census reveals a repeated exact static response family with:
+Preferred architecture:
 
-- current positive population;
-- complete bounded syntax;
-- deterministic identity;
-- positive + adversarial near-miss fixtures;
-- currentness binding;
-- no dynamic/runtime/fuzzy inference;
-- explicit false-positive analysis;
-- downstream compatibility through existing adapters;
+valid durable dossier
+-> findings authority
+-> sanitized FindingsDossierMetadata
+-> findings adapter
+-> DTO
 
-may you add ONE such proof family.
+The adapter should project, not decide.
 
-If no family clears that bar, record NO_SAFE_NEW_FAMILY and spend the remaining useful budget on adversarial tests, mutation cases, bounded helper decomposition, differential tooling, hidden bypass search and clean-checkout proof.
+If a direct raw-dossier adapter input is actually used outside tests, preserve it only through the same shared pure reducer.
 
-Do not touch GET-only read-only authority, runtime-binding generalization, dynamic dispatch, owner policy, replay authority, selection rules or publication.
+Conservative baseline semantics:
 
-## 12-hour work shape
+- empty => SOURCE_UNAVAILABLE
+- any UNKNOWN => SOURCE_UNAVAILABLE
+- else any LOCAL_TRACKING_REF_ONLY => SOURCE_STALE
+- else every member current-class => CURRENT
 
-Use the OpenSpec tasks.md schedule as the primary checklist:
+Current-class means SOURCE_CURRENT_LOCALLY or REMOTE_FRESHNESS_CONFIRMED.
 
-- H0–1.5: full tracked-file audit + baseline
-- H1.5–3: reproduce/falsify all soundness probes
-- H3–5.5: PHP reachability/completeness hardening
-- H5–7: route/declaration lexical hardening
-- H7–8.5: downstream proof/census reconciliation
-- H8.5–10: adversarial depth; optional exact-family admission only if earned
-- H10–11: full local + clean-checkout acceptance
-- H11–12: state/report/docs/Git/exact-head CI observation
+Make the reducer:
+- deterministic
+- permutation invariant
+- total over validated SourceFreshness values
+- unreachable for malformed candidate values because validation rejects first
 
-This is a productive engineering budget, not a timer. Do not idle. Do not stop after the first green fix. If all required acceptance is genuinely complete early, continue useful in-scope adversarial and coupling review; stop only when the campaign is terminal or further work would be manufactured scope.
+Investigate the existing case where correlateSourceChanges can emit relevance UNKNOWN / confidence UNRESOLVED while sourceFreshness remains current-class. Decide from owning contracts whether sourceCurrentness is strictly checkout freshness or total evidence currentness. Document the meaning; do not silently conflate them.
 
-## Validation
+## Workstream F — facade-wide mutation audit
 
-At minimum run and record:
+The dossier hole is a signal, not permission to assume other validators are broken.
 
-- npm run typecheck
-- npm run hardening:check
-- npm run quality-gate:spec
-- npm run gate:inventory
-- focused Phase 25/26/27/28 analyzer/source/response-flow suites
-- real-source extraction/currentness/admission tests
-- sourceAnalysisParity tests
-- npm run campaign:synthetic
-- npm run campaign:source-gaps
-- npm run campaign:eligibility-census
-- npm run campaign:readonly-census
-- npm run test:semantic-compat
-- npm run test:owner-provenance
-- npm run gate:local
-- npm run gate:clean
-- npm run agent:check
-- npm run agent:audit
-- npm run project:check
-- git diff --check
+Enumerate ARTIFACT_KIND_VERSION_ACCEPTANCE and probe every registered kind with bounded nested mutations.
 
-Run the canonical complete Playwright enumeration and a fresh disposable checkout/topology acceptance consistent with current repository policy.
+For each kind record:
+- producer
+- validator
+- positive fixture
+- nested authority fields
+- at least one type mutation
+- at least one enum/identity mutation when applicable
+- unknown-field behavior
+- privacy/sentinel behavior
+- mutation-of-input behavior
 
-Capture comparable before/after source-census wall time and peak RSS. Correctness may cost some time; unbounded or severe regressions require investigation.
+Fix additional reproduced false accepts only if:
+- schema ownership is clear
+- behavior is pure/local
+- compatibility impact is bounded
+- tests can prove correctness
 
-If Control Center source DTOs/adapters change, run its typecheck/tests/build/browser gate. If they do not change, still verify source projections consumed by it remain schema-compatible.
+Otherwise leave a fail-closed mitigation + explicit follow-up recommendation.
 
-## Safety
+## Workstream G — Control Center integration proof
 
-Hard boundaries:
+Prove:
 
-- no production/DEV/NEXT/authenticated product contact;
-- no data/infra/cloud operations;
-- no sibling-source writes;
-- no source execution;
-- no publication;
-- no runtime AI authority;
-- no canonical self-dev promotion;
-- no force push;
-- raw source/customer/credential/cookie/body/trace values never enter committed task artifacts;
-- all uncertain source facts fail closed.
+- malformed dossier never yields valid FindingsDossierMetadata
+- mixed valid+corrupt store => explicit UNKNOWN / partial corruption
+- valid rows under partial corruption remain sanitized
+- stale/unknown cannot render CURRENT
+- collection UNKNOWN is not upgraded to AVAILABLE
+- generation/provenance changes when currentness changes
+- snapshot refresh failure never serves old generation as CURRENT
+- SSE remains advisory
+- GET remains authoritative
+- loopback/read-only/Host/Origin/body restrictions remain intact
+- no command, browser product, network, file write, selector, promotion, or execution route is introduced
 
-## Git and reporting
+If the UI is touched or its labels depend on corrected values, run built UI and synthetic browser qualification. Add the smallest deterministic fixture needed to visibly prove SOURCE_STALE and SOURCE_UNAVAILABLE.
 
-Commit only coherent validated checkpoints and push according to repository policy. Never force push.
+## Workstream H — full regression and quality gates
+
+After every meaningful slice run focused tests.
+
+Before terminal completion run the repository's current native full cone. Discover exact commands from package.json/current docs rather than trusting stale prose.
+
+Required evidence categories:
+
+- typecheck
+- hardening
+- owner policy/provenance
+- artifact-validation comprehensive suite
+- dossier/currentness focused tests
+- Control Center authorities/adapters/contracts/server/snapshot tests
+- UI unit/build and built-server browser qualification when applicable
+- campaign synthetic compatibility
+- semantic compatibility if validation fingerprint changed
+- project-state
+- continuity/agent-state
+- local quality gate
+- clean Node20 gate
+- canonical serial Playwright suite
+- exact skip count
+- git diff / private-artifact audit
+
+No test deletion, new skip, weakened assertion, or cached verdict.
+
+Fix every Critical/High regression caused by this campaign before proceeding.
+
+## Safety boundaries — absolute
+
+Do not:
+
+- contact DEV
+- contact NEXT
+- contact production
+- load authenticated storage state
+- access Alphaus data/datastores/cloud/infrastructure
+- write sibling repositories
+- publish evidence
+- create issues/PRs/releases
+- call AI/model providers
+- add network-based validation
+- run Docker/L6 experiments
+- mutate user/global config
+- introduce a Control Center command route
+
+All work must remain LOCAL / SOURCE / SYNTHETIC.
+
+The known GitHub Actions zero-step billing/platform condition is not an implementation bug. Do not modify CI merely to make it appear green.
+
+## Commit / push protocol
+
+Follow AGENTS.md single-writer and validation rules.
+
+Use durable checkpoints, not noisy microcommits.
+
+Each implementation checkpoint commit message should contain:
+- campaign ID
+- workstreams completed
+- reproduced defects fixed
+- validation executed/results
+- safety statement
+- known blockers
+
+Before final push:
+- working tree intentional/clean
+- local gates green
+- state/report updated
+- no secret/private artifact staged
+
+Push to origin main only as repository policy permits. Confirm remote main equals final local HEAD.
+
+## Final external CI observation
+
+Only after final exact-head local acceptance, and only if current repo policy expects an observation:
+
+- inspect the exact-head Actions run once
+- executed passing steps => report exact evidence
+- null/empty steps => NO_STEPS_BILLING_OR_PLATFORM_BLOCK
+- do not call zero-step result green
+- do not retry repeatedly or churn workflow
+
+## Completion gate
+
+You may mark COMPLETE only when all are true:
+
+1. Fresh tracked-file audit is 1:1 complete.
+2. Every planner P0 probe is reproduced or explicitly falsified.
+3. Every reproduced malformed dossier false accept in the selected schema scope is fixed.
+4. Valid historical v1/v2 producer corpus remains accepted or any rejection has a justified compatibility decision.
+5. Mixed current/stale and current/unknown cannot yield CURRENT.
+6. One currentness authority remains.
+7. Facade-wide mutation audit has a disposition for every registered kind.
+8. No malformed durable dossier yields a valid public finding.
+9. Full local + clean acceptance passes.
+10. No introduced Critical/High regression remains.
+11. Safety/external-contact vectors are zero.
+12. STATE/REPORT/docs/OpenSpec truth is current.
+13. Final validated commit is pushed and remote HEAD confirmed.
+
+If any gate cannot be met, leave the task BLOCKED or INCOMPLETE with the exact evidence and next action. Never fabricate completion.
+
+## Time discipline
+
+Treat 12 hours as the engineering budget, not a reason to stall.
+
+Suggested sequence:
+
+- 0-1h takeover + exhaustive audit
+- 1-2.5h reproductions
+- 2.5-5h strict validators
+- 5-6.5h currentness authority convergence
+- 6.5-8.5h facade mutation audit / adjacent bounded repairs
+- 8.5-9.5h Control Center/UI differential proof
+- 9.5-11h full local/clean regression + fixes
+- 11-12h exact-head evidence, docs, continuity, final push
+
+If the full acceptance gate is achieved earlier, close honestly and stop. If the budget is exhausted with unresolved correctness, preserve truthful INCOMPLETE/BLOCKED state and the exact next command/action.
+
+## Terminal report format
 
 REPORT.md must include:
 
-- exact starting/final SHAs;
-- exhaustive audit manifest totals;
-- every planner probe and disposition;
-- reproduced defects with root cause;
-- implementation and versioning;
-- safe before/after proof/census counts;
-- intentional identity deltas;
-- adversarial matrix;
-- validation ledger with exact counts/skips;
-- before/after timing + RSS;
-- regressions fixed;
-- candidates rejected and why;
-- remaining risks/deferred work;
-- explicit safety counters/statement;
-- exact-head Actions observation.
-
-A GitHub Actions job with steps: [] is NO_STEPS_BILLING_OR_PLATFORM_BLOCK, not green CI.
-
-Terminal next action after complete validated push: STOP.
+- starting SHA and final SHA
+- tracked-file audit counts/digest
+- reproduced planner findings
+- mutation false-accept table before/after
+- additional facade findings by artifact kind
+- currentness truth table before/after
+- architecture changes
+- validation-facade/version identity changes
+- focused test totals
+- full test totals and skips
+- quality/clean receipts
+- external CI classification
+- safety vector with all prohibited contacts/mutations
+- remaining risks
+- final next action: STOP
