@@ -45,7 +45,10 @@ function runGitStatusPorcelain(repositoryRoot) {
     env: { PATH: '/usr/bin:/bin', LANG: 'C', LC_ALL: 'C', GIT_OPTIONAL_LOCKS: '0', GIT_CONFIG_NOSYSTEM: '1' },
     shell: false,
     encoding: 'utf8',
-    timeout: 5_000,
+    // A clean checkout with its freshly installed node_modules can require
+    // several seconds for Git's ignored-file walk. Keep the bounded guard,
+    // but leave enough headroom for the authoritative clean gate.
+    timeout: 30_000,
     maxBuffer: 512 * 1024,
   });
   if (result.status !== 0) fail('SELFDEV_CATALOG_INTEGRITY_GIT_FAILED');
