@@ -1,392 +1,467 @@
-# EXECUTION PROMPT — Durable Artifact + Control Center Truth Hardening
+# EXECUTION PROMPT — Resolved Egress + Containment Truth Hardening
 
-Status: COMPLETED — executed and closed in the terminal task records
-`.agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/`.
-Change ID: nightwatch-durable-artifact-and-control-center-truth-hardening-v1
-Planned-From: 49034831377f243054261361b4d1a7d783c0fc4f
+Status: ACTIVE PLANNING HANDOFF — IMPLEMENTATION NOT STARTED
+Change ID: nightwatch-resolved-egress-and-containment-truth-hardening-v1
+Planned-From: 4981b212eed46ffde1edac2b175f1bd1b1f826d2
 Target branch: main
-Expected productive budget: approximately 12 hours
-Safety authority: LOCAL / repository source / synthetic fixtures only
+OpenSpec: openspec/changes/nightwatch-resolved-egress-and-containment-truth-hardening-v1/
+Expected productive budget: approximately 12 engineering hours
+Safety authority: LOCAL / repository source / synthetic loopback fixtures only
 
 ## Mission
 
-Execute the OpenSpec change openspec/changes/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/ end-to-end in one autonomous engineering session.
+Pull/reconcile current quantdale/night-watch main and execute the OpenSpec change nightwatch-resolved-egress-and-containment-truth-hardening-v1 end-to-end as one autonomous campaign.
 
-The primary objective is not feature growth. It is to restore Nightwatch's durable evidence invariant:
+Do not resume the completed durable-artifact campaign. Create a fresh continuity-v2 task.
 
-1. malformed dossier JSON cannot be accepted by the strict artifact-validation facade through TypeScript-assumption gaps;
-2. a Control Center finding cannot claim CURRENT when any required source-currentness member is stale or unknown;
-3. the authority and adapter layers do not maintain competing copies of currentness logic;
-4. the rest of the durable artifact facade receives a bounded adversarial mutation audit for the same failure class.
+The objective is to strengthen Nightwatch's L5 egress invariant from:
 
-Do not ask for routine confirmation. Use repository truth, tests, and the OpenSpec to resolve details. Stop only for an actual authorization boundary, an ambiguous unsafe migration that cannot be resolved locally, or terminal completion.
+"hostname is allowlisted"
+
+to:
+
+"hostname is allowlisted, every resolved address is policy-acceptable, and the socket dials the exact validated numeric destination without uncontrolled re-resolution."
+
+Also make proxy evidence and pre-real-run identity truthful about this stronger containment contract.
+
+Do not ask for routine confirmation. Resolve implementation details from repository truth, tests, and this OpenSpec. Stop only for a genuine authorization boundary, an unsafe ambiguity that cannot be conservatively resolved, or terminal completion.
 
 ## Why this campaign exists
 
-The planner audit found two concrete authority seams on current main.
+Current main has a concrete unsolved containment seam.
 
-### P0-A — shallow runtime dossier validation
+In src/proxy/server.ts, after OutboundPolicy allows a hostname:
 
-The artifact facade describes validateArtifact(kind, unknownValue) as a strict durable boundary. For dossier v1/v2, current runtime validators do not recursively prove many nested required fields. They rely on TypeScript types after JSON has already crossed the runtime boundary.
+- HTTP uses http.request with target.hostname
+- CONNECT uses net.connect with target.hostname
+- WebSocket Upgrade uses net.connect with target.hostname
 
-Relevant code:
+Node therefore resolves the actual socket destination after hostname authorization. Nightwatch does not own or validate the returned address set and does not bind the policy decision to the exact numeric destination.
 
-- src/core/artifactValidation/index.ts
-- src/core/artifactValidation/dossierKindValidation.ts
-- src/core/triage/dossier.ts
-- src/core/triage/dossierV2.ts
-- tests/unit/phase15pArtifactValidation.test.ts
+Current proxy tests prove denied literal hosts/IPs receive zero connections. They do not prove address-class admission or exact hostname-to-socket binding.
 
-You MUST reproduce false accepts with one-field mutations before fixing them. Do not claim every listed probe is a defect until the current code demonstrably accepts it.
+A second adjacent truth gap exists: proxy events record allow before resolution/connection outcome, and ProxySummary.allowed counts those authorizations. Resolution denial/failure and successful exact binding are not distinct durable outcomes.
 
-### P0-B — optimistic Control Center source currentness
+The real-run gate checks hostname policy version and proxy health but not a resolved-egress binding identity.
 
-Both:
+docs/SAFETY_MODEL.md also explicitly says browser speculative DNS remains unresolved and future L6 network namespace/container work is planned. That is real residual scope, but this campaign does NOT authorize Docker, root, firewall, or namespace implementation.
 
-- src/controlCenter/authorities/findingsAuthority.ts
-- src/controlCenter/adapters/findingsAdapter.ts
+## Mandatory takeover
 
-currently label a whole dossier CURRENT if any source-change candidate is current-class. This can upgrade mixed current+stale and current+unknown evidence.
+Read in this order:
 
-You MUST reproduce both paths and replace them with one conservative authority.
+1. AGENTS.md
+2. .agent/PLANNER_HANDOFF.md
+3. .agent/PLANS.md
+4. this file
+5. .agent/ACTIVE_TASK.md
+6. docs/CURRENT_STATE.md
+7. docs/SAFETY_MODEL.md
+8. docs/DECISIONS.md
+9. docs/ROADMAP.md
+10. docs/ARCHITECTURE.md
+11. completed predecessor STATE/REPORT
+12. every file in openspec/changes/nightwatch-resolved-egress-and-containment-truth-hardening-v1/
 
-## Mandatory takeover sequence
+Then:
 
-1. Read AGENTS.md and all repository-local instructions.
-2. Read .agent/PLANNER_HANDOFF.md and .agent/PLANS.md.
-3. Read .agent/ACTIVE_TASK.md and preserve the completed predecessor as history.
-4. Read every file in openspec/changes/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/.
-5. Fetch/reconcile origin/main.
-6. If main differs from Planned-From, review every intervening diff before source edits.
-7. Create native continuity-v2 task:
-   - .agent/tasks/nightwatch-durable-artifact-and-control-center-truth-hardening-v1/SPEC.md
-   - PLAN.md
-   - STATE.md
-   - REPORT.md
-8. Route .agent/ACTIVE_TASK.md to this new task.
-9. Record exact starting SHA, dirty state, toolchain, and authority scope.
-10. Begin the fresh exhaustive audit.
+- fetch origin/main
+- compare takeover HEAD with Planned-From
+- inspect every intervening diff
+- create .agent/tasks/nightwatch-resolved-egress-and-containment-truth-hardening-v1/SPEC.md
+- create PLAN.md, STATE.md, REPORT.md
+- declare CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
+- route .agent/ACTIVE_TASK.md to the fresh ACTIVE task
+- record exact starting SHA/toolchain/dirty state/scope before source edits
 
-## Workstream A — literal whole-repository audit
+## H0 — literal every-file audit is non-negotiable
 
-Do not rely on the planner's remote inventory alone.
+Before implementation, scour the entire local checkout.
 
-Use local git ls-files as the authoritative tracked manifest. Read every tracked regular file. Include historical .agent records, docs, fixtures, UI, configs, scripts, tests, and generated-looking tracked artifacts.
+Use NUL-safe git ls-files and account for every tracked regular file.
 
 Record:
 
-- tracked files
-- reviewed files
-- bytes
-- lines
-- manifest digest
-- subsystem disposition
-- changed-since-Planned-From disposition
+- tracked count
+- reviewed count
+- tracked bytes
+- tracked lines
+- deterministic manifest/content digest
+- subsystem classification
+- active-runtime vs historical/docs disposition
+- changed-since-planner disposition
 
-Hard gate: reviewed files == tracked files.
+Hard gate: reviewed == tracked.
 
-Pay special attention to every consumer/producer of:
+Planner remote baseline at 4981b212... was 1,334 tracked blobs / 14,615,257 bytes. This is only a cross-check; local Git at takeover is authoritative.
 
-- BugDossier / BugDossierV2
-- validateArtifact('dossier')
-- validateDossierArtifact
-- validateBugDossier / parseBugDossierV2
-- sourceChangeCandidates / SourceFreshness
-- FindingsDossierMetadata
-- projectFindings
-- artifact validation version fingerprints
-- Control Center generation/provenance digests
+At minimum mechanically search/disposition across the complete tree:
 
-## Workstream B — reproduce before repair
+- TODO/FIXME/HACK/XXX/DEPRECATED
+- test.skip/only and describe.skip/only
+- ts-ignore/expect-error/eslint-disable
+- eval/new Function/shell:true/child_process
+- all dns.lookup/resolve APIs
+- all http/https/fetch/net/socket/dgram primitives
+- browser launch/proxy flags
+- all ProxyEvent/ProxySummary/ProxyRuntimeState consumers
+- all real-run gate consumers
+- every env/host/address policy
+- all writes/persistence that could capture resolver diagnostics
+- every test/corpus fixture that asserts network safety
 
-Build mutation tests from canonical producer outputs.
+Historical .agent/docs files still count as reviewed. Do not waste the campaign rewriting completed history unless it contains a live conflicting instruction.
 
-For v1 and v2, mutate one nested field at a time. At minimum cover IDs, timestamps, arrays, reproduction, browser/API differential, source candidates, confidence, fault boundary, severity/priority, semantic objects, v2 recipe/AI-ready structures, invalid enum/type/count, unknown nested field, sentinel, and prototype cases.
+No production source edit before H0 + baseline are recorded in STATE.
 
-For each mutation:
+## Reproduce before repair
 
-- validate via owning module validator
-- validate via validateArtifact('dossier')
-- record current valid/invalid result
-- mark only accepted malformed inputs FALSE_ACCEPT
+The planner finding is not a license to blindly patch.
 
-Create a compact mutation ledger in task STATE/REPORT so the final commit explains exactly what changed.
+Create executable failing tests first for the public/owning proxy path.
 
-Reproduce currentness truth table in both authority and raw adapter path:
+### Reproduction A — hostname allow does not bind address
 
-- current/current
-- current/remote
-- current/stale
-- current/unknown
-- stale/unknown
-- stale only
-- unknown only
-- empty
-- permutations
+Use a synthetic injected resolver. No public DNS.
 
-Do not implement until these reproductions exist.
+Required cases:
 
-## Workstream C — make dossier validation genuinely strict
+- allowlisted synthetic hostname -> 127.0.0.1
+- same hostname -> 127.0.0.2
+- safe + unsafe mixed answers
+- malformed answer
+- empty answer
+- resolver error
+- resolver never settles / bounded timeout
+- IPv4
+- IPv6
+- IPv4-mapped IPv6
 
-Implement full bounded runtime validation for accepted v1/v2 shapes.
+Prove current semantics, then implement the corrected invariant.
 
-Rules:
+### Reproduction B — denied hostname must never resolve
 
-- unknown JSON stays unknown until every required field is checked
-- use owning constants/vocabularies instead of duplicate literals
-- exact-key nested validation where schema is frozen
-- bounded strings, arrays, counts, ids, digests, timestamps
-- safe plain-object/prototype rules
-- complete SourceChangeCandidate validation
-- complete reproduction/differential/fault-boundary/confidence validation
-- existing semantic validators remain authoritative
-- v2 UNRESOLVED historical shape remains supported
-- no arbitrary recursive walk of attacker-controlled graphs
-- no raw error echo
-- no input mutation
+Spy resolver call count.
 
-Preserve valid historical v1/v2 artifacts. Tight validation is not permission to delete backward compatibility.
+Test:
 
-If a previously accepted committed artifact fails after the fix, determine whether it is:
-- actually malformed under its own frozen schema; or
-- valid historical data the new validator misunderstood.
+- hard deny
+- production-class deny
+- unknown Alphaus deny
+- external default deny
+- telemetry local block
+- optional-support local block
+- browser-background local block
 
-Do not paper over the distinction.
+Expected: zero target resolver calls and zero upstream connections.
 
-## Workstream D — validation identity discipline
+### Reproduction C — all protocols share one address authority
 
-Audit ARTIFACT_VALIDATION_FACADE_VERSION and every version fingerprint/cache/currentness contract that consumes it.
+Exercise the same resolver matrix through:
 
-If the tightened semantics require a validation-facade version bump, do it once and update all exact consumers. Do not bump:
+- forward HTTP
+- CONNECT
+- WebSocket Upgrade
+- WSS/HTTPS tunnel framing where the existing fixture can prove it without MITM
 
-- dossier schema version
-- source analyzer version
-- semantic contract version
-- replay version
-- Phase-24 selector identity
+No protocol may own a weaker resolver rule.
 
-unless that exact wire/semantic contract genuinely changes.
+### Reproduction D — exact dial
 
-All identity drift must be categorized and explained.
+Instrument the connector locally.
 
-## Workstream E — one currentness authority
+The AFTER invariant must prove:
 
-Remove the duplicated ANY-current reducer.
+- resolver accepts numeric A
+- socket receives numeric A
+- socket does not receive the original hostname
+- no second DNS lookup occurs in that connection attempt
+- HTTP Host / CONNECT authority still contains original hostname
 
-Preferred architecture:
+### Reproduction E — evidence truth
 
-valid durable dossier
--> findings authority
--> sanitized FindingsDossierMetadata
--> findings adapter
--> DTO
+Capture current behavior for:
 
-The adapter should project, not decide.
+- policy allow + resolver failure
+- policy allow + unsafe address
+- policy allow + connect refusal
+- policy allow + successful connection
 
-If a direct raw-dossier adapter input is actually used outside tests, preserve it only through the same shared pure reducer.
-
-Conservative baseline semantics:
-
-- empty => SOURCE_UNAVAILABLE
-- any UNKNOWN => SOURCE_UNAVAILABLE
-- else any LOCAL_TRACKING_REF_ONLY => SOURCE_STALE
-- else every member current-class => CURRENT
-
-Current-class means SOURCE_CURRENT_LOCALLY or REMOTE_FRESHNESS_CONFIRMED.
-
-Make the reducer:
-- deterministic
-- permutation invariant
-- total over validated SourceFreshness values
-- unreachable for malformed candidate values because validation rejects first
+Then make durable/sanitized evidence distinguish policy authorization from resolution/connect outcome. Do not log raw unbounded errors.
 
-Investigate the existing case where correlateSourceChanges can emit relevance UNKNOWN / confidence UNRESOLVED while sourceFreshness remains current-class. Decide from owning contracts whether sourceCurrentness is strictly checkout freshness or total evidence currentness. Document the meaning; do not silently conflate them.
+### Reproduction F — old runtime state
 
-## Workstream F — facade-wide mutation audit
+Build a valid current hostname-only ProxyRuntimeState fixture. After hardening, it must fail the new containment runtime/gate identity rather than masquerading as current.
 
-The dossier hole is a signal, not permission to assume other validators are broken.
+## Implement one pure resolved-address classifier
 
-Enumerate ARTIFACT_KIND_VERSION_ACCEPTANCE and probe every registered kind with bounded nested mutations.
+Create the smallest owning pure module. Do not scatter CIDR logic across protocol handlers.
 
-For each kind record:
-- producer
-- validator
-- positive fixture
-- nested authority fields
-- at least one type mutation
-- at least one enum/identity mutation when applicable
-- unknown-field behavior
-- privacy/sentinel behavior
-- mutation-of-input behavior
+Cover exact boundary behavior for:
 
-Fix additional reproduced false accepts only if:
-- schema ownership is clear
-- behavior is pure/local
-- compatibility impact is bounded
-- tests can prove correctness
+IPv4:
+- unspecified
+- exact loopback vs other loopback aliases
+- RFC1918 private
+- link-local
+- CGNAT/shared
+- documentation
+- benchmark/testing
+- multicast
+- reserved/special-use
+- global unicast
 
-Otherwise leave a fail-closed mitigation + explicit follow-up recommendation.
+IPv6:
+- unspecified
+- loopback
+- link-local
+- unique-local
+- multicast
+- documentation/reserved
+- IPv4-mapped
+- global unicast
 
-## Workstream G — Control Center integration proof
+Do not classify CIDRs with fragile string-prefix regexes.
 
-Prove:
+Target policy:
 
-- malformed dossier never yields valid FindingsDossierMetadata
-- mixed valid+corrupt store => explicit UNKNOWN / partial corruption
-- valid rows under partial corruption remain sanitized
-- stale/unknown cannot render CURRENT
-- collection UNKNOWN is not upgraded to AVAILABLE
-- generation/provenance changes when currentness changes
-- snapshot refresh failure never serves old generation as CURRENT
-- SSE remains advisory
-- GET remains authoritative
-- loopback/read-only/Host/Origin/body restrictions remain intact
-- no command, browser product, network, file write, selector, promotion, or execution route is introduced
-
-If the UI is touched or its labels depend on corrected values, run built UI and synthetic browser qualification. Add the smallest deterministic fixture needed to visibly prove SOURCE_STALE and SOURCE_UNAVAILABLE.
-
-## Workstream H — full regression and quality gates
-
-After every meaningful slice run focused tests.
-
-Before terminal completion run the repository's current native full cone. Discover exact commands from package.json/current docs rather than trusting stale prose.
+LOCAL:
+- exact 127.0.0.1 / ::1 transport authority only, unless the current config explicitly proves another exact address
 
-Required evidence categories:
+DEV/NEXT/static external:
+- hostname must already pass existing OutboundPolicy
+- resolved answers must be globally routable unicast
+- special-use/private/local ranges fail closed
+- mixed safe+unsafe answer set fails closed
 
-- typecheck
-- hardening
-- owner policy/provenance
-- artifact-validation comprehensive suite
-- dossier/currentness focused tests
-- Control Center authorities/adapters/contracts/server/snapshot tests
-- UI unit/build and built-server browser qualification when applicable
-- campaign synthetic compatibility
-- semantic compatibility if validation fingerprint changed
-- project-state
-- continuity/agent-state
-- local quality gate
-- clean Node20 gate
-- canonical serial Playwright suite
-- exact skip count
-- git diff / private-artifact audit
+Do not query live Alphaus DNS and do not invent CIDR allowlists.
 
-No test deletion, new skip, weakened assertion, or cached verdict.
+If repository truth proves a real environment requires a non-global range, record a future explicit owner-reviewed address-policy need. Do not weaken the rule ad hoc in this local campaign.
 
-Fix every Critical/High regression caused by this campaign before proceeding.
+## Implement one owned resolver seam
 
-## Safety boundaries — absolute
+Requirements:
 
-Do not:
+- called only after hostname allow
+- tests inject deterministic address records only
+- real resolver remains internal
+- answer count bounded
+- malformed/family mismatch rejected
+- empty set rejected
+- categorical errors only
+- no arbitrary callback/socket injection from page/config
+- logical timeout/bound so request cannot hang forever
+- be truthful if OS lookup cannot be physically cancelled
+- IP literals still pass address classification
+- no global unbounded resolver cache
 
-- contact DEV
-- contact NEXT
-- contact production
-- load authenticated storage state
-- access Alphaus data/datastores/cloud/infrastructure
-- write sibling repositories
-- publish evidence
-- create issues/PRs/releases
-- call AI/model providers
-- add network-based validation
-- run Docker/L6 experiments
-- mutate user/global config
-- introduce a Control Center command route
-
-All work must remain LOCAL / SOURCE / SYNTHETIC.
-
-The known GitHub Actions zero-step billing/platform condition is not an implementation bug. Do not modify CI merely to make it appear green.
-
-## Commit / push protocol
-
-Follow AGENTS.md single-writer and validation rules.
-
-Use durable checkpoints, not noisy microcommits.
-
-Each implementation checkpoint commit message should contain:
-- campaign ID
-- workstreams completed
-- reproduced defects fixed
-- validation executed/results
-- safety statement
-- known blockers
-
-Before final push:
-- working tree intentional/clean
-- local gates green
-- state/report updated
-- no secret/private artifact staged
-
-Push to origin main only as repository policy permits. Confirm remote main equals final local HEAD.
-
-## Final external CI observation
-
-Only after final exact-head local acceptance, and only if current repo policy expects an observation:
-
-- inspect the exact-head Actions run once
-- executed passing steps => report exact evidence
-- null/empty steps => NO_STEPS_BILLING_OR_PLATFORM_BLOCK
-- do not call zero-step result green
-- do not retry repeatedly or churn workflow
-
-## Completion gate
-
-You may mark COMPLETE only when all are true:
-
-1. Fresh tracked-file audit is 1:1 complete.
-2. Every planner P0 probe is reproduced or explicitly falsified.
-3. Every reproduced malformed dossier false accept in the selected schema scope is fixed.
-4. Valid historical v1/v2 producer corpus remains accepted or any rejection has a justified compatibility decision.
-5. Mixed current/stale and current/unknown cannot yield CURRENT.
-6. One currentness authority remains.
-7. Facade-wide mutation audit has a disposition for every registered kind.
-8. No malformed durable dossier yields a valid public finding.
-9. Full local + clean acceptance passes.
-10. No introduced Critical/High regression remains.
-11. Safety/external-contact vectors are zero.
-12. STATE/REPORT/docs/OpenSpec truth is current.
-13. Final validated commit is pushed and remote HEAD confirmed.
-
-If any gate cannot be met, leave the task BLOCKED or INCOMPLETE with the exact evidence and next action. Never fabricate completion.
-
-## Time discipline
-
-Treat 12 hours as the engineering budget, not a reason to stall.
-
-Suggested sequence:
-
-- 0-1h takeover + exhaustive audit
-- 1-2.5h reproductions
-- 2.5-5h strict validators
-- 5-6.5h currentness authority convergence
-- 6.5-8.5h facade mutation audit / adjacent bounded repairs
-- 8.5-9.5h Control Center/UI differential proof
-- 9.5-11h full local/clean regression + fixes
-- 11-12h exact-head evidence, docs, continuity, final push
-
-If the full acceptance gate is achieved earlier, close honestly and stop. If the budget is exhausted with unresolved correctness, preserve truthful INCOMPLETE/BLOCKED state and the exact next command/action.
-
-## Terminal disposition
-
-This execution prompt was executed under its LOCAL / SOURCE / SYNTHETIC
-authority boundary. The implementation, validation, documentation, and Git
-closure requirements are complete; no external CI result is claimed.
-
-## Terminal report format
-
-REPORT.md must include:
-
-- starting SHA and final SHA
-- tracked-file audit counts/digest
-- reproduced planner findings
-- mutation false-accept table before/after
-- additional facade findings by artifact kind
-- currentness truth table before/after
-- architecture changes
-- validation-facade/version identity changes
-- focused test totals
-- full test totals and skips
-- quality/clean receipts
-- external CI classification
-- safety vector with all prohibited contacts/mutations
-- remaining risks
-- final next action: STOP
+Validate the entire answer set before selecting/dialing. Do not drop an unsafe answer and proceed.
+
+## Bind the socket to the validated numeric destination
+
+HTTP:
+- exact numeric connection
+- original Host preserved
+- no second uncontrolled hostname lookup
+
+CONNECT:
+- net.connect numeric address/family
+- original hostname:port preserved as authority
+- TLS remains browser-to-origin, no MITM
+
+WebSocket Upgrade:
+- same resolution helper
+- numeric dial
+- original Host preserved
+
+If multiple accepted addresses are attempted, bound the attempt count and never re-resolve within the same connection attempt.
+
+## Evidence and hard-failure semantics
+
+Do not conflate "policy allowed" with "connected."
+
+Prefer additive explicit bounded outcome truth such as:
+
+- policyAuthorized
+- resolutionDenied
+- resolutionFailed
+- connectAttempted
+- connected
+- connectFailed
+
+Use the smallest schema consistent with existing artifacts/consumers.
+
+A resolved-address policy denial is a containment violation and must fail the run.
+
+Durable evidence must remain sanitized. Raw IP storage is not required. Address family/class + categorical reason is sufficient unless an existing privacy contract proves otherwise.
+
+Audit every consumer if ProxyEvent/ProxySummary changes. Version deliberately; do not silently reinterpret durable data.
+
+## Runtime identity
+
+Do not rely on OUTBOUND_POLICY_VERSION alone if hostname policy semantics did not change.
+
+The running proxy must expose an identity proving current:
+
+- hostname policy version
+- resolved-address policy version
+- exact-address-binding contract
+
+Update:
+
+- proxy runtime state
+- parser
+- global setup
+- direct runners
+- realRunGate
+- fixtures/tests
+- docs
+
+Old/malformed containment state must fail closed before authenticated browser creation.
+
+Do not load authenticated state during this campaign.
+
+## Browser DNS workstream — bounded, no false claim
+
+Existing browser hardening already disables QUIC, non-proxied WebRTC UDP, background networking, network hints, and fetching hints, and mandates the loopback proxy.
+
+The docs still correctly say speculative DNS is unresolved.
+
+You may investigate stronger Chromium resolver controls only if a deterministic zero-external-contact experiment can prove them mechanically and the normal proxy path remains functional.
+
+Do NOT:
+
+- add random Chrome flags because they sound relevant
+- query external DNS to test
+- edit system hosts/DNS
+- use root/admin networking
+- install Docker
+- create network namespaces
+- alter firewall rules
+
+If no valid local proof exists, record exactly:
+BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL
+
+That is a valid campaign result and is more correct than a false "full network isolation" claim.
+
+## Regression rules
+
+Do not weaken existing:
+
+- hostname allow/deny policy
+- known production host table
+- environment selection
+- L0 CDP guard
+- L1 route policy
+- L2 WebSocket policy
+- L3 worker containment
+- L4 detection
+- L5 mandatory proxy
+- proxy bypass restriction
+- QUIC disable
+- WebRTC non-proxied UDP disable
+- auth trace/privacy rules
+- read-only action policy
+- data/infra freeze
+- sibling read-only policy
+- publication prohibition
+- source-proof/campaign/replay/dossier authority
+
+No test deletion, skip addition, assertion loosening, or silent snapshot rewrite to obtain green.
+
+Correctness drift must be categorized:
+- INTENTIONAL_CONTAINMENT_DELTA
+- EXPECTED_VERSION_INVALIDATION
+- UNEXPLAINED_DRIFT
+
+UNEXPLAINED_DRIFT blocks completion.
+
+## Validation
+
+Use current repository-native scripts, not stale assumptions.
+
+At minimum record:
+
+- npm run typecheck
+- npm run hardening:check
+- focused proxy tests
+- new classifier/resolver/binding tests
+- safety tests
+- realRunGate tests
+- RunRecorder/proxy evidence tests
+- proxy smoke
+- browser containment contract tests
+- privacy/redaction tests
+- npm run test:owner-provenance
+- npm run gate:inventory
+- npm run campaign:synthetic where applicable
+- npm run test:semantic-compat if durable shared identity changed
+- npm run agent:check
+- npm run agent:audit
+- npm run project:check
+- npm run gate:local
+- npm run gate:clean / current clean Node20 equivalent
+- canonical complete serial Playwright regression
+- git diff --check
+- tracked secret/private artifact audit
+- focused before/after wall time/open-handle check
+
+Run the clean Node20 acceptance in a disposable clean checkout/worktree. Prove no dependency on untracked hosts/DNS overrides or developer-machine state.
+
+If Control Center/UI DTOs are not touched, do not manufacture UI work. If proxy summary schema reaches them, run the exact affected UI/unit/build/browser cone.
+
+## 12-hour productive work shape
+
+Use tasks.md as the detailed checklist.
+
+Suggested:
+
+- H0-1.5: takeover + literal every-file audit + baseline
+- H1.5-3: red-team resolver/address/evidence/runtime reproductions
+- H3-5: classifier + resolver authority
+- H5-7: exact-address HTTP/CONNECT/WS binding + races/timeouts
+- H7-8.5: evidence/runtime gate/version integration
+- H8.5-9.5: browser DNS residual qualification + adversarial cases
+- H9.5-11: full local/clean regressions + fixes
+- H11-12: docs/continuity/exact-head evidence/final push
+
+This is a productive budget, not an instruction to idle. If all acceptance is truly complete early, stop. If Critical/High in-scope defects remain, prioritize correctness and truthful INCOMPLETE/BLOCKED state.
+
+## Safety hard boundaries
+
+The final safety vector must remain:
+
+- DEV contacts: 0
+- NEXT contacts: 0
+- production contacts: 0
+- live Alphaus DNS reconnaissance: 0
+- authenticated storage-state loads: 0
+- customer/data/datastore ops: 0
+- cloud/infra ops: 0
+- sibling writes: 0
+- publication: 0
+- external runtime AI/model calls: 0
+- Docker/network namespace/firewall/root networking changes: 0
+- force pushes: 0
+
+Synthetic loopback server/socket activity required by tests is allowed.
+
+## Git / continuity / closure
+
+After each durable milestone:
+
+implement -> validate -> repair -> update STATE -> commit/push validated checkpoint when appropriate.
+
+At final:
+
+- all OpenSpec requirements/tasks backed by evidence
+- REPORT includes every reproduction, matrix, identity delta, test count, timing, and safety vector
+- docs/SAFETY_MODEL.md accurately states stronger L5 resolved-egress binding
+- docs keep browser-process DNS / actual L6 residual truthful if still unresolved
+- CURRENT_STATE / ROADMAP / DECISIONS / ARCHITECTURE updated only for durable changed truth
+- .agent/ACTIVE_TASK.md terminal COMPLETE
+- next action STOP
+- push final main
+- verify origin/main == local HEAD
+- classify exact-head Actions truthfully; zero-step remains external billing/platform blocked
+- stop; do not select another campaign
