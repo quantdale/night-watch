@@ -1,6 +1,6 @@
 # Tasks: Resolved Egress + Containment Truth Hardening
 
-Status: IN_PROGRESS
+Status: COMPLETE — native task closed at 3db48ed7d35a0a816ef1a801c86a1d14ddf60b27
 Change ID: nightwatch-resolved-egress-and-containment-truth-hardening-v1
 Planning baseline: 4981b212eed46ffde1edac2b175f1bd1b1f826d2
 Target branch: main
