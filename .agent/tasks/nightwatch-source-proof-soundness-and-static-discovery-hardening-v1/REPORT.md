@@ -1,22 +1,21 @@
 # Source-Proof Soundness + Static Discovery Hardening — Execution Report
 
-Status: IN_PROGRESS
-Campaign result: LOCAL_ACCEPTANCE_COMPLETE_EXTERNAL_ACTIONS_RECORDED
+Status: COMPLETE
+Campaign result: COMPLETE_LOCAL_NOT_CI_VERIFIED
 
 Task ID: `nightwatch-source-proof-soundness-and-static-discovery-hardening-v1`
 Phase: SOURCE-PROOF-SOUNDNESS-AND-STATIC-DISCOVERY-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: `nightwatch.agent-continuity.v2`
 Starting SHA: `54090566dad7ba3f65c9ffb2a398e4fcf1fad52b`
-Last validated implementation SHA: `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`
-Last substantive checkpoint SHA: `15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`
+Last validated implementation SHA: `3be590b1a7b4de8e1caccfeb4f1642da66f486ad`
+Last substantive checkpoint SHA: `3be590b1a7b4de8e1caccfeb4f1642da66f486ad`
 
 Closure documentation checkpoint `b4c6b715f90de5814ec8e939b1d255c36f32db5c`
 was pushed without force. External GitHub Actions run `33031299302` matched
 that head and completed `failure`; its sole job `98384195570` completed
 `failure` with `steps: []`. This is external non-evidence, not a CI-green
-claim. Final continuity synchronization remains in progress while the checker
-is repaired to recognize the completed OpenSpec checklist as a planning-only
-checkpoint.
+claim. The checker-policy repair is included in the validated implementation
+checkpoint; no CI-green claim is made.
 
 ## Executive summary
 
@@ -123,16 +122,28 @@ observed source was 242,093 bytes and maximum token population 32,027.
 - Fresh Node20 disposable nine-group gate: passed; gate receipt
   `receipt:sha256:21240f63fcd5a926e094478c` and clean receipt
   `clean-receipt:sha256:95622c261d62483259844deb`.
+- Continuity-policy repair gate at waypoint `2160761a2471bbf90560a862b88de794b9a1845f`:
+  local nine-group gate passed with receipt
+  `receipt:sha256:237452d77b159a8b0a336e35`; the Node20 disposable nine-group
+  gate passed with gate receipt `receipt:sha256:1a95c68f3d30317adfb070d5` and
+  clean receipt `clean-receipt:sha256:6309b63d82968a422b9a1951`.
+- Agent-state continuity regression: 107 passed; hardening passed after the
+  exact OpenSpec task-checklist checkpoint rule was added.
 - Project truth, continuity, and final tracked-file accounting passed. The
-  implementation checkpoint `15fe2c1` was pushed without force and verified
-  equal to `origin/main` with a clean tree.
+  source implementation checkpoint `15fe2c1` was pushed without force and
+  verified equal to `origin/main` with a clean tree; the continuity-policy
+  implementation checkpoint is `3be590b` and was validated on its clean
+  documentation descendant.
 
-The one exact-head GitHub Actions observation was run `33031299302` for head
+The one exact-head GitHub Actions observation was run `33031299302` for the
+closure documentation head
 `b4c6b715f90de5814ec8e939b1d255c36f32db5c`; the sole job was
 `98384195570` (`Executable quality gate`), completed with `failure`, and had
 `steps: []`. It is classified as external non-evidence under the repository's
 zero-step billing/platform rule; local/source/synthetic validation remains the
-terminal acceptance evidence.
+terminal acceptance evidence. The final continuity-policy and task-document
+descendants were pushed as the terminal local record without a second Actions
+query, honoring the campaign's single-observation requirement.
 
 ## Safety and follow-up
 
@@ -140,6 +151,5 @@ The owner freeze remains intact. Unsupported dynamic/runtime/framework/data/
 infrastructure/authenticated execution remains excluded. Future proof-family
 work requires a fresh current-source census and separate authorization; this
 campaign must not be used to infer promotion authority from candidate
-availability. The task remains in progress only for the narrow
-continuity-checkpoint policy repair described above. Any unrelated future work
-requires a fresh task and authorization.
+availability. The task is complete. Any future work requires a fresh task and
+authorization.

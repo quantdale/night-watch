@@ -3412,4 +3412,8 @@ canonical-promotion operation occurred. The one exact-head Actions observation
 matched pushed head `b4c6b715f90de5814ec8e939b1d255c36f32db5c` as run
 `33031299302` / job `98384195570`; it completed with failure and `steps=[]`,
 so it is external non-evidence under the zero-step billing/platform
-classification and is not a CI-green claim.
+classification and is not a CI-green claim. Terminal continuity also required
+the narrow checkpoint-policy repair in `3be590b`, which recognizes only
+`openspec/changes/<change>/tasks.md` as a planning-only OpenSpec checkpoint;
+the repair passed the local and Node20 clean gates without changing source
+discovery or campaign authority.

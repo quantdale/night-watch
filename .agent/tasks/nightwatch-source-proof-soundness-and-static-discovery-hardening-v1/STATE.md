@@ -4,22 +4,22 @@
 
 Task ID: nightwatch-source-proof-soundness-and-static-discovery-hardening-v1
 Phase: SOURCE-PROOF-SOUNDNESS-AND-STATIC-DISCOVERY-HARDENING-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
-Last validated implementation SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
-Last substantive checkpoint SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
+Last validated implementation SHA: 3be590b1a7b4de8e1caccfeb4f1642da66f486ad
+Last substantive checkpoint SHA: 3be590b1a7b4de8e1caccfeb4f1642da66f486ad
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: main
-Last checkpoint: 2026-08-27 — M5 local acceptance and the closure-head Actions observation are recorded; continuity validation found the completed OpenSpec checklist is not yet an approved checkpoint path.
+Last checkpoint: 2026-08-27 — M5 terminal validation is complete; continuity checkpoint-policy repair `3be590b` passed local and Node20 clean gates, and exact-head Actions run `33031299302` is recorded as external non-evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 54090566dad7ba3f65c9ffb2a398e4fcf1fad52b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 15fe2c108d6b044f4e0b3a99d2b83e7feb81c157
+LAST_VALIDATED_IMPLEMENTATION_SHA: 3be590b1a7b4de8e1caccfeb4f1642da66f486ad
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3be590b1a7b4de8e1caccfeb4f1642da66f486ad
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_SOURCE_PROOF_SOUNDNESS_AND_STATIC_DISCOVERY_HARDENING_V1_STATUS: IN_PROGRESS
+PHASE_SOURCE_PROOF_SOUNDNESS_AND_STATIC_DISCOVERY_HARDENING_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,11 +30,8 @@ execution, and fail-closed owner policy.
 
 ## Current Milestone
 
-Milestone ID: M5
-Milestone status: IN_PROGRESS
-What is being attempted: Repair the continuity checkpoint classification for
-the completed OpenSpec checklist, validate the resulting implementation
-checkpoint, and finish terminal task synchronization.
+COMPLETE — M5 terminal validation, documentation, Git synchronization, and
+exact-head Actions observation are recorded.
 
 ## Completed Milestones
 
@@ -80,20 +77,18 @@ checkpoint, and finish terminal task synchronization.
   pushed without force; the committed-tree local gate passed all nine groups
   with receipt `receipt:sha256:c92ef378c757194871718953`; exact-head Actions
   run `33031299302` matched that head but failed before executing any step.
-  Terminal continuity remains in progress because the checker needs to admit
-  the completed OpenSpec checklist as a planning-only checkpoint.
+  The continuity-policy repair is validated as the new implementation
+  checkpoint; no source-proof behavior changed.
 
 ## Work In Progress
 
-M2/M3 implementation, M4 census/parity, local/clean acceptance, closure
-documentation, push, and the one exact-head Actions observation are complete.
-The remaining M5 work is the narrow continuity-checkpoint policy repair and
-its validation.
+None — M2/M3 implementation, M4 census/parity, continuity-policy repair,
+local/clean acceptance, closure documentation, push, and the exact-head Actions
+observation are complete.
 
 ## Exact Next Action
 
-Add and test the narrow OpenSpec task-checklist checkpoint rule, validate the
-resulting implementation checkpoint, then finish terminal continuity.
+STOP — campaign complete; no further work is authorized in this task.
 
 ## Files Changed
 
@@ -396,6 +391,17 @@ Relevant failure/output summary: The rule is exact to
 `openspec/changes/<change>/tasks.md`; unrelated OpenSpec files remain outside
 the checkpoint allowlist.
 
+Command: `npm run gate:local` and `npm run gate:clean` after continuity-policy repair
+Result: PASS — waypoint `2160761a2471bbf90560a862b88de794b9a1845f` passed all 9
+local groups with receipt `receipt:sha256:237452d77b159a8b0a336e35`; its fresh
+Node20 clean checkout passed all 9 groups with gate receipt
+`receipt:sha256:1a95c68f3d30317adfb070d5` and clean receipt
+`clean-receipt:sha256:6309b63d82968a422b9a1951`.
+When: 2026-08-27
+Relevant failure/output summary: The validated continuity implementation
+anchor is `3be590b1a7b4de8e1caccfeb4f1642da66f486ad`; source-proof discovery
+outputs and Phase-24 authority are unchanged.
+
 ## Decisions Made During This Task
 
 Decision: Use a fresh task ID and preserve the completed predecessor unchanged.
@@ -509,14 +515,12 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect Git status and current SHA.
-4. Run the smallest relevant validation.
-5. Continue the Exact Next Action.
+Task complete. Do not resume this task. Any future source-proof work requires
+a fresh task, current-source evidence, and separate authorization.
 
 ## Completion Snapshot
 
-Not complete. Local/source/synthetic acceptance and the one exact-head Actions
-observation are recorded; terminal continuity remains pending the
-checkpoint-policy repair.
+Task complete. All OpenSpec milestones and acceptance criteria are closed;
+local/source/synthetic validation is green, exact-head Actions is recorded as
+external non-evidence, and terminal Git synchronization is the final live
+authority.

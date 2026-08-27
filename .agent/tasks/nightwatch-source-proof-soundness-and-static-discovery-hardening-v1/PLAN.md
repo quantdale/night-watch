@@ -143,7 +143,7 @@ tests, and close the task only after the complete local acceptance sequence.
   external classification; task records and project truth are coherent; clean
   pushed Git state is verified.
 - Validation commands: the complete OpenSpec H10/H11 acceptance list.
-- Status: IN_PROGRESS
+- Status: DONE
 
 ## Validation Strategy
 
@@ -173,8 +173,8 @@ results in STATE and REPORT; do not treat a zero-step CI run as green evidence.
   acceptance requiring separate authorization.
 
 The exact-head Actions observation completed with failure before any step; that
-external non-evidence result is recorded in STATE and REPORT. A final
-continuity-policy repair remains before this milestone can close.
+external non-evidence result is recorded in STATE and REPORT. The narrow
+continuity-policy repair is validated and all milestones are closed.
 
 ## Completion Criteria
 
