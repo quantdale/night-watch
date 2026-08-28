@@ -172,3 +172,8 @@ fail-closed. A fresh owner authorization and safe rootless proof are required
 before reopening this campaign; no real environment, product endpoint,
 database, cloud/infrastructure system, sibling repository or credential may be
 contacted.
+
+The one exact-head Actions observation for pushed head
+`9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9` was run `33139304292` / job
+`98746329861`, which completed with `failure` and `steps=[]`. It is
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence; no retry was made.

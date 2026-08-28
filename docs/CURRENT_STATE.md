@@ -2525,6 +2525,12 @@ sibling writes; its gate receipt is
 `receipt:sha256:5a7f5dcf518189c23f315253` and clean receipt is
 `clean-receipt:sha256:cdd966a52941eb94363ca082`.
 
+The one exact-head GitHub Actions observation for pushed head
+`9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9` was run `33139304292` / job
+`98746329861`; it completed with `failure` and `steps=[]` and is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No retry or
+workflow churn occurred.
+
 L6 process/DNS containment remains unproven: Bubblewrap namespace creation is
 available, but the parent relay is incompatible and browser speculative DNS
 remains outside L5. Direct DNS/TCP/UDP denial and complete child-process

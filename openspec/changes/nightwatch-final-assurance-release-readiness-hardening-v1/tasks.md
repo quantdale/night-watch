@@ -124,7 +124,7 @@ Exit: no material current-state contradiction or misleading completion/authority
 - [x] `npm run gate:clean` — PASS, fresh Node 20 install and receipt recorded in task STATE.
 - [x] Verify `git diff --check`, secret/debug/generated-output hygiene, clean working tree.
 - [x] Execute representative CLI/Control Center/local-fixture smoke journeys.
-- [ ] If Actions is available, observe one exact-head run and require real executed steps + PASS; otherwise record truthful external non-evidence without workflow churn/retry loops.
+- [x] If Actions is available, observe one exact-head run and require real executed steps + PASS; the single run `33139304292` / job `98746329861` executed zero steps and is recorded as `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence without workflow churn or retries.
 
 Exit: all required local/clean checks green, no unexplained skip or safety-critical retry masking, no open P0/P1, no blocking P2, no privacy/safety boundary regression, and L6/process-isolation truth matches the actual implemented boundary.
 
@@ -133,7 +133,7 @@ Exit: all required local/clean checks green, no unexplained skip or safety-criti
 - [x] Update task `STATE.md`, `PLAN.md`, `REPORT.md`, this OpenSpec checklist and current project docs with exact earned evidence.
 - [x] Choose exactly one terminal outcome from `proposal.md`.
 - [x] Transition `.agent/EXECUTION_PROMPT.md` and `ACTIVE_TASK` to coherent terminal `COMPLETE` or `BLOCKED` state.
-- [ ] Commit only validated durable checkpoints; push without force; verify local HEAD == `origin/main`.
+- [x] Commit only validated durable checkpoints; push without force; verify local HEAD == `origin/main` (the closure checkpoint was pushed and equality verified before the final exact-head CI observation; this terminal record is also validated for push).
 - [x] If documentation-only closure follows the implementation anchor, preserve implementation-vs-documentation SHA roles.
 - [x] Stop when remaining work is speculative, low-value, separately authorized, or externally blocked.
 

@@ -2482,6 +2482,12 @@ The closure local gate passed all 10 groups with receipt
 all 10 groups with gate receipt `receipt:sha256:5a7f5dcf518189c23f315253` and
 clean receipt `clean-receipt:sha256:cdd966a52941eb94363ca082`.
 
+The one exact-head Actions observation for pushed head
+`9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9` was run `33139304292` / job
+`98746329861` and completed with `failure` and `steps=[]`; it is
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No retry was
+made.
+
 The remaining L6 process/DNS containment is explicitly unproven because the
 parent relay is incompatible and browser speculative DNS remains outside L5.
 Authenticated OOPS stays fail-closed. Reopening requires fresh owner

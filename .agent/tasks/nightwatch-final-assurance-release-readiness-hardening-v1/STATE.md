@@ -177,6 +177,11 @@ and Phase 5 provenance/privacy/template regressions.
   `66`; no module reuse, auth state, owner finding state or sibling writes;
   gate receipt `receipt:sha256:5a7f5dcf518189c23f315253`, clean receipt
   `clean-receipt:sha256:cdd966a52941eb94363ca082`.
+- Exact-head GitHub Actions observation: run `33139304292`, job
+  `98746329861`, head `9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9`, completed
+  `failure` with `steps=[]`. This is
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence; no retry or
+  workflow change was made.
 - Control Center UI: typecheck PASS; test PASS (`2` files, `11` tests);
   build PASS (`31` modules, `3` files); browser qualification PASS (one
   qualification test, `10.3s`).
@@ -339,8 +344,9 @@ are:
   isolation, parent-relay reachability and browser speculative-DNS closure
   are not proven. Authenticated/non-browser OOPS therefore remains blocked.
 - P1 external CI is not repository evidence when the exact-head job executes
-  zero steps; this is an external non-evidence classification, not a workflow
-  repair target. At most one exact-head observation is allowed after push.
+  zero steps; run `33139304292` / job `98746329861` is classified as
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, not a workflow repair target. No
+  retry was made.
 - P2 Vue 2 legacy/deprecation and one low-severity `npm audit` finding remain
   documented non-blocking dependency hygiene; no demonstrated runtime defect
   justifies version churn in this campaign.
@@ -384,6 +390,7 @@ compatibility is `1920/1907/13/0`; owner provenance is `91/91`; synthetic
 campaign is `66/66`; UI typecheck, tests, build and browser qualification are
 green; safety is retry-free and restricted OOPS is deterministic. The closure
 local and fresh Node 20 clean gates are green with the receipts recorded
-above. The single post-push CI observation remains a bounded external check,
-but even green receipts cannot override the unproven L6 boundary. No COMPLETE
-outcome is permitted.
+above. The single post-push CI observation was a zero-step external
+non-evidence result (`33139304292` / `98746329861`); even executed green
+receipts could not override the unproven L6 boundary. No COMPLETE outcome is
+permitted.

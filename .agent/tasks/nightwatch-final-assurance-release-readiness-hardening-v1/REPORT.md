@@ -102,6 +102,11 @@ documentation and release-matrix qualification are recorded below.
   no module reuse/auth/finding state/sibling writes; gate receipt
   `receipt:sha256:5a7f5dcf518189c23f315253`, clean receipt
   `clean-receipt:sha256:cdd966a52941eb94363ca082`.
+- Exact-head GitHub Actions observation for pushed head
+  `9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9`: run `33139304292`, job
+  `98746329861`, completed `failure` with `steps=[]`. It is classified
+  `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence; no retry or
+  workflow churn was performed.
 - Control Center UI typecheck, tests (`11`), build and browser qualification
   all passed. The build produced `31` modules and `3` files; the browser
   qualification had one passing test and no console errors or error overlay.
@@ -123,6 +128,6 @@ authorization and a safe rootless proof; privileged firewall/network
 administration, system-wide DNS/hosts/proxy mutation, TLS MITM and live
 external probes remain prohibited.
 
-The single permitted exact-head GitHub Actions observation is the remaining
-external handoff check; it is not grounds to weaken this boundary or claim
+The exact-head GitHub Actions result above is external non-evidence because no
+required step executed; it is not grounds to weaken this boundary or claim
 project completion.

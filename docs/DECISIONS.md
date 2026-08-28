@@ -3559,4 +3559,6 @@ qualification with exact skip parity. The terminal result is
 `PROJECT_NOT_COMPLETE_BLOCKED`; no local green result can override the L6
 boundary. The closure local and fresh Node 20 clean quality gates both passed
 all 10 groups (receipts are recorded in the task STATE). Fresh owner
-authorization is required before any future L6 work.
+authorization is required before any future L6 work. The one exact-head
+Actions run `33139304292` / job `98746329861` executed zero steps and is
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence; no retry was made.
