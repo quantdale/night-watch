@@ -1,19 +1,25 @@
-# EXECUTION PROMPT — Final Assurance + Release-Readiness Hardening
+# EXECUTION PROMPT — Final Completion and L6 Containment
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: BLOCKED
-Campaign ID: nightwatch-final-assurance-release-readiness-hardening-v1
-OpenSpec: openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/
-Planned-From: 9ecd09c0d33d05d665721080627e5d63b376c16d
+Status: IN_PROGRESS
+Campaign ID: nightwatch-final-completion-and-l6-containment-v1
+OpenSpec: openspec/changes/nightwatch-final-completion-and-l6-containment-v1/
+Planned-From: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
 Target Branch: main
 Predecessor Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Pull/reconcile current `quantdale/night-watch` main and execute the OpenSpec change `nightwatch-final-assurance-release-readiness-hardening-v1` end-to-end as the repository's final whole-system assurance and release-readiness campaign for the currently authorized product scope.
+Execute the OpenSpec change `nightwatch-final-completion-and-l6-containment-v1`
+end-to-end as a fresh whole-system completion campaign. Re-audit the live
+repository, prove or safely falsify rootless L6 process/network containment,
+repair all evidence-backed release defects, and finish with one truthful
+terminal outcome.
 
-This is **not** permission to invent another feature phase. The repository is mature and the preceding campaign completed a literal 1,359-file audit plus full local/clean certification. The new objective is to prove or falsify project completeness across the entire live repository, find residual defects that campaign-scoped testing may have missed, repair evidence-backed P0/P1/P2 issues, and finish with a truthful project-completion certification.
+This is not permission to expand product scope. It is permission to determine
+whether the known L6 blocker can be closed safely under the existing owner
+policy, while finding and repairing any current release-critical defects.
 
 Work autonomously through the full campaign. Do not stop after the first green test or first repair. Continue through whole-repository audit, authority tracing, validation-gap analysis, dependency/install/build qualification, performance/resource review, documentation truth, full regression and release certification. Stop only for a genuine safety/authorization boundary, an unrecoverable remote-divergence conflict, a concrete external blocker required for completion, or terminal certification.
 
@@ -21,17 +27,15 @@ Work autonomously through the full campaign. Do not stop after the first green t
 
 Before implementation edits:
 
-1. Confirm repository root, `origin`, branch and live HEAD.
-2. Read `AGENTS.md` completely.
-3. Read `.agent/README.md`, `.agent/PLANS.md`, `.agent/PLANNER_HANDOFF.md`, this file, and `.agent/ACTIVE_TASK.md`.
-4. Read the predecessor task `SPEC.md`, `PLAN.md`, `STATE.md`, and `REPORT.md`.
-5. Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, and `docs/ARCHITECTURE.md` with current-vs-historical truth in mind.
-6. Read every file under `openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/`.
-7. Fetch/reconcile `origin/main` without force. `Planned-From` is a planning baseline, not an instruction to reset current main.
-8. Inspect every commit after Planned-From and confirm the OpenSpec/prompt planning commits are present and coherent.
-9. Create a fresh continuity-v2 task at `.agent/tasks/nightwatch-final-assurance-release-readiness-hardening-v1/` with `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`.
-10. When execution actually begins, route `.agent/ACTIVE_TASK.md` to the new task and transition this prompt to `IN_PROGRESS` under the existing handoff protocol.
-11. Run `npm run handoff:check`, `npm run agent:check`, and `npm run project:check` before substantive changes.
+1. Confirm repository root, `origin`, branch, live HEAD, Node/npm and clean
+   status; fetch/reconcile `origin/main` without force.
+2. Read the repository contract, agent memory, predecessor and successor task
+   records, current-facing docs, packages, gates, workflows and OpenSpec.
+3. Run the fresh NUL-safe every-tracked-path audit before runtime edits.
+4. Reproduce and implement/prove the rootless L6 design only with synthetic
+   loopback targets; preserve fail-closed authenticated OOPS if proof fails.
+5. Execute the full local/clean/UI/campaign/adversarial release matrix and
+   synchronize current truth before terminal closure.
 
 Do not edit or resume the completed predecessor task as though it were active.
 
@@ -57,7 +61,9 @@ A grep with zero matches is not an all-file audit. Record the H0 census and reme
 
 ## Campaign decision and priority
 
-The planner's current decision is **Combined Implementation + Hardening**, tightly bounded to release-critical evidence. Fresh review has already earned focused work on the documented L6 process/DNS containment residual and safety-critical retry/conditional-skip qualification; this does not authorize broad product expansion.
+The campaign decision is **Combined Implementation + Hardening**, tightly
+bounded to release-critical evidence and the documented L6 residual. It does
+not authorize broad product expansion.
 
 Do not reopen source-proof, portfolio, DEV, self-development, infrastructure, publication, or other product scope simply to fill time. If the whole-system audit finds a P0/P1 implementation defect, fix it immediately and add a regression. If no significant defect exists, continue through final assurance/certification and stop without manufacturing work.
 
@@ -70,7 +76,7 @@ Priority order:
 
 ## Required workstreams
 
-Execute every OpenSpec milestone M0–M9. In particular:
+Execute every successor OpenSpec milestone. In particular:
 
 ### Architecture and authority
 
@@ -160,20 +166,10 @@ When terminal, update task state/plan/report, OpenSpec checklist, current projec
 
 The objective is not to consume 12 hours artificially. The objective is to remain productive for up to roughly 12 hours if the repository justifies it, automatically progressing from audit -> repairs -> hardening -> regression hunting -> certification -> documentation truth -> final cleanup, and stopping only when further work is speculative, low-value, separately authorized, or externally blocked.
 
-## Terminal execution disposition
+## Terminal disposition
 
-This campaign reached terminal `PROJECT_NOT_COMPLETE_BLOCKED`. The repair
-checkpoint `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b` passed the available local
-synthetic, UI, canonical and topology-correct isolated qualification, with
-exact skip parity. Completion remains blocked because L6 process/DNS
-containment is unproven: Bubblewrap's parent relay is incompatible and browser
-speculative DNS remains outside L5. Authenticated OOPS therefore remains
-fail-closed. A fresh owner authorization and safe rootless proof are required
-before reopening this campaign; no real environment, product endpoint,
-database, cloud/infrastructure system, sibling repository or credential may be
-contacted.
-
-The one exact-head Actions observation for pushed head
-`9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9` was run `33139304292` / job
-`98746329861`, which completed with `failure` and `steps=[]`. It is
-`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence; no retry was made.
+This prompt is IN_PROGRESS for the successor campaign. The prior blocked
+result remains historical evidence, not a current completion claim. The final
+state must be `PROJECT_COMPLETE_AND_CI_CERTIFIED`,
+`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`, or
+`PROJECT_NOT_COMPLETE_BLOCKED`, selected only after fresh proof and gates.

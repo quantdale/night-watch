@@ -1,34 +1,29 @@
 # Active Task
 
-Task ID: nightwatch-final-assurance-release-readiness-hardening-v1
-Phase: FINAL-ASSURANCE-RELEASE-READINESS-HARDENING-V1
-Title: Final Assurance + Release-Readiness Hardening
-Status: BLOCKED
-Task directory: .agent/tasks/nightwatch-final-assurance-release-readiness-hardening-v1
-Starting SHA: e26b649c7eded8a50ab9c4c3d8a2197f9c409052
-Last validated implementation SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
-Last checkpoint: substantive repair checkpoint 72af3a8 was validated by the
-complete canonical and topology-correct isolated suites; terminal docs remain
-bounded by the unproven L6 process/DNS boundary.
-Current milestone: M9 — terminal assurance certification BLOCKED by the
-unproven L6 process/DNS boundary; local synthetic evidence is otherwise
-recorded.
-Next action: STOP. Fresh owner authorization and a safe, rootless proof of
-direct DNS/TCP/UDP denial plus browser speculative-DNS closure are required
-before any authenticated OOPS or COMPLETE claim.
-Authorization class: NIGHTWATCH_FINAL_ASSURANCE_RELEASE_READINESS_HARDENING_V1
+Task ID: nightwatch-final-completion-and-l6-containment-v1
+Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
+Title: Final Completion and L6 Containment
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-final-completion-and-l6-containment-v1
+Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+Last validated implementation SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+Last checkpoint: successor campaign planning and continuity files created at
+the reconciled current head; route checkpoint is the next action.
+Current milestone: M0 — takeover and activation IN_PROGRESS
+Next action: Commit the planning/continuity checkpoint after route checks, then
+run the NUL-safe all-tracked-path audit and record its evidence before runtime
+implementation changes.
+Authorization class: NIGHTWATCH_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: e26b649c7eded8a50ab9c4c3d8a2197f9c409052
-LAST_VALIDATED_IMPLEMENTATION_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
 LIVE_HEAD_AUTHORITY: GIT
-FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 
 ## Routing and safety
 
-This is the fresh executor route for the final assurance campaign. The
-completed predecessor `nightwatch-campaign-handoff-and-project-truth-hardening-v1`
-remains immutable history. All work is local, repository-only, deterministic,
-and synthetic-only. No real environment, product, database, cloud,
-infrastructure, sibling repository, publication, runtime AI, or canonical
-promotion operation is authorized.
+This is the fresh executor route for the final completion/L6 campaign. The
+completed and blocked predecessors remain immutable history. All work is local,
+repository-only, deterministic and synthetic-only. No real environment,
+product, database, cloud, infrastructure, sibling repository, publication,
+runtime AI or canonical promotion operation is authorized.
