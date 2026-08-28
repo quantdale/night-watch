@@ -4,8 +4,8 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: `6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20`
-Last validated implementation SHA: `6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20`
-Last substantive checkpoint SHA: `6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20`
+Last validated implementation SHA: `466edb097998a0821d9ec20c828d9b08aa9d3f66`
+Last substantive checkpoint SHA: `466edb097998a0821d9ec20c828d9b08aa9d3f66`
 
 ## Scope and current disposition
 
@@ -39,5 +39,10 @@ canonical/isolated skip parity, UI qualification, and honest CI SHA status.
 
 ## Remaining work
 
-The next concrete action is the NUL-safe all-tracked-path audit followed by
-L6 namespace/relay reproduction. Authenticated OOPS remains fail-closed.
+The implementation checkpoint `466edb097998a0821d9ec20c828d9b08aa9d3f66`
+now contains the proven rootless L6 namespace/relay envelope, authenticated
+OOPS readiness integration, release-truth checker semantics, retry-free
+safety tests, UI dependency repair and Control Center descriptor hardening.
+The next concrete action is full local/clean/canonical/isolated certification;
+CI remains an exact-release-checkpoint question. No real environment or
+credential is used.

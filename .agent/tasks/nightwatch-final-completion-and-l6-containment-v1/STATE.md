@@ -6,13 +6,13 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last validated implementation SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last substantive checkpoint SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+Last validated implementation SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
+Last substantive checkpoint SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+LAST_VALIDATED_IMPLEMENTATION_SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: IN_PROGRESS
@@ -95,12 +95,16 @@ issues. Full certification remains pending.
   migration authorization.
 - Gate inventory now derives synthetic test files from the package script and
   reports `156` unique authoritative test files with no duplicate execution.
+- Implementation checkpoint `466edb097998a0821d9ec20c828d9b08aa9d3f66` was
+  committed and pushed after the focused cone passed; the current active
+  continuity anchor now names that substantive checkpoint. The checkout is
+  clean and local/remote heads are equal at this checkpoint.
 
 ## Work In Progress
 
-Finish current release-truth/UI/resource qualification, rerun all required
-local gates from a clean implementation checkpoint, then perform disposable
-Node 20 clean-checkout certification.
+Rerun all required local gates from the clean `466edb0` implementation
+checkpoint, then perform disposable Node 20 clean-checkout certification and
+the canonical/isolated parity run.
 
 ## Exact Next Action
 
