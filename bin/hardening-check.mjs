@@ -912,6 +912,15 @@ function checkProjectStateIntegrity() {
   if (!/PROJECT_STATE_COMPLETION_STATUS_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION/.test(checker)) {
     fail('project-state checker does not enforce blocked/completion and CI execution semantics');
   }
+  if (!/IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING/.test(checker)
+    || !/OPERATIONALLY_ACCEPTED/.test(checker)
+    || !/REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN/.test(checker)
+    || !/OPERATIONAL_ACCEPTANCE_BLOCKED/.test(checker)
+    || !/OPERATIONAL_ACCEPTANCE_FAILED/.test(checker)
+    || !/PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED/.test(checker)
+    || !/COMPLETION_BY_ACTIVE_STATUS/.test(checker)) {
+    fail('project-state checker must keep historical local-clean complete distinct from operational-acceptance statuses');
+  }
   if (/\b(?:fetch\(|https?\.request|net\.|dns\.|WebSocket|child_process\.[a-z]+exec|execSync|spawnSync\([^)]*['"]git['"]\s*,\s*\[[^\]]*(?:add|commit|push|checkout|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config))/i.test(checker)) {
     fail('bin/project-state-check.mjs must stay a read-only local checker (no network, no Git mutation verbs)');
   }

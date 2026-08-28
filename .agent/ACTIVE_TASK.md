@@ -1,28 +1,29 @@
 # Active Task
 
-Task ID: nightwatch-final-completion-and-l6-containment-v1
-Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
-Title: Final Completion and L6 Containment
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-final-completion-and-l6-containment-v1
-Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+Task ID: nightwatch-operational-acceptance-v1
+Phase: OPERATIONAL_ACCEPTANCE_V1
+Title: Nightwatch Operational Acceptance
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-operational-acceptance-v1
+Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
 Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
-Last checkpoint: implementation checkpoint `e278da1` is pushed; the L6 relay
-request-volume bound passes its focused adversarial regression.
-Current milestone: COMPLETE / STOP — final local/clean certification closed;
-CI is recorded as external zero-step non-evidence.
-Next action: STOP — task complete.
-Authorization class: NIGHTWATCH_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1
+Last checkpoint: successor task activated; project-state pairing tests 29–37 passed
+Current milestone: M1/M2 — Git topology cleanup and project-truth reclassification
+Next action: Finish successor-task routing and live CURRENT_STATE reclassification, then run agent:check and project:check after the files are tracked
+Authorization class: NIGHTWATCH_OPERATIONAL_ACCEPTANCE_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
+STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
 LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
+PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
-This is the fresh executor route for the final completion/L6 campaign. The
-completed and blocked predecessors remain immutable history. All work is local,
-repository-only, deterministic and synthetic-only. No real environment,
-product, database, cloud, infrastructure, sibling repository, publication,
-runtime AI or canonical promotion operation is authorized.
+This is the successor operational-acceptance campaign. The predecessor
+`nightwatch-final-completion-and-l6-containment-v1` remains COMPLETE historical
+local/clean certification and must not be rewritten as operational acceptance.
+Work is bounded to Git topology cleanup, truthful reclassification, local
+preflight, and contained DEV owner workflow. Production, DEV mutation,
+infrastructure/data-layer operations, credential leakage and Alphaus writes
+remain forbidden.

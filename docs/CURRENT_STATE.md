@@ -1,10 +1,14 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-29** for
-> successor campaign `nightwatch-final-completion-and-l6-containment-v1`,
-> terminal `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` at release checkpoint
-> `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; GitHub Actions remains external
-> non-evidence because its exact-head job executed zero steps.
+> successor campaign `nightwatch-operational-acceptance-v1`, project status
+> `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`. Historical
+> campaign `nightwatch-final-completion-and-l6-containment-v1` remains
+> COMPLETE local/synthetic/clean certification
+> (`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`) at release checkpoint
+> `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; that token is not operational
+> acceptance. GitHub Actions remains external non-evidence because its
+> exact-head job executed zero steps.
 > The predecessor (`nightwatch-final-assurance-release-readiness-hardening-v1`;
 > validated implementation checkpoint `72af3a8`) is historical and ended
 > `PROJECT_NOT_COMPLETE_BLOCKED`; its L6 residual does not override the active
@@ -268,7 +272,7 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED
+PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
@@ -2559,8 +2563,10 @@ operation was authorized or claimed.
 
 ## Current final completion and L6 containment campaign — terminal local/clean certified — 2026-08-29
 
-The successor campaign `nightwatch-final-completion-and-l6-containment-v1` is
-terminal as `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`. Its fresh H0 census reviewed `1389/1389` regular
+The predecessor campaign `nightwatch-final-completion-and-l6-containment-v1` is
+historical local/clean certified as `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`.
+That record remains truthful for implementation/local/clean evidence and is
+not the current operational-acceptance projection. Its fresh H0 census reviewed `1389/1389` regular
 tracked paths with no missing or non-regular entries. The implementation now
 has a versioned rootless L6 capability at
 `nightwatch.process-network-containment.v1`: Bubblewrap creates a no-external-
@@ -2585,3 +2591,15 @@ qualification. Local and clean Node 20 gates, canonical/isolated suites, UI,
 and adversarial matrices are green. Exact-head Actions run `33190456115` /
 job `98914301082` failed before runner provisioning with `steps=[]` and
 `runner_id=0`; it is recorded as external non-evidence and not CI PASS.
+
+## Current operational-acceptance campaign — pending — 2026-08-29
+
+Active task `nightwatch-operational-acceptance-v1` is IN_PROGRESS. The current
+machine-checked project completion status is
+`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`. Historical
+`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` remains a COMPLETE-only local/clean
+record and is not the current finished-project claim. Operational acceptance
+requires a real DEV owner workflow and one of
+`OPERATIONALLY_ACCEPTED`,
+`REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`,
+`OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED`.

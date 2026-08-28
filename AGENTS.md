@@ -263,7 +263,10 @@ duplicate, missing, malformed, or oversized fields fail closed:
   SHAs, CI status and final documentation role separate. Live and final
   documentation heads remain Git-discovered markers. A blocked active task
   cannot project a complete status, and zero-step CI cannot project executed
-  CI.
+  CI. Historical `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` is local/clean
+  certification only; an IN_PROGRESS operational-acceptance task cannot
+  project it as finished and must use
+  `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` or `IN_PROGRESS`.
 
 - `CURRENT_STATE` is a project SNAPSHOT, never its own Git/checkpoint
   authority. Live HEAD comes from Git; the current implementation checkpoint

@@ -3622,3 +3622,27 @@ topology-correct isolated suites are green with exact skip parity, local and
 Node 20 clean gates are green, and the current project state is terminal and
 mechanically checkable. GitHub Actions remains an external follow-up until a
 runner-provisioned exact release-checkpoint run exists.
+
+## D-89 — local/clean certification is not operational acceptance
+
+**Context.** Campaign `nightwatch-final-completion-and-l6-containment-v1`
+truthfully closed as `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`. A successor
+owner campaign must determine whether Nightwatch works against the approved
+DEV system. Project-state v2 previously paired COMPLETE active tasks with
+whatever valid completion token was declared, which would let a still-pending
+operational campaign keep projecting local-clean complete if ACTIVE stayed
+COMPLETE.
+
+**Decision.** Keep `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` and
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` valid only for COMPLETE historical
+local/CI records. Add operational tokens
+`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` (IN_PROGRESS),
+`OPERATIONAL_ACCEPTANCE_BLOCKED` (BLOCKED), and
+`OPERATIONALLY_ACCEPTED` / `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN` /
+`OPERATIONAL_ACCEPTANCE_FAILED` (COMPLETE). Pairing is fail-closed through
+`COMPLETION_BY_ACTIVE_STATUS`. Do not weaken prior blocked-versus-complete
+or CI-execution rules.
+
+**Consequences.** The live project may not be described as finished while
+operational acceptance is pending. Historical local-clean certification stays
+mechanically valid as history. Unknown status tokens still fail closed.

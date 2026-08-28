@@ -70,7 +70,30 @@ const R1_TASK_STATE_PATH = '.agent/tasks/phase-8b-1-r1-owner-gated-canonical-pro
 const MAX_CURRENT_STATE_BYTES = 512 * 1024;
 const MAX_BLOCK_LINE_CHARS = 1024;
 const RELEASE_CERTIFICATION_PROTOCOL = 'nightwatch.release-certification.v1';
-const PROJECT_COMPLETION_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'PROJECT_NOT_COMPLETE_BLOCKED', 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED', 'PROJECT_COMPLETE_AND_CI_CERTIFIED']);
+const PROJECT_COMPLETION_STATUSES = new Set([
+  'NONE',
+  'IN_PROGRESS',
+  'PROJECT_NOT_COMPLETE_BLOCKED',
+  'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED',
+  'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+  'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING',
+  'OPERATIONALLY_ACCEPTED',
+  'REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN',
+  'OPERATIONAL_ACCEPTANCE_BLOCKED',
+  'OPERATIONAL_ACCEPTANCE_FAILED',
+]);
+const COMPLETION_BY_ACTIVE_STATUS = new Map([
+  ['IN_PROGRESS', new Set(['IN_PROGRESS', 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING'])],
+  ['BLOCKED', new Set(['PROJECT_NOT_COMPLETE_BLOCKED', 'OPERATIONAL_ACCEPTANCE_BLOCKED'])],
+  ['COMPLETE', new Set([
+    'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED',
+    'PROJECT_COMPLETE_AND_CI_CERTIFIED',
+    'OPERATIONALLY_ACCEPTED',
+    'REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN',
+    'OPERATIONAL_ACCEPTANCE_FAILED',
+  ])],
+  ['NONE', new Set(['NONE'])],
+]);
 const CI_STATUSES = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL']);
 const SHA_OR_DISCOVER = /^(?:DISCOVER_FROM_GIT|[0-9a-f]{40})$/i;
 const SHA_OR_NONE = /^(?:NONE|[0-9a-f]{40})$/i;
@@ -235,16 +258,10 @@ function main() {
         return null;
       }
     })();
-    const expectedCompletion = activeStatus === 'IN_PROGRESS'
-      ? 'IN_PROGRESS'
-      : activeStatus === 'BLOCKED'
-        ? 'PROJECT_NOT_COMPLETE_BLOCKED'
-        : activeStatus === 'COMPLETE'
-          ? fields.get('PROJECT_COMPLETION_STATUS')
-          : activeStatus === 'NONE'
-            ? 'NONE'
-            : null;
-    if (expectedCompletion === null || fields.get('PROJECT_COMPLETION_STATUS') !== expectedCompletion) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
+    if (allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'))) {
+      fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    }
     const ciStatus = fields.get('CI_STATUS');
     const observedSha = fields.get('CI_OBSERVED_SHA');
     const executedSha = fields.get('CI_EXECUTED_SHA');

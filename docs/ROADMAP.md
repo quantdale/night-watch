@@ -2518,3 +2518,8 @@ L6 adversarial matrices are green. GitHub Actions run `33190456115` / job
 `98914301082` matched the release checkpoint but executed zero steps with no
 runner (`runner_id=0`), so the truthful terminal outcome is
 `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`, not CI-certified.
+
+That local/clean certification is historical. The current campaign is
+`nightwatch-operational-acceptance-v1` with project status
+`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` until a real DEV
+owner workflow earns one of the four operational verdicts.

@@ -182,6 +182,28 @@ Status: COMPLETE
   return { active, plan, state, report };
 }
 
+function validInProgressTask(taskId: string, phase: string, sha: string): ClosedTaskRecords {
+  const phaseKey = `PHASE_${phase.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_STATUS`;
+  const complete = validClosedTask(taskId, phase, sha);
+  return {
+    active: complete.active
+      .replace('Status: COMPLETE', 'Status: IN_PROGRESS')
+      .replace('Current milestone: COMPLETE / STOP', 'Current milestone: M1 — operational acceptance pending')
+      .replace('Next action: STOP', 'Next action: Continue the operational-acceptance mapping')
+      .replace(`${phaseKey}: COMPLETE`, `${phaseKey}: IN_PROGRESS`),
+    plan: complete.plan.replace('- M1 — DONE', '- M1 — IN_PROGRESS'),
+    state: complete.state
+      .replace('Status: COMPLETE', 'Status: IN_PROGRESS')
+      .replace(`${phaseKey}: COMPLETE`, `${phaseKey}: IN_PROGRESS`)
+      .replace('COMPLETE / STOP.', 'M1 — operational acceptance pending.')
+      .replace('NONE.', 'Validator extension in progress.')
+      .replace('STOP — task complete.', 'Continue the operational-acceptance mapping.')
+      .replace('Task complete. Do not resume.', 'Resume from the current operational-acceptance milestone.')
+      .replace('Task complete. PASS.', 'Not complete. Operational acceptance pending.'),
+    report: complete.report.replace('Status: COMPLETE', 'Status: IN_PROGRESS'),
+  };
+}
+
 function validBlockedTask(taskId: string, phase: string, sha: string): ClosedTaskRecords {
   const phaseKey = `PHASE_${phase.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_STATUS`;
   const complete = validClosedTask(taskId, phase, sha);
@@ -331,7 +353,7 @@ interface FixtureOptions {
   readonly activeTaskPhaseStatus?: string;
   readonly tamperCatalog?: 'comment-append' | 'corrupt';
   readonly dirtyFile?: boolean;
-  readonly activeTaskStatus?: 'complete' | 'blocked';
+  readonly activeTaskStatus?: 'complete' | 'blocked' | 'in_progress';
 }
 
 interface Fixture {
@@ -369,7 +391,9 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   if (options.blockPresent !== false) {
     const block = options.block === undefined && options.activeTaskStatus === 'blocked'
       ? { projectCompletionStatus: 'PROJECT_NOT_COMPLETE_BLOCKED' }
-      : options.block;
+      : options.block === undefined && options.activeTaskStatus === 'in_progress'
+        ? { projectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING' }
+        : options.block;
     fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, block));
   } else {
     fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), '# Nightwatch — CURRENT STATE (synthetic fixture, no block)\n');
@@ -379,7 +403,9 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   // Active task: valid v2 COMPLETE (or corrupted per option).
   const activeRecords = options.activeTaskStatus === 'blocked'
     ? validBlockedTask(ACTIVE_TASK_ID, 'test', sha)
-    : validClosedTask(ACTIVE_TASK_ID, 'test', sha);
+    : options.activeTaskStatus === 'in_progress'
+      ? validInProgressTask(ACTIVE_TASK_ID, 'test', sha)
+      : validClosedTask(ACTIVE_TASK_ID, 'test', sha);
   let activeText = activeRecords.active;
   let stateText = activeRecords.state;
   if (options.activeTaskPhaseStatus !== undefined) {
@@ -874,6 +900,130 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain('PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('29. in-progress operational campaign cannot project historical local-clean as finished', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' },
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('30. in-progress operational campaign accepts IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING', () => {
+    const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).projectCompletionStatus).toBe('IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('31. in-progress campaign still accepts the historical IN_PROGRESS completion token', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'IN_PROGRESS' },
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).projectCompletionStatus).toBe('IN_PROGRESS');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('32. COMPLETE historical local-clean remains valid and is not an operational-accepted token', () => {
+    const fixture = makeFixture();
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).projectCompletionStatus).toBe('PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('33. COMPLETE accepts OPERATIONALLY_ACCEPTED and REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN', () => {
+    for (const status of ['OPERATIONALLY_ACCEPTED', 'REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN', 'OPERATIONAL_ACCEPTANCE_FAILED'] as const) {
+      const fixture = makeFixture({ block: { projectCompletionStatus: status } });
+      try {
+        const result = run(fixture.root);
+        expect(result.status).toBe(0);
+        expect(JSON.parse(result.stdout).projectCompletionStatus).toBe(status);
+      } finally {
+        fixture.cleanup();
+      }
+    }
+  });
+
+  test('34. COMPLETE cannot project operational-acceptance pending', () => {
+    const fixture = makeFixture({ block: { projectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('35. blocked campaign accepts OPERATIONAL_ACCEPTANCE_BLOCKED and still rejects local-clean complete', () => {
+    const allowed = makeFixture({
+      activeTaskStatus: 'blocked',
+      block: { projectCompletionStatus: 'OPERATIONAL_ACCEPTANCE_BLOCKED' },
+    });
+    try {
+      const result = run(allowed.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).projectCompletionStatus).toBe('OPERATIONAL_ACCEPTANCE_BLOCKED');
+    } finally {
+      allowed.cleanup();
+    }
+    const forbidden = makeFixture({
+      activeTaskStatus: 'blocked',
+      block: { projectCompletionStatus: 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' },
+    });
+    try {
+      const result = run(forbidden.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    } finally {
+      forbidden.cleanup();
+    }
+  });
+
+  test('36. unknown operational status still fails closed', () => {
+    const fixture = makeFixture({ block: { projectCompletionStatus: 'OPERATIONALLY_FINISHED' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_INVALID');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('37. in-progress campaign cannot project OPERATIONALLY_ACCEPTED', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
     } finally {
       fixture.cleanup();
     }
