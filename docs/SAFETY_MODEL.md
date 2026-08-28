@@ -1439,23 +1439,42 @@ validation or as green evidence.
 
 ---
 
-## Final assurance release-readiness safety boundary
+## Historical final assurance release-readiness safety boundary
 
 The 2026-08-28 final-assurance campaign preserves the local-only boundary.
 The retry-free WebSocket safety matrix is authoritative; the exact observed
 `www.gstatic.com` browser CONNECT is classified as local telemetry only and
 is not added to the destination allowlist or treated as successful background
-traffic. Restricted OOPS is qualified by a tracked deterministic local
-substitute, while authenticated OOPS remains disabled until L6 is proven.
+traffic. Restricted OOPS was qualified by a tracked deterministic local
+substitute, while authenticated OOPS remained disabled until L6 was proven.
 
-Bubblewrap `0.9.0` can create an unprivileged network namespace, but the
-parent relay is incompatible and browser speculative DNS remains outside L5.
-The resulting L6 capability is `UNPROVEN/BLOCKED`, not a process-isolation
+Bubblewrap `0.9.0` could create an unprivileged network namespace, but the
+parent relay was incompatible and browser speculative DNS remained outside L5.
+The resulting L6 capability was `UNPROVEN/BLOCKED`, not a process-isolation
 claim. Direct DNS/TCP/UDP denial and complete child-process lifecycle
-isolation remain uncertified. No root, privileged firewall/network
+isolation remained uncertified. No root, privileged firewall/network
 administration, system-wide DNS/hosts/proxy mutation, TLS MITM, live external
 probe, real Alphaus contact, credential, customer value, sibling write or
-publication is permitted by this campaign.
+publication was permitted by that campaign.
+
+## Current final completion safety boundary — 2026-08-28
+
+The successor campaign adds the versioned local-only L6 process boundary
+`nightwatch.process-network-containment.v1`. It uses a rootless Bubblewrap
+network namespace with no external interface, a minimal read-only root view,
+the exact parent Node runtime, and a namespace-local bounded HTTP/upgrade
+adapter. The only parent capability is a permissioned AF_UNIX framed control
+channel; destination policy and exact egress binding remain owned by the
+existing L5 proxy/Phase-5 relay.
+
+The executable qualification covers direct system/Node DNS, UDP/TCP DNS,
+TCP/UDP/HTTP/HTTPS, IPv6 and IPv4-mapped addresses, descendant attempts,
+allowed HTTP/WebSocket relay flow, browser DNS-prefetch/preconnect/background
+traffic, and process-group/parent-death cleanup. Authenticated OOPS is gated
+on a fresh complete ready capability and fails closed on any unsupported,
+relay, liveness or cleanup state. Qualification is synthetic only; it does
+not authorize DEV/NEXT/production contact or credentials. L0–L5 remain
+separate authorities and L6 does not weaken their policy or evidence rules.
 
 ---
 

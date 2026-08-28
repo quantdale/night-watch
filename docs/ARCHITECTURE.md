@@ -1895,7 +1895,7 @@ no external requests. No new persistence, execution, source, DEV, data,
 infrastructure, authentication, AI, or promotion authority was introduced;
 the artifact facade identity remains `nightwatch.artifact-validation.private.v1`.
 
-## Final assurance boundary — 2026-08-28
+## Historical final assurance boundary — 2026-08-28
 
 The final assurance campaign adds no new authority. The six audited chains
 remain bounded by the existing environment/proxy/safety/evidence,
@@ -1906,7 +1906,29 @@ substitute only improve qualification of those existing paths.
 
 The implementation anchor `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b` is
 validated by local/source/synthetic evidence. L0–L5 remain distinct from L6;
-Bubblewrap availability does not imply L6 because relay compatibility,
-direct DNS/TCP/UDP denial, child lifecycle isolation and browser speculative-DNS
-closure are not proven. Authenticated OOPS is consequently fail-closed and
-the project terminal status is `PROJECT_NOT_COMPLETE_BLOCKED`.
+Bubblewrap availability did not imply L6 in that predecessor because relay
+compatibility, direct DNS/TCP/UDP denial, child lifecycle isolation and
+browser speculative-DNS closure were not proven. Authenticated OOPS was
+consequently fail-closed and the project terminal status was
+`PROJECT_NOT_COMPLETE_BLOCKED`.
+
+## Current final completion and L6 boundary — 2026-08-28
+
+The active successor campaign implements and qualifies a distinct L6 process
+boundary. The supervisor launches a target and all descendants inside an
+unprivileged Bubblewrap user/PID/network namespace with `--as-pid-1`,
+`--die-with-parent`, no external interface, a minimal read-only root view and
+the exact parent Node runtime. A namespace-local HTTP/upgrade proxy binds only
+to namespace loopback and forwards bounded frames over a read-only-mounted,
+permissioned AF_UNIX channel. The parent side invokes the existing Phase-5/L5
+authority; it does not accept raw socket-forward instructions or create a
+second destination policy.
+
+The versioned capability `nightwatch.process-network-containment.v1` is
+`READY` only after separate synthetic proof of DNS/TCP/UDP/HTTP/HTTPS denial,
+IPv6/mapped-address denial, descendant and parent-death behavior, HTTP and
+WebSocket relay flow, browser prefetch/preconnect/background containment and
+cleanup. Authenticated OOPS performs this fresh readiness check before target
+workspace/child creation and uses the same envelope. The current qualifying
+host passes this proof; an unsupported host returns a categorical blocked
+state and never falls back to the old uncontained authenticated path.

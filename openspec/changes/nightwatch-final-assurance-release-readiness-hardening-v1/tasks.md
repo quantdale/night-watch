@@ -38,13 +38,17 @@ Exit: every core workflow has one documented authority path and all P0/P1 defect
 ## M3 — Repair P0/P1 defects
 
 - [x] Fix all P0 findings immediately, preserving fail-closed boundaries.
-- [ ] Fix all P1 findings before unrelated P2 work (the L6 residual remains
-  deliberately open and fail-closed).
+- [ ] Repair every actionable P1 before unrelated P2 work; a required
+  process-boundary P1 may remain only as an explicitly represented terminal
+  blocker when the task is BLOCKED and the route stays fail-closed (the L6
+  residual is that bounded case).
 - [x] Add regression tests for every material defect.
 - [x] Run focused and dependency-cone validation after each repair.
 - [x] Never weaken assertions/proof thresholds/safety/privacy checks to recover green.
 
-Exit: zero open P0/P1 findings; affected cones green.
+Exit: zero unaccounted P0/P1 findings and green affected cones. A terminal
+blocking P1 is not counted as resolved; it must be named in STATE `## Blockers`,
+the phase status must normalize to BLOCKED, and COMPLETE is forbidden.
 
 ## M3A — L6 process containment + safety-test authority
 
@@ -126,7 +130,12 @@ Exit: no material current-state contradiction or misleading completion/authority
 - [x] Execute representative CLI/Control Center/local-fixture smoke journeys.
 - [x] If Actions is available, observe one exact-head run and require real executed steps + PASS; the single run `33139304292` / job `98746329861` executed zero steps and is recorded as `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence without workflow churn or retries.
 
-Exit: all required local/clean checks green, no unexplained skip or safety-critical retry masking, no open P0/P1, no blocking P2, no privacy/safety boundary regression, and L6/process-isolation truth matches the actual implemented boundary.
+Exit: all required local/clean checks green, no unexplained skip or
+safety-critical retry masking, no unaccounted P0/P1, no blocking P2, no
+privacy/safety boundary regression, and L6/process-isolation truth matches
+the actual implemented boundary. If a required L6 P1 remains unproven, M8 may
+record green available checks but the campaign terminal status must remain
+BLOCKED and cannot be projected as COMPLETE.
 
 ## M9 — Terminal project-completion certification
 

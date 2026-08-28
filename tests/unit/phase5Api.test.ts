@@ -185,13 +185,15 @@ test('Phase 5 auth bridge reads a valid external state only into an in-memory re
   }
 });
 
-test('Phase 5 records the available OS namespace probe without enabling an incompatible authenticated OOPS path', () => {
+test('Phase 5 keeps the legacy namespace observation distinct from executable L6 qualification', () => {
   const status = inspectOopsSandbox();
   expect(status.schemaVersion).toBe('nightwatch.oops-sandbox-status.v2');
   expect(status.containmentLevel).toBe('L0_L5');
   expect(['PASS', 'UNAVAILABLE']).toContain(status.networkNamespaceProbe);
   expect(status.relayCompatible).toBe(false);
-  expect(status.authenticatedOopsExecution).toBe('DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
+  expect(status.l6RuntimeIdentity).toBe('nightwatch.process-network-containment.v1');
+  expect(status.l6Qualification).toBe('ON_DEMAND_EXECUTABLE_PROBE');
+  expect(status.authenticatedOopsExecution).toBe('REQUIRES_L6_RUNTIME_QUALIFICATION');
   expect(status.localRestrictedExecution).toBe('ALLOWED_LOOPBACK_RELAY');
   expect(status.l6).toMatchObject({
     schemaVersion: 'nightwatch.l6-runtime-capability.v1',
@@ -201,36 +203,50 @@ test('Phase 5 records the available OS namespace probe without enabling an incom
     directDnsDenial: 'NOT_PROVEN',
     directTcpDenial: 'NOT_PROVEN',
     directUdpDenial: 'NOT_PROVEN',
-    syntheticRelayFlow: 'BLOCKED_PARENT_NAMESPACE',
+    syntheticRelayFlow: 'NOT_QUALIFIED',
     completeProcessIsolation: false,
     completeNetworkIsolation: false,
-    blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL',
+    blockerCode: 'L6_RUNTIME_QUALIFICATION_REQUIRED',
   });
   expect(() => assertL6RuntimeCapability(status.l6)).toThrow('L6_RUNTIME_CAPABILITY_REQUIRED');
 });
 
-test('DEV or authenticated OOPS fails closed before creating a scenario workspace or child process', async () => {
+test('authenticated OOPS uses the proven L6 envelope before creating its temporary workspace', async () => {
+  const selected = selectOopsBinary();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-oops-l6-block-'));
-  const binary = path.join(directory, 'synthetic-oops');
-  fs.writeFileSync(binary, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
-  fs.chmodSync(binary, 0o700);
+  const binary = selected.path;
+  const operation = syntheticOperation({
+    operationId: 'synthetic.authenticated.read',
+    requiredHostClass: 'LOCAL_LOOPBACK',
+    authClass: 'RELAY_EPHEMERAL_DEV_SESSION',
+    sourceRepo: 'synthetic',
+    sourceSHA: 'synthetic',
+    sourceProvenance: ['synthetic fixture'],
+  });
+  const catalog: ApiCatalog = { schemaVersion: API_CATALOG_VERSION, generatedBy: SCENARIO_GENERATOR_VERSION, operations: [operation] };
+  const relay = await startPhase5Relay({
+    catalog,
+    mode: 'local',
+    targetResolver: () => new URL('http://127.0.0.1:7312/fixture'),
+    fetcher: async () => ({ status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{"fixture":true}') }),
+  });
   try {
-    const operation = syntheticOperation({
-      operationId: 'synthetic.dev.read',
-      requiredHostClass: 'DEV_API',
-      authClass: 'RELAY_EPHEMERAL_DEV_SESSION',
-    });
     const digest = sha256Executable(binary);
-    await expect(runRestrictedOops({
+    const result = await runRestrictedOops({
       binaryPath: binary,
       binarySourceSHA: 'synthetic-source-sha',
       expectedSourceSHA: 'synthetic-source-sha',
       expectedBinarySHA256: digest,
-      scenario: undefined as never,
+      scenario: generateRestrictedScenario(operation, catalog),
       operation,
-      relay: undefined as never,
-    })).rejects.toThrow('AUTHENTICATED_OOPS_DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
+      relay,
+    });
+    expect(result.outcome).toBe('SCENARIO_SUCCESS');
+    expect(result.process.containment).toBe('L6_ROOTLESS_NAMESPACE');
+    expect(result.workspace.cleaned).toBe(true);
   } finally {
+    await relay.close();
+    selected.cleanup();
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });

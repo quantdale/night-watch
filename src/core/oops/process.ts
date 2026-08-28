@@ -8,7 +8,7 @@ import { assertGeneratedScenarioSafe } from '../../api/phase5/restrictedProfile'
 import type { ApiOperation, GeneratedScenario } from '../../api/phase5/types';
 import type { Phase5Relay, RelayObservation } from '../../api/phase5/relay';
 import { OOPS_ADAPTER_VERSION } from '../../api/phase5/types';
-import { assertAuthenticatedOopsCapability, inspectOopsSandbox } from './sandbox';
+import { assertL6RuntimeCapability, qualifyL6RuntimeCapability, runL6ContainedOops } from './l6';
 
 export const OOPS_PROCESS_TIMEOUT_MS = 20_000;
 export const OOPS_OUTPUT_LIMIT_BYTES = 64 * 1024;
@@ -46,6 +46,7 @@ export interface OopsRunResult {
     binarySHA256: string;
     argvSafe: true;
     shell: false;
+    containment: 'L5_POLICY_RELAY' | 'L6_ROOTLESS_NAMESPACE';
   };
   relayObservation?: RelayObservation;
   output: OopsOutputSummary;
@@ -274,31 +275,53 @@ export async function runRestrictedOops(options: RunRestrictedOopsOptions): Prom
   const actualBinarySHA256 = sha256Executable(options.binaryPath);
   if (actualBinarySHA256 !== options.expectedBinarySHA256) throw new Error('OOPS_BINARY_DIGEST_MISMATCH');
   if (options.operation.semanticClass !== 'KNOWN_READ') throw new Error('fail-closed: OOPS adapter only accepts KNOWN_READ');
-  // A DEV/authenticated operation would place a credential-bearing or
-  // product-reaching subprocess behind the process boundary. The current
-  // rootless namespace cannot reach the parent relay, so fail before any
-  // scenario workspace or child process is created. LOCAL_LOOPBACK synthetic
-  // fixtures remain covered by the narrower relay-only path below.
-  if (options.operation.requiredHostClass === 'DEV_API' || options.operation.authClass === 'RELAY_EPHEMERAL_DEV_SESSION') {
-    assertAuthenticatedOopsCapability(inspectOopsSandbox());
-  }
   const logicalYaml = options.scenario.logicalYaml;
   assertGeneratedScenarioSafe(logicalYaml, options.operation.operationId);
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase5-oops-'));
-  ensurePrivateDirectory(workspace);
+  const requiresL6 = options.operation.requiredHostClass === 'DEV_API' || options.operation.authClass === 'RELAY_EPHEMERAL_DEV_SESSION';
+  if (requiresL6) {
+    const capability = await qualifyL6RuntimeCapability();
+    assertL6RuntimeCapability(capability);
+  }
+  const secrets = [...(options.extraSecrets ?? []), ...(options.parentSentinelValue ? [options.parentSentinelValue] : [])];
+  let workspace: string | undefined;
   let cleaned = false;
+  let l6Cleaned = false;
   let completedResult: OopsRunResult | undefined;
   try {
-    const env = buildOOPSAllowlistedEnvironment(workspace);
-    const scenarioFile = path.join(workspace, 'scenario.yaml');
-    const materialized = materializeRelayPort(logicalYaml, options.relay.port, options.operation.operationId);
-    assertGeneratedScenarioSafe(materialized, options.operation.operationId);
-    writePrivateAtomic(scenarioFile, materialized);
-    const args = ['--scenarios', scenarioFile, '--skip-result-notif'];
-    validateRestrictedOopsInvocationArgs(args);
-    const secrets = [...(options.extraSecrets ?? []), ...(options.parentSentinelValue ? [options.parentSentinelValue] : [])];
-    for (const arg of [options.binaryPath, ...args]) assertSafeArg(arg, secrets);
-    const capture = await captureProcess(options.binaryPath, args, env, workspace, options.timeoutMs ?? OOPS_PROCESS_TIMEOUT_MS);
+    let capture: ProcessCapture;
+    let containment: OopsRunResult['process']['containment'];
+    if (requiresL6) {
+      const l6Capture = await runL6ContainedOops({
+        binaryPath: options.binaryPath,
+        logicalScenario: logicalYaml,
+        operationId: options.operation.operationId,
+        relay: options.relay,
+        timeoutMs: options.timeoutMs ?? OOPS_PROCESS_TIMEOUT_MS,
+      });
+      capture = {
+        exitCode: l6Capture.exitCode,
+        signal: l6Capture.signal,
+        timedOut: l6Capture.timedOut,
+        stdout: l6Capture.stdout,
+        stderr: l6Capture.stderr,
+        outputTruncated: l6Capture.outputTruncated,
+      };
+      l6Cleaned = l6Capture.cleanup;
+      containment = 'L6_ROOTLESS_NAMESPACE';
+    } else {
+      workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase5-oops-'));
+      ensurePrivateDirectory(workspace);
+      const env = buildOOPSAllowlistedEnvironment(workspace);
+      const scenarioFile = path.join(workspace, 'scenario.yaml');
+      const materialized = materializeRelayPort(logicalYaml, options.relay.port, options.operation.operationId);
+      assertGeneratedScenarioSafe(materialized, options.operation.operationId);
+      writePrivateAtomic(scenarioFile, materialized);
+      const args = ['--scenarios', scenarioFile, '--skip-result-notif'];
+      validateRestrictedOopsInvocationArgs(args);
+      for (const arg of [options.binaryPath, ...args]) assertSafeArg(arg, secrets);
+      capture = await captureProcess(options.binaryPath, args, env, workspace, options.timeoutMs ?? OOPS_PROCESS_TIMEOUT_MS);
+      containment = 'L5_POLICY_RELAY';
+    }
     const observation = options.relay.takeObservation(options.operation.operationId);
     const output = sanitizeOopsOutput(capture.stdout, capture.stderr, secrets);
     output.outputTruncated = capture.outputTruncated;
@@ -307,21 +330,23 @@ export async function runRestrictedOops(options: RunRestrictedOopsOptions): Prom
       scenarioId: options.scenario.scenarioId,
       operationId: options.operation.operationId,
       outcome: classifyOutcome(capture, observation),
-      process: { exitCode: capture.exitCode, signal: capture.signal, timedOut: capture.timedOut, binarySHA256: actualBinarySHA256, argvSafe: true, shell: false },
+      process: { exitCode: capture.exitCode, signal: capture.signal, timedOut: capture.timedOut, binarySHA256: actualBinarySHA256, argvSafe: true, shell: false, containment },
       ...(observation ? { relayObservation: observation } : {}),
       output,
       childEnvironment: { allowlistOnly: true, parentSentinelInherited: false, credentialNamesPassed: 0 },
-      workspace: { ownerOnly: ownerOnly(workspace), scenarioMode: '0600', cleaned: false },
+      workspace: { ownerOnly: workspace === undefined ? true : ownerOnly(workspace), scenarioMode: '0600', cleaned: false },
     };
     completedResult = result;
     return result;
   } finally {
-    try {
-      fs.rmSync(workspace, { recursive: true, force: true });
-      cleaned = true;
-    } catch {
-      cleaned = false;
+    if (workspace !== undefined) {
+      try {
+        fs.rmSync(workspace, { recursive: true, force: true });
+        cleaned = true;
+      } catch {
+        cleaned = false;
+      }
     }
-    if (completedResult !== undefined) completedResult.workspace.cleaned = cleaned;
+    if (completedResult !== undefined) completedResult.workspace.cleaned = workspace === undefined ? l6Cleaned : cleaned;
   }
 }

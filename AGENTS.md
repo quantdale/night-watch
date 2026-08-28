@@ -91,6 +91,21 @@ DEV campaign and requires the external owner-only storage state. The real
 launcher is serial, fail-closed, and never runs in production, publishes
 findings, or performs infrastructure/data operations.
 
+## L6 process/network containment (current capability)
+
+The versioned `nightwatch.process-network-containment.v1` capability is the
+only authority for authenticated/non-browser subprocess containment. Its
+rootless Bubblewrap envelope uses a no-external-interface user/PID/network
+namespace, a minimal read-only root view, the exact invoking Node runtime, a
+namespace-local bounded HTTP/upgrade proxy, and a permissioned inherited
+AF_UNIX control channel to the existing L5/Phase-5 authority. Qualification
+must separately prove direct system/Node DNS, UDP/TCP DNS, TCP/UDP/HTTP/HTTPS,
+IPv6/mapped-address, descendant, browser speculative/background, HTTP/
+WebSocket relay and parent-death cleanup behavior. Authenticated OOPS checks a
+fresh READY capability before target workspace or child creation and fails
+closed on any unsupported or lost state; local synthetic L5-only fixtures keep
+their explicit narrower classification.
+
 ## Phase 9 semantic oracles (permanent rule)
 
 Phase 9 is `COMPLETE_LOCAL_SYNTHETIC` (D-54). Semantic oracles
@@ -223,7 +238,7 @@ Under v2 the checker enforces a cross-file task-status state machine:
   identical (`DUPLICATE_CONTINUITY_FIELD` with line numbers).
 - Future-value placeholders such as `(filled after push)` / `(filled at
   close)` are rejected in COMPLETE live/final fields. `DISCOVER_FROM_GIT`,
-  `LIVE_HEAD_AUTHORITY: GIT` and `FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD`
+  `LIVE_HEAD_AUTHORITY: GIT` and `FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT`
   are intentional authority markers, not placeholders.
 - Tracked documents record only SHAs and CI run IDs already known before the
   document commit; live HEAD is discovered from Git; a document never predicts
@@ -240,6 +255,13 @@ Under v2 the checker enforces a cross-file task-status state machine:
 `docs/CURRENT_STATE.md` (`nightwatch.project-state.v2`) against mechanically
 derivable source. The v2 block has an explicit owned-key schema; unknown,
 duplicate, missing, malformed, or oversized fields fail closed:
+
+- Release certification fields keep project completion status, release
+  checkpoint, substantive/local/clean validation SHAs, CI-observed/executed
+  SHAs, CI status and final documentation role separate. Live and final
+  documentation heads remain Git-discovered markers. A blocked active task
+  cannot project a complete status, and zero-step CI cannot project executed
+  CI.
 
 - `CURRENT_STATE` is a project SNAPSHOT, never its own Git/checkpoint
   authority. Live HEAD comes from Git; the current implementation checkpoint

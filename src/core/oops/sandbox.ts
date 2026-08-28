@@ -1,15 +1,19 @@
 // ---------------------------------------------------------------------------
-// Nightwatch Phase 5 — local OOPS sandbox capability probe.
+// Nightwatch Phase 5 — legacy OOPS sandbox observation.
 //
-// Bubblewrap can create an isolated network namespace on this host, but that
-// namespace cannot reach a relay bound in Nightwatch's parent namespace. The
-// restricted Phase 5 OOPS path therefore uses the stronger applicable
-// control: a fixed loopback relay URL, a catalog-resolved destination, and a
-// credential-free OOPS process. The namespace probe is retained as evidence
-// rather than pretending it can protect the authenticated relay path.
+// This synchronous record intentionally reports only the cheap Bubblewrap
+// observation. Executable L6 readiness is qualified by the versioned,
+// adversarial async probe in `l6.ts`; callers requiring authenticated OOPS
+// must consume that stronger capability before creating a target workspace.
 // ---------------------------------------------------------------------------
 
 import { spawnSync } from 'node:child_process';
+
+// The legacy Phase 5 observation remains available for compatibility. The
+// current authenticated-OOPS authority is the executable L6 qualification in
+// `l6.ts`, which is intentionally a separate, stronger capability record.
+export { L6_PROCESS_NETWORK_CONTAINMENT_VERSION, qualifyL6BrowserTraffic, qualifyL6RuntimeCapability, runL6ContainedOops } from './l6';
+export type { L6RuntimeCapability as ProvenL6RuntimeCapability } from './l6';
 
 export const OOPS_SANDBOX_STATUS_VERSION = 'nightwatch.oops-sandbox-status.v2' as const;
 export const L6_RUNTIME_CAPABILITY_VERSION = 'nightwatch.l6-runtime-capability.v1' as const;
@@ -31,13 +35,13 @@ export interface L6RuntimeCapability {
   readonly directDnsDenial: 'PROVEN' | 'NOT_PROVEN';
   readonly directTcpDenial: 'PROVEN' | 'NOT_PROVEN';
   readonly directUdpDenial: 'PROVEN' | 'NOT_PROVEN';
-  readonly syntheticRelayFlow: 'PROVEN' | 'BLOCKED_PARENT_NAMESPACE';
+  readonly syntheticRelayFlow: 'PROVEN' | 'NOT_QUALIFIED';
   readonly startup: 'PROVEN' | 'NOT_PROVEN';
   readonly liveness: 'PROVEN' | 'NOT_PROVEN';
   readonly cleanup: 'PROVEN' | 'NOT_PROVEN';
   readonly completeProcessIsolation: boolean;
   readonly completeNetworkIsolation: boolean;
-  readonly blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL' | null;
+  readonly blockerCode: 'L6_RUNTIME_QUALIFICATION_REQUIRED' | null;
 }
 
 const UNSUPPORTED_L6_RUNTIME_CAPABILITY: L6RuntimeCapability = Object.freeze({
@@ -49,13 +53,13 @@ const UNSUPPORTED_L6_RUNTIME_CAPABILITY: L6RuntimeCapability = Object.freeze({
   directDnsDenial: 'NOT_PROVEN',
   directTcpDenial: 'NOT_PROVEN',
   directUdpDenial: 'NOT_PROVEN',
-  syntheticRelayFlow: 'BLOCKED_PARENT_NAMESPACE',
+  syntheticRelayFlow: 'NOT_QUALIFIED',
   startup: 'NOT_PROVEN',
   liveness: 'NOT_PROVEN',
   cleanup: 'NOT_PROVEN',
   completeProcessIsolation: false,
   completeNetworkIsolation: false,
-  blockerCode: 'BROWSER_DNS_PREFETCH_REMAINS_L6_RESIDUAL',
+  blockerCode: 'L6_RUNTIME_QUALIFICATION_REQUIRED',
 });
 
 const OOPS_PROBE_ENV: NodeJS.ProcessEnv = {
@@ -72,17 +76,21 @@ export interface OopsSandboxStatus {
   toolVersion: string | null;
   networkNamespaceProbe: 'PASS' | 'UNAVAILABLE';
   relayCompatible: false;
-  authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE' | 'ENABLED_L6';
+  l6RuntimeIdentity: 'nightwatch.process-network-containment.v1';
+  l6Qualification: 'ON_DEMAND_EXECUTABLE_PROBE';
+  authenticatedOopsExecution: 'REQUIRES_L6_RUNTIME_QUALIFICATION' | 'ENABLED_L6';
   localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY';
   l6: L6RuntimeCapability;
 }
 
-function statusBase(): Pick<OopsSandboxStatus, 'schemaVersion' | 'containmentLevel' | 'relayCompatible' | 'authenticatedOopsExecution' | 'localRestrictedExecution' | 'l6'> {
+function statusBase(): Pick<OopsSandboxStatus, 'schemaVersion' | 'containmentLevel' | 'relayCompatible' | 'l6RuntimeIdentity' | 'l6Qualification' | 'authenticatedOopsExecution' | 'localRestrictedExecution' | 'l6'> {
   return {
     schemaVersion: OOPS_SANDBOX_STATUS_VERSION,
     containmentLevel: 'L0_L5',
     relayCompatible: false,
-    authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE',
+    l6RuntimeIdentity: 'nightwatch.process-network-containment.v1',
+    l6Qualification: 'ON_DEMAND_EXECUTABLE_PROBE',
+    authenticatedOopsExecution: 'REQUIRES_L6_RUNTIME_QUALIFICATION',
     localRestrictedExecution: 'ALLOWED_LOOPBACK_RELAY',
     l6: UNSUPPORTED_L6_RUNTIME_CAPABILITY,
   };
@@ -152,7 +160,7 @@ export function assertL6RuntimeCapability(capability: L6RuntimeCapability): void
 
 export function assertAuthenticatedOopsCapability(status: OopsSandboxStatus): void {
   if (status.authenticatedOopsExecution !== 'ENABLED_L6') {
-    throw new Error('AUTHENTICATED_OOPS_DISABLED_RELAY_NAMESPACE_INCOMPATIBLE');
+    throw new Error('AUTHENTICATED_OOPS_REQUIRES_L6_RUNTIME_QUALIFICATION');
   }
   assertL6RuntimeCapability(status.l6);
 }

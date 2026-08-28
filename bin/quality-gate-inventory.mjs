@@ -83,13 +83,20 @@ function newGateGroups() {
   const gate = JSON.parse(read(gateFile));
   const compatibility = JSON.parse(read(compatibilityFile));
   const semanticFiles = [...compatibility.phaseSuites.flatMap((suite) => suite.files), ...(compatibility.supportFiles ?? [])];
+  const packageJson = JSON.parse(read('package.json'));
+  const syntheticCommand = packageJson?.scripts?.['campaign:synthetic'];
+  if (typeof syntheticCommand !== 'string') throw new Error('SYNTHETIC_CAMPAIGN_SCRIPT_MISSING');
+  const syntheticFiles = [...new Set(syntheticCommand.match(testFilePattern) ?? [])];
+  if (syntheticFiles.length === 0 || !syntheticCommand.includes('--workers=1') || !syntheticCommand.includes('--retries=0')) {
+    throw new Error('SYNTHETIC_CAMPAIGN_SERIAL_RETRY_POLICY_INVALID');
+  }
   return gate.groups.map((group) => {
     const files = group.commandKey === 'SEMANTIC_COMPATIBILITY'
       ? semanticFiles
       : group.commandKey === 'OWNER_PROVENANCE'
         ? ['tests/unit/privateArtifactAtomic.test.ts', 'tests/unit/aiOwnerReview.test.ts', 'tests/unit/aiReview.test.ts']
         : group.commandKey === 'SYNTHETIC_CAMPAIGN'
-          ? ['tests/unit/campaign.test.ts', 'tests/unit/phase24SyntheticCampaign.test.ts', 'tests/unit/phase24AuthorityLifecycleHardening.test.ts', 'tests/unit/phase25SyntheticCampaign.test.ts', 'tests/unit/phase26SyntheticCampaign.test.ts', 'tests/unit/phase27ResponseFlow.test.ts', 'tests/unit/phase28SourceIntelligence.test.ts', 'tests/unit/responseFlowBindingHardening.test.ts']
+          ? syntheticFiles
           : [];
     return {
       groupId: group.id,

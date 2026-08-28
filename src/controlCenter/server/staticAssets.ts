@@ -23,6 +23,35 @@ function inside(root: string, candidate: string): boolean {
   return candidate === root || candidate.startsWith(`${root}${path.sep}`);
 }
 
+function readConfinedFile(root: string, candidate: string): StaticAssetResult {
+  const noFollow = fs.constants.O_NOFOLLOW;
+  if (noFollow === undefined) return { kind: 'REJECTED' };
+  let descriptor: number | undefined;
+  try {
+    descriptor = fs.openSync(candidate, fs.constants.O_RDONLY | noFollow);
+    const before = fs.fstatSync(descriptor);
+    if (!before.isFile() || before.size > MAX_STATIC_BYTES) return { kind: 'REJECTED' };
+    // The descriptor, rather than the pathname, is the authority after open.
+    // This closes the realpath/read TOCTOU window and also detects an
+    // intermediate directory symlink that points outside the configured root.
+    const openedPath = fs.realpathSync(`/proc/self/fd/${descriptor}`);
+    if (!inside(root, openedPath)) return { kind: 'REJECTED' };
+    const extension = path.extname(openedPath).toLowerCase();
+    const contentType = CONTENT_TYPES[extension];
+    if (contentType === undefined) return { kind: 'REJECTED' };
+    const body = fs.readFileSync(descriptor);
+    const after = fs.fstatSync(descriptor);
+    if (before.ino !== after.ino || before.size !== after.size || before.mtimeMs !== after.mtimeMs) return { kind: 'REJECTED' };
+    return { kind: 'FOUND', body, contentType };
+  } catch {
+    return { kind: 'MISSING' };
+  } finally {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch { /* bounded read already classified */ }
+    }
+  }
+}
+
 /** Root-confined resolver for built UI assets only; it never serves arbitrary files. */
 export class ControlCenterStaticAssets {
   private readonly root: string | null;
@@ -61,10 +90,7 @@ export class ControlCenterStaticAssets {
       realCandidate = fs.realpathSync(candidate);
       const stat = fs.statSync(realCandidate);
       if (!stat.isFile() || stat.size > MAX_STATIC_BYTES || !inside(this.root, realCandidate)) return { kind: 'REJECTED' };
-      const extension = path.extname(realCandidate).toLowerCase();
-      const contentType = CONTENT_TYPES[extension];
-      if (contentType === undefined) return { kind: 'REJECTED' };
-      return { kind: 'FOUND', body: fs.readFileSync(realCandidate), contentType };
+      return readConfinedFile(this.root, candidate);
     } catch {
       return { kind: 'MISSING' };
     }

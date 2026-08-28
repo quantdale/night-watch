@@ -78,6 +78,23 @@ function checkChildProcessBoundaries() {
   }
 }
 
+function checkL6ProcessNetworkBoundary() {
+  const l6 = read('src/core/oops/l6.ts');
+  const process = read('src/core/oops/process.ts');
+  if (!/nightwatch\.process-network-containment\.v1/.test(l6)) fail('L6 capability is missing its versioned identity');
+  for (const option of ['--unshare-user', '--unshare-net', '--unshare-pid', '--as-pid-1', '--die-with-parent', '--new-session', '--clearenv']) {
+    if (!l6.includes(option)) fail(`L6 launcher is missing required rootless option ${option}`);
+  }
+  if (!/--ro-bind/.test(l6) || /['"]\/['"]\s*,\s*['"]\/['"]/.test(l6)) fail('L6 root view is missing or exposes the host root broadly');
+  if (!/INHERITED_AF_UNIX_ONLY/.test(l6) || !/websocketRelayFlow/.test(l6) || !/L6_CONTROL_PROTOCOL_VERSION/.test(l6) || !/MAX_FRAME_BYTES/.test(l6)) fail('L6 AF_UNIX control protocol is not versioned/bounded');
+  if (/shell\s*:\s*true/.test(l6) || /--privileged|iptables|nftables|sudo\b|tls\s*mitm/i.test(l6)) fail('L6 introduces privileged or shell/network-administration authority');
+  if (!/process\.kill\(-child\.pid/.test(l6) || !/--die-with-parent/.test(l6)) fail('L6 process-group/parent-death cleanup is incomplete');
+  if (!/qualifyL6RuntimeCapability/.test(process) || !/assertL6RuntimeCapability/.test(process) || !/runL6ContainedOops/.test(process)) fail('authenticated OOPS is not bound to the L6 readiness gate');
+  if (!/requiredHostClass === 'DEV_API'/.test(process) || !/RELAY_EPHEMERAL_DEV_SESSION/.test(process)) fail('authenticated OOPS host/auth classes are not L6-gated');
+  const capability = read('src/core/oops/sandbox.ts');
+  if (!/qualifyL6RuntimeCapability/.test(capability)) fail('legacy OOPS sandbox status does not expose the current L6 qualifier');
+}
+
 function checkTargetPolicy() {
   for (const file of ['bin/phase7-real.mjs', 'bin/phase5-real.mjs', 'bin/phase4-real.mjs', 'bin/phase2b-real.mjs', 'bin/phase2c-real.mjs', 'bin/observe-authenticated.mjs']) {
     if (!/env\s*!==\s*['"]dev['"]/.test(read(file))) fail(`${file} does not enforce DEV-only automated credential execution`);
@@ -889,6 +906,12 @@ function checkProjectStateIntegrity() {
   // filesystem writes, no network, no model, no DB/infrastructure, and the
   // canonical catalog target stays code-defined (no user-supplied path).
   const checker = read('bin/project-state-check.mjs');
+  for (const field of ['RELEASE_CERTIFICATION_PROTOCOL_VERSION', 'PROJECT_COMPLETION_STATUS', 'RELEASE_CHECKPOINT_SHA', 'LIVE_HEAD_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'CI_OBSERVED_SHA', 'CI_EXECUTED_SHA', 'CI_STATUS', 'FINAL_DOCUMENTATION_SHA', 'FINAL_CI_AUTHORITY']) {
+    if (!checker.includes(field)) fail(`project-state checker is missing release-truth field ${field}`);
+  }
+  if (!/PROJECT_STATE_COMPLETION_STATUS_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH/.test(checker) || !/PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION/.test(checker)) {
+    fail('project-state checker does not enforce blocked/completion and CI execution semantics');
+  }
   if (/\b(?:fetch\(|https?\.request|net\.|dns\.|WebSocket|child_process\.[a-z]+exec|execSync|spawnSync\([^)]*['"]git['"]\s*,\s*\[[^\]]*(?:add|commit|push|checkout|reset|clean|stash|merge|rebase|cherry-pick|apply|am|tag|branch|config))/i.test(checker)) {
     fail('bin/project-state-check.mjs must stay a read-only local checker (no network, no Git mutation verbs)');
   }
@@ -1659,6 +1682,7 @@ function checkPhase22IntegrationSeams() {
 }
 
 checkChildProcessBoundaries();
+checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
 checkTypecheckCoverage();
 checkPrivateSurface();

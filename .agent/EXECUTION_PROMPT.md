@@ -6,8 +6,8 @@ Campaign ID: nightwatch-final-completion-and-l6-containment-v1
 OpenSpec: openspec/changes/nightwatch-final-completion-and-l6-containment-v1/
 Planned-From: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
 Target Branch: main
-Predecessor Task ID: nightwatch-campaign-handoff-and-project-truth-hardening-v1
-Predecessor Status: COMPLETE
+Predecessor Task ID: nightwatch-final-assurance-release-readiness-hardening-v1
+Predecessor Status: BLOCKED
 
 ## Mission
 
@@ -93,7 +93,19 @@ Reject duplicate authority, silent fallback, stale-currentness acceptance and am
 
 ### L6 process/DNS containment truth
 
-Reproduce the current L6 boundary before claiming release completeness: browser speculative DNS remains outside L5; Bubblewrap currently reports relay incompatibility; authenticated OOPS remains disabled. Prefer an unprivileged/rootless L6 design and prove direct DNS/TCP/UDP escape denial separately from allowed synthetic proxy/relay flow. Never use root, privileged firewall/network administration, system-wide proxy/DNS/hosts mutation, TLS MITM or live external probes. If safe closure is not possible, preserve fail-closed routes and terminate full-completion certification as blocked.
+Reproduce the current L6 boundary before claiming release completeness. The
+successor implementation uses an unprivileged Bubblewrap network namespace
+with no external interface, a minimal read-only root view, an inherited
+AF_UNIX control protocol, a namespace-local bounded proxy, and a process-group
+supervisor. Its qualification separately proves direct DNS/TCP/UDP/HTTP/HTTPS
+denial, IPv6/mapped-address denial, descendant denial, synthetic HTTP and
+WebSocket relay flow, browser speculative/background traffic containment and
+parent-death cleanup. Authenticated OOPS is permitted only after a fresh
+`READY` capability check and fails closed if any dimension is unavailable.
+Never use root, privileged firewall/network administration, system-wide
+proxy/DNS/hosts mutation, TLS MITM or live external probes. If the current
+host cannot reproduce the complete proof, retain the fail-closed state and
+terminate certification as blocked.
 
 Re-run the WebSocket containment smoke surface with retries disabled. The current network observer awaits `routeWebSocket`; stale retry rationale may not mask safety regressions. Deterministically qualify restricted-OOPS provenance/relay/privacy behavior in clean certification rather than silently skipping it when a local binary is absent.
 

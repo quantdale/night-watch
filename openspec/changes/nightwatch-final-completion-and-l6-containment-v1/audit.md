@@ -1,7 +1,7 @@
 # Fresh Current-Head Audit Ledger
 
 Campaign: `nightwatch-final-completion-and-l6-containment-v1`
-Audit status: H0_COMPLETE_M1_IN_PROGRESS
+Audit status: M1_COMPLETE_M4_IN_PROGRESS
 Audit baseline: `6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20`
 Scope: tracked Nightwatch repository paths only; synthetic/local execution
 
@@ -65,10 +65,23 @@ not defect counts; historical prose and test fixtures account for many hits.
 
 | ID | Severity | Area | Initial disposition |
 | --- | --- | --- | --- |
-| L6-01 | P1 | Rootless process/DNS/network containment is not yet proven | Reproduce direct child/descendant DNS/TCP/UDP/HTTP escape and relay topology; implement only if safe and mechanically provable; otherwise retain fail-closed blocker |
-| L6-02 | P1 | OOPS launch currently uses plain `spawn`, while comments describe an absent namespace | Bind launch to a proven capability or correct the truth boundary and regression-test pre-spawn failure |
-| L6-03 | P1 | Browser speculative DNS remains outside the L5 proxy authority | Prove namespace denial or retain explicit L6 residual; do not claim complete containment |
-| TRUTH-01 | P1 | M3/M8 blocker semantics and SHA/CI roles need a single current successor authority | Add blocked-vs-complete and exact-SHA regressions; preserve historical records |
-| SKIP-01 | P2 | Fresh exact skip/retry identity census is not yet recorded | Enumerate nested and canonical skips; classify every identity before certification |
-| DEP-01 | P2 | Root retains legacy `vue@2.6.12` and the dependency audit needs current evidence | Determine actual role/vulnerability impact; remove only if unused and safe |
-| AUDIT-01 | P2 | Fresh dependency/UI/resource/Control Center evidence is not yet recorded | Complete before certification |
+| L6-01 | P1 | Rootless process/DNS/network containment was not proven | FIXED: Bubblewrap namespace, AF_UNIX relay, direct escape probe, browser qualification, descendant and parent-death proof all pass locally |
+| L6-02 | P1 | OOPS launch used plain `spawn`, while comments described an absent namespace | FIXED: authenticated/DEV-class launch now qualifies and uses `runL6ContainedOops`; local-only operations retain explicit L5 classification |
+| L6-03 | P1 | Browser speculative DNS was outside the L5 proxy authority | FIXED: Chrome qualification runs in the no-external-interface namespace with synthetic prefetch/preconnect and bounded local proxy; L5 remains distinct |
+| TRUTH-01 | P1 | M3/M8 blocker semantics and SHA/CI roles needed a single current authority | FIXED: successor status, project release fields, blocked-vs-complete regressions, and predecessor-BLOCKED handoff route are explicit |
+| SKIP-01 | P2 | Fresh exact skip/retry identity census was not recorded | IN PROGRESS: fourteen environment/authorization guarded call sites, no only/fixme; full serial/isolated identity parity pending |
+| DEP-01 | P2 | Root retained legacy `vue@2.6.12` and the dependency audit needed current evidence | ACCEPTED NON-BLOCKING: dev-only exact Vue 2.6.12 compatibility oracle; one low ReDoS advisory, major Vue 3 is the only audit fix and is not a compatible drop-in |
+| DEP-02 | P1 | UI Vite/Vitest versions carried path/file-execution advisories | FIXED: exact Vite `6.4.3` and Vitest `3.2.7`; fresh UI install/audit is clean |
+| CC-01 | P2 | Static asset path was resolved then read by pathname, leaving a symlink race | FIXED: `O_NOFOLLOW` descriptor, `/proc/self/fd` root check, and pre/post stat validation |
+| AUDIT-01 | P2 | Gate inventory omitted newly added synthetic test files | FIXED: inventory derives files from the package script and enforces serial/no-retry policy |
+
+The fresh skip census found fourteen guarded skip call sites and no
+`test.only`/`test.fixme`: four manual real-environment flags, one disposable
+source-snapshot guard (two grouped tests), one optional sibling-backtest guard,
+one Git/uid capability guard (two branches), and four Git-availability guards.
+These are environment/authorization guards rather than hidden ordinary local
+failures; their exact terminal identities and dispositions remain to be
+verified by the complete serial and isolated runs. The prior retry workaround
+on `tests/smoke/safety.smoke.ts` is already absent; the fresh audit also found
+stale retries on authenticated/proxy smoke suites and they are being removed
+and re-run with retries disabled.

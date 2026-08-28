@@ -136,7 +136,11 @@ export function validateHandoffHeader(parsedOrText) {
   if (!isGitSha(fields['Planned-From'])) add('HANDOFF_PLANNED_FROM_INVALID', 'Planned-From');
   if (fields['Target Branch'] !== 'main') add('HANDOFF_TARGET_BRANCH_INVALID', 'Target Branch');
   if (fields['OpenSpec'] !== `openspec/changes/${fields['Campaign ID']}/`) add('HANDOFF_OPENSPEC_ROUTE_INVALID', 'OpenSpec');
-  if (fields['Predecessor Status'] !== 'COMPLETE') add('HANDOFF_PREDECESSOR_STATUS_INVALID', 'Predecessor Status');
+  // A successor may be authorized to repair a genuinely blocked predecessor;
+  // requiring COMPLETE here forced new campaigns to skip or mislabel the
+  // immediately preceding blocker. READY_FOR_EXECUTION still requires the
+  // active task to match this status exactly.
+  if (fields['Predecessor Status'] !== 'COMPLETE' && fields['Predecessor Status'] !== 'BLOCKED') add('HANDOFF_PREDECESSOR_STATUS_INVALID', 'Predecessor Status');
 
   return Object.freeze({
     ok: errors.length === 0,

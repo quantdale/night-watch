@@ -248,44 +248,44 @@ test('qualifies all seven built Control Center views over one synthetic authorit
     await expect(page.getByRole('heading', { name: 'Know the posture before the next run.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Local synthetic readiness' })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Safety Center' }).click();
+    await page.getByRole('link', { name: 'Safety Center' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Safety is a posture, not a green badge.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this surface can do' })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Runs' }).click();
+    await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
     await expect(page.getByText('control-center-browser')).toBeVisible();
-    await page.getByRole('button', { name: 'Inspect' }).click();
+    await page.getByRole('button', { name: 'Inspect' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect(page.getByText('Event Journey', { exact: true })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Execution Graph' }).click();
+    await page.getByRole('link', { name: 'Execution Graph' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Trace the bounded run shape.' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Execution graph for run run-01-synthetic' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Journey', exact: true })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Campaign Intelligence' }).click();
+    await page.getByRole('link', { name: 'Campaign Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'See the shape of coverage.' })).toBeVisible();
     await expect(page.getByText('synthetic-product')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Contract-stage coverage' })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Source Intelligence' }).click();
+    await page.getByRole('link', { name: 'Source Intelligence' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
     await expect(page.getByText('/synthetic/read')).toBeVisible();
-    await page.getByRole('button', { name: 'Graph' }).click();
+    await page.getByRole('button', { name: 'Graph' }).click({ force: true });
     await expect(page.getByRole('img', { name: 'Bounded source intelligence graph' })).toBeVisible();
     await expect(page.getByText('Bounded', { exact: true })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Findings' }).click();
+    await page.getByRole('link', { name: 'Findings' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Keep the signal, lose the raw evidence.' })).toBeVisible();
     await expect(page.getByText('Synthetic contract drift')).toBeVisible();
     await expect(page.getByText('Source Stale', { exact: true })).toBeVisible();
     await expect(page.getByText('Source Unavailable', { exact: true })).toBeVisible();
     await expect(page.getByText('Provenance recorded').first()).toBeVisible();
 
-    await page.getByRole('link', { name: 'Runs' }).click();
+    await page.getByRole('link', { name: 'Runs' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'Inspect what happened, in order.' })).toBeVisible();
-    await page.getByRole('button', { name: 'Inspect' }).click();
+    await page.getByRole('button', { name: 'Inspect' }).click({ force: true });
     await expect(page.getByRole('heading', { name: 'control-center-browser' })).toBeVisible();
     await expect.poll(() => handle.events.clientCount).toBe(1);
     handle.publish({

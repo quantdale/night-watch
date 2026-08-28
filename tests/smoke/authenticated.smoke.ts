@@ -123,10 +123,6 @@ function buildEnv(server: FixtureServerHandle): EnvironmentConfig {
 }
 
 test.describe('authenticated storage state is secret material', () => {
-  // Same rationale as safety.smoke.ts: the harness's unawaited routeWebSocket
-  // registration occasionally never completes; retry with a fresh context.
-  test.describe.configure({ retries: 2 });
-
   test('synthetic auth secrets never enter artifacts; traces stay disabled', async ({ browser }) => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-auth-'));
     const stateFile = path.join(tmp, 'state.json');

@@ -3562,3 +3562,41 @@ all 10 groups (receipts are recorded in the task STATE). Fresh owner
 authorization is required before any future L6 work. The one exact-head
 Actions run `33139304292` / job `98746329861` executed zero steps and is
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence; no retry was made.
+
+## D-87 — rootless L6 uses a namespace-local relay and explicit release truth
+
+**Context.** D-86 correctly stopped completion because Bubblewrap namespace
+creation alone did not prove direct DNS/TCP/UDP denial or reachability of the
+parent relay. The old OOPS launcher still spawned in the parent namespace, and
+the project state did not distinguish a blocked terminal P1 from an executed
+release checkpoint or CI observation.
+
+**Decision.** Use an unprivileged Bubblewrap user/PID/network namespace with
+`--as-pid-1`, `--die-with-parent`, no external interface, a minimal read-only
+root view and the exact invoking Node runtime. A namespace-local bounded
+HTTP/upgrade adapter crosses only a read-only-mounted AF_UNIX framed channel;
+the parent forwards OOPS requests to the existing Phase-5/L5 authority and
+never accepts raw socket-forward instructions. The versioned capability
+`nightwatch.process-network-containment.v1` is READY only after synthetic
+direct DNS/TCP/UDP/HTTP/HTTPS, IPv6/mapped-address, descendant, browser
+speculative/background, HTTP/WebSocket relay and cleanup proofs. Authenticated
+OOPS performs this readiness check before any target workspace or child spawn.
+
+**Release truth.** Add release fields to the machine-checked project block:
+`PROJECT_COMPLETION_STATUS` follows the active continuity task, while
+`LIVE_HEAD_SHA`/`FINAL_DOCUMENTATION_SHA` are Git-discovered markers and
+substantive/local/clean/CI observed/CI executed SHA roles are separate.
+`NO_STEPS_EXTERNAL_NON_EVIDENCE` requires an observed SHA and no executed SHA;
+CI-certified completion requires an exact executed passing SHA. A BLOCKED task
+cannot project a complete release status. Handoff predecessors may be
+`COMPLETE` or `BLOCKED`, so an authorized successor can repair a blocked
+campaign without relabeling its history.
+
+**Consequences.** The old L6 residual and authenticated-OOPS disablement are
+replaced by a proven local capability on hosts where the complete qualification
+passes; unsupported hosts remain categorical and fail closed. L5 remains a
+separate browser/proxy authority. Vite/Vitest are pinned to patched versions;
+the root Vue 2 dependency remains a documented dev-only legacy compatibility
+fixture with one low advisory and no compatible non-major fix. Final release
+status and exact validation/CI SHAs remain pending until the successor's full
+local, clean, isolated and external-evidence checks complete.

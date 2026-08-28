@@ -63,27 +63,27 @@ blocked result.
 - Create this v2 task and exact OpenSpec route; route ACTIVE_TASK and prompt.
 - Run handoff/agent/project baseline checks after the planning checkpoint.
 
-### M1 — current whole-repository audit — IN_PROGRESS
+### M1 — current whole-repository audit — COMPLETE
 
 - Census, read/hash, classify and reconcile every tracked file.
 - Deep-review runtime, tests, gates, workflows, dependencies, UI, docs and
   all process/network/persistence/lifecycle authorities.
 - Record exact skip/retry census and P0–P3 remediation matrix.
 
-### M2 — L6 implementation and proof — NOT_STARTED
+### M2 — L6 implementation and proof — COMPLETE
 
 - Reproduce the old namespace/relay result.
 - Implement or disprove the minimal rootless envelope and versioned capability.
 - Add direct DNS/TCP/UDP/HTTP/HTTPS, browser speculative, descendant,
   inherited-descriptor, relay and cleanup adversarial coverage.
 
-### M3 — OOPS/L5 and adjacent defect repair — NOT_STARTED
+### M3 — OOPS/L5 and adjacent defect repair — COMPLETE
 
 - Integrate readiness with OOPS/browser/helper launch only if proven.
 - Repair material defects and revalidate L5, privacy, event-log and lifecycle
   semantics; keep unsupported paths fail closed.
 
-### M4 — truth, dependencies, UI and resource qualification — NOT_STARTED
+### M4 — truth, dependencies, UI and resource qualification — IN_PROGRESS
 
 - Resolve current-facing M3/M8/CI SHA inconsistencies and validate checkers.
 - Audit skips/retries/dependencies/Node/UI/Control Center and measure resource

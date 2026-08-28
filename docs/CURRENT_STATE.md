@@ -1,12 +1,12 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-28** for
-> the final assurance and release-readiness campaign
-> (`nightwatch-final-assurance-release-readiness-hardening-v1`; validated
-> implementation checkpoint `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b`):
-> terminal outcome `PROJECT_NOT_COMPLETE_BLOCKED` because L6 process/DNS
-> containment remains unproven. The older closure material below is historical
-> context and does not override the final-assurance section at the end.
+> successor campaign `nightwatch-final-completion-and-l6-containment-v1`,
+> currently `IN_PROGRESS` from the reconciled `31a8b02` planning checkpoint.
+> The predecessor (`nightwatch-final-assurance-release-readiness-hardening-v1`;
+> validated implementation checkpoint `72af3a8`) is historical and ended
+> `PROJECT_NOT_COMPLETE_BLOCKED`; its L6 residual does not override the active
+> campaign section at the end.
 > Historical context:
 > hostname allow is now followed by bounded complete-answer-set admission and
 > exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
@@ -265,6 +265,18 @@ source; it is validated read-only by `npm run project:check`
 
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
+RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
+PROJECT_COMPLETION_STATUS: IN_PROGRESS
+RELEASE_CHECKPOINT_SHA: DISCOVER_FROM_GIT
+LIVE_HEAD_SHA: DISCOVER_FROM_GIT
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+LAST_LOCALLY_VALIDATED_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+LAST_CLEAN_VALIDATED_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+CI_OBSERVED_SHA: 9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9
+CI_EXECUTED_SHA: NONE
+CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
+FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
+FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
 CURRENT_TASK_AUTHORITY: .agent/ACTIVE_TASK.md
 VALIDATED_IMPLEMENTATION_AUTHORITY: .agent/ACTIVE_TASK.md
@@ -2504,7 +2516,7 @@ production, authentication, customer data, infrastructure, publication, AI,
 and sibling-write operations remain zero. No successor is selected; future
 work requires a fresh census and separate authorization.
 
-## Final assurance release-readiness campaign — 2026-08-28
+## Historical final assurance release-readiness campaign — 2026-08-28
 
 The current final-assurance task is terminally blocked as
 `PROJECT_NOT_COMPLETE_BLOCKED`. The validated substantive implementation
@@ -2535,10 +2547,36 @@ The one exact-head GitHub Actions observation for pushed head
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No retry or
 workflow churn occurred.
 
-L6 process/DNS containment remains unproven: Bubblewrap namespace creation is
-available, but the parent relay is incompatible and browser speculative DNS
-remains outside L5. Direct DNS/TCP/UDP denial and complete child-process
-lifecycle isolation are therefore not certified; authenticated OOPS remains
-fail-closed. No real environment, product, database, cloud/infrastructure,
-credential, publication or sibling-repository operation is authorized or
-claimed.
+L6 process/DNS containment remained unproven in that predecessor: Bubblewrap
+namespace creation was available, but the parent relay was incompatible and
+browser speculative DNS remained outside L5. Direct DNS/TCP/UDP denial and
+complete child-process lifecycle isolation were therefore not certified;
+authenticated OOPS remained fail-closed. No real environment, product,
+database, cloud/infrastructure, credential, publication or sibling-repository
+operation was authorized or claimed.
+
+## Current final completion and L6 containment campaign — 2026-08-28
+
+The successor campaign `nightwatch-final-completion-and-l6-containment-v1` is
+currently `IN_PROGRESS`. Its fresh H0 census reviewed `1389/1389` regular
+tracked paths with no missing or non-regular entries. The implementation now
+has a versioned rootless L6 capability at
+`nightwatch.process-network-containment.v1`: Bubblewrap creates a no-external-
+interface network namespace, a minimal read-only root view binds the exact
+campaign Node runtime, a namespace-local bounded HTTP/upgrade adapter crosses
+only an inherited AF_UNIX control channel, and the parent callback remains
+the existing L5/Phase-5 policy authority.
+
+The local synthetic proof has passed direct libc/Node DNS, UDP/TCP DNS,
+TCP/UDP/HTTP/HTTPS, IPv6/mapped-address and grandchild escape attempts with
+zero parent listener hits; allowed AF_UNIX HTTP and WebSocket relay flows;
+browser prefetch/preconnect/background traffic; parent-death cleanup; and
+exact runtime binding. Authenticated OOPS now runs only after a fresh complete
+L6 qualification and reports `L6_ROOTLESS_NAMESPACE`; failure at any
+qualification or liveness boundary remains fail-closed.
+
+Current repairs also include retry-free safety smoke, dynamic gate inventory,
+blocked-versus-complete project-state/CI-SHA semantics, descriptor-bound
+Control Center static reads, and patched UI Vite/Vitest versions. Full local,
+clean Node 20, canonical/isolated and exact CI certification are still pending
+in this successor campaign; no completion claim is made yet.

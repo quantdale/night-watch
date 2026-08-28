@@ -342,6 +342,13 @@ test.describe('planner -> executor handoff protocol', () => {
       }).ok).toBe(true);
     }
 
+    const blockedPredecessor = parseHandoffHeader(handoffHeader({ predecessorStatus: 'BLOCKED' }));
+    expect(validateHandoffState(blockedPredecessor, {
+      activeTaskId: CAMPAIGN_ID,
+      activeTaskStatus: 'IN_PROGRESS',
+      continuityOk: true,
+    }).ok).toBe(true);
+
     const proseOnly = parseHandoffHeader('# Synthetic prompt\n\nThe Status is IN_PROGRESS.\n');
     expect(proseOnly.ok).toBe(false);
     expect(uniqueErrorCodes(proseOnly.errors)).toContain('HANDOFF_REQUIRED_FIELD_MISSING');

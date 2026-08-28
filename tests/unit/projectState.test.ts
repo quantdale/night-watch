@@ -182,6 +182,28 @@ Status: COMPLETE
   return { active, plan, state, report };
 }
 
+function validBlockedTask(taskId: string, phase: string, sha: string): ClosedTaskRecords {
+  const phaseKey = `PHASE_${phase.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_STATUS`;
+  const complete = validClosedTask(taskId, phase, sha);
+  return {
+    active: complete.active
+      .replace('Status: COMPLETE', 'Status: BLOCKED')
+      .replace('Current milestone: COMPLETE / STOP', 'Current milestone: M1 — BLOCKED')
+      .replace('Next action: STOP', 'Next action: STOP — unblock prerequisite before retry')
+      .replace(`${phaseKey}: COMPLETE`, `${phaseKey}: BLOCKED`),
+    plan: complete.plan.replace('- M1 — DONE', '- M1 — BLOCKED'),
+    state: complete.state
+      .replace('Status: COMPLETE', 'Status: BLOCKED')
+      .replace(`${phaseKey}: COMPLETE`, `${phaseKey}: BLOCKED`)
+      .replace('COMPLETE / STOP.', 'M1 — BLOCKED.')
+      .replace('STOP — task complete.', 'STOP — unblock prerequisite before retry.')
+      .replace('None.\n## Safety Events', '**BLOCKED**: synthetic unblock prerequisite.\n## Safety Events')
+      .replace('Task complete. Do not resume.', 'Task blocked; do not resume.')
+      .replace('Task complete. PASS.', 'Task blocked; no completion claim.'),
+    report: complete.report.replace('Status: COMPLETE', 'Status: BLOCKED'),
+  };
+}
+
 /** Legacy v1 R1 task record — minimal, warnings-only for agent:check. */
 const LEGACY_R1_STATE = `# Task State
 
@@ -239,6 +261,17 @@ interface BlockOptions {
   readonly nextPortfolioMember?: string;
   readonly promotionAuthorizationLifecycle?: string;
   readonly effectiveNextPromotionAuthority?: string;
+  readonly projectCompletionStatus?: string;
+  readonly releaseCheckpointSha?: string;
+  readonly liveHeadSha?: string;
+  readonly lastSubstantiveImplementationSha?: string;
+  readonly lastLocallyValidatedSha?: string;
+  readonly lastCleanValidatedSha?: string;
+  readonly ciObservedSha?: string;
+  readonly ciExecutedSha?: string;
+  readonly ciStatus?: string;
+  readonly finalDocumentationSha?: string;
+  readonly finalCiAuthority?: string;
   readonly extraFields?: readonly string[];
 }
 
@@ -247,6 +280,18 @@ function renderBlock(catalogState: 'EMPTY' | 'ONE', options: BlockOptions = {}):
   const count = catalogState === 'EMPTY' ? '0' : '1';
   const lines = [
     `PROJECT_STATE_PROTOCOL_VERSION: ${options.version ?? 'nightwatch.project-state.v2'}`,
+    'RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1',
+    `PROJECT_COMPLETION_STATUS: ${options.projectCompletionStatus ?? 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED'}`,
+    `RELEASE_CHECKPOINT_SHA: ${options.releaseCheckpointSha ?? 'DISCOVER_FROM_GIT'}`,
+    `LIVE_HEAD_SHA: ${options.liveHeadSha ?? 'DISCOVER_FROM_GIT'}`,
+    `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ${options.lastSubstantiveImplementationSha ?? 'DISCOVER_FROM_GIT'}`,
+    `LAST_LOCALLY_VALIDATED_SHA: ${options.lastLocallyValidatedSha ?? 'DISCOVER_FROM_GIT'}`,
+    `LAST_CLEAN_VALIDATED_SHA: ${options.lastCleanValidatedSha ?? 'DISCOVER_FROM_GIT'}`,
+    `CI_OBSERVED_SHA: ${options.ciObservedSha ?? 'NONE'}`,
+    `CI_EXECUTED_SHA: ${options.ciExecutedSha ?? 'NONE'}`,
+    `CI_STATUS: ${options.ciStatus ?? 'NOT_OBSERVED'}`,
+    `FINAL_DOCUMENTATION_SHA: ${options.finalDocumentationSha ?? 'DISCOVER_FROM_GIT'}`,
+    `FINAL_CI_AUTHORITY: ${options.finalCiAuthority ?? 'GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT'}`,
     `LIVE_HEAD_AUTHORITY: ${options.liveHeadAuthority ?? 'GIT'}`,
     `CURRENT_TASK_AUTHORITY: ${options.currentTaskAuthority ?? '.agent/ACTIVE_TASK.md'}`,
     `VALIDATED_IMPLEMENTATION_AUTHORITY: ${options.validatedImplementationAuthority ?? '.agent/ACTIVE_TASK.md'}`,
@@ -286,6 +331,7 @@ interface FixtureOptions {
   readonly activeTaskPhaseStatus?: string;
   readonly tamperCatalog?: 'comment-append' | 'corrupt';
   readonly dirtyFile?: boolean;
+  readonly activeTaskStatus?: 'complete' | 'blocked';
 }
 
 interface Fixture {
@@ -321,14 +367,19 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
 
   fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
   if (options.blockPresent !== false) {
-    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, options.block));
+    const block = options.block === undefined && options.activeTaskStatus === 'blocked'
+      ? { projectCompletionStatus: 'PROJECT_NOT_COMPLETE_BLOCKED' }
+      : options.block;
+    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, block));
   } else {
     fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), '# Nightwatch — CURRENT STATE (synthetic fixture, no block)\n');
   }
   fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Agent contract\n');
 
   // Active task: valid v2 COMPLETE (or corrupted per option).
-  const activeRecords = validClosedTask(ACTIVE_TASK_ID, 'test', sha);
+  const activeRecords = options.activeTaskStatus === 'blocked'
+    ? validBlockedTask(ACTIVE_TASK_ID, 'test', sha)
+    : validClosedTask(ACTIVE_TASK_ID, 'test', sha);
   let activeText = activeRecords.active;
   let stateText = activeRecords.state;
   if (options.activeTaskPhaseStatus !== undefined) {
@@ -790,6 +841,39 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain('PROJECT_STATE_CURRENT_TASK_AUTHORITY_INVALID');
       expect(result.stderr).toContain('PROJECT_STATE_VALIDATED_IMPLEMENTATION_AUTHORITY_INVALID');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('26. blocked campaign cannot project a complete release status', () => {
+    const fixture = makeFixture({ activeTaskStatus: 'blocked', block: { projectCompletionStatus: 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('27. blocked campaign projects the explicit blocked terminal status', () => {
+    const fixture = makeFixture({ activeTaskStatus: 'blocked' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).projectCompletionStatus).toBe('PROJECT_NOT_COMPLETE_BLOCKED');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('28. CI non-evidence cannot be projected as executed CI', () => {
+    const fixture = makeFixture({ block: { ciStatus: 'NO_STEPS_EXTERNAL_NON_EVIDENCE', ciObservedSha: 'NONE', ciExecutedSha: 'NONE' } });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH');
     } finally {
       fixture.cleanup();
     }

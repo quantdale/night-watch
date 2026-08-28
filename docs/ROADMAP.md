@@ -2467,7 +2467,7 @@ regression passed `2,548/2,564` in `4.5m`, skipped `16`, and failed `0`.
 External CI was not observed because no current policy required an exact-head
 observation; it is not claimed green. No successor is selected.
 
-## Final assurance release-readiness campaign — terminal blocked
+## Historical final assurance release-readiness campaign — terminal blocked
 
 As of 2026-08-28, the final assurance task has completed its local/source/
 synthetic audit and is terminally `PROJECT_NOT_COMPLETE_BLOCKED`. The
@@ -2488,9 +2488,24 @@ The one exact-head Actions observation for pushed head
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No retry was
 made.
 
-The remaining L6 process/DNS containment is explicitly unproven because the
-parent relay is incompatible and browser speculative DNS remains outside L5.
-Authenticated OOPS stays fail-closed. Reopening requires fresh owner
-authorization and a safe rootless proof; no real environment, data layer,
-cloud/infrastructure, credential, sibling-write or publication work is
-authorized.
+The remaining L6 process/DNS containment was explicitly unproven in that
+predecessor because the parent relay was incompatible and browser speculative
+DNS remained outside L5. Authenticated OOPS stayed fail-closed. The successor
+below is the separately authorized route for a safe rootless proof; no real
+environment, data layer, cloud/infrastructure, credential, sibling-write or
+publication work is authorized.
+
+## Current final completion and L6 containment campaign — in progress
+
+`nightwatch-final-completion-and-l6-containment-v1` is the active successor
+route. It re-audits every current tracked path and implements the smallest
+rootless L6 envelope that can be mechanically proven: a no-external-interface
+Bubblewrap namespace, minimal read-only root view, exact runtime binding,
+namespace-local bounded HTTP/upgrade relay, and inherited AF_UNIX parent
+transport. Direct DNS/TCP/UDP/HTTP/HTTPS, IPv6/mapped-address, descendant,
+browser speculative/background, WebSocket and parent-death cases are synthetic
+qualification requirements. Authenticated OOPS remains readiness-gated and
+fails closed on any unsupported or lost containment state.
+
+Fresh local, clean Node 20, canonical/isolated, UI and CI release receipts are
+still required before selecting a terminal project outcome.

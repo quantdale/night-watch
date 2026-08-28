@@ -25,9 +25,10 @@ truthful terminal release state.
 
 ## Current Milestone
 
-M1 — current whole-repository audit is IN_PROGRESS. H0 accounting, hashing,
-classification and discovery scans are closed; the deep authority review and
-L6 reproduction remain active. No runtime implementation has been changed.
+M4 — truth, dependencies, UI and resource qualification is IN_PROGRESS. M1–M3
+are closed: the fresh audit found and the implementation repaired the L6,
+release-truth, stale-retry, gate-inventory, UI-toolchain and static-asset
+issues. Full certification remains pending.
 
 ## Completed Milestones
 
@@ -61,17 +62,50 @@ L6 reproduction remain active. No runtime implementation has been changed.
 - An independent read-only review confirmed the current L6 boundary is real:
   `src/core/oops/process.ts` uses plain `spawn` and no namespace wrapper,
   while `src/core/oops/sandbox.ts` only probes Bubblewrap and asserts the
-  unsupported capability. No direct DNS/TCP/UDP proof exists yet.
+  unsupported capability. This finding was repaired by the new L6 supervisor
+  and is no longer current.
+- M1 deep authority review: the six required chains have one current authority
+  each; the only reproduced release defects were the unbound OOPS process,
+  unproven L6/browser DNS boundary, stale safety retries, stale campaign-file
+  inventory, current-state completion/CI ambiguity, a static-asset read race,
+  and patched UI toolchain advisories.
+- M2/M3 L6 focused qualification: `tests/unit/l6Containment.test.ts` passed
+  `3/3` with retries `0`; the proof covers direct Node/libc DNS, UDP/TCP DNS,
+  direct TCP/UDP/HTTP/HTTPS, IPv6 and mapped IPv6, grandchild attempts,
+  AF_UNIX HTTP relay, AF_UNIX WebSocket upgrade relay, browser prefetch/
+  preconnect/background fixture traffic, parent-death cleanup and exact
+  runtime binding. `tests/unit/phase5Api.test.ts` plus the L6 suite passed
+  `17/17`; authenticated synthetic OOPS reported `L6_ROOTLESS_NAMESPACE`.
+- Safety retry repair: retry-free authenticated/proxy smoke passed `8/8`; no
+  safety-critical suite-level retry remains in those files. Synthetic campaign
+  passed `69/69` with workers `1` and retries `0`.
+- Truth regressions: project-state and planner-handoff suites passed `46/46`;
+  blocked-versus-complete and predecessor-BLOCKED routing cases are covered.
+- UI dependency repair: nested clean `npm ci --ignore-scripts`, UI typecheck,
+  Vitest `11/11`, Vite build verifier and browser qualification passed; the
+  patched Vite `6.4.3`/Vitest `3.2.7` graph reports zero vulnerabilities.
+- Control Center static asset reads now use an opened `O_NOFOLLOW` descriptor,
+  descriptor-root verification and pre/post stat checks; existing traversal/
+  symlink regressions remain green.
+- Root dependency audit: `vue@2.6.12` is a dev-only legacy Vue 2 compatibility
+  fixture used by `tests/unit/rippleReadiness.test.ts` and the source-backed
+  Ripple readiness contract. It carries one low ReDoS advisory with only a
+  major Vue 3 fix; removing it would erase the exact legacy compatibility
+  oracle, so it remains explicitly non-runtime/non-blocking pending a product
+  migration authorization.
+- Gate inventory now derives synthetic test files from the package script and
+  reports `156` unique authoritative test files with no duplicate execution.
 
 ## Work In Progress
 
-Complete the deep authority review and reproduce the L6 namespace/relay
-boundary with synthetic local probes before changing runtime implementation.
+Finish current release-truth/UI/resource qualification, rerun all required
+local gates from a clean implementation checkpoint, then perform disposable
+Node 20 clean-checkout certification.
 
 ## Exact Next Action
 
-Finish M1 authority/dependency/skip/retry review and record the L6 reproduction
-before editing runtime implementation.
+Run the full mandatory regression matrix and record exact receipts, then
+reconcile the final task/docs/OpenSpec state before the release checkpoint.
 
 ## Files Changed
 
@@ -103,10 +137,10 @@ historical predecessor task records remain unchanged.
 
 ## Discoveries
 
-H0 is complete. Current P1 hypotheses are L6-01 direct process/network
-containment, L6-02 uncontained OOPS launch versus its comments, L6-03 browser
-speculative DNS, and TRUTH-01 release-state/CI authority semantics. They are
-not yet accepted as repaired findings.
+H0 is complete. L6-01/L6-02/L6-03, TRUTH-01, SKIP-01's stale retry seam,
+AUDIT-01's gate inventory gap and the Control Center static read race are
+repaired with focused regressions. DEP-01 remains a documented low-severity
+test-only legacy dependency finding; no release-blocking P0/P1 remains.
 
 ## Blockers
 

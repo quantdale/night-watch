@@ -32,6 +32,18 @@ const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';
 const BLOCK_SECTION_HEADING = '## Project-state v2 (machine-checked truth block)';
 const OWNED_PROJECT_STATE_FIELDS = new Set([
   'PROJECT_STATE_PROTOCOL_VERSION',
+  'RELEASE_CERTIFICATION_PROTOCOL_VERSION',
+  'PROJECT_COMPLETION_STATUS',
+  'RELEASE_CHECKPOINT_SHA',
+  'LIVE_HEAD_SHA',
+  'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA',
+  'LAST_LOCALLY_VALIDATED_SHA',
+  'LAST_CLEAN_VALIDATED_SHA',
+  'CI_OBSERVED_SHA',
+  'CI_EXECUTED_SHA',
+  'CI_STATUS',
+  'FINAL_DOCUMENTATION_SHA',
+  'FINAL_CI_AUTHORITY',
   'LIVE_HEAD_AUTHORITY',
   'CURRENT_TASK_AUTHORITY',
   'VALIDATED_IMPLEMENTATION_AUTHORITY',
@@ -57,6 +69,11 @@ const FORBIDDEN_DOCUMENTATION_AUTHORITY_FIELDS = new Set(['LAST_DOCUMENTATION_CH
 const R1_TASK_STATE_PATH = '.agent/tasks/phase-8b-1-r1-owner-gated-canonical-promotion-retry/STATE.md';
 const MAX_CURRENT_STATE_BYTES = 512 * 1024;
 const MAX_BLOCK_LINE_CHARS = 1024;
+const RELEASE_CERTIFICATION_PROTOCOL = 'nightwatch.release-certification.v1';
+const PROJECT_COMPLETION_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'PROJECT_NOT_COMPLETE_BLOCKED', 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED', 'PROJECT_COMPLETE_AND_CI_CERTIFIED']);
+const CI_STATUSES = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL']);
+const SHA_OR_DISCOVER = /^(?:DISCOVER_FROM_GIT|[0-9a-f]{40})$/i;
+const SHA_OR_NONE = /^(?:NONE|[0-9a-f]{40})$/i;
 
 function parseArgs(argv) {
   const rootIndex = argv.indexOf('--root');
@@ -185,6 +202,57 @@ function main() {
     if (fields.get('EFFECTIVE_NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID');
     if (fields.get('PHASE_8_STATUS') !== 'COMPLETE') fail(errors, 'PROJECT_STATE_PHASE_8_STATUS_MISMATCH');
     if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
+
+    if (fields.get('RELEASE_CERTIFICATION_PROTOCOL_VERSION') !== RELEASE_CERTIFICATION_PROTOCOL) fail(errors, 'PROJECT_STATE_RELEASE_PROTOCOL_UNSUPPORTED');
+    if (!PROJECT_COMPLETION_STATUSES.has(fields.get('PROJECT_COMPLETION_STATUS'))) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_INVALID');
+    if (fields.get('LIVE_HEAD_SHA') !== 'DISCOVER_FROM_GIT') fail(errors, 'PROJECT_STATE_LIVE_HEAD_SHA_NOT_GIT_DISCOVERED');
+    for (const key of ['RELEASE_CHECKPOINT_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'FINAL_DOCUMENTATION_SHA']) {
+      if (!SHA_OR_DISCOVER.test(fields.get(key) ?? '')) fail(errors, `PROJECT_STATE_${key}_INVALID`);
+    }
+    for (const key of ['CI_OBSERVED_SHA', 'CI_EXECUTED_SHA']) {
+      if (!SHA_OR_NONE.test(fields.get(key) ?? '')) fail(errors, `PROJECT_STATE_${key}_INVALID`);
+    }
+    const liveHeadForRelease = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+    const validReleaseAnchor = (value, allowNone = false) => {
+      if (value === 'DISCOVER_FROM_GIT' || (allowNone && value === 'NONE')) return true;
+      if (!/^[0-9a-f]{40}$/i.test(value ?? '') || liveHeadForRelease === null) return false;
+      return gitReadOnly(root, ['cat-file', '-e', `${value}^{commit}`]) !== null
+        && gitReadOnly(root, ['merge-base', '--is-ancestor', value, liveHeadForRelease]) !== null;
+    };
+    for (const key of ['RELEASE_CHECKPOINT_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'FINAL_DOCUMENTATION_SHA']) {
+      if (!validReleaseAnchor(fields.get(key))) fail(errors, `PROJECT_STATE_${key}_NOT_IN_HISTORY`);
+    }
+    for (const key of ['CI_OBSERVED_SHA', 'CI_EXECUTED_SHA']) {
+      if (!validReleaseAnchor(fields.get(key), true)) fail(errors, `PROJECT_STATE_${key}_NOT_IN_HISTORY`);
+    }
+    if (!CI_STATUSES.has(fields.get('CI_STATUS'))) fail(errors, 'PROJECT_STATE_CI_STATUS_INVALID');
+    if (fields.get('FINAL_CI_AUTHORITY') !== 'GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT') fail(errors, 'PROJECT_STATE_FINAL_CI_AUTHORITY_INVALID');
+    const activeStatus = (() => {
+      try {
+        const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
+        return /^Status:\s*(?<value>[^\r\n]+)$/m.exec(active)?.groups?.value?.trim() ?? null;
+      } catch {
+        return null;
+      }
+    })();
+    const expectedCompletion = activeStatus === 'IN_PROGRESS'
+      ? 'IN_PROGRESS'
+      : activeStatus === 'BLOCKED'
+        ? 'PROJECT_NOT_COMPLETE_BLOCKED'
+        : activeStatus === 'COMPLETE'
+          ? fields.get('PROJECT_COMPLETION_STATUS')
+          : activeStatus === 'NONE'
+            ? 'NONE'
+            : null;
+    if (expectedCompletion === null || fields.get('PROJECT_COMPLETION_STATUS') !== expectedCompletion) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    const ciStatus = fields.get('CI_STATUS');
+    const observedSha = fields.get('CI_OBSERVED_SHA');
+    const executedSha = fields.get('CI_EXECUTED_SHA');
+    if (ciStatus === 'NOT_OBSERVED' && (observedSha !== 'NONE' || executedSha !== 'NONE')) fail(errors, 'PROJECT_STATE_CI_OBSERVATION_MISMATCH');
+    if (ciStatus === 'NO_STEPS_EXTERNAL_NON_EVIDENCE' && (observedSha === 'NONE' || executedSha !== 'NONE')) fail(errors, 'PROJECT_STATE_CI_NON_EVIDENCE_MISMATCH');
+    if ((ciStatus === 'EXECUTED_PASS' || ciStatus === 'EXECUTED_FAIL') && (!/^[0-9a-f]{40}$/i.test(observedSha ?? '') || observedSha !== executedSha)) fail(errors, 'PROJECT_STATE_CI_EXECUTION_MISMATCH');
+    if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_AND_CI_CERTIFIED' && ciStatus !== 'EXECUTED_PASS') fail(errors, 'PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION');
+    if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' && ciStatus === 'EXECUTED_FAIL') fail(errors, 'PROJECT_STATE_LOCAL_COMPLETE_WITH_FAILED_CI');
 
     // R1 task durable-status cross-check (deterministic mapping only): the
     // completed R1 task STATE's own structured status line.
@@ -318,6 +386,18 @@ function main() {
     effectiveNextPromotionAuthority: fieldsGet(parsed, 'EFFECTIVE_NEXT_PROMOTION_AUTHORITY'),
     activeTaskContinuity: 'PASS',
     checkoutClean: true,
+    releaseCertificationProtocol: RELEASE_CERTIFICATION_PROTOCOL,
+    projectCompletionStatus: fieldsGet(parsed, 'PROJECT_COMPLETION_STATUS'),
+    releaseCheckpointSha: fieldsGet(parsed, 'RELEASE_CHECKPOINT_SHA'),
+    liveHeadSha: fieldsGet(parsed, 'LIVE_HEAD_SHA'),
+    lastSubstantiveImplementationSha: fieldsGet(parsed, 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA'),
+    lastLocallyValidatedSha: fieldsGet(parsed, 'LAST_LOCALLY_VALIDATED_SHA'),
+    lastCleanValidatedSha: fieldsGet(parsed, 'LAST_CLEAN_VALIDATED_SHA'),
+    ciObservedSha: fieldsGet(parsed, 'CI_OBSERVED_SHA'),
+    ciExecutedSha: fieldsGet(parsed, 'CI_EXECUTED_SHA'),
+    ciStatus: fieldsGet(parsed, 'CI_STATUS'),
+    finalDocumentationSha: fieldsGet(parsed, 'FINAL_DOCUMENTATION_SHA'),
+    finalCiAuthority: fieldsGet(parsed, 'FINAL_CI_AUTHORITY'),
   }, null, 2));
 }
 

@@ -282,7 +282,7 @@ test('Phase 5 bounded source-generated DEV API corpus', async ({ browser }) => {
     environment: 'dev',
     targetHostClass: 'DEV_API',
     mode: 'NATIVE_NIGHTWATCH_RELAY_FALLBACK',
-    oops: { adapterVersion: OOPS_ADAPTER_VERSION, profileVersion: OOPS_PROFILE_VERSION, generatorVersion: SCENARIO_GENERATOR_VERSION, sandbox, authenticatedOopsExecution: 'DISABLED_RELAY_NAMESPACE_INCOMPATIBLE' },
+    oops: { adapterVersion: OOPS_ADAPTER_VERSION, profileVersion: OOPS_PROFILE_VERSION, generatorVersion: SCENARIO_GENERATOR_VERSION, sandbox, authenticatedOopsExecution: sandbox.authenticatedOopsExecution },
     auth: { provider: firstAuth.providerType, environment: firstAuth.environment, autoRefresh: firstAuth.autoRefresh, mfaOccurred: firstAuth.mfaOccurred, passedToOops: false, persisted: false },
     budget: PHASE5_REAL_BUDGET,
     operationIds: PHASE5_REAL_OPERATION_IDS,

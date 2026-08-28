@@ -124,8 +124,6 @@ function localEnv(origin: string): EnvironmentConfig {
 }
 
 test.describe('Phase 1.2 outer proxy browser containment', () => {
-  test.describe.configure({ retries: 1 });
-
   test('loopback bypass is disabled: allowed A works and denied B gets zero connections', async ({ browser }) => {
     const denied = await startContainmentServer('127.0.0.2');
     const allowed = await startContainmentServer('127.0.0.1', denied.origin);
