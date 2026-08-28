@@ -25,9 +25,9 @@ truthful terminal release state.
 
 ## Current Milestone
 
-M1 — current whole-repository audit is IN_PROGRESS. M0 activation is closed
-after the route checkpoint and baseline validation; no runtime implementation
-has been changed.
+M1 — current whole-repository audit is IN_PROGRESS. H0 accounting, hashing,
+classification and discovery scans are closed; the deep authority review and
+L6 reproduction remain active. No runtime implementation has been changed.
 
 ## Completed Milestones
 
@@ -39,16 +39,39 @@ has been changed.
   handoff, agent and project checks passed after the route became tracked.
 - `openspec status --change nightwatch-final-completion-and-l6-containment-v1`:
   all 4 planning artifacts complete.
+- H0 NUL-safe census at live `31a8b02`: `1389` tracked / `1389` reviewed /
+  `1389` regular / `0` non-regular / `0` missing; `15128308` bytes and
+  `302189` LF lines. Path digest:
+  `sha256:8f8a0eb842cc8f538a7d196c226893daf07eba704eab2a8ab349b7a1219d7d21`.
+  Content digest:
+  `sha256:8a244561ccbb151f497154ba9978e78bee4c37302abd469dd989ac71d17bdbbf`.
+- H0 role counts: agent-continuity `460`, config `26`, corpus-fixture `112`,
+  durable-doc-history `66`, gate-tooling `57`, root-metadata `2`,
+  runtime-source `412`, test `240`, UI `14`.
+- H0 scan totals: markers `80`/`33` files; skip/retry/only/fixme/slow
+  `653`/`225`; suppressions `4`/`4`; process-launch `391`/`116`;
+  network primitives `366`/`84`; filesystem/path safety `2679`/`384`;
+  lifecycle `232`/`57`; authority/currentness `18838`/`1130`; secret-like
+  terms `2786`/`418`; dynamic evaluation `69`/`46`. These are aggregate
+  discovery counts over all regular tracked content, not findings.
+- H0 delta: the exact Git tree at predecessor baseline `e26b649` had `1372`
+  paths; checkpoint `72af3a8` added the four task files and deterministic OOPS
+  fixture, yielding `1377`; this successor added twelve tracked planning/
+  continuity paths and has no deletion or unexplained path.
+- An independent read-only review confirmed the current L6 boundary is real:
+  `src/core/oops/process.ts` uses plain `spawn` and no namespace wrapper,
+  while `src/core/oops/sandbox.ts` only probes Bubblewrap and asserts the
+  unsupported capability. No direct DNS/TCP/UDP proof exists yet.
 
 ## Work In Progress
 
-Run the fresh H0 audit, record its aggregate evidence and remediation matrix,
-then reproduce the L6 namespace/relay boundary before runtime changes.
+Complete the deep authority review and reproduce the L6 namespace/relay
+boundary with synthetic local probes before changing runtime implementation.
 
 ## Exact Next Action
 
-Run the NUL-safe tracked-file audit and record its counts/digests before
-editing runtime implementation.
+Finish M1 authority/dependency/skip/retry review and record the L6 reproduction
+before editing runtime implementation.
 
 ## Files Changed
 
@@ -80,7 +103,10 @@ historical predecessor task records remain unchanged.
 
 ## Discoveries
 
-No fresh audit or implementation finding has been accepted yet.
+H0 is complete. Current P1 hypotheses are L6-01 direct process/network
+containment, L6-02 uncontained OOPS launch versus its comments, L6-03 browser
+speculative DNS, and TRUTH-01 release-state/CI authority semantics. They are
+not yet accepted as repaired findings.
 
 ## Blockers
 
