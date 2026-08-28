@@ -3557,4 +3557,6 @@ complete lifecycle isolation and browser speculative-DNS closure are proven.
 semantic, provenance, campaign, UI, canonical and topology-correct isolated
 qualification with exact skip parity. The terminal result is
 `PROJECT_NOT_COMPLETE_BLOCKED`; no local green result can override the L6
-boundary. Fresh owner authorization is required before any future L6 work.
+boundary. The closure local and fresh Node 20 clean quality gates both passed
+all 10 groups (receipts are recorded in the task STATE). Fresh owner
+authorization is required before any future L6 work.

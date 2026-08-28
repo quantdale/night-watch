@@ -95,6 +95,13 @@ documentation and release-matrix qualification are recorded below.
   `0` failed, exit `0`, `874.84s`, peak RSS `1290916 KiB`.
 - Owner provenance: `91/91` passed, exit `0`, wrapper elapsed `56.87s`.
   Synthetic campaign: `66/66` passed, exit `0`, wrapper elapsed `69.34s`.
+- Closure local quality gate at `0d759f6279c754622bcaf52f50b879efe7ed4e76`:
+  all 10 required groups PASS; receipt
+  `receipt:sha256:9be40f964db15574714632d0`.
+- Closure clean Node 20 gate: fresh install, all 10 required groups PASS,
+  no module reuse/auth/finding state/sibling writes; gate receipt
+  `receipt:sha256:5a7f5dcf518189c23f315253`, clean receipt
+  `clean-receipt:sha256:cdd966a52941eb94363ca082`.
 - Control Center UI typecheck, tests (`11`), build and browser qualification
   all passed. The build produced `31` modules and `3` files; the browser
   qualification had one passing test and no console errors or error overlay.
@@ -116,6 +123,6 @@ authorization and a safe rootless proof; privileged firewall/network
 administration, system-wide DNS/hosts/proxy mutation, TLS MITM and live
 external probes remain prohibited.
 
-The remaining local/clean gate receipts and the single permitted exact-head
-GitHub Actions observation are final handoff checks, not grounds to weaken
-this boundary or claim project completion.
+The single permitted exact-head GitHub Actions observation is the remaining
+external handoff check; it is not grounds to weaken this boundary or claim
+project completion.

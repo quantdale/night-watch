@@ -2477,6 +2477,11 @@ canonical suite and topology-correct isolated suite are green with identical
 13-skip identity sets. The exact browser background telemetry seam is
 classified narrowly and does not expand the allowlist.
 
+The closure local gate passed all 10 groups with receipt
+`receipt:sha256:9be40f964db15574714632d0`; the fresh Node 20 clean gate passed
+all 10 groups with gate receipt `receipt:sha256:5a7f5dcf518189c23f315253` and
+clean receipt `clean-receipt:sha256:cdd966a52941eb94363ca082`.
+
 The remaining L6 process/DNS containment is explicitly unproven because the
 parent relay is incompatible and browser speculative DNS remains outside L5.
 Authenticated OOPS stays fail-closed. Reopening requires fresh owner

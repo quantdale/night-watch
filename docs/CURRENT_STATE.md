@@ -2517,6 +2517,14 @@ topology-correct isolated suites (`2608` discovered / `2595` passed /
 match exactly. The gstatic browser CONNECT is local telemetry classification,
 not an allowlist or background-traffic success.
 
+The closure local quality gate passed all 10 groups at documentation
+checkpoint `0d759f6279c754622bcaf52f50b879efe7ed4e76` with receipt
+`receipt:sha256:9be40f964db15574714632d0`. The fresh Node 20 clean gate also
+passed all 10 groups without module reuse, auth state, owner finding state or
+sibling writes; its gate receipt is
+`receipt:sha256:5a7f5dcf518189c23f315253` and clean receipt is
+`clean-receipt:sha256:cdd966a52941eb94363ca082`.
+
 L6 process/DNS containment remains unproven: Bubblewrap namespace creation is
 available, but the parent relay is incompatible and browser speculative DNS
 remains outside L5. Direct DNS/TCP/UDP denial and complete child-process

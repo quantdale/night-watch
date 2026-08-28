@@ -120,8 +120,8 @@ Exit: no material current-state contradiction or misleading completion/authority
 - [x] Run every new focused regression.
 - [x] Run complete canonical Playwright serially; record pass/skip/fail and wall/RSS.
 - [x] Run topology-correct isolated complete suite; require pass/fail and skip-identity parity.
-- [ ] `npm run gate:local` (recorded after this closure checkpoint)
-- [ ] `npm run gate:clean` (recorded after this closure checkpoint)
+- [x] `npm run gate:local` — PASS, receipt recorded in task STATE.
+- [x] `npm run gate:clean` — PASS, fresh Node 20 install and receipt recorded in task STATE.
 - [x] Verify `git diff --check`, secret/debug/generated-output hygiene, clean working tree.
 - [x] Execute representative CLI/Control Center/local-fixture smoke journeys.
 - [ ] If Actions is available, observe one exact-head run and require real executed steps + PASS; otherwise record truthful external non-evidence without workflow churn/retry loops.

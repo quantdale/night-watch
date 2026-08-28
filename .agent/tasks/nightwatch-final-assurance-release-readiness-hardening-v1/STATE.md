@@ -168,6 +168,15 @@ and Phase 5 provenance/privacy/template regressions.
   `13` skipped / `0` failed, elapsed `874.84s`, peak RSS `1290916 KiB`.
 - Current owner-provenance and synthetic campaign checks: PASS, `91/91` in
   `48.1s` and `66/66` in `1.0m`; timed wrapper elapsed `56.87s` and `69.34s`.
+- Closure local quality gate at documentation checkpoint
+  `0d759f6279c754622bcaf52f50b879efe7ed4e76`: PASS, all 10 required groups;
+  semantic `1920/1907/13/0`, owner `91`, synthetic `66`, patch integrity
+  PASS; receipt `receipt:sha256:9be40f964db15574714632d0`.
+- Closure clean gate: fresh disposable Node 20 checkout and install, all 10
+  required groups PASS with semantic `1920/1907/13/0`, owner `91`, synthetic
+  `66`; no module reuse, auth state, owner finding state or sibling writes;
+  gate receipt `receipt:sha256:5a7f5dcf518189c23f315253`, clean receipt
+  `clean-receipt:sha256:cdd966a52941eb94363ca082`.
 - Control Center UI: typecheck PASS; test PASS (`2` files, `11` tests);
   build PASS (`31` modules, `3` files); browser qualification PASS (one
   qualification test, `10.3s`).
@@ -373,7 +382,8 @@ topology-correct isolated suites are both `2608` discovered / `2595` passed /
 `13` skipped / `0` failed with exact skip identity parity. Semantic
 compatibility is `1920/1907/13/0`; owner provenance is `91/91`; synthetic
 campaign is `66/66`; UI typecheck, tests, build and browser qualification are
-green; safety is retry-free and restricted OOPS is deterministic. Required
-local/clean gate receipts and the single post-push CI observation remain to be
-recorded in the final handoff, but even green receipts cannot override the
-unproven L6 boundary. No COMPLETE outcome is permitted.
+green; safety is retry-free and restricted OOPS is deterministic. The closure
+local and fresh Node 20 clean gates are green with the receipts recorded
+above. The single post-push CI observation remains a bounded external check,
+but even green receipts cannot override the unproven L6 boundary. No COMPLETE
+outcome is permitted.
