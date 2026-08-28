@@ -4,11 +4,11 @@
 - [x] 1.2 Inventory Nightwatch clones/worktrees and prove redundancy or unique work.
 - [ ] 1.3 Delete extra local/remote branches and proven-redundant clones.
 - [x] 1.4 Extend project-state pairing tests and checker before live docs change.
-- [ ] 1.5 Activate successor task and reclassify CURRENT_STATE.
+- [x] 1.5 Activate successor task and reclassify CURRENT_STATE.
 
 ## 2. Preflight
 
-- [ ] 2.1 Run typecheck, hardening, agent, project, gate:local, and gate:clean if possible.
+- [x] 2.1 Run typecheck, hardening, agent, project, gate:local, and gate:clean if possible.
 
 ## 3. Real DEV
 

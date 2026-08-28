@@ -45,7 +45,7 @@ existing serial launchers.
 
 ## Milestones
 
-### M1 — Git topology cleanup — IN_PROGRESS
+### M1 — Git topology cleanup — IN_PROGRESS (partial)
 
 - Objective: one canonical clone, local `main` only, remote `main` only.
 - Files/areas: canonical Git refs, duplicate clones, plan branches.
@@ -55,7 +55,7 @@ existing serial launchers.
 - Validation commands: `git fetch --prune origin`; `git branch`; `git ls-remote --heads origin`
 - Status: IN_PROGRESS
 
-### M2 — Reclassify project truth — IN_PROGRESS
+### M2 — Reclassify project truth — COMPLETE
 
 - Objective: operational-acceptance pending without erasing local-clean history.
 - Files/areas: `bin/project-state-check.mjs`, `tests/unit/projectState.test.ts`,
@@ -64,18 +64,18 @@ existing serial launchers.
 - Acceptance criteria: agent/project checks pass; historical local-clean cannot
   be projected as operational completion while pending.
 - Validation commands: `npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1 --retries=0`; `npm run agent:check`; `npm run project:check`
-- Status: IN_PROGRESS
+- Status: COMPLETE
 
-### M3 — Local preflight — NOT_STARTED
+### M3 — Local preflight — COMPLETE
 
 - Objective: prove cleanup/docs did not damage the project.
 - Validation commands: `npm run typecheck`; `npm run hardening:check`; `npm run agent:check`; `npm run project:check`; `npm run gate:local`; `npm run gate:clean`
-- Status: NOT_STARTED
+- Status: COMPLETE
 
-### M4 — Real DEV owner workflow — NOT_STARTED
+### M4 — Real DEV owner workflow — IN_PROGRESS
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M5 — UX, second run, efficacy, adversarial — NOT_STARTED
 

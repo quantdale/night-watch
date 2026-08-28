@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-operational-acceptance-v1
 Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
 Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
-Last checkpoint: successor task activated; project-state pairing tests 29–37 passed
-Current milestone: M1/M2 — Git topology cleanup and project-truth reclassification
-Next action: Finish successor-task routing and live CURRENT_STATE reclassification, then run agent:check and project:check after the files are tracked
+Last checkpoint: successor pairing committed `b83282b`; local/clean preflight PASS; owner CLI stdio forwarding repaired
+Current milestone: M4 — real DEV owner workflow
+Next action: Run `npm run journey:phase2c -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json` then phase4, phase5, and campaign:real prepare/resume serially
 Authorization class: NIGHTWATCH_OPERATIONAL_ACCEPTANCE_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd

@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { buildChildEnvironment } from './child-environment.mjs';
+import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -103,4 +103,5 @@ const result = spawnSync(cmd, ['test', '--config=playwright.phase7.config.ts', '
   stdio: ['ignore', 'pipe', 'pipe'],
   maxBuffer: 2 * 1024 * 1024,
 });
+emitChildStdio(result);
 process.exit(result.status ?? 1);

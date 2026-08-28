@@ -44,3 +44,19 @@ export function buildChildEnvironment(parentEnvironment, explicitValues = {}) {
 }
 
 export const CHILD_ENV_INHERITED_KEYS = INHERITED_KEYS;
+
+/**
+ * Forward captured child stdio to the owner. Launchers that spawn Playwright
+ * with piped stdio must call this before exiting, otherwise the official
+ * command prints nothing on success or failure.
+ *
+ * @param {{ stdout?: string | Buffer | null, stderr?: string | Buffer | null }} result
+ */
+export function emitChildStdio(result) {
+  if (result?.stdout !== undefined && result.stdout !== null && result.stdout !== '') {
+    process.stdout.write(result.stdout);
+  }
+  if (result?.stderr !== undefined && result.stderr !== null && result.stderr !== '') {
+    process.stderr.write(result.stderr);
+  }
+}

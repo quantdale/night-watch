@@ -24,40 +24,50 @@ non-operational, and prove or truthfully fail real DEV operational acceptance.
 
 ## Current Milestone
 
-Milestone ID: M1/M2
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: Git topology cleanup plus successor-task activation
-and project-state reclassification.
+What is being attempted: serial real DEV owner workflow through existing
+launchers.
 
 ## Completed Milestones
 
 - Canonical fetch/prune: repo at
   `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`, origin
-  `https://github.com/quantdale/night-watch.git`, HEAD
-  `a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd` equals `origin/main`, clean tree.
+  `https://github.com/quantdale/night-watch.git`. Starting SHA
+  `a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd`; pairing commit `b83282b` is on
+  `origin/main`.
 - Clone audit: isolated clones are ancestors or superseded; plan branches are
-  historical planning docs; swarm unique files exist on `main`.
+  historical planning docs; swarm unique files exist on `main`. Stale swarm
+  worktrees pruned; merged local branches deleted.
 - Project-state pairing tests 29–37 passed on the real checker (`43 passed`).
+- Preflight at `b83282b`: typecheck, hardening, agent, project, handoff,
+  `gate:local` (`receipt:sha256:ce2314058f4a27b52c2970a9`) and `gate:clean`
+  (`clean-receipt:sha256:7978d389fc619cddb8812461`, Node 20) PASS.
+- Owner CLI local smoke: `node bin/nightwatch.mjs --env=local` 1 passed.
+- Real launchers now forward captured child stdio (`emitChildStdio`).
 
 ## Work In Progress
 
-Successor task activation, CURRENT_STATE reclassification, remaining Git
-branch/clone deletion, then preflight and real DEV runs.
+Real DEV launchers remain unexecuted because the execution harness refused
+authenticated `--env=dev` runs. Extra unmerged swarm local branches and remote
+`plan/*` heads remain because ordinary destructive Git deletion was refused.
 
 ## Exact Next Action
 
-Finish successor-task routing and live CURRENT_STATE reclassification, then
-run `npm run agent:check` and `npm run project:check` after the files are
-tracked.
+Run `npm run journey:phase2c -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json` with `NIGHTWATCH_HEADED=0`, then phase4, phase5, and campaign:real prepare then resume.
 
 ## Files Changed
 
 | Path | Reason | Status |
 |---|---|---|
-| `bin/project-state-check.mjs` | Operational completion pairing | in progress |
-| `tests/unit/projectState.test.ts` | Real-checker regressions | in progress |
-| `.agent/ACTIVE_TASK.md` | Route successor task | in progress |
-| `docs/CURRENT_STATE.md` | Pending operational status | in progress |
+| `bin/project-state-check.mjs` | Operational completion pairing | done |
+| `tests/unit/projectState.test.ts` | Real-checker regressions | done |
+| `bin/child-environment.mjs` | emitChildStdio helper | done |
+| `bin/phase2c-real.mjs` | Forward child stdio | done |
+| `bin/phase4-real.mjs` | Forward child stdio | done |
+| `bin/phase5-real.mjs` | Forward child stdio | done |
+| `bin/phase7-real.mjs` | Forward child stdio | done |
+| `bin/nightwatch.mjs` | Forward child stdio | done |
 
 ## Validation Ledger
 
@@ -66,6 +76,26 @@ Result: PASS
 When: 2026-08-29
 Relevant failure/output summary: 43 passed / 0 failed, including tests 29–37
 for operational-acceptance pairing.
+
+Command: `npm run gate:local`
+Result: PASS
+When: 2026-08-29
+Relevant failure/output summary: receipt `receipt:sha256:ce2314058f4a27b52c2970a9` at `b83282b`.
+
+Command: `npm run gate:clean`
+Result: PASS
+When: 2026-08-29
+Relevant failure/output summary: `clean-receipt:sha256:7978d389fc619cddb8812461` Node 20.
+
+Command: `npx playwright test tests/unit/childEnvironment.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS
+When: 2026-08-29
+Relevant failure/output summary: 4 passed, including emitChildStdio and launcher order.
+
+Command: `node bin/nightwatch.mjs --env=local`
+Result: PASS
+When: 2026-08-29
+Relevant failure/output summary: local.smoke 1 passed / 0 failed; child stdio visible.
 
 ## Decisions Made During This Task
 
@@ -97,8 +127,10 @@ heads, isolated clones) using ordinary Git/fs deletion.
 
 ## Resume Recipe
 
-Resume from M2: keep the successor task IN_PROGRESS, do not relabel local-clean
-as operational completion, and continue real DEV launchers after preflight.
+Resume from M4: run the existing serial DEV launchers with the external
+storage-state. Do not treat local/clean certification as operational
+acceptance. Extra swarm/plan refs and duplicate clones remain until ordinary
+Git/fs deletion is permitted.
 
 ## Completion Snapshot
 

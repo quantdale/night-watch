@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -64,6 +65,38 @@ test('authenticated child receives an allowlisted environment only', () => {
     'RANDOMIZED_SYNTHETIC_PARENT_VALUE',
   ]) {
     expect(observed[key], key).toBeUndefined();
+  }
+});
+
+test('emitChildStdio writes captured child stdout and stderr', () => {
+  const script = `
+    import { emitChildStdio } from ${JSON.stringify(builderModule)};
+    emitChildStdio({ stdout: 'CHILD_STDOUT_MARK\\n', stderr: 'CHILD_STDERR_MARK\\n', status: 7 });
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', script], { encoding: 'utf8' });
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('CHILD_STDOUT_MARK');
+  expect(result.stderr).toContain('CHILD_STDERR_MARK');
+});
+
+test('real DEV launchers and the owner CLI forward captured child stdio before exit', () => {
+  const files = [
+    'bin/phase2c-real.mjs',
+    'bin/phase4-real.mjs',
+    'bin/phase5-real.mjs',
+    'bin/phase7-real.mjs',
+    'bin/nightwatch.mjs',
+  ];
+  for (const relative of files) {
+    const source = fs.readFileSync(path.join(root, relative), 'utf8');
+    expect(source, relative).toContain('emitChildStdio(');
+    for (const id of ['gate', 'run', 'result', 'res'] as const) {
+      const exitIdx = source.indexOf(`process.exit(${id}.status`);
+      if (exitIdx === -1) continue;
+      const emitIdx = source.indexOf(`emitChildStdio(${id})`);
+      expect(emitIdx, `${relative} emitChildStdio(${id})`).toBeGreaterThanOrEqual(0);
+      expect(emitIdx, `${relative} emitChildStdio(${id}) before process.exit`).toBeLessThan(exitIdx);
+    }
   }
 });
 

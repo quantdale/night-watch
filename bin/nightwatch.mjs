@@ -15,7 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { buildChildEnvironment } from './child-environment.mjs';
+import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
 
 const args = process.argv.slice(2);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -72,5 +72,6 @@ const res = spawnSync(cmd, ['test', scenarioPath, '--project=nightwatch', ...res
   timeout: 15 * 60 * 1000,
   maxBuffer: 2 * 1024 * 1024,
 });
+emitChildStdio(res);
 process.exit(res.status ?? 1);
 }
