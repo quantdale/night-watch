@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Final Assurance + Release-Readiness Hardening
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: BLOCKED
 Campaign ID: nightwatch-final-assurance-release-readiness-hardening-v1
 OpenSpec: openspec/changes/nightwatch-final-assurance-release-readiness-hardening-v1/
 Planned-From: 9ecd09c0d33d05d665721080627e5d63b376c16d
@@ -159,3 +159,16 @@ A COMPLETE outcome is forbidden while any P0/P1 defect, blocking P2, unexplained
 When terminal, update task state/plan/report, OpenSpec checklist, current project docs, this prompt and ACTIVE_TASK coherently. Preserve substantive implementation SHA roles across documentation-only closure. Commit validated checkpoints, push without force, and verify local HEAD == `origin/main`.
 
 The objective is not to consume 12 hours artificially. The objective is to remain productive for up to roughly 12 hours if the repository justifies it, automatically progressing from audit -> repairs -> hardening -> regression hunting -> certification -> documentation truth -> final cleanup, and stopping only when further work is speculative, low-value, separately authorized, or externally blocked.
+
+## Terminal execution disposition
+
+This campaign reached terminal `PROJECT_NOT_COMPLETE_BLOCKED`. The repair
+checkpoint `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b` passed the available local
+synthetic, UI, canonical and topology-correct isolated qualification, with
+exact skip parity. Completion remains blocked because L6 process/DNS
+containment is unproven: Bubblewrap's parent relay is incompatible and browser
+speculative DNS remains outside L5. Authenticated OOPS therefore remains
+fail-closed. A fresh owner authorization and safe rootless proof are required
+before reopening this campaign; no real environment, product endpoint,
+database, cloud/infrastructure system, sibling repository or credential may be
+contacted.

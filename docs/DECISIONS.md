@@ -3536,3 +3536,25 @@ contact products, access data/infrastructure, or emit task/source bodies.
 Existing SHA-role continuity rules remain authoritative; docs-only planning
 and closure descendants cannot become implementation checkpoints. Historical
 v1 task and decision records remain readable and are not bulk-migrated.
+
+## D-86 — final assurance remains blocked at the proven L6 boundary
+
+**Context.** The final assurance campaign reproduced a retry-free browser
+background classification seam and the release-critical restricted-OOPS
+binary-absence skip. It also rechecked the process/DNS containment residual
+without using privileged or external operations.
+
+**Decision.** Classify the exact `www.gstatic.com` CONNECT as local telemetry
+only, preserving the destination allowlist and browser-background blocking
+semantics. Remove the stale WebSocket retry/polling workaround, qualify
+restricted OOPS with the tracked deterministic local substitute, and retain a
+versioned `UNPROVEN/BLOCKED` L6 capability. Authenticated OOPS must fail before
+workspace or child creation until safe rootless direct DNS/TCP/UDP denial,
+complete lifecycle isolation and browser speculative-DNS closure are proven.
+
+**Consequences.** The implementation checkpoint
+`72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b` passes the available local safety,
+semantic, provenance, campaign, UI, canonical and topology-correct isolated
+qualification with exact skip parity. The terminal result is
+`PROJECT_NOT_COMPLETE_BLOCKED`; no local green result can override the L6
+boundary. Fresh owner authorization is required before any future L6 work.

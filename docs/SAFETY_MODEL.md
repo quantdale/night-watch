@@ -1439,6 +1439,26 @@ validation or as green evidence.
 
 ---
 
+## Final assurance release-readiness safety boundary
+
+The 2026-08-28 final-assurance campaign preserves the local-only boundary.
+The retry-free WebSocket safety matrix is authoritative; the exact observed
+`www.gstatic.com` browser CONNECT is classified as local telemetry only and
+is not added to the destination allowlist or treated as successful background
+traffic. Restricted OOPS is qualified by a tracked deterministic local
+substitute, while authenticated OOPS remains disabled until L6 is proven.
+
+Bubblewrap `0.9.0` can create an unprivileged network namespace, but the
+parent relay is incompatible and browser speculative DNS remains outside L5.
+The resulting L6 capability is `UNPROVEN/BLOCKED`, not a process-isolation
+claim. Direct DNS/TCP/UDP denial and complete child-process lifecycle
+isolation remain uncertified. No root, privileged firewall/network
+administration, system-wide DNS/hosts/proxy mutation, TLS MITM, live external
+probe, real Alphaus contact, credential, customer value, sibling write or
+publication is permitted by this campaign.
+
+---
+
 *End of SAFETY_MODEL. Normative for Phase 0/1/1.1/1.2, private local triage,
 Phase 4 authentication/MCP, Phase 7 campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 AI review,
 and Phase 8A/8A.1/8A.1.1/8B/8B.0.1/8B.1/8B.1.0 self-development evaluation,

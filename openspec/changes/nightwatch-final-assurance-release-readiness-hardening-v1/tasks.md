@@ -42,7 +42,7 @@ Exit: every core workflow has one documented authority path and all P0/P1 defect
   deliberately open and fail-closed).
 - [x] Add regression tests for every material defect.
 - [x] Run focused and dependency-cone validation after each repair.
-- [ ] Never weaken assertions/proof thresholds/safety/privacy checks to recover green.
+- [x] Never weaken assertions/proof thresholds/safety/privacy checks to recover green.
 
 Exit: zero open P0/P1 findings; affected cones green.
 
@@ -63,78 +63,78 @@ Exit: no silent L6 claim inflation; no unsafe authenticated OOPS route; no safet
 
 ## M4 — Skipped-test and validation-gap hardening
 
-- [ ] Enumerate exact identities of all Playwright skips and nested-runner skips.
-- [ ] Classify each using the allowed dispositions in `design.md`.
-- [ ] Remove obsolete skips, run locally executable cases, or add deterministic substitutes when justified.
-- [ ] Prove environment guards are narrow and cannot accidentally hide ordinary local failures.
-- [ ] Record the terminal skip set and exact rationale.
+- [x] Enumerate exact identities of all Playwright skips and nested-runner skips.
+- [x] Classify each using the allowed dispositions in `design.md`.
+- [x] Remove obsolete skips, run locally executable cases, or add deterministic substitutes when justified.
+- [x] Prove environment guards are narrow and cannot accidentally hide ordinary local failures.
+- [x] Record the terminal skip set and exact rationale.
 
 Exit: zero unexplained skips and zero blocking validation gaps.
 
 ## M5 — Dependency/install/build/toolchain qualification
 
-- [ ] Verify root `package.json`/lockfile and nested Control Center package/lockfile consistency.
-- [ ] Perform fresh `npm ci` paths under supported Node 20 and prove lifecycle/global-state assumptions.
-- [ ] Audit direct dependencies by runtime/fixture/test/build role; investigate legacy packages rather than reflexively upgrading them.
-- [ ] Verify Control Center typecheck/test/build/browser qualification from clean state.
-- [ ] Verify generated/ignored outputs and no accidental committed build/cache/private artifacts.
-- [ ] Repair demonstrated dependency, install or reproducibility defects and requalify affected cones.
+- [x] Verify root `package.json`/lockfile and nested Control Center package/lockfile consistency.
+- [x] Perform fresh `npm ci` paths under supported Node 20 and prove lifecycle/global-state assumptions.
+- [x] Audit direct dependencies by runtime/fixture/test/build role; investigate legacy packages rather than reflexively upgrading them.
+- [x] Verify Control Center typecheck/test/build/browser qualification from clean state.
+- [x] Verify generated/ignored outputs and no accidental committed build/cache/private artifacts.
+- [x] Repair demonstrated dependency, install or reproducibility defects and requalify affected cones.
 
 Exit: clean installation and build are reproducible without ambient credentials, sibling writes, cached modules or global tooling.
 
 ## M6 — Performance/resource and lifecycle hardening
 
-- [ ] Baseline wall time/peak RSS for the representative commands in `design.md` H5.
-- [ ] Profile only material hot paths; inspect repeated tree scans, repeated parsing/serialization, process spawning, large retained collections, timer/listener cleanup and refresh amplification.
-- [ ] Fix material regressions/unbounded behavior; avoid brittle microbenchmark work.
-- [ ] Add broad sanity ceilings/trend checks only when stable across repeated local runs.
-- [ ] Repeat benchmarks after repairs and record before/after evidence.
+- [x] Baseline wall time/peak RSS for the representative commands in `design.md` H5.
+- [x] Profile only material hot paths; inspect repeated tree scans, repeated parsing/serialization, process spawning, large retained collections, timer/listener cleanup and refresh amplification.
+- [x] Fix material regressions/unbounded behavior; avoid brittle microbenchmark work.
+- [x] Add broad sanity ceilings/trend checks only when stable across repeated local runs.
+- [x] Repeat benchmarks after repairs and record before/after evidence.
 
 Exit: no known material resource leak/unbounded path/severe performance regression in intended workloads.
 
 ## M7 — Operator, documentation and truth synchronization
 
-- [ ] Cross-check README/AGENTS/CURRENT_STATE/ROADMAP/ARCHITECTURE/SAFETY_MODEL/DECISIONS against implementation and machine truth.
-- [ ] Verify authoritative documented commands exist and behave as stated.
-- [ ] Verify current vs historical status is obvious enough for a fresh autonomous agent.
-- [ ] Verify Control Center/status/intelligence CLI outputs do not overstate unavailable/stale/blocked/unknown evidence.
-- [ ] Update only genuinely stale current-facing documentation; preserve historical records.
+- [x] Cross-check README/AGENTS/CURRENT_STATE/ROADMAP/ARCHITECTURE/SAFETY_MODEL/DECISIONS against implementation and machine truth.
+- [x] Verify authoritative documented commands exist and behave as stated.
+- [x] Verify current vs historical status is obvious enough for a fresh autonomous agent.
+- [x] Verify Control Center/status/intelligence CLI outputs do not overstate unavailable/stale/blocked/unknown evidence.
+- [x] Update only genuinely stale current-facing documentation; preserve historical records.
 
 Exit: no material current-state contradiction or misleading completion/authority claim remains.
 
 ## M8 — Full regression and release certification
 
-- [ ] `npm run typecheck`
-- [ ] `npm run control-center:ui:typecheck`
-- [ ] `npm run control-center:ui:test`
-- [ ] `npm run control-center:ui:build`
-- [ ] `npm run control-center:ui:browser`
-- [ ] `npm run hardening:check`
-- [ ] `npm run handoff:check`
-- [ ] `npm run project:check`
-- [ ] `npm run quality-gate:spec`
-- [ ] `npm run gate:inventory`
-- [ ] `npm run test:semantic-compat`
-- [ ] `npm run test:owner-provenance`
-- [ ] `npm run campaign:synthetic`
-- [ ] Run every new focused regression.
-- [ ] Run complete canonical Playwright serially; record pass/skip/fail and wall/RSS.
-- [ ] Run topology-correct isolated complete suite; require pass/fail and skip-identity parity.
-- [ ] `npm run gate:local`
-- [ ] `npm run gate:clean`
-- [ ] Verify `git diff --check`, secret/debug/generated-output hygiene, clean working tree.
-- [ ] Execute representative CLI/Control Center/local-fixture smoke journeys.
+- [x] `npm run typecheck`
+- [x] `npm run control-center:ui:typecheck`
+- [x] `npm run control-center:ui:test`
+- [x] `npm run control-center:ui:build`
+- [x] `npm run control-center:ui:browser`
+- [x] `npm run hardening:check`
+- [x] `npm run handoff:check`
+- [x] `npm run project:check`
+- [x] `npm run quality-gate:spec`
+- [x] `npm run gate:inventory`
+- [x] `npm run test:semantic-compat`
+- [x] `npm run test:owner-provenance`
+- [x] `npm run campaign:synthetic`
+- [x] Run every new focused regression.
+- [x] Run complete canonical Playwright serially; record pass/skip/fail and wall/RSS.
+- [x] Run topology-correct isolated complete suite; require pass/fail and skip-identity parity.
+- [ ] `npm run gate:local` (recorded after this closure checkpoint)
+- [ ] `npm run gate:clean` (recorded after this closure checkpoint)
+- [x] Verify `git diff --check`, secret/debug/generated-output hygiene, clean working tree.
+- [x] Execute representative CLI/Control Center/local-fixture smoke journeys.
 - [ ] If Actions is available, observe one exact-head run and require real executed steps + PASS; otherwise record truthful external non-evidence without workflow churn/retry loops.
 
 Exit: all required local/clean checks green, no unexplained skip or safety-critical retry masking, no open P0/P1, no blocking P2, no privacy/safety boundary regression, and L6/process-isolation truth matches the actual implemented boundary.
 
 ## M9 — Terminal project-completion certification
 
-- [ ] Update task `STATE.md`, `PLAN.md`, `REPORT.md`, this OpenSpec checklist and current project docs with exact earned evidence.
-- [ ] Choose exactly one terminal outcome from `proposal.md`.
-- [ ] Transition `.agent/EXECUTION_PROMPT.md` and `ACTIVE_TASK` to coherent terminal `COMPLETE` or `BLOCKED` state.
+- [x] Update task `STATE.md`, `PLAN.md`, `REPORT.md`, this OpenSpec checklist and current project docs with exact earned evidence.
+- [x] Choose exactly one terminal outcome from `proposal.md`.
+- [x] Transition `.agent/EXECUTION_PROMPT.md` and `ACTIVE_TASK` to coherent terminal `COMPLETE` or `BLOCKED` state.
 - [ ] Commit only validated durable checkpoints; push without force; verify local HEAD == `origin/main`.
-- [ ] If documentation-only closure follows the implementation anchor, preserve implementation-vs-documentation SHA roles.
-- [ ] Stop when remaining work is speculative, low-value, separately authorized, or externally blocked.
+- [x] If documentation-only closure follows the implementation anchor, preserve implementation-vs-documentation SHA roles.
+- [x] Stop when remaining work is speculative, low-value, separately authorized, or externally blocked.
 
 Exit: another agent can pull the repo and determine project truth without this conversation.

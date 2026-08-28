@@ -2466,3 +2466,20 @@ receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt
 regression passed `2,548/2,564` in `4.5m`, skipped `16`, and failed `0`.
 External CI was not observed because no current policy required an exact-head
 observation; it is not claimed green. No successor is selected.
+
+## Final assurance release-readiness campaign — terminal blocked
+
+As of 2026-08-28, the final assurance task has completed its local/source/
+synthetic audit and is terminally `PROJECT_NOT_COMPLETE_BLOCKED`. The
+retry-free safety surface, deterministic restricted-OOPS substitute,
+semantic/provenance/synthetic checks, Control Center UI qualification, exact
+canonical suite and topology-correct isolated suite are green with identical
+13-skip identity sets. The exact browser background telemetry seam is
+classified narrowly and does not expand the allowlist.
+
+The remaining L6 process/DNS containment is explicitly unproven because the
+parent relay is incompatible and browser speculative DNS remains outside L5.
+Authenticated OOPS stays fail-closed. Reopening requires fresh owner
+authorization and a safe rootless proof; no real environment, data layer,
+cloud/infrastructure, credential, sibling-write or publication work is
+authorized.

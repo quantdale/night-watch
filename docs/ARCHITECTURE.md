@@ -1894,3 +1894,19 @@ including visible `Source Stale` and `Source Unavailable` findings labels, with
 no external requests. No new persistence, execution, source, DEV, data,
 infrastructure, authentication, AI, or promotion authority was introduced;
 the artifact facade identity remains `nightwatch.artifact-validation.private.v1`.
+
+## Final assurance boundary — 2026-08-28
+
+The final assurance campaign adds no new authority. The six audited chains
+remain bounded by the existing environment/proxy/safety/evidence,
+source/proof/lifecycle/campaign, observation/triage/private-finding,
+Control Center projection, continuity/project-state, and quality-gate
+authorities. The retry-free safety repair and deterministic restricted-OOPS
+substitute only improve qualification of those existing paths.
+
+The implementation anchor `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b` is
+validated by local/source/synthetic evidence. L0–L5 remain distinct from L6;
+Bubblewrap availability does not imply L6 because relay compatibility,
+direct DNS/TCP/UDP denial, child lifecycle isolation and browser speculative-DNS
+closure are not proven. Authenticated OOPS is consequently fail-closed and
+the project terminal status is `PROJECT_NOT_COMPLETE_BLOCKED`.

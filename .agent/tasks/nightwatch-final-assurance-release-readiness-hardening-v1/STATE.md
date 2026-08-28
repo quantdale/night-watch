@@ -4,18 +4,18 @@
 
 Task ID: nightwatch-final-assurance-release-readiness-hardening-v1
 Phase: FINAL-ASSURANCE-RELEASE-READINESS-HARDENING-V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: e26b649c7eded8a50ab9c4c3d8a2197f9c409052
-Last validated implementation SHA: e4ac7076600f9a347d230445aa312e321f635624
-Last substantive checkpoint SHA: e4ac7076600f9a347d230445aa312e321f635624
+Last validated implementation SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+Last substantive checkpoint SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e26b649c7eded8a50ab9c4c3d8a2197f9c409052
-LAST_VALIDATED_IMPLEMENTATION_SHA: e4ac7076600f9a347d230445aa312e321f635624
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e4ac7076600f9a347d230445aa312e321f635624
+LAST_VALIDATED_IMPLEMENTATION_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_LIVE_HEAD
-PHASE_FINAL_ASSURANCE_RELEASE_READINESS_HARDENING_V1_STATUS: IN_PROGRESS
+PHASE_FINAL_ASSURANCE_RELEASE_READINESS_HARDENING_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -25,10 +25,10 @@ Nightwatch's local-only fail-closed safety boundary.
 
 ## Current Milestone
 
-M2/M3A — architecture and authority audit plus release-critical containment
-repair; H0 is complete, the six authority chains are traced, and the first
-repair cone is green. The canonical suite exposed one cross-suite browser
-background classification gap that remains under repair.
+M9 — terminal assurance certification is BLOCKED by the unproven L6
+process/DNS boundary. H0, the six authority chains, the release-critical
+repairs, skip census, dependency/UI, performance, canonical/isolated and
+local synthetic evidence are recorded; no COMPLETE claim is permitted.
 
 ## Completed Milestones
 
@@ -42,18 +42,16 @@ background classification gap that remains under repair.
 
 ## Work In Progress
 
-Repair the canonical-suite browser background gap, then resume M4–M8
-qualification: exact skip census, clean Node 20 dependency and UI
-qualification, performance/resource checks, current-facing truth updates, and
-the complete canonical/isolated/local/clean release matrix. The L6 residual
-remains a deliberate terminal-completion blocker.
+No work remains authorized in this task while L6 is unproven. The local
+fail-closed boundary and all available synthetic release checks are complete;
+the remaining work requires a separately authorized, safe rootless L6 proof.
 
 ## Exact Next Action
 
-Repair and regression-test the observed `www.gstatic.com` browser-background
-classification gap at the local outer-proxy boundary, then rerun the complete
-canonical suite with retries disabled before advancing to M4–M8. Do not claim
-complete process isolation.
+STOP. Obtain fresh owner authorization and prove direct DNS/TCP/UDP denial,
+complete child-process lifecycle isolation and browser speculative-DNS closure
+with an allowed rootless design before retrying certification. Do not contact
+real environments or claim complete process isolation.
 
 ## Files Changed
 
@@ -65,7 +63,9 @@ and Phase 5 provenance/privacy/template regressions.
 ## Validation Ledger
 
 - Live repository: `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`.
-- Branch: `main`; `HEAD == origin/main == e26b649c7eded8a50ab9c4c3d8a2197f9c409052`.
+- Branch: `main`; execution began at `HEAD == origin/main ==
+  e26b649c7eded8a50ab9c4c3d8a2197f9c409052`; live HEAD is always discovered
+  from Git rather than copied into this record.
 - Remote: `https://github.com/quantdale/night-watch.git`.
 - Toolchain: Node `v22.22.1`; npm `10.9.4`.
 - Planned-From `9ecd09c0d33d05d665721080627e5d63b376c16d` is an ancestor of
@@ -73,12 +73,13 @@ and Phase 5 provenance/privacy/template regressions.
 - Pre-activation `handoff:check`: PASS.
 - Pre-activation `agent:check`: PASS with 2 expected warnings.
 - Pre-activation `project:check`: PASS.
-- Post-activation `handoff:check`: PASS for `IN_PROGRESS`.
-- Post-activation `agent:check`: PASS with the expected checkpoint and legacy
-  warnings; `agent:audit`: 85 tasks, 61 strict v2, 24 legacy v1, 0 strict
-  errors, 34 legacy warnings.
-- Post-activation `project:check`: expected FAIL `PROJECT_STATE_CHECKOUT_DIRTY`
-  while continuity files are uncommitted.
+- Post-activation `handoff:check`: PASS for `IN_PROGRESS`; terminal route is
+  now bound to `BLOCKED`.
+- Post-activation `agent:check`: PASS with the expected legacy-v1 warnings;
+  `agent:audit`: 85 tasks, 61 strict v2, 24 legacy v1, 0 strict errors, 34
+  legacy warnings.
+- Post-activation `project:check`: expected FAIL
+  `PROJECT_STATE_CHECKOUT_DIRTY` while continuity files were uncommitted.
 - H0 NUL-safe census: tracked `1372`, reviewed `1372`, regular `1372`,
   nonregular `0`, missing `0`, bytes `15037644`, LF lines `300348`.
 - H0 path manifest SHA256:
@@ -136,8 +137,7 @@ and Phase 5 provenance/privacy/template regressions.
   destination; synthetic local smoke environments use the same non-fatal
   block. The safety policy regression is `28/28`, the full retry-free safety
   smoke is `23/23`, `npm run typecheck` is PASS, `npm run hardening:check` is
-  PASS, and `git diff --check` is PASS. The canonical suite must be rerun
-  after this repair.
+  PASS, and `git diff --check` is PASS.
 - Restricted-OOPS deterministic qualification: the full
   `tests/unit/phase5Api.test.ts` passed `14/14`, skipped `0`, failed `0` in
   `10.4s`. The prior three binary-absence skips now use the tracked local
@@ -148,6 +148,35 @@ and Phase 5 provenance/privacy/template regressions.
   `npm run handoff:check`, `git diff --check`, Phase 5 (14/14), and the
   retry-free safety smoke (23/23) all pass. `inspectOopsSandbox()` remains an
   observation-only probe; no external or product network was contacted.
+- Complete canonical serial suite at implementation checkpoint `72af3a8`:
+  exact command `npx playwright test --project=nightwatch --workers=1
+  --retries=0`; `2608` discovered, `2595` passed, `13` skipped, `0` failed,
+  exit `0`, elapsed about `19.0m`.
+- Topology-correct isolated suite: fresh clone, fresh `npm ci
+  --ignore-scripts --no-audit --no-fund`, private HOME outside the workspace,
+  no CI/storage/auth/proxy variables, `NIGHTWATCH_ENV=local`, headed mode off,
+  trace off, and the same serial command; `2608` discovered, `2595` passed,
+  `13` skipped, `0` failed, exit `0`, elapsed `971.29s`, peak RSS
+  `1539524 KiB`. The clone was removed after validation.
+- Canonical/isolated skip identity parity: PASS; both have exactly `13`
+  skips. The identities are one Phase 14A C5 snapshot guard, eleven Phase 14A
+  C3 fresh-source/snapshot guards, and one Phase 8B.0.1 ownership/chown guard.
+  Manual real-environment guards are authorization guards and were not
+  invoked; former Phase 5 binary skips use the deterministic tracked
+  substitute. No blocking validation gap remains in the default release gate.
+- Current semantic compatibility: PASS, `1920` total / `1907` passed /
+  `13` skipped / `0` failed, elapsed `874.84s`, peak RSS `1290916 KiB`.
+- Current owner-provenance and synthetic campaign checks: PASS, `91/91` in
+  `48.1s` and `66/66` in `1.0m`; timed wrapper elapsed `56.87s` and `69.34s`.
+- Control Center UI: typecheck PASS; test PASS (`2` files, `11` tests);
+  build PASS (`31` modules, `3` files); browser qualification PASS (one
+  qualification test, `10.3s`).
+- Representative performance: agent checks cold/warm `2.68s`/`2.20s` with
+  peak RSS `66604`/`66148 KiB`; project checks cold/warm `4.13s`/`3.74s`
+  with peak RSS `127988`/`126068 KiB` during expected dirty-tree checks.
+- Correct isolated setup required a private HOME outside the repository;
+  earlier clones with HOME inside the fixture workspace or missing sibling
+  topology were discarded as setup-invalid and supplied no release evidence.
 
 ## Authority Chain Review
 
@@ -237,13 +266,23 @@ reproduced and repaired/blocked as recorded below.
 
 ## Skip Census and Dispositions
 
-The release-critical Phase 5 identities that previously skipped on absent
-`NIGHTWATCH_OOPS_BINARY` are now `DETERMINISTIC_SUBSTITUTE_PRESENT`: local
-relay success, assertion failure, and all six generated KNOWN_READ templates
-run through the tracked substitute and have zero skips. The remaining manual,
-source-snapshot, git-availability and self-development guards are environment
-or authorization guards outside the synthetic release gate; their exact
-identity census and canonical/isolated parity are still part of M4/M8.
+The terminal default-suite skip set is exactly 13 identities in both the
+canonical and isolated suites, with parity PASS:
+
+- one Phase 14A C5 `--snapshot` test requiring a disposable source snapshot —
+  `LEGITIMATE_ENVIRONMENT_GUARD`;
+- eleven Phase 14A C3 fresh-source/currentness tests requiring a disposable
+  source snapshot — `LEGITIMATE_ENVIRONMENT_GUARD`;
+- one Phase 8B.0.1 ownership/chown test requiring uid semantics and chown —
+  `LEGITIMATE_ENVIRONMENT_GUARD`.
+
+The former Phase 5 absent-binary identities are no longer skipped:
+`DETERMINISTIC_SUBSTITUTE_PRESENT` supplies the tracked local relay and the
+full Phase 5 file passes `14/14`. Manual real-environment guards in
+`tests/manual/phase{2c,4,5,7}-real-*` are narrow
+`LEGITIMATE_ENVIRONMENT_GUARD` cases and were not invoked. Git-backed cases
+were executable in the canonical and isolated topology; no unexplained or
+blocking skip remains.
 
 ## Decisions Made During This Task
 
@@ -264,6 +303,17 @@ identity census and canonical/isolated parity are still part of M4/M8.
   deny-before-network behavior and leaving every DEV/NEXT/production policy
   unchanged; require a full canonical rerun before treating the repair as
   validated.
+- 2026-08-28 — The repair was validated by the exact retry-free canonical
+  suite and a topology-correct isolated suite. The observed gstatic CONNECT is
+  local telemetry only; it is not an allowlist or browser-background escape.
+- 2026-08-28 — The isolated run is authoritative only when its clone has the
+  repository's sibling topology and its private HOME is outside the fixture
+  workspace. Runs with missing siblings or HOME/workspace overlap were
+  classified as setup-invalid and not used as evidence.
+- 2026-08-28 — M4–M8 qualification is locally complete enough to select the
+  blocked terminal route: all required available synthetic, UI, canonical,
+  isolated, semantic, provenance and campaign checks passed, while L6 remains
+  unproven under the permanent safety scope.
 
 ## Discoveries
 
@@ -272,8 +322,8 @@ identity census and canonical/isolated parity are still part of M4/M8.
 
 ## Deferred / Follow-Up
 
-H0 is complete and M2/M3A authority work is materially closed. Remaining
-qualification and terminal findings are:
+H0 and M2–M8 qualification are closed for this campaign. Remaining findings
+are:
 
 - P1 L6 process/DNS containment remains open by design: Bubblewrap namespace
   creation is observed, but direct DNS/TCP/UDP denial, complete lifecycle
@@ -281,26 +331,49 @@ qualification and terminal findings are:
   are not proven. Authenticated/non-browser OOPS therefore remains blocked.
 - P1 external CI is not repository evidence when the exact-head job executes
   zero steps; this is an external non-evidence classification, not a workflow
-  repair target.
-- P2 dependency/toolchain, performance/resource, documentation truth and the
-  full canonical/isolated/clean release matrix remain under qualification.
+  repair target. At most one exact-head observation is allowed after push.
+- P2 Vue 2 legacy/deprecation and one low-severity `npm audit` finding remain
+  documented non-blocking dependency hygiene; no demonstrated runtime defect
+  justifies version churn in this campaign.
 
 ## Blockers
 
-None.
+- `PROJECT_NOT_COMPLETE_BLOCKED`: L6 process/DNS containment is not proven.
+  Bubblewrap namespace creation works locally, but the parent relay is
+  incompatible and browser speculative DNS remains outside L5; direct
+  DNS/TCP/UDP denial and complete child-process lifecycle isolation therefore
+  cannot be certified. Authenticated OOPS remains disabled before workspace
+  creation or child spawn. Unblocking requires fresh owner authorization and
+  a safe rootless proof that does not use privileged networking, system-wide
+  mutation, TLS MITM, or live external probes.
 
 ## Safety Events
 
-None.
+- The pre-repair canonical suite caught one real retry-free browser background
+  classification failure; it was repaired narrowly by classifying the exact
+  `www.gstatic.com` CONNECT as local telemetry. Safety assertions and the
+  retry-free matrix remain green (`23/23`, policy `28/28`).
+- L6 remained fail-closed throughout. No real environment, product endpoint,
+  database, cloud/infrastructure system, sibling repository or credential was
+  contacted.
 
 ## Resume Recipe
 
-Read this state, continue M4–M8 qualification from the next exact action,
-record every release receipt, and preserve the L6 blocked boundary. Do not
-contact external environments or edit sibling repositories.
+STOP. Do not resume implementation or retry certification. Only a separately
+authorized safe rootless L6 design with mechanically proven DNS/TCP/UDP and
+browser speculative-DNS containment may reopen this task; then re-read the
+prompt, SPEC, PLAN and this state and revalidate from the new evidence.
 
 ## Completion Snapshot
 
-Not complete; M0/M1 and the authority/repair cone are recorded, while full
-release certification remains open and the L6 residual prevents a COMPLETE
-terminal outcome unless separately and safely proven.
+Terminal outcome: `PROJECT_NOT_COMPLETE_BLOCKED`.
+
+The source repair checkpoint `72af3a8` is validated. The canonical and
+topology-correct isolated suites are both `2608` discovered / `2595` passed /
+`13` skipped / `0` failed with exact skip identity parity. Semantic
+compatibility is `1920/1907/13/0`; owner provenance is `91/91`; synthetic
+campaign is `66/66`; UI typecheck, tests, build and browser qualification are
+green; safety is retry-free and restricted OOPS is deterministic. Required
+local/clean gate receipts and the single post-push CI observation remain to be
+recorded in the final handoff, but even green receipts cannot override the
+unproven L6 boundary. No COMPLETE outcome is permitted.

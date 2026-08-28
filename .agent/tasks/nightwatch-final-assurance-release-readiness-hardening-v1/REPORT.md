@@ -1,6 +1,6 @@
 # Final Assurance + Release-Readiness Hardening — Execution Report
 
-Status: IN_PROGRESS
+Status: BLOCKED
 Task ID: nightwatch-final-assurance-release-readiness-hardening-v1
 Phase: FINAL-ASSURANCE-RELEASE-READINESS-HARDENING-V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -14,9 +14,10 @@ pre-activation handoff, continuity and project-state checks passed. A fresh
 continuity-v2 task was created and activated; the predecessor remains
 immutable history.
 
-No implementation or external-system operation has occurred. H0 audit
-evidence and subsequent milestone receipts will be appended as the campaign
-progresses.
+The implementation checkpoint `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b`
+contains only evidence-backed local repairs. No real environment, product
+endpoint, database, cloud/infrastructure system, sibling repository,
+credential or external publication path was contacted.
 
 ## H0 census and initial findings
 
@@ -48,12 +49,73 @@ progresses.
   disabled. Three restricted-OOPS release tests remain skipped when the
   source-built binary is absent (`10 passed / 3 skipped / 0 failed`).
 
-Initial remediation matrix: P1 L6/process-DNS containment truth and P1
-safety-retry authority require repair or truthful blocking disposition; P2
-restricted-OOPS binary-absence coverage is a `BLOCKING_VALIDATION_GAP` until
-a deterministic safe qualification path exists. Dependency/toolchain,
-resource/lifecycle and documentation findings remain under M2 review.
+Initial remediation matrix: P1 L6/process-DNS containment truth required a
+truthful blocking disposition; P1 safety-retry authority was repaired and
+validated; P2 restricted-OOPS binary-absence coverage was replaced by a
+deterministic tracked substitute. Dependency/toolchain, resource/lifecycle,
+documentation and release-matrix qualification are recorded below.
 
 ## Terminal outcome
 
-Pending.
+`PROJECT_NOT_COMPLETE_BLOCKED`
+
+## M2/M3A authority and safety repairs
+
+- The six required authority chains were traced and no duplicate selector,
+  stale-currentness acceptance, silent cache fallback or lifecycle leak was
+  found in the audited paths.
+- `tests/smoke/safety.smoke.ts` now has retry-free WebSocket authority. The
+  complete safety matrix passed `23/23`; the focused safety policy matrix
+  passed `28/28`.
+- The exact Chrome background CONNECT observed in the first canonical run,
+  `www.gstatic.com`, is classified as local telemetry only. It is not an
+  allowlisted destination and does not make browser background traffic
+  successful.
+- Restricted OOPS is deterministically qualified through the tracked local
+  substitute: `tests/unit/phase5Api.test.ts` passed `14/14` with zero skips.
+  Authenticated OOPS still fails closed before workspace creation or child
+  spawn because L6 is not proven.
+
+## M4–M8 release evidence
+
+- Canonical serial command `npx playwright test --project=nightwatch
+  --workers=1 --retries=0`: `2608` discovered, `2595` passed, `13` skipped,
+  `0` failed, exit `0`, about `19.0m`.
+- Topology-correct isolated serial suite from a fresh clone and fresh install:
+  `2608` discovered, `2595` passed, `13` skipped, `0` failed, exit `0`,
+  `971.29s`, peak RSS `1539524 KiB`. Private HOME was outside the fixture
+  workspace; the disposable clone was removed after validation.
+- Canonical and isolated skip identity parity is PASS. The 13 identities are
+  one Phase 14A C5 disposable-snapshot guard, eleven Phase 14A C3
+  fresh-source/currentness snapshot guards, and one Phase 8B.0.1 ownership/
+  chown guard. Each is `LEGITIMATE_ENVIRONMENT_GUARD`. Former Phase 5
+  binary-absence skips are `DETERMINISTIC_SUBSTITUTE_PRESENT`; manual real
+  environment guards were not invoked and are not default-suite evidence.
+- Semantic compatibility: `1920` total / `1907` passed / `13` skipped /
+  `0` failed, exit `0`, `874.84s`, peak RSS `1290916 KiB`.
+- Owner provenance: `91/91` passed, exit `0`, wrapper elapsed `56.87s`.
+  Synthetic campaign: `66/66` passed, exit `0`, wrapper elapsed `69.34s`.
+- Control Center UI typecheck, tests (`11`), build and browser qualification
+  all passed. The build produced `31` modules and `3` files; the browser
+  qualification had one passing test and no console errors or error overlay.
+- Fresh isolated `npm ci --ignore-scripts --no-audit --no-fund` succeeded in
+  `11s` under the campaign's Node 22 host; clean-gate qualification remains
+  the supported Node 20 path. Vue 2 deprecation and one low-severity audit
+  finding are non-blocking legacy dependency hygiene.
+- Representative agent/project checks were stable across cold/warm samples;
+  no material resource or lifecycle regression was reproduced.
+
+## Terminal disposition
+
+L6 process/DNS containment remains unproven. Bubblewrap `0.9.0` can create an
+unprivileged namespace (`--unshare-net` `/usr/bin/true` probe exit `0`), but
+the parent relay is incompatible and browser speculative DNS remains outside
+L5. Direct DNS/TCP/UDP denial and complete child-process lifecycle isolation
+were therefore not certified. Closing this requires fresh owner
+authorization and a safe rootless proof; privileged firewall/network
+administration, system-wide DNS/hosts/proxy mutation, TLS MITM and live
+external probes remain prohibited.
+
+The remaining local/clean gate receipts and the single permitted exact-head
+GitHub Actions observation are final handoff checks, not grounds to weaken
+this boundary or claim project completion.

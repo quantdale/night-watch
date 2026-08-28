@@ -2499,3 +2499,28 @@ current policy did not require it, and no CI-green claim is made. DEV/NEXT/
 production, authentication, customer data, infrastructure, publication, AI,
 and sibling-write operations remain zero. No successor is selected; future
 work requires a fresh census and separate authorization.
+
+## Final assurance release-readiness campaign — 2026-08-28
+
+The current final-assurance task is terminally blocked as
+`PROJECT_NOT_COMPLETE_BLOCKED`. The validated substantive implementation
+anchor is `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b`; live HEAD and remote
+synchronization remain Git-discovered authority rather than static project
+snapshot fields.
+
+The repair checkpoint passes the retry-free safety matrix, deterministic
+restricted-OOPS qualification, semantic compatibility (`1920/1907/13/0`),
+owner provenance (`91/91`), synthetic campaign (`66/66`), Control Center UI
+typecheck/tests/build/browser checks, and the exact serial canonical and
+topology-correct isolated suites (`2608` discovered / `2595` passed /
+`13` skipped / `0` failed in each). Canonical and isolated skip identities
+match exactly. The gstatic browser CONNECT is local telemetry classification,
+not an allowlist or background-traffic success.
+
+L6 process/DNS containment remains unproven: Bubblewrap namespace creation is
+available, but the parent relay is incompatible and browser speculative DNS
+remains outside L5. Direct DNS/TCP/UDP denial and complete child-process
+lifecycle isolation are therefore not certified; authenticated OOPS remains
+fail-closed. No real environment, product, database, cloud/infrastructure,
+credential, publication or sibling-repository operation is authorized or
+claimed.
