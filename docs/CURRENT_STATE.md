@@ -1,9 +1,13 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-27** for
-> the campaign handoff and project-truth hardening closure
-> (`nightwatch-campaign-handoff-and-project-truth-hardening-v1`; validated
-> implementation checkpoint `e4ac7076600f9a347d230445aa312e321f635624`):
+> Durable memory for the next agent/session. Last updated: **2026-08-28** for
+> the final assurance and release-readiness campaign
+> (`nightwatch-final-assurance-release-readiness-hardening-v1`; validated
+> implementation checkpoint `72af3a8fa69d9b0c03d5d2a9254f6e28f9f1c08b`):
+> terminal outcome `PROJECT_NOT_COMPLETE_BLOCKED` because L6 process/DNS
+> containment remains unproven. The older closure material below is historical
+> context and does not override the final-assurance section at the end.
+> Historical context:
 > hostname allow is now followed by bounded complete-answer-set admission and
 > exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
 > fail-closed event-log handling, and explicit runtime containment identities.
