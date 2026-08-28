@@ -33,6 +33,11 @@ export const REQUIRED_BROWSER_LAUNCH_ARGS: readonly string[] = [
  * nightwatchChromiumLaunchOptions consumes it here (no external callers).
  */
 const CHROMIUM_HARDENING_ARGS: readonly string[] = [
+  // Current system Chrome's headless compositor can deadlock screenshot
+  // capture when SwiftShader/software rasterization is selected. Disable
+  // that path explicitly; ordinary page rendering and network policy remain
+  // unchanged, and screenshot capture has its own bounded timeout.
+  '--disable-software-rasterizer',
   '--disable-background-networking',
   '--disable-sync',
   '--disable-default-apps',

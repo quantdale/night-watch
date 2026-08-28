@@ -323,7 +323,10 @@ export class RunRecorder {
     const rel = path.join('screenshots', `${safeName}.png`);
     fs.mkdirSync(path.join(this.dir, 'screenshots'), { recursive: true });
     try {
-      await page.screenshot({ path: path.join(this.dir, rel) });
+      // Keep capture bounded even when a host compositor is unavailable. The
+      // browser contract selects the compatible compositor path for current
+      // system Chrome before this call.
+      await page.screenshot({ path: path.join(this.dir, rel), timeout: 10_000, animations: 'disabled' });
     } catch {
       this.event({
         type: 'screenshot',
