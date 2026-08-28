@@ -3,17 +3,15 @@
 Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Title: Final Completion and L6 Containment
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-final-completion-and-l6-containment-v1
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
 Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
 Last checkpoint: implementation checkpoint `e278da1` is pushed; the L6 relay
 request-volume bound passes its focused adversarial regression.
-Current milestone: M4 — truth, dependencies, UI and resource qualification
-IN_PROGRESS
-Next action: finish the mandatory local/clean/canonical/isolated receipts,
-then synchronize terminal project truth and investigate one exact release-
-checkpoint CI observation.
+Current milestone: COMPLETE / STOP — final local/clean certification closed;
+CI is recorded as external zero-step non-evidence.
+Next action: STOP — task complete.
 Authorization class: NIGHTWATCH_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20

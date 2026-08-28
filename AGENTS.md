@@ -104,7 +104,9 @@ IPv6/mapped-address, descendant, browser speculative/background, HTTP/
 WebSocket relay and parent-death cleanup behavior. Authenticated OOPS checks a
 fresh READY capability before target workspace or child creation and fails
 closed on any unsupported or lost state; local synthetic L5-only fixtures keep
-their explicit narrower classification.
+their explicit narrower classification. Parent relay volume is bounded to
+eight calls per contained runtime; the next call fails closed and terminates
+the process group.
 
 ## Phase 9 semantic oracles (permanent rule)
 

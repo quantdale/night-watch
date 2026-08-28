@@ -83,18 +83,29 @@ blocked result.
 - Repair material defects and revalidate L5, privacy, event-log and lifecycle
   semantics; keep unsupported paths fail closed.
 
-### M4 — truth, dependencies, UI and resource qualification — IN_PROGRESS
+### M4 — truth, dependencies, UI and resource qualification — COMPLETE
 
 - Resolve current-facing M3/M8/CI SHA inconsistencies and validate checkers.
 - Audit skips/retries/dependencies/Node/UI/Control Center and measure resource
   behavior; repair demonstrated issues.
+- Validation: static/hardening/handoff/project/spec/inventory checks passed;
+  root/UI installs and audits passed; Control Center typecheck, tests, build,
+  verifier and browser passed; the Chrome 151 screenshot compositor timeout,
+  stale journey fixture route, action-intent race, and L6 relay-volume gap
+  were reproduced and repaired with focused regressions.
 
-### M5 — full certification and terminal closure — NOT_STARTED
+### M5 — full certification and terminal closure — COMPLETE
 
 - Run the complete local, clean, canonical, isolated, UI and campaign matrix.
 - Observe at most one exact-head CI run if available and classify honestly.
 - Synchronize state/docs, select the truthful outcome, commit/push and verify
   remote equality.
+- Validation: release checkpoint `2576c5751d33bb40046246e8fcf57c7cc5c30a57`
+  is local/clean certified; canonical and topology-correct isolated suites
+  both pass `2604/2617` with exact 13-skip parity; local gate receipt is
+  `receipt:sha256:94f8c00ea1f09d81a5973947`; clean Node 20 receipt is
+  `clean-receipt:sha256:5459eedccc6e5c05eabf2786`; exact Actions observation
+  is zero-step external non-evidence.
 
 ## Validation Strategy
 

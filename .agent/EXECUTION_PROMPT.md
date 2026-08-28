@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Final Completion and L6 Containment
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-final-completion-and-l6-containment-v1
 OpenSpec: openspec/changes/nightwatch-final-completion-and-l6-containment-v1/
 Planned-From: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
@@ -180,8 +180,12 @@ The objective is not to consume 12 hours artificially. The objective is to remai
 
 ## Terminal disposition
 
-This prompt is IN_PROGRESS for the successor campaign. The prior blocked
-result remains historical evidence, not a current completion claim. The final
-state must be `PROJECT_COMPLETE_AND_CI_CERTIFIED`,
-`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`, or
-`PROJECT_NOT_COMPLETE_BLOCKED`, selected only after fresh proof and gates.
+This prompt is COMPLETE for the successor campaign. The prior blocked result
+remains historical evidence, not a current completion claim. The terminal
+state is `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` at release checkpoint
+`2576c5751d33bb40046246e8fcf57c7cc5c30a57`; substantive implementation is
+`e278da19f5fbc62107528033716f271cbb64e1de`. Local/clean gates, canonical and
+topology-correct isolated suites, UI and adversarial proofs are green. Exact
+Actions run `33190456115` / job `98914301082` matched the release checkpoint
+but executed zero steps with no runner, so it is external non-evidence and
+not CI certification.

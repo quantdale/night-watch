@@ -3600,3 +3600,25 @@ the root Vue 2 dependency remains a documented dev-only legacy compatibility
 fixture with one low advisory and no compatible non-major fix. Final release
 status and exact validation/CI SHAs remain pending until the successor's full
 local, clean, isolated and external-evidence checks complete.
+
+## D-88 — final completion is local/clean certified when exact CI is non-evidence
+
+**Context.** The successor campaign completed the rootless L6 proof and all
+repository-owned qualification, but the exact release-checkpoint Actions run
+failed before runner provisioning with no executed steps.
+
+**Decision.** Select `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` for release
+checkpoint `2576c5751d33bb40046246e8fcf57c7cc5c30a57`, with substantive
+implementation `e278da19f5fbc62107528033716f271cbb64e1de`. Bind local and
+clean validation to that release checkpoint, record the exact CI observation
+as `NO_STEPS_EXTERNAL_NON_EVIDENCE`, and never project it as CI execution or
+PASS. Preserve the historical D-86 blocked campaign and all planning branches
+as history; no branch deletion is required or authorized by this closure.
+
+**Consequences.** L6 is proven locally through the rootless namespace, bounded
+AF_UNIX relay and adversarial matrix; authenticated OOPS is enabled only after
+fresh `READY` qualification and fails closed on capability loss. Canonical and
+topology-correct isolated suites are green with exact skip parity, local and
+Node 20 clean gates are green, and the current project state is terminal and
+mechanically checkable. GitHub Actions remains an external follow-up until a
+runner-provisioned exact release-checkpoint run exists.

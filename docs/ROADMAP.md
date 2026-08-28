@@ -2495,7 +2495,7 @@ below is the separately authorized route for a safe rootless proof; no real
 environment, data layer, cloud/infrastructure, credential, sibling-write or
 publication work is authorized.
 
-## Current final completion and L6 containment campaign — in progress
+## Current final completion and L6 containment campaign — terminal local/clean certified
 
 `nightwatch-final-completion-and-l6-containment-v1` is the active successor
 route. It re-audits every current tracked path and implements the smallest
@@ -2507,5 +2507,14 @@ browser speculative/background, WebSocket and parent-death cases are synthetic
 qualification requirements. Authenticated OOPS remains readiness-gated and
 fails closed on any unsupported or lost containment state.
 
-Fresh local, clean Node 20, canonical/isolated, UI and CI release receipts are
-still required before selecting a terminal project outcome.
+Fresh local, clean Node 20, canonical/isolated, UI and adversarial receipts
+are complete. Release checkpoint `2576c5751d33bb40046246e8fcf57c7cc5c30a57`
+contains substantive implementation `e278da19f5fbc62107528033716f271cbb64e1de`.
+The canonical and topology-correct isolated suites each pass `2604` of
+`2617`, with the same 13 justified environment skips and zero failures. The
+local gate receipt is `receipt:sha256:94f8c00ea1f09d81a5973947`; the clean
+Node 20 receipt is `clean-receipt:sha256:5459eedccc6e5c05eabf2786`; UI and
+L6 adversarial matrices are green. GitHub Actions run `33190456115` / job
+`98914301082` matched the release checkpoint but executed zero steps with no
+runner (`runner_id=0`), so the truthful terminal outcome is
+`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`, not CI-certified.

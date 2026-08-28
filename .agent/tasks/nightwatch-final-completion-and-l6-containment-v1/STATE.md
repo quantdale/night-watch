@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
 Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
 Last substantive checkpoint SHA: e278da19f5fbc62107528033716f271cbb64e1de
@@ -15,7 +15,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: IN_PROGRESS
+PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -25,10 +25,11 @@ truthful terminal release state.
 
 ## Current Milestone
 
-M4 — truth, dependencies, UI and resource qualification is IN_PROGRESS. M1–M3
-are closed: the fresh audit found and the implementation repaired the L6,
-release-truth, stale-retry, gate-inventory, UI-toolchain and static-asset
-issues. Full certification remains pending.
+COMPLETE / STOP. M0–M5 are closed: the fresh audit found and the
+implementation repaired the L6, release-truth, stale-retry, gate-inventory,
+UI-toolchain, static-asset, action-attribution, screenshot-compositor and
+relay-volume issues. Local/clean certification is complete; CI is recorded as
+external zero-step non-evidence.
 
 ## Completed Milestones
 
@@ -119,19 +120,44 @@ issues. Full certification remains pending.
   enforced. Checkpoint `e278da1` enforces the limit at eight parent relay
   calls, terminates the contained process on the ninth request, and adds a
   retry-free regression; the L6 suite now passes `6/6`.
+- Final canonical suite at release checkpoint `2576c57` passed `2604` with
+  `13` skipped and `0` failed out of `2617`, using workers `1` and retries `0`;
+  wall time was `4:29.19` and peak RSS `1507792 KiB`.
+- Final topology-correct isolated Node 20 suite passed `2604` with `13`
+  skipped and `0` failed out of `2617`, using workers `1` and retries `0`;
+  wall time was `4:46.53` and peak RSS `1397616 KiB`. The fresh clone,
+  private HOME/cache, modules and temporary state were removed; clean before
+  and after were true and sibling writes were zero.
+- Exact canonical/isolated skip parity is PASS. The `13` identities are the
+  Phase 14 C5 snapshot guard (1), Phase 14 C3 fresh-source guards (12), and
+  the Phase 8B.0.1 unprivileged chown guard (1); the two Phase 14 suite guards
+  account for 12 test identities. Both canonical and isolated JSON guard
+  censuses report the same file/title/guard-line set.
+- Final local gate at `2576c57`: all ten groups PASS, semantic `1923/1910/13/0`,
+  owner `91`, synthetic `72`, receipt
+  `receipt:sha256:94f8c00ea1f09d81a5973947`; wall `3:56.59`, peak RSS
+  `1231420 KiB`.
+- Final clean Node 20 gate at `2576c57`: install and all ten groups PASS,
+  semantic `1923/1910/13/0`, owner `91`, synthetic `72`, clean receipt
+  `clean-receipt:sha256:5459eedccc6e5c05eabf2786`; clean before/after true,
+  no module/auth/finding reuse, sibling writes `0`.
+- Final UI qualification: nested clean install and audit PASS; UI typecheck
+  PASS; Vitest `11/11`; Vite build verifier `3` files / `259566` bytes / no
+  external references; browser `1/1`.
+- Final adversarial cone: `306/306` retry-free tests PASS, including direct
+  production/IP/IPv6/mapped/DNS/UDP/TCP/HTTP/HTTPS/WebSocket/descendant,
+  relay-death, malformed evidence/project truth, path traversal/symlink,
+  privacy and Control Center cases.
 
 ## Work In Progress
 
-Finish the required local gates from the current implementation tree, then
-perform disposable Node 20 clean-checkout certification and the
-canonical/isolated parity run. The repaired action/compositor/L6 lifecycle is
-committed at `e278da1`; remaining work is full receipt collection and terminal
-closure.
+Task complete. No implementation work remains. The source implementation is
+`e278da1`; release checkpoint `2576c57` is the validated documentation
+descendant used for local/clean/CI-role binding.
 
 ## Exact Next Action
 
-Run the remaining mandatory regression matrix and record exact receipts, then
-reconcile the final task/docs/OpenSpec state before the release checkpoint.
+STOP — task complete.
 
 ## Files Changed
 
@@ -178,9 +204,8 @@ test-only legacy dependency finding; no release-blocking P0/P1 remains.
 
 ## Blockers
 
-None. The known L6 boundary is now mechanically qualified; remaining work is
-release receipt collection, clean/isolated validation, exact CI
-classification, documentation closure and final hygiene.
+None. The known L6 boundary is mechanically qualified and all repository-owned
+release work is closed; exact CI remains recorded as external non-evidence.
 
 ## Safety Events
 
@@ -189,15 +214,22 @@ system or privileged network operation was contacted.
 
 ## Deferred / Follow-Up
 
-None yet.
+NONE.
 
 ## Resume Recipe
 
-Read this STATE, then run the Exact Next Action. Do not claim COMPLETE until
-the clean/isolated receipts, final project truth and CI classification are
-recorded.
+Task complete. Do not resume; any future substantive change requires a new
+authorized task and fresh validation.
 
 ## Completion Snapshot
 
-IN_PROGRESS — successor campaign activated at the reconciled `6743401` base;
-terminal outcome not selected.
+Terminal outcome: `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`.
+Active task, STATE and REPORT are COMPLETE; all OpenSpec tasks are checked;
+the substantive implementation is `e278da19f5fbc62107528033716f271cbb64e1de`;
+the release checkpoint is `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; local and
+clean gates, canonical and topology-correct isolated suites, UI and
+adversarial proofs are green. Exact Actions run `33190456115` / job
+`98914301082` matched that checkpoint but had no runner and `steps=[]`, so
+`CI_EXECUTED_SHA: NONE` and `CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE` remain
+truthful. No P0/P1 or blocking P2 remains; the sole Vue 2 advisory is
+test-only legacy compatibility debt with no safe non-major fix.

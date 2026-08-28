@@ -1,8 +1,10 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-28** for
+> Durable memory for the next agent/session. Last updated: **2026-08-29** for
 > successor campaign `nightwatch-final-completion-and-l6-containment-v1`,
-> currently `IN_PROGRESS` from the reconciled `31a8b02` planning checkpoint.
+> terminal `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` at release checkpoint
+> `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; GitHub Actions remains external
+> non-evidence because its exact-head job executed zero steps.
 > The predecessor (`nightwatch-final-assurance-release-readiness-hardening-v1`;
 > validated implementation checkpoint `72af3a8`) is historical and ended
 > `PROJECT_NOT_COMPLETE_BLOCKED`; its L6 residual does not override the active
@@ -266,13 +268,13 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: IN_PROGRESS
-RELEASE_CHECKPOINT_SHA: DISCOVER_FROM_GIT
+PROJECT_COMPLETION_STATUS: PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED
+RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
-LAST_LOCALLY_VALIDATED_SHA: 5fae538289305516f3f79bb1929b6ee7d5263add
-LAST_CLEAN_VALIDATED_SHA: 5fae538289305516f3f79bb1929b6ee7d5263add
-CI_OBSERVED_SHA: 9f0f2d7c267d12a2ddd14c50eb5b916f0e9fc0d9
+LAST_LOCALLY_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
+LAST_CLEAN_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
+CI_OBSERVED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
@@ -2555,10 +2557,10 @@ authenticated OOPS remained fail-closed. No real environment, product,
 database, cloud/infrastructure, credential, publication or sibling-repository
 operation was authorized or claimed.
 
-## Current final completion and L6 containment campaign — 2026-08-28
+## Current final completion and L6 containment campaign — terminal local/clean certified — 2026-08-29
 
 The successor campaign `nightwatch-final-completion-and-l6-containment-v1` is
-currently `IN_PROGRESS`. Its fresh H0 census reviewed `1389/1389` regular
+terminal as `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`. Its fresh H0 census reviewed `1389/1389` regular
 tracked paths with no missing or non-regular entries. The implementation now
 has a versioned rootless L6 capability at
 `nightwatch.process-network-containment.v1`: Bubblewrap creates a no-external-
@@ -2577,6 +2579,9 @@ qualification or liveness boundary remains fail-closed.
 
 Current repairs also include retry-free safety smoke, dynamic gate inventory,
 blocked-versus-complete project-state/CI-SHA semantics, descriptor-bound
-Control Center static reads, and patched UI Vite/Vitest versions. Full local,
-clean Node 20, canonical/isolated and exact CI certification are still pending
-in this successor campaign; no completion claim is made yet.
+Control Center static reads, patched UI Vite/Vitest versions, bounded Chrome
+screenshot capture, bounded L6 relay volume, and the complete release
+qualification. Local and clean Node 20 gates, canonical/isolated suites, UI,
+and adversarial matrices are green. Exact-head Actions run `33190456115` /
+job `98914301082` failed before runner provisioning with `steps=[]` and
+`runner_id=0`; it is recorded as external non-evidence and not CI PASS.

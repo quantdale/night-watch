@@ -1,10 +1,10 @@
 # Nightwatch Architecture
 
-Status: Resolved-egress L5 local/source/synthetic implementation checkpoint
-`3db48ed7d35a0a816ef1a801c86a1d14ddf60b27` (hostname authorization now feeds
-bounded complete-answer-set admission and exact numeric HTTP/CONNECT/Upgrade
-binding; the final documentation checkpoint is discovered from Git), building
-on the historical Phase 23 local/source/synthetic implementation checkpoint
+Status: L6 process/network containment and L5 resolved-egress local/source/
+synthetic release checkpoint `2576c5751d33bb40046246e8fcf57c7cc5c30a57`
+(source implementation `e278da19f5fbc62107528033716f271cbb64e1de`; final
+documentation checkpoint is discovered from Git), building on the historical
+Phase 23 local/source/synthetic implementation checkpoint
 `98ce2faa3eaf1282a0e61cbd37ec2c9895ac5b9b` (unified quality gate, clean
 checkout, canonical, and topology-correct isolated regressions green with
 exact parity; exact-head external CI was observed with zero steps and
@@ -19,9 +19,10 @@ campaigns, Phase 7B/7B.1/7B.1.1/7B.1.2/7B.2/7B.2.1/7B.3 bounded private AI
 review assistance, the Phase 8A evaluated self-development sandbox foundation,
 the Phase 8A.1/8A.1.1 trusted evaluation provenance/replay/eligibility
 boundary, and the Phase 8B controlled source adoption sandbox. This document describes the implemented scaffold, browser
-containment, and mandatory out-of-process L5 proxy. The future restricted
-container is explicitly marked planned; nothing here starts Phase 2 product
-testing. The safety model is normative and load-bearing — read
+containment, mandatory out-of-process L5 proxy, and the versioned rootless L6
+OOPS/process boundary. Real product testing remains separately authorized and
+is not implied by local certification. The safety model is normative and
+load-bearing — read
 `docs/SAFETY_MODEL.md` alongside this document.
 
 The repository's own planner-to-executor route is also a load-bearing local
@@ -81,19 +82,20 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/environment/` | Fail-closed environment selection (`assertSupportedEnvironment`, `selectEnvironment`, `loadEnvironmentConfig`, shape validation). `production` is never selectable. | implemented |
 | `src/core/safety/types.ts` | Shared safety contracts: `HostClass`, `Verdict`, `OutboundDecision`. | implemented |
 | `src/core/safety/redaction.ts` | `RedactionLayer`: sensitive-header list, sensitive query params, secret-shape patterns (Bearer/JWT/AWS key/PEM/JSON secret fields), runtime secret registry. No I/O. | implemented |
-| `src/core/safety/hosts.ts` | Explicit host classification tables: `KNOWN_PRODUCTION_HOSTS`, `DEV_HOSTS`, `NEXT_HOSTS`, `CLOUD_RUN_SUFFIX` (`.run.app`), `ALPHAUS_DOMAINS` (`alphaus.cloud`, `mobingi.com`). | *in flight* |
-| `src/core/safety/outboundPolicy.ts` | `OutboundPolicy.decide(rawUrl): OutboundDecision`. Rule order: non-http → internal allow; env allowlist → allow; static asset list → allow; exact browser-background list → local block; optional support → local block; telemetry list → block-telemetry; known production → deny; `*.run.app` → deny; unknown `*.alphaus.cloud` → deny; `*.mobingi.com` → deny; localhost when not allowlisted → deny; else external deny. Pure logic, no I/O. | *in flight* |
-| `src/core/safety/canary.ts` | Startup policy canary (`runCanary`, `defaultCanaryChecks`, `assertCanary`): asserts the policy/redaction/action tables behave as specified. Pure policy logic, zero network I/O. | *in flight* |
-| `src/core/safety/actions.ts` | Passive action policy: `assertPassiveAction`, `classifyRippleAction`, `RIPPLE_MUTATION_PATTERNS`. Gates every journey step. | *in flight* |
+| `src/core/safety/hosts.ts` | Explicit host classification tables: `KNOWN_PRODUCTION_HOSTS`, `DEV_HOSTS`, `NEXT_HOSTS`, `CLOUD_RUN_SUFFIX` (`.run.app`), `ALPHAUS_DOMAINS` (`alphaus.cloud`, `mobingi.com`). | implemented |
+| `src/core/safety/outboundPolicy.ts` | `OutboundPolicy.decide(rawUrl): OutboundDecision`. Rule order: non-http → internal allow; env allowlist → allow; static asset list → allow; exact browser-background list → local block; optional support → local block; telemetry list → block-telemetry; known production → deny; `*.run.app` → deny; unknown `*.alphaus.cloud` → deny; `*.mobingi.com` → deny; localhost when not allowlisted → deny; else external deny. Pure logic, no I/O. | implemented |
+| `src/core/safety/canary.ts` | Startup policy canary (`runCanary`, `defaultCanaryChecks`, `assertCanary`): asserts the policy/redaction/action tables behave as specified. Pure policy logic, zero network I/O. | implemented |
+| `src/core/safety/actions.ts` | Passive action policy: `assertPassiveAction`, `classifyRippleAction`, `RIPPLE_MUTATION_PATTERNS`. Gates every journey step. | implemented |
 | `src/core/evidence/types.ts` | Event contracts: `RunEvent`, `RunEventType`, `RunSummary`, `RepoSnapshotRecord`. | implemented |
-| `src/core/evidence/runRecorder.ts` | `RunRecorder`: writes `artifacts/<run-id>/{manifest.json, events.jsonl, network.jsonl, console.jsonl, repositories.json, summary.json, screenshots/}`; shared `RedactionLayer`; injected clock for determinism; monotonic event sequencing. | *in flight* |
-| `src/core/repositories/snapshotter.ts` | Read-only git snapshot collector: branch, HEAD SHA, upstream, ahead/behind, dirty state, last commit, timestamp. Never mutates a repo. | *in flight* |
-| `src/browser/context/` | Playwright browser-context factory: system Chrome via `channel`, storage-state by path, tracing decision (disabled when authenticated state is in use), installs the request-inspection route. | *in flight* |
-| `src/browser/observers/` | Console, page-error, and request-failed observers emitting redacted `RunEvent`s. | *in flight* |
-| `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / local block+abort / deny+abort+hard-failure), redacted request/response recording. | *in flight* |
+| `src/core/evidence/runRecorder.ts` | `RunRecorder`: writes `artifacts/<run-id>/{manifest.json, events.jsonl, network.jsonl, console.jsonl, repositories.json, summary.json, screenshots/}`; shared `RedactionLayer`; injected clock for determinism; monotonic event sequencing. | implemented |
+| `src/core/repositories/snapshotter.ts` | Read-only git snapshot collector: branch, HEAD SHA, upstream, ahead/behind, dirty state, last commit, timestamp. Never mutates a repo. | implemented |
+| `src/browser/context.ts` | Playwright browser-context factory: system Chrome via `channel`, storage-state by path, tracing decision (disabled when authenticated state is in use), installs the request-inspection route. | implemented |
+| `src/browser/observers/` | Console, page-error, and request-failed observers emitting redacted `RunEvent`s. | implemented |
+| `src/browser/network/` | Request inspection: every request → `OutboundPolicy.decide` → verdict handling (allow / local block+abort / deny+abort+hard-failure), redacted request/response recording. | implemented |
+| `src/core/oops/l6.ts` | Versioned rootless process/network envelope, namespace-local bounded relay, AF_UNIX control protocol, categorical readiness, descendant/process-group teardown and synthetic DNS/TCP/UDP/browser qualification. | implemented; authenticated OOPS requires fresh READY |
 | `src/proxy/` | Mandatory loopback L5 HTTP/CONNECT/Upgrade proxy, strict destination parser, canonical policy adapter, bounded complete-answer-set address classifier/resolver, exact numeric binding, sanitized lifecycle evidence, and fail-closed runtime health state. | implemented |
-| `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | *in flight* |
-| `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | *in flight* |
+| `src/browser/fixtures/` | Built-in fixture app for the default `local` scenario (`http://127.0.0.1:7311`): serves the candidate passive routes with deterministic responses; zero external network. | implemented |
+| `src/oracles/protocol/passiveChecks.ts` | Generic passive protocol oracles: uncaught page errors, console errors, unexpected failed requests, unexpected production/unknown-host requests, malformed JSON, malformed NDJSON, navigation failure, stability timeout. | implemented |
 | `src/core/policy/ownerScope.ts` | Central owner-scope gate. Allows local/source/contained DEV/replay/evidence operations and rejects frozen infrastructure, datastore, deployment, and external-publication classes with `OWNER_POLICY_BLOCKED`. | implemented |
 | `src/core/policy/privateArtifacts.ts` | Owner-only local JSON store for private dossiers and summaries; immutable AI publication uses complete fsynced same-directory temporaries plus no-replace `linkSync`, while non-immutable workflows retain staged replacement semantics. Default root is outside the repository and has no publication API. | implemented |
 | `src/core/triage/` | Deterministic minimization, sanitized fingerprint clustering/deduplication, browser/API differential, source relevance, conservative app-layer localization, dossier generation, recipes, and private summaries. | implemented |
@@ -102,7 +104,7 @@ browser. Hence the architecture is built around request-level policy.
 | `src/core/campaign/runtimeValidation.ts` | Strict handoff, plan, authorization and manifest document boundary with bounded categorical errors; unsafe external field names are sanitized. | implemented; fail-closed |
 | `src/core/aiReview/` | Strict sanitized AI input/output DTOs, L2/L3 eligibility, synthetic provider, optional loopback-only provider, non-executable oracle suggestions, owner review records, staleness, rendering, and private companion storage. No authority over deterministic evidence or execution. | implemented |
 | `src/core/aiReview/localCanary.ts` | Fixed synthetic L2 fixture, strict canary arguments, one fresh session, one `BUG_CANDIDATE` call maximum, in-memory v2 validation, and sanitized non-persistent result metadata. | implemented |
-| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`, produced only by the deterministic renderer; currently ONE adopted entry, 0..64 cardinality a supported state) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; canonical promotion via the separate owner-gated Phase 8B.1 executor |
+| `src/core/selfDev/` | Explicit Phase 8A/8A.1/8A.1.1 companion subsystem: strict versioned DTOs, recomputed session identity, semantic state machine, fixed registries, bounded proposer/evaluator, ordered replay, future-review eligibility gate, and the data-only Phase 8B adopted-case catalog (`adoptedCases.ts` + `adoptedCaseCatalog.generated.ts`, produced only by the deterministic renderer; currently TWO adopted entries, 0..64 cardinality a supported state) whose live contents seed evaluator baseline state and are bound into `contractDigest`. Phase 8B.1.0 adds the bounded deterministic proposal portfolio (`portfolio.ts`: EXPAND_SUMMARY / EXPAND_THEN_COLLAPSE, frozen order, registry-derived coverage/fingerprints) and the pure catalog-aware novelty selector; the controller resolves the default alias to a concrete replay fixture; portfolio exhaustion is a valid terminal state. | implemented; canonical promotion via the separate owner-gated Phase 8B.1 executor |
 | `src/core/selfDevSandbox/` | Phase 8B sandbox-mutation authority boundary, distinct from the pure `selfDev` trust/evaluation domain: a pure deterministic adoption planner, immutable private plan/result storage, a disposable owner-private source mirror, and a bounded serial cache-isolated TypeScript sandbox loader that executes the modified sandbox evaluator to metamorphically prove one adoption's effect. Zero canonical source write, Git, AI, product, database/infrastructure, or publication authority. | implemented; sandbox-only, no canonical apply |
 | `src/core/provenance/` | Fixed-path source-bundle/contract provenance and no-shell local Git metadata boundary; read-only only. | implemented |
 | `bin/selfdev-synthetic.mjs` | Thin wrapper for one bounded synthetic v2 session with locally attested provenance, replay, immutable write, and read-back summary. | implemented |
@@ -114,10 +116,10 @@ browser. Hence the architecture is built around request-level policy.
 | `bin/ai-local-canary.mjs` | One-shot synthetic local-model canary wrapper; accepts only strict endpoint/model/timeout arguments and never reads findings or owns transport/process/publication authority. | implemented |
 | `bin/agent-state.mjs` | Read-only task continuity validator: claimed-commit implementation/documentation SHA roles, STARTING_SHA lineage, live Git HEAD discovery, approved checkpoint classification, and COMPLETE-task source-drift closure. | implemented |
 | `src/products/ripple/config.ts` | Ripple product config: candidate passive routes (dashboard, invoice list/detail, billing-group list/detail). | implemented |
-| `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | *in flight* |
+| `scenarios/ripple/` | Runnable Phase 1 scenarios; `local.smoke.ts` targets the fixture app by default. | implemented |
 | `config/environments/` | Per-environment allowlists and labels with provenance: `local.json`, `dev.json`, `next.json`; `production.json` documents the rejected surface only. | implemented |
 | `bin/nightwatch.mjs` | Fail-closed CLI: `--env` required (missing/unsupported → exit 2), forwards to the Playwright runner. | implemented |
-| `tests/` | Nightwatch's own unit tests (`tests/unit`) and smoke tests (`tests/smoke`). | *in flight* |
+| `tests/` | Nightwatch's own unit tests (`tests/unit`) and smoke tests (`tests/smoke`). | implemented |
 | `artifacts/` | Run evidence output. Gitignored; evidence is never committed. | scaffold |
 
 The Playwright project launches Chromium with an explicit proxy from
@@ -1912,7 +1914,7 @@ browser speculative-DNS closure were not proven. Authenticated OOPS was
 consequently fail-closed and the project terminal status was
 `PROJECT_NOT_COMPLETE_BLOCKED`.
 
-## Current final completion and L6 boundary — 2026-08-28
+## Current final completion and L6 boundary — terminal local/clean certification
 
 The active successor campaign implements and qualifies a distinct L6 process
 boundary. The supervisor launches a target and all descendants inside an
@@ -1932,3 +1934,10 @@ cleanup. Authenticated OOPS performs this fresh readiness check before target
 workspace/child creation and uses the same envelope. The current qualifying
 host passes this proof; an unsupported host returns a categorical blocked
 state and never falls back to the old uncontained authenticated path.
+The release checkpoint is `2576c5751d33bb40046246e8fcf57c7cc5c30a57`, with
+substantive implementation `e278da19f5fbc62107528033716f271cbb64e1de`.
+Canonical and topology-correct isolated Playwright both pass `2604/2617`
+with `13` exact-parity skips; the local and Node 20 clean gates pass all ten
+groups. GitHub Actions run `33190456115` observed this exact checkpoint but
+its sole job `98914301082` failed before runner provisioning
+(`steps=[]`, `runner_id=0`), so CI is external non-evidence rather than green.

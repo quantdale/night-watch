@@ -23,11 +23,11 @@
 - [x] 4.1 Reconcile M3/M8/P1 blocker semantics across OpenSpec, task state, project-state and handoff validators; add blocked-versus-complete regressions.
 - [x] 4.2 Separate live, implementation, local/clean, CI observed/executed and documentation SHA roles in machine state and reports.
 - [x] 4.3 Resolve every discovered release-critical skip/retry, dependency/install/UI/Control Center, path/privacy, error and resource/lifecycle defect with focused regressions.
-- [ ] 4.4 Synchronize current-facing docs, CLI/status projections, workflow semantics and the OpenSpec checklist without rewriting historical records.
+- [x] 4.4 Synchronize current-facing docs, CLI/status projections, workflow semantics and the OpenSpec checklist without rewriting historical records.
 
 ## 5. Certification and terminal closure
 
-- [ ] 5.1 Run the complete required local test, safety, semantic, provenance, campaign, UI, canonical and isolated matrices with exact counts, skip parity and resource evidence.
-- [ ] 5.2 Run fresh clean-checkout Node 20 install/gate and representative CLI, fixture and Control Center journeys; verify teardown and artifact hygiene.
-- [ ] 5.3 Investigate at most one exact release-checkpoint Actions observation; classify zero-step/external failures as non-evidence and never claim CI green without executed required steps.
-- [ ] 5.4 Select the truthful terminal outcome, complete STATE/REPORT/PLAN/ACTIVE_TASK/prompt/project docs, run final audit and hygiene checks, commit and push without force, and verify `HEAD == origin/main`.
+- [x] 5.1 Run the complete required local test, safety, semantic, provenance, campaign, UI, canonical and isolated matrices with exact counts, skip parity and resource evidence.
+- [x] 5.2 Run fresh clean-checkout Node 20 install/gate and representative CLI, fixture and Control Center journeys; verify teardown and artifact hygiene.
+- [x] 5.3 Investigate at most one exact release-checkpoint Actions observation; classify zero-step/external failures as non-evidence and never claim CI green without executed required steps.
+- [x] 5.4 Select the truthful terminal outcome, complete STATE/REPORT/PLAN/ACTIVE_TASK/prompt/project docs, run final audit and hygiene checks, commit and push without force, and verify `HEAD == origin/main`.

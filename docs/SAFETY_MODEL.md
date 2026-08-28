@@ -1457,7 +1457,7 @@ administration, system-wide DNS/hosts/proxy mutation, TLS MITM, live external
 probe, real Alphaus contact, credential, customer value, sibling write or
 publication was permitted by that campaign.
 
-## Current final completion safety boundary — 2026-08-28
+## Current final completion safety boundary — terminal local/clean certification
 
 The successor campaign adds the versioned local-only L6 process boundary
 `nightwatch.process-network-containment.v1`. It uses a rootless Bubblewrap
@@ -1475,6 +1475,15 @@ on a fresh complete ready capability and fails closed on any unsupported,
 relay, liveness or cleanup state. Qualification is synthetic only; it does
 not authorize DEV/NEXT/production contact or credentials. L0–L5 remain
 separate authorities and L6 does not weaken their policy or evidence rules.
+The parent relay also enforces an eight-request bound per contained runtime;
+the ninth request fails closed and terminates the process group. The final
+release checkpoint is `2576c5751d33bb40046246e8fcf57c7cc5c30a57` with source
+implementation `e278da19f5fbc62107528033716f271cbb64e1de`. Canonical and
+topology-correct isolated suites pass `2604/2617` with identical 13 guarded
+skips, and local/clean gates pass all ten groups. The exact Actions
+observation `33190456115` / job `98914301082` had no runner and `steps=[]`,
+so it remains external non-evidence; local/clean certification does not claim
+CI certification.
 
 ---
 
