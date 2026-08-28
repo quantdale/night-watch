@@ -58,12 +58,12 @@ blocked result.
 
 ## Milestones
 
-### M0 — takeover and activation — IN_PROGRESS
+### M0 — takeover and activation — COMPLETE
 
 - Create this v2 task and exact OpenSpec route; route ACTIVE_TASK and prompt.
 - Run handoff/agent/project baseline checks after the planning checkpoint.
 
-### M1 — current whole-repository audit — NOT_STARTED
+### M1 — current whole-repository audit — IN_PROGRESS
 
 - Census, read/hash, classify and reconcile every tracked file.
 - Deep-review runtime, tests, gates, workflows, dependencies, UI, docs and

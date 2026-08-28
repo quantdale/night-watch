@@ -25,8 +25,9 @@ truthful terminal release state.
 
 ## Current Milestone
 
-M0 — takeover and activation is IN_PROGRESS; planning artifacts are created,
-but the route checkpoint and baseline validation still need to be recorded.
+M1 — current whole-repository audit is IN_PROGRESS. M0 activation is closed
+after the route checkpoint and baseline validation; no runtime implementation
+has been changed.
 
 ## Completed Milestones
 
@@ -34,17 +35,20 @@ but the route checkpoint and baseline validation still need to be recorded.
   confirmed; `origin/main` fetched and equals local `6743401`.
 - Successor OpenSpec proposal, design and capability specs created; task list
   created with 20 tracked implementation/qualification tasks.
+- M0 activation checkpoint committed as `31a8b02e40c782b76c189cc422ba356c47603dac`;
+  handoff, agent and project checks passed after the route became tracked.
+- `openspec status --change nightwatch-final-completion-and-l6-containment-v1`:
+  all 4 planning artifacts complete.
 
 ## Work In Progress
 
-Create the continuity checkpoint, activate the route, run baseline checkers,
-then begin the fresh H0 audit and L6 reproduction.
+Run the fresh H0 audit, record its aggregate evidence and remediation matrix,
+then reproduce the L6 namespace/relay boundary before runtime changes.
 
 ## Exact Next Action
 
-Commit the planning/continuity checkpoint after running the route checks; then
-run the NUL-safe tracked-file audit and record its counts/digests before editing
-runtime implementation.
+Run the NUL-safe tracked-file audit and record its counts/digests before
+editing runtime implementation.
 
 ## Files Changed
 
@@ -58,8 +62,11 @@ historical predecessor task records remain unchanged.
 - Toolchain observed: Node `v22.22.1`, npm `10.9.4`; supported Node 20 remains
   required for clean certification.
 - `git fetch origin main`: PASS; no remote divergence.
-- Existing handoff/agent/project checks: PASS for the predecessor route before
-  successor activation; successor route checks are pending this checkpoint.
+- `npm run handoff:check`: PASS for successor route at live `31a8b02`.
+- `npm run agent:check`: PASS with the expected 24 legacy-v1 warnings and a
+  checkpoint-advance warning for planning metadata; strict errors 0.
+- `npm run project:check`: PASS; catalog count 2, portfolio EXHAUSTED, clean
+  checkout at the validation instant.
 - Prior L6 evidence: Bubblewrap namespace probe passed, but relay compatibility
   and direct DNS/TCP/UDP/process-tree proof were not established; authenticated
   OOPS remains disabled.

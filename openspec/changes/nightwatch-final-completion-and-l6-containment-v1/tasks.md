@@ -1,6 +1,6 @@
 ## 1. Campaign activation and audit
 
-- [ ] 1.1 Create and route a continuity-v2 campaign task, reconcile `origin/main`, and record baseline checker/toolchain truth.
+- [x] 1.1 Create and route a continuity-v2 campaign task, reconcile `origin/main`, and record baseline checker/toolchain truth.
 - [ ] 1.2 Run a NUL-safe census of every tracked path, read/hash all regular files, classify roles, and compare the live manifest with the prior audit.
 - [ ] 1.3 Deep-review authority, process/network, persistence, lifecycle, dependency, UI, workflow and gate boundaries; build a P0–P3 remediation matrix and exact skip/retry census.
 
