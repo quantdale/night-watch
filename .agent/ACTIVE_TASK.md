@@ -6,9 +6,9 @@ Title: Final Completion and L6 Containment
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-and-l6-containment-v1
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last validated implementation SHA: 6650480741152aa150180721adda6fcd687000ef
-Last checkpoint: implementation checkpoint `6650480` is pushed; the
-compositor repair makes the local/negative/passive smoke path green again.
+Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
+Last checkpoint: implementation checkpoint `e278da1` is pushed; the L6 relay
+request-volume bound passes its focused adversarial regression.
 Current milestone: M4 — truth, dependencies, UI and resource qualification
 IN_PROGRESS
 Next action: finish the mandatory local/clean/canonical/isolated receipts,
@@ -17,7 +17,7 @@ checkpoint CI observation.
 Authorization class: NIGHTWATCH_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6650480741152aa150180721adda6fcd687000ef
+LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 

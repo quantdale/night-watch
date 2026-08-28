@@ -4,8 +4,8 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: `6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20`
-Last validated implementation SHA: `6650480741152aa150180721adda6fcd687000ef`
-Last substantive checkpoint SHA: `6650480741152aa150180721adda6fcd687000ef`
+Last validated implementation SHA: `e278da19f5fbc62107528033716f271cbb64e1de`
+Last substantive checkpoint SHA: `e278da19f5fbc62107528033716f271cbb64e1de`
 
 ## Scope and current disposition
 
@@ -39,7 +39,7 @@ canonical/isolated skip parity, UI qualification, and honest CI SHA status.
 
 ## Remaining work
 
-The implementation checkpoint `6650480741152aa150180721adda6fcd687000ef`
+The implementation checkpoint `e278da19f5fbc62107528033716f271cbb64e1de`
 now contains the proven rootless L6 namespace/relay envelope, authenticated
 OOPS readiness integration, release-truth checker semantics, retry-free
 safety tests, UI dependency repair and Control Center descriptor hardening.

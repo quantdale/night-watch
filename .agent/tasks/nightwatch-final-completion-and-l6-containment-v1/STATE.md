@@ -6,13 +6,13 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last validated implementation SHA: 6650480741152aa150180721adda6fcd687000ef
-Last substantive checkpoint SHA: 6650480741152aa150180721adda6fcd687000ef
+Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
+Last substantive checkpoint SHA: e278da19f5fbc62107528033716f271cbb64e1de
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_VALIDATED_IMPLEMENTATION_SHA: 6650480741152aa150180721adda6fcd687000ef
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6650480741152aa150180721adda6fcd687000ef
+LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: IN_PROGRESS
@@ -95,7 +95,7 @@ issues. Full certification remains pending.
   migration authorization.
 - Gate inventory now derives synthetic test files from the package script and
   reports `156` unique authoritative test files with no duplicate execution.
-- Implementation checkpoint `6650480741152aa150180721adda6fcd687000ef` was
+- Implementation checkpoint `e278da19f5fbc62107528033716f271cbb64e1de` was
   committed and pushed after the focused compositor/evidence/safety cone
   passed; the current active continuity anchor now names that substantive
   checkpoint. The checkout is clean and local/remote heads are equal.
@@ -115,14 +115,18 @@ issues. Full certification remains pending.
   explicit launch flag plus a `10s` screenshot timeout is now in `6650480`.
   The repaired local/negative/passive smoke cone passed `3/3` in `8.7s`, and
   the evidence/context/L6 cone passed `38/38`.
+- L6 resource review found the declared `MAX_PROXY_REQUESTS` bound was not
+  enforced. Checkpoint `e278da1` enforces the limit at eight parent relay
+  calls, terminates the contained process on the ninth request, and adds a
+  retry-free regression; the L6 suite now passes `6/6`.
 
 ## Work In Progress
 
 Finish the required local gates from the current implementation tree, then
 perform disposable Node 20 clean-checkout certification and the
-canonical/isolated parity run. The repaired action/compositor lifecycle is
-committed at `6650480`; remaining work is full receipt collection and
-terminal closure.
+canonical/isolated parity run. The repaired action/compositor/L6 lifecycle is
+committed at `e278da1`; remaining work is full receipt collection and terminal
+closure.
 
 ## Exact Next Action
 
@@ -154,7 +158,7 @@ historical predecessor task records remain unchanged.
 - `npm run test:owner-provenance`: PASS — `91/91`; synthetic campaign:
   `71/71`; retry-free safety smoke: `8/8`.
 - The predecessor's partial L6 evidence is historical and superseded. The
-  current `6650480` implementation has a fresh `READY` qualification path;
+  current `e278da1` implementation has a fresh `READY` qualification path;
   authenticated OOPS is enabled only inside that qualified envelope and
   remains fail-closed on any missing capability or lifecycle failure.
 
