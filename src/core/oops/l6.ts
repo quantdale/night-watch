@@ -602,6 +602,11 @@ export async function runL6ContainedProcess(options: L6ContainedProcessOptions):
         }
         headers[key] = value;
       }
+      if (relayRequests >= MAX_PROXY_REQUESTS) {
+        fatalError ??= new Error('L6_RELAY_REQUEST_LIMIT');
+        terminate();
+        return;
+      }
       relayRequests += 1;
       try {
         const response = await Promise.race([

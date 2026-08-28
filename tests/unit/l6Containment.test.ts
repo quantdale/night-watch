@@ -91,6 +91,36 @@ request.once('error', () => process.exit(2));
   }
 });
 
+test('contained relay calls are bounded and the request limit fails closed', async () => {
+  const target = temporaryL6Target(`#!/usr/bin/env node
+import http from 'node:http';
+const port = Number(process.env.NIGHTWATCH_L6_PROXY_PORT);
+let completed = 0;
+function next() {
+  const request = http.get({ host: '127.0.0.1', port, path: '/l6-probe', headers: { Accept: 'application/json', 'X-Nightwatch-L6-Probe': '1' } }, response => {
+    response.resume();
+    response.once('end', () => { completed += 1; if (completed < 10) next(); else process.exit(0); });
+  });
+  request.once('error', () => process.exit(0));
+}
+next();
+`);
+  let relayCalls = 0;
+  try {
+    await expect(runL6ContainedProcess({
+      targetPath: target.path,
+      targetMountPath: '/workspace/oops.mjs',
+      targetArgs: [],
+      mode: 'PROBE',
+      relay: async () => { relayCalls += 1; return { status: 204 }; },
+      timeoutMs: 5_000,
+    })).rejects.toThrow('L6_RELAY_REQUEST_LIMIT');
+    expect(relayCalls).toBe(8);
+  } finally {
+    target.cleanup();
+  }
+});
+
 test('target crash and timeout both terminate the complete contained lifecycle', async () => {
   const crash = temporaryL6Target('#!/usr/bin/env node\nprocess.exit(17);\n');
   const hanging = temporaryL6Target('#!/usr/bin/env node\nsetInterval(() => undefined, 1000);\n');
