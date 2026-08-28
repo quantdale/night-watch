@@ -6,13 +6,13 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last validated implementation SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
-Last substantive checkpoint SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
+Last validated implementation SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
+Last substantive checkpoint SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_VALIDATED_IMPLEMENTATION_SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 466edb097998a0821d9ec20c828d9b08aa9d3f66
+LAST_VALIDATED_IMPLEMENTATION_SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: IN_PROGRESS
@@ -35,7 +35,7 @@ issues. Full certification remains pending.
 - Git takeover: repository root, `origin`, `main`, Node/npm and clean state
   confirmed; `origin/main` fetched and equals local `6743401`.
 - Successor OpenSpec proposal, design and capability specs created; task list
-  created with 20 tracked implementation/qualification tasks.
+  created with 19 tracked implementation/qualification tasks.
 - M0 activation checkpoint committed as `31a8b02e40c782b76c189cc422ba356c47603dac`;
   handoff, agent and project checks passed after the route became tracked.
 - `openspec status --change nightwatch-final-completion-and-l6-containment-v1`:
@@ -70,7 +70,7 @@ issues. Full certification remains pending.
   inventory, current-state completion/CI ambiguity, a static-asset read race,
   and patched UI toolchain advisories.
 - M2/M3 L6 focused qualification: `tests/unit/l6Containment.test.ts` passed
-  `3/3` with retries `0`; the proof covers direct Node/libc DNS, UDP/TCP DNS,
+  `5/5` with retries `0`; the proof covers direct Node/libc DNS, UDP/TCP DNS,
   direct TCP/UDP/HTTP/HTTPS, IPv6 and mapped IPv6, grandchild attempts,
   AF_UNIX HTTP relay, AF_UNIX WebSocket upgrade relay, browser prefetch/
   preconnect/background fixture traffic, parent-death cleanup and exact
@@ -78,7 +78,7 @@ issues. Full certification remains pending.
   `17/17`; authenticated synthetic OOPS reported `L6_ROOTLESS_NAMESPACE`.
 - Safety retry repair: retry-free authenticated/proxy smoke passed `8/8`; no
   safety-critical suite-level retry remains in those files. Synthetic campaign
-  passed `69/69` with workers `1` and retries `0`.
+  passed `71/71` with workers `1` and retries `0`.
 - Truth regressions: project-state and planner-handoff suites passed `46/46`;
   blocked-versus-complete and predecessor-BLOCKED routing cases are covered.
 - UI dependency repair: nested clean `npm ci --ignore-scripts`, UI typecheck,
@@ -95,20 +95,30 @@ issues. Full certification remains pending.
   migration authorization.
 - Gate inventory now derives synthetic test files from the package script and
   reports `156` unique authoritative test files with no duplicate execution.
-- Implementation checkpoint `466edb097998a0821d9ec20c828d9b08aa9d3f66` was
+- Implementation checkpoint `d6a9b422a4cd99a45f9fa402bf911208b19f3bb0` was
   committed and pushed after the focused cone passed; the current active
   continuity anchor now names that substantive checkpoint. The checkout is
-  clean and local/remote heads are equal at this checkpoint.
+  clean at the checkpoint and local/remote heads are equal before the current
+  continuity note update.
+- Fresh-install full unit sweep at the current implementation tree passed
+  `2569/2569` executed tests, with `13` explicit environment-guard skips and
+  no worker crash. The prior diagnostic sweep's two actionability/fixture
+  failures were reproduced: the login and declarative journey controls now
+  perform bounded visible/enabled checks before the current-Chrome forced
+  click path, the journey fixture distinguishes GET from POST, and the
+  action-intent grace window is bounded at `250ms`. The repaired interaction
+  cone passed `35/35` with retries `0`.
 
 ## Work In Progress
 
-Rerun all required local gates from the clean `466edb0` implementation
-checkpoint, then perform disposable Node 20 clean-checkout certification and
-the canonical/isolated parity run.
+Finish the required local gates from the current implementation tree, then
+perform disposable Node 20 clean-checkout certification and the
+canonical/isolated parity run. The repaired action lifecycle is committed at
+`d6a9b42`; remaining work is receipt collection and terminal closure.
 
 ## Exact Next Action
 
-Run the full mandatory regression matrix and record exact receipts, then
+Run the remaining mandatory regression matrix and record exact receipts, then
 reconcile the final task/docs/OpenSpec state before the release checkpoint.
 
 ## Files Changed
@@ -128,9 +138,17 @@ historical predecessor task records remain unchanged.
   checkpoint-advance warning for planning metadata; strict errors 0.
 - `npm run project:check`: PASS; catalog count 2, portfolio EXHAUSTED, clean
   checkout at the validation instant.
-- Prior L6 evidence: Bubblewrap namespace probe passed, but relay compatibility
-  and direct DNS/TCP/UDP/process-tree proof were not established; authenticated
-  OOPS remains disabled.
+- Current fresh-install `npm run test:unit -- --retries=0`: PASS — `2569`
+  passed, `13` skipped, `2582` discovered, elapsed `5.8m`; the full run used
+  one worker and no retries.
+- `npm run test:semantic-compat`: PASS — `1910` passed, `13` skipped, `0`
+  failed across `22` phases and `142` files.
+- `npm run test:owner-provenance`: PASS — `91/91`; synthetic campaign:
+  `71/71`; retry-free safety smoke: `8/8`.
+- The predecessor's partial L6 evidence is historical and superseded. The
+  current `d6a9b42` implementation has a fresh `READY` qualification path;
+  authenticated OOPS is enabled only inside that qualified envelope and
+  remains fail-closed on any missing capability or lifecycle failure.
 
 ## Decisions Made During This Task
 
@@ -148,9 +166,9 @@ test-only legacy dependency finding; no release-blocking P0/P1 remains.
 
 ## Blockers
 
-None at activation. The known unproven L6 boundary is the primary hypothesis
-to reproduce; if it remains unresolved after safe approaches, it becomes the
-terminal blocker.
+None. The known L6 boundary is now mechanically qualified; remaining work is
+release receipt collection, clean/isolated validation, exact CI
+classification, documentation closure and final hygiene.
 
 ## Safety Events
 
@@ -163,9 +181,9 @@ None yet.
 
 ## Resume Recipe
 
-Read this STATE, then run the Exact Next Action. Do not resume authenticated
-OOPS or claim COMPLETE until the L6 capability and adversarial proof are
-mechanically ready.
+Read this STATE, then run the Exact Next Action. Do not claim COMPLETE until
+the clean/isolated receipts, final project truth and CI classification are
+recorded.
 
 ## Completion Snapshot
 

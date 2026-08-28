@@ -21,6 +21,16 @@ request is aborted before leaving the browser and the run hard-fails.
 Host classification is explicit, never string-matching on "prod".
 All evidence passes through a redaction layer before persistence.
 
+Authenticated OOPS subprocesses are enabled only after the versioned
+`nightwatch.process-network-containment.v1` qualification reaches `READY`.
+The qualified L6 envelope is an unprivileged Bubblewrap network namespace
+with no external interface, a minimal read-only root view, a bounded
+namespace-local proxy, and an inherited AF_UNIX control channel to the existing
+L5/Phase 5 relay authority. Direct DNS/TCP/UDP/HTTP/HTTPS and descendant
+escapes fail closed; unsupported host layouts remain unavailable rather than
+falling back to an uncontained process. The deterministic proof is in
+`tests/unit/l6Containment.test.ts` and is run by `npm run campaign:synthetic`.
+
 ## Quickstart
 
 ```bash
