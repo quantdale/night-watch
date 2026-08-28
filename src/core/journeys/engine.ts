@@ -30,7 +30,11 @@ import type {
 } from './types';
 
 const ROUTE_POLL_MS = 50;
-const ACTION_SETTLE_MS = 75;
+// Keep the intent classification window open long enough for Chromium's
+// request event to cross the route/CDP boundary after a click. This is a
+// bounded lifecycle grace period, not a retry: an action-caused request that
+// arrives inside the window remains causally attributed to that action.
+const ACTION_SETTLE_MS = 250;
 
 // Phase 15P A15 convergence: de-exported (module-private, zero external callers).
 interface JourneyRunOptions {
@@ -329,7 +333,15 @@ async function executeStep(
             if (step.value === undefined) fail('missing-fixed-filter-value');
             else await locator.selectOption(step.value, { timeout: step.timeoutMs });
           } else {
-            await locator.click({ timeout: step.timeoutMs });
+            // The selector is validated as part of the fixed declarative
+            // contract. Preserve the meaningful actionability checks, then
+            // bypass only Chromium's unstable-renderer heuristic: current
+            // system Chrome can leave an unchanged synthetic control in a
+            // perpetual "stable" wait. This does not permit hidden or
+            // disabled controls and does not broaden selector authority.
+            await locator.waitFor({ state: 'visible', timeout: step.timeoutMs });
+            if (!(await locator.isEnabled())) throw new Error('fail-closed: declarative control is disabled');
+            await locator.click({ timeout: step.timeoutMs, force: true });
           }
           await sleep(ACTION_SETTLE_MS);
         } catch {

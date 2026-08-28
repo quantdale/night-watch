@@ -148,7 +148,15 @@ export function startJourneyFixtureServer(
       send(res, 200, 'application/json', '{"synthetic":');
       return;
     }
-    if (pathname === '/m/ripple/v2/payer/exchange_rate/2026-08') {
+    // Keep the source-backed GET and mutation POST contracts distinct. The
+    // method-specific mutation branch must precede the shared pathname
+    // fallback; otherwise the fixture would silently turn a synthetic write
+    // into a successful read and invalidate the mutation tripwire test.
+    if (pathname === '/m/ripple/v2/payer/exchange_rate/2026-08' && req.method === 'POST') {
+      send(res, 200, 'application/json', '{"synthetic":"mutation"}');
+      return;
+    }
+    if (pathname === '/m/ripple/v2/payer/exchange_rate/2026-08' && req.method === 'GET') {
       send(res, 200, 'application/json', '{"synthetic":"read"}');
       return;
     }
@@ -170,10 +178,6 @@ export function startJourneyFixtureServer(
     }
     if (pathname === '/m/ripple/action-unknown') {
       send(res, 200, 'application/json', '{"synthetic":"unknown"}');
-      return;
-    }
-    if (pathname === '/m/ripple/v2/payer/exchange_rate/2026-08' && req.method === 'POST') {
-      send(res, 200, 'application/json', '{"synthetic":"mutation"}');
       return;
     }
     if (pathname.startsWith('/m/ripple/')) {

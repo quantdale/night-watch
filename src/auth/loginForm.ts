@@ -30,5 +30,12 @@ export async function fillAndSubmitSourceApprovedDevLogin(
 ): Promise<void> {
   await controls.username.fill(credential.username);
   await controls.password.fill(credential.password);
-  await controls.submit.click({ timeout: 10_000 });
+  // The locator is source-approved and the two preconditions keep this
+  // bounded helper from submitting a hidden/disabled control. Current system
+  // Chrome can keep this minimal synthetic button in a perpetual
+  // actionability "stable" wait while its geometry is unchanged; force only
+  // skips that renderer stability heuristic and does not broaden the locator.
+  await controls.submit.waitFor({ state: 'visible', timeout: 10_000 });
+  if (!(await controls.submit.isEnabled())) throw new Error('fail-closed: source-approved login submit control is disabled');
+  await controls.submit.click({ timeout: 10_000, force: true });
 }
