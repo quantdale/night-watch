@@ -6,13 +6,13 @@ Task ID: nightwatch-final-completion-and-l6-containment-v1
 Phase: FINAL-COMPLETION-AND-L6-CONTAINMENT-V1
 Status: IN_PROGRESS
 Starting SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-Last validated implementation SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
-Last substantive checkpoint SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
+Last validated implementation SHA: 6650480741152aa150180721adda6fcd687000ef
+Last substantive checkpoint SHA: 6650480741152aa150180721adda6fcd687000ef
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 6743401eabdbf1d3eca1d87a2dbdc3fc8cd53a20
-LAST_VALIDATED_IMPLEMENTATION_SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d6a9b422a4cd99a45f9fa402bf911208b19f3bb0
+LAST_VALIDATED_IMPLEMENTATION_SHA: 6650480741152aa150180721adda6fcd687000ef
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6650480741152aa150180721adda6fcd687000ef
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FINAL_COMPLETION_AND_L6_CONTAINMENT_V1_STATUS: IN_PROGRESS
@@ -95,11 +95,10 @@ issues. Full certification remains pending.
   migration authorization.
 - Gate inventory now derives synthetic test files from the package script and
   reports `156` unique authoritative test files with no duplicate execution.
-- Implementation checkpoint `d6a9b422a4cd99a45f9fa402bf911208b19f3bb0` was
-  committed and pushed after the focused cone passed; the current active
-  continuity anchor now names that substantive checkpoint. The checkout is
-  clean at the checkpoint and local/remote heads are equal before the current
-  continuity note update.
+- Implementation checkpoint `6650480741152aa150180721adda6fcd687000ef` was
+  committed and pushed after the focused compositor/evidence/safety cone
+  passed; the current active continuity anchor now names that substantive
+  checkpoint. The checkout is clean and local/remote heads are equal.
 - Fresh-install full unit sweep at the current implementation tree passed
   `2569/2569` executed tests, with `13` explicit environment-guard skips and
   no worker crash. The prior diagnostic sweep's two actionability/fixture
@@ -108,13 +107,22 @@ issues. Full certification remains pending.
   click path, the journey fixture distinguishes GET from POST, and the
   action-intent grace window is bounded at `250ms`. The repaired interaction
   cone passed `35/35` with retries `0`.
+- The first canonical run at `cfd0afd` exposed three passive-flow timeouts
+  (`2600` passed, `3` failed, `13` skipped, `2616` discovered): all expected
+  requests/responses completed, but current system Chrome 151's screenshot
+  compositor never returned. A minimal synthetic probe reproduced the same
+  timeout and passed in `57ms` with `--disable-software-rasterizer`; that
+  explicit launch flag plus a `10s` screenshot timeout is now in `6650480`.
+  The repaired local/negative/passive smoke cone passed `3/3` in `8.7s`, and
+  the evidence/context/L6 cone passed `38/38`.
 
 ## Work In Progress
 
 Finish the required local gates from the current implementation tree, then
 perform disposable Node 20 clean-checkout certification and the
-canonical/isolated parity run. The repaired action lifecycle is committed at
-`d6a9b42`; remaining work is receipt collection and terminal closure.
+canonical/isolated parity run. The repaired action/compositor lifecycle is
+committed at `6650480`; remaining work is full receipt collection and
+terminal closure.
 
 ## Exact Next Action
 
@@ -146,7 +154,7 @@ historical predecessor task records remain unchanged.
 - `npm run test:owner-provenance`: PASS — `91/91`; synthetic campaign:
   `71/71`; retry-free safety smoke: `8/8`.
 - The predecessor's partial L6 evidence is historical and superseded. The
-  current `d6a9b42` implementation has a fresh `READY` qualification path;
+  current `6650480` implementation has a fresh `READY` qualification path;
   authenticated OOPS is enabled only inside that qualified envelope and
   remains fail-closed on any missing capability or lifecycle failure.
 
