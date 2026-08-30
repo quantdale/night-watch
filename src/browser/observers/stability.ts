@@ -50,7 +50,9 @@ export async function waitForNetworkObservationSettle(opts: {
       // Debug: log settlement failure details for real DEV diagnosis
       try {
         // eslint-disable-next-line no-console
-        console.log(`[settlement-timeout] pending=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs}`);
+        const pendingUrls = (opts.network as any).pendingUrls?.() as Set<string> | undefined;
+        const pendingList = pendingUrls ? [...pendingUrls].slice(0, 3).join(',') : 'unknown';
+        console.log(`[settlement-timeout] pending=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs} pendingUrls=${pendingList}`);
       } catch {}
       return false;
     }

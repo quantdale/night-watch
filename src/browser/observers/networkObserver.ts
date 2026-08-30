@@ -105,6 +105,8 @@ export interface NetworkObserver {
   activeRequests(): number;
   /** Asynchronous response handlers still completing body/oracle work. */
   pendingResponseHandlers(): number;
+  /** Debug: pending handler URLs (for settlement diagnostics). */
+  pendingUrls?(): Set<string>;
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
@@ -195,6 +197,7 @@ export function createNetworkObserver(opts: {
 
   let active = 0;
   let pendingResponseHandlers = 0;
+  const pendingUrls = new Set<string>();
   let lastActivity = Date.now();
   const blockedUrls = new Set<string>();
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
@@ -681,6 +684,7 @@ export function createNetworkObserver(opts: {
       tracked = trackedRequests.has(request);
       if (blockedUrls.has(rawUrl)) return; // policy-aborted — no response exists
       pendingResponseHandlers += 1;
+      pendingUrls.add(rawUrl);
       observing = true;
       const redactedUrl = recorder.redactUrl(rawUrl);
       const status = response.status();
@@ -933,7 +937,10 @@ export function createNetworkObserver(opts: {
   } catch {
       // An observer must never crash the run.
     } finally {
-      if (observing) pendingResponseHandlers = Math.max(0, pendingResponseHandlers - 1);
+      if (observing) {
+        pendingResponseHandlers = Math.max(0, pendingResponseHandlers - 1);
+        try { if (request !== undefined) pendingUrls.delete(request.url()); } catch {}
+      }
       if (tracked && request !== undefined) {
         trackedRequests.delete(request);
         active = Math.max(0, active - 1);
@@ -1107,6 +1114,7 @@ export function createNetworkObserver(opts: {
     },
     activeRequests: () => active,
     pendingResponseHandlers: () => pendingResponseHandlers,
+    pendingUrls: () => new Set(pendingUrls),
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,
