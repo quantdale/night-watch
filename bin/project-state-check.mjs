@@ -266,10 +266,10 @@ function main() {
         return null;
       }
     })();
-    const isPostAcceptanceHardening = typeof activeTaskIdForGuard === 'string' && activeTaskIdForGuard.startsWith('nightwatch-post-acceptance');
+    const isPostAcceptanceHardening = typeof activeTaskIdForGuard === 'string' && activeTaskIdForGuard.startsWith('nightwatch-') && activeTaskIdForGuard !== 'nightwatch-operational-acceptance-v1' && activeTaskIdForGuard !== 'nightwatch-final-completion-and-l6-containment-v1';
     const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
     let isMismatch = allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'));
-    // Narrow exception: post-acceptance hardening IN_PROGRESS may remain OPERATIONALLY_ACCEPTED (historical acceptance preserved)
+    // Narrow exception: any post-acceptance hardening/continuous/final-polish IN_PROGRESS may remain OPERATIONALLY_ACCEPTED (historical acceptance preserved)
     if (isMismatch && isPostAcceptanceHardening && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
       isMismatch = false;
     }
