@@ -3795,3 +3795,22 @@ empty QSelect input with a rendered AWS label and proves AWS is excluded
 while Azure remains executable. The next real Phase 4 run must show E2
 vendor selection causing the approved read or fail with an explicit bounded
 failure; no request, mutation, or authority is widened.
+
+## D-96 — QSelect option matching must be exact within the opened menu
+
+**Context.** The next real Phase 4 run correctly excluded the active AWS
+vendor and reached the payer status selector, but the `Set` action was
+classified `APPROVED_OPTION_NOT_UNIQUE`. The opened Quasar menu contained
+both the source labels `Set` and `Not Set`; substring matching treated the
+latter as a second `Set` match.
+
+**Decision.** Match fixed source option labels with an anchored,
+whitespace-tolerant pattern against `.q-item` text inside the visible menu.
+Keep the uniqueness gate and reject zero or multiple exact matches. No
+customer text, arbitrary selector, force-click, or option-value injection is
+allowed.
+
+**Evidence and consequences.** A browser-backed regression fixture with both
+overlapping status labels now passes the exact `Set` action. The next real
+Phase 4 run must validate the result against DEV and continue to enforce the
+existing read, route, safety, and termination contracts.

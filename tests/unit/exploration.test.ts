@@ -112,6 +112,48 @@ test.describe('Phase 4 exploration model', () => {
     expect((await runtime.execute(action)).status).toBe('COMPLETED');
   });
 
+  test('Ripple selector runtime matches overlapping status labels exactly', async ({ page }) => {
+    await page.setContent(`
+      <div class="__ExchangeRateDataTable_Selectors">
+        <div class="__C_Selector">
+          <div class="__C_Selector-Label">Exchange Rate Status</div>
+          <div class="q-select"><input value="" /><span>All</span></div>
+        </div>
+      </div>
+      <script>
+        document.querySelector('.q-select').addEventListener('click', () => {
+          const menu = document.createElement('div');
+          menu.className = 'q-menu';
+          for (const label of ['Set', 'Not Set']) {
+            const item = document.createElement('div');
+            item.className = 'q-item';
+            item.textContent = label;
+            item.addEventListener('click', () => menu.remove());
+            menu.appendChild(item);
+          }
+          document.body.appendChild(menu);
+        });
+      </script>
+    `);
+    const action = RIPPLE_PHASE4_ACTIONS.find((candidate) => candidate.actionId === 'p4.j1.status-local.set')!;
+    const network = {
+      beginJourneyIntent: () => undefined,
+      endJourneyIntent: () => undefined,
+      journeySemanticRequests: () => [],
+    } as never;
+    const monitor = { safetyFailed: false, hardFailures: [] } as never;
+    const runtime = createRippleExplorationRuntime({
+      page,
+      uiBaseUrl: 'https://appdev.alphaus.cloud/ripple/',
+      anchorJourney: 'ripple-payer-exchange-read',
+      network,
+      monitor,
+      authValid: true,
+    });
+    expect(await runtime.actionAvailable(action)).toBeTruthy();
+    expect((await runtime.execute(action)).status).toBe('COMPLETED');
+  });
+
   test('different seeds can choose different safe branches', async () => {
     const plans = new Set<string>();
     for (let value = 1; value <= 8; value += 1) {

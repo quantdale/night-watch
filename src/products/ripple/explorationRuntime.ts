@@ -116,6 +116,11 @@ function actionFailureCode(error: unknown): ActionFailureCode {
   return error instanceof ApprovedActionFailure ? error.code : 'ACTION_EXECUTION_FAILED';
 }
 
+function exactTextPattern(value: string): RegExp {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^\\s*${escaped}\\s*$`);
+}
+
 export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOptions): ExplorationRuntime {
   let safeViewState: Record<string, string | number | boolean> = { view: 'anchor' };
   const surface = ANCHOR_SURFACES[opts.anchorJourney];
@@ -182,7 +187,7 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
     for (const label of spec.optionLabels) {
       // Quasar 1 renders QSelect entries as q-items without an option ARIA
       // role. The menu is still an approved source-backed control boundary.
-      const candidate = menu.locator('.q-item').filter({ hasText: label });
+      const candidate = menu.locator('.q-item').filter({ hasText: exactTextPattern(label) });
       const count = await uniqueCount(candidate);
       matchingOptionCount += count;
       if (count === 1) {
