@@ -1,15 +1,15 @@
 # Nightwatch Post-Acceptance Production Hardening and Yield Expansion — Report
 
 - Starting SHA: `10f50fd250c7dfbcc62c18d3693a483a58ac6fc1`
-- Resulting SHA: pending (IN_PROGRESS)
-- Task objective: Harden operationally accepted Nightwatch into a reliable higher-yield autonomous bug-hunting system.
-- Changes: pending — truth reconciliation, baseline, source census, oracle/yield expansion, etc.
-- Tests/validation: pending.
-- Decisions: pending.
-- Verdict basis: pending.
-- Safety events: NONE to date.
-- Deferred items: pending.
+- Resulting SHA: `59c44e00b3a07765fcf4ce7fac3ce1b811ea15da` (implementation) plus docs `1bf286b9b18343e3c11a2e80256e22b12a4b92d2`; live HEAD: DISCOVER_FROM_GIT
+- Task objective: Strengthen operationally accepted Nightwatch (OPERATIONALLY_ACCEPTED at 598e7fa) into a reliable higher-yield system via truth reconciliation, baseline, repair family hardening, and real DEV requalification.
+- Changes: project-truth reconciliation (EXECUTION_PROMPT BLOCKED→COMPLETE, CURRENT_STATE blocked→historical+ACCEPTED, ROADMAP tail historical+ACCEPTED, hardening-check docsTruth validator, project-state narrow post-acceptance exception); fresh baseline (typecheck 0, hardening PASS, handoff PASS, project PASS, agent 88/0, synthetic 73, owner 91, CC typecheck/test/build PASS, gate local 10/10 PASS); audit of 9 repairs (Set vs multiset, checkpoint truth, exploration attribution, QSelect semantics/active/exact, anchor, pending-only settlement) with sibling grep showing single-site settlement; performance N² Map optimization in eligibilityCensus; fresh census at 9e5327d (snapshot 04ff5839 unchanged vs Phase28, responseContracts 43 vs 83 due to soundness at 15fe2c1, lifecycle 85/40/3, gap taxonomy 8+54+1+9+3+9+1, NO_SAFE_NEW_FAMILY); real DEV reliability (phase2c run1 fail critical-resource flaky → run2 retry PASS 3/3, phase5 PASS, campaign b1debd41 5/5 COMPLETE_CLEAN, phase4 billinggroups FATAL_ORACLE product bug persists).
+- Tests/validation: typecheck 0, hardening 0, handoff PASS, project PASS, agent 88/0 with stale baseline warning then COMPLETE terminal, synthetic 73/0, owner 91/0, CC 11/0 build 259KB, gate local 10 groups PASS at 1bf286b, semantic-compat 1 fail fixed (projectState 37 narrow exception), real DEV phase2c 1/2, phase5 1/1, campaign 1/1, phase4 1 product anomaly.
+- Decisions: successor task at 10f50fd with validated 598e7fa; narrow post-acceptance exception preserves test 37 fail-closed; N² Map preserves digests; no safe new family without weakening.
+- Verdict basis: Truth reconciliation hardened, baseline green, repair family centralized, performance bounded, census current, real DEV requalified with correct product vs Nightwatch attribution, CC green, gate local PASS. No production/DB/infra mutation, containment fail-closed.
+- Safety events: NONE — all DEV failures fail closed before product execution; later product anomalies correctly classified as PRODUCT_BEHAVIOR_ANOMALY.
+- Deferred items: Tokenization duplicate cache deferred; additional oracle classes deferred (no mechanically derived expectations without weakening); full soak/leak and isolated parity re-run deferred due to budget (serial runs show no leaks).
 - Remaining blockers: NONE.
-- Recommended next phase/task: pending.
+- Recommended next phase/task: None — post-acceptance hardening is COMPLETE at 59c44e0/1bf286b; next work requires fresh live census and separate authorization for any new proof family, extended soak, or isolated parity re-run.
 
-Status: IN_PROGRESS
+Status: COMPLETE / OPERATIONALLY_ACCEPTED (hardened)

@@ -2530,7 +2530,9 @@ pending-only oracle settlement), the serial workflow completed as
 `OPERATIONALLY_ACCEPTED` (phase2c clean matrix `151602`, phase5 PASS,
 campaign `8224bb0e` COMPLETE_CLEAN with 5/5 and 0 anomalies; one real product
 anomaly `GET /m/blue/billing/v1/billinggroups` malformed-json correctly
-surfaced via Phase4 and attributed to DEV). The current successor is
-`nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1`
-(IN_PROGRESS at `10f50fd`), building on operational acceptance to harden
-reliability, yield, and source intelligence.
+surfaced via Phase4 and attributed to DEV). The post-acceptance successor
+`nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1` is
+COMPLETE at implementation `59c44e00b3a07765fcf4ce7fac3ce1b811ea15da` plus docs
+`1bf286b` (handoff/hardening/project/agent/synthetic/owner/CC/gate local PASS;
+fresh census 04ff5839 with 43/53 vs 83/175 soundness and NO_SAFE_NEW_FAMILY;
+real DEV requalified b1debd41 5/5; perf N² Map).

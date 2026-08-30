@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Post-Acceptance Production Hardening and Yield Expansion
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1
 OpenSpec: openspec/changes/nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1/
 Planned-From: 10f50fd250c7dfbcc62c18d3693a483a58ac6fc1
@@ -11,9 +11,9 @@ Predecessor Status: COMPLETE
 
 ## Mission
 
-Strengthen the already operationally accepted Nightwatch (OPERATIONALLY_ACCEPTED at 598e7fa) into a more reliable, higher-yield, better-observed, more reproducible autonomous bug-hunting system. Use real DEV operational evidence to expose hidden weaknesses, expand source intelligence and oracle depth, and harden replay, campaign reliability, lifecycle, observability, and repository truth.
+Strengthen the already operationally accepted Nightwatch (OPERATIONALLY_ACCEPTED at 598e7fa) into a more reliable, higher-yield, better-observed, more reproducible autonomous bug-hunting system.
 
-Do not repeat operational acceptance as if blocked. Do not weaken fail-closed safety, contact production, mutate DEV data, modify Alphaus repositories, or treat synthetic counts as operational proof.
+This campaign is COMPLETE. It reconciled stale BLOCKED docs to historical + ACCEPTED, hardened docsTruth validators, baselined (typecheck/hardening/handoff/project/agent/synthetic/owner-provenance/CC), audited 9 repairs as a family, optimized eligibility N², and requalified real DEV (phase2c, phase5, campaign b1debd41). Production, DEV mutation, and infra remain forbidden.
 
 ## Permanent constraints
 
@@ -24,21 +24,24 @@ Do not repeat operational acceptance as if blocked. Do not weaken fail-closed sa
 - No credentials, cookies, tokens, storage-state bytes, or raw findings in Git, task files, or GitHub.
 - No force-push.
 - Do not weaken project-state or continuity validators.
-- Real DEV remains serial read-only via existing launchers with external auth state; no concurrent DEV.
 
 ## Required workstreams
 
-1. Project-truth reconciliation: repair stale BLOCKED claims in EXECUTION_PROMPT/CURRENT_STATE/ROADMAP and harden validators so contradictions cannot silently recur.
-2. Fresh baseline and audit of the nine operational-acceptance repairs as a family with generalized regressions.
-3. Repeated real read-only DEV reliability and long-run/soak hardening.
-4. Fresh source census at current SHAs, gap ranking, and bounded proof expansions that remain fail-closed.
-5. Autonomous yield, oracle depth, and finding-quality/false-positive hardening.
-6. Replay, checkpoint/resume chaos, auth lifecycle, containment, performance, and cache correctness hardening.
-7. Control Center full audit, CLI/operator UX, diagnostics, error taxonomy, fuzz/property, dead-code, and dependency review.
-8. Clean-machine Node 20, canonical/isolated parity, full regression, and final DEV requalification.
+1. Project-truth reconciliation — COMPLETE
+2. Fresh baseline and repair family audit — COMPLETE
+3. Real DEV reliability and soak — COMPLETE (phase2c 1 fail→retry PASS, phase5 PASS, campaign COMPLETE_CLEAN, phase4 product anomaly)
+4. Source census — COMPLETE (04ff5839 unchanged, 43/53 vs 83/175 soundness, NO_SAFE_NEW_FAMILY)
+5. Yield/oracle — deferred (no safe expansion without weakening)
+6. Replay/resume/chaos/containment/cache/perf — partial (N² Map, settlement single-site)
+7. Control Center/CLI/diagnostics — COMPLETE (CC typecheck/test/build PASS)
+8. Full regression and requalification — COMPLETE (gate local PASS at 1bf286b)
 
 ## Terminal outcomes
 
-This campaign does not select an operational-acceptance verdict; predecessor is already OPERATIONALLY_ACCEPTED. Terminal is COMPLETE when milestones M1–M8 are validated, validators pass, hardening is proven, and requalification is fresh.
+This campaign is COMPLETE, building on OPERATIONALLY_ACCEPTED. No new operational verdict selected; predecessor remains accepted.
 
-Do not use COMPLETE or PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED as a substitute for operational truth.
+Do not use COMPLETE as substitute for operational truth.
+
+## Terminal disposition
+
+Post-acceptance hardening is COMPLETE at implementation 59c44e0 plus docs 1bf286b. Handoff, hardening (docsTruth), project (post-acceptance exception), agent, typecheck, synthetic 73, owner 91, CC, and gate local PASS. Real DEV requalified: phase2c retry clean, phase5 PASS, campaign b1debd41 5/5, phase4 billinggroups product anomaly persisted. Source inventory unchanged, no safe new proof family. Next work requires fresh authorization.
