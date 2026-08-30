@@ -3673,3 +3673,29 @@ and `next` continues to deny it. The guarded auth capture must be retried from
 the human wait boundary after this validated repair; no prior external state
 is replaced by this failure. This change grants no production, NEXT, product,
 mutation, data, infrastructure, or publication authority.
+
+## D-91 — Fresh journey replay must distinguish duplicate reads from semantic drift
+
+**Context.** The first successful real Phase 2C run on 2026-08-30 returned
+exit 0 even though the account-inventory fresh-context comparison reported
+`passed=false` with `semantic-request-ledger`. Sanitized evidence showed the
+same two approved `KNOWN_READ` rule keys repeated during ordinary application
+rehydration, plus passive unknown initialization variance; route, structure,
+auth, safety, and oracle outcomes were otherwise PASS. The manual runner
+recorded the comparison but did not assert it, creating a false-success path.
+
+**Decision.** Compare the strict semantic ledger as a set of equivalent
+metadata keys, not an occurrence-sensitive multiset. Preserve rule ID,
+classification, disposition, method, step, and action in each key, so any
+semantic-family, method, mutation, or action-caused-unknown change remains a
+strict divergence. Existing bounded request-count variance records duplicate
+read multiplicity. Phase 2C now persists its comparison before asserting
+`comparison.passed`, so a genuine strict replay divergence fails the command
+instead of being reported as success.
+
+**Evidence and consequences.** A permanent unit regression covers duplicate
+approved reads as bounded variance while existing semantic-divergence tests
+remain strict. The focused journey/replay matrix passed `21/21`, with
+typecheck and hardening green. The real Phase 2C matrix must be rerun against
+the current pushed checkpoint; the prior run remains historical evidence of
+the defect and is not retroactively relabeled.

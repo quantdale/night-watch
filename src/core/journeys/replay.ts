@@ -24,10 +24,16 @@ function semanticKey(item: JourneySemanticRequest): string {
 
 function strictSemanticLedger(evidence: JourneyEvidence): string[] | null {
   if (evidence.semanticRequests === undefined) return null;
-  return evidence.semanticRequests
+  // The strict contract compares which approved semantic request shapes were
+  // exercised, while bounded request-count variance covers repeated reads
+  // caused by normal application rehydration/polling. Preserve method,
+  // disposition, step, and action in the key so a mutation or action-caused
+  // unknown request remains a strict divergence; ignore only duplicate
+  // occurrences of an otherwise identical safe key.
+  return [...new Set(evidence.semanticRequests
     .filter((item) => item.disposition !== 'PASSIVE_UNKNOWN_OBSERVED')
     .map(semanticKey)
-    .sort();
+  )].sort();
 }
 
 function semanticFamilies(evidence: JourneyEvidence): string[] {

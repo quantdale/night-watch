@@ -206,6 +206,22 @@ test('replay matrix distinguishes strict, bounded, semantic, and anomaly dimensi
   expect(compareJourneyReplay(sameFingerprint, differentFingerprint).strictInvariantMismatches).toContain('oracle-set');
 });
 
+test('replay comparator treats duplicate equivalent reads as bounded count variance', () => {
+  const first = baseEvidence();
+  const read = first.semanticRequests![0]!;
+  const replay = {
+    ...first,
+    semanticRequests: [read, { ...read }],
+    boundedVariance: { requestCount: 2 },
+  };
+  const comparison = compareJourneyReplay(first, replay);
+  expect(comparison.passed).toBe(true);
+  expect(comparison.strictInvariantMismatches).toEqual([]);
+  expect(comparison.differential?.semanticStrictLedgerSame).toBe(true);
+  expect(comparison.differential?.requestCountDelta).toBe(1);
+  expect(comparison.categories).toEqual(expect.arrayContaining(['BOUNDED_MATCH', 'EXPECTED_REQUEST_COUNT_VARIANCE']));
+});
+
 test('replay comparator treats expected cancellation as bounded containment, not resource failure', () => {
   const first = baseEvidence();
   const withPolicyContainment = {

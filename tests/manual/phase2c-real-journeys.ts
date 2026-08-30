@@ -7,7 +7,7 @@
 // preflight before the journey begins.
 // ---------------------------------------------------------------------------
 
-import { test, type Browser } from '@playwright/test';
+import { test, expect, type Browser } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -446,6 +446,7 @@ test('Phase 2C six serial fresh-context Ripple canary observations', async ({ br
       finalClassifications: [first.finalClassification, replay.finalClassification],
     });
     writeMatrix(root, baseRunId, contracts, observations, comparisons);
+    expect(comparison.passed, `${contract.definition.journeyId} strict replay invariants diverged: ${comparison.strictInvariantMismatches.join(',')}`).toBe(true);
   }
   writeMatrix(root, baseRunId, contracts, observations, comparisons, admissionLedger(observations));
 });
