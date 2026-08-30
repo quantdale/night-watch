@@ -91,6 +91,11 @@ tests/unit/phase14FreshSourceAdmission.test.ts:240:C3-13 missing source never ce
 tests/unit/selfDevSandboxConfinement.test.ts:143:G: a base owned by another uid fails closed where uid semantics and chown permit the setup
 ```
 
+Command: `npm run gate:local` at documentation checkpoint `69215117acc856ef4fcfaea847b842329b32ce7d`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: all 10 required groups PASS; semantic compatibility `1919 passed / 13 skipped / 0 failed`; owner provenance `91 passed`; synthetic campaign `73 passed`; Node 22; `receipt:sha256:fc00f7b051fc4110a2aeba46`.
+
 ## Decisions Made During This Task
 
 Decision: Create successor `nightwatch-final-reproducibility-polish-v1` at e0c0c33; reason: prior deep hardening deferred `gate:clean` and isolated parity; evidence: STATE e0c0c33.
