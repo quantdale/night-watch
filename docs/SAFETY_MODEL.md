@@ -142,7 +142,7 @@ to `allow` for http(s) requests (an entry without a port matches any port).
 | **unknown-alphaus** | any other `*.alphaus.cloud`, `*.mobingi.com` | deny — treated as hostile |
 | **external** | everything else | deny |
 | **static** | `fonts.googleapis.com`, `fonts.gstatic.com`, `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` | `dev.json` / `next.json` `staticAssetHosts`; `local.json` has none |
-| **telemetry** | `sentry.io` + `*.sentry.io`, `browser.sentry-cdn.com`, `google-analytics.com` + `*.google-analytics.com`, `googletagmanager.com` + `*.googletagmanager.com`, `mixpanel.com` + `*.mixpanel.com`, `cdn.mxpnl.com`, `amplitude.com` + `*.amplitude.com`, `segment.io` + `*.segment.io`, `intercom.io` + `*.intercom.io` | `telemetryHosts` in all three configs; wildcard = suffix match |
+| **telemetry** | `sentry.io` + `*.sentry.io`, `browser.sentry-cdn.com`, `google-analytics.com` + `*.google-analytics.com`, `googletagmanager.com` + `*.googletagmanager.com`, `mixpanel.com` + `*.mixpanel.com`, `cdn.mxpnl.com`, `amplitude.com` + `*.amplitude.com`, `segment.io` + `*.segment.io`, `intercom.io` + `*.intercom.io`, exact `www.gstatic.com` in local and DEV | `telemetryHosts` in the selected config; wildcard = suffix match; `www.gstatic.com` is an exact observed Chrome control-plane host and is blocked, never allowlisted |
 | **browser background** | `android.clients.google.com`, `update.googleapis.com`, `redirector.gvt1.com` | exact `browserBackgroundHosts` entries in all supported configs; no wildcard; local block only |
 | **internal** | non-http(s) schemes | allowed; cannot leave the browser |
 
@@ -268,7 +268,9 @@ Telemetry/analytics hosts are classified explicitly per environment
 (sentry, mixpanel, intercom, Google Analytics/GTM, Amplitude, Segment —
 plus their CDN subdomains). Chromium's observed control-plane hosts
 `accounts.google.com` and `www.google.com` are also explicit telemetry-class
-entries in all supported environment configs. Requests to them are:
+entries in all supported environment configs. The exact `www.gstatic.com`
+host observed during the guarded local/DEV capture is classified the same way
+in those observed environments. Requests to them are:
 
 1. **blocked** — aborted at the route handler before leaving the browser
    (sentry.io spans, analytics beacons, etc. never fire);

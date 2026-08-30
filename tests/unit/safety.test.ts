@@ -275,14 +275,21 @@ test('approved Chromium background hosts are blocked telemetry, never allowed', 
   }
 });
 
-test('reviewed local Chrome telemetry is blocked and never allowlisted', () => {
-  const env = loadEnvironmentConfig('local');
-  expect(env.allowedHosts).not.toContain('www.gstatic.com');
-  expect(env.browserBackgroundHosts?.some((entry) => entry.host === 'www.gstatic.com')).toBe(false);
-  expect(env.telemetryHosts).toContain('www.gstatic.com');
-  const decision = new OutboundPolicy(env).decide('https://www.gstatic.com/synthetic-background-check');
-  expect(decision.verdict).toBe('block-telemetry');
-  expect(decision.hostClass).toBe('telemetry');
+test('reviewed Chrome telemetry is blocked only in the observed local and DEV environments', () => {
+  for (const envName of ['local', 'dev'] as const) {
+    const env = loadEnvironmentConfig(envName);
+    expect(env.allowedHosts, `${envName} allowlist`).not.toContain('www.gstatic.com');
+    expect(env.browserBackgroundHosts?.some((entry) => entry.host === 'www.gstatic.com'), `${envName} background`).toBe(false);
+    expect(env.telemetryHosts, `${envName} telemetry`).toContain('www.gstatic.com');
+    const decision = new OutboundPolicy(env).decide('https://www.gstatic.com/synthetic-background-check');
+    expect(decision.verdict, envName).toBe('block-telemetry');
+    expect(decision.hostClass, envName).toBe('telemetry');
+  }
+
+  const next = loadEnvironmentConfig('next');
+  expect(next.allowedHosts).not.toContain('www.gstatic.com');
+  expect(next.telemetryHosts).not.toContain('www.gstatic.com');
+  expect(new OutboundPolicy(next).decide('https://www.gstatic.com/synthetic-background-check').verdict).toBe('deny');
 });
 
 test('port-exact allowlist entries', () => {

@@ -3646,3 +3646,30 @@ or CI-execution rules.
 **Consequences.** The live project may not be described as finished while
 operational acceptance is pending. Historical local-clean certification stays
 mechanically valid as history. Unknown status tokens still fail closed.
+
+## D-90 — Exact observed DEV Chrome control-plane traffic remains a local block
+
+**Context.** During the owner-authenticated DEV storage-state capture on
+2026-08-30, the guarded outer proxy observed repeated exact CONNECT attempts
+to `www.gstatic.com`. The host had already been classified as local telemetry
+after a prior canonical-suite observation, but the DEV environment config did
+not carry that exact classification. The capture therefore failed closed as
+`external-default-deny` during the human wait, before storage-state
+replacement.
+
+**Decision.** Add only the exact `www.gstatic.com` host to the DEV
+`telemetryHosts` table. It remains neither an environment allowlist entry nor
+a wildcard/browser-background rule. The outer proxy continues to block it
+before resolution/TCP, records non-fatal telemetry containment, and preserves
+the default-deny behavior for the same host in unobserved environments and
+for related hosts.
+
+**Evidence and consequences.** The sanitized direct-capture artifact recorded
+`https-connect`, host `www.gstatic.com`, `external-default-deny`,
+`resolution=not-attempted`, and `connection=not-attempted`; no credential,
+storage-state bytes, or upstream connection entered Nightwatch evidence. A
+regression test proves local/DEV classify the exact host as `block-telemetry`
+and `next` continues to deny it. The guarded auth capture must be retried from
+the human wait boundary after this validated repair; no prior external state
+is replaced by this failure. This change grants no production, NEXT, product,
+mutation, data, infrastructure, or publication authority.
