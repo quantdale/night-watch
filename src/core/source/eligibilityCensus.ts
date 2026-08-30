@@ -395,6 +395,7 @@ function distribution(key: string, rows: readonly SourceEligibilitySurfaceRow[],
   const selected = rows.filter((row) => row[field] === key);
   const byId = new Set(selected.map((row) => row.surfaceId));
   const selectedSurfaces = surfaces.filter((surface) => byId.has(surface.surfaceId));
+  const rowById = new Map(rows.map((row) => [row.surfaceId, row] as const));
   return {
     key,
     surfaceCount: selected.length,
@@ -406,10 +407,11 @@ function distribution(key: string, rows: readonly SourceEligibilitySurfaceRow[],
     readOnlyProvenCount: selectedSurfaces.filter((surface) => surface.operation.readOnlyClassification === 'PROVEN_READ_ONLY').length,
     mutabilityUnknownCount: selectedSurfaces.filter((surface) => surface.operation.readOnlyClassification === 'READ_ONLY_METHOD_ONLY').length,
     mutabilityAmbiguousCount: selectedSurfaces.filter((surface) => ['AMBIGUOUS', 'CONDITIONAL_MUTATION'].includes(surface.operation.readOnlyClassification)).length,
-    phase24EligibleCount: selectedSurfaces.filter((surface) => rows.find((row) => row.surfaceId === surface.surfaceId)?.chain.stages.at(-1)?.status === 'ELIGIBLE').length,
-    phase24ExcludedCount: selectedSurfaces.filter((surface) => rows.find((row) => row.surfaceId === surface.surfaceId)?.chain.stages.at(-1)?.status === 'EXCLUDED').length,
+    phase24EligibleCount: selectedSurfaces.filter((surface) => rowById.get(surface.surfaceId)?.chain.stages.at(-1)?.status === 'ELIGIBLE').length,
+    phase24ExcludedCount: selectedSurfaces.filter((surface) => rowById.get(surface.surfaceId)?.chain.stages.at(-1)?.status === 'EXCLUDED').length,
   };
 }
+
 
 function distributions(rows: readonly SourceEligibilitySurfaceRow[], surfaces: readonly RealSourceSurfaceDescriptor[], field: 'repository' | 'routeLanguage' | 'handlerLanguage'): readonly SourceEligibilityDistribution[] {
   const keys = [...new Set(rows.map((row) => row[field]))].sort(compareCodeUnits);
