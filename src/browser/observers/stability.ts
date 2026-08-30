@@ -46,7 +46,14 @@ export async function waitForNetworkObservationSettle(opts: {
     ) {
       return true;
     }
-    if (now() >= deadline) return false;
+    if (now() >= deadline) {
+      // Debug: log settlement failure details for real DEV diagnosis
+      try {
+        // eslint-disable-next-line no-console
+        console.log(`[settlement-timeout] pending=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs}`);
+      } catch {}
+      return false;
+    }
     await sleep(POLL_MS);
   }
 }
