@@ -249,7 +249,17 @@ async function establishAnchor(opts: {
     if (!pageAuthValid) throw new Error('HUMAN_AUTH_ACTION_REQUIRED: page-visible DEV auth is invalid');
     context.network.beginJourneyObservation();
     const anchorEvidence = await runDeclarativeJourney(context.page, { recorder: opts.recorder, monitor: context.monitor, network: context.network }, contract.definition, { uiBaseUrl: opts.target, authValid: pageAuthValid });
-    return { context, anchorPassed: anchorEvidence.passed && !context.monitor.safetyFailed };
+    const anchorPassed = anchorEvidence.passed && !context.monitor.safetyFailed;
+    opts.recorder.addManifestEntry('phase4AnchorDecision', {
+      journeyPassed: anchorEvidence.passed,
+      anchorPassed,
+      monitorFailed: context.monitor.failed,
+      monitorSafetyFailed: context.monitor.safetyFailed,
+      monitorOracleFailed: context.monitor.oracleFailed,
+      hardFailureCount: context.monitor.hardFailures.length,
+      monitorFailureReasons: context.monitor.monitorFailures.map((failure) => failure.reason),
+    });
+    return { context, anchorPassed };
   } catch (error) {
     await context.close();
     throw error;
@@ -288,7 +298,7 @@ async function runExplorationContext(opts: {
   if (!context.anchorPassed) {
     const safety = safetyFromRun(context.context, recorder);
     await context.context.close();
-    throw new Error(`PHASE_4_ANCHOR_FAILED: ${opts.envelopeId}; safety=${JSON.stringify(safety)}`);
+    throw new Error(`PHASE_4_ANCHOR_FAILED: ${opts.envelopeId}; anchorPassed=false; safety=${JSON.stringify(safety)}`);
   }
   let evidence: ExplorationEvidence;
   try {
