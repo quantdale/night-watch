@@ -1,19 +1,17 @@
-# EXECUTION PROMPT — Continuous Deep Hardening
+# EXECUTION PROMPT — Final Reproducibility and Polish
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-continuous-deep-hardening-v1
-OpenSpec: openspec/changes/nightwatch-continuous-deep-hardening-v1/
-Planned-From: 5080e0d67794462853f62b8757b64d41410b2f1e
+Status: IN_PROGRESS
+Campaign ID: nightwatch-final-reproducibility-polish-v1
+OpenSpec: openspec/changes/nightwatch-final-reproducibility-polish-v1/
+Planned-From: e0c0c33cb6f44d33993b666d301cc261b87a4f01
 Target Branch: main
-Predecessor Task ID: nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1
+Predecessor Task ID: nightwatch-continuous-deep-hardening-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Prove post-acceptance Nightwatch remains stable over repeated autonomous operation by exercising the deferred soak, cache, containment, chaos, auth, fuzz, and reproducibility workstreams that were budget-deferred.
-
-This is a new, substantial continuation intended to occupy remaining autonomous budget without re-proving already completed hardening.
+Prove post-acceptance Nightwatch reproduces on a clean machine and in isolated topology, and requalify real DEV, closing the deferred reproducibility gaps.
 
 ## Permanent constraints
 
@@ -27,14 +25,12 @@ This is a new, substantial continuation intended to occupy remaining autonomous 
 
 ## Required workstreams
 
-1. Soak/long-run 3× synthetic with resource snapshots
-2. Cache currentness 12-case (same/changed SHA/content, dep, analyzer, interrupted/malformed/duplicate/stale)
-3. Containment requalification (L6 4/4 + manual denied)
-4. Replay/resume chaos 8-case
-5. Auth lifecycle 9-case (sanitized)
-6. Fuzz/property ≥20 cases
-7. Dead-code, deps, gate:clean, isolated parity, final DEV requalification
+1. Clean-machine `gate:clean` Node20
+2. Isolated parity canonical vs isolated `gate:local`
+3. Final DEV requalification (phase2c/phase4/phase5/prepare/resume)
+4. Final reconciliation and hygiene
 
 ## Terminal outcomes
 
-This campaign is COMPLETE when M1–M7 are terminal and validators pass. No new operational verdict; predecessor remains OPERATIONALLY_ACCEPTED.
+This campaign is COMPLETE when M1–M4 are terminal and validators pass. No new operational verdict.
+

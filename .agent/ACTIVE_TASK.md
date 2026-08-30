@@ -1,24 +1,22 @@
 # Active Task
 
-Task ID: nightwatch-continuous-deep-hardening-v1
-Phase: CONTINUOUS_DEEP_HARDENING_V1
-Title: Nightwatch Continuous Deep Hardening
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-continuous-deep-hardening-v1
-Starting SHA: 5080e0d67794462853f62b8757b64d41410b2f1e
+Task ID: nightwatch-final-reproducibility-polish-v1
+Phase: FINAL_REPRODUCIBILITY_POLISH_V1
+Title: Nightwatch Final Reproducibility and Polish
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-final-reproducibility-polish-v1
+Starting SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
 Last validated implementation SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
-Last checkpoint: continuous deep hardening complete at 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3 (cache 12-case, fuzz 12-case, soak 3×73); gate local still 10/10 at 5080e0d
-Current milestone: COMPLETE — continuous deep hardening earned
-Next action: STOP — task complete
-Authorization class: NIGHTWATCH_CONTINUOUS_DEEP_HARDENING_V1
+Last checkpoint: task created at e0c0c33; predecessor continuous deep hardening COMPLETE at 55e92b9/e0c0c33; deferred gate:clean and isolated parity
+Current milestone: M1 — Clean-machine `gate:clean`
+Next action: Run `npm run gate:clean` and capture clean-receipt and receipt at same HEAD
+Authorization class: NIGHTWATCH_FINAL_REPRODUCIBILITY_POLISH_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 5080e0d67794462853f62b8757b64d41410b2f1e
+STARTING_SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
 LAST_VALIDATED_IMPLEMENTATION_SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_CONTINUOUS_DEEP_HARDENING_V1_STATUS: COMPLETE
+PHASE_FINAL_REPRODUCIBILITY_POLISH_V1_STATUS: IN_PROGRESS
 ## Routing and safety
 
-This continuous deep-hardening successor is COMPLETE. Predecessor post-acceptance hardening remains COMPLETE at 59c44e0/5080e0d. This campaign proved soak 3×73 with bounded fd growth (+3), cache 12-case (same/changed SHA/content, dep, analyzer, interrupted/malformed/duplicate/stale) and fuzz 12-case (permutation stability etc.) No production, DB, infra, or publication.
+This is the final reproducibility polish successor. Predecessor continuous deep hardening is COMPLETE at 55e92b9/e0c0c33 (cache 12, fuzz 12, soak 3×73, gate local 10/10). Deferred gate:clean and isolated parity are now in scope. No production, DB, infra, sibling writes, weakening containment, or publication. Auth remains external; containment fail-closed.
