@@ -72,10 +72,14 @@ existing serial launchers.
 - Validation commands: `npm run typecheck`; `npm run hardening:check`; `npm run agent:check`; `npm run project:check`; `npm run gate:local`; `npm run gate:clean`
 - Status: COMPLETE
 
-### M4 — Real DEV owner workflow — IN_PROGRESS
+### M4 — Real DEV owner workflow — IN_PROGRESS (auth-blocked)
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
-- Status: IN_PROGRESS
+- Status: IN_PROGRESS; 2026-08-30 safety gates passed, but the external DEV
+  state was not page-valid and all product-capable paths stopped during
+  guarded auth replacement with `AUTH_STATE_REPLACEMENT_FAILED` (phase2c
+  emitted `HUMAN_AUTH_ACTION_REQUIRED`). A human owner must refresh the state
+  before the real workflow can continue.
 
 ### M5 — UX, second run, efficacy, adversarial — NOT_STARTED
 
@@ -108,8 +112,15 @@ Repair implementation defects with regressions and re-run the affected real path
 - Canonical HEAD `a17c6ae` matches `origin/main`. Many local swarm branches and
   isolated clones exist; unique files are already on `main`. Remote `plan/*`
   branches are historical planning docs only.
-- Auto-mode blocked bulk `rm -rf` of clones and `git branch -D` / remote
-  `--delete` during the first pass; uniqueness proof is captured in scratch.
+- The first cleanup pass did not delete unmerged refs or clones; current
+  redundancy evidence is retained in the task state and must be rechecked
+  immediately before each ordinary deletion.
+- Current DEV attempts on 2026-08-30 supersede the historical valid-auth
+  snapshot: phase2c stopped before browser context, and phase4/phase5/campaign
+  prepare stopped in guarded auth replacement. No product or API work ran.
+- Local owner/resume/adversarial evidence remains green: 47 launcher/auth
+  boundary tests, 39 owner/checkpoint/resume tests, and 17 integrated triage
+  and release-resume tests passed.
 
 ## Deferred Work
 

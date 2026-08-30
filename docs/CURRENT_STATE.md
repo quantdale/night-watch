@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-29** for
+> Durable memory for the next agent/session. Last updated: **2026-08-30** for
 > successor campaign `nightwatch-operational-acceptance-v1`, project status
 > `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`. Historical
 > campaign `nightwatch-final-completion-and-l6-containment-v1` remains
@@ -2603,3 +2603,15 @@ requires a real DEV owner workflow and one of
 `OPERATIONALLY_ACCEPTED`,
 `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`,
 `OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED`.
+
+The first guarded operational probes ran on 2026-08-30 using the external
+owner-only DEV state path. The Phase 2A safety gate passed, but Phase 2C
+stopped before browser creation with `HUMAN_AUTH_ACTION_REQUIRED`; Phase 4,
+Phase 5, and campaign `--prepare-only` each stopped in guarded auth refresh
+with the sanitized `AUTH_STATE_REPLACEMENT_FAILED` result. No DEV browser
+product journey, API operation, campaign manifest, or executor ran. The
+historical Phase 7 `AUTH_STATUS=VALID` statement above belongs to its completed
+2026-08-13 capture and is not current operational evidence. A human owner must
+complete the existing headed `auth:capture` flow into the external state path
+before the serial real workflow can continue. Local fail-closed, owner UX,
+checkpoint/resume, and adversarial suites remain green (47 + 39 + 17 tests).
