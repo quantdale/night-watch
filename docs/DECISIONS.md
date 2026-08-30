@@ -3726,3 +3726,25 @@ the established policy that runtime-infrastructure failures are not resumed
 automatically, while making the persisted owner next action and process exit
 truthful. A fresh DEV campaign is required; the prior terminal checkpoint is
 retained as private historical evidence and is not rewritten.
+
+## D-93 — Bounded Phase 4 failures and aggregate timeout are never success
+
+**Context.** The current-checkpoint real Phase 4 run reached the six-seed
+matrix but hit the Playwright default 120-second aggregate test timeout. Its
+partial sanitized matrix also showed seed terminations of `RUNTIME_FAILURE`
+and `SAFETY_BLOCK` while the per-seed recorder marked them passed because it
+checked only zero safety counters and excluded `RUN_INCOMPLETE`. This could
+hide a failed exploration behind a successful owner-facing matrix.
+
+**Decision.** Phase 4 uses the existing bounded child limit of 15 minutes for
+the aggregate six-seed Playwright test, while each exploration retains its
+own 120-second engine budget. Only `BUDGET_EXHAUSTED`, `SAFE_FRONTIER_EXHAUSTED`,
+and `MODEL_TERMINAL_STATE` are successful exploration terminations; runtime,
+safety, auth, route, oracle, and interruption terminations fail the real
+command even with zeroed derived safety counters. The matrix persists each
+attempt before the explicit failure is raised.
+
+**Evidence and consequences.** The pure termination classifier and existing
+failed-action regression cover the boundary; a fresh real Phase 4 run is
+required to validate the timeout repair against DEV. No budget, action
+catalog, safety policy, or external authority is widened.

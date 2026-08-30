@@ -6,6 +6,7 @@ import { formatCanonicalSeed, SplitMix64 } from '../../src/core/exploration/rng'
 import { createSyntheticFixture, SYNTHETIC_ACTIONS, SYNTHETIC_SAFE_ACTION_IDS } from '../../src/core/exploration/syntheticFixture';
 import type { ExplorationBudget, ExplorationEnvelope, SafeAction } from '../../src/core/exploration/types';
 import { BUDGET_POLICY_VERSION } from '../../src/core/exploration/types';
+import { isSuccessfulPhase4Termination } from '../../src/core/exploration/acceptance';
 import { RIPPLE_PHASE4_ACTIONS } from '../../src/products/ripple/explorationCatalog';
 
 const budget: ExplorationBudget = {
@@ -209,6 +210,16 @@ test.describe('Phase 4 exploration model', () => {
     expect(result.transitions[0]?.actionOutcome).toBe('FAILED');
     expect(result.transitions[0]?.verification).toBe('INVALIDATED');
     expect(result.transitions[0]?.oracleResults).toContain('ACTION_TRANSITION_FAILED');
+    expect(isSuccessfulPhase4Termination(result.terminationReason)).toBe(false);
+  });
+
+  test('only safe frontier, model-terminal, and bounded-budget terminations count as successful', () => {
+    expect(isSuccessfulPhase4Termination('SAFE_FRONTIER_EXHAUSTED')).toBe(true);
+    expect(isSuccessfulPhase4Termination('MODEL_TERMINAL_STATE')).toBe(true);
+    expect(isSuccessfulPhase4Termination('BUDGET_EXHAUSTED')).toBe(true);
+    for (const reason of ['AUTH_INVALID', 'SAFETY_BLOCK', 'ACTION_CAUSED_UNKNOWN', 'KNOWN_MUTATION_DETECTED', 'NEW_HOST_BLOCKED', 'UNEXPECTED_ROUTE_ESCAPE', 'FATAL_ORACLE', 'RUNTIME_FAILURE', 'REPLAY_DIVERGENCE', 'RUN_INCOMPLETE'] as const) {
+      expect(isSuccessfulPhase4Termination(reason), reason).toBe(false);
+    }
   });
 
   test('declared action structural/read contracts are independently enforced', async () => {

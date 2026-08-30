@@ -29,6 +29,7 @@ import { createRippleExplorationRuntime } from '../../src/products/ripple/explor
 import { RIPPLE_PHASE4_ACTIONS, RIPPLE_PHASE4_BUDGET, RIPPLE_PHASE4_ENVELOPES, envelopeById } from '../../src/products/ripple/explorationCatalog';
 import { deriveSeed } from '../../src/core/exploration/rng';
 import { replayExactSequence, runExploration } from '../../src/core/exploration/engine';
+import { isSuccessfulPhase4Termination } from '../../src/core/exploration/acceptance';
 import { catalogFingerprint, modelFingerprint } from '../../src/core/exploration/state';
 import type { ExplorationEvidence, ExactReplayResult, SafetyVector } from '../../src/core/exploration/types';
 import { DevAuthFailure, runDevAuthRefresh } from '../../src/auth/devAutoLogin';
@@ -296,8 +297,9 @@ async function runExplorationContext(opts: {
     const evidenceSafety = safetyFromRun(context.context, recorder);
     evidence = { ...evidence, safety: evidenceSafety };
     writeAtomic(path.join(recorder.dir, 'exploration.json'), evidence);
+    const successfulTermination = isSuccessfulPhase4Termination(evidence.terminationReason);
     const zero = safetyIsZero(evidenceSafety);
-    await recorder.finalize({ passed: zero && evidence.terminationReason !== 'RUN_INCOMPLETE', notes: [`Phase 4 validation exploration ${opts.envelopeId}`, `termination=${evidence.terminationReason}`, `safety=${JSON.stringify(evidenceSafety)}`] });
+    await recorder.finalize({ passed: successfulTermination && zero, notes: [`Phase 4 validation exploration ${opts.envelopeId}`, `termination=${evidence.terminationReason}`, `safety=${JSON.stringify(evidenceSafety)}`] });
     return { evidence, safety: evidenceSafety, authRefresh };
   } finally {
     await context.context.close();
@@ -342,6 +344,11 @@ async function runExactReplayContext(opts: {
 
 test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   if (process.env.NIGHTWATCH_PHASE_4_REAL !== '1') { test.skip(); return; }
+  // The six serial seeds each have their own bounded runtime budget. The
+  // aggregate Playwright deadline must cover the whole bounded matrix plus
+  // browser setup/teardown, otherwise a valid slow matrix is killed before it
+  // can persist its final report.
+  test.setTimeout(15 * 60 * 1000);
   const envName = assertSupportedEnvironment(process.env.NIGHTWATCH_ENV);
   if (envName !== 'dev') throw new Error('fail-closed: Phase 4 real exploration requires DEV; NEXT is reserved for human-led auth capture');
   const env = loadEnvironmentConfig(envName);
@@ -363,6 +370,9 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
     const result = await runExplorationContext({ browser, env, target, statePath: validatedStatePath, repository, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, runId });
     const record: RealRecord = { kind: 'EXPLORATION', runId, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, derivedSeed: result.evidence.derivedSeed, plannedActions: result.evidence.plannedActions, observedActions: result.evidence.observedActions, stateIds: result.evidence.states.map((state) => state.stateId), transitionIds: result.evidence.transitions.map((transition) => transition.transitionId), terminationReason: result.evidence.terminationReason, coverage: result.evidence.coverage, safety: result.safety, authProvenance: result.authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: result.authRefresh.autoRefresh, mfaOccurred: result.authRefresh.mfaOccurred, authCaptureId: result.authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
     records.push(record);
+    if (!isSuccessfulPhase4Termination(result.evidence.terminationReason)) {
+      throw new Error(`PHASE_4_EXPLORATION_FAILED: ${seedEntry.envelopeId} ${seedEntry.seed} ${result.evidence.terminationReason}`);
+    }
     if (!firstByEnvelope.has(seedEntry.envelopeId) && result.evidence.plannedActions.length > 1 && safetyIsZero(result.safety)) firstByEnvelope.set(seedEntry.envelopeId, result.evidence);
     if (!safetyIsZero(result.safety)) throw new Error(`PHASE_4_SAFETY_BLOCK: ${seedEntry.envelopeId} ${seedEntry.seed}`);
   }
