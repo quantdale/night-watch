@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-reproducibility-polish-v1
 Starting SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
 Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
-Last checkpoint: M2 canonical/detached-source parity plus local gate PASS at 6921511; final DEV remains
-Current milestone: M3 — Final DEV requalification
-Next action: Perform a read-only auth-state presence/preflight check, then run the serial DEV requalification launchers or record the exact `HUMAN_AUTH_ACTION_REQUIRED` blocker
+Last checkpoint: M3 DEV requalification PASS/known product anomaly at fe35220; final reconciliation remains
+Current milestone: M4 — Final reconciliation and hygiene
+Next action: Reconcile all live task/project/OpenSpec documents, run the complete acceptance gate set, then commit, push, and verify clean HEAD parity
 Authorization class: NIGHTWATCH_FINAL_REPRODUCIBILITY_POLISH_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01

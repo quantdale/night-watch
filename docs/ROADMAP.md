@@ -2536,3 +2536,26 @@ COMPLETE at implementation `59c44e00b3a07765fcf4ce7fac3ce1b811ea15da` plus docs
 `1bf286b` (handoff/hardening/project/agent/synthetic/owner/CC/gate local PASS;
 fresh census 04ff5839 with 43/53 vs 83/175 soundness and NO_SAFE_NEW_FAMILY;
 real DEV requalified b1debd41 5/5; perf N² Map).
+
+## Final reproducibility and polish — IN_PROGRESS — 2026-08-31
+
+The current successor `nightwatch-final-reproducibility-polish-v1` closes the
+remaining reproducibility evidence after post-acceptance hardening. The clean
+Node 20 gate passed at implementation checkpoint `d12b1d7` with a fresh install,
+no auth or owner-finding state, no sibling writes, and clean before/after
+receipts. The `ONBOARDING.md` bootstrap and baseline path was verified.
+
+Canonical and topology-correct isolated full suites matched exactly:
+`2661` enumerated, `2648` passed, `13` identical environment skips, and `0`
+failures. The isolated run used a fresh no-hardlink Nightwatch checkout plus
+six detached approved-source clones under the expected repository topology;
+aggregate sibling symlinks correctly failed closed under the no-follow source
+reader. The local gate passed all `10` groups.
+
+Contained DEV requalification used the external owner-managed state with
+headed mode and traces disabled. Phase 2C passed on a bounded retry, Phase 5
+passed `1/1`, and fresh Phase 7 prepare/resume completed `5/5 COMPLETE_CLEAN`
+with zero anomalies and zero safety counters. Phase 4 retained the known DEV
+`billinggroups` malformed-JSON product anomaly as `FATAL_ORACLE`. Final task
+reconciliation and acceptance validation remain in progress; this successor
+does not create a new operational verdict.

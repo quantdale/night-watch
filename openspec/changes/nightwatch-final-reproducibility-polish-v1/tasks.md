@@ -8,7 +8,7 @@
 
 ## 3. Final DEV requalification
 
-- [ ] 3.1 `phase2c` + `phase5` + `campaign` prepare/resume or truthful `HUMAN_AUTH_ACTION_REQUIRED`
+- [x] 3.1 `phase2c` + `phase5` + `campaign` prepare/resume complete; Phase 2C retry and Phase 5 passed, campaign completed `5/5 COMPLETE_CLEAN`; Phase 4's known DEV malformed-JSON product anomaly is retained separately
 
 ## 4. Final reconciliation
 

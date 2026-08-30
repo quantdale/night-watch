@@ -47,21 +47,21 @@ Reuse `bin/quality-gate-clean.mjs` for clean checkout (fresh `mktemp`, `npm ci -
 - Validation: canonical and detached-source `npx playwright test --project=nightwatch --workers=1 --reporter=json`
 - Status: COMPLETE — both runs enumerated `2661`, with `2648` expected passes, `13` identical skips, `0` unexpected failures, and `0` flaky tests. Aggregate sibling symlinks were rejected by the existing no-follow source-reader guard; detached no-hardlink clones of the six approved source repositories reproduced the canonical result.
 
-### M3 — Final DEV requalification — IN_PROGRESS
+### M3 — Final DEV requalification — COMPLETE
 
 - Objective: real journey, exploration, API, prepare/resume, replay, second-run (read-only, serial)
 - Files/areas: `bin/phase2c-real.mjs`, `bin/phase4-real.mjs`, `bin/phase5-real.mjs`, `bin/phase7-real.mjs`
 - Acceptance: at least `phase2c` + `phase5` + `campaign` fresh or truthful `HUMAN_AUTH_ACTION_REQUIRED`, no prod contact, no secret leakage
 - Validation: `NIGHTWATCH_HEADED=0 npm run journey:phase2c` etc. serial
-- Status: IN_PROGRESS
+- Status: COMPLETE — Phase 2C passed on the bounded retry after one sanitized strict-replay product anomaly; Phase 5 passed `1/1`; fresh Phase 7 prepare/resume completed `5/5 COMPLETE_CLEAN` with zero anomalies and zero safety counters. Phase 4 retained the known DEV `billinggroups` malformed-JSON product anomaly.
 
-### M4 — Final reconciliation and hygiene — NOT_STARTED
+### M4 — Final reconciliation and hygiene — IN_PROGRESS
 
 - Objective: reconcile `ACTIVE_TASK`, `STATE`, `REPORT`, `EXECUTION_PROMPT`, `CURRENT_STATE`, `ROADMAP`, `OpenSpec`; check no stale `BLOCKED`/`IN_PROGRESS`/`PENDING`; `HEAD==origin/main` clean
 - Files/areas: all durable docs
 - Acceptance: `agent:check`/`project:check`/`handoff:check`/`hardening:check` PASS, `HEAD==origin/main`, clean tree, no `TODO` in live milestones
 - Validation: `npm run agent:check && npm run project:check && npm run handoff:check && npm run hardening:check && git status --porcelain --branch`
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ## Validation Strategy
 
@@ -80,7 +80,7 @@ Continuity v2 gatekeepers; `gate:clean` via `quality-gate-clean.mjs` + `ONBOARDI
 
 ## Deferred Work
 
-- Final DEV requalification and final documentation/checkpoint reconciliation remain.
+- Final documentation/checkpoint reconciliation remains.
 
 ## Completion Criteria
 

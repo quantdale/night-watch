@@ -22,23 +22,24 @@ Prove post-acceptance Nightwatch reproduces on a clean machine and in isolated t
 
 ## Current Milestone
 
-Milestone ID: M3
+Milestone ID: M4
 Milestone status: IN_PROGRESS
-What is being attempted: Final contained DEV requalification with external auth fail-closed and no mutation
+What is being attempted: Final documentation, validator, Git, and privacy reconciliation after reproducibility and DEV evidence
 
 ## Completed Milestones
 
 - Git topology verified at d12b1d7 — main only, origin/main sync, clean tree
 - M1 complete at d12b1d7 — clean Node 20 checkout, fresh dependency install, and full gate passed
 - M2 complete at documentation checkpoint 82be077 — canonical and topology-correct detached-source full suites have exact parity: 2,661 enumerated, 2,648 expected passes, 13 skips, 0 unexpected failures, 0 flaky; isolated Nightwatch and six detached source clones clean before/after
+- M3 complete at documentation checkpoint fe35220 — Phase 2C retry passed, Phase 5 passed, fresh Phase 7 prepare/resume completed cleanly; Phase 4 surfaced one known DEV product anomaly without a Nightwatch code change
 
 ## Work In Progress
 
-M1 `gate:clean` and M2 isolated parity passed. M3 final DEV requalification is now in progress; M4 reconciliation remains.
+M1 clean-machine, M2 isolated parity, and M3 DEV requalification are complete. M4 reconciliation and final acceptance validation are now in progress.
 
 ## Exact Next Action
 
-Read only auth-state metadata and launcher preflight requirements. If the external DEV state is valid, run the serial phase2c/phase4/phase5/prepare/resume/replay/second-run path with headed mode disabled; otherwise preserve fail-closed behavior and record the exact `HUMAN_AUTH_ACTION_REQUIRED` receipt without contacting DEV.
+Reconcile `ACTIVE_TASK`, `EXECUTION_PROMPT`, task `PLAN`/`STATE`/`REPORT`, `CURRENT_STATE`, `ROADMAP`, and OpenSpec; then run the complete local/clean/typecheck/hardening/agent/project/handoff acceptance set and verify the pushed clean Git topology.
 
 ## Files Changed
 
@@ -47,7 +48,7 @@ Read only auth-state metadata and launcher preflight requirements. If the extern
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/SPEC.md` | New task spec | done |
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/PLAN.md` | New task plan | done |
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/STATE.md` | New task state | done |
-| `openspec/changes/nightwatch-final-reproducibility-polish-v1/*` | OpenSpec | pending |
+| `openspec/changes/nightwatch-final-reproducibility-polish-v1/*` | OpenSpec | M1/M2 complete; M3/M4 pending |
 | `.agent/ACTIVE_TASK.md` | Activate successor and checkpoint M1/M2 | in progress |
 | `.agent/EXECUTION_PROMPT.md` | New handoff | in progress |
 
@@ -96,17 +97,49 @@ Result: PASS
 When: 2026-08-31
 Relevant failure/output summary: all 10 required groups PASS; semantic compatibility `1919 passed / 13 skipped / 0 failed`; owner provenance `91 passed`; synthetic campaign `73 passed`; Node 22; `receipt:sha256:fc00f7b051fc4110a2aeba46`.
 
+Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json` (first final run)
+Result: FAIL / PRODUCT_ANOMALY
+When: 2026-08-31
+Relevant failure/output summary: Phase 2A safety gate `13/13` passed; the bounded six-context run reported sanitized strict replay divergence for `ripple-common-exchange-read` and stopped. No Nightwatch source or sibling repository writes occurred.
+
+Command: same Phase 2C launcher (bounded retry)
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: Phase 2A safety gate `13/13` passed; all six serial fresh-context journeys completed with strict replay pass and zero strict mismatches.
+
+Command: `NIGHTWATCH_HEADED=0 npm run explore:phase4 -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PARTIAL / PRODUCT_ANOMALY
+When: 2026-08-31
+Relevant failure/output summary: Phase 2A safety gate `13/13` passed; payer/common exploration paths passed, while `E3-J3-account-inventory` terminated `FATAL_ORACLE` on the known DEV malformed-JSON `GET /m/blue/billing/v1/billinggroups` response. This is product behavior, not a Nightwatch implementation failure.
+
+Command: `NIGHTWATCH_HEADED=0 npm run api:phase5 -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: bounded source-generated DEV API corpus `1 passed / 0 failed`; traces and raw response persistence remained disabled.
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: fresh checkpoint `PHASE_7_NEW_REAL_CAMPAIGN_READY`; campaign `campaign:sha256:914bb649e928692a4dd2b9ba`; manifest `manifest:sha256:e12e6fd21767017047177259`; source implementation SHA `69215117acc856ef4fcfaea847b842329b32ce7d`; 5 work items; `PREPARE_GATE_PASS`.
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:914bb649e928692a4dd2b9ba --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS / COMPLETE_CLEAN
+When: 2026-08-31
+Relevant failure/output summary: all 5/5 work items completed; 0 anomaly observations; 0 unique clusters; privacy `PASS`; safety production attempts, proxy violations, unknown destinations/approvals, product mutations, action-caused-unknown, database queries, infrastructure queries, and external publication attempts all `0`; L4 `OUT_OF_SCOPE_BY_OWNER`; headline `NO ANOMALIES OBSERVED`.
+
 ## Decisions Made During This Task
 
 Decision: Create successor `nightwatch-final-reproducibility-polish-v1` at e0c0c33; reason: prior deep hardening deferred `gate:clean` and isolated parity; evidence: STATE e0c0c33.
 Decision: Treat the current `d12b1d7` as the validated implementation checkpoint; reason: `gate:clean` exercises the clean checkout at the live HEAD and passes all required groups.
 Decision: Use detached no-hardlink clones for isolated parity; reason: the first aggregate sibling-symlink topology correctly failed closed in `src/core/source/siblingSource.ts` because the source reader rejects symlink paths, while detached clones reproduced canonical results without weakening that safety contract.
+Decision: Accept the final DEV evidence with the Phase 2C bounded retry and retain the Phase 4 malformed-JSON result as a product anomaly; reason: the required clean Phase 2C/Phase 5/campaign evidence passed, while Nightwatch must not hide a real DEV oracle failure or relabel it as a framework defect.
 
 ## Discoveries
 
 - Prior deep hardening gate local 10/10 at e0c0c33, real DEV b1debd41 valid
 - Clean-machine qualification at d12b1d7: PASS; receipts recorded above
 - Canonical and detached-source isolated full-suite parity: exact `2661/2648/13/0` enumeration/pass/skip/fail counts and identical skip identities; the aggregate-symlink diagnostic produced four expected no-snapshot failures and was not used as the parity result
+- Final DEV: Phase 2C retry clean, Phase 5 `1/1` pass, Phase 7 fresh prepare/resume `5/5 COMPLETE_CLEAN`; Phase 4 separately surfaced the known `billinggroups` malformed-JSON product anomaly
 
 ## Blockers
 
@@ -127,8 +160,9 @@ NONE
 3. Inspect git status and live HEAD.
 4. M1: run `npm run gate:clean` and capture both receipts — complete at d12b1d7.
 5. M2: compare canonical and detached-source isolated full-suite counts and skip identities — complete at 82be077.
-6. M3: inspect auth metadata only, then run or fail-closed the serial DEV requalification.
+6. M3: inspect auth metadata only, then run or fail-closed the serial DEV requalification — complete at fe35220; Phase 2C retry and Phase 5/campaign passed, Phase 4 retained a product anomaly.
+7. M4: reconcile all durable documents and run final acceptance gates.
 
 ## Completion Snapshot
 
-Not complete — IN_PROGRESS. M1 clean-machine PASS and M2 exact canonical/detached-source parity are complete; M3 DEV requalification is in progress.
+Not complete — IN_PROGRESS. M1/M2/M3 are complete; M4 final reconciliation and acceptance validation are in progress.
