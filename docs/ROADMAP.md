@@ -2521,5 +2521,6 @@ runner (`runner_id=0`), so the truthful terminal outcome is
 
 That local/clean certification is historical. The current campaign is
 `nightwatch-operational-acceptance-v1` with project status
-`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` until a real DEV
-owner workflow earns one of the four operational verdicts.
+`OPERATIONAL_ACCEPTANCE_BLOCKED`: its guarded DEV probes reached the safety
+and auth boundaries, but the human-owned auth capture was not completed, so no
+real product workflow ran. A fresh owner-authenticated audit may resume later.

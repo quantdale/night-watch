@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Operational Acceptance
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: BLOCKED
 Campaign ID: nightwatch-operational-acceptance-v1
 OpenSpec: openspec/changes/nightwatch-operational-acceptance-v1/
 Planned-From: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd

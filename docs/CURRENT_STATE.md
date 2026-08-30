@@ -2,7 +2,7 @@
 
 > Durable memory for the next agent/session. Last updated: **2026-08-30** for
 > successor campaign `nightwatch-operational-acceptance-v1`, project status
-> `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`. Historical
+> `OPERATIONAL_ACCEPTANCE_BLOCKED`. Historical
 > campaign `nightwatch-final-completion-and-l6-containment-v1` remains
 > COMPLETE local/synthetic/clean certification
 > (`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`) at release checkpoint
@@ -272,7 +272,7 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
+PROJECT_COMPLETION_STATUS: OPERATIONAL_ACCEPTANCE_BLOCKED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
@@ -2592,11 +2592,11 @@ and adversarial matrices are green. Exact-head Actions run `33190456115` /
 job `98914301082` failed before runner provisioning with `steps=[]` and
 `runner_id=0`; it is recorded as external non-evidence and not CI PASS.
 
-## Current operational-acceptance campaign — pending — 2026-08-30
+## Current operational-acceptance campaign — blocked — 2026-08-30
 
-Active task `nightwatch-operational-acceptance-v1` is IN_PROGRESS. The current
+Active task `nightwatch-operational-acceptance-v1` is BLOCKED. The current
 machine-checked project completion status is
-`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`. Historical
+`OPERATIONAL_ACCEPTANCE_BLOCKED`. Historical
 `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` remains a COMPLETE-only local/clean
 record and is not the current finished-project claim. Operational acceptance
 requires a real DEV owner workflow and one of
@@ -2619,3 +2619,8 @@ The canonical Git topology cleanup is complete: the canonical workspace has
 only the `main` branch and `origin` has only `refs/heads/main`; redundant
 isolated clones were removed from the workspace recoverably and historical
 swarm/plan refs were deleted.
+
+This is a truthful terminal operational verdict, not a project-success claim:
+the human-owned auth capture was unavailable, so the real DEV owner workflow
+could not proceed. A fresh human-authenticated audit may resume the campaign;
+no credentials or storage-state bytes belong in Nightwatch or GitHub.

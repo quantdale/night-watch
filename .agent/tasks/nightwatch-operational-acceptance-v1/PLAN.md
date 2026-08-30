@@ -77,24 +77,27 @@ existing serial launchers.
 - Validation commands: `npm run typecheck`; `npm run hardening:check`; `npm run agent:check`; `npm run project:check`; `npm run gate:local`; `npm run gate:clean`
 - Status: COMPLETE
 
-### M4 — Real DEV owner workflow — IN_PROGRESS (auth-blocked)
+### M4 — Real DEV owner workflow — BLOCKED
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
-- Status: IN_PROGRESS; 2026-08-30 safety gates passed, but the external DEV
+- Status: BLOCKED; 2026-08-30 safety gates passed, but the external DEV
   state was not page-valid and all product-capable paths stopped during
   guarded auth replacement with `AUTH_STATE_REPLACEMENT_FAILED` (phase2c
   emitted `HUMAN_AUTH_ACTION_REQUIRED`). A human owner must refresh the state
   before the real workflow can continue.
 
-### M5 — UX, second run, efficacy, adversarial — NOT_STARTED
+### M5 — UX, second run, efficacy, adversarial — BLOCKED
 
 - Objective: owner UX, resume after persisted state, fail-closed cases, verdict.
-- Status: NOT_STARTED
+- Status: BLOCKED; local owner/resume/adversarial evidence passed, but the
+  real second run and efficacy assessment require the unavailable human auth
+  capture.
 
-### M6 — Final report and topology close — NOT_STARTED
+### M6 — Final report and topology close — BLOCKED
 
 - Objective: sanitized report, one of four verdicts, push without force.
-- Status: NOT_STARTED
+- Status: BLOCKED; truthful terminal verdict is
+  `OPERATIONAL_ACCEPTANCE_BLOCKED` pending a fresh owner-authenticated audit.
 
 ## Validation Strategy
 
@@ -111,6 +114,11 @@ Repair implementation defects with regressions and re-run the affected real path
   which this campaign forbids; evidence: checker pairing tests 29–37;
   consequence: pending status is
   `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`.
+- 2026-08-30 — Verdict: select `OPERATIONAL_ACCEPTANCE_BLOCKED`; reason:
+  phase2c, phase4, phase5, and campaign prepare all failed closed at the
+  human-owned DEV auth boundary, repeated verified waits produced no capture,
+  and no browser/product/API executor ran. The task may be resumed only after
+  a fresh human-authenticated audit.
 
 ## Discoveries
 

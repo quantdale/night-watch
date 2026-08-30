@@ -11,13 +11,17 @@
   47 passed; owner/checkpoint/resume 39 passed; integrated triage/release
   resume 17 passed; current DEV probes failed closed before product execution.
 - Decisions: historical `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` remains a
-  COMPLETE-only local-clean record; pending token is
-  `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`.
+  COMPLETE-only local-clean record; the selected operational verdict is
+  `OPERATIONAL_ACCEPTANCE_BLOCKED`.
+- Verdict basis: the human-owned auth capture was required but not completed;
+  no browser product journey, API operation, campaign manifest, or executor
+  ran. This is not operational acceptance and not a project-success claim.
 - Safety events: NONE
-- Deferred items: human-owned refresh of the external DEV storage state, then
-  serial phase2c/phase4/phase5/campaign prepare-resume and final verdict.
+- Deferred items: a future fresh audit may refresh the external DEV state and
+  rerun the serial workflow; this task is terminally blocked.
 - Remaining blockers: current external DEV state is not page-valid;
   `AUTH_STATE_REPLACEMENT_FAILED` is the sanitized guarded refresh result.
-- Recommended next phase/task: continue this campaign through real DEV.
+- Recommended next phase/task: fresh owner-authenticated operational audit
+  after the external state is refreshed.
 
-Status: IN_PROGRESS
+Status: BLOCKED

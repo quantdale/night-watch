@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-operational-acceptance-v1
 Phase: OPERATIONAL_ACCEPTANCE_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
 Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
 Last substantive checkpoint SHA: e278da19f5fbc62107528033716f271cbb64e1de
@@ -15,7 +15,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: e278da19f5fbc62107528033716f271cbb64e1de
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: IN_PROGRESS
+PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -25,10 +25,11 @@ non-operational, and prove or truthfully fail real DEV operational acceptance.
 ## Current Milestone
 
 Milestone ID: M4
-Milestone status: IN_PROGRESS
+Milestone status: BLOCKED
 What is being attempted: serial real DEV owner workflow through existing
-launchers. Safety gates pass, but the external auth state is currently not
-page-valid and guarded replacement stops before product execution.
+launchers. Safety gates pass, but the external auth state is not page-valid
+and guarded replacement stops before product execution. This milestone is
+terminally blocked pending human auth completion.
 
 ## Completed Milestones
 
@@ -53,15 +54,16 @@ page-valid and guarded replacement stops before product execution.
 
 ## Work In Progress
 
-Real DEV launchers reach their safety gates but remain product-unexecuted:
+Real DEV launchers reached their safety gates but remain product-unexecuted:
 phase2c stops with `HUMAN_AUTH_ACTION_REQUIRED`, while phase4, phase5, and
 campaign prepare stop with `AUTH_STATE_REPLACEMENT_FAILED`. A human owner must
-refresh the external DEV state before the real workflow can continue. The Git
-topology cleanup is complete.
+refresh the external DEV state before a fresh campaign can continue. The Git
+topology cleanup is complete; this task is terminally blocked until that
+external prerequisite changes.
 
 ## Exact Next Action
 
-Human owner runs `NIGHTWATCH_HEADED=1 npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"` from an interactive terminal; after a successful sanitized capture, rerun phase2c, phase4, phase5, and campaign `--prepare-only` then `--resume-campaign=<id>` serially.
+STOP — human owner must complete `NIGHTWATCH_HEADED=1 npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"` from an interactive terminal before a fresh operational-acceptance audit can rerun the serial DEV workflow.
 
 ## Files Changed
 
@@ -181,18 +183,22 @@ performed.
 
 ## Deferred / Follow-Up
 
-After the auth unblock, rerun the serial real workflow and complete M5/M6. The
+Task is blocked at the human-auth prerequisite. A future resumed audit may
+rerun the serial real workflow after a successful sanitized capture. The
 removed redundant clones remain recoverable through the desktop trash; they are
 not part of the canonical Nightwatch workspace.
 
 ## Resume Recipe
 
-Resume from the human auth unblock: run the guarded external capture, then the
-existing serial DEV launchers. Do not treat local/clean certification as
-operational acceptance. Keep the current project status pending until a real
-operational verdict is earned; topology cleanup remains separate and
-fail-closed.
+STOP — operational acceptance is blocked. Resume only after the human owner
+completes a fresh guarded external capture; do not treat local/clean
+certification as operational acceptance.
 
 ## Completion Snapshot
 
-Not complete. Operational acceptance pending.
+Terminal verdict: `OPERATIONAL_ACCEPTANCE_BLOCKED`. The guarded DEV safety
+gates passed, but the external state was not page-valid; human auth capture was
+required and not completed. No browser product journey, API operation,
+campaign manifest, executor, mutation, production, data-layer, infrastructure,
+or publication operation ran. Local topology cleanup and all local validation
+requirements are complete; a fresh user-authenticated audit may resume later.
