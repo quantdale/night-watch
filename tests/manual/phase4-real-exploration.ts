@@ -15,6 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { assertSupportedEnvironment, loadEnvironmentConfig } from '../../src/core/environment';
 import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
+import { waitForNetworkObservationSettle } from '../../src/browser/observers/stability';
 import { inspectRipplePageAuthReadability } from '../../src/browser/fixtures/pageAuthReadability';
 import { inspectStorageStateCookiePageReadability, inspectStorageStateKeySemantics, validateStorageStateFile, validateStorageStateOutputPath } from '../../src/browser/fixtures/storageState';
 import { AUTHENTICATED_BROWSER_CONTRACT } from '../../src/browser/contract';
@@ -66,6 +67,8 @@ interface RealRecord {
   readonly terminationReason: string;
   readonly coverage?: ExplorationEvidence['coverage'];
   readonly replayStatus?: ExactReplayResult['status'];
+  readonly oracleStatus: 'PASS' | 'FAIL';
+  readonly observationSettled: boolean;
   readonly safety: SafetyVector;
   readonly authProvenance: 'REUSED_EXTERNAL_STATE' | 'AUTO_REFRESHED_DEV_STATE';
   readonly autoRefresh: boolean;
@@ -275,7 +278,7 @@ async function runExplorationContext(opts: {
   envelopeId: string;
   seed: string;
   runId: string;
-}): Promise<{ evidence: ExplorationEvidence; safety: SafetyVector; authRefresh: Phase4AuthResult }> {
+}): Promise<{ evidence: ExplorationEvidence; safety: SafetyVector; oracleStatus: 'PASS' | 'FAIL'; observationSettled: boolean; authRefresh: Phase4AuthResult }> {
   const { envelope, contract } = anchorFor(opts.envelopeId);
   const authRefresh = await ensurePhase4Auth(opts.browser, opts.env, opts.target, opts.statePath);
   const auth = authFacts(opts.statePath, opts.target, opts.env);
@@ -304,13 +307,41 @@ async function runExplorationContext(opts: {
   try {
     const runtime = createRippleExplorationRuntime({ page: context.context.page, uiBaseUrl: opts.target, anchorJourney: envelope.anchorJourney, network: context.context.network, monitor: context.context.monitor, authValid: true });
     evidence = await runExploration({ runId: opts.runId, seed: opts.seed, derivedSeed: deriveSeed(opts.seed, 'nightwatch.exploration-model.phase4.v1', opts.envelopeId, 0), catalog: RIPPLE_PHASE4_ACTIONS, envelope, budget: RIPPLE_PHASE4_BUDGET, runtime });
+    const observationSettled = await waitForNetworkObservationSettle({
+      network: context.context.network,
+      quietMs: 500,
+      timeoutMs: 10_000,
+    });
+    if (!observationSettled) {
+      const event = recorder.event({
+        type: 'issue',
+        severity: 'error',
+        message: 'phase4 oracle observation settlement timed out',
+        data: { reason: 'oracle-observation-settle-timeout', envelopeId: opts.envelopeId },
+      });
+      context.context.monitor.recordIssue(event);
+    }
     const evidenceSafety = safetyFromRun(context.context, recorder);
-    evidence = { ...evidence, safety: evidenceSafety };
+    const monitorFailed = context.context.monitor.failed;
+    const oracleStatus = context.context.monitor.oracleFailed ? 'FAIL' : 'PASS';
+    const finalTermination = monitorFailed
+      ? context.context.monitor.safetyFailed ? 'SAFETY_BLOCK' : 'FATAL_ORACLE'
+      : evidence.terminationReason;
+    const oracleFingerprints = context.context.monitor.oracleObservations
+      .filter((item) => item.fingerprint !== undefined)
+      .map((item) => item.fingerprint as string);
+    evidence = {
+      ...evidence,
+      oracleResults: monitorFailed ? [...new Set([...evidence.oracleResults, 'FATAL:configured-oracle-failure'])].sort() : evidence.oracleResults,
+      anomalyFingerprints: [...new Set([...evidence.anomalyFingerprints, ...oracleFingerprints])].sort(),
+      safety: evidenceSafety,
+      terminationReason: finalTermination,
+    };
     writeAtomic(path.join(recorder.dir, 'exploration.json'), evidence);
     const successfulTermination = isSuccessfulPhase4Termination(evidence.terminationReason);
     const zero = safetyIsZero(evidenceSafety);
-    await recorder.finalize({ passed: successfulTermination && zero, notes: [`Phase 4 validation exploration ${opts.envelopeId}`, `termination=${evidence.terminationReason}`, `safety=${JSON.stringify(evidenceSafety)}`] });
-    return { evidence, safety: evidenceSafety, authRefresh };
+    await recorder.finalize({ passed: successfulTermination && zero && observationSettled && !monitorFailed, notes: [`Phase 4 validation exploration ${opts.envelopeId}`, `termination=${evidence.terminationReason}`, `oracle=${oracleStatus}`, `observationSettled=${observationSettled}`, `safety=${JSON.stringify(evidenceSafety)}`] });
+    return { evidence, safety: evidenceSafety, oracleStatus, observationSettled, authRefresh };
   } finally {
     await context.context.close();
   }
@@ -343,10 +374,26 @@ async function runExactReplayContext(opts: {
   try {
     const runtime = createRippleExplorationRuntime({ page: context.context.page, uiBaseUrl: opts.target, anchorJourney: envelope.anchorJourney, network: context.context.network, monitor: context.context.monitor, authValid: true });
     const replay = await replayExactSequence({ initialStateId: opts.original.initialStateId, actionIds: opts.original.plannedActions, expectedStateIds: [opts.original.initialStateId, ...opts.original.transitions.map((transition) => transition.toStateId)], expectedTransitionIds: opts.original.transitions.map((transition) => transition.transitionId), catalog: RIPPLE_PHASE4_ACTIONS, envelope, runtime });
+    const observationSettled = await waitForNetworkObservationSettle({
+      network: context.context.network,
+      quietMs: 500,
+      timeoutMs: 10_000,
+    });
+    if (!observationSettled) {
+      const event = recorder.event({
+        type: 'issue',
+        severity: 'error',
+        message: 'phase4 replay oracle observation settlement timed out',
+        data: { reason: 'oracle-observation-settle-timeout', envelopeId: opts.envelopeId },
+      });
+      context.context.monitor.recordIssue(event);
+    }
     const safety = safetyFromRun(context.context, recorder);
-    writeAtomic(path.join(recorder.dir, 'replay.json'), { schemaVersion: 'nightwatch.exploration.phase4.v1', envelopeId: opts.envelopeId, seed: opts.seed, replay, safety, trace: false, screenshots: false });
-    await recorder.finalize({ passed: replay.status === 'STRICT_MATCH' && safetyIsZero(safety), notes: [`Phase 4 exact sequence replay ${opts.envelopeId}`, `status=${replay.status}`, `safety=${JSON.stringify(safety)}`] });
-    return { kind: 'EXACT_SEQUENCE_REPLAY', runId: opts.runId, envelopeId: opts.envelopeId, seed: opts.seed, derivedSeed: opts.seed, plannedActions: opts.original.plannedActions, observedActions: replay.observedActions, stateIds: replay.stateIds, transitionIds: replay.transitionIds, terminationReason: replay.terminationReason ?? 'STRICT_MATCH', replayStatus: replay.status, safety, authProvenance: authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: authRefresh.autoRefresh, mfaOccurred: authRefresh.mfaOccurred, authCaptureId: authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
+    const oracleStatus = context.context.monitor.oracleFailed ? 'FAIL' : 'PASS';
+    const monitorClean = !context.context.monitor.failed;
+    writeAtomic(path.join(recorder.dir, 'replay.json'), { schemaVersion: 'nightwatch.exploration.phase4.v1', envelopeId: opts.envelopeId, seed: opts.seed, replay, safety, oracleStatus, observationSettled, trace: false, screenshots: false });
+    await recorder.finalize({ passed: replay.status === 'STRICT_MATCH' && safetyIsZero(safety) && observationSettled && monitorClean, notes: [`Phase 4 exact sequence replay ${opts.envelopeId}`, `status=${replay.status}`, `oracle=${oracleStatus}`, `observationSettled=${observationSettled}`, `safety=${JSON.stringify(safety)}`] });
+    return { kind: 'EXACT_SEQUENCE_REPLAY', runId: opts.runId, envelopeId: opts.envelopeId, seed: opts.seed, derivedSeed: opts.seed, plannedActions: opts.original.plannedActions, observedActions: replay.observedActions, stateIds: replay.stateIds, transitionIds: replay.transitionIds, terminationReason: replay.terminationReason ?? 'STRICT_MATCH', replayStatus: replay.status, oracleStatus, observationSettled, safety, authProvenance: authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: authRefresh.autoRefresh, mfaOccurred: authRefresh.mfaOccurred, authCaptureId: authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
   } finally {
     await context.context.close();
   }
@@ -378,10 +425,13 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
   for (const seedEntry of PHASE4_SEED_CORPUS) {
     const runId = `${baseRunId}-${seedEntry.envelopeId}-${seedEntry.ordinal}`;
     const result = await runExplorationContext({ browser, env, target, statePath: validatedStatePath, repository, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, runId });
-    const record: RealRecord = { kind: 'EXPLORATION', runId, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, derivedSeed: result.evidence.derivedSeed, plannedActions: result.evidence.plannedActions, observedActions: result.evidence.observedActions, stateIds: result.evidence.states.map((state) => state.stateId), transitionIds: result.evidence.transitions.map((transition) => transition.transitionId), terminationReason: result.evidence.terminationReason, coverage: result.evidence.coverage, safety: result.safety, authProvenance: result.authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: result.authRefresh.autoRefresh, mfaOccurred: result.authRefresh.mfaOccurred, authCaptureId: result.authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
+    const record: RealRecord = { kind: 'EXPLORATION', runId, envelopeId: seedEntry.envelopeId, seed: seedEntry.seed, derivedSeed: result.evidence.derivedSeed, plannedActions: result.evidence.plannedActions, observedActions: result.evidence.observedActions, stateIds: result.evidence.states.map((state) => state.stateId), transitionIds: result.evidence.transitions.map((transition) => transition.transitionId), terminationReason: result.evidence.terminationReason, coverage: result.evidence.coverage, oracleStatus: result.oracleStatus, observationSettled: result.observationSettled, safety: result.safety, authProvenance: result.authRefresh.autoRefresh ? 'AUTO_REFRESHED_DEV_STATE' : 'REUSED_EXTERNAL_STATE', autoRefresh: result.authRefresh.autoRefresh, mfaOccurred: result.authRefresh.mfaOccurred, authCaptureId: result.authRefresh.authCaptureId, mcpAttached: false, mcpObservationStatus: MCP_OBSERVATION_STATUS };
     records.push(record);
     if (!isSuccessfulPhase4Termination(result.evidence.terminationReason)) {
       throw new Error(`PHASE_4_EXPLORATION_FAILED: ${seedEntry.envelopeId} ${seedEntry.seed} ${result.evidence.terminationReason}`);
+    }
+    if (result.oracleStatus !== 'PASS' || !result.observationSettled) {
+      throw new Error(`PHASE_4_ORACLE_FAILED: ${seedEntry.envelopeId} ${seedEntry.seed}; oracle=${result.oracleStatus}; observationSettled=${result.observationSettled}`);
     }
     if (!firstByEnvelope.has(seedEntry.envelopeId) && result.evidence.plannedActions.length > 1 && safetyIsZero(result.safety)) firstByEnvelope.set(seedEntry.envelopeId, result.evidence);
     if (!safetyIsZero(result.safety)) throw new Error(`PHASE_4_SAFETY_BLOCK: ${seedEntry.envelopeId} ${seedEntry.seed}`);
@@ -392,6 +442,8 @@ test('Phase 4 bounded seeded Ripple DEV exploration', async ({ browser }) => {
     const replay = await runExactReplayContext({ browser, env, target, statePath: validatedStatePath, repository, envelopeId, seed, original, runId: `${baseRunId}-${envelopeId}-exact` });
     records.push(replay);
     expect(replay.replayStatus, `exact replay diverged for ${envelopeId}`).toBe('STRICT_MATCH');
+    expect(replay.oracleStatus, `exact replay oracle failed for ${envelopeId}`).toBe('PASS');
+    expect(replay.observationSettled, `exact replay observations not settled for ${envelopeId}`).toBeTruthy();
     expect(safetyIsZero(replay.safety)).toBeTruthy();
   }
   const authRecords = records.filter((record) => record.autoRefresh || record.mfaOccurred || record.authCaptureId !== undefined);

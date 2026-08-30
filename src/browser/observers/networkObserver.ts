@@ -103,6 +103,8 @@ export interface NetworkObserver {
    *  page navigation (route/routeWebSocket registration is asynchronous). */
   install(context: BrowserContext): Promise<void>;
   activeRequests(): number;
+  /** Asynchronous response handlers still completing body/oracle work. */
+  pendingResponseHandlers(): number;
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
@@ -192,6 +194,7 @@ export function createNetworkObserver(opts: {
   const { policy, recorder, monitor } = opts;
 
   let active = 0;
+  let pendingResponseHandlers = 0;
   let lastActivity = Date.now();
   const blockedUrls = new Set<string>();
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
@@ -204,6 +207,7 @@ export function createNetworkObserver(opts: {
   const optionalResourceFailureUrls = new Set<string>();
   const semanticLedger: SemanticRequestObservation[] = [];
   const resourceLedger: ResourceObservation[] = [];
+  const trackedRequests = new WeakSet<Request>();
   const completedRequests = new WeakSet<Request>();
   let requestCount = 0;
   let journeyIntent: { stepId: string; actionType: string } | null = null;
@@ -445,6 +449,7 @@ export function createNetworkObserver(opts: {
       }
 
       if (decision.verdict === 'allow') {
+        trackedRequests.add(request);
         active += 1;
         requestCount += 1;
         lastActivity = Date.now();
@@ -667,27 +672,32 @@ export function createNetworkObserver(opts: {
   }
 
   async function onResponse(response: Response): Promise<void> {
+    let request: Request | undefined;
+    let tracked = false;
+    let observing = false;
     try {
-      const rawUrl = response.request().url();
+      request = response.request();
+      const rawUrl = request.url();
+      tracked = trackedRequests.has(request);
       if (blockedUrls.has(rawUrl)) return; // policy-aborted — no response exists
+      pendingResponseHandlers += 1;
+      observing = true;
       const redactedUrl = recorder.redactUrl(rawUrl);
       const status = response.status();
       const responseHeaders = response.headers();
       const contentType = responseHeaders['content-type'];
       const contentLength = responseHeaders['content-length'];
-      const method = response.request().method();
+      const method = request.method();
       const endpointMatch = matchEndpoint(rawUrl, method);
       const endpointClassification = endpointMatch?.classification ?? null;
-      const role = resourceRole(rawUrl, response.request().resourceType(), endpointClassification);
-      active = Math.max(0, active - 1);
-      lastActivity = Date.now();
-      completedRequests.add(response.request());
+      const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
+      completedRequests.add(request);
       recordResource(rawUrl, role, status >= 400 ? 'HTTP_FAILED' : 'COMPLETED', method, status, contentType);
 
       const data: Record<string, unknown> = {
         url: redactedUrl,
         method,
-        resourceType: response.request().resourceType(),
+        resourceType: request.resourceType(),
         status,
         contentType,
         completed: true,
@@ -920,14 +930,25 @@ export function createNetworkObserver(opts: {
           monitor.recordIssue(ev);
         }
       }
-    } catch {
+  } catch {
       // An observer must never crash the run.
+    } finally {
+      if (observing) pendingResponseHandlers = Math.max(0, pendingResponseHandlers - 1);
+      if (tracked && request !== undefined) {
+        trackedRequests.delete(request);
+        active = Math.max(0, active - 1);
+      }
+      if (observing || tracked) lastActivity = Date.now();
     }
   }
 
   function onRequestFailed(request: Request): void {
     try {
       const rawUrl = request.url();
+      if (trackedRequests.delete(request)) {
+        active = Math.max(0, active - 1);
+        lastActivity = Date.now();
+      }
       const redactedUrl = recorder.redactUrl(rawUrl);
       if (blockedUrls.has(rawUrl)) {
         const decision = policy.decide(rawUrl);
@@ -1085,6 +1106,7 @@ export function createNetworkObserver(opts: {
       context.on('page', (page) => installPage(page));
     },
     activeRequests: () => active,
+    pendingResponseHandlers: () => pendingResponseHandlers,
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,

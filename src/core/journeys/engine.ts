@@ -11,7 +11,7 @@ import {
   RIPPLE_BOOTSTRAP_MOUNT_SELECTOR,
   RIPPLE_RENDERED_SHELL_SELECTOR,
 } from '../../products/ripple/readiness';
-import { waitForRippleStability } from '../../browser/observers/stability';
+import { waitForNetworkObservationSettle, waitForRippleStability } from '../../browser/observers/stability';
 import type { SemanticRequestObservation } from '../../browser/observers/networkObserver';
 import { buildJourneyFailureAttribution } from './attribution';
 import {
@@ -463,6 +463,20 @@ export async function runDeclarativeJourney(
     if (!markers[marker.id]) recordIssue(ctx, 'journey-structural-readiness-failure', { journeyId: definition.journeyId, markerId: marker.id });
   }
 
+  // A response event starts an asynchronous body/oracle handler. Required
+  // request observations are emitted earlier, so deciding the journey here
+  // without a bounded settlement barrier can report PASS before a malformed
+  // response body has been classified. Structural Ripple stability remains
+  // intentionally independent; this barrier is only for verdict finalization.
+  const observationsSettled = await waitForNetworkObservationSettle({
+    network: ctx.network,
+    quietMs: 500,
+    timeoutMs: 10_000,
+  });
+  if (!observationsSettled) {
+    recordIssue(ctx, 'oracle-observation-settle-timeout', { journeyId: definition.journeyId });
+  }
+
   const observations = ctx.network.journeySemanticRequests();
   const semantics = semanticSummary(observations);
   const contractUnchanged = journeyContractDigest(definition) === contractDigest;
@@ -489,6 +503,7 @@ export async function runDeclarativeJourney(
     journeyMarkersReady &&
     requiredReadsPresent &&
     safetyStatus === 'PASS' &&
+    observationsSettled &&
     !ctx.monitor.failed &&
     authValid &&
     contractUnchanged;
@@ -508,7 +523,7 @@ export async function runDeclarativeJourney(
     mutationCount: semantics.mutationCount,
     routeStabilityMs,
     authValid,
-    oracleStatus: ctx.monitor.oracleFailed ? 'FAIL' : 'PASS',
+    oracleStatus: ctx.monitor.oracleFailed || !observationsSettled ? 'FAIL' : 'PASS',
     privacyStatus: 'PASS',
     safetyStatus,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,

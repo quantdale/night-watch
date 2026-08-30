@@ -3814,3 +3814,29 @@ allowed.
 overlapping status labels now passes the exact `Set` action. The next real
 Phase 4 run must validate the result against DEV and continue to enforce the
 existing read, route, safety, and termination contracts.
+
+## D-97 — Finalize journey and exploration verdicts only after response oracles settle
+
+**Context.** A real DEV account-inventory run exposed a lifecycle race: the
+Playwright `response` listener starts asynchronous body capture and protocol
+oracle evaluation, while the observer decremented its active-request count
+before that work completed. Structural journey readiness and required-request
+presence could therefore produce a successful journey/exploration result
+before a later `malformed-json` oracle was recorded. The same gap could make a
+late oracle failure invisible to exact replay acceptance.
+
+**Decision.** Track response handlers separately from in-flight requests and
+keep request accounting correct for both completed and failed requests. Add a
+bounded observation-settlement barrier requiring zero active requests, zero
+pending response handlers, and a quiet interval. Declarative journey evidence
+must settle before computing its final oracle/pass fields; Phase 4 exploration
+and exact replay must settle again after runtime work and require a clean
+monitor before recording success. A settlement timeout or configured oracle
+failure is recorded as a non-successful bounded outcome; no raw response body
+or browser error text is exposed.
+
+**Evidence and consequences.** Local timing, journey, exploration, and
+observer regressions cover the barrier and the existing metadata-only oracle
+boundary remains intact. The real Phase 4 matrix must be rerun from the clean
+checkpoint; any surviving malformed-response event remains DEV/product
+evidence and must not be suppressed or reclassified as a Nightwatch pass.

@@ -15,6 +15,39 @@ import { isRippleStructurallyReady, type RippleStructuralState } from '../../pro
 
 const POLL_MS = 100;
 
+/**
+ * Wait until the network observer has finished both browser request
+ * lifecycles and its asynchronous response-body/oracle handlers. Generic
+ * Ripple structural stability intentionally ignores background activity, but
+ * a journey verdict must not be finalized while a response can still produce
+ * a configured oracle failure.
+ */
+export async function waitForNetworkObservationSettle(opts: {
+  network: Pick<NetworkObserver, 'activeRequests' | 'pendingResponseHandlers' | 'lastActivityAt'>;
+  quietMs?: number;
+  timeoutMs?: number;
+  now?: () => number;
+  sleep?: (ms: number) => Promise<void>;
+}): Promise<boolean> {
+  const quietMs = opts.quietMs ?? 500;
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+  const now = opts.now ?? Date.now;
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const deadline = now() + timeoutMs;
+
+  for (;;) {
+    if (
+      opts.network.activeRequests() === 0 &&
+      opts.network.pendingResponseHandlers() === 0 &&
+      now() - opts.network.lastActivityAt() >= quietMs
+    ) {
+      return true;
+    }
+    if (now() >= deadline) return false;
+    await sleep(POLL_MS);
+  }
+}
+
 export async function waitForStability(opts: {
   network: NetworkObserver;
   quietMs?: number;
