@@ -2519,8 +2519,18 @@ L6 adversarial matrices are green. GitHub Actions run `33190456115` / job
 runner (`runner_id=0`), so the truthful terminal outcome is
 `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`, not CI-certified.
 
-That local/clean certification is historical. The current campaign is
-`nightwatch-operational-acceptance-v1` with project status
-`OPERATIONAL_ACCEPTANCE_BLOCKED`: its guarded DEV probes reached the safety
-and auth boundaries, but the human-owned auth capture was not completed, so no
-real product workflow ran. A fresh owner-authenticated audit may resume later.
+That local/clean certification is historical. The successor campaign
+`nightwatch-operational-acceptance-v1` first reached
+`OPERATIONAL_ACCEPTANCE_BLOCKED` at `e615b3b` when guarded DEV probes stopped
+at the safety/auth boundaries without valid owner capture. After
+owner-authenticated capture at 2026-08-30 20:00 (valid until 2026-08-31 07:59
+PST) and nine implementation repairs through `598e7fa92fb99786b2db847ace8c1fdf566d3c71`
+(QSelect semantics, active detection, exact matching, anchor decision,
+pending-only oracle settlement), the serial workflow completed as
+`OPERATIONALLY_ACCEPTED` (phase2c clean matrix `151602`, phase5 PASS,
+campaign `8224bb0e` COMPLETE_CLEAN with 5/5 and 0 anomalies; one real product
+anomaly `GET /m/blue/billing/v1/billinggroups` malformed-json correctly
+surfaced via Phase4 and attributed to DEV). The current successor is
+`nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1`
+(IN_PROGRESS at `10f50fd`), building on operational acceptance to harden
+reliability, yield, and source intelligence.

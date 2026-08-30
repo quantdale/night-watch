@@ -1,31 +1,22 @@
 # Active Task
 
-Task ID: nightwatch-operational-acceptance-v1
-Phase: OPERATIONAL_ACCEPTANCE_V1
-Title: Nightwatch Operational Acceptance
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-operational-acceptance-v1
-Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
+Task ID: nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1
+Phase: POST_ACCEPTANCE_PRODUCTION_HARDENING_AND_YIELD_EXPANSION_V1
+Title: Nightwatch Post-Acceptance Production Hardening and Yield Expansion
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1
+Starting SHA: 10f50fd250c7dfbcc62c18d3693a483a58ac6fc1
 Last validated implementation SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
-Last checkpoint: operational acceptance earned at `598e7fa`; phase2c clean (151602), phase5 PASS, campaign COMPLETE_CLEAN (8224bb0e), phase4 product anomaly (billinggroups malformed) correctly surfaced; validated and pushed
-Current milestone: COMPLETE — operational acceptance earned
-Next action: STOP — task complete; topology remains main-only; no further DEV contact required
-Authorization class: NIGHTWATCH_OPERATIONAL_ACCEPTANCE_V1
+Last checkpoint: task created at 10f50fd; reconciling stale EXECUTION_PROMPT/CURRENT_STATE/ROADMAP BLOCKED to historical + OPERATIONALLY_ACCEPTED at 598e7fa
+Current milestone: M1 — Project-truth reconciliation and validator hardening
+Next action: Fix EXECUTION_PROMPT, CURRENT_STATE narrative, ROADMAP tail, and harden hardening-check docsTruth; then run handoff/project/agent checks
+Authorization class: NIGHTWATCH_POST_ACCEPTANCE_PRODUCTION_HARDENING_AND_YIELD_EXPANSION_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
+STARTING_SHA: 10f50fd250c7dfbcc62c18d3693a483a58ac6fc1
 LAST_VALIDATED_IMPLEMENTATION_SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: COMPLETE
+PHASE_POST_ACCEPTANCE_PRODUCTION_HARDENING_AND_YIELD_EXPANSION_V1_STATUS: IN_PROGRESS
 ## Routing and safety
 
-This is the successor operational-acceptance campaign. The predecessor
-`nightwatch-final-completion-and-l6-containment-v1` remains COMPLETE historical
-local/clean certification and must not be rewritten as operational acceptance.
-Work is bounded to Git topology cleanup, truthful reclassification, local
-preflight, and contained DEV owner workflow. Production, DEV mutation,
-infrastructure/data-layer operations, credential leakage and Alphaus writes
-remain forbidden. The 2026-08-30 DEV workflow initially required human auth, which
-was subsequently captured and remains valid (expires 2026-08-31 07:59 PST); later
-phase2c/phase5/campaign probes passed while phase4 exposed real selector and
-response-oracle defects repaired through `56d3c24`. The serial DEV workflow completed successfully; Nightwatch is operationally accepted with one real product anomaly (billinggroups malformed) correctly attributed to DEV, not to Nightwatch.
+This is the post-acceptance production-hardening successor. Predecessor `nightwatch-operational-acceptance-v1` remains COMPLETE with OPERATIONALLY_ACCEPTED at 598e7fa (phase2c 151602, phase5 PASS, campaign 8224bb0e COMPLETE_CLEAN; one real product anomaly billinggroups malformed correctly surfaced). Stale present-tense BLOCKED claims in EXECUTION_PROMPT, CURRENT_STATE narrative, and ROADMAP tail are being reconciled to historical BLOCKED then terminal ACCEPTED. Work is bounded to Nightwatch hardening; production, DEV mutation, infra/data-layer ops, credential leakage, and Alphaus writes remain forbidden. Handoff protocol and project-state v2 validators remain fail-closed and are being hardened so cross-document live contradictions cannot silently recur.

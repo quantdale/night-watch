@@ -1054,6 +1054,53 @@ function checkPlannerHandoffIntegrity() {
 }
 
 /**
+ * Documentation truth hardening (post-acceptance): when the machine-checked
+ * truth block says OPERATIONALLY_ACCEPTED at 598e7fa, live narratives must not
+ * claim the current operational campaign is still BLOCKED as present tense.
+ * Historical BLOCKED is preserved as historical. This catches the class of
+ * stale EXECUTION_PROMPT/BLOCKED vs ACTIVE_TASK/COMPLETE divergence that
+ * previously escaped agent/project checks (handoff:check alone was not
+ * re-run after docs commits and ROADMAP/CURRENT_STATE narratives had no gate).
+ */
+function checkDocumentationTruth() {
+  const currentState = read('docs/CURRENT_STATE.md');
+  const roadmap = read('docs/ROADMAP.md');
+  const activeTask = read('.agent/ACTIVE_TASK.md');
+  const executionPrompt = read('.agent/EXECUTION_PROMPT.md');
+  const blockMatch = /PROJECT_COMPLETION_STATUS:\s*(\S+)/.exec(currentState);
+  const machineStatus = blockMatch ? blockMatch[1].trim() : undefined;
+  if (machineStatus === 'OPERATIONALLY_ACCEPTED') {
+    // CURRENT_STATE narrative must not claim present-tense BLOCKED for operational acceptance.
+    if (/Active task `nightwatch-operational-acceptance-v1` is BLOCKED/.test(currentState)) {
+      fail('docs/CURRENT_STATE.md claims live BLOCKED while machine block is OPERATIONALLY_ACCEPTED — stale present-tense contradiction');
+    }
+    if (/## Current operational-acceptance campaign — blocked/i.test(currentState)) {
+      fail('docs/CURRENT_STATE.md has stale "Current operational-acceptance campaign — blocked" heading while machine block is OPERATIONALLY_ACCEPTED');
+    }
+    if (!/OPERATIONALLY_ACCEPTED at 598e7fa/.test(currentState) && !/OPERATIONALLY_ACCEPTED.*598e7fa/.test(currentState)) {
+      fail('docs/CURRENT_STATE.md must document terminal OPERATIONALLY_ACCEPTED at 598e7fa when machine block is ACCEPTED');
+    }
+    // ROADMAP tail must not claim present-tense current campaign is BLOCKED.
+    if (/current campaign is `nightwatch-operational-acceptance-v1` with project status `OPERATIONAL_ACCEPTANCE_BLOCKED`/.test(roadmap)) {
+      fail('docs/ROADMAP.md claims live BLOCKED while machine block is OPERATIONALLY_ACCEPTED — stale present-tense contradiction');
+    }
+    if (!/OPERATIONALLY_ACCEPTED/.test(roadmap)) {
+      fail('docs/ROADMAP.md must mention OPERATIONALLY_ACCEPTED when machine block is ACCEPTED');
+    }
+    // EXECUTION_PROMPT for the predecessor is now superseded by the successor IN_PROGRESS handoff;
+    // when active task is the successor IN_PROGRESS, its handoff must be consistent (checked by handoff:check).
+    // For defense-in-depth, ensure the new prompt does not claim BLOCKED for the new campaign.
+    if (/^Status:\s*BLOCKED/m.test(executionPrompt) && /nightwatch-post-acceptance/.test(executionPrompt)) {
+      fail('.agent/EXECUTION_PROMPT.md for post-acceptance campaign must not be BLOCKED at creation');
+    }
+    // Also ensure active task is not still claiming BLOCKED for operational acceptance while machine is ACCEPTED
+    if (/nightwatch-operational-acceptance-v1/.test(activeTask) && /^Status:\s*BLOCKED/m.test(activeTask)) {
+      fail('.agent/ACTIVE_TASK.md still claims BLOCKED for operational acceptance while machine block is OPERATIONALLY_ACCEPTED');
+    }
+  }
+}
+
+/**
  * Phase 9 semantic-core purity (SPEC §76-79): the projections, expectations,
  * invariants, and semantic oracle modules must be deterministic local
  * computation only — no AI, no selfDev/promotion, no DB/infra, no network
@@ -1707,6 +1754,7 @@ checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
 checkPlannerHandoffIntegrity();
+checkDocumentationTruth();
 checkProjectStateIntegrity();
 checkPhase9SemanticCorePurity();
 checkPhase9IntegrationSeams();

@@ -2595,35 +2595,42 @@ and adversarial matrices are green. Exact-head Actions run `33190456115` /
 job `98914301082` failed before runner provisioning with `steps=[]` and
 `runner_id=0`; it is recorded as external non-evidence and not CI PASS.
 
-## Current operational-acceptance campaign — blocked — 2026-08-30
+## Current operational-acceptance campaign — terminal OPERATIONALLY_ACCEPTED — 2026-08-30 at 598e7fa
 
-Active task `nightwatch-operational-acceptance-v1` is BLOCKED. The current
-machine-checked project completion status is
-`OPERATIONAL_ACCEPTANCE_BLOCKED`. Historical
+Active task `nightwatch-operational-acceptance-v1` is COMPLETE with
+`OPERATIONALLY_ACCEPTED` at validated implementation
+`598e7fa92fb99786b2db847ace8c1fdf566d3c71` plus documentation descendants
+`33c06af` / `10f50fd`. The current machine-checked project completion status is
+`OPERATIONALLY_ACCEPTED`. Historical
 `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` remains a COMPLETE-only local/clean
-record and is not the current finished-project claim. Operational acceptance
-requires a real DEV owner workflow and one of
-`OPERATIONALLY_ACCEPTED`,
+record and is not the current finished-project claim. Terminal selection was
+among `OPERATIONALLY_ACCEPTED`,
 `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`,
 `OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED`.
 
-The first guarded operational probes ran on 2026-08-30 using the external
-owner-only DEV state path. The Phase 2A safety gate passed, but Phase 2C
-stopped before browser creation with `HUMAN_AUTH_ACTION_REQUIRED`; Phase 4,
-Phase 5, and campaign `--prepare-only` each stopped in guarded auth refresh
-with the sanitized `AUTH_STATE_REPLACEMENT_FAILED` result. No DEV browser
-product journey, API operation, campaign manifest, or executor ran. The
-historical Phase 7 `AUTH_STATUS=VALID` statement above belongs to its completed
-2026-08-13 capture and is not current operational evidence. A human owner must
-complete the existing headed `auth:capture` flow into the external state path
-before the serial real workflow can continue. Local fail-closed, owner UX,
-checkpoint/resume, and adversarial suites remain green (47 + 39 + 17 tests).
-The canonical Git topology cleanup is complete: the canonical workspace has
-only the `main` branch and `origin` has only `refs/heads/main`; redundant
-isolated clones were removed from the workspace recoverably and historical
-swarm/plan refs were deleted.
+The campaign first reached `OPERATIONAL_ACCEPTANCE_BLOCKED` on 2026-08-30
+(e615b3b) when guarded probes hit `HUMAN_AUTH_ACTION_REQUIRED` and
+`AUTH_STATE_REPLACEMENT_FAILED` before any DEV browser/API execution. After
+owner capture at 2026-08-30 20:00 (external state valid until 2026-08-31
+07:59 PST) and nine implementation repairs through `598e7fa` (QSelect
+semantics, active detection, exact matching, anchor decision, pending-only
+oracle settlement with pendingUrls diagnostics, child stdio forwarding, failed
+checkpoint/exploration truth, replay divergence), the serial real DEV workflow
+completed: phase2c clean matrix `151602` (payer True, common True,
+account-inventory True, 0 strict mismatches), phase5 bounded API 1 passed,
+campaign prepare `8224bb0e` PASS (5 work items) and resume COMPLETE_CLEAN
+(5/5 completed, 0 anomalies). Phase4 payer and common passed; E3-J3
+account-inventory correctly terminated `FATAL_ORACLE` for the real DEV product
+anomaly `GET /m/blue/billing/v1/billinggroups` 200 with invalid JSON
+(fp:5a5ab705), attributed to DEV product, not Nightwatch. Local fail-closed,
+owner UX, checkpoint/resume, and adversarial suites remain green (47 + 39 +
+17 tests plus 3 observation-settlement). The canonical Git topology cleanup is
+complete: the canonical workspace has only the `main` branch and `origin` has
+only `refs/heads/main`; redundant isolated clones were removed recoverably and
+historical swarm/plan refs were deleted.
 
-This is a truthful terminal operational verdict, not a project-success claim:
-the human-owned auth capture was unavailable, so the real DEV owner workflow
-could not proceed. A fresh human-authenticated audit may resume the campaign;
-no credentials or storage-state bytes belong in Nightwatch or GitHub.
+This operational acceptance is validated and pushed; topology remains
+main-only with no further DEV contact required for this verdict. The
+historical blocked probes remain a truthful record of the pre-auth state, not a
+current live claim. No credentials or storage-state bytes belong in Nightwatch
+or GitHub.
