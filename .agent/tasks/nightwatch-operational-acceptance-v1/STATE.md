@@ -22,9 +22,7 @@ non-operational, and prove or truthfully fail real DEV operational acceptance.
 
 ## Current Milestone
 
-Milestone ID: M4
-Milestone status: COMPLETE
-What was achieved: serial real DEV workflow completed with valid auth; phase2c clean, phase5 PASS, campaign COMPLETE_CLEAN, phase4 correctly surfaced real product anomaly (billinggroups malformed) via
+COMPLETE / STOP. M1–M6 are closed: Git topology is main-only, project truth reclassified, local/clean preflight passed, and the serial real DEV workflow completed with valid auth (phase2c clean at 151602, phase5 PASS, campaign COMPLETE_CLEAN 8224bb0e). One real product anomaly (billinggroups malformed-json) was correctly surfaced via
 launchers with the currently valid external auth state (expires 2026-08-31).
 Codex repaired four real phase4 defects and one response-oracle race through
 `56d3c24`; local/clean preflight and topology cleanup are complete. Now
@@ -53,12 +51,11 @@ operational verdict.
 
 ## Work In Progress
 
-DEV auth (2026-08-30 20:00, mode 600, expires 2026-08-31 07:59 PST) was page-valid for the entire sequence.
-Repaired real defects through `598e7fa` (incl. pending-only settlement + pendingUrls debug) (relaxed settlement to pending-only for payer polling); previous repairs through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c clean at `151602` (all three journeys), Phase5 PASS, Campaign COMPLETE_CLEAN (8224bb0e) with 5 work items and 0 anomalies; Phase4 payer/common passed, account-inventory sort correctly surfaced real DEV malformed-json for billinggroups (product bug, not Nightwatch defect).
+Task complete. No implementation work remains. The source implementation is `598e7fa`; the campaign `8224bb0e` is COMPLETE_CLEAN with 5 work items and 0 anomalies. One real product anomaly (billinggroups malformed-json) was correctly attributed to DEV via Phase4 exploration and is not a Nightwatch defect.
 
 ## Exact Next Action
 
-STOP — operational acceptance complete. All required real DEV launchers executed serially with valid auth; repairs validated; second-run (campaign prepare→resume) and fail-closed adversarial checks passed; topology remains main-only.
+STOP — task complete.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -216,7 +213,7 @@ Complete second-run/resume and adversarial acceptance after the serial workflow;
 
 ## Resume Recipe
 
-COMPLETE — no further action. A future campaign would require fresh auth and a new task; this task's evidence and verdict are durable.
+Task complete. Do not resume; any future substantive change requires a new authorized task and fresh validation.
 
 ## Completion Snapshot
 
