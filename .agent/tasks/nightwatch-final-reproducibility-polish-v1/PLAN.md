@@ -31,21 +31,21 @@ Reuse `bin/quality-gate-clean.mjs` for clean checkout (fresh `mktemp`, `npm ci -
 
 ## Milestones
 
-### M1 — Clean-machine `gate:clean` — NOT_STARTED
+### M1 — Clean-machine `gate:clean` — COMPLETE
 
 - Objective: fresh Node20 checkout, `npm ci`, no `node_modules` reuse, no auth state, no findings, `gate:clean` PASS
 - Files/areas: `bin/quality-gate-clean.mjs`, `ONBOARDING.md`, `package-lock.json`
 - Acceptance: `clean-receipt:sha256:` + `receipt:sha256:` at same HEAD, `HEAD` unchanged, `ONBOARDING.md` steps sufficient
 - Validation: `npm run gate:clean` (via `bin/quality-gate-clean.mjs` with `NIGHTWATCH_PROXY_PORT` etc.)
-- Status: NOT_STARTED
+- Status: COMPLETE — `npm run gate:clean` PASS at `d12b1d75886987356f3ab6d80ca5b25f0723c471`; Node 20, fresh `npm ci`, `cleanBefore=true`, `cleanAfter=true`, `nodeModulesReused=false`, `authStateProvided=false`, `ownerFindingStateProvided=false`, `siblingWrites=0`, `gateResult=PASS`, `clean-receipt:sha256:e8ca0d67dd02cf559e8e58b9`, nested `receipt:sha256:de32d1f7bf365176c246fe27`, semantic compatibility `1919 passed / 13 skipped / 0 failed`, synthetic campaign `73 passed`.
 
-### M2 — Isolated parity — NOT_STARTED
+### M2 — Isolated parity — IN_PROGRESS
 
 - Objective: canonical `gate:local` vs isolated `gate:local` (topology-correct, `read-only sibling symlinks`, `NIGHTWATCH_PROXY_PORT`)
 - Files/areas: `scripts/isolated-*`, `bin/quality-gate.mjs`
 - Acceptance: enumeration, pass/fail/skip counts, skip identities exact (or truthfully explained)
 - Validation: `npm run gate:local` canonical + `npm run gate:local` isolated
-- Status: NOT_STARTED
+- Status: IN_PROGRESS
 
 ### M3 — Final DEV requalification — NOT_STARTED
 

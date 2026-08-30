@@ -6,14 +6,14 @@ Title: Nightwatch Final Reproducibility and Polish
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-reproducibility-polish-v1
 Starting SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
-Last validated implementation SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
-Last checkpoint: task created at e0c0c33; predecessor continuous deep hardening COMPLETE at 55e92b9/e0c0c33; deferred gate:clean and isolated parity
-Current milestone: M1 — Clean-machine `gate:clean`
-Next action: Run `npm run gate:clean` and capture clean-receipt and receipt at same HEAD
+Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
+Last checkpoint: M1 `gate:clean` PASS at d12b1d7; deferred isolated parity and final DEV remain
+Current milestone: M2 — Isolated parity
+Next action: Identify and run the topology-correct isolated `gate:local` harness, recording canonical and isolated pass/fail/skip identities
 Authorization class: NIGHTWATCH_FINAL_REPRODUCIBILITY_POLISH_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
-LAST_VALIDATED_IMPLEMENTATION_SHA: 55e92b963f1d4d6d7d719d4d38fe6d36bc224ef3
+LAST_VALIDATED_IMPLEMENTATION_SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_FINAL_REPRODUCIBILITY_POLISH_V1_STATUS: IN_PROGRESS
