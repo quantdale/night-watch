@@ -62,12 +62,12 @@ existing serial launchers.
 
 ### M2 — Reclassify project truth — COMPLETE
 
-- Objective: operational-acceptance pending without erasing local-clean history.
+- Objective: operational-acceptance reclassification without erasing local-clean history.
 - Files/areas: `bin/project-state-check.mjs`, `tests/unit/projectState.test.ts`,
   `.agent/`, `docs/CURRENT_STATE.md`.
 - Implementation actions: extend pairing map; add fixture tests; activate task.
 - Acceptance criteria: agent/project checks pass; historical local-clean cannot
-  be projected as operational completion while pending.
+  be projected as operational completion while the successor is active.
 - Validation commands: `npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1 --retries=0`; `npm run agent:check`; `npm run project:check`
 - Status: COMPLETE
 
@@ -80,7 +80,7 @@ existing serial launchers.
 ### M4 — Real DEV owner workflow — COMPLETE
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
-- Status: IN_PROGRESS; 2026-08-30 20:00 human capture is page-valid until 2026-08-31. Phase2c/phase5/campaign previously passed; phase4 exposed four selector defects and one response-oracle race, repaired through `e8f071f` and interrupted mid-rerun. Now resuming serial workflow from current HEAD.
+- Status: COMPLETE; 2026-08-30 20:00 capture was page-valid for the entire sequence. Phase2c clean at 151602 (all three), phase5 PASS, campaign COMPLETE_CLEAN (8224bb0e), phase4 payer/common PASS and account-inventory correctly surfaced real product malformed-json for billinggroups (product bug, not Nightwatch).
 
 ### M5 — UX, second run, efficacy, adversarial — COMPLETE
 
@@ -105,7 +105,7 @@ Repair implementation defects with regressions and re-run the affected real path
   identity mapping would let an in-progress task keep projecting
   `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` only if we left ACTIVE complete,
   which this campaign forbids; evidence: checker pairing tests 29–37;
-  consequence: pending status is
+  consequence: the successor status is
   `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`.
 - 2026-08-30 — Verdict: select `OPERATIONAL_ACCEPTANCE_BLOCKED`; reason:
   phase2c, phase4, phase5, and campaign prepare all failed closed at the
