@@ -83,7 +83,7 @@ const PROJECT_COMPLETION_STATUSES = new Set([
   'OPERATIONAL_ACCEPTANCE_FAILED',
 ]);
 const COMPLETION_BY_ACTIVE_STATUS = new Map([
-  ['IN_PROGRESS', new Set(['IN_PROGRESS', 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING', 'OPERATIONALLY_ACCEPTED'])],
+  ['IN_PROGRESS', new Set(['IN_PROGRESS', 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING'])],
   ['BLOCKED', new Set(['PROJECT_NOT_COMPLETE_BLOCKED', 'OPERATIONAL_ACCEPTANCE_BLOCKED'])],
   ['COMPLETE', new Set([
     'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED',
@@ -258,15 +258,6 @@ function main() {
         return null;
       }
     })();
-    const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
-    if (allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'))) {
-      fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
-    }
-    // Post-acceptance hardening tasks run IN_PROGRESS while the overall project
-    // remains OPERATIONALLY_ACCEPTED. The original mapping only allowed pending
-    // for IN_PROGRESS, so a narrow exception is added above via
-    // OPERATIONALLY_ACCEPTED inclusion, but the operational-acceptance task
-    // itself must still not claim ACCEPTED while IN_PROGRESS (early acceptance).
     const activeTaskIdForGuard = (() => {
       try {
         const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
@@ -275,8 +266,20 @@ function main() {
         return null;
       }
     })();
-    if (activeTaskIdForGuard === 'nightwatch-operational-acceptance-v1' && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
+    const isPostAcceptanceHardening = typeof activeTaskIdForGuard === 'string' && activeTaskIdForGuard.startsWith('nightwatch-post-acceptance');
+    const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
+    let isMismatch = allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'));
+    // Narrow exception: post-acceptance hardening IN_PROGRESS may remain OPERATIONALLY_ACCEPTED (historical acceptance preserved)
+    if (isMismatch && isPostAcceptanceHardening && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
+      isMismatch = false;
+    }
+    if (isMismatch) {
       fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    }
+    // Early acceptance guard: operational-acceptance task must not claim ACCEPTED while still IN_PROGRESS
+    if (activeTaskIdForGuard === 'nightwatch-operational-acceptance-v1' && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
+      // Already fails as mismatch, but keep explicit for diagnosis
+      if (!isMismatch) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
     }
     const ciStatus = fields.get('CI_STATUS');
     const observedSha = fields.get('CI_OBSERVED_SHA');
