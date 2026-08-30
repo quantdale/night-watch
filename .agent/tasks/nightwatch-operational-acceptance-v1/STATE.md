@@ -46,15 +46,18 @@ page-valid and guarded replacement stops before product execution.
   (`clean-receipt:sha256:7978d389fc619cddb8812461`, Node 20) PASS.
 - Owner CLI local smoke: `node bin/nightwatch.mjs --env=local` 1 passed.
 - Real launchers now forward captured child stdio (`emitChildStdio`).
+- Git topology cleanup: after redundancy recheck, the nine isolated clones
+  were moved to the desktop trash, all 32 `swarm*` local refs were deleted,
+  and both remote `plan/*` refs were deleted; canonical local and remote
+  topology now contain only `main`.
 
 ## Work In Progress
 
 Real DEV launchers reach their safety gates but remain product-unexecuted:
 phase2c stops with `HUMAN_AUTH_ACTION_REQUIRED`, while phase4, phase5, and
 campaign prepare stop with `AUTH_STATE_REPLACEMENT_FAILED`. A human owner must
-refresh the external DEV state before the real workflow can continue. Extra
-unmerged swarm local branches, remote `plan/*` heads, and one dirty isolated
-clone remain under topology cleanup pending redundancy-safe deletion.
+refresh the external DEV state before the real workflow can continue. The Git
+topology cleanup is complete.
 
 ## Exact Next Action
 
@@ -178,10 +181,9 @@ performed.
 
 ## Deferred / Follow-Up
 
-Complete remaining Git topology deletions (unmerged swarm refs, remote plan
-heads, and only redundancy-proven isolated clones) using ordinary Git/fs
-deletion. The dirty `nightwatch-isolated-16h` clone requires an explicit
-content-equivalence decision before removal.
+After the auth unblock, rerun the serial real workflow and complete M5/M6. The
+removed redundant clones remain recoverable through the desktop trash; they are
+not part of the canonical Nightwatch workspace.
 
 ## Resume Recipe
 

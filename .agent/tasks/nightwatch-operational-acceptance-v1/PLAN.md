@@ -45,7 +45,7 @@ existing serial launchers.
 
 ## Milestones
 
-### M1 — Git topology cleanup — IN_PROGRESS (partial)
+### M1 — Git topology cleanup — COMPLETE
 
 - Objective: one canonical clone, local `main` only, remote `main` only.
 - Files/areas: canonical Git refs, duplicate clones, plan branches.
@@ -53,7 +53,12 @@ existing serial launchers.
 - Acceptance criteria: `git branch` is only `main`; `git ls-remote --heads origin`
   is only `refs/heads/main`.
 - Validation commands: `git fetch --prune origin`; `git branch`; `git ls-remote --heads origin`
-- Status: IN_PROGRESS
+- Status: COMPLETE; rechecked immediately before deletion. Canonical parent
+  contains only `nightwatch/.git`, local branches contain only `main`, and
+  `origin` contains only `refs/heads/main`. The nine redundant isolated clones
+  were moved to the desktop trash for recovery, and the 32 redundant swarm
+  refs plus two historical remote `plan/*` refs were deleted with ordinary
+  Git operations.
 
 ### M2 — Reclassify project truth — COMPLETE
 
@@ -121,6 +126,8 @@ Repair implementation defects with regressions and re-run the affected real path
 - Local owner/resume/adversarial evidence remains green: 47 launcher/auth
   boundary tests, 39 owner/checkpoint/resume tests, and 17 integrated triage
   and release-resume tests passed.
+- Topology cleanup completed after an immediate redundancy recheck; only the
+  human-owned auth refresh remains on the critical operational path.
 
 ## Deferred Work
 

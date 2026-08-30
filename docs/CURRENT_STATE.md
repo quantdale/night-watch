@@ -2592,7 +2592,7 @@ and adversarial matrices are green. Exact-head Actions run `33190456115` /
 job `98914301082` failed before runner provisioning with `steps=[]` and
 `runner_id=0`; it is recorded as external non-evidence and not CI PASS.
 
-## Current operational-acceptance campaign — pending — 2026-08-29
+## Current operational-acceptance campaign — pending — 2026-08-30
 
 Active task `nightwatch-operational-acceptance-v1` is IN_PROGRESS. The current
 machine-checked project completion status is
@@ -2615,3 +2615,7 @@ historical Phase 7 `AUTH_STATUS=VALID` statement above belongs to its completed
 complete the existing headed `auth:capture` flow into the external state path
 before the serial real workflow can continue. Local fail-closed, owner UX,
 checkpoint/resume, and adversarial suites remain green (47 + 39 + 17 tests).
+The canonical Git topology cleanup is complete: the canonical workspace has
+only the `main` branch and `origin` has only `refs/heads/main`; redundant
+isolated clones were removed from the workspace recoverably and historical
+swarm/plan refs were deleted.
