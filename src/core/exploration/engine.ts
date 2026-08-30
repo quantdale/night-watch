@@ -270,10 +270,11 @@ export async function runExploration(opts: ExplorationRunOptions): Promise<Explo
     safety = addSafety(safety, resultSafety);
     const mismatch = actionOutcomeMismatch(action, result);
     const actionFailure = result.status === 'FAILED' || mismatch !== null;
-    const actionOracleResults = actionFailure && !result.oracleResults.includes('ACTION_TRANSITION_FAILED')
-      ? [...result.oracleResults, 'ACTION_TRANSITION_FAILED']
+    const failureOracle = result.failureCode === undefined ? [] : [`ACTION_FAILURE:${result.failureCode}`];
+    const actionOracleResults = actionFailure
+      ? [...result.oracleResults, ...failureOracle, ...(result.oracleResults.includes('ACTION_TRANSITION_FAILED') ? [] : ['ACTION_TRANSITION_FAILED'])]
       : result.oracleResults;
-    for (const oracle of result.oracleResults) {
+    for (const oracle of actionOracleResults) {
       oracles.add(oracle);
       if (oracle.startsWith('FINGERPRINT:')) anomalyFingerprints.add(oracle.slice('FINGERPRINT:'.length));
     }

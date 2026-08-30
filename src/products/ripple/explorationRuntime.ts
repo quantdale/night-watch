@@ -3,7 +3,7 @@ import type { NetworkObserver, SemanticRequestObservation } from '../../browser/
 import { waitForRippleStability } from '../../browser/observers/stability';
 import { isRippleStructurallyReady } from './readiness';
 import type { RunMonitor } from '../../state/run';
-import type { ActionExecutionResult, ExplorationRuntime, ExplorationStateInput, SafeAction, LocatorSpec, AnchorJourney, RuntimeNetworkObservation } from '../../core/exploration/types';
+import type { ActionExecutionResult, ActionFailureCode, ExplorationRuntime, ExplorationStateInput, SafeAction, LocatorSpec, AnchorJourney, RuntimeNetworkObservation } from '../../core/exploration/types';
 
 const ANCHOR_MARKERS: Record<AnchorJourney, string> = {
   'ripple-payer-exchange-read': '.__ExchangeRateDataTable',
@@ -90,6 +90,20 @@ export interface RippleExplorationRuntimeOptions {
   readonly authValid: boolean;
 }
 
+class ApprovedActionFailure extends Error {
+  readonly code: ActionFailureCode;
+
+  constructor(code: ActionFailureCode) {
+    super(code);
+    this.name = 'ApprovedActionFailure';
+    this.code = code;
+  }
+}
+
+function actionFailureCode(error: unknown): ActionFailureCode {
+  return error instanceof ApprovedActionFailure ? error.code : 'ACTION_EXECUTION_FAILED';
+}
+
 export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOptions): ExplorationRuntime {
   let safeViewState: Record<string, string | number | boolean> = { view: 'anchor' };
   const surface = ANCHOR_SURFACES[opts.anchorJourney];
@@ -138,32 +152,52 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
 
   const executeSelectorOption = async (action: SafeAction, spec: Extract<LocatorSpec, { kind: 'selector-option' }>): Promise<void> => {
     const field = locatorForSpec(opts.page, spec);
-    if (await uniqueCount(field) !== 1) throw new Error('approved selector field is not unique');
+    if (await uniqueCount(field) !== 1) throw new ApprovedActionFailure('SELECTOR_FIELD_NOT_UNIQUE');
     const select = field.locator('.q-select');
-    if (await uniqueCount(select) !== 1) throw new Error('approved q-select is not unique');
+    if (await uniqueCount(select) !== 1) throw new ApprovedActionFailure('SELECTOR_CONTROL_NOT_UNIQUE');
     // A selected source enum is not re-clicked: it is a runtime-unavailable
     // edge for this action, not permission to choose another option.
     const input = select.locator('input');
     if (await uniqueCount(input) === 1) {
       const current = (await input.inputValue()).trim();
-      if (spec.optionLabels.includes(current)) throw new Error('approved option is already selected');
+      if (spec.optionLabels.includes(current)) throw new ApprovedActionFailure('OPTION_ALREADY_SELECTED');
     }
-    await select.click();
+    try {
+      await select.click();
+    } catch {
+      throw new ApprovedActionFailure('SELECTOR_OPEN_FAILED');
+    }
+    const menu = opts.page.locator('.q-menu:visible').last();
+    try {
+      await menu.waitFor({ state: 'visible', timeout: 5_000 });
+    } catch {
+      throw new ApprovedActionFailure('SELECTOR_OPEN_FAILED');
+    }
     let option: Locator | null = null;
+    let matchingOptionCount = 0;
     for (const label of spec.optionLabels) {
-      const candidate = opts.page.getByRole('option', { name: label, exact: true });
-      if (await uniqueCount(candidate) === 1) {
+      // Quasar 1 renders QSelect entries as q-items without an option ARIA
+      // role. The menu is still an approved source-backed control boundary.
+      const candidate = menu.locator('.q-item').filter({ hasText: label });
+      const count = await uniqueCount(candidate);
+      matchingOptionCount += count;
+      if (count === 1) {
         option = candidate;
         break;
       }
     }
-    if (option === null) throw new Error('approved fixed option is unavailable');
-    await option.click();
+    if (option === null) throw new ApprovedActionFailure(matchingOptionCount > 1 ? 'APPROVED_OPTION_NOT_UNIQUE' : 'APPROVED_OPTION_NOT_FOUND');
+    try {
+      await option.click();
+    } catch {
+      throw new ApprovedActionFailure('OPTION_CLICK_FAILED');
+    }
   };
 
   const execute = async (action: SafeAction): Promise<ActionExecutionResult> => {
     const before = opts.network.journeySemanticRequests().length;
     let status: ActionExecutionResult['status'] = 'COMPLETED';
+    let failureCode: ActionFailureCode | undefined;
     let failureReason: string | undefined;
     opts.network.beginJourneyIntent(action.actionId, action.actionKind === 'RETURN_TO_ANCHOR' ? 'RETURN_TO_ANCHOR' : action.actionKind);
     try {
@@ -187,17 +221,17 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
             fatal: opts.page.isClosed() || opts.monitor.safetyFailed,
           }),
         });
-        if (!stable) throw new Error('anchor route did not reach structural stability');
+        if (!stable) throw new ApprovedActionFailure('ANCHOR_STABILITY_FAILED');
       } else if (action.locator.kind === 'selector-option') {
         await executeSelectorOption(action, action.locator);
       } else if (action.locator.kind === 'column-header') {
         const locator = locatorForSpec(opts.page, action.locator);
-        if (await uniqueCount(locator) !== 1) throw new Error('approved column header is not unique');
-        await locator.click();
+        if (await uniqueCount(locator) !== 1) throw new ApprovedActionFailure('COLUMN_HEADER_NOT_UNIQUE');
+        try { await locator.click(); } catch { throw new ApprovedActionFailure('COLUMN_HEADER_CLICK_FAILED'); }
       } else if (action.locator.kind === 'vendor-tab') {
         const locator = locatorForSpec(opts.page, action.locator);
-        if (await uniqueCount(locator) !== 1) throw new Error('approved vendor tab is not unique');
-        await locator.click();
+        if (await uniqueCount(locator) !== 1) throw new ApprovedActionFailure('VENDOR_TAB_NOT_UNIQUE');
+        try { await locator.click(); } catch { throw new ApprovedActionFailure('VENDOR_TAB_CLICK_FAILED'); }
       }
       await opts.page.waitForTimeout(150);
       const expectedReads = new Set(action.expectedReadFamilies);
@@ -208,10 +242,12 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
         }
         if (expectedReads.size > 0) await opts.page.waitForTimeout(100);
       }
-      if (expectedReads.size > 0) throw new Error('approved read family did not settle');
+      if (expectedReads.size > 0) throw new ApprovedActionFailure('EXPECTED_READ_NOT_SETTLED');
     } catch (error) {
       status = 'FAILED';
-      failureReason = error instanceof Error ? error.message : 'approved action failed';
+      failureCode = actionFailureCode(error);
+      // Keep the legacy field safe too; Playwright text is never retained.
+      failureReason = failureCode;
     } finally {
       opts.network.endJourneyIntent(action.actionId);
     }
@@ -236,6 +272,7 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
       oracleResults: [],
       safety,
       durationClass: 'MEDIUM',
+      ...(failureCode === undefined ? {} : { failureCode }),
       ...(failureReason === undefined ? {} : { failureReason }),
     };
   };

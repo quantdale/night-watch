@@ -3748,3 +3748,27 @@ attempt before the explicit failure is raised.
 failed-action regression cover the boundary; a fresh real Phase 4 run is
 required to validate the timeout repair against DEV. No budget, action
 catalog, safety policy, or external authority is widened.
+
+## D-94 — Ripple Phase 4 must use the source-backed Quasar option surface
+
+**Context.** The first truthful Phase 4 DEV rerun failed on the approved
+`p4.j1.vendor-local.azure` action with zero safety events. Playwright debug
+evidence showed that the real Quasar 1 QSelect opened successfully, but its
+menu entries had no `option` ARIA role; the role-based locator therefore
+returned zero matches. The local tracking source confirms that this control
+is the shared `Selector` component and its options are rendered as QSelect
+items.
+
+**Decision.** Locate the opened menu through the bounded visible `.q-menu`
+surface and its `.q-item` entries, matching only the fixed source-proven
+option labels. Wait for the menu surface before inspecting entries. Preserve
+unique-count checks and fail closed on missing or ambiguous entries; do not
+use force-clicks, arbitrary text, customer-derived selectors, or value
+injection. Runtime failures are represented by a closed safe failure-code
+vocabulary rather than raw Playwright text.
+
+**Evidence and consequences.** A browser-backed unit fixture reproduces a
+Quasar-style menu item without an option role and passes through the runtime
+path. The next clean real Phase 4 run must prove the fix against DEV and
+remain subject to the existing safety and successful-termination gates. No
+new target, request family, mutation, or external authority is admitted.

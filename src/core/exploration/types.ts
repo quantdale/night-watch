@@ -149,6 +149,26 @@ export interface RuntimeNetworkObservation {
   readonly hostClass: 'TARGET' | 'OPTIONAL_BLOCKED' | 'BROWSER_BACKGROUND' | 'UNKNOWN' | 'PRODUCTION';
 }
 
+// Runtime action failures use a closed vocabulary. Playwright error text can
+// contain page-derived values and must not become operational evidence.
+export type ActionFailureCode =
+  | 'SELECTOR_FIELD_NOT_UNIQUE'
+  | 'SELECTOR_CONTROL_NOT_UNIQUE'
+  | 'OPTION_ALREADY_SELECTED'
+  | 'SELECTOR_OPEN_FAILED'
+  | 'APPROVED_OPTION_NOT_UNIQUE'
+  | 'APPROVED_OPTION_NOT_FOUND'
+  | 'OPTION_CLICK_FAILED'
+  | 'OPTION_SELECTION_NOT_CONFIRMED'
+  | 'ANCHOR_NAVIGATION_FAILED'
+  | 'ANCHOR_STABILITY_FAILED'
+  | 'EXPECTED_READ_NOT_SETTLED'
+  | 'COLUMN_HEADER_NOT_UNIQUE'
+  | 'COLUMN_HEADER_CLICK_FAILED'
+  | 'VENDOR_TAB_NOT_UNIQUE'
+  | 'VENDOR_TAB_CLICK_FAILED'
+  | 'ACTION_EXECUTION_FAILED';
+
 export interface ActionExecutionResult {
   readonly status: 'COMPLETED' | 'FAILED' | 'ACTION_NOT_AVAILABLE_AT_RUNTIME';
   readonly nextState: ExplorationStateInput;
@@ -158,6 +178,7 @@ export interface ActionExecutionResult {
   readonly oracleResults: readonly string[];
   readonly safety: SafetyVector;
   readonly durationClass: 'SHORT' | 'MEDIUM' | 'LONG' | 'UNKNOWN';
+  readonly failureCode?: ActionFailureCode;
   readonly failureReason?: string;
 }
 

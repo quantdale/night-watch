@@ -8,6 +8,7 @@ import type { ExplorationBudget, ExplorationEnvelope, SafeAction } from '../../s
 import { BUDGET_POLICY_VERSION } from '../../src/core/exploration/types';
 import { isSuccessfulPhase4Termination } from '../../src/core/exploration/acceptance';
 import { RIPPLE_PHASE4_ACTIONS } from '../../src/products/ripple/explorationCatalog';
+import { createRippleExplorationRuntime } from '../../src/products/ripple/explorationRuntime';
 
 const budget: ExplorationBudget = {
   policyVersion: BUDGET_POLICY_VERSION,
@@ -67,6 +68,46 @@ test.describe('Phase 4 exploration model', () => {
     validateSafeActionCatalog(RIPPLE_PHASE4_ACTIONS);
     expect(approvedActions(RIPPLE_PHASE4_ACTIONS)).toHaveLength(RIPPLE_PHASE4_ACTIONS.length);
     expect(RIPPLE_PHASE4_ACTIONS.every((action) => action.semanticClass === 'KNOWN_READ' || action.semanticClass === 'LOCAL_ONLY')).toBeTruthy();
+  });
+
+  test('Ripple selector runtime supports Quasar menu items without an option role', async ({ page }) => {
+    await page.setContent(`
+      <div class="__ExchangeRateDataTable_Selectors">
+        <div class="__C_Selector">
+          <div class="__C_Selector-Label">Cloud Provider</div>
+          <div class="q-select"><input value="Amazon Web Services" /></div>
+        </div>
+      </div>
+      <script>
+        document.querySelector('.q-select').addEventListener('click', () => {
+          const menu = document.createElement('div');
+          menu.className = 'q-menu';
+          const item = document.createElement('div');
+          item.className = 'q-item';
+          item.textContent = 'Microsoft Azure';
+          item.addEventListener('click', () => menu.remove());
+          menu.appendChild(item);
+          document.body.appendChild(menu);
+        });
+      </script>
+    `);
+    const action = RIPPLE_PHASE4_ACTIONS.find((candidate) => candidate.actionId === 'p4.j1.vendor-local.azure')!;
+    const network = {
+      beginJourneyIntent: () => undefined,
+      endJourneyIntent: () => undefined,
+      journeySemanticRequests: () => [],
+    } as never;
+    const monitor = { safetyFailed: false, hardFailures: [] } as never;
+    const runtime = createRippleExplorationRuntime({
+      page,
+      uiBaseUrl: 'https://appdev.alphaus.cloud/ripple/',
+      anchorJourney: 'ripple-payer-exchange-read',
+      network,
+      monitor,
+      authValid: true,
+    });
+    expect(await runtime.actionAvailable(action)).toBeTruthy();
+    expect((await runtime.execute(action)).status).toBe('COMPLETED');
   });
 
   test('different seeds can choose different safe branches', async () => {
@@ -211,6 +252,35 @@ test.describe('Phase 4 exploration model', () => {
     expect(result.transitions[0]?.verification).toBe('INVALIDATED');
     expect(result.transitions[0]?.oracleResults).toContain('ACTION_TRANSITION_FAILED');
     expect(isSuccessfulPhase4Termination(result.terminationReason)).toBe(false);
+  });
+
+  test('safe action failure codes are retained without raw runtime error text', async () => {
+    const fixture = createSyntheticFixture();
+    const action = SYNTHETIC_ACTIONS.find((candidate) => candidate.actionId === 'fixture.safe-a')!;
+    const result = await runExploration({
+      runId: 'coded-failure',
+      seed: '0x0000000000000001',
+      catalog: [{ ...action, status: 'APPROVED' }],
+      envelope: envelope([action.actionId], ['/start']),
+      budget,
+      runtime: {
+        ...fixture.runtime,
+        execute: async () => ({
+          status: 'FAILED' as const,
+          nextState: await fixture.runtime.currentState(),
+          routeDelta: { routeClass: '/start' },
+          structuralDelta: {},
+          semanticRequestDelta: [],
+          oracleResults: [],
+          safety: { productionAttempts: 0, proxyViolations: 0, unknownDestinations: 0, unknownApprovals: 0, knownMutations: 0, actionCausedUnknown: 0, dbQueries: 0 },
+          durationClass: 'SHORT' as const,
+          failureCode: 'OPTION_CLICK_FAILED' as const,
+          failureReason: 'OPTION_CLICK_FAILED',
+        }),
+      },
+    });
+    expect(result.transitions[0]?.oracleResults).toContain('ACTION_FAILURE:OPTION_CLICK_FAILED');
+    expect(result.transitions[0]?.oracleResults).not.toContain('raw runtime error');
   });
 
   test('only safe frontier, model-terminal, and bounded-budget terminations count as successful', () => {
