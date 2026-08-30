@@ -4,10 +4,11 @@
 
 Task ID: nightwatch-final-reproducibility-polish-v1
 Phase: FINAL_REPRODUCIBILITY_POLISH_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
 Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
 Last substantive checkpoint SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
+Last documentation checkpoint SHA: 6769bb427d90c6b8c7b9a09aa396e433749b0f2d
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e0c0c33cb6f44d33993b666d301cc261b87a4f01
@@ -15,16 +16,14 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_FINAL_REPRODUCIBILITY_POLISH_V1_STATUS: IN_PROGRESS
+PHASE_FINAL_REPRODUCIBILITY_POLISH_V1_STATUS: COMPLETE
 ## Objective
 
 Prove post-acceptance Nightwatch reproduces on a clean machine and in isolated topology, and requalify real DEV.
 
 ## Current Milestone
 
-Milestone ID: M4
-Milestone status: IN_PROGRESS
-What is being attempted: Final documentation, validator, Git, and privacy reconciliation after reproducibility and DEV evidence
+COMPLETE / STOP. M1–M4 are closed: clean-machine Node 20, exact canonical/detached-source parity, bounded DEV requalification, and final documentation/validator/Git/privacy reconciliation.
 
 ## Completed Milestones
 
@@ -32,14 +31,15 @@ What is being attempted: Final documentation, validator, Git, and privacy reconc
 - M1 complete at d12b1d7 — clean Node 20 checkout, fresh dependency install, and full gate passed
 - M2 complete at documentation checkpoint 82be077 — canonical and topology-correct detached-source full suites have exact parity: 2,661 enumerated, 2,648 expected passes, 13 skips, 0 unexpected failures, 0 flaky; isolated Nightwatch and six detached source clones clean before/after
 - M3 complete at documentation checkpoint fe35220 — Phase 2C retry passed, Phase 5 passed, fresh Phase 7 prepare/resume completed cleanly; Phase 4 surfaced one known DEV product anomaly without a Nightwatch code change
+- M4 complete at validation checkpoint 6769bb4 — all final documents reconciled; local and Node 20 clean gates passed; typecheck, hardening, agent, project, handoff, and history audit passed; pushed `HEAD == origin/main` and clean tree verified
 
 ## Work In Progress
 
-M1 clean-machine, M2 isolated parity, and M3 DEV requalification are complete. M4 reconciliation and final acceptance validation are now in progress.
+Task complete. No implementation or documentation work remains in this task. The known Phase 4 DEV product anomaly is preserved as a sanitized follow-up, not a Nightwatch defect.
 
 ## Exact Next Action
 
-Reconcile `ACTIVE_TASK`, `EXECUTION_PROMPT`, task `PLAN`/`STATE`/`REPORT`, `CURRENT_STATE`, `ROADMAP`, and OpenSpec; then run the complete local/clean/typecheck/hardening/agent/project/handoff acceptance set and verify the pushed clean Git topology.
+STOP — task complete; any follow-up starts as a new authorized task.
 
 ## Files Changed
 
@@ -48,9 +48,9 @@ Reconcile `ACTIVE_TASK`, `EXECUTION_PROMPT`, task `PLAN`/`STATE`/`REPORT`, `CURR
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/SPEC.md` | New task spec | done |
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/PLAN.md` | New task plan | done |
 | `.agent/tasks/nightwatch-final-reproducibility-polish-v1/STATE.md` | New task state | done |
-| `openspec/changes/nightwatch-final-reproducibility-polish-v1/*` | OpenSpec | M1/M2 complete; M3/M4 pending |
-| `.agent/ACTIVE_TASK.md` | Activate successor and checkpoint M1/M2 | in progress |
-| `.agent/EXECUTION_PROMPT.md` | New handoff | in progress |
+| `openspec/changes/nightwatch-final-reproducibility-polish-v1/*` | OpenSpec | done |
+| `.agent/ACTIVE_TASK.md` | Activate successor and record final closure | done |
+| `.agent/EXECUTION_PROMPT.md` | Final handoff | done |
 
 ## Validation Ledger
 
@@ -97,6 +97,31 @@ Result: PASS
 When: 2026-08-31
 Relevant failure/output summary: all 10 required groups PASS; semantic compatibility `1919 passed / 13 skipped / 0 failed`; owner provenance `91 passed`; synthetic campaign `73 passed`; Node 22; `receipt:sha256:fc00f7b051fc4110a2aeba46`.
 
+Command: `npm run gate:local` at validation checkpoint `6769bb427d90c6b8c7b9a09aa396e433749b0f2d`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: all 10 required groups PASS; semantic compatibility `1919 passed / 13 skipped / 0 failed`; owner provenance `91 passed`; synthetic campaign `73 passed`; `receipt:sha256:b6d2e61df1c7c5969fb895a7`.
+
+Command: `npm run gate:clean` at validation checkpoint `6769bb427d90c6b8c7b9a09aa396e433749b0f2d`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: source HEAD `6769bb427d90c6b8c7b9a09aa396e433749b0f2d`; Node 20; fresh `npm ci --ignore-scripts`; `cleanBefore=true`; `cleanAfter=true`; `nodeModulesReused=false`; `authStateProvided=false`; `ownerFindingStateProvided=false`; `siblingWrites=0`; all 10 required groups PASS; semantic compatibility `1919 passed / 13 skipped / 0 failed`; `receipt:sha256:1d402605037d763913e301ae`; `clean-receipt:sha256:7a00dd503f78cfb0f308d653`.
+
+Command: `npm run typecheck`, `npm run hardening:check`, `npm run agent:check`, `npm run project:check`, `npm run handoff:check`, and `npm run agent:audit` at validation checkpoint `6769bb427d90c6b8c7b9a09aa396e433749b0f2d`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: typecheck 0 errors; hardening PASS; project PASS with `OPERATIONALLY_ACCEPTED` preserved; handoff PASS; agent strict errors `0`; history audit strict errors `0` across `90` tasks, with the known `24` legacy-task warnings and the documented implementation-SHA checkpoint warning.
+
+Command: `npm run agent:check` and `npm run handoff:check` after terminal-closure wording repair
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: strict agent validation `strict_errors=0`; handoff status `COMPLETE`; the only agent warnings remain the approved implementation-SHA checkpoint warning and `24` historical legacy-task warnings. M4 acceptance prose was made status-neutral after the parser correctly treated embedded terminal-state vocabulary as open milestone status.
+
+Command: `git diff --check` and `test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" && git status --porcelain --branch`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: no whitespace errors; pushed main is synchronized with origin/main at `6769bb427d90c6b8c7b9a09aa396e433749b0f2d`; working tree clean.
+
 Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json` (first final run)
 Result: FAIL / PRODUCT_ANOMALY
 When: 2026-08-31
@@ -133,6 +158,8 @@ Decision: Create successor `nightwatch-final-reproducibility-polish-v1` at e0c0c
 Decision: Treat the current `d12b1d7` as the validated implementation checkpoint; reason: `gate:clean` exercises the clean checkout at the live HEAD and passes all required groups.
 Decision: Use detached no-hardlink clones for isolated parity; reason: the first aggregate sibling-symlink topology correctly failed closed in `src/core/source/siblingSource.ts` because the source reader rejects symlink paths, while detached clones reproduced canonical results without weakening that safety contract.
 Decision: Accept the final DEV evidence with the Phase 2C bounded retry and retain the Phase 4 malformed-JSON result as a product anomaly; reason: the required clean Phase 2C/Phase 5/campaign evidence passed, while Nightwatch must not hide a real DEV oracle failure or relabel it as a framework defect.
+Decision: Close the task without changing the project’s operational verdict; reason: all M1–M4 evidence and final validators passed, while the project-state block correctly remains the existing `OPERATIONALLY_ACCEPTED` authority.
+Decision: Keep M4 milestone prose status-neutral where it describes acceptance conditions; reason: the continuity parser uses the last recognized status token on each milestone bullet, so incidental vocabulary must not create a false open milestone.
 
 ## Discoveries
 
@@ -140,6 +167,7 @@ Decision: Accept the final DEV evidence with the Phase 2C bounded retry and reta
 - Clean-machine qualification at d12b1d7: PASS; receipts recorded above
 - Canonical and detached-source isolated full-suite parity: exact `2661/2648/13/0` enumeration/pass/skip/fail counts and identical skip identities; the aggregate-symlink diagnostic produced four expected no-snapshot failures and was not used as the parity result
 - Final DEV: Phase 2C retry clean, Phase 5 `1/1` pass, Phase 7 fresh prepare/resume `5/5 COMPLETE_CLEAN`; Phase 4 separately surfaced the known `billinggroups` malformed-JSON product anomaly
+- Final closure at 6769bb4: local and Node 20 clean gates passed with 10/10 groups, all individual validators passed, and Git main/origin parity was clean
 
 ## Blockers
 
@@ -151,18 +179,13 @@ NONE
 
 ## Deferred / Follow-Up
 
-- None.
+- Known DEV product follow-up: `GET /m/blue/billing/v1/billinggroups` returned malformed JSON during Phase 4; it remains attributed to DEV product behavior and is outside this Nightwatch task.
+- External CI was not run and is not claimed green; any future CI observation requires separate policy/authorization.
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN.
-3. Inspect git status and live HEAD.
-4. M1: run `npm run gate:clean` and capture both receipts — complete at d12b1d7.
-5. M2: compare canonical and detached-source isolated full-suite counts and skip identities — complete at 82be077.
-6. M3: inspect auth metadata only, then run or fail-closed the serial DEV requalification — complete at fe35220; Phase 2C retry and Phase 5/campaign passed, Phase 4 retained a product anomaly.
-7. M4: reconcile all durable documents and run final acceptance gates.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Not complete — IN_PROGRESS. M1/M2/M3 are complete; M4 final reconciliation and acceptance validation are in progress.
+COMPLETE. M1–M4 are closed; clean-machine and isolated reproducibility passed, required DEV evidence passed with the Phase 4 product anomaly retained truthfully, final validators passed, and pushed main is clean and synchronized.

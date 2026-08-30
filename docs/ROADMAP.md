@@ -2495,10 +2495,10 @@ below is the separately authorized route for a safe rootless proof; no real
 environment, data layer, cloud/infrastructure, credential, sibling-write or
 publication work is authorized.
 
-## Current final completion and L6 containment campaign — terminal local/clean certified
+## Historical final completion and L6 containment campaign — terminal local/clean certified
 
-`nightwatch-final-completion-and-l6-containment-v1` is the active successor
-route. It re-audits every current tracked path and implements the smallest
+`nightwatch-final-completion-and-l6-containment-v1` was the successor route at
+that checkpoint. It re-audited every current tracked path and implemented the smallest
 rootless L6 envelope that can be mechanically proven: a no-external-interface
 Bubblewrap namespace, minimal read-only root view, exact runtime binding,
 namespace-local bounded HTTP/upgrade relay, and inherited AF_UNIX parent
@@ -2537,9 +2537,9 @@ COMPLETE at implementation `59c44e00b3a07765fcf4ce7fac3ce1b811ea15da` plus docs
 fresh census 04ff5839 with 43/53 vs 83/175 soundness and NO_SAFE_NEW_FAMILY;
 real DEV requalified b1debd41 5/5; perf N² Map).
 
-## Final reproducibility and polish — IN_PROGRESS — 2026-08-31
+## Final reproducibility and polish — terminal COMPLETE — 2026-08-31
 
-The current successor `nightwatch-final-reproducibility-polish-v1` closes the
+The completed successor `nightwatch-final-reproducibility-polish-v1` closed the
 remaining reproducibility evidence after post-acceptance hardening. The clean
 Node 20 gate passed at implementation checkpoint `d12b1d7` with a fresh install,
 no auth or owner-finding state, no sibling writes, and clean before/after
@@ -2550,12 +2550,17 @@ Canonical and topology-correct isolated full suites matched exactly:
 failures. The isolated run used a fresh no-hardlink Nightwatch checkout plus
 six detached approved-source clones under the expected repository topology;
 aggregate sibling symlinks correctly failed closed under the no-follow source
-reader. The local gate passed all `10` groups.
+reader. The local gate passed all `10` groups; the final local receipt was
+`receipt:sha256:b6d2e61df1c7c5969fb895a7` and the final clean receipt was
+`clean-receipt:sha256:7a00dd503f78cfb0f308d653` with nested gate receipt
+`receipt:sha256:1d402605037d763913e301ae`.
 
 Contained DEV requalification used the external owner-managed state with
 headed mode and traces disabled. Phase 2C passed on a bounded retry, Phase 5
 passed `1/1`, and fresh Phase 7 prepare/resume completed `5/5 COMPLETE_CLEAN`
 with zero anomalies and zero safety counters. Phase 4 retained the known DEV
 `billinggroups` malformed-JSON product anomaly as `FATAL_ORACLE`. Final task
-reconciliation and acceptance validation remain in progress; this successor
-does not create a new operational verdict.
+reconciliation and acceptance validation completed with typecheck, hardening,
+agent, project, handoff, history-audit, and Git hygiene passes. This successor
+does not create a new operational verdict; future work requires a fresh
+authorization.

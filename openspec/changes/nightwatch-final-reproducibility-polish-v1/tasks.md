@@ -12,4 +12,4 @@
 
 ## 4. Final reconciliation
 
-- [ ] 4.1 `agent:check`/`project:check`/`handoff:check`/`hardening:check` PASS, `HEAD==origin/main` clean
+- [x] 4.1 `agent:check`/`project:check`/`handoff:check`/`hardening:check` PASS, typecheck and history audit pass, `HEAD==origin/main` clean; local and Node 20 clean gates passed all 10 groups

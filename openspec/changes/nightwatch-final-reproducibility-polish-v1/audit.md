@@ -13,5 +13,12 @@ Private local source intelligence, contained DEV, deterministic replay, sanitize
 
 ## Gaps
 
-- No fresh final DEV requalification after the current reproducibility checkpoint
-- No final reconciliation/checkpoint has been completed
+- Final DEV requalification is complete: Phase 2C retry and Phase 5 passed, fresh Phase 7 prepare/resume completed cleanly, and the Phase 4 product anomaly was retained truthfully
+- Final reconciliation is complete: all continuity/project/handoff/hardening/typecheck checks passed and the pushed tree is clean and synchronized
+
+## Terminal evidence
+
+- Clean Node 20 gate at `6769bb4`: fresh install, all 10 groups PASS, clean before/after, no auth/finding state, and zero sibling writes
+- Canonical and detached-source full suites: `2661` enumerated / `2648` passed / `13` identical skips / `0` failed
+- DEV: Phase 2C bounded retry PASS, Phase 5 `1/1` PASS, Phase 7 `5/5 COMPLETE_CLEAN`; Phase 4 `billinggroups` malformed-JSON `FATAL_ORACLE` remains a DEV product anomaly
+- No CI-green claim and no new successor selected

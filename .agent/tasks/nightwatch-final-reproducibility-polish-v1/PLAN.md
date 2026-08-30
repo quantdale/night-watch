@@ -55,13 +55,13 @@ Reuse `bin/quality-gate-clean.mjs` for clean checkout (fresh `mktemp`, `npm ci -
 - Validation: `NIGHTWATCH_HEADED=0 npm run journey:phase2c` etc. serial
 - Status: COMPLETE — Phase 2C passed on the bounded retry after one sanitized strict-replay product anomaly; Phase 5 passed `1/1`; fresh Phase 7 prepare/resume completed `5/5 COMPLETE_CLEAN` with zero anomalies and zero safety counters. Phase 4 retained the known DEV `billinggroups` malformed-JSON product anomaly.
 
-### M4 — Final reconciliation and hygiene — IN_PROGRESS
+### M4 — Final reconciliation and hygiene — COMPLETE
 
-- Objective: reconcile `ACTIVE_TASK`, `STATE`, `REPORT`, `EXECUTION_PROMPT`, `CURRENT_STATE`, `ROADMAP`, `OpenSpec`; check no stale `BLOCKED`/`IN_PROGRESS`/`PENDING`; `HEAD==origin/main` clean
+- Objective: reconcile `ACTIVE_TASK`, `STATE`, `REPORT`, `EXECUTION_PROMPT`, `CURRENT_STATE`, `ROADMAP`, `OpenSpec`; check no stale nonterminal markers; `HEAD==origin/main` clean
 - Files/areas: all durable docs
-- Acceptance: `agent:check`/`project:check`/`handoff:check`/`hardening:check` PASS, `HEAD==origin/main`, clean tree, no `TODO` in live milestones
+- Acceptance: `agent:check`/`project:check`/`handoff:check`/`hardening:check` PASS, `HEAD==origin/main`, clean tree, no unresolved live milestone markers
 - Validation: `npm run agent:check && npm run project:check && npm run handoff:check && npm run hardening:check && git status --porcelain --branch`
-- Status: IN_PROGRESS
+- Status: COMPLETE — all final documents are reconciled; `gate:local` and fresh Node 20 `gate:clean` passed all 10 groups at `6769bb4`; typecheck, hardening, agent, project, handoff, and history audit passed; `git diff --check` passed; and pushed `main` matched `origin/main` with a clean tree.
 
 ## Validation Strategy
 
@@ -80,7 +80,7 @@ Continuity v2 gatekeepers; `gate:clean` via `quality-gate-clean.mjs` + `ONBOARDI
 
 ## Deferred Work
 
-- Final documentation/checkpoint reconciliation remains.
+- Known DEV `billinggroups` malformed-JSON behavior remains a product-owner follow-up; no further Nightwatch work is authorized by this task.
 
 ## Completion Criteria
 

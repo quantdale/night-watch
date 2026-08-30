@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Final Reproducibility and Polish
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-final-reproducibility-polish-v1
 OpenSpec: openspec/changes/nightwatch-final-reproducibility-polish-v1/
 Planned-From: e0c0c33cb6f44d33993b666d301cc261b87a4f01
@@ -32,5 +32,4 @@ Prove post-acceptance Nightwatch reproduces on a clean machine and in isolated t
 
 ## Terminal outcomes
 
-This campaign is COMPLETE when M1–M4 are terminal and validators pass. No new operational verdict.
-
+M1–M4 are terminal and validators pass. The campaign is COMPLETE with local and Node 20 clean certification, exact isolated parity, bounded DEV evidence, and no new operational verdict.

@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-31** for
-> successor campaign `nightwatch-final-reproducibility-polish-v1`, which is
-> closing final reproducibility evidence while project status remains
+> completed successor campaign `nightwatch-final-reproducibility-polish-v1`,
+> which closed final reproducibility evidence while project status remains
 > `OPERATIONALLY_ACCEPTED` at validated implementation
 > `598e7fa92fb99786b2db847ace8c1fdf566d3c71`. Historical
 > campaign `nightwatch-final-completion-and-l6-containment-v1` remains
@@ -2565,7 +2565,7 @@ authenticated OOPS remained fail-closed. No real environment, product,
 database, cloud/infrastructure, credential, publication or sibling-repository
 operation was authorized or claimed.
 
-## Current final completion and L6 containment campaign — terminal local/clean certified — 2026-08-29
+## Historical final completion and L6 containment campaign — terminal local/clean certified — 2026-08-29
 
 The predecessor campaign `nightwatch-final-completion-and-l6-containment-v1` is
 historical local/clean certified as `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`.
@@ -2596,9 +2596,9 @@ and adversarial matrices are green. Exact-head Actions run `33190456115` /
 job `98914301082` failed before runner provisioning with `steps=[]` and
 `runner_id=0`; it is recorded as external non-evidence and not CI PASS.
 
-## Current operational-acceptance campaign — terminal OPERATIONALLY_ACCEPTED — 2026-08-30 at 598e7fa
+## Historical operational-acceptance campaign — terminal OPERATIONALLY_ACCEPTED — 2026-08-30 at 598e7fa
 
-Active task `nightwatch-operational-acceptance-v1` is COMPLETE with
+Former active task `nightwatch-operational-acceptance-v1` was COMPLETE with
 `OPERATIONALLY_ACCEPTED` at validated implementation
 `598e7fa92fb99786b2db847ace8c1fdf566d3c71` plus documentation descendants
 `33c06af` / `10f50fd`. The current machine-checked project completion status is
@@ -2640,10 +2640,10 @@ or GitHub.
 
 Successor `nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1` is COMPLETE at implementation `59c44e00b3a07765fcf4ce7fac3ce1b811ea15da` plus docs `1bf286b9b18343e3c11a2e80256e22b12a4b92d2`, building on OPERATIONALLY_ACCEPTED. It reconciled stale present-tense BLOCKED docs to historical + ACCEPTED, hardened validators (hardening-check docsTruth, project-state narrow post-acceptance exception), baselined (typecheck 0, hardening PASS, handoff PASS, project PASS, agent 88/64, synthetic 73, owner 91, CC typecheck/test/build PASS, gate local 10/10 PASS at 1bf286b), audited 9 repairs as a family with N² Map perf fix, ran fresh census at snapshot `04ff583971865f335902f5ad` (inventory 1732/1092/1078/654 unchanged; responseContracts 43 vs 83 due to soundness at 15fe2c1; lifecycle 85/40/3; gap taxonomy 8+54+1+9+3+9+1; NO_SAFE_NEW_FAMILY), and requalified real DEV (phase2c run1 fail critical-resource flaky → run2 retry PASS 3/3; phase5 1 PASS; campaign `b1debd41` 5/5 COMPLETE_CLEAN; phase4 billinggroups FATAL_ORACLE product bug persists). Auth remains valid until 2026-08-31 07:59 PST (external state). No soak or isolated parity re-run due to budget; serial runs show no leaked processes/ports; tokenization duplicate cache deferred.
 
-## Final reproducibility and polish — IN_PROGRESS — 2026-08-31
+## Final reproducibility and polish — terminal COMPLETE — 2026-08-31
 
-The successor `nightwatch-final-reproducibility-polish-v1` is the current
-closure task. Its clean-machine Node 20 gate passed at implementation
+The completed successor `nightwatch-final-reproducibility-polish-v1` closed the
+reproducibility task. Its clean-machine Node 20 gate passed at implementation
 checkpoint `d12b1d75886987356f3ab6d80ca5b25f0723c471` with fresh dependencies,
 no auth/finding state, no sibling writes, and clean before/after receipts.
 `ONBOARDING.md` bootstrap and baseline steps were verified by that run.
@@ -2654,7 +2654,10 @@ no-follow source reader, so the valid isolated topology used six clean
 detached no-hardlink approved-source clones and proxy port `20989`. Both runs
 enumerated `2661`, passed `2648`, skipped the same `13` environment-conditional
 tests, and failed `0`; Nightwatch and all detached source clones were clean
-before and after. The local quality gate also passed all `10` groups.
+before and after. The local quality gate also passed all `10` groups; the final
+local receipt was `receipt:sha256:b6d2e61df1c7c5969fb895a7` and the final clean
+gate receipt was `clean-receipt:sha256:7a00dd503f78cfb0f308d653` with nested
+gate receipt `receipt:sha256:1d402605037d763913e301ae`.
 
 Final contained DEV requalification used the external owner-managed state with
 headed mode and traces disabled. Phase 2C passed on its bounded retry after one
@@ -2662,5 +2665,8 @@ sanitized strict-replay product anomaly; Phase 5 passed `1/1`; fresh Phase 7
 prepare/resume completed `5/5 COMPLETE_CLEAN` with zero anomalies and zero
 safety counters. Phase 4 retained the known DEV malformed-JSON
 `billinggroups` product anomaly as `FATAL_ORACLE`; it was not relabeled as a
-Nightwatch defect. M4 final documentation and acceptance validation are in
-progress. No new operational verdict or implementation authority is claimed.
+Nightwatch defect. M4 final documentation and acceptance validation completed
+with typecheck, hardening, agent, project, handoff, history-audit, and Git
+hygiene passes. No new operational verdict or implementation authority is
+claimed; the project-state block remains the existing `OPERATIONALLY_ACCEPTED`
+authority.
