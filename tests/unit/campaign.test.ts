@@ -593,6 +593,49 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('terminal runtime failure blocks the failed item, skips pending work, and derives a truthful next action', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+      const failedWorkItemId = manifest.workItems[0]!.workItemId;
+      let executeCalls = 0;
+      const executor = {
+        ...passingExecutor(),
+        execute: async ({ workItem }: { readonly workItem: CampaignWorkItem }) => {
+          executeCalls += 1;
+          if (workItem.workItemId === failedWorkItemId) {
+            return defaultOutcome({
+              result: 'RUNTIME_FAILURE',
+              reasonCode: 'JOURNEY_ORACLE_FAILURE',
+              browserContextCreated: true,
+            });
+          }
+          return defaultOutcome({ browserContextCreated: workItem.kind !== 'API' });
+        },
+      };
+      const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(result.stopReason).toBe('PREFLIGHT_FAILED');
+      expect(result.checkpoint.executionLedger.find((record) => record.workItemId === failedWorkItemId)).toMatchObject({
+        state: 'BLOCKED',
+        result: 'RUNTIME_FAILURE',
+        reasonCode: 'JOURNEY_ORACLE_FAILURE',
+      });
+      expect(result.checkpoint.completedWorkItemIds).toEqual([]);
+      expect(result.checkpoint.remainingWorkItemIds).toEqual([]);
+      expect(result.checkpoint.executionLedger.filter((record) => record.state === 'SKIPPED')).toHaveLength(manifest.workItems.length - 1);
+      expect(result.checkpoint.nextExactAction).toBe('inspect campaign checkpoint and morning brief');
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+
+      const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
+      expect(resumed.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(resumed.checkpoint.nextExactAction).toBe('inspect campaign checkpoint and morning brief');
+      expect(executeCalls).toBe(1);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('prepares an ordinal-zero checkpoint without invoking an executor', () => {
     const { root, store } = tempStore();
     try {

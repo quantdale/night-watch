@@ -253,6 +253,10 @@ function remainingWorkItems(manifest: CampaignManifest, ledger: readonly Campaig
   return manifest.workItems.filter((item) => !complete.has(item.workItemId)).map((item) => item.workItemId);
 }
 
+function terminalNextAction(): string {
+  return 'inspect campaign checkpoint and morning brief';
+}
+
 function completedWorkItems(ledger: readonly CampaignExecutionRecord[]): readonly string[] {
   return ledger.filter((item) => item.state === 'COMPLETED').map((item) => item.workItemId).sort();
 }
@@ -739,6 +743,15 @@ export class CampaignOrchestrator {
       updatedAt: nowIso(this.now),
       completedWorkItemIds: completedWorkItems(this.state.executionLedger),
       remainingWorkItemIds: remainingWorkItems(this.manifest, this.state.executionLedger),
+      nextExactAction: this.state.campaignStatus === 'IN_PROGRESS'
+        ? `execute ${remainingWorkItems(this.manifest, this.state.executionLedger)[0] ?? 'finalize morning brief'}`
+        : this.state.campaignStatus === 'INCOMPLETE_PROCESS_INTERRUPTION'
+          ? (this.state.executionLedger.find((record) => record.state === 'REPLAY_REQUIRED')?.workItemId === undefined
+            ? (this.state.nextExactAction.startsWith('resume reproduction ') || this.state.nextExactAction.startsWith('replay ')
+              ? this.state.nextExactAction
+              : `execute ${remainingWorkItems(this.manifest, this.state.executionLedger)[0] ?? 'resume campaign'}`)
+            : `replay ${this.state.executionLedger.find((record) => record.state === 'REPLAY_REQUIRED')!.workItemId}`)
+          : terminalNextAction(),
       candidateLifecycles: persistedLifecycles,
       runtimeContractVersions: { ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED },
       ...(interruptedWork.length > 0 ? { interruptedWork } : { interruptedWork: undefined }),
@@ -1158,10 +1171,10 @@ export class CampaignOrchestrator {
       for (const candidate of outcome.observations) this.appendObservation(candidate);
       const anomalyFingerprints = outcome.observations.map((candidate) => candidate.observation.fingerprint).sort();
       const record: Partial<CampaignExecutionRecord> = {
-        state: outcome.result === 'AUTH_BLOCKED' || outcome.result === 'SAFETY_BLOCKED' ? 'BLOCKED' : 'COMPLETED',
+        state: outcome.result === 'AUTH_BLOCKED' || outcome.result === 'SAFETY_BLOCKED' || outcome.result === 'RUNTIME_FAILURE' || outcome.result === 'INCOMPLETE' ? 'BLOCKED' : 'COMPLETED',
         executionGuarantee: executionGuarantee(item.kind, replay),
         result: outcome.result,
-        reasonCode: outcome.reasonCode ?? null,
+        reasonCode: outcome.reasonCode ?? (outcome.result === 'RUNTIME_FAILURE' || outcome.result === 'INCOMPLETE' ? outcome.result : null),
         actionsExecuted: outcome.actionsExecuted,
         apiExecutions: outcome.apiExecutions,
         browserContextCreated: outcome.browserContextCreated,
@@ -1192,8 +1205,17 @@ export class CampaignOrchestrator {
         this.checkpoint();
         return { stopped: { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'FAILURE_STORM_SHARED_ROOT_SYMPTOM' } };
       }
+      if (outcome.result === 'RUNTIME_FAILURE' || outcome.result === 'INCOMPLETE' || outcome.result === 'AUTH_BLOCKED') {
+        this.markPendingSkipped(outcome.reasonCode ?? outcome.result);
+        this.checkpoint();
+        return {
+          stopped: outcome.result === 'AUTH_BLOCKED'
+            ? { resultClass: 'PARTIAL_AUTH_BLOCKED', stopReason: 'AUTH_BLOCKED' }
+            : { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' },
+        };
+      }
       this.checkpoint();
-      return { stopped: outcome.result === 'AUTH_BLOCKED' ? { resultClass: 'PARTIAL_AUTH_BLOCKED', stopReason: 'AUTH_BLOCKED' } : outcome.result === 'SAFETY_BLOCKED' ? { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'SAFETY_EVENT' } : outcome.result === 'RUNTIME_FAILURE' || outcome.result === 'INCOMPLETE' ? { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' } : null };
+      return { stopped: outcome.result === 'SAFETY_BLOCKED' ? { resultClass: 'PARTIAL_SAFETY_BLOCKED', stopReason: 'SAFETY_EVENT' } : null };
     } catch (error) {
       const code = safeErrorCode(error);
       if (error instanceof CampaignProcessInterruptionError) {

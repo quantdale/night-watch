@@ -3699,3 +3699,30 @@ remain strict. The focused journey/replay matrix passed `21/21`, with
 typecheck and hardening green. The real Phase 2C matrix must be rerun against
 the current pushed checkpoint; the prior run remains historical evidence of
 the defect and is not retroactively relabeled.
+
+## D-92 — Terminal campaign failures must close pending work and expose a safe next action
+
+**Context.** The first real campaign resume on 2026-08-30 executed two
+journeys, then received a bounded common-journey `RUNTIME_FAILURE` from the
+real adapter. The orchestrator persisted that failed outcome as `COMPLETED`,
+left later work pending in a terminal checkpoint, and retained the initial
+`nextExactAction`. The owner wrapper then exited 0 because it asserted only
+safety and privacy counters, even though the checkpoint reported
+`PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED`.
+
+**Decision.** A `RUNTIME_FAILURE` or `INCOMPLETE` execution result is a
+blocked terminal work-item record with a safe reason code; all not-yet-run
+work is explicitly skipped before terminal persistence. Checkpoint generation
+derives the next action from current ledger state, preserves an explicit
+replay action only for resumable interruptions, and uses a fixed inspection
+action for terminal campaigns. The real campaign test succeeds only for
+`COMPLETE_CLEAN`, `COMPLETE_WITH_FINDINGS`, or valid bounded-budget terminals;
+partial auth, safety, runtime, owner-policy, or interruption outcomes return
+nonzero.
+
+**Evidence and consequences.** The synthetic campaign/checkpoint/resume
+regression passed `37/37` with typecheck and hardening green. This preserves
+the established policy that runtime-infrastructure failures are not resumed
+automatically, while making the persisted owner next action and process exit
+truthful. A fresh DEV campaign is required; the prior terminal checkpoint is
+retained as private historical evidence and is not rewritten.
