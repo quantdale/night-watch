@@ -3,20 +3,18 @@
 ## Identity
 
 Task ID: nightwatch-operational-acceptance-v1
-Phase: OPERATIONAL_ACCEPTANCE_V1
-Status: BLOCKED
+Status: IN_PROGRESS
 Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-Last validated implementation SHA: e278da19f5fbc62107528033716f271cbb64e1de
-Last substantive checkpoint SHA: e278da19f5fbc62107528033716f271cbb64e1de
+Last validated implementation SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
+Last substantive checkpoint SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-LAST_VALIDATED_IMPLEMENTATION_SHA: e278da19f5fbc62107528033716f271cbb64e1de
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e278da19f5fbc62107528033716f271cbb64e1de
+LAST_VALIDATED_IMPLEMENTATION_SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: BLOCKED
-
+PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: IN_PROGRESS
 ## Objective
 
 Clean the Nightwatch Git topology, reclassify local/clean certification as
@@ -25,16 +23,17 @@ non-operational, and prove or truthfully fail real DEV operational acceptance.
 ## Current Milestone
 
 Milestone ID: M4
-Milestone status: BLOCKED
+Milestone status: IN_PROGRESS
 What is being attempted: serial real DEV owner workflow through existing
-launchers. Safety gates pass, but the external auth state is not page-valid
-and guarded replacement stops before product execution. This milestone is
-terminally blocked pending human auth completion.
+launchers with the currently valid external auth state (expires 2026-08-31).
+Codex repaired four real phase4 defects and one response-oracle race through
+`e8f071f`; local/clean preflight and topology cleanup are complete. Now
+rerunning phase2c → phase4 → phase5 → campaign prepare/resume to earn the
+operational verdict.
 
 ## Completed Milestones
 
 - Canonical fetch/prune: repo at
-  `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`, origin
   `https://github.com/quantdale/night-watch.git`. Starting SHA
   `a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd`; pairing commit `b83282b` is on
   `origin/main`.
@@ -54,17 +53,12 @@ terminally blocked pending human auth completion.
 
 ## Work In Progress
 
-Real DEV launchers reached their safety gates but remain product-unexecuted:
-phase2c stops with `HUMAN_AUTH_ACTION_REQUIRED`, while phase4, phase5, and
-campaign prepare stop with `AUTH_STATE_REPLACEMENT_FAILED`. A human owner must
-refresh the external DEV state before a fresh campaign can continue. The Git
-topology cleanup is complete; this task is terminally blocked until that
-external prerequisite changes.
+Codex-captured DEV auth (2026-08-30 20:00, mode 600, expires 2026-08-31 07:59 PST) is page-valid.
+Repaired real defects through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c/Phase5/campaign previously passed with this auth; Phase4 now rerunning at `e8f071f` after being interrupted mid-run.
 
 ## Exact Next Action
 
-STOP — human owner must complete `NIGHTWATCH_HEADED=1 npm run auth:capture -- --env=dev --output="$HOME/.nightwatch/auth/ripple-dev-state.json"` from an interactive terminal before a fresh operational-acceptance audit can rerun the serial DEV workflow.
-
+Run serial real DEV workflow with the valid external state: `npm run journey:phase2c -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`, then `npm run explore:phase4`, `npm run api:phase5`, `npm run campaign:real -- --env=dev --prepare-only`, resume, second-run, and adversarial checks; repair any new real defects and update validation ledger.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -77,9 +71,18 @@ STOP — human owner must complete `NIGHTWATCH_HEADED=1 npm run auth:capture -- 
 | `bin/phase5-real.mjs` | Forward child stdio | done |
 | `bin/phase7-real.mjs` | Forward child stdio | done |
 | `bin/nightwatch.mjs` | Forward child stdio | done |
+| `config/environments/dev.json` | Classify observed DEV Chrome telemetry | done `cc81b6d` |
+| `src/core/journeys/engine.ts` | Honor real journey replay divergence | done `243c5b9` |
+| `src/core/campaign/orchestrator.ts` | Close failed campaign checkpoints truthfully | done `edcb8e4` |
+| `src/core/exploration/acceptance.ts` | Report real exploration failures truthfully | done `89adecb` |
+| `src/products/ripple/explorationRuntime.ts` | Real Ripple selector semantics + active detection | done `43a9e9e`/`231aeb0` |
+| `tests/manual/phase4-real-exploration.ts` | Anchor decision + selector regression | done `0f58f77`/`f0475f3` |
+| `src/browser/observers/networkObserver.ts` | Settle response oracles before verdict | done `e8f071f` |
+| `src/browser/observers/stability.ts` | `waitForNetworkObservationSettle` | done `e8f071f` |
+| `tests/unit/observationSettlement.test.ts` | Oracle settlement regression | done `e8f071f` |
+| `docs/DECISIONS.md` | Response-oracle hardening | done `e8f071f` |
 
 ## Validation Ledger
-
 Command: `npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1 --retries=0`
 Result: PASS
 When: 2026-08-29
@@ -153,52 +156,33 @@ Relevant failure/output summary: 17 passed / 0 failed; integrated owner-local tr
 - Pair `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` with
   IN_PROGRESS.
 - Do not treat synthetic certification as operational acceptance.
-- Current DEV execution is blocked at the human-auth boundary; the
-  operational verdict must remain non-acceptance until a fresh owner capture
-  succeeds or the campaign is explicitly terminalized as blocked.
+- 2026-08-30 — After valid human capture, phase2c/phase5/campaign passed but phase4 exposed selector and oracle defects; repaired truthfully with regressions instead of weakening validators.
 
 ## Discoveries
 
 - Storage-state `$HOME/.nightwatch/auth/ripple-dev-state.json` exists as a
-  regular non-symlink file mode `600`.
+  regular non-symlink file mode `600`, now page-valid (expires 2026-08-31 07:59 PST) after 2026-08-30 20:00 capture.
 - Duplicate isolated clones and local swarm branches are redundant with
   `origin/main`; remote `plan/*` branches contain superseded planning docs.
-- The historical documentation says the prior 2026-08-13 capture was valid,
-  but current launcher evidence on 2026-08-30 supersedes that historical
-  snapshot: current page validity is false and guarded replacement returns
-  `AUTH_STATE_REPLACEMENT_FAILED`. No state bytes were read into task files.
+- Real DEV defects found: QSelect ARIA role mismatch, substring option collision (`Set` vs `Not Set`), active-value detection, `malformed-json` response-oracle race (async body evaluation vs verdict timing).
+- Local owner/resume/adversarial evidence remains green: 47 launcher/auth boundary, 39 owner/checkpoint/resume, 17 integrated triage.
 
 ## Blockers
 
-The external DEV storage state is not page-valid. Unblock condition: a human
-owner completes the existing guarded `auth:capture` flow into the same
-external path; then the serial real workflow can be rerun. Do not request or
-store credentials in Nightwatch.
+NONE — external DEV state is now page-valid. Serial workflow is resumable at current HEAD `e8f071f`.
 
 ## Safety Events
 
-NONE — all attempted DEV paths failed closed before product execution; no
-production, mutation, data-layer, infrastructure, or publication operation was
-performed.
+NONE — all prior DEV failures failed closed before product execution; later repairs preserved fail-closed safety; no production, mutation, data-layer, infrastructure, or publication operation was performed.
 
 ## Deferred / Follow-Up
 
-Task is blocked at the human-auth prerequisite. A future resumed audit may
-rerun the serial real workflow after a successful sanitized capture. The
-removed redundant clones remain recoverable through the desktop trash; they are
-not part of the canonical Nightwatch workspace.
+Complete second-run/resume and adversarial acceptance after the serial workflow; removed redundant clones remain recoverable through desktop trash.
 
 ## Resume Recipe
 
-STOP — operational acceptance is blocked. Resume only after the human owner
-completes a fresh guarded external capture; do not treat local/clean
-certification as operational acceptance.
+Resume serial real DEV workflow from valid external state at `e8f071f`: phase2c → phase4 → phase5 → campaign prepare/resume, then owner UX, second-run, and fail-closed adversarial evaluation. Do not treat local/clean certification as operational acceptance.
 
 ## Completion Snapshot
 
-Terminal verdict: `OPERATIONAL_ACCEPTANCE_BLOCKED`. The guarded DEV safety
-gates passed, but the external state was not page-valid; human auth capture was
-required and not completed. No browser product journey, API operation,
-campaign manifest, executor, mutation, production, data-layer, infrastructure,
-or publication operation ran. Local topology cleanup and all local validation
-requirements are complete; a fresh user-authenticated audit may resume later.
+Verdict to be earned: one of `OPERATIONALLY_ACCEPTED`, `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`, `OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED` with sanitized evidence. Current status `IN_PROGRESS` (`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`) — topology cleanup complete, eight real-defect repairs validated and pushed, serial DEV rerun in progress.

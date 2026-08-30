@@ -77,27 +77,20 @@ existing serial launchers.
 - Validation commands: `npm run typecheck`; `npm run hardening:check`; `npm run agent:check`; `npm run project:check`; `npm run gate:local`; `npm run gate:clean`
 - Status: COMPLETE
 
-### M4 — Real DEV owner workflow — BLOCKED
+### M4 — Real DEV owner workflow — IN_PROGRESS
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
-- Status: BLOCKED; 2026-08-30 safety gates passed, but the external DEV
-  state was not page-valid and all product-capable paths stopped during
-  guarded auth replacement with `AUTH_STATE_REPLACEMENT_FAILED` (phase2c
-  emitted `HUMAN_AUTH_ACTION_REQUIRED`). A human owner must refresh the state
-  before the real workflow can continue.
+- Status: IN_PROGRESS; 2026-08-30 20:00 human capture is page-valid until 2026-08-31. Phase2c/phase5/campaign previously passed; phase4 exposed four selector defects and one response-oracle race, repaired through `e8f071f` and interrupted mid-rerun. Now resuming serial workflow from current HEAD.
 
-### M5 — UX, second run, efficacy, adversarial — BLOCKED
+### M5 — UX, second run, efficacy, adversarial — IN_PROGRESS
 
 - Objective: owner UX, resume after persisted state, fail-closed cases, verdict.
-- Status: BLOCKED; local owner/resume/adversarial evidence passed, but the
-  real second run and efficacy assessment require the unavailable human auth
-  capture.
+- Status: IN_PROGRESS; local owner/resume/adversarial evidence passed; real second-run and efficacy now executable with valid auth and repaired oracles.
 
-### M6 — Final report and topology close — BLOCKED
+### M6 — Final report and topology close — IN_PROGRESS
 
 - Objective: sanitized report, one of four verdicts, push without force.
-- Status: BLOCKED; truthful terminal verdict is
-  `OPERATIONAL_ACCEPTANCE_BLOCKED` pending a fresh owner-authenticated audit.
+- Status: IN_PROGRESS; topology already `main`-only locally and remotely; report and CURRENT_STATE will be finalized after the serial DEV rerun earns its verdict.
 
 ## Validation Strategy
 
