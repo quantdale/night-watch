@@ -1,10 +1,10 @@
 ## 1. Clean-machine
 
-- [ ] 1.1 `gate:clean` Node20 `clean-receipt:sha256:` + `receipt:sha256:` at e0c0c33, `ONBOARDING.md` sufficient
+- [x] 1.1 `gate:clean` Node20 `clean-receipt:sha256:` + `receipt:sha256:` at validated implementation d12b1d7; `ONBOARDING.md` sufficient
 
 ## 2. Isolated parity
 
-- [ ] 2.1 Canonical `gate:local` vs isolated `gate:local` exact counts and skip identities
+- [x] 2.1 Canonical versus topology-correct detached-source full suite exact counts and skip identities: 2661 enumerated, 2648 pass, 13 identical skips, 0 fail
 
 ## 3. Final DEV requalification
 
