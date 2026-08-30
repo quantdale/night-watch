@@ -72,6 +72,18 @@ async function uniqueCount(locator: Locator): Promise<number> {
   }
 }
 
+async function selectedOptionMatches(select: Locator, optionLabels: readonly string[]): Promise<boolean> {
+  const input = select.locator('input');
+  if (await uniqueCount(input) === 1) {
+    const current = (await input.inputValue()).trim();
+    if (optionLabels.includes(current)) return true;
+  }
+  // Quasar 1 QSelect uses an empty input for use-input=false and renders the
+  // mapped selected label in the field body instead.
+  return (await Promise.all(optionLabels.map(async (label) =>
+    uniqueCount(select.getByText(label, { exact: true }))))).some((count) => count === 1);
+}
+
 function toRuntimeRequest(item: SemanticRequestObservation): RuntimeNetworkObservation {
   return {
     family: item.ruleId,
@@ -141,11 +153,7 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
     if (await uniqueCount(locator) !== 1) return false;
     if (action.locator.kind === 'selector-option') {
       const select = locator.locator('.q-select');
-      const input = select.locator('input');
-      if (await uniqueCount(input) === 1) {
-        const current = (await input.inputValue()).trim();
-        if (action.locator.optionLabels.includes(current)) return false;
-      }
+      if (await selectedOptionMatches(select, action.locator.optionLabels)) return false;
     }
     return true;
   };
@@ -157,11 +165,7 @@ export function createRippleExplorationRuntime(opts: RippleExplorationRuntimeOpt
     if (await uniqueCount(select) !== 1) throw new ApprovedActionFailure('SELECTOR_CONTROL_NOT_UNIQUE');
     // A selected source enum is not re-clicked: it is a runtime-unavailable
     // edge for this action, not permission to choose another option.
-    const input = select.locator('input');
-    if (await uniqueCount(input) === 1) {
-      const current = (await input.inputValue()).trim();
-      if (spec.optionLabels.includes(current)) throw new ApprovedActionFailure('OPTION_ALREADY_SELECTED');
-    }
+    if (await selectedOptionMatches(select, spec.optionLabels)) throw new ApprovedActionFailure('OPTION_ALREADY_SELECTED');
     try {
       await select.click();
     } catch {

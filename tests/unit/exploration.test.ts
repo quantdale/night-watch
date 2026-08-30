@@ -75,7 +75,7 @@ test.describe('Phase 4 exploration model', () => {
       <div class="__ExchangeRateDataTable_Selectors">
         <div class="__C_Selector">
           <div class="__C_Selector-Label">Cloud Provider</div>
-          <div class="q-select"><input value="Amazon Web Services" /></div>
+          <div class="q-select"><input value="" /><span>Amazon Web Services</span></div>
         </div>
       </div>
       <script>
@@ -92,6 +92,7 @@ test.describe('Phase 4 exploration model', () => {
       </script>
     `);
     const action = RIPPLE_PHASE4_ACTIONS.find((candidate) => candidate.actionId === 'p4.j1.vendor-local.azure')!;
+    const alreadySelected = RIPPLE_PHASE4_ACTIONS.find((candidate) => candidate.actionId === 'p4.j1.vendor-local.aws')!;
     const network = {
       beginJourneyIntent: () => undefined,
       endJourneyIntent: () => undefined,
@@ -106,6 +107,7 @@ test.describe('Phase 4 exploration model', () => {
       monitor,
       authValid: true,
     });
+    expect(await runtime.actionAvailable(alreadySelected)).toBeFalsy();
     expect(await runtime.actionAvailable(action)).toBeTruthy();
     expect((await runtime.execute(action)).status).toBe('COMPLETED');
   });

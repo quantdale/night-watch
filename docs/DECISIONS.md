@@ -3772,3 +3772,26 @@ Quasar-style menu item without an option role and passes through the runtime
 path. The next clean real Phase 4 run must prove the fix against DEV and
 remain subject to the existing safety and successful-termination gates. No
 new target, request family, mutation, or external authority is admitted.
+
+## D-95 — Phase 4 availability must inspect the mapped QSelect selection
+
+**Context.** After D-94, the real Phase 4 E1 seeds completed successfully,
+but E2 selected the already-active AWS vendor and waited for a new common
+exchange read that the product correctly did not issue. The sanitized state
+record showed both AWS and Azure as available even though the common-exchange
+page had initialized its default vendor. This is because the source-backed
+shared Selector uses Quasar 1 `use-input=false`: its input is empty while the
+mapped selected label is rendered in the field body.
+
+**Decision.** Determine selector availability from both the input value and
+the exact fixed source labels rendered inside the QSelect field. An action
+whose requested source option is already selected is unavailable and is not
+clicked; the planner may choose another approved option or a terminal safe
+edge. The same check is applied at execution as a defensive fail-closed
+precondition.
+
+**Evidence and consequences.** A browser-backed unit fixture now models an
+empty QSelect input with a rendered AWS label and proves AWS is excluded
+while Azure remains executable. The next real Phase 4 run must show E2
+vendor selection causing the approved read or fail with an explicit bounded
+failure; no request, mutation, or authority is widened.
