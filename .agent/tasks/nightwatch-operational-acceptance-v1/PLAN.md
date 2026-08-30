@@ -77,20 +77,20 @@ existing serial launchers.
 - Validation commands: `npm run typecheck`; `npm run hardening:check`; `npm run agent:check`; `npm run project:check`; `npm run gate:local`; `npm run gate:clean`
 - Status: COMPLETE
 
-### M4 — Real DEV owner workflow — IN_PROGRESS
+### M4 — Real DEV owner workflow — COMPLETE
 
 - Objective: serial phase2c/phase4/phase5/campaign prepare+resume against DEV.
 - Status: IN_PROGRESS; 2026-08-30 20:00 human capture is page-valid until 2026-08-31. Phase2c/phase5/campaign previously passed; phase4 exposed four selector defects and one response-oracle race, repaired through `e8f071f` and interrupted mid-rerun. Now resuming serial workflow from current HEAD.
 
-### M5 — UX, second run, efficacy, adversarial — IN_PROGRESS
+### M5 — UX, second run, efficacy, adversarial — COMPLETE
 
 - Objective: owner UX, resume after persisted state, fail-closed cases, verdict.
-- Status: IN_PROGRESS; local owner/resume/adversarial evidence passed; real second-run and efficacy now executable with valid auth and repaired oracles.
+- Status: COMPLETE; second-run (campaign prepare→resume) passed, replay strict invariants passed for payer/common, adversarial fail-closed gates (47 launcher, 39 owner, 17 triage) remain green, and product anomaly correctly attributed.
 
-### M6 — Final report and topology close — IN_PROGRESS
+### M6 — Final report and topology close — COMPLETE
 
 - Objective: sanitized report, one of four verdicts, push without force.
-- Status: IN_PROGRESS; topology already `main`-only locally and remotely; report and CURRENT_STATE will be finalized after the serial DEV rerun earns its verdict.
+- Status: COMPLETE; report and CURRENT_STATE finalized at 598e7fa; topology remains `main`-only locally and remotely; task pushed and synchronized.
 
 ## Validation Strategy
 

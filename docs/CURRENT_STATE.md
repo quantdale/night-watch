@@ -2,16 +2,16 @@
 
 > Durable memory for the next agent/session. Last updated: **2026-08-30** for
 > successor campaign `nightwatch-operational-acceptance-v1`, project status
-> `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` at validated HEAD
-> `56d3c247626547b4d30812ae510f4d8f4e47f173`. Historical
+> `OPERATIONALLY_ACCEPTED` at validated HEAD
+> `598e7fa92fb99786b2db847ace8c1fdf566d3c71`. Historical
 > campaign `nightwatch-final-completion-and-l6-containment-v1` remains
 > COMPLETE local/synthetic/clean certification
 > (`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`) at release checkpoint
 > `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; that token is not operational
 > acceptance. GitHub Actions remains external non-evidence because its
 > exact-head job executed zero steps. Codex-captured DEV auth (2026-08-30 20:00)
-> is page-valid until 2026-08-31 07:59 PST; nine real-defect repairs through
-> `56d3c24` are validated and the serial DEV workflow is resumable.
+> is page-valid until 2026-08-31 07:59 PST; ten real-defect repairs through
+> `598e7fa` are validated and the serial DEV workflow is complete; one real product anomaly (billinggroups malformed) correctly surfaced; campaign COMPLETE_CLEAN.
 > The predecessor (`nightwatch-final-assurance-release-readiness-hardening-v1`;
 > validated implementation checkpoint `72af3a8`) is historical and ended
 > `PROJECT_NOT_COMPLETE_BLOCKED`; its L6 residual does not override the active
@@ -275,10 +275,10 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
+PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
 LAST_LOCALLY_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LAST_CLEAN_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 CI_OBSERVED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57

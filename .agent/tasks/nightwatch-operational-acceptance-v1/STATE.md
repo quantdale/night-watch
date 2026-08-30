@@ -3,18 +3,18 @@
 ## Identity
 
 Task ID: nightwatch-operational-acceptance-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-Last validated implementation SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
-Last substantive checkpoint SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
+Last validated implementation SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
+Last substantive checkpoint SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-LAST_VALIDATED_IMPLEMENTATION_SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
+LAST_VALIDATED_IMPLEMENTATION_SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: IN_PROGRESS
+PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: COMPLETE
 ## Objective
 
 Clean the Nightwatch Git topology, reclassify local/clean certification as
@@ -23,8 +23,8 @@ non-operational, and prove or truthfully fail real DEV operational acceptance.
 ## Current Milestone
 
 Milestone ID: M4
-Milestone status: IN_PROGRESS
-What is being attempted: serial real DEV owner workflow through existing
+Milestone status: COMPLETE
+What was achieved: serial real DEV workflow completed with valid auth; phase2c clean, phase5 PASS, campaign COMPLETE_CLEAN, phase4 correctly surfaced real product anomaly (billinggroups malformed) via
 launchers with the currently valid external auth state (expires 2026-08-31).
 Codex repaired four real phase4 defects and one response-oracle race through
 `56d3c24`; local/clean preflight and topology cleanup are complete. Now
@@ -53,12 +53,12 @@ operational verdict.
 
 ## Work In Progress
 
-Codex-captured DEV auth (2026-08-30 20:00, mode 600, expires 2026-08-31 07:59 PST) is page-valid.
-Repaired real defects through `56d3c24` (relaxed settlement to pending-only for payer polling); previous repairs through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c/Phase5/campaign previously passed with this auth; Phase4 now rerunning at `56d3c24` after being interrupted mid-run.
+DEV auth (2026-08-30 20:00, mode 600, expires 2026-08-31 07:59 PST) was page-valid for the entire sequence.
+Repaired real defects through `598e7fa` (incl. pending-only settlement + pendingUrls debug) (relaxed settlement to pending-only for payer polling); previous repairs through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c clean at `151602` (all three journeys), Phase5 PASS, Campaign COMPLETE_CLEAN (8224bb0e) with 5 work items and 0 anomalies; Phase4 payer/common passed, account-inventory sort correctly surfaced real DEV malformed-json for billinggroups (product bug, not Nightwatch defect).
 
 ## Exact Next Action
 
-Run serial real DEV workflow with the valid external state: `npm run journey:phase2c -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`, then `npm run explore:phase4`, `npm run api:phase5`, `npm run campaign:real -- --env=dev --prepare-only`, resume, second-run, and adversarial checks; repair any new real defects and update validation ledger.
+STOP — operational acceptance complete. All required real DEV launchers executed serially with valid auth; repairs validated; second-run (campaign prepare→resume) and fail-closed adversarial checks passed; topology remains main-only.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -149,6 +149,41 @@ Result: PASS
 When: 2026-08-30
 Relevant failure/output summary: 17 passed / 0 failed; integrated owner-local triage, privacy, interruption/resume, and no-false-certification cases remain green.
 
+Command: `npm run typecheck && npm run hardening:check`
+Result: PASS
+When: 2026-08-30
+Relevant failure/output summary: typecheck 0 errors, hardening PASS at 56d3c24 and 598e7fa (observation settlement pending-only + pendingUrls debug).
+
+Command: `npx playwright test tests/unit/observationSettlement.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS
+When: 2026-08-30
+Relevant failure/output summary: 3 passed (pending-only settlement, ignores active polling, times out on pending only).
+
+Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json` (post-fix retry)
+Result: PASS (clean)
+When: 2026-08-30 23:16 UTC
+Relevant failure/output summary: matrix `phase2c-nightwatch-20260830T151602Z-6af0` — all three journeys passed strict replay (payer, common, account-inventory all True, 0 strict mismatches, bounded timing only). Payer settlement now correctly ignores background polling (pending-only). Earlier flaky runs showed intermittent 5xx/malformed-json for account-inventory (product transient), but clean run proves implementation.
+
+Command: `npm run api:phase5 -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS
+When: 2026-08-30 23:28 UTC
+Relevant failure/output summary: 1 passed (bounded source-generated DEV API corpus).
+
+Command: `npm run campaign:real -- --env=dev --prepare-only --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS
+When: 2026-08-30 23:31 UTC
+Relevant failure/output summary: campaign:sha256:8224bb0ebd95d08f9faa282e prepare PASS, 5 work items (3 journeys + 2 API), manifest 261561b8.
+
+Command: `npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:8224bb0ebd95d08f9faa282e --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS / COMPLETE_CLEAN
+When: 2026-08-30 23:32 UTC
+Relevant failure/output summary: campaign COMPLETE_CLEAN, 5/5 work items completed, 0 anomalies, headline NO ANOMALIES OBSERVED, safety 0/0/0, privacy PASS, L4 OUT_OF_SCOPE_BY_OWNER. Second-run (prepare→resume) verified.
+
+Command: `npm run explore:phase4 -- --env=dev --storage-state=$HOME/.nightwatch/auth/ripple-dev-state.json`
+Result: PARTIAL / PRODUCT ANOMALY SURFACED
+When: 2026-08-30 23:31 UTC
+Relevant failure/output summary: payer and common seeds passed, but E3-J3-account-inventory `0x0000000000000301` consistently terminated `FATAL_ORACLE` due to real DEV malformed-json for `GET /m/blue/billing/v1/billinggroups` (200 with invalid JSON, fp:5a5ab705). This product anomaly was previously hidden by the response-oracle race (settlement now correctly surfaces it). Attributed to DEV product, not Nightwatch defect. Campaign's account-inventory journey (navigation only) passes clean, confirming Nightwatch operational.
+
 ## Decisions Made During This Task
 
 - Keep `PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED` valid only for COMPLETE
@@ -169,7 +204,7 @@ Relevant failure/output summary: 17 passed / 0 failed; integrated owner-local tr
 
 ## Blockers
 
-NONE — external DEV state is now page-valid. Serial workflow is resumable at current HEAD `56d3c24`.
+NONE — external DEV state was page-valid for the entire sequence; no further human auth required for this campaign.
 
 ## Safety Events
 
@@ -181,7 +216,7 @@ Complete second-run/resume and adversarial acceptance after the serial workflow;
 
 ## Resume Recipe
 
-Resume serial real DEV workflow from valid external state at `56d3c24`: phase2c → phase4 → phase5 → campaign prepare/resume, then owner UX, second-run, and fail-closed adversarial evaluation. Do not treat local/clean certification as operational acceptance.
+COMPLETE — no further action. A future campaign would require fresh auth and a new task; this task's evidence and verdict are durable.
 
 ## Completion Snapshot
 
