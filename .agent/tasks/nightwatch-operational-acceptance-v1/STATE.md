@@ -5,13 +5,13 @@
 Task ID: nightwatch-operational-acceptance-v1
 Status: IN_PROGRESS
 Starting SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-Last validated implementation SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
-Last substantive checkpoint SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
+Last validated implementation SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
+Last substantive checkpoint SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a17c6aebaaf50a933bcd9be77474f0b9cf0b93dd
-LAST_VALIDATED_IMPLEMENTATION_SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: e8f071f129163b310993dbb9c60230c7e3eb6233
+LAST_VALIDATED_IMPLEMENTATION_SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 56d3c247626547b4d30812ae510f4d8f4e47f173
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_OPERATIONAL_ACCEPTANCE_V1_STATUS: IN_PROGRESS
@@ -27,7 +27,7 @@ Milestone status: IN_PROGRESS
 What is being attempted: serial real DEV owner workflow through existing
 launchers with the currently valid external auth state (expires 2026-08-31).
 Codex repaired four real phase4 defects and one response-oracle race through
-`e8f071f`; local/clean preflight and topology cleanup are complete. Now
+`56d3c24`; local/clean preflight and topology cleanup are complete. Now
 rerunning phase2c → phase4 → phase5 → campaign prepare/resume to earn the
 operational verdict.
 
@@ -54,7 +54,7 @@ operational verdict.
 ## Work In Progress
 
 Codex-captured DEV auth (2026-08-30 20:00, mode 600, expires 2026-08-31 07:59 PST) is page-valid.
-Repaired real defects through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c/Phase5/campaign previously passed with this auth; Phase4 now rerunning at `e8f071f` after being interrupted mid-run.
+Repaired real defects through `56d3c24` (relaxed settlement to pending-only for payer polling); previous repairs through `e8f071f`: Ripple QSelect menu locator (`.q-menu .q-item` visible), active-selector detection, exact option matching (Set vs Not Set), anchor-decision exposure, and response-oracle settlement (async body/oracle handlers now bound to request lifecycle and journey verdicts require `waitForNetworkObservationSettle`). Phase2c/Phase5/campaign previously passed with this auth; Phase4 now rerunning at `56d3c24` after being interrupted mid-run.
 
 ## Exact Next Action
 
@@ -77,10 +77,10 @@ Run serial real DEV workflow with the valid external state: `npm run journey:pha
 | `src/core/exploration/acceptance.ts` | Report real exploration failures truthfully | done `89adecb` |
 | `src/products/ripple/explorationRuntime.ts` | Real Ripple selector semantics + active detection | done `43a9e9e`/`231aeb0` |
 | `tests/manual/phase4-real-exploration.ts` | Anchor decision + selector regression | done `0f58f77`/`f0475f3` |
-| `src/browser/observers/networkObserver.ts` | Settle response oracles before verdict | done `e8f071f` |
-| `src/browser/observers/stability.ts` | `waitForNetworkObservationSettle` | done `e8f071f` |
-| `tests/unit/observationSettlement.test.ts` | Oracle settlement regression | done `e8f071f` |
-| `docs/DECISIONS.md` | Response-oracle hardening | done `e8f071f` |
+| `src/browser/observers/networkObserver.ts` | Settle response oracles before verdict | done `56d3c24` |
+| `src/browser/observers/stability.ts` | `waitForNetworkObservationSettle` | done `56d3c24` |
+| `tests/unit/observationSettlement.test.ts` | Oracle settlement regression | done `56d3c24` |
+| `docs/DECISIONS.md` | Response-oracle hardening | done `56d3c24` |
 
 ## Validation Ledger
 Command: `npx playwright test tests/unit/projectState.test.ts --project=nightwatch --workers=1 --retries=0`
@@ -169,7 +169,7 @@ Relevant failure/output summary: 17 passed / 0 failed; integrated owner-local tr
 
 ## Blockers
 
-NONE — external DEV state is now page-valid. Serial workflow is resumable at current HEAD `e8f071f`.
+NONE — external DEV state is now page-valid. Serial workflow is resumable at current HEAD `56d3c24`.
 
 ## Safety Events
 
@@ -181,8 +181,8 @@ Complete second-run/resume and adversarial acceptance after the serial workflow;
 
 ## Resume Recipe
 
-Resume serial real DEV workflow from valid external state at `e8f071f`: phase2c → phase4 → phase5 → campaign prepare/resume, then owner UX, second-run, and fail-closed adversarial evaluation. Do not treat local/clean certification as operational acceptance.
+Resume serial real DEV workflow from valid external state at `56d3c24`: phase2c → phase4 → phase5 → campaign prepare/resume, then owner UX, second-run, and fail-closed adversarial evaluation. Do not treat local/clean certification as operational acceptance.
 
 ## Completion Snapshot
 
-Verdict to be earned: one of `OPERATIONALLY_ACCEPTED`, `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`, `OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED` with sanitized evidence. Current status `IN_PROGRESS` (`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`) — topology cleanup complete, eight real-defect repairs validated and pushed, serial DEV rerun in progress.
+Verdict to be earned: one of `OPERATIONALLY_ACCEPTED`, `REAL_SYSTEM_EXECUTION_VERIFIED_EFFICACY_UNPROVEN`, `OPERATIONAL_ACCEPTANCE_BLOCKED`, or `OPERATIONAL_ACCEPTANCE_FAILED` with sanitized evidence. Current status `IN_PROGRESS` (`IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING`) — topology cleanup complete, nine real-defect repairs validated and pushed, serial DEV rerun in progress.
