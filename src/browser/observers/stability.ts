@@ -16,11 +16,15 @@ import { isRippleStructurallyReady, type RippleStructuralState } from '../../pro
 const POLL_MS = 100;
 
 /**
- * Wait until the network observer has finished both browser request
- * lifecycles and its asynchronous response-body/oracle handlers. Generic
- * Ripple structural stability intentionally ignores background activity, but
- * a journey verdict must not be finalized while a response can still produce
- * a configured oracle failure.
+ * Wait until the network observer has finished its asynchronous
+ * response-body/oracle handlers. Generic Ripple structural stability
+ * intentionally ignores background activity, and payer/exchange pages may
+ * continue benign polling after journey steps. A journey verdict must not be
+ * finalized while a response can still produce a configured oracle failure,
+ * but it must not remain blocked forever on unrelated background requests.
+ * The barrier therefore waits for pending handlers to drain and for a quiet
+ * interval; in-flight requests are not required to be zero because they will
+ * be observed as pending handlers once their responses arrive.
  */
 export async function waitForNetworkObservationSettle(opts: {
   network: Pick<NetworkObserver, 'activeRequests' | 'pendingResponseHandlers' | 'lastActivityAt'>;
@@ -37,7 +41,6 @@ export async function waitForNetworkObservationSettle(opts: {
 
   for (;;) {
     if (
-      opts.network.activeRequests() === 0 &&
       opts.network.pendingResponseHandlers() === 0 &&
       now() - opts.network.lastActivityAt() >= quietMs
     ) {

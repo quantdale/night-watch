@@ -3827,16 +3827,27 @@ late oracle failure invisible to exact replay acceptance.
 
 **Decision.** Track response handlers separately from in-flight requests and
 keep request accounting correct for both completed and failed requests. Add a
-bounded observation-settlement barrier requiring zero active requests, zero
-pending response handlers, and a quiet interval. Declarative journey evidence
-must settle before computing its final oracle/pass fields; Phase 4 exploration
-and exact replay must settle again after runtime work and require a clean
-monitor before recording success. A settlement timeout or configured oracle
-failure is recorded as a non-successful bounded outcome; no raw response body
-or browser error text is exposed.
+bounded observation-settlement barrier requiring zero pending response handlers
+and a quiet interval (active in-flight requests are intentionally not required
+to be zero). Declarative journey evidence must settle before computing its
+final oracle/pass fields; Phase 4 exploration and exact replay must settle
+again after runtime work and require a clean monitor before recording success.
+A settlement timeout or configured oracle failure is recorded as a
+non-successful bounded outcome; no raw response body or browser error text is
+exposed.
+
+**Amendment 2026-08-30.** Initial barrier required zero active requests,
+zero pending handlers, and quiet. Real payer-exchange validation showed the
+payer page continues benign polling after journey steps, so requiring zero
+active would time out even when no pending oracle work remains. The barrier
+was relaxed to zero pending + quiet only (active is ignored because any
+in-flight request will become a pending handler upon response). Local
+settlement regressions were updated and the payer journey now settles correctly
+while still guaranteeing that a malformed-json handler cannot be missed.
 
 **Evidence and consequences.** Local timing, journey, exploration, and
 observer regressions cover the barrier and the existing metadata-only oracle
-boundary remains intact. The real Phase 4 matrix must be rerun from the clean
-checkpoint; any surviving malformed-response event remains DEV/product
-evidence and must not be suppressed or reclassified as a Nightwatch pass.
+boundary remains intact. The real Phase 2C and Phase 4 matrices must be rerun
+from the clean checkpoint; any surviving malformed-response event remains
+DEV/product evidence and must not be suppressed or reclassified as a
+Nightwatch pass.

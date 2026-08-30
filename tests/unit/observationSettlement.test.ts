@@ -4,7 +4,7 @@
 import { expect, test } from '@playwright/test';
 import { waitForNetworkObservationSettle } from '../../src/browser/observers/stability';
 
-test('settlement waits for active requests, response handlers, and the quiet interval', async () => {
+test('settlement waits for pending handlers and the quiet interval (active requests are not required to drain)', async () => {
   let now = 0;
   let active = 1;
   let pending = 1;
@@ -23,7 +23,7 @@ test('settlement waits for active requests, response handlers, and the quiet int
     sleep: async (ms) => {
       now += ms;
       if (now >= 100 && !completed) {
-        active = 0;
+        active = 1; // background polling may remain in-flight; settlement ignores it
         pending = 0;
         lastActivity = now;
         completed = true;
@@ -35,8 +35,26 @@ test('settlement waits for active requests, response handlers, and the quiet int
   expect(now).toBeGreaterThanOrEqual(300);
 });
 
-test('settlement times out instead of certifying an in-flight observation', async () => {
+test('settlement times out instead of certifying a pending observation', async () => {
   let now = 0;
+  const settled = await waitForNetworkObservationSettle({
+    network: {
+      activeRequests: () => 0,
+      pendingResponseHandlers: () => 1,
+      lastActivityAt: () => 0,
+    },
+    quietMs: 100,
+    timeoutMs: 250,
+    now: () => now,
+    sleep: async (ms) => { now += ms; },
+  });
+
+  expect(settled).toBe(false);
+  expect(now).toBeGreaterThanOrEqual(250);
+});
+
+test('settlement ignores in-flight requests when no pending handler remains', async () => {
+  let now = 350;
   const settled = await waitForNetworkObservationSettle({
     network: {
       activeRequests: () => 1,
@@ -49,6 +67,5 @@ test('settlement times out instead of certifying an in-flight observation', asyn
     sleep: async (ms) => { now += ms; },
   });
 
-  expect(settled).toBe(false);
-  expect(now).toBeGreaterThanOrEqual(250);
+  expect(settled).toBe(true);
 });
