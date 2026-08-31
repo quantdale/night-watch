@@ -17,11 +17,12 @@ general hardening.
 
 ## Current result
 
-M0 is complete. The pushed deterministic regression proves three collection
-journeys consume `journeyContexts=3/3`, a current-source product candidate is
-clustered and queued, and the reproduction estimate fails
-`BUDGET_EXHAUSTED` before replay executor entry. M1 design and later closure
-remain in progress; see STATE.md for the validation ledger.
+M0 is complete at the pushed deterministic regression. M1 is now complete:
+the chosen design is a durable campaign/cluster replay reservation ledger,
+with one protected browser slot in the initial real profile, normalized
+physical replay requirements, and no collection-limit increase or retry
+bypass. M2 implementation and adversarial validation are active; see STATE.md
+for the exact validation ledger.
 
 ## Safety
 

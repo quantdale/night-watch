@@ -11,16 +11,44 @@ BUDGET_EXHAUSTED before replay executor entry.
 
 The fix must preserve boundedness while making replay capacity intentional.
 
-The implementation should prefer the smallest deterministic model that can be
-proven safe. Candidate designs include:
+The implementation MUST NOT simply add an unbounded retry path, raise the
+collection limits, or bypass the existing budget authority.
 
-- a dedicated reproduction reserve;
-- separate collection and reproduction sub-budgets;
-- deterministic transfer of explicitly unused collection capacity;
-- a campaign-level reserve committed at prepare time.
+## Chosen architecture
 
-The implementation MUST NOT simply add an unbounded retry path or bypass the
-existing budget authority.
+Use a dedicated, campaign-level replay reservation ledger without adding a new
+policy dimension or increasing `maxTotalBrowserContexts`.
+
+- The existing real profile's `maxPromotedClusters` is the finite maximum
+  number of browser replay reservations. For that profile, collection browser
+  reservations are capped at `maxTotalBrowserContexts -
+  maxPromotedClusters`; the protected slot is never silently consumed by
+  JOURNEY or EXPLORATION collection work. Synthetic fixture profiles keep their
+  existing resource model because their executors do not contact DEV.
+- A replay reservation consumes `replays`, any explicitly estimated
+  `apiExecutions` and `totalActions`, and one aggregate `browserContexts` slot
+  when the replay creates a browser context. Replay does not consume the
+  collection-only `journeyContexts` or `explorationContexts` sub-budgets. If
+  an adapter reports a category context estimate, the normalized physical
+  browser requirement is the maximum of the aggregate/category estimates, not
+  their sum. This is the deterministic rule that prevents a browser replay
+  from being rejected because the collection category counter is full.
+- Each reservation is persisted by deterministic campaign/cluster identity
+  with its normalized requirements and `RESERVED`/`CONSUMED` state. Reusing a
+  `RESERVED` record after a checkpoint does not charge again. A
+  `REPLAY_REQUIRED`/consumed reservation is terminal on resume and is never
+  re-entered, so an interruption after executor entry cannot duplicate
+  contact.
+- Eligibility remains upstream of reservation: only a current, non-unknown,
+  non-reproduced product candidate bound to the manifest source changeset can
+  reserve real replay capacity. Auth, capture/framework, environment,
+  known-defect, stale, incomplete, and duplicate candidates are rejected
+  before the replay callback.
+
+This is smaller and safer than arbitrary limit growth, broad sub-budget
+reallocation, or transfer heuristics: the existing aggregate browser and
+replay ceilings remain authoritative, while the one missing protected
+collection/replay boundary becomes durable and inspectable.
 
 ## Required invariants
 

@@ -1,7 +1,7 @@
 # Tasks — Replay Budget and Dossier Closure
 
-- [ ] M0 reproduce current replay-budget starvation
-- [ ] M1 design explicit bounded collection/reproduction budget semantics
+- [x] M0 reproduce current replay-budget starvation
+- [x] M1 design explicit bounded collection/reproduction budget semantics
 - [ ] M2 implement and adversarially test reserve accounting
 - [ ] M3 run focused/full local and clean validation
 - [ ] M4 prepare fresh current-source DEV campaign and validate owner auth

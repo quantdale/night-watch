@@ -68,28 +68,41 @@ Status: COMPLETE
   `9b7e3ad661bab91065a8674b6bfd5d0536f3495a`.
 ## M1 — Design bounded replay reservation semantics
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-Evaluate the smallest safe design. Acceptable directions include a dedicated
-reproduction reserve, collection/reproduction sub-budgets, or deterministic
-budget transfer/reallocation. Do not blindly raise limits.
+Chosen design: a durable campaign-level replay reservation ledger at the
+`CampaignBudgetManager`/orchestrator boundary. No policy limit is raised and
+no retry bypass is added.
+
+- For the initial real profile, `maxPromotedClusters=1` is the explicit finite
+  browser-replay reserve. Collection browser work is capped at
+  `maxTotalBrowserContexts - maxPromotedClusters`; the protected slot remains
+  available for an eligible browser replay. Synthetic fixture profiles retain
+  their existing collection accounting because they do not contact DEV.
+- Replay reservation requirements are normalized atomically as
+  `replays=1`, estimated API/actions, and the maximum of aggregate/category
+  browser-context estimates. Replay does not spend collection
+  `journeyContexts` or `explorationContexts`; this prevents the reproduced
+  DVR-011 path from depending on a full collection subtype counter.
+- A checkpoint-persisted reservation record is keyed by campaign/cluster
+  identity and stores normalized requirements plus `RESERVED`/`CONSUMED` state.
+  Reusing a reserved record on resume is idempotent; a consumed
+  `REPLAY_REQUIRED` record is never re-entered.
+- Real replay eligibility is checked before reservation: current non-unknown
+  source freshness, manifest changeset binding, non-reproduced product
+  observation, and no auth/capture/framework/environment/known-defect
+  evidence. Duplicate cluster identity reuses the existing reservation.
 
 Required invariants:
 
-- bounded total execution remains explicit;
-- at most the authorized replay count can execute;
-- no candidate means no reproduction contact;
-- stale/historical candidates cannot consume replay budget;
-- incomplete capture cannot consume product-replay authority;
-- collection work cannot silently steal protected replay reserve if reserve is
-  required by the chosen design;
-- reproduction cannot steal unrelated API/exploration budget without an
-  explicit deterministic rule;
-- checkpoint/resume preserves exact budget state;
-- source/version drift invalidates stale prepared work;
-- interruption cannot double-spend budget;
-- duplicate candidate/cluster identities cannot multiply replay authority;
-- all budget decisions are deterministic and sanitized.
+- bounded total execution and authorized replay cap remain explicit;
+- zero candidates cause zero replay contact;
+- stale, historical, incomplete, unsafe, duplicate, and exhausted work fails
+  closed before the replay callback;
+- collection cannot steal the protected real-profile browser slot;
+- checkpoint/resume preserves exact usage and prevents double spend/duplicate
+  entry;
+- minimization/dossier work remains downstream of successful admitted replay.
 
 ## M2 — Implement + adversarial validation
 

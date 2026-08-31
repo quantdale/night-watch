@@ -26,20 +26,19 @@ confirm a current candidate can traverse the real bounded replay/dossier path.
 
 ## Current Milestone
 
-M1 — design bounded replay reservation semantics.
+M2 — implement and adversarially validate bounded replay reservations.
 
 ## Work In Progress
 
-M0 is closed at pushed checkpoint
-`9b7e3ad661bab91065a8674b6bfd5d0536f3495a`. The active work is comparing
-explicit reserve, sub-budget, and deterministic-transfer models before editing
-production budget semantics.
+M1 design is complete. The chosen owner is a durable campaign/cluster replay
+reservation ledger with one protected browser slot in the initial real profile;
+no collection limit is raised and no retry bypass is introduced.
 
 ## Exact Next Action
 
-Evaluate the three bounded reservation designs against every required invariant,
-select the smallest safe owner, and record the decision before implementation.
-
+Implement the normalized replay requirement and persisted reservation ledger in
+the campaign types, budget manager, checkpoint validator, and orchestrator;
+then add the required adversarial campaign tests.
 ## Starting evidence
 
 - Predecessor: nightwatch-dev-soak-replay-yield-v1 COMPLETE.
