@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: e33c07fdd00bf1cb2fb01f3842a4c935178155f6
+Last documentation checkpoint SHA: bfe0fd02ada4b987c90d54b4fa7f204672d6b338
 
 ## Final verdict
 
@@ -25,10 +25,10 @@ promotion boundaries.
   `a5ff79f` (planner/yield), `82e661b` (replay/state/cache/property), and
   `f875730` (handoff fixture compatibility).
 - Final evidence was measured from clean source HEAD
-  `e33c07fdd00bf1cb2fb01f3842a4c935178155f6`; closure documentation is the
-  next durable descendant.
-- At the last inspected checkpoint, `main == origin/main` and the tree was
-  clean. The final closure commit must preserve that parity.
+  `e33c07fdd00bf1cb2fb01f3842a4c935178155f6`; terminal documentation
+  checkpoint `bfe0fd02ada4b987c90d54b4fa7f204672d6b338` records that evidence.
+- The terminal documentation checkpoint was committed on `main`; final push
+  reconciliation must preserve `main == origin/main` and a clean tree.
 
 ## Phase 2C reliability
 

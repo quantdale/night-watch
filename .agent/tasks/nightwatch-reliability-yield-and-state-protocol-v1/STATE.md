@@ -8,7 +8,7 @@ Status: COMPLETE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+Last documentation checkpoint SHA: bfe0fd02ada4b987c90d54b4fa7f204672d6b338
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
@@ -29,7 +29,7 @@ invalidates it.
 
 ## Current Milestone
 
-M5 — Repeated operation and release evidence — COMPLETE
+COMPLETE / STOP. M5 — Repeated operation and release evidence is closed.
 
 ## Completed Milestones
 
@@ -79,14 +79,15 @@ M5 — Repeated operation and release evidence — COMPLETE
 
 ## Work In Progress
 
-The baseline and scaffold checkpoint are closed. M1 is closed by the
+NONE. The baseline and scaffold checkpoint are closed. M1 is closed by the
 `bf35bf3` implementation checkpoint. M2, M3, and M4 are closed by the
 `82e661b` implementation checkpoint after the current inventory backtest,
 state-protocol matrix, interruption boundary matrix, cache audit, and
 canonical-digest property audit passed. M5 is complete: bounded DEV
 requalification was evaluated and auth-blocked before browser-context
 creation; local, clean, Control Center, canonical, and isolated evidence is
-recorded below.
+recorded below. No implementation or documentation work remains in this
+task.
 
 The clean guarded Phase 2C retry passed all local safety checks, but the first
 journey stopped before browser-context creation with
@@ -453,7 +454,8 @@ and do not convert an earlier strict divergence into a retry PASS.
 ## Completion Snapshot
 
 Complete. M0 through M4 are closed at implementation checkpoint `f875730`.
-M5 is closed at the final evidence checkpoint represented by `e33c07f`:
+M5 is closed at terminal documentation checkpoint `bfe0fd0` after final
+evidence represented by `e33c07f`:
 canonical/isolated parity, local/clean validation, Control Center checks, and
 state/documentation reconciliation passed. DEV re-observation remained
 auth-blocked before browser-context creation, with zero actual observations;
