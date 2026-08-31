@@ -120,7 +120,9 @@ reduced to a local deterministic regression before a real run resumes.
   checkpoint changed `nightwatchSourceSha`; the implementation pathspec repair
   is validated at `374ad71`, including a temporary-Git regression and the full
   31-test campaign suite. Prepare a fresh current-source manifest and resume
-  only that manifest; do not reuse `campaign:sha256:ceae02f22573c85f4a6d6c5e`.
+  only that manifest; prepare passed as
+  `campaign:sha256:6134013e41664bf66911887a` with source `374ad71`; do not
+  reuse `campaign:sha256:ceae02f22573c85f4a6d6c5e`.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

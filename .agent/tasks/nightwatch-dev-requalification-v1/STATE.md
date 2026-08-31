@@ -187,22 +187,31 @@ as drift inputs. Its temporary-Git regression passes, so the `ceae...`
 manifest is stale by a real source change and remains quarantined; a new
 current-source manifest is required.
 
+After the repair, the bounded DEV preflight passed and a fresh prepare passed
+as `campaign:sha256:6134013e41664bf66911887a` with manifest fingerprint
+`manifest:sha256:f5c596b14f1561864b7db7f4`, five bounded work items, and frozen
+`nightwatchSourceSha=374ad71e0ebbaadecf17b1c9a767f36b6f054552`. The
+documentation checkpoint did not advance executable source identity. No
+product execution occurred during preparation; resume only this manifest.
+
 ## Exact Next Action
 
-Prepare a fresh current-source serial campaign after a bounded DEV preflight,
-then resume that new campaign. The original campaign
+Resume the fresh current-source serial campaign after the bounded DEV
+preflight and prepare. The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
 repeated occurrences, persisted state advances without duplicate/lost work,
-and cleanup remains safe. Preserve DVR-006 and DVR-007 independently. Fresh
-prepare now passed as
+and cleanup remains safe. Preserve DVR-006 and DVR-007 independently. The
+first fresh campaign
 `campaign:sha256:4b8372d920d9694ca6c67c77` with manifest fingerprint
 `manifest:sha256:dc825e5258042974aba10179`, five work items, and frozen source
 `c1f5f529e830757cc2c3124aae46047bda863173`. That campaign completed all five
 selected items with no duplicate or lost work. DVR-008 is repaired and
-validated at `374ad71`; do not resume the stale `ceae...` manifest. Prepare a
-fresh current-source campaign and compare product fingerprint/cluster identity
-across campaigns.
+validated at `374ad71`; the fresh current-source campaign is
+`campaign:sha256:6134013e41664bf66911887a` with manifest
+`manifest:sha256:f5c596b14f1561864b7db7f4`. Resume it, then compare product
+fingerprint/cluster identity across campaigns. Do not resume the stale
+`ceae...` manifest.
 
 ## Blockers
 
@@ -217,8 +226,9 @@ serially. The duplicate-fingerprint repair is checkpointed at
 classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; the
 source-identity repair is checkpointed at
 `374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Run the bounded DEV preflight,
-prepare a fresh current-source campaign, then resume only that new manifest.
-Do not use production/NEXT or bypass any guard.
+prepare passed as `campaign:sha256:6134013e41664bf66911887a` with source
+`374ad71`; resume only that new manifest. Do not use production/NEXT or bypass
+any guard.
 
 ## Validation Ledger
 
@@ -561,6 +571,21 @@ Command: `npm run typecheck` and `npm run hardening:check`
 Result: PASS after implementation checkpoint
 `374ad71e0ebbaadecf17b1c9a767f36b6f054552`; executable-source identity and
 hardening invariants remain valid.
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before the fresh post-DVR-008 campaign preparation;
+the approved DEV target remained allowlisted, production remained explicitly
+denied, and no target network activity was performed.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; prepared
+`campaign:sha256:6134013e41664bf66911887a` with manifest fingerprint
+`manifest:sha256:f5c596b14f1561864b7db7f4`, five bounded work items, and
+`nightwatchSourceSha=374ad71e0ebbaadecf17b1c9a767f36b6f054552`. The source
+identity remained stable across the documentation checkpoint; no product
+execution occurred during preparation.
 When: 2026-08-31
 
 ## Files Changed

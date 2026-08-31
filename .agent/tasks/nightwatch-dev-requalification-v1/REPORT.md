@@ -143,6 +143,14 @@ with typecheck and hardening also passing. The `ceae...` manifest is stale by
 this real implementation change and remains unresumed; a fresh current-source
 campaign is required.
 
+After the DVR-008 repair, the bounded DEV preflight and fresh prepare passed.
+The new campaign is `campaign:sha256:6134013e41664bf66911887a` with manifest
+`manifest:sha256:f5c596b14f1561864b7db7f4`, five bounded work items, and
+`nightwatchSourceSha=374ad71e0ebbaadecf17b1c9a767f36b6f054552`. The
+documentation checkpoint did not change executable-source identity. No
+product execution occurred during preparation; only this manifest may be
+resumed.
+
 The fresh current-source campaign `campaign:sha256:4b8372d920d9694ca6c67c77`
 then completed all five selected work items exactly once and passed the
 launcher. Both selected API items completed their first-plus-fresh-replay

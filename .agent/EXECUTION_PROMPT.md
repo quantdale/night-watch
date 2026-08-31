@@ -118,8 +118,11 @@ The DVR-008 repair is implemented at
 excludes `.agent/**`, `docs/**`, and `openspec/**`, while retaining runtime
 source, tests, launcher, and dependency changes as drift inputs. Its temporary
 Git regression, 31-test campaign suite, typecheck, and hardening validation
-pass. Run a bounded DEV preflight, prepare a fresh current-source cycle, and
-resume only that new manifest. Compare its sanitized anomaly identity with
+pass. The bounded DEV preflight and fresh prepare then passed with campaign
+`campaign:sha256:6134013e41664bf66911887a`, manifest
+`manifest:sha256:f5c596b14f1561864b7db7f4`, and frozen source
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Resume only that manifest.
+Compare its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
 work-item accounting. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
