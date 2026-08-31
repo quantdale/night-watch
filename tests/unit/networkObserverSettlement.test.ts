@@ -3,6 +3,7 @@
 // whose source-reviewed known-read requests have settled.
 
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
 import http from 'node:http';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { RunRecorder } from '../../src/core/evidence/runRecorder';
@@ -60,6 +61,20 @@ async function startFixtureServer(): Promise<{ origin: string; close: () => Prom
   };
 }
 
+function responseCaptureCodes(recorder: RunRecorder): string[] {
+  try {
+    return fs.readFileSync(`${recorder.dir}/events.jsonl`, 'utf8')
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as { type?: string; data?: { captureFailureCode?: unknown } })
+      .filter((event) => event.type === 'response' && typeof event.data?.captureFailureCode === 'string')
+      .map((event) => event.data!.captureFailureCode as string);
+  } catch {
+    return [];
+  }
+}
+
 test('passive hanging subresources do not hold active journey settlement open', async ({ browser }) => {
   const fixture = await startFixtureServer();
   const env = fixtureEnvironment(fixture.origin);
@@ -76,7 +91,7 @@ test('passive hanging subresources do not hold active journey settlement open', 
     recorder,
     monitor,
     endpointMatcher: (rawUrl, method) => {
-      if (method === 'GET' && new URL(rawUrl).pathname === '/known-read') {
+      if (method === 'GET' && ['/known-read', '/truncated-json'].includes(new URL(rawUrl).pathname)) {
         return { ruleId: 'fixture.known-read', classification: 'KNOWN_READ' };
       }
       return null;
@@ -93,15 +108,27 @@ test('passive hanging subresources do not hold active journey settlement open', 
     await expect.poll(() => observer.activeJourneyRequests?.() ?? -1, { timeout: 2_000 }).toBe(0);
 
     observer.endJourneyIntent('fixture-navigation');
+    await page.evaluate((target) => fetch(`${target}/truncated-json`).catch(() => undefined), fixture.origin);
+    await expect.poll(() => responseCaptureCodes(recorder), { timeout: 8_000 }).toEqual(['BODY_READ_TIMEOUT']);
+    expect(observer.captureStatus?.()).toBe('UNKNOWN');
+    expect(observer.captureFailureCodes?.()).toEqual([]);
+
     observer.beginJourneyIntent('fixture-read', 'CLICK_READ_ONLY_CONTROL');
     await page.evaluate((target) => { void fetch(`${target}/known-read`); }, fixture.origin);
     await expect.poll(() => observer.activeJourneyRequests?.() ?? -1, { timeout: 2_000 }).toBe(1);
     observer.endJourneyIntent('fixture-read');
+    observer.beginJourneyIntent('fixture-read-timeout', 'CLICK_READ_ONLY_CONTROL');
     await page.evaluate((target) => fetch(`${target}/truncated-json`).catch(() => undefined), fixture.origin);
     await expect.poll(() => ({
       status: observer.captureStatus?.() ?? 'UNKNOWN',
       codes: observer.captureFailureCodes?.() ?? [],
-    }), { timeout: 8_000 }).toEqual({ status: 'INCOMPLETE', codes: ['BODY_READ_TIMEOUT'] });
+      responseCodes: responseCaptureCodes(recorder),
+    }), { timeout: 8_000 }).toEqual({
+      status: 'INCOMPLETE',
+      codes: ['BODY_READ_TIMEOUT'],
+      responseCodes: ['BODY_READ_TIMEOUT', 'BODY_READ_TIMEOUT'],
+    });
+    observer.endJourneyIntent('fixture-read-timeout');
   } finally {
     observer.endJourneyIntent('fixture-navigation');
     await context.close();

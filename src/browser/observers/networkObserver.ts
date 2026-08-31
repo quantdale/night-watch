@@ -136,9 +136,9 @@ export interface NetworkObserver {
   pendingUrlCount?(): number;
   /** In-flight source-reviewed known-read requests initiated by an intentional journey action. */
   activeJourneyRequests?(): number;
-  /** Aggregate response-body capture health for the current observation. */
+  /** Aggregate response-body capture health for intentional known-read work. */
   captureStatus?(): 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
-  /** Bounded categorical response-body capture diagnostics. */
+  /** Bounded categorical diagnostics for intentional known-read capture. */
   captureFailureCodes?(): readonly JourneyCaptureFailureCode[];
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
@@ -744,6 +744,7 @@ export function createNetworkObserver(opts: {
     let tracked = false;
     let observing = false;
     let requestIntent: JourneyIntent | null = null;
+    let captureRelevant = false;
     try {
       request = response.request();
       const rawUrl = request.url();
@@ -761,6 +762,7 @@ export function createNetworkObserver(opts: {
       const method = request.method();
       const endpointMatch = matchEndpoint(rawUrl, method);
       const endpointClassification = endpointMatch?.classification ?? null;
+      captureRelevant = requestIntent !== null && endpointClassification === 'KNOWN_READ';
       const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
       completedRequests.add(request);
       recordResource(rawUrl, role, status >= 400 ? 'HTTP_FAILED' : 'COMPLETED', method, status, contentType, requestIntent);
@@ -789,10 +791,10 @@ export function createNetworkObserver(opts: {
       let responseCaptureFailureCode: JourneyCaptureFailureCode | undefined;
       const noteCaptureFailure = (code: JourneyCaptureFailureCode): void => {
         responseCaptureFailureCode ??= code;
-        recordCaptureFailure(code);
+        if (captureRelevant) recordCaptureFailure(code);
       };
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
-        captureAttempted = true;
+        if (captureRelevant) captureAttempted = true;
         try {
           // Playwright's body() waits for completion. Bound that wait so a
           // truncated or never-ending response cannot keep the observer alive
@@ -801,18 +803,18 @@ export function createNetworkObserver(opts: {
           const bodyResult = await boundedResponseOperation(response.body(), RESPONSE_BODY_TIMEOUT_MS);
           if (!bodyResult.completed) {
             noteCaptureFailure('BODY_READ_TIMEOUT');
-            captureIncomplete = true;
+            if (captureRelevant) captureIncomplete = true;
           } else {
             const buf = bodyResult.value;
             bodyCapture = bodyCaptureStatus(buf, responseHeaders);
             if (bodyCapture === 'incomplete') {
-              captureIncomplete = true;
+              if (captureRelevant) captureIncomplete = true;
               noteCaptureFailure('BODY_LENGTH_MISMATCH');
             }
             const text = buf.toString('utf8');
             if (text.length > MAX_BODY_CHARS) {
               bodyCapture = 'incomplete';
-              captureIncomplete = true;
+              if (captureRelevant) captureIncomplete = true;
               noteCaptureFailure('BODY_SIZE_LIMIT_EXCEEDED');
             }
             rawText = text;
@@ -824,7 +826,7 @@ export function createNetworkObserver(opts: {
         } catch {
           // Unreadable body (no-body response, closed early, or transport
           // rejection) — skip capture without retaining exception text.
-          captureIncomplete = true;
+          if (captureRelevant) captureIncomplete = true;
           noteCaptureFailure('BODY_UNAVAILABLE');
         }
       }
@@ -1036,8 +1038,10 @@ export function createNetworkObserver(opts: {
       // a product pass. The bounded capture status makes it visible to the
       // journey evidence and replay classifier without retaining exception
       // text or response data.
-      captureIncomplete = true;
-      recordCaptureFailure('RESPONSE_PROCESSING_ERROR');
+      if (captureRelevant) {
+        captureIncomplete = true;
+        recordCaptureFailure('RESPONSE_PROCESSING_ERROR');
+      }
       // An observer must never crash the run.
     } finally {
       if (observing) {
