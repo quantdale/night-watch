@@ -17,6 +17,7 @@ import { buildJourneyFailureAttribution } from '../../src/core/journeys/attribut
 import { evaluateAnomalyAdmission } from '../../src/core/journeys/admission';
 import { fingerprintAnomaly, sanitizeAnomalyFingerprintInput } from '../../src/core/journeys/fingerprint';
 import { compareJourneyReplay } from '../../src/core/journeys/replay';
+import { classifyJourneyObservation } from '../../src/core/journeys/observationClassification';
 import type { JourneyEvidence } from '../../src/core/journeys/types';
 import { getRippleJourneyDefinition } from '../../src/products/ripple/journeyContracts';
 import { classifyResourceRole, checkResourceContentType, checkResourceStatus, classifyRequestFailure } from '../../src/oracles/protocol/resourceChecks';
@@ -274,6 +275,65 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   const unknown = compareJourneyReplay({ ...settled, passed: false }, { ...settled, passed: false });
   expect(unknown.classification).toBe('UNKNOWN_DIVERGENCE');
   expect(unknown.passed).toBe(false);
+});
+
+test('single-observation classification keeps capture failures out of product findings', () => {
+  const safety = {
+    productionAttempts: 0,
+    proxyViolations: 0,
+    unknownDestinations: 0,
+    unknownApprovals: 0,
+    mutations: 0,
+    dbQueries: 0,
+    actionCausedUnknown: 0,
+  };
+  const productOracle = {
+    oracleId: 'malformed-json',
+    triggered: true,
+    severity: 'ERROR' as const,
+    anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY' as const,
+    causalToPrimaryFailure: 'UNRESOLVED' as const,
+  };
+  const timedOut = classifyJourneyObservation({
+    evidence: {
+      ...baseEvidence(),
+      passed: false,
+      oracleStatus: 'FAIL',
+      captureStatus: 'INCOMPLETE',
+      observationSettlement: 'TIMED_OUT',
+      oracleObservations: [productOracle],
+    },
+    safety,
+  });
+  expect(timedOut.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
+  expect(timedOut.diagnosticCodes).toEqual(['SETTLEMENT_TIMEOUT']);
+
+  const settledProduct = classifyJourneyObservation({
+    evidence: {
+      ...baseEvidence(),
+      passed: false,
+      oracleStatus: 'FAIL',
+      captureStatus: 'COMPLETE',
+      observationSettlement: 'SETTLED',
+      oracleObservations: [productOracle],
+    },
+    safety,
+  });
+  expect(settledProduct.classification).toBe('PRODUCT_BEHAVIOR_ANOMALY');
+
+  const unexplained = classifyJourneyObservation({
+    evidence: {
+      ...baseEvidence(),
+      passed: false,
+      oracleStatus: 'FAIL',
+      captureStatus: 'COMPLETE',
+      observationSettlement: 'SETTLED',
+      oracleObservations: [],
+    },
+    safety,
+  });
+  expect(unexplained.classification).toBe('UNKNOWN');
+  expect(unexplained.diagnosticCodes).toEqual(['UNCLASSIFIED_OBSERVATION_FAILURE']);
 });
 
 test('replay rejects unsupported and cyclic structural evidence even when both sides share it', () => {

@@ -29,9 +29,10 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M1 — Repeated Phase 2C sample — PAUSED FOR DEFECT REPAIR. M0 activation and
-pre-DEV authority checks passed at `2e7e84f`; the first guarded invocation
-completed far enough to expose a Nightwatch-owned classification defect.
+M1 — Repeated Phase 2C sample / DVR-001 repair — IN_PROGRESS. M0 activation
+and pre-DEV authority checks passed at `2e7e84f`; the first guarded
+invocation exposed a Nightwatch-owned classification defect and local repair
+is now validated.
 
 ## Completed Milestones
 
@@ -46,16 +47,17 @@ and zero safety violations, but the bounded response/oracle settlement timed
 out. The replay comparator correctly classified the pair as
 `FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`; the manual real-run
 summary independently mislabeled each observation as
-`PRODUCT_BEHAVIOR_ANOMALY`. Further DEV execution is paused until that false
-finding/classification path is repaired and covered by a local regression.
+`PRODUCT_BEHAVIOR_ANOMALY`. A shared deterministic observation classifier now
+checks safety, auth, settlement, and capture health before product attribution;
+its local regression and focused validation pass. The repair is ready for a
+Git checkpoint before further DEV execution.
 
 ## Exact Next Action
 
-Repair the Phase 2C manual-runner final classification so incomplete capture
-or timed-out settlement is emitted as `FRAMEWORK_CAPTURE_DEFECT` (or the
-repository's equivalent explicit framework class), add a deterministic local
-regression, run the focused validation cone, and checkpoint before resuming
-the bounded DEV sample.
+Commit and push the validated observation-classification repair, record its
+implementation SHA, then rerun the bounded DEV preflight and execute the next
+independent Phase 2C invocation. Preserve invocation 1 as a framework capture
+defect; do not relabel it from a later result.
 
 ## Blockers
 
@@ -92,6 +94,21 @@ Command: `openspec validate nightwatch-dev-requalification-v1 --type change --st
 Result: PASS; all four OpenSpec artifacts validate
 When: 2026-08-31
 
+Command: `npx playwright test tests/unit/phase2cOracleMatrix.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 15 passed, 0 skipped, 0 failed in 2.1 seconds, including the
+single-observation framework/product/unknown attribution regression
+When: 2026-08-31
+
+Command: `npm run typecheck`
+Result: PASS; TypeScript compilation completed with no diagnostics after the
+observation-classification repair
+When: 2026-08-31
+
+Command: `npm run hardening:check`
+Result: PASS; offline structural invariants hold after the observation-
+classification repair
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -102,18 +119,24 @@ When: 2026-08-31
 | `openspec/changes/nightwatch-dev-requalification-v1/` | bounded requalification proposal/spec/tasks | in progress |
 | `docs/CURRENT_STATE.md` | live project snapshot | in progress |
 | `docs/ROADMAP.md` | current roadmap entry | in progress |
+| `src/core/journeys/observationClassification.ts` | deterministic single-observation attribution | validated locally |
+| `tests/manual/phase2c-real-journeys.ts` | use shared observation attribution and safe diagnostics | validated locally |
+| `tests/unit/phase2cOracleMatrix.test.ts` | regression for framework/product/unknown attribution | validated locally |
 
 ## Decisions Made During This Task
 
 - Use a separate successor because the prior reliability task is terminal.
 - Preserve `OPERATIONALLY_ACCEPTED` explicitly during bounded read-only
   observations; use `REEVALUATE` if validated evidence invalidates it.
+- Keep single-observation attribution in a pure shared classifier: safety,
+  auth, settlement, and capture health take precedence over oracle class, and
+  unclassified failed oracles remain `UNKNOWN`.
 
 ## Defect Ledger
 
 | ID | Severity | Subsystem | Discovery source | Reproduction | Root cause | Fix | Regression | Validation | Final disposition |
 |---|---|---|---|---|---|---|---|---|---|
-| DVR-001 | HIGH | Phase 2C final classification | Fresh guarded DEV invocation 1 | `nightwatch-20260831T083408Z-9a6c-j1-c1` and `...-c2`; both had `observationSettlement=TIMED_OUT`, `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, while pair comparison returned `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT` | `tests/manual/phase2c-real-journeys.ts` mapped generic `oracleStatus=FAIL` to `PRODUCT_BEHAVIOR_ANOMALY` before considering framework capture health | Pending | Pending local regression | Open; no product finding admitted | Open; blocks further DEV sampling until repaired |
+| DVR-001 | HIGH | Phase 2C final classification | Fresh guarded DEV invocation 1 | `nightwatch-20260831T083408Z-9a6c-j1-c1` and `...-c2`; both had `observationSettlement=TIMED_OUT`, `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, while pair comparison returned `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT` | `tests/manual/phase2c-real-journeys.ts` mapped generic `oracleStatus=FAIL` to `PRODUCT_BEHAVIOR_ANOMALY` before considering framework capture health | Shared `classifyJourneyObservation` checks settlement/capture before product attribution and retains explicit Nightwatch/unknown classes | `tests/unit/phase2cOracleMatrix.test.ts` single-observation classification regression | `npm run typecheck`, `npm run hardening:check`, and focused Phase 2C matrix: PASS; real post-fix observation pending | Fixed locally; awaiting post-fix DEV confirmation |
 
 ## Discoveries
 
@@ -128,6 +151,10 @@ When: 2026-08-31
 - The replay classifier already preserved the framework attribution, exposing
   a mismatch between core replay semantics and the manual runner's per-
   observation classification.
+- A shared pure classifier now aligns the real runner's per-observation
+  result with the replay health boundary and emits bounded reason/code
+  diagnostics; generic failed oracle status alone no longer creates a product
+  finding.
 
 ## Safety Events
 

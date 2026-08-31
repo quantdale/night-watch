@@ -61,15 +61,21 @@ explicit `REEVALUATE` protocol before further campaign work.
 
 ## Initial next action
 
-Run the first serial Phase 2C observation with the external owner-local state
-after the pre-DEV checks recorded in the task STATE have passed.
+The first Phase 2C invocation exposed DVR-001: settlement timeout and
+incomplete capture were mislabeled as a product anomaly. The shared
+observation classifier and focused regression now pass locally. Commit and
+push that repair, rerun the bounded DEV preflight, and execute the next
+independent Phase 2C invocation. Preserve invocation 1 as
+`FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`.
 
 ## Current checkpoint
 
 The owner-led DEV auth capture completed successfully and the successor
-activation checks passed at checkpoint `2e7e84f`. The state was structurally
-validated and written outside the workspace; no secret values were printed.
-No real product observation has been claimed in this successor yet.
+activation checks passed at checkpoint `2e7e84f`. The first guarded Phase 2C
+invocation completed two payer observations but timed out at the bounded
+settlement barrier; no safety violation or product finding was admitted. The
+classification repair is locally validated and is being checkpointed before
+the next real invocation.
 
 ## Terminal action
 

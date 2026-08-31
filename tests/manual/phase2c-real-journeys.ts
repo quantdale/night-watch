@@ -27,6 +27,7 @@ import { snapshotRepositories } from '../../src/core/repositories/snapshotter';
 import type { RepoSnapshotRecord } from '../../src/core/evidence/types';
 import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import { compareJourneyReplay } from '../../src/core/journeys/replay';
+import { classifyJourneyObservation, type JourneyObservationClassification } from '../../src/core/journeys/observationClassification';
 import { evaluateAnomalyAdmission, type AnomalyObservation, type AdmissionResult } from '../../src/core/journeys/admission';
 import {
   assertJourneyContractUnchanged,
@@ -69,7 +70,9 @@ interface RealObservation {
     dbQueries: number;
     actionCausedUnknown: number;
   };
-  finalClassification: 'PASS' | 'PRODUCT_BEHAVIOR_ANOMALY' | 'DEV_INFRA_TRANSIENT' | 'AUTH_STATE_INVALID' | 'SAFETY_BLOCK' | 'UNKNOWN';
+  finalClassification: JourneyObservationClassification;
+  finalClassificationReason: string;
+  finalDiagnosticCodes: readonly string[];
 }
 
 function rootDirectory(): string {
@@ -293,18 +296,7 @@ async function observeOnce(opts: {
     authValid: auth.valid && pageAuthValid,
     safetyCounts: { ...evidence.safetyCounts!, ...safety },
   };
-  const transient = finalEvidence.oracleObservations?.some((item) => item.anomalyClass === 'DEV_INFRA_TRANSIENT') ?? false;
-  const finalClassification = safety.productionAttempts > 0 || safety.proxyViolations > 0 || safety.unknownDestinations > 0 || safety.mutations > 0 || safety.actionCausedUnknown > 0
-    ? 'SAFETY_BLOCK'
-    : !finalEvidence.authValid
-      ? 'AUTH_STATE_INVALID'
-      : finalEvidence.passed
-        ? 'PASS'
-        : transient
-          ? 'DEV_INFRA_TRANSIENT'
-          : finalEvidence.oracleStatus === 'FAIL'
-            ? 'PRODUCT_BEHAVIOR_ANOMALY'
-            : 'UNKNOWN';
+  const classification = classifyJourneyObservation({ evidence: finalEvidence, safety });
   await recorder.finalize({
     passed,
     notes: [
@@ -312,7 +304,17 @@ async function observeOnce(opts: {
       `safety totals: production=${safety.productionAttempts}, proxy=${safety.proxyViolations}, unknownDestinations=${safety.unknownDestinations}, unknownApprovals=${safety.unknownApprovals}, mutations=${safety.mutations}, db=${safety.dbQueries}, actionUnknown=${safety.actionCausedUnknown}`,
     ],
   });
-  return { runId: opts.runId, journeyId: definition.journeyId, pass: opts.pass, evidence: finalEvidence, auth, safety, finalClassification };
+  return {
+    runId: opts.runId,
+    journeyId: definition.journeyId,
+    pass: opts.pass,
+    evidence: finalEvidence,
+    auth,
+    safety,
+    finalClassification: classification.classification,
+    finalClassificationReason: classification.reason,
+    finalDiagnosticCodes: classification.diagnosticCodes,
+  };
 }
 
 function admissionLedger(observations: readonly RealObservation[]): AdmissionResult[] {
