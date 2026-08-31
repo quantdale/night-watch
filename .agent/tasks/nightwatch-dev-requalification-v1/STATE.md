@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-Last substantive checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-Last documentation checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last validated implementation SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last substantive checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last documentation checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+LAST_VALIDATED_IMPLEMENTATION_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+LAST_DOCUMENTATION_CHECKPOINT_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -636,6 +636,19 @@ status parsing, duplicate-field rejection, interruption/currentness checks,
 and project-state truth all passed.
 When: 2026-08-31
 
+Command: `npx playwright test tests/unit/cacheCurrentness.test.ts tests/unit/fuzzProperty.test.ts tests/unit/phase15CanonicalDigestIdentity.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 40 passed, 0 skipped, 0 failed in 1.7 seconds. The cache
+invalidation tests perform actual misses for changed analyzer/taxonomy version
+inputs; canonical digest permutation, array/multiplicity, bounded cycle
+diagnostic, nested non-mutation, prototype, and opaque-digest properties pass.
+When: 2026-08-31
+
+Command: `npm run typecheck`, `npm run hardening:check`, and `npx playwright test tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS after source checkpoint
+`de169c96c9244f7693493942f4a8b7c5dd50e778`; typecheck and hardening passed,
+and the campaign suite passed 31/31.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -681,6 +694,7 @@ When: 2026-08-31
 | DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; stale-manifest resume later refused on expected source drift | Fixed locally; original duplicate-integrity failure retained and stale-manifest refusal is non-product evidence; fresh current-source campaign still required |
 | DVR-007 | MEDIUM | Campaign version-drift observability and launcher terminal assertion | Exact resume after DVR-006 repair changed the frozen source SHA | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373` refused before execution with `stopReason=CAMPAIGN_VERSION_DRIFT`; the brief said `NIGHTWATCH INTERNAL DEFECT` and the guarded manual test failed its accepted-result assertion | Version drift shared the generic `PARTIAL_RUNTIME_INFRA_FAILURE` result class but the brief and launcher did not recognize its explicit stop reason as an expected fail-closed terminal outcome | `c1f5f529e830757cc2c3124aae46047bda863173` gives version drift a dedicated safe headline and allows only that explicit stop reason through the real launcher assertion; it does not bypass the drift gate | `tests/unit/campaign.test.ts` runtime source-version drift headline regression | Targeted drift/duplicate tests, full campaign suite (30), typecheck, and hardening: PASS | Fixed locally; exact stale-manifest refusal retained as non-product evidence |
 | DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, hardening, and fresh prepare/resume source stability pass | Fixed; `ceae...` remains a stale no-resume manifest; fresh campaign `6134013...` proved the repaired identity through real bounded prepare/resume |
+| DVR-009 | LOW | Cache/property test quality | Invariant audit after repeated campaign reconciliation | Cache version tests changed a reference digest but never queried the cache with a changed key; a “duplicate-input idempotence” property only repeated identical input | Cache key now accepts an explicit pure version-input seam with live authoritative defaults; property wording and assertions cover true equivalent nested JSON round-trips, bounded cycle diagnostics, and deep non-mutation | `tests/unit/cacheCurrentness.test.ts`, `tests/unit/fuzzProperty.test.ts`; 40/40 cache/property/digest tests | `npm run typecheck`, `npm run hardening:check`, campaign suite 31/31: PASS | Closed at `de169c9`; fresh current-source DEV campaign required because executable identity changed |
 
 ## Discoveries
 
@@ -775,6 +789,16 @@ When: 2026-08-31
   anomaly fingerprint, cluster ID/key, occurrence count, timing class, and
   completed-work ledger matched the prior fresh campaign exactly; the bounded
   reproduction reserve, not a hidden framework error, ended both runs.
+- The cache/property audit then identified a Low test-quality defect: the
+  analyzer/taxonomy invalidation cases compared a hand-built digest rather than
+  exercising a cache miss under a changed version input, and one canonical
+  property was only a same-call repetition. The source-key function now
+  exposes an explicit pure version-input seam with authoritative runtime
+  defaults; the tests perform actual cache misses, nested round-trip identity,
+  bounded cycle diagnostics, and deep non-mutation checks. The repair is
+  validated at `de169c96c9244f7693493942f4a8b7c5dd50e778`, so the prior
+  `374ad71` campaign manifest is stale and a fresh current-source campaign is
+  required.
 
 ## Safety Events
 

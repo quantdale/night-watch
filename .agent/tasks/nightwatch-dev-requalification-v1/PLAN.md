@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `374ad71e0ebbaadecf17b1c9a767f36b6f054552`
+Last validated implementation: `de169c96c9244f7693493942f4a8b7c5dd50e778`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -139,6 +139,9 @@ reduced to a local deterministic regression before a real run resumes.
   stable across both current-source runs.
 - Audit cache/property claim strength and auth/interruption classification
   coverage before finalizing the evidence limitations.
+- The cache/property audit repaired version-invalidation and canonical-digest
+  assertions at `de169c9`; a fresh current-source DEV campaign is required
+  before closure.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.

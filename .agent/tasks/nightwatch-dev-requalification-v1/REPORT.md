@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-Last substantive checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-Last documentation checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last validated implementation SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last substantive checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last documentation checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
 
 ## Scope
 
@@ -174,6 +174,17 @@ Its fingerprint `fp:sha256:d491c1b9779adfbcd030cc23`, cluster ID/key,
 occurrence count, timing class, and work-item/replay ledger matched the first
 fresh campaign exactly. This establishes stable finding identity across the
 two bounded campaigns, not a product reproduction or all-budget certification.
+
+The cache/property audit then closed a Low test-quality defect. The former
+analyzer/taxonomy cases compared a synthetic expected digest rather than
+performing a cache lookup under changed version inputs, and one property only
+repeated identical input. The repaired key seam keeps authoritative runtime
+defaults while allowing pure version-input testing; actual cache misses,
+nested equivalent round-trips, bounded cycle diagnostics, and deep
+non-mutation are now asserted. The 40-case cache/property/digest suite,
+typecheck, hardening, and campaign suite passed at source checkpoint
+`de169c96c9244f7693493942f4a8b7c5dd50e778`. This executable-source change
+requires one fresh current-source DEV campaign before closure.
 
 The focused reconciliation cone passed 292/292 with no skips or failures:
 campaign/checkpoint/triage/replay compatibility passed 113/113, and continuity,

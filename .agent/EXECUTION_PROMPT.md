@@ -129,9 +129,14 @@ its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
 work-item accounting; this comparison is complete with an identical
 fingerprint, cluster ID/key, occurrence count, and five-item ledger. The
-focused campaign/replay/state cone is green (113 + 179 tests); audit the
-remaining cache/property/auth/interruption coverage and run the final
-local/clean matrix before closure. The DVR-006 repair is checkpointed at
+focused campaign/replay/state cone is green (113 + 179 tests). The cache and
+canonical-digest audit then repaired weak invalidation/property assertions at
+source checkpoint
+`de169c96c9244f7693493942f4a8b7c5dd50e778`; 40 cache/property/digest tests,
+typecheck, hardening, and the 31-test campaign suite pass. Because that is a
+new executable identity, run a bounded DEV preflight and prepare/resume one
+fresh current-source campaign against `de169c9`, then run the final
+local/clean matrix. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at
 `c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest
