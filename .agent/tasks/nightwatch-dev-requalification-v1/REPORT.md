@@ -7,8 +7,8 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
-Last substantive checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
+Last validated implementation SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
+Last substantive checkpoint SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
 Last documentation checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
 
 ## Scope
@@ -41,8 +41,11 @@ unknown traffic. The narrower settlement-tracking repair is validated at
 `247b27a`. A third independent invocation then settled the payer pair, but
 one observation had an unavailable body for a source-reviewed known-read
 JSON/XHR response. Strict replay preserved the failure as
-`FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; this is tracked as DVR-003
-and must be reduced locally before more DEV observations.
+`FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; this was tracked as
+DVR-003. The response observer now bounds body reads to five seconds and
+propagates only categorical capture diagnostics. A local truncated-response
+regression and the focused 41-test cone pass at implementation checkpoint
+`1d3eb0a`; post-fix DEV confirmation remains.
 
 ## Safety and verdict
 

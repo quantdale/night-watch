@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `247b27ae9e48279692359a29147a51cc7fa2bc2a`
+Last validated implementation: `1d3eb0a5c498d22b54a24f635cb34805aa69f057`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -66,9 +66,9 @@ reduced to a local deterministic regression before a real run resumes.
 - Repair the over-broad `activeJourneyRequests` settlement signal exposed by
   the second invocation, with a local hanging-subresource regression.
 - Investigate DVR-003 from the third invocation: a settled source-reviewed
-  known-read JSON response had unavailable body capture. Add bounded
-  categorical diagnostics and a deterministic local regression before the
-  next real observation.
+  known-read JSON response had unavailable body capture. Bounded body reads,
+  categorical diagnostics, and a deterministic local truncated-response
+  regression are implemented at `1d3eb0a`; post-fix DEV confirmation remains.
 
 ### M2 — Cross-phase observation — PENDING
 

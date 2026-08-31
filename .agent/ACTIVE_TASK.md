@@ -6,10 +6,10 @@ Title: Nightwatch Bounded DEV Requalification
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
-Last checkpoint: settlement-tracking repair at `247b27a`
-Current milestone: M1 — Repeated Phase 2C sample / DVR-003 capture repair — IN_PROGRESS
-Next action: Add bounded categorical diagnostics for unavailable known-read response bodies, reduce the capture failure to a deterministic local regression, then rerun focused validation before the next independent Phase 2C invocation.
+Last validated implementation SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
+Last checkpoint: bounded response-capture repair at `1d3eb0a`
+Current milestone: M1 — Repeated Phase 2C sample / DVR-003 post-fix confirmation — IN_PROGRESS
+Next action: Rerun the bounded DEV preflight and execute one independent post-fix Phase 2C invocation, preserving its outcome separately from the three earlier observations.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
