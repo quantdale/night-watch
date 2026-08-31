@@ -2602,13 +2602,39 @@ job `99392187476`) and failed before any job step (`steps=[]`); this remains
 external non-evidence, while the local and clean gates are the authoritative
 validation for this locally scoped successor.
 
-## Bounded DEV requalification — IN_PROGRESS — 2026-08-31
+## Bounded DEV requalification — COMPLETE — 2026-08-31
 
-The owner-managed DEV authentication state was freshly refreshed through the
-guarded human-led capture path and passed post-login, structural, provenance,
-and cleanup validation. A new continuity-v2 successor,
-`nightwatch-dev-requalification-v1`, is authorized for a fixed serial sample
-of Phase 2C, Phase 4, Phase 5, campaign prepare/resume, and safe replay. It
-preserves `OPERATIONALLY_ACCEPTED` explicitly while evidence is collected;
-every auth, environment, product, framework, timing, and replay result will be
-retained without retry relabeling.
+The owner-authorized successor `nightwatch-dev-requalification-v1` is
+terminal COMPLETE. It repaired DVR-001 through DVR-012 and preserved
+`OPERATIONALLY_ACCEPTED`. Final current-source campaign
+`campaign:sha256:1054b8271440fc29f7fb5f21` ended truthfully as
+`PARTIAL_RUNTIME_INFRA_FAILURE / PREFLIGHT_FAILED` with
+`BODY_UNAVAILABLE`, zero product candidates/dossiers, zero safety counters,
+privacy `PASS`, and no product finding. The outcome exposes residual capture
+fragility and replay starvation, not a new product finding or Nightwatch
+internal defect.
+
+## DEV capture soak, replay, and yield — IN_PROGRESS — 2026-08-31
+
+Active successor: `nightwatch-dev-soak-replay-yield-v1`.
+
+This campaign measures residual capture instability over a larger bounded
+serial DEV sample and attempts current-manifest replay/dossier closure only
+when DVR-011 admission produces a fresh eligible candidate. It targets ten
+Phase 2C invocations, five Phase 4 explorations, five Phase 5 cycles, and five
+fresh Phase 7 campaigns unless a stop-worthy defect or auth/environment
+boundary intervenes.
+
+The campaign must repeatedly reach account-inventory where guarded runtime
+conditions permit, quantify `BODY_READ_TIMEOUT`, `BODY_UNAVAILABLE`,
+settlement/capture success and candidate conversion, and repair any
+Nightwatch-owned Critical/High capture or replay defect before further real
+execution. Historical replay fingerprints are evidence only and never
+executable authority.
+
+The project verdict remains `OPERATIONALLY_ACCEPTED` through
+`PROJECT_VERDICT_EFFECT: PRESERVE`. Any genuinely invalidating evidence must
+stop this task and use the explicit `REEVALUATE` protocol. Production, NEXT,
+mutation, datastore, infrastructure, sibling writes, publication, credential
+persistence, raw authenticated evidence, and containment weakening remain
+unauthorized.
