@@ -680,6 +680,7 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
       expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
       expect(execution?.state).toBe('BLOCKED');
       expect(execution?.reasonCode).toBe('NIGHTWATCH_INTERNAL_DEFECT');
+      expect(result.morningBrief.headline).toBe('NIGHTWATCH INTERNAL DEFECT');
       expect(result.checkpoint.anomalyObservations).toHaveLength(0);
       expect(result.checkpoint.anomalyCandidates).toHaveLength(0);
       expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
@@ -756,6 +757,7 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
       const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
       expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
       expect(result.stopReason).toBe('PREFLIGHT_FAILED');
+      expect(result.morningBrief.headline).toBe('RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING');
       expect(result.checkpoint.executionLedger.find((record) => record.workItemId === failedWorkItemId)).toMatchObject({
         state: 'BLOCKED',
         result: 'RUNTIME_FAILURE',
@@ -769,6 +771,7 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
 
       const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
       expect(resumed.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(resumed.morningBrief.headline).toBe('RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING');
       expect(resumed.checkpoint.nextExactAction).toBe('inspect campaign checkpoint and morning brief');
       expect(executeCalls).toBe(1);
     } finally {

@@ -81,17 +81,19 @@ export function buildCampaignMorningBrief(input: {
       ? 'SHARED DEV FAILURE'
       : input.resultClass === 'PARTIAL_AUTH_BLOCKED' && !hasAnomalyObservation
         ? 'AUTH BLOCKED BEFORE PRODUCT WORK'
-        : input.resultClass === 'PARTIAL_RUNTIME_INFRA_FAILURE' && !hasAnomalyObservation
+        : input.resultClass === 'PARTIAL_RUNTIME_INFRA_FAILURE' && input.nightwatchInternalIssues.length > 0
           ? 'NIGHTWATCH INTERNAL DEFECT'
-          : hasAnomalyObservation && budgetBlocked
-            ? 'UNRESOLVED L0 CANDIDATES — REPRODUCTION BLOCKED BY BUDGET'
-            : hasAnomalyObservation && (hasPendingReproduction || input.clusters.length > 0)
-              ? 'UNRESOLVED L0 CANDIDATES — NO ADMITTED REPRODUCIBLE PRODUCT ANOMALIES'
-              : hasTransientObservation
-                ? 'TRANSIENTS NOT REPRODUCED'
-                : budgetBlocked
-                  ? 'REPRODUCTION BLOCKED BY BUDGET'
-                  : 'NO ANOMALIES OBSERVED';
+          : input.resultClass === 'PARTIAL_RUNTIME_INFRA_FAILURE' && !hasAnomalyObservation
+            ? 'RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING'
+            : hasAnomalyObservation && budgetBlocked
+              ? 'UNRESOLVED L0 CANDIDATES — REPRODUCTION BLOCKED BY BUDGET'
+              : hasAnomalyObservation && (hasPendingReproduction || input.clusters.length > 0)
+                ? 'UNRESOLVED L0 CANDIDATES — NO ADMITTED REPRODUCIBLE PRODUCT ANOMALIES'
+                : hasTransientObservation
+                  ? 'TRANSIENTS NOT REPRODUCED'
+                  : budgetBlocked
+                    ? 'REPRODUCTION BLOCKED BY BUDGET'
+                    : 'NO ANOMALIES OBSERVED';
   const whatRan = [
     `mode=${input.manifest.mode}`,
     `journeys=${input.manifest.selectedJourneys.length}`,
