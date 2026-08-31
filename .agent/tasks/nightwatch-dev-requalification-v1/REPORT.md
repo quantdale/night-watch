@@ -231,6 +231,13 @@ product fingerprints. Non-product outcomes map to explicit campaign result
 classes without candidates. Focused and expanded local validation pass; a
 fresh current-source DEV campaign remains required.
 
+The repaired-source campaign preparation passed as
+`campaign:sha256:75fafe6abbb73d1b79ef918d` with manifest
+`manifest:sha256:0099d6bce1e603dea454a255`, frozen to source
+`971e998bb5cb2818775a198c604dc9d67dfe84bc`. It contains five bounded
+work items and `productExecution=NOT_STARTED`; no product execution occurred
+during preparation. This manifest is the only authorized next resume.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved

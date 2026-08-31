@@ -118,11 +118,14 @@ The DVR-011 admission repair is implemented and validated at
 classifier, admits only settled complete product-classified observations with
 exact triggered product fingerprints, and maps framework, transient, auth,
 safety, and unknown outcomes without creating product candidates. The focused
-and expanded local cones, typecheck, and hardening pass. Record the checkpoint,
-rerun continuity/project gates, prepare a fresh current-source campaign, and
-resume only that new manifest. The completed `2fe5dc...`, stale `ceae...`, and
-quarantined `168c37...` manifests must not be resumed after this source change.
-Preserve all prior outcomes independently.
+and expanded local cones, typecheck, and hardening pass. The bounded DEV
+preflight and fresh prepare then passed as campaign
+`campaign:sha256:75fafe6abbb73d1b79ef918d`, manifest
+`manifest:sha256:0099d6bce1e603dea454a255`, frozen to source `971e998`, with
+five work items and product execution not started. Commit this preparation
+checkpoint and resume only that manifest once. The completed `2fe5dc...`,
+stale `ceae...`, and quarantined `168c37...` manifests must not be resumed
+after this source change. Preserve all prior outcomes independently.
 
 ## Terminal action
 

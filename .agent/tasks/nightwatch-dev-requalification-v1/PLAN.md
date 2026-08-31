@@ -152,8 +152,11 @@ reduced to a local deterministic regression before a real run resumes.
   exposed DVR-011, so its common/account candidate labels are not product
   findings and it must not be reused after the admission source change.
 - DVR-011 admission repair is validated at `971e998`; it requires a fresh
-  current-source DEV prepare/resume. Then run final validation appropriate to
-  the changed implementation and evidence.
+  current-source DEV prepare/resume. The fresh prepare passed as
+  `campaign:sha256:75fafe6abbb73d1b79ef918d` with manifest
+  `manifest:sha256:0099d6bce1e603dea454a255`, frozen to source `971e998`;
+  resume only this manifest once. Then run final validation appropriate to the
+  changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.
 

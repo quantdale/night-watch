@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last checkpoint: validated campaign admission repair; fresh current-source DEV campaign required
+Last checkpoint: fresh current-source campaign prepared at `75fafe6`
 Current milestone: M3 — Reconciliation and closure — IN_PROGRESS
-Next action: Record the implementation checkpoint, rerun continuity/project gates, prepare a fresh guarded DEV campaign, then resume it once.
+Next action: Commit the preparation checkpoint, then resume only campaign `75fafe6abbb73d1b79ef918d`.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
