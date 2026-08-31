@@ -548,6 +548,10 @@ const APPROVED_CHECKPOINT_PATHS = [
   // The remaining OpenSpec planning artifacts are also documentation-only
   // route inputs. Keep the shape narrow: one change directory, one-level
   // Markdown files, and one-level capability specs only.
+  // OpenSpec's versioned route metadata is planning-only as well. Keep this
+  // exact one-file shape so a tool-generated manifest cannot make arbitrary
+  // YAML or source-like files look documentation-only.
+  /^openspec\/changes\/[^/]+\/\.openspec\.yaml$/,
   /^openspec\/changes\/[^/]+\/(?:audit|proposal|design)\.md$/,
   /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,

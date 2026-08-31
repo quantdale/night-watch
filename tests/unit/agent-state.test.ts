@@ -684,6 +684,7 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
       '.agent/tasks/phase-test/ACCEPTANCE_MATRIX.md',
       '.agent/tasks/phase-test/DEFECT_LEDGER.md',
       'openspec/changes/example-change/tasks.md',
+      'openspec/changes/example-change/.openspec.yaml',
       'openspec/changes/example-change/audit.md',
       'openspec/changes/example-change/proposal.md',
       'openspec/changes/example-change/design.md',
@@ -708,6 +709,9 @@ test.describe('docs/design approved checkpoint path extension (Phase 8 closure)'
 
   test('OpenSpec planning paths stay narrow and source-like paths remain unapproved', () => {
     expect(isApprovedCheckpointPath('openspec/changes/example-change/specs/capability/spec.md')).toBe(true);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/.openspec.yaml')).toBe(true);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/nested/.openspec.yaml')).toBe(false);
+    expect(isApprovedCheckpointPath('openspec/changes/example-change/metadata.yaml')).toBe(false);
     expect(isApprovedCheckpointPath('openspec/changes/example-change/specs/nested/capability/spec.md')).toBe(false);
     expect(isApprovedCheckpointPath('openspec/changes/example-change/design.json')).toBe(false);
     expect(isApprovedCheckpointPath('openspec/changes/example-change/src/implementation.ts')).toBe(false);
