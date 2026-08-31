@@ -62,6 +62,7 @@ different explicit effect and pass the corresponding checker rules.
 
 ## Initial next action
 
-The baseline is complete and the task/OpenSpec checkpoint is pushed at
-`d11dae2`. Inspect the existing replay identity, observation settlement, and
-divergence paths; create a deterministic reproducer before modifying them.
+The baseline and M1 replay checkpoint are complete; the replay fix is pushed
+at `bf35bf3`. Audit current campaign scoring, selection inputs, diversity
+behavior, and cluster identity; build a deterministic selection backtest
+before modifying the planner.

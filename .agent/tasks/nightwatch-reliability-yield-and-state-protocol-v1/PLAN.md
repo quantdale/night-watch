@@ -3,7 +3,7 @@
 Task ID: `nightwatch-reliability-yield-and-state-protocol-v1`
 Phase: `RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Starting SHA: `7ac265594719f3d93eabf78e0bd9f749ef63dba7`
-Last validated implementation: `d12b1d75886987356f3ab6d80ca5b25f0723c471`
+Last validated implementation: `bf35bf31414bcac91e8a297ee9c9c4f6b1647871`
 Authorization class: `NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-reliability-yield-and-state-protocol-v1/`
@@ -74,13 +74,19 @@ running any external observation.
   Control Center baseline passed. The pre-checkpoint continuity/project/
   handoff failures were closed as expected scaffold state.
 
-### M1 — Phase 2C replay diagnosis and identity — IN_PROGRESS
+### M1 — Phase 2C replay diagnosis and identity — COMPLETE
 
 - Reproduce the divergence with sanitized fixtures and classify its cause.
 - Implement strict categorical replay outcomes, canonicalization, bounded
   diagnostics, and permanent regression/property tests.
+- Result: a delayed intentional read previously finalized before its response;
+  response-time mutable intent also made attribution timing-dependent. The
+  observer now snapshots request intent, waits for intentional in-flight
+  requests, records capture/settlement health, and classifies replay outcomes
+  without allowing an unexplained retry to pass. Focused replay/journey/
+  readiness validation: 44 passed / 0 failed.
 
-### M2 — Campaign yield and finding stability — NOT_STARTED
+### M2 — Campaign yield and finding stability — IN_PROGRESS
 
 - Backtest current selection; implement measured explainable scoring,
   diversity, yield attribution, and stable conservative clustering.

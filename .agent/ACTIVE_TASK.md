@@ -6,16 +6,16 @@ Title: Nightwatch Reliability, Yield, and State Protocol Campaign
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
-Last checkpoint: task/OpenSpec scaffold validated and pushed at `d11dae2`
-Current milestone: M1 — Phase 2C replay diagnosis and identity — IN_PROGRESS
-Next action: Inspect the existing replay identity, observation settlement, and divergence paths; create a deterministic reproducer before modifying them
+Last validated implementation SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
+Last checkpoint: replay settlement and attribution fix validated and pushed at `bf35bf3`
+Current milestone: M2 — Campaign yield and finding stability — IN_PROGRESS
+Next action: Audit current campaign scoring, selection inputs, diversity behavior, and cluster identity; build a deterministic selection backtest
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-LAST_VALIDATED_IMPLEMENTATION_SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
+LAST_VALIDATED_IMPLEMENTATION_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: IN_PROGRESS
