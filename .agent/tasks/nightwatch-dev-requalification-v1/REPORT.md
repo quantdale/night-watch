@@ -37,8 +37,12 @@ misreported each observation as a product anomaly. The shared classifier fix
 and local regression are validated at `dd5ff766`. The next invocation confirms
 that attribution repair, but both payer observations still time out because
 `activeJourneyRequests` counts unfinished page subresources and passive
-unknown traffic. A narrower settlement-tracking repair is now required before
-more DEV observations.
+unknown traffic. The narrower settlement-tracking repair is validated at
+`247b27a`. A third independent invocation then settled the payer pair, but
+one observation had an unavailable body for a source-reviewed known-read
+JSON/XHR response. Strict replay preserved the failure as
+`FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; this is tracked as DVR-003
+and must be reduced locally before more DEV observations.
 
 ## Safety and verdict
 

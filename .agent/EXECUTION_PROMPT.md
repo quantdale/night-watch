@@ -77,8 +77,13 @@ activation checks passed at checkpoint `2e7e84f`. The first guarded Phase 2C
 invocation completed two payer observations but timed out at the bounded
 settlement barrier; no safety violation or product finding was admitted. The
 shared classification repair and focused validation are checkpointed at
-`dd5ff766828d71706c75b6ffb86e5b2267c7ffb9`; the next real invocation is now
-authorized by the active task's existing bounded DEV scope.
+`dd5ff766828d71706c75b6ffb86e5b2267c7ffb9`; the settlement-tracking repair is
+checkpointed at `247b27ae9e48279692359a29147a51cc7fa2bc2a`. The next real
+invocation exposed DVR-003: one settled known-read JSON response had
+unavailable body capture, causing strict replay divergence and a framework
+capture classification. Add safe categorical capture diagnostics and a
+deterministic local regression before the next DEV invocation. Preserve the
+independent `nightwatch-20260831T085807Z-7767` outcomes.
 
 ## Terminal action
 

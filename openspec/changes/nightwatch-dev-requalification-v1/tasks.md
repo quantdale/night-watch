@@ -7,11 +7,11 @@
 
 ## 2. Repeated Phase 2C evidence
 
-- [ ] 2.1 Run the first guarded Phase 2C observation against DEV and retain its
+- [x] 2.1 Run the first guarded Phase 2C observation against DEV and retain its
   sanitized outcome, replay classification, and cleanup result.
-- [ ] 2.2 Run two additional serial Phase 2C observations and compare outcome
+- [x] 2.2 Run two additional serial Phase 2C observations and compare outcome
   categories, fingerprints, step identity, and timing diagnostics.
-- [ ] 2.3 Classify any divergence without retry relabeling and open a defect
+- [x] 2.3 Classify any divergence without retry relabeling and open a defect
   record if the evidence indicates a Nightwatch-owned fault.
 
 ## 3. Cross-phase real operation

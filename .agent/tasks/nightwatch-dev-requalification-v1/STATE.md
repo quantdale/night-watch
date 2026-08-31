@@ -29,7 +29,7 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M1 — Repeated Phase 2C sample / DVR-002 repair — IN_PROGRESS. M0 activation
+M1 — Repeated Phase 2C sample / DVR-003 capture repair — IN_PROGRESS. M0 activation
 and pre-DEV authority checks passed at `2e7e84f`; the first guarded
 invocation exposed a classification defect that is locally repaired, and the
 next post-fix invocation exposed an over-broad settlement tracking defect
@@ -56,15 +56,24 @@ unfinished page subresources and passive unknown traffic as active journey
 requests. The observer now tracks only source-reviewed intentional known-read
 requests for that signal while retaining response handlers for all observed
 responses. A local hanging-subresource/known-read regression and focused
-validation pass; the repair is ready for a Git checkpoint before further DEV
-execution.
+validation pass; the repair is checkpointed at `247b27a`. The third
+independent invocation then produced one clean settled payer observation and
+one settled payer observation with an unavailable known-read JSON body. Strict
+comparison classified the pair as `FRAMEWORK_CAPTURE_DEFECT` /
+`CAPTURE_INCOMPLETE` with `oracle-or-result-status` divergence. A sanitized
+event audit found exactly one `KNOWN_READ` JSON/XHR response with
+`bodyCapture=unavailable`; auth was valid and safety counters were zero. This
+is DVR-003 and requires local capture diagnostics/reduction before the next
+DEV invocation.
 
 ## Exact Next Action
 
-Commit and push the validated DVR-002 observer repair, record its
-implementation SHA, rerun the bounded DEV preflight, and execute the next
-independent Phase 2C invocation. Preserve both prior invocations as framework
-capture defects; do not relabel them from a later result.
+Add bounded categorical capture-failure diagnostics without raw errors, reduce
+DVR-003 to a deterministic local response-body capture regression, and repair
+the owning abstraction if the failure is Nightwatch-owned. Run focused
+validation and checkpoint the repair before another independent DEV
+invocation. Preserve all three prior invocation outcomes; do not relabel them
+from a later result.
 
 ## Blockers
 
@@ -141,6 +150,18 @@ tracked; existing settlement, readiness, replay, and attribution regressions
 also pass.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL as independent post-DVR-002 invocation at
+`nightwatch-20260831T085807Z-7767`; payer observation c1 settled and passed,
+while payer observation c2 settled with valid auth and zero safety counters but
+had `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, and one known-read JSON/XHR
+response with `bodyCapture=unavailable`. Strict comparison reported
+`oracle-or-result-status` and classified the pair as
+`FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; no product finding was
+admitted. Sanitized matrix:
+`artifacts/phase2c-nightwatch-20260831T085807Z-7767-matrix.json`.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -173,6 +194,7 @@ When: 2026-08-31
 |---|---|---|---|---|---|---|---|---|---|
 | DVR-001 | HIGH | Phase 2C final classification | Fresh guarded DEV invocation 1 | `nightwatch-20260831T083408Z-9a6c-j1-c1` and `...-c2`; both had `observationSettlement=TIMED_OUT`, `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, while pair comparison returned `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT` | `tests/manual/phase2c-real-journeys.ts` mapped generic `oracleStatus=FAIL` to `PRODUCT_BEHAVIOR_ANOMALY` before considering framework capture health | Shared `classifyJourneyObservation` checks settlement/capture before product attribution and retains explicit Nightwatch/unknown classes | `tests/unit/phase2cOracleMatrix.test.ts` single-observation classification regression | `npm run typecheck`, `npm run hardening:check`, and focused Phase 2C matrix: PASS; real post-fix observation pending | Fixed locally; awaiting post-fix DEV confirmation |
 | DVR-002 | HIGH | Phase 2C settlement barrier | Fresh guarded DEV invocation 2 after DVR-001 repair | `nightwatch-20260831T084705Z-849e-j1-c1` and `...-c2`; `pendingHandlers=0`, `activeJourney=24/4`, and resource ledgers showed 22/3 unfinished critical-script requests plus passive unknown/image requests; both known reads completed | `activeJourneyRequestCount` tracked every request carrying journey intent, including page subresources and unreviewed passive traffic; the barrier required that broad count to reach zero | `activeJourneyRequestCount` now tracks only source-reviewed `KNOWN_READ` requests; all response handlers remain covered by the independent pending-handler barrier | `tests/unit/networkObserverSettlement.test.ts` hanging passive subresource and known-read cases | `npm run typecheck`, `npm run hardening:check`, and 40-test focused cone: PASS; post-fix DEV confirmation pending | Fixed locally; awaiting post-fix DEV confirmation |
+| DVR-003 | HIGH | Phase 2C response capture | Fresh guarded DEV invocation 3 after DVR-002 repair | `nightwatch-20260831T085807Z-7767-j1-c2`; settlement was `SETTLED`, auth was valid, safety counters were zero, but one source-reviewed known-read JSON/XHR response was `bodyCapture=unavailable`, making the observation incomplete and the pair diverge on `oracle-or-result-status` | Root cause is under investigation; the observer cannot currently distinguish a response-body unavailability from other capture failures using safe diagnostics | Pending: add bounded categorical capture-failure diagnostics, reduce to a local deterministic regression, then repair the owning capture abstraction if reproducible | Pending local response-body failure regression | Real evidence is classified as `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; no product finding admitted | Open — continuation blocked on local repair/reduction |
 
 ## Discoveries
 
@@ -202,6 +224,11 @@ When: 2026-08-31
 - The narrowed observer signal separates journey semantics from incidental
   page loading: known-read lifecycle remains blocking, while passive resource
   loading remains visible but cannot hold the semantic settlement barrier.
+- The third independent invocation confirms the narrowed barrier can settle,
+  but exposed a separate capture defect: one known-read JSON/XHR body was
+  unavailable after settlement. The strict replay failure is preserved as a
+  framework capture defect, not a product anomaly, and raw response/error
+  details were not copied into task evidence.
 
 ## Safety Events
 

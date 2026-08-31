@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `f8757303403dffab6039be3f51b807c8631e3c6a`
+Last validated implementation: `247b27ae9e48279692359a29147a51cc7fa2bc2a`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -58,14 +58,17 @@ reduced to a local deterministic regression before a real run resumes.
   `2e7e84f`; the guarded DEV preflight passed with production explicitly
   denied.
 
-### M1 — Repeated Phase 2C sample / settlement repair — IN_PROGRESS
+### M1 — Repeated Phase 2C sample / capture repair — IN_PROGRESS
 
 - Run three serial Phase 2C invocations with the owner-managed state.
 - Preserve each run, journey, replay, and cleanup category independently.
 - Classify any divergence and stop for a Nightwatch defect.
 - Repair the over-broad `activeJourneyRequests` settlement signal exposed by
-  the second invocation, with a local hanging-subresource regression, before
-  the next real observation.
+  the second invocation, with a local hanging-subresource regression.
+- Investigate DVR-003 from the third invocation: a settled source-reviewed
+  known-read JSON response had unavailable body capture. Add bounded
+  categorical diagnostics and a deterministic local regression before the
+  next real observation.
 
 ### M2 — Cross-phase observation — PENDING
 

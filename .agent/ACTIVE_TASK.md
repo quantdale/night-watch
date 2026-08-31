@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
 Last checkpoint: settlement-tracking repair at `247b27a`
-Current milestone: M1 — Repeated Phase 2C sample / DVR-002 repair — IN_PROGRESS
-Next action: Restrict active journey settlement tracking to source-reviewed known-read requests, add the local hanging-subresource regression, then rerun focused validation before the next independent Phase 2C invocation.
+Current milestone: M1 — Repeated Phase 2C sample / DVR-003 capture repair — IN_PROGRESS
+Next action: Add bounded categorical diagnostics for unavailable known-read response bodies, reduce the capture failure to a deterministic local regression, then rerun focused validation before the next independent Phase 2C invocation.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
