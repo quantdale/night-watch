@@ -29,23 +29,23 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M0 — Successor activation and baseline — IN_PROGRESS. OpenSpec and task
-records are being bound to the refreshed-auth execution boundary.
+M1 — Repeated Phase 2C sample — IN_PROGRESS. M0 activation and pre-DEV
+authority checks passed at `2e7e84f`; the first guarded observation is next.
 
 ## Completed Milestones
 
-None yet. M0 is in progress and no real product observation has been claimed.
+- M0 — Successor activation and baseline — COMPLETE at `2e7e84f`; OpenSpec
+  validation and all pre-DEV authority checks passed.
 
 ## Work In Progress
 
-Run the pre-DEV continuity, handoff, project, hardening, and bounded preflight
-checks, then begin the first serial Phase 2C observation.
+Run the first serial Phase 2C observation with the refreshed owner-local DEV
+state, retaining its independent sanitized outcome.
 
 ## Exact Next Action
 
-Run `npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
-`npm run hardening:check`, and `npm run observe:preflight -- --env=dev`; if
-they pass, run Phase 2C observation 1 with the owner-local external state.
+Run Phase 2C observation 1 with the owner-local external state; preserve every
+journey, replay, auth, product, framework, and cleanup category.
 
 ## Blockers
 
@@ -64,6 +64,24 @@ Command: `git status --short --branch`, `git rev-parse HEAD`, and
 Result: PASS; clean `main`, local and origin both at `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
 When: 2026-08-31
 
+Command: `npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
+`npm run hardening:check`, and `npm run observe:preflight -- --env=dev`
+Result: PASS; continuity, handoff, project truth, hardening, and bounded DEV
+preflight all passed at `2e7e84f`; production was explicitly denied by the
+preflight.
+When: 2026-08-31
+
+Command: `npm run auth:capture -- --env=dev --output=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; guarded human-led capture, post-login verification, atomic
+storage-state write, provenance write, state validation, and cleanup passed
+When: 2026-08-31
+Relevant failure/output summary: owner-local file is mode 0600; no credential
+or storage-state contents were printed.
+
+Command: `openspec validate nightwatch-dev-requalification-v1 --type change --strict --no-interactive`
+Result: PASS; all four OpenSpec artifacts validate
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -80,17 +98,6 @@ When: 2026-08-31
 - Use a separate successor because the prior reliability task is terminal.
 - Preserve `OPERATIONALLY_ACCEPTED` explicitly during bounded read-only
   observations; use `REEVALUATE` if validated evidence invalidates it.
-
-Command: `npm run auth:capture -- --env=dev --output=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
-Result: PASS; guarded human-led capture, post-login verification, atomic
-storage-state write, provenance write, state validation, and cleanup passed
-When: 2026-08-31
-Relevant failure/output summary: owner-local file is mode 0600; no credential
-or storage-state contents were printed.
-
-Command: `openspec validate nightwatch-dev-requalification-v1 --type change --strict --no-interactive`
-Result: PASS; all four OpenSpec artifacts validate
-When: 2026-08-31
 
 ## Defect Ledger
 

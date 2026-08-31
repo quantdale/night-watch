@@ -49,13 +49,16 @@ reduced to a local deterministic regression before a real run resumes.
 
 ## Milestones
 
-### M0 — Successor activation and baseline — IN_PROGRESS
+### M0 — Successor activation and baseline — COMPLETE
 
 - Create and bind the continuity-v2 task and OpenSpec route.
 - Run freshness, safety, handoff, project, and agent checks before DEV.
 - Record the exact starting SHA and refreshed-auth boundary.
+- Result: successor/OpenSpec activation and all pre-DEV checks passed at
+  `2e7e84f`; the guarded DEV preflight passed with production explicitly
+  denied.
 
-### M1 — Repeated Phase 2C sample — PENDING
+### M1 — Repeated Phase 2C sample — IN_PROGRESS
 
 - Run three serial Phase 2C invocations with the owner-managed state.
 - Preserve each run, journey, replay, and cleanup category independently.

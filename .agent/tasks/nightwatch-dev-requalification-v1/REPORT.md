@@ -27,9 +27,10 @@ not printed or copied into the repository.
 
 ## Current result
 
-No Phase 2C, Phase 4, Phase 5, campaign, or replay observation has been
-claimed yet. The next action is the pre-DEV validation sequence recorded in
-STATE.md.
+Successor activation, OpenSpec validation, continuity, handoff, project truth,
+hardening, and bounded DEV preflight all passed at `2e7e84f`. No Phase 2C,
+Phase 4, Phase 5, campaign, or replay observation has been claimed yet; the
+first serial Phase 2C observation is next.
 
 ## Safety and verdict
 

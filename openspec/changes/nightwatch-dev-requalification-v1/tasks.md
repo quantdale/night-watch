@@ -1,8 +1,8 @@
 ## 1. Successor setup and authority
 
-- [ ] 1.1 Create the continuity-v2 successor task, bind it to the current Git
+- [x] 1.1 Create the continuity-v2 successor task, bind it to the current Git
   head and this OpenSpec change, and declare explicit `PRESERVE` authority.
-- [ ] 1.2 Run repository freshness, agent, handoff, project-state, and safety
+- [x] 1.2 Run repository freshness, agent, handoff, project-state, and safety
   checks before any DEV operation; stop if the active state is contradictory.
 
 ## 2. Repeated Phase 2C evidence

@@ -61,17 +61,15 @@ explicit `REEVALUATE` protocol before further campaign work.
 
 ## Initial next action
 
-Run `npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
-`npm run hardening:check`, and `npm run observe:preflight -- --env=dev`.
-If they pass, run the first serial Phase 2C observation with the external
-owner-local state.
+Run the first serial Phase 2C observation with the external owner-local state
+after the pre-DEV checks recorded in the task STATE have passed.
 
 ## Current checkpoint
 
-The owner-led DEV auth capture completed successfully at the starting Git
-head. The state was structurally validated and written outside the workspace;
-no secret values were printed. No real product observation has been claimed in
-this successor yet.
+The owner-led DEV auth capture completed successfully and the successor
+activation checks passed at checkpoint `2e7e84f`. The state was structurally
+validated and written outside the workspace; no secret values were printed.
+No real product observation has been claimed in this successor yet.
 
 ## Terminal action
 

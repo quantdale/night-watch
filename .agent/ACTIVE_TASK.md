@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last checkpoint: successor activation at starting head `e51bf773`
-Current milestone: M0 — Successor activation and baseline — IN_PROGRESS
-Next action: Run the pre-DEV state/safety checks, then the first serial Phase 2C observation.
+Current milestone: M1 — Repeated Phase 2C sample — IN_PROGRESS
+Next action: Run the first guarded Phase 2C observation with the refreshed owner-local DEV state.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
