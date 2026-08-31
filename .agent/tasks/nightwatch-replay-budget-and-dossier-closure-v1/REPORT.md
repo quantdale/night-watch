@@ -7,7 +7,7 @@ Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-Last validated implementation SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
+Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 
 ## Scope
 
@@ -17,12 +17,15 @@ general hardening.
 
 ## Current result
 
-M0 is complete at the pushed deterministic regression. M1 is now complete:
-the chosen design is a durable campaign/cluster replay reservation ledger,
-with one protected browser slot in the initial real profile, normalized
-physical replay requirements, and no collection-limit increase or retry
-bypass. M2 implementation and adversarial validation are active; see STATE.md
-for the exact validation ledger.
+M0 is complete at the pushed deterministic regression. M1 and M2 are
+complete: the chosen design is a durable campaign/cluster replay reservation
+ledger with one protected real-scale browser slot, normalized physical replay
+requirements, strict checkpoint identity, and no collection-limit increase or
+retry bypass. The implementation is pushed at
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`; focused replay/checkpoint,
+typecheck, hardening, handoff, project, semantic, owner-provenance, and
+synthetic validation are green. CI classification and guarded DEV confirmation
+remain open; see STATE.md for the exact ledger.
 
 ## Safety
 

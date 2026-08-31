@@ -74,7 +74,7 @@ Chosen design: a durable campaign-level replay reservation ledger at the
 `CampaignBudgetManager`/orchestrator boundary. No policy limit is raised and
 no retry bypass is added.
 
-- For the initial real profile, `maxPromotedClusters=1` is the explicit finite
+- For real-scale profiles, `maxPromotedClusters=1` is the explicit finite
   browser-replay reserve. Collection browser work is capped at
   `maxTotalBrowserContexts - maxPromotedClusters`; the protected slot remains
   available for an eligible browser replay. Synthetic fixture profiles retain
@@ -106,27 +106,30 @@ Required invariants:
 
 ## M2 — Implement + adversarial validation
 
-Status: NOT_STARTED
+Status: COMPLETE
 
-Implement the owning budget change with tests for:
+Implemented at pushed checkpoint
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`:
 
-- pre-fix starvation reproducer;
-- one eligible candidate obtains one replay reservation;
-- zero-candidate campaign uses no replay reserve;
-- multiple candidates cannot exceed cap;
-- duplicate identities do not multiply reserve;
-- resume after interruption cannot double spend;
-- stale manifest/source drift fails before replay;
-- auth/capture/framework failures do not become replayable;
-- exhausted total budget remains fail closed;
-- minimization/dossier only follow successful admitted reproduction.
+- normalized replay requirements and persisted `RESERVED`/`CONSUMED`
+  campaign/cluster reservations;
+- protected real-scale browser capacity with collection-only accounting;
+- strict checkpoint validation for replay identity, requirements, queue state,
+  duplicate clusters, and dossier relationships;
+- fresh/current-source/authenticated/product eligibility before reservation;
+- idempotent checkpoint-boundary resume, post-entry interruption consumption,
+  and no re-entry for spent replay authority;
+- deterministic regressions for the starvation reproducer, eligible/zero/
+  multi-candidate cases, duplicate/source drift/rejection, exhaustion,
+  downstream dossier closure, interruption/resume, and JSON accounting.
 
-Run focused campaign/replay/checkpoint tests, typecheck, hardening, semantic
-compatibility, owner provenance, synthetic campaign, gate:local, and gate:clean.
+Validation passed: focused campaign/checkpoint cone 92/92, typecheck,
+hardening, handoff, project, semantic compatibility, owner provenance, and
+synthetic campaign.
 
 ## M3 — Fresh guarded DEV confirmation
 
-Status: NOT_STARTED
+Status: IN_PROGRESS
 
 After owner-managed auth/readiness validation, prepare a fresh current-source
 campaign. Do not reuse soak checkpoints or historical candidates.
@@ -185,16 +188,27 @@ exact-head CI inspection. Real DEV confirmation remains guarded and bounded.
 
 ## Discoveries
 
-- The current real profile reserves browser capacity by `maxTotalBrowserContexts`
-  but does not reserve a separate `journeyContexts` slot for reproduction.
-- The active continuity documents initially lacked required v2 headings, so the
-  baseline handoff gate failed before executable campaign work.
+- The current real-scale profile reserves browser capacity by
+  `maxPromotedClusters`; collection now stops one browser context early while
+  the replay path consumes the protected slot without journey/exploration
+  subtype spend.
+- Checkpoint validation must allow a consumed reservation to coexist with a
+  READY dossier during resume, while rejecting every other orphaned or
+  mismatched reservation.
+- A pre-entry checkpoint interruption is resumable exactly once; a
+  post-entry interruption consumes the reservation and records
+  `REPLAY_EXECUTION_ALREADY_STARTED` on resume.
+- The source-window and candidate freshness gates reject drift before budget
+  reservation, preserving the original admission/identity boundary.
 
 ## Deferred Work
 
-- Guarded DEV confirmation and candidate-to-dossier closure remain pending until
-  the local reservation implementation and clean gates pass.
+- Guarded DEV confirmation and candidate-to-dossier closure remain pending the
+  owner-only target/auth preflight; no credential or raw evidence may enter
+  this repository.
 - External CI remains non-evidence unless an exact-head job executes steps.
+- Final certification remains pending clean Node20, CI classification,
+  continuity/project reconciliation, privacy audit, and remote parity.
 
 ## Completion Criteria
 
