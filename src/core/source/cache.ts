@@ -29,8 +29,19 @@ export interface RealSourceSurfaceCache {
   readonly clear: () => void;
 }
 
+export interface SourceSurfaceCacheVersionInputs {
+  readonly analyzerSetVersion: string;
+  readonly gapTaxonomyVersion: string;
+}
+
 /** Build the correctness key after the bounded inventory has been produced. */
-export function sourceSurfaceCacheKey(input: { readonly config: RealSourceScanConfig; readonly inventory: RealSourceSnapshotInventory }): string {
+export function sourceSurfaceCacheKey(
+  input: { readonly config: RealSourceScanConfig; readonly inventory: RealSourceSnapshotInventory },
+  versions: SourceSurfaceCacheVersionInputs = {
+    analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
+    gapTaxonomyVersion: REAL_SOURCE_GAP_TAXONOMY_VERSION,
+  },
+): string {
   const repositories = input.inventory.repositories.map((repository) => ({ repoId: repository.repoId, sourceSha: repository.sourceSha, status: repository.status })).sort((left, right) => left.repoId.localeCompare(right.repoId));
   return safeSemanticDigest({
     schemaVersion: REAL_SOURCE_SURFACE_CACHE_VERSION,
@@ -38,8 +49,8 @@ export function sourceSurfaceCacheKey(input: { readonly config: RealSourceScanCo
     snapshotDigest: input.inventory.snapshotDigest,
     configDigest: input.config.configDigest,
     extractorVersion: input.config.extractorVersion,
-    analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
-    gapTaxonomyVersion: REAL_SOURCE_GAP_TAXONOMY_VERSION,
+    analyzerSetVersion: versions.analyzerSetVersion,
+    gapTaxonomyVersion: versions.gapTaxonomyVersion,
     enabledAnalyzers: [...input.config.enabledAnalyzers].sort(),
   }, 'source-surface-cache');
 }

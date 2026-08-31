@@ -12,10 +12,11 @@ test('canonicalDigest preserves array order and multiplicity', () => {
   expect(prefixedDigest24('test', { items: [1, 2, 2] })).not.toBe(prefixedDigest24('test', { items: [1, 2] }));
 });
 
-test('canonicalDigest duplicate-input idempotence', () => {
-  const input = { x: [1, 2, 3], y: 'hello' };
-  expect(prefixedDigest24('p', input)).toBe(prefixedDigest24('p', input));
-  expect(prefixedDigest24('p', input)).toBe(prefixedDigest24('p', JSON.parse(JSON.stringify(input))));
+test('canonicalDigest equivalent JSON round-trip preserves identity', () => {
+  const input = { x: [1, 2, 3], y: { nested: 'hello', values: [{ b: 2, a: 1 }] } };
+  const roundTrip = JSON.parse(JSON.stringify(input)) as typeof input;
+  expect(stableJsonSorted(input)).toBe(stableJsonSorted(roundTrip));
+  expect(prefixedDigest24('p', input)).toBe(prefixedDigest24('p', roundTrip));
 });
 
 test('canonicalDigest deterministic digest for same inputs', () => {
@@ -35,6 +36,7 @@ test('canonicalDigest malformed-input rejection is bounded and does not echo val
     message = error instanceof Error ? error.message : String(error);
   }
   expect(message).toBeTruthy();
+  expect(message.length).toBeLessThanOrEqual(256);
   expect(message).not.toContain('SYNTHETIC_CYCLE_SECRET');
 });
 
@@ -47,7 +49,7 @@ test('canonicalDigest output has the exact bounded digest shape', () => {
 });
 
 test('canonicalDigest no mutation of input', () => {
-  const input = { b: 2, a: 1 };
+  const input = { b: 2, a: { nested: [{ z: 3, y: 4 }] } };
   const copy = JSON.parse(JSON.stringify(input));
   prefixedDigest24('test', input);
   expect(input).toEqual(copy);

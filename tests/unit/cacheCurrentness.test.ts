@@ -127,7 +127,7 @@ test('cache currentness — dependency change (configDigest) misses', () => {
   expect(sourceSurfaceCacheKey({ config: c1, inventory: inv })).not.toBe(sourceSurfaceCacheKey({ config: c2, inventory: inv }));
 });
 
-function expectedKey(config: RealSourceScanConfig, inventory: RealSourceSnapshotInventory, overrides: { analyzerSetVersion?: string; gapTaxonomyVersion?: string } = {}): string {
+function expectedKey(config: RealSourceScanConfig, inventory: RealSourceSnapshotInventory): string {
   const repositories = inventory.repositories.map((repository) => ({ repoId: repository.repoId, sourceSha: repository.sourceSha, status: repository.status })).sort((left, right) => left.repoId.localeCompare(right.repoId));
   return safeSemanticDigest({
     schemaVersion: 'nightwatch.real-source-surface-cache.v1',
@@ -135,8 +135,8 @@ function expectedKey(config: RealSourceScanConfig, inventory: RealSourceSnapshot
     snapshotDigest: inventory.snapshotDigest,
     configDigest: config.configDigest,
     extractorVersion: config.extractorVersion,
-    analyzerSetVersion: overrides.analyzerSetVersion ?? sourceSurfaceAnalyzerSetIdentity(),
-    gapTaxonomyVersion: overrides.gapTaxonomyVersion ?? REAL_SOURCE_GAP_TAXONOMY_VERSION,
+    analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
+    gapTaxonomyVersion: REAL_SOURCE_GAP_TAXONOMY_VERSION,
     enabledAnalyzers: [...config.enabledAnalyzers].sort(),
   }, 'source-surface-cache');
 }
@@ -146,8 +146,15 @@ test('cache currentness — authoritative analyzer identity change misses', () =
   const inventory = baseInventory();
   const actual = sourceSurfaceCacheKey({ config, inventory });
   expect(actual).toBe(expectedKey(config, inventory));
-  const changedAnalyzer = expectedKey(config, inventory, { analyzerSetVersion: 'ev:sha256:000000000000000000000099' });
+  const changedAnalyzer = sourceSurfaceCacheKey({ config, inventory }, {
+    analyzerSetVersion: 'ev:sha256:000000000000000000000099',
+    gapTaxonomyVersion: REAL_SOURCE_GAP_TAXONOMY_VERSION,
+  });
   expect(changedAnalyzer).not.toBe(actual);
+  const cache = createRealSourceSurfaceCache({ maxEntries: 8 });
+  cache.put(actual, fakeDiscovery('1111'));
+  expect(cache.get(changedAnalyzer)).toBeUndefined();
+  expect(cache.stats().misses).toBe(1);
 });
 
 test('cache currentness — authoritative taxonomy version change misses', () => {
@@ -155,8 +162,15 @@ test('cache currentness — authoritative taxonomy version change misses', () =>
   const inventory = baseInventory();
   const actual = sourceSurfaceCacheKey({ config, inventory });
   expect(actual).toBe(expectedKey(config, inventory));
-  const changedTaxonomy = expectedKey(config, inventory, { gapTaxonomyVersion: 'nightwatch.real-source-gap-taxonomy.v999' });
+  const changedTaxonomy = sourceSurfaceCacheKey({ config, inventory }, {
+    analyzerSetVersion: sourceSurfaceAnalyzerSetIdentity(),
+    gapTaxonomyVersion: 'nightwatch.real-source-gap-taxonomy.v999',
+  });
   expect(changedTaxonomy).not.toBe(actual);
+  const cache = createRealSourceSurfaceCache({ maxEntries: 8 });
+  cache.put(actual, fakeDiscovery('1111'));
+  expect(cache.get(changedTaxonomy)).toBeUndefined();
+  expect(cache.stats().misses).toBe(1);
 });
 
 test('cache currentness — clearing an in-memory cache discards an entry', () => {
