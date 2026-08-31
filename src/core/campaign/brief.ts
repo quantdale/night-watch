@@ -68,12 +68,15 @@ export function buildCampaignMorningBrief(input: {
   const admitted = topDossiers.length;
   const hasAnomalyObservation = input.clusters.some((cluster) => cluster.timingVariance !== 'TRANSIENT');
   const hasTransientObservation = input.runs.some((run) => run.result === 'TRANSIENT') || input.clusters.some((cluster) => cluster.timingVariance === 'TRANSIENT');
+  const versionDrift = input.coverageGaps.includes('CAMPAIGN_VERSION_DRIFT');
   const budgetBlocked = input.resultClass === 'PARTIAL_BUDGET_EXHAUSTED'
     || input.coverageGaps.some((gap) => /BUDGET|MINIMIZATION/i.test(gap))
     || input.reproductionQueue.some((item) => item.state === 'BLOCKED' && /BUDGET/i.test(item.reasonCode ?? ''));
   const hasPendingReproduction = input.reproductionQueue.some((item) => ['PENDING', 'RUNNING', 'REPLAY_REQUIRED', 'BLOCKED'].includes(item.state));
   const headline = admitted > 0
     ? `${admitted} admitted finding(s) deserve attention first; ${input.clusters.length} private anomaly cluster(s) were observed.`
+    : versionDrift
+      ? 'CAMPAIGN VERSION DRIFT — RESUME REFUSED'
     : input.resultClass === 'PARTIAL_RUNTIME_INFRA_FAILURE' && input.nightwatchInternalIssues.some((issue) => issue.includes('FAILURE_STORM'))
       ? 'SHARED DEV FAILURE'
       : input.resultClass === 'PARTIAL_AUTH_BLOCKED' && !hasAnomalyObservation

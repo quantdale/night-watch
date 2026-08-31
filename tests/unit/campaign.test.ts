@@ -885,6 +885,7 @@ test.describe('Phase 7 no-finding and drift contracts', () => {
       expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
       expect(result.stopReason).toBe('CAMPAIGN_VERSION_DRIFT');
       expect(result.checkpoint.versionDrift).toEqual(['CAMPAIGN_VERSION_DRIFT']);
+      expect(result.morningBrief.headline).toBe('CAMPAIGN VERSION DRIFT — RESUME REFUSED');
       expect(executed).toBe(0);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
