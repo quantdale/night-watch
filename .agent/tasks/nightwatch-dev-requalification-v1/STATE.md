@@ -170,7 +170,12 @@ then resume that new campaign. The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
 repeated occurrences, persisted state advances without duplicate/lost work,
-and cleanup remains safe. Preserve DVR-006 and DVR-007 independently.
+and cleanup remains safe. Preserve DVR-006 and DVR-007 independently. Fresh
+prepare now passed as
+`campaign:sha256:4b8372d920d9694ca6c67c77` with manifest fingerprint
+`manifest:sha256:dc825e5258042974aba10179`, five work items, and frozen source
+`c1f5f529e830757cc2c3124aae46047bda863173`. The next action is its serial
+resume.
 
 ## Blockers
 
@@ -469,6 +474,21 @@ When: 2026-08-31
 
 Command: `npm run hardening:check`
 Result: PASS; offline structural invariants hold after the DVR-007 repair.
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before fresh current-source campaign preparation;
+the approved DEV target remained allowlisted, production remained explicitly
+denied, and no target network activity was performed.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; fresh campaign
+`campaign:sha256:4b8372d920d9694ca6c67c77` prepared against source
+`c1f5f529e830757cc2c3124aae46047bda863173`, manifest fingerprint
+`manifest:sha256:dc825e5258042974aba10179`, five bounded work items,
+`CHANGE_DIRECTED` selection, ordinal-zero checkpoint, and
+`PREPARE_GATE_PASS`. No product execution occurred during preparation.
 When: 2026-08-31
 
 ## Files Changed
