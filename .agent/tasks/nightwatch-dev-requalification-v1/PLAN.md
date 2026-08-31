@@ -99,6 +99,9 @@ reduced to a local deterministic regression before a real run resumes.
   `malformed-json` product oracle; exact replay remained unavailable after the
   failed anchor. Phase 4 evidence is complete as a truthful bounded outcome,
   not as an all-seeds PASS.
+- The guarded Phase 5 run at `nightwatch-20260831T095813Z-09be` passed all six
+  source-generated first executions and six fresh replays with stable
+  fingerprints and zero safety/privacy counters. Proceed to campaign state.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

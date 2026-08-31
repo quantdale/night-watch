@@ -8,13 +8,13 @@ Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
+Last documentation checkpoint SHA: 6a5a7914206ea1cfae0f1f9aa5f3434081afbb04
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 6a5a7914206ea1cfae0f1f9aa5f3434081afbb04
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -120,12 +120,23 @@ achieved 3/4 clean contexts, common 2/2, and account 0/1; exact replay was
 unavailable because each bounded run stopped at a product oracle before its
 replay loop.
 
+The guarded Phase 5 API run at `nightwatch-20260831T095813Z-09be` passed its
+serial six-operation corpus and six fresh replays in 27.4 seconds. All 12
+attempts were DEV-verified with valid external auth, 2xx status classes,
+valid JSON or complete JSON chunks, stable first/replay fingerprints, and
+`ORACLE_PASS`. The run used the native Nightwatch relay fallback, persisted
+no auth or response material, and reported zero production attempts, proxy
+violations, unknown destinations/approvals, mutations, database queries, or
+secret leaks. The account-inventory and billing-groups API paths passed here,
+so the malformed-JSON product evidence remains context-specific to the
+browser account-inventory observation rather than a blanket API failure.
+
 ## Exact Next Action
 
-Advance to Phase 5: rerun the bounded DEV preflight, inspect the guarded
-read-only API operation contract, and execute one serial Phase 5 observation
-with the current owner-local state. Preserve the Phase 4 product-oracle
-outcomes independently; do not relabel them as framework failures or PASS.
+Advance to campaign state: inspect the guarded Phase 7 prepare/resume usage,
+rerun the bounded DEV preflight, and prepare one serial read-only campaign
+with the current owner-local state. Preserve the Phase 5 first/replay ledger
+and all Phase 4 product-oracle outcomes independently.
 
 ## Blockers
 
@@ -296,6 +307,22 @@ and
 When: 2026-08-31
 
 Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before Phase 5; the approved DEV target remained
+allowlisted, production remained explicitly denied, and preflight performed no
+network activity.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run api:phase5 -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; run `nightwatch-20260831T095813Z-09be` completed six serial
+first executions and six fresh replays in 27.4 seconds. Every record was
+DEV-verified with `ORACLE_PASS`, 2xx status, valid JSON/complete JSON chunks,
+and identical first/replay fingerprints. Auth remained external-owner-only
+with no auto-refresh or MFA; the native Nightwatch relay fallback ran with
+zero safety counters and zero privacy persistence. Sanitized ledger:
+`artifacts/nightwatch-20260831T095813Z-09be-phase5-api-ledger.json`.
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
 Result: PASS immediately before the Phase 4 confirmation; the approved DEV
 target remained allowlisted, production remained explicitly denied, and no
 network activity was performed by preflight.
@@ -421,6 +448,11 @@ When: 2026-08-31
   product-surface anomaly classification rather than a Nightwatch lifecycle
   defect; the launcher remained fail closed and did not run exact replay after
   a failed anchor.
+- Phase 5 passed all six source-generated API operations and all six fresh
+  replays, including account-inventory and billing-groups reads that are
+  implicated by the browser-only malformed-JSON observation. This narrows the
+  product evidence to a context-specific browser observation; it does not
+  authorize changing the product or weakening the browser oracle.
 
 ## Safety Events
 

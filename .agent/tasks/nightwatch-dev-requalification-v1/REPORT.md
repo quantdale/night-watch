@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
+Last documentation checkpoint SHA: 6a5a7914206ea1cfae0f1f9aa5f3434081afbb04
 
 ## Scope
 
@@ -85,6 +85,16 @@ oracle, again with valid auth, complete capture, settled observation, and zero
 safety counters. Exact replay was unavailable after the failed account
 anchor; this is recorded as a bounded product-oracle outcome rather than an
 all-seeds Phase 4 PASS.
+
+The guarded Phase 5 API run at `nightwatch-20260831T095813Z-09be` passed all
+six source-generated first executions and six fresh replays in 27.4 seconds.
+Every attempt was DEV-verified with 2xx status, valid JSON or complete JSON
+chunks, stable first/replay fingerprints, and `ORACLE_PASS`. The native
+Nightwatch relay fallback reported zero safety counters and the privacy
+ledger reported no persisted credentials, customer identifiers, raw bodies,
+or response bodies forwarded to OOPS. Account-inventory and billing-groups
+API operations passed here, narrowing the malformed-JSON evidence to the
+browser account-inventory context observed in Phase 2C/Phase 4.
 
 ## Safety and verdict
 

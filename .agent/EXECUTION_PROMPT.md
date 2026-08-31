@@ -100,7 +100,9 @@ capture defect. The first Phase 4 run at
 then stopped fail-closed on a fresh-context critical bootstrap 502 product
 oracle. A second bounded run at `nightwatch-20260831T095337Z-c375` passed
 payer/common contexts and stopped at the known account malformed-JSON product
-oracle. Preserve both independent outcomes and advance to Phase 5.
+oracle. Phase 5 then passed six first executions and six fresh replays with
+zero safety/privacy violations. Preserve these outcomes and advance to the
+guarded campaign prepare/resume path.
 
 ## Terminal action
 
