@@ -343,9 +343,9 @@ attempted.
 The final canonical and topology-correct isolated suites are exact at 2,690
 test instances / 2,677 expected passes / 13 skips / 0 failures or flakes,
 including identical skip identities. The local gate passed all ten groups
-with receipt `receipt:sha256:7d0150eae20ae9e316ff92d7`; the Node 20 clean gate
-passed with receipt `receipt:sha256:51dedd6a466a50eaa5d5e373` and clean receipt
-`clean-receipt:sha256:9b594dbf07540e040f0ec162`. Control Center typecheck,
+with receipt `receipt:sha256:5e1ac34e748d354ec30860fb`; the Node 20 clean gate
+passed with receipt `receipt:sha256:204fec32f3097dee597ca7a7` and clean receipt
+`clean-receipt:sha256:95d5aafd432b349ad4a90f8b`. Control Center typecheck,
 11 tests, and the 3-file build passed. `OPERATIONALLY_ACCEPTED` is preserved;
 fresh real DEV repetition remains a separately authorized follow-up after
 owner-managed authentication is refreshed.

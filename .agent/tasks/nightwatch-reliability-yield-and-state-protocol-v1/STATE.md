@@ -8,7 +8,7 @@ Status: COMPLETE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: 88bd70de5306d2f461f9c0c5b5091e237caaac6e
+Last documentation checkpoint SHA: 3ca3e03e7e9f76ed365a106076f98ec770f9b88f
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
@@ -368,6 +368,18 @@ sibling writes; nested receipt
 `receipt:sha256:51dedd6a466a50eaa5d5e373` and clean receipt
 `clean-receipt:sha256:9b594dbf07540e040f0ec162`.
 
+Command: `npm run gate:local` and `npm run gate:clean` at terminal documentation checkpoint `3ca3e03e7e9f76ed365a106076f98ec770f9b88f`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: the final local gate passed all 10 groups
+with semantic compatibility 1,950 / 1,937 / 13 / 0, owner provenance 91,
+and synthetic campaign 74; receipt
+`receipt:sha256:5e1ac34e748d354ec30860fb`. The final fresh Node 20 clean gate
+passed with clean before/after, no reused modules, no auth/finding state, and
+zero sibling writes; nested receipt
+`receipt:sha256:204fec32f3097dee597ca7a7` and clean receipt
+`clean-receipt:sha256:95d5aafd432b349ad4a90f8b`.
+
 Command: `npm run observe:preflight -- --env=dev` and guarded Phase 2C launch
 Result: PASS preflight; BLOCKED before target observation
 When: 2026-08-31
@@ -466,7 +478,7 @@ and do not convert an earlier strict divergence into a retry PASS.
 ## Completion Snapshot
 
 Complete. M0 through M4 are closed at implementation checkpoint `f875730`.
-M5 is closed at terminal validation checkpoint `88bd70d`; the full-suite
+M5 is closed at terminal validation checkpoint `3ca3e03`; the full-suite
 parity evidence was measured at the immediately preceding source-equivalent
 checkpoint `e33c07f`:
 canonical/isolated parity, local/clean validation, Control Center checks, and
