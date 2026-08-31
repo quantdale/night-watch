@@ -171,6 +171,11 @@ function hasProductStateDifference(first: JourneyEvidence, replay: JourneyEviden
   return true;
 }
 
+function hasIndependentObservationFailure(evidence: JourneyEvidence): boolean {
+  return !evidence.passed || evidence.oracleStatus === 'FAIL' ||
+    evidence.failureAttribution?.primaryFailure !== null && evidence.failureAttribution?.primaryFailure !== undefined;
+}
+
 function classifyReplayOutcome(input: {
   first: JourneyEvidence;
   replay: JourneyEvidence;
@@ -203,7 +208,8 @@ function classifyReplayOutcome(input: {
     for (const code of input.replay.captureFailureCodes ?? []) diagnostics.add(code);
     return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'one observation has incomplete response capture', diagnosticCodes: [...diagnostics].sort() };
   }
-  if (input.first.captureStatus === 'UNKNOWN' || input.replay.captureStatus === 'UNKNOWN') {
+  if ((input.first.captureStatus === 'UNKNOWN' || input.replay.captureStatus === 'UNKNOWN') &&
+      !hasIndependentObservationFailure(input.first) && !hasIndependentObservationFailure(input.replay)) {
     diagnostics.add('CAPTURE_STATUS_UNKNOWN');
     return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'response capture health was not established for one observation', diagnosticCodes: [...diagnostics].sort() };
   }

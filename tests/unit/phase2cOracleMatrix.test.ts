@@ -259,6 +259,15 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   expect(unknownCapture.passed).toBe(false);
   expect(unknownCapture.diagnosticCodes).toContain('CAPTURE_STATUS_UNKNOWN');
 
+  const unattemptedCapture = compareJourneyReplay(settled, {
+    ...settled,
+    passed: false,
+    oracleStatus: 'FAIL',
+    captureStatus: 'UNKNOWN',
+    globalShellReady: false,
+  });
+  expect(unattemptedCapture.classification).not.toBe('FRAMEWORK_CAPTURE_DEFECT');
+
   const product = {
     ...settled,
     passed: false,
@@ -329,6 +338,19 @@ test('single-observation classification keeps capture failures out of product fi
   });
   expect(unavailableBody.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
   expect(unavailableBody.diagnosticCodes).toEqual(['BODY_UNAVAILABLE', 'CAPTURE_INCOMPLETE']);
+
+  const unattemptedCapture = classifyJourneyObservation({
+    evidence: {
+      ...baseEvidence(),
+      passed: false,
+      oracleStatus: 'FAIL',
+      captureStatus: 'UNKNOWN',
+      observationSettlement: 'SETTLED',
+      oracleObservations: [productOracle],
+    },
+    safety,
+  });
+  expect(unattemptedCapture.classification).toBe('PRODUCT_BEHAVIOR_ANOMALY');
 
   const settledProduct = classifyJourneyObservation({
     evidence: {

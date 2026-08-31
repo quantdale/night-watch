@@ -95,7 +95,7 @@ export function classifyJourneyObservation(input: {
       diagnosticCodes: [evidence.observationSettlement === 'TIMED_OUT' ? 'SETTLEMENT_TIMEOUT' : 'SETTLEMENT_STATUS_UNKNOWN'],
     };
   }
-  if (evidence.captureStatus !== 'COMPLETE') {
+  if (evidence.captureStatus === 'INCOMPLETE' || (evidence.captureStatus === 'UNKNOWN' && evidence.passed)) {
     return {
       classification: 'FRAMEWORK_CAPTURE_DEFECT',
       reason: evidence.captureStatus === 'INCOMPLETE'
