@@ -113,20 +113,17 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-The DVR-011 admission repair is implemented and validated at
-`971e998bb5cb2818775a198c604dc9d67dfe84bc`. It uses the shared observation
-classifier, admits only settled complete product-classified observations with
-exact triggered product fingerprints, and maps framework, transient, auth,
-safety, and unknown outcomes without creating product candidates. The focused
-and expanded local cones, typecheck, and hardening pass. The bounded DEV
-preflight and fresh prepare then passed as campaign
-`campaign:sha256:75fafe6abbb73d1b79ef918d`, manifest
-`manifest:sha256:0099d6bce1e603dea454a255`, frozen to source `971e998`, with
-five work items and product execution not started. Commit this preparation
-checkpoint and resume only that manifest once. The completed `2fe5dc...`,
-stale `ceae...`, and quarantined `168c37...` manifests must not be resumed
-after this source change. Preserve all prior outcomes independently.
-
+The DVR-012 terminal-classification repair is commit-validated at
+`fa236b690ceace3a420771645fce9f99bf751ea8`. Prepare a fresh current-source
+campaign once with `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev
+--prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-
+state.json` and reconcile it as the only authorized replacement for the
+quarantined `campaign:sha256:75fafe6abbb73d1b79ef918d`; do not resume any
+quarantined or stale manifest after a source change. Resume only the fresh
+manifest once, classify the terminal outcome truthfully (product, framework,
+transient, auth, safety, unknown, or budget), and run the full local and clean
+validation matrix before closing. Preserve all prior repaired outcomes
+independently.
 ## Terminal action
 
 At closure, complete the successor STATE/REPORT, validate the final evidence,

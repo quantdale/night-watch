@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last substantive checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last documentation checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last documentation checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+LAST_DOCUMENTATION_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -256,25 +256,34 @@ boundary defect. The campaign is retained as evidence of repaired checkpoint
 identity, but its common/account candidate labels are not product findings;
 fresh current-source execution is required after the admission repair.
 
+The fresh current-source campaign
+`campaign:sha256:75fafe6abbb73d1b79ef918d` resumed once and fail-closed after
+two completed payer/common browser journeys. The account journey was blocked
+with execution result `RUNTIME_FAILURE` and reason `BODY_READ_TIMEOUT`; the
+remaining two API items were skipped. The persisted checkpoint reached ordinal
+9 with zero anomaly observations, clusters, and dossiers, one
+`BODY_READ_TIMEOUT` unresolved gap, zero safety counters, and privacy `PASS`.
+The campaign result was `PARTIAL_RUNTIME_INFRA_FAILURE` /
+`PREFLIGHT_FAILED`, but the morning brief headline was `NIGHTWATCH INTERNAL
+DEFECT` despite no internal issue list entries. This is DVR-012: a truthful
+framework-capture limitation was presented as a Nightwatch defect and the
+guarded launcher rejected the bounded non-product terminal result.
+
+The campaign is retained as sanitized evidence and must not be resumed after
+the source repair. A local terminal-classification regression and fresh
+current-source campaign are required.
+
 ## Exact Next Action
 
-The DVR-011 admission repair is validated at `971e998`; the continuity
-checkpoint is pushed at `f2fb52b`. The bounded DEV preflight passed, and fresh
-prepare-only created campaign `campaign:sha256:75fafe6abbb73d1b79ef918d` with
-manifest fingerprint `manifest:sha256:0099d6bce1e603dea454a255`, frozen source
-`971e998bb5cb2818775a198c604dc9d67dfe84bc`, five bounded work items, and
-`productExecution=NOT_STARTED`. Record this preparation checkpoint and resume
-only this manifest once; do not resume the completed `2fe5dc...`, stale
-`ceae...`, or quarantined `168c37...` manifests after source changes.
-
-The original campaign
-`campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
-refusal and is not reused. Verify that the repaired summary boundary accepts
-repeated occurrences, persisted state advances without duplicate/lost work,
-and cleanup remains safe. Preserve DVR-006 through DVR-011 independently.
-Classify every fresh campaign result as product, framework, transient, auth,
-safety, unknown, or budget evidence without retry relabeling, then run final
-local and clean validation.
+The DVR-012 terminal-classification repair is commit-validated at
+`fa236b690ceace3a420771645fce9f99bf751ea8`. Prepare a fresh current-source
+campaign once, then resume only that manifest once. Reconcile its sanitized
+checkpoint as product, framework, transient, auth, safety, unknown, or budget
+evidence without retry relabeling. Do not resume
+`campaign:sha256:75fafe6abbb73d1b79ef918d`, the completed `2fe5dc...`, stale
+`ceae...`, or quarantined `168c37...` after the source change. Preserve
+DVR-006 through DVR-011 independently, and do not convert framework, auth,
+environment, unknown, or budget outcomes into product PASS.
 
 ## Blockers
 
@@ -284,21 +293,34 @@ None.
 
 Read this STATE, PLAN, and SPEC, verify clean Git and the external state path
 without reading its contents, rerun the pre-DEV checks, and continue M3
-serially. The duplicate-fingerprint repair is checkpointed at
-`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` and the version-drift
-classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; the
-source-identity repair is checkpointed at
-`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. The cache/property repair
-at `de169c9` changed executable identity, and the post-audit campaign
-`168c37...` exposed DVR-010. The observation-identity repair is checkpointed
-at `20184770015129fe2138dd1e18a853d34bef7274`, and the admission repair at
-`971e998bb5cb2818775a198c604dc9d67dfe84bc`. Fresh prepare passed as
+serially. The admission repair is validated at `971e998`; the terminal
+classification repair is validated at
+`fa236b690ceace3a420771645fce9f99bf751ea8`. The prior prepare
 `campaign:sha256:75fafe6abbb73d1b79ef918d` with manifest
-`manifest:sha256:0099d6bce1e603dea454a255` and source `971e998`; resume only
-that manifest once before final reconciliation.
+`manifest:sha256:0099d6bce1e603dea454a255` exposed DVR-012 and must not be
+repeated after the source repair. Prepare a fresh manifest, resume it once,
+and then finalize the task.
 Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:75fafe6abbb73d1b79ef918d --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: BOUNDED FRAMEWORK-CAPTURE FAILURE after 54.6 seconds; payer and
+common journeys completed with `PASS`, account inventory was blocked with
+`RUNTIME_FAILURE` / `BODY_READ_TIMEOUT`, API work was skipped, and the
+checkpoint persisted ordinal 9 with zero anomaly observations/clusters/dossiers,
+zero safety counters, and privacy `PASS`. Before DVR-012 repair the launcher
+surfaced `PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` with an inaccurate
+`NIGHTWATCH INTERNAL DEFECT` headline and failed its terminal assertion. No
+product candidate was admitted and no raw authenticated evidence was copied.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/campaign.test.ts`, `npm run typecheck`, and `npm run hardening:check`
+Result: PASS at implementation checkpoint
+`fa236b690ceace3a420771645fce9f99bf751ea8`; campaign suite 32/32 including
+the new bounded-runtime headline and retained internal-defect headline
+assertions, TypeScript compilation, and offline hardening all passed.
+When: 2026-08-31
+
 
 Command: `git status --short --branch`, `git rev-parse HEAD`, and
 `git rev-parse origin/main`
@@ -828,6 +850,7 @@ When: 2026-08-31
 | DVR-010 | HIGH | Campaign observation identity / checkpoint integrity | Fresh current-source DEV campaign resume `campaign:sha256:168c37cad1869a47a652f8bf` | Account journey emitted multiple anomaly observations with repeated run ID `phase7-journey-ripple-account-inventory-1`; resume failed closed at checkpoint validation with `DUPLICATE_OBSERVATION` | `adaptJourneyEvidence` reused the single enclosing run ID for every fingerprint, while the checkpoint ledger and run-ID keyed candidate map require observation identities to be unique | `20184770015129fe2138dd1e18a853d34bef7274` derives bounded deterministic per-observation IDs for multi-fingerprint journey/exploration evidence and the orchestrator validates the batch before mutation | Adapter, legacy compatibility, bounded-length, and checkpoint containment regressions; 70/70 focused cone | Typecheck and hardening PASS at `2018477`; fresh current-source DEV campaign still required because executable identity changed | Fixed; failed `168c37...` manifest quarantined as non-product evidence |
 | DVR-009 | LOW | Cache/property test quality | Invariant audit after repeated campaign reconciliation | Cache version tests changed a reference digest but never queried the cache with a changed key; a “duplicate-input idempotence” property only repeated identical input | Cache key now accepts an explicit pure version-input seam with live authoritative defaults; property wording and assertions cover true equivalent nested JSON round-trips, bounded cycle diagnostics, and deep non-mutation | `tests/unit/cacheCurrentness.test.ts`, `tests/unit/fuzzProperty.test.ts`; 40/40 cache/property/digest tests | `npm run typecheck`, `npm run hardening:check`, campaign suite 31/31: PASS | Closed at `de169c9`; fresh current-source DEV campaign required because executable identity changed |
 | DVR-011 | HIGH | Phase 7 journey admission | Fresh repaired DEV campaign `2fe5dc...` | Common journey was marked `ANOMALY` from non-fatal `unexpected-status` fingerprints despite passed/settled/complete/ORACLE_PASS evidence; account product oracle was admitted despite incomplete capture and `BODY_READ_TIMEOUT` | Campaign admission selected any `anomalyFingerprints` and bypassed shared observation classification | `971e998bb5cb2818775a198c604dc9d67dfe84bc` gates candidates on shared settled/capture-complete/product classification and exact triggered product fingerprints, and maps non-product outcomes explicitly | `tests/unit/phase2cOracleMatrix.test.ts` campaign admission matrix plus focused 30-test and expanded 73-test cones | Typecheck, hardening, focused/expanded cones PASS; fresh current-source DEV campaign pending | Open; fresh DEV confirmation required |
+| DVR-012 | MEDIUM | Campaign terminal classification | Fresh repaired-source DEV campaign `campaign:sha256:75fafe6abbb73d1b79ef918d` | Account inventory ended with `RUNTIME_FAILURE` / `BODY_READ_TIMEOUT`, no product candidate, zero safety counters, and privacy `PASS`, but the brief said `NIGHTWATCH INTERNAL DEFECT` and the launcher assertion failed | Generic `PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` treated a safe framework limitation as a Nightwatch defect | `fa236b690ceace3a420771645fce9f99bf751ea8` requires an internal-issue signal for the defect headline, surfaces `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`, and accepts only the explicit bounded no-candidate/no-safety/privacy terminal | `tests/unit/campaign.test.ts` headline regression plus guarded launcher predicate | Open; fresh current-source confirmation required |
 
 ## Discoveries
 

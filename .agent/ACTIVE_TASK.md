@@ -6,10 +6,10 @@ Title: Nightwatch Bounded DEV Requalification
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last checkpoint: fresh current-source campaign prepared at `75fafe6`
+Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last checkpoint: terminal classification repaired so bounded runtime observation failures no longer misreport as Nightwatch defects
 Current milestone: M3 — Reconciliation and closure — IN_PROGRESS
-Next action: Commit the preparation checkpoint, then resume only campaign `75fafe6abbb73d1b79ef918d`.
+Next action: Prepare a fresh current-source campaign once, then resume only that manifest once.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

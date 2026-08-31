@@ -151,12 +151,23 @@ reduced to a local deterministic regression before a real run resumes.
   source `2018477`; its resume completed with repaired observation identity but
   exposed DVR-011, so its common/account candidate labels are not product
   findings and it must not be reused after the admission source change.
-- DVR-011 admission repair is validated at `971e998`; it requires a fresh
-  current-source DEV prepare/resume. The fresh prepare passed as
+- DVR-011 admission repair is validated at `971e998`; it required a fresh
+  current-source prepare/resume. Prepare passed as
   `campaign:sha256:75fafe6abbb73d1b79ef918d` with manifest
-  `manifest:sha256:0099d6bce1e603dea454a255`, frozen to source `971e998`;
-  resume only this manifest once. Then run final validation appropriate to the
-  changed implementation and evidence.
+  `manifest:sha256:0099d6bce1e603dea454a255`, frozen to source `971e998`; its
+  single authorized resume exposed DVR-012: a bounded `RUNTIME_FAILURE` /
+  `BODY_READ_TIMEOUT` without any product candidate was rendered as
+  `NIGHTWATCH INTERNAL DEFECT` and rejected by the guarded launcher. That
+  manifest is retained as bounded framework-capture evidence and must not be
+  resumed after source changes.
+- DVR-012 terminal classification is repaired at
+  `fa236b690ceace3a420771645fce9f99bf751ea8`: the morning-brief headline
+  now requires an internal-issue signal for `NIGHTWATCH INTERNAL DEFECT` and
+  surfaces a truthful `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`
+  otherwise; the guarded launcher now accepts that exact bounded non-product
+  terminal alongside `CAMPAIGN_VERSION_DRIFT`. A fresh current-source
+  prepare and single resume remain required before final local and clean
+  validation.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.
 

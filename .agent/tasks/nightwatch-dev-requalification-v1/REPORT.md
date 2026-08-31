@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last substantive checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
-Last documentation checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last documentation checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 
 ## Scope
 
@@ -237,6 +237,24 @@ The repaired-source campaign preparation passed as
 `971e998bb5cb2818775a198c604dc9d67dfe84bc`. It contains five bounded
 work items and `productExecution=NOT_STARTED`; no product execution occurred
 during preparation. This manifest is the only authorized next resume.
+
+DVR-012 is a Medium campaign-terminal classification defect discovered during
+the single authorized resume of `campaign:sha256:75fafe6abbb73d1b79ef918d`. A
+known capture failure produced no candidate, no internal issue, zero safety
+counters, and privacy `PASS`, but the generic runtime-failure headline said
+`NIGHTWATCH INTERNAL DEFECT` and the manual launcher rejected the bounded
+non-product terminal result. The manifest is quarantined. A local repair must
+preserve fail-closed behavior for actual Nightwatch defects while accepting
+truthful framework-capture limitations, then requires one fresh current-source
+campaign.
+The terminal-classification repair is validated at
+`fa236b690ceace3a420771645fce9f99bf751ea8`, where the brief explicitly
+surfaces an internal-issue branch before a runtime-failure-without-findings
+branch and the campaign suite asserts that only `NIGHTWATCH_DEFECT` / duplicate
+identity failures produce the defect headline. The guarded launcher now accepts
+both the historical version-drift terminal and the explicit bounded
+framework-capture limitation. A fresh current-source prepare and single resume
+remain required before final local and clean validation.
 
 ## Safety and verdict
 
