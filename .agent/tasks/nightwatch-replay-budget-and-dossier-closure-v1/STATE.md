@@ -106,11 +106,21 @@ authorized bounded DEV preflight.
 - Focused replay/checkpoint suites — PASS, 92/92 tests, serial, no retries.
 - `npm run typecheck` — PASS.
 - `npm run hardening:check` — PASS; offline structural invariants hold.
-- `npm run agent:check -- --root .` — PASS with expected legacy-task warning
-  before this state refresh; it also reported the stale SHA now corrected.
+- `npm run agent:check -- --root .` — PASS; 0 strict errors, 34 historical
+  legacy warnings.
 - `npm run handoff:check -- --root .` — PASS.
 - `npm run project:check` — PASS.
 - `npm run test:semantic-compat` — PASS; 1,937 passed, 13 skipped, 0 failed.
+- `npm run test:owner-provenance` — PASS; 91/91 tests.
+- `npm run campaign:synthetic` — PASS; 89/89 tests.
+- `npm run gate:local` — PASS; all 10 required groups, receipt
+  `receipt:sha256:e7cdf8bc8eec21bb39758484`, Node 22.
+- `npm run gate:clean` — PASS; disposable clean checkout and all 10 groups
+  under Node 20, receipt `clean-receipt:sha256:30151b7253775d2e09da6caf`.
+- Exact-head GitHub Actions run `33446473458` for
+  `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` — completed `failure`; sole job
+  `99666610250` (`Executable quality gate`) also failed with `steps=[]`;
+  failed-log retrieval returned `log not found`.
 
 ## Decisions Made During This Task
 
@@ -160,10 +170,10 @@ publication, or authenticated evidence operation was performed.
 
 ## Deferred / Follow-Up
 
-- Exact-head CI inspection/classification remains pending until the GitHub
-  Actions result is read for this checkpoint.
+- CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external
+  non-evidence; no repository step executed and CI PASS is not claimed.
 - Guarded DEV confirmation remains pending its owner-only target/auth
-  preflight; no DEV credentials, raw evidence, or production operation is
+  preflight; no DEV credentials, raw evidence, or production operation was
   authorized.
 - Final continuity closure, privacy audit, documentation checkpoint, push, and
   remote-parity verification remain pending.
@@ -183,7 +193,10 @@ Completion state: IN_PROGRESS
 Current milestone: M3 — complete local, CI, and guarded DEV validation.
 Validated result: pushed implementation checkpoint
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` passes the focused 92-test
-campaign/checkpoint cone, typecheck, hardening, handoff, project, and semantic
-compatibility checks.
-Terminal outcome: NONE; CI classification, guarded DEV confirmation, final
-closure, and clean remote parity remain open.
+campaign/checkpoint cone, local gate, clean Node20 gate, typecheck, hardening,
+handoff, project, semantic compatibility, owner provenance, and synthetic
+campaign checks.
+CI result: exact-head run `33446473458` failed before any job step and is
+classified as external non-evidence.
+Terminal outcome: NONE; guarded DEV confirmation, final closure, and clean
+remote parity remain open.

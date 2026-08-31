@@ -27,6 +27,16 @@ typecheck, hardening, handoff, project, semantic, owner-provenance, and
 synthetic validation are green. CI classification and guarded DEV confirmation
 remain open; see STATE.md for the exact ledger.
 
+## CI classification
+
+The exact pushed implementation head
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` was observed once by GitHub
+Actions as run `33446473458` (`Nightwatch hardening`). Its sole job
+`99666610250` (`Executable quality gate`) completed `failure` with
+`steps=[]`; failed-log retrieval returned `log not found`. This is classified
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No repository
+workflow step executed, so CI PASS is not claimed.
+
 ## Safety
 
 Production, NEXT, mutation, datastore/infrastructure, sibling writes,
