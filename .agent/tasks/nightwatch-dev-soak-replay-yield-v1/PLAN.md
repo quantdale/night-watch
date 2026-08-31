@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-dev-soak-replay-yield-v1
 Phase: DEV_SOAK_REPLAY_YIELD_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -41,35 +41,43 @@ first/replay corpus in every cycle.
 
 ## M3 — Fresh campaign soak
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-Run five independently prepared current-source Phase 7 campaigns. Never reuse
-a stale manifest. Measure completion, account coverage, capture-limited stops,
-candidate/cluster/dossier yield, duplication/loss, and safety/privacy.
+Five fresh prepare/resume pairs ran from current source. All used newly written
+manifests in isolated owner-only roots; no predecessor checkpoint was resumed.
+One campaign was capture/settlement-limited after the payer journey; four
+completed all five work items and emitted two strict product candidates each.
 
 ## M4 — Current replay/dossier closure
 
-Status: NOT_STARTED
+Status: COMPLETE
 
-Use only fresh DVR-011-admitted product candidates. Execute at most five safe
-attack replays total. If none exist after the full sample, record replay as
-STARVED_BY_CURRENT_ADMISSION rather than PASS.
+The fresh campaigns emitted eight product candidates across two stable
+fingerprints, but every candidate remained `PROTOCOL_ONLY / UNRESOLVED`.
+Four one-cluster reproduction queues were blocked by the bounded
+`journeyContexts` budget before executor entry. No stale candidate was replayed,
+no attack replay executor ran, and no dossier was generated. Terminal outcome:
+`SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`.
 
 ## M5 — Quantitative diagnosis
 
-Status: NOT_STARTED
+Status: COMPLETE
 
-Compute capture success/failure rates, journey/context correlations,
-account-inventory reach, candidate-to-replay-to-dossier conversion, and
-before/after repair impact.
+M1/M2/M3 capture, settlement, account reach, candidate, replay, dossier,
+duplication, cleanup, and before/after repair rates are recorded in STATE.md
+and REPORT.md. The evidence attributes the remaining weakness to bounded DEV
+capture/settlement and the per-kind campaign budget, not a newly reproduced
+Nightwatch Critical/High defect.
 
 ## M6 — Final validation and closure
 
-Status: NOT_STARTED
+Status: COMPLETE
 
-Run focused/full gates, clean Node 20 qualification, parity where required,
-single exact-head CI observation, reconcile task/project truth, push clean
-main, and record one terminal soak outcome.
+All required local/source, continuity, project, synthetic, privacy, and
+clean-checkout validation passed or was recorded as external non-evidence.
+The task truth is reconciled and the terminal outcome is
+`SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`. No additional DEV
+execution is authorized.
 
 ## Purpose
 

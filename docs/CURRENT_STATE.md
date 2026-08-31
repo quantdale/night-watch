@@ -1,19 +1,20 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-08-31** after
-> completed bounded DEV requalification `nightwatch-dev-requalification-v1`.
+> completed `nightwatch-dev-soak-replay-yield-v1`.
 > The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
-> requalification repaired DVR-001 through DVR-012 across observation
+> predecessor repaired DVR-001 through DVR-012 across observation
 > settlement/capture, attribution, campaign checkpoint identity, executable
 > source identity, finding admission, and truthful terminal classification.
-> Final current-source campaign
-> `campaign:sha256:1054b8271440fc29f7fb5f21` ended
-> `PARTIAL_RUNTIME_INFRA_FAILURE / PREFLIGHT_FAILED` on `BODY_UNAVAILABLE`
-> with zero product candidates/dossiers, zero safety counters, privacy
-> `PASS`, and headline `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`.
-> Active successor `nightwatch-dev-soak-replay-yield-v1` measures capture
-> reliability over a larger bounded serial DEV sample and seeks fresh
-> current-manifest replay/dossier/yield evidence when strict admission permits.
+> The successor then ran ten independent Phase 2C launchers, five Phase 4
+> explorations, five Phase 5 API cycles, and five fresh Phase 7 pairs.
+> M1 reached 56/60 observations with zero `BODY_UNAVAILABLE`; M2 reached the
+> account anchor 5/5 and verified 60/60 API attempts; M3 completed 21/25
+> work items and emitted eight fresh candidates in four campaigns.
+> Four current reproduction queues exhausted bounded journey budget before
+> replay/dossier execution. Terminal outcome:
+> `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`, with zero safety
+> counters, privacy `PASS`, and no Nightwatch-owned Critical/High defect.
 > GitHub Actions remains external non-evidence while exact-head jobs execute
 > zero steps.
 
@@ -193,29 +194,30 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-dev-soak-replay-yield-v1
 LIVE_PHASE: DEV_SOAK_REPLAY_YIELD_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
-### Active DEV soak, replay, and yield campaign
+### Completed DEV soak, replay, and yield campaign
 
-The active successor is `nightwatch-dev-soak-replay-yield-v1`, starting from
-`754aa629b4b24bda0eca98fe567cc44ef536e30d` with explicit verdict effect `PRESERVE`. It exists because the
-completed bounded requalification proved the classification pipeline while
-the final current-source sample remained capture-limited
-(`BODY_READ_TIMEOUT` / `BODY_UNAVAILABLE`) before a fresh admissible
-account-inventory candidate could reach replay.
+`nightwatch-dev-soak-replay-yield-v1` is complete from implementation source
+`fa236b690ceace3a420771645fce9f99bf751ea8`, with explicit verdict effect
+`PRESERVE`. It measured ten independent Phase 2C launchers, five Phase 4
+explorations, five Phase 5 API cycles, and five fresh Phase 7 prepare/resume
+pairs using only existing guarded read-only launchers.
 
-The successor is authorized for a larger bounded serial DEV sample using only
-the existing read-only guarded launchers. Its primary measurements are
-intentional known-read capture success, settlement success, body-read
-failure-code frequency, per-journey reliability, account-inventory reach,
-candidate admission, current replay execution, cluster/dossier conversion, and
-resource cleanup. Historical candidates remain evidence only and are not
-execution authority under DVR-011.
+The five Phase 7 manifests were newly written in isolated owner-only roots;
+their deterministic content identity matched the current manifest, but no
+predecessor checkpoint was resumed or deleted. Four campaigns completed the
+five-item worklist and emitted eight strict product candidates across two
+stable fingerprints. All four reproduction queues stopped before executor
+entry at the bounded `journeyContexts` limit; no attack replay, minimization,
+or dossier ran. The terminal result is
+`SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`, not replay starvation
+and not a product PASS. Historical candidates remain non-authoritative.
 
 ### Post-acceptance reliability, yield, and state-protocol campaign
 

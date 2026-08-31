@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — DEV Capture Soak, Replay, and Yield
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-dev-soak-replay-yield-v1
 OpenSpec: openspec/changes/nightwatch-dev-soak-replay-yield-v1/
 Planned-From: 754aa629b4b24bda0eca98fe567cc44ef536e30d

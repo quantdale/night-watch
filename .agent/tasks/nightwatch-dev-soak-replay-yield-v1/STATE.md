@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-dev-soak-replay-yield-v1
 Phase: DEV_SOAK_REPLAY_YIELD_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
@@ -16,7 +16,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_DEV_SOAK_REPLAY_YIELD_V1_STATUS: IN_PROGRESS
+PHASE_DEV_SOAK_REPLAY_YIELD_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -26,19 +26,22 @@ without weakening DVR-011 admission.
 
 ## Current Milestone
 
-M3 — Fresh campaign soak.
+COMPLETE / STOP. M6 — Final validation and closure is closed.
 
 ## Work In Progress
 
-M0, M1, and M2 are COMPLETE. M3 requires five fresh current-source Phase 7
-prepare/resume campaign pairs, with no stale-manifest reuse. Replay remains
-limited to candidates admitted by the current DVR-011 path.
+NONE. M0 through M5 are complete. M1 measured 56 observations under ten
+independent launches; M2 measured five Phase 4 and five Phase 5 cycles; M3
+measured five fresh Phase 7 prepare/resume pairs (21/25 work items, eight
+strict product candidates); M4 found four budget-blocked reproduction queues,
+zero attack replays, zero minimizations, and zero dossiers. M5 attributes the
+remaining limitation to bounded DEV capture/settlement and the per-kind
+campaign budget. No Nightwatch-owned Critical/High defect was reproduced.
 
 ## Exact Next Action
 
-Prepare five new Phase 7 campaigns serially, then resume each exact fresh
-manifest once. Record campaign status, completed work items, capture stops,
-candidate/cluster/dossier yield, safety, privacy, and resource cleanup.
+STOP. This task is complete; preserve the terminal outcome and sanitized
+owner-local evidence. No further DEV execution is authorized.
 
 ## Known starting evidence
 
@@ -53,8 +56,8 @@ candidate/cluster/dossier yield, safety, privacy, and resource cleanup.
 - Replay: not executed because no fresh admitted candidate existed.
 ## Completed Milestones
 
-- M0 — Baseline, freshness, safety, and owner-auth readiness — COMPLETE at
-  `30db50f` with the full offline gate evidence ledger below.
+- M0 — Baseline, freshness, safety, and owner-auth readiness — COMPLETE with
+  the full offline and pre-DEV gate evidence ledger below.
 
 - M1 — Phase 2C capture soak — COMPLETE: ten independent serial launchers
   produced ten fresh matrix files, 56/60 possible observations, and 28/30
@@ -66,10 +69,25 @@ candidate/cluster/dossier yield, safety, privacy, and resource cleanup.
   subrecords plus five account-anchor product stops; Phase 5 yielded 60/60
   verified API attempts.
 
+- M3 — Fresh campaign soak — COMPLETE: five fresh isolated prepare/resume
+  pairs yielded 21/25 work items and eight current product candidates.
+
+- M4 — Replay/dossier decision — COMPLETE: four reproduction queues were
+  budget-blocked before executor entry; attack replay, minimization, and
+  dossier yields were all zero.
+
+- M5 — Quantitative diagnosis — COMPLETE: the remaining limitation is
+  bounded DEV capture/settlement plus the per-kind campaign budget; no new
+  Nightwatch Critical/High defect was reproduced.
+
 ## Files Changed
 
+- `.agent/ACTIVE_TASK.md`
 - `.agent/tasks/nightwatch-dev-soak-replay-yield-v1/PLAN.md`
+- `.agent/tasks/nightwatch-dev-soak-replay-yield-v1/REPORT.md`
 - `.agent/tasks/nightwatch-dev-soak-replay-yield-v1/STATE.md`
+- `docs/CURRENT_STATE.md`
+- `openspec/changes/nightwatch-dev-soak-replay-yield-v1/tasks.md`
 
 No product, Alphaus sibling-repository, credential, storage-state, or runtime
 evidence files were changed.
@@ -77,15 +95,15 @@ evidence files were changed.
 ## Validation Ledger
 
 - `git fetch --prune origin` — PASS; remote advanced and was reconciled.
-- `git pull --ff-only origin main` — PASS; local `main` equals `origin/main`
-  at `30db50f` before this update.
+- `git pull --ff-only origin main` — PASS; local `main` equaled `origin/main`
+  at `a22b3aec540b7ea03946d63e31f65a5af9b28ceb` before documentation edits.
 - `npm ci` — PASS; pinned dependencies restored.
 - `npm run typecheck` — PASS.
 - `npm run hardening:check` — PASS.
 - `npm run agent:check` — PASS after continuity-document repair.
 - `npm run agent:audit` — PASS with inventory 93 tasks, legacy warnings only.
-- `npm run handoff:check` — PASS with derived live head `30db50f`.
-- `npm run project:check` — PASS after pushing `30db50f`.
+- `npm run handoff:check` — PASS with derived live head `a8dabe9bc93e893a178876841808629c3a4f36fe`.
+- `npm run project:check` — PASS at the reconciled documentation checkpoint.
 - `npm run quality-gate:spec` — PASS.
 - `npm run gate:inventory` — PASS.
 - `npm run test:semantic-compat` — PASS with 1950/1937/13/0.
@@ -120,6 +138,56 @@ evidence files were changed.
   product mutations, database queries, and secret leaks. Each ledger was
   metadata-only with zero persisted/forwarded bodies, credentials, or
   customer identifiers.
+## M3 and M4 Validation Ledger
+
+- Five serial prepare/resume pairs completed from current executable source
+  `fa236b690ceace3a420771645fce9f99bf751ea8`. Each prepare emitted the same
+  content-addressed identity
+  `campaign:sha256:1054b8271440fc29f7fb5f21` /
+  `manifest:sha256:154410a95040816ba1b63de0`; each was a newly written
+  manifest/checkpoint in a distinct owner-only local HOME root
+  (`/home/dalepalaca/.nightwatch/soak/p7-01-home` through `p7-05-home`).
+  The existing default-store collision was not resumed or deleted, and no
+  predecessor checkpoint was used. A first prepare attempt against the
+  default store returned `CAMPAIGN_ALREADY_PREPARED` before target work and
+  was not counted.
+- Campaign 1 ended
+  `PARTIAL_RUNTIME_INFRA_FAILURE / PREFLIGHT_FAILED` after the payer journey;
+  the common journey was blocked by `SETTLEMENT_TIMEOUT`, account/API work was
+  skipped, one of five work items completed, and no observation, candidate,
+  cluster, replay, or dossier was retained.
+- Campaigns 2–5 each completed all five work items exactly once and ended
+  `PARTIAL_BUDGET_EXHAUSTED / BUDGET_EXHAUSTED`. Each retained two settled,
+  capture-complete `ripple-account-inventory` product candidates with oracle
+  `malformed-json`, two clusters, one queued reproduction, zero completed
+  reproductions, zero minimization candidates, and zero dossiers. Across the
+  four full campaigns: 8 candidate records, 8 clusters in isolated ledgers,
+  two stable product fingerprints
+  (`fp:sha256:a9bc7b4b6b075dae9e9b5da3` and
+  `fp:sha256:d491c1b9779adfbcd030cc23`), and four reproduction queues blocked
+  by `BUDGET_EXHAUSTED`. Candidate lifecycle records were
+  `PROTOCOL_ONLY / UNRESOLVED`; no attack replay executor was entered.
+- M3 totals: 5/5 prepares passed; 5/5 resumes reached a truthful terminal;
+  21/25 work items completed, 4/25 terminally blocked/skipped, and every
+  checkpoint had five unique ledger work-item IDs with no duplicate or lost
+  ledger identity. Account-inventory reach was 4/5 campaigns (80%); one
+  campaign was capture/settlement-limited before that item. Fresh product
+  candidates occurred in 4/5 campaigns (8 records, 2 per full campaign).
+- M4 was completed without stale replay: 0/5 attack replays ran, 4 current
+  reproduction queues were blocked before executor entry because
+  `journeyContexts` was already 3/3 after the three required journeys, and
+  `reproductionCount` remained zero. Candidate-to-replay and
+  candidate-to-dossier conversion were therefore 0/8 and 0/8. This is
+  `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`, not
+  `SOAK_COMPLETE_REPLAY_STARVED_BY_CURRENT_ADMISSION`, because the fresh
+  strict product-candidate gate emitted eight candidates.
+- All five campaign checkpoints reported zero safety counters, zero safety
+  events, privacy `PASS`, and zero persisted raw bodies/customer values/
+  credentials/cookies/tokens/DOM/screenshots/traces. Post-soak process
+  snapshot was `node=4`, `chrome=2`, `playwright=0`, `listeners=5`; all five
+  isolated campaign roots and findings roots were mode `700`. No raw
+  authenticated run data was inspected or copied.
+
 
 ## Decisions Made During This Task
 
@@ -127,8 +195,13 @@ evidence files were changed.
 - Treat Phase 4 account-anchor failures as current product/runtime evidence:
   auth and capture were valid, the source-reviewed account journey reached its
   structural marker, and the product oracle observed malformed JSON.
-- Do not promote any Phase 2C or Phase 4 anomaly to replay authority without
-  an explicit current DVR-011 admission record.
+- M3 used five newly written manifests in isolated owner-only roots because the
+  default store already contained the deterministic predecessor identity; no
+  stale checkpoint was resumed or deleted.
+- M4 did not execute attack replay because the fresh product candidates'
+  reproduction queues were blocked by the bounded per-kind journey budget.
+  Preserve `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`; do not
+  relabel it as replay starvation or PASS.
 
 ## Discoveries
 
@@ -158,34 +231,52 @@ evidence files were changed.
   `malformed-json`, while payer/common exploration and exact replay remained
   clean. Phase 5 independently verified all six source-generated operations
   in both first and fresh-replay modes across 5/5 cycles.
+- M3 aggregate source/campaign identity was stable: all five fresh manifests
+  used source `fa236b690ceace3a420771645fce9f99bf751ea8`, campaign
+  `campaign:sha256:1054b8271440fc29f7fb5f21`, and manifest
+  `manifest:sha256:154410a95040816ba1b63de0`.
+- Four full campaigns each reproduced two settled, capture-complete account
+  product candidates (`malformed-json`), yielding eight records over two stable
+  fingerprints. Each full campaign reached all five work items, but its
+  one-cluster reproduction queue stopped at `BUDGET_EXHAUSTED` with
+  `journeyContexts=3/3`; no reproduction callback, minimizer, or dossier ran.
+- Campaign 1 reached the payer journey, then hit `SETTLEMENT_TIMEOUT` on the
+  common journey and skipped the remaining work. This was the only M3
+  capture/settlement-limited stop.
+- Post-soak resource health had no Playwright residue (`playwright=0`) and
+  retained five listeners, matching the established local harness snapshot;
+  isolated campaign roots were tightened to mode `700` after validation.
 
 ## Blockers
 
-None in M0. Real execution remains at the owner-managed auth boundary.
+None. Owner-managed DEV authentication remained valid for all five M3
+prepare/resume pairs. Replay was budget-inconclusive, not auth/environment
+blocked.
 
 ## Safety Events
 
-None in M1 or M2: all 56 Phase 2C observations and all Phase 4/5 records
-reported zero safety counters; journeys/API calls were read-only and no
-mutation, database, infrastructure, production, or publication operation was
-performed.
+None in M1 through M4: every real observation/campaign checkpoint reported
+zero production, proxy, unknown-destination/approval, mutation, database,
+infrastructure, action-caused-unknown, or publication counters; privacy
+remained `PASS` with zero persisted sensitive categories.
 
 ## Deferred / Follow-Up
 
-- Execute M3 as five freshly prepared current-source Phase 7 campaigns.
-- Preserve all Phase 4/5 artifacts as local sanitized evidence; they do not
-  create current replay authority without DVR-011 admission.
+None for this task. The terminal outcome is
+`SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`; any future DEV
+execution requires a separate owner authorization and fresh task.
 
 ## Resume Recipe
 
-Re-read `ACTIVE_TASK.md`, this `STATE.md`, `PLAN.md`, and `SPEC.md`; verify
-clean `main == origin/main`; prepare five fresh Phase 7 campaigns and resume
-each exact manifest once. If owner-managed auth becomes invalid, stop at
-`HUMAN_AUTH_ACTION_REQUIRED`; never print or inspect credential contents.
-
+STOP — task is terminal. Do not resume it. Read `ACTIVE_TASK.md`, this
+`STATE.md`, `PLAN.md`, and `SPEC.md` only to reconstruct the closure. A future
+bounded DEV execution requires separate owner authorization and a fresh task.
 ## Completion Snapshot
 
-IN_PROGRESS — M0 through M2 are complete. M1 measured 56 observations under
-ten independent launches; M2 measured five Phase 4 and five Phase 5 cycles,
-with Phase 4 account product stops and full Phase 5 API verification recorded
-above. M3 is next.
+Complete. M0 through M6 are closed. M1 measured 56 observations under ten
+independent launches; M2 measured five Phase 4 and five Phase 5 cycles; M3
+measured five fresh Phase 7 prepare/resume pairs (21/25 work items, eight
+strict product candidates); M4 found four budget-blocked reproduction queues,
+zero attack replays, zero minimizations, and zero dossiers; M5 recorded the
+quantitative diagnosis; M6 reconciled local/project/continuity truth and
+checkpoint closure. Safety remained zero and privacy `PASS`.
