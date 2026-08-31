@@ -7,6 +7,48 @@ Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
+## Purpose
+
+Remove the proven bounded replay-budget starvation while preserving strict
+candidate admission, finite contact authority, checkpoint identity, privacy,
+and containment.
+
+## Starting State
+
+This task starts from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` on `main`.
+The completed predecessor proved eight fresh product candidates but zero replay
+executions because three collection journeys consumed `journeyContexts=3/3`.
+The owning path is `CampaignBudgetManager` plus the Phase 7 orchestrator's
+`reserveReproductionBudget` boundary.
+
+## Scope
+
+Reproduce the pre-fix starvation locally, implement the smallest explicit
+collection/reproduction reservation model, adversarially validate it, and run
+the bounded local and guarded DEV confirmation lifecycle.
+
+## Non-Goals
+
+No production/NEXT contact, product mutation, datastore or infrastructure
+operation, sibling-repository write, publication, credential persistence,
+historical replay, DVR-011 weakening, or unbounded retry.
+
+## Safety Constraints
+
+All source and fixtures remain read-only against Alphaus repositories. Replay
+authority must remain finite, current-source, DVR-011-admitted, privacy-safe,
+and fail-closed across stale state, interruption, duplicate identity, and
+executor failure.
+
+## Architecture / Approach
+
+Keep collection and reproduction accounting in the owning campaign budget
+boundary. Reserve replay capacity explicitly and atomically before replay
+executor entry; persist the reservation with checkpoint state; reject stale,
+incomplete, unsafe, duplicate, or already-spent authority without callbacks.
+
+## Milestones
+
 ## M0 — Reconstruct and reproduce budget starvation
 
 Status: IN_PROGRESS
@@ -108,3 +150,37 @@ Run final focused/full gates, clean Node20 validation, canonical/isolated
 parity when runtime behavior changed materially, single exact-head CI
 inspection, continuity/project reconciliation, clean Git push, and terminal
 report.
+
+## Validation Strategy
+
+Use the focused campaign test for the old boundary and new reservation
+accounting first. Then run the repository quality cone, semantic and owner
+provenance checks, synthetic campaign, local gate, clean Node20 gate, and one
+exact-head CI inspection. Real DEV confirmation remains guarded and bounded.
+
+## Decision Log
+
+- 2026-09-01 — Reproduce the starvation before production budget changes.
+  Evidence: three journey reservations leave `journeyContexts` at `3/3`, and
+  the current estimate requires one additional journey context. Consequence:
+  the regression is committed before the reservation redesign.
+
+## Discoveries
+
+- The current real profile reserves browser capacity by `maxTotalBrowserContexts`
+  but does not reserve a separate `journeyContexts` slot for reproduction.
+- The active continuity documents initially lacked required v2 headings, so the
+  baseline handoff gate failed before executable campaign work.
+
+## Deferred Work
+
+- Guarded DEV confirmation and candidate-to-dossier closure remain pending until
+  the local reservation implementation and clean gates pass.
+- External CI remains non-evidence unless an exact-head job executes steps.
+
+## Completion Criteria
+
+The task is complete only when the bounded replay model and adversarial tests
+pass, local and clean Node20 gates pass, DEV confirmation is truthfully closed,
+continuity/OpenSpec/project truth is terminal, privacy and safety remain clean,
+and `main` is clean and equal to `origin/main`.

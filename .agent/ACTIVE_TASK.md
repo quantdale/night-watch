@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-replay-budget-and-dossier-closure-v1
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last checkpoint: ACTIVATED — successor created from completed DEV soak budget-starvation evidence
-Current milestone: M0 — reconstruct and reproduce replay-budget starvation
-Next action: reproduce the three-journey plus fresh-candidate BUDGET_EXHAUSTED path locally before changing budget semantics
+Current milestone: M0 — reproducible starvation regression complete; checkpoint pending
+Next action: commit the regression and continuity repair before changing budget semantics
 Authorization class: NIGHTWATCH_REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

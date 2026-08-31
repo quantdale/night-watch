@@ -508,6 +508,71 @@ test.describe('Phase 7 campaign identity, selection, and policy', () => {
     }
   });
 });
+test('reproduces pre-fix three-journey replay starvation before executor entry', async () => {
+  const { root, store } = tempStore();
+  try {
+    const admittedCandidate = candidate({
+      runId: 'run-dvr011-current-account',
+      fingerprint: 'fp:sha256:777777777777777777777777',
+      journeyId: 'ripple-account-inventory',
+    });
+    const currentCandidate: CampaignAnomalyCandidate = {
+      ...admittedCandidate,
+      observation: {
+        ...admittedCandidate.observation,
+        sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
+      },
+      sourceCorrelation: {
+        ...admittedCandidate.sourceCorrelation,
+        sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
+      },
+    };
+    const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+    const executeCalls: string[] = [];
+    let reproductionCalls = 0;
+    const executor: CampaignExecutor = {
+      preflight: () => ({ passed: true, code: 'PREFLIGHT_PASS' as const, failedChecks: [], checkedAt: STATIC_NOW }),
+      execute: async ({ workItem }) => {
+        executeCalls.push(workItem.workItemId);
+        const observations = workItem.workItemId === 'journey:ripple-account-inventory' ? [currentCandidate] : [];
+        return defaultOutcome({
+          result: observations.length > 0 ? 'ANOMALY' : 'PASS',
+          actionsExecuted: 1,
+          browserContextCreated: workItem.kind !== 'API',
+          observations,
+        });
+      },
+      estimateReproduction: () => ({ browserContexts: 1, journeyContexts: 1, totalActions: 1 }),
+      reproduce: async () => {
+        reproductionCalls += 1;
+        throw new Error('REPLAY_EXECUTOR_SHOULD_NOT_ENTER');
+      },
+    };
+
+    const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+    const clusterId = result.checkpoint.anomalyClusters[0]?.clusterId;
+
+    expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
+    expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
+    expect(executeCalls.filter((id) => id.startsWith('journey:'))).toHaveLength(3);
+    expect(result.checkpoint.anomalyCandidates).toHaveLength(1);
+    expect(result.checkpoint.anomalyCandidates[0]?.observation.sourceFreshness).toBe('SOURCE_CURRENT_LOCALLY');
+    expect(result.checkpoint.anomalyCandidates[0]?.knownNightwatchDefect).toBe(false);
+    expect(result.checkpoint.anomalyClusters).toHaveLength(1);
+    expect(result.checkpoint.reproductionQueue).toEqual([
+      expect.objectContaining({ clusterId, state: 'BLOCKED', reasonCode: 'BUDGET_EXHAUSTED' }),
+    ]);
+    expect(result.checkpoint.budgetUsed.browserContexts).toBe(3);
+    expect(result.checkpoint.budgetUsed.journeyContexts).toBe(3);
+    expect(result.checkpoint.budgetRemaining.journeyContexts).toBe(0);
+    expect(result.checkpoint.unresolved).toContain('BUDGET_EXHAUSTED');
+    expect(reproductionCalls).toBe(0);
+    expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 
 test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
   test('runs the real orchestrator through safe execution, clustering, reproduction, minimization, dossier, brief, and privacy boundaries', async () => {
