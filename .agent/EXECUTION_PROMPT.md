@@ -113,8 +113,11 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-Run one independent bounded current-source campaign cycle using a fresh
-manifest, compare its sanitized anomaly identity with
+Reduce and repair DVR-008 locally: the second prepare-only campaign showed
+that an OpenSpec-only documentation commit changed `nightwatchSourceSha`.
+Exclude only non-executable OpenSpec content from that source identity, add a
+deterministic regression, and validate before any campaign resume. Then run a
+fresh current-source cycle, compare its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
 work-item accounting. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest

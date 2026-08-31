@@ -116,6 +116,10 @@ reduced to a local deterministic regression before a real run resumes.
   once, ran two API replay pairs, retained one account product fingerprint,
   and stopped at the bounded reproduction reserve. Run one independent fresh
   cycle to test cross-campaign identity stability before final reconciliation.
+  The second prepare-only attempt exposed DVR-008: an OpenSpec-only task
+  checkpoint changed `nightwatchSourceSha`; repair the implementation
+  pathspec and prove the identity remains stable across documentation-only
+  commits before resuming a fresh campaign.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

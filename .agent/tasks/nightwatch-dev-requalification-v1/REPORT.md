@@ -124,6 +124,14 @@ campaign observation. This stale manifest is retained as evidence and will not
 be reused; the next real campaign must be freshly prepared against the
 current source checkpoint.
 
+A second prepare-only attempt, `campaign:sha256:ceae02f22573c85f4a6d6c5e`,
+passed its gate but exposed DVR-008 before resume: the implementation-source
+fingerprint advanced to `af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` solely
+because an OpenSpec task-document commit was the latest non-excluded Git
+change. Executable Nightwatch source had not changed. The manifest was not
+resumed and no product execution occurred. The source-identity pathspec must
+be corrected and revalidated before the next real cycle.
+
 The fresh current-source campaign `campaign:sha256:4b8372d920d9694ca6c67c77`
 then completed all five selected work items exactly once and passed the
 launcher. Both selected API items completed their first-plus-fresh-replay
