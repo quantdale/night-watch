@@ -7,7 +7,7 @@ Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last validated implementation SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
 
 ## Scope
 
@@ -17,7 +17,11 @@ general hardening.
 
 ## Current result
 
-Not terminal. See STATE.md.
+M0 is complete. The pushed deterministic regression proves three collection
+journeys consume `journeyContexts=3/3`, a current-source product candidate is
+clustered and queued, and the reproduction estimate fails
+`BUDGET_EXHAUSTED` before replay executor entry. M1 design and later closure
+remain in progress; see STATE.md for the validation ledger.
 
 ## Safety
 

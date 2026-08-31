@@ -6,13 +6,13 @@ Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 Status: IN_PROGRESS
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last validated implementation SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
+Last substantive checkpoint SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 9b7e3ad661bab91065a8674b6bfd5d0536f3495a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -26,17 +26,19 @@ confirm a current candidate can traverse the real bounded replay/dossier path.
 
 ## Current Milestone
 
-M0 — reconstruct and reproduce the budget starvation locally.
+M1 — design bounded replay reservation semantics.
 
 ## Work In Progress
 
-The deterministic pre-fix regression is implemented and focused-green. The
-active task remains before the reservation redesign checkpoint.
+M0 is closed at pushed checkpoint
+`9b7e3ad661bab91065a8674b6bfd5d0536f3495a`. The active work is comparing
+explicit reserve, sub-budget, and deterministic-transfer models before editing
+production budget semantics.
 
 ## Exact Next Action
 
-Commit the validated pre-fix regression and continuity-document repair, then
-design the smallest explicit collection/reproduction reservation model.
+Evaluate the three bounded reservation designs against every required invariant,
+select the smallest safe owner, and record the decision before implementation.
 
 ## Starting evidence
 
@@ -56,6 +58,10 @@ design the smallest explicit collection/reproduction reservation model.
   `origin/main` exist, with no open pull requests requiring integration.
 - Source reconnaissance: COMPLETE; the budget manager and orchestrator
   reservation boundary were inspected without changing budget semantics.
+- M0 — reproduce budget starvation: COMPLETE at pushed checkpoint
+  `9b7e3ad661bab91065a8674b6bfd5d0536f3495a`; the current-source candidate
+  survived clustering, queued reproduction, and hit `BUDGET_EXHAUSTED` before
+  the replay callback after three journey reservations.
 
 ## Files Changed
 
@@ -68,26 +74,28 @@ design the smallest explicit collection/reproduction reservation model.
 ## Validation Ledger
 
 - `git fetch --prune origin` — PASS.
-- `git status --short --branch`, `git branch --all --verbose --no-abbrev`,
-  and `git ls-remote --heads origin` — PASS; `main` equals `origin/main` at
-  `418181ae6eef11fde82bebbd989f0f79498c8d01`, with no non-main branches.
-- Cached `pr://quantdale/night-watch?state=open&limit=100` — no open pull
-  requests matched.
-- `npm run gate:local` — FAIL at the baseline `HANDOFF_TRUTH` group because
-  the active PLAN/STATE lacked required continuity headings; no executable
-  gate group after handoff ran.
-- `npm run handoff:check -- --root .` — FAIL
-  `HANDOFF_ACTIVE_CONTINUITY_FAILED` for the same pre-existing document shape.
-- `npm run agent:check -- --root .` — FAIL with the missing PLAN/STATE
-  heading errors recorded above; repair is included in this checkpoint.
+- Remote-head listing, local branch listing, and cached open-PR lookup —
+  PASS; only `main` existed before the M0 push.
+- Baseline `npm run gate:local` — FAIL at `HANDOFF_TRUTH` because the
+  active PLAN/STATE lacked required continuity headings; no later group ran.
+- Baseline `npm run handoff:check -- --root .` — FAIL
+  `HANDOFF_ACTIVE_CONTINUITY_FAILED` for the same document shape.
+- Baseline `npm run agent:check -- --root .` — FAIL with missing PLAN/STATE
+  heading errors; the required sections were repaired before the M0 checkpoint.
 - `npm run typecheck` — PASS after the regression edit.
 - `npx playwright test tests/unit/campaign.test.ts --grep "pre-fix
   three-journey replay starvation" --project=nightwatch --workers=1
   --retries=0` — PASS, 1/0.
+- `git diff --check` — PASS before the M0 commit.
+- `git push origin main` — PASS for M0 checkpoint
+  `9b7e3ad661bab91065a8674b6bfd5d0536f3495a`.
+- Post-push `npm run agent:check -- --root .` and
+  `npm run handoff:check -- --root .` — PASS; only established legacy-task
+  and checkpoint-history warnings remained.
 
 ## Decisions Made During This Task
 
-- Keep the three-journey starvation behavior unchanged until its regression is
+- Keep the three-journey starvation behavior unchanged until its regression was
   checkpointed.
 - Model the reproducer with a current-source, product-classified candidate,
   clean preflight/execution outcome, one cluster, and a reproduction estimate
@@ -103,7 +111,7 @@ design the smallest explicit collection/reproduction reservation model.
   journey context only after collection has already used all three.
 - `analyzeCampaignBudgetFeasibility` checks aggregate browser capacity but does
   not reserve a separate journey-context slot for reproduction.
-- The current test now proves the candidate survives clustering and queues
+- The regression proves the candidate survives clustering and queues
   reproduction while the replay callback count remains zero.
 
 ## Blockers
@@ -117,23 +125,21 @@ publication, or authenticated evidence operation was performed.
 
 ## Deferred / Follow-Up
 
-- Commit the regression before changing executable budget semantics.
 - M1 design and M2 implementation/adversarial validation remain open.
 - Guarded DEV confirmation, CI classification, and final certification remain
   pending their prerequisite local implementation gates.
 
 ## Resume Recipe
 
-Read this state and the active PLAN. Run the focused starvation regression and
-continuity checks, commit the regression checkpoint, then compare dedicated
-reproduction reserve, sub-budget, and deterministic-transfer designs against
-the required invariants before editing `src/core/campaign/budget.ts` or
-`src/core/campaign/orchestrator.ts`.
+Read this state and the active PLAN. Compare dedicated reproduction reserve,
+sub-budget, and deterministic-transfer designs against every invariant; record
+the chosen model and then implement it in the owning campaign budget boundary.
 
 ## Completion Snapshot
 
 Completion state: IN_PROGRESS
-Current milestone: M0 — reconstruct and reproduce budget starvation locally.
+Current milestone: M1 — design bounded replay reservation semantics.
 Validated result: pre-fix three-journey path reaches `BUDGET_EXHAUSTED` before
-the replay executor.
+the replay executor at pushed checkpoint
+`9b7e3ad661bab91065a8674b6bfd5d0536f3495a`.
 Terminal outcome: NONE.

@@ -51,19 +51,24 @@ incomplete, unsafe, duplicate, or already-spent authority without callbacks.
 
 ## M0 — Reconstruct and reproduce budget starvation
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-- Validate clean main/origin parity and current gates.
-- Read the completed soak REPORT/STATE and owning campaign budget code.
-- Build a deterministic local regression reproducing:
-  three required journey contexts -> fresh admitted candidate -> reproduction
-  queue -> reservation refused with BUDGET_EXHAUSTED before replay executor.
-- Prove the failure is budget allocation, not DVR-011 admission, replay
-  identity, auth, capture, or product classification.
-
+- Main/origin topology was reconciled; no non-main branch or open PR required
+  integration.
+- The predecessor REPORT/STATE and current budget/orchestrator ownership were
+  inspected.
+- A deterministic local regression proves three required journey contexts,
+  one current-source product candidate, one cluster, and a reproduction
+  estimate requiring one additional journey context produce
+  `BUDGET_EXHAUSTED` before replay executor entry.
+- Candidate retention, clean preflight/execution, current source identity,
+  zero safety/privacy, and one-cluster queueing distinguish budget allocation
+  from admission, identity, auth, capture, drift, or framework failure.
+- Focused test and typecheck passed; the regression was pushed as checkpoint
+  `9b7e3ad661bab91065a8674b6bfd5d0536f3495a`.
 ## M1 — Design bounded replay reservation semantics
 
-Status: NOT_STARTED
+Status: IN_PROGRESS
 
 Evaluate the smallest safe design. Acceptable directions include a dedicated
 reproduction reserve, collection/reproduction sub-budgets, or deterministic
