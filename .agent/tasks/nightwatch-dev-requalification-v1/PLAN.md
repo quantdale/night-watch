@@ -134,6 +134,11 @@ reduced to a local deterministic regression before a real run resumes.
 
 - Reconcile product anomaly identity, cluster counts, persisted state, and
   explicit auth/environment/unknown limitations.
+- The focused campaign/replay/state cone passed 292/292 with no skips or
+  failures; the repeated real campaign identity and persisted ledger are
+  stable across both current-source runs.
+- Audit cache/property claim strength and auth/interruption classification
+  coverage before finalizing the evidence limitations.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.

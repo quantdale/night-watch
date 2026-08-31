@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
-Last checkpoint: bounded campaign resume completed at `6134013`
+Last checkpoint: focused reconciliation cone passed at `43e0d69`
 Current milestone: M3 — Reconciliation and closure — IN_PROGRESS
-Next action: Reconcile cross-campaign anomaly identity, then run focused state/auth/privacy validation before final closure.
+Next action: Audit cache/property/auth/interruption coverage, then run the final local and clean validation matrix before closure.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

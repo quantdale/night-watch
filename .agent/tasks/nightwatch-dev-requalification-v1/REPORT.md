@@ -175,6 +175,14 @@ occurrence count, timing class, and work-item/replay ledger matched the first
 fresh campaign exactly. This establishes stable finding identity across the
 two bounded campaigns, not a product reproduction or all-budget certification.
 
+The focused reconciliation cone passed 292/292 with no skips or failures:
+campaign/checkpoint/triage/replay compatibility passed 113/113, and continuity,
+handoff, project-state, explicit verdict-effect, contradiction, status-parser,
+and currentness coverage passed 179/179. No new Nightwatch Critical/High
+defect was found in this cone; the remaining bounded limitation is that the
+real campaign's reproduction reserve was exhausted before a dossier could be
+admitted.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved

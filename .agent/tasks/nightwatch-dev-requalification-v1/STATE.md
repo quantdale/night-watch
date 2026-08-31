@@ -29,9 +29,9 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M2 — Cross-phase real operation — IN_PROGRESS. M1 repeated Phase 2C evidence
-and DVR-001 through DVR-005 post-fix confirmation are complete. M0 activation
-and pre-DEV authority checks passed at `2e7e84f`.
+M3 — Reconciliation and closure — IN_PROGRESS. M0 activation, M1 repeated
+Phase 2C evidence, and M2 cross-phase real operation are complete. M0
+pre-DEV authority checks passed at `2e7e84f`.
 
 ## Completed Milestones
 
@@ -209,8 +209,9 @@ reproduction or clean all-budget certification.
 
 ## Exact Next Action
 
-Reconcile the completed fresh current-source serial campaign after the bounded
-DEV preflight, prepare, and resume. The original campaign
+Complete the focused local reconciliation for the completed fresh
+current-source serial campaign, then run the final local/clean/state matrix.
+The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
 repeated occurrences, persisted state advances without duplicate/lost work,
@@ -224,9 +225,9 @@ validated at `374ad71`; the independent fresh current-source campaign is
 `campaign:sha256:6134013e41664bf66911887a` with manifest
 `manifest:sha256:f5c596b14f1561864b7db7f4`. Its resume completed 5/5 items with
 the same product fingerprint and deterministic cluster identity as the first
-fresh campaign. Reconcile anomaly deduplication, state, cleanup, auth/
-environment limitations, and final local validation. Do not resume the stale
-`ceae...` manifest.
+fresh campaign. The campaign/replay/state cone is green; record its exact
+counts, classify auth/environment/unknown limitations, then run final local
+and clean validation. Do not resume the stale `ceae...` manifest.
 
 ## Blockers
 
@@ -619,6 +620,20 @@ Result: PASS; both campaigns have the same anomaly fingerprint
 `cluster:sha256:dd8e213cb49d1a327626be0c`, cluster key, occurrence count 1,
 timing class `NONE`, five completed work items, two API replay pairs, and zero
 safety/privacy violations. This comparison used only bounded sanitized fields.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/campaign.test.ts tests/unit/phase15pCheckpointDrift.test.ts tests/unit/phase15CampaignTriageIntegration.test.ts tests/unit/phase15CheckpointCompat.test.ts tests/unit/phase15pReplayBinding.test.ts tests/unit/phase25SyntheticCampaign.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 113 passed, 0 skipped, 0 failed in 8.0 seconds. Campaign
+selection, source drift, duplicate-occurrence handling, persisted resume,
+exact replay binding, triage clustering, and safety/privacy floors remained
+green.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/agent-state.test.ts tests/unit/plannerHandoff.test.ts tests/unit/projectState.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 179 passed, 0 skipped, 0 failed in 50.2 seconds. Explicit
+project-verdict effects, contradictory live-state rejection, continuity
+status parsing, duplicate-field rejection, interruption/currentness checks,
+and project-state truth all passed.
 When: 2026-08-31
 
 ## Files Changed

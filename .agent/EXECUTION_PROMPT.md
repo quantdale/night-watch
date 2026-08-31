@@ -127,8 +127,11 @@ bounded resume completed as `PARTIAL_BUDGET_EXHAUSTED` /
 one cluster, zero dossiers, privacy PASS, and zero safety counters. Compare
 its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
-work-item accounting; then run the focused local state/auth/privacy
-reconciliation before closure. The DVR-006 repair is checkpointed at
+work-item accounting; this comparison is complete with an identical
+fingerprint, cluster ID/key, occurrence count, and five-item ledger. The
+focused campaign/replay/state cone is green (113 + 179 tests); audit the
+remaining cache/property/auth/interruption coverage and run the final
+local/clean matrix before closure. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at
 `c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest
