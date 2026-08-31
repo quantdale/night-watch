@@ -94,6 +94,11 @@ reduced to a local deterministic regression before a real run resumes.
   and completed one bounded payer exploration, then stopped on a fresh-context
   critical bootstrap HTTP 502 product oracle with zero safety violations.
   Take one bounded Phase 4 confirmation before proceeding to Phase 5.
+- The confirmation at `nightwatch-20260831T095337Z-c375` passed payer/common
+  contexts and stopped at account inventory on the already observed
+  `malformed-json` product oracle; exact replay remained unavailable after the
+  failed anchor. Phase 4 evidence is complete as a truthful bounded outcome,
+  not as an all-seeds PASS.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

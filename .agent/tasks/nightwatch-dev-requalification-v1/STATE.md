@@ -8,13 +8,13 @@ Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
+Last documentation checkpoint SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -105,15 +105,27 @@ records `PRODUCT_BEHAVIOR_ANOMALY` with stable fingerprint
 `fp:sha256:417f5b6941eba537f0fae85e`; a separate image 502 was
 `DEV_INFRA_TRANSIENT` and non-causal. Safety counters remained zero and no
 Nightwatch capture defect was observed. The launcher stopped before later
-seeds and exact replay, so a fresh bounded Phase 4 observation is required to
-characterize this product/environment variation.
+seeds and exact replay, so a fresh bounded Phase 4 observation was required to
+characterize this product/environment variation. The second Phase 4 run at
+`nightwatch-20260831T095337Z-c375` passed both fresh payer contexts and both
+fresh common-exchange contexts with complete capture, settled observations,
+and zero safety counters. It then stopped at account inventory: the account
+anchor had valid auth, complete capture, settled observation, and zero safety
+counters, but two sanitized `malformed-json` product oracles were triggered
+(HTTP 200 with invalid JSON) with fingerprints
+`fp:sha256:d491c1b9779adfbcd030cc23` and
+`fp:sha256:a9bc7b4b6b075dae9e9b5da3`. No Nightwatch defect or
+auth/environment failure occurred. Across the two Phase 4 runs, payer
+achieved 3/4 clean contexts, common 2/2, and account 0/1; exact replay was
+unavailable because each bounded run stopped at a product oracle before its
+replay loop.
 
 ## Exact Next Action
 
-Rerun the bounded DEV preflight and execute one fresh serial Phase 4
-observation with the current owner-local state to characterize the independent
-HTTP-502 anchor outcome. Preserve both Phase 4 contexts separately; do not
-relabel the prior product observation as a framework or PASS result.
+Advance to Phase 5: rerun the bounded DEV preflight, inspect the guarded
+read-only API operation contract, and execute one serial Phase 5 observation
+with the current owner-local state. Preserve the Phase 4 product-oracle
+outcomes independently; do not relabel them as framework failures or PASS.
 
 ## Blockers
 
@@ -283,6 +295,30 @@ and
 `artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-1/manifest.json`.
 When: 2026-08-31
 
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before the Phase 4 confirmation; the approved DEV
+target remained allowlisted, production remained explicitly denied, and no
+network activity was performed by preflight.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run explore:phase4 -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: BOUNDED PRODUCT ORACLE STOP at base run
+`nightwatch-20260831T095337Z-c375`. Payer seeds `0x...0101` and `0x...0102`
+and common seeds `0x...0201` and `0x...0202` each passed their anchors and
+completed one bounded transition with valid auth, complete capture, settled
+observation, and zero safety counters. Account seed `0x...0301` had the same
+valid auth/capture/settlement/safety posture but failed its anchor on two
+`malformed-json` product oracles (HTTP 200, invalid JSON), with safe
+fingerprints `fp:sha256:d491c1b9779adfbcd030cc23` and
+`fp:sha256:a9bc7b4b6b075dae9e9b5da3`. The launcher stopped before the
+remaining seed corpus and exact replay. Sanitized manifests:
+`artifacts/nightwatch-20260831T095337Z-c375-E1-J1-payer-exchange-0/manifest.json`,
+`artifacts/nightwatch-20260831T095337Z-c375-E1-J1-payer-exchange-1/manifest.json`,
+`artifacts/nightwatch-20260831T095337Z-c375-E2-J2-common-exchange-0/manifest.json`,
+`artifacts/nightwatch-20260831T095337Z-c375-E2-J2-common-exchange-1/manifest.json`,
+and `artifacts/nightwatch-20260831T095337Z-c375-E3-J3-account-inventory-0/manifest.json`.
+When: 2026-08-31
+
 Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
 Result: PASS for framework/replay reliability as independent invocation
 `nightwatch-20260831T094029Z-e57a`. Payer and common journeys each had two
@@ -379,6 +415,12 @@ When: 2026-08-31
   the anchor on repeated critical bootstrap 502s. This is product/environment
   evidence, not a Nightwatch capture or safety failure; the launcher correctly
   stopped before treating later exploration as valid.
+- The bounded Phase 4 confirmation passed payer 2/2 and common 2/2 after the
+  earlier payer bootstrap failure, while account inventory again failed on
+  malformed JSON with two stable sanitized fingerprints. This supports a
+  product-surface anomaly classification rather than a Nightwatch lifecycle
+  defect; the launcher remained fail closed and did not run exact replay after
+  a failed anchor.
 
 ## Safety Events
 

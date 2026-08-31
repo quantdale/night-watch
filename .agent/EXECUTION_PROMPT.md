@@ -98,8 +98,9 @@ payer/common replay and a stable account product oracle with no Nightwatch
 capture defect. The first Phase 4 run at
 `nightwatch-20260831T095007Z-246e` completed one bounded payer exploration,
 then stopped fail-closed on a fresh-context critical bootstrap 502 product
-oracle. Preserve that independent outcome and take one bounded Phase 4
-confirmation before Phase 5.
+oracle. A second bounded run at `nightwatch-20260831T095337Z-c375` passed
+payer/common contexts and stopped at the known account malformed-JSON product
+oracle. Preserve both independent outcomes and advance to Phase 5.
 
 ## Terminal action
 

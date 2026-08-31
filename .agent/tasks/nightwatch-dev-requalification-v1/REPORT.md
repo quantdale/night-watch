@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
+Last documentation checkpoint SHA: 37ba7cabaeb015ddf4284521a06b77afd087e3d4
 
 ## Scope
 
@@ -76,6 +76,15 @@ and
 `artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-1/manifest.json`.
 The launcher stopped before later seeds and exact replay, so the Phase 4
 reliability rate is not yet certified.
+
+The bounded confirmation at `nightwatch-20260831T095337Z-c375` passed both
+payer contexts and both common-exchange contexts, each with valid auth,
+complete capture, settled observation, and zero safety counters. It then
+stopped at account inventory on the already observed `malformed-json` product
+oracle, again with valid auth, complete capture, settled observation, and zero
+safety counters. Exact replay was unavailable after the failed account
+anchor; this is recorded as a bounded product-oracle outcome rather than an
+all-seeds Phase 4 PASS.
 
 ## Safety and verdict
 
