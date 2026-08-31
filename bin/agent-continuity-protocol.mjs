@@ -16,12 +16,19 @@ export const PROTOCOL_V2 = 'nightwatch.agent-continuity.v2';
 export const PROTOCOL_LEGACY = 'LEGACY_CONTINUITY_V1';
 
 export const TASK_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
+export const PROJECT_VERDICT_EFFECTS = new Set(['PRESERVE', 'REEVALUATE', 'SUPERSEDE']);
+
+export function normalizeProjectVerdictEffect(value) {
+  const normalized = String(value ?? '').trim();
+  return PROJECT_VERDICT_EFFECTS.has(normalized) ? normalized : null;
+}
 
 // Canonical human-readable continuity fields (exact keys as used in repo
 // task files). Together with the UPPER_SNAKE pattern these are the ONLY
 // structured keys subject to duplicate detection and placeholder scanning.
 const KNOWN_HUMAN_FIELDS = new Set([
   'Task ID',
+  'Campaign ID',
   'Phase',
   'Title',
   'Status',
@@ -95,6 +102,14 @@ export function findDuplicateFields(parsed) {
 export function fieldValue(parsed, key) {
   const records = parsed.byKey.get(key);
   return records && records.length > 0 ? records[0].value : undefined;
+}
+
+export function fieldRecordsInLineRange(parsed, key, minExclusive = 0, maxInclusive = Number.POSITIVE_INFINITY) {
+  return (parsed?.byKey.get(key) ?? []).filter((record) => record.line > minExclusive && record.line <= maxInclusive);
+}
+
+export function fieldValueInLineRange(parsed, key, minExclusive = 0, maxInclusive = Number.POSITIVE_INFINITY) {
+  return fieldRecordsInLineRange(parsed, key, minExclusive, maxInclusive)[0]?.value;
 }
 
 export function allFieldValues(parsed, key) {
@@ -196,12 +211,20 @@ export function derivePhaseStatusKey(phase) {
 // Terminal-token matchers (small explicit sets).
 // ---------------------------------------------------------------------------
 
-const NONTERMINAL_WORDS = /\b(?:pending|in progress|not started|to be done|todo|awaiting|wip)\b/i;
+const NONTERMINAL_LEADING_SUFFIX = /^\s*(?:\(|—|–|-)\s*(?:pending|in progress|not started|to be done|todo|awaiting|wip)\b/i;
 
 export function isTerminalMilestoneText(value) {
   const v = normalizeText(value);
   if (v === '') return false;
-  return /^(?:complete|done|stop|closed)\b/.test(v) && !NONTERMINAL_WORDS.test(v);
+  const terminal = /^(?:complete|done|stop|closed)\b/.exec(v);
+  if (!terminal) return false;
+  // Only a nonterminal token in the structured status suffix can override a
+  // terminal status. Narrative text after a completed status is not parsed as
+  // a second state (for example, "COMPLETE — repaired pending behavior").
+  // Keep the original separators for this check: normalizeText deliberately
+  // turns dashes into spaces for general token matching.
+  const raw = String(value ?? '').replace(/^[\s\-•>#]+/, '');
+  return !NONTERMINAL_LEADING_SUFFIX.test(raw.slice(terminal[0].length));
 }
 
 const WIP_TERMINAL_PREFIX = /^(?:none|no active work|task complete)\b/i;
@@ -332,7 +355,7 @@ export function findDuplicateReportFields(fields) {
 // PLAN milestone status parsing.
 // ---------------------------------------------------------------------------
 
-const MILESTONE_STATUS_RE = /\b(DONE|COMPLETE|PASS|SUCCESS|CLOSED|PENDING|IN_PROGRESS|NOT_STARTED|TODO|BLOCKED|FAILED)\b/i;
+const MILESTONE_STATUS_RE = /(?:—|–|:)\s*(DONE|COMPLETE|PASS|SUCCESS|CLOSED|PENDING|IN_PROGRESS|NOT_STARTED|TODO|BLOCKED|FAILED)(?:\s*(?:\/|—)\s*STOP\b)?\s*[.)]?$/i;
 const NONTERMINAL_MILESTONE_STATUSES = new Set(['PENDING', 'IN_PROGRESS', 'NOT_STARTED', 'TODO']);
 
 export function parsePlanMilestoneLines(milestoneLines) {
@@ -343,12 +366,10 @@ export function parsePlanMilestoneLines(milestoneLines) {
       /^(?:[-*]|\d+[.)])\s+/.test(trimmed) || /\[[ xX]\]/.test(trimmed) || /\bM\d+([./]\d+)?\b/.test(trimmed);
     if (!isItem) continue;
     const unchecked = /\[ \]/.test(trimmed);
-    // The LAST status token wins: milestone lines conventionally close with
-    // the status ("M1 — DONE"), while the milestone TITLE may legitimately
-    // mention other states ("M12 self-host (IN_PROGRESS mode) — DONE").
-    const globalStatusRe = new RegExp(MILESTONE_STATUS_RE.source, 'gi');
-    const statusMatches = [...trimmed.matchAll(globalStatusRe)];
-    const statusMatch = statusMatches.length > 0 ? statusMatches[statusMatches.length - 1] : null;
+    // Status is read only from an explicit trailing delimiter form such as
+    // "M1 — DONE" or "M1: PENDING". Incidental status vocabulary in a
+    // milestone title or explanatory prose is not state authority.
+    const statusMatch = MILESTONE_STATUS_RE.exec(trimmed);
     out.push({
       lineNumber,
       text: trimmed,
@@ -418,10 +439,38 @@ export function validateTaskV2(task, opts = {}) {
   const reportFields = task.reportText ? parseReportFields(task.reportText) : null;
   const activeParsed = task.activeText ? parseKeyValuesWithLocations(task.activeText) : null;
 
-  const stateStatus = normalizeTaskStatus(fieldValue(stateParsed, 'Status'));
-  const stateTaskId = fieldValue(stateParsed, 'Task ID');
-  const statePhase = fieldValue(stateParsed, 'Phase');
-  const stateProtocol = fieldValue(stateParsed, 'CONTINUITY_PROTOCOL_VERSION');
+  const stateIdentitySection = stateSections.get('Identity');
+  const stateIdentityStart = stateIdentitySection?.start ?? 0;
+  const stateIdentityEnd = stateIdentitySection?.end ?? 0;
+  const stateMetadataValue = (key) => fieldValueInLineRange(stateParsed, key, stateIdentityStart, stateIdentityEnd);
+  const activeSectionStarts = task.activeText
+    ? [...parseMarkdownSections(task.activeText).sections.values()].map((section) => section.start)
+    : [];
+  const firstActiveSection = activeSectionStarts.length > 0 ? Math.min(...activeSectionStarts) : Number.POSITIVE_INFINITY;
+  const activeMetadataValue = (key) => activeParsed
+    ? fieldValueInLineRange(activeParsed, key, 0, firstActiveSection - 1)
+    : undefined;
+
+  const stateStatus = normalizeTaskStatus(stateMetadataValue('Status'));
+  const stateTaskId = stateMetadataValue('Task ID');
+  const statePhase = stateMetadataValue('Phase');
+  const stateProtocol = stateMetadataValue('CONTINUITY_PROTOCOL_VERSION');
+
+  // The effect is part of the canonical metadata preamble in ACTIVE_TASK and
+  // the Identity section in STATE. A status-looking line in an explanatory
+  // section is not an authorization field and cannot grant preservation.
+  for (const record of stateParsed.byKey.get('PROJECT_VERDICT_EFFECT') ?? []) {
+    if (!stateIdentitySection || record.line <= stateIdentitySection.start || record.line > stateIdentitySection.end) {
+      errors.push(makeError('PROJECT_VERDICT_EFFECT_OUTSIDE_METADATA', task.statePath, record.line, 'STATE PROJECT_VERDICT_EFFECT must be inside ## Identity'));
+    }
+  }
+  if (bindActive && activeParsed) {
+    for (const record of activeParsed.byKey.get('PROJECT_VERDICT_EFFECT') ?? []) {
+      if (record.line >= firstActiveSection) {
+        errors.push(makeError('PROJECT_VERDICT_EFFECT_OUTSIDE_METADATA', task.activePath, record.line, 'ACTIVE PROJECT_VERDICT_EFFECT must be in the metadata preamble'));
+      }
+    }
+  }
 
   // --- protocol version ---------------------------------------------------
   if (stateProtocol === undefined) {
@@ -430,7 +479,7 @@ export function validateTaskV2(task, opts = {}) {
     errors.push(makeError('UNSUPPORTED_PROTOCOL_VERSION', task.statePath, null, `unsupported protocol ${stateProtocol}`));
   }
   if (bindActive && activeParsed) {
-    const activeProtocol = fieldValue(activeParsed, 'CONTINUITY_PROTOCOL_VERSION');
+    const activeProtocol = activeMetadataValue('CONTINUITY_PROTOCOL_VERSION');
     if (activeProtocol === undefined) {
       errors.push(makeError('ACTIVE_TASK_PROTOCOL_REQUIRED', task.activePath, null, 'ACTIVE_TASK missing CONTINUITY_PROTOCOL_VERSION'));
     } else if (stateProtocol !== undefined && activeProtocol !== stateProtocol) {
@@ -465,7 +514,7 @@ export function validateTaskV2(task, opts = {}) {
   }
 
   // --- cross-file identity -------------------------------------------------
-  const taskId = bindActive && activeParsed ? fieldValue(activeParsed, 'Task ID') : stateTaskId;
+  const taskId = bindActive && activeParsed ? activeMetadataValue('Task ID') : stateTaskId;
   const dirBasename = String(task.dir).split('/').filter(Boolean).pop();
   if (taskId !== undefined && dirBasename !== undefined && taskId !== dirBasename) {
     errors.push(makeError('TASK_ID_MISMATCH', task.statePath, null, `task id ${taskId} != directory ${dirBasename}`));
@@ -492,12 +541,14 @@ export function validateTaskV2(task, opts = {}) {
   let phaseStatusValue;
   let phaseStatusLine;
   if (phaseKey && stateParsed.byKey.has(phaseKey)) {
-    const occurrences = stateParsed.byKey.get(phaseKey);
-    phaseStatusValue = occurrences[0].value;
-    phaseStatusLine = occurrences[0].line;
+    const occurrences = fieldRecordsInLineRange(stateParsed, phaseKey, stateIdentityStart, stateIdentityEnd);
+    if (occurrences.length > 0) {
+      phaseStatusValue = occurrences[0].value;
+      phaseStatusLine = occurrences[0].line;
+    }
   }
   if (bindActive && activeParsed) {
-    const activePhase = fieldValue(activeParsed, 'Phase');
+    const activePhase = activeMetadataValue('Phase');
     if (phase !== undefined && activePhase !== undefined && phaseToken(phase) !== phaseToken(activePhase)) {
       errors.push(makeError('TASK_PHASE_MISMATCH', task.activePath, null, `ACTIVE phase ${activePhase} != STATE phase ${phase}`));
     }
@@ -511,14 +562,14 @@ export function validateTaskV2(task, opts = {}) {
 
   // --- cross-file anchors ----------------------------------------------------
   const stateAnchors = {
-    starting: fieldValue(stateParsed, 'Starting SHA') ?? fieldValue(stateParsed, 'STARTING_SHA'),
-    validated: fieldValue(stateParsed, 'Last validated implementation SHA') ?? fieldValue(stateParsed, 'LAST_VALIDATED_IMPLEMENTATION_SHA'),
-    substantive: fieldValue(stateParsed, 'Last substantive checkpoint SHA') ?? fieldValue(stateParsed, 'LAST_SUBSTANTIVE_CHECKPOINT_SHA'),
-    documentation: fieldValue(stateParsed, 'Last documentation checkpoint SHA') ?? fieldValue(stateParsed, 'LAST_DOCUMENTATION_CHECKPOINT_SHA'),
+    starting: stateMetadataValue('Starting SHA') ?? stateMetadataValue('STARTING_SHA'),
+    validated: stateMetadataValue('Last validated implementation SHA') ?? stateMetadataValue('LAST_VALIDATED_IMPLEMENTATION_SHA'),
+    substantive: stateMetadataValue('Last substantive checkpoint SHA') ?? stateMetadataValue('LAST_SUBSTANTIVE_CHECKPOINT_SHA'),
+    documentation: stateMetadataValue('Last documentation checkpoint SHA') ?? stateMetadataValue('LAST_DOCUMENTATION_CHECKPOINT_SHA'),
   };
   if (bindActive && activeParsed) {
-    const activeStarting = fieldValue(activeParsed, 'Starting SHA');
-    const activeValidated = fieldValue(activeParsed, 'Last validated implementation SHA');
+    const activeStarting = activeMetadataValue('Starting SHA');
+    const activeValidated = activeMetadataValue('Last validated implementation SHA');
     if (activeStarting !== undefined && stateAnchors.starting !== undefined && activeStarting !== stateAnchors.starting) {
       errors.push(makeError('CONTINUITY_ANCHOR_MISMATCH', task.activePath, null, `ACTIVE Starting SHA ${activeStarting} != STATE ${stateAnchors.starting}`));
     }
@@ -542,11 +593,47 @@ export function validateTaskV2(task, opts = {}) {
   }
 
   // --- status agreement ------------------------------------------------------
-  const activeStatus = bindActive && activeParsed ? normalizeTaskStatus(fieldValue(activeParsed, 'Status')) : undefined;
+  const activeStatus = bindActive && activeParsed ? normalizeTaskStatus(activeMetadataValue('Status')) : undefined;
   if (bindActive && activeStatus !== undefined && stateStatus !== undefined && activeStatus !== stateStatus) {
     errors.push(makeError('TASK_STATUS_MISMATCH', task.activePath, null, `ACTIVE status ${activeStatus} != STATE status ${stateStatus}`));
   }
   const status = bindActive && activeStatus !== undefined ? activeStatus : stateStatus;
+
+  // Verdict effect is an authorization field, not narrative metadata. History
+  // records remain byte-compatible: bindActive requires the field for every
+  // active v2 task, while historical v2 records validate it only when present.
+  const stateVerdictEffect = stateMetadataValue('PROJECT_VERDICT_EFFECT');
+  const activeVerdictEffect = bindActive && activeParsed ? activeMetadataValue('PROJECT_VERDICT_EFFECT') : undefined;
+  const normalizedStateVerdictEffect = stateVerdictEffect === undefined
+    ? undefined
+    : normalizeProjectVerdictEffect(stateVerdictEffect);
+  const normalizedActiveVerdictEffect = activeVerdictEffect === undefined
+    ? undefined
+    : normalizeProjectVerdictEffect(activeVerdictEffect);
+  if (stateVerdictEffect !== undefined && normalizedStateVerdictEffect === null) {
+    errors.push(makeError('PROJECT_VERDICT_EFFECT_INVALID', task.statePath, null, `STATE PROJECT_VERDICT_EFFECT must be one of ${[...PROJECT_VERDICT_EFFECTS].join(', ')}`));
+  }
+  if (bindActive && activeVerdictEffect !== undefined && normalizedActiveVerdictEffect === null) {
+    errors.push(makeError('PROJECT_VERDICT_EFFECT_INVALID', task.activePath, null, `ACTIVE PROJECT_VERDICT_EFFECT must be one of ${[...PROJECT_VERDICT_EFFECTS].join(', ')}`));
+  }
+  if (bindActive && status !== null && status !== undefined && status !== 'NONE') {
+    if (stateVerdictEffect === undefined) {
+      errors.push(makeError('PROJECT_VERDICT_EFFECT_MISSING', task.statePath, null, 'active v2 task STATE must declare PROJECT_VERDICT_EFFECT'));
+    }
+    if (activeParsed && activeVerdictEffect === undefined) {
+      errors.push(makeError('PROJECT_VERDICT_EFFECT_MISSING', task.activePath, null, 'active v2 task ACTIVE_TASK must declare PROJECT_VERDICT_EFFECT'));
+    }
+    if (normalizedStateVerdictEffect !== undefined && normalizedStateVerdictEffect !== null
+      && normalizedActiveVerdictEffect !== undefined && normalizedActiveVerdictEffect !== null
+      && normalizedStateVerdictEffect !== normalizedActiveVerdictEffect) {
+      errors.push(makeError(
+        'PROJECT_VERDICT_EFFECT_MISMATCH',
+        task.activePath,
+        null,
+        `ACTIVE PROJECT_VERDICT_EFFECT ${normalizedActiveVerdictEffect} != STATE ${normalizedStateVerdictEffect}`
+      ));
+    }
+  }
   if (status === null || status === undefined) {
     // Missing/invalid status is reported by the base checker; nothing more to do here.
     return { errors, warnings };
@@ -608,8 +695,8 @@ export function validateTaskV2(task, opts = {}) {
   // ---------------------------------------------------------------------------
   // State machines
   // ---------------------------------------------------------------------------
-  const activeMilestone = bindActive && activeParsed ? fieldValue(activeParsed, 'Current milestone') : undefined;
-  const activeNextAction = bindActive && activeParsed ? fieldValue(activeParsed, 'Next action') : undefined;
+  const activeMilestone = bindActive && activeParsed ? activeMetadataValue('Current milestone') : undefined;
+  const activeNextAction = bindActive && activeParsed ? activeMetadataValue('Next action') : undefined;
 
   const reportStatus = reportFields ? reportFields.find((field) => field.key === 'Status')?.value : undefined;
   const reportStatusNormalized = reportStatus === undefined ? undefined : normalizeTaskStatus(reportStatus);

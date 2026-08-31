@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { createRealSourceSurfaceCache, sourceSurfaceCacheKey } from '../../src/core/source/cache';
+import { sourceSurfaceAnalyzerSetIdentity } from '../../src/core/semanticCoverage/sourceAnalyzers';
+import { safeSemanticDigest } from '../../src/core/semanticCoverage/types';
 import type { RealSourceScanConfig, RealSourceSnapshotInventory } from '../../src/core/source/scanTypes';
 import type { SourceSurfaceDiscovery } from '../../src/core/source/surfaces';
 import { REAL_SOURCE_GAP_TAXONOMY_VERSION } from '../../src/core/source/gapTaxonomy';
@@ -125,24 +127,39 @@ test('cache currentness — dependency change (configDigest) misses', () => {
   expect(sourceSurfaceCacheKey({ config: c1, inventory: inv })).not.toBe(sourceSurfaceCacheKey({ config: c2, inventory: inv }));
 });
 
-test('cache currentness — analyzer version change misses', () => {
-  const k1 = sourceSurfaceCacheKey({ config: baseConfig(), inventory: baseInventory() });
-  // analyzerSetVersion is part of key; we prove by checking that different enabledAnalyzers give different keys
-  const c1 = { ...baseConfig(), enabledAnalyzers: ['PHP_RETURN_ROOT_TYPE'] } as unknown as RealSourceScanConfig;
-  const c2 = { ...baseConfig(), enabledAnalyzers: ['PHP_RETURN_ROOT_TYPE', 'PHP_RETURN_FIELD_TYPE'] } as unknown as RealSourceScanConfig;
-  expect(sourceSurfaceCacheKey({ config: c1, inventory: baseInventory() })).not.toBe(sourceSurfaceCacheKey({ config: c2, inventory: baseInventory() }));
-  expect(k1).toBeTruthy();
+function expectedKey(config: RealSourceScanConfig, inventory: RealSourceSnapshotInventory, overrides: { analyzerSetVersion?: string; gapTaxonomyVersion?: string } = {}): string {
+  const repositories = inventory.repositories.map((repository) => ({ repoId: repository.repoId, sourceSha: repository.sourceSha, status: repository.status })).sort((left, right) => left.repoId.localeCompare(right.repoId));
+  return safeSemanticDigest({
+    schemaVersion: 'nightwatch.real-source-surface-cache.v1',
+    repositories,
+    snapshotDigest: inventory.snapshotDigest,
+    configDigest: config.configDigest,
+    extractorVersion: config.extractorVersion,
+    analyzerSetVersion: overrides.analyzerSetVersion ?? sourceSurfaceAnalyzerSetIdentity(),
+    gapTaxonomyVersion: overrides.gapTaxonomyVersion ?? REAL_SOURCE_GAP_TAXONOMY_VERSION,
+    enabledAnalyzers: [...config.enabledAnalyzers].sort(),
+  }, 'source-surface-cache');
+}
+
+test('cache currentness — authoritative analyzer identity change misses', () => {
+  const config = baseConfig();
+  const inventory = baseInventory();
+  const actual = sourceSurfaceCacheKey({ config, inventory });
+  expect(actual).toBe(expectedKey(config, inventory));
+  const changedAnalyzer = expectedKey(config, inventory, { analyzerSetVersion: 'ev:sha256:000000000000000000000099' });
+  expect(changedAnalyzer).not.toBe(actual);
 });
 
-test('cache currentness — taxonomy version change misses', () => {
-  // gapTaxonomyVersion is baked into key via safeSemanticDigest; we verify determinism
-  const key = sourceSurfaceCacheKey({ config: baseConfig(), inventory: baseInventory() });
-  expect(key).toBeTruthy();
-  const k2 = sourceSurfaceCacheKey({ config: baseConfig(), inventory: baseInventory() });
-  expect(key).toBe(k2);
+test('cache currentness — authoritative taxonomy version change misses', () => {
+  const config = baseConfig();
+  const inventory = baseInventory();
+  const actual = sourceSurfaceCacheKey({ config, inventory });
+  expect(actual).toBe(expectedKey(config, inventory));
+  const changedTaxonomy = expectedKey(config, inventory, { gapTaxonomyVersion: 'nightwatch.real-source-gap-taxonomy.v999' });
+  expect(changedTaxonomy).not.toBe(actual);
 });
 
-test('cache currentness — interrupted write does not pollute (put after clear)', () => {
+test('cache currentness — clearing an in-memory cache discards an entry', () => {
   const cache = createRealSourceSurfaceCache({ maxEntries: 8 });
   const key = sourceSurfaceCacheKey({ config: baseConfig(), inventory: baseInventory() });
   cache.put(key, fakeDiscovery('1111'));
@@ -158,7 +175,7 @@ test('cache currentness — malformed key never hits (empty string)', () => {
   expect(cache.get('different-key')).toBeUndefined();
 });
 
-test('cache currentness — partially written cache (eviction) bounded', () => {
+test('cache currentness — bounded LRU eviction never exceeds its entry limit', () => {
   const cache = createRealSourceSurfaceCache({ maxEntries: 2 });
   const c = baseConfig();
   const inv1 = baseInventory(`srcsnapshot:sha256:${'1'.repeat(64)}`);

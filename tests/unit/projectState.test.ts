@@ -116,6 +116,7 @@ Last validated implementation SHA: ${sha}
 Current milestone: COMPLETE / STOP
 Last checkpoint: synthetic
 Next action: STOP
+PROJECT_VERDICT_EFFECT: PRESERVE
 ${phaseKey}: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 `;
@@ -142,6 +143,7 @@ LIVE_HEAD_AUTHORITY: GIT
 CURRENT_LOCAL_HEAD: DISCOVER_FROM_GIT
 CURRENT_REMOTE_HEAD: DISCOVER_FROM_GIT
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
+PROJECT_VERDICT_EFFECT: PRESERVE
 ${phaseKey}: COMPLETE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Branch: main
@@ -294,6 +296,13 @@ interface BlockOptions {
   readonly ciStatus?: string;
   readonly finalDocumentationSha?: string;
   readonly finalCiAuthority?: string;
+  readonly liveTaskId?: string;
+  readonly livePhase?: string;
+  readonly liveTaskStatus?: string;
+  readonly liveProjectCompletionStatus?: string;
+  readonly liveVerdictEffect?: string;
+  readonly liveNextActionState?: string;
+  readonly liveCompletionClaim?: string;
   readonly extraFields?: readonly string[];
 }
 
@@ -328,12 +337,28 @@ function renderBlock(catalogState: 'EMPTY' | 'ONE', options: BlockOptions = {}):
     `EFFECTIVE_NEXT_PROMOTION_AUTHORITY: ${options.effectiveNextPromotionAuthority ?? 'NONE'}`,
     ...(options.extraFields ?? []),
   ];
+  const liveLines = [
+    'LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1',
+    `LIVE_TASK_ID: ${options.liveTaskId ?? 'phase-test'}`,
+    `LIVE_PHASE: ${options.livePhase ?? 'test'}`,
+    `LIVE_TASK_STATUS: ${options.liveTaskStatus ?? 'COMPLETE'}`,
+    `LIVE_PROJECT_COMPLETION_STATUS: ${options.liveProjectCompletionStatus ?? options.projectCompletionStatus ?? 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED'}`,
+    `LIVE_PROJECT_VERDICT_EFFECT: ${options.liveVerdictEffect ?? 'PRESERVE'}`,
+    `LIVE_NEXT_ACTION_STATE: ${options.liveNextActionState ?? 'STOP'}`,
+    `LIVE_COMPLETION_CLAIM: ${options.liveCompletionClaim ?? 'COMPLETE'}`,
+  ];
   return `# Nightwatch — CURRENT STATE (synthetic fixture)
 
 ## Project-state v2 (machine-checked truth block)
 
 \`\`\`
 ${lines.join('\n')}
+\`\`\`
+
+## Live-state v2 (machine-checked cross-check)
+
+\`\`\`
+${liveLines.join('\n')}
 \`\`\`
 
 ## Historical prose (must never affect machine checks)
@@ -354,6 +379,7 @@ interface FixtureOptions {
   readonly tamperCatalog?: 'comment-append' | 'corrupt';
   readonly dirtyFile?: boolean;
   readonly activeTaskStatus?: 'complete' | 'blocked' | 'in_progress';
+  readonly verdictEffect?: string | null;
 }
 
 interface Fixture {
@@ -394,7 +420,26 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
       : options.block === undefined && options.activeTaskStatus === 'in_progress'
         ? { projectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING' }
         : options.block;
-    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, block));
+    const activeTaskStatus = options.activeTaskStatus === 'blocked'
+      ? 'BLOCKED'
+      : options.activeTaskStatus === 'in_progress'
+        ? 'IN_PROGRESS'
+        : 'COMPLETE';
+    const defaultProjectStatus = activeTaskStatus === 'BLOCKED'
+      ? 'PROJECT_NOT_COMPLETE_BLOCKED'
+      : activeTaskStatus === 'IN_PROGRESS'
+        ? 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING'
+        : 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED';
+    fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, {
+      liveTaskId: ACTIVE_TASK_ID,
+      livePhase: 'test',
+      liveTaskStatus: activeTaskStatus,
+      liveProjectCompletionStatus: block?.projectCompletionStatus ?? defaultProjectStatus,
+      liveVerdictEffect: options.verdictEffect === null ? 'PRESERVE' : options.verdictEffect ?? 'PRESERVE',
+      liveNextActionState: activeTaskStatus === 'COMPLETE' || activeTaskStatus === 'BLOCKED' ? 'STOP' : 'CONTINUE',
+      liveCompletionClaim: activeTaskStatus === 'COMPLETE' ? 'COMPLETE' : 'NONE',
+      ...(block ?? {}),
+    }));
   } else {
     fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), '# Nightwatch — CURRENT STATE (synthetic fixture, no block)\n');
   }
@@ -412,6 +457,11 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     activeText = activeText.replace(/^PHASE_TEST_STATUS: COMPLETE$/m, `PHASE_TEST_STATUS: ${options.activeTaskPhaseStatus}`);
     stateText = stateText.replace(/^PHASE_TEST_STATUS: COMPLETE$/m, `PHASE_TEST_STATUS: ${options.activeTaskPhaseStatus}`);
   }
+  if (options.verdictEffect !== undefined) {
+    const effectLine = options.verdictEffect === null ? '' : `PROJECT_VERDICT_EFFECT: ${options.verdictEffect}`;
+    activeText = activeText.replace(/^PROJECT_VERDICT_EFFECT:.*$/m, effectLine);
+    stateText = stateText.replace(/^PROJECT_VERDICT_EFFECT:.*$/m, effectLine);
+  }
   fs.mkdirSync(path.join(root, '.agent', 'tasks', ACTIVE_TASK_ID), { recursive: true });
   if (options.activeTaskPresent !== false) {
     fs.writeFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), activeText);
@@ -420,6 +470,12 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   fs.writeFileSync(path.join(root, '.agent', 'tasks', ACTIVE_TASK_ID, 'PLAN.md'), activeRecords.plan);
   fs.writeFileSync(path.join(root, '.agent', 'tasks', ACTIVE_TASK_ID, 'STATE.md'), stateText);
   fs.writeFileSync(path.join(root, '.agent', 'tasks', ACTIVE_TASK_ID, 'REPORT.md'), activeRecords.report);
+  const promptStatus = options.activeTaskStatus === 'blocked'
+    ? 'BLOCKED'
+    : options.activeTaskStatus === 'in_progress'
+      ? 'IN_PROGRESS'
+      : 'COMPLETE';
+  fs.writeFileSync(path.join(root, '.agent', 'EXECUTION_PROMPT.md'), `# Synthetic execution prompt\nStatus: ${promptStatus}\nCampaign ID: ${ACTIVE_TASK_ID}\n`);
 
   // R1 task record (v2-complete or legacy-minimal or missing).
   if (options.r1Task !== 'missing') {
@@ -467,6 +523,194 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
       expect(output.rendererRoundTrip).toBe(true);
     } finally {
       fixture.cleanup();
+    }
+  });
+
+  test('1a. explicit PRESERVE allows a generic active hardening task to retain acceptance', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).status).toBe('PASS');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1b. accepted project state fails when the active effect is missing', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      replaceFile(fixture.root, '.agent/ACTIVE_TASK.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT:.*\n/m, ''));
+      replaceFile(fixture.root, '.agent/tasks/phase-test/STATE.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT:.*\n/m, ''));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'missing verdict effect']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_VERDICT_EFFECT_MISSING');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1c. REEVALUATE cannot silently preserve an accepted verdict', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      replaceFile(fixture.root, '.agent/ACTIVE_TASK.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT: PRESERVE$/m, 'PROJECT_VERDICT_EFFECT: REEVALUATE'));
+      replaceFile(fixture.root, '.agent/tasks/phase-test/STATE.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT: PRESERVE$/m, 'PROJECT_VERDICT_EFFECT: REEVALUATE'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'reevaluate accepted verdict']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_VERDICT_EFFECT_MISMATCH');
+      expect(result.stderr).toContain('PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1d. REEVALUATE permits a truthful operational-acceptance downgrade', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONAL_ACCEPTANCE_FAILED' },
+      verdictEffect: 'REEVALUATE',
+    });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1e. malformed project-verdict effect fails before project acceptance is projected', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      replaceFile(fixture.root, '.agent/ACTIVE_TASK.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT: PRESERVE$/m, 'PROJECT_VERDICT_EFFECT: PRESERVE_WITH_RETRY'));
+      replaceFile(fixture.root, '.agent/tasks/phase-test/STATE.md', (text) => text.replace(/^PROJECT_VERDICT_EFFECT: PRESERVE$/m, 'PROJECT_VERDICT_EFFECT: PRESERVE_WITH_RETRY'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'malformed verdict effect']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_VERDICT_EFFECT_INVALID');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1f. contradictory live blocked status is rejected while historical prose remains inert', () => {
+    const fixture = makeFixture({
+      activeTaskStatus: 'in_progress',
+      block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+    });
+    try {
+      replaceFile(fixture.root, 'docs/CURRENT_STATE.md', (text) => text.replace(/^LIVE_TASK_STATUS: IN_PROGRESS$/m, 'LIVE_TASK_STATUS: BLOCKED'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'contradictory live status']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_LIVE_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1g. execution prompt status cannot contradict the active task', () => {
+    const fixture = makeFixture();
+    try {
+      replaceFile(fixture.root, '.agent/EXECUTION_PROMPT.md', (text) => text.replace(/^Status: COMPLETE$/m, 'Status: IN_PROGRESS'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'contradictory execution prompt']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1h. execution prompt campaign identity cannot drift from the active task', () => {
+    const fixture = makeFixture();
+    try {
+      replaceFile(fixture.root, '.agent/EXECUTION_PROMPT.md', (text) => text.replace(/^Campaign ID: phase-test$/m, 'Campaign ID: another-task'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'contradictory execution identity']);
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('1i. every live cross-check field is bound to the active state', () => {
+    const cases: readonly [keyof BlockOptions, string, string][] = [
+      ['liveTaskId', 'another-task', 'PROJECT_STATE_LIVE_TASK_ID_MISMATCH'],
+      ['livePhase', 'another-phase', 'PROJECT_STATE_LIVE_PHASE_MISMATCH'],
+      ['liveTaskStatus', 'IN_PROGRESS', 'PROJECT_STATE_LIVE_STATUS_MISMATCH'],
+      ['liveProjectCompletionStatus', 'OPERATIONALLY_ACCEPTED', 'PROJECT_STATE_LIVE_COMPLETION_STATUS_MISMATCH'],
+      ['liveVerdictEffect', 'REEVALUATE', 'PROJECT_STATE_LIVE_VERDICT_EFFECT_MISMATCH'],
+      ['liveNextActionState', 'CONTINUE', 'PROJECT_STATE_LIVE_NEXT_ACTION_MISMATCH'],
+      ['liveCompletionClaim', 'NONE', 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_MISMATCH'],
+    ];
+    for (const [field, value, code] of cases) {
+      const fixture = makeFixture({ block: { [field]: value } as BlockOptions });
+      try {
+        const result = run(fixture.root);
+        expect(result.status, field).not.toBe(0);
+        expect(result.stderr, field).toContain(code);
+      } finally {
+        fixture.cleanup();
+      }
+    }
+  });
+
+  test('1j. live-state block shape failures are fail closed', () => {
+    const cases: readonly [string, (text: string) => string, string][] = [
+      [
+        'duplicate',
+        (text) => text.replace(/^LIVE_TASK_ID: phase-test$/m, 'LIVE_TASK_ID: phase-test\nLIVE_TASK_ID: phase-test'),
+        'PROJECT_STATE_LIVE_STATE_DUPLICATE_FIELD',
+      ],
+      [
+        'unknown',
+        (text) => text.replace(/^LIVE_COMPLETION_CLAIM: COMPLETE$/m, 'LIVE_UNEXPECTED: VALUE\nLIVE_COMPLETION_CLAIM: COMPLETE'),
+        'PROJECT_STATE_LIVE_STATE_UNKNOWN_FIELD',
+      ],
+      [
+        'missing',
+        (text) => text.replace(/^LIVE_COMPLETION_CLAIM: COMPLETE\n/m, ''),
+        'PROJECT_STATE_LIVE_STATE_REQUIRED_FIELD_MISSING',
+      ],
+      [
+        'malformed',
+        (text) => text.replace(/^LIVE_COMPLETION_CLAIM: COMPLETE$/m, 'not-a-structured-field\nLIVE_COMPLETION_CLAIM: COMPLETE'),
+        'PROJECT_STATE_LIVE_STATE_BLOCK_MALFORMED',
+      ],
+    ];
+    for (const [label, mutate, code] of cases) {
+      const fixture = makeFixture();
+      try {
+        replaceFile(fixture.root, 'docs/CURRENT_STATE.md', mutate);
+        git(fixture.root, ['add', '--all']);
+        git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', `live-state ${label}`]);
+        const result = run(fixture.root);
+        expect(result.status, label).not.toBe(0);
+        expect(result.stderr, label).toContain(code);
+      } finally {
+        fixture.cleanup();
+      }
     }
   });
 
@@ -1019,6 +1263,7 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
     const fixture = makeFixture({
       activeTaskStatus: 'in_progress',
       block: { projectCompletionStatus: 'OPERATIONALLY_ACCEPTED' },
+      verdictEffect: 'REEVALUATE',
     });
     try {
       const result = run(fixture.root);

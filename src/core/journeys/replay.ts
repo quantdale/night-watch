@@ -14,9 +14,72 @@ import type {
   ReplayDivergenceClassification,
   ReplayDifferentialEvidence,
 } from './types';
+import { stableJsonSorted } from '../identity/canonicalDigest';
+
+const MAX_REPLAY_CANONICAL_DEPTH = 64;
+const MAX_REPLAY_CANONICAL_NODES = 8192;
+const MAX_REPLAY_CANONICAL_BYTES = 256 * 1024;
+
+interface ReplayCanonicalBudget {
+  nodes: number;
+}
+
+/**
+ * The historical canonical-digest helper intentionally preserves legacy
+ * serialization quirks. Replay comparison has a stricter boundary: it only
+ * accepts finite JSON-shaped trees, and rejects cycles and exotic objects
+ * before canonicalization. That keeps an unsupported value from matching its
+ * equally unsupported counterpart and turning an incomplete observation into
+ * a PASS.
+ */
+function isSupportedReplayValue(value: unknown, seen: Set<object>, budget: ReplayCanonicalBudget, depth = 0): boolean {
+  if (depth > MAX_REPLAY_CANONICAL_DEPTH) return false;
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'object') return false;
+  if (seen.has(value) || ++budget.nodes > MAX_REPLAY_CANONICAL_NODES) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (Array.isArray(value)) {
+    seen.add(value);
+    try {
+      for (const item of value) {
+        if (!isSupportedReplayValue(item, seen, budget, depth + 1)) return false;
+      }
+      return true;
+    } finally {
+      seen.delete(value);
+    }
+  }
+  if (prototype !== Object.prototype && prototype !== null) return false;
+  seen.add(value);
+  try {
+    for (const item of Object.values(value as Record<string, unknown>)) {
+      if (!isSupportedReplayValue(item, seen, budget, depth + 1)) return false;
+    }
+    return true;
+  } finally {
+    seen.delete(value);
+  }
+}
 
 function sameJson(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  // Replay evidence is JSON-shaped, but object insertion order is an
+  // incidental capture detail. Canonicalize object keys while retaining
+  // array order: step/request order is meaningful where the comparator
+  // explicitly preserves it, whereas marker/count object order is not.
+  try {
+    const budget = { nodes: 0 };
+    if (!isSupportedReplayValue(a, new Set(), budget) || !isSupportedReplayValue(b, new Set(), budget)) return false;
+    const first = stableJsonSorted(a);
+    const replay = stableJsonSorted(b);
+    if (typeof first !== 'string' || typeof replay !== 'string') return false;
+    if (first.length > MAX_REPLAY_CANONICAL_BYTES || replay.length > MAX_REPLAY_CANONICAL_BYTES) return false;
+    return first === replay;
+  } catch {
+    // Unsupported or cyclic evidence cannot be compared safely. Treat it as
+    // a mismatch; never let a comparator exception become an implicit pass.
+    return false;
+  }
 }
 
 function semanticKey(item: JourneySemanticRequest): string {
@@ -137,6 +200,10 @@ function classifyReplayOutcome(input: {
   if (input.first.captureStatus === 'INCOMPLETE' || input.replay.captureStatus === 'INCOMPLETE') {
     diagnostics.add('CAPTURE_INCOMPLETE');
     return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'one observation has incomplete response capture', diagnosticCodes: [...diagnostics].sort() };
+  }
+  if (input.first.captureStatus === 'UNKNOWN' || input.replay.captureStatus === 'UNKNOWN') {
+    diagnostics.add('CAPTURE_STATUS_UNKNOWN');
+    return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'response capture health was not established for one observation', diagnosticCodes: [...diagnostics].sort() };
   }
 
   const productStateDifference = hasProductStateDifference(input.first, input.replay, input.firstOracleKeys, input.replayOracleKeys);

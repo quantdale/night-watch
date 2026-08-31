@@ -4,6 +4,8 @@
 export const PROTOCOL_V2: 'nightwatch.agent-continuity.v2';
 export const PROTOCOL_LEGACY: 'LEGACY_CONTINUITY_V1';
 export const TASK_STATUSES: ReadonlySet<string>;
+export const PROJECT_VERDICT_EFFECTS: ReadonlySet<'PRESERVE' | 'REEVALUATE' | 'SUPERSEDE'>;
+export function normalizeProjectVerdictEffect(value: string | undefined | null): 'PRESERVE' | 'REEVALUATE' | 'SUPERSEDE' | null;
 
 export function isCanonicalKey(key: string): boolean;
 export function parseKeyValuesWithLocations(text: string): {
@@ -16,6 +18,18 @@ export function findDuplicateFields(parsed: {
 export function fieldValue(
   parsed: { byKey: Map<string, Array<{ key: string; value: string; line: number }>> },
   key: string
+): string | undefined;
+export function fieldRecordsInLineRange(
+  parsed: { byKey: Map<string, Array<{ key: string; value: string; line: number }>> },
+  key: string,
+  minExclusive?: number,
+  maxInclusive?: number
+): Array<{ key: string; value: string; line: number }>;
+export function fieldValueInLineRange(
+  parsed: { byKey: Map<string, Array<{ key: string; value: string; line: number }>> },
+  key: string,
+  minExclusive?: number,
+  maxInclusive?: number
 ): string | undefined;
 export function allFieldValues(
   parsed: { byKey: Map<string, Array<{ key: string; value: string; line: number }>> },

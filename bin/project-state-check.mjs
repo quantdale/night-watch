@@ -27,9 +27,20 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import {
+  findDuplicateFields,
+  fieldValue,
+  fieldValueInLineRange,
+  isTerminalNextActionText,
+  normalizeProjectVerdictEffect,
+  normalizeTaskStatus,
+  parseMarkdownSections,
+  parseKeyValuesWithLocations,
+} from './agent-continuity-protocol.mjs';
 
 const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';
 const BLOCK_SECTION_HEADING = '## Project-state v2 (machine-checked truth block)';
+const LIVE_STATE_BLOCK_HEADING = '## Live-state v2 (machine-checked cross-check)';
 const OWNED_PROJECT_STATE_FIELDS = new Set([
   'PROJECT_STATE_PROTOCOL_VERSION',
   'RELEASE_CERTIFICATION_PROTOCOL_VERSION',
@@ -56,6 +67,16 @@ const OWNED_PROJECT_STATE_FIELDS = new Set([
   'NEXT_PORTFOLIO_MEMBER',
   'PROMOTION_AUTHORIZATION_LIFECYCLE',
   'EFFECTIVE_NEXT_PROMOTION_AUTHORITY',
+]);
+const OWNED_LIVE_STATE_FIELDS = new Set([
+  'LIVE_STATE_PROTOCOL_VERSION',
+  'LIVE_TASK_ID',
+  'LIVE_PHASE',
+  'LIVE_TASK_STATUS',
+  'LIVE_PROJECT_COMPLETION_STATUS',
+  'LIVE_PROJECT_VERDICT_EFFECT',
+  'LIVE_NEXT_ACTION_STATE',
+  'LIVE_COMPLETION_CLAIM',
 ]);
 const FORBIDDEN_IMPLEMENTATION_AUTHORITY_FIELDS = new Set([
   'LAST_VALIDATED_IMPLEMENTATION_SHA',
@@ -141,13 +162,13 @@ function loadTypeScriptModule(root, file) {
   return loadRuntimeTypeScriptModule(path.join(root, file), { root });
 }
 
-function parseKeyValueBlock(text) {
+function parseKeyValueBlock(text, heading = BLOCK_SECTION_HEADING, ownedFields = OWNED_PROJECT_STATE_FIELDS) {
   const fields = new Map();
   const lines = [];
   const duplicates = [];
   const unknown = [];
   if (text.length > MAX_CURRENT_STATE_BYTES) return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
-  const start = text.indexOf(BLOCK_SECTION_HEADING);
+  const start = text.indexOf(heading);
   if (start === -1) return null;
   const fenceStart = text.indexOf('\n```', start);
   if (fenceStart === -1) return null;
@@ -162,7 +183,7 @@ function parseKeyValueBlock(text) {
     if (!match?.groups) return { malformed: true, fields: null, lines };
     const key = match.groups.key.trim();
     if (fields.has(key)) duplicates.push(key);
-    if (!OWNED_PROJECT_STATE_FIELDS.has(key)) unknown.push(key);
+    if (!ownedFields.has(key)) unknown.push(key);
     if (key.length > MAX_BLOCK_LINE_CHARS || match.groups.value.length > MAX_BLOCK_LINE_CHARS) {
       return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
     }
@@ -171,6 +192,26 @@ function parseKeyValueBlock(text) {
     lines.push(key);
   }
   return { malformed: false, oversized: false, fields, lines, duplicates, unknown };
+}
+
+function readActiveContinuity(root) {
+  try {
+    const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
+    const parsed = parseKeyValuesWithLocations(active);
+    const starts = [...parseMarkdownSections(active).sections.values()].map((section) => section.start);
+    const preambleEnd = starts.length > 0 ? Math.min(...starts) - 1 : Number.POSITIVE_INFINITY;
+    const metadataValue = (key) => fieldValueInLineRange(parsed, key, 0, preambleEnd);
+    return {
+      parsed,
+      status: normalizeTaskStatus(metadataValue('Status')),
+      effect: metadataValue('PROJECT_VERDICT_EFFECT'),
+      taskId: metadataValue('Task ID'),
+      phase: metadataValue('Phase'),
+      nextAction: metadataValue('Next action'),
+    };
+  } catch {
+    return { parsed: null, status: null, effect: undefined, taskId: undefined, phase: undefined, nextAction: undefined };
+  }
 }
 
 function main() {
@@ -190,6 +231,7 @@ function main() {
     fail(errors, 'PROJECT_STATE_CURRENT_STATE_MISSING');
     currentStateText = '';
   }
+  const activeContinuity = readActiveContinuity(root);
   const parsed = parseKeyValueBlock(currentStateText);
   if (parsed === null) {
     fail(errors, 'PROJECT_STATE_BLOCK_MISSING');
@@ -250,36 +292,40 @@ function main() {
     }
     if (!CI_STATUSES.has(fields.get('CI_STATUS'))) fail(errors, 'PROJECT_STATE_CI_STATUS_INVALID');
     if (fields.get('FINAL_CI_AUTHORITY') !== 'GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT') fail(errors, 'PROJECT_STATE_FINAL_CI_AUTHORITY_INVALID');
-    const activeStatus = (() => {
-      try {
-        const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
-        return /^Status:\s*(?<value>[^\r\n]+)$/m.exec(active)?.groups?.value?.trim() ?? null;
-      } catch {
-        return null;
+    const activeStatus = activeContinuity.status;
+    const activeEffect = activeContinuity.effect === undefined
+      ? undefined
+      : normalizeProjectVerdictEffect(activeContinuity.effect);
+    if (activeStatus !== null && activeStatus !== undefined && activeStatus !== 'NONE') {
+      if (activeContinuity.effect === undefined) {
+        fail(errors, 'PROJECT_STATE_VERDICT_EFFECT_MISSING');
+      } else if (activeEffect === null) {
+        fail(errors, 'PROJECT_STATE_VERDICT_EFFECT_INVALID');
       }
-    })();
-    const activeTaskIdForGuard = (() => {
-      try {
-        const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
-        return /^Task ID:\s*(?<value>[^\r\n]+)$/m.exec(active)?.groups?.value?.trim() ?? null;
-      } catch {
-        return null;
-      }
-    })();
-    const isPostAcceptanceHardening = typeof activeTaskIdForGuard === 'string' && activeTaskIdForGuard.startsWith('nightwatch-') && activeTaskIdForGuard !== 'nightwatch-operational-acceptance-v1' && activeTaskIdForGuard !== 'nightwatch-final-completion-and-l6-containment-v1';
+    }
+    if (activeContinuity.parsed !== null && findDuplicateFields(activeContinuity.parsed).some(({ key }) => key === 'PROJECT_VERDICT_EFFECT')) {
+      fail(errors, 'PROJECT_STATE_VERDICT_EFFECT_DUPLICATE');
+    }
     const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
     let isMismatch = allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'));
-    // Narrow exception: any post-acceptance hardening/continuous/final-polish IN_PROGRESS may remain OPERATIONALLY_ACCEPTED (historical acceptance preserved)
-    if (isMismatch && isPostAcceptanceHardening && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
+    // Explicit preservation is the only authority that lets an active task
+    // retain the already-earned operational verdict. Task names are labels,
+    // not authorization. Requalification/supersession tasks may instead
+    // truthfully expose an operational failure while still recording work.
+    if (isMismatch && activeStatus === 'IN_PROGRESS' && activeEffect === 'PRESERVE' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
       isMismatch = false;
+    }
+    if (isMismatch && activeStatus === 'IN_PROGRESS' && activeEffect !== 'PRESERVE'
+      && (activeEffect === 'REEVALUATE' || activeEffect === 'SUPERSEDE')
+      && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONAL_ACCEPTANCE_FAILED') {
+      isMismatch = false;
+    }
+    if (activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED'
+      && activeContinuity.effect !== undefined && activeEffect !== null && activeEffect !== 'PRESERVE') {
+      fail(errors, 'PROJECT_STATE_VERDICT_EFFECT_MISMATCH');
     }
     if (isMismatch) {
       fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
-    }
-    // Early acceptance guard: operational-acceptance task must not claim ACCEPTED while still IN_PROGRESS
-    if (activeTaskIdForGuard === 'nightwatch-operational-acceptance-v1' && activeStatus === 'IN_PROGRESS' && fields.get('PROJECT_COMPLETION_STATUS') === 'OPERATIONALLY_ACCEPTED') {
-      // Already fails as mismatch, but keep explicit for diagnosis
-      if (!isMismatch) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_MISMATCH');
     }
     const ciStatus = fields.get('CI_STATUS');
     const observedSha = fields.get('CI_OBSERVED_SHA');
@@ -289,6 +335,67 @@ function main() {
     if ((ciStatus === 'EXECUTED_PASS' || ciStatus === 'EXECUTED_FAIL') && (!/^[0-9a-f]{40}$/i.test(observedSha ?? '') || observedSha !== executedSha)) fail(errors, 'PROJECT_STATE_CI_EXECUTION_MISMATCH');
     if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_AND_CI_CERTIFIED' && ciStatus !== 'EXECUTED_PASS') fail(errors, 'PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION');
     if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' && ciStatus === 'EXECUTED_FAIL') fail(errors, 'PROJECT_STATE_LOCAL_COMPLETE_WITH_FAILED_CI');
+
+    // The live cross-check is a small, explicitly machine-owned snapshot.
+    // It is the only documentation narrative outside the truth block that is
+    // interpreted. Historical prose remains inert, while a stale live task,
+    // phase, status, effect, completion claim, or next-action state fails
+    // closed before any campaign authority can be constructed.
+    const liveParsed = parseKeyValueBlock(currentStateText, LIVE_STATE_BLOCK_HEADING, OWNED_LIVE_STATE_FIELDS);
+    if (liveParsed === null) {
+      fail(errors, 'PROJECT_STATE_LIVE_STATE_BLOCK_MISSING');
+    } else if (liveParsed.malformed) {
+      fail(errors, liveParsed.oversized ? 'PROJECT_STATE_LIVE_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_LIVE_STATE_BLOCK_MALFORMED');
+    } else {
+      const liveFields = liveParsed.fields;
+      for (const key of liveParsed.duplicates ?? []) fail(errors, 'PROJECT_STATE_LIVE_STATE_DUPLICATE_FIELD');
+      for (const key of liveParsed.unknown ?? []) fail(errors, 'PROJECT_STATE_LIVE_STATE_UNKNOWN_FIELD');
+      for (const key of OWNED_LIVE_STATE_FIELDS) {
+        if (!liveFields.has(key)) fail(errors, 'PROJECT_STATE_LIVE_STATE_REQUIRED_FIELD_MISSING');
+      }
+      if (liveFields.get('LIVE_STATE_PROTOCOL_VERSION') !== 'nightwatch.live-state.v1') {
+        fail(errors, 'PROJECT_STATE_LIVE_STATE_PROTOCOL_UNSUPPORTED');
+      }
+      if (activeContinuity.parsed !== null) {
+        const actualTaskId = activeContinuity.taskId;
+        const actualPhase = activeContinuity.phase;
+        const actualNextAction = activeContinuity.nextAction ?? '';
+        const expectedNextActionState = isTerminalNextActionText(actualNextAction) ? 'STOP' : 'CONTINUE';
+        const expectedCompletionClaim = activeStatus === 'COMPLETE' ? 'COMPLETE' : 'NONE';
+        if (liveFields.get('LIVE_TASK_ID') !== actualTaskId) fail(errors, 'PROJECT_STATE_LIVE_TASK_ID_MISMATCH');
+        if (liveFields.get('LIVE_PHASE') !== actualPhase) fail(errors, 'PROJECT_STATE_LIVE_PHASE_MISMATCH');
+        if (normalizeTaskStatus(liveFields.get('LIVE_TASK_STATUS')) !== activeStatus) fail(errors, 'PROJECT_STATE_LIVE_STATUS_MISMATCH');
+        if (liveFields.get('LIVE_PROJECT_COMPLETION_STATUS') !== fields.get('PROJECT_COMPLETION_STATUS')) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_STATUS_MISMATCH');
+        const liveEffect = normalizeProjectVerdictEffect(liveFields.get('LIVE_PROJECT_VERDICT_EFFECT'));
+        if (liveEffect === null) fail(errors, 'PROJECT_STATE_LIVE_VERDICT_EFFECT_INVALID');
+        if (activeEffect !== null && liveEffect !== activeEffect) fail(errors, 'PROJECT_STATE_LIVE_VERDICT_EFFECT_MISMATCH');
+        if (!new Set(['STOP', 'CONTINUE']).has(liveFields.get('LIVE_NEXT_ACTION_STATE'))) fail(errors, 'PROJECT_STATE_LIVE_NEXT_ACTION_INVALID');
+        else if (liveFields.get('LIVE_NEXT_ACTION_STATE') !== expectedNextActionState) fail(errors, 'PROJECT_STATE_LIVE_NEXT_ACTION_MISMATCH');
+        if (!new Set(['NONE', 'COMPLETE']).has(liveFields.get('LIVE_COMPLETION_CLAIM'))) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_INVALID');
+        else if (liveFields.get('LIVE_COMPLETION_CLAIM') !== expectedCompletionClaim) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_MISMATCH');
+      }
+    }
+
+    // EXECUTION_PROMPT is an active handoff, so only its canonical metadata
+    // fields participate in this cross-file truth check. Missing optional
+    // prompt metadata remains compatible with older records; a present but
+    // contradictory status or campaign identity is never treated as prose.
+    try {
+      const executionPrompt = fs.readFileSync(path.join(root, '.agent/EXECUTION_PROMPT.md'), 'utf8');
+      const promptParsed = parseKeyValuesWithLocations(executionPrompt);
+      const promptStatusValue = fieldValue(promptParsed, 'Status');
+      if (promptStatusValue !== undefined && normalizeTaskStatus(promptStatusValue) !== activeStatus) {
+        fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_STATUS_MISMATCH');
+      }
+      const promptCampaignId = fieldValue(promptParsed, 'Campaign ID');
+      const activeTaskId = activeContinuity.taskId;
+      if (promptCampaignId !== undefined && promptCampaignId !== activeTaskId) {
+        fail(errors, 'PROJECT_STATE_EXECUTION_PROMPT_TASK_ID_MISMATCH');
+      }
+    } catch {
+      // A missing prompt is not itself a project-verdict authority failure;
+      // ACTIVE_TASK and its bound task record remain the required authority.
+    }
 
     // R1 task durable-status cross-check (deterministic mapping only): the
     // completed R1 task STATE's own structured status line.

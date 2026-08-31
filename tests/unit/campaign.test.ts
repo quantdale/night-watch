@@ -593,6 +593,51 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('resumes correctly from every bounded work-item completion boundary', async () => {
+    const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
+    expect(manifest.workItems.length).toBeGreaterThanOrEqual(3);
+
+    for (const [boundaryIndex, boundary] of manifest.workItems.entries()) {
+      const { root, store } = tempStore();
+      try {
+        const calls: string[] = [];
+        const executor = {
+          ...passingExecutor(),
+          execute: async ({ workItem }: { readonly workItem: CampaignWorkItem }) => {
+            calls.push(workItem.workItemId);
+            return passingExecutor().execute({ workItem });
+          },
+        };
+        const interrupted = await runCampaign(manifest, executor, {
+          store,
+          stopAfterWorkItemId: boundary.workItemId,
+          now: () => new Date(STATIC_NOW),
+        });
+        expect(interrupted.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+        expect([...interrupted.checkpoint.completedWorkItemIds].sort()).toEqual(
+          manifest.workItems.slice(0, boundaryIndex + 1).map((item) => item.workItemId).sort(),
+        );
+        expect([...interrupted.checkpoint.remainingWorkItemIds].sort()).toEqual(
+          manifest.workItems.slice(boundaryIndex + 1).map((item) => item.workItemId).sort(),
+        );
+        expect(interrupted.checkpoint.interruptedWork ?? []).toEqual([]);
+
+        const resumed = await resumeCampaign(manifest, executor, {
+          checkpointStore: new CampaignCheckpointStore(store),
+          now: () => new Date(STATIC_NOW),
+        });
+        expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
+        expect([...resumed.checkpoint.completedWorkItemIds].sort()).toEqual(manifest.workItems.map((item) => item.workItemId).sort());
+        expect(resumed.checkpoint.remainingWorkItemIds).toEqual([]);
+        expect([...calls].sort()).toEqual(manifest.workItems.map((item) => item.workItemId).sort());
+        expect(resumed.checkpoint.interruptedWork ?? []).toEqual([]);
+        expect(() => validateCampaignCheckpoint(resumed.checkpoint, manifest)).not.toThrow();
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
+    }
+  });
+
   test('terminal runtime failure blocks the failed item, skips pending work, and derives a truthful next action', async () => {
     const { root, store } = tempStore();
     try {

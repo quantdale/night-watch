@@ -1,10 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { prefixedDigest24, stableJsonSorted } from '../../src/core/identity/canonicalDigest';
 
-test('canonicalDigest is permutation stable for object keys', () => {
-  const a = { b: 1, a: 2, c: { z: 3, y: 4 } };
-  const b = { a: 2, c: { y: 4, z: 3 }, b: 1 };
+test('canonicalDigest is permutation stable for nested object keys', () => {
+  const a = { b: 1, a: 2, c: { z: [{ q: 1, p: 2 }, { n: 3, m: 4 }], y: 4 } };
+  const b = { c: { y: 4, z: [{ p: 2, q: 1 }, { m: 4, n: 3 }] }, a: 2, b: 1 };
   expect(prefixedDigest24('test', a)).toBe(prefixedDigest24('test', b));
+});
+
+test('canonicalDigest preserves array order and multiplicity', () => {
+  expect(prefixedDigest24('test', { items: [1, 2, 2] })).not.toBe(prefixedDigest24('test', { items: [2, 1, 2] }));
+  expect(prefixedDigest24('test', { items: [1, 2, 2] })).not.toBe(prefixedDigest24('test', { items: [1, 2] }));
 });
 
 test('canonicalDigest duplicate-input idempotence', () => {
@@ -20,17 +25,24 @@ test('canonicalDigest deterministic digest for same inputs', () => {
   expect(v1).toMatch(/^ns:sha256:[0-9a-f]{24}$/);
 });
 
-test('canonicalDigest malformed-input rejection (circular throws)', () => {
-  const circular: Record<string, unknown> = { a: 1 };
+test('canonicalDigest malformed-input rejection is bounded and does not echo values', () => {
+  const circular: Record<string, unknown> = { a: 'SYNTHETIC_CYCLE_SECRET' };
   (circular as Record<string, unknown>).self = circular;
-  expect(() => stableJsonSorted(circular)).toThrow();
+  let message = '';
+  try {
+    stableJsonSorted(circular);
+  } catch (error) {
+    message = error instanceof Error ? error.message : String(error);
+  }
+  expect(message).toBeTruthy();
+  expect(message).not.toContain('SYNTHETIC_CYCLE_SECRET');
 });
 
-test('canonicalDigest bounded output cardinality (prefix preserved)', () => {
+test('canonicalDigest output has the exact bounded digest shape', () => {
   const d1 = prefixedDigest24('alpha', { a: 1 });
   const d2 = prefixedDigest24('beta', { a: 1 });
-  expect(d1.startsWith('alpha:')).toBeTruthy();
-  expect(d2.startsWith('beta:')).toBeTruthy();
+  expect(d1).toMatch(/^alpha:sha256:[0-9a-f]{24}$/);
+  expect(d2).toMatch(/^beta:sha256:[0-9a-f]{24}$/);
   expect(d1).not.toBe(d2);
 });
 
@@ -41,16 +53,35 @@ test('canonicalDigest no mutation of input', () => {
   expect(input).toEqual(copy);
 });
 
+test('canonicalDigest ignores inherited and symbol properties but retains own string keys', () => {
+  const inherited = { inherited: 'not-part-of-identity' };
+  const value = Object.create(inherited) as Record<string | symbol, unknown>;
+  value.own = 1;
+  const symbol = Symbol('ignored');
+  value[symbol] = 'ignored';
+  const equivalent = { own: 1 };
+  expect(stableJsonSorted(value)).toBe(stableJsonSorted(equivalent));
+  expect(prefixedDigest24('test', value)).toBe(prefixedDigest24('test', equivalent));
+});
+
+test('canonicalDigest retains own __proto__ data as an ordinary key', () => {
+  const value: Record<string, unknown> = {};
+  Object.defineProperty(value, '__proto__', { value: 'synthetic-proto-value', enumerable: true, writable: true, configurable: true });
+  expect(stableJsonSorted(value)).toBe('{"__proto__":"synthetic-proto-value"}');
+  expect(stableJsonSorted(value)).not.toBe(stableJsonSorted({}));
+});
+
 test('stableJsonSorted sorts object keys deterministically', () => {
   const s1 = stableJsonSorted({ z: 1, a: 2 });
   const s2 = stableJsonSorted({ a: 2, z: 1 });
   expect(s1).toBe(s2);
 });
 
-test('prefixedDigest rejects empty prefix (bounded)', () => {
-  // Empty prefix still produces a digest, but we check that different prefixes give different outputs
+test('prefixedDigest keeps caller namespace distinct', () => {
   const d1 = prefixedDigest24('', { a: 1 });
   const d2 = prefixedDigest24('x', { a: 1 });
+  expect(d1).toMatch(/^:sha256:[0-9a-f]{24}$/);
+  expect(d2).toMatch(/^x:sha256:[0-9a-f]{24}$/);
   expect(d1).not.toBe(d2);
 });
 
@@ -60,11 +91,11 @@ test('prefixedDigest handles null consistently and undefined is distinct', () =>
   expect(() => prefixedDigest24('test', undefined)).toThrow();
   expect(prefixedDigest24('test', null)).not.toBe('test:sha256:undefined');
 });
-test('stableJsonSorted bounded input size', () => {
+test('stableJsonSorted preserves bounded input content without truncation', () => {
   const large = { a: 'x'.repeat(10000) };
   const s = stableJsonSorted(large);
-  expect(s.length).toBeGreaterThan(10000);
-  expect(s).toContain('x'.repeat(10));
+  expect(s).toBe(`{"a":"${'x'.repeat(10000)}"}`);
+  expect(s.length).toBe(10008);
 });
 
 test('prefixedDigest duplicate keys idempotent', () => {
@@ -74,7 +105,7 @@ test('prefixedDigest duplicate keys idempotent', () => {
   expect(d1).toBe(d2);
 });
 
-test('stableJsonSorted no secret propagation in digest', () => {
+test('canonical serialization is intentionally raw while digest output is opaque', () => {
   const input = { secret: 'my-secret-value', a: 1 };
   const out = stableJsonSorted(input);
   expect(out).toContain('my-secret-value');

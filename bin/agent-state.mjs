@@ -14,6 +14,7 @@ import {
   inspectLegacyTask,
   parseMarkdownSections,
   sectionBodyText,
+  parseKeyValuesWithLocations,
 } from './agent-continuity-protocol.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
@@ -91,13 +92,26 @@ function readFile(root, relativePath, errors) {
   }
 }
 
-function parseKeyValueFile(text) {
+function parseKeyValueFile(text, scope = 'all') {
+  const parsed = parseKeyValuesWithLocations(text);
+  let minExclusive = 0;
+  let maxInclusive = Number.POSITIVE_INFINITY;
+  if (scope === 'identity') {
+    const identity = parseMarkdownSections(text).sections.get('Identity');
+    // Legacy v1 records do not all carry the v2 section shape. Preserve their
+    // warning-only inspection; strict v2 validation still requires Identity.
+    if (identity) {
+      minExclusive = identity.start;
+      maxInclusive = identity.end;
+    }
+  } else if (scope === 'preamble') {
+    const starts = [...parseMarkdownSections(text).sections.values()].map((section) => section.start);
+    maxInclusive = starts.length > 0 ? Math.min(...starts) - 1 : Number.POSITIVE_INFINITY;
+  }
   const fields = new Map();
-  for (const line of text.split(/\r?\n/)) {
-    const match = /^(?<key>[^:#][^:]*):\s*(?<value>.*)$/.exec(line);
-    if (!match?.groups) continue;
-    const key = match.groups.key.trim();
-    if (!fields.has(key)) fields.set(key, match.groups.value.trim());
+  for (const record of parsed.records) {
+    if (record.line <= minExclusive || record.line > maxInclusive) continue;
+    if (!fields.has(record.key)) fields.set(record.key, record.value);
   }
   return fields;
 }
@@ -706,6 +720,9 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
     const planText = readTaskFile('PLAN.md');
     const stateText = readTaskFile('STATE.md');
     const reportText = readTaskFile('REPORT.md');
+    // Continuity anchors may be carried by older v2-compatible fixtures at a
+    // later legacy location; strict validateTaskV2 still binds state identity,
+    // while the graph checker must not silently skip a stale anchor.
     const stateFields = stateText !== null ? parseKeyValueFile(stateText) : new Map();
     const taskId = stateFields.get('Task ID') ?? entry.name;
     const taskStatus = stateFields.get('Status') ?? 'UNKNOWN';
@@ -788,7 +805,7 @@ export function validate(root, auditMode = false) {
   readFile(root, 'AGENTS.md', errors);
   if (activeText === null) return { errors, warnings };
 
-  const active = parseKeyValueFile(activeText);
+  const active = parseKeyValueFile(activeText, 'preamble');
   for (const field of REQUIRED_ACTIVE_FIELDS) {
     if (!active.has(field)) errors.push(`ACTIVE_TASK missing field: ${field}`);
   }

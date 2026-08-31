@@ -175,6 +175,21 @@ test('contract, fingerprint, and privacy matrix are deterministic and metadata-o
   expect(first).toMatch(/^fp:sha256:[0-9a-f]{24}$/);
 });
 
+test('anomaly fingerprints ignore query ordering/values but retain meaningful oracle and status identity', () => {
+  const common = {
+    journeyId: 'ripple-billinggroups-read',
+    stepId: 'billinggroups-read',
+    host: 'apidev.alphaus.cloud',
+    path: 'https://apidev.alphaus.cloud/m/blue/billing/v1/billinggroups?filter_vendor=aws&nonce=SYNTHETIC_ONE',
+    status: 200,
+    contentType: 'application/json; charset=utf-8',
+  };
+  const equivalent = fingerprintAnomaly({ ...common, path: `${common.path.split('?')[0]}?nonce=SYNTHETIC_TWO&filter_vendor=aws`, oracleId: 'malformed-json' });
+  expect(equivalent).toBe(fingerprintAnomaly({ ...common, oracleId: 'malformed-json' }));
+  expect(JSON.stringify(sanitizeAnomalyFingerprintInput({ ...common, oracleId: 'malformed-json' }))).not.toContain('SYNTHETIC_');
+  expect(equivalent).not.toBe(fingerprintAnomaly({ ...common, oracleId: 'unexpected-status', status: 502 }));
+});
+
 test('replay matrix distinguishes strict, bounded, semantic, and anomaly dimensions', () => {
   const first = baseEvidence();
   const bounded = { ...first, routeStabilityMs: 812, passiveUnknownCount: 1, boundedVariance: { requestCount: 1 } };
@@ -221,6 +236,7 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   const auth = compareJourneyReplay(settled, { ...settled, authValid: false });
   expect(auth.classification).toBe('AUTH_DIVERGENCE');
   expect(auth.passed).toBe(false);
+  expect(auth.diagnosticCodes).toContain('AUTH_STATE_CHANGED');
 
   const environment = compareJourneyReplay(settled, { ...settled, environmentInputDigest: 'env:second' });
   expect(environment.classification).toBe('ENVIRONMENT_DIVERGENCE');
@@ -229,6 +245,11 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   const capture = compareJourneyReplay(settled, { ...settled, captureStatus: 'INCOMPLETE' });
   expect(capture.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
   expect(capture.passed).toBe(false);
+
+  const unknownCapture = compareJourneyReplay(settled, { ...settled, captureStatus: 'UNKNOWN' });
+  expect(unknownCapture.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
+  expect(unknownCapture.passed).toBe(false);
+  expect(unknownCapture.diagnosticCodes).toContain('CAPTURE_STATUS_UNKNOWN');
 
   const product = {
     ...settled,
@@ -255,6 +276,31 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   expect(unknown.passed).toBe(false);
 });
 
+test('replay rejects unsupported and cyclic structural evidence even when both sides share it', () => {
+  const unsupported = { ...baseEvidence(), journeyMarkers: { marker: Symbol('synthetic') } as unknown as Record<string, boolean> };
+  const unsupportedResult = compareJourneyReplay(unsupported, unsupported);
+  expect(unsupportedResult.passed).toBe(false);
+  expect(unsupportedResult.classification).toBe('DETERMINISTIC_REPLAY_MISMATCH');
+  expect(unsupportedResult.strictInvariantMismatches).toContain('structural-checkpoints');
+
+  const cyclicMarkers = { marker: true } as Record<string, unknown>;
+  cyclicMarkers.self = cyclicMarkers;
+  const cyclic = { ...baseEvidence(), journeyMarkers: cyclicMarkers as Record<string, boolean> };
+  const cyclicResult = compareJourneyReplay(cyclic, cyclic);
+  expect(cyclicResult.passed).toBe(false);
+  expect(cyclicResult.classification).toBe('DETERMINISTIC_REPLAY_MISMATCH');
+  expect(cyclicResult.strictInvariantMismatches).toContain('structural-checkpoints');
+});
+
+test('replay diagnostics are byte-stable and metadata-only across repeated classification', () => {
+  const first = { ...baseEvidence(), finalRouteClass: '/m/blue/billing/v1/<SEGMENT>' };
+  const replay = { ...first, finalRouteClass: '/m/blue/billing/v1/<OTHER_SEGMENT>' };
+  const serialized = Array.from({ length: 3 }, () => JSON.stringify(compareJourneyReplay(first, replay)));
+  expect(new Set(serialized).size).toBe(1);
+  expect(serialized[0]).not.toContain('<SEGMENT>');
+  expect(serialized[0]).toContain('final-route-class');
+});
+
 test('replay comparator treats duplicate equivalent reads as bounded count variance', () => {
   const first = baseEvidence();
   const read = first.semanticRequests![0]!;
@@ -269,6 +315,53 @@ test('replay comparator treats duplicate equivalent reads as bounded count varia
   expect(comparison.differential?.semanticStrictLedgerSame).toBe(true);
   expect(comparison.differential?.requestCountDelta).toBe(1);
   expect(comparison.categories).toEqual(expect.arrayContaining(['BOUNDED_MATCH', 'EXPECTED_REQUEST_COUNT_VARIANCE']));
+});
+
+test('replay comparator canonicalizes object-key order but preserves meaningful array order', () => {
+  const first = {
+    ...baseEvidence(),
+    journeyMarkers: { PAYER_EXCHANGE_PAGE: true, PAYER_EXCHANGE_DATA_TABLE: true },
+    safetyCounts: {
+      productionAttempts: 0,
+      proxyViolations: 0,
+      unknownDestinations: 0,
+      unknownApprovals: 0,
+      mutations: 0,
+      dbQueries: 0,
+      actionCausedUnknown: 0,
+    },
+    boundedVariance: { requestCount: 1, passiveUnknownDelta: 0 },
+  };
+  const reorderedObjects = {
+    ...first,
+    journeyMarkers: { PAYER_EXCHANGE_DATA_TABLE: true, PAYER_EXCHANGE_PAGE: true },
+    safetyCounts: {
+      actionCausedUnknown: 0,
+      dbQueries: 0,
+      mutations: 0,
+      unknownApprovals: 0,
+      unknownDestinations: 0,
+      proxyViolations: 0,
+      productionAttempts: 0,
+    },
+    boundedVariance: { passiveUnknownDelta: 0, requestCount: 1 },
+  };
+  const equivalent = compareJourneyReplay(first, reorderedObjects);
+  expect(equivalent.passed).toBe(true);
+  expect(equivalent.classification).toBe('MATCH');
+  expect(equivalent.strictInvariantMismatches).toEqual([]);
+
+  const firstWithSteps = {
+    ...first,
+    stepResults: [
+      { stepId: 'first', actionType: 'WAIT_STRUCTURAL_CHECKPOINT' as const, status: 'PASS' as const, routeClass: '/same', structuralMarkerId: 'A', structuralPresent: true, requiredReadRuleIds: [], elapsedMs: 1 },
+      { stepId: 'second', actionType: 'WAIT_STRUCTURAL_CHECKPOINT' as const, status: 'PASS' as const, routeClass: '/same', structuralMarkerId: 'B', structuralPresent: true, requiredReadRuleIds: [], elapsedMs: 1 },
+    ],
+  };
+  const reversedSteps = { ...firstWithSteps, stepResults: [...firstWithSteps.stepResults].reverse() };
+  const meaningful = compareJourneyReplay(firstWithSteps, reversedSteps);
+  expect(meaningful.passed).toBe(false);
+  expect(meaningful.strictInvariantMismatches).toContain('step-results');
 });
 
 test('replay comparator treats expected cancellation as bounded containment, not resource failure', () => {

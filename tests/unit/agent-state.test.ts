@@ -6,10 +6,13 @@ import { spawnSync } from 'node:child_process';
 import {
   derivePhaseStatusKey,
   normalizeTaskStatus,
+  PROJECT_VERDICT_EFFECTS,
   isTerminalMilestoneText,
   isTerminalNextActionText,
   isTerminalResumeRecipeText,
   hasClosurePlaceholder,
+  parsePlanMilestoneLines,
+  findNonterminalPlanMilestones,
 } from '../../bin/agent-continuity-protocol.mjs';
 import { classifySha, isApprovedCheckpointPath } from '../../bin/agent-state.mjs';
 
@@ -45,6 +48,7 @@ interface ProtocolOptions {
   readonly phaseStatus?: string;
   readonly protocolVersion?: string;
   readonly omitProtocol?: boolean;
+  readonly verdictEffect?: string | null;
   readonly activeMilestone?: string;
   readonly activeNextAction?: string;
   readonly stateMilestone?: string;
@@ -71,6 +75,7 @@ function protocolStrings(taskId: string, options: ProtocolOptions): { active: st
   const phase = options.phase ?? 'test';
   const activePhase = options.activePhase ?? phase;
   const protocolVersion = options.protocolVersion ?? 'nightwatch.agent-continuity.v2';
+  const verdictEffectLine = options.verdictEffect === null ? '' : `PROJECT_VERDICT_EFFECT: ${options.verdictEffect ?? 'PRESERVE'}\n`;
   const activeMilestone = options.activeMilestone ?? 'M1';
   const activeNextAction = options.activeNextAction ?? 'run the synthetic validator test';
   const stateMilestone = options.stateMilestone ?? 'synthetic';
@@ -99,7 +104,7 @@ ${legacyCurrentSha === undefined ? '' : `Current SHA: ${legacyCurrentSha}
 `}Current milestone: ${activeMilestone}
 Last checkpoint: synthetic
 Next action: ${activeNextAction}
-${protocolLine}${options.activeExtra ?? ''}`;
+${verdictEffectLine}${protocolLine}${options.activeExtra ?? ''}`;
   const spec = '# Synthetic task\n';
   const plan = `# Synthetic plan
 
@@ -138,7 +143,7 @@ CURRENT_LOCAL_HEAD: ${persistedHeadSha}
 CURRENT_REMOTE_HEAD: ${persistedHeadSha}
 LAST_PUSHED_SHA: DEPRECATED_HISTORICAL_ONLY
 ${legacyCurrentSha === undefined ? '' : `Current SHA: ${legacyCurrentSha}
-`}${phaseStatusLine}${protocolLine}
+`}${verdictEffectLine}${phaseStatusLine}${protocolLine}
 Branch: main
 Last checkpoint: synthetic
 
@@ -1313,6 +1318,58 @@ test('ACTIVE/STATE protocol version mismatch fails', () => {
   expect(result.stderr).toContain('PROTOCOL_VERSION_MISMATCH');
 });
 
+test('active v2 task requires an explicit project-verdict effect', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, verdictEffect: null });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('PROJECT_VERDICT_EFFECT_MISSING');
+});
+
+test('project-verdict effect accepts only the bounded vocabulary', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, verdictEffect: 'PRESERVE_WITH_RETRY' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('PROJECT_VERDICT_EFFECT_INVALID');
+});
+
+test('ACTIVE and STATE project-verdict effects must agree', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  setField(root, '.agent/ACTIVE_TASK.md', 'PROJECT_VERDICT_EFFECT', 'REEVALUATE');
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('PROJECT_VERDICT_EFFECT_MISMATCH');
+});
+
+test('duplicate project-verdict effect fails closed', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeExtra: '\nPROJECT_VERDICT_EFFECT: PRESERVE\n',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('DUPLICATE_CONTINUITY_FIELD');
+  expect(result.stderr).toContain('PROJECT_VERDICT_EFFECT');
+});
+
+test('project-verdict effect outside canonical metadata is not authority', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeExtra: '\n## Narrative\nPROJECT_VERDICT_EFFECT: PRESERVE\n',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('PROJECT_VERDICT_EFFECT_OUTSIDE_METADATA');
+});
+
 // ---------------------------------------------------------------------------
 // Protocol v2 — history audit protection of closed tasks
 // ---------------------------------------------------------------------------
@@ -1381,6 +1438,7 @@ test('terminal matchers are explicit and narrow', () => {
   expect(isTerminalMilestoneText('COMPLETE — all milestones closed')).toBe(true);
   expect(isTerminalMilestoneText('M17 — finalization pending')).toBe(false);
   expect(isTerminalMilestoneText('COMPLETE (pending M18 report)')).toBe(false);
+  expect(isTerminalMilestoneText('COMPLETE — pending M18 report')).toBe(false);
   expect(isTerminalNextActionText('STOP')).toBe(true);
   expect(isTerminalNextActionText('NONE WITHIN CURRENT AUTHORIZATION')).toBe(true);
   expect(isTerminalNextActionText('STOP — task complete; Phase 8B.1 retry requires separate fresh owner authorization.')).toBe(true);
@@ -1390,6 +1448,24 @@ test('terminal matchers are explicit and narrow', () => {
   expect(isTerminalResumeRecipeText('Historical task COMPLETE; do NOT resume milestones M12–M18.')).toBe(true);
   expect(isTerminalResumeRecipeText('Continue from Exact Next Action (M12 → M18).')).toBe(false);
   expect(isTerminalResumeRecipeText('Resume M17 and finish remaining work.')).toBe(false);
+});
+
+test('milestone status comes from an explicit trailing delimiter only', () => {
+  expect([...PROJECT_VERDICT_EFFECTS]).toEqual(['PRESERVE', 'REEVALUATE', 'SUPERSEDE']);
+  const narrative = parsePlanMilestoneLines([
+    { lineNumber: 1, text: '- M1 historical pending behavior was repaired' },
+    { lineNumber: 2, text: '- M2 explains why a blocked retry was safe' },
+  ]);
+  expect(narrative).toHaveLength(2);
+  expect(narrative.every((milestone) => milestone.status === null)).toBe(true);
+  expect(findNonterminalPlanMilestones(narrative.map(({ lineNumber, text }) => ({ lineNumber, text })))).toHaveLength(0);
+
+  const structured = parsePlanMilestoneLines([
+    { lineNumber: 3, text: '- M3 — DONE' },
+    { lineNumber: 4, text: '- M4: PENDING' },
+  ]);
+  expect(structured.map((milestone) => milestone.status)).toEqual(['DONE', 'PENDING']);
+  expect(findNonterminalPlanMilestones(structured.map(({ lineNumber, text }) => ({ lineNumber, text })))).toHaveLength(1);
 });
 
 test('placeholder sentinels are narrow', () => {
