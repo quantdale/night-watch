@@ -29,8 +29,9 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M1 — Repeated Phase 2C sample — IN_PROGRESS. M0 activation and pre-DEV
-authority checks passed at `2e7e84f`; the first guarded observation is next.
+M1 — Repeated Phase 2C sample — PAUSED FOR DEFECT REPAIR. M0 activation and
+pre-DEV authority checks passed at `2e7e84f`; the first guarded invocation
+completed far enough to expose a Nightwatch-owned classification defect.
 
 ## Completed Milestones
 
@@ -39,13 +40,22 @@ authority checks passed at `2e7e84f`; the first guarded observation is next.
 
 ## Work In Progress
 
-Run the first serial Phase 2C observation with the refreshed owner-local DEV
-state, retaining its independent sanitized outcome.
+The first guarded Phase 2C invocation used the refreshed owner-local DEV
+state. Both observations for `ripple-payer-exchange-read` reached valid auth
+and zero safety violations, but the bounded response/oracle settlement timed
+out. The replay comparator correctly classified the pair as
+`FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`; the manual real-run
+summary independently mislabeled each observation as
+`PRODUCT_BEHAVIOR_ANOMALY`. Further DEV execution is paused until that false
+finding/classification path is repaired and covered by a local regression.
 
 ## Exact Next Action
 
-Run Phase 2C observation 1 with the owner-local external state; preserve every
-journey, replay, auth, product, framework, and cleanup category.
+Repair the Phase 2C manual-runner final classification so incomplete capture
+or timed-out settlement is emitted as `FRAMEWORK_CAPTURE_DEFECT` (or the
+repository's equivalent explicit framework class), add a deterministic local
+regression, run the focused validation cone, and checkpoint before resuming
+the bounded DEV sample.
 
 ## Blockers
 
@@ -101,8 +111,9 @@ When: 2026-08-31
 
 ## Defect Ledger
 
-No defects identified in this successor yet. Add sanitized rows before
-continuing if any real operation exposes a Nightwatch-owned defect.
+| ID | Severity | Subsystem | Discovery source | Reproduction | Root cause | Fix | Regression | Validation | Final disposition |
+|---|---|---|---|---|---|---|---|---|---|
+| DVR-001 | HIGH | Phase 2C final classification | Fresh guarded DEV invocation 1 | `nightwatch-20260831T083408Z-9a6c-j1-c1` and `...-c2`; both had `observationSettlement=TIMED_OUT`, `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, while pair comparison returned `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT` | `tests/manual/phase2c-real-journeys.ts` mapped generic `oracleStatus=FAIL` to `PRODUCT_BEHAVIOR_ANOMALY` before considering framework capture health | Pending | Pending local regression | Open; no product finding admitted | Open; blocks further DEV sampling until repaired |
 
 ## Discoveries
 
@@ -110,6 +121,13 @@ continuing if any real operation exposes a Nightwatch-owned defect.
   new owner-authorized observation condition.
 - The auth capture path reached the approved DEV Ripple target, waited for
   manual login/MFA, and closed with safe validation.
+- Invocation 1 did not establish a product anomaly: the bounded settlement
+  barrier timed out with no pending handlers, three active requests, and zero
+  safety violations. The sanitized matrix is
+  `artifacts/phase2c-nightwatch-20260831T083408Z-9a6c-matrix.json`.
+- The replay classifier already preserved the framework attribution, exposing
+  a mismatch between core replay semantics and the manual runner's per-
+  observation classification.
 
 ## Safety Events
 
