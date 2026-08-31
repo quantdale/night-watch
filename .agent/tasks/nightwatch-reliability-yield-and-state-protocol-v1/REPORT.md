@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: bfe0fd02ada4b987c90d54b4fa7f204672d6b338
+Last documentation checkpoint SHA: 88bd70de5306d2f461f9c0c5b5091e237caaac6e
 
 ## Final verdict
 
@@ -24,9 +24,12 @@ promotion boundaries.
 - Implementation checkpoints: `bf35bf3` (settlement/intent attribution),
   `a5ff79f` (planner/yield), `82e661b` (replay/state/cache/property), and
   `f875730` (handoff fixture compatibility).
-- Final evidence was measured from clean source HEAD
-  `e33c07fdd00bf1cb2fb01f3842a4c935178155f6`; terminal documentation
-  checkpoint `bfe0fd02ada4b987c90d54b4fa7f204672d6b338` records that evidence.
+- Final gate evidence was measured at clean source HEAD
+  `88bd70de5306d2f461f9c0c5b5091e237caaac6e`; the full-suite parity was
+  measured at the immediately preceding source-equivalent checkpoint
+  `e33c07fdd00bf1cb2fb01f3842a4c935178155f6`.
+- Terminal documentation checkpoint `88bd70de5306d2f461f9c0c5b5091e237caaac6e`
+  records the final gate evidence.
 - The terminal documentation checkpoint was committed on `main`; final push
   reconciliation must preserve `main == origin/main` and a clean tree.
 
@@ -124,11 +127,11 @@ evidence boundaries where required.
   six detached source clones.
 - Local gate: all 10 required groups PASS; semantic compatibility 1,950 /
   1,937 / 13 / 0; owner provenance 91; synthetic campaign 74; receipt
-  `receipt:sha256:58005c13ef803536d167d852`.
+  `receipt:sha256:7d0150eae20ae9e316ff92d7`.
 - Clean gate: Node 20 fresh install, clean before/after, no reused modules,
   no auth/finding state, zero sibling writes; all 10 groups PASS; receipt
-  `receipt:sha256:716668b15b0e58c39b135ccb`, clean receipt
-  `clean-receipt:sha256:778d4a900de355724261fe51`.
+  `receipt:sha256:51dedd6a466a50eaa5d5e373`, clean receipt
+  `clean-receipt:sha256:9b594dbf07540e040f0ec162`.
 - Control Center: typecheck PASS; 2 files / 11 tests PASS; 3-file,
   259566-byte build PASS with no external references or embedded content.
 - Agent/project/handoff truth: PASS; agent audit 91 tasks (67 strict v2,

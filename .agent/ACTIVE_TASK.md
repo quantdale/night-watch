@@ -7,7 +7,7 @@ Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last checkpoint: terminal documentation checkpoint `bfe0fd0`
+Last checkpoint: terminal validation checkpoint `88bd70d`
 Current milestone: COMPLETE / STOP. M5 — Repeated operation and release evidence is closed.
 Next action: STOP
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
