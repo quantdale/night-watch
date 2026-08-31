@@ -45,7 +45,11 @@ JSON/XHR response. Strict replay preserved the failure as
 DVR-003. The response observer now bounds body reads to five seconds and
 propagates only categorical capture diagnostics. A local truncated-response
 regression and the focused 41-test cone pass at implementation checkpoint
-`1d3eb0a`; post-fix DEV confirmation remains.
+`1d3eb0a`. The following independent DEV run then showed a second scope
+defect: both intentional known-read JSON responses completed, but a passive
+unknown JSON/XHR body timed out in one context and the global capture status
+still failed the pair. That evidence is tracked as DVR-004; its local scope
+repair is pending checkpoint and requalification.
 
 ## Safety and verdict
 

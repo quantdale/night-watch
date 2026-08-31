@@ -68,7 +68,12 @@ reduced to a local deterministic regression before a real run resumes.
 - Investigate DVR-003 from the third invocation: a settled source-reviewed
   known-read JSON response had unavailable body capture. Bounded body reads,
   categorical diagnostics, and a deterministic local truncated-response
-  regression are implemented at `1d3eb0a`; post-fix DEV confirmation remains.
+  regression are implemented at `1d3eb0a`.
+- The next post-fix invocation exposed DVR-004: a passive `UNKNOWN` JSON/XHR
+  body timeout still made aggregate capture health incomplete even though both
+  intentional known reads completed. Scope verdict-affecting capture health
+  to intentional source-reviewed known reads while retaining passive response
+  diagnostics, then requalify independently.
 
 ### M2 — Cross-phase observation — PENDING
 
