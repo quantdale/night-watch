@@ -125,6 +125,7 @@ Task ID: ${taskId}
 Phase: TEST
 Title: Synthetic handoff task
 Status: ${status}
+PROJECT_VERDICT_EFFECT: PRESERVE
 Task directory: .agent/tasks/${taskId}
 Starting SHA: ${startingSha}
 Last validated implementation SHA: ${implementationSha}
@@ -169,6 +170,7 @@ synthetic
 Task ID: ${taskId}
 Phase: TEST
 Status: ${status}
+PROJECT_VERDICT_EFFECT: PRESERVE
 Starting SHA: ${startingSha}
 Last validated implementation SHA: ${implementationSha}
 Last substantive checkpoint SHA: ${implementationSha}
