@@ -90,6 +90,10 @@ reduced to a local deterministic regression before a real run resumes.
 
 - Run Phase 4, Phase 5, campaign prepare/resume, and one safe replay where
   available.
+- The first Phase 4 run at `nightwatch-20260831T095007Z-246e` passed the gate
+  and completed one bounded payer exploration, then stopped on a fresh-context
+  critical bootstrap HTTP 502 product oracle with zero safety violations.
+  Take one bounded Phase 4 confirmation before proceeding to Phase 5.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

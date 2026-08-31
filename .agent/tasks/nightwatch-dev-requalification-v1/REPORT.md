@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 80ac16265785a099307b9d9aef5c144585240343
+Last documentation checkpoint SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
 
 ## Scope
 
@@ -61,6 +61,21 @@ invariant mismatches. The account-inventory pair produced the same settled
 product oracle failure in both contexts and replay classified its bounded
 difference as `EXPECTED_PRODUCT_STATE_DRIFT`. The sanitized matrix is
 `artifacts/phase2c-nightwatch-20260831T094029Z-e57a-matrix.json`.
+
+The first guarded Phase 4 run at `nightwatch-20260831T095007Z-246e` passed its
+pre-real safety gate. The first payer-exchange context passed its anchor and
+completed one bounded `status-local.set` transition with
+`SAFE_FRONTIER_EXHAUSTED`, settled observation, complete capture, and zero
+safety counters. The fresh second context had valid auth, route/structural
+markers, settled observation, complete capture, and zero safety counters, but
+failed the required anchor on repeated critical bootstrap HTTP 502 responses
+classified as `PRODUCT_BEHAVIOR_ANOMALY`; a separate image 502 was classified
+as non-causal `DEV_INFRA_TRANSIENT`. The sanitized manifests are
+`artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-0/manifest.json`
+and
+`artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-1/manifest.json`.
+The launcher stopped before later seeds and exact replay, so the Phase 4
+reliability rate is not yet certified.
 
 ## Safety and verdict
 

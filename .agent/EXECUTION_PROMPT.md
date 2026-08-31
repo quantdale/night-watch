@@ -95,8 +95,11 @@ bootstrap 5xx/missing-read evidence. The attribution-precedence repair is
 checkpointed at `d1b9f31880ee22605f47d6c459c40287c5c491c3`. Independent
 invocation `nightwatch-20260831T094029Z-e57a` then confirmed passing
 payer/common replay and a stable account product oracle with no Nightwatch
-capture defect. Advance to the guarded cross-phase observations while
-preserving all six Phase 2C invocation outcomes.
+capture defect. The first Phase 4 run at
+`nightwatch-20260831T095007Z-246e` completed one bounded payer exploration,
+then stopped fail-closed on a fresh-context critical bootstrap 502 product
+oracle. Preserve that independent outcome and take one bounded Phase 4
+confirmation before Phase 5.
 
 ## Terminal action
 

@@ -8,13 +8,13 @@ Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 80ac16265785a099307b9d9aef5c144585240343
+Last documentation checkpoint SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 80ac16265785a099307b9d9aef5c144585240343
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 7e8231d0dcc7790128f769aeb7ff63d434ed8d52
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -93,13 +93,27 @@ its bounded difference as `EXPECTED_PRODUCT_STATE_DRIFT`, not a framework
 divergence. No auth, environment, or Nightwatch capture defect occurred in
 this invocation.
 
+The first guarded Phase 4 run at `nightwatch-20260831T095007Z-246e` passed
+its pre-real safety gate. Its first payer-exchange context (`seed=0x...0101`)
+passed the anchor and completed one bounded `status-local.set` transition
+with `SAFE_FRONTIER_EXHAUSTED`, settled observation, complete capture, and
+zero safety counters. Its fresh second context (`seed=0x...0102`) passed
+auth/page readability, route and structural markers, settlement, and capture,
+but failed the required anchor because the product oracle observed repeated
+critical bootstrap resource HTTP 502 responses. The sanitized anchor manifest
+records `PRODUCT_BEHAVIOR_ANOMALY` with stable fingerprint
+`fp:sha256:417f5b6941eba537f0fae85e`; a separate image 502 was
+`DEV_INFRA_TRANSIENT` and non-causal. Safety counters remained zero and no
+Nightwatch capture defect was observed. The launcher stopped before later
+seeds and exact replay, so a fresh bounded Phase 4 observation is required to
+characterize this product/environment variation.
+
 ## Exact Next Action
 
-Advance to M2: inspect the guarded Phase 4/Phase 5/campaign launcher usage,
-rerun the bounded DEV preflight, and execute the next serial read-only
-cross-phase observation with the current owner-local state. Preserve the six
-Phase 2C invocation outcomes independently; do not relabel any earlier result
-from a later run.
+Rerun the bounded DEV preflight and execute one fresh serial Phase 4
+observation with the current owner-local state to characterize the independent
+HTTP-502 anchor outcome. Preserve both Phase 4 contexts separately; do not
+relabel the prior product observation as a framework or PASS result.
 
 ## Blockers
 
@@ -253,6 +267,22 @@ target and auth host were allowed, production was denied, and the owner-local
 state path remained mode 0600 without reading its contents.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run explore:phase4 -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: BOUNDED PRODUCT/ENVIRONMENT FAILURE at base run
+`nightwatch-20260831T095007Z-246e`. The Phase 4 safety gate passed. Context
+`seed=0x...0101` passed its payer anchor and completed one bounded transition
+(`SAFE_FRONTIER_EXHAUSTED`, oracle PASS, settled, capture complete, safety
+zero). Fresh context `seed=0x...0102` had valid auth, settled observation,
+complete capture, and zero safety counters but failed the anchor on repeated
+critical bootstrap HTTP 502 responses classified by the product oracle as
+`PRODUCT_BEHAVIOR_ANOMALY`; the separate image 502 was a non-causal
+`DEV_INFRA_TRANSIENT`. The launcher stopped fail-closed before the remaining
+seed corpus and exact replay. Sanitized manifests:
+`artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-0/manifest.json`
+and
+`artifacts/nightwatch-20260831T095007Z-246e-E1-J1-payer-exchange-1/manifest.json`.
+When: 2026-08-31
+
 Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
 Result: PASS for framework/replay reliability as independent invocation
 `nightwatch-20260831T094029Z-e57a`. Payer and common journeys each had two
@@ -344,6 +374,11 @@ When: 2026-08-31
   product oracle failure twice; the bounded replay difference was product
   state drift, with auth/safety/capture health equivalent and no Nightwatch
   capture failure.
+- Phase 4 has a separate real-system stability signal: one fresh context
+  completed its bounded exploration, while the next valid-auth context failed
+  the anchor on repeated critical bootstrap 502s. This is product/environment
+  evidence, not a Nightwatch capture or safety failure; the launcher correctly
+  stopped before treating later exploration as valid.
 
 ## Safety Events
 
