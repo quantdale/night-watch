@@ -18,6 +18,13 @@ validated by focused replay, state, planner, campaign, cache, property, and
 hardening checks. The campaign remains active only for bounded DEV
 requalification, clean/isolated parity, CI observation, and final closure.
 
+The clean guarded DEV attempt passed the full local safety gate but stopped
+before browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`; the
+external state is structurally valid but the session is expired/invalid. This
+continuation therefore has zero actual DEV observations and one auth-blocked
+attempt, not a replay pass or divergence result. The remaining local and
+reproducibility evidence proceeds without automatic auth refresh.
+
 Current project verdict: `OPERATIONALLY_ACCEPTED`.
 
 Exact evidence and the next action are maintained in `STATE.md`. M1 closed

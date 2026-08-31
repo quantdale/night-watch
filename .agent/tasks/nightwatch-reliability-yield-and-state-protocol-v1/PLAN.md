@@ -123,6 +123,12 @@ running any external observation.
   every divergence/anomaly classification.
 - Run local, clean, isolated, Control Center, and final validation, inspect CI
   once, and reconcile all task/project documentation.
+- Result so far: the clean Phase 2C launcher passed all safety gates but its
+  first journey stopped before browser-context creation with
+  `HUMAN_AUTH_ACTION_REQUIRED`; the external state is structurally valid but
+  its session is no longer usable. Actual DEV observations are 0, with one
+  auth-blocked attempt and no replay-divergence sample. Continue with local,
+  clean, isolated, and final evidence without automatic credential refresh.
 
 ## Validation Strategy
 

@@ -86,12 +86,18 @@ state-protocol matrix, interruption boundary matrix, cache audit, and
 canonical-digest property audit passed. M5 remains active for bounded real
 requalification, clean/isolated parity, CI observation, and final closure.
 
+The clean guarded Phase 2C retry passed all local safety checks, but the first
+journey stopped before browser-context creation with
+`HUMAN_AUTH_ACTION_REQUIRED`; the external storage state is structurally valid
+but its authenticated session is no longer usable. Actual DEV observations
+remain 0 (auth-blocked attempts: 1; replay divergences: 0).
+
 ## Exact Next Action
 
-Run bounded serial Phase 2C DEV requalification with the external
-owner-managed storage state only if its structural/authentication gates pass;
-record every journey outcome and any divergence category without allowing a
-later retry to erase an earlier result.
+Complete the local final matrix, clean Node 20 gate, and canonical/topology-
+correct isolated parity. Do not retry DEV until the owner refreshes the
+external authentication state; if refreshed, run only the bounded serial
+Phase 2C observation and preserve every outcome category.
 
 ## Files Changed
 

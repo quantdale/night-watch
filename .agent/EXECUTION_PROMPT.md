@@ -76,3 +76,9 @@ backtest is deterministic: 128 considered, 3 eligible, 3 selected, zero
 redundancy, and no new proof family. The remaining release evidence is bounded
 DEV requalification if the external owner-managed authentication is valid,
 then clean/isolated/final validation.
+
+The clean DEV retry passed all local safety checks but the first journey
+stopped before browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`.
+Actual DEV observation count is therefore zero; continue with local,
+clean/isolated, and final evidence, and do not refresh or bypass credentials
+automatically.

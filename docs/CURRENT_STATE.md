@@ -335,8 +335,10 @@ summary field; direct eligibility and Control Center authority agree on 3.
 The remaining milestone is bounded serial DEV requalification, followed by
 clean/isolated parity, final local validation, and one CI observation. The
 first guarded DEV invocation stopped at the local repository-freshness gate
-because this successor's documentation checkpoint was uncommitted; it did not
-create a browser context or contact DEV.
+because this successor's documentation checkpoint was uncommitted. After the
+documentation checkpoint, the safety gate passed but the first journey
+stopped before browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`;
+there are currently no actual DEV observations in this continuation.
 
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated

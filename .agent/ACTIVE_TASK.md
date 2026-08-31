@@ -9,7 +9,7 @@ Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: 82e661bae45424573c3ea06a20900e342047b849
 Last checkpoint: replay and explicit state-protocol hardening validated at `82e661b`
 Current milestone: M5 — Repeated operation and release evidence — IN_PROGRESS
-Next action: Run bounded serial Phase 2C DEV requalification if owner-managed authentication and all safety gates pass; record every outcome category
+Next action: Complete final local, clean, and isolated validation; DEV remains AUTH_BLOCKED until the owner refreshes the external state
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
