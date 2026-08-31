@@ -141,9 +141,11 @@ passed against source `de169c9` as campaign
 exposed DVR-010: multiple account-journey fingerprints reused one run ID and
 failed checkpoint integrity before product result admission. The repaired
 adapter and pre-mutation campaign boundary are validated at implementation
-checkpoint `20184770015129fe2138dd1e18a853d34bef7274`; prepare a fresh
-current-source manifest and resume only that new manifest, then run the final
-local/clean matrix. The DVR-006 repair is
+checkpoint `20184770015129fe2138dd1e18a853d34bef7274`; replacement prepare then
+passed as campaign `campaign:sha256:2fe5dc56383e03f493f41efc`, manifest
+`manifest:sha256:eccd5c59191188ce2ed931c6`, frozen to source `2018477`, with
+five work items and product execution not started. Resume only that manifest,
+then run the final local/clean matrix. The DVR-006 repair is
 checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at

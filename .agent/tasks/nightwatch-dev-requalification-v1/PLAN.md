@@ -146,7 +146,9 @@ reduced to a local deterministic regression before a real run resumes.
   its resume exposed DVR-010: multi-fingerprint journey evidence reused one
   run ID and failed checkpoint integrity. The adapter and pre-mutation campaign
   boundary repair is validated at `2018477`; that manifest is quarantined and a
-  fresh current-source campaign is required.
+  fresh current-source campaign `campaign:sha256:2fe5dc56383e03f493f41efc` with
+  manifest `manifest:sha256:eccd5c59191188ce2ed931c6` is prepared against
+  source `2018477`; resume only that manifest.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.

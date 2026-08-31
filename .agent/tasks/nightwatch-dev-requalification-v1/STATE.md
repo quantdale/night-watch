@@ -8,13 +8,13 @@ Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
 Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last documentation checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last documentation checkpoint SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: 20184770015129fe2138dd1e18a853d34bef7274
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 20184770015129fe2138dd1e18a853d34bef7274
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 20184770015129fe2138dd1e18a853d34bef7274
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -234,11 +234,19 @@ state rather than surfacing as a later checkpoint-integrity crash. The 70-test
 campaign/triage cone, typecheck, and hardening all pass. A fresh current-source
 DEV manifest is required before any further real execution.
 
+The guarded preflight then passed and prepare-only created the fresh repaired
+campaign `campaign:sha256:2fe5dc56383e03f493f41efc` with manifest fingerprint
+`manifest:sha256:eccd5c59191188ce2ed931c6`, frozen source
+`20184770015129fe2138dd1e18a853d34bef7274`, five work items, and product
+execution `NOT_STARTED`. No product execution occurred during preparation;
+resume only this manifest.
+
 ## Exact Next Action
 
-Run bounded DEV preflight, prepare a fresh current-source serial campaign, and
-resume it once; do not resume the quarantined post-audit manifest. Then run the
-final local/clean/state matrix.
+Resume only the fresh repaired campaign
+`campaign:sha256:2fe5dc56383e03f493f41efc` with manifest fingerprint
+`manifest:sha256:eccd5c59191188ce2ed931c6`; do not resume the quarantined
+`168c37...` manifest. Then run the final local/clean/state matrix.
 The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
@@ -258,8 +266,9 @@ fresh campaign. The post-audit manifest is
 `manifest:sha256:3b128e5451436cc1d27ad572`; its resume exposed DVR-010 and it
 must not be retried after source changes. After the repair at `2018477`, prepare
 a fresh manifest, resume it once, classify auth/environment/unknown
-limitations, and run final local and clean validation. Do not resume the stale
-`ceae...` manifest.
+limitations, and run final local and clean validation. The repaired fresh
+manifest is `2fe5dc...`; do not resume the stale `ceae...` or quarantined
+`168c37...` manifests.
 
 ## Blockers
 
@@ -279,8 +288,8 @@ prepare passed as `campaign:sha256:6134013e41664bf66911887a` with source
 at `de169c9` changed executable identity, and the fresh post-audit manifest
 `168c37...` was prepared. Its resume exposed DVR-010; the adapter and campaign
 boundary repair is checkpointed at `2018477` with local validation complete. Run
-a fresh DEV preflight and prepare a new compatible manifest, then resume only
-that new manifest before final reconciliation.
+a fresh DEV preflight and prepare passed as campaign `2fe5dc...` with source
+`2018477`; resume only that manifest before final reconciliation.
 Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
@@ -718,6 +727,20 @@ When: 2026-08-31
 Command: `npm run typecheck` and `npm run hardening:check`
 Result: PASS at implementation checkpoint
 `20184770015129fe2138dd1e18a853d34bef7274`.
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before replacement campaign preparation; the approved
+DEV target remained allowlisted, production remained explicitly denied, and no
+target network activity was performed.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; prepared
+`campaign:sha256:2fe5dc56383e03f493f41efc` with manifest fingerprint
+`manifest:sha256:eccd5c59191188ce2ed931c6`, frozen source
+`20184770015129fe2138dd1e18a853d34bef7274`, five bounded work items, and
+`productExecution=NOT_STARTED`.
 When: 2026-08-31
 
 ## Files Changed

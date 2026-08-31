@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
 Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last documentation checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last documentation checkpoint SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
 
 ## Scope
 
@@ -203,6 +203,13 @@ journey/exploration adapters now derive bounded deterministic observation IDs,
 and the campaign boundary validates the complete batch before mutation. The
 70-test campaign/triage cone, typecheck, and hardening pass; a fresh
 current-source DEV manifest is required.
+
+The replacement guarded preflight passed and prepare-only created campaign
+`campaign:sha256:2fe5dc56383e03f493f41efc`, manifest
+`manifest:sha256:eccd5c59191188ce2ed931c6`, frozen to source
+`20184770015129fe2138dd1e18a853d34bef7274`. It contains five bounded work
+items and recorded `productExecution=NOT_STARTED`; only this manifest may be
+resumed.
 
 The focused reconciliation cone passed 292/292 with no skips or failures:
 campaign/checkpoint/triage/replay compatibility passed 113/113, and continuity,
