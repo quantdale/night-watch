@@ -113,17 +113,15 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-The DVR-012 terminal-classification repair is commit-validated at
-`fa236b690ceace3a420771645fce9f99bf751ea8`. Prepare a fresh current-source
-campaign once with `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev
---prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-
-state.json` and reconcile it as the only authorized replacement for the
-quarantined `campaign:sha256:75fafe6abbb73d1b79ef918d`; do not resume any
-quarantined or stale manifest after a source change. Resume only the fresh
-manifest once, classify the terminal outcome truthfully (product, framework,
-transient, auth, safety, unknown, or budget), and run the full local and clean
-validation matrix before closing. Preserve all prior repaired outcomes
-independently.
+Fresh current-source preparation passed as campaign
+`campaign:sha256:1054b8271440fc29f7fb5f21`, manifest
+`manifest:sha256:154410a95040816ba1b63de0`, frozen source
+`fa236b690ceace3a420771645fce9f99bf751ea8`, with five bounded work items
+and `productExecution=NOT_STARTED`. Resume only this manifest once. Inspect
+only sanitized checkpoint/brief projections, classify the terminal result
+truthfully, record any new defect, and run final local/clean validation. Do not
+resume `75fafe...`, `2fe5dc...`, `ceae...`, or `168c37...`, and do not use
+production/NEXT or bypass any guard.
 ## Terminal action
 
 At closure, complete the successor STATE/REPORT, validate the final evidence,

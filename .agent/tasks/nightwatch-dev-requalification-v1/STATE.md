@@ -273,17 +273,26 @@ The campaign is retained as sanitized evidence and must not be resumed after
 the source repair. A local terminal-classification regression and fresh
 current-source campaign are required.
 
+Fresh current-source preparation after the DVR-012 repair passed:
+`campaign:sha256:1054b8271440fc29f7fb5f21`, manifest
+`manifest:sha256:154410a95040816ba1b63de0`, source
+`fa236b690ceace3a420771645fce9f99bf751ea8`, five bounded work items,
+`productExecution=NOT_STARTED`. No product execution occurred during
+preparation; only this manifest may be resumed once.
+
 ## Exact Next Action
 
-The DVR-012 terminal-classification repair is commit-validated at
-`fa236b690ceace3a420771645fce9f99bf751ea8`. Prepare a fresh current-source
-campaign once, then resume only that manifest once. Reconcile its sanitized
-checkpoint as product, framework, transient, auth, safety, unknown, or budget
-evidence without retry relabeling. Do not resume
+The guarded preflight passed and fresh current-source prepare-only created
+`campaign:sha256:1054b8271440fc29f7fb5f21` with manifest fingerprint
+`manifest:sha256:154410a95040816ba1b63de0`, frozen source
+`fa236b690ceace3a420771645fce9f99bf751ea8`, five bounded work items, and
+`productExecution=NOT_STARTED`. Resume only this manifest once, then reconcile
+its sanitized checkpoint as product, framework, transient, auth, safety,
+unknown, or budget evidence without retry relabeling. Do not resume
 `campaign:sha256:75fafe6abbb73d1b79ef918d`, the completed `2fe5dc...`, stale
-`ceae...`, or quarantined `168c37...` after the source change. Preserve
-DVR-006 through DVR-011 independently, and do not convert framework, auth,
-environment, unknown, or budget outcomes into product PASS.
+`ceae...`, or quarantined `168c37...` after source changes. Preserve DVR-006
+through DVR-012 independently, and do not convert non-product outcomes into
+product PASS.
 
 ## Blockers
 
@@ -291,18 +300,24 @@ None.
 
 ## Resume Recipe
 
-Read this STATE, PLAN, and SPEC, verify clean Git and the external state path
-without reading its contents, rerun the pre-DEV checks, and continue M3
-serially. The admission repair is validated at `971e998`; the terminal
-classification repair is validated at
-`fa236b690ceace3a420771645fce9f99bf751ea8`. The prior prepare
-`campaign:sha256:75fafe6abbb73d1b79ef918d` with manifest
-`manifest:sha256:0099d6bce1e603dea454a255` exposed DVR-012 and must not be
-repeated after the source repair. Prepare a fresh manifest, resume it once,
-and then finalize the task.
+Read this STATE, PLAN, and SPEC, verify the clean pushed preparation checkpoint
+and owner-local state path without reading its contents, then run only
+`NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev
+--resume-campaign=campaign:sha256:1054b8271440fc29f7fb5f21
+--storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`.
+Inspect only sanitized checkpoint/brief projections, classify the result
+truthfully, record any new defect, and run final local/clean validation.
 Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; prepared
+`campaign:sha256:1054b8271440fc29f7fb5f21` with manifest fingerprint
+`manifest:sha256:154410a95040816ba1b63de0`, frozen source
+`fa236b690ceace3a420771645fce9f99bf751ea8`, five bounded work items,
+`checkpointOrdinal=0`, and `productExecution=NOT_STARTED`. No product
+execution occurred during preparation; only this manifest may be resumed once.
+When: 2026-08-31
 Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:75fafe6abbb73d1b79ef918d --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
 Result: BOUNDED FRAMEWORK-CAPTURE FAILURE after 54.6 seconds; payer and
 common journeys completed with `PASS`, account inventory was blocked with

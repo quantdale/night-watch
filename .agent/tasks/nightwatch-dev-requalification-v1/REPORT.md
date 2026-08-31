@@ -256,6 +256,13 @@ both the historical version-drift terminal and the explicit bounded
 framework-capture limitation. A fresh current-source prepare and single resume
 remain required before final local and clean validation.
 
+Fresh current-source preparation after the DVR-012 repair passed as campaign
+`campaign:sha256:1054b8271440fc29f7fb5f21` with manifest
+`manifest:sha256:154410a95040816ba1b63de0`, frozen source
+`fa236b690ceace3a420771645fce9f99bf751ea8`. It contains five bounded work
+items and `productExecution=NOT_STARTED`; no product execution occurred during
+preparation. This manifest is the only authorized next resume.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved
