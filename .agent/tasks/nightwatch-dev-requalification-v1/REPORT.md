@@ -261,7 +261,17 @@ Fresh current-source preparation after the DVR-012 repair passed as campaign
 `manifest:sha256:154410a95040816ba1b63de0`, frozen source
 `fa236b690ceace3a420771645fce9f99bf751ea8`. It contains five bounded work
 items and `productExecution=NOT_STARTED`; no product execution occurred during
-preparation. This manifest is the only authorized next resume.
+preparation.
+
+The single authorized resume of that manifest produced
+`resultClass=PARTIAL_RUNTIME_INFRA_FAILURE` /
+`stopReason=PREFLIGHT_FAILED` at `checkpointOrdinal=5` with
+`BODY_UNAVAILABLE` on the first payer journey; all remaining work was
+skipped with identical reason. The morning brief rendered
+`RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING` with zero candidates,
+zero safety counters, and privacy `PASS`. No product finding was claimed
+and the guarded launcher passed. This is retained as bounded non-product
+evidence with truthful framework attribution.
 
 ## Safety and verdict
 

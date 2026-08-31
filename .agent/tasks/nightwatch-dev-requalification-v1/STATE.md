@@ -328,6 +328,18 @@ surfaced `PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` with an inaccurate
 `NIGHTWATCH INTERNAL DEFECT` headline and failed its terminal assertion. No
 product candidate was admitted and no raw authenticated evidence was copied.
 When: 2026-08-31
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:1054b8271440fc29f7fb5f21 --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: BOUNDED RUNTIME OBSERVATION FAILURE at `checkpointOrdinal=5` with
+`resultClass=PARTIAL_RUNTIME_INFRA_FAILURE` / `stopReason=PREFLIGHT_FAILED`;
+the payer journey was blocked with `RUNTIME_FAILURE` /
+`BODY_UNAVAILABLE`, four remaining items were `SKIPPED` with identical
+`BODY_UNAVAILABLE`. Zero anomaly observations/clusters/dossiers, no product
+candidate, safety zero, privacy `PASS`. The morning brief headline is
+`RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`,
+`coverageGaps=[BODY_UNAVAILABLE]`, `nightwatchInternalIssues=[]`; the repaired
+guarded launcher accepts this truthful framework limitation while real
+Nightwatch defects remain rejected. No raw authenticated evidence was copied.
+When: 2026-08-31
 
 Command: `npx playwright test tests/unit/campaign.test.ts`, `npm run typecheck`, and `npm run hardening:check`
 Result: PASS at implementation checkpoint

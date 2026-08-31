@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last checkpoint: fresh current-source campaign prepared at `1054b827`; source `fa236b690ceace3a420771645fce9f99bf751ea8`
+Last checkpoint: DVR-012 repaired; fresh current-source campaign `1054b827` reached bounded runtime observation failure; terminal classification truthful
 Current milestone: M3 — Reconciliation and closure — IN_PROGRESS
-Next action: Resume only campaign `campaign:sha256:1054b8271440fc29f7fb5f21` once, then reconcile its sanitized checkpoint.
+Next action: Record sanitized `campaign:sha256:1054b8271440fc29f7fb5f21` outcome, then run final local/clean validation and close.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

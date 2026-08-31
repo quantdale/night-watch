@@ -165,12 +165,14 @@ reduced to a local deterministic regression before a real run resumes.
   now requires an internal-issue signal for `NIGHTWATCH INTERNAL DEFECT` and
   surfaces a truthful `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`
   otherwise; the guarded launcher now accepts that exact bounded non-product
-  terminal alongside `CAMPAIGN_VERSION_DRIFT`.
+  terminal alongside `CAMPAIGN_VERSION_DRIFT`. This is validated at
+  `campaign:sha256:1054b8271440fc29f7fb5f21`: truthful framework limitation,
+  no product candidate, zero safety counters, privacy `PASS`.
 - Fresh current-source prepare passed as
   `campaign:sha256:1054b8271440fc29f7fb5f21` with manifest
   `manifest:sha256:154410a95040816ba1b63de0`, frozen source `fa236b6`; no
-  product execution occurred during preparation. Resume only this manifest
-  once, then finalize the sanitized outcome and closure validation.
+  product execution occurred during preparation. That manifest was resumed
+  once, producing the bounded truthful terminal above.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.
 
