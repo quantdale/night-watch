@@ -6,14 +6,14 @@ Task ID: nightwatch-reliability-yield-and-state-protocol-v1
 Phase: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 Status: IN_PROGRESS
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
-Last substantive checkpoint SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
-Last documentation checkpoint SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
+Last validated implementation SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
+Last substantive checkpoint SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
+Last documentation checkpoint SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-LAST_VALIDATED_IMPLEMENTATION_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
+LAST_VALIDATED_IMPLEMENTATION_SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -43,18 +43,29 @@ M2 — Campaign yield and finding stability — IN_PROGRESS
   response was absent from final evidence after the settlement barrier; after
   the fix, two fresh runs captured the malformed response with stable
   `payer-navigate` attribution and identical fingerprints.
+- M2 planner/yield slice checkpointed and pushed at `a5ff79f`. The plan is now
+  v2 and includes bounded semantic, relation, source-change, proof, age,
+  anomaly, replay, portfolio, and redundancy signals. Candidate metadata is
+  part of the plan input digest; greedy selection defers equivalent
+  redundancy keys while distinct eligible representatives remain. Yield
+  aggregation canonicalizes sanitized outcomes so duplicate ownership and
+  confidence attribution do not depend on arrival order. Control Center
+  adapters provide source-derived diversity/proof metadata.
 
 ## Work In Progress
 
 The baseline and scaffold checkpoint are closed. M1 is closed by the
-`bf35bf3` implementation checkpoint. M2 begins with a read-only audit of the
-current campaign planner, its proof-backed inputs, and finding clustering.
+`bf35bf3` implementation checkpoint. The first M2 implementation slice is
+closed by `a5ff79f`: planner v2, diversity/redundancy selection, order-stable
+yield attribution, and protocol-cluster regressions pass. M2 remains active
+for current-inventory backtesting, false-positive/cache/property audits, and
+any measured follow-up fixes.
 
 ## Exact Next Action
 
-Audit current campaign scoring, selection inputs, diversity behavior, and
-cluster identity; build a deterministic selection backtest before modifying
-the planner.
+Build and record a deterministic backtest against the current Phase 24
+mechanically proven inventory, including eligible count, score ordering,
+redundancy rate, diversity coverage, and no-starvation checks.
 
 ## Files Changed
 
@@ -77,6 +88,12 @@ the planner.
 | `tests/unit/journeyEngine.test.ts` | late-response attribution/fingerprint regression | done |
 | `tests/unit/phase2cOracleMatrix.test.ts` | categorical replay regression matrix | done |
 | `tests/unit/rippleReadiness.test.ts` | intentional-vs-background settlement regressions | done |
+| `src/core/campaignIntelligence/types.ts` | versioned planner-v2 metadata and selection trace | done |
+| `src/core/campaignIntelligence/planner.ts` | explainable scoring and diversity-aware selection | done |
+| `src/core/campaignIntelligence/yield.ts` | order-independent sanitized yield attribution | done |
+| `src/controlCenter/authorities/campaignAuthority.ts` | source-derived proof/diversity metadata | done |
+| `tests/unit/phase19CampaignIntelligence.test.ts` | planner, cluster, and yield regressions | done |
+| `tests/unit/controlCenterAdapters.test.ts` | planner-v2 adapter fixture | done |
 
 ## Validation Ledger
 
@@ -209,6 +226,19 @@ When: 2026-08-31
 Relevant failure/output summary: 44 passed; 0 failed; Playwright 40.5s;
 46.93s wall.
 
+Command: `npm run hardening:check && npm run typecheck && npx playwright test tests/unit/phase19CampaignIntelligence.test.ts tests/unit/phase19ProductOperator.test.ts tests/unit/phase20SemanticCoverage.test.ts tests/unit/controlCenterAdapters.test.ts --workers=1`
+Result: PASS after M2 planner/yield implementation
+When: 2026-08-31
+Relevant failure/output summary: hardening passed; TypeScript passed; 37
+focused tests passed; 0 failed; Playwright 4.9s observed.
+
+Command: `npm run campaign:plan -- --json`
+Result: PASS after M2 planner/yield implementation
+When: 2026-08-31
+Relevant failure/output summary: local synthetic plan emitted
+`nightwatch.campaign-plan.v2`, one selected item, bounded score/diversity/
+redundancy trace, and no raw values or external contact.
+
 ## Decisions Made During This Task
 
 - Create a distinct continuity-v2 successor because completed acceptance and
@@ -219,6 +249,14 @@ Relevant failure/output summary: 44 passed; 0 failed; Playwright 40.5s;
   bounded retry passes.
 - Keep `NO_SAFE_NEW_FAMILY` authoritative unless new source evidence clears
   the existing mechanical proof bar.
+- Version planner identity when ranking inputs change; include the complete
+  sanitized candidate metadata and previous-provenance inputs in the plan
+  digest so stale rankings cannot masquerade as identical plans.
+- Keep first-stage priority intrinsic and apply diversity/redundancy only as a
+  bounded transparent second-stage selector; once unique redundancy keys are
+  exhausted, the selector fills remaining budget by intrinsic priority.
+- Canonicalize sanitized yield outcomes before aggregation so campaign or
+  worker arrival order cannot change duplicate ownership or confidence counts.
 
 ## Defect Ledger
 
@@ -227,6 +265,7 @@ Relevant failure/output summary: 44 passed; 0 failed; Playwright 40.5s;
 | RYSP-001 | Medium | continuity bootstrap | baseline | New task scaffold was not visible to the strict checker before STATE/REPORT and required OpenSpec audit were present/tracked | setup ordering and incomplete handoff scaffold | added required v2 state/report shape, `audit.md`, and checkpointed before strict gate evaluation | `agent:check`, `project:check`, and `handoff:check` pass after `d11dae2` | post-checkpoint validators pass | Closed as scaffold sequencing; not a Nightwatch runtime defect |
 | RYSP-002 | High | journey settlement | deterministic delayed-response reproducer | an intentional known-read remained in flight while pending response handlers were zero; the engine finalized, closed the context, and omitted the response/oracle | settlement sampled response-handler count and quiet time, not intentional in-flight requests | track intentional requests and wait for their lifecycle; emit `TIMED_OUT`/capture health and classify framework defects | delayed malformed-response journey regression and 44-test focused cone | PASS after `bf35bf3` | Closed; false-success/missed-oracle path removed |
 | RYSP-003 | Medium | replay identity | same delayed-response reproducer | response resource/oracle attribution read mutable current intent, so response timing could alter the fingerprint and step | response processing used `journeyIntent` instead of request-origin metadata | snapshot request intent in a bounded WeakMap and use it for response lifecycle, fingerprints, semantic hook context, and failures | two fresh delayed-response runs produce the same fingerprint and initiating step | PASS after `bf35bf3` | Closed; strict replay identity remains meaningful |
+| RYSP-004 | Medium | campaign planning | planner/yield audit and reverse-order regression | changing candidate metadata did not change the plan input digest; reversing identical outcome records changed high-confidence/per-candidate attribution | plan identity included candidate IDs only; yield duplicate ownership used arrival order | planner v2 digests full sanitized metadata/provenance and uses bounded diversity/redundancy selection; yield sorts sanitized outcomes canonically | 37-test planner/control-center/semantic cone; reversed yield input equals canonical report; three planner runs and reversed candidates are equal | PASS after `a5ff79f` | Closed; no proof authority or safety gate weakened |
 
 ## Discoveries
 

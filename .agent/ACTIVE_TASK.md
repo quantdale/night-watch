@@ -6,16 +6,16 @@ Title: Nightwatch Reliability, Yield, and State Protocol Campaign
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
-Last checkpoint: replay settlement and attribution fix validated and pushed at `bf35bf3`
+Last validated implementation SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
+Last checkpoint: planner/yield determinism slice validated and pushed at `a5ff79f`
 Current milestone: M2 — Campaign yield and finding stability — IN_PROGRESS
-Next action: Audit current campaign scoring, selection inputs, diversity behavior, and cluster identity; build a deterministic selection backtest
+Next action: Build and record a deterministic backtest against the current Phase 24 mechanically proven inventory
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-LAST_VALIDATED_IMPLEMENTATION_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: bf35bf31414bcac91e8a297ee9c9c4f6b1647871
+LAST_VALIDATED_IMPLEMENTATION_SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: a5ff79f921bbc8e5477df7d66f10d9504f3eb3da
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: IN_PROGRESS

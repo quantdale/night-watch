@@ -63,6 +63,6 @@ different explicit effect and pass the corresponding checker rules.
 ## Initial next action
 
 The baseline and M1 replay checkpoint are complete; the replay fix is pushed
-at `bf35bf3`. Audit current campaign scoring, selection inputs, diversity
-behavior, and cluster identity; build a deterministic selection backtest
-before modifying the planner.
+at `bf35bf3`. The first M2 planner/yield slice is pushed at `a5ff79f`; build
+and record a deterministic selection backtest against the current Phase 24
+mechanically proven inventory next.
