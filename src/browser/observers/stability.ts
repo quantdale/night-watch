@@ -24,11 +24,14 @@ const POLL_MS = 100;
  * but it must not remain blocked forever on unrelated background requests.
  * The barrier therefore waits for pending handlers to drain and for a quiet
  * interval; in-flight requests are not required to be zero because they will
- * be observed as pending handlers once their responses arrive.
+ * be observed as pending handlers once their responses arrive. Only
+ * source-reviewed intentional known-read requests are included in the
+ * optional activeJourneyRequests signal; page subresources are not journey
+ * proof even when created during a navigation action.
  */
 export async function waitForNetworkObservationSettle(opts: {
   network: Pick<NetworkObserver, 'activeRequests' | 'pendingResponseHandlers' | 'lastActivityAt'> & {
-    /** Optional newer signal: only intentional journey requests delay settlement. */
+    /** Optional newer signal: only intentional source-reviewed known reads delay settlement. */
     activeJourneyRequests?: () => number;
     /** Optional count-only diagnostic; raw URLs are never logged. */
     pendingUrlCount?: () => number;

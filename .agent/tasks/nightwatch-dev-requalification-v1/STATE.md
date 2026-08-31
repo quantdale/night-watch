@@ -29,10 +29,11 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M1 — Repeated Phase 2C sample / DVR-001 repair — IN_PROGRESS. M0 activation
+M1 — Repeated Phase 2C sample / DVR-002 repair — IN_PROGRESS. M0 activation
 and pre-DEV authority checks passed at `2e7e84f`; the first guarded
-invocation exposed a Nightwatch-owned classification defect and local repair
-is now validated.
+invocation exposed a classification defect that is locally repaired, and the
+next post-fix invocation exposed an over-broad settlement tracking defect
+that is now locally repaired and regression-tested.
 
 ## Completed Milestones
 
@@ -49,15 +50,21 @@ out. The replay comparator correctly classified the pair as
 summary independently mislabeled each observation as
 `PRODUCT_BEHAVIOR_ANOMALY`. A shared deterministic observation classifier now
 checks safety, auth, settlement, and capture health before product attribution;
-its local regression and focused validation pass. The repair is ready for a
-Git checkpoint before further DEV execution.
+its local regression and focused validation pass. The second invocation then
+timed out in both payer observations because the settlement barrier counted
+unfinished page subresources and passive unknown traffic as active journey
+requests. The observer now tracks only source-reviewed intentional known-read
+requests for that signal while retaining response handlers for all observed
+responses. A local hanging-subresource/known-read regression and focused
+validation pass; the repair is ready for a Git checkpoint before further DEV
+execution.
 
 ## Exact Next Action
 
-Commit and push the validated observation-classification repair, record its
-implementation SHA, then rerun the bounded DEV preflight and execute the next
-independent Phase 2C invocation. Preserve invocation 1 as a framework capture
-defect; do not relabel it from a later result.
+Commit and push the validated DVR-002 observer repair, record its
+implementation SHA, rerun the bounded DEV preflight, and execute the next
+independent Phase 2C invocation. Preserve both prior invocations as framework
+capture defects; do not relabel them from a later result.
 
 ## Blockers
 
@@ -109,11 +116,29 @@ Result: PASS; offline structural invariants hold after the observation-
 classification repair
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL as an independent post-classification observation at
+`nightwatch-20260831T084705Z-849e`; both payer observations had valid auth,
+zero safety counters, `captureStatus=INCOMPLETE`,
+`observationSettlement=TIMED_OUT`, and final classification
+`FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`. The replay comparison
+had zero strict invariant mismatches, so no product finding was admitted.
+Sanitized matrix: `artifacts/phase2c-nightwatch-20260831T084705Z-849e-matrix.json`.
+When: 2026-08-31
+
 Command: `npm run agent:check`, `npm run handoff:check`, and
 `npm run project:check`
 Result: PASS; active continuity, handoff, project truth, and clean checkout
 validated at `dd5ff766828d71706c75b6ffb86e5b2267c7ffb9`; agent check retained
 the expected legacy-task and checkpoint-history warnings only
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/networkObserverSettlement.test.ts tests/unit/observationSettlement.test.ts tests/unit/rippleReadiness.test.ts tests/unit/phase2cOracleMatrix.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 40 passed, 0 skipped, 0 failed in 3.5 seconds. The new local
+fixture proves a hanging passive subresource does not increment
+`activeJourneyRequests`, while a hanging source-reviewed known read remains
+tracked; existing settlement, readiness, replay, and attribution regressions
+also pass.
 When: 2026-08-31
 
 ## Files Changed
@@ -129,6 +154,9 @@ When: 2026-08-31
 | `src/core/journeys/observationClassification.ts` | deterministic single-observation attribution | validated locally |
 | `tests/manual/phase2c-real-journeys.ts` | use shared observation attribution and safe diagnostics | validated locally |
 | `tests/unit/phase2cOracleMatrix.test.ts` | regression for framework/product/unknown attribution | validated locally |
+| `src/browser/observers/networkObserver.ts` | narrow active journey settlement tracking to known reads | validated locally |
+| `src/browser/observers/stability.ts` | document settlement signal contract | validated locally |
+| `tests/unit/networkObserverSettlement.test.ts` | hanging passive/known-read lifecycle regression | validated locally |
 
 ## Decisions Made During This Task
 
@@ -144,6 +172,7 @@ When: 2026-08-31
 | ID | Severity | Subsystem | Discovery source | Reproduction | Root cause | Fix | Regression | Validation | Final disposition |
 |---|---|---|---|---|---|---|---|---|---|
 | DVR-001 | HIGH | Phase 2C final classification | Fresh guarded DEV invocation 1 | `nightwatch-20260831T083408Z-9a6c-j1-c1` and `...-c2`; both had `observationSettlement=TIMED_OUT`, `captureStatus=INCOMPLETE`, `oracleStatus=FAIL`, while pair comparison returned `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT` | `tests/manual/phase2c-real-journeys.ts` mapped generic `oracleStatus=FAIL` to `PRODUCT_BEHAVIOR_ANOMALY` before considering framework capture health | Shared `classifyJourneyObservation` checks settlement/capture before product attribution and retains explicit Nightwatch/unknown classes | `tests/unit/phase2cOracleMatrix.test.ts` single-observation classification regression | `npm run typecheck`, `npm run hardening:check`, and focused Phase 2C matrix: PASS; real post-fix observation pending | Fixed locally; awaiting post-fix DEV confirmation |
+| DVR-002 | HIGH | Phase 2C settlement barrier | Fresh guarded DEV invocation 2 after DVR-001 repair | `nightwatch-20260831T084705Z-849e-j1-c1` and `...-c2`; `pendingHandlers=0`, `activeJourney=24/4`, and resource ledgers showed 22/3 unfinished critical-script requests plus passive unknown/image requests; both known reads completed | `activeJourneyRequestCount` tracked every request carrying journey intent, including page subresources and unreviewed passive traffic; the barrier required that broad count to reach zero | `activeJourneyRequestCount` now tracks only source-reviewed `KNOWN_READ` requests; all response handlers remain covered by the independent pending-handler barrier | `tests/unit/networkObserverSettlement.test.ts` hanging passive subresource and known-read cases | `npm run typecheck`, `npm run hardening:check`, and 40-test focused cone: PASS; post-fix DEV confirmation pending | Fixed locally; awaiting post-fix DEV confirmation |
 
 ## Discoveries
 
@@ -162,6 +191,17 @@ When: 2026-08-31
   result with the replay health boundary and emits bounded reason/code
   diagnostics; generic failed oracle status alone no longer creates a product
   finding.
+- The post-fix run confirms DVR-001 is repaired: both per-observation rows
+  and the pair comparison retained `FRAMEWORK_CAPTURE_DEFECT` /
+  `SETTLEMENT_TIMEOUT`.
+- The settlement barrier's `activeJourneyRequests` signal is broader than its
+  name implies. It includes navigation-created static resources and passive
+  unknown requests, so a slow or never-ending page subresource can block a
+  semantically complete known-read observation even when no oracle handler is
+  pending.
+- The narrowed observer signal separates journey semantics from incidental
+  page loading: known-read lifecycle remains blocking, while passive resource
+  loading remains visible but cannot hold the semantic settlement barrier.
 
 ## Safety Events
 

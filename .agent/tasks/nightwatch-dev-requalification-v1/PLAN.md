@@ -58,11 +58,14 @@ reduced to a local deterministic regression before a real run resumes.
   `2e7e84f`; the guarded DEV preflight passed with production explicitly
   denied.
 
-### M1 — Repeated Phase 2C sample — IN_PROGRESS
+### M1 — Repeated Phase 2C sample / settlement repair — IN_PROGRESS
 
 - Run three serial Phase 2C invocations with the owner-managed state.
 - Preserve each run, journey, replay, and cleanup category independently.
 - Classify any divergence and stop for a Nightwatch defect.
+- Repair the over-broad `activeJourneyRequests` settlement signal exposed by
+  the second invocation, with a local hanging-subresource regression, before
+  the next real observation.
 
 ### M2 — Cross-phase observation — PENDING
 

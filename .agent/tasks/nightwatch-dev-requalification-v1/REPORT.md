@@ -34,8 +34,11 @@ and zero safety violations, but the bounded settlement barrier timed out and
 capture was incomplete. Replay classified the pair as
 `FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT`; the pre-fix runner had
 misreported each observation as a product anomaly. The shared classifier fix
-and local regression are validated at `dd5ff766`; further DEV observations
-remain pending post-fix confirmation.
+and local regression are validated at `dd5ff766`. The next invocation confirms
+that attribution repair, but both payer observations still time out because
+`activeJourneyRequests` counts unfinished page subresources and passive
+unknown traffic. A narrower settlement-tracking repair is now required before
+more DEV observations.
 
 ## Safety and verdict
 

@@ -63,9 +63,11 @@ explicit `REEVALUATE` protocol before further campaign work.
 
 The first Phase 2C invocation exposed DVR-001: settlement timeout and
 incomplete capture were mislabeled as a product anomaly. The shared
-observation classifier and focused regression now pass locally. Commit and
-push that repair, rerun the bounded DEV preflight, and execute the next
-independent Phase 2C invocation. Preserve invocation 1 as
+observation classifier and focused regression now pass locally. Invocation 2
+confirms DVR-001 is repaired, but both observations still timed out because
+`activeJourneyRequests` counts unfinished static subresources and passive
+unknown traffic. Repair that settlement-tracking boundary locally before the
+next DEV invocation. Preserve both observed pairs as
 `FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`.
 
 ## Current checkpoint

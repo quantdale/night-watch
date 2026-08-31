@@ -109,7 +109,7 @@ export interface NetworkObserver {
   pendingUrls?(): Set<string>;
   /** Count-only settlement diagnostic; no URL values cross this boundary. */
   pendingUrlCount?(): number;
-  /** In-flight requests that were initiated by an intentional journey action. */
+  /** In-flight source-reviewed known-read requests initiated by an intentional journey action. */
   activeJourneyRequests?(): number;
   /** Aggregate response-body capture health for the current observation. */
   captureStatus?(): 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
@@ -476,7 +476,13 @@ export function createNetworkObserver(opts: {
         trackedRequests.add(request);
         const requestIntent = journeyIntent === null ? null : { ...journeyIntent };
         requestIntents.set(request, requestIntent);
-        if (requestIntent !== null) {
+        // A navigation intent also creates scripts, styles, images, fonts, and
+        // unreviewed API traffic. Those resources remain observable and their
+        // response-body handlers still participate in the settlement barrier,
+        // but they are not intentional journey reads. Counting them here
+        // lets a slow/streaming subresource hold a semantically complete read
+        // open until the hard timeout.
+        if (requestIntent !== null && endpointClassification === 'KNOWN_READ') {
           journeyTrackedRequests.add(request);
           activeJourneyRequestCount += 1;
         }
