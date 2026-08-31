@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
-Last substantive checkpoint SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
-Last documentation checkpoint SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
+Last validated implementation SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
+Last substantive checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
+Last documentation checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
 
 ## Scope
 
