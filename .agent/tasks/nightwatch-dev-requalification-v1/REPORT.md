@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last documentation checkpoint SHA: 55493ba524b4cc4a6d7deb37d5a541e3e6d69172
+Last documentation checkpoint SHA: 9ef80880d36d4cf50097ea62992f98f3367d6f96
 
 ## Scope
 
@@ -296,7 +296,7 @@ evidence with truthful framework attribution.
 
 ## Safety and verdict
 
-The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved
+The task was read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved
 through explicit `PROJECT_VERDICT_EFFECT: PRESERVE` while the bounded sample
-is collected. Any invalidating evidence will be recorded and handled through
+was collected. Any invalidating evidence would be recorded and handled through
 the explicit project-state protocol.

@@ -9,14 +9,14 @@ Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last checkpoint: COMPLETE — bounded DEV requalification closed; `1054b827` truthful runtime limitation, no product finding
 Current milestone: COMPLETE / STOP. M3 — Reconciliation and closure is closed.
-Next action: NONE — task closed; clean main at `2e20d9043fa6858f32235ccbd3b6a18b62be161f` (pushed), findings remain owner-local.
+Next action: NONE — task closed; clean main at `9ef80880d36d4cf50097ea62992f98f3367d6f96` (pushed), findings remain owner-local.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 55493ba524b4cc4a6d7deb37d5a541e3e6d69172
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 9ef80880d36d4cf50097ea62992f98f3367d6f96
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_DEV_REQUALIFICATION_V1_STATUS: COMPLETE

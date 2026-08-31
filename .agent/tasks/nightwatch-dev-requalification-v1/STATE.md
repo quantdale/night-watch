@@ -8,13 +8,13 @@ Status: COMPLETE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last documentation checkpoint SHA: 55493ba524b4cc4a6d7deb37d5a541e3e6d69172
+Last documentation checkpoint SHA: 9ef80880d36d4cf50097ea62992f98f3367d6f96
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 55493ba524b4cc4a6d7deb37d5a541e3e6d69172
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 9ef80880d36d4cf50097ea62992f98f3367d6f96
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -759,7 +759,7 @@ NONE.
 
 Complete. M0 through M2 are closed by prior implementation checkpoints.
 M3 is closed at implementation checkpoint `fa236b6` and documentation
-checkpoint `452ba8e`. Final bounded evidence is the fresh current-source
+checkpoint `9ef8088`. Final bounded evidence is the fresh current-source
 campaign `campaign:sha256:1054b8271440fc29f7fb5f21` with manifest
 `manifest:sha256:154410a95040816ba1b63de0`: `RUNTIME OBSERVATION FAILURE — NO
 PRODUCT FINDING` at `checkpointOrdinal=5`, `coverageGaps=[BODY_UNAVAILABLE]`,
