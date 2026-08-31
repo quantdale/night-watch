@@ -102,7 +102,24 @@ oracle. A second bounded run at `nightwatch-20260831T095337Z-c375` passed
 payer/common contexts and stopped at the known account malformed-JSON product
 oracle. Phase 5 then passed six first executions and six fresh replays with
 zero safety/privacy violations. Preserve these outcomes and advance to the
-guarded campaign prepare/resume path.
+guarded campaign prepare/resume path. Prepare passed as
+`campaign:sha256:394f3fd1ed3828e2914a6373`, but exact resume exposed DVR-006:
+the first payer work item produced two legitimate repeated anomaly
+occurrences with the same fingerprint and the orchestrator wrote duplicate
+values into the checkpoint's set-valued execution summary. The checkpoint
+validator correctly failed closed. Reduce and repair this locally before any
+further DEV campaign execution; preserve occurrence evidence and only
+canonicalize the summary identity set.
+
+## Current next action
+
+Build a deterministic local regression around `CampaignOrchestrator` and the
+checkpoint validator for duplicate occurrence fingerprints. Prove that
+duplicate observations remain available for occurrence counts/clustering,
+while `CampaignExecutionRecord.anomalyFingerprints` is sorted and unique.
+Run the focused campaign tests, typecheck, and hardening. Then checkpoint the
+repair and resume the exact owner-local campaign, retaining the original
+fail-closed result as DVR-006.
 
 ## Terminal action
 

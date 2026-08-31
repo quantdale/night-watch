@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 6a5a7914206ea1cfae0f1f9aa5f3434081afbb04
+Last documentation checkpoint SHA: a77c929b815e0139a42574a092cdd0bb3b7087f2
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
@@ -131,12 +131,31 @@ secret leaks. The account-inventory and billing-groups API paths passed here,
 so the malformed-JSON product evidence remains context-specific to the
 browser account-inventory observation rather than a blanket API failure.
 
+The bounded Phase 7 campaign prepared successfully as
+`campaign:sha256:394f3fd1ed3828e2914a6373`, with manifest fingerprint
+`manifest:sha256:35a5e608ac1339f8ea6cf8f9`, five selected work items, and a
+`PREPARE_GATE_PASS`. Resuming that exact owner-local campaign then failed
+closed after the first payer work item produced two observations carrying the
+same sanitized anomaly fingerprint. The checkpoint validator rejected the
+execution record as `CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID` /
+`CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE`; the persisted checkpoint stayed
+`IN_PROGRESS` at ordinal 2 with the first item `RUNNING`, no completed work,
+and zero safety/privacy counters. This is DVR-006, a High Nightwatch
+checkpoint-boundary defect: occurrence evidence legitimately preserves
+duplicate observations, but the execution summary mapped those occurrences
+without canonicalizing its identity set. No further DEV campaign execution is
+authorized until the owning summary boundary is reduced locally, fixed, and
+regression-tested.
+
 ## Exact Next Action
 
-Advance to campaign state: inspect the guarded Phase 7 prepare/resume usage,
-rerun the bounded DEV preflight, and prepare one serial read-only campaign
-with the current owner-local state. Preserve the Phase 5 first/replay ledger
-and all Phase 4 product-oracle outcomes independently.
+Reduce DVR-006 locally: prove that duplicate anomaly occurrences remain in
+observation evidence and cluster occurrence counts while the execution
+checkpoint summary contains one sorted unique fingerprint. Add a deterministic
+checkpoint/resume regression, run typecheck and hardening, then resume the
+same owner-local campaign only after the fix is checkpointed. Preserve the
+failed resume as an independent High defect; do not treat a later retry as a
+replacement outcome.
 
 ## Blockers
 
@@ -186,6 +205,28 @@ When: 2026-08-31
 Command: `npm run hardening:check`
 Result: PASS; offline structural invariants hold after the observation-
 classification repair
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before the guarded campaign prepare; the approved
+DEV target and auth host remained allowlisted, production remained explicitly
+denied, and preflight performed no target network activity.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; prepared campaign
+`campaign:sha256:394f3fd1ed3828e2914a6373` with five bounded read-only work
+items, `CHANGE_DIRECTED` selection, manifest fingerprint
+`manifest:sha256:35a5e608ac1339f8ea6cf8f9`, and `PREPARE_GATE_PASS`.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:394f3fd1ed3828e2914a6373 --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL CLOSED on DVR-006 after 12.7 seconds:
+`CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE:fp:sha256:bba7c1fd5564ece993a0238f`.
+The owner-local checkpoint remained `IN_PROGRESS`, ordinal 2, with the first
+work item `RUNNING`, retry reserved, no completed work, and zero safety or
+privacy violations. The duplicate value was a sanitized anomaly identity;
+raw response or customer data was not inspected or persisted.
 When: 2026-08-31
 
 Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
@@ -393,6 +434,7 @@ When: 2026-08-31
 | DVR-003 | HIGH | Phase 2C response capture | Fresh guarded DEV invocation 3 after DVR-002 repair | `nightwatch-20260831T085807Z-7767-j1-c2`; settlement was `SETTLED`, auth was valid, safety counters were zero, but one source-reviewed known-read JSON/XHR response was `bodyCapture=unavailable`, making the observation incomplete and the pair diverge on `oracle-or-result-status` | Response-body reads were unbounded and emitted no safe reason, so a truncated/never-ending response could keep capture pending or leave the failure unexplained | Response-body reads are bounded to 5 seconds; failures emit one of five bounded codes and propagate through evidence/classification/replay without raw error text | `tests/unit/networkObserverSettlement.test.ts` truncated JSON response; `tests/unit/phase2cOracleMatrix.test.ts` diagnostic/parser regressions | Typecheck, hardening, focused 41-test cone, and local capture regression: PASS; invocation 4 completed both intentional known-read bodies | Fixed at `1d3eb0a` and confirmed by invocation 4; passive timeout remained separately classified |
 | DVR-004 | HIGH | Phase 2C capture attribution | Fresh guarded DEV invocation 4 after DVR-003 repair | `nightwatch-20260831T092548Z-f5ee`; both contexts captured both intentional known-read JSON responses completely, but c2 had one passive `UNKNOWN` JSON/XHR body with `BODY_READ_TIMEOUT`; global capture status became `INCOMPLETE` and strict replay diverged on `oracle-or-result-status` | Capture health and its failure-code ledger aggregated every JSON-ish response, so unrelated passive/background capture instability changed the journey verdict | `captureStatus`/`captureFailureCodes` now aggregate only requests carrying active journey intent and `KNOWN_READ`; per-response passive diagnostics remain observable and intentional reads remain strict | `tests/unit/networkObserverSettlement.test.ts` passive and intentional truncated-response cases | `224801f`; payer pair passed strict replay in the next real invocation; invocation 6 retained complete intentional capture | Fixed at `224801f` and confirmed by invocations 5-6; no product finding admitted |
 | DVR-005 | HIGH | Phase 2C observation attribution | Fresh guarded DEV invocation 5 after DVR-004 repair | `nightwatch-20260831T093257Z-bb5a-j2-c1`; bootstrap 5xx/required-read and structural failures left intentional capture `UNKNOWN`, but the classifier reported `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_STATUS_UNKNOWN` and masked explicit non-capture evidence | Unknown capture status was treated as a framework defect before checking whether the observation had independently failed; no intentional known-read capture had been attempted | `UNKNOWN` capture health is a framework defect only for an otherwise passing observation; explicit failed evidence proceeds to product/environment/unknown attribution | `tests/unit/phase2cOracleMatrix.test.ts` unknown-capture precedence regressions | `d1b9f31`; local matrix/typecheck/hardening pass; invocation 6 produced passing payer/common and product-classified account outcomes | Fixed at `d1b9f31` and confirmed by invocation 6; no Nightwatch defect or product finding was masked |
+| DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | Pending local reduction/fix: canonicalize only the execution summary to a sorted unique set; preserve duplicate observations and cluster occurrence counts | Pending deterministic campaign checkpoint/resume regression | Pending; no further DEV execution until local validation passes | Open; High defect blocks campaign continuation |
 
 ## Discoveries
 
@@ -453,6 +495,14 @@ When: 2026-08-31
   implicated by the browser-only malformed-JSON observation. This narrows the
   product evidence to a context-specific browser observation; it does not
   authorize changing the product or weakening the browser oracle.
+- Campaign prepare passed with five selected read-only work items, but exact
+  resume exposed a new High Nightwatch checkpoint defect. The first payer
+  work item retained two legitimate repeated anomaly occurrences with one
+  identity fingerprint; the orchestrator incorrectly serialized both into a
+  set-valued execution summary, so the fail-closed validator rejected the
+  checkpoint before any work item could complete. The persisted state is
+  `IN_PROGRESS`/`RUNNING`, but must not be trusted for continuation until the
+  local repair proves resume behavior.
 
 ## Safety Events
 

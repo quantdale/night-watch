@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last checkpoint: Phase 5 API corpus outcome recorded at `6a5a791`
+Last checkpoint: Phase 5 API corpus and campaign checkpoint defect recorded at `a77c929`
 Current milestone: M2 — Cross-phase real operation — IN_PROGRESS
-Next action: Inspect guarded Phase 7 prepare/resume usage, rerun DEV preflight, and prepare one serial read-only campaign with the current owner-local state.
+Next action: Reduce and locally fix DVR-006 duplicate execution fingerprints, add checkpoint/resume regression coverage, and validate before resuming the persisted DEV campaign.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

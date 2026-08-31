@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 6a5a7914206ea1cfae0f1f9aa5f3434081afbb04
+Last documentation checkpoint SHA: a77c929b815e0139a42574a092cdd0bb3b7087f2
 
 ## Scope
 
@@ -95,6 +95,20 @@ ledger reported no persisted credentials, customer identifiers, raw bodies,
 or response bodies forwarded to OOPS. Account-inventory and billing-groups
 API operations passed here, narrowing the malformed-JSON evidence to the
 browser account-inventory context observed in Phase 2C/Phase 4.
+
+Campaign prepare then passed with five selected bounded read-only work items
+under campaign `campaign:sha256:394f3fd1ed3828e2914a6373` and manifest
+fingerprint `manifest:sha256:35a5e608ac1339f8ea6cf8f9`. Exact resume failed
+closed after the first payer work item with
+`CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE:fp:sha256:bba7c1fd5564ece993a0238f`.
+The first observation contained two repeated anomaly occurrences with one
+stable identity fingerprint. This is DVR-006, a High Nightwatch defect at the
+execution-summary/checkpoint boundary: repeated occurrence evidence must be
+preserved, but the summary identity list must be canonicalized before strict
+checkpoint validation. The owner-local checkpoint remained `IN_PROGRESS` at
+ordinal 2 with the first work item `RUNNING`, no completed work, and zero
+safety/privacy counters. No further DEV campaign execution is being run until
+the defect is reduced and repaired locally.
 
 ## Safety and verdict
 

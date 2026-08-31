@@ -102,6 +102,11 @@ reduced to a local deterministic regression before a real run resumes.
 - The guarded Phase 5 run at `nightwatch-20260831T095813Z-09be` passed all six
   source-generated first executions and six fresh replays with stable
   fingerprints and zero safety/privacy counters. Proceed to campaign state.
+- Campaign prepare passed with five bounded work items, but exact resume
+  exposed DVR-006: two legitimate repeated anomaly observations were copied
+  into the set-valued execution fingerprint summary without deduplication.
+  Stop real execution, reduce this at the orchestrator/checkpoint boundary,
+  and prove recovery locally before resuming the persisted campaign.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 
@@ -136,6 +141,10 @@ needed, state/project/handoff checks, privacy checks, and clean Git parity.
 
 - The guarded auth capture reached the approved DEV target and completed safe
   post-login/state validation.
+- The first exact campaign resume failed closed on duplicate execution
+  fingerprints after prepare had passed. This is a Nightwatch-owned High
+  checkpoint defect, not a reason to weaken the validator or discard repeated
+  anomaly occurrences.
 
 ## Deferred Work
 
