@@ -113,17 +113,18 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-Fresh current-source preparation passed as campaign
-`campaign:sha256:1054b8271440fc29f7fb5f21`, manifest
-`manifest:sha256:154410a95040816ba1b63de0`, frozen source
-`fa236b690ceace3a420771645fce9f99bf751ea8`, with five bounded work items
-and `productExecution=NOT_STARTED`. Resume only this manifest once. Inspect
-only sanitized checkpoint/brief projections, classify the terminal result
-truthfully, record any new defect, and run final local/clean validation. Do not
-resume `75fafe...`, `2fe5dc...`, `ceae...`, or `168c37...`, and do not use
-production/NEXT or bypass any guard.
+STOP. The successor task is COMPLETE. Fresh current-source campaign
+`campaign:sha256:1054b8271440fc29f7fb5f21` closed at
+`PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` with
+`BODY_UNAVAILABLE`, zero product candidates, zero safety counters, privacy
+`PASS`, and truthful headline `RUNTIME OBSERVATION FAILURE — NO PRODUCT
+FINDING`. No further DEV execution, replay, or source change belongs to this
+task. Any larger soak or replay requires fresh owner-managed authentication
+and separate authorization.
+
 ## Terminal action
 
-At closure, complete the successor STATE/REPORT, validate the final evidence,
-commit and push the checkpoint, and verify clean `main` parity. Do not close
-while any required observation or recovery result is unexplained.
+The successor STATE/REPORT are complete, validation passed, the checkpoint is
+committed and pushed, and local `main` matches `origin/main`. Preserve the
+sanitized runtime-limitation classification; do not reinterpret it as a
+product finding or a retry PASS.

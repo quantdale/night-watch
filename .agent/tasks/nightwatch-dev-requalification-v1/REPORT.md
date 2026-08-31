@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last documentation checkpoint SHA: 03da86d8f38c10f45d589568a166b39965aa4fe8
+Last documentation checkpoint SHA: 55493ba524b4cc4a6d7deb37d5a541e3e6d69172
 
 ## Scope
 
