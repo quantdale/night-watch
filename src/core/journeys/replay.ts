@@ -11,6 +11,7 @@ import type {
   JourneySemanticRequest,
   ReplayComparison,
   ReplayComparisonCategory,
+  ReplayDivergenceClassification,
   ReplayDifferentialEvidence,
 } from './types';
 
@@ -84,6 +85,88 @@ function safetyEqual(first: JourneyEvidence, replay: JourneyEvidence): boolean {
     return sameJson(first.safetyCounts, replay.safetyCounts);
   }
   return true;
+}
+
+const TIMING_ONLY_VARIANCE = new Set(['route-stability-timing']);
+const BENIGN_VARIANCE = new Set([
+  'passive-unknown-count',
+  'semantic-request-count',
+  'background-and-cleanup-variance',
+  'containment-count-variance',
+  'resource-containment-variance',
+]);
+
+function hasTriggeredAnomalyClass(evidence: JourneyEvidence, anomalyClass: string): boolean {
+  return evidence.oracleObservations?.some((item) => item.triggered && item.anomalyClass === anomalyClass) ?? false;
+}
+
+function hasProductStateDifference(first: JourneyEvidence, replay: JourneyEvidence, firstOracleKeys: string[] | null, replayOracleKeys: string[] | null): boolean {
+  if (!hasTriggeredAnomalyClass(first, 'PRODUCT_BEHAVIOR_ANOMALY') && !hasTriggeredAnomalyClass(replay, 'PRODUCT_BEHAVIOR_ANOMALY')) return false;
+  if (firstOracleKeys !== null && replayOracleKeys !== null && sameJson(firstOracleKeys, replayOracleKeys)) {
+    return first.oracleStatus === 'FAIL' || replay.oracleStatus === 'FAIL' || !first.passed || !replay.passed;
+  }
+  return true;
+}
+
+function classifyReplayOutcome(input: {
+  first: JourneyEvidence;
+  replay: JourneyEvidence;
+  mismatches: readonly string[];
+  variance: readonly string[];
+  firstOracleKeys: string[] | null;
+  replayOracleKeys: string[] | null;
+}): { classification: ReplayDivergenceClassification; reason: string; diagnosticCodes: readonly string[] } {
+  const diagnostics = new Set<string>();
+  const addMismatchDiagnostics = (): void => {
+    for (const mismatch of input.mismatches) diagnostics.add(`STRICT_${mismatch.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}`);
+  };
+
+  if (input.first.authValid !== input.replay.authValid) {
+    diagnostics.add('AUTH_STATE_CHANGED');
+    return { classification: 'AUTH_DIVERGENCE', reason: 'auth validity differs between observations', diagnosticCodes: [...diagnostics].sort() };
+  }
+  if (input.first.environmentInputDigest !== undefined && input.replay.environmentInputDigest !== undefined &&
+      input.first.environmentInputDigest !== input.replay.environmentInputDigest) {
+    diagnostics.add('ENVIRONMENT_INPUT_CHANGED');
+    return { classification: 'ENVIRONMENT_DIVERGENCE', reason: 'declared environment input digest differs', diagnosticCodes: [...diagnostics].sort() };
+  }
+  if (input.first.observationSettlement === 'TIMED_OUT' || input.replay.observationSettlement === 'TIMED_OUT') {
+    diagnostics.add('SETTLEMENT_TIMEOUT');
+    return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'response/oracle settlement did not complete within the bounded barrier', diagnosticCodes: [...diagnostics].sort() };
+  }
+  if (input.first.captureStatus === 'INCOMPLETE' || input.replay.captureStatus === 'INCOMPLETE') {
+    diagnostics.add('CAPTURE_INCOMPLETE');
+    return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'one observation has incomplete response capture', diagnosticCodes: [...diagnostics].sort() };
+  }
+
+  const productStateDifference = hasProductStateDifference(input.first, input.replay, input.firstOracleKeys, input.replayOracleKeys);
+  const productOnlyMismatch = input.mismatches.length > 0 && input.mismatches.every((item) => item === 'oracle-set' || item === 'oracle-or-result-status');
+  if (productStateDifference && (productOnlyMismatch || input.mismatches.length === 0)) {
+    diagnostics.add('PRODUCT_ORACLE_STATE_CHANGED');
+    return { classification: 'EXPECTED_PRODUCT_STATE_DRIFT', reason: 'the differing outcome is attributed to a product-behavior oracle', diagnosticCodes: [...diagnostics].sort() };
+  }
+
+  if (input.mismatches.length === 0 && input.variance.length === 0 && input.first.passed && input.replay.passed) {
+    diagnostics.add('NO_DIFFERENCE');
+    return { classification: 'MATCH', reason: 'strict invariants and bounded observation channels match', diagnosticCodes: [...diagnostics].sort() };
+  }
+  if (input.mismatches.length === 0 && input.variance.length > 0) {
+    if (input.variance.every((item) => TIMING_ONLY_VARIANCE.has(item))) {
+      diagnostics.add('TIMING_VARIANCE_ONLY');
+      return { classification: 'TIMING_ONLY_OBSERVATION_DIFFERENCE', reason: 'only the bounded route-stability timing channel differs', diagnosticCodes: [...diagnostics].sort() };
+    }
+    if (input.variance.every((item) => BENIGN_VARIANCE.has(item) || TIMING_ONLY_VARIANCE.has(item))) {
+      diagnostics.add('BENIGN_VARIANCE_ONLY');
+      return { classification: 'BENIGN_TELEMETRY_VARIATION', reason: 'only bounded passive, timing, cleanup, containment, or multiplicity channels differ', diagnosticCodes: [...diagnostics].sort() };
+    }
+  }
+  if (input.mismatches.length > 0) {
+    addMismatchDiagnostics();
+    return { classification: 'DETERMINISTIC_REPLAY_MISMATCH', reason: 'one or more strict replay invariants differ without a narrower safe classification', diagnosticCodes: [...diagnostics].sort() };
+  }
+
+  diagnostics.add('RUN_VERDICT_NOT_PASS');
+  return { classification: 'UNKNOWN_DIVERGENCE', reason: 'the run verdict is non-pass without a classified strict or bounded difference', diagnosticCodes: [...diagnostics].sort() };
 }
 
 export function compareJourneyReplay(first: JourneyEvidence, replay: JourneyEvidence): ReplayComparison {
@@ -242,11 +325,29 @@ export function compareJourneyReplay(first: JourneyEvidence, replay: JourneyEvid
     authEquivalent: first.authValid === replay.authValid,
     safetyEquivalent: safetyEqual(first, replay),
   };
+  const classification = classifyReplayOutcome({
+    first,
+    replay,
+    mismatches,
+    variance,
+    firstOracleKeys,
+    replayOracleKeys,
+  });
+  const replayPasses = classification.classification === 'MATCH' ||
+    classification.classification === 'TIMING_ONLY_OBSERVATION_DIFFERENCE' ||
+    classification.classification === 'BENIGN_TELEMETRY_VARIATION';
   return {
-    passed: mismatches.length === 0 && first.passed && replay.passed,
+    // A bounded retry is not a pass when capture/settlement/environment
+    // evidence is incomplete or the classifier cannot explain the result.
+    // Timing and explicitly bounded benign variation remain the only
+    // non-strict outcomes allowed to pass.
+    passed: mismatches.length === 0 && first.passed && replay.passed && replayPasses,
     categories: [...categories],
     strictInvariantMismatches: mismatches,
     boundedVariance: variance,
+    classification: classification.classification,
+    classificationReason: classification.reason,
+    diagnosticCodes: classification.diagnosticCodes,
     differential,
   };
 }

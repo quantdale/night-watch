@@ -27,7 +27,12 @@ const POLL_MS = 100;
  * be observed as pending handlers once their responses arrive.
  */
 export async function waitForNetworkObservationSettle(opts: {
-  network: Pick<NetworkObserver, 'activeRequests' | 'pendingResponseHandlers' | 'lastActivityAt'>;
+  network: Pick<NetworkObserver, 'activeRequests' | 'pendingResponseHandlers' | 'lastActivityAt'> & {
+    /** Optional newer signal: only intentional journey requests delay settlement. */
+    activeJourneyRequests?: () => number;
+    /** Optional count-only diagnostic; raw URLs are never logged. */
+    pendingUrlCount?: () => number;
+  };
   quietMs?: number;
   timeoutMs?: number;
   now?: () => number;
@@ -40,8 +45,10 @@ export async function waitForNetworkObservationSettle(opts: {
   const deadline = now() + timeoutMs;
 
   for (;;) {
+    const activeJourneyRequests = opts.network.activeJourneyRequests?.() ?? 0;
     if (
       opts.network.pendingResponseHandlers() === 0 &&
+      activeJourneyRequests === 0 &&
       now() - opts.network.lastActivityAt() >= quietMs
     ) {
       return true;
@@ -50,9 +57,8 @@ export async function waitForNetworkObservationSettle(opts: {
       // Debug: log settlement failure details for real DEV diagnosis
       try {
         // eslint-disable-next-line no-console
-        const pendingUrls = (opts.network as any).pendingUrls?.() as Set<string> | undefined;
-        const pendingList = pendingUrls ? [...pendingUrls].slice(0, 3).join(',') : 'unknown';
-        console.log(`[settlement-timeout] pending=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs} pendingUrls=${pendingList}`);
+        const pendingUrlCount = opts.network.pendingUrlCount?.() ?? null;
+        console.log(`[settlement-timeout] pendingHandlers=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} activeJourney=${activeJourneyRequests} pendingUrlCount=${pendingUrlCount ?? 'unknown'} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs}`);
       } catch {}
       return false;
     }

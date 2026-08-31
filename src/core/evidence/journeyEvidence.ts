@@ -64,7 +64,7 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
     'evidenceSchemaVersion', 'contractVersion', 'contractDigest', 'oracleVersion',
     'semanticRequests', 'safetyCounts', 'boundedVariance', 'oracleObservations',
     'anomalyFingerprints', 'failureAttribution', 'resourceObservations',
-    'containmentCounts',
+    'containmentCounts', 'captureStatus', 'observationSettlement', 'environmentInputDigest',
   ] as const;
   for (const key of optionalKeys) {
     if (candidate[key] !== undefined) safe[key] = candidate[key];

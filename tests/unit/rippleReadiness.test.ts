@@ -3,7 +3,7 @@
 // involved.
 
 import { test, expect } from '@playwright/test';
-import { waitForRippleStability } from '../../src/browser/observers/stability';
+import { waitForNetworkObservationSettle, waitForRippleStability } from '../../src/browser/observers/stability';
 import {
   confirmsRippleTarget,
   classifyRippleReadiness,
@@ -235,6 +235,42 @@ test('blocked telemetry, Pylon support, and browser-background traffic do not cr
   await expect(runStability([
     { route: '/ripple/dashboard', documentReadyState: 'complete', renderedShellPresent: true },
   ])).resolves.toBe(true);
+});
+
+test('journey observation settlement waits for intentional requests but not background polling', async () => {
+  let now = 0;
+  let activeJourney = 1;
+  await expect(waitForNetworkObservationSettle({
+    network: {
+      activeRequests: () => 1,
+      activeJourneyRequests: () => activeJourney,
+      pendingResponseHandlers: () => 0,
+      lastActivityAt: () => 0,
+    },
+    quietMs: 200,
+    timeoutMs: 600,
+    now: () => now,
+    sleep: async (ms) => {
+      now += ms;
+      if (now >= 100) activeJourney = 0;
+    },
+  })).resolves.toBe(true);
+  expect(now).toBeGreaterThanOrEqual(200);
+
+  now = 0;
+  await expect(waitForNetworkObservationSettle({
+    network: {
+      activeRequests: () => 1,
+      activeJourneyRequests: () => 0,
+      pendingResponseHandlers: () => 0,
+      lastActivityAt: () => 0,
+    },
+    quietMs: 200,
+    timeoutMs: 600,
+    now: () => now,
+    sleep: async (ms) => { now += ms; },
+  })).resolves.toBe(true);
+  expect(now).toBeGreaterThanOrEqual(200);
 });
 
 test('a malformed-json oracle remains evidence and does not become a fatal stability signal', async () => {

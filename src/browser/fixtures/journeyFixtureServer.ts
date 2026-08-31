@@ -27,7 +27,8 @@ export type JourneyFixtureVariant =
   | 'js-html'
   | 'csp-block'
   | 'unhandled-rejection'
-  | 'console-warning';
+  | 'console-warning'
+  | 'late-response';
 
 export interface JourneyFixtureHandle {
   origin: string;
@@ -157,6 +158,10 @@ export function startJourneyFixtureServer(
       return;
     }
     if (pathname === '/m/ripple/v2/payer/exchange_rate/2026-08' && req.method === 'GET') {
+      if (variant === 'late-response') {
+        setTimeout(() => send(res, 200, 'application/json', '{"synthetic":'), 1_200);
+        return;
+      }
       send(res, 200, 'application/json', '{"synthetic":"read"}');
       return;
     }

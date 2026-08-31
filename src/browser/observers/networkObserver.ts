@@ -107,6 +107,12 @@ export interface NetworkObserver {
   pendingResponseHandlers(): number;
   /** Debug: pending handler URLs (for settlement diagnostics). */
   pendingUrls?(): Set<string>;
+  /** Count-only settlement diagnostic; no URL values cross this boundary. */
+  pendingUrlCount?(): number;
+  /** In-flight requests that were initiated by an intentional journey action. */
+  activeJourneyRequests?(): number;
+  /** Aggregate response-body capture health for the current observation. */
+  captureStatus?(): 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
@@ -197,7 +203,7 @@ export function createNetworkObserver(opts: {
 
   let active = 0;
   let pendingResponseHandlers = 0;
-  const pendingUrls = new Set<string>();
+  const pendingUrls = new Map<string, number>();
   let lastActivity = Date.now();
   const blockedUrls = new Set<string>();
   const optionalSupportBlockedHosts = opts.optionalSupportBlockedHosts ?? new Set<string>();
@@ -211,8 +217,13 @@ export function createNetworkObserver(opts: {
   const semanticLedger: SemanticRequestObservation[] = [];
   const resourceLedger: ResourceObservation[] = [];
   const trackedRequests = new WeakSet<Request>();
+  const requestIntents = new WeakMap<Request, { stepId: string; actionType: string } | null>();
+  const journeyTrackedRequests = new WeakSet<Request>();
   const completedRequests = new WeakSet<Request>();
   let requestCount = 0;
+  let activeJourneyRequestCount = 0;
+  let captureAttempted = false;
+  let captureIncomplete = false;
   let journeyIntent: { stepId: string; actionType: string } | null = null;
   let journeyObservationStart = 0;
 
@@ -303,6 +314,13 @@ export function createNetworkObserver(opts: {
     });
   }
 
+  type JourneyIntent = { stepId: string; actionType: string };
+
+  function intentForRequest(request: Request | undefined): JourneyIntent | null {
+    if (request === undefined) return null;
+    return requestIntents.get(request) ?? null;
+  }
+
   function recordResource(
     rawUrl: string,
     role: ResourceRole,
@@ -310,12 +328,13 @@ export function createNetworkObserver(opts: {
     method: string,
     status: number | null,
     contentType: string | undefined,
+    intent: JourneyIntent | null = journeyIntent,
   ): void {
     resourceLedger.push({
       role,
       state,
       method,
-      stepId: journeyIntent?.stepId ?? null,
+      stepId: intent?.stepId ?? null,
       status,
       contentTypeClass: contentTypeClass(contentType),
     });
@@ -330,13 +349,15 @@ export function createNetworkObserver(opts: {
     status?: number | null;
     contentType?: string | null;
     routeClass?: string | null;
+    intent?: JourneyIntent | null;
     data?: Record<string, unknown>;
   }): void {
     const impact = resourceImpact(input.role);
     if (impact === 'OPTIONAL' || impact === 'ASSET') optionalResourceFailureUrls.add(input.rawUrl);
+    const intent = input.intent === undefined ? journeyIntent : input.intent;
     const fingerprint = fingerprintAnomaly({
       journeyId: opts.journeyId ?? 'unbound',
-      stepId: journeyIntent?.stepId ?? null,
+      stepId: intent?.stepId ?? null,
       oracleId: input.reason,
       resourceRole: input.role,
       host: (() => { try { return new URL(input.rawUrl).hostname; } catch { return undefined; } })(),
@@ -453,10 +474,16 @@ export function createNetworkObserver(opts: {
 
       if (decision.verdict === 'allow') {
         trackedRequests.add(request);
+        const requestIntent = journeyIntent === null ? null : { ...journeyIntent };
+        requestIntents.set(request, requestIntent);
+        if (requestIntent !== null) {
+          journeyTrackedRequests.add(request);
+          activeJourneyRequestCount += 1;
+        }
         active += 1;
         requestCount += 1;
         lastActivity = Date.now();
-        recordResource(rawUrl, resourceRole(rawUrl, request.resourceType(), endpointClassification), 'REQUESTED', request.method(), null, undefined);
+        recordResource(rawUrl, resourceRole(rawUrl, request.resourceType(), endpointClassification), 'REQUESTED', request.method(), null, undefined, requestIntent);
         recorder.event({
           type: 'request',
           severity: 'info',
@@ -678,13 +705,15 @@ export function createNetworkObserver(opts: {
     let request: Request | undefined;
     let tracked = false;
     let observing = false;
+    let requestIntent: JourneyIntent | null = null;
     try {
       request = response.request();
       const rawUrl = request.url();
       tracked = trackedRequests.has(request);
+      requestIntent = intentForRequest(request);
       if (blockedUrls.has(rawUrl)) return; // policy-aborted — no response exists
       pendingResponseHandlers += 1;
-      pendingUrls.add(rawUrl);
+      pendingUrls.set(rawUrl, (pendingUrls.get(rawUrl) ?? 0) + 1);
       observing = true;
       const redactedUrl = recorder.redactUrl(rawUrl);
       const status = response.status();
@@ -696,7 +725,7 @@ export function createNetworkObserver(opts: {
       const endpointClassification = endpointMatch?.classification ?? null;
       const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
       completedRequests.add(request);
-      recordResource(rawUrl, role, status >= 400 ? 'HTTP_FAILED' : 'COMPLETED', method, status, contentType);
+      recordResource(rawUrl, role, status >= 400 ? 'HTTP_FAILED' : 'COMPLETED', method, status, contentType, requestIntent);
 
       const data: Record<string, unknown> = {
         url: redactedUrl,
@@ -720,11 +749,16 @@ export function createNetworkObserver(opts: {
       let rawText: string | undefined; // transient, in-memory only (Phase 9 hook)
       let bodyCapture: 'complete' | 'incomplete' | 'unavailable' = 'unavailable';
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
+        captureAttempted = true;
         try {
           const buf = await response.body();
           bodyCapture = bodyCaptureStatus(buf, responseHeaders);
+          if (bodyCapture === 'incomplete') captureIncomplete = true;
           const text = buf.toString('utf8');
-          if (text.length > MAX_BODY_CHARS) bodyCapture = 'incomplete';
+          if (text.length > MAX_BODY_CHARS) {
+            bodyCapture = 'incomplete';
+            captureIncomplete = true;
+          }
           rawText = text;
           body = recorder.redaction.redactText(
             text.length > MAX_BODY_CHARS ? text.slice(0, MAX_BODY_CHARS) : text
@@ -732,6 +766,7 @@ export function createNetworkObserver(opts: {
           data.body = body;
         } catch {
           // unreadable body (no-body response, closed early...) — skip capture
+          captureIncomplete = true;
         }
       }
       data.bodyCapture = bodyCapture;
@@ -763,6 +798,7 @@ export function createNetworkObserver(opts: {
               role,
               status,
               contentType,
+              intent: requestIntent,
               data: { protocolExpected: issue.protocolExpected, protocolObserved: issue.protocolObserved },
             });
             continue;
@@ -770,7 +806,7 @@ export function createNetworkObserver(opts: {
           const location = safeProtocolLocation(redactedUrl);
           const fingerprint = fingerprintAnomaly({
             journeyId: opts.journeyId ?? 'unbound',
-            stepId: journeyIntent?.stepId ?? null,
+            stepId: requestIntent?.stepId ?? null,
             oracleId: issue.type,
             resourceRole: role,
             host: (() => { try { return new URL(rawUrl).hostname; } catch { return undefined; } })(),
@@ -816,6 +852,7 @@ export function createNetworkObserver(opts: {
           role,
           status,
           contentType,
+          intent: requestIntent,
           data: { expectedContentType: contentIssue.expected, observedContentType: contentIssue.observed },
         });
       }
@@ -847,7 +884,7 @@ export function createNetworkObserver(opts: {
             method,
             targetId: endpointMatch?.ruleId,
             journeyId: opts.journeyId ?? 'unbound',
-            stepId: journeyIntent?.stepId ?? undefined,
+            stepId: requestIntent?.stepId ?? undefined,
           });
         } catch {
           // Defensive only: the hook core is total. A crash here must still
@@ -856,7 +893,7 @@ export function createNetworkObserver(opts: {
           const receipt = buildInternalErrorReceipt({
             targetId: endpointMatch?.ruleId,
             journeyId: opts.journeyId,
-            stepId: journeyIntent?.stepId ?? undefined,
+            stepId: requestIntent?.stepId ?? undefined,
           });
           recordEvaluation(receipt);
           recorder.event({
@@ -934,16 +971,31 @@ export function createNetworkObserver(opts: {
           monitor.recordIssue(ev);
         }
       }
-  } catch {
+    } catch {
+      // A response-processing failure is a framework observation defect, not
+      // a product pass. The bounded capture status makes it visible to the
+      // journey evidence and replay classifier without retaining exception
+      // text or response data.
+      captureIncomplete = true;
       // An observer must never crash the run.
     } finally {
       if (observing) {
         pendingResponseHandlers = Math.max(0, pendingResponseHandlers - 1);
-        try { if (request !== undefined) pendingUrls.delete(request.url()); } catch {}
+        try {
+          if (request !== undefined) {
+            const count = pendingUrls.get(request.url()) ?? 0;
+            if (count <= 1) pendingUrls.delete(request.url());
+            else pendingUrls.set(request.url(), count - 1);
+          }
+        } catch {}
       }
       if (tracked && request !== undefined) {
         trackedRequests.delete(request);
         active = Math.max(0, active - 1);
+      }
+      if (request !== undefined) {
+        if (journeyTrackedRequests.delete(request)) activeJourneyRequestCount = Math.max(0, activeJourneyRequestCount - 1);
+        requestIntents.delete(request);
       }
       if (observing || tracked) lastActivity = Date.now();
     }
@@ -952,16 +1004,19 @@ export function createNetworkObserver(opts: {
   function onRequestFailed(request: Request): void {
     try {
       const rawUrl = request.url();
+      const requestIntent = intentForRequest(request);
       if (trackedRequests.delete(request)) {
         active = Math.max(0, active - 1);
         lastActivity = Date.now();
       }
+      if (journeyTrackedRequests.delete(request)) activeJourneyRequestCount = Math.max(0, activeJourneyRequestCount - 1);
+      requestIntents.delete(request);
       const redactedUrl = recorder.redactUrl(rawUrl);
       if (blockedUrls.has(rawUrl)) {
         const decision = policy.decide(rawUrl);
         const endpointClassification = matchEndpoint(rawUrl, request.method())?.classification ?? null;
         const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
-        recordResource(rawUrl, role, 'CANCELED_BY_POLICY', request.method(), null, undefined);
+        recordResource(rawUrl, role, 'CANCELED_BY_POLICY', request.method(), null, undefined, requestIntent);
         recorder.event({
           type: 'requestfailed',
           severity: 'info',
@@ -982,13 +1037,13 @@ export function createNetworkObserver(opts: {
       const errorText = request.failure()?.errorText ?? 'unknown';
       const endpointClassification = matchEndpoint(rawUrl, request.method())?.classification ?? null;
       const role = resourceRole(rawUrl, request.resourceType(), endpointClassification);
-      const lifecycleState = classifyRequestFailure(errorText, journeyIntent?.actionType === 'NAVIGATE_APPROVED_ROUTE');
+      const lifecycleState = classifyRequestFailure(errorText, requestIntent?.actionType === 'NAVIGATE_APPROVED_ROUTE');
       // Chromium can emit a follow-up ERR_ABORTED after a response has
       // already been delivered while a document is replaced. The response
       // lifecycle is authoritative in that case; do not relabel an HTTP
       // failure as a navigation cancellation.
       if (!completedRequests.has(request)) {
-        recordResource(rawUrl, role, lifecycleState, request.method(), null, undefined);
+        recordResource(rawUrl, role, lifecycleState, request.method(), null, undefined, requestIntent);
       }
       // Client-side aborts (net::ERR_ABORTED) are ordinary application
       // behavior (e.g. EventSource.close(), fetch AbortController) and
@@ -1039,6 +1094,7 @@ export function createNetworkObserver(opts: {
         rawUrl,
         redactedUrl,
         role,
+        intent: requestIntent,
         data: { lifecycleState },
       });
     } catch {
@@ -1114,7 +1170,10 @@ export function createNetworkObserver(opts: {
     },
     activeRequests: () => active,
     pendingResponseHandlers: () => pendingResponseHandlers,
-    pendingUrls: () => new Set(pendingUrls),
+    pendingUrls: () => new Set(pendingUrls.keys()),
+    pendingUrlCount: () => pendingUrls.size,
+    activeJourneyRequests: () => activeJourneyRequestCount,
+    captureStatus: () => captureIncomplete ? 'INCOMPLETE' : captureAttempted ? 'COMPLETE' : 'UNKNOWN',
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,

@@ -132,6 +132,21 @@ test('real declarative engine runs the source-shaped read journey and distinguis
   expect(run.evidence.safetyStatus).toBe('PASS');
 });
 
+test('late responses retain the action that initiated the request', async ({ browser }) => {
+  const first = await runFixture(browser, 'late-response');
+  const replay = await runFixture(browser, 'late-response');
+  expect(first.evidence.resourceObservations).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      role: 'API_KNOWN_READ',
+      state: 'COMPLETED',
+      stepId: 'payer-navigate',
+    }),
+  ]));
+  expect(first.evidence.oracleStatus).toBe('FAIL');
+  expect(first.evidence.oracleObservations?.find((item) => item.oracleId === 'malformed-json')?.fingerprint)
+    .toBe(replay.evidence.oracleObservations?.find((item) => item.oracleId === 'malformed-json')?.fingerprint);
+});
+
 test('route mismatch and missing structural selector are journey oracle failures', async ({ browser }) => {
   const mismatch = await runFixture(browser, 'route-mismatch');
   expect(mismatch.evidence.passed).toBe(false);

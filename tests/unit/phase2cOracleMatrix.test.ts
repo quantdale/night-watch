@@ -206,6 +206,55 @@ test('replay matrix distinguishes strict, bounded, semantic, and anomaly dimensi
   expect(compareJourneyReplay(sameFingerprint, differentFingerprint).strictInvariantMismatches).toContain('oracle-set');
 });
 
+test('replay classification is explicit and never upgrades unexplained outcomes to PASS', () => {
+  const settled = {
+    ...baseEvidence(),
+    captureStatus: 'COMPLETE' as const,
+    observationSettlement: 'SETTLED' as const,
+    environmentInputDigest: 'env:first',
+  };
+  const timing = compareJourneyReplay(settled, { ...settled, routeStabilityMs: settled.routeStabilityMs + 25 });
+  expect(timing.classification).toBe('TIMING_ONLY_OBSERVATION_DIFFERENCE');
+  expect(timing.passed).toBe(true);
+  expect(timing.diagnosticCodes).toContain('TIMING_VARIANCE_ONLY');
+
+  const auth = compareJourneyReplay(settled, { ...settled, authValid: false });
+  expect(auth.classification).toBe('AUTH_DIVERGENCE');
+  expect(auth.passed).toBe(false);
+
+  const environment = compareJourneyReplay(settled, { ...settled, environmentInputDigest: 'env:second' });
+  expect(environment.classification).toBe('ENVIRONMENT_DIVERGENCE');
+  expect(environment.passed).toBe(false);
+
+  const capture = compareJourneyReplay(settled, { ...settled, captureStatus: 'INCOMPLETE' });
+  expect(capture.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
+  expect(capture.passed).toBe(false);
+
+  const product = {
+    ...settled,
+    passed: false,
+    oracleStatus: 'FAIL' as const,
+    oracleObservations: [{
+      oracleId: 'malformed-json',
+      triggered: true,
+      severity: 'WARNING' as const,
+      anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY' as const,
+      causalToPrimaryFailure: 'UNRESOLVED' as const,
+      fingerprint: 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
+    }],
+  };
+  const productDrift = compareJourneyReplay(product, {
+    ...product,
+    oracleObservations: [{ ...product.oracleObservations[0]!, fingerprint: 'fp:sha256:bbbbbbbbbbbbbbbbbbbbbbbb' }],
+  });
+  expect(productDrift.classification).toBe('EXPECTED_PRODUCT_STATE_DRIFT');
+  expect(productDrift.passed).toBe(false);
+
+  const unknown = compareJourneyReplay({ ...settled, passed: false }, { ...settled, passed: false });
+  expect(unknown.classification).toBe('UNKNOWN_DIVERGENCE');
+  expect(unknown.passed).toBe(false);
+});
+
 test('replay comparator treats duplicate equivalent reads as bounded count variance', () => {
   const first = baseEvidence();
   const read = first.semanticRequests![0]!;

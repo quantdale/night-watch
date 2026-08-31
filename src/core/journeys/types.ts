@@ -136,7 +136,17 @@ export interface JourneyEvidence {
   failureAttribution?: JourneyFailureAttribution;
   resourceObservations?: readonly JourneyResourceObservation[];
   containmentCounts?: JourneyContainmentCounts;
+  /** Aggregate response-body capture health for this observation. */
+  captureStatus?: JourneyCaptureStatus;
+  /** Whether the bounded response/oracle settlement barrier completed. */
+  observationSettlement?: JourneyObservationSettlement;
+  /** Optional safe digest of the environment inputs used by the observation. */
+  environmentInputDigest?: string;
 }
+
+export type JourneyCaptureStatus = 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
+
+export type JourneyObservationSettlement = 'SETTLED' | 'TIMED_OUT' | 'NOT_APPLICABLE';
 
 export interface JourneySemanticRequest {
   ruleId: string;
@@ -250,11 +260,26 @@ export type ReplayComparisonCategory =
   | 'SAFETY_DIVERGENCE'
   | 'AUTH_DIVERGENCE';
 
+export type ReplayDivergenceClassification =
+  | 'MATCH'
+  | 'DETERMINISTIC_REPLAY_MISMATCH'
+  | 'EXPECTED_PRODUCT_STATE_DRIFT'
+  | 'TIMING_ONLY_OBSERVATION_DIFFERENCE'
+  | 'ENVIRONMENT_DIVERGENCE'
+  | 'AUTH_DIVERGENCE'
+  | 'BENIGN_TELEMETRY_VARIATION'
+  | 'FRAMEWORK_CAPTURE_DEFECT'
+  | 'UNKNOWN_DIVERGENCE';
+
 export interface ReplayComparison {
   passed: boolean;
   categories: readonly ReplayComparisonCategory[];
   strictInvariantMismatches: readonly string[];
   boundedVariance: readonly string[];
+  classification: ReplayDivergenceClassification;
+  classificationReason: string;
+  /** Stable bounded diagnostic codes; never raw URLs, payloads, or timing values. */
+  diagnosticCodes: readonly string[];
   differential?: ReplayDifferentialEvidence;
 }
 

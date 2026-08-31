@@ -446,6 +446,8 @@ export async function runDeclarativeJourney(
       failureAttribution: buildJourneyFailureAttribution({ steps, monitor: ctx.monitor, authValid: false }),
       resourceObservations: ctx.network.resourceObservations().map((item) => ({ role: item.role, state: item.state, method: item.method, stepId: item.stepId, statusClass: statusClass(item.status), contentTypeClass: item.contentTypeClass })),
       containmentCounts: { optionalSupportBlocked: ctx.network.optionalSupportBlockedHosts().size, telemetryBlocked: ctx.network.telemetryBlockedHosts().size, browserBackgroundBlocked: ctx.network.browserBackgroundBlockedHosts().size, containmentEvents: [...ctx.monitor.containmentEvents] },
+      captureStatus: ctx.network.captureStatus?.() ?? 'UNKNOWN',
+      observationSettlement: 'NOT_APPLICABLE',
     };
     ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion });
     return evidence;
@@ -476,6 +478,8 @@ export async function runDeclarativeJourney(
   if (!observationsSettled) {
     recordIssue(ctx, 'oracle-observation-settle-timeout', { journeyId: definition.journeyId });
   }
+  const captureStatus = ctx.network.captureStatus?.() ?? 'UNKNOWN';
+  const observationSettlement = observationsSettled ? 'SETTLED' : 'TIMED_OUT';
 
   const observations = ctx.network.journeySemanticRequests();
   const semantics = semanticSummary(observations);
@@ -504,6 +508,7 @@ export async function runDeclarativeJourney(
     requiredReadsPresent &&
     safetyStatus === 'PASS' &&
     observationsSettled &&
+    captureStatus !== 'INCOMPLETE' &&
     !ctx.monitor.failed &&
     authValid &&
     contractUnchanged;
@@ -523,7 +528,7 @@ export async function runDeclarativeJourney(
     mutationCount: semantics.mutationCount,
     routeStabilityMs,
     authValid,
-    oracleStatus: ctx.monitor.oracleFailed || !observationsSettled ? 'FAIL' : 'PASS',
+    oracleStatus: ctx.monitor.oracleFailed || !observationsSettled || captureStatus === 'INCOMPLETE' ? 'FAIL' : 'PASS',
     privacyStatus: 'PASS',
     safetyStatus,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
@@ -572,6 +577,8 @@ export async function runDeclarativeJourney(
       browserBackgroundBlocked: ctx.network.browserBackgroundBlockedHosts().size,
       containmentEvents: [...ctx.monitor.containmentEvents],
     },
+    captureStatus,
+    observationSettlement,
   };
   ctx.recorder.addManifestEntry('journeyEvidence', {
     journeyId: evidence.journeyId,
@@ -598,6 +605,8 @@ export async function runDeclarativeJourney(
     anomalyFingerprints: evidence.anomalyFingerprints,
     failureAttribution: evidence.failureAttribution,
     containmentCounts: evidence.containmentCounts,
+    captureStatus: evidence.captureStatus,
+    observationSettlement: evidence.observationSettlement,
   });
   ctx.recorder.event({
     type: 'journey',
