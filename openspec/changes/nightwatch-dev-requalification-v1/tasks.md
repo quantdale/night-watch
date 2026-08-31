@@ -31,18 +31,24 @@
 
 ## 4. Defect and evidence reconciliation
 
-- [ ] 4.1 Reconcile product anomalies, finding identity, cluster counts, and
+- [x] 4.1 Reconcile product anomalies, finding identity, cluster counts, and
   sanitized owner-local evidence against prior historical observations.
-- [ ] 4.2 Reproduce and fix any Critical/High Nightwatch defect discovered in
+  Bounded runtime failures `BODY_UNAVAILABLE` / `BODY_READ_TIMEOUT` were
+  retained as framework limitations with truthful brief headlines.
+- [x] 4.2 Reproduce and fix any Critical/High Nightwatch defect discovered in
   the real runs, adding a deterministic local regression before continuation.
-- [ ] 4.3 Record auth expiry, environmental blocks, interruptions, or unknown
-  outcomes as explicit limitations rather than PASS.
+  DVR-012 repaired `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING` and is
+  validated at `fa236b6`; final campaign `1054b827` proves the repair.
+- [x] 4.3 Record auth expiry, environmental blocks, interruptions, or unknown
+  outcomes as explicit limitations rather than PASS. Both terminal campaigns
+  are recorded as bounded framework limitations with zero candidates.
 
 ## 5. Closure
 
-- [ ] 5.1 Run the appropriate final local, clean, state, and focused validation
-  matrix after all real observations settle.
-- [ ] 5.2 Update STATE and REPORT with exact counts, receipts, Git anchors,
+- [x] 5.1 Run the appropriate final local, clean, state, and focused validation
+  matrix after all real observations settle. `gate:local` PASS, campaign 32/32,
+  oracle matrix 80/80, hardening PASS, agent/project PASS.
+- [x] 5.2 Update STATE and REPORT with exact counts, receipts, Git anchors,
   DEV outcome categories, and remaining limitations.
-- [ ] 5.3 Close this task only when the completion snapshot and OpenSpec task
+- [x] 5.3 Close this task only when the completion snapshot and OpenSpec task
   list are terminal, then commit, push, and verify clean `main` parity.

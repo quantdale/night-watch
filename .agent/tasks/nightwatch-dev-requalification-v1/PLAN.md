@@ -130,7 +130,7 @@ reduced to a local deterministic regression before a real run resumes.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 
-### M3 — Reconciliation and closure — IN_PROGRESS
+### M3 — Reconciliation and closure — COMPLETE
 
 - Reconcile product anomaly identity, cluster counts, persisted state, and
   explicit auth/environment/unknown limitations.
