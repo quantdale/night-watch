@@ -1,93 +1,80 @@
-# EXECUTION PROMPT — Reliability, Yield, and State Protocol
+# EXECUTION PROMPT — Bounded DEV Requalification
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-reliability-yield-and-state-protocol-v1
-OpenSpec: openspec/changes/nightwatch-reliability-yield-and-state-protocol-v1/
-Planned-From: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
+Status: IN_PROGRESS
+Campaign ID: nightwatch-dev-requalification-v1
+OpenSpec: openspec/changes/nightwatch-dev-requalification-v1/
+Planned-From: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Target Branch: main
-Predecessor Task ID: nightwatch-final-reproducibility-polish-v1
+Predecessor Task ID: nightwatch-reliability-yield-and-state-protocol-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Determine whether Nightwatch can repeatedly produce the same trustworthy
-interpretation under real product nondeterminism, use existing mechanically
-proven surfaces more effectively, and preserve project-state truth through an
-explicit fail-closed task-verdict protocol.
+Use the freshly refreshed owner-managed DEV authentication state to obtain a
+bounded, serial, truthful real-system sample from the existing read-only Phase
+2C, Phase 4, Phase 5, campaign, and replay paths. Preserve independent
+outcome categories and do not reopen or relabel the completed predecessor.
 
 ## Permanent constraints
 
 - No production or NEXT contact and no DEV mutation.
-- No infrastructure, deployment, database, datastore, or cloud operations;
-  the owner-frozen data/infrastructure boundary remains authoritative.
+- No infrastructure, deployment, database, datastore, or cloud operations.
 - No Alphaus sibling-repository writes, external publication, issue creation,
   or automatic owner/team messaging.
 - No credentials, cookies, tokens, storage-state bytes, raw customer values,
   raw DOM/responses, authenticated traces, or raw findings in Git, task files,
-  artifacts committed to GitHub, or diagnostics.
+  diagnostics, or shared artifacts.
 - No force-push, retry-based correctness certification, proof weakening,
-  opaque execution scoring, or arbitrary canonical promotion.
+  opaque scoring, or arbitrary canonical promotion.
+- Use only the existing guarded serial launchers and the owner-local external
+  state produced by the human-led auth capture.
 
 ## Required workstreams
 
-1. Baseline and defect ledger before implementation.
-2. Phase 2C replay reproduction, classification, canonicalization, and
-   regression hardening.
-3. Proof-aware campaign prioritization, diversity, yield attribution,
-   clustering, and false-positive controls without a new proof family.
-4. Explicit `PROJECT_VERDICT_EFFECT` state protocol and structured continuity/
-   live-document validation.
-5. Persisted-state chaos, auth lifecycle, bounded diagnostics, cache/property
-   audit, and measured performance.
-6. Bounded real DEV observations if owner-managed auth and all guards pass;
-   local/clean/isolated parity and final reconciliation.
+1. Validate successor continuity, handoff, project truth, safety, and DEV
+   preflight before any target operation.
+2. Run three independent Phase 2C observations and retain every sanitized
+   journey/replay classification.
+3. Run one Phase 4 read-only exploration, one Phase 5 read-only API operation,
+   one campaign prepare/resume, and one safe selected replay when available.
+4. Inspect product-vs-framework classification, finding deduplication,
+   persisted state, cleanup, and resource boundaries.
+5. Reproduce and repair any Nightwatch Critical/High defect before continuing;
+   otherwise perform final local/clean/state/Git reconciliation.
 
 ## Execution rule
 
-Every divergence, blocked gate, anomaly, and CI observation is retained as a
-sanitized categorical result. A retry may provide another observation but may
-not erase or relabel a prior strict mismatch. `NO_SAFE_NEW_FAMILY` remains a
-valid outcome. Any Critical/High Nightwatch defect is repaired before closure.
+Every result is retained as a categorical observation. A retry is a new
+observation and may not erase or relabel an earlier mismatch. Auth,
+environment, timing, framework, product, and unknown results never become
+unqualified PASS. `NO_SAFE_NEW_FAMILY` remains unchanged.
 
 ## Active continuity
 
 The active task is
-`.agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1/` under
-`nightwatch.agent-continuity.v2`. The task declares
-`PROJECT_VERDICT_EFFECT: PRESERVE`; this allows post-acceptance hardening to
-remain active while the existing project verdict stays
-`OPERATIONALLY_ACCEPTED`. A future requalification or invalidation must use a
-different explicit effect and pass the corresponding checker rules.
+`.agent/tasks/nightwatch-dev-requalification-v1/` under
+`nightwatch.agent-continuity.v2`. It declares
+`PROJECT_VERDICT_EFFECT: PRESERVE` while the bounded read-only sample is
+underway. If validated evidence invalidates acceptance, stop and use the
+explicit `REEVALUATE` protocol before further campaign work.
 
 ## Initial next action
 
-The baseline and M1 replay checkpoint are complete; the replay fix is pushed
-at `bf35bf3`. The first M2 planner/yield slice is pushed at `a5ff79f`; build
-and record a deterministic selection backtest against the current Phase 24
-mechanically proven inventory next.
+Run `npm run agent:check`, `npm run handoff:check`, `npm run project:check`,
+`npm run hardening:check`, and `npm run observe:preflight -- --env=dev`.
+If they pass, run the first serial Phase 2C observation with the external
+owner-local state.
 
 ## Current checkpoint
 
-The replay, planner/yield, explicit verdict-effect, live-state, cache/property,
-bounded interruption, and handoff-fixture compatibility milestones are
-locally validated at implementation checkpoint
-`f8757303403dffab6039be3f51b807c8631e3c6a`. The current inventory
-backtest is deterministic: 128 considered, 3 eligible, 3 selected, zero
-redundancy, and no new proof family. The release evidence is complete for the
-locally authorized branch. The owner-managed DEV state was structurally valid
-but its session failed the authenticated-session gate before browser-context
-creation, so actual DEV observations remain zero. No credential refresh or
-bypass was attempted.
-
-Canonical and topology-correct isolated full suites are byte-equivalent at
-`e33c07f`: 2,690 test instances, 2,677 expected passes, 13 identical skips,
-and zero failures/flakes. The local gate and Control Center checks are green;
-the clean Node 20 gate and final project/agent/handoff truth are recorded in
-the task STATE.
+The owner-led DEV auth capture completed successfully at the starting Git
+head. The state was structurally validated and written outside the workspace;
+no secret values were printed. No real product observation has been claimed in
+this successor yet.
 
 ## Terminal action
 
-STOP. A future DEV repetition or requalification requires fresh owner-managed
-authentication and a separately authorized successor; it must not relabel
-this task's auth-blocked branch as a replay result.
+At closure, complete the successor STATE/REPORT, validate the final evidence,
+commit and push the checkpoint, and verify clean `main` parity. Do not close
+while any required observation or recovery result is unexplained.

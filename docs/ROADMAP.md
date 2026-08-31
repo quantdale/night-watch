@@ -2601,3 +2601,14 @@ The final pushed checkpoint was inspected once by Actions (run `33361000650`,
 job `99392187476`) and failed before any job step (`steps=[]`); this remains
 external non-evidence, while the local and clean gates are the authoritative
 validation for this locally scoped successor.
+
+## Bounded DEV requalification — IN_PROGRESS — 2026-08-31
+
+The owner-managed DEV authentication state was freshly refreshed through the
+guarded human-led capture path and passed post-login, structural, provenance,
+and cleanup validation. A new continuity-v2 successor,
+`nightwatch-dev-requalification-v1`, is authorized for a fixed serial sample
+of Phase 2C, Phase 4, Phase 5, campaign prepare/resume, and safe replay. It
+preserves `OPERATIONALLY_ACCEPTED` explicitly while evidence is collected;
+every auth, environment, product, framework, timing, and replay result will be
+retained without retry relabeling.

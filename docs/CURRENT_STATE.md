@@ -309,18 +309,18 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-reliability-yield-and-state-protocol-v1
-LIVE_PHASE: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-dev-requalification-v1
+LIVE_PHASE: DEV_REQUALIFICATION_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
 
 ### Post-acceptance reliability, yield, and state-protocol campaign
 
-The active successor task is
+The completed successor task was
 `nightwatch-reliability-yield-and-state-protocol-v1`, with explicit verdict
 effect `PRESERVE`. Its implementation checkpoint is
 `f8757303403dffab6039be3f51b807c8631e3c6a`: replay identity/capture
@@ -332,7 +332,7 @@ validated. The current source authority remains
 projections. A separate source-gaps presentation has a stale zero-eligible
 summary field; direct eligibility and Control Center authority agree on 3.
 
-The successor is complete for its locally authorized scope. The first guarded
+That successor was complete for its locally authorized scope. The first guarded
 DEV invocation stopped at the local repository-freshness gate because the
 successor's documentation checkpoint was uncommitted. After the checkpoint,
 the safety gate passed but the first journey stopped before browser-context
@@ -348,12 +348,22 @@ passed with receipt `receipt:sha256:204fec32f3097dee597ca7a7` and clean receipt
 `clean-receipt:sha256:95d5aafd432b349ad4a90f8b`. Control Center typecheck,
 11 tests, and the 3-file build passed. `OPERATIONALLY_ACCEPTED` is preserved;
 fresh real DEV repetition remains a separately authorized follow-up after
-owner-managed authentication is refreshed.
+owner-managed authentication was refreshed.
 
 The final pushed head `2ffc79c` was observed once by Actions as run
 `33361000650` / job `99392187476`; the job failed with `steps=[]` before
 runner execution. This is external non-evidence and does not supersede the
 passing local and clean receipts above.
+
+### Current bounded DEV requalification
+
+The active successor task is `nightwatch-dev-requalification-v1`, bound to the
+current Git head with explicit `PROJECT_VERDICT_EFFECT: PRESERVE`. The owner-led
+DEV authentication capture has passed guarded target, post-login, structural
+state, provenance, and cleanup validation. The next action is a bounded serial
+Phase 2C sample followed by the authorized Phase 4, Phase 5, campaign, and
+replay observations; no result is claimed until its sanitized outcome is
+recorded.
 
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated
