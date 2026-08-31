@@ -117,18 +117,21 @@ running any external observation.
   green; cache invalidation tests mutate actual version inputs; canonical
   digest properties assert their stated invariants.
 
-### M5 — Repeated operation and release evidence — IN_PROGRESS
+### M5 — Repeated operation and release evidence — COMPLETE
 
 - Run bounded DEV observations if the owner-managed state is valid, preserving
   every divergence/anomaly classification.
 - Run local, clean, isolated, Control Center, and final validation, inspect CI
   once, and reconcile all task/project documentation.
-- Result so far: the clean Phase 2C launcher passed all safety gates but its
-  first journey stopped before browser-context creation with
+- Result: the clean Phase 2C launcher passed all safety gates but its first
+  journey stopped before browser-context creation with
   `HUMAN_AUTH_ACTION_REQUIRED`; the external state is structurally valid but
   its session is no longer usable. Actual DEV observations are 0, with one
-  auth-blocked attempt and no replay-divergence sample. Continue with local,
-  clean, isolated, and final evidence without automatic credential refresh.
+  auth-blocked attempt and no replay-divergence sample. This is retained as a
+  truthful limitation; no automatic credential refresh was attempted.
+  Canonical and topology-correct isolated suites are exact at 2,690 total /
+  2,677 expected / 13 skipped / 0 failed or flaky. Local, clean Node 20,
+  Control Center, project, handoff, and continuity evidence is green.
 
 ## Validation Strategy
 
@@ -178,3 +181,10 @@ state regressions are green; yield claims are evidence-based; local/clean and
 isolated parity are exact or explained; DEV and CI are reported truthfully;
 task/project/handoff docs agree; a validated checkpoint is committed on clean
 `main` with `HEAD == origin/main`.
+
+## Terminal state
+
+COMPLETE / STOP. No further action is authorized in this task. A future
+bounded DEV repetition requires refreshed owner-managed authentication and a
+separately authorized successor; it must preserve the categorical auth,
+environment, replay, product, and framework outcomes defined by this task.

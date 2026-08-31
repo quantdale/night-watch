@@ -3851,3 +3851,49 @@ boundary remains intact. The real Phase 2C and Phase 4 matrices must be rerun
 from the clean checkpoint; any surviving malformed-response event remains
 DEV/product evidence and must not be suppressed or reclassified as a
 Nightwatch pass.
+
+## D-98 — Project-verdict preservation requires explicit task semantics
+
+**Context.** The project-state checker had been allowing an active task whose
+name began with `nightwatch-` to preserve `OPERATIONALLY_ACCEPTED`, with
+historical exceptions layered on top. Continuity parsing also treated status
+words in explanatory prose as milestone state. Both behaviors made
+authorization and recovery depend on conventions outside the semantic state
+model.
+
+**Decision.** Active tasks must declare one bounded verdict effect:
+`PRESERVE`, `REEVALUATE`, or `SUPERSEDE`. The project checker consumes that
+field and rejects missing, malformed, duplicate, or semantically mismatched
+effects. Active task, task STATE, execution prompt, and the bounded live-state
+snapshot cross-check explicit task/phase/status/effect/next-action/completion
+fields. Milestone status is recognized only in the structured location and
+format defined by the continuity protocol; narrative status vocabulary is
+inert.
+
+**Evidence and consequences.** Negative state matrices cover accepted
+preservation, requalification, premature acceptance, malformed/duplicate
+fields, task-name independence, and contradictory live documentation. The
+current hardening task uses `PRESERVE`, so the existing operational verdict is
+unchanged. Historical task records remain readable and are not mass-migrated.
+
+## D-99 — Auth-blocked real requalification is a categorical limitation
+
+**Context.** The post-acceptance reliability campaign required repeated real
+DEV observation, but the owner-managed storage state passed structural checks
+and then failed authenticated-session validation before browser-context
+creation. Treating that path as a retry pass or a product result would make
+the final reliability claim false.
+
+**Decision.** Record the auth boundary as `HUMAN_AUTH_ACTION_REQUIRED` with
+zero actual product observations, preserve the prior accepted evidence as
+historical, and stop without automatic credential refresh or bypass. Local
+replay, state, campaign, clean-install, and isolated-topology evidence may
+close the locally authorized hardening scope, but a fresh DEV reliability rate
+requires new owner-managed authentication and a separately authorized
+successor.
+
+**Evidence and consequences.** The guarded continuation had one initial
+repository-freshness block while documentation was dirty and one subsequent
+auth-blocked attempt after all local safety gates passed. No credentials,
+raw responses, or customer values were persisted. `OPERATIONALLY_ACCEPTED`
+remains preserved and no DEV outcome is overclaimed.

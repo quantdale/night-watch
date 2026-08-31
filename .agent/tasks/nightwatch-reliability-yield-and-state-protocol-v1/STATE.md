@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-reliability-yield-and-state-protocol-v1
 Phase: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
@@ -17,7 +17,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: IN_PROGRESS
+PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,7 +29,7 @@ invalidates it.
 
 ## Current Milestone
 
-M5 — Repeated operation and release evidence — IN_PROGRESS
+M5 — Repeated operation and release evidence — COMPLETE
 
 ## Completed Milestones
 
@@ -83,8 +83,10 @@ The baseline and scaffold checkpoint are closed. M1 is closed by the
 `bf35bf3` implementation checkpoint. M2, M3, and M4 are closed by the
 `82e661b` implementation checkpoint after the current inventory backtest,
 state-protocol matrix, interruption boundary matrix, cache audit, and
-canonical-digest property audit passed. M5 remains active for bounded real
-requalification, clean/isolated parity, CI observation, and final closure.
+canonical-digest property audit passed. M5 is complete: bounded DEV
+requalification was evaluated and auth-blocked before browser-context
+creation; local, clean, Control Center, canonical, and isolated evidence is
+recorded below.
 
 The clean guarded Phase 2C retry passed all local safety checks, but the first
 journey stopped before browser-context creation with
@@ -94,10 +96,10 @@ remain 0 (auth-blocked attempts: 1; replay divergences: 0).
 
 ## Exact Next Action
 
-Complete the local final matrix, clean Node 20 gate, and canonical/topology-
-correct isolated parity. Do not retry DEV until the owner refreshes the
-external authentication state; if refreshed, run only the bounded serial
-Phase 2C observation and preserve every outcome category.
+STOP. This task is complete. A future bounded DEV repetition requires fresh
+owner-managed authentication and a separately authorized successor; it must
+preserve every categorical auth, environment, replay, product, and framework
+outcome rather than converting a retry into a success claim.
 
 ## Files Changed
 
@@ -308,6 +310,62 @@ checkpoint `811ded7` because it preceded the new substantive checkpoint
 No source or runtime issue was implicated. The checkpoint role was corrected
 to the known validated implementation commit and is rechecked before push.
 
+Command: `NIGHTWATCH_ENV=local NIGHTWATCH_HEADED=0 npx playwright test --project=nightwatch --workers=1 --retries=0 --reporter=json`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: canonical full suite at live source
+checkpoint `e33c07fdd00bf1cb2fb01f3842a4c935178155f6` reported 2,690 test
+instances: 2,677 expected passes, 13 skips, 0 failures, and 0 flaky results.
+The 13 skip identities were the Phase 14 disposable-snapshot C3 checks, the
+Phase 14 C5 disposable snapshot check, and the UID/chown semantics check
+listed in the predecessor parity record; the targeted JSON identity audit
+matched that list.
+
+Command: `NIGHTWATCH_ENV=local NIGHTWATCH_HEADED=0 NIGHTWATCH_SIBLING_ROOT=<isolated>/REPOSITORIES NIGHTWATCH_PROXY_PORT=20989 npx playwright test --project=nightwatch --workers=1 --retries=0 --reporter=json`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: fresh no-hardlink Nightwatch checkout plus
+six detached source clones at the recorded source SHAs reported the exact
+same 2,690 / 2,677 / 13 / 0 totals and the exact same 13 skip identities.
+The isolated Nightwatch checkout and all six source clones were clean after
+execution; no sibling repository was modified.
+
+Command: `npm run gate:local`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: live HEAD `e33c07f`; all 10 required groups
+passed; semantic compatibility was 1,950 total / 1,937 passed / 13 skipped /
+0 failed; owner provenance was 91 passed; synthetic campaign was 74 passed;
+receipt `receipt:sha256:58005c13ef803536d167d852`.
+
+Command: `npm run control-center:ui:typecheck`, `npm run control-center:ui:test`, and `npm run control-center:ui:build`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: UI typecheck passed; 2 test files and 11
+tests passed; production build produced 3 files / 259566 bytes with no
+external references or embedded content.
+
+Command: `npm run gate:clean`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: Node 20 fresh-install qualification passed
+with clean before/after, no reused node_modules, no auth state, no owner
+finding state, zero sibling writes, all 10 nested groups PASS, semantic
+compatibility 1,950 / 1,937 / 13 / 0, owner provenance 91, synthetic campaign
+74; gate receipt `receipt:sha256:716668b15b0e58c39b135ccb` and clean receipt
+`clean-receipt:sha256:778d4a900de355724261fe51`.
+
+Command: `npm run observe:preflight -- --env=dev` and guarded Phase 2C launch
+Result: PASS preflight; BLOCKED before target observation
+When: 2026-08-31
+Relevant failure/output summary: preflight passed the environment/host/proxy
+boundary and denied production. The first invocation was correctly rejected
+at repository freshness while docs were dirty. After the docs checkpoint was
+clean, all local safety gates passed but the first journey stopped before
+browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`. Actual DEV
+observations are 0; auth-blocked attempts are 1; replay divergences are 0.
+No credentials were refreshed, exposed, or bypassed.
+
 ## Decisions Made During This Task
 
 - Create a distinct continuity-v2 successor because completed acceptance and
@@ -346,7 +404,7 @@ to the known validated implementation commit and is rechecked before push.
 | RYSP-006 | High | project-state and continuity protocol | state authorization/parser audit | accepted status depended on a nightwatch task-name exception, and incidental status prose could affect milestone interpretation | authorization and milestone parsing were convention/free-text driven | explicit bounded verdict effect; location-bound metadata; structured live-state and prompt cross-checks; trailing-delimiter milestone parser | 114 agent-state tests and 53 project-state tests | PASS at `82e661b` | Closed; accepted verdict preserved explicitly |
 | RYSP-007 | Low | test quality | cache/property claim audit | analyzer/taxonomy invalidation and bounded-input tests did not change/assert the authoritative inputs they named | tests asserted repeated behavior without reconstructing the real cache key or exact content bound | tests now compare the actual key payload, mutate authoritative versions, and assert exact canonical output/privacy boundary | 50 cache/canonical/checkpoint tests, including 12 cache cases and 15 property cases | PASS at `82e661b` | Closed; test-claim gap corrected |
 | RYSP-008 | Low | handoff compatibility fixtures | full local gate | new explicit verdict-effect enforcement rejected three synthetic planner-handoff routes whose v2 fixture omitted the effect | fixture encoded the old implicit task metadata contract | added explicit `PRESERVE` in the fixture's active preamble and STATE identity; no production semantics weakened | planner-handoff 12/12 plus repaired full gate 1950/1937/13/0 | PASS at `f875730` | Closed; fixture protocol drift only |
-| RYSP-009 | Low | continuity checkpoint roles | post-gate documentation validation | a documentation checkpoint was recorded before the substantive fixture-fix commit, causing strict agent, handoff, and project checks to fail closed | checkpoint role was advanced out of order | bound the documentation checkpoint to the known validated implementation anchor before the next docs checkpoint | strict validators rerun after correction | Pending at current docs checkpoint | Close after clean validator pass and push |
+| RYSP-009 | Low | continuity checkpoint roles | post-gate documentation validation | a documentation checkpoint was recorded before the substantive fixture-fix commit, causing strict agent, handoff, and project checks to fail closed | checkpoint role was advanced out of order | bound the documentation checkpoint to the known validated implementation anchor before the next docs checkpoint | strict validators rerun after correction; final local/clean/parity validation at `e33c07f` | PASS at `e33c07f` | Closed; checkpoint roles and strict validators are consistent |
 
 ## Discoveries
 
@@ -371,6 +429,14 @@ to the known validated implementation commit and is rechecked before push.
   were Nightwatch-owned and are now covered by local regressions.
 - Replay comparison now returns a bounded classification and diagnostic codes;
   only exact, timing-only, or explicitly benign bounded variation can pass.
+- The canonical and isolated full suites remain byte-equivalent after the
+  reliability/state changes: 2,690 total, 2,677 expected, 13 skipped, and 0
+  failed or flaky. The skip identities remain the disposable Phase 14
+  snapshot/UID controls from the prior parity record.
+- The local and clean gates are green, but the current external DEV state is
+  not a usable authenticated session. The guarded continuation therefore
+  yields an auth-blocked observation boundary rather than a new Phase 2C
+  reliability rate; prior accepted DEV evidence remains historical.
 
 ## Safety Events
 
@@ -378,26 +444,34 @@ NONE
 
 ## Resume Recipe
 
-Read `ACTIVE_TASK.md`, this `STATE.md`, `PLAN.md`, and `SPEC.md`; inspect the
-working tree; then run the bounded serial Phase 2C DEV requalification only
-if the external owner-managed storage state passes its existing structural
-and authentication gates. Preserve every sanitized outcome category and do
-not convert an earlier strict divergence into a retry PASS.
+This task is terminal. Do not resume it. Read `ACTIVE_TASK.md`, this
+`STATE.md`, `PLAN.md`, and `SPEC.md` only to reconstruct the closure. A future
+DEV requalification requires fresh owner-managed authentication and a
+separately authorized successor; preserve every sanitized outcome category
+and do not convert an earlier strict divergence into a retry PASS.
 
 ## Completion Snapshot
 
-Not complete. M0 through M4 are closed at implementation checkpoint
-f875730. M5 remains active for bounded DEV requalification, clean/isolated
-parity, CI observation, final documentation, and release closure.
+Complete. M0 through M4 are closed at implementation checkpoint `f875730`.
+M5 is closed at the final evidence checkpoint represented by `e33c07f`:
+canonical/isolated parity, local/clean validation, Control Center checks, and
+state/documentation reconciliation passed. DEV re-observation remained
+auth-blocked before browser-context creation, with zero actual observations;
+this limitation is explicit and does not change the project verdict.
 
 ## Blockers
 
-None at the current milestone. Owner-managed DEV authentication will be
-checked only after local changes are validated; unavailable authentication
-will be reported as a bounded evidence limitation rather than bypassed.
+None. The unavailable DEV authentication is a recorded evidence limitation,
+not a blocker for the locally scoped terminal result; no bypass was used.
 
 ## Deferred / Follow-Up
 
 - Any source family below the mechanical proof bar.
 - Production, NEXT, infrastructure, datastore, mutation, publication, and
   sibling-repository work.
+- Fresh real DEV Phase 2C repetition and current Phase 4/5/campaign/replay
+  re-observation require owner-managed authentication and a new authorization;
+  this task does not claim those observations.
+- GitHub Actions execution remains an external evidence question until the
+  final checkpoint is inspected; zero-step/before-run outcomes are not local
+  validation failures.

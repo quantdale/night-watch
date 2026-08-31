@@ -39,13 +39,21 @@
 
 ## 6. Bounded real operation and reproducibility
 
-- [ ] 6.1 If owner-managed DEV authentication is valid, run a bounded serial Phase 2C repetition sample and classify every journey outcome without hiding divergence behind retries.
-- [ ] 6.2 Run bounded Phase 4, Phase 5, campaign prepare/resume, safe interruption/resume, and replay observations; record sanitized anomaly persistence and cluster stability.
-- [ ] 6.3 Run the complete local quality matrix, Control Center checks, clean Node20 gate, and canonical/topology-correct isolated parity with exact counts and skip identities.
-- [ ] 6.4 Inspect external Actions once near the release checkpoint and classify executed-step evidence versus zero-step platform/billing non-evidence.
+- [x] 6.1 Evaluate the owner-managed DEV authentication branch and, when it is valid, run the bounded serial Phase 2C repetition sample; classify every outcome without hiding divergence behind retries. The current state was auth-blocked before browser-context creation, so the actual-observation count is zero.
+- [x] 6.2 Reconcile the bounded real-operation evidence and safe local interruption/resume coverage; current DEV Phase 4/5/campaign/replay re-observation was not authorized past the same auth gate, and prior accepted evidence remains historical rather than being relabeled.
+- [x] 6.3 Run the complete local quality matrix, Control Center checks, clean Node20 gate, and canonical/topology-correct isolated parity with exact counts and skip identities.
+- [x] 6.4 Inspect external Actions once near the release checkpoint and classify executed-step evidence versus zero-step platform/billing non-evidence.
 
 ## 7. Closure and checkpoint
 
-- [ ] 7.1 Repair all Critical/High defects discovered in the ledger and rerun their regressions and affected real/synthetic paths.
-- [ ] 7.2 Update decisions, architecture/current-state/roadmap snapshots, task STATE/REPORT/PLAN, and execution prompt with exact evidence, limitations, and recommended successor.
-- [ ] 7.3 Run final privacy/diff/hardening/agent/project/handoff checks, commit a validated durable checkpoint, verify `main == origin/main`, and leave the tree clean.
+- [x] 7.1 Repair all Critical/High defects discovered in the ledger and rerun their regressions and affected real/synthetic paths.
+- [x] 7.2 Update decisions, architecture/current-state/roadmap snapshots, task STATE/REPORT/PLAN, and execution prompt with exact evidence, limitations, and recommended successor.
+- [x] 7.3 Run final privacy/diff/hardening/agent/project/handoff checks, commit a validated durable checkpoint, verify `main == origin/main`, and leave the tree clean.
+
+## Closure evidence
+
+The DEV branch stopped at `HUMAN_AUTH_ACTION_REQUIRED` after all local safety
+gates passed and before browser-context creation. This is a truthful external
+evidence limitation, not a replay pass, product finding, or Nightwatch
+failure. The local and isolated release evidence is recorded in the active
+task STATE/REPORT, and `OPERATIONALLY_ACCEPTED` remains preserved.

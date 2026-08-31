@@ -3,13 +3,13 @@
 Task ID: nightwatch-reliability-yield-and-state-protocol-v1
 Phase: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 Title: Nightwatch Reliability, Yield, and State Protocol Campaign
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last checkpoint: handoff-fixture protocol compatibility validated at `f875730`
-Current milestone: M5 — Repeated operation and release evidence — IN_PROGRESS
-Next action: Complete final local, clean, and isolated validation; DEV remains AUTH_BLOCKED until the owner refreshes the external state
+Last checkpoint: final canonical/isolated parity and local truth validation at `e33c07f`
+Current milestone: M5 — Repeated operation and release evidence — COMPLETE
+Next action: STOP
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: IN_PROGRESS
+PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: COMPLETE
 ## Routing and safety
 
 This is the active post-acceptance hardening successor. It preserves the
@@ -28,3 +28,8 @@ source, synthetic, deterministic replay/campaign/state hardening and bounded
 owner-gated DEV read-only observations. No production, NEXT, data/infra,
 sibling writes, publication, credential capture, or containment weakening is
 authorized.
+
+The task is terminal at the validated implementation and final evidence
+recorded in its STATE/REPORT. DEV re-observation was evaluated through the
+existing gates but remained auth-blocked before browser-context creation; no
+credential refresh or bypass was attempted.

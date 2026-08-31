@@ -311,11 +311,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-reliability-yield-and-state-protocol-v1
 LIVE_PHASE: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Post-acceptance reliability, yield, and state-protocol campaign
@@ -332,13 +332,23 @@ validated. The current source authority remains
 projections. A separate source-gaps presentation has a stale zero-eligible
 summary field; direct eligibility and Control Center authority agree on 3.
 
-The remaining milestone is bounded serial DEV requalification, followed by
-clean/isolated parity, final local validation, and one CI observation. The
-first guarded DEV invocation stopped at the local repository-freshness gate
-because this successor's documentation checkpoint was uncommitted. After the
-documentation checkpoint, the safety gate passed but the first journey
-stopped before browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`;
-there are currently no actual DEV observations in this continuation.
+The successor is complete for its locally authorized scope. The first guarded
+DEV invocation stopped at the local repository-freshness gate because the
+successor's documentation checkpoint was uncommitted. After the checkpoint,
+the safety gate passed but the first journey stopped before browser-context
+creation with `HUMAN_AUTH_ACTION_REQUIRED`; there are no actual DEV
+observations in this continuation, and no credential refresh or bypass was
+attempted.
+
+The final canonical and topology-correct isolated suites are exact at 2,690
+test instances / 2,677 expected passes / 13 skips / 0 failures or flakes,
+including identical skip identities. The local gate passed all ten groups
+with receipt `receipt:sha256:58005c13ef803536d167d852`; the Node 20 clean gate
+passed with receipt `receipt:sha256:716668b15b0e58c39b135ccb` and clean receipt
+`clean-receipt:sha256:778d4a900de355724261fe51`. Control Center typecheck,
+11 tests, and the 3-file build passed. `OPERATIONALLY_ACCEPTED` is preserved;
+fresh real DEV repetition remains a separately authorized follow-up after
+owner-managed authentication is refreshed.
 
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated

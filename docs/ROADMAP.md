@@ -2564,3 +2564,35 @@ reconciliation and acceptance validation completed with typecheck, hardening,
 agent, project, handoff, history-audit, and Git hygiene passes. This successor
 does not create a new operational verdict; future work requires a fresh
 authorization.
+
+## Post-acceptance reliability, yield, and state protocol — terminal COMPLETE — 2026-08-31
+
+The successor `nightwatch-reliability-yield-and-state-protocol-v1` closed the
+remaining locally actionable reliability and protocol weaknesses without
+changing the project verdict. The delayed-response reproducer identified two
+Nightwatch-owned defects: premature oracle settlement and response-time
+mutable intent attribution. The observer/engine now tracks intentional
+requests through a bounded settlement barrier and binds responses to the
+originating request intent. Replay comparison canonicalizes only plain-object
+key order, preserves array order/multiplicity, rejects unsupported/cyclic/
+oversized evidence, and classifies unknown capture as a framework defect.
+
+The current source census remains `NO_SAFE_NEW_FAMILY`. Yield improved through
+deterministic proof-aware scheduling: 128 considered / 3 eligible / 3
+selected, scores `953245 > 953140 > 953105`, zero selected redundancy, and
+byte-identical repeated planner projections. The explicit state protocol now
+uses bounded `PRESERVE`, `REEVALUATE`, and `SUPERSEDE` effects; task-name
+prefixes and incidental status prose no longer authorize project truth.
+Cache/property claims were strengthened to exercise their authoritative inputs
+and invariants.
+
+Final canonical and topology-correct isolated suites were exactly 2,690 total
+/ 2,677 expected / 13 skipped / 0 failed or flaky, with identical skip
+identities. The local and Node 20 clean gates passed all ten groups; Control
+Center checks passed; isolated checkouts and all six detached source clones
+remained clean. The current external DEV continuation was truthfully
+auth-blocked before browser-context creation (`HUMAN_AUTH_ACTION_REQUIRED`),
+so no new DEV reliability rate is claimed and prior accepted DEV evidence is
+not relabeled. `OPERATIONALLY_ACCEPTED` remains preserved. A future fresh DEV
+sample requires owner-managed authentication refresh and a separately
+authorized successor.

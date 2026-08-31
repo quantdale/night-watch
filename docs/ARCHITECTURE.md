@@ -1914,6 +1914,40 @@ browser speculative-DNS closure were not proven. Authenticated OOPS was
 consequently fail-closed and the project terminal status was
 `PROJECT_NOT_COMPLETE_BLOCKED`.
 
+## Post-acceptance reliability, yield, and state protocol
+
+The reliability successor adds no new execution or source-proof authority.
+Journey settlement now separates intentional in-flight requests from pending
+response handlers and waits for a bounded quiet barrier before deriving
+journey, exploration, or replay success. Request intent is captured at request
+creation and reused for response attribution, semantic hooks, fingerprints,
+and bounded diagnostics, so response timing cannot change the initiating
+action. Capture health and replay comparison use categorical outcomes; unknown
+capture is a framework defect, not a clean replay.
+
+Replay identity canonicalizes plain object keys only. Array order and
+multiplicity, methods, routes, oracle/semantic identity, source identity, and
+meaningful state remain identity-bearing. Unsupported, cyclic, exotic, or
+oversized structures fail closed before comparison. The planner adds a
+versioned, integer-bounded score and a deterministic second-stage portfolio
+selector using proof confidence, semantic/relation density, source change,
+age, anomalies, replay confidence, cost, diversity, and redundancy. It does
+not admit a source surface or invent a proof family.
+
+Project-state authorization is an explicit protocol rather than task-name
+inference. `PRESERVE`, `REEVALUATE`, and `SUPERSEDE` are bounded effects with
+distinct project-state semantics. Continuity and live documentation validators
+consume location-bound structured fields and reject contradictory or duplicate
+state; incidental prose is not a state channel. The current task's
+`PRESERVE` effect keeps `OPERATIONALLY_ACCEPTED` unchanged.
+
+The implementation checkpoint `f8757303403dffab6039be3f51b807c8631e3c6a`
+passed the affected local regressions. The final canonical and detached-source
+isolated suites at the documentation checkpoint were exact at 2,690 total /
+2,677 expected / 13 skipped / 0 failed or flaky. No real DEV reliability rate
+is asserted when owner-managed authentication stops before browser-context
+creation; that boundary remains a categorical external limitation.
+
 ## Current final completion and L6 boundary — terminal local/clean certification
 
 The active successor campaign implements and qualifies a distinct L6 process

@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Reliability, Yield, and State Protocol
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-reliability-yield-and-state-protocol-v1
 OpenSpec: openspec/changes/nightwatch-reliability-yield-and-state-protocol-v1/
 Planned-From: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
@@ -74,12 +74,20 @@ bounded interruption, and handoff-fixture compatibility milestones are
 locally validated at implementation checkpoint
 `f8757303403dffab6039be3f51b807c8631e3c6a`. The current inventory
 backtest is deterministic: 128 considered, 3 eligible, 3 selected, zero
-redundancy, and no new proof family. The remaining release evidence is bounded
-DEV requalification if the external owner-managed authentication is valid,
-then clean/isolated/final validation.
+redundancy, and no new proof family. The release evidence is complete for the
+locally authorized branch. The owner-managed DEV state was structurally valid
+but its session failed the authenticated-session gate before browser-context
+creation, so actual DEV observations remain zero. No credential refresh or
+bypass was attempted.
 
-The clean DEV retry passed all local safety checks but the first journey
-stopped before browser-context creation with `HUMAN_AUTH_ACTION_REQUIRED`.
-Actual DEV observation count is therefore zero; continue with local,
-clean/isolated, and final evidence, and do not refresh or bypass credentials
-automatically.
+Canonical and topology-correct isolated full suites are byte-equivalent at
+`e33c07f`: 2,690 test instances, 2,677 expected passes, 13 identical skips,
+and zero failures/flakes. The local gate and Control Center checks are green;
+the clean Node 20 gate and final project/agent/handoff truth are recorded in
+the task STATE.
+
+## Terminal action
+
+STOP. A future DEV repetition or requalification requires fresh owner-managed
+authentication and a separately authorized successor; it must not relabel
+this task's auth-blocked branch as a replay result.
