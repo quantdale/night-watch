@@ -1,144 +1,174 @@
-# EXECUTION PROMPT — DEV Capture Soak, Replay, and Yield
+# EXECUTION PROMPT — Replay Budget and Dossier Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-dev-soak-replay-yield-v1
-OpenSpec: openspec/changes/nightwatch-dev-soak-replay-yield-v1/
-Planned-From: 754aa629b4b24bda0eca98fe567cc44ef536e30d
+Status: IN_PROGRESS
+Campaign ID: nightwatch-replay-budget-and-dossier-closure-v1
+OpenSpec: openspec/changes/nightwatch-replay-budget-and-dossier-closure-v1/
+Planned-From: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Target Branch: main
-Predecessor Task ID: nightwatch-dev-requalification-v1
+Predecessor Task ID: nightwatch-dev-soak-replay-yield-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Measure whether Nightwatch's remaining `BODY_READ_TIMEOUT` /
-`BODY_UNAVAILABLE` behavior is transient or systemic, obtain a materially
-larger bounded real-DEV reliability sample, and drive at least one fresh
-current-manifest anomaly through replay and dossier/yield closure if the
-existing DVR-011 admission rules produce an eligible candidate.
+Close the proven final gap in the current Nightwatch evidence chain:
 
-Do not reopen DVR-001..DVR-012 unless fresh evidence reproduces the defect
-family. Do not weaken candidate admission merely to make replay run.
+fresh candidate -> replay reservation -> attack replay -> reproduction
+classification -> bounded minimization -> sanitized dossier.
 
-## Permanent constraints
+The completed soak produced 8 fresh strict candidates across 4 campaigns and
+2 stable fingerprints, but every reproduction queue was refused before replay
+executor entry because the three required collection journeys had already
+consumed `journeyContexts=3/3`.
 
-- DEV only through existing guarded launchers; serial target contact.
-- No production or NEXT contact; no product mutation.
-- No database/datastore, infrastructure, deployment, or cloud operation.
-- No Alphaus sibling-repository writes or external publication.
-- No credentials, cookies, tokens, storage-state bytes, raw DOM/responses,
-  authenticated traces, customer values, or raw findings in Git.
-- No force-push, containment weakening, proof weakening, or retry relabeling.
-- Auth is owner-managed and external. If not page-valid, stop at the human
-  boundary and print the repository-approved headed capture command.
+Fix that budget architecture without weakening DVR-011, containment, privacy,
+current-source identity, or finite campaign authority.
 
-## M0 — baseline and readiness
+## M0 — reproduce before modifying
 
-Fetch/prune, prove clean `main == origin/main`, read current task/predecessor
-evidence, run typecheck/hardening/agent/project/handoff/campaign-focused gates,
-validate current approved-source/runtime identity, run DEV preflight, and
-validate the external owner-managed storage state. If invalid, stop before
-product contact at `HUMAN_AUTH_ACTION_REQUIRED`; after owner refresh,
-revalidate freshness and gates.
+1. Fetch/prune and prove clean `main == origin/main`.
+2. Read the active task, OpenSpec, predecessor REPORT/STATE, campaign budget,
+   orchestrator, checkpoint, replay, minimizer, and dossier code.
+3. Run baseline typecheck/hardening/project/handoff/campaign/replay gates.
+4. Build a deterministic local regression for exactly:
+   - three required journey contexts consumed;
+   - fresh settled capture-complete product candidate admitted;
+   - cluster queues reproduction;
+   - reproduction reservation rejected with `BUDGET_EXHAUSTED`;
+   - attack replay executor callback count remains 0.
+5. Prove this is the same abstraction boundary as the four real soak queues.
 
-## M1 — capture reliability soak
+Do not alter a limit before the reproducer exists.
 
-Run **10 independent Phase 2C invocations** serially unless a Critical/High
-Nightwatch defect requires an earlier stop. Every invocation is independent
-evidence, never a retry that overwrites a prior outcome.
+## M1 — design the smallest safe bounded model
 
-Measure per payer/common/account journey: attempts/completions, settlement,
-intentional known-read capture, BODY_READ_TIMEOUT/BODY_UNAVAILABLE/other
-bounded capture codes, auth/environment/framework/product classification,
-strict replay result, account-inventory reach, admitted product identity,
-safety/privacy, elapsed time, and browser/child/proxy cleanup.
+Inspect existing budget ownership and choose the smallest provable design.
+Possible shapes include:
 
-If capture failures correlate with request class, content size, journey,
-context, response type, lifecycle, or timing, build deterministic local
-reproducers and fix the owning abstraction. After every executable fix,
-quarantine stale manifests and rerun focused + gate validation before fresh
-DEV contact.
+- a dedicated reproduction reserve;
+- collection/reproduction sub-budgets;
+- prepare-time reserved replay capacity;
+- deterministic transfer of explicitly unused capacity.
 
-## M2 — cross-phase soak
+Do not mechanically change 3 -> 4 unless the accounting model proves why that
+new authority is bounded and safe.
 
-Run **5 independent Phase 4 bounded explorations** and **5 independent Phase 5
-source-generated API first+fresh-replay cycles** serially. Require repeated
-account-inventory coverage whenever safety/readiness permits. Preserve
-browser-vs-API differences as evidence rather than normalizing them away.
+Required invariants:
 
-## M3 — fresh campaign soak
+- all real contact authority is finite and explicit;
+- no candidate => zero replay contact;
+- only fresh current DVR-011-admitted candidates can spend replay reserve;
+- stale/historical candidates spend nothing;
+- incomplete capture/framework/auth/environment outcomes cannot gain replay
+  authority;
+- duplicate candidate/cluster identity cannot multiply replay count;
+- checkpoint/resume cannot double-spend;
+- interruption cannot duplicate executor entry;
+- source/version drift invalidates stale replay authority;
+- reserve accounting is deterministic and persisted;
+- budget exhaustion remains fail closed;
+- minimization/dossier remain downstream of successful admitted replay;
+- existing safety/privacy/containment limits remain unchanged.
 
-Run **5 independently prepared current-source Phase 7 campaigns**, each using a
-fresh manifest and the current bounded five-work-item portfolio.
+If the safest model requires a small explicit increase in total authorized
+journey contacts, encode that increase as a named versioned bounded profile
+with tests and rationale; never hide it as a retry or generic limit bump.
 
-Never resume stale pre-repair manifests. Track campaign class, work-item
-completion, account-inventory reach, capture-limited stops, candidate/cluster/
-dossier yield, checkpoint correctness, source drift, duplicate/lost work,
-safety, privacy, and cleanup.
+## M2 — adversarial implementation validation
 
-## M4 — current replay and dossier closure
+Implement the owning abstraction and test at least:
 
-Only fresh DVR-011-admitted current-manifest product candidates may enter
-attack replay. Historical fingerprints are comparison evidence only.
+1. pre-fix starvation case now reserves one bounded replay;
+2. zero candidates use zero replay reserve;
+3. one candidate cannot exceed configured replay cap;
+4. many candidates cannot exceed cap;
+5. duplicate fingerprints/clusters cannot multiply reserve;
+6. interrupted pre-entry resume spends once;
+7. interrupted post-entry resume does not execute twice;
+8. stale source/manifest fails before replay;
+9. framework capture failure remains non-replayable;
+10. auth/environment divergence remains non-replayable;
+11. exhausted collection and replay budgets remain truthful;
+12. successful reproduction can proceed to minimization/dossier;
+13. failed/inconclusive reproduction cannot fabricate dossier readiness.
 
-Execute at most **5 replay executions total**. Preserve deterministic
-reproduction, product-state drift, auth/environment divergence, semantic
-non-reproduction, invalid replay, and framework capture failure as distinct
-outcomes. Never promote incomplete capture. If reproduction succeeds, run
-bounded minimization and dossier generation and verify identity stability.
+Run focused campaign/replay/checkpoint/triage suites plus:
 
-If the full soak yields zero fresh candidates, close replay as
-`STARVED_BY_CURRENT_ADMISSION`, not PASS.
+- typecheck;
+- hardening;
+- semantic compatibility;
+- owner provenance;
+- synthetic campaign;
+- project/handoff/agent checks;
+- gate:local;
+- gate:clean.
 
-## M5 — quantitative diagnosis
+If runtime behavior or persistence semantics change materially, run full
+canonical/isolated parity.
 
-Report actual rates, not a retry-selected success story:
+## M3 — fresh DEV confirmation
 
-- intentional known-read complete-capture rate;
-- BODY_READ_TIMEOUT/BODY_UNAVAILABLE frequency;
-- settlement success rate;
-- per-journey/context failure distribution;
-- account-inventory reach rate;
-- fresh candidates per campaign;
-- candidates replayable/reproduced;
-- dossiers generated;
-- fingerprint/cluster stability;
-- before/after impact of any repair;
-- correlation with duration, size, resource role, lifecycle, endpoint;
-- final attribution: Nightwatch capture, DEV environment, product behavior,
-  auth, or sample scarcity.
+Only after local validation:
 
-## Defect rule
+1. validate owner-managed DEV authentication and guarded preflight;
+2. prepare a fresh current-source manifest;
+3. never resume predecessor soak checkpoints;
+4. never replay historical fingerprints;
+5. execute the minimum bounded sample needed to naturally obtain a fresh
+   DVR-011-admitted candidate.
 
-Any newly discovered Critical/High Nightwatch defect stops real execution
-until local reproduction, root cause, owning repair, permanent regression,
-campaign/replay compatibility, typecheck/hardening, current-source refresh,
-and fresh DEV confirmation where authorized.
+Authorization bounds for confirmation:
 
-Never weaken DVR-011, safety, containment, or classification to manufacture
-yield.
+- maximum 3 fresh campaign attempts;
+- maximum 3 attack replay executions total;
+- maximum 1 successful minimization/dossier chain required for closure.
 
-## Final validation
+Every attempt remains independent evidence. A later success cannot relabel an
+earlier failure.
 
-Run focused capture/campaign/replay regressions, typecheck, hardening,
-agent:check/audit, handoff, project, semantic compatibility, owner provenance,
-synthetic campaign, Control Center checks if touched, gate:local, gate:clean,
-and canonical/isolated parity when runtime/state/source behavior changed
-materially.
+## M4 — close the chain
 
-Inspect exact-head Actions once. `steps=[]` remains external non-evidence.
+When a fresh candidate exists:
+
+- prove the budget reservation came from the new versioned accounting;
+- execute attack replay;
+- classify REPRODUCED / product-state drift / precondition divergence /
+  auth divergence / environment divergence / framework capture / invalid replay
+  using existing bounded taxonomy;
+- if REPRODUCED, run the existing bounded minimizer;
+- if dossier readiness is satisfied, generate the sanitized dossier;
+- verify stable candidate, cluster, replay-plan, minimization, and dossier
+  identity;
+- verify safety/privacy counters and cleanup.
+
+Do not publish or open an issue.
+
+If the implementation is correct but no fresh candidate appears within the
+authorized DEV sample, close as
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`.
+
+## Defect policy
+
+Any Critical/High Nightwatch defect discovered in budget, replay, checkpoint,
+minimization, dossier, capture, or safety stops further real execution until
+root cause, local reproducer, owning fix, permanent regression, and gates pass.
 
 ## Terminal outcomes
 
-Use exactly one evidence-backed closure category:
+Use one truthful outcome:
 
-- `SOAK_COMPLETE_REPLAY_DOSSIER_VERIFIED`
-- `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`
-- `SOAK_COMPLETE_REPLAY_STARVED_BY_CURRENT_ADMISSION`
-- `SOAK_BLOCKED_AUTH_OR_ENVIRONMENT`
-- `SOAK_FAILED_NIGHTWATCH_DEFECT`
+- `REPLAY_BUDGET_AND_DOSSIER_VERIFIED`
+- `REPLAY_BUDGET_FIXED_REPLAY_INCONCLUSIVE`
+- `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`
+- `REPLAY_BUDGET_DESIGN_BLOCKED_SAFETY`
+- `REPLAY_BUDGET_TASK_FAILED_NIGHTWATCH_DEFECT`
 
 Preserve `OPERATIONALLY_ACCEPTED` under `PROJECT_VERDICT_EFFECT: PRESERVE`
-unless evidence genuinely requires a separate `REEVALUATE` successor.
+unless genuinely invalidating evidence requires a separate `REEVALUATE`
+successor.
 
-Begin with M0. Do not skip the human auth boundary.
+At final closure run the strongest relevant gates, inspect exact-head Actions
+once, classify `steps=[]` as external non-evidence, reconcile all continuity
+documents, push clean main, and report exact counts.
+
+Begin with M0.
