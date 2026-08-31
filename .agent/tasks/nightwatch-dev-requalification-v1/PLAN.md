@@ -58,7 +58,7 @@ reduced to a local deterministic regression before a real run resumes.
   `2e7e84f`; the guarded DEV preflight passed with production explicitly
   denied.
 
-### M1 — Repeated Phase 2C sample / capture repair — IN_PROGRESS
+### M1 — Repeated Phase 2C sample / capture repair — COMPLETE
 
 - Run three serial Phase 2C invocations with the owner-managed state.
 - Preserve each run, journey, replay, and cleanup category independently.
@@ -80,9 +80,13 @@ reduced to a local deterministic regression before a real run resumes.
   and oracle failure. Let independent failed evidence classify before unknown
   capture; retain framework classification for an otherwise passing journey
   without established capture health. This precedence repair is checkpointed
-  at `d1b9f31`; post-fix DEV confirmation remains.
+  at `d1b9f31`; post-fix DEV confirmation completed at
+  `nightwatch-20260831T094029Z-e57a`: payer and common journeys passed with
+  complete intentional capture and no strict replay mismatches;
+  account-inventory reproduced a stable product oracle in both contexts and
+  replay classified the bounded difference as expected product-state drift.
 
-### M2 — Cross-phase observation — PENDING
+### M2 — Cross-phase observation — IN_PROGRESS
 
 - Run Phase 4, Phase 5, campaign prepare/resume, and one safe replay where
   available.

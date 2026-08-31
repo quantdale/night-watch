@@ -9,7 +9,7 @@ Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
+Last documentation checkpoint SHA: 80ac16265785a099307b9d9aef5c144585240343
 
 ## Scope
 
@@ -53,7 +53,14 @@ repair is now checkpointed at `224801f`. The following run confirmed the
 payer pair passed strict replay, then exposed a common-journey bootstrap 5xx
 and missing-read divergence whose `CAPTURE_STATUS_UNKNOWN` label masked the
 stronger failure. That attribution repair is checkpointed at `d1b9f31`; post-
-fix DEV confirmation remains.
+fix DEV confirmation completed at `nightwatch-20260831T094029Z-e57a`.
+Payer and common journeys each produced two valid-auth, zero-safety, settled
+observations with complete intentional capture. Payer replay was `MATCH`;
+common replay was bounded `BENIGN_TELEMETRY_VARIATION`; both had no strict
+invariant mismatches. The account-inventory pair produced the same settled
+product oracle failure in both contexts and replay classified its bounded
+difference as `EXPECTED_PRODUCT_STATE_DRIFT`. The sanitized matrix is
+`artifacts/phase2c-nightwatch-20260831T094029Z-e57a-matrix.json`.
 
 ## Safety and verdict
 
