@@ -11,11 +11,12 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## M0 — Baseline, freshness, safety, auth readiness
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-Validate canonical Git state, project/continuity/handoff/hardening gates,
-approved-source/runtime identity, DEV preflight, and external owner-managed
-auth. Stop at the human boundary if auth is not page-valid.
+Canonical Git, continuity/audit, handoff, project truth, reading-order,
+approved-source/runtime identity, DEV preflight, and owner-managed storage
+state were all revalidated. No executable source change belongs to this
+milestone; the task lives at the fetched documentation checkpoint.
 
 ## M1 — Phase 2C capture soak
 

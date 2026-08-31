@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-soak-replay-yield-v1
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last checkpoint: ACTIVATED — bounded DEV soak/replay/yield successor created after DVR-012 closure
-Current milestone: M0 — baseline, freshness, safety, and owner-auth readiness
-Next action: validate Git/gates and current external DEV auth; if auth is not page-valid, stop at HUMAN_AUTH_ACTION_REQUIRED for owner refresh before any target operation
+Last checkpoint: M0 COMPLETE — `30db50f` with all offline gates PASS; no executable change
+Current milestone: M1 — Phase 2C capture soak (10 invocations)
+Next action: execute M1 through its guarded serial launchers; preserve every independent categorical outcome; if page-visible auth is invalid, stop at HUMAN_AUTH_ACTION_REQUIRED
 Authorization class: NIGHTWATCH_DEV_SOAK_REPLAY_YIELD_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
