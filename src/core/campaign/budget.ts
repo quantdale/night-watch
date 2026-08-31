@@ -170,13 +170,30 @@ export function analyzeCampaignBudgetFeasibility(input: {
   };
 }
 
+export interface CampaignBudgetManagerOptions {
+  /**
+   * Browser contexts protected from collection for replay. The orchestrator
+   * derives this from the frozen real-profile promotion cap; synthetic
+   * fixture managers default to zero because they do not contact DEV.
+   */
+  readonly protectedReplayBrowserContexts?: number;
+}
+
 export class CampaignBudgetManager {
   readonly policy: CampaignBudgetPolicy;
+  readonly protectedReplayBrowserContexts: number;
+  private readonly collectionBrowserContextLimit: number;
   private usage: CampaignBudgetUsage;
 
-  constructor(policy: CampaignBudgetPolicy, initial: CampaignBudgetUsage = ZERO_USAGE) {
+  constructor(policy: CampaignBudgetPolicy, initial: CampaignBudgetUsage = ZERO_USAGE, options: CampaignBudgetManagerOptions = {}) {
     validateBudgetPolicy(policy);
+    const protectedReplayBrowserContexts = options.protectedReplayBrowserContexts ?? 0;
+    if (!Number.isInteger(protectedReplayBrowserContexts) || protectedReplayBrowserContexts < 0 || protectedReplayBrowserContexts > policy.maxTotalBrowserContexts) {
+      throw new Error('CAMPAIGN_REPLAY_RESERVE_INVALID');
+    }
     this.policy = policy;
+    this.protectedReplayBrowserContexts = protectedReplayBrowserContexts;
+    this.collectionBrowserContextLimit = policy.maxTotalBrowserContexts - protectedReplayBrowserContexts;
     this.usage = cloneUsage(initial);
     this.assertWithinLimits();
   }
@@ -230,6 +247,20 @@ export class CampaignBudgetManager {
     this.usage = next;
   }
 
+  /**
+   * Collection-only reservation. In the real profile, aggregate browser
+   * capacity is deliberately checked against the collection ceiling rather
+   * than the total ceiling, leaving the protected replay slot untouched.
+   */
+  private consumeCollectionBundle(requirements: Partial<Readonly<Record<BudgetDimension, number>>>): void {
+    const browserContexts = requirements.browserContexts ?? 0;
+    if (!Number.isInteger(browserContexts) || browserContexts < 0) throw new Error('CAMPAIGN_BUDGET_AMOUNT_INVALID');
+    if (this.usage.browserContexts + browserContexts > this.collectionBrowserContextLimit) {
+      throw new Error('CAMPAIGN_BUDGET_EXHAUSTED:browserContexts');
+    }
+    this.consumeBundle(requirements);
+  }
+
   reserveWork(kind: CampaignWorkKind, replay = false): void {
     const requirements: Partial<Record<BudgetDimension, number>> = {};
     if (kind === 'JOURNEY') {
@@ -246,7 +277,8 @@ export class CampaignBudgetManager {
       requirements.minimizationCandidates = 1;
     }
     if (replay && kind !== 'MINIMIZATION') requirements.replays = (requirements.replays ?? 0) + 1;
-    this.consumeBundle(requirements);
+    if (kind === 'JOURNEY' || kind === 'EXPLORATION') this.consumeCollectionBundle(requirements);
+    else this.consumeBundle(requirements);
   }
 
   reserveFirstPlusApi(): void {

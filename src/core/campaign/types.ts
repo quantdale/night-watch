@@ -516,6 +516,35 @@ export interface CampaignReproductionOutcome {
 export type CampaignReproductionBudgetEstimate = Partial<Pick<CampaignBudgetUsage,
   'browserContexts' | 'journeyContexts' | 'explorationContexts' | 'apiExecutions' | 'totalActions'>>;
 
+/**
+ * Durable normalized requirements for one admitted replay reservation.
+ * Category context counters describe collection work; a replay owns only its
+ * aggregate physical browser requirement, so the normalizer writes those
+ * category counters as zero and keeps `replays=1` explicit.
+ */
+export interface CampaignReplayReservationRequirements {
+  readonly browserContexts: number;
+  readonly journeyContexts: number;
+  readonly explorationContexts: number;
+  readonly apiExecutions: number;
+  readonly totalActions: number;
+  readonly replays: number;
+}
+
+/**
+ * One deterministic campaign/cluster replay reservation. RESERVED means the
+ * pre-entry checkpoint was persisted and can be reused on resume; CONSUMED
+ * means executor entry or completion is known and the reservation must never
+ * be charged or entered again.
+ */
+export interface CampaignReplayReservation {
+  readonly reservationId: string;
+  readonly clusterId: string;
+  readonly representativeRunId: string;
+  readonly state: 'RESERVED' | 'CONSUMED';
+  readonly requirements: CampaignReplayReservationRequirements;
+}
+
 export interface CampaignExecutor {
   readonly preflight: (input: { readonly manifest: CampaignManifest; readonly workItem: CampaignWorkItem | null }) => Promise<CampaignPreflightResult> | CampaignPreflightResult;
   readonly execute: (context: CampaignExecutionContext) => Promise<CampaignExecutionOutcome>;
@@ -669,6 +698,9 @@ export interface CampaignCheckpoint {
   readonly dossierLedger: readonly CampaignDossierRecord[];
   readonly morningBriefStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'READY';
   readonly bugCandidates: readonly string[];
+  // Optional replay-reservation ledger. New checkpoints persist it; absent
+  // remains readable for historical checkpoints created before this boundary.
+  readonly replayReservations?: readonly CampaignReplayReservation[];
   readonly rejectedHypotheses: readonly string[];
   readonly unresolved: readonly string[];
   readonly safetyEvents: readonly string[];

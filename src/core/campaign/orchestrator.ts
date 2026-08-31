@@ -50,7 +50,7 @@ import type {
   OvernightRunRecord,
 } from '../triage/types';
 import { buildCampaignMorningBrief, renderCampaignMorningBrief, validateCampaignMorningBrief } from './brief';
-import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage } from './budget';
+import { CampaignBudgetManager, CampaignTimeBudget, emptyBudgetUsage, isRealScaleBudget } from './budget';
 import { CampaignCheckpointStore, evaluateResumeCompatibility, grantWorkItemAttempt, validateCampaignCheckpoint, type CheckpointResumeRefusal } from './checkpoint';
 import { assertManifestCompatible, stableCampaignJson, validateCampaignManifest } from './identity';
 import { detectFailureStorm, type FailureStorm } from './storm';
@@ -69,6 +69,8 @@ import {
   type CampaignMorningBrief,
   type CampaignPreflightResult,
   type CampaignPrivacyStatus,
+  type CampaignReplayReservation,
+  type CampaignReplayReservationRequirements,
   type CampaignReproductionBudgetEstimate,
   type CampaignReproductionOutcome,
   type CampaignReproductionRecord,
@@ -327,6 +329,7 @@ function initialCheckpoint(manifest: CampaignManifest, now: () => Date): Campaig
     anomalyCandidates: [],
     anomalyClusters: [],
     reproductionQueue: [],
+    replayReservations: [],
     minimizationQueue: [],
     dossierLedger: [],
     morningBriefStatus: 'NOT_STARTED',
@@ -357,6 +360,29 @@ function initialCheckpoint(manifest: CampaignManifest, now: () => Date): Campaig
 
 function candidateSurface(candidate: CampaignAnomalyCandidate): string {
   return candidate.journeyId ?? candidate.observation.features.operationFamily ?? 'application-anomaly';
+}
+
+function replayEligibilityReason(manifest: CampaignManifest, candidate: CampaignAnomalyCandidate): string | null {
+  if (manifest.mode === 'LOCAL_SYNTHETIC' || !isRealScaleBudget(manifest.budgetPolicy)) return null;
+  if (candidate.observation.sourceFreshness !== 'SOURCE_CURRENT_LOCALLY' && candidate.observation.sourceFreshness !== 'REMOTE_FRESHNESS_CONFIRMED') return 'REPLAY_SOURCE_FRESHNESS_UNCONFIRMED';
+  if (candidate.sourceCorrelation.sourceFreshness !== 'SOURCE_CURRENT_LOCALLY' && candidate.sourceCorrelation.sourceFreshness !== 'REMOTE_FRESHNESS_CONFIRMED') return 'REPLAY_SOURCE_FRESHNESS_UNCONFIRMED';
+  if (candidate.sourceCorrelation.sourceVersion !== manifest.sourceWindow.changesetId) return 'REPLAY_SOURCE_VERSION_STALE';
+  if (stableCampaignJson(candidate.sourceCorrelation.changedFiles) !== stableCampaignJson(manifest.sourceWindow.changedFiles)) return 'REPLAY_SOURCE_WINDOW_MISMATCH';
+  const observedAt = Date.parse(candidate.observation.observedAt);
+  const manifestCreatedAt = Date.parse(manifest.createdAt);
+  if (!Number.isFinite(observedAt) || !Number.isFinite(manifestCreatedAt) || observedAt < manifestCreatedAt) return 'REPLAY_HISTORICAL_CANDIDATE';
+  if (candidate.contextKind !== 'FIRST_OBSERVATION' || candidate.observation.reproduced || candidate.observation.minimized) return 'REPLAY_CANDIDATE_NOT_FRESH';
+  if (candidate.originalSequence.length === 0) return 'REPLAY_CAPTURE_INCOMPLETE';
+  if (!candidate.alternativesRuledOut.includes('auth-valid')) return 'REPLAY_AUTH_UNPROVEN';
+  if (candidate.knownNightwatchDefect) return 'REPLAY_KNOWN_NIGHTWATCH_DEFECT';
+  const nonProductSignals = [
+    ...candidate.alternativesRuledOut.filter((value) => !/VALID|NOT_APPLICABLE/.test(value.toUpperCase())),
+    ...candidate.missingEvidence,
+    candidate.browser.runtimeCategory,
+    candidate.observation.features.runtimeCategory ?? '',
+  ].join('|').toUpperCase();
+  if (/AUTH|CAPTURE|FRAMEWORK|ENVIRONMENT|TRANSIENT|UNKNOWN/.test(nonProductSignals)) return 'REPLAY_NON_PRODUCT_OUTCOME';
+  return null;
 }
 
 function admissionFor(cluster: AnomalyCluster, candidates: readonly CampaignAnomalyCandidate[]): { readonly level: EvidenceLevel; readonly reason: string; readonly contextCount: number } {
@@ -598,6 +624,10 @@ export class CampaignOrchestrator {
   private readonly chargedArtifactPaths = new Set<string>();
   private readonly clusterIdAliases = new Map<string, string>();
   private readonly precompletedReproductions = new Map<string, CampaignReproductionOutcome>();
+  // Durable per-cluster replay reservations. The budget counters record the
+  // spend; this ledger records which cluster owns each one so resume can reuse
+  // a pre-entry reservation without charging or entering it twice.
+  private readonly replayReservations = new Map<string, CampaignReplayReservation>();
   private readonly maxTopFindings: number;
   private readonly currentVersions?: CampaignRunOptions['currentVersions'];
   private promotionStop: { readonly resultClass: CampaignResultClass; readonly stopReason: CampaignCheckpoint['stopReason'] } | null = null;
@@ -623,10 +653,13 @@ export class CampaignOrchestrator {
       };
     }
     const startedAt = this.now().getTime() - this.state.runtimeElapsedMs;
-    this.budget = new CampaignBudgetManager(manifest.budgetPolicy, this.state.budgetUsed);
+    this.budget = new CampaignBudgetManager(manifest.budgetPolicy, this.state.budgetUsed, {
+      protectedReplayBrowserContexts: manifest.mode === 'LOCAL_SYNTHETIC' || !isRealScaleBudget(manifest.budgetPolicy) ? 0 : manifest.budgetPolicy.maxPromotedClusters,
+    });
     this.time = new CampaignTimeBudget(manifest.runtimeCeilingMs, () => this.now().getTime(), startedAt);
     this.observations = [...this.state.anomalyObservations];
     for (const candidate of this.state.anomalyCandidates) this.candidates.set(candidate.observation.runId, candidate);
+    for (const reservation of this.state.replayReservations ?? []) this.replayReservations.set(reservation.reservationId, reservation);
     // Session-2 lifecycle records survive resume; the checkpoint validator has
     // already proven their shape and cluster-ledger referential integrity.
     for (const [clusterId, record] of Object.entries(this.state.candidateLifecycles ?? {})) {
@@ -761,6 +794,7 @@ export class CampaignOrchestrator {
               : `execute ${remainingWorkItems(this.manifest, this.state.executionLedger)[0] ?? 'resume campaign'}`)
             : `replay ${this.state.executionLedger.find((record) => record.state === 'REPLAY_REQUIRED')!.workItemId}`)
           : terminalNextAction(),
+      replayReservations: [...this.replayReservations.values()].sort((a, b) => a.reservationId.localeCompare(b.reservationId)),
       candidateLifecycles: persistedLifecycles,
       runtimeContractVersions: { ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED },
       ...(interruptedWork.length > 0 ? { interruptedWork } : { interruptedWork: undefined }),
@@ -1275,28 +1309,65 @@ export class CampaignOrchestrator {
       .filter((item): item is { cluster: AnomalyCluster; representative: CampaignAnomalyCandidate } => item.representative !== undefined)
       .filter((item) => !this.state.dossierLedger.some((entry) => entry.clusterId === item.cluster.clusterId && entry.state === 'READY'))
       .sort((a, b) => priorityKey(a.cluster, a.representative).localeCompare(priorityKey(b.cluster, b.representative)));
+    const previousQueue = new Map(this.state.reproductionQueue.map((item) => [item.clusterId, item]));
     const queue: CampaignReproductionRecord[] = [];
-    const eligible = ranked.filter((item) => !(item.cluster.timingVariance === 'TRANSIENT' && item.cluster.occurrenceCount === 1) && !item.representative.knownNightwatchDefect);
+    const rejectedReasons = new Map<string, string>();
+    const eligible = ranked.filter((item) => {
+      if (item.cluster.timingVariance === 'TRANSIENT' && item.cluster.occurrenceCount === 1) {
+        rejectedReasons.set(item.cluster.clusterId, 'TRANSIENT');
+        return false;
+      }
+      if (item.representative.knownNightwatchDefect) {
+        rejectedReasons.set(item.cluster.clusterId, 'FALSE_POSITIVE');
+        return false;
+      }
+      const replayReason = replayEligibilityReason(this.manifest, item.representative);
+      if (replayReason !== null) {
+        rejectedReasons.set(item.cluster.clusterId, replayReason);
+        return false;
+      }
+      return true;
+    });
     for (const item of ranked.filter((candidate) => !eligible.includes(candidate))) {
-      // T1: transient / false-positive candidates are rejected before any
-      // reproduction or dossier work; the lifecycle record closes as REJECTED.
-      // Phase 15P (A05): resume re-enters promoteFindings over restored
-      // records — an already-terminal record is never re-rejected (the frozen
-      // table has no REJECT edge from REJECTED and must never be bent).
+      // T1: transient / false-positive / stale or incomplete candidates are
+      // rejected before any reproduction or dossier work; the lifecycle record
+      // closes with the exact bounded reason.
       const rejectState = this.lifecycleStateFor(item.cluster.clusterId);
       if (rejectState === null || isTerminalCandidateLifecycleState(rejectState)) continue;
-      this.transitionClusterLifecycle(item.cluster.clusterId, 'REJECT', item.representative.knownNightwatchDefect ? 'FALSE_POSITIVE' : 'TRANSIENT');
-      this.transients.push(`${item.cluster.clusterId}:${item.representative.knownNightwatchDefect ? 'KNOWN_NIGHTWATCH_FALSE_POSITIVE' : 'L0_TRANSIENT_NOT_REPRODUCED'}`);
-      this.state = { ...this.state, rejectedHypotheses: [...this.state.rejectedHypotheses, item.cluster.clusterId] };
+      const reason = rejectedReasons.get(item.cluster.clusterId) ?? 'TRANSIENT';
+      this.transitionClusterLifecycle(item.cluster.clusterId, 'REJECT', reason);
+      this.transients.push(`${item.cluster.clusterId}:${reason}`);
+      this.state = {
+        ...this.state,
+        rejectedHypotheses: [...this.state.rejectedHypotheses, item.cluster.clusterId],
+        unresolved: reason === 'TRANSIENT' || reason === 'FALSE_POSITIVE' || reason.startsWith('REPLAY_')
+          ? this.state.unresolved
+          : [...new Set([...this.state.unresolved, `${item.cluster.clusterId}:${reason}`])],
+      };
     }
     for (const item of eligible.slice(0, this.manifest.budgetPolicy.maxPromotedClusters)) {
       const admission = admissionFor(item.cluster, candidatesByCluster.get(item.cluster.clusterId) ?? [item.representative]);
-      queue.push(makeReproductionRecord(item.cluster, admission.level));
+      const previous = previousQueue.get(item.cluster.clusterId);
+      const initial = previous ?? makeReproductionRecord(item.cluster, admission.level);
+      queue.push(previous === undefined && this.precompletedReproductions.has(item.cluster.clusterId)
+        ? { ...initial, state: 'RUNNING' }
+        : initial);
     }
-    this.state = { ...this.state, reproductionQueue: queue, minimizationQueue: queue.map((item) => item.clusterId) };
+    this.state = {
+      ...this.state,
+      reproductionQueue: queue,
+      minimizationQueue: queue.filter((item) => item.state === 'PENDING' || item.state === 'RUNNING').map((item) => item.clusterId),
+    };
     this.checkpoint();
     if (this.currentStorm !== null) return;
     for (const queueItem of queue) {
+      const persistedQueueItem = this.state.reproductionQueue.find((item) => item.clusterId === queueItem.clusterId);
+      if (persistedQueueItem === undefined) continue;
+      if (persistedQueueItem.state === 'COMPLETED' || persistedQueueItem.state === 'BLOCKED' || persistedQueueItem.state === 'SKIPPED') continue;
+      if (persistedQueueItem.state === 'REPLAY_REQUIRED') {
+        this.closeInterruptedReplay(queueItem.clusterId, 'REPLAY_EXECUTION_ALREADY_STARTED');
+        break;
+      }
       if (this.currentStorm !== null) break;
       const cluster = this.state.anomalyClusters.find((candidate) => candidate.clusterId === queueItem.clusterId);
       if (cluster === undefined || this.executor.reproduce === undefined) {
@@ -1313,15 +1384,24 @@ export class CampaignOrchestrator {
       }
       const representative = this.candidates.get(cluster.primaryRunId);
       if (representative === undefined) continue;
+      let replayExecutorEntered = false;
       try {
         this.globalOwnerPreflight({ workItemId: `reproduce:${cluster.clusterId}`, kind: 'JOURNEY', order: 0, journeyId: representative.journeyId, envelopeId: representative.observation.features.envelopeId, apiOperationId: representative.observation.features.operationFamily, seed: null, linkedWorkItemIds: [], replayPolicy: 'ON_ADMISSION', selection: { selected: false, reason: 'derived representative', sourceImpact: 'ADMITTED_ANOMALY', confidence: 'UNRESOLVED', riskClass: 'TRIAGE', linkedJourneyId: representative.journeyId, linkedEnvelopeId: representative.observation.features.envelopeId, linkedApiOperationId: representative.observation.features.operationFamily } });
         const precompleted = this.precompletedReproductions.get(cluster.clusterId);
-        if (precompleted === undefined) {
-          this.reserveReproductionBudget(cluster, representative);
+        const reservation = this.replayReservations.get(this.replayReservationId(cluster.clusterId));
+        const activeReservation = precompleted === undefined
+          ? this.reserveReproductionBudget(cluster, representative)
+          : reservation;
+        if (activeReservation === undefined) throw new Error('REPLAY_RESERVATION_MISSING');
+        if (activeReservation.state === 'CONSUMED' && precompleted === undefined) {
+          this.closeInterruptedReplay(cluster.clusterId, 'REPLAY_EXECUTION_ALREADY_STARTED');
+          break;
         }
         this.state = { ...this.state, reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'RUNNING' } : item) };
         this.checkpoint();
+        if (precompleted === undefined) replayExecutorEntered = true;
         const reproduction = precompleted ?? await this.executor.reproduce({ manifest: this.manifest, cluster, representative });
+        this.markReplayReservationConsumed(cluster.clusterId);
         const reproductionPrivacy = addPrivacy(this.state.privacy, reproduction.privacy);
         this.state = { ...this.state, safety: addSafety(this.state.safety, reproduction.safety), privacy: reproductionPrivacy, privacyStatus: reproductionPrivacy.result };
         if (!safetyIsZero(reproduction.safety)) {
@@ -1574,9 +1654,13 @@ export class CampaignOrchestrator {
       } catch (error) {
         const code = safeErrorCode(error);
         if (error instanceof CampaignProcessInterruptionError) {
+          if (replayExecutorEntered) this.markReplayReservationConsumed(cluster.clusterId);
+          const replayState = replayExecutorEntered
+            ? { state: 'REPLAY_REQUIRED' as const, reasonCode: code }
+            : { state: 'RUNNING' as const };
           this.state = {
             ...this.state,
-            reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, state: 'REPLAY_REQUIRED', reasonCode: code } : item),
+            reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === cluster.clusterId ? { ...item, ...replayState } : item),
             campaignStatus: 'INCOMPLETE_PROCESS_INTERRUPTION',
             stopReason: 'PROCESS_INTERRUPTION',
             nextExactAction: `resume reproduction ${cluster.clusterId}`,
@@ -1630,21 +1714,78 @@ export class CampaignOrchestrator {
     }
   }
 
-  private reserveReproductionBudget(cluster: AnomalyCluster, representative: CampaignAnomalyCandidate): void {
-    const estimate: CampaignReproductionBudgetEstimate | undefined = this.executor.estimateReproduction?.({ manifest: this.manifest, cluster, representative });
-    const requirements: Partial<Record<'browserContexts' | 'journeyContexts' | 'explorationContexts' | 'apiExecutions' | 'totalActions' | 'replays', number>> = { replays: 1 };
-    if (estimate === undefined) {
-      this.budget.consumeBundle(requirements);
-      return;
-    }
-    for (const dimension of ['browserContexts', 'journeyContexts', 'explorationContexts', 'apiExecutions', 'totalActions'] as const) {
-      const amount = estimate[dimension] ?? 0;
-      if (!Number.isInteger(amount) || amount < 0) throw new Error(`CAMPAIGN_REPRODUCTION_ESTIMATE_INVALID:${dimension}`);
-      if (amount > 0) requirements[dimension] = amount;
-    }
-    this.budget.consumeBundle(requirements);
+  private replayReservationId(clusterId: string): string {
+    return `replay:${this.manifest.campaignId}:${clusterId}`;
   }
 
+  private normalizedReplayRequirements(estimate: CampaignReproductionBudgetEstimate | undefined): CampaignReplayReservationRequirements {
+    const dimensions = ['browserContexts', 'journeyContexts', 'explorationContexts', 'apiExecutions', 'totalActions'] as const;
+    const values: Partial<Record<(typeof dimensions)[number], number>> = {};
+    if (estimate !== undefined) {
+      if (typeof estimate !== 'object' || estimate === null) throw new Error('CAMPAIGN_REPRODUCTION_ESTIMATE_INVALID');
+      for (const key of Object.keys(estimate as Record<string, unknown>)) {
+        if (!dimensions.some((dimension) => dimension === key)) throw new Error(`CAMPAIGN_REPRODUCTION_ESTIMATE_INVALID:${key}`);
+      }
+      for (const dimension of dimensions) {
+        const amount = (estimate as Record<string, unknown>)[dimension];
+        if (amount !== undefined) {
+          if (typeof amount !== 'number' || !Number.isInteger(amount) || amount < 0) throw new Error(`CAMPAIGN_REPRODUCTION_ESTIMATE_INVALID:${dimension}`);
+          values[dimension] = amount;
+        }
+      }
+    }
+    return {
+      browserContexts: Math.max(values.browserContexts ?? 0, values.journeyContexts ?? 0, values.explorationContexts ?? 0),
+      journeyContexts: 0,
+      explorationContexts: 0,
+      apiExecutions: values.apiExecutions ?? 0,
+      totalActions: values.totalActions ?? 0,
+      replays: 1,
+    };
+  }
+
+  private markReplayReservationConsumed(clusterId: string): void {
+    const reservationId = this.replayReservationId(clusterId);
+    const reservation = this.replayReservations.get(reservationId);
+    if (reservation === undefined) throw new Error('REPLAY_RESERVATION_MISSING');
+    if (reservation.state === 'CONSUMED') return;
+    this.replayReservations.set(reservationId, { ...reservation, state: 'CONSUMED' });
+  }
+
+  private closeInterruptedReplay(clusterId: string, reasonCode: string): void {
+    this.closeOnGateFailure(clusterId, reasonCode);
+    this.state = {
+      ...this.state,
+      reproductionQueue: this.state.reproductionQueue.map((item) => item.clusterId === clusterId ? { ...item, state: 'BLOCKED', reasonCode } : item),
+      minimizationQueue: this.state.minimizationQueue.filter((id) => id !== clusterId),
+      unresolved: [...new Set([...this.state.unresolved, `${clusterId}:${reasonCode}`])],
+    };
+    this.promotionStop = { resultClass: 'PARTIAL_RUNTIME_INFRA_FAILURE', stopReason: 'PREFLIGHT_FAILED' };
+    this.checkpoint();
+  }
+
+  private reserveReproductionBudget(cluster: AnomalyCluster, representative: CampaignAnomalyCandidate): CampaignReplayReservation {
+    const reservationId = this.replayReservationId(cluster.clusterId);
+    const existing = this.replayReservations.get(reservationId);
+    if (existing !== undefined) {
+      if (existing.clusterId !== cluster.clusterId || existing.representativeRunId !== representative.observation.runId) {
+        throw new Error('REPLAY_RESERVATION_IDENTITY_DRIFT');
+      }
+      return existing;
+    }
+    const estimate = this.executor.estimateReproduction?.({ manifest: this.manifest, cluster, representative });
+    const requirements = this.normalizedReplayRequirements(estimate);
+    this.budget.consumeBundle(requirements);
+    const reservation: CampaignReplayReservation = {
+      reservationId,
+      clusterId: cluster.clusterId,
+      representativeRunId: representative.observation.runId,
+      state: 'RESERVED',
+      requirements,
+    };
+    this.replayReservations.set(reservationId, reservation);
+    return reservation;
+  }
   // ---------------------------------------------------------------------------
   // Phase 15 Session 2 (T3) — V2-certified replay for promoted candidates.
   //
@@ -1947,26 +2088,60 @@ export class CampaignOrchestrator {
       this.recomputeClusters();
     }
     const existing = this.state.executionLedger.find((record) => record.workItemId === item.workItemId);
+    const replayReservationId = this.replayReservationId(cluster.clusterId);
+    const persistedReplayReservation = this.replayReservations.get(replayReservationId);
+    const replayAlreadyStarted = existing?.state === 'REPLAY_REQUIRED'
+      || (existing?.state === 'RUNNING' && persistedReplayReservation?.state === 'CONSUMED');
+    if (replayAlreadyStarted) {
+      const reasonCode = persistedReplayReservation?.state === 'CONSUMED'
+        ? 'REPLAY_EXECUTION_ALREADY_STARTED'
+        : 'REPLAY_RESERVATION_MISSING';
+      this.closeOnGateFailure(cluster.clusterId, reasonCode);
+      this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode, executionGuarantee: 'REPLAY_REQUIRED' });
+      this.state = {
+        ...this.state,
+        nextExactAction: `do not replay ${item.workItemId}`,
+        unresolved: [...new Set([...this.state.unresolved, `${item.workItemId}:${reasonCode}`])],
+      };
+      return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'PREFLIGHT_FAILED');
+    }
     if (existing?.state !== 'COMPLETED') {
+      let activeReplayReservation: CampaignReplayReservation | undefined;
+      let executorEntered = false;
       try {
         // Phase 15P A09: explicit attempt reservation before the durable
         // RUNNING marker; exhaustion refuses fail-closed before any
         // reproduction adapter callback.
-        const reservation = this.reserveAttempt(item.workItemId, (existing?.attemptCount ?? 0) + 1);
-        if (!reservation.granted) {
-          this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: reservation.code });
-          this.state = { ...this.state, unresolved: [...new Set([...this.state.unresolved, reservation.code])] };
+        const reuseReservedReplay = existing?.state === 'RUNNING' && persistedReplayReservation?.state === 'RESERVED';
+        if (existing?.state === 'RUNNING' && !reuseReservedReplay) throw new Error('REPLAY_RESERVATION_MISSING');
+        if (!reuseReservedReplay) {
+          const reservation = this.reserveAttempt(item.workItemId, (existing?.attemptCount ?? 0) + 1);
+          if (!reservation.granted) {
+            this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: reservation.code });
+            this.state = { ...this.state, unresolved: [...new Set([...this.state.unresolved, reservation.code])] };
+            return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'PREFLIGHT_FAILED');
+          }
+          this.updateRecord(item.workItemId, { state: 'RUNNING', attemptCount: (existing?.attemptCount ?? 0) + 1, executionGuarantee: 'REPLAY_REQUIRED' });
+        }
+        activeReplayReservation = reuseReservedReplay
+          ? persistedReplayReservation
+          : this.reserveReproductionBudget(cluster, representative);
+        if (activeReplayReservation.state === 'CONSUMED') {
+          const reasonCode = 'REPLAY_EXECUTION_ALREADY_STARTED';
+          this.closeOnGateFailure(cluster.clusterId, reasonCode);
+          this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode, executionGuarantee: 'REPLAY_REQUIRED' });
+          this.state = { ...this.state, nextExactAction: `do not replay ${item.workItemId}`, unresolved: [...new Set([...this.state.unresolved, `${item.workItemId}:${reasonCode}`])] };
           return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'PREFLIGHT_FAILED');
         }
-        this.updateRecord(item.workItemId, { state: 'RUNNING', attemptCount: (existing?.attemptCount ?? 0) + 1, executionGuarantee: 'REPLAY_REQUIRED' });
-        this.reserveReproductionBudget(cluster, representative);
         // Keep the reservation and RUNNING marker in the same persisted
         // checkpoint. A restart before this write replays the pending target
-        // once; a restart after it charges only the next attempt.
+        // once with the same reservation; a restart after it never re-enters
+        // an already-consumed replay.
         this.checkpoint();
         if (this.executor.reproduce === undefined) throw new Error('REPRODUCTION_ADAPTER_UNAVAILABLE');
+        executorEntered = true;
         const reproduction = await this.executor.reproduce({ manifest: this.manifest, cluster, representative });
-        this.precompletedReproductions.set(cluster.clusterId, reproduction);
+        this.markReplayReservationConsumed(cluster.clusterId);
         this.state = {
           ...this.state,
           safety: addSafety(this.state.safety, reproduction.safety),
@@ -1982,6 +2157,7 @@ export class CampaignOrchestrator {
           safety: reproduction.safety,
           privacy: reproduction.privacy,
         });
+        this.precompletedReproductions.set(cluster.clusterId, reproduction);
         if (!safetyIsZero(reproduction.safety)) {
           // Phase 15P (A05): the safety gate closes the target's lifecycle at
           // a terminal state carrying the gate identity.
@@ -2000,17 +2176,33 @@ export class CampaignOrchestrator {
         if (reproduction.candidate !== undefined) {
           validateCandidatePrivacy(reproduction.candidate);
           this.appendObservation(reproduction.candidate);
+          const replayCluster = clusterAnomalies([reproduction.candidate.observation])[0];
+          if (replayCluster !== undefined) {
+            this.clusterIdAliases.set(replayCluster.clusterId, cluster.clusterId);
+            this.precompletedReproductions.set(replayCluster.clusterId, reproduction);
+          }
         }
         this.checkpoint();
       } catch (error) {
         const code = safeErrorCode(error);
-        this.updateRecord(item.workItemId, { state: error instanceof CampaignProcessInterruptionError ? 'REPLAY_REQUIRED' : 'BLOCKED', reasonCode: code, executionGuarantee: 'REPLAY_REQUIRED' });
+        if (error instanceof CampaignProcessInterruptionError) {
+          if (executorEntered) {
+            this.markReplayReservationConsumed(cluster.clusterId);
+            this.updateRecord(item.workItemId, { state: 'REPLAY_REQUIRED', reasonCode: code, executionGuarantee: 'REPLAY_REQUIRED' });
+          } else {
+            this.updateRecord(item.workItemId, { state: 'RUNNING', reasonCode: null, executionGuarantee: 'REPLAY_REQUIRED' });
+          }
+          this.state = { ...this.state, nextExactAction: `resume reproduction ${item.workItemId}`, unresolved: [...new Set([...this.state.unresolved, code])] };
+          this.checkpoint();
+          return await this.finalize('INCOMPLETE_PROCESS_INTERRUPTION', 'PROCESS_INTERRUPTION');
+        }
+        if (executorEntered || this.replayReservations.has(this.replayReservationId(cluster.clusterId))) this.markReplayReservationConsumed(cluster.clusterId);
+        this.updateRecord(item.workItemId, { state: 'BLOCKED', reasonCode: code, executionGuarantee: 'REPLAY_REQUIRED' });
         this.state = { ...this.state, nextExactAction: `replay ${item.workItemId}`, unresolved: [...new Set([...this.state.unresolved, code])] };
         this.checkpoint();
         if (code === 'OWNER_POLICY_BLOCKED') return await this.finalize('ABORTED_OWNER_POLICY', 'OWNER_POLICY_BLOCKED');
         if (code === 'AUTH_BLOCKED') return await this.finalize('PARTIAL_AUTH_BLOCKED', 'AUTH_BLOCKED');
         if (code === 'SAFETY_EVENT') return await this.finalize('PARTIAL_SAFETY_BLOCKED', 'SAFETY_EVENT');
-        if (code === 'PROCESS_INTERRUPTION') return await this.finalize('INCOMPLETE_PROCESS_INTERRUPTION', 'PROCESS_INTERRUPTION');
         return await this.finalize('PARTIAL_RUNTIME_INFRA_FAILURE', 'PREFLIGHT_FAILED');
       }
     }

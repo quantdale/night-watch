@@ -55,7 +55,7 @@ const CHECKPOINT_KEYS = [
 ] as const;
 // Phase 15 Session 2 additions: optional so historical pre-S2 checkpoints
 // remain valid; when present they are strictly validated below.
-const CHECKPOINT_OPTIONAL_KEYS = ['candidateLifecycles', 'runtimeContractVersions', 'interruptedWork', 'workItemRetries'] as const;
+const CHECKPOINT_OPTIONAL_KEYS = ['candidateLifecycles', 'runtimeContractVersions', 'interruptedWork', 'workItemRetries', 'replayReservations'] as const;
 const WORK_KINDS: readonly CampaignWorkKind[] = ['JOURNEY', 'API', 'EXPLORATION', 'REPRODUCTION', 'MINIMIZATION'];
 const CAMPAIGN_STATUSES = ['IN_PROGRESS', 'COMPLETE_CLEAN', 'COMPLETE_WITH_FINDINGS', 'PARTIAL_BUDGET_EXHAUSTED', 'PARTIAL_AUTH_BLOCKED', 'PARTIAL_SAFETY_BLOCKED', 'PARTIAL_RUNTIME_INFRA_FAILURE', 'ABORTED_OWNER_POLICY', 'INCOMPLETE_PROCESS_INTERRUPTION'] as const;
 const STOP_REASONS = ['NONE', 'OWNER_POLICY_BLOCKED', 'AUTH_BLOCKED', 'SAFETY_EVENT', 'PRIVACY_BLOCKED', 'BUDGET_EXHAUSTED', 'RUNTIME_TIMEOUT', 'FAILURE_STORM_SHARED_ROOT_SYMPTOM', 'CAMPAIGN_VERSION_DRIFT', 'PROCESS_INTERRUPTION', 'PREFLIGHT_FAILED'] as const;
@@ -110,6 +110,60 @@ function validateBudgetUsage(value: unknown, policy: CampaignManifest['budgetPol
   for (const key of keys) {
     assertNonNegativeInteger(usage[key], `${code}:${key}`);
     if ((usage[key] as number) > limits[key]) checkpointIntegrity(`${code}:EXCEEDS_POLICY:${key}`);
+  }
+}
+
+function validateReplayReservationRequirements(value: unknown, policy: CampaignManifest['budgetPolicy'], code: string): void {
+  const requirements = requireRuntimeRecord(value, code);
+  const keys = ['browserContexts', 'journeyContexts', 'explorationContexts', 'apiExecutions', 'totalActions', 'replays'] as const;
+  assertExactKeys(requirements, keys, code);
+  const limits: Record<(typeof keys)[number], number> = {
+    browserContexts: policy.maxTotalBrowserContexts,
+    journeyContexts: policy.maxJourneyContexts,
+    explorationContexts: policy.maxExplorationContexts,
+    apiExecutions: policy.maxApiExecutions,
+    totalActions: policy.maxTotalActions,
+    replays: policy.maxReplays,
+  };
+  for (const key of keys) {
+    assertNonNegativeInteger(requirements[key], `${code}:${key}`);
+    if ((requirements[key] as number) > limits[key]) checkpointIntegrity(`${code}:EXCEEDS_POLICY:${key}`);
+  }
+  if (requirements.replays !== 1) checkpointIntegrity(`${code}:REPLAY_UNIT_INVALID`);
+  if (requirements.journeyContexts !== 0 || requirements.explorationContexts !== 0) checkpointIntegrity(`${code}:COLLECTION_CATEGORY_SPEND`);
+}
+
+function validateReplayReservations(checkpoint: RuntimeRecord, manifest: CampaignManifest, clusterIds: Set<string>, observationIds: Set<string>, queueStateByCluster: ReadonlyMap<string, string>, executionLedger: readonly CampaignExecutionRecord[], dossierReadyClusters: ReadonlySet<string>): void {
+  if (checkpoint.replayReservations === undefined) return;
+  const reservations = requireRuntimeArray(checkpoint.replayReservations, 'CHECKPOINT_REPLAY_RESERVATIONS');
+  const reservationIds = new Set<string>();
+  const reservationClusters = new Set<string>();
+  for (const value of reservations) {
+    const reservation = requireRuntimeRecord(value, 'CHECKPOINT_REPLAY_RESERVATION');
+    assertExactKeys(reservation, ['reservationId', 'clusterId', 'representativeRunId', 'state', 'requirements'], 'CHECKPOINT_REPLAY_RESERVATION');
+    assertString(reservation.reservationId, 'CHECKPOINT_REPLAY_RESERVATION_ID');
+    assertString(reservation.clusterId, 'CHECKPOINT_REPLAY_RESERVATION_CLUSTER');
+    assertString(reservation.representativeRunId, 'CHECKPOINT_REPLAY_RESERVATION_REPRESENTATIVE');
+    const reservationId = reservation.reservationId as string;
+    const clusterId = reservation.clusterId as string;
+    const representativeRunId = reservation.representativeRunId as string;
+    if (reservationIds.has(reservationId)) checkpointIntegrity(`DUPLICATE_REPLAY_RESERVATION:${reservationId}`);
+    if (reservationClusters.has(clusterId)) checkpointIntegrity(`DUPLICATE_REPLAY_RESERVATION_CLUSTER:${clusterId}`);
+    reservationIds.add(reservationId);
+    reservationClusters.add(clusterId);
+    if (reservationId !== `replay:${manifest.campaignId}:${clusterId}`) checkpointIntegrity(`REPLAY_RESERVATION_IDENTITY_DRIFT:${clusterId}`);
+    if (!clusterIds.has(clusterId)) checkpointIntegrity(`UNKNOWN_REPLAY_RESERVATION_CLUSTER:${clusterId}`);
+    if (!observationIds.has(representativeRunId)) checkpointIntegrity(`UNKNOWN_REPLAY_RESERVATION_REPRESENTATIVE:${clusterId}`);
+    assertEnum(reservation.state, ['RESERVED', 'CONSUMED'], 'CHECKPOINT_REPLAY_RESERVATION_STATE');
+    const state = reservation.state as 'RESERVED' | 'CONSUMED';
+    validateReplayReservationRequirements(reservation.requirements, manifest.budgetPolicy, 'CHECKPOINT_REPLAY_RESERVATION_REQUIREMENTS');
+    if (dossierReadyClusters.has(clusterId) && state !== 'CONSUMED') checkpointIntegrity(`REPLAY_RESERVATION_DOSSIER_STATE_MISMATCH:${clusterId}`);
+    const queueState = queueStateByCluster.get(clusterId);
+    const isReproductionOnlyLedger = manifest.mode === 'REPRODUCTION_ONLY'
+      && executionLedger.some((record) => record.kind === 'REPRODUCTION' && (record.state === 'RUNNING' || record.state === 'REPLAY_REQUIRED' || record.state === 'COMPLETED' || record.state === 'BLOCKED'));
+    if (queueState === undefined && !isReproductionOnlyLedger && !dossierReadyClusters.has(clusterId)) checkpointIntegrity(`ORPHAN_REPLAY_RESERVATION:${clusterId}`);
+    if (queueState !== undefined && state === 'RESERVED' && queueState !== 'RUNNING') checkpointIntegrity(`RESERVED_REPLAY_STATE_MISMATCH:${clusterId}`);
+    if (queueState !== undefined && state === 'CONSUMED' && !['RUNNING', 'REPLAY_REQUIRED', 'COMPLETED', 'BLOCKED', 'SKIPPED'].includes(queueState)) checkpointIntegrity(`CONSUMED_REPLAY_STATE_MISMATCH:${clusterId}`);
   }
 }
 
@@ -191,6 +245,7 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
     }
   }
   const reproductionIds = new Set<string>();
+  const queueStateByCluster = new Map<string, string>();
   for (const value of requireRuntimeArray(checkpoint.reproductionQueue, 'CHECKPOINT_REPRODUCTION_QUEUE')) {
     const reproduction = requireRuntimeRecord(value, 'CHECKPOINT_REPRODUCTION');
     assertExactKeys(reproduction, ['clusterId', 'representativeRunId', 'state', 'result', 'admissionLevel', 'reasonCode', 'runId', 'safety', 'privacy'], 'CHECKPOINT_REPRODUCTION');
@@ -210,10 +265,13 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
     if (reproduction.state === 'PENDING' || reproduction.state === 'RUNNING' || reproduction.state === 'REPLAY_REQUIRED') {
       if (reproduction.result !== null) checkpointIntegrity(`PENDING_REPRODUCTION_HAS_RESULT:${reproduction.clusterId}`);
     }
+    queueStateByCluster.set(reproduction.clusterId, reproduction.state);
   }
+
   const minimization = requireRuntimeArray(checkpoint.minimizationQueue, 'CHECKPOINT_MINIMIZATION_QUEUE');
   assertUniqueStrings(minimization, 'CHECKPOINT_MINIMIZATION_QUEUE');
   for (const clusterId of minimization as readonly string[]) if (!clusterIds.has(clusterId)) checkpointIntegrity(`UNKNOWN_MINIMIZATION_CLUSTER:${clusterId}`);
+  const dossierReadyClusters = new Set<string>();
   const dossierClusters = new Set<string>();
   const bugCandidates = requireRuntimeArray(checkpoint.bugCandidates, 'CHECKPOINT_BUG_CANDIDATES');
   assertUniqueStrings(bugCandidates, 'CHECKPOINT_BUG_CANDIDATES');
@@ -233,9 +291,13 @@ function validateReferenceLedgers(checkpoint: RuntimeRecord, manifest: CampaignM
       assertString(dossier.dossierVersion, 'CHECKPOINT_DOSSIER_VERSION');
       if (dossier.dossierVersion !== 'nightwatch.bug-dossier.private.v1' && dossier.dossierVersion !== 'nightwatch.bug-dossier.private.v2') checkpointIntegrity('DOSSIER_VERSION_INVALID');
     }
-    if (dossier.state === 'READY' && !bugCandidates.includes(dossier.candidateId)) checkpointIntegrity(`READY_DOSSIER_NOT_IN_BUG_CANDIDATES:${dossier.candidateId}`);
+    if (dossier.state === 'READY') {
+      if (!bugCandidates.includes(dossier.candidateId)) checkpointIntegrity(`READY_DOSSIER_NOT_IN_BUG_CANDIDATES:${dossier.candidateId}`);
+      dossierReadyClusters.add(dossier.clusterId);
+    }
     if (dossier.state !== 'READY' && bugCandidates.includes(dossier.candidateId)) checkpointIntegrity(`UNRESOLVED_DOSSIER_IN_BUG_CANDIDATES:${dossier.candidateId}`);
   }
+  validateReplayReservations(checkpoint, manifest, clusterIds, observationIds, queueStateByCluster, executionLedger, dossierReadyClusters);
 }
 
 // ---------------------------------------------------------------------------

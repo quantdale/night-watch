@@ -1211,7 +1211,6 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
           // the capability itself, like a real adapter would.
           reproduce: async ({ representative }) => {
             reproduceAttempts += 1;
-            if (reproduceAttempts === 1) throw new CampaignProcessInterruptionError();
             const fingerprint = representative.observation.fingerprint;
             const replay = (seq: readonly MinimizationAction[]) => ({
               status: seq.length > 0 ? 'FAILURE' as const : 'PASS' as const,
@@ -1228,8 +1227,22 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
             };
           },
         };
-        const interrupted = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+        const orchestrator = new CampaignOrchestrator(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+        const originalWriteCheckpoint = orchestrator.checkpointStore.writeCheckpoint.bind(orchestrator.checkpointStore);
+        let interruptedOnce = false;
+        orchestrator.checkpointStore.writeCheckpoint = (...args: Parameters<CampaignCheckpointStore['writeCheckpoint']>) => {
+          const written = originalWriteCheckpoint(...args);
+          const [checkpoint] = args;
+          if (!interruptedOnce && checkpoint.replayReservations?.some((reservation) => reservation.state === 'RESERVED') && checkpoint.reproductionQueue.some((item) => item.state === 'RUNNING')) {
+            interruptedOnce = true;
+            throw new CampaignProcessInterruptionError();
+          }
+          return written;
+        };
+        const interrupted = await orchestrator.run();
         expect(interrupted.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+        expect(interruptedOnce).toBe(true);
+        expect(reproduceAttempts).toBe(0);
         expect(interrupted.checkpoint.runtimeContractVersions).toEqual({ ...CAMPAIGN_RUNTIME_CONTRACT_VERSIONS_EXPECTED });
         expect(classifyCheckpointRuntimeContracts(interrupted.checkpoint)).toBe('CURRENT_S2_CONTRACTS');
         expect(() => validateCampaignCheckpoint(interrupted.checkpoint, manifest)).not.toThrow();
@@ -1244,6 +1257,7 @@ test.describe('Phase 15 Session 2 Workstream G — campaign/triage integration t
         const resumed = await resumeCampaign(manifest, executor, { checkpointStore: new CampaignCheckpointStore(store), now: () => new Date(STATIC_NOW) });
         assertSafetyPrivacyFloors(resumed);
         expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
+        expect(reproduceAttempts).toBe(1);
         // Completed work items were NOT re-executed across the resume boundary.
         for (const item of manifest.workItems) expect(executions.get(item.workItemId)).toBe(1);
         expect(resumed.checkpoint.completedWorkItemIds).toHaveLength(manifest.workItems.length);

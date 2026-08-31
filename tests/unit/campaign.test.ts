@@ -19,8 +19,10 @@ import {
   runCampaign,
   validateCampaignCheckpoint,
   validateCampaignManifest,
+  type CampaignCheckpoint,
   type CampaignAnomalyCandidate,
   type CampaignBudgetPolicy,
+  type CampaignReproductionOutcome,
   type CampaignExecutor,
   type CampaignExecutionOutcome,
   type CampaignInput,
@@ -29,6 +31,7 @@ import {
   type CampaignWorkItem,
   type CampaignSourceSnapshot,
 } from '../../src/core/campaign';
+import { CampaignOrchestrator } from '../../src/core/campaign/orchestrator';
 import { PHASE5_API_CATALOG } from '../../src/api/phase5/catalog';
 import { API_CATALOG_VERSION, SCENARIO_GENERATOR_VERSION } from '../../src/api/phase5/types';
 import { DEPENDENCY_MAP_VERSION, RIPPLE_REPOSITORIES, SELECTOR_VERSION, changesetId, selectJourneys, type ChangeSet, type ChangedFile } from '../../src/core/changeIntelligence';
@@ -72,6 +75,10 @@ const TEST_BUDGET: CampaignBudgetPolicy = Object.freeze({
   maxPerTestTimeoutMs: 5_000,
   maxPromotedClusters: 3,
   maxPrivateEvidenceBytes: 20 * 1024 * 1024,
+});
+const REPLAY_TEST_BUDGET: CampaignBudgetPolicy = Object.freeze({
+  ...TEST_BUDGET,
+  maxTotalBrowserContexts: 12,
 });
 
 const PRIVACY_POLICY: CampaignPrivacyPolicy = {
@@ -295,6 +302,52 @@ function candidate(options: {
     replay,
   };
 }
+function currentRealCandidate(value: CampaignAnomalyCandidate, sourceVersion = 'cs-empty-phase7', changedFiles: readonly ChangedFile[] = []): CampaignAnomalyCandidate {
+  return {
+    ...value,
+    observation: {
+      ...value.observation,
+      sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
+    },
+    sourceCorrelation: {
+      ...value.sourceCorrelation,
+      sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
+      sourceVersion,
+      changedFiles,
+    },
+  };
+}
+
+function notReproducedOutcome(runId: string): CampaignReproductionOutcome {
+  return {
+    result: 'NOT_REPRODUCED',
+    runId,
+    fingerprint: null,
+    safety: {
+      productionAttempts: 0,
+      proxyViolations: 0,
+      unknownDestinations: 0,
+      unknownApprovals: 0,
+      productMutations: 0,
+      actionCausedUnknown: 0,
+      databaseQueries: 0,
+      infrastructureQueries: 0,
+      externalPublicationAttempts: 0,
+    },
+    privacy: {
+      result: 'PASS',
+      rawBodiesPersisted: 0,
+      customerValuesPersisted: 0,
+      credentialsPersisted: 0,
+      cookiesPersisted: 0,
+      tokensPersisted: 0,
+      domPersisted: 0,
+      screenshotsPersisted: 0,
+      authenticatedTracesPersisted: 0,
+    },
+  };
+}
+
 
 function defaultOutcome(overrides: Partial<CampaignExecutionOutcome> = {}): CampaignExecutionOutcome {
   return {
@@ -340,6 +393,23 @@ function passingExecutor(script: ReadonlyMap<string, readonly CampaignAnomalyCan
     },
   };
 }
+function noFindingReplayExecutor(options: {
+  readonly script?: ReadonlyMap<string, readonly CampaignAnomalyCandidate[]>;
+  readonly estimate?: CampaignExecutor['estimateReproduction'];
+  readonly onReplay?: (representative: CampaignAnomalyCandidate) => void;
+} = {}): CampaignExecutor {
+  const base = passingExecutor(options.script ?? new Map());
+  return {
+    preflight: base.preflight,
+    execute: base.execute,
+    estimateReproduction: options.estimate ?? (() => ({ browserContexts: 1, journeyContexts: 1, totalActions: 1 })),
+    reproduce: async ({ representative }) => {
+      options.onReplay?.(representative);
+      return notReproducedOutcome(`${representative.observation.runId}-fresh`);
+    },
+  };
+}
+
 
 function tempStore(): { readonly root: string; readonly store: PrivateArtifactStore } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase7-'));
@@ -508,70 +578,454 @@ test.describe('Phase 7 campaign identity, selection, and policy', () => {
     }
   });
 });
-test('reproduces pre-fix three-journey replay starvation before executor entry', async () => {
-  const { root, store } = tempStore();
-  try {
-    const admittedCandidate = candidate({
-      runId: 'run-dvr011-current-account',
-      fingerprint: 'fp:sha256:777777777777777777777777',
-      journeyId: 'ripple-account-inventory',
-    });
-    const currentCandidate: CampaignAnomalyCandidate = {
-      ...admittedCandidate,
-      observation: {
-        ...admittedCandidate.observation,
-        sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
-      },
-      sourceCorrelation: {
-        ...admittedCandidate.sourceCorrelation,
-        sourceFreshness: 'SOURCE_CURRENT_LOCALLY',
-      },
-    };
-    const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
-    const executeCalls: string[] = [];
-    let reproductionCalls = 0;
-    const executor: CampaignExecutor = {
-      preflight: () => ({ passed: true, code: 'PREFLIGHT_PASS' as const, failedChecks: [], checkedAt: STATIC_NOW }),
-      execute: async ({ workItem }) => {
-        executeCalls.push(workItem.workItemId);
-        const observations = workItem.workItemId === 'journey:ripple-account-inventory' ? [currentCandidate] : [];
-        return defaultOutcome({
-          result: observations.length > 0 ? 'ANOMALY' : 'PASS',
-          actionsExecuted: 1,
-          browserContextCreated: workItem.kind !== 'API',
-          observations,
-        });
-      },
-      estimateReproduction: () => ({ browserContexts: 1, journeyContexts: 1, totalActions: 1 }),
-      reproduce: async () => {
-        reproductionCalls += 1;
-        throw new Error('REPLAY_EXECUTOR_SHOULD_NOT_ENTER');
-      },
-    };
+test('reproduces pre-fix three-journey replay starvation before executor entry', () => {
+  // Historical M0 reproducer: the pre-fix replay reservation charged a
+  // JOURNEY category context in addition to the physical browser context.
+  // The exact orchestrator reproducer is checkpointed in 9b7e3ad; this small
+  // frozen arithmetic fixture keeps that failure observable after the
+  // production reservation semantics change.
+  const budget = new CampaignBudgetManager(INITIAL_REAL_CAMPAIGN_BUDGET, emptyBudgetUsage());
+  budget.reserveWork('JOURNEY');
+  budget.reserveWork('JOURNEY');
+  budget.reserveWork('JOURNEY');
+  let reproductionCalls = 0;
 
-    const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
-    const clusterId = result.checkpoint.anomalyClusters[0]?.clusterId;
-
-    expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
-    expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
-    expect(executeCalls.filter((id) => id.startsWith('journey:'))).toHaveLength(3);
-    expect(result.checkpoint.anomalyCandidates).toHaveLength(1);
-    expect(result.checkpoint.anomalyCandidates[0]?.observation.sourceFreshness).toBe('SOURCE_CURRENT_LOCALLY');
-    expect(result.checkpoint.anomalyCandidates[0]?.knownNightwatchDefect).toBe(false);
-    expect(result.checkpoint.anomalyClusters).toHaveLength(1);
-    expect(result.checkpoint.reproductionQueue).toEqual([
-      expect.objectContaining({ clusterId, state: 'BLOCKED', reasonCode: 'BUDGET_EXHAUSTED' }),
-    ]);
-    expect(result.checkpoint.budgetUsed.browserContexts).toBe(3);
-    expect(result.checkpoint.budgetUsed.journeyContexts).toBe(3);
-    expect(result.checkpoint.budgetRemaining.journeyContexts).toBe(0);
-    expect(result.checkpoint.unresolved).toContain('BUDGET_EXHAUSTED');
-    expect(reproductionCalls).toBe(0);
-    expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
+  expect(() => {
+    budget.consumeBundle({ browserContexts: 1, journeyContexts: 1, replays: 1, totalActions: 1 });
+    reproductionCalls += 1;
+  }).toThrow('CAMPAIGN_BUDGET_EXHAUSTED:journeyContexts');
+  expect(reproductionCalls).toBe(0);
+  expect(budget.used()).toMatchObject({ browserContexts: 3, journeyContexts: 3, replays: 0, totalActions: 0 });
 });
+test('protected replay browser capacity remains unavailable to collection work', () => {
+  const policy = { ...INITIAL_REAL_CAMPAIGN_BUDGET, maxExplorationContexts: 3 };
+  const budget = new CampaignBudgetManager(policy, emptyBudgetUsage(), { protectedReplayBrowserContexts: 1 });
+  budget.reserveWork('JOURNEY');
+  budget.reserveWork('JOURNEY');
+  budget.reserveWork('JOURNEY');
+  budget.reserveWork('EXPLORATION');
+  budget.reserveWork('EXPLORATION');
+  expect(() => budget.reserveWork('EXPLORATION')).toThrow('CAMPAIGN_BUDGET_EXHAUSTED:browserContexts');
+  budget.consumeBundle({ browserContexts: 1, replays: 1 });
+  expect(budget.used()).toMatchObject({ browserContexts: 6, journeyContexts: 3, explorationContexts: 2, replays: 1 });
+});
+test.describe('Bounded replay reservation ledger', () => {
+  test('eligible initial-real candidate receives one protected replay reservation', async () => {
+    const { root, store } = tempStore();
+    try {
+      const observed = currentRealCandidate(candidate({
+        runId: 'run-replay-eligible',
+        fingerprint: 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa',
+        journeyId: 'ripple-account-inventory',
+      }));
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+      let replayCalls = 0;
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({
+          script: new Map([['journey:ripple-account-inventory', [observed]]]),
+          onReplay: () => { replayCalls += 1; },
+        }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(replayCalls).toBe(1);
+      expect(result.checkpoint.budgetUsed.browserContexts).toBe(4);
+      expect(result.checkpoint.budgetUsed.journeyContexts).toBe(3);
+      expect(result.checkpoint.budgetUsed.explorationContexts).toBe(0);
+      expect(result.checkpoint.budgetUsed.replays).toBe(3);
+      expect(result.checkpoint.replayReservations).toEqual([
+        expect.objectContaining({
+          state: 'CONSUMED',
+          clusterId: result.checkpoint.anomalyClusters[0]?.clusterId,
+          representativeRunId: observed.observation.runId,
+          requirements: {
+            browserContexts: 1,
+            journeyContexts: 0,
+            explorationContexts: 0,
+            apiExecutions: 0,
+            totalActions: 1,
+            replays: 1,
+          },
+        }),
+      ]);
+      expect(result.checkpoint.reproductionQueue).toEqual([
+        expect.objectContaining({ state: 'COMPLETED', result: 'NOT_REPRODUCED' }),
+      ]);
+      expect(result.dossiers).toHaveLength(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+      const serialized = JSON.parse(JSON.stringify(result.checkpoint)) as CampaignCheckpoint;
+      expect(() => validateCampaignCheckpoint(serialized, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('zero admitted candidates consume zero replay reserve', async () => {
+    const { root, store } = tempStore();
+    try {
+      let replayCalls = 0;
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({ onReplay: () => { replayCalls += 1; } }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(replayCalls).toBe(0);
+      expect(result.checkpoint.replayReservations).toEqual([]);
+      expect(result.checkpoint.reproductionQueue).toEqual([]);
+      expect(result.checkpoint.budgetUsed.browserContexts).toBe(3);
+      expect(result.checkpoint.budgetUsed.journeyContexts).toBe(3);
+      expect(result.checkpoint.budgetUsed.replays).toBe(2);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('multiple candidates respect the finite promotion and replay cap', async () => {
+    const { root, store } = tempStore();
+    try {
+      const candidates = [
+        candidate({ runId: 'run-cap-one', fingerprint: 'fp:sha256:bbbbbbbbbbbbbbbbbbbbbbbb', journeyId: 'ripple-payer-exchange-read' }),
+        candidate({ runId: 'run-cap-two', fingerprint: 'fp:sha256:cccccccccccccccccccccccc', journeyId: 'ripple-common-exchange-read' }),
+        candidate({ runId: 'run-cap-three', fingerprint: 'fp:sha256:dddddddddddddddddddddddd', journeyId: 'ripple-account-inventory' }),
+        candidate({ runId: 'run-cap-four', fingerprint: 'fp:sha256:eeeeeeeeeeeeeeeeeeeeeeee', journeyId: 'ripple-payer-exchange-read' }),
+      ];
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], { ...TEST_BUDGET, maxTotalBrowserContexts: 12 }));
+      let replayCalls = 0;
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({
+          script: new Map([['journey:ripple-payer-exchange-read', candidates]]),
+          onReplay: () => { replayCalls += 1; },
+        }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(replayCalls).toBe(3);
+      expect(result.checkpoint.replayReservations).toHaveLength(3);
+      expect(new Set(result.checkpoint.replayReservations!.map((reservation) => reservation.reservationId)).size).toBe(3);
+      expect(new Set(result.checkpoint.replayReservations!.map((reservation) => reservation.clusterId)).size).toBe(3);
+      expect(result.checkpoint.replayReservations!.every((reservation) => reservation.state === 'CONSUMED')).toBe(true);
+      expect(result.checkpoint.reproductionQueue).toHaveLength(3);
+      expect(result.checkpoint.budgetUsed.replays).toBe(6);
+      expect(result.dossiers).toHaveLength(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('duplicate candidates share one cluster and one replay reservation', async () => {
+    const { root, store } = tempStore();
+    try {
+      const fingerprint = 'fp:sha256:ffffffffffffffffffffffff';
+      const first = candidate({ runId: 'run-duplicate-replay-one', fingerprint, journeyId: 'ripple-payer-exchange-read' });
+      const second = candidate({ runId: 'run-duplicate-replay-two', fingerprint, journeyId: 'ripple-payer-exchange-read' });
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], TEST_BUDGET));
+      let replayCalls = 0;
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({
+          script: new Map([['journey:ripple-payer-exchange-read', [first, second]]]),
+          estimate: () => ({}),
+          onReplay: () => { replayCalls += 1; },
+        }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(result.checkpoint.anomalyObservations.filter((observation) => observation.fingerprint === fingerprint)).toHaveLength(2);
+      expect(result.checkpoint.anomalyClusters.filter((cluster) => cluster.fingerprint === fingerprint)).toHaveLength(1);
+      expect(result.checkpoint.reproductionQueue).toHaveLength(1);
+      expect(result.checkpoint.replayReservations).toHaveLength(1);
+      expect(replayCalls).toBe(1);
+      const reservation = result.checkpoint.replayReservations![0]!;
+      const duplicateClusterReservation = { ...reservation, reservationId: `${reservation.reservationId}:duplicate` };
+      const duplicateClusterCheckpoint = {
+        ...result.checkpoint,
+        replayReservations: [reservation, duplicateClusterReservation],
+      };
+      expect(() => validateCampaignCheckpoint(duplicateClusterCheckpoint, manifest)).toThrow(/DUPLICATE_REPLAY_RESERVATION_CLUSTER/);
+      const identityDriftCheckpoint = {
+        ...result.checkpoint,
+        replayReservations: [{ ...reservation, reservationId: `${reservation.reservationId}:drift` }],
+      };
+      expect(() => validateCampaignCheckpoint(identityDriftCheckpoint, manifest)).toThrow(/REPLAY_RESERVATION_IDENTITY_DRIFT/);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('stale, historical, incomplete, auth, and framework candidates cannot enter replay', async () => {
+    const rejectionCases: readonly {
+      readonly reason: string;
+      readonly transform: (value: CampaignAnomalyCandidate) => CampaignAnomalyCandidate;
+    }[] = [
+      { reason: 'REPLAY_SOURCE_FRESHNESS_UNCONFIRMED', transform: (value) => value },
+      { reason: 'REPLAY_SOURCE_VERSION_STALE', transform: (value) => currentRealCandidate(value, 'stale-source') },
+      {
+        reason: 'REPLAY_HISTORICAL_CANDIDATE',
+        transform: (value) => {
+          const current = currentRealCandidate(value);
+          return { ...current, observation: { ...current.observation, observedAt: '2026-08-12T01:00:00.000Z' } };
+        },
+      },
+      { reason: 'REPLAY_CAPTURE_INCOMPLETE', transform: (value) => ({ ...currentRealCandidate(value), originalSequence: [] }) },
+      {
+        reason: 'REPLAY_AUTH_UNPROVEN',
+        transform: (value) => ({ ...currentRealCandidate(value), alternativesRuledOut: [] }),
+      },
+      {
+        reason: 'REPLAY_NON_PRODUCT_OUTCOME',
+        transform: (value) => {
+          const current = currentRealCandidate(value);
+          return {
+            ...current,
+            browser: { ...current.browser, runtimeCategory: 'framework' as const },
+            observation: { ...current.observation, features: { ...current.observation.features, runtimeCategory: 'framework' as const } },
+          };
+        },
+      },
+    ];
+    for (const [index, rejection] of rejectionCases.entries()) {
+      const { root, store } = tempStore();
+      try {
+        const value = rejection.transform(candidate({
+          runId: `run-rejection-${index}`,
+          fingerprint: `fp:sha256:${String(index + 1).repeat(24)}`,
+          journeyId: 'ripple-account-inventory',
+        }));
+        const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], INITIAL_REAL_CAMPAIGN_BUDGET));
+        let replayCalls = 0;
+        const result = await runCampaign(
+          manifest,
+          noFindingReplayExecutor({
+            script: new Map([['journey:ripple-account-inventory', [value]]]),
+            onReplay: () => { replayCalls += 1; },
+          }),
+          { store, now: () => new Date(STATIC_NOW) },
+        );
+        const clusterId = result.checkpoint.anomalyClusters[0]?.clusterId;
+        expect(result.resultClass).toBe('COMPLETE_CLEAN');
+        expect(replayCalls).toBe(0);
+        expect(result.checkpoint.replayReservations).toEqual([]);
+        expect(result.checkpoint.reproductionQueue).toEqual([]);
+        expect(clusterId).toBeDefined();
+        expect(result.checkpoint.candidateLifecycles?.[clusterId!]?.state).toBe('REJECTED');
+        expect(result.morningBrief.transientsAndNonFindings).toContain(`${clusterId}:${rejection.reason}`);
+        expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
+    }
+  });
+
+  test('source-window drift is rejected before replay reservation', async () => {
+    const { root, store } = tempStore();
+    try {
+      const changedFile: ChangedFile = { repoId: 'mobingilabs/ripple-ui', path: 'src/replay-window.ts', status: 'modify' };
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [changedFile], INITIAL_REAL_CAMPAIGN_BUDGET));
+      const value = currentRealCandidate(candidate({
+        runId: 'run-source-window-drift',
+        fingerprint: 'fp:sha256:121212121212121212121212',
+        journeyId: 'ripple-account-inventory',
+      }), manifest.sourceWindow.changesetId);
+      let replayCalls = 0;
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({
+          script: new Map([['journey:ripple-account-inventory', [value]]]),
+          onReplay: () => { replayCalls += 1; },
+        }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      const clusterId = result.checkpoint.anomalyClusters[0]?.clusterId;
+      expect(replayCalls).toBe(0);
+      expect(result.resultClass).toBe('COMPLETE_CLEAN');
+      expect(result.checkpoint.replayReservations).toEqual([]);
+      expect(result.checkpoint.reproductionQueue).toEqual([]);
+      expect(result.morningBrief.transientsAndNonFindings).toContain(`${clusterId}:REPLAY_SOURCE_WINDOW_MISMATCH`);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('successful admitted replay is the only path to minimization and dossier closure', async () => {
+    const { root, store } = tempStore();
+    try {
+      const bug = candidate({
+        runId: 'run-replay-dossier',
+        fingerprint: 'fp:sha256:131313131313131313131313',
+        journeyId: 'ripple-payer-exchange-read',
+        sequence: ['payer-navigate', 'payer-structural-checkpoint'],
+        predicate: (ids) => ids.includes('payer-navigate') && ids.includes('payer-structural-checkpoint'),
+      });
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], REPLAY_TEST_BUDGET));
+      const base = passingExecutor(new Map([['journey:ripple-payer-exchange-read', [bug]]]));
+      let replayCalls = 0;
+      const executor: CampaignExecutor = {
+        preflight: base.preflight,
+        execute: base.execute,
+        estimateReproduction: () => ({ browserContexts: 1, journeyContexts: 1, totalActions: 2 }),
+        reproduce: async ({ representative }) => {
+          replayCalls += 1;
+          return await base.reproduce({ representative });
+        },
+      };
+      const result = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      expect(result.resultClass).toBe('COMPLETE_WITH_FINDINGS');
+      expect(replayCalls).toBe(1);
+      expect(result.checkpoint.replayReservations).toEqual([expect.objectContaining({ state: 'CONSUMED' })]);
+      expect(result.checkpoint.reproductionQueue).toEqual([expect.objectContaining({ state: 'COMPLETED', result: 'REPRODUCED' })]);
+      expect(result.checkpoint.budgetUsed.minimizationCandidates).toBeGreaterThan(0);
+      expect(result.dossiers).toHaveLength(1);
+      expect(result.checkpoint.privacyStatus).toBe('PASS');
+      expect(result.checkpoint.safety.productionAttempts).toBe(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('exhausted total browser budget remains fail-closed before replay entry', async () => {
+    const { root, store } = tempStore();
+    try {
+      const budget = {
+        ...TEST_BUDGET,
+        maxTotalBrowserContexts: 6,
+        maxExplorationContexts: 3,
+        maxPromotedClusters: 1,
+      };
+      const observed = candidate({
+        runId: 'run-replay-total-exhausted',
+        fingerprint: 'fp:sha256:141414141414141414141414',
+        journeyId: 'ripple-account-inventory',
+      });
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], budget));
+      let replayCalls = 0;
+      const result = await runCampaign(
+        manifest,
+        noFindingReplayExecutor({
+          script: new Map([['journey:ripple-account-inventory', [observed]]]),
+          onReplay: () => { replayCalls += 1; },
+        }),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      expect(result.resultClass).toBe('PARTIAL_BUDGET_EXHAUSTED');
+      expect(result.stopReason).toBe('BUDGET_EXHAUSTED');
+      expect(replayCalls).toBe(0);
+      expect(result.checkpoint.replayReservations).toEqual([]);
+      expect(result.checkpoint.reproductionQueue).toEqual([
+        expect.objectContaining({ state: 'BLOCKED', reasonCode: 'BUDGET_EXHAUSTED' }),
+      ]);
+      expect(result.dossiers).toHaveLength(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('interruption before replay entry preserves RESERVED budget across resume', async () => {
+    const { root, store } = tempStore();
+    try {
+      const observed = candidate({
+        runId: 'run-replay-before-entry',
+        fingerprint: 'fp:sha256:151515151515151515151515',
+        journeyId: 'ripple-account-inventory',
+      });
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], REPLAY_TEST_BUDGET));
+      const base = passingExecutor(new Map([['journey:ripple-account-inventory', [observed]]]));
+      let replayCalls = 0;
+      const executor: CampaignExecutor = {
+        preflight: base.preflight,
+        execute: base.execute,
+        estimateReproduction: () => ({ browserContexts: 1, journeyContexts: 1, totalActions: 1 }),
+        reproduce: async ({ representative }) => {
+          replayCalls += 1;
+          return notReproducedOutcome(`${representative.observation.runId}-fresh`);
+        },
+      };
+      const orchestrator = new CampaignOrchestrator(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      const originalWriteCheckpoint = orchestrator.checkpointStore.writeCheckpoint.bind(orchestrator.checkpointStore);
+      let interrupted = false;
+      orchestrator.checkpointStore.writeCheckpoint = (...args: Parameters<CampaignCheckpointStore['writeCheckpoint']>) => {
+        const written = originalWriteCheckpoint(...args);
+        const [checkpoint] = args;
+        if (!interrupted && checkpoint.replayReservations?.some((reservation) => reservation.state === 'RESERVED') && checkpoint.reproductionQueue.some((item) => item.state === 'RUNNING')) {
+          interrupted = true;
+          throw new CampaignProcessInterruptionError();
+        }
+        return written;
+      };
+      const first = await orchestrator.run();
+      expect(first.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+      expect(replayCalls).toBe(0);
+      expect(first.checkpoint.replayReservations).toEqual([expect.objectContaining({ state: 'RESERVED' })]);
+      expect(first.checkpoint.reproductionQueue).toEqual([expect.objectContaining({ state: 'RUNNING' })]);
+      expect(first.checkpoint.budgetUsed.replays).toBe(4);
+      expect(interrupted).toBe(true);
+      const resumed = await resumeCampaign(manifest, executor, {
+        checkpointStore: new CampaignCheckpointStore(store),
+        now: () => new Date(STATIC_NOW),
+      });
+      expect(resumed.resultClass).toBe('COMPLETE_CLEAN');
+      expect(replayCalls).toBe(1);
+      expect(resumed.checkpoint.replayReservations).toEqual([expect.objectContaining({ state: 'CONSUMED' })]);
+      expect(resumed.checkpoint.budgetUsed.replays).toBe(4);
+      expect(resumed.checkpoint.reproductionQueue).toEqual([expect.objectContaining({ state: 'COMPLETED', result: 'NOT_REPRODUCED' })]);
+      expect(() => validateCampaignCheckpoint(resumed.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('interruption after replay entry never re-enters the executor on resume', async () => {
+    const { root, store } = tempStore();
+    try {
+      const observed = candidate({
+        runId: 'run-replay-after-entry',
+        fingerprint: 'fp:sha256:161616161616161616161616',
+        journeyId: 'ripple-account-inventory',
+      });
+      const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH', [], REPLAY_TEST_BUDGET));
+      const base = passingExecutor(new Map([['journey:ripple-account-inventory', [observed]]]));
+      let replayCalls = 0;
+      const executor: CampaignExecutor = {
+        preflight: base.preflight,
+        execute: base.execute,
+        estimateReproduction: () => ({ browserContexts: 1, journeyContexts: 1, totalActions: 1 }),
+        reproduce: async () => {
+          replayCalls += 1;
+          throw new CampaignProcessInterruptionError();
+        },
+      };
+      const first = await runCampaign(manifest, executor, { store, now: () => new Date(STATIC_NOW) });
+      expect(first.resultClass).toBe('INCOMPLETE_PROCESS_INTERRUPTION');
+      expect(replayCalls).toBe(1);
+      expect(first.checkpoint.replayReservations).toEqual([expect.objectContaining({ state: 'CONSUMED' })]);
+      expect(first.checkpoint.reproductionQueue).toEqual([expect.objectContaining({ state: 'REPLAY_REQUIRED', reasonCode: 'PROCESS_INTERRUPTION' })]);
+      const resumed = await resumeCampaign(manifest, executor, {
+        checkpointStore: new CampaignCheckpointStore(store),
+        now: () => new Date(STATIC_NOW),
+      });
+      expect(replayCalls).toBe(1);
+      expect(resumed.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(resumed.stopReason).toBe('PREFLIGHT_FAILED');
+      expect(resumed.checkpoint.replayReservations).toEqual([expect.objectContaining({ state: 'CONSUMED' })]);
+      expect(resumed.checkpoint.reproductionQueue).toEqual([
+        expect.objectContaining({ state: 'BLOCKED', reasonCode: 'REPLAY_EXECUTION_ALREADY_STARTED' }),
+      ]);
+      expect(resumed.dossiers).toHaveLength(0);
+      expect(() => validateCampaignCheckpoint(resumed.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 
 
 test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
