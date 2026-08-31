@@ -1169,7 +1169,10 @@ export class CampaignOrchestrator {
       this.state = { ...this.state, safety: addSafety(this.state.safety, outcome.safety), privacy: executionPrivacy, privacyStatus: executionPrivacy.result };
       for (const candidate of outcome.observations) validateCandidatePrivacy(candidate);
       for (const candidate of outcome.observations) this.appendObservation(candidate);
-      const anomalyFingerprints = outcome.observations.map((candidate) => candidate.observation.fingerprint).sort();
+      // Observations preserve repeated occurrences for clustering and
+      // occurrence counts. The execution record is a set-valued identity
+      // summary, so canonicalize only this boundary before checkpointing.
+      const anomalyFingerprints = [...new Set(outcome.observations.map((candidate) => candidate.observation.fingerprint))].sort();
       const record: Partial<CampaignExecutionRecord> = {
         state: outcome.result === 'AUTH_BLOCKED' || outcome.result === 'SAFETY_BLOCKED' || outcome.result === 'RUNTIME_FAILURE' || outcome.result === 'INCOMPLETE' ? 'BLOCKED' : 'COMPLETED',
         executionGuarantee: executionGuarantee(item.kind, replay),

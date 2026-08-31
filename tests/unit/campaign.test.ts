@@ -593,6 +593,36 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('canonicalizes duplicate occurrence fingerprints without discarding observations', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const fingerprint = 'fp:sha256:abababababababababababab';
+      const first = candidate({
+        runId: 'run-duplicate-occurrence-1',
+        fingerprint,
+        journeyId: 'ripple-payer-exchange-read',
+      });
+      const second = candidate({
+        runId: 'run-duplicate-occurrence-2',
+        fingerprint,
+        journeyId: 'ripple-payer-exchange-read',
+      });
+      const result = await runCampaign(
+        manifest,
+        passingExecutor(new Map([['journey:ripple-payer-exchange-read', [first, second]]])),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      const execution = result.checkpoint.executionLedger.find((record) => record.workItemId === 'journey:ripple-payer-exchange-read');
+      expect(execution?.anomalyFingerprints).toEqual([fingerprint]);
+      expect(result.checkpoint.anomalyObservations.filter((observation) => ['run-duplicate-occurrence-1', 'run-duplicate-occurrence-2'].includes(observation.runId))).toHaveLength(2);
+      expect(result.checkpoint.anomalyCandidates.filter((candidateItem) => ['run-duplicate-occurrence-1', 'run-duplicate-occurrence-2'].includes(candidateItem.observation.runId))).toHaveLength(2);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('resumes correctly from every bounded work-item completion boundary', async () => {
     const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
     expect(manifest.workItems.length).toBeGreaterThanOrEqual(3);
