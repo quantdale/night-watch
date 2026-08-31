@@ -273,6 +273,27 @@ zero safety counters, and privacy `PASS`. No product finding was claimed
 and the guarded launcher passed. This is retained as bounded non-product
 evidence with truthful framework attribution.
 
+## Replay and yield weaknesses
+
+- **Replay selection:** Final campaign `1054b827` produced zero anomaly
+  candidates and zero dossiers; no replay was queued or executed. The two
+  historical true product oracles (`2fe5dc` common/account candidates)
+  were correctly suppressed by the DVR-011 admission repair, and the
+  historical true product fingerprint `d491c1b9...` remains valid only for the
+  pre-repair manifest, not for the truthful `1054b827` terminal.
+- **Yield limitations:** Bounded DEV sample is small (5 work items, 1
+  campaign). Both terminal campaigns (`75fafe` and `1054b827`) stopped on
+  framework capture (`BODY_READ_TIMEOUT` / `BODY_UNAVAILABLE`) before any
+  product anomaly could be observed, indicating DEV capture fragility rather
+  than infrastructure failure. Payer/common/API paths showed no product defect
+  in the final sample; account-inventory was not observed due to early
+  framework block.
+- **Deferred requalification:** A larger DEV soak or fresh owner-managed
+  authentication retry would be required to distinguish transient capture
+  instability from stable product health. No production, NEXT, or mutation
+  was attempted; `OPERATIONALLY_ACCEPTED` remains preserved via explicit
+  evidence categories.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved
