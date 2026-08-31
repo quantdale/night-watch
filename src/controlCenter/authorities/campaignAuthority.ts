@@ -159,6 +159,17 @@ function campaignReasonFor(candidate: Phase24CandidateDecision): CampaignReasonC
 function candidateMetadata(candidate: Phase24CandidateDecision, memberId: string, selected: boolean): CampaignCandidateMetadata {
   const phase24Eligible = candidate.eligibility === 'ELIGIBLE';
   const supported = selected && phase24Eligible && candidate.readOnlySuitable && candidate.projectionSafe;
+  const proofSignals = [
+    candidate.sourceAvailable && candidate.source !== null,
+    candidate.sourceSnapshotMatches !== false,
+    candidate.routeIdentityProven,
+    candidate.contractIdentityProven,
+    candidate.behaviorOwnerProven,
+    candidate.semanticContractProven,
+    candidate.semanticPreconditionsBound,
+    candidate.readOnlySuitable,
+    candidate.projectionSafe,
+  ].filter(Boolean).length;
   return {
     memberId,
     product: candidate.product,
@@ -171,6 +182,27 @@ function candidateMetadata(candidate: Phase24CandidateDecision, memberId: string
     supported,
     provenance: selected ? ['PHASE24_SOURCE_ANALYSIS', 'PHASE24_SELECTION'] : ['PHASE24_SOURCE_ANALYSIS'],
     semanticGapReasons: campaignReasonFor(candidate),
+    semanticContractCount: candidate.semanticContractProven ? 1 : 0,
+    relationCount: candidate.materialClass === 'RELATIONAL' ? Math.min(64, candidate.anticipatedInvariantCount) : 0,
+    proofConfidence: Math.floor((proofSignals * 5) / 9),
+    diversityDimensions: {
+      repository: candidate.behaviorOwner?.repository ?? candidate.product,
+      routeFamily: candidate.route?.endpointId ?? candidate.surfaceKey,
+      entityType: candidate.materialClass,
+      semanticInvariant: candidate.semanticExpectationId,
+      journeyType: candidate.targetId,
+      interfaceType: candidate.route?.transport ?? null,
+      sourceChangeCluster: candidate.relevantFiles.length > 0
+        ? prefixedDigest24('campaign-source-change', [...candidate.relevantFiles].sort((left, right) => left.localeCompare(right)))
+        : null,
+    },
+    redundancyKey: prefixedDigest24('campaign-redundancy', {
+      product: candidate.product,
+      surface: candidate.surfaceKey,
+      targetId: candidate.targetId,
+      semanticExpectationId: candidate.semanticExpectationId,
+      routeFamily: candidate.route?.endpointId ?? null,
+    }),
   };
 }
 

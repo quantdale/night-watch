@@ -7,6 +7,7 @@ import {
   type CampaignScenarioOutcome,
   type CampaignYieldAttribution,
   type CampaignYieldReport,
+  safeCampaignCanonical,
   safeCampaignDigest,
 } from "./types";
 
@@ -49,6 +50,13 @@ export function buildCampaignYieldReport(input: {
 }): CampaignYieldReport {
   if (!Array.isArray(input.outcomes) || input.outcomes.length > 4096) invalid("OUTCOME_COUNT");
   for (const outcome of input.outcomes) validateOutcome(outcome);
+  // Outcome arrival order is an execution detail.  Canonical processing keeps
+  // duplicate ownership, high-confidence counts, and per-candidate
+  // attribution stable when the same observations arrive from different
+  // workers or campaigns in a different order.
+  const outcomes = [...input.outcomes].sort((left, right) =>
+    safeCampaignCanonical(left).localeCompare(safeCampaignCanonical(right)),
+  );
   let scenariosAttempted = 0;
   let scenariosApplicable = 0;
   let scenariosSkippedByAuthority = 0;
@@ -70,7 +78,7 @@ export function buildCampaignYieldReport(input: {
   const groups = new Map<string, { attempted: boolean; useful: boolean }>();
   const attributions = new Map<string, MutableAttribution>();
 
-  for (const outcome of input.outcomes) {
+  for (const outcome of outcomes) {
     const group = groups.get(outcome.scenarioGroup) ?? { attempted: false, useful: false };
     if (outcome.disposition === "ATTEMPTED" || outcome.disposition === "APPLICABLE" || outcome.disposition === "EXECUTOR_FAILURE" || outcome.disposition === "NO_FINDING") {
       scenariosAttempted += 1;

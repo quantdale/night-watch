@@ -279,7 +279,7 @@ test.describe("Phase 20 contract discovery and graph", () => {
       candidates: [{ memberId, product: "synthetic-phase20-product", surface: "summary-api", journeyClass: "phase20.semantic", apiClass: "summary.read", semanticContractId: sourceCandidateId, oracleFamilies: capability.map((entry) => entry.capabilityKind), applicable: true, supported: true, provenance: ["PHASE20_SYNTHETIC"] }],
       maxSelectedItems: 1,
     });
-    expect(composed.plan.schemaVersion).toBe("nightwatch.campaign-plan.v1");
+    expect(composed.plan.schemaVersion).toBe("nightwatch.campaign-plan.v2");
     expect(composed.plan.ownerScopeStatus).toBe("FROZEN_BY_OWNER");
     expect(composed.plan.items[0]!.coverageGapReasons.some((reason) => reason === "REPLAY_GAP" || reason === "MINIMIZATION_GAP" || reason === "MECHANICALLY_PROVABLE_UNCOVERED")).toBe(true);
     expect(composed.plan.items[0]!.selectionReasons).toContain("CAMPAIGN_AUTO_COMPOSED");

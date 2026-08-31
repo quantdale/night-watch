@@ -65,7 +65,7 @@ test.describe("Phase 19 product abstraction and operator surfaces", () => {
     const output = execFileSync(process.execPath, [path.join(ROOT, "bin/nightwatch.mjs"), "plan", "--json"], { cwd: ROOT, encoding: "utf8", timeout: 120_000, maxBuffer: 2 * 1024 * 1024 });
     const parsed = JSON.parse(output) as { scope: string; plan: { schemaVersion: string; ownerScopeStatus: string } };
     expect(parsed.scope).toBe("LOCAL_SYNTHETIC_ONLY");
-    expect(parsed.plan.schemaVersion).toBe("nightwatch.campaign-plan.v1");
+    expect(parsed.plan.schemaVersion).toBe("nightwatch.campaign-plan.v2");
     expect(parsed.plan.ownerScopeStatus).toBe("FROZEN_BY_OWNER");
   });
 });

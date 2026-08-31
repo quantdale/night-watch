@@ -5,7 +5,12 @@
 
 import { prefixedDigest24, stableJsonSorted } from "../identity/canonicalDigest";
 
-export const CAMPAIGN_PLAN_VERSION = "nightwatch.campaign-plan.v1" as const;
+/**
+ * Plan v2 makes the mechanical selection inputs and the selection trace
+ * explicit.  v1 plans are intentionally not byte-compatible: a plan whose
+ * ranking inputs are incomplete must not be compared with a v2 plan.
+ */
+export const CAMPAIGN_PLAN_VERSION = "nightwatch.campaign-plan.v2" as const;
 export const CAMPAIGN_IMPACT_REPORT_VERSION =
   "nightwatch.campaign-impact-report.v1" as const;
 export const CAMPAIGN_COVERAGE_REPORT_VERSION =
@@ -46,6 +51,29 @@ export const CAMPAIGN_COST_CATEGORIES: readonly CampaignCostCategory[] = [
   "MEDIUM",
   "HIGH",
 ];
+
+export const CAMPAIGN_DIVERSITY_DIMENSIONS = [
+  "repository",
+  "routeFamily",
+  "entityType",
+  "semanticInvariant",
+  "journeyType",
+  "interfaceType",
+  "sourceChangeCluster",
+] as const;
+export type CampaignDiversityDimension =
+  (typeof CAMPAIGN_DIVERSITY_DIMENSIONS)[number];
+
+/** Optional, safe categorical keys used by the bounded selector. */
+export interface CampaignDiversityDimensions {
+  readonly repository?: string | null;
+  readonly routeFamily?: string | null;
+  readonly entityType?: string | null;
+  readonly semanticInvariant?: string | null;
+  readonly journeyType?: string | null;
+  readonly interfaceType?: string | null;
+  readonly sourceChangeCluster?: string | null;
+}
 
 export type CampaignImpactClass =
   | "CHANGED_SOURCE_ADJACENCY"
@@ -98,7 +126,9 @@ export type CampaignReasonCode =
   | "SURVIVING_MUTANT"
   | "ANALYZER_UNSUPPORTED"
   | "DUPLICATE_SEMANTIC_COVERAGE"
-  | "CAMPAIGN_AUTO_COMPOSED";
+  | "CAMPAIGN_AUTO_COMPOSED"
+  | "DIVERSITY_BONUS"
+  | "REDUNDANCY_DEFERRED";
 
 export type CoverageStage =
   | "SOURCE_SURFACE_EXISTS"
@@ -140,6 +170,16 @@ export interface CampaignCandidateMetadata {
   readonly provenance: readonly string[];
   /** Phase 20 additive gap signals; these are planner inputs, never authority. */
   readonly semanticGapReasons?: readonly CampaignReasonCode[];
+  /** Number of mechanically bound semantic contracts represented by this item. */
+  readonly semanticContractCount?: number;
+  /** Number of mechanically bound cross-surface relations represented by this item. */
+  readonly relationCount?: number;
+  /** Bounded source/proof confidence supplied by a mechanical adapter (0..5). */
+  readonly proofConfidence?: number;
+  /** Explicit diversity keys; omitted keys receive deterministic planner fallbacks. */
+  readonly diversityDimensions?: CampaignDiversityDimensions;
+  /** Normalized semantic-surface identity used for duplicate suppression. */
+  readonly redundancyKey?: string | null;
 }
 
 export interface CampaignImpactBinding {
@@ -251,6 +291,15 @@ export interface CampaignPlanPriority {
   readonly detectionPower: number;
   readonly actionability: number;
   readonly executionCost: number;
+  readonly semanticDensity: number;
+  readonly relationDensity: number;
+  readonly sourceChangeSignal: number;
+  readonly proofConfidence: number;
+  readonly explorationAge: number;
+  readonly anomalyDensity: number;
+  readonly replayConfidence: number;
+  readonly redundancyPenalty: number;
+  readonly portfolioScoreSignal: number;
   readonly numerator: number;
   readonly priorityPermille: number;
   readonly basePortfolioScore: number;
@@ -276,6 +325,11 @@ export interface CampaignPlanItem {
   readonly exclusionReasons: readonly CampaignReasonCode[];
   readonly selected: boolean;
   readonly order: number | null;
+  /** Transparent, bounded second-stage selection trace. */
+  readonly diversityBonusPermille?: number;
+  readonly selectionScorePermille?: number;
+  readonly diversityDimensions?: CampaignDiversityDimensions;
+  readonly redundancyKey?: string;
 }
 
 export interface CampaignPlan {

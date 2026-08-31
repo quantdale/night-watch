@@ -13,7 +13,7 @@ import { calculateConfidenceV2 } from "../../src/core/campaignIntelligence/confi
 import { createOwnerDossierV3 } from "../../src/core/campaignIntelligence/dossierV3";
 import { campaignDiagnostic } from "../../src/core/campaignIntelligence/diagnostics";
 import { buildPortfolio, portfolioMemberId } from "../../src/core/portfolio/types";
-import { p16Member, P16_SHA_A, P16_EV_A } from "../../corpus/phase16a/portfolioFixtures";
+import { p16Member, P16_SHA_A, P16_EV_A, P16_TARGET_INVENTORY } from "../../corpus/phase16a/portfolioFixtures";
 
 const FP = "fp:sha256:000000000000000000000001";
 const FP_2 = "fp:sha256:000000000000000000000002";
@@ -224,6 +224,131 @@ test.describe("Phase 19 integrated campaign intelligence", () => {
     expect(plan.excludedItems[0]!.exclusionReasons).toEqual(expect.arrayContaining(["CURRENTNESS_STALE", "STALE_SEMANTIC_AUTHORITY", "MISSING_CANDIDATE_METADATA"]));
   });
 
+  test("priority exposes bounded mechanical signals and diversity defers equivalent duplicates", () => {
+    const members = [
+      p16Member("phase19.diversity.one", {
+        semanticScope: "phase19.diversity.scope.one",
+        journeyId: "ripple-payer-exchange-read",
+        historicalYield: { distinctClusterCount: 2 },
+        starvationAgeBuckets: 1,
+      }),
+      p16Member("phase19.diversity.two", {
+        semanticScope: "phase19.diversity.scope.two",
+        journeyId: "ripple-common-exchange-read",
+        historicalYield: { distinctClusterCount: 0 },
+      }),
+      p16Member(P16_TARGET_INVENTORY, {
+        semanticScope: "phase19.diversity.scope.three",
+        journeyId: "ripple-account-inventory",
+        historicalYield: { distinctClusterCount: 0 },
+      }),
+    ];
+    const portfolio = buildPortfolio({
+      approvedTargets: members.map((member) => member.targetId),
+      memberInputs: members,
+    });
+    const memberIdFor = (targetId: string) => portfolio.members.find((member) => member.input.targetId === targetId)!.memberId;
+    const impact = buildCampaignImpactReport({ sourceCurrentness: "CURRENT", changedFiles: [], bindings: [] });
+    const coverage = buildCampaignCoverageReport({ facts: members.map((member, index) => coverageFact(memberIdFor(member.targetId), {
+      surface: `diversity-surface-${index + 1}`,
+      semanticContractId: `contract.diversity.${index + 1}`,
+    })) });
+    const candidates = [
+      {
+        memberId: memberIdFor("phase19.diversity.one"),
+        product: "ripple",
+        surface: "diversity-surface-1",
+        journeyClass: "journey.one",
+        apiClass: "GET",
+        semanticContractId: "contract.diversity.1",
+        oracleFamilies: ["RELATION", "HTTP_ENVELOPE"],
+        applicable: true,
+        supported: true,
+        provenance: ["synthetic.phase19"],
+        semanticContractCount: 2,
+        relationCount: 3,
+        proofConfidence: 5,
+        diversityDimensions: {
+          repository: "repo-a",
+          routeFamily: "list",
+          entityType: "account",
+          semanticInvariant: "invariant-a",
+          journeyType: "journey-one",
+          interfaceType: "API",
+          sourceChangeCluster: "change-a",
+        },
+        redundancyKey: "same-surface",
+      },
+      {
+        memberId: memberIdFor("phase19.diversity.two"),
+        product: "ripple",
+        surface: "diversity-surface-2",
+        journeyClass: "journey.two",
+        apiClass: "GET",
+        semanticContractId: "contract.diversity.2",
+        oracleFamilies: ["HTTP_ENVELOPE"],
+        applicable: true,
+        supported: true,
+        provenance: ["synthetic.phase19"],
+        diversityDimensions: {
+          repository: "repo-a",
+          routeFamily: "list",
+          entityType: "account",
+          semanticInvariant: "invariant-a",
+          journeyType: "journey-two",
+          interfaceType: "API",
+          sourceChangeCluster: "change-a",
+        },
+        redundancyKey: "same-surface",
+      },
+      {
+        memberId: memberIdFor(P16_TARGET_INVENTORY),
+        product: "ripple",
+        surface: "diversity-surface-3",
+        journeyClass: "journey.three",
+        apiClass: "BROWSER_READ_ONLY",
+        semanticContractId: "contract.diversity.3",
+        oracleFamilies: ["COLLECTION"],
+        applicable: true,
+        supported: true,
+        provenance: ["synthetic.phase19"],
+        diversityDimensions: {
+          repository: "repo-b",
+          routeFamily: "detail",
+          entityType: "billing-group",
+          semanticInvariant: "invariant-b",
+          journeyType: "journey-three",
+          interfaceType: "BROWSER_READ_ONLY",
+          sourceChangeCluster: "change-b",
+        },
+        redundancyKey: "distinct-surface",
+      },
+    ] as const;
+    const planA = buildCampaignPlan({ portfolio, sourceCurrentness: "CURRENT", impact, coverage, candidates, maxSelectedItems: 2 });
+    const planB = buildCampaignPlan({ portfolio, sourceCurrentness: "CURRENT", impact, coverage, candidates: [...candidates].reverse(), maxSelectedItems: 2 });
+    const planC = buildCampaignPlan({ portfolio, sourceCurrentness: "CURRENT", impact, coverage, candidates, maxSelectedItems: 2 });
+    expect(planA).toEqual(planB);
+    expect(planA).toEqual(planC);
+    expect(planA.selectedItems).toHaveLength(2);
+    expect(new Set(planA.selectedItems.map((item) => item.redundancyKey)).size).toBe(2);
+    expect(planA.selectedItems.some((item) => item.redundancyKey === "distinct-surface")).toBe(true);
+    expect(planA.excludedItems.some((item) => item.redundancyKey === "same-surface" && item.exclusionReasons.includes("BUDGET_EXHAUSTED"))).toBe(true);
+    const dense = planA.items.find((item) => item.memberId === memberIdFor("phase19.diversity.one"))!;
+    expect(dense.priority.semanticDensity).toBe(4);
+    expect(dense.priority.relationDensity).toBe(3);
+    expect(dense.priority.proofConfidence).toBe(5);
+    expect(dense.priority.anomalyDensity).toBe(2);
+    expect(dense.diversityDimensions?.sourceChangeCluster).toBe("change-a");
+    expect(dense.selectionScorePermille).toBeGreaterThan(0);
+
+    const changedMetadata = candidates.map((candidate) => candidate.memberId === memberIdFor("phase19.diversity.one")
+      ? { ...candidate, relationCount: 4 }
+      : candidate);
+    const changedPlan = buildCampaignPlan({ portfolio, sourceCurrentness: "CURRENT", impact, coverage, candidates: changedMetadata, maxSelectedItems: 2 });
+    expect(changedPlan.inputDigest).not.toBe(planA.inputDigest);
+    expect(changedPlan.deterministicDigest).not.toBe(planA.deterministicDigest);
+  });
+
   test("replay V4 distinguishes exact, semantic equivalent, environment, precondition, stale, and no-longer-applicable", () => {
     expect(replay().outcome).toBe("REPRODUCED_EXACT");
     expect(replay({ observedSemanticFindingFingerprint: FP_2 }).outcome).toBe("REPRODUCED_SEMANTIC_EQUIVALENT");
@@ -282,6 +407,33 @@ test.describe("Phase 19 integrated campaign intelligence", () => {
     expect(findingClusterIdentity(first).clusterId).not.toBe(findingClusterIdentity(distinct).clusterId);
   });
 
+  test("protocol anomaly clustering is stable across context and approved timing variation", () => {
+    const first = {
+      findingId: "protocol.one",
+      semanticContractId: null,
+      invariantId: null,
+      behaviorClass: "MALFORMED_JSON",
+      normalizedFailureLocation: "api.billinggroups",
+      sourceImpactIdentity: "impact.billinggroups",
+      replayFingerprint: FP,
+      minimizedStructureDigest: null,
+      protocolClass: "HTTP_200_BODY_INVALID",
+      sourceCurrentness: "CURRENT",
+    } as const;
+    const equivalent = {
+      ...first,
+      findingId: "protocol.two",
+      sourceCurrentness: "STALE",
+      minimizedStructureDigest: "min:sha256:000000000000000000000002",
+    } as const;
+    const meaningful = { ...first, findingId: "protocol.three", replayFingerprint: FP_2 } as const;
+    expect(findingClusterIdentity(first).clusterId).toBe(findingClusterIdentity(equivalent).clusterId);
+    expect(findingClusterIdentity(first).clusterId).not.toBe(findingClusterIdentity(meaningful).clusterId);
+    expect(clusterFindings([equivalent, first])).toEqual(expect.arrayContaining([
+      expect.objectContaining({ duplicateCount: 1, findingIds: ["protocol.one", "protocol.two"] }),
+    ]));
+  });
+
   test("confidence V2 and owner dossier retain blockers, limitations, and the next action", () => {
     const confidence = calculateConfidenceV2({
       firstRunEvidence: true,
@@ -337,12 +489,15 @@ test.describe("Phase 19 integrated campaign intelligence", () => {
   });
 
   test("yield attribution, benign controls, empty plans, and diagnostics remain explicit", () => {
-    const yieldReport = buildCampaignYieldReport({ outcomes: [
+    const outcomes = [
       { candidateId: "candidate.one", scenarioGroup: "group.one", oracleFamilies: ["RELATION"], disposition: "ATTEMPTED", protocolFinding: false, semanticFinding: true, clusterId: "cluster:sha256:000000000000000000000001", replayOutcome: "REPRODUCED_EXACT", minimized: true, confidence: "HIGH", benignControl: false, falsePositive: false, staleSource: false, coverageGained: ["contract.one.replay"] },
       { candidateId: "candidate.two", scenarioGroup: "group.one", oracleFamilies: ["RELATION"], disposition: "ATTEMPTED", protocolFinding: false, semanticFinding: true, clusterId: "cluster:sha256:000000000000000000000001", replayOutcome: "DIVERGED", minimized: false, confidence: "LOW", benignControl: false, falsePositive: false, staleSource: false, coverageGained: [] },
       { candidateId: "candidate.three", scenarioGroup: "group.benign", oracleFamilies: ["RELATION"], disposition: "NO_FINDING", protocolFinding: false, semanticFinding: true, clusterId: null, replayOutcome: "FAILED", minimized: false, confidence: "UNRESOLVED", benignControl: true, falsePositive: true, staleSource: false, coverageGained: [] },
       { candidateId: "candidate.four", scenarioGroup: "group.blocked", oracleFamilies: [], disposition: "SKIPPED_AUTHORITY", protocolFinding: false, semanticFinding: false, clusterId: null, replayOutcome: "NOT_APPLICABLE", minimized: false, confidence: "UNRESOLVED", benignControl: false, falsePositive: false, staleSource: false, coverageGained: [] },
-    ] });
+    ] as const;
+    const yieldReport = buildCampaignYieldReport({ outcomes });
+    const reorderedYieldReport = buildCampaignYieldReport({ outcomes: [...outcomes].reverse() });
+    expect(reorderedYieldReport).toEqual(yieldReport);
     expect(yieldReport.uniqueClusters).toBe(1);
     expect(yieldReport.duplicatesRemoved).toBe(1);
     expect(yieldReport.benignControlFalsePositives).toBe(1);
