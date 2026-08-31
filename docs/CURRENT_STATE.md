@@ -323,7 +323,7 @@ LIVE_COMPLETION_CLAIM: NONE
 The active successor task is
 `nightwatch-reliability-yield-and-state-protocol-v1`, with explicit verdict
 effect `PRESERVE`. Its implementation checkpoint is
-`82e661bae45424573c3ea06a20900e342047b849`: replay identity/capture
+`f8757303403dffab6039be3f51b807c8631e3c6a`: replay identity/capture
 canonicalization, deterministic portfolio selection, explicit state
 authorization, interruption boundaries, and cache/property audits are locally
 validated. The current source authority remains

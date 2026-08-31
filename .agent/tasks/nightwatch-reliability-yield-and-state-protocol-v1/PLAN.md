@@ -3,7 +3,7 @@
 Task ID: `nightwatch-reliability-yield-and-state-protocol-v1`
 Phase: `RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Starting SHA: `7ac265594719f3d93eabf78e0bd9f749ef63dba7`
-Last validated implementation: `82e661bae45424573c3ea06a20900e342047b849`
+Last validated implementation: `f8757303403dffab6039be3f51b807c8631e3c6a`
 Authorization class: `NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-reliability-yield-and-state-protocol-v1/`

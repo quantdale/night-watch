@@ -70,8 +70,9 @@ mechanically proven inventory next.
 ## Current checkpoint
 
 The replay, planner/yield, explicit verdict-effect, live-state, cache/property,
-and bounded interruption milestones are locally validated at implementation
-checkpoint `82e661bae45424573c3ea06a20900e342047b849`. The current inventory
+bounded interruption, and handoff-fixture compatibility milestones are
+locally validated at implementation checkpoint
+`f8757303403dffab6039be3f51b807c8631e3c6a`. The current inventory
 backtest is deterministic: 128 considered, 3 eligible, 3 selected, zero
 redundancy, and no new proof family. The remaining release evidence is bounded
 DEV requalification if the external owner-managed authentication is valid,

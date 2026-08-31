@@ -7,15 +7,16 @@ Phase: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: 82e661bae45424573c3ea06a20900e342047b849
-Last substantive checkpoint SHA: 82e661bae45424573c3ea06a20900e342047b849
+Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 
 This report is a live handoff. The campaign has completed its authoritative
 local baseline, replay hardening, current-inventory selection backtest,
 explicit state protocol, persisted interruption boundary, cache audit, and
 canonical-digest property audit. Implementation checkpoint 82e661b is
 validated by focused replay, state, planner, campaign, cache, property, and
-hardening checks. The campaign remains active only for bounded DEV
+hardening checks. The handoff fixture compatibility regression is now also
+closed at `f875730`; the campaign remains active only for bounded DEV
 requalification, clean/isolated parity, CI observation, and final closure.
 
 The clean guarded DEV attempt passed the full local safety gate but stopped

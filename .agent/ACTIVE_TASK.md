@@ -6,16 +6,16 @@ Title: Nightwatch Reliability, Yield, and State Protocol Campaign
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: 82e661bae45424573c3ea06a20900e342047b849
-Last checkpoint: replay and explicit state-protocol hardening validated at `82e661b`
+Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+Last checkpoint: handoff-fixture protocol compatibility validated at `f875730`
 Current milestone: M5 — Repeated operation and release evidence — IN_PROGRESS
 Next action: Complete final local, clean, and isolated validation; DEV remains AUTH_BLOCKED until the owner refreshes the external state
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-LAST_VALIDATED_IMPLEMENTATION_SHA: 82e661bae45424573c3ea06a20900e342047b849
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 82e661bae45424573c3ea06a20900e342047b849
+LAST_VALIDATED_IMPLEMENTATION_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1_STATUS: IN_PROGRESS

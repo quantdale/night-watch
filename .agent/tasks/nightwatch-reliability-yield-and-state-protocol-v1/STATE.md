@@ -6,14 +6,14 @@ Task ID: nightwatch-reliability-yield-and-state-protocol-v1
 Phase: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 Status: IN_PROGRESS
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-Last validated implementation SHA: 82e661bae45424573c3ea06a20900e342047b849
-Last substantive checkpoint SHA: 82e661bae45424573c3ea06a20900e342047b849
-Last documentation checkpoint SHA: 82e661bae45424573c3ea06a20900e342047b849
+Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+Last documentation checkpoint SHA: 811ded7e665020b27036dd5332ef04af43e67b91
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
-LAST_VALIDATED_IMPLEMENTATION_SHA: 82e661bae45424573c3ea06a20900e342047b849
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 82e661bae45424573c3ea06a20900e342047b849
+LAST_VALIDATED_IMPLEMENTATION_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -282,6 +282,23 @@ uncommitted. No browser context or DEV target operation was started; this is
 not a Phase 2C reliability observation. The documentation checkpoint must be
 committed and revalidated before retrying the bounded real run.
 
+Command: `npm run gate:local` at `811ded7e665020b27036dd5332ef04af43e67b91`
+Result: FAIL, repaired before proceeding
+When: 2026-08-31
+Relevant failure/output summary: groups 1–6 passed; semantic compatibility
+stopped at 1950 total / 1934 passed / 13 skipped / 3 failed in the synthetic
+planner-handoff fixture because the new mandatory explicit verdict-effect
+field was absent. Owner provenance, synthetic campaign, and patch-integrity
+groups were not run. No runtime or safety defect was implicated.
+
+Command: `npm run gate:local` at `f8757303403dffab6039be3f51b807c8631e3c6a`
+Result: PASS
+When: 2026-08-31
+Relevant failure/output summary: all 10 required groups passed; semantic
+compatibility 1950 total / 1937 passed / 13 skipped / 0 failed; owner
+provenance 91 passed; synthetic campaign 74 passed; patch integrity passed;
+receipt `receipt:sha256:7952ccb2e38fb5cb04c934fb`.
+
 ## Decisions Made During This Task
 
 - Create a distinct continuity-v2 successor because completed acceptance and
@@ -319,6 +336,7 @@ committed and revalidated before retrying the bounded real run.
 | RYSP-005 | Medium | replay identity and capture boundary | replay identity/metamorphic audit | equivalent object-key insertion order produced strict mismatch; two equally unsupported/cyclic evidence values could otherwise compare alike | replay equality used raw JSON.stringify and did not reject unknown capture/evidence shape before comparison | canonicalize object keys while retaining array order; reject unsupported/cyclic/oversized evidence and UNKNOWN capture status | Phase 2C oracle matrix, canonical-digest audit, and 179-test state/replay suite | PASS at `82e661b` | Closed; strict replay remains fail closed |
 | RYSP-006 | High | project-state and continuity protocol | state authorization/parser audit | accepted status depended on a nightwatch task-name exception, and incidental status prose could affect milestone interpretation | authorization and milestone parsing were convention/free-text driven | explicit bounded verdict effect; location-bound metadata; structured live-state and prompt cross-checks; trailing-delimiter milestone parser | 114 agent-state tests and 53 project-state tests | PASS at `82e661b` | Closed; accepted verdict preserved explicitly |
 | RYSP-007 | Low | test quality | cache/property claim audit | analyzer/taxonomy invalidation and bounded-input tests did not change/assert the authoritative inputs they named | tests asserted repeated behavior without reconstructing the real cache key or exact content bound | tests now compare the actual key payload, mutate authoritative versions, and assert exact canonical output/privacy boundary | 50 cache/canonical/checkpoint tests, including 12 cache cases and 15 property cases | PASS at `82e661b` | Closed; test-claim gap corrected |
+| RYSP-008 | Low | handoff compatibility fixtures | full local gate | new explicit verdict-effect enforcement rejected three synthetic planner-handoff routes whose v2 fixture omitted the effect | fixture encoded the old implicit task metadata contract | added explicit `PRESERVE` in the fixture's active preamble and STATE identity; no production semantics weakened | planner-handoff 12/12 plus repaired full gate 1950/1937/13/0 | PASS at `f875730` | Closed; fixture protocol drift only |
 
 ## Discoveries
 
@@ -359,7 +377,7 @@ not convert an earlier strict divergence into a retry PASS.
 ## Completion Snapshot
 
 Not complete. M0 through M4 are closed at implementation checkpoint
-82e661b. M5 remains active for bounded DEV requalification, clean/isolated
+f875730. M5 remains active for bounded DEV requalification, clean/isolated
 parity, CI observation, final documentation, and release closure.
 
 ## Blockers
