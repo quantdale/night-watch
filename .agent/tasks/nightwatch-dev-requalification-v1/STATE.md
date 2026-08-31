@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last substantive checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last documentation checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last substantive checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last documentation checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: c1f5f529e830757cc2c3124aae46047bda863173
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
-LAST_DOCUMENTATION_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
+LAST_VALIDATED_IMPLEMENTATION_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -178,11 +178,14 @@ A second fresh prepare then passed as
 `manifest:sha256:29616a17482ad72e69bcd802`, but before any resume it revealed
 that `nightwatchSourceSha` had advanced to the documentation-only OpenSpec
 commit `af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though executable source
-was unchanged from `c1f5f529`. The source-fingerprint helper excludes
-`.agent/**` and `docs/**` but not `openspec/**`; this is DVR-008, a Medium
-false-version-drift defect. No product execution occurred for this manifest.
-Do not resume it until the executable-source pathspec is corrected and a
-fresh current-source manifest is prepared.
+was unchanged from `c1f5f529`. This is DVR-008, a Medium false-version-drift
+defect. No product execution occurred for this manifest. The repair at
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source
+pathspec, excludes `openspec/**` with the existing continuity/documentation
+exclusions, and retains runtime source, test, launcher, and dependency changes
+as drift inputs. Its temporary-Git regression passes, so the `ceae...`
+manifest is stale by a real source change and remains quarantined; a new
+current-source manifest is required.
 
 ## Exact Next Action
 
@@ -196,10 +199,10 @@ prepare now passed as
 `campaign:sha256:4b8372d920d9694ca6c67c77` with manifest fingerprint
 `manifest:sha256:dc825e5258042974aba10179`, five work items, and frozen source
 `c1f5f529e830757cc2c3124aae46047bda863173`. That campaign completed all five
-selected items with no duplicate or lost work. Before a second product cycle,
-repair DVR-008 locally so documentation-only OpenSpec commits cannot
-invalidate a compatible runtime manifest; then prepare a fresh current-source
-campaign and compare product fingerprint/cluster identity across campaigns.
+selected items with no duplicate or lost work. DVR-008 is repaired and
+validated at `374ad71`; do not resume the stale `ceae...` manifest. Prepare a
+fresh current-source campaign and compare product fingerprint/cluster identity
+across campaigns.
 
 ## Blockers
 
@@ -211,10 +214,11 @@ Read this STATE, PLAN, and SPEC, verify clean Git and the external state path
 without reading its contents, rerun the pre-DEV checks, and continue M2
 serially. The duplicate-fingerprint repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` and the version-drift
-classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; run the
-bounded DEV preflight, repair DVR-008 locally, prepare a fresh current-source
-campaign, then resume only that new manifest. Do not use production/NEXT or
-bypass any guard.
+classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; the
+source-identity repair is checkpointed at
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Run the bounded DEV preflight,
+prepare a fresh current-source campaign, then resume only that new manifest.
+Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
 
@@ -542,6 +546,23 @@ commit `af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` despite no executable-source
 change, so no resume was attempted and no product execution occurred.
 When: 2026-08-31
 
+Command: `npx playwright test tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0 --grep "excludes OpenSpec-only commits"`
+Result: PASS; the temporary-Git regression keeps the executable campaign
+identity at the runtime commit across an OpenSpec-only commit and advances it
+after a runtime-source commit.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 31 passed, 0 skipped, 0 failed in 3.5 seconds after the DVR-008
+source-identity repair.
+When: 2026-08-31
+
+Command: `npm run typecheck` and `npm run hardening:check`
+Result: PASS after implementation checkpoint
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`; executable-source identity and
+hardening invariants remain valid.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -562,7 +583,9 @@ When: 2026-08-31
 | `tests/unit/campaign.test.ts` | duplicate occurrence/checkpoint regression | validated at `3cbe5f2` |
 | `src/core/campaign/brief.ts` | truthful version-drift morning-brief classification | validated at `c1f5f52` |
 | `tests/manual/phase7-real-campaign.ts` | accept guarded version-drift refusal as terminal non-product outcome | validated at `c1f5f52` |
-| `tests/manual/phase7-real-campaign.ts` | executable-source SHA pathspec audit; OpenSpec exclusion pending DVR-008 | pending |
+| `src/core/campaign/sourceIdentity.ts` | executable-source SHA pathspec boundary; excludes non-runtime protocol/docs trees | validated at `374ad71` |
+| `tests/manual/phase7-real-campaign.ts` | use centralized executable-source SHA pathspec | validated at `374ad71` |
+| `tests/unit/campaign.test.ts` | temporary-Git OpenSpec-only/runtime source identity regression | validated at `374ad71` |
 
 ## Decisions Made During This Task
 
@@ -584,7 +607,7 @@ When: 2026-08-31
 | DVR-005 | HIGH | Phase 2C observation attribution | Fresh guarded DEV invocation 5 after DVR-004 repair | `nightwatch-20260831T093257Z-bb5a-j2-c1`; bootstrap 5xx/required-read and structural failures left intentional capture `UNKNOWN`, but the classifier reported `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_STATUS_UNKNOWN` and masked explicit non-capture evidence | Unknown capture status was treated as a framework defect before checking whether the observation had independently failed; no intentional known-read capture had been attempted | `UNKNOWN` capture health is a framework defect only for an otherwise passing observation; explicit failed evidence proceeds to product/environment/unknown attribution | `tests/unit/phase2cOracleMatrix.test.ts` unknown-capture precedence regressions | `d1b9f31`; local matrix/typecheck/hardening pass; invocation 6 produced passing payer/common and product-classified account outcomes | Fixed at `d1b9f31` and confirmed by invocation 6; no Nightwatch defect or product finding was masked |
 | DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; stale-manifest resume later refused on expected source drift | Fixed locally; original duplicate-integrity failure retained and stale-manifest refusal is non-product evidence; fresh current-source campaign still required |
 | DVR-007 | MEDIUM | Campaign version-drift observability and launcher terminal assertion | Exact resume after DVR-006 repair changed the frozen source SHA | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373` refused before execution with `stopReason=CAMPAIGN_VERSION_DRIFT`; the brief said `NIGHTWATCH INTERNAL DEFECT` and the guarded manual test failed its accepted-result assertion | Version drift shared the generic `PARTIAL_RUNTIME_INFRA_FAILURE` result class but the brief and launcher did not recognize its explicit stop reason as an expected fail-closed terminal outcome | `c1f5f529e830757cc2c3124aae46047bda863173` gives version drift a dedicated safe headline and allows only that explicit stop reason through the real launcher assertion; it does not bypass the drift gate | `tests/unit/campaign.test.ts` runtime source-version drift headline regression | Targeted drift/duplicate tests, full campaign suite (30), typecheck, and hardening: PASS | Fixed locally; exact stale-manifest refusal retained as non-product evidence |
-| DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excludes `.agent/**` and `docs/**` but includes `openspec/**`, so documentation-only protocol edits alter the runtime version key and can cause false `CAMPAIGN_VERSION_DRIFT` | Pending local fix: exclude non-executable `openspec/**` from the implementation pathspec while retaining executable source/test/dependency changes as drift inputs | Pending deterministic source-identity regression and fresh prepare/resume validation | Pending; second manifest retained without resume | Open; fresh current-source campaign required after identity fix |
+| DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, and hardening pass | Fixed locally; `ceae...` remains a stale no-resume manifest; a fresh current-source campaign is required for real execution validation |
 
 ## Discoveries
 
@@ -670,8 +693,11 @@ When: 2026-08-31
   defect was observed.
 - A second prepare-only run exposed DVR-008: an OpenSpec task-document commit
   changed the campaign implementation SHA despite no executable-source change.
-  The manifest was not resumed; source identity must be corrected before the
-  next real cycle so documentation checkpoints do not create false drift.
+  The manifest was not resumed. The source-identity boundary now excludes
+  `openspec/**` alongside the existing non-runtime documentation trees, and a
+  temporary-Git regression proves OpenSpec-only commits do not change the
+  executable identity while runtime-source commits still do. The stale
+  manifest remains quarantined; a fresh current-source cycle is next.
 
 ## Safety Events
 

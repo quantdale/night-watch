@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `c1f5f529e830757cc2c3124aae46047bda863173`
+Last validated implementation: `374ad71e0ebbaadecf17b1c9a767f36b6f054552`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -117,9 +117,10 @@ reduced to a local deterministic regression before a real run resumes.
   and stopped at the bounded reproduction reserve. Run one independent fresh
   cycle to test cross-campaign identity stability before final reconciliation.
   The second prepare-only attempt exposed DVR-008: an OpenSpec-only task
-  checkpoint changed `nightwatchSourceSha`; repair the implementation
-  pathspec and prove the identity remains stable across documentation-only
-  commits before resuming a fresh campaign.
+  checkpoint changed `nightwatchSourceSha`; the implementation pathspec repair
+  is validated at `374ad71`, including a temporary-Git regression and the full
+  31-test campaign suite. Prepare a fresh current-source manifest and resume
+  only that manifest; do not reuse `campaign:sha256:ceae02f22573c85f4a6d6c5e`.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

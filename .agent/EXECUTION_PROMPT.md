@@ -113,17 +113,20 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-Reduce and repair DVR-008 locally: the second prepare-only campaign showed
-that an OpenSpec-only documentation commit changed `nightwatchSourceSha`.
-Exclude only non-executable OpenSpec content from that source identity, add a
-deterministic regression, and validate before any campaign resume. Then run a
-fresh current-source cycle, compare its sanitized anomaly identity with
+The DVR-008 repair is implemented at
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`: executable-source identity now
+excludes `.agent/**`, `docs/**`, and `openspec/**`, while retaining runtime
+source, tests, launcher, and dependency changes as drift inputs. Its temporary
+Git regression, 31-test campaign suite, typecheck, and hardening validation
+pass. Run a bounded DEV preflight, prepare a fresh current-source cycle, and
+resume only that new manifest. Compare its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
 work-item accounting. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at
-`c1f5f529e830757cc2c3124aae46047bda863173`. Preserve all prior outcomes
-independently and do not execute the stale manifest again.
+`c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest
+`campaign:sha256:ceae02f22573c85f4a6d6c5e` is stale by this source change and
+must not be resumed. Preserve all prior outcomes independently.
 
 ## Terminal action
 

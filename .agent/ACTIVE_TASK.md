@@ -6,17 +6,17 @@ Title: Nightwatch Bounded DEV Requalification
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last checkpoint: DVR-008 source-identity audit recorded at `af56ef1`
+Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last checkpoint: DVR-008 source-identity repair validated at `374ad71`
 Current milestone: M2 — Cross-phase real operation — IN_PROGRESS
-Next action: Reduce and fix DVR-008 so OpenSpec-only documentation commits do not alter the executable Nightwatch source SHA; add a deterministic regression, validate, then prepare/resume a fresh campaign.
+Next action: Run a bounded DEV preflight, prepare a fresh current-source campaign, then resume only that manifest and compare its sanitized product identity with the prior campaign.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: c1f5f529e830757cc2c3124aae46047bda863173
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
-LAST_DOCUMENTATION_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
+LAST_VALIDATED_IMPLEMENTATION_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_DEV_REQUALIFICATION_V1_STATUS: IN_PROGRESS

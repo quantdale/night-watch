@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last substantive checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last documentation checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last validated implementation SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last substantive checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
+Last documentation checkpoint SHA: 374ad71e0ebbaadecf17b1c9a767f36b6f054552
 
 ## Scope
 
@@ -131,6 +131,17 @@ because an OpenSpec task-document commit was the latest non-excluded Git
 change. Executable Nightwatch source had not changed. The manifest was not
 resumed and no product execution occurred. The source-identity pathspec must
 be corrected and revalidated before the next real cycle.
+
+DVR-008 is repaired at
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. The executable campaign-source
+pathspec is centralized and excludes only the non-runtime continuity,
+project-documentation, and OpenSpec trees; runtime source, tests, launcher,
+and dependency changes remain identity inputs. A temporary-Git regression
+proves an OpenSpec-only commit leaves the identity at the runtime commit and a
+subsequent runtime change advances it. The full campaign suite passed 31/31,
+with typecheck and hardening also passing. The `ceae...` manifest is stale by
+this real implementation change and remains unresumed; a fresh current-source
+campaign is required.
 
 The fresh current-source campaign `campaign:sha256:4b8372d920d9694ca6c67c77`
 then completed all five selected work items exactly once and passed the
