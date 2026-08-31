@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-soak-replay-yield-v1
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last checkpoint: M0 COMPLETE — `30db50f` with all offline gates PASS; no executable change
-Current milestone: M1 — Phase 2C capture soak (10 invocations)
-Next action: execute M1 through its guarded serial launchers; preserve every independent categorical outcome; if page-visible auth is invalid, stop at HUMAN_AUTH_ACTION_REQUIRED
+Last checkpoint: M1 COMPLETE — ten independent Phase 2C invocations; 56/60 observations; no Nightwatch Critical/High repair required
+Current milestone: M2 — Cross-phase reliability
+Next action: execute five guarded Phase 4 explorations and five guarded Phase 5 API cycles serially; preserve every categorical outcome without retries
 Authorization class: NIGHTWATCH_DEV_SOAK_REPLAY_YIELD_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

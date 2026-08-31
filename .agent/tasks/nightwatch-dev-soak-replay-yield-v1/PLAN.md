@@ -20,19 +20,23 @@ milestone; the task lives at the fetched documentation checkpoint.
 
 ## M1 — Phase 2C capture soak
 
-Status: NOT_STARTED
+Status: COMPLETE
 
-Run ten independent serial invocations and measure settlement, intentional
-capture, bounded body-read failure codes, replay class, account-inventory
-reach, product/framework attribution, and cleanup. Repair Nightwatch-owned
-Critical/High defects before continuing.
+Ten independent serial launchers ran. They produced 10 fresh matrix files,
+56 observations (four observations were not reached after one bounded run
+stopped at the first payer pair), and 28 replay comparisons. All auth,
+safety, and privacy fields remained valid. The observed product anomalies,
+settlement timeouts, and two `BODY_READ_TIMEOUT` codes remain evidence; no
+Nightwatch-owned Critical/High defect was found by the local timeout
+regression.
 
 ## M2 — Cross-phase reliability
 
-Status: NOT_STARTED
+Status: IN_PROGRESS
 
 Run five Phase 4 explorations and five Phase 5 API first+fresh-replay cycles
 serially. Preserve every categorical outcome.
+
 
 ## M3 — Fresh campaign soak
 

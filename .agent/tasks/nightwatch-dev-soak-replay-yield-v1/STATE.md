@@ -26,21 +26,20 @@ without weakening DVR-011 admission.
 
 ## Current Milestone
 
-M1 — Phase 2C capture soak.
+M2 — Cross-phase reliability.
 
 ## Work In Progress
 
-Running the bounded serial soak. M0 is COMPLETE. Current work is a ten-sample
-Phase 2C capture soak preserving every sanitized categorical outcome, followed
-by Phase 4, Phase 5, campaign soak, and current-admission replay. No DEV work
-has been attempted after the M0 validation ledger below.
+M1 is COMPLETE. M2 runs five serial Phase 4 explorations followed by five
+serial Phase 5 API first/fresh-replay cycles. All ten M1 launchers completed
+as independent attempts; sanitized matrices and the local timeout regression
+are recorded above.
 
 ## Exact Next Action
 
-Execute M1 through its guarded serial launchers and preserve every sanitized
-outcome category without retry relabeling. If the external state is not
-page-valid, stop at `HUMAN_AUTH_ACTION_REQUIRED` with the approved headed
-capture command.
+Execute five guarded Phase 4 explorations, then five guarded Phase 5 API
+cycles. Preserve API/browser discrepancies, body-capture codes, settlement
+classes, and cleanup/resource health without retries.
 
 ## Known starting evidence
 
@@ -54,9 +53,13 @@ capture command.
 - Privacy: PASS.
 - Replay: not executed because no fresh admitted candidate existed.
 ## Completed Milestones
-
 - M0 — Baseline, freshness, safety, and owner-auth readiness — COMPLETE at
-  `30db50f` with the full M0 gate evidence ledger below.
+  `30db50f` with the full offline gate evidence ledger below.
+
+- M1 — Phase 2C capture soak — COMPLETE: ten independent serial launchers
+  produced ten fresh matrix files, 56/60 possible observations, and 28/30
+  replay comparisons. The seventh invocation stopped after its payer pair at a
+  bounded framework capture defect; no retry was substituted.
 
 ## Files Changed
 
@@ -100,8 +103,28 @@ evidence files were changed.
 
 ## Discoveries
 
-- Current head `30db50f` is a documented descendant of the validated source;
-  execution remains governed by the existing admission and safety boundaries.
+- The ten matrices were all produced at `nightwatchSha` equal to
+  `f399e32577603542050535e5f41aa7912d71a08a`.
+- Observation totals: 56; evidence PASS 37; product-behavior anomalies 13;
+  framework-capture-defect classifications 6.
+- Per journey: payer 20 observations/19 PASS; common 18/18 PASS; account
+  inventory 18/0 PASS.
+- Primary failures: `malformed-json` 17 and `critical-resource-status` 1.
+  Capture status was COMPLETE 54 and INCOMPLETE 2; settlement was SETTLED 50
+  and TIMED_OUT 6. The two incomplete observations carried exactly
+  `BODY_READ_TIMEOUT`; `BODY_UNAVAILABLE` occurred zero times.
+- Resource lifecycle totals were REQUESTED 11,262, COMPLETED 10,867,
+  CANCELED_BY_POLICY 317, and HTTP_FAILED 18. Auth was valid 56/56, privacy
+  PASS 56/56, and safety PASS 56/56.
+- Replay classifications: BENIGN_TELEMETRY_VARIATION 6,
+  TIMING_ONLY_OBSERVATION_DIFFERENCE 12, EXPECTED_PRODUCT_STATE_DRIFT 4,
+  FRAMEWORK_CAPTURE_DEFECT 5, and DETERMINISTIC_REPLAY_MISMATCH 1; 18/28
+  comparisons passed.
+- Local `networkObserverSettlement.test.ts` and
+  `phase2cOracleMatrix.test.ts` reproduced the bounded timeout contract:
+  18/18 tests passed. No Nightwatch-owned Critical/High defect was found;
+  current failures remain product/runtime evidence or bounded capture
+  incompleteness, not a repaired source defect.
 
 ## Blockers
 
@@ -109,21 +132,26 @@ None in M0. Real execution remains at the owner-managed auth boundary.
 
 ## Safety Events
 
-None during the remaining M0 gates. All M0 evidence came from offline gates.
+None in the M1 observations: every observation reported auth valid, privacy
+PASS, and safety PASS; the journeys were read-only and no mutation, database,
+infrastructure, production, or publication operation was performed.
 
 ## Deferred / Follow-Up
 
-- Execute M1..M6 through the guarded serial launchers with actual DEV contact
-  and preserve every independent outcome category.
+- Continue M2 with five guarded Phase 4 explorations and five Phase 5 API
+  first/fresh-replay cycles.
+- Preserve all M1 matrices as local sanitized evidence; never treat them as
+  current replay authority unless admission explicitly promotes a candidate.
 
 ## Resume Recipe
 
 Re-read `ACTIVE_TASK.md`, this `STATE.md`, `PLAN.md`, and `SPEC.md`; verify
-clean `main == origin/main`; execute M1 through its guarded serial launchers.
-If page-visible auth is invalid, stop and provide the repository-approved
-headed capture command. Never print or inspect credential bytes.
+clean `main == origin/main`; execute M2 through the guarded serial launchers.
+If the owner-managed auth state becomes invalid, stop at
+`HUMAN_AUTH_ACTION_REQUIRED`; never print or inspect credential contents.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 is complete with all offline/current-source gates passing at
-`30db50f`; M1..M6 remain not started.
+IN_PROGRESS — M0 and M1 are complete. M1 measured a 56-observation result
+under ten independent launches, with bounded product and capture failures
+recorded above; M2 is next.
