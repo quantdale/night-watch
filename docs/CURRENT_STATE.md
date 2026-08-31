@@ -192,14 +192,31 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-dev-soak-replay-yield-v1
-LIVE_PHASE: DEV_SOAK_REPLAY_YIELD_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-replay-budget-and-dossier-closure-v1
+LIVE_PHASE: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
+
+### Active replay-budget and dossier-closure campaign
+
+The active successor is `nightwatch-replay-budget-and-dossier-closure-v1`, starting from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` with
+`PROJECT_VERDICT_EFFECT: PRESERVE`. The completed soak proved that strict
+current admission now yields candidates: 8 fresh candidates across 4 campaigns
+and 2 stable fingerprints. The remaining block is downstream of admission:
+all 4 reproduction queues were denied before replay executor entry because
+collection had consumed `journeyContexts=3/3`.
+
+This successor first requires a deterministic local reproduction of that exact
+budget boundary. It then permits only a versioned, finite replay-reservation
+redesign that preserves DVR-011, checkpoint/source currentness, interruption
+idempotence, safety, privacy, and containment. After local/clean validation it
+authorizes a small fresh DEV confirmation, capped at 3 campaign attempts and 3
+attack replay executions, seeking one current candidate through replay and,
+if reproduced, minimization and sanitized dossier generation.
 
 ### Completed DEV soak, replay, and yield campaign
 
