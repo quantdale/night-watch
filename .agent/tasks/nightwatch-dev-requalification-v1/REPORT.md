@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-Last substantive checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-Last documentation checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
+Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last substantive checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last documentation checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
 
 ## Scope
 
@@ -107,13 +107,22 @@ execution-summary/checkpoint boundary: repeated occurrence evidence must be
 preserved, but the summary identity list must be canonicalized before strict
 checkpoint validation. The owner-local checkpoint remained `IN_PROGRESS` at
 ordinal 2 with the first work item `RUNNING`, no completed work, and zero
-safety/privacy counters. No further DEV campaign execution is being run until
-the defect is reduced and repaired locally. The repair at
+safety/privacy counters. The repair at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution
 summary fingerprint set, while preserving duplicate occurrence evidence. The
 focused regression, full 30-test campaign suite, 30-test checkpoint/triage
 cone, typecheck, and hardening pass. Exact resume of the original prepared
-campaign remains the next real-system validation.
+campaign was then refused before any executor callback because its frozen
+source SHA was stale. The guarded result was
+`PARTIAL_RUNTIME_INFRA_FAILURE` with `stopReason=CAMPAIGN_VERSION_DRIFT`, zero
+work completed, and clean safety/privacy counters. The launcher/brief
+previously mislabeled this expected refusal as `NIGHTWATCH INTERNAL DEFECT`;
+the truthful classification repair is checkpointed at
+`c1f5f529e830757cc2c3124aae46047bda863173` with a local regression. A fresh
+current-source campaign is now required for the remaining real-system
+campaign observation. This stale manifest is retained as evidence and will not
+be reused; the next real campaign must be freshly prepared against the
+current source checkpoint.
 
 ## Safety and verdict
 

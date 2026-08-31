@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `d1b9f31880ee22605f47d6c459c40287c5c491c3`
+Last validated implementation: `c1f5f529e830757cc2c3124aae46047bda863173`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -108,8 +108,10 @@ reduced to a local deterministic regression before a real run resumes.
   Stop real execution, reduce this at the orchestrator/checkpoint boundary,
   and prove recovery locally before resuming the persisted campaign. The
   repair is implemented at `3cbe5f2`; focused campaign/checkpoint/triage
-  coverage, typecheck, and hardening pass. Resume the exact prepared campaign
-  next and retain the original failure as a separate observation.
+  coverage, typecheck, and hardening pass. The old manifest then refused
+  before execution on its frozen source SHA; the launcher now reports that
+  expected drift truthfully at `c1f5f52`. Prepare a fresh current-source
+  campaign next and retain both prior outcomes separately.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

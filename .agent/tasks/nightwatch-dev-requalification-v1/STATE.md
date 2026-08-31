@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-Last substantive checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-Last documentation checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
+Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last substantive checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
+Last documentation checkpoint SHA: c1f5f529e830757cc2c3124aae46047bda863173
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
+LAST_VALIDATED_IMPLEMENTATION_SHA: c1f5f529e830757cc2c3124aae46047bda863173
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
+LAST_DOCUMENTATION_CHECKPOINT_SHA: c1f5f529e830757cc2c3124aae46047bda863173
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -143,24 +143,34 @@ execution record as `CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID` /
 and zero safety/privacy counters. This is DVR-006, a High Nightwatch
 checkpoint-boundary defect: occurrence evidence legitimately preserves
 duplicate observations, but the execution summary mapped those occurrences
-without canonicalizing its identity set. No further DEV campaign execution is
-authorized until the owning summary boundary is reduced locally, fixed, and
+without canonicalizing its identity set. Further DEV campaign execution was
+held until the owning summary boundary was reduced locally, fixed, and
 regression-tested. The local repair is now implemented at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`: only the execution-record
 fingerprint summary is canonicalized to a sorted unique set; observation and
 candidate occurrence records remain untouched. The focused regression, full
 30-test campaign suite, 30-test checkpoint/triage compatibility cone,
-typecheck, and hardening all pass. The exact persisted DEV resume is the next
-required validation.
+typecheck, and hardening all pass. The exact persisted DEV resume then
+correctly refused to execute because the prepared manifest froze the
+pre-repair Nightwatch source SHA. It returned
+`PARTIAL_RUNTIME_INFRA_FAILURE` with `stopReason=CAMPAIGN_VERSION_DRIFT`,
+completed zero work items, and made no executor callback. Before the repair,
+the launcher called this expected fail-closed outcome `NIGHTWATCH INTERNAL
+DEFECT` and failed its result assertion; the bounded brief/launcher
+classification repair is checkpointed at
+`c1f5f529e830757cc2c3124aae46047bda863173` with local regression coverage.
+This is DVR-007. The old manifest is now a truthful terminal version-drift
+record and must not be reused for product execution; a fresh current-source
+campaign is required.
 
 ## Exact Next Action
 
-Resume the exact owner-local campaign
-`campaign:sha256:394f3fd1ed3828e2914a6373` after a fresh bounded DEV preflight.
-Verify that the repaired summary boundary accepts repeated occurrences,
-persisted state advances without duplicate/lost work, and cleanup remains
-safe. Preserve the original failed resume as DVR-006; a successful resume is
-a new observation and does not erase the defect history.
+Prepare a fresh current-source serial campaign after a bounded DEV preflight,
+then resume that new campaign. The original campaign
+`campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
+refusal and is not reused. Verify that the repaired summary boundary accepts
+repeated occurrences, persisted state advances without duplicate/lost work,
+and cleanup remains safe. Preserve DVR-006 and DVR-007 independently.
 
 ## Blockers
 
@@ -171,9 +181,10 @@ None.
 Read this STATE, PLAN, and SPEC, verify clean Git and the external state path
 without reading its contents, rerun the pre-DEV checks, and continue M2
 serially. The duplicate-fingerprint repair is checkpointed at
-`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; run the bounded DEV preflight,
-then resume only the exact prepared campaign. Do not use production/NEXT or
-bypass any guard.
+`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` and the version-drift
+classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; run the
+bounded DEV preflight, prepare a fresh current-source campaign, then resume
+only that new manifest. Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
 
@@ -235,6 +246,17 @@ The owner-local checkpoint remained `IN_PROGRESS`, ordinal 2, with the first
 work item `RUNNING`, retry reserved, no completed work, and zero safety or
 privacy violations. The duplicate value was a sanitized anomaly identity;
 raw response or customer data was not inspected or persisted.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:394f3fd1ed3828e2914a6373 --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL CLOSED on the expected frozen-source boundary after the DVR-006
+repair was pushed: `PARTIAL_RUNTIME_INFRA_FAILURE` with
+`stopReason=CAMPAIGN_VERSION_DRIFT`, zero completed work items, zero executor
+callbacks, zero safety/privacy counters, and no product work. Before the
+launcher classification repair this same truthful refusal was reported as
+`NIGHTWATCH INTERNAL DEFECT` and caused the manual test assertion to fail;
+that presentation defect is DVR-007. A fresh current-source campaign is
+required rather than reusing this manifest.
 When: 2026-08-31
 
 Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
@@ -430,8 +452,23 @@ Result: PASS after the DVR-006 implementation checkpoint
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`.
 When: 2026-08-31
 
+Command: `npx playwright test tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0 --grep "runtime source-version drift|canonicalizes duplicate occurrence"`
+Result: PASS; 2 passed, 0 skipped, 0 failed in 2.0 seconds, covering the
+DVR-006 duplicate summary and DVR-007 version-drift headline contracts.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 30 passed, 0 skipped, 0 failed in 3.7 seconds after the DVR-007
+repair.
+When: 2026-08-31
+
+Command: `npm run typecheck`
+Result: PASS after the DVR-007 implementation checkpoint
+`c1f5f529e830757cc2c3124aae46047bda863173`.
+When: 2026-08-31
+
 Command: `npm run hardening:check`
-Result: PASS; offline structural invariants hold after the DVR-006 repair.
+Result: PASS; offline structural invariants hold after the DVR-007 repair.
 When: 2026-08-31
 
 ## Files Changed
@@ -452,6 +489,8 @@ When: 2026-08-31
 | `tests/unit/networkObserverSettlement.test.ts` | hanging passive/known-read lifecycle regression | validated locally |
 | `src/core/campaign/orchestrator.ts` | canonicalize set-valued execution fingerprint summary | validated at `3cbe5f2` |
 | `tests/unit/campaign.test.ts` | duplicate occurrence/checkpoint regression | validated at `3cbe5f2` |
+| `src/core/campaign/brief.ts` | truthful version-drift morning-brief classification | validated at `c1f5f52` |
+| `tests/manual/phase7-real-campaign.ts` | accept guarded version-drift refusal as terminal non-product outcome | validated at `c1f5f52` |
 
 ## Decisions Made During This Task
 
@@ -471,7 +510,8 @@ When: 2026-08-31
 | DVR-003 | HIGH | Phase 2C response capture | Fresh guarded DEV invocation 3 after DVR-002 repair | `nightwatch-20260831T085807Z-7767-j1-c2`; settlement was `SETTLED`, auth was valid, safety counters were zero, but one source-reviewed known-read JSON/XHR response was `bodyCapture=unavailable`, making the observation incomplete and the pair diverge on `oracle-or-result-status` | Response-body reads were unbounded and emitted no safe reason, so a truncated/never-ending response could keep capture pending or leave the failure unexplained | Response-body reads are bounded to 5 seconds; failures emit one of five bounded codes and propagate through evidence/classification/replay without raw error text | `tests/unit/networkObserverSettlement.test.ts` truncated JSON response; `tests/unit/phase2cOracleMatrix.test.ts` diagnostic/parser regressions | Typecheck, hardening, focused 41-test cone, and local capture regression: PASS; invocation 4 completed both intentional known-read bodies | Fixed at `1d3eb0a` and confirmed by invocation 4; passive timeout remained separately classified |
 | DVR-004 | HIGH | Phase 2C capture attribution | Fresh guarded DEV invocation 4 after DVR-003 repair | `nightwatch-20260831T092548Z-f5ee`; both contexts captured both intentional known-read JSON responses completely, but c2 had one passive `UNKNOWN` JSON/XHR body with `BODY_READ_TIMEOUT`; global capture status became `INCOMPLETE` and strict replay diverged on `oracle-or-result-status` | Capture health and its failure-code ledger aggregated every JSON-ish response, so unrelated passive/background capture instability changed the journey verdict | `captureStatus`/`captureFailureCodes` now aggregate only requests carrying active journey intent and `KNOWN_READ`; per-response passive diagnostics remain observable and intentional reads remain strict | `tests/unit/networkObserverSettlement.test.ts` passive and intentional truncated-response cases | `224801f`; payer pair passed strict replay in the next real invocation; invocation 6 retained complete intentional capture | Fixed at `224801f` and confirmed by invocations 5-6; no product finding admitted |
 | DVR-005 | HIGH | Phase 2C observation attribution | Fresh guarded DEV invocation 5 after DVR-004 repair | `nightwatch-20260831T093257Z-bb5a-j2-c1`; bootstrap 5xx/required-read and structural failures left intentional capture `UNKNOWN`, but the classifier reported `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_STATUS_UNKNOWN` and masked explicit non-capture evidence | Unknown capture status was treated as a framework defect before checking whether the observation had independently failed; no intentional known-read capture had been attempted | `UNKNOWN` capture health is a framework defect only for an otherwise passing observation; explicit failed evidence proceeds to product/environment/unknown attribution | `tests/unit/phase2cOracleMatrix.test.ts` unknown-capture precedence regressions | `d1b9f31`; local matrix/typecheck/hardening pass; invocation 6 produced passing payer/common and product-classified account outcomes | Fixed at `d1b9f31` and confirmed by invocation 6; no Nightwatch defect or product finding was masked |
-| DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; exact DEV resume pending | Fixed locally; original fail-closed DEV result retained, exact resumed campaign still required |
+| DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; stale-manifest resume later refused on expected source drift | Fixed locally; original duplicate-integrity failure retained and stale-manifest refusal is non-product evidence; fresh current-source campaign still required |
+| DVR-007 | MEDIUM | Campaign version-drift observability and launcher terminal assertion | Exact resume after DVR-006 repair changed the frozen source SHA | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373` refused before execution with `stopReason=CAMPAIGN_VERSION_DRIFT`; the brief said `NIGHTWATCH INTERNAL DEFECT` and the guarded manual test failed its accepted-result assertion | Version drift shared the generic `PARTIAL_RUNTIME_INFRA_FAILURE` result class but the brief and launcher did not recognize its explicit stop reason as an expected fail-closed terminal outcome | `c1f5f529e830757cc2c3124aae46047bda863173` gives version drift a dedicated safe headline and allows only that explicit stop reason through the real launcher assertion; it does not bypass the drift gate | `tests/unit/campaign.test.ts` runtime source-version drift headline regression | Targeted drift/duplicate tests, full campaign suite (30), typecheck, and hardening: PASS | Fixed locally; exact stale-manifest refusal retained as non-product evidence |
 
 ## Discoveries
 
@@ -544,6 +584,11 @@ When: 2026-08-31
   has one sorted fingerprint while both original occurrences and the fresh
   reproduction remain in their respective evidence ledgers. Strict checkpoint
   validation, campaign resume fixtures, and triage clustering remain intact.
+- Resuming the pre-repair manifest after the implementation checkpoint was
+  correctly blocked by source-version drift before any executor callback. The
+  old manifest is therefore not a valid vehicle for post-fix product work;
+  current-source preparation is required. The launcher now exposes this as a
+  version-drift refusal rather than an internal-defect headline.
 
 ## Safety Events
 
