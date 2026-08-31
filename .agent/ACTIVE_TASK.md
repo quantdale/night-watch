@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-reliability-yield-and-state-protocol-v1
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
-Last checkpoint: successor task/OpenSpec scaffolding created at live `7ac2655`
-Current milestone: M0 — setup and authoritative baseline — IN_PROGRESS
-Next action: Checkpoint the validated task/OpenSpec scaffold, then inspect and reproduce replay, campaign-selection, and state-protocol issues
+Last checkpoint: task/OpenSpec scaffold validated and pushed at `d11dae2`
+Current milestone: M1 — Phase 2C replay diagnosis and identity — IN_PROGRESS
+Next action: Inspect the existing replay identity, observation settlement, and divergence paths; create a deterministic reproducer before modifying them
 Authorization class: NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

@@ -65,13 +65,16 @@ running any external observation.
 
 ## Milestones
 
-### M0 — Setup and authoritative baseline — IN_PROGRESS
+### M0 — Setup and authoritative baseline — COMPLETE
 
 - Bind the new task/OpenSpec route, preserve the accepted verdict, and record
   the starting Git state.
 - Run all required baseline gates and inspect the owning implementations.
+- Result: scaffold validated and pushed at `d11dae2`; implementation gates and
+  Control Center baseline passed. The pre-checkpoint continuity/project/
+  handoff failures were closed as expected scaffold state.
 
-### M1 — Phase 2C replay diagnosis and identity — NOT_STARTED
+### M1 — Phase 2C replay diagnosis and identity — IN_PROGRESS
 
 - Reproduce the divergence with sanitized fixtures and classify its cause.
 - Implement strict categorical replay outcomes, canonicalization, bounded

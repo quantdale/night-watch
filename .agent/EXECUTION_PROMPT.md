@@ -62,6 +62,6 @@ different explicit effect and pass the corresponding checker rules.
 
 ## Initial next action
 
-Run `npm ci`, then the baseline matrix in the task STATE and campaign prompt;
-record exact pass/skip/failure counts, durations, current source census, and
-environment blockers before changing implementation.
+The baseline is complete and the task/OpenSpec checkpoint is pushed at
+`d11dae2`. Inspect the existing replay identity, observation settlement, and
+divergence paths; create a deterministic reproducer before modifying them.

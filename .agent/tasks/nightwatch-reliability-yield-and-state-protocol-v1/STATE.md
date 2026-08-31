@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
 Last substantive checkpoint SHA: d12b1d75886987356f3ab6d80ca5b25f0723c471
-Last documentation checkpoint SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
+Last documentation checkpoint SHA: d11dae2e71f501ddfb611dd3c8beb349e6e44711
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
@@ -29,26 +29,26 @@ invalidates it.
 
 ## Current Milestone
 
-M0 — setup and authoritative baseline — IN_PROGRESS
+M1 — Phase 2C replay diagnosis and identity — IN_PROGRESS
 
 ## Completed Milestones
 
 - Git topology and authoritative starting SHA verified.
 - Successor task and OpenSpec change scaffolded.
-- Required local baseline tests and Control Center checks completed; state,
-  project, and handoff checks were intentionally observed before the new
-  scaffold was checkpointed.
+- Required local baseline tests and Control Center checks completed.
+- Task/OpenSpec scaffold checkpointed and pushed at `d11dae2`; post-checkpoint
+  agent, project, handoff, and hardening checks pass.
 
 ## Work In Progress
 
-The authoritative baseline is recorded below. The new task/OpenSpec files are
-not yet committed, so strict continuity/project/handoff checks still report
-scaffold-tracking failures. No Nightwatch implementation change has started.
+The baseline and scaffold checkpoint are closed. No Nightwatch implementation
+change has started. M1 now begins with the existing replay identity,
+observation settlement, and divergence-path audit.
 
 ## Exact Next Action
 
-Checkpoint the validated task/OpenSpec scaffold, then inspect and reproduce
-the replay, campaign-selection, and state-protocol issues in that order.
+Inspect the existing replay identity, observation settlement, and divergence
+paths; create a deterministic local reproducer before modifying them.
 
 ## Files Changed
 
@@ -138,25 +138,28 @@ Relevant failure/output summary: 3 built files; 259566 bytes; no external
 references or embedded content; 2.08s wall.
 
 Command: `npm run agent:check`
-Result: FAIL during initial untracked scaffold
+Result: FAIL during initial untracked scaffold; PASS after checkpoint
 When: 2026-08-31
-Relevant failure/output summary: first invocation preceded creation of this
-STATE/REPORT; second invocation then reported the required legacy-format
-headings before this format repair. The observed stale implementation-baseline
-warning refers to the documentation-only OpenSpec scaffold, not source code.
+Relevant failure/output summary: the first invocation preceded creation of
+this STATE/REPORT; after the continuity-v2 shape repair and checkpoint it
+passed with only the approved stale implementation-baseline and legacy-task
+warnings. The stale warning refers to the documentation-only OpenSpec
+scaffold, not source code.
 
 Command: `npm run project:check`
-Result: FAIL closed during untracked scaffold
+Result: FAIL closed during untracked scaffold; PASS after checkpoint
 When: 2026-08-31
-Relevant failure/output summary: `PROJECT_STATE_CHECKOUT_DIRTY` and
-`PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED`; expected until this task is
-checkpointed and strict continuity is valid.
+Relevant failure/output summary: the pre-checkpoint run emitted
+`PROJECT_STATE_CHECKOUT_DIRTY` and
+`PROJECT_STATE_ACTIVE_TASK_CONTINUITY_FAILED`; the post-checkpoint run passed
+and preserved `OPERATIONALLY_ACCEPTED`.
 
 Command: `npm run handoff:check`
-Result: FAIL closed during untracked scaffold
+Result: FAIL closed during untracked scaffold; PASS after checkpoint
 When: 2026-08-31
-Relevant failure/output summary: missing/untracked OpenSpec and active
-continuity errors; expected before the scaffold checkpoint.
+Relevant failure/output summary: the pre-checkpoint run emitted
+missing/untracked OpenSpec and active continuity errors; the post-checkpoint
+handoff receipt passed with all seven OpenSpec files, including `audit.md`.
 
 Command: `npm run gate:local`
 Result: FAIL closed during untracked scaffold
@@ -175,6 +178,12 @@ not an implementation regression.
   bounded retry passes.
 - Keep `NO_SAFE_NEW_FAMILY` authoritative unless new source evidence clears
   the existing mechanical proof bar.
+
+## Defect Ledger
+
+| ID | Severity | Subsystem | Discovery | Reproduction | Root cause | Fix | Regression | Validation | Final disposition |
+|---|---|---|---|---|---|---|---|---|---|
+| RYSP-001 | Medium | continuity bootstrap | baseline | New task scaffold was not visible to the strict checker before STATE/REPORT and required OpenSpec audit were present/tracked | setup ordering and incomplete handoff scaffold | added required v2 state/report shape, `audit.md`, and checkpointed before strict gate evaluation | `agent:check`, `project:check`, and `handoff:check` pass after `d11dae2` | post-checkpoint validators pass | Closed as scaffold sequencing; not a Nightwatch runtime defect |
 
 ## Discoveries
 
@@ -198,13 +207,13 @@ NONE
 ## Resume Recipe
 
 Read `ACTIVE_TASK.md`, this `STATE.md`, `PLAN.md`, and `SPEC.md`; inspect the
-working tree; checkpoint the scaffold after strict checks pass; then take the
-replay implementation audit as M1's first bounded subproblem. Do not contact
-DEV until the local replay/state changes and their focused regressions pass.
+working tree; then take the replay implementation audit as M1's first bounded
+subproblem. Do not contact DEV until the local replay/state changes and their
+focused regressions pass.
 
 ## Completion Snapshot
 
-Not complete. M0 is awaiting the scaffold checkpoint; replay, selection,
+Not complete. M0 is closed; replay, selection,
 state-protocol, persisted-execution, DEV, reproducibility, CI, and final
 closure evidence remain pending.
 
