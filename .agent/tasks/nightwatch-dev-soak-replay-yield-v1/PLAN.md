@@ -32,15 +32,16 @@ regression.
 
 ## M2 — Cross-phase reliability
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-Run five Phase 4 explorations and five Phase 5 API first+fresh-replay cycles
-serially. Preserve every categorical outcome.
-
+Five Phase 4 explorations and five Phase 5 API first/fresh-replay cycles ran
+serially. Phase 4 consistently stopped at the account anchor after four
+successful payer/common records; Phase 5 completed its full six-operation
+first/replay corpus in every cycle.
 
 ## M3 — Fresh campaign soak
 
-Status: NOT_STARTED
+Status: IN_PROGRESS
 
 Run five independently prepared current-source Phase 7 campaigns. Never reuse
 a stale manifest. Measure completion, account coverage, capture-limited stops,

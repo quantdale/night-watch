@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-soak-replay-yield-v1
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last checkpoint: M1 COMPLETE — ten independent Phase 2C invocations; 56/60 observations; no Nightwatch Critical/High repair required
-Current milestone: M2 — Cross-phase reliability
-Next action: execute five guarded Phase 4 explorations and five guarded Phase 5 API cycles serially; preserve every categorical outcome without retries
+Last checkpoint: M2 COMPLETE — 5 Phase 4 cycles, 5 Phase 5 cycles; 20 passing subrecords plus 60/60 verified API attempts
+Current milestone: M3 — Fresh campaign soak
+Next action: prepare five fresh current-source Phase 7 manifests serially and resume each exact manifest once; preserve candidate and dossier yield
 Authorization class: NIGHTWATCH_DEV_SOAK_REPLAY_YIELD_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

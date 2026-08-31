@@ -26,20 +26,19 @@ without weakening DVR-011 admission.
 
 ## Current Milestone
 
-M2 — Cross-phase reliability.
+M3 — Fresh campaign soak.
 
 ## Work In Progress
 
-M1 is COMPLETE. M2 runs five serial Phase 4 explorations followed by five
-serial Phase 5 API first/fresh-replay cycles. All ten M1 launchers completed
-as independent attempts; sanitized matrices and the local timeout regression
-are recorded above.
+M0, M1, and M2 are COMPLETE. M3 requires five fresh current-source Phase 7
+prepare/resume campaign pairs, with no stale-manifest reuse. Replay remains
+limited to candidates admitted by the current DVR-011 path.
 
 ## Exact Next Action
 
-Execute five guarded Phase 4 explorations, then five guarded Phase 5 API
-cycles. Preserve API/browser discrepancies, body-capture codes, settlement
-classes, and cleanup/resource health without retries.
+Prepare five new Phase 7 campaigns serially, then resume each exact fresh
+manifest once. Record campaign status, completed work items, capture stops,
+candidate/cluster/dossier yield, safety, privacy, and resource cleanup.
 
 ## Known starting evidence
 
@@ -53,6 +52,7 @@ classes, and cleanup/resource health without retries.
 - Privacy: PASS.
 - Replay: not executed because no fresh admitted candidate existed.
 ## Completed Milestones
+
 - M0 — Baseline, freshness, safety, and owner-auth readiness — COMPLETE at
   `30db50f` with the full offline gate evidence ledger below.
 
@@ -60,6 +60,11 @@ classes, and cleanup/resource health without retries.
   produced ten fresh matrix files, 56/60 possible observations, and 28/30
   replay comparisons. The seventh invocation stopped after its payer pair at a
   bounded framework capture defect; no retry was substituted.
+
+- M2 — Cross-phase reliability — COMPLETE: five Phase 4 launches and five
+  Phase 5 launches ran serially. Phase 4 yielded 20 passing payer/common
+  subrecords plus five account-anchor product stops; Phase 5 yielded 60/60
+  verified API attempts.
 
 ## Files Changed
 
@@ -95,11 +100,35 @@ evidence files were changed.
 - `npm run campaign:source-gaps` — PASS; 128 candidates produced/0 eligible.
 - `npm run gate:predev` — PASS with inventory identical to `gate:local`.
 
+## M2 Validation Ledger
+
+- Phase 4: 5/5 launchers stopped at
+  `PHASE_4_ANCHOR_FAILED: E3-J3-account-inventory`. Each completed four
+  records (payer/common first plus exact replay): 20/20 summaries were
+  `passed=true`, oracle PASS, settled, and safety-zero. Each failed account
+  manifest had auth page preflight VALID, account journey oracle FAIL with
+  `malformed-json`, capture COMPLETE, settlement SETTLED, and safety zero.
+- Phase 5: 5/5 ledgers completed 6 operations × first/replay = 60/60
+  attempts. Every first was `DEV_VERIFIED_FIRST`, every replay
+  `DEV_VERIFIED_REPLAY`, every oracle was `ORACLE_PASS`, status was 2xx, and
+  content type was application/json. Parse/stream classes were json-valid /
+  single-json 50 times and json-chunks-valid / json-chunks-complete 10 times.
+  All 30 operations had lineage FRESH; auth auto-refresh and MFA were false
+  in all five ledgers.
+- Phase 5 safety totals were zero for production attempts, proxy violations,
+  unknown destinations/approvals, known mutations, action-caused unknowns,
+  product mutations, database queries, and secret leaks. Each ledger was
+  metadata-only with zero persisted/forwarded bodies, credentials, or
+  customer identifiers.
+
 ## Decisions Made During This Task
 
-- Completed M0 and left executable source unchanged at
-  `fa236b690ceace3a420771645fce9f99bf751ea8` so fresh DEV soak remains
-  invalidated by documentation-only advancement.
+- Completed M0, M1, and M2 without changing executable Nightwatch source.
+- Treat Phase 4 account-anchor failures as current product/runtime evidence:
+  auth and capture were valid, the source-reviewed account journey reached its
+  structural marker, and the product oracle observed malformed JSON.
+- Do not promote any Phase 2C or Phase 4 anomaly to replay authority without
+  an explicit current DVR-011 admission record.
 
 ## Discoveries
 
@@ -125,6 +154,10 @@ evidence files were changed.
   18/18 tests passed. No Nightwatch-owned Critical/High defect was found;
   current failures remain product/runtime evidence or bounded capture
   incompleteness, not a repaired source defect.
+- Phase 4 account-anchor behavior repeated 5/5 times with
+  `malformed-json`, while payer/common exploration and exact replay remained
+  clean. Phase 5 independently verified all six source-generated operations
+  in both first and fresh-replay modes across 5/5 cycles.
 
 ## Blockers
 
@@ -132,26 +165,27 @@ None in M0. Real execution remains at the owner-managed auth boundary.
 
 ## Safety Events
 
-None in the M1 observations: every observation reported auth valid, privacy
-PASS, and safety PASS; the journeys were read-only and no mutation, database,
-infrastructure, production, or publication operation was performed.
+None in M1 or M2: all 56 Phase 2C observations and all Phase 4/5 records
+reported zero safety counters; journeys/API calls were read-only and no
+mutation, database, infrastructure, production, or publication operation was
+performed.
 
 ## Deferred / Follow-Up
 
-- Continue M2 with five guarded Phase 4 explorations and five Phase 5 API
-  first/fresh-replay cycles.
-- Preserve all M1 matrices as local sanitized evidence; never treat them as
-  current replay authority unless admission explicitly promotes a candidate.
+- Execute M3 as five freshly prepared current-source Phase 7 campaigns.
+- Preserve all Phase 4/5 artifacts as local sanitized evidence; they do not
+  create current replay authority without DVR-011 admission.
 
 ## Resume Recipe
 
 Re-read `ACTIVE_TASK.md`, this `STATE.md`, `PLAN.md`, and `SPEC.md`; verify
-clean `main == origin/main`; execute M2 through the guarded serial launchers.
-If the owner-managed auth state becomes invalid, stop at
+clean `main == origin/main`; prepare five fresh Phase 7 campaigns and resume
+each exact manifest once. If owner-managed auth becomes invalid, stop at
 `HUMAN_AUTH_ACTION_REQUIRED`; never print or inspect credential contents.
 
 ## Completion Snapshot
 
-IN_PROGRESS — M0 and M1 are complete. M1 measured a 56-observation result
-under ten independent launches, with bounded product and capture failures
-recorded above; M2 is next.
+IN_PROGRESS — M0 through M2 are complete. M1 measured 56 observations under
+ten independent launches; M2 measured five Phase 4 and five Phase 5 cycles,
+with Phase 4 account product stops and full Phase 5 API verification recorded
+above. M3 is next.
