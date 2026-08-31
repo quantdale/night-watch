@@ -311,11 +311,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-dev-requalification-v1
 LIVE_PHASE: DEV_REQUALIFICATION_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Post-acceptance reliability, yield, and state-protocol campaign
@@ -357,13 +357,17 @@ passing local and clean receipts above.
 
 ### Current bounded DEV requalification
 
-The active successor task is `nightwatch-dev-requalification-v1`, bound to the
-current Git head with explicit `PROJECT_VERDICT_EFFECT: PRESERVE`. The owner-led
-DEV authentication capture has passed guarded target, post-login, structural
-state, provenance, and cleanup validation. The next action is a bounded serial
-Phase 2C sample followed by the authorized Phase 4, Phase 5, campaign, and
-replay observations; no result is claimed until its sanitized outcome is
-recorded.
+The successor task `nightwatch-dev-requalification-v1` is COMPLETE with
+explicit `PROJECT_VERDICT_EFFECT: PRESERVE`. Its final current-source campaign
+`campaign:sha256:1054b8271440fc29f7fb5f21` reached a bounded
+`PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` at checkpoint ordinal 5
+because the first payer journey returned `BODY_UNAVAILABLE`. No product
+candidate or dossier was admitted; safety counters were zero, privacy was
+`PASS`, and the brief reported `RUNTIME OBSERVATION FAILURE — NO PRODUCT
+FINDING`. DVR-012 repaired the misleading internal-defect headline and
+guarded-launcher assertion. Larger DEV soak or replay requires fresh
+owner-managed authentication and separate authorization; no production, NEXT,
+mutation, data, infrastructure, or publication operation was performed.
 
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated
