@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -201,12 +201,14 @@ an auth-readiness block is terminal evidence, not a reason to retry.
 
 ## Deferred Work
 
-- Guarded DEV confirmation and candidate-to-dossier closure remain pending the
-  owner-only target/auth preflight; no credential or raw evidence may enter
-  this repository.
-- External CI remains non-evidence unless an exact-head job executes steps.
-- Final certification remains pending clean Node20, CI classification,
-  continuity/project reconciliation, privacy audit, and remote parity.
+- Guarded DEV confirmation and candidate-to-dossier closure are terminally
+  blocked at owner-only target/auth preflight; no credential or raw evidence
+  may enter this repository.
+- External CI remains non-evidence because the exact-head job executed zero
+  steps.
+- Local/clean validation, continuity/project reconciliation, privacy audit,
+  and final diff inspection are complete; remote parity is the only closure
+  action remaining.
 
 ## Completion Criteria
 
