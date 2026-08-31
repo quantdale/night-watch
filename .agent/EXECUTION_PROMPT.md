@@ -113,45 +113,16 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-The DVR-008 repair is implemented at
-`374ad71e0ebbaadecf17b1c9a767f36b6f054552`: executable-source identity now
-excludes `.agent/**`, `docs/**`, and `openspec/**`, while retaining runtime
-source, tests, launcher, and dependency changes as drift inputs. Its temporary
-Git regression, 31-test campaign suite, typecheck, and hardening validation
-pass. The bounded DEV preflight and fresh prepare then passed with campaign
-`campaign:sha256:6134013e41664bf66911887a`, manifest
-`manifest:sha256:f5c596b14f1561864b7db7f4`, and frozen source
-`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Resume only that manifest. The
-bounded resume completed as `PARTIAL_BUDGET_EXHAUSTED` /
-`BUDGET_EXHAUSTED` with 5/5 work items, one sanitized anomaly observation,
-one cluster, zero dossiers, privacy PASS, and zero safety counters. Compare
-its sanitized anomaly identity with
-`fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
-work-item accounting; this comparison is complete with an identical
-fingerprint, cluster ID/key, occurrence count, and five-item ledger. The
-focused campaign/replay/state cone is green (113 + 179 tests). The cache and
-canonical-digest audit then repaired weak invalidation/property assertions at
-source checkpoint
-`de169c96c9244f7693493942f4a8b7c5dd50e778`; 40 cache/property/digest tests,
-typecheck, hardening, and the 31-test campaign suite pass. Because that is a
-new executable identity, the bounded DEV preflight and fresh prepare then
-passed against source `de169c9` as campaign
-`campaign:sha256:168c37cad1869a47a652f8bf`, manifest
-`manifest:sha256:3b128e5451436cc1d27ad572`, with five work items. Its resume
-exposed DVR-010: multiple account-journey fingerprints reused one run ID and
-failed checkpoint integrity before product result admission. The repaired
-adapter and pre-mutation campaign boundary are validated at implementation
-checkpoint `20184770015129fe2138dd1e18a853d34bef7274`; replacement prepare then
-passed as campaign `campaign:sha256:2fe5dc56383e03f493f41efc`, manifest
-`manifest:sha256:eccd5c59191188ce2ed931c6`, frozen to source `2018477`, with
-five work items and product execution not started. Resume only that manifest,
-then run the final local/clean matrix. The DVR-006 repair is
-checkpointed at
-`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
-refusal and its truthful launcher classification are checkpointed at
-`c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest
-`campaign:sha256:ceae02f22573c85f4a6d6c5e` is stale by this source change and
-must not be resumed. Preserve all prior outcomes independently.
+The DVR-011 admission repair is implemented and validated at
+`971e998bb5cb2818775a198c604dc9d67dfe84bc`. It uses the shared observation
+classifier, admits only settled complete product-classified observations with
+exact triggered product fingerprints, and maps framework, transient, auth,
+safety, and unknown outcomes without creating product candidates. The focused
+and expanded local cones, typecheck, and hardening pass. Record the checkpoint,
+rerun continuity/project gates, prepare a fresh current-source campaign, and
+resume only that new manifest. The completed `2fe5dc...`, stale `ceae...`, and
+quarantined `168c37...` manifests must not be resumed after this source change.
+Preserve all prior outcomes independently.
 
 ## Terminal action
 

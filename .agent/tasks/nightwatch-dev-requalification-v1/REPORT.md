@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last documentation checkpoint SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
+Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last substantive checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last documentation checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
 
 ## Scope
 
@@ -218,6 +218,18 @@ and currentness coverage passed 179/179. No new Nightwatch Critical/High
 defect was found in this cone; the remaining bounded limitation is that the
 real campaign's reproduction reserve was exhausted before a dossier could be
 admitted.
+
+DVR-011 is a High campaign-admission defect discovered in the completed
+`2fe5dc...` run. A non-fatal `unexpected-status` fingerprint caused a common
+journey with `passed=true`, `ORACLE_PASS`, complete capture, and settled
+observation to be admitted as `ANOMALY`; the account journey combined a
+product-classified malformed-JSON observation with incomplete capture and
+`BODY_READ_TIMEOUT`. The repaired boundary at
+`971e998bb5cb2818775a198c604dc9d67dfe84bc` uses the shared classifier and
+requires settled, capture-complete product classification plus exact triggered
+product fingerprints. Non-product outcomes map to explicit campaign result
+classes without candidates. Focused and expanded local validation pass; a
+fresh current-source DEV campaign remains required.
 
 ## Safety and verdict
 

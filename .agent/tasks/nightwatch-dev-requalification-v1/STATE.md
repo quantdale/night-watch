@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
-Last documentation checkpoint SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
+Last validated implementation SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last substantive checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+Last documentation checkpoint SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: 20184770015129fe2138dd1e18a853d34bef7274
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 20184770015129fe2138dd1e18a853d34bef7274
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 27fd5cb2de059f21dfcbd7fd4deb028aa412096d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 971e998bb5cb2818775a198c604dc9d67dfe84bc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -238,15 +238,35 @@ The guarded preflight then passed and prepare-only created the fresh repaired
 campaign `campaign:sha256:2fe5dc56383e03f493f41efc` with manifest fingerprint
 `manifest:sha256:eccd5c59191188ce2ed931c6`, frozen source
 `20184770015129fe2138dd1e18a853d34bef7274`, five work items, and product
-execution `NOT_STARTED`. No product execution occurred during preparation;
-resume only this manifest.
+execution `NOT_STARTED`. No product execution occurred during preparation.
+Resuming it completed all five work items exactly once in 47.7 seconds, with
+three distinct observation IDs, three clusters, two API first-plus-fresh
+replay pairs, zero safety counters, PASS privacy, and no checkpoint-integrity
+failure. The account-inventory observation remained an unresolved
+`BUDGET_EXHAUSTED` reproduction candidate. However, the common-exchange
+journey was recorded as `ANOMALY` even though its evidence was
+`passed=true`, `oracleStatus=PASS`, `captureStatus=COMPLETE`, and
+`observationSettlement=SETTLED`; its two fingerprints came from non-fatal
+`unexpected-status` observations. The account journey also combined a
+product-classified malformed-JSON observation with `captureStatus=INCOMPLETE`
+and `BODY_READ_TIMEOUT`. The Phase 7 adapter selected candidates solely from
+the presence of `anomalyFingerprints`, bypassing the shared deterministic
+observation classifier. This is DVR-011, a High false-finding/admission
+boundary defect. The campaign is retained as evidence of repaired checkpoint
+identity, but its common/account candidate labels are not product findings;
+fresh current-source execution is required after the admission repair.
 
 ## Exact Next Action
 
-Resume only the fresh repaired campaign
-`campaign:sha256:2fe5dc56383e03f493f41efc` with manifest fingerprint
-`manifest:sha256:eccd5c59191188ce2ed931c6`; do not resume the quarantined
-`168c37...` manifest. Then run the final local/clean/state matrix.
+Repair the Phase 7 journey admission boundary with a local regression: use
+the shared observation classifier, admit only settled complete observations
+with an explicit product classification and stable product fingerprints, and
+map framework/transient/auth/safety/unknown outcomes to their corresponding
+campaign result classes without creating product candidates. The implementation
+repair is validated at `971e998`; record this checkpoint, rerun continuity and
+project gates, prepare a fresh guarded DEV campaign, and resume it once. Do not
+resume the completed `2fe5dc...` campaign after the source change.
+
 The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
@@ -264,11 +284,11 @@ the same product fingerprint and deterministic cluster identity as the first
 fresh campaign. The post-audit manifest is
 `campaign:sha256:168c37cad1869a47a652f8bf` with fingerprint
 `manifest:sha256:3b128e5451436cc1d27ad572`; its resume exposed DVR-010 and it
-must not be retried after source changes. After the repair at `2018477`, prepare
-a fresh manifest, resume it once, classify auth/environment/unknown
-limitations, and run final local and clean validation. The repaired fresh
-manifest is `2fe5dc...`; do not resume the stale `ceae...` or quarantined
-`168c37...` manifests.
+must not be retried after source changes. After the repair at `2018477`, the
+stale manifest `2fe5dc...` completed with repaired observation identity but
+exposed DVR-011; do not treat its common/account candidate labels as product
+findings. Run the fresh current-source campaign, classify all outcomes, and
+then run final local and clean validation.
 
 ## Blockers
 
@@ -743,6 +763,13 @@ Result: PASS; prepared
 `productExecution=NOT_STARTED`.
 When: 2026-08-31
 
+Command: `npx playwright test tests/unit/phase2cOracleMatrix.test.ts tests/unit/campaign.test.ts tests/unit/phase15pCheckpointDrift.test.ts tests/unit/phase15CampaignTriageIntegration.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 79 tests passed, 0 skipped, and 0 failed after the DVR-011
+campaign-admission repair. The matrix covers non-fatal and incomplete
+candidate rejection; campaign checkpoint, resume, drift, duplicate-occurrence,
+and triage compatibility remain green.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -799,6 +826,7 @@ When: 2026-08-31
 | DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, hardening, and fresh prepare/resume source stability pass | Fixed; `ceae...` remains a stale no-resume manifest; fresh campaign `6134013...` proved the repaired identity through real bounded prepare/resume |
 | DVR-010 | HIGH | Campaign observation identity / checkpoint integrity | Fresh current-source DEV campaign resume `campaign:sha256:168c37cad1869a47a652f8bf` | Account journey emitted multiple anomaly observations with repeated run ID `phase7-journey-ripple-account-inventory-1`; resume failed closed at checkpoint validation with `DUPLICATE_OBSERVATION` | `adaptJourneyEvidence` reused the single enclosing run ID for every fingerprint, while the checkpoint ledger and run-ID keyed candidate map require observation identities to be unique | `20184770015129fe2138dd1e18a853d34bef7274` derives bounded deterministic per-observation IDs for multi-fingerprint journey/exploration evidence and the orchestrator validates the batch before mutation | Adapter, legacy compatibility, bounded-length, and checkpoint containment regressions; 70/70 focused cone | Typecheck and hardening PASS at `2018477`; fresh current-source DEV campaign still required because executable identity changed | Fixed; failed `168c37...` manifest quarantined as non-product evidence |
 | DVR-009 | LOW | Cache/property test quality | Invariant audit after repeated campaign reconciliation | Cache version tests changed a reference digest but never queried the cache with a changed key; a “duplicate-input idempotence” property only repeated identical input | Cache key now accepts an explicit pure version-input seam with live authoritative defaults; property wording and assertions cover true equivalent nested JSON round-trips, bounded cycle diagnostics, and deep non-mutation | `tests/unit/cacheCurrentness.test.ts`, `tests/unit/fuzzProperty.test.ts`; 40/40 cache/property/digest tests | `npm run typecheck`, `npm run hardening:check`, campaign suite 31/31: PASS | Closed at `de169c9`; fresh current-source DEV campaign required because executable identity changed |
+- DVR-011 | HIGH | Phase 7 journey admission | Fresh repaired DEV campaign `2fe5dc...` | Common journey was marked `ANOMALY` from non-fatal `unexpected-status` fingerprints despite passed/settled/complete/ORACLE_PASS evidence; account product oracle was admitted despite incomplete capture and `BODY_READ_TIMEOUT` | Campaign admission selected any `anomalyFingerprints` and bypassed shared observation classification | `971e998bb5cb2818775a198c604dc9d67dfe84bc` gates candidates on shared settled/capture-complete/product classification and exact triggered product fingerprints, and maps non-product outcomes explicitly | `tests/unit/phase2cOracleMatrix.test.ts` campaign admission matrix plus focused 30-test and expanded 73-test cones | Typecheck, hardening, focused/expanded cones PASS; fresh current-source DEV campaign pending | Open; fresh DEV confirmation required
 
 ## Discoveries
 

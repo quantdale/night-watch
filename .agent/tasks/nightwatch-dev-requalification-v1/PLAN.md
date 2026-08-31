@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `20184770015129fe2138dd1e18a853d34bef7274`
+Last validated implementation: `971e998bb5cb2818775a198c604dc9d67dfe84bc`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -134,7 +134,7 @@ reduced to a local deterministic regression before a real run resumes.
 
 - Reconcile product anomaly identity, cluster counts, persisted state, and
   explicit auth/environment/unknown limitations.
-- The focused campaign/replay/state cone passed 292/292 with no skips or
+- The focused campaign/replay/triage cone passed 292/292 with no skips or
   failures; the repeated real campaign identity and persisted ledger are
   stable across both current-source runs.
 - Audit cache/property claim strength and auth/interruption classification
@@ -148,8 +148,12 @@ reduced to a local deterministic regression before a real run resumes.
   boundary repair is validated at `2018477`; that manifest is quarantined and a
   fresh current-source campaign `campaign:sha256:2fe5dc56383e03f493f41efc` with
   manifest `manifest:sha256:eccd5c59191188ce2ed931c6` is prepared against
-  source `2018477`; resume only that manifest.
-- Run final validation appropriate to changed implementation and evidence.
+  source `2018477`; its resume completed with repaired observation identity but
+  exposed DVR-011, so its common/account candidate labels are not product
+  findings and it must not be reused after the admission source change.
+- DVR-011 admission repair is validated at `971e998`; it requires a fresh
+  current-source DEV prepare/resume. Then run final validation appropriate to
+  the changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.
 
