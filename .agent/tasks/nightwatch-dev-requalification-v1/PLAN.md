@@ -141,7 +141,9 @@ reduced to a local deterministic regression before a real run resumes.
   coverage before finalizing the evidence limitations.
 - The cache/property audit repaired version-invalidation and canonical-digest
   assertions at `de169c9`; a fresh current-source DEV campaign is required
-  before closure.
+  before closure. Prepare passed as
+  `campaign:sha256:168c37cad1869a47a652f8bf` with frozen source `de169c9`;
+  resume only that manifest.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.

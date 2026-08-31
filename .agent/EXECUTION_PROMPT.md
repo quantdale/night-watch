@@ -134,9 +134,12 @@ canonical-digest audit then repaired weak invalidation/property assertions at
 source checkpoint
 `de169c96c9244f7693493942f4a8b7c5dd50e778`; 40 cache/property/digest tests,
 typecheck, hardening, and the 31-test campaign suite pass. Because that is a
-new executable identity, run a bounded DEV preflight and prepare/resume one
-fresh current-source campaign against `de169c9`, then run the final
-local/clean matrix. The DVR-006 repair is checkpointed at
+new executable identity, the bounded DEV preflight and fresh prepare then
+passed against source `de169c9` as campaign
+`campaign:sha256:168c37cad1869a47a652f8bf`, manifest
+`manifest:sha256:3b128e5451436cc1d27ad572`, with five work items. Resume only
+that manifest, then run the final local/clean matrix. The DVR-006 repair is
+checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at
 `c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest

@@ -207,10 +207,16 @@ fingerprint, cluster ID, cluster key, occurrence count, timing class, and
 work-item ledger. This is cross-campaign identity stability, not a product
 reproduction or clean all-budget certification.
 
+After the cache/property repair, the bounded DEV preflight passed and a fresh
+prepare passed as `campaign:sha256:168c37cad1869a47a652f8bf` with manifest
+fingerprint `manifest:sha256:3b128e5451436cc1d27ad572`, five bounded work
+items, and frozen `nightwatchSourceSha=de169c96c9244f7693493942f4a8b7c5dd50e778`.
+No product execution occurred during preparation; resume only this manifest.
+
 ## Exact Next Action
 
-Complete the focused local reconciliation for the completed fresh
-current-source serial campaign, then run the final local/clean/state matrix.
+Resume the fresh post-audit current-source serial campaign, then run the final
+local/clean/state matrix.
 The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
@@ -223,11 +229,13 @@ first fresh campaign
 selected items with no duplicate or lost work. DVR-008 is repaired and
 validated at `374ad71`; the independent fresh current-source campaign is
 `campaign:sha256:6134013e41664bf66911887a` with manifest
-`manifest:sha256:f5c596b14f1561864b7db7f4`. Its resume completed 5/5 items with
+`manifest:sha256:f5c596b14f1561864b7db7f4`; its resume completed 5/5 items with
 the same product fingerprint and deterministic cluster identity as the first
-fresh campaign. The campaign/replay/state cone is green; record its exact
-counts, classify auth/environment/unknown limitations, then run final local
-and clean validation. Do not resume the stale `ceae...` manifest.
+fresh campaign. The post-audit manifest is
+`campaign:sha256:168c37cad1869a47a652f8bf` with fingerprint
+`manifest:sha256:3b128e5451436cc1d27ad572`. Resume it, then classify
+auth/environment/unknown limitations and run final local and clean
+validation. Do not resume the stale `ceae...` manifest.
 
 ## Blockers
 
@@ -243,8 +251,10 @@ classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; the
 source-identity repair is checkpointed at
 `374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Run the bounded DEV preflight,
 prepare passed as `campaign:sha256:6134013e41664bf66911887a` with source
-`374ad71`; its resume completed the bounded ledger. Continue with focused
-local reconciliation only. Do not use production/NEXT or bypass any guard.
+`374ad71`; its resume completed the bounded ledger. The cache/property repair
+at `de169c9` changed executable identity, and the fresh post-audit manifest is
+ready. Resume only that manifest, then continue with final local reconciliation.
+Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
 
@@ -647,6 +657,20 @@ Command: `npm run typecheck`, `npm run hardening:check`, and `npx playwright tes
 Result: PASS after source checkpoint
 `de169c96c9244f7693493942f4a8b7c5dd50e778`; typecheck and hardening passed,
 and the campaign suite passed 31/31.
+When: 2026-08-31
+
+Command: `npm run observe:preflight -- --env=dev`
+Result: PASS immediately before the post-audit fresh campaign preparation;
+the approved DEV target remained allowlisted, production remained explicitly
+denied, and no target network activity was performed.
+When: 2026-08-31
+
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --prepare-only --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS; prepared
+`campaign:sha256:168c37cad1869a47a652f8bf` with manifest fingerprint
+`manifest:sha256:3b128e5451436cc1d27ad572`, five bounded work items, and
+`nightwatchSourceSha=de169c96c9244f7693493942f4a8b7c5dd50e778`. No product
+execution occurred during preparation.
 When: 2026-08-31
 
 ## Files Changed
