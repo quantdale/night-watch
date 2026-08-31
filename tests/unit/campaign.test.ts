@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import {
   CAMPAIGN_ORCHESTRATOR_VERSION,
@@ -44,6 +45,7 @@ import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/
 import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
 import { clusterAnomalies } from '../../src/core/triage/clustering';
 import { PRIVATE_ARTIFACT_POLICY_VERSION, OWNER_SCOPE_POLICY_VERSION, PrivateArtifactStore, assertOwnerPolicyAllows } from '../../src/core/policy';
+import { NIGHTWATCH_IMPLEMENTATION_PATHSPEC } from '../../src/core/campaign/sourceIdentity';
 
 const STATIC_NOW = '2026-08-13T01:00:00.000Z';
 const SEEDS = ['0x0000000000000101', '0x0000000000000201', '0x0000000000000301'] as const;
@@ -343,6 +345,38 @@ function tempStore(): { readonly root: string; readonly store: PrivateArtifactSt
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase7-'));
   return { root, store: new PrivateArtifactStore({ root }) };
 }
+
+function filteredImplementationSha(root: string): string {
+  return execFileSync('git', ['-C', root, 'log', '-1', '--format=%H', 'HEAD', '--', ...NIGHTWATCH_IMPLEMENTATION_PATHSPEC], { encoding: 'utf8' }).trim();
+}
+
+function commitFixture(root: string, message: string): string {
+  execFileSync('git', ['-C', root, 'add', '.']);
+  execFileSync('git', ['-C', root, 'commit', '--quiet', '-m', message]);
+  return execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+}
+
+test('excludes OpenSpec-only commits from executable campaign source identity', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-source-identity-'));
+  try {
+    execFileSync('git', ['-C', root, 'init', '--quiet']);
+    execFileSync('git', ['-C', root, 'config', 'user.email', 'nightwatch-tests@example.invalid']);
+    execFileSync('git', ['-C', root, 'config', 'user.name', 'Nightwatch Tests']);
+    fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'src', 'runtime.ts'), 'export const runtime = 1;\n');
+    const runtimeCommit = commitFixture(root, 'runtime');
+    fs.mkdirSync(path.join(root, 'openspec', 'changes'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'openspec', 'changes', 'change.md'), 'protocol note\n');
+    const documentationCommit = commitFixture(root, 'openspec documentation');
+    expect(documentationCommit).not.toBe(runtimeCommit);
+    expect(filteredImplementationSha(root)).toBe(runtimeCommit);
+    fs.writeFileSync(path.join(root, 'src', 'runtime.ts'), 'export const runtime = 2;\n');
+    const nextRuntimeCommit = commitFixture(root, 'runtime change');
+    expect(filteredImplementationSha(root)).toBe(nextRuntimeCommit);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test.describe('Phase 7 campaign identity, selection, and policy', () => {
   test('manifest identity is deterministic and source-change selection preserves Phase 3 explanations', () => {

@@ -66,6 +66,7 @@ import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
 import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION } from '../../src/core/source/semanticCampaignBundle';
 import { SEMANTIC_EVALUATION_RECEIPT_VERSION } from '../../src/oracles/semantic/receipts';
 import { REAL_SOURCE_DERIVATION_VERSION_V2 } from '../../src/oracles/expectations/admission';
+import { NIGHTWATCH_IMPLEMENTATION_PATHSPEC } from '../../src/core/campaign/sourceIdentity';
 import {
   CAMPAIGN_ORCHESTRATOR_VERSION,
   CAMPAIGN_SCHEMA_VERSION,
@@ -256,10 +257,7 @@ function nightwatchImplementationSha(root: string): string | null {
     '--format=%H',
     'HEAD',
     '--',
-    '.',
-    ':(exclude)AGENTS.md',
-    ':(exclude).agent/**',
-    ':(exclude)docs/**',
+    ...NIGHTWATCH_IMPLEMENTATION_PATHSPEC,
   ], { encoding: 'utf8' });
   const value = (result.stdout ?? '').trim();
   return result.status === 0 && /^[0-9a-f]{40}$/i.test(value) ? value : null;
