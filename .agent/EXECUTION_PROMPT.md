@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Replay Budget and Dossier Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: BLOCKED
 Campaign ID: nightwatch-replay-budget-and-dossier-closure-v1
 OpenSpec: openspec/changes/nightwatch-replay-budget-and-dossier-closure-v1/
 Planned-From: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
@@ -27,9 +27,8 @@ generation.
 Do not simply raise limits. Do not replay historical candidates. Do not weaken
 DVR-011.
 
-## Initial next action
+## Current next action
 
-Begin with M0 from the task PLAN/STATE and OpenSpec. Prove the current
-three-journey -> fresh candidate -> reproduction reserve ->
-BUDGET_EXHAUSTED-before-executor behavior in a local regression before making
-any executable source change.
+STOP — owner must refresh the designated external DEV auth state to a
+page-readable valid state for the configured DEV target before this campaign
+can prepare a fresh manifest or contact the product.

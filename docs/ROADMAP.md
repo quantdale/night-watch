@@ -2640,29 +2640,27 @@ persistence, raw authenticated evidence, and containment weakening remain
 unauthorized.
 
 
-## Replay budget and dossier closure — IN_PROGRESS — 2026-09-01
+## Replay budget and dossier closure — BLOCKED — 2026-09-01
 
 Active successor: `nightwatch-replay-budget-and-dossier-closure-v1`.
 
 The completed DEV soak admitted eight fresh strict product candidates across
 four campaigns, but all four reproduction queues failed before executor entry
 because the three collection journeys exhausted `journeyContexts=3/3`.
-Capture and candidate admission are therefore no longer the primary blocker.
 
-This successor must reproduce that starvation locally before changing budget
-semantics, then implement the smallest deterministic finite replay-reservation
-model that prevents collection from consuming all authorized reproduction
-capacity. The design must remain fail closed under duplicate candidates,
-checkpoint/resume, interruption, source drift, incomplete capture, and
-auth/environment/framework outcomes.
+M2 is complete at
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`: the finite real-scale replay
+reserve, durable reservation ledger, strict checkpoint validation, freshness
+and eligibility gates, and interruption/resume behavior pass local and clean
+Node20 validation. Exact-head Actions run `33446473458` / job `99666610250`
+failed with `steps=[]` and no log, so CI is external non-evidence.
 
-After local and clean certification, a fresh guarded DEV confirmation may use
-up to three new campaign attempts and three attack replay executions total.
-Historical findings and predecessor checkpoints are not replay authority.
-Success means a fresh current candidate reaches bounded replay and, if
-reproduced, the existing minimization and sanitized dossier chain.
-
-`OPERATIONALLY_ACCEPTED` remains preserved unless evidence requires explicit
-`REEVALUATE`. Production, NEXT, product mutation, datastore/infrastructure,
-sibling writes, publication, credential persistence, raw authenticated
-evidence, containment weakening, and unbounded retries remain unauthorized.
+Guarded DEV confirmation stopped before campaign preparation. The designated
+external auth state passed regular-file/mode checks but was not page-valid; a
+no-refresh check returned `AUTH_NETWORK_FAILURE`, and one guarded refresh
+attempt returned `AUTH_STATE_REPLACEMENT_FAILED`. No fresh candidate, replay,
+minimization, or dossier exists for this successor. The task remains blocked
+until the owner refreshes and confirms page-readable DEV auth. No alternate
+credentials, predecessor checkpoints, historical candidates, stale manifests,
+production/NEXT contact, mutation, datastore, infrastructure, publication,
+sibling write, or unbounded retry is authorized.

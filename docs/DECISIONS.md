@@ -3897,3 +3897,29 @@ repository-freshness block while documentation was dirty and one subsequent
 auth-blocked attempt after all local safety gates passed. No credentials,
 raw responses, or customer values were persisted. `OPERATIONALLY_ACCEPTED`
 remains preserved and no DEV outcome is overclaimed.
+
+## D-100 — Replay-budget repair is locally complete but DEV confirmation stays blocked at auth
+
+**Context.** The completed DEV soak admitted eight fresh product candidates but
+all four replay queues stopped before executor entry because collection consumed
+the journey-context budget. The successor reproduced that boundary, added a
+finite real-scale browser reserve and durable campaign/cluster reservation
+ledger, and passed its complete local and clean Node 20 validation cone. The
+exact implementation head was observed by Actions once, but the sole job
+failed with `steps=[]` before any workflow step.
+
+**Decision.** Keep the replay repair as the validated local implementation at
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. Classify Actions run
+`33446473458` / job `99666610250` as
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` external non-evidence. Treat guarded DEV
+confirmation as `BLOCKED` until the designated external auth state is
+page-readable. Do not use alternate credentials, predecessor checkpoints,
+historical candidates, stale manifests, extra retries, or broader contact.
+
+**Evidence and consequences.** One no-refresh prepare-only check returned
+`AUTH_NETWORK_FAILURE`; one guarded refresh attempt returned
+`AUTH_STATE_REPLACEMENT_FAILED`. No fresh campaign manifest, candidate, replay,
+minimization, or dossier was produced. The project snapshot therefore uses
+`OPERATIONAL_ACCEPTANCE_BLOCKED` with `LIVE_NEXT_ACTION_STATE: STOP`; prior
+operational acceptance remains historical context and is not silently relabeled
+as a fresh DEV result.

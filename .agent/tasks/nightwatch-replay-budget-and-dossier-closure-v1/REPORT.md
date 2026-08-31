@@ -4,7 +4,7 @@ CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -17,25 +17,29 @@ general hardening.
 
 ## Current result
 
-M0 is complete at the pushed deterministic regression. M1 and M2 are
-complete: the chosen design is a durable campaign/cluster replay reservation
-ledger with one protected real-scale browser slot, normalized physical replay
-requirements, strict checkpoint identity, and no collection-limit increase or
-retry bypass. The implementation is pushed at
+M0, M1, M2, and all local/source validation are complete. The bounded replay
+reservation implementation is pushed at
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`; focused replay/checkpoint,
-typecheck, hardening, handoff, project, semantic, owner-provenance, and
-synthetic validation are green. CI classification and guarded DEV confirmation
-remain open; see STATE.md for the exact ledger.
+typecheck, hardening, handoff, project, semantic, owner-provenance, synthetic,
+local-gate, and clean Node20 validation passed.
 
-## CI classification
+The exact pushed head was observed by Actions once as run `33446473458`; its
+sole job `99666610250` failed with `steps=[]` and no retrievable log. This is
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence; CI PASS is not
+claimed.
 
-The exact pushed implementation head
-`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` was observed once by GitHub
-Actions as run `33446473458` (`Nightwatch hardening`). Its sole job
-`99666610250` (`Executable quality gate`) completed `failure` with
-`steps=[]`; failed-log retrieval returned `log not found`. This is classified
-`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence. No repository
-workflow step executed, so CI PASS is not claimed.
+Guarded DEV confirmation is blocked before campaign preparation. The
+designated external auth file had valid path permissions but was not
+page-valid. A no-refresh check failed with `AUTH_NETWORK_FAILURE`; one
+guarded refresh attempt failed with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh
+campaign manifest, candidate, replay, minimization, or dossier was produced.
+
+## DEV confirmation blocker
+
+The task stops before product campaign work. The owner must refresh the
+designated external DEV auth state and confirm page-readable validity for the
+configured DEV target. No alternate credentials, predecessor checkpoint,
+historical candidate, or stale manifest may be used.
 
 ## Safety
 

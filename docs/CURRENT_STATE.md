@@ -159,13 +159,13 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
+PROJECT_COMPLETION_STATUS: OPERATIONAL_ACCEPTANCE_BLOCKED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 598e7fa92fb99786b2db847ace8c1fdf566d3c71
-LAST_LOCALLY_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
-LAST_CLEAN_VALIDATED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
-CI_OBSERVED_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
+LAST_LOCALLY_VALIDATED_SHA: 24d60560d02749693c17af4d395428bef03cfa0e
+LAST_CLEAN_VALIDATED_SHA: 24d60560d02749693c17af4d395428bef03cfa0e
+CI_OBSERVED_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
@@ -194,39 +194,37 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-replay-budget-and-dossier-closure-v1
 LIVE_PHASE: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-LIVE_TASK_STATUS: IN_PROGRESS
-LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
+LIVE_TASK_STATUS: BLOCKED
+LIVE_PROJECT_COMPLETION_STATUS: OPERATIONAL_ACCEPTANCE_BLOCKED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_NEXT_ACTION_STATE: STOP
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
 ### Active replay-budget and dossier-closure campaign
 
-The active successor is `nightwatch-replay-budget-and-dossier-closure-v1`, starting from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` with
-`PROJECT_VERDICT_EFFECT: PRESERVE`. The completed soak proved that strict
-current admission now yields candidates: 8 fresh candidates across 4 campaigns
-and 2 stable fingerprints. The remaining block is downstream of admission:
-all 4 reproduction queues were denied before replay executor entry because
-collection had consumed `journeyContexts=3/3`.
+The active successor is `nightwatch-replay-budget-and-dossier-closure-v1`,
+starting from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` with
+`PROJECT_VERDICT_EFFECT: PRESERVE`. The completed soak admitted eight fresh
+strict product candidates across four campaigns, but all four reproduction
+queues stopped before replay executor entry because collection had consumed
+`journeyContexts=3/3`.
 
-This successor first requires a deterministic local reproduction of that exact
-budget boundary. It then permits only a versioned, finite replay-reservation
-redesign that preserves DVR-011, checkpoint/source currentness, interruption
-idempotence, safety, privacy, and containment. After local/clean validation it
-authorizes a small fresh DEV confirmation, capped at 3 campaign attempts and 3
-attack replay executions, seeking one current candidate through replay and,
-if reproduced, minimization and sanitized dossier generation.
+M2 is complete at implementation checkpoint
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`: a finite real-scale replay
+reserve, durable campaign/cluster reservation ledger, strict checkpoint
+identity, eligibility gate, and interruption/resume semantics are locally and
+clean-Node20 validated. The exact-head Actions observation failed before any
+step (`33446473458` / job `99666610250`, `steps=[]`) and is external
+`NO_STEPS_BILLING_OR_PLATFORM_BLOCK` non-evidence.
 
-### Active replay budget and dossier closure campaign
-
-The active successor is `nightwatch-replay-budget-and-dossier-closure-v1`, starting from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` with
-`PROJECT_VERDICT_EFFECT: PRESERVE`. It addresses the specific budget
-starvation proven by the completed soak: four fresh current reproduction queues
-were blocked before replay executor entry because required collection journeys
-had consumed `journeyContexts=3/3`. The successor must preserve explicit
-bounded execution and DVR-011 admission while making replay capacity
-intentional, then confirm the repair with a fresh guarded DEV candidate.
+The successor's guarded DEV confirmation is currently `BLOCKED` before
+campaign preparation. The designated external auth file was a regular mode
+`600` file but was not page-valid. A no-refresh check returned
+`AUTH_NETWORK_FAILURE`; one guarded refresh returned
+`AUTH_STATE_REPLACEMENT_FAILED`. No fresh campaign manifest, candidate,
+replay, minimization, or dossier was produced. The owner must refresh and
+confirm page-readable DEV auth before any new bounded campaign.
 
 ### Completed DEV soak, replay, and yield campaign
 

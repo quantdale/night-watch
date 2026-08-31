@@ -129,55 +129,50 @@ synthetic campaign.
 
 ## M3 — Fresh guarded DEV confirmation
 
-Status: IN_PROGRESS
+Status: BLOCKED
 
-After owner-managed auth/readiness validation, prepare a fresh current-source
-campaign. Do not reuse soak checkpoints or historical candidates.
+Owner-managed DEV authentication is not currently page-valid. The designated
+external state file passed regular-file/mode checks but a no-refresh
+prepare-only validation failed with `AUTH_NETWORK_FAILURE`; one guarded refresh
+attempt failed with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh Phase 7 campaign
+manifest was emitted and no product campaign work started.
 
-Run only enough real DEV work to obtain a fresh DVR-011-admitted candidate and
-exercise the new bounded replay reservation. Prefer the stable account
-malformed-json path only if it reappears naturally under current evidence.
+Unblock only after the owner refreshes that external state and confirms
+page-readable validity for the configured DEV target. Do not reuse the failed
+state, predecessor soak, historical candidates, or stale manifests.
 
-Maximum real confirmation target:
+The intended bounded confirmation remains:
 
 - up to 3 fresh campaign attempts;
 - up to 3 attack replay executions total;
 - at most 1 minimization/dossier chain required for success.
 
-Every attempt remains independent evidence; retries do not erase failures.
+No attempt may exceed those caps, and the caps are limits rather than targets.
 
 ## M4 — Candidate -> replay -> dossier closure
 
-Status: NOT_STARTED
+Status: BLOCKED
 
-If a fresh candidate is admitted:
-
-- prove the replay reservation came from the new bounded budget semantics;
-- execute replay;
-- classify reproduced / product-state drift / precondition divergence /
-  auth/environment divergence / framework capture / invalid replay;
-- if reproduced, run bounded minimization;
-- produce a sanitized dossier if existing readiness rules permit;
-- verify fingerprint, cluster, replay-plan, minimization, and dossier identity.
-
-If no fresh candidate appears within the authorized sample, close as
-REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED rather than weakening admission.
+No fresh candidate was available because M3 stopped at owner-auth readiness.
+Candidate admission, replay, minimization, and dossier work were not entered.
+When the unblock condition is met, use only a fresh current-source candidate
+and retain the existing downstream-only-on-`REPRODUCED` rule.
 
 ## M5 — Final certification
 
-Status: NOT_STARTED
+Status: BLOCKED
 
-Run final focused/full gates, clean Node20 validation, canonical/isolated
-parity when runtime behavior changed materially, single exact-head CI
-inspection, continuity/project reconciliation, clean Git push, and terminal
-report.
+Final local and clean Node20 certification passed. Exact-head CI is external
+zero-step non-evidence. Terminal project/continuity truth records this task as
+blocked before DEV rather than claiming an operational or CI completion.
 
 ## Validation Strategy
 
 Use the focused campaign test for the old boundary and new reservation
 accounting first. Then run the repository quality cone, semantic and owner
 provenance checks, synthetic campaign, local gate, clean Node20 gate, and one
-exact-head CI inspection. Real DEV confirmation remains guarded and bounded.
+exact-head CI inspection. Real DEV confirmation remains guarded and bounded;
+an auth-readiness block is terminal evidence, not a reason to retry.
 
 ## Decision Log
 
@@ -185,6 +180,9 @@ exact-head CI inspection. Real DEV confirmation remains guarded and bounded.
   Evidence: three journey reservations leave `journeyContexts` at `3/3`, and
   the current estimate requires one additional journey context. Consequence:
   the regression is committed before the reservation redesign.
+- 2026-08-31 — Keep DEV auth refresh bounded to one guarded attempt after the
+  designated state failed page readability. The attempt ended with
+  `AUTH_STATE_REPLACEMENT_FAILED`; no alternate credential or retry is allowed.
 
 ## Discoveries
 

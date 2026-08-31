@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: BLOCKED
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 Last substantive checkpoint SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -16,7 +16,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: IN_PROGRESS
+PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: BLOCKED
 
 ## Objective
 
@@ -26,22 +26,22 @@ confirm a current candidate can traverse the real bounded replay/dossier path.
 
 ## Current Milestone
 
-M3 — complete local, CI, and guarded DEV validation.
+M3 — guarded DEV confirmation BLOCKED before campaign start.
 
 ## Work In Progress
 
-M2 is complete at pushed implementation checkpoint
-`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. The durable replay reservation
-ledger, finite collection reserve, strict checkpoint validation, eligibility
-gate, interruption/resume handling, and adversarial regressions are in place.
-Focused campaign and phase-15 checkpoint suites pass; local certification and
-guarded DEV confirmation remain open.
+M2 and all local/source validation are complete. The exact-head CI observation
+is external zero-step non-evidence. The designated external DEV storage-state
+file passed path/permission checks but was not page-valid; one guarded refresh
+attempt ended with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh campaign manifest
+was prepared, and no collection, replay, minimization, or dossier execution
+was authorized after that failure.
 
 ## Exact Next Action
 
-Run the owner-provenance, synthetic campaign, local-gate, and clean-runtime
-checks; then inspect exact-head CI status and perform only the separately
-authorized bounded DEV preflight.
+STOP — the owner must refresh the designated external DEV auth state to a
+page-readable valid state. Only then may a new bounded current-source campaign
+be prepared; do not retry this task with alternate credentials or stale state.
 ## Starting evidence
 
 - Predecessor: nightwatch-dev-soak-replay-yield-v1 COMPLETE.
@@ -121,6 +121,14 @@ authorized bounded DEV preflight.
   `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` — completed `failure`; sole job
   `99666610250` (`Executable quality gate`) also failed with `steps=[]`;
   failed-log retrieval returned `log not found`.
+- `stat` verified the designated external DEV storage-state file is a regular
+  file with mode `600`; its contents were not read.
+- `NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev
+  --prepare-only` failed closed with `AUTH_NETWORK_FAILURE` before any
+  refresh.
+- One guarded `NIGHTWATCH_PHASE_7_AUTH_REFRESH=1` prepare-only attempt passed
+  the guarded safety path but failed with `AUTH_STATE_REPLACEMENT_FAILED`;
+  no fresh Phase 7 manifest/checkpoint was emitted.
 
 ## Decisions Made During This Task
 
@@ -161,36 +169,40 @@ authorized bounded DEV preflight.
 
 ## Blockers
 
-None.
+- Owner-managed DEV authentication is not currently page-valid. The one
+  permitted guarded refresh attempt ended with `AUTH_STATE_REPLACEMENT_FAILED`;
+  the exact unblock condition is a refreshed designated external state that
+  passes page-readable DEV auth validation.
 
 ## Safety Events
 
-None. No Alphaus environment, product, datastore, infrastructure, credential,
-publication, or authenticated evidence operation was performed.
+None. The guarded auth refresh used only the designated external DEV path,
+remained read-only, persisted no credentials or raw authenticated evidence,
+and stopped before Phase 7 campaign/product work. No production, NEXT,
+datastore, infrastructure, mutation, publication, or sibling write occurred.
 
 ## Deferred / Follow-Up
 
-- CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external
-  non-evidence; no repository step executed and CI PASS is not claimed.
-- Guarded DEV confirmation remains pending its owner-only target/auth
-  preflight; no DEV credentials, raw evidence, or production operation was
-  authorized.
-- Final continuity closure, privacy audit, documentation checkpoint, push, and
-  remote-parity verification remain pending.
+- Fresh current-source campaign, candidate admission, replay, minimization,
+  and dossier closure are blocked by the auth readiness condition above.
+- CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
+  no repository workflow step executed and CI PASS is not claimed.
+- Final continuity/project reconciliation, privacy audit, documentation
+  checkpoint, push, and remote-parity verification remain pending.
 
 ## Resume Recipe
 
-Read this state, the active PLAN, and the safety model. Run the remaining local
-gates first. For DEV, verify owner authorization and READY containment, use a
-fresh current-source candidate only, enforce the campaign/replay/minimization
-caps, and record only sanitized categorical results. If preflight or fresh
-candidate admission is unavailable, close as non-evidence rather than retrying
-or weakening policy.
+STOP until the owner refreshes the designated external DEV auth state and
+independently confirms it is page-readable for the configured DEV target.
+Then rerun the required local/pre-DEV gates, prepare a fresh manifest from
+current source, and use no more than 3 campaign attempts, 3 attack replays,
+and 1 minimization/dossier chain. Never reuse this failed auth attempt's state,
+the predecessor soak, historical candidates, or alternate credentials.
 
 ## Completion Snapshot
 
-Completion state: IN_PROGRESS
-Current milestone: M3 — complete local, CI, and guarded DEV validation.
+Completion state: BLOCKED
+Current milestone: M3 — guarded DEV confirmation BLOCKED before campaign start.
 Validated result: pushed implementation checkpoint
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` passes the focused 92-test
 campaign/checkpoint cone, local gate, clean Node20 gate, typecheck, hardening,
@@ -198,5 +210,8 @@ handoff, project, semantic compatibility, owner provenance, and synthetic
 campaign checks.
 CI result: exact-head run `33446473458` failed before any job step and is
 classified as external non-evidence.
-Terminal outcome: NONE; guarded DEV confirmation, final closure, and clean
-remote parity remain open.
+DEV result: auth readiness failed once with
+`AUTH_STATE_REPLACEMENT_FAILED`; campaign/replay/minimization/dossier counts
+are all zero.
+Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
+claimed.
