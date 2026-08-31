@@ -124,6 +124,17 @@ campaign observation. This stale manifest is retained as evidence and will not
 be reused; the next real campaign must be freshly prepared against the
 current source checkpoint.
 
+The fresh current-source campaign `campaign:sha256:4b8372d920d9694ca6c67c77`
+then completed all five selected work items exactly once and passed the
+launcher. Both selected API items completed their first-plus-fresh-replay
+pairs. The account-inventory browser item retained one sanitized product
+anomaly, `fp:sha256:d491c1b9779adfbcd030cc23`, matching the earlier Phase 4
+browser evidence. The run stopped at `PARTIAL_BUDGET_EXHAUSTED` /
+`BUDGET_EXHAUSTED` before reproduction, with one cluster, no dossier, zero
+safety counters, and privacy `PASS`; this is a bounded result, not a clean
+all-budget certification. One independent fresh cycle remains for
+cross-campaign identity stability.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved

@@ -111,7 +111,11 @@ reduced to a local deterministic regression before a real run resumes.
   coverage, typecheck, and hardening pass. The old manifest then refused
   before execution on its frozen source SHA; the launcher now reports that
   expected drift truthfully at `c1f5f52`. Prepare a fresh current-source
-  campaign next and retain both prior outcomes separately.
+  campaign next and retain both prior outcomes separately. The fresh campaign
+  `campaign:sha256:4b8372d920d9694ca6c67c77` completed 5/5 work items exactly
+  once, ran two API replay pairs, retained one account product fingerprint,
+  and stopped at the bounded reproduction reserve. Run one independent fresh
+  cycle to test cross-campaign identity stability before final reconciliation.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

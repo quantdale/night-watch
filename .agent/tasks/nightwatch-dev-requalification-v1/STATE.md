@@ -161,7 +161,17 @@ classification repair is checkpointed at
 `c1f5f529e830757cc2c3124aae46047bda863173` with local regression coverage.
 This is DVR-007. The old manifest is now a truthful terminal version-drift
 record and must not be reused for product execution; a fresh current-source
-campaign is required.
+campaign is required. The fresh current-source campaign
+`campaign:sha256:4b8372d920d9694ca6c67c77` then passed the guarded launcher in
+51.1 seconds as `PARTIAL_BUDGET_EXHAUSTED` /
+`BUDGET_EXHAUSTED`: all five work items completed once, both API items ran
+their first-plus-fresh-replay pair, and the account-inventory browser item
+produced one sanitized product anomaly with fingerprint
+`fp:sha256:d491c1b9779adfbcd030cc23`. Its persisted checkpoint reached ordinal
+15 with one cluster and one occurrence, no dossier because the bounded
+reproduction reserve was unavailable, zero safety counters, and clean privacy
+status. File modes remained owner-only and the launcher test passed. This is
+a truthful bounded campaign outcome, not a clean all-budget certification.
 
 ## Exact Next Action
 
@@ -174,8 +184,10 @@ and cleanup remains safe. Preserve DVR-006 and DVR-007 independently. Fresh
 prepare now passed as
 `campaign:sha256:4b8372d920d9694ca6c67c77` with manifest fingerprint
 `manifest:sha256:dc825e5258042974aba10179`, five work items, and frozen source
-`c1f5f529e830757cc2c3124aae46047bda863173`. The next action is its serial
-resume.
+`c1f5f529e830757cc2c3124aae46047bda863173`. That campaign completed all five
+selected items with no duplicate or lost work; the next action is one
+independent bounded current-source cycle to compare product fingerprint and
+cluster identity across campaigns.
 
 ## Blockers
 
@@ -491,6 +503,17 @@ Result: PASS; fresh campaign
 `PREPARE_GATE_PASS`. No product execution occurred during preparation.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:4b8372d920d9694ca6c67c77 --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS for the guarded campaign launcher; 5/5 selected work items
+completed once, both API items completed their fresh replay pair, and the
+run stopped truthfully at `PARTIAL_BUDGET_EXHAUSTED` /
+`BUDGET_EXHAUSTED` before reproduction. One sanitized account-inventory
+product anomaly was retained as fingerprint
+`fp:sha256:d491c1b9779adfbcd030cc23`; one cluster, one occurrence, zero
+dossiers, zero safety counters, privacy `PASS`, and owner-only artifact modes
+were verified. Runtime was 51.1 seconds.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -609,6 +632,12 @@ When: 2026-08-31
   old manifest is therefore not a valid vehicle for post-fix product work;
   current-source preparation is required. The launcher now exposes this as a
   version-drift refusal rather than an internal-defect headline.
+- The first fresh current-source campaign completed all five selected work
+  items exactly once and performed two API fresh replays. It retained one
+  account-inventory malformed-JSON product identity already seen in the
+  bounded Phase 4 evidence, then stopped before reproduction because the
+  frozen reserve was exhausted. No duplicate/lost work or safety/privacy
+  defect was observed.
 
 ## Safety Events
 

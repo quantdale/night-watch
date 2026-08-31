@@ -20,11 +20,14 @@
   product/framework/auth/environment outcomes.
 - [x] 3.2 Run the guarded Phase 5 read-only API operation and retain its safe
   result and cleanup evidence.
-- [ ] 3.3 Prepare and resume one guarded real campaign, verify persisted state,
-  completion counts, duplicate/lost work, and cleanup. Prepare passed, but
-  resume is blocked by DVR-006 until its local checkpoint regression is fixed.
-- [ ] 3.4 Replay one selected observation when the launcher reports a safe
+- [x] 3.3 Prepare and resume one guarded real campaign, verify persisted state,
+  completion counts, duplicate/lost work, and cleanup. The stale pre-repair
+  manifest was retained as DVR-006/DVR-007 evidence; a fresh current-source
+  campaign completed all five selected work items once and stopped truthfully
+  at the bounded reproduction reserve.
+- [x] 3.4 Replay one selected observation when the launcher reports a safe
   replayable item, preserving the original and replay outcomes separately.
+  The two selected API items each completed their fresh replay pair.
 
 ## 4. Defect and evidence reconciliation
 

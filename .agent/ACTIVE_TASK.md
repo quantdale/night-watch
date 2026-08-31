@@ -7,9 +7,9 @@ Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: c1f5f529e830757cc2c3124aae46047bda863173
-Last checkpoint: DVR-007 version-drift classification repair recorded at `c1f5f52`
+Last checkpoint: Fresh campaign outcome recorded at `c1f5f52`
 Current milestone: M2 — Cross-phase real operation — IN_PROGRESS
-Next action: Rerun DEV preflight, prepare a fresh current-source campaign, and resume it serially; retain the original DVR-006 failure and DVR-007 version-drift refusal independently.
+Next action: Run one independent bounded current-source campaign cycle to compare product fingerprint/cluster identity across campaigns, then reconcile anomaly deduplication, auth/chaos coverage, and final validation.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

@@ -113,11 +113,13 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-Rerun the bounded DEV preflight, prepare a fresh current-source campaign, and
-resume that new manifest using the owner-local state. The DVR-006 repair is
-checkpointed at `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale
-manifest refusal and its truthful launcher classification are checkpointed at
-`c1f5f529e830757cc2c3124aae46047bda863173`. Preserve both prior outcomes
+Run one independent bounded current-source campaign cycle using a fresh
+manifest, compare its sanitized anomaly identity with
+`fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
+work-item accounting. The DVR-006 repair is checkpointed at
+`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
+refusal and its truthful launcher classification are checkpointed at
+`c1f5f529e830757cc2c3124aae46047bda863173`. Preserve all prior outcomes
 independently and do not execute the stale manifest again.
 
 ## Terminal action
