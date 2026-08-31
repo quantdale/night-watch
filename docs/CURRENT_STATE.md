@@ -301,6 +301,43 @@ PROMOTION_AUTHORIZATION_LIFECYCLE: SPENT
 EFFECTIVE_NEXT_PROMOTION_AUTHORITY: NONE
 ```
 
+### Live-state v2 (machine-checked cross-check)
+
+The bounded live snapshot below is the only current-state narrative consumed
+by `project:check`. Historical status words elsewhere in this document remain
+informational and are not interpreted as current authority.
+
+```
+LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
+LIVE_TASK_ID: nightwatch-reliability-yield-and-state-protocol-v1
+LIVE_PHASE: RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1
+LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
+LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
+```
+
+### Post-acceptance reliability, yield, and state-protocol campaign
+
+The active successor task is
+`nightwatch-reliability-yield-and-state-protocol-v1`, with explicit verdict
+effect `PRESERVE`. Its implementation checkpoint is
+`82e661bae45424573c3ea06a20900e342047b849`: replay identity/capture
+canonicalization, deterministic portfolio selection, explicit state
+authorization, interruption boundaries, and cache/property audits are locally
+validated. The current source authority remains
+`NO_SAFE_NEW_FAMILY`; its direct census has 128 considered, 3 eligible, and
+3 selected surfaces with zero selected redundancy and deterministic repeated
+projections. A separate source-gaps presentation has a stale zero-eligible
+summary field; direct eligibility and Control Center authority agree on 3.
+
+The remaining milestone is bounded serial DEV requalification, followed by
+clean/isolated parity, final local validation, and one CI observation. The
+first guarded DEV invocation stopped at the local repository-freshness gate
+because this successor's documentation checkpoint was uncommitted; it did not
+create a browser context or contact DEV.
+
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated
 or derived by `bin/project-state-check.mjs`.

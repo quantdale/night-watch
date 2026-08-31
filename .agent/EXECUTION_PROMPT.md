@@ -66,3 +66,13 @@ The baseline and M1 replay checkpoint are complete; the replay fix is pushed
 at `bf35bf3`. The first M2 planner/yield slice is pushed at `a5ff79f`; build
 and record a deterministic selection backtest against the current Phase 24
 mechanically proven inventory next.
+
+## Current checkpoint
+
+The replay, planner/yield, explicit verdict-effect, live-state, cache/property,
+and bounded interruption milestones are locally validated at implementation
+checkpoint `82e661bae45424573c3ea06a20900e342047b849`. The current inventory
+backtest is deterministic: 128 considered, 3 eligible, 3 selected, zero
+redundancy, and no new proof family. The remaining release evidence is bounded
+DEV requalification if the external owner-managed authentication is valid,
+then clean/isolated/final validation.

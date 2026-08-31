@@ -3,7 +3,7 @@
 Task ID: `nightwatch-reliability-yield-and-state-protocol-v1`
 Phase: `RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Starting SHA: `7ac265594719f3d93eabf78e0bd9f749ef63dba7`
-Last validated implementation: `bf35bf31414bcac91e8a297ee9c9c4f6b1647871`
+Last validated implementation: `82e661bae45424573c3ea06a20900e342047b849`
 Authorization class: `NIGHTWATCH_RELIABILITY_YIELD_AND_STATE_PROTOCOL_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-reliability-yield-and-state-protocol-v1/`
@@ -86,25 +86,38 @@ running any external observation.
   without allowing an unexplained retry to pass. Focused replay/journey/
   readiness validation: 44 passed / 0 failed.
 
-### M2 — Campaign yield and finding stability — IN_PROGRESS
+### M2 — Campaign yield and finding stability — COMPLETE
 
 - Backtest current selection; implement measured explainable scoring,
   diversity, yield attribution, and stable conservative clustering.
 - Add benign controls and prove no source-proof weakening or false-positive
   regression.
+- Result: current source authority is 128 considered / 3 eligible / 3
+  selected, with scores 953245, 953140, 953105, zero selected redundancy,
+  and deterministic three-run projection. NO_SAFE_NEW_FAMILY remains
+  unchanged.
 
-### M3 — Explicit state protocol — NOT_STARTED
+### M3 — Explicit state protocol — COMPLETE
 
 - Add and validate `PROJECT_VERDICT_EFFECT` semantics.
 - Remove task-name authorization inference, harden continuity parsing, and
   validate bounded live documentation contradictions.
 
-### M4 — Persisted execution and quality hardening — NOT_STARTED
+- Result: bounded PRESERVE/REEVALUATE/SUPERSEDE effects, location-bound
+  metadata, structured live-state/prompt cross-checks, and explicit trailing
+  milestone status parsing pass 114 agent-state and 53 project-state tests.
+
+### M4 — Persisted execution and quality hardening — COMPLETE
 
 - Expand interruption/resume chaos, auth expiry, diagnostics, cache/property,
   and measured performance coverage.
 
-### M5 — Repeated operation and release evidence — NOT_STARTED
+- Result: all work-item completion boundaries resume without duplication or
+  loss; existing atomic-write and replay-required interruption paths remain
+  green; cache invalidation tests mutate actual version inputs; canonical
+  digest properties assert their stated invariants.
+
+### M5 — Repeated operation and release evidence — IN_PROGRESS
 
 - Run bounded DEV observations if the owner-managed state is valid, preserving
   every divergence/anomaly classification.
@@ -131,7 +144,20 @@ tests, and truthful DEV/CI evidence.
 
 ## Discoveries
 
-- Pending: baseline and current implementation audit.
+- Phase 2C's deterministic fixture failure was Nightwatch-owned: intentional
+  delayed reads were allowed to settle before response evidence existed, and
+  response attribution read mutable current intent. The observer/engine fix is
+  retained at the earlier replay checkpoint and the comparator hardening is
+  at implementation checkpoint 82e661b.
+- The current proof state remains NO_SAFE_NEW_FAMILY. Better selection yields
+  a deterministic three-item portfolio from 128 considered / 3 eligible
+  surfaces without weakening eligibility.
+- A separate source-gaps presentation reports a stale zero-eligible summary
+  field; direct eligibility census and Control Center authority both report
+  three. The direct authority path is used and the contradiction is recorded.
+- The state checker no longer grants accepted-verdict preservation from a
+  task-name prefix. Explicit bounded verdict effect and structured live-state
+  fields are now required.
 
 ## Deferred Work
 
