@@ -380,6 +380,15 @@ zero sibling writes; nested receipt
 `receipt:sha256:204fec32f3097dee597ca7a7` and clean receipt
 `clean-receipt:sha256:95d5aafd432b349ad4a90f8b`.
 
+Command: `gh run view 33361000650 --json databaseId,headSha,status,conclusion,jobs`
+Result: EXTERNAL_NON_EVIDENCE
+When: 2026-08-31
+Relevant failure/output summary: final pushed HEAD
+`2ffc79c119f176d6f39eb5fc52da7257b83c2379` produced Actions run
+`33361000650`, job `99392187476`, with conclusion `failure` and
+`steps=[]` before runner execution. No quality-gate step executed and no
+rerun was requested.
+
 Command: `npm run observe:preflight -- --env=dev` and guarded Phase 2C launch
 Result: PASS preflight; BLOCKED before target observation
 When: 2026-08-31

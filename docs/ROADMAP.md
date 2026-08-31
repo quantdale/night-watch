@@ -2596,3 +2596,8 @@ so no new DEV reliability rate is claimed and prior accepted DEV evidence is
 not relabeled. `OPERATIONALLY_ACCEPTED` remains preserved. A future fresh DEV
 sample requires owner-managed authentication refresh and a separately
 authorized successor.
+
+The final pushed checkpoint was inspected once by Actions (run `33361000650`,
+job `99392187476`) and failed before any job step (`steps=[]`); this remains
+external non-evidence, while the local and clean gates are the authoritative
+validation for this locally scoped successor.

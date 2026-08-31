@@ -350,6 +350,11 @@ passed with receipt `receipt:sha256:204fec32f3097dee597ca7a7` and clean receipt
 fresh real DEV repetition remains a separately authorized follow-up after
 owner-managed authentication is refreshed.
 
+The final pushed head `2ffc79c` was observed once by Actions as run
+`33361000650` / job `99392187476`; the job failed with `steps=[]` before
+runner execution. This is external non-evidence and does not supersede the
+passing local and clean receipts above.
+
 Phase-15 session/convergence notes remain historical prose below and are not
 machine-owned current-state fields. The v2 block admits only values validated
 or derived by `bin/project-state-check.mjs`.

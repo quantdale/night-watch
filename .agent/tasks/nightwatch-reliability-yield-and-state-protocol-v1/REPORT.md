@@ -30,6 +30,8 @@ promotion boundaries.
   `e33c07fdd00bf1cb2fb01f3842a4c935178155f6`.
 - Terminal documentation checkpoint `3ca3e03e7e9f76ed365a106076f98ec770f9b88f`
   records the final gate evidence.
+- Previously pushed documentation head before the final CI record:
+  `2ffc79c119f176d6f39eb5fc52da7257b83c2379`.
 - The terminal documentation checkpoint was committed on `main`; final push
   reconciliation must preserve `main == origin/main` and a clean tree.
 
@@ -155,10 +157,10 @@ with clean before/after and zero sibling writes.
 
 ## CI
 
-The one inspected Actions run for `e33c07f` was run `33355692348`, job
-`99377288744`: conclusion `failure`, `steps=[]`, runner id 0. It executed no
-quality-gate steps and is external non-evidence, not a local validation
-failure. No rerun was requested.
+The final inspected Actions run for `2ffc79c` was run `33361000650`, job
+`99392187476`: conclusion `failure`, `steps=[]`, before runner execution. It
+executed no quality-gate steps and is external non-evidence, not a local
+validation failure. No rerun was requested.
 
 ## Remaining limitations
 
