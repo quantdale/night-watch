@@ -8,7 +8,7 @@ Status: COMPLETE
 Project verdict effect: PRESERVE
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last documentation checkpoint SHA: d7efa05ea5498b2b4960b4230592787506860e84
+Last documentation checkpoint SHA: 0c4ac5381d52f483d047a8dd2a49739432f04864
 
 ## Scope and terminal rule
 

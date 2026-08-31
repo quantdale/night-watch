@@ -8,13 +8,13 @@ Status: COMPLETE
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last documentation checkpoint SHA: d7efa05ea5498b2b4960b4230592787506860e84
+Last documentation checkpoint SHA: 0c4ac5381d52f483d047a8dd2a49739432f04864
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-LAST_DOCUMENTATION_CHECKPOINT_SHA: d7efa05ea5498b2b4960b4230592787506860e84
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 0c4ac5381d52f483d047a8dd2a49739432f04864
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -220,6 +220,11 @@ evidence files were changed.
 - `git diff --check` — PASS before the closure commit
   `d7efa05ea5498b2b4960b4230592787506860e84`.
 - External CI remains `NO_STEPS_EXTERNAL_NON_EVIDENCE`; no CI PASS is claimed.
+- `git push origin main` — PASS; closure commits were published to `origin
+  main`.
+- Post-push parity — PASS:
+  `HEAD=origin/main=0c4ac5381d52f483d047a8dd2a49739432f04864`; working tree
+  clean.
 
 
 ## Decisions Made During This Task
