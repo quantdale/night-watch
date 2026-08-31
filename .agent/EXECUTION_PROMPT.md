@@ -137,8 +137,13 @@ typecheck, hardening, and the 31-test campaign suite pass. Because that is a
 new executable identity, the bounded DEV preflight and fresh prepare then
 passed against source `de169c9` as campaign
 `campaign:sha256:168c37cad1869a47a652f8bf`, manifest
-`manifest:sha256:3b128e5451436cc1d27ad572`, with five work items. Resume only
-that manifest, then run the final local/clean matrix. The DVR-006 repair is
+`manifest:sha256:3b128e5451436cc1d27ad572`, with five work items. Its resume
+exposed DVR-010: multiple account-journey fingerprints reused one run ID and
+failed checkpoint integrity before product result admission. The repaired
+adapter and pre-mutation campaign boundary are validated at implementation
+checkpoint `20184770015129fe2138dd1e18a853d34bef7274`; prepare a fresh
+current-source manifest and resume only that new manifest, then run the final
+local/clean matrix. The DVR-006 repair is
 checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at

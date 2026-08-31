@@ -6,15 +6,15 @@ Task ID: nightwatch-dev-requalification-v1
 Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-Last substantive checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-Last documentation checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last documentation checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-LAST_VALIDATED_IMPLEMENTATION_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-LAST_DOCUMENTATION_CHECKPOINT_SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+LAST_VALIDATED_IMPLEMENTATION_SHA: 20184770015129fe2138dd1e18a853d34bef7274
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 20184770015129fe2138dd1e18a853d34bef7274
+LAST_DOCUMENTATION_CHECKPOINT_SHA: 20184770015129fe2138dd1e18a853d34bef7274
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -213,10 +213,32 @@ fingerprint `manifest:sha256:3b128e5451436cc1d27ad572`, five bounded work
 items, and frozen `nightwatchSourceSha=de169c96c9244f7693493942f4a8b7c5dd50e778`.
 No product execution occurred during preparation; resume only this manifest.
 
+The guarded resume of that manifest exposed a new Nightwatch-owned checkpoint
+integrity defect after 40.4 seconds: the account journey emitted at least two
+anomaly observations with the same run ID
+`phase7-journey-ripple-account-inventory-1`, and checkpoint validation failed
+closed with `CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:DUPLICATE_OBSERVATION`.
+The persisted checkpoint remained `IN_PROGRESS` at ordinal 6 with payer/common
+completed, account `RUNNING`, no persisted observations, zero safety counters,
+and `PASS` privacy. No product finding was admitted and the manifest is now
+quarantined because the owning implementation must change before another
+resume.
+
+DVR-010 is repaired at implementation checkpoint
+`20184770015129fe2138dd1e18a853d34bef7274`. Multi-fingerprint journey and
+exploration adapters now derive deterministic bounded per-observation IDs while
+preserving the enclosing ID for a single observation. The orchestrator validates
+the complete batch before mutating its observation list or run-ID keyed map, so
+future executor collisions fail as contained `NIGHTWATCH_INTERNAL_DEFECT`
+state rather than surfacing as a later checkpoint-integrity crash. The 70-test
+campaign/triage cone, typecheck, and hardening all pass. A fresh current-source
+DEV manifest is required before any further real execution.
+
 ## Exact Next Action
 
-Resume the fresh post-audit current-source serial campaign, then run the final
-local/clean/state matrix.
+Run bounded DEV preflight, prepare a fresh current-source serial campaign, and
+resume it once; do not resume the quarantined post-audit manifest. Then run the
+final local/clean/state matrix.
 The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
@@ -233,9 +255,11 @@ validated at `374ad71`; the independent fresh current-source campaign is
 the same product fingerprint and deterministic cluster identity as the first
 fresh campaign. The post-audit manifest is
 `campaign:sha256:168c37cad1869a47a652f8bf` with fingerprint
-`manifest:sha256:3b128e5451436cc1d27ad572`. Resume it, then classify
-auth/environment/unknown limitations and run final local and clean
-validation. Do not resume the stale `ceae...` manifest.
+`manifest:sha256:3b128e5451436cc1d27ad572`; its resume exposed DVR-010 and it
+must not be retried after source changes. After the repair at `2018477`, prepare
+a fresh manifest, resume it once, classify auth/environment/unknown
+limitations, and run final local and clean validation. Do not resume the stale
+`ceae...` manifest.
 
 ## Blockers
 
@@ -252,8 +276,11 @@ source-identity repair is checkpointed at
 `374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Run the bounded DEV preflight,
 prepare passed as `campaign:sha256:6134013e41664bf66911887a` with source
 `374ad71`; its resume completed the bounded ledger. The cache/property repair
-at `de169c9` changed executable identity, and the fresh post-audit manifest is
-ready. Resume only that manifest, then continue with final local reconciliation.
+at `de169c9` changed executable identity, and the fresh post-audit manifest
+`168c37...` was prepared. Its resume exposed DVR-010; the adapter and campaign
+boundary repair is checkpointed at `2018477` with local validation complete. Run
+a fresh DEV preflight and prepare a new compatible manifest, then resume only
+that new manifest before final reconciliation.
 Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
@@ -673,6 +700,26 @@ Result: PASS; prepared
 execution occurred during preparation.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:168c37cad1869a47a652f8bf --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL CLOSED as a Nightwatch checkpoint-integrity defect after 40.4
+seconds: `CAMPAIGN_CHECKPOINT_INTEGRITY_INVALID:DUPLICATE_OBSERVATION:phase7-journey-ripple-account-inventory-1`.
+The account work item emitted duplicate observation identity; no product result
+was accepted. The persisted checkpoint remained safe `IN_PROGRESS` at ordinal
+6 with payer/common complete, account running, zero safety counters, and PASS
+privacy. The manifest is quarantined pending DVR-010 repair.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/privateTriage.test.ts tests/unit/phase15pTriageDossierPipeline.test.ts tests/unit/campaign.test.ts --project=nightwatch --workers=1 --retries=0`
+Result: PASS; 70 passed, 0 skipped, 0 failed in 4.3 seconds. Multi-observation
+adapter IDs, bounded long IDs, checkpoint pre-mutation containment, clustering,
+and legacy compatibility all passed.
+When: 2026-08-31
+
+Command: `npm run typecheck` and `npm run hardening:check`
+Result: PASS at implementation checkpoint
+`20184770015129fe2138dd1e18a853d34bef7274`.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -696,6 +743,11 @@ When: 2026-08-31
 | `src/core/campaign/sourceIdentity.ts` | executable-source SHA pathspec boundary; excludes non-runtime protocol/docs trees | validated at `374ad71` |
 | `tests/manual/phase7-real-campaign.ts` | use centralized executable-source SHA pathspec | validated at `374ad71` |
 | `tests/unit/campaign.test.ts` | temporary-Git OpenSpec-only/runtime source identity regression | validated at `374ad71` |
+| `src/core/triage/compatibility.ts` | deterministic bounded per-observation IDs for multi-fingerprint adapters | validated at `2018477` |
+| `src/core/campaign/orchestrator.ts` | pre-mutation duplicate observation identity guard | validated at `2018477` |
+| `tests/unit/privateTriage.test.ts` | multi-observation adapter identity and length regressions | validated at `2018477` |
+| `tests/unit/phase15pTriageDossierPipeline.test.ts` | legacy repeated-observation identity regression | validated at `2018477` |
+| `tests/unit/campaign.test.ts` | duplicate identity checkpoint containment regression | validated at `2018477` |
 
 ## Decisions Made During This Task
 
@@ -705,6 +757,10 @@ When: 2026-08-31
 - Keep single-observation attribution in a pure shared classifier: safety,
   auth, settlement, and capture health take precedence over oracle class, and
   unclassified failed oracles remain `UNKNOWN`.
+- Treat `AnomalyObservation.runId` as a unique occurrence identity at the
+  campaign boundary. Adapters preserve a single observation's historical ID
+  and derive bounded deterministic occurrence suffixes for multi-fingerprint
+  evidence; the orchestrator rejects any remaining collision before mutation.
 
 ## Defect Ledger
 
@@ -718,6 +774,7 @@ When: 2026-08-31
 | DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; stale-manifest resume later refused on expected source drift | Fixed locally; original duplicate-integrity failure retained and stale-manifest refusal is non-product evidence; fresh current-source campaign still required |
 | DVR-007 | MEDIUM | Campaign version-drift observability and launcher terminal assertion | Exact resume after DVR-006 repair changed the frozen source SHA | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373` refused before execution with `stopReason=CAMPAIGN_VERSION_DRIFT`; the brief said `NIGHTWATCH INTERNAL DEFECT` and the guarded manual test failed its accepted-result assertion | Version drift shared the generic `PARTIAL_RUNTIME_INFRA_FAILURE` result class but the brief and launcher did not recognize its explicit stop reason as an expected fail-closed terminal outcome | `c1f5f529e830757cc2c3124aae46047bda863173` gives version drift a dedicated safe headline and allows only that explicit stop reason through the real launcher assertion; it does not bypass the drift gate | `tests/unit/campaign.test.ts` runtime source-version drift headline regression | Targeted drift/duplicate tests, full campaign suite (30), typecheck, and hardening: PASS | Fixed locally; exact stale-manifest refusal retained as non-product evidence |
 | DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, hardening, and fresh prepare/resume source stability pass | Fixed; `ceae...` remains a stale no-resume manifest; fresh campaign `6134013...` proved the repaired identity through real bounded prepare/resume |
+| DVR-010 | HIGH | Campaign observation identity / checkpoint integrity | Fresh current-source DEV campaign resume `campaign:sha256:168c37cad1869a47a652f8bf` | Account journey emitted multiple anomaly observations with repeated run ID `phase7-journey-ripple-account-inventory-1`; resume failed closed at checkpoint validation with `DUPLICATE_OBSERVATION` | `adaptJourneyEvidence` reused the single enclosing run ID for every fingerprint, while the checkpoint ledger and run-ID keyed candidate map require observation identities to be unique | `20184770015129fe2138dd1e18a853d34bef7274` derives bounded deterministic per-observation IDs for multi-fingerprint journey/exploration evidence and the orchestrator validates the batch before mutation | Adapter, legacy compatibility, bounded-length, and checkpoint containment regressions; 70/70 focused cone | Typecheck and hardening PASS at `2018477`; fresh current-source DEV campaign still required because executable identity changed | Fixed; failed `168c37...` manifest quarantined as non-product evidence |
 | DVR-009 | LOW | Cache/property test quality | Invariant audit after repeated campaign reconciliation | Cache version tests changed a reference digest but never queried the cache with a changed key; a “duplicate-input idempotence” property only repeated identical input | Cache key now accepts an explicit pure version-input seam with live authoritative defaults; property wording and assertions cover true equivalent nested JSON round-trips, bounded cycle diagnostics, and deep non-mutation | `tests/unit/cacheCurrentness.test.ts`, `tests/unit/fuzzProperty.test.ts`; 40/40 cache/property/digest tests | `npm run typecheck`, `npm run hardening:check`, campaign suite 31/31: PASS | Closed at `de169c9`; fresh current-source DEV campaign required because executable identity changed |
 
 ## Discoveries
@@ -748,6 +805,13 @@ When: 2026-08-31
 - The narrowed observer signal separates journey semantics from incidental
   page loading: known-read lifecycle remains blocking, while passive resource
   loading remains visible but cannot hold the semantic settlement barrier.
+
+- DVR-010 is a checkpoint-integrity defect, not a DEV product outcome. The
+  journey compatibility adapter creates one observation per anomaly fingerprint
+  but reused the enclosing run ID for every observation. The account journey
+  emitted multiple anomaly observations, so the checkpoint's required unique
+  observation ledger and the orchestrator's run-ID keyed candidate map exposed
+  the collision before state could be finalized.
 - The third independent invocation confirms the narrowed barrier can settle,
   but exposed a separate capture defect: one known-read JSON/XHR body was
   unavailable after settlement. The strict replay failure is preserved as a

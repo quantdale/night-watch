@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-Last substantive checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
-Last documentation checkpoint SHA: de169c96c9244f7693493942f4a8b7c5dd50e778
+Last validated implementation SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last substantive checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
+Last documentation checkpoint SHA: 20184770015129fe2138dd1e18a853d34bef7274
 
 ## Scope
 
@@ -191,6 +191,18 @@ passed as `campaign:sha256:168c37cad1869a47a652f8bf`, manifest
 `manifest:sha256:3b128e5451436cc1d27ad572`, with five bounded work items and
 frozen source `de169c96c9244f7693493942f4a8b7c5dd50e778`. No product execution
 occurred during preparation; only this manifest may be resumed.
+
+That resume then failed closed with a Nightwatch checkpoint-integrity defect:
+the account journey emitted multiple anomaly observations with the same run ID
+and `validateCampaignCheckpoint` rejected `DUPLICATE_OBSERVATION` before any
+product finding was admitted. The persisted checkpoint remained safe and
+recoverable (`IN_PROGRESS`, ordinal 6, payer/common complete, account running,
+zero safety counters, privacy PASS). DVR-010 is repaired at implementation
+checkpoint `20184770015129fe2138dd1e18a853d34bef7274`: multi-fingerprint
+journey/exploration adapters now derive bounded deterministic observation IDs,
+and the campaign boundary validates the complete batch before mutation. The
+70-test campaign/triage cone, typecheck, and hardening pass; a fresh
+current-source DEV manifest is required.
 
 The focused reconciliation cone passed 292/292 with no skips or failures:
 campaign/checkpoint/triage/replay compatibility passed 113/113, and continuity,

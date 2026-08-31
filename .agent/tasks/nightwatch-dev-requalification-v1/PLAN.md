@@ -3,7 +3,7 @@
 Task ID: `nightwatch-dev-requalification-v1`
 Phase: `DEV_REQUALIFICATION_V1`
 Starting SHA: `e51bf7730a8d79051ceb19f8ae9dd3eece5aa300`
-Last validated implementation: `de169c96c9244f7693493942f4a8b7c5dd50e778`
+Last validated implementation: `20184770015129fe2138dd1e18a853d34bef7274`
 Authorization class: `NIGHTWATCH_DEV_REQUALIFICATION_V1`
 Project verdict effect: `PRESERVE`
 OpenSpec: `openspec/changes/nightwatch-dev-requalification-v1/`
@@ -143,7 +143,10 @@ reduced to a local deterministic regression before a real run resumes.
   assertions at `de169c9`; a fresh current-source DEV campaign is required
   before closure. Prepare passed as
   `campaign:sha256:168c37cad1869a47a652f8bf` with frozen source `de169c9`;
-  resume only that manifest.
+  its resume exposed DVR-010: multi-fingerprint journey evidence reused one
+  run ID and failed checkpoint integrity. The adapter and pre-mutation campaign
+  boundary repair is validated at `2018477`; that manifest is quarantined and a
+  fresh current-source campaign is required.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.
