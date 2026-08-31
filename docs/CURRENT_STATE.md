@@ -218,6 +218,16 @@ authorizes a small fresh DEV confirmation, capped at 3 campaign attempts and 3
 attack replay executions, seeking one current candidate through replay and,
 if reproduced, minimization and sanitized dossier generation.
 
+### Active replay budget and dossier closure campaign
+
+The active successor is `nightwatch-replay-budget-and-dossier-closure-v1`, starting from `4834e4da1ec40fbad9736f0a12d1d8f610cb622d` with
+`PROJECT_VERDICT_EFFECT: PRESERVE`. It addresses the specific budget
+starvation proven by the completed soak: four fresh current reproduction queues
+were blocked before replay executor entry because required collection journeys
+had consumed `journeyContexts=3/3`. The successor must preserve explicit
+bounded execution and DVR-011 admission while making replay capacity
+intentional, then confirm the repair with a fresh guarded DEV candidate.
+
 ### Completed DEV soak, replay, and yield campaign
 
 `nightwatch-dev-soak-replay-yield-v1` is complete from implementation source
