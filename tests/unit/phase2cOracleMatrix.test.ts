@@ -17,7 +17,7 @@ import { buildJourneyFailureAttribution } from '../../src/core/journeys/attribut
 import { evaluateAnomalyAdmission } from '../../src/core/journeys/admission';
 import { fingerprintAnomaly, sanitizeAnomalyFingerprintInput } from '../../src/core/journeys/fingerprint';
 import { compareJourneyReplay } from '../../src/core/journeys/replay';
-import { classifyJourneyObservation } from '../../src/core/journeys/observationClassification';
+import { campaignProductFingerprints, classifyJourneyObservation } from '../../src/core/journeys/observationClassification';
 import type { JourneyEvidence } from '../../src/core/journeys/types';
 import { getRippleJourneyDefinition } from '../../src/products/ripple/journeyContracts';
 import { classifyResourceRole, checkResourceContentType, checkResourceStatus, classifyRequestFailure } from '../../src/oracles/protocol/resourceChecks';
@@ -378,6 +378,57 @@ test('single-observation classification keeps capture failures out of product fi
   });
   expect(unexplained.classification).toBe('UNKNOWN');
   expect(unexplained.diagnosticCodes).toEqual(['UNCLASSIFIED_OBSERVATION_FAILURE']);
+});
+
+test('campaign candidate admission ignores non-fatal and incomplete fingerprints', () => {
+  const safety = {
+    productionAttempts: 0,
+    proxyViolations: 0,
+    unknownDestinations: 0,
+    unknownApprovals: 0,
+    mutations: 0,
+    dbQueries: 0,
+    actionCausedUnknown: 0,
+  };
+  const transientFingerprint = 'fp:sha256:aaaaaaaaaaaaaaaaaaaaaaaa';
+  const transient = {
+    ...baseEvidence(),
+    captureStatus: 'COMPLETE' as const,
+    observationSettlement: 'SETTLED' as const,
+    oracleObservations: [{
+      oracleId: 'unexpected-status',
+      triggered: true,
+      severity: 'WARNING' as const,
+      anomalyClass: 'DEV_INFRA_TRANSIENT' as const,
+      causalToPrimaryFailure: 'NOT_CAUSAL' as const,
+      fingerprint: transientFingerprint,
+    }],
+    anomalyFingerprints: [transientFingerprint],
+  };
+  expect(campaignProductFingerprints({ evidence: transient, safety })).toEqual([]);
+
+  const productFingerprint = 'fp:sha256:bbbbbbbbbbbbbbbbbbbbbbbb';
+  const product = {
+    ...baseEvidence(),
+    passed: false,
+    oracleStatus: 'FAIL' as const,
+    captureStatus: 'COMPLETE' as const,
+    observationSettlement: 'SETTLED' as const,
+    oracleObservations: [{
+      oracleId: 'malformed-json',
+      triggered: true,
+      severity: 'WARNING' as const,
+      anomalyClass: 'PRODUCT_BEHAVIOR_ANOMALY' as const,
+      causalToPrimaryFailure: 'UNRESOLVED' as const,
+      fingerprint: productFingerprint,
+    }],
+    anomalyFingerprints: [productFingerprint, productFingerprint],
+  };
+  expect(campaignProductFingerprints({ evidence: product, safety })).toEqual([productFingerprint]);
+  expect(campaignProductFingerprints({
+    evidence: { ...product, captureStatus: 'INCOMPLETE' as const, captureFailureCodes: ['BODY_READ_TIMEOUT'] as const },
+    safety,
+  })).toEqual([]);
 });
 
 test('replay rejects unsupported and cyclic structural evidence even when both sides share it', () => {

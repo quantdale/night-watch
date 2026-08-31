@@ -21,6 +21,7 @@ import { RunRecorder } from '../../src/core/evidence/runRecorder';
 import { isProxyViolation, readProxyEvents } from '../../src/proxy/events';
 import { runDeclarativeJourney } from '../../src/core/journeys/engine';
 import { freezeJourneyContract, JOURNEY_CONTRACT_VERSION, ORACLE_VERSION } from '../../src/core/journeys/contract';
+import { campaignProductFingerprints, classifyJourneyObservation, type JourneyObservationClassification } from '../../src/core/journeys/observationClassification';
 import type { SemanticResponseOracle } from '../../src/browser/observers/networkObserver';
 import type { RealSourceResolution } from '../../src/oracles/expectations/resolver';
 import { buildCampaignSemanticOracle, campaignSemanticObservationFor } from '../../src/core/campaign/realCampaignSemanticWiring';
@@ -406,6 +407,36 @@ function safetyFromJourney(context: Awaited<ReturnType<typeof createNightwatchCo
     infrastructureQueries: 0,
     externalPublicationAttempts: 0,
   };
+}
+
+function journeyObservationSafety(safety: CampaignSafetyVector): Parameters<typeof classifyJourneyObservation>[0]['safety'] {
+  return {
+    productionAttempts: safety.productionAttempts,
+    proxyViolations: safety.proxyViolations,
+    unknownDestinations: safety.unknownDestinations,
+    unknownApprovals: safety.unknownApprovals,
+    mutations: safety.productMutations,
+    dbQueries: safety.databaseQueries,
+    actionCausedUnknown: safety.actionCausedUnknown,
+  };
+}
+
+function campaignJourneyResult(
+  classification: JourneyObservationClassification,
+  hasProductCandidates: boolean,
+): CampaignExecutionOutcome['result'] {
+  if (hasProductCandidates) return 'ANOMALY';
+  switch (classification) {
+    case 'PASS': return 'PASS';
+    case 'DEV_INFRA_TRANSIENT': return 'TRANSIENT';
+    case 'NIGHTWATCH_DEFECT': return 'NIGHTWATCH_DEFECT';
+    case 'AUTH_STATE_INVALID': return 'AUTH_BLOCKED';
+    case 'SAFETY_BLOCK': return 'SAFETY_BLOCKED';
+    case 'PRODUCT_BEHAVIOR_ANOMALY':
+    case 'FRAMEWORK_CAPTURE_DEFECT':
+    case 'UNKNOWN':
+      return 'RUNTIME_FAILURE';
+  }
 }
 
 function safeRunId(workItem: CampaignWorkItem, attempt: number): string {
@@ -860,10 +891,24 @@ async function runJourney(context: RealCampaignContext, browser: Browser, manife
     nightwatch.network.beginJourneyObservation();
     const evidence = await runDeclarativeJourney(nightwatch.page, { recorder, monitor: nightwatch.monitor, network: nightwatch.network }, contract.definition, { uiBaseUrl: context.target, authValid });
     const safety = safetyFromJourney(nightwatch, recorder, evidence);
-    const candidates = evidence.anomalyFingerprints?.length ? journeyCandidate({ manifest, workItem, runId: safeRunId(workItem, attempt), evidence }) : [];
-    await recorder.finalize({ passed: evidence.passed && Object.values(safety).every((value) => value === 0), notes: [`Phase 7 campaign journey ${journeyId}`, `anomalies=${candidates.length}`, `safety=${JSON.stringify(safety)}`] });
+    const observationSafety = journeyObservationSafety(safety);
+    const classification = classifyJourneyObservation({ evidence, safety: observationSafety });
+    const productFingerprints = campaignProductFingerprints({ evidence, safety: observationSafety });
+    const candidateEvidence = productFingerprints.length === 0
+      ? evidence
+      : { ...evidence, anomalyFingerprints: productFingerprints };
+    const candidates = productFingerprints.length > 0
+      ? journeyCandidate({ manifest, workItem, runId: safeRunId(workItem, attempt), evidence: candidateEvidence })
+      : [];
+    const result = campaignJourneyResult(classification.classification, candidates.length > 0);
+    const reasonCode = result === 'PASS' || result === 'ANOMALY'
+      ? undefined
+      : classification.classification === 'PRODUCT_BEHAVIOR_ANOMALY'
+        ? 'PRODUCT_ORACLE_FINGERPRINT_MISSING'
+        : classification.diagnosticCodes[0] ?? classification.classification;
+    await recorder.finalize({ passed: result === 'PASS' && Object.values(safety).every((value) => value === 0), notes: [`Phase 7 campaign journey ${journeyId}`, `classification=${classification.classification}`, `diagnostics=${classification.diagnosticCodes.join(',')}`, `anomalies=${candidates.length}`, `safety=${JSON.stringify(safety)}`] });
     finalized = true;
-    return { result: candidates.length > 0 ? 'ANOMALY' : evidence.passed ? 'PASS' : 'RUNTIME_FAILURE', safety, privacy: privacyPass(), actionsExecuted: evidence.stepResults.length, apiExecutions: 0, browserContextCreated: true, replay: false, observations: candidates, journeyEvidence: evidence, reasonCode: evidence.passed ? undefined : 'JOURNEY_ORACLE_FAILURE' };
+    return { result, safety, privacy: privacyPass(), actionsExecuted: evidence.stepResults.length, apiExecutions: 0, browserContextCreated: true, replay: false, observations: candidates, journeyEvidence: evidence, reasonCode };
   } finally {
     await nightwatch.close();
     if (!finalized) {

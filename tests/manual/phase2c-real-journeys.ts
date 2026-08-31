@@ -320,8 +320,13 @@ async function observeOnce(opts: {
 function admissionLedger(observations: readonly RealObservation[]): AdmissionResult[] {
   const candidates = new Map<string, AnomalyObservation[]>();
   for (const observation of observations) {
+    // The oracle ledger also contains non-fatal asset/background observations.
+    // Only a settled observation that the shared classifier explicitly
+    // attributed to product behavior can enter the bounded product-admission
+    // matrix; otherwise a warning fingerprint would look like an L0 finding.
+    if (observation.finalClassification !== 'PRODUCT_BEHAVIOR_ANOMALY') continue;
     for (const item of observation.evidence.oracleObservations ?? []) {
-      if (item.fingerprint === undefined) continue;
+      if (item.fingerprint === undefined || item.anomalyClass !== 'PRODUCT_BEHAVIOR_ANOMALY' || !item.triggered) continue;
       const candidate: AnomalyObservation = {
         runId: observation.runId,
         journeyId: observation.journeyId,

@@ -36,6 +36,31 @@ export interface JourneyObservationClassificationResult {
   readonly diagnosticCodes: readonly string[];
 }
 
+/**
+ * Return only fingerprints that are safe for the product-candidate boundary.
+ *
+ * `anomalyFingerprints` is an observation ledger and may contain fingerprints
+ * for non-fatal asset/background signals. A campaign must not turn the mere
+ * presence of one of those fingerprints into an anomaly. Candidate admission
+ * therefore requires the shared settled-observation classification and an
+ * explicitly product-classified oracle observation with the same stable
+ * fingerprint. Missing or contradictory evidence fails closed as an empty
+ * candidate set.
+ */
+export function campaignProductFingerprints(input: {
+  readonly evidence: JourneyEvidence;
+  readonly safety: JourneyObservationSafetySummary;
+}): readonly string[] {
+  const classification = classifyJourneyObservation(input);
+  if (classification.classification !== 'PRODUCT_BEHAVIOR_ANOMALY') return [];
+  const fingerprintLedger = new Set(input.evidence.anomalyFingerprints ?? []);
+  return [...new Set((input.evidence.oracleObservations ?? [])
+    .filter((item) => item.triggered && item.anomalyClass === 'PRODUCT_BEHAVIOR_ANOMALY')
+    .map((item) => item.fingerprint)
+    .filter((fingerprint): fingerprint is string => fingerprint !== undefined && fingerprintLedger.has(fingerprint)))]
+    .sort();
+}
+
 const SAFETY_FIELDS: readonly (keyof JourneyObservationSafetySummary)[] = [
   'productionAttempts',
   'proxyViolations',
