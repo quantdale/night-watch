@@ -235,8 +235,8 @@ test.describe('private clustering and app-layer differential', () => {
       observedAt: '2026-08-13T00:00:00.000Z',
       evidence: {
         envelopeId: 'E1-J1',
-        anomalyFingerprints: [FP],
-        oracleResults: ['oracle.protocol'],
+        anomalyFingerprints: [FP, FP_API],
+        oracleResults: ['oracle.protocol', 'oracle.secondary'],
         observedActions: ['p4.j1.read'],
         states: [{ routeClass: '/ripple/exchange' }],
         coverage: { statesDiscovered: 1 },
@@ -251,7 +251,23 @@ test.describe('private clustering and app-layer differential', () => {
     });
     expect(journey[0]?.fingerprint).toBe(FP);
     expect(exploration[0]?.fingerprint).toBe(FP);
+    expect(exploration.map((item) => item.runId)).toEqual([
+      'legacy-exploration-1-observation-1',
+      'legacy-exploration-1-observation-2',
+    ]);
+    expect(new Set(exploration.map((item) => item.runId)).size).toBe(2);
     expect(api[0]?.features.operationFamily).toBe('exchange.read');
+  });
+
+  test('multi-observation adapter IDs remain unique and bounded for long run IDs', () => {
+    const observations = adaptJourneyEvidence({
+      runId: 'x'.repeat(160),
+      observedAt: '2026-08-13T00:00:00.000Z',
+      evidence: { journeyId: 'ripple-payer-exchange-read', anomalyFingerprints: [FP, FP_API] } as never,
+    });
+    expect(observations).toHaveLength(2);
+    expect(new Set(observations.map((item) => item.runId)).size).toBe(2);
+    expect(observations.every((item) => item.runId.length <= 160)).toBe(true);
   });
 
   test('synthetic dossier matrix keeps product, protocol, transient, false-positive, and source cases separate', async () => {

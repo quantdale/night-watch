@@ -10,6 +10,8 @@ import type { AnomalyObservation, StableAnomalyFeatures } from './types';
 
 export const TRIAGE_COMPATIBILITY_VERSION = 'nightwatch.triage-compatibility.private.v1' as const;
 
+const MAX_RUN_ID_LENGTH = 160;
+
 function featureDefaults(overrides: Partial<StableAnomalyFeatures>): StableAnomalyFeatures {
   return {
     journeyId: null,
@@ -33,13 +35,29 @@ function safeRunId(runId: string): string {
   return runId;
 }
 
+/**
+ * A single browser/exploration run can produce more than one anomaly
+ * fingerprint. Campaign ledgers use `runId` as the observation identity, so
+ * those occurrences need deterministic distinct IDs. Preserve the historical
+ * enclosing ID for the common single-observation case; only add a bounded
+ * occurrence suffix when the adapter is expanding one run into many records.
+ */
+function observationRunId(runId: string, index: number, total: number): string {
+  const base = safeRunId(runId);
+  if (total === 1) return base;
+  const suffix = `-observation-${index + 1}`;
+  const prefixLength = MAX_RUN_ID_LENGTH - suffix.length;
+  if (prefixLength < 1) throw new Error('COMPATIBILITY_RUN_ID_INVALID');
+  return safeRunId(`${base.slice(0, prefixLength)}${suffix}`);
+}
+
 function observation(runId: string, observedAt: string, fingerprint: string, features: StableAnomalyFeatures, timingClass: AnomalyObservation['timingClass'] = 'NONE'): AnomalyObservation {
   return { runId: safeRunId(runId), observedAt, fingerprint, features, timingClass, reproduced: false, minimized: false, sourceFreshness: 'UNKNOWN' };
 }
 
 export function adaptJourneyEvidence(input: { readonly runId: string; readonly observedAt: string; readonly evidence: JourneyEvidence }): readonly AnomalyObservation[] {
   const fingerprints = input.evidence.anomalyFingerprints ?? [];
-  return fingerprints.map((fingerprint, index) => observation(input.runId, input.observedAt, fingerprint, featureDefaults({
+  return fingerprints.map((fingerprint, index) => observation(observationRunId(input.runId, index, fingerprints.length), input.observedAt, fingerprint, featureDefaults({
     journeyId: input.evidence.journeyId,
     oracleId: input.evidence.oracleObservations?.[index]?.oracleId ?? 'journey-oracle',
     routeClass: input.evidence.finalRouteClass,
@@ -50,7 +68,7 @@ export function adaptJourneyEvidence(input: { readonly runId: string; readonly o
 }
 
 export function adaptExplorationEvidence(input: { readonly runId: string; readonly observedAt: string; readonly evidence: ExplorationEvidence }): readonly AnomalyObservation[] {
-  return input.evidence.anomalyFingerprints.map((fingerprint, index) => observation(input.runId, input.observedAt, fingerprint, featureDefaults({
+  return input.evidence.anomalyFingerprints.map((fingerprint, index) => observation(observationRunId(input.runId, index, input.evidence.anomalyFingerprints.length), input.observedAt, fingerprint, featureDefaults({
     journeyId: null,
     envelopeId: input.evidence.envelopeId,
     oracleId: input.evidence.oracleResults[index] ?? 'exploration-oracle',

@@ -469,6 +469,10 @@ test.describe('Phase 15P A08 — v1 dossier and legacy ledger compatibility', ()
       },
     } as never);
     expect(observations).toHaveLength(2);
+    expect(observations.map((observation) => observation.runId)).toEqual([
+      'legacy-run-1-observation-1',
+      'legacy-run-1-observation-2',
+    ]);
     const clusters = clusterAnomalies(observations);
     expect(clusters).toHaveLength(1);
     expect(clusters[0]!.occurrenceCount).toBe(2);

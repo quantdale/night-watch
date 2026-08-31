@@ -190,6 +190,15 @@ function validateCandidatePrivacy(candidate: CampaignAnomalyCandidate): void {
   }
 }
 
+function assertUniqueOutcomeObservationIds(existing: readonly TriageAnomalyObservation[], incoming: readonly CampaignAnomalyCandidate[]): void {
+  const observationIds = new Set(existing.map((observation) => observation.runId));
+  for (const candidate of incoming) {
+    const runId = candidate.observation.runId;
+    if (observationIds.has(runId)) throw new Error('NIGHTWATCH_INTERNAL_DEFECT:OBSERVATION_ID_DUPLICATE');
+    observationIds.add(runId);
+  }
+}
+
 function hasValidSemanticEvidence(candidate: CampaignAnomalyCandidate): boolean {
   const evidence = candidate.campaignSemanticEvidence;
   if (evidence === undefined) return false;
@@ -1168,6 +1177,11 @@ export class CampaignOrchestrator {
       const executionPrivacy = addPrivacy(this.state.privacy, outcome.privacy);
       this.state = { ...this.state, safety: addSafety(this.state.safety, outcome.safety), privacy: executionPrivacy, privacyStatus: executionPrivacy.result };
       for (const candidate of outcome.observations) validateCandidatePrivacy(candidate);
+      // Validate the whole observation batch before mutating either the
+      // durable observation list or the run-ID keyed candidate map. A faulty
+      // adapter must become a contained Nightwatch defect, never a partially
+      // appended checkpoint that only fails later in integrity validation.
+      assertUniqueOutcomeObservationIds(this.observations, outcome.observations);
       for (const candidate of outcome.observations) this.appendObservation(candidate);
       // Observations preserve repeated occurrences for clustering and
       // occurrence counts. The execution record is a set-valued identity

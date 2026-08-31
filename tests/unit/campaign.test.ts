@@ -657,6 +657,37 @@ test.describe('Phase 7 deterministic synthetic campaign matrix', () => {
     }
   });
 
+  test('contains duplicate observation identities before checkpoint mutation', async () => {
+    const { root, store } = tempStore();
+    try {
+      const manifest = createCampaignManifest(inputFor('LOCAL_SYNTHETIC'));
+      const first = candidate({
+        runId: 'run-same-observation-id',
+        fingerprint: 'fp:sha256:abababababababababababac',
+        journeyId: 'ripple-payer-exchange-read',
+      });
+      const second = candidate({
+        runId: 'run-same-observation-id',
+        fingerprint: 'fp:sha256:cdcdcdcdcdcdcdcdcdcdcdcd',
+        journeyId: 'ripple-payer-exchange-read',
+      });
+      const result = await runCampaign(
+        manifest,
+        passingExecutor(new Map([['journey:ripple-payer-exchange-read', [first, second]]])),
+        { store, now: () => new Date(STATIC_NOW) },
+      );
+      const execution = result.checkpoint.executionLedger.find((record) => record.workItemId === 'journey:ripple-payer-exchange-read');
+      expect(result.resultClass).toBe('PARTIAL_RUNTIME_INFRA_FAILURE');
+      expect(execution?.state).toBe('BLOCKED');
+      expect(execution?.reasonCode).toBe('NIGHTWATCH_INTERNAL_DEFECT');
+      expect(result.checkpoint.anomalyObservations).toHaveLength(0);
+      expect(result.checkpoint.anomalyCandidates).toHaveLength(0);
+      expect(() => validateCampaignCheckpoint(result.checkpoint, manifest)).not.toThrow();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('resumes correctly from every bounded work-item completion boundary', async () => {
     const manifest = createCampaignManifest(inputFor('BASELINE_HEALTH'));
     expect(manifest.workItems.length).toBeGreaterThanOrEqual(3);
