@@ -207,8 +207,8 @@ an auth-readiness block is terminal evidence, not a reason to retry.
 - External CI remains non-evidence because the exact-head job executed zero
   steps.
 - Local/clean validation, continuity/project reconciliation, privacy audit,
-  and final diff inspection are complete; remote parity is the only closure
-  action remaining.
+  final diff inspection, push, and remote parity are complete. The task remains
+  BLOCKED only at the owner-managed DEV auth boundary.
 
 ## Completion Criteria
 

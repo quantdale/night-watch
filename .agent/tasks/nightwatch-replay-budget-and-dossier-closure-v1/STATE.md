@@ -187,8 +187,10 @@ datastore, infrastructure, mutation, publication, or sibling write occurred.
   and dossier closure are blocked by the auth readiness condition above.
 - CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
   no repository workflow step executed and CI PASS is not claimed.
-- Final continuity/project reconciliation, privacy audit, documentation
-  checkpoint, push, and remote-parity verification remain pending.
+- Continuity/project reconciliation, safety/privacy audit, generated-artifact
+  inspection, terminal documentation, push, and final remote-parity checks
+  passed. No further task action is authorized until the owner unblocks DEV
+  authentication.
 
 ## Resume Recipe
 
@@ -213,5 +215,8 @@ classified as external non-evidence.
 DEV result: auth readiness failed once with
 `AUTH_STATE_REPLACEMENT_FAILED`; campaign/replay/minimization/dossier counts
 are all zero.
+Closure result: continuity/OpenSpec/project truth, safety/privacy, generated
+artifact/diff inspection, checkpoint push, and final `main`/`origin/main`
+parity with a clean checkout all passed.
 Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
 claimed.

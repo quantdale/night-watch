@@ -7,4 +7,4 @@
 - [ ] M4 prepare fresh current-source DEV campaign and validate owner auth (BLOCKED: designated state is not page-valid)
 - [ ] M5 obtain fresh admitted candidate and exercise bounded attack replay (BLOCKED before campaign)
 - [x] M6 no minimization/dossier without a reproduced candidate
-- [ ] M7 final parity, project truth, CI classification, and terminal report (in progress)
+- [x] M7 final parity, project truth, CI classification, and terminal report (task terminally BLOCKED before DEV auth)

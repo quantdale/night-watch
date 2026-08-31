@@ -46,3 +46,18 @@ historical candidate, or stale manifest may be used.
 Production, NEXT, mutation, datastore/infrastructure, sibling writes,
 publication, credential persistence, raw authenticated evidence in Git,
 containment weakening, DVR-011 weakening, and unbounded replay are forbidden.
+
+## Terminal disposition
+
+The implementation and every reachable local validation milestone are closed.
+The exact-head Actions observation remains external non-evidence because its
+only job had zero executed steps. Guarded DEV execution stopped before campaign
+preparation after the single permitted auth refresh failed; therefore no fresh
+candidate, replay, minimization, dossier, or product finding is claimed.
+
+Continuity v2, OpenSpec task reconciliation, project truth, hardening,
+owner-provenance, generated-artifact/diff, checkpoint push, and final clean
+`main`/`origin/main` parity checks all passed. The active task remains
+`BLOCKED` with the exact next action to stop until the owner supplies a
+page-readable designated DEV auth state. No alternate credential, stale state,
+historical candidate, or retry is authorized.
