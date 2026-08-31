@@ -1,35 +1,33 @@
 # Active Task
 
-Task ID: nightwatch-dev-requalification-v1
-Phase: DEV_REQUALIFICATION_V1
-Title: Nightwatch Bounded DEV Requalification
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-dev-requalification-v1
-Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
+Task ID: nightwatch-dev-soak-replay-yield-v1
+Phase: DEV_SOAK_REPLAY_YIELD_V1
+Title: Nightwatch DEV Capture Soak, Replay, and Yield
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-dev-soak-replay-yield-v1
+Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-Last checkpoint: COMPLETE — bounded DEV requalification closed; `1054b827` truthful runtime limitation, no product finding
-Current milestone: COMPLETE / STOP. M3 — Reconciliation and closure is closed.
-Next action: NONE — task closed; clean main at `9ef80880d36d4cf50097ea62992f98f3367d6f96` (pushed), findings remain owner-local.
-Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
+Last checkpoint: ACTIVATED — bounded DEV soak/replay/yield successor created after DVR-012 closure
+Current milestone: M0 — baseline, freshness, safety, and owner-auth readiness
+Next action: validate Git/gates and current external DEV auth; if auth is not page-valid, stop at HUMAN_AUTH_ACTION_REQUIRED for owner refresh before any target operation
+Authorization class: NIGHTWATCH_DEV_SOAK_REPLAY_YIELD_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
+STARTING_SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
-LAST_DOCUMENTATION_CHECKPOINT_SHA: 9ef80880d36d4cf50097ea62992f98f3367d6f96
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_DEV_REQUALIFICATION_V1_STATUS: COMPLETE
+PHASE_DEV_SOAK_REPLAY_YIELD_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
-This is a new bounded owner-authorized DEV requalification successor. It
-preserves the existing `OPERATIONALLY_ACCEPTED` project verdict through the
-explicit `PROJECT_VERDICT_EFFECT: PRESERVE` while collecting read-only
-evidence. The task is limited to the existing guarded DEV launchers, serial
-observations, sanitized owner-local evidence, and local regression repair only
-if a Nightwatch defect is found.
+This successor preserves the existing `OPERATIONALLY_ACCEPTED` verdict while
+measuring the residual DEV capture/replay/yield weakness exposed by completed
+campaign `1054b827`. Real execution is serial, read-only, guarded, and
+bounded. Authentication remains owner-managed and external.
 
-No production, NEXT, DEV mutation, data/infra, sibling write, publication,
-credential capture, raw authenticated evidence, containment weakening, or
+No production, NEXT, DEV mutation, datastore/database, cloud/infrastructure,
+sibling-repository write, publication, credential capture/persistence, raw
+authenticated evidence in Git, containment weakening, force-push, or
 retry-based correctness claim is authorized.
