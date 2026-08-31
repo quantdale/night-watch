@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 Starting SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
 Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: 811ded7e665020b27036dd5332ef04af43e67b91
+Last documentation checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 7ac265594719f3d93eabf78e0bd9f749ef63dba7
@@ -299,6 +299,15 @@ compatibility 1950 total / 1937 passed / 13 skipped / 0 failed; owner
 provenance 91 passed; synthetic campaign 74 passed; patch integrity passed;
 receipt `receipt:sha256:7952ccb2e38fb5cb04c934fb`.
 
+Command: `npm run agent:check`, `npm run handoff:check`, and `npm run project:check` at `cc8918ff6acd27ff7f48651fb627bfc77fbd4637`
+Result: FAIL closed, repaired before push
+When: 2026-08-31
+Relevant failure/output summary: strict continuity rejected the documentation
+checkpoint `811ded7` because it preceded the new substantive checkpoint
+`f875730`; handoff and project truth propagated the same continuity failure.
+No source or runtime issue was implicated. The checkpoint role was corrected
+to the known validated implementation commit and is rechecked before push.
+
 ## Decisions Made During This Task
 
 - Create a distinct continuity-v2 successor because completed acceptance and
@@ -337,6 +346,7 @@ receipt `receipt:sha256:7952ccb2e38fb5cb04c934fb`.
 | RYSP-006 | High | project-state and continuity protocol | state authorization/parser audit | accepted status depended on a nightwatch task-name exception, and incidental status prose could affect milestone interpretation | authorization and milestone parsing were convention/free-text driven | explicit bounded verdict effect; location-bound metadata; structured live-state and prompt cross-checks; trailing-delimiter milestone parser | 114 agent-state tests and 53 project-state tests | PASS at `82e661b` | Closed; accepted verdict preserved explicitly |
 | RYSP-007 | Low | test quality | cache/property claim audit | analyzer/taxonomy invalidation and bounded-input tests did not change/assert the authoritative inputs they named | tests asserted repeated behavior without reconstructing the real cache key or exact content bound | tests now compare the actual key payload, mutate authoritative versions, and assert exact canonical output/privacy boundary | 50 cache/canonical/checkpoint tests, including 12 cache cases and 15 property cases | PASS at `82e661b` | Closed; test-claim gap corrected |
 | RYSP-008 | Low | handoff compatibility fixtures | full local gate | new explicit verdict-effect enforcement rejected three synthetic planner-handoff routes whose v2 fixture omitted the effect | fixture encoded the old implicit task metadata contract | added explicit `PRESERVE` in the fixture's active preamble and STATE identity; no production semantics weakened | planner-handoff 12/12 plus repaired full gate 1950/1937/13/0 | PASS at `f875730` | Closed; fixture protocol drift only |
+| RYSP-009 | Low | continuity checkpoint roles | post-gate documentation validation | a documentation checkpoint was recorded before the substantive fixture-fix commit, causing strict agent, handoff, and project checks to fail closed | checkpoint role was advanced out of order | bound the documentation checkpoint to the known validated implementation anchor before the next docs checkpoint | strict validators rerun after correction | Pending at current docs checkpoint | Close after clean validator pass and push |
 
 ## Discoveries
 
