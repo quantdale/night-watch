@@ -1,130 +1,144 @@
-# EXECUTION PROMPT — Bounded DEV Requalification
+# EXECUTION PROMPT — DEV Capture Soak, Replay, and Yield
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-dev-requalification-v1
-OpenSpec: openspec/changes/nightwatch-dev-requalification-v1/
-Planned-From: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
+Status: IN_PROGRESS
+Campaign ID: nightwatch-dev-soak-replay-yield-v1
+OpenSpec: openspec/changes/nightwatch-dev-soak-replay-yield-v1/
+Planned-From: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Target Branch: main
-Predecessor Task ID: nightwatch-reliability-yield-and-state-protocol-v1
+Predecessor Task ID: nightwatch-dev-requalification-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Use the freshly refreshed owner-managed DEV authentication state to obtain a
-bounded, serial, truthful real-system sample from the existing read-only Phase
-2C, Phase 4, Phase 5, campaign, and replay paths. Preserve independent
-outcome categories and do not reopen or relabel the completed predecessor.
+Measure whether Nightwatch's remaining `BODY_READ_TIMEOUT` /
+`BODY_UNAVAILABLE` behavior is transient or systemic, obtain a materially
+larger bounded real-DEV reliability sample, and drive at least one fresh
+current-manifest anomaly through replay and dossier/yield closure if the
+existing DVR-011 admission rules produce an eligible candidate.
+
+Do not reopen DVR-001..DVR-012 unless fresh evidence reproduces the defect
+family. Do not weaken candidate admission merely to make replay run.
 
 ## Permanent constraints
 
-- No production or NEXT contact and no DEV mutation.
-- No infrastructure, deployment, database, datastore, or cloud operations.
-- No Alphaus sibling-repository writes, external publication, issue creation,
-  or automatic owner/team messaging.
-- No credentials, cookies, tokens, storage-state bytes, raw customer values,
-  raw DOM/responses, authenticated traces, or raw findings in Git, task files,
-  diagnostics, or shared artifacts.
-- No force-push, retry-based correctness certification, proof weakening,
-  opaque scoring, or arbitrary canonical promotion.
-- Use only the existing guarded serial launchers and the owner-local external
-  state produced by the human-led auth capture.
+- DEV only through existing guarded launchers; serial target contact.
+- No production or NEXT contact; no product mutation.
+- No database/datastore, infrastructure, deployment, or cloud operation.
+- No Alphaus sibling-repository writes or external publication.
+- No credentials, cookies, tokens, storage-state bytes, raw DOM/responses,
+  authenticated traces, customer values, or raw findings in Git.
+- No force-push, containment weakening, proof weakening, or retry relabeling.
+- Auth is owner-managed and external. If not page-valid, stop at the human
+  boundary and print the repository-approved headed capture command.
 
-## Required workstreams
+## M0 — baseline and readiness
 
-1. Validate successor continuity, handoff, project truth, safety, and DEV
-   preflight before any target operation.
-2. Run three independent Phase 2C observations and retain every sanitized
-   journey/replay classification.
-3. Run one Phase 4 read-only exploration, one Phase 5 read-only API operation,
-   one campaign prepare/resume, and one safe selected replay when available.
-4. Inspect product-vs-framework classification, finding deduplication,
-   persisted state, cleanup, and resource boundaries.
-5. Reproduce and repair any Nightwatch Critical/High defect before continuing;
-   otherwise perform final local/clean/state/Git reconciliation.
+Fetch/prune, prove clean `main == origin/main`, read current task/predecessor
+evidence, run typecheck/hardening/agent/project/handoff/campaign-focused gates,
+validate current approved-source/runtime identity, run DEV preflight, and
+validate the external owner-managed storage state. If invalid, stop before
+product contact at `HUMAN_AUTH_ACTION_REQUIRED`; after owner refresh,
+revalidate freshness and gates.
 
-## Execution rule
+## M1 — capture reliability soak
 
-Every result is retained as a categorical observation. A retry is a new
-observation and may not erase or relabel an earlier mismatch. Auth,
-environment, timing, framework, product, and unknown results never become
-unqualified PASS. `NO_SAFE_NEW_FAMILY` remains unchanged.
+Run **10 independent Phase 2C invocations** serially unless a Critical/High
+Nightwatch defect requires an earlier stop. Every invocation is independent
+evidence, never a retry that overwrites a prior outcome.
 
-## Active continuity
+Measure per payer/common/account journey: attempts/completions, settlement,
+intentional known-read capture, BODY_READ_TIMEOUT/BODY_UNAVAILABLE/other
+bounded capture codes, auth/environment/framework/product classification,
+strict replay result, account-inventory reach, admitted product identity,
+safety/privacy, elapsed time, and browser/child/proxy cleanup.
 
-The active task is
-`.agent/tasks/nightwatch-dev-requalification-v1/` under
-`nightwatch.agent-continuity.v2`. It declares
-`PROJECT_VERDICT_EFFECT: PRESERVE` while the bounded read-only sample is
-underway. If validated evidence invalidates acceptance, stop and use the
-explicit `REEVALUATE` protocol before further campaign work.
+If capture failures correlate with request class, content size, journey,
+context, response type, lifecycle, or timing, build deterministic local
+reproducers and fix the owning abstraction. After every executable fix,
+quarantine stale manifests and rerun focused + gate validation before fresh
+DEV contact.
 
-## Initial next action
+## M2 — cross-phase soak
 
-The first Phase 2C invocation exposed DVR-001: settlement timeout and
-incomplete capture were mislabeled as a product anomaly. The shared
-observation classifier and focused regression now pass locally. Invocation 2
-confirms DVR-001 is repaired, but both observations still timed out because
-`activeJourneyRequests` counts unfinished static subresources and passive
-unknown traffic. Repair that settlement-tracking boundary locally before the
-next DEV invocation. Preserve both observed pairs as
-`FRAMEWORK_CAPTURE_DEFECT` with `SETTLEMENT_TIMEOUT`.
+Run **5 independent Phase 4 bounded explorations** and **5 independent Phase 5
+source-generated API first+fresh-replay cycles** serially. Require repeated
+account-inventory coverage whenever safety/readiness permits. Preserve
+browser-vs-API differences as evidence rather than normalizing them away.
 
-## Current checkpoint
+## M3 — fresh campaign soak
 
-The owner-led DEV auth capture completed successfully and the successor
-activation checks passed at checkpoint `2e7e84f`. The first guarded Phase 2C
-invocation completed two payer observations but timed out at the bounded
-settlement barrier; no safety violation or product finding was admitted. The
-shared classification repair and focused validation are checkpointed at
-`dd5ff766828d71706c75b6ffb86e5b2267c7ffb9`; the settlement-tracking repair is
-checkpointed at `247b27ae9e48279692359a29147a51cc7fa2bc2a`. The next real
-invocation exposed DVR-003: one settled known-read JSON response had
-unavailable body capture, causing strict replay divergence and a framework
-capture classification. The bounded response-capture repair, safe categorical
-diagnostics, and deterministic local truncated-response regression are
-checkpointed at `1d3eb0a5c498d22b54a24f635cb34805aa69f057`. The next
-independent invocation showed DVR-004: a passive unknown JSON body timeout
-still poisoned aggregate capture health although intentional known reads
-completed. Scope capture health to intentional source-reviewed known reads,
-preserve passive per-response diagnostics, then execute another independent
-Phase 2C invocation. The capture-scope repair is checkpointed at
-`224801f879c55f61df8eb9d285f27f63f672595c`; that run's payer pair passed,
-but its common pair exposed DVR-005 because unknown capture status masked
-bootstrap 5xx/missing-read evidence. The attribution-precedence repair is
-checkpointed at `d1b9f31880ee22605f47d6c459c40287c5c491c3`. Independent
-invocation `nightwatch-20260831T094029Z-e57a` then confirmed passing
-payer/common replay and a stable account product oracle with no Nightwatch
-capture defect. The first Phase 4 run at
-`nightwatch-20260831T095007Z-246e` completed one bounded payer exploration,
-then stopped fail-closed on a fresh-context critical bootstrap 502 product
-oracle. A second bounded run at `nightwatch-20260831T095337Z-c375` passed
-payer/common contexts and stopped at the known account malformed-JSON product
-oracle. Phase 5 then passed six first executions and six fresh replays with
-zero safety/privacy violations. Preserve these outcomes and advance to the
-guarded campaign prepare/resume path. Prepare passed as
-`campaign:sha256:394f3fd1ed3828e2914a6373`, but exact resume exposed DVR-006:
-the first payer work item produced two legitimate repeated anomaly
-occurrences with the same fingerprint and the orchestrator wrote duplicate
-values into the checkpoint's set-valued execution summary. The checkpoint
-validator correctly failed closed. Reduce and repair this locally before any
-further DEV campaign execution; preserve occurrence evidence and only
-canonicalize the summary identity set.
+Run **5 independently prepared current-source Phase 7 campaigns**, each using a
+fresh manifest and the current bounded five-work-item portfolio.
 
-## Current next action
+Never resume stale pre-repair manifests. Track campaign class, work-item
+completion, account-inventory reach, capture-limited stops, candidate/cluster/
+dossier yield, checkpoint correctness, source drift, duplicate/lost work,
+safety, privacy, and cleanup.
 
-STOP. The successor task is COMPLETE. Fresh current-source campaign
-`campaign:sha256:1054b8271440fc29f7fb5f21` closed at
-`PARTIAL_RUNTIME_INFRA_FAILURE` / `PREFLIGHT_FAILED` with
-`BODY_UNAVAILABLE`, zero product candidates, zero safety counters, privacy
-`PASS`, and truthful headline `RUNTIME OBSERVATION FAILURE — NO PRODUCT
-FINDING`. No further DEV execution, replay, or source change belongs to this
-task. Any larger soak or replay requires fresh owner-managed authentication
-and separate authorization.
+## M4 — current replay and dossier closure
 
-## Terminal action
+Only fresh DVR-011-admitted current-manifest product candidates may enter
+attack replay. Historical fingerprints are comparison evidence only.
 
-The successor STATE/REPORT are complete, validation passed, the checkpoint is
-committed and pushed, and local `main` matches `origin/main`. Preserve the
-sanitized runtime-limitation classification; do not reinterpret it as a
-product finding or a retry PASS.
+Execute at most **5 replay executions total**. Preserve deterministic
+reproduction, product-state drift, auth/environment divergence, semantic
+non-reproduction, invalid replay, and framework capture failure as distinct
+outcomes. Never promote incomplete capture. If reproduction succeeds, run
+bounded minimization and dossier generation and verify identity stability.
+
+If the full soak yields zero fresh candidates, close replay as
+`STARVED_BY_CURRENT_ADMISSION`, not PASS.
+
+## M5 — quantitative diagnosis
+
+Report actual rates, not a retry-selected success story:
+
+- intentional known-read complete-capture rate;
+- BODY_READ_TIMEOUT/BODY_UNAVAILABLE frequency;
+- settlement success rate;
+- per-journey/context failure distribution;
+- account-inventory reach rate;
+- fresh candidates per campaign;
+- candidates replayable/reproduced;
+- dossiers generated;
+- fingerprint/cluster stability;
+- before/after impact of any repair;
+- correlation with duration, size, resource role, lifecycle, endpoint;
+- final attribution: Nightwatch capture, DEV environment, product behavior,
+  auth, or sample scarcity.
+
+## Defect rule
+
+Any newly discovered Critical/High Nightwatch defect stops real execution
+until local reproduction, root cause, owning repair, permanent regression,
+campaign/replay compatibility, typecheck/hardening, current-source refresh,
+and fresh DEV confirmation where authorized.
+
+Never weaken DVR-011, safety, containment, or classification to manufacture
+yield.
+
+## Final validation
+
+Run focused capture/campaign/replay regressions, typecheck, hardening,
+agent:check/audit, handoff, project, semantic compatibility, owner provenance,
+synthetic campaign, Control Center checks if touched, gate:local, gate:clean,
+and canonical/isolated parity when runtime/state/source behavior changed
+materially.
+
+Inspect exact-head Actions once. `steps=[]` remains external non-evidence.
+
+## Terminal outcomes
+
+Use exactly one evidence-backed closure category:
+
+- `SOAK_COMPLETE_REPLAY_DOSSIER_VERIFIED`
+- `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`
+- `SOAK_COMPLETE_REPLAY_STARVED_BY_CURRENT_ADMISSION`
+- `SOAK_BLOCKED_AUTH_OR_ENVIRONMENT`
+- `SOAK_FAILED_NIGHTWATCH_DEFECT`
+
+Preserve `OPERATIONALLY_ACCEPTED` under `PROJECT_VERDICT_EFFECT: PRESERVE`
+unless evidence genuinely requires a separate `REEVALUATE` successor.
+
+Begin with M0. Do not skip the human auth boundary.
