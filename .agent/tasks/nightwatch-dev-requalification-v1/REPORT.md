@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
-Last documentation checkpoint SHA: a77c929b815e0139a42574a092cdd0bb3b7087f2
+Last validated implementation SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
+Last substantive checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
+Last documentation checkpoint SHA: 3cbe5f2f36dcaf4d94aa0a203649126aedb26be3
 
 ## Scope
 
@@ -108,7 +108,12 @@ preserved, but the summary identity list must be canonicalized before strict
 checkpoint validation. The owner-local checkpoint remained `IN_PROGRESS` at
 ordinal 2 with the first work item `RUNNING`, no completed work, and zero
 safety/privacy counters. No further DEV campaign execution is being run until
-the defect is reduced and repaired locally.
+the defect is reduced and repaired locally. The repair at
+`3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution
+summary fingerprint set, while preserving duplicate occurrence evidence. The
+focused regression, full 30-test campaign suite, 30-test checkpoint/triage
+cone, typecheck, and hardening pass. Exact resume of the original prepared
+campaign remains the next real-system validation.
 
 ## Safety and verdict
 

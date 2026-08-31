@@ -106,7 +106,10 @@ reduced to a local deterministic regression before a real run resumes.
   exposed DVR-006: two legitimate repeated anomaly observations were copied
   into the set-valued execution fingerprint summary without deduplication.
   Stop real execution, reduce this at the orchestrator/checkpoint boundary,
-  and prove recovery locally before resuming the persisted campaign.
+  and prove recovery locally before resuming the persisted campaign. The
+  repair is implemented at `3cbe5f2`; focused campaign/checkpoint/triage
+  coverage, typecheck, and hardening pass. Resume the exact prepared campaign
+  next and retain the original failure as a separate observation.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 

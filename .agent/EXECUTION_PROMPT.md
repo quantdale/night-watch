@@ -113,13 +113,11 @@ canonicalize the summary identity set.
 
 ## Current next action
 
-Build a deterministic local regression around `CampaignOrchestrator` and the
-checkpoint validator for duplicate occurrence fingerprints. Prove that
-duplicate observations remain available for occurrence counts/clustering,
-while `CampaignExecutionRecord.anomalyFingerprints` is sorted and unique.
-Run the focused campaign tests, typecheck, and hardening. Then checkpoint the
-repair and resume the exact owner-local campaign, retaining the original
-fail-closed result as DVR-006.
+Rerun the bounded DEV preflight, then resume the exact prepared campaign
+`campaign:sha256:394f3fd1ed3828e2914a6373` using the owner-local state. The
+DVR-006 repair is checkpointed at `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`
+and its local regression, campaign suite, checkpoint/triage cone, typecheck,
+and hardening pass. Preserve the original fail-closed result independently.
 
 ## Terminal action
 
