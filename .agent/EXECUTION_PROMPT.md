@@ -91,9 +91,10 @@ preserve passive per-response diagnostics, then execute another independent
 Phase 2C invocation. The capture-scope repair is checkpointed at
 `224801f879c55f61df8eb9d285f27f63f672595c`; that run's payer pair passed,
 but its common pair exposed DVR-005 because unknown capture status masked
-bootstrap 5xx/missing-read evidence. Preserve the independent
-`nightwatch-20260831T093257Z-bb5a` outcomes while checkpointing the
-attribution-precedence repair.
+bootstrap 5xx/missing-read evidence. The attribution-precedence repair is
+checkpointed at `d1b9f31880ee22605f47d6c459c40287c5c491c3`. Preserve the
+independent `nightwatch-20260831T093257Z-bb5a` outcomes while running the next
+post-fix observation.
 
 ## Terminal action
 

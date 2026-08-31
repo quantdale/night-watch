@@ -7,8 +7,8 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
-Last substantive checkpoint SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
+Last validated implementation SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
+Last substantive checkpoint SHA: d1b9f31880ee22605f47d6c459c40287c5c491c3
 Last documentation checkpoint SHA: 247b27ae9e48279692359a29147a51cc7fa2bc2a
 
 ## Scope
@@ -52,8 +52,8 @@ still failed the pair. That evidence is tracked as DVR-004; its local scope
 repair is now checkpointed at `224801f`. The following run confirmed the
 payer pair passed strict replay, then exposed a common-journey bootstrap 5xx
 and missing-read divergence whose `CAPTURE_STATUS_UNKNOWN` label masked the
-stronger failure. That attribution repair is tracked as DVR-005 and is
-pending checkpoint and requalification.
+stronger failure. That attribution repair is checkpointed at `d1b9f31`; post-
+fix DEV confirmation remains.
 
 ## Safety and verdict
 
