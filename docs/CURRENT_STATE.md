@@ -1,139 +1,21 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-31** for
-> completed successor campaign `nightwatch-final-reproducibility-polish-v1`,
-> which closed final reproducibility evidence while project status remains
-> `OPERATIONALLY_ACCEPTED` at validated implementation
-> `598e7fa92fb99786b2db847ace8c1fdf566d3c71`. Historical
-> campaign `nightwatch-final-completion-and-l6-containment-v1` remains
-> COMPLETE local/synthetic/clean certification
-> (`PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED`) at release checkpoint
-> `2576c5751d33bb40046246e8fcf57c7cc5c30a57`; that token is not operational
-> acceptance. GitHub Actions remains external non-evidence because its
-> exact-head job executed zero steps. Codex-captured DEV auth (2026-08-30 20:00)
-> is page-valid until 2026-08-31 07:59 PST; ten real-defect repairs through
-> `598e7fa` are validated and the serial DEV workflow is complete; one real product anomaly (billinggroups malformed) correctly surfaced; campaign COMPLETE_CLEAN.
-> The predecessor (`nightwatch-final-assurance-release-readiness-hardening-v1`;
-> validated implementation checkpoint `72af3a8`) is historical and ended
-> `PROJECT_NOT_COMPLETE_BLOCKED`; its L6 residual does not override the active
-> campaign section at the end.
-> Historical context:
-> hostname allow is now followed by bounded complete-answer-set admission and
-> exact numeric HTTP/CONNECT/Upgrade binding, with schema-v2 lifecycle evidence,
-> fail-closed event-log handling, and explicit runtime containment identities.
-> The campaign is LOCAL / SOURCE / SYNTHETIC only; the final documentation
-> checkpoint is discovered from Git. Prior closure: the source-to-campaign proof-chain expansion followed the
-> Control Center authority-integration and whole-repository hardening
-> closure. Phase 28 and the evidence-backed response-flow successor remain
-> historical; the Control Center successor's validated implementation
-> checkpoint is `76f5de9b09cdba930d89c7b74247c6579232a436`; live HEAD and the
-> final documentation head are discovered from Git. Phase 24's authoritative local and disposable
-> Node20 clean-checkout gates pass, while its exact-head Actions run
-> `32723603497` / job `97419996717` had `steps=[]`, so the terminal state is
-> `COMPLETE_LOCAL_BLOCKED_EXTERNAL_CI` and DEV observations remain zero. Phase
-> 23's canonical/isolated parity baseline remains 2,360 / 4 skipped / 0 failed
-> out of 2,364 with exact skip parity. This snapshot is
-> LOCAL / SOURCE / SYNTHETIC only, building on the Phase 16CH
-> portfolio runtime-binding hardening terminal closure
-> (`PHASE_16CH_STATUS: BLOCKED_EXTERNAL_CI` on earned implementation SHA
-> 794b32d; `PHASE_16C_RUNTIME_BINDING: VERIFIED_LOCAL_NOT_CI_VERIFIED`; DEF-01
-> and DEF-02 repaired with permanent regressions; 171-scenario corpus x3
-> deterministic repeats with all thirteen quality floors zero; canonical AND
-> topology-correct isolated complete regressions both 2232 passed / 0 failed /
-> 4 skipped with exact parity; Phase 17 canonical and isolated complete
-> regressions both 2259 passed / 0 failed / 4 skipped with exact parity;
-> Actions run 32628613509 / job 97167784939 executed zero steps
-> under the standing external billing/spending block), building on the
-> Phase 16A portfolio implementation
-> (`PHASE_16A_STATUS: COMPLETE
-> (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)` at 1737e30), the Phase 15H whole-system integrated hardening terminal closure
-> (`PHASE_15H_STATUS: BLOCKED_EXTERNAL_CI` on earned hardening SHA 06ea7ca;
-> `PHASE_15P_MASS_IMPLEMENTATION: VERIFIED_LOCAL_NOT_CI_VERIFIED`; canonical
-> full 2063/0/4 == isolated full 2063/0/4; DEF-01..DEF-13 repaired, zero new
-> defects; D-65), building on the
-> Phase 15P parallel implementation completion (PHASE_15_PARALLEL_IMPLEMENTATION:
-> IMPLEMENTATION_COMPLETE_AWAITING_INTEGRATED_HARDENING at 42c5a7e; sixteen
-> assignments A01–A16 integrated over four validated waves; D-64) and the
-> 105-file mass-bulk round (strategy shift abc9bf9 -> c2640cb, unvalidated by
-> owner direction until hardened). Earlier milestones: Phase 13I residual runtime completion (PHASE_13I_STATUS:
-> BLOCKED_EXTERNAL_CI on clean 186122f; PHASE_13_SEMANTIC_PROMOTION,
-> PHASE_13_REPLAY_V2_BINDING, PHASE_13_SHADOW_CAMPAIGN
-> VERIFIED_LOCAL_NOT_CI_VERIFIED; D-63) and
-> Phase 10B COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED (PHASE_10_STATUS:
-> COMPLETE; Phase 10B COMPLETE_DEV_DEEP_SEMANTIC_ACCEPTANCE_VERIFIED; D-61).
-> Phase 0–5 are
-> complete; Phase 6 is frozen by owner; Phase 7, Hardening Campaign I/I.1,
-> Phase 7B, Phase 7B.1.2, Phase 7B.2, and Phase 7B.2.1 are complete. The
-> Phase 7B.3 harness is complete; its real local-model canary was not run
-> because no compatible local runtime/model was available. Phase 8 is
-> `COMPLETE` (final closure executed: `PHASE_8_STATUS` pinned to COMPLETE,
-> the canonical-promotion research boundary is closed with the machinery
-> retained, and the Phase 9 roadmap selected); Phase 8A, Phase 8A.1,
-> Phase 8A.1.1, Phase 8B, Phase 8B.0.1,
-> Phase 8B.1.0, Phase 8B.1.0.1, and Phase 8B.1.0.2 are `COMPLETE`,
-> Phase 8B.1 is `COMPLETE VIA SUCCESSFUL RETRY R1`, Phase 8B.1-R1.1
-> (project-memory & canonical-source truth hardening) is `COMPLETE`, and
-> Phase 8B.1-R1.1.1 (canonical catalog authority wording closeout) is
-> `COMPLETE`. Phase 8B proved one sandbox-confined,
-> metamorphically-verified source adoption with zero canonical mutation;
-> Phase 8B.0.1 closed the four promotion-readiness integrity gaps;
-> Phase 8B.1 (Owner-Gated Canonical Promotion) — its original attempt
-> remains the truthful `BLOCKED`/CLOSED historical record (one authorized
-> real promotion was applied/verified then reverted because the full
-> regression suite assumed a permanently-fresh single candidate, and its
-> one-shot approval is permanently spent);
-> Phase 8B.1.0 removed that structural blocker with a bounded deterministic
-> proposal portfolio (EXPAND_SUMMARY, EXPAND_THEN_COLLAPSE) and
-> state-explicit test baselines; Phase 8B.1.0.1 proved the complete clean
-> full regression and reconciled the continuity records; Phase 8B.1.0.2
-> introduced the versioned continuity protocol
-> (`nightwatch.agent-continuity.v2`) that mechanically rejects completed-task
-> contradictions (stale milestones/WIP/next actions, duplicate structured
-> fields, future-value placeholders), added `npm run agent:audit` and the CI
-> "Completed-task continuity audit" step, and migrated the current 8B.1
-> lineage to strict v2; Phase 8B.1-R1 then replaced the repository-wide
-> empty-only catalog CI assumption with a cardinality-agnostic
-> catalog-integrity invariant (readiness commit `a319849`, exact green CI)
-> and completed the ONE authorized fresh canonical promotion: a fresh
-> session/candidate A, fresh sandbox proof, an exact one-entry future-state
-> rehearsal (full suite 0 failed, portfolio selects B), one fresh promotion
-> intent, one fresh one-shot approval, one real APPLY (one file,
-> `src/core/selfDev/adoptedCaseCatalog.generated.ts`), fresh-process verify
-> PASS, full regression green, the canonical adoption commit `24fc437` with
-> exact green CI including the catalog-integrity step at count 1,
-> `CANONICAL_PROMOTION_COMMITTED_EXACT`, and a fresh post-commit session
-> selecting variant B. Phase 8B.1-R1.1 then corrected the generated-catalog
-> authority header (sandbox mirror-only + owner-gated canonical promotion —
-> no generic self-modification), removed the stale generic project-level
-> checkpoint anchors (authority de-duplication), introduced
-> `nightwatch.project-state.v2` with read-only `npm run project:check` and
-> a CI "Project-memory truth check" step, and preserved promotion-currentness
-> strictness. The canonical adopted-case catalog contains
-> exactly TWO entries (raw digest `d96c24de...` after variant B adoption); variant B
-> (EXPAND_THEN_COLLAPSE) is now adopted, portfolio EXHAUSTED with promotion
-> authority SPENT. No further promotion possible (portfolio EXHAUSTED). The
-> next-architecture design review (Phase 8-DESIGN, 2026-08-15) selected
-> `PHASE_8_NEXT_ARCHITECTURE: CLOSE_PHASE_8` — Phase 8's objective (one
-> owner-authorized canonical promotion + continuation) is fulfilled; Phase 8
-> closure is COMPLETE (executed by
-> `phase-8-final-closure-phase-9-roadmap-selection`, authorization
-> `PHASE_8_CLOSURE_AND_ROADMAP_SELECTION_ONLY` — see the closure record below
-> and `docs/ARCHITECTURE.md` (Phase 8 next-architecture design review
-> section); decisions D-52 + D-53). The selected next investment is
-> **Phase 9 — Deterministic Semantic Oracle Depth** (`PHASE_9_DIRECTION:
-> DETERMINISTIC_ORACLE_DEPTH`, design in `docs/design/PHASE_9_ROADMAP.md`).
-> Phase 9 is now `COMPLETE_LOCAL_SYNTHETIC` (2026-08-16): the owner-
-> authorized implementation task
-> (`phase-9-deterministic-semantic-oracle-depth`,
-> `PHASE_9_ORACLE_DEPTH_IMPLEMENTATION_ONLY`) implemented sanitized in-memory
-> semantic projections, source-backed declarative expectations, deterministic
-> semantic expectation + cross-step invariant oracles, five seeded semantic
-> bug classes with zero benign false positives, adversarial sentinel-leakage
-> proof, and integration of semantic findings through the existing
-> campaign/triage/dossier pipeline (additive sanitized dossier evidence),
-> closed under continuity v2 (D-54; record below; `PHASE_9_DEV_ACCEPTANCE:
-> RECOMMENDED_SEPARATE_AUTHORIZATION` for any contained DEV run — Phase 9B,
-> not executed).
+> Durable memory for the next agent/session. Last updated: **2026-08-31** after
+> completed bounded DEV requalification `nightwatch-dev-requalification-v1`.
+> The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
+> requalification repaired DVR-001 through DVR-012 across observation
+> settlement/capture, attribution, campaign checkpoint identity, executable
+> source identity, finding admission, and truthful terminal classification.
+> Final current-source campaign
+> `campaign:sha256:1054b8271440fc29f7fb5f21` ended
+> `PARTIAL_RUNTIME_INFRA_FAILURE / PREFLIGHT_FAILED` on `BODY_UNAVAILABLE`
+> with zero product candidates/dossiers, zero safety counters, privacy
+> `PASS`, and headline `RUNTIME OBSERVATION FAILURE — NO PRODUCT FINDING`.
+> Active successor `nightwatch-dev-soak-replay-yield-v1` measures capture
+> reliability over a larger bounded serial DEV sample and seeks fresh
+> current-manifest replay/dossier/yield evidence when strict admission permits.
+> GitHub Actions remains external non-evidence while exact-head jobs execute
+> zero steps.
 
 ---
 
@@ -309,14 +191,31 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-dev-requalification-v1
-LIVE_PHASE: DEV_REQUALIFICATION_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-dev-soak-replay-yield-v1
+LIVE_PHASE: DEV_SOAK_REPLAY_YIELD_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
+
+### Active DEV soak, replay, and yield campaign
+
+The active successor is `nightwatch-dev-soak-replay-yield-v1`, starting from
+`754aa629b4b24bda0eca98fe567cc44ef536e30d` with explicit verdict effect `PRESERVE`. It exists because the
+completed bounded requalification proved the classification pipeline while
+the final current-source sample remained capture-limited
+(`BODY_READ_TIMEOUT` / `BODY_UNAVAILABLE`) before a fresh admissible
+account-inventory candidate could reach replay.
+
+The successor is authorized for a larger bounded serial DEV sample using only
+the existing read-only guarded launchers. Its primary measurements are
+intentional known-read capture success, settlement success, body-read
+failure-code frequency, per-journey reliability, account-inventory reach,
+candidate admission, current replay execution, cluster/dossier conversion, and
+resource cleanup. Historical candidates remain evidence only and are not
+execution authority under DVR-011.
 
 ### Post-acceptance reliability, yield, and state-protocol campaign
 
