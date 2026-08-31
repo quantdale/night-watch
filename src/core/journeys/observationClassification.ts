@@ -58,6 +58,10 @@ function triggeredClasses(evidence: JourneyEvidence): Set<string> {
   );
 }
 
+function captureDiagnostics(evidence: JourneyEvidence, fallback: string): readonly string[] {
+  return [...new Set([fallback, ...(evidence.captureFailureCodes ?? [])])].sort();
+}
+
 /**
  * Classify one real Phase 2C observation without promoting incomplete
  * framework evidence to a product finding.
@@ -97,7 +101,7 @@ export function classifyJourneyObservation(input: {
       reason: evidence.captureStatus === 'INCOMPLETE'
         ? 'response capture was incomplete for the observation'
         : 'response capture health was not established for the observation',
-      diagnosticCodes: [evidence.captureStatus === 'INCOMPLETE' ? 'CAPTURE_INCOMPLETE' : 'CAPTURE_STATUS_UNKNOWN'],
+      diagnosticCodes: captureDiagnostics(evidence, evidence.captureStatus === 'INCOMPLETE' ? 'CAPTURE_INCOMPLETE' : 'CAPTURE_STATUS_UNKNOWN'),
     };
   }
 

@@ -199,6 +199,8 @@ function classifyReplayOutcome(input: {
   }
   if (input.first.captureStatus === 'INCOMPLETE' || input.replay.captureStatus === 'INCOMPLETE') {
     diagnostics.add('CAPTURE_INCOMPLETE');
+    for (const code of input.first.captureFailureCodes ?? []) diagnostics.add(code);
+    for (const code of input.replay.captureFailureCodes ?? []) diagnostics.add(code);
     return { classification: 'FRAMEWORK_CAPTURE_DEFECT', reason: 'one observation has incomplete response capture', diagnosticCodes: [...diagnostics].sort() };
   }
   if (input.first.captureStatus === 'UNKNOWN' || input.replay.captureStatus === 'UNKNOWN') {

@@ -53,9 +53,16 @@ import { buildInternalErrorReceipt, evaluateSemanticHook, type SemanticHookOracl
 import type { SemanticEvaluationReceipt } from '../../oracles/semantic/receipts';
 import { guardPhase22SemanticHookResult } from '../../oracles/semantic/phase22Firewall';
 import type { Phase22PrivacyReceipt } from '../../core/phase22';
+import type { JourneyCaptureFailureCode } from '../../core/journeys/types';
 
 /** Max captured body size (chars) — bodies are sliced, then redacted. */
 const MAX_BODY_CHARS = 1_000_000;
+
+/** Capture diagnostics are categorical, bounded, and never include exception text. */
+const MAX_CAPTURE_FAILURE_CODES = 8;
+
+/** A response body must not hold the observer open beyond the journey barrier. */
+const RESPONSE_BODY_TIMEOUT_MS = 5_000;
 
 /**
  * Phase 9A.1 — bounded sanitized semantic-evaluation ledger. Overflow is
@@ -98,6 +105,24 @@ function bodyCaptureStatus(
   return bytes.byteLength === declaredLength ? 'complete' : 'incomplete';
 }
 
+async function boundedResponseOperation<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+): Promise<{ completed: true; value: T } | { completed: false }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<{ completed: false }>((resolve) => {
+    timer = setTimeout(() => resolve({ completed: false }), timeoutMs);
+  });
+  try {
+    return await Promise.race([
+      operation.then((value) => ({ completed: true as const, value })),
+      timeout,
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 export interface NetworkObserver {
   /** Registers the route + WebSocket policy gates. MUST be awaited before any
    *  page navigation (route/routeWebSocket registration is asynchronous). */
@@ -113,6 +138,8 @@ export interface NetworkObserver {
   activeJourneyRequests?(): number;
   /** Aggregate response-body capture health for the current observation. */
   captureStatus?(): 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
+  /** Bounded categorical response-body capture diagnostics. */
+  captureFailureCodes?(): readonly JourneyCaptureFailureCode[];
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
@@ -224,8 +251,13 @@ export function createNetworkObserver(opts: {
   let activeJourneyRequestCount = 0;
   let captureAttempted = false;
   let captureIncomplete = false;
+  const captureFailureCodeSet = new Set<JourneyCaptureFailureCode>();
   let journeyIntent: { stepId: string; actionType: string } | null = null;
   let journeyObservationStart = 0;
+
+  function recordCaptureFailure(code: JourneyCaptureFailureCode): void {
+    if (captureFailureCodeSet.size < MAX_CAPTURE_FAILURE_CODES) captureFailureCodeSet.add(code);
+  }
 
   function matchEndpoint(rawUrl: string, method: string): EndpointSemanticMatch | null {
     if (opts.endpointMatcher !== undefined) return opts.endpointMatcher(rawUrl, method);
@@ -754,28 +786,50 @@ export function createNetworkObserver(opts: {
       let body: string | undefined;
       let rawText: string | undefined; // transient, in-memory only (Phase 9 hook)
       let bodyCapture: 'complete' | 'incomplete' | 'unavailable' = 'unavailable';
+      let responseCaptureFailureCode: JourneyCaptureFailureCode | undefined;
+      const noteCaptureFailure = (code: JourneyCaptureFailureCode): void => {
+        responseCaptureFailureCode ??= code;
+        recordCaptureFailure(code);
+      };
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
         captureAttempted = true;
         try {
-          const buf = await response.body();
-          bodyCapture = bodyCaptureStatus(buf, responseHeaders);
-          if (bodyCapture === 'incomplete') captureIncomplete = true;
-          const text = buf.toString('utf8');
-          if (text.length > MAX_BODY_CHARS) {
-            bodyCapture = 'incomplete';
+          // Playwright's body() waits for completion. Bound that wait so a
+          // truncated or never-ending response cannot keep the observer alive
+          // until context teardown. The rejection/value itself is never
+          // retained or emitted.
+          const bodyResult = await boundedResponseOperation(response.body(), RESPONSE_BODY_TIMEOUT_MS);
+          if (!bodyResult.completed) {
+            noteCaptureFailure('BODY_READ_TIMEOUT');
             captureIncomplete = true;
+          } else {
+            const buf = bodyResult.value;
+            bodyCapture = bodyCaptureStatus(buf, responseHeaders);
+            if (bodyCapture === 'incomplete') {
+              captureIncomplete = true;
+              noteCaptureFailure('BODY_LENGTH_MISMATCH');
+            }
+            const text = buf.toString('utf8');
+            if (text.length > MAX_BODY_CHARS) {
+              bodyCapture = 'incomplete';
+              captureIncomplete = true;
+              noteCaptureFailure('BODY_SIZE_LIMIT_EXCEEDED');
+            }
+            rawText = text;
+            body = recorder.redaction.redactText(
+              text.length > MAX_BODY_CHARS ? text.slice(0, MAX_BODY_CHARS) : text
+            );
+            data.body = body;
           }
-          rawText = text;
-          body = recorder.redaction.redactText(
-            text.length > MAX_BODY_CHARS ? text.slice(0, MAX_BODY_CHARS) : text
-          );
-          data.body = body;
         } catch {
-          // unreadable body (no-body response, closed early...) — skip capture
+          // Unreadable body (no-body response, closed early, or transport
+          // rejection) — skip capture without retaining exception text.
           captureIncomplete = true;
+          noteCaptureFailure('BODY_UNAVAILABLE');
         }
       }
       data.bodyCapture = bodyCapture;
+      if (responseCaptureFailureCode !== undefined) data.captureFailureCode = responseCaptureFailureCode;
 
       recorder.event({
         type: 'response',
@@ -983,6 +1037,7 @@ export function createNetworkObserver(opts: {
       // journey evidence and replay classifier without retaining exception
       // text or response data.
       captureIncomplete = true;
+      recordCaptureFailure('RESPONSE_PROCESSING_ERROR');
       // An observer must never crash the run.
     } finally {
       if (observing) {
@@ -1180,6 +1235,7 @@ export function createNetworkObserver(opts: {
     pendingUrlCount: () => pendingUrls.size,
     activeJourneyRequests: () => activeJourneyRequestCount,
     captureStatus: () => captureIncomplete ? 'INCOMPLETE' : captureAttempted ? 'COMPLETE' : 'UNKNOWN',
+    captureFailureCodes: () => [...captureFailureCodeSet].sort(),
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,
     optionalSupportBlockedHosts: () => optionalSupportBlockedHosts,

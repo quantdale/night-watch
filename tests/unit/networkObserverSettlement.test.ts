@@ -36,6 +36,15 @@ async function startFixtureServer(): Promise<{ origin: string; close: () => Prom
       // are closed by the browser context teardown.
       return;
     }
+    if (req.url === '/truncated-json') {
+      // The declared length is intentionally larger than the bytes sent. The
+      // browser reports a response, but its body lifecycle ends as a capture
+      // failure rather than a trustworthy JSON observation.
+      res.writeHead(200, { 'content-type': 'application/json', 'content-length': '999' });
+      res.write('{"ok":true}');
+      setTimeout(() => res.destroy(), 25);
+      return;
+    }
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end('<!doctype html><html><head><script async src="/hanging-script.js"></script></head><body>fixture</body></html>');
   });
@@ -87,6 +96,12 @@ test('passive hanging subresources do not hold active journey settlement open', 
     observer.beginJourneyIntent('fixture-read', 'CLICK_READ_ONLY_CONTROL');
     await page.evaluate((target) => { void fetch(`${target}/known-read`); }, fixture.origin);
     await expect.poll(() => observer.activeJourneyRequests?.() ?? -1, { timeout: 2_000 }).toBe(1);
+    observer.endJourneyIntent('fixture-read');
+    await page.evaluate((target) => fetch(`${target}/truncated-json`).catch(() => undefined), fixture.origin);
+    await expect.poll(() => ({
+      status: observer.captureStatus?.() ?? 'UNKNOWN',
+      codes: observer.captureFailureCodes?.() ?? [],
+    }), { timeout: 8_000 }).toEqual({ status: 'INCOMPLETE', codes: ['BODY_READ_TIMEOUT'] });
   } finally {
     observer.endJourneyIntent('fixture-navigation');
     await context.close();

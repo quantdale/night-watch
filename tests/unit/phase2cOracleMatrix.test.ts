@@ -247,6 +247,13 @@ test('replay classification is explicit and never upgrades unexplained outcomes 
   expect(capture.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
   expect(capture.passed).toBe(false);
 
+  const diagnosedCapture = compareJourneyReplay(settled, {
+    ...settled,
+    captureStatus: 'INCOMPLETE',
+    captureFailureCodes: ['BODY_UNAVAILABLE'],
+  });
+  expect(diagnosedCapture.diagnosticCodes).toEqual(['BODY_UNAVAILABLE', 'CAPTURE_INCOMPLETE']);
+
   const unknownCapture = compareJourneyReplay(settled, { ...settled, captureStatus: 'UNKNOWN' });
   expect(unknownCapture.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
   expect(unknownCapture.passed).toBe(false);
@@ -307,6 +314,21 @@ test('single-observation classification keeps capture failures out of product fi
   });
   expect(timedOut.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
   expect(timedOut.diagnosticCodes).toEqual(['SETTLEMENT_TIMEOUT']);
+
+  const unavailableBody = classifyJourneyObservation({
+    evidence: {
+      ...baseEvidence(),
+      passed: false,
+      oracleStatus: 'FAIL',
+      captureStatus: 'INCOMPLETE',
+      observationSettlement: 'SETTLED',
+      captureFailureCodes: ['BODY_UNAVAILABLE'],
+      oracleObservations: [productOracle],
+    },
+    safety,
+  });
+  expect(unavailableBody.classification).toBe('FRAMEWORK_CAPTURE_DEFECT');
+  expect(unavailableBody.diagnosticCodes).toEqual(['BODY_UNAVAILABLE', 'CAPTURE_INCOMPLETE']);
 
   const settledProduct = classifyJourneyObservation({
     evidence: {
@@ -489,6 +511,13 @@ test('legacy Phase 2B evidence remains parseable and attribution separates prima
   expect(attribution.primaryFailure).toBe('route-contradiction');
   expect(attribution.secondaryOracles).toEqual(expect.arrayContaining(['pageerror', 'unexpected-status']));
   expect(attribution.causalityConfidence).toBe('PROVEN');
+});
+
+test('capture diagnostics remain bounded categorical evidence at the parser boundary', () => {
+  const parsed = parseJourneyEvidence({ ...baseEvidence(), captureFailureCodes: ['BODY_UNAVAILABLE', 'BODY_READ_TIMEOUT'] });
+  expect(parsed.captureFailureCodes).toEqual(['BODY_UNAVAILABLE', 'BODY_READ_TIMEOUT']);
+  expect(() => parseJourneyEvidence({ ...baseEvidence(), captureFailureCodes: ['RAW_ERROR'] })).toThrow(/captureFailureCodes/);
+  expect(() => parseJourneyEvidence({ ...baseEvidence(), captureFailureCodes: Array.from({ length: 9 }, () => 'BODY_UNAVAILABLE') })).toThrow(/captureFailureCodes/);
 });
 
 test('bounded admission promotes only exact same-fingerprint fresh contexts', () => {

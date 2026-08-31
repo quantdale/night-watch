@@ -448,8 +448,9 @@ export async function runDeclarativeJourney(
       containmentCounts: { optionalSupportBlocked: ctx.network.optionalSupportBlockedHosts().size, telemetryBlocked: ctx.network.telemetryBlockedHosts().size, browserBackgroundBlocked: ctx.network.browserBackgroundBlockedHosts().size, containmentEvents: [...ctx.monitor.containmentEvents] },
       captureStatus: ctx.network.captureStatus?.() ?? 'UNKNOWN',
       observationSettlement: 'NOT_APPLICABLE',
+      captureFailureCodes: ctx.network.captureFailureCodes?.() ?? [],
     };
-    ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion });
+    ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion, captureStatus: evidence.captureStatus, observationSettlement: evidence.observationSettlement, captureFailureCodes: evidence.captureFailureCodes });
     return evidence;
   }
 
@@ -579,6 +580,7 @@ export async function runDeclarativeJourney(
     },
     captureStatus,
     observationSettlement,
+    captureFailureCodes: ctx.network.captureFailureCodes?.() ?? [],
   };
   ctx.recorder.addManifestEntry('journeyEvidence', {
     journeyId: evidence.journeyId,
@@ -607,6 +609,7 @@ export async function runDeclarativeJourney(
     containmentCounts: evidence.containmentCounts,
     captureStatus: evidence.captureStatus,
     observationSettlement: evidence.observationSettlement,
+    captureFailureCodes: evidence.captureFailureCodes,
   });
   ctx.recorder.event({
     type: 'journey',
@@ -626,6 +629,9 @@ export async function runDeclarativeJourney(
       mutationCount: evidence.mutationCount,
       privacyStatus: evidence.privacyStatus,
       safetyStatus: evidence.safetyStatus,
+      captureStatus: evidence.captureStatus,
+      observationSettlement: evidence.observationSettlement,
+      captureFailureCodes: evidence.captureFailureCodes,
     },
   });
   return evidence;

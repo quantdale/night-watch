@@ -140,11 +140,28 @@ export interface JourneyEvidence {
   captureStatus?: JourneyCaptureStatus;
   /** Whether the bounded response/oracle settlement barrier completed. */
   observationSettlement?: JourneyObservationSettlement;
+  /** Bounded categorical reasons for incomplete response-body capture. */
+  captureFailureCodes?: readonly JourneyCaptureFailureCode[];
   /** Optional safe digest of the environment inputs used by the observation. */
   environmentInputDigest?: string;
 }
 
 export type JourneyCaptureStatus = 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
+
+/** Safe categorical reasons for an incomplete response-body capture. */
+export const JOURNEY_CAPTURE_FAILURE_CODES = [
+  'BODY_UNAVAILABLE',
+  'BODY_LENGTH_MISMATCH',
+  'BODY_SIZE_LIMIT_EXCEEDED',
+  'BODY_READ_TIMEOUT',
+  'RESPONSE_PROCESSING_ERROR',
+] as const;
+
+export type JourneyCaptureFailureCode = (typeof JOURNEY_CAPTURE_FAILURE_CODES)[number];
+
+export function isJourneyCaptureFailureCode(value: unknown): value is JourneyCaptureFailureCode {
+  return typeof value === 'string' && (JOURNEY_CAPTURE_FAILURE_CODES as readonly string[]).includes(value);
+}
 
 export type JourneyObservationSettlement = 'SETTLED' | 'TIMED_OUT' | 'NOT_APPLICABLE';
 

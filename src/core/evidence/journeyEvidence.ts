@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import type { JourneyEvidence } from '../journeys/types';
+import { isJourneyCaptureFailureCode } from '../journeys/types';
 import { EVIDENCE_SCHEMA_VERSION } from '../journeys/contract'; // Phase 15P A15: single owner of the phase2c evidence schema tag
 
 const JOURNEY_ID = /^[a-z0-9][a-z0-9-]*$/;
@@ -16,6 +17,11 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
   const candidate = value as Record<string, unknown>;
   if (typeof candidate.journeyId !== 'string' || !JOURNEY_ID.test(candidate.journeyId)) throw new Error('journey evidence journeyId is invalid');
   if (typeof candidate.contractSourceSha !== 'string' || !/^[0-9a-f]{40}$/i.test(candidate.contractSourceSha)) throw new Error('journey evidence contractSourceSha is invalid');
+  if (candidate.captureFailureCodes !== undefined &&
+      (!Array.isArray(candidate.captureFailureCodes) || candidate.captureFailureCodes.length > 8 ||
+       candidate.captureFailureCodes.some((code) => !isJourneyCaptureFailureCode(code)))) {
+    throw new Error('journey evidence captureFailureCodes is invalid');
+  }
   if (typeof candidate.passed !== 'boolean' || typeof candidate.finalRouteClass !== 'string' ||
       typeof candidate.globalShellReady !== 'boolean' || typeof candidate.journeyMarkers !== 'object' ||
       !Array.isArray(candidate.stepResults) || !Array.isArray(candidate.semanticRuleIds) ||
@@ -64,7 +70,7 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
     'evidenceSchemaVersion', 'contractVersion', 'contractDigest', 'oracleVersion',
     'semanticRequests', 'safetyCounts', 'boundedVariance', 'oracleObservations',
     'anomalyFingerprints', 'failureAttribution', 'resourceObservations',
-    'containmentCounts', 'captureStatus', 'observationSettlement', 'environmentInputDigest',
+    'containmentCounts', 'captureStatus', 'observationSettlement', 'captureFailureCodes', 'environmentInputDigest',
   ] as const;
   for (const key of optionalKeys) {
     if (candidate[key] !== undefined) safe[key] = candidate[key];
