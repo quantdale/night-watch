@@ -8,11 +8,13 @@ Status: COMPLETE
 Starting SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 Last validated implementation SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 Last substantive checkpoint SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+Last documentation checkpoint SHA: d7efa05ea5498b2b4960b4230592787506860e84
 Branch: main
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 754aa629b4b24bda0eca98fe567cc44ef536e30d
 LAST_VALIDATED_IMPLEMENTATION_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: fa236b690ceace3a420771645fce9f99bf751ea8
+LAST_DOCUMENTATION_CHECKPOINT_SHA: d7efa05ea5498b2b4960b4230592787506860e84
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -102,7 +104,7 @@ evidence files were changed.
 - `npm run hardening:check` — PASS.
 - `npm run agent:check` — PASS after continuity-document repair.
 - `npm run agent:audit` — PASS with inventory 93 tasks, legacy warnings only.
-- `npm run handoff:check` — PASS with derived live head `a8dabe9bc93e893a178876841808629c3a4f36fe`.
+- `npm run handoff:check` — PASS with derived live head `a22b3aec540b7ea03946d63e31f65a5af9b28ceb`.
 - `npm run project:check` — PASS at the reconciled documentation checkpoint.
 - `npm run quality-gate:spec` — PASS.
 - `npm run gate:inventory` — PASS.
@@ -187,6 +189,37 @@ evidence files were changed.
   snapshot was `node=4`, `chrome=2`, `playwright=0`, `listeners=5`; all five
   isolated campaign roots and findings roots were mode `700`. No raw
   authenticated run data was inspected or copied.
+
+## M6 Validation Ledger
+
+- `npm run typecheck` — PASS.
+- `npm run hardening:check` — PASS.
+- `npm run quality-gate:spec` — PASS with definition digest
+  `sha256:4c5a9d19416fd2e0c24f01a2fd6a518b8faf47f866665ae37af21abbf8921044`.
+- `npm run gate:inventory` — PASS.
+- `npm run test:semantic-compat` — PASS with `1,950` total / `1,937`
+  passed / `13` skipped / `0` failed.
+- `npm run test:owner-provenance` — PASS with `91` passed.
+- `npm run campaign:synthetic` — PASS with `77` passed.
+- `npm run agent:check -- --root .` — PASS with `strict_errors=0`; the
+  established warnings were the validated implementation preceding the
+  documentation head and 24 legacy v1 records.
+- `npm run handoff:check -- --root .` — PASS; status `COMPLETE`.
+- `npm run project:check` — PASS; `activeTaskContinuity=PASS`,
+  `checkoutClean=true`, and project completion remained
+  `OPERATIONALLY_ACCEPTED`.
+- `npm run gate:local` — PASS at source head
+  `d7efa05ea5498b2b4960b4230592787506860e84`; all ten groups passed,
+  semantic `1950/1937/13/0`, owner provenance `91`, synthetic `77`, receipt
+  `receipt:sha256:09726836fac7517b08de6ce8`.
+- `npm run gate:clean` — PASS from source head
+  `d7efa05ea5498b2b4960b4230592787506860e84` under Node 20; install and all
+  ten groups passed, `cleanBefore=true`, `cleanAfter=true`,
+  `nodeModulesReused=false`, receipt
+  `clean-receipt:sha256:ee038d0227204d9d5e7c1cf1`.
+- `git diff --check` — PASS before the closure commit
+  `d7efa05ea5498b2b4960b4230592787506860e84`.
+- External CI remains `NO_STEPS_EXTERNAL_NON_EVIDENCE`; no CI PASS is claimed.
 
 
 ## Decisions Made During This Task
