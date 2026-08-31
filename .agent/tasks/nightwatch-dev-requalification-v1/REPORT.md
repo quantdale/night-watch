@@ -7,9 +7,9 @@ Phase: DEV_REQUALIFICATION_V1
 Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
-Last validated implementation SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last substantive checkpoint SHA: f8757303403dffab6039be3f51b807c8631e3c6a
-Last documentation checkpoint SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
+Last validated implementation SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
+Last substantive checkpoint SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
+Last documentation checkpoint SHA: dd5ff766828d71706c75b6ffb86e5b2267c7ffb9
 
 ## Scope
 
@@ -28,9 +28,14 @@ not printed or copied into the repository.
 ## Current result
 
 Successor activation, OpenSpec validation, continuity, handoff, project truth,
-hardening, and bounded DEV preflight all passed at `2e7e84f`. No Phase 2C,
-Phase 4, Phase 5, campaign, or replay observation has been claimed yet; the
-first serial Phase 2C observation is next.
+hardening, and bounded DEV preflight all passed at `2e7e84f`. The first
+guarded Phase 2C invocation produced two payer observations with valid auth
+and zero safety violations, but the bounded settlement barrier timed out and
+capture was incomplete. Replay classified the pair as
+`FRAMEWORK_CAPTURE_DEFECT` / `SETTLEMENT_TIMEOUT`; the pre-fix runner had
+misreported each observation as a product anomaly. The shared classifier fix
+and local regression are validated at `dd5ff766`; further DEV observations
+remain pending post-fix confirmation.
 
 ## Safety and verdict
 

@@ -74,8 +74,9 @@ The owner-led DEV auth capture completed successfully and the successor
 activation checks passed at checkpoint `2e7e84f`. The first guarded Phase 2C
 invocation completed two payer observations but timed out at the bounded
 settlement barrier; no safety violation or product finding was admitted. The
-classification repair is locally validated and is being checkpointed before
-the next real invocation.
+shared classification repair and focused validation are checkpointed at
+`dd5ff766828d71706c75b6ffb86e5b2267c7ffb9`; the next real invocation is now
+authorized by the active task's existing bounded DEV scope.
 
 ## Terminal action
 
