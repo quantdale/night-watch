@@ -88,8 +88,12 @@ independent invocation showed DVR-004: a passive unknown JSON body timeout
 still poisoned aggregate capture health although intentional known reads
 completed. Scope capture health to intentional source-reviewed known reads,
 preserve passive per-response diagnostics, then execute another independent
-Phase 2C invocation. Preserve the independent
-`nightwatch-20260831T092548Z-f5ee` outcomes.
+Phase 2C invocation. The capture-scope repair is checkpointed at
+`224801f879c55f61df8eb9d285f27f63f672595c`; that run's payer pair passed,
+but its common pair exposed DVR-005 because unknown capture status masked
+bootstrap 5xx/missing-read evidence. Preserve the independent
+`nightwatch-20260831T093257Z-bb5a` outcomes while checkpointing the
+attribution-precedence repair.
 
 ## Terminal action
 

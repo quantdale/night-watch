@@ -8,8 +8,8 @@ Task directory: .agent/tasks/nightwatch-dev-requalification-v1
 Starting SHA: e51bf7730a8d79051ceb19f8ae9dd3eece5aa300
 Last validated implementation SHA: 1d3eb0a5c498d22b54a24f635cb34805aa69f057
 Last checkpoint: bounded response-capture repair at `1d3eb0a`
-Current milestone: M1 — Repeated Phase 2C sample / DVR-004 capture-scope repair — IN_PROGRESS
-Next action: Checkpoint the intentional-known-read capture-scope repair, rerun the bounded DEV preflight, and execute one independent Phase 2C invocation while preserving the `f5ee` outcome.
+Current milestone: M1 — Repeated Phase 2C sample / DVR-005 attribution repair — IN_PROGRESS
+Next action: Checkpoint the non-capture failure precedence repair, rerun the bounded DEV preflight, and execute one independent Phase 2C invocation while preserving the `bb5a` outcomes.
 Authorization class: NIGHTWATCH_DEV_REQUALIFICATION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

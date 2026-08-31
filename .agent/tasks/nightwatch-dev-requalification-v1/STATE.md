@@ -29,7 +29,7 @@ explicit reevaluation.
 
 ## Current Milestone
 
-M1 — Repeated Phase 2C sample / DVR-004 capture-scope repair — IN_PROGRESS. M0 activation
+M1 — Repeated Phase 2C sample / DVR-005 attribution repair — IN_PROGRESS. M0 activation
 and pre-DEV authority checks passed at `2e7e84f`; the first guarded
 invocation exposed a classification defect that is locally repaired, and the
 next post-fix invocation exposed an over-broad settlement tracking defect
@@ -74,14 +74,20 @@ known-read JSON responses completed in both contexts, but one passive
 aggregate, that unrelated timeout made the pair diverge on
 `oracle-or-result-status`. This is DVR-004: verdict-affecting capture health
 must be limited to intentional source-reviewed known reads while passive
-response diagnostics remain observable.
+response diagnostics remain observable. The fourth invocation's payer pair
+replayed successfully after the scope repair, but the run then stopped on
+`ripple-common-exchange-read`: c1 had bootstrap 5xx responses, no rendered
+shell, and no required read while c2 passed. Because c1 had no intentional
+capture attempt, `CAPTURE_STATUS_UNKNOWN` incorrectly took precedence over its
+explicit structural/oracle failure. This is DVR-005 and requires attribution
+precedence repair before the next DEV run.
 
 ## Exact Next Action
 
-Checkpoint the intentional-known-read capture-scope repair and its local
-passive/intentional truncated-response regression, then rerun
+Checkpoint the non-capture failure precedence repair and its local
+classification/replay regressions, then rerun
 `npm run observe:preflight -- --env=dev` and execute one independent Phase 2C
-invocation. Preserve all four prior invocation outcomes and classify the new
+invocation. Preserve all five prior invocation outcomes and classify the new
 result independently; do not relabel any earlier result from a later run.
 
 ## Blockers
@@ -211,6 +217,25 @@ changing intentional capture health, while an intentional known-read timeout
 remains `INCOMPLETE` with `BODY_READ_TIMEOUT`.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run journey:phase2c -- --env=dev --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: FAIL as independent post-DVR-004 invocation at
+`nightwatch-20260831T093257Z-bb5a`; the payer pair passed strict replay with
+complete intentional capture, but the common pair diverged. Common c1 had
+valid auth and zero safety counters but bootstrap 5xx responses, no rendered
+shell, and no required read; c2 passed. The comparator reported
+`structural-checkpoints`, `step-results`, `semantic-endpoint-families`,
+`semantic-request-ledger`, `oracle-set`, `oracle-or-result-status`, and
+`resource-lifecycle`; c1 was labeled `FRAMEWORK_CAPTURE_DEFECT` /
+`CAPTURE_STATUS_UNKNOWN` before the attribution repair. No product finding was
+admitted. Sanitized matrix:
+`artifacts/phase2c-nightwatch-20260831T093257Z-bb5a-matrix.json`.
+When: 2026-08-31
+
+Command: `npx playwright test tests/unit/phase2cOracleMatrix.test.ts --project=nightwatch --workers=1 --retries=0 && npm run typecheck && npm run hardening:check`
+Result: PASS; 16 Phase 2C matrix tests passed, TypeScript typecheck passed,
+and hardening structural checks passed after the DVR-005 precedence repair.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -245,6 +270,7 @@ When: 2026-08-31
 | DVR-002 | HIGH | Phase 2C settlement barrier | Fresh guarded DEV invocation 2 after DVR-001 repair | `nightwatch-20260831T084705Z-849e-j1-c1` and `...-c2`; `pendingHandlers=0`, `activeJourney=24/4`, and resource ledgers showed 22/3 unfinished critical-script requests plus passive unknown/image requests; both known reads completed | `activeJourneyRequestCount` tracked every request carrying journey intent, including page subresources and unreviewed passive traffic; the barrier required that broad count to reach zero | `activeJourneyRequestCount` now tracks only source-reviewed `KNOWN_READ` requests; all response handlers remain covered by the independent pending-handler barrier | `tests/unit/networkObserverSettlement.test.ts` hanging passive subresource and known-read cases | `npm run typecheck`, `npm run hardening:check`, and 40-test focused cone: PASS; post-fix DEV confirmation pending | Fixed locally; awaiting post-fix DEV confirmation |
 | DVR-003 | HIGH | Phase 2C response capture | Fresh guarded DEV invocation 3 after DVR-002 repair | `nightwatch-20260831T085807Z-7767-j1-c2`; settlement was `SETTLED`, auth was valid, safety counters were zero, but one source-reviewed known-read JSON/XHR response was `bodyCapture=unavailable`, making the observation incomplete and the pair diverge on `oracle-or-result-status` | Response-body reads were unbounded and emitted no safe reason, so a truncated/never-ending response could keep capture pending or leave the failure unexplained | Response-body reads are bounded to 5 seconds; failures emit one of five bounded codes and propagate through evidence/classification/replay without raw error text | `tests/unit/networkObserverSettlement.test.ts` truncated JSON response; `tests/unit/phase2cOracleMatrix.test.ts` diagnostic/parser regressions | Typecheck, hardening, focused 41-test cone, and local capture regression: PASS; post-fix DEV confirmation pending | Fixed at `1d3eb0a`; awaiting real post-fix confirmation |
 | DVR-004 | HIGH | Phase 2C capture attribution | Fresh guarded DEV invocation 4 after DVR-003 repair | `nightwatch-20260831T092548Z-f5ee`; both contexts captured both intentional known-read JSON responses completely, but c2 had one passive `UNKNOWN` JSON/XHR body with `BODY_READ_TIMEOUT`; global capture status became `INCOMPLETE` and strict replay diverged on `oracle-or-result-status` | Capture health and its failure-code ledger aggregated every JSON-ish response, so unrelated passive/background capture instability changed the journey verdict | Pending checkpoint: aggregate `captureStatus`/`captureFailureCodes` only for requests carrying active journey intent and `KNOWN_READ`; retain per-response passive diagnostics and strict failure for intentional reads | `tests/unit/networkObserverSettlement.test.ts` passive and intentional truncated-response cases | Real evidence is classified as `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_INCOMPLETE`; no product finding admitted | Open — local repair validated, checkpoint and DEV confirmation pending |
+| DVR-005 | HIGH | Phase 2C observation attribution | Fresh guarded DEV invocation 5 after DVR-004 repair | `nightwatch-20260831T093257Z-bb5a-j2-c1`; bootstrap 5xx/required-read and structural failures left intentional capture `UNKNOWN`, but the classifier reported `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_STATUS_UNKNOWN` and masked explicit non-capture evidence | Unknown capture status was treated as a framework defect before checking whether the observation had independently failed; no intentional known-read capture had been attempted | Pending checkpoint: only an otherwise passing observation with unknown capture health is a framework capture defect; explicit failed evidence proceeds to product/environment/unknown attribution | `tests/unit/phase2cOracleMatrix.test.ts` unknown-capture precedence regressions | Real evidence retained as a non-pass strict divergence; no product finding admitted | Open — local repair validated, checkpoint and DEV confirmation pending |
 
 ## Discoveries
 
@@ -279,6 +305,10 @@ When: 2026-08-31
   unavailable after settlement. The strict replay failure is preserved as a
   framework capture defect, not a product anomaly, and raw response/error
   details were not copied into task evidence.
+- The fourth invocation confirms the payer pair can pass strict replay after
+  capture health is scoped to intentional reads. The common pair independently
+  encountered bootstrap 5xx and missing-read evidence; unknown capture status
+  must not erase that stronger failure signal. This is tracked as DVR-005.
 
 ## Safety Events
 

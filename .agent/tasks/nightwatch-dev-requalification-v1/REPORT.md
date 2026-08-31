@@ -49,7 +49,11 @@ regression and the focused 41-test cone pass at implementation checkpoint
 defect: both intentional known-read JSON responses completed, but a passive
 unknown JSON/XHR body timed out in one context and the global capture status
 still failed the pair. That evidence is tracked as DVR-004; its local scope
-repair is pending checkpoint and requalification.
+repair is now checkpointed at `224801f`. The following run confirmed the
+payer pair passed strict replay, then exposed a common-journey bootstrap 5xx
+and missing-read divergence whose `CAPTURE_STATUS_UNKNOWN` label masked the
+stronger failure. That attribution repair is tracked as DVR-005 and is
+pending checkpoint and requalification.
 
 ## Safety and verdict
 

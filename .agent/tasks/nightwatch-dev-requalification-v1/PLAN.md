@@ -74,6 +74,12 @@ reduced to a local deterministic regression before a real run resumes.
   intentional known reads completed. Scope verdict-affecting capture health
   to intentional source-reviewed known reads while retaining passive response
   diagnostics, then requalify independently.
+- The following invocation confirmed the payer pair replays cleanly, then
+  exposed DVR-005 on the common journey: a bootstrap 5xx prevented the
+  required read, but `CAPTURE_STATUS_UNKNOWN` masked the explicit structural
+  and oracle failure. Let independent failed evidence classify before unknown
+  capture; retain framework classification for an otherwise passing journey
+  without established capture health.
 
 ### M2 — Cross-phase observation — PENDING
 
