@@ -86,7 +86,7 @@ reduced to a local deterministic regression before a real run resumes.
   account-inventory reproduced a stable product oracle in both contexts and
   replay classified the bounded difference as expected product-state drift.
 
-### M2 — Cross-phase observation — IN_PROGRESS
+### M2 — Cross-phase observation — COMPLETE
 
 - Run Phase 4, Phase 5, campaign prepare/resume, and one safe replay where
   available.
@@ -123,11 +123,17 @@ reduced to a local deterministic regression before a real run resumes.
   only that manifest; prepare passed as
   `campaign:sha256:6134013e41664bf66911887a` with source `374ad71`; do not
   reuse `campaign:sha256:ceae02f22573c85f4a6d6c5e`.
+- The independent fresh resume completed 5/5 work items exactly once in
+  52.0 seconds, repeated the prior product fingerprint and deterministic
+  cluster identity, completed both API replay pairs, and stopped truthfully at
+  the bounded reproduction reserve with zero safety/privacy violations.
 - Verify product-vs-framework classification, finding deduplication, state,
   cleanup, and resource boundaries.
 
-### M3 — Reconciliation and closure — PENDING
+### M3 — Reconciliation and closure — IN_PROGRESS
 
+- Reconcile product anomaly identity, cluster counts, persisted state, and
+  explicit auth/environment/unknown limitations.
 - Run final validation appropriate to changed implementation and evidence.
 - Complete STATE/REPORT, OpenSpec task checkboxes, project/live docs, and Git
   checkpoint; commit, push, and verify clean parity.

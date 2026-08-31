@@ -194,10 +194,23 @@ as `campaign:sha256:6134013e41664bf66911887a` with manifest fingerprint
 documentation checkpoint did not advance executable source identity. No
 product execution occurred during preparation; resume only this manifest.
 
+The bounded resume then completed in 52.0 seconds as
+`PARTIAL_BUDGET_EXHAUSTED` / `BUDGET_EXHAUSTED`. All five selected work items
+completed exactly once: payer/common browser journeys passed, the account
+journey retained one sanitized product anomaly, and both selected API items
+completed first-plus-fresh-replay pairs. The checkpoint reached ordinal 15 with
+one observation, one cluster, zero dossiers, and a reproduction queue blocked
+only by the bounded budget. Safety counters were all zero, privacy was PASS,
+and owner-local artifacts remained mode 0600. The anomaly fingerprint was
+`fp:sha256:d491c1b9779adfbcd030cc23`; it matched the first fresh campaign's
+fingerprint, cluster ID, cluster key, occurrence count, timing class, and
+work-item ledger. This is cross-campaign identity stability, not a product
+reproduction or clean all-budget certification.
+
 ## Exact Next Action
 
-Resume the fresh current-source serial campaign after the bounded DEV
-preflight and prepare. The original campaign
+Reconcile the completed fresh current-source serial campaign after the bounded
+DEV preflight, prepare, and resume. The original campaign
 `campaign:sha256:394f3fd1ed3828e2914a6373` is retained as a version-drift
 refusal and is not reused. Verify that the repaired summary boundary accepts
 repeated occurrences, persisted state advances without duplicate/lost work,
@@ -207,10 +220,12 @@ first fresh campaign
 `manifest:sha256:dc825e5258042974aba10179`, five work items, and frozen source
 `c1f5f529e830757cc2c3124aae46047bda863173`. That campaign completed all five
 selected items with no duplicate or lost work. DVR-008 is repaired and
-validated at `374ad71`; the fresh current-source campaign is
+validated at `374ad71`; the independent fresh current-source campaign is
 `campaign:sha256:6134013e41664bf66911887a` with manifest
-`manifest:sha256:f5c596b14f1561864b7db7f4`. Resume it, then compare product
-fingerprint/cluster identity across campaigns. Do not resume the stale
+`manifest:sha256:f5c596b14f1561864b7db7f4`. Its resume completed 5/5 items with
+the same product fingerprint and deterministic cluster identity as the first
+fresh campaign. Reconcile anomaly deduplication, state, cleanup, auth/
+environment limitations, and final local validation. Do not resume the stale
 `ceae...` manifest.
 
 ## Blockers
@@ -220,15 +235,15 @@ None.
 ## Resume Recipe
 
 Read this STATE, PLAN, and SPEC, verify clean Git and the external state path
-without reading its contents, rerun the pre-DEV checks, and continue M2
+without reading its contents, rerun the pre-DEV checks, and continue M3
 serially. The duplicate-fingerprint repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` and the version-drift
 classification repair at `c1f5f529e830757cc2c3124aae46047bda863173`; the
 source-identity repair is checkpointed at
 `374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Run the bounded DEV preflight,
 prepare passed as `campaign:sha256:6134013e41664bf66911887a` with source
-`374ad71`; resume only that new manifest. Do not use production/NEXT or bypass
-any guard.
+`374ad71`; its resume completed the bounded ledger. Continue with focused
+local reconciliation only. Do not use production/NEXT or bypass any guard.
 
 ## Validation Ledger
 
@@ -588,6 +603,24 @@ identity remained stable across the documentation checkpoint; no product
 execution occurred during preparation.
 When: 2026-08-31
 
+Command: `NIGHTWATCH_HEADED=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:6134013e41664bf66911887a --storage-state=/home/dalepalaca/.nightwatch/auth/ripple-dev-state.json`
+Result: PASS for the guarded campaign launcher in 52.0 seconds;
+`PARTIAL_BUDGET_EXHAUSTED` / `BUDGET_EXHAUSTED`, 5/5 work items completed once,
+both API replay pairs completed, one sanitized account product anomaly was
+retained, one cluster and zero dossiers were persisted, safety counters were
+zero, and privacy was PASS. No raw authenticated evidence was inspected.
+When: 2026-08-31
+
+Command: sanitized owner-local comparison of campaign checkpoints
+`campaign:sha256:4b8372d920d9694ca6c67c77` and
+`campaign:sha256:6134013e41664bf66911887a`
+Result: PASS; both campaigns have the same anomaly fingerprint
+`fp:sha256:d491c1b9779adfbcd030cc23`, cluster ID
+`cluster:sha256:dd8e213cb49d1a327626be0c`, cluster key, occurrence count 1,
+timing class `NONE`, five completed work items, two API replay pairs, and zero
+safety/privacy violations. This comparison used only bounded sanitized fields.
+When: 2026-08-31
+
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -632,7 +665,7 @@ When: 2026-08-31
 | DVR-005 | HIGH | Phase 2C observation attribution | Fresh guarded DEV invocation 5 after DVR-004 repair | `nightwatch-20260831T093257Z-bb5a-j2-c1`; bootstrap 5xx/required-read and structural failures left intentional capture `UNKNOWN`, but the classifier reported `FRAMEWORK_CAPTURE_DEFECT` / `CAPTURE_STATUS_UNKNOWN` and masked explicit non-capture evidence | Unknown capture status was treated as a framework defect before checking whether the observation had independently failed; no intentional known-read capture had been attempted | `UNKNOWN` capture health is a framework defect only for an otherwise passing observation; explicit failed evidence proceeds to product/environment/unknown attribution | `tests/unit/phase2cOracleMatrix.test.ts` unknown-capture precedence regressions | `d1b9f31`; local matrix/typecheck/hardening pass; invocation 6 produced passing payer/common and product-classified account outcomes | Fixed at `d1b9f31` and confirmed by invocation 6; no Nightwatch defect or product finding was masked |
 | DVR-006 | HIGH | Campaign checkpoint execution summary | Guarded Phase 7 campaign resume | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373`; first payer work item emitted two occurrence observations with the same `fp:sha256:bba7c1fd5564ece993a0238f`, and resume failed closed with `CHECKPOINT_EXECUTION_FINGERPRINTS:DUPLICATE` | `CampaignOrchestrator` copied every observation fingerprint into the execution record summary, while checkpoint integrity correctly requires that identity summary to be unique; legitimate repeated occurrences crossed the wrong abstraction boundary | `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3` canonicalizes only the execution summary to a sorted unique set; duplicate observations and cluster occurrence counts remain intact | `tests/unit/campaign.test.ts` duplicate-occurrence checkpoint/resume regression | Focused regression, full campaign suite (30), checkpoint/triage cone (30), typecheck, and hardening: PASS; stale-manifest resume later refused on expected source drift | Fixed locally; original duplicate-integrity failure retained and stale-manifest refusal is non-product evidence; fresh current-source campaign still required |
 | DVR-007 | MEDIUM | Campaign version-drift observability and launcher terminal assertion | Exact resume after DVR-006 repair changed the frozen source SHA | Campaign `campaign:sha256:394f3fd1ed3828e2914a6373` refused before execution with `stopReason=CAMPAIGN_VERSION_DRIFT`; the brief said `NIGHTWATCH INTERNAL DEFECT` and the guarded manual test failed its accepted-result assertion | Version drift shared the generic `PARTIAL_RUNTIME_INFRA_FAILURE` result class but the brief and launcher did not recognize its explicit stop reason as an expected fail-closed terminal outcome | `c1f5f529e830757cc2c3124aae46047bda863173` gives version drift a dedicated safe headline and allows only that explicit stop reason through the real launcher assertion; it does not bypass the drift gate | `tests/unit/campaign.test.ts` runtime source-version drift headline regression | Targeted drift/duplicate tests, full campaign suite (30), typecheck, and hardening: PASS | Fixed locally; exact stale-manifest refusal retained as non-product evidence |
-| DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, and hardening pass | Fixed locally; `ceae...` remains a stale no-resume manifest; a fresh current-source campaign is required for real execution validation |
+| DVR-008 | MEDIUM | Campaign implementation-source identity | Second fresh campaign prepare after OpenSpec task checkpoint | `campaign:sha256:ceae02f22573c85f4a6d6c5e` froze `nightwatchSourceSha=af56ef1a83e61ef7f8ce7c59e0fd0c7b19dd022b` even though the only change since `c1f5f529` was an OpenSpec task-document commit; no product execution was attempted | `nightwatchImplementationSha` excluded `.agent/**` and `docs/**` but included `openspec/**`, so documentation-only protocol edits altered the runtime version key and could cause false `CAMPAIGN_VERSION_DRIFT` | `374ad71e0ebbaadecf17b1c9a767f36b6f054552` centralizes the executable-source pathspec and excludes `openspec/**` while retaining runtime source/test/launcher/dependency changes as drift inputs | Temporary-Git regression in `tests/unit/campaign.test.ts`; full campaign suite 31/31, typecheck, hardening, and fresh prepare/resume source stability pass | Fixed; `ceae...` remains a stale no-resume manifest; fresh campaign `6134013...` proved the repaired identity through real bounded prepare/resume |
 
 ## Discoveries
 
@@ -723,6 +756,10 @@ When: 2026-08-31
   temporary-Git regression proves OpenSpec-only commits do not change the
   executable identity while runtime-source commits still do. The stale
   manifest remains quarantined; a fresh current-source cycle is next.
+- The post-repair fresh campaign resumed without source drift. Its account
+  anomaly fingerprint, cluster ID/key, occurrence count, timing class, and
+  completed-work ledger matched the prior fresh campaign exactly; the bounded
+  reproduction reserve, not a hidden framework error, ended both runs.
 
 ## Safety Events
 

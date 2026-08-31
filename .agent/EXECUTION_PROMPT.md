@@ -121,10 +121,14 @@ Git regression, 31-test campaign suite, typecheck, and hardening validation
 pass. The bounded DEV preflight and fresh prepare then passed with campaign
 `campaign:sha256:6134013e41664bf66911887a`, manifest
 `manifest:sha256:f5c596b14f1561864b7db7f4`, and frozen source
-`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Resume only that manifest.
-Compare its sanitized anomaly identity with
+`374ad71e0ebbaadecf17b1c9a767f36b6f054552`. Resume only that manifest. The
+bounded resume completed as `PARTIAL_BUDGET_EXHAUSTED` /
+`BUDGET_EXHAUSTED` with 5/5 work items, one sanitized anomaly observation,
+one cluster, zero dossiers, privacy PASS, and zero safety counters. Compare
+its sanitized anomaly identity with
 `fp:sha256:d491c1b9779adfbcd030cc23`, and verify cross-campaign clustering and
-work-item accounting. The DVR-006 repair is checkpointed at
+work-item accounting; then run the focused local state/auth/privacy
+reconciliation before closure. The DVR-006 repair is checkpointed at
 `3cbe5f2f36dcaf4d94aa0a203649126aedb26be3`; the expected stale-manifest
 refusal and its truthful launcher classification are checkpointed at
 `c1f5f529e830757cc2c3124aae46047bda863173`. The OpenSpec-only manifest

@@ -162,6 +162,19 @@ safety counters, and privacy `PASS`; this is a bounded result, not a clean
 all-budget certification. One independent fresh cycle remains for
 cross-campaign identity stability.
 
+The independent fresh current-source campaign
+`campaign:sha256:6134013e41664bf66911887a` then resumed successfully in 52.0
+seconds as `PARTIAL_BUDGET_EXHAUSTED` / `BUDGET_EXHAUSTED`. All five selected
+work items completed exactly once; both API items completed their first-plus-
+fresh-replay pairs; payer/common browser journeys passed; and the account
+journey retained one sanitized product anomaly. The checkpoint persisted one
+anomaly observation, one cluster, zero dossiers, zero safety counters, and
+privacy PASS; the reproduction reserve was blocked only by the bounded budget.
+Its fingerprint `fp:sha256:d491c1b9779adfbcd030cc23`, cluster ID/key,
+occurrence count, timing class, and work-item/replay ledger matched the first
+fresh campaign exactly. This establishes stable finding identity across the
+two bounded campaigns, not a product reproduction or all-budget certification.
+
 ## Safety and verdict
 
 The task remains read-only and serial. `OPERATIONALLY_ACCEPTED` is preserved
