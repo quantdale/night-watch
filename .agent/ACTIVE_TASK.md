@@ -7,7 +7,7 @@ Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-openapi-admission-c02a-v1
 Starting SHA: c64b56fff1237c489982a9d6cece7adea83c6387
 Last validated implementation SHA: 6a70061729b224a78eeaced009149457bf75cb5b
-Last checkpoint: full local and clean Node 20 quality gates passed with all eleven required groups at 316ac761aa5de99da06db39ca0e242834a574467, plus a 2,771-test canonical regression
+Last checkpoint: full local and clean Node 20 quality gates passed with all eleven required groups at 316ac761aa5de99da06db39ca0e242834a574467 and again at the closeout commit 35cb82da9c91519bc2a4a6795431af1e06c31660, plus a 2,771-test canonical regression
 Current milestone: COMPLETE / STOP — M1 through M7 are closed
 Next action: STOP — C-02a is complete; do not begin C-02b in this task, and do not run any implementation session in the canonical checkout
 Authorization class: NIGHTWATCH_OPENAPI_ADMISSION_C02A_V1

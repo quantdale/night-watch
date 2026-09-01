@@ -115,8 +115,15 @@ quietly chosen to fit the target.
 
 - `npx tsc --noEmit` — exit 0.
 - Focused `tests/unit/c02aOpenApiAdmission.test.ts` — 18 passed.
-- Full canonical Playwright regression — see `STATE.md` Validation Ledger.
-- `npm run gate:local` and `npm run gate:clean` — see `STATE.md`.
+- Full canonical Playwright regression — 2,771 passed / 13 skipped / 0 failed.
+- `npm run gate:local` — PASS, all eleven required groups, receipt
+  `receipt:sha256:f901ce1e76c083cb867fd3e7` at
+  `316ac761aa5de99da06db39ca0e242834a574467`, and
+  `receipt:sha256:2e078aeabcbf539e411ed437` at the closeout commit
+  `35cb82da9c91519bc2a4a6795431af1e06c31660`.
+- `npm run gate:clean` — PASS on a clean Node 20 checkout, receipt
+  `receipt:sha256:9a9be194536773d5dd2df458` at `316ac761`, and
+  `receipt:sha256:808ae7475f4c43c9de5afcbc` at `35cb82da`.
 
 Two pre-existing tests were repaired rather than weakened, because C-02a
 changed a real measurement each of them had pinned:

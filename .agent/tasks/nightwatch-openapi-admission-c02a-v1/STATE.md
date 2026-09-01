@@ -163,6 +163,12 @@ previously contributed none.
   `sourceHead 316ac761aa5de99da06db39ca0e242834a574467`, Node 20,
   `installResult: PASS`, `gateResult: PASS`, all eleven groups PASS, receipt
   `receipt:sha256:9a9be194536773d5dd2df458`.
+- Final certification pass at the closeout commit
+  `35cb82da9c91519bc2a4a6795431af1e06c31660`:
+  `npm run gate:local` PASS, Node 22, all eleven groups PASS, receipt
+  `receipt:sha256:2e078aeabcbf539e411ed437`; `npm run gate:clean` PASS,
+  Node 20, `installResult: PASS`, `gateResult: PASS`, all eleven groups PASS,
+  receipt `receipt:sha256:808ae7475f4c43c9de5afcbc`.
 
 ## Decisions Made During This Task
 
