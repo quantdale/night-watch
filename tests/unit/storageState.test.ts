@@ -147,15 +147,20 @@ test.describe('storage-state secret handling', () => {
   });
 
   test('files inside the Alphaus workspace are rejected', () => {
-    const file = path.join(WORKSPACE_ROOT, 'alphauslabs', 'evil-storage-state.json');
+    // C-00: the fixture writes only inside its own disposable directory. A
+    // writing agent's worktree lives outside the workspace tree, so deriving
+    // the workspace root from this checkout's location would create stray
+    // directories in owner-local state.
+    const syntheticWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-workspace-root-'));
+    const file = path.join(syntheticWorkspace, 'alphauslabs', 'evil-storage-state.json');
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(FAKE_STATE));
     try {
       expect(() =>
-        validateStorageStateFile(file, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: WORKSPACE_ROOT })
+        validateStorageStateFile(file, { nightwatchRoot: NIGHTWATCH_ROOT, workspaceRoot: syntheticWorkspace })
       ).toThrow(/must NOT live inside/);
     } finally {
-      fs.rmSync(file, { force: true });
+      fs.rmSync(syntheticWorkspace, { recursive: true, force: true });
     }
   });
 

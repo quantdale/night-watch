@@ -1785,6 +1785,14 @@ function checkC00WorkspaceIntegrity() {
   for (const file of gitFiles()) {
     if (/(?:^|\/)node_modules(?:\/|$)/.test(file)) fail(`dependency tree must never be tracked: ${file}`);
   }
+  // C-00 consequence: a fixture must never write into a directory derived from
+  // the checkout's own parent. In an out-of-tree session worktree that parent
+  // is the session-worktree root, and stray directories there corrupt the
+  // worktree inventory an operator reads.
+  const storageStateTest = read('tests/unit/storageState.test.ts');
+  if (/(?:mkdirSync|writeFileSync)\([^)]*\bWORKSPACE_ROOT\b|path\.join\(WORKSPACE_ROOT,/.test(storageStateTest)) {
+    fail('tests/unit/storageState.test.ts must not write into the real workspace root; use a disposable synthetic root');
+  }
   // C-00 consequence: a writing agent's worktree lives outside the workspace
   // tree, so the REPOSITORIES root must never be derived from this checkout's
   // own location. These two surfaces previously did exactly that and broke in
