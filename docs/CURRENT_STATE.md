@@ -84,6 +84,8 @@ canonical `origin` remote. It reads the Alphaus repos under
 | `PHASE_REPOSITORY_SYSTEMIC_OPTIMIZATION_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — validated implementation checkpoint `f9902bf43081ce737d08437f9f68c3af04ed62b0`; mechanics-only optimization with identical validated outputs: agent-state one-shot git graph (880→64 spawns/run; check 8.40s→1.03s, audit 5.80s→0.99s; 107/107 focused + differential verdict parity), incremental noEmit typecheck (warm 47.0s→7.36s, cold unchanged, tsbuildinfo outside tracked tree), portfolio CLI content-addressed compile cache (cold/warm stdout byte-identical; phase16h suite 190.5s→9.7s), batched hardening syntax check (2.78s→0.90s); full gate:local PASS at f9902bf in 373.77s vs ~808s baseline component sum with compat 1,884/1,871/13/0 parity, owner-provenance 91/91, synthetic 66/66; external CI was not run and is not claimed green; deferred follow-ups (TS require-hook consolidation across 20 bin scripts, census analyzer deduplication) require separate authorization |
 | `PHASE_12_YIELD_BACKTEST` | `VERIFIED_LOCAL_NOT_CI_VERIFIED` — fixed `corpus/phase12` 27 fixtures; phase12Minimized(16) > baselineMinimized(0); all floors 0; 3× determinism 0 mismatches |
 | `PHASE_DURABLE_ARTIFACT_AND_CONTROL_CENTER_TRUTH_HARDENING_V1_STATUS` | `COMPLETE_LOCAL_NOT_CI_VERIFIED` — source implementation anchor `01f2ac0608931b83aed0b5c948ed3a4471de7e01`, validated implementation/test checkpoint `c3d69039d4f2a9969118d877b432c6b4a2f5d09c`, and final documentation checkpoint `d2c606c26f598626f24dd94a11cb7fad18887607`; strict v1/v2 dossier runtime validation rejects all reproduced malformed nested mutations, the facade audit covers `14/14` registered kinds with `55/55` bounded mutations rejected, and one conservative findings currentness reducer governs raw, authority, projected, and collector paths; current-head local gate passed all `9` groups with semantic `1,903/1,890/13/0`, owner provenance `91`, synthetic campaign `66`, local receipt `receipt:sha256:b26864ec34f00438044c1076`, clean gate receipt `receipt:sha256:186a15aed5e9dbbd9c95ab1d`, and clean receipt `clean-receipt:sha256:d9c6c98dd7a83b0bab0a40d6`; final canonical serial Playwright passed `2,548/2,564` with `16` skips and `0` failures; external CI was not observed and is not claimed green; prohibited safety vectors remain zero |
+| `CAMPAIGN_C00_CONCURRENCY_WORKSPACE_HARDENING_STATUS` | see the C-00 section below; the durable invariant is `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`, enforced by `bin/workspace-integrity.mjs`, `bin/nightwatch-session.mjs`, `agent:check`, and the required `WORKSPACE_INTEGRITY` quality-gate group (`docs/DECISIONS.md` D-101…D-104) |
+| `PRE_C01_BASELINE` | `docs/design/PRE-C01-BASELINE.md` — pinned, clean, local/source-only census: `srcsnapshot:sha256:04ff583971865f335902f5ad`, `source-eligibility-census:sha256:2f97b732e0472df347f695a1` |
 | `LIVE_HEAD_AUTHORITY` | `GIT` — discover local `HEAD` and `origin/main` with read-only Git commands; do not persist a current-head field in the file that records it |
 
 This private development remote contains Nightwatch source, tests, schemas,
@@ -91,6 +93,41 @@ synthetic fixtures, and sanitized continuity state only. Real runtime
 credentials, storage state, authenticated evidence, customer values, and
 private findings remain outside GitHub under the owner-only local storage
 policy.
+
+## C-00 concurrency and workspace hardening
+
+A concurrent-session incident during the production-observability planning
+campaign set `skip-worktree` on `docs/ROADMAP.md`, added a planning change
+directory to `.git/info/exclude`, and deleted an in-progress `audit.md`. The
+independent second-reviewer architecture review recorded it as `T-48`
+(OBSERVED), classified the missing response as `MA-13`, and required campaign
+`C-00` as `MUST FIX BEFORE IMPLEMENTATION`, first on the revised critical path.
+
+C-00 replaces "incidentally clean" with "mechanically enforced":
+
+- one writing agent owns one `git worktree` on one `session/<name>` branch,
+  claimed by a regenerable per-worktree ownership record; unknown, malformed,
+  duplicated and unowned states have no write authority;
+- the shared common Git directory is validated once (`info/exclude` effective
+  patterns, `*.sample`-only hooks, unset `core.hooksPath`, worktree
+  registrations), and the index invariant is validated for EVERY registered
+  worktree because indexes are per-worktree (`docs/DECISIONS.md` D-102
+  corrects the review on this point);
+- if any owned session worktree is live, the canonical checkout must be clean;
+- every tracked-file deletion against the session base must be declared in the
+  active task `SPEC.md`;
+- integration is a fast-forward `git push origin HEAD:refs/heads/main` from
+  the session worktree, serialized by the remote compare-and-swap, verified
+  afterwards, never forced; no lease exists, by decision (D-103).
+
+`tests/unit/workspaceIsolation.test.ts` is a 36-case adversarial matrix over
+hazard classes A–L, executed on disposable synthetic repositories inside the
+required synthetic campaign. Two defects were found by the matrix itself and
+repaired: an invalid `git merge --no-rebase` invocation, and a reconcile path
+that reported every merge failure as a conflict.
+
+C-00 granted no new product or runtime authority, contacted no environment,
+and modified no sibling company repository.
 
 ### Project-memory authority model (Phase 8B.1-R1.1)
 
