@@ -143,11 +143,13 @@ No sibling company repository was modified. No tracked file was deleted, so the
 - Final `npm run project:check` — PASS.
 - Final `npm run agent:check` / `npm run agent:audit` — PASS, 0 strict errors.
 - `npm run workspace:check` — PASS, all seven invariants.
-- `npm run gate:local` at `1deecbc0306807dd9c372ff66dcf4430edee16b9` — PASS,
-  11/11 groups, receipt `receipt:sha256:fb4237efe09aa703fdd363ba`.
+- `npm run gate:local` at `cb1fed4c2d09490bb84ea2ed228a6994dfa7d634` — PASS,
+  11/11 groups, receipt `receipt:sha256:15c8418350969c2f772133b1`.
 - `npm run gate:clean` (Node 20 disposable clone) at the same head — PASS,
-  11/11 groups, gate receipt `receipt:sha256:17435865c67de72b7105361a`,
-  clean receipt `clean-receipt:sha256:daf3ea88ed184fe565b632c0`.
+  11/11 groups, gate receipt `receipt:sha256:e9b78082ea8116654d264ae6`,
+  clean receipt `clean-receipt:sha256:68dc94360941752326cd3b89`.
+- After the final full suite, the session-worktree root contained zero entries
+  other than registered worktrees — observational proof that DEF-09 is closed.
 - Semantic compatibility: 1,950 / 1,937 / 13 / 0 — exactly equal to the
   canonical `main` baseline measured independently.
 - Owner provenance 91 passed; synthetic campaign 128 passed.
