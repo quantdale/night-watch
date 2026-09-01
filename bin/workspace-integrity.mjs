@@ -335,7 +335,15 @@ function effectiveExcludePatterns(text) {
     .filter((line) => line !== '' && !line.startsWith('#'));
 }
 
-function checkExclude(commonDir, policy, errors) {
+/**
+ * The shared-exclude invariant is an ALLOWLIST comparison, so it is only
+ * meaningful where the inspected repository carries its own committed
+ * allowlist. A foreign or disposable repository inspected with the built-in
+ * default policy has no authoritative allowlist to compare against, so the
+ * result is reported as NOT_APPLICABLE with an advisory rather than asserted
+ * as a violation. Enforcement in the Nightwatch repository is unchanged.
+ */
+function checkExclude(commonDir, policy, policySource, errors, warnings) {
   const maxBytes = policy?.excludePolicy?.maxBytes ?? 8192;
   const maxLines = policy?.excludePolicy?.maxLines ?? 128;
   const allowed = new Set(policy?.excludePolicy?.allowedEffectivePatterns ?? []);
@@ -358,6 +366,22 @@ function checkExclude(commonDir, policy, errors) {
   }
   const patterns = effectiveExcludePatterns(found.text);
   const unauthorized = patterns.filter((pattern) => !allowed.has(pattern));
+  const allowlistIsAuthoritative = policySource === 'REPOSITORY' || policySource === 'SUPPLIED';
+  if (!allowlistIsAuthoritative) {
+    if (unauthorized.length > 0) {
+      warnings.push({
+        code: 'WORKSPACE_EXCLUDE_ALLOWLIST_UNAVAILABLE',
+        detail: `${unauthorized.length} effective shared exclude pattern(s) present, but this repository carries no committed allowlist to compare against`,
+      });
+    }
+    return {
+      id: 'WORKSPACE_EXCLUDE_POLICY',
+      status: 'NOT_APPLICABLE',
+      effectivePatternCount: patterns.length,
+      unauthorized: [],
+      note: 'NO_COMMITTED_ALLOWLIST',
+    };
+  }
   for (const pattern of unauthorized) {
     errors.push({ code: 'WORKSPACE_EXCLUDE_DRIFT', detail: `unauthorized shared exclude pattern: ${pattern}` });
   }
@@ -769,7 +793,7 @@ export function inspectWorkspace(options = {}) {
 
   const invariants = [
     checkIndexFlags(worktrees, policy, errors),
-    checkExclude(commonDir, policy, errors),
+    checkExclude(commonDir, policy, policySource, errors, warnings),
     checkHooks(commonDir, root, policy, errors),
     checkWorktreeMetadata(worktrees, policy, errors, warnings),
     checkCanonicalProtection(worktrees, policy, errors),

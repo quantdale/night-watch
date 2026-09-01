@@ -806,6 +806,15 @@ test.describe('C-00 diagnostics contract', () => {
       // The fallback is not a weakening: the same invariants still fire.
       gitOk(base, ['update-index', '--skip-worktree', 'file.txt']);
       const failed = integrityJson(base);
+      // The allowlist comparison needs the repository's own committed
+      // allowlist; without one it is NOT_APPLICABLE plus an advisory, never a
+      // silently green PASS.
+      fs.appendFileSync(path.join(base, '.git/info/exclude'), 'private-scratch/\n');
+      const advisory = integrityJson(base);
+      expect(advisory.status).toBe(1);
+      expect(invariant(advisory.report, 'WORKSPACE_EXCLUDE_POLICY')).toBe('NOT_APPLICABLE');
+      expect((advisory.report.warnings ?? []).map((warning: { code: string }) => warning.code))
+        .toContain('WORKSPACE_EXCLUDE_ALLOWLIST_UNAVAILABLE');
       expect(failed.status).toBe(1);
       expect(codes(failed.report)).toContain('WORKSPACE_FORBIDDEN_INDEX_FLAG');
     } finally {
