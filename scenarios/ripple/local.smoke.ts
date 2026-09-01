@@ -17,6 +17,7 @@ import type { EnvironmentConfig } from '../../src/core/environment/types';
 import { OutboundPolicy } from '../../src/core/safety/outboundPolicy';
 import { runCanary, assertCanary } from '../../src/core/safety/canary';
 import { discoverRepositories, snapshotRepositories } from '../../src/core/repositories/snapshotter';
+import { DEFAULT_SIBLING_ROOT } from '../../src/core/source/siblingSource';
 import { startFixtureServer, type FixtureServerHandle } from '../../src/browser/fixtures/fixtureServer';
 import { createNightwatchContext, validateUiUrl } from '../../src/browser/context';
 import { resolveStorageStatePath } from '../../src/browser/fixtures/storageState';
@@ -115,8 +116,10 @@ test('ripple passive local journey', async ({ browser }) => {
   // REPO SNAPSHOT — read-only git state of the workspace repos.
   // The workspace keeps clones under REPOSITORIES/<org>/<repo>, so the
   // default discovery scans the repos root plus its alphauslabs/mobingilabs
-  // org directories (52 + 92 repos).
-  const reposRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? path.resolve(__dirname, '..', '..', '..');
+  // org directories (52 + 92 repos). C-00: the root is never derived from this
+  // checkout's own location, because a writing agent's worktree lives outside
+  // the workspace tree.
+  const reposRoot = process.env.NIGHTWATCH_REPOS_ROOT ?? DEFAULT_SIBLING_ROOT;
   const repos = process.env.NIGHTWATCH_TRACKED_REPOS
     ? process.env.NIGHTWATCH_TRACKED_REPOS.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
     : discoverWorkspaceRepos(reposRoot);

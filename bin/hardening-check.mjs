@@ -1778,6 +1778,17 @@ function checkC00WorkspaceIntegrity() {
   if (!packageJson.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
   const agents = read('AGENTS.md');
   if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
+  // C-00 consequence: a writing agent's worktree lives outside the workspace
+  // tree, so the REPOSITORIES root must never be derived from this checkout's
+  // own location. These two surfaces previously did exactly that and broke in
+  // an isolated worktree.
+  for (const file of ['tests/unit/changeIntelligenceBacktest.test.ts', 'scenarios/ripple/local.smoke.ts']) {
+    const source = read(file);
+    if (!/DEFAULT_SIBLING_ROOT/.test(source)) fail(`${file} must resolve the repositories root through DEFAULT_SIBLING_ROOT`);
+    if (/__dirname,\s*'\.\.\/\.\.\/\.\.'|__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'/.test(source)) {
+      fail(`${file} must not derive the repositories root from its own checkout location`);
+    }
+  }
 }
 
 checkChildProcessBoundaries();
