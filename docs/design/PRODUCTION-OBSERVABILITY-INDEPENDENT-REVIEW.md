@@ -1327,7 +1327,7 @@ Applied by this review (planning documents only):
 | E-04 | `audit.md §A.13` | Add the measured company-repo finding: production webhook URL with embedded token on the live GET path (`MarketplaceSubscriptionMiddleware.php:18,26,36`) — referenced, not reproduced | MUST FIX BEFORE IMPLEMENTATION |
 | E-05 | `MASTER_PLAN §0` | Annotate the `≥ 900` and `≥ 200` targets as unreachable/coercive as scoped | MUST FIX BEFORE IMPLEMENTATION |
 | E-06 | `MASTER_PLAN §2` | Add C-00, C-02a/C-02b split, C-08b; assign `G-16` and EIG | MUST FIX BEFORE IMPLEMENTATION |
-| E-07 | `MASTER_PLAN §3` | Revised critical path (§10); resolve the C-05 inconsistency; advance C-15 truncation surfacing | MUST FIX BEFORE IMPLEMENTATION |
+| E-07 | `MASTER_PLAN §3` | Revised critical path (§10); resolve the C-05 inconsistency; advance C-15 truncation surfacing | **RESOLVED** — `MASTER_PLAN §3` now carries the revised critical path as authoritative, the `F-29` resolution (new ROOT inside an admitted repository → C-02a; new REPOSITORY → C-05), and C-15a shipped with C-01 |
 | E-08 | `MASTER_PLAN §4` | `RG-13` becomes a hard requirement with a named owner exception; add `G-ORG`, the parameter-provenance gate, and the `DEPLOYMENT_FACT` binding gate | MUST FIX BEFORE PRODUCTION |
 | E-09 | `THREAT_MODEL` | Add T-35…T-48 and R-6…R-8; narrow `R-1`; mark `T-13`'s flags as existing | MUST FIX BEFORE PRODUCTION |
 | E-10 | `tasks.md` | Reflect C-00, C-02a/b, C-08b, revised acceptance criteria | MUST FIX BEFORE IMPLEMENTATION |

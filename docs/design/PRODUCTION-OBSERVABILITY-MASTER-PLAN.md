@@ -34,9 +34,19 @@ Three numbers define success:
 
 | Metric | Today | After C-01…C-05 (target) | After C-06…C-09 (target) |
 |---|---|---|---|
-| operations modelled | 128 (capped, 1 repo) | ≥ 900 (≥ 5 repos, uncapped) | same |
+| operations modelled | 128 (capped, 1 repo) — **superseded, see note** | ≥ 900 (≥ 5 repos, uncapped) | same |
 | `READ_ONLY_PROVEN` | 5 (hand-catalog) | ≥ 200 (two-witness, mechanical) | same |
 | product findings | 0 | ≥ 1 on DEV | ≥ 1 from P2 production reads |
+
+> **POST-C-01 MEASUREMENT.** The `Today` column is the pinned audit-date
+> baseline (`docs/design/PRE-C01-BASELINE.md`), not current truth. C-01 is
+> COMPLETE at `4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778`: the `128` cap is
+> gone, `ripple-api` reports **223 operations with
+> `routeOperationsTruncated = 0`**, and the whole-population response-contract
+> figure is **58** (`docs/DECISIONS.md` D-105 — the historical `83` and `43`
+> are one metric at two analyzer versions, both measured over the 128 cap).
+> The `≥ 900` target still requires the C-05 admission-set expansion; see the
+> `F-29` resolution in §3.
 
 > **SECOND-REVIEW CORRECTION (R2)** — see
 > `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md`
@@ -285,11 +295,16 @@ authorizable.
 
 ## 3. Sequencing
 
+> The `C05 → C02` edge named by `F-29` is corrected below: C-05 gates new
+> REPOSITORY admission, not C-02a's `blueapi/openapiv2` root. Full reasoning in
+> the `F-29` resolution later in this section.
+
 ```mermaid
 flowchart LR
-  C01[C-01 truncation truth] --> C02[C-02 protobuf]
+  C01[C-01 truncation truth] --> C02a[C-02a OpenAPI admission<br/>blueapi/openapiv2 root]
+  C02a --> C02[C-02b protobuf]
   C01 --> C04[C-04 frontend]
-  C05[C-05 universe hygiene] --> C02
+  C05[C-05 universe hygiene] --> UNIV[new REPOSITORY admission<br/>blueinternal, wave-api, ≥ 900 ops]
   C02 --> C03[C-03 go/grpc]
   C02 --> C10x[G-10 response contracts<br/>inside C-02/C-03]
   C03 --> C06[C-06 two-witness read-only]
@@ -311,13 +326,21 @@ flowchart LR
   C04 --> C15
 ```
 
-**Critical path:** `C-01 → C-02 → C-03 → C-06 → C-11 → C-12 → C-13 → C-14`.
+**Critical path (SUPERSEDED — retained as the first explorer's original
+wording).** `C-01 → C-02 → C-03 → C-06 → C-11 → C-12 → C-13 → C-14`.
 Everything that matters for production runs through the two-witness read-only
-proof; nothing can shorten that.
+proof; nothing can shorten that. The authoritative path is the **revised
+critical path** in the second-review block below:
+`C-00 → C-01 → C-02a → C-06(PHP) → C-10 → C-11 → C-12 → C-13 → C-14`.
 
-**True parallelism:** `C-05` and `C-10` have no upstream dependency and should
-run alongside `C-01`/`C-02`. `C-04` and `C-15` parallel the C-02→C-03 leg.
-`C-09` parallels C-06.
+**True parallelism (CORRECTED by `F-29`, resolved below).** `C-10` has no
+upstream dependency and should run alongside `C-01`/`C-02a`. `C-05` likewise
+has no upstream dependency and may run in parallel, but it is **not**
+dependency-free downstream: it is a hard predecessor of any new REPOSITORY
+admission (`blueinternal`, `wave-api`) and therefore of the `≥ 900` operations
+metric. It is **not** a predecessor of C-02a's `blueapi/openapiv2` root
+admission. `C-04` and `C-15b` parallel the C-02b→C-03 leg; `C-15a` ships with
+C-01. `C-09` parallels C-06.
 
 **Deliberately deferred:** `C-07` waits for both C-06 and C-08 so that
 generated targets are proven *and* bound — generating targets earlier would
@@ -362,6 +385,43 @@ planned.
 > C-02's Dependencies line says C-01 only, the prose says C-05 has no upstream
 > dependency, and the critical path omits C-05. C-05 is a genuine predecessor
 > of any reach beyond `blueapi/billing`. Resolve to one statement.
+>
+> **`F-29` RESOLVED — post-C-01 planning-truth maintenance.** The contradiction
+> dissolves once "admission" is split at the boundary the code actually
+> enforces. `createApprovedRealSourceScanConfig`
+> (`src/core/source/approvedScan.ts:26`) admits a repository only if it is
+> already an `IN_SCOPE` member of `RIPPLE_REPOSITORIES`
+> (`src/core/changeIntelligence/map.ts`) **and** carries an `APPROVED_ROOTS`
+> entry; otherwise it throws `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`. Roots are
+> validated and path-confined per repository, and the file/byte budgets are
+> per-repository ceilings that compose additively — "there is no single global
+> ceiling to report" (`src/core/source/scan.ts`, inventory-completeness
+> aggregation). There is no shared universe-level budget to re-architect.
+> Therefore:
+>
+> - **A new ROOT inside an already-admitted REPOSITORY is a bounded per-root
+>   change and belongs to C-02a.** `alphauslabs/blueapi` is already admitted
+>   with `allowlistedRoots: ['billing']`; adding `'openapiv2'` is one element
+>   of owner-approved data, is parsed by the existing `parseOpenApiRoutes`
+>   (`.json` → `OPENAPI`), and needs no universe machinery. **C-02a may admit
+>   `blueapi/openapiv2` under its own explicit owner authorization. C-05 is
+>   NOT a predecessor for it.**
+> - **A new REPOSITORY in the universe is a universe-level change and belongs
+>   to C-05.** `alphauslabs/blueinternal` is absent from `RIPPLE_REPOSITORIES`
+>   entirely, so admitting `blueinternal/openapiv2` requires a new hand-written
+>   universe literal carrying persisted mutable git state (`checkedOutSha`,
+>   `trackingSha`, `ahead`, `behind`, `dirty`) — precisely the hand-written
+>   literals and persisted git state C-05 is chartered to replace. **C-05 MUST
+>   precede `blueinternal/openapiv2`, `wave-api`, and the `≥ 900` operations
+>   metric.**
+>
+> Read at that granularity the second review is exactly right and not in
+> conflict with itself: reach beyond `billing` *within* `blueapi` is C-02a;
+> reach beyond `blueapi` is C-05. The revised critical path
+> `C-00 → C-01 → C-02a → C-06(PHP) → C-10 → C-11 → C-12 → C-13 → C-14` stands
+> unchanged, C-05 stays off it, and C-05 gains one hard outgoing edge:
+> `C-05 → {blueinternal, wave-api, ≥ 900 operations}`. C-02a's `blueinternal`
+> clause is moved behind that edge; its `blueapi` clause is not.
 >
 > **C-03 is not on the production critical path (`F-31`).** `W-EFFECT_RPC`
 > needs *method*-level RPC → Go handler binding over a **completely enumerated**
