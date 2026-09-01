@@ -2679,7 +2679,7 @@ The bounded terminal result is
 weakened, no candidate was manufactured, and no product finding is claimed.
 Safety counters remained zero and privacy was `PASS`. Final local and clean
 Node20 quality gates passed at
-`d4883ebf8795266a82a037258cdb14a40c063bc1`; the project verdict remains
+`5383428710076ad8c645a86d7d282409d3642ba8`; the project verdict remains
 `OPERATIONALLY_ACCEPTED` through `PROJECT_VERDICT_EFFECT: PRESERVE`.
 No further DEV attempt is authorized for this task. No alternate credentials,
 predecessor checkpoints, historical candidates, stale manifests,

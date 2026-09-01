@@ -178,9 +178,9 @@ Status: COMPLETE
 
 Final continuity, handoff, project-truth, hardening, privacy, local-quality,
 clean-Node20, diff, and hygiene checks passed at documentation checkpoint
-`d4883ebf8795266a82a037258cdb14a40c063bc1`. The local quality receipt is
-`receipt:sha256:ffc933146fa403fa99478e1f`; the clean Node20 receipt is
-`clean-receipt:sha256:666d335db69307569208e391`. The task closes with the
+`5383428710076ad8c645a86d7d282409d3642ba8`. The local quality receipt is
+`receipt:sha256:e6187a7406a0897d05520756`; the clean Node20 receipt is
+`clean-receipt:sha256:47248695a1e055d24399ce46`. The task closes with the
 truthful terminal result `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`.
 Exact-head Actions remains external non-evidence because its observed job
 executed zero steps.
