@@ -6,7 +6,7 @@ Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 Status: COMPLETE
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
+Last validated implementation SHA: 60964864cae2ef50361f36d421fdddb4fb8ff683
 
 ## Scope
 
