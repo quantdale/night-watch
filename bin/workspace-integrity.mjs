@@ -22,15 +22,58 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
 export const WORKSPACE_INTEGRITY_SCHEMA = 'nightwatch.workspace-integrity-report.v1';
 export const WORKSPACE_SESSION_SCHEMA = 'nightwatch.workspace-session.v1';
 
-const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// This module deliberately uses NO `import.meta`: it is imported by
+// bin/agent-state.mjs, which is in turn imported by a TypeScript test through
+// Playwright's CommonJS transform, where `import.meta` is a syntax error.
 const POLICY_RELATIVE_PATH = 'config/workspace-integrity.v1.json';
 const GIT_TIMEOUT_MS = 20_000;
 const GIT_MAX_BUFFER = 8 * 1024 * 1024;
+
+/**
+ * Fail-safe policy for a repository that carries no committed policy file —
+ * a disposable synthetic fixture, or a foreign checkout being inspected. It
+ * mirrors config/workspace-integrity.v1.json exactly; `hardening:check`
+ * asserts the committed file's values independently, and deleting the
+ * committed file is itself caught by the declared-deletion gate.
+ */
+const DEFAULT_POLICY = Object.freeze({
+  schemaVersion: 'nightwatch.workspace-integrity.v1',
+  policyName: 'Nightwatch C-00 built-in default policy',
+  sessionRecordSchema: WORKSPACE_SESSION_SCHEMA,
+  sessionRecordFile: 'nightwatch-session.v1.json',
+  canonical: Object.freeze({
+    branch: 'main',
+    remote: 'origin',
+    sessionBranchPrefix: 'session/',
+    mayHostImplementationSession: false,
+    requireCleanWhenSessionLive: true,
+  }),
+  indexFlagPolicy: Object.freeze({
+    allowedTags: Object.freeze(['H', 'M', 'R', 'C', 'K', '?']),
+    skipWorktreeTags: Object.freeze(['S', 's']),
+    maxReportedExamples: 8,
+  }),
+  excludePolicy: Object.freeze({
+    allowedEffectivePatterns: Object.freeze([]),
+    maxBytes: 8192,
+    maxLines: 128,
+  }),
+  hookPolicy: Object.freeze({ allowedSuffix: '.sample', requireUnsetHooksPath: true, maxEntries: 64 }),
+  worktreePolicy: Object.freeze({
+    maxWorktrees: 8,
+    maxRecordBytes: 4096,
+    allowedRoles: Object.freeze(['IMPLEMENTATION', 'MAINTENANCE']),
+    allowedOwnershipStates: Object.freeze(['OWNED', 'RELEASED']),
+    allowedIntegrationStates: Object.freeze(['NOT_INTEGRATED', 'INTEGRATED']),
+    requireOwnerRecordForLinkedWorktree: true,
+    pruneIsOwnerDecision: true,
+  }),
+  deletionPolicy: Object.freeze({ declaredDeletionHeading: '## Declared Deletions', maxReportedExamples: 16 }),
+});
 
 const WORKTREE_CLASSES = Object.freeze([
   'CANONICAL_MAIN',
@@ -106,17 +149,14 @@ function readTextIfPresent(file, maxBytes) {
   }
 }
 
-export function loadPolicy(root = MODULE_ROOT) {
-  const candidates = [path.join(root, POLICY_RELATIVE_PATH), path.join(MODULE_ROOT, POLICY_RELATIVE_PATH)];
-  for (const candidate of candidates) {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8'));
-      if (parsed?.schemaVersion === 'nightwatch.workspace-integrity.v1') return parsed;
-    } catch {
-      // try the next candidate
-    }
+export function loadPolicy(root) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(root, POLICY_RELATIVE_PATH), 'utf8'));
+    if (parsed?.schemaVersion === 'nightwatch.workspace-integrity.v1') return { policy: parsed, source: 'REPOSITORY' };
+    return { policy: null, source: 'REPOSITORY_INVALID' };
+  } catch {
+    return { policy: DEFAULT_POLICY, source: 'BUILT_IN_DEFAULT' };
   }
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -631,9 +671,13 @@ export function inspectWorkspace(options = {}) {
     };
   }
   const root = path.resolve(toplevel);
-  const policy = options.policy ?? loadPolicy(root);
+  const loaded = options.policy === undefined
+    ? loadPolicy(root)
+    : { policy: options.policy, source: 'SUPPLIED' };
+  const policy = loaded.policy;
+  const policySource = loaded.source;
   if (policy === null) {
-    errors.push({ code: 'WORKSPACE_POLICY_MISSING', detail: `${POLICY_RELATIVE_PATH} is missing or unsupported` });
+    errors.push({ code: 'WORKSPACE_POLICY_INVALID', detail: `${POLICY_RELATIVE_PATH} does not declare the supported schema version` });
   }
   const rawCommonDir = gitValue(root, ['rev-parse', '--git-common-dir']) ?? '.git';
   const commonDir = path.resolve(root, rawCommonDir);
@@ -798,6 +842,7 @@ export function inspectWorkspace(options = {}) {
     },
     errors,
     warnings,
+    policySource,
     gitDirIsLinked: gitDir !== commonDir,
   };
 }
@@ -875,7 +920,7 @@ function main() {
   if (parsed.command === 'check' && report.verdict === 'FAIL') process.exitCode = 1;
 }
 
-if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
+if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'workspace-integrity.mjs') {
   main();
 }
 

@@ -16,7 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+
 import {
   WORKSPACE_SESSION_SCHEMA,
   bootDigest,
@@ -71,7 +71,7 @@ function resolveContext(root) {
   const gitDir = path.resolve(resolved, gitValue(resolved, ['rev-parse', '--git-dir']) ?? '.git');
   const isLinked = gitDir !== commonDir;
   const worktreeName = isLinked ? path.basename(gitDir) : null;
-  return { root: resolved, commonDir, gitDir, isLinked, worktreeName, policy: loadPolicy(resolved) };
+  return { root: resolved, commonDir, gitDir, isLinked, worktreeName, policy: loadPolicy(resolved).policy };
 }
 
 function buildRecord({ taskId, campaignId, role, branch, baseSha, anchorPid = null }) {
@@ -448,7 +448,7 @@ function main() {
   else if (options.command === 'remove') commandRemove(context, options);
 }
 
-if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
+if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'nightwatch-session.mjs') {
   main();
 }
 

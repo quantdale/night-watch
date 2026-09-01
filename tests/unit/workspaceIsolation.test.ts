@@ -783,6 +783,36 @@ test.describe('C-00 diagnostics contract', () => {
     }
   });
 
+  test('a repository with the committed policy reports REPOSITORY as the policy source', () => {
+    const { base, canonical } = fixture();
+    try {
+      expect(integrityJson(canonical).report.policySource).toBe('REPOSITORY');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('a foreign repository without the committed policy falls back to the built-in default', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c00-foreign-'));
+    try {
+      gitOk(base, ['init', '-b', 'main']);
+      fs.writeFileSync(path.join(base, 'file.txt'), 'foreign repository\n');
+      gitOk(base, ['add', '.']);
+      gitOk(base, ['commit', '-m', 'foreign base']);
+      const { report, status } = integrityJson(base);
+      expect(status).toBe(0);
+      expect(report.verdict).toBe('PASS');
+      expect(report.policySource).toBe('BUILT_IN_DEFAULT');
+      // The fallback is not a weakening: the same invariants still fire.
+      gitOk(base, ['update-index', '--skip-worktree', 'file.txt']);
+      const failed = integrityJson(base);
+      expect(failed.status).toBe(1);
+      expect(codes(failed.report)).toContain('WORKSPACE_FORBIDDEN_INDEX_FLAG');
+    } finally {
+      fs.rmSync(base, { recursive: true, force: true });
+    }
+  });
+
   test('the inspection core is deterministic across repeated runs', () => {
     const { base, canonical } = fixture();
     try {
