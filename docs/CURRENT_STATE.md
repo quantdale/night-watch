@@ -120,11 +120,13 @@ C-00 replaces "incidentally clean" with "mechanically enforced":
   the session worktree, serialized by the remote compare-and-swap, verified
   afterwards, never forced; no lease exists, by decision (D-103).
 
-`tests/unit/workspaceIsolation.test.ts` is a 36-case adversarial matrix over
+`tests/unit/workspaceIsolation.test.ts` is a 39-case adversarial matrix over
 hazard classes A–L, executed on disposable synthetic repositories inside the
-required synthetic campaign. Two defects were found by the matrix itself and
-repaired: an invalid `git merge --no-rebase` invocation, and a reconcile path
-that reported every merge failure as a conflict.
+required synthetic campaign. Eight defects were found and repaired during the
+campaign, including an invalid `git merge --no-rebase` invocation, a reconcile
+path that reported every merge failure as a conflict, two surfaces that derived
+the sibling REPOSITORIES root from their own checkout location, and a
+stale-base advisory raised for an already-released claim.
 
 C-00 granted no new product or runtime authority, contacted no environment,
 and modified no sibling company repository.

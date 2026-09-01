@@ -12,7 +12,7 @@ field.
 
 ## 2. Final implementation SHA
 
-`7d95958` lineage; the exact validated implementation checkpoint is recorded in
+`24220965fb3bacd0fd6e7d7826a40c1ec0428efc`; also recorded in
 `STATE.md` (`LAST_VALIDATED_IMPLEMENTATION_SHA`) and integrated into canonical
 `main` by fast-forward push.
 
@@ -157,7 +157,7 @@ implementation authority.
 
 ## 10. Adversarial test results
 
-`tests/unit/workspaceIsolation.test.ts` — **38 cases, all passing**, on
+`tests/unit/workspaceIsolation.test.ts` — **39 cases, all passing**, on
 disposable synthetic repositories only (an upstream bare repo plus a canonical
 clone plus session worktrees, all inside the test's own temporary directory).
 The canonical Nightwatch checkout, live session worktrees, and sibling company
@@ -182,7 +182,8 @@ repositories are never used as destructive targets.
 ## 11. Full validation results
 
 At implementation checkpoint `8c333699cdfa373e536d1f8ba990b7f8c1812679` (the
-subsequent commit `7d95958` repaired DEF-06 and was revalidated):
+subsequent commits repaired DEF-06 through DEF-08 and were revalidated; the
+final validated implementation checkpoint is `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`):
 
 - `npm run gate:local` — **PASS**, all 11 groups; receipt
   `receipt:sha256:ce66284f03146d9be522bff3`.
@@ -253,6 +254,20 @@ named as the baseline reproduced exactly.
   `NIGHTWATCH_REPOS_ROOT`, with a `hardening:check` guard against regression.
   This is a direct consequence of the isolation model and would have silently
   mis-resolved sibling sources in every future session.
+- **DEF-07** — base-staleness advisories were computed from any ownership
+  record, so a *released* record whose historical base had been overtaken by
+  `origin/main` raised `WORKSPACE_BASE_STALE` — advice to reconcile work that
+  was already closed. Repaired: staleness is evaluated only for a live claim,
+  with a permanent regression case. Found while auditing the closure state of
+  this campaign's own canonical maintenance claim.
+- **DEF-08** — `.gitignore`'s `node_modules/` rule does not match a
+  `node_modules` *symlink*, so sharing one dependency install across worktrees
+  can be tracked by an ordinary `git add -A`. It was: this session's own first
+  commit tracked the symlink. Repaired by installing dependencies in the
+  session worktree and by a `hardening:check` rule that rejects any tracked
+  path inside a dependency tree. The bad commit was this session's own,
+  unpushed, and was corrected before integration; no other session's history
+  was touched.
 
 ## 14. Remaining concurrency residual risks
 

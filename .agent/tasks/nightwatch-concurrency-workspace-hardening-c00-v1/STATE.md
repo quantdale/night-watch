@@ -6,13 +6,13 @@ Task ID: nightwatch-concurrency-workspace-hardening-c00-v1
 Phase: CONCURRENCY_WORKSPACE_HARDENING_C00_V1
 Status: COMPLETE
 Starting SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
-Last validated implementation SHA: 7d95958dd759eeee603cb6e3842a9a03a24773f6
-Last substantive checkpoint SHA: 7d95958dd759eeee603cb6e3842a9a03a24773f6
+Last validated implementation SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
+Last substantive checkpoint SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
 Branch: session/c00-a396cd1f
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7d95958dd759eeee603cb6e3842a9a03a24773f6
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7d95958dd759eeee603cb6e3842a9a03a24773f6
+LAST_VALIDATED_IMPLEMENTATION_SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -77,7 +77,7 @@ Measured read-only at `2517c26a019bbf8aa53008cd57658b917cc79bea`:
 - M6 — lease decision: none implemented; analysis recorded (D-103).
 - M7 — integration into `agent:check`, `handoff:check`, `hardening:check`, the
   required `WORKSPACE_INTEGRITY` gate group, and four npm entry points.
-- M8 — adversarial matrix A–L: 38 deterministic cases on disposable synthetic
+- M8 — adversarial matrix A–L: 39 deterministic cases on disposable synthetic
   repositories, proving both failure and repaired-green for every class.
 - M9 — pinned pre-C-01 baseline recorded in `docs/design/PRE-C01-BASELINE.md`
   at clean SHA `886d8362b6f0979ccdfc2881abb46cb5ac79b359`.
@@ -180,7 +180,7 @@ No sibling company repository was modified. No tracked file was deleted, so the
 
 ## Discoveries
 
-DEF-01 … DEF-06 are recorded in full in `REPORT.md` §13, with the residual
+DEF-01 … DEF-08 are recorded in full in `REPORT.md` §13, with the residual
 concurrency risks RES-1 … RES-6 in §14. The load-bearing discoveries:
 
 - Independent review §11 item 2 is mechanically wrong twice: index flags are
@@ -219,10 +219,10 @@ is a NEW task with a NEW session worktree created through
 - Status: COMPLETE. All ten milestones closed; every acceptance criterion in
   `SPEC.md` met.
 - Validated implementation checkpoint:
-  `7d95958dd759eeee603cb6e3842a9a03a24773f6`.
+  `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`.
 - Local quality gate: PASS, 11/11 required groups.
 - Clean Node 20 quality gate: PASS, 11/11 required groups.
-- Adversarial matrix A–L: 38/38 on disposable synthetic repositories.
+- Adversarial matrix A–L: 39/39 on disposable synthetic repositories.
 - Full regression parity: 2,748 / 2,735 / 13 / 0 against a canonical baseline
   of 2,710 / 2,697 / 13 / 0; the delta is exactly the new C-00 cases.
 - Pinned pre-C-01 baseline recorded with reproduced digests
@@ -233,9 +233,13 @@ is a NEW task with a NEW session worktree created through
   only; live heads are discovered from Git, not persisted here.
 - Project verdict effect: PRESERVE. C-00 granted no new product or runtime
   authority.
-- Six defects found and repaired; six residual concurrency risks recorded
+- Eight defects found and repaired; six residual concurrency risks recorded
   rather than hidden.
 - External CI: not run, not claimed green.
+- DEF-07 (stale-base advisory for a released claim) and DEF-08 (a tracked
+  dependency symlink in this session's own unpushed commit) were found during
+  closure, repaired at `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`, and each
+  carries a permanent mechanical guard.
 - Closure, measured after integration: canonical
   `HEAD == origin/main == 5567e249dcf5e0f31c92a4f1a08f7001caa2f1f0`; canonical
   worktree clean; exactly one registered worktree; local and remote branch
