@@ -151,6 +151,21 @@ page-readable validation before a new current-source campaign can be prepared.
   and after, no auth/finding state, 0 sibling writes, gate receipt
   `receipt:sha256:8a14aeb6bfe6e58030f29ac7`, clean receipt
   `clean-receipt:sha256:be6079cbbea65fa793fbdf4d`.
+- Final `npm run agent:check -- --root .`, `npm run handoff:check -- --root .`,
+  `npm run project:check`, `npm run hardening:check`, `npm run hygiene:status`,
+  and `git diff --check` at `9f0d9a2683b7c3129894f851815035c1905ad03b` — PASS;
+  continuity has 0 strict errors, handoff/project truth are valid, hardening
+  passes, hygiene is `PRESERVED`, and the current tree is clean.
+- Final `npm run gate:local` at `9f0d9a2683b7c3129894f851815035c1905ad03b` —
+  PASS; all 10 required groups, Node 22, semantic compatibility 1,937/1,950
+  with 13 skipped and 0 failed, owner provenance 91, synthetic campaign 89,
+  receipt `receipt:sha256:099b82a26abb27c5c3ad216f`.
+- Final `npm run gate:clean` from source head
+  `9f0d9a2683b7c3129894f851815035c1905ad03b` — PASS; fresh Node 20
+  dependencies and all 10 groups passed, clean before and after, no auth or
+  finding state, 0 sibling writes, gate receipt
+  `receipt:sha256:ef0fd4f48bfbc0fc684f61ab`, clean receipt
+  `clean-receipt:sha256:8ebbf16dd46294899dcea6c1`.
 
 ## Decisions Made During This Task
 
@@ -212,9 +227,10 @@ sibling write occurred.
   condition above.
 - CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
   no repository workflow step executed and CI PASS is not claimed.
-- Continuity/project reconciliation, safety/privacy audit, generated-artifact
-  inspection, terminal documentation, push, and final remote-parity checks
-  remain required after this continuation's state update.
+- Final continuity/project reconciliation, safety/privacy, generated-artifact
+  inspection, and terminal documentation validation passed at the final
+  continuation head. Checkpoint push and final remote-parity verification
+  remain.
 
 ## Resume Recipe
 
@@ -234,9 +250,9 @@ Validated result: pushed implementation checkpoint
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` passes the focused 92-test
 campaign/checkpoint cone, local gate, clean Node20 gate, typecheck, hardening,
 handoff, project, semantic compatibility, owner provenance, and synthetic
-campaign checks. The continuation documentation checkpoint
-`66c41a2a0953d920ebd97ade76fde2e83d016874` also passed project truth and both
-authoritative local/clean gates.
+campaign checks. The final continuation head
+`9f0d9a2683b7c3129894f851815035c1905ad03b` also passed the explicit
+continuity, handoff, project, safety, privacy, local, and clean Node20 gates.
 CI result: exact-head run `33446473458` failed before any job step and is
 classified as external non-evidence.
 DEV result: after the owner refresh, the normal no-refresh prepare-only path
