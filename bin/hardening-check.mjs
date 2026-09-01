@@ -1778,6 +1778,13 @@ function checkC00WorkspaceIntegrity() {
   if (!packageJson.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
   const agents = read('AGENTS.md');
   if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
+  // C-00 consequence: `.gitignore`'s `node_modules/` rule does not match a
+  // `node_modules` SYMLINK, so sharing an install between worktrees can be
+  // tracked by an ordinary `git add -A`. A session worktree installs its own
+  // dependencies; the dependency tree is never a tracked path.
+  for (const file of gitFiles()) {
+    if (/(?:^|\/)node_modules(?:\/|$)/.test(file)) fail(`dependency tree must never be tracked: ${file}`);
+  }
   // C-00 consequence: a writing agent's worktree lives outside the workspace
   // tree, so the REPOSITORIES root must never be derived from this checkout's
   // own location. These two surfaces previously did exactly that and broke in

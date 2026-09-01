@@ -654,6 +654,33 @@ test.describe('C-00 adversarial matrix — stale sessions and recovery', () => {
     }
   });
 
+  test('a released claim keeps its historical base without raising a stale-base advisory', () => {
+    const { base, canonical, upstream } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      expect(session(owned.path, ['release']).status).toBe(0);
+
+      // Canonical main advances after the session closed.
+      const other = path.join(base, 'other');
+      gitOk(base, ['clone', upstream, other]);
+      fs.writeFileSync(path.join(other, 'later.txt'), 'later work\n');
+      gitOk(other, ['add', 'later.txt']);
+      gitOk(other, ['commit', '-m', 'later work']);
+      gitOk(other, ['push', 'origin', 'HEAD:refs/heads/main']);
+      gitOk(canonical, ['fetch', 'origin', 'main']);
+
+      const { report } = integrityJson(owned.path);
+      expect(report.self.class).toBe('STALE_SESSION');
+      expect(report.self.baseSha).not.toBeNull();
+      expect(report.bootstrapAnswers.baseState).toBe('UNKNOWN');
+      const advisories = (report.warnings ?? []).map((warning: { code: string }) => warning.code);
+      expect(advisories).not.toContain('WORKSPACE_BASE_STALE');
+      expect(advisories).not.toContain('WORKSPACE_BASE_DIVERGED');
+    } finally {
+      cleanup(base);
+    }
+  });
+
   test('K. recovery never deletes a live session, and unmerged work is protected', () => {
     const { base, canonical } = fixture();
     try {

@@ -627,7 +627,10 @@ function checkIntegrationReadiness(root, self, policy, warnings) {
   const remoteMain = gitValue(root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${branch}`]);
   const headSha = gitValue(root, ['rev-parse', 'HEAD']);
   let baseState = 'UNKNOWN';
-  const baseSha = self?.record?.baseSha ?? null;
+  // Base staleness only matters for a LIVE claim that may still integrate. A
+  // released record keeps its historical base for audit and must not raise a
+  // reconciliation advisory for work that is already closed.
+  const baseSha = self !== null && self.holderLive ? (self.record?.baseSha ?? null) : null;
   if (remoteMain !== null && baseSha !== null) {
     if (baseSha === remoteMain) baseState = 'CURRENT';
     else if (git(root, ['merge-base', '--is-ancestor', baseSha, remoteMain]).ok) baseState = 'STALE';
