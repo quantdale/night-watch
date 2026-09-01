@@ -57,6 +57,9 @@ import {
 } from './surfaceTypes';
 import { sourceEvidenceProvenance, type SourceEvidenceProvenance } from './generatedArtifact';
 import { coverageStateForCompleteness, isComplete, worstCompleteness, type SourceCompletenessState } from './completeness';
+import { analyzePhpEffectClosure, type PhpClosureEntrypoint, type PhpEffectClosureProof } from './phpEffectClosure';
+import { parsePhpRouteMiddlewareFlags, parsePhpRoutePipelineModel, resolvePhpRoutePipeline, type PhpResolvedRoutePipeline, type PhpRouteMiddlewareFlags, type PhpRoutePipelineModel } from './phpPipeline';
+import { buildReadOnlyProof, readOnlyClassificationFromProof, type ReadOnlyProof } from './readOnlyProof';
 
 const SAFE_HANDLER_RE = /^[A-Za-z_][A-Za-z0-9_$\\.-]{0,159}$/;
 const SAFE_REFERENCE_RE = /^src\/[A-Za-z0-9._/-]{1,239}\.(?:php|json|ya?ml|tsx?|jsx?|go)$/i;
@@ -79,6 +82,10 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 export const MAX_PROJECTED_OPERATIONS = 4096;
 const ROUTE_FILE_RE = /(?:Routing\.ya?ml|routes?\.(?:json|ya?ml)|openapi\.json|swagger\.json)$/i;
 const SOURCE_VERSION = 'nightwatch.real-source-surface-descriptor.v3';
+/** The Slim-style route provider is located structurally, never by a
+ * hand-maintained per-repository path. Zero or several matches leave the
+ * pipeline model unresolved, which fails closed. */
+const ROUTE_PROVIDER_RE = /(?:^|\/)Route\/Providor\/RouteProvidor\.php$/;
 
 export interface SourceSurfaceDiscovery {
   readonly inventory: RealSourceSnapshotInventory;
@@ -176,13 +183,13 @@ function runtimeBinding(repoId: string, sourceSha: string, routeTemplate: string
   return { operation, ambiguous: false, stale: operation !== null && operation.sourceSHA !== sourceSha };
 }
 
-function readOnlyClassification(routeMethod: SourceOperationMethod, binding: RuntimeMatch): SourceReadOnlyClassification {
-  if (binding.ambiguous) return 'AMBIGUOUS';
-  if (binding.operation?.semanticClass === 'KNOWN_MUTATION') return 'PROVEN_MUTATION_CAPABLE';
-  if (routeMethod !== 'GET') return 'PROVEN_MUTATION_CAPABLE';
-  if (binding.operation?.semanticClass === 'KNOWN_READ' && !binding.stale) return 'PROVEN_READ_ONLY';
-  return 'READ_ONLY_METHOD_ONLY';
-}
+// C-06 — the hand-authored eleven-row operation catalog is no longer a
+// read-only classifier. `runtimeBinding` above still joins it, because a
+// runtime binding is a different fact from a read-only property; but no
+// `semanticClass` value can produce `PROVEN_READ_ONLY` any more. Read-only
+// classification is derived at the post-join proof stage of
+// `discoverSourceSurfaces` by `buildReadOnlyProof`, from the route's resolved
+// middleware pipeline and its bounded effect closure.
 
 function parseYamlRoutes(sourcePath: string, sourceText: string): readonly ParsedRoute[] {
   const lines = sourceText.split(/\r?\n/);
@@ -365,7 +372,10 @@ function routeOperation(source: { readonly repoId: string; readonly sha: string 
     transport: 'HTTP_API',
     routeProof: route.routeProof,
     routeRejectionReason: route.routeRejectionReason,
-    readOnlyClassification: readOnlyClassification(route.method, binding),
+    // Provisional. A parse-time descriptor has read no handler, no middleware
+    // and no join, so it cannot carry a read-only property. The proof stage
+    // replaces this with the projection of the assembled proof.
+    readOnlyClassification: 'UNSUPPORTED',
     runtimeBinding: bindingState,
     targetId: binding.operation?.operationId ?? null,
     deploymentStatusUnresolved: true,
@@ -722,7 +732,7 @@ function lifecycle(operation: SourceOperationDescriptor, contract: SourceContrac
   return 'MECHANICALLY_PROVEN';
 }
 
-function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence, sourceEvidence: SourceEvidenceProvenance): RealSourceSurfaceDescriptor {
+function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence, sourceEvidence: SourceEvidenceProvenance, readOnlyProof: ReadOnlyProof): RealSourceSurfaceDescriptor {
   const component = componentProvenance(operation);
   const exclusion = exclusionReasons(operation, contract, component, joins);
   const surfaceId = safeSemanticDigest({ operationId: operation.operationId, sourcePath: operation.sourcePath, route: operation.routeTemplate, method: operation.method }, 'surface');
@@ -743,6 +753,7 @@ function descriptor(operation: SourceOperationDescriptor, source: { readonly rep
     differentialCapability: 'UNPROVEN' as const,
     exclusionReasons: exclusion,
     sourceEvidence,
+    readOnlyProof,
   };
   return { ...core, deterministicDigest: safeSemanticDigest(core, 'surface-descriptor') };
 }
@@ -911,6 +922,73 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   const responseFlowIndexStartedAt = Date.now();
   const responseFlowIndex = createResponseFlowIndex({ access: scopedAccess, inventory });
   const responseFlowIndexElapsedMs = Math.max(0, Date.now() - responseFlowIndexStartedAt);
+
+  // --- C-06 read-only proof stage ---------------------------------------
+  // Every read below goes through the same call-scoped view as the rest of
+  // discovery, and every file is re-checked against the inventory's own
+  // content digest, so a proof can never be decided over stale bytes.
+  const currentSource = (repoId: string, relativePath: string): string | null => {
+    const record = inventory.files.find((file) => file.repoId === repoId && file.relativePath === relativePath);
+    if (record === undefined || record.status !== 'ELIGIBLE' || record.contentDigest === null) return null;
+    const sourceText = scopedAccess.reader.readFile(repoId, relativePath);
+    if (sourceText === null || sourceContentDigest(sourceText) !== record.contentDigest) return null;
+    return sourceText;
+  };
+  const pipelineModels = new Map<string, PhpRoutePipelineModel>();
+  const pipelineModelFor = (repoId: string): PhpRoutePipelineModel => {
+    const cached = pipelineModels.get(repoId);
+    if (cached !== undefined) return cached;
+    const candidates = inventory.files.filter((file) => file.repoId === repoId && file.status === 'ELIGIBLE' && ROUTE_PROVIDER_RE.test(file.relativePath));
+    const only = candidates.length === 1 ? candidates[0]! : null;
+    const model = parsePhpRoutePipelineModel({
+      providerPath: only?.relativePath ?? 'UNRESOLVED',
+      providerSource: only === null ? null : currentSource(repoId, only.relativePath),
+    });
+    pipelineModels.set(repoId, model);
+    return model;
+  };
+  const routeFlags = new Map<string, PhpRouteMiddlewareFlags>();
+  const routeFlagsFor = (repoId: string, relativePath: string): PhpRouteMiddlewareFlags => {
+    const key = `${repoId}|${relativePath}`;
+    const cached = routeFlags.get(key);
+    if (cached !== undefined) return cached;
+    const sourceText = currentSource(repoId, relativePath);
+    const flags: PhpRouteMiddlewareFlags = sourceText === null ? { defaults: null, overrides: new Map() } : parsePhpRouteMiddlewareFlags(sourceText);
+    routeFlags.set(key, flags);
+    return flags;
+  };
+  const repositoryEnumeration = (repoId: string): SourceCompletenessState =>
+    inventory.completeness.repositories.find((entry) => entry.repoId === repoId)?.enumeration.state ?? 'UNKNOWN';
+  const surfaceReadOnlyProof = (operation: SourceOperationDescriptor, handlerState: SourceJoinState): ReadOnlyProof => {
+    let pipeline: PhpResolvedRoutePipeline | null = null;
+    let closure: PhpEffectClosureProof | null = null;
+    // The PHP lane is the only effect lane C-06 implements. A route in any
+    // other language reaches the proof with no effect witness at all, which
+    // is an absence, not a pass.
+    if (operation.language === 'YAML' && operation.handlerPath !== null && operation.handlerSymbol !== null) {
+      pipeline = resolvePhpRoutePipeline({
+        model: pipelineModelFor(operation.repository),
+        flags: routeFlagsFor(operation.repository, operation.sourcePath),
+        method: operation.method,
+        routeTemplate: operation.routeTemplate,
+      });
+      if (pipeline.state === 'RESOLVED') {
+        const entrypoints: PhpClosureEntrypoint[] = [
+          ...pipeline.middleware.map((attachment) => ({ relativePath: attachment.relativePath, symbol: attachment.symbol, role: 'MIDDLEWARE' as const })),
+          { relativePath: operation.handlerPath, symbol: operation.handlerSymbol, role: 'HANDLER' as const },
+        ];
+        closure = analyzePhpEffectClosure({ entrypoints, resolver: { read: (relativePath) => currentSource(operation.repository, relativePath) } });
+      }
+    }
+    return buildReadOnlyProof({
+      method: operation.method,
+      routeProof: operation.routeProof,
+      joinState: handlerState,
+      inventoryCompleteness: repositoryEnumeration(operation.repository),
+      pipeline,
+      closure,
+    });
+  };
   let routeFilesConsidered = 0;
   let routeOperationsTruncated = 0;
   let analyzerInvocations = 0;
@@ -1011,7 +1089,9 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     const key = `${operation.repository}|${operation.sourcePath}`;
     artifactOperationCounts.set(key, (artifactOperationCounts.get(key) ?? 0) + 1);
   }
-  for (const operation of operations) {
+  const readOnlyProofs: ReadOnlyProof[] = [];
+  for (let operationIndex = 0; operationIndex < operations.length; operationIndex += 1) {
+    const operation = operations[operationIndex]!;
     const joins = resolveSurfaceJoins({ access: scopedAccess, inventory, operation });
     const analysis = observationsFor({ access: scopedAccess, inventory, operation, handlerState: joins.handlerState, responseFlowIndex });
     responseFlowResolveElapsedMs += analysis.responseFlowElapsedMs;
@@ -1032,7 +1112,14 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
       relativePath: operation.sourcePath,
       artifactOperationCount: artifactOperationCounts.get(`${operation.repository}|${operation.sourcePath}`) ?? 0,
     });
-    surfaces.push(descriptor(operation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins, ...openApiDefinitionJoins(operation, responseDefinitions)], contract, provenance));
+    // The read-only property is decided HERE, after the join and with the
+    // handler, middleware and inventory in hand — never at parse time, and
+    // never from an operation catalog.
+    const readOnlyProof = surfaceReadOnlyProof(operation, joins.handlerState);
+    readOnlyProofs.push(readOnlyProof);
+    const provenOperation: SourceOperationDescriptor = { ...operation, readOnlyClassification: readOnlyClassificationFromProof(readOnlyProof) };
+    operations[operationIndex] = provenOperation;
+    surfaces.push(descriptor(provenOperation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins, ...openApiDefinitionJoins(operation, responseDefinitions)], contract, provenance, readOnlyProof));
   }
   surfaces.sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
   const gapTaxonomy = buildSourceGapTaxonomy({ inventory, surfaces });

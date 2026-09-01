@@ -1,3 +1,4 @@
+import { provenReadOnlyProof } from '../helpers/readOnlyProofFixtures';
 import { expect, test } from '@playwright/test';
 import {
   projectCampaignCoverage,
@@ -174,7 +175,7 @@ function campaignCoverage(): CampaignCoverageReport {
 
 function sourceSurface(): RealSourceSurfaceDescriptor {
   return {
-    schemaVersion: 'nightwatch.real-source-surface-descriptor.v4',
+    schemaVersion: 'nightwatch.real-source-surface-descriptor.v5',
     surfaceId: 'surface-1',
     targetId: 'target-1',
     operation: {
@@ -238,6 +239,7 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
       generationCurrency: null,
       productionAdmission: { state: 'NOT_DENIED_BY_EVIDENCE_CLASS', denialCodes: [] },
     },
+    readOnlyProof: provenReadOnlyProof(),
     deterministicDigest: `surface:sha256:${'f'.repeat(24)}`,
   };
 }

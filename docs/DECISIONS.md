@@ -4091,3 +4091,54 @@ requirement so generated operations could reuse the analyzer path was rejected
 in favour of a separate, explicitly labelled `OPENAPI_RESPONSE_DEFINITION`
 proof path. Adding `blueinternal/openapiv2` alongside it was rejected: that is
 a REPOSITORY admission and belongs to C-05.
+
+## D-107 — read-only proof is rooted at the resolved pipeline, and the count is reported
+
+**Decision.** `PROVEN_READ_ONLY` is earned, per route, from the route's FULLY
+RESOLVED middleware pipeline PLUS its handler, through a bounded effect
+closure classified by a versioned data-only effect-kind vocabulary, and
+requires at least one DECLARATION witness AND at least one EFFECT witness.
+Membership in the eleven-row `PHASE5_API_CATALOG` grants nothing. The
+resulting population is REPORTED, per repository and per effect kind; it is
+never a threshold.
+
+**Why.** The previous classifier (`surfaces.ts:186-192`) reduced the question
+to "GET plus a `KNOWN_READ` catalog row", decided at parse time before any
+handler, middleware or join had been read. D-79 already reproduced two
+false-positive admissions from exactly that surface. The independent review's
+F-01 then measured the deeper defect: Ripple attaches its middleware per route
+group, so the pipeline is outside every handler closure, and
+`MarketplaceSubscriptionMiddleware.__invoke` carries no method guard and
+performs an outbound call on every request. A handler-rooted proof declares
+such a route read-only while the request leaves the analysable region.
+
+**Evidence and consequences.** Measured over the approved universe, the
+`READ_ONLY_PROVEN` population fell from **5 to 0** across 814 operations with
+zero truncation. All five were catalog-granted and two of them are the D-79
+admissions. Of 223 `ripple-api` operations, 222 are now decided
+`MUTATION_CAPABLE` — 79 disqualified solely by an outbound call, 72 by a data
+write, 71 by a cache write — and exactly one route (`get:/version`, the only
+route that opts out of `x-header`) is declared in the class form and so
+resolves no handler join at all. 6,114 distinct unclassified callee identities
+were reached; every proof that touches one is denied with
+`CALLEE_CLASSIFICATION_INCOMPLETE`, so callee-classification coverage is a
+measured, reported, promotion-blocking fact rather than an assumption. The 591
+`alphauslabs/blueapi` operations have no effect analyzer at all and remain
+single-witness: C-02a's generated-artifact route evidence grants no effect
+proof.
+
+A closure disqualified ONLY by an outbound call projects to
+`CONDITIONAL_MUTATION`, not `PROVEN_MUTATION_CAPABLE`. Nightwatch proved the
+request leaves the analysable region; it did not prove a write, and both
+values deny identically downstream.
+
+**Rejected alternatives.** Falling back to handler-only analysis when a
+pipeline cannot be resolved was rejected — that is precisely the F-01 defect.
+Binding `$this` across files to raise the count was rejected — that is
+precisely the D-79 defect. Retaining the catalog as a corroborating witness
+was rejected: a human judgement is not an independent witness to the source it
+paraphrases. Treating an identifier the vocabulary does not name as a read was
+rejected in favour of `UNCLASSIFIED`, so removing a write identifier can only
+make closures ambiguous, never proven. A numeric `≥ 200` acceptance floor was
+rejected outright: every mechanism that reduces the count is a mechanism an
+implementer under quota is incentivised to weaken.

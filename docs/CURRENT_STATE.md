@@ -195,6 +195,26 @@ The machine-checked truth block below holds only facts with a deterministic
 source; it is validated read-only by `npm run project:check`
 (`bin/project-state-check.mjs`).
 
+### C-06 — PHP read-only proof (complete)
+
+Read-only authority for `mobingilabs/ripple-api` is no longer a hand-authored
+catalog. `PROVEN_READ_ONLY` is now earned per route from the route's fully
+resolved middleware pipeline plus its handler, through a bounded effect
+closure classified by a versioned data-only effect-kind vocabulary, and
+requires one declaration witness AND one effect witness (D-107).
+
+Measured over the approved universe: the `READ_ONLY_PROVEN` population fell
+from 5 to 0 across 814 operations with zero truncation. All five were
+catalog-granted, two of them are the historical D-79 false-positive
+admissions, and 79 `ripple-api` GET routes are now positively shown to
+perform an outbound call through their resolved pipeline. 6,114 unclassified
+callee identities block promotion through `CALLEE_CLASSIFICATION_INCOMPLETE`.
+The count is reported, never targeted.
+
+The Go/gRPC effect witness (C-03), the protobuf declaration witness (C-02b)
+and the spec-derived witness (C-09) remain unimplemented and report
+`UNSUPPORTED`; their absence is never treated as a pass.
+
 ### Project-state v2 (machine-checked truth block)
 
 ```
@@ -233,13 +253,13 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-openapi-admission-c02a-v1
-LIVE_PHASE: OPENAPI_ADMISSION_C02A_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-php-readonly-proof-c06-v1
+LIVE_PHASE: PHP_READONLY_PROOF_C06_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
 
 ### Active replay-budget and dossier-closure campaign

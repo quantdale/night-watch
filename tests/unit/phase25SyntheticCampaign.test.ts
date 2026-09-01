@@ -19,6 +19,7 @@ import {
 import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces } from '../../src/core/source/surfaces';
+import { PIPELINE_DEFAULT_CONFIG_LINES, installReadOnlyPipeline } from '../helpers/phpPipelineFixture';
 
 const SOURCE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
 
@@ -32,7 +33,9 @@ function setup(): string {
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Route', 'Config'), { recursive: true });
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Handler'), { recursive: true });
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Schema'), { recursive: true });
+  installReadOnlyPipeline(repo);
   fs.writeFileSync(path.join(repo, 'src', 'App', 'Route', 'Config', 'Routing.yaml'), [
+    ...PIPELINE_DEFAULT_CONFIG_LINES,
     '"get:/accts":',
     '  client: App\\Handler\\Account',
     '  method: getAccountVendor',

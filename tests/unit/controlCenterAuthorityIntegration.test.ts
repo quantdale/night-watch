@@ -1,3 +1,4 @@
+import { provenReadOnlyProof } from '../helpers/readOnlyProofFixtures';
 import { expect, test } from '@playwright/test';
 import { projectSourceSummary } from '../../src/controlCenter/adapters/sourceAdapter';
 import { createCampaignAuthority } from '../../src/controlCenter/authorities/campaignAuthority';
@@ -12,7 +13,7 @@ const EVIDENCE = `ev:sha256:${'b'.repeat(24)}`;
 
 function sourceSurface(): RealSourceSurfaceDescriptor {
   return {
-    schemaVersion: 'nightwatch.real-source-surface-descriptor.v4',
+    schemaVersion: 'nightwatch.real-source-surface-descriptor.v5',
     surfaceId: 'synthetic.surface.read',
     targetId: 'synthetic.target.read',
     operation: {
@@ -67,6 +68,7 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
       generationCurrency: null,
       productionAdmission: { state: 'NOT_DENIED_BY_EVIDENCE_CLASS', denialCodes: [] },
     },
+    readOnlyProof: provenReadOnlyProof(),
     deterministicDigest: `surface:sha256:${'c'.repeat(24)}`,
   };
 }

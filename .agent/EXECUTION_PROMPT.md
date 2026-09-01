@@ -1,48 +1,40 @@
-# EXECUTION PROMPT — OpenAPI Admission (C-02a)
+# EXECUTION PROMPT — PHP Read-Only Proof (C-06)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-openapi-admission-c02a-v1
-OpenSpec: openspec/changes/nightwatch-openapi-admission-c02a-v1/
-Planned-From: c64b56fff1237c489982a9d6cece7adea83c6387
+Status: IN_PROGRESS
+Campaign ID: nightwatch-php-readonly-proof-c06-v1
+OpenSpec: openspec/changes/nightwatch-php-readonly-proof-c06-v1/
+Planned-From: 93ea6ebc19ad2e27ff63c9dca3d3b8b21c8cdf57
 Target Branch: main
-Predecessor Task ID: nightwatch-truncation-truth-discovery-paging-c01-v1
+Predecessor Task ID: nightwatch-openapi-admission-c02a-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Admit `openapiv2` as an approved root of the already-admitted
-`alphauslabs/blueapi` repository and recover its committed generated Swagger
-artifact through the existing `parseOpenApiRoutes` machinery. Zero new
-parsers: the only parser change is in-document `$ref` → `definitions`
-response binding inside the OpenAPI branch that already existed.
+Replace the eleven-row hand-catalog read-only authority for `ripple-api` PHP
+routes with a mechanically derived, fail-closed proof rooted at the route's
+FULLY RESOLVED middleware pipeline plus its handler.
+
+The independent review's F-01 counterexample is the reason: Ripple's
+middleware pipeline sits outside every handler closure, and one middleware
+performs an outbound call to an external host on every request. A
+handler-rooted proof calls such a route read-only. C-06 roots the closure at
+the pipeline, replaces the binary write vocabulary with an eight-kind effect
+lattice, makes admission kind-diverse and effect-mandatory, and REPORTS the
+resulting count instead of targeting it.
 
 C-00's `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY` invariant
-and its hygiene, deletion-gate and fast-forward-only integration protocol
-remain in force as historical COMPLETE. C-01's truncation-truth and
-no-eviction contracts remain in force and are re-proven against the expanded
-population: C-02a is precisely the adversarial case C-01's per-repository
-round-robin projection was built for, because `alphauslabs/blueapi` sorts
-before `mobingilabs/ripple-api`.
+governs the work: all implementation happens in the owned session worktree,
+never in the canonical checkout.
 
-## Authority and boundaries
+## Authority
 
-C-02a grants no new product or runtime authority. The generated artifact is
-`SOURCE_FACT` with a `GENERATED_ARTIFACT` qualifier; its generation currency
-against the proto surface is `UNKNOWN` until C-02b supplies a corroborator,
-and generated evidence is mechanically barred from being the sole basis of a
-production admission.
+C-06 grants no new product or runtime authority. It REMOVES one: catalog
+membership stops being a read-only classifier. No DEV, NEXT or production
+contact, credential inspection, datastore, cloud/IAM/Kubernetes access,
+sibling-repository write, or publication is authorized or performed. Sibling
+Alphaus repositories are read only, through the existing confined
+`SiblingSourceAccess` boundary.
 
-`alphauslabs/blueinternal` is NOT admitted — that is a REPOSITORY admission
-blocked behind C-05. No protobuf parser (C-02b), no Go/gRPC topology (C-03),
-no read-only proof (C-06), no `PROD_OBSERVE`. No DEV, NEXT, or production
-contact; no auth refresh; no credential or customer-data inspection; no
-datastore, cloud, IAM, or Kubernetes access; no sibling-repository write; no
-publication. Sibling Alphaus repositories are READ-ONLY source inputs reached
-only through the existing confined read-only access object.
-
-## Acceptance
-
-See `openspec/changes/nightwatch-openapi-admission-c02a-v1/specs/openapi-admission/spec.md`
-for the twelve normative requirements, and the task `SPEC.md` for the
-campaign's acceptance criteria and declared deletions.
+C-06 delivers the PHP lane only. `W-DECLARED_VERB` (C-02b), `W-EFFECT_RPC`
+(C-03) and `W-SPEC` (C-09) remain unimplemented and report `UNSUPPORTED`.

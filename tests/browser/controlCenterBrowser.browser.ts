@@ -1,3 +1,4 @@
+import { provenReadOnlyProof } from '../helpers/readOnlyProofFixtures';
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -23,7 +24,7 @@ const SOURCE_EVIDENCE = `ev:sha256:${'b'.repeat(24)}`;
 
 function sourceSurface(): RealSourceSurfaceDescriptor {
   return {
-    schemaVersion: 'nightwatch.real-source-surface-descriptor.v4',
+    schemaVersion: 'nightwatch.real-source-surface-descriptor.v5',
     surfaceId: 'synthetic.surface.read',
     targetId: 'synthetic.target.read',
     operation: {
@@ -78,6 +79,7 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
       generationCurrency: null,
       productionAdmission: { state: 'NOT_DENIED_BY_EVIDENCE_CLASS', denialCodes: [] },
     },
+    readOnlyProof: provenReadOnlyProof(),
     deterministicDigest: `surface:sha256:${'c'.repeat(24)}`,
   };
 }

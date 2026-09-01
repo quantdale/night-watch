@@ -23,6 +23,7 @@ import { buildSourceReviewQueue } from '../../src/core/source/review';
 import { createSiblingSourceAccess } from '../../src/core/source/siblingSource';
 import { createRealSourceScanConfig } from '../../src/core/source/scan';
 import { analyzeSourceSurfacesIntoPhase24, discoverSourceSurfaces } from '../../src/core/source/surfaces';
+import { PIPELINE_DEFAULT_CONFIG_LINES, installReadOnlyPipeline } from '../helpers/phpPipelineFixture';
 
 const SOURCE_SHA = '27bb007ad0c798800b6bd3b29760c966422966e7';
 
@@ -35,7 +36,9 @@ function setup(): string {
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Route', 'Config'), { recursive: true });
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Handler'), { recursive: true });
   fs.mkdirSync(path.join(repo, 'src', 'App', 'Schema'), { recursive: true });
+  installReadOnlyPipeline(repo);
   fs.writeFileSync(path.join(repo, 'src', 'App', 'Route', 'Config', 'Routing.yaml'), [
+    ...PIPELINE_DEFAULT_CONFIG_LINES,
     '"get:/accts":',
     '  client: App\\Handler\\Account',
     '  method: getAccountVendor',
@@ -75,7 +78,7 @@ test('Phase 26 source proof reaches the existing Phase24 semantic/replay/dossier
     const scanConfig = config();
     const discovery = discoverSourceSurfaces({ access, config: scanConfig });
     const surface = discovery.surfaces[0];
-    expect(surface?.schemaVersion).toBe('nightwatch.real-source-surface-descriptor.v4');
+    expect(surface?.schemaVersion).toBe('nightwatch.real-source-surface-descriptor.v5');
     expect(surface?.contract.responseProof).toBe('PROVEN');
     expect(surface?.contract.semanticProof).toBe('PROVEN');
     expect(surface?.contract.responseAnalyzerDiagnostics.some((diagnostic) => diagnostic.analyzerId === 'PHP_RETURN_OBJECT_FIELDS' && diagnostic.analyzerVersion === REAL_SOURCE_RESPONSE_ANALYZER_VERSION)).toBe(true);

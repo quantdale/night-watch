@@ -8,8 +8,9 @@ import type { ResponseFlowProof } from './responseFlow';
 import type { SourceGapTaxonomyChange } from './gapTaxonomy';
 import type { R2CoverageState, SourceCompletenessState } from './completeness';
 import type { SourceEvidenceProvenance } from './generatedArtifact';
+import type { ReadOnlyProof } from './readOnlyProof';
 
-export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v4' as const;
+export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v5' as const;
 export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v2' as const;
 export const REAL_SOURCE_SURFACE_PERFORMANCE_VERSION = 'nightwatch.real-source-surface-performance.v1' as const;
 export const REAL_SOURCE_OPERATION_COMPLETENESS_VERSION = 'nightwatch.source-operation-projection-completeness.v1' as const;
@@ -187,6 +188,11 @@ export interface RealSourceSurfaceDescriptor {
   readonly exclusionReasons: readonly SourceSurfaceReasonCode[];
   /** C-02a — is this surface's route evidence direct or generated source? */
   readonly sourceEvidence: SourceEvidenceProvenance;
+  /** C-06 — the mechanically derived read-only proof, with its witnesses,
+   * preconditions, effect ledger and vocabulary digest. `readOnlyClassification`
+   * on the operation is a projection of `readOnlyProof.state` and of nothing
+   * else. */
+  readonly readOnlyProof: ReadOnlyProof;
   readonly deterministicDigest: string;
 }
 
