@@ -202,23 +202,21 @@ separately authorized task for any future DEV work.
   or an admission relaxation.
 
 - Final validation at documentation checkpoint
-  `784d553d4bb8ec413b4195670e594aabf01293aa` — `agent:check` PASS with the
+  `d4883ebf8795266a82a037258cdb14a40c063bc1` — `agent:check` PASS with the
   expected checkpoint-advance and historical-task warnings (0 strict errors);
   `handoff:check`, `project:check`, `hardening:check`, and
-  `hygiene:status` PASS. The project snapshot at that checkpoint correctly
-  paired active `IN_PROGRESS` with
-  `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` while closure
-  records were being finalized.
+  `hygiene:status` PASS. The project snapshot paired active `COMPLETE` with
+  `OPERATIONALLY_ACCEPTED`.
 - `npm run gate:local` at
-  `784d553d4bb8ec413b4195670e594aabf01293aa` — PASS; all 10 required groups,
+  `d4883ebf8795266a82a037258cdb14a40c063bc1` — PASS; all 10 required groups,
   semantic compatibility `1937/1950` with 13 skipped and 0 failed,
   owner-provenance 91, synthetic campaign 89, receipt
-  `receipt:sha256:5eeb617d280dba9c3bf3f375`.
+  `receipt:sha256:ffc933146fa403fa99478e1f`.
 - `npm run gate:clean` from source head
-  `784d553d4bb8ec413b4195670e594aabf01293aa` — PASS; fresh Node20
+  `d4883ebf8795266a82a037258cdb14a40c063bc1` — PASS; fresh Node20
   dependencies, all 10 required groups, `cleanBefore=true`,
   `cleanAfter=true`, no auth/finding state, 0 sibling writes, receipt
-  `clean-receipt:sha256:17b744b308cf0f54f0abafca`.
+  `clean-receipt:sha256:666d335db69307569208e391`.
 - `git diff --check` — PASS; no whitespace errors were present at the
   documentation checkpoint.
 

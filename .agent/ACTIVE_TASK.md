@@ -7,7 +7,7 @@ Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-replay-budget-and-dossier-closure-v1
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
-Last checkpoint: fresh guarded DEV confirmation and final local/clean validation passed at documentation checkpoint 784d553d4bb8ec413b4195670e594aabf01293aa
+Last checkpoint: fresh guarded DEV confirmation and final local/clean validation passed at documentation checkpoint d4883ebf8795266a82a037258cdb14a40c063bc1
 Current milestone: COMPLETE / STOP — M0 through M5 are closed
 Next action: STOP — this task is complete; do not start another DEV campaign, refresh authentication, use alternate credentials, or reuse historical candidates
 Authorization class: NIGHTWATCH_REPLAY_BUDGET_DOSSIER_CLOSURE_V1
