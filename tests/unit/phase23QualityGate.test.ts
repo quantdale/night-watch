@@ -18,7 +18,7 @@ test.describe('Phase 23 executable quality-gate definition', () => {
   test('contains the required serial groups with fixed command keys', () => {
     expect(QUALITY_GATE_DEFINITION.groups.map((group) => group.id)).toEqual([
       'GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY',
-      'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY',
+      'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY',
     ]);
     for (const group of QUALITY_GATE_DEFINITION.groups) {
       expect(QUALITY_GATE_COMMAND_KEYS).toContain(group.commandKey);

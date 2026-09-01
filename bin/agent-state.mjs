@@ -16,6 +16,7 @@ import {
   sectionBodyText,
   parseKeyValuesWithLocations,
 } from './agent-continuity-protocol.mjs';
+import { inspectWorkspace } from './workspace-integrity.mjs';
 
 const ACTIVE_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 const REQUIRED_ACTIVE_FIELDS = [
@@ -933,6 +934,19 @@ export function validate(root, auditMode = false) {
     warnings.push(
       `LEGACY_TASK_NOT_STRICTLY_VALIDATED: ${auditStats.legacyV1} legacy v1 task(s) are historical records; not strict-validated (agent:audit --audit-history for detail)`
     );
+  }
+
+  // C-00 — repository-global workspace/session integrity. Worktrees isolate
+  // HEAD/index/checkout, but info/exclude and hooks are shared, so isolation
+  // alone is insufficient. Unknown ownership fails closed.
+  const workspace = inspectWorkspace({ root });
+  if (workspace.verdict === 'FAIL') {
+    for (const violation of workspace.errors) {
+      errors.push(`${violation.code}: ${violation.detail}`);
+    }
+  }
+  for (const advisory of workspace.warnings) {
+    warnings.push(`${advisory.code}: ${advisory.detail}`);
   }
 
   return { errors: [...new Set(errors)], warnings };

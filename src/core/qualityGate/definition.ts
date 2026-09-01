@@ -16,6 +16,7 @@ export const QUALITY_GATE_COMMAND_KEYS = [
   'OWNER_PROVENANCE',
   'SYNTHETIC_CAMPAIGN',
   'PATCH_INTEGRITY',
+  'WORKSPACE_INTEGRITY',
 ] as const;
 
 export type QualityGateCommandKey = typeof QUALITY_GATE_COMMAND_KEYS[number];

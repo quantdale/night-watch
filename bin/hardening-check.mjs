@@ -556,7 +556,7 @@ function checkPhase23QualityGate() {
     return;
   }
   if (gate.schemaVersion !== 'nightwatch.quality-gate.v1' || !Array.isArray(gate.groups)) fail('Phase 23 quality-gate schema/version is invalid');
-  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY'];
+  const requiredGroups = ['GATE_DEFINITION', 'STATIC', 'HARDENING', 'HANDOFF_TRUTH', 'PROJECT_TRUTH', 'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE', 'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY'];
   for (const id of requiredGroups) {
     const group = gate.groups.find((candidate) => candidate.id === id);
     if (!group || group.required !== true) fail(`Phase 23 required quality-gate group missing or optional: ${id}`);
@@ -1737,6 +1737,49 @@ function checkPhase22IntegrationSeams() {
   for (const script of ['dev-preflight', 'dev-manifest', 'dev-acceptance', 'dev-results', 'dev-explain']) if (!packageJson.includes(`"${script}"`)) fail(`Phase 22 operator script missing: ${script}`);
 }
 
+function checkC00WorkspaceIntegrity() {
+  // C-00 concurrency and workspace hardening. The inspection core stays
+  // read-only and importable by the continuity checker; every mutation lives
+  // in the session CLI; the session CLI never rewrites shared history.
+  const core = read('bin/workspace-integrity.mjs');
+  const mutationRe = /(?:fs|node:fs)[\s\S]{0,80}?\b(?:writeFile|writeFileSync|appendFile|appendFileSync|rename|renameSync|chmod|chmodSync|mkdir|mkdirSync|rm|rmSync|unlink|unlinkSync|createWriteStream)\b/;
+  if (mutationRe.test(core)) fail('bin/workspace-integrity.mjs must stay read-only (no filesystem mutation)');
+  if (/from 'node:(?:net|http|https|dns|tls)'/.test(core) || /\bfetch\s*\(/.test(core)) fail('bin/workspace-integrity.mjs must not open a network surface');
+  if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(core)) fail('bin/workspace-integrity.mjs exposes shell-capable or unbounded child execution');
+  if (!/timeout:/.test(core) || !/maxBuffer:/.test(core)) fail('bin/workspace-integrity.mjs lacks bounded child execution');
+  for (const invariant of ['WORKSPACE_FORBIDDEN_INDEX_FLAG', 'WORKSPACE_EXCLUDE_DRIFT', 'WORKSPACE_UNEXPECTED_HOOK', 'WORKSPACE_UNOWNED_SESSION_WORKTREE', 'WORKSPACE_UNDECLARED_TRACKED_DELETION', 'WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE']) {
+    if (!core.includes(invariant)) fail(`C-00 hygiene invariant missing from the inspection core: ${invariant}`);
+  }
+  if (!/skipWorktreeTags/.test(core) || !/ASSUME_UNCHANGED/.test(core)) fail('C-00 index-flag invariant must reject skip-worktree and assume-unchanged explicitly');
+  const session = read('bin/nightwatch-session.mjs');
+  if (/--force|--force-with-lease|push\s+--force|'rebase'|'--hard'|clean',\s*'-fd|'stash'/.test(session)) fail('bin/nightwatch-session.mjs must never force-push, rebase, hard-reset, clean, or stash');
+  if (!/HEAD:refs\/heads\//.test(session)) fail('bin/nightwatch-session.mjs must integrate by pushing the session branch, never by checking out the canonical branch');
+  if (!/SESSION_ALREADY_OWNED/.test(session) || !/SESSION_OWNER_STALE/.test(session) || !/flag: 'wx'/.test(session)) fail('bin/nightwatch-session.mjs must claim ownership with an exclusive create and distinguish live from stale owners');
+  if (!/SESSION_REMOVE_REFUSED_LIVE_HOLDER/.test(session) || !/SESSION_REMOVE_REFUSED_UNMERGED/.test(session)) fail("bin/nightwatch-session.mjs must refuse to delete another session's live or unmerged work");
+  if (!/SESSION_RECONCILE_CONFLICT/.test(session) || !/merge', '--abort/.test(session)) fail('bin/nightwatch-session.mjs must abort rather than silently resolve a reconcile conflict');
+  const checker = read('bin/agent-state.mjs');
+  if (!/from '\.\/workspace-integrity\.mjs'/.test(checker)) fail('bin/agent-state.mjs must consume the C-00 workspace inspection core');
+  let policy;
+  try {
+    policy = JSON.parse(read('config/workspace-integrity.v1.json'));
+  } catch {
+    fail('config/workspace-integrity.v1.json must be valid JSON');
+    return;
+  }
+  if (policy.schemaVersion !== 'nightwatch.workspace-integrity.v1') fail('C-00 workspace policy schema/version is invalid');
+  if (!Array.isArray(policy.excludePolicy?.allowedEffectivePatterns) || policy.excludePolicy.allowedEffectivePatterns.length !== 0) fail('C-00 shared exclude policy must allow zero effective patterns');
+  if (policy.hookPolicy?.allowedSuffix !== '.sample' || policy.hookPolicy?.requireUnsetHooksPath !== true) fail('C-00 hook policy must permit only samples and require core.hooksPath to be unset');
+  if (policy.canonical?.mayHostImplementationSession !== false || policy.canonical?.requireCleanWhenSessionLive !== true) fail('C-00 canonical protection policy is weakened');
+  const packageJson = read('package.json');
+  for (const script of ['workspace:check', 'workspace:status', 'session:status', 'session:check']) {
+    if (!packageJson.includes(`"${script}"`)) fail(`C-00 operator script missing: ${script}`);
+  }
+  if (!/"workspace:check"\s*:\s*"node bin\/workspace-integrity\.mjs check"/.test(packageJson)) fail('package.json must expose the fixed C-00 workspace checker entry point');
+  if (!packageJson.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
+  const agents = read('AGENTS.md');
+  if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -1775,6 +1818,7 @@ checkPhase12TriageIntegrationSeams();
 checkPhase22CorePurity();
 checkPhase22IntegrationSeams();
 checkPhase23QualityGate();
+checkC00WorkspaceIntegrity();
 checkSyntax();
 
 if (errors.length > 0) {

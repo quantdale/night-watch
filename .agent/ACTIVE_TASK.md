@@ -1,32 +1,37 @@
 # Active Task
 
-Task ID: nightwatch-replay-budget-and-dossier-closure-v1
-Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Title: Nightwatch Replay Budget and Dossier Closure
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-replay-budget-and-dossier-closure-v1
-Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-Last validated implementation SHA: 60964864cae2ef50361f36d421fdddb4fb8ff683
-Last checkpoint: fresh guarded DEV confirmation and final local/clean validation passed at documentation checkpoint 5383428710076ad8c645a86d7d282409d3642ba8
-Current milestone: COMPLETE / STOP — M0 through M5 are closed
-Next action: STOP — this task is complete; do not start another DEV campaign, refresh authentication, use alternate credentials, or reuse historical candidates
-Authorization class: NIGHTWATCH_REPLAY_BUDGET_DOSSIER_CLOSURE_V1
+Task ID: nightwatch-concurrency-workspace-hardening-c00-v1
+Phase: CONCURRENCY_WORKSPACE_HARDENING_C00_V1
+Title: Nightwatch Concurrency and Workspace Hardening (C-00)
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-concurrency-workspace-hardening-c00-v1
+Starting SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
+Last validated implementation SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
+Last checkpoint: M0/M1 bootstrap and durable task creation adopted from the interrupted predecessor session in worktree branch session/c00-a396cd1f
+Current milestone: M2 — deterministic worktree/session ownership model
+Next action: Implement bin/workspace-integrity.mjs ownership classification and config/workspace-integrity.v1.json, then wire M3 hygiene invariants
+Authorization class: NIGHTWATCH_CONCURRENCY_WORKSPACE_HARDENING_C00_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
-LAST_VALIDATED_IMPLEMENTATION_SHA: 60964864cae2ef50361f36d421fdddb4fb8ff683
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 60964864cae2ef50361f36d421fdddb4fb8ff683
+STARTING_SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
+LAST_VALIDATED_IMPLEMENTATION_SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: COMPLETE
+PHASE_CONCURRENCY_WORKSPACE_HARDENING_C00_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
-This successor exists specifically to remove the proven Phase 7 reproduction
-budget starvation while preserving bounded execution and strict DVR-011
-admission. The completed soak remains historical and must not be reopened.
+C-00 is the concurrency and workspace hardening campaign required by the
+independent second-reviewer architecture review (MA-13, review §11, threat
+T-48 OBSERVED, F-32) before any substantial parallel implementation of the
+production-observability roadmap. It establishes the invariant
+`ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`, deterministic
+repository-global Git hygiene invariants, a declared-deletion gate, and a
+fast-forward-only integration protocol.
 
-No production, NEXT, DEV mutation, datastore/database, infrastructure,
-sibling-repository write, publication, credential persistence, raw
-authenticated evidence in Git, containment weakening, historical-candidate
-replay, or unbounded retry authority is granted.
+C-00 grants no new product or runtime authority. No production, NEXT, DEV
+contact, credential inspection, datastore/database, cloud/IAM/Kubernetes,
+sibling-repository write, publication, or C-01 implementation authority is
+granted. Destructive Git behaviour is exercised only against disposable
+synthetic repositories created by the tests.

@@ -15,7 +15,7 @@ const compatibilityPath = path.join(root, 'config', 'semantic-compatibility.v1.j
 const commandKeys = new Set([
   'GATE_DEFINITION', 'TYPECHECK', 'HARDENING_CHECK', 'HANDOFF_CHECK', 'PROJECT_CHECK',
   'AGENT_CONTINUITY', 'SEMANTIC_COMPATIBILITY', 'OWNER_PROVENANCE',
-  'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY',
+  'SYNTHETIC_CAMPAIGN', 'PATCH_INTEGRITY', 'WORKSPACE_INTEGRITY',
 ]);
 const timeoutClasses = new Set(['SHORT', 'MEDIUM', 'LONG']);
 const idPattern = /^[A-Z][A-Z0-9_]{1,63}$/;

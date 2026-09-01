@@ -27,16 +27,104 @@ owner-only local store outside GitHub.
 Before substantial work:
 
 1. Confirm the current directory is inside this Nightwatch Git repository.
-2. Read this file.
-3. Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
+2. Run `npm run session:status`. It answers, categorically: am I in an owned
+   implementation worktree, which task owns it, what SHA it started from,
+   whether shared Git state has drifted, whether the base is stale, whether
+   integration is permitted, whether canonical `main` is safe, and which
+   worktrees need owner attention. A `FAIL` verdict is a stop condition.
+3. Read this file.
+4. Read `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
    `docs/DECISIONS.md`, and `docs/ROADMAP.md`. Read `docs/ARCHITECTURE.md`
    when architecture is relevant.
-4. Read `.agent/ACTIVE_TASK.md`.
-5. For an `IN_PROGRESS` task, read its `SPEC.md`, `PLAN.md`, and `STATE.md`
+5. Read `.agent/ACTIVE_TASK.md`.
+6. For an `IN_PROGRESS` task, read its `SPEC.md`, `PLAN.md`, and `STATE.md`
    in that order, then resume from `STATE.md`.
 
 Do not restart investigation or planning merely because the conversation is
 fresh. The active task files are the execution memory.
+
+## Mandatory worktree and session protocol (C-00)
+
+The invariant is mechanically enforced:
+
+```text
+ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY
+```
+
+Agents may share the append-only object database. They must never share a
+working tree or an index. A writing agent works in a dedicated
+`git worktree` on its own `session/<name>` branch, claimed by an ownership
+record in that worktree's private Git directory
+(`$GIT_COMMON_DIR/worktrees/<name>/nightwatch-session.v1.json`, untracked and
+regenerable — no machine-specific absolute path ever enters durable project
+truth).
+
+Lifecycle, all through `bin/nightwatch-session.mjs`:
+
+```text
+node bin/nightwatch-session.mjs start --task <task-id>   # from the canonical checkout
+cd <printed worktree path>
+node bin/nightwatch-session.mjs claim --task <task-id> --adopt
+…implement and validate…
+node bin/nightwatch-session.mjs reconcile                # only if the base is stale
+node bin/nightwatch-session.mjs integrate                # fast-forward push, verified
+node bin/nightwatch-session.mjs release
+node bin/nightwatch-session.mjs remove --name <session> --delete-branch   # from canonical
+```
+
+Worktree classes and write authority:
+
+| Class | Write authority |
+|---|---|
+| `CANONICAL_MAIN` | integration and maintenance only |
+| `CANONICAL_MAINTENANCE` | bounded maintenance under an explicit claim |
+| `OWNED_SESSION` | full, for its own task |
+| `STALE_SESSION` | none until explicitly adopted (`--adopt`) |
+| `UNOWNED_WORKTREE` | none — fails closed |
+| `UNKNOWN` | none — fails closed |
+
+Repository-global hygiene invariants, enforced by `npm run workspace:check`,
+`npm run agent:check`, and the required `WORKSPACE_INTEGRITY` quality-gate
+group. `git worktree` isolates `HEAD`, the index and the checkout, but
+`info/exclude` and `hooks` live in the shared common directory, so isolation
+alone is insufficient:
+
+- no tracked entry may carry a `skip-worktree` (`S`/`s`) or any
+  assume-unchanged (lowercase) index tag, in ANY registered worktree;
+- `$GIT_COMMON_DIR/info/exclude` must contain zero effective patterns — the
+  shared exclude file is never private per-session scratch state;
+- `$GIT_COMMON_DIR/hooks` may contain only `*.sample` files and
+  `core.hooksPath` must be unset; Nightwatch never installs or executes a
+  repository-local hook;
+- worktree registrations must resolve to real, non-symlink directories, carry
+  exactly one ownership record, and never duplicate a session identity or a
+  live task claim;
+- if any owned session worktree is live, the canonical checkout must be clean.
+
+Destructive-operation policy. The mechanically enforced core is the
+declared-deletion gate: every tracked-file deletion measured against the
+session base (committed, staged or unstaged) must be declared under
+`## Declared Deletions` in the active task `SPEC.md`, or validation fails with
+`WORKSPACE_UNDECLARED_TRACKED_DELETION`. A file created *and* deleted inside
+one session yields no net deletion, so session-created files need no
+declaration.
+
+These remain agent behavioural rules — their effects are detected, but the
+commands themselves cannot be blocked from inside the repository. Never run,
+across paths your session does not own: `git clean -fd`, broad `git restore`,
+broad `git checkout -- <path>`, any destructive `git reset`, or `git stash`.
+Never delete, revert, or amend another session's work. Never force-push, never
+rebase another session's commits, and never discard a newer `origin/main`.
+
+Integration is serialized by the remote ref compare-and-swap, not by a lock
+file: `git push origin HEAD:refs/heads/main` from the session worktree, which
+never touches another worktree's index or checkout. A rejected push means stop
+and reconcile. No integration lease exists, by decision.
+
+Exceptions, explicitly bounded: the canonical checkout may hold a
+`MAINTENANCE` claim, and single-worktree topologies (a fresh clone, a CI
+checkout, the clean-checkout gate) share nothing and are therefore not
+subject to the canonical-branch rule.
 
 ## Authority and scope
 

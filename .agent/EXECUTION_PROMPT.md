@@ -1,56 +1,48 @@
-# EXECUTION PROMPT — Replay Budget and Dossier Closure
+# EXECUTION PROMPT — Concurrency and Workspace Hardening (C-00)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-replay-budget-and-dossier-closure-v1
-OpenSpec: openspec/changes/nightwatch-replay-budget-and-dossier-closure-v1/
-Planned-From: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
+Status: IN_PROGRESS
+Campaign ID: nightwatch-concurrency-workspace-hardening-c00-v1
+OpenSpec: openspec/changes/nightwatch-concurrency-workspace-hardening-c00-v1/
+Planned-From: 2517c26a019bbf8aa53008cd57658b917cc79bea
 Target Branch: main
-Predecessor Task ID: nightwatch-dev-soak-replay-yield-v1
+Predecessor Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Repair the specific bounded Phase 7 budget starvation proven by the completed
-DEV soak: fresh DVR-011-admitted product candidates were created, but all four
-reproduction queues stopped before replay executor entry because the three
-required collection journeys had already consumed journeyContexts=3/3.
+Prevent concurrent Nightwatch development agents from sharing mutable
+checkout/index state and mechanically detect corruption of repository-global
+Git state.
 
-First reproduce that boundary deterministically. Then implement the smallest
-safe replay-reservation model that preserves finite total execution authority,
-checkpoint correctness, source currentness, privacy, containment, and strict
-candidate admission. Finally confirm the new budget on a fresh guarded DEV
-campaign and, when a fresh candidate naturally appears, carry it through
-attack replay and—if reproduced—bounded minimization and sanitized dossier
-generation.
+This is `MA-13` from the independent second-reviewer architecture review
+(review §11, threat `T-48` OBSERVED, ordering finding `F-26`, baseline finding
+`F-32`), classified `MUST FIX BEFORE IMPLEMENTATION` and placed first on the
+revised critical path
+`C-00 → C-01 → C-02a → C-06(PHP) → C-10 → C-11 → C-12 → C-13 → C-14`.
 
-Do not simply raise limits. Do not replay historical candidates. Do not weaken
-DVR-011.
+The enforced invariant is
+`ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`. Agents may share
+the append-only object database; they must never share a working tree or an
+index. Because `git worktree` does not isolate `info/exclude`, hooks or
+`config`, isolation is combined with deterministic hygiene invariants over the
+shared common directory, a declared-deletion gate, and a fast-forward-only,
+never-force-push integration protocol serialized at the canonical `main` ref.
+
+Do not implement C-01. Do not grant new product or runtime authority. Do not
+contact DEV, NEXT, or production. Exercise destructive Git behaviour only
+against disposable synthetic repositories.
 
 ## Current next action
-STOP — this task is complete. No further DEV campaign, authentication
-refresh, alternate credential, historical-candidate replay, or stale-manifest
-resume is authorized. The terminal documentation checkpoint must remain clean
-and preserve the existing project verdict.
 
-## Fresh DEV confirmation result
-The owner completed one guarded headed auth capture for the designated DEV
-state. Post-login verification, atomic state/provenance writes, validation,
-and cleanup passed; secret values and storage-state contents were not printed
-or copied.
+Continue the C-00 milestones in `.agent/tasks/nightwatch-concurrency-workspace-hardening-c00-v1/PLAN.md`,
+resuming from the `Exact Next Action` recorded in that task's `STATE.md`.
 
-The fresh current-source campaign
-`campaign:sha256:37aca1e950ab804e3a6fd592` prepared and resumed successfully
-against implementation source
-`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. It completed all five selected
-read-only work items with `COMPLETE_CLEAN`, zero safety counters, and privacy
-`PASS`.
+## Working protocol for this campaign
 
-The campaign observed two protocol-only anomaly candidates and two clusters,
-but both were rejected before candidate replay because
-`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`. The reproduction queue and persisted
-candidate replay-reservation ledger were empty; no attack replay,
-minimization, dossier, or product finding is claimed. The two source-bound API
-work items each completed their ordinary first-plus-fresh replay pair, which
-used two of the campaign's aggregate replay units and is distinct from
-candidate attack replay.
+Work inside the owned C-00 session worktree on branch
+`session/c00-a396cd1f`, claimed for this task. Run `npm run session:status`
+before substantial work; a `FAIL` verdict is a stop condition. Integrate with
+`node bin/nightwatch-session.mjs integrate`, which fast-forward-pushes the
+session branch onto canonical `main` and verifies the result. The final remote
+topology remains `main` only.

@@ -146,6 +146,9 @@ function runFixedCommand(commandKey, mode, timeoutClass) {
     const cleanRequired = mode !== 'local';
     const isClean = status.stdout.trim() === '';
     return { status: !cleanRequired || isClean ? 'PASS' : 'TEST_FAILURE', exitCode: !cleanRequired || isClean ? 0 : 1, counts: parseCounts('') };
+  } else if (commandKey === 'WORKSPACE_INTEGRITY') {
+    command = nodeExecutable;
+    args = [path.join(root, 'bin', 'workspace-integrity.mjs'), 'check'];
   } else {
     return { status: 'CONFIG_INVALID', exitCode: null, counts: parseCounts(''), errorClass: 'UNKNOWN_COMMAND' };
   }

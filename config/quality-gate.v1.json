@@ -131,6 +131,19 @@
       "requiresSiblingTopology": false,
       "preDevRelevant": true,
       "expectedFailClosedBehavior": "whitespace, untracked, or dirty checkout fails closed"
+    },
+    {
+      "id": "WORKSPACE_INTEGRITY",
+      "commandKey": "WORKSPACE_INTEGRITY",
+      "required": true,
+      "environmentRequirements": ["NODE20_PLUS", "OFFLINE"],
+      "timeoutClass": "SHORT",
+      "dependsOn": ["PATCH_INTEGRITY"],
+      "ciCapable": true,
+      "cleanCheckoutCapable": true,
+      "requiresSiblingTopology": false,
+      "preDevRelevant": true,
+      "expectedFailClosedBehavior": "forbidden index flags, shared exclude drift, unexpected hooks, unknown or unowned worktree ownership, and undeclared tracked deletions fail closed"
     }
   ]
 }

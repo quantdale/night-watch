@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "nightwatch.workspace-integrity.v1",
+  "policyName": "Nightwatch concurrency and workspace hardening policy (C-00)",
+  "sessionRecordSchema": "nightwatch.workspace-session.v1",
+  "sessionRecordFile": "nightwatch-session.v1.json",
+  "canonical": {
+    "branch": "main",
+    "remote": "origin",
+    "sessionBranchPrefix": "session/",
+    "mayHostImplementationSession": false,
+    "requireCleanWhenSessionLive": true
+  },
+  "indexFlagPolicy": {
+    "allowedTags": ["H", "M", "R", "C", "K", "?"],
+    "skipWorktreeTags": ["S", "s"],
+    "maxReportedExamples": 8,
+    "note": "git ls-files -v: a lowercase tag letter means assume-unchanged and S means skip-worktree. Rejecting only lowercase letters would miss the observed incident."
+  },
+  "excludePolicy": {
+    "allowedEffectivePatterns": [],
+    "maxBytes": 8192,
+    "maxLines": 128,
+    "note": "$GIT_COMMON_DIR/info/exclude is shared by every worktree and must never be used as private per-session scratch state. Comment and blank lines are normalized away before comparison."
+  },
+  "hookPolicy": {
+    "allowedSuffix": ".sample",
+    "requireUnsetHooksPath": true,
+    "maxEntries": 64,
+    "note": "Nightwatch never installs or executes a repository-local Git hook."
+  },
+  "worktreePolicy": {
+    "maxWorktrees": 8,
+    "maxRecordBytes": 4096,
+    "allowedRoles": ["IMPLEMENTATION", "MAINTENANCE"],
+    "allowedOwnershipStates": ["OWNED", "RELEASED"],
+    "allowedIntegrationStates": ["NOT_INTEGRATED", "INTEGRATED"],
+    "requireOwnerRecordForLinkedWorktree": true,
+    "pruneIsOwnerDecision": true
+  },
+  "deletionPolicy": {
+    "declaredDeletionHeading": "## Declared Deletions",
+    "maxReportedExamples": 16,
+    "note": "A file created and deleted inside one session produces no net deletion against the session base, so the only observable net deletions are of files that existed at the base and must be declared."
+  }
+}

@@ -3923,3 +3923,107 @@ minimization, or dossier was produced. The project snapshot therefore uses
 `OPERATIONAL_ACCEPTANCE_BLOCKED` with `LIVE_NEXT_ACTION_STATE: STOP`; prior
 operational acceptance remains historical context and is not silently relabeled
 as a fresh DEV result.
+
+## D-101 — Concurrent Nightwatch agents never share a working tree or an index
+
+**Context.** During the production-observability planning campaign a second
+Nightwatch session, sharing the single canonical working tree and index, set
+`skip-worktree` on `docs/ROADMAP.md`, added the planning change directory to
+`.git/info/exclude`, and deleted the first agent's in-progress `audit.md`. The
+independent second-reviewer architecture review recorded the hazard as `T-48`
+(OBSERVED), classified the missing response as `MA-13`, and required campaign
+`C-00 — concurrency and workspace hardening` as
+`MUST FIX BEFORE IMPLEMENTATION`, first on the revised critical path
+`C-00 → C-01 → C-02a → C-06(PHP) → C-10 → C-11 → C-12 → C-13 → C-14`.
+
+**Decision.** Adopt isolation over cooperation. The enforced invariant is
+`ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY`: a writing agent
+owns one `git worktree` on one `session/<name>` branch, claimed by an
+ownership record in that worktree's private Git directory. Agents share only
+the append-only object database. Ownership is regenerable local state, never
+durable project truth, and stores no machine-specific absolute path. Unknown,
+malformed, duplicated, contradictory and unowned states have no write
+authority and fail closed.
+
+**Evidence and consequences.** `bin/workspace-integrity.mjs` (read-only) and
+`bin/nightwatch-session.mjs` (the only mutating surface) implement the model;
+`bin/agent-state.mjs`, `npm run workspace:check` and the required
+`WORKSPACE_INTEGRITY` quality-gate group enforce it in `gate:local`,
+`gate:ci` and `gate:clean`. `tests/unit/workspaceIsolation.test.ts` reproduces
+every observed hazard class on disposable synthetic repositories and proves
+both the failure and the repaired green state. The continuity-v2 model is
+unaffected because it records SHAs, not checkout state; `LIVE_HEAD_AUTHORITY:
+GIT` becomes more correct, not less.
+
+## D-102 — Index flags are per-worktree; shared-state hygiene needs both surfaces
+
+**Context.** Independent review §11 item 2 states that
+`skip-worktree`/`assume-unchanged` bits "live in the shared common directory"
+and prescribes an invariant that `git ls-files -v` "reports no lowercase
+status letters". Both statements are mechanically wrong, and the C-00 audit's
+first design inherited the first one.
+
+**Decision.** Record the measured correction and implement the corrected
+invariants. Empirically, a linked worktree has its own index: setting
+`skip-worktree` in a linked worktree reports `S` there and `H` in the main
+worktree. Only `info/exclude`, `hooks` and `config` are shared. And in
+`git ls-files -v`, a lowercase tag means assume-unchanged while `S`
+(uppercase) means skip-worktree — so rejecting only lowercase letters would
+have missed the exact bit set during the observed incident.
+
+**Evidence and consequences.** C-00 therefore checks BOTH surfaces: the shared
+common directory once, and the index of EVERY registered worktree. The index
+invariant is "no lowercase tag and no `S`/`s` tag". The review text and the
+original audit are preserved unedited as historical evidence; this decision is
+the correction of record. Isolation reduces, but does not remove, the
+index-flag hazard: the canonical checkout's index remains shared by every
+agent who works there, which is one reason the canonical checkout is not a
+valid implementation workspace.
+
+## D-103 — No main-integration lease; the remote ref compare-and-swap is the serializer
+
+**Context.** M6 of the C-00 campaign asked whether a lease should guard the one
+genuinely shared operation, updating canonical `main`. The review ranks leases
+as "the fallback, not the mechanism".
+
+**Decision.** Implement no lease. Integration is
+`git push origin HEAD:refs/heads/main` from the session worktree. The remote
+ref update is already an atomic compare-and-swap: a losing writer receives a
+non-fast-forward rejection and must reconcile, which is exactly the behaviour
+a correct lease would produce, without a file that leaks when an agent dies.
+Pushing the session branch instead of checking `main` out also means
+integration never mutates another worktree's index or checkout — the precise
+class of damage C-00 exists to remove.
+
+**Evidence and consequences.** A local lease would add expiry, ownership,
+adoption and stale-recovery semantics while strengthening nothing Git already
+guarantees, and it would risk being mistaken for implementation authority. The
+residual — two sessions pushing within the same instant — is handled: the
+second push is rejected, that session reconciles by merging `origin/main` into
+its own branch (never rebasing), revalidates, and pushes again. Nothing is
+lost and nothing is rewritten. Reconciliation refuses to resolve a conflict:
+it aborts the merge and reports `SESSION_RECONCILE_CONFLICT`.
+
+## D-104 — A declared-deletion gate is the enforceable core of file ownership
+
+**Context.** The review requires that "a session may delete only files it
+created in that session or files explicitly declared in its task scope". A
+general per-file ownership index would turn Nightwatch into an SCM.
+
+**Decision.** Enforce the rule with one deterministic query. Deletions are
+`git diff --diff-filter=D --name-only <base>` against the session base (or the
+canonical merge base outside a session), which covers committed, staged and
+unstaged tracked-file deletions at once. Every deleted path must appear under
+`## Declared Deletions` in the active task `SPEC.md`; otherwise validation
+fails with `WORKSPACE_UNDECLARED_TRACKED_DELETION`.
+
+**Evidence and consequences.** This satisfies both clauses of the rule without
+an ownership index: a file created *and* deleted inside one session produces
+no net deletion against the session base, so the only observable net deletions
+are of files that existed at the base — which are by construction not
+session-created and must therefore be declared. The prohibitions on
+`git clean -fd`, broad `git restore`/`git checkout -- <path>`, destructive
+reset and cross-session `git stash` remain agent behavioural rules recorded in
+`AGENTS.md`; their *effects* are caught by this gate, the hygiene invariants,
+and the rule that the canonical checkout must be clean while a session is
+live.

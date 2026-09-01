@@ -15,6 +15,7 @@ import {
   uniqueErrorCodes,
 } from './planner-handoff-protocol.mjs';
 import { fieldValue, findDuplicateFields, normalizeTaskStatus, parseKeyValuesWithLocations } from './agent-continuity-protocol.mjs';
+import { inspectWorkspace } from './workspace-integrity.mjs';
 
 const MAX_READ_BYTES = 512 * 1024;
 const MAX_ROUTE_ENTRIES = 256;
@@ -224,14 +225,38 @@ function runContinuity(root) {
   return result.status === 0 && !result.error;
 }
 
+/**
+ * True only when `branch` is a C-00 session branch that the current worktree
+ * actually owns for the active task. This is a narrowing of the old
+ * "must be on main" rule, not a widening: an unowned or foreign session
+ * branch is still rejected.
+ */
+function ownedSessionBranch(root, branch) {
+  if (typeof branch !== 'string' || !branch.startsWith('session/')) return false;
+  const report = inspectWorkspace({ root });
+  return report.verdict === 'PASS'
+    && report.self !== null
+    && report.self.class === 'OWNED_SESSION'
+    && report.self.branch === branch;
+}
+
 function inspectGitBinding(root, fields, errors) {
   const top = git(root, ['rev-parse', '--show-toplevel']);
   if (top.status !== 0 || path.resolve((top.stdout ?? '').trim()) !== path.resolve(root)) {
     errors.push('HANDOFF_GIT_ROOT_INVALID');
     return undefined;
   }
+  // C-00: a writing agent works on an owned session branch whose integration
+  // target is still the declared canonical branch. The declared target must
+  // therefore be `main`, and the current branch must be either `main` itself
+  // or a `session/*` branch that is owned by the active task in this worktree.
   const branch = git(root, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  if (branch.status !== 0 || (branch.stdout ?? '').trim() !== 'main') errors.push('HANDOFF_TARGET_BRANCH_MISMATCH');
+  const currentBranch = branch.status === 0 ? (branch.stdout ?? '').trim() : '';
+  const targetBranch = fields['Target Branch'];
+  if (targetBranch !== 'main') errors.push('HANDOFF_TARGET_BRANCH_MISMATCH');
+  else if (currentBranch !== 'main' && !ownedSessionBranch(root, currentBranch)) {
+    errors.push('HANDOFF_TARGET_BRANCH_MISMATCH');
+  }
   const head = git(root, ['rev-parse', 'HEAD']);
   const headSha = head.status === 0 ? (head.stdout ?? '').trim() : undefined;
   if (!headSha) {
