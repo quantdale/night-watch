@@ -296,16 +296,36 @@ read-only.
 
 ## 17. Final `HEAD == origin/main`
 
-Verified after integration — see `STATE.md` completion snapshot.
+Verified. The session branch was integrated by
+`git push origin HEAD:refs/heads/main` (no force), the push was verified by a
+re-fetch, and the canonical checkout then fast-forwarded:
+`HEAD == origin/main == 5567e249dcf5e0f31c92a4f1a08f7001caa2f1f0`.
 
 ## 18. Final canonical clean-worktree status
 
-Verified clean — see `STATE.md` completion snapshot.
+Verified clean: `git status --porcelain` in the canonical checkout is empty.
 
 ## 19. Final worktree inventory
 
-See `STATE.md` completion snapshot.
+Exactly one worktree: the canonical checkout on `main`. The C-00 session was
+released, then removed with `session remove --name c00-a396cd1f
+--delete-branch` from the canonical checkout after its work was proven
+contained in `origin/main`; the per-worktree ownership record was
+garbage-collected with it, leaving no phantom claim. The session-worktree root
+`$HOME/.nightwatch/worktrees/` is empty.
+
+`npm run workspace:check` after closure: `PASS`, all seven invariants, zero
+worktrees requiring owner attention. The canonical checkout holds a
+`CANONICAL_MAINTENANCE` claim for this closure commit — the documented
+exception — and no implementation session.
+
+Post-closure hygiene, measured: zero non-`H` `git ls-files -v` entries, zero
+effective `$GIT_COMMON_DIR/info/exclude` patterns, zero non-`*.sample` hook
+entries, `core.hooksPath` unset.
 
 ## 20. Final local/remote branch inventory
 
-Remote topology remains `main` only — see `STATE.md` completion snapshot.
+Local: `main` only. Remote: `refs/heads/main` only
+(`git ls-remote --heads origin`). The session branch
+`session/c00-a396cd1f` existed only locally, was never pushed, and was deleted
+at closure. The final remote topology is `main` only, as required.

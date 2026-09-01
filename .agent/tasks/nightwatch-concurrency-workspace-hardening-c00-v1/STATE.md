@@ -236,6 +236,12 @@ is a NEW task with a NEW session worktree created through
 - Six defects found and repaired; six residual concurrency risks recorded
   rather than hidden.
 - External CI: not run, not claimed green.
+- Closure, measured after integration: canonical
+  `HEAD == origin/main == 5567e249dcf5e0f31c92a4f1a08f7001caa2f1f0`; canonical
+  worktree clean; exactly one registered worktree; local and remote branch
+  inventory `main` only; `workspace:check` PASS with zero worktrees requiring
+  owner attention; zero non-`H` index entries, zero effective shared exclude
+  patterns, zero non-sample hooks, `core.hooksPath` unset.
 
 ## Blockers
 
