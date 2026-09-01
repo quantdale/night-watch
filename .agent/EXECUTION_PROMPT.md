@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Concurrency and Workspace Hardening (C-00)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-concurrency-workspace-hardening-c00-v1
 OpenSpec: openspec/changes/nightwatch-concurrency-workspace-hardening-c00-v1/
 Planned-From: 2517c26a019bbf8aa53008cd57658b917cc79bea
@@ -35,8 +35,9 @@ against disposable synthetic repositories.
 
 ## Current next action
 
-Continue the C-00 milestones in `.agent/tasks/nightwatch-concurrency-workspace-hardening-c00-v1/PLAN.md`,
-resuming from the `Exact Next Action` recorded in that task's `STATE.md`.
+STOP — C-00 is complete and locally certified. Do not begin C-01 in this
+campaign, and do not run an implementation session in the canonical checkout.
+The next campaign is a new task with its own session worktree.
 
 ## Working protocol for this campaign
 

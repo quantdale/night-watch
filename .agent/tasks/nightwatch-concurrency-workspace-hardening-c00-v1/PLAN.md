@@ -93,46 +93,46 @@ it instead of creating a second one.
 `SPEC.md`, `PLAN.md`, `STATE.md`, `REPORT.md`, the OpenSpec change, and
 `.agent/ACTIVE_TASK.md` all point at this task.
 
-## M2 — Worktree ownership model
+## M2 — Worktree ownership model — COMPLETE
 
 Per-worktree ownership record, six-way classification, atomic exclusive claim,
 injectable liveness probe, fail-closed unknown states.
 
-## M3 — Repository-global hygiene invariants
+## M3 — Repository-global hygiene invariants — COMPLETE
 
 Index-flag invariant (corrected: no lowercase tag and no `S`/`s`), normalized
 `info/exclude` allowlist, hooks-only-samples plus unset `core.hooksPath`,
 worktree-metadata invariants, canonical-cleanliness cross-session invariant.
 
-## M4 — Destructive-operation policy
+## M4 — Destructive-operation policy — COMPLETE
 
 Declared-deletion gate against the session base; behavioural prohibitions
 documented in `AGENTS.md`.
 
-## M5 — Integration protocol
+## M5 — Integration protocol — COMPLETE
 
 `git push origin <sessionBranch>:main` compare-and-swap, merge-not-rebase
 reconciliation, fast-forward-only canonical advance, no force-push.
 
-## M6 — Main integration lease decision
+## M6 — Main integration lease decision — COMPLETE
 
 Recorded analysis; decision is to implement no lease.
 
-## M7 — agent:check / CLI integration
+## M7 — agent:check / CLI integration — COMPLETE
 
 `session:status`, `session:check`, and the `WORKSPACE_INTEGRITY` gate group.
 
-## M8 — Adversarial matrix A–L
+## M8 — Adversarial matrix A–L — COMPLETE
 
 Deterministic synthetic-repository tests for every observed hazard class,
 proving both the failure and the repaired green state.
 
-## M9 — Pinned pre-C-01 baseline
+## M9 — Pinned pre-C-01 baseline — COMPLETE
 
 One read-only local/source-only eligibility census at a pinned clean SHA;
 record source snapshot digest, census digest, and operation counts.
 
-## M10 — Full validation and integration
+## M10 — Full validation and integration — COMPLETE
 
 Focused tests, continuity, typecheck, hardening, project truth, synthetic
 campaign, local gate, clean Node20 gate; documentation; serialized integration

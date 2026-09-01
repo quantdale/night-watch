@@ -126,6 +126,13 @@ Exceptions, explicitly bounded: the canonical checkout may hold a
 checkout, the clean-checkout gate) share nothing and are therefore not
 subject to the canonical-branch rule.
 
+Worktree-location independence. A session worktree lives outside the workspace
+tree (default `$HOME/.nightwatch/worktrees/<name>`), so nothing may derive the
+sibling REPOSITORIES root from its own checkout location. Use
+`DEFAULT_SIBLING_ROOT` (or an explicit `NIGHTWATCH_REPOS_ROOT`); a
+`__dirname`-relative parent escape is rejected by `hardening:check` for the
+surfaces that previously did it.
+
 ## Authority and scope
 
 When sources disagree, use this precedence:

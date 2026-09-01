@@ -14,6 +14,6 @@
 - [x] M7 integrate C-00 into `agent:check` and the executable quality gate
 - [x] M8 build the deterministic adversarial matrix A–L on disposable
       synthetic repositories
-- [ ] M9 record the pinned pre-C-01 eligibility-census baseline at a clean SHA
-- [ ] M10 run the full validation stack, update documentation, and integrate
+- [x] M9 record the pinned pre-C-01 eligibility-census baseline at a clean SHA
+- [x] M10 run the full validation stack, update documentation, and integrate
       serially into canonical `main`
