@@ -4,17 +4,17 @@
 
 Task ID: nightwatch-php-readonly-proof-c06-v1
 Phase: PHP_READONLY_PROOF_C06_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 93ea6ebc19ad2e27ff63c9dca3d3b8b21c8cdf57
 Branch: session/nightwatch-php-readonly-proof-c0-4d9beb32
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 93ea6ebc19ad2e27ff63c9dca3d3b8b21c8cdf57
-LAST_VALIDATED_IMPLEMENTATION_SHA: 93ea6ebc19ad2e27ff63c9dca3d3b8b21c8cdf57
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 93ea6ebc19ad2e27ff63c9dca3d3b8b21c8cdf57
+LAST_VALIDATED_IMPLEMENTATION_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PHP_READONLY_PROOF_C06_V1_STATUS: IN_PROGRESS
+PHASE_PHP_READONLY_PROOF_C06_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -26,7 +26,7 @@ an observation rather than gated against a numeric floor.
 
 ## Current Milestone
 
-M8 — validation and closure.
+COMPLETE / STOP — M1 through M8 are closed.
 
 ## Completed Milestones
 
@@ -48,16 +48,12 @@ M8 — validation and closure.
 
 ## Work In Progress
 
-Nothing is partially implemented. The remaining work is the closure sequence:
-full gate at a committed checkpoint, then the documentation closure commit and
-integration.
+None. Every milestone is closed and validated.
 
 ## Exact Next Action
 
-Run `npm run gate:local` at this committed checkpoint; on a green receipt,
-write the closure commit that flips the task to COMPLETE and records this
-checkpoint as `LAST_VALIDATED_IMPLEMENTATION_SHA`, then integrate through
-`node bin/nightwatch-session.mjs integrate`.
+STOP — C-06 is complete. Do not begin another campaign in this task, and do
+not run any implementation session in the canonical checkout.
 
 ## Starting evidence
 
@@ -136,7 +132,14 @@ No file was deleted; `## Declared Deletions` is NONE.
 - Full canonical regression — 2,809 tests; one legitimate fixture failure
   (`phase25SyntheticCampaign`) was repaired by giving the synthetic repository
   the route provider the new proof requires, then re-run green.
-- `npm run gate:local` — to be recorded at the committed checkpoint.
+- `npm run gate:local` at 7ce2cf91a00f1916ea1e04790dc395a809ef8727 — PASS, all eleven required groups
+  (`GATE_DEFINITION`, `STATIC`, `HARDENING`, `HANDOFF_TRUTH`,
+  `PROJECT_TRUTH`, `AGENT_CONTINUITY`, `SEMANTIC_COMPATIBILITY` 1,937
+  passed / 13 skipped of 1,950, `OWNER_PROVENANCE` 91 passed,
+  `SYNTHETIC_CAMPAIGN` 128 passed, `PATCH_INTEGRITY`,
+  `WORKSPACE_INTEGRITY`).
+- `npm run gate:clean` at 7ce2cf91a00f1916ea1e04790dc395a809ef8727 — Node 20 clean checkout,
+  `installResult: PASS`, `gateResult: PASS`, all eleven groups PASS.
 
 ## Decisions Made During This Task
 
@@ -172,11 +175,28 @@ None recorded yet.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-php-readonly-proof-c0-4d9beb32`
-2. `node bin/nightwatch-session.mjs claim --task nightwatch-php-readonly-proof-c06-v1 --adopt`
-3. Read this `STATE.md`, then `PLAN.md` "Milestones".
-4. Continue from "Exact Next Action".
+Task complete. Do not resume this task. C-06 is closed and its session
+worktree is released; a future campaign requires a new authorization and its
+own task directory.
 
 ## Completion Snapshot
 
-Not complete.
+- C-06 is COMPLETE: milestones M1 through M8 are closed, both quality gates
+  pass, and the campaign is stopped.
+- Every acceptance criterion in `SPEC.md` is met; see `REPORT.md` for the
+  criterion-by-criterion table.
+- The eleven-row `PHASE5_API_CATALOG` no longer produces any read-only
+  classification. `PROVEN_READ_ONLY` is reachable only from a
+  `READ_ONLY_PROVEN` proof that holds one declaration witness AND one effect
+  witness over a resolved middleware pipeline plus handler.
+- The negative corpus covers all eight required cases with zero false
+  positives; the positive corpus proves a genuinely provable route IS
+  admitted, and that its admission is revoked by a single added write.
+- Measured, not targeted: `READ_ONLY_PROVEN` fell 5 → 0 over 814 operations
+  with zero truncation; 79 `ripple-api` GET routes are positively shown to
+  perform an outbound call; 6,114 unclassified callee identities block
+  promotion.
+- Both quality gates are green at 7ce2cf91a00f1916ea1e04790dc395a809ef8727; the canonical
+  regression is 2,809 tests.
+- No new product or runtime authority was created; one was removed. No
+  environment contact of any kind occurred. C-10 was not started.
