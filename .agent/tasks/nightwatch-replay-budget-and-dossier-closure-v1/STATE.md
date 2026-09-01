@@ -166,6 +166,13 @@ page-readable validation before a new current-source campaign can be prepared.
   finding state, 0 sibling writes, gate receipt
   `receipt:sha256:ef0fd4f48bfbc0fc684f61ab`, clean receipt
   `clean-receipt:sha256:8ebbf16dd46294899dcea6c1`.
+- `git push origin main` for final blocked documentation checkpoint
+  `d3328d97016a6c48cc05e1fb1276270760943353` — PASS; `main` advanced on
+  `origin` without force-push.
+- Post-push `git fetch --prune origin` plus clean/topology/parity checks —
+  PASS; working tree clean, only local branch `main`, only remote-tracking
+  branch `origin/main` plus the `origin/HEAD` symbolic reference, and
+  `HEAD == origin/main` at `d3328d97016a6c48cc05e1fb1276270760943353`.
 
 ## Decisions Made During This Task
 
@@ -228,9 +235,9 @@ sibling write occurred.
 - CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
   no repository workflow step executed and CI PASS is not claimed.
 - Final continuity/project reconciliation, safety/privacy, generated-artifact
-  inspection, and terminal documentation validation passed at the final
-  continuation head. Checkpoint push and final remote-parity verification
-  remain.
+  inspection, terminal documentation validation, checkpoint push, and
+  post-push remote-parity verification passed. The task remains BLOCKED only
+  at the designated DEV page-readability condition.
 
 ## Resume Recipe
 
@@ -260,7 +267,7 @@ failed closed with `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the
 required token present but unexpired `false`, page-readable `false`, and
 overall valid `false`. Campaign/replay/minimization/dossier counts remain zero.
 Closure result: continuity, OpenSpec, project truth, hardening, privacy, local
-quality, and clean Node20 validation are closed for the blocked outcome; final
-checkpoint push and remote-parity verification remain.
+quality, clean Node20 validation, checkpoint push, and post-push remote-parity
+verification are complete for the blocked outcome.
 Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
 claimed.
