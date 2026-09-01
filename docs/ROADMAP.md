@@ -2685,3 +2685,45 @@ No further DEV attempt is authorized for this task. No alternate credentials,
 predecessor checkpoints, historical candidates, stale manifests,
 production/NEXT contact, mutation, datastore, infrastructure, publication,
 sibling write, or unbounded retry is authorized.
+
+## Frontier planning baseline — production observability & whole-system map — 2026-09-01
+
+`PLANNING_ONLY`. The owner-authorized broad planning audit
+(`openspec/changes/nightwatch-production-observability-system-map-master-plan-v1/`)
+established a fresh whole-system architectural baseline before the next
+roadmap change. It produced no implementation, no environment/allowlist/auth
+change, no DEV/NEXT/production contact, and grants no new authority.
+
+Canonical documents (change dir `openspec/changes/nightwatch-production-observability-system-map-master-plan-v1/`):
+
+- `docs/design/PRODUCTION-OBSERVABILITY-MASTER-PLAN.md` —
+  gap matrix, 15 dependency-ordered campaigns, critical path, and the 20 hard
+  production-readiness gates.
+- `audit.md` — evidence baseline: Nightwatch as-built plus the 148-repository
+  company census, every claim evidence-classed.
+- `design.md` — target architecture: fact taxonomy, whole-system model,
+  two-witness read-only proof, `PROD_OBSERVE`, privacy firewall, System Map V2,
+  coverage ledgers, bug-hunting loop.
+- `docs/design/PRODUCTION-OBSERVABILITY-THREAT-MODEL.md` —
+  34 hazards with prevention/detection/containment/evidence/recovery/test and
+  five stated residuals.
+- `tasks.md`, `specs/` — campaign checklist and requirement deltas.
+
+Load-bearing measured findings (live census at
+`source-eligibility-census:sha256:2f97b732e0472df347f695a1`): all 128 discovered
+operations come from `mobingilabs/ripple-api` alone via `Routing.yaml`;
+`MAX_DISCOVERED_OPERATIONS = 128` silently drops 95 of that file's 223 route
+keys; `alphauslabs/blueapi` is approved but unreadable because `.proto` is not
+a scanned extension, hiding 599 HTTP-annotated RPCs; and `PROVEN_READ_ONLY`
+resolves to membership in an 11-row hand-written catalog, which is why only
+5 of 128 operations and 3 surfaces qualify.
+
+Every campaign in the master plan remains `NOT_AUTHORIZED` until it receives
+its own explicit one-shot owner authorization. Production remains unrunnable:
+`SUPPORTED_ENVIRONMENTS` is unchanged and `config/environments/production.json`
+remains structurally unloadable (D-4).
+
+This plan is orthogonal to `docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md`, which
+covers optional external agent orchestration. This one covers product
+observability and system mapping; the two share no scope and neither depends
+on the other.
