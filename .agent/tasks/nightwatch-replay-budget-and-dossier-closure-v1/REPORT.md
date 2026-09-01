@@ -61,7 +61,9 @@ therefore no fresh candidate, replay, minimization, dossier, or product finding
 is claimed.
 
 Continuity v2, OpenSpec task reconciliation, project truth, hardening,
-owner-provenance, generated-artifact/diff, checkpoint push, and final clean
-`main`/`origin/main` parity checks remain to be rerun after this continuation's
-documentation update. No alternate credential, stale state, historical
-candidate, or retry is authorized.
+owner-provenance, generated-artifact/privacy inspection, and both authoritative
+local and clean Node20 quality gates passed at documentation checkpoint
+`66c41a2a0953d920ebd97ade76fde2e83d016874`. The active task remains `BLOCKED`
+solely at the owner-managed page-readable DEV auth boundary; no alternate
+credential, stale state, historical candidate, or retry is authorized. Final
+checkpoint push and remote-parity verification remain.

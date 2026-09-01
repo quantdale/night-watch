@@ -138,6 +138,19 @@ page-readable validation before a new current-source campaign can be prepared.
   semantics valid; required token unexpired `false`, page-readable `false`, and
   overall valid `false`. Raw storage-state contents were not printed, copied,
   committed, or persisted.
+- `npm run project:check` at documentation checkpoint
+  `66c41a2a0953d920ebd97ade76fde2e83d016874` — PASS; active continuity PASS,
+  checkout clean, project completion remains `OPERATIONAL_ACCEPTANCE_BLOCKED`.
+- `npm run gate:local` at `66c41a2a0953d920ebd97ade76fde2e83d016874` — PASS;
+  all 10 required groups, Node 22, semantic compatibility 1,937/1,950 with
+  13 skipped and 0 failed, owner provenance 91, synthetic campaign 89,
+  receipt `receipt:sha256:33830faa0c3bc2d452cb84fa`.
+- `npm run gate:clean` from source head
+  `66c41a2a0953d920ebd97ade76fde2e83d016874` — PASS; disposable clean
+  checkout, fresh Node 20 dependencies and all 10 groups passed, clean before
+  and after, no auth/finding state, 0 sibling writes, gate receipt
+  `receipt:sha256:8a14aeb6bfe6e58030f29ac7`, clean receipt
+  `clean-receipt:sha256:be6079cbbea65fa793fbdf4d`.
 
 ## Decisions Made During This Task
 
@@ -221,14 +234,17 @@ Validated result: pushed implementation checkpoint
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` passes the focused 92-test
 campaign/checkpoint cone, local gate, clean Node20 gate, typecheck, hardening,
 handoff, project, semantic compatibility, owner provenance, and synthetic
-campaign checks.
+campaign checks. The continuation documentation checkpoint
+`66c41a2a0953d920ebd97ade76fde2e83d016874` also passed project truth and both
+authoritative local/clean gates.
 CI result: exact-head run `33446473458` failed before any job step and is
 classified as external non-evidence.
 DEV result: after the owner refresh, the normal no-refresh prepare-only path
 failed closed with `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the
 required token present but unexpired `false`, page-readable `false`, and
 overall valid `false`. Campaign/replay/minimization/dossier counts remain zero.
-Closure result: final documentation and parity gates remain to be run after
-this continuation's state update.
+Closure result: continuity, OpenSpec, project truth, hardening, privacy, local
+quality, and clean Node20 validation are closed for the blocked outcome; final
+checkpoint push and remote-parity verification remain.
 Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
 claimed.
