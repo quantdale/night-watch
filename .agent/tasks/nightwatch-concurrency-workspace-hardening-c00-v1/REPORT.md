@@ -185,19 +185,21 @@ At implementation checkpoint `8c333699cdfa373e536d1f8ba990b7f8c1812679` (the
 subsequent commits repaired DEF-06 through DEF-08 and were revalidated; the
 final validated implementation checkpoint is `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`):
 
-- `npm run gate:local` — **PASS**, all 11 groups; receipt
-  `receipt:sha256:ce66284f03146d9be522bff3`.
-- `npm run gate:clean` (Node 20 disposable clone) — **PASS**, all 11 groups;
-  gate receipt `receipt:sha256:05fc0ae7b88f12a5674287b0`, clean receipt
-  `clean-receipt:sha256:b3ed59c5bad0815aec322075`.
+- `npm run gate:local` at `1deecbc0306807dd9c372ff66dcf4430edee16b9` —
+  **PASS**, all 11 groups; receipt `receipt:sha256:fb4237efe09aa703fdd363ba`.
+- `npm run gate:clean` (Node 20 disposable clone) at the same head — **PASS**,
+  all 11 groups; gate receipt `receipt:sha256:17435865c67de72b7105361a`,
+  clean receipt `clean-receipt:sha256:daf3ea88ed184fe565b632c0`.
 - Semantic compatibility — 1,950 total / 1,937 passed / 13 skipped / 0 failed,
   exactly matching the canonical baseline measured independently on `main`.
-- Owner provenance 91 passed; synthetic campaign 127 passed.
+- Owner provenance 91 passed; synthetic campaign 128 passed.
 - `npm run typecheck`, `npm run hardening:check`, `npm run handoff:check`,
   `npm run project:check`, `npm run agent:check`, `npm run agent:audit`,
   `npm run quality-gate:spec` — all PASS.
-- Full canonical Playwright regression — 2,748 total / 2,735 passed / 13
-  skipped / 0 failed.
+- Full canonical Playwright regression — 2,749 total / 2,736 passed / 13
+  skipped / 0 failed, against an independently measured pre-C-00 canonical
+  baseline of 2,710 / 2,697 / 13 / 0. The delta is exactly the 39 new C-00
+  adversarial cases, with identical skip counts.
 
 External GitHub Actions CI was not run and is not claimed green.
 

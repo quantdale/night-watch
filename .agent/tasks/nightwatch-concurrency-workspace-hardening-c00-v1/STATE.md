@@ -143,18 +143,18 @@ No sibling company repository was modified. No tracked file was deleted, so the
 - Final `npm run project:check` — PASS.
 - Final `npm run agent:check` / `npm run agent:audit` — PASS, 0 strict errors.
 - `npm run workspace:check` — PASS, all seven invariants.
-- `npm run gate:local` at `8c333699cdfa373e536d1f8ba990b7f8c1812679` — PASS,
-  11/11 groups, receipt `receipt:sha256:ce66284f03146d9be522bff3`.
+- `npm run gate:local` at `1deecbc0306807dd9c372ff66dcf4430edee16b9` — PASS,
+  11/11 groups, receipt `receipt:sha256:fb4237efe09aa703fdd363ba`.
 - `npm run gate:clean` (Node 20 disposable clone) at the same head — PASS,
-  11/11 groups, gate receipt `receipt:sha256:05fc0ae7b88f12a5674287b0`,
-  clean receipt `clean-receipt:sha256:b3ed59c5bad0815aec322075`.
+  11/11 groups, gate receipt `receipt:sha256:17435865c67de72b7105361a`,
+  clean receipt `clean-receipt:sha256:daf3ea88ed184fe565b632c0`.
 - Semantic compatibility: 1,950 / 1,937 / 13 / 0 — exactly equal to the
   canonical `main` baseline measured independently.
-- Owner provenance 91 passed; synthetic campaign 127 passed.
-- Full canonical Playwright regression on the session branch: 2,748 total /
-  2,735 passed / 13 skipped / 0 failed. Independently measured canonical
-  `main` baseline: 2,710 / 2,697 / 13 / 0. The delta is exactly the 38 new
-  C-00 adversarial cases, with identical skip counts.
+- Owner provenance 91 passed; synthetic campaign 128 passed.
+- Full canonical Playwright regression on the session branch: 2,749 total /
+  2,736 passed / 13 skipped / 0 failed. Independently measured pre-C-00
+  canonical `main` baseline: 2,710 / 2,697 / 13 / 0. The delta is exactly the
+  39 new C-00 adversarial cases, with identical skip counts.
 - External GitHub Actions CI was not run and is not claimed green.
 
 ## Decisions Made During This Task
@@ -223,8 +223,8 @@ is a NEW task with a NEW session worktree created through
 - Local quality gate: PASS, 11/11 required groups.
 - Clean Node 20 quality gate: PASS, 11/11 required groups.
 - Adversarial matrix A–L: 39/39 on disposable synthetic repositories.
-- Full regression parity: 2,748 / 2,735 / 13 / 0 against a canonical baseline
-  of 2,710 / 2,697 / 13 / 0; the delta is exactly the new C-00 cases.
+- Full regression parity: 2,749 / 2,736 / 13 / 0 against a pre-C-00 canonical
+  baseline of 2,710 / 2,697 / 13 / 0; the delta is exactly the new C-00 cases.
 - Pinned pre-C-01 baseline recorded with reproduced digests
   `srcsnapshot:sha256:04ff583971865f335902f5ad` and
   `source-eligibility-census:sha256:2f97b732e0472df347f695a1`.
