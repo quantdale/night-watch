@@ -29,6 +29,90 @@ Classification used throughout:
 
 ---
 
+## 0. Required-output index
+
+| # | Required output | Where |
+|---|---|---|
+| 1 | Overall verdict | §1 |
+| 2 | Claims confirmed | §2 |
+| 3 | Claims corrected | §3 (X-01…X-06) |
+| 4 | Missing architecture | §0.1 below (collected); detail in §4, §6, §10, §11 |
+| 5 | Unsafe assumptions | §0.2 below (collected); detail in §4, §5, §7 |
+| 6 | Implementation-order corrections | §10 |
+| 7 | Production-safety corrections | §5, §6 |
+| 8 | Privacy corrections | §7 |
+| 9 | System Map corrections | §8 |
+| 10 | Concurrency/workspace corrections | §11 |
+| 11 | Acceptance-criteria corrections | §0.3 below (collected); detail in §4 F-08, §9, §13 |
+| 12 | Revised critical path | §10, final subsection |
+| 13 | Explicit list of master-plan edits | §13 |
+
+### 0.1 Missing architecture — collected
+
+Design elements the plan needs and does not have. Each is expanded where cited.
+
+| # | Missing element | Class | Detail |
+|---|---|---|---|
+| MA-1 | Middleware-pipeline resolution as part of the effect closure | MUST FIX BEFORE IMPLEMENTATION | §4 F-01 |
+| MA-2 | An effect-**kind** lattice (`DATA_WRITE`, `AUDIT_WRITE`, `CACHE_WRITE`, `SESSION_WRITE`, `MESSAGE_PUBLISH`, `EXTERNAL_CALL`, `PURE_READ`, `UNCLASSIFIED`) replacing the binary write vocabulary | MUST FIX BEFORE IMPLEMENTATION | §4 F-07 |
+| MA-3 | A repository **inventory-completeness** assertion for any negative (absence-of-write) proof | MUST FIX BEFORE IMPLEMENTATION | §3 X-02, §4 F-05 |
+| MA-4 | Method-level proto RPC → Go handler binding (`W-EFFECT_RPC` has no input without it) | MUST FIX BEFORE IMPLEMENTATION | §10 F-31 |
+| MA-5 | A `DEPLOYMENT_FACT` route → runtime-endpoint binding gate, and the `mochi` manifest access that makes it possible | MUST FIX BEFORE PRODUCTION | §10 F-30, RG-21 |
+| MA-6 | A production request **parameter-provenance** model (opaque handles, external storage) | MUST FIX BEFORE PRODUCTION | §7 F-16, RG-23 |
+| MA-7 | An **induced-egress** model: fan-out from Nightwatch's requests into further production calls | MUST FIX BEFORE PRODUCTION | §4 F-02, T-36 |
+| MA-8 | A P1-specific **observation-scope** admission chain (the eleven gates are request-issuance gates and never fire for P1) | MUST FIX BEFORE PRODUCTION | §6 F-13 |
+| MA-9 | Import-graph isolation between the production and DEV cones, plus a distinct `productionRunGate` | MUST FIX BEFORE IMPLEMENTATION | §6 F-11, F-12, RG-25 |
+| MA-10 | External-only production configuration and a production host allowlist that is never an inversion of the deny table | MUST FIX BEFORE IMPLEMENTATION | §6 F-09, F-10, RG-24 |
+| MA-11 | Two distinct digest families (unsalted structural, salted value) | MUST FIX BEFORE IMPLEMENTATION | §7 F-15, T-42 |
+| MA-12 | Server-side, content-addressed, version-pinned graph layout | MUST FIX BEFORE IMPLEMENTATION | §8 F-19 |
+| MA-13 | Campaign **C-00** — per-agent worktrees, repository-hygiene invariants, file ownership, integration protocol | MUST FIX BEFORE IMPLEMENTATION | §11 |
+| MA-14 | Campaign **C-02a** — OpenAPI admission (zero new parsers) | MUST FIX BEFORE IMPLEMENTATION | §3 X-03 |
+| MA-15 | Owners for `G-16` and for EIG prioritization — both orphaned | SHOULD FIX | §10 F-28 |
+| MA-16 | A derived, rebuildable index over the fact store, plus snapshot retention/compaction | SHOULD FIX | §8 |
+
+### 0.2 Unsafe assumptions — collected
+
+Assumptions the plan relies on that do not hold, ordered by consequence.
+
+| # | Assumption *(as written)* | Why it is unsafe | Class |
+|---|---|---|---|
+| UA-1 | "A handler's bounded call closure captures the route's effects." | Measured false. The middleware pipeline is outside every handler closure, and one middleware calls a production webhook on every GET. §4 F-01 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-2 | "Two witnesses are enough." | The lattice counts to two without requiring an effect witness, so `W-DECLARED_VERB` + `W-SPEC` admits production with zero implementation analysis. §4 F-03 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-3 | "Nightwatch's containment bounds Nightwatch's production impact." | It bounds Nightwatch's own egress only; the system under test calls production on Nightwatch's behalf, unbudgeted and invisible. §4 F-02 | MUST FIX BEFORE PRODUCTION |
+| UA-4 | "The eleven gates and the two-witness proof make the credential's authority irrelevant." | Every one of those controls is inside Nightwatch's own trust domain; UA-1 shows the domain is not defect-free. §5 | MUST FIX BEFORE PRODUCTION |
+| UA-5 | "`INFERENCE` never grants authority (`I-3`)." | Contradicted by `R-2`: P2 targets production using the client-side host matrix, and no gate refuses an `UNKNOWN` endpoint binding. §10 F-30 | MUST FIX BEFORE PRODUCTION |
+| UA-6 | "A negative proof over the scanned inventory is evidence of absence." | `ouchan` is enumerated at roughly one third and the shortfall is never computed. §3 X-02, §4 F-05 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-7 | "The route → handler join is reliable." | 118 proven / 10 rejected; the join is the unwitnessed link both witnesses depend on. §4 F-04 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-8 | "P1 issues no requests." | Loading an authenticated SPA issues many application-initiated requests; and P1 as defined cannot satisfy mandatory L6. §6 F-13 | MUST FIX BEFORE PRODUCTION |
+| UA-9 | "Structural projection makes raw bytes structurally unable to persist." | True for response bodies; false for request URLs/parameters, key names admitted as "shape", page console output, and the on-disk browser profile. §7 | MUST FIX BEFORE PRODUCTION |
+| UA-10 | "Key sets are structure, not data." | In this domain, objects are routinely keyed by account id, MSP id or company name. §7 F-14 | MUST FIX BEFORE PRODUCTION |
+| UA-11 | "Digests can be both salted-per-campaign and comparable across campaigns." | Mutually exclusive as specified. §7 F-15 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-12 | "A separate launcher is separation." | Separation is a property of the import graph, not the entry point. §6 F-12 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-13 | "`parseOpenApiRoutes` is unreachable, so protobuf is the only way in." | Both contract repos ship complete generated OpenAPI documents the existing parser reads. §3 X-03 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-14 | "Adding a new route source before C-01 merely truncates the new operations." | It **evicts** the existing ones: the counter is global and sorts `repoId` first. §10 F-27 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-15 | "ELK.js layout is deterministic." | Deterministic only for a fixed version, option set and platform. §8 F-19 | MUST FIX BEFORE IMPLEMENTATION |
+| UA-16 | "Five coverage buckets express the required distinctions." | They cannot express `unmeasured` or `stale`, both of which the objective requires. §9 F-22 | MUST FIX BEFORE IMPLEMENTATION |
+
+### 0.3 Acceptance-criteria corrections — collected
+
+| Campaign / gate | Original *(E1)* | Corrected *(R2)* | Class |
+|---|---|---|---|
+| Programme metric | `operations modelled ≥ 900` after C-01…C-05 | Unreachable as scoped (370). Either make admission-set expansion an owner-gated C-05 deliverable with named roots, or restate the metric. §3 X-05 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-06** | `≥ 200 READ_ONLY_PROVEN` | **Withdrawn as a gate.** Pass = zero false positives on the negative corpus + 100 % callee classification + kind-diverse effect-mandatory witnesses + join/inventory/vocabulary preconditions. Count is reported, not gated. §4 F-08 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-01** | 223 operations, `routeOperationsTruncated = 0` | Adds a permanent **no-eviction** regression assertion and brings **enumeration** truncation into scope with a computed `dropped`. §10 F-27, §3 X-02 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-02** | ≥ 147 operations from `blueapi/billing` via a new proto lexer | Split: **C-02a** OpenAPI admission (~591 ops, ~1,179 definitions, zero new parsers) precedes **C-02b** proto lexer (streaming, service↔RPC symbol, corroboration). §3 X-03 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-03** | ≥ 12 services bound to ≥ 12 proto services | Insufficient for `W-EFFECT_RPC`, which needs **method**-level binding over a completely enumerated `ouchan`. Either extend, or move C-03 off the production critical path. §10 F-31 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-05** | one allowlist; no persisted git state | Adds owner-gated **admission-set expansion** with named target roots. §3 X-05 | MUST FIX BEFORE IMPLEMENTATION |
+| **C-08** | every operation carries a binding class | Insufficient: permits every production route to be `UNKNOWN`. Add **C-08b** (`mochi` access) and require `DEPLOYMENT_FACT` for production-admitted routes. §10 F-30 | MUST FIX BEFORE PRODUCTION |
+| **C-12** | "zero requests issued by Nightwatch" | "Zero requests **attributable** to Nightwatch", with every proxy-traversing request counted and attributed. §6 F-13 | MUST FIX BEFORE PRODUCTION |
+| **C-14** | ≥ 1 candidate reproduced; minimization bounded | Adds: every minimized/replayed request independently re-satisfies RG-04/RG-05/G7; parameter mutation prohibited. §12 T-46 | MUST FIX BEFORE PRODUCTION |
+| **C-15** | byte-identical layout; 10⁴-node render budget | Server-side content-addressed layout with pinned ELK version; the 10⁴ target is replaced by contract-bound projections with `{limit, total, dropped}` and an interactive budget at 1,000/2,000. Split C-15a (with C-01) / C-15b. §8 F-19, F-20 | SHOULD FIX |
+| **RG-13** | `ORDINARY_USER` permitted for P2/P3 | `ORG_ENFORCED_READ_ONLY` required **before P2**, else a named written dated owner exception. §5 | MUST FIX BEFORE PRODUCTION |
+| Coverage ledger | five buckets | seven buckets `{proven, unproven, unsupported, truncated, stale, unknown, unmeasured}`; coverage may deny, never grant. §9 F-22, F-23 | MUST FIX BEFORE IMPLEMENTATION |
+| New gates | — | RG-21…RG-28 (endpoint binding, observation window, parameter source, external config, import isolation, no credential persistence, minimized-request admission, coverage-may-only-deny). §6, §7, §9 | MUST FIX BEFORE PRODUCTION |
+
+---
+
 ## 1. Overall verdict
 
 **The plan is directionally correct and unusually well-evidenced, and it must
