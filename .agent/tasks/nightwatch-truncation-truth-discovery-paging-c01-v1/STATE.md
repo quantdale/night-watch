@@ -19,4 +19,17 @@
 - PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md  
 - openspec/changes/nightwatch-production-observability-system-map-master-plan-v1/tasks.md  
 
-**C-00 remains historical COMPLETE.**
+**PROJECT_VERDICT_EFFECT:** PRESERVE  
+
+**Current Milestone:** begin C-01 implementation  
+
+**Files Changed:**  
+- .agent/ACTIVE_TASK.md  
+- .agent/tasks/nightwatch-truncation-truth-discovery-paging-c01-v1/SPEC.md  
+- .agent/tasks/nightwatch-truncation-truth-discovery-paging-c01-v1/PLAN.md  
+- .agent/tasks/nightwatch-truncation-truth-discovery-paging-c01-v1/STATE.md  
+- .agent/tasks/nightwatch-truncation-truth-discovery-paging-c01-v1/REPORT.md  
+
+**Decisions Made During This Task:**  
+- C-01 is now the actual active task (was C-00 COMPLETE)  
+- No implementation completed yet  
