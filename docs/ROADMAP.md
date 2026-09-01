@@ -2708,6 +2708,17 @@ Canonical documents (change dir `openspec/changes/nightwatch-production-observab
   34 hazards with prevention/detection/containment/evidence/recovery/test and
   five stated residuals.
 - `tasks.md`, `specs/` — campaign checklist and requirement deltas.
+- `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md` — **independent second-reviewer architecture
+  review** (`PLANNING_ONLY`, same change dir). Re-measured every load-bearing
+  claim; confirmed the diagnosis and the `PROD_OBSERVE` architecture;
+  corrected `B-6` (retracted), `B-8` (LOW → HIGH), `B-7`/`U-6`
+  (`parseOpenApiRoutes` is reachable — `blueapi/openapiv2/apidocs.swagger.json`
+  holds 591 operations and 1,179 definitions readable with **no new parser**);
+  and found that `W-EFFECT_CLOSURE` is unsound as specified because it is
+  rooted at the handler and misses a middleware that calls a production
+  webhook on every GET. Adds campaigns C-00, C-02a, C-08b; adds hazards
+  T-35…T-48 and residuals R-6…R-8; withdraws `≥ 200 READ_ONLY_PROVEN` as a
+  pass/fail gate; requires `ORG_ENFORCED_READ_ONLY` before P2 rather than P4.
 
 Load-bearing measured findings (live census at
 `source-eligibility-census:sha256:2f97b732e0472df347f695a1`): all 128 discovered

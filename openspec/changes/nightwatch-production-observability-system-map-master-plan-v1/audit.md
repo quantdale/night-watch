@@ -357,6 +357,14 @@ contract permits, with no zoom, pan, search, filter or drill-down. The SSE
 subscription helper `subscribeToControlCenterEvents` exists in `api.ts` but is
 **not invoked** by `App.tsx` — refresh is manual only (`STRONGLY_SUPPORTED`).
 
+> **SECOND-REVIEW CORRECTION (R2).** This claim is **incorrect**.
+> `subscribeToControlCenterEvents` is imported at
+> `ui/control-center/src/App.tsx:2` and invoked at
+> `ui/control-center/src/App.tsx:365`
+> (`useEffect(() => subscribeToControlCenterEvents(...), [])`). Refresh is
+> **not** manual only. See `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §3 X-01`. The original
+> text is preserved above as the first explorer wrote it.
+
 ### A.9 Governance machinery (`PROVEN`)
 
 Ten-group executable gate `config/quality-gate.v1.json` driven by
@@ -403,11 +411,22 @@ GitHub Actions job running `npm run gate:ci`;
 - `parseStaticRoutes` Go branch — structurally unreachable against `ouchan`.
 - `parseStaticRoutes` TS/JS branch — structurally unreachable against `ripple-ui`.
 - `parseOpenApiRoutes` — no `openapi.json`/`swagger.json` inside any approved root.
+  > **SECOND-REVIEW CORRECTION (R2).** Literally true, but the conclusion
+  > "unreachable architecture" is wrong. `alphauslabs/blueapi/openapiv2/apidocs.swagger.json`
+  > (swagger 2.0, 1,435,500 B, 462 paths, **591 operations**, 591 with a
+  > `responses["200"].schema`, **1,179 definitions**) and
+  > `alphauslabs/blueinternal/openapiv2/apidocs.swagger.json` both exist on
+  > disk. `.json` is already an admitted extension, `apidocs.swagger.json`
+  > already matches `ROUTE_FILE_RE` (`surfaces.ts:60`), and
+  > `parseOpenApiRoutes` already parses this exact shape. Only
+  > `APPROVED_ROOTS['alphauslabs/blueapi'] = ['billing']` prevents it. See
+  > `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §3 X-03`.
 - `src/core/source/lexical.ts` — tokenizer whose only consumer is the above.
 - `src/data/phase6/**` (1,593 LOC) — `PHASE_6_STATUS: FROZEN_BY_OWNER`; quarantined behind `assertOwnerPolicyAllows(..._DATA_ORACLE)`.
 - `src/core/selfDev*/**` (6,331 LOC) — `EFFECTIVE_NEXT_PROMOTION_AUTHORITY: NONE`, portfolio `EXHAUSTED`.
 - `src/core/aiReview/**` (3,324 LOC) — no compatible local model was ever available; `PHASE_7B_3_STATUS: HARNESS_COMPLETE / LOCAL_MODEL_CANARY_NOT_RUN`.
-- `subscribeToControlCenterEvents` — exported, never called.
+- ~~`subscribeToControlCenterEvents` — exported, never called.~~ **RETRACTED
+  by second review**: it is called at `App.tsx:365`. See `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §3 X-01`.
 - `routeOperationsTruncated` — computed, never surfaced.
 
 Roughly **11,000 LOC** is retained-but-inert. That is defensible (owner freezes,
@@ -435,14 +454,26 @@ numbers.
 | B-3 | MEDIUM | Stale duplicate census figures in four durable docs read as current | see A.12 |
 | B-4 | MEDIUM | `RIPPLE_REPOSITORIES` bakes `dirty`/`ahead`/`behind` into source; already false for `ouchan` | `map.ts:44-51` vs live `git status` (71 dirty) |
 | B-5 | MEDIUM | Control Center renders ≤24 nodes while its contract allows 1000; no truncation indicator in the UI | `App.tsx` `nodes.slice(0,24)` vs `sourceGraph.ts nodeLimit 1000` |
-| B-6 | LOW | SSE endpoint implemented and exported but never subscribed | `api.ts` vs `App.tsx` |
-| B-7 | LOW | Three route parsers and one tokenizer are unreachable against the real corpus | A.11 |
-| B-8 | LOW | `ouchan` silently hits its 1,024-file cap (`SOURCE_FILE_COUNT_EXCEEDED: 1`) | live census |
+| B-6 | ~~LOW~~ **RETRACTED** | ~~SSE endpoint implemented and exported but never subscribed~~ — **false**; invoked at `App.tsx:365` (second review, `§3 X-01`) | `api.ts` vs `App.tsx` |
+| B-7 | LOW *(partially corrected)* | Two route parsers and one tokenizer are unreachable against the real corpus. **Second review:** the `parseStaticRoutes` Go and TS/JS branches are genuinely unreachable, but `parseOpenApiRoutes` is **not** — see `§3 X-03` | A.11 |
+| B-8 | ~~LOW~~ **HIGH** *(re-severitized by second review)* | `ouchan` enumeration aborts silently. `SOURCE_FILE_COUNT_EXCEEDED: 1` is a **one-shot flag** (`scan.ts:191-193` increments only while the count is 0), not "1 file rejected"; `siblingSource.ts:273-276` aborts the directory walk at the first budget hit. Measured: `ouchan/{services,pkg}` holds **3,025** approved-extension files (28.4 MB of `.go`) against `maxFiles: 1024`, so roughly two thirds is never enumerated — not rejected, not counted, **never computed**. `MAX_SIBLING_SOURCE_SCAN_FILES = 4096` is a further hard ceiling. See `§3 X-02` | live census; `scan.ts:191`; `siblingSource.ts:20,273` |
 
 Company-repository finding, also **NOT FIXED**:
 `alphauslabs/ripple-ui-cost-finalization/src/app/stores/finilizeCost/actions.ts:123-124`
 hard-codes `https://api.alphaus.cloud/m/status/calculations/status` while
 sibling calls use environment-aware `getApiUrl(...)`.
+
+Second company-repository finding added by the second review, also
+**NOT FIXED** — and load-bearing for the plan's read-only proof:
+`mobingilabs/ripple-api/src/App/Middleware/MarketplaceSubscriptionMiddleware.php:18,26,36,100`
+declares a hard-coded **production** `api.alphaus.cloud` webhook URL (the
+constant embeds a path token; referenced by file:line and deliberately not
+reproduced here) and calls it by `curl` from `__invoke` with **no HTTP method
+guard**, carrying the customer `mspId` in the query string.
+`src/App/Route/Providor/RouteProvidor.php:74` attaches this middleware to every
+route group whose routing config enables `x-header`. Consequently a `ripple-api`
+**GET** performs an outbound production call that lies entirely outside any
+handler call closure. See `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §4 F-01/F-02`.
 
 ### A.14 Nightwatch limitation summary
 
@@ -726,6 +757,6 @@ source universe; several (`gateway`, `rbac`, `user`, `safe-box`) are wrapped as
 | U-3 | Whether a production observer identity with organizationally enforced read-only RBAC can exist | Owner/organization decision; out of Nightwatch's frozen scope |
 | U-4 | Real production error/latency baselines needed for anomaly confidence | Requires P1 passive observation, which is gated |
 | U-5 | How many `ripple-openspec` scenarios are checkable by read-only HTTP observation | Bounded classification pass over the 68 canonical `spec.md` files |
-| U-6 | Whether `blue-sdk-ts` descriptor decoding is needed or the `openapiv2/apidocs.swagger.json` fallback suffices | Inspect the generated swagger artifact's completeness |
+| U-6 | ~~Whether `blue-sdk-ts` descriptor decoding is needed or the `openapiv2/apidocs.swagger.json` fallback suffices~~ **SETTLED by second review**: the fallback is complete — 591 of ~595 verb-bound `blueapi` RPCs with path, verb, operationId and 200-response schema, plus 1,179 definitions. No descriptor decoding is needed for the HTTP surface. | Measured; see `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §3 X-03/X-04` |
 | U-7 | Actual `routeOperationsTruncated` value reported by the runtime (arithmetic says 95) | Surface the counter in a CLI projection |
 | U-8 | Whether `next` shares the production data plane in the same way `dev` does (RECON_B E8) | `next.json` records the caveat; no independent confirmation was attempted |

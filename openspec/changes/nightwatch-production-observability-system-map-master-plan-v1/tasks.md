@@ -21,24 +21,47 @@
 - [x] M16 point durable documentation at the master plan without rewriting history
 - [x] M17 verify the diff is planning-only, commit, push, confirm `HEAD == origin/main`, clean worktree, sibling repositories unmodified
 
+## Independent second review (this session)
+
+- [x] R0 re-measure every load-bearing claim in `audit.md` independently, read-only
+- [x] R1 adversarially assess the two-witness read-only proof against real `ripple-api` source
+- [x] R2 challenge the production observer identity model and the `PROD_OBSERVE` separation
+- [x] R3 attempt to break the privacy firewall projection boundary
+- [x] R4 review System Map V2, the coverage model and the campaign sequencing
+- [x] R5 design the multi-agent/workspace isolation response (C-00)
+- [x] R6 extend the threat model (T-35…T-48, R-6…R-8) and narrow `R-1`
+- [x] R7 record the review in `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md` and annotate the first explorer's artifacts without rewriting them
+- [x] R8 verify planning-only diff, commit, push, confirm `HEAD == origin/main` and a clean worktree
+
 ## Future implementation campaigns — NOT AUTHORIZED
 
 Each requires its own explicit one-shot owner authorization. Acceptance
 criteria are in `docs/design/PRODUCTION-OBSERVABILITY-MASTER-PLAN.md` §2; gates in `§4`.
 
+> **SECOND-REVIEW CORRECTIONS (R2)** — full reasoning in
+> `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md`. Corrected acceptance criteria are inline below;
+> the first explorer's original wording is preserved in
+> `docs/design/PRODUCTION-OBSERVABILITY-MASTER-PLAN.md` §2.
+
+### Track 0 — Prerequisite (added by second review)
+
+- [ ] **C-00 concurrency and workspace hardening** — acceptance: per-agent `git worktree` on a session-owned branch; `agent:check` repository-hygiene invariant (no `skip-worktree`/`assume-unchanged` bits, `.git/info/exclude` matches a committed digest, `.git/hooks` samples only); file-ownership rule with a declared-deletion gate check; fast-forward-only integration protocol. **MUST precede any substantial parallel implementation.**
+
 ### Track A — Reach
 
-- [ ] C-01 truncation truth and discovery paging — acceptance: `ripple-api` reports 223 operations, `routeOperationsTruncated = 0`, `TRUNCATED` propagated to CLI + contract + ledger
-- [ ] C-02 protobuf source intelligence — acceptance: ≥ 147 operations from `blueapi/billing` with verb, path, request and response message; zero operations from commented or malformed options
+- [ ] C-01 truncation truth and discovery paging — acceptance: `ripple-api` reports 223 operations, `routeOperationsTruncated = 0`, `TRUNCATED` propagated to CLI + contract + ledger. **Second review adds:** (a) a permanent **no-eviction regression assertion** — pre-change operation identities must be a subset of post-change identities, because the counter is global and `surfaces.ts:832` sorts `repoId` first, so any new `alphauslabs/blueapi` operation would otherwise silently evict all of `ripple-api`; (b) **enumeration** truncation is in scope, not only operation truncation — `TRUNCATED` must carry `{limit, examined, dropped}` and `dropped` must be **computed** (today the walk aborts at `siblingSource.ts:273` and records a one-shot flag, leaving ~2,000 `ouchan` files invisible).
+- [ ] **C-02a OpenAPI admission** *(added by second review; precedes C-02b)* — acceptance: `blueapi/openapiv2` and `blueinternal/openapiv2` admitted to `APPROVED_ROOTS`; **zero new parsers**; ≥ 591 `blueapi` operations with verb, path and operationId through the existing `parseOpenApiRoutes`; `$ref` → `definitions` binding yields ≥ 400 response contracts from the 1,179 available definitions; the artifact is classed `SOURCE_FACT (GENERATED_ARTIFACT)`, carries a generation-currency check against the proto surface, and is barred from being the sole basis of a production admission.
+- [ ] C-02b protobuf source intelligence *(was C-02)* — acceptance: ≥ 147 operations from `blueapi/billing` with verb, path, request and response message; zero operations from commented or malformed options. **Second review:** now required only for streaming RPCs (90 repo-wide), the proto service ↔ RPC symbol that C-03 joins on, and corroboration of the generated OpenAPI artifact — not as the primary route to the RPC surface.
 - [ ] C-03 Go/gRPC topology binding — acceptance: ≥ 12 ouchan services bound to ≥ 12 proto services as `SOURCE_FACT`
 - [ ] C-04 frontend consumer intelligence — acceptance: ≥ 400 frontend→route edges; no `SOURCE_FACT` edge from a non-literal path
-- [ ] C-05 universe discovery and admission hygiene — acceptance: one owner-approved allowlist; no persisted mutable git state; unapproved repositories provably unscanned
+- [ ] C-05 universe discovery and admission hygiene — acceptance: one owner-approved allowlist; no persisted mutable git state; unapproved repositories provably unscanned. **Second review adds:** owner-gated **admission-set expansion** with named target roots — no other campaign can deliver the plan's `≥ 900` operations metric.
 
 ### Track B — Proof
 
-- [ ] C-06 two-witness read-only proof — acceptance: ≥ 200 `READ_ONLY_PROVEN` operations, each with two named witnesses; the 11-row catalog is no longer an input to classification
+- [ ] C-06 two-witness read-only proof — acceptance **replaced by second review**: (a) **zero false positives** on a negative corpus that must include the two historical D-79 admissions, a GET whose resolved closure reaches a write, **a GET whose middleware performs an external call** (`MarketplaceSubscriptionMiddleware`), an unclassified callee, a depth-bound overflow, a dynamic-dispatch callee and an ambiguous join; (b) **100 %** callee-identifier classification coverage for every admitted repository; (c) every proof **kind-diverse and effect-mandatory** — ≥ 1 declaration witness AND ≥ 1 effect witness, with `W-SPEC` barred from production admission; (d) each proof carries its join precondition, its repository **inventory-completeness** assertion and its vocabulary digest; (e) the effect closure is rooted at the **resolved middleware pipeline plus handler**; (f) the 11-row catalog is no longer an input. The achieved count is **reported, never gated** — `≥ 200` is withdrawn as a pass/fail criterion.
 - [ ] C-07 derived endpoint semantics and generated targets — acceptance: registry fully derived; ≥ 30 generated DEV targets; ≥ 1 product finding on DEV
 - [ ] C-08 deployment-fact binding — acceptance: every operation carries a binding class; U-1 recorded as an explicit unknown, never inferred
+- [ ] **C-08b `mochi` read-only manifest access** *(added by second review; start immediately — organizational lead time)* — acceptance: read-only access to `mochi`'s `services/{env}/{appproxy,serviceproxy}/ingress.yaml`; `U-1` and `U-2` settled; a `DEPLOYMENT_FACT` route → endpoint binding exists for every route proposed for production admission. **Precondition for C-13**: without it P2 grants authority from an `INFERENCE`, violating `I-3`.
 - [ ] C-09 spec-derived expectations — acceptance: ≥ 40 admitted expectations bound to `repo@SHA:path`; non-checkable scenarios grant nothing
 
 ### Track C — Production
@@ -51,7 +74,8 @@ criteria are in `docs/design/PRODUCTION-OBSERVABILITY-MASTER-PLAN.md` §2; gates
 
 ### Track D — Visibility
 
-- [ ] C-15 System Map V2 and coverage ledgers — acceptance: byte-identical deterministic layout across runs; 10⁴-node render budget met; all eight operator queries answerable; `TRUNCATED` rendered; Control Center still GET/HEAD-only with `executionAuthority: NONE`
+- [ ] C-15 System Map V2 and coverage ledgers — **split by second review**: **C-15a truncation and ledger surfacing ships with C-01** (the only way an operator can see eviction and enumeration loss); **C-15b graph rebuild** follows C-03/C-04. Acceptance: layout computed **server-side** and content-addressed, with the pinned ELK version and option set inside the layout digest; the 10⁴-node budget is replaced by "no projection exceeds its contract bound, every bound reports `{limit, total, dropped}`, and the interactive frame budget is met at the largest permitted projection (1,000/2,000)"; all eight operator queries answerable; `TRUNCATED` rendered (both graph contracts already compute it — the UI ignores it); the coverage ledger uses **seven** buckets `{proven, unproven, unsupported, truncated, stale, unknown, unmeasured}`; Control Center still GET/HEAD-only with `executionAuthority: NONE`.
+- [ ] **G-16 and EIG owners** *(added by second review)* — `G-16` (one derived figure source) and EIG prioritization (`design.md §9.2`) appear in the gap matrix and the design but are owned by no campaign. Assign both.
 
 ### Designed but not planned
 

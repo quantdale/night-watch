@@ -279,6 +279,180 @@ eliminated.
 
 ---
 
+## Group 7 — Second-review additions (T-35 … T-48)
+
+Added by the independent second review
+(`docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md`).
+`T-01`…`T-34` above are the first explorer's and are preserved unchanged.
+
+Note on `T-13`: `--disable-quic` and
+`--force-webrtc-ip-handling-policy=disable_non_proxied_udp` are **existing**
+controls (`src/browser/contract.ts:21-22`), not proposed ones.
+
+### T-35 Middleware/framework pipeline effect outside the handler closure · **C** · MEASURED
+- **Instance.** `mobingilabs/ripple-api/src/App/Middleware/MarketplaceSubscriptionMiddleware.php:18,26,36,100`
+  performs an outbound `curl` to a hard-coded **production** `api.alphaus.cloud`
+  webhook from `__invoke`, with no HTTP method guard, on every request in any
+  route group whose config enables `x-header`
+  (`src/App/Route/Providor/RouteProvidor.php:74`).
+- **Prevention.** Root `W-EFFECT_CLOSURE` at the route's fully resolved
+  middleware pipeline **plus** handler, derived mechanically from the app
+  bootstrap and the per-route `middleware` config. Unresolvable pipeline ⇒
+  `AMBIGUOUS`.
+- **Detection.** Admission receipt names every pipeline element analysed;
+  an element count of zero for a route that declares middleware is a hard error.
+- **Containment.** No proof ⇒ no admission.
+- **Evidence.** Pipeline resolution digest recorded on each read-only proof.
+- **Recovery.** Invalidate every proof derived with a handler-only closure.
+- **Test.** This exact route/middleware pair as a permanent negative fixture:
+  assert a GET on an `x-header` group is refused `READ_ONLY_PROVEN`.
+- **Residual.** None once the closure root is corrected; the effect itself
+  remains and is covered by T-36.
+- **Classification.** Preventable.
+
+### T-36 Transitive production contact induced via the system under test · **H**
+- **Prevention.** Not preventable by Nightwatch. L0–L6 govern Nightwatch's own
+  egress; they cannot govern a server calling production on Nightwatch's behalf.
+- **Detection.** Source-level: any outbound call in a route's resolved closure
+  is recorded on the operation as `INDUCED_EGRESS` with its destination class.
+- **Containment.** Per-route budget bounds Nightwatch-originated requests only.
+  The induced fan-out multiplier is `UNKNOWN` and must be reported as such.
+- **Evidence.** `INDUCED_EGRESS` annotations from the source model.
+- **Recovery.** Withdraw the route from the production admission list.
+- **Test.** Assert a route with a production-destined induced call is never
+  auto-admitted to `PROD_OBSERVE`.
+- **Residual.** R-6.
+- **Classification.** Detectable in source; not containable; partly accepted.
+
+### T-37 Cross-repository callee inside a read closure · **C**
+- **Prevention.** An unresolved or out-of-universe callee makes the closure
+  `AMBIGUOUS`. Never treat "outside the repository" as "no effect".
+- **Detection.** Callee-resolution coverage metric per proof.
+- **Containment.** No proof ⇒ no admission.
+- **Test.** A GET handler calling an out-of-universe symbol ⇒ refusal.
+- **Classification.** Preventable.
+
+### T-38 Asynchronous or queued write from a read handler · **C**
+- **Prevention.** Replace the binary write vocabulary with an effect-kind
+  lattice covering `MESSAGE_PUBLISH`, `CACHE_WRITE`, `SESSION_WRITE`,
+  `AUDIT_WRITE`, `EXTERNAL_CALL`, raw SQL literals and ORM
+  `save`/`persist`/`flush`, in addition to `DATA_WRITE`.
+- **Detection.** `UNCLASSIFIED > 0` blocks promotion.
+- **Test.** A GET whose closure publishes to a queue ⇒ refusal.
+- **Classification.** Preventable.
+
+### T-39 Audit/access-log write on the read path · **M**
+- **Prevention.** Not preventable — many read paths legitimately write an audit
+  row. Requires an explicit owner policy **per effect kind**, recorded on each
+  proof, rather than a silent exception inside the vocabulary.
+- **Detection.** Effect-kind breakdown reported per proof and in the ledger.
+- **Test.** Assert `AUDIT_WRITE` never silently classifies as `PURE_READ`.
+- **Classification.** Accepted residual under explicit owner policy.
+
+### T-40 Production request-parameter provenance · **H**
+- **Prevention.** Real customer identifiers are required to construct a
+  meaningful production read. They must be owner-supplied, stored external-only
+  (D-13/D-20 discipline), referenced internally by an **opaque handle**, and
+  resolved only inside the request builder.
+- **Detection.** Admission gate refusing any request whose concrete parameters
+  did not come from the approved source.
+- **Containment.** Values never enter logs, budget keys, digest inputs,
+  fingerprints, ledgers, errors or checkpoints.
+- **Test.** Sentinel parameter value; assert it appears nowhere outside the
+  in-memory request builder.
+- **Classification.** Preventable.
+
+### T-41 Key-name leakage through the "shape" allowlist · **C**
+- **Prevention.** A key name may be persisted only if it is a member of a
+  source-proven finite key set. Dynamic string keys (account ids, MSP ids,
+  company names) project to cardinality plus digest, never the literal.
+- **Detection.** Projection-totality test extended to key names.
+- **Test.** A response object keyed by a 12-digit account id; assert no key
+  literal is persisted.
+- **Classification.** Preventable.
+
+### T-42 Digest-family collision between salting and cross-run comparison · **H**
+- **Prevention.** Two explicitly named families: an **unsalted structural
+  digest** over shape and type with no value input (comparable across runs and
+  environments), and a **salted value digest** (per-campaign, never persisted,
+  never compared). Resolves the contradiction between `design.md §6.4`/`T-30`
+  and `design.md §9.4`.
+- **Detection.** Contract-level type separation; a value digest used in a
+  cross-run comparison is a type error.
+- **Test.** Assert structural digests are stable across campaigns and value
+  digests are not.
+- **Classification.** Preventable.
+
+### T-43 Observer session side effects · **H**
+- **Prevention.** No login automation, no auth retry, no credential refresh.
+- **Detection.** Any `401`/`403` terminates the campaign.
+- **Containment.** Reads may still extend a session, evict the human's
+  concurrent session under single-session enforcement, or rotate a token and
+  invalidate the operator's saved storage state.
+- **Recovery.** Owner re-captures storage state out of band.
+- **Test.** Assert no code path writes `context.storageState()` in the
+  production cone, and no rotated `Set-Cookie` is persisted.
+- **Classification.** Detectable and recoverable.
+
+### T-44 WAF, bot-mitigation or SOC response to automated traffic · **H**
+- **Prevention.** Serial execution, ≤ 1 req/2 s per service, global cap, and a
+  new gate `G-ORG` requiring an owner-attested observation window.
+- **Detection.** Any `403` from an edge/WAF class response opens the global
+  breaker.
+- **Containment.** Corporate egress IP ban and on-call alert noise are
+  organizational costs; bounded by the window gate and prior notification.
+- **Test.** Fixture returning a WAF-class block; assert immediate global
+  breaker open and campaign termination.
+- **Classification.** Containable.
+
+### T-45 Attribution and compliance of automated production reads · **H**
+- **Prevention.** `ORG_ENFORCED_READ_ONLY` observer identity, which is an
+  attribution control as well as a capability control.
+- **Detection.** `observerIdentityClass` recorded on every run.
+- **Containment.** None available under `ORDINARY_USER`: production audit logs
+  will attribute automated traffic to a human.
+- **Test.** Assert a campaign refuses to start when the recorded identity class
+  is below the stage minimum.
+- **Residual.** R-7 when `ORG_ENFORCED_READ_ONLY` is unavailable; requires
+  written owner acceptance before P2.
+- **Classification.** Preventable, else accepted residual.
+
+### T-46 Minimization synthesizing an unproven request variant · **C**
+- **Prevention.** In production, minimization may only **remove** steps. Any
+  minimized request must independently re-satisfy G4, G5 and G7 before issue;
+  parameter mutation into an unproven shape is prohibited.
+- **Detection.** Each replayed/minimized request carries its own admission
+  receipt.
+- **Test.** Minimizer proposing a mutated parameter ⇒ refusal.
+- **Classification.** Preventable.
+
+### T-47 Numeric acceptance target pressuring proof weakening · **H**
+- **Prevention.** Remove `≥ 200 READ_ONLY_PROVEN` as a pass/fail gate. The gate
+  is zero false positives on the negative corpus plus 100 % callee
+  classification coverage; the achieved count is reported as an observation.
+- **Detection.** Any change that increases the count while reducing negative
+  corpus coverage is a gate failure.
+- **Test.** Vocabulary-removal and witness-removal mutation tests must flip
+  proofs to `AMBIGUOUS`, never to `READ_ONLY_PROVEN`.
+- **Classification.** Preventable.
+
+### T-48 Concurrent-agent workspace corruption destroying in-progress evidence · **M** · OBSERVED
+- **Instance.** During the first exploration a concurrent session set
+  `skip-worktree` on `docs/ROADMAP.md`, added the planning change directory to
+  `.git/info/exclude`, and **deleted** the in-progress `audit.md`.
+- **Prevention.** Campaign C-00: per-agent `git worktree` on a session-owned
+  branch; file-ownership rule; prohibition on `git clean -fd`,
+  `git checkout -- <path>`, `git restore` and `git stash` outside owned paths.
+- **Detection.** `agent:check` repository-hygiene invariant — no
+  `skip-worktree`/`assume-unchanged` bits, `.git/info/exclude` matches a
+  committed digest, `.git/hooks` contains only samples.
+- **Containment.** Worktrees isolate index and checkout; the object store is
+  append-only.
+- **Recovery.** Fast-forward-only integration; never force-push, never rebase
+  another session's commits.
+- **Test.** Assert the hygiene invariant fails when a `skip-worktree` bit is set.
+- **Classification.** Preventable.
+
 ## Summary — what remains unresolved after all controls
 
 | # | Residual | Why it cannot be closed here |
@@ -288,3 +462,18 @@ eliminated.
 | R-3 | Organizationally enforced read-only observer identity (U-3) | Organizational decision outside Nightwatch. P4 is gated on it; P2/P3 are designed not to depend on it. |
 | R-4 | DNS prefetch invisibility | Mitigated only by making L6 mandatory in production; not eliminated. |
 | R-5 | Cache warming from reads | Inherent to observation. |
+
+### Second-review residuals
+
+| # | Residual | Why it cannot be closed here |
+|---|---|---|
+| R-6 | Induced downstream production load is unmeasured (T-36) | Requires visibility into the callee's own egress, outside Nightwatch and outside the owner scope. |
+| R-7 | Attribution under `ORDINARY_USER` (T-45) | Organizational; closed only by `ORG_ENFORCED_READ_ONLY`. |
+| R-8 | Browser profile bytes on disk during a session and after a crash | Inherent to running a real browser; bounded by ephemeral paths, disabled disk cache, and crash-path cleanup in the persistence audit. |
+
+**Narrowing of `R-1`.** `R-1` ("a production side effect invisible in source")
+must no longer absorb middleware-level effects. T-35 is a side effect that
+**is** visible in source and was missed only because the analysis was rooted at
+the handler. `R-1` now covers only effects genuinely invisible in source:
+database triggers, a downstream service's own writes, and infrastructure-level
+analytics.

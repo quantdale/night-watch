@@ -73,6 +73,13 @@ This change is **planning only**. It creates:
 - `tasks.md` — the campaign decomposition future sessions execute from.
 - `specs/` — requirement deltas for the three new capabilities
   (`prod-observe`, `whole-system-map`, `coverage-ledger`).
+- `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md` *(added by the independent second review)* — an
+  adversarial audit of everything above. It re-measured every load-bearing
+  claim, records where it disagrees, and classifies each recommendation
+  MUST FIX BEFORE IMPLEMENTATION / MUST FIX BEFORE PRODUCTION / SHOULD FIX /
+  OPTIONAL. **Read it alongside the master plan**: several acceptance criteria
+  in `§2` and `§4` are corrected there, campaigns `C-00`, `C-02a` and `C-08b`
+  are added, and the `≥ 200 READ_ONLY_PROVEN` gate is withdrawn.
 
 ## Expected result
 
@@ -80,6 +87,13 @@ A future frontier or coding agent can open `docs/design/PRODUCTION-OBSERVABILITY
 `C-01`, and begin implementing without rediscovering the project — and can
 prove, before any production request is ever issued, that every gate in
 `§ Readiness gates` is satisfied.
+
+> **SECOND-REVIEW NOTE (R2).** A future agent must **not** open the master plan
+> and begin `C-01` without also reading `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md`. Beginning
+> C-02/C-02a before C-01's no-eviction assertion exists would silently evict
+> every currently proven `ripple-api` surface, and implementing C-06 against
+> the handler-rooted closure specified in `design.md §4.1` would produce
+> unsound read-only proofs.
 
 The plan's load-bearing conclusions are:
 

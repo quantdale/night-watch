@@ -38,6 +38,26 @@ Three numbers define success:
 | `READ_ONLY_PROVEN` | 5 (hand-catalog) | ≥ 200 (two-witness, mechanical) | same |
 | product findings | 0 | ≥ 1 on DEV | ≥ 1 from P2 production reads |
 
+> **SECOND-REVIEW CORRECTION (R2)** — see
+> `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md`
+> `§3 X-05` and `§4 F-08`. Neither of the first two targets survives audit:
+>
+> - **`≥ 900` operations is unreachable as scoped.** C-01 (+95) plus C-02 as
+>   written (+147, the only approved proto root) gives **370**. Exceeding 900
+>   requires admitting `blueapi` in full, `blueinternal` and `wave-api` — an
+>   `APPROVED_ROOTS` expansion that appears in no campaign's acceptance
+>   criteria. Either make admission-set expansion an explicit owner-gated
+>   deliverable of C-05 with named target roots, or restate the metric.
+> - **`≥ 200 READ_ONLY_PROVEN` is coercive and should not be a gate.** Under a
+>   correct fail-closed implementation the near-term figure is plausibly in the
+>   tens and could be zero (`§4 F-01`, `F-04`…`F-07`). A numeric floor turns
+>   every soundness mechanism into an obstacle. Replace with: zero false
+>   positives on the negative corpus, 100 % callee-identifier classification
+>   coverage, kind-diverse effect-mandatory witnesses, and the achieved count
+>   **reported as an observation** in the coverage ledger.
+>
+> `product findings ≥ 1` is a sound target and stands.
+
 ---
 
 ## 1. Gap matrix
@@ -309,6 +329,56 @@ construction: each stage's evidence is the next stage's precondition.
 organizational decision outside Nightwatch's frozen scope. It is designed, not
 planned.
 
+> **SECOND-REVIEW CORRECTION (R2)** — `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §10`.
+>
+> **Ordering hazard (`F-27`, MUST FIX BEFORE IMPLEMENTATION).**
+> `MAX_DISCOVERED_OPERATIONS` is a **single global counter** and
+> `surfaces.ts:832` sorts by `repoId` first. `alphauslabs/blueapi` sorts
+> **before** `mobingilabs/ripple-api`. The moment blueapi yields any operation
+> — 147 via C-02, or 591 via C-02a, which is a one-line data change — it
+> consumes the whole 128-operation budget and **ripple-api drops to zero**,
+> silently destroying all 6 admitted expectations, all 3 eligible surfaces and
+> all 5 runtime bindings while every counter still reports a healthy 128.
+> C-01's acceptance must therefore add a permanent **no-eviction regression
+> assertion**: the set of operation identities discovered before the change is
+> a subset of the set discovered after.
+>
+> **Campaigns to add.**
+> - **C-00 concurrency and workspace hardening** — first, before any parallel
+>   implementation (`§11`).
+> - **C-02a OpenAPI admission** — admit `blueapi/openapiv2` and
+>   `blueinternal/openapiv2`; **zero new parsers**; ~591 + ~57 operations and
+>   1,179 response definitions using the already-implemented
+>   `parseOpenApiRoutes` (`§3 X-03`). C-02 as written becomes **C-02b**
+>   (protobuf lexer) and is needed only for streaming RPCs, the proto service ↔
+>   RPC symbol required by C-03, and corroboration of the generated artifact.
+> - **C-08b `mochi` read-only manifest access** — an owner/organizational
+>   request with a long lead time; settles `U-1`/`U-2` and is a precondition
+>   for P2 (`§10 F-30`).
+> - Assign owners for **`G-16`** and for **EIG prioritization**
+>   (`design.md §9.2`), both currently orphaned (`§10 F-28`).
+>
+> **Dependency inconsistency (`F-29`).** The Mermaid graph draws `C05 → C02`,
+> C-02's Dependencies line says C-01 only, the prose says C-05 has no upstream
+> dependency, and the critical path omits C-05. C-05 is a genuine predecessor
+> of any reach beyond `blueapi/billing`. Resolve to one statement.
+>
+> **C-03 is not on the production critical path (`F-31`).** `W-EFFECT_RPC`
+> needs *method*-level RPC → Go handler binding over a **completely enumerated**
+> `ouchan`; C-03's acceptance is *service*-level binding, and `ouchan` is
+> enumerated at roughly one third (`§3 X-02`). Production observation v1
+> therefore targets `ripple-api` GET routes only; C-03 moves to the mapping
+> path.
+>
+> **C-15 should be advanced, not delayed.** Split it: truncation and ledger
+> surfacing ships **with C-01** (it is the only way an operator can see `F-27`
+> and `X-02` happening); the graph rebuild follows C-03/C-04.
+>
+> **Revised critical path:**
+> `C-00 → C-01 → C-02a → C-06(PHP) → C-10 → C-11 → C-12 → C-13 → C-14`,
+> with `C-08 + C-08b` started immediately in parallel because of their
+> organizational lead time.
+
 ---
 
 ## 4. Readiness gates — hard go/no-go before the first production request
@@ -331,7 +401,7 @@ contact**, before C-12 may be authorized.
 | RG-10 | Request storms are impossible within configured limits | Serial execution proven; rate limiter proven with a monotonic clock; persistent-5xx fixture yields exactly one attempt |
 | RG-11 | Privacy sentinels never persist | Sentinel corpus campaign leaves no sentinel byte anywhere under the private root, in logs, or in errors |
 | RG-12 | Raw customer payloads do not enter Git, findings, or logs | Projection-totality property test; store-boundary re-screen; `.gitignore` + hardening private-surface rule cover the production root |
-| RG-13 | Observer identity lacks write capability where organizationally possible | `observerIdentityClass` recorded; `ORDINARY_USER` permitted only for P2/P3, `ORG_ENFORCED_READ_ONLY` required for P4 |
+| RG-13 | Observer identity lacks write capability | **SECOND-REVIEW CORRECTION (R2), `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §5`:** `ORG_ENFORCED_READ_ONLY` is **required before P2** — the first Nightwatch-issued production request — not before P4. Under `ORDINARY_USER` every control lives inside Nightwatch's own trust domain, and `§4 F-01` proves the flagship control has a measured soundness hole. The only alternative is a **named, written, dated owner exception** enumerating the six acceptance points in `§5`. `observerIdentityClass` is recorded on every run and compared against the stage minimum **by a gate**, not by prose. *(Original first-explorer text: "…where organizationally possible; `ORDINARY_USER` permitted only for P2/P3, `ORG_ENFORCED_READ_ONLY` required for P4".)* |
 | RG-14 | A safety event immediately terminates the campaign | Injected safety counter ⇒ `PARTIAL_SAFETY_BLOCKED` with no subsequent request |
 | RG-15 | Production mode has a single-command kill mechanism | Kill switch stops a running campaign within one gate check; proven under load |
 | RG-16 | Control Center creates no hidden execution authority | Every non-GET method 405; no mutating handler in the route table; SSE accepts no input |
@@ -339,6 +409,19 @@ contact**, before C-12 may be authorized.
 | RG-18 | L6 containment is READY for the run | Fresh capability qualification (DNS/TCP/UDP/HTTP/HTTPS denial, browser speculative DNS, relay flow, cleanup) before target workspace creation |
 | RG-19 | No silent truncation anywhere in the admission path | Every projection feeding an admission decision reports its truncation bucket; `truncated > 0` blocks promotion |
 | RG-20 | Synthetic and local qualification precede any contact | PQ receipt exists, is bound to the exact implementation SHA, and covers all of RG-01…RG-19 |
+
+> **SECOND-REVIEW ADDITIONS (R2)** — `docs/design/PRODUCTION-OBSERVABILITY-INDEPENDENT-REVIEW.md §6`, `§7`, `§9`.
+>
+> | # | Gate | Evidence required |
+> |---|---|---|
+> | RG-21 | Route → runtime endpoint is a `DEPLOYMENT_FACT` | No production-admitted route may carry an `UNKNOWN` or `INFERENCE` endpoint binding. Closes the `I-3` violation in which `R-2` grants P2 authority from the client-side host matrix. Blocked on C-08b. |
+> | RG-22 | Observation window attested (`G-ORG`) | Owner attests an approved window; automated traffic during an incident or a month-end cost-finalization run is refused. |
+> | RG-23 | Request parameters come only from the approved external source | No customer identifier may be constructed, inferred, or reused from observed data; values resolve only inside the request builder via an opaque handle. |
+> | RG-24 | Production config and host allowlist are external-only | No production host is written into the repository outside the unloadable `config/environments/production.json`; `KNOWN_PRODUCTION_HOSTS` is never inverted into an allow table. |
+> | RG-25 | Production and DEV cones are import-isolated | Hardening rule: the production cone imports no DEV orchestrator or DEV environment loader; `realRunGate.ts` contains no production-permitting branch and no mode parameter; shared modules take policy by injection with no default. |
+> | RG-26 | No response credential is persisted | No `context.storageState()` write path exists in the production cone; a rotated `Set-Cookie` is never written back. |
+> | RG-27 | Minimized and replayed requests are independently admitted | Every minimized or replayed production request re-satisfies RG-04, RG-05 and G7; parameter mutation into an unproven shape is refused. |
+> | RG-28 | Coverage may deny, never grant | No gate treats a coverage-ledger value as evidence permitting an action; `RG-19`'s deny-direction use is the only permitted coupling. |
 
 ---
 
