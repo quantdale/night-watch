@@ -122,11 +122,12 @@ C-00 replaces "incidentally clean" with "mechanically enforced":
 
 `tests/unit/workspaceIsolation.test.ts` is a 39-case adversarial matrix over
 hazard classes A–L, executed on disposable synthetic repositories inside the
-required synthetic campaign. Eight defects were found and repaired during the
+required synthetic campaign. Nine defects were found and repaired during the
 campaign, including an invalid `git merge --no-rebase` invocation, a reconcile
 path that reported every merge failure as a conflict, two surfaces that derived
-the sibling REPOSITORIES root from their own checkout location, and a
-stale-base advisory raised for an already-released claim.
+the sibling REPOSITORIES root from their own checkout location, a fixture that
+wrote stray directories into the real workspace parent, and a stale-base
+advisory raised for an already-released claim.
 
 C-00 granted no new product or runtime authority, contacted no environment,
 and modified no sibling company repository.

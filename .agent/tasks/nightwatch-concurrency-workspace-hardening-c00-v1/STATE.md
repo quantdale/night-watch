@@ -6,13 +6,13 @@ Task ID: nightwatch-concurrency-workspace-hardening-c00-v1
 Phase: CONCURRENCY_WORKSPACE_HARDENING_C00_V1
 Status: COMPLETE
 Starting SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
-Last validated implementation SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
-Last substantive checkpoint SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
+Last validated implementation SHA: d8fdf952c7ede0691ea6bc93308d37974a4381bb
+Last substantive checkpoint SHA: d8fdf952c7ede0691ea6bc93308d37974a4381bb
 Branch: session/c00-a396cd1f
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 2517c26a019bbf8aa53008cd57658b917cc79bea
-LAST_VALIDATED_IMPLEMENTATION_SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 24220965fb3bacd0fd6e7d7826a40c1ec0428efc
+LAST_VALIDATED_IMPLEMENTATION_SHA: d8fdf952c7ede0691ea6bc93308d37974a4381bb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d8fdf952c7ede0691ea6bc93308d37974a4381bb
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -180,7 +180,7 @@ No sibling company repository was modified. No tracked file was deleted, so the
 
 ## Discoveries
 
-DEF-01 … DEF-08 are recorded in full in `REPORT.md` §13, with the residual
+DEF-01 … DEF-09 are recorded in full in `REPORT.md` §13, with the residual
 concurrency risks RES-1 … RES-6 in §14. The load-bearing discoveries:
 
 - Independent review §11 item 2 is mechanically wrong twice: index flags are
@@ -189,7 +189,8 @@ concurrency risks RES-1 … RES-6 in §14. The load-bearing discoveries:
 - Worktree isolation does not remove the index-flag hazard for the canonical
   checkout, whose index remains shared by everyone who works there.
 - Out-of-tree session worktrees break any resolution that derives a sibling
-  path from the checkout's own location; two such surfaces existed.
+  path from the checkout's own location; three such surfaces existed, and one
+  of them silently created stray directories in the session-worktree root.
 
 ## Safety Events
 
@@ -219,7 +220,7 @@ is a NEW task with a NEW session worktree created through
 - Status: COMPLETE. All ten milestones closed; every acceptance criterion in
   `SPEC.md` met.
 - Validated implementation checkpoint:
-  `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`.
+  `d8fdf952c7ede0691ea6bc93308d37974a4381bb`.
 - Local quality gate: PASS, 11/11 required groups.
 - Clean Node 20 quality gate: PASS, 11/11 required groups.
 - Adversarial matrix A–L: 39/39 on disposable synthetic repositories.
@@ -233,13 +234,13 @@ is a NEW task with a NEW session worktree created through
   only; live heads are discovered from Git, not persisted here.
 - Project verdict effect: PRESERVE. C-00 granted no new product or runtime
   authority.
-- Eight defects found and repaired; six residual concurrency risks recorded
+- Nine defects found and repaired; six residual concurrency risks recorded
   rather than hidden.
 - External CI: not run, not claimed green.
-- DEF-07 (stale-base advisory for a released claim) and DEF-08 (a tracked
-  dependency symlink in this session's own unpushed commit) were found during
-  closure, repaired at `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`, and each
-  carries a permanent mechanical guard.
+- DEF-07 (stale-base advisory for a released claim), DEF-08 (a tracked
+  dependency symlink in a session's own unpushed commit) and DEF-09 (a fixture
+  writing into the real workspace parent) were found during closure, repaired,
+  and each carries a permanent mechanical guard.
 - Closure, measured after integration: canonical
   `HEAD == origin/main == 5567e249dcf5e0f31c92a4f1a08f7001caa2f1f0`; canonical
   worktree clean; exactly one registered worktree; local and remote branch

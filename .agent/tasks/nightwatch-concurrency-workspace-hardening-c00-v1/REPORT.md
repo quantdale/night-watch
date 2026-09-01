@@ -12,7 +12,7 @@ field.
 
 ## 2. Final implementation SHA
 
-`24220965fb3bacd0fd6e7d7826a40c1ec0428efc`; also recorded in
+`d8fdf952c7ede0691ea6bc93308d37974a4381bb`; also recorded in
 `STATE.md` (`LAST_VALIDATED_IMPLEMENTATION_SHA`) and integrated into canonical
 `main` by fast-forward push.
 
@@ -183,7 +183,7 @@ repositories are never used as destructive targets.
 
 At implementation checkpoint `8c333699cdfa373e536d1f8ba990b7f8c1812679` (the
 subsequent commits repaired DEF-06 through DEF-08 and were revalidated; the
-final validated implementation checkpoint is `24220965fb3bacd0fd6e7d7826a40c1ec0428efc`):
+final validated implementation checkpoint is `d8fdf952c7ede0691ea6bc93308d37974a4381bb`):
 
 - `npm run gate:local` at `1deecbc0306807dd9c372ff66dcf4430edee16b9` —
   **PASS**, all 11 groups; receipt `receipt:sha256:fb4237efe09aa703fdd363ba`.
@@ -270,6 +270,15 @@ named as the baseline reproduced exactly.
   path inside a dependency tree. The bad commit was this session's own,
   unpushed, and was corrected before integration; no other session's history
   was touched.
+- **DEF-09** — `tests/unit/storageState.test.ts` built its "inside the Alphaus
+  workspace" fixture from `path.resolve(NIGHTWATCH_ROOT, '..')` and wrote a
+  real file there. In the canonical checkout that parent is `REPOSITORIES/`, so
+  the stray `alphauslabs/` directory it left behind was invisible; in an
+  out-of-tree session worktree the same code created a stray directory inside
+  the session-worktree root, corrupting the inventory an operator reads.
+  Repaired: the fixture now writes only inside its own disposable root, with a
+  `hardening:check` guard. Same defect class as DEF-06, found by auditing the
+  session-worktree root at closure rather than by a failing assertion.
 
 ## 14. Remaining concurrency residual risks
 
