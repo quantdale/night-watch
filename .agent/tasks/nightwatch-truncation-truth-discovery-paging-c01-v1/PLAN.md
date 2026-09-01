@@ -82,7 +82,7 @@ Measured read-only at `68e64a143d40aea051df186e050b3c0fa33d6ae5`:
 - M5 — census, CLI, and downstream ceiling propagation. DONE.
 - M6 — C-15a Control Center backend contract and visible UI marking. DONE.
 - M7 — 43-vs-83 durable-truth resolution (D-105). DONE.
-- M8 — full validation and closure. IN PROGRESS.
+- M8 — full validation and closure. DONE.
 
 ## Validation Strategy
 

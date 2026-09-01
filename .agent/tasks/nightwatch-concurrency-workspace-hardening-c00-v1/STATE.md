@@ -123,7 +123,11 @@ No sibling company repository was modified. No tracked file was deleted, so the
 - Adversarial matrix, first execution: 35/36 — reproduced DEF-02
   (`git merge --no-rebase` is not a `git merge` option, and the failure was
   misreported as a conflict). Repaired, then 36/36, then 38/38 with the
-  policy-source cases.
+  policy-source cases. `36/36` and `38/38` are intermediate points in that
+  progression, not the terminal count: the matrix closed at **39/39**, which
+  is the mechanically proven number of `test('` cases in
+  `tests/unit/workspaceIsolation.test.ts` and the figure carried by
+  `REPORT.md` and `docs/CURRENT_STATE.md` (re-verified under C-01).
 - `test:semantic-compat`, first execution after wiring: `TEST_FAILURE` with
   zero counts — reproduced DEF-03 (`import.meta` in a module reached through
   Playwright's CommonJS transform). Repaired.

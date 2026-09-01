@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Truncation Truth, Discovery Paging, and Early Coverage Surfacing (C-01)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-truncation-truth-discovery-paging-c01-v1
 OpenSpec: openspec/changes/nightwatch-truncation-truth-discovery-paging-c01-v1/
 Planned-From: 68e64a143d40aea051df186e050b3c0fa33d6ae5

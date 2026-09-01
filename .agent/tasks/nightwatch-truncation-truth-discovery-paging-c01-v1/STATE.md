@@ -4,19 +4,19 @@
 
 Task ID: nightwatch-truncation-truth-discovery-paging-c01-v1
 Phase: TRUNCATION_TRUTH_DISCOVERY_PAGING_C01_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
-Last validated implementation SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
-Last substantive checkpoint SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
+Last validated implementation SHA: 4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778
+Last substantive checkpoint SHA: 4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778
 Branch: session/nightwatch-truncation-truth-disc-b84ac363
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
-LAST_VALIDATED_IMPLEMENTATION_SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 68e64a143d40aea051df186e050b3c0fa33d6ae5
+LAST_VALIDATED_IMPLEMENTATION_SHA: 4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_TRUNCATION_TRUTH_DISCOVERY_PAGING_C01_V1_STATUS: IN_PROGRESS
+PHASE_TRUNCATION_TRUTH_DISCOVERY_PAGING_C01_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,20 +29,17 @@ census, CLI, and Control Center without changing runtime admission authority.
 
 ## Current Milestone
 
-C-01 implementation complete and focused-green; required full validation
-(`gate:local`, clean-checkout gate) not yet run and nothing committed.
+COMPLETE / STOP — every C-01 milestone is closed and both required gates are
+green.
 
 ## Work In Progress
 
-Full validation and closure. All implementation acceptance criteria are
-implemented and covered by focused tests; the remaining work is the required
-full validation, `REPORT.md`, `ACTIVE_TASK.md`, and integration through the
-C-00 session tooling.
+NONE — the campaign is complete. C-02a is deliberately not started.
 
 ## Exact Next Action
 
-Run `npm run gate:local`, repair any failure, then run the clean-checkout gate,
-then close out (REPORT.md, ACTIVE_TASK.md, `nightwatch-session integrate`).
+STOP — C-01 is complete and locally certified. Do not begin C-02a in this
+task; the next campaign is a new task with its own session worktree.
 
 ## Starting evidence
 
@@ -180,8 +177,11 @@ then close out (REPORT.md, ACTIVE_TASK.md, `nightwatch-session integrate`).
   Total files "TOTAL UNKNOWN" and Dropped files "UNKNOWN"; CONTENT READ
   COMPLETE (ready tone); callout "Coverage is reporting only and never grants
   admission."
-- Required full validation (`gate:local`, clean-checkout gate) NOT run yet.
-  Nothing committed or pushed.
+- `npm test` full canonical regression — 2,753 passed, 13 skipped, 0 failed.
+- `npm run gate:local` — PASS, all eleven required groups.
+- `npm run gate:clean` — PASS at sourceHead `4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778`, Node 20,
+  `installResult: PASS`, `gateResult: PASS`, all eleven groups PASS, receipt
+  `receipt:sha256:10e254cef07010adf2d56f8f`.
 
 ## Decisions Made During This Task
 
@@ -259,12 +259,21 @@ NONE.
 
 ## Resume Recipe
 
-Read this file, then `.agent/ACTIVE_TASK.md`, then run
-`node bin/nightwatch-session.mjs status` from this worktree. If the working
-tree still holds the uncommitted C-01 change set, continue from Exact Next
-Action: run `npm run gate:local`, repair, run the clean-checkout gate, then
-close out and integrate.
+STOP — task complete; do not resume. C-01 is closed and locally certified at
+`4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778`; `REPORT.md` holds the closure
+evidence. A future campaign, C-02a included, is a NEW task with a NEW session
+worktree created through `node bin/nightwatch-session.mjs start`; it does not
+resume this one.
 
 ## Completion Snapshot
 
-NOT COMPLETE — full validation and integration pending.
+- Every acceptance criterion in `SPEC.md` is met; see `REPORT.md` for the
+  criterion-by-criterion table.
+- Validated implementation commit: `4d8c88aba9bbb53b900e9f1d2c24bc3ed7b95778`.
+- `gate:local` PASS (eleven required groups); `gate:clean` PASS on a clean
+  Node 20 checkout of that commit; full canonical regression 2,753 passed /
+  13 skipped / 0 failed.
+- ripple-api projects all 223 operations with `routeOperationsTruncated: 0`;
+  the whole-population `responseContracts` figure is 58, recorded as D-105.
+- No new product or runtime authority was created. Coverage is reporting only.
+- C-02a not started.
