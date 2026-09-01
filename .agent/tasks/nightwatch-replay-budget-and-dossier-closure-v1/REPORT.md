@@ -66,7 +66,6 @@ local and clean Node20 quality gates passed at final continuation head
 `9f0d9a2683b7c3129894f851815035c1905ad03b`. The active task remains `BLOCKED`
 solely at the owner-managed page-readable DEV auth boundary; no alternate
 credential, stale state, historical candidate, or retry is authorized. Final
-blocked documentation checkpoint `d3328d97016a6c48cc05e1fb1276270760943353`
-was pushed to `origin/main`, and post-push verification confirmed a clean
-working tree with `HEAD == origin/main`; the task remains `BLOCKED` solely at
-the owner-managed page-readable DEV auth boundary.
+blocked documentation checkpoint was pushed to `origin/main`, and post-push
+verification confirmed a clean working tree with `HEAD == origin/main`; the task
+remains `BLOCKED` solely at the owner-managed page-readable DEV auth boundary.

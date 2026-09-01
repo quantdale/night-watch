@@ -7,7 +7,7 @@ Status: BLOCKED
 Task directory: .agent/tasks/nightwatch-replay-budget-and-dossier-closure-v1
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
-Last checkpoint: implementation and local/clean validation passed; the latest guarded DEV validation stopped before campaign preparation because the designated state was not page-readable; final blocked documentation checkpoint `d3328d97016a6c48cc05e1fb1276270760943353` was pushed with verified main/origin parity
+Last checkpoint: implementation and local/clean validation passed; the latest guarded DEV validation stopped before campaign preparation because the designated state was not page-readable; the final blocked documentation closure was pushed with verified main/origin parity
 Current milestone: M3 — guarded DEV confirmation BLOCKED before campaign start
 Next action: STOP — no further auth refresh or retry is authorized in this task; unblock only after the owner supplies a designated external DEV state that passes page-readable validation
 Authorization class: NIGHTWATCH_REPLAY_BUDGET_DOSSIER_CLOSURE_V1
