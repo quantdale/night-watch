@@ -28,18 +28,22 @@ sole job `99666610250` failed with `steps=[]` and no retrievable log. This is
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence; CI PASS is not
 claimed.
 
-Guarded DEV confirmation is blocked before campaign preparation. The
-designated external auth file had valid path permissions but was not
-page-valid. A no-refresh check failed with `AUTH_NETWORK_FAILURE`; one
-guarded refresh attempt failed with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh
-campaign manifest, candidate, replay, minimization, or dossier was produced.
+On 2026-09-01, the owner-refreshed designated DEV state was revalidated through
+the normal no-refresh Phase 7 prepare-only path. It failed closed with
+`AUTH_NETWORK_FAILURE` before campaign preparation. Sanitized diagnostics showed
+the state shape and DEV provenance valid, the required token present, and
+domain/path applicable, but the token was not unexpired and the state was not
+page-readable. No fresh campaign manifest, candidate, replay, minimization, or
+dossier was produced.
 
 ## DEV confirmation blocker
 
-The task stops before product campaign work. The owner must refresh the
-designated external DEV auth state and confirm page-readable validity for the
-configured DEV target. No alternate credentials, predecessor checkpoint,
-historical candidate, or stale manifest may be used.
+The task stops before product campaign work. The owner-refreshed designated
+external DEV state still fails page-readable validation. No repeated refresh,
+retry, alternate credential, predecessor checkpoint, historical candidate, or
+stale manifest is authorized. Unblock requires a separately supplied
+designated state that passes the guarded page-readable validation for the
+configured DEV target.
 
 ## Safety
 
@@ -52,12 +56,12 @@ containment weakening, DVR-011 weakening, and unbounded replay are forbidden.
 The implementation and every reachable local validation milestone are closed.
 The exact-head Actions observation remains external non-evidence because its
 only job had zero executed steps. Guarded DEV execution stopped before campaign
-preparation after the single permitted auth refresh failed; therefore no fresh
-candidate, replay, minimization, dossier, or product finding is claimed.
+preparation after the owner-refreshed state failed the page-readable gate;
+therefore no fresh candidate, replay, minimization, dossier, or product finding
+is claimed.
 
 Continuity v2, OpenSpec task reconciliation, project truth, hardening,
 owner-provenance, generated-artifact/diff, checkpoint push, and final clean
-`main`/`origin/main` parity checks all passed. The active task remains
-`BLOCKED` with the exact next action to stop until the owner supplies a
-page-readable designated DEV auth state. No alternate credential, stale state,
-historical candidate, or retry is authorized.
+`main`/`origin/main` parity checks remain to be rerun after this continuation's
+documentation update. No alternate credential, stale state, historical
+candidate, or retry is authorized.

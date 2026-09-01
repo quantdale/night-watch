@@ -29,6 +29,9 @@ DVR-011.
 
 ## Current next action
 
-STOP — owner must refresh the designated external DEV auth state to a
-page-readable valid state for the configured DEV target before this campaign
-can prepare a fresh manifest or contact the product.
+STOP — the owner-refreshed designated DEV state still fails the normal
+no-refresh page-readable validation with `AUTH_NETWORK_FAILURE`; safe
+diagnostics show the required token is present but unexpired/page-readable is
+false. Stop this task. No repeated refresh, retry, alternate credential, or
+campaign preparation is authorized until a separately supplied state passes the
+guarded validation.

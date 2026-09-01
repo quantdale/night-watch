@@ -31,17 +31,18 @@ M3 — guarded DEV confirmation BLOCKED before campaign start.
 ## Work In Progress
 
 M2 and all local/source validation are complete. The exact-head CI observation
-is external zero-step non-evidence. The designated external DEV storage-state
-file passed path/permission checks but was not page-valid; one guarded refresh
-attempt ended with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh campaign manifest
-was prepared, and no collection, replay, minimization, or dossier execution
-was authorized after that failure.
+is external zero-step non-evidence. On 2026-09-01, the owner-refreshed
+designated DEV state was revalidated through the normal no-refresh Phase 7
+prepare-only path and failed closed with `AUTH_NETWORK_FAILURE` before
+campaign preparation. Safe diagnostics showed a valid file shape and DEV
+provenance with a present required token, but the token was not unexpired and
+the state was not page-readable; no fresh campaign work ran.
 
 ## Exact Next Action
 
-STOP — the owner must refresh the designated external DEV auth state to a
-page-readable valid state. Only then may a new bounded current-source campaign
-be prepared; do not retry this task with alternate credentials or stale state.
+STOP — no further auth refresh or retry is authorized in this task. The owner
+must independently supply a designated external DEV state that passes guarded
+page-readable validation before a new current-source campaign can be prepared.
 ## Starting evidence
 
 - Predecessor: nightwatch-dev-soak-replay-yield-v1 COMPLETE.
@@ -129,6 +130,14 @@ be prepared; do not retry this task with alternate credentials or stale state.
 - One guarded `NIGHTWATCH_PHASE_7_AUTH_REFRESH=1` prepare-only attempt passed
   the guarded safety path but failed with `AUTH_STATE_REPLACEMENT_FAILED`;
   no fresh Phase 7 manifest/checkpoint was emitted.
+- Fresh continuation auth revalidation (2026-09-01):
+  `NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev --prepare-only`
+  — FAIL_CLOSED / `AUTH_NETWORK_FAILURE` before campaign preparation. Safe
+  `inspectDevAuthState` diagnostics: state exists, shape valid, DEV provenance
+  valid, required token present, domain/path applicable, and application
+  semantics valid; required token unexpired `false`, page-readable `false`, and
+  overall valid `false`. Raw storage-state contents were not printed, copied,
+  committed, or persisted.
 
 ## Decisions Made During This Task
 
@@ -169,37 +178,40 @@ be prepared; do not retry this task with alternate credentials or stale state.
 
 ## Blockers
 
-- Owner-managed DEV authentication is not currently page-valid. The one
-  permitted guarded refresh attempt ended with `AUTH_STATE_REPLACEMENT_FAILED`;
-  the exact unblock condition is a refreshed designated external state that
-  passes page-readable DEV auth validation.
+- Owner-managed DEV authentication remains not page-valid after the latest
+  owner refresh. The normal no-refresh campaign prepare path returned
+  `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the required token is
+  present but unexpired and page-readable are both `false`. The exact unblock
+  condition is a separately supplied designated external state that passes
+  guarded page-readable validation.
 
 ## Safety Events
 
-None. The guarded auth refresh used only the designated external DEV path,
-remained read-only, persisted no credentials or raw authenticated evidence,
-and stopped before Phase 7 campaign/product work. No production, NEXT,
-datastore, infrastructure, mutation, publication, or sibling write occurred.
+None. The guarded revalidation remained read-only and exposed no raw
+storage-state contents. It stopped before fresh campaign preparation; no
+production, NEXT, product mutation, datastore, infrastructure, publication, or
+sibling write occurred.
 
 ## Deferred / Follow-Up
 
 - Fresh current-source campaign, candidate admission, replay, minimization,
-  and dossier closure are blocked by the auth readiness condition above.
+  and dossier closure remain blocked by the designated DEV page-readability
+  condition above.
 - CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
   no repository workflow step executed and CI PASS is not claimed.
 - Continuity/project reconciliation, safety/privacy audit, generated-artifact
   inspection, terminal documentation, push, and final remote-parity checks
-  passed. No further task action is authorized until the owner unblocks DEV
-  authentication.
+  remain required after this continuation's state update.
 
 ## Resume Recipe
 
-STOP until the owner refreshes the designated external DEV auth state and
-independently confirms it is page-readable for the configured DEV target.
-Then rerun the required local/pre-DEV gates, prepare a fresh manifest from
-current source, and use no more than 3 campaign attempts, 3 attack replays,
-and 1 minimization/dossier chain. Never reuse this failed auth attempt's state,
-the predecessor soak, historical candidates, or alternate credentials.
+STOP until the owner independently supplies a designated external DEV state
+that passes guarded page-readable validation. Do not repeatedly refresh, retry,
+use alternate credentials, reuse this failed state, reuse the predecessor soak,
+reuse historical candidates, or use stale manifests. If the owner supplies a
+valid state and fresh authorization, prepare a new current-source campaign and
+use no more than 3 campaign attempts, 3 attack replays, and 1
+minimization/dossier chain.
 
 ## Completion Snapshot
 
@@ -212,11 +224,11 @@ handoff, project, semantic compatibility, owner provenance, and synthetic
 campaign checks.
 CI result: exact-head run `33446473458` failed before any job step and is
 classified as external non-evidence.
-DEV result: auth readiness failed once with
-`AUTH_STATE_REPLACEMENT_FAILED`; campaign/replay/minimization/dossier counts
-are all zero.
-Closure result: continuity/OpenSpec/project truth, safety/privacy, generated
-artifact/diff inspection, checkpoint push, and final `main`/`origin/main`
-parity with a clean checkout all passed.
+DEV result: after the owner refresh, the normal no-refresh prepare-only path
+failed closed with `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the
+required token present but unexpired `false`, page-readable `false`, and
+overall valid `false`. Campaign/replay/minimization/dossier counts remain zero.
+Closure result: final documentation and parity gates remain to be run after
+this continuation's state update.
 Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
 claimed.

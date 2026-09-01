@@ -131,15 +131,20 @@ synthetic campaign.
 
 Status: BLOCKED
 
-Owner-managed DEV authentication is not currently page-valid. The designated
-external state file passed regular-file/mode checks but a no-refresh
-prepare-only validation failed with `AUTH_NETWORK_FAILURE`; one guarded refresh
-attempt failed with `AUTH_STATE_REPLACEMENT_FAILED`. No fresh Phase 7 campaign
-manifest was emitted and no product campaign work started.
+The owner manually refreshed the designated external DEV authentication state
+before this continuation. On 2026-09-01, the normal no-refresh
+`NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev --prepare-only`
+path failed closed with `AUTH_NETWORK_FAILURE` before campaign preparation.
+Safe diagnostics showed a regular, structurally valid state with valid DEV
+provenance, a present required token, applicable domain/path, and valid
+application semantics, but `requiredTokenUnexpired=false`,
+`pageReadable=false`, and `valid=false`. No fresh manifest was emitted and no
+product campaign work started.
 
-Unblock only after the owner refreshes that external state and confirms
-page-readable validity for the configured DEV target. Do not reuse the failed
-state, predecessor soak, historical candidates, or stale manifests.
+This is an auth-readiness stop, not a replay-budget or implementation result.
+Do not refresh repeatedly, retry this task, substitute credentials, contact
+NEXT/production, or prepare a campaign until a separately supplied designated
+state passes the guarded page-readable validation.
 
 The intended bounded confirmation remains:
 
@@ -148,15 +153,17 @@ The intended bounded confirmation remains:
 - at most 1 minimization/dossier chain required for success.
 
 No attempt may exceed those caps, and the caps are limits rather than targets.
+M3 remains blocked before any fresh campaign attempt.
 
 ## M4 — Candidate -> replay -> dossier closure
 
 Status: BLOCKED
 
-No fresh candidate was available because M3 stopped at owner-auth readiness.
-Candidate admission, replay, minimization, and dossier work were not entered.
-When the unblock condition is met, use only a fresh current-source candidate
-and retain the existing downstream-only-on-`REPRODUCED` rule.
+No fresh candidate is available because M3 stopped before campaign preparation
+after the owner-refreshed state failed page-readable validation. Candidate
+admission, replay, minimization, and dossier work were not entered. When the
+unblock condition is met, use only a fresh current-source candidate and retain
+the existing downstream-only-on-`REPRODUCED` rule.
 
 ## M5 — Final certification
 
@@ -183,6 +190,12 @@ an auth-readiness block is terminal evidence, not a reason to retry.
 - 2026-08-31 — Keep DEV auth refresh bounded to one guarded attempt after the
   designated state failed page readability. The attempt ended with
   `AUTH_STATE_REPLACEMENT_FAILED`; no alternate credential or retry is allowed.
+- 2026-09-01 — Revalidate the owner-refreshed designated DEV state through the
+  normal no-refresh Phase 7 prepare-only path. Evidence: the path failed
+  closed with `AUTH_NETWORK_FAILURE`; sanitized state diagnostics showed the
+  required token present but unexpired and page-readable both false. Consequence:
+  M3 remains blocked before campaign preparation and no further task refresh or
+  retry is authorized.
 
 ## Discoveries
 

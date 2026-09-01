@@ -2655,12 +2655,15 @@ and eligibility gates, and interruption/resume behavior pass local and clean
 Node20 validation. Exact-head Actions run `33446473458` / job `99666610250`
 failed with `steps=[]` and no log, so CI is external non-evidence.
 
-Guarded DEV confirmation stopped before campaign preparation. The designated
-external auth state passed regular-file/mode checks but was not page-valid; a
-no-refresh check returned `AUTH_NETWORK_FAILURE`, and one guarded refresh
-attempt returned `AUTH_STATE_REPLACEMENT_FAILED`. No fresh candidate, replay,
-minimization, or dossier exists for this successor. The task remains blocked
-until the owner refreshes and confirms page-readable DEV auth. No alternate
-credentials, predecessor checkpoints, historical candidates, stale manifests,
+Guarded DEV confirmation stopped before campaign preparation. The owner
+refreshed the designated external auth state, but the normal no-refresh
+prepare-only path returned `AUTH_NETWORK_FAILURE`. Sanitized diagnostics show
+valid file shape and DEV provenance, a present required token, applicable
+domain/path, and valid application semantics, but
+`requiredTokenUnexpired=false`, `pageReadable=false`, and `valid=false`. No
+fresh candidate, replay, minimization, or dossier exists for this successor.
+No further task refresh or retry is authorized until a separately supplied
+designated state passes page-readable validation. No alternate credentials,
+predecessor checkpoints, historical candidates, stale manifests,
 production/NEXT contact, mutation, datastore, infrastructure, publication,
 sibling write, or unbounded retry is authorized.

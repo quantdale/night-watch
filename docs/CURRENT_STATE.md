@@ -1,7 +1,8 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-08-31** after
-> completed `nightwatch-dev-soak-replay-yield-v1`.
+> Durable memory for the next agent/session. Last updated: **2026-09-01** after
+> the replay-budget continuation revalidated the designated DEV auth state and
+> stopped before fresh campaign preparation.
 > The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
 > predecessor repaired DVR-001 through DVR-012 across observation
 > settlement/capture, attribution, campaign checkpoint identity, executable
@@ -218,13 +219,15 @@ clean-Node20 validated. The exact-head Actions observation failed before any
 step (`33446473458` / job `99666610250`, `steps=[]`) and is external
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` non-evidence.
 
-The successor's guarded DEV confirmation is currently `BLOCKED` before
-campaign preparation. The designated external auth file was a regular mode
-`600` file but was not page-valid. A no-refresh check returned
-`AUTH_NETWORK_FAILURE`; one guarded refresh returned
-`AUTH_STATE_REPLACEMENT_FAILED`. No fresh campaign manifest, candidate,
-replay, minimization, or dossier was produced. The owner must refresh and
-confirm page-readable DEV auth before any new bounded campaign.
+The successor's guarded DEV confirmation remains `BLOCKED` before campaign
+preparation. The owner refreshed the designated external auth state, but the
+normal no-refresh prepare-only path returned `AUTH_NETWORK_FAILURE`. Safe
+diagnostics show the state is structurally valid with DEV provenance, a present
+required token, applicable domain/path, and valid application semantics, but
+`requiredTokenUnexpired=false`, `pageReadable=false`, and `valid=false`. No
+fresh campaign manifest, candidate, replay, minimization, or dossier was
+produced. No further task refresh or retry is authorized until a separately
+supplied designated state passes page-readable validation.
 
 ### Completed DEV soak, replay, and yield campaign
 
