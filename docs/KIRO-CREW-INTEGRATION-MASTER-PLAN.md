@@ -20,7 +20,12 @@ Nightwatch already has the critical continuity primitives Crew is meant to impro
 
 Crew therefore sits **above** Nightwatch as an optional operator. It may help maintain long-lived context, decompose work, resume a multi-step task, and run bounded local commands, but Nightwatch's existing files and machine-checked gates remain authoritative.
 
-The current task `nightwatch-replay-budget-and-dossier-closure-v1` is BLOCKED pending an owner-supplied page-readable DEV state. Crew MUST NOT retry, refresh auth, contact DEV, infer authorization, or reinterpret that blocker.
+The current task `nightwatch-replay-budget-and-dossier-closure-v1` is COMPLETE
+after one owner-authorized guarded DEV confirmation attempt. It ended with the
+truthful terminal classification `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`;
+no product anomaly, dossier, or candidate attack replay was admitted. Crew MUST
+NOT start another campaign, refresh auth, or infer authorization; any future
+use requires a separate owner-authorized task.
 
 ## 2. Why Nightwatch is a high-value Crew candidate
 
@@ -177,7 +182,9 @@ Tasks:
 - no product contact;
 - no secret/auth read;
 - restart preserves useful context;
-- Crew correctly reports the active task as BLOCKED and does not attempt to bypass it;
+- Crew correctly reports the active task as COMPLETE with terminal classification
+  `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` and does not attempt another
+  campaign;
 - deleting `KIROCREW_HOME` leaves Nightwatch fully functional.
 
 ### NW-C1 — Local/synthetic TaskRunner pilot

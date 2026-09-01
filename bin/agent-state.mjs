@@ -570,6 +570,9 @@ const APPROVED_CHECKPOINT_PATHS = [
   /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/,
   /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
   /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
+  // The Kiro Crew integration plan is a repository-native planning document;
+  // it adds no runtime, safety, authorization, or evidence authority.
+  /^docs\/KIRO-CREW-INTEGRATION-MASTER-PLAN\.md$/,
   // Repository-native design documents: exactly one level under docs/design,
   // Markdown only. Deliberately NOT docs/design/** (no nested directories)
   // and NOT non-Markdown files, so arbitrary files under docs/design can
