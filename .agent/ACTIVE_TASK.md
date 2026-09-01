@@ -3,13 +3,13 @@
 Task ID: nightwatch-openapi-admission-c02a-v1
 Phase: OPENAPI_ADMISSION_C02A_V1
 Title: Nightwatch OpenAPI Admission (C-02a)
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-openapi-admission-c02a-v1
 Starting SHA: c64b56fff1237c489982a9d6cece7adea83c6387
 Last validated implementation SHA: 6a70061729b224a78eeaced009149457bf75cb5b
-Last checkpoint: focused C-02a implementation green — typecheck exit 0 and 18/18 focused regressions at the session worktree
-Current milestone: M7 — full validation stack and integration through C-00 tooling
-Next action: Run `npm test`, `npm run gate:local` and `npm run gate:clean` in the session worktree, repair any failure, record the receipts in STATE.md, then integrate through `node bin/nightwatch-session.mjs integrate`
+Last checkpoint: full local and clean Node 20 quality gates passed with all eleven required groups at 316ac761aa5de99da06db39ca0e242834a574467, plus a 2,771-test canonical regression
+Current milestone: COMPLETE / STOP — M1 through M7 are closed
+Next action: STOP — C-02a is complete; do not begin C-02b in this task, and do not run any implementation session in the canonical checkout
 Authorization class: NIGHTWATCH_OPENAPI_ADMISSION_C02A_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 6a70061729b224a78eeaced009149457bf75cb5b
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a70061729b224a78eeaced009149457bf75cb5b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_OPENAPI_ADMISSION_C02A_V1_STATUS: IN_PROGRESS
+PHASE_OPENAPI_ADMISSION_C02A_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

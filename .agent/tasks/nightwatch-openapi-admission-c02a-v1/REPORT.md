@@ -1,9 +1,12 @@
 # REPORT.md — C-02a OpenAPI admission
 
-**Task:** nightwatch-openapi-admission-c02a-v1
-**Status:** COMPLETE
-**Branch:** session/nightwatch-openapi-admission-c02-602bf4e2
-**Starting SHA:** c64b56fff1237c489982a9d6cece7adea83c6387
+Task ID: nightwatch-openapi-admission-c02a-v1
+Phase: OPENAPI_ADMISSION_C02A_V1
+Status: COMPLETE
+Starting SHA: c64b56fff1237c489982a9d6cece7adea83c6387
+Last validated implementation SHA: 6a70061729b224a78eeaced009149457bf75cb5b
+Branch: session/nightwatch-openapi-admission-c02-602bf4e2
+CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 ## What changed and why
 

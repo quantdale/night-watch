@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-openapi-admission-c02a-v1
 Phase: OPENAPI_ADMISSION_C02A_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: c64b56fff1237c489982a9d6cece7adea83c6387
 Branch: session/nightwatch-openapi-admission-c02-602bf4e2
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -14,7 +14,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6a70061729b224a78eeaced009149457bf75cb5b
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_OPENAPI_ADMISSION_C02A_V1_STATUS: IN_PROGRESS
+PHASE_OPENAPI_ADMISSION_C02A_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,18 +29,16 @@ operation identity.
 
 ## Current Milestone
 
-M7 — full validation stack and integration through C-00 tooling.
+COMPLETE / STOP — M1 through M7 are closed.
 
 ## Work In Progress
 
-Running the full regression, `gate:local`, and the clean Node 20 gate against
-the completed implementation, then integrating.
+NONE — the campaign is complete. C-02b is deliberately not started.
 
 ## Exact Next Action
 
-Run `npm test`, `npm run gate:local` and `npm run gate:clean` in the session
-worktree, repair any failure, record the exact receipts here, then integrate
-through `node bin/nightwatch-session.mjs integrate`.
+STOP — C-02a is complete and locally certified. Do not begin C-02b in this
+task; the next campaign is a new task with its own session worktree.
 
 ## Starting evidence
 
@@ -138,6 +136,33 @@ previously contributed none.
 
 - `npx tsc --noEmit` — exit 0.
 - Focused Playwright `tests/unit/c02aOpenApiAdmission.test.ts` — 18 passed.
+- `node bin/hardening-check.mjs` — PASS.
+- Real approved source, read-only whole-population census
+  (`node bin/nightwatch-intelligence.mjs eligibility-census --json`):
+  `examinedOperations: 814`, `projectedOperations: 814`,
+  `droppedOperations: 0`, `truncated: false`, `state: UNKNOWN`,
+  per repository `alphauslabs/blueapi` 591/591/0 and
+  `mobingilabs/ripple-api` 223/223/0; `routeProofs: 813`,
+  `requestContracts: 813`, `responseContracts: 649`;
+  discovery counters `generatedArtifactOperations: 591`,
+  `openApiResponseDefinitionsBound: 970`,
+  `openApiResponseDefinitionsUnresolved: 0`.
+- Full canonical Playwright regression — 2,771 passed / 13 skipped / 0 failed.
+  The regression and both gates ran at
+  `316ac761aa5de99da06db39ca0e242834a574467`, the documentation-only descendant
+  of the implementation commit
+  `6a70061729b224a78eeaced009149457bf75cb5b` that wires these checkpoint SHAs.
+  Its source tree is byte-identical to the implementation commit's; only
+  `.agent` and `docs` differ.
+- `npm run gate:local` — PASS at `gitHead 316ac761aa5de99da06db39ca0e242834a574467`,
+  Node 22, `environmentClass: LOCAL`, all eleven required groups PASS
+  (SEMANTIC_COMPATIBILITY 1,950 total / 1,937 passed / 13 skipped / 0 failed;
+  OWNER_PROVENANCE 91; SYNTHETIC_CAMPAIGN 128), receipt
+  `receipt:sha256:f901ce1e76c083cb867fd3e7`.
+- `npm run gate:clean` — PASS at
+  `sourceHead 316ac761aa5de99da06db39ca0e242834a574467`, Node 20,
+  `installResult: PASS`, `gateResult: PASS`, all eleven groups PASS, receipt
+  `receipt:sha256:9a9be194536773d5dd2df458`.
 
 ## Decisions Made During This Task
 

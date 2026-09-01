@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — OpenAPI Admission (C-02a)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-openapi-admission-c02a-v1
 OpenSpec: openspec/changes/nightwatch-openapi-admission-c02a-v1/
 Planned-From: c64b56fff1237c489982a9d6cece7adea83c6387
