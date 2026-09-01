@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: BLOCKED
+Status: IN_PROGRESS
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -127,59 +127,70 @@ Validation passed: focused campaign/checkpoint cone 92/92, typecheck,
 hardening, handoff, project, semantic compatibility, owner provenance, and
 synthetic campaign.
 
-## M3 — Fresh guarded DEV confirmation
+## M3 — Fresh guarded DEV confirmation — COMPLETE
 
-Status: BLOCKED
+Status: COMPLETE
 
-The owner manually refreshed the designated external DEV authentication state
-before this continuation. On 2026-09-01, the normal no-refresh
+The owner completed one guarded headed capture for the designated external DEV
+state. Post-login verification, atomic state/provenance writes, structural
+validation, and cleanup passed. Secret values and storage-state contents were
+not printed or copied.
+
+The normal no-refresh prepare-only path then passed:
+
 `NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev --prepare-only`
-path failed closed with `AUTH_NETWORK_FAILURE` before campaign preparation.
-Safe diagnostics showed a regular, structurally valid state with valid DEV
-provenance, a present required token, applicable domain/path, and valid
-application semantics, but `requiredTokenUnexpired=false`,
-`pageReadable=false`, and `valid=false`. No fresh manifest was emitted and no
-product campaign work started.
 
-This is an auth-readiness stop, not a replay-budget or implementation result.
-Do not refresh repeatedly, retry this task, substitute credentials, contact
-NEXT/production, or prepare a campaign until a separately supplied designated
-state passes the guarded page-readable validation.
+It created fresh current-source campaign
+`campaign:sha256:37aca1e950ab804e3a6fd592` with manifest fingerprint
+`manifest:sha256:41cdedac2beff0d59125ee1a`, frozen to implementation source
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`, five selected read-only work
+items, `checkpointOrdinal=0`, and `productExecution=NOT_STARTED`.
 
-The intended bounded confirmation remains:
+The single bounded resume then passed:
 
-- up to 3 fresh campaign attempts;
-- up to 3 attack replay executions total;
-- at most 1 minimization/dossier chain required for success.
+`NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev --resume-campaign=campaign:sha256:37aca1e950ab804e3a6fd592`
 
-No attempt may exceed those caps, and the caps are limits rather than targets.
-M3 remains blocked before any fresh campaign attempt.
+It completed all five selected work items with `COMPLETE_CLEAN`, zero safety
+counters, and privacy `PASS`. No retry, alternate credential, predecessor
+checkpoint, historical candidate, or stale manifest was used.
 
-## M4 — Candidate -> replay -> dossier closure
+## M4 — Candidate -> replay -> dossier closure — COMPLETE
 
-Status: BLOCKED
+Status: COMPLETE
 
-No fresh candidate is available because M3 stopped before campaign preparation
-after the owner-refreshed state failed page-readable validation. Candidate
-admission, replay, minimization, and dossier work were not entered. When the
-unblock condition is met, use only a fresh current-source candidate and retain
-the existing downstream-only-on-`REPRODUCED` rule.
+The fresh campaign produced two protocol-only anomaly candidate observations
+and two clusters. Both candidates were rejected before candidate replay with
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; neither entered the DVR-011 replay
+admission boundary. The reproduction queue and persisted candidate
+replay-reservation ledger were empty, so attack replay executor entry was zero.
 
-## M5 — Final certification
+Minimization and dossier work remained correctly downstream of successful
+admitted replay: both counts were zero and no product finding or dossier is
+claimed. The two source-bound API work items each completed their ordinary
+first-plus-fresh replay pair, consuming two aggregate replay units; those API
+replays are not candidate attack replay. This is the truthful bounded
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` outcome, not a reason to weaken
+DVR-011 or manufacture a candidate.
 
-Status: BLOCKED
+## M5 — Final certification — IN_PROGRESS
 
-Final local and clean Node20 certification passed. Exact-head CI is external
-zero-step non-evidence. Terminal project/continuity truth records this task as
-blocked before DEV rather than claiming an operational or CI completion.
+Status: IN_PROGRESS
+
+The fresh DEV confirmation is terminally classified as
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. Final continuity, project
+truth, privacy, local-quality, clean-Node20, diff, and remote-parity checks
+remain the exact next closure action.
 
 ## Validation Strategy
 
-Use the focused campaign test for the old boundary and new reservation
-accounting first. Then run the repository quality cone, semantic and owner
-provenance checks, synthetic campaign, local gate, clean Node20 gate, and one
-exact-head CI inspection. Real DEV confirmation remains guarded and bounded;
-an auth-readiness block is terminal evidence, not a reason to retry.
+Use the focused campaign/checkpoint validation already passed at the
+implementation checkpoint, then run the repository continuity, handoff,
+project, hardening, privacy, local, and clean Node20 gates after this
+documentation update. The guarded DEV confirmation used one fresh
+prepare/resume pair after a successful owner-led auth capture. No retry,
+alternate credential, historical candidate, stale manifest, production/NEXT
+contact, mutation, datastore, infrastructure, or publication operation is
+authorized.
 
 ## Decision Log
 
@@ -189,13 +200,21 @@ an auth-readiness block is terminal evidence, not a reason to retry.
   the regression is committed before the reservation redesign.
 - 2026-08-31 — Keep DEV auth refresh bounded to one guarded attempt after the
   designated state failed page readability. The attempt ended with
-  `AUTH_STATE_REPLACEMENT_FAILED`; no alternate credential or retry is allowed.
+  `AUTH_STATE_REPLACEMENT_FAILED`; no alternate credential or retry was allowed.
 - 2026-09-01 — Revalidate the owner-refreshed designated DEV state through the
-  normal no-refresh Phase 7 prepare-only path. Evidence: the path failed
-  closed with `AUTH_NETWORK_FAILURE`; sanitized state diagnostics showed the
-  required token present but unexpired and page-readable both false. Consequence:
-  M3 remains blocked before campaign preparation and no further task refresh or
-  retry is authorized.
+  normal no-refresh Phase 7 prepare-only path. The path failed closed with
+  `AUTH_NETWORK_FAILURE`; sanitized state diagnostics showed the required token
+  present but unexpired and page-readable both false. This historical failure
+  was superseded by the later owner-led headed capture.
+- 2026-09-01 — The owner completed the guarded headed DEV auth capture after
+  the prior page-readability failure. Post-login verification, atomic
+  state/provenance writes, validation, and cleanup passed without exposing
+  secret values.
+- 2026-09-01 — One fresh current-source campaign prepared and resumed
+  successfully. Two protocol-only anomaly candidates were rejected before
+  candidate replay with `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; no candidate
+  replay, minimization, or dossier chain was entered. The bounded terminal
+  classification is `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`.
 
 ## Discoveries
 
@@ -211,17 +230,19 @@ an auth-readiness block is terminal evidence, not a reason to retry.
   `REPLAY_EXECUTION_ALREADY_STARTED` on resume.
 - The source-window and candidate freshness gates reject drift before budget
   reservation, preserving the original admission/identity boundary.
+- The real bounded run distinguishes aggregate API replay accounting from
+  candidate attack replay: two API fresh replays consumed two aggregate replay
+  units, while ineligible browser candidates spent no candidate replay reserve.
 
 ## Deferred Work
 
-- Guarded DEV confirmation and candidate-to-dossier closure are terminally
-  blocked at owner-only target/auth preflight; no credential or raw evidence
-  may enter this repository.
-- External CI remains non-evidence because the exact-head job executed zero
-  steps.
-- Local/clean validation, continuity/project reconciliation, privacy audit,
-  final diff inspection, push, and remote parity are complete. The task remains
-  BLOCKED only at the owner-managed DEV auth boundary.
+- No product finding or dossier was produced because no fresh candidate passed
+  the existing replay eligibility gate. Do not weaken DVR-011 or manufacture a
+  candidate to obtain downstream artifacts.
+- The final continuity, project, privacy, local, clean-Node20, diff, and
+  remote-parity checks are the next closure action.
+- Exact-head Actions remains external non-evidence because its observed job
+  executed zero steps; no CI PASS is claimed.
 
 ## Completion Criteria
 

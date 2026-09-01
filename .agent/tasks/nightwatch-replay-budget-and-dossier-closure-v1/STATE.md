@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: BLOCKED
+Status: IN_PROGRESS
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 Last substantive checkpoint SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -16,7 +16,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: BLOCKED
+PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: IN_PROGRESS
 
 ## Objective
 
@@ -26,23 +26,25 @@ confirm a current candidate can traverse the real bounded replay/dossier path.
 
 ## Current Milestone
 
-M3 — guarded DEV confirmation BLOCKED before campaign start.
+M5 — final certification is in progress after the fresh DEV confirmation.
 
 ## Work In Progress
 
-M2 and all local/source validation are complete. The exact-head CI observation
-is external zero-step non-evidence. On 2026-09-01, the owner-refreshed
-designated DEV state was revalidated through the normal no-refresh Phase 7
-prepare-only path and failed closed with `AUTH_NETWORK_FAILURE` before
-campaign preparation. Safe diagnostics showed a valid file shape and DEV
-provenance with a present required token, but the token was not unexpired and
-the state was not page-readable; no fresh campaign work ran.
+M0–M4 are complete. The owner completed a guarded headed DEV auth capture,
+then one fresh current-source campaign prepared and resumed successfully.
+M4 closed truthfully without candidate attack replay because both observed
+protocol-only candidates failed the existing
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED` eligibility gate. M5 is the final
+continuity, project-truth, privacy, local-quality, clean-Node20, diff, and
+remote-parity closure.
 
 ## Exact Next Action
 
-STOP — no further auth refresh or retry is authorized in this task. The owner
-must independently supply a designated external DEV state that passes guarded
-page-readable validation before a new current-source campaign can be prepared.
+Run the final continuity, handoff, project, hardening, privacy, local, and
+clean-Node20 gates; record their exact results and the terminal starved
+classification, then commit, push, and verify clean `main`/`origin/main`
+parity. Do not start another campaign, retry authentication, use alternate
+credentials, or reuse historical candidates.
 ## Starting evidence
 
 - Predecessor: nightwatch-dev-soak-replay-yield-v1 COMPLETE.
@@ -173,6 +175,106 @@ page-readable validation before a new current-source campaign can be prepared.
   PASS; working tree clean, only local branch `main`, only remote-tracking
   branch `origin/main` plus the `origin/HEAD` symbolic reference, and
   `HEAD == origin/main` at `d3328d97016a6c48cc05e1fb1276270760943353`.
+- Guarded owner-led auth capture — PASS; post-login verification, atomic
+  state/provenance writes, structural validation, and cleanup passed. Secret
+  values and storage-state contents were not printed, copied, or committed.
+- `NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev
+  --prepare-only` — PASS; fresh campaign
+  `campaign:sha256:37aca1e950ab804e3a6fd592`, manifest
+  `manifest:sha256:41cdedac2beff0d59125ee1a`, source
+  `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`, five work items,
+  `checkpointOrdinal=0`, and `productExecution=NOT_STARTED`.
+- `NIGHTWATCH_PHASE_7_AUTH_REFRESH=0 npm run campaign:real -- --env=dev
+  --resume-campaign=campaign:sha256:37aca1e950ab804e3a6fd592` — PASS;
+  `COMPLETE_CLEAN`, all five work items completed, zero safety counters,
+  privacy `PASS`, two anomaly observations, two clusters, and zero dossiers.
+- Safe owner-local checkpoint aggregate inspection — PASS;
+  `checkpointOrdinal=14`, `budgetUsed.replays=2/8` from the two ordinary API
+  first-plus-fresh replay pairs, `reproductionQueue=0`,
+  `replayReservations=0`, `minimizationQueue=0`, `dossierLedger=0`,
+  both candidate lifecycles `PROTOCOL_ONLY/REJECTED` with
+  `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`, and no executor attack replay entry.
+
+- 2026-09-01 — The owner completed guarded headed DEV auth capture after the
+  earlier page-readability failure. The fresh state passed post-login,
+  structural, provenance, validation, and cleanup gates without exposing
+  secret values.
+- 2026-09-01 — The fresh campaign was run once, not retried. Its two
+  protocol-only candidates failed replay eligibility before reservation, so
+  the result is classified as
+  `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` rather than a product PASS
+  or an admission relaxation.
+
+## Discoveries
+
+- `INITIAL_REAL_CAMPAIGN_BUDGET` permits three journey contexts and six total
+  browser contexts; the protected reserve leaves five browser contexts for
+  collection while retaining one replay slot.
+- Replay reservations are accepted by checkpoint validation only when their
+  deterministic identity, candidate observation, representative run, queue
+  state, and dossier relationship agree.
+- Eligible real-scale replay consumes the protected slot without charging
+  collection journey/exploration counters; duplicate clusters and rejected
+  outcomes do not reserve.
+- A checkpoint boundary before replay callback entry preserves `RESERVED` and
+  permits one resume attempt; interruption after entry consumes the
+  reservation and blocks re-entry.
+- Reproduced replay alone unlocks minimization and dossier stages; clean,
+  blocked, skipped, or interrupted outcomes do not create dossier work.
+- The real bounded run distinguishes aggregate API replay accounting from
+  candidate attack replay: two API fresh replays consumed two aggregate replay
+  units, while no browser candidate replay reservation or executor entry was
+  created.
+
+## Blockers
+
+None. The prior auth blocker was cleared by the owner-led capture; no product
+or Nightwatch defect was admitted in the fresh campaign.
+
+## Safety Events
+
+None. The fresh auth capture and campaign remained within the guarded DEV
+target, produced zero safety counters, and reported privacy `PASS`. No
+production, NEXT, mutation, datastore, infrastructure, publication, or
+sibling-repository operation occurred, and no raw authenticated evidence was
+copied into the repository.
+
+## Deferred / Follow-Up
+
+- No further DEV attempt is authorized for this task. The fresh campaign is
+  closed as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`; do not weaken
+  DVR-011 or manufacture a candidate for replay/dossier yield.
+- Exact-head Actions remains external non-evidence because its observed job
+  executed zero steps; no CI PASS is claimed.
+- Final continuity, project truth, privacy, local, clean-Node20, diff, and
+  remote-parity checks remain the exact closure action.
+
+## Resume Recipe
+
+This task is in final certification. Do not resume the campaign, refresh
+authentication again, use alternate credentials, reuse a predecessor
+checkpoint, reuse historical candidates, or use a stale manifest. Complete the
+final repository gates, record their exact results, then close and push this
+task.
+
+## Completion Snapshot
+
+Current state: IN_PROGRESS after one successful guarded fresh DEV
+prepare/resume pair.
+
+Implementation source remains
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`; the fresh campaign
+`campaign:sha256:37aca1e950ab804e3a6fd592` completed five read-only work items
+with `COMPLETE_CLEAN`, zero safety counters, and privacy `PASS`. It produced
+two protocol-only candidate observations/clusters, both rejected before
+candidate replay with `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; attack replay,
+minimization, and dossier counts are zero. The two API first-plus-fresh replay
+pairs used two aggregate replay units and do not establish candidate attack
+replay.
+
+The truthful DEV terminal classification is
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. Final repository gates,
+documentation closure, push, and remote parity are the remaining actions.
 
 ## Decisions Made During This Task
 
@@ -193,81 +295,6 @@ page-readable validation before a new current-source campaign can be prepared.
   interrupted replay.
 - Admit replay only for fresh, changeset-bound, complete, authenticated,
   product-classified, non-reproduced, non-known-defect candidates.
-
-## Discoveries
-
-- `INITIAL_REAL_CAMPAIGN_BUDGET` permits three journey contexts and six total
-  browser contexts; the protected reserve leaves five browser contexts for
-  collection while retaining one replay slot.
-- Replay reservations are accepted by checkpoint validation only when their
-  deterministic identity, candidate observation, representative run, queue
-  state, and dossier relationship agree.
-- Eligible real-scale replay consumes the protected slot without charging
-  collection journey/exploration counters; duplicate clusters and rejected
-  outcomes do not reserve.
-- A checkpoint boundary before replay callback entry preserves `RESERVED` and
-  permits one resume attempt; interruption after entry consumes the reservation
-  and blocks re-entry.
-- Reproduced replay alone unlocks minimization and dossier stages; clean,
-  blocked, skipped, or interrupted outcomes do not create dossier work.
-
-## Blockers
-
-- Owner-managed DEV authentication remains not page-valid after the latest
-  owner refresh. The normal no-refresh campaign prepare path returned
-  `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the required token is
-  present but unexpired and page-readable are both `false`. The exact unblock
-  condition is a separately supplied designated external state that passes
-  guarded page-readable validation.
-
-## Safety Events
-
-None. The guarded revalidation remained read-only and exposed no raw
-storage-state contents. It stopped before fresh campaign preparation; no
-production, NEXT, product mutation, datastore, infrastructure, publication, or
-sibling write occurred.
-
-## Deferred / Follow-Up
-
-- Fresh current-source campaign, candidate admission, replay, minimization,
-  and dossier closure remain blocked by the designated DEV page-readability
-  condition above.
-- CI is classified `NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence;
-  no repository workflow step executed and CI PASS is not claimed.
-- Final continuity/project reconciliation, safety/privacy, generated-artifact
-  inspection, terminal documentation validation, checkpoint push, and
-  post-push remote-parity verification passed. The task remains BLOCKED only
-  at the designated DEV page-readability condition.
-
-## Resume Recipe
-
-STOP until the owner independently supplies a designated external DEV state
-that passes guarded page-readable validation. Do not repeatedly refresh, retry,
-use alternate credentials, reuse this failed state, reuse the predecessor soak,
-reuse historical candidates, or use stale manifests. If the owner supplies a
-valid state and fresh authorization, prepare a new current-source campaign and
-use no more than 3 campaign attempts, 3 attack replays, and 1
-minimization/dossier chain.
-
-## Completion Snapshot
-
-Completion state: BLOCKED
-Current milestone: M3 — guarded DEV confirmation BLOCKED before campaign start.
-Validated result: pushed implementation checkpoint
-`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4` passes the focused 92-test
-campaign/checkpoint cone, local gate, clean Node20 gate, typecheck, hardening,
-handoff, project, semantic compatibility, owner provenance, and synthetic
-campaign checks. The final continuation head
-`9f0d9a2683b7c3129894f851815035c1905ad03b` also passed the explicit
-continuity, handoff, project, safety, privacy, local, and clean Node20 gates.
-CI result: exact-head run `33446473458` failed before any job step and is
-classified as external non-evidence.
-DEV result: after the owner refresh, the normal no-refresh prepare-only path
-failed closed with `AUTH_NETWORK_FAILURE`; sanitized diagnostics show the
-required token present but unexpired `false`, page-readable `false`, and
-overall valid `false`. Campaign/replay/minimization/dossier counts remain zero.
-Closure result: continuity, OpenSpec, project truth, hardening, privacy, local
-quality, clean Node20 validation, checkpoint push, and post-push remote-parity
-verification are complete for the blocked outcome.
-Terminal outcome: BLOCKED_BEFORE_DEV_AUTH; no product finding or dossier was
-claimed.
+- The owner-led capture cleared the designated DEV auth boundary. The fresh
+  campaign then produced no replay-eligible candidate, so the starved terminal
+  classification is preserved without another attempt.

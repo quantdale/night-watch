@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-09-01** after
-> the replay-budget continuation revalidated the designated DEV auth state and
-> stopped before fresh campaign preparation.
+> the owner-led DEV auth capture and one fresh replay-budget campaign
+> completed a truthful starved confirmation; final repository closure remains.
 > The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
 > predecessor repaired DVR-001 through DVR-012 across observation
 > settlement/capture, attribution, campaign checkpoint identity, executable
@@ -12,10 +12,9 @@
 > M1 reached 56/60 observations with zero `BODY_UNAVAILABLE`; M2 reached the
 > account anchor 5/5 and verified 60/60 API attempts; M3 completed 21/25
 > work items and emitted eight fresh candidates in four campaigns.
-> Four current reproduction queues exhausted bounded journey budget before
-> replay/dossier execution. Terminal outcome:
-> `SOAK_COMPLETE_PRODUCT_CANDIDATES_REPLAY_INCONCLUSIVE`, with zero safety
-> counters, privacy `PASS`, and no Nightwatch-owned Critical/High defect.
+> The replay-budget successor completed one fresh guarded campaign with five
+> read-only work items, two protocol-only candidates rejected before candidate
+> replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > GitHub Actions remains external non-evidence while exact-head jobs execute
 > zero steps.
 
@@ -160,7 +159,7 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: OPERATIONAL_ACCEPTANCE_BLOCKED
+PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -195,10 +194,10 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-replay-budget-and-dossier-closure-v1
 LIVE_PHASE: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-LIVE_TASK_STATUS: BLOCKED
-LIVE_PROJECT_COMPLETION_STATUS: OPERATIONAL_ACCEPTANCE_BLOCKED
+LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
+LIVE_NEXT_ACTION_STATE: CONTINUE
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
@@ -211,7 +210,7 @@ strict product candidates across four campaigns, but all four reproduction
 queues stopped before replay executor entry because collection had consumed
 `journeyContexts=3/3`.
 
-M2 is complete at implementation checkpoint
+M2 remains complete at implementation checkpoint
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`: a finite real-scale replay
 reserve, durable campaign/cluster reservation ledger, strict checkpoint
 identity, eligibility gate, and interruption/resume semantics are locally and
@@ -219,16 +218,29 @@ clean-Node20 validated. The exact-head Actions observation failed before any
 step (`33446473458` / job `99666610250`, `steps=[]`) and is external
 `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` non-evidence.
 
-The successor's guarded DEV confirmation remains `BLOCKED` before campaign
-preparation. The owner refreshed the designated external auth state, but the
-normal no-refresh prepare-only path returned `AUTH_NETWORK_FAILURE`. Safe
-diagnostics show the state is structurally valid with DEV provenance, a present
-required token, applicable domain/path, and valid application semantics, but
-`requiredTokenUnexpired=false`, `pageReadable=false`, and `valid=false`. No
-fresh campaign manifest, candidate, replay, minimization, or dossier was
-produced. No further task refresh or retry is authorized until a separately
-supplied designated state passes page-readable validation.
+The owner then completed one guarded headed auth capture for the designated
+DEV state. Post-login verification, atomic state/provenance writes, structural
+validation, provenance recording, and cleanup passed without exposing secret
+values or storage-state contents.
 
+The fresh current-source campaign
+`campaign:sha256:37aca1e950ab804e3a6fd592` prepared and resumed successfully
+with manifest `manifest:sha256:41cdedac2beff0d59125ee1a`, frozen to source
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. It completed all five selected
+read-only work items with `COMPLETE_CLEAN`, zero safety counters, and privacy
+`PASS`.
+
+It observed two protocol-only anomaly candidates and two clusters, but both
+were rejected before candidate replay with
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`. The reproduction queue and persisted
+candidate replay-reservation ledger were empty; candidate attack replay,
+minimization, dossier, and product-finding counts were zero. The two
+source-bound API items each completed their ordinary first-plus-fresh replay
+pair, consuming two aggregate replay units distinct from candidate attack
+replay.
+
+M5 final continuity, project-truth, privacy, local-quality, clean-Node20,
+diff, and remote-parity checks remain.
 ### Completed DEV soak, replay, and yield campaign
 
 `nightwatch-dev-soak-replay-yield-v1` is complete from implementation source

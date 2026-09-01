@@ -1,10 +1,9 @@
 # Replay Budget and Dossier Closure — Report
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: BLOCKED
+Status: IN_PROGRESS
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -17,33 +16,49 @@ general hardening.
 
 ## Current result
 
-M0, M1, M2, and all local/source validation are complete. The bounded replay
-reservation implementation is pushed at
+M0, M1, and M2 remain complete. The bounded replay-reservation implementation
+is pushed at
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`; focused replay/checkpoint,
 typecheck, hardening, handoff, project, semantic, owner-provenance, synthetic,
-local-gate, and clean Node20 validation passed.
+local-gate, and clean Node20 validation passed before this continuation.
 
-The exact pushed head was observed by Actions once as run `33446473458`; its
-sole job `99666610250` failed with `steps=[]` and no retrievable log. This is
-`NO_STEPS_BILLING_OR_PLATFORM_BLOCK`, external non-evidence; CI PASS is not
-claimed.
+The owner then completed one guarded headed auth capture for the designated DEV
+state. Post-login verification, atomic state/provenance writes, structural
+validation, and cleanup passed. Secret values and storage-state contents were
+not printed or copied into the repository.
 
-On 2026-09-01, the owner-refreshed designated DEV state was revalidated through
-the normal no-refresh Phase 7 prepare-only path. It failed closed with
-`AUTH_NETWORK_FAILURE` before campaign preparation. Sanitized diagnostics showed
-the state shape and DEV provenance valid, the required token present, and
-domain/path applicable, but the token was not unexpired and the state was not
-page-readable. No fresh campaign manifest, candidate, replay, minimization, or
-dossier was produced.
+The fresh current-source campaign
+`campaign:sha256:37aca1e950ab804e3a6fd592` prepared and resumed successfully
+against source
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. It completed all five selected
+read-only work items with `COMPLETE_CLEAN`, zero safety counters, and privacy
+`PASS`.
 
-## DEV confirmation blocker
+Two protocol-only anomaly candidates and two clusters were observed. Both
+were rejected before candidate replay with
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; the reproduction queue and persisted
+candidate replay-reservation ledger were empty. No candidate attack replay,
+minimization, dossier, or product finding is claimed. The two API work items
+each completed their ordinary first-plus-fresh replay pair, using two
+aggregate replay units distinct from candidate attack replay.
 
-The task stops before product campaign work. The owner-refreshed designated
-external DEV state still fails page-readable validation. No repeated refresh,
-retry, alternate credential, predecessor checkpoint, historical candidate, or
-stale manifest is authorized. Unblock requires a separately supplied
-designated state that passes the guarded page-readable validation for the
-configured DEV target.
+## Fresh DEV confirmation
+
+This is a bounded `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` result. The
+existing DVR-011 admission and downstream-only-on-`REPRODUCED` rules were not
+weakened. No retry, alternate credential, historical candidate, stale
+manifest, production/NEXT contact, mutation, datastore, infrastructure, or
+publication operation occurred.
+
+## Fresh DEV confirmation
+
+The owner-managed auth boundary now passes the guarded headed capture and
+post-login validation. The single fresh campaign prepare/resume pair passed
+with the current implementation source and closed `COMPLETE_CLEAN`. Because
+no candidate passed the replay eligibility gate, candidate replay,
+minimization, and dossier work were correctly not entered. The result is
+classified as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`, not as a
+product PASS and not as an admission relaxation.
 
 ## Safety
 
@@ -51,21 +66,17 @@ Production, NEXT, mutation, datastore/infrastructure, sibling writes,
 publication, credential persistence, raw authenticated evidence in Git,
 containment weakening, DVR-011 weakening, and unbounded replay are forbidden.
 
-## Terminal disposition
+## Current disposition
 
-The implementation and every reachable local validation milestone are closed.
-The exact-head Actions observation remains external non-evidence because its
-only job had zero executed steps. Guarded DEV execution stopped before campaign
-preparation after the owner-refreshed state failed the page-readable gate;
-therefore no fresh candidate, replay, minimization, dossier, or product finding
-is claimed.
+The bounded replay-reservation implementation and all reachable local
+validation milestones remain intact. The fresh DEV confirmation is closed
+truthfully as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`: two
+protocol-only candidates were rejected before candidate replay with
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`, no candidate replay reservation or
+executor entry occurred, two aggregate API replay units were used by the
+ordinary first-plus-fresh API pairs, and no minimization/dossier/product
+finding was produced.
 
-Continuity v2, OpenSpec task reconciliation, project truth, hardening,
-owner-provenance, generated-artifact/privacy inspection, and both authoritative
-local and clean Node20 quality gates passed at final continuation head
-`9f0d9a2683b7c3129894f851815035c1905ad03b`. The active task remains `BLOCKED`
-solely at the owner-managed page-readable DEV auth boundary; no alternate
-credential, stale state, historical candidate, or retry is authorized. Final
-blocked documentation checkpoint was pushed to `origin/main`, and post-push
-verification confirmed a clean working tree with `HEAD == origin/main`; the task
-remains `BLOCKED` solely at the owner-managed page-readable DEV auth boundary.
+Final continuity, project truth, privacy, local-quality, clean-Node20, diff,
+and remote-parity validation are the next closure action. CI remains external
+non-evidence because the observed exact-head job executed zero steps.
