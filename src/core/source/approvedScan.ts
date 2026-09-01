@@ -7,11 +7,16 @@ import { RIPPLE_REPOSITORIES } from '../changeIntelligence/map';
 import { createRealSourceScanConfig } from './scan';
 import type { RealSourceScanConfig } from './scanTypes';
 
+// Owner-approved roots. C-02a adds `openapiv2` to the already-admitted
+// `alphauslabs/blueapi` repository: a per-root change inside an existing
+// member of the universe, not a new repository admission. `blueinternal` is
+// deliberately absent — it is not a member of RIPPLE_REPOSITORIES at all and
+// its admission is a REPOSITORY admission blocked behind C-05.
 const APPROVED_ROOTS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'mobingilabs/ripple-ui': ['src'],
   'mobingilabs/ripple-api': ['src'],
   'mobingilabs/ouchan': ['services', 'pkg'],
-  'alphauslabs/blueapi': ['billing'],
+  'alphauslabs/blueapi': ['billing', 'openapiv2'],
   'alphauslabs/blue-sdk-go': ['billing'],
   'alphauslabs/grpc-chunk-parser': ['src'],
 });

@@ -233,13 +233,13 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-truncation-truth-discovery-paging-c01-v1
-LIVE_PHASE: TRUNCATION_TRUTH_DISCOVERY_PAGING_C01_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-openapi-admission-c02a-v1
+LIVE_PHASE: OPENAPI_ADMISSION_C02A_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
 
 ### Active replay-budget and dossier-closure campaign
@@ -2514,6 +2514,24 @@ family cleared the bar: `NO_SAFE_NEW_FAMILY` and promotion authority remains
 `NONE`.
 
 > **Current whole-population truth (C-01).** The first honest whole-population measurement at the same snapshot under C-01 (`MAX_PROJECTED_OPERATIONS = 4096`, per-repository fair projection, explicit `SourceOperationProjectionCompleteness`) is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see `docs/DECISIONS.md` D-105 for the single durable resolution. The `43` and `83` remain valid only as phase-qualified historical measurements over the 128 cap.
+
+> **Current whole-population truth (C-02a).** C-02a admitted the
+> `alphauslabs/blueapi` `openapiv2` root, so the C-01 figures above are now
+> the `mobingilabs/ripple-api`-only view of a larger population. The current
+> whole-population measurement over the approved universe is `814`
+> operations — `223` Ripple plus `591` from the committed generated Swagger
+> artifact `openapiv2/apidocs.swagger.json` at
+> `alphauslabs/blueapi@691422e5dc81afd263d064986fb50fcb3ea432a9` — with
+> `droppedOperations: 0` in both repositories, `routeProofs: 813`,
+> `requestContracts: 813`, `responseContracts: 649`,
+> `openApiResponseDefinitionsBound: 970`,
+> `openApiResponseDefinitionsUnresolved: 0`, and completeness still
+> `UNKNOWN` / `totalOperations: null` / `remainingUnknown: true` because file
+> enumeration remains bounded. All 223 pre-C-02a operation identities are
+> preserved. The 591 blueapi surfaces are
+> `SOURCE_FACT (GENERATED_ARTIFACT)` with `UNKNOWN` generation currency and a
+> `DENIED` production admission until C-02b supplies a proto-surface
+> corroborator; see `docs/DECISIONS.md` D-106.
 
 The pre-fix probe reproduced the PHP, lexical-route, and fake-declaration
 defects. The final focused cone passed 74/74; semantic compatibility passed

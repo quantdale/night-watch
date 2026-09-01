@@ -4038,3 +4038,56 @@ live.
 
 **Rejected alternatives.** Silently rewriting history to `58` everywhere was rejected per `AGENTS.md` documentation-truth discipline (historical phase-qualified anchors stay valid at their own SHA; only `CURRENT`-truth statements get corrected). Changing analyzer semantics to make the numbers agree was rejected.
 
+
+## D-106 — a generated artifact is source evidence, qualified and deny-only
+
+**Context.** `alphauslabs/blueapi/openapiv2/apidocs.swagger.json` is a
+committed, generated mirror of the protobuf surface: 462 paths, 591 verb-bound
+operations, 1,179 `definitions`, regenerated only when somebody runs the
+generator. C-02a admits it. Two wrong answers were available. Treating it as
+ordinary `SOURCE_FACT` would let a stale mirror silently authorize behaviour
+the protos no longer describe. Demoting it below `SOURCE_FACT` would be
+equally untrue: the file is committed, exact, and mechanically parseable, and
+the independent review measured it at 591 of ~595 verb-bound RPCs with full
+path, verb, `operationId` and response schema.
+
+**Decision.** Class it `SOURCE_FACT` with a `GENERATED_ARTIFACT` qualifier and
+keep three facts structurally separate in
+`src/core/source/generatedArtifact.ts`:
+
+1. the evidence qualifier — a pure function of repository plus first path
+   segment over one frozen table;
+2. generation currency against the proto surface —
+   `CURRENT | STALE | UNKNOWN`, derived only from an explicit corroboration
+   record carrying its own snapshot SHA;
+3. the production-admission effect —
+   `DENIED | NOT_DENIED_BY_EVIDENCE_CLASS`, a type with no `GRANTED` member.
+
+Absence of a corroborator is `UNKNOWN`, never `CURRENT`. A snapshot mismatch,
+a duplicate record and a malformed count are all `UNKNOWN` too. Only a single
+corroboration at the same SHA with a matching operation count yields
+`CURRENT`. `GENERATED_ARTIFACT` without a `DIRECT_SOURCE` witness is `DENIED`
+with `GENERATED_ARTIFACT_SOLE_EVIDENCE` *even when currency is provably
+`CURRENT`* — currency and sole-basis are independent denials.
+
+**Evidence and consequences.** C-02b owns the proto surface, so
+`PROTO_SURFACE_CORROBORATIONS` is empty and all 591 generated surfaces report
+`UNKNOWN` currency and a `DENIED` production admission today. The measured
+divergence the review recorded (get 185 vs 187, delete 60 vs 61, post 253 vs
+254) is exactly what the `STALE` branch exists to catch once C-02b lands. The
+whole-population census moved from 223 to 814 operations
+(223 Ripple + 591 blueapi, zero dropped, zero deduplicated) with
+`responseContracts` 58 → 649; 970 response contracts are bound through
+in-document `definitions` with 0 unresolved. A side effect worth recording:
+a generated Swagger document declares no handler symbol, so all 591 operations
+carry an `UNSUPPORTED_REFERENCE` `ROUTE_HANDLER` join and `JOIN_GRAPH`
+replaces `RESPONSE_CONTRACT` as the top-ranked proof-gap family (607 vs 165
+gap surfaces).
+
+**Rejected alternatives.** A single scalar "trust score" fusing class,
+currency and admission effect was rejected: it would have made the deny-only
+property unprovable. Weakening `responseEvidence`'s `handlerState === 'PROVEN'`
+requirement so generated operations could reuse the analyzer path was rejected
+in favour of a separate, explicitly labelled `OPENAPI_RESPONSE_DEFINITION`
+proof path. Adding `blueinternal/openapiv2` alongside it was rejected: that is
+a REPOSITORY admission and belongs to C-05.

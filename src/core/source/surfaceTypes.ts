@@ -7,8 +7,9 @@ import type { Phase24CandidateInvalidationLedger } from '../phase24/types';
 import type { ResponseFlowProof } from './responseFlow';
 import type { SourceGapTaxonomyChange } from './gapTaxonomy';
 import type { R2CoverageState, SourceCompletenessState } from './completeness';
+import type { SourceEvidenceProvenance } from './generatedArtifact';
 
-export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v3' as const;
+export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v4' as const;
 export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v2' as const;
 export const REAL_SOURCE_SURFACE_PERFORMANCE_VERSION = 'nightwatch.real-source-surface-performance.v1' as const;
 export const REAL_SOURCE_OPERATION_COMPLETENESS_VERSION = 'nightwatch.source-operation-projection-completeness.v1' as const;
@@ -19,7 +20,7 @@ export type SourceReadOnlyClassification = 'PROVEN_READ_ONLY' | 'READ_ONLY_METHO
 export type SourceRuntimeBinding = 'RUNTIME_BOUND_EXACT' | 'RUNTIME_BOUND_PARTIAL' | 'SOURCE_ONLY' | 'RUNTIME_ONLY' | 'AMBIGUOUS' | 'STALE_BINDING' | 'SOURCE_VERSION_MISMATCH';
 export type SourceComponentProvenance = 'EXACT_COMPONENT' | 'REPOSITORY_ONLY' | 'AMBIGUOUS_COMPONENT' | 'UNRESOLVED';
 export type SourceJoinState = 'PROVEN' | 'AMBIGUOUS' | 'MISSING_SYMBOL' | 'MULTIPLE_SYMBOLS' | 'OUTSIDE_SCOPE' | 'UNSUPPORTED_REFERENCE' | 'SOURCE_STALE';
-export type SourceJoinKind = 'ROUTE_HANDLER' | 'HANDLER_REQUEST_CONTRACT' | 'HANDLER_RESPONSE_CONTRACT' | 'OPERATION_SCHEMA' | 'RESPONSE_FLOW';
+export type SourceJoinKind = 'ROUTE_HANDLER' | 'HANDLER_REQUEST_CONTRACT' | 'HANDLER_RESPONSE_CONTRACT' | 'OPERATION_SCHEMA' | 'RESPONSE_FLOW' | 'OPENAPI_RESPONSE_DEFINITION';
 export type SourceSurfaceLifecycle = 'DISCOVERED' | 'MECHANICALLY_PROVEN' | 'PROJECTABLE' | 'SCENARIO_BOUND' | 'REPLAY_SUPPORTED' | 'MINIMIZATION_SUPPORTED' | 'DIFFERENTIAL_CAPABLE' | 'FULL_LIFECYCLE';
 export type SourceSurfaceProjectionCapability = 'PROJECTABLE' | 'NOT_PROJECTABLE' | 'UNPROVEN';
 export type SourceSurfaceReplayCapability = 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
@@ -117,6 +118,24 @@ export interface SourceOperationDescriptor {
   readonly deploymentStatusUnresolved: true;
 }
 
+/** Resolution outcome of one OpenAPI `responses[code].schema.$ref` against the
+ * document's own `definitions` block. A malformed or unresolvable reference is
+ * reported, never dropped. */
+export const OPENAPI_RESPONSE_BINDING_STATES = ['RESOLVED', 'REF_MALFORMED', 'DEFINITION_MISSING', 'DEFINITION_UNSAFE'] as const;
+export type OpenApiResponseBindingState = (typeof OPENAPI_RESPONSE_BINDING_STATES)[number];
+
+export interface OpenApiResponseDefinitionBinding {
+  /** Swagger response key: an HTTP status code or `default`. */
+  readonly statusCode: string;
+  readonly state: OpenApiResponseBindingState;
+  /** Definition name, only when the reference is structurally safe. */
+  readonly definition: string | null;
+  /** Top-level property count of the resolved definition. */
+  readonly fieldCount: number;
+  /** Digest over the definition's sorted property names and types. */
+  readonly definitionDigest: string | null;
+}
+
 export interface SourceContractEvidence {
   readonly requestContractId: string | null;
   readonly requestEvidenceDigest: string | null;
@@ -129,6 +148,9 @@ export interface SourceContractEvidence {
   readonly semanticProof: SourceJoinState;
   readonly responseAnalyzerDiagnostics: readonly SourceAnalyzerDiagnostic[];
   readonly responseFlow: ResponseFlowProof | null;
+  /** C-02a — OpenAPI `$ref` → `definitions` response bindings, when the route
+   * came from an OpenAPI document. Empty for every other route language. */
+  readonly responseDefinitions: readonly OpenApiResponseDefinitionBinding[];
 }
 
 export interface SourceEvidenceJoin {
@@ -163,6 +185,8 @@ export interface RealSourceSurfaceDescriptor {
   readonly replayCapability: SourceSurfaceReplayCapability;
   readonly differentialCapability: 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
   readonly exclusionReasons: readonly SourceSurfaceReasonCode[];
+  /** C-02a — is this surface's route evidence direct or generated source? */
+  readonly sourceEvidence: SourceEvidenceProvenance;
   readonly deterministicDigest: string;
 }
 
@@ -196,6 +220,10 @@ export interface SourceSurfaceDiscoveryCounters {
   readonly candidatesProduced: number;
   readonly eligibleCandidates: number;
   readonly excludedCandidates: number;
+  /** C-02a — generated-artifact and OpenAPI definition-binding yield. */
+  readonly generatedArtifactOperations: number;
+  readonly openApiResponseDefinitionsBound: number;
+  readonly openApiResponseDefinitionsUnresolved: number;
 }
 
 /** Truthful projection completeness for operation discovery.

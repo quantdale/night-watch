@@ -174,7 +174,7 @@ function campaignCoverage(): CampaignCoverageReport {
 
 function sourceSurface(): RealSourceSurfaceDescriptor {
   return {
-    schemaVersion: 'nightwatch.real-source-surface-descriptor.v3',
+    schemaVersion: 'nightwatch.real-source-surface-descriptor.v4',
     surfaceId: 'surface-1',
     targetId: 'target-1',
     operation: {
@@ -216,6 +216,7 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
       semanticProof: 'MISSING_SYMBOL',
       responseAnalyzerDiagnostics: [],
       responseFlow: null,
+      responseDefinitions: [],
     },
     componentProvenance: {
       state: 'EXACT_COMPONENT',
@@ -230,6 +231,13 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
     replayCapability: 'SUPPORTED',
     differentialCapability: 'SUPPORTED',
     exclusionReasons: [],
+    sourceEvidence: {
+      schemaVersion: 'nightwatch.source-evidence-provenance.v1',
+      evidenceClass: 'SOURCE_FACT',
+      qualifier: 'DIRECT_SOURCE',
+      generationCurrency: null,
+      productionAdmission: { state: 'NOT_DENIED_BY_EVIDENCE_CLASS', denialCodes: [] },
+    },
     deterministicDigest: `surface:sha256:${'f'.repeat(24)}`,
   };
 }

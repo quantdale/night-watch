@@ -2729,6 +2729,20 @@ a scanned extension, hiding 599 HTTP-annotated RPCs; and `PROVEN_READ_ONLY`
 resolves to membership in an 11-row hand-written catalog, which is why only
 5 of 128 operations and 3 surfaces qualify — `128` is the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`), not the real population of `223` under C-01; see D-105 —.
 
+C-02a closed the `blueapi` half of that finding. Admitting the one
+`openapiv2` root of the already-admitted `alphauslabs/blueapi` repository —
+zero new parsers, through the existing `parseOpenApiRoutes` — moved the whole
+population from `223` to `814` operations (`223` Ripple + `591` blueapi,
+`droppedOperations: 0` in both, no deduplication) and `responseContracts` from
+`58` to `649`, with `970` response contracts bound from the artifact's own
+`definitions` and `0` unresolved. The `591` are `SOURCE_FACT
+(GENERATED_ARTIFACT)`: their generation currency against the proto surface is
+`UNKNOWN` until C-02b supplies a corroborator, and generated evidence is
+mechanically barred from being the sole basis of a production admission. See
+`docs/DECISIONS.md` D-106. The `.proto` half — streaming RPCs, the proto
+service ↔ RPC symbol C-03 joins on, and the corroborator itself — remains
+C-02b's; `blueinternal` remains C-05's.
+
 Every campaign in the master plan remains `NOT_AUTHORIZED` until it receives
 its own explicit one-shot owner authorization. Production remains unrunnable:
 `SUPPORTED_ENVIRONMENTS` is unchanged and `config/environments/production.json`

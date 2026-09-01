@@ -53,13 +53,23 @@ import {
   type SourceOperationCompletenessState,
   REAL_SOURCE_OPERATION_COMPLETENESS_VERSION,
   REAL_SOURCE_SURFACE_PERFORMANCE_VERSION,
+  type OpenApiResponseDefinitionBinding,
 } from './surfaceTypes';
+import { sourceEvidenceProvenance, type SourceEvidenceProvenance } from './generatedArtifact';
 import { coverageStateForCompleteness, isComplete, worstCompleteness, type SourceCompletenessState } from './completeness';
 
 const SAFE_HANDLER_RE = /^[A-Za-z_][A-Za-z0-9_$\\.-]{0,159}$/;
 const SAFE_REFERENCE_RE = /^src\/[A-Za-z0-9._/-]{1,239}\.(?:php|json|ya?ml|tsx?|jsx?|go)$/i;
-const SAFE_ROUTE_RE = /^\/[A-Za-z0-9._~{}:-]{0,239}(?:\/[A-Za-z0-9._~{}:-]{0,239})*$/;
+// `&` is admitted because gRPC-gateway custom-method templates use it in the
+// literal path segment (`/v1/invoice/{date}:create&savesettings`). Widening the
+// character class can only make a previously UNSUPPORTED route template exact;
+// it can never rewrite an already-safe template, and the C-02a regression
+// proves the widening is inert for every pre-C-02a operation identity.
+const SAFE_ROUTE_RE = /^\/[A-Za-z0-9._~{}:&-]{0,239}(?:\/[A-Za-z0-9._~{}:&-]{0,239})*$/;
 const SAFE_OPERATION_RE = /^[A-Za-z][A-Za-z0-9_.:/-]{0,199}$/;
+/** Swagger 2.0 local reference into the document's own `definitions` block. */
+const OPENAPI_DEFINITION_REF_RE = /^#\/definitions\/([A-Za-z0-9_.-]{1,159})$/;
+const SAFE_DEFINITION_RE = /^[A-Za-z_][A-Za-z0-9_.-]{0,159}$/;
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 /** Bounded projection ceiling. It is a memory/CPU guard, not a coverage
  * policy: it is aligned with the upstream file-scan ceiling
@@ -106,6 +116,8 @@ interface ParsedRoute {
   readonly language: SourceScanLanguage;
   readonly routeProof: SourceRouteProof;
   readonly routeRejectionReason: SourceSurfaceReasonCode | null;
+  /** C-02a — OpenAPI in-document `$ref` → `definitions` response bindings. */
+  readonly responseDefinitions: readonly OpenApiResponseDefinitionBinding[];
 }
 
 interface RuntimeMatch {
@@ -205,7 +217,7 @@ function parseYamlRoutes(sourcePath: string, sourceText: string): readonly Parse
     const safeMethod = safeHandler(handler);
     const routeProof: SourceRouteProof = routeMethod !== null && routeTemplate !== null && safeClient !== null && safeMethod !== null ? 'PROVEN' : 'UNSUPPORTED';
     const routeRejectionReason: SourceSurfaceReasonCode | null = routeProof === 'PROVEN' ? null : routeTemplate === null || routeMethod === null ? 'ROUTE_NOT_FOUND' : safeClient === null || safeMethod === null ? 'HANDLER_UNRESOLVED' : 'SOURCE_SYNTAX_UNSUPPORTED';
-    routes.push({ method: routeMethod ?? 'GET', routeTemplate: routeTemplate ?? '/', handlerClient: safeClient, handlerSymbol: safeMethod, requestReference, responseReference, sourcePath, language: 'YAML', routeProof, routeRejectionReason });
+    routes.push({ method: routeMethod ?? 'GET', routeTemplate: routeTemplate ?? '/', handlerClient: safeClient, handlerSymbol: safeMethod, requestReference, responseReference, sourcePath, language: 'YAML', routeProof, routeRejectionReason, responseDefinitions: [] });
   }
   return routes;
 }
@@ -260,9 +272,37 @@ function parseStaticRoutes(sourcePath: string, sourceText: string, language: 'TY
     const handler = safeHandler(qualifiedIdentifier(openIndex + 3)?.value ?? null);
     const routeTemplate = safeRoute(routeToken.value);
     const routeProof: SourceRouteProof = routeMethod !== null && routeTemplate !== null && handler !== null ? 'PROVEN' : 'UNSUPPORTED';
-    routes.push({ method: routeMethod ?? 'GET', routeTemplate: routeTemplate ?? '/', handlerClient: null, handlerSymbol: handler, requestReference: null, responseReference: null, sourcePath, language, routeProof, routeRejectionReason: routeProof === 'PROVEN' ? null : 'SOURCE_SYNTAX_UNSUPPORTED' });
+    routes.push({ method: routeMethod ?? 'GET', routeTemplate: routeTemplate ?? '/', handlerClient: null, handlerSymbol: handler, requestReference: null, responseReference: null, sourcePath, language, routeProof, routeRejectionReason: routeProof === 'PROVEN' ? null : 'SOURCE_SYNTAX_UNSUPPORTED', responseDefinitions: [] });
   }
   return routes;
+}
+
+/** Resolve one Swagger `responses[code].schema.$ref` against the document's own
+ * `definitions` block. This is in-document resolution only: no external file,
+ * no remote reference, and no value ever leaves the document boundary — only
+ * the definition's name, its top-level property count, and a digest over its
+ * sorted property name/type pairs. */
+function bindOpenApiResponseDefinition(statusCode: string, response: unknown, definitions: Record<string, unknown>): OpenApiResponseDefinitionBinding | null {
+  if (response === null || typeof response !== 'object' || Array.isArray(response)) return null;
+  const schema = (response as Record<string, unknown>).schema;
+  if (schema === null || typeof schema !== 'object' || Array.isArray(schema)) return null;
+  const reference = (schema as Record<string, unknown>).$ref;
+  if (typeof reference !== 'string') return null;
+  const match = reference.match(OPENAPI_DEFINITION_REF_RE);
+  const name = match?.[1];
+  if (name === undefined) return { statusCode, state: 'REF_MALFORMED', definition: null, fieldCount: 0, definitionDigest: null };
+  if (!SAFE_DEFINITION_RE.test(name)) return { statusCode, state: 'DEFINITION_UNSAFE', definition: null, fieldCount: 0, definitionDigest: null };
+  if (!Object.prototype.hasOwnProperty.call(definitions, name)) return { statusCode, state: 'DEFINITION_MISSING', definition: name, fieldCount: 0, definitionDigest: null };
+  const definition = definitions[name];
+  if (definition === null || typeof definition !== 'object' || Array.isArray(definition)) return { statusCode, state: 'DEFINITION_MISSING', definition: name, fieldCount: 0, definitionDigest: null };
+  const properties = (definition as Record<string, unknown>).properties;
+  const fields = properties !== null && typeof properties === 'object' && !Array.isArray(properties)
+    ? Object.entries(properties as Record<string, unknown>)
+      .filter(([field]) => SAFE_DEFINITION_RE.test(field))
+      .map(([field, shape]) => ({ field, type: shape !== null && typeof shape === 'object' && !Array.isArray(shape) && typeof (shape as Record<string, unknown>).type === 'string' ? (shape as Record<string, unknown>).type as string : null }))
+      .sort((left, right) => left.field.localeCompare(right.field))
+    : [];
+  return { statusCode, state: 'RESOLVED', definition: name, fieldCount: fields.length, definitionDigest: safeSemanticDigest({ definition: name, fields }, 'openapi-definition') };
 }
 
 function parseOpenApiRoutes(sourcePath: string, sourceText: string): readonly ParsedRoute[] {
@@ -271,6 +311,8 @@ function parseOpenApiRoutes(sourcePath: string, sourceText: string): readonly Pa
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
   const paths = (parsed as Record<string, unknown>).paths;
   if (paths === null || typeof paths !== 'object' || Array.isArray(paths)) return [];
+  const rawDefinitions = (parsed as Record<string, unknown>).definitions;
+  const definitions = rawDefinitions !== null && typeof rawDefinitions === 'object' && !Array.isArray(rawDefinitions) ? rawDefinitions as Record<string, unknown> : {};
   const routes: ParsedRoute[] = [];
   for (const routeTemplate of Object.keys(paths as Record<string, unknown>).sort()) {
     const safePath = safeRoute(routeTemplate);
@@ -284,8 +326,12 @@ function parseOpenApiRoutes(sourcePath: string, sourceText: string): readonly Pa
       const handler = operation !== null && typeof operation['x-handler'] === 'string' ? safeHandler(operation['x-handler'] as string) : operationId;
       const requestReference = operation !== null && typeof operation['x-request-schema'] === 'string' ? safeReference(operation['x-request-schema'] as string) : null;
       const responseReference = operation !== null && typeof operation['x-response-schema'] === 'string' ? safeReference(operation['x-response-schema'] as string) : null;
+      const responses = operation !== null && operation.responses !== null && typeof operation.responses === 'object' && !Array.isArray(operation.responses) ? operation.responses as Record<string, unknown> : {};
+      const responseDefinitions = Object.keys(responses).sort()
+        .map((statusCode) => bindOpenApiResponseDefinition(statusCode, responses[statusCode], definitions))
+        .filter((binding): binding is OpenApiResponseDefinitionBinding => binding !== null);
       const proven = safePath !== null && operation !== null;
-      routes.push({ method: routeMethod, routeTemplate: safePath ?? '/', handlerClient: null, handlerSymbol: handler, requestReference, responseReference, sourcePath, language: 'OPENAPI', routeProof: proven ? 'PROVEN' : 'UNSUPPORTED', routeRejectionReason: proven ? null : 'SOURCE_SYNTAX_UNSUPPORTED' });
+      routes.push({ method: routeMethod, routeTemplate: safePath ?? '/', handlerClient: null, handlerSymbol: handler, requestReference, responseReference, sourcePath, language: 'OPENAPI', routeProof: proven ? 'PROVEN' : 'UNSUPPORTED', routeRejectionReason: proven ? null : 'SOURCE_SYNTAX_UNSUPPORTED', responseDefinitions });
     }
   }
   return routes;
@@ -422,6 +468,19 @@ interface ResolvedSurfaceJoins {
   readonly responseState: SourceJoinState | null;
 }
 
+/** C-02a — one join per OpenAPI response `$ref`. A resolved reference is a
+ * PROVEN in-document contract binding; a malformed or missing definition is an
+ * explicit UNSUPPORTED_REFERENCE join, never a silent omission. */
+function openApiDefinitionJoins(operation: SourceOperationDescriptor, bindings: readonly OpenApiResponseDefinitionBinding[]): readonly SourceEvidenceJoin[] {
+  return bindings.map((binding) => joinEvidence({
+    operation,
+    kind: 'OPENAPI_RESPONSE_DEFINITION',
+    toIdentity: `${operation.repository}:${operation.sourcePath}#/definitions/${binding.definition ?? '?'}:${binding.statusCode}`,
+    state: binding.state === 'RESOLVED' ? 'PROVEN' : 'UNSUPPORTED_REFERENCE',
+    evidence: binding.state === 'RESOLVED' ? { kind: 'openapi-definition', statusCode: binding.statusCode, definition: binding.definition, fieldCount: binding.fieldCount, definitionDigest: binding.definitionDigest } : null,
+  }));
+}
+
 function resolveSurfaceJoins(input: { readonly access: SiblingSourceAccess; readonly inventory: RealSourceSnapshotInventory; readonly operation: SourceOperationDescriptor }): ResolvedSurfaceJoins {
   const operation = input.operation;
   const joins: SourceEvidenceJoin[] = [];
@@ -541,6 +600,27 @@ function analyzerDiagnostics(observations: readonly AnalyzerObservation[], respo
   return diagnostics.sort((left, right) => left.analyzerId.localeCompare(right.analyzerId) || left.evidenceDigest.localeCompare(right.evidenceDigest));
 }
 
+/** C-02a — response contract recovered from the OpenAPI document itself.
+ *
+ * A generated Swagger document has no handler symbol to analyze, so the
+ * handler-analyzer route can never prove its response shape. The document's
+ * own `$ref` → `definitions` edge is the mechanical proof, and it is a
+ * different, explicitly labelled kind of evidence: the surface's provenance
+ * records that it came from a GENERATED_ARTIFACT, and that qualifier alone can
+ * never grant a production admission. */
+function openApiResponseEvidence(operation: SourceOperationDescriptor, bindings: readonly OpenApiResponseDefinitionBinding[]): { readonly responseContractId: string | null; readonly responseEvidenceDigest: string | null; readonly semanticContractIds: readonly string[]; readonly responseProof: SourceJoinState; readonly semanticProof: SourceJoinState } {
+  const resolved = bindings.filter((binding) => binding.state === 'RESOLVED').sort((left, right) => left.statusCode.localeCompare(right.statusCode));
+  if (resolved.length === 0) return { responseContractId: null, responseEvidenceDigest: null, semanticContractIds: [], responseProof: 'UNSUPPORTED_REFERENCE', semanticProof: 'UNSUPPORTED_REFERENCE' };
+  const core = resolved.map((binding) => ({ statusCode: binding.statusCode, definition: binding.definition, fieldCount: binding.fieldCount, definitionDigest: binding.definitionDigest }));
+  return {
+    responseContractId: safeSemanticDigest({ operationId: operation.operationId, definitions: core }, 'response-contract'),
+    responseEvidenceDigest: sourceEvidenceDigest({ kind: 'openapi-response-contract', operationId: operation.operationId, definitions: core }),
+    semanticContractIds: core.map((binding) => safeSemanticDigest({ operationId: operation.operationId, definition: binding }, 'semantic-contract')).sort(),
+    responseProof: 'PROVEN',
+    semanticProof: 'PROVEN',
+  };
+}
+
 function responseEvidence(input: { readonly operation: SourceOperationDescriptor; readonly observations: readonly AnalyzerObservation[]; readonly handlerState: SourceJoinState; readonly responseReferenceState: SourceJoinState | null; readonly responseFlow: ResponseFlowProof | null }): { readonly responseContractId: string | null; readonly responseEvidenceDigest: string | null; readonly semanticContractIds: readonly string[]; readonly responseProof: SourceJoinState; readonly semanticProof: SourceJoinState; readonly responseFlow: ResponseFlowProof | null } {
   if (input.handlerState !== 'PROVEN' || (input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN')) {
     const state = input.responseReferenceState !== null && input.responseReferenceState !== 'PROVEN' ? input.responseReferenceState : input.handlerState;
@@ -562,14 +642,19 @@ function responseEvidence(input: { readonly operation: SourceOperationDescriptor
   return { responseContractId, responseEvidenceDigest, semanticContractIds, responseProof: 'PROVEN', semanticProof: 'PROVEN', responseFlow: input.responseFlow };
 }
 
-function contractEvidence(operation: SourceOperationDescriptor, analysis: { readonly observations: readonly AnalyzerObservation[]; readonly responseFlow: ResponseFlowProof | null }, joins: ResolvedSurfaceJoins): SourceContractEvidence {
+function contractEvidence(operation: SourceOperationDescriptor, analysis: { readonly observations: readonly AnalyzerObservation[]; readonly responseFlow: ResponseFlowProof | null }, joins: ResolvedSurfaceJoins, responseDefinitions: readonly OpenApiResponseDefinitionBinding[]): SourceContractEvidence {
   const fields = routeFields(operation.routeTemplate);
   const requestCore = { kind: 'request-contract', operationId: operation.operationId, method: operation.method, routeTemplate: operation.routeTemplate, fields };
   const requestEvidenceDigest = sourceEvidenceDigest(requestCore);
   const requestContractId = safeSemanticDigest(requestCore, 'request-contract');
   const requestProof = operation.requestReference === null ? operation.routeProof === 'PROVEN' ? 'PROVEN' : 'UNSUPPORTED_REFERENCE' : joins.requestState ?? 'UNSUPPORTED_REFERENCE';
-  const response = responseEvidence({ operation, observations: analysis.observations, handlerState: joins.handlerState, responseReferenceState: joins.responseState, responseFlow: analysis.responseFlow });
-  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof, responseAnalyzerDiagnostics: analyzerDiagnostics(analysis.observations, response.responseFlow), responseFlow: response.responseFlow };
+  // An OpenAPI route with in-document definition bindings is proven by the
+  // document; every other route still goes through the handler analyzers.
+  const openApi = operation.language === 'OPENAPI' && operation.routeProof === 'PROVEN' && responseDefinitions.length > 0 ? openApiResponseEvidence(operation, responseDefinitions) : null;
+  const response = openApi !== null && openApi.responseProof === 'PROVEN'
+    ? { ...openApi, responseFlow: analysis.responseFlow }
+    : responseEvidence({ operation, observations: analysis.observations, handlerState: joins.handlerState, responseReferenceState: joins.responseState, responseFlow: analysis.responseFlow });
+  return { requestContractId, requestEvidenceDigest, requestProof, requestFieldCount: fields.length, responseContractId: response.responseContractId, responseEvidenceDigest: response.responseEvidenceDigest, responseProof: response.responseProof, semanticContractIds: response.semanticContractIds, semanticProof: response.semanticProof, responseAnalyzerDiagnostics: analyzerDiagnostics(analysis.observations, response.responseFlow), responseFlow: response.responseFlow, responseDefinitions: [...responseDefinitions].sort((left, right) => left.statusCode.localeCompare(right.statusCode)) };
 }
 
 export function sourceProofGapCode(proof: SourceJoinState, diagnostics: readonly SourceAnalyzerDiagnostic[], kind: 'RESPONSE' | 'SEMANTIC'): string | null {
@@ -637,7 +722,7 @@ function lifecycle(operation: SourceOperationDescriptor, contract: SourceContrac
   return 'MECHANICALLY_PROVEN';
 }
 
-function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence): RealSourceSurfaceDescriptor {
+function descriptor(operation: SourceOperationDescriptor, source: { readonly repoId: string; readonly sha: string; readonly evidenceDigest: string }, relevantFiles: readonly string[], joins: readonly SourceEvidenceJoin[], contract: SourceContractEvidence, sourceEvidence: SourceEvidenceProvenance): RealSourceSurfaceDescriptor {
   const component = componentProvenance(operation);
   const exclusion = exclusionReasons(operation, contract, component, joins);
   const surfaceId = safeSemanticDigest({ operationId: operation.operationId, sourcePath: operation.sourcePath, route: operation.routeTemplate, method: operation.method }, 'surface');
@@ -657,6 +742,7 @@ function descriptor(operation: SourceOperationDescriptor, source: { readonly rep
     replayCapability: operation.runtimeBinding === 'RUNTIME_BOUND_EXACT' && operation.readOnlyClassification === 'PROVEN_READ_ONLY' ? 'SUPPORTED' as const : 'UNPROVEN' as const,
     differentialCapability: 'UNPROVEN' as const,
     exclusionReasons: exclusion,
+    sourceEvidence,
   };
   return { ...core, deterministicDigest: safeSemanticDigest(core, 'surface-descriptor') };
 }
@@ -867,6 +953,10 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   routeOperationsTruncated = parsedRoutes.length - projectedEntries.length;
   const projectedByRepository = new Map<string, number>();
   const duplicateOrdinals = new Map<string, number>();
+  // Definition bindings belong to the parsed route, not to the safe operation
+  // descriptor. They are carried by object identity so no descriptor field,
+  // digest, or operation identity changes shape to transport them.
+  const definitionsByOperation = new Map<SourceOperationDescriptor, readonly OpenApiResponseDefinitionBinding[]>();
   for (const entry of projectedEntries) {
     const { file, route } = entry;
     projectedByRepository.set(file.repoId, (projectedByRepository.get(file.repoId) ?? 0) + 1);
@@ -878,6 +968,7 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     duplicateOrdinals.set(duplicateKey, ordinal);
     const operation = duplicate ? { ...baseOperation, operationId: sourceEvidenceDigest({ kind: 'ambiguous-route-operation', baseOperationId: baseOperation.operationId, duplicateOrdinal: ordinal }) } : baseOperation;
     operations.push(operation);
+    if (route.responseDefinitions.length > 0) definitionsByOperation.set(operation, route.responseDefinitions);
     if (operation.handlerPath !== null) analyzerInvocations += 1;
   }
   // Enumeration truncation and content-read exhaustion are kept apart all the
@@ -912,11 +1003,20 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   operations.sort((left, right) => left.repository.localeCompare(right.repository) || left.sourcePath.localeCompare(right.sourcePath) || left.method.localeCompare(right.method) || left.routeTemplate.localeCompare(right.routeTemplate) || left.operationId.localeCompare(right.operationId));
   const surfaces: RealSourceSurfaceDescriptor[] = [];
   let responseFlowResolveElapsedMs = 0;
+  // Generation currency is a property of the artifact, not of one operation:
+  // the corroborator compares the whole artifact's operation count against the
+  // proto surface, so the per-artifact total is computed once, up front.
+  const artifactOperationCounts = new Map<string, number>();
+  for (const operation of operations) {
+    const key = `${operation.repository}|${operation.sourcePath}`;
+    artifactOperationCounts.set(key, (artifactOperationCounts.get(key) ?? 0) + 1);
+  }
   for (const operation of operations) {
     const joins = resolveSurfaceJoins({ access: scopedAccess, inventory, operation });
     const analysis = observationsFor({ access: scopedAccess, inventory, operation, handlerState: joins.handlerState, responseFlowIndex });
     responseFlowResolveElapsedMs += analysis.responseFlowElapsedMs;
-    const contract = contractEvidence(operation, analysis, joins);
+    const responseDefinitions = definitionsByOperation.get(operation) ?? [];
+    const contract = contractEvidence(operation, analysis, joins, responseDefinitions);
     const responseFlowPaths = analysis.responseFlow?.declarations.map((declaration) => declaration.relativePath) ?? [];
     const references = [operation.handlerPath, operation.requestReference, operation.responseReference].filter((value): value is string => value !== null);
     const relevantFileEvidence = [operation.sourcePath, ...references, ...responseFlowPaths]
@@ -926,7 +1026,13 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
       .sort((left, right) => left.path.localeCompare(right.path));
     const surfaceEvidenceDigest = sourceEvidenceDigest({ kind: 'source-surface-evidence', operationEvidenceDigest: operation.evidenceDigest, files: relevantFileEvidence, joins: joins.joins.map((join) => ({ kind: join.kind, state: join.state, toIdentity: join.toIdentity, evidenceDigest: join.evidenceDigest })), contract: { requestEvidenceDigest: contract.requestEvidenceDigest, responseEvidenceDigest: contract.responseEvidenceDigest, semanticContractIds: contract.semanticContractIds } });
     const flowJoins = analysis.responseFlow?.status === 'PROVEN' ? analysis.responseFlow.edges.map((edge) => ({ kind: 'RESPONSE_FLOW' as const, fromIdentity: edge.fromDeclarationId, toIdentity: edge.toDeclarationId, state: 'PROVEN' as const, evidenceDigest: edge.callsiteId })) : [];
-    surfaces.push(descriptor(operation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins], contract));
+    const provenance = sourceEvidenceProvenance({
+      repoId: operation.repository,
+      sourceSha: operation.sourceSha,
+      relativePath: operation.sourcePath,
+      artifactOperationCount: artifactOperationCounts.get(`${operation.repository}|${operation.sourcePath}`) ?? 0,
+    });
+    surfaces.push(descriptor(operation, { repoId: operation.repository, sha: operation.sourceSha, evidenceDigest: surfaceEvidenceDigest }, [operation.sourcePath, ...references, ...responseFlowPaths], [...joins.joins, ...flowJoins, ...openApiDefinitionJoins(operation, responseDefinitions)], contract, provenance));
   }
   surfaces.sort((left, right) => left.surfaceId.localeCompare(right.surfaceId));
   const gapTaxonomy = buildSourceGapTaxonomy({ inventory, surfaces });
@@ -959,6 +1065,9 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     gapDiagnosticCount: gapTaxonomy.rejectedDiagnosticCount,
     gapTaxonomyRows: gapTaxonomy.dimensions.rejectionCode.length,
     candidatesProduced: surfaces.length,
+    generatedArtifactOperations: surfaces.filter((surface) => surface.sourceEvidence.qualifier === 'GENERATED_ARTIFACT').length,
+    openApiResponseDefinitionsBound: surfaces.reduce((count, surface) => count + surface.contract.responseDefinitions.filter((binding) => binding.state === 'RESOLVED').length, 0),
+    openApiResponseDefinitionsUnresolved: surfaces.reduce((count, surface) => count + surface.contract.responseDefinitions.filter((binding) => binding.state !== 'RESOLVED').length, 0),
     eligibleCandidates: 0,
     excludedCandidates: surfaces.length,
   };

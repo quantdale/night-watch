@@ -213,6 +213,10 @@ test.describe('deterministic source eligibility census', () => {
       cwd: process.cwd(),
       encoding: 'utf8',
       timeout: 60_000,
+      // The C-02a population (814 operations) renders ~2.4 MB of census JSON.
+      // Node's default 1 MB spawnSync buffer would truncate it and surface as
+      // a null exit status, which is a harness limit, not a product fact.
+      maxBuffer: 64 * 1024 * 1024,
     }));
     for (const output of outputs) {
       expect(output.status).toBe(0);
@@ -225,7 +229,13 @@ test.describe('deterministic source eligibility census', () => {
     expect(censuses[1]).toEqual(censuses[0]);
     expect(censuses[2]).toEqual(censuses[0]);
     expect(censuses[0]?.summary.proofFamilyRanking.find((entry) => entry.family === 'SEMANTIC_CONTRACT')?.assessment).toBe('NO_INDEPENDENT_GAP');
-    expect(censuses[0]?.summary.proofFamilyRanking[0]?.family).toBe('RESPONSE_CONTRACT');
+    // C-02a moved the dominant gap family. Binding 591 generated-artifact
+    // response contracts through the document's own `definitions` left
+    // RESPONSE_CONTRACT's gap unchanged at 165 surfaces, while every one of
+    // those 591 operations declares no handler symbol at all — a generated
+    // Swagger document has none — so JOIN_GRAPH now carries 607 gap surfaces
+    // and ranks first. Both facts are measurements, not targets.
+    expect(censuses[0]?.summary.proofFamilyRanking[0]?.family).toBe('JOIN_GRAPH');
     expect(JSON.stringify(censuses[0])).not.toContain('CUSTOMER_ELIGIBILITY_SENTINEL');
   });
 });

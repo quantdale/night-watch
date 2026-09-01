@@ -23,7 +23,7 @@ const SOURCE_EVIDENCE = `ev:sha256:${'b'.repeat(24)}`;
 
 function sourceSurface(): RealSourceSurfaceDescriptor {
   return {
-    schemaVersion: 'nightwatch.real-source-surface-descriptor.v3',
+    schemaVersion: 'nightwatch.real-source-surface-descriptor.v4',
     surfaceId: 'synthetic.surface.read',
     targetId: 'synthetic.target.read',
     operation: {
@@ -62,6 +62,7 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
       semanticProof: 'MISSING_SYMBOL',
       responseAnalyzerDiagnostics: [],
       responseFlow: null,
+      responseDefinitions: [],
     },
     componentProvenance: { state: 'EXACT_COMPONENT', repository: 'approved/repo-a', packageName: 'fixtures', component: 'SENTINEL_COMPONENT', confidence: 'HIGH' },
     currentness: 'CURRENT',
@@ -70,6 +71,13 @@ function sourceSurface(): RealSourceSurfaceDescriptor {
     replayCapability: 'SUPPORTED',
     differentialCapability: 'SUPPORTED',
     exclusionReasons: [],
+    sourceEvidence: {
+      schemaVersion: 'nightwatch.source-evidence-provenance.v1',
+      evidenceClass: 'SOURCE_FACT',
+      qualifier: 'DIRECT_SOURCE',
+      generationCurrency: null,
+      productionAdmission: { state: 'NOT_DENIED_BY_EVIDENCE_CLASS', denialCodes: [] },
+    },
     deterministicDigest: `surface:sha256:${'c'.repeat(24)}`,
   };
 }
