@@ -2640,7 +2640,7 @@ persistence, raw authenticated evidence, and containment weakening remain
 unauthorized.
 
 
-## Replay budget and dossier closure — BLOCKED — 2026-09-01
+## Replay budget and dossier closure — COMPLETE (DEV confirmation starved) — 2026-09-01
 
 Active successor: `nightwatch-replay-budget-and-dossier-closure-v1`.
 
@@ -2655,15 +2655,33 @@ and eligibility gates, and interruption/resume behavior pass local and clean
 Node20 validation. Exact-head Actions run `33446473458` / job `99666610250`
 failed with `steps=[]` and no log, so CI is external non-evidence.
 
-Guarded DEV confirmation stopped before campaign preparation. The owner
-refreshed the designated external auth state, but the normal no-refresh
-prepare-only path returned `AUTH_NETWORK_FAILURE`. Sanitized diagnostics show
-valid file shape and DEV provenance, a present required token, applicable
-domain/path, and valid application semantics, but
-`requiredTokenUnexpired=false`, `pageReadable=false`, and `valid=false`. No
-fresh candidate, replay, minimization, or dossier exists for this successor.
-No further task refresh or retry is authorized until a separately supplied
-designated state passes page-readable validation. No alternate credentials,
+The owner completed one guarded headed capture for the designated DEV state;
+post-login verification, atomic state/provenance writes, validation, and
+cleanup passed without exposing secret values or storage-state contents.
+
+The fresh current-source campaign
+`campaign:sha256:37aca1e950ab804e3a6fd592` prepared and resumed successfully
+with manifest `manifest:sha256:41cdedac2beff0d59125ee1a`, frozen to source
+`6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`. It completed all five selected
+read-only work items with `COMPLETE_CLEAN`, zero safety counters, and privacy
+`PASS`.
+
+It observed two protocol-only anomaly candidates and two clusters, but both
+were rejected before candidate replay with
+`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`. No candidate replay reservation or
+executor entry occurred; minimization, dossier, and product-finding counts
+were zero. The two source-bound API items completed their ordinary
+first-plus-fresh replay pairs, consuming two aggregate replay units distinct
+from candidate attack replay.
+
+The bounded terminal result is
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. DVR-011 admission was not
+weakened, no candidate was manufactured, and no product finding is claimed.
+Safety counters remained zero and privacy was `PASS`. Final local and clean
+Node20 quality gates passed at
+`784d553d4bb8ec413b4195670e594aabf01293aa`; the project verdict remains
+`OPERATIONALLY_ACCEPTED` through `PROJECT_VERDICT_EFFECT: PRESERVE`.
+No further DEV attempt is authorized for this task. No alternate credentials,
 predecessor checkpoints, historical candidates, stale manifests,
 production/NEXT contact, mutation, datastore, infrastructure, publication,
 sibling write, or unbounded retry is authorized.

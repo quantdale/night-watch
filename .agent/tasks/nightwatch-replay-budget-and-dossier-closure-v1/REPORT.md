@@ -3,7 +3,7 @@
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Project verdict effect: PRESERVE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -69,14 +69,14 @@ containment weakening, DVR-011 weakening, and unbounded replay are forbidden.
 ## Current disposition
 
 The bounded replay-reservation implementation and all reachable local
-validation milestones remain intact. The fresh DEV confirmation is closed
+validation milestones are closed. The fresh DEV confirmation is closed
 truthfully as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`: two
 protocol-only candidates were rejected before candidate replay with
 `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`, no candidate replay reservation or
 executor entry occurred, two aggregate API replay units were used by the
-ordinary first-plus-fresh API pairs, and no minimization/dossier/product
+ordinary first-plus-fresh API pairs, and no minimization, dossier, or product
 finding was produced.
 
-Final continuity, project truth, privacy, local-quality, clean-Node20, diff,
-and remote-parity validation are the next closure action. CI remains external
-non-evidence because the observed exact-head job executed zero steps.
+The task is COMPLETE with `PROJECT_VERDICT_EFFECT: PRESERVE`. The project
+snapshot remains operationally accepted; exact-head Actions remains external
+non-evidence because the observed job executed zero steps.

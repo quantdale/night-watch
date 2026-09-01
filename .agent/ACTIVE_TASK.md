@@ -3,13 +3,13 @@
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 Title: Nightwatch Replay Budget and Dossier Closure
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-replay-budget-and-dossier-closure-v1
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
-Last checkpoint: fresh guarded DEV campaign completed with a truthful starved confirmation; final local/clean closure is in progress
-Current milestone: M5 — final certification
-Next action: Run final continuity, project, privacy, local, and clean gates; record the terminal starved result, then push and verify main/origin parity
+Last checkpoint: fresh guarded DEV confirmation and final local/clean validation passed at documentation checkpoint 784d553d4bb8ec413b4195670e594aabf01293aa
+Current milestone: COMPLETE / STOP — M0 through M5 are closed
+Next action: STOP — this task is complete; do not start another DEV campaign, refresh authentication, use alternate credentials, or reuse historical candidates
 Authorization class: NIGHTWATCH_REPLAY_BUDGET_DOSSIER_CLOSURE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: IN_PROGRESS
+PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

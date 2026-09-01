@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Replay Budget and Dossier Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-replay-budget-and-dossier-closure-v1
 OpenSpec: openspec/changes/nightwatch-replay-budget-and-dossier-closure-v1/
 Planned-From: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
@@ -28,11 +28,10 @@ Do not simply raise limits. Do not replay historical candidates. Do not weaken
 DVR-011.
 
 ## Current next action
-Run final continuity, project, privacy, local, and clean gates for the
-freshly closed starved confirmation; update terminal records, then push and
-verify clean `main`/`origin/main` parity. Do not start another campaign,
-retry authentication, use alternate credentials, or reuse historical
-candidates.
+STOP — this task is complete. No further DEV campaign, authentication
+refresh, alternate credential, historical-candidate replay, or stale-manifest
+resume is authorized. The terminal documentation checkpoint must remain clean
+and preserve the existing project verdict.
 
 ## Fresh DEV confirmation result
 The owner completed one guarded headed auth capture for the designated DEV

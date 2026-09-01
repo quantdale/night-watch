@@ -2,7 +2,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -172,25 +172,28 @@ replays are not candidate attack replay. This is the truthful bounded
 `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` outcome, not a reason to weaken
 DVR-011 or manufacture a candidate.
 
-## M5 — Final certification — IN_PROGRESS
+## M5 — Final certification — COMPLETE
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
-The fresh DEV confirmation is terminally classified as
-`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. Final continuity, project
-truth, privacy, local-quality, clean-Node20, diff, and remote-parity checks
-remain the exact next closure action.
+Final continuity, handoff, project-truth, hardening, privacy, local-quality,
+clean-Node20, diff, and hygiene checks passed at documentation checkpoint
+`784d553d4bb8ec413b4195670e594aabf01293aa`. The local quality receipt is
+`receipt:sha256:5eeb617d280dba9c3bf3f375`; the clean Node20 receipt is
+`clean-receipt:sha256:17b744b308cf0f54f0abafca`. The task closes with the
+truthful terminal result `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`.
+Exact-head Actions remains external non-evidence because its observed job
+executed zero steps.
 
 ## Validation Strategy
 
-Use the focused campaign/checkpoint validation already passed at the
-implementation checkpoint, then run the repository continuity, handoff,
-project, hardening, privacy, local, and clean Node20 gates after this
-documentation update. The guarded DEV confirmation used one fresh
-prepare/resume pair after a successful owner-led auth capture. No retry,
+The focused campaign/checkpoint validation, typecheck, hardening, handoff,
+project, semantic compatibility, owner-provenance, synthetic, local-quality,
+and clean-Node20 validation all passed. The guarded DEV confirmation used one
+fresh prepare/resume pair after a successful owner-led auth capture. No retry,
 alternate credential, historical candidate, stale manifest, production/NEXT
-contact, mutation, datastore, infrastructure, or publication operation is
-authorized.
+contact, mutation, datastore, infrastructure, or publication operation was
+performed.
 
 ## Decision Log
 
@@ -237,12 +240,12 @@ authorized.
 ## Deferred Work
 
 - No product finding or dossier was produced because no fresh candidate passed
-  the existing replay eligibility gate. Do not weaken DVR-011 or manufacture a
-  candidate to obtain downstream artifacts.
-- The final continuity, project, privacy, local, clean-Node20, diff, and
-  remote-parity checks are the next closure action.
+  the existing replay eligibility gate. This task is terminally closed as
+  `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`; DVR-011 remains unchanged.
 - Exact-head Actions remains external non-evidence because its observed job
   executed zero steps; no CI PASS is claimed.
+- No further DEV attempt is authorized for this task. Any future campaign
+  requires a separately authorized task and fresh current-source evidence.
 
 ## Completion Criteria
 

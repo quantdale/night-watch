@@ -7,4 +7,4 @@
 - [x] M4 prepare fresh current-source DEV campaign and validate owner auth (owner-led guarded capture, fresh prepare/resume passed; current-source campaign completed clean)
 - [x] M5 attempt fresh candidate replay confirmation and close truthfully when no candidate passes replay eligibility (`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; no candidate attack replay)
 - [x] M6 no minimization/dossier without a reproduced candidate
-- [ ] M7 final parity, project truth, CI classification, and terminal report (final repository gates and push remain)
+- [x] M7 final parity, project truth, CI classification, and terminal report (terminal starved result recorded; local/clean gates passed; final documentation checkpoint and remote parity are verified)

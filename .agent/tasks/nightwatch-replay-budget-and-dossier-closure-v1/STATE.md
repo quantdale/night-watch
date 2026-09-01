@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-replay-budget-and-dossier-closure-v1
 Phase: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 4834e4da1ec40fbad9736f0a12d1d8f610cb622d
 Last validated implementation SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 Last substantive checkpoint SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
@@ -16,7 +16,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: IN_PROGRESS
+PHASE_REPLAY_BUDGET_DOSSIER_CLOSURE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -26,25 +26,21 @@ confirm a current candidate can traverse the real bounded replay/dossier path.
 
 ## Current Milestone
 
-M5 — final certification is in progress after the fresh DEV confirmation.
+COMPLETE / STOP — M0 through M5 are closed. The fresh DEV confirmation is
+truthfully classified as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`.
 
 ## Work In Progress
 
-M0–M4 are complete. The owner completed a guarded headed DEV auth capture,
-then one fresh current-source campaign prepared and resumed successfully.
-M4 closed truthfully without candidate attack replay because both observed
-protocol-only candidates failed the existing
-`REPLAY_SOURCE_FRESHNESS_UNCONFIRMED` eligibility gate. M5 is the final
-continuity, project-truth, privacy, local-quality, clean-Node20, diff, and
-remote-parity closure.
+NONE. The bounded replay-reservation implementation, fresh guarded
+prepare/resume campaign, terminal classification, and repository validation
+are closed.
 
 ## Exact Next Action
 
-Run the final continuity, handoff, project, hardening, privacy, local, and
-clean-Node20 gates; record their exact results and the terminal starved
-classification, then commit, push, and verify clean `main`/`origin/main`
-parity. Do not start another campaign, retry authentication, use alternate
-credentials, or reuse historical candidates.
+STOP. This task is complete. Do not start another DEV campaign or refresh
+authentication. Do not use alternate credentials, historical candidates, or
+stale manifests. Preserve the existing project verdict and require a
+separately authorized task for any future DEV work.
 ## Starting evidence
 
 - Predecessor: nightwatch-dev-soak-replay-yield-v1 COMPLETE.
@@ -205,6 +201,27 @@ credentials, or reuse historical candidates.
   `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED` rather than a product PASS
   or an admission relaxation.
 
+- Final validation at documentation checkpoint
+  `784d553d4bb8ec413b4195670e594aabf01293aa` — `agent:check` PASS with the
+  expected checkpoint-advance and historical-task warnings (0 strict errors);
+  `handoff:check`, `project:check`, `hardening:check`, and
+  `hygiene:status` PASS. The project snapshot at that checkpoint correctly
+  paired active `IN_PROGRESS` with
+  `IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING` while closure
+  records were being finalized.
+- `npm run gate:local` at
+  `784d553d4bb8ec413b4195670e594aabf01293aa` — PASS; all 10 required groups,
+  semantic compatibility `1937/1950` with 13 skipped and 0 failed,
+  owner-provenance 91, synthetic campaign 89, receipt
+  `receipt:sha256:5eeb617d280dba9c3bf3f375`.
+- `npm run gate:clean` from source head
+  `784d553d4bb8ec413b4195670e594aabf01293aa` — PASS; fresh Node20
+  dependencies, all 10 required groups, `cleanBefore=true`,
+  `cleanAfter=true`, no auth/finding state, 0 sibling writes, receipt
+  `clean-receipt:sha256:17b744b308cf0f54f0abafca`.
+- `git diff --check` — PASS; no whitespace errors were present at the
+  documentation checkpoint.
+
 ## Discoveries
 
 - `INITIAL_REAL_CAMPAIGN_BUDGET` permits three journey contexts and six total
@@ -241,40 +258,40 @@ copied into the repository.
 
 ## Deferred / Follow-Up
 
-- No further DEV attempt is authorized for this task. The fresh campaign is
-  closed as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`; do not weaken
-  DVR-011 or manufacture a candidate for replay/dossier yield.
+- No product finding or dossier was produced because no fresh candidate passed
+  the existing replay eligibility gate. The terminal result is
+  `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`; DVR-011 was not weakened.
 - Exact-head Actions remains external non-evidence because its observed job
   executed zero steps; no CI PASS is claimed.
-- Final continuity, project truth, privacy, local, clean-Node20, diff, and
-  remote-parity checks remain the exact closure action.
+- Any future DEV campaign requires a separately authorized task and fresh
+  current-source evidence. This task has no remaining follow-up action.
 
 ## Resume Recipe
 
-This task is in final certification. Do not resume the campaign, refresh
-authentication again, use alternate credentials, reuse a predecessor
-checkpoint, reuse historical candidates, or use a stale manifest. Complete the
-final repository gates, record their exact results, then close and push this
-task.
+This task is terminal. Do not resume it, refresh authentication, use alternate
+credentials, reuse a predecessor checkpoint, reuse historical candidates, or
+use a stale manifest. A future DEV campaign requires a separately authorized
+task with fresh current-source evidence.
 
 ## Completion Snapshot
 
-Current state: IN_PROGRESS after one successful guarded fresh DEV
-prepare/resume pair.
+Completion state: COMPLETE.
 
 Implementation source remains
 `6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4`; the fresh campaign
 `campaign:sha256:37aca1e950ab804e3a6fd592` completed five read-only work items
 with `COMPLETE_CLEAN`, zero safety counters, and privacy `PASS`. It produced
 two protocol-only candidate observations/clusters, both rejected before
-candidate replay with `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; attack replay,
-minimization, and dossier counts are zero. The two API first-plus-fresh replay
-pairs used two aggregate replay units and do not establish candidate attack
-replay.
+candidate replay with `REPLAY_SOURCE_FRESHNESS_UNCONFIRMED`; candidate attack
+replay, minimization, and dossier counts are zero. The two API first-plus-fresh
+replay pairs used two aggregate replay units and do not establish candidate
+attack replay.
 
 The truthful DEV terminal classification is
-`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. Final repository gates,
-documentation closure, push, and remote parity are the remaining actions.
+`REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`. Active task, STATE, REPORT,
+PLAN milestones, OpenSpec task list, and project snapshot are terminal; the
+local and clean Node20 quality gates passed at the documented checkpoint, with
+external CI retained as non-evidence.
 
 ## Decisions Made During This Task
 

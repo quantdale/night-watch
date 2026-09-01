@@ -1,8 +1,8 @@
 # Nightwatch — CURRENT STATE
 
 > Durable memory for the next agent/session. Last updated: **2026-09-01** after
-> the owner-led DEV auth capture and one fresh replay-budget campaign
-> completed a truthful starved confirmation; final repository closure remains.
+> the owner-led DEV auth capture, one fresh replay-budget campaign, and final
+> local/clean closure validation.
 > The machine-checked project verdict remains `OPERATIONALLY_ACCEPTED`. The
 > predecessor repaired DVR-001 through DVR-012 across observation
 > settlement/capture, attribution, campaign checkpoint identity, executable
@@ -15,9 +15,8 @@
 > The replay-budget successor completed one fresh guarded campaign with five
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
-> GitHub Actions remains external non-evidence while exact-head jobs execute
-> zero steps.
-
+> Final local and clean Node20 quality gates passed; GitHub Actions remains
+> external non-evidence while exact-head jobs execute zero steps.
 ---
 
 ## What exists now
@@ -159,12 +158,12 @@ source; it is validated read-only by `npm run project:check`
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
-PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
+PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
-LAST_LOCALLY_VALIDATED_SHA: 24d60560d02749693c17af4d395428bef03cfa0e
-LAST_CLEAN_VALIDATED_SHA: 24d60560d02749693c17af4d395428bef03cfa0e
+LAST_LOCALLY_VALIDATED_SHA: 784d553d4bb8ec413b4195670e594aabf01293aa
+LAST_CLEAN_VALIDATED_SHA: 784d553d4bb8ec413b4195670e594aabf01293aa
 CI_OBSERVED_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
 CI_EXECUTED_SHA: NONE
 CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
@@ -194,11 +193,11 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-replay-budget-and-dossier-closure-v1
 LIVE_PHASE: REPLAY_BUDGET_DOSSIER_CLOSURE_V1
-LIVE_TASK_STATUS: IN_PROGRESS
-LIVE_PROJECT_COMPLETION_STATUS: IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING
+LIVE_TASK_STATUS: COMPLETE
+LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Active replay-budget and dossier-closure campaign
@@ -239,8 +238,11 @@ source-bound API items each completed their ordinary first-plus-fresh replay
 pair, consuming two aggregate replay units distinct from candidate attack
 replay.
 
-M5 final continuity, project-truth, privacy, local-quality, clean-Node20,
-diff, and remote-parity checks remain.
+Final continuity, handoff, project-truth, hardening, hygiene, local-quality,
+clean-Node20, and diff validation passed at
+`784d553d4bb8ec413b4195670e594aabf01293aa`. The task is terminally classified
+as `REPLAY_BUDGET_FIXED_DEV_CONFIRMATION_STARVED`, with the existing
+`OPERATIONALLY_ACCEPTED` project verdict preserved.
 ### Completed DEV soak, replay, and yield campaign
 
 `nightwatch-dev-soak-replay-yield-v1` is complete from implementation source
