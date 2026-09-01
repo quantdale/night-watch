@@ -3192,7 +3192,7 @@ Phase 24 remains the sole portfolio authority.
 
 **Evidence and consequences.** The fresh inventory remained 1,732 considered /
 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes across six
-approved repositories. Bounded lexical hardening raised response contracts
+approved repositories. Bounded lexical hardening raised response contracts — `responseContracts` = surfaces with `responseProof === 'PROVEN'` at `src/core/source/eligibilityCensus.ts:728` and `src/core/source/surfaces.ts`, measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —
 from 62 to 83 and semantic observations from 138 to 175 without changing
 joins, mutation/read-only proof, or Phase 24 eligibility. The new flow layer
 attempted 13 current patterns, proved 0, rejected 13, and observed no exact
@@ -3236,7 +3236,7 @@ review, lifecycle, semantic, and Phase 24 authorities remain unchanged.
 **Evidence and consequences.** The current six-repository snapshot is
 `srcsnapshot:sha256:04ff583971865f335902f5ad`: 1,732 considered / 1,092 read /
 1,078 admitted / 654 rejected / 12,449,877 bytes; 128 operations; 83 response
-contracts; 175 semantic observations; 13 flow attempts, 0 proved, 13
+contracts; 175 semantic observations; 13 flow attempts, 0 proved, 13 — historical measurement over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —
 rejected; and Phase 24 3 eligible / 125 excluded. Taxonomy v3 reports 45
 proof-gap surfaces and 325 rejected diagnostics with deterministic digest
 `source-gap-taxonomy:sha256:7adf9ef4eee0788461b34494`. Synthetic and relevant
@@ -3269,7 +3269,7 @@ unchanged.
 **Evidence and consequences.** The repair was validated at
 `1570547db9069c2a19d4c42c3e27e496ff1b5f01`. Source coverage and proof counts
 remain unchanged: 128 operations, 83 response contracts, 175 semantic
-observations, 118 proven joins, 10 rejected joins, 13 flow attempts with zero
+observations, 118 proven joins, 10 rejected joins, 13 flow attempts with zero — historical over pre-C-01 128 cap at analyzer v3 (validated at `1570547db9069c2a19d4c42c3e27e496ff1b5f01`); see D-105 —
 proofs, and Phase 24 at 3 eligible / 125 excluded. The two reproduced false
 positives now reject deterministically; a supported same-file positive remains
 proven. The taxonomy digest changed only for the analyzer-version change.
@@ -3294,7 +3294,7 @@ campaign reproduced six current approved repositories, 1,732 files
 considered / 1,092 read / 1,078 admitted / 654 rejected / 12,449,877 bytes,
 128 operations, 127 route proofs, 127 request contracts, 83 response
 contracts, 175 semantic observations, 118 proven joins / 10 rejected joins,
-47 mutation-capable operations, 5 independently proven read-only operations,
+47 mutation-capable operations, 5 independently proven read-only operations, — historical over pre-C-01 128 cap at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 —
 and Phase 24 at 3 eligible / 125 excluded. Read-only-method-only was present
 on 76 surfaces, but every one also carried another source or Phase 24 blocker.
 The previous response-flow family remained exhausted at 13 attempts / 0
@@ -3354,7 +3354,7 @@ Control Center may expose bounded proof-chain diagnostics but remains a view,
 not a policy engine.
 
 **Evidence and consequences.** The current result is 83 response-contract
-surfaces, 83 semantic-contract surfaces / 175 observations, 5 exact runtime
+surfaces, 83 semantic-contract surfaces / 175 observations, 5 exact runtime — historical measurement over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —
 bindings, 5 replay-proven surfaces, 128 dossier-compatible candidates, and
 Phase 24 at 3 eligible / 125 excluded. First blockers are 44 response, 37
 mutability, 43 read-only, 1 route, and 3 complete. No surface was newly
@@ -3396,7 +3396,7 @@ symbol inference.
 investigation-only candidate census is
 `source-readonly-candidate-census:sha256:c54347c14d4d1e5f95f18660`. The
 result is 128 operations, 127 route proofs, 43 response-contract surfaces,
-53 semantic observations, 118 proven / 10 rejected joins, and Phase 24 at
+53 semantic observations, 118 proven / 10 rejected joins, and Phase 24 at — this `43` is `responseContracts` = surfaces with `responseProof === 'PROVEN'` at analyzer v4 (post-hardening, commit `15fe2c1`, discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`) measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`; 43+9+76=128 is the cap); first honest whole-population under C-01 at same snapshot is `58` of `223` (`source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see D-105 —
 3 eligible / 125 excluded. Forty unsound response/semantic transitions were
 removed; operation identity drift is zero; the family disposition is
 `NO_SAFE_NEW_FAMILY`.
@@ -4027,3 +4027,14 @@ reset and cross-session `git stash` remain agent behavioural rules recorded in
 `AGENTS.md`; their *effects* are caught by this gate, the hygiene invariants,
 and the rule that the canonical checkout must be clean while a session is
 live.
+
+## D-105 — truncation truth: 83 vs 43 vs 58 are one metric over two caps
+
+**Context.** Durable docs recorded two different `responseContracts` counts for one identical source snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad` over the silently capped discovery pipeline. `openspec/changes/nightwatch-production-observability-system-map-master-plan-v1/audit.md:166` records `43 (UNPROVEN 9, UNSUPPORTED 76)` — 43+9+76=128 exactly, which is the pre-C-01 projection cap `MAX_DISCOVERED_OPERATIONS = 128` (`src/core/source/surfaces.ts:59` pre-C-01, `59` `routeOperationsTruncated` silently dropped, never surfaced), not the real population. `docs/CURRENT_STATE.md:2505-2506`, `docs/ARCHITECTURE.md:1860`, `docs/ROADMAP.md:2418` and the phase tables repeated that `43` (and the earlier `83` at `docs/CURRENT_STATE.md:78,82,83,148,2342,2458`, `docs/ARCHITECTURE.md:1765,1824`, `docs/ROADMAP.md:2234,2257,2325,2372`, `docs/DECISIONS.md:3196,3238,3271,3295,3356`) as if it were whole-population truth. The metric in all cases is one metric, not two: `responseContracts` = count of surfaces with `surface.contract.responseProof === 'PROVEN'`, defined identically at `src/core/source/eligibilityCensus.ts:728` (census summary) and in the discovery counters produced by `src/core/source/surfaces.ts`.
+
+**Decision.** Keep historical, phase-qualified records intact but make them unambiguously historical: every `83` or `43` `responseContracts` phase measurement is the same metric at a phase-qualified analyzer checkpoint over the pre-C-01 128-operation projection cap; only the post-C-01 whole-population measurement is current truth. Specifically `83` was that metric under response-analyzer v3, before the soundness hardening at commit `15fe2c1` (bounded PHP direct-return shape + mechanically complete branch requirement), measured over the silently capped 128-operation projection at the same snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`. `43` was the same metric after that hardening (analyzer v4) at the same snapshot and the same 128 cap. Both numbers were measured over a silently truncated population: the pre-C-01 discovery core silently capped projection at 128 operations and the audit's `43 (UNPROVEN 9, UNSUPPORTED 76)` sums to that cap. C-01 removed that silent cap (`MAX_PROJECTED_OPERATIONS = 4096`, per-repository fair round-robin projection, explicit `SourceOperationProjectionCompleteness` at `src/core/source/surfaceTypes.ts` and `src/core/source/surfaces.ts:69,858-910`, with `coverageStateForCompleteness` reporting `TRUNCATED`/`UNKNOWN`/`PROVEN`).
+
+**Evidence and consequences.** The first honest whole-population measurement over all 223 discovered `ripple-api` operations at the same snapshot, taken in this worktree with `node bin/nightwatch-intelligence.mjs source-gaps` (C-01), is `routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, discovery digest `source-surface-discovery:sha256:21de18a23a387d7b816db3c0` (verified from the C-01 session worktree; the earlier C-01 digest `source-surface-discovery:sha256:fb553ea66d4cc98b29294565` is the same 223-operation population measured before the inventory-completeness contract entered the snapshot digest, not a different measurement). This reconciles `audit.md:166` and `:439` and `docs/CURRENT_STATE.md:2505-2506`: historical `83` (v3, capped) and `43` (v4, capped) remain valid at their own SHA and analyzer identity; current truth is `58` of `223` under C-01. No analyzer semantics were changed to force the numbers to agree. Coverage/completeness remains reporting only (`coverageAuthorityEffect` may `DENY` but never `GRANT`; `src/core/source/completeness.ts`). All durable docs that previously presented `128` as a discovery result now carry the explicit cap note and reference this decision.
+
+**Rejected alternatives.** Silently rewriting history to `58` everywhere was rejected per `AGENTS.md` documentation-truth discipline (historical phase-qualified anchors stay valid at their own SHA; only `CURRENT`-truth statements get corrected). Changing analyzer semantics to make the numbers agree was rejected.
+

@@ -114,6 +114,41 @@ export interface SafetySnapshot {
   readonly blockedOperationClasses: readonly string[];
 }
 
+export type SourceCompletenessState = 'COMPLETE' | 'TRUNCATED' | 'UNKNOWN';
+export type SourceCoverageState = 'PROVEN' | 'UNPROVEN' | 'UNSUPPORTED' | 'TRUNCATED' | 'STALE' | 'UNKNOWN' | 'UNMEASURED';
+
+export interface SourceEnumerationCompletenessSnapshot {
+  readonly state: SourceCompletenessState;
+  readonly limit: number;
+  readonly examinedFiles: number;
+  readonly totalFiles: number | null;
+  readonly droppedFiles: number | null;
+  readonly remainingUnknown: boolean;
+}
+
+export interface SourceContentReadCompletenessSnapshot {
+  readonly state: SourceCompletenessState;
+  readonly candidateFiles: number;
+  readonly readFiles: number;
+  readonly admittedFiles: number;
+  readonly droppedFiles: number;
+  readonly unreadableFiles: number;
+}
+
+export interface SourceCompletenessSnapshot {
+  readonly state: SourceCompletenessState;
+  readonly coverageState: SourceCoverageState;
+  readonly limit: number;
+  readonly total: number | null;
+  readonly examined: number;
+  readonly projected: number;
+  readonly dropped: number;
+  readonly truncated: boolean;
+  readonly remainingUnknown: boolean;
+  readonly enumeration: SourceEnumerationCompletenessSnapshot;
+  readonly contentRead: SourceContentReadCompletenessSnapshot;
+}
+
 export interface SourceSummarySnapshot {
   readonly schemaVersion: string;
   readonly state: 'AVAILABLE' | 'EMPTY' | 'STALE' | 'UNAVAILABLE' | 'UNKNOWN';
@@ -143,6 +178,7 @@ export interface SourceSummarySnapshot {
     readonly stageStatusCounts: readonly { readonly stage: string; readonly status: string; readonly count: number }[];
     readonly proofFamilies: readonly { readonly family: string; readonly assessment: string; readonly rank: number; readonly gapSurfaceCount: number; readonly firstBlockerCount: number; readonly potentiallyUnlockableCount: number; readonly proofCompleteness: string; readonly dependencyFanOut: number; readonly bugHuntingValue: string }[];
   } | null;
+  readonly completeness: SourceCompletenessSnapshot;
 }
 
 export type RunEnvironment = 'LOCAL_SYNTHETIC' | 'LOCAL' | 'DEV_RECORDED' | 'NEXT_RECORDED' | 'UNKNOWN';

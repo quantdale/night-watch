@@ -2136,7 +2136,7 @@ The approved six-repository scan inspected 1,732 bounded files, read 1,092,
 admitted 1,078, rejected 654, and inspected 12,449,877 bytes at exact current
 source identities. It discovered 128 operations, proved 127 routes and 127
 request contracts, and used strict PHP direct-return analyzers to raise
-response contracts from 25 to 62 and semantic contract observations from 25
+response contracts — `responseContracts` = surfaces with `responseProof === 'PROVEN'` at `src/core/source/eligibilityCensus.ts:728` and `src/core/source/surfaces.ts`, measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3; see D-105 for whole-population 58 of 223 under C-01 — from 25 to 62 and semantic contract observations from 25
 to 138. Lifecycle coverage moved from 103 `DISCOVERED` to 66, with 59
 `MECHANICALLY_PROVEN` and the same three `PROJECTABLE` surfaces. Phase 24
 eligibility stayed at 3/128; the 125 exclusions remain explicit rather than
@@ -2192,7 +2192,7 @@ execution remain excluded. The graph, cache, invalidation, review, lifecycle,
 semantic materialization, and Phase 24 seams are additive integrations of the
 existing authorities.
 
-The lexical hardening raised current-source response contracts from 62 to 83
+The lexical hardening raised current-source response contracts — `responseContracts` = surfaces with `responseProof === 'PROVEN'`, measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 — from 62 to 83
 and semantic observations from 138 to 175. Current-source operations/routes,
 joins, mutation/read-only counts, and Phase 24 eligibility remained unchanged
 at 128 / 127 / 118 proven + 10 rejected / 47 + 5 / 3 eligible + 125
@@ -2231,7 +2231,7 @@ debug surface was created.
 
 The current approved-source census is 1,732 files considered / 1,092 read /
 1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations, 127
-route proofs, 127 request contracts, 83 response contracts, 175 semantic
+route proofs, 127 request contracts, 83 response contracts, 175 semantic — historical measurement over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —
 observations, 118 proven and 10 rejected joins, lifecycle 45/80/3, and Phase
 24 at 3 eligible / 125 excluded. Response flow attempted 13, proved 0,
 rejected 13, and resolved 0 current calls. The taxonomy reports 45 proof-gap
@@ -2254,7 +2254,7 @@ preselected Phase 29.
 The fresh census of all six approved repositories exactly reproduced the Phase
 28 source snapshot and structural metrics: 1,732 files considered / 1,092
 read / 1,078 admitted / 654 rejected / 12,449,877 bytes; 128 operations / 127
-route proofs / 127 request contracts / 83 response contracts / 175 semantic
+route proofs / 127 request contracts / 83 response contracts / 175 semantic — historical over pre-C-01 128 cap at analyzer v3; see D-105 —
 observations / 118 proven joins / 10 rejected joins; lifecycle 45/80/3; Phase
 24 3 eligible / 125 excluded; and response flow 13 attempts / 0 proven / 13
 rejected / 0 resolved. No new producer-flow family or other excluded family
@@ -2322,7 +2322,7 @@ selector was admitted.
 
 The terminal six-repository inventory remains 1,732 files considered / 1,092
 read / 1,078 admitted / 654 rejected / 12,449,877 bytes, with 128 operations,
-127 routes, 127 request contracts, 83 response contracts, 175 semantic
+127 routes, 127 request contracts, 83 response contracts, 175 semantic — historical over pre-C-01 128 cap at analyzer v3 (checkpoint `1525951a0d65ed1a59b8678c03a886f433600d09`); see D-105 —
 observations, 118 proven joins / 10 rejected joins, 47 mutation-capable
 operations, 5 independently proven read-only operations, lifecycle 45/80/3,
 and Phase 24 at 3 eligible / 125 excluded. The additive eligibility census
@@ -2369,7 +2369,7 @@ snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`. It measures all twelve
 ordered proof-chain stages, first and secondary blockers, source currentness,
 repository/language distribution, unsupported constructs, runtime/replay/
 dossier compatibility, and bounded structural cost. The result is 128
-operations; 127 route proofs; 127 request contracts; 83 response contracts;
+operations; 127 route proofs; 127 request contracts; 83 response contracts; — historical over pre-C-01 128 cap at analyzer v3 (checkpoint `74f28356fd615eb51b4842f40a49ed6fc269c68f`); see D-105 —
 83 semantic-contract surfaces / 175 observations; 47 mutation-capable; 5
 proven read-only; 118 proven / 10 rejected joins; 5 exact runtime bindings /
 123 source-only; 5 replay-proven / 123 unproven; 128 dossier-compatible; and
@@ -2414,10 +2414,10 @@ The response analyzer identity is v4. No new selector, proof family, or
 promotion authority was added.
 
 At implementation checkpoint
-`15fe2c108d6b044f4e0b3a99d2b83e7feb81c157`, the fresh approved-source result
+`15fe2c108d6b044f4e0b3a99d2b83e7feb81c157` (analyzer v4 post-hardening, commit `15fe2c1`; prior `83` was same metric `responseContracts` = surfaces with `responseProof === 'PROVEN'` at analyzer v3 pre-hardening), the fresh approved-source result — measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`; 43+9+76=128 is the cap, not whole population), discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad` —
 is 128 operations, 127 routes, 127 request contracts, 43 response-contract
 surfaces, 53 semantic observations, 118 proven / 10 rejected joins, and
-Phase 24 at 3 eligible / 125 excluded. The eligibility digest is
+Phase 24 at 3 eligible / 125 excluded — historical capped measurement, not whole-population truth. The first honest whole-population measurement under C-01 at the same snapshot is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see D-105. The eligibility digest is
 `source-eligibility-census:sha256:2f97b732e0472df347f695a1`; the read-only
 candidate census remains investigation-only at
 `source-readonly-candidate-census:sha256:c54347c14d4d1e5f95f18660`. The exact
@@ -2727,7 +2727,7 @@ operations come from `mobingilabs/ripple-api` alone via `Routing.yaml`;
 keys; `alphauslabs/blueapi` is approved but unreadable because `.proto` is not
 a scanned extension, hiding 599 HTTP-annotated RPCs; and `PROVEN_READ_ONLY`
 resolves to membership in an 11-row hand-written catalog, which is why only
-5 of 128 operations and 3 surfaces qualify.
+5 of 128 operations and 3 surfaces qualify — `128` is the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`), not the real population of `223` under C-01; see D-105 —.
 
 Every campaign in the master plan remains `NOT_AUTHORIZED` until it receives
 its own explicit one-shot owner authorization. Production remains unrunnable:

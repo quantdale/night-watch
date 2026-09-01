@@ -165,4 +165,107 @@ test.describe('Control Center authority integration', () => {
     expect(summary.currentness).toEqual([{ key: 'SOURCE_STALE', count: 1 }]);
     expect(summary.gapReasons).toContain('SOURCE_STALE');
   });
+
+  test('authority integration surfaces truncated completeness with exact dropped count via collector', async () => {
+    const base = sourceSnapshot();
+    const inventoryCompleteness = {
+      schemaVersion: 'nightwatch.source-inventory-completeness.v1' as const,
+      state: 'COMPLETE' as const,
+      enumeration: {
+        state: 'COMPLETE' as const,
+        limit: 1000,
+        byteLimit: 10_000_000,
+        examinedFiles: 10,
+        totalFiles: 10,
+        droppedFiles: 0,
+        remainingUnknown: false,
+        truncationReason: null,
+      },
+      contentRead: {
+        state: 'COMPLETE' as const,
+        fileByteLimit: 1_000_000,
+        totalByteLimit: 10_000_000,
+        candidateFiles: 10,
+        readFiles: 10,
+        admittedFiles: 10,
+        bytesRead: 50000,
+        droppedFiles: 0,
+        unreadableFiles: 0,
+        policyExcludedFiles: 0,
+      },
+      repositories: [],
+    } as unknown as import('../../src/core/source/scanTypes').SourceInventoryCompleteness;
+    const operationCompleteness = {
+      schemaVersion: 'nightwatch.source-operation-projection-completeness.v1' as const,
+      state: 'TRUNCATED' as const,
+      limit: 2,
+      examinedOperations: 5,
+      totalOperations: 5,
+      projectedOperations: 2,
+      droppedOperations: 3,
+      truncated: true,
+      remainingUnknown: false,
+      enumerationCompleteness: 'COMPLETE' as const,
+      contentReadCompleteness: 'COMPLETE' as const,
+      coverageState: 'TRUNCATED' as const,
+      repositories: [{ repository: 'approved/repo-a', examinedOperations: 5, projectedOperations: 2, droppedOperations: 3 }],
+    } as unknown as import('../../src/core/source/surfaceTypes').SourceOperationProjectionCompleteness;
+    const truncatedDiscovery = {
+      ...(base.discovery as unknown as Record<string, unknown>),
+      inventory: {
+        repositories: [{ repoId: 'approved/repo-a', status: 'CURRENT' }],
+        completeness: inventoryCompleteness,
+        snapshotDigest: 'srcsnapshot:sha256:' + '9'.repeat(24),
+      },
+      operationCompleteness,
+      surfaces: base.discovery!.surfaces,
+    } as unknown as SourceSurfaceDiscovery;
+    const truncatedSnapshot: SourceAuthoritySnapshot = {
+      ...base,
+      discovery: truncatedDiscovery,
+      generation: 'cc-source-generation:sha256:' + '5'.repeat(24),
+    };
+    const sourceAuthority = createSourceAuthorityForTests(truncatedSnapshot);
+    const campaignAuthority = createCampaignAuthority({ sourceAuthority });
+    const collector = createDefaultControlCenterCollector({ sourceAuthority, campaignAuthority, sourceSnapshotTtlMs: 10_000 });
+    const summary = await collector.sourceSummary();
+    expect(summary.completeness.state).toBe('TRUNCATED');
+    expect(summary.completeness.dropped).toBe(3);
+    expect(summary.completeness.coverageState).toBe('TRUNCATED');
+    expect(summary.completeness.total).toBe(5);
+    expect(summary.completeness.enumeration.state).toBe('COMPLETE');
+    expect(summary.completeness.contentRead.state).toBe('COMPLETE');
+    expect(summary.completeness.enumeration.totalFiles).toBe(10);
+    expect(summary.state).toBe('AVAILABLE');
+    expect(JSON.stringify(summary.completeness)).not.toContain('SENTINEL');
+  });
+
+  test('authority integration fallback surfaces UNKNOWN/UNMEASURED with total null when discovery unavailable', async () => {
+    const unavailable: SourceAuthoritySnapshot = {
+      schemaVersion: 'nightwatch.control-center-source-authority.v1',
+      state: 'UNKNOWN',
+      inventoryDigest: null,
+      repositoryCount: 0,
+      repositoryStatuses: [],
+      discovery: null,
+      phase24: null,
+      generation: null,
+      reasonCodes: ['SOURCE_DISCOVERY_UNAVAILABLE'],
+    };
+    const sourceAuthority = createSourceAuthorityForTests(unavailable);
+    const campaignAuthority = createCampaignAuthority({ sourceAuthority });
+    const collector = createDefaultControlCenterCollector({ sourceAuthority, campaignAuthority, sourceSnapshotTtlMs: 10_000 });
+    const summary = await collector.sourceSummary();
+    expect(summary.completeness.state).toBe('UNKNOWN');
+    expect(summary.completeness.coverageState).toBe('UNMEASURED');
+    expect(summary.completeness.total).toBeNull();
+    expect(summary.completeness.enumeration.totalFiles).toBeNull();
+    expect(summary.completeness.enumeration.droppedFiles).toBeNull();
+    expect(summary.completeness.enumeration.remainingUnknown).toBe(true);
+    expect(summary.completeness.remainingUnknown).toBe(true);
+    const direct = projectSourceSummary([], {});
+    expect(direct.completeness.state).toBe('UNKNOWN');
+    expect(direct.completeness.coverageState).toBe('UNMEASURED');
+    expect(direct.completeness.total).toBeNull();
+  });
 });

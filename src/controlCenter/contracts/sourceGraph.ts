@@ -11,7 +11,7 @@ import type {
 import { CONTROL_CENTER_CONTRACT_NAMESPACE } from './common';
 import { REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION } from '../../core/source/eligibilityCensus';
 
-export const CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-summary.v2` as const;
+export const CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-summary.v3` as const;
 export const CONTROL_CENTER_SOURCE_SURFACES_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-surfaces.v1` as const;
 export const CONTROL_CENTER_SOURCE_GRAPH_SCHEMA_VERSION = `${CONTROL_CENTER_CONTRACT_NAMESPACE}.source-graph.v1` as const;
 export const CONTROL_CENTER_SOURCE_PROOF_CHAIN_SCHEMA_VERSION = REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION;
@@ -43,6 +43,41 @@ export type ControlCenterSourceRuntimeBinding =
   | 'STALE_BINDING'
   | 'SOURCE_VERSION_MISMATCH';
 export type ControlCenterSourceCapability = 'SUPPORTED' | 'UNSUPPORTED' | 'UNPROVEN';
+
+export type ControlCenterSourceCompletenessState = 'COMPLETE' | 'TRUNCATED' | 'UNKNOWN';
+export type ControlCenterSourceCoverageState = 'PROVEN' | 'UNPROVEN' | 'UNSUPPORTED' | 'TRUNCATED' | 'STALE' | 'UNKNOWN' | 'UNMEASURED';
+
+export interface ControlCenterSourceEnumerationCompletenessDto {
+  readonly state: ControlCenterSourceCompletenessState;
+  readonly limit: number;
+  readonly examinedFiles: number;
+  readonly totalFiles: number | null;
+  readonly droppedFiles: number | null;
+  readonly remainingUnknown: boolean;
+}
+
+export interface ControlCenterSourceContentReadCompletenessDto {
+  readonly state: ControlCenterSourceCompletenessState;
+  readonly candidateFiles: number;
+  readonly readFiles: number;
+  readonly admittedFiles: number;
+  readonly droppedFiles: number;
+  readonly unreadableFiles: number;
+}
+
+export interface ControlCenterSourceCompletenessDto {
+  readonly state: ControlCenterSourceCompletenessState;
+  readonly coverageState: ControlCenterSourceCoverageState;
+  readonly limit: number;
+  readonly total: number | null;
+  readonly examined: number;
+  readonly projected: number;
+  readonly dropped: number;
+  readonly truncated: boolean;
+  readonly remainingUnknown: boolean;
+  readonly enumeration: ControlCenterSourceEnumerationCompletenessDto;
+  readonly contentRead: ControlCenterSourceContentReadCompletenessDto;
+}
 
 export interface ControlCenterSourceRollupDto {
   readonly key: SafeControlCenterCode;
@@ -99,6 +134,7 @@ export interface ControlCenterSourceSummaryDto {
   readonly capabilities: readonly ControlCenterSourceRollupDto[];
   readonly gapReasons: readonly SafeControlCenterCode[];
   readonly proofChain: ControlCenterSourceProofChainDto | null;
+  readonly completeness: ControlCenterSourceCompletenessDto;
 }
 
 export interface ControlCenterSourceSurfaceDto {

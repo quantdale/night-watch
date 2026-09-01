@@ -48,15 +48,25 @@ import {
   type SourceDiagnosticRejectionFamily,
   type SourceProofGapCount,
   type SourceSurfacePerformanceMetrics,
+  type SourceOperationProjectionCompleteness,
+  type SourceOperationRepositoryCompleteness,
+  type SourceOperationCompletenessState,
+  REAL_SOURCE_OPERATION_COMPLETENESS_VERSION,
   REAL_SOURCE_SURFACE_PERFORMANCE_VERSION,
 } from './surfaceTypes';
+import { coverageStateForCompleteness, isComplete, worstCompleteness, type SourceCompletenessState } from './completeness';
 
 const SAFE_HANDLER_RE = /^[A-Za-z_][A-Za-z0-9_$\\.-]{0,159}$/;
 const SAFE_REFERENCE_RE = /^src\/[A-Za-z0-9._/-]{1,239}\.(?:php|json|ya?ml|tsx?|jsx?|go)$/i;
 const SAFE_ROUTE_RE = /^\/[A-Za-z0-9._~{}:-]{0,239}(?:\/[A-Za-z0-9._~{}:-]{0,239})*$/;
 const SAFE_OPERATION_RE = /^[A-Za-z][A-Za-z0-9_.:/-]{0,199}$/;
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
-const MAX_DISCOVERED_OPERATIONS = 128;
+/** Bounded projection ceiling. It is a memory/CPU guard, not a coverage
+ * policy: it is aligned with the upstream file-scan ceiling
+ * (MAX_SIBLING_SOURCE_SCAN_FILES) so that a fully enumerated snapshot
+ * projects every parsed operation, and any drop is reported explicitly
+ * through SourceOperationProjectionCompleteness. */
+export const MAX_PROJECTED_OPERATIONS = 4096;
 const ROUTE_FILE_RE = /(?:Routing\.ya?ml|routes?\.(?:json|ya?ml)|openapi\.json|swagger\.json)$/i;
 const SOURCE_VERSION = 'nightwatch.real-source-surface-descriptor.v3';
 
@@ -69,6 +79,7 @@ export interface SourceSurfaceDiscovery {
   readonly gapTaxonomy: SourceGapTaxonomy;
   readonly performance: SourceSurfacePerformanceMetrics;
   readonly deterministicDigest: string;
+  readonly operationCompleteness: SourceOperationProjectionCompleteness;
 }
 
 export interface SourcePhase24Integration {
@@ -830,13 +841,35 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     parsedKeys.set(key, (parsedKeys.get(key) ?? 0) + 1);
   }
   parsedRoutes.sort((left, right) => left.file.repoId.localeCompare(right.file.repoId) || left.file.relativePath.localeCompare(right.file.relativePath) || left.route.method.localeCompare(right.route.method) || left.route.routeTemplate.localeCompare(right.route.routeTemplate) || (left.route.handlerSymbol ?? '').localeCompare(right.route.handlerSymbol ?? ''));
-  const duplicateOrdinals = new Map<string, number>();
+  // Bounded projection with per-repository fairness. Projection order is not
+  // the eviction order: the budget is dealt round-robin across repositories in
+  // deterministic repoId order, so an earlier-sorting repository can never
+  // consume the whole budget and silently evict another repository's
+  // operations. Anything actually dropped is reported per repository.
+  const entriesByRepository = new Map<string, typeof parsedRoutes>();
   for (const entry of parsedRoutes) {
-    if (operations.length >= MAX_DISCOVERED_OPERATIONS) {
-      routeOperationsTruncated += 1;
-      continue;
+    const existing = entriesByRepository.get(entry.file.repoId);
+    if (existing === undefined) entriesByRepository.set(entry.file.repoId, [entry]);
+    else existing.push(entry);
+  }
+  const projectionRepositories = [...entriesByRepository.keys()].sort((left, right) => left.localeCompare(right));
+  const projectedEntries: typeof parsedRoutes = [];
+  const maxRepositoryEntries = projectionRepositories.reduce((maximum, repoId) => Math.max(maximum, entriesByRepository.get(repoId)?.length ?? 0), 0);
+  for (let round = 0; round < maxRepositoryEntries && projectedEntries.length < MAX_PROJECTED_OPERATIONS; round += 1) {
+    for (const repoId of projectionRepositories) {
+      if (projectedEntries.length >= MAX_PROJECTED_OPERATIONS) break;
+      const entry = entriesByRepository.get(repoId)?.[round];
+      if (entry === undefined) continue;
+      projectedEntries.push(entry);
     }
+  }
+  projectedEntries.sort((left, right) => left.file.repoId.localeCompare(right.file.repoId) || left.file.relativePath.localeCompare(right.file.relativePath) || left.route.method.localeCompare(right.route.method) || left.route.routeTemplate.localeCompare(right.route.routeTemplate) || (left.route.handlerSymbol ?? '').localeCompare(right.route.handlerSymbol ?? ''));
+  routeOperationsTruncated = parsedRoutes.length - projectedEntries.length;
+  const projectedByRepository = new Map<string, number>();
+  const duplicateOrdinals = new Map<string, number>();
+  for (const entry of projectedEntries) {
     const { file, route } = entry;
+    projectedByRepository.set(file.repoId, (projectedByRepository.get(file.repoId) ?? 0) + 1);
     const duplicateKey = `${file.repoId}:${route.method}:${route.routeTemplate}`;
     const duplicate = (parsedKeys.get(duplicateKey) ?? 0) > 1;
     const withDuplicate: ParsedRoute = duplicate ? { ...route, routeProof: 'AMBIGUOUS', routeRejectionReason: 'ROUTE_AMBIGUOUS' } : route;
@@ -847,6 +880,35 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     operations.push(operation);
     if (operation.handlerPath !== null) analyzerInvocations += 1;
   }
+  // Enumeration truncation and content-read exhaustion are kept apart all the
+  // way through: either makes the true operation total unknowable, but they
+  // are different facts about the snapshot and are reported as such.
+  const enumerationCompleteness = inventory.completeness.enumeration.state;
+  const contentReadCompleteness = inventory.completeness.contentRead.state;
+  const remainingUnknown = !isComplete(enumerationCompleteness) || !isComplete(contentReadCompleteness);
+  // Own drops are countable (TRUNCATED); an upstream bound is not (UNKNOWN).
+  const projectionState: SourceCompletenessState = routeOperationsTruncated > 0 ? 'TRUNCATED' : 'COMPLETE';
+  const completenessState: SourceOperationCompletenessState = worstCompleteness(projectionState, remainingUnknown ? 'UNKNOWN' : 'COMPLETE');
+  const completenessRepositories: readonly SourceOperationRepositoryCompleteness[] = projectionRepositories.map((repository) => {
+    const examinedOperations = entriesByRepository.get(repository)?.length ?? 0;
+    const projected = projectedByRepository.get(repository) ?? 0;
+    return { repository, examinedOperations, projectedOperations: projected, droppedOperations: examinedOperations - projected };
+  });
+  const operationCompleteness: SourceOperationProjectionCompleteness = {
+    schemaVersion: REAL_SOURCE_OPERATION_COMPLETENESS_VERSION,
+    state: completenessState,
+    limit: MAX_PROJECTED_OPERATIONS,
+    examinedOperations: parsedRoutes.length,
+    totalOperations: remainingUnknown ? null : parsedRoutes.length,
+    projectedOperations: operations.length,
+    droppedOperations: routeOperationsTruncated,
+    truncated: routeOperationsTruncated > 0,
+    remainingUnknown,
+    enumerationCompleteness,
+    contentReadCompleteness,
+    coverageState: coverageStateForCompleteness(completenessState),
+    repositories: completenessRepositories,
+  };
   operations.sort((left, right) => left.repository.localeCompare(right.repository) || left.sourcePath.localeCompare(right.sourcePath) || left.method.localeCompare(right.method) || left.routeTemplate.localeCompare(right.routeTemplate) || left.operationId.localeCompare(right.operationId));
   const surfaces: RealSourceSurfaceDescriptor[] = [];
   let responseFlowResolveElapsedMs = 0;
@@ -915,11 +977,11 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     maxTokens: responseFlowIndex.metrics.maxTokens,
     maxSourceBytes: responseFlowIndex.metrics.maxSourceBytes,
   };
-  const core = { inventoryDigest: inventory.snapshotDigest, operations, surfaces, counters, gapTaxonomyDigest: gapTaxonomy.deterministicDigest };
+  const core = { inventoryDigest: inventory.snapshotDigest, operations, surfaces, counters, gapTaxonomyDigest: gapTaxonomy.deterministicDigest, operationCompleteness };
   // Timings are advisory operator instrumentation, not deterministic source
   // evidence. Keep the profile available to explicit CLI projections while
   // excluding it from object serialization, caches, and equality contracts.
-  const discovery: SourceSurfaceDiscovery = { inventory, operations, surfaces, phase24Inputs, counters, gapTaxonomy, performance, deterministicDigest: safeSemanticDigest(core, 'source-surface-discovery') };
+  const discovery: SourceSurfaceDiscovery = { inventory, operations, surfaces, phase24Inputs, counters, gapTaxonomy, performance, operationCompleteness, deterministicDigest: safeSemanticDigest(core, 'source-surface-discovery') };
   Object.defineProperty(discovery, 'performance', { value: performance, enumerable: false, writable: false, configurable: false });
   if (cacheKey !== null) input.cache?.put(cacheKey, discovery);
   return discovery;

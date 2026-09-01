@@ -1678,7 +1678,7 @@ the historical Phase 20/21 analyzer profile remains byte-compatible. Safe
 diagnostics contain only analyzer IDs, proof status, bounded behavior/reason
 codes, and evidence digests; source text and literal private values never
 cross the source boundary. Phase 24 remains the sole eligibility and portfolio
-authority: Phase 26 raised response contracts from 25 to 62 and advanced the
+authority: Phase 26 raised response contracts from 25 to 62 — both `responseContracts` = surfaces with `responseProof === 'PROVEN'` at `src/core/source/eligibilityCensus.ts:728` and `src/core/source/surfaces.ts`, measured over the pre-C-01 silently capped 128-operation projection (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (pre-lexical-hardening, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 — and advanced the
 current approved lifecycle from 103 `DISCOVERED` to 66, while retaining the
 three existing `PROJECTABLE` surfaces.
 
@@ -1714,7 +1714,7 @@ dynamic includes, and opaque resource/DTO behavior remain exclusions.
 The bounded PHP lexer hardening treats oversized quoted values as opaque scalar
 strings without retaining their contents, while oversized structural keys still
 fail closed. This preserves the existing response/semantic vocabulary and
-recovered 21 response contracts and 37 semantic observations in the current
+recovered 21 response contracts and 37 semantic observations — both `responseContracts` = surfaces with `responseProof === 'PROVEN'`, measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (lexical hardening, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 — in the current
 approved source. The exact flow layer attempted 13 current patterns and
 proved none because the current route set contains no exact safe helper,
 resource, or DTO boundary; no coverage was manufactured.
@@ -1764,7 +1764,7 @@ structural metrics.
 
 The current source result remains 128 operations, 83 response contracts, 175
 semantic observations, 13 flow attempts with 0 proven, 3 Phase 24 eligible
-surfaces, and 125 excluded. Phase 24 remains the sole candidate authority;
+surfaces, and 125 excluded — historical measurement over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (pre-hardening, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —. Phase 24 remains the sole candidate authority;
 response proof does not establish mutation safety, read-only behavior,
 deployment equivalence, authentication correctness, runtime identity, or DEV
 readiness.
@@ -1824,7 +1824,7 @@ unsupported, ambiguous, truncated, and over-budget analysis remains
 The current snapshot measures 128 operations, 83 response-contract surfaces,
 83 semantic-contract surfaces / 175 observations, 5 exact runtime bindings,
 5 replay-proven surfaces, 128 dossier-compatible candidates, and 3 Phase-24
-eligible / 125 excluded. The response, semantic, runtime, join, and bridge
+eligible / 125 excluded — historical measurement over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`) at analyzer v3 (snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`); see D-105 for whole-population 58 of 223 under C-01 —. The response, semantic, runtime, join, and bridge
 families did not clear the admission bar, so the architecture outcome is
 reusable observability with zero coverage unlock.
 
@@ -1860,7 +1860,7 @@ source-version condition.
 The current approved-source result remains 128 operations, 127 route proofs,
 127 request contracts, 43 response-contract surfaces, 53 semantic
 observations, 118 proven / 10 rejected joins, and Phase 24 at 3 eligible /
-125 excluded. The fresh eligibility and read-only candidate projections are
+125 excluded — this `43` is `responseContracts` = surfaces with `responseProof === 'PROVEN'` at analyzer v4 (post-hardening, commit `15fe2c1`, discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`) measured over the pre-C-01 128-operation projection cap (`MAX_DISCOVERED_OPERATIONS = 128`; 43+9+76=128 is the cap, not the real population), not whole-population truth. The first honest whole-population measurement under C-01 (`MAX_PROJECTED_OPERATIONS = 4096`) at the same snapshot is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see D-105. The fresh eligibility and read-only candidate projections are
 source-bound and investigation-only; no new proof family or promotion
 authority was added. The owner freeze, raw-source privacy boundary,
 non-executing scanners, deterministic identities, and existing Phase-24

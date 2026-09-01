@@ -60,7 +60,7 @@ test.describe('Control Center versioned contracts', () => {
     for (const version of versions.filter((value) => value !== CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION)) {
       expect(version).toMatch(/^nightwatch\.control-center\.[a-z0-9-]+\.v1$/);
     }
-    expect(CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION).toBe('nightwatch.control-center.source-summary.v2');
+    expect(CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION).toBe('nightwatch.control-center.source-summary.v3');
   });
 
   test('rejects path-shaped, encoded, absolute, oversized, and sensitive IDs', () => {

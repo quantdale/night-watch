@@ -4,6 +4,8 @@ import type {
   SourceEvidenceJoin,
 } from '../../core/source/surfaceTypes';
 import type { SourceEligibilityCensus } from '../../core/source/eligibilityCensus';
+import type { SourceInventoryCompleteness } from '../../core/source/scanTypes';
+import type { SourceOperationProjectionCompleteness } from '../../core/source/surfaceTypes';
 import {
   asSafeControlCenterCode,
   asSafeControlCenterDigest,
@@ -16,6 +18,8 @@ import {
 } from '../contracts/common';
 import type {
   ControlCenterSourceCapability,
+  ControlCenterSourceCompletenessDto,
+  ControlCenterSourceCoverageState,
   ControlCenterSourceCurrentness,
   ControlCenterSourceGraphDto,
   ControlCenterSourceGraphEdgeDto,
@@ -25,6 +29,7 @@ import type {
   ControlCenterSourceProofChainDto,
   ControlCenterSourceProofChainFamilyDto,
   ControlCenterSourceProofChainStageCountDto,
+  ControlCenterSourceCompletenessState,
   ControlCenterSourceLifecycle,
   ControlCenterSourceSummaryDto,
   ControlCenterSourceSurfaceDto,
@@ -110,6 +115,8 @@ export interface SourceSummaryAuthorityInput {
   readonly repositoryCurrentness?: readonly ControlCenterSourceCurrentness[];
   readonly reasonCodes?: readonly string[];
   readonly proofChain?: SourceEligibilityCensus | null;
+  readonly operationCompleteness?: SourceOperationProjectionCompleteness | null;
+  readonly inventoryCompleteness?: SourceInventoryCompleteness | null;
 }
 
 function proofChainRollup(values: readonly { readonly code: string; readonly count: number }[]): readonly { readonly key: NonNullable<ReturnType<typeof asSafeControlCenterCode>>; readonly count: number }[] {
@@ -158,6 +165,88 @@ function proofChainDto(census: SourceEligibilityCensus | null | undefined): Cont
   };
 }
 
+
+function unavailableSourceCompleteness(): ControlCenterSourceCompletenessDto {
+  return {
+    state: 'UNKNOWN',
+    coverageState: 'UNMEASURED',
+    limit: 0,
+    total: null,
+    examined: 0,
+    projected: 0,
+    dropped: 0,
+    truncated: false,
+    remainingUnknown: true,
+    enumeration: {
+      state: 'UNKNOWN',
+      limit: 0,
+      examinedFiles: 0,
+      totalFiles: null,
+      droppedFiles: null,
+      remainingUnknown: true,
+    },
+    contentRead: {
+      state: 'UNKNOWN',
+      candidateFiles: 0,
+      readFiles: 0,
+      admittedFiles: 0,
+      droppedFiles: 0,
+      unreadableFiles: 0,
+    },
+  };
+}
+
+function sourceCompletenessDto(
+  operationCompleteness: SourceOperationProjectionCompleteness | null | undefined,
+  inventoryCompleteness: SourceInventoryCompleteness | null | undefined,
+): ControlCenterSourceCompletenessDto {
+  if (operationCompleteness === null || operationCompleteness === undefined || inventoryCompleteness === null || inventoryCompleteness === undefined) {
+    return unavailableSourceCompleteness();
+  }
+  const validStates: readonly ControlCenterSourceCompletenessState[] = ['COMPLETE', 'TRUNCATED', 'UNKNOWN'];
+  const state = validStates.includes(operationCompleteness.state as ControlCenterSourceCompletenessState)
+    ? (operationCompleteness.state as ControlCenterSourceCompletenessState)
+    : 'UNKNOWN';
+  const validCoverage: readonly ControlCenterSourceCoverageState[] = ['PROVEN', 'UNPROVEN', 'UNSUPPORTED', 'TRUNCATED', 'STALE', 'UNKNOWN', 'UNMEASURED'];
+  const rawCoverage = operationCompleteness.coverageState as ControlCenterSourceCoverageState;
+  const coverageState = validCoverage.includes(rawCoverage) ? rawCoverage : 'UNMEASURED';
+  const enumeration = inventoryCompleteness.enumeration;
+  const enumState = validStates.includes(enumeration.state as ControlCenterSourceCompletenessState)
+    ? (enumeration.state as ControlCenterSourceCompletenessState)
+    : 'UNKNOWN';
+  const contentRead = inventoryCompleteness.contentRead;
+  const contentState = validStates.includes(contentRead.state as ControlCenterSourceCompletenessState)
+    ? (contentRead.state as ControlCenterSourceCompletenessState)
+    : 'UNKNOWN';
+  return {
+    state,
+    coverageState,
+    limit: boundedCount(operationCompleteness.limit),
+    total: operationCompleteness.totalOperations === null ? null : boundedCount(operationCompleteness.totalOperations),
+    examined: boundedCount(operationCompleteness.examinedOperations),
+    projected: boundedCount(operationCompleteness.projectedOperations),
+    dropped: boundedCount(operationCompleteness.droppedOperations),
+    truncated: Boolean(operationCompleteness.truncated),
+    remainingUnknown: Boolean(operationCompleteness.remainingUnknown),
+    enumeration: {
+      state: enumState,
+      limit: boundedCount(enumeration.limit),
+      examinedFiles: boundedCount(enumeration.examinedFiles),
+      totalFiles: enumeration.totalFiles === null ? null : boundedCount(enumeration.totalFiles),
+      droppedFiles: enumeration.droppedFiles === null ? null : boundedCount(enumeration.droppedFiles),
+      remainingUnknown: Boolean(enumeration.remainingUnknown),
+    },
+    contentRead: {
+      state: contentState,
+      candidateFiles: boundedCount(contentRead.candidateFiles),
+      readFiles: boundedCount(contentRead.readFiles),
+      admittedFiles: boundedCount(contentRead.admittedFiles),
+      droppedFiles: boundedCount(contentRead.droppedFiles),
+      unreadableFiles: boundedCount(contentRead.unreadableFiles),
+    },
+  };
+}
+
 /** Project source descriptors without exposing source paths, symbols, or text. */
 export function projectSourceSurfaces(descriptors: readonly RealSourceSurfaceDescriptor[], repositoryFilter?: unknown, requestedLimit?: unknown): ControlCenterSourceSurfacesDto {
   const filter = typeof repositoryFilter === 'string' ? repositoryFilter : null;
@@ -202,6 +291,7 @@ export function projectSourceSummary(
     currentness: row.currentness,
     lifecycle: row.lifecycle,
   })));
+  const completeness = sourceCompletenessDto(authority.operationCompleteness, authority.inventoryCompleteness);
   return {
     schemaVersion: CONTROL_CENTER_SOURCE_SUMMARY_SCHEMA_VERSION,
     state,
@@ -214,6 +304,7 @@ export function projectSourceSummary(
     capabilities: rollup(capabilityValues),
     gapReasons,
     proofChain: proofChainDto(authority.proofChain),
+    completeness,
   };
 }
 

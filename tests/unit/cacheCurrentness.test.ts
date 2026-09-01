@@ -82,7 +82,8 @@ function baseInventory(snapshotDigest = `srcsnapshot:sha256:${'b'.repeat(64)}`, 
       bytesRead: 100,
       symlinkRejections: 0,
       pathRejections: 0,
-      budgetRejections: 0,
+      enumerationBudgetRejections: 0,
+      contentBudgetRejections: 0,
     },
   } as unknown as RealSourceSnapshotInventory;
 }

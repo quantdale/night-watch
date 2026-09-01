@@ -175,6 +175,8 @@ session (read-only, no network) at snapshot
 | lifecycle | 85 `DISCOVERED` / 40 `MECHANICALLY_PROVEN` / 3 `PROJECTABLE` |
 | response flow attempted / proven | 13 / **0** |
 
+> **Historical note (C-01 truncation truth).** The `43` above is `responseContracts` = surfaces with `surface.contract.responseProof === 'PROVEN'` (defined identically at `src/core/source/eligibilityCensus.ts:728` and in the discovery counters from `src/core/source/surfaces.ts`). It was measured at analyzer v4 (post-hardening, commit `15fe2c1`, snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad`, discovery `source-surface-discovery:sha256:906830010ed198639d3c7b91`) over the pre-C-01 silently capped 128-operation projection (`MAX_DISCOVERED_OPERATIONS = 128`; 43+9+76=128 is the cap, not the real population). The earlier `83` at the same snapshot was the same metric under analyzer v3 (pre-hardening, pre-C-01 cap). The first honest whole-population measurement under C-01 (`MAX_PROJECTED_OPERATIONS = 4096`, per-repository fair projection) is `58` of `223` (`routeOperationsFound: 223`, `routeOperationsTruncated: 0`, `responseContracts: 58`, `requestContracts: 222`, `routeProofs: 222`, `semanticContracts: 90`, `joinsAttempted: 223`, `joinsProven: 207`, `source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see `docs/DECISIONS.md` D-105 for the single durable resolution.
+
 `PROVEN`. Repository attribution is the decisive fact:
 
 | Dimension | Distribution |
@@ -436,7 +438,7 @@ compatibility) but it dominates the repository's apparent complexity.
 
 | Claim | Location | Live reality |
 |---|---|---|
-| "83 response contracts / 175 semantic observations / lifecycle 45-80-3" | `docs/CURRENT_STATE.md:108,2302`; `docs/ARCHITECTURE.md:1765`; `docs/ROADMAP.md:2234,2257,2325,2372`; `docs/DECISIONS.md:3271` | **43 / 53 / 85-40-3.** The soundness repair (D-82) halved the proven counts; the newer figures exist at `CURRENT_STATE.md:2466`, `ARCHITECTURE.md:1861`, `ROADMAP.md:2419`, `DECISIONS.md:3399`, but the superseded ones were never retired and read as current. |
+| "83 response contracts / 175 semantic observations / lifecycle 45-80-3" | `docs/CURRENT_STATE.md:108,2302`; `docs/ARCHITECTURE.md:1765`; `docs/ROADMAP.md:2234,2257,2325,2372`; `docs/DECISIONS.md:3271` | **43 / 53 / 85-40-3** (both the `83` at analyzer v3 and the `43` at analyzer v4, commit `15fe2c1`, were measured over the pre-C-01 silently capped 128-operation projection `MAX_DISCOVERED_OPERATIONS = 128`; 43+9+76=128 is the cap). The soundness repair (D-82) halved the proven counts; the newer figures at `CURRENT_STATE.md:2466`, `ARCHITECTURE.md:1861`, `ROADMAP.md:2419`, `DECISIONS.md:3399` are also over the same 128 cap. The first honest whole-population measurement under C-01 is `58` of `223` at the same snapshot `srcsnapshot:sha256:04ff583971865f335902f5ad` (`source-surface-discovery:sha256:21de18a23a387d7b816db3c0`); see D-105. |
 | "128 operations" presented as a discovery result | all census narratives | 128 is the **cap**; 223 exist. |
 | "5 independently proven read-only operations" | census narratives | True, but the proof is catalog membership, not source analysis. |
 | Six-repository source universe implies six-repository coverage | `approvedScan.ts`, all census docs | One repository produces 100 % of operations. |

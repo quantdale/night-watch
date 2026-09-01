@@ -11,10 +11,11 @@ import { safeSemanticDigest } from '../semanticCoverage/types';
 import { buildPhase24CandidatePortfolio } from '../phase24/portfolio';
 import { sourceContentDigest } from './scanTypes';
 import type { SourceSurfaceDiscovery } from './surfaces';
+import { buildSourcePopulationCompleteness, type SourcePopulationCompleteness } from './populationCompleteness';
 import type { SiblingSourceAccess } from './siblingSource';
 import { findFunctionBody, tokenizePhp, type PhpToken } from '../../oracles/expectations/extract/php';
 
-export const REAL_SOURCE_READONLY_CANDIDATE_CENSUS_VERSION = 'nightwatch.real-source-readonly-candidate-census.v1' as const;
+export const REAL_SOURCE_READONLY_CANDIDATE_CENSUS_VERSION = 'nightwatch.real-source-readonly-candidate-census.v2' as const;
 export const MAX_READONLY_CANDIDATE_EXAMPLES = 16;
 export const MAX_READONLY_CANDIDATE_HANDLER_FILES = 128;
 export const MAX_READONLY_CANDIDATE_HANDLER_BYTES = 400_000;
@@ -57,6 +58,10 @@ export interface ReadOnlyCandidateCensus {
   readonly schemaVersion: typeof REAL_SOURCE_READONLY_CANDIDATE_CENSUS_VERSION;
   readonly sourceSnapshotDigest: string;
   readonly sourceSurfaceDigest: string;
+  /** Population truth for every count below. When this is not COMPLETE the
+   * family measurements are counts over an observed subset, not a census of
+   * the whole product surface. */
+  readonly population: SourcePopulationCompleteness;
   readonly familyMeasurements: readonly ReadOnlyCandidateFamilyMeasurement[];
   readonly handlerPopulation: number;
   readonly getPopulation: number;
@@ -359,6 +364,7 @@ export function buildReadOnlyCandidateCensus(input: { readonly access: SiblingSo
     schemaVersion: REAL_SOURCE_READONLY_CANDIDATE_CENSUS_VERSION,
     sourceSnapshotDigest: input.discovery.inventory.snapshotDigest,
     sourceSurfaceDigest: input.discovery.deterministicDigest,
+    population: buildSourcePopulationCompleteness({ operationCompleteness: input.discovery.operationCompleteness, inventoryCompleteness: input.discovery.inventory.completeness }),
     familyMeasurements,
     handlerPopulation: handlers.length,
     getPopulation: getSurfaces.length,

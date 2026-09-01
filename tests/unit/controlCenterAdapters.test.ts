@@ -432,4 +432,84 @@ test.describe('Control Center authoritative adapters', () => {
     expect(JSON.stringify(safe)).not.toContain('SENTINEL');
     expect(projectFindings({ dossiers: [], available: false }).state).toBe('UNAVAILABLE');
   });
+
+  test('source completeness surfaces truncated projection with exact dropped count', () => {
+    const inventoryCompleteness = {
+      schemaVersion: 'nightwatch.source-inventory-completeness.v1' as const,
+      state: 'COMPLETE' as const,
+      enumeration: {
+        state: 'COMPLETE' as const,
+        limit: 1000,
+        byteLimit: 10_000_000,
+        examinedFiles: 10,
+        totalFiles: 10,
+        droppedFiles: 0,
+        remainingUnknown: false,
+        truncationReason: null,
+      },
+      contentRead: {
+        state: 'COMPLETE' as const,
+        fileByteLimit: 1_000_000,
+        totalByteLimit: 10_000_000,
+        candidateFiles: 10,
+        readFiles: 10,
+        admittedFiles: 10,
+        bytesRead: 50000,
+        droppedFiles: 0,
+        unreadableFiles: 0,
+        policyExcludedFiles: 0,
+      },
+      repositories: [],
+    } as unknown as import('../../src/core/source/scanTypes').SourceInventoryCompleteness;
+    const operationCompleteness = {
+      schemaVersion: 'nightwatch.source-operation-projection-completeness.v1' as const,
+      state: 'TRUNCATED' as const,
+      limit: 2,
+      examinedOperations: 5,
+      totalOperations: 5,
+      projectedOperations: 2,
+      droppedOperations: 3,
+      truncated: true,
+      remainingUnknown: false,
+      enumerationCompleteness: 'COMPLETE' as const,
+      contentReadCompleteness: 'COMPLETE' as const,
+      coverageState: 'TRUNCATED' as const,
+      repositories: [{ repository: 'mobingilabs/ripple-api', examinedOperations: 5, projectedOperations: 2, droppedOperations: 3 }],
+    } as unknown as import('../../src/core/source/surfaceTypes').SourceOperationProjectionCompleteness;
+    const summary = projectSourceSummary([sourceSurface()], {
+      operationCompleteness,
+      inventoryCompleteness,
+    });
+    expect(summary.completeness.state).toBe('TRUNCATED');
+    expect(summary.completeness.coverageState).toBe('TRUNCATED');
+    expect(summary.completeness.limit).toBe(2);
+    expect(summary.completeness.examined).toBe(5);
+    expect(summary.completeness.projected).toBe(2);
+    expect(summary.completeness.dropped).toBe(3);
+    expect(summary.completeness.total).toBe(5);
+    expect(summary.completeness.truncated).toBe(true);
+    expect(summary.completeness.remainingUnknown).toBe(false);
+    expect(summary.completeness.enumeration.state).toBe('COMPLETE');
+    expect(summary.completeness.enumeration.examinedFiles).toBe(10);
+    expect(summary.completeness.enumeration.totalFiles).toBe(10);
+    expect(summary.completeness.enumeration.droppedFiles).toBe(0);
+    expect(summary.completeness.contentRead.state).toBe('COMPLETE');
+    expect(summary.completeness.contentRead.candidateFiles).toBe(10);
+    expect(summary.completeness.contentRead.droppedFiles).toBe(0);
+    expect(JSON.stringify(summary.completeness)).not.toContain('SENTINEL');
+  });
+
+  test('source completeness fallback surfaces UNKNOWN/UNMEASURED with total null', () => {
+    const summary = projectSourceSummary([], {});
+    expect(summary.completeness.state).toBe('UNKNOWN');
+    expect(summary.completeness.coverageState).toBe('UNMEASURED');
+    expect(summary.completeness.total).toBeNull();
+    expect(summary.completeness.enumeration.totalFiles).toBeNull();
+    expect(summary.completeness.enumeration.droppedFiles).toBeNull();
+    expect(summary.completeness.enumeration.state).toBe('UNKNOWN');
+    expect(summary.completeness.enumeration.remainingUnknown).toBe(true);
+    expect(summary.completeness.contentRead.state).toBe('UNKNOWN');
+    expect(summary.completeness.remainingUnknown).toBe(true);
+    expect(JSON.stringify(summary)).not.toContain('SENTINEL');
+  });
 });

@@ -71,7 +71,7 @@ const overview: OverviewSnapshot = {
     blockedOperationClasses: [],
   },
   source: {
-    schemaVersion: 'nightwatch.control-center.source-summary.v2',
+    schemaVersion: 'nightwatch.control-center.source-summary.v3',
     state: 'UNAVAILABLE',
     inventoryDigest: null,
     repositoryCount: 0,
@@ -82,6 +82,19 @@ const overview: OverviewSnapshot = {
     capabilities: [],
     gapReasons: ['SOURCE_REPOSITORY_UNAVAILABLE'],
     proofChain: null,
+    completeness: {
+      state: 'UNKNOWN',
+      coverageState: 'UNMEASURED',
+      limit: 0,
+      total: null,
+      examined: 0,
+      projected: 0,
+      dropped: 0,
+      truncated: false,
+      remainingUnknown: true,
+      enumeration: { state: 'UNKNOWN', limit: 0, examinedFiles: 0, totalFiles: null, droppedFiles: null, remainingUnknown: true },
+      contentRead: { state: 'UNKNOWN', candidateFiles: 0, readFiles: 0, admittedFiles: 0, droppedFiles: 0, unreadableFiles: 0 },
+    },
   },
 };
 
@@ -286,6 +299,19 @@ describe('Control Center UI shell', () => {
       repositoryCount: 1,
       surfaceCount: 1,
       currentness: [{ key: 'SOURCE_STALE', count: 1 }],
+      completeness: {
+        state: 'COMPLETE' as const,
+        coverageState: 'PROVEN' as const,
+        limit: 4096,
+        total: 1,
+        examined: 1,
+        projected: 1,
+        dropped: 0,
+        truncated: false,
+        remainingUnknown: false,
+        enumeration: { state: 'COMPLETE' as const, limit: 1000, examinedFiles: 10, totalFiles: 10, droppedFiles: 0, remainingUnknown: false },
+        contentRead: { state: 'COMPLETE' as const, candidateFiles: 10, readFiles: 10, admittedFiles: 10, droppedFiles: 0, unreadableFiles: 0 },
+      },
     };
     const sourceSurfaces = {
       schemaVersion: 'nightwatch.control-center.source-surfaces.v1',
@@ -331,6 +357,68 @@ describe('Control Center UI shell', () => {
     expect(screen.getByText('Request')).toBeInTheDocument();
     expect(screen.getByText('Bounded')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/source/graph?depth=2&surface=surface-01', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('visibly marks a truncated, enumeration-bounded source population', async () => {
+    const user = userEvent.setup();
+    const sourceSummary = {
+      ...overview.source,
+      state: 'AVAILABLE' as const,
+      repositoryCount: 2,
+      surfaceCount: 4096,
+      currentness: [{ key: 'CURRENT', count: 4096 }],
+      completeness: {
+        // Projection dropped a known 104, and the file walk was bounded, so
+        // the true total is not knowable at all.
+        state: 'UNKNOWN' as const,
+        coverageState: 'UNKNOWN' as const,
+        limit: 4096,
+        total: null,
+        examined: 4200,
+        projected: 4096,
+        dropped: 104,
+        truncated: true,
+        remainingUnknown: true,
+        enumeration: { state: 'TRUNCATED' as const, limit: 512, examinedFiles: 512, totalFiles: null, droppedFiles: null, remainingUnknown: true },
+        contentRead: { state: 'COMPLETE' as const, candidateFiles: 512, readFiles: 512, admittedFiles: 512, droppedFiles: 0, unreadableFiles: 0 },
+      },
+    };
+    const responses: Record<string, unknown> = {
+      [CONTROL_CENTER_API_PATHS.health]: overview.health,
+      [CONTROL_CENTER_API_PATHS.meta]: overview.meta,
+      [CONTROL_CENTER_API_PATHS.readiness]: overview.readiness,
+      [CONTROL_CENTER_API_PATHS.safety]: overview.safety,
+      [CONTROL_CENTER_API_PATHS.sourceSummary]: sourceSummary,
+      '/api/v1/source/surfaces?limit=50': {
+        schemaVersion: 'nightwatch.control-center.source-surfaces.v1',
+        items: [],
+        page: { limit: 50, nextCursor: null, truncated: true },
+        repositoryFilter: null,
+      },
+    };
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => Promise.resolve(responseFor(responses[String(input)]))));
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Know the posture before the next run.' });
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Source Intelligence' }));
+    expect(await screen.findByRole('heading', { name: 'Follow proof, currentness, and capability.' })).toBeVisible();
+
+    // The population panel exists and separates the two upstream dimensions.
+    expect(screen.getByText('POPULATION COMPLETENESS')).toBeVisible();
+    expect(screen.getByText('ENUMERATION')).toBeVisible();
+    expect(screen.getByText('CONTENT READ')).toBeVisible();
+
+    // The truncated population is never presentable as a complete one: the
+    // total is explicitly unknown and the dropped count is shown.
+    expect(screen.getByText('4096, total unknown')).toBeVisible();
+    expect(screen.getByText('total unknown')).toBeVisible();
+    expect(screen.getByText('104')).toBeVisible();
+    expect(screen.getAllByText('Truncated').length).toBeGreaterThan(0);
+
+    // Warning tone, not the neutral/ready tone a complete population gets.
+    const warned = (label: string): boolean => screen.getAllByText(label).some((node) => /warning/.test(node.className) || /warning/.test(node.parentElement?.className ?? ''));
+    expect(warned('Unknown')).toBe(true);
+    expect(warned('Truncated')).toBe(true);
+    expect(warned('Yes')).toBe(true);
   });
 
   it('renders sanitized finding metadata without raw dossier fields', async () => {

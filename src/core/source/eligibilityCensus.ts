@@ -10,6 +10,7 @@ import { safeSemanticDigest } from '../semanticCoverage/types';
 import type { Phase24CandidatePortfolio, Phase24ReasonCode } from '../phase24/types';
 import type { SourceSurfaceDiscovery } from './surfaces';
 import type { SourceScanLanguage } from './scanTypes';
+import { buildSourcePopulationCompleteness, type SourcePopulationCompleteness } from './populationCompleteness';
 import type {
   RealSourceSurfaceDescriptor,
   SourceJoinState,
@@ -19,7 +20,7 @@ import type {
   SourceSurfaceReplayCapability,
 } from './surfaceTypes';
 
-export const REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION = 'nightwatch.real-source-eligibility-census.v2' as const;
+export const REAL_SOURCE_ELIGIBILITY_CENSUS_VERSION = 'nightwatch.real-source-eligibility-census.v3' as const;
 
 export const SOURCE_ELIGIBILITY_STAGE_NAMES = [
   'SOURCE_DISCOVERED',
@@ -171,6 +172,13 @@ export interface SourceEligibilityDistribution {
 }
 
 export interface SourceEligibilityCensusSummary {
+  /** Truthful population statement for every count in this summary.
+   *
+   * `totalOperations` below is the number of surfaces actually censused. When
+   * `population.state` is not COMPLETE it is a floor, not a total, and every
+   * derived count (responseContracts, joinsProven, ...) is a count over that
+   * observed subset only. Read this block before comparing any two censuses. */
+  readonly population: SourcePopulationCompleteness;
   readonly totalOperations: number;
   readonly routeProofs: number;
   readonly requestContracts: number;
@@ -722,6 +730,7 @@ export function buildSourceEligibilityCensus(input: { readonly discovery: Source
   const cost = censusCost(input.discovery);
   const proofFamilyMeasurements = proofFamilyRanking({ rows, surfaces });
   const summary: SourceEligibilityCensusSummary = {
+    population: buildSourcePopulationCompleteness({ operationCompleteness: input.discovery.operationCompleteness, inventoryCompleteness: input.discovery.inventory.completeness }),
     totalOperations: surfaces.length,
     routeProofs: surfaces.filter((surface) => surface.operation.routeProof === 'PROVEN').length,
     requestContracts: surfaces.filter((surface) => surface.contract.requestProof === 'PROVEN').length,

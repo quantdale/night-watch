@@ -232,6 +232,8 @@ function sourceSummaryAuthority(snapshot: SourceAuthoritySnapshot): SourceSummar
     repositoryCount: snapshot.repositoryCount,
     repositoryCurrentness: snapshot.repositoryStatuses.map((status) => status.currentness),
     reasonCodes: snapshot.reasonCodes,
+    operationCompleteness: snapshot.discovery?.operationCompleteness ?? null,
+    inventoryCompleteness: snapshot.discovery?.inventory.completeness ?? null,
   };
 }
 

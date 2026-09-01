@@ -13,9 +13,11 @@ import {
   MAX_SIBLING_SOURCE_SCAN_FILES,
   type SiblingSourceAccess,
 } from './siblingSource';
+import { worstCompleteness, type SourceCompletenessState } from './completeness';
 import {
   REAL_SOURCE_SCAN_CONFIG_VERSION,
   REAL_SOURCE_SCAN_EXTRACTOR_VERSION,
+  REAL_SOURCE_INVENTORY_COMPLETENESS_VERSION,
   REAL_SOURCE_SNAPSHOT_INVENTORY_VERSION,
   SOURCE_SCAN_ANALYZERS,
   SOURCE_SCAN_EXCLUDED_DIRECTORIES,
@@ -38,6 +40,10 @@ import {
   type SourceScanRejectionReason,
   type SourceSnapshotFileRecord,
   type SourceSnapshotRepositoryRecord,
+  type SourceContentReadCompleteness,
+  type SourceEnumerationCompleteness,
+  type SourceInventoryCompleteness,
+  type SourceRepositoryCompleteness,
 } from './scanTypes';
 
 const SAFE_REPO_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/;
@@ -152,6 +158,57 @@ function fileRecord(input: {
 }
 
 /**
+ * Roll per-repository completeness up to one inventory-wide statement.
+ *
+ * Aggregation only ever weakens: a dimension is COMPLETE only when every
+ * repository is COMPLETE in that dimension, and an empty repository set is
+ * UNKNOWN rather than vacuously COMPLETE. A null total anywhere makes the
+ * aggregate total null, because summing over an unknowable remainder would
+ * manufacture a number that was never observed.
+ */
+function aggregateInventoryCompleteness(rows: readonly SourceRepositoryCompleteness[]): SourceInventoryCompleteness {
+  const enumerationState: SourceCompletenessState = worstCompleteness(...rows.map((row) => row.enumeration.state));
+  const contentReadState: SourceCompletenessState = worstCompleteness(...rows.map((row) => row.contentRead.state));
+  const anyEnumerationTotalUnknown = rows.some((row) => row.enumeration.totalFiles === null);
+  const anyEnumerationDroppedUnknown = rows.some((row) => row.enumeration.droppedFiles === null);
+  const sum = (values: readonly number[]): number => values.reduce((total, value) => total + value, 0);
+  const max = (values: readonly number[]): number => values.reduce((highest, value) => Math.max(highest, value), 0);
+  const enumeration: SourceEnumerationCompleteness = {
+    state: enumerationState,
+    // Per-repository ceilings compose additively for the file count and the
+    // walk byte budget; there is no single global ceiling to report.
+    limit: sum(rows.map((row) => row.enumeration.limit)),
+    byteLimit: sum(rows.map((row) => row.enumeration.byteLimit)),
+    examinedFiles: sum(rows.map((row) => row.enumeration.examinedFiles)),
+    totalFiles: anyEnumerationTotalUnknown ? null : sum(rows.map((row) => row.enumeration.totalFiles ?? 0)),
+    droppedFiles: anyEnumerationDroppedUnknown ? null : sum(rows.map((row) => row.enumeration.droppedFiles ?? 0)),
+    remainingUnknown: rows.some((row) => row.enumeration.remainingUnknown),
+    truncationReason: rows.find((row) => row.enumeration.truncationReason !== null)?.enumeration.truncationReason ?? null,
+  };
+  const contentRead: SourceContentReadCompleteness = {
+    state: contentReadState,
+    // A per-file ceiling does not compose additively: report the widest one
+    // actually applied.
+    fileByteLimit: max(rows.map((row) => row.contentRead.fileByteLimit)),
+    totalByteLimit: sum(rows.map((row) => row.contentRead.totalByteLimit)),
+    candidateFiles: sum(rows.map((row) => row.contentRead.candidateFiles)),
+    readFiles: sum(rows.map((row) => row.contentRead.readFiles)),
+    admittedFiles: sum(rows.map((row) => row.contentRead.admittedFiles)),
+    bytesRead: sum(rows.map((row) => row.contentRead.bytesRead)),
+    droppedFiles: sum(rows.map((row) => row.contentRead.droppedFiles)),
+    unreadableFiles: sum(rows.map((row) => row.contentRead.unreadableFiles)),
+    policyExcludedFiles: sum(rows.map((row) => row.contentRead.policyExcludedFiles)),
+  };
+  return {
+    schemaVersion: REAL_SOURCE_INVENTORY_COMPLETENESS_VERSION,
+    state: worstCompleteness(enumerationState, contentReadState),
+    enumeration,
+    contentRead,
+    repositories: rows,
+  };
+}
+
+/**
  * Produce a safe, deterministic inventory from one approved source config.
  * The returned inventory contains no source text and no executable config.
  */
@@ -167,19 +224,34 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
   let bytesRead = 0;
   let symlinkRejections = 0;
   let pathRejections = 0;
-  let budgetRejections = 0;
+  // Enumeration and content-read exhaustion are DISJOINT failure modes and are
+  // counted separately. A repository can be fully enumerated while only some
+  // file bodies are read; conflating the two makes a complete inventory look
+  // bounded and a bounded one look complete.
+  let enumerationBudgetRejections = 0;
+  let contentBudgetRejections = 0;
+  const repositoryCompleteness: SourceRepositoryCompleteness[] = [];
 
   for (const repository of input.config.approvedRepositories) {
     const counts = emptyRejectionCounts();
+    const unobserved = (reason: SourceScanRejectionReason): SourceRepositoryCompleteness => ({
+      repoId: repository.repoId,
+      // The repository was never walked, so neither dimension is knowable.
+      // UNKNOWN, never COMPLETE-by-vacuity.
+      enumeration: { state: 'UNKNOWN', limit: repository.maxFiles, byteLimit: repository.maxTotalBytes, examinedFiles: 0, totalFiles: null, droppedFiles: null, remainingUnknown: true, truncationReason: reason },
+      contentRead: { state: 'UNKNOWN', fileByteLimit: repository.maxFileBytes, totalByteLimit: repository.maxTotalBytes, candidateFiles: 0, readFiles: 0, admittedFiles: 0, bytesRead: 0, droppedFiles: 0, unreadableFiles: 0, policyExcludedFiles: 0 },
+    });
     const current = input.access.currentness.currentSnapshot(repository.repoId);
     if (current === null) {
       counts.SOURCE_REPOSITORY_UNAVAILABLE += 1;
       repositories.push({ repoId: repository.repoId, sourceSha: null, status: 'SOURCE_UNAVAILABLE', fileCount: 0, admittedFileCount: 0, rejectedFileCount: 0, bytesInspected: 0, rejectionCounts: counts });
+      repositoryCompleteness.push(unobserved('SOURCE_REPOSITORY_UNAVAILABLE'));
       continue;
     }
     if (repository.expectedSourceSha !== null && current.sha !== repository.expectedSourceSha) {
       counts.SOURCE_STALE += 1;
       repositories.push({ repoId: repository.repoId, sourceSha: current.sha, status: 'SOURCE_STALE', fileCount: 0, admittedFileCount: 0, rejectedFileCount: 0, bytesInspected: 0, rejectionCounts: counts });
+      repositoryCompleteness.push(unobserved('SOURCE_STALE'));
       continue;
     }
 
@@ -190,7 +262,7 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
     });
     if (enumeration.truncationReason !== null && counts[enumeration.truncationReason] === 0) {
       counts[enumeration.truncationReason] += 1;
-      budgetRejections += 1;
+      enumerationBudgetRejections += 1;
     }
     directoriesVisited += enumeration.directoriesVisited;
     const repositoryFiles: SourceSnapshotFileRecord[] = [];
@@ -204,8 +276,14 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
       filesRejected += 1;
       if (rejected.reason === 'SOURCE_SYMLINK_REJECTED') symlinkRejections += 1;
       if (rejected.reason === 'SOURCE_ROOT_UNAPPROVED' || rejected.reason === 'SOURCE_PATH_ESCAPE' || rejected.reason === 'SOURCE_PATH_EXCLUDED') pathRejections += 1;
-      if (rejected.reason === 'SOURCE_FILE_COUNT_EXCEEDED' || rejected.reason === 'SOURCE_TOTAL_BUDGET_EXCEEDED') budgetRejections += 1;
+      if (rejected.reason === 'SOURCE_FILE_COUNT_EXCEEDED' || rejected.reason === 'SOURCE_TOTAL_BUDGET_EXCEEDED') enumerationBudgetRejections += 1;
     }
+    let repositoryFilesRead = 0;
+    let repositoryFilesAdmitted = 0;
+    let repositoryBytesRead = 0;
+    let repositoryContentDropped = 0;
+    let repositoryUnreadable = 0;
+    let repositoryPolicyExcluded = 0;
     for (const entry of enumeration.entries) {
       filesConsidered += 1;
       const extension = extensionFor(entry.relativePath);
@@ -228,9 +306,11 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
           byteCount = null;
         } else {
           filesRead += 1;
+          repositoryFilesRead += 1;
           const actualBytes = Buffer.byteLength(sourceText, 'utf8');
           byteCount = actualBytes;
           bytesRead += actualBytes;
+          repositoryBytesRead += actualBytes;
           contentDigest = sourceContentDigest(sourceText);
           if (actualBytes > repository.maxFileBytes) {
             status = 'REJECTED';
@@ -250,10 +330,20 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
       repositoryFiles.push(record);
       if (rejectionReason === null) {
         filesAdmitted += 1;
+        repositoryFilesAdmitted += 1;
       } else {
         filesRejected += 1;
         counts[rejectionReason] += 1;
-        if (rejectionReason === 'SOURCE_FILE_TOO_LARGE' || rejectionReason === 'SOURCE_TOTAL_BUDGET_EXCEEDED') budgetRejections += 1;
+        // Budget exhaustion on a BODY: the file is enumerated and present in
+        // the snapshot; only its content was not admitted.
+        if (rejectionReason === 'SOURCE_FILE_TOO_LARGE' || rejectionReason === 'SOURCE_TOTAL_BUDGET_EXCEEDED') {
+          contentBudgetRejections += 1;
+          repositoryContentDropped += 1;
+        }
+        if (rejectionReason === 'SOURCE_READ_FAILED') repositoryUnreadable += 1;
+        // Deliberate policy exclusions are not truncation and never weaken the
+        // content-read completeness state.
+        if (rejectionReason === 'SOURCE_LANGUAGE_UNSUPPORTED' || rejectionReason === 'SOURCE_PRIVACY_REJECTED') repositoryPolicyExcluded += 1;
       }
     }
     repositoryFiles.sort((left, right) => left.relativePath.localeCompare(right.relativePath) || left.status.localeCompare(right.status));
@@ -268,6 +358,27 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
       bytesInspected: repositoryBytes,
       rejectionCounts: counts,
     });
+    // Enumeration aborts on truncation, so a bounded walk leaves the remainder
+    // not merely unlisted but uncountable: totals and drops are null and
+    // remainingUnknown is true rather than a fabricated zero.
+    const enumerationCompleteness: SourceEnumerationCompleteness = enumeration.truncated
+      ? { state: 'TRUNCATED', limit: repository.maxFiles, byteLimit: repository.maxTotalBytes, examinedFiles: enumeration.entries.length, totalFiles: null, droppedFiles: null, remainingUnknown: true, truncationReason: enumeration.truncationReason }
+      : { state: 'COMPLETE', limit: repository.maxFiles, byteLimit: repository.maxTotalBytes, examinedFiles: enumeration.entries.length, totalFiles: enumeration.entries.length, droppedFiles: 0, remainingUnknown: false, truncationReason: null };
+    // Content-read completeness is measured against the ENUMERATED set, so it
+    // stays exact even when enumeration itself was bounded.
+    const contentReadCompleteness: SourceContentReadCompleteness = {
+      state: repositoryContentDropped > 0 || repositoryUnreadable > 0 ? 'TRUNCATED' : 'COMPLETE',
+      fileByteLimit: repository.maxFileBytes,
+      totalByteLimit: repository.maxTotalBytes,
+      candidateFiles: enumeration.entries.length,
+      readFiles: repositoryFilesRead,
+      admittedFiles: repositoryFilesAdmitted,
+      bytesRead: repositoryBytesRead,
+      droppedFiles: repositoryContentDropped,
+      unreadableFiles: repositoryUnreadable,
+      policyExcludedFiles: repositoryPolicyExcluded,
+    };
+    repositoryCompleteness.push({ repoId: repository.repoId, enumeration: enumerationCompleteness, contentRead: contentReadCompleteness });
   }
 
   files.sort((left, right) => left.repoId.localeCompare(right.repoId) || left.relativePath.localeCompare(right.relativePath) || (left.rejectionReason ?? '').localeCompare(right.rejectionReason ?? ''));
@@ -283,8 +394,11 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
     bytesRead,
     symlinkRejections,
     pathRejections,
-    budgetRejections,
+    enumerationBudgetRejections,
+    contentBudgetRejections,
   };
+  repositoryCompleteness.sort((left, right) => left.repoId.localeCompare(right.repoId));
+  const completeness = aggregateInventoryCompleteness(repositoryCompleteness);
   const core: Omit<RealSourceSnapshotInventory, 'snapshotDigest'> = {
     schemaVersion: REAL_SOURCE_SNAPSHOT_INVENTORY_VERSION,
     configDigest: input.config.configDigest,
@@ -292,6 +406,7 @@ export function scanSource(input: { readonly access: SiblingSourceAccess; readon
     files,
     repositories,
     counters,
+    completeness,
   };
   return { ...core, snapshotDigest: sourceSnapshotDigest(core) };
 }

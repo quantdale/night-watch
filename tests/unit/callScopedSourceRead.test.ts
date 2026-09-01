@@ -188,7 +188,14 @@ test.describe('call-scoped source read reuse', () => {
       extractorVersion: 'nightwatch.real-source-scan-extractor.v1',
       files: records,
       repositories: [],
-      counters: { repositoriesConsidered: 1, repositoriesInspected: 1, directoriesVisited: 1, filesConsidered: records.length, filesRead: records.length, filesAdmitted: records.length, filesRejected: 0, bytesRead: records.reduce((total, file) => total + file.byteCount, 0), symlinkRejections: 0, pathRejections: 0, budgetRejections: 0 },
+      counters: { repositoriesConsidered: 1, repositoriesInspected: 1, directoriesVisited: 1, filesConsidered: records.length, filesRead: records.length, filesAdmitted: records.length, filesRejected: 0, bytesRead: records.reduce((total, file) => total + file.byteCount, 0), symlinkRejections: 0, pathRejections: 0, enumerationBudgetRejections: 0, contentBudgetRejections: 0 },
+      completeness: {
+        schemaVersion: 'nightwatch.source-inventory-completeness.v1',
+        state: 'COMPLETE',
+        enumeration: { state: 'COMPLETE', limit: 4096, byteLimit: 64_000_000, examinedFiles: records.length, totalFiles: records.length, droppedFiles: 0, remainingUnknown: false, truncationReason: null },
+        contentRead: { state: 'COMPLETE', fileByteLimit: 2_000_000, totalByteLimit: 64_000_000, candidateFiles: records.length, readFiles: records.length, admittedFiles: records.length, bytesRead: records.reduce((total, file) => total + file.byteCount, 0), droppedFiles: 0, unreadableFiles: 0, policyExcludedFiles: 0 },
+        repositories: [],
+      },
       snapshotDigest: 'srcsnapshot:synthetic',
     } satisfies RealSourceSnapshotInventory;
     let throwOnce = true;

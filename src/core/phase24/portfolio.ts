@@ -236,9 +236,19 @@ function sourceKey(source: Phase24SourceIdentity): string {
   return `${source.repoId}:${source.sha}:${source.evidenceDigest}`;
 }
 
+/** Bounded portfolio ceiling.
+ *
+ * This was 128 while the upstream source discovery silently capped operation
+ * projection at 128, so the two limits coincided by accident and the portfolio
+ * never observed a real overflow. C-01 removed that silent cap; the ceiling is
+ * now aligned with MAX_PROJECTED_OPERATIONS in src/core/source/surfaces.ts so a
+ * fully projected discovery is fully representable. It stays a cost guard, and
+ * an overflow still fails closed rather than dropping candidates silently. */
+export const MAX_PHASE24_CANDIDATES = 4096;
+
 /** Build a source-derived portfolio from facts; the core never reads source. */
 export function buildPhase24CandidatePortfolio(input: { readonly candidates: readonly Phase24CandidateInput[] }): Phase24CandidatePortfolio {
-  if (!Array.isArray(input.candidates) || input.candidates.length === 0 || input.candidates.length > 128) invalid('CANDIDATE_COUNT');
+  if (!Array.isArray(input.candidates) || input.candidates.length === 0 || input.candidates.length > MAX_PHASE24_CANDIDATES) invalid('CANDIDATE_COUNT');
   const decisions = input.candidates.map(decisionFor).sort((left, right) => left.candidateId.localeCompare(right.candidateId));
   if (new Set(decisions.map((candidate) => candidate.candidateId)).size !== decisions.length) invalid('DUPLICATE_CANDIDATE');
   if (new Set(decisions.map((candidate) => candidate.surfaceKey)).size !== decisions.length) invalid('DUPLICATE_SURFACE');
@@ -264,7 +274,7 @@ export function buildPhase24CandidatePortfolio(input: { readonly candidates: rea
 
 export function validatePhase24CandidatePortfolio(portfolio: Phase24CandidatePortfolio): void {
   if (portfolio.schemaVersion !== PHASE24_PORTFOLIO_VERSION || !Array.isArray(portfolio.candidates) || portfolio.candidates.length !== portfolio.consideredCount) invalid('PORTFOLIO_HEADER');
-  if (portfolio.consideredCount > 128 || portfolio.eligibleCount + portfolio.excludedCount !== portfolio.consideredCount) invalid('PORTFOLIO_COUNT');
+  if (portfolio.consideredCount > MAX_PHASE24_CANDIDATES || portfolio.eligibleCount + portfolio.excludedCount !== portfolio.consideredCount) invalid('PORTFOLIO_COUNT');
   const ids = portfolio.candidates.map((candidate) => candidate.candidateId);
   if (new Set(ids).size !== ids.length || JSON.stringify(ids) !== JSON.stringify([...ids].sort((left, right) => left.localeCompare(right)))) invalid('PORTFOLIO_ORDER');
   const surfaces = portfolio.candidates.map((candidate) => candidate.surfaceKey);

@@ -58,11 +58,36 @@ function fixture(): { readonly discovery: SourceSurfaceDiscovery; readonly portf
     deterministicDigest: 'surface-descriptor:sha256:333333333333333333333333',
   };
   const discovery = {
-    inventory: { snapshotDigest: 'srcsnapshot:sha256:444444444444444444444444', files: [] },
+    inventory: {
+      snapshotDigest: 'srcsnapshot:sha256:444444444444444444444444',
+      files: [],
+      completeness: {
+        schemaVersion: 'nightwatch.source-inventory-completeness.v1',
+        state: 'COMPLETE',
+        enumeration: { state: 'COMPLETE', limit: 64, byteLimit: 4_000_000, examinedFiles: 1, totalFiles: 1, droppedFiles: 0, remainingUnknown: false, truncationReason: null },
+        contentRead: { state: 'COMPLETE', fileByteLimit: 400_000, totalByteLimit: 4_000_000, candidateFiles: 1, readFiles: 1, admittedFiles: 1, bytesRead: 64, droppedFiles: 0, unreadableFiles: 0, policyExcludedFiles: 0 },
+        repositories: [],
+      },
+    },
     operations: [surface.operation],
     surfaces: [surface],
     phase24Inputs: [],
     counters: {},
+    operationCompleteness: {
+      schemaVersion: 'nightwatch.source-operation-projection-completeness.v1',
+      state: 'COMPLETE',
+      limit: 4096,
+      examinedOperations: 1,
+      totalOperations: 1,
+      projectedOperations: 1,
+      droppedOperations: 0,
+      truncated: false,
+      remainingUnknown: false,
+      enumerationCompleteness: 'COMPLETE',
+      contentReadCompleteness: 'COMPLETE',
+      coverageState: 'PROVEN',
+      repositories: [{ repository: 'mobingilabs/ripple-api', examinedOperations: 1, projectedOperations: 1, droppedOperations: 0 }],
+    },
     gapTaxonomy: { dimensions: { rejectionFamily: [] }, proofGapSurfaceCount: 1, rejectedDiagnosticCount: 0 },
     performance: {},
     deterministicDigest: 'source-surface-discovery:sha256:555555555555555555555555',
@@ -105,7 +130,13 @@ test.describe('deterministic source eligibility census', () => {
     const first = buildSourceEligibilityCensus(input);
     const second = buildSourceEligibilityCensus(input);
     expect(first).toEqual(second);
-    expect(first.schemaVersion).toBe('nightwatch.real-source-eligibility-census.v2');
+    expect(first.schemaVersion).toBe('nightwatch.real-source-eligibility-census.v3');
+    // C-01: every census states the population its counts were measured over.
+    expect(first.summary.population.state).toBe('COMPLETE');
+    expect(first.summary.population.coverageState).toBe('PROVEN');
+    expect(first.summary.population.operations.total).toBe(1);
+    expect(first.summary.population.enumeration.state).toBe('COMPLETE');
+    expect(first.summary.population.contentRead.state).toBe('COMPLETE');
     expect(first.summary).toMatchObject({ totalOperations: 1, routeProofs: 1, requestContracts: 1, responseContracts: 0, semanticContractSurfaces: 0, readOnlyProven: 0, mutabilityUnknown: 1, phase24Eligible: 0, phase24Excluded: 1 });
     expect(first.rows[0]?.chain.firstBlockingStage).toBe('RESPONSE_CONTRACT');
     expect(first.rows[0]?.chain.stages.map((entry) => entry.stage)).toEqual([

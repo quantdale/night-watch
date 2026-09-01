@@ -6,10 +6,12 @@ import type { SourceScanLanguage } from './scanTypes';
 import type { Phase24CandidateInvalidationLedger } from '../phase24/types';
 import type { ResponseFlowProof } from './responseFlow';
 import type { SourceGapTaxonomyChange } from './gapTaxonomy';
+import type { R2CoverageState, SourceCompletenessState } from './completeness';
 
 export const REAL_SOURCE_SURFACE_DESCRIPTOR_VERSION = 'nightwatch.real-source-surface-descriptor.v3' as const;
 export const REAL_SOURCE_SURFACE_CHANGE_REPORT_VERSION = 'nightwatch.real-source-surface-change-report.v2' as const;
 export const REAL_SOURCE_SURFACE_PERFORMANCE_VERSION = 'nightwatch.real-source-surface-performance.v1' as const;
+export const REAL_SOURCE_OPERATION_COMPLETENESS_VERSION = 'nightwatch.source-operation-projection-completeness.v1' as const;
 
 export type SourceOperationMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type SourceRouteProof = 'PROVEN' | 'AMBIGUOUS' | 'UNSUPPORTED';
@@ -194,6 +196,61 @@ export interface SourceSurfaceDiscoveryCounters {
   readonly candidatesProduced: number;
   readonly eligibleCandidates: number;
   readonly excludedCandidates: number;
+}
+
+/** Truthful projection completeness for operation discovery.
+ *
+ * Operation projection is bounded, but never silently lossy: the bound, the
+ * number of route entries examined, the total when knowable, the projected
+ * count, and every dropped operation are stated explicitly and per repository.
+ *
+ * Three independent things can bound the operation population, and they are
+ * reported independently because they fail differently:
+ *   - projection    — this discovery's own ceiling; drops are always countable
+ *                     (TRUNCATED).
+ *   - enumeration   — the file walk was bounded upstream, so the true number
+ *                     of operations is not knowable (UNKNOWN).
+ *   - content read  — some enumerated file bodies were never read, so any
+ *                     operations they declare are invisible and uncountable
+ *                     (UNKNOWN).
+ *
+ * `state` is the conservative combination and is COMPLETE only when all three
+ * are clean. */
+export type SourceOperationCompletenessState = SourceCompletenessState;
+
+export interface SourceOperationRepositoryCompleteness {
+  readonly repository: string;
+  readonly examinedOperations: number;
+  readonly projectedOperations: number;
+  readonly droppedOperations: number;
+}
+
+export interface SourceOperationProjectionCompleteness {
+  readonly schemaVersion: typeof REAL_SOURCE_OPERATION_COMPLETENESS_VERSION;
+  readonly state: SourceOperationCompletenessState;
+  /** Bounded projection ceiling actually applied to this discovery. */
+  readonly limit: number;
+  /** Parsed route entries examined for projection. */
+  readonly examinedOperations: number;
+  /** Exact only when nothing upstream was bounded; null when the true total is
+   * unknowable. Never a fabricated stand-in for an unobserved population. */
+  readonly totalOperations: number | null;
+  readonly projectedOperations: number;
+  /** Operations dropped by THIS discovery's projection ceiling. Always exact:
+   * projection sees every examined entry before deciding. */
+  readonly droppedOperations: number;
+  readonly truncated: boolean;
+  /** True when an upstream bound makes the remainder uncountable. */
+  readonly remainingUnknown: boolean;
+  /** Upstream file-walk completeness. Separate from contentReadCompleteness:
+   * a repository may be fully enumerated with only some bodies read. */
+  readonly enumerationCompleteness: SourceCompletenessState;
+  /** Upstream file-body read completeness over the enumerated set. */
+  readonly contentReadCompleteness: SourceCompletenessState;
+  /** R2 coverage projection of `state`. Coverage may deny authority; it never
+   * grants it. */
+  readonly coverageState: R2CoverageState;
+  readonly repositories: readonly SourceOperationRepositoryCompleteness[];
 }
 
 /** Advisory bounded cost measurements. Timings are never part of a proof or
