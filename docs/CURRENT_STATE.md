@@ -17,8 +17,9 @@
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
 > longer a zero-step platform block and is now GREEN at the exact head: run
-> `33590645175` at `b99ce4e` passed all eleven required groups, including the
-> first-ever execution of `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`.
+> `33601265465` at `cb631cc` passed all eleven required groups on Node 20 with
+> receipt `receipt:sha256:f38b272bec3a37464257e194` and `SYNTHETIC_CAMPAIGN`
+> 221/221, certifying C-10.
 ---
 
 ## What exists now
@@ -219,17 +220,36 @@ and the spec-derived witness (C-09) remain unimplemented and report
 
 ### Project-state v2 (machine-checked truth block)
 
+Each live anchor names a DIFFERENT checkpoint, so the five are not synonyms
+and must never be bulk-set to HEAD:
+
+| Field | Claims | Current value | Why |
+| --- | --- | --- | --- |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `23523cc` | where the C-10 / DEF-C10-5 route-provenance repair landed; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `23523cc` | the local gate was recorded green at that commit |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `23523cc` | the clean gate was recorded green at that commit |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `cb631cc` | run `33601265465` |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `cb631cc` | same run; `EXECUTED_PASS` requires observed == executed |
+
+The implementation anchor legitimately TRAILS the CI anchor: the commits
+between `23523cc` and `cb631cc` are documentation checkpoints that changed no
+implementation, so CI ran later than the last substantive change without a new
+substantive change existing. `npm run project:check` enforces this
+relationship mechanically (C-10.5 A10) by classifying the intervening commits
+rather than trusting the fields to agree with each other.
+
+
 ```
 PROJECT_STATE_PROTOCOL_VERSION: nightwatch.project-state.v2
 RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-LAST_LOCALLY_VALIDATED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-LAST_CLEAN_VALIDATED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-CI_OBSERVED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-CI_EXECUTED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_LOCALLY_VALIDATED_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+LAST_CLEAN_VALIDATED_SHA: 23523cc743c77b2250738caa980c218dab8671bb
+CI_OBSERVED_SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
+CI_EXECUTED_SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -266,14 +286,26 @@ LIVE_COMPLETION_CLAIM: NONE
 
 ### Exact-head CI is green (current live CI state)
 
-Run `33590645175` / job `100123768379` at
-`b99ce4e61166e52b554dd6ac07b7678b433959da` passed with receipt
-`receipt:sha256:120582acb7bb971190a3a05d`. All eleven required groups PASS:
+Run `33601265465` / job `100155266632` at
+`cb631cc4af3c3572f4cbf78da04a8265075fbfa5` passed on Node 20 with receipt
+`receipt:sha256:f38b272bec3a37464257e194`. All eleven required groups PASS:
 `SEMANTIC_COMPATIBILITY` 1,967 total / 1,954 passed / 13 skipped / 0 failed,
-`OWNER_PROVENANCE` 91 passed, `SYNTHETIC_CAMPAIGN` 128 total / 128 passed / 0
-failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`, and
-`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` EXECUTED AND PASSED for the first
-time in the project's history.
+`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 221 total / 221 passed /
+0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass.
+
+This is the C-10 completion certification, verified read-only against the
+GitHub API during C-10.5 rather than transcribed from a prior document. The
+corresponding canonical regression is 2,932 total / 2,919 passed / 13 skipped /
+0 failed, with 93 dedicated C-10 tests.
+
+Two earlier runs are HISTORICAL and deliberately preserved as such below:
+`33600603779` / job `100153229914` at `1234daf`
+(`receipt:sha256:aecae84fb070b89734a6efc0`), and `33590645175` / job
+`100123768379` at `b99ce4e` (`receipt:sha256:120582acb7bb971190a3a05d`,
+`SYNTHETIC_CAMPAIGN` 128/128), which was the first run in the project's history
+to execute `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`. Both were named as the
+LIVE state by this document until C-10.5 reconciled it; neither is rewritten.
 
 The containment classification is deliberately visible rather than implied. The
 runner cannot provide a rootless containment envelope, so the deep lane did not
