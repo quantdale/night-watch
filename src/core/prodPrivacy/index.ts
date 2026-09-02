@@ -22,6 +22,7 @@ export * from './serializer';
 export * from './projector';
 export * from './evidence';
 export * from './parameterProvenance';
+export * from './persistedFieldInventory';
 
 // Key vocabulary — consumption API only.
 export {
