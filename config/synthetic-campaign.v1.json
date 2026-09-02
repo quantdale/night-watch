@@ -25,6 +25,8 @@
     "tests/unit/l6Containment.test.ts",
     "tests/unit/workspaceIsolation.test.ts",
     "tests/unit/c10ProductionProjection.test.ts",
-    "tests/unit/c10AcceptanceSuite.test.ts"
+    "tests/unit/c10AcceptanceSuite.test.ts",
+    "tests/unit/c105ProvenanceAuthority.test.ts",
+    "tests/unit/c105PersistedFieldCoverage.test.ts"
   ]
 }
