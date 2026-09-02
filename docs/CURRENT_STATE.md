@@ -17,9 +17,9 @@
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
 > longer a zero-step platform block and is now GREEN at the exact head: run
-> `33601265465` at `cb631cc` passed all eleven required groups on Node 20 with
-> receipt `receipt:sha256:f38b272bec3a37464257e194` and `SYNTHETIC_CAMPAIGN`
-> 221/221, certifying C-10.
+> `33627408962` at `4d59235` passed all eleven required groups on Node 20 with
+> receipt `receipt:sha256:072d1ba432a39944aca0466c` and `SYNTHETIC_CAMPAIGN`
+> 256/256, certifying C-10.5.
 ---
 
 ## What exists now
@@ -228,8 +228,8 @@ and must never be bulk-set to HEAD:
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `23523cc` | where the C-10 / DEF-C10-5 route-provenance repair landed; the commits after it changed documentation only |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `23523cc` | the local gate was recorded green at that commit |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `23523cc` | the clean gate was recorded green at that commit |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `NONE` while C-10.5 is mid-campaign | no CI run has yet executed at the C-10.5 baseline; the C-10 run at `cb631cc` certified an ANCESTOR and therefore certifies nothing about this baseline |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `NONE` while C-10.5 is mid-campaign | set together with `CI_OBSERVED_SHA` after integration and the exact-head run |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4d59235` | run `33627408962` |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4d59235` | same run; `EXECUTED_PASS` requires observed == executed |
 
 The implementation anchor legitimately TRAILS the CI anchor: the commits
 between `23523cc` and `cb631cc` are documentation checkpoints that changed no
@@ -248,9 +248,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_LOCALLY_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_CLEAN_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
-CI_OBSERVED_SHA: NONE
-CI_EXECUTED_SHA: NONE
-CI_STATUS: NOT_OBSERVED
+CI_OBSERVED_SHA: 4d59235c64ba8fbdd7d788a20f678378b06a4014
+CI_EXECUTED_SHA: 4d59235c64ba8fbdd7d788a20f678378b06a4014
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -277,44 +277,58 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-c10-provenance-truth-closure-v1
 LIVE_PHASE: C10_PROVENANCE_TRUTH_CLOSURE_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
 
-Run `33601265465` / job `100155266632` at
-`cb631cc4af3c3572f4cbf78da04a8265075fbfa5` passed on Node 20 with receipt
-`receipt:sha256:f38b272bec3a37464257e194`. All eleven required groups PASS:
-`SEMANTIC_COMPATIBILITY` 1,967 total / 1,954 passed / 13 skipped / 0 failed,
-`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 221 total / 221 passed /
+Run `33627408962` / job `100238317324` at
+`4d59235c64ba8fbdd7d788a20f678378b06a4014` passed on Node 20 with receipt
+`receipt:sha256:072d1ba432a39944aca0466c`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 1,975 total / 1,962 passed / 13 skipped / 0 failed,
+`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 256 total / 256 passed /
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass.
 
-This is the C-10 completion certification, verified read-only against the
-GitHub API during C-10.5 rather than transcribed from a prior document. The
-corresponding canonical regression is 2,932 total / 2,919 passed / 13 skipped /
-0 failed, with 93 dedicated C-10 tests.
+This is the C-10.5 completion certification. The corresponding canonical
+regression is 2,975 total / 2,962 passed / 13 skipped / 0 failed, with 56
+dedicated C-10.5 tests.
 
-Two earlier runs are HISTORICAL and deliberately preserved as such below:
-`33600603779` / job `100153229914` at `1234daf`
-(`receipt:sha256:aecae84fb070b89734a6efc0`), and `33590645175` / job
-`100123768379` at `b99ce4e` (`receipt:sha256:120582acb7bb971190a3a05d`,
-`SYNTHETIC_CAMPAIGN` 128/128), which was the first run in the project's history
-to execute `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`. Both were named as the
-LIVE state by this document until C-10.5 reconciled it; neither is rewritten.
+**On the exact-head fixpoint.** The commit that RECORDS this receipt is
+necessarily a descendant of the commit the run certified — a field cannot name
+the SHA of the commit containing it. So the certification covers `4d59235`
+(the substantive implementation plus its validation records), and the
+documentation descendant carrying these numbers is a separate, later commit
+whose own run is reported alongside it. This is the same shape as the C-10
+closure, where `cb631cc` recorded the run that certified it.
 
 The containment classification is deliberately visible rather than implied. The
-runner cannot provide a rootless containment envelope, so the deep lane did not
-run there and the receipt says so; the gate REQUIRES that lane to be `PROVEN`
-in the `local`, `clean` and `predev` modes, where it is, so no coverage was
-traded away for a green baseline.
+GitHub runner cannot provide a rootless containment envelope, so the deep lane
+does not run there and the receipt says so; the gate REQUIRES that lane to be
+`PROVEN` in the `local`, `clean` and `predev` modes, where it is. Locally the
+same campaign reports `deepContainmentLane: PROVEN`, so no coverage was traded
+away for a green CI baseline — the two environments differ in topology, not in
+required coverage.
 
-`GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT` is therefore a live, executable
-authority again rather than a standing non-evidence classification.
+`GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT` remains a live, executable authority.
+
+### Historical exact-head runs (preserved, not rewritten)
+
+- `33625337034` at `09c13fa` — green, but superseded: it certified the tree
+  BEFORE the DEF-C105-1 key-vocabulary authority repair.
+- `33601265465` / job `100155266632` at `cb631cc` — the C-10 completion
+  certification, receipt `receipt:sha256:f38b272bec3a37464257e194`,
+  `SYNTHETIC_CAMPAIGN` 221/221.
+- `33600603779` / job `100153229914` at `1234daf` — receipt
+  `receipt:sha256:aecae84fb070b89734a6efc0`.
+- `33590645175` / job `100123768379` at `b99ce4e` — receipt
+  `receipt:sha256:120582acb7bb971190a3a05d`, `SYNTHETIC_CAMPAIGN` 128/128; the
+  first run in the project's history to execute `PATCH_INTEGRITY` and
+  `WORKSPACE_INTEGRITY`.
 
 ### How the previous run failed (historical, run 33572572053)
 

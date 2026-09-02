@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-c10-provenance-truth-closure-v1
 Phase: C10_PROVENANCE_TRUTH_CLOSURE_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
 Branch: session/nightwatch-c10-provenance-truth--ba3470bc
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -14,7 +14,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_C10_PROVENANCE_TRUTH_CLOSURE_V1_STATUS: IN_PROGRESS
+PHASE_C10_PROVENANCE_TRUTH_CLOSURE_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -25,7 +25,9 @@ provenance label.
 
 ## Current Milestone
 
-M11 — validation complete; integration and exact-head CI remain.
+COMPLETE / STOP — M0 through M12 are closed. Stage A (C-10.5) is complete and
+exact-head CI certified. Stage B (C-11 `PROD_OBSERVE`) is NOT started here and
+requires its own separately recorded task.
 
 ## Verified Starting Truth
 
@@ -88,23 +90,21 @@ A10 must learn to detect.
 - M9 — A11/A12 certification and digest-semantics reconciliation, history
   preserved as history.
 - M10 — A13 inventory-driven persisted-position coverage, negative-probed.
-- M11 — A14 validation: full set green (see ledger).
+- M11 — A14 validation: full set green (see ledger), then integration through
+  the C-00 session tooling and an exact-head GitHub Actions PASS.
+- M12 — A15 gate evaluated item by item; every item holds (see the gate table
+  in `REPORT.md`).
 
 ## Work In Progress
 
-M11 — validation is complete and green (see the ledger). Remaining: integrate
-the session branch through the C-00 tooling, obtain an exact-head GitHub
-Actions result with all eleven required groups PASS, set the CI anchors from
-that run, and close the A15 gate.
+NONE. Stage A is complete.
 
 ## Exact Next Action
 
-Integrate the session branch `session/nightwatch-c10-provenance-truth--ba3470bc`
-into `main` through `node bin/nightwatch-session.mjs integrate`, push, then
-identify the exact-head GitHub Actions run at the resulting `origin/main` and
-confirm all eleven required groups PASS. Then set `CI_OBSERVED_SHA`,
-`CI_EXECUTED_SHA` and `CI_STATUS` in `docs/CURRENT_STATE.md` from that run, and
-evaluate the A15 gate item by item.
+STOP — Stage A is complete. Do not begin Stage B (C-11 `PROD_OBSERVE`) in this
+task: it requires its own separately recorded task, its own OpenSpec change and
+its own audit trail, because the two stages must remain separately auditable.
+Release the session worktree and leave the canonical checkout clean.
 
 ## Files Changed
 
@@ -149,7 +149,7 @@ approved documentation.
 | Full canonical regression | PASS | 2,975 total / 2,962 passed / 13 skipped / 0 failed |
 | `gate:local` | PASS | Node 22, all eleven groups, `receipt:sha256:50f85aa10248ac17323c9290` at `93d15b3` |
 | `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner gate `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) at `93d15b3` |
-| Exact-head GitHub Actions | PENDING | run after integration to `main` |
+| Exact-head GitHub Actions | PASS | run `33627408962` / job `100238317324` at `4d59235`, Node 20, all eleven groups, `SYNTHETIC_CAMPAIGN` 256/256, receipt `receipt:sha256:072d1ba432a39944aca0466c` |
 
 ### Negative probes (proving the new gates bite rather than pass vacuously)
 
@@ -252,14 +252,17 @@ hard-gated behind the Stage-A completion gate.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-c10-provenance-truth--ba3470bc`
-2. `node bin/nightwatch-session.mjs status` — confirm the session worktree is
-   owned and the canonical checkout is untouched.
-3. Read this file's `## Exact Next Action`, then `PLAN.md` `## Milestones` for
-   the first non-terminal milestone.
-4. Implement → validate → record results here → advance.
+Task complete. Do not resume. Stage A is closed and certified; there is no
+remaining work in this task. C-11 `PROD_OBSERVE` begins in a NEW task with its
+own records and OpenSpec change, and requires the owner authorization already
+given for Stage B plus a fresh session worktree.
 
 ## Completion Snapshot
 
-Not complete. Stage A is complete only when every item of the A15 gate holds;
-if any item fails, Stage A is reported incomplete and C-11 is not started.
+COMPLETE. Every item of the A15 Stage-A gate holds; the item-by-item table is
+in `REPORT.md`. Stage A is certified by exact-head GitHub Actions run
+`33627408962` at `4d59235`.
+
+Stage B (C-11 `PROD_OBSERVE`) is NOT started. The Stage-A gate passing
+AUTHORIZES C-11 to begin in a new task; it does not itself begin it, and it
+grants no production connectivity of any kind.

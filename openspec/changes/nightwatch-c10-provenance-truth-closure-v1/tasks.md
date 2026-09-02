@@ -73,7 +73,7 @@
 ## M11 — A14 validation and integration
 - [x] Full validation set green
 - [x] `gate:local` PASS, `gate:clean` PASS
-- [ ] Integration through C-00, exact-head CI, eleven groups PASS
+- [x] Integration through C-00, exact-head CI, eleven groups PASS
 
 ## M12 — A15 gate and closeout
-- [ ] Every Stage-A gate item confirmed, or Stage A reported incomplete
+- [x] Every Stage-A gate item confirmed, or Stage A reported incomplete

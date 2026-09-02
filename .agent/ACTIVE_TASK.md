@@ -3,13 +3,13 @@
 Task ID: nightwatch-c10-provenance-truth-closure-v1
 Phase: C10_PROVENANCE_TRUTH_CLOSURE_V1
 Title: C-10.5 Provenance and Project-Truth Closure
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-c10-provenance-truth-closure-v1
 Starting SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
 Last validated implementation SHA: c763c056d306172df3c03c03781f5ec5516944e9
-Last checkpoint: campaign records and OpenSpec change created; verified starting truth independently — origin/main and local HEAD both cb631cc with a clean tree, C-10 substantive implementation 23523cc, and the final exact-head CI run 33601265465 / job 100155266632 at cb631cc green on Node 20 across all eleven required groups with receipt receipt:sha256:f38b272bec3a37464257e194 and SYNTHETIC_CAMPAIGN 221/221
-Current milestone: M0 — campaign records and activation
-Next action: complete M0 activation checks, then implement the A3/A7 provenance authority core (validated source-evidence capability types, deterministic canonical binding, computed-digest mint with no digest parameter, module-private runtime brand registry)
+Last checkpoint: exact-head GitHub run 33627408962 / job 100238317324 at 4d59235 passed all eleven required groups on Node 20 with receipt receipt:sha256:072d1ba432a39944aca0466c and SYNTHETIC_CAMPAIGN 256/256; local gate receipt:sha256:50f85aa10248ac17323c9290 and clean Node 20 gate clean-receipt:sha256:ed216b4c47ec9247d6507a40 green with siblingWrites 0; canonical regression 2,975 total / 2,962 passed / 13 skipped / 0 failed; DEF-C105-1 found and repaired before closure
+Current milestone: COMPLETE / STOP — M0 through M12 are closed
+Next action: STOP — Stage A (C-10.5) is complete and exact-head CI certified. Do NOT begin Stage B (C-11 PROD_OBSERVE) in this task: it requires its own separately recorded task, OpenSpec change and audit trail so the two stages stay separately auditable. Stage A passing authorizes C-11 to begin; it grants no production connectivity
 Authorization class: NIGHTWATCH_C10_PROVENANCE_TRUTH_CLOSURE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -18,7 +18,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_C10_PROVENANCE_TRUTH_CLOSURE_V1_STATUS: IN_PROGRESS
+PHASE_C10_PROVENANCE_TRUTH_CLOSURE_V1_STATUS: COMPLETE
 
 ## Routing and safety
 
