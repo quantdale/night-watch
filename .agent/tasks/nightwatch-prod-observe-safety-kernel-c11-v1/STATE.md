@@ -4,22 +4,22 @@
 
 Task ID: nightwatch-prod-observe-safety-kernel-c11-v1
 Phase: PROD_OBSERVE_SAFETY_KERNEL_C11_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
-Last validated implementation SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
-Last substantive checkpoint SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
+Last validated implementation SHA: 787966061beb91de0002fd114ca04e488b44be48
+Last substantive checkpoint SHA: 787966061beb91de0002fd114ca04e488b44be48
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-prod-observe-safety-k-5d5e338f
-Last checkpoint: 2026-09-03 — M1 through M7 closed. The eighteen-gate kernel is implemented; 109 C-11 tests green including a 38-entry one-fault denial matrix with network-side zero-contact proof and a 16-tamper PQ receipt matrix; 22/22 C-11 hardening negative probes detected after repairing four vacuous rules; SYNTHETIC_CAMPAIGN 365/365 with deepContainmentLane PROVEN
+Last checkpoint: exact-head GitHub run 33665872548 / job 100367351818 at 150dfcc passed all eleven required groups on Node 20 with receipt receipt:sha256:1d991b9a10d4cad618c0f533; gate:local and gate:clean PASS at 7879660; canonical regression 3,141/3,128/13/0; substantive checkpoint 7879660
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
-LAST_VALIDATED_IMPLEMENTATION_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
+LAST_VALIDATED_IMPLEMENTATION_SHA: 787966061beb91de0002fd114ca04e488b44be48
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 787966061beb91de0002fd114ca04e488b44be48
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PROD_OBSERVE_SAFETY_KERNEL_C11_V1_STATUS: IN_PROGRESS
+PHASE_PROD_OBSERVE_SAFETY_KERNEL_C11_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,10 +30,11 @@ denial leaves the mock server's received-request count at zero.
 
 ## Current Milestone
 
-Milestone ID: M8
-Milestone status: IN_PROGRESS
-What is being attempted: the full C-11 validation sequence, integration through
-C-00, and exact-head GitHub Actions with all eleven required groups PASS.
+COMPLETE / STOP — M1 through M8 are closed. The `PROD_OBSERVE` kernel is
+implemented and certified against MOCK production by exact-head CI run
+33665872548 / job 100367351818 at `150dfcc` with all eleven required groups
+PASS. C-12 P1 real production observation is NOT authorized and NOT started; it
+requires a new explicit owner authorization.
 
 ## Completed Milestones
 
@@ -90,17 +91,13 @@ C-00, and exact-head GitHub Actions with all eleven required groups PASS.
 
 ## Work In Progress
 
-Implementation is complete for M2 through M7; nothing is half-edited. The
-negative-probe harness lives in the session scratchpad only.
+NONE.
 
 ## Exact Next Action
 
-Run the full C-11 validation sequence — `typecheck`, `hardening:check`,
-`handoff:check`, `project:check`, `agent:check`, `agent:audit`,
-`gate:inventory`, `test:semantic-compat`, `campaign:synthetic`, the complete
-canonical regression, `gate:local`, `gate:clean` — committing first and not
-touching the tree while a gate runs. Then integrate through C-00 and obtain
-exact-head GitHub Actions.
+STOP. C-11 is COMPLETE and certified. Any follow-up starts as a new authorized
+task. The next production critical-path campaign is C-12 P1 PASSIVE PRODUCTION
+OBSERVATION, which is NOT authorized here.
 
 ## Files Changed
 
@@ -214,14 +211,28 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN, especially the Decision Log.
-3. Read the OpenSpec `audit.md` and `design.md`; the design reconciliation and
-   the eighteen-gate chain are COMPLETE — do not re-derive them.
-4. Inspect `git status` and the current SHA in the owned session worktree.
-5. Run `npm run typecheck` and `npm run hardening:check`.
-6. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete — with real evidence, never placeholders.
+Final substantive checkpoint: 787966061beb91de0002fd114ca04e488b44be48
+Final documentation checkpoint: 150dfccb010ddc0a8f006819ca44b8104c22b66e
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,141 total / 3,128 passed / 13 skipped / 0 failed;
+`SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0; `OWNER_PROVENANCE` 91 passed;
+`SYNTHETIC_CAMPAIGN` 366/366 with `deepContainmentLane: PROVEN` locally and
+`NOT_EXERCISED_BWRAP_UNAVAILABLE` in CI; 110 C-11 tests, all gate-registered;
+zero new skips; a 38-entry one-fault denial matrix over all eighteen gates with
+`receivedRequestCount === 0` on every pre-dispatch denial; a 16-entry PQ
+receipt tamper matrix; 22/22 hardening negative probes detected.
+Artifacts: `gate:local` receipt `receipt:sha256:2ff143e71ea8974847053723`;
+`gate:clean` inner `receipt:sha256:997ebf6461843448173e889d` and outer
+`clean-receipt:sha256:5b366dd9f3dd05eb8cdd41f6` with `siblingWrites: 0`;
+exact-head CI run 33665872548 / job 100367351818 at `150dfcc` with receipt
+`receipt:sha256:1d991b9a10d4cad618c0f533`.
+Known issues: none outstanding. DEF-C11-1 through DEF-C11-6 were introduced by
+this campaign and are all closed; two were found only by building the one-fault
+matrix, three only by negative probing, and one only by the clean Node 20 gate.
+Recommended next task: C-12 P1 PASSIVE PRODUCTION OBSERVATION, which requires a
+new explicit owner authorization after review of this evidence. C-11 grants no
+authority over real production.

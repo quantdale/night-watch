@@ -48,4 +48,4 @@
 - [x] Hardening rules for every C-11 invariant, each negative-probed.
 - [x] Zero-real-contact proofs, D-4 regression, C-06 unchanged.
 - [x] Validator proving every C-11 suite is gate-registered.
-- [ ] Full validation sequence, integration, exact-head CI.
+- [x] Full validation sequence, integration, exact-head CI.

@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-11 `PROD_OBSERVE` Safety Kernel
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-prod-observe-safety-kernel-c11-v1
 OpenSpec: openspec/changes/nightwatch-prod-observe-safety-kernel-c11-v1/
 Planned-From: 060fef41205b29210d9bd8416aca97c03b028e4f
@@ -122,3 +122,38 @@ PASS with all eleven groups; the worktree is clean; `origin/main` is
 synchronized; and the session is released.
 
 If any item fails, C-11 is reported incomplete and C-12 is NOT started.
+
+## Outcome
+
+COMPLETE. Every completion-gate condition holds. The `PROD_OBSERVE` kernel is
+implemented and qualified against MOCK production only, and it creates no
+production connectivity: the cone contains no network client, so it cannot
+contact anything even if every gate were bypassed.
+
+The historical "eleven gates" labelled `G0`-`G11` — twelve identifiers, with an
+acceptance criterion phrased as a COUNT — is replaced by
+`nightwatch.production-admission-chain.v1`, a versioned NAMED ordered chain of
+eighteen gates carrying a definition digest, with the mapping kept
+machine-checkable in source. A 38-entry one-fault denial matrix falsifies every
+gate individually, each denial proven network-side to leave the mock server's
+received-request count at ZERO. The positive synthetic path lands exactly one
+GET on loopback with budget reserved first and the one-shot grant CONSUMED.
+
+Certified by exact-head GitHub run `33665872548` / job `100367351818` at
+`150dfcc` on Node 20 with receipt `receipt:sha256:1d991b9a10d4cad618c0f533`,
+all eleven required groups PASS. Canonical regression 3,141 total / 3,128
+passed / 13 skipped / 0 failed; `gate:local` PASS; `gate:clean` PASS on Node 20
+with `siblingWrites: 0`; 22/22 hardening negative probes detected.
+
+Six defects introduced by this campaign — DEF-C11-1 through DEF-C11-6 — were
+found, repaired and reported. Two were caught only by building the one-fault
+matrix, three only by negative probing, and one only by the clean Node 20 gate.
+
+D-4 is intact, production remains ordinarily non-loadable,
+`KNOWN_PRODUCTION_HOSTS` stays deny-only and unreachable from the cone, C-06 is
+not weakened, and zero credentials were inspected.
+
+NEXT CRITICAL-PATH CAMPAIGN: C-12 P1 PASSIVE PRODUCTION OBSERVATION. It is NOT
+authorized and NOT started: it would be the first campaign involving real
+production observation and requires a new explicit owner authorization after
+review of the completed C-11 evidence.

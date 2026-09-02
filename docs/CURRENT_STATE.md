@@ -16,12 +16,12 @@
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
-> longer a zero-step platform block and is GREEN. R-11's certification run is
-> `33656654543` / job `100336766433` at `e11cf64`, which passed all eleven
-> required groups on Node 20 with receipt `receipt:sha256:e086ad8c508e9eeb3e40d24a`,
-> `SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0 and `SYNTHETIC_CAMPAIGN` 256/256.
-> C-10.5's earlier certification run `33635296271` at `29b9212` is preserved as
-> historical.
+> longer a zero-step platform block and is GREEN. C-11's certification run is
+> `33665872548` / job `100367351818` at `150dfcc`, which passed all eleven
+> required groups on Node 20 with receipt `receipt:sha256:1d991b9a10d4cad618c0f533`,
+> `SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0 and `SYNTHETIC_CAMPAIGN` 366/366.
+> R-11's run `33656654543` at `e11cf64` and C-10.5's `33635296271` at `29b9212`
+> are preserved as historical.
 ---
 
 ## What exists now
@@ -258,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 787966061beb91de0002fd114ca04e488b44be48
 LAST_LOCALLY_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
 LAST_CLEAN_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
-CI_OBSERVED_SHA: b8cd4e8353af70570dd2624c0a4bf031dab48049
-CI_EXECUTED_SHA: b8cd4e8353af70570dd2624c0a4bf031dab48049
-CI_STATUS: EXECUTED_FAIL
+CI_OBSERVED_SHA: 150dfccb010ddc0a8f006819ca44b8104c22b66e
+CI_EXECUTED_SHA: 150dfccb010ddc0a8f006819ca44b8104c22b66e
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -287,23 +287,26 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-prod-observe-safety-kernel-c11-v1
 LIVE_PHASE: PROD_OBSERVE_SAFETY_KERNEL_C11_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
 
-Run `33656654543` / job `100336766433` at
-`e11cf64a622dffb00b3d5aff4e31273051ee7935` passed on Node 20 with receipt
-`receipt:sha256:e086ad8c508e9eeb3e40d24a`. All eleven required groups PASS:
+Run `33665872548` / job `100367351818` at
+`150dfccb010ddc0a8f006819ca44b8104c22b66e` passed on Node 20 with receipt
+`receipt:sha256:1d991b9a10d4cad618c0f533`. All eleven required groups PASS:
 `SEMANTIC_COMPATIBILITY` 2,032 total / 2,019 passed / 13 skipped / 0 failed,
-`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 256 total / 256 passed /
+`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 366 total / 366 passed /
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
-`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass. This is R-11's
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass. This is C-11's
 certification.
+
+R-11's certification run `33656654543` / job `100336766433` at `e11cf64` is
+preserved as historical.
 
 C-10.5's certification is preserved below as historical.
 
@@ -337,9 +340,9 @@ certification of its substantive ancestor.
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `7879660` (C-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `7879660` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `7879660` |
-| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `b8cd4e8`, run `33665737015`, currently `EXECUTED_FAIL` |
+| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `150dfcc`, run `33665872548`, `EXECUTED_PASS` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
-| Latest observed exact-head run | the newest run observed WHEN THIS RECORD WAS WRITTEN — a historical observation, not a live claim | run `33657772689` / job `100340513895` at `cb4eabf`, PASS, all eleven groups |
+| Latest observed exact-head run | the newest run observed WHEN THIS RECORD WAS WRITTEN — a historical observation, not a live claim | run `33665872548` / job `100367351818` at `150dfcc`, PASS, all eleven groups |
 
 The commit RECORDING a receipt is necessarily a descendant of the commit the
 run certified, since a field cannot name the SHA of the commit containing it.

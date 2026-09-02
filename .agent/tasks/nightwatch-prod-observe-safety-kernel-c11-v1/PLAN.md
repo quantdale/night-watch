@@ -133,7 +133,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: all eleven required groups PASS at the exact head;
   canonical checkout clean; `origin/main` synchronized; `siblingWrites = 0`.
 - Validation commands: `node bin/nightwatch-session.mjs integrate`, `gh run view`
-- Status: NOT_STARTED
+- Status: DONE
 
 ## Validation Strategy
 
