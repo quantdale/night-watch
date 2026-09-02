@@ -57,7 +57,19 @@ import type { SourceOperationDescriptor, SourceOperationProjectionCompleteness }
 import { MockProductionServer, dispatchToMockProduction } from './support/mockProduction';
 
 const ROOT = path.resolve(__dirname, '../..');
-const WORKSPACE = path.resolve(ROOT, '..');
+/**
+ * A DEDICATED synthetic workspace root, not `path.resolve(ROOT, '..')`.
+ *
+ * Climbing one level from the repository is a guess about where the checkout
+ * sits, and it is false in the clean-checkout topology: that gate clones
+ * DIRECTLY into `os.tmpdir()`, so the inferred workspace root became `/tmp`
+ * and every disposable config in `/tmp` counted as "inside the workspace".
+ * Constructing both roots explicitly makes the fixture independent of where
+ * the checkout lives — the same lesson as R-11's DEF-R11-3.
+ */
+function syntheticWorkspaceRoot(): string {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c11-wsroot-'));
+}
 const SYNTHETIC_SHA = 'a'.repeat(40);
 /** Obvious synthetic sentinels. No real customer identifier appears anywhere. */
 const SENTINEL_HANDLE = `pph_${'1'.repeat(32)}`;
@@ -133,6 +145,7 @@ function derivedRouteVocabulary() {
 
 interface ExternalConfigHandle {
   readonly directory: string;
+  readonly workspaceRoot: string;
   readonly file: string;
   readonly config: ProdObserveConfig;
 }
@@ -146,6 +159,9 @@ function writeExternalConfig(options: {
   readonly contents?: string;
 }): ExternalConfigHandle {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c11-extcfg-'));
+  // Sibling directories: neither contains the other, so "outside the
+  // repository AND outside the workspace" is established by construction.
+  const workspaceRoot = syntheticWorkspaceRoot();
   const file = path.join(directory, 'prod-observe.v1.json');
   const contents = options.contents ?? JSON.stringify({
     schemaVersion: PROD_OBSERVE_CONFIG_SCHEMA,
@@ -157,11 +173,11 @@ function writeExternalConfig(options: {
   const loaded = loadProdObserveConfig({
     environment: { [PROD_OBSERVE_CONFIG_ENV]: file },
     repositoryRoot: ROOT,
-    workspaceRoot: WORKSPACE,
+    workspaceRoot,
     digest: sha24,
   });
   if (!loaded.ok) throw new Error(`C11_TEST_CONFIG_LOAD_FAILED:${loaded.failure}`);
-  return { directory, file, config: loaded.config };
+  return { directory, workspaceRoot, file, config: loaded.config };
 }
 
 const NOW = 1_760_000_000_000;
@@ -184,6 +200,7 @@ async function createHarness(): Promise<Harness> {
   const cleanup = async (): Promise<void> => {
     await server.stop();
     fs.rmSync(configHandle.directory, { recursive: true, force: true });
+    fs.rmSync(configHandle.workspaceRoot, { recursive: true, force: true });
     clearProdObserveGrantRegistryForTest();
   };
   const base = (): ProductionAdmissionInput => ({

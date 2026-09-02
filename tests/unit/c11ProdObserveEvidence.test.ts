@@ -42,7 +42,6 @@ import { SUPPORTED_ENVIRONMENTS } from '../../src/core/environment';
 import { KNOWN_PRODUCTION_HOSTS } from '../../src/core/safety/hosts';
 
 const ROOT = path.resolve(__dirname, '../..');
-const WORKSPACE = path.resolve(ROOT, '..');
 const NOW = 1_760_000_000_000;
 
 function sha24(canonical: string): string {
@@ -199,13 +198,25 @@ test.describe('C-11 the observation config is external-only', () => {
     observationWindow: { notBeforeMs: NOW - 1_000, notAfterMs: NOW + 1_000 },
   });
 
-  function load(file: string | undefined) {
-    return loadProdObserveConfig({
-      environment: file === undefined ? {} : { [PROD_OBSERVE_CONFIG_ENV]: file },
-      repositoryRoot: ROOT,
-      workspaceRoot: WORKSPACE,
-      digest: sha24,
-    });
+  /**
+   * The workspace root is a DEDICATED synthetic directory, never
+   * `path.resolve(ROOT, '..')`. Climbing from the repository is a guess about
+   * where the checkout sits, and the clean-checkout gate clones directly into
+   * `os.tmpdir()` — which made the inferred root `/tmp` and every disposable
+   * config "inside the workspace". Both roots are now explicit.
+   */
+  function load(file: string | undefined, workspaceRoot?: string) {
+    const synthetic = workspaceRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c11-wsroot-'));
+    try {
+      return loadProdObserveConfig({
+        environment: file === undefined ? {} : { [PROD_OBSERVE_CONFIG_ENV]: file },
+        repositoryRoot: ROOT,
+        workspaceRoot: synthetic,
+        digest: sha24,
+      });
+    } finally {
+      if (workspaceRoot === undefined) fs.rmSync(synthetic, { recursive: true, force: true });
+    }
   }
 
   test('a well-formed external config loads and yields a host allowlist', () => {
@@ -246,6 +257,21 @@ test.describe('C-11 the observation config is external-only', () => {
       if (!loaded.ok) expect(loaded.failure).toBe('CONFIG_INSIDE_REPOSITORY');
     } finally {
       fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('a config INSIDE the Alphaus workspace is refused', () => {
+    // The second containment rule from F-09, independent of the repository
+    // rule: a production host list must not sit anywhere in the workspace.
+    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-c11-wsroot-'));
+    try {
+      const inside = path.join(workspaceRoot, 'nested');
+      fs.mkdirSync(inside);
+      const loaded = load(write(inside, validContents), workspaceRoot);
+      expect(loaded.ok).toBe(false);
+      if (!loaded.ok) expect(loaded.failure).toBe('CONFIG_INSIDE_WORKSPACE');
+    } finally {
+      fs.rmSync(workspaceRoot, { recursive: true, force: true });
     }
   });
 
@@ -318,10 +344,12 @@ test.describe('C-11 the observation config is external-only', () => {
       'CONFIG_ENV_ABSENT', 'CONFIG_PATH_NOT_ABSOLUTE', 'CONFIG_PATH_TRAVERSAL', 'CONFIG_INSIDE_REPOSITORY',
       'CONFIG_NOT_FOUND', 'CONFIG_SYMLINK', 'CONFIG_NOT_REGULAR_FILE', 'CONFIG_MODE_NOT_OWNER_ONLY',
       'CONFIG_MALFORMED', 'CONFIG_SCHEMA_UNSUPPORTED', 'CONFIG_ALLOWLIST_EMPTY', 'CONFIG_ALLOWLIST_INVALID',
-      'CONFIG_WINDOW_INVALID',
+      'CONFIG_WINDOW_INVALID', 'CONFIG_INSIDE_WORKSPACE',
     ]);
     const unexercised = CONFIG_INTEGRITY_FAILURES.filter((failure) => !exercised.has(failure));
-    expect(unexercised).toEqual(['CONFIG_INSIDE_WORKSPACE', 'CONFIG_UNREADABLE']);
+    // Only the unreadable-file code needs a condition this suite cannot create
+    // portably, so the vocabulary has no other silently untested member.
+    expect(unexercised).toEqual(['CONFIG_UNREADABLE']);
   });
 });
 
