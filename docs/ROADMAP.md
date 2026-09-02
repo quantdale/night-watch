@@ -2773,8 +2773,47 @@ rather than runner topology and could not have caught either defect. Exact-head
 GitHub execution is the only authority for that class. A CI-topology clean gate
 is deferred follow-up work.
 
-The next critical-path campaign after this one is C-10, the production privacy
-firewall. It is unchanged by this repair and remains `NOT_AUTHORIZED` until it
+The next critical-path campaign after this one was C-10, the production privacy
+firewall, which is now IMPLEMENTED (see below).
+
+## C-10 production privacy firewall (implemented)
+
+C-10 makes raw production and customer data structurally incapable of reaching
+persistent Nightwatch artifacts. The primary boundary is an allowlisted
+structural projection whose persistence API cannot accept a raw value;
+redaction remains defence in depth only. See D-112, D-113 and D-114, and
+`openspec/changes/nightwatch-production-privacy-firewall-c10-v1/`.
+
+Resolved independent-review findings:
+
+- **F-14** — object key literals are data. A literal crosses the production
+  boundary only as a proven member of a source-proven finite key vocabulary; an
+  unproven key yields bounded cardinality and its value's structure, never the
+  literal and never a digest of it.
+- **F-15** — two type-distinct digest concepts. `prodstruct:sha256:` is
+  value-free, unsalted and cross-campaign comparable; no durable value-derived
+  digest exists at all.
+- **F-16** — the parameter-provenance PRIVACY MODEL only: opaque handles in
+  Nightwatch state, values owner-supplied and external-only, route-template URL
+  identity. No production request execution path was created.
+- **F-17** — ephemeral private browser profiles with cache and crash dumps
+  disabled, normal-exit and crash-path cleanup, and profile residue in the
+  persistence audit.
+- **F-18** — the Control Center findings authority is structurally excluded
+  from the production store by resolved-path equivalence, on every construction
+  route including the test-only seam.
+
+The two cones are separated by CAPABILITY, not convention:
+`src/core/prodPrivacy/**` is import-isolated with no filesystem, network,
+process or publication authority (enforced by `hardening:check`), while
+`src/core/prodEvidence/**` holds persistence and accepts only the approved DTO,
+re-validated by an independent firewall at the durable write.
+
+**C-10 does NOT authorize production observation.** It creates the privacy
+prerequisite for the later production kernel. The production critical path
+remains C-11 → C-12 → C-13 → C-14, and C-11 must still independently implement
+and prove the separate `PROD_OBSERVE` safety kernel and its ordered request
+gates against mock/synthetic production. C-11 remains `NOT_AUTHORIZED` until it
 receives its own explicit one-shot owner authorization.
 
 This plan is orthogonal to `docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md`, which

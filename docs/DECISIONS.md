@@ -4234,3 +4234,105 @@ tokens have any representation; a malformed value is DROPPED rather than
 sanitized. Source contents, assertion values, secrets, customer data, raw
 response bodies, environment values, credentials and arbitrary child stderr
 cannot pass through by accident, and no raw output is ever persisted.
+
+## D-112 — the production privacy boundary is an allowlisted structural projection, and object key names are data
+
+The existing boundary is a denylist: `RedactionLayer` scrubs known-sensitive
+headers, query parameters and registered secret values after observation (D-6),
+and `assertPrivatePayload` sentinel-screens at the store. That is adequate for
+DEV fixtures and wrong in KIND for production, where the sensitive material is
+ordinary-looking business values — an account id, an invoice number, a cost
+figure, a company name. A denylist cannot enumerate those.
+
+Decision (C-10): the primary production boundary is an allowlisted structural
+projection whose persistence API cannot accept a raw value. Redaction remains
+defence in depth and is never the primary boundary. An `UNKNOWN` privacy
+classification DENIES persistence.
+
+Decision (F-14): an object KEY LITERAL is data, not metadata. In this domain
+objects are routinely keyed by AWS account id, MSP id, billing-group id, payer
+id or company name — Nightwatch's own `EMPTY_ARRAY_OR_STRING_KEYS` extractor
+exists because dynamic string keys occur in Ripple responses. A key literal may
+cross the production boundary ONLY as a proven member of a source-proven finite
+key vocabulary carrying a provenance class and an `ev:sha256` provenance
+digest. A syntactically ordinary field name is NOT proof, and a regular
+expression over key names is never accepted as proof. An unproven key
+contributes bounded cardinality and its value's structure only — never the
+literal, and never a digest derived from it, because a digest over an
+enumerable domain (a 12-digit account id, a `YYYYMM` period) is invertible by
+enumeration and is not anonymization.
+
+Decision: the Phase 9 DEV projection `nightwatch.semantic-projection.v1` is
+RETAINED UNCHANGED as the DEV projection. It is load-bearing for Phase
+9/9A.1/10/10A admission, `semanticStateEquals`, path-based expectations,
+`TYPE_IN_SET` and the PHP row-key contracts. C-10 adds the versioned production
+sibling `nightwatch.production-projection.v1` rather than rewriting it, and
+re-scopes the DEV key-literal allowance in place as explicitly DEV-only.
+
+## D-113 — two digest families, and no durable value digest at all
+
+`design.md §6.2/§6.4` of the production-observability master plan specify a
+digest "salted per-campaign, never persisted", while `§9.4` requires
+cross-campaign structural comparison for new-deployment detection. Independent
+review F-15 (with MA-11 and UA-11) identifies this as a direct internal
+contradiction: both cannot hold with one family.
+
+Decision: the master-plan text is SUPERSEDED, not silently contradicted. Per
+the AGENTS.md precedence rule the disagreement is recorded here and in the C-10
+OpenSpec change rather than reconciled in silence.
+
+Decision: `prodstruct:sha256:<24>` is the STRUCTURAL family — computed only from
+privacy-approved structural information (node types, shape, cardinality,
+key-provenance classification and source-proven key literals), unsalted,
+deterministic, stable across runs and environments, comparable across
+campaigns, and persistable. It is safe precisely because the canonical bytes it
+hashes contain no value and no unproven key literal. A NUMBER serializes as
+type alone, so a monetary amount is indistinguishable from a count.
+
+Decision: NO durable value-derived digest exists in the production persistence
+contract. Nothing in C-10 required durable value correlation, so the concept is
+REMOVED rather than invented, and the policy object records
+`durableValueDigest: 'ABSENT'`. Correlation within one in-memory analysis uses
+encounter-ORDER tokens that are never persisted and never digested, so there is
+no salt to persist and no low-entropy value hash to invert. The two concepts
+are type-distinct and the persistence firewall refuses the DEV `proj:sha256:`
+family by name.
+
+## D-114 — the production store is a separate root, and the Control Center is structurally excluded from it
+
+`createFindingsAuthority()` defaults to `.nightwatch/findings`, so a separate
+production store is not read today. Independent review F-18: that is correct by
+ACCIDENT, not by construction. The Control Center is a localhost HTTP server
+reachable by any local process, and `Host`/`Origin` validation is not an
+authorization boundary against local software.
+
+Decision: production findings live in `$HOME/.nightwatch/prod-findings/` — a
+separate namespace with its own policy identity, mode 0700 directories and 0600
+files, symlink refusal at every path component, repository and workspace
+exclusion, atomic writes and bounded file counts. The DEV findings root is
+never reused.
+
+Decision: the Control Center findings authority may NEVER resolve the
+production store, enforced by RESOLVED PATH EQUIVALENCE — `realpath` followed
+by containment tested in both directions, so neither the production root nor
+any ancestor of it can be handed to the authority — applied on every
+construction route INCLUDING the test-only seam, so a seam cannot become
+production authority. A hardening rule prevents reintroduction. Normal DEV
+findings continue to work unchanged.
+
+Decision: production page console text may never persist; the production cone
+emits categorical console events with no field a page-provided string could
+occupy. Production screenshots and Playwright traces are contract failures: the
+versioned policy object cannot be constructed with either enabled. Policy
+differences between DEV and production live in that one fail-closed capability
+object, never as environment checks scattered through the code.
+
+Decision (F-16): future request-parameter values are owner-supplied and stored
+external-only; Nightwatch state holds an OPAQUE HANDLE and never the value, and
+retained URL identity is a route template. C-10 supplies the privacy model,
+validators and synthetic proof ONLY, and deliberately creates no production
+request execution path.
+
+C-10 completing does NOT authorize production observation. It creates the
+privacy prerequisite for the later production kernel; the critical path remains
+C-11 → C-12 → C-13 → C-14.
