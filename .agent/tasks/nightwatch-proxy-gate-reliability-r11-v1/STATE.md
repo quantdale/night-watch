@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-proxy-gate-reliability-r11-v1
 Phase: PROXY_GATE_RELIABILITY_R11_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
 Last validated implementation SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 Last substantive checkpoint SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-proxy-gate-reliabilit-6e648bc4
-Last checkpoint: 2026-09-02 — M1 through M7 closed. OBS-C105-1 reproduced and repaired; 20 deterministic adversarial lease cases plus a real-OS-TCP integration case green; bounded stress campaign green; durable confined atomic gate receipts wired into both gates with 30 adversarial cases; 29/29 hardening negative probes detected after repairing DEF-R11-1 and DEF-R11-2; Stage-A documentation truth and the obsolete T-30/T-41/T-42 digest semantics reconciled. The clean Node 20 gate then reproducibly falsified three defects in R-11's OWN new tests (DEF-R11-3/4/5), all repaired. Substantive checkpoint 200221c
+Last checkpoint: exact-head GitHub run 33656654543 / job 100336766433 at e11cf64 passed all eleven required groups on Node 20 with receipt receipt:sha256:e086ad8c508e9eeb3e40d24a; gate:local PASS and gate:clean PASS twice with identical inner receipts; canonical regression 3,032/3,019/13/0; substantive checkpoint 200221c
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PROXY_GATE_RELIABILITY_R11_V1_STATUS: IN_PROGRESS
+PHASE_PROXY_GATE_RELIABILITY_R11_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -30,12 +30,11 @@ information and whose failures remain attributable.
 
 ## Current Milestone
 
-Milestone ID: M8
-Milestone status: IN_PROGRESS
-What is being attempted: the full R-11 validation sequence — `gate:local`, the
-complete canonical regression, and repeated independent `gate:clean`
-invocations in the clean Node 20 topology, plus a deliberately induced real
-TEST_FAILURE gate run to prove failure-receipt persistence end to end.
+COMPLETE / STOP — M1 through M9 are closed. OBS-C105-1 is reproduced and
+repaired, gate receipts are durable, and R-11 is certified by exact-head CI run
+33656654543 / job 100336766433 at `e11cf64` with all eleven required groups
+PASS. C-11 `PROD_OBSERVE` is NOT started here and requires its own separately
+recorded task.
 
 ## Completed Milestones
 
@@ -116,17 +115,14 @@ TEST_FAILURE gate run to prove failure-receipt persistence end to end.
 
 ## Work In Progress
 
-M2 has not begun editing `src/proxy/portLease.ts`. The reproduction harness
-lives in the session scratchpad only and is not a repository artifact.
+NONE.
 
 ## Exact Next Action
 
-Edit `src/proxy/portLease.ts`: add pure `proxyPortCandidates(preferred)`,
-factor the allocation loop into a module-private core taking an
-`available: (port: number) => boolean` predicate, keep `reserveProxyPortLease`
-binding `portAvailable` with no substitutable parameter, add
-`reserveProxyPortLeaseWithAvailabilityForTest` branded `TEST ONLY`, and add the
-`candidateOffset` / `preferredOutcome` fields to `ProxyPortLease`.
+STOP. R-11 is COMPLETE and certified by exact-head CI run 33656654543 / job
+100336766433 at `e11cf64` with all eleven required groups PASS. Any follow-up
+starts as a new authorized task; the next authorized campaign is C-11
+`PROD_OBSERVE`, which requires its own task, OpenSpec change and audit trail.
 
 ## Files Changed
 
@@ -312,14 +308,25 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.
-2. Read PLAN, especially the Decision Log.
-3. Read the OpenSpec `audit.md`; OBS-C105-1 is already reproduced — do not
-   rediscover it.
-4. Inspect `git status` and the current SHA in the owned session worktree.
-5. Run `npx playwright test tests/unit/phase24ProxyLifecycle.test.ts tests/unit/phase23PortLease.test.ts --project=nightwatch --workers=1`.
-6. Continue Exact Next Action.
+Task complete. Do not resume; any follow-up starts as a new authorized task.
 
 ## Completion Snapshot
 
-Populate only when complete — with real evidence, never placeholders.
+Final substantive checkpoint: 200221cf6c80fbab7f463680c44086e231bc034c
+Final documentation checkpoint: e11cf64a622dffb00b3d5aff4e31273051ee7935
+Live HEAD: DISCOVER_FROM_GIT
+Tests: canonical regression 3,032 total / 3,019 passed / 13 skipped / 0 failed;
+`SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0; `OWNER_PROVENANCE` 91 passed;
+`SYNTHETIC_CAMPAIGN` 256/256 with `deepContainmentLane: PROVEN` locally and
+`NOT_EXERCISED_BWRAP_UNAVAILABLE` in CI; 57 new tests over C-10.5 with zero new
+skips; 29/29 hardening negative probes detected.
+Artifacts: `gate:local` receipt `receipt:sha256:b772ac7c8076752bd4539d77`;
+`gate:clean` twice, both inner `receipt:sha256:e9621d43adff5cdf6204235c` and
+outer `clean-receipt:sha256:d0b62a77e5ad0f8e1ba9c1de`, `siblingWrites: 0`;
+exact-head CI run 33656654543 / job 100336766433 at `e11cf64` with receipt
+`receipt:sha256:e086ad8c508e9eeb3e40d24a`, all eleven required groups PASS.
+Known issues: none outstanding. DEF-R11-1 through DEF-R11-5 were introduced by
+this campaign and are all closed; two were found only by negative probing and
+three only by the clean Node 20 gate.
+Recommended next task: C-11 `PROD_OBSERVE` safety kernel, as its own task with
+its own OpenSpec change. R-11 grants no production connectivity.

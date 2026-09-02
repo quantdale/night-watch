@@ -16,11 +16,12 @@
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
-> longer a zero-step platform block and is GREEN. C-10.5's certification run is
-> `33635296271` at `29b9212`, which passed all eleven required groups on Node 20
-> with receipt `receipt:sha256:d64ef703c328a4d10d7e86f3` and
-> `SYNTHETIC_CAMPAIGN` 256/256. The LATEST OBSERVED exact-head run is
-> `33637832941` / job `100273053129` at `c423e33`, also green on Node 20.
+> longer a zero-step platform block and is GREEN. R-11's certification run is
+> `33656654543` / job `100336766433` at `e11cf64`, which passed all eleven
+> required groups on Node 20 with receipt `receipt:sha256:e086ad8c508e9eeb3e40d24a`,
+> `SEMANTIC_COMPATIBILITY` 2,032/2,019/13/0 and `SYNTHETIC_CAMPAIGN` 256/256.
+> C-10.5's earlier certification run `33635296271` at `29b9212` is preserved as
+> historical.
 ---
 
 ## What exists now
@@ -257,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 LAST_LOCALLY_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
 LAST_CLEAN_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
-CI_OBSERVED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
-CI_EXECUTED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
-CI_STATUS: EXECUTED_FAIL
+CI_OBSERVED_SHA: e11cf64a622dffb00b3d5aff4e31273051ee7935
+CI_EXECUTED_SHA: e11cf64a622dffb00b3d5aff4e31273051ee7935
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -286,22 +287,30 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-proxy-gate-reliability-r11-v1
 LIVE_PHASE: PROXY_GATE_RELIABILITY_R11_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
 ### Exact-head CI is green (current live CI state)
 
-Run `33635296271` / job `100268250381` at
-`29b921256ea09199d2cfe5f373737f2e42967ea9` passed on Node 20 with receipt
-`receipt:sha256:d64ef703c328a4d10d7e86f3`. All eleven required groups PASS:
-`SEMANTIC_COMPATIBILITY` 1,975 total / 1,962 passed / 13 skipped / 0 failed,
+Run `33656654543` / job `100336766433` at
+`e11cf64a622dffb00b3d5aff4e31273051ee7935` passed on Node 20 with receipt
+`receipt:sha256:e086ad8c508e9eeb3e40d24a`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 2,032 total / 2,019 passed / 13 skipped / 0 failed,
 `OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 256 total / 256 passed /
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
-`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass.
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass. This is R-11's
+certification.
+
+C-10.5's certification is preserved below as historical.
+
+Run `33635296271` / job `100268250381` at
+`29b921256ea09199d2cfe5f373737f2e42967ea9` passed on Node 20 with receipt
+`receipt:sha256:d64ef703c328a4d10d7e86f3`, all eleven required groups PASS,
+`SEMANTIC_COMPATIBILITY` 1,975 total / 1,962 passed / 13 skipped / 0 failed.
 
 This is the C-10.5 completion certification. It was the exact head of `main`
 when the run executed; it is NO LONGER the head, because two documentation
@@ -328,7 +337,7 @@ certification of its substantive ancestor.
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `200221c` (R-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `65d976d` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
-| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `2a64369`, run `33653818653`, currently `EXECUTED_FAIL` |
+| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `e11cf64`, run `33656654543`, `EXECUTED_PASS` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
 | Latest observed exact-head run | the newest run whose `headSha` equalled the then-current head | run `33637832941` at `c423e33` |
 
@@ -380,7 +389,7 @@ Both clean invocations produced the SAME inner receipt digest, so the clean
 gate's result is reproducible rather than sampled — which is the property
 OBS-C105-1 destroyed.
 
-### Why the CI anchor currently records a FAILURE, and how the sequence terminates
+### Why two CI anchors recorded a FAILURE on the way here, and how the sequence terminated
 
 Two exact-head runs failed this way, both for the same reason and neither
 because of a defect in the code under test:
@@ -392,9 +401,16 @@ because of a defect in the code under test:
 
 In both cases the seven later groups are `NOT_RUN`, and `project:check`
 correctly refused a baseline whose CI evidence predated the implementation it
-claimed to cover. Recording the result as `EXECUTED_FAIL` is what makes the
-block self-consistent again, and it is the honest record: the runs happened and
-they failed.
+claimed to cover. Recording each result as `EXECUTED_FAIL` in turn is what made
+the block self-consistent again, and it is the honest record: the runs happened
+and they failed.
+
+The sequence then terminated exactly as predicted. Once the block named
+`2a64369`, `project:check` passed, the local and clean gates passed at
+`65d976d`, and their anchors advanced. Run `33656654543` at `e11cf64` then
+passed all eleven groups, and this commit records it. This commit is a
+documentation-only descendant, so it invalidates nothing it records — there is
+no further step.
 
 The sequence terminates rather than regressing forever, because a
 documentation-only descendant does not invalidate the anchors it records:

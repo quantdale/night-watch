@@ -153,7 +153,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
 - Acceptance criteria: full canonical regression zero failures; no new skips;
   `gate:local` and `gate:clean` PASS.
 - Validation commands: the R-11 validation sequence in full.
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M9 — Integration and exact-head CI
 
@@ -162,7 +162,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
 - Acceptance criteria: all eleven required groups PASS at the exact head;
   canonical checkout clean; `origin/main` synchronized; `siblingWrites = 0`.
 - Validation commands: `node bin/nightwatch-session.mjs integrate`, `gh run view`
-- Status: NOT_STARTED
+- Status: DONE
 
 ## Validation Strategy
 

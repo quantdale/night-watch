@@ -1,7 +1,7 @@
 # R-11 Proxy/Gate Reliability Closure — Report
 
 - Starting SHA: `c423e33e3384dd3ec34bfd4e9d57d863f58bc190`
-- Resulting SHA: Live HEAD: DISCOVER_FROM_GIT
+- Resulting SHA: substantive `200221cf6c80fbab7f463680c44086e231bc034c`; CI-certified documentation checkpoint `e11cf64a622dffb00b3d5aff4e31273051ee7935`; Live HEAD: DISCOVER_FROM_GIT
 - Task objective: close the two pre-existing reliability defects recorded as
   `OBS-C105-1`, so the C-11 `PROD_OBSERVE` safety kernel can be certified by a
   gate whose red/green result carries information and whose failures stay
@@ -10,7 +10,7 @@
 - Remaining blockers: none.
 - Recommended next phase/task: C-11 `PROD_OBSERVE` safety kernel.
 
-Status: IN_PROGRESS
+Status: COMPLETE
 
 ---
 
@@ -242,6 +242,40 @@ channel failure directly: stdout is polluted with noise and a forged PASS
 receipt, scraping yields the forgery, and reading the file the gate wrote still
 yields the truth.
 
+## 11. Local, clean and CI receipts
+
+| Gate | Result | Receipt |
+| --- | --- | --- |
+| `gate:local` at `65d976d` | PASS, eleven groups, Node 22 | `receipt:sha256:b772ac7c8076752bd4539d77` |
+| `gate:clean` at `65d976d`, invocation 1 | PASS, eleven groups, Node 20, `siblingWrites: 0` | inner `receipt:sha256:e9621d43adff5cdf6204235c`, outer `clean-receipt:sha256:d0b62a77e5ad0f8e1ba9c1de` |
+| `gate:clean` at `65d976d`, invocation 2 | PASS, eleven groups, Node 20, `siblingWrites: 0` | IDENTICAL to invocation 1 |
+| Exact-head CI, run `33656654543` / job `100336766433` at `e11cf64` | PASS, eleven groups, Node 20, `environmentClass: CI` | `receipt:sha256:e086ad8c508e9eeb3e40d24a` |
+
+Both clean invocations produced the SAME inner receipt digest. That is the
+property OBS-C105-1 destroyed and the one R-11 exists to restore: the clean
+gate's result is now reproducible rather than sampled.
+
+`gateReceiptSource: STRUCTURED_FILE` on both clean runs, with
+`gateReceiptStdoutDigest` equal to `gateReceiptDigest`, so the wrapper consumed
+the file the gate wrote and confirmed stdout agreed — the scraping path is gone.
+
+The containment lane is `PROVEN` locally and
+`NOT_EXERCISED_BWRAP_UNAVAILABLE` in CI. The GitHub runner cannot provide a
+rootless containment envelope, the receipt says so, and the gate still REQUIRES
+`PROVEN` in the `local`, `clean` and `predev` modes. No coverage was traded for
+a green baseline.
+
+**Every attempt is recorded, including the failures.** Two exact-head runs
+failed before this one — `33649946137` at `3c4756c` and `33653818653` at
+`2a64369` — each on `PROJECT_TRUTH` alone, and both because the CI anchor
+predated the validated implementation rather than because of any defect in the
+code under test. One `gate:local` run failed on `PATCH_INTEGRITY` and one on
+`HANDOFF_TRUTH`; two `gate:clean` runs failed reproducibly on
+`SEMANTIC_COMPATIBILITY` (which found DEF-R11-3/4/5); and one pair of
+`gate:clean` runs was void with `ENVIRONMENT_MISMATCH` because the report was
+being edited while they ran, which dirtied the source checkout. No failure was
+re-run into a pass: each was diagnosed and its cause repaired or recorded.
+
 ## 12. Regression totals
 
 | Measure | Before (C-10.5) | After (R-11) |
@@ -274,6 +308,48 @@ No runner retry is configured anywhere in the repository.
 DEF-R11-1 through DEF-R11-5 were introduced by this campaign and are reported
 rather than quietly fixed. Two were found only by negative probing and three
 only by the clean Node 20 gate — none by review.
+
+## 13. Final R-11 SHA
+
+- Substantive implementation: `200221cf6c80fbab7f463680c44086e231bc034c`
+- Local and clean validation checkpoint: `65d976db73f5e760cf30122a90007756905c987a`
+- CI certification checkpoint: `e11cf64a622dffb00b3d5aff4e31273051ee7935`,
+  run `33656654543` / job `100336766433`, all eleven required groups PASS
+
+The commit RECORDING these values is necessarily a descendant of the commit the
+run certified, since a field cannot name the SHA of the commit containing it.
+It is a documentation-only descendant, so it invalidates nothing it records.
+
+## Completion gate
+
+| Condition | Result |
+| --- | --- |
+| OBS-C105-1 reproduced or disproved | PASS — reproduced deterministically AND end-to-end with the exact recorded `failedLocations` value |
+| root cause established with evidence | PASS — correct allocator, over-strong test, probabilistic input |
+| test invariant matches allocator contract | PASS — named outcome plus candidate-set membership |
+| no probabilistic port-selection assumption remains | PASS — enforced by a hardening rule that bans `process.pid`, `Math.random()` and `Date.now()`-derived ports in proxy tests, negative-probed twice |
+| occupied-port advancement explicitly tested | PASS — simulated and against real OS TCP |
+| orphan reclaim explicitly tested | PASS — SIGKILL, SIGTERM, SIGINT, each in both endpoint states |
+| real allocator safety preserved | PASS — nine properties, six hardening-enforced |
+| deterministic adversarial port tests green | PASS — 20 cases |
+| stress evidence green | PASS — exact counts recorded |
+| gate receipts durable | PASS — confined, atomic, digest-identical, failures included |
+| failing group cannot be destroyed by output filtering | PASS — proven by a test that pollutes stdout with a forged PASS receipt |
+| receipt persistence privacy-safe | PASS — allowlisted content only; confined outside the repository |
+| full regression 0 failures | PASS — 3,032 / 3,019 / 13 / 0 |
+| no test skipped | PASS — 13 before, 13 after; DEF-R11-4 was a new skip and was removed |
+| no retry added | PASS — no runner retry anywhere |
+| no timeout inflation | PASS — correctness now rests on observable readiness events; remaining bounds are documented liveness guards and no assertion depends on elapsed time |
+| local gate PASS | PASS |
+| clean Node 20 gate PASS | PASS, twice, identical receipts |
+| exact-head Actions PASS | PASS — run `33656654543` |
+| all eleven required groups PASS | PASS |
+| canonical checkout clean | PASS |
+| `origin/main` synchronized | PASS |
+| `siblingWrites = 0` | PASS |
+
+Every condition holds, so C-11 `PROD_OBSERVE` is authorized to begin as its own
+separately auditable task. R-11 grants no production connectivity.
 
 ## Negative hardening probes
 

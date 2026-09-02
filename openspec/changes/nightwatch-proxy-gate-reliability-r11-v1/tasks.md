@@ -57,9 +57,9 @@
 
 ## R6 — Registration and validation
 
-- [ ] Register every new suite in the semantic-compatibility manifest and, where
+- [x] Register every new suite in the semantic-compatibility manifest and, where
       applicable, the synthetic-campaign manifest; prove gate membership.
-- [ ] Full validation sequence, repeated runs of the previously flaky suite in
+- [x] Full validation sequence, repeated runs of the previously flaky suite in
       both local and clean Node 20 topologies, no runner retries.
-- [ ] Integrate through C-00; obtain exact-head GitHub Actions with all eleven
+- [x] Integrate through C-00; obtain exact-head GitHub Actions with all eleven
       required groups PASS.

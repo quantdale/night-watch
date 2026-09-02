@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — R-11 Proxy/Gate Reliability Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-proxy-gate-reliability-r11-v1
 OpenSpec: openspec/changes/nightwatch-proxy-gate-reliability-r11-v1/
 Planned-From: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
@@ -107,3 +107,28 @@ Node 20 gate PASS; exact-head Actions PASS with all eleven required groups; the
 canonical checkout clean; `origin/main` synchronized; `siblingWrites = 0`.
 
 If any item fails, R-11 is reported incomplete and C-11 is NOT started.
+
+## Outcome
+
+COMPLETE. Every completion-gate condition holds. OBS-C105-1 was reproduced
+deterministically and end-to-end — reproducing the exact `failedLocations`
+value the CI receipt had recorded — and closed by correcting the test invariant
+rather than the allocator, whose behaviour is unchanged. Gate receipts are
+confined, atomic, digest-identical and persisted for failures as well as
+passes, and the clean-checkout wrapper consumes the structured file instead of
+scraping stdout. Stage-A documentation truth and the obsolete T-30/T-41/T-42
+digest semantics are reconciled to D-113.
+
+Certified by exact-head GitHub run `33656654543` / job `100336766433` at
+`e11cf64` on Node 20 with receipt `receipt:sha256:e086ad8c508e9eeb3e40d24a`,
+all eleven required groups PASS. Canonical regression 3,032 total / 3,019
+passed / 13 skipped / 0 failed; `gate:local` PASS; `gate:clean` PASS twice as
+independent invocations with identical inner receipts and `siblingWrites: 0`;
+29/29 hardening negative probes detected.
+
+Five defects introduced by this campaign — DEF-R11-1 through DEF-R11-5 — were
+found, repaired and reported rather than folded away. Two were caught only by
+negative probing and three only by the clean Node 20 gate.
+
+C-11 `PROD_OBSERVE` is authorized to begin as its own separately auditable
+task. R-11 grants no production connectivity.
