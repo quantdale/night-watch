@@ -258,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
 LAST_LOCALLY_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
 LAST_CLEAN_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
-CI_OBSERVED_SHA: e11cf64a622dffb00b3d5aff4e31273051ee7935
-CI_EXECUTED_SHA: e11cf64a622dffb00b3d5aff4e31273051ee7935
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: 77f3ac96c0de5846abcc0603ee3f83c97c632317
+CI_EXECUTED_SHA: 77f3ac96c0de5846abcc0603ee3f83c97c632317
+CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -337,7 +337,7 @@ certification of its substantive ancestor.
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `aa5d1e6` (C-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `65d976d` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
-| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `e11cf64`, run `33656654543`, `EXECUTED_PASS` |
+| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `77f3ac9`, run `33663495218`, currently `EXECUTED_FAIL` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
 | Latest observed exact-head run | the newest run observed WHEN THIS RECORD WAS WRITTEN — a historical observation, not a live claim | run `33657772689` / job `100340513895` at `cb4eabf`, PASS, all eleven groups |
 
@@ -411,6 +411,7 @@ because of a defect in the code under test:
 | --- | --- | --- | --- |
 | `33649946137` | `3c4756c` | `PROJECT_TRUTH` | the baseline named C-10.5's CI checkpoint `29b9212` while the validated implementation had advanced to R-11's `22a2928` |
 | `33653818653` | `2a64369` | `PROJECT_TRUTH` | the baseline named `3c4756c` while the validated implementation had advanced again to `200221c`, after the DEF-R11-3/4/5 repairs changed tests |
+| `33663495218` | `77f3ac9` | `PROJECT_TRUTH` | the same constraint at C-11's opening: the baseline named R-11's `e11cf64` while the validated implementation had advanced to C-11's `aa5d1e6` |
 
 In both cases the seven later groups are `NOT_RUN`, and `project:check`
 correctly refused a baseline whose CI evidence predated the implementation it
