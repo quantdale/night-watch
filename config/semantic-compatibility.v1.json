@@ -1,6 +1,9 @@
 {
   "schemaVersion": "nightwatch.semantic-compatibility.v1",
-  "requiredPhaseRange": { "first": 9, "last": 26 },
+  "requiredPhaseRange": {
+    "first": 9,
+    "last": 26
+  },
   "execution": {
     "project": "nightwatch",
     "workers": 1,
@@ -8,34 +11,238 @@
     "expectedSkipPolicy": "only canonical skip identities may skip"
   },
   "phaseSuites": [
-    { "phase": 9, "files": [
-      "tests/unit/oracleCeilingReproduction.test.ts", "tests/unit/oracleProjection.test.ts", "tests/unit/oracleExpectation.test.ts", "tests/unit/oracleExpectationRealSource.test.ts", "tests/unit/oracleInvariant.test.ts", "tests/unit/oraclePrecision.test.ts", "tests/unit/semanticSentinel.test.ts", "tests/unit/semanticIntegration.test.ts", "tests/unit/semanticCampaign.test.ts"
-    ] },
-    { "phase": 9.1, "files": [
-      "tests/unit/phase9a1GapReproduction.test.ts", "tests/unit/realSourceExtraction.test.ts", "tests/unit/realSourceRecipeValidation.test.ts", "tests/unit/realSourceAdmission.test.ts", "tests/unit/realSourceCurrentness.test.ts", "tests/unit/semanticReceipt.test.ts", "tests/unit/semanticReceiptSentinel.test.ts", "tests/unit/realSourceConformingMutation.test.ts", "tests/unit/observerSemanticLedger.test.ts", "tests/unit/realSourceCanary.test.ts"
-    ] },
-    { "phase": 9.2, "files": ["tests/unit/phase9bFreshness.test.ts", "tests/unit/phase9bHarness.test.ts"] },
-    { "phase": 10, "files": [
-      "tests/unit/phase10TypeFlowExtraction.test.ts", "tests/unit/phase10RecipeValidation.test.ts", "tests/unit/phase10Admission.test.ts", "tests/unit/phase10TypeInSetInvariant.test.ts", "tests/unit/phase10CorpusPrecision.test.ts", "tests/unit/phase10Privacy.test.ts", "tests/unit/phase10Currentness.test.ts", "tests/unit/phase10Identity.test.ts", "tests/unit/phase10Campaign.test.ts", "tests/unit/phase10Canary.test.ts"
-    ] },
-    { "phase": 10.2, "files": ["tests/unit/phase10bHarness.test.ts"] },
-    { "phase": 11, "files": ["tests/unit/phase11CollectionWide.test.ts"] },
-    { "phase": 11.3, "files": ["tests/unit/phase11a3CollectionAdmission.test.ts"] },
-    { "phase": 12, "files": ["tests/unit/phase12CoverageInventory.test.ts", "tests/unit/phase12SemanticCluster.test.ts", "tests/unit/phase12SemanticTriage.test.ts", "tests/unit/phase12YieldBacktest.test.ts"] },
-    { "phase": 13, "files": ["tests/unit/phase13Shadow.test.ts"] },
-    { "phase": 14, "files": ["tests/unit/phase14Analyzer.test.ts", "tests/unit/phase14ContractDrift.test.ts", "tests/unit/phase14ContractReport.test.ts", "tests/unit/phase14CoverageInventory.test.ts", "tests/unit/phase14FreshSourceAdmission.test.ts", "tests/unit/phase14StaticSchemaAdapters.test.ts"] },
-    { "phase": 15, "files": ["tests/unit/phase15CampaignIntegratedProof.test.ts", "tests/unit/phase15CampaignTriageIntegration.test.ts", "tests/unit/phase15CanonicalDigestIdentity.test.ts", "tests/unit/phase15CheckpointCompat.test.ts", "tests/unit/phase15ContractLifecycleRegistry.test.ts", "tests/unit/phase15ContractMigrationMap.test.ts", "tests/unit/phase15ContractResultVocabulary.test.ts", "tests/unit/phase15ContractSchemaValidation.test.ts", "tests/unit/phase15MinimizationEvidence.test.ts", "tests/unit/phase15PromotionAuthority.test.ts", "tests/unit/phase15SourceContractResolution.test.ts", "tests/unit/phase15pAdversarialCorpus.test.ts", "tests/unit/phase15pArtifactValidation.test.ts", "tests/unit/phase15pCandidateLifecycleGates.test.ts", "tests/unit/phase15pCheckpointDrift.test.ts", "tests/unit/phase15pCompatConvergence.test.ts", "tests/unit/phase15pContractLifecycle.test.ts", "tests/unit/phase15pCurrentnessDrift.test.ts", "tests/unit/phase15pLocalReadiness.test.ts", "tests/unit/phase15pMinimalityTruth.test.ts", "tests/unit/phase15pPrivacyAuthority.test.ts", "tests/unit/phase15pProjectSnapshot.test.ts", "tests/unit/phase15pReleaseRehearsal.test.ts", "tests/unit/phase15pReplayBinding.test.ts", "tests/unit/phase15pSchemaCoherence.test.ts", "tests/unit/phase15pSemanticVocabulary.test.ts", "tests/unit/phase15pTriageDossierPipeline.test.ts"] },
-    { "phase": 16, "files": ["tests/unit/phase16aAllocation.test.ts", "tests/unit/phase16aPortfolioModel.test.ts", "tests/unit/phase16aReplanSimulator.test.ts", "tests/unit/phase16aScoring.test.ts", "tests/unit/phase16aToolingHandoff.test.ts", "tests/unit/phase16aYieldManifest.test.ts", "tests/unit/phase16cAdmissionBinding.test.ts", "tests/unit/phase16cLauncher.test.ts", "tests/unit/phase16cRealUniverse.test.ts", "tests/unit/phase16cSeamRehearsal.test.ts", "tests/unit/phase16chBudgetBindingHardening.test.ts", "tests/unit/phase16chCorpusRunner.test.ts", "tests/unit/phase16chDef01Probe.test.ts", "tests/unit/phase16chFingerprintResumeHardening.test.ts", "tests/unit/phase16chLauncherBoundary.test.ts", "tests/unit/phase16chStaticSingleExecutor.test.ts", "tests/unit/phase16chUniverseHardening.test.ts", "tests/unit/phase16hCliHandoffHardening.test.ts", "tests/unit/phase16hPortfolioHardening.test.ts"] },
-    { "phase": 17, "files": ["tests/unit/phase17EvidenceHardening.test.ts"] },
-    { "phase": 18, "files": ["tests/unit/phase18SemanticDepth.test.ts"] },
-    { "phase": 19, "files": ["tests/unit/phase19CampaignIntelligence.test.ts", "tests/unit/phase19ProductOperator.test.ts"] },
-    { "phase": 20, "files": ["tests/unit/phase20Operator.test.ts", "tests/unit/phase20SemanticCoverage.test.ts"] },
-    { "phase": 21, "files": ["tests/unit/phase21Differential.test.ts", "tests/unit/phase21GapClosure.test.ts", "tests/unit/phase21Integration.test.ts", "tests/unit/phase21Membership.test.ts", "tests/unit/phase21Mutation.test.ts"] },
-    { "phase": 22, "files": ["tests/unit/phase22Core.test.ts"] },
-    { "phase": 23, "files": ["tests/unit/phase23QualityGate.test.ts", "tests/unit/phase23PortLease.test.ts", "tests/unit/phase23CiAuthority.test.ts", "tests/unit/phase23Manifest.test.ts", "tests/unit/plannerHandoff.test.ts"] },
-    { "phase": 24, "files": ["tests/unit/phase24LocalTriage.test.ts", "tests/unit/phase24ProxyLifecycle.test.ts"] },
-    { "phase": 25, "files": ["tests/unit/phase25SourceBoundary.test.ts", "tests/unit/phase25SourceInventory.test.ts", "tests/unit/phase25AnalyzerSoundness.test.ts", "tests/unit/phase25SurfaceDiscovery.test.ts", "tests/unit/phase25Invalidation.test.ts", "tests/unit/phase25Adversarial.test.ts", "tests/unit/phase25Operator.test.ts"] },
-    { "phase": 26, "files": ["tests/unit/phase26Adversarial.test.ts", "tests/unit/phase26ResponseCoverage.test.ts", "tests/unit/phase26SourceMetrics.test.ts", "tests/unit/phase26Invalidation.test.ts"] }
+    {
+      "phase": 9,
+      "files": [
+        "tests/unit/oracleCeilingReproduction.test.ts",
+        "tests/unit/oracleProjection.test.ts",
+        "tests/unit/oracleExpectation.test.ts",
+        "tests/unit/oracleExpectationRealSource.test.ts",
+        "tests/unit/oracleInvariant.test.ts",
+        "tests/unit/oraclePrecision.test.ts",
+        "tests/unit/semanticSentinel.test.ts",
+        "tests/unit/semanticIntegration.test.ts",
+        "tests/unit/semanticCampaign.test.ts"
+      ]
+    },
+    {
+      "phase": 9.1,
+      "files": [
+        "tests/unit/phase9a1GapReproduction.test.ts",
+        "tests/unit/realSourceExtraction.test.ts",
+        "tests/unit/realSourceRecipeValidation.test.ts",
+        "tests/unit/realSourceAdmission.test.ts",
+        "tests/unit/realSourceCurrentness.test.ts",
+        "tests/unit/semanticReceipt.test.ts",
+        "tests/unit/semanticReceiptSentinel.test.ts",
+        "tests/unit/realSourceConformingMutation.test.ts",
+        "tests/unit/observerSemanticLedger.test.ts",
+        "tests/unit/realSourceCanary.test.ts"
+      ]
+    },
+    {
+      "phase": 9.2,
+      "files": [
+        "tests/unit/phase9bFreshness.test.ts",
+        "tests/unit/phase9bHarness.test.ts"
+      ]
+    },
+    {
+      "phase": 10,
+      "files": [
+        "tests/unit/phase10TypeFlowExtraction.test.ts",
+        "tests/unit/phase10RecipeValidation.test.ts",
+        "tests/unit/phase10Admission.test.ts",
+        "tests/unit/phase10TypeInSetInvariant.test.ts",
+        "tests/unit/phase10CorpusPrecision.test.ts",
+        "tests/unit/phase10Privacy.test.ts",
+        "tests/unit/phase10Currentness.test.ts",
+        "tests/unit/phase10Identity.test.ts",
+        "tests/unit/phase10Campaign.test.ts",
+        "tests/unit/phase10Canary.test.ts"
+      ]
+    },
+    {
+      "phase": 10.2,
+      "files": [
+        "tests/unit/phase10bHarness.test.ts"
+      ]
+    },
+    {
+      "phase": 11,
+      "files": [
+        "tests/unit/phase11CollectionWide.test.ts"
+      ]
+    },
+    {
+      "phase": 11.3,
+      "files": [
+        "tests/unit/phase11a3CollectionAdmission.test.ts"
+      ]
+    },
+    {
+      "phase": 12,
+      "files": [
+        "tests/unit/phase12CoverageInventory.test.ts",
+        "tests/unit/phase12SemanticCluster.test.ts",
+        "tests/unit/phase12SemanticTriage.test.ts",
+        "tests/unit/phase12YieldBacktest.test.ts"
+      ]
+    },
+    {
+      "phase": 13,
+      "files": [
+        "tests/unit/phase13Shadow.test.ts"
+      ]
+    },
+    {
+      "phase": 14,
+      "files": [
+        "tests/unit/phase14Analyzer.test.ts",
+        "tests/unit/phase14ContractDrift.test.ts",
+        "tests/unit/phase14ContractReport.test.ts",
+        "tests/unit/phase14CoverageInventory.test.ts",
+        "tests/unit/phase14FreshSourceAdmission.test.ts",
+        "tests/unit/phase14StaticSchemaAdapters.test.ts"
+      ]
+    },
+    {
+      "phase": 15,
+      "files": [
+        "tests/unit/phase15CampaignIntegratedProof.test.ts",
+        "tests/unit/phase15CampaignTriageIntegration.test.ts",
+        "tests/unit/phase15CanonicalDigestIdentity.test.ts",
+        "tests/unit/phase15CheckpointCompat.test.ts",
+        "tests/unit/phase15ContractLifecycleRegistry.test.ts",
+        "tests/unit/phase15ContractMigrationMap.test.ts",
+        "tests/unit/phase15ContractResultVocabulary.test.ts",
+        "tests/unit/phase15ContractSchemaValidation.test.ts",
+        "tests/unit/phase15MinimizationEvidence.test.ts",
+        "tests/unit/phase15PromotionAuthority.test.ts",
+        "tests/unit/phase15SourceContractResolution.test.ts",
+        "tests/unit/phase15pAdversarialCorpus.test.ts",
+        "tests/unit/phase15pArtifactValidation.test.ts",
+        "tests/unit/phase15pCandidateLifecycleGates.test.ts",
+        "tests/unit/phase15pCheckpointDrift.test.ts",
+        "tests/unit/phase15pCompatConvergence.test.ts",
+        "tests/unit/phase15pContractLifecycle.test.ts",
+        "tests/unit/phase15pCurrentnessDrift.test.ts",
+        "tests/unit/phase15pLocalReadiness.test.ts",
+        "tests/unit/phase15pMinimalityTruth.test.ts",
+        "tests/unit/phase15pPrivacyAuthority.test.ts",
+        "tests/unit/phase15pProjectSnapshot.test.ts",
+        "tests/unit/phase15pReleaseRehearsal.test.ts",
+        "tests/unit/phase15pReplayBinding.test.ts",
+        "tests/unit/phase15pSchemaCoherence.test.ts",
+        "tests/unit/phase15pSemanticVocabulary.test.ts",
+        "tests/unit/phase15pTriageDossierPipeline.test.ts"
+      ]
+    },
+    {
+      "phase": 16,
+      "files": [
+        "tests/unit/phase16aAllocation.test.ts",
+        "tests/unit/phase16aPortfolioModel.test.ts",
+        "tests/unit/phase16aReplanSimulator.test.ts",
+        "tests/unit/phase16aScoring.test.ts",
+        "tests/unit/phase16aToolingHandoff.test.ts",
+        "tests/unit/phase16aYieldManifest.test.ts",
+        "tests/unit/phase16cAdmissionBinding.test.ts",
+        "tests/unit/phase16cLauncher.test.ts",
+        "tests/unit/phase16cRealUniverse.test.ts",
+        "tests/unit/phase16cSeamRehearsal.test.ts",
+        "tests/unit/phase16chBudgetBindingHardening.test.ts",
+        "tests/unit/phase16chCorpusRunner.test.ts",
+        "tests/unit/phase16chDef01Probe.test.ts",
+        "tests/unit/phase16chFingerprintResumeHardening.test.ts",
+        "tests/unit/phase16chLauncherBoundary.test.ts",
+        "tests/unit/phase16chStaticSingleExecutor.test.ts",
+        "tests/unit/phase16chUniverseHardening.test.ts",
+        "tests/unit/phase16hCliHandoffHardening.test.ts",
+        "tests/unit/phase16hPortfolioHardening.test.ts"
+      ]
+    },
+    {
+      "phase": 17,
+      "files": [
+        "tests/unit/phase17EvidenceHardening.test.ts"
+      ]
+    },
+    {
+      "phase": 18,
+      "files": [
+        "tests/unit/phase18SemanticDepth.test.ts"
+      ]
+    },
+    {
+      "phase": 19,
+      "files": [
+        "tests/unit/phase19CampaignIntelligence.test.ts",
+        "tests/unit/phase19ProductOperator.test.ts"
+      ]
+    },
+    {
+      "phase": 20,
+      "files": [
+        "tests/unit/phase20Operator.test.ts",
+        "tests/unit/phase20SemanticCoverage.test.ts"
+      ]
+    },
+    {
+      "phase": 21,
+      "files": [
+        "tests/unit/phase21Differential.test.ts",
+        "tests/unit/phase21GapClosure.test.ts",
+        "tests/unit/phase21Integration.test.ts",
+        "tests/unit/phase21Membership.test.ts",
+        "tests/unit/phase21Mutation.test.ts"
+      ]
+    },
+    {
+      "phase": 22,
+      "files": [
+        "tests/unit/phase22Core.test.ts"
+      ]
+    },
+    {
+      "phase": 23,
+      "files": [
+        "tests/unit/phase23QualityGate.test.ts",
+        "tests/unit/phase23PortLease.test.ts",
+        "tests/unit/phase23CiAuthority.test.ts",
+        "tests/unit/phase23Manifest.test.ts",
+        "tests/unit/plannerHandoff.test.ts"
+      ]
+    },
+    {
+      "phase": 24,
+      "files": [
+        "tests/unit/phase24LocalTriage.test.ts",
+        "tests/unit/phase24ProxyLifecycle.test.ts",
+        "tests/unit/proxyPortLeaseDeterminism.test.ts"
+      ]
+    },
+    {
+      "phase": 25,
+      "files": [
+        "tests/unit/phase25SourceBoundary.test.ts",
+        "tests/unit/phase25SourceInventory.test.ts",
+        "tests/unit/phase25AnalyzerSoundness.test.ts",
+        "tests/unit/phase25SurfaceDiscovery.test.ts",
+        "tests/unit/phase25Invalidation.test.ts",
+        "tests/unit/phase25Adversarial.test.ts",
+        "tests/unit/phase25Operator.test.ts"
+      ]
+    },
+    {
+      "phase": 26,
+      "files": [
+        "tests/unit/phase26Adversarial.test.ts",
+        "tests/unit/phase26ResponseCoverage.test.ts",
+        "tests/unit/phase26SourceMetrics.test.ts",
+        "tests/unit/phase26Invalidation.test.ts"
+      ]
+    }
   ],
   "supportFiles": [
     "tests/unit/agent-state.test.ts",

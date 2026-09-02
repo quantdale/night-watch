@@ -17,11 +17,25 @@ const CANDIDATE_COUNT = 32;
 const TOKEN_RE = /^[a-f0-9]{24}$/;
 export const PROXY_PORT_LEASE_OWNER_ENV = 'NIGHTWATCH_PROXY_LEASE_OWNER_PID' as const;
 
+// A preferred port is a PREFERENCE, not a guarantee. Allocation promises an
+// owned lease for a currently admissible candidate inside the bounded search
+// space; it does not promise the preferred number. Naming the outcome is what
+// lets a test assert the real contract instead of either the false stronger
+// property (`port === preferred`) or a uselessly weak one (`any port will do`).
+export type ProxyPortAllocationOutcome =
+  | 'PREFERRED_REUSED'
+  | 'PREFERRED_UNAVAILABLE_ADVANCED'
+  | 'INHERITED_LEASE_ADOPTED';
+
 export interface ProxyPortLease {
   readonly schemaVersion: typeof PROXY_PORT_LEASE_SCHEMA;
   readonly port: number;
   readonly token: string;
   readonly file: string;
+  // Offset within the bounded candidate list, or null for a lease adopted from
+  // an inherited owner handoff rather than allocated by the bounded search.
+  readonly candidateOffset: number | null;
+  readonly preferredOutcome: ProxyPortAllocationOutcome;
   readonly release: () => void;
 }
 
@@ -87,6 +101,21 @@ function candidatePort(preferred: number, offset: number): number {
   return candidate <= 65535 ? candidate : 1024 + ((candidate - 1024) % (65535 - 1024));
 }
 
+/**
+ * The bounded ordered candidate list, as a PURE function of the preferred port
+ * alone: no process id, no clock, no randomness, no filesystem and no network.
+ *
+ * Extracting it makes boundedness and wraparound directly testable without
+ * touching a socket, which is what removes the probabilistic input that made
+ * the Phase 24 lifecycle case non-deterministic (OBS-C105-1).
+ */
+export function proxyPortCandidates(preferred: number): readonly number[] {
+  if (!validPort(preferred)) throw new Error(`PROXY_PORT_PREFERRED_INVALID:${String(preferred)}`);
+  const candidates: number[] = [];
+  for (let offset = 0; offset < CANDIDATE_COUNT; offset += 1) candidates.push(candidatePort(preferred, offset));
+  return Object.freeze(candidates);
+}
+
 function releaseLease(file: string, token: string, allowInheritedOwner = false): void {
   try {
     const current = readLease(file);
@@ -96,13 +125,14 @@ function releaseLease(file: string, token: string, allowInheritedOwner = false):
   }
 }
 
-export function reserveProxyPortLease(options: { root?: string; preferredPort: number }): ProxyPortLease {
-  const root = options.root ?? DEFAULT_LEASE_ROOT;
-  const preferredPort = options.preferredPort;
-  if (!validPort(preferredPort)) throw new Error(`PROXY_PORT_PREFERRED_INVALID:${String(preferredPort)}`);
+// The single allocator core. The availability predicate is an explicit
+// parameter here so that BOTH entry points below exercise this exact code — a
+// seam that duplicated the loop would leave the deterministic tests testing a
+// copy of the allocator rather than the allocator.
+function reserveWithAvailability(root: string, preferredPort: number, available: (port: number) => boolean): ProxyPortLease {
+  const candidates = proxyPortCandidates(preferredPort);
   fs.mkdirSync(leaseDirectory(root), { recursive: true, mode: 0o700 });
-  for (let offset = 0; offset < CANDIDATE_COUNT; offset += 1) {
-    const port = candidatePort(preferredPort, offset);
+  for (const [offset, port] of candidates.entries()) {
     const file = leaseFile(root, port);
     const existing = readLease(file);
     if (existing !== null) {
@@ -127,7 +157,7 @@ export function reserveProxyPortLease(options: { root?: string; preferredPort: n
       if ((error as NodeJS.ErrnoException).code === 'EEXIST') continue;
       throw error;
     }
-    if (!portAvailable(port)) {
+    if (!available(port)) {
       try { fs.unlinkSync(file); } catch { /* bounded scratch cleanup */ }
       continue;
     }
@@ -136,10 +166,43 @@ export function reserveProxyPortLease(options: { root?: string; preferredPort: n
       port,
       token,
       file,
+      candidateOffset: offset,
+      preferredOutcome: offset === 0 ? 'PREFERRED_REUSED' : 'PREFERRED_UNAVAILABLE_ADVANCED',
       release: () => releaseLease(file, token),
     };
   }
   throw new Error('PROXY_PORT_LEASE_EXHAUSTED');
+}
+
+/**
+ * The PRODUCTION allocation path. It binds the real operating-system TCP
+ * availability probe, and there is deliberately no parameter a caller can
+ * supply to replace it. `hardening:check` enforces both halves: that this call
+ * site passes `portAvailable`, and that `portAvailable` still performs a real
+ * TCP bind rather than a stub.
+ */
+export function reserveProxyPortLease(options: { root?: string; preferredPort: number }): ProxyPortLease {
+  return reserveWithAvailability(options.root ?? DEFAULT_LEASE_ROOT, options.preferredPort, portAvailable);
+}
+
+/**
+ * TEST ONLY. NOT A PRODUCTION AUTHORITY PATH.
+ *
+ * Deterministic simulation of the availability decision, so the adversarial
+ * lease cases (occupied preferred candidate, a fully occupied bounded space,
+ * wraparound) are expressible without racing a real operating system for a
+ * port number. It reaches the same allocator core as production, so it proves
+ * the real lease/ownership/fail-closed logic and not a copy of it.
+ *
+ * `hardening:check` forbids any file outside `tests/**` from referencing this
+ * export, so it cannot become a way to weaken real proxy safety.
+ */
+export function reserveProxyPortLeaseWithAvailabilityForTest(options: {
+  root?: string;
+  preferredPort: number;
+  available: (port: number) => boolean;
+}): ProxyPortLease {
+  return reserveWithAvailability(options.root ?? DEFAULT_LEASE_ROOT, options.preferredPort, options.available);
 }
 
 export function ensureProxyPortLease(root = DEFAULT_LEASE_ROOT, preferredPort: number): ProxyPortLease {
@@ -158,6 +221,10 @@ export function ensureProxyPortLease(root = DEFAULT_LEASE_ROOT, preferredPort: n
         port,
         token,
         file,
+        // Not produced by the bounded search: this lease was handed over by an
+        // explicit owner handoff, so there is no candidate offset to report.
+        candidateOffset: null,
+        preferredOutcome: 'INHERITED_LEASE_ADOPTED',
         release: () => { if (existing.pid === process.pid) releaseLease(file, token); },
       };
     }
