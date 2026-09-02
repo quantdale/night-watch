@@ -228,8 +228,8 @@ and must never be bulk-set to HEAD:
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `23523cc` | where the C-10 / DEF-C10-5 route-provenance repair landed; the commits after it changed documentation only |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `23523cc` | the local gate was recorded green at that commit |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `23523cc` | the clean gate was recorded green at that commit |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `cb631cc` | run `33601265465` |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `cb631cc` | same run; `EXECUTED_PASS` requires observed == executed |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `NONE` while C-10.5 is mid-campaign | no CI run has yet executed at the C-10.5 baseline; the C-10 run at `cb631cc` certified an ANCESTOR and therefore certifies nothing about this baseline |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `NONE` while C-10.5 is mid-campaign | set together with `CI_OBSERVED_SHA` after integration and the exact-head run |
 
 The implementation anchor legitimately TRAILS the CI anchor: the commits
 between `23523cc` and `cb631cc` are documentation checkpoints that changed no
@@ -245,12 +245,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 23523cc743c77b2250738caa980c218dab8671bb
-LAST_LOCALLY_VALIDATED_SHA: 23523cc743c77b2250738caa980c218dab8671bb
-LAST_CLEAN_VALIDATED_SHA: 23523cc743c77b2250738caa980c218dab8671bb
-CI_OBSERVED_SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
-CI_EXECUTED_SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
-CI_STATUS: EXECUTED_PASS
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: e0e3728ed273eabbc51c50bbc63889c8fb1257fc
+LAST_LOCALLY_VALIDATED_SHA: e0e3728ed273eabbc51c50bbc63889c8fb1257fc
+LAST_CLEAN_VALIDATED_SHA: e0e3728ed273eabbc51c50bbc63889c8fb1257fc
+CI_OBSERVED_SHA: NONE
+CI_EXECUTED_SHA: NONE
+CI_STATUS: NOT_OBSERVED
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
