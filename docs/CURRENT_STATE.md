@@ -227,7 +227,7 @@ and must never be bulk-set to HEAD:
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `200221c` | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `aa5d1e6` | where the C-11 `PROD_OBSERVE` kernel and its hardening-rule repairs landed | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `65d976d` | `gate:local` PASS, all eleven groups, receipt `receipt:sha256:b772ac7c8076752bd4539d77` |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `65d976d` | `gate:clean` PASS TWICE as independent invocations, Node 20, `siblingWrites: 0`, both yielding the identical inner receipt `receipt:sha256:e9621d43adff5cdf6204235c` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `2a64369` | run `33653818653`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
@@ -255,7 +255,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
 LAST_LOCALLY_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
 LAST_CLEAN_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
 CI_OBSERVED_SHA: e11cf64a622dffb00b3d5aff4e31273051ee7935
@@ -334,7 +334,7 @@ certification of its substantive ancestor.
 
 | Role | Means | Current value |
 | --- | --- | --- |
-| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `200221c` (R-11) |
+| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `aa5d1e6` (C-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `65d976d` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
 | CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `e11cf64`, run `33656654543`, `EXECUTED_PASS` |

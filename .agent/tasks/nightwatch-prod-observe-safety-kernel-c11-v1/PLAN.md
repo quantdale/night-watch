@@ -77,7 +77,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: `realRunGate` byte-unchanged in behaviour; every
   separation rule negative-probed.
 - Validation commands: `npm run typecheck`, `npm run hardening:check`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M3 — The admission chain
 
@@ -89,7 +89,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: one-fault denial for every gate with its categorical
   reason.
 - Validation commands: focused C-11 suites
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M4 — Budgets, breakers, containment
 
@@ -98,7 +98,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: concurrency cannot oversubscribe; a failed request is
   not refunded; the CI containment carve-out stays explicit.
 - Validation commands: focused C-11 suites
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M5 — Mock production and the denial matrix
 
@@ -107,7 +107,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: every pre-dispatch denial leaves the received-request
   count at zero, asserted against the server.
 - Validation commands: focused C-11 suites
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M6 — Positive path and PQ receipt
 
@@ -116,7 +116,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: exactly one expected request on the positive path; the
   full tamper matrix fails closed.
 - Validation commands: focused C-11 suites
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M7 — Hardening, registration and validation
 
@@ -125,7 +125,7 @@ See the OpenSpec `design.md`. The load-bearing choices:
 - Acceptance criteria: all negative probes detected; the registration validator
   fails on an unregistered suite.
 - Validation commands: the full C-11 validation sequence
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M8 — Integration and exact-head CI
 

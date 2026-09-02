@@ -6,16 +6,16 @@ Title: C-11 PROD_OBSERVE Safety Kernel
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-prod-observe-safety-kernel-c11-v1
 Starting SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
-Last validated implementation SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
+Last validated implementation SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
 Last checkpoint: 2026-09-03 — C-11 opened at the R-11 closure head 060fef4; the design reconciliation is complete and nightwatch.production-admission-chain.v1 defines a versioned NAMED ordered chain of eighteen gates, replacing the historical "eleven gates" labelled G0-G11 (twelve identifiers) whose acceptance criterion was phrased as a count
-Current milestone: M2 — authorization class and separation
-Next action: Create src/core/prodObserve/ and implement the PROD_OBSERVE authorization class with one-shot ALREADY_CONSUMED semantics, the external observation config loader with the F-09 integrity requirements, the independent production allowlist built solely from that config, and productionRunGate as a decision path sharing no branch with realRunGate
+Current milestone: M8 — full validation, integration and exact-head CI
+Next action: Run the full C-11 validation sequence (typecheck, hardening:check, handoff:check, project:check, agent:check, agent:audit, gate:inventory, test:semantic-compat, campaign:synthetic, the complete canonical regression, gate:local, gate:clean), then integrate through C-00 and obtain exact-head GitHub Actions with all eleven required groups PASS
 Authorization class: NIGHTWATCH_PROD_OBSERVE_SAFETY_KERNEL_C11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
-LAST_VALIDATED_IMPLEMENTATION_SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 060fef41205b29210d9bd8416aca97c03b028e4f
+LAST_VALIDATED_IMPLEMENTATION_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PROD_OBSERVE_SAFETY_KERNEL_C11_V1_STATUS: IN_PROGRESS
