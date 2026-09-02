@@ -6,16 +6,16 @@ Title: R-11 Proxy/Gate Reliability Closure
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-proxy-gate-reliability-r11-v1
 Starting SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-Last validated implementation SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-Last checkpoint: 2026-09-02 — OBS-C105-1 reproduced deterministically and end-to-end against the unmodified allocator at c423e33; the allocator is correct in all four brief-specified cases and the failing assertion is the test's, reproducing the exact CI failedLocations value tests/unit/phase24ProxyLifecycle.test.ts:105
-Current milestone: M2 — port-lease contract
-Next action: Edit src/proxy/portLease.ts — add pure proxyPortCandidates(preferred), factor the allocation loop into a module-private core taking an explicit availability predicate, keep reserveProxyPortLease bound to the real portAvailable probe with no substitutable parameter, add the TEST ONLY availability seam, and add the candidateOffset / preferredOutcome diagnostics
+Last validated implementation SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
+Last checkpoint: 2026-09-02 — M1 through M7 closed at substantive checkpoint 22a2928. OBS-C105-1 reproduced and repaired; 20 deterministic adversarial lease cases plus a real-OS-TCP integration case green; bounded stress campaign green with exact counts; durable confined atomic gate receipts wired into both gates with 30 adversarial cases; 29/29 hardening negative probes detected after DEF-R11-1 and DEF-R11-2 were found and repaired; Stage-A documentation truth and the obsolete T-30/T-41/T-42 digest semantics reconciled
+Current milestone: M8 — registration and full validation
+Next action: Complete the R-11 validation sequence — gate:local PASS on a clean checkout, the complete canonical Playwright regression, repeated independent gate:clean invocations in the clean Node 20 topology, and repeated independent runs of the previously flaky suite in both topologies with every attempt recorded. Then M9: integrate through C-00 and obtain exact-head GitHub Actions with all eleven required groups PASS
 Authorization class: NIGHTWATCH_PROXY_GATE_RELIABILITY_R11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-LAST_VALIDATED_IMPLEMENTATION_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+LAST_VALIDATED_IMPLEMENTATION_SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PROXY_GATE_RELIABILITY_R11_V1_STATUS: IN_PROGRESS
