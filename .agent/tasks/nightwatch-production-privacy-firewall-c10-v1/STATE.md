@@ -89,9 +89,8 @@ M11 — full validation and integration. M0 through M10 are closed.
 
 ## Work In Progress
 
-M0 — the task records are written and the dedicated OpenSpec change is written
-and staged. Remaining in M0: satisfy `handoff:check` and `agent:check`, then
-open M1/M2.
+Implementation and local/clean validation are complete. Remaining: C-00
+integration, the exact-head GitHub Actions result, and the closeout records.
 
 ## Files Changed
 
@@ -114,6 +113,13 @@ open M1/M2.
 | M10 | `npm run hardening:check` | PASS; proven non-vacuous by injecting a `node:fs` import into the cone (2 errors) and restoring (PASS) |
 | M10 | affected existing suites (Control Center / findings / projection / evidence / privacy / dossier / console / storage) | 581 passed, 2 skipped (pre-existing), 0 failed |
 | M10 | `tests/unit/phase10Privacy.test.ts` | 8/8 PASS after re-scoping the DEV key-literal assertion in place |
+| M11 | `npm run project:check` | PASS (after pointing live truth at the active C-10 campaign) |
+| M11 | `npm run agent:check` / `agent:audit` | PASS; `tasks=100 strict_v2=77 strict_errors=0` |
+| M11 | `npm run test:semantic-compat` | PASS — 1,967 total / 1,954 passed / 13 skipped / 0 failed |
+| M11 | `npm run campaign:synthetic` | PASS — 14 files, 209/209, `deepContainmentLane: PROVEN` (was 12 files / 128) |
+| M11 | complete canonical Playwright regression | 2,920 total / 2,907 passed / 13 skipped / 0 failed (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 81 new C-10 cases) |
+| M11 | `npm run gate:local` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, all eleven groups, `receipt:sha256:531bf12aa22c7da419bedf92` |
+| M11 | `npm run gate:clean` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, Node 20, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036` (gate `receipt:sha256:8b79ac2ebd9718766e95a379`) |
 
 ## Decisions Made During This Task
 
@@ -133,12 +139,10 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-Run the full §21 validation battery in cost order — `typecheck`,
-`hardening:check`, `handoff:check`, `project:check`, `agent:check`,
-`agent:audit`, `gate:inventory`, `test:semantic-compat`, `campaign:synthetic`,
-the complete canonical Playwright regression, `gate:local`, `gate:clean` — then
-integrate through the C-00 session mechanism and obtain an exact-head GitHub
-Actions result.
+Integrate through the C-00 session mechanism
+(`node bin/nightwatch-session.mjs integrate`), then obtain the exact-head
+GitHub Actions result for the integrated head and record the run and job in
+this file and in `REPORT.md`. Release the session worktree afterwards.
 
 ## Blockers
 
@@ -168,6 +172,17 @@ channels. The assertion failed honestly. Repaired by splitting the corpus into
 channel, so non-vacuity is now established per channel rather than assumed.
 Disposition: FIXED. No absence assertion was weakened — all sentinels are still
 swept for everywhere.
+
+**DEF-C10-4 — five C-10 cases were Node-version dependent.** The clean Node 20
+gate failed five acceptance cases that pass under Node 22. All five used a
+dynamic `await import()` of a TypeScript path, which the Playwright transform
+resolves differently across Node majors. The production code was already
+correct; the TESTS carried a loader assumption. Repaired by converting to
+static imports — the idiom every other suite uses — so the cases hold in both
+topologies. No test was skipped, weakened or removed and the assertions are
+byte-identical. Disposition: FIXED; `gate:clean` then PASSED with all eleven
+groups. This is the same class of defect the predecessor campaign existed to
+repair, and it was caught before integration rather than in CI.
 
 **DEF-C10-3 — the hardening capability pattern matched a method call.** The new
 rule's `exec(`/`fetch(` pattern matched `regex.exec(`, which is not a process
