@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — C-10.5 Provenance and Project-Truth Closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-c10-provenance-truth-closure-v1
 OpenSpec: openspec/changes/nightwatch-c10-provenance-truth-closure-v1/
 Planned-From: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
