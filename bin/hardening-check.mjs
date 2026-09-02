@@ -2420,6 +2420,129 @@ function checkC11ProdObserveBoundary() {
   }
 }
 
+/**
+ * C-02b protobuf source-intelligence invariants.
+ *
+ * Four things in this campaign are load-bearing, and each is the kind of thing
+ * a later change could undo without any test noticing, so each is guarded
+ * here and negative-probed:
+ *
+ *   1. the proto modules stay data-in / data-out — no filesystem, process,
+ *      network or evaluation authority, and above all no protoc/buf shell-out;
+ *   2. only the LEXER sees raw source, which is what makes "no fact from a
+ *      comment" a property of the layering rather than a rule to remember;
+ *   3. generation currency can leave UNKNOWN only through a per-operation
+ *      corroboration (OpenSpec audit A-4);
+ *   4. route ambiguity stays scoped to the evidence class (DEF-C02B-1).
+ */
+function checkC02bProtobufBoundary() {
+  const protoModules = ['src/core/source/protoLexer.ts', 'src/core/source/protoDeclarations.ts', 'src/core/source/protoCorroboration.ts'];
+  for (const file of protoModules) {
+    let source;
+    try {
+      source = read(file);
+    } catch {
+      fail(`C-02b the protobuf module ${file} is missing`);
+      return;
+    }
+    for (const [pattern, description] of [
+      [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
+      [/from\s+['"]node:child_process['"]|require\(['"](?:node:)?child_process['"]\)/, 'process authority'],
+      [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
+      [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
+      // Narrow on purpose. An earlier form of this rule matched the words
+      // `protoc-gen-openapiv2` inside a comment explaining a real annotation,
+      // which is the C-11 lesson about plausible rules matching irrelevant
+      // occurrences of the same identifier. What must be forbidden is a
+      // compiler DEPENDENCY or a command string, not the prose.
+      [/from\s+['"](?:protobufjs|google-protobuf)|require\(['"](?:protobufjs|google-protobuf)['"]\)/, 'a protobuf compiler dependency'],
+      [/['"]protoc['"]|['"]buf['"]/, 'a protobuf compiler command'],
+    ]) {
+      if (pattern.test(source)) fail(`${file} contains ${description}; the C-02b protobuf path is data-in / data-out only`);
+    }
+  }
+
+  // --- only the lexer may look at raw source ---
+  // The declaration reader must hand `sourceText` straight to `lexProto` and
+  // never inspect it again. If it grows a regex or an `indexOf` over the raw
+  // text, comment and string handling has escaped the one module that owns it
+  // and a fact could be derived from a comment.
+  const declarations = read('src/core/source/protoDeclarations.ts');
+  const rawSourceUses = (declarations.match(/sourceText/g) ?? []).length;
+  if (rawSourceUses !== 2) {
+    fail('C-02b protoDeclarations.ts must touch raw source exactly twice — its parameter and the lexProto call; comment and string syntax belongs to the lexer alone');
+  }
+  if (!/lexProto\(sourceText/.test(declarations)) {
+    fail('C-02b protoDeclarations.ts must obtain its tokens from lexProto');
+  }
+  const lexer = read('src/core/source/protoLexer.ts');
+  for (const [pattern, description] of [
+    [/UNTERMINATED_COMMENT/, 'an unterminated block comment must fail closed'],
+    [/UNTERMINATED_STRING/, 'an unterminated string must fail closed'],
+    [/TOKEN_BUDGET_EXHAUSTED/, 'the token ceiling must be categorical'],
+    [/DEPTH_EXCEEDED/, 'the nesting ceiling must be categorical'],
+  ]) if (!pattern.test(lexer)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
+
+  // --- A-4: currency may not be upgraded by a count ---
+  const corroboration = read('src/core/source/protoCorroboration.ts');
+  if (!/state\s*!==\s*'CORROBORATED_EXACT'\)\s*return null/.test(corroboration)) {
+    fail("C-02b toProtoSurfaceCorroboration must return null unless the per-operation comparison is CORROBORATED_EXACT; without that guard a count alone reaches evaluateGenerationCurrency");
+  }
+  const generated = read('src/core/source/generatedArtifact.ts');
+  const corroborationLiteral = /PROTO_SURFACE_CORROBORATIONS[^=]*=\s*Object\.freeze\(\[\s*\]\)/.test(generated);
+  if (!corroborationLiteral) {
+    fail('C-02b PROTO_SURFACE_CORROBORATIONS must stay an empty literal; a hand-written corroboration would assert currency without comparing an operation');
+  }
+
+  // --- DEF-C02B-1: ambiguity stays scoped to the evidence class ---
+  const surfaces = read('src/core/source/surfaces.ts');
+  const duplicateKeys = surfaces.match(/const (?:parsedKeys|duplicate)Key[^\n]*|const key = `\$\{entry\.file\.repoId\}[^\n]*/g) ?? [];
+  const ambiguityKeyLines = surfaces.split('\n').filter((line) => /\$\{(?:entry\.file|file)\.repoId\}/.test(line) && /route\.(?:method|routeTemplate)|entry\.route\./.test(line));
+  if (ambiguityKeyLines.length !== 2) {
+    fail('C-02b expected exactly two route-ambiguity key constructions in surfaces.ts; the DEF-C02B-1 guard cannot be verified');
+  }
+  for (const line of ambiguityKeyLines) {
+    if (!line.includes('classifySourceEvidenceQualifier')) {
+      fail('C-02b the route-ambiguity key must include the evidence qualifier (DEF-C02B-1): a generated artifact and the source it was generated from are one witness, not two rival declarations');
+    }
+  }
+  if (duplicateKeys.length === 0) fail('C-02b could not locate the route-ambiguity key construction in surfaces.ts');
+
+  // --- no root or repository was admitted ---
+  const approved = read('src/core/source/approvedScan.ts');
+  if (!/'alphauslabs\/blueapi':\s*\['billing',\s*'openapiv2'\]/.test(approved)) {
+    fail('C-02b must not change the approved roots of alphauslabs/blueapi; new roots belong to C-05');
+  }
+  // Read the DECLARATION, not the file. `approvedScan.ts` carries a comment
+  // explaining that blueinternal is deliberately absent, and a rule that
+  // matched the comment would fire on the very text documenting compliance.
+  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
+  if (rootsBlock === null) {
+    fail('C-02b could not read the APPROVED_ROOTS declaration; the root-admission guard cannot be verified');
+  } else if (/blueinternal|wave-api/.test(rootsBlock[1])) {
+    fail('C-02b must not admit blueinternal or wave-api; repository admission belongs to C-05');
+  }
+
+  // --- every C-02b certification suite must be gate-registered ---
+  let compatibility;
+  let synthetic;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  } catch {
+    fail('C-02b the quality-gate manifests must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
+  ]);
+  for (const suite of ['tests/unit/c02bProtoLexer.test.ts', 'tests/unit/c02bProtoSurface.test.ts', 'tests/unit/c02bProtoCorroboration.test.ts']) {
+    if (!registered.has(suite)) fail(`C-02b certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2436,6 +2559,7 @@ checkPhase8BSandboxBoundary();
 checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
+checkC02bProtobufBoundary();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
 checkProjectStateIntegrity();

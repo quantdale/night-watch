@@ -241,6 +241,25 @@ test.describe('C-02b — malformed declarations fail closed', () => {
     expect(rpc?.bindings).toEqual([]);
   });
 
+  test('an unknown verb ALONGSIDE a known one still fails the whole binding', () => {
+    // Negative probe B3 caught the previous version of this claim being
+    // vacuous: `{ fetch: "/v1/real" }` alone is rejected by the
+    // no-verbs-at-all check, so deleting the unknown-key rule left the test
+    // green. Pairing the unknown key with a valid one isolates the rule — with
+    // it the binding is MALFORMED, without it `/v1/ghost` silently disappears
+    // and the RPC reads as a clean GET. A misspelled or future verb vanishing
+    // from the surface without a trace is exactly the failure to prevent.
+    const [rpc] = rpcs(`
+      service Svc {
+        rpc Real(RealRequest) returns (RealResponse) {
+          option (google.api.http) = { get: "/v1/real" fetch: "/v1/ghost" };
+        }
+      }
+    `);
+    expect(rpc?.httpBindingState).toBe('MALFORMED');
+    expect(rpc?.bindings).toEqual([]);
+  });
+
   test('an unsafe route template is rejected rather than admitted', () => {
     const [rpc] = rpcs(`
       service Svc {

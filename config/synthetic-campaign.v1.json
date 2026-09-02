@@ -29,6 +29,9 @@
     "tests/unit/c105ProvenanceAuthority.test.ts",
     "tests/unit/c105PersistedFieldCoverage.test.ts",
     "tests/unit/c11ProdObserveKernel.test.ts",
-    "tests/unit/c11ProdObserveEvidence.test.ts"
+    "tests/unit/c11ProdObserveEvidence.test.ts",
+    "tests/unit/c02bProtoLexer.test.ts",
+    "tests/unit/c02bProtoSurface.test.ts",
+    "tests/unit/c02bProtoCorroboration.test.ts"
   ]
 }

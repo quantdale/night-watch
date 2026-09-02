@@ -30,11 +30,11 @@ the C-02a generated OpenAPI artifact that cannot be satisfied by counting.
 
 ## Current Milestone
 
-Milestone ID: M6 — hardening rules and negative probes
+Milestone ID: M8 — integration, exact-head CI, closure
 Milestone status: IN_PROGRESS
-What is being attempted: guard the load-bearing C-02b invariants in
-`hardening:check` and negative-probe each one — mutation must FAIL, restoration
-must PASS, both recorded.
+What is being attempted: run the full validation matrix with writes frozen for
+`gate:clean`, integrate per C-00, observe exact-head CI, reconcile project
+truth, complete the REPORT and release the session.
 
 ## Completed Milestones
 
@@ -56,15 +56,24 @@ must PASS, both recorded.
   `tests/unit/c02bProtoCorroboration.test.ts` 17/17. All 147 real Billing
   operations MATCH the proto on verb and path; the artifact still does not
   reach CURRENT.
+- M6 — `checkC02bProtobufBoundary()` added to `bin/hardening-check.mjs`;
+  15 negative probes attempted, 15 detected, 15 restored to PASS. One vacuous
+  test found and repaired.
+- M7 — the three C-02b suites registered in
+  `config/synthetic-campaign.v1.json`, with a membership assertion in
+  `tests/unit/syntheticCampaignDiagnostics.test.ts` so the registration cannot
+  be silently dropped.
 
 ## Work In Progress
 
-M6. Nothing partial: M1-M5 are closed and committed.
+M8. Nothing partial: M1-M7 are closed.
 
 ## Exact Next Action
 
-Read `bin/hardening-check.mjs`, add rules for the C-02b invariants that can
-actually deny, and negative-probe each one by mutating the source it guards.
+Run the full validation matrix — typecheck, hardening, handoff, project, agent,
+agent audit, workspace, gate inventory, semantic compatibility, synthetic
+campaign, the full canonical regression, `gate:local`, then `gate:clean` with
+campaign writes frozen — then integrate per C-00 and observe exact-head CI.
 
 ## Files Changed
 
@@ -93,6 +102,9 @@ actually deny, and negative-probe each one by mutating the source it guards.
 | `tests/unit/c02aOpenApiAdmission.test.ts` | three assertions rescoped from "the repository" to "the artifact" | 18/18 PASS |
 | `src/core/source/protoCorroboration.ts` | per-operation corroboration, seven outcomes, scope limits | IMPLEMENTED |
 | `tests/unit/c02bProtoCorroboration.test.ts` | A-4 gate, outcome vocabulary, real-surface measurement | 17/17 PASS |
+| `bin/hardening-check.mjs` | `checkC02bProtobufBoundary()` — six guarded invariants | PASS |
+| `config/synthetic-campaign.v1.json` | the three C-02b suites gate-registered | PASS |
+| `tests/unit/syntheticCampaignDiagnostics.test.ts` | membership assertion for the C-02b suites | PASS |
 
 ## Validation Ledger
 
@@ -197,6 +209,18 @@ OPENAPI_ONLY, 444 out of scope. State UNCORROBORATABLE, so
 `toProtoSurfaceCorroboration` returns null and blueapi's generation currency
 stays UNKNOWN with its production admission DENIED.
 
+Command: 15 negative probes (10 against `hardening:check`, 5 behavioural
+against the suites), each mutate -> run -> restore -> run
+Result: 15/15 DETECTED, 15/15 RESTORED_PASS
+When: 2026-09-03, session worktree
+Relevant failure/output summary: two of my own hardening rules were over-broad
+on first run and were tightened before probing — one matched the words
+`protoc-gen-openapiv2` inside a comment describing a real annotation, the other
+matched the comment in `approvedScan.ts` that documents blueinternal's absence.
+Both are the C-11 lesson about plausible rules matching irrelevant occurrences
+of the same identifier, caught here rather than shipped. Probe B3 then found a
+genuinely vacuous test; see the discovery below.
+
 ## Decisions Made During This Task
 
 Decision: corroborate the generated artifact per operation identity, never by
@@ -246,6 +270,15 @@ Decision: a renamed path placeholder is a divergence, not a normalization.
 Reason: the artifact is meant to be a faithful mirror, and `{id}` vs
 `{thingId}` is exactly the drift the check exists to catch.
 
+Decision: probes must mutate faithfully or they prove nothing.
+Reason: B3's first mutation replaced the unknown-verb-key rejection with
+`continue`, which stalls the cursor on the `:` so the block fails for an
+unrelated reason and the probe read as NOT_DETECTED against a test that WAS
+vacuous. Deleting the rule outright is the faithful mutation, and it exposed
+the real gap.
+Consequence: a probe that comes back NOT_DETECTED is investigated as a possible
+bad probe as well as a possible bad rule.
+
 ## Defects introduced by this campaign
 
 DEF-C02B-1 — a generated mirror was treated as a rival declaration.
@@ -271,6 +304,13 @@ DEF-C02B-1 — a generated mirror was treated as a rival declaration.
 
 ## Discoveries
 
+- VACUOUS TEST FOUND AND REPAIRED. "An unknown HTTP verb is never coerced to a
+  known one" asserted `{ fetch: "/v1/real" }` is MALFORMED — but a block with
+  no verbs at all is rejected by a different check, so deleting the unknown-key
+  rule left the test green. The replacement pairs the unknown key with a valid
+  one (`{ get: "/v1/real" fetch: "/v1/ghost" }`): with the rule the binding is
+  MALFORMED, without it `/v1/ghost` silently disappears and the RPC reads as a
+  clean GET. Re-probed: DETECTED, and by the new assertion specifically.
 - The parser reproduces the independent line-regex baseline exactly on all ten
   measured dimensions. Two methods measuring the same number by different means
   is the strongest evidence available here that neither is fabricating.

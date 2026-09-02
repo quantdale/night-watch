@@ -62,6 +62,18 @@ test.describe('synthetic campaign manifest', () => {
     expect(manifest.files).toContain('tests/unit/workspaceIsolation.test.ts');
     expect(manifest.files).toContain('tests/unit/l6Containment.test.ts');
   });
+
+  test('carries every campaign certification suite that claims to be certified', () => {
+    // C-11 lesson 5.3: a suite absent from every manifest does not run in the
+    // authoritative gate, and a certification claim resting on it is empty.
+    // Membership, not string presence — dropping a line from the manifest must
+    // fail here rather than quietly retire the evidence.
+    for (const suite of [
+      'tests/unit/c02bProtoLexer.test.ts',
+      'tests/unit/c02bProtoSurface.test.ts',
+      'tests/unit/c02bProtoCorroboration.test.ts',
+    ]) expect(manifest.files).toContain(suite);
+  });
 });
 
 test.describe('quality-gate bounded diagnostics', () => {
