@@ -327,9 +327,30 @@ flowchart LR
 
 `type` · `shape` (key set, nesting) · `cardinality` · `category` (enumerated
 classifier output) · HTTP status class · invariant result · deterministic
-digest (salted per-run so digests are not a cross-run join key on customer
-identity) · sanitized structural difference · timestamps · route identity ·
-source provenance · replay status · receipt outcome.
+STRUCTURAL digest · sanitized structural difference · timestamps · route
+identity · source provenance · replay status · receipt outcome.
+
+> **SUPERSEDED BY C-10 (D-113).** This section originally said "deterministic
+> digest (salted per-run so digests are not a cross-run join key on customer
+> identity)". That model is HISTORICAL and is not what the production
+> implementation does. The original single family was asked to be both salted
+> per campaign (so two campaigns over identical data differ) and comparable
+> across campaigns (for new-deployment detection); those are mutually
+> exclusive. C-10 replaced it with two explicitly named, type-distinct
+> concepts. See `docs/DECISIONS.md` D-113 and §6.4 below.
+>
+> **Current production semantics:**
+>
+> * **Structural digest — `prodstruct:sha256:*`.** Structural only. Contains no
+>   raw customer value and no unproven dynamic key literal. UNSALTED,
+>   deterministic, and therefore comparable across campaigns.
+>   Persistable.
+> * **Durable value digest — ABSENT.** Nothing in the production persistence
+>   contract requires durable value correlation, so the concept is REMOVED
+>   rather than invented. Correlation within one in-memory analysis uses
+>   ephemeral encounter tokens that are never persisted and never digested.
+>   There is consequently no salt to persist and no low-entropy value hash to
+>   invert.
 
 ### 6.3 What may never be persisted (closed denylist, enforced twice)
 
@@ -350,7 +371,8 @@ re-screens and fails closed.
 | Playwright trace | **prohibited** (already always-off when authenticated) | off when authenticated |
 | Response body retention | **zero bytes**, projection only | bounded, redacted |
 | URL retention | route template only; concrete path params replaced by `{}` | redacted URL |
-| Digest salt | per-campaign random, never persisted | n/a |
+| Digest family | `prodstruct:sha256:*` STRUCTURAL only — unsalted, deterministic, cross-campaign comparable, no raw value, no unproven dynamic key | n/a |
+| Durable value digest | **ABSENT** — no value-derived digest exists in the production persistence contract; hence no salt is persisted (D-113, supersedes the earlier "per-campaign random salt" row) | n/a |
 | Evidence expiry | 30 days default; unresolved findings owner-controlled | existing retention |
 | Store | separate root `$HOME/.nightwatch/prod-findings/`, mode 0700/0600, never the DEV root | `$HOME/.nightwatch/findings/` |
 | Publication | structurally impossible — no connector exists, `EXTERNAL_PUBLICATION` frozen | same |
@@ -368,8 +390,11 @@ re-screens and fails closed.
   receives raw bytes only through one call-scoped reader.
 - **Error-path leakage**: every thrown error in the analyzer/projection cone is
   asserted to be categorical (a code, never interpolated content).
-- **Digest non-invertibility**: assert per-campaign salt is used and not
-  persisted.
+- **Digest non-invertibility**: assert that NO durable value-derived digest
+  exists, that the structural digest ingests no customer scalar and no unproven
+  dynamic key literal, and that no salt is persisted — there is none to
+  persist. (SUPERSEDES the original "assert per-campaign salt is used and not
+  persisted", which described the withdrawn single/salted model; D-113.)
 
 ---
 

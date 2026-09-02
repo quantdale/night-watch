@@ -533,8 +533,12 @@ the absence of any mutation verb in the production cone.
 
 **How is customer data protected?** Allowlist structural projection at a
 boundary raw bytes cannot cross; no screenshots, no traces, no bodies, no URLs
-with query data; per-campaign salted digests; a separate owner-only store; and
-five specific tests that must be green before the first passive session.
+with query data; an unsalted, value-free `prodstruct:sha256:*` STRUCTURAL
+digest and NO durable value-derived digest at all (D-113 — this supersedes the
+earlier "per-campaign salted digests" phrasing, which described a single family
+asked to be both per-campaign salted and cross-campaign comparable); a separate
+owner-only store; and five specific tests that must be green before the first
+passive session.
 
 **What must happen before the first production request?** RG-01…RG-20, all
 green, in one qualification run, with zero real contact, plus a fresh one-shot
