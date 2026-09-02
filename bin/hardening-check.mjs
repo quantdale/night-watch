@@ -2279,10 +2279,14 @@ function checkC11ProdObserveBoundary() {
     [/from\s+['"][^'"]*safety\/realRunGate['"]/, 'the generic real-run decision path'],
     [/from\s+['"][^'"]*safety\/hosts['"]/, 'the production deny table (F-10)'],
     [/from\s+['"][^'"]*safety\/canary['"]/, 'the DEV canary'],
-    [/from\s+['"][^'"]*core\/phase22\//, 'the DEV campaign orchestrator'],
-    [/from\s+['"][^'"]*core\/phase23\//, 'the DEV acceptance manifest'],
-    [/from\s+['"][^'"]*core\/environment['"]/, 'the DEV environment loader'],
+    // Patterns must match a RELATIVE import too: `../phase22/manifest` is the
+    // same module as `core/phase22/manifest`, and requiring the `core/` segment
+    // let the relative form through.
+    [/from\s+['"][^'"]*phase22\//, 'the DEV campaign orchestrator'],
+    [/from\s+['"][^'"]*phase23\//, 'the DEV acceptance manifest'],
+    [/from\s+['"][^'"]*\/environment(?:\/|['"])/, 'the DEV environment loader'],
     [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+    [/from\s+['"][^'"]*campaign\//, 'the campaign execution path'],
   ];
   for (const file of coneFiles) {
     const source = withoutComments(read(file));
@@ -2311,8 +2315,12 @@ function checkC11ProdObserveBoundary() {
 
   // --- F-11: realRunGate gains no production branch and no mode parameter ---
   const realRunGate = withoutComments(read('src/core/safety/realRunGate.ts'));
-  if (!/isProductionClassHost/.test(realRunGate)) {
-    fail('F-11: realRunGate must keep refusing production-class hosts');
+  // Anchored to the DECLARATION and the guarded call site. The bare name
+  // appears in both, so matching it alone stayed true when the declaration was
+  // renamed away — the DEF-R11-1 vacuity class.
+  if (!/function isProductionClassHost\(host: string\): boolean/.test(realRunGate)
+    || !/if \(isProductionClassHost\(normalized\)\)/.test(realRunGate)) {
+    fail('F-11: realRunGate must keep refusing production-class hosts at its guarded call site');
   }
   if (/PROD_OBSERVE|prodObserve|productionRunGate/.test(realRunGate)) {
     fail('F-11: realRunGate must gain no PROD_OBSERVE branch; the production decision belongs to a separate kernel');
@@ -2326,7 +2334,9 @@ function checkC11ProdObserveBoundary() {
   if (!/PRODUCTION_ADMISSION_CHAIN_VERSION = 'nightwatch\.production-admission-chain\.v1'/.test(types)) {
     fail('C-11 the admission chain must be versioned');
   }
-  if (!/HISTORICAL_GATE_MAPPING/.test(types)) {
+  // Anchored to the export, because the bare identifier is a prefix of any
+  // renamed variant such as `HISTORICAL_GATE_MAPPING_REMOVED`.
+  if (!/export const HISTORICAL_GATE_MAPPING:/.test(types)) {
     fail('C-11 the mapping from the historical G0-G11 identifiers must stay machine-checkable in source');
   }
   const gateBlock = /PRODUCTION_ADMISSION_GATES = \[([\s\S]*?)\] as const;/.exec(types);
