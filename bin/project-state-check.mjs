@@ -27,6 +27,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { isApprovedCheckpointPath } from './agent-state.mjs';
 import {
   findDuplicateFields,
   fieldValue,
@@ -208,9 +209,14 @@ function readActiveContinuity(root) {
       taskId: metadataValue('Task ID'),
       phase: metadataValue('Phase'),
       nextAction: metadataValue('Next action'),
+      // C-10.5 A10: ACTIVE_TASK is already declared
+      // VALIDATED_IMPLEMENTATION_AUTHORITY, so its validated-implementation
+      // anchor is the authority the project baseline is checked against.
+      validatedImplementationSha: metadataValue('LAST_VALIDATED_IMPLEMENTATION_SHA'),
+      substantiveCheckpointSha: metadataValue('LAST_SUBSTANTIVE_CHECKPOINT_SHA'),
     };
   } catch {
-    return { parsed: null, status: null, effect: undefined, taskId: undefined, phase: undefined, nextAction: undefined };
+    return { parsed: null, status: null, effect: undefined, taskId: undefined, phase: undefined, nextAction: undefined, validatedImplementationSha: undefined, substantiveCheckpointSha: undefined };
   }
 }
 
@@ -354,6 +360,77 @@ function main() {
       && gitReadOnly(root, ['merge-base', '--is-ancestor', ciEvidenceSha, substantiveSha]) !== null
     ) {
       fail(errors, 'PROJECT_STATE_CI_EVIDENCE_STALE');
+    }
+
+    // C-10.5 A10 — CROSS-AUTHORITY BASELINE INVARIANT.
+    //
+    // The check above compares the CI anchor to the substantive anchor, so it
+    // only fires when the two DISAGREE. That misses the failure this campaign
+    // found: all five live anchors named b99ce4e, an ANCESTOR of the validated
+    // C-10 implementation at 23523cc, and because they agreed with each other
+    // nothing fired. Pairwise agreement cannot detect a globally stale
+    // baseline; only an external reference can.
+    //
+    // `.agent/ACTIVE_TASK.md` is that reference, and this document already
+    // names it `VALIDATED_IMPLEMENTATION_AUTHORITY`. The invariant is
+    // DIRECTIONAL — the task says what it validated, the project baseline must
+    // not lag it — so no circular truth is created: CURRENT_STATE never becomes
+    // the authority for what the task validated, and the task never dictates
+    // the baseline's other fields.
+    //
+    // A documentation-only descendant is legitimate and must PASS: after a
+    // validated implementation, the task records and project docs are updated,
+    // which necessarily advances the task anchor past the substantive commit.
+    // So the range is CLASSIFIED rather than merely compared, reusing the
+    // continuity protocol's existing approved-checkpoint allowlist. Only a
+    // commit touching an unapproved (implementation, source, test, config)
+    // path proves a later substantive implementation exists.
+    //
+    // Everything here is local: `merge-base` and `diff --name-only` against the
+    // object database, no network.
+    const taskValidatedSha = activeContinuity.validatedImplementationSha;
+    if (
+      /^[0-9a-f]{40}$/i.test(substantiveSha ?? '')
+      && /^[0-9a-f]{40}$/i.test(taskValidatedSha ?? '')
+      && substantiveSha !== taskValidatedSha
+      // Strict-ancestor only: a baseline AHEAD of the task anchor is a
+      // different condition and is not this check's business.
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', substantiveSha, taskValidatedSha]) !== null
+    ) {
+      const changed = gitReadOnly(root, ['diff', '--name-only', substantiveSha, taskValidatedSha]);
+      if (changed === null) {
+        // Ancestry held but the range could not be classified. Fail closed:
+        // an unclassifiable range must not be assumed documentation-only.
+        fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_UNVERIFIABLE');
+      } else {
+        const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
+        const substantive = files.filter((file) => !isApprovedCheckpointPath(file));
+        if (substantive.length > 0) {
+          // The active task validated an implementation strictly newer than the
+          // project baseline. The baseline is stale even if every field in the
+          // block agrees with every other field.
+          fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+        }
+      }
+    }
+
+    // The CI anchor is held to the same reference with its own semantics: it
+    // names the commit a run executed at, so it may legitimately sit on a
+    // documentation descendant, but it must never certify a commit older than
+    // the validated implementation it claims to cover.
+    if (
+      /^[0-9a-f]{40}$/i.test(executedSha ?? '')
+      && /^[0-9a-f]{40}$/i.test(taskValidatedSha ?? '')
+      && executedSha !== taskValidatedSha
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', executedSha, taskValidatedSha]) !== null
+    ) {
+      const changed = gitReadOnly(root, ['diff', '--name-only', executedSha, taskValidatedSha]);
+      if (changed !== null) {
+        const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
+        if (files.some((file) => !isApprovedCheckpointPath(file))) {
+          fail(errors, 'PROJECT_STATE_CI_BASELINE_STALE');
+        }
+      }
     }
 
     // The live cross-check is a small, explicitly machine-owned snapshot.
