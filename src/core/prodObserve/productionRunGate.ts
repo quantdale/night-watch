@@ -34,6 +34,7 @@ import {
   type ProductionAdmissionGate,
   type ProductionDenialCode,
   type ProductionObservationStage,
+  type RequestableAuthorizationClass,
 } from './types';
 import { consumeProdObserveGrant, validateProdObserveGrant } from './authorization';
 import { isAdmittedProductionHost, type ProdObserveConfig } from './observationConfig';
@@ -83,6 +84,14 @@ export interface ProductionAdmissionInput {
   readonly environmentClass: 'LOCAL' | 'CLEAN' | 'CI' | 'PREDEV';
 
   readonly killSwitchProbe: KillSwitchProbe;
+  /**
+   * The authorization class this qualification CLAIMS. Compared against the
+   * grant, so `PROD_OBSERVE` cannot be reached by requesting DEV, NEXT,
+   * authenticated-browser, replay, source-intelligence or generic real-run
+   * authority — and a `PROD_OBSERVE` grant cannot authorize a run claiming to
+   * be one of those.
+   */
+  readonly requestedAuthorizationClass: RequestableAuthorizationClass;
   readonly grant: unknown;
   readonly config: ProdObserveConfig | null;
   readonly observerIdentityClass: ObserverIdentityClass;
@@ -193,7 +202,12 @@ export function evaluateProductionAdmission(
       }
       case 'G_AUTHORIZATION_CLASS': {
         const candidate = input.grant as { authorizationClass?: unknown } | null;
-        if (candidate === null || candidate.authorizationClass !== PROD_OBSERVE_AUTHORIZATION_CLASS) {
+        // BOTH directions must hold: the grant is a PROD_OBSERVE grant, and
+        // this qualification claims PROD_OBSERVE. Aliasing in either direction
+        // denies.
+        if (input.requestedAuthorizationClass !== PROD_OBSERVE_AUTHORIZATION_CLASS
+          || candidate === null
+          || candidate.authorizationClass !== PROD_OBSERVE_AUTHORIZATION_CLASS) {
           deny(gate, 'AUTHORIZATION_CLASS_NOT_PROD_OBSERVE');
         } else pass(gate);
         break;

@@ -35,8 +35,12 @@ export const PRODUCTION_ADMISSION_GATES = [
   'G_KILL_SWITCH_ENTRY',
   'G_OWNER_AUTHORIZATION',
   'G_AUTHORIZATION_CLASS',
-  'G_ORGANIZATION_WINDOW',
+  // Configuration integrity precedes the organizational window because the
+  // window is READ FROM the config. Ordered the other way round, a missing
+  // config denied as `ORGANIZATION_WINDOW_ABSENT` and the integrity gate could
+  // never be reached, which made it unfalsifiable.
   'G_CONFIGURATION_INTEGRITY',
+  'G_ORGANIZATION_WINDOW',
   'G_OBSERVER_IDENTITY',
   'G_SOURCE_CURRENCY',
   'G_READ_ONLY_PROOF',
@@ -155,6 +159,27 @@ export const GATE_DENIAL_CODES: Readonly<Record<ProductionAdmissionGate, readonl
  */
 export const PROD_OBSERVE_AUTHORIZATION_CLASS = 'PROD_OBSERVE' as const;
 export type ProdObserveAuthorizationClass = typeof PROD_OBSERVE_AUTHORIZATION_CLASS;
+
+/**
+ * The authorization classes a caller might REQUEST. `PROD_OBSERVE` must never
+ * be reachable by asking for any other one, and holding a `PROD_OBSERVE` grant
+ * must never authorize a qualification that claims to be something else.
+ *
+ * This list exists so `G_AUTHORIZATION_CLASS` has something to compare
+ * against. Without a requested class the gate could only re-read the grant's
+ * own field — which `issueProdObserveGrant` always sets correctly — so it
+ * could never deny, and a gate that cannot deny proves nothing.
+ */
+export const REQUESTABLE_AUTHORIZATION_CLASSES = [
+  'PROD_OBSERVE',
+  'DEV',
+  'NEXT',
+  'AUTHENTICATED_BROWSER',
+  'REPLAY',
+  'SOURCE_INTELLIGENCE',
+  'REAL_RUN',
+] as const;
+export type RequestableAuthorizationClass = (typeof REQUESTABLE_AUTHORIZATION_CLASSES)[number];
 
 /** Promotion stages. C-11 qualifies at PQ and grants nothing beyond it. */
 export const PRODUCTION_OBSERVATION_STAGES = ['P0', 'PQ', 'P1', 'P2', 'P3', 'P4'] as const;

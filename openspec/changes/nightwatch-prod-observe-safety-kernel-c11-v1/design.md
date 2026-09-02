@@ -12,9 +12,9 @@ authority; the count is derived from it and never asserted (see `audit.md` §A).
 | --- | --- | --- | --- |
 | 1 | `G_KILL_SWITCH_ENTRY` | no kill switch engaged at qualification entry | review SHOULD FIX (new position) |
 | 2 | `G_OWNER_AUTHORIZATION` | a `PROD_OBSERVE` grant exists, is scoped to this campaign, is unexpired and is UNCONSUMED | `G0` |
-| 3 | `G_AUTHORIZATION_CLASS` | the grant's class is `PROD_OBSERVE`, reached through the production kernel and not aliased to any other authority | `G1` |
-| 4 | `G_ORGANIZATION_WINDOW` | now falls inside a finite, explicitly approved observation window | review EXPANDED (`G-ORG`) |
-| 5 | `G_CONFIGURATION_INTEGRITY` | the observation config is external-only and passes every integrity requirement | F-09 (replaces in-repo config) |
+| 3 | `G_AUTHORIZATION_CLASS` | the grant's class is `PROD_OBSERVE` AND this qualification claims `PROD_OBSERVE`; aliasing denies in either direction | `G1` |
+| 4 | `G_CONFIGURATION_INTEGRITY` | the observation config is external-only and passes every integrity requirement | F-09 (replaces in-repo config) |
+| 5 | `G_ORGANIZATION_WINDOW` | now falls inside a finite, explicitly approved observation window | review EXPANDED (`G-ORG`) |
 | 6 | `G_OBSERVER_IDENTITY` | the observer identity class meets the stage minimum | review EXPANDED (was prose in `§5.6`) |
 | 7 | `G_SOURCE_CURRENCY` | the source snapshot is COMPLETE and CURRENT at a pinned checkpoint | `G3` |
 | 8 | `G_READ_ONLY_PROOF` | the target surface is `READ_ONLY_PROVEN` by two non-stale witnesses | `G4` |
@@ -46,6 +46,28 @@ Twelve historical identifiers become eighteen named gates. No historical check
 is dropped; six are added and one is split. The receipt records the ordered IDs
 and a digest over the chain definition, so identity — not a count — is what
 fails closed.
+
+### Two ordering and falsifiability corrections found by the matrix
+
+Both were caught by building the one-fault matrix rather than by review, and
+both are recorded because they show what the matrix is FOR.
+
+**Configuration integrity must precede the organizational window.** The window
+is read FROM the config, so with the original order a missing config denied as
+`ORGANIZATION_WINDOW_ABSENT` and `G_CONFIGURATION_INTEGRITY` could never be
+reached. It was therefore unfalsifiable — present in the chain, incapable of
+denying. Reordered, each is independently falsifiable: no config denies at
+integrity, and a bad window with a good config denies at the window.
+
+**`G_AUTHORIZATION_CLASS` needed something to compare against.** Reading the
+grant's own `authorizationClass` could never deny, because
+`issueProdObserveGrant` always sets it correctly and a non-registered object is
+already refused by the preceding gate. The gate now compares the grant against
+the authorization class this qualification CLAIMS, so `PROD_OBSERVE` cannot be
+reached by requesting DEV, NEXT, authenticated-browser, replay,
+source-intelligence or generic real-run authority — and a `PROD_OBSERVE` grant
+cannot authorize a run claiming to be one of those. A gate that cannot deny
+proves nothing.
 
 ## §2. Why the count is not the contract
 
