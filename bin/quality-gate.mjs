@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
-import { parseCounts, parseSafeDetails } from './lib/gate-receipt.mjs';
+import { GATE_RECEIPT_PATH_ENV, parseCounts, parseSafeDetails, persistGateReceipt, resolveGateReceiptTarget } from './lib/gate-receipt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
@@ -21,6 +21,9 @@ const FORBIDDEN_ENVIRONMENT_KEYS = Object.freeze([
   'NIGHTWATCH_STORAGE_STATE', 'NIGHTWATCH_AUTH_FILE', 'NIGHTWATCH_OWNER_FINDINGS',
   'GITHUB_TOKEN', 'GH_TOKEN', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
   'AWS_SESSION_TOKEN', 'GOOGLE_APPLICATION_CREDENTIALS', 'CLOUDSDK_AUTH_ACCESS_TOKEN',
+  // The receipt destination belongs to THIS gate run. A child inheriting it
+  // could overwrite the parent's authoritative receipt with its own.
+  GATE_RECEIPT_PATH_ENV,
 ]);
 
 function canonical(value) {
@@ -138,6 +141,39 @@ function summarizeChild(result, commandKey) {
   return { status: result.status === 0 ? 'PASS' : 'TEST_FAILURE', exitCode: result.status, counts: parseCounts(output), details: parseSafeDetails(output), errorClass: result.status === 0 ? null : `COMMAND_FAILED_${commandKey}` };
 }
 
+/**
+ * Emit the receipt once, to both destinations, from ONE canonical string.
+ *
+ * Byte identity is structural here: there is a single `JSON.stringify` result
+ * and both stdout and the file receive that exact string, so the two can never
+ * drift and their `receiptDigest` values are necessarily equal.
+ *
+ * Persistence failure is a gate failure. A run whose evidence could not be
+ * durably recorded is reported as such rather than passing quietly — that is
+ * the whole point of the mechanism.
+ */
+function emitReceipt(receipt, target, exitCode) {
+  receipt.receiptDigest = `receipt:sha256:${sha256(canonical(receipt)).slice(0, 24)}`;
+  const canonicalBytes = JSON.stringify(receipt);
+  console.log(canonicalBytes);
+  if (target.file === undefined) {
+    // The destination was rejected before any group ran; that refusal is
+    // already reported and is itself the failure.
+    process.exitCode = exitCode === 0 ? 1 : exitCode;
+    return;
+  }
+  const persisted = persistGateReceipt(target.file, canonicalBytes);
+  if (persisted.status !== 'WRITTEN') {
+    // stderr only: stdout stays receipt-only so a consumer parsing the last
+    // line still finds the receipt and nothing else.
+    console.error(JSON.stringify({ status: 'RECEIPT_PERSISTENCE_FAILED', code: persisted.code, receiptDigest: receipt.receiptDigest }));
+    process.exitCode = 3;
+    return;
+  }
+  console.error(JSON.stringify({ status: 'RECEIPT_PERSISTED', origin: target.origin, receiptDigest: receipt.receiptDigest, file: persisted.file }));
+  process.exitCode = exitCode;
+}
+
 function main() {
   const mode = process.argv[2];
   if (!modes.has(mode)) {
@@ -157,11 +193,19 @@ function main() {
   const nodeMajor = Number(process.versions.node.split('.')[0]);
   const head = gitValue(['rev-parse', 'HEAD']);
   const packageLock = (() => { try { return fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'); } catch { return null; } })();
+  // Fail closed on the receipt destination BEFORE any group runs: an unsafe or
+  // unwritable path must cost no test time, and must never be discovered only
+  // after the evidence it would have held already exists.
+  const target = resolveGateReceiptTarget({ repositoryRoot: root, mode, gitHead: head });
+  if (target.error !== undefined) {
+    console.error(JSON.stringify({ status: 'CONFIG_INVALID', code: target.error }));
+    process.exitCode = 2;
+    return;
+  }
   if (!head || packageLock === null || nodeMajor < 20 || ((mode === 'ci' || mode === 'clean') && nodeMajor !== 20)) {
-    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, environmentClass: mode.toUpperCase(), groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
-    receipt.receiptDigest = `receipt:sha256:${sha256(canonical(receipt)).slice(0, 24)}`;
-    console.log(JSON.stringify(receipt));
-    process.exitCode = 1;
+    // An environment rejection is exactly the kind of result worth persisting.
+    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
+    emitReceipt(receipt, target, 1);
     return;
   }
   const groups = [];
@@ -184,13 +228,14 @@ function main() {
     packageLockDigest: `sha256:${sha256(packageLock)}`,
     nodeMajor,
     environmentClass: mode.toUpperCase(),
+    // Deterministic, and part of the digested body: the OUTCOME of persistence
+    // cannot be, because the digest must exist before the bytes are written.
+    receiptPersistenceRequested: true,
     groupIds: groups.map((group) => group.id),
     groups,
     finalResult,
   };
-  receipt.receiptDigest = `receipt:sha256:${sha256(canonical(receipt)).slice(0, 24)}`;
-  console.log(JSON.stringify(receipt));
-  process.exitCode = finalResult === 'PASS' ? 0 : 1;
+  emitReceipt(receipt, target, finalResult === 'PASS' ? 0 : 1);
 }
 
 main();

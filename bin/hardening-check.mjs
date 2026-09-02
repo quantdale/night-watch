@@ -2105,6 +2105,152 @@ function checkC105ProvenanceAuthorityBoundary() {
   }
 }
 
+/**
+ * R-11 proxy/gate reliability invariants (OBS-C105-1).
+ *
+ * Two mechanisms are protected here. First, the port allocator's PRODUCTION
+ * path must keep using the real operating-system availability probe: R-11
+ * introduced an injectable availability predicate so the adversarial lease
+ * cases could be deterministic, and that seam would be worth nothing — worse
+ * than nothing — if production could reach it. Second, the authoritative gate
+ * must keep persisting its receipt to a confined path, because OBS-C105-1's
+ * failing-group detail was destroyed by a filter over the single stdout copy.
+ *
+ * Every rule below is negative-probed by
+ * `tests/unit/gateReceiptPersistence.test.ts`, so none of them is a regex that
+ * merely happens to match.
+ */
+function checkR11ProxyGateReliability() {
+  const lease = read('src/proxy/portLease.ts');
+  const leaseSource = withoutComments(lease);
+
+  // The production entry must bind the REAL probe, and must not take an
+  // availability parameter that a caller could substitute.
+  if (!/export function reserveProxyPortLease\(options:\s*\{\s*root\?:\s*string;\s*preferredPort:\s*number\s*\}\)/.test(leaseSource)) {
+    fail('R-11 reserveProxyPortLease must accept only { root?, preferredPort }; an availability parameter would let a caller bypass the real OS probe');
+  }
+  if (!/return reserveWithAvailability\([^)]*\bportAvailable\)/.test(leaseSource)) {
+    fail('R-11 reserveProxyPortLease must pass the real portAvailable probe to the allocator core');
+  }
+  // The real probe must remain a real TCP bind rather than a stub.
+  if (!/function portAvailable\(/.test(leaseSource) || !/net\.createServer\(\)/.test(leaseSource) || !/s\.listen\(/.test(leaseSource)) {
+    fail('R-11 portAvailable must retain a real loopback TCP bind probe');
+  }
+  // Allocator safety properties R-11 must not have weakened.
+  for (const [pattern, message] of [
+    [/fs\.openSync\(file,\s*'wx',\s*0o600\)/, 'exclusive lease creation with owner-only mode'],
+    [/processAlive\(existing\.pid\)/, 'live-owner detection before reclaiming a lease'],
+    [/PROXY_PORT_LEASE_EXHAUSTED/, 'bounded search exhaustion'],
+    [/const CANDIDATE_COUNT = \d+;/, 'a fixed bounded candidate count'],
+    [/fs\.lstatSync\(file\)/, 'lstat-based lease inspection so a symlink is never followed'],
+    [/current\?\.token === token/, 'token ownership on release'],
+  ]) if (!pattern.test(leaseSource)) fail(`R-11 the port allocator must retain ${message}`);
+
+  // The TEST-ONLY availability seam must be branded and unreachable from
+  // anything but tests/**.
+  if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(lease)) {
+    fail('R-11 the injectable availability seam must be explicitly branded TEST ONLY');
+  }
+  const seamName = 'reserveProxyPortLeaseWithAvailabilityForTest';
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') && !file.endsWith('.tsx')) continue;
+    if (file === 'src/proxy/portLease.ts' || file.startsWith('tests/')) continue;
+    if (new RegExp(seamName).test(withoutComments(read(file)))) {
+      fail(`${file} references the R-11 TEST-ONLY availability seam; only tests/** may use it`);
+    }
+  }
+
+  // No proxy test may reintroduce a probabilistic port choice. This is the
+  // exact defect OBS-C105-1 was: a PID-derived port asserted as a guarantee.
+  for (const file of gitFiles()) {
+    if (!/^tests\/unit\/(?:phase2[34].*|proxy).*\.test\.ts$/i.test(file)) continue;
+    const source = withoutComments(read(file));
+    for (const [pattern, message] of [
+      [/\bMath\.random\(\)/, 'Math.random()'],
+      [/\bDate\.now\(\)\s*[%+*]/, 'a Date.now()-derived port'],
+      [/(?:preferred|port)\w*\s*=\s*[^;\n]*process\.pid/i, 'a process.pid-derived port'],
+    ]) if (pattern.test(source)) {
+      fail(`${file} selects a proxy port using ${message}; R-11 forbids probabilistic port selection in proxy tests`);
+    }
+  }
+
+  // Durable gate receipts.
+  const receiptLib = read('bin/lib/gate-receipt.mjs');
+  const runner = read('bin/quality-gate.mjs');
+  const clean = read('bin/quality-gate-clean.mjs');
+
+  for (const code of [
+    'GATE_RECEIPT_PATH_NOT_ABSOLUTE', 'GATE_RECEIPT_PATH_TRAVERSAL', 'GATE_RECEIPT_PATH_INSIDE_REPOSITORY',
+    'GATE_RECEIPT_PATH_UNCONFINED', 'GATE_RECEIPT_PATH_PARENT_SYMLINK', 'GATE_RECEIPT_PATH_DESTINATION_SYMLINK',
+    'GATE_RECEIPT_FILE_MALFORMED', 'GATE_RECEIPT_STALE_HEAD',
+  ]) if (!receiptLib.includes(code)) fail(`R-11 the gate-receipt module must retain the fail-closed code ${code}`);
+  // Confinement, not merely validation: an unconfined absolute path would let
+  // the gate write anywhere the process can reach.
+  if (!/function gateReceiptPermittedRoots\(/.test(receiptLib) || !/os\.tmpdir\(\)/.test(receiptLib)) {
+    fail('R-11 the gate-receipt module must confine receipt destinations to permitted temporary roots');
+  }
+  // Atomicity: exclusive create, fsync, rename. A plain writeFileSync would let
+  // a reader observe a truncated receipt.
+  if (!/fs\.openSync\(temporary,\s*'wx',\s*0o600\)/.test(receiptLib) || !/fs\.fsyncSync\(/.test(receiptLib) || !/fs\.renameSync\(temporary,\s*file\)/.test(receiptLib)) {
+    fail('R-11 receipt persistence must be an exclusive-create, fsync, atomic-rename write');
+  }
+
+  if (!/resolveGateReceiptTarget\(\{\s*repositoryRoot: root/.test(runner)) {
+    fail('R-11 the quality gate must resolve and validate its receipt destination against the repository root');
+  }
+  // Validation must precede execution, so an unsafe path costs no test time and
+  // is never discovered only after the evidence already exists.
+  if (runner.indexOf('resolveGateReceiptTarget(') > runner.indexOf('for (const group of definition.groups)')) {
+    fail('R-11 the quality gate must validate its receipt destination BEFORE running any group');
+  }
+  // One canonical string reaches both destinations, so stdout and file cannot drift.
+  if (!/function emitReceipt\(/.test(runner) || !/const canonicalBytes = JSON\.stringify\(receipt\);/.test(runner) || !/console\.log\(canonicalBytes\)/.test(runner) || !/persistGateReceipt\(target\.file, canonicalBytes\)/.test(runner)) {
+    fail('R-11 the quality gate must emit ONE canonical receipt string to both stdout and the persisted file');
+  }
+  if ((runner.match(/console\.log\(/g) ?? []).length !== 1) {
+    fail('R-11 the quality gate must write nothing but the receipt to stdout');
+  }
+  if (!/GATE_RECEIPT_PATH_ENV,/.test(runner)) {
+    fail('R-11 the quality gate must strip the receipt-path variable from child environments so a child cannot overwrite the run receipt');
+  }
+  if (!/RECEIPT_PERSISTENCE_FAILED/.test(runner)) {
+    fail('R-11 a receipt that cannot be persisted must fail the gate rather than pass quietly');
+  }
+
+  if (!/readPersistedGateReceipt\(receiptFile/.test(clean)) {
+    fail('R-11 the clean-checkout gate must consume the structured receipt file rather than scraping stdout');
+  }
+  if (!/GATE_RECEIPT_DIGEST_MISMATCH/.test(clean)) {
+    fail('R-11 the clean-checkout gate must fail closed when the file and stdout receipts disagree');
+  }
+  // The destination must live outside the disposable clone, or writing it would
+  // dirty the very checkout the clean gate measures.
+  if (!/mkdtempSync\(path\.join\(os\.tmpdir\(\), 'nightwatch-clean-gate-receipt-'\)\)/.test(clean)) {
+    fail('R-11 the clean-checkout gate must place its inner receipt outside the disposable clone');
+  }
+
+  // Every R-11 certification suite must be executed by an authoritative gate
+  // group. A safety suite no gate runs is equivalent to no test at all.
+  let compatibility;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+  } catch {
+    fail('R-11 the semantic compatibility manifest must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+  ]);
+  for (const suite of [
+    'tests/unit/phase23PortLease.test.ts',
+    'tests/unit/phase24ProxyLifecycle.test.ts',
+    'tests/unit/proxyPortLeaseDeterminism.test.ts',
+    'tests/unit/proxyPortLeaseStress.test.ts',
+    'tests/unit/gateReceiptPersistence.test.ts',
+  ]) if (!registered.has(suite)) fail(`R-11 certification suite ${suite} is not registered in any authoritative quality-gate group`);
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2146,6 +2292,7 @@ checkPhase23QualityGate();
 checkC00WorkspaceIntegrity();
 checkC10ProductionPrivacyBoundary();
 checkC105ProvenanceAuthorityBoundary();
+checkR11ProxyGateReliability();
 checkSyntax();
 
 if (errors.length > 0) {

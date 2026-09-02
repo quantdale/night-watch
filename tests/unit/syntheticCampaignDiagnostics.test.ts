@@ -2,11 +2,23 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 // The gate's diagnostic boundary is plain ESM so it can be exercised directly
-// rather than inferred from a whole gate run.
-// @ts-expect-error -- untyped repository-local .mjs boundary module
-import { parseCounts, parseSafeDetails } from '../../bin/lib/gate-receipt.mjs';
+// rather than inferred from a whole gate run. R-11 added `bin/lib/gate-receipt.d.mts`,
+// so it is now typed and `parseSafeDetails` correctly returns `null` when no
+// structured child receipt is present.
+import { parseCounts, parseSafeDetails, type GateReceiptSafeDetails } from '../../bin/lib/gate-receipt.mjs';
 
 const root = process.cwd();
+
+/**
+ * These cases all supply a structured receipt, so details MUST be present.
+ * Asserting that explicitly is the point rather than an inconvenience: a null
+ * here would mean the gate silently contributed no diagnostics, which is the
+ * exact regression this suite guards.
+ */
+function requireDetails(value: GateReceiptSafeDetails | null): GateReceiptSafeDetails {
+  expect(value).not.toBeNull();
+  return value as GateReceiptSafeDetails;
+}
 
 function syntheticReceiptLine(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({
@@ -81,7 +93,7 @@ test.describe('quality-gate bounded diagnostics', () => {
   });
 
   test('failing test locations reach the receipt, bounded and categorical', () => {
-    const details = parseSafeDetails(syntheticReceiptLine());
+    const details = requireDetails(parseSafeDetails(syntheticReceiptLine()));
     expect(details.failedLocations).toEqual(['tests/unit/eligibilityCensus.test.ts:211', 'tests/unit/l6Containment.test.ts:10']);
     expect(details.deepContainmentLane).toBe('NOT_EXERCISED_BWRAP_UNAVAILABLE');
   });
@@ -96,7 +108,7 @@ test.describe('quality-gate bounded diagnostics', () => {
     // Allowlisting is the contract: a location must be a tracked tests/** path
     // plus a line number. Absolute host paths, traversal, source text and
     // secret-shaped strings have no representation and cannot leak by accident.
-    const details = parseSafeDetails(syntheticReceiptLine({
+    const details = requireDetails(parseSafeDetails(syntheticReceiptLine({
       failedLocations: [
         'tests/unit/campaign.test.ts:12',
         '/home/someone/secret/path.test.ts:1',
@@ -107,18 +119,18 @@ test.describe('quality-gate bounded diagnostics', () => {
         42,
         null,
       ],
-    }));
+    })));
     expect(details.failedLocations).toEqual(['tests/unit/campaign.test.ts:12']);
   });
 
   test('the location list is bounded so a mass failure cannot flood the receipt', () => {
     const many = Array.from({ length: 200 }, (_, index) => `tests/unit/campaign.test.ts:${index + 1}`);
-    expect(parseSafeDetails(syntheticReceiptLine({ failedLocations: many })).failedLocations).toHaveLength(16);
+    expect(requireDetails(parseSafeDetails(syntheticReceiptLine({ failedLocations: many }))).failedLocations).toHaveLength(16);
   });
 
   test('a malformed containment lane is omitted rather than passed through', () => {
     for (const lane of ['not an enum', 'lower_case', '', 'A'.repeat(200), 12, null]) {
-      expect(parseSafeDetails(syntheticReceiptLine({ deepContainmentLane: lane })).deepContainmentLane).toBeUndefined();
+      expect(requireDetails(parseSafeDetails(syntheticReceiptLine({ deepContainmentLane: lane }))).deepContainmentLane).toBeUndefined();
     }
   });
 

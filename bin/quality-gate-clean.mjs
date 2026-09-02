@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { GATE_RECEIPT_PATH_ENV, readPersistedGateReceipt } from './lib/gate-receipt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const timeout = 1_800_000;
@@ -99,14 +100,61 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
           if (install.status !== 0 || install.error) {
             emit({ schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: head, nodeMajor: toolchain.nodeMajor, installResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE', gateResult: 'NOT_RUN', finalResult: install.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'INSTALL_FAILURE' }, 1);
           } else {
-            const gate = spawnSync(packageManager, ['run', 'gate:clean-exec'], { cwd: clone, env: { ...environment, CI: 'true' }, encoding: 'utf8', timeout, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
-            const output = `${gate.stdout ?? ''}\n${gate.stderr ?? ''}`;
-            const receiptLine = output.split(/\r?\n/).reverse().find((line) => line.includes('nightwatch.quality-gate-receipt.v1'));
+            // R-11: the inner receipt is recovered from a STRUCTURED FILE the
+            // gate itself wrote, not by scraping stdout for a schema token.
+            // Scraping was how the C-10.5 failing-group detail was lost, and it
+            // let any child shadow the real receipt by printing a matching
+            // line. The destination lives in this wrapper's own temporary
+            // directory, deliberately OUTSIDE the disposable clone, so writing
+            // it can never dirty the checkout the clean gate is measuring.
+            const receiptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-clean-gate-receipt-'));
+            const receiptFile = path.join(receiptDirectory, 'clean-inner-gate-receipt.json');
             let gateReceipt = null;
-            try { gateReceipt = receiptLine ? JSON.parse(receiptLine) : null; } catch { gateReceipt = null; }
-            const cleanAfter = git(['status', '--porcelain'], clone);
-            const gateResult = gateReceipt?.finalResult ?? (gate.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'UNKNOWN_FAILURE');
-            const finalResult = gateResult === 'PASS' && cleanAfter.status === 0 && cleanAfter.stdout.trim() === '' ? 'PASS' : gateResult;
+            let receiptSource = 'NOT_READ';
+            let receiptError = null;
+            let stdoutReceiptDigest = null;
+            let cleanAfter = null;
+            let gateTimedOut = false;
+            try {
+              const gate = spawnSync(packageManager, ['run', 'gate:clean-exec'], { cwd: clone, env: { ...environment, CI: 'true', [GATE_RECEIPT_PATH_ENV]: receiptFile }, encoding: 'utf8', timeout, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+              const output = `${gate.stdout ?? ''}\n${gate.stderr ?? ''}`;
+              cleanAfter = git(['status', '--porcelain'], clone);
+
+              const persisted = readPersistedGateReceipt(receiptFile, { gitHead: head, environmentClass: 'CLEAN' });
+              if (persisted.status === 'READ') {
+                gateReceipt = persisted.receipt;
+                receiptSource = 'STRUCTURED_FILE';
+              } else {
+                receiptError = persisted.code;
+              }
+
+              // stdout is still parsed, purely as a CROSS-CHECK. It is never the
+              // authority, and a disagreement fails closed rather than picking
+              // whichever copy looks better.
+              const receiptLine = output.split(/\r?\n/).reverse().find((line) => line.includes('nightwatch.quality-gate-receipt.v1'));
+              try {
+                const parsed = receiptLine ? JSON.parse(receiptLine) : null;
+                if (parsed && typeof parsed.receiptDigest === 'string') stdoutReceiptDigest = parsed.receiptDigest;
+              } catch {
+                stdoutReceiptDigest = null;
+              }
+
+              if (gateReceipt === null) {
+                receiptError = receiptError ?? 'GATE_RECEIPT_UNAVAILABLE';
+              } else if (stdoutReceiptDigest !== null && stdoutReceiptDigest !== gateReceipt.receiptDigest) {
+                receiptError = 'GATE_RECEIPT_DIGEST_MISMATCH';
+              }
+
+              gateTimedOut = gate.error?.code === 'ETIMEDOUT';
+            } finally {
+              fs.rmSync(receiptDirectory, { recursive: true, force: true });
+            }
+
+            const gateResult = receiptError !== null
+              ? (gateTimedOut ? 'TIMEOUT' : 'UNKNOWN_FAILURE')
+              : gateReceipt.finalResult;
+            const checkoutStillClean = cleanAfter !== null && cleanAfter.status === 0 && cleanAfter.stdout.trim() === '';
+            const finalResult = receiptError === null && gateResult === 'PASS' && checkoutStillClean ? 'PASS' : gateResult;
             emit({
               schemaVersion: 'nightwatch.clean-checkout-receipt.v1',
               sourceHead: head,
@@ -115,11 +163,14 @@ if (!head || statusResult.status !== 0 || statusResult.stdout.trim() !== '') {
               nodeRequirement: '20',
               installResult: 'PASS',
               gateResult,
+              gateReceiptSource: receiptSource,
+              gateReceiptError: receiptError,
+              gateReceiptStdoutDigest: stdoutReceiptDigest,
               gateReceiptDigest: gateReceipt?.receiptDigest ?? null,
               gateDefinitionDigest: gateReceipt?.gateDefinitionDigest ?? null,
               gateGroups: Array.isArray(gateReceipt?.groups) ? gateReceipt.groups : [],
               cleanBefore: cleanBefore.stdout.trim() === '',
-              cleanAfter: cleanAfter.status === 0 && cleanAfter.stdout.trim() === '',
+              cleanAfter: checkoutStillClean,
               nodeModulesReused: false,
               authStateProvided: false,
               ownerFindingStateProvided: false,

@@ -211,7 +211,8 @@
         "tests/unit/phase23PortLease.test.ts",
         "tests/unit/phase23CiAuthority.test.ts",
         "tests/unit/phase23Manifest.test.ts",
-        "tests/unit/plannerHandoff.test.ts"
+        "tests/unit/plannerHandoff.test.ts",
+        "tests/unit/gateReceiptPersistence.test.ts"
       ]
     },
     {
@@ -219,7 +220,8 @@
       "files": [
         "tests/unit/phase24LocalTriage.test.ts",
         "tests/unit/phase24ProxyLifecycle.test.ts",
-        "tests/unit/proxyPortLeaseDeterminism.test.ts"
+        "tests/unit/proxyPortLeaseDeterminism.test.ts",
+        "tests/unit/proxyPortLeaseStress.test.ts"
       ]
     },
     {
