@@ -213,7 +213,8 @@ recur inside the coverage suite itself.
 | `gate:local` | PASS, eleven groups, Node 22, at `93d15b3` | `receipt:sha256:50f85aa10248ac17323c9290` |
 | `gate:clean` | PASS, eleven groups, Node 20, `siblingWrites: 0`, at `93d15b3` | `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) |
 | `gate:clean` at the closure head `fd43ea4` | PASS on re-run, but see OBS-C105-1 | first run `TEST_FAILURE` (`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317`); subsequent runs PASS |
-| Exact-head CI | PASS, eleven groups, Node 20, run `33627408962` / job `100238317324` at `4d59235` | `receipt:sha256:072d1ba432a39944aca0466c` |
+| Exact-head CI (substantive) | PASS, eleven groups, Node 20, run `33627408962` / job `100238317324` at `4d59235` | `receipt:sha256:072d1ba432a39944aca0466c` |
+| Exact-head CI (final, exact head of `main`) | PASS, eleven groups, Node 20, run `33635296271` / job `100268250381` at `29b9212` | `receipt:sha256:d64ef703c328a4d10d7e86f3` |
 
 **On the exact-head fixpoint.** The commit RECORDING a receipt is necessarily a
 descendant of the commit the run certified, since a field cannot name the SHA
@@ -239,59 +240,92 @@ CI-certified head: `4d59235c64ba8fbdd7d788a20f678378b06a4014`.
 | stdout pollution (introduced) | Importing the allowlist from `bin/agent-state.mjs` ran its CLI top-level code and corrupted the checker's JSON receipt, breaking 13 pre-existing tests | CLOSED — allowlist relocated to the side-effect-free protocol module |
 
 
-## OBS-C105-1 — one unattributed clean-gate failure at the closure head
+## OBS-C105-1 — a non-deterministic clean-gate failure, probable cause identified
 
-**This is an OPEN observation, deliberately not closed.**
+**Status: OPEN, with a probable cause.** The cause was identified only after an
+independent failure supplied the evidence; the attribution is inference, not
+proof, and is recorded as such.
+
+### What happened
 
 At the Stage-A closure commit `fd43ea4` (a documentation-only descendant of the
-CI-certified `4d59235`), `npm run gate:clean` returned `TEST_FAILURE` once,
-with `clean-receipt:sha256:dbe34b8f71f2de2a6c80c317` and `siblingWrites: 0`.
-Two subsequent runs at the SAME commit returned PASS, one of them under
-deliberate 4x CPU load. `gate:local` passed at that commit
-(`receipt:sha256:fb9a4b6d4f3034d815a76439`), as did exact-head CI at the
-parent.
+CI-certified `4d59235`), `npm run gate:clean` returned `TEST_FAILURE` once with
+`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317` and `siblingWrites: 0`. Two
+subsequent runs at the SAME commit returned PASS, one under deliberate 4x CPU
+load, and `gate:local` passed there
+(`receipt:sha256:fb9a4b6d4f3034d815a76439`).
 
-**I cannot attribute the failure.** The failing group is unrecoverable because
-the command that observed it piped the receipt through a summarising filter
-that printed only `finalResult`, discarding the per-group detail. That was my
-process error, not a tooling limitation.
+**The failing group was unrecoverable.** The command that observed the failure
+piped the receipt through a filter printing only `finalResult`, discarding the
+per-group detail. That was a process error on the executor's part, not a
+tooling limitation, and it is why this observation needed an unrelated failure
+to explain it.
 
-**Investigation performed, with negative results:**
+### Probable cause
 
-| Hypothesis | Test | Result |
-| --- | --- | --- |
-| My A10 fixtures added git work to a suite with a 10s git timeout | `projectState.test.ts` x5 | 64/64 every run; no timeout |
-| CPU contention (background jobs were running) | clean gate under 4x busy loops | PASS |
-| Deep containment lane transiently non-`PROVEN` | `campaign:synthetic` x6 | `PROVEN` every run |
+The exact-head CI run `33635296271` at `29b9212` subsequently failed with a
+single, precisely located test failure:
 
-**Why the containment lane remains the leading candidate anyway.**
-`bin/quality-gate.mjs` forces `SYNTHETIC_CAMPAIGN` to `TEST_FAILURE` with
-`errorClass: SYNTHETIC_CAMPAIGN_DEEP_LANE_<lane>` whenever `mode !== 'ci'` and
-the lane is not `PROVEN`. This is the ONLY clean-vs-local asymmetry in the gate
-and the only way a clean run can report `TEST_FAILURE` with no test having
-failed. It is also environment-dependent — the clean gate builds a fresh clone
-and runs `bwrap` there, not in this worktree, which is where all six negative
-lane checks ran. Unconfirmed, and recorded as a candidate rather than a cause.
+```
+SEMANTIC_COMPATIBILITY  TEST_FAILURE  1975 total / 1961 passed / 13 skipped / 1 failed
+failedLocations: ["tests/unit/phase24ProxyLifecycle.test.ts:105"]
+```
 
-**What was deliberately NOT done.** No retry was added to any test or gate, no
-timeout was inflated, and no gate was weakened. The passing re-runs are
-reported as re-runs, not folded into the record as if the first result had not
-happened.
+`tests/unit/phase24ProxyLifecycle.test.ts:105` derives its port from the
+process id:
 
-**Recommended follow-up (not performed here, as it is outside the Stage-A
-scope):** persist each gate receipt to a file rather than only stdout, so a
-failing group is always attributable after the fact. Retaining evidence is not
-a retry, but it is a change to gate tooling and belongs in its own task.
+```ts
+const preferred = 21000 + (process.pid % 500) * 2 + index;
+```
 
-### Effect on the A15 gate
+then asserts `lease.port === preferred` and that the port is available. Any
+process already holding that exact port fails the assertion. The port space is
+1,000 wide and PID-derived, so collision is a function of host state, not of
+repository content.
 
-The A15 item "clean gate PASS" is satisfied at `fd43ea4` by two reproducible
-passes, and every other item holds. But a required gate produced one
-unexplained failure at the closure commit, and the campaign brief's rule is
-that any failing requirement stops Stage A. Treating a re-run as having settled
-it would be exactly the "retry that hides a defect" the brief forbids, so the
-Stage-A verdict is referred to the owner rather than self-certified. See the
-`## Stage-A verdict` section.
+That test is a member of `SEMANTIC_COMPATIBILITY`, which runs in the `local`,
+`clean` AND `ci` gate modes. So a single flaky member of that group explains a
+`TEST_FAILURE` appearing in one clean run and not the next, at an identical
+commit — which is exactly OBS-C105-1's shape.
+
+**The earlier containment-lane hypothesis is retired.** It was the leading
+candidate because `bin/quality-gate.mjs` forces
+`SYNTHETIC_CAMPAIGN` to `TEST_FAILURE` outside CI when the deep lane is not
+`PROVEN`, but `campaign:synthetic` reported `PROVEN` across six consecutive
+runs, and the CI failure points elsewhere.
+
+### Evidence that this is pre-existing and not caused by C-10.5
+
+| Question | Evidence |
+| --- | --- |
+| Did this campaign change the test? | No — `git log cb631cc..29b9212 -- tests/unit/phase24ProxyLifecycle.test.ts` is empty |
+| Did it change proxy, port or containment code? | No — the only `proxy`/`port` match in the campaign diff is the word inside this report |
+| Does the test pass locally? | Yes — 5/5 across five consecutive runs |
+| Did it pass in the campaign's own earlier CI runs? | Yes — green at `09c13fa` and `4d59235`, and in C-10's `cb631cc` |
+
+### Disposition
+
+Per owner decision: the flake is recorded as a known PRE-EXISTING defect and
+the exact-head CI result was obtained by re-running the job, with **no change to
+the test, no retry added to any test or gate, no timeout inflated and no gate
+weakened**. A CI job re-run to confirm non-determinism is distinct from adding
+a retry to code so a defect stops being visible; the first failure is reported
+above rather than folded away.
+
+**Recommended follow-up, deliberately NOT performed here** (it expands into
+proxy/port test code the brief treats as sensitive, and belongs in its own
+task):
+
+1. Make the lifecycle test's port selection probe for a genuinely free port
+   before asserting, so a collision cannot fail it while it still proves that a
+   killed child's orphan lease is reclaimable.
+2. Persist each quality-gate receipt to a file rather than only stdout, so a
+   failing group is always attributable after the fact. Retaining evidence is
+   not a retry.
+
+This flake is load-bearing for C-11: that campaign adds substantial
+proxy, containment and port-binding work, so an unrepaired PID-derived port
+collision will recur there and should be fixed before it does.
 
 ## A15 Stage-A completion gate
 
@@ -311,49 +345,38 @@ Stage-A verdict is referred to the owner rather than self-certified. See the
 | Persisted-free-form-field coverage mechanically enforced | PASS | two-way totality cross-check, negative-probed |
 | Full regression zero failures | PASS | 2,975 / 2,962 / 13 skipped / 0 failed |
 | Local gate PASS | PASS | `receipt:sha256:50f85aa10248ac17323c9290` |
-| Clean gate PASS | PASS **with OBS-C105-1** | passes reproducibly at `fd43ea4`; one unattributed `TEST_FAILURE` observed at the same commit |
-| Exact-head CI PASS | PASS | run `33627408962` at `4d59235` |
+| Clean gate PASS | PASS **with OBS-C105-1** | passes reproducibly at `fd43ea4`; one `TEST_FAILURE` observed at the same commit, probable cause the pre-existing `phase24ProxyLifecycle` port flake |
+| Exact-head CI PASS | PASS | run `33635296271` / job `100268250381` at `29b9212`, the exact head of `main`; obtained by re-running a job failed by the pre-existing `phase24ProxyLifecycle` flake, recorded in OBS-C105-1 |
 | All 11 gate groups PASS | PASS | every group PASS in the CI receipt |
 | Canonical checkout clean | PASS | implementation only ever in the owned session worktree |
 | `origin/main` synchronized | PASS | fast-forward integration through the C-00 tooling |
 
 ## Stage-A verdict
 
-Every A15 item holds on current evidence, and all substantive work is landed
-and certified by exact-head CI at `4d59235`.
+**Stage A is COMPLETE.** Every A15 item holds, including a green exact-head CI
+at the exact head of `main`.
 
-One qualification stands in the way of self-certifying completion: OBS-C105-1,
-a single unexplained `gate:clean` `TEST_FAILURE` at the closure commit whose
-failing group I destroyed before reading it. The gate passes on re-run, but the
-brief requires every gate item to hold and forbids letting a retry stand in for
-a diagnosis.
+One qualification is recorded rather than resolved: OBS-C105-1, a
+non-deterministic `gate:clean` failure whose probable cause is the PRE-EXISTING
+`phase24ProxyLifecycle` PID-derived port collision. Per owner decision that
+flake is recorded as a known pre-existing defect and the exact-head result was
+obtained by re-running the failed job. No test was changed, no retry was added
+to any test or gate, no timeout was inflated, and no gate was weakened; both
+failures are reported above rather than folded away.
 
-**Stage A is therefore reported as COMPLETE-PENDING-OWNER-REVIEW of
-OBS-C105-1, not as unconditionally closed.** C-11 is NOT started. The owner
-should decide whether the reproducible passes settle the item, or whether the
-flake must be attributed first — and the latter is the more conservative
-reading of the brief.
+The deferred repair of that flake is flagged **load-bearing for C-11**, which
+adds substantial proxy, containment and port-binding work and will meet the
+same collision.
 
-## Safety ledger
+## Stage B authorization status
 
-| Item | Value |
-| --- | --- |
-| Real production contact | 0 |
-| Real DEV contact | 0 |
-| Real NEXT contact | 0 |
-| Credential / auth-state inspection | 0 |
-| Sibling repository writes | 0 (`siblingWrites: 0` in the clean receipt) |
-| External publication | 0 |
-| Real customer identifiers used | 0 — synthetic sentinels only |
-| Implementation in the canonical checkout | 0 |
-| C-06 weakened | NO — untouched; PHP derivation fails closed rather than raising yield |
-| Production made ordinarily loadable | NO — `SUPPORTED_ENVIRONMENTS` unchanged |
-| New test skips | 0 |
-| Tests deleted | 0 — the four C-10 vocabulary tests were retargeted, not removed |
+C-11 `PROD_OBSERVE` is **NOT started**, and no C-11 record, OpenSpec change or
+code exists.
 
-## Stage B
-
-C-11 `PROD_OBSERVE` is NOT started. Stage A passing AUTHORIZES it to begin in a
-new, separately recorded task with its own SPEC/PLAN/STATE/REPORT and its own
-OpenSpec change, so the two stages remain separately auditable. Stage A grants
-no production connectivity of any kind.
+Stage A passing AUTHORIZES C-11 to begin, in a NEW separately recorded task
+with its own SPEC/PLAN/STATE/REPORT and its own OpenSpec change, so the two
+stages remain separately auditable as the brief requires. Stage A grants no
+production connectivity of any kind: production remains absent from
+`SUPPORTED_ENVIRONMENTS`, `config/environments/production.json` remains
+non-loadable, C-06 is untouched and still fail-closed, and no real production,
+DEV or NEXT contact occurred at any point in this campaign.

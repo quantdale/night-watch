@@ -17,9 +17,9 @@
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
 > longer a zero-step platform block and is now GREEN at the exact head: run
-> `33627408962` at `4d59235` passed all eleven required groups on Node 20 with
-> receipt `receipt:sha256:072d1ba432a39944aca0466c` and `SYNTHETIC_CAMPAIGN`
-> 256/256, certifying C-10.5.
+> `33635296271` at `29b9212` passed all eleven required groups on Node 20 with
+> receipt `receipt:sha256:d64ef703c328a4d10d7e86f3` and `SYNTHETIC_CAMPAIGN`
+> 256/256, certifying C-10.5 at the exact head.
 ---
 
 ## What exists now
@@ -228,8 +228,8 @@ and must never be bulk-set to HEAD:
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `23523cc` | where the C-10 / DEF-C10-5 route-provenance repair landed; the commits after it changed documentation only |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `23523cc` | the local gate was recorded green at that commit |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `23523cc` | the clean gate was recorded green at that commit |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `4d59235` | run `33627408962` |
-| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `4d59235` | same run; `EXECUTED_PASS` requires observed == executed |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `29b9212` | run `33635296271` |
+| `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `29b9212` | same run; `EXECUTED_PASS` requires observed == executed |
 
 The implementation anchor legitimately TRAILS the CI anchor: the commits
 between `23523cc` and `cb631cc` are documentation checkpoints that changed no
@@ -248,8 +248,8 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_LOCALLY_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_CLEAN_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
-CI_OBSERVED_SHA: 4d59235c64ba8fbdd7d788a20f678378b06a4014
-CI_EXECUTED_SHA: 4d59235c64ba8fbdd7d788a20f678378b06a4014
+CI_OBSERVED_SHA: 29b921256ea09199d2cfe5f373737f2e42967ea9
+CI_EXECUTED_SHA: 29b921256ea09199d2cfe5f373737f2e42967ea9
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -286,25 +286,27 @@ LIVE_COMPLETION_CLAIM: COMPLETE
 
 ### Exact-head CI is green (current live CI state)
 
-Run `33627408962` / job `100238317324` at
-`4d59235c64ba8fbdd7d788a20f678378b06a4014` passed on Node 20 with receipt
-`receipt:sha256:072d1ba432a39944aca0466c`. All eleven required groups PASS:
+Run `33635296271` / job `100268250381` at
+`29b921256ea09199d2cfe5f373737f2e42967ea9` passed on Node 20 with receipt
+`receipt:sha256:d64ef703c328a4d10d7e86f3`. All eleven required groups PASS:
 `SEMANTIC_COMPATIBILITY` 1,975 total / 1,962 passed / 13 skipped / 0 failed,
 `OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 256 total / 256 passed /
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass.
 
-This is the C-10.5 completion certification. The corresponding canonical
-regression is 2,975 total / 2,962 passed / 13 skipped / 0 failed, with 56
-dedicated C-10.5 tests.
+This is the C-10.5 completion certification, and it is the EXACT head of
+`main`. The corresponding canonical regression is 2,975 total / 2,962 passed /
+13 skipped / 0 failed, with 56 dedicated C-10.5 tests.
 
-**On the exact-head fixpoint.** The commit that RECORDS this receipt is
-necessarily a descendant of the commit the run certified — a field cannot name
-the SHA of the commit containing it. So the certification covers `4d59235`
-(the substantive implementation plus its validation records), and the
-documentation descendant carrying these numbers is a separate, later commit
-whose own run is reported alongside it. This is the same shape as the C-10
-closure, where `cb631cc` recorded the run that certified it.
+**This run was obtained by re-running a failed job, and that is recorded rather
+than hidden.** The first attempt at this commit failed with exactly one test,
+`tests/unit/phase24ProxyLifecycle.test.ts:105`, a PRE-EXISTING port-collision
+flake that derives its port from `process.pid` and then asserts it obtained
+that exact port. C-10.5 changed no proxy, port or containment code; the test
+passes 5/5 locally and was green in this campaign's own earlier runs. No test
+was changed, no retry was added to any test or gate, no timeout was inflated
+and no gate was weakened. See OBS-C105-1 in the C-10.5 report, and the deferred
+follow-up to repair the port selection — which is load-bearing for C-11.
 
 The containment classification is deliberately visible rather than implied. The
 GitHub runner cannot provide a rootless containment envelope, so the deep lane
@@ -318,6 +320,10 @@ required coverage.
 
 ### Historical exact-head runs (preserved, not rewritten)
 
+- `33627408962` / job `100238317324` at `4d59235` — green, receipt
+  `receipt:sha256:072d1ba432a39944aca0466c`, `SYNTHETIC_CAMPAIGN` 256/256; the
+  substantive C-10.5 implementation plus its validation records, superseded
+  only by the closure documentation descendant.
 - `33625337034` at `09c13fa` — green, but superseded: it certified the tree
   BEFORE the DEF-C105-1 key-vocabulary authority repair.
 - `33601265465` / job `100155266632` at `cb631cc` — the C-10 completion

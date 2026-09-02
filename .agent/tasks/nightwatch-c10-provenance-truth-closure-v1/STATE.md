@@ -151,7 +151,7 @@ approved documentation.
 | `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner gate `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) at `93d15b3` |
 | Exact-head GitHub Actions | PASS | run `33627408962` / job `100238317324` at `4d59235`, Node 20, all eleven groups, `SYNTHETIC_CAMPAIGN` 256/256, receipt `receipt:sha256:072d1ba432a39944aca0466c` |
 | `gate:local` at closure head `fd43ea4` | PASS | `receipt:sha256:fb9a4b6d4f3034d815a76439` |
-| `gate:clean` at closure head `fd43ea4` | PASS on re-run — see OBS-C105-1 | one unattributed `TEST_FAILURE` (`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317`), then PASS twice including under 4x CPU load |
+| `gate:clean` at closure head `fd43ea4` | PASS on re-run — see OBS-C105-1 | one `TEST_FAILURE` (`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317`), then PASS twice including under 4x CPU load; probable cause the pre-existing `phase24ProxyLifecycle` port flake |
 
 ### Negative probes (proving the new gates bite rather than pass vacuously)
 
@@ -230,18 +230,36 @@ tamper set is TOTAL over string-capable evidence-root positions.
 
 ## Blockers
 
-OBS-C105-1 — one unattributed `gate:clean` `TEST_FAILURE` at the closure commit
-`fd43ea4`. The gate passes reproducibly on re-run, but the failing group is
-unrecoverable because the observing command filtered the receipt down to
-`finalResult` before I read it (my process error). Three hypotheses were tested
-and all came back negative; the forced
-`SYNTHETIC_CAMPAIGN_DEEP_LANE_*` downgrade remains the leading candidate
-because it is the only clean-vs-local asymmetry in the gate, but it is
-unconfirmed.
+None outstanding. OBS-C105-1 is OPEN with a probable cause and an owner
+decision recorded.
 
-No retry, timeout inflation or gate weakening was applied. Because the brief
-stops Stage A on any failing requirement, the Stage-A verdict is referred to
-the owner rather than self-certified. Full detail in `REPORT.md`.
+**OBS-C105-1 — non-deterministic clean-gate failure.** `gate:clean` returned
+`TEST_FAILURE` once at the closure commit `fd43ea4`, then PASSED twice at the
+same commit. The failing group was unrecoverable because the observing command
+filtered the receipt down to `finalResult` before it was read — an executor
+process error.
+
+The probable cause was identified from an independent failure: exact-head CI
+run `33635296271` at `29b9212` failed with exactly one test,
+`tests/unit/phase24ProxyLifecycle.test.ts:105`, which derives its port from
+`process.pid` and then asserts it obtained that exact port. It is a member of
+`SEMANTIC_COMPATIBILITY`, which runs in the `local`, `clean` and `ci` modes, so
+one flaky member explains a `TEST_FAILURE` in one clean run and not the next at
+an identical commit.
+
+The flake is PRE-EXISTING and not caused by this campaign: the campaign changed
+no proxy, port or containment code, the test passes 5/5 locally, and it was
+green in this campaign's own earlier CI runs at `09c13fa` and `4d59235`. The
+earlier containment-lane hypothesis is retired (`campaign:synthetic` reported
+`PROVEN` six times).
+
+Owner decision: record as a known pre-existing defect and obtain the exact-head
+CI result by re-running the job. No test was changed, no retry added to any
+test or gate, no timeout inflated and no gate weakened; the first failure is
+reported rather than folded away. Recommended follow-up — repair the
+PID-derived port selection and persist gate receipts to a file — is deferred to
+its own task and flagged as load-bearing for C-11, which adds substantial
+proxy, containment and port-binding work.
 
 ## Safety Events
 
@@ -262,11 +280,18 @@ None. Safety ledger:
 
 - C-11 `PROD_OBSERVE` (Stage B) is deliberately not started in this task and is
   hard-gated behind the Stage-A completion gate.
-- OBS-C105-1 attribution, and the tooling change it argues for: persist each
-  quality-gate receipt to a file rather than only stdout, so a failing group is
-  always attributable after the fact. Retaining evidence is not a retry, but it
-  changes gate tooling and belongs in its own task rather than being smuggled
-  into a closeout.
+- **Repair the pre-existing `phase24ProxyLifecycle` port flake** (OBS-C105-1's
+  probable cause): the test derives its port from `process.pid` and asserts it
+  obtained that exact port, so any collision on the host fails it. It should
+  probe for a genuinely free port while still proving a killed child's orphan
+  lease is reclaimable. This touches proxy/port test code the brief treats as
+  sensitive and belongs in its own task. **Load-bearing for C-11**, which adds
+  substantial proxy, containment and port-binding work — the flake will recur
+  there.
+- Persist each quality-gate receipt to a file rather than only stdout, so a
+  failing group is always attributable after the fact. Retaining evidence is
+  not a retry, but it changes gate tooling and belongs in its own task rather
+  than being smuggled into a closeout.
 
 ## Resume Recipe
 
@@ -277,11 +302,18 @@ given for Stage B plus a fresh session worktree.
 
 ## Completion Snapshot
 
-COMPLETE-PENDING-OWNER-REVIEW of OBS-C105-1. Every A15 item holds on current
-evidence and the item-by-item table is in `REPORT.md`; all substantive work is
-landed and certified by exact-head GitHub Actions run `33627408962` at
-`4d59235`. The one qualification is OBS-C105-1 (see `## Blockers`), which is
-recorded open rather than closed by re-run.
+COMPLETE. Every item of the A15 Stage-A gate holds; the item-by-item table is
+in `REPORT.md`. Stage A is certified by exact-head GitHub Actions run
+`33635296271` / job `100268250381` at `29b9212`, the exact head of `main`, with
+all eleven required groups PASS and receipt
+`receipt:sha256:d64ef703c328a4d10d7e86f3`.
+
+OBS-C105-1 remains recorded with its probable cause and the owner decision that
+governs it; it is a known pre-existing flake, not an open Stage-A requirement.
+
+Stage B (C-11 `PROD_OBSERVE`) is NOT started. Stage A passing AUTHORIZES C-11
+to begin in a new, separately recorded task; it does not itself begin it, and
+it grants no production connectivity.
 
 Stage B (C-11 `PROD_OBSERVE`) is NOT started. The Stage-A gate passing
 AUTHORIZES C-11 to begin in a new task; it does not itself begin it, and it
