@@ -58,6 +58,14 @@ import {
   productionProfileResidue,
 } from '../../src/core/prodEvidence';
 import { projectObservation, projectionDigest } from '../../src/oracles/projections';
+// Static imports deliberately: a dynamic `await import()` of a TypeScript path
+// resolves differently under Node 20 than Node 22, which made these cases
+// environment-dependent. Static imports hold in BOTH topologies.
+import { createFindingsAuthorityForTests } from '../../src/controlCenter/authorities/findingsAuthority';
+import {
+  CONTROL_CENTER_EVENT_SCHEMA_VERSION,
+  sanitizeControlCenterEvent,
+} from '../../src/controlCenter/contracts/events';
 
 // ===========================================================================
 // The hostile sentinel corpus.
@@ -837,20 +845,14 @@ test.describe('C-10 F-18 — Control Center cannot read the production store', (
     }
   });
 
-  test('the test-only seam refuses the production root', async () => {
-    const { createFindingsAuthorityForTests } = await import(
-      '../../src/controlCenter/authorities/findingsAuthority'
-    );
+  test('the test-only seam refuses the production root', () => {
     const production = path.join(os.homedir(), PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT);
     expect(() => createFindingsAuthorityForTests(production)).toThrow(
       /FINDINGS_ROOT_PRODUCTION_EXCLUDED/,
     );
   });
 
-  test('the test-only seam still serves a normal DEV root', async () => {
-    const { createFindingsAuthorityForTests } = await import(
-      '../../src/controlCenter/authorities/findingsAuthority'
-    );
+  test('the test-only seam still serves a normal DEV root', () => {
     const root = disposableRoot('ccdev');
     try {
       const authority = createFindingsAuthorityForTests(root);
@@ -967,8 +969,7 @@ test.describe('C-10 — production console, screenshots and traces', () => {
 // ===========================================================================
 
 test.describe('C-10 Workstream K — SSE cannot become a side channel', () => {
-  test('the event contract is a closed allowlist that discards arbitrary fields', async () => {
-    const { sanitizeControlCenterEvent } = await import('../../src/controlCenter/contracts/events');
+  test('the event contract is a closed allowlist that discards arbitrary fields', () => {
     const hostile = {
       schemaVersion: 'nightwatch.control-center.event.v1',
       type: 'findings.snapshot.changed',
@@ -999,18 +1000,14 @@ test.describe('C-10 Workstream K — SSE cannot become a side channel', () => {
     }
   });
 
-  test('an unknown event type is refused outright rather than passed through', async () => {
-    const { sanitizeControlCenterEvent } = await import('../../src/controlCenter/contracts/events');
+  test('an unknown event type is refused outright rather than passed through', () => {
     expect(sanitizeControlCenterEvent({ type: S.freeText, sequence: 1 })).toBeNull();
     expect(sanitizeControlCenterEvent({ type: 'production.finding', sequence: 1 })).toBeNull();
     expect(sanitizeControlCenterEvent(null)).toBeNull();
     expect(sanitizeControlCenterEvent([{ type: 'run.updated', sequence: 1 }])).toBeNull();
   });
 
-  test('the SSE frame carries only the sanitized event, never a findings payload', async () => {
-    const { sanitizeControlCenterEvent, CONTROL_CENTER_EVENT_SCHEMA_VERSION } = await import(
-      '../../src/controlCenter/contracts/events'
-    );
+  test('the SSE frame carries only the sanitized event, never a findings payload', () => {
     const sanitized = sanitizeControlCenterEvent({
       schemaVersion: CONTROL_CENTER_EVENT_SCHEMA_VERSION,
       type: 'findings.snapshot.changed',
@@ -1027,7 +1024,7 @@ test.describe('C-10 Workstream K — SSE cannot become a side channel', () => {
     expect(frame).not.toContain('"provenFields"');
   });
 
-  test('production evidence has no route into any Control Center contract', async () => {
+  test('production evidence has no route into any Control Center contract', () => {
     // The findings authority reads the DEV root only, and the production root
     // is structurally excluded, so no adapter can reach production evidence.
     const production = path.join(os.homedir(), PRODUCTION_ARTIFACT_DEFAULT_RELATIVE_ROOT);
