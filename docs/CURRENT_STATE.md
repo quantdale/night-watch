@@ -229,7 +229,7 @@ and must never be bulk-set to HEAD:
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `200221c` | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
 | `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c763c05` | the local gate was last recorded fully green at that commit; it advances only when `gate:local` passes at the R-11 state, not because implementation moved |
 | `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c763c05` | same discipline for the clean Node 20 gate |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `3c4756c` | run `33649946137`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `2a64369` | run `33653818653`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `3c4756c` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed |
 
 The anchors deliberately name DIFFERENT commits, and the ordering constraint is
@@ -257,8 +257,8 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 LAST_LOCALLY_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_CLEAN_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
-CI_OBSERVED_SHA: 3c4756c3f48b3b5976b0b956079d6f649bca3b80
-CI_EXECUTED_SHA: 3c4756c3f48b3b5976b0b956079d6f649bca3b80
+CI_OBSERVED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
+CI_EXECUTED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
 CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -328,7 +328,7 @@ certification of its substantive ancestor.
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `200221c` (R-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `c763c05` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `c763c05` |
-| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `3c4756c`, run `33649946137`, currently `EXECUTED_FAIL` |
+| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `2a64369`, run `33653818653`, currently `EXECUTED_FAIL` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
 | Latest observed exact-head run | the newest run whose `headSha` equalled the then-current head | run `33637832941` at `c423e33` |
 
@@ -363,14 +363,19 @@ required coverage.
 
 ### Why the CI anchor currently records a FAILURE, and how the sequence terminates
 
-Run `33649946137` at `3c4756c` failed exactly one group, `PROJECT_TRUTH`, with
-the seven later groups `NOT_RUN`. The cause was the ordering constraint stated
-above and nothing else: the baseline named C-10.5's CI checkpoint `29b9212`
-while the validated implementation had advanced to R-11's `22a2928`, so
-`project:check` correctly refused a baseline whose CI evidence predated the
-implementation it claimed to cover. Recording that result as `EXECUTED_FAIL` is
-what makes the block self-consistent again, and it is the honest record: the
-run happened and it failed.
+Two exact-head runs failed this way, both for the same reason and neither
+because of a defect in the code under test:
+
+| Run | Head | Failing group | Why |
+| --- | --- | --- | --- |
+| `33649946137` | `3c4756c` | `PROJECT_TRUTH` | the baseline named C-10.5's CI checkpoint `29b9212` while the validated implementation had advanced to R-11's `22a2928` |
+| `33653818653` | `2a64369` | `PROJECT_TRUTH` | the baseline named `3c4756c` while the validated implementation had advanced again to `200221c`, after the DEF-R11-3/4/5 repairs changed tests |
+
+In both cases the seven later groups are `NOT_RUN`, and `project:check`
+correctly refused a baseline whose CI evidence predated the implementation it
+claimed to cover. Recording the result as `EXECUTED_FAIL` is what makes the
+block self-consistent again, and it is the honest record: the runs happened and
+they failed.
 
 The sequence terminates rather than regressing forever, because a
 documentation-only descendant does not invalidate the anchors it records:
