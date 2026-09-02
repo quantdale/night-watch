@@ -1347,3 +1347,253 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
   });
 
 });
+
+// ---------------------------------------------------------------------------
+// C-10.5 A10 — cross-authority baseline invariant.
+//
+// The pre-existing staleness detection compares the CI anchor to the
+// substantive anchor, so it only fires when the two DISAGREE. The live defect
+// this campaign found was five anchors all naming b99ce4e, an ANCESTOR of the
+// validated C-10 implementation: mutually consistent, globally stale, and
+// invisible because the fields were each other's only reference.
+//
+// These cases pin the repaired behaviour. The reference is
+// `.agent/ACTIVE_TASK.md`, which the truth block already declares
+// VALIDATED_IMPLEMENTATION_AUTHORITY, and the check CLASSIFIES the commit
+// range so a documentation-only descendant still passes.
+// ---------------------------------------------------------------------------
+
+interface BaselineFixtureOptions {
+  /** What the commits between the project baseline and the task anchor touch. */
+  readonly intervening: 'IMPLEMENTATION' | 'DOCS_ONLY';
+  /** Which SHA the project block records as the substantive baseline. */
+  readonly substantive: 'STALE' | 'CURRENT';
+  /** Which SHA the project block records as the CI anchor. */
+  readonly ci: 'STALE' | 'CURRENT' | 'MALFORMED';
+}
+
+/**
+ * Build a repository whose project baseline and active-task anchor are
+ * deliberately separated by a classifiable commit range.
+ */
+function makeBaselineFixture(options: BaselineFixtureOptions): Fixture {
+  const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
+  const root = fixture.root;
+  const staleSha = git(root, ['rev-parse', 'HEAD']);
+
+  // The intervening commit. An implementation path proves a later substantive
+  // implementation exists; an approved documentation path does not.
+  if (options.intervening === 'IMPLEMENTATION') {
+    fs.mkdirSync(path.join(root, 'src/core/synthetic'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'src/core/synthetic/probe.ts'), 'export const probe = 1;\n');
+  } else {
+    // An approved documentation path that carries no validated contract of its
+    // own, so the case isolates range CLASSIFICATION rather than content rules.
+    fs.writeFileSync(path.join(root, 'docs/ROADMAP.md'), '# Roadmap\n\nsynthetic documentation descendant\n');
+  }
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic intervening commit']);
+  const currentSha = git(root, ['rev-parse', 'HEAD']);
+
+  // The ACTIVE_TASK authority names the newer commit as what it validated.
+  for (const relative of ['.agent/ACTIVE_TASK.md', `.agent/tasks/${ACTIVE_TASK_ID}/STATE.md`]) {
+    replaceFile(root, relative, (text) =>
+      text
+        .replace(/^LAST_VALIDATED_IMPLEMENTATION_SHA: .*$/m, `LAST_VALIDATED_IMPLEMENTATION_SHA: ${currentSha}`)
+        .replace(/^LAST_SUBSTANTIVE_CHECKPOINT_SHA: .*$/m, `LAST_SUBSTANTIVE_CHECKPOINT_SHA: ${currentSha}`)
+        .replace(/^Last validated implementation SHA: .*$/m, `Last validated implementation SHA: ${currentSha}`)
+        .replace(/^Last substantive checkpoint SHA: .*$/m, `Last substantive checkpoint SHA: ${currentSha}`));
+  }
+
+  const substantiveSha = options.substantive === 'STALE' ? staleSha : currentSha;
+  const ciSha = options.ci === 'MALFORMED'
+    ? 'not-a-valid-sha'
+    : options.ci === 'STALE' ? staleSha : currentSha;
+
+  fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock('ONE', {
+    liveTaskId: ACTIVE_TASK_ID,
+    livePhase: 'test',
+    liveTaskStatus: 'IN_PROGRESS',
+    liveProjectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING',
+    projectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING',
+    liveVerdictEffect: 'PRESERVE',
+    liveNextActionState: 'CONTINUE',
+    liveCompletionClaim: 'NONE',
+    lastSubstantiveImplementationSha: substantiveSha,
+    lastLocallyValidatedSha: substantiveSha,
+    lastCleanValidatedSha: substantiveSha,
+    ciObservedSha: ciSha,
+    ciExecutedSha: ciSha,
+    ciStatus: 'EXECUTED_PASS',
+  }));
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic baseline record']);
+  return fixture;
+}
+
+/**
+ * The checker's JSON receipt, isolated from the read-only `agent-state`
+ * subprocess warnings that share stdout (for example CHECKPOINT_ADVANCE when
+ * the task anchor legitimately precedes HEAD).
+ */
+function receiptOf(result: ReturnType<typeof run>): { readonly status: string } {
+  const stdout = result.stdout ?? '';
+  const start = stdout.indexOf('{');
+  const end = stdout.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error(`NO_RECEIPT_JSON:${stdout.slice(0, 200)}`);
+  return JSON.parse(stdout.slice(start, end + 1));
+}
+
+function errorsOf(result: ReturnType<typeof run>): readonly string[] {
+  const combined = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  return combined.split('\n').map((line) => line.trim()).filter((line) => line.startsWith('PROJECT_STATE_'));
+}
+
+test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
+  test('A10.1 project state and active task agree — PASS', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'CURRENT', ci: 'CURRENT' });
+    try {
+      const result = run(fixture.root);
+      expect(errorsOf(result)).toEqual([]);
+      expect(result.status).toBe(0);
+      expect(receiptOf(result).status).toBe('PASS');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.2 both project CI and substantive fields stale but MUTUALLY EQUAL — FAIL', () => {
+    // The exact live defect: pairwise agreement, global staleness. The
+    // pre-existing check cannot see this, because it requires the two anchors
+    // to differ from each other.
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(errorsOf(result)).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+      // And the mutual-equality escape is proven: the older pairwise check,
+      // which needs the anchors to disagree, does NOT fire here.
+      expect(errorsOf(result)).not.toContain('PROJECT_STATE_CI_EVIDENCE_STALE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.3 CI newer but substantive stale — FAIL', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'CURRENT' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(errorsOf(result)).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.4 docs-only descendant chain after a validated implementation — PASS', () => {
+    // Updating task records and project docs after a validated implementation
+    // necessarily advances HEAD past the substantive commit, often by several
+    // commits. That must not be reported as staleness, or every campaign would
+    // fail its own closeout.
+    //
+    // Note the representation: continuity separately forbids an
+    // implementation ANCHOR that is documentation-only in its own commit
+    // (INVALID_IMPLEMENTATION_ROLE), so the correct shape is a real
+    // implementation anchor followed by a documentation-only chain — not a
+    // documentation commit relabelled as the implementation.
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'CURRENT', ci: 'CURRENT' });
+    try {
+      for (const [file, body] of [
+        ['docs/ROADMAP.md', '# Roadmap\n\nfirst documentation descendant\n'],
+        ['docs/DECISIONS.md', '# Decisions\n\nsecond documentation descendant\n'],
+      ] as const) {
+        fs.writeFileSync(path.join(fixture.root, file), body);
+        git(fixture.root, ['add', '--all']);
+        git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', `synthetic docs descendant ${file}`]);
+      }
+      const result = run(fixture.root);
+      expect(errorsOf(result)).toEqual([]);
+      expect(result.status).toBe(0);
+      expect(receiptOf(result).status).toBe('PASS');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.5 historical narrative containing stale SHAs is ignored', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'CURRENT', ci: 'CURRENT' });
+    try {
+      const stale = 'b99ce4e61166e52b554dd6ac07b7678b433959da';
+      // Prose naming old anchors, outside the machine-checked block.
+      fs.appendFileSync(path.join(fixture.root, 'docs/CURRENT_STATE.md'), [
+        '',
+        '## Historical narrative (informational)',
+        '',
+        `The predecessor baseline was \`${stale}\` and CI ran there as run 33590645175.`,
+        `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ${stale}`,
+        `CI_EXECUTED_SHA: ${stale}`,
+        '',
+      ].join('\n'));
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic historical prose']);
+      const result = run(fixture.root);
+      expect(errorsOf(result)).toEqual([]);
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.6 a COMPLETE prior task does not become the current authority', () => {
+    // The reference is the ACTIVE task, not any task record that happens to
+    // name a newer SHA. A completed predecessor record must not move the bar.
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'CURRENT', ci: 'CURRENT' });
+    try {
+      const head = git(fixture.root, ['rev-parse', 'HEAD']);
+      const priorId = 'synthetic-completed-predecessor';
+      const prior = validClosedTask(priorId, 'prior', head);
+      fs.mkdirSync(path.join(fixture.root, '.agent/tasks', priorId), { recursive: true });
+      fs.writeFileSync(path.join(fixture.root, '.agent/tasks', priorId, 'SPEC.md'), '# Synthetic task\n');
+      fs.writeFileSync(path.join(fixture.root, '.agent/tasks', priorId, 'PLAN.md'), prior.plan);
+      fs.writeFileSync(path.join(fixture.root, '.agent/tasks', priorId, 'STATE.md'), prior.state);
+      fs.writeFileSync(path.join(fixture.root, '.agent/tasks', priorId, 'REPORT.md'), prior.report);
+      git(fixture.root, ['add', '--all']);
+      git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic completed predecessor']);
+      const result = run(fixture.root);
+      expect(errorsOf(result)).toEqual([]);
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.7 a malformed SHA in the CI anchor — FAIL', () => {
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'CURRENT', ci: 'MALFORMED' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      const errors = errorsOf(result);
+      expect(errors.some((code) => code.startsWith('PROJECT_STATE_CI_'))).toBe(true);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.8 ancestor substitution is refused even when every field is well-formed', () => {
+    // The attack shape: swap the baseline for a real, in-history, perfectly
+    // well-formed ANCESTOR commit. Shape validation cannot see it; only the
+    // classified range against the task authority can.
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'STALE' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      const errors = errorsOf(result);
+      expect(errors).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+      // The substituted SHA is genuinely in history — this is not a
+      // "not in history" rejection.
+      expect(errors.some((code) => code.includes('NOT_IN_HISTORY'))).toBe(false);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+});

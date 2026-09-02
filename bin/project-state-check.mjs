@@ -212,8 +212,15 @@ function readActiveContinuity(root) {
       // C-10.5 A10: ACTIVE_TASK is already declared
       // VALIDATED_IMPLEMENTATION_AUTHORITY, so its validated-implementation
       // anchor is the authority the project baseline is checked against.
-      validatedImplementationSha: metadataValue('LAST_VALIDATED_IMPLEMENTATION_SHA'),
-      substantiveCheckpointSha: metadataValue('LAST_SUBSTANTIVE_CHECKPOINT_SHA'),
+      // Both spellings are accepted. The uppercase continuity field is
+      // canonical, but ACTIVE_TASK.md has long carried the prose-style
+      // metadata line too, and a validator that reads only one spelling would
+      // silently not fire on the other — which is how a staleness check
+      // becomes decorative.
+      validatedImplementationSha: metadataValue('LAST_VALIDATED_IMPLEMENTATION_SHA')
+        ?? metadataValue('Last validated implementation SHA'),
+      substantiveCheckpointSha: metadataValue('LAST_SUBSTANTIVE_CHECKPOINT_SHA')
+        ?? metadataValue('Last substantive checkpoint SHA'),
     };
   } catch {
     return { parsed: null, status: null, effect: undefined, taskId: undefined, phase: undefined, nextAction: undefined, validatedImplementationSha: undefined, substantiveCheckpointSha: undefined };
