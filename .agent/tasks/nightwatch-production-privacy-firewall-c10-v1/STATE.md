@@ -27,12 +27,26 @@ F-15 digest confusion and the F-18 Control Center exposure.
 
 ## Current Milestone
 
-M0 — task records and the dedicated OpenSpec change carrying the Workstream A
-persistence-cone audit.
+M5 — safe evidence DTO is landed; next is the INDEPENDENT persistence firewall
+and the production artifact root.
 
 ## Completed Milestones
 
-None yet.
+- M0 — task records and the OpenSpec change carrying the Workstream A
+  persistence-cone audit. `handoff:check` PASS, `agent:check` PASS.
+- M1 — Workstream A audit complete in `audit.md`: 16 durable-write sites and 22
+  derived-state classes enumerated and classified; the single `UNKNOWN` (the
+  existing `proj:sha256:` digest family) resolved by supersession.
+- M2 — pure cone landed: `errors.ts` (closed reason/detail vocabularies, a
+  constructor that physically cannot accept a free string), `policy.ts`
+  (versioned fail-closed capability object), `keyVocabulary.ts`
+  (`ProvenKeyVocabulary`), `types.ts` (the three boundary types).
+- M3 — `projector.ts`: F-14 resolved. A key literal survives only as a proven
+  member of a source-proven finite set; a dynamic key contributes its value's
+  structure and the object's cardinality and nothing else.
+- M4 — `serializer.ts`: F-15 resolved. `prodstruct:sha256:` is value-free and
+  unsalted; NUMBER writes as type alone; no branch emits an encounter token,
+  a numeric ref or a dynamic key literal. No durable value digest exists.
 
 ## Verified Starting Facts
 
@@ -76,6 +90,10 @@ open M1/M2.
 |---|---|---|
 | M0 | `node bin/nightwatch-session.mjs status` | PASS — `OWNED_SESSION`, all seven workspace groups PASS, `canonicalSafe=true`, `attention=0` |
 | M0 | `git rev-parse origin/main` | `a152889a71eec6c67d82b05e5984df6423fe88d4` — matches the expected starting state |
+| M0 | `npm run handoff:check` | PASS — `IN_PROGRESS` bound to the C-10 task, `Planned-From` a real `main` ancestor |
+| M0 | `npm run agent:check` | PASS with 2 pre-existing warnings (CHECKPOINT_ADVANCE, legacy v1 tasks) |
+| M4 | `npm run typecheck` | PASS |
+| M4 | `tests/unit/c10ProductionProjection.test.ts` | 33/33 PASS — sentinel key literals present in raw input, absent from projection, canonical bytes, digest input and evidence |
 
 ## Decisions Made During This Task
 
@@ -95,11 +113,10 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-Write the dedicated OpenSpec change
-`openspec/changes/nightwatch-production-privacy-firewall-c10-v1/` with
-`audit.md` (the Workstream A persistence-cone classification), `proposal.md`,
-`design.md`, `tasks.md` and at least one `specs/*/spec.md`; `git add` it so it
-is tracked; then run `npm run handoff:check` and `npm run agent:check`.
+Implement `src/core/prodEvidence/firewall.ts` — the INDEPENDENT persistence
+re-validation at the durable-write boundary — as a closed-vocabulary walk that
+does not re-call the projection's own validator, then
+`productionFindingsStore.ts` for the `$HOME/.nightwatch/prod-findings/` root.
 
 ## Blockers
 
@@ -114,6 +131,10 @@ None.
 - **DISC-C10-1** — the repository's single digest family
   (`proj:sha256:`) is simultaneously the F-14 and F-15 defect: it is the
   structural comparison digest AND it ingests raw dynamic key literals.
+- **DISC-C10-3** — the session worktree had no `node_modules`; `npm ci
+  --ignore-scripts` is required in a fresh worktree before `typecheck` or any
+  suite runs, otherwise `tsc` resolves to a newer global TypeScript that
+  rejects the repository's `moduleResolution=node10`.
 - **DISC-C10-2** — `runRecorder` authenticated mode already suppresses
   screenshots and minimizes URLs, but it is a mode toggled by callers, not a
   production invariant; C-10 must not rely on it as the production boundary.
