@@ -29,27 +29,34 @@ whole-repository completeness that ouchan's enumeration cannot support.
 
 ## Current Milestone
 
-Milestone ID: M1 — task record, OpenSpec change, recorded baseline
+Milestone ID: M4 — root admission and budget correction
 Milestone status: IN_PROGRESS
-What is being attempted: SPEC and PLAN are written; the OpenSpec change and the
-`agent:check` / `handoff:check` pair remain.
+What is being attempted: admit the fourteen further blueapi proto roots and the
+fourteen matching blue-sdk-go roots, raise ouchan `maxFiles` to 4,096, and
+prove C-01 no-eviction over the enlarged population.
 
 ## Completed Milestones
 
-- None yet. M1 is the first.
+- M1 — task record, OpenSpec change, recorded baseline. Committed at `d7b45fb`.
+  `agent:check`, `handoff:check` and `project:check` PASS.
+- M2 — adversarial Go corpus asserted BEFORE the parser.
+  `tests/unit/c03GoRegistration.test.ts` failed to import, which is the
+  reproduction.
+- M3 — `src/core/source/goRegistration.ts` implemented; 29/29. One real bug
+  found by the corpus: a blank import `import _ "…"` fell through to the
+  derived package name and bound `billing`, so a qualifier the file never
+  binds would have resolved. Blank and dot imports now bind nothing.
 
 ## Work In Progress
 
-M1. SPEC.md and PLAN.md are written. No source module and no test exists yet:
-the adversarial Go corpus of M2 is asserted before the parser of M3.
+M4. Nothing partial: M1-M3 are closed and committed.
 
 ## Exact Next Action
 
-Write the OpenSpec change
-`openspec/changes/nightwatch-go-grpc-topology-binding-c03-v1/` with `audit.md`,
-`proposal.md`, `design.md`, `tasks.md` and `specs/*/spec.md`, route
-`.agent/ACTIVE_TASK.md` and `.agent/EXECUTION_PROMPT.md` to this campaign, then
-run `agent:check` and `handoff:check` and commit the M1 checkpoint.
+Admit the fourteen further blueapi proto roots and the fourteen matching
+blue-sdk-go roots in `approvedScan.ts`, raise `mobingilabs/ouchan` `maxFiles`
+to 4,096, then assert the C-01 no-eviction regression over the enlarged
+population before building the index and the join.
 
 ## Files Changed
 
@@ -59,6 +66,9 @@ run `agent:check` and `handoff:check` and commit the M1 checkpoint.
 | `.agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1/PLAN.md` | living plan, eight milestones | WRITTEN |
 | `.agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1/STATE.md` | this waypoint | WRITTEN |
 | `.agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1/REPORT.md` | requirement ledger skeleton | WRITTEN |
+| `openspec/changes/nightwatch-go-grpc-topology-binding-c03-v1/**` | five OpenSpec files | COMMITTED d7b45fb |
+| `tests/unit/c03GoRegistration.test.ts` | adversarial Go corpus | 29/29 PASS |
+| `src/core/source/goRegistration.ts` | bounded registration reader with import-alias resolution | IMPLEMENTED |
 
 ## Validation Ledger
 
@@ -85,6 +95,16 @@ Relevant failure/output summary: 17 production registrations across 15 daemons
 plus 2 in `_test.go`; 15 name blueapi proto services. The fourteen further
 blueapi proto roots hold 443 RPCs, taking the proto surface to 590.
 
+Command: `npx playwright test tests/unit/c03GoRegistration.test.ts`
+Result: PASS 29/29
+When: 2026-09-03, session worktree
+Relevant failure/output summary: the suite could not import before the reader
+existed. After M3 one assertion failed and it was a real defect, not a bad
+assertion: `import _ "github.com/.../billing/v1"` was pushed through the
+identifier fallback and bound `billing`, so `billing.RegisterBillingServer`
+would have resolved through a package the file imports only for side effects.
+Blank and dot imports now bind nothing.
+
 ## Decisions Made During This Task
 
 Decision: admit the fourteen further blueapi proto roots.
@@ -108,7 +128,29 @@ Reason: it would drop `pkg`, which holds the `types.proto` negative case C-02b
 depends on, and buying a completeness claim by shrinking what is looked at is
 the trade the operating principles forbid.
 
+Decision: the join runs through the generated SDK, not through a naming
+convention, and the design was corrected on evidence before implementation.
+Reason: the PLAN assumed ouchan would import blueapi and that the join key
+would be the proto's `go_package`. It does not. `services/billingd/main.go`
+imports `github.com/alphauslabs/blue-sdk-go/billing/v1`, whose `go_package`
+differs from blueapi's. Matching those two by name would have been the
+naming-similarity join §25 forbids.
+Evidence/constraint: `blue-sdk-go/billing/v1/billing_grpc.pb.go` declares BOTH
+`func RegisterBillingServer` and `ServiceName: "blueapi.billing.v1.Billing"` in
+the same generated file. That string is generated data, so the chain
+ouchan -> sdk -> proto full name is mechanical at every link. All fifteen SDK
+roots carry exactly the expected `ServiceName`, 57 files and 8 MB in total,
+largest file 1.18 MB against a 2 MB cap.
+Consequence: the fourteen matching blue-sdk-go roots must be admitted too.
+This is the same per-root class the owner approved for blueapi and is
+mechanically required to realise the outcome that decision chose; it is
+recorded here and in the REPORT rather than folded in silently.
+
 ## Discoveries
+
+- ouchan does not import blueapi at all. Every registration goes through the
+  generated `blue-sdk-go` SDK, and the SDK's own `ServiceName` constant is what
+  makes the binding provable rather than merely plausible.
 
 - The enumeration walk counts every considered directory entry, not only
   admitted source files, so `pkg` sorting before `services` consumed the entire
