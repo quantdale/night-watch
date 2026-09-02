@@ -2253,6 +2253,163 @@ function checkR11ProxyGateReliability() {
   ]) if (!registered.has(suite)) fail(`R-11 certification suite ${suite} is not registered in any authoritative quality-gate group`);
 }
 
+/**
+ * C-11 `PROD_OBSERVE` boundary invariants.
+ *
+ * The kernel's value is that production is unreachable unless every authority
+ * grants it, so the rules that matter are the ones a future change could
+ * silently break: the separation of the production decision path from the
+ * DEV/NEXT one (F-11, F-12), the independence of the production allowlist from
+ * the deny table (F-10), the external-only configuration (F-09), and D-4.
+ *
+ * Separation is a property of the IMPORT GRAPH, not of the entry point, so
+ * these rules read imports rather than trusting a launcher boundary. Every one
+ * is negative-probed.
+ */
+function checkC11ProdObserveBoundary() {
+  const coneDirectory = 'src/core/prodObserve';
+  const coneFiles = gitFiles().filter((file) => file.startsWith(`${coneDirectory}/`) && file.endsWith('.ts'));
+  if (coneFiles.length === 0) {
+    fail('C-11 the PROD_OBSERVE cone is missing');
+    return;
+  }
+
+  // --- F-12: the production cone may not import the DEV/NEXT/real-run cones ---
+  const forbiddenInProductionCone = [
+    [/from\s+['"][^'"]*safety\/realRunGate['"]/, 'the generic real-run decision path'],
+    [/from\s+['"][^'"]*safety\/hosts['"]/, 'the production deny table (F-10)'],
+    [/from\s+['"][^'"]*safety\/canary['"]/, 'the DEV canary'],
+    [/from\s+['"][^'"]*core\/phase22\//, 'the DEV campaign orchestrator'],
+    [/from\s+['"][^'"]*core\/phase23\//, 'the DEV acceptance manifest'],
+    [/from\s+['"][^'"]*core\/environment['"]/, 'the DEV environment loader'],
+    [/from\s+['"][^'"]*browser\//, 'the browser cone'],
+  ];
+  for (const file of coneFiles) {
+    const source = withoutComments(read(file));
+    for (const [pattern, description] of forbiddenInProductionCone) {
+      if (pattern.test(source)) fail(`${file} imports ${description}; the C-11 production cone must stay import-isolated from it`);
+    }
+    // No dispatcher anywhere in the cone: the kernel DECIDES and cannot contact
+    // anything even if every gate were bypassed.
+    for (const [pattern, description] of [
+      [/from\s+['"]node:https?['"]/, 'an HTTP client'],
+      [/from\s+['"]node:net['"]/, 'a socket client'],
+      [/from\s+['"]node:dns['"]/, 'a DNS resolver'],
+      [/\bfetch\s*\(/, 'fetch()'],
+      [/storageState/, 'a storage-state path'],
+    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the C-11 production cone must contain no network or credential path`);
+  }
+
+  // --- F-12, the other direction: the DEV/NEXT cone may not import production policy ---
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') || file.startsWith('tests/') || file.startsWith(`${coneDirectory}/`)) continue;
+    const source = withoutComments(read(file));
+    if (/from\s+['"][^'"]*core\/prodObserve/.test(source)) {
+      fail(`${file} imports the C-11 production authorization machinery; only the production cone and tests/** may reach it`);
+    }
+  }
+
+  // --- F-11: realRunGate gains no production branch and no mode parameter ---
+  const realRunGate = withoutComments(read('src/core/safety/realRunGate.ts'));
+  if (!/isProductionClassHost/.test(realRunGate)) {
+    fail('F-11: realRunGate must keep refusing production-class hosts');
+  }
+  if (/PROD_OBSERVE|prodObserve|productionRunGate/.test(realRunGate)) {
+    fail('F-11: realRunGate must gain no PROD_OBSERVE branch; the production decision belongs to a separate kernel');
+  }
+  if (/\bmode\s*[:?]/.test(realRunGate)) {
+    fail('F-11: realRunGate must take no mode parameter; parameterizing it would destroy the DEV guard for every existing campaign');
+  }
+
+  // --- the chain is a named identity, not a count ---
+  const types = read(`${coneDirectory}/types.ts`);
+  if (!/PRODUCTION_ADMISSION_CHAIN_VERSION = 'nightwatch\.production-admission-chain\.v1'/.test(types)) {
+    fail('C-11 the admission chain must be versioned');
+  }
+  if (!/HISTORICAL_GATE_MAPPING/.test(types)) {
+    fail('C-11 the mapping from the historical G0-G11 identifiers must stay machine-checkable in source');
+  }
+  const gateBlock = /PRODUCTION_ADMISSION_GATES = \[([\s\S]*?)\] as const;/.exec(types);
+  if (gateBlock === null) {
+    fail('C-11 the ordered gate list must be a literal const array');
+  } else {
+    for (const gate of [
+      'G_KILL_SWITCH_ENTRY', 'G_OWNER_AUTHORIZATION', 'G_AUTHORIZATION_CLASS', 'G_CONFIGURATION_INTEGRITY',
+      'G_ORGANIZATION_WINDOW', 'G_OBSERVER_IDENTITY', 'G_SOURCE_CURRENCY', 'G_READ_ONLY_PROOF',
+      'G_ROUTE_AUTHORITY', 'G_HOST_ADMISSION', 'G_ADDRESS_POLICY', 'G_METHOD_AND_BODY',
+      'G_PARAMETER_PROVENANCE', 'G_PRIVACY_CAPABILITY', 'G_CONTAINMENT_READINESS', 'G_BUDGET_RESERVATION',
+      'G_BREAKER_STATE', 'G_KILL_SWITCH_PREDISPATCH',
+    ]) if (!gateBlock[1].includes(`'${gate}'`)) fail(`C-11 the admission chain is missing the required gate ${gate}`);
+    // Configuration integrity supplies the window, so it must precede it or the
+    // integrity gate becomes unfalsifiable.
+    if (gateBlock[1].indexOf("'G_CONFIGURATION_INTEGRITY'") > gateBlock[1].indexOf("'G_ORGANIZATION_WINDOW'")) {
+      fail('C-11 G_CONFIGURATION_INTEGRITY must precede G_ORGANIZATION_WINDOW: the window is read from the config');
+    }
+  }
+
+  // --- the kill switch is evaluated twice, and the second time is pre-dispatch ---
+  const gate = withoutComments(read(`${coneDirectory}/productionRunGate.ts`));
+  if ((gate.match(/evaluateKillSwitch\(/g) ?? []).length < 2) {
+    fail('C-11 the kill switch must be evaluated at qualification entry AND immediately before dispatch');
+  }
+  // Reserve BEFORE dispatch: the reservation must be taken inside the chain.
+  if (!/input\.budget\.reserve\(/.test(gate)) {
+    fail('C-11 the budget reservation must be taken inside the admission chain, before any dispatch');
+  }
+  // Route authority must delegate to the C-10.5 guard rather than re-deciding.
+  if (!/assertSourceProvenRoute\(/.test(gate)) {
+    fail('C-11 route authority must consume the C-10.5 source-bound guard');
+  }
+  // No default policy: a shared module that falls back is a silent allow.
+  if (!/privacyPolicy: PrivacyPolicy \| null/.test(gate) || !/PRIVACY_CAPABILITY_ABSENT/.test(gate)) {
+    fail('C-11 the privacy policy must be explicitly injected with no default, and a missing policy must deny');
+  }
+
+  // --- F-09: the observation config is external-only and never in-repo ---
+  const config = withoutComments(read(`${coneDirectory}/observationConfig.ts`));
+  for (const code of ['CONFIG_PATH_NOT_ABSOLUTE', 'CONFIG_INSIDE_REPOSITORY', 'CONFIG_INSIDE_WORKSPACE', 'CONFIG_SYMLINK', 'CONFIG_MODE_NOT_OWNER_ONLY']) {
+    if (!config.includes(code)) fail(`C-11 the external observation config loader must retain the fail-closed code ${code}`);
+  }
+  for (const file of gitFiles()) {
+    // An in-repo loadable production host list would substitute a naming
+    // convention for D-4's structural property.
+    if (/^config\/observation\//.test(file)) fail(`${file} is an in-repo production observation config; F-09 requires external-only`);
+  }
+
+  // --- D-4 stands ---
+  const environment = withoutComments(read('src/core/environment/index.ts'));
+  if (!/SUPPORTED_ENVIRONMENTS: readonly EnvironmentName\[\] = \['local', 'dev', 'next'\]/.test(environment)) {
+    fail('D-4: SUPPORTED_ENVIRONMENTS must remain exactly local, dev, next');
+  }
+  const decisions = read('docs/DECISIONS.md');
+  if (!decisions.includes('## D-4 — Allowlist-only environments; `production.json` documents the rejected surface')
+    || !decisions.includes('Only `local`, `dev`, `next` are selectable.')) {
+    fail('D-4: the decision text must remain intact');
+  }
+
+  // --- every C-11 certification suite must be gate-registered ---
+  // A suite is gate-registered if a REQUIRED group runs it. Two manifests
+  // qualify: SEMANTIC_COMPATIBILITY and SYNTHETIC_CAMPAIGN. The C-10 and C-10.5
+  // safety suites live in the latter, so C-11's belong there too.
+  let compatibility;
+  let synthetic;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  } catch {
+    fail('C-11 the quality-gate manifests must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
+  ]);
+  for (const suite of ['tests/unit/c11ProdObserveKernel.test.ts', 'tests/unit/c11ProdObserveEvidence.test.ts']) {
+    if (!registered.has(suite)) fail(`C-11 certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2295,6 +2452,7 @@ checkC00WorkspaceIntegrity();
 checkC10ProductionPrivacyBoundary();
 checkC105ProvenanceAuthorityBoundary();
 checkR11ProxyGateReliability();
+checkC11ProdObserveBoundary();
 checkSyntax();
 
 if (errors.length > 0) {
