@@ -92,56 +92,73 @@ Four layers, each independently testable:
 
 ## Milestones
 
-### M1 — Task record, OpenSpec change, and measured baseline — IN_PROGRESS
+### M1 — Task record, OpenSpec change, and measured baseline — COMPLETE
 - Objective: frozen intent, living plan, operational waypoint, OpenSpec change
   with `audit.md` / `proposal.md` / `design.md` / `tasks.md` /
   `specs/*/spec.md`, and a recorded pre-implementation baseline.
 - Acceptance: `npm run agent:check` and `npm run handoff:check` pass; the
   baseline numbers above are recorded before any parser exists.
 - Validation: `npm run agent:check`, `npm run handoff:check`.
+- Outcome: closed at `725fbad`; both checks PASS.
 
-### M2 — Adversarial corpus, reproduced before implementation — NOT_STARTED
+### M2 — Adversarial corpus, reproduced before implementation — COMPLETE
 - Objective: the comment/string/malformed corpus of SPEC §Acceptance 2 exists
   as explicit synthetic fixtures, and each case is asserted against the
   intended behaviour before the parser is written.
 - Files: `tests/unit/c02bProtoLexer.test.ts`, fixtures inline and explicit.
 - Acceptance: every adversarial case has a named assertion; no fixture derives
   its root from the checkout location.
+- Outcome: the suite failed to import before the parser existed, which is the
+  reproduction; 51/51 after M3.
 
-### M3 — Bounded lexer and declaration reader — NOT_STARTED
+### M3 — Bounded lexer and declaration reader — COMPLETE
 - Objective: `protoLexer.ts` + `protoDeclarations.ts` implemented and bounded.
 - Acceptance: the adversarial corpus passes with zero facts from comments or
   strings; the measured blueapi distribution is produced by the parser itself
   and matches or truthfully explains its divergence from the M1 baseline.
+- Outcome: closed at `fc4f00a`; the parser reproduces the M1 baseline exactly
+  on all ten dimensions.
 
-### M4 — Admission and route-discovery participation — NOT_STARTED
+### M4 — Admission and route-discovery participation — COMPLETE
 - Objective: `PROTOBUF` language, `.proto` extension, `parseProtoRoutes`.
 - Acceptance: blueapi/billing proto operations are discovered; C-01
   no-eviction regression holds; completeness propagates; no new repository is
   admitted.
+- Outcome: closed at `b69d422`. DEF-C02B-1 found by the no-eviction assertion
+  and repaired; blueapi yields 738 operations, ripple-api still yields 223.
 
-### M5 — Per-operation OpenAPI corroboration — NOT_STARTED
+### M5 — Per-operation OpenAPI corroboration — COMPLETE
 - Objective: `protoCorroboration.ts` with the seven categorical outcomes, wired
   to the `generatedArtifact.ts` seam without weakening it.
 - Acceptance: currency leaves UNKNOWN only on per-operation identity evidence;
   a count-only agreement provably does not upgrade it.
+- Outcome: closed at `d775864`. All 147 real Billing operations MATCH; the
+  artifact stays UNCORROBORATABLE because 444 of its 591 operations are out of
+  scope.
 
-### M6 — Hardening rules and negative probes — NOT_STARTED
+### M6 — Hardening rules and negative probes — COMPLETE
 - Objective: load-bearing invariants guarded, each probe recorded as
   mutation→FAIL, restore→PASS.
 - Acceptance: zero vacuous rules; every probe bites.
+- Outcome: closed at `f479b02`. 15/15 probes detected and restored; two
+  over-broad rules tightened and one vacuous test (DEF-C02B-2) repaired.
 
-### M7 — Gate registration and full validation matrix — NOT_STARTED
+### M7 — Gate registration and full validation matrix — COMPLETE
 - Objective: suites registered in `config/synthetic-campaign.v1.json` with a
   membership assertion; SPEC §Validation executed.
 - Acceptance: canonical regression zero failures; `gate:local` PASS;
   `gate:clean` PASS with writes frozen.
+- Outcome: closed at `f479b02`/`321f11b`. Regression 3,228/3,215/13/0;
+  `gate:local` PASS `receipt:sha256:372e981fa39b01b87b8581da`; `gate:clean`
+  PASS with siblingWrites 0.
 
-### M8 — Integration, exact-head CI, closure — NOT_STARTED
+### M8 — Integration, exact-head CI, closure — COMPLETE
 - Objective: integrate per C-00, observe exact-head CI, reconcile project
   truth, close and release.
 - Acceptance: `origin/main` advanced by fast-forward; exact-head CI PASS;
   canonical clean; session released.
+- Outcome: closed. `origin/main` at `321f11b`; exact-head CI run 33680339948 /
+  job 100415095920 PASS on all eleven groups.
 
 ## Validation Strategy
 

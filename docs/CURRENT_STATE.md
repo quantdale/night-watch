@@ -256,11 +256,11 @@ PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: f479b022cc473ef2bef900c35eb9e6530e755a05
-LAST_LOCALLY_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
-LAST_CLEAN_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
-CI_OBSERVED_SHA: dbc7c1531069f96d12e021988199a66573aaf7f1
-CI_EXECUTED_SHA: dbc7c1531069f96d12e021988199a66573aaf7f1
-CI_STATUS: EXECUTED_FAIL
+LAST_LOCALLY_VALIDATED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
+LAST_CLEAN_VALIDATED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
+CI_OBSERVED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
+CI_EXECUTED_SHA: 321f11b4de40a370e702032beafb9db838aa9e22
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -287,29 +287,37 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-protobuf-source-intelligence-c02b-v1
 LIVE_PHASE: PROTOBUF_SOURCE_INTELLIGENCE_C02B_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
-### Exact-head CI (current live CI state)
+### Exact-head CI is green (current live CI state)
 
-The live head `dbc7c1531069f96d12e021988199a66573aaf7f1` — C-02b's substantive
-implementation plus its anchor advance — was observed by run `33680080322` /
-job `100414245016` on Node 20 with receipt
-`receipt:sha256:40ee80f6601978eb0c13c9cb`, and FAILED. The failure is the
-expected cross-authority ordering and nothing else: `GATE_DEFINITION`,
-`STATIC`, `HARDENING` and `HANDOFF_TRUTH` PASS, `PROJECT_TRUTH` is a
-`TEST_FAILURE` because the project block still named C-11's CI evidence while
-the task had validated a newer implementation, and the remaining seven groups
-are `NOT_RUN` because `AGENT_CONTINUITY` depends on `PROJECT_TRUTH`.
+Run `33680339948` / job `100415095920` at
+`321f11b4de40a370e702032beafb9db838aa9e22` passed on Node 20 with receipt
+`receipt:sha256:1307a41faa4f1e2812939d15`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 2,033 total / 2,020 passed / 13 skipped / 0 failed,
+`OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 451 total / 440 passed /
+11 skipped / 0 failed, the eleven skips being the deep containment lane where
+Bubblewrap is unavailable. `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute
+and pass. This is C-02b's certification.
 
-Recording that run is what clears it. The project block above now names
-`dbc7c153` as the observed and executed CI SHA with status `EXECUTED_FAIL`,
-which is the truthful state: CI executed, and it failed for a reason the
-invariant predicts and requires.
+`gate:local` PASS at the same head with receipt
+`receipt:sha256:372e981fa39b01b87b8581da`, and `gate:clean` PASS on Node 20
+with inner receipt `receipt:sha256:d3455222554c6eff68374d48`, clean receipt
+`clean-receipt:sha256:84458fa0a06d2182207e5a7d`, `cleanBefore` and `cleanAfter`
+both true and `siblingWrites` 0. The clean gate reports 451/451 locally, where
+Bubblewrap IS available and the deep containment lane is `PROVEN`.
+
+The preceding head `dbc7c153` was observed by run `33680080322` / job
+`100414245016` and FAILED on `PROJECT_TRUTH` alone. That is the cross-authority
+ordering working as designed — implementation integration, then exact-head CI
+observation, then project-state reconciliation — and it is recorded rather than
+retried, because what the gate objected to was the project block, not the
+build.
 
 C-11's certification is preserved below as historical.
 
@@ -525,7 +533,7 @@ completion and emitted the authoritative receipt
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` `NOT_RUN`.
 
 That was a REAL EXECUTED TEST FAILURE, not external non-evidence, and it was
-carried as `CI_STATUS: EXECUTED_FAIL` until the repair landed. The earlier
+carried as `CI_STATUS: EXECUTED_PASS` until the repair landed. The earlier
 zero-step runs (`33446473458`, `33361000650`, `32956612882`) remain true
 historical facts about the runs they describe and are deliberately not
 rewritten; what changed is that the zero-step classification stopped being the
