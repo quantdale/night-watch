@@ -21,7 +21,10 @@ const APPROVED_ROOTS: Readonly<Record<string, readonly string[]>> = Object.freez
   'alphauslabs/grpc-chunk-parser': ['src'],
 });
 
-const APPROVED_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml'] as const;
+// C-02b adds `.proto`. No root and no repository is added: the protobuf
+// source it admits already lived inside `alphauslabs/blueapi` `billing` and
+// `mobingilabs/ouchan` `pkg`, both approved since Phase 25.
+const APPROVED_EXTENSIONS = ['.php', '.ts', '.tsx', '.js', '.jsx', '.go', '.json', '.yaml', '.yml', '.proto'] as const;
 
 export const PHASE25_APPROVED_REPOSITORY_IDS = Object.freeze(
   RIPPLE_REPOSITORIES.filter((repository) => repository.scope === 'IN_SCOPE' && APPROVED_ROOTS[repository.repoId] !== undefined).map((repository) => repository.repoId).sort(),

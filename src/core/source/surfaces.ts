@@ -55,11 +55,12 @@ import {
   REAL_SOURCE_SURFACE_PERFORMANCE_VERSION,
   type OpenApiResponseDefinitionBinding,
 } from './surfaceTypes';
-import { sourceEvidenceProvenance, type SourceEvidenceProvenance } from './generatedArtifact';
+import { classifySourceEvidenceQualifier, sourceEvidenceProvenance, type SourceEvidenceProvenance } from './generatedArtifact';
 import { coverageStateForCompleteness, isComplete, worstCompleteness, type SourceCompletenessState } from './completeness';
 import { analyzePhpEffectClosure, type PhpClosureEntrypoint, type PhpEffectClosureProof } from './phpEffectClosure';
 import { parsePhpRouteMiddlewareFlags, parsePhpRoutePipelineModel, resolvePhpRoutePipeline, type PhpResolvedRoutePipeline, type PhpRouteMiddlewareFlags, type PhpRoutePipelineModel } from './phpPipeline';
 import { buildReadOnlyProof, readOnlyClassificationFromProof, type ReadOnlyProof } from './readOnlyProof';
+import { readProtoDeclarations } from './protoDeclarations';
 
 const SAFE_HANDLER_RE = /^[A-Za-z_][A-Za-z0-9_$\\.-]{0,159}$/;
 const SAFE_REFERENCE_RE = /^src\/[A-Za-z0-9._/-]{1,239}\.(?:php|json|ya?ml|tsx?|jsx?|go)$/i;
@@ -109,7 +110,7 @@ export interface SourcePhase24Integration {
 }
 
 function isRouteCandidateFile(language: SourceScanLanguage, relativePath: string): boolean {
-  return language === 'YAML' || language === 'OPENAPI' || language === 'TYPESCRIPT' || language === 'JAVASCRIPT' || language === 'GO' || ROUTE_FILE_RE.test(relativePath);
+  return language === 'YAML' || language === 'OPENAPI' || language === 'TYPESCRIPT' || language === 'JAVASCRIPT' || language === 'GO' || language === 'PROTOBUF' || ROUTE_FILE_RE.test(relativePath);
 }
 
 interface ParsedRoute {
@@ -344,9 +345,65 @@ function parseOpenApiRoutes(sourcePath: string, sourceText: string): readonly Pa
   return routes;
 }
 
+/** C-02b — map mechanically proven protobuf HTTP bindings into the existing
+ * route-discovery contract.
+ *
+ * Only a PROVEN single binding becomes a route. An AMBIGUOUS RPC carries more
+ * than one real route and choosing one would make the map both wrong and
+ * nondeterministic, so it is surfaced as an UNSUPPORTED route rather than
+ * silently resolved; MALFORMED and UNSUPPORTED_OPTION likewise. The richer
+ * proto facts — service identity, RPC symbol, streaming class — do not fit the
+ * route contract and are read directly from `protoDeclarations` by the
+ * corroborator and by C-03.
+ */
+function parseProtoRoutes(sourcePath: string, sourceText: string): readonly ParsedRoute[] {
+  const facts = readProtoDeclarations(sourceText);
+  const routes: ParsedRoute[] = [];
+  for (const service of facts.services) {
+    for (const rpc of service.rpcs) {
+      const symbol = safeHandler(`${service.serviceName}_${rpc.rpcName}`);
+      if (rpc.httpBindingState !== 'PROVEN' || rpc.bindings.length !== 1) {
+        routes.push({
+          method: 'GET',
+          routeTemplate: '/',
+          handlerClient: null,
+          handlerSymbol: symbol,
+          requestReference: null,
+          responseReference: null,
+          sourcePath,
+          language: 'PROTOBUF',
+          routeProof: rpc.httpBindingState === 'AMBIGUOUS' ? 'AMBIGUOUS' : 'UNSUPPORTED',
+          routeRejectionReason: 'SOURCE_SYNTAX_UNSUPPORTED',
+          responseDefinitions: [],
+        });
+        continue;
+      }
+      const [binding] = rpc.bindings;
+      const routeTemplate = binding === undefined ? null : safeRoute(binding.routeTemplate);
+      const routeMethod = binding === undefined ? null : method(binding.method);
+      const proven = routeTemplate !== null && routeMethod !== null && symbol !== null;
+      routes.push({
+        method: routeMethod ?? 'GET',
+        routeTemplate: routeTemplate ?? '/',
+        handlerClient: null,
+        handlerSymbol: symbol,
+        requestReference: null,
+        responseReference: null,
+        sourcePath,
+        language: 'PROTOBUF',
+        routeProof: proven ? 'PROVEN' : 'UNSUPPORTED',
+        routeRejectionReason: proven ? null : 'SOURCE_SYNTAX_UNSUPPORTED',
+        responseDefinitions: [],
+      });
+    }
+  }
+  return routes;
+}
+
 function parseRoutes(sourcePath: string, language: SourceScanLanguage, sourceText: string): readonly ParsedRoute[] {
   if (language === 'YAML') return parseYamlRoutes(sourcePath, sourceText);
   if (language === 'OPENAPI') return parseOpenApiRoutes(sourcePath, sourceText);
+  if (language === 'PROTOBUF') return parseProtoRoutes(sourcePath, sourceText);
   if (language === 'TYPESCRIPT' || language === 'JAVASCRIPT' || language === 'GO') return parseStaticRoutes(sourcePath, sourceText, language);
   return [];
 }
@@ -855,12 +912,17 @@ function mergeFlowObservations(observationsByDeclaration: readonly (readonly Ana
 function observationsFor(input: { readonly access: SiblingSourceAccess; readonly inventory: RealSourceSnapshotInventory; readonly operation: SourceOperationDescriptor; readonly handlerState: SourceJoinState; readonly responseFlowIndex: ReturnType<typeof createResponseFlowIndex> }): SourceResponseAnalysis {
   if (input.operation.handlerPath === null || input.handlerState !== 'PROVEN') return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
   const match = input.inventory.files.find((file) => file.repoId === input.operation.repository && file.relativePath === input.operation.handlerPath && file.status === 'ELIGIBLE');
-  if (match === undefined || match.language === null || match.language === 'YAML') return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
+  // PROTOBUF joins YAML here: the semantic analyzers model handler languages,
+  // and a `.proto` file declares a contract rather than implementing one. A
+  // proto route carries no handler path at all, so this guard is belt and
+  // braces — but it keeps the cast below honest rather than widening
+  // `SourceLanguage` to a language no analyzer can read.
+  if (match === undefined || match.language === null || match.language === 'YAML' || match.language === 'PROTOBUF') return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
   const sourceText = input.access.reader.readFile(input.operation.repository, match.relativePath);
   if (sourceText === null) return { observations: [], responseFlow: null, responseFlowElapsedMs: 0 };
   const artifact: SourceAnalyzerArtifact = {
     artifactId: `surface-artifact-${input.operation.sourceSha.slice(0, 12)}`,
-    language: match.language as Exclude<SourceScanLanguage, 'YAML'>,
+    language: match.language as Exclude<SourceScanLanguage, 'YAML' | 'PROTOBUF'>,
     repoId: input.operation.repository,
     sha: input.operation.sourceSha,
     relativePath: match.relativePath,
@@ -999,9 +1061,24 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
     if (sourceText === null || file.language === null) continue;
     for (const route of parseRoutes(file.relativePath, file.language, sourceText)) parsedRoutes.push({ file, route });
   }
+  // Route ambiguity is a conflict between RIVAL declarations, and rivalry is
+  // scoped to the evidence class. A committed generated artifact and the
+  // source it was generated FROM are one witness expressed twice, not two
+  // witnesses disagreeing: `openapiv2/apidocs.swagger.json` is a mirror of
+  // `billing/v1/billing.proto`, so pairing them would mark 147 real routes
+  // AMBIGUOUS and drop their read-only classification to UNSUPPORTED for no
+  // reason a reader would accept.
+  //
+  // Measuring the relationship between those two views is exactly what the
+  // C-02b corroborator does. Collapsing it into a false ambiguity here would
+  // destroy the evidence instead of comparing it.
+  //
+  // Two DIRECT_SOURCE declarations of one route are still ambiguous, and so
+  // are two GENERATED_ARTIFACT ones. Only the cross-class pair is exempt, and
+  // before C-02b no such pair could exist in this repository.
   const parsedKeys = new Map<string, number>();
   for (const entry of parsedRoutes) {
-    const key = `${entry.file.repoId}:${entry.route.method}:${entry.route.routeTemplate}`;
+    const key = `${entry.file.repoId}:${classifySourceEvidenceQualifier(entry.file.repoId, entry.file.relativePath)}:${entry.route.method}:${entry.route.routeTemplate}`;
     parsedKeys.set(key, (parsedKeys.get(key) ?? 0) + 1);
   }
   parsedRoutes.sort((left, right) => left.file.repoId.localeCompare(right.file.repoId) || left.file.relativePath.localeCompare(right.file.relativePath) || left.route.method.localeCompare(right.route.method) || left.route.routeTemplate.localeCompare(right.route.routeTemplate) || (left.route.handlerSymbol ?? '').localeCompare(right.route.handlerSymbol ?? ''));
@@ -1038,7 +1115,7 @@ export function discoverSourceSurfaces(input: { readonly access: SiblingSourceAc
   for (const entry of projectedEntries) {
     const { file, route } = entry;
     projectedByRepository.set(file.repoId, (projectedByRepository.get(file.repoId) ?? 0) + 1);
-    const duplicateKey = `${file.repoId}:${route.method}:${route.routeTemplate}`;
+    const duplicateKey = `${file.repoId}:${classifySourceEvidenceQualifier(file.repoId, file.relativePath)}:${route.method}:${route.routeTemplate}`;
     const duplicate = (parsedKeys.get(duplicateKey) ?? 0) > 1;
     const withDuplicate: ParsedRoute = duplicate ? { ...route, routeProof: 'AMBIGUOUS', routeRejectionReason: 'ROUTE_AMBIGUOUS' } : route;
     const baseOperation = routeOperation({ repoId: file.repoId, sha: file.sourceSha! }, withDuplicate);

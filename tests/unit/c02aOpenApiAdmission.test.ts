@@ -307,12 +307,15 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
 
   test('recovers >= 591 operations with verb, path and operationId, and >= 400 bound response contracts', () => {
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
-    const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI);
+    // C-02b later admitted `.proto` into the same repository, so "the blueapi
+    // surfaces" and "the surfaces from the generated artifact" stopped being
+    // the same set. Every claim below is about the artifact, so it is now
+    // scoped to the artifact rather than to the repository.
+    const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
 
     expect(blueapi.length).toBeGreaterThanOrEqual(EXPECTED_BLUEAPI_OPERATIONS);
     // Every one of them came from the OpenAPI branch of the existing parser.
     expect(blueapi.every((surface) => surface.operation.language === 'OPENAPI')).toBe(true);
-    expect(blueapi.every((surface) => surface.operation.sourcePath === ARTIFACT_PATH)).toBe(true);
 
     // Verb, path and operationId are all preserved, exactly and distinctly.
     expect(blueapi.every((surface) => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(surface.operation.method))).toBe(true);
@@ -333,7 +336,7 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
 
   test('every blueapi surface is GENERATED_ARTIFACT with UNKNOWN currency and a denied production admission', () => {
     const discovery = discoverSourceSurfaces({ access: createSiblingSourceAccess(DEFAULT_SIBLING_ROOT), config: createApprovedRealSourceScanConfig() });
-    const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI);
+    const blueapi = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.sourcePath === ARTIFACT_PATH);
     expect(blueapi.length).toBeGreaterThan(0);
     for (const surface of blueapi) {
       expect(surface.sourceEvidence.qualifier).toBe('GENERATED_ARTIFACT');
@@ -341,6 +344,14 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
       expect(surface.sourceEvidence.generationCurrency?.state).toBe('UNKNOWN');
       expect(surface.sourceEvidence.productionAdmission.state).toBe('DENIED');
     }
+
+    // The C-02b protobuf surface in the SAME repository is direct source, and
+    // the generated-artifact denial does not leak onto it. Repository identity
+    // never decided the evidence class; the root always did.
+    const protoSurfaces = discovery.surfaces.filter((surface) => surface.operation.repository === BLUEAPI && surface.operation.language === 'PROTOBUF');
+    expect(protoSurfaces.length).toBeGreaterThan(0);
+    expect(protoSurfaces.every((surface) => surface.sourceEvidence.qualifier === 'DIRECT_SOURCE')).toBe(true);
+    expect(protoSurfaces.every((surface) => surface.sourceEvidence.generationCurrency === null)).toBe(true);
     // Ripple stays direct source and is not collaterally denied.
     const ripple = discovery.surfaces.filter((surface) => surface.operation.repository === RIPPLE_API);
     expect(ripple.length).toBe(EXPECTED_RIPPLE_OPERATIONS);
@@ -369,7 +380,12 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
       expect(repository.droppedOperations).toBe(0);
       expect(repository.projectedOperations).toBe(repository.examinedOperations);
     }
-    expect(after.operations.length).toBe(before.operations.length + EXPECTED_BLUEAPI_OPERATIONS);
+    // The artifact still contributes exactly its own operations. Asserting the
+    // repository total here would silently absorb C-02b's protobuf operations
+    // into C-02a's claim; asserting the artifact's own contribution keeps the
+    // two campaigns' evidence separable.
+    expect(after.operations.filter((operation) => operation.sourcePath === ARTIFACT_PATH).length).toBe(EXPECTED_BLUEAPI_OPERATIONS);
+    expect(after.operations.length).toBeGreaterThanOrEqual(before.operations.length + EXPECTED_BLUEAPI_OPERATIONS);
 
     // Completeness stays truthful rather than optimistic: the upstream file
     // enumeration is still bounded, so the true total remains unknown.

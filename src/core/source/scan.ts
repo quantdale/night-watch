@@ -62,6 +62,10 @@ const EXTENSION_LANGUAGE: Readonly<Record<SourceScanExtension, SourceScanLanguag
   '.json': 'OPENAPI',
   '.yaml': 'YAML',
   '.yml': 'YAML',
+  // C-02b. This is a LANGUAGE admission, not a root admission: every .proto
+  // file it reaches was already inside an owner-approved root and was being
+  // rejected SOURCE_LANGUAGE_UNSUPPORTED on its extension alone.
+  '.proto': 'PROTOBUF',
 };
 
 function invalid(reason: string): never {

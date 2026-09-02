@@ -6,17 +6,17 @@ Task ID: nightwatch-protobuf-source-intelligence-c02b-v1
 Phase: PROTOBUF_SOURCE_INTELLIGENCE_C02B_V1
 Status: IN_PROGRESS
 Starting SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-Last validated implementation SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-Last substantive checkpoint SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
+Last validated implementation SHA: fc4f00a43386d117c3a76afa6058e49a312912df
+Last substantive checkpoint SHA: fc4f00a43386d117c3a76afa6058e49a312912df
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-protobuf-source-intel-139a4f45
-Last checkpoint: M1 opened at the C-11 closure head fab7675 with the approved-universe protobuf surface measured before any parser exists
+Last checkpoint: M4 closed — protobuf admitted as a language, parseProtoRoutes wired, DEF-C02B-1 found and repaired; blueapi yields 738 operations and ripple-api still yields 223
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-LAST_VALIDATED_IMPLEMENTATION_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
+LAST_VALIDATED_IMPLEMENTATION_SHA: fc4f00a43386d117c3a76afa6058e49a312912df
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: fc4f00a43386d117c3a76afa6058e49a312912df
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -30,11 +30,11 @@ the C-02a generated OpenAPI artifact that cannot be satisfied by counting.
 
 ## Current Milestone
 
-Milestone ID: M4 — admission and route-discovery participation
+Milestone ID: M5 — per-operation OpenAPI corroboration
 Milestone status: IN_PROGRESS
-What is being attempted: add `PROTOBUF` to the scan languages and `.proto` to
-the approved extensions, dispatch `parseProtoRoutes` from `surfaces.ts`, and
-prove the C-01 no-eviction regression over the enlarged population.
+What is being attempted: `src/core/source/protoCorroboration.ts` with the seven
+categorical outcomes, wired to the `generatedArtifact.ts` seam so that currency
+can leave UNKNOWN only on per-operation identity evidence.
 
 ## Completed Milestones
 
@@ -48,17 +48,22 @@ prove the C-01 no-eviction regression over the enlarged population.
   `src/core/source/protoDeclarations.ts` implemented. 50/50 corpus assertions
   pass, and the parser independently reproduces the M1 line-regex baseline
   exactly.
+- M4 — `PROTOBUF` and `.proto` admitted; `parseProtoRoutes` dispatched from
+  `surfaces.ts`; `tests/unit/c02bProtoSurface.test.ts` 17/17. DEF-C02B-1 found
+  and repaired. blueapi now yields 738 operations (591 artifact + 147 proto)
+  and `mobingilabs/ripple-api` still yields its full 223.
 
 ## Work In Progress
 
-M4. Nothing partial: M1-M3 are closed and committed.
+M5. Nothing partial: M1-M4 are closed and committed.
 
 ## Exact Next Action
 
-Add `PROTOBUF` to `SOURCE_SCAN_LANGUAGES` and `.proto` to `SOURCE_SCAN_EXTENSIONS`
-and `APPROVED_EXTENSIONS`, implement `parseProtoRoutes` in `surfaces.ts`, and
-assert that every operation identity discovered before the change is still
-discovered after it.
+Implement `src/core/source/protoCorroboration.ts`: match each proven proto HTTP
+binding to the artifact by `<Service>_<Rpc>` operationId and independently by
+`(method, route)`, classify every operation into the seven outcomes, and allow
+`evaluateGenerationCurrency` to leave UNKNOWN only when every operation on both
+sides is MATCH.
 
 ## Files Changed
 
@@ -79,6 +84,12 @@ discovered after it.
 | `tests/unit/c02bProtoLexer.test.ts` | adversarial corpus, HTTP matrix, streaming matrix | 50/50 PASS |
 | `src/core/source/protoLexer.ts` | bounded tokenizer; the only module that knows comment/string syntax | IMPLEMENTED |
 | `src/core/source/protoDeclarations.ts` | bounded recursive-descent reader and fact model | IMPLEMENTED |
+| `src/core/source/scanTypes.ts` | `PROTOBUF` language, `.proto` extension | COMMITTED |
+| `src/core/source/scan.ts` | `.proto` -> `PROTOBUF` extension mapping | COMMITTED |
+| `src/core/source/approvedScan.ts` | `.proto` in the approved extension list | COMMITTED |
+| `src/core/source/surfaces.ts` | `parseProtoRoutes`, evidence-class-scoped route ambiguity (DEF-C02B-1) | COMMITTED |
+| `tests/unit/c02bProtoSurface.test.ts` | admission, real surface, no-eviction, DEF-C02B-1 regression | 17/17 PASS |
+| `tests/unit/c02aOpenApiAdmission.test.ts` | three assertions rescoped from "the repository" to "the artifact" | 18/18 PASS |
 
 ## Validation Ledger
 
@@ -146,6 +157,33 @@ comments discarded, completeness COMPLETE with zero malformed declarations and
 zero ceiling drops. `mobingilabs/ouchan` `types.proto`: 0 services, 5 messages,
 COMPLETE.
 
+Command: `npx playwright test tests/unit/c02bProtoSurface.test.ts`
+Result: PASS 17/17
+When: 2026-09-03, session worktree
+Relevant failure/output summary: two genuine failures on the way. (1) A
+hand-spread scan config was rejected `REAL_SOURCE_SCAN_INVALID:CONFIG_DIGEST`
+— the digest guard working correctly; the fixture now rebuilds the config
+through `createRealSourceScanConfig`. (2) DEF-C02B-1, below.
+
+Command: `npx playwright test` over phase25 x4, c02a, c06, eligibilityCensus,
+readonlyCandidateCensus
+Result: PASS 82/82 after the C-02a rescope; 79/82 before it
+When: 2026-09-03, session worktree
+Relevant failure/output summary: three C-02a assertions said "every blueapi
+surface" where they meant "every surface from the generated artifact". That was
+true only while the artifact was blueapi's sole yield. Rescoped to the artifact
+path, and a new positive assertion added that the proto surface in the same
+repository is DIRECT_SOURCE with null currency — so the rescope proves
+something rather than merely excusing the proto.
+
+Command: `npx tsc --noEmit`
+Result: PASS
+When: 2026-09-03, session worktree
+Relevant failure/output summary: one error first — `SourceLanguage` in the
+semantic analyzers does not include PROTOBUF. Rather than widen that union to a
+language no analyzer can read, PROTOBUF now joins YAML in the guard that keeps
+non-handler languages out of the analyzer path.
+
 ## Decisions Made During This Task
 
 Decision: corroborate the generated artifact per operation identity, never by
@@ -168,6 +206,39 @@ Decision: the reader reports `UNSUPPORTED_OPTION` distinctly from `ABSENT`.
 Reason: "no annotation" and "an annotation this reader does not understand" are
 different facts about the surface, and collapsing them would hide the second.
 Evidence/constraint: `openapiv2_operation` options appear on real RPCs.
+
+Decision: route ambiguity is scoped to the evidence class.
+Reason: a committed generated artifact and the source it was generated FROM are
+one witness expressed twice. Treating them as rivals marked 147 real routes
+AMBIGUOUS and dropped them from PROVEN_MUTATION_CAPABLE to UNSUPPORTED.
+Evidence/constraint: measured before/after; `classifySourceEvidenceQualifier`
+already distinguishes the two classes, so the fix reuses C-02a's own vocabulary
+rather than inventing a special case. Two same-class declarations of one route
+are still AMBIGUOUS, asserted directly and also by the pre-existing Phase 25
+`ambiguousRoutes === 2` fixture.
+
+## Defects introduced by this campaign
+
+DEF-C02B-1 — a generated mirror was treated as a rival declaration.
+- Symptom: admitting `billing/v1/billing.proto` degraded all 147 matching
+  operations in `openapiv2/apidocs.swagger.json` from `routeProof: PROVEN` /
+  `readOnlyClassification: PROVEN_MUTATION_CAPABLE` to `AMBIGUOUS` /
+  `UNSUPPORTED`, and changed their `operationId` (the `evidenceDigest` was
+  unchanged, so nothing was lost — but every downstream consumer keyed on
+  `operationId` would have seen 147 identities disappear and 147 appear).
+- Reproduction: discover blueapi with and without `.proto` admitted and diff
+  the operation identities; 147 differ. Caught by the C-01 no-eviction
+  assertion written for this campaign, which is the assertion earning its keep.
+- Root cause: the duplicate-route key in `surfaces.ts` was
+  `repoId:method:routeTemplate`, with no notion of evidence class. Before
+  C-02b, no repository could contain both a generated artifact and its own
+  generator input, so the gap was unreachable.
+- Fix: the key now includes `classifySourceEvidenceQualifier(...)`, so rivalry
+  is judged within an evidence class.
+- Regression: three assertions in `tests/unit/c02bProtoSurface.test.ts` — the
+  cross-class pair stays PROVEN, two same-class protos stay AMBIGUOUS, and the
+  real 591 artifact operations keep `PROVEN`.
+- Disposition: REPAIRED.
 
 ## Discoveries
 

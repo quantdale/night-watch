@@ -6,16 +6,16 @@ Title: C-02b Protobuf Source Intelligence
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-protobuf-source-intelligence-c02b-v1
 Starting SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-Last validated implementation SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-Last checkpoint: M1 opened at the C-11 closure head fab7675 with the approved-universe protobuf surface measured before any parser exists
-Current milestone: M1 — task record, OpenSpec change, measured baseline
-Next action: Run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by asserting the adversarial comment/string/malformed corpus before the parser exists
+Last validated implementation SHA: fc4f00a43386d117c3a76afa6058e49a312912df
+Last checkpoint: M4 closed — protobuf admitted as a language, parseProtoRoutes wired, DEF-C02B-1 found and repaired; blueapi yields 738 operations and ripple-api still yields 223
+Current milestone: M5 — per-operation OpenAPI corroboration
+Next action: Implement `src/core/source/protoCorroboration.ts` with the seven categorical outcomes and wire it to the `generatedArtifact.ts` seam so generation currency can leave UNKNOWN only on per-operation identity evidence
 Authorization class: NIGHTWATCH_PROTOBUF_SOURCE_INTELLIGENCE_C02B_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-LAST_VALIDATED_IMPLEMENTATION_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: fab7675883b15bdfc29bcc946d52b2762fe96b2f
+LAST_VALIDATED_IMPLEMENTATION_SHA: fc4f00a43386d117c3a76afa6058e49a312912df
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: fc4f00a43386d117c3a76afa6058e49a312912df
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_PROTOBUF_SOURCE_INTELLIGENCE_C02B_V1_STATUS: IN_PROGRESS
