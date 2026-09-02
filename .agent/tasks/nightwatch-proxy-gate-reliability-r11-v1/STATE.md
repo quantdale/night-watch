@@ -6,17 +6,17 @@ Task ID: nightwatch-proxy-gate-reliability-r11-v1
 Phase: PROXY_GATE_RELIABILITY_R11_V1
 Status: IN_PROGRESS
 Starting SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-Last validated implementation SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
-Last substantive checkpoint SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
+Last validated implementation SHA: 200221cf6c80fbab7f463680c44086e231bc034c
+Last substantive checkpoint SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-proxy-gate-reliabilit-6e648bc4
-Last checkpoint: 2026-09-02 — M1 through M7 closed. OBS-C105-1 reproduced and repaired; 20 deterministic adversarial lease cases plus a real-OS-TCP integration case green; bounded stress campaign green; durable confined atomic gate receipts wired into both gates with 30 adversarial cases; 29/29 hardening negative probes detected after repairing DEF-R11-1 and DEF-R11-2; Stage-A documentation truth and the obsolete T-30/T-41/T-42 digest semantics reconciled. Substantive checkpoint 22a2928
+Last checkpoint: 2026-09-02 — M1 through M7 closed. OBS-C105-1 reproduced and repaired; 20 deterministic adversarial lease cases plus a real-OS-TCP integration case green; bounded stress campaign green; durable confined atomic gate receipts wired into both gates with 30 adversarial cases; 29/29 hardening negative probes detected after repairing DEF-R11-1 and DEF-R11-2; Stage-A documentation truth and the obsolete T-30/T-41/T-42 digest semantics reconciled. The clean Node 20 gate then reproducibly falsified three defects in R-11's OWN new tests (DEF-R11-3/4/5), all repaired. Substantive checkpoint 200221c
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
-LAST_VALIDATED_IMPLEMENTATION_SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
+LAST_VALIDATED_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_PROXY_GATE_RELIABILITY_R11_V1_STATUS: IN_PROGRESS
@@ -157,6 +157,41 @@ binding `portAvailable` with no substitutable parameter, add
 
 ## Validation Ledger
 
+Command: `npx playwright test --project=nightwatch --workers=1` (complete canonical regression)
+Result: PASS
+When: 2026-09-02
+Relevant failure/output summary: 3,031 total / 3,018 passed / 13 skipped / 0 failed. C-10.5 baseline was 2,975/2,962/13/0, so +56 tests and no new skip.
+
+Command: `npm run gate:local`
+Result: PASS at `5a4da2f`
+When: 2026-09-02
+Relevant failure/output summary: all eleven required groups PASS on Node 22, receipt `receipt:sha256:9bb74f33208cf27b0db4963a`; SEMANTIC_COMPATIBILITY 2,031/2,018/13/0, OWNER_PROVENANCE 91 passed, SYNTHETIC_CAMPAIGN 256/256 with `deepContainmentLane: PROVEN`.
+
+Command: `npm run gate:clean` x2 (independent invocations) at `5a4da2f`
+Result: FAIL both times, reproducibly, at SEMANTIC_COMPATIBILITY
+When: 2026-09-02
+Relevant failure/output summary: run 1 `clean-receipt:sha256:7bdcebf7c54432cd1c59c5d2` (3 failed, 14 skipped), run 2 `clean-receipt:sha256:c779cfcfccc2e2b87eb346b5` (2 failed, 14 skipped). `gateReceiptSource: STRUCTURED_FILE`, file and stdout receipt digests EQUAL, `siblingWrites: 0`, `cleanBefore`/`cleanAfter` true. Failing locations named directly by the receipt: `gateReceiptPersistence.test.ts:64`, `gateReceiptPersistence.test.ts:326`, `proxyPortLeaseDeterminism.test.ts:455`. All three are defects in R-11's own new tests — DEF-R11-3, DEF-R11-5 and the load-sensitive readiness deadline — plus DEF-R11-4, the 13→14 skip. Repaired at `200221c`.
+
+Command: exact-head GitHub Actions run `33649946137` at `3c4756c`
+Result: FAIL — one group, `PROJECT_TRUTH`
+When: 2026-09-02
+Relevant failure/output summary: receipt `receipt:sha256:97cd10d99d6eeaaa3c60ef43`, Node 20, `environmentClass: CI`; the seven later groups `NOT_RUN`. Cause was the baseline ordering constraint only: the CI anchor still named C-10.5's `29b9212` while the validated implementation had advanced. Diagnosed in one command against the retained job log.
+
+Command: `npx playwright test <five proxy and receipt suites>` after the DEF-R11-3/4/5 repairs
+Result: PASS
+When: 2026-09-03
+Relevant failure/output summary: 67 passed, 0 skipped.
+
+Command: six independent invocations of `phase24ProxyLifecycle` + `proxyPortLeaseDeterminism` + `phase23PortLease`
+Result: PASS 6/6
+When: 2026-09-02
+Relevant failure/output summary: 31 passed on every attempt; no runner retry configured anywhere.
+
+Command: eight independent invocations of `proxyPortLeaseDeterminism` under Node 20 in a disposable /tmp clone
+Result: PASS 8/8
+When: 2026-09-02
+Relevant failure/output summary: 20 passed on every attempt.
+
 Command: `git rev-parse origin/main`
 Result: PASS
 When: 2026-09-02
@@ -230,6 +265,38 @@ Evidence/constraint: The rule text in `bin/hardening-check.mjs`; the brief permi
   hardening rules (`upload-artifact` forbidden, exactly two run commands, only
   `actions/checkout@v4` and `actions/setup-node@v4`). Justified away rather than
   taken; CI attribution comes from the complete receipt in the retained job log.
+- **DEF-R11-3.** A new receipt test asserted "the repository is never inside a
+  permitted temporary root". FALSE in the clean topology, which clones into
+  `os.tmpdir()`. It also hid something load-bearing: there, confinement alone
+  would admit a destination inside the tracked tree, so the
+  inside-repository refusal — and its ORDER before the confinement check — is
+  the only thing protecting a tracked file. The replacement asserts exactly
+  that, plus that a sibling directory in the same root is still accepted.
+- **DEF-R11-4.** The byte-identity case keyed off "Node major is not 20" to
+  reach a fast gate refusal, so it SKIPPED in the clean and CI topologies,
+  taking skipped from 13 to 14 — a new skipped test, which R-11 must not
+  introduce. Replaced with a minimal gate root carrying no `package-lock.json`,
+  which reaches `ENVIRONMENT_MISMATCH` on any Node major.
+- **DEF-R11-5.** Two cases spawned the gate with `{ ...process.env }` and
+  asserted the child's stderr was exactly one JSON document. Root cause
+  captured verbatim rather than inferred: `Warning: The 'NO_COLOR' env is
+  ignored due to the 'FORCE_COLOR' env being set.` Playwright's worker exports
+  `FORCE_COLOR` while the gate launcher sets `NO_COLOR=1`, and a child
+  inheriting both makes Node 20 warn on stderr — hence passing under a bare
+  `npx playwright test` and failing under the gate. This is the SAME defect
+  class as OBS-C105-1: an uncontrolled ambient input. Fixed by giving the
+  spawned gate a minimal explicit environment.
+- Both proxy suites replaced poll-a-file-against-a-deadline waits with an
+  explicit child readiness event. The SIGTERM/SIGINT case had failed once under
+  the clean gate's load and passed otherwise. This is not timeout inflation: no
+  assertion depends on elapsed time, so the remaining bounds are liveness
+  guards documented as such, and correctness now rests on an observable event.
+- The repository's own cross-authority invariant FORCES the closure ordering.
+  `project:check` refuses a baseline whose CI anchor certifies a commit older
+  than the validated implementation, so a campaign that changes implementation
+  cannot have a self-consistent baseline — and therefore cannot pass
+  `gate:local` or `gate:clean` — until CI has executed at that implementation.
+  Integration necessarily precedes the CI and validation anchors, as in C-10.5.
 
 ## Blockers
 
