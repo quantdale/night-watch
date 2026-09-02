@@ -124,9 +124,9 @@ evaluate the A15 gate item by item.
 
 ## Validation Ledger
 
-All results recorded from actual runs in the session worktree at
-`c7a5c00887d61b9ea5518af3b2fe24f4c15b2fa5`, whose only difference from the
-substantive implementation `e0e3728ed273eabbc51c50bbc63889c8fb1257fc` is
+All results recorded from actual runs in the session worktree. The substantive
+implementation is `c763c056d306172df3c03c03781f5ec5516944e9` (the DEF-C105-1
+repair); the gates executed at `93d15b3`, whose only difference from it is
 approved documentation.
 
 | Check | Result | Detail |
@@ -141,14 +141,14 @@ approved documentation.
 | `agent:audit` | PASS | 101 tasks, 77 strict v2, `strict_errors=0` |
 | `gate:inventory` | PASS | 11 logical groups, 0 duplicate test-file executions |
 | `test:semantic-compat` | PASS | 1,975 total / 1,962 passed / 13 skipped / 0 failed |
-| `campaign:synthetic` | PASS | 16 files, 253 total / 253 passed / 0 failed, `deepContainmentLane: PROVEN` |
+| `campaign:synthetic` | PASS | 16 files, 256 total / 256 passed / 0 failed, `deepContainmentLane: PROVEN` locally |
 | C-10 privacy suites | PASS | `c10ProductionProjection` + `c10AcceptanceSuite` green after authority rewiring |
-| C-10.5 provenance suite | PASS | `c105ProvenanceAuthority` 32/32 |
-| C-10.5 persisted-position suite | PASS | `c105PersistedFieldCoverage` 13/13 |
+| C-10.5 provenance suite | PASS | `c105ProvenanceAuthority` 34/34 |
+| C-10.5 persisted-position suite | PASS | `c105PersistedFieldCoverage` 14/14 |
 | Project-state validator suites | PASS | `projectState` + `agent-state` 52 tests, including the 8 A10 cases |
-| Full canonical regression | PASS | 2,972 total / 2,959 passed / 13 skipped / 0 failed |
-| `gate:local` | PASS | Node 22, all eleven groups, `receipt:sha256:d2bc919608f5a05c683015b4` |
-| `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:826d3462708244546b75d2b0` (inner gate `receipt:sha256:52e3420361397732d2a735b4`) |
+| Full canonical regression | PASS | 2,975 total / 2,962 passed / 13 skipped / 0 failed |
+| `gate:local` | PASS | Node 22, all eleven groups, `receipt:sha256:50f85aa10248ac17323c9290` at `93d15b3` |
+| `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner gate `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) at `93d15b3` |
 | Exact-head GitHub Actions | PENDING | run after integration to `main` |
 
 ### Negative probes (proving the new gates bite rather than pass vacuously)
@@ -160,10 +160,32 @@ approved documentation.
 | A new free-form persisted field `operatorNote` with no declared disposition | FAIL | FAIL — inventory totality diff |
 | The A10 invariant against the live stale baseline | FAIL | FAIL — `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE` and `PROJECT_STATE_CI_BASELINE_STALE` |
 
+| A module removes the key-vocabulary guard call site | FAIL | FAIL — "dead-guard regression" |
+
 ### C-10.5 dedicated test total
 
-53 tests: 32 provenance authority + 13 persisted-position coverage + 8
+56 tests: 34 provenance authority + 14 persisted-position coverage + 8
 project-state A10 cases.
+
+### Defect found in this campaign's own implementation
+
+**DEF-C105-1 — key-vocabulary authority guard was dead code.**
+`assertProductionKeyVocabularyAuthority` was written and exported but never
+called. The route side was wired into `assertSourceProvenRoute` and pinned by a
+hardening rule; the key side was not. Reproduced before repair: a TEST_ONLY key
+vocabulary is genuinely minted, so it satisfied `isSourceProvenKey` membership,
+and an arbitrary key literal reached persisted evidence through
+`provenFields[].name` — the F-14 position. Repaired by wiring the guard into
+`toProductionEvidence`, adding two hardening rules (guard exists; call site
+exists) and a regression test with a PRODUCTION-marked counter-case. The
+dead-guard rule was negative-probed. Disposition: CLOSED.
+
+A second review finding was coverage rather than a defect: the A13 tamper set
+declared `keyProvenance`, `vocabularyProvenanceClass` and
+`routeProvenanceClass` as CLOSED_VOCABULARY but planted no sentinel in them —
+the DEF-C10-5 shape recurring inside the coverage suite. All three are in fact
+rejected by the firewall; they are now planted, and a new test asserts the
+tamper set is TOTAL over string-capable evidence-root positions.
 
 ## Decisions Made During This Task
 
