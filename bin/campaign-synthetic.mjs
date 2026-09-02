@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+// Authoritative launcher for the deterministic synthetic campaign.
+//
+// This exists because the quality gate could report only that the campaign
+// failed, never which cases failed. The gate deliberately discards child
+// output, and its receipt parser understood exactly one structured schema
+// (`nightwatch.semantic-compatibility.v1`), so a Playwright-backed group could
+// not contribute diagnostics at all. An exact-head CI failure was therefore
+// undebuggable from its own authoritative receipt.
+//
+// The fix is a bounded, categorical receipt — never raw child output. What
+// crosses this boundary is: integer counts, test-file locations already
+// present in this repository as tracked paths, and fixed enum classifications.
+// Source contents, assertion values, environment values, stack frames,
+// credentials and arbitrary child stderr never do.
+//
+// The file list is a versioned data-only manifest invoked as argv entries with
+// shell=false; manifest values cannot become commands, flags, selectors, or
+// paths outside `tests/`.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { buildChildEnvironment } from './child-environment.mjs';
+import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const manifestPath = path.join(root, 'config', 'synthetic-campaign.v1.json');
+const SCHEMA_VERSION = 'nightwatch.synthetic-campaign.v1';
+const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
+
+function fail(code) {
+  throw new Error(code);
+}
+
+function loadManifest() {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  if (manifest.schemaVersion !== SCHEMA_VERSION) fail('SYNTHETIC_CAMPAIGN_SCHEMA_UNSUPPORTED');
+  // Serial, zero-retry execution is a determinism contract, not a preference:
+  // retries would let a nondeterministic failure pass, and parallel workers
+  // would let namespace/port-binding suites interfere.
+  if (manifest.execution?.project !== 'nightwatch' || manifest.execution?.workers !== 1 || manifest.execution?.retries !== 0 || manifest.execution?.serial !== true) {
+    fail('SYNTHETIC_CAMPAIGN_EXECUTION_INVALID');
+  }
+  const maxFailedLocations = manifest.diagnostics?.maxFailedLocations;
+  if (!Number.isInteger(maxFailedLocations) || maxFailedLocations < 1 || maxFailedLocations > 64) fail('SYNTHETIC_CAMPAIGN_DIAGNOSTICS_INVALID');
+  if (!Array.isArray(manifest.files) || manifest.files.length === 0) fail('SYNTHETIC_CAMPAIGN_FILES_INVALID');
+  const files = [];
+  const seen = new Set();
+  for (const file of manifest.files) {
+    if (typeof file !== 'string' || file.includes('..') || !filePattern.test(file) || seen.has(file)) fail(`SYNTHETIC_CAMPAIGN_FILE_INVALID:${String(file)}`);
+    if (!fs.existsSync(path.join(root, file))) fail(`SYNTHETIC_CAMPAIGN_FILE_MISSING:${file}`);
+    seen.add(file);
+    files.push(file);
+  }
+  return { manifest, files, maxFailedLocations };
+}
+
+// The deep L6 lane is a HOST capability. Recording which lane actually ran
+// keeps a green receipt from implying containment coverage the run never had.
+// The classification comes from the same predicate the runtime and the tests
+// use, so the three can never disagree.
+function deepContainmentLane() {
+  try {
+    const [l6] = loadTypeScriptModules(['src/core/oops/l6.ts'], { root });
+    const availability = l6.l6ContainmentAvailability();
+    return availability.available ? 'PROVEN' : `NOT_EXERCISED_${availability.blockerCode ?? 'UNKNOWN'}`;
+  } catch {
+    return 'NOT_EXERCISED_CLASSIFICATION_UNAVAILABLE';
+  }
+}
+
+try {
+  const { manifest, files, maxFailedLocations } = loadManifest();
+  const environment = buildChildEnvironment(process.env, { NIGHTWATCH_ENV: 'local', NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN' });
+  environment.TZ = 'UTC';
+  environment.LC_ALL = 'C';
+  environment.LANG = 'C';
+  environment.NO_COLOR = '1';
+  environment.NIGHTWATCH_HEADED = '0';
+  for (const key of ['NIGHTWATCH_PROXY_PORT', 'NIGHTWATCH_PROXY_LEASE_TOKEN', 'NIGHTWATCH_PROXY_LEASE_PATH', 'NIGHTWATCH_PROXY_LEASE_OWNER_PID']) delete environment[key];
+
+  const deepLane = deepContainmentLane();
+  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const result = spawnSync(npx, ['playwright', 'test', ...files, `--project=${manifest.execution.project}`, '--workers=1', '--retries=0'], {
+    cwd: root,
+    env: environment,
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+    timeout: 1_200_000,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
+  const passed = count(/(\d+)\s+passed/i);
+  const skipped = count(/(\d+)\s+skipped/i);
+  // Playwright reports tests it never reached as "did not run", NOT as
+  // "skipped". A serial suite whose first case fails cascades every remaining
+  // case into that bucket. The gate's aggregate parser could not see the word,
+  // so five cases once vanished from an authoritative receipt without trace.
+  const didNotRun = count(/(\d+)\s+did not run/i);
+  let failed = count(/(\d+)\s+failed/i);
+  if (result.status === 0 && failed === null) failed = 0;
+  const total = [passed, skipped, failed, didNotRun]
+    .map((value) => (Number.isInteger(value) ? value : 0))
+    .reduce((left, right) => left + right, 0);
+  // Only the tracked test path and 1-based line survive; the failure message,
+  // received/expected values and stack are intentionally discarded here.
+  const failedLocations = [...output.matchAll(/^\s*\d+\)\s+\[[^\]]+\]\s+›\s+(tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts):(\d+)(?::\d+)?\s+›/gm)]
+    .map((match) => `${match[1]}:${match[2]}`)
+    .filter((location, index, all) => all.indexOf(location) === index)
+    .slice(0, maxFailedLocations);
+  const receipt = {
+    schemaVersion: SCHEMA_VERSION,
+    fileCount: files.length,
+    total,
+    passed,
+    skipped,
+    didNotRun,
+    failed,
+    failedLocations,
+    deepContainmentLane: deepLane,
+    result: result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
+  };
+  console.log(JSON.stringify(receipt));
+  process.exitCode = result.status === 0 ? 0 : 1;
+} catch (error) {
+  console.error(JSON.stringify({ schemaVersion: SCHEMA_VERSION, result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'SYNTHETIC_CAMPAIGN_INVALID' }));
+  process.exitCode = 2;
+}

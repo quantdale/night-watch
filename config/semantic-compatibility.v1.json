@@ -39,6 +39,7 @@
   ],
   "supportFiles": [
     "tests/unit/agent-state.test.ts",
+    "tests/unit/syntheticCampaignDiagnostics.test.ts",
     "tests/unit/aiLocalCanary.test.ts",
     "tests/unit/aiReviewLoopback.test.ts",
     "tests/unit/ownerScope.test.ts",

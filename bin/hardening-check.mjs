@@ -1775,7 +1775,20 @@ function checkC00WorkspaceIntegrity() {
     if (!packageJson.includes(`"${script}"`)) fail(`C-00 operator script missing: ${script}`);
   }
   if (!/"workspace:check"\s*:\s*"node bin\/workspace-integrity\.mjs check"/.test(packageJson)) fail('package.json must expose the fixed C-00 workspace checker entry point');
-  if (!packageJson.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
+  // The synthetic file list moved out of the package script into a versioned
+  // manifest, so this membership check follows it there. It must keep proving
+  // MEMBERSHIP of the C-00 matrix, not merely that the string appears
+  // somewhere: dropping the adversarial matrix out of the required campaign is
+  // exactly the regression this guard exists to catch.
+  const syntheticManifest = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  if (syntheticManifest?.schemaVersion !== 'nightwatch.synthetic-campaign.v1') fail('the synthetic campaign manifest schema is unsupported');
+  const syntheticCampaignFiles = Array.isArray(syntheticManifest.files) ? syntheticManifest.files : [];
+  if (!syntheticCampaignFiles.includes('tests/unit/workspaceIsolation.test.ts')) fail('the C-00 adversarial matrix must run inside the required synthetic campaign');
+  if (!syntheticCampaignFiles.includes('tests/unit/l6Containment.test.ts')) fail('the L6 containment matrix must run inside the required synthetic campaign');
+  if (syntheticManifest.execution?.workers !== 1 || syntheticManifest.execution?.retries !== 0 || syntheticManifest.execution?.serial !== true) {
+    fail('the synthetic campaign must stay serial with zero retries');
+  }
+  if (!/"campaign:synthetic"\s*:\s*"node bin\/campaign-synthetic\.mjs"/.test(packageJson)) fail('package.json must expose the fixed synthetic campaign launcher entry point');
   const agents = read('AGENTS.md');
   if (!/ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY/.test(agents)) fail('AGENTS.md must state the C-00 session/worktree invariant');
   // C-00 consequence: `.gitignore`'s `node_modules/` rule does not match a

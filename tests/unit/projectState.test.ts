@@ -1273,4 +1273,77 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
       fixture.cleanup();
     }
   });
+
+  // C-06's exact-head CI observation was recorded against an ancestor SHA while
+  // the substantive baseline had advanced past it, so a zero-step
+  // classification kept describing a run that no longer represented the code in
+  // force. Ancestry is derivable offline, so that staleness is mechanically
+  // detectable without contacting GitHub.
+  function rewriteBlock(root: string, replacements: Record<string, string>): void {
+    const file = path.join(root, 'docs/CURRENT_STATE.md');
+    let text = fs.readFileSync(file, 'utf8');
+    for (const [key, value] of Object.entries(replacements)) {
+      text = text.replace(new RegExp(`^${key}: .*$`, 'm'), `${key}: ${value}`);
+    }
+    fs.writeFileSync(file, text);
+    git(root, ['add', '--all']);
+    git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'rewrite block']);
+  }
+
+  test('29. CI evidence older than the substantive baseline is rejected as stale', () => {
+    const fixture = makeFixture();
+    try {
+      const ancestor = git(fixture.root, ['rev-parse', 'HEAD~1']);
+      const baseline = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteBlock(fixture.root, {
+        LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: baseline,
+        CI_OBSERVED_SHA: ancestor,
+        CI_EXECUTED_SHA: ancestor,
+        CI_STATUS: 'EXECUTED_PASS',
+      });
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('PROJECT_STATE_CI_EVIDENCE_STALE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('29a. CI evidence at the substantive baseline is accepted', () => {
+    const fixture = makeFixture();
+    try {
+      const baseline = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteBlock(fixture.root, {
+        LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: baseline,
+        CI_OBSERVED_SHA: baseline,
+        CI_EXECUTED_SHA: baseline,
+        CI_STATUS: 'EXECUTED_PASS',
+      });
+      const result = run(fixture.root);
+      expect(result.stderr).not.toContain('PROJECT_STATE_CI_EVIDENCE_STALE');
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('29b. an executed-fail observation at the baseline is truthful, not stale', () => {
+    // The exact state this campaign had to record: CI ran and really failed.
+    const fixture = makeFixture({ activeTaskStatus: 'in_progress' });
+    try {
+      const baseline = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteBlock(fixture.root, {
+        LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: baseline,
+        CI_OBSERVED_SHA: baseline,
+        CI_EXECUTED_SHA: baseline,
+        CI_STATUS: 'EXECUTED_FAIL',
+      });
+      const result = run(fixture.root);
+      expect(result.stderr).not.toContain('PROJECT_STATE_CI_EVIDENCE_STALE');
+      expect(result.status).toBe(0);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
 });

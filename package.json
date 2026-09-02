@@ -68,7 +68,7 @@
     "change:shadow": "node bin/change-intelligence.mjs",
     "explore:phase4": "node bin/phase4-real.mjs",
     "api:phase5": "node bin/phase5-real.mjs",
-  "campaign:synthetic": "playwright test tests/unit/campaign.test.ts tests/unit/phase24SyntheticCampaign.test.ts tests/unit/phase24AuthorityLifecycleHardening.test.ts tests/unit/phase25SyntheticCampaign.test.ts tests/unit/phase26SyntheticCampaign.test.ts tests/unit/phase27ResponseFlow.test.ts tests/unit/phase28SourceIntelligence.test.ts tests/unit/responseFlowBindingHardening.test.ts tests/unit/readonlyCandidateCensus.test.ts tests/unit/eligibilityCensus.test.ts tests/unit/l6Containment.test.ts tests/unit/workspaceIsolation.test.ts --workers=1 --retries=0",
+    "campaign:synthetic": "node bin/campaign-synthetic.mjs",
     "campaign:phase24": "playwright test tests/unit/phase24SyntheticCampaign.test.ts tests/unit/phase24LocalTriage.test.ts tests/unit/phase24AuthorityLifecycleHardening.test.ts --project=nightwatch --workers=1",
     "selfdev:synthetic": "node bin/selfdev-synthetic.mjs",
     "selfdev:verify": "node bin/selfdev-verify.mjs",

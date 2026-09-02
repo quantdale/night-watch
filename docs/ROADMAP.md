@@ -2748,6 +2748,35 @@ its own explicit one-shot owner authorization. Production remains unrunnable:
 `SUPPORTED_ENVIRONMENTS` is unchanged and `config/environments/production.json`
 remains structurally unloadable (D-4).
 
+## Exact-head CI baseline repair (prerequisite to C-10)
+
+`nightwatch-exact-head-ci-baseline-repair-v1` is a bounded repair campaign
+sitting between C-06 and C-10 on the critical path. It exists because exact-head
+Actions run `33572572053` at `c3fed38abd281e8648c039ac3befe8034c13e868` was the
+first run to bootstrap the runner and EXECUTE `gate:ci`, and it failed two real
+synthetic-campaign cases (`receipt:sha256:1a55a1e307541c094dcbfb3f`).
+
+That result is executed CI, not the zero-step platform block that older runs
+truthfully were. Earlier zero-step observations recorded elsewhere in this
+document remain accurate about the runs they describe and are not rewritten;
+see `docs/DECISIONS.md` D-108.
+
+Both failures were host-topology defects in test code — an absolute sibling
+source root that cannot exist on a runner, and a Bubblewrap binary the
+`ubuntu-24.04` image does not ship. In each case the production path was
+already correct and already fail-closed, and neither implicates C-06, which
+remains closed. See D-109.
+
+The campaign's structural finding is D-110: `gate:clean` clones into a temp
+directory but runs on the SAME HOST, so it certifies checkout cleanliness
+rather than runner topology and could not have caught either defect. Exact-head
+GitHub execution is the only authority for that class. A CI-topology clean gate
+is deferred follow-up work.
+
+The next critical-path campaign after this one is C-10, the production privacy
+firewall. It is unchanged by this repair and remains `NOT_AUTHORIZED` until it
+receives its own explicit one-shot owner authorization.
+
 This plan is orthogonal to `docs/KIRO-CREW-INTEGRATION-MASTER-PLAN.md`, which
 covers optional external agent orchestration. This one covers product
 observability and system mapping; the two share no scope and neither depends

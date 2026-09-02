@@ -335,6 +335,26 @@ function main() {
     if ((ciStatus === 'EXECUTED_PASS' || ciStatus === 'EXECUTED_FAIL') && (!/^[0-9a-f]{40}$/i.test(observedSha ?? '') || observedSha !== executedSha)) fail(errors, 'PROJECT_STATE_CI_EXECUTION_MISMATCH');
     if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_AND_CI_CERTIFIED' && ciStatus !== 'EXECUTED_PASS') fail(errors, 'PROJECT_STATE_CI_COMPLETE_WITHOUT_EXECUTION');
     if (fields.get('PROJECT_COMPLETION_STATUS') === 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED' && ciStatus === 'EXECUTED_FAIL') fail(errors, 'PROJECT_STATE_LOCAL_COMPLETE_WITH_FAILED_CI');
+    // CI evidence must describe the CURRENT substantive baseline, not an
+    // ancestor of it. These fields are live state, so an observation taken
+    // before the baseline advanced says nothing about the baseline in force
+    // now, and leaving it in place lets a stale classification (for example
+    // "CI executed zero steps") outlive the run it described. That is exactly
+    // the drift this campaign found: the block still asserted a zero-step
+    // non-evidence CI state for an ancestor SHA while the exact-head run at
+    // the current baseline had in fact bootstrapped and executed the gate.
+    // Ancestry is mechanically derivable offline, so the staleness is
+    // detectable without contacting GitHub.
+    const substantiveSha = fields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
+    const ciEvidenceSha = ciStatus === 'NOT_OBSERVED' ? 'NONE' : observedSha;
+    if (
+      /^[0-9a-f]{40}$/i.test(ciEvidenceSha ?? '')
+      && /^[0-9a-f]{40}$/i.test(substantiveSha ?? '')
+      && ciEvidenceSha !== substantiveSha
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', ciEvidenceSha, substantiveSha]) !== null
+    ) {
+      fail(errors, 'PROJECT_STATE_CI_EVIDENCE_STALE');
+    }
 
     // The live cross-check is a small, explicitly machine-owned snapshot.
     // It is the only documentation narrative outside the truth block that is

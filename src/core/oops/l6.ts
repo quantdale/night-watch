@@ -933,9 +933,34 @@ function parseProbeResult(stdout: Uint8Array): Record<string, string> | null {
   }
 }
 
+/**
+ * Host precondition for the rootless containment envelope.
+ *
+ * This is the ONE predicate that decides whether this host can provide L6 at
+ * all. `qualifyL6RuntimeCapability` consults it before doing any probing, and
+ * the deep qualification lane consults it to classify itself, so the runtime
+ * and its regression suite can never disagree about what the host supports.
+ * It is deliberately cheap and side-effect free: it starts no namespace, binds
+ * no port and spawns no child, so a caller may ask before committing to a
+ * twenty-second qualification.
+ *
+ * Availability is NOT authority. A host that reports `available: true` has
+ * only cleared the precondition; nothing may treat that as containment. Proof
+ * still comes exclusively from `qualifyL6RuntimeCapability` plus
+ * `assertL6RuntimeCapability`.
+ */
+export function l6ContainmentAvailability(): {
+  readonly available: boolean;
+  readonly blockerCode: L6RuntimeCapability['blockerCode'];
+} {
+  if (process.platform !== 'linux') return { available: false, blockerCode: 'BWRAP_UNAVAILABLE' };
+  if (bwrapPath() === null) return { available: false, blockerCode: 'BWRAP_UNAVAILABLE' };
+  return { available: true, blockerCode: null };
+}
+
 export async function qualifyL6RuntimeCapability(): Promise<L6RuntimeCapability> {
-  if (process.platform !== 'linux') return failureCapability('UNAVAILABLE', 'BWRAP_UNAVAILABLE');
-  if (bwrapPath() === null) return failureCapability('UNAVAILABLE', 'BWRAP_UNAVAILABLE');
+  const availability = l6ContainmentAvailability();
+  if (!availability.available) return failureCapability('UNAVAILABLE', availability.blockerCode);
   const probeDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-l6-probe-'));
   ensurePrivateDirectory(probeDirectory);
   const probeTarget = path.join(probeDirectory, 'probe.mjs');

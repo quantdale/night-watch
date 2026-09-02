@@ -13,8 +13,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workflowFile = path.join(root, '.github', 'workflows', 'hardening.yml');
 const gateFile = path.join(root, 'config', 'quality-gate.v1.json');
 const compatibilityFile = path.join(root, 'config', 'semantic-compatibility.v1.json');
+const syntheticFile = path.join(root, 'config', 'synthetic-campaign.v1.json');
 const LEGACY_WORKFLOW_SHA = 'ac3df00195eef846a8e9e42615e90b4b912877d2';
 const testFilePattern = /tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts/g;
+// Anchored and non-global: `testFilePattern` carries /g, whose stateful
+// lastIndex makes repeated `.test()` calls alternate between true and false.
+const exactTestFilePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
 
 function read(file) {
   return fs.readFileSync(file, 'utf8');
@@ -83,11 +87,17 @@ function newGateGroups() {
   const gate = JSON.parse(read(gateFile));
   const compatibility = JSON.parse(read(compatibilityFile));
   const semanticFiles = [...compatibility.phaseSuites.flatMap((suite) => suite.files), ...(compatibility.supportFiles ?? [])];
-  const packageJson = JSON.parse(read('package.json'));
-  const syntheticCommand = packageJson?.scripts?.['campaign:synthetic'];
-  if (typeof syntheticCommand !== 'string') throw new Error('SYNTHETIC_CAMPAIGN_SCRIPT_MISSING');
-  const syntheticFiles = [...new Set(syntheticCommand.match(testFilePattern) ?? [])];
-  if (syntheticFiles.length === 0 || !syntheticCommand.includes('--workers=1') || !syntheticCommand.includes('--retries=0')) {
+  // The synthetic file list and its serial/zero-retry policy live in a
+  // versioned manifest rather than in a package script string, so the launcher
+  // (bin/campaign-synthetic.mjs), this inventory, and the quality gate all read
+  // one declaration instead of re-parsing a command line.
+  const synthetic = JSON.parse(read(syntheticFile));
+  if (synthetic?.schemaVersion !== 'nightwatch.synthetic-campaign.v1') throw new Error('SYNTHETIC_CAMPAIGN_SCHEMA_UNSUPPORTED');
+  const syntheticFiles = [...new Set(Array.isArray(synthetic.files) ? synthetic.files : [])];
+  if (syntheticFiles.length === 0 || syntheticFiles.some((file) => typeof file !== 'string' || !exactTestFilePattern.test(file))) {
+    throw new Error('SYNTHETIC_CAMPAIGN_FILES_INVALID');
+  }
+  if (synthetic.execution?.workers !== 1 || synthetic.execution?.retries !== 0 || synthetic.execution?.serial !== true) {
     throw new Error('SYNTHETIC_CAMPAIGN_SERIAL_RETRY_POLICY_INVALID');
   }
   return gate.groups.map((group) => {

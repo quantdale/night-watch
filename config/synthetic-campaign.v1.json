@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "nightwatch.synthetic-campaign.v1",
+  "definitionName": "Nightwatch deterministic synthetic campaign",
+  "execution": {
+    "project": "nightwatch",
+    "workers": 1,
+    "retries": 0,
+    "serial": true
+  },
+  "diagnostics": {
+    "maxFailedLocations": 16,
+    "policy": "BOUNDED_CATEGORICAL_LOCATIONS_ONLY"
+  },
+  "files": [
+    "tests/unit/campaign.test.ts",
+    "tests/unit/phase24SyntheticCampaign.test.ts",
+    "tests/unit/phase24AuthorityLifecycleHardening.test.ts",
+    "tests/unit/phase25SyntheticCampaign.test.ts",
+    "tests/unit/phase26SyntheticCampaign.test.ts",
+    "tests/unit/phase27ResponseFlow.test.ts",
+    "tests/unit/phase28SourceIntelligence.test.ts",
+    "tests/unit/responseFlowBindingHardening.test.ts",
+    "tests/unit/readonlyCandidateCensus.test.ts",
+    "tests/unit/eligibilityCensus.test.ts",
+    "tests/unit/l6Containment.test.ts",
+    "tests/unit/workspaceIsolation.test.ts"
+  ]
+}

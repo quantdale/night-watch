@@ -222,12 +222,92 @@ test.describe('deterministic source eligibility census', () => {
       expect(output.status).toBe(0);
       expect(output.stderr).toBe('');
     }
-    const censuses = outputs.map((output) => {
-      const parsed = JSON.parse(output.stdout) as { readonly census: { readonly summary: { readonly proofFamilyRanking: readonly { readonly family: string; readonly assessment: string }[] }; readonly deterministicDigest: string } };
-      return parsed.census;
+    const emissions = outputs.map((output) => JSON.parse(output.stdout) as {
+      readonly completeness: { readonly state: string };
+      readonly operationCompleteness: { readonly state: string };
+      readonly note?: string;
+      readonly portfolio: unknown;
+      readonly queue: unknown;
+      readonly counters?: Record<string, unknown>;
+      readonly inventory?: { readonly repositories?: readonly { readonly status: string; readonly sourceSha: string | null }[] };
+      readonly census?: {
+        readonly summary: {
+          readonly population: { readonly state: string; readonly coverageState: string; readonly operations: { readonly examined: number } };
+          readonly proofFamilyRanking: readonly { readonly family: string; readonly assessment: string }[];
+        };
+        readonly deterministicDigest: string;
+      };
     });
-    expect(censuses[1]).toEqual(censuses[0]);
-    expect(censuses[2]).toEqual(censuses[0]);
+
+    // Determinism is the environment-independent property this test exists for,
+    // so it is asserted BEFORE anything about the population, and in every
+    // environment. Whatever the operator concludes, it must conclude it
+    // identically in three fresh processes.
+    //
+    // `performance` carries wall-clock measurements (`elapsedMs`) that are
+    // legitimately different between runs; determinism is a property of the
+    // derived census, not of how long the host took to derive it. Everything
+    // else — including the whole census and every counter — must match
+    // exactly. The pre-C-06 test compared only `census`, so this comparison is
+    // strictly wider than the one it replaces.
+    const stable = (emission: Record<string, unknown>): Record<string, unknown> => {
+      const { performance: _performance, ...rest } = emission;
+      return rest;
+    };
+    expect(stable(emissions[1] as unknown as Record<string, unknown>)).toEqual(stable(emissions[0] as unknown as Record<string, unknown>));
+    expect(stable(emissions[2] as unknown as Record<string, unknown>)).toEqual(stable(emissions[0] as unknown as Record<string, unknown>));
+    for (const output of outputs) expect(output.stdout).not.toContain('CUSTOMER_ELIGIBILITY_SENTINEL');
+
+    // A census states the population it measured. Every content claim below is
+    // meaningful ONLY over a population that was actually READ, so source
+    // availability is the precondition and is asserted first. Previously the
+    // content assertions ran unconditionally, which is why an unread
+    // population surfaced as `undefined` rather than as the categorical fact
+    // it is.
+    //
+    // The discriminator is the operator's own per-repository status, not an
+    // environment variable and not a host path probe: if no approved
+    // repository could be read, there is no population to make claims about.
+    // Note that `completeness.state` is NOT the discriminator — it reports
+    // `UNKNOWN` even on a fully populated host, because file enumeration
+    // legitimately truncates against its budget.
+    const repositories = emissions[0]?.inventory?.repositories ?? [];
+    expect(repositories.length).toBeGreaterThan(0);
+    const sourceRead = repositories.some((repository) => repository.status !== 'SOURCE_UNAVAILABLE');
+
+    if (!sourceRead) {
+      // ABSENT APPROVED SOURCE MUST NEVER MASQUERADE AS EVIDENCE.
+      // The sibling Alphaus repositories are a read-only INPUT that a checkout
+      // is not entitled to assume: `DEFAULT_SIBLING_ROOT` is an absolute path
+      // that does not exist on a CI runner or a fresh clone. When it is
+      // missing the operator must say so categorically and must not present
+      // any proven or eligible population.
+      expect(emissions[0]?.completeness.state).toBe('UNKNOWN');
+      expect(emissions[0]?.operationCompleteness.state).toBe('UNKNOWN');
+      expect(emissions[0]?.note).toBe('NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE');
+      expect(emissions[0]?.census).toBeUndefined();
+      expect(emissions[0]?.portfolio).toBeNull();
+      expect(emissions[0]?.queue).toBeNull();
+      // Every approved repository is individually accounted for as unavailable
+      // rather than silently omitted, and none carries a source SHA.
+      for (const repository of repositories) {
+        expect(repository.status).toBe('SOURCE_UNAVAILABLE');
+        expect(repository.sourceSha).toBeNull();
+      }
+      // No counter that could be read as a proof or an admission may be
+      // non-zero over an unmeasured population.
+      for (const counter of ['routeProofs', 'readOnlyProvenOperations', 'candidatesProduced', 'eligibleCandidates', 'joinsProven', 'responseFlowProven']) {
+        expect(emissions[0]?.counters?.[counter]).toBe(0);
+      }
+      return;
+    }
+
+    // Measured population: the full content invariants, unchanged in strength.
+    const censuses = emissions.map((emission) => emission.census);
+    for (const census of censuses) expect(census).toBeDefined();
+    // The operator read real source, so the census must describe a non-empty
+    // examined population rather than an empty one that happens to parse.
+    expect(censuses[0]?.summary.population.operations.examined).toBeGreaterThan(0);
     expect(censuses[0]?.summary.proofFamilyRanking.find((entry) => entry.family === 'SEMANTIC_CONTRACT')?.assessment).toBe('NO_INDEPENDENT_GAP');
     // C-02a moved the dominant gap family. Binding 591 generated-artifact
     // response contracts through the document's own `definitions` left

@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { parseCounts, parseSafeDetails } from './lib/gate-receipt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
@@ -56,51 +57,6 @@ function gitValue(args) {
   return result.stdout.trim();
 }
 
-function parseCounts(output) {
-  const counts = { total: null, passed: null, skipped: null, failed: null };
-  for (const line of output.split(/\r?\n/).reverse()) {
-    try {
-      const value = JSON.parse(line);
-      if (value?.schemaVersion === 'nightwatch.semantic-compatibility.v1') {
-        for (const key of ['total', 'passed', 'skipped', 'failed']) {
-          if (Number.isInteger(value[key])) counts[key] = value[key];
-        }
-        if (counts.total === null && [counts.passed, counts.skipped, counts.failed].every((item) => Number.isInteger(item))) {
-          counts.total = counts.passed + counts.skipped + counts.failed;
-        }
-        return counts;
-      }
-    } catch {
-      // The child may also emit ordinary Playwright output; use the bounded
-      // text patterns below when no structured summary is present.
-    }
-  }
-  const total = /Total:\s*(\d+)\s+tests?/i.exec(output);
-  const passed = /(\d+)\s+passed/i.exec(output);
-  const skipped = /(\d+)\s+skipped/i.exec(output);
-  const failed = /(\d+)\s+failed/i.exec(output);
-  if (total) counts.total = Number(total[1]);
-  if (passed) counts.passed = Number(passed[1]);
-  if (skipped) counts.skipped = Number(skipped[1]);
-  if (failed) counts.failed = Number(failed[1]);
-  return counts;
-}
-
-function parseSafeDetails(output) {
-  for (const line of output.split(/\r?\n/).reverse()) {
-    try {
-      const value = JSON.parse(line);
-      if (value?.schemaVersion === 'nightwatch.semantic-compatibility.v1') {
-        return { failedLocations: Array.isArray(value.failedLocations) ? value.failedLocations.slice(0, 16) : [] };
-      }
-    } catch {
-      // Structured child receipts are optional diagnostics; raw output is
-      // intentionally never copied into the quality-gate receipt.
-    }
-  }
-  return null;
-}
-
 function runFixedCommand(commandKey, mode, timeoutClass) {
   const environment = safeChildEnvironment(mode);
   let command;
@@ -132,8 +88,24 @@ function runFixedCommand(commandKey, mode, timeoutClass) {
     command = packageManager;
     args = ['run', 'test:owner-provenance'];
   } else if (commandKey === 'SYNTHETIC_CAMPAIGN') {
-    command = packageManager;
-    args = ['run', 'campaign:synthetic'];
+    const synthetic = spawnSync(packageManager, ['run', 'campaign:synthetic'], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[timeoutClass], maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    const summary = summarizeChild(synthetic, 'SYNTHETIC_CAMPAIGN');
+    if (summary.status !== 'PASS') return summary;
+    // The deep L6 containment lane is a HOST capability: a runner without a
+    // usable Bubblewrap binary genuinely cannot exercise it, and the suite
+    // correctly proves the fail-closed path there instead. That absence must
+    // never pass silently, so it is required to be PROVEN wherever the host
+    // can provide it and merely RECORDED where it cannot.
+    //
+    // This mirrors PATCH_INTEGRITY's existing `mode !== 'local'` strictness:
+    // the requirement varies by gate mode, the invariant does not. The
+    // discriminator is the probed capability carried in the child receipt, not
+    // an environment variable, and CI still fails closed on a lane that is
+    // missing or unclassifiable rather than merely not PROVEN.
+    const lane = summary.details?.deepContainmentLane;
+    if (typeof lane !== 'string') return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'SYNTHETIC_CAMPAIGN_DEEP_LANE_UNCLASSIFIED' };
+    if (mode !== 'ci' && lane !== 'PROVEN') return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: `SYNTHETIC_CAMPAIGN_DEEP_LANE_${lane}` };
+    return summary;
   } else if (commandKey === 'PATCH_INTEGRITY') {
     const catalog = spawnSync(nodeExecutable, [path.join(root, 'bin', 'selfdev-catalog-integrity.mjs')], { cwd: root, env: environment, encoding: 'utf8', timeout: timeoutMs[timeoutClass], maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
     if (catalog.status !== 0 || catalog.error) return summarizeChild(catalog, 'PATCH_INTEGRITY');

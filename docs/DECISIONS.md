@@ -4142,3 +4142,95 @@ rejected in favour of `UNCLASSIFIED`, so removing a write identifier can only
 make closures ambiguous, never proven. A numeric `≥ 200` acceptance floor was
 rejected outright: every mechanism that reduces the count is a mechanism an
 implementer under quota is incentivised to weaken.
+
+## D-108 — GitHub Actions now executes the gate, and that changes the CI verdict class
+
+Exact-head run `33572572053` at `c3fed38abd281e8648c039ac3befe8034c13e868` is
+the first Actions run that bootstrapped the runner and executed repository
+code: checkout, Node 20 setup and `npm ci --ignore-scripts` all passed, and
+`npm run gate:ci` ran to completion and emitted
+`receipt:sha256:1a55a1e307541c094dcbfb3f`.
+
+Decision: a run that reaches and executes the gate is EXECUTED CI, and a real
+executed test failure is recorded as `CI_STATUS: EXECUTED_FAIL`. It is not
+filed under the zero-step billing/platform classification of D-88.
+
+The older zero-step runs (`33446473458`, `33361000650`, `32956612882`) remain
+true statements about the runs they describe and are preserved verbatim. What
+changed is that the zero-step classification stopped being the LIVE state
+while remaining an accurate historical record. Live state and history are
+different claims and are now kept separately.
+
+Consequence: `PROJECT_STATE_CI_EVIDENCE_STALE` fails project-state validation
+when the CI-evidence SHA is a strict ancestor of
+`LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`. An observation taken before the baseline
+advanced says nothing about the baseline in force now, and leaving it in place
+is exactly how a stale classification outlives the run it described. Ancestry
+is mechanically derivable offline, so this needs no GitHub contact.
+
+## D-109 — a host capability is not a repository invariant
+
+Both exact-head CI failures had the same shape: a test asserted a property of
+the developer's machine as though it were a property of this repository. The
+sibling Alphaus source root (`DEFAULT_SIBLING_ROOT`, an absolute path) and the
+Bubblewrap binary are host-provided INPUTS that a checkout is not entitled to
+assume. In both cases the PRODUCTION path was already correct and already
+fail-closed; only the tests were wrong.
+
+Decision: where a capability is host-provided, its suite asserts the
+full-strength behaviour where the capability is present AND the fail-closed
+behaviour where it is absent. The discriminator must be a value the system
+under test reports — `l6ContainmentAvailability()`, the census operator's own
+per-repository `SOURCE_UNAVAILABLE` status — never an environment variable and
+never a host path probe. Nothing is skipped in either topology.
+
+This is strictly stronger than what it replaces. Before this campaign nothing
+asserted that an absent sibling root yields no census and no proven population,
+or that an unavailable containment envelope is uniformly unproven and is
+REFUSED by `assertL6RuntimeCapability`. Rejected alternatives: `test.skip` on
+the runner (suppression, and it would hide a future regression permanently),
+and installing Bubblewrap in the workflow (it would not remove the need for the
+invariant, and it would make apt availability and the Ubuntu 24.04
+unprivileged-userns policy inputs to CI greenness).
+
+Because availability may legitimately differ, the receipt records WHICH lane
+ran, and the gate REQUIRES the proven lane in `local`, `clean` and `predev`.
+Availability is never authority: clearing the precondition grants nothing, and
+proof still comes only from qualification plus assertion.
+
+## D-110 — the clean gate cannot certify runner topology
+
+`bin/quality-gate-clean.mjs` clones into `os.tmpdir()` and then runs the gate on
+the SAME HOST. The sibling source root, `$HOME` and the Bubblewrap binary are
+all still present, so it measures CHECKOUT CLEANLINESS, not environment
+topology. That is why C-06 was certified green both locally and clean at
+`7ce2cf9` and still failed on GitHub.
+
+Decision: local and clean certification remain valid for what they measure and
+are not weakened, but neither is evidence about runner topology. Exact-head
+GitHub execution is the only authority for that class, which makes the
+executable CI baseline a first-class deliverable rather than a nice-to-have.
+
+A CI-topology clean gate — one that reproduces runner shape rather than
+same-host cleanliness — is recorded as deferred follow-up work, not built here.
+
+## D-111 — receipt diagnostics are allowlisted, and an unreached test is not a skipped test
+
+The CI receipt could not say which two cases failed. `parseSafeDetails` keyed on
+exactly one schema, so no Playwright-backed group could contribute detail at
+all, and `parseCounts` had no pattern for Playwright's "did not run" output. The
+receipt therefore reported 121 passed and 2 failed of a 128-test campaign, with
+`skipped: null`, and five cases silently vanished from an authoritative record.
+
+Decision: cases that were never reached are their own bucket, `didNotRun`,
+never folded into `skipped`. A serial suite whose first case fails cascades the
+rest into it, so conflating the two is precisely how coverage disappears
+without trace.
+
+Decision: `bin/lib/gate-receipt.mjs` is the only path by which anything a child
+printed may reach a receipt, and its contract is ALLOWLISTING, not redaction.
+Only integers, tracked `tests/**` paths with a line number, and fixed enum
+tokens have any representation; a malformed value is DROPPED rather than
+sanitized. Source contents, assertion values, secrets, customer data, raw
+response bodies, environment values, credentials and arbitrary child stderr
+cannot pass through by accident, and no raw output is ever persisted.

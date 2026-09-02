@@ -15,8 +15,11 @@
 > The replay-budget successor completed one fresh guarded campaign with five
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
-> Final local and clean Node20 quality gates passed; GitHub Actions remains
-> external non-evidence while exact-head jobs execute zero steps.
+> Final local and clean Node20 quality gates passed. GitHub Actions is no
+> longer a zero-step platform block: exact-head run `33572572053` bootstrapped
+> the runner and executed `gate:ci`, which failed on two real synthetic-campaign
+> cases. Those cases are host-topology defects and are repaired by
+> `nightwatch-exact-head-ci-baseline-repair-v1`.
 ---
 
 ## What exists now
@@ -226,9 +229,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
 LAST_LOCALLY_VALIDATED_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
 LAST_CLEAN_VALIDATED_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-CI_OBSERVED_SHA: 6b13744bb0fa19047d681eaaf9aae9eb60b5a3c4
-CI_EXECUTED_SHA: NONE
-CI_STATUS: NO_STEPS_EXTERNAL_NON_EVIDENCE
+CI_OBSERVED_SHA: c3fed38abd281e8648c039ac3befe8034c13e868
+CI_EXECUTED_SHA: c3fed38abd281e8648c039ac3befe8034c13e868
+CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -253,14 +256,52 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-php-readonly-proof-c06-v1
-LIVE_PHASE: PHP_READONLY_PROOF_C06_V1
-LIVE_TASK_STATUS: COMPLETE
+LIVE_TASK_ID: nightwatch-exact-head-ci-baseline-repair-v1
+LIVE_PHASE: EXACT_HEAD_CI_BASELINE_REPAIR_V1
+LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: STOP
-LIVE_COMPLETION_CLAIM: COMPLETE
+LIVE_NEXT_ACTION_STATE: CONTINUE
+LIVE_COMPLETION_CLAIM: NONE
 ```
+
+### GitHub Actions now executes the gate (corrected live CI state)
+
+Exact-head run `33572572053` / job `100069494765` at
+`c3fed38abd281e8648c039ac3befe8034c13e868` is the first Actions run that
+BOOTSTRAPPED THE RUNNER AND EXECUTED REPOSITORY CODE. Checkout, Node 20 setup
+and `npm ci --ignore-scripts` all passed, and `npm run gate:ci` ran to
+completion and emitted the authoritative receipt
+`receipt:sha256:1a55a1e307541c094dcbfb3f`. Eight required groups passed;
+`SYNTHETIC_CAMPAIGN` failed with 121 passed and 2 failed, leaving
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` `NOT_RUN`.
+
+That is a REAL EXECUTED TEST FAILURE, not external non-evidence, and it is
+recorded as `CI_STATUS: EXECUTED_FAIL`. The earlier zero-step runs
+(`33446473458`, `33361000650`, `32956612882`) remain true historical facts
+about the runs they describe and are deliberately not rewritten; what changed
+is that the zero-step classification is no longer the LIVE state.
+
+Both failures were host-topology defects rather than product regressions, and
+neither implicates C-06:
+
+- `DEF-CI-01` — `tests/unit/eligibilityCensus.test.ts` asserted census CONTENT
+  without first asserting the census POPULATION. `DEFAULT_SIBLING_ROOT` is an
+  absolute path that cannot exist on a runner, so the operator correctly
+  reported every approved repository as `SOURCE_UNAVAILABLE` and emitted no
+  census at all; the unconditional content assertion then read `undefined`.
+- `DEF-CI-02` — `tests/unit/l6Containment.test.ts` asserted that rootless L6
+  containment is always available. The runner image ships no Bubblewrap
+  binary, so `qualifyL6RuntimeCapability()` correctly failed closed with
+  `BWRAP_UNAVAILABLE`. Because that suite is serial, the first failure
+  cascaded the remaining five cases into Playwright's "did not run" bucket,
+  which the gate's aggregate parser could not see — 121 + 2 reconciled against
+  nothing while five cases silently vanished from an authoritative receipt.
+
+`gate:clean` could not have caught either one: it clones into `os.tmpdir()`
+but runs on the SAME HOST, so the sibling source root, `$HOME` and the
+Bubblewrap binary are all still present. Local and clean certification remain
+valid for what they measure; they are not a substitute for runner topology.
 
 ### Active replay-budget and dossier-closure campaign
 
