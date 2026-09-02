@@ -1,63 +1,63 @@
-# EXECUTION PROMPT — R-11 Proxy/Gate Reliability Closure
+# EXECUTION PROMPT — C-11 `PROD_OBSERVE` Safety Kernel
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-proxy-gate-reliability-r11-v1
-OpenSpec: openspec/changes/nightwatch-proxy-gate-reliability-r11-v1/
-Planned-From: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+Status: IN_PROGRESS
+Campaign ID: nightwatch-prod-observe-safety-kernel-c11-v1
+OpenSpec: openspec/changes/nightwatch-prod-observe-safety-kernel-c11-v1/
+Planned-From: 060fef41205b29210d9bd8416aca97c03b028e4f
 Target Branch: main
-Predecessor Task ID: nightwatch-c10-provenance-truth-closure-v1
+Predecessor Task ID: nightwatch-proxy-gate-reliability-r11-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Eliminate the two pre-existing reliability defects recorded as `OBS-C105-1`, so
-that the C-11 `PROD_OBSERVE` safety kernel can be certified by a gate whose
-red/green result carries information about repository content and whose
-receipts survive being read.
+Implement and certify the `PROD_OBSERVE` production-qualification kernel
+against MOCK/SYNTHETIC production only, so that Nightwatch is demonstrably
+incapable of issuing a production request unless every required machine
+authority grants it.
 
-OBS-C105-1 is REPRODUCED, not inferred. The allocator
-(`reserveProxyPortLease`) is correct in all four brief-specified cases: it
-claims a lease with an exclusive create, probes REAL TCP availability, refuses
-an occupied endpoint, and advances through bounded candidates. The defect is in
-`tests/unit/phase24ProxyLifecycle.test.ts`, which selected its port by a
-`process.pid` lottery and then asserted `lease.port === preferred` — a
-preference asserted as a guarantee. Full evidence in the OpenSpec `audit.md`.
+C-11 is Production Qualification ONLY. It does not perform C-12/P1 real
+production observation, and it grants no authority over real production.
 
-The second defect is structural: the authoritative gate emits its receipt to
-stdout only, and the clean-checkout wrapper recovers the inner receipt by
-scraping stdout for a schema token. C-10.5 lost the original failing-group
-detail exactly that way.
+The design reconciliation is COMPLETE and recorded in the OpenSpec `audit.md`
+and `design.md`. Do not implement the historical text blindly: five historical
+requirements are SUPERSEDED by independent-review findings F-09 through F-13,
+P1 is DEFERRED per F-13, and the "eleven ordered gates" labelled `G0`–`G11` —
+twelve identifiers — is replaced by `nightwatch.production-admission-chain.v1`,
+a versioned NAMED ordered chain of eighteen gates with a definition digest and a
+documented mapping from the historical identifiers.
 
 ## Authority
 
-Repository-local, offline, synthetic-only reliability hardening. This campaign
-grants no new product or runtime authority and creates no production
-connectivity.
+Repository-local, offline, synthetic-only production-qualification hardening.
+This campaign creates NO production connectivity.
 
-No production, NEXT or DEV contact, authenticated browsing, auth capture or
-refresh, credential or auth-state inspection, customer-data or datastore
+No real production, NEXT or DEV contact, authenticated browsing, auth capture
+or refresh, credential or auth-state inspection, customer-data or datastore
 access, AWS/GCP/IAM/Kubernetes discovery, sibling-repository write, or external
 publication is authorized or performed. Sibling Alphaus repositories are read
-only. Every socket is loopback-only and belongs either to the port-availability
-probe or to a deliberately planted test listener.
+only. Mock production is loopback-only with no external DNS and no real Alphaus
+host.
 
-C-11 `PROD_OBSERVE` is NOT implemented here and is hard-gated behind the R-11
-completion gate. C-06 remains closed and fail-closed. C-10 privacy and C-10.5
-provenance are untouched. Production remains non-loadable through ordinary
-environment selection.
+D-4 stands: production does not join `SUPPORTED_ENVIRONMENTS` and
+`config/environments/production.json` remains structurally unloadable. C-06
+remains fail-closed and `READ_ONLY_PROVEN` is not increased. C-10 privacy and
+C-10.5 provenance are consumed, not modified.
+
+C-12 is NOT authorized and is NOT begun.
 
 C-00's `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY` invariant
 governs the work: all implementation happens in the owned session worktree
-`session/nightwatch-proxy-gate-reliabilit-6e648bc4`, never in the canonical
+`session/nightwatch-prod-observe-safety-k-5d5e338f`, never in the canonical
 checkout.
 
 ## Ordered workstreams
 
-R1 reproduction → R2 port-lease contract → R3 deterministic adversarial tests →
-R4 bounded stress campaign → R5 durable gate receipts → R6 adversarial receipt
-suite and hardening → R7 Stage-A truth reconciliation → R8 registration and
-full validation → R9 integration and exact-head CI.
+C1 design reconciliation (complete) → C2 authorization class and separation →
+C3 the eighteen-gate admission chain → C4 budgets, breakers and containment →
+C5 mock production and the one-fault denial matrix → C6 positive path and PQ
+receipt → C7 hardening, gate registration and full validation → C8 integration
+and exact-head CI.
 
 ## Constraints
 
@@ -66,69 +66,59 @@ Git configuration, untracked safety-critical change, test deletion,
 `test.skip`, defect-hiding retry, timeout inflation as a correctness fix, gate
 weakening, or bypass of `agent:check`, `project:check` or `handoff:check`.
 
-No probabilistic port selection may remain in any proxy test: not random, not
-`Date.now()`, not another PID formula, and not "find a free port, close the
-socket, then assume it is still free". Every repeated run is an independent
-invocation; no runner retry is configured or added.
+`KNOWN_PRODUCTION_HOSTS` remains DENY-ONLY in every mode and must never be
+inverted or imported by the production policy. `realRunGate` must gain no
+production branch and no mode parameter. Shared modules must take policy by
+injection with NO default; missing policy denies. No production
+`context.storageState()` persistence path may exist.
 
-No allocator safety property may be weakened: real TCP bind probing, exclusive
-lease creation, process and token ownership, malformed and symlink fail-closed
-handling, system-temp coordination across clones and worktrees, the bounded
-candidate count, and never deleting a live non-owned lease.
+Concrete parameter values may not enter authorization state, receipts, logs,
+budget keys, replay keys, fingerprints, errors, checkpoints or persistent route
+identities. Budgets reserve BEFORE dispatch and are consumed on reservation.
+Breakers are terminal. The kill switch is evaluated at entry AND immediately
+before dispatch.
 
-The availability test seam must not be usable to weaken real proxy safety, and
-hardening must enforce that the production call path uses the real OS
-availability probe. Receipt persistence must be confined, atomic, privacy-safe,
-and must never write into a tracked repository path or dirty a clean checkout.
+Every pre-dispatch denial must be proven to leave the mock server's
+received-request count at ZERO, asserted network-side; an internal boolean is
+not accepted as evidence.
 
 ## Validation
 
 `typecheck`, `hardening:check`, `handoff:check`, `project:check`,
 `agent:check`, `agent:audit`, `gate:inventory`, `test:semantic-compat`,
-`campaign:synthetic`, the focused proxy lifecycle suite, all proxy suites, the
-containment suites, the receipt suites, the project-state suites, the complete
-canonical Playwright regression, `gate:local`, and repeated `gate:clean` — with
-a meaningful repeated run of the previously flaky suite in BOTH the normal local
-topology and the clean Node 20 topology, every attempt recorded including any
-failure. Then integration and an exact-head GitHub Actions result with all
+`campaign:synthetic`, all proxy suites, all containment suites, all C-10 and
+C-10.5 suites, all C-11 suites, all receipt suites, all environment suites, all
+authorization suites, all privacy and persistence suites, all budget and
+breaker suites, the complete canonical Playwright regression, `gate:local`, and
+`gate:clean`. Then integration and an exact-head GitHub Actions result with all
 eleven required groups PASS.
+
+Commit before running a gate and do not touch the tree while one runs: a dirty
+checkout voids `PATCH_INTEGRITY` and the clean gate outright. This is R-11's
+recorded lesson.
 
 ## Completion gate
 
-R-11 is COMPLETE only when: OBS-C105-1 reproduced or disproved; root cause
-established with evidence; the test invariant matches the allocator contract;
-no probabilistic port-selection assumption remains; occupied-port advancement
-and orphan reclaim explicitly tested; real allocator safety preserved;
-deterministic adversarial port tests green; stress evidence green with exact
-counts; gate receipts durable; a failing group cannot be destroyed by output
-filtering; receipt persistence privacy-safe; full regression zero failures; no
-test skipped; no retry added; no timeout inflated; `gate:local` PASS; clean
-Node 20 gate PASS; exact-head Actions PASS with all eleven required groups; the
-canonical checkout clean; `origin/main` synchronized; `siblingWrites = 0`.
+C-11 is COMPLETE only when: R-11 remains closed; the reconciled design is
+implemented; the gate-count ambiguity is resolved by name; D-4 is intact;
+production remains ordinarily non-loadable; the external-only config
+architecture exists; the production allowlist is independent of the deny table;
+a separate production run gate exists; import graphs are mechanically
+separated; the authoritative ordered admission chain is defined and versioned;
+every gate is individually tested; all one-fault cases deny; every pre-dispatch
+denial is proven to leave zero mock-server requests; the kill switch is checked
+at entry and pre-dispatch with the revocation race tested; the observer-identity
+and organizational-window gates are present; source provenance is mechanically
+bound; C-06 is not weakened; opaque parameter semantics are preserved; the
+privacy firewall is mandatory; containment qualification is explicit; budgets
+are race-safe; breakers are terminal; `Set-Cookie` cannot persist auth state;
+screenshots, traces and raw console text remain impossible to persist; the
+positive synthetic path succeeds; the PQ receipt is valid and tamper-resistant;
+the persistence audit is clean; there is zero real production, DEV and NEXT
+contact and zero credential inspection; `siblingWrites = 0`; every C-11 suite
+is gate-registered; the canonical regression has zero failures and no new
+skips; `gate:local` PASS; clean Node 20 gate PASS; exact-head GitHub Actions
+PASS with all eleven groups; the worktree is clean; `origin/main` is
+synchronized; and the session is released.
 
-If any item fails, R-11 is reported incomplete and C-11 is NOT started.
-
-## Outcome
-
-COMPLETE. Every completion-gate condition holds. OBS-C105-1 was reproduced
-deterministically and end-to-end — reproducing the exact `failedLocations`
-value the CI receipt had recorded — and closed by correcting the test invariant
-rather than the allocator, whose behaviour is unchanged. Gate receipts are
-confined, atomic, digest-identical and persisted for failures as well as
-passes, and the clean-checkout wrapper consumes the structured file instead of
-scraping stdout. Stage-A documentation truth and the obsolete T-30/T-41/T-42
-digest semantics are reconciled to D-113.
-
-Certified by exact-head GitHub run `33656654543` / job `100336766433` at
-`e11cf64` on Node 20 with receipt `receipt:sha256:e086ad8c508e9eeb3e40d24a`,
-all eleven required groups PASS. Canonical regression 3,032 total / 3,019
-passed / 13 skipped / 0 failed; `gate:local` PASS; `gate:clean` PASS twice as
-independent invocations with identical inner receipts and `siblingWrites: 0`;
-29/29 hardening negative probes detected.
-
-Five defects introduced by this campaign — DEF-R11-1 through DEF-R11-5 — were
-found, repaired and reported rather than folded away. Two were caught only by
-negative probing and three only by the clean Node 20 gate.
-
-C-11 `PROD_OBSERVE` is authorized to begin as its own separately auditable
-task. R-11 grants no production connectivity.
+If any item fails, C-11 is reported incomplete and C-12 is NOT started.
