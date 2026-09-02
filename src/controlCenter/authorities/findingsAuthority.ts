@@ -14,6 +14,7 @@ import path from 'node:path';
 import { prefixedDigest24 } from '../../core/identity/canonicalDigest';
 import { validateArtifact } from '../../core/artifactValidation';
 import { containsPrivatePayloadShape, privateArtifactRoot, assertPrivateArtifactPath } from '../../core/policy';
+import { assertNotProductionFindingsRoot } from '../../core/prodEvidence/controlCenterExclusion';
 import { DOSSIER_VERSION, type BugDossier } from '../../core/triage/types';
 import { DOSSIER_VERSION_V2, type BugDossierV2 } from '../../core/triage/dossierV2';
 import { reduceFindingsSourceCurrentness } from './findingsCurrentness';
@@ -31,6 +32,7 @@ export type FindingsAuthorityState = 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE' | 'UN
 export const FINDINGS_AUTHORITY_REASON_CODES = [
   'FINDINGS_ROOT_UNAVAILABLE',
   'FINDINGS_ROOT_UNSAFE',
+  'FINDINGS_ROOT_PRODUCTION_EXCLUDED',
   'FINDINGS_ROOT_PERMISSIONS_UNSAFE',
   'FINDINGS_EMPTY',
   'FINDINGS_INCOMPLETE_DOSSIER',
@@ -316,15 +318,48 @@ function readFindingsSnapshot(root: string): FindingsAuthoritySnapshot {
   }
 }
 
+/**
+ * C-10 / F-18: the Control Center findings authority may NEVER resolve the
+ * production findings store. This is a security invariant, not a consequence of
+ * the current default path, so it is enforced by resolved-path equivalence on
+ * EVERY construction route — including the test-only seam, so that a seam
+ * cannot accidentally become production authority.
+ */
+function assertDevFindingsRoot(root: string): void {
+  assertNotProductionFindingsRoot(root);
+}
+
 /** Create the normal fixed owner-local findings authority. */
 export function createFindingsAuthority(): FindingsAuthority {
   let root: string | null = null;
-  try { root = privateArtifactRoot(); } catch { /* fail closed at snapshot time */ }
-  return { snapshot: () => root === null ? unavailable('FINDINGS_ROOT_UNAVAILABLE') : readFindingsSnapshot(root) };
+  let productionExcluded = false;
+  try {
+    const candidate = privateArtifactRoot();
+    assertDevFindingsRoot(candidate);
+    root = candidate;
+  } catch (error) {
+    // Distinguish "the production store was reached" from a generic failure so
+    // the refusal is legible in the snapshot rather than silently unavailable.
+    if (error instanceof Error && error.message === 'FINDINGS_ROOT_PRODUCTION_EXCLUDED') {
+      productionExcluded = true;
+    }
+  }
+  return {
+    snapshot: () => {
+      if (productionExcluded) return unavailable('FINDINGS_ROOT_PRODUCTION_EXCLUDED');
+      return root === null ? unavailable('FINDINGS_ROOT_UNAVAILABLE') : readFindingsSnapshot(root);
+    },
+  };
 }
 
-/** Test-only seam; normal server construction has no root option. */
+/**
+ * Test-only seam; normal server construction has no root option. The
+ * production exclusion applies here too, BEFORE the root is resolved, so this
+ * seam cannot be used to reach the production store.
+ */
 export function createFindingsAuthorityForTests(root: string): FindingsAuthority {
+  assertDevFindingsRoot(root);
   const resolvedRoot = privateArtifactRoot(root);
+  assertDevFindingsRoot(resolvedRoot);
   return { snapshot: () => readFindingsSnapshot(resolvedRoot) };
 }

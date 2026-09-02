@@ -1819,6 +1819,110 @@ function checkC00WorkspaceIntegrity() {
   }
 }
 
+/**
+ * C-10 Workstream E — production privacy boundary isolation.
+ *
+ * design.md 6.5 "boundary isolation": the raw-to-safe projection/analyzer cone
+ * must possess NO filesystem, networking, process or publication capability,
+ * enforced mechanically rather than by developer convention, so a future
+ * change cannot silently reintroduce an escape path. Raw bytes enter through
+ * ONE bounded call-scoped reader.
+ */
+function checkC10ProductionPrivacyBoundary() {
+  const coneDirectory = 'src/core/prodPrivacy/';
+  const absoluteCone = path.join(root, coneDirectory);
+  if (!fs.existsSync(absoluteCone)) {
+    fail('C-10 production privacy cone src/core/prodPrivacy/ is missing');
+    return;
+  }
+  const coneFiles = fs
+    .readdirSync(absoluteCone)
+    .filter((entry) => entry.endsWith('.ts'))
+    .map((entry) => `${coneDirectory}${entry}`);
+  if (coneFiles.length < 7) fail('C-10 production privacy cone source files are missing');
+
+  for (const file of coneFiles) {
+    const source = read(file);
+    // No filesystem, transport, process, publication or output-destination import.
+    if (/import\s+[^;]*from\s+['"][^'"]*(?:node:fs|node:http|node:https|node:net|node:dgram|node:dns|node:tls|node:child_process|child_process|undici|node-fetch|axios|playwright|@playwright|aiReview|selfDev|phase6|privateArtifacts|prodEvidence|runRecorder|controlCenter|proxy\/)[^'"]*['"]/i.test(source)) {
+      fail(`${file} imports a forbidden filesystem/network/process/publication module (C-10 boundary isolation)`);
+    }
+    // No capability reference even without an import (require, dynamic import,
+    // global fetch, an environment-derived output destination).
+    if (/(?<![.\w])(?:require\s*\(|child_process|spawn\s*\(|exec(?:File)?\s*\(|fetch\s*\(|writeFile|appendFile|readFile|createWriteStream|createReadStream|mkdirSync|renameSync|unlinkSync|rmSync|openSync|PrivateArtifactStore|ProductionFindingsStore)/.test(source)) {
+      fail(`${file} exposes a process, network, or persistence capability (C-10 boundary isolation)`);
+    }
+    if (/process\.env/.test(source)) {
+      fail(`${file} must not derive an output destination from the environment (C-10 boundary isolation)`);
+    }
+    // node:crypto is the ONLY permitted node builtin, for the structural digest.
+    for (const match of source.matchAll(/from\s+['"](node:[a-z_]+)['"]/g)) {
+      if (match[1] !== 'node:crypto') {
+        fail(`${file} imports the node builtin ${match[1]}; the C-10 cone permits node:crypto only`);
+      }
+    }
+  }
+
+  // Raw bytes enter through exactly one bounded, call-scoped reader.
+  const types = read('src/core/prodPrivacy/types.ts');
+  if (!/class RawEphemeralSource/.test(types) || !/toJSON\(\): never/.test(types)) {
+    fail('C-10 raw bytes must enter through the single call-scoped RawEphemeralSource, which must refuse serialization');
+  }
+  const projector = read('src/core/prodPrivacy/projector.ts');
+  if (!/source instanceof RawEphemeralSource/.test(projector)) {
+    fail('C-10 projector must accept raw bytes only through RawEphemeralSource');
+  }
+  if (!/keyProvenanceRequirement/.test(projector) || !/isSourceProvenKey/.test(projector)) {
+    fail('C-10 projector must decide key provenance through the source-proven vocabulary (F-14)');
+  }
+
+  // F-15: the two digest families must stay distinct and the structural family
+  // must never ingest a value or an unproven key literal.
+  const serializer = read('src/core/prodPrivacy/serializer.ts');
+  if (!/PRODUCTION_STRUCTURAL_DIGEST_PREFIX/.test(serializer)) {
+    fail('C-10 structural digest must use the distinct prodstruct: family (F-15)');
+  }
+  if (/encounterToken|numericEncounterRef/.test(serializer.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))) {
+    fail('C-10 canonical serializer must never write an ephemeral correlation label (F-15)');
+  }
+  const policy = read('src/core/prodPrivacy/policy.ts');
+  if (!/durableValueDigest: 'ABSENT'/.test(policy)) {
+    fail('C-10 production policy must record that no durable value digest exists (F-15)');
+  }
+
+  // Workstream F: the persistence firewall must be an independent re-validation
+  // at the durable write, and the store must run it.
+  const firewall = read('src/core/prodEvidence/firewall.ts');
+  for (const required of ['ENCOUNTER_TOKEN_PRESENT', 'DYNAMIC_KEY_LITERAL_PRESENT', 'DIGEST_MISMATCH', 'UNKNOWN_SCHEMA_VERSION']) {
+    if (!firewall.includes(required)) fail(`C-10 persistence firewall must reject ${required}`);
+  }
+  const store = read('src/core/prodEvidence/productionFindingsStore.ts');
+  if (!/assertPersistableProductionEvidence/.test(store)) {
+    fail('C-10 production store must re-validate through the persistence firewall at the durable write');
+  }
+  if (!/prod-findings/.test(store)) {
+    fail('C-10 production store must use its own prod-findings namespace, never the DEV findings root');
+  }
+  if (/'\.nightwatch',\s*'findings'/.test(store)) {
+    fail('C-10 production store must not resolve the DEV findings root');
+  }
+
+  // F-18: the Control Center findings authority must be structurally excluded
+  // from the production store, on EVERY construction route including the seam.
+  const authority = read('src/controlCenter/authorities/findingsAuthority.ts');
+  if (!/assertNotProductionFindingsRoot/.test(authority)) {
+    fail('Control Center findings authority must assert the C-10 production exclusion (F-18)');
+  }
+  const seam = authority.slice(authority.indexOf('export function createFindingsAuthorityForTests'));
+  if (!/assertDevFindingsRoot/.test(seam)) {
+    fail('the Control Center test-only findings seam must also refuse the production root (F-18)');
+  }
+  const exclusion = read('src/core/prodEvidence/controlCenterExclusion.ts');
+  if (!/realpathSync/.test(exclusion)) {
+    fail('C-10 Control Center exclusion must use resolved-path equivalence, not string comparison (F-18)');
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -1858,6 +1962,7 @@ checkPhase22CorePurity();
 checkPhase22IntegrationSeams();
 checkPhase23QualityGate();
 checkC00WorkspaceIntegrity();
+checkC10ProductionPrivacyBoundary();
 checkSyntax();
 
 if (errors.length > 0) {

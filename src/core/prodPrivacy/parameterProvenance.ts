@@ -100,11 +100,8 @@ export interface SafeRouteIdentity {
 /** Placeholders declared by a route template, in declaration order. */
 export function templatePlaceholders(routeTemplate: string): readonly string[] {
   const found: string[] = [];
-  const pattern = /\{([A-Za-z][A-Za-z0-9_]*)\}/g;
-  let match = pattern.exec(routeTemplate);
-  while (match !== null) {
+  for (const match of routeTemplate.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
     found.push(match[1]!);
-    match = pattern.exec(routeTemplate);
   }
   return found;
 }
