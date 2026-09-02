@@ -1,30 +1,32 @@
-# EXECUTION PROMPT — C-02b Protobuf Source Intelligence
+# EXECUTION PROMPT — C-03 Go/gRPC Topology Binding
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-protobuf-source-intelligence-c02b-v1
-OpenSpec: openspec/changes/nightwatch-protobuf-source-intelligence-c02b-v1/
-Planned-From: fab7675883b15bdfc29bcc946d52b2762fe96b2f
+Status: IN_PROGRESS
+Campaign ID: nightwatch-go-grpc-topology-binding-c03-v1
+OpenSpec: openspec/changes/nightwatch-go-grpc-topology-binding-c03-v1/
+Planned-From: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
 Target Branch: main
-Predecessor Task ID: nightwatch-prod-observe-safety-kernel-c11-v1
+Predecessor Task ID: nightwatch-protobuf-source-intelligence-c02b-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-Give Nightwatch bounded, deterministic protobuf source intelligence over the
-roots it has already been granted, so that gRPC streaming becomes visible, the
-proto service↔RPC symbol becomes a fact C-03 can join against, and the C-02a
-generated OpenAPI artifact is corroborated per operation identity rather than
-by counting operations.
+Bind protobuf services to the Go gRPC registration topology that serves them,
+at SERVICE level, as mechanically proven `SOURCE_FACT`s — and keep positive
+facts strictly apart from a repository completeness that ouchan's enumeration
+cannot support.
 
 ## Authority
 
 Repository-local, offline, read-only source intelligence. Sibling Alphaus
 repositories are read through the existing path-confined boundary and never
-written. No protobuf compilation or execution, no descriptor decoding, no
-generated-code reading, no gRPC client, no networking, no dynamic evaluation.
-No new repository admission and no new root: this campaign adds a language and
-an extension.
+written. No Go toolchain, no type checking, no call graph, no networking.
+
+Two authorized scope items, both recorded in the OpenSpec audit: the fourteen
+further blueapi proto roots (owner-decided, on the C-02a precedent that a root
+inside an admitted repository is not a repository admission), and raising
+ouchan's `maxFiles` to the existing 4,096 contract ceiling. No repository is
+admitted; `MAX_SIBLING_SOURCE_SCAN_FILES` is unchanged.
 
 No real production, DEV or NEXT contact, authenticated browsing, credential or
 auth-state inspection, customer-data or datastore access, cloud/IAM/Kubernetes
@@ -33,45 +35,42 @@ performed. C-12 is NOT authorized and is NOT begun.
 
 C-00's `ONE_WRITING_AGENT == ONE_WORKTREE == ONE_SESSION_IDENTITY` invariant
 governs the work: all implementation happens in the owned session worktree
-`session/nightwatch-protobuf-source-intel-139a4f45`.
+`session/nightwatch-go-grpc-topology-bind-25187565`.
 
 ## Ordered workstreams
 
-1. Task record, OpenSpec change, measured pre-implementation baseline.
-2. Adversarial comment/string/malformed corpus, asserted before the parser.
-3. Bounded lexer and bounded declaration reader.
-4. HTTP annotation matrix and streaming matrix, ambiguity represented.
-5. `PROTOBUF` language and `.proto` extension; `parseProtoRoutes` dispatch.
-6. Completeness propagation and the C-01 no-eviction regression.
-7. Per-operation OpenAPI corroboration wired to the C-02a seam.
-8. Hardening rules with recorded negative probes.
-9. Gate registration, full validation matrix, integration, exact-head CI.
+1. Task record, OpenSpec change, recorded baseline.
+2. Adversarial Go corpus, asserted before the parser.
+3. Bounded Go registration lexer with import-alias resolution.
+4. Root admission and ouchan budget correction; C-01 no-eviction.
+5. Proto service index and the categorical join.
+6. Completeness discipline and the W-EFFECT_RPC determination.
+7. Hardening rules with recorded negative probes; gate registration.
+8. Full validation matrix, integration, exact-head CI, closure.
 
 ## Constraints
 
-Bounded loops and explicit ceilings everywhere; categorical exhaustion states;
+Bounded loops and explicit ceilings; categorical states rather than defaults;
 structural facts and digests only in durable evidence; fail closed to
-UNKNOWN/AMBIGUOUS; explicit synthetic roots in every fixture; no repository
+AMBIGUOUS/UNSUPPORTED; explicit synthetic roots in every fixture; no repository
 write while `gate:clean` evidence is running.
 
 ## Validation
 
 `npm run typecheck`, `hardening:check`, `handoff:check`, `project:check`,
 `agent:check`, `agent:audit`, `workspace:check`, `gate:inventory`,
-`test:semantic-compat`, `campaign:synthetic`, the new C-02b suites, the C-02a
-and C-06 suites, source inventory and completeness suites, the full canonical
+`test:semantic-compat`, `campaign:synthetic`, the new C-03 suites, the C-02b
+suites, source inventory and completeness suites, the full canonical
 regression, `gate:local`, `gate:clean`, and exact-head GitHub Actions.
 
 ## Acceptance and completion gates
 
-The nine acceptance rows of
-`.agent/tasks/nightwatch-protobuf-source-intelligence-c02b-v1/SPEC.md`, each
-carried in the REPORT requirement ledger with exact evidence. A campaign
-cannot close while any mandatory row is NOT_STARTED, IN_PROGRESS, FAIL or
-BLOCKED.
+The ten acceptance rows of
+`.agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1/SPEC.md`, each carried
+in the REPORT requirement ledger with exact evidence.
 
 ## Git and reporting
 
 Coherent checkpoints in the session worktree; integrate by verified
-fast-forward push; observe exact-head CI; reconcile project truth; complete
+fast-forward; observe exact-head CI; reconcile project truth; complete
 `REPORT.md`; release the session and remove the worktree and branch.
