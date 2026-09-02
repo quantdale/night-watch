@@ -22,6 +22,12 @@ function fail(message) {
   errors.push(message);
 }
 
+/** Strip line and block comments so a structural check reads CODE, not prose. */
+/** @param {string} source */
+function withoutComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
 /** @param {string} file */
 function read(file) {
   try {
@@ -1957,6 +1963,134 @@ function checkC10ProductionPrivacyBoundary() {
   }
 }
 
+/**
+ * C-10.5 (A3-A8) — production vocabulary AUTHORITY boundary.
+ *
+ * C-10 left the minting side of the route/key provenance boundary unowned: a
+ * caller could assert a provenance class, supply any shape-valid
+ * `ev:sha256:<24 hex>` digest and arbitrary members, and receive a
+ * `SOURCE_PROVEN_*` capability. C-10.5 moved authority to trusted derivation.
+ * These invariants keep it there — "only the adapter mints" must be a gate,
+ * not a convention.
+ */
+function checkC105ProvenanceAuthorityBoundary() {
+  const authority = read('src/core/prodPrivacy/vocabularyAuthority.ts');
+
+  // The runtime brand must be a module-private WeakSet. If it were exported in
+  // any form, arbitrary code could register a forged object and the A6
+  // JSON-revival refusal would collapse.
+  if (!/const MINTED = new WeakSet<object>\(\)/.test(authority)) {
+    fail('C-10.5 vocabulary authority must brand capabilities with a module-private WeakSet');
+  }
+  if (/export\s+(?:const\s+MINTED|function\s+mintedRegistry|\{[^}]*\bMINTED\b)/.test(authority)) {
+    fail('C-10.5 the minted-capability registry must never be exported (runtime brand integrity)');
+  }
+
+  // Identity must be COMPUTED. A digest parameter anywhere in the mint would
+  // restore the forgery the campaign closed.
+  if (!/function computeProvenanceDigest\(evidence: ValidatedSourceEvidence\): string/.test(authority)) {
+    fail('C-10.5 provenance identity must be computed from validated evidence');
+  }
+  if (/provenanceDigest\s*:\s*string;?\s*(?:\/\/[^\n]*)?\n[^}]*\}\s*\)\s*:\s*MintedProvenance/.test(authority)) {
+    fail('C-10.5 the mint must not accept a caller-supplied provenance digest');
+  }
+  for (const required of [
+    'EVIDENCE_INVENTORY_INCOMPLETE',
+    'EVIDENCE_CURRENCY_UNPROVEN',
+    'EVIDENCE_SOURCE_IDENTITY',
+    'EVIDENCE_REPOSITORY_UNAPPROVED',
+    'EVIDENCE_CLASS_MISMATCH',
+    'CAPABILITY_NOT_MINTED',
+    'CAPABILITY_TEST_ONLY',
+  ]) {
+    if (!authority.includes(required)) {
+      fail(`C-10.5 vocabulary authority must fail closed with ${required}`);
+    }
+  }
+  // Only a COMPLETE inventory may grant authority.
+  if (!/evidence\.inventoryState !== 'COMPLETE'/.test(authority)) {
+    fail('C-10.5 an incomplete source inventory must deny authority');
+  }
+  // A generated artifact must be provably CURRENT.
+  if (!/qualifier === 'GENERATED_ARTIFACT' && evidence\.currencyState !== 'CURRENT'/.test(authority)) {
+    fail('C-10.5 stale or unknown generated evidence must deny authority');
+  }
+
+  // Consumption must require the brand, not the shape.
+  const routeVocabulary = read('src/core/prodPrivacy/routeVocabulary.ts');
+  const keyVocabulary = read('src/core/prodPrivacy/keyVocabulary.ts');
+  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(routeVocabulary)) {
+    fail('C-10.5 route provenance must require a minted capability, not a matching shape');
+  }
+  if (!/if \(!isMintedCapability\(source\)\) return false;/.test(keyVocabulary)) {
+    fail('C-10.5 key provenance must require a minted capability, not a matching shape');
+  }
+  if (!/assertProductionVocabularyAuthority\(source\)/.test(routeVocabulary)) {
+    fail('C-10.5 production route authority must refuse an unminted or TEST_ONLY capability');
+  }
+
+  // The cone's public surface must NOT re-export the mint. A wildcard
+  // re-export of the vocabulary modules would put a `'PRODUCTION'` marker
+  // argument within reach of every importer of the cone.
+  const coneIndex = withoutComments(read('src/core/prodPrivacy/index.ts'));
+  for (const wildcard of ["export * from './keyVocabulary'", "export * from './routeVocabulary'", "export * from './vocabularyAuthority'"]) {
+    if (coneIndex.includes(wildcard)) {
+      fail(`C-10.5 the cone public surface must not wildcard-re-export the mint (${wildcard})`);
+    }
+  }
+  for (const minted of ['deriveProvenRouteVocabulary', 'deriveProvenKeyVocabulary', 'mintProvenance']) {
+    if (new RegExp(`\\b${minted}\\b`).test(coneIndex)) {
+      fail(`C-10.5 ${minted} must not appear on the cone public surface`);
+    }
+  }
+
+  // The derivation adapter must live OUTSIDE the pure cone (A8).
+  if (!fs.existsSync(path.join(root, 'src/core/prodProvenance'))) {
+    fail('C-10.5 the source-evidence derivation adapter src/core/prodProvenance/ is missing');
+  }
+
+  // Only the trusted adapter and the cone itself may reach the mint.
+  const MINT_NAMES = ['deriveProvenRouteVocabulary', 'deriveProvenKeyVocabulary', 'mintProvenance'];
+  const ALLOWED_MINT_IMPORTERS = /^src\/core\/(?:prodProvenance|prodPrivacy)\//;
+  for (const file of gitFiles()) {
+    if (!file.endsWith('.ts') && !file.endsWith('.tsx')) continue;
+    if (ALLOWED_MINT_IMPORTERS.test(file)) continue;
+    const source = withoutComments(read(file));
+    for (const name of MINT_NAMES) {
+      // An IMPORT of the mint, not a mere mention (tests may name it in prose).
+      if (new RegExp(`import[^;]*\\b${name}\\b[^;]*from`).test(source)) {
+        fail(`${file} imports the C-10.5 mint ${name}; only src/core/prodProvenance/** may mint production authority`);
+      }
+    }
+  }
+
+  // The TEST-ONLY seam must be reachable from tests only.
+  const seamPath = 'src/core/prodProvenance/testOnlySeam.ts';
+  const seamSource = read(seamPath);
+  if (!/TEST ONLY\. NOT A PRODUCTION AUTHORITY PATH\./.test(seamSource)) {
+    fail('C-10.5 the test-only vocabulary seam must be explicitly branded TEST ONLY');
+  }
+  for (const file of gitFiles()) {
+    if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file === seamPath) continue;
+    if (file.startsWith('tests/')) continue;
+    const source = withoutComments(read(file));
+    if (/from\s+['"][^'"]*prodProvenance\/testOnlySeam['"]/.test(source)) {
+      fail(`${file} imports the C-10.5 TEST-ONLY vocabulary seam; only tests/** may import it`);
+    }
+  }
+  const provenanceIndex = withoutComments(read('src/core/prodProvenance/index.ts'));
+  if (/testOnlySeam/.test(provenanceIndex)) {
+    fail('C-10.5 the provenance derivation surface must not re-export the TEST-ONLY seam');
+  }
+
+  // The PHP route adapter must stay fail-closed: C-06 admits no production
+  // route today, and C-10.5 must not invent completeness to manufacture one.
+  const routeDerivation = read('src/core/prodProvenance/routeVocabularyDerivation.ts');
+  if (!/PHP_ROUTE_PROOF_UNAVAILABLE/.test(routeDerivation)) {
+    fail('C-10.5 PHP route derivation must fail closed while C-06 admits no production route');
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -1997,6 +2131,7 @@ checkPhase22IntegrationSeams();
 checkPhase23QualityGate();
 checkC00WorkspaceIntegrity();
 checkC10ProductionPrivacyBoundary();
+checkC105ProvenanceAuthorityBoundary();
 checkSyntax();
 
 if (errors.length > 0) {
