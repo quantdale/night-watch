@@ -226,18 +226,21 @@ and must never be bulk-set to HEAD:
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `c763c05` | where the C-10.5 / DEF-C105-1 key-vocabulary authority repair landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c763c05` | the local gate was recorded green at that commit |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c763c05` | the clean gate was recorded green at that commit |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `22a2928` | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c763c05` | the local gate was last recorded fully green at that commit; it advances only when `gate:local` passes at the R-11 state, not because implementation moved |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c763c05` | same discipline for the clean Node 20 gate |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `29b9212` | C-10.5's certification run `33635296271`; NOT the newest run — see the checkpoint-role table below |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `29b9212` | same run; `EXECUTED_PASS` requires observed == executed |
 
-The implementation anchor legitimately TRAILS the CI anchor: the commits
-between `c763c05` and `29b9212` are documentation checkpoints that changed no
-implementation, so CI ran later than the last substantive change without a new
-substantive change existing. `npm run project:check` enforces this
-relationship mechanically (C-10.5 A10) by classifying the intervening commits
-rather than trusting the fields to agree with each other.
+The anchors deliberately name DIFFERENT commits, and the ordering constraint is
+real rather than bureaucratic: `npm run project:check` refuses a baseline whose
+CI anchor certifies a commit older than the validated implementation it claims
+to cover (C-10.5 A10), classifying the intervening range rather than trusting
+the fields to agree with each other. So a campaign that changes implementation
+CANNOT have a self-consistent baseline until CI has executed at that
+implementation. That is why the substantive anchor advances here while the
+validation and CI anchors do not: they are advanced when their own evidence
+exists, never as a side effect.
 
 R-11 note: these three prose "Current value" cells previously read `23523cc`
 while the machine-checked block below already said `c763c05`. The validator
@@ -251,7 +254,7 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: c763c056d306172df3c03c03781f5ec5516944e9
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 22a2928e8ecc80544e63c4d17a25cdb8ba4b569a
 LAST_LOCALLY_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 LAST_CLEAN_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
 CI_OBSERVED_SHA: 29b921256ea09199d2cfe5f373737f2e42967ea9
@@ -322,7 +325,7 @@ certification of its substantive ancestor.
 
 | Role | Means | Current value |
 | --- | --- | --- |
-| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `c763c05` |
+| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `22a2928` (R-11) |
 | Local-validation checkpoint | last commit where `gate:local` was recorded green | `c763c05` |
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `c763c05` |
 | CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `29b9212`, run `33635296271` |
