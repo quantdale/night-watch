@@ -29,11 +29,10 @@ whole-repository completeness that ouchan's enumeration cannot support.
 
 ## Current Milestone
 
-Milestone ID: M4 — root admission and budget correction
+Milestone ID: M6 — method-level investigation and the W-EFFECT_RPC determination
 Milestone status: IN_PROGRESS
-What is being attempted: admit the fourteen further blueapi proto roots and the
-fourteen matching blue-sdk-go roots, raise ouchan `maxFiles` to 4,096, and
-prove C-01 no-eviction over the enlarged population.
+What is being attempted: record an evidence-backed determination on
+RPC-to-handler binding and on `W-EFFECT_RPC`.
 
 ## Completed Milestones
 
@@ -49,14 +48,14 @@ prove C-01 no-eviction over the enlarged population.
 
 ## Work In Progress
 
-M4. Nothing partial: M1-M3 are closed and committed.
+M6. Nothing partial: M1-M5 are closed.
 
 ## Exact Next Action
 
-Admit the fourteen further blueapi proto roots and the fourteen matching
-blue-sdk-go roots in `approvedScan.ts`, raise `mobingilabs/ouchan` `maxFiles`
-to 4,096, then assert the C-01 no-eviction regression over the enlarged
-population before building the index and the join.
+Investigate whether C-02b's RPC symbols plus the SDK descriptors can produce a
+mechanically exact RPC-to-handler binding; record the determination and, if it
+cannot, the exact blocker for `W-EFFECT_RPC`. Then add the hardening rules and
+negative probes.
 
 ## Files Changed
 
@@ -69,6 +68,12 @@ population before building the index and the join.
 | `openspec/changes/nightwatch-go-grpc-topology-binding-c03-v1/**` | five OpenSpec files | COMMITTED d7b45fb |
 | `tests/unit/c03GoRegistration.test.ts` | adversarial Go corpus | 29/29 PASS |
 | `src/core/source/goRegistration.ts` | bounded registration reader with import-alias resolution | IMPLEMENTED |
+| `src/core/source/approvedScan.ts` | fourteen blueapi + fourteen blue-sdk-go roots; ouchan file and byte budgets | IMPLEMENTED |
+| `src/core/source/protoServiceIndex.ts` | proto service facts and generated-SDK descriptors | IMPLEMENTED |
+| `src/core/source/grpcTopology.ts` | the three-link join with categorical states | IMPLEMENTED |
+| `tests/unit/c03GrpcTopology.test.ts` | join, completeness discipline, real yield, no-eviction | 23/23 PASS |
+| `tests/unit/c02aOpenApiAdmission.test.ts` | two assertions rescoped from root-list description to the property defended | PASS |
+| `tests/unit/c02bProtoSurface.test.ts` | one assertion rescoped likewise | PASS |
 
 ## Validation Ledger
 
@@ -104,6 +109,32 @@ assertion: `import _ "github.com/.../billing/v1"` was pushed through the
 identifier fallback and bound `billing`, so `billing.RegisterBillingServer`
 would have resolved through a package the file imports only for side effects.
 Blank and dot imports now bind nothing.
+
+Command: measured C-03 topology yield against the real sibling checkouts
+Result: 12 PROVEN, 12 distinct proto services, 0 ambiguous / 0 missing /
+0 multiple / 0 stale, 1 UNSUPPORTED
+When: 2026-09-03, session worktree
+Relevant failure/output summary: bound services are Admin, Billing, Cost,
+Cover, Flags, Flow, GuaranteedCommitments, Iam, Luster, Operations,
+Organization, Preferences, across 7 daemon directories (`services/blued`
+carries six). `RegisterMetricsControlPlaneServer` is UNSUPPORTED with blocker
+`SDK_DESCRIPTOR_UNOBSERVED`. All 15 SDK descriptors pair uniquely; 421 test
+files excluded; ouchan enumeration TRUNCATED with `repositoryCompleteProof`
+false.
+
+Command: `npx playwright test` over the C-02a, C-02b, C-06, phase25 and census
+suites after the admission
+Result: PASS 109/109 after three truthful assertion updates; 106/109 before
+When: 2026-09-03, session worktree
+Relevant failure/output summary: two assertions described blueapi's root list
+("exactly two roots wide") rather than the property they defend, and C-03
+legitimately changed that list under an owner decision; they now assert that
+`openapiv2` and `billing` are admitted, that `protos` is not, and that no
+repository was admitted. The third compared a repository-wide counter to the
+artifact's own definition total — equal only while the artifact was the sole
+OpenAPI source with definitions. Raising ouchan's budget made its own
+`services/*/docs/swagger.json` files visible, contributing 328 further bound
+definitions, so the counter is now compared to the repository-wide sum.
 
 ## Decisions Made During This Task
 
@@ -146,7 +177,22 @@ This is the same per-root class the owner approved for blueapi and is
 mechanically required to realise the outcome that decision chose; it is
 recorded here and in the REPORT rather than folded in silently.
 
+Decision: embedding corroboration is scoped to the Go package directory, not
+the file, and requires the same resolved import path.
+Reason: real daemons register in `main.go` and embed
+`Unimplemented<Service>Server` in `service.go`, so a same-file rule reported
+zero corroboration across the whole repository while the evidence sat one file
+away. Requiring the import path to match as well stops an unrelated package's
+identically named embedding from corroborating anything.
+Evidence/constraint: all 12 proven bindings are corroborated under the
+directory rule and none under the file rule.
+
 ## Discoveries
+
+- Raising ouchan's budget revealed eleven `services/*/docs/swagger.json`
+  documents that had never been enumerated, adding 328 bound response
+  definitions and 341 ouchan operations. That is new reach delivered by a
+  budget correction rather than by a parser.
 
 - ouchan does not import blueapi at all. Every registration goes through the
   generated `blue-sdk-go` SDK, and the SDK's own `ServiceName` constant is what

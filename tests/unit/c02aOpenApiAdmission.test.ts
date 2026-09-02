@@ -84,14 +84,21 @@ function syntheticConfig(repoId: string, sha: string) {
 
 const SYNTHETIC_SHA = 'aaaabbbbccccddddeeeeffff00001111 22223333'.replace(/\s/g, '');
 
-test.describe('C-02a — root admission stays exactly one root wide', () => {
-  test('blueapi/openapiv2 is admitted and every other blueapi root stays confined', () => {
+test.describe('C-02a — the generated root is admitted and the universe is not widened', () => {
+  test('blueapi/openapiv2 is admitted and no repository is admitted with it', () => {
     const config = createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] });
     const repository = config.approvedRepositories.find((entry) => entry.repoId === BLUEAPI);
     expect(repository).toBeDefined();
-    // Exactly the pre-C-02a root plus the one C-02a root. `protos`, `admin`,
-    // `iam`, `cost`, … remain unapproved.
-    expect([...repository!.allowlistedRoots].sort()).toEqual(['billing', 'openapiv2']);
+    // C-02a's invariant is that `openapiv2` is admitted and that admitting it
+    // widens no REPOSITORY. It was originally written as "exactly billing and
+    // openapiv2", which was a true description of the root list at the time
+    // rather than the property being defended: C-03 later admitted the other
+    // blueapi proto roots under an explicit owner decision, and that is a
+    // per-root change of the same class. The repository boundary is asserted
+    // where it belongs, in the sibling test below.
+    expect(repository!.allowlistedRoots).toContain('openapiv2');
+    expect(repository!.allowlistedRoots).toContain('billing');
+    expect(repository!.allowlistedRoots).not.toContain('protos');
   });
 
   test('an unapproved repository still fails closed', () => {
@@ -329,7 +336,14 @@ test.describe('C-02a — the real committed blueapi artifact', () => {
     // Response contracts are recovered from the document's own definitions.
     const bound = blueapi.reduce((count, surface) => count + surface.contract.responseDefinitions.filter((binding) => binding.state === 'RESOLVED').length, 0);
     expect(bound).toBeGreaterThanOrEqual(MINIMUM_BOUND_RESPONSE_CONTRACTS);
-    expect(discovery.counters.openApiResponseDefinitionsBound).toBe(bound);
+    // The counter is repository-wide, so it is compared to the repository-wide
+    // sum. It equalled the artifact's own total only while the artifact was
+    // the sole OpenAPI source carrying definitions; ouchan's
+    // `services/*/docs/swagger.json` files became visible when C-03 corrected
+    // that repository's scan budget.
+    const allBound = discovery.surfaces.reduce((count, surface) => count + surface.contract.responseDefinitions.filter((binding) => binding.state === 'RESOLVED').length, 0);
+    expect(discovery.counters.openApiResponseDefinitionsBound).toBe(allBound);
+    expect(allBound).toBeGreaterThanOrEqual(bound);
     expect(blueapi.filter((surface) => surface.contract.responseProof === 'PROVEN').length).toBeGreaterThanOrEqual(MINIMUM_BOUND_RESPONSE_CONTRACTS);
     expect(discovery.counters.generatedArtifactOperations).toBe(blueapi.length);
   });

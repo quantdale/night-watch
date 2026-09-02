@@ -66,9 +66,16 @@ test.describe('C-02b — protobuf is a LANGUAGE admission, not a root admission'
     ]);
   });
 
-  test('blueapi is still exactly two roots wide', () => {
+  test('blueapi keeps its billing and openapiv2 roots and admits no repository', () => {
+    // Originally "exactly two roots wide". That described the root list of the
+    // day rather than the property C-02b defends, which is that protobuf was
+    // admitted as a LANGUAGE and widened no repository. C-03 later admitted
+    // the remaining blueapi proto roots under an explicit owner decision.
     const config = createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] });
-    expect(config.approvedRepositories[0]?.allowlistedRoots).toEqual(['billing', 'openapiv2']);
+    const roots = config.approvedRepositories[0]?.allowlistedRoots ?? [];
+    expect(roots).toContain('billing');
+    expect(roots).toContain('openapiv2');
+    expect(roots).not.toContain('protos');
   });
 
   test('an unapproved repository is still rejected', () => {
