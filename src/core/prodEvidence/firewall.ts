@@ -9,10 +9,22 @@
 // re-derivation of the structural digest.
 //
 // It accepts only C-10-approved DTOs, and rejects raw values, response bodies,
-// dynamic key literals, URLs carrying concrete parameters, headers, cookies,
-// auth tokens, storage state, free text, authenticated DOM, screenshots,
-// traces, arbitrary nested objects outside the contract, and unknown schema
-// versions.
+// URLs carrying concrete parameters, headers, cookies, auth tokens, storage
+// state, free text, authenticated DOM, screenshots, traces, arbitrary nested
+// objects outside the contract, and unknown schema versions.
+//
+// Precise limit, stated rather than overstated: this module holds NO
+// vocabulary. It rejects dynamic key literals STRUCTURALLY — a `name` on a
+// dynamic entry, proven fields declared under
+// `BOUNDED_DYNAMIC_KEY_COLLECTION`, dynamic fields declared under
+// `ALL_SOURCE_PROVEN` — and it cannot tell a genuinely proven literal from an
+// unproven one that a defective projector mislabelled as proven. The same
+// applies to routes: it verifies that route provenance was RECORDED, while
+// MEMBERSHIP is enforced where the proven set is known (construction and the
+// store). The structural-digest re-derivation is what makes this division
+// safe: a mislabelled tree cannot also carry a matching digest unless the
+// projector and the digest agree, and the digest is computed from the same
+// canonical bytes the firewall walks.
 // ---------------------------------------------------------------------------
 
 import { containsPrivatePayloadShape } from '../policy/privateScreening';
@@ -49,6 +61,16 @@ const VOCABULARY_PROVENANCE_CLASSES: ReadonlySet<string> = new Set([
   'NONE',
 ]);
 const PROVENANCE_DIGEST_RE = /^ev:sha256:[0-9a-f]{24}$/;
+/**
+ * DEF-C10-5: route identity must carry PROVEN provenance. `NONE` is absent by
+ * design — a route has no safe structural reduction, so unproven provenance
+ * denies persistence here as well as at construction.
+ */
+const ROUTE_PROVENANCE_CLASSES: ReadonlySet<string> = new Set([
+  'SOURCE_PROVEN_OPENAPI_OPERATION',
+  'SOURCE_PROVEN_PHP_ROUTE',
+  'SOURCE_PROVEN_FIXED_CONTRACT',
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -230,6 +252,23 @@ export function assertPersistableProductionEvidence(candidate: unknown): SafePro
     // Catches a concrete URL, a query string, headers or cookies smuggled in
     // as "the route we observed".
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'CONCRETE_URL_PARAMETER');
+  }
+  // DEF-C10-5: the shape check above CANNOT distinguish `accounts` from
+  // `481516234299`, so it is not the authority. Route provenance is. The
+  // firewall holds no vocabulary, so what it independently enforces is that a
+  // proven vocabulary was used AT ALL and that its provenance is recorded —
+  // the same division of labour as key provenance.
+  if (
+    typeof candidate.routeProvenanceClass !== 'string' ||
+    !ROUTE_PROVENANCE_CLASSES.has(candidate.routeProvenanceClass)
+  ) {
+    failProduction('PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED', 'ROUTE_PROVENANCE_MISSING');
+  }
+  if (
+    typeof candidate.routeProvenanceDigest !== 'string' ||
+    !PROVENANCE_DIGEST_RE.test(candidate.routeProvenanceDigest)
+  ) {
+    failProduction('PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED', 'ROUTE_PROVENANCE_MISSING');
   }
   if (typeof candidate.statusClass !== 'string' || !PRODUCTION_STATUS_CLASSES.has(candidate.statusClass)) {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'FIELD_TYPE');

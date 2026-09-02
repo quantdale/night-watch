@@ -208,9 +208,16 @@ export interface SafeProductionEvidence {
   readonly routeTemplate: string;
   readonly statusClass: ProductionStatusClass;
   readonly keyProvenance: Exclude<KeyProvenanceClassification, 'UNRESOLVED'>;
-  /** Provenance of the vocabulary used, carrying no key literals. */
+  /** Provenance of the KEY vocabulary used, carrying no key literals. */
   readonly vocabularyProvenanceClass: string;
   readonly vocabularyProvenanceDigest: string | null;
+  /**
+   * Provenance of the ROUTE vocabulary the `routeTemplate` was proven against
+   * (DEF-C10-5). `NONE` is not persistable: route identity has no safe
+   * structural reduction, so unproven provenance denies persistence.
+   */
+  readonly routeProvenanceClass: string;
+  readonly routeProvenanceDigest: string;
   /** F-15 STRUCTURAL family: `prodstruct:sha256:<24>`. Value-free, unsalted. */
   readonly structuralDigest: string;
   /** The structural projection with every ephemeral correlation field removed. */
@@ -314,6 +321,8 @@ export const PRODUCTION_EVIDENCE_SAFE_FIELDS: ReadonlySet<string> = new Set([
   'keyProvenance',
   'vocabularyProvenanceClass',
   'vocabularyProvenanceDigest',
+  'routeProvenanceClass',
+  'routeProvenanceDigest',
   'structuralDigest',
   'root',
 ]);
@@ -346,7 +355,16 @@ export const PRODUCTION_STRUCTURAL_DIGEST_RE = /^prodstruct:sha256:[0-9a-f]{24}$
 export const DEV_PROJECTION_DIGEST_PREFIX = 'proj:sha256:' as const;
 
 /**
- * Route TEMPLATE shape (F-16): a method plus a path whose variable segments are
- * `{name}` placeholders. A concrete identifier or a query string is refused.
+ * Route TEMPLATE SHAPE PRECONDITION (F-16).
+ *
+ * WARNING — this is NOT the persistence authority. A literal segment matches
+ * `[A-Za-z0-9._~-]+`, which cannot distinguish `accounts` from `481516234299`
+ * or `invoices` from `INV-2026-000731-SENTINEL`. Relying on it alone was
+ * DEF-C10-5: concrete customer identifiers reached persisted evidence through
+ * the route field.
+ *
+ * Authority for a persisted route identity is membership in a source-proven
+ * finite route vocabulary — see `routeVocabulary.ts`. This regex only bounds
+ * what may ENTER such a vocabulary.
  */
 export const ROUTE_TEMPLATE_RE = /^(?:GET|HEAD|OPTIONS) \/(?:[A-Za-z0-9._~-]+|\{[A-Za-z][A-Za-z0-9_]*\})(?:\/(?:[A-Za-z0-9._~-]+|\{[A-Za-z][A-Za-z0-9_]*\}))*\/?$/;

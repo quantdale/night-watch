@@ -19,7 +19,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { failProduction } from '../prodPrivacy';
+import {
+  assertSourceProvenRoute,
+  failProduction,
+  NO_PROVEN_ROUTE_VOCABULARY,
+  type RouteVocabularySource,
+} from '../prodPrivacy';
 import { assertPersistableProductionEvidence } from './firewall';
 import type { SafeProductionEvidence } from '../prodPrivacy';
 
@@ -139,15 +144,30 @@ function safeFileName(fileName: string): string {
  * There is deliberately no `writeRaw`, no `writeBody`, no `attachScreenshot`
  * and no `attachTrace`: the only write method takes evidence that must pass
  * the firewall.
+ *
+ * DEF-C10-5: the store also holds the campaign's source-proven ROUTE
+ * vocabulary and re-checks route membership at the durable write. The firewall
+ * carries no vocabulary and so can only verify that provenance was RECORDED;
+ * membership itself has to be enforced somewhere that knows the proven set,
+ * and the durable boundary is that place. A store constructed without a route
+ * vocabulary cannot verify route provenance and therefore refuses every write.
  */
 export class ProductionFindingsStore {
   readonly root: string;
   readonly policy: ProductionArtifactPolicyRecord;
+  private readonly routeVocabulary: RouteVocabularySource;
 
-  constructor(options: { root?: string; createIfMissing?: boolean } = {}) {
+  constructor(
+    options: {
+      root?: string;
+      createIfMissing?: boolean;
+      routeVocabulary?: RouteVocabularySource;
+    } = {},
+  ) {
     this.root = productionArtifactRoot(options.root);
     if (options.createIfMissing !== false) ensureOwnerDirectory(this.root);
     this.policy = productionArtifactPolicyRecord(options.root);
+    this.routeVocabulary = options.routeVocabulary ?? NO_PROVEN_ROUTE_VOCABULARY;
   }
 
   /** Bounded enumeration of the store's finding files. */
@@ -169,6 +189,10 @@ export class ProductionFindingsStore {
   write(fileName: string, evidence: unknown): string {
     const name = safeFileName(fileName);
     const validated: SafeProductionEvidence = assertPersistableProductionEvidence(evidence);
+    // DEF-C10-5: membership, not spelling. A template-SHAPED route carrying a
+    // concrete customer identifier passes every syntactic check, so the
+    // durable boundary verifies it against the proven set.
+    assertSourceProvenRoute(this.routeVocabulary, validated.routeTemplate);
 
     if (this.list().length >= MAX_PRODUCTION_FINDING_FILES) {
       failProduction('PRODUCTION_PRIVACY_LIMIT_EXCEEDED', 'EVIDENCE_BYTES');

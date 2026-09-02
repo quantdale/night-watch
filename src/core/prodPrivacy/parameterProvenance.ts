@@ -27,6 +27,7 @@
 
 import { failProduction } from './errors';
 import { ROUTE_TEMPLATE_RE } from './types';
+import { assertSourceProvenRoute, type RouteVocabularySource } from './routeVocabulary';
 
 export const PARAMETER_PROVENANCE_VERSION = 'nightwatch.request-parameter-provenance.v1' as const;
 
@@ -162,14 +163,25 @@ export function assertNoConcreteParameterValue(candidate: string): void {
 }
 
 /**
- * Assert a persisted/keyed string is a route template, not a concrete URL.
- * This is the check budget keys, fingerprints and checkpoints use.
+ * Assert a persisted/keyed string is a PROVEN route template, not a concrete
+ * URL. This is the check budget keys, fingerprints, checkpoints and receipts
+ * use.
+ *
+ * DEF-C10-5: this previously validated shape only, which accepted
+ * `GET /v1/accounts/481516234299` — a concrete customer identifier — because a
+ * literal segment and an account id are syntactically identical. Provenance,
+ * not spelling, is the discriminator, so a source-proven route vocabulary is
+ * required.
  */
-export function assertRouteTemplateOnly(candidate: string): void {
+export function assertRouteTemplateOnly(
+  candidate: string,
+  routeVocabulary: RouteVocabularySource,
+): void {
   assertNoConcreteParameterValue(candidate);
   if (!ROUTE_TEMPLATE_RE.test(candidate)) {
     failProduction('PRODUCTION_PRIVACY_PARAMETER_VALUE_EXPOSED', 'ROUTE_TEMPLATE_INVALID');
   }
+  assertSourceProvenRoute(routeVocabulary, candidate);
 }
 
 /**

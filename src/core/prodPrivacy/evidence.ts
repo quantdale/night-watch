@@ -15,6 +15,11 @@
 
 import { failProduction } from './errors';
 import { vocabularyIdentity, type KeyVocabularySource } from './keyVocabulary';
+import {
+  assertSourceProvenRoute,
+  routeVocabularyIdentity,
+  type RouteVocabularySource,
+} from './routeVocabulary';
 import { assertProductionCone, type PrivacyPolicy } from './policy';
 import { foldKeyProvenance, productionStructuralDigest } from './serializer';
 import {
@@ -78,8 +83,18 @@ function toEvidenceNode(node: ProductionNode): ProductionNode {
 export interface ProductionEvidenceRequest {
   readonly projection: SafeStructuralProjection;
   readonly vocabulary: KeyVocabularySource;
+  /**
+   * The source-proven route vocabulary `routeTemplate` must be a member of.
+   * Required and without a default: `NO_PROVEN_ROUTE_VOCABULARY` must be
+   * passed explicitly, and it denies persistence (DEF-C10-5).
+   */
+  readonly routeVocabulary: RouteVocabularySource;
   readonly policy: PrivacyPolicy;
-  /** Route TEMPLATE identity only. A concrete path parameter is refused. */
+  /**
+   * Route TEMPLATE identity only, and only when PROVEN. A concrete path
+   * parameter is refused because it is not a vocabulary member — not because
+   * of how it is spelled.
+   */
   readonly routeTemplate: string;
   readonly statusClass: ProductionStatusClass;
 }
@@ -117,8 +132,15 @@ export function toProductionEvidence(request: ProductionEvidenceRequest): SafePr
     failProduction('PRODUCTION_PRIVACY_KEY_PROVENANCE_UNRESOLVED', 'PROVENANCE_AMBIGUOUS');
   }
 
+  // DEF-C10-5: shape first as a cheap precondition, then PROVENANCE as the
+  // actual authority. A syntactically valid route is not a safe route.
   if (typeof request.routeTemplate !== 'string' || !ROUTE_TEMPLATE_RE.test(request.routeTemplate)) {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'ROUTE_TEMPLATE_INVALID');
+  }
+  assertSourceProvenRoute(request.routeVocabulary, request.routeTemplate);
+  const routeIdentity = routeVocabularyIdentity(request.routeVocabulary);
+  if (routeIdentity.provenanceDigest === null || routeIdentity.provenanceClass === 'NONE') {
+    failProduction('PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED', 'ROUTE_PROVENANCE_MISSING');
   }
   if (typeof request.statusClass !== 'string' || !PRODUCTION_STATUS_CLASSES.has(request.statusClass)) {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'FIELD_TYPE');
@@ -135,6 +157,8 @@ export function toProductionEvidence(request: ProductionEvidenceRequest): SafePr
     keyProvenance: derived,
     vocabularyProvenanceClass: identity.provenanceClass,
     vocabularyProvenanceDigest: identity.provenanceDigest,
+    routeProvenanceClass: routeIdentity.provenanceClass,
+    routeProvenanceDigest: routeIdentity.provenanceDigest,
     // The structural digest is computed over the VALUE-FREE canonical bytes,
     // so it is identical whether taken before or after the ephemeral strip.
     structuralDigest: productionStructuralDigest(root),

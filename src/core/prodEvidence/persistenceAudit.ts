@@ -100,6 +100,13 @@ export interface PersistenceAuditRequest {
    * bytes exist anywhere under the audited roots.
    */
   readonly sentinels?: readonly string[];
+  /**
+   * The source-proven route templates the campaign was permitted to persist.
+   * DEF-C10-5: any persisted `routeTemplate` outside this set is a raw request
+   * parameter value, however template-shaped it looks. Omit only when the
+   * audited roots are known to hold no production evidence.
+   */
+  readonly provenRouteTemplates?: readonly string[];
 }
 
 function walk(
@@ -151,6 +158,8 @@ function walk(
 export function auditProductionPersistence(request: PersistenceAuditRequest): PersistenceAuditReport {
   const violations: PersistenceViolation[] = [];
   const sentinels = request.sentinels ?? [];
+  const provenRoutes =
+    request.provenRouteTemplates === undefined ? null : new Set(request.provenRouteTemplates);
   let filesInspected = 0;
   let directoriesInspected = 0;
   let bytesInspected = 0;
@@ -207,8 +216,27 @@ export function auditProductionPersistence(request: PersistenceAuditRequest): Pe
           }
         }
         // A concrete query parameter must never appear in a persisted route.
-        if (/"routeTemplate"\s*:\s*"[^"]*[?&][^"]*"/.test(content)) {
+        if (/"routeTemplate"\s*:\s*"[^"]*[?&#][^"]*"/.test(content)) {
           record('RAW_REQUEST_PARAMETER_VALUE', relative);
+        }
+        // DEF-C10-5: a template-SHAPED route is not a safe route. Every
+        // persisted route identity must be a source-proven member; a concrete
+        // identifier segment is syntactically indistinguishable from a literal
+        // one, so membership is the only sound check.
+        if (provenRoutes !== null) {
+          for (const match of content.matchAll(/"routeTemplate"\s*:\s*"((?:[^"\\]|\\.)*)"/g)) {
+            let persisted: string;
+            try {
+              persisted = JSON.parse(`"${match[1]!}"`) as string;
+            } catch {
+              record('RAW_REQUEST_PARAMETER_VALUE', relative);
+              break;
+            }
+            if (!provenRoutes.has(persisted)) {
+              record('RAW_REQUEST_PARAMETER_VALUE', relative);
+              break;
+            }
+          }
         }
         // A raw response body would arrive as a nested object outside the
         // closed vocabulary; the firewall refuses it, and this is the

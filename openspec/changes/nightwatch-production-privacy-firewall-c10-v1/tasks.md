@@ -59,6 +59,23 @@
 - [x] **Integration** — C-00 session integration, then an exact-head GitHub
   Actions result with all eleven required groups PASS.
 
+## Reopened after closure
+
+- [x] **DEF-C10-5 — route identity requires source-proven provenance.** A
+  review pass after closure found `routeTemplate` — the one free-form string
+  the evidence DTO persists — validated by `ROUTE_TEMPLATE_RE` alone, which
+  cannot distinguish a literal path segment from a concrete customer
+  identifier. `GET /v1/accounts/481516234299` was accepted, and a test
+  CERTIFIED it. Repaired by mirroring the F-14 answer: a route survives only as
+  a proven member of a source-proven finite route vocabulary, enforced at
+  construction, the durable write and the audit, with the shape regex demoted
+  to a vocabulary precondition. The certifying assertion is flipped and
+  sentinels are now planted in the route-identity position, which is the gap
+  that let the original corpus miss this.
+- [x] **DEF-C10-6 — the first DEF-C10-5 hardening rule was vacuous**, matching
+  the import rather than the call. Made call-specific and re-proven by removal
+  probe.
+
 ## Explicitly out of scope
 
 - [ ] ~~C-11 `PROD_OBSERVE`~~ — not started in this campaign, by construction.

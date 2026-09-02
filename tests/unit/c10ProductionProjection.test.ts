@@ -19,6 +19,8 @@ import {
   createOpaqueParameterHandle,
   createProductionPrivacyPolicy,
   createProvenKeyVocabulary,
+  createProvenRouteVocabulary,
+  NO_PROVEN_ROUTE_VOCABULARY,
   createSafeRouteIdentity,
   canonicalStructuralBytes,
   foldKeyProvenance,
@@ -86,6 +88,25 @@ function vocabulary() {
   });
 }
 
+
+/**
+ * The source-proven route vocabulary. DEF-C10-5: a route template is safe
+ * because a SOURCE proves it exists, never because it is spelled like one.
+ * C-02a supplies this proof in practice (814 admitted operations).
+ */
+function routeVocabulary() {
+  return createProvenRouteVocabulary({
+    provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
+    provenanceDigest: 'ev:sha256:fedcba98765432100123abcd',
+    templates: [
+      'GET /v1/billing/accounts/{accountId}',
+      'GET /v1/billing/groups/{id}',
+      'GET /v1/x',
+      'GET /v1/costs',
+    ],
+  });
+}
+
 /** Every string that appears anywhere in a structure, however nested. */
 function everyString(value: unknown, sink: string[] = []): string[] {
   if (typeof value === 'string') sink.push(value);
@@ -141,6 +162,7 @@ test.describe('C-10 F-14 — dynamic key literals cannot cross the production bo
     const evidence = toProductionEvidence({
       projection,
       vocabulary: vocabulary(),
+      routeVocabulary: routeVocabulary(),
       policy,
       routeTemplate: 'GET /v1/billing/groups/{id}',
       statusClass: '2XX',
@@ -214,6 +236,7 @@ test.describe('C-10 F-14 — dynamic key literals cannot cross the production bo
       toProductionEvidence({
         projection,
         vocabulary: vocabulary(),
+        routeVocabulary: routeVocabulary(),
         policy,
         routeTemplate: 'GET /v1/billing/groups/{id}',
         statusClass: '2XX',
@@ -262,6 +285,7 @@ test.describe('C-10 — the typed boundary', () => {
         // deliberately mis-typed at the boundary the firewall exists to catch
         projection: forged as never,
         vocabulary: NO_PROVEN_VOCABULARY,
+        routeVocabulary: routeVocabulary(),
         policy,
         routeTemplate: 'GET /v1/x',
         statusClass: '2XX',
@@ -377,10 +401,33 @@ test.describe('C-10 F-16 — parameter values never enter Nightwatch state', () 
   });
 
   test('a concrete URL cannot be persisted, keyed or fingerprinted', () => {
-    expect(() => assertRouteTemplateOnly(`GET /v1/costs?mspId=${SENTINEL_MSP_ID}`)).toThrow(
-      /CONCRETE_URL_PARAMETER/,
-    );
-    expect(() => assertRouteTemplateOnly(`GET /v1/accounts/${SENTINEL_ACCOUNT_ID}`)).not.toThrow();
+    expect(() =>
+      assertRouteTemplateOnly(`GET /v1/costs?mspId=${SENTINEL_MSP_ID}`, routeVocabulary()),
+    ).toThrow(/CONCRETE_URL_PARAMETER/);
+  });
+
+  test('DEF-C10-5: a concrete identifier in the PATH is refused, not just in the query', () => {
+    // This assertion previously read `.not.toThrow()`, which CERTIFIED the
+    // leak: `ROUTE_TEMPLATE_RE` cannot distinguish `accounts` from
+    // `481516234299`, so a concrete customer identifier passed as a "route
+    // template" and reached persisted evidence. Provenance is the authority.
+    for (const sentinel of [SENTINEL_ACCOUNT_ID, SENTINEL_MSP_ID, SENTINEL_INVOICE, SENTINEL_BILLING_GROUP]) {
+      expect(() =>
+        assertRouteTemplateOnly(`GET /v1/accounts/${sentinel}`, routeVocabulary()),
+      ).toThrow(/ROUTE_NOT_SOURCE_PROVEN/);
+    }
+  });
+
+  test('a proven route template IS accepted, so the rule is not refusing everything', () => {
+    expect(() =>
+      assertRouteTemplateOnly('GET /v1/billing/groups/{id}', routeVocabulary()),
+    ).not.toThrow();
+  });
+
+  test('with no route vocabulary every route identity is refused', () => {
+    expect(() =>
+      assertRouteTemplateOnly('GET /v1/billing/groups/{id}', NO_PROVEN_ROUTE_VOCABULARY),
+    ).toThrow(/ROUTE_NOT_SOURCE_PROVEN/);
   });
 
   test('a raw value supplied where a handle is required is refused', () => {

@@ -4,7 +4,7 @@ Task: nightwatch-production-privacy-firewall-c10-v1
 
 Campaign: C-10 — Production Privacy Firewall
 
-Status: COMPLETE
+Status: IN_PROGRESS — reopened for the DEF-C10-5 route-provenance repair
 
 Starting SHA: `a152889a71eec6c67d82b05e5984df6423fe88d4`
 Validated implementation SHA: `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`

@@ -2795,7 +2795,12 @@ Resolved independent-review findings:
   digest exists at all.
 - **F-16** — the parameter-provenance PRIVACY MODEL only: opaque handles in
   Nightwatch state, values owner-supplied and external-only, route-template URL
-  identity. No production request execution path was created.
+  identity. No production request execution path was created. Route identity is
+  a proven member of a source-proven finite route vocabulary, not a
+  shape-matched string: DEF-C10-5 showed that validating `routeTemplate` by
+  regex alone accepted concrete customer identifiers, because a literal path
+  segment and an account id are syntactically identical. Membership, enforced
+  at construction, the durable write and the audit, is the discriminator.
 - **F-17** — ephemeral private browser profiles with cache and crash dumps
   disabled, normal-exit and crash-path cleanup, and profile residue in the
   persistence audit.

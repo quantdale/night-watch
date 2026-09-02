@@ -32,6 +32,8 @@ import {
   createDevPrivacyPolicy,
   createProductionPrivacyPolicy,
   createProvenKeyVocabulary,
+  createProvenRouteVocabulary,
+  NO_PROVEN_ROUTE_VOCABULARY,
   DEV_PROJECTION_DIGEST_PREFIX,
   NO_PROVEN_VOCABULARY,
   productionStructuralDigest,
@@ -40,6 +42,7 @@ import {
   PRODUCTION_PRIVACY_REASON_CODES,
   projectProduction,
   RawEphemeralSource,
+  ROUTE_TEMPLATE_RE,
   toProductionEvidence,
   type SafeProductionEvidence,
 } from '../../src/core/prodPrivacy';
@@ -143,6 +146,25 @@ function vocabulary() {
   });
 }
 
+
+/**
+ * The source-proven route vocabulary. DEF-C10-5: a route template is safe
+ * because a SOURCE proves it exists, never because it is spelled like one.
+ * C-02a supplies this proof in practice (814 admitted operations).
+ */
+function routeVocabulary() {
+  return createProvenRouteVocabulary({
+    provenanceClass: 'SOURCE_PROVEN_OPENAPI_OPERATION',
+    provenanceDigest: 'ev:sha256:fedcba98765432100123abcd',
+    templates: [
+      'GET /v1/billing/accounts/{accountId}',
+      'GET /v1/billing/groups/{id}',
+      'GET /v1/x',
+      'GET /v1/costs',
+    ],
+  });
+}
+
 function disposableRoot(label: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), `nightwatch-c10-${label}-`));
 }
@@ -157,6 +179,7 @@ function runProductionPipeline(): SafeProductionEvidence {
   return toProductionEvidence({
     projection,
     vocabulary: vocabulary(),
+    routeVocabulary: routeVocabulary(),
     policy,
     routeTemplate: 'GET /v1/billing/accounts/{accountId}',
     statusClass: '2XX',
@@ -211,7 +234,7 @@ test.describe('C-10 acceptance A — sentinel corpus', () => {
     try {
       // Run the complete synthetic production privacy pipeline.
       const evidence = runProductionPipeline();
-      const store = new ProductionFindingsStore({ root: storeRoot });
+      const store = new ProductionFindingsStore({ root: storeRoot, routeVocabulary: routeVocabulary() });
       store.write('finding-0001.json', evidence);
 
       // Console: plant the sentinel in page console output and project it.
@@ -230,6 +253,7 @@ test.describe('C-10 acceptance A — sentinel corpus', () => {
         roots: [storeRoot, profileBase],
         profileBaseDirectories: [profileBase],
         sentinels: [...ALL_SENTINELS, S.consoleText],
+        provenRouteTemplates: [...routeVocabulary().templates],
       });
 
       expect(audit.violations, JSON.stringify(audit.violations)).toEqual([]);
@@ -581,6 +605,7 @@ test.describe('C-10 acceptance D — error-path leakage', () => {
         toProductionEvidence({
           projection: projectProduction(RawEphemeralSource.of({ a: 1 }), NO_PROVEN_VOCABULARY, policy),
           vocabulary: NO_PROVEN_VOCABULARY,
+          routeVocabulary: routeVocabulary(),
           policy,
           routeTemplate: `GET /v1/x?q=${S.queryParam}`,
           statusClass: '2XX',
@@ -589,6 +614,7 @@ test.describe('C-10 acceptance D — error-path leakage', () => {
         toProductionEvidence({
           projection: projectProduction(RawEphemeralSource.of({ a: 1 }), NO_PROVEN_VOCABULARY, policy),
           vocabulary: NO_PROVEN_VOCABULARY,
+          routeVocabulary: routeVocabulary(),
           policy,
           routeTemplate: 'GET /v1/x',
           statusClass: '9XX' as never,
@@ -695,6 +721,7 @@ test.describe('C-10 acceptance E — digest privacy', () => {
     const evidence = toProductionEvidence({
       projection,
       vocabulary: NO_PROVEN_VOCABULARY,
+      routeVocabulary: routeVocabulary(),
       policy,
       routeTemplate: 'GET /v1/x',
       statusClass: '2XX',
@@ -780,7 +807,7 @@ test.describe('C-10 — production artifact root isolation', () => {
   test('the store writes owner-only files atomically and enforces its schema', () => {
     const root = disposableRoot('rootiso');
     try {
-      const store = new ProductionFindingsStore({ root });
+      const store = new ProductionFindingsStore({ root, routeVocabulary: routeVocabulary() });
       const written = store.write('f1.json', runProductionPipeline());
       const stat = fs.lstatSync(written);
       expect(stat.isFile()).toBe(true);
@@ -800,7 +827,7 @@ test.describe('C-10 — production artifact root isolation', () => {
   test('the store refuses a raw response object at the durable write', () => {
     const root = disposableRoot('rawrefuse');
     try {
-      const store = new ProductionFindingsStore({ root });
+      const store = new ProductionFindingsStore({ root, routeVocabulary: routeVocabulary() });
       expect(() => store.write('f1.json', hostileProductionPayload())).toThrow(
         /PRODUCTION_PRIVACY/,
       );
@@ -813,7 +840,7 @@ test.describe('C-10 — production artifact root isolation', () => {
   test('the store refuses an unsafe file name', () => {
     const root = disposableRoot('name');
     try {
-      const store = new ProductionFindingsStore({ root });
+      const store = new ProductionFindingsStore({ root, routeVocabulary: routeVocabulary() });
       for (const name of ['../escape.json', 'a/b.json', 'no-extension', '.hidden.json']) {
         expect(() => store.write(name, runProductionPipeline())).toThrow(
           /PRODUCTION_ARTIFACT_FILE_NAME_UNSAFE/,
@@ -1037,5 +1064,176 @@ test.describe('C-10 Workstream K — SSE cannot become a side channel', () => {
     // the exclusion rule itself.
     expect(source).toContain('assertNotProductionFindingsRoot');
     expect(source).not.toMatch(/ProductionFindingsStore|productionArtifactRoot/);
+  });
+});
+
+// ===========================================================================
+// DEF-C10-5 — sentinels in the ROUTE-IDENTITY position
+//
+// The original sentinel corpus planted query and path parameters as BODY
+// VALUES, which class B already proves are stripped generically. It never
+// planted them in the route-identity position — the one persisted field that
+// can hold a free-form string — so it missed the leak entirely. These cases
+// close that gap at every boundary: construction, the firewall, the durable
+// write, and the post-hoc audit.
+// ===========================================================================
+
+test.describe('C-10 DEF-C10-5 — route identity requires source-proven provenance', () => {
+  const CONCRETE_ROUTES = [
+    `GET /v1/billing/accounts/${S.accountId}`,
+    `GET /v1/invoices/${S.invoiceId}`,
+    `GET /v1/billing/groups/${S.nestedDynamicKey}`,
+    `GET /v1/msp/${S.dynamicKey}`,
+  ];
+
+  test('the concrete routes are SHAPE-valid, proving the regex alone was not enough', () => {
+    // Non-vacuous framing: these strings pass ROUTE_TEMPLATE_RE. That is why
+    // shape could never have been the authority.
+    for (const route of CONCRETE_ROUTES) {
+      expect(ROUTE_TEMPLATE_RE.test(route), `${route} should be shape-valid`).toBe(true);
+    }
+  });
+
+  test('evidence construction refuses a concrete identifier in the route position', () => {
+    const policy = createProductionPrivacyPolicy();
+    for (const route of CONCRETE_ROUTES) {
+      const projection = projectProduction(
+        RawEphemeralSource.of({ status: 'ACTIVE' }),
+        vocabulary(),
+        policy,
+      );
+      let thrown: unknown;
+      try {
+        toProductionEvidence({
+          projection,
+          vocabulary: vocabulary(),
+          routeVocabulary: routeVocabulary(),
+          policy,
+          routeTemplate: route,
+          statusClass: '2XX',
+        });
+      } catch (error) {
+        thrown = error;
+      }
+      expect(thrown, `${route} was accepted`).toBeInstanceOf(ProductionPrivacyError);
+      expect((thrown as ProductionPrivacyError).reasonCode).toBe(
+        'PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED',
+      );
+      // The error itself must not echo the identifier.
+      for (const sentinel of ALL_SENTINELS) {
+        expect((thrown as Error).message).not.toContain(sentinel);
+      }
+    }
+  });
+
+  test('an unproven route vocabulary denies persistence outright', () => {
+    const policy = createProductionPrivacyPolicy();
+    const projection = projectProduction(RawEphemeralSource.of({ status: 'A' }), vocabulary(), policy);
+    expect(() =>
+      toProductionEvidence({
+        projection,
+        vocabulary: vocabulary(),
+        routeVocabulary: NO_PROVEN_ROUTE_VOCABULARY,
+        policy,
+        routeTemplate: 'GET /v1/billing/groups/{id}',
+        statusClass: '2XX',
+      }),
+    ).toThrow(/PRODUCTION_PRIVACY_ROUTE_PROVENANCE_UNRESOLVED/);
+  });
+
+  test('the firewall independently refuses evidence lacking route provenance', () => {
+    const evidence = runProductionPipeline();
+    for (const mutation of [
+      { routeProvenanceClass: 'NONE' },
+      { routeProvenanceClass: 'ASSUMED_SAFE' },
+      { routeProvenanceDigest: 'not-a-digest' },
+    ]) {
+      const tampered = { ...JSON.parse(JSON.stringify(evidence)), ...mutation };
+      expect(() => assertPersistableProductionEvidence(tampered)).toThrow(
+        /ROUTE_PROVENANCE_MISSING/,
+      );
+    }
+  });
+
+  test('the store refuses a concrete-identifier route at the durable write', () => {
+    const root = disposableRoot('routeleak');
+    try {
+      const store = new ProductionFindingsStore({ root, routeVocabulary: routeVocabulary() });
+      // Forge past construction to prove the SECOND boundary also holds.
+      const forged = {
+        ...JSON.parse(JSON.stringify(runProductionPipeline())),
+        routeTemplate: `GET /v1/billing/accounts/${S.accountId}`,
+      };
+      expect(() => store.write('leak.json', forged)).toThrow(/PRODUCTION_PRIVACY/);
+      expect(store.list()).toEqual([]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the persistence audit detects a template-shaped but unproven route on disk', () => {
+    const root = disposableRoot('routeaudit');
+    try {
+      // Written directly, as an upstream defect or an older artifact would be.
+      fs.writeFileSync(
+        path.join(root, 'finding.json'),
+        JSON.stringify({ routeTemplate: `GET /v1/billing/accounts/${S.accountId}` }),
+        { mode: 0o600 },
+      );
+      const audit = auditProductionPersistence({
+        roots: [root],
+        provenRouteTemplates: [...routeVocabulary().templates],
+      });
+      expect(audit.clean).toBe(false);
+      expect(audit.violations.map((violation) => violation.violationClass)).toContain(
+        'RAW_REQUEST_PARAMETER_VALUE',
+      );
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the audit accepts a proven route, so it is not refusing everything', () => {
+    const root = disposableRoot('routeok');
+    try {
+      const store = new ProductionFindingsStore({ root, routeVocabulary: routeVocabulary() });
+      store.write('finding.json', runProductionPipeline());
+      const audit = auditProductionPersistence({
+        roots: [root],
+        sentinels: [...ALL_SENTINELS],
+        provenRouteTemplates: [...routeVocabulary().templates],
+      });
+      expect(audit.violations, JSON.stringify(audit.violations)).toEqual([]);
+      expect(audit.filesInspected).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('persisted evidence records route provenance and no route sentinel', () => {
+    const evidence = runProductionPipeline();
+    expect(evidence.routeProvenanceClass).toBe('SOURCE_PROVEN_OPENAPI_OPERATION');
+    expect(evidence.routeProvenanceDigest).toMatch(/^ev:sha256:[0-9a-f]{24}$/);
+    expect(evidence.routeTemplate).toBe('GET /v1/billing/accounts/{accountId}');
+    const serialized = JSON.stringify(evidence);
+    for (const sentinel of ALL_SENTINELS) {
+      expect(serialized).not.toContain(sentinel);
+    }
+  });
+});
+
+test.describe('C-10 DEF-C10-5 — the store cannot verify a route it has no vocabulary for', () => {
+  test('a store built without a route vocabulary refuses every write', () => {
+    // Fail-closed: not knowing the proven set is not permission to persist.
+    const root = disposableRoot('novocab');
+    try {
+      const store = new ProductionFindingsStore({ root });
+      expect(() => store.write('f.json', runProductionPipeline())).toThrow(
+        /ROUTE_NOT_SOURCE_PROVEN/,
+      );
+      expect(store.list()).toEqual([]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

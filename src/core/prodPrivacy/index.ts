@@ -9,6 +9,7 @@
 export * from './errors';
 export * from './policy';
 export * from './keyVocabulary';
+export * from './routeVocabulary';
 export * from './types';
 export * from './serializer';
 export * from './projector';

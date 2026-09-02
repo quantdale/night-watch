@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-production-privacy-firewall-c10-v1
 Phase: PRODUCTION_PRIVACY_FIREWALL_C10_V1
-Status: COMPLETE
+Status: IN_PROGRESS
 Starting SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
 Branch: session/nightwatch-production-privacy-fi-5af2d530
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -15,7 +15,7 @@ LAST_DOCUMENTATION_CHECKPOINT_SHA: da551f0b875fe46acd8a6a9d64f9b16b07ce0734
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: COMPLETE
+PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: IN_PROGRESS
 
 ## Objective
 
@@ -28,7 +28,10 @@ F-15 digest confusion and the F-18 Control Center exposure.
 
 ## Current Milestone
 
-COMPLETE / STOP — M0 through M11 are closed.
+M12 — DEF-C10-5 repair. C-10 was REOPENED after closure: a review pass found
+that `routeTemplate`, the one free-form string the evidence DTO persists, was
+validated by `ROUTE_TEMPLATE_RE` alone, which cannot distinguish a literal path
+segment from a concrete customer identifier. M0 through M11 remain closed.
 
 ## Completed Milestones
 
@@ -90,9 +93,9 @@ COMPLETE / STOP — M0 through M11 are closed.
 
 ## Work In Progress
 
-None. Implementation, local/clean validation, integration and the exact-head
-GitHub Actions result are all complete. The only remaining step is releasing
-the session worktree and fast-forwarding the canonical checkout.
+M12 — the DEF-C10-5 route-provenance repair is implemented and the C-10 suites
+are green at 93 tests. Remaining: full revalidation, integration and a fresh
+exact-head GitHub Actions result.
 
 ## Files Changed
 
@@ -142,11 +145,10 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-STOP — C-10 is complete. Release the session worktree and fast-forward the
-canonical checkout. Do NOT begin another campaign in this task. The next
-critical-path campaign is C-11, the `PROD_OBSERVE` safety kernel, which
-requires its own explicit owner authorization and its own task directory.
-C-10 completing does NOT authorize production observation.
+Re-run the full §21 validation battery for the DEF-C10-5 repair, integrate
+through the C-00 session mechanism, and obtain a fresh exact-head GitHub
+Actions result. F-16 must NOT be recorded as resolved, and C-10 must NOT be
+recorded as COMPLETE, until that closes.
 
 ## Blockers
 
@@ -157,6 +159,55 @@ None.
 None.
 
 ## Defects
+
+**DEF-C10-5 — a concrete customer identifier could be persisted as a "route
+template" (F-16, CRITICAL).** Found by a review pass AFTER the campaign had
+been closed and CI-certified green, which is the honest and uncomfortable fact
+about it. `routeTemplate` is the only free-form string the production evidence
+DTO persists, and both `toProductionEvidence` and the persistence firewall
+validated it with `ROUTE_TEMPLATE_RE` alone. A literal path segment matches
+`[A-Za-z0-9._~-]+`, which cannot distinguish `accounts` from `481516234299` or
+`invoices` from `INV-2026-000731-SENTINEL`. Verified empirically: all of
+`GET /v1/accounts/481516234299`,
+`GET /v1/invoices/INV-2026-000731-SENTINEL` and
+`GET /v1/billing/groups/bg-SENTINEL-8812` were ACCEPTED. Two of those three are
+members of the campaign's own sentinel set.
+
+Worse, `tests/unit/c10ProductionProjection.test.ts` CERTIFIED the behaviour with
+`expect(() => assertRouteTemplateOnly('GET /v1/accounts/' + SENTINEL_ACCOUNT_ID)).not.toThrow()`
+— the same defect shape this campaign spent effort re-scoping out of
+`phase10Privacy.test.ts`.
+
+Why three checks missed it: the sentinel corpus planted query and path
+parameters as BODY VALUES, which class B already proves are stripped
+generically, and never in the route-identity position — the one persisted field
+that can hold them. The persistence audit's route rule matched only `?` and
+`&`, which a concrete path segment does not contain. And
+`assertNoConcreteParameterValue` likewise screened only `?`, `#` and `&`.
+
+Repaired by mirroring the F-14 answer instead of inventing a second mechanism:
+`src/core/prodPrivacy/routeVocabulary.ts` makes route identity a proven member
+of a source-proven finite route vocabulary (C-02a's 814 admitted operations are
+the proof source), injected call-scoped with a `NO_PROVEN_ROUTE_VOCABULARY`
+sentinel so omission is a type error. Membership is exact-set, so no syntactic
+judgement is made anywhere; `ROUTE_TEMPLATE_RE` is retained ONLY as a
+precondition on what may enter a vocabulary and is documented as never being
+the authority. Unlike a dynamic key, a route has no safe structural reduction,
+so unproven provenance DENIES persistence. Enforced at four boundaries:
+construction, the firewall (provenance recorded), the durable write (membership
+— the store now holds the vocabulary, because the firewall holds none), and the
+post-hoc audit (`provenRouteTemplates`). Disposition: FIXED; the certifying
+assertion is flipped to `.toThrow()` with a case per sentinel class in the path
+position, plus a non-vacuity case proving those strings are shape-valid.
+
+**DEF-C10-6 — the first DEF-C10-5 hardening rule was itself vacuous.** The new
+rule tested for the bare identifier `assertSourceProvenRoute`, which also
+matches the IMPORT line, so deleting the actual call still PASSED. Caught by
+running the non-vacuity probe rather than trusting the rule. Repaired by
+requiring the call bound to its injected vocabulary
+(`assertSourceProvenRoute(request.routeVocabulary`,
+`assertSourceProvenRoute(this.routeVocabulary`). Both removal probes now fail
+closed. Disposition: FIXED.
 
 **DEF-C10-1 — a node could carry a field belonging to a DIFFERENT node type.**
 Found by the C-10 digest-privacy tamper case, not by review. The canonical

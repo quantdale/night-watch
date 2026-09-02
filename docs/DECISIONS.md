@@ -4333,6 +4333,18 @@ retained URL identity is a route template. C-10 supplies the privacy model,
 validators and synthetic proof ONLY, and deliberately creates no production
 request execution path.
 
+Decision (DEF-C10-5): a retained route identity is a PROVEN MEMBER of a
+source-proven finite route vocabulary, never a shape-matched string. Validating
+`routeTemplate` with a regex alone accepted `GET /v1/accounts/481516234299`,
+because a literal path segment and an account id are syntactically identical —
+the same "regex is not proof" failure D-112 rules out for object keys. The
+shape regex is retained only as a precondition on vocabulary contents.
+Membership is enforced at construction, at the durable write (the store holds
+the vocabulary; the firewall holds none and so verifies only that provenance
+was recorded), and in the post-hoc persistence audit. Unlike a dynamic key a
+route has no safe structural reduction, so unproven provenance denies
+persistence outright.
+
 C-10 completing does NOT authorize production observation. It creates the
 privacy prerequisite for the later production kernel; the critical path remains
 C-11 → C-12 → C-13 → C-14.

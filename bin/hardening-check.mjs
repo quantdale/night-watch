@@ -1907,6 +1907,40 @@ function checkC10ProductionPrivacyBoundary() {
     fail('C-10 production store must not resolve the DEV findings root');
   }
 
+  // DEF-C10-5 / F-16: route identity must be decided by source-proven
+  // vocabulary MEMBERSHIP, never by the shape regex alone. `ROUTE_TEMPLATE_RE`
+  // admits any `[A-Za-z0-9._~-]+` segment, so it cannot tell `accounts` from
+  // `481516234299`; relying on it let concrete customer identifiers reach
+  // persisted evidence through the route field.
+  const routeVocabulary = read('src/core/prodPrivacy/routeVocabulary.ts');
+  if (!/isSourceProvenRoute/.test(routeVocabulary) || !/NO_PROVEN_ROUTE_VOCABULARY/.test(routeVocabulary)) {
+    fail('C-10 route identity must be decided by a source-proven route vocabulary (DEF-C10-5)');
+  }
+  if (!/templates\.has\(/.test(routeVocabulary)) {
+    fail('C-10 route provenance must be exact-set membership, not a syntactic judgement (DEF-C10-5)');
+  }
+  const evidenceModule = read('src/core/prodPrivacy/evidence.ts');
+  if (!/assertSourceProvenRoute\(\s*request\.routeVocabulary/.test(evidenceModule)) {
+    fail('C-10 evidence construction must assert source-proven route provenance (DEF-C10-5)');
+  }
+  if (!/routeProvenanceDigest/.test(evidenceModule)) {
+    fail('C-10 persisted evidence must record route provenance (DEF-C10-5)');
+  }
+  if (!/assertSourceProvenRoute\(\s*this\.routeVocabulary/.test(store)) {
+    fail('C-10 production store must re-check route membership at the durable write (DEF-C10-5)');
+  }
+  if (!/ROUTE_PROVENANCE_MISSING/.test(firewall)) {
+    fail('C-10 persistence firewall must reject evidence lacking route provenance (DEF-C10-5)');
+  }
+  const parameterProvenance = read('src/core/prodPrivacy/parameterProvenance.ts');
+  if (!/assertSourceProvenRoute\(\s*routeVocabulary/.test(parameterProvenance)) {
+    fail('C-10 assertRouteTemplateOnly must require route provenance, not shape alone (DEF-C10-5)');
+  }
+  const audit = read('src/core/prodEvidence/persistenceAudit.ts');
+  if (!/provenRouteTemplates/.test(audit)) {
+    fail('C-10 persistence audit must flag a persisted route outside the proven set (DEF-C10-5)');
+  }
+
   // F-18: the Control Center findings authority must be structurally excluded
   // from the production store, on EVERY construction route including the seam.
   const authority = read('src/controlCenter/authorities/findingsAuthority.ts');
