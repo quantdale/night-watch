@@ -125,6 +125,12 @@ exact-head GitHub Actions result.
 | M11 | complete canonical Playwright regression | 2,920 total / 2,907 passed / 13 skipped / 0 failed (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 81 new C-10 cases) |
 | M11 | `npm run gate:local` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, all eleven groups, `receipt:sha256:531bf12aa22c7da419bedf92` |
 | M11 | `npm run gate:clean` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, Node 20, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036` (gate `receipt:sha256:8b79ac2ebd9718766e95a379`) |
+| M12 | `tests/unit/c10*.test.ts` after the DEF-C10-5 repair | 93/93 PASS (81 -> 93; 12 new route-identity cases) |
+| M12 | `npm run hardening:check` | PASS; the DEF-C10-5 rule proven non-vacuous by TWO removal probes (evidence call, store call), after DEF-C10-6 showed the first version matched the import |
+| M12 | `npm run campaign:synthetic` | PASS — 14 files, 221/221 (209 -> 221) |
+| M12 | complete canonical Playwright regression | 2,932 total / 2,919 passed / 13 skipped / 0 failed (2,920 -> 2,932; delta is exactly the 12 new cases) |
+| M12 | `npm run gate:local` @ `23523cc743c77b2250738caa980c218dab8671bb` | PASS, all eleven groups, `receipt:sha256:e9b6be885532544ed7233a02` |
+| M12 | `npm run gate:clean` @ `23523cc743c77b2250738caa980c218dab8671bb` | PASS, Node 20, all eleven groups, `clean-receipt:sha256:6a1d1bc5870510c0b4dfedfe`, `siblingWrites: 0` |
 | M11 | exact-head GitHub Actions run `33597262624` / job `100143115528` @ `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` | PASS — Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:2adf16776476b94f87e8c87c` |
 
 ## Decisions Made During This Task
