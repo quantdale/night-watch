@@ -339,12 +339,25 @@ certification of its substantive ancestor.
 | Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
 | CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `e11cf64`, run `33656654543`, `EXECUTED_PASS` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
-| Latest observed exact-head run | the newest run whose `headSha` equalled the then-current head | run `33637832941` at `c423e33` |
+| Latest observed exact-head run | the newest run observed WHEN THIS RECORD WAS WRITTEN — a historical observation, not a live claim | run `33657772689` / job `100340513895` at `cb4eabf`, PASS, all eleven groups |
 
 The commit RECORDING a receipt is necessarily a descendant of the commit the
 run certified, since a field cannot name the SHA of the commit containing it.
 So "certified at the exact head" is a statement about the moment a run
 executed, never a permanent property of a SHA.
+
+That is also why the last row is phrased as a HISTORICAL observation. A field
+defined as "the newest run that exists" can never be written truthfully,
+because writing it creates a newer commit and therefore a newer run — the
+regress this table exists to end. Pinned to the commit that recorded it, the
+statement stays true permanently, and a later documentation descendant having
+its own green run does not make it stale.
+
+R-11's closure demonstrated the fixpoint in practice: run `33656654543` at
+`e11cf64` certified the campaign, the closure commit `cb4eabf` recorded it, and
+`cb4eabf`'s own run `33657772689` also passed all eleven groups with receipt
+`receipt:sha256:6eba44386a974e28ddd96c81` — confirming that a
+documentation-only descendant has nothing left to reject.
 
 **That run was obtained by re-running a failed job, and that is recorded rather
 than hidden.** The first attempt at `29b9212` failed with exactly one test,
