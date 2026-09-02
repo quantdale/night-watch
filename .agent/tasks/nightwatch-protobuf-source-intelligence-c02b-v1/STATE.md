@@ -70,10 +70,9 @@ M8. Nothing partial: M1-M7 are closed.
 
 ## Exact Next Action
 
-Run the full validation matrix — typecheck, hardening, handoff, project, agent,
-agent audit, workspace, gate inventory, semantic compatibility, synthetic
-campaign, the full canonical regression, `gate:local`, then `gate:clean` with
-campaign writes frozen — then integrate per C-00 and observe exact-head CI.
+Integrate the session branch to `origin/main` by verified fast-forward, observe
+exact-head GitHub Actions, record the CI result in the project-state block,
+then run `gate:local` and `gate:clean` with campaign writes frozen and close.
 
 ## Files Changed
 
@@ -105,6 +104,7 @@ campaign writes frozen — then integrate per C-00 and observe exact-head CI.
 | `bin/hardening-check.mjs` | `checkC02bProtobufBoundary()` — six guarded invariants | PASS |
 | `config/synthetic-campaign.v1.json` | the three C-02b suites gate-registered | PASS |
 | `tests/unit/syntheticCampaignDiagnostics.test.ts` | membership assertion for the C-02b suites | PASS |
+| `docs/CURRENT_STATE.md` | substantive implementation anchor advanced to f479b02 | COMMITTED |
 
 ## Validation Ledger
 
@@ -220,6 +220,50 @@ matched the comment in `approvedScan.ts` that documents blueinternal's absence.
 Both are the C-11 lesson about plausible rules matching irrelevant occurrences
 of the same identifier, caught here rather than shipped. Probe B3 then found a
 genuinely vacuous test; see the discovery below.
+
+Command: `npm run test:semantic-compat`
+Result: PASS
+When: 2026-09-03, session worktree at f479b02
+Relevant failure/output summary: 2,033 total / 2,020 passed / 13 skipped / 0
+failed across 22 phases and 146 files.
+
+Command: `npm run campaign:synthetic`
+Result: PASS
+When: 2026-09-03, session worktree at f479b02
+Relevant failure/output summary: 21 files, 451 total / 451 passed / 0 failed,
+`deepContainmentLane: PROVEN`. Up from C-11's 366 by exactly the 85 tests of
+the three newly registered C-02b suites.
+
+Command: `npx playwright test --project=nightwatch --workers=1` (full canonical
+regression)
+Result: PASS
+When: 2026-09-03, session worktree at f479b02
+Relevant failure/output summary: 3,228 total / 3,215 passed / 13 skipped / 0
+failed in 7.1 minutes. C-11 recorded 3,141 at its checkpoint; 86 of the +87 are
+attributable to this campaign (85 in the three C-02b suites, 1 gate-membership
+assertion). The residual +1 is not a campaign effect: this run reports
+`deepContainmentLane: PROVEN` where C-11's CI reported
+`NOT_EXERCISED_BWRAP_UNAVAILABLE`, so an additional containment test executes
+here. Exact-head CI settles it.
+
+Command: `npm run gate:local`
+Result: FAIL — PROJECT_TRUTH only, classified PROJECT_TRUTH_ORDERING
+When: 2026-09-03, session worktree at f479b02
+Relevant failure/output summary: receipt
+`receipt:sha256:b28d31c552ae9ab2f6c1e081`, persisted to
+`/tmp/nightwatch-gate-receipts/local-f479b022cc47.json`. GATE_DEFINITION,
+STATIC, HARDENING and HANDOFF_TRUTH PASS; PROJECT_TRUTH TEST_FAILURE with
+`PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE` and
+`PROJECT_STATE_CI_BASELINE_STALE`; the remaining seven groups NOT_RUN because
+AGENT_CONTINUITY depends on PROJECT_TRUTH.
+
+This is the expected cross-authority ordering, not a defect and not a flake.
+It was confirmed mechanically rather than assumed: advancing the substantive
+anchor alone clears `SUBSTANTIVE_BASELINE_STALE` and leaves
+`CI_BASELINE_STALE`, which can only clear once a real CI run on the new head
+is recorded. C-11's own history took the same three commits — 7879660
+substantive, b8cd4e8 anchors, 150dfcc CI result — so the route is the
+repository's documented one.
 
 ## Decisions Made During This Task
 
