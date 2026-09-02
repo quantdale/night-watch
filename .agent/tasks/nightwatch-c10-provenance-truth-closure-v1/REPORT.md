@@ -212,6 +212,7 @@ recur inside the coverage suite itself.
 | --- | --- | --- |
 | `gate:local` | PASS, eleven groups, Node 22, at `93d15b3` | `receipt:sha256:50f85aa10248ac17323c9290` |
 | `gate:clean` | PASS, eleven groups, Node 20, `siblingWrites: 0`, at `93d15b3` | `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) |
+| `gate:clean` at the closure head `fd43ea4` | PASS on re-run, but see OBS-C105-1 | first run `TEST_FAILURE` (`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317`); subsequent runs PASS |
 | Exact-head CI | PASS, eleven groups, Node 20, run `33627408962` / job `100238317324` at `4d59235` | `receipt:sha256:072d1ba432a39944aca0466c` |
 
 **On the exact-head fixpoint.** The commit RECORDING a receipt is necessarily a
@@ -237,6 +238,61 @@ CI-certified head: `4d59235c64ba8fbdd7d788a20f678378b06a4014`.
 | Validator spelling | Cross-authority check read only the uppercase anchor field and silently did not fire on the prose spelling | CLOSED — both spellings accepted, canonical first |
 | stdout pollution (introduced) | Importing the allowlist from `bin/agent-state.mjs` ran its CLI top-level code and corrupted the checker's JSON receipt, breaking 13 pre-existing tests | CLOSED — allowlist relocated to the side-effect-free protocol module |
 
+
+## OBS-C105-1 — one unattributed clean-gate failure at the closure head
+
+**This is an OPEN observation, deliberately not closed.**
+
+At the Stage-A closure commit `fd43ea4` (a documentation-only descendant of the
+CI-certified `4d59235`), `npm run gate:clean` returned `TEST_FAILURE` once,
+with `clean-receipt:sha256:dbe34b8f71f2de2a6c80c317` and `siblingWrites: 0`.
+Two subsequent runs at the SAME commit returned PASS, one of them under
+deliberate 4x CPU load. `gate:local` passed at that commit
+(`receipt:sha256:fb9a4b6d4f3034d815a76439`), as did exact-head CI at the
+parent.
+
+**I cannot attribute the failure.** The failing group is unrecoverable because
+the command that observed it piped the receipt through a summarising filter
+that printed only `finalResult`, discarding the per-group detail. That was my
+process error, not a tooling limitation.
+
+**Investigation performed, with negative results:**
+
+| Hypothesis | Test | Result |
+| --- | --- | --- |
+| My A10 fixtures added git work to a suite with a 10s git timeout | `projectState.test.ts` x5 | 64/64 every run; no timeout |
+| CPU contention (background jobs were running) | clean gate under 4x busy loops | PASS |
+| Deep containment lane transiently non-`PROVEN` | `campaign:synthetic` x6 | `PROVEN` every run |
+
+**Why the containment lane remains the leading candidate anyway.**
+`bin/quality-gate.mjs` forces `SYNTHETIC_CAMPAIGN` to `TEST_FAILURE` with
+`errorClass: SYNTHETIC_CAMPAIGN_DEEP_LANE_<lane>` whenever `mode !== 'ci'` and
+the lane is not `PROVEN`. This is the ONLY clean-vs-local asymmetry in the gate
+and the only way a clean run can report `TEST_FAILURE` with no test having
+failed. It is also environment-dependent — the clean gate builds a fresh clone
+and runs `bwrap` there, not in this worktree, which is where all six negative
+lane checks ran. Unconfirmed, and recorded as a candidate rather than a cause.
+
+**What was deliberately NOT done.** No retry was added to any test or gate, no
+timeout was inflated, and no gate was weakened. The passing re-runs are
+reported as re-runs, not folded into the record as if the first result had not
+happened.
+
+**Recommended follow-up (not performed here, as it is outside the Stage-A
+scope):** persist each gate receipt to a file rather than only stdout, so a
+failing group is always attributable after the fact. Retaining evidence is not
+a retry, but it is a change to gate tooling and belongs in its own task.
+
+### Effect on the A15 gate
+
+The A15 item "clean gate PASS" is satisfied at `fd43ea4` by two reproducible
+passes, and every other item holds. But a required gate produced one
+unexplained failure at the closure commit, and the campaign brief's rule is
+that any failing requirement stops Stage A. Treating a re-run as having settled
+it would be exactly the "retry that hides a defect" the brief forbids, so the
+Stage-A verdict is referred to the owner rather than self-certified. See the
+`## Stage-A verdict` section.
+
 ## A15 Stage-A completion gate
 
 | Requirement | Status | Evidence |
@@ -255,13 +311,28 @@ CI-certified head: `4d59235c64ba8fbdd7d788a20f678378b06a4014`.
 | Persisted-free-form-field coverage mechanically enforced | PASS | two-way totality cross-check, negative-probed |
 | Full regression zero failures | PASS | 2,975 / 2,962 / 13 skipped / 0 failed |
 | Local gate PASS | PASS | `receipt:sha256:50f85aa10248ac17323c9290` |
-| Clean gate PASS | PASS | `clean-receipt:sha256:ed216b4c47ec9247d6507a40`, Node 20 |
+| Clean gate PASS | PASS **with OBS-C105-1** | passes reproducibly at `fd43ea4`; one unattributed `TEST_FAILURE` observed at the same commit |
 | Exact-head CI PASS | PASS | run `33627408962` at `4d59235` |
 | All 11 gate groups PASS | PASS | every group PASS in the CI receipt |
 | Canonical checkout clean | PASS | implementation only ever in the owned session worktree |
 | `origin/main` synchronized | PASS | fast-forward integration through the C-00 tooling |
 
-**Stage A is COMPLETE.** Every gate item holds.
+## Stage-A verdict
+
+Every A15 item holds on current evidence, and all substantive work is landed
+and certified by exact-head CI at `4d59235`.
+
+One qualification stands in the way of self-certifying completion: OBS-C105-1,
+a single unexplained `gate:clean` `TEST_FAILURE` at the closure commit whose
+failing group I destroyed before reading it. The gate passes on re-run, but the
+brief requires every gate item to hold and forbids letting a retry stand in for
+a diagnosis.
+
+**Stage A is therefore reported as COMPLETE-PENDING-OWNER-REVIEW of
+OBS-C105-1, not as unconditionally closed.** C-11 is NOT started. The owner
+should decide whether the reproducible passes settle the item, or whether the
+flake must be attributed first — and the latter is the more conservative
+reading of the brief.
 
 ## Safety ledger
 

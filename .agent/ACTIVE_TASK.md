@@ -9,7 +9,7 @@ Starting SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
 Last validated implementation SHA: c763c056d306172df3c03c03781f5ec5516944e9
 Last checkpoint: exact-head GitHub run 33627408962 / job 100238317324 at 4d59235 passed all eleven required groups on Node 20 with receipt receipt:sha256:072d1ba432a39944aca0466c and SYNTHETIC_CAMPAIGN 256/256; local gate receipt:sha256:50f85aa10248ac17323c9290 and clean Node 20 gate clean-receipt:sha256:ed216b4c47ec9247d6507a40 green with siblingWrites 0; canonical regression 2,975 total / 2,962 passed / 13 skipped / 0 failed; DEF-C105-1 found and repaired before closure
 Current milestone: COMPLETE / STOP — M0 through M12 are closed
-Next action: STOP — Stage A (C-10.5) is complete and exact-head CI certified. Do NOT begin Stage B (C-11 PROD_OBSERVE) in this task: it requires its own separately recorded task, OpenSpec change and audit trail so the two stages stay separately auditable. Stage A passing authorizes C-11 to begin; it grants no production connectivity
+Next action: STOP — Stage A (C-10.5) substantive work is complete and exact-head CI certified, with OBS-C105-1 recorded OPEN (one unattributed gate:clean TEST_FAILURE at the closure commit; passes on re-run, failing group unrecoverable). Owner review of OBS-C105-1 is required before C-11. Do NOT begin Stage B (C-11 PROD_OBSERVE) in this task: it requires its own separately recorded task, OpenSpec change and audit trail so the two stages stay separately auditable. Stage A passing authorizes C-11 to begin; it grants no production connectivity
 Authorization class: NIGHTWATCH_C10_PROVENANCE_TRUTH_CLOSURE_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

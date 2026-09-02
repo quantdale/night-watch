@@ -150,6 +150,8 @@ approved documentation.
 | `gate:local` | PASS | Node 22, all eleven groups, `receipt:sha256:50f85aa10248ac17323c9290` at `93d15b3` |
 | `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:ed216b4c47ec9247d6507a40` (inner gate `receipt:sha256:8ebb52eacf14b0da3b36ca9b`) at `93d15b3` |
 | Exact-head GitHub Actions | PASS | run `33627408962` / job `100238317324` at `4d59235`, Node 20, all eleven groups, `SYNTHETIC_CAMPAIGN` 256/256, receipt `receipt:sha256:072d1ba432a39944aca0466c` |
+| `gate:local` at closure head `fd43ea4` | PASS | `receipt:sha256:fb9a4b6d4f3034d815a76439` |
+| `gate:clean` at closure head `fd43ea4` | PASS on re-run — see OBS-C105-1 | one unattributed `TEST_FAILURE` (`clean-receipt:sha256:dbe34b8f71f2de2a6c80c317`), then PASS twice including under 4x CPU load |
 
 ### Negative probes (proving the new gates bite rather than pass vacuously)
 
@@ -228,7 +230,18 @@ tamper set is TOTAL over string-capable evidence-root positions.
 
 ## Blockers
 
-None.
+OBS-C105-1 — one unattributed `gate:clean` `TEST_FAILURE` at the closure commit
+`fd43ea4`. The gate passes reproducibly on re-run, but the failing group is
+unrecoverable because the observing command filtered the receipt down to
+`finalResult` before I read it (my process error). Three hypotheses were tested
+and all came back negative; the forced
+`SYNTHETIC_CAMPAIGN_DEEP_LANE_*` downgrade remains the leading candidate
+because it is the only clean-vs-local asymmetry in the gate, but it is
+unconfirmed.
+
+No retry, timeout inflation or gate weakening was applied. Because the brief
+stops Stage A on any failing requirement, the Stage-A verdict is referred to
+the owner rather than self-certified. Full detail in `REPORT.md`.
 
 ## Safety Events
 
@@ -247,8 +260,13 @@ None. Safety ledger:
 
 ## Deferred / Follow-Up
 
-C-11 `PROD_OBSERVE` (Stage B) is deliberately not started in this task and is
-hard-gated behind the Stage-A completion gate.
+- C-11 `PROD_OBSERVE` (Stage B) is deliberately not started in this task and is
+  hard-gated behind the Stage-A completion gate.
+- OBS-C105-1 attribution, and the tooling change it argues for: persist each
+  quality-gate receipt to a file rather than only stdout, so a failing group is
+  always attributable after the fact. Retaining evidence is not a retry, but it
+  changes gate tooling and belongs in its own task rather than being smuggled
+  into a closeout.
 
 ## Resume Recipe
 
@@ -259,9 +277,11 @@ given for Stage B plus a fresh session worktree.
 
 ## Completion Snapshot
 
-COMPLETE. Every item of the A15 Stage-A gate holds; the item-by-item table is
-in `REPORT.md`. Stage A is certified by exact-head GitHub Actions run
-`33627408962` at `4d59235`.
+COMPLETE-PENDING-OWNER-REVIEW of OBS-C105-1. Every A15 item holds on current
+evidence and the item-by-item table is in `REPORT.md`; all substantive work is
+landed and certified by exact-head GitHub Actions run `33627408962` at
+`4d59235`. The one qualification is OBS-C105-1 (see `## Blockers`), which is
+recorded open rather than closed by re-run.
 
 Stage B (C-11 `PROD_OBSERVE`) is NOT started. The Stage-A gate passing
 AUTHORIZES C-11 to begin in a new task; it does not itself begin it, and it
