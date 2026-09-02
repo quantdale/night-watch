@@ -3,22 +3,23 @@
 Task ID: nightwatch-production-privacy-firewall-c10-v1
 Phase: PRODUCTION_PRIVACY_FIREWALL_C10_V1
 Title: C-10 Production Privacy Firewall
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-production-privacy-firewall-c10-v1
 Starting SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-Last validated implementation SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-Last checkpoint: campaign opened from the predecessor's validated exact-head CI baseline; task records and the dedicated OpenSpec change carrying the Workstream A persistence-cone audit are written
-Current milestone: M0 — task records and OpenSpec change
-Next action: track the OpenSpec change, run handoff:check and agent:check, then begin M1/M2 — the pure production privacy cone (policy, proven key vocabulary, production projection types)
+Last validated implementation SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
+Last checkpoint: exact-head GitHub run 33597262624 / job 100143115528 at da551f0b passed all eleven required groups with receipt receipt:sha256:2adf16776476b94f87e8c87c on Node 20; local and clean Node 20 gates green at 69de7752 and a 2,920-test canonical regression green with 0 failures
+Current milestone: COMPLETE / STOP — M0 through M11 are closed
+Next action: STOP — this campaign is complete; do not begin another campaign in this task, and do not run any implementation session in the canonical checkout. C-10 completing does NOT authorize production observation; the next critical-path campaign is C-11 PROD_OBSERVE, which requires its own explicit owner authorization
 Authorization class: NIGHTWATCH_PRODUCTION_PRIVACY_FIREWALL_C10_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-LAST_VALIDATED_IMPLEMENTATION_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_VALIDATED_IMPLEMENTATION_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
+LAST_DOCUMENTATION_CHECKPOINT_SHA: da551f0b875fe46acd8a6a9d64f9b16b07ce0734
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: IN_PROGRESS
+PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

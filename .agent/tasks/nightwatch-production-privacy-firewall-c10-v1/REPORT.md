@@ -1,7 +1,18 @@
 # REPORT.md
 
-**Task:** nightwatch-production-privacy-firewall-c10-v1
-**Campaign:** C-10 — Production Privacy Firewall
+Task: nightwatch-production-privacy-firewall-c10-v1
+
+Campaign: C-10 — Production Privacy Firewall
+
+Status: COMPLETE
+
+Starting SHA: `a152889a71eec6c67d82b05e5984df6423fe88d4`
+Validated implementation SHA: `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`
+Documentation checkpoint SHA: `da551f0b875fe46acd8a6a9d64f9b16b07ce0734`
+
+C-10 completing does NOT authorize production observation. It creates the
+privacy prerequisite required by the later production kernel. The production
+critical path remains C-11 -> C-12 -> C-13 -> C-14, and C-11 was not started.
 
 ## 1. Git and CI anchors
 
@@ -12,14 +23,15 @@
 | Substantive implementation SHA (locally and clean-gate validated) | `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` |
 | Integrated `origin/main` | `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` |
 | Session branch | `session/nightwatch-production-privacy-fi-5af2d530` |
-| Exact-head GitHub Actions | run `33597262624` at `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` (see §3) |
+| Exact-head GitHub Actions | run `33597262624` / job `100143115528` at `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` — **PASS**, Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:2adf16776476b94f87e8c87c` |
 
 ## 2. Local and clean receipts
 
 | Gate | Head | Result |
 |---|---|---|
 | `gate:local` (Node 22) | `69de7752` | PASS, all eleven groups, `receipt:sha256:531bf12aa22c7da419bedf92` |
-| `gate:clean` (Node 20, fresh clone, `npm ci`) | `69de7752` | PASS, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036`, gate `receipt:sha256:8b79ac2ebd9718766e95a379` |
+| `gate:clean` (Node 20, fresh clone, `npm ci`) | `69de7752` | PASS, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036`, gate `receipt:sha256:8b79ac2ebd9718766e95a379`, `siblingWrites: 0` |
+| `gate:ci` exact-head GitHub Actions | `da551f0b` | PASS, all eleven groups, `receipt:sha256:2adf16776476b94f87e8c87c` |
 
 `GATE_DEFINITION`, `STATIC`, `HARDENING`, `HANDOFF_TRUTH`, `PROJECT_TRUTH`,
 `AGENT_CONTINUITY`, `SEMANTIC_COMPATIBILITY`, `OWNER_PROVENANCE`,

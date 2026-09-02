@@ -4,17 +4,18 @@
 
 Task ID: nightwatch-production-privacy-firewall-c10-v1
 Phase: PRODUCTION_PRIVACY_FIREWALL_C10_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
 Branch: session/nightwatch-production-privacy-fi-5af2d530
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: a152889a71eec6c67d82b05e5984df6423fe88d4
-LAST_VALIDATED_IMPLEMENTATION_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_VALIDATED_IMPLEMENTATION_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 69de7752ca92dc9c01f971e1c2e7d7efcb4569eb
+LAST_DOCUMENTATION_CHECKPOINT_SHA: da551f0b875fe46acd8a6a9d64f9b16b07ce0734
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: IN_PROGRESS
+PHASE_PRODUCTION_PRIVACY_FIREWALL_C10_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,7 +28,7 @@ F-15 digest confusion and the F-18 Control Center exposure.
 
 ## Current Milestone
 
-M11 — full validation and integration. M0 through M10 are closed.
+COMPLETE / STOP — M0 through M11 are closed.
 
 ## Completed Milestones
 
@@ -89,8 +90,9 @@ M11 — full validation and integration. M0 through M10 are closed.
 
 ## Work In Progress
 
-Implementation and local/clean validation are complete. Remaining: C-00
-integration, the exact-head GitHub Actions result, and the closeout records.
+None. Implementation, local/clean validation, integration and the exact-head
+GitHub Actions result are all complete. The only remaining step is releasing
+the session worktree and fast-forwarding the canonical checkout.
 
 ## Files Changed
 
@@ -120,6 +122,7 @@ integration, the exact-head GitHub Actions result, and the closeout records.
 | M11 | complete canonical Playwright regression | 2,920 total / 2,907 passed / 13 skipped / 0 failed (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 81 new C-10 cases) |
 | M11 | `npm run gate:local` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, all eleven groups, `receipt:sha256:531bf12aa22c7da419bedf92` |
 | M11 | `npm run gate:clean` @ `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb` | PASS, Node 20, all eleven groups, `clean-receipt:sha256:ebe45a42352d5621b20c1036` (gate `receipt:sha256:8b79ac2ebd9718766e95a379`) |
+| M11 | exact-head GitHub Actions run `33597262624` / job `100143115528` @ `da551f0b875fe46acd8a6a9d64f9b16b07ce0734` | PASS — Node 20, `environmentClass: CI`, all eleven required groups PASS, `receipt:sha256:2adf16776476b94f87e8c87c` |
 
 ## Decisions Made During This Task
 
@@ -139,10 +142,11 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-Integrate through the C-00 session mechanism
-(`node bin/nightwatch-session.mjs integrate`), then obtain the exact-head
-GitHub Actions result for the integrated head and record the run and job in
-this file and in `REPORT.md`. Release the session worktree afterwards.
+STOP — C-10 is complete. Release the session worktree and fast-forward the
+canonical checkout. Do NOT begin another campaign in this task. The next
+critical-path campaign is C-11, the `PROD_OBSERVE` safety kernel, which
+requires its own explicit owner authorization and its own task directory.
+C-10 completing does NOT authorize production observation.
 
 ## Blockers
 
@@ -209,17 +213,33 @@ None recorded yet.
 
 ## Resume Recipe
 
-1. `cd /home/dalepalaca/.nightwatch/worktrees/nightwatch-production-privacy-fi-5af2d530`
-   and run `node bin/nightwatch-session.mjs status`; a non-`PASS` verdict is a
-   stop condition.
-2. Read `SPEC.md`, then `PLAN.md`, then this file; resume from
-   `## Exact Next Action`.
-3. Run the smallest decisive validation for the open milestone before adding
-   new work: `npm run typecheck` and `npm run hardening:check`.
+Task complete. Do not resume this task. The C-10 production privacy firewall is
+closed — implementation, local, clean Node 20 and exact-head CI validation,
+integration and truth records are all done — and its session worktree is
+released. C-10 does NOT authorize production observation; the next
+critical-path campaign is C-11 `PROD_OBSERVE`, which requires a new
+authorization and its own task directory.
 
 ## Completion Snapshot
 
-Not complete. This section is filled at campaign close with the substantive
-implementation SHA, the exact-head GitHub Actions run and job, the local and
-clean gate receipts, the complete regression totals, the C-10 suite totals, and
-the persistence-audit, sentinel-corpus and import-isolation results.
+- **Starting SHA:** `a152889a71eec6c67d82b05e5984df6423fe88d4`
+- **Substantive implementation SHA (local + clean gates):** `69de7752ca92dc9c01f971e1c2e7d7efcb4569eb`
+- **Integrated substantive checkpoint (exact-head CI validated):** `da551f0b875fe46acd8a6a9d64f9b16b07ce0734`
+- **Exact-head CI:** run `33597262624` / job `100143115528` at `da551f0b`,
+  Node 20, `environmentClass: CI`, PASS, all eleven required groups PASS,
+  `receipt:sha256:2adf16776476b94f87e8c87c`
+- **Local gate:** PASS @ `69de7752`, `receipt:sha256:531bf12aa22c7da419bedf92`
+- **Clean Node 20 gate:** PASS @ `69de7752`,
+  `clean-receipt:sha256:ebe45a42352d5621b20c1036`, `siblingWrites: 0`
+- **Canonical regression:** 2,920 total / 2,907 passed / 13 skipped / 0 failed
+  (baseline 2,839 / 2,826 / 13 / 0; delta is exactly the 81 new C-10 cases)
+- **Synthetic campaign:** 14 files, 209/209, `deepContainmentLane: PROVEN`
+- **C-10 suites:** 81 tests in 2 files, 81 passed
+- **Sentinel corpus:** zero sentinel bytes under any permitted root; non-vacuous
+  per channel; sweep proven capable of failing
+- **Persistence audit:** CLEAN, zero violations, bounded counts
+- **Import isolation:** PASS, and the hardening rule proven non-vacuous
+- **Defects:** DEF-C10-1 through DEF-C10-4, all FIXED
+- **Safety:** no test or safety authority weakened; C-06 untouched; zero
+  DEV/NEXT/production contact; zero credential inspection; zero
+  sibling-repository writes; C-11 not started

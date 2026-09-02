@@ -118,7 +118,7 @@ Digest families (F-15) are named so they cannot be merged:
 
 ## Milestones
 
-### M0 — Records and OpenSpec — Status: IN_PROGRESS
+### M0 — Records and OpenSpec — Status: COMPLETE
 Objective: truthful task records and a dedicated OpenSpec change carrying the
 Workstream A audit.
 Files: `.agent/tasks/nightwatch-production-privacy-firewall-c10-v1/*`,
@@ -126,63 +126,63 @@ Files: `.agent/tasks/nightwatch-production-privacy-firewall-c10-v1/*`,
 Acceptance: `npm run agent:check`, `npm run handoff:check` pass with the
 OpenSpec change tracked.
 
-### M1 — Workstream A persistence-cone audit — Status: NOT_STARTED
+### M1 — Workstream A persistence-cone audit — Status: COMPLETE
 Objective: the complete data-flow graph, classified, in `audit.md`.
 Acceptance: every enumerated class from the brief §5 appears with a
 classification and a named code path; zero `UNKNOWN` left unresolved without an
 explicit fail-closed disposition.
 
-### M2 — Pure cone: policy, key vocabulary, types — Status: NOT_STARTED
+### M2 — Pure cone: policy, key vocabulary, types — Status: COMPLETE
 Objective: `ProductionPrivacyPolicy` (versioned, fail-closed construction),
 `ProvenKeyVocabulary`, and the production projection DTO vocabulary.
 Acceptance: focused unit suite; `typecheck`.
 
-### M3 — Production projector (F-14) — Status: NOT_STARTED
+### M3 — Production projector (F-14) — Status: COMPLETE
 Objective: raw -> `SAFE_STRUCTURAL_PROJECTION` with key provenance.
 Acceptance: sentinel key proven present in raw input and absent after the
 boundary; property/totality corpus green.
 
-### M4 — Serializer + structural digest (F-15) — Status: NOT_STARTED
+### M4 — Serializer + structural digest (F-15) — Status: COMPLETE
 Objective: canonical production serialization and `prodstruct:sha256:`.
 Acceptance: digest privacy suite — stability, value-insensitivity, key-literal
 exclusion, no salt, no durable value digest, families not interchangeable.
 
-### M5 — Safe evidence DTO + persistence firewall (D, F) — Status: NOT_STARTED
+### M5 — Safe evidence DTO + persistence firewall (D, F) — Status: COMPLETE
 Objective: `SAFE_PRODUCTION_EVIDENCE` builder and an INDEPENDENT re-validating
 firewall at the durable-write boundary.
 Acceptance: firewall rejects every denylisted class with categorical codes and
 zero raw interpolation.
 
-### M6 — Production artifact root (G) — Status: NOT_STARTED
+### M6 — Production artifact root (G) — Status: COMPLETE
 Objective: `$HOME/.nightwatch/prod-findings/` store, separate policy identity,
 0700/0600, symlink-refusing, atomic, bounded.
 Acceptance: synthetic store suite against an INJECTED temp root; the default
 root is asserted to RESOLVE correctly without being created.
 
-### M7 — Control Center exclusion (H, K) — Status: NOT_STARTED
+### M7 — Control Center exclusion (H, K) — Status: COMPLETE
 Objective: resolved-path-equivalence rejection of the production root in both
 the normal authority and the test seam, plus SSE projection safety.
 Acceptance: DEV findings still work; production-root injection rejected;
 symlink/path-equivalence tricks fail; hardening invariant added.
 
-### M8 — Console, screenshots, traces, browser profile (I) — Status: NOT_STARTED
+### M8 — Console, screenshots, traces, browser profile (I) — Status: COMPLETE
 Objective: production-specific invariants, not accidental consequences of
 authenticated mode; ephemeral profile controls and crash-path cleanup.
 Acceptance: planted console sentinel absent from all durable outputs;
 enabling a production screenshot or trace is a contract failure.
 
-### M9 — Parameter provenance (J) — Status: NOT_STARTED
+### M9 — Parameter provenance (J) — Status: COMPLETE
 Objective: opaque-handle privacy model + validators + synthetic proof. No
 production request execution path.
 Acceptance: no value in logs, budget keys, replay fingerprints, checkpoints,
 errors, receipts or persisted URL; route-template URL identity.
 
-### M10 — Import isolation + acceptance suite + persistence audit — Status: NOT_STARTED
+### M10 — Import isolation + acceptance suite + persistence audit — Status: COMPLETE
 Objective: `hardening:check` rule for the pure cone; all five §6.5 classes;
 deterministic persistence audit over every permitted root.
 Acceptance: audit reports bounded counts and zero categorical violations.
 
-### M11 — Full validation and integration — Status: NOT_STARTED
+### M11 — Full validation and integration — Status: COMPLETE
 Objective: the complete §21 command set, then integration and an exact-head
 GitHub Actions result.
 Acceptance: all eleven gate groups PASS at the exact head.
