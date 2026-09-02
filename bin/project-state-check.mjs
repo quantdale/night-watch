@@ -27,7 +27,6 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { isApprovedCheckpointPath } from './agent-state.mjs';
 import {
   findDuplicateFields,
   fieldValue,
@@ -37,6 +36,10 @@ import {
   normalizeTaskStatus,
   parseMarkdownSections,
   parseKeyValuesWithLocations,
+  // The approved-checkpoint allowlist. Imported from the shared protocol
+  // module rather than from bin/agent-state.mjs, whose top-level CLI code
+  // writes to stdout and would corrupt this checker's JSON receipt.
+  isApprovedCheckpointPath,
 } from './agent-continuity-protocol.mjs';
 
 const PROJECT_STATE_PROTOCOL_VERSION = 'nightwatch.project-state.v2';

@@ -815,3 +815,65 @@ export function inspectLegacyTask(task, status) {
 }
 
 export { PROTOCOL_LEGACY as LEGACY_PROTOCOL };
+
+// A task-state commit necessarily changes the repository after the last
+// validated implementation baseline. Keep this allowlist deliberately narrow:
+// arbitrary documentation or source descendants must not look synchronized.
+export const APPROVED_CHECKPOINT_PATHS = [
+  /^AGENTS\.md$/,
+  // The repository README is a durable operator-facing program document;
+  // allow its terminal updates without relabeling them as implementation.
+  /^README\.md$/,
+  // The executor prompt is a planning-only checkpoint. It may change the
+  // campaign route without relabeling the prior substantive implementation.
+  /^\.agent\/(?:ACTIVE_TASK\.md|EXECUTION_PROMPT\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
+  /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|HANDOFF|WORKSTREAMS|ACCEPTANCE_MATRIX|DEFECT_LEDGER|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER|MASS_IMPLEMENTATION_HANDOFF)\.md$/,
+  // Durable program artifacts mandated by AGENTS.md and the multi-session
+  // program plans (HARDENING_HANDOFF/MASTER_PLAN; SESSION_* specs), plus the
+  // Phase-15P parallel-execution artifacts (PROPOSAL, SUBAGENT_LEDGER,
+  // INTEGRATION_LEDGER, MASS_IMPLEMENTATION_HANDOFF) mandated by
+  // PHASE_15_PARALLEL_16_AGENT_IMPLEMENTATION_LOCAL_ONLY and
+  // PHASE_15P_MASS_BULK_IMPLEMENTATION_ONLY: each session must update its
+  // handoff/spec/state files AFTER its implementation baseline without
+  // invalidating that baseline. Enumerated explicitly (no wildcards) so
+  // arbitrary task-dir files stay unapproved.
+  /^\.agent\/tasks\/[^/]+\/(?:HARDENING_HANDOFF|MASTER_PLAN)\.md$/,
+  /^\.agent\/tasks\/[^/]+\/SESSION_[1-4]_[A-Z0-9_]+\.md$/,
+  // OpenSpec change checklists are planning-only task records. Allow their
+  // terminal checkbox updates without relabeling the preceding implementation
+  // checkpoint as stale.
+  /^openspec\/changes\/[^/]+\/tasks\.md$/,
+  // The remaining OpenSpec planning artifacts are also documentation-only
+  // route inputs. Keep the shape narrow: one change directory, one-level
+  // Markdown files, and one-level capability specs only.
+  // OpenSpec's versioned route metadata is planning-only as well. Keep this
+  // exact one-file shape so a tool-generated manifest cannot make arbitrary
+  // YAML or source-like files look documentation-only.
+  /^openspec\/changes\/[^/]+\/\.openspec\.yaml$/,
+  /^openspec\/changes\/[^/]+\/(?:audit|proposal|design)\.md$/,
+  /^openspec\/changes\/[^/]+\/specs\/[^/]+\/spec\.md$/,
+  /^corpus\/phase6\/(?:README\.md|runtime-binding-audit\.json)$/,
+  /^docs\/(?:ARCHITECTURE|CURRENT_STATE|SAFETY_MODEL|DECISIONS|ROADMAP|CI_HARDENING)\.md$/,
+  // The Kiro Crew integration plan is a repository-native planning document;
+  // it adds no runtime, safety, authorization, or evidence authority.
+  /^docs\/KIRO-CREW-INTEGRATION-MASTER-PLAN\.md$/,
+  // Repository-native design documents: exactly one level under docs/design,
+  // Markdown only. Deliberately NOT docs/design/** (no nested directories)
+  // and NOT non-Markdown files, so arbitrary files under docs/design can
+  // never be classified as documentation checkpoints.
+  /^docs\/design\/[^/]+\.md$/,
+  // Concurrent planner/executor adapter documents may arrive as a
+  // non-implementation remote descendant. Keep the exact five repository
+  // paths approved so continuity can retain the substantive non-merge
+  // implementation anchor without treating those additive adapters as stale
+  // source changes.
+  /^\.agent\/PLANNER_HANDOFF\.md$/,
+  /^\.agents\/skills\/goal\/SKILL\.md$/,
+  /^\.claude\/commands\/goal\.md$/,
+  /^\.kimi-code\/AGENTS\.md$/,
+  /^\.opencode\/commands\/goal\.md$/,
+];
+
+export function isApprovedCheckpointPath(file) {
+  return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));
+}
