@@ -6,7 +6,7 @@ Title: C-03 Go/gRPC Topology Binding
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-go-grpc-topology-binding-c03-v1
 Starting SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-Last validated implementation SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
+Last validated implementation SHA: 53e963de059518dbc865ab9153319d0af10e2863
 Last checkpoint: M1 opened at the C-02b closure head 03bab54 with the ouchan enumeration limit and the Go registration inventory measured before any code
 Current milestone: M1 — task record, OpenSpec change, recorded baseline
 Next action: Write the OpenSpec change, run `npm run agent:check` and `npm run handoff:check`, commit the M1 checkpoint, then begin M2 by asserting the adversarial Go registration corpus before the parser exists
@@ -14,8 +14,8 @@ Authorization class: NIGHTWATCH_GO_GRPC_TOPOLOGY_BINDING_C03_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-LAST_VALIDATED_IMPLEMENTATION_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
+LAST_VALIDATED_IMPLEMENTATION_SHA: 53e963de059518dbc865ab9153319d0af10e2863
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53e963de059518dbc865ab9153319d0af10e2863
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PHASE_GO_GRPC_TOPOLOGY_BINDING_C03_V1_STATUS: IN_PROGRESS

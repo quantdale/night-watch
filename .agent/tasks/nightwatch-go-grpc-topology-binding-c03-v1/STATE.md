@@ -6,8 +6,8 @@ Task ID: nightwatch-go-grpc-topology-binding-c03-v1
 Phase: GO_GRPC_TOPOLOGY_BINDING_C03_V1
 Status: IN_PROGRESS
 Starting SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-Last validated implementation SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-Last substantive checkpoint SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
+Last validated implementation SHA: 53e963de059518dbc865ab9153319d0af10e2863
+Last substantive checkpoint SHA: 53e963de059518dbc865ab9153319d0af10e2863
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-go-grpc-topology-bind-25187565
@@ -15,8 +15,8 @@ Last checkpoint: M1 opened at the C-02b closure head 03bab54 with the ouchan enu
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-LAST_VALIDATED_IMPLEMENTATION_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 03bab54e0758bb9aa4e9a44dacd7eb863e254e16
+LAST_VALIDATED_IMPLEMENTATION_SHA: 53e963de059518dbc865ab9153319d0af10e2863
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 53e963de059518dbc865ab9153319d0af10e2863
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -159,6 +159,16 @@ that explains it — and three tests were too weak to notice their rule being
 removed, because a single-service fixture cannot exercise a disambiguation
 rule and no fixture asserted a NEGATIVE corroboration. All five repaired and
 re-probed.
+
+Command: full validation matrix at 53e963d
+Result: PASS
+When: 2026-09-03, session worktree
+Relevant failure/output summary: typecheck, hardening, handoff, agent, agent
+audit, workspace and gate inventory all PASS; semantic compatibility 2,033 /
+2,020 / 13 skipped / 0 failed; synthetic campaign 511/511 across 23 files with
+the deep containment lane PROVEN; full canonical regression 3,288 total / 3,275
+passed / 13 skipped / 0 failed, up 60 on C-02b's 3,228 for the 60 tests this
+campaign adds.
 
 ## Decisions Made During This Task
 
