@@ -16,41 +16,44 @@
 
 ## R2 — Port-lease contract
 
-- [ ] Extract pure `proxyPortCandidates(preferred)`.
-- [ ] Factor the allocator core to take an explicit availability predicate.
-- [ ] `reserveProxyPortLease` binds the real probe with no substitutable parameter.
-- [ ] Add `candidateOffset` and `preferredOutcome` diagnostics.
-- [ ] Add the `TEST ONLY` availability seam.
-- [ ] Preserve every existing allocator safety property.
+- [x] Extract pure `proxyPortCandidates(preferred)`.
+- [x] Factor the allocator core to take an explicit availability predicate.
+- [x] `reserveProxyPortLease` binds the real probe with no substitutable parameter.
+- [x] Add `candidateOffset` and `preferredOutcome` diagnostics.
+- [x] Add the `TEST ONLY` availability seam.
+- [x] Preserve every existing allocator safety property.
 
 ## R3 — Deterministic proxy-lease tests
 
-- [ ] New deterministic suite covering: candidate 0 available; candidate 0
+- [x] New deterministic suite covering: candidate 0 available; candidate 0
       occupied; candidates 0..N occupied; lease collision; live lease; orphan
       lease; malformed lease; symlink; bounded exhaustion; wraparound; parallel
       allocators; release; inherited ownership; child death; SIGTERM; SIGINT.
-- [ ] Replace the over-strong `phase24ProxyLifecycle` assertion with the
+- [x] Replace the over-strong `phase24ProxyLifecycle` assertion with the
       allocator's real contract; remove the PID-derived port.
-- [ ] Retain at least one real-OS-TCP integration test for occupied-port
+- [x] Retain at least one real-OS-TCP integration test for occupied-port
       advancement.
-- [ ] Bounded stress campaign with exact iteration counts.
+- [x] Bounded stress campaign with exact iteration counts.
 
 ## R4 — Durable gate receipts
 
-- [ ] Confined, validated receipt path with a safe automatic default.
-- [ ] Atomic write, digest-identical to stdout, failure receipts included.
-- [ ] Clean-gate wrapper consumes the receipt FILE and requires digest equality.
-- [ ] Adversarial receipt suite per brief §11.
-- [ ] Hardening rules for the receipt mechanism, negative-probed.
-- [ ] Justify the absence of an Actions artifact.
+- [x] Confined, validated receipt path with a safe automatic default.
+- [x] Atomic write, digest-identical to stdout, failure receipts included.
+- [x] Clean-gate wrapper consumes the receipt FILE and requires digest equality.
+- [x] Adversarial receipt suite per brief §11.
+- [x] Hardening rules for the receipt mechanism, negative-probed.
+- [x] Justify the absence of an Actions artifact.
 
 ## R5 — Stage-A truth reconciliation
 
-- [ ] Correct the false "EXACT head of `main`" claim about `29b9212`.
-- [ ] Record run `33637832941` / job `100273053129` at `c423e33` truthfully.
-- [ ] Repair the stale project-state table row.
-- [ ] Preserve `29b9212` as historical certification.
-- [ ] State the four-role certification authority model.
+- [x] Correct the false "EXACT head of `main`" claim about `29b9212`.
+- [x] Record run `33637832941` / job `100273053129` at `c423e33` truthfully.
+- [x] Repair the stale project-state table row.
+- [x] Preserve `29b9212` as historical certification.
+- [x] State the certification authority model, naming all six checkpoint roles.
+- [x] Reconcile the production threat model to D-113: T-30's per-campaign salt
+      and inverted test, T-41's digest-of-a-dynamic-key, and T-42's second
+      "salted value digest" family, each preserved as explicitly SUPERSEDED.
 
 ## R6 — Registration and validation
 

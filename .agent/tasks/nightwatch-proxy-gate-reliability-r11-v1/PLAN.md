@@ -80,7 +80,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
 - Acceptance criteria: no production behavior change; every existing safety
   property preserved; `typecheck` clean.
 - Validation commands: `npm run typecheck`, `npx playwright test tests/unit/phase23PortLease.test.ts tests/unit/phase24ProxyLifecycle.test.ts`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M3 — Deterministic adversarial suite
 
@@ -91,7 +91,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
   SIGTERM/SIGINT case; keep a real-OS-TCP occupied-port integration test.
 - Acceptance criteria: all cases green; no PID-derived or random port remains.
 - Validation commands: `npx playwright test tests/unit/proxyPortLeaseDeterminism.test.ts tests/unit/phase24ProxyLifecycle.test.ts tests/unit/phase23PortLease.test.ts`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M4 — Bounded stress campaign
 
@@ -102,7 +102,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
   death between lease creation and release; rapid reclaim cycles.
 - Acceptance criteria: green, with counts recorded in STATE and REPORT.
 - Validation commands: `npx playwright test tests/unit/proxyPortLeaseStress.test.ts`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M5 — Durable gate receipts
 
@@ -115,7 +115,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
 - Acceptance criteria: brief §9 requirements met; no sensitive value can enter
   the receipt.
 - Validation commands: `npm run gate:local`, `npm run gate:clean`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M6 — Adversarial receipt suite and hardening
 
@@ -128,7 +128,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
 - Acceptance criteria: every §11 case green; every new rule proved to fail when
   its invariant is mutated.
 - Validation commands: `npm run hardening:check`, `npx playwright test tests/unit/gateReceiptPersistence.test.ts`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M7 — Stage-A truth reconciliation
 
@@ -140,7 +140,7 @@ See OpenSpec `design.md` for the full rationale. In brief:
   `29b9212` as historical certification.
 - Acceptance criteria: `project:check` PASS; no SHA field bulk-set to HEAD.
 - Validation commands: `npm run project:check`, `npm run agent:check`
-- Status: NOT_STARTED
+- Status: DONE
 
 ### M8 — Registration and full validation
 
