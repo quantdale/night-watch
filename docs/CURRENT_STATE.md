@@ -258,9 +258,9 @@ LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: f479b022cc473ef2bef900c35eb9e6530e755a05
 LAST_LOCALLY_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
 LAST_CLEAN_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
-CI_OBSERVED_SHA: 150dfccb010ddc0a8f006819ca44b8104c22b66e
-CI_EXECUTED_SHA: 150dfccb010ddc0a8f006819ca44b8104c22b66e
-CI_STATUS: EXECUTED_PASS
+CI_OBSERVED_SHA: dbc7c1531069f96d12e021988199a66573aaf7f1
+CI_EXECUTED_SHA: dbc7c1531069f96d12e021988199a66573aaf7f1
+CI_STATUS: EXECUTED_FAIL
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -294,7 +294,24 @@ LIVE_NEXT_ACTION_STATE: CONTINUE
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
-### Exact-head CI is green (current live CI state)
+### Exact-head CI (current live CI state)
+
+The live head `dbc7c1531069f96d12e021988199a66573aaf7f1` — C-02b's substantive
+implementation plus its anchor advance — was observed by run `33680080322` /
+job `100414245016` on Node 20 with receipt
+`receipt:sha256:40ee80f6601978eb0c13c9cb`, and FAILED. The failure is the
+expected cross-authority ordering and nothing else: `GATE_DEFINITION`,
+`STATIC`, `HARDENING` and `HANDOFF_TRUTH` PASS, `PROJECT_TRUTH` is a
+`TEST_FAILURE` because the project block still named C-11's CI evidence while
+the task had validated a newer implementation, and the remaining seven groups
+are `NOT_RUN` because `AGENT_CONTINUITY` depends on `PROJECT_TRUTH`.
+
+Recording that run is what clears it. The project block above now names
+`dbc7c153` as the observed and executed CI SHA with status `EXECUTED_FAIL`,
+which is the truthful state: CI executed, and it failed for a reason the
+invariant predicts and requires.
+
+C-11's certification is preserved below as historical.
 
 Run `33665872548` / job `100367351818` at
 `150dfccb010ddc0a8f006819ca44b8104c22b66e` passed on Node 20 with receipt
@@ -302,7 +319,7 @@ Run `33665872548` / job `100367351818` at
 `SEMANTIC_COMPATIBILITY` 2,032 total / 2,019 passed / 13 skipped / 0 failed,
 `OWNER_PROVENANCE` 91 passed, and `SYNTHETIC_CAMPAIGN` 366 total / 366 passed /
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
-`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass. This is C-11's
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass. This was C-11's
 certification.
 
 R-11's certification run `33656654543` / job `100336766433` at `e11cf64` is

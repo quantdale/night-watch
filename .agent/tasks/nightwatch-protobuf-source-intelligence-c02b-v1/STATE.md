@@ -104,7 +104,7 @@ then run `gate:local` and `gate:clean` with campaign writes frozen and close.
 | `bin/hardening-check.mjs` | `checkC02bProtobufBoundary()` — six guarded invariants | PASS |
 | `config/synthetic-campaign.v1.json` | the three C-02b suites gate-registered | PASS |
 | `tests/unit/syntheticCampaignDiagnostics.test.ts` | membership assertion for the C-02b suites | PASS |
-| `docs/CURRENT_STATE.md` | substantive implementation anchor advanced to f479b02 | COMMITTED |
+| `docs/CURRENT_STATE.md` | substantive anchor advanced to f479b02; CI evidence advanced to dbc7c153 EXECUTED_FAIL; live CI narrative rewritten truthfully | COMMITTED |
 
 ## Validation Ledger
 
@@ -264,6 +264,19 @@ anchor alone clears `SUBSTANTIVE_BASELINE_STALE` and leaves
 is recorded. C-11's own history took the same three commits — 7879660
 substantive, b8cd4e8 anchors, 150dfcc CI result — so the route is the
 repository's documented one.
+
+Command: integration and exact-head CI observation
+Result: CI EXECUTED and FAILED, exactly as the ordering invariant predicts
+When: 2026-09-03
+Relevant failure/output summary: `node bin/nightwatch-session.mjs integrate`
+advanced `origin/main` to `dbc7c1531069f96d12e021988199a66573aaf7f1` by
+verified fast-forward. Run `33680080322` / job `100414245016` on Node 20,
+receipt `receipt:sha256:40ee80f6601978eb0c13c9cb`: GATE_DEFINITION, STATIC,
+HARDENING and HANDOFF_TRUTH PASS; PROJECT_TRUTH TEST_FAILURE; seven groups
+NOT_RUN. Classification: PROJECT_TRUTH_ORDERING, matching the local prediction
+group for group. No rerun was attempted — rerunning could not change the
+result, because the input the gate objects to is the project block, not the
+build.
 
 ## Decisions Made During This Task
 
