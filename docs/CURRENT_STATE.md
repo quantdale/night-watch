@@ -227,8 +227,8 @@ and must never be bulk-set to HEAD:
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
 | `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `200221c` | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c763c05` | the local gate was last recorded fully green at that commit; it advances only when `gate:local` passes at the R-11 state, not because implementation moved |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c763c05` | same discipline for the clean Node 20 gate |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `65d976d` | `gate:local` PASS, all eleven groups, receipt `receipt:sha256:b772ac7c8076752bd4539d77` |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `65d976d` | `gate:clean` PASS TWICE as independent invocations, Node 20, `siblingWrites: 0`, both yielding the identical inner receipt `receipt:sha256:e9621d43adff5cdf6204235c` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `2a64369` | run `33653818653`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `3c4756c` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed |
 
@@ -255,8 +255,8 @@ PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
 LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 200221cf6c80fbab7f463680c44086e231bc034c
-LAST_LOCALLY_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
-LAST_CLEAN_VALIDATED_SHA: c763c056d306172df3c03c03781f5ec5516944e9
+LAST_LOCALLY_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
+LAST_CLEAN_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
 CI_OBSERVED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
 CI_EXECUTED_SHA: 2a643696ec4ad9a5cbdc784fc8fbd2fb7b471c8a
 CI_STATUS: EXECUTED_FAIL
@@ -326,8 +326,8 @@ certification of its substantive ancestor.
 | Role | Means | Current value |
 | --- | --- | --- |
 | Substantive implementation checkpoint | last commit that changed implementation AND was validated | `200221c` (R-11) |
-| Local-validation checkpoint | last commit where `gate:local` was recorded green | `c763c05` |
-| Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `c763c05` |
+| Local-validation checkpoint | last commit where `gate:local` was recorded green | `65d976d` |
+| Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
 | CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `2a64369`, run `33653818653`, currently `EXECUTED_FAIL` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
 | Latest observed exact-head run | the newest run whose `headSha` equalled the then-current head | run `33637832941` at `c423e33` |
@@ -360,6 +360,25 @@ does not run there and the receipt says so; the gate REQUIRES that lane to be
 same campaign reports `deepContainmentLane: PROVEN`, so no coverage was traded
 away for a green CI baseline — the two environments differ in topology, not in
 required coverage.
+
+### R-11 reliability closure (current)
+
+OBS-C105-1 is CLOSED. `docs/design/PRODUCTION-OBSERVABILITY-THREAT-MODEL.md`
+T-30, T-41 and T-42 are reconciled to D-113. Certified locally at `65d976d`:
+
+| Measure | Result |
+| --- | --- |
+| canonical regression | 3,032 total / 3,019 passed / 13 skipped / 0 failed |
+| `gate:local` | PASS, eleven groups, receipt `receipt:sha256:b772ac7c8076752bd4539d77` |
+| `gate:clean` (twice, independent) | PASS, Node 20, eleven groups, inner receipt `receipt:sha256:e9621d43adff5cdf6204235c`, outer `clean-receipt:sha256:d0b62a77e5ad0f8e1ba9c1de`, `siblingWrites: 0` |
+| `SEMANTIC_COMPATIBILITY` | 2,032 / 2,019 / 13 / 0 |
+| `SYNTHETIC_CAMPAIGN` | 256 / 256, `deepContainmentLane: PROVEN` |
+| new tests | +57 over C-10.5, with zero new skips |
+| hardening negative probes | 29/29 detected, 0 vacuous |
+
+Both clean invocations produced the SAME inner receipt digest, so the clean
+gate's result is reproducible rather than sampled — which is the property
+OBS-C105-1 destroyed.
 
 ### Why the CI anchor currently records a FAILURE, and how the sequence terminates
 
