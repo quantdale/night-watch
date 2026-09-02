@@ -1,47 +1,55 @@
 # Active Task
 
-Task ID: nightwatch-c10-provenance-truth-closure-v1
-Phase: C10_PROVENANCE_TRUTH_CLOSURE_V1
-Title: C-10.5 Provenance and Project-Truth Closure
-Status: COMPLETE
-Task directory: .agent/tasks/nightwatch-c10-provenance-truth-closure-v1
-Starting SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
-Last validated implementation SHA: c763c056d306172df3c03c03781f5ec5516944e9
-Last checkpoint: exact-head GitHub run 33635296271 / job 100268250381 at 29b9212 passed all eleven required groups on Node 20 with receipt receipt:sha256:d64ef703c328a4d10d7e86f3, SEMANTIC_COMPATIBILITY 1,975/1,962/13/0 and SYNTHETIC_CAMPAIGN 256/256; local gate receipt:sha256:fb9a4b6d4f3034d815a76439 and clean Node 20 gate green with siblingWrites 0; canonical regression 2,975 total / 2,962 passed / 13 skipped / 0 failed; DEF-C105-1 found and repaired before closure; OBS-C105-1 recorded as a pre-existing flake
-Current milestone: COMPLETE / STOP — M0 through M12 are closed
-Next action: STOP — Stage A (C-10.5) is COMPLETE and certified by exact-head CI run 33635296271 / job 100268250381 at 29b9212 with all eleven required groups PASS. Do NOT begin Stage B (C-11 PROD_OBSERVE) in this task: it requires its own separately recorded task, OpenSpec change and audit trail so the two stages stay separately auditable. Stage A passing authorizes C-11 to begin; it grants no production connectivity. OBS-C105-1 (pre-existing phase24ProxyLifecycle PID-derived port flake) is recorded with an owner decision, and its deferred repair is load-bearing for C-11
-Authorization class: NIGHTWATCH_C10_PROVENANCE_TRUTH_CLOSURE_V1
+Task ID: nightwatch-proxy-gate-reliability-r11-v1
+Phase: PROXY_GATE_RELIABILITY_R11_V1
+Title: R-11 Proxy/Gate Reliability Closure
+Status: IN_PROGRESS
+Task directory: .agent/tasks/nightwatch-proxy-gate-reliability-r11-v1
+Starting SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+Last validated implementation SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+Last checkpoint: 2026-09-02 — OBS-C105-1 reproduced deterministically and end-to-end against the unmodified allocator at c423e33; the allocator is correct in all four brief-specified cases and the failing assertion is the test's, reproducing the exact CI failedLocations value tests/unit/phase24ProxyLifecycle.test.ts:105
+Current milestone: M2 — port-lease contract
+Next action: Edit src/proxy/portLease.ts — add pure proxyPortCandidates(preferred), factor the allocation loop into a module-private core taking an explicit availability predicate, keep reserveProxyPortLease bound to the real portAvailable probe with no substitutable parameter, add the TEST ONLY availability seam, and add the candidateOffset / preferredOutcome diagnostics
+Authorization class: NIGHTWATCH_PROXY_GATE_RELIABILITY_R11_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
-STARTING_SHA: cb631cc4af3c3572f4cbf78da04a8265075fbfa5
-LAST_VALIDATED_IMPLEMENTATION_SHA: c763c056d306172df3c03c03781f5ec5516944e9
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: c763c056d306172df3c03c03781f5ec5516944e9
+STARTING_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+LAST_VALIDATED_IMPLEMENTATION_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: c423e33e3384dd3ec34bfd4e9d57d863f58bc190
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_C10_PROVENANCE_TRUTH_CLOSURE_V1_STATUS: COMPLETE
+PHASE_PROXY_GATE_RELIABILITY_R11_V1_STATUS: IN_PROGRESS
 
 ## Routing and safety
 
-C-10.5 is a bounded prerequisite for C-11, not a reopening of C-10's privacy
-architecture. It closes the residual AUTHORITY gap — a provenance label was
-sufficient to mint a production-safe vocabulary, and no mechanical binding to a
-source artifact existed — and the residual PROJECT-TRUTH gap, where the
-machine-checked baseline still named a predecessor ancestor that the validator
-could not detect because the stale fields agreed with each other.
+R-11 is a bounded prerequisite for C-11, not part of it. It closes the two
+pre-existing reliability defects recorded as OBS-C105-1 during C-10.5:
 
-This is a repository-local, synthetic-only campaign. No real production, DEV or
-NEXT contact is authorized or performed. No authenticated browsing, no
-credential or auth-state inspection, no datastore, cloud, IAM or Kubernetes
-access, no sibling-repository write, no external publication.
+1. a non-deterministic member of a REQUIRED quality-gate group — the
+   `phase24ProxyLifecycle` SIGTERM/SIGINT case derived its port from
+   `process.pid` and then asserted it obtained that exact port, so any
+   unrelated listener on the host failed the group; and
+2. a receipt that a summarizing filter can destroy — the authoritative gate
+   emits its receipt to stdout only, and the clean-checkout wrapper recovers
+   the inner receipt by scraping stdout.
 
-C-10's projection algebra, persistence firewall, digest families, store layout
-and Control Center exclusion all stand. C-06 remains COMPLETE and fail-closed
-and is not weakened; no attempt is made to increase `READ_ONLY_PROVEN`.
-Production remains non-loadable through ordinary environment selection.
+The allocator itself is correct and is not being changed to preserve an
+over-strong assertion.
 
-C-11 `PROD_OBSERVE` is hard-gated behind the Stage-A completion gate and is NOT
-started in this task.
+This is a repository-local, offline, synthetic-only campaign. No real
+production, DEV or NEXT contact is authorized or performed. No authenticated
+browsing, no credential or auth-state inspection, no datastore, cloud, IAM or
+Kubernetes access, no sibling-repository write, no external publication. Every
+socket is loopback-only.
+
+C-06 remains COMPLETE and fail-closed. C-10's privacy algebra and C-10.5's
+provenance binding are untouched. Production remains non-loadable through
+ordinary environment selection.
+
+C-11 `PROD_OBSERVE` is hard-gated behind the R-11 completion gate and is NOT
+started in this task. It requires its own task, OpenSpec change and audit trail
+so the two remain separately auditable.
 
 All work happens in the owned session worktree
-`session/nightwatch-c10-provenance-truth--ba3470bc`; the canonical checkout is
+`session/nightwatch-proxy-gate-reliabilit-6e648bc4`; the canonical checkout is
 never used for implementation.
