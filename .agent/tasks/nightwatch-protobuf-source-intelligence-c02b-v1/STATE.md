@@ -30,11 +30,11 @@ the C-02a generated OpenAPI artifact that cannot be satisfied by counting.
 
 ## Current Milestone
 
-Milestone ID: M5 — per-operation OpenAPI corroboration
+Milestone ID: M6 — hardening rules and negative probes
 Milestone status: IN_PROGRESS
-What is being attempted: `src/core/source/protoCorroboration.ts` with the seven
-categorical outcomes, wired to the `generatedArtifact.ts` seam so that currency
-can leave UNKNOWN only on per-operation identity evidence.
+What is being attempted: guard the load-bearing C-02b invariants in
+`hardening:check` and negative-probe each one — mutation must FAIL, restoration
+must PASS, both recorded.
 
 ## Completed Milestones
 
@@ -52,18 +52,19 @@ can leave UNKNOWN only on per-operation identity evidence.
   `surfaces.ts`; `tests/unit/c02bProtoSurface.test.ts` 17/17. DEF-C02B-1 found
   and repaired. blueapi now yields 738 operations (591 artifact + 147 proto)
   and `mobingilabs/ripple-api` still yields its full 223.
+- M5 — `src/core/source/protoCorroboration.ts` implemented;
+  `tests/unit/c02bProtoCorroboration.test.ts` 17/17. All 147 real Billing
+  operations MATCH the proto on verb and path; the artifact still does not
+  reach CURRENT.
 
 ## Work In Progress
 
-M5. Nothing partial: M1-M4 are closed and committed.
+M6. Nothing partial: M1-M5 are closed and committed.
 
 ## Exact Next Action
 
-Implement `src/core/source/protoCorroboration.ts`: match each proven proto HTTP
-binding to the artifact by `<Service>_<Rpc>` operationId and independently by
-`(method, route)`, classify every operation into the seven outcomes, and allow
-`evaluateGenerationCurrency` to leave UNKNOWN only when every operation on both
-sides is MATCH.
+Read `bin/hardening-check.mjs`, add rules for the C-02b invariants that can
+actually deny, and negative-probe each one by mutating the source it guards.
 
 ## Files Changed
 
@@ -90,6 +91,8 @@ sides is MATCH.
 | `src/core/source/surfaces.ts` | `parseProtoRoutes`, evidence-class-scoped route ambiguity (DEF-C02B-1) | COMMITTED |
 | `tests/unit/c02bProtoSurface.test.ts` | admission, real surface, no-eviction, DEF-C02B-1 regression | 17/17 PASS |
 | `tests/unit/c02aOpenApiAdmission.test.ts` | three assertions rescoped from "the repository" to "the artifact" | 18/18 PASS |
+| `src/core/source/protoCorroboration.ts` | per-operation corroboration, seven outcomes, scope limits | IMPLEMENTED |
+| `tests/unit/c02bProtoCorroboration.test.ts` | A-4 gate, outcome vocabulary, real-surface measurement | 17/17 PASS |
 
 ## Validation Ledger
 
@@ -184,6 +187,16 @@ semantic analyzers does not include PROTOBUF. Rather than widen that union to a
 language no analyzer can read, PROTOBUF now joins YAML in the guard that keeps
 non-handler languages out of the analyzer path.
 
+Command: `npx playwright test tests/unit/c02bProtoCorroboration.test.ts`
+Result: PASS 17/17
+When: 2026-09-03, session worktree
+Relevant failure/output summary: measured against the real
+`openapiv2/apidocs.swagger.json` and `billing/v1/billing.proto` at
+`691422e5`: 147 MATCH, 0 PATH_MISMATCH, 0 METHOD_MISMATCH, 0 PROTO_ONLY, 0
+OPENAPI_ONLY, 444 out of scope. State UNCORROBORATABLE, so
+`toProtoSurfaceCorroboration` returns null and blueapi's generation currency
+stays UNKNOWN with its production admission DENIED.
+
 ## Decisions Made During This Task
 
 Decision: corroborate the generated artifact per operation identity, never by
@@ -216,6 +229,22 @@ already distinguishes the two classes, so the fix reuses C-02a's own vocabulary
 rather than inventing a special case. Two same-class declarations of one route
 are still AMBIGUOUS, asserted directly and also by the pre-existing Phase 25
 `ambiguousRoutes === 2` fixture.
+
+Decision: corroboration is scoped by service, and partial coverage is a LIMIT
+rather than a divergence.
+Reason: the artifact mirrors roughly fifteen services and only `Billing` sits
+in an approved root. Counting the other 444 operations as OPENAPI_ONLY would
+blame the artifact for a boundary Nightwatch chose; ignoring them would let 147
+corroborated operations certify 591.
+Evidence/constraint: measured 591 total, 147 `Billing`-tagged, 444 out of
+scope. `ARTIFACT_COVERS_UNREADABLE_SERVICES` records the reason explicitly.
+Consequence: the truthful C-02b outcome for blueapi is that every readable
+operation agrees exactly AND the artifact still cannot be certified. Both
+halves are reported.
+
+Decision: a renamed path placeholder is a divergence, not a normalization.
+Reason: the artifact is meant to be a faithful mirror, and `{id}` vs
+`{thingId}` is exactly the drift the check exists to catch.
 
 ## Defects introduced by this campaign
 
