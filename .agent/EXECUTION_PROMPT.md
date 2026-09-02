@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Exact-Head CI Baseline Repair and Truth Reconciliation
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-exact-head-ci-baseline-repair-v1
 OpenSpec: openspec/changes/nightwatch-exact-head-ci-baseline-repair-v1/
 Planned-From: c3fed38abd281e8648c039ac3befe8034c13e868

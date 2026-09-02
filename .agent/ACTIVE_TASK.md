@@ -3,22 +3,22 @@
 Task ID: nightwatch-exact-head-ci-baseline-repair-v1
 Phase: EXACT_HEAD_CI_BASELINE_REPAIR_V1
 Title: Nightwatch Exact-Head CI Baseline Repair and Truth Reconciliation
-Status: IN_PROGRESS
+Status: COMPLETE
 Task directory: .agent/tasks/nightwatch-exact-head-ci-baseline-repair-v1
 Starting SHA: c3fed38abd281e8648c039ac3befe8034c13e868
-Last validated implementation SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-Last checkpoint: both CI defects reproduced under runner-shaped topology and repaired, with each repaired suite passing in BOTH topologies and zero skips; bounded synthetic-campaign diagnostics landed with 14 new tests; project truth reconciled and a stale-CI-evidence validator added
-Current milestone: M7 — full required-stack regression in the owned session worktree
-Next action: run the required validation stack, repair any failure, then integrate and certify the exact-head GitHub run
+Last validated implementation SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+Last checkpoint: exact-head GitHub run 33590645175 at b99ce4e passed all eleven required groups with receipt receipt:sha256:120582acb7bb971190a3a05d, including the first-ever execution of PATCH_INTEGRITY and WORKSPACE_INTEGRITY; local and clean Node 20 gates green and a 2,839-test canonical regression green
+Current milestone: COMPLETE / STOP — M1 through M8 are closed
+Next action: STOP — this campaign is complete; do not begin another campaign in this task, and do not run any implementation session in the canonical checkout
 Authorization class: NIGHTWATCH_EXACT_HEAD_CI_BASELINE_REPAIR_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 STARTING_SHA: c3fed38abd281e8648c039ac3befe8034c13e868
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
+LAST_VALIDATED_IMPLEMENTATION_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
 LIVE_HEAD_AUTHORITY: GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
-PHASE_EXACT_HEAD_CI_BASELINE_REPAIR_V1_STATUS: IN_PROGRESS
+PHASE_EXACT_HEAD_CI_BASELINE_REPAIR_V1_STATUS: COMPLETE
 
 ## Routing and safety
 

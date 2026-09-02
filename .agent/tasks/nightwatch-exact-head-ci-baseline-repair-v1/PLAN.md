@@ -76,10 +76,10 @@ gate boundary module that allowlists what may cross into a receipt.
   validator. Acceptance: the validator flags the campaign-start block; history
   preserved. Status: COMPLETE.
 - M7 — Full regression, `gate:local`, `gate:clean`. Acceptance: all green;
-  counts measured and reported rather than assumed. Status: IN_PROGRESS.
+  counts measured and reported rather than assumed. Status: COMPLETE.
 - M8 — Integrate, push, and certify the exact-head GitHub run. Acceptance:
   `gate:ci` executes and is green with all eleven groups passing.
-  Status: NOT_STARTED.
+  Status: COMPLETE.
 
 ## Validation Strategy
 

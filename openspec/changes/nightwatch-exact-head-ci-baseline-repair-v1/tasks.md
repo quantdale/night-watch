@@ -24,8 +24,8 @@
       preserving historical zero-step runs
       (`bin/project-state-check.mjs`, `docs/CURRENT_STATE.md`,
       `docs/DECISIONS.md`, `docs/ROADMAP.md`)
-- [ ] M7 full required-stack regression, `gate:local`, and clean Node 20
+- [x] M7 full required-stack regression, `gate:local`, and clean Node 20
       `gate:clean`, with counts measured and reported rather than assumed
-- [ ] M8 integrate, push, and certify the exact-head GitHub run with all
+- [x] M8 integrate, push, and certify the exact-head GitHub run with all
       eleven required groups green, including the first-ever execution of
       `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`

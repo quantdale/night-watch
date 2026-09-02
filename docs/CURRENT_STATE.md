@@ -16,10 +16,9 @@
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
-> longer a zero-step platform block: exact-head run `33572572053` bootstrapped
-> the runner and executed `gate:ci`, which failed on two real synthetic-campaign
-> cases. Those cases are host-topology defects and are repaired by
-> `nightwatch-exact-head-ci-baseline-repair-v1`.
+> longer a zero-step platform block and is now GREEN at the exact head: run
+> `33590645175` at `b99ce4e` passed all eleven required groups, including the
+> first-ever execution of `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY`.
 ---
 
 ## What exists now
@@ -226,12 +225,12 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-LAST_LOCALLY_VALIDATED_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-LAST_CLEAN_VALIDATED_SHA: 7ce2cf91a00f1916ea1e04790dc395a809ef8727
-CI_OBSERVED_SHA: c3fed38abd281e8648c039ac3befe8034c13e868
-CI_EXECUTED_SHA: c3fed38abd281e8648c039ac3befe8034c13e868
-CI_STATUS: EXECUTED_FAIL
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_LOCALLY_VALIDATED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+LAST_CLEAN_VALIDATED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+CI_OBSERVED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+CI_EXECUTED_SHA: b99ce4e61166e52b554dd6ac07b7678b433959da
+CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
 LIVE_HEAD_AUTHORITY: GIT
@@ -258,14 +257,34 @@ informational and are not interpreted as current authority.
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
 LIVE_TASK_ID: nightwatch-exact-head-ci-baseline-repair-v1
 LIVE_PHASE: EXACT_HEAD_CI_BASELINE_REPAIR_V1
-LIVE_TASK_STATUS: IN_PROGRESS
+LIVE_TASK_STATUS: COMPLETE
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
-LIVE_NEXT_ACTION_STATE: CONTINUE
-LIVE_COMPLETION_CLAIM: NONE
+LIVE_NEXT_ACTION_STATE: STOP
+LIVE_COMPLETION_CLAIM: COMPLETE
 ```
 
-### GitHub Actions now executes the gate (corrected live CI state)
+### Exact-head CI is green (current live CI state)
+
+Run `33590645175` / job `100123768379` at
+`b99ce4e61166e52b554dd6ac07b7678b433959da` passed with receipt
+`receipt:sha256:120582acb7bb971190a3a05d`. All eleven required groups PASS:
+`SEMANTIC_COMPATIBILITY` 1,967 total / 1,954 passed / 13 skipped / 0 failed,
+`OWNER_PROVENANCE` 91 passed, `SYNTHETIC_CAMPAIGN` 128 total / 128 passed / 0
+failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`, and
+`PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` EXECUTED AND PASSED for the first
+time in the project's history.
+
+The containment classification is deliberately visible rather than implied. The
+runner cannot provide a rootless containment envelope, so the deep lane did not
+run there and the receipt says so; the gate REQUIRES that lane to be `PROVEN`
+in the `local`, `clean` and `predev` modes, where it is, so no coverage was
+traded away for a green baseline.
+
+`GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT` is therefore a live, executable
+authority again rather than a standing non-evidence classification.
+
+### How the previous run failed (historical, run 33572572053)
 
 Exact-head run `33572572053` / job `100069494765` at
 `c3fed38abd281e8648c039ac3befe8034c13e868` is the first Actions run that
@@ -276,14 +295,15 @@ completion and emitted the authoritative receipt
 `SYNTHETIC_CAMPAIGN` failed with 121 passed and 2 failed, leaving
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` `NOT_RUN`.
 
-That is a REAL EXECUTED TEST FAILURE, not external non-evidence, and it is
-recorded as `CI_STATUS: EXECUTED_FAIL`. The earlier zero-step runs
-(`33446473458`, `33361000650`, `32956612882`) remain true historical facts
-about the runs they describe and are deliberately not rewritten; what changed
-is that the zero-step classification is no longer the LIVE state.
+That was a REAL EXECUTED TEST FAILURE, not external non-evidence, and it was
+carried as `CI_STATUS: EXECUTED_FAIL` until the repair landed. The earlier
+zero-step runs (`33446473458`, `33361000650`, `32956612882`) remain true
+historical facts about the runs they describe and are deliberately not
+rewritten; what changed is that the zero-step classification stopped being the
+LIVE state. The live state is now the green run recorded above.
 
-Both failures were host-topology defects rather than product regressions, and
-neither implicates C-06:
+Both failures were host-topology defects rather than product regressions,
+neither implicated C-06, and both are now repaired:
 
 - `DEF-CI-01` — `tests/unit/eligibilityCensus.test.ts` asserted census CONTENT
   without first asserting the census POPULATION. `DEFAULT_SIBLING_ROOT` is an
