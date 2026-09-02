@@ -227,9 +227,9 @@ and must never be bulk-set to HEAD:
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `aa5d1e6` | where the C-11 `PROD_OBSERVE` kernel and its hardening-rule repairs landed | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `65d976d` | `gate:local` PASS, all eleven groups, receipt `receipt:sha256:b772ac7c8076752bd4539d77` |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `65d976d` | `gate:clean` PASS TWICE as independent invocations, Node 20, `siblingWrites: 0`, both yielding the identical inner receipt `receipt:sha256:e9621d43adff5cdf6204235c` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `7879660` | where the C-11 `PROD_OBSERVE` kernel closed, including the DEF-C11-6 fixture repair | where R-11's proxy-lease contract, durable gate receipts and repaired hardening rules landed; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `7879660` | `gate:local` PASS, all eleven groups, receipt `receipt:sha256:2ff143e71ea8974847053723` |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `7879660` | `gate:clean` PASS, Node 20, eleven groups, `siblingWrites: 0`, inner receipt `receipt:sha256:997ebf6461843448173e889d` |
 | `CI_OBSERVED_SHA` | the commit whose CI result was observed | `2a64369` | run `33653818653`, which FAILED `PROJECT_TRUTH` — recorded as `EXECUTED_FAIL` rather than left naming an ancestor |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `3c4756c` | same run; both `EXECUTED_PASS` and `EXECUTED_FAIL` require observed == executed |
 
@@ -255,9 +255,9 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: aa5d1e678c8227826d8e3552e58135c9ccbc7393
-LAST_LOCALLY_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
-LAST_CLEAN_VALIDATED_SHA: 65d976db73f5e760cf30122a90007756905c987a
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 787966061beb91de0002fd114ca04e488b44be48
+LAST_LOCALLY_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
+LAST_CLEAN_VALIDATED_SHA: 787966061beb91de0002fd114ca04e488b44be48
 CI_OBSERVED_SHA: 77f3ac96c0de5846abcc0603ee3f83c97c632317
 CI_EXECUTED_SHA: 77f3ac96c0de5846abcc0603ee3f83c97c632317
 CI_STATUS: EXECUTED_FAIL
@@ -334,9 +334,9 @@ certification of its substantive ancestor.
 
 | Role | Means | Current value |
 | --- | --- | --- |
-| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `aa5d1e6` (C-11) |
-| Local-validation checkpoint | last commit where `gate:local` was recorded green | `65d976d` |
-| Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `65d976d` |
+| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `7879660` (C-11) |
+| Local-validation checkpoint | last commit where `gate:local` was recorded green | `7879660` |
+| Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `7879660` |
 | CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `77f3ac9`, run `33663495218`, currently `EXECUTED_FAIL` |
 | Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
 | Latest observed exact-head run | the newest run observed WHEN THIS RECORD WAS WRITTEN — a historical observation, not a live claim | run `33657772689` / job `100340513895` at `cb4eabf`, PASS, all eleven groups |
@@ -401,6 +401,37 @@ T-30, T-41 and T-42 are reconciled to D-113. Certified locally at `65d976d`:
 Both clean invocations produced the SAME inner receipt digest, so the clean
 gate's result is reproducible rather than sampled — which is the property
 OBS-C105-1 destroyed.
+
+### C-11 PROD_OBSERVE safety kernel (current)
+
+The `PROD_OBSERVE` production-qualification kernel is implemented and qualified
+against MOCK production only. It creates no production connectivity: the cone
+contains no network client, so it cannot contact anything even if every gate
+were bypassed. Certified locally at `7879660`:
+
+| Measure | Result |
+| --- | --- |
+| canonical regression | 3,141 total / 3,128 passed / 13 skipped / 0 failed |
+| `gate:local` | PASS, eleven groups, receipt `receipt:sha256:2ff143e71ea8974847053723` |
+| `gate:clean` | PASS, Node 20, eleven groups, inner receipt `receipt:sha256:997ebf6461843448173e889d`, outer `clean-receipt:sha256:5b366dd9f3dd05eb8cdd41f6`, `siblingWrites: 0` |
+| `SEMANTIC_COMPATIBILITY` | 2,032 / 2,019 / 13 / 0 |
+| `SYNTHETIC_CAMPAIGN` | 366 / 366, `deepContainmentLane: PROVEN` |
+| C-11 tests | 110, all gate-registered |
+| one-fault denial matrix | 38 entries over all eighteen gates, every pre-dispatch denial with `receivedRequestCount === 0` |
+| PQ receipt tamper matrix | 16 entries, each failing closed with its own rejection code |
+| hardening negative probes | 22/22 detected, 0 vacuous |
+
+The admission chain is `nightwatch.production-admission-chain.v1`: a versioned
+NAMED ordered list of eighteen gates, replacing the historical "eleven gates"
+labelled `G0`–`G11` — twelve identifiers — whose acceptance criterion was a
+COUNT. A count is unfalsifiable; gate identity is not.
+
+D-4 stands. Production is not a selectable environment,
+`config/environments/production.json` remains unloadable by name validation,
+`KNOWN_PRODUCTION_HOSTS` stays deny-only and the production cone never imports
+it, and the observation configuration is external-only per F-09.
+
+C-12 P1 passive production observation is NOT authorized and NOT begun.
 
 ### Why two CI anchors recorded a FAILURE on the way here, and how the sequence terminated
 
