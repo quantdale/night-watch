@@ -245,8 +245,27 @@ eliminated.
   root.
 
 ### T-30 Digest used as a customer join key · **M**
-- **Prevention.** Per-campaign salt, never persisted.
-- **Test.** Two campaigns over identical data must produce different digests.
+- **Prevention (current, D-113).** There is NO durable value-derived digest to
+  join on. The only persistable family is the STRUCTURAL digest
+  `prodstruct:sha256:<24>`, computed from privacy-approved structural
+  information only — node types, shape, cardinality, key-provenance
+  classification and source-proven key literals. A NUMBER serializes as its
+  type alone, so a monetary amount is indistinguishable from a count and no
+  customer value contributes any input. Within a single in-memory analysis,
+  correlation uses encounter-ORDER tokens that are never persisted and never
+  digested.
+- **Test.** The persistence firewall refuses any non-`prodstruct:` digest
+  family by name, including the DEV `proj:sha256:` family; the policy object
+  records `durableValueDigest: 'ABSENT'` and cannot be constructed otherwise;
+  planted sentinel values appear in no persisted digest input.
+- **SUPERSEDED (historical).** This entry previously read "Prevention:
+  per-campaign salt, never persisted. Test: two campaigns over identical data
+  must produce different digests." That is obsolete under D-113 and its test
+  was the exact OPPOSITE of the current requirement: the structural digest is
+  deliberately unsalted and deterministic so that two campaigns over identical
+  structure DO produce identical digests, which is what makes cross-campaign
+  new-deployment detection possible. There is no salt, because there is no
+  durable value digest to salt.
 
 ---
 
@@ -363,25 +382,57 @@ controls (`src/browser/contract.ts:21-22`), not proposed ones.
 - **Classification.** Preventable.
 
 ### T-41 Key-name leakage through the "shape" allowlist · **C**
-- **Prevention.** A key name may be persisted only if it is a member of a
-  source-proven finite key set. Dynamic string keys (account ids, MSP ids,
-  company names) project to cardinality plus digest, never the literal.
-- **Detection.** Projection-totality test extended to key names.
-- **Test.** A response object keyed by a 12-digit account id; assert no key
-  literal is persisted.
+- **Prevention (current, D-112/D-113/C-10.5).** A key literal may be persisted
+  only if it is a PROVEN MEMBER of a key vocabulary derived mechanically from
+  validated source evidence — never because it matched a shape. Since C-10.5
+  that vocabulary must additionally carry PRODUCTION authority, enforced at the
+  persistence boundary. An untrusted or dynamic key literal (account id, MSP
+  id, company name) is NOT hashed into durable evidence: it projects to
+  STRUCTURAL facts only — bounded key cardinality plus a key-provenance
+  classification — and the literal is discarded rather than transformed.
+- **Detection.** Projection-totality over every persisted position, enforced by
+  the inventory-driven coverage rule (C-10.5 A13) rather than by a corpus
+  organized by value class.
+- **Test.** A response object keyed by a 12-digit account id: assert no key
+  literal is persisted, AND that no digest anywhere in the persisted record
+  took that literal as input.
 - **Classification.** Preventable.
+- **SUPERSEDED (historical).** This entry previously said dynamic string keys
+  "project to cardinality plus digest". Digesting an untrusted key literal is
+  now forbidden: a low-entropy identifier hashed into durable evidence is a
+  reversible correlation key, and there is no durable value-digest family for it
+  to live in (D-113). Cardinality and provenance class survive; the literal does
+  not, in any form.
 
 ### T-42 Digest-family collision between salting and cross-run comparison · **H**
-- **Prevention.** Two explicitly named families: an **unsalted structural
-  digest** over shape and type with no value input (comparable across runs and
-  environments), and a **salted value digest** (per-campaign, never persisted,
-  never compared). Resolves the contradiction between `design.md §6.4`/`T-30`
-  and `design.md §9.4`.
-- **Detection.** Contract-level type separation; a value digest used in a
-  cross-run comparison is a type error.
-- **Test.** Assert structural digests are stable across campaigns and value
-  digests are not.
+- **Prevention (current, D-113).** The contradiction is resolved by REMOVING one
+  side of it, not by keeping two families. The production persistence contract
+  has exactly ONE digest concept and one deliberate absence:
+  - `prodstruct:sha256:<24>` — STRUCTURAL. Value-free, unsalted, deterministic,
+    stable across runs and environments, comparable across campaigns, and
+    persistable. Safe precisely because the canonical bytes it hashes contain no
+    value and no unproven key literal.
+  - durable value digest — **ABSENT**. Not "unsalted", not "unpersisted":
+    non-existent. Nothing in the production contract required durable value
+    correlation, so the concept was removed rather than invented, and the
+    versioned policy object records `durableValueDigest: 'ABSENT'`.
+  In-run correlation uses encounter-ORDER tokens that are never persisted and
+  never digested, so there is no salt to persist and no low-entropy value hash
+  to invert.
+- **Detection.** Contract-level type separation plus a persistence firewall that
+  refuses any other digest family BY NAME, so an unrecognized family fails
+  closed rather than being accepted as "some digest".
+- **Test.** Structural digests are stable across campaigns over identical
+  structure; the policy object cannot be constructed with any other value for
+  `durableValueDigest`; the firewall rejects the DEV `proj:sha256:` family.
 - **Classification.** Preventable.
+- **SUPERSEDED (historical).** This entry previously specified a second family,
+  "a **salted value digest** (per-campaign, never persisted, never compared)",
+  and `design.md §6.2/§6.4` specified a per-campaign salt. Independent review
+  F-15 (with MA-11 and UA-11) showed the two-family model was itself the
+  contradiction: a family that is never persisted and never compared has no
+  consumer, while §9.4 simultaneously required cross-campaign structural
+  comparison. D-113 supersedes both the master-plan text and this entry.
 
 ### T-43 Observer session side effects · **H**
 - **Prevention.** No login automation, no auth retry, no credential refresh.

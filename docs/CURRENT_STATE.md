@@ -16,10 +16,11 @@
 > read-only work items, two protocol-only candidates rejected before candidate
 > replay, zero candidate attack replay, zero minimizations, and zero dossiers.
 > Final local and clean Node20 quality gates passed. GitHub Actions is no
-> longer a zero-step platform block and is now GREEN at the exact head: run
-> `33635296271` at `29b9212` passed all eleven required groups on Node 20 with
-> receipt `receipt:sha256:d64ef703c328a4d10d7e86f3` and `SYNTHETIC_CAMPAIGN`
-> 256/256, certifying C-10.5 at the exact head.
+> longer a zero-step platform block and is GREEN. C-10.5's certification run is
+> `33635296271` at `29b9212`, which passed all eleven required groups on Node 20
+> with receipt `receipt:sha256:d64ef703c328a4d10d7e86f3` and
+> `SYNTHETIC_CAMPAIGN` 256/256. The LATEST OBSERVED exact-head run is
+> `33637832941` / job `100273053129` at `c423e33`, also green on Node 20.
 ---
 
 ## What exists now
@@ -225,18 +226,23 @@ and must never be bulk-set to HEAD:
 
 | Field | Claims | Current value | Why |
 | --- | --- | --- | --- |
-| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `23523cc` | where the C-10 / DEF-C10-5 route-provenance repair landed; the commits after it changed documentation only |
-| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `23523cc` | the local gate was recorded green at that commit |
-| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `23523cc` | the clean gate was recorded green at that commit |
-| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `29b9212` | run `33635296271` |
+| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `c763c05` | where the C-10.5 / DEF-C105-1 key-vocabulary authority repair landed; the commits after it changed documentation only |
+| `LAST_LOCALLY_VALIDATED_SHA` | the last commit where the local quality gate passed | `c763c05` | the local gate was recorded green at that commit |
+| `LAST_CLEAN_VALIDATED_SHA` | the last commit where the clean Node 20 gate passed | `c763c05` | the clean gate was recorded green at that commit |
+| `CI_OBSERVED_SHA` | the commit whose CI result was observed | `29b9212` | C-10.5's certification run `33635296271`; NOT the newest run — see the checkpoint-role table below |
 | `CI_EXECUTED_SHA` | the commit CI actually executed the gate at | `29b9212` | same run; `EXECUTED_PASS` requires observed == executed |
 
 The implementation anchor legitimately TRAILS the CI anchor: the commits
-between `23523cc` and `cb631cc` are documentation checkpoints that changed no
+between `c763c05` and `29b9212` are documentation checkpoints that changed no
 implementation, so CI ran later than the last substantive change without a new
 substantive change existing. `npm run project:check` enforces this
 relationship mechanically (C-10.5 A10) by classifying the intervening commits
 rather than trusting the fields to agree with each other.
+
+R-11 note: these three prose "Current value" cells previously read `23523cc`
+while the machine-checked block below already said `c763c05`. The validator
+does not read this table, so the drift was invisible to it — the prose is
+reconciled here to the values the block actually carries.
 
 
 ```
@@ -294,19 +300,55 @@ Run `33635296271` / job `100268250381` at
 0 failed with `deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
 `PATCH_INTEGRITY` and `WORKSPACE_INTEGRITY` execute and pass.
 
-This is the C-10.5 completion certification, and it is the EXACT head of
-`main`. The corresponding canonical regression is 2,975 total / 2,962 passed /
-13 skipped / 0 failed, with 56 dedicated C-10.5 tests.
+This is the C-10.5 completion certification. It was the exact head of `main`
+when the run executed; it is NO LONGER the head, because two documentation
+descendants have landed since. The corresponding canonical regression is 2,975
+total / 2,962 passed / 13 skipped / 0 failed, with 56 dedicated C-10.5 tests.
 
-**This run was obtained by re-running a failed job, and that is recorded rather
-than hidden.** The first attempt at this commit failed with exactly one test,
+The LATEST OBSERVED exact-head run is `33637832941` / job `100273053129` at
+`c423e33e3384dd3ec34bfd4e9d57d863f58bc190`, green on Node 20 with
+`environmentClass: CI`, all eleven required groups PASS, `SEMANTIC_COMPATIBILITY`
+1,975 total / 1,962 passed / 13 skipped / 0 failed, `SYNTHETIC_CAMPAIGN`
+256/256 and receipt `receipt:sha256:473cbcec2c938aa65a940d97`. It certifies the
+same implementation as `29b9212` plus one documentation commit.
+
+### Checkpoint roles are distinct, and none of them is "HEAD"
+
+Collapsing these into one idea is what produced the false claim above, and what
+would otherwise make every documentation commit require a further
+documentation commit to certify it, forever. A documentation-only descendant
+changes no input the gate consumes for behaviour, so it does not invalidate the
+certification of its substantive ancestor.
+
+| Role | Means | Current value |
+| --- | --- | --- |
+| Substantive implementation checkpoint | last commit that changed implementation AND was validated | `c763c05` |
+| Local-validation checkpoint | last commit where `gate:local` was recorded green | `c763c05` |
+| Clean-validation checkpoint | last commit where the clean Node 20 gate was recorded green | `c763c05` |
+| CI certification checkpoint | the commit an exact-head CI run actually executed the gate at, and which the completion record cites | `29b9212`, run `33635296271` |
+| Documentation-only descendant | a commit that changes only records, including the one that records a run's identifiers | `c423e33` |
+| Latest observed exact-head run | the newest run whose `headSha` equalled the then-current head | run `33637832941` at `c423e33` |
+
+The commit RECORDING a receipt is necessarily a descendant of the commit the
+run certified, since a field cannot name the SHA of the commit containing it.
+So "certified at the exact head" is a statement about the moment a run
+executed, never a permanent property of a SHA.
+
+**That run was obtained by re-running a failed job, and that is recorded rather
+than hidden.** The first attempt at `29b9212` failed with exactly one test,
 `tests/unit/phase24ProxyLifecycle.test.ts:105`, a PRE-EXISTING port-collision
-flake that derives its port from `process.pid` and then asserts it obtained
-that exact port. C-10.5 changed no proxy, port or containment code; the test
-passes 5/5 locally and was green in this campaign's own earlier runs. No test
-was changed, no retry was added to any test or gate, no timeout was inflated
-and no gate was weakened. See OBS-C105-1 in the C-10.5 report, and the deferred
-follow-up to repair the port selection — which is load-bearing for C-11.
+flake that derived its port from `process.pid` and then asserted it obtained
+that exact port. C-10.5 changed no proxy, port or containment code. No test was
+changed, no retry was added to any test or gate, no timeout was inflated and no
+gate was weakened. See OBS-C105-1 in the C-10.5 report.
+
+**OBS-C105-1 is now CLOSED by R-11**, which reproduced it deterministically and
+end-to-end before repairing it. The allocator was correct in every case: it
+claims a lease with an exclusive create, probes real TCP availability, refuses
+an occupied endpoint and advances through bounded candidates. The defect was the
+test's over-strong invariant, and the repair is in the test plus a named
+allocation outcome that lets the real contract be asserted. See the R-11 task
+record.
 
 The containment classification is deliberately visible rather than implied. The
 GitHub runner cannot provide a rootless containment envelope, so the deep lane
