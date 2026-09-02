@@ -48,6 +48,31 @@ export type TopologyBlocker = (typeof TOPOLOGY_BLOCKERS)[number];
 export const TOPOLOGY_ABSENCE_REASONS = ['TRUNCATED_ENUMERATION', 'NO_OBSERVED_REGISTRATION'] as const;
 export type TopologyAbsenceReason = (typeof TOPOLOGY_ABSENCE_REASONS)[number];
 
+/** §28's method-level prototype, and its honest label.
+ *
+ * `POSITIVE_ONLY` is the whole point. An RPC name matched to a method declared
+ * on the implementation type is a positive observation. The converse — that an
+ * RPC has NO handler and falls through to the embedded Unimplemented base —
+ * cannot be proven while the repository enumeration is TRUNCATED, because an
+ * unobserved method is not an absent one. Measured on `services/billingd`:
+ * the SDK interface declares 147 methods and 143 are observed locally, and
+ * the reader cannot tell whether the remaining 4 are unimplemented or merely
+ * unread. That asymmetry is why W-EFFECT_RPC stays UNSUPPORTED. */
+export const METHOD_BINDING_STATES = ['POSITIVE_ONLY', 'IMPLEMENTATION_TYPE_UNRESOLVED', 'NOT_ATTEMPTED'] as const;
+export type MethodBindingState = (typeof METHOD_BINDING_STATES)[number];
+
+export interface GrpcMethodBinding {
+  readonly state: MethodBindingState;
+  /** The struct embedding `Unimplemented<Service>Server`. */
+  readonly implementationType: string | null;
+  readonly protoRpcCount: number;
+  /** RPC names observed as methods on that type in the same package. */
+  readonly observedHandlerCount: number;
+  /** RPCs with no observed method. NOT a claim that they are unimplemented. */
+  readonly unobservedRpcCount: number;
+  readonly completenessClaim: 'NONE';
+}
+
 export interface GrpcTopologyBinding {
   /** The daemon directory, purely for reporting. It is never a join key:
    * `services/blued` registers six services. */
@@ -67,6 +92,7 @@ export interface GrpcTopologyBinding {
    * why not, and must never be read as a weaker kind of fact. */
   readonly evidenceClass: 'SOURCE_FACT' | 'NOT_A_FACT';
   readonly embeddingCorroborated: boolean;
+  readonly methodBinding: GrpcMethodBinding;
   readonly evidenceDigest: string;
 }
 
@@ -135,6 +161,8 @@ export function buildGrpcTopology(input: {
     const key = `${descriptor.importPath}|${descriptor.registrationSymbol}`;
     descriptorsByKey.set(key, [...(descriptorsByKey.get(key) ?? []), descriptor]);
   }
+  const rpcNamesByIdentity = new Map<string, readonly string[]>();
+  for (const service of index.services) rpcNamesByIdentity.set(service.canonicalIdentity, service.rpcNames);
   const servicesByIdentity = new Map<string, typeof index.services>();
   for (const service of index.services) {
     servicesByIdentity.set(service.canonicalIdentity, [...(servicesByIdentity.get(service.canonicalIdentity) ?? []), service]);
@@ -154,11 +182,24 @@ export function buildGrpcTopology(input: {
   // rule would report zero corroboration across the entire repository while
   // the evidence sits one file away in the same package.
   const embeddingsByDirectory = new Map<string, Set<string>>();
+  const implementationTypeByDirectory = new Map<string, string>();
+  const methodsByDirectory = new Map<string, Set<string>>();
   const registrationsByFile = new Map<string, ReturnType<typeof readGoRegistrations>>();
   for (const file of eligible) {
     const text = input.access.reader.readFile(file.repoId, file.relativePath);
     if (text === null) continue;
     const facts = readGoRegistrations(text);
+    const fileDirectory = file.relativePath.slice(0, file.relativePath.lastIndexOf('/'));
+    for (const embedding of facts.embeddings) {
+      if (embedding.importPath === null || embedding.enclosingType === null) continue;
+      implementationTypeByDirectory.set(`${fileDirectory}|${embedding.importPath}|${embedding.serviceToken}`, embedding.enclosingType);
+    }
+    for (const method of facts.methods) {
+      const key = `${fileDirectory}|${method.receiverType}`;
+      const bucket = methodsByDirectory.get(key) ?? new Set<string>();
+      bucket.add(method.methodName);
+      methodsByDirectory.set(key, bucket);
+    }
     if (facts.embeddings.length > 0) {
       const directory = file.relativePath.slice(0, file.relativePath.lastIndexOf('/'));
       const bucket = embeddingsByDirectory.get(directory) ?? new Set<string>();
@@ -220,6 +261,7 @@ export function buildGrpcTopology(input: {
       state,
       blocker,
       evidenceClass: 'NOT_A_FACT',
+      methodBinding: { state: 'NOT_ATTEMPTED', implementationType: null, protoRpcCount: 0, observedHandlerCount: 0, unobservedRpcCount: 0, completenessClaim: 'NONE' },
       evidenceDigest: prefixedDigest24('grpctopology', { ...base, state, blocker }),
     });
 
@@ -242,6 +284,16 @@ export function buildGrpcTopology(input: {
     if (service.sourceSha !== descriptor.sourceSha && descriptor.repoId === service.repoId) return fail('STALE', 'PROTO_SNAPSHOT_MISMATCH');
     if ((identityCounts.get(descriptor.protoFullName) ?? 0) > 1) return fail('MULTIPLE', 'MULTIPLE_REGISTRATIONS');
 
+    const directory = draft.file.relativePath.slice(0, draft.file.relativePath.lastIndexOf('/'));
+    const serviceToken = draft.registrationSymbol.slice('Register'.length, -'Server'.length);
+    const implementationType = implementationTypeByDirectory.get(`${directory}|${draft.importPath}|${serviceToken}`) ?? null;
+    const declared = implementationType === null ? new Set<string>() : methodsByDirectory.get(`${directory}|${implementationType}`) ?? new Set<string>();
+    const rpcNames = rpcNamesByIdentity.get(service.canonicalIdentity) ?? [];
+    const observedHandlerCount = rpcNames.filter((rpcName) => declared.has(rpcName)).length;
+    const methodBinding: GrpcMethodBinding = implementationType === null
+      ? { state: 'IMPLEMENTATION_TYPE_UNRESOLVED', implementationType: null, protoRpcCount: rpcNames.length, observedHandlerCount: 0, unobservedRpcCount: rpcNames.length, completenessClaim: 'NONE' }
+      : { state: 'POSITIVE_ONLY', implementationType, protoRpcCount: rpcNames.length, observedHandlerCount, unobservedRpcCount: rpcNames.length - observedHandlerCount, completenessClaim: 'NONE' };
+
     const proven = {
       ...base,
       protoServiceIdentity: service.canonicalIdentity,
@@ -250,6 +302,7 @@ export function buildGrpcTopology(input: {
       state: 'PROVEN' as const,
       blocker: null,
       evidenceClass: 'SOURCE_FACT' as const,
+      methodBinding,
     };
     return { ...proven, evidenceDigest: prefixedDigest24('grpctopology', proven) };
   });

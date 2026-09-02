@@ -372,3 +372,146 @@ test.describe('C-03 — C-01 no-eviction across the admission (F-27)', () => {
     expect(discovery.operations.filter((operation) => operation.sourcePath === 'openapiv2/apidocs.swagger.json')).toHaveLength(591);
   });
 });
+
+test.describe('C-03 — the method-level prototype is positive-only, and says so', () => {
+  test.skip(() => !siblingRepoAvailable(OUCHAN) || !siblingRepoAvailable(BLUEAPI) || !siblingRepoAvailable(SDK), 'requires the read-only sibling Alphaus checkouts');
+
+  test('a proven binding resolves its implementation type and observes handlers', () => {
+    const topology = realTopology();
+    const billing = topology.bindings.find((binding) => binding.protoServiceIdentity === 'blueapi.billing.v1.Billing');
+    expect(billing?.methodBinding.state).toBe('POSITIVE_ONLY');
+    expect(billing?.methodBinding.implementationType).toBe('service');
+    expect(billing?.methodBinding.protoRpcCount).toBe(147);
+    expect(billing?.methodBinding.observedHandlerCount).toBeGreaterThan(0);
+  });
+
+  test('an unobserved RPC is never reported as a completeness claim', () => {
+    // The asymmetry that keeps W-EFFECT_RPC UNSUPPORTED: `unobservedRpcCount`
+    // counts RPCs with no observed method, and that is NOT a claim that they
+    // are unimplemented. billingd shows 143 of 147; whether the other four
+    // fall through to the embedded base or simply were not read is not
+    // decidable while enumeration is TRUNCATED.
+    const topology = realTopology();
+    for (const binding of topology.bindings) {
+      expect(binding.methodBinding.completenessClaim).toBe('NONE');
+      if (binding.methodBinding.state === 'POSITIVE_ONLY') {
+        expect(binding.methodBinding.observedHandlerCount + binding.methodBinding.unobservedRpcCount).toBe(binding.methodBinding.protoRpcCount);
+      }
+    }
+    expect(topology.completeness.repositoryCompleteProof).toBe(false);
+  });
+
+  test('a non-proven binding does not attempt a method binding at all', () => {
+    const topology = realTopology();
+    const metrics = topology.bindings.find((binding) => binding.registrationSymbol === 'RegisterMetricsControlPlaneServer');
+    expect(metrics?.methodBinding.state).toBe('NOT_ATTEMPTED');
+  });
+
+  test('several services reach an exact handler count, which is an observation and not a proof', () => {
+    const topology = realTopology();
+    const exact = topology.bindings.filter((binding) => binding.methodBinding.state === 'POSITIVE_ONLY' && binding.methodBinding.protoRpcCount > 0 && binding.methodBinding.unobservedRpcCount === 0);
+    expect(exact.length).toBeGreaterThan(0);
+    // Even at 72/72 the state stays POSITIVE_ONLY. A complete-looking count
+    // does not upgrade the evidence class.
+    expect(exact.every((binding) => binding.methodBinding.state === 'POSITIVE_ONLY' && binding.methodBinding.completenessClaim === 'NONE')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Probe-driven additions. Negative probes B2, B4 and B7 all came back
+// NOT_DETECTED against the suite above, and in each case the rule was sound
+// while the assertion was too weak to notice it being deleted. These are the
+// fixtures that make the three rules non-vacuous.
+// ---------------------------------------------------------------------------
+
+test.describe('C-03 — the join rules are asserted, not merely present', () => {
+  test('B2: an ambiguous qualifier is distinguished from an unresolved one', () => {
+    // Both end in AMBIGUOUS, so asserting the STATE alone cannot tell them
+    // apart. The blocker is the part that carries the diagnosis.
+    const { root, topology } = syntheticTopology({
+      [OUCHAN]: {
+        'services/widgetd/main.go': `package main
+import (
+  widget "${SDK_MODULE}/widget/v1"
+  widget "github.com/example/other/widget"
+)
+func run() { widget.RegisterWidgetServer(gs, svc) }
+`,
+      },
+    });
+    try {
+      expect(topology.bindings[0]?.state).toBe('AMBIGUOUS');
+      expect(topology.bindings[0]?.blocker).toBe('QUALIFIER_AMBIGUOUS');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('B4: a generated file naming two services pairs each by its own name', () => {
+    // With one service per file the pairing filter is invisible — any single
+    // candidate is the right one. Two services in one file is what makes the
+    // filter load-bearing: dropping it would let Widget bind to Gadget.
+    const { root, topology } = syntheticTopology({
+      [SDK]: {
+        'widget/v1/widget_grpc.pb.go': `
+package widget
+func RegisterWidgetServer(s grpc.ServiceRegistrar, srv WidgetServer) {}
+func RegisterGadgetServer(s grpc.ServiceRegistrar, srv GadgetServer) {}
+var Gadget_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "blueapi.widget.v1.Gadget",
+}
+var Widget_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "blueapi.widget.v1.Widget",
+}
+`,
+      },
+    });
+    try {
+      expect(topology.bindings[0]?.state).toBe('PROVEN');
+      expect(topology.bindings[0]?.protoServiceIdentity).toBe('blueapi.widget.v1.Widget');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('B7: an embedding from another package corroborates nothing', () => {
+    const { root, topology } = syntheticTopology({
+      [OUCHAN]: {
+        'services/widgetd/main.go': WIDGET_DAEMON,
+        'services/widgetd/service.go': `package main
+import other "github.com/example/other/widget"
+type service struct {
+	other.UnimplementedWidgetServer
+}
+`,
+      },
+    });
+    try {
+      expect(topology.bindings[0]?.state).toBe('PROVEN');
+      // Same service token, different package. Corroboration must not fire.
+      expect(topology.bindings[0]?.embeddingCorroborated).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('B7: an embedding from the registered package does corroborate', () => {
+    const { root, topology } = syntheticTopology({
+      [OUCHAN]: {
+        'services/widgetd/main.go': WIDGET_DAEMON,
+        'services/widgetd/service.go': `package main
+import widget "${SDK_MODULE}/widget/v1"
+type service struct {
+	widget.UnimplementedWidgetServer
+}
+`,
+      },
+    });
+    try {
+      expect(topology.bindings[0]?.embeddingCorroborated).toBe(true);
+      expect(topology.bindings[0]?.methodBinding.implementationType).toBe('service');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});

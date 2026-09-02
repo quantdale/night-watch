@@ -29,10 +29,11 @@ whole-repository completeness that ouchan's enumeration cannot support.
 
 ## Current Milestone
 
-Milestone ID: M6 — method-level investigation and the W-EFFECT_RPC determination
+Milestone ID: M8 — validation, integration, exact-head CI, closure
 Milestone status: IN_PROGRESS
-What is being attempted: record an evidence-backed determination on
-RPC-to-handler binding and on `W-EFFECT_RPC`.
+What is being attempted: the full validation matrix with writes frozen for
+`gate:clean`, then integration, exact-head CI, project-truth reconciliation and
+release.
 
 ## Completed Milestones
 
@@ -48,14 +49,13 @@ RPC-to-handler binding and on `W-EFFECT_RPC`.
 
 ## Work In Progress
 
-M6. Nothing partial: M1-M5 are closed.
+M8. Nothing partial: M1-M7 are closed.
 
 ## Exact Next Action
 
-Investigate whether C-02b's RPC symbols plus the SDK descriptors can produce a
-mechanically exact RPC-to-handler binding; record the determination and, if it
-cannot, the exact blocker for `W-EFFECT_RPC`. Then add the hardening rules and
-negative probes.
+Run the full validation matrix, freeze campaign writes for `gate:clean`,
+integrate per C-00, observe exact-head CI, reconcile project truth, complete
+the REPORT and release the session.
 
 ## Files Changed
 
@@ -136,6 +136,30 @@ OpenAPI source with definitions. Raising ouchan's budget made its own
 `services/*/docs/swagger.json` files visible, contributing 328 further bound
 definitions, so the counter is now compared to the repository-wide sum.
 
+Command: method-level investigation against the real sibling checkouts
+Result: POSITIVE direction supportable; NEGATIVE direction unattainable
+When: 2026-09-03, session worktree
+Relevant failure/output summary: the generated `BillingServer` interface
+declares 147 methods for 147 RPCs, and `services/billingd` defines 143 of them
+on `*service` across three files. Across the twelve proven bindings, 531 of 549
+RPCs have an observed handler method, and six services reach an exact count
+(Cost 72/72, Flow 18/18, Luster 19/19, Organization 7/7, Operations 5/5,
+Flags 2/2). What cannot be decided is the other 18: an RPC with no observed
+method may be unimplemented and inheriting the embedded base, or its file may
+simply not have been enumerated. While ouchan is TRUNCATED those two are
+indistinguishable.
+
+Command: 19 negative probes (12 against `hardening:check`, 7 behavioural)
+Result: 19/19 DETECTED, 19/19 RESTORED_PASS
+When: 2026-09-03, session worktree
+Relevant failure/output summary: five failures on the first pass, all mine.
+Two hardening rules were vacuous — one was satisfied by the import line while
+the filter it named was deleted, and one matched the word inside the comment
+that explains it — and three tests were too weak to notice their rule being
+removed, because a single-service fixture cannot exercise a disambiguation
+rule and no fixture asserted a NEGATIVE corroboration. All five repaired and
+re-probed.
+
 ## Decisions Made During This Task
 
 Decision: admit the fourteen further blueapi proto roots.
@@ -187,7 +211,31 @@ identically named embedding from corroborating anything.
 Evidence/constraint: all 12 proven bindings are corroborated under the
 directory rule and none under the file rule.
 
+Decision: implement the method-level prototype as POSITIVE_ONLY and keep
+`W-EFFECT_RPC` UNSUPPORTED.
+Reason: §29 requires COMPLETE repository enumeration before an effect closure
+can be sound, and ouchan cannot reach COMPLETE under the contract ceiling. A
+handler count that happens to be exact does not change that; `completenessClaim`
+is `NONE` even at 72/72.
+Evidence/constraint: measured 531/549 observed handlers with 18 undecidable.
+
+Decision: avoid the regular-expression method whose name collides with the
+process-spawning one, rather than relax the source-authority guard that
+forbids it.
+Reason: the guard matches that identifier textually across
+`src/core/source/**` and cannot tell a regular expression from a child
+process. Loosening a safety rule so this campaign's code could pass is exactly
+the trade the operating rules forbid; rewriting the call is free.
+Evidence/constraint: `hardening:check` fired on `goRegistration.ts` and
+`protoServiceIndex.ts`, and then on the COMMENT that explained the workaround.
+
 ## Discoveries
+
+- The repository's `src/core/source/**` authority guard matches that
+  identifier as bare text, so a regular-expression call — and even a comment
+  naming it — reads as process authority. Worth narrowing one day the way the
+  sibling-reader rule already does; not narrowed here, because relaxing a
+  safety rule to suit a campaign is the wrong direction.
 
 - Raising ouchan's budget revealed eleven `services/*/docs/swagger.json`
   documents that had never been enumerated, adding 328 bound response

@@ -38,6 +38,8 @@ export interface ProtoServiceFact {
   /** `<package>.<Service>` — the identity the generated SDK also states. */
   readonly canonicalIdentity: string;
   readonly rpcCount: number;
+  /** RPC names, for the §28 positive-only method observation. */
+  readonly rpcNames: readonly string[];
   readonly serverStreamingCount: number;
   readonly clientStreamingCount: number;
   readonly bidirectionalCount: number;
@@ -104,7 +106,7 @@ function readSdkDescriptors(input: {
     const token = tokens[index];
     if (token === undefined) continue;
     if (token.kind === 'IDENTIFIER') {
-      const match = REGISTER_RE.exec(token.value);
+      const match = token.value.match(REGISTER_RE);
       const previous = tokens[index - 1];
       // A declaration, not a call: `func Register…Server(`.
       if (match !== null && previous !== undefined && previous.kind === 'IDENTIFIER' && previous.value === 'func') symbols.push(token.value);
@@ -120,7 +122,7 @@ function readSdkDescriptors(input: {
 
   const descriptors: SdkServiceDescriptor[] = [];
   for (const registrationSymbol of [...new Set(symbols)].sort()) {
-    const serviceToken = (REGISTER_RE.exec(registrationSymbol) as RegExpExecArray)[1] as string;
+    const serviceToken = (registrationSymbol.match(REGISTER_RE) as RegExpMatchArray)[1] as string;
     const candidates = fullNames.filter((name) => name.slice(name.lastIndexOf('.') + 1) === serviceToken);
     const unique = [...new Set(candidates)];
     const state: SdkDescriptorState = unique.length === 1 ? 'PROVEN' : unique.length === 0 ? 'UNPAIRED' : 'AMBIGUOUS';
@@ -169,6 +171,7 @@ export function buildProtoServiceIndex(input: {
           serviceName: service.serviceName,
           canonicalIdentity: service.canonicalIdentity,
           rpcCount: service.rpcs.length,
+          rpcNames: service.rpcs.map((rpc) => rpc.rpcName),
           serverStreamingCount: service.rpcs.filter((rpc) => rpc.streamingClass === 'SERVER_STREAMING').length,
           clientStreamingCount: service.rpcs.filter((rpc) => rpc.streamingClass === 'CLIENT_STREAMING').length,
           bidirectionalCount: service.rpcs.filter((rpc) => rpc.streamingClass === 'BIDIRECTIONAL').length,

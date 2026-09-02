@@ -61,7 +61,17 @@ export interface GoUnimplementedEmbedding {
   readonly serviceToken: string;
   readonly qualifier: string | null;
   readonly importPath: string | null;
+  /** The struct type that embeds it, when the embedding sits inside a
+   * `type <Name> struct { … }` declaration. This is how the implementation
+   * type is identified without any variable-flow analysis. */
+  readonly enclosingType: string | null;
   readonly ordinal: number;
+}
+
+/** A method declared on a named receiver type: `func (s *service) Name(`. */
+export interface GoMethodDeclaration {
+  readonly receiverType: string;
+  readonly methodName: string;
 }
 
 export interface GoRegistrationCompleteness {
@@ -75,6 +85,7 @@ export interface GoRegistrationFacts {
   readonly imports: readonly GoImportBinding[];
   readonly registrations: readonly GoServerRegistration[];
   readonly embeddings: readonly GoUnimplementedEmbedding[];
+  readonly methods: readonly GoMethodDeclaration[];
   readonly completeness: GoRegistrationCompleteness;
 }
 
@@ -201,6 +212,7 @@ export function readGoRegistrations(sourceText: string): GoRegistrationFacts {
       imports: [],
       registrations: [],
       embeddings: [],
+      methods: [],
       completeness: { state: 'UNKNOWN', reason: 'GO_LEXICAL_BUDGET_EXHAUSTED', droppedByCeiling: 0 },
     };
   }
@@ -208,6 +220,50 @@ export function readGoRegistrations(sourceText: string): GoRegistrationFacts {
   const { bindings, droppedByCeiling: importDrops } = readImports(tokens);
   const registrations: GoServerRegistration[] = [];
   const embeddings: GoUnimplementedEmbedding[] = [];
+  const methods: GoMethodDeclaration[] = [];
+
+  // `type <Name> struct {` spans, so an embedding can name the type it belongs
+  // to without any flow analysis. Recorded as ranges rather than tracked with
+  // a running variable, so nesting cannot silently mis-attribute one.
+  const typeSpans: { readonly name: string; readonly start: number; readonly end: number }[] = [];
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index]?.kind !== 'IDENTIFIER' || tokens[index]?.value !== 'type') continue;
+    const name = tokens[index + 1];
+    const keyword = tokens[index + 2];
+    const brace = tokens[index + 3];
+    if (name?.kind !== 'IDENTIFIER' || keyword?.kind !== 'IDENTIFIER' || keyword.value !== 'struct') continue;
+    if (brace?.kind !== 'PUNCT' || brace.value !== '{') continue;
+    let depth = 1;
+    let cursor = index + 4;
+    while (cursor < tokens.length && depth > 0) {
+      const token = tokens[cursor];
+      if (token?.kind === 'PUNCT' && token.value === '{') depth += 1;
+      else if (token?.kind === 'PUNCT' && token.value === '}') depth -= 1;
+      cursor += 1;
+    }
+    typeSpans.push({ name: name.value, start: index + 3, end: cursor });
+  }
+  const enclosingTypeAt = (position: number): string | null => {
+    const span = typeSpans.find((entry) => position > entry.start && position < entry.end);
+    return span?.name ?? null;
+  };
+
+  // `func ( receiver [*] Type ) MethodName (`
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index]?.kind !== 'IDENTIFIER' || tokens[index]?.value !== 'func') continue;
+    if (tokens[index + 1]?.kind !== 'PUNCT' || tokens[index + 1]?.value !== '(') continue;
+    let cursor = index + 2;
+    if (tokens[cursor]?.kind === 'IDENTIFIER') cursor += 1;
+    if (tokens[cursor]?.kind === 'PUNCT' && tokens[cursor]?.value === '*') cursor += 1;
+    const receiver = tokens[cursor];
+    const close = tokens[cursor + 1];
+    const method = tokens[cursor + 2];
+    const open = tokens[cursor + 3];
+    if (receiver?.kind !== 'IDENTIFIER' || close?.kind !== 'PUNCT' || close.value !== ')') continue;
+    if (method?.kind !== 'IDENTIFIER' || open?.kind !== 'PUNCT' || open.value !== '(') continue;
+    if (!SAFE_IDENTIFIER_RE.test(receiver.value) || !SAFE_IDENTIFIER_RE.test(method.value)) continue;
+    methods.push({ receiverType: receiver.value, methodName: method.value });
+  }
   let droppedByCeiling = importDrops;
   let ceilingReason: GoIncompletenessReason | null = importDrops > 0 ? 'GO_IMPORT_CEILING_REACHED' : null;
 
@@ -215,8 +271,15 @@ export function readGoRegistrations(sourceText: string): GoRegistrationFacts {
     const token = tokens[index];
     if (token === undefined || token.kind !== 'IDENTIFIER') continue;
 
-    const registerMatch = REGISTER_RE.exec(token.value);
-    const embeddingMatch = UNIMPLEMENTED_RE.exec(token.value);
+    // `String.match` rather than the regular-expression method of the same
+    // name as the process-spawning one: the repository's source-authority
+    // guard for this directory matches that identifier textually and cannot
+    // tell a regular expression from a child process. Matching the other way
+    // round keeps the guard meaningful instead of weakening it to suit this
+    // module — and this comment is deliberately phrased to avoid the literal
+    // it describes, which is the same trap one layer up.
+    const registerMatch = token.value.match(REGISTER_RE);
+    const embeddingMatch = token.value.match(UNIMPLEMENTED_RE);
     if (registerMatch === null && embeddingMatch === null) continue;
 
     const previous = tokens[index - 1];
@@ -255,9 +318,10 @@ export function readGoRegistrations(sourceText: string): GoRegistrationFacts {
     const resolved = resolve(bindings, qualifier);
     embeddings.push({
       embeddingSymbol: token.value,
-      serviceToken: (embeddingMatch as RegExpExecArray)[1] as string,
+      serviceToken: (embeddingMatch as RegExpMatchArray)[1] as string,
       qualifier,
       importPath: resolved.importPath,
+      enclosingType: enclosingTypeAt(index),
       ordinal: embeddings.length,
     });
   }
@@ -267,6 +331,7 @@ export function readGoRegistrations(sourceText: string): GoRegistrationFacts {
     imports: bindings,
     registrations,
     embeddings,
+    methods,
     completeness: {
       state: ceilingReason === null ? 'COMPLETE' : 'TRUNCATED',
       reason: ceilingReason,

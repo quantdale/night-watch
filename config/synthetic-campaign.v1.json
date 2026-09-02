@@ -32,6 +32,8 @@
     "tests/unit/c11ProdObserveEvidence.test.ts",
     "tests/unit/c02bProtoLexer.test.ts",
     "tests/unit/c02bProtoSurface.test.ts",
-    "tests/unit/c02bProtoCorroboration.test.ts"
+    "tests/unit/c02bProtoCorroboration.test.ts",
+    "tests/unit/c03GoRegistration.test.ts",
+    "tests/unit/c03GrpcTopology.test.ts"
   ]
 }

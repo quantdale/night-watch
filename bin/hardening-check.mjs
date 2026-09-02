@@ -2510,8 +2510,14 @@ function checkC02bProtobufBoundary() {
 
   // --- no root or repository was admitted ---
   const approved = read('src/core/source/approvedScan.ts');
-  if (!/'alphauslabs\/blueapi':\s*\['billing',\s*'openapiv2'\]/.test(approved)) {
-    fail('C-02b must not change the approved roots of alphauslabs/blueapi; new roots belong to C-05');
+  // C-02b's property is that protobuf was admitted as a LANGUAGE and widened
+  // no REPOSITORY. The rule originally pinned blueapi's root list literally,
+  // which described the state of the day rather than the property: C-03 later
+  // admitted the remaining blueapi proto roots under an explicit owner
+  // decision, and a rule that fires on an authorized per-root change is
+  // guarding the wrong thing. The repository boundary is asserted below.
+  if (!/'billing'/.test(approved) || !/'openapiv2'/.test(approved)) {
+    fail('C-02b requires the blueapi billing and openapiv2 roots to stay admitted');
   }
   // Read the DECLARATION, not the file. `approvedScan.ts` carries a comment
   // explaining that blueinternal is deliberately absent, and a rule that
@@ -2543,6 +2549,113 @@ function checkC02bProtobufBoundary() {
   }
 }
 
+/**
+ * C-03 Go/gRPC topology invariants.
+ *
+ * The value of this campaign is that a binding is a fact rather than a naming
+ * coincidence, and that a truncated enumeration never becomes a completeness
+ * claim. Both are one edit away from being untrue, so both are guarded here
+ * and negative-probed.
+ */
+function checkC03GrpcTopologyBoundary() {
+  const modules = ['src/core/source/goRegistration.ts', 'src/core/source/protoServiceIndex.ts', 'src/core/source/grpcTopology.ts'];
+  for (const file of modules) {
+    let source;
+    try {
+      source = read(file);
+    } catch {
+      fail(`C-03 the topology module ${file} is missing`);
+      return;
+    }
+    for (const [pattern, description] of [
+      [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
+      [/from\s+['"]node:child_process['"]|require\(['"](?:node:)?child_process['"]\)/, 'process authority'],
+      [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
+      [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
+      [/['"]go\s+build['"]|['"]go['"]\s*,\s*\[|gopls|go\/types/, 'a Go toolchain dependency'],
+    ]) {
+      if (pattern.test(source)) fail(`${file} contains ${description}; the C-03 topology path is data-in / data-out only`);
+    }
+  }
+
+  const registration = read('src/core/source/goRegistration.ts');
+  const topology = read('src/core/source/grpcTopology.ts');
+
+  // --- test files may never become topology facts ---
+  if (!/_test\.go/.test(registration) || !/export function isTopologyEligibleGoPath/.test(registration)) {
+    fail('C-03 the `_test.go` topology exclusion must exist in goRegistration.ts');
+  }
+  // The CALL SITE, not the identifier. A rule satisfied by the import line
+  // stays green while the filter it names is deleted — presence is not proof.
+  if (!/goFiles\.filter\(\(file\) => isTopologyEligibleGoPath\(file\.relativePath\)\)/.test(topology)) {
+    fail('C-03 the topology builder must apply the `_test.go` exclusion to its file set; two real registrations in pkg/exportcostfilters would otherwise become Cost implementations');
+  }
+
+  // --- a binding is a fact only when it is PROVEN ---
+  if (!/state === 'PROVEN'[\s\S]{0,200}?SOURCE_FACT|evidenceClass: 'SOURCE_FACT'/.test(topology)) {
+    fail('C-03 the topology must classify evidence explicitly');
+  }
+  // Count ASSIGNMENTS, not the type declaration `'SOURCE_FACT' | 'NOT_A_FACT'`.
+  // Requiring the `as const` spelling is what separates the two.
+  if ((topology.match(/evidenceClass: 'SOURCE_FACT' as const/g) ?? []).length !== 1) {
+    fail("C-03 exactly one construction may set evidenceClass SOURCE_FACT; every other outcome is NOT_A_FACT");
+  }
+
+  // --- absence is never a negative fact ---
+  // The derived ASSIGNMENT, not the token. The first version of this rule
+  // matched the word inside the comment that explains it, so deleting the
+  // behaviour left the guard green.
+  if (!/absenceReason: enumerationState === 'COMPLETE' \? 'NO_OBSERVED_REGISTRATION' : 'TRUNCATED_ENUMERATION'/.test(topology)) {
+    fail('C-03 an unobserved registration must be reported TRUNCATED_ENUMERATION rather than MISSING, derived from the measured enumeration state');
+  }
+  if (!/repositoryCompleteProof: enumerationState === 'COMPLETE'/.test(topology)) {
+    fail('C-03 repositoryCompleteProof must be derived from the measured enumeration state, never asserted');
+  }
+
+  // --- W-EFFECT_RPC stays unsupported, and the method prototype says so ---
+  if (!/completenessClaim: 'NONE'/.test(topology) || /completenessClaim: '(?!NONE)/.test(topology)) {
+    fail("C-03 the method-level prototype must carry completenessClaim NONE; an unobserved handler is not an absent one");
+  }
+  if (/W_EFFECT_RPC|WRITE_EFFECT_CLOSURE/.test(topology)) {
+    fail('C-03 must not implement W-EFFECT_RPC: sound effect proof requires COMPLETE enumeration, which ouchan cannot provide');
+  }
+
+  // --- the universe and the contract ceilings are unchanged ---
+  const approved = read('src/core/source/approvedScan.ts');
+  const rootsBlock = /const APPROVED_ROOTS[^=]*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/.exec(approved);
+  if (rootsBlock === null) {
+    fail('C-03 could not read the APPROVED_ROOTS declaration');
+  } else if (/blueinternal|wave-api/.test(rootsBlock[1])) {
+    fail('C-03 must not admit blueinternal or wave-api; repository admission belongs to C-05');
+  }
+  const sibling = read('src/core/source/siblingSource.ts');
+  if (!/MAX_SIBLING_SOURCE_SCAN_FILES = 4096/.test(sibling) || !/MAX_SIBLING_SOURCE_SCAN_BYTES = 64_000_000/.test(sibling)) {
+    fail('C-03 must not change the sibling scan contract ceilings; raising them is a separate authorized change');
+  }
+  if (!/'mobingilabs\/ouchan': 4096/.test(approved)) {
+    fail('C-03 ouchan must keep the raised file budget; at 1,024 not one registration daemon is enumerated');
+  }
+
+  // --- every C-03 certification suite must be gate-registered ---
+  let compatibility;
+  let synthetic;
+  try {
+    compatibility = JSON.parse(read('config/semantic-compatibility.v1.json'));
+    synthetic = JSON.parse(read('config/synthetic-campaign.v1.json'));
+  } catch {
+    fail('C-03 the quality-gate manifests must be valid JSON');
+    return;
+  }
+  const registered = new Set([
+    ...(compatibility.phaseSuites ?? []).flatMap((suite) => suite.files ?? []),
+    ...(compatibility.supportFiles ?? []),
+    ...(Array.isArray(synthetic.files) ? synthetic.files : []),
+  ]);
+  for (const suite of ['tests/unit/c03GoRegistration.test.ts', 'tests/unit/c03GrpcTopology.test.ts']) {
+    if (!registered.has(suite)) fail(`C-03 certification suite ${suite} is not registered in any authoritative quality-gate group`);
+  }
+}
+
 checkChildProcessBoundaries();
 checkL6ProcessNetworkBoundary();
 checkTargetPolicy();
@@ -2560,6 +2673,7 @@ checkPhase8B01CloseoutIntegrity();
 checkPhase8B10PortfolioIntegrity();
 checkPhase8B1CanonicalPromotionBoundary();
 checkC02bProtobufBoundary();
+checkC03GrpcTopologyBoundary();
 checkPlannerHandoffIntegrity();
 checkDocumentationTruth();
 checkProjectStateIntegrity();
