@@ -25,7 +25,7 @@ provenance label.
 
 ## Current Milestone
 
-M0 — campaign records and activation.
+M11 — validation complete; integration and exact-head CI remain.
 
 ## Verified Starting Truth
 
@@ -67,29 +67,44 @@ A10 must learn to detect.
 
 ## Completed Milestones
 
-None terminal yet.
+- M0 — campaign records and OpenSpec change created; `ACTIVE_TASK`,
+  `EXECUTION_PROMPT` and the `CURRENT_STATE` live-state block routed to this
+  task. `handoff:check` PASS, `agent:check` PASS, `project:check` PASS.
+- M1 — A2 reproduction recorded in `audit.md` with captured output, then
+  retained as the forgery-resistance assertions rather than deleted.
+- M2 — A3/A7 authority core: `ValidatedSourceEvidence`, the deterministic
+  length-prefixed binding encoder, the computed-digest mint with NO digest
+  parameter, and the module-private `WeakSet` runtime brand.
+- M3 — A4 route derivation: the OpenAPI-operation adapter over C-02a evidence,
+  and the PHP adapter failing closed because C-06 admits no production route.
+- M4 — A5 key derivation: OpenAPI-definition, PHP row-key and fixed-contract
+  adapters; the label-accepting constructors withdrawn; TEST-ONLY seam added.
+- M5 — A6 forgery-resistance suite, 32 tests covering all eleven adversarial
+  classes.
+- M6 — A8 isolation: cone import profile retained (`node:crypto` only) and the
+  mint's importer set mechanically bounded, both negative-probed.
+- M7 — A9 `CURRENT_STATE` reconciliation with per-field semantics stated.
+- M8 — A10 validator repair plus the eight adversarial cases.
+- M9 — A11/A12 certification and digest-semantics reconciliation, history
+  preserved as history.
+- M10 — A13 inventory-driven persisted-position coverage, negative-probed.
+- M11 — A14 validation: full set green (see ledger).
 
 ## Work In Progress
 
-M0 — campaign records and activation. Task `SPEC.md`, `PLAN.md`, `STATE.md`,
-`REPORT.md` and the OpenSpec change (`audit.md`, `proposal.md`, `design.md`,
-`tasks.md`, `specs/production-provenance-authority/spec.md`) are written and
-tracked. `.agent/EXECUTION_PROMPT.md` is rewritten with
-`Planned-From: cb631cc` and `.agent/ACTIVE_TASK.md` is routed to this task.
-
-Remaining in M0: route the `docs/CURRENT_STATE.md` live-state block to this
-task, then obtain `handoff:check` PASS and `agent:check` PASS.
+M11 — validation is complete and green (see the ledger). Remaining: integrate
+the session branch through the C-00 tooling, obtain an exact-head GitHub
+Actions result with all eleven required groups PASS, set the CI anchors from
+that run, and close the A15 gate.
 
 ## Exact Next Action
 
-Update the `LIVE_STATE_PROTOCOL_VERSION` block in `docs/CURRENT_STATE.md` so
-`LIVE_TASK_ID` is `nightwatch-c10-provenance-truth-closure-v1`, `LIVE_PHASE`
-is `C10_PROVENANCE_TRUTH_CLOSURE_V1`, `LIVE_TASK_STATUS` is `IN_PROGRESS`,
-`LIVE_NEXT_ACTION_STATE` is `CONTINUE` and `LIVE_COMPLETION_CLAIM` is
-`IN_PROGRESS`, while leaving `LIVE_PROJECT_COMPLETION_STATUS`
-(`OPERATIONALLY_ACCEPTED`) and `LIVE_PROJECT_VERDICT_EFFECT` (`PRESERVE`)
-intact. Then run `npm run handoff:check` and `npm run agent:check` and close
-M0.
+Integrate the session branch `session/nightwatch-c10-provenance-truth--ba3470bc`
+into `main` through `node bin/nightwatch-session.mjs integrate`, push, then
+identify the exact-head GitHub Actions run at the resulting `origin/main` and
+confirm all eleven required groups PASS. Then set `CI_OBSERVED_SHA`,
+`CI_EXECUTED_SHA` and `CI_STATUS` in `docs/CURRENT_STATE.md` from that run, and
+evaluate the A15 gate item by item.
 
 ## Files Changed
 
@@ -109,12 +124,46 @@ M0.
 
 ## Validation Ledger
 
-| Check | Result | Notes |
+All results recorded from actual runs in the session worktree at
+`c7a5c00887d61b9ea5518af3b2fe24f4c15b2fa5`, whose only difference from the
+substantive implementation `e0e3728ed273eabbc51c50bbc63889c8fb1257fc` is
+approved documentation.
+
+| Check | Result | Detail |
 | --- | --- | --- |
 | Git/CI starting-truth verification | PASS | read-only; every §0 expectation confirmed |
 | A2 forgery reproduction | REPRODUCED | four distinct failures captured in `audit.md` |
-| `handoff:check` | PENDING | run at M0 close |
-| `agent:check` | PENDING | run at M0 close |
+| `typecheck` | PASS | exit 0 |
+| `hardening:check` | PASS | offline structural invariants hold |
+| `handoff:check` | PASS | — |
+| `project:check` | PASS | — |
+| `agent:check` | PASS | 2 warnings (checkpoint advance, 24 historical legacy v1 tasks) |
+| `agent:audit` | PASS | 101 tasks, 77 strict v2, `strict_errors=0` |
+| `gate:inventory` | PASS | 11 logical groups, 0 duplicate test-file executions |
+| `test:semantic-compat` | PASS | 1,975 total / 1,962 passed / 13 skipped / 0 failed |
+| `campaign:synthetic` | PASS | 16 files, 253 total / 253 passed / 0 failed, `deepContainmentLane: PROVEN` |
+| C-10 privacy suites | PASS | `c10ProductionProjection` + `c10AcceptanceSuite` green after authority rewiring |
+| C-10.5 provenance suite | PASS | `c105ProvenanceAuthority` 32/32 |
+| C-10.5 persisted-position suite | PASS | `c105PersistedFieldCoverage` 13/13 |
+| Project-state validator suites | PASS | `projectState` + `agent-state` 52 tests, including the 8 A10 cases |
+| Full canonical regression | PASS | 2,972 total / 2,959 passed / 13 skipped / 0 failed |
+| `gate:local` | PASS | Node 22, all eleven groups, `receipt:sha256:d2bc919608f5a05c683015b4` |
+| `gate:clean` | PASS | Node 20, all eleven groups, `siblingWrites: 0`, `clean-receipt:sha256:826d3462708244546b75d2b0` (inner gate `receipt:sha256:52e3420361397732d2a735b4`) |
+| Exact-head GitHub Actions | PENDING | run after integration to `main` |
+
+### Negative probes (proving the new gates bite rather than pass vacuously)
+
+| Probe | Expected | Observed |
+| --- | --- | --- |
+| A module outside `src/core/prodProvenance/**` imports the mint | FAIL | FAIL — "only src/core/prodProvenance/** may mint production authority" |
+| Production code imports the TEST-ONLY seam | FAIL | FAIL — "only tests/** may import it" |
+| A new free-form persisted field `operatorNote` with no declared disposition | FAIL | FAIL — inventory totality diff |
+| The A10 invariant against the live stale baseline | FAIL | FAIL — `PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE` and `PROJECT_STATE_CI_BASELINE_STALE` |
+
+### C-10.5 dedicated test total
+
+53 tests: 32 provenance authority + 13 persisted-position coverage + 8
+project-state A10 cases.
 
 ## Decisions Made During This Task
 
