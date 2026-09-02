@@ -23,6 +23,8 @@
     "tests/unit/readonlyCandidateCensus.test.ts",
     "tests/unit/eligibilityCensus.test.ts",
     "tests/unit/l6Containment.test.ts",
-    "tests/unit/workspaceIsolation.test.ts"
+    "tests/unit/workspaceIsolation.test.ts",
+    "tests/unit/c10ProductionProjection.test.ts",
+    "tests/unit/c10AcceptanceSuite.test.ts"
   ]
 }

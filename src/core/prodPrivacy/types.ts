@@ -261,6 +261,44 @@ export const PRODUCTION_EVIDENCE_NODE_SAFE_FIELDS: ReadonlySet<string> = new Set
 
 export const PRODUCTION_PROVEN_FIELD_SAFE_FIELDS: ReadonlySet<string> = new Set(['name', 'node']);
 
+/**
+ * EXACT per-type field sets.
+ *
+ * A node must carry the fields of its own type and no others. Without this a
+ * field belonging to a different type (say `itemCount` on an OBJECT) is
+ * ignored by the canonical writer, so it does not change the structural
+ * digest — and a tampered structure would travel under a matching digest.
+ */
+export const PRODUCTION_NODE_FIELDS_BY_TYPE: Readonly<Record<ProductionNodeType, ReadonlySet<string>>> =
+  Object.freeze({
+    NULL: new Set(['type']),
+    BOOLEAN: new Set(['type', 'booleanClass']),
+    NUMBER: new Set(['type', 'numericEncounterRef']),
+    STRING: new Set(['type', 'stringClass', 'encounterToken']),
+    OBJECT: new Set([
+      'type',
+      'fieldCount',
+      'keyProvenance',
+      'provenFieldCount',
+      'dynamicFieldCount',
+      'provenFields',
+      'dynamicFields',
+    ]),
+    ARRAY: new Set(['type', 'itemType', 'itemCount', 'inspectedCount', 'items', 'arrayTruncated']),
+  });
+
+/** The same sets for PERSISTED nodes: the two ephemeral members are removed. */
+export const PRODUCTION_EVIDENCE_NODE_FIELDS_BY_TYPE: Readonly<
+  Record<ProductionNodeType, ReadonlySet<string>>
+> = Object.freeze({
+  NULL: new Set(['type']),
+  BOOLEAN: new Set(['type', 'booleanClass']),
+  NUMBER: new Set(['type']),
+  STRING: new Set(['type', 'stringClass']),
+  OBJECT: PRODUCTION_NODE_FIELDS_BY_TYPE.OBJECT,
+  ARRAY: PRODUCTION_NODE_FIELDS_BY_TYPE.ARRAY,
+});
+
 export const PRODUCTION_PROJECTION_ROOT_SAFE_FIELDS: ReadonlySet<string> = new Set([
   'boundaryClass',
   'schemaVersion',

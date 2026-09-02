@@ -27,8 +27,7 @@ F-15 digest confusion and the F-18 Control Center exposure.
 
 ## Current Milestone
 
-M5 — safe evidence DTO is landed; next is the INDEPENDENT persistence firewall
-and the production artifact root.
+M11 — full validation and integration. M0 through M10 are closed.
 
 ## Completed Milestones
 
@@ -44,6 +43,23 @@ and the production artifact root.
 - M3 — `projector.ts`: F-14 resolved. A key literal survives only as a proven
   member of a source-proven finite set; a dynamic key contributes its value's
   structure and the object's cardinality and nothing else.
+- M5 — `prodEvidence/firewall.ts`: an INDEPENDENT closed-vocabulary re-walk at
+  the durable write plus an independent digest re-derivation.
+- M6 — `productionFindingsStore.ts`: `$HOME/.nightwatch/prod-findings/`,
+  separate policy identity, 0700/0600, symlink refusal on every path
+  component, atomic writes, bounded file count.
+- M7 — F-18 resolved: `controlCenterExclusion.ts` plus wiring in
+  `findingsAuthority.ts` on BOTH construction routes; Workstream K proved SSE
+  is a constructed five-field allowlist that cannot carry a payload.
+- M8 — `browserProfile.ts`: ephemeral private profiles, cache and crash dumps
+  disabled, normal-exit and crash-path cleanup, categorical console events with
+  no field a page string could occupy.
+- M9 — `parameterProvenance.ts`: F-16 opaque-handle model with no function
+  anywhere that accepts a concrete parameter value.
+- M10 — `hardening:check` boundary rule (proven non-vacuous), the full
+  acceptance suite (all five §6.5 classes) and the deterministic persistence
+  audit; both C-10 suites registered in `config/synthetic-campaign.v1.json`
+  (12 -> 14 files).
 - M4 — `serializer.ts`: F-15 resolved. `prodstruct:sha256:` is value-free and
   unsalted; NUMBER writes as type alone; no branch emits an encounter token,
   a numeric ref or a dynamic key literal. No durable value digest exists.
@@ -94,6 +110,10 @@ open M1/M2.
 | M0 | `npm run agent:check` | PASS with 2 pre-existing warnings (CHECKPOINT_ADVANCE, legacy v1 tasks) |
 | M4 | `npm run typecheck` | PASS |
 | M4 | `tests/unit/c10ProductionProjection.test.ts` | 33/33 PASS — sentinel key literals present in raw input, absent from projection, canonical bytes, digest input and evidence |
+| M10 | `tests/unit/c10AcceptanceSuite.test.ts` | 48/48 PASS — all five §6.5 classes plus the persistence audit |
+| M10 | `npm run hardening:check` | PASS; proven non-vacuous by injecting a `node:fs` import into the cone (2 errors) and restoring (PASS) |
+| M10 | affected existing suites (Control Center / findings / projection / evidence / privacy / dossier / console / storage) | 581 passed, 2 skipped (pre-existing), 0 failed |
+| M10 | `tests/unit/phase10Privacy.test.ts` | 8/8 PASS after re-scoping the DEV key-literal assertion in place |
 
 ## Decisions Made During This Task
 
@@ -113,10 +133,12 @@ Full reasoning and evidence are in `PLAN.md` `## Decision Log`.
 
 ## Exact Next Action
 
-Implement `src/core/prodEvidence/firewall.ts` — the INDEPENDENT persistence
-re-validation at the durable-write boundary — as a closed-vocabulary walk that
-does not re-call the projection's own validator, then
-`productionFindingsStore.ts` for the `$HOME/.nightwatch/prod-findings/` root.
+Run the full §21 validation battery in cost order — `typecheck`,
+`hardening:check`, `handoff:check`, `project:check`, `agent:check`,
+`agent:audit`, `gate:inventory`, `test:semantic-compat`, `campaign:synthetic`,
+the complete canonical Playwright regression, `gate:local`, `gate:clean` — then
+integrate through the C-00 session mechanism and obtain an exact-head GitHub
+Actions result.
 
 ## Blockers
 
@@ -125,6 +147,33 @@ None.
 ## Safety Events
 
 None.
+
+## Defects
+
+**DEF-C10-1 — a node could carry a field belonging to a DIFFERENT node type.**
+Found by the C-10 digest-privacy tamper case, not by review. The canonical
+writer switched on `node.type` and wrote only that type's fields, so an
+ARRAY-only field grafted onto an OBJECT node (`itemCount`) was silently
+ignored — which meant the recomputed structural digest still MATCHED and the
+persistence firewall accepted the tampered structure. Repaired by introducing
+EXACT per-type field sets (`PRODUCTION_NODE_FIELDS_BY_TYPE` and its
+evidence-form counterpart) and validating against the node's own type on both
+boundaries. Disposition: FIXED, with a named regression case.
+
+**DEF-C10-2 — the first non-vacuity assertion over-claimed.** The sentinel
+corpus asserted that the raw JSON body contained every sentinel, including the
+console and thrown-exception sentinels, which are planted in different
+channels. The assertion failed honestly. Repaired by splitting the corpus into
+`BODY_SENTINELS` and `CHANNEL_SENTINELS` and proving each enters its OWN
+channel, so non-vacuity is now established per channel rather than assumed.
+Disposition: FIXED. No absence assertion was weakened — all sentinels are still
+swept for everywhere.
+
+**DEF-C10-3 — the hardening capability pattern matched a method call.** The new
+rule's `exec(`/`fetch(` pattern matched `regex.exec(`, which is not a process
+capability. Repaired with a negative lookbehind so only a bare global matches;
+the call site was also rewritten to `matchAll`. Disposition: FIXED. The rule
+was then verified non-vacuous against a real `node:fs` import.
 
 ## Discoveries
 

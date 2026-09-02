@@ -21,7 +21,7 @@ import {
   productionStructuralDigest,
   MAX_PROVEN_KEY_LENGTH,
   FORBIDDEN_PRODUCTION_KEY_NAMES,
-  PRODUCTION_EVIDENCE_NODE_SAFE_FIELDS,
+  PRODUCTION_EVIDENCE_NODE_FIELDS_BY_TYPE,
   PRODUCTION_EVIDENCE_SAFE_FIELDS,
   PRODUCTION_EVIDENCE_VERSION,
   PRODUCTION_NODE_TYPES,
@@ -91,12 +91,13 @@ function walkNode(value: unknown, budget: { nodes: number }): void {
   if ('numericEncounterRef' in value) {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'NUMERIC_REF_PRESENT');
   }
-  assertClosed(value, PRODUCTION_EVIDENCE_NODE_SAFE_FIELDS);
-
   const type = value.type;
   if (typeof type !== 'string' || !PRODUCTION_NODE_TYPES.has(type)) {
     failProduction('PRODUCTION_PRIVACY_EVIDENCE_INVALID', 'FIELD_TYPE');
   }
+  // Exact per-type field set, so a field belonging to another node type cannot
+  // ride along unnoticed by the digest.
+  assertClosed(value, PRODUCTION_EVIDENCE_NODE_FIELDS_BY_TYPE[type as keyof typeof PRODUCTION_EVIDENCE_NODE_FIELDS_BY_TYPE]);
 
   switch (type) {
     case 'NULL':

@@ -10,6 +10,11 @@
 // unknown-key probe proves raw key text never appears downstream (no
 // OBJECT_KEYS invariant is admitted, and none is needed — raw key text must
 // never enter safe outputs by construction).
+//
+// C-10 SCOPE NOTE: everything here describes the DEV projection
+// `nightwatch.semantic-projection.v1`. Its documented allowance for object
+// FIELD NAMES is DEV-scope only and is explicitly NOT a production
+// certification — see F-14 and the production counter-proof below.
 // ---------------------------------------------------------------------------
 
 import { expect, test } from '@playwright/test';
@@ -17,6 +22,13 @@ import { deriveRealSourceExpectation } from '../../src/oracles/expectations/admi
 import { REAL_SOURCE_EXPECTATION_RECIPES } from '../../src/oracles/expectations/recipes/registry';
 import { createMapSource } from '../helpers/phase9a1Fixtures';
 import { projectValue, ProjectionContext, projectionDigest, serializeProjection } from '../../src/oracles/projections';
+import {
+  canonicalStructuralBytes,
+  createProductionPrivacyPolicy,
+  NO_PROVEN_VOCABULARY,
+  projectProduction,
+  RawEphemeralSource,
+} from '../../src/core/prodPrivacy';
 import { evaluateSemanticResponse, semanticFindingFingerprint } from '../../src/oracles/semantic';
 import { buildSemanticEvaluationReceipt } from '../../src/oracles/semantic/receipts';
 import { exchangeRateDeepFixture, routingDeepFixture } from '../../corpus/phase10/source-fixture/exchangeRateDeepFixture';
@@ -106,21 +118,44 @@ test.describe('Phase 10A — privacy sweep on the safe path (§29, §42)', () =>
     expect(JSON.stringify(UNKNOWN_KEY_BODY)).toContain(SENTINELS.scalar);
   });
 
-  test('projection carries the unknown key ONLY as safe field-name metadata (documented boundary)', () => {
+  test('DEV projection carries the unknown key as field-name metadata — DEV SCOPE ONLY, never a production certification', () => {
+    // SCOPE (C-10 / F-14). This documents the behaviour of the DEV projection
+    // `nightwatch.semantic-projection.v1` ONLY. It is correct for DEV
+    // fixtures, where key names are repository-controlled, and it is the
+    // reason a separate production cone exists.
+    //
+    // It is NOT a certification that an unknown key literal may appear in a
+    // PRODUCTION projected serialization. In production, objects are routinely
+    // keyed by AWS account id, MSP id, billing-group id or company name, so a
+    // key set is sometimes a value set. The production boundary
+    // (`nightwatch.production-projection.v1`) refuses exactly this — see the
+    // counter-proof at the end of this test and
+    // tests/unit/c10ProductionProjection.test.ts.
     const ctx = new ProjectionContext();
     const { projection } = projectValue(UNKNOWN_KEY_BODY, ctx);
     const serialized = serializeProjection(projection);
-    // The safe projection MAY carry object field names as path metadata —
-    // that is the documented safe surface (SPEC §13/§14). What must never
-    // leave the projection is the raw SCALAR VALUE (and the raw numeric
-    // rate). Downstream artifacts (digest, finding, fingerprint, receipt,
-    // dossier) must carry neither names nor values.
+    // What must never leave even the DEV projection is the raw SCALAR VALUE
+    // (and the raw numeric rate). Downstream artifacts (digest, finding,
+    // fingerprint, receipt, dossier) must carry neither names nor values.
     assertNoScalarLeaks(serialized, 'projection serialization');
     const serializedText = JSON.stringify(serialized);
-    expect(serializedText).toContain(SENTINELS.key); // field name IS projected (safe)
+    expect(serializedText).toContain(SENTINELS.key); // DEV: field name IS projected
     expect(serializedText).not.toContain(SENTINELS.scalar); // scalar VALUE never projected
     expect(serializedText).not.toContain(String(SENTINELS.rate));
     assertNoLeaks(projectionDigest(projection), 'projection digest');
+
+    // C-10 counter-proof: the SAME body through the production cone emits no
+    // key literal at all, so the DEV behaviour above cannot be mistaken for a
+    // production guarantee.
+    const productionProjection = projectProduction(
+      RawEphemeralSource.of(UNKNOWN_KEY_BODY),
+      NO_PROVEN_VOCABULARY,
+      createProductionPrivacyPolicy(),
+    );
+    const productionText = JSON.stringify(productionProjection);
+    expect(productionText).not.toContain(SENTINELS.key);
+    expect(productionText).not.toContain(SENTINELS.scalar);
+    expect(canonicalStructuralBytes(productionProjection.root)).not.toContain(SENTINELS.key);
   });
 
   test('finding + fingerprint + receipt contain no sentinels', () => {
